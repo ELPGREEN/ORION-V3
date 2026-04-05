@@ -629,6 +629,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 tier={faceTier}
                 faceApiDetection={faceApiResultRef.current}
               />
+              {gesturesEnabled && currentGesture.gesture !== "none" && (
                 <div className="absolute inset-0 pointer-events-none z-10">
                   <div className="absolute w-6 h-6 rounded-full border-2 border-amber-400 shadow-lg shadow-amber-400/30"
                     style={{ left: `${currentGesture.handPosition.x * 100}%`, top: `${currentGesture.handPosition.y * 100}%`, transform: "translate(-50%, -50%)", opacity: currentGesture.confidence }}>
