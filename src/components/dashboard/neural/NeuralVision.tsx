@@ -21,6 +21,7 @@ import { useSuperNetWS } from "./useSuperNetWS";
 import { useOrionReasoning } from "./useOrionReasoning";
 import { useWakeWord } from "./useWakeWord";
 import { CameraPiP, BoundingBoxOverlay } from "./VisionOverlayComponents";
+import { FaceScannerOverlay } from "./FaceScannerOverlay";
 import { TeslaCoilVoltagePanel } from "./TeslaCoilVoltagePanel";
 import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
 import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
@@ -618,6 +619,15 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 width={200} height={150}
                 videoWidth={videoRef.current?.videoWidth || 640}
                 videoHeight={videoRef.current?.videoHeight || 480}
+              />
+              <FaceScannerOverlay
+                faces={detectedFacesRaw}
+                width={200}
+                height={150}
+                videoWidth={videoRef.current?.videoWidth || 640}
+                videoHeight={videoRef.current?.videoHeight || 480}
+                tier={faceTier}
+                faceApiDetection={faceApiResultRef.current}
               />
               {gesturesEnabled && currentGesture.gesture !== "none" && (
                 <div className="absolute inset-0 pointer-events-none z-10">
