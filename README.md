@@ -1,3 +1,5 @@
-# Welcome to your Lovable project
+# README file
 
-TODO: Document your project here
+# Project Title
+
+Description of the project.
