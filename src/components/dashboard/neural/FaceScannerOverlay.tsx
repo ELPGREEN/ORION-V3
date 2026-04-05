@@ -82,8 +82,6 @@ const FACE_MESH_CONNECTIONS = [
 function FaceScannerOverlayInner({
   faces, width, height, videoWidth, videoHeight, tier, faceApiDetection,
 }: FaceScannerOverlayProps) {
-  if (!faces.length) return null;
-
   const vw = videoWidth || width;
   const vh = videoHeight || height;
   const sx = width / vw;
@@ -96,6 +94,8 @@ function FaceScannerOverlayInner({
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
   }, [faceApiDetection]);
+
+  if (!faces.length) return null;
 
   const dominantEmotion = expressions[0];
 
