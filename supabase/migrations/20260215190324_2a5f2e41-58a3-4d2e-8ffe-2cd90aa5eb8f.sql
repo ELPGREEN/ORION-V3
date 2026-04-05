@@ -1,0 +1,1 @@
+UPDATE public.user_roles SET role = 'advogado' WHERE user_id = 'a9e0c5e3-adb2-4a08-b8ba-3e5a9e2024ce';

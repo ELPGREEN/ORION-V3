@@ -1,0 +1,19 @@
+# ================================================
+# NEUROCORE AI — HF Space: PDF Layout Analysis API
+# Runtime: Python 3.11+ | Docker (HuggingFace Spaces)
+# ================================================
+
+# Core API
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# PDF Processing
+pymupdf==1.25.3
+pdfplumber==0.11.4
+weasyprint==63.1
+
+# Optional: Enhanced OCR + Layout
+# pytesseract==0.3.13
+# Pillow==11.1.0
+# layoutparser==0.3.4

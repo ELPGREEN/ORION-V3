@@ -1,0 +1,39 @@
+CONSTITUIÇÃO FEDERAL DE 1988 - PARTE 6: GARANTIAS PROCESSUAIS E REMÉDIOS CONSTITUCIONAIS
+
+REMÉDIOS CONSTITUCIONAIS (Art. 5, CF/88)
+
+1. HABEAS CORPUS (Art. 5, LXVIII)
+Conceder-se-á habeas corpus sempre que alguém sofrer ou se achar ameaçado de sofrer violência ou coação em sua liberdade de locomoção, por ilegalidade ou abuso de poder.
+Espécies: preventivo (salvo-conduto) e liberatório (alvará de soltura).
+
+2. HABEAS DATA (Art. 5, LXXII)
+Conceder-se-á habeas data para assegurar o conhecimento de informações relativas à pessoa do impetrante, constantes de registros ou bancos de dados de entidades governamentais ou de caráter público; e para a retificação de dados.
+
+3. MANDADO DE SEGURANÇA (Art. 5, LXIX e LXX)
+Conceder-se-á mandado de segurança para proteger direito líquido e certo, não amparado por habeas corpus ou habeas data, quando o responsável pela ilegalidade ou abuso de poder for autoridade pública ou agente de pessoa jurídica no exercício de atribuições do Poder Público.
+Mandado de segurança coletivo pode ser impetrado por partido político, organização sindical, entidade de classe ou associação.
+
+4. MANDADO DE INJUNÇÃO (Art. 5, LXXI)
+Conceder-se-á mandado de injunção sempre que a falta de norma regulamentadora torne inviável o exercício dos direitos e liberdades constitucionais e das prerrogativas inerentes à nacionalidade, à soberania e à cidadania.
+
+5. AÇÃO POPULAR (Art. 5, LXXIII)
+Qualquer cidadão é parte legítima para propor ação popular que vise a anular ato lesivo ao patrimônio público ou de entidade de que o Estado participe, à moralidade administrativa, ao meio ambiente e ao patrimônio histórico e cultural.
+
+PRINCÍPIOS PROCESSUAIS CONSTITUCIONAIS:
+- Devido processo legal (Art. 5, LIV)
+- Contraditório e ampla defesa (Art. 5, LV)
+- Juiz natural (Art. 5, LIII)
+- Presunção de inocência (Art. 5, LVII)
+- Vedação de provas ilícitas (Art. 5, LVI)
+- Publicidade dos atos processuais (Art. 5, LX)
+- Razoável duração do processo (Art. 5, LXXVIII)
+- Assistência jurídica integral e gratuita (Art. 5, LXXIV)
+- Inafastabilidade da jurisdição (Art. 5, XXXV)
+
+CONTROLE DE CONSTITUCIONALIDADE:
+Ação Direta de Inconstitucionalidade (ADI) - Art. 102, I, a
+Ação Declaratória de Constitucionalidade (ADC) - Art. 102, I, a
+Arguição de Descumprimento de Preceito Fundamental (ADPF) - Art. 102, §1
+ADI por Omissão - Art. 103, §2
+
+Legitimados (Art. 103): Presidente da República, Mesa do Senado Federal, Mesa da Câmara dos Deputados, Mesa de Assembleia Legislativa ou da Câmara Legislativa do DF, Governador de Estado ou do DF, Procurador-Geral da República, Conselho Federal da OAB, partido político com representação no Congresso Nacional, confederação sindical ou entidade de classe de âmbito nacional.

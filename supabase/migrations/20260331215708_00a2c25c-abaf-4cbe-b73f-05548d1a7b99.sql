@@ -1,0 +1,1 @@
+ALTER TABLE public.escritorio_config ADD COLUMN IF NOT EXISTS timbre_url TEXT DEFAULT NULL;

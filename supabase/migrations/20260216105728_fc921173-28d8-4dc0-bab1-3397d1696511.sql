@@ -1,0 +1,1 @@
+UPDATE public.ai_providers SET is_enabled = true, updated_at = now() WHERE provider_name = 'gemini';

@@ -1,42 +1,123 @@
+/* Fonts loaded via index.html <link> tag — no duplicate @import needed */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 
+  ORION by ELP GLOBAL — Design System
+  Estética: Premium Dark — Dourado Metálico + Preto Profundo
+*/
+
 @layer base {
   :root {
     --background: 220 20% 4%;
-    --foreground: 210 40% 98%;
-    --card: 220 18% 7%;
-    --card-foreground: 210 40% 98%;
-    --popover: 220 18% 7%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
-    --radius: 0.75rem;
-    --sidebar-background: 220 18% 5%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 217 91% 60%;
-    --chart-1: 217 91% 60%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --foreground: 30 10% 90%;
+
+    --card: 220 15% 7%;
+    --card-foreground: 30 10% 90%;
+
+    --popover: 220 15% 6%;
+    --popover-foreground: 30 10% 90%;
+
+    /* Laranja-Ouro - primary */
+    --primary: 30 85% 52%;
+    --primary-foreground: 220 20% 4%;
+
+    /* Azul Metálico - secondary */
+    --secondary: 215 60% 45%;
+    --secondary-foreground: 210 10% 92%;
+
+    --muted: 220 12% 10%;
+    --muted-foreground: 215 8% 55%;
+
+    /* Laranja Quente accent */
+    --accent: 25 80% 55%;
+    --accent-foreground: 30 10% 95%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 20% 4%;
+
+    --border: 215 15% 14%;
+    --input: 220 12% 9%;
+    --ring: 30 85% 52%;
+
+    --radius: 0;
+
+    /* Tokens Laranja-Ouro */
+    --gold: 30 85% 52%;
+    --gold-light: 35 75% 65%;
+    --gold-dark: 25 90% 40%;
+    /* Tokens Azul Metálico */
+    --cyan: 210 70% 50%;
+    --cyan-light: 215 65% 65%;
+    --cyan-dark: 215 75% 35%;
+    --navy: 220 20% 4%;
+    --navy-light: 220 15% 10%;
+    --navy-dark: 220 25% 2%;
+    --online: 142 60% 45%;
+
+    --texture-leather: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+
+    /* Gradientes Laranja-Ouro + Azul Metálico */
+    --gradient-gold: linear-gradient(135deg, hsl(25 90% 38%), hsl(30 85% 52%), hsl(35 75% 65%), hsl(30 85% 52%));
+    --gradient-cyan: linear-gradient(135deg, hsl(215 75% 35%), hsl(210 70% 50%), hsl(215 65% 65%));
+    --gradient-tron: linear-gradient(135deg, hsl(30 85% 52%), hsl(210 70% 50%));
+    --gradient-navy: linear-gradient(180deg, hsl(220 20% 5%), hsl(220 25% 2%));
+
+    /* Sombras */
+    --shadow-gold: 0 4px 30px -4px hsl(30 85% 52% / 0.3);
+    --shadow-cyan: 0 4px 30px -4px hsl(210 70% 50% / 0.25);
+    --shadow-tron: 0 0 40px -10px hsl(30 85% 52% / 0.2), 0 0 40px -10px hsl(210 70% 50% / 0.15);
+    --shadow-elegant: 0 20px 60px -15px hsl(220 30% 2% / 0.7);
+    --shadow-card: 0 4px 20px -4px hsl(220 30% 2% / 0.5);
+
+    /* Sidebar */
+    --sidebar-background: 220 20% 3%;
+    --sidebar-foreground: 30 10% 85%;
+    --sidebar-primary: 30 85% 52%;
+    --sidebar-primary-foreground: 220 20% 4%;
+    --sidebar-accent: 220 15% 9%;
+    --sidebar-accent-foreground: 30 10% 85%;
+    --sidebar-border: 215 12% 12%;
+    --sidebar-ring: 30 85% 52%;
+  }
+
+  .dark {
+    --background: 220 25% 2%;
+    --foreground: 30 10% 94%;
+    --card: 220 15% 5%;
+    --card-foreground: 30 10% 94%;
+    --popover: 220 15% 4%;
+    --popover-foreground: 30 10% 94%;
+    --primary: 30 85% 54%;
+    --primary-foreground: 220 25% 2%;
+    --secondary: 215 60% 48%;
+    --secondary-foreground: 210 10% 92%;
+    --muted: 220 12% 8%;
+    --muted-foreground: 215 8% 55%;
+    --accent: 25 80% 50%;
+    --accent-foreground: 30 10% 95%;
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 20% 4%;
+    --border: 215 12% 10%;
+    --input: 220 12% 7%;
+    --ring: 30 85% 54%;
   }
 }
 
@@ -44,17 +125,1474 @@
   * {
     @apply border-border;
   }
+
+  /* Accessible focus ring */
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* Remove default focus for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Custom scrollbar - dark theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(220 30% 5%);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(220 20% 22%);
+    border-radius: 0px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(30 85% 40%);
+  }
+
+  /* Sidebar thin scrollbar */
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: hsl(195 90% 50% / 0.15);
+    border-radius: 2px;
+  }
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(195 90% 50% / 0.35);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: hsl(220 30% 5%);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: hsl(220 20% 22%) hsl(220 30% 5%);
+  }
+
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    background-image: var(--texture-leather);
+    background-repeat: repeat;
+  }
+
+  /* Tipografia Tech / Tron */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Orbitron', 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Respect reduced-motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  ::selection {
+    background-color: hsl(var(--gold) / 0.4);
+    color: hsl(var(--foreground));
   }
 }
 
 @layer utilities {
+  /* ═══ GLASSMORPHISM — vidro fosco com brilho dourado ═══ */
   .glass-panel {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl;
+    background: hsl(var(--card) / 0.45);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border: 1px solid hsl(var(--primary) / 0.08);
+    box-shadow: 
+      inset 0 1px 0 0 hsl(var(--primary) / 0.06),
+      inset 0 0 40px 0 hsl(var(--primary) / 0.02),
+      0 8px 32px -8px hsl(0 0% 0% / 0.4);
   }
-  .glow-primary {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.15), 0 0 60px hsl(var(--primary) / 0.05);
+  
+  .glass-panel-light {
+    background: hsl(var(--card) / 0.3);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    border: 1px solid hsl(var(--primary) / 0.06);
+    box-shadow: 
+      inset 0 1px 0 0 hsl(var(--primary) / 0.04),
+      0 4px 16px -4px hsl(0 0% 0% / 0.3);
   }
+
+  /* ═══ GLASS CARD — hybrid frosted + metallic + neumorphic ═══ */
+  .glass-card {
+    background: linear-gradient(
+      145deg,
+      hsl(0 0% 100% / 0.05) 0%,
+      hsl(0 0% 100% / 0.02) 50%,
+      hsl(0 0% 0% / 0.02) 100%
+    );
+    backdrop-filter: blur(28px) saturate(1.5);
+    -webkit-backdrop-filter: blur(28px) saturate(1.5);
+    border: 1px solid hsl(var(--primary) / 0.1);
+    box-shadow:
+      /* Neumorphic inner highlight (top-left light) */
+      inset 2px 2px 4px 0 hsl(0 0% 100% / 0.04),
+      /* Neumorphic inner shadow (bottom-right depth) */
+      inset -2px -2px 4px 0 hsl(0 0% 0% / 0.15),
+      /* Metallic edge reflection */
+      inset 0 1px 0 0 hsl(var(--primary) / 0.08),
+      /* Outer depth shadow */
+      0 8px 32px -8px hsl(0 0% 0% / 0.5),
+      /* Subtle gold ring */
+      0 0 0 0.5px hsl(var(--primary) / 0.06);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Metallic sheen overlay on glass-card */
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0.03) 0%,
+      transparent 40%,
+      transparent 60%,
+      hsl(var(--primary) / 0.02) 100%
+    );
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+
+  .glass-card:hover {
+    background: linear-gradient(
+      145deg,
+      hsl(0 0% 100% / 0.08) 0%,
+      hsl(0 0% 100% / 0.04) 50%,
+      hsl(0 0% 0% / 0.01) 100%
+    );
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow:
+      inset 2px 2px 6px 0 hsl(0 0% 100% / 0.06),
+      inset -2px -2px 6px 0 hsl(0 0% 0% / 0.12),
+      inset 0 1px 0 0 hsl(var(--primary) / 0.12),
+      0 12px 40px -8px hsl(0 0% 0% / 0.6),
+      0 0 30px hsl(var(--primary) / 0.08),
+      0 0 0 1px hsl(var(--primary) / 0.15);
+    transform: translateY(-6px);
+  }
+
+  .glass-card:hover::before {
+    opacity: 1.5;
+  }
+
+  /* ═══ GLASS CARD SUBTLE — lighter variant for smaller items ═══ */
+  .glass-card-subtle {
+    background: hsl(0 0% 100% / 0.03);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border: 1px solid hsl(var(--primary) / 0.06);
+    box-shadow:
+      inset 1px 1px 2px 0 hsl(0 0% 100% / 0.03),
+      inset -1px -1px 2px 0 hsl(0 0% 0% / 0.1),
+      0 4px 16px -4px hsl(0 0% 0% / 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-card-subtle:hover {
+    background: hsl(0 0% 100% / 0.05);
+    border-color: hsl(var(--primary) / 0.2);
+    box-shadow:
+      inset 1px 1px 3px 0 hsl(0 0% 100% / 0.05),
+      inset -1px -1px 3px 0 hsl(0 0% 0% / 0.08),
+      0 8px 24px -6px hsl(0 0% 0% / 0.4),
+      0 0 15px hsl(var(--primary) / 0.06);
+    transform: translateY(-3px);
+  }
+
+  /* ═══ NEUMORPHIC BUTTON — pressed/raised states ═══ */
+  .btn-neuro {
+    background: linear-gradient(145deg, hsl(var(--card)), hsl(var(--muted)));
+    border: 1px solid hsl(var(--primary) / 0.15);
+    box-shadow:
+      4px 4px 10px hsl(0 0% 0% / 0.4),
+      -2px -2px 8px hsl(0 0% 100% / 0.03),
+      inset 0 1px 0 hsl(0 0% 100% / 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: hsl(var(--foreground));
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+
+  .btn-neuro:hover {
+    box-shadow:
+      6px 6px 14px hsl(0 0% 0% / 0.5),
+      -3px -3px 10px hsl(0 0% 100% / 0.04),
+      inset 0 1px 0 hsl(var(--primary) / 0.08);
+    border-color: hsl(var(--primary) / 0.3);
+    transform: translateY(-2px);
+  }
+
+  .btn-neuro:active {
+    box-shadow:
+      inset 3px 3px 8px hsl(0 0% 0% / 0.4),
+      inset -2px -2px 6px hsl(0 0% 100% / 0.02);
+    transform: translateY(0);
+  }
+
+  /* ═══ FOCUS RING — accessible keyboard navigation ═══ */
+  .focus-gold:focus-visible {
+    outline: 2px solid hsl(var(--primary) / 0.6);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15);
+  }
+
+  /* === DOURADO METÁLICO ESCOVADO #D4AF37 === */
+  .bg-gold-metallic {
+    background: 
+      /* Textura de linhas verticais (efeito escovado) */
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        hsl(46 65% 52% / 0.03) 1px,
+        transparent 2px,
+        hsl(46 65% 52% / 0.05) 3px
+      ),
+      /* Reflexos de luz verticais */
+      linear-gradient(
+        90deg,
+        hsl(40 70% 35%) 0%,
+        hsl(44 65% 45%) 8%,
+        hsl(46 65% 52%) 15%,
+        hsl(48 70% 62%) 25%,
+        hsl(50 75% 72%) 35%,
+        hsl(52 80% 82%) 45%,
+        hsl(54 85% 88%) 50%,
+        hsl(52 80% 82%) 55%,
+        hsl(50 75% 72%) 65%,
+        hsl(48 70% 62%) 75%,
+        hsl(46 65% 52%) 85%,
+        hsl(44 65% 45%) 92%,
+        hsl(40 70% 35%) 100%
+      );
+    box-shadow: 
+      inset 0 1px 3px hsl(54 90% 90% / 0.6),
+      inset 0 -1px 3px hsl(38 70% 25% / 0.4),
+      0 2px 10px hsl(46 65% 52% / 0.3);
+    position: relative;
+  }
+
+  .bg-gold-metallic::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      /* Micro textura de metal escovado */
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        hsl(54 100% 95% / 0.1) 1px,
+        transparent 2px
+      );
+    pointer-events: none;
+  }
+
+  /* Texto Dourado Metálico #D4AF37 */
+  .text-gold-shine {
+    background: linear-gradient(
+      90deg,
+      hsl(42 70% 40%) 0%,
+      hsl(46 65% 52%) 20%,
+      hsl(50 75% 70%) 40%,
+      hsl(54 85% 85%) 50%,
+      hsl(50 75% 70%) 60%,
+      hsl(46 65% 52%) 80%,
+      hsl(42 70% 40%) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 1px 2px hsl(40 70% 30% / 0.5));
+  }
+
+  /* Botão com textura gradiente personalizada */
+  .btn-gold {
+    position: relative;
+    overflow: hidden;
+    background: 
+      linear-gradient(
+        90deg,
+        hsl(20 80% 45%) 0%,
+        hsl(30 85% 55%) 15%,
+        hsl(40 90% 65%) 30%,
+        hsl(45 85% 60%) 45%,
+        hsl(200 70% 55%) 65%,
+        hsl(210 80% 60%) 80%,
+        hsl(220 70% 45%) 100%
+      );
+    color: hsl(0 0% 100%);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1px solid hsl(30 60% 50% / 0.5);
+    box-shadow: 
+      inset 0 1px 2px hsl(0 0% 100% / 0.3),
+      inset 0 -1px 2px hsl(220 70% 20% / 0.3),
+      0 2px 8px hsl(220 60% 30% / 0.4),
+      0 4px 16px hsl(20 60% 30% / 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    text-shadow: 0 1px 2px hsl(0 0% 0% / 0.3);
+    background-size: 200% 100%;
+    animation: btnGoldShift 6s ease-in-out infinite;
+  }
+
+  @keyframes btnGoldShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .btn-gold::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(54 100% 95% / 0.4) 40%,
+      hsl(54 100% 98% / 0.7) 50%,
+      hsl(54 100% 95% / 0.4) 60%,
+      transparent 100%
+    );
+    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  .btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      inset 0 1px 3px hsl(0 0% 100% / 0.4),
+      inset 0 -1px 2px hsl(220 70% 20% / 0.2),
+      0 4px 12px hsl(220 60% 40% / 0.5),
+      0 8px 24px hsl(20 60% 35% / 0.4);
+  }
+
+  .btn-gold:hover::before {
+    left: 140%;
+  }
+
+  /* Botão Outline Elegante #D4AF37 */
+  .btn-outline-gold {
+    background: transparent;
+    color: hsl(46 65% 52%);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid hsl(46 65% 52% / 0.6);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-outline-gold::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      hsl(46 65% 52% / 0.05) 0%,
+      hsl(50 70% 60% / 0.1) 50%,
+      hsl(46 65% 52% / 0.05) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .btn-outline-gold:hover {
+    border-color: hsl(46 65% 52%);
+    color: hsl(50 75% 65%);
+    box-shadow: 0 0 15px hsl(46 65% 52% / 0.25);
+  }
+
+  .btn-outline-gold:hover::before {
+    opacity: 1;
+  }
+
+  /* Linha Dourada Metálica #D4AF37 */
+  .gold-line {
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(40 70% 35%) 10%,
+      hsl(46 65% 52%) 30%,
+      hsl(52 80% 75%) 50%,
+      hsl(46 65% 52%) 70%,
+      hsl(40 70% 35%) 90%,
+      transparent 100%
+    );
+    box-shadow: 0 0 6px hsl(46 65% 52% / 0.4);
+  }
+
+  /* Sombras com Glow Dourado */
+  .shadow-gold {
+    box-shadow: 
+      0 0 15px hsl(50 90% 55% / 0.3),
+      0 4px 25px hsl(45 85% 45% / 0.3),
+      0 10px 50px hsl(38 75% 35% / 0.25);
+  }
+
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
+  }
+
+  /* Glow Pulse Animation */
+  .glow-pulse {
+    animation: glowPulse 2.5s ease-in-out infinite;
+  }
+
+  /* === PARALLAX AVANÇADO === */
+  .parallax-container {
+    perspective: 1000px;
+    overflow: hidden;
+  }
+
+  .parallax-bg {
+    transform: translateZ(-2px) scale(1.5);
+    will-change: transform;
+  }
+
+  .parallax-element {
+    will-change: transform;
+    transition: transform 0.1s linear;
+  }
+
+  .parallax-slow {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  .parallax-float {
+    animation: floatParallax 8s ease-in-out infinite;
+  }
+
+  .parallax-float-delayed {
+    animation: floatParallax 8s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+
+  .parallax-rotate {
+    animation: rotateParallax 20s linear infinite;
+  }
+
+  /* === ANIMAÇÕES SLIDE AVANÇADAS === */
+  .animate-fade-in {
+    animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-slide-left {
+    animation: slideLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-slide-right {
+    animation: slideRight 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Delays para stagger effect */
+  .delay-100 { animation-delay: 0.1s; opacity: 0; }
+  .delay-200 { animation-delay: 0.2s; opacity: 0; }
+  .delay-300 { animation-delay: 0.3s; opacity: 0; }
+  .delay-400 { animation-delay: 0.4s; opacity: 0; }
+  .delay-500 { animation-delay: 0.5s; opacity: 0; }
+  .delay-600 { animation-delay: 0.6s; opacity: 0; }
+  .delay-700 { animation-delay: 0.7s; opacity: 0; }
+
+  /* Glassmorphism sutil */
+  .glass {
+    background: hsl(20 25% 10% / 0.88);
+    backdrop-filter: blur(28px) saturate(1.2);
+    -webkit-backdrop-filter: blur(28px) saturate(1.2);
+    box-shadow: 
+      0 1px 0 0 hsl(var(--primary) / 0.06),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.03);
+  }
+
+  /* ─── Standardized Interactive States ─── */
+  /* Hover Effects */
+  .hover-lift {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 
+      0 20px 60px hsl(0 0% 0% / 0.4),
+      0 8px 25px hsl(45 70% 40% / 0.15);
+  }
+
+  /* Disabled state — consistent across all interactive elements */
+  .btn-gold:disabled,
+  .btn-outline-gold:disabled,
+  .btn-neuro:disabled,
+  button:disabled,
+  a[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* Hover com brilho dourado intenso */
+  .hover-gold-glow {
+    transition: all 0.4s ease;
+  }
+
+  .hover-gold-glow:hover {
+    box-shadow: 
+      0 0 20px hsl(50 90% 55% / 0.3),
+      0 0 40px hsl(48 85% 50% / 0.15),
+      inset 0 0 20px hsl(var(--primary) / 0.03);
+    border-color: hsl(50 80% 55% / 0.6);
+  }
+
+  /* Icon Style System — acabamento dourado premium global */
+  .lucide {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter:
+      drop-shadow(0 0 3px hsl(var(--gold-light) / 0.35))
+      drop-shadow(0 1px 2px hsl(var(--gold-dark) / 0.45));
+    transition: filter 0.3s ease, transform 0.3s ease;
+  }
+
+  .lucide:hover {
+    filter:
+      drop-shadow(0 0 8px hsl(var(--gold-light) / 0.55))
+      drop-shadow(0 2px 4px hsl(var(--gold-dark) / 0.55));
+  }
+
+  .icon-gold-glow {
+    filter:
+      drop-shadow(0 0 6px hsl(var(--gold-light) / 0.55))
+      drop-shadow(0 2px 4px hsl(var(--gold-dark) / 0.5));
+    transition: filter 0.3s ease, transform 0.3s ease;
+  }
+
+  .icon-gold-glow:hover {
+    filter:
+      drop-shadow(0 0 12px hsl(var(--gold-light) / 0.8))
+      drop-shadow(0 2px 6px hsl(var(--gold-dark) / 0.65));
+    transform: translateY(-1px);
+  }
+
+  /* === KEYFRAMES === */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes fadeInUp {
+    from { 
+      opacity: 0;
+      transform: translateY(60px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideLeft {
+    from { 
+      opacity: 0;
+      transform: translateX(80px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideRight {
+    from { 
+      opacity: 0;
+      transform: translateX(-80px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideUp {
+    from { 
+      opacity: 0;
+      transform: translateY(60px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from { 
+      opacity: 0;
+      transform: scale(0.85);
+    }
+    to { 
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { 
+      box-shadow: 
+        0 0 15px hsl(50 90% 55% / 0.4),
+        0 0 30px hsl(48 85% 50% / 0.2);
+    }
+    50% { 
+      box-shadow: 
+        0 0 25px hsl(50 100% 60% / 0.6),
+        0 0 50px hsl(48 90% 55% / 0.35);
+    }
+  }
+
+  @keyframes floatParallax {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-20px) rotate(2deg); }
+    50% { transform: translateY(-10px) rotate(0deg); }
+    75% { transform: translateY(-25px) rotate(-2deg); }
+  }
+
+  @keyframes rotateParallax {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Hero light beams — cinematic vertical rays */
+  @keyframes heroBeamDrift {
+    0%, 100% { opacity: 0.3; transform: translateX(0) scaleY(1); }
+    50% { opacity: 0.7; transform: translateX(10px) scaleY(1.1); }
+  }
+
+  .hero-beam {
+    animation: heroBeamDrift 6s ease-in-out infinite;
+    will-change: opacity, transform;
+  }
+
+  /* Smooth scroll-down bounce */
+  @keyframes heroScrollBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+
+  /* Shimmer effect para elementos */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      110deg,
+      transparent 0%,
+      hsl(52 100% 92% / 0.25) 35%,
+      hsl(55 100% 98% / 0.5) 50%,
+      hsl(52 100% 92% / 0.25) 65%,
+      transparent 100%
+    );
+    animation: shimmer 2.5s infinite;
+    pointer-events: none;
+  }
+
+  /* AI Bubble Menu inline processing — scanner effect */
+  .ai-bubble-processing mark[data-color="#c4b5fd"] {
+    background-color: hsl(263 70% 85% / 0.5) !important;
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+    animation: ai-bubble-pulse 1.2s ease-in-out infinite;
+  }
+
+  .ai-bubble-processing mark[data-color="#c4b5fd"]::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(210 80% 70% / 0.3) 20%,
+      hsl(210 90% 85% / 0.7) 50%,
+      hsl(210 80% 70% / 0.3) 80%,
+      transparent 100%
+    );
+    animation: ai-scanner-sweep 1.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes ai-bubble-pulse {
+    0%, 100% { background-color: hsl(263 70% 85% / 0.35); }
+    50% { background-color: hsl(263 70% 80% / 0.55); }
+  }
+
+  @keyframes ai-scanner-sweep {
+    0% { left: -60%; }
+    100% { left: 110%; }
+  }
+
+
+  .dashboard-card {
+    background: linear-gradient(
+      145deg,
+      hsl(20 25% 16%) 0%,
+      hsl(20 22% 14%) 100%
+    );
+    border: 1px solid hsl(25 20% 22%);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dashboard-card:hover {
+    border-color: hsl(45 70% 50% / 0.4);
+    box-shadow: 
+      0 0 20px hsl(45 80% 50% / 0.1),
+      0 10px 40px hsl(0 0% 0% / 0.3);
+    transform: translateY(-4px);
+  }
+
+  .dashboard-stat {
+    background: linear-gradient(
+      135deg,
+      hsl(20 28% 13%) 0%,
+      hsl(20 25% 11%) 100%
+    );
+  }
+}
+
+/* ─── TipTap Editor Styles ─── */
+.ProseMirror {
+  color: hsl(var(--foreground));
+}
+.ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
+  /* font-family inherited from body or inline TipTap style */
+  color: hsl(var(--foreground));
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  text-indent: 0;
+  text-align: center;
+}
+.ProseMirror h1 { font-size: 1.5em; }
+.ProseMirror h2 { font-size: 1.25em; }
+.ProseMirror h3 { font-size: 1.1em; }
+.ProseMirror p {
+  color: hsl(var(--foreground) / 0.9);
+  text-indent: 12.5mm;
+  text-align: justify;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+}
+/* Remove indent inside lists */
+.ProseMirror li p,
+.ProseMirror li {
+  text-indent: 0;
+}
+/* Respect toolbar alignment overrides (TipTap may output with or without space after colon) */
+.ProseMirror p[style*="text-align: left"],
+.ProseMirror p[style*="text-align:left"] { text-align: left !important; }
+.ProseMirror p[style*="text-align: center"],
+.ProseMirror p[style*="text-align:center"] { text-align: center !important; text-indent: 0 !important; }
+.ProseMirror p[style*="text-align: right"],
+.ProseMirror p[style*="text-align:right"] { text-align: right !important; text-indent: 0 !important; }
+.ProseMirror strong {
+  color: #1a1a1a;
+}
+.ProseMirror li {
+  color: hsl(var(--foreground) / 0.9);
+}
+.ProseMirror ul, .ProseMirror ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+/* ─── TipTap Image Resize ─── */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.5rem auto;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+.ProseMirror [data-image-resizer] {
+  display: inline-block;
+  position: relative;
+}
+
+.ProseMirror [data-image-resizer] img {
+  margin: 0;
+}
+
+/* ─── Search & Replace Highlights ─── */
+.search-result {
+  background-color: hsl(46 100% 70% / 0.3);
+  border-radius: 2px;
+}
+.search-result-current {
+  background-color: hsl(46 100% 50% / 0.5);
+  outline: 2px solid hsl(var(--primary));
+  border-radius: 2px;
+}
+
+/* ─── Editor Fullscreen: hide ALL dashboard chrome ─── */
+body.editor-fullscreen-active [data-dashboard-chrome] {
+  display: none !important;
+}
+body.editor-fullscreen-active [data-dashboard-main] {
+  margin-left: 0 !important;
+}
+body.editor-fullscreen-active [data-dashboard-main] > main {
+  padding: 0 !important;
+}
+body.editor-fullscreen-active {
+  overflow: hidden;
+}
+
+/* ─── Document Margin CSS Custom Properties (Single Source of Truth) ─── */
+/* These are consumed by:
+   1. Editor canvas (.editor-canvas-a4 .ProseMirror padding)
+   2. PDF export (buildPrintHTML @page margins)
+   3. DOCX export (docx-generator body margins)
+   4. Preview (generatePrintPreviewURL)
+   5. Print media (@media print block-editor.css)
+   6. Page container (.page-container)
+   7. Stamp positioning (.document-stamp)
+*/
+:root {
+  /* Page dimensions */
+  --page-width: 210mm;
+  --page-height: 297mm;
+  /* Margins in mm (for @page, print, DOCX) */
+  --m-top: 25mm;
+  --m-bottom: 20mm;
+  --m-left: 20mm;
+  --m-right: 20mm;
+  /* Aliases kept for backward compat */
+  --doc-margin-top: var(--m-top);
+  --doc-margin-bottom: var(--m-bottom);
+  --doc-margin-left: var(--m-left);
+  --doc-margin-right: var(--m-right);
+  /* Pixel equivalents at 96dpi (for editor padding) */
+  --doc-margin-left-px: 76px;   /* 20mm */
+  --doc-margin-right-px: 76px;  /* 20mm */
+  --doc-margin-top-px: 95px;    /* 25mm */
+  --doc-margin-bottom-px: 76px; /* 20mm */
+  --doc-page-width: var(--page-width);
+  --doc-page-height: var(--page-height);
+}
+
+/* ─── Page Container — ensures consistent dimensions across editor/preview/export ─── */
+.page-container {
+  width: var(--page-width);
+  height: var(--page-height);
+  padding: var(--m-top) var(--m-right) var(--m-bottom) var(--m-left);
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+/* ─── Document Stamp — absolute positioning with z-index layering ─── */
+.document-stamp {
+  position: absolute;
+  top: 30mm;
+  right: 20mm;
+  z-index: 100;
+  pointer-events: none;
+  width: 40mm; /* Fixed size to preserve resolution */
+}
+.document-stamp img {
+  width: 100%;
+  height: auto;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* ─── Document Page visual indicators (editor only) ─── */
+.document-page {
+  border: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+  background-color: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  position: relative;
+}
+
+/* ─── Visible margin guides for editing assistance ─── */
+.editable-area {
+  position: relative;
+}
+.editable-area::before {
+  content: '';
+  position: absolute;
+  top: var(--m-top);
+  left: var(--m-left);
+  right: var(--m-right);
+  bottom: var(--m-bottom);
+  border: 1px dashed rgba(0,0,0,0.05);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── A4 Canvas — visual page with branded frame support ─── */
+.editor-canvas-a4 {
+  width: 794px;
+  min-height: var(--editor-page-height, 934px);
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px hsl(0 0% 0% / 0.06),
+    0 2px 6px hsl(0 0% 0% / 0.08),
+    0 8px 24px hsl(0 0% 0% / 0.12);
+  margin: 0 auto;
+  position: relative;
+  overflow: visible;
+}
+
+@media (max-width: 860px) {
+  .editor-canvas-a4 {
+    /* Keep A4 width — parent scrolls horizontally */
+    width: 794px;
+    min-width: 794px;
+    box-shadow:
+      0 0 0 1px hsl(0 0% 0% / 0.06),
+      0 1px 4px hsl(0 0% 0% / 0.06);
+  }
+}
+
+.editor-canvas-a4 .ProseMirror {
+  color: #1a1a1a;
+  min-height: var(--editor-page-height, 934px); /* writable area only — matches PDF content zone */
+  font-family: 'Times New Roman', 'Times', serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  text-align: justify;
+  /* Margins use CSS custom properties — Single Source of Truth */
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: var(--doc-margin-left-px, 76px);    /* 20mm left margin */
+  padding-right: var(--doc-margin-right-px, 76px);   /* 20mm right margin */
+  /* Ensure text wraps within margins */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 794px;
+  /* Force word breaking for long strings without spaces */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  /* Content layer — below overlay layers (shield z-index 10, header/footer z-index 11, guides z-index 12) */
+  position: relative;
+  z-index: 1;
+}
+
+.editor-canvas-a4 .ProseMirror p {
+  color: #1a1a1a;
+  text-indent: 12.5mm;
+  text-align: justify;
+  line-height: 1.5;
+  margin: 0;
+  margin-bottom: 0.5mm;
+  padding: 0;
+}
+
+/* Remove indent for centered/right paragraphs */
+.editor-canvas-a4 .ProseMirror p[style*="text-align: center"],
+.editor-canvas-a4 .ProseMirror p[style*="text-align:center"] {
+  text-indent: 0 !important;
+}
+.editor-canvas-a4 .ProseMirror p[style*="text-align: right"],
+.editor-canvas-a4 .ProseMirror p[style*="text-align:right"] {
+  text-indent: 0 !important;
+}
+
+/* Remove indent for first paragraph after heading */
+.editor-canvas-a4 .ProseMirror h1 + p,
+.editor-canvas-a4 .ProseMirror h2 + p,
+.editor-canvas-a4 .ProseMirror h3 + p {
+  text-indent: 0;
+}
+
+/* ABNT headings: centered, bold, uppercase for h1 */
+.editor-canvas-a4 .ProseMirror h1,
+.editor-canvas-a4 .ProseMirror h2,
+.editor-canvas-a4 .ProseMirror h3 {
+  color: #1a1a1a;
+  /* font-family inherited from body or inline TipTap style */
+  font-weight: 700;
+  text-align: center;
+  text-indent: 0;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.5;
+}
+
+.editor-canvas-a4 .ProseMirror h1 {
+  font-size: 14pt;
+  text-transform: uppercase;
+}
+
+.editor-canvas-a4 .ProseMirror h2 {
+  font-size: 13pt;
+}
+
+.editor-canvas-a4 .ProseMirror h3 {
+  font-size: 12pt;
+}
+
+/* ABNT blockquote/citation: 4cm indent, 10pt, single spacing */
+.editor-canvas-a4 .ProseMirror blockquote {
+  margin-left: 4cm;
+  margin-right: 0;
+  padding: 0;
+  border-left: none;
+  font-size: 10pt;
+  line-height: 1.0;
+  text-indent: 0;
+  color: #1a1a1a;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: normal;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.editor-canvas-a4 .ProseMirror blockquote p {
+  text-indent: 0;
+  font-size: 10pt;
+  line-height: 1.0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.editor-canvas-a4 .ProseMirror strong {
+  color: #1a1a1a;
+}
+
+.editor-canvas-a4 .ProseMirror li {
+  color: #1a1a1a;
+}
+
+.editor-canvas-a4 .ProseMirror li p {
+  text-indent: 0;
+}
+
+/* ─── Code Blocks ─── */
+.editor-canvas-a4 .ProseMirror pre {
+  background: #f8f9fa;
+  border: 1px solid #e2e4e8;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 0.5em 0;
+  overflow-x: auto;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10pt;
+  line-height: 1.5;
+  color: #1a1a1a;
+  text-indent: 0;
+  text-align: left;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.editor-canvas-a4 .ProseMirror pre code {
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+
+.page-break-spacer {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden !important;
+}
+
+/* Widget-based spacer decorations — must take space in DOM */
+.page-break-spacer-widget {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: none;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+/* ─── Page Break Zone Labels ─── */
+.page-break-zone-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: hsl(var(--muted-foreground) / 0.6);
+  background: hsl(var(--background) / 0.7);
+  padding: 1px 10px;
+  border-radius: 3px;
+  white-space: nowrap;
+  line-height: 1;
+  backdrop-filter: blur(2px);
+}
+
+.dark .page-break-zone-label {
+  background: hsl(var(--background) / 0.8);
+}
+
+/* ─── Block Handle ─── */
+.editor-canvas-a4 .block-handle {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.editor-canvas-a4:hover .block-handle {
+  opacity: 1;
+}
+
+/* ─── Table styles for editability ─── */
+.editor-canvas-a4 .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  table-layout: fixed;
+  overflow: visible;
+}
+
+.editor-canvas-a4 .ProseMirror td,
+.editor-canvas-a4 .ProseMirror th {
+  border: 1px solid #999;
+  padding: 6px 8px;
+  vertical-align: top;
+  min-width: 60px;
+  position: relative;
+  color: #1a1a1a;
+  text-indent: 0;
+  text-align: left;
+}
+
+.editor-canvas-a4 .ProseMirror td p,
+.editor-canvas-a4 .ProseMirror th p {
+  text-indent: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.editor-canvas-a4 .ProseMirror th {
+  background-color: #f3f4f6;
+  font-weight: 700;
+}
+
+.editor-canvas-a4 .ProseMirror .selectedCell {
+  background-color: hsl(210 100% 95%);
+}
+
+.editor-canvas-a4 .ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: hsl(210 100% 50%);
+  pointer-events: auto;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.editor-canvas-a4 .ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+/* ─── Slash Command Menu animation ─── */
+.slash-command-menu {
+  animation: slash-menu-in 0.12s ease-out;
+}
+
+@keyframes slash-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ─── Drag over indicator ─── */
+.ProseMirror-selectednode {
+  outline: 2px solid hsl(var(--primary)) !important;
+  border-radius: 2px;
+}
+
+/* ─── Suggestion Marks (IA) — NO visual impact, preserves all user formatting ─── */
+/* IMPORTANT: Do NOT use "all: unset" here — it destroys color, highlight, bold, etc. */
+span[data-suggestion-id] {
+  /* Purely structural wrapper — zero visual impact */
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  text-decoration: none !important;
+  /* Do NOT reset color, font-weight, font-style, or display — let user formatting through */
+}
+/* Legacy class cleanup */
+.suggestion-mark-wrapper,
+.suggestion-highlight,
+.suggestion-highlight.suggestion-insert,
+.suggestion-highlight.suggestion-delete {
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  text-decoration: none !important;
+}
+
+/* ─── Editor-specific wider scrollbars ─── */
+.editor-scrollbar-visible ::-webkit-scrollbar,
+.editor-scrollbar-visible::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.editor-scrollbar-visible ::-webkit-scrollbar-thumb,
+.editor-scrollbar-visible::-webkit-scrollbar-thumb {
+  background: hsl(25 10% 28%);
+  border-radius: 2px;
+}
+
+.editor-scrollbar-visible ::-webkit-scrollbar-thumb:hover,
+.editor-scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: hsl(46 65% 40%);
+}
+
+/* ─── Fade-scroll indicator for horizontal tab strips ─── */
+.fade-scroll-x {
+  position: relative;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.fade-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+.fade-scroll-container {
+  position: relative;
+}
+
+.fade-scroll-container::before,
+.fade-scroll-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.fade-scroll-container::before {
+  left: 0;
+  background: linear-gradient(to right, hsl(var(--card)), transparent);
+}
+
+.fade-scroll-container::after {
+  right: 0;
+  background: linear-gradient(to left, hsl(var(--card)), transparent);
+}
+
+.fade-scroll-container.can-scroll-left::before {
+  opacity: 1;
+}
+
+.fade-scroll-container.can-scroll-right::after {
+  opacity: 1;
+}
+
+/* ─── Collaboration Cursors ─── */
+.collaboration-cursor__caret {
+  border-left: 2px solid currentColor;
+  border-right: none;
+  margin-left: -1px;
+  margin-right: -1px;
+  pointer-events: none;
+  position: relative;
+  word-break: normal;
+  animation: cursor-blink 1s steps(1) infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.collaboration-cursor__label {
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 1px 4px;
+  border-radius: 3px 3px 3px 0;
+  color: #fff;
+  position: absolute;
+  top: -1.4em;
+  left: -1px;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+/* ─── Enhanced Editor Visual Hierarchy ─── */
+
+/* Focus ring for a11y keyboard navigation */
+.editor-canvas-a4:focus-within {
+  outline: 2px solid hsl(var(--ring) / 0.3);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Smooth content transitions */
+.editor-canvas-a4 .ProseMirror > * {
+  transition: background-color 0.15s ease;
+}
+
+/* Improved heading anchors for navigation */
+.editor-canvas-a4 .ProseMirror h1,
+.editor-canvas-a4 .ProseMirror h2,
+.editor-canvas-a4 .ProseMirror h3 {
+  scroll-margin-top: 2rem;
+  position: relative;
+}
+
+/* Horizontal rule styling */
+.editor-canvas-a4 .ProseMirror hr {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 1.5em 0;
+}
+
+/* Improved code block a11y */
+.editor-canvas-a4 .ProseMirror pre {
+  tab-size: 2;
+  -moz-tab-size: 2;
+  overflow-x: auto;
+}
+
+/* Read-only overlay when locked */
+.editor-locked-overlay {
+  position: relative;
+}
+
+.editor-locked-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: hsl(var(--muted) / 0.05);
+  pointer-events: none;
+  z-index: 1;
+  border-radius: 4px;
+}
+
+/* ─── Document Outline Navigation anchors ─── */
+.doc-outline-link {
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.doc-outline-link:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.doc-outline-link:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 1px;
+}
+
+/* ─── Presence avatar animation ─── */
+@keyframes presence-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.presence-avatar-enter {
+  animation: presence-enter 0.2s ease-out;
 }

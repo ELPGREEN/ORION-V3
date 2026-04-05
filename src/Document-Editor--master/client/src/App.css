@@ -1,0 +1,163 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #f0f0f0;
+  font-family: Arial, sans-serif;
+}
+
+.App {
+  min-height: 100vh;
+  padding-bottom: 100px;
+}
+
+.controls {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 15px 20px;
+  border-bottom: 2px solid #333;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.controls button {
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.controls button:hover {
+  background: #0056b3;
+}
+
+.controls input {
+  padding: 10px;
+  font-size: 14px;
+  width: 300px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.doc-id {
+  font-size: 12px;
+  color: #666;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.page-count {
+  font-size: 12px;
+  color: #666;
+  margin-left: auto;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.document-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.page {
+  background: white;
+  border: 1px solid #d0d0d0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.page-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.page-number {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #999;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Ensure contenteditable elements look clean */
+[contenteditable] {
+  cursor: text;
+}
+
+[contenteditable]:focus {
+  outline: none;
+}
+
+/* [contenteditable]:empty:before {
+  content: 'Start typing...';
+  color: #ccc;
+} */
+
+.page-content [contenteditable] {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  tab-size: 4;
+}
+
+.page {
+  background: white;
+  border: 1px solid #d0d0d0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden; /* CRITICAL: Clips content at page boundaries */
+}
+
+.page-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  direction: ltr;
+  text-align: left;
+  overflow: hidden; /* CRITICAL: Ensures no overflow */
+}
+
+.hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 10px;
+}
+
+kbd {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 11px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.editable-block::selection {
+  background: #b3d7ff;
+}
+
+.editable-block::-moz-selection {
+  background: #b3d7ff;
+}

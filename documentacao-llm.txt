@@ -1,0 +1,1312 @@
+================================================================================
+  DOCUMENTAÇÃO COMPLETA — PLATAFORMA JURÍDICA IA (SaaS)
+  
+  TITULAR / CRIADOR:
+    Nome: Ericson Rodrigues Piccoli
+    CPF: 014.343.380-61
+
+  EMPRESA DESENVOLVEDORA:
+    Razão Social: Elp Green Technology
+    CNPJ: 42.501.190/0001-70
+    Data de Fundação: 28/06/2021
+    E-mail: elpenergia@gmail.com
+    Telefone: +39 350 102 1359
+
+  Última atualização: 01/04/2026
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. VISÃO GERAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Plataforma SaaS jurídica com inteligência artificial avançada, desenvolvida
+para escritórios de advocacia e profissionais do Direito. Combina geração
+de documentos por IA, pesquisa jurisprudencial unificada, rede neural
+auto-evolutiva, visão neural com reconhecimento facial, CRM de clientes,
+gestão processual, assinatura digital, pagamentos integrados, voz humana
+(ElevenLabs TTS) e colaboração em tempo real.
+
+Stack tecnológico:
+  • Frontend: React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui
+  • Backend: Supabase (PostgreSQL + Auth + Storage + Edge Functions + Realtime)
+  • IA Multi-provider: OpenAI, Gemini, DeepSeek, Perplexity, Groq, Mistral, Anthropic
+  • Visão Neural: Gemini Vision + Groq Vision + Mistral Vision (multi-provider)
+  • TTS (Text-to-Speech): ElevenLabs API (voz humana profissional masculina)
+  • Reconhecimento Facial: FaceDetector API + Gemini Vision (anti-spoofing)
+  • Pagamentos: Stripe (Checkout, Connect, Webhooks, Faturas)
+  • Assinatura Digital: ClickSign (webhooks, status realtime)
+  • Integrações Google: Drive, Docs, Sheets, Gmail, Calendar, Contacts
+  • Editor de Texto: TipTap (rich text, colaboração, extensões)
+  • Visualização: Recharts, React Flow (@xyflow/react), Three.js
+  • Colaboração: Yjs + y-webrtc + y-indexeddb
+  • i18n: Suporte multilíngue (PT-BR, EN, ES)
+  • IoT / MQTT: HiveMQ Cloud (WebSocket TLS porta 8884)
+  • Bluetooth BLE: Web Bluetooth API (GATT services)
+  • Mobile PWA: vite-plugin-pwa (instalável, offline, sensores web)
+  • Mobile Nativo: Capacitor (iOS/Android com acesso completo a sensores)
+  • Sensores Nativos: Câmera, GPS, Acelerômetro, Háptica, Bateria, Rede
+  • Assistente de Voz: Orion (Web Speech API + comandos IoT/BLE/sensores)
+  • Raciocínio Neural: Motor de intenção v3 (emocional + contextual + continuidade)
+  • Neurolinguística: Limpeza de markdown/código para TTS, entonação com ; e quebra de cláusulas
+  • Documentos Internacionais: 15+ tipos (LOI, MOU, NDA, JV) com templates bilíngues EN/PT
+  • AML Screening: Triagem anti-lavagem com múltiplas listas e jurisdições internacionais
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. ARQUITETURA DE PÁGINAS (FRONTEND)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2.1 PÁGINAS PÚBLICAS (LANDING / SITE INSTITUCIONAL)
+────────────────────────────────────────────────────
+  • Index.tsx — Landing page com Hero, ImpactStats, WhyOrionSection (6 blocos persuasivos),
+    BenefitsSection, SystemArchitecture, TechStack, ComparisonSection (12 itens), CtaSection com prova social
+  • Sobre.tsx — Página "Sobre nós"
+  • Servicos.tsx — Serviços oferecidos pelo escritório
+  • AreasAtuacao.tsx — Áreas de atuação jurídica
+  • Diferencial.tsx — Diferenciais competitivos
+  • Depoimentos.tsx — Avaliações/depoimentos de clientes
+  • Publicacoes.tsx — Blog / publicações jurídicas
+  • PublicacaoDetalhe.tsx — Detalhe de publicação individual
+  • Contato.tsx — Formulário de contato
+  • Consulta.tsx — Agendamento de consulta pública
+  • ConsultaIA.tsx — Consulta com IA para visitantes
+  • FerramentasIA.tsx — Showcase de ferramentas de IA
+  • Plataforma.tsx — Apresentação da plataforma
+  • CadastroCliente.tsx — Cadastro de novos clientes
+  • ProBono.tsx — Solicitação de atendimento pro bono
+  • LGPD.tsx — Política de proteção de dados (LGPD)
+  • Privacidade.tsx — Política de privacidade
+  • Termos.tsx — Termos de uso
+  • Associado.tsx — Página para associados
+  • NovaPagina.tsx — Template de nova página
+
+2.2 AUTENTICAÇÃO
+────────────────
+  • Auth.tsx — Login / Registro (Supabase Auth)
+  • AuthCallback.tsx — Callback OAuth (Google, etc.)
+  • EsqueciSenha.tsx — Recuperação de senha
+  • FaceAuthEnroll.tsx — Cadastro de reconhecimento facial (câmera + FaceDetector API)
+  • FaceAuthLogin.tsx — Login por reconhecimento facial
+
+2.3 DOCUMENTAÇÃO INTERNA
+────────────────────────
+  • DocumentacaoRedeNeural.tsx — Documentação técnica da rede neural
+
+2.4 DASHBOARD — PAINEL ADMINISTRATIVO (ADVOGADO)
+─────────────────────────────────────────────────
+  • DashboardHome.tsx — Home com métricas, widgets, resumo
+  • DashboardRouter.tsx — Roteamento do dashboard
+  • ConfiguracoesRouter.tsx — Sub-rotas de configurações
+
+  GESTÃO DE DOCUMENTOS:
+  • GerarDocumento.tsx — Geração de documentos por IA (pipeline 9 agentes)
+  • MeusDocumentos.tsx — Lista de documentos salvos
+  • BlockEditor.tsx — Editor de blocos avançado
+  • DocumentEditor.tsx (component) — Editor rich text com TipTap
+
+  PESQUISA JURÍDICA:
+  • PesquisaJurisprudencial.tsx — Pesquisa em tribunais (STF, STJ, DataJud)
+  • PesquisaUnificada.tsx — Pesquisa unificada multi-fonte
+  • BibliotecaUnivates.tsx — Acesso à biblioteca Univates
+  • CatalogoDadosSenado.tsx — Catálogo de dados abertos do Senado
+  • CNJEstatisticas.tsx — Estatísticas do CNJ
+
+  CRM / CLIENTES:
+  • CRMClientes.tsx — CRM completo de clientes
+  • ClientesPage.tsx — Gestão de clientes
+  • ContatosPage.tsx — Gestão de contatos
+  • ClienteDashboard.tsx — Dashboard do cliente (portal)
+  • MeusProcessosCliente.tsx — Processos do cliente (portal)
+
+  PROCESSOS:
+  • ProcessosPage.tsx — Gestão de processos judiciais
+
+  COMUNICAÇÃO:
+  • ChatIAAdvogado.tsx — Chat com IA (modo advogado)
+  • ChatIARouter.tsx — Roteamento de chats IA
+  • ChatJuridico.tsx — Chat jurídico contextual
+  • ChatHumano.tsx — Chat humano advogado-cliente
+  • NotificacoesPage.tsx — Central de notificações
+
+  INTELIGÊNCIA ARTIFICIAL:
+  • AssistenteIA.tsx — Assistente IA multifuncional
+  • MetricasIA.tsx — Métricas de uso da IA (custos, providers, performance)
+  • RedeNeuralPage.tsx — Dashboard da rede neural auto-evolutiva
+  • BloomNetwork.tsx — Rede de conhecimento visual (mind map IA)
+  • ReformulacaoJuridica.tsx — Reformulação de textos jurídicos
+  • ManualAssistente.tsx — Manual do assistente IA
+
+  FINANCEIRO:
+  • PagamentosPage.tsx — Gestão de pagamentos
+  • PagamentoSucesso.tsx — Confirmação de pagamento
+  • PagarConsulta.tsx — Pagamento de consulta (Stripe)
+  • AgendarConsulta.tsx — Agendamento de consulta com pagamento
+  • PagamentosPlaceholder.tsx — Placeholder de pagamentos
+
+  ASSINATURA DIGITAL:
+  • AssinaturaDigital.tsx — Gestão de assinaturas digitais (ClickSign)
+  • AssinaturaCliente.tsx — Assinatura do lado do cliente
+
+  FERRAMENTAS GOOGLE:
+  • FerramentasGoogle.tsx — Integração Google (Drive, Docs, Gmail, Calendar)
+
+  RECURSOS:
+  • RecursosEU.tsx — Recursos da UE
+
+  ADMINISTRAÇÃO:
+  • UsuariosPage.tsx — Gestão de usuários
+  • AvaliacoesAdmin.tsx — Moderação de avaliações
+  • PublicacoesAdmin.tsx — Gestão de publicações/blog
+  • ConfiguracoesEscritorio.tsx — Configurações do escritório
+  • PerfilAdmin.tsx — Perfil do administrador
+  • PerfilCliente.tsx — Perfil do cliente
+  • TarefasPage.tsx — Gestão de tarefas
+  • PrazosCalculadora.tsx — Calculadora de prazos processuais
+  • WebhooksPage.tsx — Monitoramento de webhooks
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. EDGE FUNCTIONS (BACKEND — 80+ FUNÇÕES)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3.1 GERAÇÃO DE DOCUMENTOS & IA
+──────────────────────────────
+  • gerar-documento — Pipeline principal de geração (multi-provider, fallback)
+  • agente-construcao — Agente de construção de texto jurídico
+  • agente-leitura — Agente de leitura e análise de documentos
+  • agente-pesquisa — Agente de pesquisa jurídica
+  • aprimorar-documento — Aprimoramento/refinamento de documentos
+  • ai-autocomplete — Autocomplete inteligente no editor
+  • ai-orchestrator — Orquestrador central de chamadas IA
+  • analyze-reference-doc — Análise de documento de referência
+  • bloom-generate — Geração de blooms (rede de conhecimento)
+  • chat-juridico — Chat jurídico com contexto
+  • detect-ai-content — Detecção de conteúdo gerado por IA
+  • editorial-orchestrator — Orquestrador editorial de conteúdo
+  • translate-text — Tradução de textos jurídicos
+  • secretaria-ia — Secretária virtual IA
+  • ocr-document — OCR de documentos (PDF, imagens)
+  • pdf-layout-analysis — Análise de layout de PDFs (HURIDOCS)
+  • generate-pdf — Geração de PDF a partir de HTML
+
+3.2 VISÃO NEURAL & RECONHECIMENTO FACIAL
+─────────────────────────────────────────
+  • neural-vision-analyze — Análise de imagem/vídeo com IA multi-provider
+    (Gemini Vision, Groq Vision, Mistral Vision)
+  • face-auth — Autenticação facial (cadastro + verificação)
+    - Cadastro: captura de referência com anti-spoofing via Gemini
+    - Login: comparação facial com embedding armazenado
+    - Proteção contra spoofing (fotos, telas, máscaras)
+  • elevenlabs-tts — Síntese de voz humana (ElevenLabs API)
+    - Voz masculina profissional (Daniel/Charlie)
+    - Streaming de áudio para resposta em tempo real
+
+3.3 PESQUISA & DADOS JURÍDICOS
+──────────────────────────────
+  • pesquisa-unificada — Pesquisa unificada multi-fonte
+  • courtlistener-search — Pesquisa no CourtListener (jurisprudência EUA)
+  • courtlistener-webhook — Webhook do CourtListener (com validação de secret)
+  • firecrawl-search — Web scraping jurídico (Firecrawl)
+  • perplexity-search — Pesquisa via Perplexity AI
+  • legislacao-federal — Consulta legislação federal brasileira
+  • oab-acessorh — Consulta OAB/AcessoRH
+  • scrape-univates — Scraping biblioteca Univates
+  • univates-biblioteca — API biblioteca Univates
+
+3.4 INGESTÃO DE DADOS (DATA PIPELINE)
+──────────────────────────────────────
+  • datajud-ingestion — Ingestão de dados do DataJud (CNJ)
+  • smart-ingest — Ingestão inteligente de PDFs grandes
+  • ingest-senado-api — API de dados do Senado
+  • ingest-senado-bulk — Ingestão em lote do Senado
+  • ingest-senado-dados — Dados abertos do Senado
+  • ingest-senado-tables — Tabelas do Senado
+  • ingest-catalogo-senado — Catálogo de dados do Senado
+  • ingest-dados-gov — Dados do governo (dados.gov.br)
+  • ingest-jurisprudencia-stf — Jurisprudência do STF
+  • ingest-stf-bigquery — STF via BigQuery
+  • ingest-sumulas-bulk — Súmulas em lote
+  • ingest-codigos-legais — Códigos legais brasileiros
+  • ingest-aury-lopes — Doutrina Aury Lopes Jr.
+  • ingest-doutrina-penal — Doutrina penal
+
+3.5 REDE NEURAL AUTO-EVOLUTIVA
+──────────────────────────────
+  • neural-search — Busca semântica com embeddings
+  • neural-auto-learn — Aprendizado automático da rede
+  • neural-evolution — Evolução de prompts e parâmetros
+  • neural-feedback-receiver — Receptor de feedback do usuário
+  • neural-pipeline-orchestrator — Orquestrador do pipeline neural
+  • neural-training — Treinamento da rede neural
+  • neural-bridge — Bridge de comunicação neural
+  • neural-child-bridge — Bridge neural filha
+  • initialize-neural-profile — Inicialização de perfil neural
+  • generate-embeddings — Geração de embeddings vetoriais
+  • auto-evolution-cron — Cron de evolução automática
+  • auto-ingestion-cron — Cron de ingestão automática
+
+3.6 FILA DE PROCESSAMENTO
+─────────────────────────
+  • queue-worker — Worker de fila (processa jobs assíncronos):
+    - document: geração de documentos
+    - datajud_ingestion: ingestão DataJud
+    - neural_learn: aprendizado neural
+    - generate_embeddings: geração de embeddings
+    - senado_ingest: ingestão dados Senado
+    - senado_neural_sync: sync completo Senado→Neural
+    - large_pdf_embed: embeddings de PDFs grandes
+
+3.7 INTEGRAÇÕES GOOGLE
+──────────────────────
+  • google-drive — Google Drive (upload, listagem, busca)
+  • google-docs — Google Docs (criação, edição, sync)
+  • google-sheets — Google Sheets (exportação de dados)
+  • google-gmail — Gmail (envio de emails)
+  • google-calendar — Google Calendar (prazos, audiências)
+  • google-contacts — Google Contacts (sync contatos)
+
+3.8 PAGAMENTOS & FINANCEIRO
+───────────────────────────
+  • create-checkout — Criação de sessão Stripe Checkout
+  • create-invoice — Criação de faturas
+  • create-refund — Processamento de reembolsos
+  • stripe-webhook — Webhook do Stripe
+  • stripe-connect-onboarding — Onboarding Stripe Connect
+  • stripe-connect-check — Verificação de conta Connect
+  • verify-payment — Verificação de pagamento
+  • list-payments — Listagem de pagamentos
+  • report-payment-to-mother — Reporte de pagamento à plataforma mãe
+
+3.9 ASSINATURA DIGITAL
+──────────────────────
+  • clicksign-signature — Envio para assinatura (ClickSign)
+  • clicksign-webhook — Webhook de status (ClickSign)
+
+3.10 COMUNICAÇÃO & NOTIFICAÇÕES
+──────────────────────────────
+  • send-email-notification — Envio de emails (templates personalizados)
+  • notify-chat-message — Notificação de mensagens de chat
+
+3.11 ADMINISTRAÇÃO
+─────────────────
+  • admin-list-users — Listagem de usuários (admin)
+  • admin-manage-user — Gestão de usuários (admin)
+  • admin-list-payments — Listagem de pagamentos (admin)
+  • create-client-profile — Criação de perfil de cliente
+  • utils-api — Utilitários de API
+
+3.12 PLATAFORMA MÃE
+───────────────────
+  • mother-api-receiver — Receptor de API da plataforma mãe
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. BANCO DE DADOS (SUPABASE / POSTGRESQL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4.1 TABELAS PRINCIPAIS (40+ tabelas)
+────────────────────────────────────
+
+  CORE:
+  • documents — Documentos jurídicos gerados
+  • document_drafts — Rascunhos de documentos
+  • document_folders — Organização em pastas
+  • document_locks — Bloqueio de edição concorrente
+  • document_style_memory — Memória de estilo por tipo de documento
+  • processos — Processos judiciais
+  • processo_documents — Documentos vinculados a processos
+  • andamentos — Andamentos processuais
+  • client_profiles — Perfis de clientes
+  • client_documents — Documentos de clientes
+  • contacts — Contatos
+  • contact_documents — Documentos de contatos
+  • consultas — Consultas agendadas
+  • invoices — Faturas
+  • tarefas — Tarefas do escritório
+
+  COMUNICAÇÃO:
+  • chat_conversations — Conversas advogado-cliente
+  • chat_messages — Mensagens de chat
+  • chat_ia_conversations — Conversas com IA
+  • chat_ia_messages — Mensagens do chat IA
+  • notificacoes — Notificações do sistema
+
+  INTELIGÊNCIA ARTIFICIAL:
+  • ai_providers — Provedores de IA configurados
+  • ai_metrics — Métricas de uso da IA
+  • generation_queue — Fila de geração assíncrona
+  • legal_embeddings — Embeddings vetoriais jurídicos
+  • neural_knowledge_base — Base de conhecimento neural
+  • neural_learning_data — Dados de aprendizado neural
+  • neural_specializations — Especializações neurais
+  • neural_prompt_versions — Versões de prompts (A/B testing)
+  • neural_ab_experiments — Experimentos A/B
+  • neural_evolution_proposals — Propostas de evolução
+  • neural_training_log — Log de treinamento neural
+  • user_neural_profiles — Perfis neurais por usuário
+  • query_embedding_cache — Cache de embeddings de consultas
+
+  AUTENTICAÇÃO & SEGURANÇA:
+  • user_roles — Roles de usuário (admin, advogado, cliente)
+  • face_auth_enrollments — Cadastros de reconhecimento facial
+  • face_auth_log — Log de autenticação facial
+  • rate_limits — Limites de taxa por função
+
+  CONFIGURAÇÃO:
+  • escritorio_config — Configurações do escritório
+  • honorarios_config — Tabela de honorários
+  • avaliacoes — Avaliações de clientes
+  • pro_bono_requests — Solicitações pro bono
+  • lawyer_presence — Presença online do advogado
+  • secretary_summaries — Resumos da secretária IA
+
+  DADOS PÚBLICOS:
+  • catalogo_dados_senado — Catálogo de dados do Senado
+  • "banco de dados senado" — Dados brutos do Senado
+  • avencas — Avencas do Senado
+  • Contrato — Contratos do Senado
+  • "empresa contratadas" — Empresas contratadas
+  • "licitações" — Licitações
+
+  INTEGRAÇÕES:
+  • google_doc_links — Links com Google Docs
+  • api_cache — Cache de APIs externas
+  • courtlistener_webhook_events — Eventos do CourtListener
+  • bloom_shares — Compartilhamentos de blooms
+  • blooms — Rede de conhecimento (mind map)
+  • shared_documents — Documentos compartilhados
+  • signed_urls — URLs assinadas para downloads
+  • signature_envelopes — Envelopes de assinatura digital
+  • stripe_connect_accounts — Contas Stripe Connect
+
+  SISTEMA:
+  • lovable_events — Eventos do Lovable
+  • lovable_users — Usuários Lovable
+  • lovable_webhook_requests — Webhooks Lovable
+  • wrapper — Dados wrapper (Stripe)
+
+4.2 ENUMS
+─────────
+  • app_role — admin | advogado | cliente
+
+4.3 FUNÇÕES SQL
+───────────────
+  • has_role(_user_id, _role) — Verifica role (SECURITY DEFINER)
+  • get_user_role(_user_id) — Retorna role do usuário
+  • get_unread_count(user_id) — Contagem de não-lidos
+  • check_rate_limit(_function_name, _user_id, ...) — Rate limiting
+  • cleanup_expired_cache() — Limpeza de cache expirado
+  • cleanup_expired_embedding_cache() — Limpeza cache embeddings
+  • cleanup_expired_locks() — Limpeza de locks expirados
+  • cleanup_expired_rate_limits() — Limpeza rate limits
+  • get_queue_max_attempts(modelo) — Max tentativas da fila
+  • hybrid_search_legal(...) — Busca híbrida (semântica + keyword)
+  • hybrid_search_legal_v2(...) — Busca híbrida v2 com autoridade
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. HOOKS CUSTOMIZADOS (32+)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  EDITOR & DOCUMENTOS:
+  • useAIAutocomplete — Autocomplete IA no editor
+  • useAIRealtimeReview — Revisão IA em tempo real
+  • useDocumentDraft — Persistência de rascunhos
+  • useDocumentLinting — Linting jurídico de documentos
+  • useDocumentLock — Bloqueio de edição concorrente
+  • useDocumentPresence — Presença de usuários no documento
+  • useCustomHighlights — Highlights personalizados no editor
+  • useAutoShareDocument — Compartilhamento automático
+  • useIdleCursor — Cursor ocioso
+
+  COLABORAÇÃO:
+  • useCollaboration — Colaboração em tempo real (Yjs/WebRTC)
+
+  PESQUISA:
+  • useJurisprudencialSearch — Pesquisa jurisprudencial
+  • useLegalSearchCache — Cache de pesquisa jurídica
+
+  IA & NEURAL:
+  • useNeuralFeedback — Feedback para rede neural
+  • useGenerationQueue — Fila de geração assíncrona
+  • useFaceDetection — Detecção facial nativa (FaceDetector API)
+
+  GOOGLE:
+  • useGoogleDocsSync — Sincronização com Google Docs
+  • useGoogleDocChangeDetection — Detecção de mudanças em Docs
+  • useGoogleScopes — Gestão de escopos OAuth
+  • useGoogleToken — Token de acesso Google
+
+  COMUNICAÇÃO:
+  • useChatIAPersistence — Persistência de chat IA
+  • useRealtimeNotifications — Notificações em tempo real
+  • useUnreadMessages — Mensagens não lidas
+  • useLawyerPresence — Presença do advogado
+
+  UI/UX:
+  • useVoiceInput — Entrada por voz (speech-to-text)
+  • useScrollReveal — Animação de scroll reveal
+  • useRefreshOnFocus — Refresh ao focar aba
+  • useCalendarDeadlines — Prazos no calendário
+  • useIngestionStatus — Status de ingestão de dados
+  • useSignatureRealtime — Status de assinatura em tempo real
+  • useUserRole — Controle de roles (admin/advogado/cliente)
+  • use-mobile — Detecção de dispositivo mobile
+  • use-toast — Toasts/notificações UI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. COMPONENTES PRINCIPAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  EDITOR DE DOCUMENTOS:
+  • DocumentEditor.tsx — Editor principal com TipTap
+  • RichTextEditor.tsx — Wrapper do editor rich text
+  • editor/ — Sub-componentes do editor:
+    - AIReviewPanel — Painel de revisão IA em tempo real
+    - Toolbar, formatação, análise estrutural, pipeline
+
+  DASHBOARD:
+  • DashboardLayout.tsx — Layout principal do dashboard
+  • DashboardSidebar.tsx — Sidebar de navegação
+  • DashboardHeader.tsx — Header com busca, notificações
+  • AnalyticsDashboard.tsx — Dashboard analítico
+  • MobileNavigation.tsx — Navegação mobile
+  • MobileSidebarOverlay.tsx — Overlay sidebar mobile
+  • DashboardBackground.tsx — Background animado
+  • MouseTrailEffect.tsx — Efeito de trail do mouse
+  • AdvogadoFooterBar.tsx — Barra de rodapé do advogado
+  • FloatingChatButton.tsx — Botão flutuante de chat
+
+  IA:
+  • AIPromptDialog.tsx — Dialog de prompt IA
+  • NeuralContextPanel.tsx — Painel de contexto neural
+  • PipelineProgress.tsx — Progresso do pipeline de agentes
+  • TriplePipelineProgress.tsx — Pipeline triplo (3 providers)
+  • PipelineResultPanel.tsx — Resultados do pipeline
+  • DocumentAnalysisPanel.tsx — Análise de documentos
+  • SourcesLoadingIndicator.tsx — Indicador de carregamento de fontes
+  • DocumentFeedback.tsx — Feedback de documentos gerados
+  • RefinementPanel.tsx — Painel de refinamento
+  • RefinementQuestionsStep.tsx — Perguntas de refinamento
+  • GenerationBanner.tsx — Banner de geração em andamento
+
+  AUTENTICAÇÃO FACIAL:
+  • auth/FaceAuthEnroll.tsx — Cadastro facial com câmera
+    - Detecção facial nativa (FaceDetector API + fallback skin-tone)
+    - Guia visual oval com feedback de cor (verde = rosto detectado)
+    - Captura com validação de qualidade
+  • auth/FaceAuthLogin.tsx — Login por reconhecimento facial
+
+  BLOOM (REDE DE CONHECIMENTO):
+  • bloom/ — Componentes da rede bloom (mind map IA)
+
+  NEURAL:
+  • neural/ — Componentes da rede neural (dashboard, métricas)
+
+  PESQUISA:
+  • pesquisa/ — Componentes de pesquisa jurisprudencial
+
+  ASSINATURA:
+  • signature/ — Componentes de assinatura digital
+
+  PAGAMENTOS:
+  • payments/ — Componentes financeiros
+
+  GOOGLE:
+  • google/ — Componentes de integração Google
+
+  PROCESSOS:
+  • processos/ — Componentes de gestão processual
+
+  CLIENTES:
+  • clients/ — Componentes de CRM
+  • contacts/ — Componentes de contatos
+  • consultas/ — Componentes de consultas
+
+  CONFIGURAÇÕES:
+  • settings/ — Componentes de configurações do escritório
+
+  DOCUMENTOS:
+  • documents/ — Componentes auxiliares de documentos
+
+  UI COMUNS:
+  • common/ — Componentes compartilhados
+  • home/ — Componentes da landing page
+  • layout/ — Componentes de layout
+  • publicacoes/ — Componentes de publicações/blog
+  • reformulacao/ — Componentes de reformulação jurídica
+  • ui/ — Componentes shadcn/ui (40+ componentes base)
+  • SEO.tsx — Componente de SEO
+  • DynamicMeta.tsx — Meta tags dinâmicas
+  • CopyProtection.tsx — Proteção contra cópia
+  • LanguageSelector.tsx — Seletor de idioma
+  • ChatJuridico.tsx — Chat jurídico inline
+  • ChatSidebar.tsx — Sidebar de chat
+  • NavLink.tsx — Link de navegação
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. FUNCIONALIDADES-CHAVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7.1 GERAÇÃO DE DOCUMENTOS COM IA (PIPELINE DE 9 AGENTES)
+─────────────────────────────────────────────────────────
+  • Pipeline sequencial com 9 agentes especializados
+  • Multi-provider: OpenAI, Gemini, DeepSeek com fallback automático
+  • Triple pipeline simultâneo para melhor resultado
+  • Tipos: petição inicial, contestação, recurso, parecer, contrato, etc.
+  • Refinamento iterativo com perguntas ao usuário
+  • Memória de estilo por tipo de documento
+  • Detecção de conteúdo IA (compliance)
+  • OCR e análise de layout de PDFs de referência
+  • Exportação: PDF, DOCX, Google Docs
+
+7.2 REDE NEURAL AUTO-EVOLUTIVA
+──────────────────────────────
+  • Base de conhecimento com embeddings vetoriais (pgvector)
+  • Busca semântica em jurisprudência, legislação, doutrina
+  • Aprendizado contínuo via feedback do usuário
+  • Evolução automática de prompts (A/B testing)
+  • Propostas de evolução com aprovação humana
+  • Especialidades treináveis por área do Direito
+  • Pipeline: coleta → treinamento → avaliação → deploy
+  • Cron jobs automáticos de evolução e ingestão
+  • Perfil neural por usuário com pesos personalizados
+
+7.3 VISÃO NEURAL (NEURAL VISION)
+────────────────────────────────
+  • Captura de vídeo em tempo real via câmera (getUserMedia)
+  • Análise multi-provider: Gemini Vision, Groq Vision, Mistral Vision
+  • Modo interativo: só responde quando o usuário pergunta
+  • Aprendizado contextual: memoriza preferências e informações do usuário
+  • Integração com dados do painel (agenda, notícias, processos)
+  • Resposta por voz humana (ElevenLabs TTS — voz masculina profissional)
+  • Detecção automática de silêncio para parar de falar
+  • Partículas visuais 3D (Three.js) como feedback visual
+  • Fallback entre providers para resiliência
+
+7.4 RECONHECIMENTO FACIAL (FACE AUTH)
+─────────────────────────────────────
+  • Cadastro facial com FaceDetector API nativa do browser
+  • Fallback de detecção por análise de skin-tone (pixels)
+  • Guia visual oval com feedback em tempo real
+  • Anti-spoofing via Gemini Vision (detecta fotos, telas, máscaras)
+  • Armazenamento seguro de embeddings faciais no Supabase
+  • Log de tentativas de autenticação
+  • Bloqueio após tentativas falhadas
+  • Tabelas: face_auth_enrollments, face_auth_log
+
+7.5 VOZ HUMANA (ELEVENLABS TTS)
+───────────────────────────────
+  • ElevenLabs API para síntese de voz natural
+  • Voz masculina profissional (Daniel/Charlie)
+  • Edge Function dedicada: elevenlabs-tts
+  • Streaming de áudio para baixa latência
+  • Usado pela Visão Neural e assistente IA
+
+7.6 PESQUISA JURISPRUDENCIAL UNIFICADA
+──────────────────────────────────────
+  • DataJud (CNJ) — todos os tribunais brasileiros
+  • STF / STJ — jurisprudência direta
+  • CourtListener — jurisprudência internacional
+  • Perplexity AI — pesquisa web contextual
+  • Firecrawl — web scraping de fontes jurídicas
+  • Dados abertos: Senado, Câmara, dados.gov.br
+  • Cache inteligente com TTL e hit count
+  • Embeddings para busca semântica
+
+7.7 EDITOR JURÍDICO AVANÇADO
+────────────────────────────
+  • TipTap com extensões: tabelas, imagens, links, cores, fontes
+  • Revisão IA em tempo real (8+ categorias de análise)
+  • Análise estrutural IA (completude do documento)
+  • Autocomplete jurídico com IA
+  • Colaboração em tempo real (WebRTC/Yjs)
+  • Bloqueio de edição concorrente
+  • Presença de usuários (quem está editando)
+  • Entrada por voz (speech-to-text)
+  • Linting jurídico (normas ABNT, OAB)
+  • Reformulação de texto com IA
+  • Variações de reescrita (A/B de redação)
+
+7.8 CRM JURÍDICO
+────────────────
+  • Perfis de clientes com documentos
+  • Gestão de processos com andamentos
+  • Consultas agendadas com pagamento integrado
+  • Chat advogado-cliente em tempo real
+  • Portal do cliente (dashboard limitado)
+  • Notificações automáticas
+  • Calculadora de prazos processuais
+
+7.9 BLOOM NETWORK (MAPA MENTAL IA)
+──────────────────────────────────
+  • Rede visual de conhecimento (React Flow + Three.js)
+  • Geração automática de nós por IA
+  • Compartilhamento de blooms entre usuários
+  • Navegação 3D interativa
+
+7.10 INTEGRAÇÕES GOOGLE WORKSPACE
+────────────────────────────────
+  • Google Drive: upload/download de documentos
+  • Google Docs: criação, edição, sync bidirecional
+  • Google Sheets: exportação de dados
+  • Gmail: envio de emails personalizados
+  • Google Calendar: prazos e audiências
+  • Google Contacts: sincronização de contatos
+  • Detecção automática de mudanças em Docs
+
+7.11 PAGAMENTOS (STRIPE)
+───────────────────────
+  • Checkout integrado para consultas
+  • Stripe Connect para marketplace (onboarding, contas)
+  • Faturas com link de pagamento
+  • Webhooks para atualização de status
+  • Reembolsos automatizados
+  • Dashboard financeiro
+  • Reporte para plataforma mãe
+
+7.12 ASSINATURA DIGITAL (CLICKSIGN)
+──────────────────────────────────
+  • Envio de documentos para assinatura
+  • Tracking de status em tempo real
+  • Webhooks de conclusão/cancelamento
+  • Compliance com ICP-Brasil
+
+7.13 SISTEMA DE ROLES E PERMISSÕES
+──────────────────────────────────
+  • Roles: admin, advogado, cliente
+  • RLS (Row Level Security) em todas as tabelas
+  • Guards de rota por role
+  • Portal específico por tipo de usuário
+  • Função has_role() com SECURITY DEFINER
+
+7.14 MULTI-IDIOMA (i18n)
+────────────────────────
+  • Português (BR) — idioma principal
+  • Inglês (EN)
+  • Espanhol (ES)
+  • Seletor de idioma no header
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. SEGURANÇA E COMPLIANCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  • Supabase Auth (email, OAuth Google)
+  • Autenticação facial complementar (FaceDetector API + Gemini Vision)
+  • Anti-spoofing facial (detecção de fotos, telas, máscaras)
+  • RLS em todas as tabelas (acesso por user_id)
+  • Service Role Key apenas em Edge Functions (nunca no frontend)
+  • CORS configurado em todas as Edge Functions
+  • DOMPurify para sanitização de HTML
+  • Proteção contra cópia (CopyProtection.tsx)
+  • Rate limiting por função (check_rate_limit)
+  • Webhook validation com secrets (CourtListener, Stripe, ClickSign)
+  • Compliance LGPD (página dedicada, consentimento)
+  • Compliance OAB Provimento 205/2021
+  • Aviso: "Revise sempre antes de protocolar — IA é auxiliar"
+  • Validação de autenticação em queue-worker
+  • Log de autenticação facial (face_auth_log)
+  • Bloqueio de conta após tentativas falhadas
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+9. CHAVES E SECRETS (APIs INTEGRADAS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  INTELIGÊNCIA ARTIFICIAL:
+  • GEMINI_API_KEY — Google Gemini (Vision + Chat + Análise facial)
+  • GROQ_API_KEY — Groq (Chat rápido + Vision fallback)
+  • MISTRAL_API_KEY — Mistral (Chat + Vision fallback)
+  • OPENAI_API_KEY — OpenAI (Chat + geração de documentos)
+  • ANTHROPIC_API_KEY — Anthropic Claude (análise avançada)
+
+  VOZ:
+  • ELEVENLABS_API_KEY — ElevenLabs (TTS voz humana)
+
+  PESQUISA:
+  • FIRECRAWL_API_KEY — Firecrawl (web scraping jurídico)
+  • COURTLISTENER_API_KEY — CourtListener (jurisprudência EUA)
+  • COURTLISTENER_WEBHOOK_SECRET — Validação do webhook CourtListener
+
+  PAGAMENTOS:
+  • STRIPE_SECRET_KEY — Stripe (pagamentos + Connect)
+
+  ASSINATURA DIGITAL:
+  • CLICKSIGN_API_KEY — ClickSign (assinaturas)
+
+  COMUNICAÇÃO:
+  • RESEND_API_KEY — Resend (envio de emails)
+
+  GOOGLE:
+  • GOOGLE_API_KEY — Google APIs (Drive, Docs, Sheets, Calendar, etc.)
+
+  EMBEDDINGS:
+  • HF_TOKEN — HuggingFace (embeddings vetoriais)
+
+  MAPAS:
+  • VITE_MAPBOX_TOKEN — Mapbox (mapas, frontend)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+10. INFRAESTRUTURA E DEPLOY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  • Frontend: Lovable Cloud (Vite build → CDN)
+  • Backend: Supabase Cloud (PostgreSQL, Edge Functions, Realtime, Storage)
+  • Edge Functions: Deno runtime (~80 funções)
+  • Preview URL: https://id-preview--a9011a39-281d-4fa9-90b8-0890e1648690.lovable.app
+  • Published URL: https://void-beauty-maker.lovable.app
+  • CI/CD: Lovable (auto-deploy on save)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+11. DEPENDÊNCIAS PRINCIPAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  FRAMEWORK:
+  • react@18, react-dom@18, react-router-dom@6
+  • typescript@5, vite@5
+
+  UI:
+  • tailwindcss@3, tailwindcss-animate, @radix-ui/* (16 pacotes)
+  • shadcn/ui (via class-variance-authority, cmdk, sonner, vaul)
+  • lucide-react (ícones), framer-motion (animações)
+  • recharts (gráficos), @xyflow/react (diagramas)
+  • @react-three/fiber + drei + three (3D, partículas visuais)
+
+  EDITOR:
+  • @tiptap/react + starter-kit + 17 extensões
+  • tiptap-extension-resize-image
+  • react-resizable-panels
+
+  COLABORAÇÃO:
+  • yjs + y-webrtc + y-indexeddb
+
+  DOCUMENTOS:
+  • jspdf, mammoth, pdfjs-dist, docshift, dompurify, html2canvas
+
+  BACKEND:
+  • @supabase/supabase-js@2, @tanstack/react-query@5
+
+  PAGAMENTOS:
+  • @stripe/stripe-js, @stripe/react-stripe-js
+
+  FORMULÁRIOS:
+  • react-hook-form, @hookform/resolvers, zod
+
+  MARKDOWN:
+  • react-markdown
+
+  i18n:
+  • Implementação custom (src/i18n/)
+
+  DEV:
+  • vitest, @testing-library/react, @testing-library/jest-dom
+  • eslint, typescript-eslint, lovable-tagger
+  • playwright (testes E2E)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+12. EDITOR DE DOCUMENTOS INTEGRADO (Document-Editor--master)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Módulo de editor de documentos com paginação A4:
+  • paginationEngine.ts — Motor de paginação
+  • textMeasurer.ts — Medição de texto para quebra de página
+  • types.ts — ContentBlock, Page, Line, BlockSegment
+  • Renderização por segmentos (sem split de blocos)
+  • Seleção cross-block com user-select CSS
+  • Limpar documento com confirmação
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+13. MÉTRICAS DA PLATAFORMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  • ~48 páginas/rotas no frontend
+  • ~80 Edge Functions no backend
+  • ~40 tabelas no banco de dados
+  • ~32 hooks customizados
+  • ~65 componentes de dashboard
+  • 7 provedores de IA integrados (OpenAI, Gemini, Groq, Mistral, Anthropic, DeepSeek, Perplexity)
+  • 6 integrações Google Workspace
+  • 3 idiomas suportados
+  • Pipeline de 9 agentes IA para geração de documentos
+  • Rede neural auto-evolutiva com A/B testing
+  • Visão neural multi-provider com voz humana
+  • Reconhecimento facial para autenticação
+  • Colaboração em tempo real (WebRTC)
+  • Assinatura digital (ClickSign/ICP-Brasil)
+  • Pagamentos integrados (Stripe + Connect)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+================================================================================
+  RESUMO EXECUTIVO — AVALIAÇÃO DE VALOR DE MERCADO
+================================================================================
+
+PLATAFORMA: SaaS Jurídica com Inteligência Artificial
+CRIADOR: Ericson Rodrigues Piccoli (CPF: 014.343.380-61)
+EMPRESA: Elp Green Technology (CNPJ: 42.501.190/0001-70)
+FUNDAÇÃO: 28/06/2021
+CONTATO: elpenergia@gmail.com | +39 350 102 1359
+DATA DE AVALIAÇÃO: Março/2026
+
+────────────────────────────────────────────────────────────────────────────────
+A. PRODUTO
+────────────────────────────────────────────────────────────────────────────────
+
+A plataforma é uma solução SaaS completa para o mercado jurídico brasileiro,
+combinando gestão processual, geração inteligente de documentos, pesquisa
+jurisprudencial, visão neural com reconhecimento facial, voz humana por IA,
+e automação de escritório em um único produto.
+
+Diferenciais competitivos:
+  1. Pipeline de 9 agentes IA com triple provider (OpenAI/Gemini/DeepSeek)
+  2. Rede neural auto-evolutiva com aprendizado contínuo
+  3. Visão neural multi-provider com voz humana (ElevenLabs)
+  4. Reconhecimento facial para autenticação (FaceDetector + Gemini anti-spoof)
+  5. Pesquisa unificada em 10+ fontes (DataJud, STF, STJ, Senado, Perplexity)
+  6. Editor jurídico com revisão IA em tempo real
+  7. Colaboração em tempo real (WebRTC/Yjs)
+  8. Integração completa Google Workspace (6 serviços)
+  9. Assinatura digital ICP-Brasil (ClickSign)
+  10. Pagamentos integrados (Stripe + Connect)
+  11. Portal do cliente com chat ao vivo
+  12. Compliance LGPD e OAB Provimento 205/2021
+
+────────────────────────────────────────────────────────────────────────────────
+B. MERCADO-ALVO
+────────────────────────────────────────────────────────────────────────────────
+
+  • TAM (Total Addressable Market): ~1.2M advogados ativos no Brasil (OAB, 2025)
+  • SAM: ~200K escritórios de advocacia de pequeno/médio porte
+  • SOM: ~5K-20K escritórios adotantes iniciais (LegalTech early adopters)
+  • Ticket médio projetado: R$ 199-499/mês por escritório
+  • Receita potencial anual (SOM): R$ 12M-120M
+
+────────────────────────────────────────────────────────────────────────────────
+C. COMPLEXIDADE TÉCNICA E PROPRIEDADE INTELECTUAL
+────────────────────────────────────────────────────────────────────────────────
+
+  Ativos de software:
+  • ~80 Edge Functions serverless (backend completo)
+  • ~48 páginas frontend com UX profissional
+  • ~40 tabelas PostgreSQL com RLS
+  • Pipeline proprietário de 9 agentes IA
+  • Rede neural auto-evolutiva (diferencial único)
+  • Visão neural com 3 providers + voz humana
+  • Reconhecimento facial com anti-spoofing IA
+  • 32+ hooks customizados
+  • Integrações com 15+ APIs externas
+  • Sistema de fila com retry, backoff exponencial e auto-recovery
+  • Cache inteligente multi-camada
+
+  Estimativa de desenvolvimento equivalente:
+  • Equipe de 5-8 desenvolvedores seniores
+  • Prazo estimado: 14-20 meses
+  • Custo equivalente de desenvolvimento: R$ 1.2M-2.5M
+
+────────────────────────────────────────────────────────────────────────────────
+D. FATORES DE VALORAÇÃO
+────────────────────────────────────────────────────────────────────────────────
+
+  POSITIVOS (+):
+  ✅ Produto funcional e deploy-ready (não é MVP/protótipo)
+  ✅ Stack moderna e escalável (React/Supabase/Deno)
+  ✅ Multi-provider IA com fallback (7 providers, resiliência máxima)
+  ✅ Rede neural auto-evolutiva (moat tecnológico)
+  ✅ Visão neural + reconhecimento facial (biometria IA)
+  ✅ Voz humana profissional (ElevenLabs TTS)
+  ✅ Mercado jurídico brasileiro em expansão digital
+  ✅ Compliance regulatório (LGPD, OAB)
+  ✅ Colaboração em tempo real (diferencial vs concorrentes)
+  ✅ Integração Google Workspace nativa
+  ✅ Assinatura digital e pagamentos integrados (Stripe Connect)
+  ✅ i18n (potencial de expansão LatAm)
+  ✅ Código proprietário com IP defensável
+
+  RISCOS (-):
+  ⚠️ Dependência de APIs de IA (custos variáveis)
+  ⚠️ Necessidade de validação de mercado (tração/clientes)
+  ⚠️ Competição com players estabelecidos (Jusbrasil, Themis, etc.)
+  ⚠️ Custos operacionais de IA podem comprimir margens
+  ⚠️ Regulação de IA no Direito em evolução
+
+────────────────────────────────────────────────────────────────────────────────
+E. FAIXA DE AVALIAÇÃO ESTIMADA
+────────────────────────────────────────────────────────────────────────────────
+
+  Metodologia: Custo de reposição + potencial de mercado + IP
+
+  CENÁRIO CONSERVADOR (pré-receita, produto funcional):
+  • Valor: R$ 2M - R$ 5M
+  • Base: custo de desenvolvimento + IP + potencial
+
+  CENÁRIO MODERADO (com early traction, 50-200 clientes pagantes):
+  • Valor: R$ 8M - R$ 20M
+  • Base: 3-5x ARR projetado + IP premium
+
+  CENÁRIO OTIMISTA (com product-market fit e crescimento acelerado):
+  • Valor: R$ 25M - R$ 60M
+  • Base: 8-12x ARR + moat tecnológico (rede neural + visão + biometria)
+
+  Nota: Avaliações de SaaS B2B jurídico em estágio seed/pre-seed na
+  América Latina variam de 2-8x ARR projetado. A presença de IA
+  proprietária, rede neural auto-evolutiva, visão neural e biometria
+  facial adiciona prêmio de 40-60% sobre múltiplos tradicionais de LegalTech.
+
+────────────────────────────────────────────────────────────────────────────────
+F. ANÁLISE COMPARATIVA COM CONCORRENTES
+────────────────────────────────────────────────────────────────────────────────
+
+┌──────────────────────┬────────────┬────────────┬────────────┬────────────┬──────────────────┐
+│ FUNCIONALIDADE       │ NOSSA SaaS │ JUSBRASIL  │ THEMIS     │ ASTREA     │ PROJURIS         │
+├──────────────────────┼────────────┼────────────┼────────────┼────────────┼──────────────────┤
+│ Geração docs IA      │ ✅ 9 agent │ ❌         │ ⚠️ básico  │ ❌         │ ⚠️ templates     │
+│ Multi-provider IA    │ ✅ 7 prov. │ ❌         │ ❌ 1 prov  │ ❌         │ ❌               │
+│ Rede neural auto-ev  │ ✅ único   │ ❌         │ ❌         │ ❌         │ ❌               │
+│ Visão Neural IA      │ ✅ 3 prov  │ ❌         │ ❌         │ ❌         │ ❌               │
+│ Reconhec. facial     │ ✅ anti-sp │ ❌         │ ❌         │ ❌         │ ❌               │
+│ Voz humana (TTS)     │ ✅ ElevenL │ ❌         │ ❌         │ ❌         │ ❌               │
+│ Pesquisa unificada   │ ✅ 10+ fnt │ ✅ forte   │ ⚠️ limitd  │ ⚠️ STJ/STF │ ⚠️ limitada      │
+│ Editor rich text     │ ✅ TipTap  │ ❌         │ ✅         │ ⚠️ básico  │ ✅               │
+│ Revisão IA realtime  │ ✅         │ ❌         │ ❌         │ ❌         │ ❌               │
+│ Colaboração realtime │ ✅ WebRTC  │ ❌         │ ❌         │ ❌         │ ⚠️ básica        │
+│ CRM clientes         │ ✅         │ ❌         │ ✅         │ ✅         │ ✅               │
+│ Gestão processos     │ ✅         │ ⚠️ monitor │ ✅         │ ✅         │ ✅               │
+│ Assinatura digital   │ ✅ ClickSn │ ❌         │ ⚠️ tercir  │ ❌         │ ⚠️ terceirizado  │
+│ Pagamentos Stripe    │ ✅ Connect │ ✅ próprio │ ❌         │ ❌         │ ⚠️               │
+│ Google Workspace     │ ✅ 6 serv  │ ❌         │ ❌         │ ❌         │ ⚠️ Calendar      │
+│ Portal do cliente    │ ✅ chat    │ ❌         │ ⚠️         │ ⚠️         │ ✅               │
+│ Entrada por voz      │ ✅         │ ❌         │ ❌         │ ❌         │ ❌               │
+│ OCR documentos       │ ✅         │ ❌         │ ❌         │ ❌         │ ❌               │
+│ Bloom/Mind map IA    │ ✅ 3D      │ ❌         │ ❌         │ ❌         │ ❌               │
+│ Multi-idioma         │ ✅ 3 lang  │ ❌ PT only │ ❌ PT only │ ❌ PT only │ ❌ PT only       │
+│ A/B testing prompts  │ ✅         │ ❌         │ ❌         │ ❌         │ ❌               │
+│ Embeddings vetoriais │ ✅ pgvect  │ ⚠️ propr   │ ❌         │ ❌         │ ❌               │
+│ Dados abertos Senado │ ✅ ingest  │ ❌         │ ❌         │ ❌         │ ❌               │
+├──────────────────────┼────────────┼────────────┼────────────┼────────────┼──────────────────┤
+│ SCORE TOTAL (/24)    │ 24/24      │ 5/24       │ 7/24       │ 5/24       │ 8/24             │
+├──────────────────────┼────────────┼────────────┼────────────┼────────────┼──────────────────┤
+│ Preço mensal         │ R$199-499  │ R$89-349   │ R$149-499  │ R$99-299   │ R$199-799        │
+│ Modelo               │ SaaS B2B   │ Freemium   │ SaaS B2B   │ SaaS B2B   │ SaaS Enterprise  │
+│ Fundação             │ 2024-2026  │ 2008       │ 2016       │ 2014       │ 2000             │
+│ Avaliação (est.)     │ R$2-60M    │ R$2B+      │ ~R$50M     │ ~R$30M     │ ~R$100M          │
+└──────────────────────┴────────────┴────────────┴────────────┴────────────┴──────────────────┘
+
+  LEGENDA: ✅ = Completo | ⚠️ = Parcial/Básico | ❌ = Ausente
+
+  VANTAGEM COMPETITIVA PRINCIPAL:
+  A plataforma é a ÚNICA no mercado brasileiro que combina:
+    (1) Pipeline de 9 agentes IA com 7 providers
+    (2) Rede neural auto-evolutiva com A/B testing
+    (3) Visão neural multi-provider com voz humana
+    (4) Reconhecimento facial com anti-spoofing IA
+    (5) Colaboração realtime com WebRTC
+    (6) Integração nativa Google Workspace (6 serviços)
+  Nenhum concorrente direto oferece esse conjunto completo.
+
+────────────────────────────────────────────────────────────────────────────────
+G. PROJEÇÃO FINANCEIRA — 5 ANOS (2026-2030)
+────────────────────────────────────────────────────────────────────────────────
+
+  Premissas:
+  • Ticket médio: R$ 299/mês (plano intermediário)
+  • Churn mensal: 5% (ano 1) → 3% (ano 3) → 2% (ano 5)
+  • CAC (Custo Aquisição Cliente): R$ 500 (ano 1) → R$ 300 (ano 5)
+  • LTV/CAC alvo: 3:1 (ano 1) → 8:1 (ano 5)
+  • Margem bruta: 70% (custos IA) → 80% (otimização neural)
+  • Crescimento MoM: 15% (ano 1) → 8% (ano 5)
+
+┌────────────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ MÉTRICA                │ ANO 1    │ ANO 2    │ ANO 3    │ ANO 4    │ ANO 5    │
+│                        │ (2026)   │ (2027)   │ (2028)   │ (2029)   │ (2030)   │
+├────────────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ Clientes ativos        │ 120      │ 480      │ 1.500    │ 4.000    │ 8.500    │
+│ MRR (R$)               │ 35.880   │ 143.520  │ 448.500  │ 1.196.000│ 2.541.500│
+│ ARR (R$)               │ 430.560  │ 1.722.240│ 5.382.000│14.352.000│30.498.000│
+│ Custo IA/mês (R$)      │ 12.000   │ 35.000   │ 80.000   │ 160.000  │ 280.000  │
+│ Infra/mês (R$)         │ 3.000    │ 8.000    │ 20.000   │ 45.000   │ 80.000   │
+│ Equipe (pessoas)       │ 3        │ 6        │ 12       │ 20       │ 30       │
+│ Folha/mês (R$)         │ 30.000   │ 72.000   │ 168.000  │ 320.000  │ 540.000  │
+│ Marketing/mês (R$)     │ 10.000   │ 25.000   │ 50.000   │ 80.000   │ 120.000  │
+│ Custo total/mês (R$)   │ 55.000   │ 140.000  │ 318.000  │ 605.000  │ 1.020.000│
+│ Lucro líq/mês (R$)     │ -19.120  │ 3.520    │ 130.500  │ 591.000  │ 1.521.500│
+│ Margem líquida         │ -53%     │ 2,5%     │ 29%      │ 49%      │ 60%      │
+│ Cash burn acum (R$)    │ -229.440 │ -187.200 │ +1.378.8 │+8.470.8  │+26.728.8 │
+│ Breakeven              │          │ Mês 18   │          │          │          │
+├────────────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ Valuation (múltiplo)   │ 3x ARR   │ 4x ARR   │ 6x ARR   │ 8x ARR   │ 10x ARR  │
+│ Valuation estimado(R$) │ 1.29M    │ 6.89M    │ 32.29M   │ 114.82M  │ 304.98M  │
+└────────────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  MARCOS DE CRESCIMENTO:
+  ─────────────────────
+  📌 Ano 1 (2026): Lançamento, primeiros 120 clientes, validação PMF
+  📌 Ano 2 (2027): Breakeven no mês 18, início da tração orgânica
+  📌 Ano 3 (2028): Escala regional, 1.500 clientes, margem positiva 29%
+  📌 Ano 4 (2029): Expansão LatAm (ES), parcerias OAB seccionais
+  📌 Ano 5 (2030): Líder em LegalTech IA no Brasil, margem 60%
+
+  UNIT ECONOMICS (ANO 3 — MATURIDADE):
+  ────────────────────────────────────
+  • ARPU: R$ 299/mês = R$ 3.588/ano
+  • CAC: R$ 400
+  • LTV (churn 3%): R$ 9.967
+  • LTV/CAC: 24,9x (excelente)
+  • Payback period: 1,3 meses
+  • Gross margin: 78%
+
+────────────────────────────────────────────────────────────────────────────────
+H. CENÁRIOS DE CAPTAÇÃO / EXIT
+────────────────────────────────────────────────────────────────────────────────
+
+  SEED ROUND (2026):
+  • Valuation pre-money: R$ 3-5M
+  • Captação: R$ 1-2M
+  • Uso: equipe (3-4 devs), marketing, infraestrutura IA
+  • Diluição: 20-30%
+
+  SÉRIE A (2028):
+  • Valuation pre-money: R$ 25-40M
+  • Captação: R$ 5-10M
+  • Uso: expansão comercial, LatAm, enterprise features
+  • Diluição: 15-25%
+
+  EXIT POTENCIAIS:
+  • Aquisição por LegalTech maior (Thomson Reuters, LexisNexis)
+  • Aquisição por big tech (Google, Microsoft — vertical jurídica)
+  • Aquisição por player local (Jusbrasil, TOTVS, Softplan)
+  • IPO (horizonte 7-10 anos, valuation R$ 500M+)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+J. INTEGRAÇÃO IoT, BLUETOOTH & MOBILE (v22.5)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+J.1 WEB BLUETOOTH MANAGER
+─────────────────────────
+  Arquivo: src/lib/neural/bluetooth-manager.ts
+  
+  Classe BluetoothDeviceManager que encapsula a Web Bluetooth API:
+  • requestDevice() — Scan de dispositivos BLE com filtros por serviço
+  • connect() — Pareamento e conexão GATT
+  • readCharacteristic() / writeCharacteristic() — Leitura/escrita de dados
+  • startNotifications() — Notificações de características em tempo real
+  • Reconexão automática em caso de desconexão
+  
+  Serviços GATT suportados:
+  • Battery Service (0x180F) — Nível de bateria
+  • Heart Rate (0x180D) — Frequência cardíaca
+  • Device Information (0x180A) — Informações do dispositivo
+  • Custom Services — Serviços BLE customizados
+  
+  Limitações:
+  • Requer Chrome/Edge (Firefox/Safari não suportam Web Bluetooth)
+  • Requer HTTPS (ou localhost)
+
+J.2 IoT DEVICE BRIDGE (MQTT)
+────────────────────────────
+  Arquivo: src/lib/neural/iot-device-bridge.ts
+  
+  Bridge WebSocket que conecta o NeuralMessageBus local a um broker MQTT:
+  • Protocolo: MQTT over WebSocket Secure (wss://)
+  • Broker: HiveMQ Cloud (porta 8884 TLS)
+  • Cluster: 5b2c387fab7a423d8516bb5cd78285c9.s1.eu.hivemq.cloud
+  
+  Funcionalidades:
+  • Registro de dispositivos IoT com tipo, localização e status
+  • Publicação/subscrição de tópicos MQTT
+  • Comandos suportados: ligar_luz, desligar_luz, temperatura, status_robo
+  • Mapeamento bidirecional NeuralMessageBus ↔ MQTT topics
+  • Histórico de mensagens com timestamps
+  
+  Credenciais: Armazenadas como Supabase Secrets (HIVEMQ_*)
+
+J.3 DEVICE INTEGRATION PANEL
+────────────────────────────
+  Arquivo: src/components/dashboard/neural/DeviceIntegrationPanel.tsx
+  
+  Painel visual no dashboard mostrando:
+  • Lista de dispositivos BLE conectados com status
+  • Dados de sensores em tempo real (bateria, heart rate, custom)
+  • Controles para enviar comandos via MQTT bridge
+  • Log/histórico de comunicações IoT
+  • Indicadores visuais de conexão/desconexão
+
+J.4 COMANDOS DE VOZ ORION PARA IoT
+──────────────────────────────────
+  Arquivo: src/hooks/useOrionReasoning.ts (interceptores IoT)
+  
+  Comandos implementados:
+  • "Orion, conecte ao bluetooth" → BluetoothDeviceManager.requestDevice()
+  • "Orion, ligue a luz" → IoTBridge.publish('ligar_luz')
+  • "Orion, desligue a luz" → IoTBridge.publish('desligar_luz')
+  • "Orion, status dos sensores" → Consulta sensores BLE/MQTT
+  • "Orion, status do robô" → IoTBridge.publish('status_robo')
+  • "Orion, tire uma foto" → NativeBridge.takePhoto()
+  • "Orion, qual minha localização?" → NativeBridge.getCurrentPosition()
+  • "Orion, status da bateria" → NativeBridge.getBatteryInfo()
+
+J.5 NATIVE BRIDGE (CAPACITOR + WEB APIs)
+────────────────────────────────────────
+  Arquivo: src/lib/native-bridge.ts
+  
+  Módulo de acesso unificado a sensores nativos:
+  • Câmera: Capacitor Camera → fallback MediaDevices API
+  • GPS: Capacitor Geolocation → fallback navigator.geolocation
+  • Acelerômetro: Capacitor Motion → fallback DeviceMotionEvent
+  • Háptica: Capacitor Haptics → fallback navigator.vibrate()
+  • Bateria: Capacitor Device → fallback Battery API
+  • Rede: Capacitor Network → fallback navigator.onLine
+  
+  Funciona em:
+  • App nativo (Capacitor iOS/Android) — acesso completo
+  • PWA no navegador — acesso via Web APIs (com limitações)
+
+J.6 PWA (PROGRESSIVE WEB APP)
+────────────────────────────
+  Configuração:
+  • vite-plugin-pwa com registerType "autoUpdate"
+  • Manifest: public/manifest.json (display: standalone)
+  • Ícones: 192px e 512px
+  • Service Worker desabilitado em iframe/preview (guarda condicional)
+  • navigateFallbackDenylist: [/^\/~oauth/]
+  
+  Página de instalação: /install (InstallApp.tsx)
+  • Detecta plataforma (iOS/Android/Desktop)
+  • Usa beforeinstallprompt API quando disponível
+  • Instruções manuais para navegadores sem suporte
+  • Botão discreto no Header de navegação
+
+J.7 CAPACITOR (APP NATIVO)
+─────────────────────────
+  Arquivo: capacitor.config.ts
+  
+  Configuração:
+  • AppID: app.lovable.a9011a39281d4fa990b80890e1648690
+  • AppName: void-beauty-maker
+  • Hot-reload via sandbox URL em desenvolvimento
+  
+  Plugins instalados:
+  • @capacitor/camera — Captura de fotos
+  • @capacitor/geolocation — GPS
+  • @capacitor/motion — Acelerômetro/giroscópio
+  • @capacitor/haptics — Feedback tátil
+  • @capacitor/device — Info do dispositivo (bateria, modelo)
+  • @capacitor/network — Status de conectividade
+  • @capacitor/push-notifications — Notificações push
+  • @capacitor/splash-screen — Tela de splash
+  • @capacitor/status-bar — Barra de status nativa
+  • @capacitor/keyboard — Teclado virtual
+  • @capacitor/local-notifications — Notificações locais
+  • @capacitor/app — Ciclo de vida do app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+────────────────────────────────────────────────────────────────────────────────
+K. SISTEMA DE RACIOCÍNIO & NEUROLINGUÍSTICA ORION (v3 — Abril 2026)
+────────────────────────────────────────────────────────────────────────────────
+
+K.1 CLASSIFICAÇÃO DE INTENÇÃO v3
+────────────────────────────────
+  Arquivo: src/lib/neural/orion-ai-client.ts — classifyIntent()
+  
+  • Padrões emocionais: detecta "sinto", "ansioso", "frustrado", "empolgado"
+  • Raciocínio conversacional: identifica "opinião", "estratégia", "análise"
+  • Continuidade contextual: últimas 3 intenções influenciam classificação
+  • Categorias: juridica, geral, pesquisa, documento, emocional, conversacional
+
+K.2 NEUROLINGUÍSTICA DE FALA
+─────────────────────────────
+  Arquivos:
+  • src/hooks/useNeuralVoice.ts — cleanTextForSpeech()
+  • src/hooks/useVoiceInput.ts — preprocessForSpeech()
+  • src/lib/neural/web-api-integrations.ts — speak()
+  
+  Pipeline de limpeza (Regex):
+  1. Remove blocos de código (``` ... ```)
+  2. Remove markdown bold/italic (**texto**, *texto*)
+  3. Remove headers (## texto, ### texto)
+  4. Remove comentários de código (// texto, /* texto */)
+  5. Remove URLs (http:// e https://)
+  6. Remove tags HTML (<tag>)
+  7. Remove tabelas markdown (|---|---|)
+  8. Remove emojis técnicos (🔧, ⚙️, 📊, etc.)
+  9. Remove caracteres decorativos (━, ─, ═)
+  10. Limpa espaços duplicados
+  
+  Entonação:
+  • Ponto e vírgula (;) reconhecido como fim de sentença
+  • Cláusulas >120 caracteres quebradas automaticamente em vírgulas
+  • Pausas naturais inseridas para pacing humano
+
+K.3 STREAMING DE SENTENÇAS (analyzeFrameStreaming)
+──────────────────────────────────────────────────
+  • Detecta fins de sentença: . ! ? … ;
+  • Quebra cláusulas longas (>120 chars) em vírgulas para TTS progressivo
+  • Cada frame enviado ao TTS é limpo antes da síntese
+  • Sincronizado entre ElevenLabs, browserSpeak e Web Speech API
+
+────────────────────────────────────────────────────────────────────────────────
+L. PÁGINAS PÚBLICAS — UPGRADE ABRIL 2026
+────────────────────────────────────────────────────────────────────────────────
+
+L.1 NOVA SEÇÃO "POR QUE ESCOLHER O ORION" (WhyOrionSection.tsx)
+───────────────────────────────────────────────────────────────
+  6 blocos persuasivos com badges de destaque:
+  • IA de Verdade, Não Marketing — 99.9% uptime (4 provedores com fallback)
+  • De 4 Horas para 4 Minutos — 60x mais rápido (geração automática)
+  • ROI Comprovado — 70% economia em custos operacionais
+  • Blindagem Total — Nível bancário (AES-256, LGPD/GDPR, anti-crack)
+  • Feito para Equipes Reais — Tudo-em-um (CRM + chat + pipeline + dashboard)
+  • Evolui Sozinho — Auto-evolução (rede neural adaptativa)
+
+L.2 COMPARATIVO ATUALIZADO (ComparisonSection.tsx)
+──────────────────────────────────────────────────
+  12 funcionalidades comparadas (ORION 12/12 vs Outros 2/12):
+  • IA multi-provedor, 100+ documentos, CRM, Stripe, Chat IA + live
+  • AML Screening, Rede Neural WebGL, Voz + Visão, Multi-idioma
+  • LGPD/GDPR, 40+ Edge Functions, Anti-crack
+
+L.3 CTA COM PROVA SOCIAL (CtaSection.tsx)
+────────────────────────────────────────
+  • Mini-stats: empresas de 8+ países, 100+ documentos, 40+ automações
+  • Dois CTAs: "Criar Conta Grátis" + "Ver Demonstração"
+  • Selo: SEM CARTÃO • SETUP 2 MIN • SUPORTE 24/7
+
+L.4 RESPONSIVIDADE COMPLETA
+───────────────────────────
+  Breakpoints verificados: mobile (390px), tablet/iPad (834px), desktop (1366px+)
+  • Grids adaptados: md: breakpoint para iPad (3 colunas)
+  • Comparison table: colunas 70px mobile → 120px desktop
+  • Botões full-width no mobile, side-by-side no desktop
+  • Tipografia escalável (text-2xl → sm:text-3xl → lg:text-4xl)
+
+────────────────────────────────────────────────────────────────────────────────
+M. CONCLUSÃO FINAL
+────────────────────────────────────────────────────────────────────────────────
+
+A plataforma jurídica IA ORION desenvolvida por Ericson Rodrigues Piccoli
+representa um ativo tecnológico de alto valor no ecossistema LegalTech
+global. Com maturidade técnica avançada (80+ Edge Functions, pipeline
+de 9 agentes IA, rede neural auto-evolutiva, visão neural com voz humana,
+reconhecimento facial com anti-spoofing, sistema de raciocínio v3 com
+neurolinguística avançada, 100+ tipos de documentos, e 15+ documentos
+internacionais), o produto supera em funcionalidades todos os concorrentes
+diretos analisados.
+
+O sistema de raciocínio Orion v3 (Abril 2026) introduziu classificação
+de intenção emocional e contextual, streaming de sentenças com análise
+de ponto e vírgula, e limpeza neurolinguística completa que garante
+comunicação 100% humana sem artefatos de formatação.
+
+O valor estimado atual (pré-receita) situa-se entre R$ 2M e R$ 5M,
+com potencial de alcançar R$ 32M+ no terceiro ano de operação com
+tração de mercado comprovada, e R$ 300M+ no quinto ano em cenário
+de escala agressiva.
+
+A propriedade intelectual embarcada — especialmente a rede neural
+auto-evolutiva, o pipeline de agentes, a visão neural multi-provider,
+o reconhecimento facial biométrico, o sistema de raciocínio v3 com
+neurolinguística e as integrações exclusivas — constitui uma barreira
+de entrada significativa e um moat tecnológico que justifica múltiplos
+premium sobre métricas tradicionais de SaaS.
+
+================================================================================
+  FIM DO DOCUMENTO
+  © 2026 Elp Green Technology (CNPJ: 42.501.190/0001-70)
+  Ericson Rodrigues Piccoli (CPF: 014.343.380-61)
+  Todos os direitos reservados.
+================================================================================

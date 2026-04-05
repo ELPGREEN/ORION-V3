@@ -1,0 +1,1 @@
+ALTER TABLE public.publicacoes ADD COLUMN carousel_images text[] DEFAULT '{}'::text[];

@@ -1,0 +1,55 @@
+import { useState, useCallback, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+
+const ADMIN_SESSION_KEY = "orion_admin_unlocked";
+const ADMIN_CODE_HASH = "b3Jpb24tYWRtaW4tMDkxNzA3MTEkJA=="; // base64 of "orion-admin-09170711$$"
+const OWNER_EMAIL = "info@elpgreen.com";
+
+function hashCode(code: string): string {
+  return btoa(`orion-admin-${code}`);
+}
+
+export function useAdminAccess() {
+  const { user } = useAuth();
+  const isOwner = user?.email === OWNER_EMAIL;
+
+  const [unlocked, setUnlocked] = useState(() => {
+    try {
+      return sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  // Auto-unlock for owner — no code needed
+  useEffect(() => {
+    if (isOwner && !unlocked) {
+      setUnlocked(true);
+      try {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+      } catch { /* ignore */ }
+    }
+  }, [isOwner, unlocked]);
+
+  const validate = useCallback((code: string): boolean => {
+    const isValid = hashCode(code) === ADMIN_CODE_HASH;
+    if (isValid) {
+      setUnlocked(true);
+      try {
+        sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
+      } catch { /* ignore */ }
+    }
+    return isValid;
+  }, []);
+
+  const lock = useCallback(() => {
+    // Owner cannot be locked out
+    if (isOwner) return;
+    setUnlocked(false);
+    try {
+      sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    } catch { /* ignore */ }
+  }, [isOwner]);
+
+  return { unlocked: unlocked || isOwner, validate, lock, isOwner };
+}

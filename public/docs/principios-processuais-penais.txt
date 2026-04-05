@@ -1,0 +1,1749 @@
+SISTEMA DE ENSINO NOÇÕES DE DIREITO PROCESSUAL PENAL
+Princípios Processuais Penais
+Livro Eletrônico
+www.grancursosonline.com.br 2 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas Sumário
+Princípios Processuais Penais...................................................................................................... 4
+1. Introdução..................................................................................................................................... 4
+1.1. Finalidade do Direito Processual Penal ............................................................................... 6
+2. Princípios...................................................................................................................................... 6
+2.1. Princípios do Direito Processual Penal................................................................................ 6
+2.2. Princípio do Devido Processo Legal ou Due Process of Law.......................................... 7
+2.3. Princípio da Presunção de Inocência ou da Não Culpabilidade..................................... 8
+2.4. Princípio do Juiz Natural.......................................................................................................12
+2.5. Princípio da Ampla Defesa:.................................................................................................. 14
+2.6. Princípio do Favor Rei, Favor Libertatis ou in Dubio Pro Reo........................................16
+2.7. Princípio da Duração Razoável do Processo:....................................................................17
+2.8. Princípio da Intranscendência............................................................................................ 18
+2.9. Princípio da Autoritariedade............................................................................................... 18
+2.10. Princípio do Duplo Grau de Jurisdição............................................................................. 18
+2.11. Princípio da Vedação da Dupla Punição ou Ne Bis in Idem..........................................20
+2.12. Princípio da Publicidade ......................................................................................................21
+2.13. Princípio da Vedação das Provas Ilícitas ........................................................................ 23
+2.14. Princípio da Plenitude de Defesa .....................................................................................26
+2.15. Princípio da Paridade de Armas ou Igualdade Processual.......................................... 27
+2.16. Princípio do Contraditório.................................................................................................. 27
+2.17. Princípio da Demanda ou da Iniciativa das Partes........................................................28
+2.18. Princípio da Não Autoincriminação ou Nemo Tenetur se Detegere: .........................29
+2.19. Princípios da Oficiosidade e Oficialidade .......................................................................30
+2.20. Princípio da Instrumentalidade das Formas ou da Finalidade ..................................31
+2.21. Princípio da Verdade Real ou Processual ........................................................................31
+3. Garantias Constitucionais e o Processo Penal................................................................... 32
+Resumo............................................................................................................................................ 35
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 3 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Questões Comentadas em Aula ................................................................................................. 37
+Questões de Concurso ................................................................................................................. 39
+Gabarito...........................................................................................................................................45
+Gabarito Comentado ....................................................................................................................46
+Anexo ...............................................................................................................................................58
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 4 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+PRINCÍPIOS PROCESSUAIS PENAIS
+E aí, querido(a) aluno(a)!
+Nossa Constituição Federal, de cunho considerado prolixo pela doutrina, é extremamente extensa e disciplina itens de diversas áreas do Direito (incluindo aspectos sobre o Processo Penal).
+Nesse sentido, é necessário estudar o que rege a CF/88, mas não devemos fazer esse estudo no vácuo, haja vista que o Direito é sistêmico, e precisa de ser estudado de forma completa
+para ser bem compreendido.
+Por esse motivo, na aula de hoje estudaremos de forma abrangente o tema Princípios do
+Direito Processual Penal, o qual irá englobar as disposições constitucionais do direito processual penal.
+Você verá que a abordagem utilizada torna muito mais compreensível o tópico específico
+do nosso edital, bem como auxilia MUITO no entendimento das demais aulas deste curso.
+Ao final, como de praxe, faremos uma lista de exercícios direcionada aos conteúdos apresentados. Ressalto que a banca Consulplan possui poucas questões sobre o tema, mas esteja
+certo de que isso não impactará em nosso rendimento.
+Espero que tenham um estudo proveitoso.
+Lembrando que estou sempre às ordens dos senhores no fórum de dúvidas e também nas
+redes sociais (@teoriainterativa no Instagram). Estamos juntos!
+Um abraço a todos e bons estudos!
+1. Introdução
+A legislação brasileira, na esfera PENAL, está dividida em dois códigos: O Código Penal
+(CP), e o Código de Processo Penal (CPP).
+É claro que o foco de nosso curso estará no CPP (afinal de contas, nossa disciplina é o Direito Processual Penal). Entretanto, antes que possamos iniciar o nosso estudo, é fundamental
+entender por qual motivo a legislação está dividida nesses dois códigos.
+E o primeiro passo para isso é entender os conceitos de direito substantivo e direito adjetivo.
+• Ramo do direito responsável pela definição de relações
+concretas dos membros de uma sociedade.
+• Também é chamado de direito material.
+• Seu foco está no que deve ser feito, e não em como algo deve ser
+feito.
+• Exemplo: Direito Penal
+Direito Substantivo
+• Ramo do direito responsável pela definição de procedimentos
+para a concretização das normas materiais.
+• Também é chamado de direito formal.
+• O foco está em como fazer, e não no que deve ser feito.
+ElDiitPlPlDireito Adjetivo
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 5 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+concretas dos membros de uma sociedade.
+• Também é chamado de direito material.
+• Seu foco está no que deve ser feito, e não em como algo deve ser
+feito.
+• Exemplo: Direito Penal
+• Ramo do direito responsável pela definição de procedimentos
+para a concretização das normas materiais.
+• Também é chamado de direito formal.
+• O foco está em como fazer, e não no que deve ser feito.
+• Exemplo: Direito Processual Penal
+Direito Adjetivo
+Vamos trabalhar de uma forma prática: Provavelmente você concorda que a norma mais
+famosa do Direito Penal é, de longe, o art. 121 do Código Penal:
+Homicídio simples
+CP- Art. 121. Matar alguém:
+Pena/reclusão, de seis a vinte anos.
+Mas o que essa norma faz?
+Ela apresenta um determinado comportamento proibido, e informa que uma pena será
+aplicada caso o indivíduo o pratique. Se você matar alguém, poderá ser apenado com reclusão
+de seis a vinte anos.
+É fácil notar que o art. 121 do Código Penal Brasileiro tem um caráter claramente material
+ou substantivo. Afinal de contas, define uma relação concreta, focada no que fazer, e não em
+como fazê-lo.
+Veja que o legislador define apenas que o autor de um homicídio simples será apenado
+com a reclusão de seis a vinte anos... e só.
+O texto da norma não explica como se dará a aplicação da pena. Não trata de pontos importantes como o processo de escolha do juiz responsável para julgar o caso, ou se compete
+à justiça federal ou estadual julgar os casos de homicídio.
+Isso acontece porque o Código Penal tem um caráter fundamentalmente material. Não
+cabe a ele tratar de como fazer as coisas: isso é assunto de direito adjetivo.
+Dessa forma, as normas formais e adjetivas do direito penal foram separadas, e via de
+regra estão concentradas em um outro Código: O CPP, sendo objeto de estudo de outra disciplina: O Direito Processual Penal.
+Agora sim podemos começar a falar da nossa disciplina. Para começar, vejamos dois conceitos introdutórios, ambos muito importantes para o nosso aprendizado:
+O Direito Processual Penal é o conjunto de princípios e normas que regulam a aplicação jurisdicional
+do Direito Penal, bem como as atividades persecutórias da Polícia Judiciária, e a estruturação dos
+órgãos da função jurisdicional e respectivos auxiliares.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 6 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+José Frederico Marques
+O Direito Processual Penal é o conjunto de princípios e normas que disciplinam a composição das
+lides penais, por meio da aplicação do Direito Penal objetivo.
+Fernando Capez
+Os ensinamentos apresentados não deixam dúvidas: O Direito Processual Penal tem um
+caráter procedimental, instrumental. É ao estudá-lo que iremos entender como se aplica o direito material ao caso concreto. Quais os passos necessários para concretizar a execução do
+que está previsto no Código Penal e em demais leis de natureza penal.
+1.1. Finalidade do Direito Processual Penal
+A finalidade do Direito Processual Penal é, basicamente, permitir a execução do direito de
+punir (jus puniendi) estatal, ao passo que garante que o Estado respeite o devido processo legal
+e os direitos e garantias fundamentais do cidadão.
+2. Princípios
+Agora que já possuímos esse conhecimento inicial, podemos passar para o estudo da disciplina propriamente dita. E vamos começar pelo assunto que servirá de base para todo o nosso estudo: Os princípios do direito processual penal.
+2.1. Princípios do Direito Processual Penal
+Caro aluno, antes de mais nada: Você sabe dizer o que é um princípio?
+O princípio é um postulado que irradia por todo o sistema de normas.
+Guilherme Nucci
+Princípio é o mandamento nuclear de um sistema.
+Celso Antônio Bandeira de Mello
+Por mais detalhista que seja o legislador, ele não conseguirá escrever normas para todos
+os casos que demandem a atuação estatal e a aplicação da lei. Nesse sentido, é perfeitamente
+possível que ocorram situações em que não exista na legislação a solução específica para um
+determinado caso.
+E o que podemos fazer quando isso acontece?
+Uma das soluções – e provavelmente a mais importante delas – é buscar orientação nos
+fundamentos de um determinado sistema normativo. Portanto, devemos buscar a resposta
+nos fundamentos que orientaram a edição de todas as demais normas.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 7 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+É a essas bases que chamamos de princípios. São como verdadeiros maestros que regem
+uma orquestra de normas. Eles cuidam do conjunto, garantido a harmonia entre as normas e
+servindo como referência quando porventura surgirem dúvidas.
+Mas chega de conceitos abstratos. Vamos conhecer os princípios propriamente ditos, pois
+na prática é muito mais fácil entendê-los.
+2.2. Princípio do Devido Processo Legal ou Due Process of Law
+O primeiro princípio que vamos estudar é um dos chamados princípios constitucionais do
+direito processual penal, visto que está inscrito em nossa CF/88:
+LIV/ninguém será privado da liberdade ou de seus bens sem o devido processo legal;
+Art. 5º, CF
+O objetivo deste princípio é garantir que ninguém seja submetido às pesadas sanções penais sem a tramitação de um processo que respeite a legalidade - o que infelizmente era algo
+relativamente comum em nosso país antes da vigência da Constituição Federal de 1988.
+Tribunal Supremo de Justiça Venezuelano
+Um exemplo de possível violação ao devido processo legal está na denúncia realizada pela
+venezuelana Lilian Tintori no programa brasileiro Roda Viva. A cidadã venezuelana é esposa do
+líder da oposição no país, Leopoldo Lopez, e afirmou aos entrevistadores que seu marido foi condenado a 14 anos de prisão em “um julgamento à portas fechadas, sem direito ao contraditório e a
+ampla defesa, no qual sequer a defesa foi autorizada a arrolar testemunhas em favor do acusado”.
+Atualmente, chega a ser absurdo pensar em alguém detido e submetido a uma pena de 14
+anos de prisão sem direito a um julgamento que siga os ditames previstos na lei – o que se
+deve ao princípio do devido processo legal.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 8 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Note que este é um princípio com um alcance bastante amplo, pois para que ele seja respeitado em sua plenitude, todos os outros princípios relacionados ao direito processual penal
+também devem ser observados.
+Dessa forma, se houver a observância dos demais princípios processuais penais, a consequência natural é que estaremos diante de um processo penal legítimo.
+2.3. Princípio da Presunção de Inocência ou da Não Culpabilidade
+Aqui temos outro princípio expressamente previsto em nossa Constituição Federal:
+LVII/ninguém será considerado culpado até o trânsito em julgado de sentença penal condenatória;
+Art. 5º, CF
+Com certeza, você, meu caro aluno, já ouviu a seguinte frase: “Somos todos inocentes, até
+que se prove o contrário.”
+Essa afirmação é uma consequência direta da existência do princípio da presunção de
+inocência, segundo o qual, só seremos considerados culpados após o trânsito em julgado da
+sentença penal condenatória.
+Também por força desse princípio temos três características básicas em nosso sistema
+processual penal, a saber:
+•As prisões preventivas e temporárias devem ter caráter sempre
+excepcional (só sendo decretadas quando há verdadeira necessidade
+da medida).
+Excepcionalidade das Prisões Cautelares
+•Assim como as prisões cautelares, outras medidas restritivas de
+direitos (tais como prisão domiciliar, tornozeleira eletrônica, proibição
+de visitar determinados lugares, entre outras) também devem ser
+decretadas apenas excepcionalmente.
+Excepcionalidade das Medidas Restritivas de Direito
+•Como o acusado é inocente até que se prove o contrário, basta a ele
+que fique inerte para preservar sua condição.
+•E como consequência dessa presunção de inocência, podemos dizer
+que o ônus da prova cabe a acusação/afinal de contas, se a acusação
+não for capaz de provar suas alegações, o acusado continuará a ser
+considerado inocente.
+•Essa previsão legal tem como objetivo evitar que um inocente seja
+obrigado a provar sua própria inocência.
+Ônus da Prova, em regra, é da acusação
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 9 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+A regra geral, quando tratamos de alegações jurídicas, é que o ônus da prova é de quem alega.
+O princípio da presunção de inocência, sob esse ponto de vista, oferece uma “colher de chá”
+para a defesa – que não precisa provar a sua alegação de que o réu é inocente. É a acusação que precisa provar seus argumentos, posto que se não o fizer, a inocência do acusado é
+presumida.
+Embora essa afirmação pareça ser repetitiva, ela tem uma razão de ser. Deixe-me mostrar
+um exemplo para vocês:
+https://www.campograndenews.com.br/cidades/capital/juri-acata-tese-de-legitima-defesa-e-inocenta-suspeito-
+-de-crime-em-portugal
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 10 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+No caso da reportagem apresentada, temos uma situação diferente. O réu não alegou ser
+inocente – alegou que realmente matou a vítima, porém em legítima defesa.
+Quando isso ocorre, tudo muda. O acusado não está mais se baseando em sua presunção
+de inocência para ser absolvido – e sim em uma outra alegação. E adivinha de quem é o ônus
+da prova nesse caso? Exatamente – da própria defesa.
+001. (CESPE/2019/TJ-PA/JUIZ DE DIREITO SUBSTITUTO/ADAPTADA) Em razão do princípio da inocência, caso o crime seja um fato típico, antijurídico e culpável, caberá à acusação
+provar a inexistência da causa de exclusão da antijuridicidade alegada pelo réu.
+Nada disso. Conforme estudamos, quando o agente pratica determinada conduta amparada
+em causa justificadora, caberá à defesa provar que o agente agiu mediante causa de exclusão
+de antijuricidade, como a legítima defesa vista em nosso exemplo.
+Errado.
+O princípio da presunção de inocência não garante ao acusado a absolvição meramente por
+alegar excludentes de ilicitude (tais como a legítima defesa ou o estado de necessidade). E se
+ele o fizer, terá de provar suas alegações regularmente.
+ADC 44 & STF
+Tema cujo debate é de enorme importância para provas de concursos é o início da execução da sanção penal imposta pela sentença penal condenatória.
+Após condenado, quando o indivíduo deverá iniciar o cumprimento de sua pena?
+Embora a resposta a essa pergunta pareça simples, em razão da previsão contida na Constituição Federal, a realidade é que o tema é extremamente polêmico.
+Veja só: A Constituição Federal, como você já sabe, determina que ninguém será considerado culpado até o trânsito em julgado da sentença penal condenatória.
+O Código de Processo Penal, por sua vez, rege o seguinte:
+CPP- Art. 283. Ninguém poderá ser preso senão em flagrante delito ou por ordem escrita e fundamentada da autoridade judiciária competente, em decorrência de prisão cautelar ou em virtude de
+condenação criminal transitada em julgado. (Redação dada pela Lei n. 13.964, de 2019).
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 11 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Trânsito em julgado é a expressão utilizada para informar que não há mais possibilidade de
+recurso de uma determinada decisão. Na esfera penal, ao dizer que transitou em julgado
+uma determinada sentença, dizemos que chegou a hora da execução das penas cominadas
+(se houver).
+O problema é que, na prática, o trânsito em julgado demora muito. Imagine só:
+O indivíduo comete um crime X. É condenado pelo juiz em primeira instância. Recorre. É condenado
+novamente pelo Tribunal (segunda instância). Recorre mais uma vez, dessa vez ao STJ e ao STF, por
+meio dos chamados Recursos Especial e Extraordinário. Após a apreciação de todos os recursos
+cabíveis, sua sentença transita em julgado, e este finalmente inicia o cumprimento de sua pena.
+Como o trâmite apresentado demora muito, ao ponto de, na opinião de alguns, comprometer a eficácia do sistema processual penal como um todo, discute-se se não é possível que o
+cumprimento da pena se inicie antes do trânsito em julgado da sentença penal condenatória,
+ainda que existam recursos pendentes.
+É a chamada execução provisória da pena.
+Embora pareça simples, o assunto é extremamente complexo.
+A determinação do inciso LVII do art. 5º da CF/88 veda a execução provisória da pena? A
+presunção de inocência (ou de não culpabilidade) é absoluta ou relativa?
+Tanto é polêmico o assunto que o próprio STF já apresentou, ao longo de sua história, quatro posicionamentos. Veja só:
+Até fevereiro de 2009:
+STF admitia a execução provisória da pena, com base em julgado
+prolatado no ano de 1991.
+Entre 02/2009 e 02/2016:
+STF passou a não admitir a execução provisória da pena, entendo
+que a antecipação da execução penal era incompatível com a
+Carta Magna.
+Entre 02/2016 e 11/2019
+STF volta a admitir a execução provisória da pena, desde que
+exista confirmação da sentença penal em segundo grau,
+admitindo-se o estabelecimento de limites ao princípio da não
+culpabilidade.
+Atual
+Em 07/11/2019, ao analisar as ADCs 43, 44 e 54, o STF retornou
+ao entendimento de 2016, por 6 votos a 5, afirmando que o
+cumprimento da pena só pode ser iniciado após esgotados todos
+os recursos, proibindo novamente a execução provisória da
+pena.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 12 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Entre 02/2016 e 11/2019
+STF volta a admitir a execução provisória da pena, desde que
+exista confirmação da sentença penal em segundo grau,
+admitindo-se o estabelecimento de limites ao princípio da não
+culpabilidade.
+Atual
+Em 07/11/2019, ao analisar as ADCs 43, 44 e 54, o STF retornou
+ao entendimento de 2016, por 6 votos a 5, afirmando que o
+cumprimento da pena só pode ser iniciado após esgotados todos
+os recursos, proibindo novamente a execução provisória da
+pena.
+Assim sendo, restou declarada a constitucionalidade do art. 283 do CPP. Vale lembrar que,
+segundo entendimento majoritário, as decisões em sede de ADC possuem efeitos vinculantes
+e erga omnes.
+Resumindo:
+Atualmente, não se admite em nosso país a execução provisória da pena.
+Para que um indivíduo seja preso, em respeito ao princípio da presunção de inocência, é
+necessário o trânsito em julgado da sentença penal condenatória, ou que sua prisão seja decorrente de alguma medida cautelar de natureza pessoal (prisão em flagrante, preventiva ou
+temporária).
+Não há mais a possibilidade de início da execução da sentença ante a decisão de órgão
+colegiado de segundo grau, como ocorreu até novembro de 2019.
+2.4. Princípio do Juiz Natural
+Você já ouviu falar nos tribunais de exceção?
+Tribunais de exceção são aqueles criados temporariamente para julgar um caso (ou alguns casos)
+após a prática de um determinado delito.
+Tribunal de Nuremberg
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 13 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Um exemplo de um tribunal de exceção está na foto apresentada: O Tribunal de Nuremberg,
+que foi o tribunal criado pelos aliados para julgar os nazistas por seus crimes de guerra.
+Independentemente das justificativas históricas para tal e dos horrendos crimes praticados durante o nazismo, é bastante óbvio que um tribunal criado para julgar um caso específico
+dificilmente terá garantida a sua imparcialidade.
+Como consequência dessa parcialidade, historicamente os tribunais de exceção só costumam ser criados quando há interesse em direcionar o resultado das decisões por ele tomadas.
+E enquanto a guerra é uma situação peculiar e felizmente atípica, imagine as consequências da criação de tribunais de exceção para julgar cidadãos de uma república, de acordo com o
+interesse político de uma determinada época? Seria uma possibilidade bastante ameaçadora.
+Para se contrapor a esse tipo de ameaça é que surge o princípio do juiz natural, que tem a
+função primordial de vedar a existência de tribunais de exceção.
+Como consequência do princípio do juiz natural é que temos o direito de ser julgados por
+autoridades determinadas pela lei, e não de forma arbitrária, o que busca garantir a imparcialidade do julgador.
+Essa garantia tem tamanha importância que também está expressa na Constituição Federal:
+LIII/ninguém será processado nem sentenciado senão pela autoridade competente;
+Art. 5º, CF
+Uma questão recorrente em provas de concursos é a literalidade da Súmula 704 do STF, que
+está diretamente relacionada com as garantias do princípio do juiz natural.
+Súmula 704/STF
+“Não viola as garantias do juiz natural, da ampla defesa e do devido processo legal a atração por continência ou conexão do processo do corréu ao foro por prerrogativa de função
+de um dos denunciados.”
+Normalmente, quando a súmula 704 é cobrada, o examinador simplesmente utiliza a literalidade de seu conteúdo. De toda forma, cabe esclarecer que a Súmula quer dizer é o seguinte:
+Nos casos em que um réu comum (que não possui foro por prerrogativa de função) for julgado em
+conjunto com uma autoridade que tem tal prerrogativa (portanto seu processo será remetido para o
+tribunal competente para julgar a autoridade), não haverá violação ao princípio do juiz natural.
+002. (FCC/2018/MPE-PE/TÉCNICO MINISTERIAL/ADMINISTRATIVA) O princípio do Direito
+Processual Penal que impede a criação de tribunais de exceção refere-se ao princípio:
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 14 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+a) do contraditório.
+b) da verdade real.
+c) da oficiosidade.
+d) do juiz natural.
+e) da indisponibilidade.
+Tenho certeza de que você não se esquecerá do exemplo do Tribunal de Nuremberg. Trata-se
+do princípio do juiz natural.
+Letra d.
+2.5. Princípio da Ampla Defesa:
+Este princípio é importantíssimo.
+Em primeiro lugar, note que o princípio da ampla defesa também está previsto de forma
+expressa na Constituição Federal:
+LV/aos litigantes, em processo judicial ou administrativo, e aos acusados em geral são assegurados
+o contraditório e ampla defesa, com os meios e recursos a ela inerentes;
+Art. 5º, CF
+A ampla defesa é um princípio essencial ao devido processo legal, pois garante que o
+acusado disponha de todos os meios lícitos para defender seus direitos. Ele é divido em dois
+elementos: a autodefesa e a defesa técnica.
+•É a defesa que o próprio réu realiza em seu favor, de forma pessoal.
+•A maneira mais comum de exercitar a autodefesa ocorre quando o réu
+presta sua versão dos fatos durante o interrogatório.
+•É um elemento disponível, ou seja, o acusado só exerce a autodefesa se
+quiser. Isso ocorre pois o acusado também tem o direito ao silêncio.
+Autodefesa
+•É a defesa promovida pelo defensor do acusado (advogado),
+necessáriamente exercida por um bacharel em Direito.
+•Esse elemento da defesa é indisponível, e sua auência causa nulidade
+do processo (ninguém pode ser condenado sem dispor de uma defesa
+técnica adequada).
+•Por esse motivo é que o Estado tem obrigações como a de manter
+Defensorias Públicas e de nomear defensores dativos para aqueles que
+não tem condições de pagar um advogado.
+•Só pode ser exercida pelo próprio réu se ele próprio for advogado.
+Defesa Técnica
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 15 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+É interessante notar que o elemento da autodefesa acaba resultando em outras duas prerrogativas do acusado:
+• Direito de audiência (direito do acusado
+de ser ouvido no processo)
+• Direito de presença (direito do acusado
+de estar presente nos atos
+processuais).
+Prerrogativas
+oriundas da
+autodefesa:
+Você sabe o que é a revisão criminal?
+A revisão criminal é uma espécie de ação judicial na qual um condenado (cuja sentença inclusive já transitou em julgado) requer ao tribunal que o condenou a revisão de sua sentença, sob
+alegação de que houve um erro, por exemplo.
+Graças ao princípio da ampla defesa é que o condenado possui o direito de solicitar a
+revisão criminal. É interessante notar que, no entanto, o Estado (por intermédio do Ministério
+Público) não tem o direito de pedir a revisão criminal em desfavor do condenado.
+Outra consequência importante da ampla defesa é o dever do magistrado de fiscalizar a
+eficiência da defesa técnica do réu. Caso o juiz perceba que a defesa técnica está causando
+prejuízo à situação do réu, pode ele próprio nomear outro defensor ou fazer com que o acusado
+encontre um.
+Jurisprudência importante: Súmula 523 - STF.
+Quanto ao princípio da ampla defesa, temos uma jurisprudência recorrente em provas de concursos, expressa na súmula 523 do STF:
+Súmula 523/STF
+No processo penal, a falta da defesa constitui nulidade absoluta, mas a sua deficiência
+só o anulará se houver prova de prejuízo para o réu.
+Essa súmula apenas materializa o que já falamos: Quando a defesa técnica é deficiente, só
+acarretará nulidade se houver prova de que o réu foi efetivamente prejudicado pela deficiência
+em sua defesa. No entanto, se simplesmente não houve defesa técnica (ausência de defesa
+técnica), a nulidade será absoluta.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 16 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+2.6. Princípio do Favor Rei, Favor Libertatis ou in Dubio Pro Reo
+Também conhecido como princípio da prevalência do interesse do réu, este é um dos princípios mais famosos do Direito Processual Penal.
+Com certeza você já sabe qual a garantia proposta por este princípio: havendo dúvida entre
+a tese da acusação e da defesa, prevalecerão os interesses do réu.
+Aqui se torna interessante retomar a situação do réu que alega ter matado alguém em legítima defesa. Quando abordamos o assunto, afirmei que o réu, ao assumir que matou e alegar
+que o fez para se defender (de forma legítima), deverá provar sua alegação.
+Entretanto, o que acontece se ao final do julgamento, os jurados não tiverem certeza se o
+acusado estava ou não em legítima defesa?
+A resposta você já sabe: por força do princípio do favor rei, o réu deverá ser absolvido.
+Além disso, existe uma outra consequência interessante desse princípio. Imagine que um
+juiz, ao interpretar a lei, chegue a duas respostas distintas (portanto, houve dúvida na interpretação da lei, e ele deverá escolher entre duas hipóteses diferentes).
+Nesse caso, a escolha é simples: o juiz deverá utilizar a interpretação que seja mais benéfica ao réu – ou seja, a interpretação favorável ao acusado.
+003. (CESPE/2018/PC-MA/DELEGADO DE POLÍCIA CIVIL) O MP de determinado estado ofereceu denúncia contra um indivíduo, imputando-lhe a prática de roubo qualificado, mas a defesa do acusado negou a autoria. Ao proferir a sentença, o juízo do feito constatou a insuficiência
+de provas capazes de justificar a condenação do acusado.
+Nessa situação hipotética, para fundamentar a decisão absolutória, o juízo deveria aplicar o
+princípio do:
+a) estado de inocência.
+b) contraditório.
+c) promotor natural.
+d) ne eat judex ultra petita partium.
+e) favor rei.
+Perceba que diante da insuficiência de provas, o juiz não se convenceu da autoria do delito de
+roubo. Portanto, na dúvida, deve-se optar pela posição mais benéfica ao réu em razão do princípio do in dubio pro reo ou favor rei.
+Letra e.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 17 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+2.7. Princípio da Duração Razoável do Processo:
+Temos aqui mais um princípio para o qual o constituinte deu grande importância, visto que
+o inseriu de forma expressa no art. 5º da CF/88:
+LXXVIII/a todos, no âmbito judicial e administrativo, são assegurados a razoável duração do processo e os meios que garantam a celeridade de sua tramitação.
+CF, Art. 5º
+O princípio da duração razoável do processo, na verdade, é praticamente autoexplicativo.
+Para que a prestação jurisdicional seja efetiva, deve ser realizada em um tempo razoável.
+Como já asseverou a ministra do Supremo Tribunal Federal:
+O cidadão já sabe que essa história de que a Justiça tarda, mas não falha, não é verdadeira. Justiça
+que tarda, falha.
+Ministra Carmen Lúcia
+Nesse sentido, percebe-se que a duração razoável do processo está intimamente relacionada com outros princípios, como o da economia processual e da celeridade, no sentido de
+que o Estado deve atuar sempre de forma eficiente e rápida.
+Além disso, temos ainda um outro princípio subsidiário, que é o chamado princípio da duração razoável das prisões cautelares.
+Vejamos um exemplo prático da aplicação deste princípio:
+https://www.conjur.com.br/2017-abr-25/supremo-libera-joao-carlos-genu-responder-processo-liberdade
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 18 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+No caso mencionado, o STF utilizou justamente a previsão do princípio da duração razoável das prisões cautelares como fundamentação para a revogação de uma prisão preventiva
+que se estendia por um prazo superior a um ano.
+2.8. Princípio da Intranscendência
+O princípio da intranscendência é bem mais simples do que os que estudamos até agora.
+Sua premissa é a de vedar a instauração de qualquer procedimento penal contra pessoa que
+não seja a que praticou a conduta criminosa.
+Seria absurdo, por exemplo, que um processo penal fosse instaurado para punir o filho por
+um crime praticado por seu pai – e é esse o tipo de abuso que o princípio da intranscendência
+visa coibir.
+2.9. Princípio da Autoritariedade
+A persecução penal é algo muito sério – afinal de contas, meramente acusar um indivíduo
+da prática de um ilícito penal já é capaz de gerar sérias consequências para sua vida particular.
+Por conta dessa seriedade é que se restringe a capacidade de iniciar os procedimentos
+relacionados à persecução penal a autoridades públicas.
+Nesse sentido, apenas a autoridade policial (delegado de polícia) e os promotores e procuradores de justiça tem legitimidade para atuar propondo a instauração, respectivamente, de
+inquéritos policiais e de processos penais.
+Existe uma exceção ao princípio da autoritariedade, na chamada ação penal privada. Neste
+tipo de ação penal, o direito de queixa é de um particular, e não da autoridade pública.
+Quanto a ação penal privada, não iremos aprofundar muito (pois essa é uma matéria que
+também deve ser abordada em um outro contexto, e não na aula de princípios). Por hora, confie
+em mim: basta que você saiba que existe essa exceção.
+2.10. Princípio do Duplo Grau de Jurisdição
+Antes de falar deste princípio, é necessário apresentar o chamado Pacto de San José da
+Costa Rica.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 19 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+São José da Costa Rica
+A Convenção Interamericana de Direitos Humanos (também chamada de Pacto de San José da
+Costa Rica) é um tratado internacional de direitos humanos promulgado pelo decreto 678/1992.
+É essencial conhecer sua existência, pois tal diploma, na qualidade de tratado internacional
+de direitos humanos, tem eficácia supralegal segundo o STF (logo, em nosso país, está acima
+das leis ordinárias e abaixo da Constituição Federal).
+CF
+Normas Supralegais
+Legislação
+Infraconstitucional
+Este pacto possui inúmeras consequências importantes em nosso ordenamento jurídico.
+Vejamos uma delas:
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 20 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+7. Ninguém deve ser detido por dívidas. Este princípio não limita os mandados de autoridade judiciária competente expedidos em virtude de inadimplemento de obrigação alimentar.
+Pacto de San José da Costa Rica
+Esse inciso, previsto no art. 7º do pacto, ensejou a elaboração da súmula vinculante n.
+25 do STF, que tornou ilícita a prisão do depositário infiel – anteriormente prevista em nossa
+legislação:
+Súmula vinculante 25:
+É ilícita a prisão civil de depositário infiel, qualquer que seja a
+modalidade de depósito.
+Agora que já conhecemos o Pacto de San José e algumas de suas consequências jurídicas
+em nosso país, podemos finalmente apresentar outra previsão importante nele contida: a do
+direito ao duplo grau de jurisdição. Veja só:
+Toda pessoa privada da liberdade tem direito a recorrer a um juiz ou tribunal competente, a fim de
+que este decida, sem demora, sobre a legalidade de sua prisão ou detenção e ordene sua soltura, se
+a prisão ou a detenção forem ilegais. Nos Estados-partes cujas leis preveem que toda pessoa que se
+vir ameaçada de ser privada de sua liberdade tem direito a recorrer a um juiz ou tribunal competente,
+a fim de que este decida sobre a legalidade de tal ameaça, tal recurso não pode ser restringido nem
+abolido. O recurso pode ser interposto pela própria pessoa ou por outra pessoa.
+Pacto de San José da Costa Rica
+O duplo grau de jurisdição, portanto, é o princípio do direito processual penal, expressamente reconhecido na Convenção Interamericana de Direitos Humanos, que garante ao indivíduo o direito de revisão de sua causa em uma instância superior.
+Por força desse princípio, não há que se falar em um julgamento único – todo indivíduo tem
+direito a reavaliação de seu pleito perante a justiça.
+2.11. Princípio da Vedação da Dupla Punição ou Ne Bis in Idem
+Também previsto no Pacto de San José da Costa Rica, esse é um princípio tão importante
+quanto é simples de entender: Ele existe para impedir que um indivíduo responda judicialmente
+duas vezes por um mesmo fato delitivo.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 21 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+https://www.conjur.com.br/2017-jun-12/stj-reconhece-bis-in-idem-anula-condenacao-transitada-julgado
+Na imagem apresentada temos um exemplo prático da aplicação do princípio do ne bis
+in idem. A autora já havia sido julgada pelo fato perante a Justiça Militar, e estava respondendo novamente a um processo judicial pelos mesmos fatos – o que é vedado pelo princípio
+em comento.
+Existem duas consequências práticas da observação do
+princípio da vedação da dupla punição:
+1. Segundo o STF, caso duas ações
+penais sobre o mesmo fato estejam
+tramitando ao mesmo tempo, a segunda
+ação penal será considerada nula;
+2. Veda-se a instauração de novo
+processo após o trânsito em julgado de
+sua absolvição.
+2.12. Princípio da Publicidade
+O princípio da publicidade garante que os atos processuais – mesmo relacionados à aplicação do direito penal – são em regra, públicos. O cidadão, em um contexto democrático
+como o estruturado pela CF/88, tem o direito de ser comunicado de todos os atos que são
+praticados pelo Estado.
+Apenas excepcionalmente é que, estando presentes alguns requisitos, um determinado
+procedimento pode ser considerado sigiloso (como é o caso, por exemplo, de um inquérito
+policial).
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 22 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Mesmo assim, a justificativa deve ser sólida o suficiente para justificar a negativa de informações por parte do Estado a seu povo. No caso do inquérito policial, por exemplo, o sigilo
+se baseia na defesa da intimidade do investigado – afinal de contas, ele pode ser inocente, e
+a mera divulgação de que está sendo alvo de um inquérito policial já é suficiente para trazer
+consequências à sua vida.
+Outro motivo capaz de justificar a vedação temporária do princípio da publicidade é o interesse social.
+Audiência de terrorista preso na Suécia foi realizada à portas fechadas.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 23 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+No exemplo apresentado, veja que o magistrado decidiu realizar a audiência a portas fechadas e sob forte esquema de segurança, ato que busca a preservação da ordem pública (um
+interesse social) em detrimento da publicidade dos atos processuais, caracterizando exceção
+perfeitamente lícita ao princípio da publicidade.
+Nesse sentido, seguimos analisando mais uma questão:
+004. (CESPE/2018/STM/ANALISTA JUDICIÁRIO/ÁREA JUDICIÁRIA) A lei não poderá restringir a divulgação de nenhum ato processual penal, sob pena de ferir o princípio da publicidade.
+Nada disso. A própria CF/88 prevê a possibilidade de restrição da publicidade dos atos processuais quando a defesa da intimidade ou o interesse social o exigirem (CF- Art. 5º, LX).
+Errado.
+2.13. Princípio da Vedação das Provas Ilícitas
+Este princípio é um dos que despenca em provas de concursos – seja nas questões objetivas ou discursivas. Assim como alguns outros princípios do direito processual penal, ele é
+quase autoexplicativo: Seu objetivo é proibir a utilização de provas ilícitas nos processos.
+Sua importância é tamanha que ele é citado de forma expressa tanto na Constituição Federal quanto no CPP:
+Constituição Federal CPP
+LVI/são inadmissíveis, no processo, as
+provas obtidas por meios ilícitos;
+Art. 5º, LVI
+Art. 157. São inadmissíveis, devendo ser
+desentranhadas do processo, as provas ilícitas,
+assim entendidas as obtidas em violação a normas
+constitucionais ou legais.
+§ 1º São também inadmissíveis as provas derivadas
+das ilícitas, salvo quando não evidenciado o nexo
+de causalidade entre umas e outras, ou quando
+as derivadas puderem ser obtidas por uma fonte
+independente das primeiras.
+Mas professor, o que acontece quando o juiz identifica que há uma prova ilícita no processo?
+Essa é uma questão muito pertinente. Via de regra, a solução é simples: A prova ilícita deve
+ser desentranhada (removida) do processo, e pronto. Não poderá ser utilizada para embasar a
+condenação do acusado. Nesse sentido, devemos observar o art. 157, § 3º
+ do CPP:
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 24 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+CPP- Art. 157, § 3º Preclusa a decisão de desentranhamento da prova declarada inadmissível, esta
+será inutilizada por decisão judicial, facultado às partes acompanhar o incidente.
+Esse tema já foi abordado em provas, vejamos:
+005. (MPDFT/2021/MPDFT/PROMOTOR DE JUSTIÇA ADJUNTO/ADAPTADA) Preclusa a
+decisão de desentranhamento da prova declarada inadmissível, esta será apartada dos autos,
+facultada às partes sua consulta.
+Conforme determina o CPP, a prova declarada ilícita será inutilizada e não apartada dos autos,
+por meio de decisão judicial.
+Errado.
+No entanto, devemos observar o seguinte ponto:
+Caso uma prova ilícita não seja desentranhada do processo, mas o juiz não a utilize para fundamentar sua decisão de condenar o réu, essa prova não irá contaminar a decisão prolatada,
+e nem o processo como um todo.
+Assim, se a prova não for utilizada, não há problema (pois não haverá prejuízo ao acusado).
+Entretanto, se a fundamentação contar com a prova ilícita identificada, estaremos diante de
+uma nulidade absoluta da decisão.
+Outro ponto importante sobre esse princípio está no §1º do Art. 157:
+São também inadmissíveis as provas derivadas das ilícitas, salvo quando não evidenciado o nexo
+de causalidade entre umas e outras, ou quando as derivadas puderem ser obtidas por uma fonte
+independente das primeiras.
+Aqui temos as chamadas provas ilícitas por derivação, cujo conteúdo é objeto de estudo
+da aula de PROVAS. Em uma abordagem inicial, basta saber que provas ilícitas tem o poder de
+contaminar outras provas que derivarem delas.
+É claro que existem condições que devem ser avaliadas para determinar se uma determinada prova foi contaminada pela ilicitude de outra – mas isso é assunto para outro momento,
+e não para uma aula introdutória.
+Por hora, o importante é finalizar esse assunto sabendo o seguinte:
+• O princípio de vedação das provas ilícitas impede a utilização deste tipo de evidências
+no processo penal;
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 25 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+• Provas ilícitas devem ser, via de regra, desentranhadas do processo, e não podem ser
+utilizadas para embasar uma condenação;
+• Provas ilícitas podem contaminar provas derivadas.
+Excepcionalmente, provas ilícitas podem ser utilizadas em favor do acusado, para provar sua
+inocência (pro reo).
+Seguimos treinando:
+006. (CESPE/2019/TJ-AM/ASSISTENTE JUDICIÁRIO) Provas obtidas por meios ilícitos podem excepcionalmente ser admitidas se beneficiarem o réu.
+Exatamente o que estudamos. Tome nota.
+Certo.
+Antes de passarmos para o próximo princípio, é importante mencionarmos uma importante
+atualização legislativa trazida pela Lei n. 13.964 de 2019, o tão conhecido Pacote Anticrime:
+CPP- Art. 157, § 5º O juiz que conhecer do conteúdo da prova declarada inadmissível não poderá
+proferir a sentença ou acórdão. (Incluído pela Lei n. 13.964, de 2019).
+Trata-se da descontaminação do julgado, uma vez que o juiz que tiver contato com uma
+prova ilícita provavelmente não terá a imparcialidade necessária para realizar um julgamento
+com verdadeira isenção de ânimo.
+O entendimento é de que mesmo diante do desentranhamento da prova ilícita dos autos e
+de sua inutilização, o juiz ainda estará contaminado por conhecer seu conteúdo.
+Nessa situação, altera-se o juiz competente durante o curso do processo penal. Trata-se
+de tema com bastante debate doutrinário, principalmente no que diz respeito aos princípios da
+legalidade e do próprio juiz natural.
+Esse dispositivo encontra-se suspenso por força das ADI’s até então ajuizadas contra a Lei n.
+13.964/19 (ADI n. 6.298, ADI 6.299, ADI 6.300 e ADI 6.305). Contudo, é importante que você ao
+menos conheça a sua literalidade e seus fundamentos.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 26 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+2.14. Princípio da Plenitude de Defesa
+Antes mesmo de tratar do conceito deste princípio, já devemos deixar claro o seguinte:
+O princípio da plenitude de defesa não se aplica a todo o tipo de procedimento penal, mas
+apenas aos procedimentos do TRIBUNAL DO JÚRI.
+Agora que você já sabe disso, podemos explicar este princípio e a razão pela qual ele não
+é aplicável em todas as esferas.
+Quase todo mundo sabe que os crimes dolosos contra a vida (como o homicídio doloso,
+por exemplo) receberam um tratamento especial em nossa Constituição, sendo direcionados
+para julgamento perante o tribunal do júri, e não perante um juiz comum.
+Essa escolha denota a maior seriedade com que são tratadas as acusações de crimes
+dolosos contra a vida, possibilitando que o réu seja julgado por seus semelhantes (outros cidadãos brasileiros), e não por um único magistrado.
+Essa mudança no procedimento traz consigo uma consequência que agrava um pouco a
+situação do acusado: O voto dos jurados é sigiloso, o que dispensa a FUNDAMENTAÇÃO da
+decisão tomada. É o que chamamos de sistema da íntima convicção.
+Com isso, veja que o Júri não depende de uma análise muito técnica do conjunto probatório. Se os jurados se sentirem convencidos da materialidade e da autoria do delito por parte
+do réu, poderão condená-lo sem estar vinculados a fundamentar juridicamente sua escolha. O
+jurado decide conforme sua intima convicção, e pronto.
+Com isso, veja que o trabalho da defesa em desconstituir os argumentos da acusação se
+torna mais pesado do que seria diante de um magistrado, que é especialista em Direito e que
+deve analisar o conjunto probatório de uma maneira mais formal.
+Diante desse cenário, surge a pergunta:
+Como fazer para tornar o procedimento do júri mais equilibrado, garantindo ao réu meios
+de se defender diante da maior autonomia dos jurados?
+E a resposta está no princípio da plenitude de defesa, que permite ao réu, no âmbito do Tribunal do Júri, a utilização de argumentos que não seriam válidos perante um juiz singular, tais
+como justificativas de cunho moral, social e até mesmo sentimentais.
+Em outras palavras: a plenitude de defesa assegura ao acusado o direito de utilizar uma
+argumentação mais ampla para assegurar seu direito a liberdade do que poderia ser feito em
+um tribunal comum, atendendo às peculiaridades do tribunal do júri.
+Por fim, é importante notar que esse princípio está previsto expressamente em nossa CF:
+XXXVIII/é reconhecida a instituição do júri, com a organização que lhe der a lei, assegurados:
+a plenitude de defesa;
+CF, Art. 5º
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 27 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+2.15. Princípio da Paridade de Armas ou Igualdade Processual
+É fato que o Estado possui uma estrutura jurídica para amparar suas atividades – por meio
+de órgãos como o Ministério Público, Advocacia Geral da União, seus Tribunais, entre tantos outros.
+Além disso, via de regra cabe a este mesmo Estado, como todo o seu aparato jurídico, iniciar a persecução penal para punir aqueles que venham a transgredir a lei penal.
+Deste ponto de vista, veja que um cidadão comum (que muitas vezes sequer possui um
+advogado), ao ter um processo penal instaurado contra si, fica numa situação de desigualdade
+perante o Estado, que possui muito mais recursos para atuar do que um cidadão comum.
+É de olho nessa desigualdade que surge o princípio da paridade de armas, que visa assegurar que ambas as partes do processo (seja o acusador, na figura do Ministério Público, quanto
+o réu) possuam iguais condições de defender suas alegações, o que é absolutamente necessário para que o resultado do julgamento seja verdadeiramente justo e imparcial.
+Como consequência do princípio da paridade de armas é que surgem diversas prerrogativas, tais como:
+• Direito a tempos iguais para ambas as partes apresentarem suas alegações;
+• Direito à defesa técnica ao acusado que não possuir dinheiro para pagar um advogado
+(que será atendido por um defensor dativo ou por um defensor público).
+2.16. Princípio do Contraditório
+O princípio do contraditório, comumente abordado em conjunto com o princípio da ampla
+defesa, está diretamente relacionado com o devido processo legal.
+Para que o processo penal seja legítimo, é absolutamente necessária a existência do
+contraditório, ou seja, de ouvir a outra parte sobre os fatos e provas apresentados no curso
+do processo.
+Dessa forma, uma determinada prova da materialidade e de autoria de um crime só será
+válida para condenar o acusado após submetida ao contraditório em juízo. Portanto, o réu
+deve ser intimado da prova apresentada contra ele, e também deve ter a oportunidade de se
+manifestar sobre ela. Só então haverá validade de tal prova para fundamentar uma decisão
+sobre o caso.
+É importante notar que este é mais um dos princípios previstos expressamente na Constituição Federal:
+LV/Aos litigantes, em processo judicial ou administrativo, e aos acusados em geral são assegurados
+o contraditório e ampla defesa, com os meios e recursos a ela inerentes;
+Art. 5º, CF
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 28 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+A doutrina utiliza a expressão “audiência bilateral” para consubstanciar os elementos do
+contraditório:
+a) Direito à informação: Reflete a necessidade das partes estarem cientes dos termos
+do processo a partir dos diversos meios de comunicação, como a citação e a intimação,
+por exemplo.
+b) Direito de participação: Após a ciência da existência e dos argumentos do processo,
+torna-se possível a reação aos atos desfavoráveis manifestados pela parte contrária.
+Tipos de contraditório:
+• Contraditório real ou para a prova: As partes devem atuar na formação da prova, tornando-se imprescindível que sua produção ocorra na presença do juiz e das partes. Exemplo: Prova testemunhal colhida em juízo.
+• Contraditório diferido ou postergado, também chamado de contraditório sobre a prova:
+A atuação do contraditório ocorrerá após a formação da prova. Assim, prorroga-se a observação do contraditório. Exemplo: Interceptação telefônica judicialmente autorizada
+no curso das investigações.
+O princípio do contraditório é ponto chave no estudo do Direito Processual Penal, e no decorrer da abordagem dos demais assuntos de nossa disciplina, ainda falaremos muito sobre ele.
+Vejamos uma questão acerca dessa temática:
+007. (CESPE/2018/STM/ANALISTA JUDICIÁRIO/ÁREA JUDICIÁRIA) A garantia, aos acusados em geral, de contraditar atos e documentos com os meios e recursos previstos atende aos
+princípios constitucionais do contraditório e da ampla defesa.
+Questão excelente para fixarmos. Exatamente o que estudamos até aqui.
+Certo.
+2.17. Princípio da Demanda ou da Iniciativa das Partes
+Ao estudar o princípio da autoritariedade, verificamos que a persecução penal é iniciada,
+via de regra, por meio da instauração de um inquérito policial ou mesmo pelo oferecimento de
+uma denúncia, atos que são realizados respectivamente pelo delegado de polícia e pelo promotor de justiça.
+Dessa forma, temos a vigência do chamado sistema acusatório, onde a função de acusar
+e de julgar é sempre exercida por pessoas distintas.
+Um juiz não pode, ele próprio, investigar, oferecer a denúncia e condenar. Essa atitude é
+própria de sistemas inquisitórios, e que obviamente não são nada imparciais - afinal de contas,
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 29 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+quão justo pode ser um julgamento proferido pela mesma pessoa que investigou o e denunciou o acusado?
+A prevalência do sistema acusatório e de julgamentos imparciais decorre justamente do
+chamado princípio da demanda, que impede que o juiz inicie a persecução penal de ofício (portanto, sem ser provocado por um terceiro).
+Outra consequência importante desse princípio é a limitação das ações do magistrado,
+que só pode julgar o caso nos limites da denúncia, não podendo extrapolar seu conteúdo.
+2.18. PrincípiodaNãoAutoincriminaçãoouNemoTeneturseDetegere:
+Esse eu aposto que você conhece. Afinal de contas, falar desse princípio virou moda por
+causa do etilômetro (vulgo bafômetro), objeto que tanto aterroriza os motoristas que ainda insistem em dirigir embriagados.
+Toda vez que um agente de trânsito aparece com o aparelho, já está pronto para ouvir do
+condutor do veículo a velha alegação: “não vou assoprar – não sou obrigado pois ninguém é
+obrigado a gerar prova contra si mesmo”.
+Deixando a lei seca e suas implicações de lado, eu tenho que admitir que o exemplo nos
+atende muito bem, pois demonstra justamente uma aplicação prática do princípio do nemo
+tenetur se detegere.
+Cuidado para não restringir a aplicação do princípio em comento apenas ao âmbito dos
+delitos de trânsito. Este foi apenas um exemplo para contextualização.
+O princípio da não autoincriminação é aplicável em toda a esfera penal, de forma que ninguém é obrigado a fornecer material genético, assoprar etilômetro ou mesmo a participar
+de qualquer ato que possa incriminá-lo (tal como uma reprodução simulada dos fatos) se
+não o quiser.
+Observe que, no entanto, uma vez que o indivíduo se voluntariar a participar do ato (por exemplo, um indivíduo que aceita fazer o teste do etilômetro), não poderá mais voltar atrás para
+anular a prova que produziu contra si – ela será perfeitamente válida.
+Seguimos com mais uma questão:
+008. (CESPE/2018/TJ-CE/JUIZ SUBSTITUTO/ADAPTADA) São princípios processuais penais expressos na CF a presunção de não culpabilidade, o devido processo legal e o direito do
+suspeito ou indiciado ao silêncio.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 30 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Caro aluno, as bancas gostam muito de perguntar se determinado princípio está ou não expresso na CF. Tenha bastante atenção a esse ponto durante seus estudos. Tome nota.
+Certo.
+Obs.: Ainda é importante ressaltar que uma questão recorrente em provas de concursos é a
+literalidade da Súmula 522 do STJ, que está diretamente relacionada com o princípio
+da não autoincriminação:
+009. (FGV/2021/PC-RN/DELEGADO DE POLÍCIA CIVIL SUBSTITUTO/ADAPTADA) O direito
+processual penal é regido por diversos princípios, dentre os quais o do nemo tenetur se detegere, pelo qual ninguém será obrigado a produzir prova contra si mesmo. Com base no princípio
+em questão e na jurisprudência dos Tribunais Superiores julgue o item a seguir:
+A atribuição de falsa identidade pelo suspeito ou investigado, ainda que em situação de autodefesa, configura fato típico.
+Tome nota! Súmula 522, STJ: “A conduta de atribuir-se falsa identidade perante autoridade
+policial é típica, ainda que em situação de alegada autodefesa.”
+Certo.
+2.19. Princípios da Oficiosidade e Oficialidade
+E finalmente chegamos aos dois últimos princípios da aula de hoje.
+Em primeiro lugar, temos o princípio da oficiosidade.
+Você considera aceitável que a polícia judiciária, ao tomar conhecimento de um homicídio
+(por exemplo, quando uma viatura se depara com um corpo no chão, ferido por três disparos de
+arma de fogo), se omita e não faça nada para apurar o caso? É claro que a resposta é negativa.
+E quem garante que os órgãos estatais não possam se omitir, e tenham o dever de agir de ofício (sem serem provocados) em determinados casos é justamente o princípio da oficiosidade.
+Em segundo lugar, temos o princípio da oficialidade, que por sua vez está relacionado com
+o princípio da autoritariedade. Assim como a persecução penal deve ser iniciada por autoridades públicas (delegados de polícia e promotores ou procuradores), a persecução penal também deve ser exercida por órgãos oficiais do Estado, o que veda sua delegação a particulares.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 31 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+•Dever dos órgãos estatais de agir sem serem provocados, nos casos
+que demandem sua atuação na persecução penal.
+•Exemplo: Instauração de inquérito para apurar um homicídio que foi
+descoberto pela polícia em suas atividades de rotina.
+Oficiosidade
+•Necessidade de que a atividade de persecução penal seja realizada por
+órgãos públicos, não devendo ser delegada a particulares.
+Oficialidade
+2.20. Princípio da Instrumentalidade das Formas ou da Finalidade
+Vejamos uma excelente explanação acerca desse princípio processual penal:
+“...as irregularidades devem ser distinguidas conforme sua gravidade, não se declarando a nulidade
+do ato se sua finalidade foi atingida e se não houve prejuízo para as partes”.
+Renato Brasileiro
+Dessa forma, antes de se declarar a nulidade de um ato processual por esse estar em desacordo com a forma exigida em lei, deve-se verificar se a sua finalidade foi atingida, em caso
+positivo, o ato será considerado válido. Claro, desde que ausente flagrante prejuízo.
+O exemplo clássico de aplicação desse princípio diz respeito à citação defeituosa, a qual
+poderá ser sanada diante do comparecimento pessoal do acusado nos moldes do art. 570 do
+CPP: “a falta ou nulidade da citação, da intimação ou notificação estará sanada, desde que o
+interessado compareça, antes de o ato consumar-se, embora declare que o faz para o único
+fim de argui-la. O juiz ordenará, todavia, a suspensão ou o adiamento do ato, quando reconhecer que a irregularidade poderá prejudicar direito da parte”.
+2.21. Princípio da Verdade Real ou Processual
+De acordo com o princípio da verdade, a prova deve ser produzida com fiel observância ao
+contraditório e à ampla defesa. Em decorrência do sistema acusatório, a doutrina vem adotado
+o termo busca da verdade ou não verdade real, em face da impossibilidade de se alcançar a
+verdade objetiva dos fatos.
+Não pode afirmar que o juiz no decorrer do processo penal tenha alcançado a verdade objetiva,
+aquela que corresponde perfeitamente com o acontecido no plano real, por ser essa uma verdadeira utopia. Nesse sentido, o magistrado deve buscar a verdade que mais se aproxima da
+realidade em face das provas apresentadas.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 32 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Vejamos uma questão sobre o assunto:
+010. (IDECAN/2021/PC-CE/INSPETOR DE POLÍCIA CIVIL) A doutrina determina que princípios são as regras primeiras; são as premissas de todo um sistema de dogmática jurídico-processual penal. Parte da doutrina aponta esse princípio como o escopo primordial do processo
+penal. Trata-se dos elementos probatórios lícitos juntados aos autos do processo para serem
+apreciados pelo juiz e valorados no ato da sentença, a fim de se determinar quem foi de encontro ao comando da norma e por que o fez.
+Pela narrativa acima, estamos diante de qual princípio processual?
+a) Publicidade.
+b) Presunção de inocência.
+c) Verdade processual.
+d) Razoabilidade de duração do processo.
+e) Favor rei.
+A única assertiva que atende ao comando exigido pelo examinador é da verdade processual.
+Letra c.
+3. Garantias Constitucionais e o Processo Penal
+Muitas das garantias constitucionais ligadas ao processo penal são decorrentes dos princípios por nós estudados. Dessa forma, vamos elencá-las de forma mais dinâmica a seguir à
+luz da Constituição Federal de 1988. Antes disso, vejamos a distinção doutrinária sobre o tema:
+Normas meramente
+enunciativas dos
+próprios direitos
+fundamentais.
+Ex: Liberdade de
+locomoção em
+tempos de paz
+(CF-Art. 5º, XV)
+Direitos
+Normas de proteção
+a esses direitos
+fundamentais. Visam
+protegê-los em caso
+de violação.
+Ex: Remédio
+constitucional do
+Habeas Corpus
+(CF-Art. 5º, LXVIII)
+Garantias
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 33 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Todas as garantias fundamentais são também direitos fundamentais.
+Garantias processuais penais relacionadas à jurisdição na CF
+Juiz natural: Vedação de tribunais de exceção/imparcialidade do julgador (CF- Art. 5º, LIII).
+Promotor natural: Acusação por órgão imparcial designado por lei (decorrente do anteriorCF- Art. 5º, LIII).
+Motivação das decisões judiciais: Todas as decisões do judiciário devem ser fundamentadas sob pena de nulidade (CF- Art. 93, IX).
+Garantias processuais penais relacionadas às partes na CF
+Igualdade de armas/tratamento paritário: Relação com o princípio da Paridade das armas
+(Extraído da CF- Art. 5º, I).
+Ampla defesa: Defesa técnica e autodefesa (CF- Art. 5º, LV).
+Habeas corpus: Visa proteger a liberdade de locomoção (CF, art. 5º, LXVIII).
+Revisão criminal: Desconstituição de decisão condenatória definitiva prejudicial ao condenado (implícito na CF- Art. 5º, inciso LXXV).
+Não autoincriminação: Não produzir provas contra si/ permanecer em silêncio (CF- Art. 5º,
+inciso LXIII).
+Contraditório: Ciência e participação (CF-Art. 5º, LV).
+Garantias processuais penais relacionadas às provas na CF
+Inadmissibilidade das provas ilícitas: Aquelas que violam normas constitucionais ou legais
+(CF-Art. 5º, LVI).
+Identidade física do juiz: O juiz que presidir a instrução deverá proferir a sentença. (Implícito na CF- Art. 5º, incisos LIII)
+Garantias processuais penais relacionadas ao processo na CF
+Publicidade do atos processuais: Processo em regra público (CF- Art. 5º, LX).
+Devido processo legal: Processo deve respeitar a legalidade (CF, Art. 5º, LIV).
+Nesse sentido, vejamos uma questão interessantíssima sobre o tema:
+011. (FUNDEP/2021/MPE-MG/PROMOTOR DE JUSTIÇA SUBSTITUTO/ADAPTADA) Textualmente, a Constituição da República de 1988 não dispõe sobre a garantia de não autoincriminação, mas apenas sobre o direito ao silêncio.
+Perceba que a questão em análise exige um conhecimento acerca da literalidade da CF, ao
+dizer “textualmente”. Assim, de fato, não há no texto constitucional referência expressa à gaO conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 34 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+rantia da não autoincriminação: CF- Art. 5º, LXIII - o preso será informado de seus direitos,
+entre os quais o de permanecer calado, sendo-lhe assegurada a assistência da família e de
+advogado. Dessa forma, o direito ao silêncio é tido como um desdobramento do nemo tenetur
+se detegere.
+Certo.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 35 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+RESUMO
+Direito
+Substantivo:
+Define Relações
+Concretas de
+Direito;
+Também
+chamado de
+direito material;
+Exemplo: Direito
+Penal.
+Direito
+Adjetivo
+Define normas e
+procedimentos;
+Também
+chamado de
+direito formal ou
+processual;
+Exemplo: Direito
+Processual
+Penal.
+Conceito de Direito Processual Penal
+Conjunto de princípios e normas que disciplinam a aplicação do Direito Penal Material.
+Finalidade do Direito Processual Penal
+Permitir ao estado o exercício do jus puniendi (do direito de punir).
+Mandamento nuclear
+de um sistema;
+Postulado que irradia
+por todas as normas
+que o compõem.
+Princípios
+Princípios Propriamente Ditos
+Due process of law: Garante que a aplicação de punições penais só seja efetivada se o réu
+for submetido a um processo penal com todas as garantias a ele inerentes;
+Presunção de inocência: Determina que ninguém será considerado culpado antes do trânsito em julgado da sentença penal condenatória;
+Juiz Natural: Veda a existência de tribunais de exceção, garantido que o acusado seja julgado de forma imparcial e por uma autoridade determinada previamente pela lei;
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 36 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Ampla Defesa: Divide-se em defesa técnica e autodefesa, e tem por premissa garantir que o
+acusado disponha de todos os meios lícitos para se defender da denúncia prestada contra ele;
+Favor rei: Mandamento que garante que no caso de dúvida entre a tese da defesa e da acusação, deve prevalecer o interesse do acusado;
+Princípio da duração razoável do processo: Determina que o Estado, na persecução penal,
+deve agir de forma eficiente em sua prestação jurisdicional;
+Princípio da Intranscendência: Veda que a persecução penal se estenda para além da pessoa que praticou a conduta criminosa;
+Princípio da autoritariedade: Principio que restringe a instauração da persecução penal a
+autoridades públicas legalmente constituídas para esse fim;
+Duplo grau de jurisdição: Garante o direito à revisão da causa, que deve sempre ser reavaliada ao menos perante uma instância além da que originalmente condenou o acusado;
+Ne bis in idem: Veda que o acusado seja julgado e punido duas vezes pelo mesmo fato;
+Publicidade: Garante que, em regra, os atos processuais sejam públicos;
+Vedação das provas ilícitas: Principio que determina que provas ilícitas sejam desentranhadas do processo e não sejam utilizadas para fundamentar a condenação do réu;
+Plenitude de Defesa: Relacionado ao tribunal do júri, amplia os recursos inerentes à argumentação da defesa, para garantir maior efetividade de sua atuação perante jurados que
+podem decidir por meio da íntima convicção;
+Paridade de armas: Princípio que preza pelo equilíbrio entre as partes, que devem ter iguais
+condições de defender suas teses;
+Contraditório: Determina que os atos processuais, em regra, devem ser cientificados a
+ambas as partes, que terão o direito de se manifestar sobre eles para que sejam considerados válidos;
+Princípio da demanda: Veda que o magistrado inicie a persecução penal de oficio, prezando pelo sistema acusatório, no qual o acusador e o julgador são pessoas distintas;
+Princípio da não autoincriminação:Garante ao cidadão o direito de não gerar prova contra si;
+Princípio da Oficiosidade: Rege que os órgãos públicos, em regra, atuem de ofício quando
+se depararem diante de situações que ensejam a persecução penal;
+Princípio da Oficialidade: Rege que a persecução penal seja realizada por órgãos oficiais
+do estado.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 37 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+QUESTÕES COMENTADAS EM AULA
+001. (CESPE/2019/TJ-PA/JUIZ DE DIREITO SUBSTITUTO/ADAPTADA) Em razão do princípio da inocência, caso o crime seja um fato típico, antijurídico e culpável, caberá à acusação
+provar a inexistência da causa de exclusão da antijuridicidade alegada pelo réu.
+002. (FCC/2018/MPE-PE/TÉCNICO MINISTERIAL – ADMINISTRATIVA) O princípio do Direito Processual Penal que impede a criação de tribunais de exceção refere-se ao princípio
+a) do contraditório.
+b) da verdade real.
+c) da oficiosidade.
+d) do juiz natural.
+e) da indisponibilidade.
+003. (CESPE/2018/PC-MA/DELEGADO DE POLÍCIA CIVIL) O MP de determinado estado
+ofereceu denúncia contra um indivíduo, imputando-lhe a prática de roubo qualificado, mas a
+defesa do acusado negou a autoria. Ao proferir a sentença, o juízo do feito constatou a insuficiência de provas capazes de justificar a condenação do acusado. Nessa situação hipotética,
+para fundamentar a decisão absolutória, o juízo deveria aplicar o princípio do:
+a) estado de inocência.
+b) contraditório.
+c) promotor natural.
+d) ne eat judex ultra petita partium.
+e) favor rei.
+004. (CESPE/2018/STM/ANALISTA JUDICIÁRIO/ÁREA JUDICIÁRIA) A lei não poderá restringir a divulgação de nenhum ato processual penal, sob pena de ferir o princípio da publicidade.
+005. (MPDFT/2021/MPDFT/PROMOTOR DE JUSTIÇA ADJUNTO/ADAPTADA) Preclusa a
+decisão de desentranhamento da prova declarada inadmissível, esta será apartada dos autos,
+facultada às partes sua consulta.
+006. (CESPE/2019/TJ-AM/ASSISTENTE JUDICIÁRIO) Provas obtidas por meios ilícitos podem excepcionalmente ser admitidas se beneficiarem o réu.
+007. (CESPE/2018/STM/ANALISTA JUDICIÁRIO/ÁREA JUDICIÁRIA) A garantia, aos acusados em geral, de contraditar atos e documentos com os meios e recursos previstos atende aos
+princípios constitucionais do contraditório e da ampla defesa.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 38 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+008. (CESPE/2018/TJ-CE/JUIZ SUBSTITUTO/ADAPTADA) São princípios processuais penais expressos na CF a presunção de não culpabilidade, o devido processo legal e o direito do
+suspeito ou indiciado ao silêncio.
+009. (FGV/2021/PC-RN) Delegado de Polícia Civil Substituto (adaptada) O direito processual
+penal é regido por diversos princípios, dentre os quais o do nemo tenetur se detegere, pelo qual
+ninguém será obrigado a produzir prova contra si mesmo. Com base no princípio em questão
+e na jurisprudência dos Tribunais Superiores julgue o item a seguir:
+A atribuição de falsa identidade pelo suspeito ou investigado, ainda que em situação de autodefesa, configura fato típico.
+010. (IDECAN/2021/PC-CE/INSPETOR DE POLÍCIA CIVIL) A doutrina determina que princípios são as regras primeiras; são as premissas de todo um sistema de dogmática jurídico-processual penal. Parte da doutrina aponta esse princípio como o escopo primordial do processo
+penal. Trata-se dos elementos probatórios lícitos juntados aos autos do processo para serem
+apreciados pelo juiz e valorados no ato da sentença, a fim de se determinar quem foi de encontro ao comando da norma e por que o fez.
+Pela narrativa acima, estamos diante de qual princípio processual?
+a) Publicidade.
+b) Presunção de inocência.
+c) Verdade processual.
+d) Razoabilidade de duração do processo.
+e) Favor rei.
+011. (FUNDEP/2021/MPE-MG/PROMOTOR DE JUSTIÇA SUBSTITUTO /ADAPTADA) Textualmente, a Constituição da República de 1988 não dispõe sobre a garantia de não autoincriminação, mas apenas sobre o direito ao silêncio.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 39 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+QUESTÕES DE CONCURSO
+012. (CESPE/2018/ABIN/OFICIAL TÉCNICO DE INTELIGÊNCIA/ÁREA 2) A publicidade, a
+imparcialidade, o contraditório e a ampla defesa são características marcantes do sistema
+processual acusatório.
+013. (CESPE/2015/TJ-DFT/JUIZ DE DIREITO SUBSTITUTO/ADAPTADA)No Estado democrático moderno não há espaço para a aplicação do princípio processual denominado favor rei, que
+contraria o jus libertatis do acusado.
+014. (CESPE/2014/TJ-SE/TÉCNICO JUDICIÁRIO/ÁREA JUDICIÁRIA) Conforme o STF, viola
+o princípio da presunção de inocência a exclusão de certame público de candidato que responda a inquérito policial ou a ação penal sem trânsito em julgado de sentença condenatória.
+015. (CESPE/2014/TJ-SE/ANALISTA JUDICIÁRIO/DIREITO) Em virtude do princípio in dubio
+pro societate, o juiz não está autorizado a rejeitar denúncia por falta de lastro probatório mínimo que demonstre a idoneidade e a verossimilhança da acusação.
+016. (CESPE/2014/CÂMARA DOS DEPUTADOS/TÉCNICO LEGISLATIVO/AGENTE DE POLÍCIA LEGISLATIVA) Ainda que o contraditório e a ampla defesa não sejam observados durante a realização do inquérito policial, não serão inválidas a investigação criminal e a ação penal
+subsequente.
+017. (CESPE/2013/TJ-RN/JUIZ/ADAPTADA) De acordo com o princípio da presunção de inocência, o juiz não deve receber denúncia quando houver, além da prova da materialidade do
+crime, apenas indícios de autoria.
+018. (CESPE/2013/TJ-RR/TITULAR DE SERVIÇOS DE NOTAS E DE REGISTROS/ADAPTADA) Pelo princípio constitucional da publicidade, que rege as decisões proferidas pelo Poder
+Judiciário, os atos processuais deverão ser públicos, sendo absolutamente vedada a restrição
+de sua ciência por terceiros que não participem da relação processual.
+019. (CESPE/CEBRASPE/2013/PC-BA/INVESTIGADOR DE POLÍCIA) A presunção de inocência da pessoa presa em flagrante delito, ainda que pela prática de crime inafiançável e
+hediondo, é razão, em regra, para que ela permaneça em liberdade.
+020. (CESPE/2013/TJ-DFT/TÉCNICO JUDICIÁRIO/ÁREA ADMINISTRATIVA) O condenado
+pela prática do crime de estupro que recorrer da sentença penal condenatória não poderá ser
+considerado culpado da infração enquanto não transitar em julgado sua condenação.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 40 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+021. (CESPE/2013/TJ-DFT/TÉCNICO JUDICIÁRIO/ÁREA ADMINISTRATIVA) Em processo
+penal, ninguém pode ser forçado a produzir prova contra si mesmo. Por outro lado, a recusa
+em fazê-lo pode acarretar presunção de culpabilidade pelo crime.
+022. (CESPE/2013/TJ-DFT/ANALISTA JUDICIÁRIO/OFICIAL DE JUSTIÇA AVALIADOR) A
+autodefesa, que, pelo princípio da ampla defesa, é imposta ao réu, é irrenunciável.
+023. (CESPE/2012/TJ-AC/TÉCNICO JUDICIÁRIO/AUXILIAR) Aos litigantes, em processo judicial ou administrativo, e aos acusados em geral são assegurados o contraditório e ampla
+defesa, com os meios e recursos a ela inerentes.
+024. (CESPE/2012/TJ-AC/TÉCNICO JUDICIÁRIO/ÁREA JUDICIÁRIA) O princípio da presunção de inocência ou da não culpabilidade subsiste durante todo o processo e tem o objetivo
+de garantir o ônus da prova à acusação até declaração final de responsabilidade por sentença
+penal condenatória transitada em julgado.
+025. (CESPE/2012/TJ-AC/TÉCNICO JUDICIÁRIO/ÁREA JUDICIÁRIA) É assegurado, de forma expressa, na norma fundamental, o direito de qualquer acusado à plenitude de defesa em
+toda e qualquer espécie de procedimento criminal.
+026. (CESPE/2011/PC-ES/DELEGADO DE POLÍCIA/ESPECÍFICOS) De acordo com a doutrina e a jurisprudência pátrias, são inadmissíveis, em qualquer hipótese, provas ilícitas ou ilegítimas no processo penal brasileiro.
+027. (CESPE/2011/STM/ANALISTA JUDICIÁRIO/EXECUÇÃO DE MANDADOS/ESPECÍFICOS) De acordo com doutrina e a jurisprudência, os princípios da ampla defesa e da plenitude
+de defesa são sinônimos, visto que ambos têm por escopo assegurar ao acusado o acesso
+aos instrumentos normativos hábeis ao exercício da defesa.
+028. (CESPE/2011/STM/ANALISTA JUDICIÁRIO/EXECUÇÃO DE MANDADOS/ESPECÍFICOS) Entende-se por devido processo legal a garantia do acusado de não ser privado de sua
+liberdade em um processo que seguiu a forma estabelecida na lei; desse princípio deriva o fato
+de o descumprimento de qualquer formalidade pelo juiz ensejar a nulidade absoluta do processo, por ofensa a esse princípio.
+029. (CESPE/2011/STM/ANALISTA JUDICIÁRIO/EXECUÇÃO DE MANDADOS/ESPECÍFICOS) Os efeitos causados pelo princípio constitucional da presunção de inocência no ordenamento jurídico nacional incluem a inversão, no processo penal, do ônus da prova para
+o acusador.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 41 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+030. (CESPE/2010/MPU/ANALISTA/PROCESSUAL) O sistema normativo processual penal
+e a jurisprudência vedam, de forma absoluta, expressa e enfática, a utilização, pelas partes, em
+qualquer hipótese, de prova ilícita no processo penal.
+031. (CESPE/2010/DPU/DEFENSOR PÚBLICO FEDERAL) Parte da doutrina manifesta-se
+contrariamente à expressa previsão legal de cabimento da condução coercitiva determinada
+para simples interrogatório do acusado, como corolário do direito ao silêncio.
+032. (CESPE/2010/DPU/DEFENSOR PÚBLICO FEDERAL) Segundo entendimento sumulado
+do STF, o advogado de defesa não pode pedir, em alegações finais, a qualquer título, a condenação do acusado, sob pena de nulidade absoluta, por violação ao princípio da ampla defesa.
+033. (CESPE/2008/TJ-SE/JUIZ (ADAPTADA) A publicidade é um dos princípios constitucionais aplicáveis ao processo penal.
+034. (FCC/2017/DPE-PR/DEFENSOR PÚBLICO) Os princípios constitucionais aplicáveis ao
+processo penal incluem:
+a) indisponibilidade.
+b) verdade real.
+c) razoável duração do processo.
+d) identidade física do juiz.
+e) favor rei.
+035. (FCC/2015/DPE-MA/DEFENSOR PÚBLICO) A necessidade de assegurar que as partes
+gozem das mesmas oportunidades e faculdades processuais consiste o conteúdo do princípio
+processual:
+a) da paridade de armas.
+b) do contraditório.
+c) da ampla defesa.
+d) da identidade física do juiz.
+e) do estado de inocência.
+036. (FCC/2011/NOSSA CAIXA DESENVOLVIMENTO/ADVOGADO) A regra que, no processo penal, atribui à acusação, que apresenta a imputação em juízo através de denúncia ou de
+queixa- crime, o ônus da prova é decorrência do princípio
+a) do contraditório.
+b) do devido processo legal.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 42 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+c) do Promotor natural.
+d) da ampla defesa.
+e) da presunção de inocência.
+037. (FCC/2010/AL-SP/PROCURADOR) Constitui corolário do princípio do contraditório e da
+ampla defesa:
+a) a indisponibilidade do processo.
+b) a imediatidade.
+c) a isonomia processual.
+d) a indeclinabilidade da jurisdição penal.
+e) o duplo grau de jurisdição.
+038. (FCC/2007/MPU/ANALISTA – PROCESSUAL) Dispõe o art. 5º, inciso XXXVII da Constituição da República Federativa do Brasil que “Não haverá juízo ou Tribunal de exceção; inciso
+LIII? Ninguém será processado nem sentenciado senão pela autoridade competente”. Tais disposições consagram o princípio:
+a) da presunção de inocência.
+b) da ampla defesa.
+c) do devido processo legal.
+d) da dignidade.
+e) do juiz natural.
+039. (FCC/2011/MPE-CE/PROMOTOR DE JUSTIÇA) O art. 10 da Declaração Universal dos
+Direitos do Homem, proclamada pela Assembleia Geral das Nações Unidas, em Paris, aos 10
+de dezembro de 1948, consagra que toda pessoa tem direito, em condições de plena igualdade, de ser ouvida publicamente e com justiça por um tribunal independente e imparcial, para a
+determinação de seus direitos e obrigações ou para exame de qualquer acusação contra ela
+em matéria penal. O princípio do processo penal que se adequa a essa redação é o:
+a) do juiz natural.
+b) da ampla defesa.
+c) do contraditório.
+d) do duplo grau de jurisdição.
+e) da publicidade.
+040. (FCC/2011/MPE-CE/PROMOTOR DE JUSTIÇA (ADAPTADA) Embora válido em nosso
+ordenamento jurídico, o princípio do duplo grau de jurisdição não é uma garantia processual
+prevista expressamente em nossa Constituição Federal.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 43 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+041. (CONSULPLAN/2017/TJ-MG/TITULAR DE SERVIÇOS DE NOTAS E DE REGISTROS –
+REMOÇÃO) Analise as afirmativas abaixo, quanto aos princípios do Processo Penal:
+I – O princípio da ampla defesa implica em que a defesa técnica seja indisponível e efetiva.
+Assim, o STF tem entendimento consolidado de que a deficiência da defesa constitui nulidade
+absoluta, que independe da constatação de prejuízo para o réu.
+II – A atração por continência ou conexão do processo do corréu ao foro por prerrogativa de
+função de um dos denunciados não viola os princípios do juiz natural, da ampla defesa e do
+contraditório.
+III – O princípio nemo tenetur se detegere tem aplicação apenas em relação ao mérito do interrogatório, pois o réu tem o dever de informar seu nome e endereço, não sendo aplicável o
+direito ao silêncio quanto aos dados de qualificação.
+IV – Segundo o princípio tempus regt actum os atos processuais praticados sob a égide da lei
+anterior são considerados válidos e as normas processuais têm aplicação imediata, independentemente da data do fato imputado na denúncia.
+Está correto apenas o que se afirma em:
+a) I e III.
+b) II e IV.
+c) I, II e IV.
+d) II e III.
+042. (CONSULPLAN/2015/TJ-MG/TITULAR DE SERVIÇOS DE NOTAS E DE REGISTRO –
+PROVIMENTO) Quanto aos princípios constitucionais explícitos do processo penal, é INCORRETO afirmar:
+a) Nas infrações que deixam vestígios, a confissão não supre a ausência de exame de corpo
+de delito, já que a pessoa não é obrigada a se autoacusar.
+b) Em atendimento ao princípio da igualdade das partes, a revisão criminal pode ser ajuizada
+tanto pelo Ministério Público quanto pelo réu.
+c) A letra e firma dos documentos particulares serão submetidos a exame pericial, quando
+contestada a sua autenticidade.
+d) Segundo o princípio da economia processual, quando houver nulidade, por incompetência
+do juízo, somente os atos decisórios serão refeitos, mantendo-se os instrutórios.
+043. (VUNESP/2016/TJ-SP/TITULAR DE SERVIÇOS DE NOTAS E DE REGISTROS – PROVIMENTO) Dos princípios constitucionais do processo penal a seguir enumerados, assinale o
+que admite que a legislação infraconstitucional estabeleça exceções.
+a) Princípio do contraditório.
+b) Princípio da publicidade.
+c) Princípio da presunção da inocência.
+d) Princípio da imunidade à autoacusação.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 44 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+044. VUNESP/2014/TJ-PA/JUIZ DE DIREITO SUBSTITUTO) Em matéria processual penal, o duplo grau de jurisdição:
+a) não é previsto expressamente pela Convenção Americana de Direitos Humanos, mas é
+pela CR/88.
+b) não é previsto expressamente pela CR/88, mas é pela Convenção Americana de Direitos Humanos
+c) não é previsto expressamente nem pela CR/88 nem pela Convenção Americana de Direitos Humanos.
+d) é direito fundamental previsto expressamente tanto pela CR/88 quanto pela Convenção
+Americana de Direitos Humanos.
+e) é garantia fundamental prevista expressamente tanto pela CR/88 quanto pela Convenção
+Americana de Direitos Humanos.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 45 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+GABARITO
+1. E
+2. d
+3. e
+4. E
+5. C
+6. C
+7. C
+8. C
+9. C
+10. c
+11. C
+12. C
+13. E
+14. C
+15. E
+16. C
+17. E
+18. E
+19. C
+20. C
+21. E
+22. E
+23. C
+24. C
+25. E
+26. E
+27. E
+28. E
+29. C
+30. E
+31. C
+32. E
+33. C
+34. c
+35. a
+36. e
+37. c
+38. e
+39. a
+40. C
+41. b
+42. b
+43. b
+44. b
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 46 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+GABARITO COMENTADO
+012. (CESPE/2018/ABIN/OFICIAL TÉCNICO DE INTELIGÊNCIA/ÁREA 2) A publicidade, a
+imparcialidade, o contraditório e a ampla defesa são características marcantes do sistema
+processual acusatório.
+Exatamente isso. O sistema acusatório possui como característica marcante a nítida separação entre as funções de julgar, acusar e defender. Além disso, torna-se indispensável o respeito
+aos princípios mencionados pelo examinador.
+Certo.
+013. (CESPE/2015/TJ-DFT/JUIZ DE DIREITO SUBSTITUTO/ADAPTADA)No Estado democrático moderno não há espaço para a aplicação do princípio processual denominado favor rei, que
+contraria o jus libertatis do acusado.
+Negativo. É claro que o princípio do favor rei, ou in dubio pro reo, responsável por garantir que,
+em dúvida, a decisão deve favorecer o acusado, tem toda a aplicabilidade no Estado democrático de direito.
+Errado.
+014. (CESPE/2014/TJ-SE/TÉCNICO JUDICIÁRIO/ÁREA JUDICIÁRIA) Conforme o STF, viola
+o princípio da presunção de inocência a exclusão de certame público de candidato que responda a inquérito policial ou a ação penal sem trânsito em julgado de sentença condenatória.
+Exatamente. Meramente lembrar que, pelo princípio da presunção de inocência ninguém será
+considerado culpado até o trânsito em julgado da sentença penal condenatória já permite acertar essa questão. Inquérito policial ou ação penal não são idôneos para caracterizar o indivíduo como culpado, de modo que tal exclusão seria praticamente uma antecipação punitiva ao
+candidato.
+E, como afirma a questão, o STF já se manifestou expressamente sobre esse caso, confirmando o entendimento aqui apresentado.
+Certo.
+015. (CESPE/2014/TJ-SE/ANALISTA JUDICIÁRIO/DIREITO) Em virtude do princípio in dubio
+pro societate, o juiz não está autorizado a rejeitar denúncia por falta de lastro probatório mínimo que demonstre a idoneidade e a verossimilhança da acusação.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 47 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Claro que o juiz poderá rejeitar a denúncia sem lastro probatório mínimo. Tal análise de admissibilidade da renúncia é regida pela chamada Justa Causa, diferentemente do que afirma o
+examinador. Se não há justa causa, não deve a inicial ser recebida pelo magistrado.
+Errado.
+016. (CESPE/2014/CÂMARA DOS DEPUTADOS/TÉCNICO LEGISLATIVO/AGENTE DE POLÍCIA LEGISLATIVA) Ainda que o contraditório e a ampla defesa não sejam observados durante a realização do inquérito policial, não serão inválidas a investigação criminal e a ação penal
+subsequente.
+Embora ainda não tenhamos estudado o Inquérito Policial, já é importante ressaltar essa exceção. O IP, ao contrário da Ação Penal que este poderá embasar, é um procedimento inquisitório (e não acusatório), caso em que não está submetido aos princípios do contraditório e
+ampla defesa.
+Veja que tal característica é uma exceção à regra em nosso processo penal – que desde já
+você precisa conhecer – mas que é normalmente estudada em detalhes quando estamos tratando do tema Inquérito.
+Certo.
+017. (CESPE/2013/TJ-RN/JUIZ/ADAPTADA) De acordo com o princípio da presunção de inocência, o juiz não deve receber denúncia quando houver, além da prova da materialidade do
+crime, apenas indícios de autoria.
+Negativo. O princípio da presunção da inocência não impede o recebimento da denúncia quando houver apenas indícios de autoria. Pelo contrário. Se houver materialidade provada e indícios suficientes de autoria é que o juiz estará respaldado para receber a denúncia regularmente.
+Errado.
+018. (CESPE/2013/TJ-RR/TITULAR DE SERVIÇOS DE NOTAS E DE REGISTROS/ADAPTADA) Pelo princípio constitucional da publicidade, que rege as decisões proferidas pelo Poder
+Judiciário, os atos processuais deverão ser públicos, sendo absolutamente vedada a restrição
+de sua ciência por terceiros que não participem da relação processual.
+Nada disso. Lembre-se de que o princípio da publicidade pode vir a ser restringido em casos
+excepcionais, como em processos que correm em segredo de justiça para proteger a intimidade da vítima, por exemplo.
+Errado.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 48 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+019. (CESPE/CEBRASPE/2013/PC-BA/INVESTIGADOR DE POLÍCIA) A presunção de inocência da pessoa presa em flagrante delito, ainda que pela prática de crime inafiançável e
+hediondo, é razão, em regra, para que ela permaneça em liberdade.
+É exatamente isso. Embora essa situação, via de regra, cause revolta na sociedade, visto que
+as pessoas em geral não conhecem o princípio do processo penal, a liberdade provisória daqueles que são encontrados em flagrante acaba se fundamentando no princípio da presunção
+de inocência.
+O acusado, nessa situação, ainda não teve uma sentença condenatória transitada em julgado,
+e como determina nossa CF, até que isso ocorra deve ser considerado inocente – por mais
+absurdo que isso possa parecer.
+Certo.
+020. (CESPE/2013/TJ-DFT/TÉCNICO JUDICIÁRIO/ÁREA ADMINISTRATIVA) O condenado
+pela prática do crime de estupro que recorrer da sentença penal condenatória não poderá ser
+considerado culpado da infração enquanto não transitar em julgado sua condenação.
+Exatamente. Assim como observado na questão anterior – por mais que já exista uma condenação, se essa ainda não tiver transitado em julgado, ainda não cessa o efeito do princípio da
+presunção de inocência.
+Certo.
+021. (CESPE/2013/TJ-DFT/TÉCNICO JUDICIÁRIO/ÁREA ADMINISTRATIVA) Em processo
+penal, ninguém pode ser forçado a produzir prova contra si mesmo. Por outro lado, a recusa
+em fazê-lo pode acarretar presunção de culpabilidade pelo crime.
+A recusa em produzir prova contra si é direito do acusado, baseada no princípio do nemo tenetur se detegere. Nesse sentido, a utilização desse direito não pode ser interpretada em desfavor do acusado de forma alguma.
+Errado.
+022. (CESPE/2013/TJ-DFT/ANALISTA JUDICIÁRIO/OFICIAL DE JUSTIÇA AVALIADOR) A
+autodefesa, que, pelo princípio da ampla defesa, é imposta ao réu, é irrenunciável.
+Negativo. Lembre-se de que a ampla defesa resulta em direito a duas espécies de defesa: Autodefesa e Defesa Técnica.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 49 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Nesse sentido, apenas a defesa técnica é indisponível. A autodefesa (que pode ser exercida,
+por exemplo, durante o interrogatório), é perfeitamente disponível e renunciável – o réu só a
+exercerá se quiser.
+Errado.
+023. (CESPE/2012/TJ-AC/TÉCNICO JUDICIÁRIO/AUXILIAR) Aos litigantes, em processo judicial ou administrativo, e aos acusados em geral são assegurados o contraditório e ampla
+defesa, com os meios e recursos a ela inerentes.
+Questão relativamente simples, sequer o examinador elaborou muito sobre os princípios –
+simplesmente copiou e colou a letra da CF, Art. 5º, LV.
+Certo.
+024. (CESPE/2012/TJ-AC/TÉCNICO JUDICIÁRIO/ÁREA JUDICIÁRIA) O princípio da presunção de inocência ou da não culpabilidade subsiste durante todo o processo e tem o objetivo
+de garantir o ônus da prova à acusação até declaração final de responsabilidade por sentença
+penal condenatória transitada em julgado.
+É exatamente isso. Enquanto tramita o processo (logo, a sentença não transitou em julgado e
+ainda é possível algum tipo de recurso), subsistirá o princípio da presunção da inocência.
+Certo.
+025. (CESPE/2012/TJ-AC/TÉCNICO JUDICIÁRIO/ÁREA JUDICIÁRIA) É assegurado, de forma expressa, na norma fundamental, o direito de qualquer acusado à plenitude de defesa em
+toda e qualquer espécie de procedimento criminal.
+Se você errou essa questão, não fique chateado. O texto ficou bem capcioso. Veja que o princípio da plenitude de defesa é específico do TRIBUNAL DO JÚRI, e não de toda espécie de
+procedimento criminal.
+Ele não se confunde com o princípio da AMPLA DEFESA (que por sua vez se aplica a todo procedimento criminal). Apenas por esse motivo a questão está incorreta.
+Errado.
+026. (CESPE/2011/PC-ES/DELEGADO DE POLÍCIA/ESPECÍFICOS) De acordo com a doutrina e a jurisprudência pátrias, são inadmissíveis, em qualquer hipótese, provas ilícitas ou ilegítimas no processo penal brasileiro.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 50 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+A regra, conforme estudamos, é que as provas ilícitas sejam desentranhadas do processo (vedação das provas ilícitas). Entretanto, existe uma exceção: A utilização de provas ilícitas em
+favor do acusado inocente, que as utiliza para se defender. Portanto, o erro da questão está em
+afirmar que tais provas são vedadas em qualquer hipótese.
+Errado.
+027. (CESPE/2011/STM/ANALISTA JUDICIÁRIO/EXECUÇÃO DE MANDADOS/ESPECÍFICOS) De acordo com doutrina e a jurisprudência, os princípios da ampla defesa e da plenitude
+de defesa são sinônimos, visto que ambos têm por escopo assegurar ao acusado o acesso
+aos instrumentos normativos hábeis ao exercício da defesa.
+Veja como os examinadores adoram essa comparação entre ampla defesa e plenitude de defesa, para induzir o candidato em erro.
+Plenitude de defesa é o princípio relacionado à maior possibilidade de argumentação no tribunal do júri, enquanto a ampla defesa é um princípio aplicável a todo e qualquer processo
+criminal. Ambos não se confundem.
+Errado.
+028. (CESPE/2011/STM/ANALISTA JUDICIÁRIO/EXECUÇÃO DE MANDADOS/ESPECÍFICOS) Entende-se por devido processo legal a garantia do acusado de não ser privado de sua
+liberdade em um processo que seguiu a forma estabelecida na lei; desse princípio deriva o fato
+de o descumprimento de qualquer formalidade pelo juiz ensejar a nulidade absoluta do processo, por ofensa a esse princípio.
+Negativo. As nulidades advindas de descumprimentos de formalidades no processo penal devem ser avaliadas. Algumas serão absolutas, e outras, relativas, a depender da comprovação
+de que houve prejuízo para o acusado.
+Nesse sentido, não é qualquer formalidade que irá ensejar a chamada nulidade absoluta.
+Um exemplo é o da presença de prova ilícita que não foi desentranhada do processo. Se ela
+não for utilizada na fundamentação da condenação do acusado, ensejará nulidade apenas relativa, não acarretando a anulação de tal decisão.
+Errado.
+029. (CESPE/2011/STM/ANALISTA JUDICIÁRIO/EXECUÇÃO DE MANDADOS/ESPECÍFICOS) Os efeitos causados pelo princípio constitucional da presunção de inocência no ordenamento jurídico nacional incluem a inversão, no processo penal, do ônus da prova para
+o acusador.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 51 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Outro assunto que é um dos favoritos dos examinadores: A questão do ônus da prova. Via de
+regra o ônus da prova é de quem ALEGA, entretanto, o princípio da presunção de inocência tem
+realmente o condão de obrigar que o ônus da prova fique inicialmente nas mãos da acusação.
+Errado.
+030. (CESPE/2010/MPU/ANALISTA/PROCESSUAL) O sistema normativo processual penal
+e a jurisprudência vedam, de forma absoluta, expressa e enfática, a utilização, pelas partes, em
+qualquer hipótese, de prova ilícita no processo penal.
+Conforme estudamos, provas ilícitas podem ser utilizadas na defesa de réu inocente, para comprovar sua inocência, de modo que existe exceção ao princípio da vedação das provas ilícitas.
+Errado.
+031. (CESPE/2010/DPU/DEFENSOR PÚBLICO FEDERAL) Parte da doutrina manifesta-se
+contrariamente à expressa previsão legal de cabimento da condução coercitiva determinada
+para simples interrogatório do acusado, como corolário do direito ao silêncio.
+Não só a doutrina se manifesta nesse sentido, como essa é a posição atual do STF sobre o
+tema (não cabe condução coercitiva para interrogatório do acusado).
+Certo.
+032. (CESPE/2010/DPU/DEFENSOR PÚBLICO FEDERAL) Segundo entendimento sumulado
+do STF, o advogado de defesa não pode pedir, em alegações finais, a qualquer título, a condenação do acusado, sob pena de nulidade absoluta, por violação ao princípio da ampla defesa.
+Essa questão extrapola um pouco o estudo dos princípios, mas é muito interessante para que
+possamos treinar nosso raciocínio e evoluir nos estudos.
+Veja que o advogado de defesa tem que trabalhar no intuito de garantir a melhor defesa possível para o acusado. Entretanto, isso não significa que ele não possa pedir a condenação de
+seu cliente.
+Imagine que em um determinado caso existam provas cabais de um homicídio contra um
+determinado réu. Nesse sentido, pode o defensor optar por uma estratégia que não envolva
+pedir a absolvição de seu cliente, e sim uma condenação mais branda (como por exemplo
+argumentar pela condenação do réu por homicídio simples, e não por homicídio qualificado,
+por exemplo).
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 52 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+Ao traçar uma estratégia assim, o advogado trabalhará no interesse de seu cliente, e não desrespeitará a ampla defesa só por não pedir que o acusado seja inocentado.
+Errado.
+033. (CESPE/2008/TJ-SE/JUIZ (ADAPTADA) A publicidade é um dos princípios constitucionais aplicáveis ao processo penal.
+Exatamente. O princípio da publicidade está previsto expressamente na CF, e sem dúvidas é
+aplicável ao processo penal, sendo mitigado apenas de forma excepcional (como no caso de
+processos em segredo de justiça).
+Certo.
+034. (FCC/2017/DPE-PR/DEFENSOR PÚBLICO) Os princípios constitucionais aplicáveis ao
+processo penal incluem:
+a) indisponibilidade.
+b) verdade real.
+c) razoável duração do processo.
+d) identidade física do juiz.
+e) favor rei.
+Veja que não é à toa que eu costumo observar quando um princípio está expressamente previsto na Constituição Federal, ou quando um princípio está previsto em outro lugar (como o Pacto
+de San José ou na legislação ordinária). Algumas vezes o examinador bate exatamente nessa
+tecla. Conforme estudamos, o princípio da razoável duração do processo está expressamente
+previsto na CF, em seu art. 5º, LXXVIII.
+Letra c.
+035. (FCC/2015/DPE-MA/DEFENSOR PÚBLICO) A necessidade de assegurar que as partes
+gozem das mesmas oportunidades e faculdades processuais consiste o conteúdo do princípio
+processual:
+a) da paridade de armas.
+b) do contraditório.
+c) da ampla defesa.
+d) da identidade física do juiz.
+e) do estado de inocência.
+Exatamente. Também chamado de princípio da igualdade processual, é o princípio da paridade
+de armas que vela pela igualdade de condições entre as partes.
+Letra a.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 53 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+036. (FCC/2011/NOSSA CAIXA DESENVOLVIMENTO/ADVOGADO) A regra que, no processo penal, atribui à acusação, que apresenta a imputação em juízo através de denúncia ou de
+queixa- crime, o ônus da prova é decorrência do princípio
+a) do contraditório.
+b) do devido processo legal.
+c) do Promotor natural.
+d) da ampla defesa.
+e) da presunção de inocência.
+Conforme estudamos, em regra o ônus da prova é de quem alega. Entretanto, somos presumidamente inocentes (até o trânsito em julgado da sentença penal condenatória), o que faz com
+que caiba a acusação reverter essa nossa condição original.
+Logo, decorre do princípio da presunção de inocência essa transferência do ônus da prova para
+a acusação.
+Letra e.
+037. (FCC/2010/AL-SP/PROCURADOR) Constitui corolário do princípio do contraditório e da
+ampla defesa:
+a) a indisponibilidade do processo.
+b) a imediatidade.
+c) a isonomia processual.
+d) a indeclinabilidade da jurisdição penal.
+e) o duplo grau de jurisdição.
+Essa questão apresenta um português rebuscado e é para um cargo de alto nível de capacitação jurídica (Procurador), entretanto é muito boa para o nosso treinamento e aprendizado.
+Pense comigo: o contraditório e a ampla defesa existem para garantir que o acusado tenha
+recursos diante da ânsia punitiva do estado, para que possa se defender adequadamente.
+Isso porque o legislador considera que a relação acusação – acusado é desigual (Em regra, o
+Estado dispõe de mais recursos para a persecução penal do que o acusado).
+Nesse sentido, para equilibrar a balança, existem as garantias de ampla defesa e do contraditório. Tais princípios tem como resultado (portanto, como corolário), portanto, a ISONOMIA
+(igualdade) processual, de modo que a assertiva está correta.
+Letra c.
+038. (FCC/2007/MPU/ANALISTA – PROCESSUAL) Dispõe o art. 5º, inciso XXXVII da Constituição da República Federativa do Brasil que “Não haverá juízo ou Tribunal de exceção; inciso
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 54 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+LIII? Ninguém será processado nem sentenciado senão pela autoridade competente”. Tais disposições consagram o princípio:
+a) da presunção de inocência.
+b) da ampla defesa.
+c) do devido processo legal.
+d) da dignidade.
+e) do juiz natural.
+Lembre-se do tribunal de Nuremberg (você acha que seu professor escolhe esses exemplos
+excêntricos à toa? Ajuda muito na memorização).
+Voltando ao assunto da questão, o princípio que determina que devemos ser julgados com
+imparcialidade, por um julgador determinado por lei – e não constituído especificamente para
+um determinado caso – é realmente o princípio do juiz natural, que tem como objetivo maior
+evitar a existência de tribunais de exceção.
+Letra e.
+039. (FCC/2011/MPE-CE/PROMOTOR DE JUSTIÇA) O art. 10 da Declaração Universal dos
+Direitos do Homem, proclamada pela Assembleia Geral das Nações Unidas, em Paris, aos 10
+de dezembro de 1948, consagra que toda pessoa tem direito, em condições de plena igualdade, de ser ouvida publicamente e com justiça por um tribunal independente e imparcial, para a
+determinação de seus direitos e obrigações ou para exame de qualquer acusação contra ela
+em matéria penal. O princípio do processo penal que se adequa a essa redação é o:
+a) do juiz natural.
+b) da ampla defesa.
+c) do contraditório.
+d) do duplo grau de jurisdição.
+e) da publicidade.
+Veja como os examinadores adoram esse assunto.
+Ao dizer que as pessoas têm direito a um tribunal INDEPENDENTE e IMPARCIAL para examinar
+qualquer acusação, revela-se a preocupação da norma com evitar tribunais criados para julgar
+causas específicas (o que resulta invariavelmente em sua parcialidade).
+Como já estudamos, o princípio relacionado a essa preocupação é mesmo o princípio do juiz
+natural, que se opõe diretamente à existência de tribunais de exceção.
+Letra a.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 55 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+040. (FCC/2011/MPE-CE/PROMOTOR DE JUSTIÇA (ADAPTADA) Embora válido em nosso
+ordenamento jurídico, o princípio do duplo grau de jurisdição não é uma garantia processual
+prevista expressamente em nossa Constituição Federal.
+Cuidado. Lembre-se de que o Duplo Grau de Jurisdição, embora reconhecido em nosso ordenamento jurídico, não está previsto diretamente na CF, e sim no Pacto de San José da Costa Rica.
+Certo.
+041. (CONSULPLAN/2017/TJ-MG/TITULAR DE SERVIÇOS DE NOTAS E DE REGISTROS –
+REMOÇÃO) Analise as afirmativas abaixo, quanto aos princípios do Processo Penal:
+I – O princípio da ampla defesa implica em que a defesa técnica seja indisponível e efetiva.
+Assim, o STF tem entendimento consolidado de que a deficiência da defesa constitui nulidade
+absoluta, que independe da constatação de prejuízo para o réu.
+II – A atração por continência ou conexão do processo do corréu ao foro por prerrogativa de
+função de um dos denunciados não viola os princípios do juiz natural, da ampla defesa e do
+contraditório.
+III – O princípio nemo tenetur se detegere tem aplicação apenas em relação ao mérito do interrogatório, pois o réu tem o dever de informar seu nome e endereço, não sendo aplicável o
+direito ao silêncio quanto aos dados de qualificação.
+IV – Segundo o princípio tempus regt actum os atos processuais praticados sob a égide da lei
+anterior são considerados válidos e as normas processuais têm aplicação imediata, independentemente da data do fato imputado na denúncia.
+Está correto apenas o que se afirma em:
+a) I e III.
+b) II e IV.
+c) I, II e IV.
+d) II e III.
+I – Errado. Súmula 523-STF:
+No processo penal, a falta da defesa constitui nulidade absoluta, mas a sua deficiência só
+o anulará se houver prova de prejuízo para o réu.
+II – Correto. Súmula 704/STF:
+Não viola as garantias do juiz natural, da ampla defesa e do devido processo legal a atração por continência ou conexão do processo do corréu ao foro por prerrogativa de função
+de um dos denunciados.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 56 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+III – Errado. A banca considerou que a assertiva está falsa, possivelmente pois o examinador
+entendeu que o princípio nemo tenetur se detegere não tem aplicação apenas em relação ao
+interrogatório, mas sim em todo o bojo do processo penal. De todo modo, o item não ficou bem
+escrito e acaba causando confusão em sua resolução.
+IV – Correto. Tema que foge um pouco da nossa aula, mas que possui previsão expressa no
+Código de Processo Penal:
+CPP- Art. 2º “A lei processual penal aplicar-se-á desde logo, sem prejuízo da validade dos atos realizados sob a vigência da lei anterior.”
+Letra b.
+042. (CONSULPLAN/2015/TJ-MG/TITULAR DE SERVIÇOS DE NOTAS E DE REGISTRO –
+PROVIMENTO) Quanto aos princípios constitucionais explícitos do processo penal, é INCORRETO afirmar:
+a) Nas infrações que deixam vestígios, a confissão não supre a ausência de exame de corpo
+de delito, já que a pessoa não é obrigada a se autoacusar.
+b) Em atendimento ao princípio da igualdade das partes, a revisão criminal pode ser ajuizada
+tanto pelo Ministério Público quanto pelo réu.
+c) A letra e firma dos documentos particulares serão submetidos a exame pericial, quando
+contestada a sua autenticidade.
+d) Segundo o princípio da economia processual, quando houver nulidade, por incompetência
+do juízo, somente os atos decisórios serão refeitos, mantendo-se os instrutórios.
+a) Certa.
+CPP- Art. 158. Quando a infração deixar vestígios, será indispensável o exame de corpo de delito,
+direto ou indireto, não podendo supri-lo a confissão do acusado.
+b) Errada. A assertiva aborda a literalidade do CPP em relação à legitimidade ativa da revisão criminal:
+CPP- Art. 623. A revisão poderá ser pedida pelo próprio réu ou por procurador legalmente habilitado
+ou, no caso de morte do réu, pelo cônjuge, ascendente, descendente ou irmão.
+c) Certa.
+CPP- Art. 235. A letra e firma dos documentos particulares serão submetidas a exame pericial, quando contestada a sua autenticidade.
+d) Certa.
+CPP- Art. 567. A incompetência do juízo anula somente os atos decisórios, devendo o processo,
+quando for declarada a nulidade, ser remetido ao juiz competente.
+Letra b.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 57 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+043. (VUNESP/2016/TJ-SP/TITULAR DE SERVIÇOS DE NOTAS E DE REGISTROS – PROVIMENTO) Dos princípios constitucionais do processo penal a seguir enumerados, assinale o
+que admite que a legislação infraconstitucional estabeleça exceções.
+a) Princípio do contraditório.
+b) Princípio da publicidade.
+c) Princípio da presunção da inocência.
+d) Princípio da imunidade à autoacusação.
+Conforme estudamos, o princípio da publicidade, em alguns casos (como o interesse social e
+a garantia da ordem pública) pode ser mitigado por legislação infraconstitucional, que poderá
+lhe estabelecer exceções sem que isso seja considerado ilícito ou que tal medida invalidade o
+processo penal para o qual a medida for decretada.
+Letra b.
+044. VUNESP/2014/TJ-PA/JUIZ DE DIREITO SUBSTITUTO) Em matéria processual penal, o duplo grau de jurisdição:
+a) não é previsto expressamente pela Convenção Americana de Direitos Humanos, mas é
+pela CR/88.
+b) não é previsto expressamente pela CR/88, mas é pela Convenção Americana de Direitos Humanos
+c) não é previsto expressamente nem pela CR/88 nem pela Convenção Americana de Direitos Humanos.
+d) é direito fundamental previsto expressamente tanto pela CR/88 quanto pela Convenção
+Americana de Direitos Humanos.
+e) é garantia fundamental prevista expressamente tanto pela CR/88 quanto pela Convenção
+Americana de Direitos Humanos.
+De novo esse tópico. Como você já está cansado de saber, o duplo grau de jurisdição não está
+previsto expressamente na Constituição Federal – apenas no Pacto de San José da Costa Rica,
+do qual o Brasil é signatário.
+Letra b.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+www.grancursosonline.com.br 58 de 59
+Princípios Processuais Penais
+NOÇÕES DE DIREITO PROCESSUAL PENAL
+Douglas Vargas
+ANEXO
+Conforme explanamos bem em nossa aula, a Suprema Corte alterou seu entendimento e
+passou a proibir a “execução provisória da pena”:
+Se não houve ainda trânsito em julgado, não se pode determinar que o réu inicie o cumprimento provisório da pena. Não importa que os recursos pendentes possuam efeito meramente devolutivo (sem efeito suspensivo). Não existe cumprimento provisório da pena no
+Brasil porque ninguém pode ser considerado culpado antes do trânsito em julgado (art.
+5º, LVII, da CF/88). O art. 283 do CPP, que exige o trânsito em julgado da condenação para
+que se inicie o cumprimento da pena, é constitucional, sendo compatível com o princípio
+da presunção de inocência, previsto no art. 5º, LVII, da CF/88.1
+STF. Plenário. ADC 43/DF, ADC 44/DF e ADC 54/DF, Rel. Min. Marco Aurélio, julgados em
+7/11/2019 (Info 958).
+Súmula 523/STF:
+No processo penal, a falta da defesa constitui nulidade absoluta, mas a sua deficiência
+só o anulará se houver prova de prejuízo para o réu.
+1
+CAVALCANTE, Márcio André Lopes. 1ª Turma do STF aplica entendimento do Plenário no
+sentido da impossibilidade de execução provisória da pena. Buscador Dizer o Direito, Manaus.
+Disponível em: <https://www.buscadordizerodireito.com.br/jurisprudencia/detalhes/44ece762ae7e41e3a0b1301488907eaa>. Acesso em: 19/01/2021.
+Douglas Vargas
+Agente da Polícia Civil do Distrito Federal, aprovado em 6º lugar no concurso realizado em 2013. Aprovado
+em vários concursos, como Polícia Federal (Escrivão), PCDF (Escrivão e Agente), PRF (Agente), Ministério
+da Integração, Ministério da Justiça, BRB e PMDF (Soldado – 2012 e Oficial – 2017).
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.
+O conteúdo deste livro eletrônico é licenciado para Nome do Concurseiro(a) - 000.000.000-00, vedada, por quaisquer meios e a qualquer título,
+a sua reprodução, cópia, divulgação ou distribuição, sujeitando-se aos infratores à responsabilização civil e criminal.

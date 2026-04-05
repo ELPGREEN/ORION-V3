@@ -1,0 +1,1 @@
+UPDATE neural_knowledge_base SET is_processed = true WHERE embedding IS NOT NULL AND is_processed = false;

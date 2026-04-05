@@ -1,4 +1,1 @@
 project_id = "dlwafedtlvbvuoaopvsl"
-
-[functions.chat-orion]
-verify_jwt = false

@@ -1,0 +1,1 @@
+ALTER TABLE public.voice_auth_enrollments ADD CONSTRAINT voice_auth_enrollments_user_id_key UNIQUE (user_id);

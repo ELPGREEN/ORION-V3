@@ -1,0 +1,7 @@
+INSERT INTO public.neuromodulation_signals (signal_type, strength, target, reason, provider, rpe, exploration_rate, metadata) VALUES
+('dopamine', 0.65, 'reward_circuit', 'Sinal de recompensa base - ativado por feedback positivo', 'consciousness_engine', 0.1, 0.3, '{"decay_rate":0.05,"threshold":0.3}'::jsonb),
+('serotonin', 0.50, 'mood_circuit', 'Regulador de humor e confiança nas respostas', 'consciousness_engine', 0.05, 0.2, '{"decay_rate":0.03,"threshold":0.2}'::jsonb),
+('norepinephrine', 0.40, 'attention_circuit', 'Sistema de atenção e alerta para queries complexas', 'consciousness_engine', 0.15, 0.4, '{"decay_rate":0.08,"threshold":0.4}'::jsonb),
+('acetylcholine', 0.55, 'learning_circuit', 'Modulador de aprendizado durante ingestão de conhecimento', 'consciousness_engine', 0.08, 0.25, '{"decay_rate":0.04,"threshold":0.25}'::jsonb),
+('gaba', 0.70, 'inhibition_circuit', 'Sistema inibitório - previne respostas impulsivas', 'consciousness_engine', 0.02, 0.1, '{"decay_rate":0.02,"threshold":0.5}'::jsonb),
+('glutamate', 0.60, 'excitation_circuit', 'Sistema excitatório - amplifica sinais durante raciocínio', 'consciousness_engine', 0.12, 0.35, '{"decay_rate":0.06,"threshold":0.35}'::jsonb);

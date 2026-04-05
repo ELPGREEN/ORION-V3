@@ -1,0 +1,192 @@
+{
+  "id": "040e38fc-f5ff-448b-a38e-528b77d62c7c",
+  "title": "My Document",
+  "content": [
+    {
+      "id": "1764185322326",
+      "text": "Hello world"
+    },
+    {
+      "id": "block-1764185326179-0.745027487574992",
+      "text": ""
+    },
+    {
+      "id": "block-1764185326459-0.8631461999435833",
+      "text": "Hello "
+    },
+    {
+      "id": "block-1764185332099-0.4020291953985998",
+      "text": ""
+    },
+    {
+      "id": "block-1764185333507-0.4573760865672791",
+      "text": ""
+    },
+    {
+      "id": "block-1764185333723-0.2570954943893221",
+      "text": "Hello "
+    },
+    {
+      "id": "block-1764185341291-0.460156802426543",
+      "text": ""
+    },
+    {
+      "id": "block-1764185342946-0.3570515473860154",
+      "text": ""
+    },
+    {
+      "id": "block-1764185345731-0.0795202500495431",
+      "text": ""
+    },
+    {
+      "id": "block-1764185345867-0.8343009476817695",
+      "text": ""
+    },
+    {
+      "id": "block-1764185346058-0.10172043543927756",
+      "text": ""
+    },
+    {
+      "id": "block-1764185346250-0.6051099698361062",
+      "text": "\n\n\nBackend: Express (Node.js)\n\n\nGoal: Host for free\n\n\nThe best free choices right now are:\n🥇 Railway (free tier) or 🥈 Render (free tier)\nBoth can host your full-stack Node + static React build. I’ll show the easiest full-stack method (one deployment).\n\n🎉 Best Option: Host Both Together on Railway/Render\n📌 Step 1 — Build your React Client\nOpen terminal:\ncd client\nnpm install\nnpm run build\n\nThis creates a build/ folder.\n\n📌 Step 2 — Make Express Serve the React Build\nIn your server folder, modify your Express app:\nimport express from \"express\";"
+    },
+    {
+      "id": "block-1764185358773-0.36930011138627317",
+      "text": "import path from \"path\";\nimport { fileURLToPath } from \"url\";\n"
+    },
+    {
+      "id": "block-1764185387263-0.5847362075190897",
+      "text": "const __filename = fileURLToPath(import.meta.url);\nconst __dirname = path.dirname(__filename);\n\nconst app = express();\n\n// 👉 Serve React build\napp.use(express.static(path.join(__dirname, \"../client/build\")));\n\napp.get(\"*\", (_, res) => {\n  res.sendFile(path.join(__dirname, \"../client/build/index.html\"));\n});\n\napp.listen(process.env.PORT || 5000, () => {\n  console.log(\"Server running...\");\n});\n\n\n📌 Step 3 — Add a Root package.json Script\nIn the root folder (not client or server), create a package.json if it doesn’t exist:\n{\n  \"name\": \"fullstack-app\",\n  \"scripts\": {\n    \"start\": \"node server/index.js\",\n    \"server\": \"nodemon server/index.js\",\n    \"client\": \"npm start --prefix client\",\n    \"build\": \"npm install --prefix client && npm run build --prefix client\"\n  }\n}\n\n(Make sure your entry file is server/index.js or adjust path.)\n\n📌 Step 4 — Push to GitHub\nMake sure your repo has this structure:\n/client\n/server\npackage.json  (root)\n"
+    },
+    {
+      "id": "block-1764185358797-0.7712865336178318",
+      "text": "Commit and push to GitHub.\n\n🚀 Step 5 — Deploy on Railway (FREE)"
+    },
+    {
+      "id": "block-1764185387271-0.6136933963371233",
+      "text": "\n\nGo to https://railway.app/\n\n\nLogin with GitHub\n\n\nClick New Project → Deploy from GitHub Repo\n\n\nSelect your repo\n\n\nPORT=8080\nFeature\nRailway\nRender"
+    },
+    {
+      "id": "block-1764185358813-0.12024335256399588",
+      "text": "\n\n\n\nFree limit\n~5$/month usage\nFree 750 hours\n"
+    },
+    {
+      "id": "block-1764185372204-0.7695423897884532",
+      "text": "\nSleeps on inactivity\nYes\nYes\n\n\nBuild both together easily\n✔️ Best\n✔️ Good\n\n"
+    },
+    {
+      "id": "block-1764185379334-0.4269752564809537",
+      "text": "\nBoth work, but Railway is simpler.\n"
+    },
+    {
+      "id": "block-1764185387283-0.18512521330701626",
+      "text": "🧐 Want Separate Hosting Instead?\nIf you want:\n\n\nBackend on Railway\n\n\nFrontend on Vercel\n\n\nI can show that too — just say I want them separate.\n\n📌 Need Help with Environment Variables or Build Errors?\nSend:\n\n\nyour folder structure\n"
+    },
+    {
+      "id": "block-1764185358824-0.6519678463146473",
+      "text": "\npackage.json files\n\n\nI’ll fix them for you 🚀🛠️"
+    },
+    {
+      "id": "block-1764185341458-0.3415649538707576",
+      "text": ""
+    },
+    {
+      "id": "block-1764185341692-0.4827620206238017",
+      "text": "world"
+    },
+    {
+      "id": "block-1764185336714-0.6645613696878259",
+      "text": ""
+    },
+    {
+      "id": "block-1764185336883-0.6190069978347903",
+      "text": "Great! You have:\n\n\nFrontend: TypeScript React\n\n\nBackend: Express (Node.js)\n\n\nGoal: Host for free\n"
+    },
+    {
+      "id": "block-1764185379346-0.9188524656035867",
+      "text": "\nThe best free choices right now are:\n🥇 Railway (free tier) or 🥈 Render (free tier)"
+    },
+    {
+      "id": "block-1764185387293-0.39363787926915195",
+      "text": "Both can host your full-stack Node + static React build. I’ll show the easiest full-stack \nmethod (one deployment).\n\n🎉 Best Option: Host Both Together on Railway/Render\n📌 Step 1 — Build your React Client\nOpen terminal:\ncd client\nnpm install\nnpm run build\n\nThis creates a build/ folder.\n\n📌 Step 2 — Make Express Serve the React Build\nIn your server folder, modify your Express app:\nimport express from \"express\";\nimport path from \"path\";\nimport { fileURLToPath } from \"url\";"
+    },
+    {
+      "id": "block-1764185366760-0.2924867741893613",
+      "text": "const __filename = fileURLToPath(import.meta.url);"
+    },
+    {
+      "id": "block-1764185366772-0.647275959118245",
+      "text": "const __dirname = path.dirname(__filename);\n\nconst app = express();\n\n// 👉 Serve React build\napp.use(express.static(path.join(__dirname, \"../client/build\")));\n\napp.get(\"*\", (_, res) => {"
+    },
+    {
+      "id": "block-1764185372217-0.3848900377626562",
+      "text": "  res.sendFile(path.join(__dirname, \"../client/build/index.html\"));\n});\n\napp.listen(process.env.PORT || 5000, () => {\n  console.log(\"Server running...\");\n});\n\n\n📌 Step 3 — Add a Root package.json Script\nIn the root folder (not client or server), create a package.json if it doesn’t exist:\n{"
+    },
+    {
+      "id": "block-1764185379354-0.21129516703548934",
+      "text": "  \"name\": \"fullstack-app\",\n  \"scripts\": {\n    \"start\": \"node server/index.js\","
+    },
+    {
+      "id": "block-1764185387300-0.37138435896043853",
+      "text": "    \"server\": \"nodemon server/index.js\",\n    \"client\": \"npm start --prefix client\",\n    \"build\": \"npm install --prefix client && npm run build --prefix client\"\n  }\n}\n\n(Make sure your entry file is server/index.js or adjust path.)\n\n📌 Step 4 — Push to GitHub\nMake sure your repo has this structure:\n/client\n/server\npackage.json  (root)\n\nCommit and push to GitHub.\n\n🚀 Step 5 — Deploy on Railway (FREE)\n"
+    },
+    {
+      "id": "block-1764185366791-0.7988936374851168",
+      "text": "\nGo to https://railway.app/\n\n\nLogin with GitHub\n\n\nClick New Project → Deploy from GitHub Repo"
+    },
+    {
+      "id": "block-1764185372227-0.20480405535862745",
+      "text": "\n\nSelect your repo\n\n\nImportant:\n\n\nSet Root project path to your root, not /client or /server.\n\n"
+    },
+    {
+      "id": "block-1764185379364-0.2759495671627247",
+      "text": "Add Environment Variables\n→ Railway → Variables → Add:\nPORT=8080"
+    },
+    {
+      "id": "block-1764185387310-0.8035233227403694",
+      "text": "(any other secrets like Mongo URL)\n\n\n🎊 Done! Your app URL will look like:\nhttps://yourapp.up.railway.app/\n\n\n⚠️ Important Notes for Free Hosting\n\n\n\nFeature\nRailway\nRender\n\n\n\n"
+    },
+    {
+      "id": "block-1764185366808-0.7356968921107767",
+      "text": "Free limit\n~5$/month usage\nFree 750 hours\n\n\nSleeps on inactivity\nYes\nYes"
+    },
+    {
+      "id": "block-1764185372236-0.9535100220474891",
+      "text": "\n\nBuild both together easily\n✔️ Best\n✔️ Good\n\n\n\nBoth work, but Railway is simpler.\n\n🧐 Want Separate Hosting Instead?"
+    },
+    {
+      "id": "block-1764185379371-0.9362557720680834",
+      "text": "If you want:\n\n"
+    },
+    {
+      "id": "block-1764185387319-0.4459054843320799",
+      "text": "Backend on Railway\n\n\nFrontend on Vercel\n\n\nI can show that too — just say I want them separate.\n\n📌 Need Help with Environment Variables or Build Errors?\nSend:\n\n\nyour folder structure\n\n\npackage.json files\n\n"
+    },
+    {
+      "id": "block-1764185366823-0.34698356755452187",
+      "text": "I’ll fix them for you 🚀🛠️"
+    },
+    {
+      "id": "block-1764185337403-0.8706107040484482",
+      "text": ""
+    },
+    {
+      "id": "block-1764185337490-0.6390174492297295",
+      "text": ""
+    },
+    {
+      "id": "block-1764185333882-0.22483528279064768",
+      "text": "world"
+    },
+    {
+      "id": "block-1764185330842-0.6293666256813296",
+      "text": ""
+    },
+    {
+      "id": "block-1764185329171-0.5813949064381904",
+      "text": ""
+    }
+  ],
+  "created_at": "2025-11-26T19:29:49.804Z",
+  "updated_at": "2025-11-26T19:29:49.804Z"
+}

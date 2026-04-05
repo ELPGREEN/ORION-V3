@@ -1,0 +1,1 @@
+ALTER TABLE public.neural_knowledge_base DROP CONSTRAINT neural_knowledge_base_source_type_check;

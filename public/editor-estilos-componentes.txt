@@ -1,0 +1,1254 @@
+================================================================================
+  DOCUMENTAÇÃO COMPLETA DE ESTILOS DO EDITOR DE DOCUMENTOS
+  Gerado em: 2026-03-09
+================================================================================
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ÍNDICE                                                                      ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  1.  Canvas A4 — Estilos Base                                                ║
+║  2.  ProseMirror — Tipografia Global                                         ║
+║  3.  ProseMirror — Headings (H1, H2, H3)                                    ║
+║  4.  ProseMirror — Parágrafos e Recuo ABNT                                   ║
+║  5.  ProseMirror — Listas e Citações (Blockquote)                            ║
+║  6.  ProseMirror — Tabelas                                                   ║
+║  7.  ProseMirror — Imagens e Resize                                          ║
+║  8.  Search & Replace Highlights                                             ║
+║  9.  Page Break Spacer & Zone Labels                                         ║
+║ 10.  Suggestion Marks (IA)                                                   ║
+║ 11.  Comment Mark                                                            ║
+║ 12.  Slash Command Menu                                                      ║
+║ 13.  Block Handle                                                            ║
+║ 14.  Fullscreen Mode                                                         ║
+║ 15.  Editor Scrollbar                                                        ║
+║ 16.  Fade-Scroll Indicator                                                   ║
+║ 17.  EditorRuler — Régua com Recuos                                          ║
+║ 18.  WatermarkOverlay — Marca D'Água                                         ║
+║ 19.  PageBreakOverlay — Quebras de Página                                    ║
+║ 20.  AIGhostText — Texto Fantasma IA                                         ║
+║ 21.  AIProgressIndicator — Indicador de Progresso                            ║
+║ 22.  FindReplaceBar — Buscar e Substituir                                    ║
+║ 23.  InlineSuggestionTooltip — Tooltip de Sugestão                           ║
+║ 24.  DocumentFormatPresets — Presets de Formatação                            ║
+║ 25.  CommentsPanel — Painel de Comentários                                   ║
+║ 26.  SuggestionsPanel — Painel de Sugestões IA                               ║
+║ 27.  ActivityTimeline — Linha do Tempo                                        ║
+║ 28.  DocumentOutline — Sumário/Outline                                        ║
+║ 29.  PageNavigator — Navegador de Páginas                                    ║
+║ 30.  DicionarioPopover — Dicionário Inline                                   ║
+║ 31.  RedactionTool — Redação de Dados Sensíveis                              ║
+║ 32.  DocumentComparisonViewer — Comparação de Documentos                     ║
+║ 33.  DocumentCompletenessGauge — Gauge de Completude                         ║
+║ 34.  RewriteVariationsPanel — Variações de Reescrita                         ║
+║ 35.  EditorBottomPanels — Painéis Inferiores                                 ║
+║ 36.  EditorDialogs — Diálogos do Editor                                      ║
+║ 37.  SuggestionMark / CommentMark — TipTap Extensions                        ║
+║ 38.  Document Format Config — Configuração por Tipo                          ║
+║ 39.  Style Preservation — Preservação de Estilos IA                          ║
+║ 40.  Template Engine — Variáveis de Template                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+================================================================================
+1. CANVAS A4 — ESTILOS BASE (index.css)
+================================================================================
+
+.editor-canvas-a4 {
+  width: 794px;                    /* A4 210mm @ 96 DPI */
+  min-height: 1123px;              /* A4 297mm @ 96 DPI */
+  background: #ffffff;
+  box-shadow:
+    0 1px 3px hsl(0 0% 0% / 0.12),
+    0 4px 12px hsl(0 0% 0% / 0.08);
+  margin: 0 auto;
+  position: relative;
+  overflow: visible;
+}
+
+/* Mobile responsivo */
+@media (max-width: 860px) {
+  .editor-canvas-a4 {
+    width: 100%;
+    max-width: 100%;
+    min-height: auto;
+    box-shadow: none;
+  }
+}
+
+
+================================================================================
+2. PROSEMIRROR — TIPOGRAFIA GLOBAL (index.css)
+================================================================================
+
+.editor-canvas-a4 .ProseMirror {
+  color: #1a1a1a;
+  min-height: 1123px;
+  font-family: 'Times New Roman', 'Times', serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  text-align: justify;
+  /* Margens ABNT NBR 14724: top 30mm, bottom 20mm, left 30mm, right 20mm */
+  padding-top: 0px;
+  padding-bottom: 76px;   /* 20mm */
+  padding-left: 113px;    /* 30mm */
+  padding-right: 76px;    /* 20mm */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 794px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+}
+
+/* ProseMirror base (fora do canvas) */
+.ProseMirror {
+  color: hsl(var(--foreground));
+}
+
+.ProseMirror strong {
+  color: #1a1a1a;
+}
+
+.editor-canvas-a4 .ProseMirror strong {
+  color: #1a1a1a;
+}
+
+
+================================================================================
+3. PROSEMIRROR — HEADINGS (index.css)
+================================================================================
+
+/* Headings globais */
+.ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
+  font-family: 'Times New Roman', serif;
+  color: hsl(var(--foreground));
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  text-indent: 0;
+  text-align: center;
+}
+.ProseMirror h1 { font-size: 1.5em; }
+.ProseMirror h2 { font-size: 1.25em; }
+.ProseMirror h3 { font-size: 1.1em; }
+
+/* ABNT headings no canvas A4 */
+.editor-canvas-a4 .ProseMirror h1,
+.editor-canvas-a4 .ProseMirror h2,
+.editor-canvas-a4 .ProseMirror h3 {
+  color: #1a1a1a;
+  font-family: 'Times New Roman', 'Times', serif;
+  font-weight: 700;
+  text-align: center;
+  text-indent: 0;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.editor-canvas-a4 .ProseMirror h1 {
+  font-size: 14pt;
+  text-transform: uppercase;
+}
+
+.editor-canvas-a4 .ProseMirror h2 {
+  font-size: 13pt;
+}
+
+.editor-canvas-a4 .ProseMirror h3 {
+  font-size: 12pt;
+}
+
+/* Remove indent do primeiro parágrafo após heading */
+.editor-canvas-a4 .ProseMirror h1 + p,
+.editor-canvas-a4 .ProseMirror h2 + p,
+.editor-canvas-a4 .ProseMirror h3 + p {
+  text-indent: 0;
+}
+
+
+================================================================================
+4. PROSEMIRROR — PARÁGRAFOS E RECUO ABNT (index.css)
+================================================================================
+
+.ProseMirror p {
+  color: hsl(var(--foreground) / 0.9);
+  text-indent: 12.5mm;     /* Recuo ABNT 1.25cm */
+  text-align: justify;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+}
+
+.editor-canvas-a4 .ProseMirror p {
+  color: #1a1a1a;
+  text-indent: 12.5mm;
+  text-align: justify;
+  line-height: 1.5;
+  margin: 0;
+  margin-bottom: 0.5mm;
+  padding: 0;
+}
+
+/* Remove indent dentro de listas */
+.ProseMirror li p,
+.ProseMirror li {
+  text-indent: 0;
+}
+
+.editor-canvas-a4 .ProseMirror li p {
+  text-indent: 0;
+}
+
+/* Toolbar alignment overrides */
+.ProseMirror p[style*="text-align: left"],
+.ProseMirror p[style*="text-align:left"] { text-align: left !important; }
+
+.ProseMirror p[style*="text-align: center"],
+.ProseMirror p[style*="text-align:center"] {
+  text-align: center !important;
+  text-indent: 0 !important;
+}
+
+.ProseMirror p[style*="text-align: right"],
+.ProseMirror p[style*="text-align:right"] {
+  text-align: right !important;
+  text-indent: 0 !important;
+}
+
+/* Remove indent para center/right no canvas */
+.editor-canvas-a4 .ProseMirror p[style*="text-align: center"],
+.editor-canvas-a4 .ProseMirror p[style*="text-align:center"],
+.editor-canvas-a4 .ProseMirror p[style*="text-align: right"],
+.editor-canvas-a4 .ProseMirror p[style*="text-align:right"] {
+  text-indent: 0 !important;
+}
+
+
+================================================================================
+5. PROSEMIRROR — LISTAS E CITAÇÕES (index.css)
+================================================================================
+
+.ProseMirror li {
+  color: hsl(var(--foreground) / 0.9);
+}
+
+.ProseMirror ul, .ProseMirror ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.editor-canvas-a4 .ProseMirror li {
+  color: #1a1a1a;
+}
+
+/* ABNT blockquote: 4cm indent, 10pt, single spacing */
+.editor-canvas-a4 .ProseMirror blockquote {
+  margin-left: 4cm;
+  margin-right: 0;
+  padding: 0;
+  border-left: none;
+  font-size: 10pt;
+  line-height: 1.0;
+  text-indent: 0;
+  color: #1a1a1a;
+}
+
+.editor-canvas-a4 .ProseMirror blockquote p {
+  text-indent: 0;
+  font-size: 10pt;
+  line-height: 1.0;
+}
+
+
+================================================================================
+6. PROSEMIRROR — TABELAS (index.css)
+================================================================================
+
+.editor-canvas-a4 .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  table-layout: fixed;
+  overflow: visible;
+}
+
+.editor-canvas-a4 .ProseMirror td,
+.editor-canvas-a4 .ProseMirror th {
+  border: 1px solid #999;
+  padding: 6px 8px;
+  vertical-align: top;
+  min-width: 60px;
+  position: relative;
+  color: #1a1a1a;
+  text-indent: 0;
+  text-align: left;
+}
+
+.editor-canvas-a4 .ProseMirror td p,
+.editor-canvas-a4 .ProseMirror th p {
+  text-indent: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.editor-canvas-a4 .ProseMirror th {
+  background-color: #f3f4f6;
+  font-weight: 700;
+}
+
+.editor-canvas-a4 .ProseMirror .selectedCell {
+  background-color: hsl(210 100% 95%);
+}
+
+.editor-canvas-a4 .ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: hsl(210 100% 50%);
+  pointer-events: auto;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.editor-canvas-a4 .ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+
+================================================================================
+7. PROSEMIRROR — IMAGENS E RESIZE (index.css)
+================================================================================
+
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.5rem auto;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+.ProseMirror [data-image-resizer] {
+  display: inline-block;
+  position: relative;
+}
+
+.ProseMirror [data-image-resizer] img {
+  margin: 0;
+}
+
+
+================================================================================
+8. SEARCH & REPLACE HIGHLIGHTS (index.css)
+================================================================================
+
+.search-result {
+  background-color: hsl(46 100% 70% / 0.3);
+  border-radius: 2px;
+}
+
+.search-result-current {
+  background-color: hsl(46 100% 50% / 0.5);
+  outline: 2px solid hsl(var(--primary));
+  border-radius: 2px;
+}
+
+
+================================================================================
+9. PAGE BREAK SPACER & ZONE LABELS (index.css)
+================================================================================
+
+.page-break-spacer {
+  display: block !important;
+  pointer-events: none;
+  user-select: none;
+  position: relative;
+}
+
+.page-break-zone-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: hsl(var(--muted-foreground) / 0.6);
+  background: hsl(var(--background) / 0.7);
+  padding: 1px 10px;
+  border-radius: 3px;
+  white-space: nowrap;
+  line-height: 1;
+  backdrop-filter: blur(2px);
+}
+
+.dark .page-break-zone-label {
+  background: hsl(var(--background) / 0.8);
+}
+
+
+================================================================================
+10. SUGGESTION MARKS — IA (index.css)
+================================================================================
+
+/* Zero visual impact — preserves all user formatting */
+span[data-suggestion-id] {
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  text-decoration: none !important;
+  /* NÃO reseta color, font-weight, font-style, ou display */
+}
+
+/* Legacy class cleanup */
+.suggestion-mark-wrapper,
+.suggestion-highlight,
+.suggestion-highlight.suggestion-insert,
+.suggestion-highlight.suggestion-delete {
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  text-decoration: none !important;
+}
+
+
+================================================================================
+11. COMMENT MARK (CommentMark.ts — TipTap Extension)
+================================================================================
+
+Renderiza como:
+<span data-comment-id="..." class="comment-highlight"
+  style="background-color: hsl(48 96% 89% / 0.6);
+         border-bottom: 2px solid hsl(48 96% 53%);
+         cursor: pointer;">
+  ...texto...
+</span>
+
+
+================================================================================
+12. SLASH COMMAND MENU (SlashCommandMenu.tsx + index.css)
+================================================================================
+
+/* Animação CSS */
+.slash-command-menu {
+  animation: slash-menu-in 0.12s ease-out;
+}
+
+@keyframes slash-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Container: */
+className="slash-command-menu rounded-lg border border-border bg-popover shadow-xl w-64 max-h-72 overflow-y-auto"
+
+/* Category header: */
+className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider"
+
+/* Item selecionado: */
+className="bg-accent text-accent-foreground"
+
+/* Item normal: */
+className="text-popover-foreground hover:bg-accent/50"
+
+/* Icon container: */
+className="h-8 w-8 rounded-md border border-border bg-background text-muted-foreground"
+
+/* Title: */ text-xs font-medium
+/* Description: */ text-[10px] text-muted-foreground truncate
+
+
+================================================================================
+13. BLOCK HANDLE (BlockHandle.tsx + index.css)
+================================================================================
+
+/* CSS — aparece ao hover do canvas */
+.editor-canvas-a4 .block-handle {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.editor-canvas-a4:hover .block-handle {
+  opacity: 1;
+}
+
+/* Container: */
+className="block-handle absolute flex items-center gap-0.5"
+style={{ top: `${top}px`, left: "-40px" }}
+
+/* Botão Plus: */
+className="h-6 w-6 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+
+/* Botão Drag (GripVertical): */
+className="h-6 w-6 rounded hover:bg-accent text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+
+
+================================================================================
+14. FULLSCREEN MODE (index.css)
+================================================================================
+
+body.editor-fullscreen-active [data-dashboard-chrome] {
+  display: none !important;
+}
+body.editor-fullscreen-active [data-dashboard-main] {
+  margin-left: 0 !important;
+}
+body.editor-fullscreen-active [data-dashboard-main] > main {
+  padding: 0 !important;
+}
+body.editor-fullscreen-active {
+  overflow: hidden;
+}
+
+
+================================================================================
+15. EDITOR SCROLLBAR (index.css)
+================================================================================
+
+.editor-scrollbar-visible ::-webkit-scrollbar,
+.editor-scrollbar-visible::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.editor-scrollbar-visible ::-webkit-scrollbar-thumb,
+.editor-scrollbar-visible::-webkit-scrollbar-thumb {
+  background: hsl(25 10% 28%);
+  border-radius: 2px;
+}
+
+.editor-scrollbar-visible ::-webkit-scrollbar-thumb:hover,
+.editor-scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: hsl(46 65% 40%);
+}
+
+
+================================================================================
+16. FADE-SCROLL INDICATOR (index.css)
+================================================================================
+
+.fade-scroll-x {
+  position: relative;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.fade-scroll-x::-webkit-scrollbar { display: none; }
+
+.fade-scroll-container { position: relative; }
+
+.fade-scroll-container::before {
+  left: 0;
+  background: linear-gradient(to right, hsl(var(--card)), transparent);
+}
+.fade-scroll-container::after {
+  right: 0;
+  background: linear-gradient(to left, hsl(var(--card)), transparent);
+}
+/* Width: 24px, z-index: 10, pointer-events: none, opacity: 0 → 1 on scroll */
+.fade-scroll-container.can-scroll-left::before { opacity: 1; }
+.fade-scroll-container.can-scroll-right::after { opacity: 1; }
+
+
+================================================================================
+17. EDITOR RULER (EditorRuler.tsx)
+================================================================================
+
+Dimensões:
+  - Largura total: 794px (A4 width)
+  - Altura: 28px
+  - A4 = 21cm → pxPerCm = 794/21 ≈ 37.8px
+
+Cores:
+  - Background:     hsl(220, 15%, 16%)
+  - Border bottom:  hsl(220, 10%, 25%)
+  - Major tick:     hsl(40, 10%, 40%) — height: 10px
+  - Half tick:      hsl(40, 10%, 30%) — height: 6px
+  - Label:          hsl(40, 10%, 50%) — font: 8px mono
+  - Usable area:    hsl(46, 65%, 52%, 0.15) — height: 3px
+  - Active area:    hsl(46, 65%, 52%, 0.35) — height: 3px
+
+Markers (triângulos SVG):
+  - Normal:         hsl(46, 65%, 52%)
+  - Dragging:       hsl(46, 65%, 62%)
+  - Stroke:         hsl(220, 15%, 10%) — width 0.5
+  - Size:           12×10 SVG viewBox
+
+Drag tooltip:
+  - bg: hsl(220,15%,10%)
+  - text: hsl(46,65%,52%)
+  - font: 9px mono
+  - Formato: "X.Xcm"
+
+3 marcadores:
+  - First-line indent (▼ topo) — "Recuo 1ª linha"
+  - Left indent (▲ base) — "Recuo esquerdo"
+  - Right indent (▲ base, espelhado) — "Recuo direito"
+
+
+================================================================================
+18. WATERMARK OVERLAY (WatermarkOverlay.tsx)
+================================================================================
+
+Config padrão:
+  text: "CONFIDENCIAL"
+  opacity: 0.08
+  fontSize: 64px
+  rotation: -35°
+  color: "hsl(var(--muted-foreground))"
+
+WatermarkCSS render:
+  - className="absolute inset-0 z-10 pointer-events-none overflow-hidden
+              flex flex-col items-center justify-center gap-16"
+  - 5 repetições do texto
+  - className="whitespace-nowrap font-bold select-none"
+  - letterSpacing: "0.2em"
+
+WatermarkControl (Popover):
+  - Trigger: Button ghost h-7 w-7, icon Droplets 3.5×3.5
+  - Ativo: "bg-primary/20 text-primary"
+  - Inativo: "text-muted-foreground hover:text-foreground"
+  - PopoverContent: w-64 p-3 space-y-3
+  - Slider opacidade: 2%–30%
+  - Slider tamanho: 24px–120px
+
+
+================================================================================
+19. PAGE BREAK OVERLAY (PageBreakOverlay.tsx)
+================================================================================
+
+Constantes:
+  MM_TO_PX = 96 / 25.4
+  PAGE_HEIGHT_PX = 1123px
+  STD_USABLE = (297 - 30 - 20)mm × MM_TO_PX = ~935px (247mm)
+  BRANDED_USABLE = (297 - 20 - 22)mm × MM_TO_PX = ~964px (255mm)
+
+Letterhead per page:
+  - position: absolute, top: idx * 1123px
+  - backgroundSize: "100% 100%"
+  - opacity: 0.18
+
+Red break line:
+  - position: absolute, top: breakY
+  - left: -30px, right: -30px
+  - height: 3px
+  - background: linear-gradient(to right, transparent 0%, #dc2626 10%, #dc2626 90%, transparent 100%)
+  - z-index: 12
+
+Page badge (pentagon ribbon):
+  - background: #dc2626
+  - color: #fff
+  - padding: 3px 14px
+  - fontSize: 12px
+  - fontWeight: 800
+  - letterSpacing: "0.5px"
+  - Triângulos laterais (CSS border trick)
+  - Formato: "PÁG. X → PÁG. Y DE Z"
+
+
+================================================================================
+20. AI GHOST TEXT (AIGhostText.tsx)
+================================================================================
+
+Container:
+  className="absolute z-50 pointer-events-none"
+
+Loading:
+  className="inline-flex items-center gap-1 text-muted-foreground/40 text-[11px]"
+  Icon: Loader2 h-2.5 w-2.5 animate-spin
+
+Suggestion text:
+  className="text-muted-foreground/40 text-[11px] leading-relaxed italic"
+  maxWidth: 400px
+
+Tab badge:
+  className="bg-primary/10 text-primary text-[8px] px-1 py-0.5 rounded font-medium"
+  Icon: Sparkles h-2 w-2
+
+Keyboard:
+  Tab → aceitar
+  Escape → dismiss
+
+
+================================================================================
+21. AI PROGRESS INDICATOR (AIProgressIndicator.tsx)
+================================================================================
+
+4 estágios:
+  1. "Analisando contexto..." (Brain, 2s)
+  2. "Buscando fundamentação..." (Search, 3s)
+  3. "Gerando resposta..." (FileCheck, 4s)
+  4. "Verificando qualidade..." (ShieldCheck, 2s)
+  5. "Concluído" (CheckCircle2)
+
+Container:
+  className="flex items-center gap-2 px-3 py-1.5"
+
+Icon:
+  className="h-3.5 w-3.5 text-primary animate-pulse shrink-0"
+
+Label:
+  className="text-[11px] text-primary font-medium whitespace-nowrap"
+
+Progress bar:
+  className="h-1 flex-1 max-w-[120px] bg-secondary"
+
+Percentage:
+  className="text-[9px] text-muted-foreground"
+
+
+================================================================================
+22. FIND REPLACE BAR (FindReplaceBar.tsx)
+================================================================================
+
+Container:
+  className="flex flex-wrap items-center gap-1.5 px-3 py-2
+            bg-secondary/50 border-b border-border text-xs"
+
+Search Input:
+  className="h-7 text-xs pr-12"
+  max-w-[220px] min-w-[140px]
+
+Result counter:
+  className="text-[10px] text-muted-foreground"
+  Posição: absolute right-2 top-1/2
+
+Botões: variant="ghost" h-7 w-7
+  - ChevronUp (anterior)
+  - ChevronDown (próximo)
+  - CaseSensitive (ativo: "bg-primary/20 text-primary")
+  - Replace, ReplaceAll
+
+Replace input: h-7 text-xs, max-w-[200px] min-w-[120px]
+
+Separador: "w-px h-5 bg-border"
+
+
+================================================================================
+23. INLINE SUGGESTION TOOLTIP (InlineSuggestionTooltip.tsx)
+================================================================================
+
+Container:
+  className="fixed z-[9999] bg-popover border border-border rounded-lg
+            shadow-xl p-3 max-w-sm animate-in fade-in-0 zoom-in-95"
+
+Header:
+  className="text-[10px] font-medium text-muted-foreground mb-2"
+  Texto: "Sugestão da IA"
+
+Diff - original:
+  className="text-[11px] bg-destructive/10 text-destructive rounded px-2 py-1 line-through"
+
+Diff - sugerido:
+  className="text-[11px] bg-green-500/10 text-green-700
+            dark:text-green-400 rounded px-2 py-1"
+
+Botões (h-6 text-[10px]):
+  - Aceitar: default size="sm"
+  - Rejeitar: variant="outline"
+  - Copiar: variant="ghost"
+
+
+================================================================================
+24. DOCUMENT FORMAT PRESETS (DocumentFormatPresets.tsx)
+================================================================================
+
+12 presets organizados em categorias:
+
+Jurídico:
+  - Petição Judicial: Times 12pt, 1.5, justify, CNJ
+  - Contrato: Times 12pt, 1.5, justify
+  - Parecer Jurídico: Times 12pt, 1.5, justify, OAB
+  - Sentença/Decisão: Times 12pt, 2.0, justify, CNJ
+  - Recurso/Apelação: Times 12pt, 1.5, justify
+
+Acadêmico:
+  - ABNT NBR 14724: Times 12pt, 1.5, justify, ABNT
+  - Artigo Acadêmico: Times 12pt, 1.5, justify, ABNT
+  - Monografia ABNT: Times 12pt, 1.5, justify, ABNT NBR 14724
+  - Artigo Científico ABNT: Times 12pt, 1.5, justify, ABNT
+
+Internacional:
+  - US Legal: Times 12pt, 2.0, left, US Courts
+  - EU Contract: Arial 11pt, 1.5, justify
+
+Outros:
+  - Compacto: Arial 10pt, 1.15, left
+
+Trigger:
+  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+  Icon: Settings2 h-3.5 w-3.5
+
+PopoverContent: w-64 p-2
+Category: text-[9px] uppercase text-muted-foreground/60
+Item: "hover:bg-accent hover:text-accent-foreground" text-xs
+Standard badge: "text-[9px] bg-primary/10 text-primary px-1 rounded"
+Description: "text-[9px] text-muted-foreground mt-0.5"
+
+
+================================================================================
+25. COMMENTS PANEL (CommentsPanel.tsx)
+================================================================================
+
+Header:
+  className="flex items-center gap-2 px-3 py-2 border-b border-border"
+  Icon: MessageSquare h-4 w-4 text-primary
+  Badge: variant="secondary" text-[10px] h-5
+
+Comment card (pendente):
+  className="p-3 rounded-lg border border-border bg-card hover:bg-accent/30"
+
+Comment card (resolvido):
+  className="border-border/50 bg-muted/30 opacity-60"
+
+Author: text-xs font-medium text-foreground
+Date: text-[10px] text-muted-foreground
+Quoted text: text-[10px] italic border-l-2 border-primary/40 pl-2 line-clamp-2
+Content: text-xs text-foreground
+
+Resolve button: h-6 w-6 hover:text-green-500
+Delete button: h-6 w-6 hover:text-destructive
+
+Replies: pl-3 border-l border-border/50
+  Author: font-medium text-foreground
+  Content: text-muted-foreground text-[11px]
+
+Reply input: min-h-[32px] h-8 text-xs
+Reply button: h-8 w-8
+
+Empty state: text-xs text-muted-foreground text-center py-8
+
+Section "Resolvidos": text-[10px] uppercase tracking-wider
+
+
+================================================================================
+26. SUGGESTIONS PANEL (SuggestionsPanel.tsx)
+================================================================================
+
+Header:
+  Icon: Lightbulb h-4 w-4 text-primary
+  "Sugestões IA"
+  Badge: variant="secondary" text-[10px] h-5
+
+Bulk actions (quando >1 pendente):
+  - "Aceitar Todas": variant="outline" h-6 text-[10px], CheckCheck
+  - "Rejeitar Todas": variant="outline" h-6 text-[10px], XCircle
+
+Review banner:
+  className="px-3 py-2 border-b border-border bg-primary/5 space-y-2"
+  Progress: h-1.5 [&>div]:bg-primary
+  Reviewing: Loader2 animate-spin + "Revisão em andamento..."
+  Summary: totalSuggestions (foreground), risks (red-500), improvements (green-500)
+
+Type badges colors:
+  insert:  "text-green-600 bg-green-500/10"
+  delete:  "text-red-600 bg-red-500/10"
+  replace: "text-blue-600 bg-blue-500/10"
+
+Type labels: Inserção, Remoção, Substituição
+Badge: text-[9px] h-4
+
+Suggestion card:
+  className="p-3 rounded-lg border border-border bg-card hover:bg-accent/30"
+  Original: "line-through text-red-500/80" text-xs
+  Suggested: "text-green-600 bg-green-500/5 rounded px-1.5 py-1" text-xs
+
+Accept/Reject buttons: h-6 text-[10px]
+
+History section:
+  className="p-2 rounded border border-border/50 bg-muted/30 opacity-60 text-[11px]"
+  Badge aceita: variant="default"
+  Badge rejeitada: variant="destructive"
+
+
+================================================================================
+27. ACTIVITY TIMELINE (ActivityTimeline.tsx)
+================================================================================
+
+Header:
+  Icon: Clock h-4 w-4 text-primary
+  "Atividade"
+  Counter: text-[10px] text-muted-foreground
+
+Event type colors:
+  edit:       "text-blue-500 bg-blue-500/10"
+  comment:    "text-yellow-500 bg-yellow-500/10"
+  suggestion: "text-purple-500 bg-purple-500/10"
+  resolve:    "text-green-500 bg-green-500/10"
+  accept:     "text-green-600 bg-green-500/10"
+  reject:     "text-red-500 bg-red-500/10"
+
+Event icon container:
+  className="h-5 w-5 rounded-full shrink-0 mt-0.5"
+
+Event text:
+  Author: font-medium text-foreground text-[11px]
+  Description: text-muted-foreground text-[11px]
+  Time: text-[9px] text-muted-foreground (HH:MM)
+
+Day group header:
+  className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-2"
+
+
+================================================================================
+28. DOCUMENT OUTLINE / SUMÁRIO (DocumentOutline.tsx)
+================================================================================
+
+Container:
+  className="flex flex-col border-r border-border bg-card/50 w-64 shrink-0"
+
+Collapsed:
+  className="w-8 border-r border-border bg-card/50"
+  Button: h-6 w-6, ChevronRight
+
+Header:
+  Icon: BookOpen h-3.5 w-3.5 text-primary
+  Title: text-[10px] font-semibold uppercase tracking-wider
+  Stats: text-[8px] text-muted-foreground tabular-nums — "X seções · Y págs"
+
+Heading item:
+  indent: (level - 1) * 12 + 4 px
+
+  Border por nível:
+    level 1: "border-primary/60"
+    level 2: "border-primary/30"
+    level 3: "border-muted-foreground/20"
+
+  Ativo: "bg-primary/8 text-primary font-semibold"
+  Normal: "text-foreground/80 hover:bg-accent/50 font-medium"
+
+  Index: text-[9px] font-mono text-muted-foreground min-w-[16px]
+  Title: text-[10px] truncate
+  Dot leaders: border-b border-dotted border-muted-foreground/30
+  Page: text-[9px] font-mono tabular-nums — "pág.X"
+
+  Expand arrow: ChevronRight h-2.5 w-2.5, rotate-90 when expanded
+
+Summary (expanded):
+  className="ml-6 mr-1 mb-1 px-2 py-1 text-[9px] italic text-muted-foreground
+            leading-relaxed border-l border-muted-foreground/15 bg-muted/30 rounded-sm"
+
+Auto-detect: Bold paragraphs e UPPERCASE como pseudo-headings
+
+Empty state:
+  Icon: ListTree h-6 w-6 text-muted-foreground/40
+  "Organizar em Seções" button: variant="outline" h-7 text-[10px], Wand2
+
+
+================================================================================
+29. PAGE NAVIGATOR (PageNavigator.tsx)
+================================================================================
+
+PAGE_HEIGHT_PX = 1123
+
+Botões prev/next:
+  className="h-5 w-5 text-muted-foreground hover:text-foreground"
+  Icons: ChevronUp, ChevronDown
+
+Page indicator:
+  className="px-1.5 py-0.5 rounded hover:bg-accent text-[10px]
+            text-muted-foreground hover:text-foreground min-w-[50px] justify-center"
+  Formato: "Pág. X / Y"
+
+Popover (ir para página):
+  PopoverContent: w-48 p-2, side="top"
+  Input: h-7 text-xs, type="number"
+  "Ir" button: h-7 text-xs px-2.5
+
+Quick page buttons:
+  Ativo: "bg-primary text-primary-foreground"
+  Inativo: "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
+  Size: h-6 w-6 text-[10px]
+
+
+================================================================================
+30. DICIONÁRIO POPOVER (DicionarioPopover.tsx)
+================================================================================
+
+Trigger:
+  className="h-7 text-[11px] text-[hsl(40,10%,65%)]
+            hover:text-[hsl(46,65%,52%)] hover:bg-[hsl(220,12%,18%)]"
+  Icon: BookOpen h-3 w-3
+
+PopoverContent: w-80 max-h-96 overflow-y-auto
+
+Search: Input h-8 text-xs + Button h-8 text-xs
+
+Word: text-sm font-serif font-bold text-foreground
+Phonetic: text-xs text-muted-foreground
+
+Part of speech: text-[10px] uppercase tracking-wider text-primary font-medium
+
+Definition: text-xs text-foreground, pl-2 border-l-2 border-primary/20
+Example: text-[10px] text-muted-foreground italic
+Synonyms: text-[10px] text-muted-foreground
+
+
+================================================================================
+31. REDACTION TOOL — LGPD (RedactionTool.tsx)
+================================================================================
+
+Dialog: sm:max-w-lg bg-card
+
+Padrões sensíveis:
+  - CPF, CNPJ, E-mail, Telefone, RG (regex)
+  - IA contextual (nomes, endereços, processos, nascimento)
+
+Redação visual:
+  - Bloco: "█".repeat(length)
+  - Span: style="background:#000;color:#000;border-radius:2px;padding:0 2px"
+  - data-redacted="true"
+
+Checkboxes: label text-xs, gap-1.5
+Input custom: h-8 text-xs
+Botão Regex: variant="outline" text-xs, Scan icon
+Botão IA: variant="outline" text-xs, Sparkles text-primary
+
+Matches list: max-h-48 overflow-y-auto border rounded p-2
+  - Checkbox + pattern ID (text-[10px] uppercase)
+  - IA matches: text-primary font-medium + "🤖"
+  - Code display: text-xs bg-secondary px-1 rounded
+
+Apply button: "Aplicar Redação (N)", ShieldAlert icon
+
+
+================================================================================
+32. DOCUMENT COMPARISON VIEWER (DocumentComparisonViewer.tsx)
+================================================================================
+
+Dialog: max-w-3xl max-h-[80vh] bg-card
+
+Header badges:
+  - Added:     Plus icon text-green-400
+  - Removed:   Minus icon text-red-400
+  - Unchanged: Equal icon text-muted-foreground
+  - Change %:  variant="secondary"
+
+Diff area:
+  className="flex-1 overflow-y-auto p-4 bg-muted/30 rounded-lg
+            text-sm leading-relaxed font-mono"
+
+Diff segments:
+  same:    "text-foreground"
+  added:   "bg-green-500/20 text-green-400 border-b border-green-500/40 px-0.5"
+  removed: "bg-red-500/20 text-red-400 line-through border-b border-red-500/40 px-0.5"
+
+Botões:
+  - Rejeitar: variant="outline", X icon
+  - Aceitar: "btn-gold", CheckCircle2 icon
+
+
+================================================================================
+33. DOCUMENT COMPLETENESS GAUGE (DocumentCompletenessGauge.tsx)
+================================================================================
+
+Cores do gauge por %:
+  >= 80%: text-green-600, [&>div]:bg-green-500
+  >= 50%: text-amber-500, [&>div]:bg-amber-500
+  < 50%:  text-destructive, [&>div]:bg-destructive
+
+Compact mode:
+  - text-[10px] font-bold + Progress h-1.5 w-16
+  - Badge destructive text-[9px] h-4
+
+Expanded mode:
+  Header: text-lg font-bold + Progress h-2
+
+Missing Required:
+  - text-[10px] font-semibold text-destructive uppercase tracking-wider
+  - AlertCircle h-3 w-3 text-destructive
+  - "Inserir" button: variant="outline" h-5 text-[9px] px-1.5
+
+Missing Optional:
+  - text-amber-500 uppercase
+  - "○" text-[9px] text-amber-500
+
+Present:
+  - text-green-600 uppercase
+  - CheckCircle2 h-3 w-3 text-green-500 opacity-60
+
+"Detectar Lacunas com IA" button:
+  variant="outline" w-full h-7 text-xs, Search / Loader2
+
+
+================================================================================
+34. REWRITE VARIATIONS PANEL (RewriteVariationsPanel.tsx)
+================================================================================
+
+3 Tons:
+  - Formal (GraduationCap)
+  - Persuasivo (Sparkles)
+  - Simplificado (Pen)
+
+Header:
+  className="bg-muted/30 border-b border-border"
+  Icon: Scale h-3.5 w-3.5 text-primary
+  "Variações de Reescrita" text-xs font-medium
+
+Tone badges: variant="secondary" text-[10px]
+
+"Gerar Variações" button: w-full h-8 text-xs, Sparkles icon
+
+Original reference:
+  className="bg-muted/50 rounded px-2.5 py-2 border-l-2 border-l-muted-foreground/30"
+
+Variation card:
+  className="bg-primary/5 rounded px-2.5 py-2 border-l-2"
+  
+  Border-l colors por diff ratio:
+    ratio > 1.15: border-l-green-500
+    ratio < 0.85: border-l-amber-500
+    default:      border-l-primary
+
+"Aplicar esta versão": variant="outline" h-6 text-[10px], Check icon
+"Regenerar variações": variant="ghost" text-[10px] text-muted-foreground
+
+
+================================================================================
+35. EDITOR BOTTOM PANELS (EditorBottomPanels.tsx)
+================================================================================
+
+Strategic Analysis Panel:
+  Alerta contra cliente:
+    "bg-destructive/10 border-b border-destructive/20 text-destructive"
+  Favorável:
+    "bg-primary/5 border-b border-primary/20 text-primary"
+  Desfavorável:
+    "bg-destructive/5 border-b border-destructive/10 text-destructive/70"
+
+  Pontos Fortes: ShieldCheck, text-primary, border-l border-primary/30
+  Riscos: AlertTriangle, text-destructive/70, border-l border-destructive/20
+
+Gap Aggregation Panel:
+  className="bg-primary/5 border border-primary/20 p-4"
+  Icon: PlusCircle h-4 w-4 text-primary
+  "Fortalecer a Defesa" text-sm font-medium
+  
+  Input: h-8 px-3 text-xs border bg-background
+  "Agregar à Defesa" button: btn-gold, ShieldCheck icon
+
+
+================================================================================
+36. EDITOR DIALOGS (EditorDialogs.tsx)
+================================================================================
+
+PDF Name Dialog:
+  className="sm:max-w-md bg-card"
+  Title: text-sm "Nomear arquivo PDF"
+  Label: text-xs "Nome do arquivo"
+  Input: h-9 text-sm + ".pdf" suffix
+  Cancel: variant="outline"
+  Download: "btn-gold", Download icon
+
+AI Dialogs (via AIPromptDialog):
+  - Leis e Citações: showTextInput=true, allowEmpty
+  - Formatação ABNT: checkboxes, showTextInput=false
+  - Agregar com IA: showTextInput=true, allowEmpty
+
+FORMATTING_CHECKBOXES:
+  1. "Corrigir gramática e ortografia" (default: on)
+  2. "Verificar alinhamento e espaçamento" (default: on)
+  3. "Padronizar pontuação (., , -)" (default: on)
+  4. "Organizar listas e numeração" (default: on)
+
+
+================================================================================
+37. TIPTAP EXTENSIONS — SUGGESTION MARK E COMMENT MARK
+================================================================================
+
+SuggestionMark:
+  - name: "suggestion"
+  - inclusive: false
+  - excludes: "" (coexiste com bold, color, highlight, etc.)
+  - Atributos: suggestionId, suggestionType ("insert"|"delete"|"replace")
+  - Render: <span data-suggestion-id="..." data-suggestion-type="...">
+  - SEM class ou style (zero visual impact)
+
+CommentMark:
+  - name: "comment"
+  - Atributos: commentId
+  - Render: <span data-comment-id="..." class="comment-highlight"
+              style="background-color: hsl(48 96% 89% / 0.6);
+                     border-bottom: 2px solid hsl(48 96% 53%);
+                     cursor: pointer;">
+
+
+================================================================================
+38. DOCUMENT FORMAT CONFIG (document-format-config.ts)
+================================================================================
+
+Interface DocumentFormatConfig:
+  fontFamily, fontSize, lineHeight, textAlign,
+  rulerLeftIndent, rulerFirstLineIndent, rulerRightIndent, standard
+
+Bases:
+  CNJ_BASE:
+    Times New Roman 12pt, 1.5, justify
+    rulerFirstLineIndent: 47px (~1.25cm)
+    standard: "CNJ"
+
+  ABNT_BASE: = CNJ_BASE + standard: "ABNT"
+  
+  ABNT_ACADEMICO_BASE:
+    Times New Roman 12pt, 1.5, justify
+    rulerFirstLineIndent: 47px
+    standard: "ABNT NBR 14724"
+
+  SENTENCA_BASE: = CNJ_BASE + lineHeight: "2"
+  
+  CONTRATO_BASE:
+    Times New Roman 12pt, 1.5, justify
+    rulerFirstLineIndent: 0 (sem recuo de parágrafo)
+
+  TRABALHISTA_BASE: = CNJ_BASE + standard: "TST"
+
+Categorias:
+  penal: CNJ_BASE
+  civil: CNJ_BASE
+  trabalhista: TRABALHISTA_BASE
+  contrato: CONTRATO_BASE
+  extrajudicial: CONTRATO_BASE
+  academico: ABNT_ACADEMICO_BASE
+  ferramentas: ABNT_BASE
+
+Pixel reference: A4 96 DPI = 794px width, 1cm ≈ 37.8px
+
+
+================================================================================
+39. STYLE PRESERVATION (stylePreservation.ts)
+================================================================================
+
+extractUserStyles(html):
+  - Extrai atributos style="" inline de todos os elementos
+  - Chave: "tag[index]" (ex: "h1[0]", "p[3]")
+
+reapplyUserStyles(originalHtml, processedHtml):
+  - Reaplica estilos do original no processado
+  - Merge inteligente: propriedades existentes no processado são mantidas
+  - Propriedades faltantes do original são adicionadas
+  - Garante que IA NÃO remove formatação do usuário
+
+
+================================================================================
+40. TEMPLATE ENGINE (templateEngine.ts)
+================================================================================
+
+Formato de variável: {{nome_variavel}}
+
+Regex: /\{\{(\s*[\w\sÀ-ÿ._-]+\s*)\}\}/g
+
+Presets de variáveis comuns:
+  partes:    nome_autor, nome_reu, cpf_autor, cpf_reu, endereco_autor, endereco_reu
+  processo:  numero_processo, vara, comarca, tribunal, classe_processual
+  datas:     data_atual, data_fatos, data_audiencia, prazo
+  valores:   valor_causa, valor_danos, valor_honorarios
+  advogado:  nome_advogado, oab_numero, escritorio, telefone_advogado, email_advogado
+
+
+================================================================================
+FIM DO DOCUMENTO
+================================================================================

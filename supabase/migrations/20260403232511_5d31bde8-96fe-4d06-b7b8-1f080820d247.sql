@@ -1,0 +1,1 @@
+DELETE FROM public.neural_knowledge_base WHERE source_type = 'source_tracker';

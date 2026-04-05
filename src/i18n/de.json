@@ -1,0 +1,637 @@
+{
+  "common": {
+    "learnMore": "Mehr erfahren",
+    "contact": "Kontakt",
+    "schedule": "Beratung vereinbaren",
+    "whatsapp": "Direkter WhatsApp-Kontakt",
+    "readMore": "Weiterlesen",
+    "submit": "Absenden",
+    "sending": "Wird gesendet...",
+    "loading": "Wird geladen...",
+    "back": "Zurück",
+    "viewAll": "Alle anzeigen",
+    "lawyer": "General Director",
+    "oab": "CNPJ 42.501.190/0001-70",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "register": "Registrieren",
+    "panel": "Panel",
+    "myPanel": "Mein Panel",
+    "haveAccount": "Bereits ein Konto",
+    "logoutSuccess": "Erfolgreich abgemeldet",
+    "seeYou": "Bis zum nächsten Mal!",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "new": "Neu",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "all": "Alle",
+    "yes": "Ja",
+    "no": "Nein",
+    "close": "Schließen",
+    "download": "Herunterladen",
+    "upload": "Hochladen",
+    "required": "Erforderlich",
+    "optional": "Optional",
+    "success": "Erfolg",
+    "error": "Fehler",
+    "warning": "Warnung",
+    "info": "Information"
+  },
+  "nav": {
+    "home": "Startseite",
+    "about": "Über uns",
+    "areas": "Rechtsgebiete",
+    "services": "Dienstleistungen",
+    "differential": "Unterscheidung",
+    "proBono": "Pro Bono",
+    "publications": "Publikationen",
+    "testimonials": "Referenzen",
+    "contact": "Kontakt",
+    "clientArea": "Kundenbereich",
+    "theLawyer": "Der Anwalt",
+    "navigation": "Navigation",
+    "formation": "Ausbildung",
+    "directContact": "Direktkontakt",
+    "platform": "Plattform"
+  },
+  "hero": {
+    "subtitle": "Internationale Rechtspraxis mit technischer Exzellenz, Engagement für Menschenrechte und soziale Gerechtigkeit. Zertifiziert von der Harvard University mit internationaler akademischer Erfahrung am Berkeley Judicial Institute.",
+    "scheduleConsultation": "Beratung vereinbaren",
+    "meetLawyer": "Den Anwalt kennenlernen"
+  },
+  "about": {
+    "sectionTitle": "Der Anwalt",
+    "title": "Internationale juristische Exzellenz",
+    "description1": "Mr. Ericson R. Piccoli ist ein General Director mit solider akademischer Ausbildung und beruflicher Laufbahn, die von einem internationalisierten Ansatz, dem Fokus auf die Verteidigung von Grundrechten und dem Engagement für soziale Gerechtigkeit geprägt ist.",
+    "description2": "Mit Zertifizierungen von Harvard und Erfahrung als Forschungsassistent an der UC Berkeley verbindet er technische Exzellenz mit einer globalen Vision des zeitgenössischen Rechts.",
+    "yearsExperience": "Jahre Erfahrung",
+    "countriesExperience": "Länder mit Rechtserfahrung"
+  },
+  "aboutPage": {
+    "heroTitle": "Mr. Ericson R. Piccoli",
+    "heroSubtitle": "General Director • CNPJ 42.501.190/0001-70",
+    "heroDescription": "Internationale Rechtspraxis mit technischer Exzellenz, Engagement für Menschenrechte und soziale Gerechtigkeit.",
+    "scrollIndicator": "Entdecken",
+    "title": "Mr. Ericson R. Piccoli und Sein Werdegang",
+    "intro1": "Mr. Ericson R. Piccoli ist ein brasilianischer General Director mit solider akademischer Ausbildung und umfangreicher beruflicher Laufbahn im Bereich des Rechts, geprägt von einem internationalisierten Ansatz, kompromisslosem Fokus auf die Verteidigung von Grundrechten und Engagement für soziale Gerechtigkeit.",
+    "intro2": "Mit fast acht Jahren kontinuierlicher und qualifizierter Berufspraxis hat er Expertise in verschiedenen Bereichen des Justizsystems entwickelt, von der Öffentlichen Verteidigung bis zur Leitung von Rechtsabteilungen in internationalen Operationen. Er hat einen Jura-Abschluss von Univates, ein Postgraduiertenstudium in Strafrecht und Kriminologie von PUC-RS sowie Executive-Zertifizierungen der Harvard University in Führung und Unternehmertum.",
+    "intro3": "Sein Werdegang umfasst Erfahrung als Forschungsassistent am Berkeley Judicial Institute (UC Berkeley), Praxis in einer Anwaltskanzlei in Miami (USA) im Bereich Wirtschaftsrecht und geistiges Eigentum sowie Leitung der Rechtsabteilung eines multinationalen Unternehmens mit Operationen in über 8 Ländern.",
+    "whatsappButton": "KONTAKT VIA WHATSAPP",
+    "stats": {
+      "yearsExp": "Jahre Erfahrung",
+      "countries": "Länder mit Rechtserfahrung",
+      "harvardBerkeley": "Harvard & Berkeley",
+      "proBono": "Pro Bono Anwaltschaft"
+    },
+    "education": {
+      "sectionTitle": "Qualifikationen",
+      "title": "Akademischer Hintergrund",
+      "univates": {
+        "institution": "Universität Vale do Taquari (Univates)",
+        "course": "Jurastudium",
+        "description": "Eine Referenzinstitution in Rio Grande do Sul, anerkannt für die Qualität ihrer Fakultät und die humanistische und technische Ausbildung ihrer Absolventen."
+      },
+      "pucrs": {
+        "institution": "Päpstliche Katholische Universität von Rio Grande do Sul (PUC-RS)",
+        "course": "Postgraduiertenstudium in Strafrecht und Kriminologie",
+        "description": "Spezialisierung mit vertieftem Studium der allgemeinen Verbrechenstheorie, Kriminalpolitik, Strafvollzug, kritischer Kriminologie und Menschenrechte im Strafjustizsystem."
+      },
+      "harvard": {
+        "institution": "Harvard Universität",
+        "course": "Executive-Zertifizierungen",
+        "description": "Programme 'Exercising Leadership: Foundational Principles' und 'Entrepreneurship in Emerging Economies', fokussiert auf adaptive Führung und Unternehmertum in Schwellenländern."
+      },
+      "berkeley": {
+        "institution": "Universität von Kalifornien, Berkeley (UC Berkeley)",
+        "course": "Forschungsassistent - Berkeley Judicial Institute",
+        "description": "Mitarbeit an Forschungen zur institutionellen Resilienz der amerikanischen Justiz während der COVID-19-Pandemie, einschließlich Analyse virtueller Anhörungen und Verfahrensanpassungen."
+      }
+    },
+    "experience": {
+      "sectionTitle": "Karriere",
+      "title": "Berufserfahrung",
+      "defensoria": {
+        "title": "Öffentliche Verteidigung RS",
+        "description": "Umfassende Rechtshilfe für Menschen in wirtschaftlicher und sozialer Not. Vertretung in Straf-, Zivil- und Familienverfahren."
+      },
+      "tribunal": {
+        "title": "Gerichtshof von RS",
+        "description": "Tätigkeit in Strafkammern, Ausarbeitung von Urteilen und Gerichtsentscheidungen, eingehende Analyse von Fällen und rechtlichen Begründungen. Privilegierter Einblick in die Funktionsweise der Justiz auf verschiedenen Ebenen."
+      },
+      "elp": {
+        "title": "ELP Green Technology",
+        "description": "Leitung der Rechtsabteilung zur Koordinierung internationaler Operationen mit Partnern in China, den Vereinigten Arabischen Emiraten und den USA. Due Diligence, Compliance und internationale Schiedsgerichtsbarkeit."
+      },
+      "miami": {
+        "title": "Bradley Gies P.A. – Miami (USA)",
+        "description": "Praxis in Wirtschaftsrecht und geistigem Eigentum im amerikanischen Rechtssystem. Common Law Praxis, Bundes- und Staatsverfahren, Discovery, Motion Practice und Vertretung in Wirtschaftsstreitigkeiten."
+      },
+      "additionalTitle": "Zusätzliche internationale Erfahrung",
+      "additionalText1": "Zusammenarbeit mit einem US-Immobilienunternehmen bei der rechtlichen Beratung zur Konzeption und Umsetzung von Cross-Selling-Strategien und kommerziellen Partnerschaften mit Immobiliennetzwerken in europäischen Hauptstädten:",
+      "europeanCities": "München, Prag, Brüssel, Amsterdam und Paris",
+      "additionalText2": "Befindet sich derzeit in fortgeschrittenen Auswahlverfahren für das",
+      "llm": "Master of Laws (LL.M.)",
+      "additionalText3": "Programm an einer führenden Rechtsinstitution in den USA mit Schwerpunkt auf internationalem Recht und Menschenrechten."
+    },
+    "proBono": {
+      "sectionTitle": "Soziales Engagement",
+      "title": "Pro Bono Anwaltschaft",
+      "description1": "Dem universellen Zugang zur Justiz verpflichtet, widmet Mr. Ericson R. Piccoli einen bedeutenden Teil seiner Praxis der Pro-Bono-Anwaltschaft. Er arbeitet kostenlos oder mit reduzierten Honoraren in Fällen von relevantem sozialen Interesse.",
+      "description2": "Diese Hingabe spiegelt sein nicht verhandelbares Engagement für soziale Gerechtigkeit und das verfassungsrechtliche Prinzip der materiellen Gleichheit wider.",
+      "areasTitle": "Pro Bono Tätigkeitsbereiche",
+      "areas": {
+        "humanRights": "Schwere Menschenrechtsverletzungen (Folter, Diskriminierung)",
+        "vulnerability": "Situationen extremer sozioökonomischer Verletzlichkeit",
+        "homeless": "Verteidigung von Obdachlosen und Minderheiten",
+        "violence": "Klagen gegen institutionelle Gewalt und Machtmissbrauch",
+        "review": "Überprüfung von Fällen mit Anzeichen von Justizirrtum",
+        "collective": "Sammelklagen auf Entschädigung bei Staatsversagen"
+      }
+    },
+    "social": {
+      "sectionTitle": "Gesellschaftliches Engagement",
+      "title": "Soziale Arbeit",
+      "jci": {
+        "title": "Junior Chamber International (JCI)",
+        "description": "Aktive Teilnahme an Menschenrechts- und Bürgerschaftsprojekten, Advocacy und nachhaltiger Gemeindeentwicklung."
+      },
+      "leo": {
+        "title": "Leo Club",
+        "description": "Mitarbeit bei Jugenführungsinitiativen, Beitrag zu Freiwilligenarbeit und ethischer Führung in lokalen Gemeinschaften."
+      },
+      "cumprimento": {
+        "title": "Projekt Technische Interventionen im Strafvollzug",
+        "description": "Arbeit mit strafrechtlicher Überprüfung und sozialer Wiedereingliederung von Häftlingen. Direkte Rechtshilfe für Inhaftierte, einschließlich Vollzugslockerungen und Strafvorteilen."
+      }
+    },
+    "cta": {
+      "title": "Kontaktieren Sie Mr. Ericson R. Piccoli",
+      "description": "Für Beratungen, Terminvereinbarungen oder Fallklärungen nutzen Sie unseren direkten WhatsApp-Kanal.",
+      "whatsapp": "KONTAKT ELP GREEN TECHNOLOGY",
+      "viewAreas": "RECHTSGEBIETE ANSEHEN"
+    }
+  },
+  "credentials": {
+    "sectionTitle": "Akademischer Hintergrund",
+    "title": "Exzellenz-Qualifikationen",
+    "univates": {
+      "title": "Univates",
+      "desc": "Jurastudium",
+      "detail": "Rio Grande do Sul, Brasilien"
+    },
+    "pucrs": {
+      "title": "PUC-RS",
+      "desc": "Postgraduiertenstudium",
+      "detail": "Strafrecht und Kriminologie"
+    },
+    "harvard": {
+      "title": "Harvard",
+      "desc": "Zertifizierungen",
+      "detail": "Leadership & Entrepreneurship"
+    },
+    "berkeley": {
+      "title": "UC Berkeley",
+      "desc": "Akademische Forschung",
+      "detail": "Berkeley Judicial Institute"
+    }
+  },
+  "areas": {
+    "sectionTitle": "Fachgebiete",
+    "title": "Rechtsgebiete",
+    "introText": "Rechtspraxis mit globaler Vision, unterstützt durch Zertifizierungen der Harvard University und Erfahrung als Forschungsassistent an der University of Berkeley. Tätigkeit in mehreren Bereichen mit Schwerpunkt auf Menschenrechte, Strafrecht und internationales Geschäft.",
+    "criminal": {
+      "title": "Strafrecht",
+      "desc": "Strafverteidigung, Habeas Corpus, Strafrevision und Strafvollzug",
+      "details": "Strafverteidigung in allen Instanzen der Justiz. Postgraduiertenstudium in Strafrecht und Kriminologie an der PUC-RS mit konsolidierter Erfahrung bei der Öffentlichen Verteidigung von RS und am Gerichtshof von Rio Grande do Sul."
+    },
+    "international": {
+      "title": "Internationales Recht",
+      "desc": "Internationale Verträge, Schiedsverfahren und globale Transaktionen",
+      "details": "Praxis in internationalen Verträgen, globalen Transaktionen und Schutz des geistigen Eigentums. Rechtspraxis in den USA und Leitung der Rechtsabteilung von ELP Green Technology (Top Recycling Gruppe) mit Erfahrung in multinationalen Operationen."
+    },
+    "humanRights": {
+      "title": "Menschenrechte",
+      "desc": "Verteidigung von Grundrechten und Bekämpfung von Verstößen",
+      "details": "Kompromisslose Verteidigung von Grundrechten mit Fokus auf Bekämpfung von Folter, Diskriminierung und institutioneller Gewalt. Arbeit an Gemeinschaftsprojekten zur sozialen Wiedereingliederung und zum Schutz vulnerabler Gruppen."
+    },
+    "labor": {
+      "title": "Arbeitsrecht",
+      "desc": "Verteidigung von Arbeitnehmerrechten und Unternehmensberatung",
+      "details": "Verteidigung von Arbeitsrechten und präventive Beratung für Unternehmen und Arbeitnehmer. Analyse von Arbeitsverträgen, Verhandlung von Vereinbarungen und Einhaltung der geltenden Arbeitsgesetzgebung."
+    },
+    "business": {
+      "title": "Wirtschaftsrecht",
+      "desc": "Compliance, Handelsverträge und Joint Ventures"
+    },
+    "civil": {
+      "title": "Zivilrecht",
+      "desc": "Verträge, Familie, Erbschaft und zivilrechtliche Haftung",
+      "details": "Praxis in allen Bereichen des Zivilrechts: Erstellung und Überprüfung von Verträgen, Familienangelegenheiten (Scheidung, Sorgerecht, Unterhalt), Erbschaften, Ersitzung, zivilrechtliche Haftung und Entschädigungen."
+    },
+    "realEstate": {
+      "title": "Internationales Immobilienrecht",
+      "desc": "Grenzüberschreitende Transaktionen und Geschäftspartnerschaften"
+    }
+  },
+  "differential": {
+    "title": "Internationales Unterscheidungsmerkmal",
+    "countries": {
+      "title": "8+ Länder",
+      "desc": "Rechtserfahrung in internationalen Operationen"
+    },
+    "ip": {
+      "title": "Geistiges Eigentum",
+      "desc": "Markenregistrierungen, Urheberrechte und Unternehmensgründung in den USA"
+    },
+    "leadership": {
+      "title": "Globale Führung",
+      "desc": "Leitung der Rechtsabteilung von ELP Green Technology (Top Recycling Gruppe)"
+    },
+    "education": {
+      "title": "Harvard & Berkeley",
+      "desc": "Führungs- und Unternehmertraining von HarvardX und akademische Forschung am Berkeley Judicial Institute"
+    }
+  },
+  "philosophy": {
+    "sectionTitle": "Berufliche Philosophie",
+    "title": "Anwaltschaft mit Zweck",
+    "description1": "Mr. Ericson R. Piccoli versteht Anwaltschaft als Mission, denjenigen Stimme, Kraft und Wirksamkeit ihrer Rechte zu geben, die oft vom Justizsystem selbst zum Schweigen gebracht oder benachteiligt werden.",
+    "description2": "Er arbeitet mit aktivem Zuhören, technisch-juristischer Strenge, ausgefeilter Prozessstrategie, unerschütterlicher Ethik und unermüdlicher Entschlossenheit bei der Verteidigung der legitimen Interessen seiner Mandanten.",
+    "ethics": "Unerschütterliche Ethik",
+    "excellence": "Technische Exzellenz",
+    "results": "Ergebnisse"
+  },
+  "proBono": {
+    "sectionTitle": "Soziales Engagement",
+    "title": "Pro Bono Anwaltschaft",
+    "heroTitle": "Gerechtigkeit für alle",
+    "description": "Dem universellen Zugang zur Justiz verpflichtet, widmet Mr. Ericson R. Piccoli einen bedeutenden Teil seiner Praxis der Pro-Bono-Anwaltschaft und arbeitet kostenlos in Fällen von Menschenrechtsverletzungen, sozioökonomischer Verwundbarkeit, Diskriminierung und institutioneller Gewalt.",
+    "heroDescription": "Wir glauben, dass der Zugang zur Justiz ein Grundrecht ist. Unser Pro-Bono-Programm bietet kostenlose Rechtshilfe für Menschen in sozialer Notlage.",
+    "criteriaTitle": "Dienstleistungskriterien",
+    "criteriaDescription": "Um sicherzustellen, dass unsere Hilfe diejenigen erreicht, die sie am meisten brauchen, bewerten wir jede Anfrage nach folgenden Kriterien:",
+    "requestTitle": "Hilfe anfordern",
+    "requestDescription": "Füllen Sie das untenstehende Formular mit Ihren Daten aus. Alle Informationen werden absolut vertraulich behandelt.",
+    "requestReceived": "Anfrage erhalten",
+    "requestReceivedMessage": "Vielen Dank für Ihre Kontaktaufnahme. Unser Team wird Ihren Fall analysieren und Sie innerhalb von 7 Werktagen über die angegebene E-Mail kontaktieren.",
+    "sendNewRequest": "Neue Anfrage senden",
+    "sendRequest": "Anfrage senden",
+    "familiesHelped": "Unterstützte Familien",
+    "free": "Kostenlos",
+    "yearsProject": "Jahre Projekt",
+    "criteria": {
+      "vulnerability": {
+        "title": "Soziale Verletzlichkeit",
+        "desc": "Personen in nachgewiesener wirtschaftlicher Notlage"
+      },
+      "merit": {
+        "title": "Rechtlicher Verdienst",
+        "desc": "Fälle mit solider rechtlicher Grundlage und juristischer Tragfähigkeit"
+      },
+      "humanRights": {
+        "title": "Menschenrechte",
+        "desc": "Priorität für Fälle mit Verletzung von Grundrechten"
+      },
+      "impact": {
+        "title": "Soziale Wirkung",
+        "desc": "Fälle mit Potenzial, Gemeinschaften oder vulnerablen Gruppen zu helfen"
+      }
+    },
+    "form": {
+      "fullName": "Vollständiger Name",
+      "email": "E-Mail",
+      "phone": "Telefon (WhatsApp)",
+      "financialSituation": "Finanzielle Situation",
+      "financialSituationHint": "Beschreiben Sie kurz Ihre aktuelle wirtschaftliche Situation",
+      "financialSituationPlaceholder": "Familieneinkommen, Beschäftigungssituation, Abhängige, usw.",
+      "caseDescription": "Fallbeschreibung",
+      "caseDescriptionHint": "Erklären Sie das rechtliche Problem, bei dem Sie Hilfe benötigen",
+      "caseDescriptionPlaceholder": "Beschreiben Sie Ihre Situation und die Art der rechtlichen Hilfe, die Sie benötigen..."
+    },
+    "disclaimer": "Das Einreichen dieser Anfrage garantiert keine Dienstleistung. Jeder Fall wird individuell vom Rechtsteam analysiert. Die Entscheidung, einen Pro-Bono-Fall anzunehmen oder abzulehnen, liegt ausschließlich bei der Kanzlei und ist nicht anfechtbar. Dieser Service ist auf die Kapazität der Kanzlei beschränkt.",
+    "documentsNote": "Nach der ersten Analyse können wir Dokumente anfordern, die Ihre finanzielle Situation belegen (Einkommensnachweis, Erklärung über unzureichende Mittel, usw.)",
+    "badge": "Pro Bono Projekt - Kostenlose Rechtshilfe für Bedürftige"
+  },
+  "publications": {
+    "sectionTitle": "Publikationen",
+    "title": "Artikel und Analysen",
+    "description": "Juristische Reflexionen, Fallanalysen und Diskussionen über Strafrecht, Menschenrechte und soziale Gerechtigkeit.",
+    "latest": "Neueste Publikationen",
+    "others": "Andere Publikationen",
+    "noPublications": "Noch keine Publikationen",
+    "noPublicationsMessage": "Bald werden hier juristische Artikel und Analysen veröffentlicht. Verfolgen Sie unsere Arbeit.",
+    "categories": {
+      "all": "Alle",
+      "general": "Allgemein",
+      "criminal": "Strafrecht",
+      "humanRights": "Menschenrechte",
+      "international": "Internationales Recht",
+      "labor": "Arbeitsrecht"
+    }
+  },
+  "testimonials": {
+    "sectionTitle": "Bewertungen",
+    "title": "Echte Erfahrungen",
+    "description": "Erfahren Sie, was Mandanten sagen, die Mr. Ericson R. Piccoli ihre wichtigsten Rechtsangelegenheiten anvertraut haben.",
+    "comingSoon": "Echte Mandantenbewertungen demnächst.",
+    "seeGoogleReviews": "In der Zwischenzeit sehen Sie unsere Google-Bewertungen.",
+    "viewGoogleReviews": "Google-Bewertungen anzeigen",
+    "stats": {
+      "yearsExperience": "Jahre Erfahrung",
+      "countriesExperience": "Länder mit Erfahrung",
+      "ethicalCommitment": "Ethisches Engagement"
+    },
+    "aboutLawyer": "Über den Anwalt",
+    "commitmentToExcellence": "Engagement für Exzellenz"
+  },
+  "contact": {
+    "title": "Kontakt aufnehmen",
+    "description": "Wir sind bereit, Ihnen zu helfen. Kontaktieren Sie uns per WhatsApp, E-Mail oder füllen Sie das Formular aus.",
+    "form": {
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "subject": "Betreff",
+      "message": "Nachricht",
+      "send": "Nachricht senden"
+    },
+    "info": {
+      "whatsapp": "WhatsApp",
+      "email": "E-Mail",
+      "location": "Standort"
+    }
+  },
+  "cta": {
+    "title": "Benötigen Sie rechtliche Beratung?",
+    "description": "Kontaktieren Sie uns direkt über WhatsApp oder vereinbaren Sie eine Beratung.",
+    "whatsapp": "Direkter WhatsApp-Kontakt",
+    "contact": "Kontakt aufnehmen",
+    "readyToResolve": "Bereit, Ihre Rechtssache zu lösen?",
+    "otherContactForms": "Andere Kontaktmöglichkeiten"
+  },
+  "footer": {
+    "rights": "Alle Rechte vorbehalten",
+    "privacy": "Datenschutz",
+    "terms": "Nutzungsbedingungen",
+    "lgpd": "LGPD",
+    "quickLinks": "Schnelllinks",
+    "legal": "Rechtliches",
+    "contact": "Kontakt",
+    "description": "Internationale Rechtspraxis mit technischer Exzellenz, Engagement für Menschenrechte und soziale Gerechtigkeit.",
+    "ctaTitle": "Lassen Sie uns über Ihren Fall sprechen?",
+    "ctaDescription": "Kontaktieren Sie uns für eine individuelle Analyse Ihrer rechtlichen Situation."
+  },
+  "dashboard": {
+    "welcome": "Willkommen",
+    "home": "Startseite",
+    "documents": "Dokumente",
+    "myDocuments": "Meine Dokumente",
+    "generateDocument": "Dokument erstellen",
+    "chat": "Rechts-Chat",
+    "liveChat": "Live-Chat",
+    "payments": "Zahlungen",
+    "consultations": "Beratungen",
+    "scheduleConsultation": "Beratung vereinbaren",
+    "research": "Rechtsprechungssuche",
+    "clients": "Mandanten",
+    "cases": "Fälle",
+    "digitalSignature": "Digitale Signatur",
+    "contacts": "Kontakte",
+    "tasks": "Aufgaben",
+    "settings": "Einstellungen",
+    "officeSettings": "Kanzleieinstellungen",
+    "notifications": "Benachrichtigungen",
+    "crm": "CRM",
+    "profile": "Profil",
+    "admin": {
+      "title": "Admin-Panel",
+      "overview": "Übersicht",
+      "analytics": "Analysen",
+      "manageClients": "Mandanten verwalten",
+      "manageCases": "Fälle verwalten",
+      "manageDocuments": "Dokumente verwalten",
+      "financials": "Finanzen"
+    },
+    "client": {
+      "title": "Kundenbereich",
+      "myCase": "Mein Fall",
+      "myDocuments": "Meine Dokumente",
+      "myPayments": "Meine Zahlungen",
+      "messages": "Nachrichten",
+      "support": "Support"
+    },
+    "noNotifications": "Keine Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "recentActivity": "Letzte Aktivität",
+    "quickActions": "Schnellaktionen"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "forgotPassword": "Passwort vergessen?",
+    "noAccount": "Kein Konto?",
+    "hasAccount": "Bereits ein Konto?",
+    "createAccount": "Konto erstellen",
+    "loginSuccess": "Anmeldung erfolgreich",
+    "registerSuccess": "Registrierung erfolgreich",
+    "invalidCredentials": "Ungültige Anmeldedaten",
+    "passwordMismatch": "Passwörter stimmen nicht überein"
+  },
+  "legal": {
+    "privacy": {
+      "title": "Datenschutzrichtlinie",
+      "description": "Erfahren Sie, wie wir Ihre persönlichen Daten sammeln, verwenden und schützen."
+    },
+    "terms": {
+      "title": "Nutzungsbedingungen",
+      "description": "Lesen Sie die Bedingungen für die Nutzung unserer Website und Dienstleistungen."
+    },
+    "lgpd": {
+      "title": "LGPD",
+      "description": "Informationen über das Allgemeine Datenschutzgesetz und Ihre Rechte."
+    }
+  },
+  "services": {
+    "heroTitle": "Juristische",
+    "heroTitleHighlight": "Dienstleistungen",
+    "heroDescription": "Juristische Exzellenz in verschiedenen Rechtsgebieten, mit internationaler Ausbildung und persönlicher Betreuung.",
+    "explore": "Entdecken",
+    "whyChoose": "Warum die",
+    "whyChooseHighlight": "Kanzlei wählen?",
+    "whyChooseDescription": "Wir verbinden international anerkannte akademische Ausbildung mit fortschrittlicher Rechtstechnologie und einem nahen, transparenten Service, der die beste Strategie für jeden Fall gewährleistet.",
+    "scheduleConsultation": "BERATUNG VEREINBAREN",
+    "notFoundTitle": "Ihr Rechtsgebiet nicht gefunden?",
+    "notFoundDescription": "Kontaktieren Sie uns und erzählen Sie uns von Ihrem Fall. Die Kanzlei verfügt über ein Netzwerk spezialisierter Partner für alle rechtlichen Anforderungen.",
+    "meetOffice": "DIE KANZLEI KENNENLERNEN",
+    "areas": {
+      "criminal": {
+        "title": "Strafrecht",
+        "desc": "Spezialisierte technische Verteidigung in allen Phasen des Strafverfahrens, von der polizeilichen Ermittlung bis zum Geschworenengericht.",
+        "items": ["Verteidigung in polizeilichen Ermittlungen", "Habeas Corpus und vorläufige Freilassung", "Geschworenengericht", "Strafvollzug und Vollzugslockerung", "Wirtschafts- und Finanzkriminalität", "Strafrechtliche Berufungen"]
+      },
+      "international": {
+        "title": "Internationales Recht",
+        "desc": "Rechtsberatung in grenzüberschreitenden Fragen, internationalen Verträgen und internationaler Rechtshilfe.",
+        "items": ["Internationale Rechtshilfe", "Auslieferung und Abschiebung", "Öffentliches und privates Völkerrecht", "Anerkennung ausländischer Urteile", "Einwanderung und Visa", "Internationale Schiedsgerichtsbarkeit"]
+      },
+      "humanRights": {
+        "title": "Menschenrechte",
+        "desc": "Schutz und Förderung der Grundrechte vor nationalen Gerichten und internationalen Organisationen.",
+        "items": ["Prozessführung vor der IAGMR", "Schutz von Minderheiten und vulnerablen Gruppen", "Meinungs- und Pressefreiheit", "Flüchtlingsrecht", "Institutionelle Gewalt", "Advocacy vor der UN"]
+      },
+      "labor": {
+        "title": "Arbeitsrecht",
+        "desc": "Vertretung in individuellen und kollektiven Arbeitsstreitigkeiten, sowohl für Arbeitnehmer als auch für Arbeitgeber.",
+        "items": ["Arbeitsklagen", "Mobbing und sexuelle Belästigung", "Arbeitsunfälle", "Tarifverhandlungen", "Präventive Unternehmensberatung", "Abfindungen und FGTS"]
+      },
+      "business": {
+        "title": "Wirtschaftsrecht",
+        "desc": "Rechtsberatung für Unternehmen in gesellschaftsrechtlichen, vertraglichen und Compliance-Fragen.",
+        "items": ["Unternehmensgründung und -änderung", "Handelsverträge", "Compliance und Governance", "Gerichtliche Sanierung", "Juristische Due Diligence", "Schutz des geistigen Eigentums"]
+      },
+      "civil": {
+        "title": "Zivilrecht",
+        "desc": "Vertretung in Zivilsachen, einschließlich zivilrechtlicher Haftung, Verträge und Familienrecht.",
+        "items": ["Zivilrechtliche Haftung und Schadensersatz", "Vertragsüberprüfung und -erstellung", "Erbschaften und Nachfolge", "Verbraucherrecht", "Immobilienrecht", "Mediation und Schiedsverfahren"]
+      }
+    },
+    "differentials": [
+      "Ausbildung an Harvard und UC Berkeley",
+      "Praxis in 8+ Ländern",
+      "KI-gestützte Rechtstechnologie",
+      "Vollständige LGPD-Konformität",
+      "Strukturiertes Pro-Bono-Programm",
+      "Echtzeit-Kundenportal"
+    ]
+  },
+  "diferencial": {
+    "heroTitle": "Unser",
+    "heroTitleHighlight": "Unterscheidungsmerkmal",
+    "heroDescription": "Internationale Ausbildung, praktische Erfahrung in mehreren Ländern und verantwortungsvoller Einsatz von Rechtstechnologie im Dienste jedes Mandanten.",
+    "explore": "Entdecken",
+    "numbers": {
+      "yearsExp": "Jahre Erfahrung",
+      "countries": "Länder der Praxis",
+      "harvardBerkeley": "& UC Berkeley",
+      "oab": ""
+    },
+    "whyChooseUs": "Warum uns wählen",
+    "excellenceTitle": "Exzellenz in jedem Detail",
+    "items": {
+      "education": {
+        "title": "Internationale Ausbildung von Exzellenz",
+        "desc": "Ausbildung an der Harvard University und UC Berkeley, mit Spezialisierung in Strafrechtswissenschaften an der PUCRS — eine akademische Grundlage, die technische Strenge mit einer globalen Rechtsvision verbindet."
+      },
+      "countries": {
+        "title": "Praxis in 8+ Ländern",
+        "desc": "Praktische Erfahrung in über 8 Ländern, einschließlich Praxis an internationalen Gerichten und Menschenrechtsorganisationen in Europa, Nordamerika und Lateinamerika."
+      },
+      "technology": {
+        "title": "Fortschrittliche Rechtstechnologie",
+        "desc": "Einsatz von künstlicher Intelligenz für Rechtsprechungsrecherche, Vertragsanalyse und Dokumentenerstellung, mit vollständiger LGPD-Konformität und Berufsgeheimnis."
+      },
+      "security": {
+        "title": "Sicherheit und Berufsgeheimnis",
+        "desc": "Infrastruktur mit TLS/HTTPS-Verschlüsselung, Row Level Security (RLS) und XSS-Schutz, die die Unverletzlichkeit der Mandantendaten gemäß dem OAB-Statut gewährleistet."
+      },
+      "proBono": {
+        "title": "Pro-Bono-Engagement",
+        "desc": "Strukturiertes Pro-Bono-Anwaltschaftsprogramm für Menschen in vulnerablen Situationen, das das soziale Engagement der Kanzlei für den Zugang zur Justiz widerspiegelt."
+      },
+      "personalized": {
+        "title": "Persönlicher Service",
+        "desc": "Jeder Fall erhält eine individuelle Analyse mit maßgeschneiderter Rechtsstrategie, transparenter Kommunikation und Echtzeit-Fallverfolgung über das Kundenportal."
+      }
+    },
+    "techSecurityTitle": "Technologie und",
+    "techSecurityHighlight": "Sicherheit",
+    "techSecurityDesc": "Die Kanzlei verwendet Sicherheitsstandards auf Bankniveau zum Schutz der Mandantendaten, in Übereinstimmung mit dem Allgemeinen Datenschutzgesetz (Gesetz Nr. 13.709/2018) und dem Anwaltsstatut (Gesetz Nr. 8.906/1994).",
+    "techItems": {
+      "tls": { "title": "TLS/HTTPS-Verschlüsselung", "desc": "Alle Kommunikationen sind durch Ende-zu-Ende-Verschlüsselung geschützt" },
+      "rls": { "title": "Row Level Security (RLS)", "desc": "Mandantendatenisolierung mit Sicherheitsrichtlinien auf Datenbankebene" },
+      "lgpd": { "title": "LGPD-Konformität", "desc": "Datenverarbeitung gemäß den Rechtsgrundlagen des Gesetzes Nr. 13.709/2018" },
+      "secrecy": { "title": "Berufsgeheimnis", "desc": "Unverletzlicher Schutz gemäß Art. 7 des OAB-Statuts" }
+    },
+    "ctaTitle": "Sprechen Sie mit der Kanzlei",
+    "ctaDescription": "Vereinbaren Sie eine Beratung und entdecken Sie, wie die Kombination aus internationaler juristischer Expertise und modernster Technologie den Unterschied in Ihrem Fall machen kann."
+  },
+  "plataforma": {
+    "heroLabel": "KI-Unternehmensplattform",
+    "heroTitle1": "Künstliche Intelligenz",
+    "heroTitle2": "für Ihr Unternehmen",
+    "heroDescription": "Eine digitale Infrastruktur der Exzellenz, die fortschrittliche KI, Prozessautomatisierung und intelligentes Management kombiniert, um Geschäftsergebnisse zu steigern.",
+    "accessPlatform": "PLATTFORM ZUGREIFEN",
+    "talkToLawyer": "MIT ELP SPRECHEN",
+    "metrics": {
+      "tls": "Verschlüsselte Verbindung",
+      "access": "Ununterbrochener Zugang",
+      "lgpd": "DSGVO / LGPD Konform",
+      "rls": "Benutzerspezifische Sicherheit"
+    },
+    "featuresLabel": "Funktionen",
+    "featuresTitle1": "Vollständige Architektur für",
+    "featuresTitle2": "KI-gestützte Unternehmensführung",
+    "featuresDescription": "Jedes Modul wurde entwickelt, um maximale Effizienz, Automatisierung und Intelligenz bei der Verwaltung Ihres Unternehmens zu bieten.",
+    "features": {
+      "tracking": {
+        "title": "Echtzeit-Automatisierung & Überwachung",
+        "desc": "Intelligentes Panel, in dem Sie Prozesse, Operationen, KPIs und Metriken in Echtzeit einsehen. Das System überwacht automatisch alle Aktivitäten und zeigt den Status jeder Phase.",
+        "items": ["Dashboard mit Echtzeit-KPIs und Metriken", "Automatische Benachrichtigungen bei kritischen Ereignissen", "Vollständiger und prüfbarer Verlauf", "24/7-Zugriff über den Browser, von jedem Gerät"]
+      },
+      "communication": {
+        "title": "Integrierter Orion KI-Assistent",
+        "desc": "Chatten Sie mit Orion, unserem KI-Assistenten, der für Geschäftsdokumentation, Datenanalyse, Compliance und internationale Geschäftsstrategie trainiert ist.",
+        "items": ["Kontextbezogener KI-Chat innerhalb der Plattform", "KI-gestützte Geschäftsdokumentenerstellung", "Intelligente Datenanalyse und Berichterstattung", "Mehrsprachige Unterstützung (PT, EN, IT, ES, ZH)"]
+      },
+      "documents": {
+        "title": "Intelligente Dokumentenverwaltung",
+        "desc": "Erstellen, verwalten und teilen Sie Geschäftsdokumente mit KI. Internationale Verträge, LOIs, NDAs, Geschäftsvorschläge und Compliance-Berichte in intelligenten Ordnern.",
+        "items": ["KI-Dokumentenerstellung (15+ Typen)", "Zweisprachige Vorlagen (EN/PT) für internationales Geschäft", "Automatische Organisation nach Kategorien", "Sichere Cloud-Speicherung mit Versionierung"]
+      },
+      "security": {
+        "title": "Sicherheit & Compliance",
+        "desc": "Infrastruktur geschützt durch robuste Authentifizierung, TLS-Verschlüsselung und Sicherheitsrichtlinien auf Datenbankebene (RLS). DSGVO und LGPD konform.",
+        "items": ["Verschlüsselte Verbindung via HTTPS/TLS", "Profilbasierte Zugriffskontrolle (Row Level Security)", "DSGVO- und LGPD-Konformität", "Vollständiges Aktions-Audit-Trail"]
+      }
+    },
+    "benefitsLabel": "Vorteile",
+    "benefitsTitle": "Warum ORION wählen?",
+    "benefits": [
+      "Kontinuierlicher digitaler Zugang, 24 Stunden am Tag",
+      "Responsive für jedes Gerät",
+      "KI trainiert für internationales Geschäft",
+      "Integrierte DSGVO- und LGPD-Konformität",
+      "Zentralisierte und automatisierte Dokumentation",
+      "Mehrsprachig mit intelligenter Übersetzung"
+    ],
+    "howItWorksLabel": "Wie es funktioniert",
+    "howItWorksTitle1": "Drei Schritte zur",
+    "howItWorksTitle2": "digitalen Transformation",
+    "steps": {
+      "create": { "title": "Konto erstellen", "desc": "Schnelle und sichere Registrierung. In wenigen Minuten haben Sie vollen Zugang zur ORION-Plattform." },
+      "access": { "title": "Umgebung einrichten", "desc": "Definieren Sie Ihr Profil, verbinden Sie Datenquellen und passen Sie Module für Ihren Betrieb an." },
+      "control": { "title": "Automatisieren und skalieren", "desc": "Nutzen Sie KI zum Erstellen von Dokumenten, Analysieren von Daten, Verwalten von Teams und Treffen intelligenterer Entscheidungen." }
+    },
+    "showcaseLabel": "Entdecken Sie die Plattform",
+    "showcaseTitle1": "Überblick über die",
+    "showcaseTitle2": "Plattform",
+    "showcaseDescription": "Entdecken Sie die Module und Funktionen, die die Unternehmensführung effizienter, automatisierter und intelligenter machen.",
+    "showcase": {
+      "platform": { "title": "ORION KI-Plattform", "desc": "Vollständiges Panel für KI-gestützte Unternehmensführung. Überwachen Sie Operationen, verwalten Sie Teams und automatisieren Sie Prozesse mit vollständiger Transparenz und 24/7-Zugang." },
+      "ai": { "title": "Orion KI-Assistent", "desc": "Stellen Sie Geschäftsfragen an KI, die in internationalem Recht, Compliance und Geschäftsstrategie geschult ist. Kontextbezogene und fundierte Antworten." },
+      "docs": { "title": "KI-Dokumentenerstellung", "desc": "Erstellen Sie internationale Verträge, LOIs, NDAs, Geschäftsvorschläge und Berichte mit KI-Unterstützung. Professionelle zweisprachige Vorlagen, die Abläufe beschleunigen." },
+      "register": { "title": "Unternehmensregistrierung & Zugang", "desc": "Registrieren Sie Ihr Unternehmen in Minuten und greifen Sie auf alle Funktionen zu. Geschützter Bereich mit profilbasierter Sicherheit und Datenschutz." },
+      "dashboard": { "title": "Intelligentes Business-Dashboard", "desc": "Vollständiger Überblick mit Metriken, aktiven Operationen, ausstehenden Aufgaben und Echtzeit-Benachrichtigungen. Alles organisiert in einem intuitiven Panel." }
+    },
+    "ctaLabel": "Jetzt starten",
+    "ctaTitle1": "Bereit für die",
+    "ctaTitle2": "digitale Transformation",
+    "ctaTitle3": "Ihres Unternehmens?",
+    "ctaDescription": "Registrieren Sie sich kostenlos und erleben Sie eine neue Art, Ihr Unternehmen mit künstlicher Intelligenz, Automatisierung und integrierter Compliance zu verwalten."
+  }
+}

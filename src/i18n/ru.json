@@ -1,0 +1,735 @@
+{
+  "common": {
+    "learnMore": "Подробнее",
+    "contact": "Контакт",
+    "schedule": "Записаться на консультацию",
+    "whatsapp": "WhatsApp напрямую",
+    "readMore": "Читать далее",
+    "submit": "Отправить",
+    "sending": "Отправка...",
+    "loading": "Загрузка...",
+    "back": "Назад",
+    "viewAll": "Показать все",
+    "lawyer": "General Director",
+    "oab": "CNPJ 42.501.190/0001-70",
+    "login": "Войти",
+    "logout": "Выйти",
+    "register": "Регистрация",
+    "panel": "Панель",
+    "myPanel": "Моя панель",
+    "haveAccount": "Уже есть аккаунт",
+    "logoutSuccess": "Выход выполнен",
+    "seeYou": "До следующего раза!",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "new": "Новый",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "all": "Все",
+    "yes": "Да",
+    "no": "Нет",
+    "close": "Закрыть",
+    "download": "Скачать",
+    "upload": "Загрузить",
+    "required": "Обязательно",
+    "optional": "Необязательно",
+    "success": "Успех",
+    "error": "Ошибка",
+    "warning": "Внимание",
+    "info": "Информация"
+  },
+  "nav": {
+    "home": "Главная",
+    "about": "О нас",
+    "areas": "Области практики",
+    "services": "Услуги",
+    "differential": "Преимущества",
+    "proBono": "Про Боно",
+    "publications": "Публикации",
+    "testimonials": "Отзывы",
+    "contact": "Контакт",
+    "clientArea": "Кабинет клиента",
+    "theLawyer": "General Director",
+    "navigation": "Навигация",
+    "formation": "Образование",
+    "directContact": "Прямой контакт",
+    "platform": "Платформа"
+  },
+  "hero": {
+    "subtitle": "Internationalized legal practice with technical excellence, commitment to human rights and social justice. Certified by Harvard University and international academic experience at the Berkeley Judicial Institute.",
+    "scheduleConsultation": "Schedule Consultation",
+    "meetLawyer": "Meet the Lawyer"
+  },
+  "about": {
+    "sectionTitle": "The Lawyer",
+    "title": "International Legal Excellence",
+    "description1": "Mr. Ericson R. Piccoli is an attorney with a solid academic background and professional trajectory marked by an internationalized approach, focus on the defense of fundamental rights and commitment to social justice.",
+    "description2": "With certifications from Harvard and experience as a research assistant at UC Berkeley, he combines technical excellence with a global vision of contemporary Law.",
+    "yearsExperience": "Years of Experience",
+    "countriesExperience": "Countries with Legal Experience"
+  },
+  "aboutPage": {
+    "heroTitle": "Mr. Ericson R. Piccoli",
+    "heroSubtitle": "Attorney at Law • CNPJ 42.501.190/0001-70",
+    "heroDescription": "Internationalized legal practice with technical excellence, commitment to human rights and social justice.",
+    "scrollIndicator": "Discover",
+    "title": "Mr. Ericson R. Piccoli and His Journey So Far",
+    "intro1": "Mr. Ericson R. Piccoli is a Brazilian attorney with a solid academic background and extensive professional trajectory in the field of Law, marked by an internationalized approach, unwavering focus on the defense of fundamental rights and commitment to social justice.",
+    "intro2": "With nearly eight years of continuous and qualified professional practice, he has developed expertise in various spheres of the justice system, from the Public Defender's Office to leading legal departments in international operations. He holds a Law degree from Univates, a postgraduate degree in Criminal Law and Criminology from PUC-RS, and executive certifications from Harvard University in leadership and entrepreneurship.",
+    "intro3": "His journey includes experience as a research assistant at the Berkeley Judicial Institute (UC Berkeley), practice at a law firm in Miami (USA) in business law and intellectual property, and leadership of the legal department of a multinational company with operations in over 8 countries.",
+    "whatsappButton": "CONTACT VIA WHATSAPP",
+    "stats": {
+      "yearsExp": "Years of Experience",
+      "countries": "Countries with Legal Experience",
+      "harvardBerkeley": "Harvard & Berkeley",
+      "proBono": "Pro Bono Advocacy"
+    },
+    "education": {
+      "sectionTitle": "Credentials",
+      "title": "Academic Background",
+      "univates": {
+        "institution": "University of Vale do Taquari (Univates)",
+        "course": "Law Degree",
+        "description": "A reference institution in Rio Grande do Sul, recognized for the quality of its faculty and the humanistic and technical training of its graduates."
+      },
+      "pucrs": {
+        "institution": "Pontifical Catholic University of Rio Grande do Sul (PUC-RS)",
+        "course": "Postgraduate in Criminal Law and Criminology",
+        "description": "Specialization with in-depth study of general crime theory, criminal policy, penal execution, critical criminology and human rights in the criminal justice system."
+      },
+      "harvard": {
+        "institution": "Harvard University",
+        "course": "Executive Certifications",
+        "description": "Programs 'Exercising Leadership: Foundational Principles' and 'Entrepreneurship in Emerging Economies', focused on adaptive leadership and entrepreneurship in emerging markets."
+      },
+      "berkeley": {
+        "institution": "University of California, Berkeley (UC Berkeley)",
+        "course": "Research Assistant - Berkeley Judicial Institute",
+        "description": "Collaboration in research on the institutional resilience of the American Judiciary during the COVID-19 pandemic, including analysis of virtual hearings and procedural adaptations."
+      }
+    },
+    "experience": {
+      "sectionTitle": "Career",
+      "title": "Professional Experience",
+      "defensoria": {
+        "title": "Public Defender's Office of RS",
+        "description": "Comprehensive legal assistance to people in economic and social need. Representation in criminal, civil and family proceedings."
+      },
+      "tribunal": {
+        "title": "Court of Justice of RS",
+        "description": "Work in criminal chambers, drafting sentences and judicial decisions, in-depth analysis of cases and legal reasoning. Privileged view of the functioning of the Judiciary at various levels."
+      },
+      "elp": {
+        "title": "ELP Green Technology",
+        "description": "Head of the legal department coordinating international operations with counterparts in China, United Arab Emirates and the United States. Due diligence, compliance and international arbitration."
+      },
+      "miami": {
+        "title": "Bradley Gies P.A. – Miami (USA)",
+        "description": "Practice in business law and intellectual property in the American legal system. Common law practice, federal and state procedures, discovery, motion practice and representation in business litigation."
+      },
+      "additionalTitle": "Additional International Experience",
+      "additionalText1": "Collaborated with a US real estate company, providing legal consulting in the design and implementation of cross-selling strategies and commercial partnerships with real estate networks in European capitals:",
+      "europeanCities": "Munich, Prague, Brussels, Amsterdam and Paris",
+      "additionalText2": "Currently in advanced stages of the selection process for the",
+      "llm": "Master of Laws (LL.M.)",
+      "additionalText3": "program at a leading law institution in the United States, focusing on international law and human rights."
+    },
+    "proBono": {
+      "sectionTitle": "Social Commitment",
+      "title": "Pro Bono Advocacy",
+      "description1": "Committed to universal access to justice, Mr. Ericson R. Piccoli dedicates a significant part of his practice to pro bono advocacy. He works free of charge or with reduced fees in cases of relevant social interest.",
+      "description2": "This dedication reflects his non-negotiable commitment to social justice and the constitutional principle of material equality.",
+      "areasTitle": "Pro Bono Practice Areas",
+      "areas": {
+        "humanRights": "Serious human rights violations (torture, discrimination)",
+        "vulnerability": "Situations of extreme socioeconomic vulnerability",
+        "homeless": "Defense of homeless populations and minorities",
+        "violence": "Actions against institutional violence and abuse of authority",
+        "review": "Review of cases with signs of judicial error",
+        "collective": "Class actions seeking reparation for state failure"
+      }
+    },
+    "social": {
+      "sectionTitle": "Community Engagement",
+      "title": "Social Work",
+      "jci": {
+        "title": "Junior Chamber International (JCI)",
+        "description": "Active participation in human rights and citizenship projects, advocacy and sustainable community development."
+      },
+      "leo": {
+        "title": "Leo Club",
+        "description": "Collaboration in youth leadership initiatives, contributing to volunteer efforts and ethical leadership in local communities."
+      },
+      "cumprimento": {
+        "title": "Technical Interventions in Sentence Compliance Project",
+        "description": "Work with criminal review and social reintegration of inmates. Direct legal assistance to incarcerated individuals, including regime progression and penal benefits."
+      }
+    },
+    "cta": {
+      "title": "Contact Mr. Ericson R. Piccoli",
+      "description": "For consultations, meeting scheduling or case clarifications, use our direct WhatsApp channel.",
+      "whatsapp": "CONTACT ELP GREEN TECHNOLOGY",
+      "viewAreas": "VIEW PRACTICE AREAS"
+    }
+  },
+  "credentials": {
+    "sectionTitle": "Academic Background",
+    "title": "Credentials of Excellence",
+    "univates": {
+      "title": "Univates",
+      "desc": "Law Degree",
+      "detail": "Rio Grande do Sul, Brazil"
+    },
+    "pucrs": {
+      "title": "PUC-RS",
+      "desc": "Postgraduate Studies",
+      "detail": "Criminal Law and Criminology"
+    },
+    "harvard": {
+      "title": "Harvard",
+      "desc": "Certifications",
+      "detail": "Leadership & Entrepreneurship"
+    },
+    "berkeley": {
+      "title": "UC Berkeley",
+      "desc": "Academic Research",
+      "detail": "Berkeley Judicial Institute"
+    }
+  },
+  "areas": {
+    "sectionTitle": "Specialties",
+    "title": "Practice Areas",
+    "introText": "Legal practice with a global vision, supported by certifications from Harvard University and experience as a research assistant at the University of Berkeley. Practice in multiple areas, with emphasis on human rights, criminal law and international business.",
+    "criminal": {
+      "title": "Criminal Law",
+      "desc": "Criminal defense, habeas corpus, criminal review and penal execution",
+      "details": "Criminal defense in all instances of the Judiciary. Postgraduate in Criminal Law and Criminology from PUC-RS, with consolidated experience at the Public Defender's Office of RS and the Court of Justice of Rio Grande do Sul."
+    },
+    "international": {
+      "title": "International Law",
+      "desc": "International contracts, arbitration and global transactions",
+      "details": "Practice in international contracts, global transactions and intellectual property protection. Legal practice in the United States and direction of the legal department of ELP Green Technology (Top Recycling group), with experience in multinational operations."
+    },
+    "humanRights": {
+      "title": "Human Rights",
+      "desc": "Defense of fundamental guarantees and combating violations",
+      "details": "Uncompromising defense of fundamental guarantees, focusing on combating torture, discrimination and institutional violence. Work on community projects aimed at social reintegration and protection of vulnerable groups."
+    },
+    "labor": {
+      "title": "Labor Law",
+      "desc": "Defense of workers' rights and business consulting",
+      "details": "Defense of labor rights and preventive consulting for companies and workers. Analysis of employment contracts, agreement negotiations and compliance with current labor legislation."
+    },
+    "business": {
+      "title": "Business Law",
+      "desc": "Compliance, commercial contracts and joint ventures"
+    },
+    "civil": {
+      "title": "Civil Law",
+      "desc": "Contracts, family, inheritance and civil liability",
+      "details": "Practice in all areas of Civil Law: drafting and reviewing contracts, family actions (divorce, custody, alimony), estates, adverse possession, civil liability and indemnities."
+    },
+    "realEstate": {
+      "title": "International Real Estate Law",
+      "desc": "Cross-border transactions and commercial partnerships"
+    }
+  },
+  "differential": {
+    "title": "International Differential",
+    "countries": {
+      "title": "8+ Countries",
+      "desc": "Legal experience in international operations"
+    },
+    "ip": {
+      "title": "Intellectual Property",
+      "desc": "Trademark registrations, copyrights and company formation in the USA"
+    },
+    "leadership": {
+      "title": "Global Leadership",
+      "desc": "Direction of the legal department of ELP Green Technology (Top Recycling group)"
+    },
+    "education": {
+      "title": "Harvard & Berkeley",
+      "desc": "Leadership and entrepreneurship training from HarvardX and academic research at the Berkeley Judicial Institute"
+    }
+  },
+  "philosophy": {
+    "sectionTitle": "Professional Philosophy",
+    "title": "Advocacy with Purpose",
+    "description1": "Mr. Ericson R. Piccoli understands advocacy as a mission to give voice, strength and effectiveness to the rights of those who are often silenced or harmed by the justice system itself.",
+    "description2": "He works with active listening, technical-legal rigor, sophisticated procedural strategy, unwavering ethics and tireless determination in the defense of his clients' legitimate interests.",
+    "ethics": "Unwavering Ethics",
+    "excellence": "Technical Excellence",
+    "results": "Results"
+  },
+  "proBono": {
+    "sectionTitle": "Social Commitment",
+    "title": "Pro Bono Advocacy",
+    "heroTitle": "Justice For All",
+    "description": "Committed to universal access to justice, Mr. Ericson R. Piccoli dedicates a significant part of his practice to pro bono advocacy, working free of charge in cases involving human rights violations, socioeconomic vulnerability, discrimination and institutional violence.",
+    "heroDescription": "We believe that access to justice is a fundamental right. Our Pro Bono program offers free legal assistance to people in situations of social vulnerability.",
+    "criteriaTitle": "Service Criteria",
+    "criteriaDescription": "To ensure that our assistance reaches those who need it most, we evaluate each request based on the following criteria:",
+    "requestTitle": "Request Assistance",
+    "requestDescription": "Fill out the form below with your information. All information is treated with absolute confidentiality.",
+    "requestReceived": "Request Received",
+    "requestReceivedMessage": "Thank you for contacting us. Our team will analyze your case and contact you via the email provided within 7 business days.",
+    "sendNewRequest": "Send New Request",
+    "sendRequest": "Send Request",
+    "familiesHelped": "Families Helped",
+    "free": "Free",
+    "yearsProject": "Years of Project",
+    "criteria": {
+      "vulnerability": {
+        "title": "Social Vulnerability",
+        "desc": "People in proven economic vulnerability situations"
+      },
+      "merit": {
+        "title": "Legal Merit",
+        "desc": "Cases with solid legal foundation and legal viability"
+      },
+      "humanRights": {
+        "title": "Human Rights",
+        "desc": "Priority for cases involving violations of fundamental rights"
+      },
+      "impact": {
+        "title": "Social Impact",
+        "desc": "Cases with potential to benefit communities or vulnerable groups"
+      }
+    },
+    "form": {
+      "fullName": "Full Name",
+      "email": "Email",
+      "phone": "Phone (WhatsApp)",
+      "financialSituation": "Financial Situation",
+      "financialSituationHint": "Briefly describe your current economic situation",
+      "financialSituationPlaceholder": "Family income, employment situation, dependents, etc.",
+      "caseDescription": "Case Description",
+      "caseDescriptionHint": "Explain the legal problem you need assistance with",
+      "caseDescriptionPlaceholder": "Describe your situation and the type of legal help you need..."
+    },
+    "disclaimer": "Submitting this request does not guarantee service. Each case is analyzed individually by the legal team. The decision to accept or reject a pro bono case is exclusive to the firm and is not subject to appeal. This service is limited to the firm's capacity.",
+    "documentsNote": "After initial analysis, we may request documents proving your financial situation (proof of income, declaration of insufficient resources, etc.)",
+    "badge": "Pro Bono Project - Free legal assistance for those in need"
+  },
+  "publications": {
+    "sectionTitle": "Publications",
+    "title": "Articles and Analysis",
+    "description": "Legal reflections, case analyses and discussions on criminal law, human rights and social justice.",
+    "latest": "Latest Publications",
+    "others": "Other Publications",
+    "noPublications": "No Publications Yet",
+    "noPublicationsMessage": "Soon, legal articles and analyses will be published here. Follow our work.",
+    "categories": {
+      "all": "All",
+      "general": "General",
+      "criminal": "Criminal Law",
+      "humanRights": "Human Rights",
+      "international": "International Law",
+      "labor": "Labor Law"
+    }
+  },
+  "testimonials": {
+    "sectionTitle": "Reviews",
+    "title": "Real Experiences",
+    "description": "Learn about the opinions of clients who trusted Mr. Ericson R. Piccoli for their most important legal matters.",
+    "comingSoon": "Real client testimonials coming soon.",
+    "seeGoogleReviews": "In the meantime, check out our Google reviews.",
+    "viewGoogleReviews": "View Google Reviews",
+    "stats": {
+      "yearsExperience": "Years of Experience",
+      "countriesExperience": "Countries with Experience",
+      "ethicalCommitment": "Ethical Commitment"
+    },
+    "aboutLawyer": "About the Lawyer",
+    "commitmentToExcellence": "Commitment to Excellence"
+  },
+  "contact": {
+    "title": "Get in Touch",
+    "description": "We are ready to assist you. Contact us via WhatsApp, email or fill out the form.",
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "subject": "Subject",
+      "message": "Message",
+      "send": "Send Message"
+    },
+    "info": {
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "location": "Location"
+    }
+  },
+  "cta": {
+    "title": "Need legal guidance?",
+    "description": "Contact us directly via WhatsApp or schedule a consultation.",
+    "whatsapp": "Direct WhatsApp",
+    "contact": "Get in Touch",
+    "readyToResolve": "Ready to resolve your legal matter?",
+    "otherContactForms": "Other Contact Options"
+  },
+  "footer": {
+    "rights": "All rights reserved",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "lgpd": "LGPD",
+    "quickLinks": "Quick Links",
+    "legal": "Legal",
+    "contact": "Contact",
+    "description": "Internationalized legal practice with technical excellence, commitment to human rights and social justice.",
+    "ctaTitle": "Let's talk about your case?",
+    "ctaDescription": "Get in touch for a personalized analysis of your legal situation."
+  },
+  "dashboard": {
+    "welcome": "Добро пожаловать",
+    "home": "Главная",
+    "documents": "Документы",
+    "myDocuments": "Мои документы",
+    "generateDocument": "Создать документ",
+    "chat": "Юридический чат",
+    "liveChat": "Онлайн чат",
+    "payments": "Платежи",
+    "consultations": "Консультации",
+    "scheduleConsultation": "Записаться на консультацию",
+    "research": "Юридические исследования",
+    "clients": "Клиенты",
+    "cases": "Дела",
+    "digitalSignature": "Электронная подпись",
+    "contacts": "Контакты",
+    "tasks": "Задачи",
+    "settings": "Настройки",
+    "officeSettings": "Настройки офиса",
+    "notifications": "Уведомления",
+    "crm": "CRM",
+    "profile": "Профиль",
+    "admin": {
+      "title": "Admin Panel",
+      "overview": "Overview",
+      "analytics": "Analytics",
+      "manageClients": "Manage Clients",
+      "manageCases": "Manage Cases",
+      "manageDocuments": "Manage Documents",
+      "financials": "Financials"
+    },
+    "client": {
+      "title": "Client Area",
+      "myCase": "My Case",
+      "myDocuments": "My Documents",
+      "myPayments": "My Payments",
+      "messages": "Messages",
+      "support": "Support"
+    },
+    "noNotifications": "Нет уведомлений",
+    "markAllRead": "Отметить все как прочитанные",
+    "recentActivity": "Недавняя активность",
+    "quickActions": "Быстрые действия"
+  },
+  "auth": {
+    "login": "Войти",
+    "register": "Регистрация",
+    "email": "Электронная почта",
+    "password": "Пароль",
+    "confirmPassword": "Подтвердите пароль",
+    "forgotPassword": "Забыли пароль?",
+    "noAccount": "Нет аккаунта?",
+    "hasAccount": "Уже есть аккаунт?",
+    "createAccount": "Создать аккаунт",
+    "loginSuccess": "Вход выполнен",
+    "registerSuccess": "Регистрация завершена",
+    "invalidCredentials": "Неверные учётные данные",
+    "passwordMismatch": "Пароли не совпадают"
+  },
+  "legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "Learn how we collect, use and protect your personal data."
+    },
+    "terms": {
+      "title": "Terms of Use",
+      "description": "Read the terms and conditions for using our website and services."
+    },
+    "lgpd": {
+      "title": "LGPD",
+      "description": "Information about the General Data Protection Law and your rights."
+    }
+  },
+  "services": {
+    "heroTitle": "Legal",
+    "heroTitleHighlight": "Services",
+    "heroDescription": "Legal excellence across multiple specialties of Law, with international education and personalized practice.",
+    "explore": "Explore",
+    "whyChoose": "Why choose the",
+    "whyChooseHighlight": "firm?",
+    "whyChooseDescription": "We combine internationally acclaimed academic training with advanced legal technology and close, transparent service, ensuring the best strategy for each case.",
+    "scheduleConsultation": "SCHEDULE CONSULTATION",
+    "notFoundTitle": "Didn't find your area?",
+    "notFoundDescription": "Get in touch and tell us about your case. The firm has a network of specialized partners to handle all legal demands.",
+    "meetOffice": "LEARN ABOUT THE FIRM",
+    "areas": {
+      "criminal": {
+        "title": "Criminal Law",
+        "desc": "Specialized technical defense in all phases of criminal proceedings, from police investigation to jury trial.",
+        "items": [
+          "Defense in police investigations",
+          "Habeas Corpus and provisional release",
+          "Jury Trial",
+          "Criminal execution and regime progression",
+          "Economic and financial crimes",
+          "Criminal appeals"
+        ]
+      },
+      "international": {
+        "title": "International Law",
+        "desc": "Legal advisory on cross-border issues, international treaties and international legal cooperation.",
+        "items": [
+          "International legal cooperation",
+          "Extradition and deportation",
+          "Public and Private International Law",
+          "Recognition of foreign judgments",
+          "Immigration and visas",
+          "International arbitration"
+        ]
+      },
+      "humanRights": {
+        "title": "Human Rights",
+        "desc": "Protection and promotion of fundamental rights before national courts and international organizations.",
+        "items": [
+          "Litigation before the IACHR",
+          "Protection of minorities and vulnerable groups",
+          "Freedom of expression and press",
+          "Refugee rights",
+          "Institutional violence",
+          "Advocacy before the UN"
+        ]
+      },
+      "labor": {
+        "title": "Labor Law",
+        "desc": "Practice in individual and collective labor disputes, for both employees and employers.",
+        "items": [
+          "Labor claims",
+          "Moral and sexual harassment",
+          "Work accidents",
+          "Collective bargaining",
+          "Preventive business consulting",
+          "Severance pay and FGTS"
+        ]
+      },
+      "business": {
+        "title": "Business Law",
+        "desc": "Legal advisory for companies on corporate, contractual and compliance matters.",
+        "items": [
+          "Company formation and changes",
+          "Commercial contracts",
+          "Compliance and governance",
+          "Judicial recovery",
+          "Legal due diligence",
+          "Intellectual property protection"
+        ]
+      },
+      "civil": {
+        "title": "Civil Law",
+        "desc": "Practice in civil matters, including civil liability, contracts and family law.",
+        "items": [
+          "Civil liability and damages",
+          "Contract review and drafting",
+          "Estates and successions",
+          "Consumer law",
+          "Real estate law",
+          "Mediation and arbitration"
+        ]
+      }
+    },
+    "differentials": [
+      "Harvard and UC Berkeley trained",
+      "Practice in 8+ countries",
+      "AI-powered legal technology",
+      "Full LGPD compliance",
+      "Structured Pro Bono program",
+      "Real-time client portal"
+    ]
+  },
+  "diferencial": {
+    "heroTitle": "Our",
+    "heroTitleHighlight": "Differential",
+    "heroDescription": "International education, practical experience in multiple countries and responsible use of legal technology in service of each client.",
+    "explore": "Explore",
+    "numbers": {
+      "yearsExp": "Years of experience",
+      "countries": "Countries of practice",
+      "harvardBerkeley": "& UC Berkeley",
+      "oab": ""
+    },
+    "whyChooseUs": "Why choose us",
+    "excellenceTitle": "Excellence in Every Detail",
+    "items": {
+      "education": {
+        "title": "International Education of Excellence",
+        "desc": "Education at Harvard University and UC Berkeley, with specialization in Criminal Sciences at PUCRS — an academic foundation that combines technical rigor with a global vision of Law."
+      },
+      "countries": {
+        "title": "Practice in 8+ Countries",
+        "desc": "Practical experience in over 8 countries, including practice in international courts and human rights organizations in Europe, North America and Latin America."
+      },
+      "technology": {
+        "title": "Advanced Legal Technology",
+        "desc": "Use of artificial intelligence for case law research, contract analysis and document generation, with full LGPD compliance and professional secrecy."
+      },
+      "security": {
+        "title": "Security and Professional Secrecy",
+        "desc": "Infrastructure with TLS/HTTPS encryption, Row Level Security (RLS) and XSS protections, ensuring the inviolability of client data as per the OAB Statute."
+      },
+      "proBono": {
+        "title": "Pro Bono Commitment",
+        "desc": "Structured pro bono advocacy program for people in vulnerable situations, reflecting the firm's social commitment to access to justice."
+      },
+      "personalized": {
+        "title": "Personalized Service",
+        "desc": "Each case receives individualized analysis with tailored legal strategy, transparent communication and real-time case tracking through the client portal."
+      }
+    },
+    "techSecurityTitle": "Technology and",
+    "techSecurityHighlight": "Security",
+    "techSecurityDesc": "The firm employs bank-level security standards to protect client data, in compliance with the General Data Protection Law (Law No. 13,709/2018) and the Advocacy Statute (Law No. 8,906/1994).",
+    "techItems": {
+      "tls": {
+        "title": "TLS/HTTPS Encryption",
+        "desc": "All communications are protected by end-to-end encryption"
+      },
+      "rls": {
+        "title": "Row Level Security (RLS)",
+        "desc": "Client data isolation with database-level security policies"
+      },
+      "lgpd": {
+        "title": "LGPD Compliance",
+        "desc": "Data processing according to the legal bases of Law No. 13,709/2018"
+      },
+      "secrecy": {
+        "title": "Professional Secrecy",
+        "desc": "Inviolable protection as per art. 7 of the OAB Statute"
+      }
+    },
+    "ctaTitle": "Talk to the Firm",
+    "ctaDescription": "Schedule a consultation and discover how the combination of international legal expertise and cutting-edge technology can make the difference in your case."
+  },
+  "plataforma": {
+    "heroLabel": "Enterprise AI Platform",
+    "heroTitle1": "Artificial intelligence",
+    "heroTitle2": "for your business",
+    "heroDescription": "A digital infrastructure of excellence combining advanced AI, process automation and intelligent management to drive business results.",
+    "accessPlatform": "ACCESS PLATFORM",
+    "talkToLawyer": "TALK TO ELP",
+    "metrics": {
+      "tls": "Encrypted Connection",
+      "access": "Uninterrupted Access",
+      "lgpd": "GDPR / LGPD Compliant",
+      "rls": "Per-User Security"
+    },
+    "featuresLabel": "Features",
+    "featuresTitle1": "Complete architecture for",
+    "featuresTitle2": "AI-powered business management",
+    "featuresDescription": "Each module was designed to offer maximum efficiency, automation and intelligence in managing your business.",
+    "features": {
+      "tracking": {
+        "title": "Real-Time Automation & Monitoring",
+        "desc": "Intelligent panel where you view processes, operations, KPIs and metrics in real time. The system automatically monitors all activities and displays the status of each stage.",
+        "items": [
+          "Dashboard with real-time KPIs and metrics",
+          "Automatic notifications of critical events",
+          "Complete and auditable history",
+          "24/7 access via browser, from any device"
+        ]
+      },
+      "communication": {
+        "title": "Integrated Orion AI Assistant",
+        "desc": "Chat with Orion, our AI assistant trained to help with business documentation, data analysis, compliance and international business strategy.",
+        "items": [
+          "Contextual AI chat within the platform",
+          "AI-powered business document generation",
+          "Intelligent data analysis and reporting",
+          "Multi-language support (PT, EN, IT, ES, ZH)"
+        ]
+      },
+      "documents": {
+        "title": "Intelligent Document Management",
+        "desc": "Create, manage and share business documents with AI. International contracts, LOIs, NDAs, commercial proposals and compliance reports organized in smart folders.",
+        "items": [
+          "AI document generation (15+ types)",
+          "Bilingual templates (EN/PT) for international business",
+          "Automatic organization by categories",
+          "Secure cloud storage with versioning"
+        ]
+      },
+      "security": {
+        "title": "Security & Compliance",
+        "desc": "Infrastructure protected by robust authentication, TLS encryption and database-level security policies (RLS). GDPR and LGPD compliant.",
+        "items": [
+          "Encrypted connection via HTTPS/TLS",
+          "Profile-based access control (Row Level Security)",
+          "GDPR and LGPD compliance",
+          "Complete action audit trail"
+        ]
+      }
+    },
+    "benefitsLabel": "Advantages",
+    "benefitsTitle": "Why choose ORION?",
+    "benefits": [
+      "Continuous digital access, 24 hours a day",
+      "Responsive for any device",
+      "AI trained for international business",
+      "Integrated GDPR and LGPD compliance",
+      "Centralized and automated documentation",
+      "Multi-language with intelligent translation"
+    ],
+    "howItWorksLabel": "How It Works",
+    "howItWorksTitle1": "Three steps to",
+    "howItWorksTitle2": "digital transformation",
+    "steps": {
+      "create": {
+        "title": "Create your account",
+        "desc": "Quick and secure registration. In a few minutes you have full access to the ORION platform."
+      },
+      "access": {
+        "title": "Set up your environment",
+        "desc": "Define your profile, connect data sources and customize modules for your operation."
+      },
+      "control": {
+        "title": "Automate and scale",
+        "desc": "Use AI to generate documents, analyze data, manage teams and make smarter decisions."
+      }
+    },
+    "showcaseLabel": "Discover the Platform",
+    "showcaseTitle1": "Overview of the",
+    "showcaseTitle2": "platform",
+    "showcaseDescription": "Discover the modules and features that make business management more efficient, automated and intelligent.",
+    "showcase": {
+      "platform": {
+        "title": "ORION AI Platform",
+        "desc": "Complete panel for AI-powered business management. Monitor operations, manage teams and automate processes with total transparency and 24/7 access."
+      },
+      "ai": {
+        "title": "Orion AI Assistant",
+        "desc": "Consult business questions with AI trained in international legislation, compliance and business strategy. Contextual and substantiated answers."
+      },
+      "docs": {
+        "title": "AI Document Generation",
+        "desc": "Create international contracts, LOIs, NDAs, commercial proposals and reports with AI assistance. Professional bilingual templates that streamline operations."
+      },
+      "register": {
+        "title": "Business Registration & Access",
+        "desc": "Register your company in minutes and access all features. Restricted area with profile-based security and privacy."
+      },
+      "dashboard": {
+        "title": "Smart Business Dashboard",
+        "desc": "Complete overview with metrics, active operations, pending tasks and real-time notifications. Everything organized in an intuitive and responsive panel."
+      }
+    },
+    "ctaLabel": "Start Now",
+    "ctaTitle1": "Ready for the",
+    "ctaTitle2": "digital transformation",
+    "ctaTitle3": "of your business?",
+    "ctaDescription": "Register for free and experience a new way to manage your business with artificial intelligence, automation and integrated compliance."
+  }
+}

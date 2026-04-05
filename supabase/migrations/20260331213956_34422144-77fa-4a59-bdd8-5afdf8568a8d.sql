@@ -1,0 +1,1 @@
+ALTER TABLE public.user_plans ADD COLUMN IF NOT EXISTS stripe_subscription_id text;
