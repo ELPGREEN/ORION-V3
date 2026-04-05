@@ -1,1 +1,1 @@
-// vite-env.d.ts file content
+/// <reference types="vite/client" />
