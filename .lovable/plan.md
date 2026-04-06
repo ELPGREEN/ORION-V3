@@ -1,88 +1,113 @@
 
 
-# Plano: Tela de Entrada com Vídeo + Welcome Three.js + Onboarding Pós-Login
+# Plano: LLM Knowledge Harvester + Per-User Encrypted KB + Inference API
 
-## Visão Geral
+## Contexto
 
-Criar um fluxo de entrada imersivo na página Index: vídeo de 5s → tela Three.js "Bem-vindo" com opções Login/Cadastro → redirecionamento por perfil → onboarding guiado no primeiro acesso.
+O sistema neural já tem: backpropagation, Hebbian learning, distillation, knowledge base com embeddings, provider routing (quantum-llm-router), e pipeline orchestrator. O que falta é o ciclo de **coleta de conhecimento externo** durante o treino, **armazenamento criptografado por usuário**, e **API de inferência** pós-treino.
 
----
+## Arquitetura
 
-## Etapa 1 — Splash Screen com Vídeo (5s) + Welcome Three.js
+```text
+┌─────────────────────────────────────────────────┐
+│              TRAINING PHASE                      │
+│                                                  │
+│  neural-knowledge-harvester (nova edge function) │
+│     ├── Query Groq, OpenAI, Gemini, DeepSeek    │
+│     ├── Gera pares (prompt → response)          │
+│     ├── Avalia qualidade (LLM-as-judge)         │
+│     ├── Insere em neural_learning_data          │
+│     └── Dispara neural-training (neural_learn)  │
+│                                                  │
+│  Resultado: pesos sinápticos atualizados,       │
+│  knowledge base enriquecida, modelo distilado   │
+├─────────────────────────────────────────────────┤
+│              INFERENCE PHASE                     │
+│                                                  │
+│  neural-inference (nova edge function)           │
+│     ├── Carrega pesos treinados                 │
+│     ├── Quantum Router seleciona provider       │
+│     ├── Injeta RAG context do user's KB         │
+│     └── Retorna resposta "aprendida"            │
+├─────────────────────────────────────────────────┤
+│              PER-USER ENCRYPTED KB               │
+│                                                  │
+│  user_private_knowledge (nova tabela)            │
+│     ├── user_id, encrypted_content (pgcrypto)   │
+│     ├── RLS: só o próprio user acessa           │
+│     ├── O user pode deletar tudo (GDPR)         │
+│     └── Cada user = seu próprio Jarvis context  │
+└─────────────────────────────────────────────────┘
+```
 
-**Arquivo:** `src/components/home/WelcomeSplash.tsx` (novo)
+## Etapas de Implementação
 
-- Componente fullscreen que exibe o vídeo `orion-tron-video.mp4` por 5 segundos (autoplay, muted)
-- Após 5s, transição fade para a tela Three.js (reutilizando `HeroThreeBackground` como fundo)
-- Tela Three.js mostra:
-  - Logo ORION animada (usar a imagem `orion-logo-2.jpg` enviada)
-  - Texto "BEM-VINDO AO ORION" com fonte Orbitron, efeito glow dourado
-  - Dois botões estilizados: **"Fazer Login"** e **"Criar Conta"**
-  - Botão "Entrar como Visitante" secundário para ver páginas públicas
-- Estado salvo em `sessionStorage` para não repetir na mesma sessão
-- Usuários já logados pulam direto para o conteúdo
+### 1. Edge Function: `neural-knowledge-harvester`
 
-**Arquivo:** `src/pages/Index.tsx` (modificar)
+Nova edge function que, durante o treino, consulta múltiplos LLMs para coletar conhecimento:
 
-- Verificar `sessionStorage` e `useAuth().user`
-- Se não viu splash e não está logado → mostrar `WelcomeSplash`
-- Ao clicar Login/Cadastro → navegar para `/auth?tab=login` ou `/auth?tab=cadastro`
-- Ao clicar Visitante → fechar splash e mostrar Home normal
+- Recebe uma lista de **tópicos/prompts de treino** (ex: "Explique habeas corpus", "O que é LGPD")
+- Para cada prompt, consulta **Groq, Gemini, DeepSeek, OpenAI** em paralelo
+- Compara respostas, seleciona a melhor (LLM-as-judge usando Gemini)
+- Insere o par (input, best_output) em `neural_learning_data` com `quality_score`
+- Chama `neural-training` com `action: neural_learn` para treinar com os novos dados
+- Usa as API keys já configuradas (GROQ_API_KEY, GEMINI_API_KEY, DEEPSEEK_API_KEY, OPENAI_API_KEY)
 
----
+### 2. Tabela: `user_private_knowledge`
 
-## Etapa 2 — Redirecionamento Pós-Login por Perfil
+Tabela com criptografia via `pgcrypto` para knowledge pessoal de cada usuário:
 
-**Arquivo:** `src/contexts/AuthContext.tsx` (modificar)
+- Colunas: `id`, `user_id`, `title`, `encrypted_content`, `encryption_iv`, `tags`, `embedding` (vector), `created_at`
+- RLS: SELECT/INSERT/UPDATE/DELETE apenas pelo próprio `user_id`
+- O conteúdo é criptografado client-side (AES-256-GCM) com chave derivada do user
+- O embedding é gerado do título + tags (sem expor conteúdo) para busca semântica
 
-- Após login, ler `user_metadata.account_type` (já existe: cliente, advogado, produtor, afiliado)
-- Redirecionar para a rota adequada:
-  - `advogado` → `/dashboard` (painel jurídico)
-  - `cliente` → `/dashboard` (painel cliente)
-  - `produtor` → `/dashboard` (painel produtor)
-  - `afiliado` → `/dashboard` (painel afiliado)
-- Se `onboarding_completed === false` → redirecionar para `/dashboard/configurar-ia`
+### 3. Edge Function: `neural-inference`
 
----
+API de inferência pós-treino:
 
-## Etapa 3 — Onboarding Guiado no Primeiro Login
+- Carrega pesos sinápticos treinados (`__synaptic_weights__`)
+- Carrega modelo distilado (`__distilled_model_v17__`)
+- Usa quantum-router logic para selecionar provider baseado nos pesos aprendidos
+- Injeta RAG context da `user_private_knowledge` (descriptografado no client)
+- Retorna resposta com metadata de confiança e proveniência
 
-**Arquivo:** `src/pages/dashboard/ConfigurarIA.tsx` (já existe com 7 steps)
+### 4. Integração no Frontend
 
-- Adicionar steps extras no início do onboarding existente:
-  1. **Cadastro de Voz** — gravação de amostra de voz do usuário
-  2. **Cadastro Facial** — `FaceAuthEnroll` (já existe em `src/components/auth/FaceAuthEnroll.tsx`)
-  3. **Informações Complementares** — campos faltantes baseados no perfil (OAB para advogados, CNPJ para empresas, etc.)
-- Orion guia por voz cada etapa (já tem sistema de `voicePrompt`)
-- Ao concluir → `onboarding_completed = true` no `neural_config`
-- Redirecionar para dashboard principal
-
----
-
-## Etapa 4 — Copiar Logo para Assets
-
-- Copiar `user-uploads://orion-logo-2.jpg` → `src/assets/orion-logo-2.jpg`
-- Usar no `WelcomeSplash` como logo animada
-
----
+- Novo hook `useNeuralInference` que chama `neural-inference`
+- Componente de gestão da KB privada (CRUD criptografado)
+- Painel de treino mostrando progresso do harvester
+- Integração com o Jarvis existente para usar inference ao invés de chamadas diretas
 
 ## Detalhes Técnicos
 
-| Item | Tecnologia |
-|------|-----------|
-| Vídeo intro | HTML5 `<video>` com evento `onEnded` |
-| Background animado | `HeroThreeBackground` (WebGL shader existente) |
-| Animações texto | Framer Motion (já no projeto) |
-| Estado splash | `sessionStorage.setItem('orion_splash_seen', '1')` |
-| Onboarding flag | `neural_config.onboarding_completed` (Supabase) |
-| Face enrollment | `FaceAuthEnroll` componente existente |
+**Harvester — Proxy de APIs durante treino:**
+- Usa `Promise.allSettled` para consultar 4 providers simultaneamente
+- Timeout de 30s por provider, retry com exponential backoff
+- Rate limiting interno (max 10 req/min por provider)
+- Armazena raw responses para auditoria em `neural_learning_data.metadata`
 
----
+**Criptografia per-user:**
+- AES-256-GCM no client (Web Crypto API)
+- Chave derivada com PBKDF2 do user's auth token + salt fixo por user
+- Embedding gerado apenas do título (não do conteúdo) para preservar privacidade
+- Opção de export/delete total (compliance LGPD)
 
-## Ordem de Implementação
+**Inference pipeline:**
+- Score de confiança baseado nos pesos treinados
+- Fallback cascade: modelo distilado → quantum router → provider direto
+- Cache de inferência em `elp_response_cache` (já existe)
 
-1. Copiar logo + criar `WelcomeSplash`
-2. Integrar no `Index.tsx`
-3. Ajustar redirecionamento pós-login no `AuthContext`
-4. Expandir onboarding no `ConfigurarIA.tsx`
+## Arquivos a Criar/Modificar
+
+| Arquivo | Ação |
+|---------|------|
+| `supabase/functions/neural-knowledge-harvester/index.ts` | Criar |
+| `supabase/functions/neural-inference/index.ts` | Criar |
+| Migration: `user_private_knowledge` table + RLS | Criar |
+| `src/hooks/useNeuralInference.ts` | Criar |
+| `src/hooks/usePrivateKnowledge.ts` | Criar |
+| `src/lib/crypto/user-encryption.ts` | Criar |
+| `src/components/dashboard/neural/KnowledgeHarvester.tsx` | Criar |
+| `src/components/dashboard/neural/PrivateKnowledge.tsx` | Criar |
 
