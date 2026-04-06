@@ -164,12 +164,20 @@ const API_REGISTRY: OrionAPI[] = [
     checkHealth: alwaysCloud,
   },
   {
+    id: "jarvis_tts", name: "JARVIS TTS (Piper)", brandName: "Orion Voz JARVIS",
+    capability: "speech", tier: "secondary", runtime: "cloud",
+    library: "jgkawell/jarvis", version: "medium",
+    health: "online", lastLatencyMs: 0, errorCount: 0,
+    features: ["Voz JARVIS (British English)", "Piper ONNX", "22050Hz WAV", "Home Assistant compatível", "DSP pós-processamento"],
+    checkHealth: alwaysCloud,
+  },
+  {
     id: "piper_tts", name: "Piper TTS (WASM)", brandName: "Orion Voz Offline",
     capability: "speech", tier: "tertiary", runtime: "local_wasm",
     library: "@mintplex-labs/piper-tts-web", version: "^1.0.x",
     health: "unknown", lastLatencyMs: 0, errorCount: 0,
     features: ["Síntese offline pt-BR", "Modelo ONNX faber-medium", "~50MB"],
-    checkHealth: () => "online", // lazy loaded
+    checkHealth: () => "online",
   },
   {
     id: "web_speech_tts", name: "Web Speech API (TTS)", brandName: "Orion Voz Fallback",
