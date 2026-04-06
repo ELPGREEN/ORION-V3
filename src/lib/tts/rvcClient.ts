@@ -1,19 +1,77 @@
 /**
- * RVC (Retrieval-based Voice Conversion) Client
+ * RVC Client with Load Balancing across 4 HuggingFace Spaces
  * 
- * Sends audio to HuggingFace Space Ericsonv12/adv for voice conversion
- * using the ToothBrushing RVC model (Orion voice clone).
+ * Spaces: Ericsonv12/orion-voice-1 through orion-voice-4
+ * Strategy: Round-robin with health-aware failover
  * 
- * Pipeline: Formant WAV → RVC Space → Converted WAV
+ * Pipeline: Formant WAV → RVC Space → Orion Voice WAV
  */
 
-const RVC_SPACE_ID = "Ericsonv12/orion-voice";
-const RVC_SPACE_URL = "https://ericsonv12-orion-voice.hf.space";
-const RVC_TIMEOUT_MS = 30_000;
+// ═══════════════════════════════════════════════════════════
+// SPACE POOL (4 identical instances)
+// ═══════════════════════════════════════════════════════════
 
-// Model files hosted in the Space
-const RVC_MODEL_URL = "https://huggingface.co/spaces/Ericsonv12/adv/resolve/main/ToothBrushing.pth";
-const RVC_INDEX_URL = "https://huggingface.co/spaces/Ericsonv12/adv/resolve/main/added_IVF120_Flat_nprobe_1_ToothBrushing_v2.index";
+interface SpaceNode {
+  id: string;
+  url: string;
+  healthy: boolean;
+  lastCheck: number;
+  latency: number;
+  failures: number;
+}
+
+const SPACES: SpaceNode[] = [
+  { id: "Ericsonv12/orion-voice-1", url: "https://ericsonv12-orion-voice-1.hf.space", healthy: true, lastCheck: 0, latency: 0, failures: 0 },
+  { id: "Ericsonv12/orion-voice-2", url: "https://ericsonv12-orion-voice-2.hf.space", healthy: true, lastCheck: 0, latency: 0, failures: 0 },
+  { id: "Ericsonv12/orion-voice-3", url: "https://ericsonv12-orion-voice-3.hf.space", healthy: true, lastCheck: 0, latency: 0, failures: 0 },
+  { id: "Ericsonv12/orion-voice-4", url: "https://ericsonv12-orion-voice-4.hf.space", healthy: true, lastCheck: 0, latency: 0, failures: 0 },
+];
+
+const RVC_TIMEOUT_MS = 30_000;
+const HEALTH_CHECK_INTERVAL = 60_000; // 1 min
+const MAX_FAILURES = 3;
+
+let _roundRobinIndex = 0;
+
+// ═══════════════════════════════════════════════════════════
+// LOAD BALANCER
+// ═══════════════════════════════════════════════════════════
+
+function getNextSpace(): SpaceNode | null {
+  // Try round-robin among healthy spaces
+  const healthySpaces = SPACES.filter(s => s.healthy || Date.now() - s.lastCheck > HEALTH_CHECK_INTERVAL * 5);
+  if (healthySpaces.length === 0) {
+    // Reset all and try again
+    SPACES.forEach(s => { s.healthy = true; s.failures = 0; });
+    return SPACES[0];
+  }
+
+  // Sort by latency (fastest first), then round-robin
+  const sorted = [...healthySpaces].sort((a, b) => a.latency - b.latency);
+  const idx = _roundRobinIndex % sorted.length;
+  _roundRobinIndex++;
+  return sorted[idx];
+}
+
+function markSuccess(space: SpaceNode, latency: number) {
+  space.healthy = true;
+  space.failures = 0;
+  space.latency = latency;
+  space.lastCheck = Date.now();
+}
+
+function markFailure(space: SpaceNode) {
+  space.failures++;
+  if (space.failures >= MAX_FAILURES) {
+    space.healthy = false;
+    console.warn(`[RVC LB] Space ${space.id} marked unhealthy after ${MAX_FAILURES} failures`);
+  }
+  space.lastCheck = Date.now();
+}
+
+// ═══════════════════════════════════════════════════════════
+// PUBLIC API
+// ═══════════════════════════════════════════════════════════
 
 export interface RVCConvertOptions {
   pitchShift?: number;
@@ -26,7 +84,8 @@ const DEFAULT_OPTIONS: Required<RVCConvertOptions> = {
 };
 
 /**
- * Convert audio blob through RVC via Gradio client (primary method)
+ * Convert audio through RVC with automatic load balancing
+ * Tries up to 4 Spaces until one succeeds
  */
 export async function convertWithRVC(
   audioBlob: Blob,
@@ -34,56 +93,67 @@ export async function convertWithRVC(
   signal?: AbortSignal,
 ): Promise<Blob | null> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
+  const tried = new Set<string>();
 
-  try {
-    const { Client } = await import("@gradio/client");
+  for (let attempt = 0; attempt < SPACES.length; attempt++) {
     if (signal?.aborted) return null;
 
-    const client = await Client.connect(RVC_SPACE_ID);
-    if (signal?.aborted) return null;
+    const space = getNextSpace();
+    if (!space || tried.has(space.id)) continue;
+    tried.add(space.id);
 
-    console.log("[RVC] Connected to Space, sending audio for conversion...");
+    console.log(`[RVC LB] Trying ${space.id} (attempt ${attempt + 1}/${SPACES.length})`);
+    const start = Date.now();
 
-    // Call the api_convert endpoint (defined in app.py)
-    const result = await (client as any).predict("/api_convert", [
-      audioBlob,         // audio file
-      opts.pitchShift,   // pitch shift
-      opts.indexRate,     // index rate
-    ]);
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "input.wav");
+      formData.append("pitch_shift", String(opts.pitchShift));
+      formData.append("index_rate", String(opts.indexRate));
 
-    if (signal?.aborted) return null;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), RVC_TIMEOUT_MS);
+      if (signal) {
+        signal.addEventListener("abort", () => controller.abort(), { once: true });
+      }
 
-    const data = result?.data?.[0];
-    if (!data) {
-      console.warn("[RVC] No data returned from Space");
-      return null;
+      const response = await fetch(`${space.url}/rvc_convert`, {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        console.warn(`[RVC LB] ${space.id} returned ${response.status}`);
+        markFailure(space);
+        continue;
+      }
+
+      const blob = await response.blob();
+      if (blob.size < 100) {
+        markFailure(space);
+        continue;
+      }
+
+      markSuccess(space, Date.now() - start);
+      console.log(`[RVC LB] ✅ ${space.id} succeeded in ${Date.now() - start}ms (${blob.size} bytes)`);
+      return blob;
+
+    } catch (err: any) {
+      if (err?.name === "AbortError" && signal?.aborted) return null;
+      console.warn(`[RVC LB] ${space.id} error:`, err?.message);
+      markFailure(space);
     }
-
-    // Gradio may return a file URL or blob
-    if (data instanceof Blob) return data;
-
-    if (typeof data === "object" && data.url) {
-      const resp = await fetch(data.url, { signal });
-      return resp.ok ? resp.blob() : null;
-    }
-
-    if (typeof data === "string" && data.startsWith("http")) {
-      const resp = await fetch(data, { signal });
-      return resp.ok ? resp.blob() : null;
-    }
-
-    console.warn("[RVC] Unexpected response format:", typeof data);
-    return null;
-  } catch (err: any) {
-    if (err?.name !== "AbortError") {
-      console.warn("[RVC] Gradio conversion failed:", err?.message);
-    }
-    return null;
   }
+
+  console.warn("[RVC LB] All 4 Spaces failed");
+  return null;
 }
 
 /**
- * Fallback: direct HTTP POST to Space
+ * Fallback: try via Gradio client
  */
 export async function convertWithRVCDirect(
   audioBlob: Blob,
@@ -91,56 +161,75 @@ export async function convertWithRVCDirect(
   signal?: AbortSignal,
 ): Promise<Blob | null> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
+  const space = getNextSpace();
+  if (!space) return null;
 
   try {
-    const formData = new FormData();
-    formData.append("audio", audioBlob, "input.wav");
-    formData.append("pitch_shift", String(opts.pitchShift));
-    formData.append("index_rate", String(opts.indexRate));
+    const { Client } = await import("@gradio/client");
+    if (signal?.aborted) return null;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), RVC_TIMEOUT_MS);
-    if (signal) {
-      signal.addEventListener("abort", () => controller.abort(), { once: true });
+    const client = await Client.connect(space.id);
+    if (signal?.aborted) return null;
+
+    const result = await (client as any).predict("/rvc_convert", [
+      audioBlob,
+      opts.pitchShift,
+      opts.indexRate,
+    ]);
+
+    if (signal?.aborted) return null;
+
+    const data = result?.data?.[0];
+    if (!data) return null;
+    if (data instanceof Blob) return data;
+    if (typeof data === "object" && data.url) {
+      const resp = await fetch(data.url, { signal });
+      return resp.ok ? resp.blob() : null;
     }
-
-    const response = await fetch(`${RVC_SPACE_URL}/api/predict`, {
-      method: "POST",
-      body: formData,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      console.warn(`[RVC Direct] ${response.status}: ${response.statusText}`);
-      return null;
-    }
-
-    const blob = await response.blob();
-    return blob.size > 100 ? blob : null;
+    return null;
   } catch (err: any) {
     if (err?.name !== "AbortError") {
-      console.warn("[RVC Direct] Failed:", err?.message);
+      console.warn("[RVC Gradio] Failed:", err?.message);
     }
     return null;
   }
 }
 
 /**
- * Check if RVC endpoint is available on the Space
+ * Check if any RVC Space is available
  */
 export async function isRVCAvailable(): Promise<boolean> {
-  try {
-    const { Client } = await import("@gradio/client");
-    const client = await Client.connect(RVC_SPACE_ID);
-    const info = await (client as any).view_api();
-    // Check if api_convert endpoint exists
-    const endpoints = Object.keys(info?.named_endpoints || {});
-    const hasRVC = endpoints.some(e => e.includes("convert") || e.includes("rvc"));
-    console.log(`[RVC] Space endpoints: ${endpoints.join(", ")} → RVC: ${hasRVC}`);
-    return hasRVC;
-  } catch {
-    return false;
-  }
+  const checks = SPACES.map(async (space) => {
+    try {
+      const resp = await fetch(`${space.url}/rvc_health`, {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        space.healthy = data.status === "ok";
+        space.lastCheck = Date.now();
+        return space.healthy;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
+
+  const results = await Promise.allSettled(checks);
+  const anyAvailable = results.some(r => r.status === "fulfilled" && r.value);
+  console.log(`[RVC LB] Health check: ${results.filter(r => r.status === "fulfilled" && (r as any).value).length}/4 Spaces available`);
+  return anyAvailable;
+}
+
+/**
+ * Get status of all Spaces
+ */
+export function getSpaceStatus(): Array<{ id: string; healthy: boolean; latency: number; failures: number }> {
+  return SPACES.map(s => ({
+    id: s.id,
+    healthy: s.healthy,
+    latency: s.latency,
+    failures: s.failures,
+  }));
 }
