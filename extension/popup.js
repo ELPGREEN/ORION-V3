@@ -1,18 +1,17 @@
 /**
- * Orion Extension v3.0 — Popup Logic
- * Connects to iasofthub.com and neural-ops for real AI queries.
- * Vision toggle with 15min auto-timeout.
+ * Orion Extension v4.0 — Popup Logic
+ * Web search, scraping, external links, anti-hallucination display.
  */
 
 const APP_BASE = "https://www.iasofthub.com";
 
-// Elements
 const statusBadge = document.getElementById("statusBadge");
 const statusDot = document.getElementById("statusDot");
 const statusText = document.getElementById("statusText");
 const wakeToggle = document.getElementById("wakeToggle");
 const btnOpen = document.getElementById("btnOpen");
-const btnDashboard = document.getElementById("btnDashboard");
+const btnSearch = document.getElementById("btnSearch");
+const btnScrape = document.getElementById("btnScrape");
 const btnSummarize = document.getElementById("btnSummarize");
 const btnScreenshot = document.getElementById("btnScreenshot");
 const btnReadAloud = document.getElementById("btnReadAloud");
@@ -25,7 +24,6 @@ const visionPillText = document.getElementById("visionPillText");
 const visionInfo = document.getElementById("visionInfo");
 const capVisionIcon = document.getElementById("cap-vision-icon");
 
-// Load state
 function refreshState() {
   chrome.runtime.sendMessage({ type: "GET_STATE" }, (state) => {
     if (!state) return;
@@ -44,7 +42,6 @@ function updateUI(state) {
     statusText.textContent = "Inativo";
   }
 
-  // Vision state
   const isVisionOn = state.visionActive || state.apiStatus?.vision === "online";
   visionPill.className = `vision-pill ${isVisionOn ? "on" : "off"}`;
   visionPillText.textContent = isVisionOn ? "Visão ON" : "Visão OFF";
@@ -59,11 +56,11 @@ function updateUI(state) {
     pageUrl.title = state.pageContext.url || "";
   }
 
-  const caps = ["vision", "hearing", "speech", "reasoning", "face"];
+  const caps = ["vision", "hearing", "speech", "reasoning", "search", "scraping", "antihallucination"];
   caps.forEach((cap) => {
     const el = document.getElementById(`cap-${cap}`);
     if (!el) return;
-    const s = state.apiStatus?.[cap] || "unknown";
+    const s = state.apiStatus?.[cap] || (cap === "antihallucination" ? "online" : "unknown");
     el.className = `cap-status ${s}`;
     const labels = { online: "Online", loading: "...", offline: "Offline", error: "Erro", unknown: "—" };
     el.textContent = labels[s] || s;
@@ -82,9 +79,7 @@ wakeToggle.addEventListener("click", () => {
   wakeToggle.className = newState ? "toggle on" : "toggle";
   chrome.storage.local.set({ orionWakeWordEnabled: newState });
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]?.id) {
-      chrome.tabs.sendMessage(tabs[0].id, { type: "ORION_TOGGLE_LISTENING" });
-    }
+    if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, { type: "ORION_TOGGLE_LISTENING" });
   });
 });
 
@@ -94,8 +89,19 @@ btnOpen.addEventListener("click", () => {
   window.close();
 });
 
-btnDashboard.addEventListener("click", () => {
-  chrome.tabs.create({ url: `${APP_BASE}/dashboard/rede-neural` });
+// Web Search — opens search in content script panel
+btnSearch.addEventListener("click", () => {
+  sendToActiveTab({ type: "ORION_OPEN_SEARCH_PANEL" });
+  window.close();
+});
+
+// Scrape current page
+btnScrape.addEventListener("click", () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]?.url) {
+      sendToActiveTab({ type: "ORION_SCRAPE_URL", url: tabs[0].url });
+    }
+  });
   window.close();
 });
 
@@ -103,23 +109,16 @@ btnDashboard.addEventListener("click", () => {
 btnVision.addEventListener("click", () => {
   const isOn = btnVision.classList.contains("active");
   sendToActiveTab({ type: isOn ? "ORION_DEACTIVATE_VISION" : "ORION_ACTIVATE_VISION" });
-  // Optimistic UI update
   setTimeout(refreshState, 300);
 });
 
-// Page Actions
 function sendToActiveTab(message) {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]?.id) {
-      chrome.tabs.sendMessage(tabs[0].id, message);
-    }
+    if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, message);
   });
 }
 
-btnSummarize.addEventListener("click", () => {
-  sendToActiveTab({ type: "ORION_SUMMARIZE_PAGE" });
-  window.close();
-});
+btnSummarize.addEventListener("click", () => { sendToActiveTab({ type: "ORION_SUMMARIZE_PAGE" }); window.close(); });
 
 btnScreenshot.addEventListener("click", () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -136,14 +135,18 @@ btnScreenshot.addEventListener("click", () => {
   });
 });
 
-btnReadAloud.addEventListener("click", () => {
-  sendToActiveTab({ type: "ORION_READ_ALOUD" });
-  window.close();
-});
+btnReadAloud.addEventListener("click", () => { sendToActiveTab({ type: "ORION_READ_ALOUD" }); window.close(); });
+btnExtract.addEventListener("click", () => { sendToActiveTab({ type: "ORION_EXTRACT_STRUCTURED" }); window.close(); });
 
-btnExtract.addEventListener("click", () => {
-  sendToActiveTab({ type: "ORION_EXTRACT_STRUCTURED" });
-  window.close();
+// ═══ Quick Links — External Navigation ═══
+document.querySelectorAll(".quick-link[data-link]").forEach((el) => {
+  el.addEventListener("click", (e) => {
+    e.preventDefault();
+    const linkKey = el.dataset.link;
+    chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey }, () => {
+      window.close();
+    });
+  });
 });
 
 // Listen for state updates
@@ -153,7 +156,6 @@ chrome.runtime.onMessage.addListener((message) => {
 
 // Init
 refreshState();
-
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   if (tabs[0]?.url) {
     pageInfo.style.display = "block";
@@ -161,5 +163,4 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     pageUrl.title = tabs[0].url;
   }
 });
-
 setInterval(refreshState, 3000);
