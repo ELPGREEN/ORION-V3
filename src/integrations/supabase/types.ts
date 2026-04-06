@@ -7824,6 +7824,7 @@ export type Database = {
         | "cliente"
         | "produtor"
         | "afiliado"
+        | "nomade"
       citation_type:
         | "legislation"
         | "jurisprudence"
@@ -7998,6 +7999,7 @@ export const Constants = {
         "cliente",
         "produtor",
         "afiliado",
+        "nomade",
       ],
       citation_type: [
         "legislation",
