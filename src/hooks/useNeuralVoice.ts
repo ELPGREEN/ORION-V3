@@ -377,49 +377,19 @@ export function useNeuralVoice(
       }
     }
 
-    // ── PRIMARY: Gemini TTS (rápido ~2s, voz Charon, 100% grátis) ──
-    if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
-      try {
-        const result = await speakWithGeminiTTS(cleanText, "Iapetus", cascadeAbort.signal);
-        if (result.played) {
-          played = true;
-          if (result.audio) activeAudioRef.current = result.audio;
-          console.log("[Voice] ✅ Gemini TTS (Iapetus) — primário");
-        }
-      } catch (err) {
-        if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Gemini TTS falhou, tentando próximo...");
-        }
-      }
-    }
-
-    // ── SECONDARY: Fish Speech Clone (se configurado e disponível) ──
-    const voiceId = (config as any)?.orion_voice_id as string | undefined;
-    const fishRefPath = getClonedVoiceRefPath(voiceId);
-    const hasClonedVoice = !!fishRefPath;
-
-    if (!played && !cascadeAbort.signal.aborted && hasClonedVoice && isFishCloneAvailable()) {
-      try {
-        const result = await speakWithFishClone(cleanText, fishRefPath, undefined, cascadeAbort.signal);
-        if (result.played) {
-          played = true;
-          if (result.audio) activeAudioRef.current = result.audio;
-          console.log("[Voice] ✅ Fish Speech Clone (voz clonada)");
-        }
-      } catch (err) {
-        if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Fish Clone falhou...");
-        }
-      }
-    }
-
-    // ── FALLBACK 1: Piper WASM (offline) ──
+    // ── PRIMARY: Orion Voice Engine (Cache → HF → Gemini → Piper) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
-        played = await speakWithPiper(cleanText);
-        if (played) console.log("[Voice] ⚠️ Fallback: Piper WASM");
-      } catch {
-        console.warn("[Voice] Piper falhou...");
+        const result = await speakWithOrionVoice(cleanText, cascadeAbort.signal);
+        if (result.played) {
+          played = true;
+          if (result.audio) activeAudioRef.current = result.audio;
+          console.log(`[Voice] ✅ Orion Voice Engine (${result.engine})`);
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          console.warn("[Voice] Orion Voice Engine falhou...");
+        }
       }
     }
 
