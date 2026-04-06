@@ -10,7 +10,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MODEL = "gemini-2.5-flash-tts";
+const MODEL = "gemini-2.5-flash-preview-tts";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 // Default voice for Orion — Charon is informative male
