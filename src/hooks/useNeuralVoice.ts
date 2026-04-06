@@ -314,8 +314,7 @@ export function useNeuralVoice(
     });
   }, [resumeSTT, updateAiResponding]);
 
-  // speakFast placeholder — will be replaced after speak is defined
-  let speakFastFn: (text: string) => Promise<void>;
+  // speakFast defined after speak below
 
   /**
    * ═══ Main TTS — Gemini TTS Primário (100% FREE, ~2s latência) ═══
@@ -446,6 +445,11 @@ export function useNeuralVoice(
     updateAiResponding(false);
     resumeSTT();
   }, [config, browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
+
+  /** speakFast: delegates to speak (no robotic SpeechSynthesis) */
+  const speakFast = useCallback(async (text: string) => {
+    await speak(text);
+  }, [speak]);
 
   // No-op startThinking (filler audio removed)
   const startThinking = useCallback(() => {}, []);
