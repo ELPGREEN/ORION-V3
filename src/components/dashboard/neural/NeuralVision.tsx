@@ -111,7 +111,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (!guestSession || chatHistory.length === 0) return;
     const last = chatHistory[chatHistory.length - 1];
     if (last) {
-      addGuestMessage(last.role === "user" ? "user" : "assistant", last.content || "");
+      addGuestMessage(last.role === "user" ? "user" : "assistant", last.text || "");
     }
   }, [chatHistory.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const { connected: supernetConnected, latency: supernetLatency, analysis: supernetAnalysis, sendFrame: sendSuperNetFrame, sendQuery: sendSuperNetQuery, wsUrl: supernetUrl, updateUrl: updateSuperNetUrl } = useSuperNetWS(active, canvasRef);
