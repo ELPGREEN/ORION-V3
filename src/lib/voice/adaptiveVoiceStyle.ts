@@ -258,6 +258,72 @@ const STYLE_COMMANDS: StyleCommand[] = [
     feedback: "Voz alterada.",
   },
 
+  // Language switching
+  {
+    patterns: [/fal[ea]\s+(em\s+)?ingl[eê]s/i, /speak\s+(in\s+)?english/i, /switch\s+to\s+english/i],
+    apply: () => ({ language: "en-US", accent: "neutro" }),
+    feedback: "Switching to English now.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?espanhol/i, /habla\s+(en\s+)?espa[nñ]ol/i],
+    apply: () => ({ language: "es-ES", accent: "neutro" }),
+    feedback: "Cambiando a español ahora.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?franc[eê]s/i, /parle[rz]?\s+(en\s+)?fran[çc]ais/i],
+    apply: () => ({ language: "fr-FR", accent: "neutro" }),
+    feedback: "Je parle en français maintenant.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?alem[aã]o/i, /sprich\s+deutsch/i],
+    apply: () => ({ language: "de-DE", accent: "neutro" }),
+    feedback: "Ich spreche jetzt Deutsch.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?italiano/i, /parla\s+(in\s+)?italiano/i],
+    apply: () => ({ language: "it-IT", accent: "neutro" }),
+    feedback: "Parlo in italiano adesso.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?japon[eê]s/i, /日本語/],
+    apply: () => ({ language: "ja-JP", accent: "neutro" }),
+    feedback: "日本語で話します。",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?chin[eê]s/i, /fal[ea]\s+(em\s+)?mandarim/i],
+    apply: () => ({ language: "zh-CN", accent: "neutro" }),
+    feedback: "我现在用中文说话。",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?coreano/i, /한국어/],
+    apply: () => ({ language: "ko-KR", accent: "neutro" }),
+    feedback: "한국어로 말하겠습니다.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?[aá]rabe/i],
+    apply: () => ({ language: "ar-SA", accent: "neutro" }),
+    feedback: "سأتحدث بالعربية الآن.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?russo/i],
+    apply: () => ({ language: "ru-RU", accent: "neutro" }),
+    feedback: "Теперь я говорю по-русски.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?hindi/i],
+    apply: () => ({ language: "hi-IN", accent: "neutro" }),
+    feedback: "अब मैं हिंदी में बोल रहा हूँ।",
+  },
+  {
+    patterns: [
+      /fal[ea]\s+(em\s+)?portugu[eê]s/i,
+      /volt[ae]\s+(para\s+)?(o\s+)?portugu[eê]s/i,
+      /portugu[eê]s\s+brasileiro/i,
+    ],
+    apply: () => ({ language: "pt-BR", accent: "neutro" }),
+    feedback: "Voltando para português brasileiro.",
+  },
+
   // Reset all
   {
     patterns: [
