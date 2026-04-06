@@ -33,7 +33,12 @@ export function ProactiveAlerts() {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
-  const { speak } = useVoiceInput({ lang: "pt-BR" });
+  const speak = async (text: string) => {
+    if (isGeminiTTSAvailable()) {
+      try { const r = await speakWithGeminiTTS(text, "Charon"); if (r.played) return; } catch {}
+    }
+    try { await speakWithPiper(text); } catch {}
+  };
 
   useEffect(() => {
     if (user?.id) {
