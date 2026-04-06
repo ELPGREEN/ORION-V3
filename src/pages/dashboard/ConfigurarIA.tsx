@@ -260,6 +260,8 @@ export default function ConfigurarIA() {
     }
   }, [currentStep]);
 
+  const navigate = useNavigate();
+
   const finishOnboarding = async () => {
     const saved = await updateConfig({
       ...localConfig,
@@ -269,6 +271,7 @@ export default function ConfigurarIA() {
       setShowOnboarding(false);
       toast.success("Configuração salva com sucesso!");
       speak("Configuração completa! Estou pronta para te ajudar.");
+      navigate("/dashboard");
     }
   };
 
