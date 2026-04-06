@@ -315,6 +315,18 @@ export const ELP_SWARM_CATEGORIES: Record<string, SwarmCategory> = {
     status: "active",
     implementation: "ELP HF Space / (root)",
   },
+  question_answering: {
+    name: "Question Answering",
+    agentCount: 120,
+    subcategories: [
+      "Extractive QA (12)", "Generative QA (9)", "Document QA (13)",
+      "Visual QA (13)", "Domain QA (17)", "Multilingual QA (13)",
+      "Open Domain QA (9)", "Conversational QA (6)", "Music/Audio QA (5)",
+      "Table QA (6)", "mDeBERTa, RoBERTa, Flan-T5, UnifiedQA, MiniCPM-o, Qwen2-VL, TAPAS",
+    ],
+    status: "active",
+    implementation: "ELP HF Space /agents/qa/*",
+  },
 };
 
 export function getTotalSwarmAgentCount(): number {
