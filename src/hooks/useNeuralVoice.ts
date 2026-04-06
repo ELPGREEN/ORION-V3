@@ -314,32 +314,7 @@ export function useNeuralVoice(
     });
   }, [resumeSTT, updateAiResponding]);
 
-  /** speakFast: Web Speech API only (machine voice, zero latency) */
-  const speakFast = useCallback(async (text: string) => {
-    if (!ttsRef.current || typeof window === "undefined") return;
-    try { speechSynthesis.cancel(); } catch {}
-    if (activeAudioRef.current) {
-      try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
-      activeAudioRef.current = null;
-    }
-    if (speakingRef.current) speakingRef.current = false;
-    speakingRef.current = true;
-    updateAiResponding(true);
-    lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
-    lastSpokenAtRef.current = Date.now();
-    speechBufferRef.current = "";
-    if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
-    clearRestartTimer();
-    try { recRef.current?.stop(); } catch {}
-
-    if ("speechSynthesis" in window) {
-      await browserSpeak(text);
-    }
-
-    speakingRef.current = false;
-    updateAiResponding(false);
-    resumeSTT();
-  }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
+  // speakFast defined after speak below
 
   /**
    * ═══ Main TTS — Gemini TTS Primário (100% FREE, ~2s latência) ═══
@@ -452,13 +427,10 @@ export function useNeuralVoice(
       }
     }
 
-    // ── FALLBACK 2: Web Speech API (último recurso) ──
-    if (!played && !cascadeAbort.signal.aborted && "speechSynthesis" in window) {
-      try {
-        await browserSpeak(text);
-        played = true;
-        console.log("[Voice] ⚠️ Fallback: Web Speech (último recurso)");
-      } catch {}
+    // ── Web Speech API REMOVIDO — voz robótica proibida ──
+    // Prefere silêncio a usar SpeechSynthesis robótico
+    if (!played) {
+      console.warn("[Voice] Nenhum engine TTS disponível — silêncio preferido a voz robótica");
     }
 
     // ── Feed self-synthesis for evolution reinforcement ──
@@ -472,7 +444,12 @@ export function useNeuralVoice(
     speakingRef.current = false;
     updateAiResponding(false);
     resumeSTT();
-  }, [config, browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
+  }, [config, clearRestartTimer, resumeSTT, updateAiResponding]);
+
+  /** speakFast: delegates to speak (no robotic SpeechSynthesis) */
+  const speakFast = useCallback(async (text: string) => {
+    await speak(text);
+  }, [speak]);
 
   // No-op startThinking (filler audio removed)
   const startThinking = useCallback(() => {}, []);

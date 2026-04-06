@@ -97,7 +97,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    const cleanText = text.trim().slice(0, 5000);
+    // Gemini TTS needs minimum ~10 chars for reliable audio generation
+    // Pad very short texts with natural filler to avoid empty responses
+    let cleanText = text.trim().slice(0, 5000);
+    if (cleanText.length < 12) {
+      cleanText = cleanText + "...";
+    }
     const selectedVoice = voice || DEFAULT_VOICE;
     const apiKey = getGeminiKey();
 

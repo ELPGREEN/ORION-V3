@@ -250,18 +250,12 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     return sentences.map(s => s.trim()).filter(s => s.length > 2);
   }, []);
 
-  // ── TTS: Web Speech only ──
-  const speak = useCallback((text: string, options?: { rate?: number; pitch?: number; onComplete?: () => void }) => {
+  // ── TTS: High-quality Gemini TTS → Piper (no robotic SpeechSynthesis) ──
+  const speak = useCallback(async (text: string, options?: { rate?: number; pitch?: number; onComplete?: () => void }) => {
     // Mutual silencing: stop listening before speaking
     destroyRecognition();
     if (mountedRef.current) setIsListening(false);
 
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      options?.onComplete?.();
-      return;
-    }
-
-    window.speechSynthesis.cancel();
     setIsSpeaking(true);
     isSpeakingRef.current = true;
 
@@ -273,68 +267,33 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       options?.onComplete?.();
     };
 
-    const bestVoice = getOrionVoice();
-    const sentences = preprocessForSpeech(text);
-
-    if (sentences.length === 0) {
-      finalize();
-      return;
-    }
-
-    let keepAliveInterval: ReturnType<typeof setInterval> | null = null;
-    const fixedRate = options?.rate ?? ORION_VOICE_PARAMS.rate;
-    const fixedPitch = options?.pitch ?? ORION_VOICE_PARAMS.pitch;
-
-    let completed = false;
-    const safeFinalize = () => {
-      if (completed) return;
-      completed = true;
-      if (keepAliveInterval) clearInterval(keepAliveInterval);
-      finalize();
-    };
-
-    // Safety timeout — if TTS hangs, finalize after 30s
-    const safetyTimeout = setTimeout(() => {
-      console.warn("[VoiceInput] TTS safety timeout — forcing finalize");
-      window.speechSynthesis.cancel();
-      safeFinalize();
-    }, 30000);
-
-    sentences.forEach((sentence, i) => {
-      const utterance = new SpeechSynthesisUtterance(sentence);
-      utterance.lang = lang;
-      utterance.rate = fixedRate;
-      utterance.pitch = fixedPitch;
-      utterance.volume = ORION_VOICE_PARAMS.volume;
-
-      if (bestVoice) utterance.voice = bestVoice;
-
-      if (i === 0) {
-        utterance.onstart = () => {
-          // Chrome bug: pause/resume keeps synthesis alive for long texts
-          keepAliveInterval = setInterval(() => {
-            if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-              window.speechSynthesis.pause();
-              window.speechSynthesis.resume();
-            }
-          }, 10000);
-        };
+    try {
+      // Try Gemini TTS first (high quality, free)
+      const { speakWithGeminiTTS, isGeminiTTSAvailable } = await import("@/lib/tts/geminiTTS");
+      if (isGeminiTTSAvailable()) {
+        const result = await speakWithGeminiTTS(text, "Charon");
+        if (result.played) {
+          if (result.audio) audioRef.current = result.audio;
+          finalize();
+          return;
+        }
       }
+    } catch {}
 
-      if (i === sentences.length - 1) {
-        utterance.onend = () => {
-          clearTimeout(safetyTimeout);
-          safeFinalize();
-        };
-        utterance.onerror = () => {
-          clearTimeout(safetyTimeout);
-          safeFinalize();
-        };
+    try {
+      // Fallback to Piper WASM
+      const { speakWithPiper } = await import("@/lib/tts/piperTTS");
+      const played = await speakWithPiper(text);
+      if (played) {
+        finalize();
+        return;
       }
+    } catch {}
 
-      window.speechSynthesis.speak(utterance);
-    });
-  }, [lang, preprocessForSpeech, destroyRecognition]);
+    // No robotic SpeechSynthesis — prefer silence
+    console.warn("[VoiceInput] No high-quality TTS available, skipping");
+    finalize();
+  }, [destroyRecognition]);
 
   const stopSpeaking = useCallback(() => {
     window.speechSynthesis?.cancel();
