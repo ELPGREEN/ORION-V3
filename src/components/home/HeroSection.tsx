@@ -113,7 +113,7 @@ export function HeroSection({ t }: HeroSectionProps) {
             <img
               src={orionTitle}
               alt="ORION"
-              className="h-16 sm:h-20 md:h-28 lg:h-36 mx-auto mb-2 drop-shadow-[0_0_40px_hsl(var(--primary)/0.4)]"
+              className="h-28 sm:h-36 md:h-48 lg:h-60 xl:h-72 mx-auto mb-2 drop-shadow-[0_0_40px_hsl(var(--primary)/0.4)]"
               style={{ filter: 'drop-shadow(0 0 60px hsl(30 85% 52% / 0.3))' }}
             />
           </div>
