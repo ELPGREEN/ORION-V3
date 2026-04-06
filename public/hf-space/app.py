@@ -320,7 +320,7 @@ AGENT_CATEGORIES = {
             "reconviagen", "multiview_generation",
         ],
     },
-    # ── Text & NLP (250+ agents) — EXPANDED v7.1 ──
+    # ── Text & NLP (250+ agents) — EXPANDED v7.2 ──
     "text_nlp": {
         "generation": [
             "text_completion", "chat", "instruction_following",
@@ -946,7 +946,7 @@ def convert_format(data: List[dict], from_fmt: str, to_fmt: str) -> Dict[str, An
 
 
 # ============================================================
-# TEXT ANALYSIS ENGINE (NEW v7.1)
+# TEXT ANALYSIS ENGINE (NEW v7.2)
 # ============================================================
 
 # AI text detection patterns
@@ -1135,7 +1135,7 @@ def detect_prompt_injection(text: str) -> Dict[str, Any]:
 
 
 # ============================================================
-# AGENT ORCHESTRATOR (EXPANDED v7.1)
+# AGENT ORCHESTRATOR (EXPANDED v7.2)
 # ============================================================
 
 def route_to_agents(query: str) -> Dict[str, Any]:
@@ -1211,7 +1211,7 @@ def route_to_agents(query: str) -> Dict[str, Any]:
 async def health():
     return {
         "status": "ok",
-        "engine": "ELP Neural Proxy v7.1",
+        "engine": "ELP Neural Proxy v7.2",
         "total_agents": TOTAL_AGENTS,
         "capabilities": list(AGENT_CATEGORIES.keys()),
         "fine_tuning_methods": list(FINETUNE_PRESETS.keys()),
@@ -1579,7 +1579,7 @@ async def dataset_statistics(request: Request):
     })
 
 
-# ── Text Analysis Endpoints (NEW v7.1) ──
+# ── Text Analysis Endpoints (NEW v7.2) ──
 
 @app.post("/agents/text/detect-ai")
 async def text_detect_ai(request: Request):
