@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
 import { speakWithOrionVoice } from "@/lib/tts/orionVoiceEngine";
+import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
 import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/voice-evolution-feedback";
