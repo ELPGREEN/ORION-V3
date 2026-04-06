@@ -274,6 +274,13 @@ export function useOrionVoiceClone() {
       // Verify the clone works by doing a test synthesis
       toast.info("Processando sua voz com Fish Speech... Isso pode levar alguns segundos.");
 
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        toast.error("Você precisa estar logado para clonar a voz");
+        setCloneFlowStep("reviewing");
+        return;
+      }
+
       const testResponse = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fish-speech-clone`,
         {
@@ -281,7 +288,7 @@ export function useOrionVoiceClone() {
           headers: {
             "Content-Type": "application/json",
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             text: "Clonagem de voz concluída com sucesso!",
