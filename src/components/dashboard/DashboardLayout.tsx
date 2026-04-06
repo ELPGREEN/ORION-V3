@@ -15,13 +15,14 @@ import { MouseTrailEffect } from "./MouseTrailEffect";
 import { GlobalOrionListener } from "./GlobalOrionListener";
 import { ProdutorSidebar } from "./ProdutorSidebar";
 import { AfiliadoSidebar } from "./AfiliadoSidebar";
+import { NomadeSidebar } from "./NomadeSidebar";
 
 const ACTIVE_JOB_KEY = "generation_queue_active_job";
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { role, loading: roleLoading, isCliente, isAdvogado, isProdutor, isAfiliado } = useUserRole();
+  const { role, loading: roleLoading, isCliente, isAdvogado, isProdutor, isAfiliado, isNomade } = useUserRole();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { unreadCount, clearUnread } = useSignatureRealtime();
@@ -91,10 +92,10 @@ export default function DashboardLayout() {
     );
   }
 
-  // Produtor / Afiliado layout — simplified sidebar layout
-  if (isProdutor || isAfiliado) {
-    const sidebarLabel = isProdutor ? "PAINEL PRODUTOR" : "PAINEL AFILIADO";
-    const SidebarComponent = isProdutor ? ProdutorSidebar : AfiliadoSidebar;
+  // Produtor / Afiliado / Nomade layout — simplified sidebar layout
+  if (isProdutor || isAfiliado || isNomade) {
+    const sidebarLabel = isNomade ? "NÔMADE DIGITAL" : isProdutor ? "PAINEL PRODUTOR" : "PAINEL AFILIADO";
+    const SidebarComponent = isNomade ? NomadeSidebar : isProdutor ? ProdutorSidebar : AfiliadoSidebar;
 
     return (
       <div className="min-h-screen bg-background flex overflow-x-hidden relative">
@@ -118,7 +119,7 @@ export default function DashboardLayout() {
         <div data-dashboard-main className={`relative z-10 flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ${sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-72"}`}>
           <div data-dashboard-chrome><DashboardHeader onMobileMenuOpen={() => setMobileOpen(true)} unreadCount={unreadCount} clearUnread={clearUnread} /></div>
           <GenerationBanner hasActiveJob={hasActiveJob} dismissed={dismissedJob} onDismiss={() => setDismissedJob(true)} />
-          <MobileSidebarOverlay open={mobileOpen} onClose={() => setMobileOpen(false)} role={isProdutor ? "produtor" : "afiliado"} label={sidebarLabel} />
+          <MobileSidebarOverlay open={mobileOpen} onClose={() => setMobileOpen(false)} role={isNomade ? "nomade" : isProdutor ? "produtor" : "afiliado"} label={sidebarLabel} />
 
           <main className="flex-1 p-4 lg:p-8 pb-24 lg:pb-8 bg-background/30 backdrop-blur-sm">
             <Suspense fallback={PageFallback}>
