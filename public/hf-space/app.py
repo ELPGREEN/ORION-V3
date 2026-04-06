@@ -1,7 +1,7 @@
 """
-ELP Neural Proxy v6.0 — Complete AI Agent Swarm
-PDF + Vision + Code + Fine-Tuning + Dataset Creation + Media Generation
-2000+ Neural Agents covering ALL HuggingFace Spaces categories
+ELP Neural Proxy v7.0 — Complete AI Agent Swarm
+PDF + Vision + Code Generation + Code Analysis + Fine-Tuning + Dataset Creation + Media Generation
+2500+ Neural Agents covering ALL HuggingFace Spaces categories
 Runs on 2GB RAM (HF Spaces free tier)
 """
 
@@ -25,7 +25,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # ============================================================
 # App Init
 # ============================================================
-app = FastAPI(title="ELP Neural Proxy", version="6.0.0")
+app = FastAPI(title="ELP Neural Proxy", version="7.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -34,32 +34,83 @@ app.add_middleware(
 )
 
 # ============================================================
-# AGENT REGISTRY — 2000+ Neural Agents (ALL HF Categories)
+# AGENT REGISTRY — 2500+ Neural Agents (ALL HF Categories)
 # ============================================================
 
 AGENT_CATEGORIES = {
-    # ── Code Generation (150+) ──
+    # ── Code Generation (300+ agents) — EXPANDED v7.0 ──
     "code_gen": {
         "languages": [
             "python", "javascript", "typescript", "rust", "go", "java", "kotlin",
             "swift", "c", "cpp", "csharp", "ruby", "php", "scala", "haskell",
             "elixir", "clojure", "dart", "lua", "r", "julia", "perl", "zig",
             "nim", "crystal", "ocaml", "fsharp", "erlang", "fortran", "cobol",
+            "solidity", "vyper", "move", "cairo", "openscad", "glsl", "wgsl",
+            "sql", "graphql", "protobuf", "terraform", "dockerfile",
         ],
-        "paradigms": ["functional", "oop", "reactive", "procedural", "declarative"],
+        "paradigms": ["functional", "oop", "reactive", "procedural", "declarative",
+                      "event_driven", "actor_model", "data_oriented"],
         "frameworks": [
-            "react", "vue", "angular", "svelte", "nextjs", "fastapi", "django",
-            "flask", "express", "nestjs", "spring", "rails", "laravel", "phoenix",
+            "react", "vue", "angular", "svelte", "nextjs", "nuxt", "remix",
+            "fastapi", "django", "flask", "express", "nestjs", "spring", "rails",
+            "laravel", "phoenix", "gin", "actix", "rocket", "axum",
+            "streamlit", "gradio", "marimo", "panel", "dash",
+        ],
+        # NEW v7.0 — Specialized code generation models
+        "models": [
+            "qwen3_coder", "qwen2_5_coder_32b", "deepseek_coder_v2", "deepseek_coder_6_7b",
+            "yi_coder_9b", "opencoder_8b", "opencoder_1_5b", "ibm_granite",
+            "starcoder2_15b", "starcoder2_7b", "starcoderbase_1b", "santacoder",
+            "codellama_7b", "codellama_34b", "codellama_python",
+            "replit_code_v1_3b", "salesforce_codegen_16b", "wizardcoder",
+            "reffidgpt_coder_32b", "pixtral_large_coder",
+        ],
+        # NEW v7.0 — WebApp builders
+        "webapp_builders": [
+            "html_react_generator", "streamlit_app_builder", "gradio_app_builder",
+            "marimo_app_builder", "bolt_diy_fullstack", "anycoder_multi",
+            "instantcoder", "gemini_coder", "ai_app_factory",
+            "tailwind_playground", "code_generator_best",
+        ],
+        # NEW v7.0 — Specialized domains
+        "specialized": [
+            "solidity_web3", "cad_recode_openscad", "minecraft_mod_maker",
+            "circuit_diagram_wokwi", "turtle_graphics_from_image",
+            "pipeline_builder_unstructured", "automation_program",
+            "tensorflow_op_generator", "accelerate_pytorch",
+            "sd_to_diffusers_converter", "sdxl_to_diffusers_converter",
+            "model_mergekit", "gguf_quantizer", "vllm_deployer",
         ],
     },
-    # ── Code Analysis (225+) ──
+    # ── Code Analysis (350+ agents) — EXPANDED v7.0 ──
     "code_analysis": {
-        "types": [
-            "security_audit", "performance_profile", "complexity_analysis",
-            "dependency_scan", "dead_code_detection", "type_coverage",
-            "api_surface_analysis", "memory_leak_detection", "concurrency_check",
+        "security": [
             "sql_injection_scan", "xss_detection", "csrf_detection",
-            "license_compliance", "accessibility_audit", "seo_analysis",
+            "eval_injection_scan", "path_traversal_scan", "ssrf_detection",
+            "hardcoded_secret_scan", "insecure_crypto_detection",
+            "dependency_vulnerability_scan", "supply_chain_audit",
+            "cyber_ai_vulnerability_analyser", "vulnllm_r_reasoning",
+        ],
+        "quality": [
+            "complexity_analysis", "dead_code_detection", "type_coverage",
+            "api_surface_analysis", "memory_leak_detection", "concurrency_check",
+            "performance_profile", "code_smell_detection",
+            "code_comment_classification", "code_compliance_legal",
+            "carbon_footprint_analysis", "accessibility_audit",
+            "seo_analysis", "license_compliance",
+        ],
+        "intelligence": [
+            "language_classifier", "code_retrieval_semantic",
+            "code_similarity_detection", "code_infilling",
+            "autodoc_generator", "repo_to_text_converter",
+            "bigcodebench_evaluator", "code_diff_analysis",
+            "refactoring_suggester", "test_generator",
+            "api_doc_generator", "changelog_generator",
+        ],
+        "multi_agent": [
+            "autogen_coding", "metagpt_software_company",
+            "flowise_ai_orchestration", "synapster_companion",
+            "elysia_code_companion", "interactive_chat_coding",
         ],
     },
     # ── Reasoning (300+) ──
@@ -118,7 +169,7 @@ AGENT_CATEGORIES = {
             "clip", "siglip", "dinov2", "sam2",
         ],
     },
-    # ── Dataset Creation (NEW v6.0 — 180+) ──
+    # ── Dataset Creation (180+) ──
     "dataset_creation": {
         "generators": [
             "synthetic_json", "synthetic_jsonl", "synthetic_csv", "synthetic_parquet",
@@ -148,7 +199,7 @@ AGENT_CATEGORIES = {
             "data_quality_checker", "dataset_versioning",
         ],
     },
-    # ── Image Generation (NEW v6.0 — 80+) ──
+    # ── Image Generation (80+) ──
     "image_generation": {
         "models": [
             "flux_dev", "flux_schnell", "flux_klein_9b", "sdxl_base",
@@ -163,7 +214,7 @@ AGENT_CATEGORIES = {
             "character_sheet", "comic_generation", "graphic_novel",
         ],
     },
-    # ── Video Generation (NEW v6.0 — 60+) ──
+    # ── Video Generation (60+) ──
     "video_generation": {
         "models": [
             "wan2_14b", "ltx_2_3", "ltx_turbo", "cogvideox",
@@ -176,7 +227,7 @@ AGENT_CATEGORIES = {
             "video_upscaling", "video_dubbing", "video_translation",
         ],
     },
-    # ── Speech & Audio (NEW v6.0 — 90+) ──
+    # ── Speech & Audio (90+) ──
     "speech_audio": {
         "tts": [
             "voxtral_tts", "kokoro_tts", "f5_tts", "bark_tts",
@@ -195,7 +246,7 @@ AGENT_CATEGORIES = {
             "ai_cover_gen", "audio_mixing",
         ],
     },
-    # ── 3D Modeling (NEW v6.0 — 40+) ──
+    # ── 3D Modeling (40+) ──
     "modeling_3d": {
         "types": [
             "image_to_3d", "text_to_3d", "trellis_2", "hunyuan3d",
@@ -204,7 +255,7 @@ AGENT_CATEGORIES = {
             "reconviagen", "multiview_generation",
         ],
     },
-    # ── Text & NLP (NEW v6.0 — 120+) ──
+    # ── Text & NLP (120+) ──
     "text_nlp": {
         "generation": [
             "text_completion", "chat", "instruction_following",
@@ -221,13 +272,14 @@ AGENT_CATEGORIES = {
             "command_r", "phi3", "lfm2_5_moe",
         ],
     },
-    # ── Benchmarking (NEW v6.0 — 30+) ──
+    # ── Benchmarking (30+) ──
     "benchmarking": {
         "types": [
             "open_llm_leaderboard", "mteb_leaderboard", "ugi_leaderboard",
             "vbench", "open_asr_leaderboard", "world_model_bench",
             "arena_hard", "chatbot_arena", "lmsys_eval",
             "model_comparison", "speed_benchmark", "cost_benchmark",
+            "bigcodebench", "navitrace_leaderboard",
         ],
     },
     # ── PDF (110+) ──
@@ -377,7 +429,7 @@ def segments_to_markdown(segments: List[dict], tables: List[dict]) -> str:
 
 
 # ============================================================
-# CODE ANALYSIS ENGINE
+# CODE ANALYSIS ENGINE (EXPANDED v7.0)
 # ============================================================
 
 VULN_PATTERNS = {
@@ -387,6 +439,10 @@ VULN_PATTERNS = {
     "path_traversal": [r"\.\./", r"\.\.\\\\"],
     "hardcoded_secret": [r"(?:password|secret|api_key)\s*=\s*['\"][^'\"]{8,}"],
     "insecure_crypto": [r"\bmd5\b", r"\bsha1\b"],
+    "ssrf": [r"requests\.get\s*\(\s*f['\"]", r"fetch\s*\(\s*\$\{", r"urllib\.request\.urlopen\s*\("],
+    "command_injection": [r"os\.system\s*\(", r"subprocess\.call\s*\(.*shell\s*=\s*True", r"child_process\.exec\s*\("],
+    "prototype_pollution": [r"__proto__", r"constructor\s*\[\s*['\"]prototype"],
+    "insecure_deserialization": [r"pickle\.loads?\s*\(", r"yaml\.load\s*\((?!.*Loader)", r"unserialize\s*\("],
 }
 
 
@@ -400,7 +456,8 @@ def analyze_code_security(code: str, language: str = "auto") -> Dict[str, Any]:
                     findings.append({
                         "type": vuln_type, "line": i,
                         "code": line.strip()[:120],
-                        "severity": "high" if vuln_type in ("sql_injection", "eval_injection") else "medium",
+                        "severity": "critical" if vuln_type in ("sql_injection", "eval_injection", "command_injection") else
+                                    "high" if vuln_type in ("ssrf", "insecure_deserialization", "prototype_pollution") else "medium",
                     })
     return {
         "total_lines": len(lines),
@@ -430,6 +487,112 @@ def analyze_code_quality(code: str) -> Dict[str, Any]:
         "max_nesting_depth": max_indent // 4,
         "avg_line_length": round(avg_line_len, 1),
         "quality_score": min(100, 50 + len(comment_lines) * 2 + len(functions) * 3),
+    }
+
+
+# NEW v7.0 — Language classifier
+LANG_SIGNATURES = {
+    "python": [r"\bdef \w+\s*\(", r"\bimport \w+", r"if __name__", r"\.py$", r"print\s*\("],
+    "javascript": [r"\bconst \w+\s*=", r"\blet \w+\s*=", r"function\s*\w*\s*\(", r"=>", r"console\.log"],
+    "typescript": [r":\s*(?:string|number|boolean|any)\b", r"interface \w+", r"type \w+\s*=", r"<\w+>"],
+    "rust": [r"\bfn \w+", r"\blet mut\b", r"\bimpl \w+", r"pub fn", r"use \w+::\w+"],
+    "go": [r"\bfunc \w+", r"\bpackage \w+", r":=", r"fmt\.\w+"],
+    "java": [r"public class", r"public static void main", r"System\.out", r"import java\."],
+    "ruby": [r"\bdef \w+", r"\bend\b", r"puts ", r"require ['\"]"],
+    "php": [r"<\?php", r"\$\w+\s*=", r"function \w+\s*\(", r"echo "],
+    "solidity": [r"pragma solidity", r"contract \w+", r"mapping\s*\(", r"msg\.sender"],
+    "html": [r"<html", r"<div", r"<body", r"<!DOCTYPE"],
+    "css": [r"\{[^}]*:\s*\w+", r"@media", r"\.[\w-]+\s*\{"],
+    "sql": [r"\bSELECT\b", r"\bFROM\b", r"\bWHERE\b", r"\bCREATE TABLE\b"],
+    "shell": [r"#!/bin/(?:bash|sh)", r"\becho\b", r"\bfi\b", r"\bdone\b"],
+}
+
+
+def classify_language(code: str) -> Dict[str, Any]:
+    scores = {}
+    for lang, patterns in LANG_SIGNATURES.items():
+        score = 0
+        for pattern in patterns:
+            matches = len(re.findall(pattern, code, re.IGNORECASE if lang == "sql" else 0))
+            score += matches
+        if score > 0:
+            scores[lang] = score
+    if not scores:
+        return {"detected": "unknown", "confidence": 0, "scores": {}}
+    best = max(scores, key=scores.get)
+    total = sum(scores.values())
+    return {
+        "detected": best,
+        "confidence": round(scores[best] / total, 3) if total else 0,
+        "scores": {k: round(v / total, 3) for k, v in sorted(scores.items(), key=lambda x: -x[1])[:5]},
+    }
+
+
+# NEW v7.0 — AutoDoc generator
+def generate_autodoc(code: str, language: str = "python") -> Dict[str, Any]:
+    functions_found = []
+    if language in ("python",):
+        for match in re.finditer(r"def (\w+)\s*\(([^)]*)\)(?:\s*->\s*(\w+))?:", code):
+            name, params, ret = match.group(1), match.group(2), match.group(3)
+            param_list = [p.strip().split(":")[0].strip() for p in params.split(",") if p.strip() and p.strip() != "self"]
+            docstring = f'    """\\n    {name}: TODO description.\\n\\n'
+            for p in param_list:
+                docstring += f"    Args:\\n        {p}: TODO\\n"
+            if ret:
+                docstring += f"\\n    Returns:\\n        {ret}: TODO\\n"
+            docstring += '    """'
+            functions_found.append({"name": name, "params": param_list, "return_type": ret, "docstring": docstring})
+    elif language in ("javascript", "typescript"):
+        for match in re.finditer(r"(?:function|const|let|var)\s+(\w+)\s*(?:=\s*(?:async\s*)?\()?\s*([^)]*)\)", code):
+            name, params = match.group(1), match.group(2)
+            param_list = [p.strip().split(":")[0].strip() for p in params.split(",") if p.strip()]
+            jsdoc = f"/**\\n * {name}: TODO description.\\n"
+            for p in param_list:
+                jsdoc += f" * @param {{{p}}} - TODO\\n"
+            jsdoc += " * @returns TODO\\n */"
+            functions_found.append({"name": name, "params": param_list, "jsdoc": jsdoc})
+    return {
+        "functions_documented": len(functions_found),
+        "language": language,
+        "documentation": functions_found,
+    }
+
+
+# NEW v7.0 — Code compliance checker
+def check_code_compliance(code: str, standards: List[str] = None) -> Dict[str, Any]:
+    standards = standards or ["security", "accessibility", "performance"]
+    issues = []
+    if "security" in standards:
+        sec = analyze_code_security(code)
+        if sec["vulnerabilities"] > 0:
+            issues.extend([{"standard": "security", "issue": f["type"], "line": f["line"], "severity": f["severity"]} for f in sec["findings"][:10]])
+    if "accessibility" in standards:
+        if "<img" in code and 'alt=' not in code:
+            issues.append({"standard": "accessibility", "issue": "Images without alt attributes", "severity": "medium"})
+        if "<button" in code and "aria-" not in code:
+            issues.append({"standard": "accessibility", "issue": "Buttons without ARIA attributes", "severity": "low"})
+    if "performance" in standards:
+        if "SELECT *" in code.upper():
+            issues.append({"standard": "performance", "issue": "SELECT * usage — specify columns", "severity": "medium"})
+        if re.search(r"for.*in.*for.*in", code):
+            issues.append({"standard": "performance", "issue": "Nested loops detected", "severity": "low"})
+    return {
+        "compliant": len(issues) == 0,
+        "total_issues": len(issues),
+        "issues": issues,
+        "standards_checked": standards,
+    }
+
+
+# NEW v7.0 — Code infilling
+def infill_code(prefix: str, suffix: str, language: str = "python") -> Dict[str, Any]:
+    return {
+        "status": "ready",
+        "prefix_lines": len(prefix.split("\n")),
+        "suffix_lines": len(suffix.split("\n")),
+        "language": language,
+        "message": "Code infilling requires LLM backend. Use /agents/orchestrate with query containing 'infill' to route.",
+        "compatible_models": ["qwen3_coder", "deepseek_coder_v2", "starcoder2_15b", "codellama_34b"],
     }
 
 
@@ -503,11 +666,18 @@ MODEL_CONFIGS = {
     "llama3-70b": {"base": "meta-llama/Meta-Llama-3-70B", "type": "causal_lm", "context": 8192, "vram_gb": 140},
     "mistral-7b": {"base": "mistralai/Mistral-7B-v0.3", "type": "causal_lm", "context": 32768, "vram_gb": 14},
     "qwen3-7b": {"base": "Qwen/Qwen2.5-7B", "type": "causal_lm", "context": 131072, "vram_gb": 14},
+    "qwen3-coder-32b": {"base": "Qwen/Qwen2.5-Coder-32B-Instruct", "type": "causal_lm", "context": 131072, "vram_gb": 64},
     "gemma2-9b": {"base": "google/gemma-2-9b", "type": "causal_lm", "context": 8192, "vram_gb": 18},
     "gemma4": {"base": "google/gemma-4-E4B-it", "type": "causal_lm", "context": 32768, "vram_gb": 20},
     "phi3-mini": {"base": "microsoft/Phi-3-mini-4k-instruct", "type": "causal_lm", "context": 4096, "vram_gb": 8},
+    "deepseek-coder-v2": {"base": "deepseek-ai/DeepSeek-Coder-V2-Instruct", "type": "causal_lm", "context": 128000, "vram_gb": 48},
     "deepseek-coder-7b": {"base": "deepseek-ai/deepseek-coder-6.7b-instruct", "type": "causal_lm", "context": 16384, "vram_gb": 14},
+    "yi-coder-9b": {"base": "01-ai/Yi-Coder-9B-Chat", "type": "causal_lm", "context": 131072, "vram_gb": 18},
+    "opencoder-8b": {"base": "OpenCoder-LLM/OpenCoder-8B-Instruct", "type": "causal_lm", "context": 8192, "vram_gb": 16},
+    "starcoder2-15b": {"base": "bigcode/starcoder2-15b", "type": "causal_lm", "context": 16384, "vram_gb": 30},
     "starcoder2-7b": {"base": "bigcode/starcoder2-7b", "type": "causal_lm", "context": 16384, "vram_gb": 14},
+    "codellama-34b": {"base": "codellama/CodeLlama-34b-Instruct-hf", "type": "causal_lm", "context": 16384, "vram_gb": 68},
+    "ibm-granite": {"base": "ibm-granite/granite-3b-code-instruct", "type": "causal_lm", "context": 8192, "vram_gb": 6},
     "sdxl": {"base": "stabilityai/stable-diffusion-xl-base-1.0", "type": "diffusion", "resolution": 1024, "vram_gb": 12},
     "flux-dev": {"base": "black-forest-labs/FLUX.1-dev", "type": "diffusion", "resolution": 1024, "vram_gb": 24},
     "flux-klein": {"base": "black-forest-labs/FLUX.2-Klein-9B-KV", "type": "diffusion", "resolution": 1024, "vram_gb": 18},
@@ -585,7 +755,7 @@ def generate_finetune_config(method: str, model: str, dataset_format: str, custo
 
 
 # ============================================================
-# DATASET GENERATION ENGINE (NEW v6.0)
+# DATASET GENERATION ENGINE
 # ============================================================
 
 SYNTHETIC_SCHEMAS = {
@@ -655,7 +825,6 @@ def validate_dataset_sample(fmt: str, sample: dict) -> Dict[str, Any]:
 
 
 def convert_format(data: List[dict], from_fmt: str, to_fmt: str) -> Dict[str, Any]:
-    """Convert dataset between formats."""
     if to_fmt == "jsonl":
         output = "\n".join(json.dumps(row, ensure_ascii=False) for row in data)
     elif to_fmt == "csv":
@@ -671,17 +840,16 @@ def convert_format(data: List[dict], from_fmt: str, to_fmt: str) -> Dict[str, An
         output = json.dumps(data, ensure_ascii=False, indent=2)
     else:
         output = json.dumps(data, ensure_ascii=False)
-
     return {
         "format": to_fmt,
         "rows": len(data),
-        "output": output[:10000],  # limit response size
+        "output": output[:10000],
         "truncated": len(output) > 10000,
     }
 
 
 # ============================================================
-# AGENT ORCHESTRATOR
+# AGENT ORCHESTRATOR (EXPANDED v7.0)
 # ============================================================
 
 def route_to_agents(query: str) -> Dict[str, Any]:
@@ -692,8 +860,16 @@ def route_to_agents(query: str) -> Dict[str, Any]:
                              "jsonl", "parquet", "csv dataset", "corpus", "data augment"],
         "fine_tuning": ["fine-tun", "finetun", "train", "lora", "dreambooth", "qlora", "dpo",
                         "rlhf", "autotrain", "adapter", "distill", "quantiz", "prune", "merge model"],
-        "code_gen": ["generate code", "create function", "write code", "implement", "scaffold"],
-        "code_analysis": ["analyze code", "audit", "security scan", "vulnerability", "lint", "review code"],
+        "code_gen": ["generate code", "create function", "write code", "implement", "scaffold",
+                     "webapp", "web app", "react app", "html app", "streamlit", "gradio app",
+                     "solidity", "smart contract", "cad code", "openscad", "minecraft mod",
+                     "circuit diagram", "wokwi", "bolt diy", "fullstack",
+                     "anycoder", "instantcoder", "gemini coder"],
+        "code_analysis": ["analyze code", "audit", "security scan", "vulnerability", "lint", "review code",
+                          "autodoc", "docstring", "classify language", "detect language",
+                          "code compliance", "carbon footprint", "code retrieval", "infill",
+                          "repo to text", "metagpt", "autogen", "multi-agent",
+                          "code comment", "refactor", "test generat"],
         "reasoning": ["legal", "contract", "compliance", "financial", "medical reason", "case law"],
         "vision": ["face", "detect", "pose", "object", "ocr", "image", "scene", "background remov",
                     "upscal", "inpaint", "segment", "depth", "try-on", "virtual try"],
@@ -705,7 +881,8 @@ def route_to_agents(query: str) -> Dict[str, Any]:
                          "voice clon", "rvc", "vocal", "audio"],
         "modeling_3d": ["3d", "mesh", "point cloud", "gaussian", "trellis", "hunyuan3d"],
         "text_nlp": ["summariz", "translat", "sentiment", "ner", "topic", "paraphras", "chat"],
-        "benchmarking": ["benchmark", "leaderboard", "evaluate model", "compare model"],
+        "benchmarking": ["benchmark", "leaderboard", "evaluate model", "compare model",
+                         "bigcodebench", "navitrace"],
         "pdf": ["pdf", "document", "extract text", "table extract", "layout"],
     }
     for category, keywords in keywords_map.items():
@@ -738,13 +915,15 @@ def route_to_agents(query: str) -> Dict[str, Any]:
 async def health():
     return {
         "status": "ok",
-        "engine": "ELP Neural Proxy v6.0",
+        "engine": "ELP Neural Proxy v7.0",
         "total_agents": TOTAL_AGENTS,
         "capabilities": list(AGENT_CATEGORIES.keys()),
         "fine_tuning_methods": list(FINETUNE_PRESETS.keys()),
         "supported_models": list(MODEL_CONFIGS.keys()),
         "dataset_formats": list(DATASET_TEMPLATES.keys()),
         "synthetic_schemas": list(SYNTHETIC_SCHEMAS.keys()),
+        "code_gen_models": AGENT_CATEGORIES["code_gen"]["models"],
+        "webapp_builders": AGENT_CATEGORIES["code_gen"]["webapp_builders"],
     }
 
 
@@ -828,7 +1007,7 @@ async def list_agents(category: Optional[str] = None):
     return JSONResponse(content={"categories": AGENT_CATEGORIES, "total": TOTAL_AGENTS})
 
 
-# ── Code Endpoints ──
+# ── Code Endpoints (EXPANDED v7.0) ──
 
 @app.post("/agents/code/analyze")
 async def code_analyze(request: Request):
@@ -849,7 +1028,93 @@ async def code_generate(request: Request):
         "language": body.get("language", "python"),
         "paradigm": body.get("paradigm", "oop"),
         "agents_available": len(AGENT_CATEGORIES["code_gen"]["languages"]) * len(AGENT_CATEGORIES["code_gen"]["paradigms"]),
+        "models_available": AGENT_CATEGORIES["code_gen"]["models"],
         "message": "Code generation requires LLM backend. Use /agents/orchestrate to route.",
+    })
+
+
+@app.post("/agents/code/webapp")
+async def code_webapp(request: Request):
+    """Generate web app code (HTML/React/Streamlit/Gradio)."""
+    body = await request.json()
+    framework = body.get("framework", "react")
+    description = body.get("description", "")
+    available_builders = AGENT_CATEGORIES["code_gen"]["webapp_builders"]
+    builder_map = {
+        "react": "html_react_generator",
+        "html": "html_react_generator",
+        "streamlit": "streamlit_app_builder",
+        "gradio": "gradio_app_builder",
+        "marimo": "marimo_app_builder",
+        "fullstack": "bolt_diy_fullstack",
+    }
+    selected = builder_map.get(framework, "anycoder_multi")
+    return JSONResponse(content={
+        "status": "ready",
+        "framework": framework,
+        "description": description,
+        "builder_agent": selected,
+        "all_builders": available_builders,
+        "compatible_models": ["qwen3_coder", "deepseek_coder_v2", "opencoder_8b", "gemini_coder"],
+        "message": f"WebApp generation via {selected}. Route through /agents/orchestrate with 'webapp {framework}' query.",
+    })
+
+
+@app.post("/agents/code/classify")
+async def code_classify(request: Request):
+    """Identify the programming language of a code snippet."""
+    body = await request.json()
+    code = body.get("code", "")
+    if not code:
+        raise HTTPException(400, "code field required")
+    return JSONResponse(content=classify_language(code))
+
+
+@app.post("/agents/code/autodoc")
+async def code_autodoc(request: Request):
+    """Auto-generate docstrings and JSDoc comments for code."""
+    body = await request.json()
+    code = body.get("code", "")
+    language = body.get("language", "python")
+    if not code:
+        raise HTTPException(400, "code field required")
+    return JSONResponse(content=generate_autodoc(code, language))
+
+
+@app.post("/agents/code/compliance")
+async def code_compliance(request: Request):
+    """Check code against security, accessibility, and performance standards."""
+    body = await request.json()
+    code = body.get("code", "")
+    standards = body.get("standards", ["security", "accessibility", "performance"])
+    if not code:
+        raise HTTPException(400, "code field required")
+    return JSONResponse(content=check_code_compliance(code, standards))
+
+
+@app.post("/agents/code/infill")
+async def code_infill(request: Request):
+    """Code infilling — generate code between prefix and suffix."""
+    body = await request.json()
+    prefix = body.get("prefix", "")
+    suffix = body.get("suffix", "")
+    language = body.get("language", "python")
+    return JSONResponse(content=infill_code(prefix, suffix, language))
+
+
+@app.post("/agents/code/repo-to-text")
+async def repo_to_text(request: Request):
+    """Convert a GitHub repo structure to LLM-ready plain text."""
+    body = await request.json()
+    repo_url = body.get("repo_url", "")
+    if not repo_url:
+        raise HTTPException(400, "repo_url field required")
+    return JSONResponse(content={
+        "status": "ready",
+        "repo_url": repo_url,
+        "agent": "repo_to_text_converter",
+        "output_format": "plain_text",
+        "message": "Repo-to-text conversion requires fetch capability. Use /agents/orchestrate with 'repo to text' query.",
     })
 
 
@@ -920,32 +1185,20 @@ async def estimate_resources(request: Request):
     })
 
 
-# ── Dataset Creation Endpoints (NEW v6.0) ──
+# ── Dataset Creation Endpoints ──
 
 @app.get("/dataset/schemas")
 async def list_schemas():
-    """List all synthetic dataset schemas available."""
     return JSONResponse(content={"schemas": SYNTHETIC_SCHEMAS, "total": len(SYNTHETIC_SCHEMAS)})
 
 
 @app.get("/dataset/formats")
 async def list_formats():
-    """List all dataset format templates with examples."""
     return JSONResponse(content={"formats": DATASET_TEMPLATES, "total": len(DATASET_TEMPLATES)})
 
 
 @app.post("/dataset/configure")
 async def configure_dataset(request: Request):
-    """Generate a dataset creation configuration.
-    
-    Body: {
-        "schema_type": "instruction|chat_multi_turn|code_exercises|legal_qa|sentiment",
-        "num_samples": 1000,
-        "domain": "general|legal|medical|code|finance|science|education",
-        "output_format": "jsonl|json|csv|parquet|hf_dataset",
-        "language": "en|pt|es|zh|..."
-    }
-    """
     body = await request.json()
     config = generate_dataset_config(
         schema_type=body.get("schema_type", "instruction"),
@@ -959,7 +1212,6 @@ async def configure_dataset(request: Request):
 
 @app.post("/dataset/validate")
 async def validate_dataset(request: Request):
-    """Validate a dataset sample against a template format."""
     body = await request.json()
     result = validate_dataset_sample(body.get("format", "instruction"), body.get("sample", {}))
     return JSONResponse(content=result)
@@ -967,10 +1219,6 @@ async def validate_dataset(request: Request):
 
 @app.post("/dataset/convert")
 async def convert_dataset(request: Request):
-    """Convert dataset rows between formats.
-    
-    Body: { "data": [...], "from_format": "json", "to_format": "jsonl|csv|json" }
-    """
     body = await request.json()
     data = body.get("data", [])
     to_fmt = body.get("to_format", "jsonl")
@@ -982,10 +1230,6 @@ async def convert_dataset(request: Request):
 
 @app.post("/dataset/deduplicate")
 async def deduplicate_dataset(request: Request):
-    """Remove duplicate rows from a dataset based on a key field.
-    
-    Body: { "data": [...], "key_field": "text", "similarity_threshold": 1.0 }
-    """
     body = await request.json()
     data = body.get("data", [])
     key_field = body.get("key_field", "text")
@@ -1004,25 +1248,19 @@ async def deduplicate_dataset(request: Request):
         "original_count": len(data),
         "unique_count": len(unique),
         "duplicates_removed": duplicates,
-        "data": unique[:100],  # return first 100
+        "data": unique[:100],
     })
 
 
 @app.post("/dataset/statistics")
 async def dataset_statistics(request: Request):
-    """Compute statistics for a dataset.
-    
-    Body: { "data": [...] }
-    """
     body = await request.json()
     data = body.get("data", [])
     if not data:
         raise HTTPException(400, "data field required")
-
     all_keys = set()
     for row in data:
         all_keys.update(row.keys())
-
     field_stats = {}
     for key in all_keys:
         values = [row.get(key) for row in data if key in row]
@@ -1037,7 +1275,6 @@ async def dataset_statistics(request: Request):
             "max_length": max(lengths) if lengths else 0,
             "unique_values": len(set(str(v) for v in non_null)),
         }
-
     return JSONResponse(content={
         "total_rows": len(data),
         "total_fields": len(all_keys),
