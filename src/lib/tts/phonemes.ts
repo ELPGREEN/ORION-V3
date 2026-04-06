@@ -71,14 +71,14 @@ export const PT_PHONEMES: Record<string, PhonemeParams> = {
   'k':  { f1: 300, f2: 1400, f3: 2500, f4: 3400, bw1: 200, bw2: 200, bw3: 200, bw4: 250, voiced: false, nasal: false, fricative: false, plosive: true, duration: 30,  amplitude: 0.55 },
   'g':  { f1: 300, f2: 1400, f3: 2500, f4: 3400, bw1: 150, bw2: 150, bw3: 180, bw4: 220, voiced: true,  nasal: false, fricative: false, plosive: true, duration: 30,  amplitude: 0.55 },
 
-  // ── FRICATIVES ──
-  'f':  { f1: 200, f2: 1300, f3: 2500, f4: 3500, bw1: 350, bw2: 350, bw3: 350, bw4: 400, voiced: false, nasal: false, fricative: true, plosive: false, duration: 85,  amplitude: 0.35 },
-  'v':  { f1: 220, f2: 1300, f3: 2500, f4: 3500, bw1: 280, bw2: 280, bw3: 280, bw4: 350, voiced: true,  nasal: false, fricative: true, plosive: false, duration: 70,  amplitude: 0.45 },
-  's':  { f1: 200, f2: 1800, f3: 4500, f4: 7000, bw1: 350, bw2: 350, bw3: 500, bw4: 600, voiced: false, nasal: false, fricative: true, plosive: false, duration: 95,  amplitude: 0.45 },
-  'z':  { f1: 220, f2: 1800, f3: 4500, f4: 7000, bw1: 300, bw2: 300, bw3: 450, bw4: 550, voiced: true,  nasal: false, fricative: true, plosive: false, duration: 75,  amplitude: 0.5  },
-  'ʃ':  { f1: 200, f2: 1600, f3: 3800, f4: 6000, bw1: 350, bw2: 350, bw3: 450, bw4: 550, voiced: false, nasal: false, fricative: true, plosive: false, duration: 95,  amplitude: 0.45 },
-  'ʒ':  { f1: 220, f2: 1600, f3: 3800, f4: 6000, bw1: 300, bw2: 300, bw3: 400, bw4: 500, voiced: true,  nasal: false, fricative: true, plosive: false, duration: 75,  amplitude: 0.5  },
-  'h':  { f1: 500, f2: 1500, f3: 2500, f4: 3500, bw1: 500, bw2: 500, bw3: 500, bw4: 500, voiced: false, nasal: false, fricative: true, plosive: false, duration: 55,  amplitude: 0.2  },
+  // ── FRICATIVES (durations +20%) ──
+  'f':  { f1: 200, f2: 1300, f3: 2500, f4: 3500, bw1: 350, bw2: 350, bw3: 350, bw4: 400, voiced: false, nasal: false, fricative: true, plosive: false, duration: 100, amplitude: 0.35 },
+  'v':  { f1: 220, f2: 1300, f3: 2500, f4: 3500, bw1: 280, bw2: 280, bw3: 280, bw4: 350, voiced: true,  nasal: false, fricative: true, plosive: false, duration: 85,  amplitude: 0.45 },
+  's':  { f1: 200, f2: 1800, f3: 4500, f4: 7000, bw1: 350, bw2: 350, bw3: 500, bw4: 600, voiced: false, nasal: false, fricative: true, plosive: false, duration: 115, amplitude: 0.45 },
+  'z':  { f1: 220, f2: 1800, f3: 4500, f4: 7000, bw1: 300, bw2: 300, bw3: 450, bw4: 550, voiced: true,  nasal: false, fricative: true, plosive: false, duration: 90,  amplitude: 0.5  },
+  'ʃ':  { f1: 200, f2: 1600, f3: 3800, f4: 6000, bw1: 350, bw2: 350, bw3: 450, bw4: 550, voiced: false, nasal: false, fricative: true, plosive: false, duration: 115, amplitude: 0.45 },
+  'ʒ':  { f1: 220, f2: 1600, f3: 3800, f4: 6000, bw1: 300, bw2: 300, bw3: 400, bw4: 500, voiced: true,  nasal: false, fricative: true, plosive: false, duration: 90,  amplitude: 0.5  },
+  'h':  { f1: 500, f2: 1500, f3: 2500, f4: 3500, bw1: 500, bw2: 500, bw3: 500, bw4: 500, voiced: false, nasal: false, fricative: true, plosive: false, duration: 65,  amplitude: 0.2  },
 
   // ── NASALS ──
   'm':  { f1: 280, f2: 900,  f3: 2300, f4: 3200, bw1: 110, bw2: 140, bw3: 180, bw4: 250, voiced: true, nasal: true, fricative: false, plosive: false, duration: 75, amplitude: 0.75 },
