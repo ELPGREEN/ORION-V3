@@ -1,107 +1,88 @@
 
 
-# ORION — Plano de Integração Real do Software com a Linha Robótica
+# Plano: Tela de Entrada com Vídeo + Welcome Three.js + Onboarding Pós-Login
 
-## Problema Atual
+## Visão Geral
 
-O sistema tem **dois bridges desconectados**:
-
-1. **`ros2-protocol-bridge.ts`** (antigo) — simulação via MQTT/iotBridge. É o que o `RobotControlPanel` usa hoje.
-2. **`rosbridge-client.ts`** (novo) — WebSocket real para `rosbridge_suite`. Só os painéis novos (WebRTC, Telemetry) usam.
-
-**Resultado:** O painel principal do robô opera em simulação enquanto a infraestrutura Docker real já existe. Precisamos unificar tudo no client real.
+Criar um fluxo de entrada imersivo na página Index: vídeo de 5s → tela Three.js "Bem-vindo" com opções Login/Cadastro → redirecionamento por perfil → onboarding guiado no primeiro acesso.
 
 ---
 
-## Plano de Implementação
+## Etapa 1 — Splash Screen com Vídeo (5s) + Welcome Three.js
 
-### Etapa 1 — Unificar bridges (migrar para o real)
+**Arquivo:** `src/components/home/WelcomeSplash.tsx` (novo)
 
-- Criar **`src/lib/robotics/unified-robot-client.ts`** — camada única que:
-  - Usa `rosbridge-client.ts` (WebSocket real) como transporte primário
-  - Mantém fallback MQTT via `iot-device-bridge` quando ROSBridge não está disponível
-  - Exporta a mesma API do bridge antigo (`RobotState`, `sendCmdVel`, etc.) para não quebrar componentes existentes
-- Criar **`src/hooks/useRobotConnection.ts`** — hook unificado com:
-  - Configuração de IP/porta do robô (persistida em localStorage)
-  - Estado de conexão global (Context API)
-  - Auto-discovery de serviços disponíveis (rosbridge, webrtc, mqtt)
+- Componente fullscreen que exibe o vídeo `orion-tron-video.mp4` por 5 segundos (autoplay, muted)
+- Após 5s, transição fade para a tela Three.js (reutilizando `HeroThreeBackground` como fundo)
+- Tela Three.js mostra:
+  - Logo ORION animada (usar a imagem `orion-logo-2.jpg` enviada)
+  - Texto "BEM-VINDO AO ORION" com fonte Orbitron, efeito glow dourado
+  - Dois botões estilizados: **"Fazer Login"** e **"Criar Conta"**
+  - Botão "Entrar como Visitante" secundário para ver páginas públicas
+- Estado salvo em `sessionStorage` para não repetir na mesma sessão
+- Usuários já logados pulam direto para o conteúdo
 
-### Etapa 2 — Painel de Conexão Real
+**Arquivo:** `src/pages/Index.tsx` (modificar)
 
-- Criar **`src/components/dashboard/neural/RobotConnectionManager.tsx`**:
-  - Formulário: IP do robô, porta ROSBridge (9090), porta WebRTC (8443), porta MQTT (1883)
-  - Botão "Testar Conexão" — tenta WS handshake e mostra latência
-  - Indicador visual de cada serviço (verde/vermelho): ROSBridge, WebRTC, MQTT, Foxglove
-  - Salva perfis de robô (ex: "AGV-01 Fábrica", "Braço-02 Linha Pneus")
-
-### Etapa 3 — Migrar RobotControlPanel para bridge real
-
-- Substituir import de `ros2-protocol-bridge` por `unified-robot-client`
-- Joystick → envia `cmd_vel` real via WebSocket
-- Botões de navegação → `sendNav2Goal` real
-- Emergency stop → chamada de service real
-- Telemetria → subscription real em `/battery_state`, `/odom`, `/imu/data`
-
-### Etapa 4 — Integrar WebRTC com signaling real
-
-- Atualizar `WebRTCCameraViewer.tsx`:
-  - Usar o IP configurado no Connection Manager para montar URL do signaling server (`http://{robotIP}:8443/offer`)
-  - Adicionar suporte a TURN server (para acesso remoto via VPN)
-  - Indicador de latência do stream em tempo real
-
-### Etapa 5 — Pipeline de Inspeção YOLOv8 conectado
-
-- Atualizar `YOLOv8InspectionPanel.tsx`:
-  - Capturar frame do stream WebRTC real (não imagem de teste)
-  - Enviar para Edge Function que chama HuggingFace Inference API
-  - Publicar resultado como `/tire_line/defect_alert` via ROSBridge
-  - Mostrar bounding boxes sobrepostos no vídeo
-
-### Etapa 6 — Node-RED e Grafana integrados
-
-- `NodeREDPanel.tsx` → usar IP do robô para iframe (`http://{robotIP}:1880`)
-- Criar **`GrafanaDashboardPanel.tsx`** → embed Grafana (`http://{robotIP}:3001`) com dashboards de OEE pré-provisionados
-- Ambos usando o IP do Connection Manager
+- Verificar `sessionStorage` e `useAuth().user`
+- Se não viu splash e não está logado → mostrar `WelcomeSplash`
+- Ao clicar Login/Cadastro → navegar para `/auth?tab=login` ou `/auth?tab=cadastro`
+- Ao clicar Visitante → fechar splash e mostrar Home normal
 
 ---
 
-## Arquitetura Final Unificada
+## Etapa 2 — Redirecionamento Pós-Login por Perfil
 
-```text
-┌─ ORION Frontend ──────────────────────────────────────┐
-│                                                        │
-│  RobotConnectionManager (IP/porta config)              │
-│         │                                              │
-│  unified-robot-client.ts                               │
-│    ├── rosbridge-client.ts ──── WS ──→ :9090           │
-│    ├── WebRTC negotiation ──── HTTP ──→ :8443           │
-│    └── MQTT.js (fallback) ──── WS ──→ :8083            │
-│                                                        │
-│  Panels: Control │ Telemetry │ Camera │ YOLOv8 │ Tire  │
-│          Node-RED │ Grafana │ Fleet │ Digital Twin      │
-└────────────────────────────────────────────────────────┘
-                    │
-          LAN / VPN │
-                    ▼
-┌─ Robot Edge (Docker) ─────────────────────────────────┐
-│  rosbridge:9090 │ webrtc:8443 │ mqtt:1883             │
-│  influxdb:8086  │ grafana:3001 │ nodered:1880          │
-│  ROS2 DDS ← Nav2 │ YOLOv8 │ tire_line_services        │
-└────────────────────────────────────────────────────────┘
-```
+**Arquivo:** `src/contexts/AuthContext.tsx` (modificar)
 
-## Arquivos a Criar/Editar
+- Após login, ler `user_metadata.account_type` (já existe: cliente, advogado, produtor, afiliado)
+- Redirecionar para a rota adequada:
+  - `advogado` → `/dashboard` (painel jurídico)
+  - `cliente` → `/dashboard` (painel cliente)
+  - `produtor` → `/dashboard` (painel produtor)
+  - `afiliado` → `/dashboard` (painel afiliado)
+- Se `onboarding_completed === false` → redirecionar para `/dashboard/configurar-ia`
 
-| Ação | Arquivo |
-|------|---------|
-| Criar | `src/lib/robotics/unified-robot-client.ts` |
-| Criar | `src/hooks/useRobotConnection.ts` |
-| Criar | `src/contexts/RobotConnectionContext.tsx` |
-| Criar | `src/components/dashboard/neural/RobotConnectionManager.tsx` |
-| Criar | `src/components/dashboard/neural/GrafanaDashboardPanel.tsx` |
-| Editar | `src/components/dashboard/neural/RobotControlPanel.tsx` — migrar para unified client |
-| Editar | `src/components/dashboard/neural/WebRTCCameraViewer.tsx` — usar IP dinâmico |
-| Editar | `src/components/dashboard/neural/YOLOv8InspectionPanel.tsx` — captura real |
-| Editar | `src/components/dashboard/neural/NodeREDPanel.tsx` — IP dinâmico |
-| Editar | `src/components/dashboard/neural/TireProductionPanel.tsx` — dados reais |
+---
+
+## Etapa 3 — Onboarding Guiado no Primeiro Login
+
+**Arquivo:** `src/pages/dashboard/ConfigurarIA.tsx` (já existe com 7 steps)
+
+- Adicionar steps extras no início do onboarding existente:
+  1. **Cadastro de Voz** — gravação de amostra de voz do usuário
+  2. **Cadastro Facial** — `FaceAuthEnroll` (já existe em `src/components/auth/FaceAuthEnroll.tsx`)
+  3. **Informações Complementares** — campos faltantes baseados no perfil (OAB para advogados, CNPJ para empresas, etc.)
+- Orion guia por voz cada etapa (já tem sistema de `voicePrompt`)
+- Ao concluir → `onboarding_completed = true` no `neural_config`
+- Redirecionar para dashboard principal
+
+---
+
+## Etapa 4 — Copiar Logo para Assets
+
+- Copiar `user-uploads://orion-logo-2.jpg` → `src/assets/orion-logo-2.jpg`
+- Usar no `WelcomeSplash` como logo animada
+
+---
+
+## Detalhes Técnicos
+
+| Item | Tecnologia |
+|------|-----------|
+| Vídeo intro | HTML5 `<video>` com evento `onEnded` |
+| Background animado | `HeroThreeBackground` (WebGL shader existente) |
+| Animações texto | Framer Motion (já no projeto) |
+| Estado splash | `sessionStorage.setItem('orion_splash_seen', '1')` |
+| Onboarding flag | `neural_config.onboarding_completed` (Supabase) |
+| Face enrollment | `FaceAuthEnroll` componente existente |
+
+---
+
+## Ordem de Implementação
+
+1. Copiar logo + criar `WelcomeSplash`
+2. Integrar no `Index.tsx`
+3. Ajustar redirecionamento pós-login no `AuthContext`
+4. Expandir onboarding no `ConfigurarIA.tsx`
 
