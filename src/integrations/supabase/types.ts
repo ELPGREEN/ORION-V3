@@ -7350,6 +7350,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_private_knowledge: {
+        Row: {
+          created_at: string
+          embedding: string | null
+          encrypted_content: string
+          encryption_iv: string
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          embedding?: string | null
+          encrypted_content: string
+          encryption_iv: string
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          embedding?: string | null
+          encrypted_content?: string
+          encryption_iv?: string
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -7842,6 +7878,20 @@ export type Database = {
               title: string
             }[]
           }
+      search_private_knowledge: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          p_user_id: string
+          query_embedding: string
+        }
+        Returns: {
+          id: string
+          similarity: number
+          tags: string[]
+          title: string
+        }[]
+      }
       verify_report_by_hash: {
         Args: { target_hash: string }
         Returns: {
