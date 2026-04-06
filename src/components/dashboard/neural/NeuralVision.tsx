@@ -163,6 +163,30 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       return;
     }
 
+    // ═══ Vision activation/deactivation via voice ═══
+    const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+    const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+
+    if (isActivateVision) {
+      if (!active) {
+        speakFast("Ativando visão neural.").catch(() => {});
+        startCamera({ announce: false }).catch(() => {});
+      } else {
+        speakFast("Visão já está ativa.").catch(() => {});
+      }
+      return;
+    }
+
+    if (isDeactivateVision) {
+      if (active) {
+        speakFast("Desativando visão.").catch(() => {});
+        stopCamera();
+      } else {
+        speakFast("Visão já está desativada.").catch(() => {});
+      }
+      return;
+    }
+
     const isOrionExit = /[óòôõo]r[iíìeéè][oóòôõ][nmn]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q) ||
       /oreo[nm]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q);
     if (isOrionExit) { deactivateGracefully(); return; }
@@ -174,7 +198,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       else askAI(finalCommand);
     }
     toast.info(`🎤 "${cleanedCommand || original}"`);
-  }, [stopCamera, deactivateGracefully, askAI, supernetConnected, sendSuperNetQuery, speak]);
+  }, [active, stopCamera, startCamera, deactivateGracefully, askAI, supernetConnected, sendSuperNetQuery, speak, speakFast]);
 
   // ═══ Wake word activation ═══
   const activateByWakeWord = useCallback(async () => {
