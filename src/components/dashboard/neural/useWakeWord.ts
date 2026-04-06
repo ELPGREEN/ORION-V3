@@ -43,10 +43,10 @@ export function useWakeWord(
 
   const getRestartDelay = useCallback((reason?: string) => {
     if (typeof document !== "undefined" && document.hidden) return 2400;
-    const base = isMobileBrowser() ? 1300 : 450;
-    if (reason === "audio-capture" || reason === "network") return base + 700;
+    const base = isMobileBrowser() ? 600 : 200;
+    if (reason === "audio-capture" || reason === "network") return base + 500;
     if (reason === "aborted" || reason === "end" || reason === "no-speech") return base;
-    return base + 300;
+    return base + 200;
   }, []);
 
   const getBackgroundTranscripts = useCallback((): BackgroundTranscript[] => {
@@ -152,7 +152,7 @@ export function useWakeWord(
           } else {
             setWakeWordActive(false);
           }
-        }, getRestartDelay("end") + restartAttemptsRef.current * 150);
+        }, getRestartDelay("end") + restartAttemptsRef.current * 80);
       };
 
       rec.onerror = (e: any) => {
@@ -180,7 +180,7 @@ export function useWakeWord(
           } else {
             setWakeWordActive(false);
           }
-        }, getRestartDelay(e.error) + restartAttemptsRef.current * 150);
+        }, getRestartDelay(e.error) + restartAttemptsRef.current * 80);
       };
 
       wakeRecRef.current = rec;
