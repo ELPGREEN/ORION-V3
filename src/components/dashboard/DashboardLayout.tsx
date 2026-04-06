@@ -1,10 +1,11 @@
-import { useEffect, useState, Suspense } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState, Suspense, useRef } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSignatureRealtime } from "@/hooks/useSignatureRealtime";
 import { syncVoiceEvolutionFromSupabase } from "@/lib/neural/orion-voice-evolution";
+import { supabase } from "@/integrations/supabase/client";
 import { ClienteNavbar } from "./ClienteNavbar";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
@@ -12,6 +13,7 @@ import { GenerationBanner } from "./GenerationBanner";
 import { MobileSidebarOverlay } from "./MobileSidebarOverlay";
 import { DashboardBackground } from "./DashboardBackground";
 import { MouseTrailEffect } from "./MouseTrailEffect";
+import { GlobalOrionListener } from "./GlobalOrionListener";
 
 import { ProdutorSidebar } from "./ProdutorSidebar";
 import { AfiliadoSidebar } from "./AfiliadoSidebar";
@@ -30,12 +32,40 @@ export default function DashboardLayout() {
   const [hasActiveJob, setHasActiveJob] = useState(false);
   const [dismissedJob, setDismissedJob] = useState(false);
 
+  const location = useLocation();
+  const onboardingCheckedRef = useRef(false);
+
+  // Redirect to auth if not logged in
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
     if (!authLoading && user) {
       syncVoiceEvolutionFromSupabase().catch(() => {});
     }
   }, [user, authLoading, navigate]);
+
+  // First-access onboarding: redirect to ConfigurarIA only once per user
+  useEffect(() => {
+    if (!user || authLoading || onboardingCheckedRef.current) return;
+    // Don't redirect if already on configurar-ia or rede-neural
+    if (location.pathname.includes("configurar-ia") || location.pathname.includes("rede-neural")) {
+      onboardingCheckedRef.current = true;
+      return;
+    }
+    onboardingCheckedRef.current = true;
+    
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("neural_agent_config" as any)
+          .select("onboarding_completed")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (data && !(data as any).onboarding_completed) {
+          navigate("/dashboard/rede-neural", { replace: true });
+        }
+      } catch {}
+    })();
+  }, [user, authLoading, navigate, location.pathname]);
 
   useEffect(() => {
     const check = () => setHasActiveJob(!!localStorage.getItem(ACTIVE_JOB_KEY));
@@ -65,6 +95,9 @@ export default function DashboardLayout() {
 
   if (!user) return null;
 
+  // Orion voice listener — only active inside the dashboard (not on public pages)
+  const orionListener = <GlobalOrionListener />;
+
   const PageFallback = (
     <div className="flex items-center justify-center h-64">
       <Loader2 className="h-7 w-7 animate-spin text-primary" />
@@ -77,6 +110,7 @@ export default function DashboardLayout() {
       <div className="min-h-screen bg-background flex flex-col relative">
         <DashboardBackground />
         <MouseTrailEffect />
+        {orionListener}
         <div className="relative z-10 flex flex-col flex-1">
           <ClienteNavbar onMobileMenuToggle={() => setMobileOpen(!mobileOpen)} />
           <GenerationBanner hasActiveJob={hasActiveJob} dismissed={dismissedJob} onDismiss={() => setDismissedJob(true)} />
@@ -100,6 +134,7 @@ export default function DashboardLayout() {
       <div className="min-h-screen bg-background flex overflow-x-hidden relative">
         <DashboardBackground />
         <MouseTrailEffect />
+        {orionListener}
         {/* Desktop Sidebar */}
         <div data-dashboard-chrome className={`hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-72"}`}>
           <SidebarComponent collapsed={sidebarCollapsed} />
@@ -134,6 +169,7 @@ export default function DashboardLayout() {
     <div className="min-h-screen bg-background flex overflow-x-hidden relative">
       <DashboardBackground />
       <MouseTrailEffect />
+      {orionListener}
       
       {/* Desktop Sidebar */}
       <div data-dashboard-chrome className={`hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-72"}`}>

@@ -9,7 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { CopyProtection } from "@/components/CopyProtection";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { OrionShield } from "@/components/common/OrionShield";
-import { GlobalOrionListener } from "@/components/dashboard/GlobalOrionListener";
+// GlobalOrionListener moved to DashboardLayout — no mic prompts on public pages
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import { PageLoader } from "@/components/common/PageLoader";
 import { AuthGuard } from "@/components/common/AuthGuard";
@@ -117,7 +117,7 @@ const App = () => (
           <ScrollToTop />
           <CopyProtection />
           <OrionShield />
-          <GlobalOrionListener />
+          {/* GlobalOrionListener lives inside DashboardLayout now */}
           <MouseTrailEffect />
           <CookieConsent />
           <AffiliateTracker />
