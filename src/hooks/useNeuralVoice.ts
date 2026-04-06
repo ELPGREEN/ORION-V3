@@ -366,34 +366,36 @@ export function useNeuralVoice(
     // ── Feed AI response to voice evolution engine ──
     feedAIResponse(text);
 
-    // ── PRIMARY: Orion Formant DNA (100% seu código, zero API) ──
-    if (!played && !cascadeAbort.signal.aborted) {
-      try {
-        const result = await speakWithOrionVoice(cleanText, cascadeAbort.signal);
-        if (result.played) {
-          played = true;
-          if (result.audio) activeAudioRef.current = result.audio;
-          console.log(`[Voice] ✅ Formant DNA (${result.engine}) — voz própria!`);
-        } else {
-          console.warn("[Voice] Formant DNA gerou resultado mas played=false");
-        }
-      } catch (err) {
-        if ((err as Error)?.name !== "AbortError") {
-          console.error("[Voice] ❌ Formant DNA falhou:", (err as Error)?.message);
-        }
-      }
-    }
-
-    // ── FALLBACK 1: Gemini TTS (só se formant falhar) ──
+    // ── PRIMARY: Gemini TTS (fast ~2s, neural quality, FREE) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
         const gemResult = await speakWithGeminiTTS(cleanText, "Iapetus", cascadeAbort.signal);
         if (gemResult.played) {
           played = true;
           if (gemResult.audio) activeAudioRef.current = gemResult.audio;
-          console.log("[Voice] ✅ Gemini TTS fallback");
+          console.log("[Voice] ✅ Gemini TTS (primary)");
         }
-      } catch {}
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          console.warn("[Voice] Gemini TTS failed:", (err as Error)?.message);
+        }
+      }
+    }
+
+    // ── FALLBACK 1: Orion Formant DNA (100% offline, zero API) ──
+    if (!played && !cascadeAbort.signal.aborted) {
+      try {
+        const result = await speakWithOrionVoice(cleanText, cascadeAbort.signal);
+        if (result.played) {
+          played = true;
+          if (result.audio) activeAudioRef.current = result.audio;
+          console.log(`[Voice] ✅ Formant DNA fallback (${result.engine})`);
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          console.warn("[Voice] Formant DNA failed:", (err as Error)?.message);
+        }
+      }
     }
 
     // ── FALLBACK 2: Piper WASM ──
