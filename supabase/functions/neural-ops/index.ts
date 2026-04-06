@@ -894,17 +894,20 @@ async function buildOrionMessages(body: Record<string, unknown>) {
     }
   }
   
-  // ALWAYS inject vision prompt — Orion has always-on environmental awareness
+  // ═══ COST OPTIMIZATION: Only inject heavy vision prompts when vision data is present ═══
   const localDetections = body.localDetections as any;
-  systemParts.push(ORION_VISION_PROMPT);
-  systemParts.push(ORION_FRAMEWORKS_PROMPT);
   const hasVisionData = hasImage || (localDetections && typeof localDetections === "object" && Object.keys(localDetections).length > 0);
+  
   if (hasImage) {
+    // Full vision prompts only when we have an actual image to analyze
+    systemParts.push(ORION_VISION_PROMPT);
+    systemParts.push(ORION_FRAMEWORKS_PROMPT);
     systemParts.push(`[VISÃO ATIVA] Você tem acesso à imagem real da câmera do usuário. USE A IMAGEM como fonte primária de verdade. As detecções ML abaixo são apenas pistas auxiliares — podem conter erros. Descreva o que VOCÊ VÊ na imagem, não o que os sensores dizem.`);
   } else if (hasVisionData) {
-    systemParts.push(`[VISÃO PARCIAL — SEM IMAGEM] Você NÃO tem acesso à imagem real neste momento. Os dados abaixo são de sensores ML locais (YOLO/MediaPipe) que têm precisão limitada. Trate como SUGESTÕES, não como fatos. Se o usuário perguntar o que você vê, seja transparente: "Meus sensores locais detectam [X], mas posso estar impreciso sem a câmera ativa."`);
+    // Compact vision context when we only have local detections (no image)
+    systemParts.push(`[VISÃO LOCAL — SEM IMAGEM] Dados de sensores ML locais (YOLO/MediaPipe) disponíveis abaixo. Trate como sugestões, não fatos absolutos. Seja transparente sobre limitações.`);
   } else {
-    systemParts.push(`[VISÃO AMBIENTE] Sensores de visão estão ativos em segundo plano. Nenhuma detecção ML disponível neste momento. Se o usuário perguntar sobre o ambiente, informe que a câmera pode ser ativada para análise visual completa.`);
+    systemParts.push(`[SEM VISÃO] Nenhum dado visual disponível.`);
   }
   // Inject real-time ML detections ALWAYS when present (as auxiliary hints)
   if (localDetections) {
