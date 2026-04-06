@@ -279,10 +279,10 @@ function GlobeNodes({ paused, showLabels }: { paused: boolean; showLabels: boole
       const mesh = meshRefs.current[i];
       const ring = ringRefs.current[i];
       if (mesh) {
-        const pulse = 1 + Math.sin(t * 2.5 + i * 0.7) * 0.15;
+      const pulse = 1 + Math.sin(t * 3.0 + i * 0.7) * 0.2;
         mesh.scale.setScalar(pulse);
         (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity =
-          0.5 + Math.sin(t * 3 + i * 0.5) * 0.3;
+          0.7 + Math.sin(t * 4 + i * 0.5) * 0.4;
       }
       if (ring) {
         ring.rotation.x = t * 0.3 + i * 0.2;
@@ -491,7 +491,8 @@ function GlobeRotation({ paused, children }: { paused: boolean; children: React.
   const groupRef = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
     if (!paused && groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.06;
+      groupRef.current.rotation.y += delta * 0.1;
+      groupRef.current.rotation.x = Math.sin(Date.now() * 0.0002) * 0.05;
     }
   });
   return <group ref={groupRef}>{children}</group>;
