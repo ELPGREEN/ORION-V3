@@ -143,18 +143,6 @@ async function generateEmbedding(
   }
   throw new Error("All embedding providers failed");
 }
-        embedding = await generateEmbeddingOpenAI(text, provider.apiKey);
-      }
-      if (embedding.length > 0) {
-        return { embedding, provider: provider.name };
-      }
-    } catch (e) {
-      console.warn(`Provider ${provider.name} failed:`, e.message);
-      continue;
-    }
-  }
-  throw new Error("All embedding providers failed");
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
