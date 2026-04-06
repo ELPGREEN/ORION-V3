@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useVoiceIdentityGuard } from "@/hooks/useVoiceIdentityGuard";
+import { VoiceIdentityGate } from "./VoiceIdentityGate";
 import { useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,6 +69,51 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef } = useNeuralVoice();
   const bgTranscriptsGetterRef = useRef<() => import("./useWakeWord").BackgroundTranscript[]>(() => []);
   const { thought, log, aiDescription, askAI, askInput, setAskInput, chatHistory, isProcessing, detectedObjects } = useOrionReasoning(active, speak, canvasRef, identificationMode, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, () => bgTranscriptsGetterRef.current());
+
+  // ═══ Voice Identity Guard ═══
+  const {
+    identityStatus,
+    guestSession,
+    isCheckingVoice,
+    verifyVoiceIdentity,
+    startGuestSession,
+    addGuestMessage,
+    endGuestSession,
+    setIdentityStatus,
+  } = useVoiceIdentityGuard();
+
+  const voiceCheckDoneRef = useRef(false);
+
+  // Auto-check voice on first voice interaction
+  const handleVoiceIdentityCheck = useCallback(async () => {
+    if (voiceCheckDoneRef.current || identityStatus === "owner" || identityStatus === "no_enrollment") return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 } });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        voiceCheckDoneRef.current = true;
+        await verifyVoiceIdentity(blob);
+      };
+      recorder.start();
+      setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, 3000);
+    } catch {
+      voiceCheckDoneRef.current = true;
+      setIdentityStatus("owner"); // Can't access mic = skip
+    }
+  }, [identityStatus, verifyVoiceIdentity, setIdentityStatus]);
+
+  // Track guest messages in chat
+  useEffect(() => {
+    if (!guestSession || chatHistory.length === 0) return;
+    const last = chatHistory[chatHistory.length - 1];
+    if (last) {
+      addGuestMessage(last.role === "user" ? "user" : "assistant", last.content || "");
+    }
+  }, [chatHistory.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const { connected: supernetConnected, latency: supernetLatency, analysis: supernetAnalysis, sendFrame: sendSuperNetFrame, sendQuery: sendSuperNetQuery, wsUrl: supernetUrl, updateUrl: updateSuperNetUrl } = useSuperNetWS(active, canvasRef);
 
   // Gesture detection
