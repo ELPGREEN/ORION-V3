@@ -1,17 +1,13 @@
 /**
  * NEUROCORE AI — Voice Synthesis Hook
- * PRIMARY: Gemini TTS (rápido ~2s, 100% gratuito com 7 chaves)
- * CLONE OVERLAY: Fish Speech v1.5 (pré-geração em background, cached)
- * FALLBACK: Piper WASM → Web Speech API
- * Zero paid APIs. Google Translate TTS removido (qualidade inferior).
+ * PRIMARY: Orion Voice Engine (Cache → HuggingFace → Gemini → Piper)
+ * All free, no paid APIs. Orion's own voice, independent from Google.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
-import { speakWithFishClone, isFishCloneAvailable, getClonedVoiceRefPath } from "@/lib/tts/fishSpeechTTS";
-import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
-// Google Translate TTS removido — qualidade inferior, latência inconsistente
+import { speakWithOrionVoice } from "@/lib/tts/orionVoiceEngine";
 import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
 import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/voice-evolution-feedback";
