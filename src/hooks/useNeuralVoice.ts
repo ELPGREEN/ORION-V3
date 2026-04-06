@@ -267,8 +267,8 @@ export function useNeuralVoice(
             return;
           }
 
-          // Add natural micro-pause between sentences (80-200ms)
-          const pauseMs = idx > 0 ? 80 + Math.random() * 120 : 0;
+          // Tiny natural pause between sentences (30-80ms)
+          const pauseMs = idx > 0 ? 30 + Math.random() * 50 : 0;
           
           setTimeout(() => {
             const prosody = getProsodyForChunk(chunks[idx], idx, chunks.length);
