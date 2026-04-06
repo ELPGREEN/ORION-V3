@@ -8,19 +8,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Package, Edit, Archive, Eye } from "lucide-react";
+import { Plus, Package, Edit, Archive, Eye, Trash2, Save } from "lucide-react";
 
 function slugify(text: string) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
+const emptyForm = { title: "", description: "", price: "", commission: "10", category: "" };
+
 export default function MeusProdutos() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", description: "", price: "", commission: "10", category: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["my-products", user?.id],
@@ -52,11 +54,34 @@ export default function MeusProdutos() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-products"] });
-      setOpen(false);
-      setForm({ title: "", description: "", price: "", commission: "10", category: "" });
+      closeDialog();
       toast.success("Produto criado com sucesso!");
     },
     onError: () => toast.error("Erro ao criar produto"),
+  });
+
+  const updateProduct = useMutation({
+    mutationFn: async () => {
+      if (!editingId) return;
+      const { error } = await supabase
+        .from("products")
+        .update({
+          title: form.title,
+          description: form.description,
+          price_cents: Math.round(parseFloat(form.price) * 100),
+          commission_percent: parseFloat(form.commission),
+          category: form.category || null,
+        })
+        .eq("id", editingId)
+        .eq("creator_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-products"] });
+      closeDialog();
+      toast.success("Produto atualizado!");
+    },
+    onError: () => toast.error("Erro ao atualizar produto"),
   });
 
   const toggleStatus = useMutation({
@@ -71,6 +96,50 @@ export default function MeusProdutos() {
     },
   });
 
+  const deleteProduct = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("products").delete().eq("id", id).eq("creator_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-products"] });
+      toast.success("Produto removido!");
+    },
+    onError: () => toast.error("Erro ao remover produto"),
+  });
+
+  const closeDialog = () => {
+    setOpen(false);
+    setEditingId(null);
+    setForm(emptyForm);
+  };
+
+  const openEdit = (p: any) => {
+    setEditingId(p.id);
+    setForm({
+      title: p.title || "",
+      description: p.description || "",
+      price: (p.price_cents / 100).toFixed(2),
+      commission: String(p.commission_percent || 10),
+      category: p.category || "",
+    });
+    setOpen(true);
+  };
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setOpen(true);
+  };
+
+  const handleSave = () => {
+    if (editingId) {
+      updateProduct.mutate();
+    } else {
+      createProduct.mutate();
+    }
+  };
+
   const statusColors: Record<string, string> = {
     draft: "bg-muted text-muted-foreground",
     active: "bg-green-500/20 text-green-400",
@@ -84,12 +153,14 @@ export default function MeusProdutos() {
           <h1 className="text-2xl font-bold text-foreground">Meus Produtos</h1>
           <p className="text-muted-foreground text-sm">Gerencie seus produtos digitais</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { if (!v) closeDialog(); else openCreate(); }}>
           <DialogTrigger asChild>
             <Button className="gap-2"><Plus className="h-4 w-4" /> Novo Produto</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Criar Produto</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>{editingId ? "Editar Produto" : "Criar Produto"}</DialogTitle>
+            </DialogHeader>
             <div className="space-y-4">
               <Input placeholder="Título do produto" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
               <Textarea placeholder="Descrição" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
@@ -98,8 +169,13 @@ export default function MeusProdutos() {
                 <Input placeholder="Comissão (%)" type="number" value={form.commission} onChange={e => setForm(f => ({ ...f, commission: e.target.value }))} />
               </div>
               <Input placeholder="Categoria" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} />
-              <Button onClick={() => createProduct.mutate()} disabled={!form.title || !form.price} className="w-full">
-                Criar Produto
+              <Button
+                onClick={handleSave}
+                disabled={!form.title || !form.price || createProduct.isPending || updateProduct.isPending}
+                className="w-full gap-2"
+              >
+                <Save className="h-4 w-4" />
+                {editingId ? "Salvar Alterações" : "Criar Produto"}
               </Button>
             </div>
           </DialogContent>
@@ -113,7 +189,7 @@ export default function MeusProdutos() {
           <CardContent className="flex flex-col items-center justify-center py-16 gap-4">
             <Package className="h-12 w-12 text-muted-foreground/50" />
             <p className="text-muted-foreground">Nenhum produto criado ainda</p>
-            <Button variant="outline" onClick={() => setOpen(true)}>Criar primeiro produto</Button>
+            <Button variant="outline" onClick={openCreate}>Criar primeiro produto</Button>
           </CardContent>
         </Card>
       ) : (
@@ -133,9 +209,17 @@ export default function MeusProdutos() {
                   <span className="text-muted-foreground">{p.commission_percent}% comissão</span>
                 </div>
                 <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => openEdit(p)} className="gap-1">
+                    <Edit className="h-3 w-3" /> Editar
+                  </Button>
                   <Button size="sm" variant="outline" onClick={() => toggleStatus.mutate({ id: p.id, status: p.status })}>
                     {p.status === "active" ? <><Archive className="h-3 w-3 mr-1" /> Arquivar</> : <><Eye className="h-3 w-3 mr-1" /> Ativar</>}
                   </Button>
+                  {p.status === "draft" && (
+                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteProduct.mutate(p.id)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
