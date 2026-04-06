@@ -52,7 +52,7 @@ function speakText(text: string) {
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "pt-BR";
-  utterance.rate = 1.05;
+  utterance.rate = 1.30;
   utterance.pitch = 0.95;
   // Try to pick a good pt-BR voice
   const voices = window.speechSynthesis.getVoices();

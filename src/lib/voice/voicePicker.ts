@@ -129,14 +129,14 @@ export function initVoicePicker(): void {
 }
 
 /**
- * Speech parameters tuned for fast, real conversational voice.
+ * Speech parameters tuned for fast, dynamic conversational voice.
  * 
- * rate 1.18 — Fluent conversational pace (like a real person talking)
+ * rate 1.30 — Faster, energetic pace (like a sharp professional)
  * pitch 0.92 — Close to natural pitch, not artificially deep
  * volume 0.92 — Clean without clipping
  */
 export const ORION_VOICE_PARAMS = {
-  rate: 1.18,
+  rate: 1.30,
   pitch: 0.92,
   volume: 0.92,
 } as const;
