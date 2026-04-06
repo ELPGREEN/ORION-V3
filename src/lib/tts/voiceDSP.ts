@@ -21,12 +21,13 @@ export interface VoiceProfile {
 }
 
 // Iapetus voice fingerprint (extracted from sample)
+// Iapetus voice fingerprint (averaged from 4 samples — high confidence)
 export const IAPETUS_PROFILE: VoiceProfile = {
-  pitchF0: 113.7,
-  spectralCentroid: 2093.4,
-  spectralRolloff: 8552.4,
-  dynamicRange: 21.8,
-  formants: [126.4, 126.7, 125.5, 125.6, 125.9, 127.3],
+  pitchF0: 117.1,
+  spectralCentroid: 1718.4,
+  spectralRolloff: 5456.5,
+  dynamicRange: 16.9,
+  formants: [121.0, 122.4, 126.5, 128.5, 130.0, 132.2],
   sampleRate: 24000,
 };
 
