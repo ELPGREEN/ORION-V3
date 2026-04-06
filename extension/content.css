@@ -1,4 +1,4 @@
-/* Orion Extension v2.0 — Content Styles */
+/* Orion Extension v3.0 — Content Styles */
 
 #orion-mini-orb {
   position: fixed;
@@ -94,6 +94,31 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Vision badge in panel header */
+.orion-vision-badge {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: rgba(255,255,255,0.04);
+  color: #555;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.3s;
+}
+
+.orion-vision-badge.active {
+  background: rgba(0,255,136,0.1);
+  color: #00ff88;
+  border-color: rgba(0,255,136,0.3);
+  animation: vision-badge-glow 2s infinite;
+}
+
+@keyframes vision-badge-glow {
+  0%,100% { box-shadow: none; }
+  50% { box-shadow: 0 0 8px rgba(0,255,136,0.3); }
+}
+
 .orion-panel-body {
   padding: 12px;
   display: flex;
@@ -154,7 +179,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 8px 12px;
-  font-size: 16px;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
   color: #e0e0e0;
@@ -163,6 +188,26 @@
 .orion-quick-actions button:hover {
   background: rgba(0, 229, 255, 0.15);
   border-color: rgba(0, 229, 255, 0.3);
+}
+
+.orion-quick-actions button[data-action="vision-toggle"] {
+  background: rgba(0, 255, 136, 0.06);
+  border-color: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+}
+
+.orion-quick-actions button[data-action="vision-toggle"]:hover {
+  background: rgba(0, 255, 136, 0.15);
+}
+
+.orion-quick-actions button[data-action="vision-look"] {
+  background: rgba(0, 255, 136, 0.08);
+  border-color: rgba(0, 255, 136, 0.25);
+  color: #00ff88;
+}
+
+.orion-quick-actions button[data-action="vision-look"]:hover {
+  background: rgba(0, 255, 136, 0.18);
 }
 
 .orion-response {
