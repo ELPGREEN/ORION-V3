@@ -235,6 +235,55 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const isOrionExit = /[óòôõo]r[iíìeéè][oóòôõ][nmn]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q) ||
       /oreo[nm]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q);
     if (isOrionExit) { deactivateGracefully(); return; }
+
+    // ═══ Voice Clone Command Detection ═══
+    if (isVoiceCloneCommand(q)) {
+      const introMsg = voiceClone.startCloneFlow();
+      speak(introMsg).catch(() => {});
+      toast.info("🎙️ Iniciando clonagem de voz...");
+      return;
+    }
+
+    // ═══ Voice Clone Flow: handle recording commands during clone flow ═══
+    if (voiceClone.cloneFlowStep !== "idle") {
+      const step = voiceClone.cloneFlowStep;
+      if (step === "intro" || step === "reviewing") {
+        if (/gravar|começar|iniciar|pronto|vai/i.test(q)) {
+          voiceClone.startRecording();
+          speakFast("Gravando... Leia a frase naturalmente.").catch(() => {});
+          return;
+        }
+        if (/clonar|finalizar|confirmar|pronto|salvar/i.test(q) && voiceClone.samples.length >= 1) {
+          speakFast("Processando sua voz...").catch(() => {});
+          voiceClone.cloneVoice().then(() => {
+            speak(voiceClone.getFlowInstruction()).catch(() => {});
+          });
+          return;
+        }
+        if (/mais|outra|próxima/i.test(q)) {
+          const instruction = voiceClone.getFlowInstruction();
+          speakFast(instruction).catch(() => {});
+          return;
+        }
+      }
+      if (step === "recording") {
+        if (/parar|pronto|terminar|finalizar|concluir/i.test(q)) {
+          voiceClone.stopRecording();
+          const instruction = voiceClone.getFlowInstruction();
+          speak(instruction).catch(() => {});
+          return;
+        }
+      }
+      if (step === "complete") {
+        if (/testar|teste|ouvir/i.test(q)) {
+          voiceClone.testVoice();
+          return;
+        }
+        // Reset flow on any other command after completion
+        // (let it fall through to normal processing)
+      }
+    }
+
     if (cleanedCommand.includes("parar") || cleanedCommand.includes("desligar")) stopCamera();
     else if (cleanedCommand.includes("calar") || cleanedCommand.includes("silêncio")) speechSynthesis?.cancel();
     else {
@@ -243,7 +292,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       else askAI(finalCommand);
     }
     toast.info(`🎤 "${cleanedCommand || original}"`);
-  }, [active, stopCamera, startCamera, deactivateGracefully, askAI, supernetConnected, sendSuperNetQuery, speak, speakFast]);
+  }, [active, stopCamera, startCamera, deactivateGracefully, askAI, supernetConnected, sendSuperNetQuery, speak, speakFast, voiceClone]);
 
   // ═══ Wake word activation — camera does NOT auto-start, only voice ═══
   const activateByWakeWord = useCallback(async () => {
