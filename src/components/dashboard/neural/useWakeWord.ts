@@ -105,7 +105,8 @@ export function useWakeWord(
             const isOrion = ORION_WAKE_REGEX.test(transcript);
 
             if (isOrion && !wakeWordCooldownRef.current) {
-              if (confidence < 0.15) {
+              // Very low threshold — interim results often have 0 confidence
+              if (e.results[i].isFinal && confidence < 0.08) {
                 vsLog(`👂 Wake word ignorado (confiança muito baixa: ${(confidence * 100).toFixed(0)}%)`);
                 addBackgroundTranscript(transcript, confidence);
                 continue;
@@ -113,7 +114,7 @@ export function useWakeWord(
 
               wakeWordCooldownRef.current = true;
               const wakeLabel = /painel/i.test(transcript) ? "Painel" : "Orion";
-              vsLog(`🎯 Wake word '${wakeLabel}' detectado!`);
+              vsLog(`🎯 Wake word '${wakeLabel}' detectado! (conf=${(confidence * 100).toFixed(0)}%, interim=${!e.results[i].isFinal})`);
               toast.success(`🎯 ${wakeLabel} ativado!`, { duration: 2000 });
               clearRestartTimer();
               try { rec.abort?.(); } catch {}
