@@ -26,30 +26,7 @@ interface VisionProvider {
 }
 
 const VISION_PROVIDERS: VisionProvider[] = [
-  // 1. PRIMARY — Gemini 2.5 Flash via Lovable AI Gateway (fast + accurate)
-  {
-    id: "gemini_flash",
-    name: "Gemini 2.5 Flash (Lovable)",
-    endpoint: "https://ai.gateway.lovable.dev/v1/chat/completions",
-    model: "google/gemini-2.5-flash",
-    keyEnv: "LOVABLE_API_KEY",
-    supportsVision: true,
-    buildBody: (sys, usr, img, mime) => ({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: sys },
-        { role: "user", content: [
-          { type: "text", text: usr },
-          { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } },
-        ]},
-      ],
-      temperature: 0.1,
-      max_tokens: 4096,
-    }),
-    extractText: (d: any) => d.choices?.[0]?.message?.content || "",
-    buildHeaders: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
-  },
-  // 2. FALLBACK — Gemini Direct API (uses GEMINI_API_KEY, no gateway)
+  // 1. PRIMARY — Gemini 2.5 Flash Direct (suas próprias API keys, sem Lovable Gateway)
   {
     id: "gemini_direct",
     name: "Gemini 2.5 Flash (Direct)",
@@ -67,7 +44,7 @@ const VISION_PROVIDERS: VisionProvider[] = [
     extractText: (d: any) => d.candidates?.[0]?.content?.parts?.[0]?.text || "",
     buildHeaders: (_key) => ({ "Content-Type": "application/json" }),
   },
-  // 3. Groq LLaVA
+  // 2. Groq LLaVA
   {
     id: "groq",
     name: "Groq LLaVA",
