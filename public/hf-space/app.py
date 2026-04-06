@@ -124,16 +124,81 @@ AGENT_CATEGORIES = {
         ],
     },
     # ── Vision (200+) ──
+    # ── Vision & Object Detection (350+ agents) — EXPANDED v7.2 ──
     "vision": {
-        "types": [
+        "face": [
             "face_detection", "face_landmarks", "emotion_recognition",
-            "pose_estimation", "hand_tracking", "object_detection",
-            "scene_classification", "ocr_extraction", "document_layout",
-            "medical_imaging", "satellite_analysis", "style_transfer",
+            "face_swap", "face_recognition", "face_age_estimation",
+            "face_mask_detection", "face_liveness",
+        ],
+        "pose_body": [
+            "pose_estimation", "hand_tracking", "gesture_recognition",
+            "body_segmentation", "salat_pose_detection", "sports_tracking",
+            "player_speed_distance", "action_recognition",
+        ],
+        "object_detection": [
+            # Core models
+            "yolov5", "yolov7", "yolov8", "yolov9", "yolov10", "yolov11",
+            "yolov12", "yolo26", "yoloe", "yolo_world",
+            "detr_resnet50", "rf_detr", "d_fine", "mr_detr",
+            "grounding_dino", "owlv2", "llmdet",
+            # Zero-shot & open-vocab
+            "zero_shot_object_detection", "open_vocabulary_detection",
+            "text_guided_detection", "molmo_point", "qwen2_vl_detection",
+            # Tracking
+            "multi_object_tracking", "sam3_tracking", "object_counting",
+            "region_of_interest_counting", "abandoned_object_detection",
+            "baggage_tracking",
+            # Real-time & browser
+            "realtime_webgpu_detection", "webcam_detection", "webrtc_yolo",
+            "browser_object_detection", "video_object_detection",
+        ],
+        "domain_detection": [
+            # Vehicles & traffic
+            "license_plate_detection", "license_plate_recognition_alpr",
+            "traffic_sign_detection", "vehicle_detection", "pothole_detection",
+            "autonomous_vehicle_detection", "train_obstruction_detection",
+            "accident_detection",
+            # Safety & security
+            "fire_smoke_detection", "nsfw_content_detection",
+            "ppe_detection", "cigarette_detection", "weapon_detection",
+            "crowd_counting", "person_counting",
+            # Medical
+            "bone_fracture_detection", "brain_tumor_detection",
+            "blood_cell_detection", "wrinkle_detection", "xray_detection",
+            # Agriculture & nature
+            "animal_detection", "cat_dog_breed_detection", "wildlife_detection",
+            "plant_disease_detection", "tomato_ripeness_detection",
+            "pest_detection", "weed_detection", "solar_panel_detection",
+            # Industrial
+            "pcb_component_detection", "furniture_detection",
+            "lego_detection", "box_counting", "defect_detection",
+            # Geospatial
+            "satellite_object_detection", "moon_rock_detection",
+            "building_footprint_detection",
+        ],
+        "segmentation": [
+            "image_segmentation", "instance_segmentation", "panoptic_segmentation",
+            "semantic_segmentation", "sam2", "v_clr", "pollen_vision",
+            "document_layout_segmentation", "manga_panel_detection",
+        ],
+        "scene_understanding": [
+            "scene_classification", "visual_qa", "image_captioning",
+            "depth_estimation", "ocr_extraction", "document_layout",
+            "medical_imaging", "satellite_analysis",
+        ],
+        "image_processing": [
             "background_removal", "image_upscaling", "image_inpainting",
-            "image_outpainting", "controlnet", "depth_estimation",
-            "image_segmentation", "visual_qa", "image_captioning",
-            "image_to_svg", "face_swap", "virtual_tryon",
+            "image_outpainting", "controlnet", "style_transfer",
+            "image_to_svg", "virtual_tryon",
+        ],
+        "models": [
+            "yolov8_nano", "yolov8_small", "yolov8_medium", "yolov8_large",
+            "yolov8_xlarge", "yolov11n", "yolov11m", "yolo26",
+            "detr_resnet50", "detr_resnet101", "rf_detr_base", "rf_detr_large",
+            "d_fine_l", "d_fine_x", "grounding_dino_base", "grounding_dino_large",
+            "owlv2_base", "owlv2_large", "sam2_tiny", "sam2_large",
+            "molmopoint_8b", "qwen2_vl_7b", "faster_rcnn", "mobilenetv2",
         ],
     },
     # ── Fine-Tuning (200+) ──
@@ -1093,7 +1158,12 @@ def route_to_agents(query: str) -> Dict[str, Any]:
                           "code comment", "refactor", "test generat"],
         "reasoning": ["legal", "contract", "compliance", "financial", "medical reason", "case law"],
         "vision": ["face", "detect", "pose", "object", "ocr", "image", "scene", "background remov",
-                    "upscal", "inpaint", "segment", "depth", "try-on", "virtual try"],
+                    "upscal", "inpaint", "segment", "depth", "try-on", "virtual try",
+                    "yolo", "detr", "grounding dino", "owl", "license plate", "fire",
+                    "smoke", "pothole", "traffic sign", "animal", "wildlife", "fracture",
+                    "tumor", "blood cell", "pcb", "solar panel", "counting", "track",
+                    "lego", "nsfw", "weapon", "ppe", "crowd", "furniture",
+                    "satellite", "defect", "anomal"],
         "image_generation": ["generate image", "text to image", "flux", "sdxl", "stable diffusion",
                              "dreambooth", "comic", "graphic novel", "character sheet"],
         "video_generation": ["generate video", "text to video", "animate", "lipsync", "face swap video",
