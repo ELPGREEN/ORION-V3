@@ -1,8 +1,9 @@
 /**
- * ─── Neural Agent Bridge (v23.0 — 15-Layer Embodied Cognition) ───
+ * ─── Neural Agent Bridge (v24.0 — Autonomous Agent Factory) ───
  * Singleton bridge connecting API agents to the neural society,
- * now enhanced with interoceptive metrics (Layer 6) and somatic
- * marker consultation (Layer 9) for body-informed routing.
+ * now with autonomous agent creation (Orion self-generates agents),
+ * interoceptive metrics (Layer 6), somatic markers (Layer 9),
+ * and 2900+ HF model integration for embodied cognition.
  */
 
 import type { AgentRole, AgentSocietyState, AgentState } from "./multi-agent";
