@@ -341,8 +341,22 @@ const STYLE_COMMANDS: StyleCommand[] = [
 export function buildStylePrompt(prefs: VoiceStylePrefs): string {
   const parts: string[] = [];
 
-  // Base instruction
-  parts.push("Fale de forma natural e fluida em português brasileiro");
+  // Language-aware base instruction
+  const langMap: Record<string, string> = {
+    "pt-BR": "Fale de forma natural e fluida em português brasileiro",
+    "en-US": "Speak naturally and fluently in American English",
+    "es-ES": "Habla de forma natural y fluida en español",
+    "fr-FR": "Parlez de manière naturelle et fluide en français",
+    "de-DE": "Sprechen Sie natürlich und fließend auf Deutsch",
+    "it-IT": "Parla in modo naturale e fluido in italiano",
+    "ja-JP": "自然で流暢な日本語で話してください",
+    "zh-CN": "用自然流畅的中文说话",
+    "ko-KR": "자연스럽고 유창한 한국어로 말하세요",
+    "ar-SA": "تحدث بشكل طبيعي وسلس باللغة العربية",
+    "ru-RU": "Говорите естественно и плавно на русском языке",
+    "hi-IN": "स्वाभाविक और धाराप्रवाह हिंदी में बोलें",
+  };
+  parts.push(langMap[prefs.language] || `Speak naturally in ${prefs.language}`);
 
   // Accent
   if (prefs.accent && prefs.accent !== "neutro") {
