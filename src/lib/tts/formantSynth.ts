@@ -180,7 +180,7 @@ function renderPhonemes(phonemes: string[]): Float32Array {
   // Spectral tilt filter
   const tiltFilter = createTiltFilter(VOICE_DNA.dynamics.spectralTilt * 0.3, SR);
 
-  const { openQuotient: oq, speedQuotient: sq, harmonicDecay } = VOICE_DNA.glottal;
+  const { openQuotient: oq, speedQuotient: sq } = VOICE_DNA.glottal;
   const { jitter, shimmer } = VOICE_DNA.dynamics;
 
   for (let pi = 0; pi < phonemes.length; pi++) {
