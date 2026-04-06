@@ -585,8 +585,8 @@ export function useOrionReasoning(
 
           // Register owner identity in persistent memory
           const ownerFacts = [
-            "Ericson R. Piccoli é o criador, proprietário e desenvolvedor do Orion",
-            "O proprietário se chama Ericson R. Piccoli — engenheiro de IA da Elp Green Technology",
+            "Ericson Piccoli é o criador, proprietário e desenvolvedor do Orion",
+            "O proprietário se chama Ericson Piccoli — engenheiro de IA da Elp Green Technology",
             `Voice ID do proprietário registrado em ${new Date().toLocaleDateString("pt-BR")}`,
             `User ID do proprietário: ${authUser.id}`,
           ];
@@ -617,11 +617,11 @@ export function useOrionReasoning(
             return [...clean, { role: "ai" as const, text: successMsg, time: new Date().toLocaleTimeString("pt-BR") }];
           });
           setThought(successMsg);
-          addLog("🔐 Proprietário cadastrado: Ericson R. Piccoli");
+          addLog("🔐 Proprietário cadastrado: Ericson Piccoli");
           try { await speak(successMsg); } catch {}
 
           saveToNeuralLearning(question, successMsg, "owner_registration", 1.0, {
-            owner_id: authUser.id, owner_name: "Ericson R. Piccoli",
+            owner_id: authUser.id, owner_name: "Ericson Piccoli",
           }).catch(() => {});
           return;
         } catch (regErr) {

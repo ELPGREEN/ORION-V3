@@ -38,7 +38,7 @@ function buildBaseJsonLd(url: string) {
           "Empresa de tecnologia especializada em inteligência artificial empresarial, LegalTech e soluções sustentáveis. CNPJ 42.501.190/0001-70.",
         founder: {
           "@type": "Person",
-          name: "Ericson R. Piccoli",
+          name: "Ericson Piccoli",
           jobTitle: "General Director & Founder, Systems Engineer",
         },
         taxID: "42.501.190/0001-70",
