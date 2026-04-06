@@ -2467,11 +2467,15 @@ function getOpenAIKeys(): string[] {
   ].filter((k): k is string => Boolean(k) && !badKeys.has(k));
 }
 
-function getGeminiKeys(): string[] {
+function getGeminiKeysLLM(): string[] {
   return [
+    Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
     Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
   ].filter((k): k is string => Boolean(k) && !badKeys.has(k));
 }
 
