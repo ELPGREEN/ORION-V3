@@ -1,12 +1,12 @@
-import { Brain, FileText, Users, Zap, Shield, BarChart3 } from "lucide-react";
+import { IconNeuralAI, IconDocuments, IconCRM, IconAutomation, IconShield, IconDashboard } from "@/components/icons/SumerianTronIcons";
 
 const stats = [
-  { icon: Brain, value: "IA", label: "Inteligência Artificial", desc: "Motor proprietário multicamada" },
-  { icon: FileText, value: "100+", label: "Tipos de Documentos", desc: "Geração e análise automática" },
-  { icon: Users, value: "CRM", label: "Gestão de Clientes", desc: "Pipeline completo e automatizado" },
-  { icon: Zap, value: "24/7", label: "Assistente Virtual", desc: "Disponível a qualquer momento" },
-  { icon: Shield, value: "LGPD", label: "Conformidade Total", desc: "Orion Shield + LGPD/GDPR" },
-  { icon: BarChart3, value: "360°", label: "Métricas & Analytics", desc: "Dashboard com visão completa" },
+  { Icon: IconNeuralAI, value: "IA", label: "Inteligência Artificial", desc: "Motor proprietário multicamada" },
+  { Icon: IconDocuments, value: "100+", label: "Tipos de Documentos", desc: "Geração e análise automática" },
+  { Icon: IconCRM, value: "CRM", label: "Gestão de Clientes", desc: "Pipeline completo e automatizado" },
+  { Icon: IconAutomation, value: "24/7", label: "Assistente Virtual", desc: "Disponível a qualquer momento" },
+  { Icon: IconShield, value: "LGPD", label: "Conformidade Total", desc: "Orion Shield + LGPD/GDPR" },
+  { Icon: IconDashboard, value: "360°", label: "Métricas & Analytics", desc: "Dashboard com visão completa" },
 ];
 
 export function ImpactStatsSection() {
@@ -29,7 +29,7 @@ export function ImpactStatsSection() {
               className="group relative text-center p-5 border border-border/20 bg-card/20 hover:border-primary/30 transition-all duration-500"
             >
               <div className="absolute bottom-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-primary/0 to-transparent group-hover:via-primary/50 transition-all duration-500" />
-              <stat.icon className="h-6 w-6 text-primary mx-auto mb-3 group-hover:scale-110 transition-transform duration-300" />
+              <stat.Icon className="h-7 w-7 text-primary mx-auto mb-3 group-hover:scale-110 transition-transform duration-300" />
               <p className="text-xl sm:text-2xl font-bold text-primary mb-1">{stat.value}</p>
               <p className="text-[10px] text-foreground font-medium uppercase tracking-wider mb-1">{stat.label}</p>
               <p className="text-[9px] text-muted-foreground">{stat.desc}</p>

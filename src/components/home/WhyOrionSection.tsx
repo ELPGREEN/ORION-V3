@@ -1,41 +1,42 @@
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { Brain, Zap, Shield, Clock, TrendingUp, Users, Sparkles, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { IconNeuralAI, IconClock, IconTrending, IconShield, IconCRM, IconSparkles, IconAutomation } from "@/components/icons/SumerianTronIcons";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const reasons = [
   {
-    icon: Brain,
+    Icon: IconNeuralAI,
     title: "IA de Verdade, Não Marketing",
     desc: "Motor neural proprietário com múltiplas camadas de inteligência artificial. Se uma camada falhar, outra assume em milissegundos — sem interrupções.",
     highlight: "99.9% uptime",
   },
   {
-    icon: Clock,
+    Icon: IconClock,
     title: "De 4 Horas para 4 Minutos",
     desc: "Documentos que levavam horas para criar são gerados automaticamente. Contratos, relatórios e propostas prontos em minutos.",
     highlight: "60x mais rápido",
   },
   {
-    icon: TrendingUp,
+    Icon: IconTrending,
     title: "ROI Comprovado",
     desc: "Empresas que usam ORION reduzem custos operacionais em até 70% com automação de processos, documentos e atendimento.",
     highlight: "70% economia",
   },
   {
-    icon: Shield,
+    Icon: IconShield,
     title: "Blindagem Total",
     desc: "Orion Shield com múltiplas camadas de defesa proprietária. Proteção de nível bancário com monitoramento contínuo e conformidade regulatória.",
     highlight: "Nível bancário",
   },
   {
-    icon: Users,
+    Icon: IconCRM,
     title: "Feito para Equipes Reais",
     desc: "CRM, chat ao vivo, gestão de processos, pipeline de vendas e dashboard de métricas. Tudo integrado, sem precisar de 10 ferramentas.",
     highlight: "Tudo-em-um",
   },
   {
-    icon: Sparkles,
+    Icon: IconSparkles,
     title: "Evolui Sozinho",
     desc: "O Orion aprende com cada interação. Rede neural adaptativa que melhora respostas, sugere ações e antecipa necessidades.",
     highlight: "Auto-evolução",
@@ -85,10 +86,10 @@ export function WhyOrionSection() {
                   style={{ boxShadow: "inset 0 0 25px hsl(var(--primary) / 0.04)" }}
                 />
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-[9px] uppercase tracking-[0.15em] font-medium mb-4">
-                  <Zap className="h-2.5 w-2.5" />
+                  <IconAutomation className="h-3 w-3" />
                   {reason.highlight}
                 </div>
-                <reason.icon className="h-6 w-6 text-primary mb-3 group-hover:scale-110 transition-transform duration-300" />
+                <reason.Icon className="h-7 w-7 text-primary mb-3 group-hover:scale-110 transition-transform duration-300" />
                 <h3 className="text-sm font-semibold text-foreground mb-2">{reason.title}</h3>
                 <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">{reason.desc}</p>
                 <div className="absolute bottom-0 left-3 right-3 h-px bg-gradient-to-r from-transparent via-primary/0 to-transparent group-hover:via-primary/40 transition-all duration-500" />

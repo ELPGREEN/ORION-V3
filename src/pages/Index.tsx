@@ -37,12 +37,9 @@ export default function Index() {
           "operatingSystem": "Web",
           "creator": {
             "@type": "Organization",
-            "name": "ELP Green Technology S.R.L.",
+            "name": "ELP® Green Technology",
             "url": "https://www.iasofthub.com",
-            "founder": { "@type": "Person", "name": "Ericson Piccoli", "jobTitle": "Chairman of the Board & Founder" },
-            "vatID": "IT02712340062",
           },
-          "contactPoint": { "@type": "ContactPoint", "email": "info@iasofthub.com", "telephone": "+39 350 1021359", "contactType": "sales" },
         }}
       />
 

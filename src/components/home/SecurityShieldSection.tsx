@@ -1,15 +1,15 @@
-import { Shield, ShieldCheck, Lock, Eye, Fingerprint, Activity, Globe, FileCheck } from "lucide-react";
+import { IconShield, IconCheckMark, IconFingerprint, IconEye, IconGlobe, IconCompliance, IconActivity, IconSearch } from "@/components/icons/SumerianTronIcons";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 const highlights = [
-  { icon: Shield, name: "Defesa Multicamada", desc: "Múltiplas barreiras de proteção ativas 24/7 que detectam e neutralizam ameaças automaticamente." },
-  { icon: Fingerprint, name: "Autenticação Avançada", desc: "Verificação de identidade inteligente que garante que apenas pessoas autorizadas acessem seus dados." },
-  { icon: Lock, name: "Criptografia de Ponta", desc: "Seus dados são protegidos com criptografia de nível bancário em trânsito e em repouso." },
-  { icon: Eye, name: "Monitoramento Contínuo", desc: "Vigilância em tempo real que identifica comportamentos suspeitos antes que se tornem ameaças." },
-  { icon: Globe, name: "Conformidade Global", desc: "Aderência completa a LGPD, GDPR e regulamentações internacionais de proteção de dados." },
-  { icon: FileCheck, name: "Auditoria Completa", desc: "Registro detalhado de todas as ações para transparência total e rastreabilidade." },
-  { icon: Activity, name: "Análise de Risco", desc: "Motor inteligente que avalia riscos em tempo real e toma decisões automáticas de proteção." },
-  { icon: ShieldCheck, name: "Proteção Anti-Fraude", desc: "Detecção e bloqueio automático de tentativas de fraude, invasão e uso não autorizado." },
+  { Icon: IconShield, name: "Defesa Multicamada", desc: "Múltiplas barreiras de proteção ativas 24/7 que detectam e neutralizam ameaças automaticamente." },
+  { Icon: IconFingerprint, name: "Autenticação Avançada", desc: "Verificação de identidade inteligente que garante que apenas pessoas autorizadas acessem seus dados." },
+  { Icon: IconSearch, name: "Criptografia de Ponta", desc: "Seus dados são protegidos com criptografia de nível bancário em trânsito e em repouso." },
+  { Icon: IconEye, name: "Monitoramento Contínuo", desc: "Vigilância em tempo real que identifica comportamentos suspeitos antes que se tornem ameaças." },
+  { Icon: IconGlobe, name: "Conformidade Global", desc: "Aderência completa a LGPD, GDPR e regulamentações internacionais de proteção de dados." },
+  { Icon: IconCompliance, name: "Auditoria Completa", desc: "Registro detalhado de todas as ações para transparência total e rastreabilidade." },
+  { Icon: IconActivity, name: "Análise de Risco", desc: "Motor inteligente que avalia riscos em tempo real e toma decisões automáticas de proteção." },
+  { Icon: IconCheckMark, name: "Proteção Anti-Fraude", desc: "Detecção e bloqueio automático de tentativas de fraude, invasão e uso não autorizado." },
 ];
 
 export function SecurityShieldSection() {
@@ -38,7 +38,6 @@ export function SecurityShieldSection() {
           </ScrollReveal>
         </div>
 
-        {/* Shield Status */}
         <ScrollReveal direction="up" delay={0.2}>
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-12">
             <div className="flex items-center gap-3 px-5 py-3 border border-primary/30 bg-primary/5">
@@ -49,11 +48,11 @@ export function SecurityShieldSection() {
               <span className="text-xs font-semibold text-primary uppercase tracking-widest">Shield Ativo</span>
             </div>
             <div className="flex items-center gap-2 px-5 py-3 border border-border/20 bg-card/20">
-              <Lock className="h-4 w-4 text-primary" />
+              <IconSearch className="h-4 w-4 text-primary" />
               <span className="text-xs text-muted-foreground">Criptografia <span className="text-primary font-bold">AES-256</span></span>
             </div>
             <div className="flex items-center gap-2 px-5 py-3 border border-border/20 bg-card/20">
-              <Globe className="h-4 w-4 text-primary" />
+              <IconGlobe className="h-4 w-4 text-primary" />
               <span className="text-xs text-muted-foreground">Conformidade <span className="text-primary font-bold">LGPD/GDPR</span></span>
             </div>
           </div>
@@ -69,7 +68,7 @@ export function SecurityShieldSection() {
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                   style={{ boxShadow: "inset 0 0 30px hsl(var(--primary) / 0.05), 0 0 15px hsl(var(--primary) / 0.05)" }}
                 />
-                <layer.icon className="h-5 w-5 text-primary mb-3 group-hover:scale-110 transition-transform duration-300" />
+                <layer.Icon className="h-6 w-6 text-primary mb-3 group-hover:scale-110 transition-transform duration-300" />
                 <h3 className="text-sm font-semibold text-foreground mb-1.5">{layer.name}</h3>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">{layer.desc}</p>
                 <div className="absolute bottom-0 left-3 right-3 h-px bg-gradient-to-r from-transparent via-primary/0 to-transparent group-hover:via-primary/50 transition-all duration-500" />
