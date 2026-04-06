@@ -14,6 +14,8 @@ import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
 // Google Translate TTS removido — qualidade inferior, latência inconsistente
 import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
 import { useNeuralConfig } from "@/hooks/useNeuralConfig";
+import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/voice-evolution-feedback";
+import { speakWithEvolvedVoice } from "@/lib/neural/orion-voice-evolution";
 
 // ═══ Text Cleaning for Natural Speech ═══
 
@@ -389,6 +391,21 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
+    // ── Feed AI response to voice evolution engine ──
+    feedAIResponse(text);
+
+    // ── TIER 0: Evolved Voice (level ≥ 70% — voz própria, zero API) ──
+    if (!played && !cascadeAbort.signal.aborted) {
+      try {
+        played = await speakWithEvolvedVoice(cleanText);
+        if (played) {
+          console.log("[Voice] 🧬 Voz Evoluída — síntese autônoma!");
+        }
+      } catch {
+        console.warn("[Voice] Evolved voice não pronta, continuando cascade...");
+      }
+    }
+
     // ── PRIMARY: Gemini TTS (rápido ~2s, voz Charon, 100% grátis) ──
     if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
       try {
@@ -442,6 +459,11 @@ export function useNeuralVoice(
         played = true;
         console.log("[Voice] ⚠️ Fallback: Web Speech (último recurso)");
       } catch {}
+    }
+
+    // ── Feed self-synthesis for evolution reinforcement ──
+    if (played) {
+      feedSelfSynthesis(cleanText);
     }
     
     clearTimeout(safetyTimer);
@@ -529,6 +551,10 @@ export function useNeuralVoice(
 
           lastProcessedTranscriptRef.current = normalized;
           lastProcessedAtRef.current = now;
+          
+          // Feed user speech to voice evolution engine
+          feedUserSpeech(fullText);
+          
           onCmdRef.current(fullText);
         }, silenceMs);
       };
