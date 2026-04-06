@@ -24,10 +24,15 @@ import { DEFAULT_VQC_CONFIG } from "./vqc";
 // ─── Types ───
 // ═══════════════════════════════════════════
 
-export type QPUId = "ibm_brisbane" | "ibm_osaka" | "ibm_kyoto" | "ibm_sherbrooke" | "simulator_stabilizer";
-export type IBMBasisGate = "cx" | "id" | "rz" | "sx" | "x";
+export type QPUId =
+  | "ibm_boston" | "ibm_pittsburgh" | "ibm_aachen"       // Heron r3
+  | "ibm_kingston" | "ibm_fez" | "ibm_marrakesh"         // Heron r2
+  | "ibm_miami"                                           // Nighthawk r1
+  | "ibm_brussels" | "ibm_strasbourg"                     // Eagle r3 (legacy)
+  | "simulator_stabilizer";
+export type IBMBasisGate = "ecr" | "cx" | "id" | "rz" | "sx" | "x";
 export type RuntimePlan = "open" | "standard" | "premium";
-export type RuntimeRegion = "us-east" | "eu-de" | "jp-tok";
+export type RuntimeRegion = "us-east" | "eu-de";
 export type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 export type ErrorMitigationType = "none" | "zne" | "m3" | "pec";
 
@@ -120,38 +125,83 @@ export interface InstanceMetrics {
 // ═══════════════════════════════════════════
 
 const QPU_REGISTRY: Record<QPUId, QPUProfile> = {
-  ibm_brisbane: {
-    id: "ibm_brisbane", name: "IBM Brisbane", nQubits: 127,
-    processor: "Eagle", revision: "r3",
+  // ─── Heron r3 (July 2025) — Best performance, 156 qubits ───
+  ibm_boston: {
+    id: "ibm_boston", name: "IBM Boston", nQubits: 156,
+    processor: "Heron", revision: "r3",
+    t1Microseconds: 350, t2Microseconds: 250,
+    gateErrorRate: 0.00121, readoutErrorRate: 0.005127,
+    basisGates: ["ecr", "id", "rz", "sx", "x"],
+    maxShots: 100_000, isSimulator: false, status: "online",
+  },
+  ibm_pittsburgh: {
+    id: "ibm_pittsburgh", name: "IBM Pittsburgh", nQubits: 156,
+    processor: "Heron", revision: "r3",
+    t1Microseconds: 340, t2Microseconds: 240,
+    gateErrorRate: 0.00160, readoutErrorRate: 0.004517,
+    basisGates: ["ecr", "id", "rz", "sx", "x"],
+    maxShots: 100_000, isSimulator: false, status: "online",
+  },
+  ibm_aachen: {
+    id: "ibm_aachen", name: "IBM Aachen", nQubits: 156,
+    processor: "Heron", revision: "r3",
+    t1Microseconds: 345, t2Microseconds: 245,
+    gateErrorRate: 0.00148, readoutErrorRate: 0.006592,
+    basisGates: ["ecr", "id", "rz", "sx", "x"],
+    maxShots: 100_000, isSimulator: false, status: "online",
+  },
+  // ─── Heron r2 (July 2024) — Open access, 156 qubits ───
+  ibm_kingston: {
+    id: "ibm_kingston", name: "IBM Kingston", nQubits: 156,
+    processor: "Heron", revision: "r2",
     t1Microseconds: 300, t2Microseconds: 200,
-    gateErrorRate: 0.001, readoutErrorRate: 0.012,
-    basisGates: ["cx", "id", "rz", "sx", "x"],
+    gateErrorRate: 0.00189, readoutErrorRate: 0.008789,
+    basisGates: ["ecr", "id", "rz", "sx", "x"],
     maxShots: 100_000, isSimulator: false, status: "online",
   },
-  ibm_osaka: {
-    id: "ibm_osaka", name: "IBM Osaka", nQubits: 127,
-    processor: "Eagle", revision: "r3",
+  ibm_fez: {
+    id: "ibm_fez", name: "IBM Fez", nQubits: 156,
+    processor: "Heron", revision: "r2",
     t1Microseconds: 280, t2Microseconds: 180,
-    gateErrorRate: 0.0012, readoutErrorRate: 0.015,
-    basisGates: ["cx", "id", "rz", "sx", "x"],
+    gateErrorRate: 0.00250, readoutErrorRate: 0.01453,
+    basisGates: ["ecr", "id", "rz", "sx", "x"],
     maxShots: 100_000, isSimulator: false, status: "online",
   },
-  ibm_kyoto: {
-    id: "ibm_kyoto", name: "IBM Kyoto", nQubits: 127,
+  ibm_marrakesh: {
+    id: "ibm_marrakesh", name: "IBM Marrakesh", nQubits: 156,
+    processor: "Heron", revision: "r2",
+    t1Microseconds: 275, t2Microseconds: 175,
+    gateErrorRate: 0.00257, readoutErrorRate: 0.01013,
+    basisGates: ["ecr", "id", "rz", "sx", "x"],
+    maxShots: 100_000, isSimulator: false, status: "online",
+  },
+  // ─── Nighthawk r1 (December 2025) — Grid topology, 120 qubits ───
+  ibm_miami: {
+    id: "ibm_miami", name: "IBM Miami", nQubits: 120,
+    processor: "Nighthawk", revision: "r1",
+    t1Microseconds: 320, t2Microseconds: 220,
+    gateErrorRate: 0.00262, readoutErrorRate: 0.02026,
+    basisGates: ["ecr", "id", "rz", "sx", "x"],
+    maxShots: 100_000, isSimulator: false, status: "online",
+  },
+  // ─── Eagle r3 (legacy, EU region) — 127 qubits ───
+  ibm_brussels: {
+    id: "ibm_brussels", name: "IBM Brussels", nQubits: 127,
     processor: "Eagle", revision: "r3",
     t1Microseconds: 260, t2Microseconds: 170,
-    gateErrorRate: 0.0015, readoutErrorRate: 0.018,
+    gateErrorRate: 0.00787, readoutErrorRate: 0.02905,
     basisGates: ["cx", "id", "rz", "sx", "x"],
     maxShots: 100_000, isSimulator: false, status: "online",
   },
-  ibm_sherbrooke: {
-    id: "ibm_sherbrooke", name: "IBM Sherbrooke", nQubits: 127,
+  ibm_strasbourg: {
+    id: "ibm_strasbourg", name: "IBM Strasbourg", nQubits: 127,
     processor: "Eagle", revision: "r3",
-    t1Microseconds: 310, t2Microseconds: 210,
-    gateErrorRate: 0.0009, readoutErrorRate: 0.011,
+    t1Microseconds: 250, t2Microseconds: 160,
+    gateErrorRate: 0.00830, readoutErrorRate: 0.02637,
     basisGates: ["cx", "id", "rz", "sx", "x"],
     maxShots: 100_000, isSimulator: false, status: "online",
   },
+  // ─── Simulator ───
   simulator_stabilizer: {
     id: "simulator_stabilizer", name: "Stabilizer Simulator", nQubits: 5000,
     processor: "Simulator", revision: "1.0",
@@ -186,9 +236,9 @@ export function getQPUStatus(id: QPUId): { status: string; queueDepth: number; a
 // ═══════════════════════════════════════════
 
 const PLAN_LIMITS: Record<RuntimePlan, { qubits: number; depth: number; shots: number; seconds: number }> = {
-  open: { qubits: 127, depth: 300, shots: 4_000, seconds: 600 },
-  standard: { qubits: 127, depth: 1_000, shots: 100_000, seconds: 36_000 },
-  premium: { qubits: 127, depth: 5_000, shots: 1_000_000, seconds: 360_000 },
+  open: { qubits: 156, depth: 300, shots: 4_000, seconds: 600 },
+  standard: { qubits: 156, depth: 1_000, shots: 100_000, seconds: 36_000 },
+  premium: { qubits: 156, depth: 5_000, shots: 1_000_000, seconds: 360_000 },
 };
 
 let instanceCounter = 0;

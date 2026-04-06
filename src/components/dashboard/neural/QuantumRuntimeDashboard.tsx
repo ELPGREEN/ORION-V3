@@ -94,7 +94,7 @@ export function QuantumRuntimeDashboard() {
     setIsRunning(true);
     setTimeout(() => {
       const mitigations: ErrorMitigationType[] = ["zne", "m3", "pec"];
-      const qpuIds: QPUId[] = ["simulator_stabilizer", "ibm_brisbane", "ibm_osaka"];
+      const qpuIds: QPUId[] = ["simulator_stabilizer", "ibm_boston", "ibm_kingston"];
       const newJobs: JobHistoryEntry[] = [];
 
       for (const mitigation of mitigations) {
