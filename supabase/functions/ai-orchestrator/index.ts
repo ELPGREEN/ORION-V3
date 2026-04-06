@@ -610,19 +610,17 @@ Deno.serve(async (req) => {
       user_id: user.id,
     }).then(() => {}).catch(e => console.warn("⚠️ ai_metrics log failed:", e.message));
 
-    console.log(`✅ Token usage — prompt: ${tokenUsage.prompt_tokens}, completion: ${tokenUsage.completion_tokens}, total: ${tokenUsage.total_tokens} (${usedProvider.id})${reasoningContent ? ' [with V3.2 reasoning]' : ''}`);
+    console.log(`✅ FREE Gemini — prompt: ${tokenUsage.prompt_tokens}, completion: ${tokenUsage.completion_tokens}, total: ${tokenUsage.total_tokens} (${usedProvider.id} / ${usedProvider.model})`);
 
     const responsePayload: Record<string, unknown> = {
       content: output,
       provider: usedProvider.id,
+      model: usedProvider.model,
       contextUsed: !!neuralContextText,
       model_type: model_type || "default",
       usage: tokenUsage,
+      free_tier: true,
     };
-
-    if (reasoningContent) {
-      responsePayload.reasoning_content = reasoningContent;
-    }
 
     return new Response(JSON.stringify(responsePayload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
