@@ -1,16 +1,17 @@
 /**
  * NEUROCORE AI — Voice STT/TTS Hook
- * Free TTS Cascade: Gemini TTS → Google TTS → Piper WASM → Enhanced Web Speech
- * Zero paid APIs. Maximum naturalness. Gemini 2.5 Flash Preview TTS as primary.
+ * Free TTS Cascade: Fish Clone → Gemini TTS → Google TTS → Piper WASM → Web Speech
+ * Zero paid APIs. Maximum naturalness. Voice cloning via Fish Speech v1.5.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
+import { speakWithFishClone, isFishCloneAvailable, getClonedVoiceRefPath } from "@/lib/tts/fishSpeechTTS";
 import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
 import { speakWithGoogleTTS, isGoogleTTSAvailable } from "@/lib/tts/googleTTS";
 import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
-
+import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 
 // ═══ Text Cleaning for Natural Speech ═══
 
@@ -79,6 +80,7 @@ export function useNeuralVoice(
   const [supported, setSupported] = useState(false);
   const [ttsOn, setTtsOn] = useState(true);
   const ttsRef = useRef(true);
+  const { config } = useNeuralConfig();
   const recRef = useRef<any>(null);
   const speakingRef = useRef(false);
   const maleVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
@@ -385,18 +387,36 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
-    // ── Tier 0: Gemini 2.5 Flash Preview TTS (neural, free, highest quality) ──
+    // ── Tier 0: Fish Speech Clone (user's own cloned voice, free) ──
+    const voiceId = (config as any)?.orion_voice_id as string | undefined;
+    const fishRefPath = getClonedVoiceRefPath(voiceId);
+    if (!played && !cascadeAbort.signal.aborted && fishRefPath && isFishCloneAvailable()) {
+      try {
+        const result = await speakWithFishClone(cleanText, fishRefPath, undefined, cascadeAbort.signal);
+        if (result.played) {
+          played = true;
+          if (result.audio) activeAudioRef.current = result.audio;
+          console.log("[Voice] ✅ Tier 0: Fish Speech Clone (sua voz!)");
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          console.warn("[Voice] Tier 0 Fish Clone failed, trying Tier 1...");
+        }
+      }
+    }
+
+    // ── Tier 1: Gemini 2.5 Flash Preview TTS (neural, free) ──
     if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
       try {
         const result = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
         if (result.played) {
           played = true;
           if (result.audio) activeAudioRef.current = result.audio;
-          console.log("[Voice] ✅ Tier 0: Gemini TTS (neural, free)");
+          console.log("[Voice] ✅ Tier 1: Gemini TTS (neural, free)");
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Tier 0 Gemini TTS failed, trying Tier 1...");
+          console.warn("[Voice] Tier 1 Gemini TTS failed, trying Tier 2...");
         }
       }
     }
