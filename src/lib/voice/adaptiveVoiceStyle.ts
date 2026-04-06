@@ -479,10 +479,11 @@ export async function saveVoicePrefs(prefs: VoiceStylePrefs): Promise<void> {
       speech_rate: prefs.speech_rate,
       accent: prefs.accent,
       tone: prefs.tone,
+      language: prefs.language,
       extra_instructions: prefs.extra_instructions,
-    }, { onConflict: "user_id" });
+    } as any, { onConflict: "user_id" });
 
-    console.log("[Voice Style] ✅ Saved:", prefs.accent, prefs.tone, prefs.speech_rate);
+    console.log("[Voice Style] ✅ Saved:", prefs.language, prefs.accent, prefs.tone);
   } catch (err) {
     console.warn("[Voice Style] Save failed:", err);
   }
