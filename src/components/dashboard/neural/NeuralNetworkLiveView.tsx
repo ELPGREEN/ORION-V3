@@ -148,8 +148,8 @@ const CONNECTIONS: [string, string][] = [
 ];
 
 const GLOBE_RADIUS = 12;
-const NUM_PARTICLES = 8000;
-const NUM_FLOW_BEAMS = 50;
+const NUM_PARTICLES = 15000;
+const NUM_FLOW_BEAMS = 120;
 
 // ─── Fibonacci sphere distribution for globe layout ───
 function computeGlobePositions() {

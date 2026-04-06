@@ -594,8 +594,34 @@ export default function RedeNeuralPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="relative z-10">
-        <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#00D4FF]/15"
-          style={{ backgroundColor: "rgba(10,10,15,0.7)", boxShadow: "0 0 20px rgba(0,212,255,0.05), inset 0 1px 0 rgba(0,212,255,0.1)" }}>
+        <div
+          className="w-full rounded-lg border border-[#00D4FF]/15 overflow-hidden"
+          style={{ backgroundColor: "rgba(10,10,15,0.7)", boxShadow: "0 0 20px rgba(0,212,255,0.05), inset 0 1px 0 rgba(0,212,255,0.1)" }}
+        >
+          <TabsList
+            className="flex w-full gap-0.5 p-1.5 h-auto flex-nowrap bg-transparent cursor-grab active:cursor-grabbing select-none"
+            style={{
+              overflowX: "auto",
+              scrollbarWidth: "thin",
+              scrollbarColor: "rgba(0,212,255,0.2) transparent",
+              WebkitOverflowScrolling: "touch",
+            }}
+            onMouseDown={(e) => {
+              const el = e.currentTarget;
+              let isDown = true;
+              let startX = e.pageX - el.offsetLeft;
+              let scrollLeft = el.scrollLeft;
+              const onMove = (ev: MouseEvent) => {
+                if (!isDown) return;
+                ev.preventDefault();
+                const x = ev.pageX - el.offsetLeft;
+                el.scrollLeft = scrollLeft - (x - startX) * 1.5;
+              };
+              const onUp = () => { isDown = false; document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+              document.addEventListener("mousemove", onMove);
+              document.addEventListener("mouseup", onUp);
+            }}
+          >
           <TabsTrigger value="overview" className="text-xs shrink-0 gap-1 px-2.5 py-1.5">
             <BarChart3 className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Visão Geral</span>
@@ -709,7 +735,8 @@ export default function RedeNeuralPage() {
             <span className="sm:hidden">Quantum</span>
             <span className="ml-1 h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse inline-block" />
           </TabsTrigger>
-        </TabsList>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
