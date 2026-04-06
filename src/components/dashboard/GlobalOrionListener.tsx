@@ -93,6 +93,8 @@ export function GlobalOrionListener() {
 
   useEffect(() => {
     if (permissionsGranted) return;
+    // Don't show again if user already dismissed it
+    if (localStorage.getItem(PERMISSIONS_DISMISSED_KEY) === "true") return;
     const timer = setTimeout(() => setShowPermissionPrompt(true), 1500);
     return () => clearTimeout(timer);
   }, [permissionsGranted]);
