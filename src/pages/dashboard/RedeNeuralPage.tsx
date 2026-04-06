@@ -280,6 +280,7 @@ export default function RedeNeuralPage() {
   const { logNeural } = useNeuralFeedback();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
+  const initialLoadDone = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [evolutionTriggered, setEvolutionTriggered] = useState(false);
 
