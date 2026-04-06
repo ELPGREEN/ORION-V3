@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Clean and truncate text (max 5000 chars like ElevenLabs)
+    // Clean and truncate text (max 5000 chars)
     const cleanText = text.trim().slice(0, 5000);
     const chunks = splitTextIntoChunks(cleanText, CHUNK_SIZE);
 
