@@ -7,132 +7,79 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ⚠️ CRITICAL: OpenAI text-embedding-3-small (768d) MUST be primary.
-// neural-search uses OpenAI for query embeddings — document embeddings MUST match.
-// Using different models (Mistral, HF) produces incompatible vector spaces.
-function getEmbeddingProviders(): Array<{ name: string; apiKey: string; type: string }> {
-  const providers: Array<{ name: string; apiKey: string; type: string }> = [];
-
-  // OpenAI FIRST — matches neural-search query embeddings (text-embedding-3-small 768d)
-  const openaiKeys = [
-    Deno.env.get("OPENAI_API_KEY"),
-    Deno.env.get("OPENAI_API_KEY_2"),
-  ].filter(Boolean);
-  for (const key of openaiKeys) {
-    providers.push({ name: "openai", apiKey: key!, type: "openai" });
-  }
-
-  // Gemini as fallback (can output 768d natively)
+// ⚠️ CRITICAL: Gemini text-embedding-004 (768d, FREE) is the SOLE embedding provider.
+// ALL functions (neural-search, ai-orchestrator, gerar-documento, neural-training)
+// MUST use the same model to ensure vector space compatibility.
+function getEmbeddingProviders(): Array<{ name: string; apiKey: string }> {
   const geminiKeys = [
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
     Deno.env.get("GEMINI_API_KEY_3"),
-  ].filter(Boolean);
-  for (const key of geminiKeys) {
-    providers.push({ name: "gemini", apiKey: key!, type: "gemini" });
-  }
-
-  // NOTE: Mistral and HuggingFace REMOVED from pipeline.
-  // They produce embeddings in different vector spaces (1024d truncated / 384d padded)
-  // which are incompatible with OpenAI query embeddings in neural-search.
-
-  return providers;
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
+  ].filter(Boolean) as string[];
+  return geminiKeys.map(k => ({ name: "gemini", apiKey: k }));
 }
 
-// Single text embedding
-async function generateEmbeddingOpenAI(text: string, apiKey: string): Promise<number[]> {
-  const results = await generateEmbeddingOpenAIBatch([text], apiKey);
-  return results[0] || [];
-}
-
-// Batch embedding — sends up to 20 texts in ONE API call to save tokens/requests
-async function generateEmbeddingOpenAIBatch(texts: string[], apiKey: string): Promise<number[][]> {
-  const truncated = texts.map(t => t.slice(0, 4000)); // 4k chars ≈ ~1k tokens each
-  const response = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "text-embedding-3-small",
-      input: truncated,
-      dimensions: 768,
-    }),
-  });
-
+async function generateEmbeddingSingle(text: string, apiKey: string): Promise<number[]> {
+  const truncated = text.slice(0, 4000);
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "models/text-embedding-004",
+        content: { parts: [{ text: truncated }] },
+        outputDimensionality: 768,
+      }),
+    }
+  );
   if (!response.ok) {
     const err = await response.text();
-    throw new Error(`OpenAI embedding error ${response.status}: ${err}`);
+    throw new Error(`Gemini embedding error ${response.status}: ${err.slice(0, 200)}`);
   }
-
   const data = await response.json();
-  // Sort by index to maintain order
-  const sorted = (data?.data || []).sort((a: any, b: any) => a.index - b.index);
-  return sorted.map((d: any) => d.embedding || []);
+  const values = data?.embedding?.values;
+  if (!values || values.length === 0) throw new Error("No embedding from Gemini");
+  return values.length >= 768 ? values.slice(0, 768) : [...values, ...new Array(768 - values.length).fill(0)];
 }
 
-async function generateEmbeddingGemini(text: string, apiKey: string): Promise<number[]> {
-  const truncated = text.slice(0, 8000);
-  
-  // Try Gemini embedding models with multiple API versions
-  const configs = [
-    { model: "text-embedding-004", version: "v1beta" },
-    { model: "text-embedding-004", version: "v1" },
-    { model: "gemini-embedding-exp-03-07", version: "v1beta" },
-    { model: "embedding-001", version: "v1beta" },
-    { model: "embedding-001", version: "v1" },
-  ];
-  
-  for (const { model, version } of configs) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/${version}/models/${model}:embedContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            content: { parts: [{ text: truncated }] },
-            ...(model !== "embedding-001" ? { outputDimensionality: 768 } : {}),
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.warn(`Gemini ${model}/${version} failed (${response.status}): ${errText.slice(0, 100)}`);
-        continue;
-      }
-
-      const data = await response.json();
-      const values = data?.embedding?.values;
-      if (values && values.length > 0) {
-        // Truncate/pad to 768 dims
-        if (values.length >= 768) return values.slice(0, 768);
-        return [...values, ...new Array(768 - values.length).fill(0)];
-      }
-    } catch (e) {
-      console.warn(`Gemini ${model}/${version} exception:`, e.message);
-      continue;
+// Batch embedding via Gemini batchEmbedContents (up to 100 texts per call)
+async function generateEmbeddingBatch(texts: string[], apiKey: string): Promise<number[][]> {
+  const requests = texts.map(t => ({
+    model: "models/text-embedding-004",
+    content: { parts: [{ text: t.slice(0, 4000) }] },
+    outputDimensionality: 768,
+  }));
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requests }),
     }
+  );
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini batch embedding error ${response.status}: ${err.slice(0, 200)}`);
   }
-  
-  throw new Error("All Gemini embedding models failed");
+  const data = await response.json();
+  return (data?.embeddings || []).map((e: any) => {
+    const v = e?.values || [];
+    return v.length >= 768 ? v.slice(0, 768) : [...v, ...new Array(768 - v.length).fill(0)];
+  });
 }
 
-// generateEmbedding — fallback chain (OpenAI → Gemini only)
 async function generateEmbedding(
   text: string,
-  providers: Array<{ name: string; apiKey: string; type: string }>
+  providers: Array<{ name: string; apiKey: string }>
 ): Promise<{ embedding: number[]; provider: string }> {
   for (const provider of providers) {
     try {
-      let embedding: number[];
-      if (provider.type === "gemini") {
-        embedding = await generateEmbeddingGemini(text, provider.apiKey);
-      } else {
-        embedding = await generateEmbeddingOpenAI(text, provider.apiKey);
-      }
+      const embedding = await generateEmbeddingSingle(text, provider.apiKey);
       if (embedding.length > 0) {
         return { embedding, provider: provider.name };
       }
@@ -155,7 +102,6 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     // Auth: accept any valid JWT (anon for cron, service-role, or user)
-    // Also accept SUPABASE_SERVICE_ROLE_KEY directly (used by cron functions)
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       return new Response(
@@ -165,14 +111,10 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-
-    // First check if it's the service role key directly (cron-to-edge calls)
     const envServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     if (token === envServiceKey) {
-      // Service role key matched — authorized (cron pipeline)
       console.log("[Auth] Service role key matched directly — cron authorized");
     } else {
-      // Decode JWT payload to check role — accept anon, service_role, or authenticated
       try {
         const parts = token.split(".");
         if (parts.length < 2) throw new Error("Not a JWT");
@@ -190,24 +132,23 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const batchSize = Math.min(body.batchSize || 100, 200); // v11.1: batch padrão 100 (antes: 20)
-    const target = body.target || "both"; // "neural", "legal", "both"
+    const batchSize = Math.min(body.batchSize || 100, 200);
+    const target = body.target || "both";
 
     const providers = getEmbeddingProviders();
     if (providers.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No embedding API keys configured" }),
+        JSON.stringify({ error: "No Gemini API keys configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`🧠 Starting embedding generation (batch=${batchSize}, target=${target}, providers=${providers.map(p => p.name).join(",")})`);
+    console.log(`🧠 Starting embedding generation (batch=${batchSize}, target=${target}, providers=${providers.length} Gemini keys)`);
 
     const results = { neural: { processed: 0, failed: 0 }, legal: { processed: 0, failed: 0 } };
 
     // Process neural_knowledge_base
     if (target === "both" || target === "neural") {
-      // Use RPC to bypass PostgREST vector null filter bug with vector columns
       const { data: neuralItems, error: neuralError } = await supabase
         .rpc("get_items_needing_embeddings", { batch_limit: batchSize });
 
@@ -216,7 +157,6 @@ Deno.serve(async (req) => {
       } else if (neuralItems && neuralItems.length > 0) {
         console.log(`📦 Processing ${neuralItems.length} neural_knowledge_base items`);
 
-        // Filter meaningful items and skip empties
         const meaningful = [];
         for (const item of neuralItems) {
           const text = `${item.title}\n\n${item.content}`.trim();
@@ -230,30 +170,16 @@ Deno.serve(async (req) => {
           meaningful.push({ ...item, text });
         }
 
-        // Batch OpenAI calls (up to 20 per API call to save tokens)
+        // Gemini batch API — up to 20 per call, rotate keys
         const BATCH_SIZE = 20;
-        const primaryProvider = providers[0];
-
         for (let i = 0; i < meaningful.length; i += BATCH_SIZE) {
           const batch = meaningful.slice(i, i + BATCH_SIZE);
+          const keyIdx = Math.floor(i / BATCH_SIZE) % providers.length;
           try {
-            let embeddings: number[][];
-            let providerUsed = primaryProvider.name;
-
-            if (primaryProvider.type === "openai") {
-              embeddings = await generateEmbeddingOpenAIBatch(
-                batch.map(b => b.text),
-                primaryProvider.apiKey
-              );
-            } else {
-              // Fallback: one-by-one for non-OpenAI
-              embeddings = [];
-              for (const b of batch) {
-                const { embedding, provider } = await generateEmbedding(b.text, providers);
-                embeddings.push(embedding);
-                providerUsed = provider;
-              }
-            }
+            const embeddings = await generateEmbeddingBatch(
+              batch.map(b => b.text),
+              providers[keyIdx].apiKey
+            );
 
             for (let j = 0; j < batch.length; j++) {
               const vectorStr = `[${embeddings[j].join(",")}]`;
@@ -266,12 +192,24 @@ Deno.serve(async (req) => {
                 results.neural.failed++;
               } else {
                 results.neural.processed++;
-                console.log(`✅ Neural [${providerUsed}]: ${batch[j].title?.slice(0, 60)}...`);
+                console.log(`✅ Neural [gemini]: ${batch[j].title?.slice(0, 60)}...`);
               }
             }
           } catch (e) {
             console.error(`❌ Batch failed:`, e.message);
-            results.neural.failed += batch.length;
+            // Fallback: one-by-one
+            for (const b of batch) {
+              try {
+                const { embedding } = await generateEmbedding(b.text, providers);
+                const vectorStr = `[${embedding.join(",")}]`;
+                await supabase.from("neural_knowledge_base")
+                  .update({ embedding: vectorStr, is_processed: true })
+                  .eq("id", b.id);
+                results.neural.processed++;
+              } catch {
+                results.neural.failed++;
+              }
+            }
           }
 
           if (i + BATCH_SIZE < meaningful.length) {
@@ -297,26 +235,13 @@ Deno.serve(async (req) => {
         console.log(`📦 Processing ${legalItems.length} legal_embeddings items`);
 
         const BATCH_SIZE = 20;
-        const primaryProvider = providers[0];
-
         for (let i = 0; i < legalItems.length; i += BATCH_SIZE) {
           const batch = legalItems.slice(i, i + BATCH_SIZE);
           const texts = batch.map(item => `${item.title}\n\n${item.content}`.trim());
+          const keyIdx = Math.floor(i / BATCH_SIZE) % providers.length;
 
           try {
-            let embeddings: number[][];
-            let providerUsed = primaryProvider.name;
-
-            if (primaryProvider.type === "openai") {
-              embeddings = await generateEmbeddingOpenAIBatch(texts, primaryProvider.apiKey);
-            } else {
-              embeddings = [];
-              for (const t of texts) {
-                const { embedding, provider } = await generateEmbedding(t, providers);
-                embeddings.push(embedding);
-                providerUsed = provider;
-              }
-            }
+            const embeddings = await generateEmbeddingBatch(texts, providers[keyIdx].apiKey);
 
             for (let j = 0; j < batch.length; j++) {
               const vectorStr = `[${embeddings[j].join(",")}]`;
@@ -328,7 +253,7 @@ Deno.serve(async (req) => {
                 results.legal.failed++;
               } else {
                 results.legal.processed++;
-                console.log(`✅ Legal [${providerUsed}]: ${batch[j].title?.slice(0, 60)}...`);
+                console.log(`✅ Legal [gemini]: ${batch[j].title?.slice(0, 60)}...`);
               }
             }
           } catch (e) {
@@ -345,7 +270,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Check remaining — use RPC to avoid PostgREST vector null filter bug
+    // Check remaining
     const { data: neuralRemainingData } = await supabase
       .rpc("count_items_needing_embeddings");
     const neuralRemaining = neuralRemainingData || 0;
@@ -361,7 +286,7 @@ Deno.serve(async (req) => {
         neural: neuralRemaining || 0,
         legal: legalRemaining || 0,
       },
-      providers_used: providers.map((p) => p.name),
+      providers_used: ["gemini"],
     };
 
     console.log(`🏁 Done:`, JSON.stringify(summary));
