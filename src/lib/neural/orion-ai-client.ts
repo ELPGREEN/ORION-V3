@@ -620,7 +620,7 @@ export async function analyzeFrameStreaming(
         console.warn("[OrionAI] Blank frame detected (variance=" + variance.toFixed(1) + "), sending without image");
         imageBase64 = undefined;
       } else {
-        imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.92).split(",")[1];
+        imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.82).split(",")[1]; // Reduced from 0.92
       }
     }
 
