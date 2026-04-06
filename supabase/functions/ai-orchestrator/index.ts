@@ -553,33 +553,16 @@ Deno.serve(async (req) => {
       throw new Error(`All ${keysToTry.length} Gemini keys exhausted for ${p.model}`);
     }
 
-    // Retry with exponential backoff + provider fallback
-    const MAX_RETRIES = 3;
+    // Retry with exponential backoff + Gemini model fallback
+    const MAX_RETRIES = 4; // 4 models to try
     let lastError: Error | null = null;
     let providerIndex = availableLLMs.indexOf(provider);
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const currentProvider = availableLLMs[providerIndex % availableLLMs.length];
       try {
-        console.log(`🤖 Attempt ${attempt + 1}/${MAX_RETRIES} with provider: ${currentProvider.id}${thinking_enabled ? ' [V3.2-THINKING]' : ''}${currentProvider.id === 'deepseek_reasoner' ? ' [REASONER-64K]' : ''}`);
+        console.log(`🤖 Attempt ${attempt + 1}/${MAX_RETRIES} with FREE Gemini model: ${currentProvider.model}`);
         output = await callProvider(currentProvider);
-
-        // Handle tool_calls returned from DeepSeek thinking+tools
-        if (output.startsWith('{"__tool_calls"')) {
-          try {
-            const parsed = JSON.parse(output);
-            return new Response(JSON.stringify({
-              tool_calls: parsed.__tool_calls,
-              reasoning_content: parsed.reasoning_content || "",
-              provider: currentProvider.id,
-              model_type: model_type || "default",
-              usage: tokenUsage,
-              requires_tool_execution: true,
-            }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          } catch { /* not tool calls, continue */ }
-        }
 
         if (output && output.trim().length > 0) {
           usedProvider = currentProvider;
@@ -588,21 +571,23 @@ Deno.serve(async (req) => {
         throw new Error("Empty response from provider");
       } catch (e) {
         lastError = e as Error;
-        console.warn(`⚠️ Provider ${currentProvider.id} attempt ${attempt + 1} failed: ${lastError.message}`);
+        console.warn(`⚠️ Gemini ${currentProvider.model} attempt ${attempt + 1} failed: ${lastError.message}`);
         providerIndex++;
+        // Rotate to a fresh key for the next model
+        _geminiKeyIndex++;
         if (attempt < MAX_RETRIES - 1) {
           const delay = 1000 * Math.pow(2, attempt);
-          console.log(`⏳ Waiting ${delay}ms before retry...`);
+          console.log(`⏳ Waiting ${delay}ms before trying next Gemini model...`);
           await new Promise(r => setTimeout(r, delay));
         }
       }
     }
 
     if (!output || output.trim().length === 0) {
-      throw new Error(`All AI providers failed after ${MAX_RETRIES} attempts. Last error: ${lastError?.message}`);
+      throw new Error(`All FREE Gemini models failed after ${MAX_RETRIES} attempts. Last error: ${lastError?.message}`);
     }
 
-    // If no usage from API, estimate using DeepSeek V3.2 ratios
+    // Estimate tokens if not returned by API
     if (!tokenUsage) {
       const inputText = conversation.map(m => m.content).join(" ") + finalSystemPrompt;
       const estimatedInput = estimateTokens(inputText);
