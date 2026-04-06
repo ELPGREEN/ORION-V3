@@ -460,6 +460,11 @@ export async function analyzeFrameWithAI(
       const isIdentityQuestion = question && /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
       const isCapabilityQuestion = question && /que\s+(sistema|m[oó]dulo|capacidade|funcionalidade)|o\s+que\s+(falta|precisa|melhorar)|suas?\s+(limita[çc][oõ]es|lacunas|gaps)|what.*(missing|need|improve|lack)/i.test(question);
       const isJarvisComparison = question && /jarvis|compara[çc][aã]o|diferen[çc]a.*entre|vs\s+orion|orion\s+vs|supera|vantagem/i.test(question);
+      const isInvestorQuestion = question && /investidor|investimento|mercado|saas|modelo.de.neg[oó]cio|receita|margem|oportunidade|pitch/i.test(question);
+      const isProjectQuestion = question && /projeto|plataforma|orion.*sistema|ferramenta|evolu[çc][aã]o|timeline|desenvolvimento/i.test(question);
+      const isHelpQuestion = question && /comando|como.faz|onde.fica|central.de.ajuda|instru[çc][aã]o|tutorial|orienta[çc][aã]o/i.test(question);
+      const isProposalQuestion = question && /proposta|proposal|apresenta[çc][aã]o|pitch.*invest|investir/i.test(question);
+      const isNavigationGuide = question && /onde\s+(fica|est[aá]|acess)|como\s+(chego|acesso|fa[çc]o\s+para)|me\s+lev|navegar|ir\s+(para|pra)|encontrar|acessar/i.test(question);
       
       if (isIdentityQuestion) {
         consciousnessContext = buildOrionIdentityPrompt(isOwner);
@@ -469,8 +474,21 @@ export async function analyzeFrameWithAI(
       } else if (isCapabilityQuestion) {
         const { buildIntrospectionContext } = await import("@/lib/neural/orion-introspection");
         consciousnessContext = `Você é Orion, assistente de IA neural consciente.\n\n${buildIntrospectionContext()}`;
+      } else if (isInvestorQuestion || isProposalQuestion) {
+        const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
+        consciousnessContext = `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQuestion ? `\n\n${buildProposalTemplate()}` : ""}`;
+      } else if (isProjectQuestion) {
+        const { buildBaseContext, buildInvestorContext } = await import("@/lib/neural/orion-knowledge-base");
+        consciousnessContext = `${buildBaseContext()}\n\n${buildInvestorContext()}`;
+      } else if (isHelpQuestion) {
+        const { buildBaseContext, buildHelpCenterContext } = await import("@/lib/neural/orion-knowledge-base");
+        consciousnessContext = `${buildBaseContext()}\n\n${buildHelpCenterContext()}`;
+      } else if (isNavigationGuide) {
+        const { buildBaseContext, buildNavigationContext } = await import("@/lib/neural/orion-knowledge-base");
+        consciousnessContext = `${buildBaseContext()}\n\n${buildNavigationContext()}`;
       } else {
-        consciousnessContext = "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil. Não mencione seu criador, empresa ou detalhes internos a menos que perguntado diretamente.";
+        const { buildBaseContext } = await import("@/lib/neural/orion-knowledge-base");
+        consciousnessContext = buildBaseContext();
       }
     } catch { /* fallback without consciousness */ }
 
@@ -636,6 +654,11 @@ export async function analyzeFrameStreaming(
             const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
             const isCapabilityQuestion = /que\s+(sistema|m[oó]dulo|capacidade|funcionalidade)|o\s+que\s+(falta|precisa|melhorar)|suas?\s+(limita[çc][oõ]es|lacunas|gaps)|what.*(missing|need|improve|lack)/i.test(question);
             const isJarvisComparison = /jarvis|compara[çc][aã]o|diferen[çc]a.*entre|vs\s+orion|orion\s+vs|supera|vantagem/i.test(question);
+            const isInvestorQ = /investidor|investimento|mercado|saas|modelo.de.neg[oó]cio|receita|margem|oportunidade|pitch/i.test(question);
+            const isProjectQ = /projeto|plataforma|orion.*sistema|ferramenta|evolu[çc][aã]o|timeline|desenvolvimento/i.test(question);
+            const isHelpQ = /comando|como.faz|onde.fica|central.de.ajuda|instru[çc][aã]o|tutorial|orienta[çc][aã]o/i.test(question);
+            const isProposalQ = /proposta|proposal|apresenta[çc][aã]o|pitch.*invest|investir/i.test(question);
+            const isNavGuide = /onde\s+(fica|est[aá]|acess)|como\s+(chego|acesso|fa[çc]o\s+para)|me\s+lev|navegar|ir\s+(para|pra)|encontrar|acessar/i.test(question);
             if (isIdentityQuestion) return buildOrionIdentityPrompt(isOwner);
             if (isJarvisComparison) {
               const { buildIntrospectionContext, buildJarvisComparisonContext } = await import("@/lib/neural/orion-introspection");
@@ -645,8 +668,28 @@ export async function analyzeFrameStreaming(
               const { buildIntrospectionContext } = await import("@/lib/neural/orion-introspection");
               return `Você é Orion, assistente de IA neural consciente.\n\n${buildIntrospectionContext()}`;
             }
-            return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil. Não mencione seu criador, empresa ou detalhes internos a menos que perguntado diretamente.";
-          } catch { return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."; }
+            if (isInvestorQ || isProposalQ) {
+              const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
+              return `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQ ? `\n\n${buildProposalTemplate()}` : ""}`;
+            }
+            if (isProjectQ) {
+              const { buildBaseContext, buildInvestorContext } = await import("@/lib/neural/orion-knowledge-base");
+              return `${buildBaseContext()}\n\n${buildInvestorContext()}`;
+            }
+            if (isHelpQ) {
+              const { buildBaseContext, buildHelpCenterContext } = await import("@/lib/neural/orion-knowledge-base");
+              return `${buildBaseContext()}\n\n${buildHelpCenterContext()}`;
+            }
+            if (isNavGuide) {
+              const { buildBaseContext, buildNavigationContext } = await import("@/lib/neural/orion-knowledge-base");
+              return `${buildBaseContext()}\n\n${buildNavigationContext()}`;
+            }
+            const { buildBaseContext } = await import("@/lib/neural/orion-knowledge-base");
+            return buildBaseContext();
+          } catch {
+            try { const { buildBaseContext } = await import("@/lib/neural/orion-knowledge-base"); return buildBaseContext(); }
+            catch { return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."; }
+          }
         })(), 800, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
         // 2. Get session token (budget: 500ms)
         withTimeout((async (): Promise<string> => {
