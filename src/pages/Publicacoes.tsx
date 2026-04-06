@@ -278,6 +278,37 @@ export default function Publicacoes() {
               ))}
             </div>
 
+            {/* Video Showcase */}
+            <ScrollReveal direction="up">
+              <div className="mt-20 mb-8">
+                <h2 className="text-lg font-serif text-foreground mb-10 flex items-center gap-4">
+                  <span className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                  <span className="px-4 text-[10px] uppercase tracking-[0.3em] text-primary">Vídeo Institucional</span>
+                  <span className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                </h2>
+                <div className="max-w-4xl mx-auto border border-primary/20 bg-card/20 backdrop-blur-sm overflow-hidden relative">
+                  <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-primary/40" />
+                  <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-primary/40" />
+                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-primary/40" />
+                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-primary/40" />
+                  <video
+                    controls
+                    preload="metadata"
+                    poster="/og-images/og-publicacoes.jpg"
+                    className="w-full aspect-video"
+                    style={{ background: "#0a0a0f" }}
+                  >
+                    <source src="/videos/orion-investor.mp4" type="video/mp4" />
+                    Seu navegador não suporta vídeo HTML5.
+                  </video>
+                  <div className="p-4 sm:p-6 text-center">
+                    <h3 className="text-lg font-bold text-foreground mb-1">ORION — Inteligência Artificial Empresarial</h3>
+                    <p className="text-xs text-muted-foreground">Conheça a plataforma, módulos e oportunidades de investimento</p>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+
             {/* CTA for Investors */}
             <ScrollReveal direction="up">
               <div className="mt-20 text-center border border-primary/20 bg-primary/5 backdrop-blur-sm p-8 md:p-12 relative">
