@@ -333,6 +333,7 @@ export function GlobalOrionListener() {
 
   const handleDismissPermissions = useCallback(() => {
     setShowPermissionPrompt(false);
+    localStorage.setItem(PERMISSIONS_DISMISSED_KEY, "true");
   }, []);
 
   useEffect(() => {
