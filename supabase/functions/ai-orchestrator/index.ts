@@ -391,19 +391,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 2. Select Provider (model_type-aware routing)
+    // 2. Select Provider — FREE Gemini models only (7-key rotation)
+    const geminiKey = _getNextGeminiKey();
     const allLLMs = [
-      { id: "gemini", key: Deno.env.get("GEMINI_API_KEY"), model: "gemini-2.5-flash", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" },
-      { id: "deepseek", key: Deno.env.get("DEEPSEEK_API_KEY"), model: "deepseek-chat", endpoint: "https://api.deepseek.com/chat/completions" },
-      { id: "deepseek_reasoner", key: Deno.env.get("DEEPSEEK_API_KEY"), model: "deepseek-reasoner", endpoint: "https://api.deepseek.com/chat/completions" },
-      { id: "groq", key: Deno.env.get("GROQ_API_KEY"), model: "llama-3.3-70b-versatile", endpoint: "https://api.groq.com/openai/v1/chat/completions" },
-      { id: "mistral", key: Deno.env.get("MISTRAL_API_KEY"), model: "mistral-small-latest", endpoint: "https://api.mistral.ai/v1/chat/completions" },
-      { id: "github_models", key: Deno.env.get("GITHUB_PAT"), model: "gpt-4o", endpoint: "https://models.inference.ai.azure.com/chat/completions" },
-      { id: "anthropic", key: Deno.env.get("ANTHROPIC_API_KEY"), model: "claude-3-5-sonnet-20241022", endpoint: "https://api.anthropic.com/v1/messages" },
-      { id: "openai", key: Deno.env.get("OPENAI_API_KEY"), model: "gpt-4o", endpoint: "https://api.openai.com/v1/chat/completions" },
-      { id: "anthropic_sonnet", key: Deno.env.get("ANTHROPIC_API_KEY"), model: "claude-3-5-sonnet-20241022", endpoint: "https://api.anthropic.com/v1/messages" },
-      { id: "openai_4o", key: Deno.env.get("OPENAI_API_KEY"), model: "gpt-4o-mini", endpoint: "https://api.openai.com/v1/chat/completions" },
-    ].filter(p => !!p.key);
+      { id: "gemini_flash", key: geminiKey, model: "gemini-2.5-flash", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" },
+      { id: "gemini_3_flash", key: geminiKey, model: "gemini-3-flash-preview", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent" },
+      { id: "gemini_flash_lite", key: geminiKey, model: "gemini-2.5-flash-lite", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent" },
+      { id: "gemini_pro", key: geminiKey, model: "gemini-2.5-pro", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent" },
+    ];
 
     // Use model_type routing or preferredProvider or default order
     const providerOrder = model_type ? getProviderOrder(model_type) : undefined;
@@ -417,8 +412,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    const provider = availableLLMs.find(p => p.id === preferredProvider) || availableLLMs[0];
-    if (!provider) throw new Error("No AI providers available");
+    // Map old provider names to new ones for backward compatibility
+    const providerMapping: Record<string, string> = {
+      "gemini": "gemini_flash", "groq": "gemini_flash_lite", "deepseek": "gemini_flash",
+      "deepseek_reasoner": "gemini_pro", "mistral": "gemini_flash_lite",
+      "openai": "gemini_pro", "anthropic": "gemini_pro", "anthropic_sonnet": "gemini_pro",
+      "openai_4o": "gemini_flash_lite", "github_models": "gemini_flash",
+    };
+    const mappedPreferred = preferredProvider ? (providerMapping[preferredProvider] || preferredProvider) : undefined;
+    const provider = availableLLMs.find(p => p.id === mappedPreferred) || availableLLMs[0];
+    if (!provider) throw new Error("No AI providers available (Gemini keys missing)");
 
     // 3. Construct System Prompt with xAI/Grok directives
     let finalSystemPrompt = systemPrompt || AGENT_V12_SYSTEM_PROMPT;
