@@ -27,10 +27,7 @@ import { FaceScannerOverlay } from "./FaceScannerOverlay";
 import { TeslaCoilVoltagePanel } from "./TeslaCoilVoltagePanel";
 import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
 import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
-import { useFaceDetection } from "@/hooks/useFaceDetection";
-import { detectSingleFaceFull, type FaceApiDetection } from "@/lib/neural/face-api-runtime";
-import { preloadAllVision } from "@/lib/neural/realtime-vision-engine";
-import { yoloFrameXProxy as yoloFrameX } from "@/lib/neural/yolofx-proxy";
+import { preloadAllVision, detectRealTime, type RealTimeVisionResult } from "@/lib/neural/realtime-vision-engine";
 
 // Map COCO class names to overlay categories
 function categoryFromSource(name: string): string {
