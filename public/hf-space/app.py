@@ -123,7 +123,6 @@ AGENT_CATEGORIES = {
             "strategic_planning", "negotiation_analysis", "patent_analysis",
         ],
     },
-    # ── Vision (200+) ──
     # ── Vision & Object Detection (350+ agents) — EXPANDED v7.2 ──
     "vision": {
         "face": [
