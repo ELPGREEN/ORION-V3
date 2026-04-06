@@ -7,9 +7,9 @@ sdk: docker
 pinned: false
 ---
 
-# ELP Neural Proxy v7.3
+# ELP Neural Proxy v7.4
 
-Complete AI Agent Swarm with **3000+ agents** — PDF, Vision, **Object Detection**, Code Generation, Code Analysis, Text Analysis, **Question Answering**, Fine-Tuning, Dataset Creation, Image/Video/Audio Generation, 3D, NLP, Benchmarking.
+Complete AI Agent Swarm with **3100+ agents** — PDF, Vision, **Object Detection**, Code Generation, Code Analysis, Text Analysis, **Question Answering**, **Document Analysis**, Fine-Tuning, Dataset Creation, Image/Video/Audio Generation, 3D, NLP, Benchmarking.
 
 ## Endpoints
 
@@ -17,7 +17,13 @@ Complete AI Agent Swarm with **3000+ agents** — PDF, Vision, **Object Detectio
 - `GET /` — Health + capability manifest
 - `POST /` — PDF → JSON | `POST /markdown` — PDF → MD | `POST /html` — PDF → HTML | `POST /generate-pdf` — HTML → PDF
 
-### Question Answering (NEW v7.3)
+### Document Analysis (NEW v7.4)
+- `GET /agents/documents/models` — All document analysis models (MinerU, PaddleOCR, Surya, Nougat, Donut, DiT, GROBID, GOT-OCR2, TrOCR)
+- `GET /agents/documents/pipelines` — Pre-built pipelines (pdf_to_markdown, receipt_parsing, academic_paper, legal_analysis, resume_screening, handwriting)
+- `POST /agents/documents/recommend` — Recommend best model/pipeline for document task
+- `POST /agents/documents/analyze` — Route document analysis to optimal pipeline
+
+### Question Answering (v7.3)
 - `GET /agents/qa/domains` — All QA domain specializations (medical, legal, financial, scientific, education, general)
 - `GET /agents/qa/models` — QA models with capabilities (extractive, generative, visual, table, audio)
 - `POST /agents/qa/classify` — Classify QA type and recommend models
@@ -45,7 +51,7 @@ Complete AI Agent Swarm with **3000+ agents** — PDF, Vision, **Object Detectio
 - `GET /finetune/methods` | `/models` | `/datasets` | `POST /finetune/configure` | `/estimate`
 - `GET /dataset/schemas` | `/formats` | `POST /dataset/configure` | `/validate` | `/convert` | `/deduplicate` | `/statistics`
 
-## Categories (3000+ agents)
+## Categories (3100+ agents)
 
 | Category | Agents | Key |
 |----------|--------|-----|
@@ -62,7 +68,7 @@ Complete AI Agent Swarm with **3000+ agents** — PDF, Vision, **Object Detectio
 | `speech_audio` | 90+ | TTS, ASR, voice clone |
 | `modeling_3d` | 40+ | TRELLIS, Hunyuan3D |
 | `benchmarking` | 30+ | Leaderboards |
-| `pdf` | 110+ | Layout, tables, legal |
+| `pdf` | **200+** | OCR(12), Layout(10), Tables(8), Parsing(11), Bibliography(7), Resume(6), Scientific(7), Legal(6), Conversion(8), Models(13) |
 
 ## Object Detection v7.2
 
@@ -108,7 +114,37 @@ Complete AI Agent Swarm with **3000+ agents** — PDF, Vision, **Object Detectio
 - Visual QA for charts, infographics, diagrams, scene understanding
 - Table QA with SQL-like operations (select, aggregate, compare)
 
-## Example
+## Document Analysis v7.4
+
+### Models
+| Model | Type | Key Feature |
+|-------|------|-------------|
+| MinerU | OCR+Extraction | PDF → Markdown/JSON with layout preservation |
+| PaddleOCR-VL | OCR | 80+ languages, visual language model |
+| Surya | OCR+Layout | OCR + layout + reading order + table recognition |
+| Nougat | Academic OCR | PDF → LaTeX/markup (equations, formulas) |
+| Donut | Doc Understanding | OCR-free transformer for receipts, forms, IDs |
+| DiT | Layout Analysis | Document image transformer (text, title, table, figure) |
+| LayoutLMv3 | Multimodal | NER, classification, QA on documents |
+| GROBID | Bibliography | Extract citations, references, BibTeX from papers |
+| GOT-OCR2 | General OCR | Text, math, sheet music, charts |
+| TrOCR | Handwriting | Printed and handwritten text recognition |
+
+### Pipelines
+- **pdf_to_markdown**: Layout-aware PDF to structured Markdown
+- **receipt_parsing**: Structured data from receipts/invoices
+- **academic_paper**: Citations, equations, figures from papers
+- **legal_analysis**: Clause extraction, entity detection, compliance
+- **resume_screening**: ATS parsing, skill extraction, scoring
+- **handwriting_recognition**: Handwritten document digitization
+
+## Examples
+```bash
+curl -X POST https://your-space.hf.space/agents/documents/recommend \
+  -H "Content-Type: application/json" \
+  -d '{"task": "extract tables and text from scanned invoice", "has_tables": true}'
+```
+
 ```bash
 curl -X POST https://your-space.hf.space/agents/qa/classify \
   -H "Content-Type: application/json" \

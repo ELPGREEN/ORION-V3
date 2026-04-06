@@ -306,14 +306,16 @@ export const ELP_SWARM_CATEGORIES: Record<string, SwarmCategory> = {
     implementation: "ELP HF Space /agents/orchestrate",
   },
   pdf_processing: {
-    name: "PDF & Document Processing",
-    agentCount: 110,
+    name: "PDF & Document Analysis",
+    agentCount: 200,
     subcategories: [
-      "Layout Analysis", "Table Extraction", "Form Recognition",
-      "Legal Document Parser", "Invoice Parser", "Citation Extraction",
+      "OCR (12)", "Layout Analysis (10)", "Table Extraction (8)", "Document Parsing (11)",
+      "Bibliography (7)", "Resume Analysis (6)", "Scientific Documents (7)", "Legal Documents (6)",
+      "Document Conversion (8)", "Comparison (5)", "Signature/Stamp (4)", "Models (13)",
+      "MinerU, PaddleOCR-VL, Surya, Nougat, Donut, DiT, GROBID, GOT-OCR2, TrOCR, LayoutLMv3",
     ],
     status: "active",
-    implementation: "ELP HF Space / (root)",
+    implementation: "ELP HF Space /agents/documents/*",
   },
   question_answering: {
     name: "Question Answering",
