@@ -1,7 +1,7 @@
 /**
- * ═══ Orion Neural Network Registry ═══
- * Maps the 5 neural networks and 6 autonomous agents defined in Orion Protocols v1.0
- * to their concrete implementations in the codebase.
+ * ═══ Orion Neural Network Registry v7.2 ═══
+ * Maps the 5 neural networks, 6 core autonomous agents, and 2900+ ELP HF Space swarm agents
+ * defined in the NEUROCORE AI architecture.
  */
 
 // ─── Neural Network Definitions ───
