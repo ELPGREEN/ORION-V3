@@ -444,7 +444,7 @@ export function useNeuralVoice(
     speakingRef.current = false;
     updateAiResponding(false);
     resumeSTT();
-  }, [config, browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
+  }, [config, clearRestartTimer, resumeSTT, updateAiResponding]);
 
   /** speakFast: delegates to speak (no robotic SpeechSynthesis) */
   const speakFast = useCallback(async (text: string) => {
