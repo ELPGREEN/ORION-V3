@@ -479,15 +479,17 @@ export function GlobalOrionListener() {
           onClick={() => { setOrionOpen(true); setInitialCommand(""); stopWakeWordListener(); }}
           title="Clique para abrir o Orion"
         >
-          {/* Plasma orb container */}
-          <div className="relative w-14 h-14 lg:w-16 lg:h-16">
-            {/* Ambient breathing glow */}
+          {/* Plasma orb container — larger and more visible */}
+          <div className="relative w-16 h-16 lg:w-20 lg:h-20">
+            {/* Ambient breathing glow — stronger when listening */}
             <div
               className="absolute inset-0 rounded-full transition-all duration-700"
               style={{
-                background: "radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, transparent 70%)",
-                filter: "blur(12px)",
-                transform: "scale(1.6)",
+                background: wakeWordActive
+                  ? "radial-gradient(circle, hsl(var(--primary) / 0.7) 0%, hsl(var(--primary) / 0.2) 50%, transparent 70%)"
+                  : "radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, transparent 70%)",
+                filter: wakeWordActive ? "blur(16px)" : "blur(12px)",
+                transform: wakeWordActive ? "scale(2)" : "scale(1.6)",
                 animation: "orbBreath 3s ease-in-out infinite",
               }}
             />
@@ -497,13 +499,29 @@ export function GlobalOrionListener() {
 
             {/* Wake word listening pulse ring */}
             {wakeWordActive && (
-              <div
-                className="absolute inset-0 rounded-full border-2 border-primary/40"
-                style={{
-                  animation: "orbListenPulse 2s ease-out infinite",
-                }}
-              />
+              <>
+                <div
+                  className="absolute inset-0 rounded-full border-2 border-primary/50"
+                  style={{ animation: "orbListenPulse 2s ease-out infinite" }}
+                />
+                <div
+                  className="absolute inset-0 rounded-full border border-primary/30"
+                  style={{ animation: "orbListenPulse 2s ease-out infinite 0.5s" }}
+                />
+              </>
             )}
+          </div>
+
+          {/* Always-visible status label below orb */}
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+            <span className={cn(
+              "text-[9px] font-mono tracking-wider px-2 py-0.5 rounded-full border backdrop-blur-sm",
+              wakeWordActive
+                ? "text-primary border-primary/40 bg-primary/10 animate-pulse"
+                : "text-muted-foreground/60 border-border/30 bg-card/50"
+            )}>
+              {wakeWordActive ? '⚡ Diga "Orion"' : "Orion"}
+            </span>
           </div>
 
           {/* Hover tooltip */}
