@@ -98,7 +98,7 @@ export default function Afiliados() {
                     <p className="font-medium text-sm truncate">{(l as any).products?.title || "Produto"}</p>
                     <p className="text-xs text-muted-foreground">{l.clicks} cliques · {l.conversions} conversões</p>
                   </div>
-                  <Button size="sm" variant="outline" className="gap-1 flex-shrink-0" onClick={() => copyLink(l.hash, (l as any).products?.slug || "")}>
+                  <Button size="sm" variant="outline" className="gap-1 flex-shrink-0" onClick={() => copyLink(l.hash, (l as any).products?.creator_id || "")}>
                     <Copy className="h-3 w-3" /> Copiar
                   </Button>
                 </CardContent>
