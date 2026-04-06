@@ -370,14 +370,22 @@ export function useNeuralVoice(
     // ── Feed AI response to voice evolution engine ──
     feedAIResponse(text);
 
+    // ── Load adaptive voice preferences ──
+    const voicePrefs = getCachedVoicePrefs();
+
     // ── PRIMARY: Gemini TTS (fast ~2s, neural quality, FREE) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
-        const gemResult = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
+        const gemResult = await speakWithGeminiTTS(
+          cleanText,
+          voicePrefs.voice_name || "Charon",
+          cascadeAbort.signal,
+          voicePrefs.style_prompt,
+        );
         if (gemResult.played) {
           played = true;
           if (gemResult.audio) activeAudioRef.current = gemResult.audio;
-          console.log("[Voice] ✅ Gemini TTS (primary)");
+          console.log(`[Voice] ✅ Gemini TTS (${voicePrefs.voice_name}, ${voicePrefs.accent})`);
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
