@@ -1706,3 +1706,151 @@ async def text_tokenize(request: Request):
         "agents": ["tokenizer_playground", "tokenizer_comparison", "bpe_encoder", "chunk_visualizer"],
         "message": "For model-specific tokenization, use /agents/orchestrate with 'tokenize' query.",
     })
+
+
+# ── Object Detection Endpoints (NEW v7.2) ──
+
+DETECTION_MODELS_REGISTRY = {
+    "yolov8": {"family": "YOLO", "variants": ["nano", "small", "medium", "large", "xlarge"], "speed": "fast", "accuracy": "high"},
+    "yolov9": {"family": "YOLO", "variants": ["compact", "extended"], "speed": "fast", "accuracy": "very_high"},
+    "yolov10": {"family": "YOLO", "variants": ["nano", "small", "medium", "base", "large", "xlarge"], "speed": "very_fast", "accuracy": "high"},
+    "yolov11": {"family": "YOLO", "variants": ["nano", "small", "medium", "large", "xlarge"], "speed": "fast", "accuracy": "very_high"},
+    "yolov12": {"family": "YOLO", "variants": ["nano", "small", "medium"], "speed": "fast", "accuracy": "high"},
+    "yolo26": {"family": "YOLO", "variants": ["nano", "small", "medium", "large"], "speed": "very_fast", "accuracy": "very_high"},
+    "yoloe": {"family": "YOLO", "variants": ["v8s", "v8m", "v8l", "11s", "11m", "11l"], "speed": "fast", "accuracy": "high", "open_vocab": True},
+    "yolo_world": {"family": "YOLO", "variants": ["small", "medium", "large"], "speed": "fast", "accuracy": "high", "open_vocab": True},
+    "rf_detr": {"family": "DETR", "variants": ["base", "large"], "speed": "medium", "accuracy": "sota"},
+    "d_fine": {"family": "DETR", "variants": ["small", "medium", "large", "xlarge"], "speed": "fast", "accuracy": "sota"},
+    "mr_detr": {"family": "DETR", "variants": ["base"], "speed": "medium", "accuracy": "very_high"},
+    "detr_resnet50": {"family": "DETR", "variants": ["resnet50", "resnet101"], "speed": "medium", "accuracy": "high"},
+    "grounding_dino": {"family": "GroundingDINO", "variants": ["tiny", "base"], "speed": "medium", "accuracy": "very_high", "open_vocab": True},
+    "owlv2": {"family": "OWL", "variants": ["base", "large"], "speed": "medium", "accuracy": "high", "zero_shot": True},
+    "molmopoint_8b": {"family": "MolmoPoint", "variants": ["8b"], "speed": "slow", "accuracy": "very_high", "pointing": True},
+    "qwen2_vl": {"family": "Qwen2-VL", "variants": ["7b"], "speed": "slow", "accuracy": "very_high", "open_vocab": True},
+    "llmdet": {"family": "LLMDet", "variants": ["base"], "speed": "slow", "accuracy": "high", "open_vocab": True},
+    "sam3": {"family": "SAM", "variants": ["tiny", "base", "large"], "speed": "medium", "accuracy": "sota", "tracking": True},
+}
+
+DOMAIN_DETECTORS = {
+    "traffic": {
+        "models": ["license_plate_yolos", "traffic_sign_yolov10", "pothole_yolov8", "vehicle_detr"],
+        "classes": ["car", "truck", "bus", "motorcycle", "bicycle", "pedestrian", "traffic_light",
+                    "stop_sign", "speed_limit", "license_plate", "pothole", "road_marking"],
+    },
+    "safety": {
+        "models": ["fire_smoke_yolov8", "ppe_yolov8", "weapon_detector", "crowd_counter"],
+        "classes": ["fire", "smoke", "person", "helmet", "vest", "goggles", "weapon",
+                    "cigarette", "mask", "no_mask"],
+    },
+    "medical": {
+        "models": ["fracture_yolov8", "tumor_resnet", "blood_cell_yolov8", "xray_detr"],
+        "classes": ["fracture", "tumor", "red_blood_cell", "white_blood_cell", "platelet",
+                    "lesion", "nodule"],
+    },
+    "agriculture": {
+        "models": ["wildlife_pytorch", "plant_disease_yolo", "pest_detector", "tomato_yolo"],
+        "classes": ["animal", "bird", "insect", "pest", "disease_spot", "ripe", "unripe",
+                    "weed", "healthy_plant", "damaged_plant"],
+    },
+    "industrial": {
+        "models": ["pcb_yolov8", "defect_yolo", "lego_yolov8", "box_counter_yolo"],
+        "classes": ["component", "defect", "scratch", "dent", "crack", "missing_part",
+                    "lego_piece", "box", "package"],
+    },
+    "geospatial": {
+        "models": ["satellite_yolo", "building_detr", "moon_rock_yolo"],
+        "classes": ["building", "road", "vehicle", "tree", "water", "rock", "crater"],
+    },
+}
+
+
+@app.get("/agents/detection/models")
+async def detection_models():
+    """List all available object detection models with specs."""
+    return JSONResponse(content={
+        "total_models": len(DETECTION_MODELS_REGISTRY),
+        "models": DETECTION_MODELS_REGISTRY,
+        "families": list(set(m["family"] for m in DETECTION_MODELS_REGISTRY.values())),
+        "open_vocab_models": [k for k, v in DETECTION_MODELS_REGISTRY.items() if v.get("open_vocab")],
+        "zero_shot_models": [k for k, v in DETECTION_MODELS_REGISTRY.items() if v.get("zero_shot")],
+        "tracking_models": [k for k, v in DETECTION_MODELS_REGISTRY.items() if v.get("tracking")],
+    })
+
+
+@app.get("/agents/detection/domains")
+async def detection_domains():
+    """List domain-specific detection capabilities."""
+    return JSONResponse(content={
+        "domains": {k: {"model_count": len(v["models"]), "class_count": len(v["classes"]), **v}
+                    for k, v in DOMAIN_DETECTORS.items()},
+        "total_domains": len(DOMAIN_DETECTORS),
+    })
+
+
+@app.post("/agents/detection/recommend")
+async def detection_recommend(request: Request):
+    """Recommend the best detection model for a use case.
+
+    Body: { "task": "detect license plates in traffic cameras", "priority": "speed|accuracy|balanced", "realtime": true }
+    """
+    body = await request.json()
+    task = body.get("task", "").lower()
+    priority = body.get("priority", "balanced")
+    realtime = body.get("realtime", False)
+
+    # Match domain
+    matched_domain = None
+    for domain, spec in DOMAIN_DETECTORS.items():
+        if any(cls in task for cls in spec["classes"]) or domain in task:
+            matched_domain = domain
+            break
+
+    # Recommend models
+    recommendations = []
+
+    if "zero-shot" in task or "open vocab" in task or "text prompt" in task:
+        recommendations.extend(["grounding_dino", "owlv2", "yolo_world", "yoloe"])
+    elif "track" in task or "counting" in task:
+        recommendations.extend(["sam3", "yolov8", "d_fine"])
+    elif realtime or priority == "speed":
+        recommendations.extend(["yolo26", "yolov10", "d_fine", "yolov11"])
+    elif priority == "accuracy":
+        recommendations.extend(["rf_detr", "d_fine", "grounding_dino", "mr_detr"])
+    else:
+        recommendations.extend(["yolov11", "d_fine", "rf_detr", "yolov8"])
+
+    return JSONResponse(content={
+        "task": task,
+        "priority": priority,
+        "realtime": realtime,
+        "matched_domain": matched_domain,
+        "domain_models": DOMAIN_DETECTORS.get(matched_domain, {}).get("models", []) if matched_domain else [],
+        "recommended_models": recommendations[:5],
+        "model_details": {m: DETECTION_MODELS_REGISTRY[m] for m in recommendations[:5] if m in DETECTION_MODELS_REGISTRY},
+    })
+
+
+@app.post("/agents/detection/detect")
+async def detection_detect(request: Request):
+    """Run object detection on an image (routing endpoint).
+
+    Body: { "image_base64": "...", "model": "yolov8|grounding_dino|...", "classes": ["car", "person"], "confidence": 0.5 }
+    """
+    body = await request.json()
+    model = body.get("model", "yolov11")
+    classes = body.get("classes", [])
+    confidence = body.get("confidence", 0.5)
+    has_image = bool(body.get("image_base64"))
+
+    model_info = DETECTION_MODELS_REGISTRY.get(model, {})
+
+    return JSONResponse(content={
+        "status": "ready",
+        "model": model,
+        "model_info": model_info,
+        "requested_classes": classes,
+        "confidence_threshold": confidence,
+        "image_provided": has_image,
+        "agents": ["object_detection", model, "image_segmentation"],
+        "message": f"Detection with {model} requires GPU backend. Use /agents/orchestrate with 'detect objects' query for full pipeline.",
+    })
