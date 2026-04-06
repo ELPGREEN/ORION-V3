@@ -163,6 +163,30 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       return;
     }
 
+    // ═══ Vision activation/deactivation via voice ═══
+    const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+    const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+
+    if (isActivateVision) {
+      if (!active) {
+        speakFast("Ativando visão neural.").catch(() => {});
+        startCamera({ announce: false }).catch(() => {});
+      } else {
+        speakFast("Visão já está ativa.").catch(() => {});
+      }
+      return;
+    }
+
+    if (isDeactivateVision) {
+      if (active) {
+        speakFast("Desativando visão.").catch(() => {});
+        stopCamera();
+      } else {
+        speakFast("Visão já está desativada.").catch(() => {});
+      }
+      return;
+    }
+
     const isOrionExit = /[óòôõo]r[iíìeéè][oóòôõ][nmn]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q) ||
       /oreo[nm]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q);
     if (isOrionExit) { deactivateGracefully(); return; }
@@ -174,9 +198,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       else askAI(finalCommand);
     }
     toast.info(`🎤 "${cleanedCommand || original}"`);
-  }, [stopCamera, deactivateGracefully, askAI, supernetConnected, sendSuperNetQuery, speak]);
+  }, [active, stopCamera, startCamera, deactivateGracefully, askAI, supernetConnected, sendSuperNetQuery, speak, speakFast]);
 
-  // ═══ Wake word activation ═══
+  // ═══ Wake word activation — camera does NOT auto-start, only voice ═══
   const activateByWakeWord = useCallback(async () => {
     wakeWordEnabledRef.current = false;
     try { wakeRecRef.current?.abort?.(); } catch {}
@@ -185,16 +209,16 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     if (!hasGreetedRef.current) {
       hasGreetedRef.current = true;
-      speakFast("Ativando sistema AquaMonkey. Bem-vindo ao Orion.").catch(() => {});
+      speakFast("Ativando sistema AquaMonkey. Bem-vindo ao Orion. Diga ativar visão para ligar a câmera.").catch(() => {});
     } else {
       toast.info("⚡ Relâmpago Vivo — Orion pronto", { duration: 1500 });
     }
 
-    if (!active) startCamera({ announce: false }).catch(() => {});
+    // Camera does NOT start automatically — user must say "ativar visão"
     if (!listening) {
       setTimeout(() => startListening(handleVoice), 120);
     }
-  }, [active, listening, startCamera, startListening, handleVoice, speakFast]);
+  }, [listening, startListening, handleVoice, speakFast]);
 
   const { wakeWordActive, wakeWordEnabledRef, wakeRecRef, startWakeWordListener, stopWakeWordListener, enableWakeWord, getBackgroundTranscripts } = useWakeWord(listening, speechOk, activateByWakeWord);
 
@@ -220,7 +244,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const autoActivatedRef = useRef(false);
   const autoBootedRef = useRef(false);
 
-  // Auto-connect mic/camera when entering Orion on mobile after permissions were granted
+  // Auto-connect mic (NOT camera) when entering Orion after permissions were granted
   useEffect(() => {
     if (autoBootedRef.current || !speechOk || skipWakeWord) return;
     const state = location.state as any;
@@ -230,9 +254,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const timer = setTimeout(() => {
       if (!hasGreetedRef.current) {
         hasGreetedRef.current = true;
-        speakFast("Orion ativo.").catch(() => {});
+        speakFast("Orion ativo. Diga ativar visão para ligar a câmera.").catch(() => {});
       }
-      if (!active) startCamera({ announce: false }).catch(() => {});
+      // Camera does NOT auto-start — only via "ativar visão" voice command
       if (!listening) {
         stopWakeWordListener();
         setTimeout(() => startListening(handleVoice), 80);
@@ -240,7 +264,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [active, handleVoice, initialCommand, listening, location.state, skipWakeWord, speakFast, speechOk, startCamera, startListening, stopWakeWordListener]);
+  }, [handleVoice, initialCommand, listening, location.state, skipWakeWord, speakFast, speechOk, startListening, stopWakeWordListener]);
 
   // Auto-activate when navigated from OrionGlobalListener or via initialCommand prop
   useEffect(() => {

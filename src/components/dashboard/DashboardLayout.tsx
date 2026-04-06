@@ -12,7 +12,7 @@ import { GenerationBanner } from "./GenerationBanner";
 import { MobileSidebarOverlay } from "./MobileSidebarOverlay";
 import { DashboardBackground } from "./DashboardBackground";
 import { MouseTrailEffect } from "./MouseTrailEffect";
-import { GlobalOrionListener } from "./GlobalOrionListener";
+
 import { ProdutorSidebar } from "./ProdutorSidebar";
 import { AfiliadoSidebar } from "./AfiliadoSidebar";
 import { NomadeSidebar } from "./NomadeSidebar";
@@ -77,7 +77,6 @@ export default function DashboardLayout() {
       <div className="min-h-screen bg-background flex flex-col relative">
         <DashboardBackground />
         <MouseTrailEffect />
-        <GlobalOrionListener />
         <div className="relative z-10 flex flex-col flex-1">
           <ClienteNavbar onMobileMenuToggle={() => setMobileOpen(!mobileOpen)} />
           <GenerationBanner hasActiveJob={hasActiveJob} dismissed={dismissedJob} onDismiss={() => setDismissedJob(true)} />
@@ -101,7 +100,6 @@ export default function DashboardLayout() {
       <div className="min-h-screen bg-background flex overflow-x-hidden relative">
         <DashboardBackground />
         <MouseTrailEffect />
-        <GlobalOrionListener />
         {/* Desktop Sidebar */}
         <div data-dashboard-chrome className={`hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-72"}`}>
           <SidebarComponent collapsed={sidebarCollapsed} />
@@ -136,7 +134,7 @@ export default function DashboardLayout() {
     <div className="min-h-screen bg-background flex overflow-x-hidden relative">
       <DashboardBackground />
       <MouseTrailEffect />
-      <GlobalOrionListener />
+      
       {/* Desktop Sidebar */}
       <div data-dashboard-chrome className={`hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-72"}`}>
         <DashboardSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
