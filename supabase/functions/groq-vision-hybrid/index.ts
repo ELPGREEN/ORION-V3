@@ -3,29 +3,71 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// Orion Vision Hybrid v2 — Multi-Provider Cascade + Auto-Evolution
-// Groq LLaVA → Lovable AI (Gemini) → Mistral Pixtral → DeepSeek
+// Orion Vision Hybrid v3 — Gemini Flash Primary + Multi-Provider Cascade
+// Gemini 2.5 Flash → Gemini Direct → Groq LLaVA → Mistral → DeepSeek
 // ═══════════════════════════════════════════════════════════════════
 
 const CONFIDENCE_THRESHOLD = 0.75;
 
-// ─── Provider definitions with vision capabilities ───
 interface VisionProvider {
   id: string;
   name: string;
-  endpoint: string;
+  endpoint: string | ((key: string) => string);
   model: string;
-  keyEnv: string;
+  keyEnv: string | string[];
   supportsVision: boolean;
   buildBody: (systemPrompt: string, userPrompt: string, imageB64: string, mime: string) => unknown;
   extractText: (data: unknown) => string;
+  buildHeaders: (key: string) => Record<string, string>;
 }
 
 const VISION_PROVIDERS: VisionProvider[] = [
+  // 1. PRIMARY — Gemini 2.5 Flash via Lovable AI Gateway (fast + accurate)
+  {
+    id: "gemini_flash",
+    name: "Gemini 2.5 Flash (Lovable)",
+    endpoint: "https://ai.gateway.lovable.dev/v1/chat/completions",
+    model: "google/gemini-2.5-flash",
+    keyEnv: "LOVABLE_API_KEY",
+    supportsVision: true,
+    buildBody: (sys, usr, img, mime) => ({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: [
+          { type: "text", text: usr },
+          { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } },
+        ]},
+      ],
+      temperature: 0.1,
+      max_tokens: 4096,
+    }),
+    extractText: (d: any) => d.choices?.[0]?.message?.content || "",
+    buildHeaders: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
+  },
+  // 2. FALLBACK — Gemini Direct API (uses GEMINI_API_KEY, no gateway)
+  {
+    id: "gemini_direct",
+    name: "Gemini 2.5 Flash (Direct)",
+    endpoint: (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+    model: "gemini-2.5-flash",
+    keyEnv: ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"],
+    supportsVision: true,
+    buildBody: (sys, usr, img, mime) => ({
+      contents: [{ parts: [
+        { text: `${sys}\n\n${usr}` },
+        { inlineData: { mimeType: mime, data: img } },
+      ]}],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
+    }),
+    extractText: (d: any) => d.candidates?.[0]?.content?.parts?.[0]?.text || "",
+    buildHeaders: (_key) => ({ "Content-Type": "application/json" }),
+  },
+  // 3. Groq LLaVA
   {
     id: "groq",
     name: "Groq LLaVA",
@@ -46,28 +88,9 @@ const VISION_PROVIDERS: VisionProvider[] = [
       max_tokens: 2000,
     }),
     extractText: (d: any) => d.choices?.[0]?.message?.content || "",
+    buildHeaders: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
   },
-  {
-    id: "lovable_gemini",
-    name: "Lovable AI (Gemini 2.5 Pro)",
-    endpoint: "https://ai.gateway.lovable.dev/v1/chat/completions",
-    model: "google/gemini-2.5-pro",
-    keyEnv: "LOVABLE_API_KEY",
-    supportsVision: true,
-    buildBody: (sys, usr, img, mime) => ({
-      model: "google/gemini-2.5-pro",
-      messages: [
-        { role: "system", content: sys },
-        { role: "user", content: [
-          { type: "text", text: usr },
-          { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } },
-        ]},
-      ],
-      temperature: 0.1,
-      max_tokens: 2000,
-    }),
-    extractText: (d: any) => d.choices?.[0]?.message?.content || "",
-  },
+  // 4. Mistral Pixtral
   {
     id: "mistral",
     name: "Mistral Pixtral",
@@ -88,14 +111,16 @@ const VISION_PROVIDERS: VisionProvider[] = [
       max_tokens: 2000,
     }),
     extractText: (d: any) => d.choices?.[0]?.message?.content || "",
+    buildHeaders: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
   },
+  // 5. DeepSeek (text-only fallback)
   {
     id: "deepseek",
     name: "DeepSeek (Text Refinement)",
     endpoint: "https://api.deepseek.com/chat/completions",
     model: "deepseek-chat",
     keyEnv: "DEEPSEEK_API_KEY",
-    supportsVision: false, // text-only fallback for protocol refinement
+    supportsVision: false,
     buildBody: (sys, usr, _img, _mime) => ({
       model: "deepseek-chat",
       messages: [
@@ -106,26 +131,37 @@ const VISION_PROVIDERS: VisionProvider[] = [
       max_tokens: 2000,
     }),
     extractText: (d: any) => d.choices?.[0]?.message?.content || "",
+    buildHeaders: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
   },
 ];
 
 const SYSTEM_PROMPT = `Você é o Orion Vision — sistema de visão computacional de ultra-precisão.
-Analise a imagem com máximo detalhe e responda APENAS em JSON válido:
+
+INSTRUÇÕES CRÍTICAS:
+1. Identifique TODOS os objetos visíveis na imagem com seus nomes EXATOS e ESPECÍFICOS.
+   - NÃO use termos genéricos. Ex: "iPhone 15 Pro Max" em vez de "celular", "Coca-Cola lata 350ml" em vez de "lata".
+2. Descreva cor, forma, material, estado, posição, tamanho relativo e contexto.
+3. Se houver texto visível, transcreva-o EXATAMENTE.
+4. Se houver pessoas, descreva roupas, postura, expressão (sem dados pessoais/biométricos - LGPD).
+5. Se houver alimentos, identifique o prato/ingredientes específicos.
+6. Se houver marcas/logos, identifique-os.
+
+Responda APENAS em JSON válido:
 {
   "objetos": [
     {
-      "nome": "nome exato do objeto",
-      "descricao": "descrição detalhada: cor, forma, material, estado, contexto",
+      "nome": "nome EXATO e ESPECÍFICO do objeto",
+      "descricao": "descrição ultra-detalhada: cor, forma, material, estado, contexto, posição",
       "confianca": 95,
-      "categorias": ["categoria1"],
-      "protocolos": ["regra semântica para futuro matching offline"]
+      "categorias": ["categoria1", "categoria2"],
+      "protocolos": ["regra semântica precisa para matching futuro offline"]
     }
   ],
-  "cena": "descrição geral da cena",
+  "cena": "descrição completa da cena/ambiente",
   "texto_detectado": "qualquer texto visível na imagem ou null",
   "sentimento_visual": "neutro|positivo|negativo|urgente"
 }
-Cada protocolo deve permitir identificar o objeto no futuro SEM chamar IA externa.`;
+Cada protocolo deve ser suficientemente detalhado para identificar o objeto SEM chamar IA externa.`;
 
 const DEEPSEEK_REFINE_PROMPT = `Você é um especialista em refinamento de protocolos de visão computacional.
 Dado os resultados brutos de uma análise visual, refine os protocolos para serem mais precisos e acionáveis.
@@ -150,7 +186,6 @@ function parseVisionResponse(text: string): VisionResponse {
   try {
     const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const parsed = JSON.parse(cleaned);
-    // Handle both old single-object format and new multi-object format
     if (parsed.objetos) return parsed;
     if (parsed.objeto) {
       return {
@@ -172,6 +207,19 @@ function parseVisionResponse(text: string): VisionResponse {
   }
 }
 
+// ─── Resolve API key for a provider (supports multi-key rotation) ───
+function resolveKey(provider: VisionProvider): string | null {
+  if (typeof provider.keyEnv === "string") {
+    return Deno.env.get(provider.keyEnv) || null;
+  }
+  // Multi-key: try each until one is found
+  for (const envName of provider.keyEnv) {
+    const k = Deno.env.get(envName);
+    if (k) return k;
+  }
+  return null;
+}
+
 // ─── Multi-provider cascade call ───
 async function callVisionCascade(
   imageB64: string,
@@ -185,9 +233,9 @@ async function callVisionCascade(
     : VISION_PROVIDERS;
 
   for (const provider of providers) {
-    const key = Deno.env.get(provider.keyEnv);
+    const key = resolveKey(provider);
     if (!key) {
-      errors.push(`${provider.id}: no key (${provider.keyEnv})`);
+      errors.push(`${provider.id}: no key`);
       continue;
     }
 
@@ -200,13 +248,15 @@ async function callVisionCascade(
         mimeType
       );
 
-      const resp = await fetch(provider.endpoint, {
+      const endpoint = typeof provider.endpoint === "function"
+        ? provider.endpoint(key)
+        : provider.endpoint;
+
+      const resp = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${key}`,
-        },
+        headers: provider.buildHeaders(key),
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(30000),
       });
 
       if (!resp.ok) {
@@ -233,7 +283,7 @@ async function callVisionCascade(
   throw new Error(`All vision providers failed:\n${errors.join("\n")}`);
 }
 
-// ─── Refine protocols via DeepSeek (text-only, cheap) ───
+// ─── Refine protocols via DeepSeek ───
 async function refineWithDeepSeek(rawResult: VisionResponse): Promise<VisionResponse> {
   const dsKey = Deno.env.get("DEEPSEEK_API_KEY");
   if (!dsKey) return rawResult;
@@ -251,13 +301,13 @@ async function refineWithDeepSeek(rawResult: VisionResponse): Promise<VisionResp
         temperature: 0.1,
         max_tokens: 2000,
       }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!resp.ok) return rawResult;
     const data = await resp.json();
     const text = data.choices?.[0]?.message?.content || "";
     const refined = parseVisionResponse(text);
-    // Merge: keep original detections but upgrade protocols
     if (refined.objetos?.length) {
       for (let i = 0; i < rawResult.objetos.length && i < refined.objetos.length; i++) {
         if (refined.objetos[i].protocolos?.length) {
@@ -290,7 +340,7 @@ async function storeProtocol(
     `\n**Regras de Matching**:`,
     ...(obj.protocolos || [`${obj.nome}: ${obj.descricao}`]).map((p, i) => `${i + 1}. ${p}`),
     `\n**Categorias**: ${(obj.categorias || ["geral"]).join(", ")}`,
-    `\n_Auto-criado pelo Orion Vision Hybrid v2_`,
+    `\n_Auto-criado pelo Orion Vision Hybrid v3_`,
   ].join("\n");
 
   await supabase.from("neural_knowledge_base").insert({
@@ -363,10 +413,9 @@ serve(async (req) => {
         true
       );
 
-      // Refine with DeepSeek for better protocols
       const refined = await refineWithDeepSeek(result);
       const obj = refined.objetos[0] || { nome: teach_label, descricao: "", confianca: 0 };
-      obj.nome = teach_label; // Force the user's label
+      obj.nome = teach_label;
 
       await storeProtocol(supabase, obj, provider);
 
@@ -402,7 +451,6 @@ serve(async (req) => {
     }> = [];
     let usedProvider = "local_protocol";
 
-    // Process confident local detections
     const confidentLocal = local_detections.filter((d: any) => d.confidence >= CONFIDENCE_THRESHOLD);
     const uncertainLocal = local_detections.filter((d: any) => d.confidence < CONFIDENCE_THRESHOLD);
 
@@ -417,28 +465,25 @@ serve(async (req) => {
       });
     }
 
-    // Call vision cascade for uncertain or no detections
     if (uncertainLocal.length > 0 || local_detections.length === 0) {
       const prompt =
         mode === "analyze"
-          ? `Analise TODOS os elementos: objetos, pessoas, textos, emoções, contexto. ${context}`
+          ? `Analise TODOS os elementos da imagem: objetos, pessoas, textos, logos, marcas, emoções, contexto, ambiente, iluminação. Seja EXTREMAMENTE específico nos nomes. ${context}`
           : mode === "describe"
-          ? `Descrição ultra-detalhada de toda a cena. ${context}`
+          ? `Descrição ultra-detalhada de toda a cena. Identifique cada objeto pelo nome EXATO e ESPECÍFICO. ${context}`
           : uncertainLocal.length > 0
-          ? `Confirme/corrija: ${uncertainLocal.map((d: any) => `"${d.label}" (${(d.confidence * 100).toFixed(0)}%)`).join(", ")}. ${context}`
-          : `Identifique todos os objetos com máxima precisão. ${context}`;
+          ? `Confirme/corrija estas detecções: ${uncertainLocal.map((d: any) => `"${d.label}" (${(d.confidence * 100).toFixed(0)}%)`).join(", ")}. Identifique também qualquer outro objeto visível. ${context}`
+          : `Identifique TODOS os objetos visíveis com nomes EXATOS e ESPECÍFICOS. Inclua marcas, modelos, cores e materiais. ${context}`;
 
       const { result, provider, durationMs } = await callVisionCascade(image_base64, mime_type, prompt, true);
       usedProvider = provider;
 
-      // Refine protocols via DeepSeek (async, non-blocking for response)
       const refined = await refineWithDeepSeek(result);
 
       for (const obj of refined.objetos) {
         const labelKey = obj.nome.toLowerCase();
         let protocolCreated = false;
 
-        // Auto-learn new objects
         if (!existingProtocols.has(labelKey) && obj.confianca >= 75) {
           await storeProtocol(supabase, obj, provider);
           protocolCreated = true;
@@ -454,7 +499,6 @@ serve(async (req) => {
         });
       }
 
-      // Add scene-level info
       if (refined.cena || refined.texto_detectado || refined.sentimento_visual) {
         detections.push({
           objeto: "📸 Análise da Cena",
@@ -471,7 +515,6 @@ serve(async (req) => {
 
     const totalDuration = Date.now() - startTime;
 
-    // Log metrics
     await supabase.from("ai_metrics").insert({
       provider: `vision_hybrid_${usedProvider}`,
       total_duration_ms: totalDuration,
@@ -488,21 +531,24 @@ serve(async (req) => {
       providers_available: VISION_PROVIDERS.map(p => ({
         id: p.id,
         name: p.name,
-        has_key: !!Deno.env.get(p.keyEnv),
+        has_key: !!resolveKey(p),
         vision: p.supportsVision,
       })),
       protocols_available: protocolCount,
       auto_learned: detections.filter(d => d.protocol_created).length,
       evolution_status: usedProvider === "local_protocol"
         ? `🧠 100% offline — ${protocolCount} protocolos resolveram tudo`
-        : `⚡ ${usedProvider} chamado → ${detections.filter(d => d.protocol_created).length} novos protocolos criados`,
+        : `🌐 ${usedProvider} + DeepSeek refine | ${protocolCount} protocolos`,
       duration_ms: totalDuration,
       timestamp: new Date().toISOString(),
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
   } catch (e) {
-    console.error("groq-vision-hybrid error:", e);
+    console.error("❌ Vision Hybrid error:", e);
     return new Response(JSON.stringify({
-      error: e instanceof Error ? e.message : "Unknown error",
+      error: e instanceof Error ? e.message : "Unknown vision error",
+      detections: [],
+      provider_used: "none",
       duration_ms: Date.now() - startTime,
     }), {
       status: 500,
