@@ -1,10 +1,14 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   Menu, X, LogIn, UserPlus, LogOut, User, Download,
   Home, BookOpen, LayoutDashboard, Mail, Users,
-  Zap, Terminal, TrendingUp
+  Zap, Terminal, TrendingUp, ChevronDown,
+  Scale, Building2, ShoppingBag, Briefcase,
+  Brain, Shield, Cpu, Mic, FileText, Search,
+  Gavel, Globe, Heart, Bot,
+  CreditCard, HelpCircle, MessageSquare
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -14,26 +18,76 @@ import { useTranslation } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 
+interface SubItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  desc?: string;
+}
+
+interface NavItem {
+  href?: string;
+  label: string;
+  icon: React.ElementType;
+  children?: SubItem[];
+}
+
+const navLinks: NavItem[] = [
+  { href: "/", label: "Home", icon: Home },
+  {
+    label: "Soluções",
+    icon: Users,
+    children: [
+      { href: "/clientes?perfil=advogados", label: "Advogados", icon: Scale, desc: "IA jurídica, petições e processos" },
+      { href: "/clientes?perfil=escritorios", label: "Escritórios", icon: Building2, desc: "Gestão completa com CRM e equipe" },
+      { href: "/clientes?perfil=produtores", label: "Produtores Digitais", icon: ShoppingBag, desc: "Loja, checkout e afiliados" },
+      { href: "/clientes?perfil=afiliados", label: "Afiliados", icon: Briefcase, desc: "Links rastreáveis e comissões" },
+    ],
+  },
+  {
+    label: "Plataforma",
+    icon: LayoutDashboard,
+    children: [
+      { href: "/plataforma", label: "Funcionalidades", icon: Brain, desc: "Tudo que o ORION faz por você" },
+      { href: "/plataforma#seguranca", label: "Segurança", icon: Shield, desc: "LGPD, criptografia e compliance" },
+      { href: "/demo", label: "Demo ao vivo", icon: Bot, desc: "Teste o ORION agora mesmo" },
+    ],
+  },
+  {
+    label: "Serviços",
+    icon: Gavel,
+    children: [
+      { href: "/servicos", label: "Áreas Jurídicas", icon: Scale, desc: "Penal, Internacional, Trabalhista" },
+      { href: "/plataforma#ia", label: "Consultoria IA", icon: Cpu, desc: "Automação e inteligência artificial" },
+      { href: "/docs/rede-neural", label: "Documentação", icon: FileText, desc: "Guias técnicos e APIs" },
+    ],
+  },
+  { href: "/investidor", label: "Investidores", icon: TrendingUp },
+  {
+    label: "Preços",
+    icon: CreditCard,
+    children: [
+      { href: "/contato", label: "Planos & Preços", icon: CreditCard, desc: "Starter, Pro, Business, Enterprise" },
+      { href: "/contato#contato-form", label: "Falar com Vendas", icon: MessageSquare, desc: "Contato direto com a equipe" },
+    ],
+  },
+  { href: "/publicacoes", label: "Blog", icon: BookOpen },
+];
+
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [atTop, setAtTop] = useState(true);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
+  const dropdownTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
   const { canInstall, isInstalled, isIOS, triggerInstall } = useInstallPrompt();
-
-  const navLinks = [
-    { href: "/", label: t.nav.home, icon: Home },
-    { href: "/clientes", label: "Clientes", icon: Users },
-    { href: "/publicacoes", label: t.nav.publications, icon: BookOpen },
-    { href: "/plataforma", label: t.nav.platform, icon: LayoutDashboard },
-    { href: "/investidor", label: "Investidores", icon: TrendingUp },
-    { href: "/contato", label: t.nav.contact, icon: Mail },
-  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,6 +97,7 @@ export function Header() {
       if (delta > 15 && currentScrollY > 300) {
         setVisible(false);
         setMobileMenuOpen(false);
+        setOpenDropdown(null);
       } else if (delta < -5) {
         setVisible(true);
       }
@@ -60,7 +115,24 @@ export function Header() {
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    setOpenDropdown(null);
+    setMobileExpanded(null);
   }, [location.pathname]);
+
+  const handleDropdownEnter = (label: string) => {
+    if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
+    setOpenDropdown(label);
+  };
+
+  const handleDropdownLeave = () => {
+    dropdownTimeout.current = setTimeout(() => setOpenDropdown(null), 200);
+  };
+
+  const isLinkActive = (item: NavItem): boolean => {
+    if (item.href) return location.pathname === item.href;
+    if (item.children) return item.children.some(c => location.pathname === c.href?.split("?")[0]?.split("#")[0]);
+    return false;
+  };
 
   const headerElement = (
     <header
@@ -79,17 +151,17 @@ export function Header() {
         }`}
       />
 
-      {/* Top accent line — always visible */}
+      {/* Top accent line */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
-      {/* Bottom line with pulse */}
+      {/* Bottom line */}
       <div className="absolute bottom-0 left-0 right-0 h-px">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
       </div>
 
       {/* Content */}
       <div className="container relative flex h-14 items-center">
-        {/* Logo — minimal */}
+        {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group relative z-10 mr-auto">
           <div className="relative flex items-center justify-center h-8 w-8 border border-primary/20 group-hover:border-primary/50 transition-all duration-500">
             <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-primary/40" />
@@ -109,42 +181,130 @@ export function Header() {
           </div>
         </Link>
 
-        {/* Desktop Nav — center, horizontal line style */}
-        <nav className="hidden xl:flex items-center absolute left-1/2 -translate-x-1/2 max-w-[calc(100%-320px)]" aria-label="Menu principal">
+        {/* Desktop Nav with dropdowns */}
+        <nav className="hidden xl:flex items-center absolute left-1/2 -translate-x-1/2" aria-label="Menu principal">
           <div className="flex items-center">
             {navLinks.map((link, i) => {
-              const isActive = location.pathname === link.href;
+              const isActive = isLinkActive(link);
+              const hasChildren = !!link.children;
+              const isOpen = openDropdown === link.label;
+
               return (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className="relative flex items-center group"
+                <div
+                  key={link.label}
+                  className="relative"
+                  onMouseEnter={() => hasChildren && handleDropdownEnter(link.label)}
+                  onMouseLeave={() => hasChildren && handleDropdownLeave()}
                 >
-                  {/* Connector line between items */}
+                  {/* Connector line */}
                   {i > 0 && (
-                    <div className="w-6 h-px bg-primary/10 group-hover:bg-primary/20 transition-colors" />
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full w-3 h-px bg-primary/10" />
                   )}
-                  <div className={`relative px-3 py-1.5 text-[10px] tracking-[0.2em] uppercase font-mono transition-all duration-300 ${
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground/60 hover:text-foreground"
-                  }`}>
-                    {/* Active: full border box */}
-                    {isActive && (
+
+                  {hasChildren ? (
+                    <button
+                      className={`relative flex items-center gap-1 px-3 py-1.5 text-[10px] tracking-[0.2em] uppercase font-mono transition-all duration-300 ${
+                        isActive || isOpen
+                          ? "text-primary"
+                          : "text-muted-foreground/60 hover:text-foreground"
+                      }`}
+                    >
+                      {(isActive || isOpen) && (
+                        <motion.div
+                          layoutId="orion-nav"
+                          className="absolute inset-0 border border-primary/30 bg-primary/5"
+                          style={{ boxShadow: "0 0 12px hsl(var(--primary) / 0.1)" }}
+                          transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                        >
+                          <div className="absolute -top-px left-1/2 -translate-x-1/2 w-4 h-px bg-primary/60" />
+                          <div className="absolute -bottom-px left-1/2 -translate-x-1/2 w-4 h-px bg-primary/60" />
+                        </motion.div>
+                      )}
+                      <span className="relative">{link.label}</span>
+                      <ChevronDown className={`relative h-3 w-3 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+                  ) : (
+                    <Link
+                      to={link.href!}
+                      aria-current={isActive ? "page" : undefined}
+                      className={`relative flex items-center px-3 py-1.5 text-[10px] tracking-[0.2em] uppercase font-mono transition-all duration-300 ${
+                        isActive
+                          ? "text-primary"
+                          : "text-muted-foreground/60 hover:text-foreground"
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="orion-nav"
+                          className="absolute inset-0 border border-primary/30 bg-primary/5"
+                          style={{ boxShadow: "0 0 12px hsl(var(--primary) / 0.1)" }}
+                          transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                        >
+                          <div className="absolute -top-px left-1/2 -translate-x-1/2 w-4 h-px bg-primary/60" />
+                          <div className="absolute -bottom-px left-1/2 -translate-x-1/2 w-4 h-px bg-primary/60" />
+                        </motion.div>
+                      )}
+                      <span className="relative">{link.label}</span>
+                    </Link>
+                  )}
+
+                  {/* Dropdown panel */}
+                  <AnimatePresence>
+                    {hasChildren && isOpen && (
                       <motion.div
-                        layoutId="orion-nav"
-                        className="absolute inset-0 border border-primary/30 bg-primary/5"
-                        style={{ boxShadow: "0 0 12px hsl(var(--primary) / 0.1)" }}
-                        transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute top-full left-0 pt-2 z-50"
+                        onMouseEnter={() => handleDropdownEnter(link.label)}
+                        onMouseLeave={handleDropdownLeave}
                       >
-                        <div className="absolute -top-px left-1/2 -translate-x-1/2 w-4 h-px bg-primary/60" />
-                        <div className="absolute -bottom-px left-1/2 -translate-x-1/2 w-4 h-px bg-primary/60" />
+                        <div
+                          className="min-w-[260px] border border-primary/15 bg-background/95 backdrop-blur-2xl p-1.5"
+                          style={{ boxShadow: "0 20px 50px -12px rgba(0,0,0,0.5), 0 0 30px -8px hsl(var(--primary) / 0.08)" }}
+                        >
+                          {/* Top accent */}
+                          <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary/25" />
+                          <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary/25" />
+
+                          {link.children!.map((child) => {
+                            const ChildIcon = child.icon;
+                            const childActive = location.pathname === child.href?.split("?")[0]?.split("#")[0];
+                            return (
+                              <Link
+                                key={child.href}
+                                to={child.href}
+                                className={`flex items-start gap-3 px-3 py-2.5 transition-all duration-200 group/item ${
+                                  childActive
+                                    ? "bg-primary/10 text-primary"
+                                    : "hover:bg-primary/5 text-foreground"
+                                }`}
+                              >
+                                <div className={`h-8 w-8 border flex items-center justify-center flex-shrink-0 transition-colors ${
+                                  childActive ? "border-primary/40 bg-primary/10" : "border-primary/15 group-hover/item:border-primary/30"
+                                }`}>
+                                  <ChildIcon className={`h-4 w-4 ${childActive ? "text-primary" : "text-primary/60 group-hover/item:text-primary"}`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] font-mono tracking-[0.15em] uppercase font-medium leading-tight">
+                                    {child.label}
+                                  </p>
+                                  {child.desc && (
+                                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-snug">
+                                      {child.desc}
+                                    </p>
+                                  )}
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
                       </motion.div>
                     )}
-                    <span className="relative">{link.label}</span>
-                  </div>
-                </Link>
+                  </AnimatePresence>
+                </div>
               );
             })}
           </div>
@@ -212,9 +372,7 @@ export function Header() {
         <motion.div className="xl:hidden relative z-10 ml-auto" whileTap={{ scale: 0.9 }}>
           <button
             className={`relative h-10 w-10 flex items-center justify-center transition-all duration-300 ${
-              mobileMenuOpen
-                ? "text-primary"
-                : "text-foreground"
+              mobileMenuOpen ? "text-primary" : "text-foreground"
             }`}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
@@ -242,6 +400,7 @@ export function Header() {
     </header>
   );
 
+  // ─── Mobile Menu ───
   const mobileMenu = createPortal(
     <AnimatePresence>
       {mobileMenuOpen && (
@@ -277,32 +436,87 @@ export function Header() {
             {/* Links */}
             <div className="space-y-px">
               {navLinks.map((link, index) => {
-                const isActive = location.pathname === link.href;
+                const isActive = isLinkActive(link);
+                const hasChildren = !!link.children;
+                const isExpanded = mobileExpanded === link.label;
+
                 return (
                   <motion.div
-                    key={link.href}
+                    key={link.label}
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: index * 0.04, duration: 0.2 }}
                   >
-                    <Link
-                      to={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      aria-current={isActive ? "page" : undefined}
-                      className={`relative flex items-center justify-between w-full py-4 text-[12px] tracking-[0.25em] uppercase font-mono border-b transition-all duration-300 ${
-                        isActive
-                          ? "text-primary border-primary/20"
-                          : "text-muted-foreground/50 border-border/10 hover:text-foreground hover:border-primary/10"
-                      }`}
-                    >
-                      <span>{link.label}</span>
-                      {isActive && (
-                        <div className="flex items-center gap-1.5">
-                          <div className="h-1 w-1 bg-primary" />
-                          <span className="text-[7px] text-primary/40">ACTIVE</span>
-                        </div>
-                      )}
-                    </Link>
+                    {hasChildren ? (
+                      <>
+                        <button
+                          onClick={() => setMobileExpanded(isExpanded ? null : link.label)}
+                          className={`relative flex items-center justify-between w-full py-4 text-[12px] tracking-[0.25em] uppercase font-mono border-b transition-all duration-300 ${
+                            isActive
+                              ? "text-primary border-primary/20"
+                              : "text-muted-foreground/50 border-border/10 hover:text-foreground hover:border-primary/10"
+                          }`}
+                        >
+                          <span>{link.label}</span>
+                          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isExpanded ? "rotate-180 text-primary" : ""}`} />
+                        </button>
+
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="py-2 pl-4 space-y-1 border-l border-primary/10 ml-2">
+                                {link.children!.map((child) => {
+                                  const ChildIcon = child.icon;
+                                  return (
+                                    <Link
+                                      key={child.href}
+                                      to={child.href}
+                                      onClick={() => setMobileMenuOpen(false)}
+                                      className="flex items-center gap-3 py-2.5 px-3 text-[11px] tracking-[0.15em] uppercase font-mono text-muted-foreground/60 hover:text-foreground hover:bg-primary/5 transition-all"
+                                    >
+                                      <ChildIcon className="h-3.5 w-3.5 text-primary/50" />
+                                      <div>
+                                        <span className="block">{child.label}</span>
+                                        {child.desc && (
+                                          <span className="block text-[9px] text-muted-foreground/40 tracking-[0.1em] mt-0.5 normal-case">
+                                            {child.desc}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    ) : (
+                      <Link
+                        to={link.href!}
+                        onClick={() => setMobileMenuOpen(false)}
+                        aria-current={isActive ? "page" : undefined}
+                        className={`relative flex items-center justify-between w-full py-4 text-[12px] tracking-[0.25em] uppercase font-mono border-b transition-all duration-300 ${
+                          isActive
+                            ? "text-primary border-primary/20"
+                            : "text-muted-foreground/50 border-border/10 hover:text-foreground hover:border-primary/10"
+                        }`}
+                      >
+                        <span>{link.label}</span>
+                        {isActive && (
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-1 w-1 bg-primary" />
+                            <span className="text-[7px] text-primary/40">ACTIVE</span>
+                          </div>
+                        )}
+                      </Link>
+                    )}
                   </motion.div>
                 );
               })}
