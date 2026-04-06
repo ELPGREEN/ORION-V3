@@ -391,6 +391,21 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
+    // ── Feed AI response to voice evolution engine ──
+    feedAIResponse(text);
+
+    // ── TIER 0: Evolved Voice (level ≥ 70% — voz própria, zero API) ──
+    if (!played && !cascadeAbort.signal.aborted) {
+      try {
+        played = await speakWithEvolvedVoice(cleanText);
+        if (played) {
+          console.log("[Voice] 🧬 Voz Evoluída — síntese autônoma!");
+        }
+      } catch {
+        console.warn("[Voice] Evolved voice não pronta, continuando cascade...");
+      }
+    }
+
     // ── PRIMARY: Gemini TTS (rápido ~2s, voz Charon, 100% grátis) ──
     if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
       try {
@@ -444,6 +459,11 @@ export function useNeuralVoice(
         played = true;
         console.log("[Voice] ⚠️ Fallback: Web Speech (último recurso)");
       } catch {}
+    }
+
+    // ── Feed self-synthesis for evolution reinforcement ──
+    if (played) {
+      feedSelfSynthesis(cleanText);
     }
     
     clearTimeout(safetyTimer);
