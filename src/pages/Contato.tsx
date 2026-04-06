@@ -10,7 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { DynamicMeta } from "@/components/DynamicMeta";
-import { CheckCircle2, Star, ArrowRight, MessageCircle, Shield, Zap, Crown, Rocket } from "lucide-react";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { HeroThreeBackground } from "@/components/home/HeroThreeBackground";
+import {
+  CheckCircle2, Star, ArrowRight, MessageCircle, Shield, Zap, Crown, Rocket,
+  Mail, Phone, MapPin, Clock
+} from "lucide-react";
 import { useContactForm } from "@/hooks/useContactForm";
 import { toast } from "sonner";
 
@@ -117,153 +122,126 @@ export default function Contato() {
         keywords="planos, contato, preços, ORION IA, ELP Green Technology"
       />
 
-      <section className="py-20 bg-gradient-to-b from-background via-primary/5 to-background">
-        <div className="container text-center">
-          <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
-            Plano Starter gratuito para sempre
-          </Badge>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Escolha o plano <span className="text-primary">ideal</span>
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-            Transforme seu negócio com IA. Comece grátis e escale conforme cresce.
-          </p>
+      {/* ═══ HERO — Planos ═══ */}
+      <section className="relative py-20 sm:py-28 overflow-hidden" style={{ background: "#0a0a0f" }}>
+        <HeroThreeBackground />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/50 via-transparent to-[#0a0a0f]/80 z-[1]" />
+        <div className="container relative z-10 text-center">
+          <ScrollReveal direction="fade">
+            <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/5 backdrop-blur-sm">
+              Plano Starter gratuito para sempre
+            </Badge>
+          </ScrollReveal>
+          <ScrollReveal direction="up" delay={0.1}>
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
+              Escolha o plano <span className="text-primary">ideal</span>
+            </h1>
+          </ScrollReveal>
+          <ScrollReveal direction="fade" delay={0.2}>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg">
+              Transforme seu negócio com IA. Comece grátis e escale conforme cresce.
+            </p>
+          </ScrollReveal>
         </div>
       </section>
 
-      <section className="py-16 bg-background">
-        <div className="container">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {planos.map((plano) => {
+      {/* ═══ PLANOS ═══ */}
+      <section className="py-16 sm:py-20 relative" style={{ background: "#080810" }}>
+        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
+        <div className="container relative z-10">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
+            {planos.map((plano, i) => {
               const Icon = plano.icon;
               return (
-                <Card
-                  key={plano.id}
-                  className={`relative overflow-hidden transition-all duration-300 hover:shadow-elegant ${
-                    plano.destaque ? "border-primary/50 shadow-lg scale-[1.02]" : "border-border/50"
-                  }`}
-                >
-                  {plano.destaque && (
-                    <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-center text-xs py-1 font-medium tracking-wider uppercase">
-                      Mais Popular
-                    </div>
-                  )}
-                  <CardHeader className={plano.destaque ? "pt-8" : ""}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Icon className="h-5 w-5 text-primary" />
-                      <CardTitle className="font-serif text-xl">{plano.nome}</CardTitle>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold text-foreground">{plano.preco}</span>
-                      <span className="text-muted-foreground text-sm">{plano.periodo}</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2.5 mb-6">
-                      {plano.features.map((f) => (
-                        <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      className="w-full"
-                      variant={plano.destaque ? "default" : "outline"}
-                      onClick={() => {
-                        if (plano.id === "starter") {
-                          navigate("/cadastro");
-                        } else {
-                          setPlanoSelecionado(plano.id);
-                          document.getElementById("contato-form")?.scrollIntoView({ behavior: "smooth" });
-                        }
-                      }}
-                    >
-                      {plano.cta} <ArrowRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </CardContent>
-                </Card>
+                <ScrollReveal key={plano.id} direction="up" delay={i * 0.08}>
+                  <Card
+                    className={`relative overflow-hidden transition-all duration-500 h-full bg-card/20 backdrop-blur-sm hover:border-primary/30 ${
+                      plano.destaque ? "border-primary/50 shadow-[0_0_30px_hsl(var(--primary)/0.1)] scale-[1.02]" : "border-border/20"
+                    }`}
+                  >
+                    {plano.destaque && (
+                      <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-center text-[10px] py-1.5 font-medium tracking-[0.2em] uppercase">
+                        Mais Popular
+                      </div>
+                    )}
+                    <CardHeader className={plano.destaque ? "pt-10" : ""}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-8 w-8 border border-primary/20 flex items-center justify-center">
+                          <Icon className="h-4 w-4 text-primary" />
+                        </div>
+                        <CardTitle className="font-serif text-lg">{plano.nome}</CardTitle>
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl sm:text-3xl font-bold text-foreground">{plano.preco}</span>
+                        <span className="text-muted-foreground text-sm">{plano.periodo}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2.5 mb-6">
+                        {plano.features.map((f) => (
+                          <li key={f} className="flex items-center gap-2 text-[12px] text-muted-foreground">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      <Button
+                        className={`w-full text-[11px] tracking-[0.1em] uppercase ${plano.destaque ? "" : ""}`}
+                        variant={plano.destaque ? "default" : "outline"}
+                        onClick={() => {
+                          if (plano.id === "starter") {
+                            navigate("/cadastro");
+                          } else {
+                            setPlanoSelecionado(plano.id);
+                            document.getElementById("contato-form")?.scrollIntoView({ behavior: "smooth" });
+                          }
+                        }}
+                      >
+                        {plano.cta} <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </ScrollReveal>
               );
             })}
           </div>
         </div>
       </section>
 
-      <section id="contato-form" className="py-16 bg-secondary/20 scroll-mt-20">
-        <div className="container max-w-2xl">
-          <h2 className="font-serif text-2xl md:text-3xl font-bold text-center mb-2">Entre em contato</h2>
-          <p className="text-muted-foreground text-center mb-8">Preencha o formulário e nossa equipe retorna em até 24h.</p>
-          {isSubmitted ? (
-            <Card className="border-primary/30">
-              <CardContent className="p-8 text-center">
-                <CheckCircle2 className="h-16 w-16 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">Mensagem Enviada!</h3>
-                <p className="text-muted-foreground mb-6">Nossa equipe entrará em contato em breve.</p>
-                <Button onClick={() => navigate("/cadastro")}>Criar Conta Grátis</Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-border/50">
-              <CardContent className="p-6">
-                <form onSubmit={onSubmit} className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nome completo</Label>
-                      <Input id="name" name="name" value={formData.name} onChange={handleChange} required placeholder="Seu nome" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">E-mail</Label>
-                      <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="seu@email.com" />
-                    </div>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Telefone / WhatsApp</Label>
-                      <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="(00) 00000-0000" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Plano de interesse</Label>
-                      <Select value={planoSelecionado} onValueChange={setPlanoSelecionado}>
-                        <SelectTrigger><SelectValue placeholder="Selecione um plano" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="starter">Starter — Grátis</SelectItem>
-                          <SelectItem value="professional">Professional — R$ 97/mês</SelectItem>
-                          <SelectItem value="business">Business — R$ 297/mês</SelectItem>
-                          <SelectItem value="enterprise">Enterprise — R$ 497/mês</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="message">Mensagem</Label>
-                    <Textarea id="message" name="message" value={formData.message} onChange={handleChange} rows={4} placeholder="Como podemos ajudar?" />
-                  </div>
-                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                    {isSubmitting ? "Enviando..." : "Enviar Mensagem"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </section>
-
-      <section className="py-10 bg-background border-y border-border/30">
+      {/* ═══ GARANTIAS ═══ */}
+      <section className="py-6 border-y border-border/10" style={{ background: "#0a0a0f" }}>
         <div className="container">
           <div className="flex flex-wrap justify-center gap-8 text-center">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm"><Shield className="h-5 w-5 text-primary" />Dados criptografados (LGPD)</div>
-            <div className="flex items-center gap-2 text-muted-foreground text-sm"><CheckCircle2 className="h-5 w-5 text-primary" />Starter gratuito para sempre</div>
-            <div className="flex items-center gap-2 text-muted-foreground text-sm"><Zap className="h-5 w-5 text-primary" />Cancele quando quiser</div>
+            <div className="flex items-center gap-2 text-muted-foreground text-xs">
+              <Shield className="h-4 w-4 text-primary" />
+              Dados criptografados (LGPD)
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground text-xs">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              Starter gratuito para sempre
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground text-xs">
+              <Zap className="h-4 w-4 text-primary" />
+              Cancele quando quiser
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="py-16 bg-background">
+      {/* ═══ FAQ ═══ */}
+      <section className="py-16 sm:py-20" style={{ background: "#080810" }}>
         <div className="container max-w-3xl">
-          <h2 className="font-serif text-2xl md:text-3xl font-bold text-center mb-8">Perguntas <span className="text-primary">Frequentes</span></h2>
+          <ScrollReveal direction="fade">
+            <div className="text-center mb-10">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">DÚVIDAS</p>
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-foreground">
+                Perguntas <span className="text-primary">Frequentes</span>
+              </h2>
+            </div>
+          </ScrollReveal>
           <Accordion type="single" collapsible className="space-y-2">
             {faq.map((item, i) => (
-              <AccordionItem key={i} value={`faq-${i}`} className="border border-border/50 rounded-lg px-4">
+              <AccordionItem key={i} value={`faq-${i}`} className="border border-border/20 rounded-none px-4 bg-card/10">
                 <AccordionTrigger className="text-sm font-medium text-foreground hover:text-primary">{item.pergunta}</AccordionTrigger>
                 <AccordionContent className="text-sm text-muted-foreground">{item.resposta}</AccordionContent>
               </AccordionItem>
@@ -272,6 +250,140 @@ export default function Contato() {
         </div>
       </section>
 
+      {/* ═══ CONTATO — Formulário + Info ═══ */}
+      <section id="contato-form" className="py-16 sm:py-24 scroll-mt-20 relative" style={{ background: "#0a0a0f", borderTop: "1px solid rgba(0,212,255,0.1)" }}>
+        <div className="container">
+          <ScrollReveal direction="fade">
+            <div className="text-center mb-12">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">CONTATO</p>
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-foreground mb-3">
+                Fale com nossa <span className="text-primary">equipe</span>
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+                Preencha o formulário e nossa equipe retorna em até 24h.
+              </p>
+            </div>
+          </ScrollReveal>
+
+          <div className="grid lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Info lateral */}
+            <div className="space-y-6">
+              <ScrollReveal direction="up" delay={0.1}>
+                <div className="p-5 border border-border/20 bg-card/10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-9 w-9 border border-primary/20 flex items-center justify-center">
+                      <Mail className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Email</p>
+                      <p className="text-sm text-foreground">contato@iasofthub.com</p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              <ScrollReveal direction="up" delay={0.15}>
+                <div className="p-5 border border-border/20 bg-card/10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-9 w-9 border border-primary/20 flex items-center justify-center">
+                      <Phone className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">WhatsApp</p>
+                      <p className="text-sm text-foreground">+39 350 102 1359</p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              <ScrollReveal direction="up" delay={0.2}>
+                <div className="p-5 border border-border/20 bg-card/10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-9 w-9 border border-primary/20 flex items-center justify-center">
+                      <MapPin className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Sede</p>
+                      <p className="text-sm text-foreground">Itália — ELP Green Technology S.R.L.</p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+
+              <ScrollReveal direction="up" delay={0.25}>
+                <div className="p-5 border border-border/20 bg-card/10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-9 w-9 border border-primary/20 flex items-center justify-center">
+                      <Clock className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Resposta</p>
+                      <p className="text-sm text-foreground">Em até 24 horas úteis</p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+            </div>
+
+            {/* Formulário */}
+            <div className="lg:col-span-2">
+              <ScrollReveal direction="up" delay={0.1}>
+                {isSubmitted ? (
+                  <div className="border border-primary/30 bg-card/10 p-8 text-center">
+                    <CheckCircle2 className="h-16 w-16 text-primary mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-foreground mb-2">Mensagem Enviada!</h3>
+                    <p className="text-muted-foreground mb-6">Nossa equipe entrará em contato em breve.</p>
+                    <Button onClick={() => navigate("/cadastro")}>Criar Conta Grátis</Button>
+                  </div>
+                ) : (
+                  <div className="border border-border/20 bg-card/10 p-6">
+                    <form onSubmit={onSubmit} className="space-y-4">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name" className="text-xs uppercase tracking-wider text-muted-foreground">Nome completo</Label>
+                          <Input id="name" name="name" value={formData.name} onChange={handleChange} required placeholder="Seu nome" className="bg-background/50 border-border/30" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email" className="text-xs uppercase tracking-wider text-muted-foreground">E-mail</Label>
+                          <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required placeholder="seu@email.com" className="bg-background/50 border-border/30" />
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="phone" className="text-xs uppercase tracking-wider text-muted-foreground">Telefone / WhatsApp</Label>
+                          <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="(00) 00000-0000" className="bg-background/50 border-border/30" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Plano de interesse</Label>
+                          <Select value={planoSelecionado} onValueChange={setPlanoSelecionado}>
+                            <SelectTrigger className="bg-background/50 border-border/30"><SelectValue placeholder="Selecione um plano" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="starter">Starter — Grátis</SelectItem>
+                              <SelectItem value="professional">Professional — R$ 97/mês</SelectItem>
+                              <SelectItem value="business">Business — R$ 297/mês</SelectItem>
+                              <SelectItem value="enterprise">Enterprise — R$ 497/mês</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="message" className="text-xs uppercase tracking-wider text-muted-foreground">Mensagem</Label>
+                        <Textarea id="message" name="message" value={formData.message} onChange={handleChange} rows={4} placeholder="Como podemos ajudar?" className="bg-background/50 border-border/30" />
+                      </div>
+                      <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                        {isSubmitting ? "Enviando..." : "Enviar Mensagem"}
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </form>
+                  </div>
+                )}
+              </ScrollReveal>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* WhatsApp Float */}
       <a
         href="https://wa.me/393501021359?text=Olá! Gostaria de saber mais sobre a plataforma ORION."
         target="_blank"
