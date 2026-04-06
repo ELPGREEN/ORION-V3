@@ -21,19 +21,34 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "entries array required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const rows = entries.map((e: Record<string, unknown>) => ({
-      title: e.title,
-      content: e.content,
-      source_type: e.source_type || "documentation",
-      category: e.category || "general",
-      tags: e.tags || [],
-      is_processed: false,
-    }));
+    // Deduplicate: check existing titles to prevent redundant entries
+    const titles = entries.map((e: Record<string, unknown>) => e.title).filter(Boolean);
+    const { data: existing } = await supabase
+      .from("neural_knowledge_base")
+      .select("title")
+      .in("title", titles);
+
+    const existingTitles = new Set((existing || []).map((r: { title: string }) => r.title));
+
+    const rows = entries
+      .filter((e: Record<string, unknown>) => !existingTitles.has(e.title as string))
+      .map((e: Record<string, unknown>) => ({
+        title: e.title,
+        content: e.content,
+        source_type: e.source_type || "documentation",
+        category: e.category || "general",
+        tags: e.tags || [],
+        is_processed: false,
+      }));
+
+    if (rows.length === 0) {
+      return new Response(JSON.stringify({ inserted: 0, skipped: entries.length, reason: "all entries already exist" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const { error } = await supabase.from("neural_knowledge_base").insert(rows);
     if (error) throw error;
 
-    return new Response(JSON.stringify({ inserted: rows.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ inserted: rows.length, skipped: entries.length - rows.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }

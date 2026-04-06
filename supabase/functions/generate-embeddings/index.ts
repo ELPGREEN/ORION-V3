@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ⚠️ CRITICAL: Gemini text-embedding-004 (768d, FREE) is the SOLE embedding provider.
+// ⚠️ CRITICAL: Gemini gemini-embedding-001 (768d, FREE) is the SOLE embedding provider.
 // ALL functions (neural-search, ai-orchestrator, gerar-documento, neural-training)
 // MUST use the same model to ensure vector space compatibility.
 function getEmbeddingProviders(): Array<{ name: string; apiKey: string }> {
@@ -26,12 +26,12 @@ function getEmbeddingProviders(): Array<{ name: string; apiKey: string }> {
 async function generateEmbeddingSingle(text: string, apiKey: string): Promise<number[]> {
   const truncated = text.slice(0, 4000);
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "models/text-embedding-004",
+        model: "models/gemini-embedding-001",
         content: { parts: [{ text: truncated }] },
         outputDimensionality: 768,
       }),
@@ -50,12 +50,12 @@ async function generateEmbeddingSingle(text: string, apiKey: string): Promise<nu
 // Batch embedding via Gemini batchEmbedContents (up to 100 texts per call)
 async function generateEmbeddingBatch(texts: string[], apiKey: string): Promise<number[][]> {
   const requests = texts.map(t => ({
-    model: "models/text-embedding-004",
+    model: "models/gemini-embedding-001",
     content: { parts: [{ text: t.slice(0, 4000) }] },
     outputDimensionality: 768,
   }));
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

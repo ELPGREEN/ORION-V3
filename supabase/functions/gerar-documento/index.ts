@@ -1228,7 +1228,7 @@ async function extractKeywords(query: string): string[] {
   return [...new Set(words)].slice(0, 6);
 }
 
-// Generate query embedding using Gemini text-embedding-004 (768d, free)
+// Generate query embedding using Gemini gemini-embedding-001 (768d, free)
 // Unified across all functions: same provider ensures vector space compatibility
 function _getGeminiKeys(): string[] {
   return [
@@ -1276,13 +1276,13 @@ async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<
   for (const apiKey of geminiKeys) {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: AbortSignal.timeout(10000),
           body: JSON.stringify({
-            model: "models/text-embedding-004",
+            model: "models/gemini-embedding-001",
             content: { parts: [{ text: truncated }] },
             outputDimensionality: 768,
           }),
@@ -2659,13 +2659,13 @@ async function generateEmbeddingForCache(text: string): Promise<number[] | null>
   for (const key of keys) {
     try {
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${key}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${key}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: AbortSignal.timeout(8000),
           body: JSON.stringify({
-            model: "models/text-embedding-004",
+            model: "models/gemini-embedding-001",
             content: { parts: [{ text: text.substring(0, 4000) }] },
             outputDimensionality: 768,
           }),

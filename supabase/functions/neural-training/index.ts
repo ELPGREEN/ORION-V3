@@ -269,7 +269,7 @@ async function saveWeights(supabase: ReturnType<typeof createClient>, userId: st
 // AÇÕES DO SISTEMA NEURAL
 // ═══════════════════════════════════════════════════════════════
 
-// Generate embedding using Gemini text-embedding-004 (768 dims, free)
+// Generate embedding using Gemini gemini-embedding-001 (768 dims, free)
 async function generateEmbedding(text: string): Promise<number[] | null> {
   const geminiKeys = [
     Deno.env.get("GEMINI_API_KEY"),
@@ -282,12 +282,12 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
   for (const apiKey of geminiKeys) {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "models/text-embedding-004",
+            model: "models/gemini-embedding-001",
             content: { parts: [{ text: truncated }] },
             outputDimensionality: 768,
           }),

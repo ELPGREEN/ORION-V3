@@ -217,7 +217,7 @@ const AGENT_V12_SYSTEM_PROMPT = `Você é o **Agente Jurídico Autônomo v12** i
   - Von Neumann Entropy: S(ρ) = -Tr(ρ·log₂ρ) para bonus de emaranhamento.
 - **Pipeline RAG v11**:
   1. Query Input → Expansion (LLM variantes).
-  2. Embedding (Gemini text-embedding-004 768-dim, free).
+  2. Embedding (Gemini gemini-embedding-001 768-dim, free).
   3. Multi-Search (semântico + keyword + authority + recency).
   4. API Enrich (tribunais, leis).
   5. LLM Gen (multi-provedor chain com fallback automático).
@@ -262,7 +262,7 @@ interface NeuralContext {
   specializations: Array<{ name: string; prompts: Record<string, string> }>;
 }
 
-// Generate query embedding using Gemini text-embedding-004 (768d, free)
+// Generate query embedding using Gemini gemini-embedding-001 (768d, free)
 async function generateQueryEmbedding(text: string): Promise<number[]> {
   const geminiKeys = [
     Deno.env.get("GEMINI_API_KEY"),
@@ -273,13 +273,13 @@ async function generateQueryEmbedding(text: string): Promise<number[]> {
   for (const apiKey of geminiKeys) {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: AbortSignal.timeout(10000),
           body: JSON.stringify({
-            model: "models/text-embedding-004",
+            model: "models/gemini-embedding-001",
             content: { parts: [{ text: text.substring(0, 4000) }] },
             outputDimensionality: 768,
           }),
