@@ -394,31 +394,7 @@ export function useNeuralVoice(
       }
     }
 
-    // ── FALLBACK 1: Orion Formant DNA (100% offline, zero API) ──
-    if (!played && !cascadeAbort.signal.aborted) {
-      try {
-        const result = await speakWithOrionVoice(cleanText, cascadeAbort.signal);
-        if (result.played) {
-          played = true;
-          if (result.audio) activeAudioRef.current = result.audio;
-          console.log(`[Voice] ✅ Formant DNA fallback (${result.engine})`);
-        }
-      } catch (err) {
-        if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Formant DNA failed:", (err as Error)?.message);
-        }
-      }
-    }
-
-    // ── FALLBACK 2: Piper WASM ──
-    if (!played && !cascadeAbort.signal.aborted) {
-      try {
-        played = await speakWithPiper(cleanText);
-        if (played) console.log("[Voice] ✅ Piper WASM fallback");
-      } catch {}
-    }
-
-    // ── FALLBACK 3: Web Speech API (último recurso) ──
+    // ── FALLBACK: Web Speech API (último recurso, só se Gemini falhar) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
         await browserSpeak(cleanText);
