@@ -469,6 +469,14 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   return (
     <div className="space-y-3 relative">
+      {/* ═══ Voice Identity Gate ═══ */}
+      <VoiceIdentityGate
+        identityStatus={identityStatus}
+        isCheckingVoice={isCheckingVoice}
+        onGuestIdentify={(name) => startGuestSession(name)}
+        onVerifyVoice={handleVoiceIdentityCheck}
+        onSkipAsOwner={() => setIdentityStatus("owner")}
+      />
       {/* Controls — Tron styled */}
       <div className="relative flex flex-wrap items-center gap-2 rounded-lg p-2.5 overflow-hidden"
         style={{ backgroundColor: "rgba(10,10,15,0.7)", border: "1px solid rgba(212,175,55,0.15)", boxShadow: "0 0 15px rgba(212,175,55,0.05)" }}>
