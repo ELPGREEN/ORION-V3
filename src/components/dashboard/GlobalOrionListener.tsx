@@ -371,6 +371,42 @@ export function GlobalOrionListener() {
 
   return (
     <>
+      {/* ═══ Boot Screen — Plasma loading with "Iniciando sistema" ═══ */}
+      {booting && (
+        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-background/95 backdrop-blur-xl animate-fade-in">
+          <div className="relative w-32 h-32 mb-6">
+            <PlasmaCore className="w-full h-full" />
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: "radial-gradient(circle, hsl(var(--primary) / 0.3) 0%, transparent 70%)",
+                filter: "blur(20px)",
+                transform: "scale(2)",
+                animation: "orbBreath 1.5s ease-in-out infinite",
+              }}
+            />
+          </div>
+          <p className="text-sm font-mono tracking-[0.3em] text-primary/80 uppercase animate-pulse">
+            Iniciando Sistema
+          </p>
+          <div className="mt-4 w-48 h-1 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full"
+              style={{ animation: "bootProgress 2.5s ease-out forwards" }}
+            />
+          </div>
+          <style>{`
+            @keyframes bootProgress {
+              0% { width: 0%; }
+              30% { width: 40%; }
+              60% { width: 70%; }
+              90% { width: 95%; }
+              100% { width: 100%; }
+            }
+          `}</style>
+        </div>
+      )}
+
       {/* ═══ Permission Prompt ═══ */}
       {showPermissionPrompt && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
