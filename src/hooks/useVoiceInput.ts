@@ -28,12 +28,31 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onSpeakEndCallbackRef = useRef<(() => void) | null>(null);
   const intentionalStopRef = useRef(false);
+  const isSpeakingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   // Store callbacks in refs to avoid recreating startListening
   const onResultRef = useRef(onResult);
   const onEndRef = useRef(onEnd);
   useEffect(() => { onResultRef.current = onResult; }, [onResult]);
   useEffect(() => { onEndRef.current = onEnd; }, [onEnd]);
+
+  // Keep speaking ref in sync
+  useEffect(() => { isSpeakingRef.current = isSpeaking; }, [isSpeaking]);
+
+  // Track mount status for async callbacks
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      // Cleanup on unmount
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch {}
+        recognitionRef.current = null;
+      }
+      window.speechSynthesis?.cancel();
+    };
+  }, []);
 
   // Check SpeechRecognition support and current mic permission
   useEffect(() => {
@@ -42,9 +61,12 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
 
     if (navigator.permissions) {
       navigator.permissions.query({ name: "microphone" as PermissionName }).then((status) => {
+        if (!mountedRef.current) return;
         setMicPermission(status.state as "prompt" | "granted" | "denied");
         status.onchange = () => {
-          setMicPermission(status.state as "prompt" | "granted" | "denied");
+          if (mountedRef.current) {
+            setMicPermission(status.state as "prompt" | "granted" | "denied");
+          }
         };
       }).catch(() => {});
     }
@@ -54,30 +76,38 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(track => track.stop());
-      setMicPermission("granted");
+      if (mountedRef.current) setMicPermission("granted");
       return true;
     } catch (err: any) {
-      setMicPermission("denied");
+      if (mountedRef.current) setMicPermission("denied");
       return false;
     }
   }, []);
 
-  const startListening = useCallback(async (): Promise<boolean> => {
-    // Don't start if currently speaking (mutual silencing)
-    if (isSpeaking) return false;
-
+  const destroyRecognition = useCallback(() => {
     if (recognitionRef.current) {
       intentionalStopRef.current = true;
-      try { recognitionRef.current.stop(); } catch {}
+      try { recognitionRef.current.abort(); } catch {}
       recognitionRef.current = null;
     }
+  }, []);
+
+  const startListening = useCallback(async (): Promise<boolean> => {
+    // Don't start if currently speaking (mutual silencing) — use ref to avoid stale closure
+    if (isSpeakingRef.current) return false;
+
+    // Destroy any existing instance first
+    destroyRecognition();
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return false;
 
-    if (micPermission !== "granted") {
+    // Check/request mic permission
+    let currentPermission = micPermission;
+    if (currentPermission !== "granted") {
       const granted = await requestMicPermission();
       if (!granted) return false;
+      currentPermission = "granted";
     }
 
     const recognition = new SpeechRecognition();
@@ -87,11 +117,13 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
+      if (!mountedRef.current) return;
       intentionalStopRef.current = false;
       setIsListening(true);
     };
     
     recognition.onresult = (event: any) => {
+      if (!mountedRef.current) return;
       let finalTranscript = "";
       let interimTranscript = "";
       
@@ -113,16 +145,30 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     };
 
     recognition.onerror = (event: any) => {
+      if (!mountedRef.current) return;
+      
+      // "aborted" is expected when we stop intentionally — ignore it
+      if (event.error === "aborted") {
+        return;
+      }
+      
       if (event.error === "not-allowed") {
         setMicPermission("denied");
-      } else if (event.error === "aborted") {
-        intentionalStopRef.current = true;
       }
+      
+      // "no-speech" is not fatal — the user just didn't say anything
+      if (event.error === "no-speech") {
+        console.log("[VoiceInput] No speech detected, ending session");
+      }
+
       setIsListening(false);
     };
 
     recognition.onend = () => {
+      if (!mountedRef.current) return;
       setIsListening(false);
+      
+      // Only fire onEnd if stop was NOT intentional
       if (!intentionalStopRef.current) {
         onEndRef.current?.();
       }
@@ -134,18 +180,16 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       recognition.start();
       return true;
     } catch (e) {
+      console.warn("[VoiceInput] Failed to start recognition:", e);
+      recognitionRef.current = null;
       return false;
     }
-  }, [lang, continuous, micPermission, requestMicPermission, isSpeaking]);
+  }, [lang, continuous, micPermission, requestMicPermission, destroyRecognition]);
 
   const stopListening = useCallback(() => {
-    intentionalStopRef.current = true;
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch {}
-      recognitionRef.current = null;
-    }
-    setIsListening(false);
-  }, []);
+    destroyRecognition();
+    if (mountedRef.current) setIsListening(false);
+  }, [destroyRecognition]);
 
   const toggleListening = useCallback(() => {
     if (isListening) {
@@ -163,32 +207,21 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
   // ── Intelligent text preprocessing for natural speech ──
   const preprocessForSpeech = useCallback((text: string): string[] => {
     let clean = text
-      // Remove code blocks and inline code
       .replace(/```[\s\S]*?```/g, "")
       .replace(/`([^`]+)`/g, "$1")
-      // Remove markdown bold/italic
       .replace(/\*\*([^*]+)\*\*/g, "$1")
       .replace(/\*([^*]+)\*/g, "$1")
       .replace(/_{1,3}([^_]+)_{1,3}/g, "$1")
-      // Remove headers
       .replace(/#{1,6}\s*/g, "")
-      // Remove links, keep text
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      // Remove URLs
       .replace(/https?:\/\/\S+/g, "")
-      // Remove comment syntax (//, /* */)
       .replace(/\/\/[^\n]*/g, "")
       .replace(/\/\*[\s\S]*?\*\//g, "")
-      // Remove HTML tags
       .replace(/<[^>]*>/g, "")
-      // Remove decorative chars and pipe tables
       .replace(/[~|─═╔╗╚╝║╠╣╬┌┐└┘├┤┬┴┼]/g, "")
-      // Remove bullet markers
       .replace(/^\s*[-*+]\s+/gm, "")
       .replace(/^\s*\d+\.\s+/gm, "")
-      // Remove technical emojis (keep conversational ones)
       .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/g, "")
-      // Normalize whitespace
       .replace(/\n{2,}/g, ".\n")
       .replace(/\n/g, ". ")
       .replace(/\s{2,}/g, " ")
@@ -217,93 +250,91 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     return sentences.map(s => s.trim()).filter(s => s.length > 2);
   }, []);
 
-  // ── Unified TTS Cascade: Orion → ElevenLabs → Piper → WebSpeech ──
-  // Integrates all 4 synthesis platforms with evolution feedback loop
+  // ── TTS: Web Speech only ──
   const speak = useCallback((text: string, options?: { rate?: number; pitch?: number; onComplete?: () => void }) => {
     // Mutual silencing: stop listening before speaking
-    if (recognitionRef.current) {
-      intentionalStopRef.current = true;
-      try { recognitionRef.current.stop(); } catch {}
-      recognitionRef.current = null;
-      setIsListening(false);
-    }
+    destroyRecognition();
+    if (mountedRef.current) setIsListening(false);
 
-    if (typeof window === "undefined") {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
       options?.onComplete?.();
       return;
     }
 
-    window.speechSynthesis?.cancel();
+    window.speechSynthesis.cancel();
     setIsSpeaking(true);
+    isSpeakingRef.current = true;
 
     const finalize = () => {
-      setIsSpeaking(false);
-      const cb = options?.onComplete;
-      cb?.();
+      if (mountedRef.current) {
+        setIsSpeaking(false);
+        isSpeakingRef.current = false;
+      }
+      options?.onComplete?.();
     };
 
-    // Async cascade — runs through all 4 tiers
-    (async () => {
-      // ── Single voice: Browser Web Speech (masculine PT-BR) ──
-      if (window.speechSynthesis) {
-        const bestVoice = getOrionVoice();
-        const sentences = preprocessForSpeech(text);
+    const bestVoice = getOrionVoice();
+    const sentences = preprocessForSpeech(text);
 
-        if (sentences.length === 0) {
-          finalize();
-          return;
-        }
+    if (sentences.length === 0) {
+      finalize();
+      return;
+    }
 
-        let keepAliveInterval: ReturnType<typeof setInterval> | null = null;
+    let keepAliveInterval: ReturnType<typeof setInterval> | null = null;
+    const fixedRate = options?.rate ?? ORION_VOICE_PARAMS.rate;
+    const fixedPitch = options?.pitch ?? ORION_VOICE_PARAMS.pitch;
 
-        // Fixed voice parameters — no more consciousness-based modulation
-        const fixedRate = options?.rate ?? ORION_VOICE_PARAMS.rate;
-        const fixedPitch = options?.pitch ?? ORION_VOICE_PARAMS.pitch;
+    let completed = false;
+    const safeFinalize = () => {
+      if (completed) return;
+      completed = true;
+      if (keepAliveInterval) clearInterval(keepAliveInterval);
+      finalize();
+    };
 
-        await new Promise<void>((resolve) => {
-          sentences.forEach((sentence, i) => {
-            const utterance = new SpeechSynthesisUtterance(sentence);
-            utterance.lang = lang;
-            utterance.rate = fixedRate;
-            utterance.pitch = fixedPitch;
-            utterance.volume = ORION_VOICE_PARAMS.volume;
+    // Safety timeout — if TTS hangs, finalize after 30s
+    const safetyTimeout = setTimeout(() => {
+      console.warn("[VoiceInput] TTS safety timeout — forcing finalize");
+      window.speechSynthesis.cancel();
+      safeFinalize();
+    }, 30000);
 
-            if (bestVoice) utterance.voice = bestVoice;
+    sentences.forEach((sentence, i) => {
+      const utterance = new SpeechSynthesisUtterance(sentence);
+      utterance.lang = lang;
+      utterance.rate = fixedRate;
+      utterance.pitch = fixedPitch;
+      utterance.volume = ORION_VOICE_PARAMS.volume;
 
-            if (i === 0) {
-              utterance.onstart = () => {
-                keepAliveInterval = setInterval(() => {
-                  if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-                    window.speechSynthesis.pause();
-                    window.speechSynthesis.resume();
-                  }
-                }, 10000);
-              };
+      if (bestVoice) utterance.voice = bestVoice;
+
+      if (i === 0) {
+        utterance.onstart = () => {
+          // Chrome bug: pause/resume keeps synthesis alive for long texts
+          keepAliveInterval = setInterval(() => {
+            if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+              window.speechSynthesis.pause();
+              window.speechSynthesis.resume();
             }
-
-            if (i === sentences.length - 1) {
-              utterance.onend = () => {
-                if (keepAliveInterval) clearInterval(keepAliveInterval);
-                resolve();
-              };
-              utterance.onerror = () => {
-                if (keepAliveInterval) clearInterval(keepAliveInterval);
-                resolve();
-              };
-            }
-
-            window.speechSynthesis.speak(utterance);
-          });
-        });
-
-        console.log("[VoiceInput] ✅ Web Speech (masculine voice)");
-        finalize();
-        return;
+          }, 10000);
+        };
       }
 
-      finalize();
-    })().catch(() => finalize());
-  }, [lang, selectBestVoice, preprocessForSpeech]);
+      if (i === sentences.length - 1) {
+        utterance.onend = () => {
+          clearTimeout(safetyTimeout);
+          safeFinalize();
+        };
+        utterance.onerror = () => {
+          clearTimeout(safetyTimeout);
+          safeFinalize();
+        };
+      }
+
+      window.speechSynthesis.speak(utterance);
+    });
+  }, [lang, preprocessForSpeech, destroyRecognition]);
 
   const stopSpeaking = useCallback(() => {
     window.speechSynthesis?.cancel();
@@ -313,6 +344,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     }
     onSpeakEndCallbackRef.current = null;
     setIsSpeaking(false);
+    isSpeakingRef.current = false;
   }, []);
 
   return {
