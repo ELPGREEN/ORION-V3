@@ -142,10 +142,10 @@ export async function runVisionGate(
   // Run classifier and captioner in parallel
   const [classResult, captionResult] = await Promise.allSettled([
     classifierPipeline
-      ? classifierPipeline(dataUrl, { topk: 5 })
+      ? (classifierPipeline as any)(dataUrl, { topk: 5 })
       : Promise.resolve([]),
     captionerPipeline
-      ? captionerPipeline(dataUrl)
+      ? (captionerPipeline as any)(dataUrl)
       : Promise.resolve([]),
   ]);
 
