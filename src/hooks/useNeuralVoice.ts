@@ -1,16 +1,17 @@
 /**
  * NEUROCORE AI — Voice STT/TTS Hook
- * Free TTS Cascade: Gemini TTS → Google TTS → Piper WASM → Enhanced Web Speech
- * Zero paid APIs. Maximum naturalness. Gemini 2.5 Flash Preview TTS as primary.
+ * Free TTS Cascade: Fish Clone → Gemini TTS → Google TTS → Piper WASM → Web Speech
+ * Zero paid APIs. Maximum naturalness. Voice cloning via Fish Speech v1.5.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
+import { speakWithFishClone, isFishCloneAvailable, getClonedVoiceRefPath } from "@/lib/tts/fishSpeechTTS";
 import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
 import { speakWithGoogleTTS, isGoogleTTSAvailable } from "@/lib/tts/googleTTS";
 import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
-
+import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 
 // ═══ Text Cleaning for Natural Speech ═══
 
