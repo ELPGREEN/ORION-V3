@@ -20,6 +20,7 @@ export async function speakWithGeminiTTS(
   text: string,
   voice: string = "Charon",
   signal?: AbortSignal,
+  stylePrompt?: string,
 ): Promise<GeminiTTSResult> {
   const fail: GeminiTTSResult = { played: false, audio: null };
   if (!text?.trim()) return fail;
