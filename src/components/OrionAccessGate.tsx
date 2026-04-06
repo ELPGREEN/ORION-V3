@@ -48,23 +48,18 @@ const MESSAGES: Record<GateMode, { intro: string; question: string; benefits: st
 };
 
 async function speakText(text: string) {
-  // Use Gemini TTS (high quality) instead of robotic SpeechSynthesis
-  const { speakWithGeminiTTS, isGeminiTTSAvailable } = await import("@/lib/tts/geminiTTS");
+  // Use Orion's own formant voice (100% offline)
+  const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
+  try {
+    const result = await speakWithOrionVoice(text);
+    if (result.played) return;
+  } catch {}
+
   const { speakWithPiper } = await import("@/lib/tts/piperTTS");
-
-  if (isGeminiTTSAvailable()) {
-    try {
-      const result = await speakWithGeminiTTS(text, "Iapetus");
-      if (result.played) return;
-    } catch {}
-  }
-
   try {
     const played = await speakWithPiper(text);
     if (played) return;
   } catch {}
-
-  // Skip robotic SpeechSynthesis entirely
 }
 
 export function OrionAccessGate({ mode, onClose, inline = false }: OrionAccessGateProps) {

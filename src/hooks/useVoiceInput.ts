@@ -268,15 +268,13 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     };
 
     try {
-      // Try Gemini TTS first (high quality, free)
-      const { speakWithGeminiTTS, isGeminiTTSAvailable } = await import("@/lib/tts/geminiTTS");
-      if (isGeminiTTSAvailable()) {
-        const result = await speakWithGeminiTTS(text, "Iapetus");
-        if (result.played) {
-          if (result.audio) audioRef.current = result.audio;
-          finalize();
-          return;
-        }
+      // Orion's own formant voice (100% offline)
+      const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
+      const result = await speakWithOrionVoice(text);
+      if (result.played) {
+        if (result.audio) audioRef.current = result.audio;
+        finalize();
+        return;
       }
     } catch {}
 

@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageToLocale } from "@/i18n";
 import { cleanTextForSpeech } from "@/hooks/useNeuralVoice";
-import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
 import { speakWithPiper } from "@/lib/tts/piperTTS";
 
 // ═══════════════════════════════════════════════════════════
@@ -26,20 +25,18 @@ interface VoiceInputButtonProps {
 }
 
 /**
- * High-quality TTS speak using the same cascade as useNeuralVoice:
- * Gemini TTS → Piper WASM (no robotic SpeechSynthesis)
+ * High-quality TTS using Orion's own formant voice (100% offline)
  */
 async function speakHighQuality(text: string, abortSignal?: AbortSignal): Promise<void> {
   const clean = cleanTextForSpeech(text).slice(0, 1500);
   if (!clean) return;
 
-  // Try Gemini TTS first
-  if (isGeminiTTSAvailable()) {
-    try {
-      const result = await speakWithGeminiTTS(clean, "Iapetus", abortSignal);
-      if (result.played) return;
-    } catch {}
-  }
+  // Orion's own voice engine (formant synthesis from Iapetus DNA)
+  try {
+    const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
+    const result = await speakWithOrionVoice(clean, abortSignal);
+    if (result.played) return;
+  } catch {}
 
   // Fallback: Piper WASM (still not robotic)
   try {
@@ -47,8 +44,7 @@ async function speakHighQuality(text: string, abortSignal?: AbortSignal): Promis
     if (played) return;
   } catch {}
 
-  // Last resort: do nothing rather than use robotic SpeechSynthesis
-  console.warn("[VoiceButton] No high-quality TTS available, skipping speech");
+  console.warn("[VoiceButton] No TTS available, skipping speech");
 }
 
 export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProcessing, className }: VoiceInputButtonProps) {

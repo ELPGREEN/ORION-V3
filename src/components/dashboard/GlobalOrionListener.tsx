@@ -10,16 +10,15 @@ import { useUserPlan } from "@/hooks/useUserPlan";
 import { OrionAccessGate } from "@/components/OrionAccessGate";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 
-/** Speak text using high-quality Gemini TTS (not robotic SpeechSynthesis) */
+/** Speak text using Orion's own formant voice (100% offline, zero API) */
 async function orionSpeak(text: string): Promise<void> {
   try {
-    const { speakWithGeminiTTS, isGeminiTTSAvailable } = await import("@/lib/tts/geminiTTS");
-    if (isGeminiTTSAvailable()) {
-      const result = await speakWithGeminiTTS(text, "Iapetus");
-      if (result.played) return;
-    }
+    const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
+    const result = await speakWithOrionVoice(text);
+    if (result.played) return;
   } catch {}
 
+  // Fallback: Piper WASM (still offline)
   try {
     const { speakWithPiper } = await import("@/lib/tts/piperTTS");
     const played = await speakWithPiper(text);

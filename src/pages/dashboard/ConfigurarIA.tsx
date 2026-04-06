@@ -5,7 +5,6 @@ import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
 import { OrionVoiceStudio } from "@/components/dashboard/neural/OrionVoiceStudio";
 import { useNeuralConfig, VisionRule, CustomCommand } from "@/hooks/useNeuralConfig";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
 import { speakWithPiper } from "@/lib/tts/piperTTS";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -149,11 +148,13 @@ export default function ConfigurarIA() {
     onResult: handleVoiceCommand,
   });
 
-  // High-quality speak (Gemini TTS, not robotic SpeechSynthesis)
+  // Orion's own formant voice (100% offline, zero API)
   const speak = async (text: string) => {
-    if (isGeminiTTSAvailable()) {
-      try { const r = await speakWithGeminiTTS(text, "Iapetus"); if (r.played) return; } catch {}
-    }
+    try {
+      const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
+      const r = await speakWithOrionVoice(text);
+      if (r.played) return;
+    } catch {}
     try { await speakWithPiper(text); } catch {}
   };
 
