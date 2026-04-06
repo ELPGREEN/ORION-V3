@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -10,10 +11,21 @@ import {
   OrionVideoShowcase,
 } from '@/components/home';
 import { WhoIsItForSection } from '@/components/home/WhoIsItForSection';
+import { WelcomeSplash } from '@/components/home/WelcomeSplash';
 import { useTranslation } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Index() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+
+  // Show splash only once per session and only for non-logged users
+  const alreadySeen = sessionStorage.getItem('orion_splash_seen') === '1';
+  const [showSplash, setShowSplash] = useState(!user && !alreadySeen);
+
+  if (showSplash) {
+    return <WelcomeSplash onDismiss={() => setShowSplash(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
@@ -39,26 +51,13 @@ export default function Index() {
       />
 
       <Header />
-
-      {/* 1. Hero — proposta de valor */}
       <HeroSection t={t} />
-
-      {/* 2. Vídeo showcase */}
       <OrionVideoShowcase />
-
-      {/* 3. Para quem é — cards de perfil com link direto */}
       <WhoIsItForSection />
-
-      {/* 4. Por que escolher o ORION — diferenciais */}
       <WhyOrionSection />
-
-      {/* 5. Comparativo — ORION vs outros */}
       <ComparisonSection />
-
-      {/* 6. CTA Final */}
       <CtaSection />
 
-      {/* Privacy Note */}
       <section className="py-6 bg-muted/10 border-t border-border/20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-10">
           <p className="text-xs text-center text-muted-foreground">
