@@ -394,7 +394,19 @@ export function useNeuralVoice(
       }
     }
 
-    // ── FALLBACK: Piper WASM (offline, better than silence) ──
+    // ── FALLBACK 1: Gemini TTS Edge Function (free, natural voice) ──
+    if (!played && !cascadeAbort.signal.aborted) {
+      try {
+        const gemResult = await speakWithGeminiTTS(cleanText, cascadeAbort.signal);
+        if (gemResult.played) {
+          played = true;
+          if (gemResult.audio) activeAudioRef.current = gemResult.audio;
+          console.log("[Voice] ✅ Gemini TTS");
+        }
+      } catch {}
+    }
+
+    // ── FALLBACK 2: Piper WASM (offline, better than silence) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
         played = await speakWithPiper(cleanText);
