@@ -118,8 +118,11 @@ export default function DashboardHome() {
   ];
 
   const quickNav = [
+    { title: "Orion IA", icon: Brain, path: "/consulta" },
     { title: "Pesquisa Jurídica", icon: Search, path: "/dashboard/pesquisa-unificada" },
+    { title: "CRM & Clientes", icon: Users, path: "/dashboard/crm" },
     { title: "Agendar Consulta", icon: Calendar, path: "/dashboard/consultas" },
+    { title: "Chat ao Vivo", icon: MessageSquare, path: "/dashboard/chat-ao-vivo" },
     { title: "Marketplace", icon: Store, path: "/dashboard/marketplace" },
   ];
 
