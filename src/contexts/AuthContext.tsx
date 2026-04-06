@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const initializedRef = useRef(false);
+  const redirectedRef = useRef(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
