@@ -589,8 +589,9 @@ export async function analyzeFrameStreaming(
     let imageBase64: string | undefined;
     if (includeImage && canvas) {
       const tempCanvas = document.createElement("canvas");
-      const sw = Math.min(canvas.width || 1024, 1024);
-      const sh = Math.min(canvas.height || 768, 768);
+      // ═══ COST OPTIMIZATION: Reduced from 1024x768 to 640x480 ═══
+      const sw = Math.min(canvas.width || 640, 640);
+      const sh = Math.min(canvas.height || 480, 480);
       tempCanvas.width = sw;
       tempCanvas.height = sh;
       const tCtx = tempCanvas.getContext("2d");
