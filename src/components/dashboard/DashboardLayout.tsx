@@ -169,6 +169,7 @@ export default function DashboardLayout() {
     <div className="min-h-screen bg-background flex overflow-x-hidden relative">
       <DashboardBackground />
       <MouseTrailEffect />
+      {orionListener}
       
       {/* Desktop Sidebar */}
       <div data-dashboard-chrome className={`hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-40 transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-72"}`}>
