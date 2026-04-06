@@ -10,6 +10,7 @@ import { executeNeuralPipeline, postProcessResponse, cacheResponse, type Pipelin
 import { withCircuitBreaker } from "./circuit-breaker";
 import { computeProviderHealth, buildFallbackChain, type ProviderHealth } from "./neural/provider-health";
 import { detectHallucinations } from "./analysis/hallucinationDetector";
+import { validateNeuralResponse, dispatchAntiHallucinationReport } from "./analysis/anti-hallucination-engine";
 import { getProviderWeight } from "./neural/reward-loop";
 
 // Re-export split modules for backwards compatibility
@@ -89,6 +90,9 @@ export interface AIResponse {
     pipelineCompletenessScore?: number;
     pipelineJudgeGrade?: string;
     pipelineCacheHit?: boolean;
+    antiHallucinationConfidence?: number;
+    antiHallucinationFE?: number;
+    antiHallucinationGrounding?: number;
   };
   // Full pipeline output for components that need it
   pipelineOutput?: PipelineOutput;
@@ -256,18 +260,51 @@ export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIR
     }
   }
 
-  // ═══ Anti-Hallucination Check (legal content) ═══
+  // ═══ Anti-Hallucination Check (Quantum-Enhanced v2.0) ═══
   if (response.content) {
     try {
-      const hallucinationWarnings = detectHallucinations(response.content);
-      const highSeverity = hallucinationWarnings.filter(w => w.severity === "high");
-      if (highSeverity.length > 0) {
-        const warningText = highSeverity
+      const antiHalReport = validateNeuralResponse(
+        options.prompt,
+        response.content,
+        {
+          useQuantum: true,
+          sources: pipelineOutput?.systemContext
+            ? [{ source: "neural_context", content: pipelineOutput.systemContext }]
+            : undefined,
+        }
+      );
+
+      // Dispatch for UI
+      dispatchAntiHallucinationReport(antiHalReport);
+
+      // Add disclaimer for low-confidence responses
+      if (antiHalReport.freeEnergy.severity === "high") {
+        const warningText = antiHalReport.hallucinations
+          .filter(w => w.severity === "high")
           .map(w => `⚠️ ${w.entity}: ${w.reason}`)
           .join("\n");
-        response.content += `\n\n---\n**⚠️ Alertas de verificação (${highSeverity.length}):**\n${warningText}`;
-        console.warn(`[AntiHallucination] ${highSeverity.length} warnings detected`, highSeverity);
+        
+        response.content += `\n\n---\n**⚠️ Alertas de verificação (confiança: ${antiHalReport.overallConfidence}%):**\n${warningText}`;
+        
+        if (antiHalReport.sourceGrounding.ungroundedClaims.length > 0) {
+          response.content += `\n**📌 Citações não verificadas:** ${antiHalReport.sourceGrounding.ungroundedClaims.join(", ")}`;
+        }
+        
+        console.warn(`[AntiHallucination:Neural] FE=${antiHalReport.freeEnergy.freeEnergy}, QFE=${antiHalReport.quantumFreeEnergy?.freeEnergy ?? "N/A"}, confidence=${antiHalReport.overallConfidence}%, grounding=${antiHalReport.sourceGrounding.groundingScore}%`);
+      } else if (antiHalReport.freeEnergy.severity === "low" && antiHalReport.freeEnergy.disclaimer) {
+        response.content += `\n\n${antiHalReport.freeEnergy.disclaimer}`;
       }
+
+      // Store correction prompt for potential use
+      if (antiHalReport.correctionPrompt) {
+        (response as any)._correctionPrompt = antiHalReport.correctionPrompt;
+      }
+
+      response.metadata.antiHallucinationConfidence = antiHalReport.overallConfidence;
+      response.metadata.antiHallucinationFE = antiHalReport.quantumFreeEnergy?.freeEnergy ?? antiHalReport.freeEnergy.freeEnergy;
+      response.metadata.antiHallucinationGrounding = antiHalReport.sourceGrounding.groundingScore;
+
+      console.log(`[AntiHallucination:Neural] confidence=${antiHalReport.overallConfidence}%, ${antiHalReport.processingMs}ms`);
     } catch (e) {
       console.warn("[AntiHallucination] Check error (non-fatal):", e);
     }
