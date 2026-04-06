@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { VoiceIDPanel } from "@/components/dashboard/neural/VoiceIDPanel";
+import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
 import { OrionVoiceStudio } from "@/components/dashboard/neural/OrionVoiceStudio";
 import { useNeuralConfig, VisionRule, CustomCommand } from "@/hooks/useNeuralConfig";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
