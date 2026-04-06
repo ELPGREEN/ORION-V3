@@ -1,15 +1,15 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { SEO } from "@/components/SEO";
+import { ArrowRight, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import {
-  Brain, Shield, Globe, FileText, Scale, Users, Zap, Bot,
-  BarChart3, Lock, Mic, Languages, Smartphone, Workflow,
-  Search, Gavel, TrendingUp, Eye, Database, Cloud,
-  ArrowRight, CheckCircle2, Sparkles, ExternalLink,
-  Cpu, Fingerprint, Network, Rocket, Clock, Award,
-  Heart, Star, Lightbulb, Layers, GitBranch, Activity,
-  ChevronLeft, ChevronRight
-} from "lucide-react";
+  IconNeuralAI, IconShield, IconGlobe, IconDocuments, IconScale, IconCRM,
+  IconAutomation, IconBot, IconDashboard, IconSearch, IconEye, IconDatabase,
+  IconCloud, IconSparkles, IconCpu, IconFingerprint, IconNetwork, IconRocket,
+  IconClock, IconAward, IconHeart, IconStar, IconLightbulb, IconSaaS,
+  IconGitBranch, IconActivity, IconWorkflow, IconLanguages, IconSmartphone,
+  IconCompliance, IconCheckMark, IconTrending,
+} from "@/components/icons/SumerianTronIcons";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { HeroThreeBackground } from "@/components/home/HeroThreeBackground";
