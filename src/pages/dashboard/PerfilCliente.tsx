@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { User, Save, Shield, Phone, Mail, MapPin, FileText, Loader2, CheckCircle } from "lucide-react";
-import { ProfilePhotoUpload } from "@/components/dashboard/ProfilePhotoUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -197,18 +196,15 @@ export default function PerfilCliente() {
         </div>
       )}
 
-      {/* Photo + Personal Data */}
+      {/* Personal Data */}
       <div className="bg-card border border-border p-6 space-y-4">
         <h2 className="text-sm font-serif text-foreground flex items-center gap-2">
           <Shield className="h-4 w-4 text-primary" />
           Dados Pessoais
         </h2>
-        <div className="flex flex-col sm:flex-row items-start gap-6">
-          <ProfilePhotoUpload size="md" />
-          <p className="text-[10px] text-muted-foreground flex-1">
-            Estas informações são usadas para identificação em documentos e processos.
-          </p>
-        </div>
+        <p className="text-[10px] text-muted-foreground">
+          Estas informações são usadas para identificação em documentos e processos.
+        </p>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">

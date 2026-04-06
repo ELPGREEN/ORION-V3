@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { Settings, Save, Upload, DollarSign, Shield, Loader2 } from "lucide-react";
-import { ProfilePhotoUpload } from "@/components/dashboard/ProfilePhotoUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -140,9 +139,6 @@ export default function PerfilAdmin() {
           <Shield className="h-4 w-4 text-primary" />
           Dados Pessoais
         </h2>
-        <div className="flex flex-col sm:flex-row items-start gap-6">
-          <ProfilePhotoUpload size="md" />
-          <div className="flex-1 w-full">
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-[10px] text-muted-foreground tracking-wider uppercase">Nome Completo</label>
@@ -173,8 +169,6 @@ export default function PerfilAdmin() {
               onChange={(e) => setPerfil({ ...perfil, telefone: e.target.value })}
               className="bg-background border-border h-10"
             />
-          </div>
-        </div>
           </div>
         </div>
       </div>
