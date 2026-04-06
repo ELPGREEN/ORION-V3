@@ -146,7 +146,7 @@ export function KnowledgeHarvester() {
                 <div className="text-xs text-muted-foreground">Tópicos</div>
               </div>
               <div className="text-center p-3 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-green-500">{summary.insertedCount}</div>
+                <div className="text-2xl font-bold text-primary">{summary.insertedCount}</div>
                 <div className="text-xs text-muted-foreground">Inseridos</div>
               </div>
               <div className="text-center p-3 bg-muted rounded-lg">
@@ -199,9 +199,9 @@ export function KnowledgeHarvester() {
                     </div>
                   </div>
                   {d.inserted ? (
-                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-1" />
+                    <CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-1" />
                   ) : (
-                    <XCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-1" />
+                    <XCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-1" />
                   )}
                 </div>
               ))}
