@@ -53,7 +53,7 @@ export type CloneFlowStep =
   | "complete";       // Done!
 
 export function useOrionVoiceClone() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { config, updateConfig } = useNeuralConfig();
   const [samples, setSamples] = useState<VoiceSample[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -274,6 +274,13 @@ export function useOrionVoiceClone() {
       // Verify the clone works by doing a test synthesis
       toast.info("Processando sua voz com Fish Speech... Isso pode levar alguns segundos.");
 
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        toast.error("Você precisa estar logado para clonar a voz");
+        setCloneFlowStep("reviewing");
+        return;
+      }
+
       const testResponse = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fish-speech-clone`,
         {
@@ -281,7 +288,7 @@ export function useOrionVoiceClone() {
           headers: {
             "Content-Type": "application/json",
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             text: "Clonagem de voz concluída com sucesso!",
@@ -332,7 +339,7 @@ export function useOrionVoiceClone() {
     } finally {
       setIsCloning(false);
     }
-  }, [user?.id, samples, updateConfig, isCreator]);
+  }, [user?.id, samples, updateConfig, isCreator, session?.access_token]);
 
   /**
    * Test the cloned voice (or Gemini TTS fallback)
@@ -345,6 +352,7 @@ export function useOrionVoiceClone() {
 
       // If we have a Fish Speech clone, use it
       if (isFishClone && cloneRefPath) {
+        const accessToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fish-speech-clone`,
           {
@@ -352,7 +360,7 @@ export function useOrionVoiceClone() {
             headers: {
               "Content-Type": "application/json",
               apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              Authorization: `Bearer ${accessToken}`,
             },
             body: JSON.stringify({
               text: testText,
@@ -382,7 +390,7 @@ export function useOrionVoiceClone() {
           headers: {
             "Content-Type": "application/json",
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
             text: testText,
@@ -401,7 +409,7 @@ export function useOrionVoiceClone() {
             headers: {
               "Content-Type": "application/json",
               apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
             },
             body: JSON.stringify({ text: testText, lang: "pt-br" }),
           }
@@ -424,7 +432,7 @@ export function useOrionVoiceClone() {
     } finally {
       setIsTesting(false);
     }
-  }, [clonedVoiceId, isFishClone, cloneRefPath]);
+  }, [clonedVoiceId, isFishClone, cloneRefPath, session?.access_token]);
 
   const deleteClonedVoice = useCallback(async () => {
     if (!clonedVoiceId) return;
