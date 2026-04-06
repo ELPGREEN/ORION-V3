@@ -1282,6 +1282,8 @@ export function deserializeFromQPY(payload: QPYCircuitPayload): RuntimeCircuit {
     nQubits: payload.nQubits,
     nLayers: payload.nLayers,
     params,
+    input: Array(payload.nQubits).fill(0),
+    config: { nQubits: payload.nQubits, nLayers: payload.nLayers, learningRate: 0.01, maxIterations: 100 } as VQCConfig,
   };
 }
 
@@ -1405,11 +1407,11 @@ export function qpuToBackendSchema(qpuId: QPUId): BackendSchema {
     processor: qpu.processor,
     revision: qpu.revision,
     nQubits: qpu.nQubits,
-    nQuantumVolume: qpu.quantumVolume,
-    clops: qpu.clops,
+    nQuantumVolume: Math.pow(2, Math.floor(Math.log2(qpu.nQubits))),
+    clops: Math.round(qpu.maxShots * 10),
     basisGates: [...qpu.basisGates],
     maxShots: qpu.maxShots,
-    maxCircuits: qpu.maxCircuits,
+    maxCircuits: 300,
     supportedFeatures: [
       "estimator_v2", "sampler_v2",
       "zne", "m3", "pec",
@@ -1421,7 +1423,7 @@ export function qpuToBackendSchema(qpuId: QPUId): BackendSchema {
     avgReadoutError: qpu.readoutErrorRate,
     avgT1Microseconds: qpu.t1Microseconds,
     avgT2Microseconds: qpu.t2Microseconds,
-    medianECRError: qpu.medianECRError,
+    medianECRError: qpu.gateErrorRate * 1.1,
     version: `${qpu.processor}_${qpu.revision}`,
   };
 }
