@@ -682,12 +682,19 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 videoHeight={videoRef.current?.videoHeight || 480}
               />
               <FaceScannerOverlay
-                faces={lastRtVisionRef.current?.faces ?? []}
+                faces={(lastRtVisionRef.current?.faces ?? []).map(f => ({
+                  x: f.x, y: f.y, width: f.width, height: f.height,
+                  confidence: f.confidence, landmarks: [],
+                  nx: f.x / (videoRef.current?.videoWidth || 640),
+                  ny: f.y / (videoRef.current?.videoHeight || 480),
+                  nw: f.width / (videoRef.current?.videoWidth || 640),
+                  nh: f.height / (videoRef.current?.videoHeight || 480),
+                }))}
                 width={200}
                 height={150}
                 videoWidth={videoRef.current?.videoWidth || 640}
                 videoHeight={videoRef.current?.videoHeight || 480}
-                tier={lastRtVisionRef.current?.status.mediapipe ? "mediapipe" : "fallback"}
+                tier={lastRtVisionRef.current?.status.mediapipe ? "native" : "fallback"}
                 faceApiDetection={null}
               />
               {gesturesEnabled && currentGesture.gesture !== "none" && (
