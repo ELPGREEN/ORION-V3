@@ -9,7 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { CopyProtection } from "@/components/CopyProtection";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { OrionShield } from "@/components/common/OrionShield";
-import { OrionGlobalListener } from "@/components/OrionGlobalListener";
+import { GlobalOrionListener } from "@/components/dashboard/GlobalOrionListener";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import { PageLoader } from "@/components/common/PageLoader";
 import { lazy, Suspense } from "react";
@@ -128,7 +128,7 @@ const App = () => (
           <ScrollToTop />
           <CopyProtection />
           <OrionShield />
-          <OrionGlobalListener />
+          <GlobalOrionListener />
           <MouseTrailEffect />
           <CookieConsent />
           <AffiliateTracker />
