@@ -1,7 +1,8 @@
 /**
- * NEUROCORE AI — Voice STT/TTS Hook
- * Free TTS Cascade: Fish Clone → Gemini TTS → Google TTS → Piper WASM → Web Speech
- * Zero paid APIs. Maximum naturalness. Voice cloning via Fish Speech v1.5.
+ * NEUROCORE AI — Voice Synthesis Hook
+ * PRIMARY: Fish Speech v1.5 Clone (síntese vocal clonada do usuário)
+ * EMERGENCY FALLBACK: Gemini TTS → Google TTS → Piper WASM → Web Speech
+ * Zero paid APIs. Voice cloning via Fish Speech v1.5.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
@@ -338,12 +339,11 @@ export function useNeuralVoice(
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
 
   /**
-   * ═══ Main TTS Cascade (100% FREE) ═══
+   * ═══ Main TTS — Síntese Vocal Clonada (100% FREE) ═══
    * 
-   * Tier 0: Gemini 2.5 Flash Preview TTS (neural, highest quality, free via 7-key rotation)
-   * Tier 1: Google Translate TTS (edge function proxy) — great PT-BR quality, free
-   * Tier 2: Piper WASM (offline neural) — good quality, no network needed
-   * Tier 3: Enhanced Web Speech API — browser built-in with prosody variation
+   * PRIMARY: Fish Speech v1.5 Clone (sua voz clonada — uso exclusivo após configuração)
+   * EMERGENCY FALLBACK (só quando Fish Clone falha):
+   *   → Gemini TTS → Google TTS → Piper WASM → Web Speech
    */
   const speak = useCallback(async (text: string) => {
     if (!ttsRef.current || typeof window === "undefined") return;
@@ -387,75 +387,82 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
-    // ── Tier 0: Fish Speech Clone (user's own cloned voice, free) ──
+    // ── PRIMARY: Fish Speech Clone (sua voz clonada — uso exclusivo) ──
     const voiceId = (config as any)?.orion_voice_id as string | undefined;
     const fishRefPath = getClonedVoiceRefPath(voiceId);
-    if (!played && !cascadeAbort.signal.aborted && fishRefPath && isFishCloneAvailable()) {
+    const hasClonedVoice = !!fishRefPath;
+
+    if (!played && !cascadeAbort.signal.aborted && hasClonedVoice && isFishCloneAvailable()) {
       try {
         const result = await speakWithFishClone(cleanText, fishRefPath, undefined, cascadeAbort.signal);
         if (result.played) {
           played = true;
           if (result.audio) activeAudioRef.current = result.audio;
-          console.log("[Voice] ✅ Tier 0: Fish Speech Clone (sua voz!)");
+          console.log("[Voice] ✅ Síntese vocal clonada (Fish Speech v1.5)");
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Tier 0 Fish Clone failed, trying Tier 1...");
+          console.warn("[Voice] Clone TTS falhou, usando fallback de emergência...");
         }
       }
     }
 
-    // ── Tier 1: Gemini 2.5 Flash Preview TTS (neural, free) ──
-    if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
-      try {
-        const result = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
-        if (result.played) {
-          played = true;
-          if (result.audio) activeAudioRef.current = result.audio;
-          console.log("[Voice] ✅ Tier 1: Gemini TTS (neural, free)");
-        }
-      } catch (err) {
-        if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Tier 1 Gemini TTS failed, trying Tier 2...");
-        }
-      }
-    }
-
-    // ── Tier 1: Google Translate TTS (free, best PT-BR quality) ──
-    if (!played && !cascadeAbort.signal.aborted && isGoogleTTSAvailable()) {
-      try {
-        const result = await speakWithGoogleTTS(cleanText, "pt-br", cascadeAbort.signal);
-        if (result.played) {
-          played = true;
-          if (result.audio) activeAudioRef.current = result.audio;
-          console.log("[Voice] ✅ Tier 1: Google TTS (free, natural)");
-        }
-      } catch (err) {
-        if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Tier 1 Google TTS failed, trying Tier 2...");
-        }
-      }
-    }
-
-    // ── Tier 2: Piper WASM (offline neural, free) ──
+    // ══ EMERGENCY FALLBACK — só ativado quando voz clonada não está disponível ══
     if (!played && !cascadeAbort.signal.aborted) {
-      try {
-        played = await speakWithPiper(cleanText);
-        if (played) {
-          console.log("[Voice] ✅ Tier 2: Piper WASM (offline neural)");
-        }
-      } catch {
-        console.warn("[Voice] Tier 2 Piper failed, trying Tier 3...");
+      if (hasClonedVoice) {
+        console.warn("[Voice] ⚠️ Voz clonada indisponível — fallback de emergência");
       }
-    }
 
-    // ── Tier 3: Enhanced Web Speech API (prosody variation) ──
-    if (!played && !cascadeAbort.signal.aborted && "speechSynthesis" in window) {
-      try {
-        await browserSpeak(text);
-        played = true;
-        console.log("[Voice] ✅ Tier 3: Web Speech (enhanced prosody)");
-      } catch {}
+      // Fallback 1: Gemini TTS
+      if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
+        try {
+          const result = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
+          if (result.played) {
+            played = true;
+            if (result.audio) activeAudioRef.current = result.audio;
+            console.log("[Voice] ⚠️ Fallback: Gemini TTS");
+          }
+        } catch (err) {
+          if ((err as Error)?.name !== "AbortError") {
+            console.warn("[Voice] Gemini TTS falhou...");
+          }
+        }
+      }
+
+      // Fallback 2: Google Translate TTS
+      if (!played && !cascadeAbort.signal.aborted && isGoogleTTSAvailable()) {
+        try {
+          const result = await speakWithGoogleTTS(cleanText, "pt-br", cascadeAbort.signal);
+          if (result.played) {
+            played = true;
+            if (result.audio) activeAudioRef.current = result.audio;
+            console.log("[Voice] ⚠️ Fallback: Google TTS");
+          }
+        } catch (err) {
+          if ((err as Error)?.name !== "AbortError") {
+            console.warn("[Voice] Google TTS falhou...");
+          }
+        }
+      }
+
+      // Fallback 3: Piper WASM (offline)
+      if (!played && !cascadeAbort.signal.aborted) {
+        try {
+          played = await speakWithPiper(cleanText);
+          if (played) console.log("[Voice] ⚠️ Fallback: Piper WASM");
+        } catch {
+          console.warn("[Voice] Piper falhou...");
+        }
+      }
+
+      // Fallback 4: Web Speech API (último recurso)
+      if (!played && !cascadeAbort.signal.aborted && "speechSynthesis" in window) {
+        try {
+          await browserSpeak(text);
+          played = true;
+          console.log("[Voice] ⚠️ Fallback: Web Speech (último recurso)");
+        } catch {}
+      }
     }
     
     clearTimeout(safetyTimer);
