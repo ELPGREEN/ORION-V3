@@ -314,12 +314,8 @@ export function useNeuralVoice(
     });
   }, [resumeSTT, updateAiResponding]);
 
-  /** speakFast: Uses Gemini TTS (same cascade as speak, no robotic voice) */
-  const speakFast = useCallback(async (text: string) => {
-    if (!ttsRef.current || typeof window === "undefined") return;
-    // Just delegate to the main speak — no more robotic SpeechSynthesis
-    await speak(text);
-  }, [speak]);
+  // speakFast placeholder — will be replaced after speak is defined
+  let speakFastFn: (text: string) => Promise<void>;
 
   /**
    * ═══ Main TTS — Gemini TTS Primário (100% FREE, ~2s latência) ═══
