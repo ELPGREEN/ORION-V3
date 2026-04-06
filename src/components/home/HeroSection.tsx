@@ -5,6 +5,9 @@ import { IconAutomation, IconShield, IconGlobe, IconNeuralAI } from "@/component
 import { Button } from "@/components/ui/button";
 import { HeroThreeBackground } from "./HeroThreeBackground";
 import { PlasmaCore } from "./PlasmaCore";
+import orionTitle from "@/assets/orion-title-metallic.png";
+import hudElement from "@/assets/hud-element.png";
+import neuralBg from "@/assets/neural-bg.png";
 
 interface HeroSectionProps {
   t: any;
@@ -43,12 +46,39 @@ export function HeroSection({ t }: HeroSectionProps) {
   const heroTranslateY = scrollY * 0.15;
 
   return (
-    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden neural-ambient">
+    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
       <HeroThreeBackground />
 
-      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background z-[1]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.5)_70%,hsl(var(--background))_100%)] z-[1]" />
-      <div className="absolute inset-0 neural-grid z-[1] opacity-40" />
+      {/* Neural network background image */}
+      <img
+        src={neuralBg}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover z-[1] opacity-[0.07] mix-blend-screen pointer-events-none"
+      />
+
+      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background z-[2]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.5)_70%,hsl(var(--background))_100%)] z-[2]" />
+
+      {/* Holographic HUD element — right side, like the OG image */}
+      <img
+        src={hudElement}
+        alt=""
+        className="absolute right-[-5%] top-1/2 -translate-y-1/2 w-[300px] sm:w-[400px] lg:w-[500px] opacity-[0.08] z-[2] pointer-events-none"
+        style={{
+          transform: `translate3d(0, calc(-50% + ${scrollY * 0.05}px), 0)`,
+          filter: 'hue-rotate(-10deg)',
+        }}
+      />
+
+      {/* HUD element — left side, mirrored and smaller */}
+      <img
+        src={hudElement}
+        alt=""
+        className="absolute left-[-8%] top-[30%] w-[200px] sm:w-[280px] opacity-[0.04] z-[2] pointer-events-none"
+        style={{
+          transform: `scaleX(-1) translate3d(0, ${scrollY * 0.03}px, 0)`,
+        }}
+      />
 
       <div
         className="container relative z-10 py-16 sm:py-20 px-4 sm:px-6"
@@ -58,6 +88,7 @@ export function HeroSection({ t }: HeroSectionProps) {
         }}
       >
         <div className="max-w-4xl mx-auto text-center">
+          {/* Plasma orb */}
           <div
             className="mb-6 sm:mb-8"
             style={{
@@ -71,6 +102,7 @@ export function HeroSection({ t }: HeroSectionProps) {
             </div>
           </div>
 
+          {/* Metallic 3D ORION title — real image, not CSS */}
           <div
             style={{
               opacity: loaded ? 1 : 0,
@@ -78,13 +110,16 @@ export function HeroSection({ t }: HeroSectionProps) {
               transition: 'opacity 0.8s ease 0.4s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.4s',
             }}
           >
-            <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-[0.15em] mb-2 text-metallic">
-              ORION
-            </h1>
+            <img
+              src={orionTitle}
+              alt="ORION"
+              className="h-16 sm:h-20 md:h-28 lg:h-36 mx-auto mb-2 drop-shadow-[0_0_40px_hsl(var(--primary)/0.4)]"
+              style={{ filter: 'drop-shadow(0 0 60px hsl(30 85% 52% / 0.3))' }}
+            />
           </div>
 
           <div
-            className="w-16 sm:w-24 h-1 bg-primary mx-auto mb-4 sm:mb-6"
+            className="w-16 sm:w-24 h-1 bg-primary mx-auto mb-4 sm:mb-6 plasma-glow"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'scaleX(1)' : 'scaleX(0)',
@@ -100,7 +135,7 @@ export function HeroSection({ t }: HeroSectionProps) {
               transition: 'opacity 0.8s ease 0.6s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s',
             }}
           >
-            INTELIGÊNCIA ARTIFICIAL EMPRESARIAL
+            ENTERPRISE AI PLATFORM
           </p>
 
           <div
@@ -112,10 +147,10 @@ export function HeroSection({ t }: HeroSectionProps) {
             }}
           >
             {[
-              { Icon: IconAutomation, label: "Automação Inteligente" },
-              { Icon: IconShield, label: "Orion Shield" },
-              { Icon: IconGlobe, label: "Multi-idioma" },
-              { Icon: IconNeuralAI, label: "IA Avançada" },
+              { Icon: IconAutomation, label: "Neural Automation" },
+              { Icon: IconShield, label: "Cyber Shield" },
+              { Icon: IconGlobe, label: "Multi-Language" },
+              { Icon: IconNeuralAI, label: "Advanced AI" },
             ].map((item) => (
               <div key={item.label} className="hud-frame flex items-center gap-2 px-4 py-2 border border-primary/20 bg-primary/5 text-xs text-muted-foreground backdrop-blur-sm">
                 <item.Icon className="h-4 w-4 text-primary" />
@@ -132,9 +167,9 @@ export function HeroSection({ t }: HeroSectionProps) {
               transition: 'opacity 0.8s ease 0.8s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.8s',
             }}
           >
-            Plataforma de IA empresarial para automação de processos, 
-            gestão de documentos, clientes e equipes com 
-            inteligência artificial de última geração.
+            Enterprise AI platform for process automation, 
+            document management, teams and clients — powered by 
+            next-generation neural intelligence.
           </p>
 
           <div
@@ -147,13 +182,13 @@ export function HeroSection({ t }: HeroSectionProps) {
           >
             <Button size="lg" className="btn-gold px-8 sm:px-10 py-5 sm:py-6 text-xs shimmer w-full sm:w-auto" asChild>
               <Link to="/cadastro">
-                Começar Agora
+                Get Started
                 <ArrowRight className="ml-3 h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" className="btn-outline-gold px-8 sm:px-10 py-5 sm:py-6 text-xs w-full sm:w-auto" asChild>
               <Link to="/plataforma">
-                Conhecer a Plataforma
+                Explore Platform
               </Link>
             </Button>
           </div>
@@ -165,7 +200,7 @@ export function HeroSection({ t }: HeroSectionProps) {
               transition: 'opacity 1s ease 1.4s',
             }}
           >
-            Desenvolvido por ELP® Green Technology
+            Powered by ELP® Green Technology
           </p>
         </div>
       </div>
