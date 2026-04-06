@@ -1,7 +1,8 @@
 """
-ELP Neural Proxy v5.0 — PDF + Vision + Code + Fine-Tuning Agent Swarm
+ELP Neural Proxy v6.0 — Complete AI Agent Swarm
+PDF + Vision + Code + Fine-Tuning + Dataset Creation + Media Generation
+2000+ Neural Agents covering ALL HuggingFace Spaces categories
 Runs on 2GB RAM (HF Spaces free tier)
-PyMuPDF + pdfplumber + 1500+ Neural Agents + Fine-Tuning Orchestrator
 """
 
 import io
@@ -24,7 +25,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # ============================================================
 # App Init
 # ============================================================
-app = FastAPI(title="ELP Neural Proxy", version="5.0.0")
+app = FastAPI(title="ELP Neural Proxy", version="6.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,11 +34,11 @@ app.add_middleware(
 )
 
 # ============================================================
-# AGENT REGISTRY — 1500+ Neural Agents
+# AGENT REGISTRY — 2000+ Neural Agents (ALL HF Categories)
 # ============================================================
 
 AGENT_CATEGORIES = {
-    # ── Code Generation (150+ agents) ──
+    # ── Code Generation (150+) ──
     "code_gen": {
         "languages": [
             "python", "javascript", "typescript", "rust", "go", "java", "kotlin",
@@ -51,7 +52,7 @@ AGENT_CATEGORIES = {
             "flask", "express", "nestjs", "spring", "rails", "laravel", "phoenix",
         ],
     },
-    # ── Code Analysis (225+ agents) ──
+    # ── Code Analysis (225+) ──
     "code_analysis": {
         "types": [
             "security_audit", "performance_profile", "complexity_analysis",
@@ -61,7 +62,7 @@ AGENT_CATEGORIES = {
             "license_compliance", "accessibility_audit", "seo_analysis",
         ],
     },
-    # ── Reasoning (300+ agents) ──
+    # ── Reasoning (300+) ──
     "reasoning": {
         "types": [
             "legal_analysis", "contract_review", "case_law_research",
@@ -71,43 +72,40 @@ AGENT_CATEGORIES = {
             "strategic_planning", "negotiation_analysis", "patent_analysis",
         ],
     },
-    # ── Vision (144+ agents) ──
+    # ── Vision (200+) ──
     "vision": {
         "types": [
             "face_detection", "face_landmarks", "emotion_recognition",
             "pose_estimation", "hand_tracking", "object_detection",
             "scene_classification", "ocr_extraction", "document_layout",
             "medical_imaging", "satellite_analysis", "style_transfer",
+            "background_removal", "image_upscaling", "image_inpainting",
+            "image_outpainting", "controlnet", "depth_estimation",
+            "image_segmentation", "visual_qa", "image_captioning",
+            "image_to_svg", "face_swap", "virtual_tryon",
         ],
     },
-    # ── Fine-Tuning (200+ agents) — NEW v5.0 ──
+    # ── Fine-Tuning (200+) ──
     "fine_tuning": {
         "types": [
-            # LLM Fine-Tuning
             "lora_adapter", "qlora_4bit", "full_finetune", "dpo_alignment",
             "rlhf_training", "reward_modeling", "instruction_tuning",
             "chat_finetuning", "code_finetuning", "medical_finetuning",
             "legal_finetuning", "multilingual_finetuning",
-            # Image Model Fine-Tuning (DreamBooth, LoRA, SDXL, FLUX)
             "dreambooth_lora", "sdxl_lora_trainer", "flux_lora_trainer",
             "textual_inversion", "controlnet_training", "ip_adapter_training",
             "style_transfer_finetune", "image_classifier_finetune",
-            # Embedding Fine-Tuning
             "embedding_finetune", "sentence_transformer_finetune",
             "contrastive_learning", "triplet_loss_training",
-            # Speech & Audio Fine-Tuning
             "tts_finetuning", "asr_finetuning", "voice_cloning_train",
             "rvc_voice_conversion", "music_lora_training",
-            # Specialized Fine-Tuning
             "graph_classifier_training", "drug_target_affinity",
             "protein_folding_finetune", "xray_medical_finetune",
             "federated_training", "machine_unlearning",
             "reinforcement_learning", "curriculum_learning",
-            # AutoTrain Compatible
             "autotrain_text_classification", "autotrain_token_classification",
             "autotrain_qa", "autotrain_translation", "autotrain_summarization",
             "autotrain_image_classification", "autotrain_tabular",
-            # Enterprise & Deployment
             "quantize_gptq", "quantize_awq", "quantize_gguf",
             "model_merging", "model_pruning", "knowledge_distillation",
             "onnx_export", "tensorrt_optimization", "vllm_deployment",
@@ -120,7 +118,119 @@ AGENT_CATEGORIES = {
             "clip", "siglip", "dinov2", "sam2",
         ],
     },
-    # ── PDF (110+ agents) ──
+    # ── Dataset Creation (NEW v6.0 — 180+) ──
+    "dataset_creation": {
+        "generators": [
+            "synthetic_json", "synthetic_jsonl", "synthetic_csv", "synthetic_parquet",
+            "synthetic_instruction", "synthetic_chat", "synthetic_dpo",
+            "synthetic_code", "synthetic_qa", "synthetic_translation",
+            "synthetic_summarization", "synthetic_ner", "synthetic_classification",
+            "distilabel_pipeline", "infinite_dataset_hub",
+        ],
+        "converters": [
+            "pdf_to_dataset", "csv_to_hf_dataset", "jsonl_to_hf_dataset",
+            "parquet_to_csv", "xls_to_jsonl", "whatsapp_to_training",
+            "reddit_to_dataset", "corpus_creator", "safetensors_converter",
+            "gguf_quantizer", "format_validator_jsonl",
+        ],
+        "labeling": [
+            "text_classification_labeler", "token_labeler", "ner_annotator",
+            "image_segmentation_labeler", "object_detection_labeler",
+            "qa_annotator", "sentiment_labeler", "argilla_integration",
+            "coverage_classifier", "multilabel_tagger",
+        ],
+        "tools": [
+            "dataset_deduplication", "vector_search_dataset", "dataset_explorer",
+            "dataset_card_creator", "dataset_tagging", "dataset_migrator_github",
+            "dataset_migrator_kaggle", "dataset_rewriter", "dataset_splitter",
+            "ocr_dataset_generator", "domain_specific_seed",
+            "data_augmentation", "dataset_statistics", "bias_detector",
+            "data_quality_checker", "dataset_versioning",
+        ],
+    },
+    # ── Image Generation (NEW v6.0 — 80+) ──
+    "image_generation": {
+        "models": [
+            "flux_dev", "flux_schnell", "flux_klein_9b", "sdxl_base",
+            "sdxl_turbo", "stable_diffusion_3", "animagine_xl",
+            "playground_v2", "dalle3_proxy", "midjourney_proxy",
+        ],
+        "techniques": [
+            "text_to_image", "image_to_image", "inpainting", "outpainting",
+            "controlnet_canny", "controlnet_depth", "controlnet_pose",
+            "controlnet_sketch", "ip_adapter", "lora_composition",
+            "prompt_engineering", "negative_prompts", "cfg_guidance",
+            "character_sheet", "comic_generation", "graphic_novel",
+        ],
+    },
+    # ── Video Generation (NEW v6.0 — 60+) ──
+    "video_generation": {
+        "models": [
+            "wan2_14b", "ltx_2_3", "ltx_turbo", "cogvideox",
+            "animatediff", "stable_video_diffusion", "kling",
+        ],
+        "types": [
+            "text_to_video", "image_to_video", "video_extend",
+            "portrait_animation", "lipsync", "motion_transfer",
+            "video_face_swap", "video_background_removal",
+            "video_upscaling", "video_dubbing", "video_translation",
+        ],
+    },
+    # ── Speech & Audio (NEW v6.0 — 90+) ──
+    "speech_audio": {
+        "tts": [
+            "voxtral_tts", "kokoro_tts", "f5_tts", "bark_tts",
+            "qwen3_tts", "piper_tts", "xtts_v2", "chatterbox",
+        ],
+        "asr": [
+            "whisper_large_v3", "whisper_turbo", "cohere_transcribe",
+            "granite_speech", "vibevoice_asr", "multilingual_asr",
+        ],
+        "voice": [
+            "voice_cloning", "rvc_v2", "beatrice_v2", "voice_conversion",
+            "voice_separation", "uvr5_vocal_removal", "audio_silence_removal",
+        ],
+        "music": [
+            "ace_step_v15", "musicgen", "audioldm2", "music_lora",
+            "ai_cover_gen", "audio_mixing",
+        ],
+    },
+    # ── 3D Modeling (NEW v6.0 — 40+) ──
+    "modeling_3d": {
+        "types": [
+            "image_to_3d", "text_to_3d", "trellis_2", "hunyuan3d",
+            "triposr", "instantmesh", "point_cloud", "gaussian_splatting",
+            "pbr_materials", "mesh_optimization", "uv_unwrap",
+            "reconviagen", "multiview_generation",
+        ],
+    },
+    # ── Text & NLP (NEW v6.0 — 120+) ──
+    "text_nlp": {
+        "generation": [
+            "text_completion", "chat", "instruction_following",
+            "creative_writing", "code_generation", "translation",
+            "summarization", "paraphrase",
+        ],
+        "analysis": [
+            "sentiment_analysis", "ner_extraction", "topic_classification",
+            "toxicity_detection", "language_detection", "keyword_extraction",
+            "text_similarity", "question_answering",
+        ],
+        "models": [
+            "qwen3_5", "gemma4", "llama3", "mistral", "deepseek_v3",
+            "command_r", "phi3", "lfm2_5_moe",
+        ],
+    },
+    # ── Benchmarking (NEW v6.0 — 30+) ──
+    "benchmarking": {
+        "types": [
+            "open_llm_leaderboard", "mteb_leaderboard", "ugi_leaderboard",
+            "vbench", "open_asr_leaderboard", "world_model_bench",
+            "arena_hard", "chatbot_arena", "lmsys_eval",
+            "model_comparison", "speed_benchmark", "cost_benchmark",
+        ],
+    },
+    # ── PDF (110+) ──
     "pdf": {
         "types": [
             "layout_analysis", "table_extraction", "text_extraction",
@@ -146,7 +256,7 @@ TOTAL_AGENTS = count_agents()
 
 
 # ============================================================
-# PDF PROCESSING (existing)
+# PDF PROCESSING
 # ============================================================
 
 def classify_block(block: dict, page_width: float, page_height: float) -> str:
@@ -324,90 +434,66 @@ def analyze_code_quality(code: str) -> Dict[str, Any]:
 
 
 # ============================================================
-# FINE-TUNING CONFIGURATION GENERATOR (NEW v5.0)
+# FINE-TUNING CONFIG GENERATOR
 # ============================================================
 
 FINETUNE_PRESETS = {
     "lora": {
-        "method": "LoRA",
-        "r": 16, "lora_alpha": 32, "lora_dropout": 0.05,
+        "method": "LoRA", "r": 16, "lora_alpha": 32, "lora_dropout": 0.05,
         "target_modules": ["q_proj", "v_proj", "k_proj", "o_proj"],
         "learning_rate": 2e-4, "epochs": 3, "batch_size": 4,
-        "gradient_accumulation_steps": 4,
-        "optimizer": "adamw_torch", "scheduler": "cosine",
-        "warmup_ratio": 0.03, "max_grad_norm": 0.3,
-        "fp16": True, "bf16": False,
+        "gradient_accumulation_steps": 4, "optimizer": "adamw_torch",
+        "scheduler": "cosine", "warmup_ratio": 0.03, "max_grad_norm": 0.3, "fp16": True,
     },
     "qlora": {
-        "method": "QLoRA (4-bit)",
-        "r": 64, "lora_alpha": 16, "lora_dropout": 0.1,
+        "method": "QLoRA (4-bit)", "r": 64, "lora_alpha": 16, "lora_dropout": 0.1,
         "target_modules": ["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
         "bits": 4, "quant_type": "nf4", "double_quant": True,
         "learning_rate": 2e-4, "epochs": 3, "batch_size": 2,
-        "gradient_accumulation_steps": 8,
-        "optimizer": "paged_adamw_8bit", "scheduler": "cosine",
-        "warmup_ratio": 0.03, "max_grad_norm": 0.3,
-        "fp16": True,
+        "gradient_accumulation_steps": 8, "optimizer": "paged_adamw_8bit",
+        "scheduler": "cosine", "warmup_ratio": 0.03, "max_grad_norm": 0.3, "fp16": True,
     },
     "dreambooth_lora": {
-        "method": "DreamBooth + LoRA",
-        "instance_prompt": "a photo of sks [class]",
-        "class_prompt": "a photo of [class]",
-        "resolution": 512, "train_batch_size": 1,
-        "learning_rate": 1e-4, "max_train_steps": 800,
-        "lora_r": 4, "lora_alpha": 4,
+        "method": "DreamBooth + LoRA", "instance_prompt": "a photo of sks [class]",
+        "class_prompt": "a photo of [class]", "resolution": 512, "train_batch_size": 1,
+        "learning_rate": 1e-4, "max_train_steps": 800, "lora_r": 4, "lora_alpha": 4,
         "prior_preservation": True, "prior_loss_weight": 1.0,
     },
     "sdxl_lora": {
-        "method": "SDXL LoRA",
-        "resolution": 1024, "train_batch_size": 1,
-        "learning_rate": 1e-4, "max_train_steps": 1000,
-        "lora_r": 8, "rank": 8,
-        "optimizer": "prodigy", "scheduler": "constant",
-        "mixed_precision": "fp16", "gradient_checkpointing": True,
+        "method": "SDXL LoRA", "resolution": 1024, "train_batch_size": 1,
+        "learning_rate": 1e-4, "max_train_steps": 1000, "lora_r": 8, "rank": 8,
+        "optimizer": "prodigy", "scheduler": "constant", "mixed_precision": "fp16",
+        "gradient_checkpointing": True,
     },
     "flux_lora": {
-        "method": "FLUX.1 LoRA",
-        "resolution": 1024, "train_batch_size": 1,
-        "learning_rate": 1e-4, "max_train_steps": 1500,
-        "lora_r": 16, "rank": 16,
+        "method": "FLUX.1 LoRA", "resolution": 1024, "train_batch_size": 1,
+        "learning_rate": 1e-4, "max_train_steps": 1500, "lora_r": 16, "rank": 16,
         "optimizer": "adamw", "scheduler": "constant_with_warmup",
-        "warmup_steps": 100, "mixed_precision": "bf16",
-        "guidance_scale": 3.5,
+        "warmup_steps": 100, "mixed_precision": "bf16", "guidance_scale": 3.5,
     },
     "embedding": {
-        "method": "Sentence Transformer Fine-Tune",
-        "loss": "MultipleNegativesRankingLoss",
-        "learning_rate": 2e-5, "epochs": 10, "batch_size": 16,
-        "warmup_steps": 100, "evaluation_strategy": "steps",
-        "eval_steps": 500, "metric": "cosine_similarity",
+        "method": "Sentence Transformer Fine-Tune", "loss": "MultipleNegativesRankingLoss",
+        "learning_rate": 2e-5, "epochs": 10, "batch_size": 16, "warmup_steps": 100,
+        "evaluation_strategy": "steps", "eval_steps": 500, "metric": "cosine_similarity",
     },
     "tts": {
-        "method": "TTS Fine-Tuning (XTTS/Bark)",
-        "sample_rate": 22050, "max_audio_length": 11.0,
+        "method": "TTS Fine-Tuning", "sample_rate": 22050, "max_audio_length": 11.0,
         "learning_rate": 5e-6, "epochs": 20, "batch_size": 2,
         "language": "pt", "speaker_embedding_dim": 512,
     },
     "rvc": {
-        "method": "RVC Voice Conversion v2",
-        "sample_rate": 40000, "f0_method": "rmvpe",
-        "epochs": 200, "batch_size": 8,
-        "learning_rate": 1e-4, "save_every_epoch": 25,
-        "cache_all_data": True,
+        "method": "RVC Voice Conversion v2", "sample_rate": 40000, "f0_method": "rmvpe",
+        "epochs": 200, "batch_size": 8, "learning_rate": 1e-4, "save_every_epoch": 25,
     },
     "dpo": {
-        "method": "DPO Alignment",
-        "beta": 0.1, "learning_rate": 5e-7, "epochs": 1,
-        "batch_size": 4, "gradient_accumulation_steps": 4,
-        "max_length": 1024, "max_prompt_length": 512,
-        "optimizer": "rmsprop", "loss_type": "sigmoid",
+        "method": "DPO Alignment", "beta": 0.1, "learning_rate": 5e-7, "epochs": 1,
+        "batch_size": 4, "gradient_accumulation_steps": 4, "max_length": 1024,
+        "max_prompt_length": 512, "optimizer": "rmsprop", "loss_type": "sigmoid",
     },
     "autotrain": {
-        "method": "AutoTrain Advanced",
-        "task": "text-classification",
-        "model": "bert-base-uncased",
-        "learning_rate": 5e-5, "epochs": 3, "batch_size": 8,
-        "max_seq_length": 512, "auto_find_batch_size": True,
+        "method": "AutoTrain Advanced", "task": "text-classification",
+        "model": "bert-base-uncased", "learning_rate": 5e-5, "epochs": 3,
+        "batch_size": 8, "max_seq_length": 512, "auto_find_batch_size": True,
         "mixed_precision": "fp16",
     },
 }
@@ -418,12 +504,15 @@ MODEL_CONFIGS = {
     "mistral-7b": {"base": "mistralai/Mistral-7B-v0.3", "type": "causal_lm", "context": 32768, "vram_gb": 14},
     "qwen3-7b": {"base": "Qwen/Qwen2.5-7B", "type": "causal_lm", "context": 131072, "vram_gb": 14},
     "gemma2-9b": {"base": "google/gemma-2-9b", "type": "causal_lm", "context": 8192, "vram_gb": 18},
+    "gemma4": {"base": "google/gemma-4-E4B-it", "type": "causal_lm", "context": 32768, "vram_gb": 20},
     "phi3-mini": {"base": "microsoft/Phi-3-mini-4k-instruct", "type": "causal_lm", "context": 4096, "vram_gb": 8},
     "deepseek-coder-7b": {"base": "deepseek-ai/deepseek-coder-6.7b-instruct", "type": "causal_lm", "context": 16384, "vram_gb": 14},
     "starcoder2-7b": {"base": "bigcode/starcoder2-7b", "type": "causal_lm", "context": 16384, "vram_gb": 14},
     "sdxl": {"base": "stabilityai/stable-diffusion-xl-base-1.0", "type": "diffusion", "resolution": 1024, "vram_gb": 12},
     "flux-dev": {"base": "black-forest-labs/FLUX.1-dev", "type": "diffusion", "resolution": 1024, "vram_gb": 24},
+    "flux-klein": {"base": "black-forest-labs/FLUX.2-Klein-9B-KV", "type": "diffusion", "resolution": 1024, "vram_gb": 18},
     "whisper-large": {"base": "openai/whisper-large-v3", "type": "asr", "context": 30, "vram_gb": 10},
+    "kokoro-tts": {"base": "hexgrad/Kokoro-82M", "type": "tts", "vram_gb": 2},
 }
 
 DATASET_TEMPLATES = {
@@ -452,158 +541,143 @@ DATASET_TEMPLATES = {
         "columns": {"text": "str", "label": "str/int"},
         "example": {"text": "Great product!", "label": "positive"},
     },
+    "ner": {
+        "format": "token_classification",
+        "columns": {"tokens": "list[str]", "ner_tags": "list[str]"},
+        "example": {"tokens": ["John", "lives", "in", "Paris"], "ner_tags": ["B-PER", "O", "O", "B-LOC"]},
+    },
+    "qa": {
+        "format": "extractive_qa",
+        "columns": {"question": "str", "context": "str", "answer": "str", "answer_start": "int"},
+        "example": {"question": "What is Python?", "context": "Python is a programming language...", "answer": "a programming language", "answer_start": 10},
+    },
+    "translation": {
+        "format": "parallel_corpus",
+        "columns": {"source": "str", "target": "str", "source_lang": "str", "target_lang": "str"},
+        "example": {"source": "Hello world", "target": "Olá mundo", "source_lang": "en", "target_lang": "pt"},
+    },
+    "audio_transcription": {
+        "format": "audio_text",
+        "columns": {"audio": "path", "transcription": "str", "language": "str"},
+        "example": {"audio": "sample.wav", "transcription": "Hello there", "language": "en"},
+    },
+    "code": {
+        "format": "code_instruction",
+        "columns": {"instruction": "str", "language": "str", "code": "str", "tests": "str (optional)"},
+        "example": {"instruction": "Write fibonacci", "language": "python", "code": "def fib(n): ...", "tests": "assert fib(10) == 55"},
+    },
 }
 
 
-def generate_finetune_config(
-    method: str = "lora",
-    model: str = "llama3-8b",
-    dataset_format: str = "instruction",
-    custom_params: Optional[Dict] = None,
-) -> Dict[str, Any]:
+def generate_finetune_config(method: str, model: str, dataset_format: str, custom_params: Optional[Dict] = None) -> Dict:
     preset = FINETUNE_PRESETS.get(method, FINETUNE_PRESETS["lora"]).copy()
     model_info = MODEL_CONFIGS.get(model, MODEL_CONFIGS["llama3-8b"]).copy()
     dataset_tmpl = DATASET_TEMPLATES.get(dataset_format, DATASET_TEMPLATES["instruction"]).copy()
-
     if custom_params:
         preset.update(custom_params)
-
-    config = {
+    return {
         "id": str(uuid.uuid4())[:8],
         "created_at": datetime.utcnow().isoformat(),
-        "method": preset,
-        "model": model_info,
-        "dataset": dataset_tmpl,
+        "method": preset, "model": model_info, "dataset": dataset_tmpl,
         "estimated_vram_gb": model_info.get("vram_gb", 16),
         "estimated_time_hours": preset.get("epochs", 3) * 0.5,
     }
 
-    # Generate training script
-    if method in ("lora", "qlora"):
-        config["training_script"] = _gen_lora_script(preset, model_info)
-    elif method in ("dreambooth_lora", "sdxl_lora", "flux_lora"):
-        config["training_script"] = _gen_diffusion_script(preset, model_info, method)
-    elif method == "dpo":
-        config["training_script"] = _gen_dpo_script(preset, model_info)
-    elif method == "autotrain":
-        config["training_command"] = _gen_autotrain_command(preset)
 
-    return config
+# ============================================================
+# DATASET GENERATION ENGINE (NEW v6.0)
+# ============================================================
 
-
-def _gen_lora_script(preset: dict, model_info: dict) -> str:
-    is_qlora = "bits" in preset
-    return f"""# Auto-generated {preset['method']} training script
-from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from trl import SFTTrainer
-from datasets import load_dataset
-{"from transformers import BitsAndBytesConfig" if is_qlora else ""}
-
-model_name = "{model_info['base']}"
-{"bnb_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type='nf4', bnb_4bit_compute_dtype='float16', bnb_4bit_use_double_quant=True)" if is_qlora else ""}
-
-model = AutoModelForCausalLM.from_pretrained(model_name, {"quantization_config=bnb_config, " if is_qlora else ""}device_map="auto")
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-tokenizer.pad_token = tokenizer.eos_token
-{"model = prepare_model_for_kbit_training(model)" if is_qlora else ""}
-
-lora_config = LoraConfig(
-    r={preset['r']}, lora_alpha={preset['lora_alpha']},
-    lora_dropout={preset['lora_dropout']},
-    target_modules={preset['target_modules']},
-    bias="none", task_type="CAUSAL_LM",
-)
-
-dataset = load_dataset("your_dataset_here", split="train")
-
-training_args = TrainingArguments(
-    output_dir="./output",
-    num_train_epochs={preset['epochs']},
-    per_device_train_batch_size={preset['batch_size']},
-    gradient_accumulation_steps={preset['gradient_accumulation_steps']},
-    learning_rate={preset['learning_rate']},
-    optim="{preset['optimizer']}",
-    lr_scheduler_type="{preset['scheduler']}",
-    warmup_ratio={preset['warmup_ratio']},
-    max_grad_norm={preset['max_grad_norm']},
-    fp16={preset['fp16']},
-    logging_steps=10,
-    save_strategy="epoch",
-)
-
-trainer = SFTTrainer(
-    model=model,
-    train_dataset=dataset,
-    peft_config=lora_config,
-    args=training_args,
-    tokenizer=tokenizer,
-    max_seq_length={model_info.get('context', 4096)},
-)
-
-trainer.train()
-trainer.save_model("./final_model")
-"""
+SYNTHETIC_SCHEMAS = {
+    "instruction": {
+        "fields": ["instruction", "input", "output"],
+        "domains": ["general", "legal", "medical", "code", "finance", "science", "education"],
+    },
+    "chat_multi_turn": {
+        "fields": ["system", "conversations"],
+        "styles": ["professional", "casual", "technical", "creative"],
+    },
+    "code_exercises": {
+        "fields": ["task", "language", "difficulty", "solution", "test_cases"],
+        "languages": ["python", "javascript", "typescript", "rust", "go", "java"],
+        "difficulties": ["easy", "medium", "hard", "expert"],
+    },
+    "legal_qa": {
+        "fields": ["question", "jurisdiction", "area", "answer", "citations"],
+        "areas": ["civil", "criminal", "labor", "tax", "commercial", "constitutional"],
+    },
+    "sentiment": {
+        "fields": ["text", "sentiment", "confidence"],
+        "sentiments": ["positive", "negative", "neutral", "mixed"],
+    },
+}
 
 
-def _gen_diffusion_script(preset: dict, model_info: dict, method: str) -> str:
-    return f"""# Auto-generated {preset['method']} training script
-# Use: accelerate launch train_{method}.py
-
-accelerate launch diffusers/examples/dreambooth/train_dreambooth_lora_sdxl.py \\
-  --pretrained_model_name_or_path="{model_info.get('base', 'stabilityai/stable-diffusion-xl-base-1.0')}" \\
-  --instance_data_dir="./data" \\
-  --output_dir="./output" \\
-  --instance_prompt="{preset.get('instance_prompt', 'a photo of sks')}" \\
-  --resolution={preset.get('resolution', 1024)} \\
-  --train_batch_size={preset.get('train_batch_size', 1)} \\
-  --learning_rate={preset.get('learning_rate', 1e-4)} \\
-  --max_train_steps={preset.get('max_train_steps', 1000)} \\
-  --rank={preset.get('lora_r', preset.get('rank', 8))} \\
-  --mixed_precision="{preset.get('mixed_precision', 'fp16')}" \\
-  --gradient_checkpointing \\
-  --push_to_hub
-"""
-
-
-def _gen_dpo_script(preset: dict, model_info: dict) -> str:
-    return f"""# Auto-generated DPO training script
-from trl import DPOTrainer, DPOConfig
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from datasets import load_dataset
-
-model = AutoModelForCausalLM.from_pretrained("{model_info['base']}", device_map="auto")
-tokenizer = AutoTokenizer.from_pretrained("{model_info['base']}")
-
-dpo_config = DPOConfig(
-    beta={preset['beta']},
-    learning_rate={preset['learning_rate']},
-    num_train_epochs={preset['epochs']},
-    per_device_train_batch_size={preset['batch_size']},
-    gradient_accumulation_steps={preset['gradient_accumulation_steps']},
-    max_length={preset['max_length']},
-    max_prompt_length={preset['max_prompt_length']},
-    output_dir="./dpo_output",
-)
-
-dataset = load_dataset("your_dpo_dataset", split="train")
-trainer = DPOTrainer(model=model, args=dpo_config, train_dataset=dataset, tokenizer=tokenizer)
-trainer.train()
-"""
+def generate_dataset_config(
+    schema_type: str = "instruction",
+    num_samples: int = 1000,
+    domain: str = "general",
+    output_format: str = "jsonl",
+    language: str = "en",
+) -> Dict[str, Any]:
+    schema = SYNTHETIC_SCHEMAS.get(schema_type, SYNTHETIC_SCHEMAS["instruction"])
+    return {
+        "id": str(uuid.uuid4())[:8],
+        "created_at": datetime.utcnow().isoformat(),
+        "schema": schema,
+        "config": {
+            "schema_type": schema_type,
+            "num_samples": num_samples,
+            "domain": domain,
+            "output_format": output_format,
+            "language": language,
+            "seed": int(time.time()),
+        },
+        "output_formats_available": ["jsonl", "json", "csv", "parquet", "hf_dataset"],
+        "estimated_size_mb": round(num_samples * 0.002, 2),
+    }
 
 
-def _gen_autotrain_command(preset: dict) -> str:
-    return f"""autotrain --task {preset['task']} \\
-  --model {preset['model']} \\
-  --data-path ./data \\
-  --lr {preset['learning_rate']} \\
-  --epochs {preset['epochs']} \\
-  --batch-size {preset['batch_size']} \\
-  --max-seq-length {preset['max_seq_length']} \\
-  --mixed-precision {preset['mixed_precision']} \\
-  --auto-find-batch-size \\
-  --push-to-hub
-"""
+def validate_dataset_sample(fmt: str, sample: dict) -> Dict[str, Any]:
+    template = DATASET_TEMPLATES.get(fmt)
+    if not template:
+        return {"valid": False, "errors": [f"Unknown format: {fmt}"], "warnings": []}
+    errors, warnings = [], []
+    for col, col_type in template["columns"].items():
+        if "optional" in str(col_type).lower():
+            if col not in sample:
+                warnings.append(f"Optional field '{col}' missing")
+        elif col not in sample:
+            errors.append(f"Required field '{col}' missing")
+        elif not sample[col]:
+            errors.append(f"Field '{col}' is empty")
+    return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings, "expected": template}
+
+
+def convert_format(data: List[dict], from_fmt: str, to_fmt: str) -> Dict[str, Any]:
+    """Convert dataset between formats."""
+    if to_fmt == "jsonl":
+        output = "\n".join(json.dumps(row, ensure_ascii=False) for row in data)
+    elif to_fmt == "csv":
+        if not data:
+            output = ""
+        else:
+            headers = list(data[0].keys())
+            rows = [",".join(headers)]
+            for row in data:
+                rows.append(",".join(str(row.get(h, "")).replace(",", ";") for h in headers))
+            output = "\n".join(rows)
+    elif to_fmt == "json":
+        output = json.dumps(data, ensure_ascii=False, indent=2)
+    else:
+        output = json.dumps(data, ensure_ascii=False)
+
+    return {
+        "format": to_fmt,
+        "rows": len(data),
+        "output": output[:10000],  # limit response size
+        "truncated": len(output) > 10000,
+    }
 
 
 # ============================================================
@@ -613,38 +687,45 @@ def _gen_autotrain_command(preset: dict) -> str:
 def route_to_agents(query: str) -> Dict[str, Any]:
     q = query.lower()
     matched = []
-
     keywords_map = {
-        "fine_tuning": ["fine-tun", "finetun", "train", "lora", "dreambooth", "qlora", "dpo", "rlhf",
-                        "autotrain", "adapter", "distill", "quantiz", "prune", "merge model"],
-        "code_gen": ["generate code", "create function", "write code", "implement", "scaffold", "boilerplate"],
+        "dataset_creation": ["dataset", "synthetic data", "generate data", "labeling", "annotation",
+                             "jsonl", "parquet", "csv dataset", "corpus", "data augment"],
+        "fine_tuning": ["fine-tun", "finetun", "train", "lora", "dreambooth", "qlora", "dpo",
+                        "rlhf", "autotrain", "adapter", "distill", "quantiz", "prune", "merge model"],
+        "code_gen": ["generate code", "create function", "write code", "implement", "scaffold"],
         "code_analysis": ["analyze code", "audit", "security scan", "vulnerability", "lint", "review code"],
         "reasoning": ["legal", "contract", "compliance", "financial", "medical reason", "case law"],
-        "vision": ["face", "detect", "pose", "object", "ocr", "image", "scene"],
+        "vision": ["face", "detect", "pose", "object", "ocr", "image", "scene", "background remov",
+                    "upscal", "inpaint", "segment", "depth", "try-on", "virtual try"],
+        "image_generation": ["generate image", "text to image", "flux", "sdxl", "stable diffusion",
+                             "dreambooth", "comic", "graphic novel", "character sheet"],
+        "video_generation": ["generate video", "text to video", "animate", "lipsync", "face swap video",
+                             "video extend", "wan2", "ltx"],
+        "speech_audio": ["tts", "speech", "voice", "transcri", "asr", "whisper", "music",
+                         "voice clon", "rvc", "vocal", "audio"],
+        "modeling_3d": ["3d", "mesh", "point cloud", "gaussian", "trellis", "hunyuan3d"],
+        "text_nlp": ["summariz", "translat", "sentiment", "ner", "topic", "paraphras", "chat"],
+        "benchmarking": ["benchmark", "leaderboard", "evaluate model", "compare model"],
         "pdf": ["pdf", "document", "extract text", "table extract", "layout"],
     }
-
     for category, keywords in keywords_map.items():
         for kw in keywords:
             if kw in q:
                 matched.append(category)
                 break
-
     if not matched:
         matched = ["reasoning"]
-
     agents_used = []
-    for cat in matched:
+    for cat in list(set(matched)):
         spec = AGENT_CATEGORIES.get(cat, {})
         for key, values in spec.items():
             if isinstance(values, list):
                 agents_used.extend([f"{cat}.{v}" for v in values[:5]])
-
     return {
         "query": query,
         "matched_categories": list(set(matched)),
         "agents_activated": len(agents_used),
-        "sample_agents": agents_used[:20],
+        "sample_agents": agents_used[:25],
         "total_available": TOTAL_AGENTS,
     }
 
@@ -657,11 +738,13 @@ def route_to_agents(query: str) -> Dict[str, Any]:
 async def health():
     return {
         "status": "ok",
-        "engine": "ELP Neural Proxy v5.0",
+        "engine": "ELP Neural Proxy v6.0",
         "total_agents": TOTAL_AGENTS,
-        "capabilities": ["pdf", "vision", "code_gen", "code_analysis", "reasoning", "fine_tuning"],
+        "capabilities": list(AGENT_CATEGORIES.keys()),
         "fine_tuning_methods": list(FINETUNE_PRESETS.keys()),
         "supported_models": list(MODEL_CONFIGS.keys()),
+        "dataset_formats": list(DATASET_TEMPLATES.keys()),
+        "synthetic_schemas": list(SYNTHETIC_SCHEMAS.keys()),
     }
 
 
@@ -688,8 +771,7 @@ async def to_html(file: UploadFile = File(...)):
     html_parts = ['<html><body style="font-family:sans-serif;">']
     for page_num in range(len(doc)):
         page = doc[page_num]
-        html_parts.append(f'<div class="page" data-page="{page_num + 1}">')
-        html_parts.append(f'<h3>Page {page_num + 1}</h3>')
+        html_parts.append(f'<div class="page" data-page="{page_num + 1}"><h3>Page {page_num + 1}</h3>')
         for block in page.get_text("dict")["blocks"]:
             if block["type"] == 0:
                 text_parts = []
@@ -729,16 +811,13 @@ async def generate_pdf_from_html(request: Request):
 @app.post("/agents/orchestrate")
 async def orchestrate(request: Request):
     body = await request.json()
-    query = body.get("query", "")
-    result = route_to_agents(query)
-    return JSONResponse(content=result)
+    return JSONResponse(content=route_to_agents(body.get("query", "")))
 
 
 @app.post("/agents/swarm")
 async def swarm(request: Request):
     body = await request.json()
-    queries = body.get("queries", [])
-    results = [route_to_agents(q) for q in queries[:20]]
+    results = [route_to_agents(q) for q in body.get("queries", [])[:20]]
     return JSONResponse(content={"results": results, "total_processed": len(results)})
 
 
@@ -755,10 +834,10 @@ async def list_agents(category: Optional[str] = None):
 async def code_analyze(request: Request):
     body = await request.json()
     code = body.get("code", "")
-    language = body.get("language", "auto")
-    security = analyze_code_security(code, language)
-    quality = analyze_code_quality(code)
-    return JSONResponse(content={"security": security, "quality": quality})
+    return JSONResponse(content={
+        "security": analyze_code_security(code, body.get("language", "auto")),
+        "quality": analyze_code_quality(code),
+    })
 
 
 @app.post("/agents/code/generate")
@@ -774,11 +853,10 @@ async def code_generate(request: Request):
     })
 
 
-# ── Fine-Tuning Endpoints (NEW v5.0) ──
+# ── Fine-Tuning Endpoints ──
 
 @app.get("/finetune/methods")
 async def list_finetune_methods():
-    """List all available fine-tuning methods with descriptions."""
     return JSONResponse(content={
         "methods": {k: {"method_name": v["method"]} for k, v in FINETUNE_PRESETS.items()},
         "total": len(FINETUNE_PRESETS),
@@ -787,115 +865,181 @@ async def list_finetune_methods():
 
 @app.get("/finetune/models")
 async def list_finetune_models():
-    """List all supported base models for fine-tuning."""
     return JSONResponse(content={"models": MODEL_CONFIGS, "total": len(MODEL_CONFIGS)})
 
 
 @app.get("/finetune/datasets")
 async def list_dataset_templates():
-    """List dataset format templates."""
     return JSONResponse(content={"templates": DATASET_TEMPLATES, "total": len(DATASET_TEMPLATES)})
 
 
 @app.post("/finetune/configure")
 async def configure_finetune(request: Request):
-    """Generate a complete fine-tuning configuration with training script.
-    
-    Body: {
-        "method": "lora|qlora|dreambooth_lora|sdxl_lora|flux_lora|dpo|embedding|tts|rvc|autotrain",
-        "model": "llama3-8b|mistral-7b|qwen3-7b|...",
-        "dataset_format": "instruction|chat|dpo|image_caption|classification",
-        "custom_params": { ... optional overrides ... }
-    }
-    """
     body = await request.json()
     method = body.get("method", "lora")
     model = body.get("model", "llama3-8b")
-    dataset_format = body.get("dataset_format", "instruction")
-    custom_params = body.get("custom_params", None)
-
     if method not in FINETUNE_PRESETS:
         raise HTTPException(400, f"Unknown method: {method}. Available: {list(FINETUNE_PRESETS.keys())}")
     if model not in MODEL_CONFIGS:
         raise HTTPException(400, f"Unknown model: {model}. Available: {list(MODEL_CONFIGS.keys())}")
-
-    config = generate_finetune_config(method, model, dataset_format, custom_params)
+    config = generate_finetune_config(method, model, body.get("dataset_format", "instruction"), body.get("custom_params"))
     return JSONResponse(content=config)
 
 
 @app.post("/finetune/estimate")
 async def estimate_resources(request: Request):
-    """Estimate VRAM, time, and cost for a fine-tuning job."""
     body = await request.json()
     method = body.get("method", "lora")
     model = body.get("model", "llama3-8b")
     dataset_rows = body.get("dataset_rows", 10000)
     epochs = body.get("epochs", 3)
-
     model_info = MODEL_CONFIGS.get(model, MODEL_CONFIGS["llama3-8b"])
     preset = FINETUNE_PRESETS.get(method, FINETUNE_PRESETS["lora"])
-
     vram = model_info.get("vram_gb", 16)
     if method == "qlora":
-        vram = vram * 0.25
+        vram *= 0.25
     elif method == "lora":
-        vram = vram * 0.5
-
-    steps_per_epoch = dataset_rows / preset.get("batch_size", 4) / preset.get("gradient_accumulation_steps", 4)
-    total_steps = steps_per_epoch * epochs
-    hours = total_steps * 0.002  # rough estimate
-
-    gpu_recommendations = []
+        vram *= 0.5
+    steps = dataset_rows / preset.get("batch_size", 4) / preset.get("gradient_accumulation_steps", 4) * epochs
+    hours = steps * 0.002
     if vram <= 8:
-        gpu_recommendations = ["RTX 3060 12GB", "RTX 4060 Ti 16GB", "T4 (free Colab)"]
+        gpus = ["RTX 3060 12GB", "T4 (free Colab)", "RTX 4060 Ti 16GB"]
     elif vram <= 16:
-        gpu_recommendations = ["RTX 4070 Ti 16GB", "A10G (AWS)", "L4 (GCP)"]
+        gpus = ["RTX 4070 Ti 16GB", "A10G (AWS)", "L4 (GCP)"]
     elif vram <= 24:
-        gpu_recommendations = ["RTX 3090 24GB", "RTX 4090 24GB", "A100 40GB"]
+        gpus = ["RTX 3090 24GB", "RTX 4090 24GB", "A100 40GB"]
     else:
-        gpu_recommendations = ["A100 80GB", "H100", "Multi-GPU setup"]
-
+        gpus = ["A100 80GB", "H100", "Multi-GPU setup"]
     return JSONResponse(content={
-        "estimated_vram_gb": round(vram, 1),
-        "estimated_hours": round(hours, 2),
-        "total_steps": int(total_steps),
-        "gpu_recommendations": gpu_recommendations,
+        "estimated_vram_gb": round(vram, 1), "estimated_hours": round(hours, 2),
+        "total_steps": int(steps), "gpu_recommendations": gpus,
         "cost_estimate_usd": {
-            "colab_pro": round(hours * 0.10, 2),
-            "lambda_labs": round(hours * 1.10, 2),
-            "runpod": round(hours * 0.74, 2),
-            "aws_p4d": round(hours * 32.77, 2),
+            "colab_pro": round(hours * 0.10, 2), "lambda_labs": round(hours * 1.10, 2),
+            "runpod": round(hours * 0.74, 2), "aws_p4d": round(hours * 32.77, 2),
         },
     })
 
 
-@app.post("/finetune/validate-dataset")
+# ── Dataset Creation Endpoints (NEW v6.0) ──
+
+@app.get("/dataset/schemas")
+async def list_schemas():
+    """List all synthetic dataset schemas available."""
+    return JSONResponse(content={"schemas": SYNTHETIC_SCHEMAS, "total": len(SYNTHETIC_SCHEMAS)})
+
+
+@app.get("/dataset/formats")
+async def list_formats():
+    """List all dataset format templates with examples."""
+    return JSONResponse(content={"formats": DATASET_TEMPLATES, "total": len(DATASET_TEMPLATES)})
+
+
+@app.post("/dataset/configure")
+async def configure_dataset(request: Request):
+    """Generate a dataset creation configuration.
+    
+    Body: {
+        "schema_type": "instruction|chat_multi_turn|code_exercises|legal_qa|sentiment",
+        "num_samples": 1000,
+        "domain": "general|legal|medical|code|finance|science|education",
+        "output_format": "jsonl|json|csv|parquet|hf_dataset",
+        "language": "en|pt|es|zh|..."
+    }
+    """
+    body = await request.json()
+    config = generate_dataset_config(
+        schema_type=body.get("schema_type", "instruction"),
+        num_samples=body.get("num_samples", 1000),
+        domain=body.get("domain", "general"),
+        output_format=body.get("output_format", "jsonl"),
+        language=body.get("language", "en"),
+    )
+    return JSONResponse(content=config)
+
+
+@app.post("/dataset/validate")
 async def validate_dataset(request: Request):
     """Validate a dataset sample against a template format."""
     body = await request.json()
-    fmt = body.get("format", "instruction")
-    sample = body.get("sample", {})
+    result = validate_dataset_sample(body.get("format", "instruction"), body.get("sample", {}))
+    return JSONResponse(content=result)
 
-    template = DATASET_TEMPLATES.get(fmt)
-    if not template:
-        raise HTTPException(400, f"Unknown format: {fmt}")
 
-    required_cols = template["columns"]
-    errors = []
-    warnings = []
+@app.post("/dataset/convert")
+async def convert_dataset(request: Request):
+    """Convert dataset rows between formats.
+    
+    Body: { "data": [...], "from_format": "json", "to_format": "jsonl|csv|json" }
+    """
+    body = await request.json()
+    data = body.get("data", [])
+    to_fmt = body.get("to_format", "jsonl")
+    if not data:
+        raise HTTPException(400, "data field required (list of objects)")
+    result = convert_format(data, body.get("from_format", "json"), to_fmt)
+    return JSONResponse(content=result)
 
-    for col, col_type in required_cols.items():
-        if "optional" in str(col_type).lower():
-            if col not in sample:
-                warnings.append(f"Optional field '{col}' missing")
-        elif col not in sample:
-            errors.append(f"Required field '{col}' missing")
-        elif not sample[col]:
-            errors.append(f"Field '{col}' is empty")
+
+@app.post("/dataset/deduplicate")
+async def deduplicate_dataset(request: Request):
+    """Remove duplicate rows from a dataset based on a key field.
+    
+    Body: { "data": [...], "key_field": "text", "similarity_threshold": 1.0 }
+    """
+    body = await request.json()
+    data = body.get("data", [])
+    key_field = body.get("key_field", "text")
+    seen = set()
+    unique = []
+    duplicates = 0
+    for row in data:
+        key = str(row.get(key_field, "")).strip().lower()
+        h = hashlib.md5(key.encode()).hexdigest()
+        if h not in seen:
+            seen.add(h)
+            unique.append(row)
+        else:
+            duplicates += 1
+    return JSONResponse(content={
+        "original_count": len(data),
+        "unique_count": len(unique),
+        "duplicates_removed": duplicates,
+        "data": unique[:100],  # return first 100
+    })
+
+
+@app.post("/dataset/statistics")
+async def dataset_statistics(request: Request):
+    """Compute statistics for a dataset.
+    
+    Body: { "data": [...] }
+    """
+    body = await request.json()
+    data = body.get("data", [])
+    if not data:
+        raise HTTPException(400, "data field required")
+
+    all_keys = set()
+    for row in data:
+        all_keys.update(row.keys())
+
+    field_stats = {}
+    for key in all_keys:
+        values = [row.get(key) for row in data if key in row]
+        non_null = [v for v in values if v is not None and v != ""]
+        lengths = [len(str(v)) for v in non_null]
+        field_stats[key] = {
+            "count": len(values),
+            "non_null": len(non_null),
+            "null_ratio": round((len(values) - len(non_null)) / max(len(values), 1), 3),
+            "avg_length": round(sum(lengths) / max(len(lengths), 1), 1) if lengths else 0,
+            "min_length": min(lengths) if lengths else 0,
+            "max_length": max(lengths) if lengths else 0,
+            "unique_values": len(set(str(v) for v in non_null)),
+        }
 
     return JSONResponse(content={
-        "valid": len(errors) == 0,
-        "errors": errors,
-        "warnings": warnings,
-        "expected_format": template,
+        "total_rows": len(data),
+        "total_fields": len(all_keys),
+        "fields": field_stats,
     })

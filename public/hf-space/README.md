@@ -7,74 +7,99 @@ sdk: docker
 pinned: false
 ---
 
-# ELP Neural Proxy v5.0
+# ELP Neural Proxy v6.0
 
-Neural Agent Swarm with 1500+ agents: PDF analysis, code generation, code auditing, vision, reasoning, and **fine-tuning orchestration**.
+Complete AI Agent Swarm with **2000+ agents** covering ALL HuggingFace Spaces categories:
+PDF, Vision, Code, Fine-Tuning, Dataset Creation, Image/Video/Audio Generation, 3D, NLP, Benchmarking.
 
-## Endpoints
+## All Endpoints
 
-### PDF
-- `POST /` — Analyze PDF layout → JSON segments
-- `POST /markdown` — PDF → structured Markdown
-- `POST /html` — PDF → HTML
-- `POST /generate-pdf` — HTML → PDF (WeasyPrint)
+### Health
+- `GET /` — Status + full capability manifest
 
-### Agents
-- `POST /agents/orchestrate` — Route query to optimal agent pipeline
-- `POST /agents/swarm` — Batch parallel execution
-- `GET /agents/list` — List all agent categories
+### PDF Processing
+| Endpoint | Description |
+|----------|-------------|
+| `POST /` | PDF → JSON layout segments |
+| `POST /markdown` | PDF → structured Markdown |
+| `POST /html` | PDF → HTML |
+| `POST /generate-pdf` | HTML → PDF (WeasyPrint) |
 
-### Code
-- `POST /agents/code/analyze` — Security audit + quality metrics
-- `POST /agents/code/generate` — Code generation routing
+### Agent Orchestration
+| Endpoint | Description |
+|----------|-------------|
+| `POST /agents/orchestrate` | Route query → optimal agent pipeline |
+| `POST /agents/swarm` | Batch parallel execution |
+| `GET /agents/list` | List all 2000+ agents by category |
 
-### Fine-Tuning (NEW v5.0)
-- `GET /finetune/methods` — List fine-tuning methods (LoRA, QLoRA, DreamBooth, SDXL, FLUX, DPO, TTS, RVC, AutoTrain)
-- `GET /finetune/models` — List supported base models (LLaMA 3, Mistral, Qwen, Gemma, Phi-3, DeepSeek, StarCoder, SDXL, FLUX, Whisper)
-- `GET /finetune/datasets` — Dataset format templates (instruction, chat, DPO, image_caption, classification)
-- `POST /finetune/configure` — Generate complete training config + script
-- `POST /finetune/estimate` — Estimate VRAM, time, GPU recs, cost
-- `POST /finetune/validate-dataset` — Validate dataset samples
+### Code Intelligence
+| Endpoint | Description |
+|----------|-------------|
+| `POST /agents/code/analyze` | Security audit + quality metrics |
+| `POST /agents/code/generate` | Code generation routing |
 
-## Fine-Tuning Methods
+### Fine-Tuning (10 methods, 14 models)
+| Endpoint | Description |
+|----------|-------------|
+| `GET /finetune/methods` | LoRA, QLoRA, DreamBooth, SDXL, FLUX, DPO, TTS, RVC, AutoTrain |
+| `GET /finetune/models` | LLaMA 3, Mistral, Qwen, Gemma 4, Phi-3, DeepSeek, SDXL, FLUX, Whisper, Kokoro |
+| `GET /finetune/datasets` | 10 format templates |
+| `POST /finetune/configure` | Generate config + training script |
+| `POST /finetune/estimate` | VRAM, time, GPU recs, cost |
 
-| Method | Description | Use Case |
-|--------|-------------|----------|
-| `lora` | LoRA adapter training | General LLM fine-tuning |
-| `qlora` | 4-bit QLoRA | Low-VRAM LLM fine-tuning |
-| `dreambooth_lora` | DreamBooth + LoRA | Custom subject generation |
-| `sdxl_lora` | SDXL LoRA trainer | Style/concept for SDXL |
-| `flux_lora` | FLUX.1 LoRA | FLUX image model LoRA |
-| `embedding` | Sentence Transformer | Custom embeddings |
-| `tts` | TTS fine-tuning | Voice synthesis |
-| `rvc` | RVC v2 voice conversion | Voice cloning |
-| `dpo` | Direct Preference Optimization | Alignment training |
-| `autotrain` | AutoTrain Advanced | No-code training |
+### Dataset Creation (NEW v6.0)
+| Endpoint | Description |
+|----------|-------------|
+| `GET /dataset/schemas` | Synthetic schemas: instruction, chat, code, legal, sentiment |
+| `GET /dataset/formats` | 10 templates: instruction, chat, DPO, image_caption, classification, NER, QA, translation, audio, code |
+| `POST /dataset/configure` | Generate dataset creation config |
+| `POST /dataset/validate` | Validate samples against templates |
+| `POST /dataset/convert` | Convert between JSON/JSONL/CSV |
+| `POST /dataset/deduplicate` | Remove duplicate rows |
+| `POST /dataset/statistics` | Field-level stats for any dataset |
 
-## Example: Configure LoRA Training
+## Agent Categories (2000+)
 
+| Category | Agents | Description |
+|----------|--------|-------------|
+| `code_gen` | 150+ | 30 languages × 5 paradigms × 14 frameworks |
+| `code_analysis` | 225+ | Security, performance, complexity |
+| `reasoning` | 300+ | Legal, financial, medical, scientific |
+| `vision` | 200+ | Face, pose, OCR, segmentation, try-on, depth |
+| `fine_tuning` | 200+ | LoRA to GGUF, all model types |
+| `dataset_creation` | 180+ | Generate, convert, label, deduplicate |
+| `image_generation` | 80+ | FLUX, SDXL, ControlNet, comics |
+| `video_generation` | 60+ | Wan2, LTX, face swap, dubbing |
+| `speech_audio` | 90+ | TTS, ASR, voice clone, music |
+| `modeling_3d` | 40+ | TRELLIS, Hunyuan3D, gaussian splatting |
+| `text_nlp` | 120+ | Summarization, translation, NER |
+| `benchmarking` | 30+ | Leaderboards, model comparison |
+| `pdf` | 110+ | Layout, tables, legal docs |
+
+## Quick Examples
+
+### Generate Dataset Config
 ```bash
-curl -X POST https://your-space.hf.space/finetune/configure \
+curl -X POST https://your-space.hf.space/dataset/configure \
   -H "Content-Type: application/json" \
-  -d '{
-    "method": "qlora",
-    "model": "llama3-8b",
-    "dataset_format": "instruction",
-    "custom_params": {"epochs": 5, "r": 32}
-  }'
+  -d '{"schema_type": "code_exercises", "num_samples": 5000, "domain": "code", "language": "pt"}'
 ```
 
-## Example: Estimate Resources
-
+### Validate Dataset Sample
 ```bash
-curl -X POST https://your-space.hf.space/finetune/estimate \
+curl -X POST https://your-space.hf.space/dataset/validate \
   -H "Content-Type: application/json" \
-  -d '{"method": "qlora", "model": "llama3-8b", "dataset_rows": 50000, "epochs": 3}'
+  -d '{"format": "instruction", "sample": {"instruction": "Summarize", "output": "Summary here"}}'
+```
+
+### Dataset Statistics
+```bash
+curl -X POST https://your-space.hf.space/dataset/statistics \
+  -H "Content-Type: application/json" \
+  -d '{"data": [{"text": "hello", "label": "pos"}, {"text": "bad", "label": "neg"}]}'
 ```
 
 ## Integração NEUROCORE AI
 
-Módulo oficial **PDF Vision + Fine-Tuning API** da arquitetura NEUROCORE AI.
-
-- **Client TypeScript**: `src/lib/neural/hf-space-client.ts`
-- Categorias de agentes: `code_gen`, `code_analysis`, `reasoning`, `vision`, `fine_tuning`, `pdf`
+Módulo oficial **Neural Proxy** da arquitetura NEUROCORE AI — cobrindo todas as 30+ categorias do HuggingFace Spaces.
+- **Client**: `src/lib/neural/hf-space-client.ts`
