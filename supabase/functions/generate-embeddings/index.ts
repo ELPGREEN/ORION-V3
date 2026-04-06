@@ -293,46 +293,66 @@ Deno.serve(async (req) => {
       } else if (neuralItems && neuralItems.length > 0) {
         console.log(`📦 Processing ${neuralItems.length} neural_knowledge_base items`);
 
-        const PARALLEL_BATCH = Math.min(3, providers.length);
-        for (let i = 0; i < neuralItems.length; i += PARALLEL_BATCH) {
-          const batch = neuralItems.slice(i, i + PARALLEL_BATCH);
-          const batchResults = await Promise.allSettled(
-            batch.map(async (item, idx) => {
-              const text = `${item.title}\n\n${item.content}`.trim();
-              if (text.length < 10) {
-                // Skip items with no meaningful content
-                await supabase.from("neural_knowledge_base")
-                  .update({ is_processed: true })
-                  .eq("id", item.id);
-                return { id: item.id, provider: "skip", title: item.title };
-              }
-              const providerIdx = (i + idx) % providers.length;
-              const rotatedProviders = [...providers.slice(providerIdx), ...providers.slice(0, providerIdx)];
-              const { embedding, provider } = await generateEmbedding(text, rotatedProviders);
-              const vectorStr = `[${embedding.join(",")}]`;
+        // Filter meaningful items and skip empties
+        const meaningful = [];
+        for (const item of neuralItems) {
+          const text = `${item.title}\n\n${item.content}`.trim();
+          if (text.length < 10) {
+            await supabase.from("neural_knowledge_base")
+              .update({ is_processed: true })
+              .eq("id", item.id);
+            results.neural.processed++;
+            continue;
+          }
+          meaningful.push({ ...item, text });
+        }
 
+        // Batch OpenAI calls (up to 20 per API call to save tokens)
+        const BATCH_SIZE = 20;
+        const primaryProvider = providers[0];
+
+        for (let i = 0; i < meaningful.length; i += BATCH_SIZE) {
+          const batch = meaningful.slice(i, i + BATCH_SIZE);
+          try {
+            let embeddings: number[][];
+            let providerUsed = primaryProvider.name;
+
+            if (primaryProvider.type === "openai") {
+              embeddings = await generateEmbeddingOpenAIBatch(
+                batch.map(b => b.text),
+                primaryProvider.apiKey
+              );
+            } else {
+              // Fallback: one-by-one for non-OpenAI
+              embeddings = [];
+              for (const b of batch) {
+                const { embedding, provider } = await generateEmbedding(b.text, providers);
+                embeddings.push(embedding);
+                providerUsed = provider;
+              }
+            }
+
+            for (let j = 0; j < batch.length; j++) {
+              const vectorStr = `[${embeddings[j].join(",")}]`;
               const { error: updateError } = await supabase
                 .from("neural_knowledge_base")
                 .update({ embedding: vectorStr, is_processed: true })
-                .eq("id", item.id);
-
-              if (updateError) throw updateError;
-              return { id: item.id, provider, title: item.title };
-            })
-          );
-
-          for (const r of batchResults) {
-            if (r.status === "fulfilled") {
-              results.neural.processed++;
-              console.log(`✅ Neural [${r.value.provider}]: ${r.value.title.slice(0, 60)}...`);
-            } else {
-              results.neural.failed++;
-              console.error("❌ Neural batch failed:", r.reason);
+                .eq("id", batch[j].id);
+              if (updateError) {
+                console.error(`❌ Update failed for ${batch[j].id}:`, updateError);
+                results.neural.failed++;
+              } else {
+                results.neural.processed++;
+                console.log(`✅ Neural [${providerUsed}]: ${batch[j].title?.slice(0, 60)}...`);
+              }
             }
+          } catch (e) {
+            console.error(`❌ Batch failed:`, e.message);
+            results.neural.failed += batch.length;
           }
 
-          if (i + PARALLEL_BATCH < neuralItems.length) {
-            await new Promise((r) => setTimeout(r, 300));
+          if (i + BATCH_SIZE < meaningful.length) {
+            await new Promise((r) => setTimeout(r, 500));
           }
         }
       } else {
