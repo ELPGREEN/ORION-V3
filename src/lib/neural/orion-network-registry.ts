@@ -448,6 +448,9 @@ export function getNetworkHealthSummary(): {
   totalNetworks: number;
   activeNetworks: number;
   totalAgents: number;
+  coreAgents: number;
+  swarmAgents: number;
+  swarmCategories: number;
   activeAgents: number;
   totalActionsLogged: number;
   riskGuardianBlocks: number;
@@ -455,12 +458,17 @@ export function getNetworkHealthSummary(): {
   const networks = Object.values(ORION_NETWORKS);
   const agents = Object.values(ORION_AGENTS);
   const blocks = _actionLog.filter(a => a.agentRole === "risk_guardian" && a.blocked).length;
+  const swarmTotal = getTotalSwarmAgentCount();
+  const swarmCats = Object.keys(ELP_SWARM_CATEGORIES).length;
 
   return {
     totalNetworks: networks.length,
     activeNetworks: networks.filter(n => n.status === "active").length,
-    totalAgents: agents.length,
-    activeAgents: agents.filter(a => a.status === "active").length,
+    totalAgents: agents.length + swarmTotal,
+    coreAgents: agents.length,
+    swarmAgents: swarmTotal,
+    swarmCategories: swarmCats,
+    activeAgents: agents.filter(a => a.status === "active").length + getActiveSwarmCategories().reduce((s, c) => s + c.agentCount, 0),
     totalActionsLogged: _actionLog.length,
     riskGuardianBlocks: blocks,
   };
