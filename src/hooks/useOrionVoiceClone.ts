@@ -399,23 +399,7 @@ export function useOrionVoiceClone() {
         }
       );
 
-      let contentType = response.headers.get("Content-Type") || "";
-      if (!response.ok || !contentType.includes("audio")) {
-        // Last fallback: Google Translate TTS
-        response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-tts`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({ text: testText, lang: "pt-br" }),
-          }
-        );
-        contentType = response.headers.get("Content-Type") || "";
-      }
+      const contentType = response.headers.get("Content-Type") || "";
 
       if (contentType.includes("audio")) {
         const blob = await response.blob();
