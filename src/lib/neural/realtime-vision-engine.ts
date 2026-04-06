@@ -5,6 +5,7 @@
  */
 
 import { detectAllMP, preloadMediaPipe, isMediaPipeReady, type MPVisionResult } from "./mediapipe-vision";
+import { preloadHFVisionGate } from "./hf-vision-gate";
 import { detectWithYOLO, preloadYOLO, isYOLOReady, type YOLODetection } from "./yolo-onnx-detector";
 import { yoloFrameX } from "./yolo-framex-engine";
 import type { MultiTaskResult } from "./yolo-framex-types";
@@ -267,7 +268,7 @@ export async function detectRealTime(
  * Preload all models (call early for faster first detection).
  */
 export async function preloadAllVision(): Promise<void> {
-  await Promise.allSettled([preloadMediaPipe(), preloadYOLO(), preloadDepthEstimation(), preloadOCR()]);
+  await Promise.allSettled([preloadMediaPipe(), preloadYOLO(), preloadDepthEstimation(), preloadOCR(), preloadHFVisionGate()]);
 }
 
 /**

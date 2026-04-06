@@ -10,6 +10,7 @@ import {
 import { VS } from "@/components/dashboard/neural/useVisionProcessing";
 import { matchLearnedPriors, learnFromDetection, canIdentifyLocally, getLearningStats } from "@/lib/neural/vision-local-learning";
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
+import { runVisionGate, buildGatedResponse, type LocalDetectionContext } from "@/lib/neural/hf-vision-gate";
 
 // ═══ Local-first mode flag — set to true for 100% offline operation ═══
 let _localFirstMode = true;
@@ -387,6 +388,45 @@ export async function analyzeFrameWithAI(
       }
     }
 
+    // ═══ HF VISION GATE: Free classification before Gemini ═══
+    if (includeImage && canvas) {
+      try {
+        const localDetectionsRaw = buildLocalDetections();
+        const localCtx: LocalDetectionContext = {
+          objectCount: (localDetectionsRaw as any)?.realTimeObjects?.length || 0,
+          faceCount: (localDetectionsRaw as any)?.realTimeFaces?.length || (localDetectionsRaw as any)?.faceCount || 0,
+          hasOCR: !!(localDetectionsRaw as any)?.readingResult?.text?.length,
+          hasScene: !!(localDetectionsRaw as any)?.sceneClassification,
+          topObjects: ((localDetectionsRaw as any)?.realTimeObjects || []).slice(0, 5).map((o: any) => o.name || o.namePt),
+          confidence: Math.max(...((localDetectionsRaw as any)?.realTimeObjects || []).map((o: any) => o.confidence || 0), 0),
+        };
+
+        const gate = await runVisionGate(canvas, localCtx, intentType);
+
+        if (gate.gated && gate.geminiAction === "skip") {
+          // HF + local detections are sufficient — skip Gemini entirely!
+          const description = buildGatedResponse(gate, localCtx, question || "");
+          console.log(`[OrionAI] 🛡️ HF GATE: Skipped Gemini call (saved ~3000 tokens) | ${gate.inferenceMs}ms`);
+          return {
+            description: `${description}\n\n[Resposta local — HF + sensores ML, sem custo de API]`,
+            learnedFacts: [],
+            identifiedObjects: gate.classifications.map(c => ({
+              name: c.label, category: "objeto", confidence: Math.round(c.score * 100), count: 1,
+            })),
+          };
+        }
+
+        // Gate says reduce: adjust image size based on recommendation
+        if (gate.geminiAction === "text_only") {
+          // Don't send image — just text context with local detections
+          includeImage = false;
+          console.log(`[OrionAI] 🛡️ HF GATE: Text-only mode (saved ~2000 image tokens)`);
+        }
+      } catch (e) {
+        console.warn("[OrionAI] HF Vision Gate failed, proceeding to Gemini:", e);
+      }
+    }
+
     // ═══ LOCAL-FIRST: non-streaming path ═══
     if (_localFirstMode && intentType !== "visual" && question) {
       try {
@@ -403,13 +443,14 @@ export async function analyzeFrameWithAI(
     let imageBase64: string | undefined;
     if (includeImage && canvas) {
       const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = Math.min(canvas.width || 1024, 1024);
-      tempCanvas.height = Math.min(canvas.height || 768, 768);
+      // ═══ COST OPTIMIZATION: Reduce image size (was 1024x768, now 640x480) ═══
+      tempCanvas.width = Math.min(canvas.width || 640, 640);
+      tempCanvas.height = Math.min(canvas.height || 480, 480);
       const tCtx = tempCanvas.getContext("2d");
       if (!tCtx) return { description: null, learnedFacts: [], identifiedObjects: [] };
       tCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
       applyContrastEnhancement(tCtx, tempCanvas.width, tempCanvas.height);
-      imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.92).split(",")[1];
+      imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.82).split(",")[1]; // Reduced quality 0.92→0.82
     }
     let consciousnessContext = "";
     try {
@@ -548,8 +589,9 @@ export async function analyzeFrameStreaming(
     let imageBase64: string | undefined;
     if (includeImage && canvas) {
       const tempCanvas = document.createElement("canvas");
-      const sw = Math.min(canvas.width || 1024, 1024);
-      const sh = Math.min(canvas.height || 768, 768);
+      // ═══ COST OPTIMIZATION: Reduced from 1024x768 to 640x480 ═══
+      const sw = Math.min(canvas.width || 640, 640);
+      const sh = Math.min(canvas.height || 480, 480);
       tempCanvas.width = sw;
       tempCanvas.height = sh;
       const tCtx = tempCanvas.getContext("2d");
@@ -578,7 +620,7 @@ export async function analyzeFrameStreaming(
         console.warn("[OrionAI] Blank frame detected (variance=" + variance.toFixed(1) + "), sending without image");
         imageBase64 = undefined;
       } else {
-        imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.92).split(",")[1];
+        imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.82).split(",")[1]; // Reduced from 0.92
       }
     }
 
