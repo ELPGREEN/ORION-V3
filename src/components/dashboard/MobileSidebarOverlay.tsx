@@ -76,12 +76,11 @@ const advogadoSections: MenuSection[] = [
       { id: "home", label: "Meu Painel", icon: TrendingUp, path: "/dashboard" },
       { id: "gerar", label: "Gerar Documento", icon: Sparkles, path: "/dashboard/gerar-documento" },
       { id: "documentos", label: "Meus Documentos", icon: FolderOpen, path: "/dashboard/documentos" },
-      { id: "instrucoes", label: "Central de Ajuda", icon: HelpCircle, path: "/dashboard/instrucoes" },
+      { id: "orion-ia", label: "Orion IA", icon: Brain, path: "/consulta" },
     ],
   },
   {
-    label: "Gestão",
-    restricted: true,
+    label: "Gestão Jurídica",
     items: [
       { id: "crm", label: "CRM & Clientes", icon: Users, path: "/dashboard/crm" },
       { id: "processos", label: "Processos", icon: FileText, path: "/dashboard/processos" },
@@ -100,23 +99,28 @@ const advogadoSections: MenuSection[] = [
     ],
   },
   {
-    label: "Ferramentas",
-    restricted: true,
+    label: "Ferramentas IA",
     items: [
-      { id: "rede-neural", label: "Ferramentas IA", icon: Brain, path: "/dashboard/rede-neural" },
-      { id: "laboratorio-ia", label: "Laboratório IA", icon: FlaskConical, path: "/dashboard/laboratorio-ia" },
-      { id: "reformulacao", label: "Reformulação IA", icon: ScrollText, path: "/dashboard/reformulacao" },
-      { id: "ferramentas-google", label: "Ferramentas Google", icon: Globe, path: "/dashboard/ferramentas-google" },
       { id: "pesquisa", label: "Pesquisa Avançada", icon: Search, path: "/dashboard/pesquisa-unificada" },
-      { id: "controle-robotico", label: "Controle Robótico", icon: Bot, path: "/dashboard/controle-robotico" },
+      { id: "reformulacao", label: "Reformulação IA", icon: ScrollText, path: "/dashboard/reformulacao" },
+      { id: "laboratorio-ia", label: "Laboratório IA", icon: FlaskConical, path: "/dashboard/laboratorio-ia" },
       { id: "marketplace", label: "Marketplace", icon: Star, path: "/dashboard/marketplace" },
+      { id: "instrucoes", label: "Central de Ajuda", icon: HelpCircle, path: "/dashboard/instrucoes" },
     ],
   },
   {
     label: "Administração",
-    restricted: true,
     items: [
       { id: "config", label: "Meu Escritório", icon: Settings, path: "/dashboard/configuracoes" },
+    ],
+  },
+  {
+    label: "Proprietário",
+    restricted: true,
+    items: [
+      { id: "rede-neural", label: "Rede Neural", icon: Brain, path: "/dashboard/rede-neural" },
+      { id: "ferramentas-google", label: "Ferramentas Google", icon: Globe, path: "/dashboard/ferramentas-google" },
+      { id: "controle-robotico", label: "Controle Robótico", icon: Bot, path: "/dashboard/controle-robotico" },
       { id: "usuarios", label: "Usuários", icon: UserCog, path: "/dashboard/usuarios" },
       { id: "publicacoes-admin", label: "Publicações", icon: BookOpen, path: "/dashboard/publicacoes-admin" },
       { id: "recursos-eu", label: "Recursos EU", icon: Globe, path: "/dashboard/recursos-eu" },
