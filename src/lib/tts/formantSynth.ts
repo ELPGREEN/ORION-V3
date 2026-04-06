@@ -156,7 +156,6 @@ export async function synthesizeFormant(text: string): Promise<Blob> {
   console.log(`[Formant v7] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
 
   // Reset global state
-  prevGlottal = 0;
   radiationPrev = 0;
 
   const samples = renderPhonemes(phonemes);
@@ -330,8 +329,8 @@ function renderPhonemes(phonemes: string[]): Float32Array {
         glottalPhase += f0 / SR;
         if (glottalPhase >= 1) glottalPhase -= 1;
 
-        // LF glottal derivative (natural spectral tilt)
-        let source = glottalDerivative(glottalPhase, oq);
+        // LF glottal flow (radiation filter adds the +6dB/oct)
+        let source = glottalSource(glottalPhase, oq);
 
         // Shimmer
         source *= 1 + (Math.random() - 0.5) * shimmerAmt;
