@@ -348,8 +348,8 @@ export default function RedeNeuralPage() {
 
   useRefreshOnFocus(useCallback(() => loadData(), []));
 
-  async function loadData() {
-    setLoading(true);
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true);
     try {
       const { data: specs } = await supabase
         .from("neural_specializations")
