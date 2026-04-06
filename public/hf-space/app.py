@@ -1141,7 +1141,7 @@ def route_to_agents(query: str) -> Dict[str, Any]:
 async def health():
     return {
         "status": "ok",
-        "engine": "ELP Neural Proxy v7.0",
+        "engine": "ELP Neural Proxy v7.1",
         "total_agents": TOTAL_AGENTS,
         "capabilities": list(AGENT_CATEGORIES.keys()),
         "fine_tuning_methods": list(FINETUNE_PRESETS.keys()),
@@ -1150,6 +1150,7 @@ async def health():
         "synthetic_schemas": list(SYNTHETIC_SCHEMAS.keys()),
         "code_gen_models": AGENT_CATEGORIES["code_gen"]["models"],
         "webapp_builders": AGENT_CATEGORIES["code_gen"]["webapp_builders"],
+        "text_analysis_types": list(AGENT_CATEGORIES["text_nlp"].keys()),
     }
 
 
