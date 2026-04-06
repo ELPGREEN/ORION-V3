@@ -1243,6 +1243,10 @@ def route_to_agents(query: str) -> Dict[str, Any]:
                      "bot detect", "email triage", "complaint", "talent match"],
         "benchmarking": ["benchmark", "leaderboard", "evaluate model", "compare model",
                          "bigcodebench", "navitrace"],
+        "question_answering": ["question", "answer", "qa", "ask", "explain", "what is",
+                                "how to", "why", "who is", "rag", "retrieval", "document qa",
+                                "pdf qa", "visual qa", "vqa", "table qa", "open domain",
+                                "medical qa", "legal qa", "kotaemon", "chatbot qa"],
         "pdf": ["pdf", "document", "extract text", "table extract", "layout"],
     }
     for category, keywords in keywords_map.items():
