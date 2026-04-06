@@ -373,39 +373,48 @@ Deno.serve(async (req) => {
       } else if (legalItems && legalItems.length > 0) {
         console.log(`📦 Processing ${legalItems.length} legal_embeddings items`);
 
-        const PARALLEL_BATCH = Math.min(3, providers.length);
-        for (let i = 0; i < legalItems.length; i += PARALLEL_BATCH) {
-          const batch = legalItems.slice(i, i + PARALLEL_BATCH);
-          const batchResults = await Promise.allSettled(
-            batch.map(async (item, idx) => {
-              const text = `${item.title}\n\n${item.content}`.trim();
-              const providerIdx = (i + idx) % providers.length;
-              const rotatedProviders = [...providers.slice(providerIdx), ...providers.slice(0, providerIdx)];
-              const { embedding, provider } = await generateEmbedding(text, rotatedProviders);
-              const vectorStr = `[${embedding.join(",")}]`;
+        const BATCH_SIZE = 20;
+        const primaryProvider = providers[0];
 
+        for (let i = 0; i < legalItems.length; i += BATCH_SIZE) {
+          const batch = legalItems.slice(i, i + BATCH_SIZE);
+          const texts = batch.map(item => `${item.title}\n\n${item.content}`.trim());
+
+          try {
+            let embeddings: number[][];
+            let providerUsed = primaryProvider.name;
+
+            if (primaryProvider.type === "openai") {
+              embeddings = await generateEmbeddingOpenAIBatch(texts, primaryProvider.apiKey);
+            } else {
+              embeddings = [];
+              for (const t of texts) {
+                const { embedding, provider } = await generateEmbedding(t, providers);
+                embeddings.push(embedding);
+                providerUsed = provider;
+              }
+            }
+
+            for (let j = 0; j < batch.length; j++) {
+              const vectorStr = `[${embeddings[j].join(",")}]`;
               const { error: updateError } = await supabase
                 .from("legal_embeddings")
                 .update({ embedding: vectorStr })
-                .eq("id", item.id);
-
-              if (updateError) throw updateError;
-              return { id: item.id, provider, title: item.title };
-            })
-          );
-
-          for (const r of batchResults) {
-            if (r.status === "fulfilled") {
-              results.legal.processed++;
-              console.log(`✅ Legal [${r.value.provider}]: ${r.value.title.slice(0, 60)}...`);
-            } else {
-              results.legal.failed++;
-              console.error("❌ Legal batch failed:", r.reason);
+                .eq("id", batch[j].id);
+              if (updateError) {
+                results.legal.failed++;
+              } else {
+                results.legal.processed++;
+                console.log(`✅ Legal [${providerUsed}]: ${batch[j].title?.slice(0, 60)}...`);
+              }
             }
+          } catch (e) {
+            console.error(`❌ Legal batch failed:`, e.message);
+            results.legal.failed += batch.length;
           }
 
-          if (i + PARALLEL_BATCH < legalItems.length) {
-            await new Promise((r) => setTimeout(r, 300));
+          if (i + BATCH_SIZE < legalItems.length) {
+            await new Promise((r) => setTimeout(r, 500));
           }
         }
       } else {
