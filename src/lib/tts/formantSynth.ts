@@ -101,7 +101,7 @@ function lfGlottalPulse(phase: number, oq: number): number {
   if (phase >= oq) {
     // Return phase: exponential decay (models incomplete closure)
     const t = (phase - oq) / (1 - oq);
-    return -0.3 * Math.exp(-5 * t);
+    return -0.15 * Math.exp(-8 * t);
   }
   
   // Open phase: sinusoidal rise, then rapid fall
@@ -118,14 +118,11 @@ function lfGlottalPulse(phase: number, oq: number): number {
   }
 }
 
-// Differentiated glottal flow (what we actually need for synthesis)
-// This adds the natural +6dB/octave spectral tilt
-let prevGlottal = 0;
-function glottalDerivative(phase: number, oq: number): number {
-  const flow = lfGlottalPulse(phase, oq);
-  const derivative = (flow - prevGlottal) * SR * 0.0005; // scale to reasonable amplitude
-  prevGlottal = flow;
-  return derivative;
+// Use glottal flow directly (NOT derivative).
+// The radiation filter (+6dB/oct) combined with flow (-12dB/oct)
+// gives the natural speech spectrum of -6dB/oct.
+function glottalSource(phase: number, oq: number): number {
+  return lfGlottalPulse(phase, oq);
 }
 
 // ═══════════════════════════════════════════════════════════
