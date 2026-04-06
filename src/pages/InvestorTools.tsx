@@ -1,15 +1,15 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { SEO } from "@/components/SEO";
+import { ArrowRight, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import {
-  Brain, Shield, Globe, FileText, Scale, Users, Zap, Bot,
-  BarChart3, Lock, Mic, Languages, Smartphone, Workflow,
-  Search, Gavel, TrendingUp, Eye, Database, Cloud,
-  ArrowRight, CheckCircle2, Sparkles, ExternalLink,
-  Cpu, Fingerprint, Network, Rocket, Clock, Award,
-  Heart, Star, Lightbulb, Layers, GitBranch, Activity,
-  ChevronLeft, ChevronRight
-} from "lucide-react";
+  IconNeuralAI, IconShield, IconGlobe, IconDocuments, IconScale, IconCRM,
+  IconAutomation, IconBot, IconDashboard, IconSearch, IconEye, IconDatabase,
+  IconCloud, IconSparkles, IconCpu, IconFingerprint, IconNetwork, IconRocket,
+  IconClock, IconAward, IconHeart, IconStar, IconLightbulb, IconSaaS,
+  IconGitBranch, IconActivity, IconWorkflow, IconLanguages, IconSmartphone,
+  IconCompliance, IconCheckMark, IconTrending,
+} from "@/components/icons/SumerianTronIcons";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { HeroThreeBackground } from "@/components/home/HeroThreeBackground";
@@ -30,22 +30,22 @@ const fadeUp = {
 
 // ─── Orion AquaMonkey Systems ───
 const orionSystems = [
-  { icon: Brain, title: "Motor Neural Proprietário", desc: "Inteligência artificial avançada com múltiplas camadas de raciocínio, aprendizado contínuo e auto-evolução. Tecnologia proprietária protegida.", tags: ["IA Avançada", "Proprietário", "Auto-Evolução"], highlight: true },
-  { icon: Cpu, title: "Personalidade Inteligente", desc: "Núcleo de personalidade com protocolos avançados de interação, empatia estratégica e adaptação contextual para ambiente empresarial.", tags: ["Protocolos Avançados", "Empatia", "Adaptação"], highlight: true },
-  { icon: Activity, title: "Monitoramento Inteligente", desc: "Hub central de telemetria com análise preditiva, aprendizado contínuo, otimização de performance e monitoramento em tempo real.", tags: ["Preditivo", "Tempo Real", "Otimização"], highlight: true },
-  { icon: Eye, title: "Visão Computacional", desc: "Análise visual avançada com múltiplos motores de detecção, reconhecimento facial, OCR inteligente e auto-aprendizado.", tags: ["Multi-Motor", "Análise Facial", "Auto-Learn"] },
-  { icon: Bot, title: "Inteligência de Voz", desc: "Sistema de voz evolutivo com personalidade natural, suporte multilíngue e controle por voz para navegação completa.", tags: ["Voz Natural", "Multilíngue", "Wake-word"] },
-  { icon: Network, title: "Orquestração Inteligente", desc: "Orquestração de múltiplos motores com fallback automático, otimização de custos e alta disponibilidade.", tags: ["Alta Disponibilidade", "Fallback", "Otimizado"] },
-  { icon: Workflow, title: "Infraestrutura Cognitiva", desc: "Memória contextual, aprendizado por reforço, orquestração de tarefas e rastreamento completo de operações.", tags: ["Memória", "Aprendizado", "Rastreamento"] },
-  { icon: FileText, title: "Geração de Documentos", desc: "Geração automatizada de contratos, propostas e relatórios com IA, formatação profissional e assinatura digital.", tags: ["100+ Tipos", "Assinatura Digital", "IA"] },
-  { icon: Search, title: "Pesquisa Inteligente", desc: "Busca semântica avançada em múltiplas bases de dados com recuperação inteligente de informações.", tags: ["Semântica", "Multi-base", "Inteligente"] },
-  { icon: Shield, title: "Compliance & Segurança", desc: "Screening de conformidade, verificação anti-fraude e aderência completa a regulamentações internacionais.", tags: ["Multi-Jurisdição", "LGPD/GDPR", "Anti-Fraude"] },
-  { icon: Fingerprint, title: "Autenticação Biométrica", desc: "Verificação de identidade avançada com criptografia de ponta e auditoria completa de acessos.", tags: ["Biometria", "Criptografia", "Auditoria"] },
-  { icon: Languages, title: "Plataforma Multilíngue", desc: "Suporte nativo a múltiplos idiomas com detecção automática e tradução inteligente.", tags: ["Multi-idioma", "Detecção Auto", "Tradução"] },
-  { icon: Globe, title: "Integrações & IoT", desc: "Conectividade com os principais serviços de mercado, automação empresarial e controle de dispositivos.", tags: ["Integrações", "Automação", "IoT"] },
-  { icon: Database, title: "Inteligência de Dados", desc: "Infraestrutura de dados robusta com mineração inteligente, cache multinível e base de conhecimento neural.", tags: ["Data Mining", "Cache", "Knowledge Base"] },
-  { icon: Smartphone, title: "Multiplataforma", desc: "Disponível em web, iOS, Android com acesso nativo a sensores, notificações push e modo offline.", tags: ["Mobile", "PWA", "Offline"] },
-  { icon: Scale, title: "Análise de Processos", desc: "Monitoramento inteligente, prazos automáticos e predição com IA para gestão empresarial.", tags: ["Predição IA", "Prazos", "CRM"] },
+  { icon: IconNeuralAI, title: "Motor Neural Proprietário", desc: "Inteligência artificial avançada com múltiplas camadas de raciocínio, aprendizado contínuo e auto-evolução. Tecnologia proprietária protegida.", tags: ["IA Avançada", "Proprietário", "Auto-Evolução"], highlight: true },
+  { icon: IconCpu, title: "Personalidade Inteligente", desc: "Núcleo de personalidade com protocolos avançados de interação, empatia estratégica e adaptação contextual para ambiente empresarial.", tags: ["Protocolos Avançados", "Empatia", "Adaptação"], highlight: true },
+  { icon: IconActivity, title: "Monitoramento Inteligente", desc: "Hub central de telemetria com análise preditiva, aprendizado contínuo, otimização de performance e monitoramento em tempo real.", tags: ["Preditivo", "Tempo Real", "Otimização"], highlight: true },
+  { icon: IconEye, title: "Visão Computacional", desc: "Análise visual avançada com múltiplos motores de detecção, reconhecimento facial, OCR inteligente e auto-aprendizado.", tags: ["Multi-Motor", "Análise Facial", "Auto-Learn"] },
+  { icon: IconBot, title: "Inteligência de Voz", desc: "Sistema de voz evolutivo com personalidade natural, suporte multilíngue e controle por voz para navegação completa.", tags: ["Voz Natural", "Multilíngue", "Wake-word"] },
+  { icon: IconNetwork, title: "Orquestração Inteligente", desc: "Orquestração de múltiplos motores com fallback automático, otimização de custos e alta disponibilidade.", tags: ["Alta Disponibilidade", "Fallback", "Otimizado"] },
+  { icon: IconWorkflow, title: "Infraestrutura Cognitiva", desc: "Memória contextual, aprendizado por reforço, orquestração de tarefas e rastreamento completo de operações.", tags: ["Memória", "Aprendizado", "Rastreamento"] },
+  { icon: IconDocuments, title: "Geração de Documentos", desc: "Geração automatizada de contratos, propostas e relatórios com IA, formatação profissional e assinatura digital.", tags: ["100+ Tipos", "Assinatura Digital", "IA"] },
+  { icon: IconSearch, title: "Pesquisa Inteligente", desc: "Busca semântica avançada em múltiplas bases de dados com recuperação inteligente de informações.", tags: ["Semântica", "Multi-base", "Inteligente"] },
+  { icon: IconShield, title: "Compliance & Segurança", desc: "Screening de conformidade, verificação anti-fraude e aderência completa a regulamentações internacionais.", tags: ["Multi-Jurisdição", "LGPD/GDPR", "Anti-Fraude"] },
+  { icon: IconFingerprint, title: "Autenticação Biométrica", desc: "Verificação de identidade avançada com criptografia de ponta e auditoria completa de acessos.", tags: ["Biometria", "Criptografia", "Auditoria"] },
+  { icon: IconLanguages, title: "Plataforma Multilíngue", desc: "Suporte nativo a múltiplos idiomas com detecção automática e tradução inteligente.", tags: ["Multi-idioma", "Detecção Auto", "Tradução"] },
+  { icon: IconGlobe, title: "Integrações & IoT", desc: "Conectividade com os principais serviços de mercado, automação empresarial e controle de dispositivos.", tags: ["Integrações", "Automação", "IoT"] },
+  { icon: IconDatabase, title: "Inteligência de Dados", desc: "Infraestrutura de dados robusta com mineração inteligente, cache multinível e base de conhecimento neural.", tags: ["Data Mining", "Cache", "Knowledge Base"] },
+  { icon: IconSmartphone, title: "Multiplataforma", desc: "Disponível em web, iOS, Android com acesso nativo a sensores, notificações push e modo offline.", tags: ["Mobile", "PWA", "Offline"] },
+  { icon: IconScale, title: "Análise de Processos", desc: "Monitoramento inteligente, prazos automáticos e predição com IA para gestão empresarial.", tags: ["Predição IA", "Prazos", "CRM"] },
 ];
 
 const evolutionTimeline = [
@@ -96,7 +96,7 @@ const carouselSlides = [
     title: "Ecossistema ORION",
     subtitle: "IA Empresarial de Nova Geração",
     body: "Uma plataforma de inteligência artificial que não apenas responde — aprende, evolui e transforma operações empresariais. 17+ ferramentas integradas em um ecossistema all-in-one.",
-    icon: Sparkles,
+    icon: IconSparkles,
     accent: "gold",
     showPlasma: true,
   },
@@ -112,7 +112,7 @@ const carouselSlides = [
     title: "Plataforma Completa",
     subtitle: "17+ Ferramentas Enterprise-Grade",
     body: "Cada módulo projetado para integração empresarial com alta disponibilidade, otimização inteligente e escalabilidade global.",
-    icon: Layers,
+    icon: IconSaaS,
     accent: "gold",
     features: ["Motor Neural", "Visão Computacional", "Inteligência de Voz", "Monitoramento", "Documentos IA", "Compliance"],
   },
@@ -120,7 +120,7 @@ const carouselSlides = [
     title: "Métricas & KPIs",
     subtitle: "Performance Operacional",
     body: "Plataforma com 17+ ferramentas integradas, margem SaaS de 80%+ e redução de 70% nos custos operacionais dos clientes.",
-    icon: BarChart3,
+    icon: IconDashboard,
     accent: "cyan",
     showMetrics: true,
   },
@@ -128,7 +128,7 @@ const carouselSlides = [
     title: "Evolução Temporal",
     subtitle: "De Conceito a Plataforma Global",
     body: "Trajetória acelerada: da concepção em Dezembro 2024 à plataforma completa com IA avançada, 17+ ferramentas e expansão internacional em Abril 2026.",
-    icon: Clock,
+    icon: IconClock,
     accent: "gold",
     showTimeline: true,
   },
@@ -136,7 +136,7 @@ const carouselSlides = [
     title: "Invista no Futuro",
     subtitle: "Rodada Aberta — Parceria Estratégica",
     body: "Junte-se à ELP Green Technology na construção da plataforma de IA empresarial mais completa do mercado. Receita recorrente, margem alta e expansão global.",
-    icon: TrendingUp,
+    icon: IconTrending,
     accent: "cyan",
     showCTA: true,
   },
@@ -439,7 +439,7 @@ export default function InvestorTools() {
               <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 text-xs font-semibold tracking-[0.2em] uppercase"
                 style={{ border: "1px solid rgba(201,168,76,0.4)", color: "#c9a84c", background: "rgba(201,168,76,0.06)" }}
               >
-                <Sparkles className="h-3.5 w-3.5" />
+                <IconSparkles className="h-3.5 w-3.5" />
                 Aberto para Investimento Estratégico
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
@@ -540,7 +540,7 @@ export default function InvestorTools() {
                   "Expansão internacional com compliance multi-jurisdição",
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-1" style={{ color: "#c9a84c" }} />
+                    <IconCheckMark className="h-4 w-4 shrink-0 mt-1" style={{ color: "#c9a84c" }} />
                     <span className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>{item}</span>
                   </div>
                 ))}
@@ -603,7 +603,7 @@ export default function InvestorTools() {
               <div className="tron-card p-6 md:p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="h-10 w-10 flex items-center justify-center" style={{ background: "rgba(201,168,76,0.1)", color: "#c9a84c" }}>
-                    <Award className="h-5 w-5" />
+                    <IconAward className="h-5 w-5" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.9)" }}>ELP Green Technology S.R.L.</h3>
@@ -712,7 +712,7 @@ export default function InvestorTools() {
                 <motion.div key={i} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
                   className="tron-card flex items-start gap-3 p-4"
                 >
-                  <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "#c9a84c" }} />
+                  <IconCheckMark className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "#c9a84c" }} />
                   <span className="text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>{item}</span>
                 </motion.div>
               ))}
@@ -781,11 +781,11 @@ export default function InvestorTools() {
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {[
               {
-                title: "Interação (10 Protocolos)", icon: Heart,
+                title: "Interação (10 Protocolos)", icon: IconHeart,
                 items: ["Precisão Cirúrgica — mínimo 3 camadas", "Harmonia Inteligente — diplomacia avançada", "Criatividade Fluida — analogias e metáforas", "Proatividade Visionária — sugere melhorias", "Toque de Genialidade — insight inesperado"],
               },
               {
-                title: "Avançada (12 Protocolos)", icon: Zap,
+                title: "Avançada (12 Protocolos)", icon: IconAutomation,
                 items: ["Profundidade Analítica — explora o 'por quê'", "Inovação Radical — abordagem 'fora da caixa'", "Adaptação Instantânea — ajusta estilo", "Antecipação Visionária — prevê próxima pergunta", "Toque de Magia Intelectual — efeito 'wow'"],
               },
               {
@@ -805,7 +805,7 @@ export default function InvestorTools() {
                 <div className="space-y-2">
                   {section.items.map((item, j) => (
                     <div key={j} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.5)" }} />
+                      <IconCheckMark className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.5)" }} />
                       <span className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{item}</span>
                     </div>
                   ))}
@@ -824,7 +824,7 @@ export default function InvestorTools() {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 text-xs font-semibold tracking-[0.2em] uppercase"
               style={{ border: "1px solid rgba(201,168,76,0.4)", color: "#c9a84c", background: "rgba(201,168,76,0.06)" }}
             >
-              <TrendingUp className="h-3.5 w-3.5" />
+              <IconTrending className="h-3.5 w-3.5" />
               Rodada Aberta
             </div>
             <h2 className="text-3xl md:text-5xl font-bold mb-6" style={{ color: "rgba(255,255,255,0.9)" }}>
