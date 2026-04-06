@@ -72,22 +72,22 @@ const TIER_CONFIGS: Record<ModelTier, TierConfig> = {
   },
   slim: {
     tier: "slim",
-    maxTokens: 1024,
-    latencyBudgetMs: 200,
+    maxTokens: 2048,
+    latencyBudgetMs: 300,
     costMultiplier: 0.35,
     capabilities: ["summarization", "translation", "moderate_reasoning", "document_analysis"],
   },
   full: {
     tier: "full",
-    maxTokens: 8192,
-    latencyBudgetMs: 2000,
+    maxTokens: 16384,
+    latencyBudgetMs: 3000,
     costMultiplier: 1.0,
     capabilities: ["complex_reasoning", "creative_writing", "legal_analysis", "multi_step", "code_generation"],
   },
   deep: {
     tier: "deep",
-    maxTokens: 32768,
-    latencyBudgetMs: 5000,
+    maxTokens: 65536,
+    latencyBudgetMs: 8000,
     costMultiplier: 2.0,
     capabilities: [
       "deep_reasoning", "multi_step_analysis", "chain_of_thought",
