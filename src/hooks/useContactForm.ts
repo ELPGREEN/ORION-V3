@@ -1,7 +1,15 @@
 import { useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useContactForm() {
-  const [formData, setFormData] = useState<Record<string, any>>({ name: "", email: "", message: "", company: "", phone: "", subject: "" });
+  const [formData, setFormData] = useState<Record<string, any>>({
+    name: "",
+    email: "",
+    message: "",
+    company: "",
+    phone: "",
+    subject: "",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -11,13 +19,37 @@ export function useContactForm() {
     }
   }, []);
 
-  const handleSubmit = useCallback(async (e?: any) => {
-    if (e?.preventDefault) e.preventDefault();
-    setIsSubmitting(true);
-    await new Promise(r => setTimeout(r, 1000));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-  }, []);
+  const handleSubmit = useCallback(
+    async (e?: any) => {
+      if (e?.preventDefault) e.preventDefault();
+
+      const { name, email, message } = formData;
+      if (!name?.trim() || !email?.trim() || !message?.trim()) return;
+
+      setIsSubmitting(true);
+
+      try {
+        const { error } = await supabase.from("contacts").insert({
+          name: name.trim().slice(0, 200),
+          email: email.trim().slice(0, 255),
+          message: message.trim().slice(0, 5000),
+          company: formData.company?.trim()?.slice(0, 200) || null,
+          subject: formData.subject?.trim()?.slice(0, 300) || null,
+          channel: "website_form",
+          status: "new",
+        });
+
+        if (error) throw error;
+        setIsSubmitted(true);
+        setFormData({ name: "", email: "", message: "", company: "", phone: "", subject: "" });
+      } catch (err) {
+        console.error("Contact form error:", err);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [formData]
+  );
 
   return {
     formData,

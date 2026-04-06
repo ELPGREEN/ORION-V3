@@ -195,11 +195,11 @@ const App = () => (
                     <Route path="marketplace-modules" element={<MarketplaceModules />} />
 
                     {/* Marketplace routes (role-protected) */}
-                    <Route path="meus-produtos" element={<RoleGuard allowedRoles={["advogado", "produtor"]}><MeusProdutos /></RoleGuard>} />
+                    <Route path="meus-produtos" element={<RoleGuard allowedRoles={["advogado", "produtor", "nomade"]}><MeusProdutos /></RoleGuard>} />
                     <Route path="marketplace" element={<MarketplacePage />} />
-                    <Route path="afiliados" element={<RoleGuard allowedRoles={["advogado", "afiliado"]}><AfiliadosPage /></RoleGuard>} />
+                    <Route path="afiliados" element={<RoleGuard allowedRoles={["advogado", "afiliado", "nomade"]}><AfiliadosPage /></RoleGuard>} />
                     <Route path="plano" element={<Navigate to="/dashboard/configuracoes" replace />} />
-                    <Route path="documentos-internacionais" element={<RoleGuard allowedRoles={["advogado", "produtor"]}><DashboardDocumentosInternacionais /></RoleGuard>} />
+                    <Route path="documentos-internacionais" element={<RoleGuard allowedRoles={["advogado", "produtor", "nomade"]}><DashboardDocumentosInternacionais /></RoleGuard>} />
 
                     {/* Advogado-only routes */}
                     <Route path="gerar-documento" element={<RoleGuard allowedRoles={["advogado"]}><GerarDocumento /></RoleGuard>} />

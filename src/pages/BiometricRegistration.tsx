@@ -9,7 +9,7 @@ import { Fingerprint, Shield, Zap, Eye, EyeOff, Loader2, Camera, CheckCircle2, A
 import logoElp from "@/assets/logo-elp.webp";
 
 type Step = "form" | "scanning" | "neural" | "success" | "error";
-type RoleOption = "cliente" | "produtor" | "afiliado";
+type RoleOption = "cliente" | "produtor" | "afiliado" | "nomade" | "advogado";
 
 export default function BiometricRegistration() {
   const navigate = useNavigate();
@@ -107,7 +107,7 @@ export default function BiometricRegistration() {
     const frameData = captureFrame();
 
     // Create account
-    const { error: signUpError } = await signUp(form.email, form.senha, { full_name: form.nome, account_type: "cliente" });
+    const { error: signUpError } = await signUp(form.email, form.senha, { full_name: form.nome, account_type: form.role });
     if (signUpError) {
       clearInterval(interval);
       setStep("error");
@@ -173,6 +173,8 @@ export default function BiometricRegistration() {
 
   const roleLabels: Record<RoleOption, string> = {
     cliente: "Cliente",
+    advogado: "Advogado",
+    nomade: "Nômade Digital",
     produtor: "Produtor",
     afiliado: "Afiliado",
   };
@@ -358,7 +360,7 @@ export default function BiometricRegistration() {
                 {/* Role Selector */}
                 <div>
                   <label className="text-xs font-medium text-orange-300/80 tracking-wider uppercase mb-1.5 block">Perfil</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {(Object.keys(roleLabels) as RoleOption[]).map((r) => (
                       <button
                         key={r}
