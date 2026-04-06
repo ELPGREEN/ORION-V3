@@ -45,8 +45,13 @@ export function useAIAutocomplete({ enabled, documentType, debounceMs = 1200 }: 
       } else {
         setSuggestion(null);
       }
-    } catch (err) {
-      if ((err as any)?.name !== "AbortError") {
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        // If rate limited, temporarily disable requests for 10s
+        if (err?.message?.includes("429") || err?.status === 429) {
+          lastTextRef.current = "";
+          setTimeout(() => { lastTextRef.current = ""; }, 10000);
+        }
       }
       setSuggestion(null);
     } finally {
