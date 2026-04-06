@@ -47,21 +47,27 @@ export async function speakWithOrionVoice(
 
   // ── 2. FORMANT SYNTHESIS (Orion's own voice) ──
   try {
+    console.log("[Orion Voice] Starting formant synthesis...");
     const { synthesizeFormant } = await import("./formantSynth");
     const blob = await synthesizeFormant(cleanText);
+
+    console.log(`[Orion Voice] Formant blob: size=${blob?.size}, type=${blob?.type}`);
 
     if (blob && blob.size > 100) {
       // Cache for next time
       cacheAudio(cleanText, blob, "formant-iapetus").catch(() => {});
 
       const result = await playBlob(blob, signal);
+      console.log(`[Orion Voice] playBlob result: played=${result.played}`);
       if (result.played) {
         return { ...result, engine: "formant-iapetus" };
       }
+    } else {
+      console.warn(`[Orion Voice] Formant produced tiny/empty blob: ${blob?.size} bytes`);
     }
   } catch (err: any) {
     if (err?.name !== "AbortError") {
-      console.warn("[Orion Voice] Formant synthesis failed:", err?.message);
+      console.error("[Orion Voice] Formant synthesis error:", err?.message, err?.stack?.slice(0, 200));
     }
   }
 
