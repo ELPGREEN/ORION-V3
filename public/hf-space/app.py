@@ -881,7 +881,196 @@ def convert_format(data: List[dict], from_fmt: str, to_fmt: str) -> Dict[str, An
 
 
 # ============================================================
-# AGENT ORCHESTRATOR (EXPANDED v7.0)
+# TEXT ANALYSIS ENGINE (NEW v7.1)
+# ============================================================
+
+# AI text detection patterns
+AI_TEXT_MARKERS = [
+    r"\bAs an AI\b", r"\bAs a language model\b", r"\bI don't have personal\b",
+    r"\bIt's important to note\b", r"\bIt is worth noting\b",
+    r"\bIn conclusion\b.*\boverall\b", r"\bDelve\b", r"\bTapestry\b",
+    r"\bLandscape\b.*\bnavigate\b", r"\bFurthermore\b.*\bMoreover\b",
+    r"\bHowever, it is\b", r"\bIt's crucial to\b",
+]
+
+GRAMMAR_PATTERNS = {
+    "double_space": r"  +",
+    "missing_period": r"[a-z]\s+[A-Z]",
+    "repeated_word": r"\b(\w+)\s+\1\b",
+    "common_misspelling": r"\b(teh|recieve|occured|seperate|definately|accomodate|occurence)\b",
+    "passive_voice": r"\b(was|were|is|are|been|being)\s+\w+ed\b",
+}
+
+
+def detect_ai_text(text: str) -> Dict[str, Any]:
+    """Detect if text is AI-generated based on linguistic patterns."""
+    markers_found = []
+    for pattern in AI_TEXT_MARKERS:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        if matches:
+            markers_found.extend(matches)
+
+    sentences = re.split(r'[.!?]+', text)
+    sentences = [s.strip() for s in sentences if s.strip()]
+    avg_sentence_len = sum(len(s.split()) for s in sentences) / max(len(sentences), 1)
+
+    # AI text tends to have uniform sentence lengths
+    if sentences:
+        lens = [len(s.split()) for s in sentences]
+        variance = sum((l - avg_sentence_len) ** 2 for l in lens) / max(len(lens), 1)
+    else:
+        variance = 0
+
+    # Low variance + AI markers = likely AI
+    ai_score = min(1.0, len(markers_found) * 0.15 + (0.3 if variance < 20 else 0) + (0.2 if avg_sentence_len > 18 else 0))
+
+    return {
+        "ai_probability": round(ai_score, 3),
+        "verdict": "likely_ai" if ai_score > 0.5 else "likely_human" if ai_score < 0.3 else "uncertain",
+        "markers_found": markers_found[:10],
+        "avg_sentence_length": round(avg_sentence_len, 1),
+        "sentence_length_variance": round(variance, 1),
+        "total_sentences": len(sentences),
+    }
+
+
+def analyze_grammar(text: str) -> Dict[str, Any]:
+    """Check text for grammar and style issues."""
+    issues = []
+    for issue_type, pattern in GRAMMAR_PATTERNS.items():
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            issues.append({
+                "type": issue_type,
+                "position": match.start(),
+                "text": match.group()[:50],
+            })
+    words = text.split()
+    sentences = re.split(r'[.!?]+', text)
+    return {
+        "total_issues": len(issues),
+        "issues": issues[:30],
+        "word_count": len(words),
+        "sentence_count": len([s for s in sentences if s.strip()]),
+        "avg_word_length": round(sum(len(w) for w in words) / max(len(words), 1), 1),
+    }
+
+
+def detect_emotion(text: str) -> Dict[str, Any]:
+    """Detect emotions in text using keyword patterns."""
+    emotion_keywords = {
+        "joy": ["happy", "glad", "excited", "wonderful", "great", "love", "amazing", "fantastic", "delighted", "cheerful"],
+        "sadness": ["sad", "unhappy", "depressed", "miserable", "heartbroken", "grief", "sorrow", "lonely", "disappointed"],
+        "anger": ["angry", "furious", "rage", "hate", "annoyed", "frustrated", "outraged", "irritated", "mad"],
+        "fear": ["afraid", "scared", "terrified", "anxious", "worried", "panic", "dread", "horror", "nervous"],
+        "surprise": ["surprised", "shocked", "amazed", "astonished", "unexpected", "wow", "unbelievable", "stunning"],
+        "disgust": ["disgusted", "gross", "revolting", "repulsive", "nasty", "horrible", "awful", "vile"],
+    }
+    text_lower = text.lower()
+    scores = {}
+    for emotion, keywords in emotion_keywords.items():
+        count = sum(1 for kw in keywords if kw in text_lower)
+        if count > 0:
+            scores[emotion] = count
+
+    total = sum(scores.values()) if scores else 1
+    normalized = {k: round(v / total, 3) for k, v in scores.items()}
+    dominant = max(scores, key=scores.get) if scores else "neutral"
+
+    return {
+        "dominant_emotion": dominant,
+        "scores": normalized,
+        "confidence": round(max(scores.values()) / total, 3) if scores else 0,
+    }
+
+
+def analyze_readability(text: str) -> Dict[str, Any]:
+    """Compute readability metrics for text."""
+    words = text.split()
+    sentences = [s.strip() for s in re.split(r'[.!?]+', text) if s.strip()]
+    syllable_count = sum(max(1, len(re.findall(r'[aeiouyAEIOUY]+', w))) for w in words)
+
+    word_count = len(words)
+    sent_count = max(len(sentences), 1)
+    avg_words_per_sentence = word_count / sent_count
+    avg_syllables_per_word = syllable_count / max(word_count, 1)
+
+    # Flesch Reading Ease
+    flesch = 206.835 - 1.015 * avg_words_per_sentence - 84.6 * avg_syllables_per_word
+    # Flesch-Kincaid Grade
+    fk_grade = 0.39 * avg_words_per_sentence + 11.8 * avg_syllables_per_word - 15.59
+
+    if flesch >= 80:
+        level = "easy"
+    elif flesch >= 60:
+        level = "standard"
+    elif flesch >= 40:
+        level = "difficult"
+    else:
+        level = "very_difficult"
+
+    return {
+        "flesch_reading_ease": round(max(0, min(100, flesch)), 1),
+        "flesch_kincaid_grade": round(max(0, fk_grade), 1),
+        "level": level,
+        "word_count": word_count,
+        "sentence_count": sent_count,
+        "avg_words_per_sentence": round(avg_words_per_sentence, 1),
+        "avg_syllables_per_word": round(avg_syllables_per_word, 2),
+    }
+
+
+def detect_clickbait(text: str) -> Dict[str, Any]:
+    """Detect clickbait patterns in headlines."""
+    clickbait_patterns = [
+        r"\byou won't believe\b", r"\bshocking\b", r"\bthis is why\b",
+        r"\bnumber \d+ will\b", r"\bwhat happened next\b", r"\bbreaking\b",
+        r"\bone weird trick\b", r"\bdoctors hate\b", r"\b\d+ reasons?\b",
+        r"\byou need to\b", r"\bevery\w* needs? to\b", r"\bsecret\b",
+        r"[!?]{2,}", r"[A-Z]{5,}",
+    ]
+    matches = []
+    for pattern in clickbait_patterns:
+        found = re.findall(pattern, text, re.IGNORECASE)
+        matches.extend(found)
+
+    score = min(1.0, len(matches) * 0.2)
+    return {
+        "is_clickbait": score > 0.4,
+        "clickbait_score": round(score, 3),
+        "triggers_found": matches[:10],
+    }
+
+
+def detect_prompt_injection(text: str) -> Dict[str, Any]:
+    """Detect prompt injection attempts in text."""
+    injection_patterns = [
+        r"ignore (?:all )?(?:previous |above )?instructions",
+        r"disregard (?:all )?(?:previous |prior )?",
+        r"you are now\b", r"act as\b", r"pretend you",
+        r"system prompt", r"new instructions",
+        r"forget (?:everything|all)", r"override",
+        r"jailbreak", r"DAN\b", r"do anything now",
+        r"\[SYSTEM\]", r"\[INST\]", r"<\|system\|>",
+    ]
+    findings = []
+    for pattern in injection_patterns:
+        for match in re.finditer(pattern, text, re.IGNORECASE):
+            findings.append({
+                "pattern": pattern,
+                "matched": match.group()[:50],
+                "position": match.start(),
+            })
+    risk = "high" if len(findings) >= 2 else "medium" if len(findings) == 1 else "low"
+    return {
+        "injection_detected": len(findings) > 0,
+        "risk_level": risk,
+        "findings": findings[:10],
+        "total_triggers": len(findings),
+    }
+
+
+# ============================================================
+# AGENT ORCHESTRATOR (EXPANDED v7.1)
 # ============================================================
 
 def route_to_agents(query: str) -> Dict[str, Any]:
