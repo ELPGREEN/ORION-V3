@@ -1283,7 +1283,7 @@ export function deserializeFromQPY(payload: QPYCircuitPayload): RuntimeCircuit {
     nLayers: payload.nLayers,
     params,
     input: Array(payload.nQubits).fill(0),
-    config: { nQubits: payload.nQubits, nLayers: payload.nLayers, learningRate: 0.01, maxIterations: 100 } as VQCConfig,
+    config: { nQubits: payload.nQubits, nLayers: payload.nLayers, learningRate: 0.01, maxIterations: 100, featureMap: "zz", ansatz: "hardware_efficient", noiseModel: "none", noiseStrength: 0, naturalGradient: false, residualStrength: 0, gradientClip: 1.0 } as unknown as VQCConfig,
   };
 }
 
