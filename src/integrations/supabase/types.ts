@@ -7449,6 +7449,45 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_guest_sessions: {
+        Row: {
+          created_at: string
+          device_info: Json | null
+          ended_at: string | null
+          guest_name: string
+          id: string
+          is_active: boolean | null
+          messages: Json | null
+          owner_user_id: string
+          started_at: string
+          voice_features: Json | null
+        }
+        Insert: {
+          created_at?: string
+          device_info?: Json | null
+          ended_at?: string | null
+          guest_name?: string
+          id?: string
+          is_active?: boolean | null
+          messages?: Json | null
+          owner_user_id: string
+          started_at?: string
+          voice_features?: Json | null
+        }
+        Update: {
+          created_at?: string
+          device_info?: Json | null
+          ended_at?: string | null
+          guest_name?: string
+          id?: string
+          is_active?: boolean | null
+          messages?: Json | null
+          owner_user_id?: string
+          started_at?: string
+          voice_features?: Json | null
+        }
+        Relationships: []
+      }
       voice_profiles: {
         Row: {
           created_at: string | null
