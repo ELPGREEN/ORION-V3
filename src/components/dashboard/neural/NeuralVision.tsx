@@ -27,10 +27,7 @@ import { FaceScannerOverlay } from "./FaceScannerOverlay";
 import { TeslaCoilVoltagePanel } from "./TeslaCoilVoltagePanel";
 import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
 import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
-import { useFaceDetection } from "@/hooks/useFaceDetection";
-import { detectSingleFaceFull, type FaceApiDetection } from "@/lib/neural/face-api-runtime";
-import { preloadAllVision } from "@/lib/neural/realtime-vision-engine";
-import { yoloFrameXProxy as yoloFrameX } from "@/lib/neural/yolofx-proxy";
+import { preloadAllVision, detectRealTime, type RealTimeVisionResult } from "@/lib/neural/realtime-vision-engine";
 
 // Map COCO class names to overlay categories
 function categoryFromSource(name: string): string {
@@ -122,9 +119,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   }, []);
   const { currentGesture, gesturesEnabled, setGesturesEnabled } = useGestureDetection(active, canvasRef, handleGestureAction);
 
-  // ═══ Face Detection (4-tier fallback) ═══
-  const { detectFaces, detectionTier: faceTier, faces: detectedFacesRaw } = useFaceDetection();
-  const faceApiResultRef = useRef<FaceApiDetection | null>(null);
+  // Face detection now handled by detectRealTime() unified pipeline
+  const lastRtVisionRef = useRef<RealTimeVisionResult | null>(null);
 
   const hasGreetedRef = useRef(false);
 
@@ -403,53 +399,39 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         if (!prevRef.current || prevRef.current.length !== result.pixels.length) prevRef.current = new Uint8ClampedArray(result.pixels);
         else prevRef.current.set(result.pixels);
 
-        // ═══ Face Detection: run 4-tier fallback every 6 frames ═══
-        detectFaces(video, ctx, w, h).then(faces => {
-          (VS as any).detectedFaces = faces;
-          if (faces.length > 0) {
-            detectSingleFaceFull(video).then(full => {
-              faceApiResultRef.current = full;
-              (VS as any).faceApiDetection = full;
-            }).catch(() => {});
-          } else {
-            faceApiResultRef.current = null;
-            (VS as any).faceApiDetection = null;
-          }
-        }).catch(() => {});
       }
 
-      // ═══ YOLO FrameX: Multi-task vision (Objects + Faces + Scene + OCR + Movement) ═══
+      // ═══ Unified ML Vision: detectRealTime (MediaPipe + YOLO + Depth + OCR + 3D + Faces) ═══
       if (VS.frames % 12 === 0 && !rtInferenceRunningRef.current) {
         rtInferenceRunningRef.current = true;
-        yoloFrameX.processFrame(video).then(multiResult => {
-          // Store full multi-task result in VS for AI access
-          VS.realTimeVision = multiResult as any;
-          (VS as any).multiTaskResult = multiResult;
-          (VS as any).sceneClassification = multiResult.scenario;
-          (VS as any).readingResult = multiResult.reading;
-          (VS as any).movementAnalysis = multiResult.movement;
-          (VS as any).frameXFaces = multiResult.faces;
+        detectRealTime(video).then(rtResult => {
+          // Store properly typed result
+          VS.realTimeVision = rtResult;
+          lastRtVisionRef.current = rtResult;
 
-          // Merge into UI detections for BoundingBoxOverlay
-          if (multiResult.objects.length > 0 || multiResult.faces.length > 0) {
-            const mlObjects = multiResult.objects.map(o => ({
-              name: o.class,
-              category: categoryFromSource(o.class),
-              confidence: o.score,
+          // FrameX multi-task data (if available)
+          if (rtResult.frameXResult) {
+            (VS as any).multiTaskResult = rtResult.frameXResult;
+            (VS as any).sceneClassification = rtResult.frameXResult.scenario;
+            (VS as any).readingResult = rtResult.frameXResult.reading;
+            (VS as any).movementAnalysis = rtResult.frameXResult.movement;
+            (VS as any).frameXFaces = rtResult.frameXResult.faces;
+          }
+
+          // Face data from unified pipeline (replaces 3 separate face detectors)
+          (VS as any).detectedFaces = rtResult.faces;
+          (VS as any).faceAttributes = rtResult.faceAttributes;
+
+          // Merge all objects into UI detections for BoundingBoxOverlay
+          if (rtResult.allObjects.length > 0) {
+            const mlObjects = rtResult.allObjects.map(o => ({
+              name: o.namePt,
+              category: categoryFromSource(o.name),
+              confidence: o.confidence,
               count: 1,
-              bbox: { x: o.box.x, y: o.box.y, w: o.box.width, h: o.box.height },
-              source: "yolo" as "mediapipe" | "yolo" | "both",
+              bbox: { x: o.x, y: o.y, w: o.width, h: o.height },
+              source: o.source,
             }));
-            for (const f of multiResult.faces) {
-              mlObjects.push({
-                name: "face",
-                category: "pessoa",
-                confidence: f.box.confidence,
-                count: 1,
-                bbox: { x: f.box.x, y: f.box.y, w: f.box.width, h: f.box.height },
-                source: "mediapipe" as const,
-              });
-            }
             setMlDetections(mlObjects);
           } else {
             setMlDetections([]);
@@ -700,13 +682,20 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 videoHeight={videoRef.current?.videoHeight || 480}
               />
               <FaceScannerOverlay
-                faces={detectedFacesRaw}
+                faces={(lastRtVisionRef.current?.faces ?? []).map(f => ({
+                  x: f.x, y: f.y, width: f.width, height: f.height,
+                  confidence: f.confidence, landmarks: [],
+                  nx: f.x / (videoRef.current?.videoWidth || 640),
+                  ny: f.y / (videoRef.current?.videoHeight || 480),
+                  nw: f.width / (videoRef.current?.videoWidth || 640),
+                  nh: f.height / (videoRef.current?.videoHeight || 480),
+                }))}
                 width={200}
                 height={150}
                 videoWidth={videoRef.current?.videoWidth || 640}
                 videoHeight={videoRef.current?.videoHeight || 480}
-                tier={faceTier}
-                faceApiDetection={faceApiResultRef.current}
+                tier={lastRtVisionRef.current?.status.mediapipe ? "native" : "fallback"}
+                faceApiDetection={null}
               />
               {gesturesEnabled && currentGesture.gesture !== "none" && (
                 <div className="absolute inset-0 pointer-events-none z-10">
