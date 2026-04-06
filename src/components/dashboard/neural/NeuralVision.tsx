@@ -682,13 +682,13 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 videoHeight={videoRef.current?.videoHeight || 480}
               />
               <FaceScannerOverlay
-                faces={detectedFacesRaw}
+                faces={lastRtVisionRef.current?.faces ?? []}
                 width={200}
                 height={150}
                 videoWidth={videoRef.current?.videoWidth || 640}
                 videoHeight={videoRef.current?.videoHeight || 480}
-                tier={faceTier}
-                faceApiDetection={faceApiResultRef.current}
+                tier={lastRtVisionRef.current?.status.mediapipe ? "mediapipe" : "fallback"}
+                faceApiDetection={null}
               />
               {gesturesEnabled && currentGesture.gesture !== "none" && (
                 <div className="absolute inset-0 pointer-events-none z-10">
