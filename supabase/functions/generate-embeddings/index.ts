@@ -7,28 +7,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Embedding providers — Mistral (primary), HuggingFace, OpenAI, Gemini fallback
+// ⚠️ CRITICAL: OpenAI text-embedding-3-small (768d) MUST be primary.
+// neural-search uses OpenAI for query embeddings — document embeddings MUST match.
+// Using different models (Mistral, HF) produces incompatible vector spaces.
 function getEmbeddingProviders(): Array<{ name: string; apiKey: string; type: string }> {
   const providers: Array<{ name: string; apiKey: string; type: string }> = [];
 
-  // Mistral first (most reliable)
-  const mistralKey = Deno.env.get("MISTRAL_API_KEY");
-  if (mistralKey) {
-    providers.push({ name: "mistral", apiKey: mistralKey, type: "mistral" });
-  }
-
-  // HuggingFace second (free, reliable)
-  const hfKeys = [
-    Deno.env.get("HF_TOKEN"),
-    Deno.env.get("HF_WRITE_TOKEN"),
-    Deno.env.get("HUGGINGFACE_API_KEY"),
-    Deno.env.get("CHAVE_API_HUGGINGFACE"),
-  ].filter(Boolean);
-  if (hfKeys.length > 0) {
-    providers.push({ name: "huggingface", apiKey: hfKeys[0]!, type: "huggingface" });
-  }
-
-  // OpenAI keys as fallback
+  // OpenAI FIRST — matches neural-search query embeddings (text-embedding-3-small 768d)
   const openaiKeys = [
     Deno.env.get("OPENAI_API_KEY"),
     Deno.env.get("OPENAI_API_KEY_2"),
@@ -37,7 +22,7 @@ function getEmbeddingProviders(): Array<{ name: string; apiKey: string; type: st
     providers.push({ name: "openai", apiKey: key!, type: "openai" });
   }
 
-  // Gemini as last resort
+  // Gemini as fallback (can output 768d natively)
   const geminiKeys = [
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
@@ -47,11 +32,22 @@ function getEmbeddingProviders(): Array<{ name: string; apiKey: string; type: st
     providers.push({ name: "gemini", apiKey: key!, type: "gemini" });
   }
 
+  // NOTE: Mistral and HuggingFace REMOVED from pipeline.
+  // They produce embeddings in different vector spaces (1024d truncated / 384d padded)
+  // which are incompatible with OpenAI query embeddings in neural-search.
+
   return providers;
 }
 
+// Single text embedding
 async function generateEmbeddingOpenAI(text: string, apiKey: string): Promise<number[]> {
-  const truncated = text.slice(0, 8000);
+  const results = await generateEmbeddingOpenAIBatch([text], apiKey);
+  return results[0] || [];
+}
+
+// Batch embedding — sends up to 20 texts in ONE API call to save tokens/requests
+async function generateEmbeddingOpenAIBatch(texts: string[], apiKey: string): Promise<number[][]> {
+  const truncated = texts.map(t => t.slice(0, 4000)); // 4k chars ≈ ~1k tokens each
   const response = await fetch("https://api.openai.com/v1/embeddings", {
     method: "POST",
     headers: {
@@ -71,7 +67,9 @@ async function generateEmbeddingOpenAI(text: string, apiKey: string): Promise<nu
   }
 
   const data = await response.json();
-  return data?.data?.[0]?.embedding || [];
+  // Sort by index to maintain order
+  const sorted = (data?.data || []).sort((a: any, b: any) => a.index - b.index);
+  return sorted.map((d: any) => d.embedding || []);
 }
 
 async function generateEmbeddingGemini(text: string, apiKey: string): Promise<number[]> {
@@ -122,80 +120,7 @@ async function generateEmbeddingGemini(text: string, apiKey: string): Promise<nu
   throw new Error("All Gemini embedding models failed");
 }
 
-async function generateEmbeddingHuggingFace(text: string, apiKey: string): Promise<number[]> {
-  const truncated = text.slice(0, 8000);
-  const models = [
-    "BAAI/bge-small-en-v1.5",
-    "sentence-transformers/all-MiniLM-L6-v2",
-  ];
-
-  for (const model of models) {
-    try {
-      const response = await fetch(
-        `https://router.huggingface.co/hf-inference/models/${model}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            inputs: truncated,
-            options: { wait_for_model: true },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.warn(`HF ${model} failed (${response.status}): ${errText.slice(0, 100)}`);
-        continue;
-      }
-
-      const data = await response.json();
-      // HF returns array of floats directly or nested array
-      const emb = Array.isArray(data?.[0]) ? data[0] : data;
-      if (emb && emb.length > 0) {
-        // Pad or truncate to 768
-        if (emb.length >= 768) return emb.slice(0, 768);
-        return [...emb, ...new Array(768 - emb.length).fill(0)];
-      }
-    } catch (e) {
-      console.warn(`HF ${model} exception:`, e.message);
-      continue;
-    }
-  }
-
-  throw new Error("All HuggingFace embedding models failed");
-}
-
-async function generateEmbeddingMistral(text: string, apiKey: string): Promise<number[]> {
-  const truncated = text.slice(0, 8000);
-  const response = await fetch("https://api.mistral.ai/v1/embeddings", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "mistral-embed",
-      input: [truncated],
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Mistral embedding error ${response.status}: ${err}`);
-  }
-
-  const data = await response.json();
-  const emb = data?.data?.[0]?.embedding;
-  if (!emb) throw new Error("No embedding from Mistral");
-  
-  // Mistral returns 1024-dim, truncate to 768
-  return emb.slice(0, 768);
-}
-
+// generateEmbedding — fallback chain (OpenAI → Gemini only)
 async function generateEmbedding(
   text: string,
   providers: Array<{ name: string; apiKey: string; type: string }>
@@ -205,10 +130,6 @@ async function generateEmbedding(
       let embedding: number[];
       if (provider.type === "gemini") {
         embedding = await generateEmbeddingGemini(text, provider.apiKey);
-      } else if (provider.type === "mistral") {
-        embedding = await generateEmbeddingMistral(text, provider.apiKey);
-      } else if (provider.type === "huggingface") {
-        embedding = await generateEmbeddingHuggingFace(text, provider.apiKey);
       } else {
         embedding = await generateEmbeddingOpenAI(text, provider.apiKey);
       }
@@ -295,46 +216,66 @@ Deno.serve(async (req) => {
       } else if (neuralItems && neuralItems.length > 0) {
         console.log(`📦 Processing ${neuralItems.length} neural_knowledge_base items`);
 
-        const PARALLEL_BATCH = Math.min(3, providers.length);
-        for (let i = 0; i < neuralItems.length; i += PARALLEL_BATCH) {
-          const batch = neuralItems.slice(i, i + PARALLEL_BATCH);
-          const batchResults = await Promise.allSettled(
-            batch.map(async (item, idx) => {
-              const text = `${item.title}\n\n${item.content}`.trim();
-              if (text.length < 10) {
-                // Skip items with no meaningful content
-                await supabase.from("neural_knowledge_base")
-                  .update({ is_processed: true })
-                  .eq("id", item.id);
-                return { id: item.id, provider: "skip", title: item.title };
-              }
-              const providerIdx = (i + idx) % providers.length;
-              const rotatedProviders = [...providers.slice(providerIdx), ...providers.slice(0, providerIdx)];
-              const { embedding, provider } = await generateEmbedding(text, rotatedProviders);
-              const vectorStr = `[${embedding.join(",")}]`;
+        // Filter meaningful items and skip empties
+        const meaningful = [];
+        for (const item of neuralItems) {
+          const text = `${item.title}\n\n${item.content}`.trim();
+          if (text.length < 10) {
+            await supabase.from("neural_knowledge_base")
+              .update({ is_processed: true })
+              .eq("id", item.id);
+            results.neural.processed++;
+            continue;
+          }
+          meaningful.push({ ...item, text });
+        }
 
+        // Batch OpenAI calls (up to 20 per API call to save tokens)
+        const BATCH_SIZE = 20;
+        const primaryProvider = providers[0];
+
+        for (let i = 0; i < meaningful.length; i += BATCH_SIZE) {
+          const batch = meaningful.slice(i, i + BATCH_SIZE);
+          try {
+            let embeddings: number[][];
+            let providerUsed = primaryProvider.name;
+
+            if (primaryProvider.type === "openai") {
+              embeddings = await generateEmbeddingOpenAIBatch(
+                batch.map(b => b.text),
+                primaryProvider.apiKey
+              );
+            } else {
+              // Fallback: one-by-one for non-OpenAI
+              embeddings = [];
+              for (const b of batch) {
+                const { embedding, provider } = await generateEmbedding(b.text, providers);
+                embeddings.push(embedding);
+                providerUsed = provider;
+              }
+            }
+
+            for (let j = 0; j < batch.length; j++) {
+              const vectorStr = `[${embeddings[j].join(",")}]`;
               const { error: updateError } = await supabase
                 .from("neural_knowledge_base")
                 .update({ embedding: vectorStr, is_processed: true })
-                .eq("id", item.id);
-
-              if (updateError) throw updateError;
-              return { id: item.id, provider, title: item.title };
-            })
-          );
-
-          for (const r of batchResults) {
-            if (r.status === "fulfilled") {
-              results.neural.processed++;
-              console.log(`✅ Neural [${r.value.provider}]: ${r.value.title.slice(0, 60)}...`);
-            } else {
-              results.neural.failed++;
-              console.error("❌ Neural batch failed:", r.reason);
+                .eq("id", batch[j].id);
+              if (updateError) {
+                console.error(`❌ Update failed for ${batch[j].id}:`, updateError);
+                results.neural.failed++;
+              } else {
+                results.neural.processed++;
+                console.log(`✅ Neural [${providerUsed}]: ${batch[j].title?.slice(0, 60)}...`);
+              }
             }
+          } catch (e) {
+            console.error(`❌ Batch failed:`, e.message);
+            results.neural.failed += batch.length;
           }
 
-          if (i + PARALLEL_BATCH < neuralItems.length) {
-            await new Promise((r) => setTimeout(r, 300));
+          if (i + BATCH_SIZE < meaningful.length) {
+            await new Promise((r) => setTimeout(r, 500));
           }
         }
       } else {
@@ -355,39 +296,48 @@ Deno.serve(async (req) => {
       } else if (legalItems && legalItems.length > 0) {
         console.log(`📦 Processing ${legalItems.length} legal_embeddings items`);
 
-        const PARALLEL_BATCH = Math.min(3, providers.length);
-        for (let i = 0; i < legalItems.length; i += PARALLEL_BATCH) {
-          const batch = legalItems.slice(i, i + PARALLEL_BATCH);
-          const batchResults = await Promise.allSettled(
-            batch.map(async (item, idx) => {
-              const text = `${item.title}\n\n${item.content}`.trim();
-              const providerIdx = (i + idx) % providers.length;
-              const rotatedProviders = [...providers.slice(providerIdx), ...providers.slice(0, providerIdx)];
-              const { embedding, provider } = await generateEmbedding(text, rotatedProviders);
-              const vectorStr = `[${embedding.join(",")}]`;
+        const BATCH_SIZE = 20;
+        const primaryProvider = providers[0];
 
+        for (let i = 0; i < legalItems.length; i += BATCH_SIZE) {
+          const batch = legalItems.slice(i, i + BATCH_SIZE);
+          const texts = batch.map(item => `${item.title}\n\n${item.content}`.trim());
+
+          try {
+            let embeddings: number[][];
+            let providerUsed = primaryProvider.name;
+
+            if (primaryProvider.type === "openai") {
+              embeddings = await generateEmbeddingOpenAIBatch(texts, primaryProvider.apiKey);
+            } else {
+              embeddings = [];
+              for (const t of texts) {
+                const { embedding, provider } = await generateEmbedding(t, providers);
+                embeddings.push(embedding);
+                providerUsed = provider;
+              }
+            }
+
+            for (let j = 0; j < batch.length; j++) {
+              const vectorStr = `[${embeddings[j].join(",")}]`;
               const { error: updateError } = await supabase
                 .from("legal_embeddings")
                 .update({ embedding: vectorStr })
-                .eq("id", item.id);
-
-              if (updateError) throw updateError;
-              return { id: item.id, provider, title: item.title };
-            })
-          );
-
-          for (const r of batchResults) {
-            if (r.status === "fulfilled") {
-              results.legal.processed++;
-              console.log(`✅ Legal [${r.value.provider}]: ${r.value.title.slice(0, 60)}...`);
-            } else {
-              results.legal.failed++;
-              console.error("❌ Legal batch failed:", r.reason);
+                .eq("id", batch[j].id);
+              if (updateError) {
+                results.legal.failed++;
+              } else {
+                results.legal.processed++;
+                console.log(`✅ Legal [${providerUsed}]: ${batch[j].title?.slice(0, 60)}...`);
+              }
             }
+          } catch (e) {
+            console.error(`❌ Legal batch failed:`, e.message);
+            results.legal.failed += batch.length;
           }
 
-          if (i + PARALLEL_BATCH < legalItems.length) {
-            await new Promise((r) => setTimeout(r, 300));
+          if (i + BATCH_SIZE < legalItems.length) {
+            await new Promise((r) => setTimeout(r, 500));
           }
         }
       } else {
