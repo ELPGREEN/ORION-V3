@@ -463,23 +463,17 @@ Deno.serve(async (req) => {
       return Math.ceil(tokens);
     }
 
-    // 4. Call Provider with Retry + Exponential Backoff
+    // 4. Call Provider with Retry + Exponential Backoff (FREE Gemini only)
     let output = "";
-    let reasoningContent = "";
     let usedProvider = provider;
     let tokenUsage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | null = null;
 
-    // ═══ DeepSeek V3.2 Thinking Context Management (Section 3.2.1) ═══
-    // Apply context management: retain reasoning for tool rounds, discard on new user messages
+    // Build conversation from messages
     const rawConversation = messages || [{ role: "user", content: prompt }];
-    const isDeepSeekThinking = thinking_enabled && (provider.id === "deepseek_reasoner" || provider.id === "deepseek");
-    const conversation = isDeepSeekThinking
-      ? applyThinkingContextManagement(rawConversation)
-      : rawConversation
-          .filter((m: any) => m && typeof m.content === "string" && m.content.trim().length > 0)
-          .map((m: any) => ({ role: m.role || "user", content: m.content }));
+    const conversation = rawConversation
+        .filter((m: any) => m && typeof m.content === "string" && m.content.trim().length > 0)
+        .map((m: any) => ({ role: m.role || "user", content: m.content }));
     
-    // Fallback if all messages were filtered out
     if (conversation.length === 0) {
       conversation.push({ role: "user", content: prompt || "Olá" });
     }
