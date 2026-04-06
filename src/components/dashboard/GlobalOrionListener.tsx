@@ -184,7 +184,7 @@ export function GlobalOrionListener() {
     try {
       const rec = new SR();
       rec.lang = "pt-BR";
-      rec.continuous = true;
+      rec.continuous = !isMobile; // On mobile, don't use continuous — it causes rapid onend loops
       rec.interimResults = true;
       rec.maxAlternatives = 3;
 
@@ -251,7 +251,15 @@ export function GlobalOrionListener() {
           return;
         }
 
-        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 10);
+        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
+        
+        // On mobile, stop restarting after max attempts to prevent loop
+        if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
+          console.log("[GlobalOrion] Max restart attempts reached on mobile, stopping wake word listener");
+          setWakeWordActive(false);
+          return;
+        }
+        
         const delay = getRestartDelay("end");
         console.log(`[GlobalOrion] Will restart in ${delay}ms (attempt ${restartAttemptsRef.current})`);
         setWakeWordActive(true);
@@ -282,7 +290,14 @@ export function GlobalOrionListener() {
           return;
         }
 
-        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 10);
+        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
+        
+        if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
+          console.log("[GlobalOrion] Max restart attempts reached after errors, stopping");
+          setWakeWordActive(false);
+          return;
+        }
+        
         const delay = getRestartDelay(e.error);
         console.log(`[GlobalOrion] Will restart after error "${e.error}" in ${delay}ms (attempt ${restartAttemptsRef.current})`);
         setWakeWordActive(true);
