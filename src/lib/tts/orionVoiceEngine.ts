@@ -11,6 +11,7 @@
  */
 
 import { getCachedAudio, cacheAudio } from "./voiceCache";
+import { applyIapetusSignature } from "./voiceDSP";
 
 export interface OrionVoiceResult {
   played: boolean;
@@ -48,17 +49,24 @@ export async function speakWithOrionVoice(
 
   if (signal?.aborted) return fail;
 
-  // ── 2. ORION VOICE ENGINE (HuggingFace) ──
+  // ── 2. ORION VOICE ENGINE (HuggingFace) + DSP ──
   if (!orionEngineDisabled || Date.now() >= orionEngineRetryAfter) {
     try {
-      const blob = await fetchOrionEngine(cleanText, signal);
+      let blob = await fetchOrionEngine(cleanText, signal);
       if (blob && blob.size > 100) {
-        // Cache for future use
-        cacheAudio(cleanText, blob, "orion-hf").catch(() => {});
+        // Apply Iapetus voice signature DSP
+        try {
+          blob = await applyIapetusSignature(blob);
+        } catch (dspErr) {
+          console.warn("[Orion Voice] DSP failed, using raw audio:", dspErr);
+        }
+        
+        // Cache the processed audio
+        cacheAudio(cleanText, blob, "orion-hf-dsp").catch(() => {});
         
         const result = await playBlob(blob, signal);
         if (result.played) {
-          return { ...result, engine: "orion-hf" };
+          return { ...result, engine: "orion-hf-dsp" };
         }
       }
     } catch (err: any) {
