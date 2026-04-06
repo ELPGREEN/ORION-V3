@@ -370,7 +370,7 @@ export function GlobalOrionListener() {
     }
 
     wakeWordEnabledRef.current = true;
-    const timer = setTimeout(() => startWakeWordListener(), isMobile ? 800 : 400);
+    const timer = setTimeout(() => startWakeWordListener(), isMobile ? 2000 : 400);
     return () => {
       clearTimeout(timer);
       stopWakeWordListener();
