@@ -16,6 +16,7 @@ import { IdentifiedObjectsPanel } from "./IdentifiedObjectsPanel";
 import { useGestureDetection, GESTURE_ACTIONS, type GestureType, type GestureAction } from "./useGestureDetection";
 import { PlasmaCanvas } from "./EnergyOrb";
 import { useNeuralVoice } from "@/hooks/useNeuralVoice";
+import { useOrionVoiceClone, isVoiceCloneCommand } from "@/hooks/useOrionVoiceClone";
 
 // Extracted modules
 import { VS, processFrame, type Region, type MotionData } from "./useVisionProcessing";
