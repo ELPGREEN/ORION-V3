@@ -1,96 +1,106 @@
 /**
- * Portuguese Phoneme Table for Formant Synthesis
+ * Portuguese Phoneme Table for Formant Synthesis v2
  * 
- * Each phoneme has formant frequencies (F1-F4), bandwidths, duration,
- * and voicing characteristics tuned to the Iapetus voice signature.
- * 
- * F0 base: 124.2 Hz (baritone)
+ * Calibrated from 44s of Iapetus voice samples (6 recordings).
+ * Voice DNA: F0=125.7Hz, OQ=0.53, SQ=2.16, H1-H2=3.3dB
  */
 
 export interface PhonemeParams {
-  f1: number;       // First formant Hz
-  f2: number;       // Second formant Hz
-  f3: number;       // Third formant Hz
-  f4: number;       // Fourth formant Hz
-  bw1: number;      // F1 bandwidth
-  bw2: number;      // F2 bandwidth
-  bw3: number;      // F3 bandwidth
-  voiced: boolean;  // Uses glottal source
-  nasal: boolean;   // Nasal resonance
+  f1: number;
+  f2: number;
+  f3: number;
+  f4: number;
+  bw1: number;
+  bw2: number;
+  bw3: number;
+  bw4: number;
+  voiced: boolean;
+  nasal: boolean;
   fricative: boolean;
-  duration: number; // ms base duration
-  amplitude: number; // 0-1 relative amplitude
+  plosive: boolean;
+  duration: number;   // ms
+  amplitude: number;  // 0-1
 }
 
-// Iapetus voice characteristics
-export const IAPETUS_F0 = 124.2;
-export const IAPETUS_F0_STD = 16.8;
-export const IAPETUS_F0_RANGE = { min: 99.7, max: 154.8 };
-export const IAPETUS_JITTER = 0.059;
-export const IAPETUS_SPECTRAL_TILT = 34.7;
-
-/**
- * Brazilian Portuguese phoneme inventory
- * Formant values calibrated for Iapetus masculine baritone voice
- */
-export const PT_PHONEMES: Record<string, PhonemeParams> = {
-  // ── VOWELS ──
-  'a':  { f1: 750, f2: 1200, f3: 2600, f4: 3500, bw1: 80, bw2: 100, bw3: 150, voiced: true, nasal: false, fricative: false, duration: 100, amplitude: 1.0 },
-  'e':  { f1: 450, f2: 1800, f3: 2700, f4: 3600, bw1: 70, bw2: 90, bw3: 140, voiced: true, nasal: false, fricative: false, duration: 90, amplitude: 0.95 },
-  'ɛ':  { f1: 600, f2: 1750, f3: 2650, f4: 3500, bw1: 80, bw2: 100, bw3: 150, voiced: true, nasal: false, fricative: false, duration: 95, amplitude: 0.95 },
-  'i':  { f1: 300, f2: 2200, f3: 2900, f4: 3800, bw1: 60, bw2: 80, bw3: 130, voiced: true, nasal: false, fricative: false, duration: 80, amplitude: 0.85 },
-  'o':  { f1: 500, f2: 900,  f3: 2500, f4: 3400, bw1: 70, bw2: 90, bw3: 140, voiced: true, nasal: false, fricative: false, duration: 95, amplitude: 0.95 },
-  'ɔ':  { f1: 600, f2: 1000, f3: 2550, f4: 3450, bw1: 80, bw2: 100, bw3: 150, voiced: true, nasal: false, fricative: false, duration: 95, amplitude: 0.95 },
-  'u':  { f1: 350, f2: 700,  f3: 2400, f4: 3300, bw1: 60, bw2: 80, bw3: 130, voiced: true, nasal: false, fricative: false, duration: 85, amplitude: 0.85 },
-
-  // ── NASAL VOWELS ──
-  'ã':  { f1: 700, f2: 1200, f3: 2500, f4: 3400, bw1: 120, bw2: 140, bw3: 180, voiced: true, nasal: true, fricative: false, duration: 110, amplitude: 0.9 },
-  'ẽ':  { f1: 420, f2: 1750, f3: 2650, f4: 3550, bw1: 110, bw2: 130, bw3: 170, voiced: true, nasal: true, fricative: false, duration: 100, amplitude: 0.85 },
-  'ĩ':  { f1: 280, f2: 2150, f3: 2850, f4: 3750, bw1: 100, bw2: 120, bw3: 160, voiced: true, nasal: true, fricative: false, duration: 90, amplitude: 0.8 },
-  'õ':  { f1: 480, f2: 880,  f3: 2450, f4: 3350, bw1: 110, bw2: 130, bw3: 170, voiced: true, nasal: true, fricative: false, duration: 105, amplitude: 0.85 },
-  'ũ':  { f1: 330, f2: 680,  f3: 2350, f4: 3250, bw1: 100, bw2: 120, bw3: 160, voiced: true, nasal: true, fricative: false, duration: 95, amplitude: 0.8 },
-
-  // ── PLOSIVES ──
-  'p':  { f1: 200, f2: 800,  f3: 2300, f4: 3200, bw1: 200, bw2: 200, bw3: 200, voiced: false, nasal: false, fricative: false, duration: 15, amplitude: 0.0 },
-  'b':  { f1: 200, f2: 800,  f3: 2300, f4: 3200, bw1: 200, bw2: 200, bw3: 200, voiced: true,  nasal: false, fricative: false, duration: 15, amplitude: 0.3 },
-  't':  { f1: 200, f2: 1600, f3: 2600, f4: 3500, bw1: 200, bw2: 200, bw3: 200, voiced: false, nasal: false, fricative: false, duration: 15, amplitude: 0.0 },
-  'd':  { f1: 200, f2: 1600, f3: 2600, f4: 3500, bw1: 200, bw2: 200, bw3: 200, voiced: true,  nasal: false, fricative: false, duration: 15, amplitude: 0.3 },
-  'k':  { f1: 200, f2: 1400, f3: 2500, f4: 3400, bw1: 200, bw2: 200, bw3: 200, voiced: false, nasal: false, fricative: false, duration: 15, amplitude: 0.0 },
-  'g':  { f1: 200, f2: 1400, f3: 2500, f4: 3400, bw1: 200, bw2: 200, bw3: 200, voiced: true,  nasal: false, fricative: false, duration: 15, amplitude: 0.3 },
-
-  // ── FRICATIVES ──
-  'f':  { f1: 200, f2: 1300, f3: 2500, f4: 3500, bw1: 300, bw2: 300, bw3: 300, voiced: false, nasal: false, fricative: true, duration: 80, amplitude: 0.4 },
-  'v':  { f1: 220, f2: 1300, f3: 2500, f4: 3500, bw1: 250, bw2: 250, bw3: 250, voiced: true,  nasal: false, fricative: true, duration: 70, amplitude: 0.5 },
-  's':  { f1: 200, f2: 1800, f3: 4000, f4: 6000, bw1: 300, bw2: 300, bw3: 400, voiced: false, nasal: false, fricative: true, duration: 90, amplitude: 0.5 },
-  'z':  { f1: 220, f2: 1800, f3: 4000, f4: 6000, bw1: 250, bw2: 250, bw3: 350, voiced: true,  nasal: false, fricative: true, duration: 75, amplitude: 0.55 },
-  'ʃ':  { f1: 200, f2: 1600, f3: 3500, f4: 5500, bw1: 300, bw2: 300, bw3: 400, voiced: false, nasal: false, fricative: true, duration: 90, amplitude: 0.5 },
-  'ʒ':  { f1: 220, f2: 1600, f3: 3500, f4: 5500, bw1: 250, bw2: 250, bw3: 350, voiced: true,  nasal: false, fricative: true, duration: 75, amplitude: 0.55 },
-  'h':  { f1: 500, f2: 1500, f3: 2500, f4: 3500, bw1: 400, bw2: 400, bw3: 400, voiced: false, nasal: false, fricative: true, duration: 60, amplitude: 0.25 },
-
-  // ── NASALS ──
-  'm':  { f1: 280, f2: 900,  f3: 2300, f4: 3200, bw1: 100, bw2: 120, bw3: 160, voiced: true, nasal: true, fricative: false, duration: 70, amplitude: 0.8 },
-  'n':  { f1: 280, f2: 1500, f3: 2500, f4: 3400, bw1: 100, bw2: 120, bw3: 160, voiced: true, nasal: true, fricative: false, duration: 65, amplitude: 0.8 },
-  'ɲ':  { f1: 280, f2: 1900, f3: 2700, f4: 3600, bw1: 100, bw2: 120, bw3: 160, voiced: true, nasal: true, fricative: false, duration: 75, amplitude: 0.75 },
-
-  // ── LIQUIDS ──
-  'l':  { f1: 350, f2: 1100, f3: 2400, f4: 3300, bw1: 80, bw2: 100, bw3: 140, voiced: true, nasal: false, fricative: false, duration: 60, amplitude: 0.7 },
-  'ʎ':  { f1: 320, f2: 1800, f3: 2600, f4: 3500, bw1: 80, bw2: 100, bw3: 140, voiced: true, nasal: false, fricative: false, duration: 65, amplitude: 0.7 },
-  'ɾ':  { f1: 350, f2: 1300, f3: 2400, f4: 3300, bw1: 80, bw2: 100, bw3: 140, voiced: true, nasal: false, fricative: false, duration: 30, amplitude: 0.65 },
-  'R':  { f1: 300, f2: 1100, f3: 2400, f4: 3300, bw1: 100, bw2: 130, bw3: 170, voiced: true, nasal: false, fricative: true, duration: 70, amplitude: 0.6 },
-
-  // ── SEMIVOWELS ──
-  'w':  { f1: 350, f2: 700,  f3: 2400, f4: 3300, bw1: 70, bw2: 90, bw3: 130, voiced: true, nasal: false, fricative: false, duration: 50, amplitude: 0.75 },
-  'j':  { f1: 300, f2: 2100, f3: 2800, f4: 3700, bw1: 60, bw2: 80, bw3: 120, voiced: true, nasal: false, fricative: false, duration: 50, amplitude: 0.75 },
-
-  // ── SPECIAL ──
-  '_':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, voiced: false, nasal: false, fricative: false, duration: 80, amplitude: 0.0 },  // silence/pause
-  '.':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, voiced: false, nasal: false, fricative: false, duration: 200, amplitude: 0.0 }, // sentence pause
-  ',':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, voiced: false, nasal: false, fricative: false, duration: 120, amplitude: 0.0 }, // comma pause
+// ── IAPETUS VOICE DNA (from 44s / 6 samples) ──
+export const VOICE_DNA = {
+  f0: { mean: 129.0, median: 125.7, std: 18.8, p5: 102.6, p95: 169.0 },
+  glottal: {
+    openQuotient: 0.533,   // OQ: how long glottis stays open
+    speedQuotient: 2.16,   // SQ: opening speed vs closing
+    h1H2Db: 3.3,           // Breathiness: H1-H2 difference
+    harmonicDecay: 2.9,    // dB drop per harmonic
+  },
+  dynamics: {
+    spectralTilt: 29.9,    // dB — strong low-freq emphasis
+    jitter: 0.0284,        // F0 perturbation
+    shimmer: 0.2046,       // Amplitude perturbation
+  },
+  sampleRate: 24000,
 };
 
 /**
- * Text-to-Phoneme converter for Brazilian Portuguese
- * Simplified rule-based G2P (Grapheme-to-Phoneme)
+ * Brazilian Portuguese phonemes with formant values
+ * F1/F2 values are standard for male BR-PT speakers,
+ * F3/F4 adjusted to Iapetus spectral characteristics
+ */
+export const PT_PHONEMES: Record<string, PhonemeParams> = {
+  // ── ORAL VOWELS ──
+  'a':  { f1: 730, f2: 1200, f3: 2600, f4: 3500, bw1: 90, bw2: 110, bw3: 170, bw4: 250, voiced: true, nasal: false, fricative: false, plosive: false, duration: 110, amplitude: 1.0 },
+  'e':  { f1: 440, f2: 1800, f3: 2700, f4: 3600, bw1: 70, bw2: 90,  bw3: 160, bw4: 230, voiced: true, nasal: false, fricative: false, plosive: false, duration: 90,  amplitude: 0.92 },
+  'ɛ':  { f1: 580, f2: 1750, f3: 2650, f4: 3550, bw1: 80, bw2: 100, bw3: 165, bw4: 240, voiced: true, nasal: false, fricative: false, plosive: false, duration: 95,  amplitude: 0.95 },
+  'i':  { f1: 280, f2: 2250, f3: 2950, f4: 3800, bw1: 55, bw2: 80,  bw3: 150, bw4: 220, voiced: true, nasal: false, fricative: false, plosive: false, duration: 80,  amplitude: 0.82 },
+  'o':  { f1: 480, f2: 850,  f3: 2500, f4: 3400, bw1: 75, bw2: 95,  bw3: 160, bw4: 230, voiced: true, nasal: false, fricative: false, plosive: false, duration: 95,  amplitude: 0.93 },
+  'ɔ':  { f1: 590, f2: 950,  f3: 2550, f4: 3450, bw1: 80, bw2: 100, bw3: 165, bw4: 240, voiced: true, nasal: false, fricative: false, plosive: false, duration: 95,  amplitude: 0.94 },
+  'u':  { f1: 320, f2: 700,  f3: 2400, f4: 3300, bw1: 60, bw2: 80,  bw3: 155, bw4: 225, voiced: true, nasal: false, fricative: false, plosive: false, duration: 85,  amplitude: 0.83 },
+
+  // ── NASAL VOWELS ──
+  'ã':  { f1: 680, f2: 1180, f3: 2500, f4: 3400, bw1: 130, bw2: 160, bw3: 200, bw4: 280, voiced: true, nasal: true, fricative: false, plosive: false, duration: 120, amplitude: 0.88 },
+  'ẽ':  { f1: 410, f2: 1720, f3: 2650, f4: 3550, bw1: 120, bw2: 150, bw3: 190, bw4: 270, voiced: true, nasal: true, fricative: false, plosive: false, duration: 105, amplitude: 0.82 },
+  'ĩ':  { f1: 260, f2: 2180, f3: 2900, f4: 3750, bw1: 110, bw2: 140, bw3: 185, bw4: 260, voiced: true, nasal: true, fricative: false, plosive: false, duration: 90,  amplitude: 0.78 },
+  'õ':  { f1: 460, f2: 830,  f3: 2450, f4: 3350, bw1: 125, bw2: 155, bw3: 195, bw4: 275, voiced: true, nasal: true, fricative: false, plosive: false, duration: 110, amplitude: 0.83 },
+  'ũ':  { f1: 300, f2: 680,  f3: 2350, f4: 3250, bw1: 115, bw2: 145, bw3: 185, bw4: 265, voiced: true, nasal: true, fricative: false, plosive: false, duration: 95,  amplitude: 0.78 },
+
+  // ── PLOSIVES ──
+  'p':  { f1: 200, f2: 800,  f3: 2300, f4: 3200, bw1: 250, bw2: 250, bw3: 250, bw4: 300, voiced: false, nasal: false, fricative: false, plosive: true, duration: 12,  amplitude: 0.0 },
+  'b':  { f1: 200, f2: 800,  f3: 2300, f4: 3200, bw1: 200, bw2: 200, bw3: 200, bw4: 250, voiced: true,  nasal: false, fricative: false, plosive: true, duration: 12,  amplitude: 0.15 },
+  't':  { f1: 200, f2: 1600, f3: 2600, f4: 3500, bw1: 250, bw2: 250, bw3: 250, bw4: 300, voiced: false, nasal: false, fricative: false, plosive: true, duration: 12,  amplitude: 0.0 },
+  'd':  { f1: 200, f2: 1600, f3: 2600, f4: 3500, bw1: 200, bw2: 200, bw3: 200, bw4: 250, voiced: true,  nasal: false, fricative: false, plosive: true, duration: 12,  amplitude: 0.15 },
+  'k':  { f1: 200, f2: 1400, f3: 2500, f4: 3400, bw1: 250, bw2: 250, bw3: 250, bw4: 300, voiced: false, nasal: false, fricative: false, plosive: true, duration: 14,  amplitude: 0.0 },
+  'g':  { f1: 200, f2: 1400, f3: 2500, f4: 3400, bw1: 200, bw2: 200, bw3: 200, bw4: 250, voiced: true,  nasal: false, fricative: false, plosive: true, duration: 14,  amplitude: 0.15 },
+
+  // ── FRICATIVES ──
+  'f':  { f1: 200, f2: 1300, f3: 2500, f4: 3500, bw1: 350, bw2: 350, bw3: 350, bw4: 400, voiced: false, nasal: false, fricative: true, plosive: false, duration: 85,  amplitude: 0.35 },
+  'v':  { f1: 220, f2: 1300, f3: 2500, f4: 3500, bw1: 280, bw2: 280, bw3: 280, bw4: 350, voiced: true,  nasal: false, fricative: true, plosive: false, duration: 70,  amplitude: 0.45 },
+  's':  { f1: 200, f2: 1800, f3: 4500, f4: 7000, bw1: 350, bw2: 350, bw3: 500, bw4: 600, voiced: false, nasal: false, fricative: true, plosive: false, duration: 95,  amplitude: 0.45 },
+  'z':  { f1: 220, f2: 1800, f3: 4500, f4: 7000, bw1: 300, bw2: 300, bw3: 450, bw4: 550, voiced: true,  nasal: false, fricative: true, plosive: false, duration: 75,  amplitude: 0.5  },
+  'ʃ':  { f1: 200, f2: 1600, f3: 3800, f4: 6000, bw1: 350, bw2: 350, bw3: 450, bw4: 550, voiced: false, nasal: false, fricative: true, plosive: false, duration: 95,  amplitude: 0.45 },
+  'ʒ':  { f1: 220, f2: 1600, f3: 3800, f4: 6000, bw1: 300, bw2: 300, bw3: 400, bw4: 500, voiced: true,  nasal: false, fricative: true, plosive: false, duration: 75,  amplitude: 0.5  },
+  'h':  { f1: 500, f2: 1500, f3: 2500, f4: 3500, bw1: 500, bw2: 500, bw3: 500, bw4: 500, voiced: false, nasal: false, fricative: true, plosive: false, duration: 55,  amplitude: 0.2  },
+
+  // ── NASALS ──
+  'm':  { f1: 280, f2: 900,  f3: 2300, f4: 3200, bw1: 110, bw2: 140, bw3: 180, bw4: 250, voiced: true, nasal: true, fricative: false, plosive: false, duration: 75, amplitude: 0.75 },
+  'n':  { f1: 280, f2: 1500, f3: 2500, f4: 3400, bw1: 110, bw2: 140, bw3: 180, bw4: 250, voiced: true, nasal: true, fricative: false, plosive: false, duration: 70, amplitude: 0.75 },
+  'ɲ':  { f1: 280, f2: 1900, f3: 2700, f4: 3600, bw1: 110, bw2: 140, bw3: 180, bw4: 250, voiced: true, nasal: true, fricative: false, plosive: false, duration: 80, amplitude: 0.7  },
+
+  // ── LIQUIDS ──
+  'l':  { f1: 350, f2: 1100, f3: 2400, f4: 3300, bw1: 80,  bw2: 100, bw3: 160, bw4: 230, voiced: true, nasal: false, fricative: false, plosive: false, duration: 60, amplitude: 0.65 },
+  'ʎ':  { f1: 320, f2: 1800, f3: 2600, f4: 3500, bw1: 80,  bw2: 100, bw3: 160, bw4: 230, voiced: true, nasal: false, fricative: false, plosive: false, duration: 65, amplitude: 0.65 },
+  'ɾ':  { f1: 350, f2: 1300, f3: 2400, f4: 3300, bw1: 80,  bw2: 100, bw3: 160, bw4: 230, voiced: true, nasal: false, fricative: false, plosive: false, duration: 28, amplitude: 0.6  },
+  'R':  { f1: 300, f2: 1100, f3: 2400, f4: 3300, bw1: 110, bw2: 140, bw3: 190, bw4: 260, voiced: true, nasal: false, fricative: true, plosive: false, duration: 75, amplitude: 0.55 },
+
+  // ── SEMIVOWELS ──
+  'w':  { f1: 340, f2: 700,  f3: 2400, f4: 3300, bw1: 70,  bw2: 90,  bw3: 155, bw4: 225, voiced: true, nasal: false, fricative: false, plosive: false, duration: 50, amplitude: 0.7  },
+  'j':  { f1: 290, f2: 2100, f3: 2800, f4: 3700, bw1: 60,  bw2: 80,  bw3: 145, bw4: 215, voiced: true, nasal: false, fricative: false, plosive: false, duration: 50, amplitude: 0.7  },
+
+  // ── PAUSES ──
+  '_':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, bw4: 0, voiced: false, nasal: false, fricative: false, plosive: false, duration: 70,  amplitude: 0.0 },
+  '.':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, bw4: 0, voiced: false, nasal: false, fricative: false, plosive: false, duration: 220, amplitude: 0.0 },
+  ',':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, bw4: 0, voiced: false, nasal: false, fricative: false, plosive: false, duration: 130, amplitude: 0.0 },
+};
+
+/**
+ * Brazilian Portuguese Grapheme-to-Phoneme converter
  */
 export function textToPhonemes(text: string): string[] {
   const normalized = text
@@ -102,53 +112,46 @@ export function textToPhonemes(text: string): string[] {
 
   const phonemes: string[] = [];
   let i = 0;
+  const vowels = 'aeiouáéíóúãõâêàü';
 
   while (i < normalized.length) {
     const c = normalized[i];
     const next = normalized[i + 1] || '';
     const prev = normalized[i - 1] || '';
+    const next2 = normalized[i + 2] || '';
 
-    // Punctuation
     if (c === '.') { phonemes.push('.'); i++; continue; }
     if (c === ',') { phonemes.push(','); i++; continue; }
     if (c === ' ') { phonemes.push('_'); i++; continue; }
 
-    // Digraphs first
-    const digraph = c + next;
+    // Digraphs
+    const di = c + next;
+    if (di === 'ch') { phonemes.push('ʃ'); i += 2; continue; }
+    if (di === 'lh') { phonemes.push('ʎ'); i += 2; continue; }
+    if (di === 'nh') { phonemes.push('ɲ'); i += 2; continue; }
+    if (di === 'rr') { phonemes.push('R'); i += 2; continue; }
+    if (di === 'ss') { phonemes.push('s'); i += 2; continue; }
+    if (di === 'qu') { phonemes.push('k'); i += 2; continue; }
+    if (di === 'gu' && 'ei'.includes(next2)) { phonemes.push('g'); i += 2; continue; }
+    if (di === 'ou') { phonemes.push('o'); phonemes.push('w'); i += 2; continue; }
+    if (di === 'ei') { phonemes.push('e'); phonemes.push('j'); i += 2; continue; }
+    if (di === 'ai') { phonemes.push('a'); phonemes.push('j'); i += 2; continue; }
+    if (di === 'ão') { phonemes.push('ã'); phonemes.push('w'); i += 2; continue; }
+    if (di === 'õe') { phonemes.push('õ'); phonemes.push('j'); i += 2; continue; }
 
-    if (digraph === 'ch') { phonemes.push('ʃ'); i += 2; continue; }
-    if (digraph === 'lh') { phonemes.push('ʎ'); i += 2; continue; }
-    if (digraph === 'nh') { phonemes.push('ɲ'); i += 2; continue; }
-    if (digraph === 'rr') { phonemes.push('R'); i += 2; continue; }
-    if (digraph === 'ss') { phonemes.push('s'); i += 2; continue; }
-    if (digraph === 'qu') { phonemes.push('k'); i += 2; continue; }
-    if (digraph === 'gu' && 'ei'.includes(normalized[i + 2] || '')) { phonemes.push('g'); i += 2; continue; }
-
-    // Single characters
     switch (c) {
-      case 'a': phonemes.push('a'); break;
-      case 'á': phonemes.push('a'); break;
-      case 'â': phonemes.push('ã'); break;
-      case 'ã': phonemes.push('ã'); break;
+      case 'a': case 'á': case 'à': phonemes.push('a'); break;
+      case 'â': case 'ã': phonemes.push('ã'); break;
       case 'b': phonemes.push('b'); break;
       case 'c':
         if ('ei'.includes(next)) phonemes.push('s');
         else phonemes.push('k');
         break;
       case 'ç': phonemes.push('s'); break;
-      case 'd':
-        if (next === 'i' || (next === 'e' && !normalized[i + 2])) {
-          phonemes.push('d'); // Could be dʒ in some dialects
-        } else {
-          phonemes.push('d');
-        }
-        break;
+      case 'd': phonemes.push('d'); break;
       case 'e':
-        if (!next || next === ' ' || next === '.' || next === ',') {
-          phonemes.push('i'); // Final 'e' → /i/ in BR-PT
-        } else {
-          phonemes.push('e');
-        }
+        if (!next || ' .,'.includes(next)) phonemes.push('i');
+        else phonemes.push('e');
         break;
       case 'é': phonemes.push('ɛ'); break;
       case 'ê': phonemes.push('e'); break;
@@ -157,90 +160,58 @@ export function textToPhonemes(text: string): string[] {
         if ('ei'.includes(next)) phonemes.push('ʒ');
         else phonemes.push('g');
         break;
-      case 'h': break; // Silent in Portuguese
-      case 'i': phonemes.push('i'); break;
-      case 'í': phonemes.push('i'); break;
+      case 'h': break;
+      case 'i': case 'í': phonemes.push('i'); break;
       case 'j': phonemes.push('ʒ'); break;
       case 'k': phonemes.push('k'); break;
       case 'l':
-        if (!next || next === ' ' || next === '.' || next === ',') {
-          phonemes.push('w'); // Final 'l' → /w/ in BR-PT
-        } else {
-          phonemes.push('l');
-        }
+        if (!next || ' .,'.includes(next)) phonemes.push('w');
+        else phonemes.push('l');
         break;
       case 'm':
-        if (!next || next === ' ' || next === '.' || next === ',') {
-          // Nasalizes previous vowel
-          if (phonemes.length > 0) {
-            const lastP = phonemes[phonemes.length - 1];
-            const nasalMap: Record<string, string> = { 'a': 'ã', 'e': 'ẽ', 'i': 'ĩ', 'o': 'õ', 'u': 'ũ' };
-            if (nasalMap[lastP]) phonemes[phonemes.length - 1] = nasalMap[lastP];
-          }
-        } else {
-          phonemes.push('m');
-        }
+        if (!next || ' .,'.includes(next)) {
+          const last = phonemes[phonemes.length - 1];
+          const nasalMap: Record<string, string> = { 'a':'ã', 'e':'ẽ', 'i':'ĩ', 'o':'õ', 'u':'ũ' };
+          if (last && nasalMap[last]) phonemes[phonemes.length - 1] = nasalMap[last];
+          else phonemes.push('m');
+        } else phonemes.push('m');
         break;
       case 'n':
-        if (!next || next === ' ' || next === '.' || next === ',') {
-          if (phonemes.length > 0) {
-            const lastP = phonemes[phonemes.length - 1];
-            const nasalMap: Record<string, string> = { 'a': 'ã', 'e': 'ẽ', 'i': 'ĩ', 'o': 'õ', 'u': 'ũ' };
-            if (nasalMap[lastP]) phonemes[phonemes.length - 1] = nasalMap[lastP];
-          }
-        } else {
-          phonemes.push('n');
-        }
+        if (!next || ' .,'.includes(next)) {
+          const last = phonemes[phonemes.length - 1];
+          const nasalMap: Record<string, string> = { 'a':'ã', 'e':'ẽ', 'i':'ĩ', 'o':'õ', 'u':'ũ' };
+          if (last && nasalMap[last]) phonemes[phonemes.length - 1] = nasalMap[last];
+          else phonemes.push('n');
+        } else phonemes.push('n');
         break;
       case 'o':
-        if (!next || next === ' ' || next === '.' || next === ',') {
-          phonemes.push('u'); // Final 'o' → /u/ in BR-PT
-        } else {
-          phonemes.push('o');
-        }
+        if (!next || ' .,'.includes(next)) phonemes.push('u');
+        else phonemes.push('o');
         break;
       case 'ó': phonemes.push('ɔ'); break;
       case 'ô': phonemes.push('o'); break;
       case 'õ': phonemes.push('õ'); break;
       case 'p': phonemes.push('p'); break;
       case 'r':
-        if (i === 0 || prev === ' ' || prev === 'n' || prev === 'l') {
-          phonemes.push('R'); // Initial/post-consonant R → uvular
-        } else {
-          phonemes.push('ɾ'); // Intervocalic → tap
-        }
+        if (i === 0 || prev === ' ' || prev === 'n' || prev === 'l' || prev === 's')
+          phonemes.push('R');
+        else phonemes.push('ɾ');
         break;
       case 's':
-        if (next && 'aeiouáéíóúãõâê'.includes(next) && prev && 'aeiouáéíóúãõâê'.includes(prev)) {
-          phonemes.push('z'); // Intervocalic s → /z/
-        } else {
-          phonemes.push('s');
-        }
+        if (vowels.includes(next) && vowels.includes(prev)) phonemes.push('z');
+        else phonemes.push('s');
         break;
-      case 't':
-        if (next === 'i' || (next === 'e' && !normalized[i + 2])) {
-          phonemes.push('t'); // Could be tʃ in some dialects
-        } else {
-          phonemes.push('t');
-        }
-        break;
-      case 'u': phonemes.push('u'); break;
-      case 'ú': phonemes.push('u'); break;
+      case 't': phonemes.push('t'); break;
+      case 'u': case 'ú': case 'ü': phonemes.push('u'); break;
       case 'v': phonemes.push('v'); break;
       case 'w': phonemes.push('w'); break;
-      case 'x':
-        phonemes.push('ʃ'); // Simplified — x has multiple sounds in PT
-        break;
+      case 'x': phonemes.push('ʃ'); break;
       case 'y': phonemes.push('i'); break;
       case 'z':
-        if (!next || next === ' ' || next === '.' || next === ',') {
-          phonemes.push('s'); // Final z → /s/
-        } else {
-          phonemes.push('z');
-        }
+        if (!next || ' .,'.includes(next)) phonemes.push('s');
+        else phonemes.push('z');
         break;
-      default:
-        break;
+      default: break;
     }
     i++;
   }

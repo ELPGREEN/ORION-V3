@@ -1,22 +1,42 @@
 {
-  "f0_mean": 124.2,
-  "f0_std": 16.8,
-  "f0_min": 99.7,
-  "f0_max": 154.8,
+  "f0": {
+    "mean": 129.0,
+    "median": 125.7,
+    "std": 18.8,
+    "p5": 102.6,
+    "p95": 169.0
+  },
   "formants": {
-    "F1": 1615.0,
-    "F2": 3421.0,
-    "F3": 5826.0,
-    "F4": 8485.0
+    "F1": 1261,
+    "F2": 2611,
+    "F3": 4048,
+    "F4": 6046,
+    "F1_std": 439,
+    "F2_std": 534,
+    "F3_std": 670,
+    "F4_std": 544
   },
-  "formant_bandwidths": {
-    "F1_bw": 80,
-    "F2_bw": 120,
-    "F3_bw": 150,
-    "F4_bw": 200
+  "bandwidths": {
+    "BW1": 500,
+    "BW2": 500,
+    "BW3": 500,
+    "BW4": 450
   },
-  "jitter_percent": 5.92,
-  "spectral_tilt_db": 34.7,
-  "sample_rate": 24000,
-  "samples_analyzed": 5
+  "glottal": {
+    "open_quotient": 0.533,
+    "speed_quotient": 2.16,
+    "H1_H2_db": 3.3,
+    "harmonic_decay_db": 2.9
+  },
+  "dynamics": {
+    "spectral_tilt_db": 29.9,
+    "jitter_percent": 2.84,
+    "shimmer_percent": 20.46
+  },
+  "meta": {
+    "sample_rate": 24000,
+    "total_audio_seconds": 44.16,
+    "samples_count": 4,
+    "voiced_frames": 2889
+  }
 }

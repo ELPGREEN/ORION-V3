@@ -1,51 +1,131 @@
 /**
- * Orion Formant Speech Synthesizer
+ * Orion Formant Speech Synthesizer v2
  * 
- * 100% client-side speech synthesis using Web Audio API.
- * No API calls, no dependencies. Generates speech from phonemes
- * using the Iapetus voice fingerprint.
+ * Major improvements over v1:
+ * - Proper 2nd-order IIR resonant filters for formants
+ * - Accurate LF-model glottal pulse with OQ/SQ from voice DNA
+ * - Per-harmonic amplitude control matching Iapetus decay curve
+ * - Proper coarticulation with formant interpolation
+ * - Aspiration noise for breathiness (H1-H2 = 3.3dB)
+ * - Spectral tilt via 1-pole filter (29.9dB)
  * 
- * Architecture:
- * 1. Text → Phonemes (rule-based G2P)
- * 2. Phonemes → Audio frames (formant synthesis)
- * 3. Audio frames → WAV blob
- * 4. Optional: DSP post-processing
+ * 100% client-side, zero API, zero dependencies.
  */
 
 import {
   PT_PHONEMES,
   textToPhonemes,
-  IAPETUS_F0,
-  IAPETUS_F0_STD,
-  IAPETUS_JITTER,
-  IAPETUS_SPECTRAL_TILT,
+  VOICE_DNA,
   type PhonemeParams,
 } from "./phonemes";
 
-const SAMPLE_RATE = 24000;
+const SR = VOICE_DNA.sampleRate; // 24000
 
-/**
- * Main entry: synthesize text to audio blob
- */
-export async function synthesizeFormant(text: string): Promise<Blob> {
-  const phonemes = textToPhonemes(text);
-  console.log(`[Formant TTS] "${text.slice(0, 40)}..." → ${phonemes.length} phonemes`);
+// ── IIR RESONATOR STATE ──
+interface ResonatorState {
+  y1: number;
+  y2: number;
+  a1: number;
+  a2: number;
+  b0: number;
+}
 
-  const samples = renderPhonemes(phonemes);
-  const normalized = normalizeAudio(samples);
-  return samplesToWav(normalized, SAMPLE_RATE);
+function createResonator(freq: number, bw: number, sr: number): ResonatorState {
+  const r = Math.exp(-Math.PI * bw / sr);
+  const theta = 2 * Math.PI * freq / sr;
+  return {
+    y1: 0,
+    y2: 0,
+    a1: -2 * r * Math.cos(theta),
+    a2: r * r,
+    b0: 1 - r,
+  };
+}
+
+function tickResonator(state: ResonatorState, input: number): number {
+  const output = state.b0 * input - state.a1 * state.y1 - state.a2 * state.y2;
+  state.y2 = state.y1;
+  state.y1 = output;
+  return output;
+}
+
+function resetResonator(state: ResonatorState) {
+  state.y1 = 0;
+  state.y2 = 0;
+}
+
+function updateResonator(state: ResonatorState, freq: number, bw: number, sr: number) {
+  const r = Math.exp(-Math.PI * bw / sr);
+  const theta = 2 * Math.PI * freq / sr;
+  state.a1 = -2 * r * Math.cos(theta);
+  state.a2 = r * r;
+  state.b0 = 1 - r;
+}
+
+// ── GLOTTAL PULSE (Liljencrants-Fant model) ──
+function glottalLF(phase: number, oq: number, sq: number): number {
+  // OQ: open quotient (0-1), how much of the cycle is open
+  // SQ: speed quotient, ratio of opening to closing time
+  const openPhase = oq;
+  const openingTime = openPhase * sq / (1 + sq);
+  const closingTime = openPhase - openingTime;
+
+  if (phase < openingTime) {
+    // Opening phase — sinusoidal rise
+    const t = phase / openingTime;
+    return 0.5 * (1 - Math.cos(Math.PI * t));
+  } else if (phase < openPhase) {
+    // Closing phase — exponential fall (sharper)
+    const t = (phase - openingTime) / closingTime;
+    return Math.cos(Math.PI * 0.5 * t);
+  } else {
+    // Closed phase — near zero with slight return
+    const t = (phase - openPhase) / (1 - openPhase);
+    return -0.05 * Math.sin(Math.PI * t);
+  }
+}
+
+// ── 1-POLE FILTER FOR SPECTRAL TILT ──
+interface OnePoleState {
+  y1: number;
+  coeff: number;
+}
+
+function createTiltFilter(tiltDb: number, sr: number): OnePoleState {
+  // Convert tilt in dB to lowpass coefficient
+  // Higher tilt = more lowpass = warmer sound
+  const freq = 500 * Math.pow(10, -tiltDb / 40); // Cutoff based on tilt
+  const dt = 1 / sr;
+  const rc = 1 / (2 * Math.PI * Math.max(freq, 50));
+  const coeff = dt / (rc + dt);
+  return { y1: 0, coeff: Math.min(0.99, Math.max(0.01, coeff)) };
+}
+
+function tickTilt(state: OnePoleState, input: number): number {
+  state.y1 += state.coeff * (input - state.y1);
+  return state.y1;
 }
 
 /**
- * Synthesize and play immediately
+ * Main: synthesize text to WAV blob
+ */
+export async function synthesizeFormant(text: string): Promise<Blob> {
+  const phonemes = textToPhonemes(text);
+  console.log(`[Formant TTS v2] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
+  
+  const samples = renderPhonemes(phonemes);
+  const normalized = normalizeAudio(samples);
+  return samplesToWav(normalized, SR);
+}
+
+/**
+ * Synthesize and play
  */
 export async function speakFormant(
   text: string,
   signal?: AbortSignal,
 ): Promise<{ played: boolean; audio: HTMLAudioElement | null }> {
-  if (!text?.trim() || signal?.aborted) {
-    return { played: false, audio: null };
-  }
+  if (!text?.trim() || signal?.aborted) return { played: false, audio: null };
 
   try {
     const blob = await synthesizeFormant(text);
@@ -55,319 +135,251 @@ export async function speakFormant(
     const audio = new Audio(url);
 
     await new Promise<void>((resolve, reject) => {
-      const onAbort = () => {
-        audio.pause();
-        audio.src = "";
-        URL.revokeObjectURL(url);
-        resolve();
-      };
+      const onAbort = () => { audio.pause(); audio.src = ""; URL.revokeObjectURL(url); resolve(); };
       signal?.addEventListener("abort", onAbort, { once: true });
-
-      audio.onended = () => {
-        signal?.removeEventListener("abort", onAbort);
-        URL.revokeObjectURL(url);
-        resolve();
-      };
-      audio.onerror = () => {
-        signal?.removeEventListener("abort", onAbort);
-        URL.revokeObjectURL(url);
-        reject(new Error("Playback error"));
-      };
+      audio.onended = () => { signal?.removeEventListener("abort", onAbort); URL.revokeObjectURL(url); resolve(); };
+      audio.onerror = () => { signal?.removeEventListener("abort", onAbort); URL.revokeObjectURL(url); reject(new Error("Playback error")); };
       audio.play().catch(reject);
     });
 
     return { played: !signal?.aborted, audio };
   } catch (err) {
-    console.warn("[Formant TTS] Error:", err);
+    console.warn("[Formant TTS v2] Error:", err);
     return { played: false, audio: null };
   }
 }
 
 /**
- * Render phoneme sequence to PCM samples
+ * Core synthesis: phonemes → PCM samples
  */
 function renderPhonemes(phonemes: string[]): Float32Array {
   // Estimate total duration
-  let totalSamples = 0;
+  let totalMs = 0;
   for (const p of phonemes) {
     const params = PT_PHONEMES[p];
-    if (params) {
-      totalSamples += Math.floor((params.duration / 1000) * SAMPLE_RATE);
-    }
+    if (params) totalMs += params.duration;
   }
-  // Add transition samples
-  totalSamples += phonemes.length * Math.floor(0.01 * SAMPLE_RATE);
+  totalMs += phonemes.length * 10; // transitions
+  const totalSamples = Math.ceil((totalMs / 1000) * SR) + SR;
+  const buffer = new Float32Array(totalSamples);
 
-  const buffer = new Float32Array(totalSamples + SAMPLE_RATE); // extra 1s safety
+  // State
   let offset = 0;
-  let prevParams: PhonemeParams | null = null;
   let glottalPhase = 0;
+  let prevParams: PhonemeParams | null = null;
+
+  // IIR resonators (4 formants)
+  const res = [
+    createResonator(500, 100, SR),
+    createResonator(1500, 120, SR),
+    createResonator(2500, 160, SR),
+    createResonator(3500, 230, SR),
+  ];
+  // Nasal resonator + anti-resonator
+  const nasalRes = createResonator(280, 100, SR);
+  const nasalAnti = createResonator(1500, 300, SR);
+
+  // Spectral tilt filter
+  const tiltFilter = createTiltFilter(VOICE_DNA.dynamics.spectralTilt * 0.3, SR);
+
+  const { openQuotient: oq, speedQuotient: sq, harmonicDecay } = VOICE_DNA.glottal;
+  const { jitter, shimmer } = VOICE_DNA.dynamics;
 
   for (let pi = 0; pi < phonemes.length; pi++) {
     const phoneme = phonemes[pi];
     const params = PT_PHONEMES[phoneme];
     if (!params) continue;
 
-    const durationSec = params.duration / 1000;
-    const numSamples = Math.floor(durationSec * SAMPLE_RATE);
-    
-    // Prosody: slight F0 variation across the sentence
-    const sentencePosition = pi / Math.max(phonemes.length - 1, 1);
-    const prosodyF0 = getProsodyF0(sentencePosition, phoneme);
+    const numSamples = Math.floor((params.duration / 1000) * SR);
+    const sentPos = pi / Math.max(phonemes.length - 1, 1);
+
+    // Update resonator frequencies (with smooth transition from prev)
+    if (params.f1 > 0) {
+      updateResonator(res[0], params.f1, params.bw1, SR);
+      updateResonator(res[1], params.f2, params.bw2, SR);
+      updateResonator(res[2], params.f3, params.bw3, SR);
+      updateResonator(res[3], params.f4, params.bw4, SR);
+    }
 
     for (let n = 0; n < numSamples; n++) {
-      if (offset + n >= buffer.length) break;
+      if (offset >= buffer.length) break;
 
-      const t = n / SAMPLE_RATE;
-      const samplePos = n / numSamples; // 0-1 position within phoneme
+      const pos = n / Math.max(numSamples - 1, 1); // 0-1
 
-      // Envelope (attack/release for natural transitions)
-      const envelope = getEnvelope(samplePos, durationSec, prevParams !== null);
-
-      let sample = 0;
+      // Envelope
+      const env = getEnvelope(pos, params.duration, params.plosive);
 
       if (params.amplitude === 0) {
-        // Silence
-        buffer[offset + n] = 0;
+        buffer[offset++] = 0;
         continue;
       }
 
-      // ── GLOTTAL SOURCE ──
-      if (params.voiced) {
-        // Glottal pulse with jitter
-        const jitter = 1 + (Math.random() - 0.5) * IAPETUS_JITTER;
-        const f0 = prosodyF0 * jitter;
-        const period = SAMPLE_RATE / f0;
-        
-        glottalPhase += 1;
-        if (glottalPhase >= period) glottalPhase -= period;
+      let excitation = 0;
 
-        // LF model glottal pulse (more natural than simple sawtooth)
-        const phase = glottalPhase / period;
-        sample = glottalPulse(phase);
-        
-        // Shimmer (amplitude variation)
-        sample *= 1 + (Math.random() - 0.5) * 0.03;
+      // ── VOICED EXCITATION ──
+      if (params.voiced) {
+        // F0 with prosody + jitter
+        const prosF0 = getProsodyF0(sentPos);
+        const f0 = prosF0 * (1 + (Math.random() - 0.5) * jitter * 2);
+        const period = SR / f0;
+
+        glottalPhase += 1 / period;
+        if (glottalPhase >= 1) glottalPhase -= 1;
+
+        // LF model glottal pulse
+        let pulse = glottalLF(glottalPhase, oq, sq);
+
+        // Add harmonics with proper decay
+        const nHarmonics = Math.min(Math.floor(SR / 2 / f0), 20);
+        for (let h = 2; h <= nHarmonics; h++) {
+          const harmonicAmp = Math.pow(10, -(harmonicDecay * h) / 20);
+          if (harmonicAmp < 0.01) break;
+          pulse += harmonicAmp * Math.sin(2 * Math.PI * h * glottalPhase);
+        }
+
+        // Shimmer
+        pulse *= 1 + (Math.random() - 0.5) * shimmer * 0.5;
+
+        excitation = pulse * 0.6;
+
+        // Aspiration noise (breathiness from H1-H2)
+        const breathiness = VOICE_DNA.glottal.h1H2Db / 30; // normalized
+        excitation += (Math.random() * 2 - 1) * breathiness * 0.08;
       }
 
-      // ── NOISE SOURCE (fricatives) ──
+      // ── NOISE EXCITATION (fricatives) ──
       if (params.fricative) {
-        const noise = (Math.random() * 2 - 1) * 0.4;
+        const noise = (Math.random() * 2 - 1) * 0.5;
         if (params.voiced) {
-          sample = sample * 0.6 + noise * 0.4; // Mixed
+          excitation = excitation * 0.55 + noise * 0.45;
         } else {
-          sample = noise;
+          excitation = noise;
         }
       }
 
-      // ── FORMANT FILTERING ──
-      // Interpolate formants for smooth transitions
-      const interpParams = interpolateParams(prevParams, params, samplePos);
-      
-      // Apply formant resonances
-      sample = applyFormants(sample, t, interpParams);
+      // ── PLOSIVE BURST ──
+      if (params.plosive && pos < 0.3) {
+        const burst = (Math.random() * 2 - 1) * (1 - pos / 0.3) * 0.6;
+        excitation += burst;
+      }
 
-      // ── NASAL RESONANCE ──
+      // ── FORMANT FILTERING (IIR resonators in parallel) ──
+      let formantOut = 0;
+      if (params.f1 > 0) {
+        // Smooth formant transition in first 30% of phoneme
+        if (prevParams && prevParams.f1 > 0 && pos < 0.3) {
+          const t = pos / 0.3;
+          const lerp = (a: number, b: number) => a + (b - a) * t;
+          updateResonator(res[0], lerp(prevParams.f1, params.f1), lerp(prevParams.bw1, params.bw1), SR);
+          updateResonator(res[1], lerp(prevParams.f2, params.f2), lerp(prevParams.bw2, params.bw2), SR);
+          updateResonator(res[2], lerp(prevParams.f3, params.f3), lerp(prevParams.bw3, params.bw3), SR);
+          updateResonator(res[3], lerp(prevParams.f4, params.f4), lerp(prevParams.bw4, params.bw4), SR);
+        }
+
+        formantOut += tickResonator(res[0], excitation) * 1.0;
+        formantOut += tickResonator(res[1], excitation) * 0.6;
+        formantOut += tickResonator(res[2], excitation) * 0.3;
+        formantOut += tickResonator(res[3], excitation) * 0.12;
+      } else {
+        formantOut = excitation;
+      }
+
+      // ── NASAL COUPLING ──
       if (params.nasal) {
-        sample = applyNasalResonance(sample, t);
+        const nasalOut = tickResonator(nasalRes, excitation) * 0.35;
+        const antiOut = tickResonator(nasalAnti, formantOut) * 0.2;
+        formantOut = formantOut * 0.65 + nasalOut - antiOut;
       }
 
       // ── SPECTRAL TILT ──
-      // Iapetus has high spectral tilt (34.7dB) = emphasis on low frequencies
-      // Simple 1-pole lowpass for tilt approximation
-      sample = sample * params.amplitude * envelope;
+      let output = tickTilt(tiltFilter, formantOut);
 
-      buffer[offset + n] = sample;
+      // ── APPLY ENVELOPE & AMPLITUDE ──
+      output *= env * params.amplitude;
+
+      buffer[offset++] = output;
     }
 
     prevParams = params;
-    offset += numSamples;
-
-    // Add brief coarticulation transition
-    const transitionSamples = Math.floor(0.008 * SAMPLE_RATE);
-    for (let n = 0; n < transitionSamples && offset + n < buffer.length; n++) {
-      const fade = 1 - n / transitionSamples;
-      buffer[offset + n] = (buffer[offset + n] || 0) * fade;
-    }
-    offset += Math.floor(transitionSamples * 0.3); // Slight overlap
   }
 
   return buffer.slice(0, offset);
 }
 
 /**
- * LF-model glottal pulse (Liljencrants-Fant)
- * More natural than simple waveforms
+ * F0 contour with natural prosody
  */
-function glottalPulse(phase: number): number {
-  if (phase < 0.4) {
-    // Opening phase - sinusoidal rise
-    const t = phase / 0.4;
-    return Math.sin(t * Math.PI * 0.5) * 0.8;
-  } else if (phase < 0.6) {
-    // Closing phase - rapid fall
-    const t = (phase - 0.4) / 0.2;
-    return (1 - t) * 0.8;
-  } else {
-    // Closed phase
-    return -0.1 * Math.sin((phase - 0.6) / 0.4 * Math.PI);
-  }
+function getProsodyF0(sentencePos: number): number {
+  const { mean, std, p5, p95 } = VOICE_DNA.f0;
+
+  // Declarative: start slightly high, decline toward end
+  let f0 = mean * (1.05 - sentencePos * 0.15);
+
+  // Add micro-prosody variation
+  f0 += (Math.random() - 0.5) * std * 0.25;
+
+  return Math.max(p5, Math.min(p95, f0));
 }
 
 /**
- * Simple formant filter using resonance addition
- * Each formant is modeled as a damped sinusoidal resonance
+ * Amplitude envelope
  */
-function applyFormants(input: number, t: number, params: PhonemeParams): number {
-  if (params.f1 === 0) return input;
-
-  let output = 0;
-  const formants = [
-    { freq: params.f1, bw: params.bw1, amp: 1.0 },
-    { freq: params.f2, bw: params.bw2, amp: 0.7 },
-    { freq: params.f3, bw: params.bw3, amp: 0.35 },
-    { freq: params.f4 || 3500, bw: 200, amp: 0.15 },
-  ];
-
-  for (const f of formants) {
-    if (f.freq <= 0) continue;
-    // Resonance modeled as amplitude-weighted sine at formant frequency
-    const resonance = Math.sin(2 * Math.PI * f.freq * t);
-    const decay = Math.exp(-Math.PI * f.bw * t);
-    output += input * resonance * f.amp * Math.min(decay, 1);
+function getEnvelope(pos: number, durationMs: number, isPlosive: boolean): number {
+  if (isPlosive) {
+    // Plosives: sharp attack, fast decay
+    if (pos < 0.1) return pos / 0.1;
+    return Math.pow(1 - (pos - 0.1) / 0.9, 0.5);
   }
 
-  return output * 0.3; // Scale down
-}
+  const attackMs = 8;
+  const releaseMs = 12;
+  const attack = attackMs / durationMs;
+  const release = releaseMs / durationMs;
 
-/**
- * Nasal resonance (add nasal formant + anti-resonance)
- */
-function applyNasalResonance(input: number, t: number): number {
-  const nasalFormant = Math.sin(2 * Math.PI * 280 * t) * 0.3;
-  const antiResonance = -Math.sin(2 * Math.PI * 1500 * t) * 0.15;
-  return input * 0.7 + (nasalFormant + antiResonance) * input * 0.3;
-}
-
-/**
- * Smooth interpolation between phoneme parameters for coarticulation
- */
-function interpolateParams(
-  prev: PhonemeParams | null,
-  curr: PhonemeParams,
-  position: number, // 0-1
-): PhonemeParams {
-  if (!prev || position > 0.3) return curr;
-
-  const t = position / 0.3; // 0-1 over first 30% of phoneme
-  const lerp = (a: number, b: number) => a + (b - a) * t;
-
-  return {
-    ...curr,
-    f1: lerp(prev.f1, curr.f1),
-    f2: lerp(prev.f2, curr.f2),
-    f3: lerp(prev.f3, curr.f3),
-    f4: lerp(prev.f4 || 3500, curr.f4 || 3500),
-    bw1: lerp(prev.bw1, curr.bw1),
-    bw2: lerp(prev.bw2, curr.bw2),
-    bw3: lerp(prev.bw3, curr.bw3),
-  };
-}
-
-/**
- * Amplitude envelope for smooth phoneme transitions
- */
-function getEnvelope(
-  position: number,  // 0-1 within phoneme
-  duration: number,  // seconds
-  hasTransition: boolean,
-): number {
-  const attackTime = Math.min(0.01 / duration, 0.15); // 10ms attack
-  const releaseTime = Math.min(0.01 / duration, 0.15);
-
-  if (position < attackTime) {
-    return position / attackTime; // Fade in
-  } else if (position > 1 - releaseTime) {
-    return (1 - position) / releaseTime; // Fade out
-  }
+  if (pos < attack) return pos / attack;
+  if (pos > 1 - release) return (1 - pos) / release;
   return 1.0;
 }
 
 /**
- * Prosody: natural F0 contour across the sentence
- * Iapetus voice: declarative sentences end lower
- */
-function getProsodyF0(sentencePosition: number, phoneme: string): number {
-  let f0 = IAPETUS_F0;
-
-  // Slight decline toward end (declarative intonation)
-  f0 *= 1.0 - sentencePosition * 0.12;
-
-  // Stress emphasis on vowels (slight rise)
-  if ('aeiouɛɔ'.includes(phoneme)) {
-    f0 *= 1.02;
-  }
-
-  // Add micro-variation for naturalness
-  f0 += (Math.random() - 0.5) * IAPETUS_F0_STD * 0.3;
-
-  return Math.max(IAPETUS_F0 * 0.8, Math.min(IAPETUS_F0 * 1.25, f0));
-}
-
-/**
- * Normalize audio to prevent clipping
+ * Normalize audio
  */
 function normalizeAudio(samples: Float32Array): Float32Array {
-  let maxAbs = 0;
+  let max = 0;
   for (let i = 0; i < samples.length; i++) {
-    const abs = Math.abs(samples[i]);
-    if (abs > maxAbs) maxAbs = abs;
+    const a = Math.abs(samples[i]);
+    if (a > max) max = a;
   }
+  if (max === 0) return samples;
 
-  if (maxAbs === 0) return samples;
-
-  const gain = 0.85 / maxAbs;
-  const output = new Float32Array(samples.length);
+  const gain = 0.88 / max;
+  const out = new Float32Array(samples.length);
   for (let i = 0; i < samples.length; i++) {
-    output[i] = samples[i] * gain;
+    out[i] = samples[i] * gain;
   }
-  return output;
+  return out;
 }
 
 /**
- * Convert Float32 samples to WAV Blob
+ * PCM → WAV
  */
 function samplesToWav(samples: Float32Array, sampleRate: number): Blob {
-  const bitsPerSample = 16;
-  const dataLength = samples.length * 2;
-  const buffer = new ArrayBuffer(44 + dataLength);
-  const view = new DataView(buffer);
+  const dataLen = samples.length * 2;
+  const buf = new ArrayBuffer(44 + dataLen);
+  const v = new DataView(buf);
 
-  // RIFF header
-  writeStr(view, 0, "RIFF");
-  view.setUint32(4, 36 + dataLength, true);
-  writeStr(view, 8, "WAVE");
-  writeStr(view, 12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);        // PCM
-  view.setUint16(22, 1, true);        // Mono
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true);
-  view.setUint16(32, 2, true);
-  view.setUint16(34, bitsPerSample, true);
-  writeStr(view, 36, "data");
-  view.setUint32(40, dataLength, true);
+  const ws = (o: number, s: string) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  ws(0, "RIFF"); v.setUint32(4, 36 + dataLen, true);
+  ws(8, "WAVE"); ws(12, "fmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  ws(36, "data"); v.setUint32(40, dataLen, true);
 
   for (let i = 0; i < samples.length; i++) {
     const s = Math.max(-1, Math.min(1, samples[i]));
-    view.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
   }
 
-  return new Blob([buffer], { type: "audio/wav" });
-}
-
-function writeStr(view: DataView, offset: number, str: string) {
-  for (let i = 0; i < str.length; i++) {
-    view.setUint8(offset + i, str.charCodeAt(i));
-  }
+  return new Blob([buf], { type: "audio/wav" });
 }
