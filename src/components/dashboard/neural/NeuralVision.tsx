@@ -244,7 +244,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const autoActivatedRef = useRef(false);
   const autoBootedRef = useRef(false);
 
-  // Auto-connect mic/camera when entering Orion on mobile after permissions were granted
+  // Auto-connect mic (NOT camera) when entering Orion after permissions were granted
   useEffect(() => {
     if (autoBootedRef.current || !speechOk || skipWakeWord) return;
     const state = location.state as any;
@@ -254,9 +254,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const timer = setTimeout(() => {
       if (!hasGreetedRef.current) {
         hasGreetedRef.current = true;
-        speakFast("Orion ativo.").catch(() => {});
+        speakFast("Orion ativo. Diga ativar visão para ligar a câmera.").catch(() => {});
       }
-      if (!active) startCamera({ announce: false }).catch(() => {});
+      // Camera does NOT auto-start — only via "ativar visão" voice command
       if (!listening) {
         stopWakeWordListener();
         setTimeout(() => startListening(handleVoice), 80);
@@ -264,7 +264,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [active, handleVoice, initialCommand, listening, location.state, skipWakeWord, speakFast, speechOk, startCamera, startListening, stopWakeWordListener]);
+  }, [handleVoice, initialCommand, listening, location.state, skipWakeWord, speakFast, speechOk, startListening, stopWakeWordListener]);
 
   // Auto-activate when navigated from OrionGlobalListener or via initialCommand prop
   useEffect(() => {
