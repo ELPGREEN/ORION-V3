@@ -1,13 +1,11 @@
 /**
- * Orion Formant Speech Synthesizer v2
+ * Orion Formant Speech Synthesizer v3
  * 
- * Major improvements over v1:
- * - Proper 2nd-order IIR resonant filters for formants
- * - Accurate LF-model glottal pulse with OQ/SQ from voice DNA
- * - Per-harmonic amplitude control matching Iapetus decay curve
- * - Proper coarticulation with formant interpolation
- * - Aspiration noise for breathiness (H1-H2 = 3.3dB)
- * - Spectral tilt via 1-pole filter (29.9dB)
+ * v3 improvements:
+ * - Per-harmonic amplitude profile from 66s of real voice data
+ * - Exact harmonic structure: H1=1.0, H2=0.886, H3=0.24, H4=0.088...
+ * - OQ=0.504, SQ=2.02, H1-H2=0.4dB (modal phonation)
+ * - Spectral tilt 29.3dB via 1-pole filter
  * 
  * 100% client-side, zero API, zero dependencies.
  */
@@ -229,11 +227,12 @@ function renderPhonemes(phonemes: string[]): Float32Array {
         // LF model glottal pulse
         let pulse = glottalLF(glottalPhase, oq, sq);
 
-        // Add harmonics with proper decay
-        const nHarmonics = Math.min(Math.floor(SR / 2 / f0), 20);
+        // Add harmonics with EXACT amplitude profile from voice DNA
+        const harmonicProfile = VOICE_DNA.harmonicProfile;
+        const nHarmonics = Math.min(Math.floor(SR / 2 / f0), harmonicProfile.length);
         for (let h = 2; h <= nHarmonics; h++) {
-          const harmonicAmp = Math.pow(10, -(harmonicDecay * h) / 20);
-          if (harmonicAmp < 0.01) break;
+          const harmonicAmp = h <= harmonicProfile.length ? harmonicProfile[h - 1] : 0.01;
+          if (harmonicAmp < 0.005) continue;
           pulse += harmonicAmp * Math.sin(2 * Math.PI * h * glottalPhase);
         }
 
