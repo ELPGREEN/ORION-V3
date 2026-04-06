@@ -1,7 +1,8 @@
 /**
- * Orion Extension v3.0 — Content Script
+ * Orion Extension v3.1 — Content Script
  * Wake word, page extraction, floating panel with real AI via neural-ops,
  * TTS, structured data extraction, VISION on-demand with 15min auto-timeout.
+ * Auth verification: unregistered users get compliments + signup nudge.
  * Domain: iasofthub.com
  */
 (function () {
@@ -20,6 +21,104 @@
   let visionTimer = null;
   const VISION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
   let lastVisionResponseTime = 0;
+
+  // ─── Auth State ───
+  let userAuthenticated = false;
+  let userIsPremium = false;
+  let authChecked = false;
+  let complimentIndex = 0;
+  let observationIndex = 0;
+
+  // ─── Random compliment/observation pools ───
+  const FIRST_VISIT_PHRASES = [
+    "Gostei do seu estilo! Nos vemos depois. 😎",
+  ];
+
+  const RETURN_COMPLIMENTS = [
+    "Que bom te ver de novo! Você tem bom gosto navegando por aqui. 🌟",
+    "Olha quem voltou! Seu interesse me impressiona. 💡",
+    "Ei, prazer em revê-lo! Você parece alguém que valoriza tecnologia de ponta. 🚀",
+    "De volta tão cedo? Isso mostra inteligência — gosto disso! 🧠",
+    "Sabia que você voltaria! Pessoas curiosas sempre voltam. ✨",
+  ];
+
+  const RETURN_OBSERVATIONS = [
+    "Percebi que você navega com foco — isso é raro hoje em dia.",
+    "Você escolhe bem os sites que visita, hein? Bom critério!",
+    "Sua forma de explorar a web mostra que você sabe o que quer.",
+    "Notei que você tem um padrão eficiente de navegação. Impressionante!",
+    "Você parece alguém que aproveita bem o tempo online. Respeito!",
+  ];
+
+  // ─── Auth Verification ───
+  function checkUserAuth(callback) {
+    if (authChecked) {
+      callback(userAuthenticated, userIsPremium);
+      return;
+    }
+
+    chrome.runtime.sendMessage({ type: "ORION_CHECK_AUTH" }, (response) => {
+      authChecked = true;
+      if (response && response.authenticated) {
+        userAuthenticated = true;
+        userIsPremium = response.isPremium || false;
+      } else {
+        userAuthenticated = false;
+        userIsPremium = false;
+      }
+      callback(userAuthenticated, userIsPremium);
+    });
+  }
+
+  function handleUnauthenticatedUser() {
+    // Get visit count from storage
+    chrome.storage.local.get(["orionVisitCount"], (result) => {
+      const visitCount = (result.orionVisitCount || 0) + 1;
+      chrome.storage.local.set({ orionVisitCount: visitCount });
+
+      let phrase;
+      if (visitCount <= 1) {
+        // First visit — fixed phrase
+        phrase = FIRST_VISIT_PHRASES[0];
+      } else {
+        // Subsequent visits — alternate between compliments and observations
+        if (visitCount % 2 === 0) {
+          phrase = RETURN_COMPLIMENTS[complimentIndex % RETURN_COMPLIMENTS.length];
+          complimentIndex++;
+        } else {
+          phrase = RETURN_OBSERVATIONS[observationIndex % RETURN_OBSERVATIONS.length];
+          observationIndex++;
+        }
+      }
+
+      const fullMessage = `🔒 ${phrase}\n\nPara usar o Orion, você precisa se cadastrar! Acesse iasofthub.com/cadastro`;
+      showNotification(phrase, "info");
+      showResponsePanel(fullMessage);
+      speakText(phrase + " Para usar o Orion, você precisa se cadastrar!");
+    });
+  }
+
+  function handleNonPremiumUser() {
+    const msg = "👑 Orion é exclusivo para assinantes Premium! Faça upgrade em iasofthub.com/dashboard/plano";
+    showNotification(msg, "info");
+    showResponsePanel(msg);
+    speakText("Orion é exclusivo para assinantes Premium. Faça upgrade no seu painel.");
+  }
+
+  /** Guard: returns true if user can proceed, false otherwise */
+  function requireAuth(callback) {
+    checkUserAuth((authenticated, isPremium) => {
+      if (!authenticated) {
+        handleUnauthenticatedUser();
+        return;
+      }
+      if (!isPremium) {
+        handleNonPremiumUser();
+        return;
+      }
+      callback();
+    });
+  }
 
   // Register with background
   chrome.runtime.sendMessage({ type: "TAB_CONNECTED" }, (response) => {
@@ -86,9 +185,9 @@
   function handleVoiceCommand(cmd) {
     const lower = cmd.toLowerCase();
 
-    // ─── Vision Commands ───
+    // ─── Vision Commands — require auth ───
     if (lower.includes("ativar visão") || lower.includes("ativar visao") || lower.includes("ativa visão") || lower.includes("ativa visao")) {
-      activateVision();
+      requireAuth(() => activateVision());
       return;
     }
     if (lower.includes("desativar visão") || lower.includes("desativar visao") || lower.includes("desativa visão") || lower.includes("parar visão")) {
@@ -97,17 +196,19 @@
     }
     // Vision queries — only work if vision is active
     if (visionActive && (lower.includes("o que você vê") || lower.includes("o que voce ve") || lower.includes("o que está vendo") || lower.includes("descreve") || lower.includes("analise o que vê") || lower.includes("veja isso") || lower.includes("olhe") || lower.includes("veja"))) {
-      captureAndAnalyzeVision(cmd);
+      requireAuth(() => captureAndAnalyzeVision(cmd));
       return;
     }
 
-    // ─── Standard Commands ───
-    if (lower.includes("resum")) extractAndAnalyze("summarize");
-    else if (lower.includes("traduz")) extractAndAnalyze("translate");
-    else if (lower.includes("analis")) extractAndAnalyze("analyze");
-    else if (lower.includes("leia") || lower.includes("ler")) readPageAloud();
-    else if (lower.includes("abrir")) chrome.runtime.sendMessage({ type: "OPEN_ORION_APP" });
-    else sendAIQuery(cmd);
+    // ─── All other commands require auth ───
+    requireAuth(() => {
+      if (lower.includes("resum")) extractAndAnalyze("summarize");
+      else if (lower.includes("traduz")) extractAndAnalyze("translate");
+      else if (lower.includes("analis")) extractAndAnalyze("analyze");
+      else if (lower.includes("leia") || lower.includes("ler")) readPageAloud();
+      else if (lower.includes("abrir")) chrome.runtime.sendMessage({ type: "OPEN_ORION_APP" });
+      else sendAIQuery(cmd);
+    });
   }
 
   // ─── Vision System ───
@@ -127,7 +228,7 @@
       if (elapsed >= VISION_TIMEOUT_MS) {
         deactivateVision("timeout");
       }
-    }, 30000); // check every 30s
+    }, 30000);
   }
 
   function deactivateVision(reason) {
@@ -169,16 +270,14 @@
     showThinking();
     showNotification("📸 Capturando tela...", "info");
 
-    // Request screenshot from background (which has access to chrome.tabs.captureVisibleTab)
     chrome.runtime.sendMessage(
       { type: "ORION_VISION_CAPTURE", query: userQuery || "Descreva o que você vê nesta tela." },
       (response) => {
         hideThinking();
         if (response?.result?.response) {
-          lastVisionResponseTime = Date.now(); // reset timer on successful response
+          lastVisionResponseTime = Date.now();
           showResponsePanel("👁 " + response.result.response);
-          // TTS the response
-          readPageAloud(response.result.response);
+          speakText(response.result.response);
         } else if (response?.error) {
           showNotification("Erro na visão: " + response.error, "error");
         }
@@ -271,8 +370,7 @@
   }
 
   // ─── TTS ───
-  function readPageAloud(customText) {
-    const text = customText || extractPageContent().content.substring(0, 2000);
+  function speakText(text) {
     if (!text) return;
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
@@ -280,6 +378,12 @@
     utter.rate = 1.0;
     utter.pitch = 0.95;
     window.speechSynthesis.speak(utter);
+  }
+
+  function readPageAloud(customText) {
+    const text = customText || extractPageContent().content.substring(0, 2000);
+    if (!text) return;
+    speakText(text);
     showNotification("Lendo em voz alta...", "info");
   }
 
@@ -320,7 +424,6 @@
       document.addEventListener("mouseup", onUp);
     });
 
-    // Sync vision state
     if (visionActive) updateOrbVisionState(true);
   }
 
@@ -373,7 +476,10 @@
 
     sendBtn.addEventListener("click", () => {
       const q = input.value.trim();
-      if (q) { sendAIQuery(q); input.value = ""; }
+      if (q) {
+        requireAuth(() => { sendAIQuery(q); });
+        input.value = "";
+      }
     });
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { sendBtn.click(); e.preventDefault(); }
@@ -382,24 +488,28 @@
     panel.querySelectorAll(".orion-quick-actions button").forEach((btn) => {
       btn.addEventListener("click", () => {
         const action = btn.dataset.action;
-        if (action === "summarize") extractAndAnalyze("summarize");
-        else if (action === "analyze") extractAndAnalyze("analyze");
-        else if (action === "read") readPageAloud();
-        else if (action === "vision-toggle") {
-          if (visionActive) deactivateVision("manual");
-          else activateVision();
-          // Refresh panel
+        if (action === "vision-toggle") {
+          if (visionActive) {
+            deactivateVision("manual");
+          } else {
+            requireAuth(() => activateVision());
+          }
           hidePanel();
           setTimeout(() => showPanel(), 100);
-        }
-        else if (action === "vision-look") {
-          captureAndAnalyzeVision("Descreva detalhadamente o que você vê nesta tela.");
-        }
-        else if (action === "extract") {
-          const pageData = extractPageContent();
-          showResponsePanel(
-            `Dados Extraídos\n\nTítulo: ${pageData.title}\nURL: ${pageData.url}\nPalavras: ${pageData.wordCount}\nTítulos: ${pageData.headings.length}\nLinks: ${pageData.links.length}\nImagens: ${pageData.images.length}\n\nTítulos encontrados:\n${pageData.headings.map(h => `${"  ".repeat(h.level - 1)}${h.text}`).join("\n")}`
-          );
+        } else if (action === "vision-look") {
+          requireAuth(() => captureAndAnalyzeVision("Descreva detalhadamente o que você vê nesta tela."));
+        } else {
+          requireAuth(() => {
+            if (action === "summarize") extractAndAnalyze("summarize");
+            else if (action === "analyze") extractAndAnalyze("analyze");
+            else if (action === "read") readPageAloud();
+            else if (action === "extract") {
+              const pageData = extractPageContent();
+              showResponsePanel(
+                `Dados Extraídos\n\nTítulo: ${pageData.title}\nURL: ${pageData.url}\nPalavras: ${pageData.wordCount}\nTítulos: ${pageData.headings.length}\nLinks: ${pageData.links.length}\nImagens: ${pageData.images.length}\n\nTítulos encontrados:\n${pageData.headings.map(h => `${"  ".repeat(h.level - 1)}${h.text}`).join("\n")}`
+              );
+            }
+          });
         }
       });
     });
@@ -464,40 +574,46 @@
         }
         break;
       case "ORION_EXTRACT_PAGE":
-        const data = extractPageContent();
-        chrome.runtime.sendMessage({ type: "PAGE_CONTEXT_UPDATE", ...data });
-        sendAIQuery(`Analise detalhadamente esta página: ${data.title}. Conteúdo: ${data.content.substring(0, 5000)}`);
+        requireAuth(() => {
+          const data = extractPageContent();
+          chrome.runtime.sendMessage({ type: "PAGE_CONTEXT_UPDATE", ...data });
+          sendAIQuery(`Analise detalhadamente esta página: ${data.title}. Conteúdo: ${data.content.substring(0, 5000)}`);
+        });
         break;
       case "ORION_SUMMARIZE_PAGE":
-        extractAndAnalyze("summarize");
+        requireAuth(() => extractAndAnalyze("summarize"));
         break;
       case "ORION_ANALYZE_TEXT":
-        sendAIQuery(`Analise o seguinte texto selecionado: "${message.text}"`);
+        requireAuth(() => sendAIQuery(`Analise o seguinte texto selecionado: "${message.text}"`));
         break;
       case "ORION_ANALYZE_IMAGE":
-        showNotification("Analisando imagem...", "info");
-        sendAIQuery(`Descreva e analise esta imagem: ${message.imageUrl}`);
+        requireAuth(() => {
+          showNotification("Analisando imagem...", "info");
+          sendAIQuery(`Descreva e analise esta imagem: ${message.imageUrl}`);
+        });
         break;
       case "ORION_READ_ALOUD":
-        readPageAloud(message.text);
+        requireAuth(() => readPageAloud(message.text));
         break;
       case "ORION_TRANSLATE":
-        sendAIQuery(`Traduza para ${message.targetLang || "inglês"}: ${message.text || extractPageContent().content.substring(0, 3000)}`);
+        requireAuth(() => sendAIQuery(`Traduza para ${message.targetLang || "inglês"}: ${message.text || extractPageContent().content.substring(0, 3000)}`));
         break;
       case "ORION_EXTRACT_STRUCTURED":
-        const pageData = extractPageContent();
-        showResponsePanel(
-          `Dados Extraídos\n\nTítulo: ${pageData.title}\nURL: ${pageData.url}\nPalavras: ${pageData.wordCount}\nTítulos: ${pageData.headings.length}\nLinks: ${pageData.links.length}\nImagens: ${pageData.images.length}`
-        );
+        requireAuth(() => {
+          const pageData = extractPageContent();
+          showResponsePanel(
+            `Dados Extraídos\n\nTítulo: ${pageData.title}\nURL: ${pageData.url}\nPalavras: ${pageData.wordCount}\nTítulos: ${pageData.headings.length}\nLinks: ${pageData.links.length}\nImagens: ${pageData.images.length}`
+          );
+        });
         break;
       case "ORION_ACTIVATE_VISION":
-        activateVision();
+        requireAuth(() => activateVision());
         break;
       case "ORION_DEACTIVATE_VISION":
         deactivateVision("manual");
         break;
       case "ORION_VISION_LOOK":
-        captureAndAnalyzeVision(message.query || "O que você vê?");
+        requireAuth(() => captureAndAnalyzeVision(message.query || "O que você vê?"));
         break;
     }
     sendResponse({ ok: true });

@@ -1,13 +1,17 @@
 /**
- * Orion Extension v3.0 — Background Service Worker
+ * Orion Extension v3.1 — Background Service Worker
  * Full integration with neural-ops via Supabase Edge Functions.
  * Vision capture, voice commands, AI queries.
+ * Auth verification for premium-only features.
  * Domain: iasofthub.com
  */
 
 const APP_BASE = "https://www.iasofthub.com";
 const SUPABASE_URL = "https://dlwafedtlvbvuoaopvsl.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsd2FmZWR0bHZidnVvYW9wdnNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MDI0MjEsImV4cCI6MjA4NDQ3ODQyMX0.ohz98f-MO3VNYoR6dth3zYhYqmviFs60ytJAQCwfJNk";
+
+const PREMIUM_PLANS = ["professional", "business", "enterprise"];
+const OWNER_EMAIL = "info@elpgreen.com";
 
 // State
 let orionState = {
@@ -27,6 +31,84 @@ let orionState = {
     face: "unknown",
   },
 };
+
+// ─── Auth cache ───
+let authCache = { checked: false, authenticated: false, isPremium: false, checkedAt: 0 };
+const AUTH_CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+async function checkAuth() {
+  if (authCache.checked && (Date.now() - authCache.checkedAt) < AUTH_CACHE_TTL) {
+    return authCache;
+  }
+
+  try {
+    // Check if user has a session by querying the Supabase auth
+    const sessionRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${await getStoredAccessToken()}`,
+      },
+    });
+
+    if (!sessionRes.ok) {
+      authCache = { checked: true, authenticated: false, isPremium: false, checkedAt: Date.now() };
+      return authCache;
+    }
+
+    const user = await sessionRes.json();
+    const userId = user.id;
+    const email = user.email;
+
+    // Check if owner
+    if (email === OWNER_EMAIL) {
+      authCache = { checked: true, authenticated: true, isPremium: true, checkedAt: Date.now() };
+      return authCache;
+    }
+
+    // Check user_plans
+    const planRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/user_plans?user_id=eq.${userId}&select=plan_type&limit=1`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${await getStoredAccessToken()}`,
+        },
+      }
+    );
+
+    let isPremium = false;
+    if (planRes.ok) {
+      const plans = await planRes.json();
+      if (plans.length > 0 && PREMIUM_PLANS.includes(plans[0].plan_type)) {
+        isPremium = true;
+      }
+    }
+
+    authCache = { checked: true, authenticated: true, isPremium, checkedAt: Date.now() };
+    return authCache;
+  } catch (err) {
+    console.warn("[Orion BG] Auth check failed:", err.message);
+    authCache = { checked: true, authenticated: false, isPremium: false, checkedAt: Date.now() };
+    return authCache;
+  }
+}
+
+async function getStoredAccessToken() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["orionAccessToken"], (result) => {
+      resolve(result.orionAccessToken || "");
+    });
+  });
+}
+
+// Listen for auth token from the app (iasofthub.com sets this)
+chrome.runtime.onMessageExternal?.addListener?.((message, sender, sendResponse) => {
+  if (message.type === "ORION_SET_AUTH_TOKEN" && message.token) {
+    chrome.storage.local.set({ orionAccessToken: message.token });
+    authCache = { checked: false, authenticated: false, isPremium: false, checkedAt: 0 };
+    sendResponse({ ok: true });
+  }
+});
 
 // Context Menu
 chrome.runtime.onInstalled.addListener(() => {
@@ -61,34 +143,22 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   switch (info.menuItemId) {
     case "orion-analyze-selection":
       if (info.selectionText && tab?.id) {
-        chrome.tabs.sendMessage(tab.id, {
-          type: "ORION_ANALYZE_TEXT",
-          text: info.selectionText,
-        });
+        chrome.tabs.sendMessage(tab.id, { type: "ORION_ANALYZE_TEXT", text: info.selectionText });
       }
       break;
     case "orion-analyze-page":
-      if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, { type: "ORION_EXTRACT_PAGE" });
-      }
+      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_EXTRACT_PAGE" });
       break;
     case "orion-analyze-image":
       if (info.srcUrl && tab?.id) {
-        chrome.tabs.sendMessage(tab.id, {
-          type: "ORION_ANALYZE_IMAGE",
-          imageUrl: info.srcUrl,
-        });
+        chrome.tabs.sendMessage(tab.id, { type: "ORION_ANALYZE_IMAGE", imageUrl: info.srcUrl });
       }
       break;
     case "orion-summarize":
-      if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, { type: "ORION_SUMMARIZE_PAGE" });
-      }
+      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_SUMMARIZE_PAGE" });
       break;
     case "orion-vision-activate":
-      if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, { type: "ORION_ACTIVATE_VISION" });
-      }
+      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_ACTIVATE_VISION" });
       break;
   }
 });
@@ -97,9 +167,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 chrome.commands.onCommand.addListener((command) => {
   if (command === "toggle-listening") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: "ORION_TOGGLE_LISTENING" });
-      }
+      if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, { type: "ORION_TOGGLE_LISTENING" });
     });
   }
 });
@@ -107,6 +175,12 @@ chrome.commands.onCommand.addListener((command) => {
 // Message Handler
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
+    case "ORION_CHECK_AUTH":
+      checkAuth()
+        .then((auth) => sendResponse(auth))
+        .catch(() => sendResponse({ authenticated: false, isPremium: false }));
+      return true;
+
     case "ORION_WAKE_WORD":
       orionState.wakeWordDetected = true;
       orionState.active = true;
@@ -203,12 +277,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // ─── AI Query via neural-ops Edge Function ───
 async function handleAIQuery(query, context) {
   try {
+    const token = await getStoredAccessToken();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/neural-ops`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
         question: query,
@@ -240,21 +315,18 @@ async function handleVisionCapture(query, tab) {
   if (!tab?.id) throw new Error("Nenhuma aba ativa");
 
   try {
-    // Capture visible tab as screenshot
     const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality: 75 });
-    
     if (!dataUrl) throw new Error("Falha ao capturar tela");
 
-    // Extract base64 from data URL
     const base64Image = dataUrl.split(",")[1];
+    const token = await getStoredAccessToken();
 
-    // Send to neural-ops with image for vision analysis
     const res = await fetch(`${SUPABASE_URL}/functions/v1/neural-ops`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
         question: query || "Descreva detalhadamente o que você vê nesta imagem da tela do navegador do usuário.",
@@ -270,13 +342,12 @@ async function handleVisionCapture(query, tab) {
     });
 
     if (!res.ok) {
-      // Fallback: send without image if the edge function doesn't support it
       const fallbackRes = await fetch(`${SUPABASE_URL}/functions/v1/neural-ops`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           question: `[VISÃO ATIVA] O usuário está na página "${tab.title || 'desconhecida'}" (${tab.url || ''}). Ele pediu: "${query}". Descreva o que provavelmente está visível com base no contexto da página.`,
@@ -313,43 +384,24 @@ async function handleQuickAction(action, data, tab) {
         return { ok: true, screenshot: dataUrl };
       }
       return { error: "No active tab" };
-
     case "read-aloud":
-      if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, { type: "ORION_READ_ALOUD", text: data?.text });
-      }
+      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_READ_ALOUD", text: data?.text });
       return { ok: true };
-
     case "translate":
-      if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, { type: "ORION_TRANSLATE", text: data?.text, targetLang: data?.lang || "en" });
-      }
+      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_TRANSLATE", text: data?.text, targetLang: data?.lang || "en" });
       return { ok: true };
-
     case "extract-data":
-      if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, { type: "ORION_EXTRACT_STRUCTURED" });
-      }
+      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_EXTRACT_STRUCTURED" });
       return { ok: true };
-
     case "activate-vision":
-      if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, { type: "ORION_ACTIVATE_VISION" });
-      }
+      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_ACTIVATE_VISION" });
       return { ok: true };
-
     case "deactivate-vision":
-      if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, { type: "ORION_DEACTIVATE_VISION" });
-      }
+      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_DEACTIVATE_VISION" });
       return { ok: true };
-
     case "vision-look":
-      if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, { type: "ORION_VISION_LOOK", query: data?.query });
-      }
+      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_VISION_LOOK", query: data?.query });
       return { ok: true };
-
     default:
       return { error: "Unknown action" };
   }
