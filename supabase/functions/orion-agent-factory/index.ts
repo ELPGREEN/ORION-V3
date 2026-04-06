@@ -637,6 +637,9 @@ Deno.serve(async (req) => {
       case "get_registry":
         result = handleGetRegistry();
         break;
+      case "synthesize_speech":
+        result = await handleSpeechSynthesis(body);
+        break;
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
           status: 400,

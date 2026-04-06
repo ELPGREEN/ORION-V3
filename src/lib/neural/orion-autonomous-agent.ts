@@ -146,6 +146,29 @@ export class OrionAgentFactory {
   }
 
   /**
+   * Synthesize speech via Orion's multi-engine pipeline.
+   * Priority: ElevenLabs (premium) > HF Spaces > Browser fallback.
+   */
+  async synthesizeSpeech(
+    text: string,
+    options?: {
+      voice_profile_id?: string;
+      engine?: "elevenlabs" | "hf_spaces" | "browser_fallback";
+      language?: string;
+    }
+  ): Promise<AgentFactoryResult & { audio_base64?: string; mime_type?: string; engine?: string }> {
+    const { data, error } = await supabase.functions.invoke("orion-agent-factory", {
+      body: {
+        action: "synthesize_speech",
+        text,
+        ...options,
+      },
+    });
+    if (error) return { success: false, error: error.message };
+    return data;
+  }
+
+  /**
    * Smart task execution: try the task, and if it fails,
    * auto-create a specialized agent and retry.
    */
