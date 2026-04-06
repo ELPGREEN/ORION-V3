@@ -8,7 +8,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// AI Provider Configurations
+// ═══ FREE-ONLY AI PROVIDERS — Google Gemini Free Tier (7-key rotation) ═══
+// All models below are 100% free via Google AI Studio / Gemini API
+// Gemini 2.5 Flash: 10 RPM, 250 RPD, 250K TPM — balanced default
+// Gemini 2.5 Flash-Lite: 15 RPM, 1000 RPD, 250K TPM — fast/cheap
+// Gemini 2.5 Pro: 5 RPM, 100 RPD, 250K TPM — complex reasoning
+// Gemini 3 Flash Preview: ~10 RPM — latest model
 interface AIProvider {
   name: string;
   apiKeyEnv: string;
@@ -18,94 +23,65 @@ interface AIProvider {
   temperature: number;
 }
 
+// Helper: Get all available Gemini keys for rotation
+function _getGeminiKeys(): string[] {
+  return [
+    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
+  ].filter(Boolean) as string[];
+}
+
+// Round-robin key index (persists across requests in same isolate)
+let _geminiKeyIndex = 0;
+function _getNextGeminiKey(): string {
+  const keys = _getGeminiKeys();
+  if (keys.length === 0) throw new Error("No Gemini API keys configured");
+  const key = keys[_geminiKeyIndex % keys.length];
+  _geminiKeyIndex++;
+  return key;
+}
+
 const AI_PROVIDERS: Record<string, AIProvider> = {
-  gemini: {
-    name: "Google Gemini 2.5 Flash",
+  gemini_flash: {
+    name: "Gemini 2.5 Flash (Free)",
     apiKeyEnv: "GEMINI_API_KEY",
     endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
     model: "gemini-2.5-flash",
     maxTokens: 16384,
     temperature: 0.3,
   },
-  groq: {
-    name: "Groq (Llama-3.3-70B)",
-    apiKeyEnv: "GROQ_API_KEY",
-    endpoint: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.3-70b-versatile",
-    maxTokens: 8000,
-    temperature: 0.3,
-  },
-  anthropic: {
-    name: "Anthropic Claude 3.5 Sonnet",
-    apiKeyEnv: "ANTHROPIC_API_KEY",
-    endpoint: "https://api.anthropic.com/v1/messages",
-    model: "claude-3-5-sonnet-20241022",
+  gemini_flash_lite: {
+    name: "Gemini 2.5 Flash-Lite (Free, Fast)",
+    apiKeyEnv: "GEMINI_API_KEY",
+    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+    model: "gemini-2.5-flash-lite",
     maxTokens: 8192,
     temperature: 0.3,
   },
-  anthropic_sonnet: {
-    name: "Anthropic Claude 3.5 Sonnet (alias)",
-    apiKeyEnv: "ANTHROPIC_API_KEY",
-    endpoint: "https://api.anthropic.com/v1/messages",
-    model: "claude-3-5-sonnet-20241022",
-    maxTokens: 8192,
+  gemini_pro: {
+    name: "Gemini 2.5 Pro (Free, Reasoning)",
+    apiKeyEnv: "GEMINI_API_KEY",
+    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent",
+    model: "gemini-2.5-pro",
+    maxTokens: 16384,
     temperature: 0.3,
   },
-  openai: {
-    name: "OpenAI GPT-4o",
-    apiKeyEnv: "OPENAI_API_KEY",
-    endpoint: "https://api.openai.com/v1/chat/completions",
-    model: "gpt-4o",
-    maxTokens: 8000,
-    temperature: 0.3,
-  },
-  openai_4o: {
-    name: "OpenAI GPT-4o-mini",
-    apiKeyEnv: "OPENAI_API_KEY",
-    endpoint: "https://api.openai.com/v1/chat/completions",
-    model: "gpt-4o-mini",
-    maxTokens: 4000,
-    temperature: 0.3,
-  },
-  github_models: {
-    name: "GitHub Models (GPT-4o)",
-    apiKeyEnv: "GITHUB_PAT",
-    endpoint: "https://models.inference.ai.azure.com/chat/completions",
-    model: "gpt-4o",
-    maxTokens: 4096,
-    temperature: 0.3,
-  },
-  mistral: {
-    name: "Mistral Small 4",
-    apiKeyEnv: "MISTRAL_API_KEY",
-    endpoint: "https://api.mistral.ai/v1/chat/completions",
-    model: "mistral-small-latest",
-    maxTokens: 8192,
-    temperature: 0.3,
-  },
-  // ═══ DeepSeek V3.2 — Updated per tech report (DSA + GRPO + Agentic) ═══
-  // deepseek-chat = DeepSeek-V3.2 Non-thinking Mode (128K context, max output 8K)
-  deepseek: {
-    name: "DeepSeek V3.2 (Non-thinking)",
-    apiKeyEnv: "DEEPSEEK_API_KEY",
-    endpoint: "https://api.deepseek.com/chat/completions",
-    model: "deepseek-chat",
-    maxTokens: 8192,
-    temperature: 0.3,
-  },
-  // deepseek-reasoner = DeepSeek-V3.2 Thinking Mode (128K context, max output 64K)
-  // Per paper: uses GRPO with unbiased KL estimate, off-policy masking, keep routing
-  deepseek_reasoner: {
-    name: "DeepSeek V3.2 Reasoner (Thinking)",
-    apiKeyEnv: "DEEPSEEK_API_KEY",
-    endpoint: "https://api.deepseek.com/chat/completions",
-    model: "deepseek-reasoner",
-    maxTokens: 32768,
+  gemini_3_flash: {
+    name: "Gemini 3 Flash Preview (Free, Latest)",
+    apiKeyEnv: "GEMINI_API_KEY",
+    endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+    model: "gemini-3-flash-preview",
+    maxTokens: 16384,
     temperature: 0.3,
   },
 };
 
-const FALLBACK_ORDER = ["gemini", "deepseek", "groq", "mistral", "github_models", "anthropic", "openai", "anthropic_sonnet", "openai_4o"] as const;
+const FALLBACK_ORDER = ["gemini_flash", "gemini_3_flash", "gemini_flash_lite", "gemini_pro"] as const;
 
 // ═══ DIRETRIZES xAI (GROK) — INJETADAS EM TODAS AS CHAMADAS ═══
 const XAI_GROK_DIRECTIVES = `
