@@ -3,6 +3,7 @@ import { MainVideo } from "./MainVideo";
 import { OrionLogoVideo } from "./OrionLogoVideo";
 import { TutorialVideo } from "./tutorial/TutorialVideo";
 import { PromoVideo } from "./promo/PromoVideo";
+import { InvestorVideo } from "./investor/InvestorVideo";
 
 export const RemotionRoot = () => (
   <>
@@ -34,6 +35,14 @@ export const RemotionRoot = () => (
       id="orion-promo"
       component={PromoVideo}
       durationInFrames={1800}
+      fps={30}
+      width={1920}
+      height={1080}
+    />
+    <Composition
+      id="orion-investor"
+      component={InvestorVideo}
+      durationInFrames={830}
       fps={30}
       width={1920}
       height={1080}
