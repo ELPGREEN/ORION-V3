@@ -131,10 +131,13 @@ export default function Auth() {
   // Face enrollment step (advogado only)
   const [authStep, setAuthStep] = useState<AuthStep>("form");
 
+  // Get returnTo destination from URL params
+  const returnTo = searchParams.get("returnTo") || "/dashboard";
+
   // Redirect if logged in
   useEffect(() => {
-    if (user) navigate("/dashboard");
-  }, [user, navigate]);
+    if (user) navigate(returnTo);
+  }, [user, navigate, returnTo]);
 
   // Sync URL params
   useEffect(() => {
