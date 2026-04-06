@@ -200,7 +200,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     toast.info(`🎤 "${cleanedCommand || original}"`);
   }, [active, stopCamera, startCamera, deactivateGracefully, askAI, supernetConnected, sendSuperNetQuery, speak, speakFast]);
 
-  // ═══ Wake word activation ═══
+  // ═══ Wake word activation — camera does NOT auto-start, only voice ═══
   const activateByWakeWord = useCallback(async () => {
     wakeWordEnabledRef.current = false;
     try { wakeRecRef.current?.abort?.(); } catch {}
@@ -209,16 +209,16 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     if (!hasGreetedRef.current) {
       hasGreetedRef.current = true;
-      speakFast("Ativando sistema AquaMonkey. Bem-vindo ao Orion.").catch(() => {});
+      speakFast("Ativando sistema AquaMonkey. Bem-vindo ao Orion. Diga ativar visão para ligar a câmera.").catch(() => {});
     } else {
       toast.info("⚡ Relâmpago Vivo — Orion pronto", { duration: 1500 });
     }
 
-    if (!active) startCamera({ announce: false }).catch(() => {});
+    // Camera does NOT start automatically — user must say "ativar visão"
     if (!listening) {
       setTimeout(() => startListening(handleVoice), 120);
     }
-  }, [active, listening, startCamera, startListening, handleVoice, speakFast]);
+  }, [listening, startListening, handleVoice, speakFast]);
 
   const { wakeWordActive, wakeWordEnabledRef, wakeRecRef, startWakeWordListener, stopWakeWordListener, enableWakeWord, getBackgroundTranscripts } = useWakeWord(listening, speechOk, activateByWakeWord);
 
