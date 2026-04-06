@@ -629,6 +629,9 @@ export default function RobotControlPanel() {
           <TabsContent value="nodered">
             <NodeREDPanel />
           </TabsContent>
+          <TabsContent value="tireline">
+            <TireProductionPanel />
+          </TabsContent>
         </Suspense>
       </Tabs>
     </div>
