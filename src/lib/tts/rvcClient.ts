@@ -7,8 +7,8 @@
  * Pipeline: Formant WAV → RVC Space → Converted WAV
  */
 
-const RVC_SPACE_ID = "Ericsonv12/adv";
-const RVC_SPACE_URL = "https://ericsonv12-adv.hf.space";
+const RVC_SPACE_ID = "Ericsonv12/orion-voice";
+const RVC_SPACE_URL = "https://ericsonv12-orion-voice.hf.space";
 const RVC_TIMEOUT_MS = 30_000;
 
 // Model files hosted in the Space
