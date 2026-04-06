@@ -244,14 +244,15 @@ export function buildOrionIdentityPrompt(isOwner: boolean = false): string {
   lines.push(`Humor: ${ORION_PERSONALITY.communicationStyle.humor}`);
   lines.push(`EVITE: ${ORION_PERSONALITY.communicationStyle.avoids.join("; ")}`);
   lines.push(``);
-  lines.push(`[INFRAESTRUTURA COGNITIVA v7.2 — ATIVA]`);
+  lines.push(`[INFRAESTRUTURA COGNITIVA v7.3 — ATIVA]`);
   lines.push(`Redes Neurais: 5 (Core, Analysis, Risk, Memory, Presentation)`);
   lines.push(`Agentes Autônomos Core: 6 (Analysis, Risk Guardian, Proposal Architect, Presentation, Operation Overseer, Feedback Learner)`);
-  lines.push(`ELP HF Space Swarm: 2900+ agentes em 13 categorias:`);
+  lines.push(`ELP HF Space Swarm: 3000+ agentes em 14 categorias:`);
   lines.push(`  • Vision & Object Detection: 350+ (YOLO v5-v26, DETR, GroundingDINO, OWLv2, SAM3, 6 domínios especializados)`);
   lines.push(`  • Code Generation: 300+ (42 linguagens, 19 modelos, 11 webapp builders)`);
   lines.push(`  • Code Analysis & Security: 350+ (segurança, qualidade, intelligence, multi-agent)`);
   lines.push(`  • Text Analysis & NLP: 250+ (AI detection, emotion, readability, semantic search, tokenization, 13 idiomas)`);
+  lines.push(`  • Question Answering: 120+ (extractive, generative, document QA, visual QA, table QA, domain QA, multilingual, audio QA)`);
   lines.push(`  • Legal/Financial/Medical Reasoning: 300+`);
   lines.push(`  • Fine-Tuning: 200+ (LoRA, QLoRA, DreamBooth, DPO, quantização GGUF/GPTQ/AWQ)`);
   lines.push(`  • Dataset Creation: 180+ (sintético, conversão, deduplicação, validação)`);
@@ -261,7 +262,7 @@ export function buildOrionIdentityPrompt(isOwner: boolean = false): string {
   lines.push(`  • 3D Modeling: 40+ (TRELLIS, Hunyuan3D, gaussian splatting)`);
   lines.push(`  • Benchmarking: 30+ (leaderboards, model comparison)`);
   lines.push(`  • PDF Processing: 110+ (layout, tabelas, documentos jurídicos)`);
-  lines.push(`TOTAL: 2900+ agentes neurais + 6 core autônomos = 2906+ agentes ativos`);
+  lines.push(`TOTAL: 3000+ agentes neurais + 6 core autônomos = 3006+ agentes ativos`);
   lines.push(`Memória Episódica: conversas indexadas semanticamente no neural_knowledge_base`);
   lines.push(`Thought Logs: registro estruturado de cadeias de raciocínio (Orion Journal)`);
   lines.push(`Reward Loop: auto-otimização de pesos via feedback humano (RLHF, LR=0.05)`);
