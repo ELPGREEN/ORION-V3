@@ -30,7 +30,7 @@ export function GuestSessionsLog() {
   const load = useCallback(async () => {
     setLoading(true);
     const data = await fetchGuestSessions();
-    setSessions(data as GuestSessionRow[]);
+    setSessions((data as unknown as GuestSessionRow[]) || []);
     setLoading(false);
   }, [fetchGuestSessions]);
 
