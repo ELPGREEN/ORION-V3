@@ -236,52 +236,48 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       /oreo[nm]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q);
     if (isOrionExit) { deactivateGracefully(); return; }
 
-    // ═══ Voice Clone Command Detection ═══
+    // ═══ Voice Clone Command Detection — FULLY AUTOMATIC FLOW ═══
     if (isVoiceCloneCommand(q)) {
+      toast.info("🎙️ Iniciando clonagem de voz automática...");
+      // Stop listening so STT doesn't capture Orion's own speech
+      stopListen();
+
       const introMsg = voiceClone.startCloneFlow();
-      speak(introMsg).catch(() => {});
-      toast.info("🎙️ Iniciando clonagem de voz...");
+      speak(introMsg).then(async () => {
+        // After Orion finishes speaking, auto-start recording
+        toast.info("🔴 Gravando sua voz por 15 segundos... Fale naturalmente!");
+        await voiceClone.startRecording();
+        
+        // Auto-stop after 15 seconds
+        setTimeout(async () => {
+          voiceClone.stopRecording();
+          toast.info("⏹️ Gravação concluída! Processando...");
+          
+          // Wait a moment for upload to finish, then auto-clone
+          setTimeout(async () => {
+            await speak("Gravação concluída. Agora vou processar sua voz. Aguarde um momento.");
+            await voiceClone.cloneVoice();
+            const result = voiceClone.getFlowInstruction();
+            await speak(result);
+            // Resume listening
+            startListening(handleVoice);
+          }, 3000);
+        }, 15000);
+      }).catch(() => {
+        // If speak fails, still start recording
+        voiceClone.startRecording();
+        setTimeout(() => {
+          voiceClone.stopRecording();
+          setTimeout(() => voiceClone.cloneVoice(), 3000);
+        }, 15000);
+      });
       return;
     }
 
-    // ═══ Voice Clone Flow: handle recording commands during clone flow ═══
-    if (voiceClone.cloneFlowStep !== "idle") {
-      const step = voiceClone.cloneFlowStep;
-      if (step === "intro" || step === "reviewing") {
-        if (/gravar|começar|iniciar|pronto|vai/i.test(q)) {
-          voiceClone.startRecording();
-          speakFast("Gravando... Leia a frase naturalmente.").catch(() => {});
-          return;
-        }
-        if (/clonar|finalizar|confirmar|pronto|salvar/i.test(q) && voiceClone.samples.length >= 1) {
-          speakFast("Processando sua voz...").catch(() => {});
-          voiceClone.cloneVoice().then(() => {
-            speak(voiceClone.getFlowInstruction()).catch(() => {});
-          });
-          return;
-        }
-        if (/mais|outra|próxima/i.test(q)) {
-          const instruction = voiceClone.getFlowInstruction();
-          speakFast(instruction).catch(() => {});
-          return;
-        }
-      }
-      if (step === "recording") {
-        if (/parar|pronto|terminar|finalizar|concluir/i.test(q)) {
-          voiceClone.stopRecording();
-          const instruction = voiceClone.getFlowInstruction();
-          speak(instruction).catch(() => {});
-          return;
-        }
-      }
-      if (step === "complete") {
-        if (/testar|teste|ouvir/i.test(q)) {
-          voiceClone.testVoice();
-          return;
-        }
-        // Reset flow on any other command after completion
-        // (let it fall through to normal processing)
-      }
+    // ═══ Voice Clone Flow: ignore commands during active clone flow ═══
+    if (voiceClone.cloneFlowStep !== "idle" && voiceClone.cloneFlowStep !== "complete") {
+      // During clone flow, ignore all other commands
+      return;
     }
 
     if (cleanedCommand.includes("parar") || cleanedCommand.includes("desligar")) stopCamera();
