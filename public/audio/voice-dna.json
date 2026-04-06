@@ -1,38 +1,58 @@
 {
   "f0": {
-    "mean": 129.0,
-    "median": 125.7,
-    "std": 18.8,
-    "p5": 103.0,
-    "p95": 169.0
+    "mean": 168.7,
+    "median": 166.7,
+    "std": 30.2,
+    "p5": 127.0,
+    "p95": 218.2
   },
   "formants": {
-    "F1": 1260,
-    "F2": 2612,
-    "F3": 4048,
-    "F4": 6042
+    "F1": 1104,
+    "F2": 2300,
+    "F3": 3593,
+    "F4": 5172
   },
   "bandwidths": {
-    "BW1": 500,
-    "BW2": 500,
-    "BW3": 500,
-    "BW4": 450
+    "BW1": 600,
+    "BW2": 600,
+    "BW3": 571,
+    "BW4": 411
   },
+  "harmonic_profile": [
+    1.0,
+    0.8862,
+    0.2399,
+    0.0881,
+    0.0326,
+    0.0396,
+    0.0479,
+    0.049
+  ],
+  "harmonic_db_drop": [
+    0.0,
+    1.0,
+    12.4,
+    21.1,
+    29.7,
+    28.0,
+    26.4,
+    26.2
+  ],
   "glottal": {
-    "open_quotient": 0.533,
-    "speed_quotient": 2.16,
-    "H1_H2_db": 3.3,
-    "harmonic_decay_db": 3.9
+    "open_quotient": 0.504,
+    "speed_quotient": 2.02,
+    "H1_H2_db": 0.4,
+    "harmonic_decay_db": 11.5
   },
   "dynamics": {
-    "spectral_tilt_db": 29.9,
-    "jitter_percent": 2.82,
-    "shimmer_percent": 20.24
+    "spectral_tilt_db": 29.3,
+    "jitter_percent": 2.93,
+    "shimmer_percent": 17.84
   },
   "meta": {
     "sample_rate": 24000,
-    "total_audio_seconds": 55.2,
-    "samples_count": 5,
-    "voiced_frames": 3604
+    "total_audio_seconds": 66.24,
+    "samples_count": 6,
+    "voiced_frames": 2970
   }
 }

@@ -24,17 +24,19 @@ export interface PhonemeParams {
 
 // ── IAPETUS VOICE DNA (from 44s / 6 samples) ──
 export const VOICE_DNA = {
-  f0: { mean: 129.0, median: 125.7, std: 18.8, p5: 103.0, p95: 169.0 },
+  f0: { mean: 168.7, median: 166.7, std: 18.8, p5: 103.0, p95: 169.0 },
   glottal: {
-    openQuotient: 0.533,
-    speedQuotient: 2.16,
-    h1H2Db: 3.3,
-    harmonicDecay: 3.9,    // Updated from 7 samples (55s)
+    openQuotient: 0.504,
+    speedQuotient: 2.02,
+    h1H2Db: 0.4,
+    harmonicDecay: 4.8,
   },
+  // Per-harmonic amplitude profile (H1=1.0 reference)
+  harmonicProfile: [1.0, 0.886, 0.240, 0.088, 0.033, 0.040, 0.048, 0.049],
   dynamics: {
-    spectralTilt: 29.9,
-    jitter: 0.0282,
-    shimmer: 0.2024,
+    spectralTilt: 29.3,
+    jitter: 0.0293,
+    shimmer: 0.1784,
   },
   sampleRate: 24000,
 };
