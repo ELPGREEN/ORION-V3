@@ -2,7 +2,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { vsLog } from "./useVisionProcessing";
 
-const ORION_WAKE_REGEX = /([óòôõo][. ]*r[iíìeéè][. ]*[oóòôõ][. ]*[nmn]|oreo[nm]|oria[nm]|orie[nm]|ore[oó][nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|painel)\b/i;
+// Expanded regex: catches "orion", "órion", "oreon", "oriom", "o rion", "orían", "orian", etc.
+const ORION_WAKE_REGEX = /([óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\b/i;
 
 export interface BackgroundTranscript {
   text: string;
@@ -42,10 +43,10 @@ export function useWakeWord(
 
   const getRestartDelay = useCallback((reason?: string) => {
     if (typeof document !== "undefined" && document.hidden) return 2400;
-    const base = isMobileBrowser() ? 1300 : 450;
-    if (reason === "audio-capture" || reason === "network") return base + 700;
+    const base = isMobileBrowser() ? 600 : 200;
+    if (reason === "audio-capture" || reason === "network") return base + 500;
     if (reason === "aborted" || reason === "end" || reason === "no-speech") return base;
-    return base + 300;
+    return base + 200;
   }, []);
 
   const getBackgroundTranscripts = useCallback((): BackgroundTranscript[] => {
@@ -104,7 +105,8 @@ export function useWakeWord(
             const isOrion = ORION_WAKE_REGEX.test(transcript);
 
             if (isOrion && !wakeWordCooldownRef.current) {
-              if (confidence < 0.15) {
+              // Very low threshold — interim results often have 0 confidence
+              if (e.results[i].isFinal && confidence < 0.08) {
                 vsLog(`👂 Wake word ignorado (confiança muito baixa: ${(confidence * 100).toFixed(0)}%)`);
                 addBackgroundTranscript(transcript, confidence);
                 continue;
@@ -112,7 +114,7 @@ export function useWakeWord(
 
               wakeWordCooldownRef.current = true;
               const wakeLabel = /painel/i.test(transcript) ? "Painel" : "Orion";
-              vsLog(`🎯 Wake word '${wakeLabel}' detectado!`);
+              vsLog(`🎯 Wake word '${wakeLabel}' detectado! (conf=${(confidence * 100).toFixed(0)}%, interim=${!e.results[i].isFinal})`);
               toast.success(`🎯 ${wakeLabel} ativado!`, { duration: 2000 });
               clearRestartTimer();
               try { rec.abort?.(); } catch {}
@@ -150,7 +152,7 @@ export function useWakeWord(
           } else {
             setWakeWordActive(false);
           }
-        }, getRestartDelay("end") + restartAttemptsRef.current * 150);
+        }, getRestartDelay("end") + restartAttemptsRef.current * 80);
       };
 
       rec.onerror = (e: any) => {
@@ -178,7 +180,7 @@ export function useWakeWord(
           } else {
             setWakeWordActive(false);
           }
-        }, getRestartDelay(e.error) + restartAttemptsRef.current * 150);
+        }, getRestartDelay(e.error) + restartAttemptsRef.current * 80);
       };
 
       wakeRecRef.current = rec;
