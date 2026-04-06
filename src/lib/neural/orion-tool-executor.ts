@@ -2234,7 +2234,7 @@ const TOOLS: OrionTool[] = [
     extract: () => ({}),
     call: async () => {
       return `🏗️ **Arquitetura NEUROCORE AI — 5 Camadas**\n\n` +
-        `**Camada 5 — Interface:** Voz (ElevenLabs/Piper), Visão (Câmera), Robótica, Mobile (Capacitor), Assistentes Virtuais\n` +
+        `**Camada 5 — Interface:** Voz (Google TTS/Piper/Kokoro), Visão (Câmera), Robótica, Mobile (Capacitor), Assistentes Virtuais\n` +
         `**Camada 4 — Orquestrador:** Digital Twin (AAS), Agente SupAgent, Meta-Raciocínio, Pipeline Paralelo Brain-like\n` +
         `**Camada 3 — Módulos Especializados:** 9 modelos neurais (LLM, VLM, MoE, SAM, Mamba, SLM, LCM, MLM, LAM), Raciocínio Jurídico, Consciência Reflexiva\n` +
         `**Camada 2 — Motor de Visão:** YOLOv11, MediaPipe (33 pontos), SigLIP-2, Video-Mamba, BlazeFace, ArcFace\n` +

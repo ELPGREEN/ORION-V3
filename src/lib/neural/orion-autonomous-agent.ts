@@ -37,7 +37,7 @@ export interface VoiceProfile {
   user_id: string;
   profile_type: "owner" | "client" | "user";
   display_name: string;
-  elevenlabs_voice_id: string | null;
+  cloned_voice_id: string | null;
   voice_sample_url: string | null;
   voice_characteristics: Record<string, unknown>;
   is_primary: boolean;
@@ -147,13 +147,13 @@ export class OrionAgentFactory {
 
   /**
    * Synthesize speech via Orion's multi-engine pipeline.
-   * Priority: ElevenLabs (premium) > HF Spaces > Browser fallback.
+   * Priority: Google TTS (free) > Kokoro (browser) > Piper WASM > Web Speech.
    */
   async synthesizeSpeech(
     text: string,
     options?: {
       voice_profile_id?: string;
-      engine?: "elevenlabs" | "hf_spaces" | "browser_fallback";
+      engine?: "google_tts" | "kokoro" | "piper" | "browser_fallback";
       language?: string;
     }
   ): Promise<AgentFactoryResult & { audio_base64?: string; mime_type?: string; engine?: string }> {

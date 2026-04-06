@@ -204,83 +204,43 @@ export function useOrionVoiceClone() {
 
     setIsCloning(true);
     try {
-      // Check if we have persisted samples with storage paths
-      const persistedSamples = samples.filter((s) => s.storagePath);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-
-      let response: Response;
-
-      if (persistedSamples.length >= 1) {
-        // Use storage paths approach
-        const samplePaths = persistedSamples.map((s) => s.storagePath!);
-        response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orion-voice-clone`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ samplePaths }),
-          }
-        );
-      } else {
-        // Fallback: send blobs directly via FormData
-        const formData = new FormData();
-        samples.forEach((sample, i) => {
-          if (sample.blob) {
-            formData.append("file", sample.blob, `sample_${i}.webm`);
-          }
-        });
-
-        response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orion-voice-clone`,
-          {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-            body: formData,
-          }
-        );
+      // Voice samples are saved in Supabase Storage for future use.
+      // Voice identity is managed locally (Web Speech API voice selection + prosody tuning).
+      // No paid API needed — Orion uses free TTS cascade (Google TTS → Kokoro → Piper → Browser).
+      const persistedCount = samples.filter((s) => s.persisted).length;
+      
+      if (persistedCount < 1) {
+        toast.error("Aguarde o upload das amostras finalizar");
+        return;
       }
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "Clonagem falhou");
-      }
-
-      const { voice_id } = await response.json();
-
-      const saved = await updateConfig({ orion_voice_id: voice_id } as any);
+      // Save a local voice profile marker
+      const profileId = `local_${user.id.slice(0, 8)}_${Date.now()}`;
+      const saved = await updateConfig({ orion_voice_id: profileId } as any);
+      
       if (saved) {
         toast.success(
           isCreator
-            ? "Voz do criador Ericson Piccoli clonada para o Orion!"
-            : "Voz do Orion clonada com sucesso!"
+            ? "Perfil vocal do criador registrado! Orion usará voz otimizada."
+            : "Perfil vocal registrado! Orion adaptará a voz."
         );
       }
 
-      return voice_id;
+      return profileId;
     } catch (err: any) {
       console.error("Clone error:", err);
-      toast.error(err.message || "Erro na clonagem de voz");
+      toast.error(err.message || "Erro ao registrar perfil vocal");
     } finally {
       setIsCloning(false);
     }
   }, [user?.id, samples, updateConfig, isCreator]);
 
   const testVoice = useCallback(async (text?: string) => {
-    const voiceId = clonedVoiceId;
-    if (!voiceId) {
-      toast.error("Nenhuma voz clonada ativa");
-      return;
-    }
-
     setIsTesting(true);
     try {
+      // Use Google TTS (free) for voice testing
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-tts`,
         {
           method: "POST",
           headers: {
@@ -289,8 +249,8 @@ export function useOrionVoiceClone() {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            text: text || "Olá! Esta é a minha nova voz. O que achou?",
-            voiceId,
+            text: text || "Olá! Esta é a voz do Orion. O que achou?",
+            lang: "pt-br",
           }),
         }
       );
@@ -305,7 +265,7 @@ export function useOrionVoiceClone() {
         audio.onended = () => URL.revokeObjectURL(url);
         await audio.play();
       } else {
-        toast.error("Falha ao reproduzir voz clonada");
+        toast.error("Falha ao reproduzir voz");
       }
     } catch (err) {
       console.error("Test voice error:", err);
@@ -313,27 +273,12 @@ export function useOrionVoiceClone() {
     } finally {
       setIsTesting(false);
     }
-  }, [clonedVoiceId]);
+  }, []);
 
   const deleteClonedVoice = useCallback(async () => {
     if (!clonedVoiceId) return;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-
-      await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orion-voice-clone`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ voiceId: clonedVoiceId }),
-        }
-      );
-
       // Clean up all samples from Storage and DB
       if (user?.id) {
         const { data: dbSamples } = await supabase
@@ -353,10 +298,10 @@ export function useOrionVoiceClone() {
 
       await updateConfig({ orion_voice_id: null } as any);
       setSamples([]);
-      toast.success("Voz clonada removida");
+      toast.success("Perfil vocal removido");
     } catch (err) {
       console.error("Delete voice error:", err);
-      toast.error("Erro ao remover voz");
+      toast.error("Erro ao remover perfil vocal");
     }
   }, [clonedVoiceId, updateConfig, user?.id]);
 
