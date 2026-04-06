@@ -242,7 +242,7 @@ export function GlobalOrionListener() {
           } else {
             setWakeWordActive(false);
           }
-        }, getRestartDelay("end") + restartAttemptsRef.current * 120);
+        }, getRestartDelay("end") + restartAttemptsRef.current * 80);
       };
 
       rec.onerror = (e: any) => {
@@ -271,7 +271,7 @@ export function GlobalOrionListener() {
           } else {
             setWakeWordActive(false);
           }
-        }, getRestartDelay(e.error) + restartAttemptsRef.current * 120);
+        }, getRestartDelay(e.error) + restartAttemptsRef.current * 80);
       };
 
       wakeRecRef.current = rec;
