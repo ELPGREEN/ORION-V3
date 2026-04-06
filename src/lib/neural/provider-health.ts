@@ -71,7 +71,7 @@ export function computeProviderHealth(
 
 export function buildFallbackChain(
   healthData: ProviderHealth[],
-  defaultOrder: string[] = ["groq", "mistral", "anthropic", "openai", "github_models"]
+  defaultOrder: string[] = ["gemini_flash", "gemini_3_flash", "gemini_flash_lite", "gemini_pro"]
 ): string[] {
   const available = healthData.filter(h => h.status !== "down");
   available.sort((a, b) => {
