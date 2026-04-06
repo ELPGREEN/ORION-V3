@@ -1,60 +1,41 @@
 
 
-# Plano de Correção Completa do Sistema RAG
+# Plano: Tornar o Formant Synth Inteligível (v6)
 
-## Situacao Atual (ja corrigido anteriormente)
-- Modelo de embedding: `gemini-embedding-001` (OK em todas as 6 functions)
-- Harvester: `gemini-2.5-flash` (OK)
-- kb-ingest: deduplicacao implementada (OK)
-- 41 neural embeddings processados (OK), 2 legal falharam por quota (429)
+## Diagnóstico
 
-## Problemas Restantes a Corrigir
+O som sai mas é ininteligível por 3 razões técnicas principais:
 
-### 1. Fallback HuggingFace para embeddings (CRITICO)
-Quando todas as 7 chaves Gemini falham (429/403), o sistema morre sem fallback.
+1. **Ressonadores em paralelo** — O modelo atual soma F1+F2+F3+F4 em paralelo. Para fala, o trato vocal é uma **cascata** (série): a saída de F1 alimenta F2, que alimenta F3, etc. Paralelo funciona para análise, cascata para síntese realista.
 
-**Solucao:** Adicionar fallback via HuggingFace Inference API (`HUGGINGFACE_API_KEY` ja existe nos secrets) usando modelo `sentence-transformers/all-MiniLM-L6-v2` (384d, gratuito).
+2. **Fonte glotal muito simples** — O Rosenberg C produz um pulso limpo demais. Falta a riqueza harmônica real do Iapetus. Precisa usar o `harmonicProfile` de 10 harmônicos diretamente na geração do pulso.
 
-- Como 384d != 768d, o fallback fara zero-padding para 768d para manter compatibilidade vetorial
-- Sera o ultimo recurso apos todas as keys Gemini falharem
-- Aplicado em: `generate-embeddings`, `neural-search`, `ai-orchestrator`, `gerar-documento`, `neural-training`, `orion-codegen`
+3. **Duração dos fonemas muito curta** — Vogais com 80-110ms são rápidas demais para o cérebro processar. Fala natural em PT-BR usa 120-180ms para vogais tônicas.
 
-### 2. Processar os 2 legal_embeddings pendentes
-- Falharam por 429 (quota). Com o fallback HF implementado, re-executar o generate-embeddings
+## Mudanças Técnicas
 
-### 3. CORS headers consistentes
-- `kb-ingest` usa headers incompletos vs as outras functions
-- Padronizar para incluir todos os headers de plataforma Supabase
+### 1. `formantSynth.ts` — Reescrever motor (v6)
 
-### 4. Cache de embeddings nao funcional
-- `query_embedding_cache` esta vazio apesar do codigo de leitura/escrita existir em `neural-search` e `gerar-documento`
-- Investigar se o upsert esta falhando silenciosamente (provavelmente problema de tipo — embedding como string vs vector)
+- **Trocar paralelo → cascata**: F1 → F2 → F3 → F4 em série
+- **Fonte glotal com harmônicos reais**: Usar os 10 harmônicos do `VOICE_DNA.harmonicProfile` para construir o pulso, em vez do Rosenberg C simplificado
+- **Aumentar ganho do F1/F2**: São os formantes que definem identidade da vogal
+- **Reduzir pre-emphasis**: De 0.4 para 0.15 (menos agressivo)
+- **Adicionar anti-zeroing nasal**: Zeros nasais em ~500Hz para nasais reais
 
-### 5. Deprecar `knowledge_embeddings` e `match_knowledge()`
-- Tabela vazia, funcao RPC orfao
-- Criar migration para dropar ambos
+### 2. `phonemes.ts` — Aumentar durações
 
----
+- Vogais orais: +40% duração (ex: 'a' de 110→155ms, 'i' de 80→115ms)  
+- Vogais nasais: +30%
+- Plosivas: manter curtas (realista)
+- Fricativas: +20%
+- Pausas: manter
 
-## Detalhes Tecnicos
+### 3. Verificação
 
-### Fallback HuggingFace (generate-embeddings/index.ts)
-```text
-Gemini keys (7x) → falham todas → HuggingFace Inference API
-  POST https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2
-  Headers: Authorization: Bearer $HUGGINGFACE_API_KEY
-  Body: { inputs: "text" }
-  Response: float[384] → zero-pad to float[768]
-```
+- Gerar WAV de teste com frase "Olá, eu sou o Orion" e validar espectrograma
+- Comparar com sample Iapetus-11 enviado
 
-### Arquivos modificados
-1. `supabase/functions/generate-embeddings/index.ts` — adicionar `generateEmbeddingHF()` como fallback final
-2. `supabase/functions/neural-search/index.ts` — adicionar fallback HF na funcao `generateEmbedding()`
-3. `supabase/functions/ai-orchestrator/index.ts` — adicionar fallback HF
-4. `supabase/functions/gerar-documento/index.ts` — adicionar fallback HF
-5. `supabase/functions/neural-training/index.ts` — adicionar fallback HF
-6. `supabase/functions/orion-codegen/index.ts` — adicionar fallback HF
-7. `supabase/functions/kb-ingest/index.ts` — corrigir CORS headers
-8. Migration SQL: DROP `knowledge_embeddings` table + DROP `match_knowledge()` function
-9. Re-deploy all + re-trigger embeddings para os 2 pendentes
+## Resultado Esperado
+
+Vogais distinguíveis entre si (a/e/i/o/u), consoantes audíveis, ritmo natural de PT-BR. Ainda será voz sintética, mas **compreensível**.
 
