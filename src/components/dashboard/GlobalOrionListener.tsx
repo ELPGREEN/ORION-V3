@@ -52,6 +52,7 @@ export function GlobalOrionListener() {
   const { isPremium, loading: planLoading } = useUserPlan();
   const [wakeWordActive, setWakeWordActive] = useState(false);
   const [orionOpen, setOrionOpen] = useState(false);
+  const [booting, setBooting] = useState(false);
   const [initialCommand, setInitialCommand] = useState<string>("");
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const [permissionsGranted, setPermissionsGranted] = useState(() => {
