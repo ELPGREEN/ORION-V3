@@ -279,21 +279,6 @@ export function useOrionVoiceClone() {
     if (!clonedVoiceId) return;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-
-      await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orion-voice-clone`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ voiceId: clonedVoiceId }),
-        }
-      );
-
       // Clean up all samples from Storage and DB
       if (user?.id) {
         const { data: dbSamples } = await supabase
@@ -313,10 +298,10 @@ export function useOrionVoiceClone() {
 
       await updateConfig({ orion_voice_id: null } as any);
       setSamples([]);
-      toast.success("Voz clonada removida");
+      toast.success("Perfil vocal removido");
     } catch (err) {
       console.error("Delete voice error:", err);
-      toast.error("Erro ao remover voz");
+      toast.error("Erro ao remover perfil vocal");
     }
   }, [clonedVoiceId, updateConfig, user?.id]);
 
