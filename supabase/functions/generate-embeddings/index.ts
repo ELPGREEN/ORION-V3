@@ -120,80 +120,7 @@ async function generateEmbeddingGemini(text: string, apiKey: string): Promise<nu
   throw new Error("All Gemini embedding models failed");
 }
 
-async function generateEmbeddingHuggingFace(text: string, apiKey: string): Promise<number[]> {
-  const truncated = text.slice(0, 8000);
-  const models = [
-    "BAAI/bge-small-en-v1.5",
-    "sentence-transformers/all-MiniLM-L6-v2",
-  ];
-
-  for (const model of models) {
-    try {
-      const response = await fetch(
-        `https://router.huggingface.co/hf-inference/models/${model}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            inputs: truncated,
-            options: { wait_for_model: true },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.warn(`HF ${model} failed (${response.status}): ${errText.slice(0, 100)}`);
-        continue;
-      }
-
-      const data = await response.json();
-      // HF returns array of floats directly or nested array
-      const emb = Array.isArray(data?.[0]) ? data[0] : data;
-      if (emb && emb.length > 0) {
-        // Pad or truncate to 768
-        if (emb.length >= 768) return emb.slice(0, 768);
-        return [...emb, ...new Array(768 - emb.length).fill(0)];
-      }
-    } catch (e) {
-      console.warn(`HF ${model} exception:`, e.message);
-      continue;
-    }
-  }
-
-  throw new Error("All HuggingFace embedding models failed");
-}
-
-async function generateEmbeddingMistral(text: string, apiKey: string): Promise<number[]> {
-  const truncated = text.slice(0, 8000);
-  const response = await fetch("https://api.mistral.ai/v1/embeddings", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "mistral-embed",
-      input: [truncated],
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Mistral embedding error ${response.status}: ${err}`);
-  }
-
-  const data = await response.json();
-  const emb = data?.data?.[0]?.embedding;
-  if (!emb) throw new Error("No embedding from Mistral");
-  
-  // Mistral returns 1024-dim, truncate to 768
-  return emb.slice(0, 768);
-}
-
+// generateEmbedding — fallback chain (OpenAI → Gemini only)
 async function generateEmbedding(
   text: string,
   providers: Array<{ name: string; apiKey: string; type: string }>
@@ -203,11 +130,19 @@ async function generateEmbedding(
       let embedding: number[];
       if (provider.type === "gemini") {
         embedding = await generateEmbeddingGemini(text, provider.apiKey);
-      } else if (provider.type === "mistral") {
-        embedding = await generateEmbeddingMistral(text, provider.apiKey);
-      } else if (provider.type === "huggingface") {
-        embedding = await generateEmbeddingHuggingFace(text, provider.apiKey);
       } else {
+        embedding = await generateEmbeddingOpenAI(text, provider.apiKey);
+      }
+      if (embedding.length > 0) {
+        return { embedding, provider: provider.name };
+      }
+    } catch (e) {
+      console.warn(`Provider ${provider.name} failed:`, e.message);
+      continue;
+    }
+  }
+  throw new Error("All embedding providers failed");
+}
         embedding = await generateEmbeddingOpenAI(text, provider.apiKey);
       }
       if (embedding.length > 0) {
