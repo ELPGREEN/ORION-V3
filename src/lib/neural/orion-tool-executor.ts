@@ -164,6 +164,17 @@ const extractUF = (q: string) => {
 };
 
 const TOOLS: OrionTool[] = [
+  // ═══ PROPOSAL GENERATION ═══
+  {
+    name: "generate_proposal",
+    regex: /cri(?:ar?|e)\s+(?:uma?\s+)?proposta|ger(?:ar?|e)\s+(?:uma?\s+)?proposta|proposta.*invest|fa(?:zer?|ça)\s+(?:uma?\s+)?proposta/i,
+    extract: () => ({}),
+    call: async () => {
+      const { buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
+      return { proposal: buildProposalTemplate() };
+    },
+    format: (r: any) => r.proposal || "Não foi possível gerar a proposta no momento.",
+  },
   // ═══ HELP / CAPABILITIES ═══
   {
     name: "orion_help",

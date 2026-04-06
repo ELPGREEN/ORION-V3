@@ -304,6 +304,7 @@ export * from "./orion-defense-system";
 export * from "./orion-network-registry";
 export * from "./orion-protocol-registry";
 export * from "./orion-nav-map";
+export * from "./orion-knowledge-base";
 export * from "./orion-journal";
 export * from "./orion-tracing";
 export * from "./orion-voice-evolution";
