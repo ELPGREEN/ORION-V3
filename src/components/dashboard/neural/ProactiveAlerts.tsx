@@ -5,7 +5,8 @@ import { AlertTriangle, Bell, CheckCircle2, Clock, TrendingUp, Shield, Brain, X,
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
+import { speakWithPiper } from "@/lib/tts/piperTTS";
 import { toast } from "sonner";
 
 // ═══════════════════════════════════════════════════════════
@@ -33,7 +34,12 @@ export function ProactiveAlerts() {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
-  const { speak } = useVoiceInput({ lang: "pt-BR" });
+  const speak = async (text: string) => {
+    if (isGeminiTTSAvailable()) {
+      try { const r = await speakWithGeminiTTS(text, "Charon"); if (r.played) return; } catch {}
+    }
+    try { await speakWithPiper(text); } catch {}
+  };
 
   useEffect(() => {
     if (user?.id) {

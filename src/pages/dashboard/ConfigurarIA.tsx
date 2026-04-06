@@ -5,6 +5,8 @@ import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
 import { OrionVoiceStudio } from "@/components/dashboard/neural/OrionVoiceStudio";
 import { useNeuralConfig, VisionRule, CustomCommand } from "@/hooks/useNeuralConfig";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
+import { speakWithPiper } from "@/lib/tts/piperTTS";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,10 +144,18 @@ export default function ConfigurarIA() {
     personality_prompt: "",
   });
 
-  const { isListening, isSupported, isSpeaking, toggleListening, speak, stopSpeaking } = useVoiceInput({
+  const { isListening, isSupported, isSpeaking, toggleListening, stopSpeaking } = useVoiceInput({
     lang: "pt-BR",
     onResult: handleVoiceCommand,
   });
+
+  // High-quality speak (Gemini TTS, not robotic SpeechSynthesis)
+  const speak = async (text: string) => {
+    if (isGeminiTTSAvailable()) {
+      try { const r = await speakWithGeminiTTS(text, "Charon"); if (r.played) return; } catch {}
+    }
+    try { await speakWithPiper(text); } catch {}
+  };
 
   // Load config into local state
   useEffect(() => {

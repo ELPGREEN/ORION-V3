@@ -10,22 +10,23 @@ import { useUserPlan } from "@/hooks/useUserPlan";
 import { OrionAccessGate } from "@/components/OrionAccessGate";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 
-/** Speak text using the unified Orion voice */
-function orionSpeak(text: string): Promise<void> {
-  return new Promise((resolve) => {
-    if (!window.speechSynthesis) { resolve(); return; }
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "pt-BR";
-    u.rate = ORION_VOICE_PARAMS.rate;
-    u.pitch = ORION_VOICE_PARAMS.pitch;
-    u.volume = ORION_VOICE_PARAMS.volume;
-    const voice = getOrionVoice();
-    if (voice) u.voice = voice;
-    u.onend = () => resolve();
-    u.onerror = () => resolve();
-    window.speechSynthesis.speak(u);
-  });
+/** Speak text using high-quality Gemini TTS (not robotic SpeechSynthesis) */
+async function orionSpeak(text: string): Promise<void> {
+  try {
+    const { speakWithGeminiTTS, isGeminiTTSAvailable } = await import("@/lib/tts/geminiTTS");
+    if (isGeminiTTSAvailable()) {
+      const result = await speakWithGeminiTTS(text, "Charon");
+      if (result.played) return;
+    }
+  } catch {}
+
+  try {
+    const { speakWithPiper } = await import("@/lib/tts/piperTTS");
+    const played = await speakWithPiper(text);
+    if (played) return;
+  } catch {}
+
+  // Skip robotic SpeechSynthesis — prefer silence over bad quality
 }
 // ═══════════════════════════════════════════════════════════
 // ⚡ Audição Relâmpago — Lightning Hearing Engine

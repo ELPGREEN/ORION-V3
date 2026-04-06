@@ -5,10 +5,14 @@ import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageToLocale } from "@/i18n";
+import { cleanTextForSpeech } from "@/hooks/useNeuralVoice";
+import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
+import { speakWithPiper } from "@/lib/tts/piperTTS";
 
 // ═══════════════════════════════════════════════════════════
 // R.A.G ELP Voice Button — Conversação Contínua Hands-Free
-// Mic → Auto-send → IA responde → TTS fala → Mic reativa
+// Mic → Auto-send → IA responde → Gemini TTS fala → Mic reativa
+// Google Translate / SpeechSynthesis removidos (voz robótica)
 // ═══════════════════════════════════════════════════════════
 
 type VoiceStatus = "idle" | "listening" | "processing" | "speaking";
@@ -21,18 +25,46 @@ interface VoiceInputButtonProps {
   className?: string;
 }
 
+/**
+ * High-quality TTS speak using the same cascade as useNeuralVoice:
+ * Gemini TTS → Piper WASM (no robotic SpeechSynthesis)
+ */
+async function speakHighQuality(text: string, abortSignal?: AbortSignal): Promise<void> {
+  const clean = cleanTextForSpeech(text).slice(0, 1500);
+  if (!clean) return;
+
+  // Try Gemini TTS first
+  if (isGeminiTTSAvailable()) {
+    try {
+      const result = await speakWithGeminiTTS(clean, "Charon", abortSignal);
+      if (result.played) return;
+    } catch {}
+  }
+
+  // Fallback: Piper WASM (still not robotic)
+  try {
+    const played = await speakWithPiper(clean);
+    if (played) return;
+  } catch {}
+
+  // Last resort: do nothing rather than use robotic SpeechSynthesis
+  console.warn("[VoiceButton] No high-quality TTS available, skipping speech");
+}
+
 export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProcessing, className }: VoiceInputButtonProps) {
   const [conversationMode, setConversationMode] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>("idle");
+  const [isSpeakingHQ, setIsSpeakingHQ] = useState(false);
   const lastSpokenTextRef = useRef("");
   const conversationModeRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
   const { language } = useLanguage();
   const voiceLang = languageToLocale[language] || "pt-BR";
 
   // Keep ref in sync
   useEffect(() => { conversationModeRef.current = conversationMode; }, [conversationMode]);
 
-  const { isListening, isSupported, isSpeaking, toggleListening, startListening, stopListening, speak, stopSpeaking } = useVoiceInput({
+  const { isListening, isSupported, toggleListening, startListening, stopListening } = useVoiceInput({
     lang: voiceLang,
     onResult: (text) => {
       onTranscript(text);
@@ -44,7 +76,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
 
   // Update visual status
   useEffect(() => {
-    if (isSpeaking) {
+    if (isSpeakingHQ) {
       setVoiceStatus("speaking");
     } else if (isProcessing) {
       setVoiceStatus("processing");
@@ -53,47 +85,55 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
     } else {
       setVoiceStatus("idle");
     }
-  }, [isListening, isProcessing, isSpeaking]);
+  }, [isListening, isProcessing, isSpeakingHQ]);
 
-  // Auto-speak new assistant responses in conversation mode, then restart mic
+  // High-quality speak wrapper
+  const doSpeak = useCallback(async (text: string, onComplete?: () => void) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setIsSpeakingHQ(true);
+    try {
+      await speakHighQuality(text, controller.signal);
+    } finally {
+      setIsSpeakingHQ(false);
+      onComplete?.();
+    }
+  }, []);
+
+  const stopSpeakingHQ = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    window.speechSynthesis?.cancel();
+    setIsSpeakingHQ(false);
+  }, []);
+
+  // Auto-speak new assistant responses in conversation mode
   useEffect(() => {
     if (!conversationMode || !speakText || speakText === lastSpokenTextRef.current) return;
-    if (isProcessing) return; // Wait until processing is done
+    if (isProcessing) return;
     
     lastSpokenTextRef.current = speakText;
 
-    // Clean markdown for speech
-    const clean = speakText
-      .replace(/[#*_`~\[\]()]/g, "")
-      .replace(/\n+/g, ". ")
-      .slice(0, 1500);
-
-    speak(clean, {
-      onComplete: () => {
-        // Auto-restart mic after TTS finishes
-        if (conversationModeRef.current) {
-          setTimeout(() => {
-            startListening();
-          }, 400);
-        }
-      },
+    doSpeak(speakText, () => {
+      if (conversationModeRef.current) {
+        setTimeout(() => startListening(), 400);
+      }
     });
-  }, [speakText, conversationMode, isProcessing, speak, startListening]);
+  }, [speakText, conversationMode, isProcessing, doSpeak, startListening]);
 
   // Toggle conversation mode
   const handleToggleConversation = useCallback(() => {
     if (conversationMode) {
-      // Turning OFF
       setConversationMode(false);
-      stopSpeaking();
+      stopSpeakingHQ();
       stopListening();
       setVoiceStatus("idle");
     } else {
-      // Turning ON — start listening immediately
       setConversationMode(true);
       startListening();
     }
-  }, [conversationMode, startListening, stopListening, stopSpeaking]);
+  }, [conversationMode, startListening, stopListening, stopSpeakingHQ]);
 
   if (!isSupported) return null;
 
@@ -166,23 +206,19 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
           variant="ghost"
           size="sm"
           onClick={() => {
-            if (isSpeaking) {
-              stopSpeaking();
+            if (isSpeakingHQ) {
+              stopSpeakingHQ();
             } else if (speakText) {
-              const clean = speakText
-                .replace(/[#*_`~\[\]()]/g, "")
-                .replace(/\n+/g, ". ")
-                .slice(0, 1000);
-              speak(clean);
+              doSpeak(speakText);
             }
           }}
           className={cn(
             "h-8 w-8 p-0 flex-shrink-0",
-            isSpeaking ? "text-cyan-400 bg-cyan-400/10" : "text-muted-foreground hover:text-foreground"
+            isSpeakingHQ ? "text-cyan-400 bg-cyan-400/10" : "text-muted-foreground hover:text-foreground"
           )}
-          title={isSpeaking ? "Parar fala" : "Ouvir resposta"}
+          title={isSpeakingHQ ? "Parar fala" : "Ouvir resposta"}
         >
-          {isSpeaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          {isSpeakingHQ ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </Button>
       )}
 
