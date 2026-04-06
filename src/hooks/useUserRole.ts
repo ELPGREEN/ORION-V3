@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "cliente" | "advogado" | "produtor" | "afiliado";
+export type AppRole = "cliente" | "advogado" | "produtor" | "afiliado" | "nomade";
 
 // In-memory cache to avoid redundant DB queries on every navigation
 const roleCache = new Map<string, AppRole>();
@@ -55,9 +55,12 @@ export function useUserRole() {
         const hasAdmin = data.some((r: any) => r.role === "admin");
         const hasProdutor = data.some((r: any) => r.role === "produtor");
         const hasAfiliado = data.some((r: any) => r.role === "afiliado");
+        const hasNomade = data.some((r: any) => r.role === "nomade");
 
         if (hasAdvogado || hasAdmin) {
           resolvedRole = "advogado";
+        } else if (hasNomade) {
+          resolvedRole = "nomade";
         } else if (hasProdutor) {
           resolvedRole = "produtor";
         } else if (hasAfiliado) {
@@ -79,9 +82,10 @@ export function useUserRole() {
   const isCliente = role === "cliente";
   const isProdutor = role === "produtor";
   const isAfiliado = role === "afiliado";
+  const isNomade = role === "nomade";
 
   // Role updates are managed server-side only (via service_role).
   // No client-side updateRole to prevent privilege escalation.
 
-  return { role, loading, isAdvogado, isCliente, isProdutor, isAfiliado };
+  return { role, loading, isAdvogado, isCliente, isProdutor, isAfiliado, isNomade };
 }
