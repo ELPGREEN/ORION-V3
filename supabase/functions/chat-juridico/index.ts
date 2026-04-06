@@ -493,6 +493,21 @@ async function callLLM(
       const ad = await resp.json();
       return ad?.content?.[0]?.text || "";
     }
+    case "deepseek": {
+      const resp = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${llm.apiKey}` },
+        body: JSON.stringify({
+          model: llm.model,
+          messages: [{ role: "system", content: systemPrompt }, ...messages],
+          temperature: 0.3,
+          max_tokens: 4096,
+        }),
+      });
+      if (!resp.ok) throw new Error(`DeepSeek error: ${resp.status}`);
+      const dd = await resp.json();
+      return dd?.choices?.[0]?.message?.content || "";
+    }
     default:
       throw new Error(`Unknown provider: ${llm.provider}`);
   }
@@ -505,11 +520,14 @@ async function callLLMStream(
   systemPrompt: string
 ): Promise<ReadableStream<Uint8Array> | null> {
   // Only OpenAI-compatible APIs support streaming easily (groq, openai)
-  if (llm.provider !== "groq" && llm.provider !== "openai") return null;
+  if (llm.provider !== "groq" && llm.provider !== "openai" && llm.provider !== "deepseek") return null;
 
-  const url = llm.provider === "groq"
-    ? "https://api.groq.com/openai/v1/chat/completions"
-    : "https://api.openai.com/v1/chat/completions";
+  const urlMap: Record<string, string> = {
+    groq: "https://api.groq.com/openai/v1/chat/completions",
+    openai: "https://api.openai.com/v1/chat/completions",
+    deepseek: "https://api.deepseek.com/chat/completions",
+  };
+  const url = urlMap[llm.provider];
 
   const response = await fetch(url, {
     method: "POST",
