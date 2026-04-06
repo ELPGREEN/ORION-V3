@@ -1,57 +1,107 @@
 
 
-# Plano: Enriquecer o Conhecimento do Orion
+# ORION — Plano de Integração Real do Software com a Linha Robótica
 
-## Resumo
+## Problema Atual
 
-O Orion cai num prompt genérico para qualquer pergunta fora de identidade/capacidades/Jarvis. Vamos criar um módulo de conhecimento consolidado e expandir a detecção de intenção nos dois pontos do `orion-ai-client.ts` (linhas ~460 e ~636).
+O sistema tem **dois bridges desconectados**:
 
-## Arquivos
+1. **`ros2-protocol-bridge.ts`** (antigo) — simulação via MQTT/iotBridge. É o que o `RobotControlPanel` usa hoje.
+2. **`rosbridge-client.ts`** (novo) — WebSocket real para `rosbridge_suite`. Só os painéis novos (WebRTC, Telemetry) usam.
 
-| Arquivo | Ação |
-|---|---|
-| `src/lib/neural/orion-knowledge-base.ts` | **Criar** |
-| `src/lib/neural/orion-ai-client.ts` | Editar linhas ~460-474 e ~636-650 |
-| `src/lib/neural/orion-tool-executor.ts` | Adicionar tool `generate_proposal` |
-| `src/lib/neural/index.ts` | Adicionar export |
+**Resultado:** O painel principal do robô opera em simulação enquanto a infraestrutura Docker real já existe. Precisamos unificar tudo no client real.
 
-## Detalhes
+---
 
-### 1. Novo `orion-knowledge-base.ts`
+## Plano de Implementação
 
-Quatro funções exportadas:
+### Etapa 1 — Unificar bridges (migrar para o real)
 
-- **`buildInvestorContext()`** — Texto compacto com: mercado LegalTech US$35.6B, margem SaaS 80%+, 17+ ferramentas, modelo de receita (assinaturas + marketplace + afiliados), timeline de evolução, diferenciais competitivos. Dados extraídos estaticamente do que existe em `InvestorTools.tsx`.
+- Criar **`src/lib/robotics/unified-robot-client.ts`** — camada única que:
+  - Usa `rosbridge-client.ts` (WebSocket real) como transporte primário
+  - Mantém fallback MQTT via `iot-device-bridge` quando ROSBridge não está disponível
+  - Exporta a mesma API do bridge antigo (`RobotState`, `sendCmdVel`, etc.) para não quebrar componentes existentes
+- Criar **`src/hooks/useRobotConnection.ts`** — hook unificado com:
+  - Configuração de IP/porta do robô (persistida em localStorage)
+  - Estado de conexão global (Context API)
+  - Auto-discovery de serviços disponíveis (rosbridge, webrtc, mqtt)
 
-- **`buildHelpCenterContext()`** — Top 15 comandos de voz formatados ("Diga 'Orion, abra documentos' para ir a Meus Documentos"), seções da Central de Ajuda resumidas.
+### Etapa 2 — Painel de Conexão Real
 
-- **`buildNavigationContext()`** — Importa `NAV_MAP` de `orion-nav-map.ts` e formata como lista: "Documentos → /dashboard/documentos", "CRM → /dashboard/crm", etc. para o Orion orientar verbalmente.
+- Criar **`src/components/dashboard/neural/RobotConnectionManager.tsx`**:
+  - Formulário: IP do robô, porta ROSBridge (9090), porta WebRTC (8443), porta MQTT (1883)
+  - Botão "Testar Conexão" — tenta WS handshake e mostra latência
+  - Indicador visual de cada serviço (verde/vermelho): ROSBridge, WebRTC, MQTT, Foxglove
+  - Salva perfis de robô (ex: "AGV-01 Fábrica", "Braço-02 Linha Pneus")
 
-- **`buildProposalTemplate()`** — Template de proposta de investimento com placeholders preenchidos pelos dados da ELP (Orion Systems, métricas, modelo SaaS, timeline, diferenciais).
+### Etapa 3 — Migrar RobotControlPanel para bridge real
 
-- **`buildBaseContext()`** — Contexto mínimo sempre presente: criador (Ericson Pires, CEO ELP Green), data de concepção (2024), top 10 comandos, orientação para usar módulos especializados quando perguntado.
+- Substituir import de `ros2-protocol-bridge` por `unified-robot-client`
+- Joystick → envia `cmd_vel` real via WebSocket
+- Botões de navegação → `sendNav2Goal` real
+- Emergency stop → chamada de service real
+- Telemetria → subscription real em `/battery_state`, `/odom`, `/imu/data`
 
-### 2. Expandir detecção em `orion-ai-client.ts`
+### Etapa 4 — Integrar WebRTC com signaling real
 
-Nos dois blocos de context-building (linhas ~460 e ~636), após os 3 checks existentes e antes do fallback genérico, adicionar:
+- Atualizar `WebRTCCameraViewer.tsx`:
+  - Usar o IP configurado no Connection Manager para montar URL do signaling server (`http://{robotIP}:8443/offer`)
+  - Adicionar suporte a TURN server (para acesso remoto via VPN)
+  - Indicador de latência do stream em tempo real
 
-```typescript
-const isInvestorQuestion = /investidor|investimento|mercado|saas|modelo.de.neg[oó]cio|receita|margem|oportunidade|pitch/i.test(question);
-const isProjectQuestion = /projeto|plataforma|orion.*sistema|ferramenta|evolu[çc][aã]o|timeline|desenvolvimento/i.test(question);
-const isHelpQuestion = /comando|ajuda|como.faz|onde.fica|central|instru[çc][aã]o|tutorial|orienta[çc][aã]o/i.test(question);
-const isProposalQuestion = /proposta|proposal|apresenta[çc][aã]o|pitch.*invest|investir/i.test(question);
-const isNavigationGuide = /onde\s+(fica|est[aá]|acess)|como\s+(chego|acesso|fa[çc]o\s+para)|me\s+lev|navegar|ir\s+(para|pra)|encontrar|acessar/i.test(question);
+### Etapa 5 — Pipeline de Inspeção YOLOv8 conectado
+
+- Atualizar `YOLOv8InspectionPanel.tsx`:
+  - Capturar frame do stream WebRTC real (não imagem de teste)
+  - Enviar para Edge Function que chama HuggingFace Inference API
+  - Publicar resultado como `/tire_line/defect_alert` via ROSBridge
+  - Mostrar bounding boxes sobrepostos no vídeo
+
+### Etapa 6 — Node-RED e Grafana integrados
+
+- `NodeREDPanel.tsx` → usar IP do robô para iframe (`http://{robotIP}:1880`)
+- Criar **`GrafanaDashboardPanel.tsx`** → embed Grafana (`http://{robotIP}:3001`) com dashboards de OEE pré-provisionados
+- Ambos usando o IP do Connection Manager
+
+---
+
+## Arquitetura Final Unificada
+
+```text
+┌─ ORION Frontend ──────────────────────────────────────┐
+│                                                        │
+│  RobotConnectionManager (IP/porta config)              │
+│         │                                              │
+│  unified-robot-client.ts                               │
+│    ├── rosbridge-client.ts ──── WS ──→ :9090           │
+│    ├── WebRTC negotiation ──── HTTP ──→ :8443           │
+│    └── MQTT.js (fallback) ──── WS ──→ :8083            │
+│                                                        │
+│  Panels: Control │ Telemetry │ Camera │ YOLOv8 │ Tire  │
+│          Node-RED │ Grafana │ Fleet │ Digital Twin      │
+└────────────────────────────────────────────────────────┘
+                    │
+          LAN / VPN │
+                    ▼
+┌─ Robot Edge (Docker) ─────────────────────────────────┐
+│  rosbridge:9090 │ webrtc:8443 │ mqtt:1883             │
+│  influxdb:8086  │ grafana:3001 │ nodered:1880          │
+│  ROS2 DDS ← Nav2 │ YOLOv8 │ tire_line_services        │
+└────────────────────────────────────────────────────────┘
 ```
 
-Cada um injeta o contexto correspondente do knowledge-base. O fallback genérico passa a usar `buildBaseContext()` em vez do texto hardcoded.
+## Arquivos a Criar/Editar
 
-### 3. Tool `generate_proposal` no `orion-tool-executor.ts`
-
-Nova entrada no array de tools com:
-- **Regex**: `/cri(?:ar?|e)\s+(?:uma?\s+)?proposta|ger(?:ar?|e)\s+(?:uma?\s+)?proposta|proposta.*invest/i`
-- **Ação**: Chama `buildProposalTemplate()` do knowledge-base, retorna texto formatado com visão geral, métricas, modelo de receita, timeline e call-to-action.
-
-### 4. Export em `index.ts`
-
-Adicionar `export * from "./orion-knowledge-base";` na seção "Orion Core Systems".
+| Ação | Arquivo |
+|------|---------|
+| Criar | `src/lib/robotics/unified-robot-client.ts` |
+| Criar | `src/hooks/useRobotConnection.ts` |
+| Criar | `src/contexts/RobotConnectionContext.tsx` |
+| Criar | `src/components/dashboard/neural/RobotConnectionManager.tsx` |
+| Criar | `src/components/dashboard/neural/GrafanaDashboardPanel.tsx` |
+| Editar | `src/components/dashboard/neural/RobotControlPanel.tsx` — migrar para unified client |
+| Editar | `src/components/dashboard/neural/WebRTCCameraViewer.tsx` — usar IP dinâmico |
+| Editar | `src/components/dashboard/neural/YOLOv8InspectionPanel.tsx` — captura real |
+| Editar | `src/components/dashboard/neural/NodeREDPanel.tsx` — IP dinâmico |
+| Editar | `src/components/dashboard/neural/TireProductionPanel.tsx` — dados reais |
 
