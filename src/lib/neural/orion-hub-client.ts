@@ -123,12 +123,12 @@ export async function speakJarvis(text: string, speed = 1.0): Promise<TTSResult>
     audioUrl = URL.createObjectURL(audioBlob);
   } else if (typeof resultAny === "string" && resultAny.startsWith("http")) {
     // File URL from Gradio
-    audioUrl = result;
-    const resp = await fetch(result);
+    audioUrl = resultAny as string;
+    const resp = await fetch(audioUrl);
     audioBlob = await resp.blob();
   } else {
     // Numpy tuple format: [sampleRate, audioArray]
-    const [sampleRate, audioArray] = result as unknown as [number, number[]];
+    const [sampleRate, audioArray] = resultAny as [number, number[]];
     audioBlob = int16ArrayToWavBlob(new Int16Array(audioArray), sampleRate);
     audioUrl = URL.createObjectURL(audioBlob);
   }
