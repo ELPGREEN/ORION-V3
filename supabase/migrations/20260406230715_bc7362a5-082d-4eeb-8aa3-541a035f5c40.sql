@@ -1,0 +1,1 @@
+ALTER TABLE public.voice_style_preferences ADD COLUMN IF NOT EXISTS language text DEFAULT 'pt-BR';

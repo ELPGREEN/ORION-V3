@@ -7527,6 +7527,7 @@ export type Database = {
           created_at: string | null
           extra_instructions: string[] | null
           id: string
+          language: string | null
           speech_rate: string | null
           style_prompt: string
           tone: string | null
@@ -7539,6 +7540,7 @@ export type Database = {
           created_at?: string | null
           extra_instructions?: string[] | null
           id?: string
+          language?: string | null
           speech_rate?: string | null
           style_prompt?: string
           tone?: string | null
@@ -7551,6 +7553,7 @@ export type Database = {
           created_at?: string | null
           extra_instructions?: string[] | null
           id?: string
+          language?: string | null
           speech_rate?: string | null
           style_prompt?: string
           tone?: string | null

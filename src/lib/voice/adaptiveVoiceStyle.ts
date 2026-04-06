@@ -374,6 +374,7 @@ export async function loadVoicePrefs(): Promise<VoiceStylePrefs> {
       speech_rate: data.speech_rate || DEFAULT_PREFS.speech_rate,
       accent: data.accent || DEFAULT_PREFS.accent,
       tone: data.tone || DEFAULT_PREFS.tone,
+      language: (data as any).language || DEFAULT_PREFS.language,
       extra_instructions: data.extra_instructions || [],
     };
     cachedUserId = user.id;
