@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Store, Package, ShoppingBag, DollarSign, Share2, Brain,
   Settings, Bell, LogOut, Globe, Crown, FileText, BarChart3,
-  MessageSquare, CreditCard,
+  MessageSquare, CreditCard, Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import logoElp from "@/assets/logo-elp.webp";
@@ -13,6 +13,7 @@ const nomadeItems = [
   { id: "marketplace", label: "Marketplace", icon: ShoppingBag, path: "/dashboard/marketplace" },
   { id: "afiliados", label: "Afiliados", icon: Share2, path: "/dashboard/afiliados" },
   { id: "meu-site", label: "Minha Loja", icon: Globe, path: "/dashboard/escritorio" },
+  { id: "crm", label: "CRM / Contatos", icon: Users, path: "/dashboard/crm" },
   { id: "documentos", label: "Documentos", icon: FileText, path: "/dashboard/documentos" },
   { id: "docs-internacionais", label: "Docs Internacionais", icon: Globe, path: "/dashboard/documentos-internacionais" },
   { id: "pagamentos", label: "Pagamentos", icon: CreditCard, path: "/dashboard/pagamentos" },
