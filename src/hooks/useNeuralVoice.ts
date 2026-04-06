@@ -318,108 +318,25 @@ export function useNeuralVoice(
   // speakFast defined after speak below
 
   /**
-   * ═══ Main TTS — Gemini TTS Primário (100% FREE, ~2s latência) ═══
+   * ═══ Orion Voice — EM CONSTRUÇÃO ═══
    * 
-   * PRIMARY: Gemini TTS (Iapetus voice — rápido, natural, gratuito)
-   * FALLBACK 1: Orion Formant DNA (100% offline)
-   * FALLBACK 2: Piper WASM
-   * FALLBACK 3: Web Speech API
+   * Voz desativada. Orion apenas ouve e aprende comandos de estilo/idioma.
+   * Quando a voz estiver pronta, reativar com Gemini TTS (Charon).
+   * Config preservada: Gemini TTS + Charon + multi-idioma.
    */
   const speak = useCallback(async (text: string) => {
     if (!ttsRef.current || typeof window === "undefined") return;
-    // Cancel ALL ongoing speech
-    try { speechSynthesis.cancel(); } catch {}
-    if (activeAudioRef.current) {
-      try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
-      activeAudioRef.current = null;
-    }
-    speakingRef.current = true;
-    updateAiResponding(true);
-    lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
-    lastSpokenAtRef.current = Date.now();
-    speechBufferRef.current = "";
-    if (speechDebounceRef.current) {
-      clearTimeout(speechDebounceRef.current);
-      speechDebounceRef.current = null;
-    }
-    clearRestartTimer();
-    try { recRef.current?.stop(); } catch {}
-
-    // Create abort controller for cascade cancellation
-    const cascadeAbort = new AbortController();
-    abortControllerRef.current = cascadeAbort;
-
-    const safetyTimer = setTimeout(() => {
-      if (speakingRef.current) {
-        cascadeAbort.abort();
-        try { speechSynthesis.cancel(); } catch {}
-        if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-        if (activeAudioRef.current) {
-          try { activeAudioRef.current.pause(); } catch {}
-          activeAudioRef.current = null;
-        }
-        speakingRef.current = false;
-        updateAiResponding(false);
-        resumeSTT();
-      }
-    }, 60000);
-
-    const cleanText = cleanTextForSpeech(text);
-    let played = false;
-
-    // ── Feed AI response to voice evolution engine ──
-    feedAIResponse(text);
-
-    // ── Load adaptive voice preferences ──
-    const voicePrefs = getCachedVoicePrefs();
-
-    // ── PRIMARY: Gemini TTS (fast ~2s, neural quality, FREE) ──
-    if (!played && !cascadeAbort.signal.aborted) {
-      try {
-        const gemResult = await speakWithGeminiTTS(
-          cleanText,
-          voicePrefs.voice_name || "Charon",
-          cascadeAbort.signal,
-          voicePrefs.style_prompt,
-          voicePrefs.language,
-        );
-        if (gemResult.played) {
-          played = true;
-          if (gemResult.audio) activeAudioRef.current = gemResult.audio;
-          console.log(`[Voice] ✅ Gemini TTS (${voicePrefs.voice_name}, ${voicePrefs.accent})`);
-        }
-      } catch (err) {
-        if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Gemini TTS failed:", (err as Error)?.message);
-        }
-      }
-    }
-
-    // ── FALLBACK: Web Speech API (último recurso, só se Gemini falhar) ──
-    if (!played && !cascadeAbort.signal.aborted) {
-      try {
-        await browserSpeak(cleanText);
-        played = true;
-        console.log("[Voice] ✅ Web Speech fallback");
-      } catch {}
-    }
-
-    if (!played) {
-      console.warn("[Voice] Nenhum engine TTS disponível");
-    }
-
-    // ── Feed self-synthesis for evolution reinforcement ──
-    if (played) {
-      feedSelfSynthesis(cleanText);
-    }
     
-    clearTimeout(safetyTimer);
-    abortControllerRef.current = null;
-    activeAudioRef.current = null;
+    // Voice is disabled (under construction) — just log and skip
+    console.log("[Voice] 🚧 Voz em construção — resposta apenas em texto");
+    
+    // Still feed AI response to evolution engine for learning
+    feedAIResponse(text);
+    
+    // Don't speak, just update state
     speakingRef.current = false;
     updateAiResponding(false);
-    resumeSTT();
-  }, [config, clearRestartTimer, resumeSTT, updateAiResponding]);
+  }, [updateAiResponding]);
 
   /** speakFast: delegates to speak (no robotic SpeechSynthesis) */
   const speakFast = useCallback(async (text: string) => {
