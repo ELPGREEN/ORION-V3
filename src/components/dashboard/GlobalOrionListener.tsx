@@ -8,7 +8,25 @@ import { PlasmaCore } from "@/components/home/PlasmaCore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserPlan } from "@/hooks/useUserPlan";
 import { OrionAccessGate } from "@/components/OrionAccessGate";
+import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 
+/** Speak text using the unified Orion voice */
+function orionSpeak(text: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis) { resolve(); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "pt-BR";
+    u.rate = ORION_VOICE_PARAMS.rate;
+    u.pitch = ORION_VOICE_PARAMS.pitch;
+    u.volume = ORION_VOICE_PARAMS.volume;
+    const voice = getOrionVoice();
+    if (voice) u.voice = voice;
+    u.onend = () => resolve();
+    u.onerror = () => resolve();
+    window.speechSynthesis.speak(u);
+  });
+}
 // ═══════════════════════════════════════════════════════════
 // ⚡ Audição Relâmpago — Lightning Hearing Engine
 // Global Orion Listener — Alexa-style wake word + command capture
@@ -34,6 +52,7 @@ export function GlobalOrionListener() {
   const { isPremium, loading: planLoading } = useUserPlan();
   const [wakeWordActive, setWakeWordActive] = useState(false);
   const [orionOpen, setOrionOpen] = useState(false);
+  const [booting, setBooting] = useState(false);
   const [initialCommand, setInitialCommand] = useState<string>("");
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const [permissionsGranted, setPermissionsGranted] = useState(() => {
@@ -90,7 +109,7 @@ export function GlobalOrionListener() {
     setWakeWordActive(false);
   }, [clearRestartTimer]);
 
-  const activateWithCommand = useCallback((command: string) => {
+  const activateWithCommand = useCallback(async (command: string) => {
     if (cooldownRef.current) return;
     cooldownRef.current = true;
     wakeDetectedRef.current = false;
@@ -103,13 +122,6 @@ export function GlobalOrionListener() {
     }
 
     const cleanCmd = command.trim();
-    toast("🐒 Ativando sistema AquaMonkey...", { duration: 2000 });
-    setTimeout(() => {
-      toast.success("⚡ Bem-vindo ao Orion!", { duration: 3000 });
-    }, 1200);
-    if (cleanCmd.length > 2) {
-      console.log(`[OrionDashboard] command: "${cleanCmd}"`);
-    }
 
     try { wakeRecRef.current?.abort?.(); } catch {}
     try { wakeRecRef.current?.stop?.(); } catch {}
@@ -118,7 +130,20 @@ export function GlobalOrionListener() {
     wakeWordEnabledRef.current = false;
     setWakeWordActive(false);
     setInitialCommand(cleanCmd);
+
+    // ── Boot sequence: show plasma loading + speak "Iniciando sistema" ──
+    setBooting(true);
+    initVoicePicker();
+    await orionSpeak("Iniciando sistema");
+
+    // Wait for plasma animation (2.5s total boot time)
+    await new Promise(r => setTimeout(r, 2500));
+
+    // ── System ready: open panel + speak welcome ──
+    setBooting(false);
     setOrionOpen(true);
+    orionSpeak("Sistema ativado. Seja bem-vindo.");
+
     setTimeout(() => { cooldownRef.current = false; }, 1200);
   }, [clearRestartTimer]);
 
@@ -346,6 +371,42 @@ export function GlobalOrionListener() {
 
   return (
     <>
+      {/* ═══ Boot Screen — Plasma loading with "Iniciando sistema" ═══ */}
+      {booting && (
+        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-background/95 backdrop-blur-xl animate-fade-in">
+          <div className="relative w-32 h-32 mb-6">
+            <PlasmaCore className="w-full h-full" />
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: "radial-gradient(circle, hsl(var(--primary) / 0.3) 0%, transparent 70%)",
+                filter: "blur(20px)",
+                transform: "scale(2)",
+                animation: "orbBreath 1.5s ease-in-out infinite",
+              }}
+            />
+          </div>
+          <p className="text-sm font-mono tracking-[0.3em] text-primary/80 uppercase animate-pulse">
+            Iniciando Sistema
+          </p>
+          <div className="mt-4 w-48 h-1 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full"
+              style={{ animation: "bootProgress 2.5s ease-out forwards" }}
+            />
+          </div>
+          <style>{`
+            @keyframes bootProgress {
+              0% { width: 0%; }
+              30% { width: 40%; }
+              60% { width: 70%; }
+              90% { width: 95%; }
+              100% { width: 100%; }
+            }
+          `}</style>
+        </div>
+      )}
+
       {/* ═══ Permission Prompt ═══ */}
       {showPermissionPrompt && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
