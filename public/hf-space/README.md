@@ -51,7 +51,7 @@ Complete AI Agent Swarm with **3100+ agents** — PDF, Vision, **Object Detectio
 - `GET /finetune/methods` | `/models` | `/datasets` | `POST /finetune/configure` | `/estimate`
 - `GET /dataset/schemas` | `/formats` | `POST /dataset/configure` | `/validate` | `/convert` | `/deduplicate` | `/statistics`
 
-## Categories (3000+ agents)
+## Categories (3100+ agents)
 
 | Category | Agents | Key |
 |----------|--------|-----|
@@ -68,7 +68,7 @@ Complete AI Agent Swarm with **3100+ agents** — PDF, Vision, **Object Detectio
 | `speech_audio` | 90+ | TTS, ASR, voice clone |
 | `modeling_3d` | 40+ | TRELLIS, Hunyuan3D |
 | `benchmarking` | 30+ | Leaderboards |
-| `pdf` | 110+ | Layout, tables, legal |
+| `pdf` | **200+** | OCR(12), Layout(10), Tables(8), Parsing(11), Bibliography(7), Resume(6), Scientific(7), Legal(6), Conversion(8), Models(13) |
 
 ## Object Detection v7.2
 
