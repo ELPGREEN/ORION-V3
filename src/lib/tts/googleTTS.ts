@@ -2,7 +2,7 @@
  * Google Translate TTS — Free, unlimited PT-BR synthesis
  * Adapted from eac-ufsm/texto-para-voz (gTTS technique)
  * Uses Edge Function proxy to avoid CORS issues.
- * Tier 1.5 in Orion's voice cascade (between ElevenLabs and Piper).
+ * Legacy module — kept for compatibility but not used in main cascade.
  */
 
 let googleTTSDisabled = false;

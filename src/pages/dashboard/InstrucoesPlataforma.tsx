@@ -627,13 +627,14 @@ const allSections: Section[] = [
     links: [{ label: "Orion IA", path: "/consulta" }],
     steps: [
       "A evolução vocal acontece automaticamente a cada interação.",
-      "O sistema prioriza voz clonada via ElevenLabs quando configurada.",
+      "O sistema usa Gemini TTS (Charon) como voz primária, 100% gratuito.",
+      "Fish Speech Clone disponível como voz secundária personalizada.",
       "Fallback offline disponível via Piper TTS (WebAssembly).",
       "O perfil vocal sincroniza entre dispositivos via Supabase.",
       "O vocabulário é limitado a 5.000 palavras para otimização.",
     ],
     faq: [
-      { q: "Como configuro a voz clonada?", a: "Grave amostras de 3-5 segundos nas configurações de voz. O sistema usa ElevenLabs para clonar." },
+      { q: "Como configuro a voz clonada?", a: "Grave amostras de 3-5 segundos nas configurações de voz. O sistema usa Fish Speech (gratuito) para clonar." },
       { q: "Funciona sem internet?", a: "Sim, o Piper TTS (offline) assume quando não há conexão." },
     ],
   },
