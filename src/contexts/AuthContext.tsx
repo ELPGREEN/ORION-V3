@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { useNavigate } from 'react-router-dom';
+
 import { supabase } from '@/integrations/supabase';
 import { initializeNeuralProfile } from '@/lib/neural-init';
 import { clearRoleCache } from '@/hooks/useUserRole';
