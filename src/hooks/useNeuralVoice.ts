@@ -531,13 +531,12 @@ export function useNeuralVoice(
           // Feed user speech to voice evolution engine
           feedUserSpeech(fullText);
           
-          // ── Adaptive Voice Style: detect style commands ──
+          // ── Adaptive Voice Style: detect style commands (learn silently) ──
           const styleResult = detectStyleCommand(fullText, getCachedVoicePrefs());
           if (styleResult.matched) {
             saveVoicePrefs(styleResult.updatedPrefs);
-            // Speak the feedback using the NEW style immediately
-            speak(styleResult.feedback);
-            return; // Don't pass style commands to the AI
+            console.log("[Voice Style] 🎓 Learned:", styleResult.feedback);
+            return; // Don't pass style commands to the AI, just learn silently
           }
           
           onCmdRef.current(fullText);
