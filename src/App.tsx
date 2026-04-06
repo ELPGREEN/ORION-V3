@@ -217,6 +217,7 @@ const App = () => (
                     <Route path="ferramentas-google" element={<RoleGuard allowedRoles={["advogado"]}><FerramentasGoogle /></RoleGuard>} />
                     <Route path="laboratorio-ia" element={<RoleGuard allowedRoles={["advogado"]}><LaboratorioIA /></RoleGuard>} />
                     <Route path="controle-robotico" element={<RoleGuard allowedRoles={["advogado"]}><ControleRobotico /></RoleGuard>} />
+                    <Route path="dispositivos-iot" element={<RoleGuard allowedRoles={["advogado"]}><DeviceIntegrationPage /></RoleGuard>} />
                     <Route path="extension" element={<OrionExtensionPage />} />
 
                     {/* Dashboard redirects — consolidation */}
