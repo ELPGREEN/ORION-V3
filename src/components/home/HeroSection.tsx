@@ -43,11 +43,12 @@ export function HeroSection({ t }: HeroSectionProps) {
   const heroTranslateY = scrollY * 0.15;
 
   return (
-    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden neural-ambient">
       <HeroThreeBackground />
 
       <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background z-[1]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.5)_70%,hsl(var(--background))_100%)] z-[1]" />
+      <div className="absolute inset-0 neural-grid z-[1] opacity-40" />
 
       <div
         className="container relative z-10 py-16 sm:py-20 px-4 sm:px-6"
@@ -77,7 +78,7 @@ export function HeroSection({ t }: HeroSectionProps) {
               transition: 'opacity 0.8s ease 0.4s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.4s',
             }}
           >
-            <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-foreground tracking-[0.15em] mb-2">
+            <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-[0.15em] mb-2 text-metallic">
               ORION
             </h1>
           </div>
@@ -116,7 +117,7 @@ export function HeroSection({ t }: HeroSectionProps) {
               { Icon: IconGlobe, label: "Multi-idioma" },
               { Icon: IconNeuralAI, label: "IA Avançada" },
             ].map((item) => (
-              <div key={item.label} className="flex items-center gap-2 px-4 py-2 border border-primary/20 bg-primary/5 text-xs text-muted-foreground backdrop-blur-sm">
+              <div key={item.label} className="hud-frame flex items-center gap-2 px-4 py-2 border border-primary/20 bg-primary/5 text-xs text-muted-foreground backdrop-blur-sm">
                 <item.Icon className="h-4 w-4 text-primary" />
                 {item.label}
               </div>
