@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroThreeBackground } from "./HeroThreeBackground";
 import orionVideo from "@/assets/orion-tron-video.mp4";
-import orionLogo from "@/assets/orion-gold-logo.png";
+import orionLogo from "@/assets/orion-og-logo.jpg";
 import { LogIn, UserPlus, Eye, Shield, Zap, Brain } from "lucide-react";
 
 type Phase = "video" | "welcome";
@@ -160,10 +160,9 @@ export function WelcomeSplash({ onDismiss }: WelcomeSplashProps) {
               >
                 <img
                   src={orionLogo}
-                  alt="ORION Logo"
-                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-primary/40 shadow-[0_0_40px_hsl(var(--primary)/0.3)]"
+                  alt="ORION Enterprise AI Platform"
+                  className="w-64 sm:w-80 md:w-96 rounded-lg object-contain shadow-[0_0_60px_hsl(var(--primary)/0.3)]"
                 />
-                <div className="absolute inset-0 rounded-full border border-primary/20 animate-pulse" />
               </motion.div>
 
               {/* Title — English */}
