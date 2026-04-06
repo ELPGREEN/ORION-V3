@@ -12,6 +12,7 @@ import { OrionShield } from "@/components/common/OrionShield";
 import { GlobalOrionListener } from "@/components/dashboard/GlobalOrionListener";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import { PageLoader } from "@/components/common/PageLoader";
+import { AuthGuard } from "@/components/common/AuthGuard";
 import { lazy, Suspense } from "react";
 import { MouseTrailEffect } from "@/components/dashboard/MouseTrailEffect";
 import { CookieConsent } from "@/components/CookieConsent";
@@ -19,11 +20,8 @@ import { AffiliateTracker } from "@/components/AffiliateTracker";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { lazyRetry } from "@/lib/lazyRetry";
 
-// ─── Public Pages ───
+// ─── Public Pages (no auth required) ───
 const Index = lazy(lazyRetry(() => import("./pages/Index")));
-const ConsultaIA = lazy(lazyRetry(() => import("./pages/ConsultaIA")));
-const Publicacoes = lazy(lazyRetry(() => import("./pages/Publicacoes")));
-const PublicacaoDetalhe = lazy(lazyRetry(() => import("./pages/PublicacaoDetalhe")));
 const Privacidade = lazy(lazyRetry(() => import("./pages/Privacidade")));
 const Termos = lazy(lazyRetry(() => import("./pages/Termos")));
 const LGPD = lazy(lazyRetry(() => import("./pages/LGPD")));
@@ -32,25 +30,30 @@ const Auth = lazy(lazyRetry(() => import("./pages/Auth")));
 const AuthCallback = lazy(lazyRetry(() => import("./pages/AuthCallback")));
 const EsqueciSenha = lazy(lazyRetry(() => import("./pages/EsqueciSenha")));
 const CadastroCliente = lazy(lazyRetry(() => import("./pages/CadastroCliente")));
+const InstallApp = lazy(lazyRetry(() => import("./pages/InstallApp")));
+const SpotifyCallback = lazy(lazyRetry(() => import("./pages/SpotifyCallback")));
+const YouTubeMusicCallback = lazy(lazyRetry(() => import("./pages/callback/YouTubeMusicCallback")));
+const AdvogadoSite = lazy(lazyRetry(() => import("./pages/AdvogadoSite")));
+const Publicacoes = lazy(lazyRetry(() => import("./pages/Publicacoes")));
+const PublicacaoDetalhe = lazy(lazyRetry(() => import("./pages/PublicacaoDetalhe")));
+const ProBono = lazy(lazyRetry(() => import("./pages/ProBono")));
+const Depoimentos = lazy(lazyRetry(() => import("./pages/Depoimentos")));
+
+// ─── Auth-Required Pages (visible only after login) ───
+const ConsultaIA = lazy(lazyRetry(() => import("./pages/ConsultaIA")));
 const DocumentacaoRedeNeural = lazy(lazyRetry(() => import("./pages/DocumentacaoRedeNeural")));
 const DocumentacaoNeuroCore = lazy(lazyRetry(() => import("./pages/DocumentacaoNeuroCore")));
 const Servicos = lazy(lazyRetry(() => import("./pages/Servicos")));
 const Plataforma = lazy(lazyRetry(() => import("./pages/Plataforma")));
-const InstallApp = lazy(lazyRetry(() => import("./pages/InstallApp")));
-const OrionExtensionPage = lazy(lazyRetry(() => import("./pages/OrionExtensionPage")));
-const Loja = lazy(lazyRetry(() => import("./pages/Loja")));
-const LojaSucesso = lazy(lazyRetry(() => import("./pages/LojaSucesso")));
-const ProdutoDetalhe = lazy(lazyRetry(() => import("./pages/ProdutoDetalhe")));
-const AdvogadoSite = lazy(lazyRetry(() => import("./pages/AdvogadoSite")));
 const Clientes = lazy(lazyRetry(() => import("./pages/Clientes")));
 const Contato = lazy(lazyRetry(() => import("./pages/Contato")));
 const InvestorTools = lazy(lazyRetry(() => import("./pages/InvestorTools")));
 const BiometricRegistration = lazy(lazyRetry(() => import("./pages/BiometricRegistration")));
-const SpotifyCallback = lazy(lazyRetry(() => import("./pages/SpotifyCallback")));
-const YouTubeMusicCallback = lazy(lazyRetry(() => import("./pages/callback/YouTubeMusicCallback")));
 const OrionDemo = lazy(lazyRetry(() => import("./pages/OrionDemo")));
-const ProBono = lazy(lazyRetry(() => import("./pages/ProBono")));
-const Depoimentos = lazy(lazyRetry(() => import("./pages/Depoimentos")));
+const OrionExtensionPage = lazy(lazyRetry(() => import("./pages/OrionExtensionPage")));
+const Loja = lazy(lazyRetry(() => import("./pages/Loja")));
+const LojaSucesso = lazy(lazyRetry(() => import("./pages/LojaSucesso")));
+const ProdutoDetalhe = lazy(lazyRetry(() => import("./pages/ProdutoDetalhe")));
 
 // ─── Dashboard ───
 const DashboardLayout = lazy(lazyRetry(() => import("./components/dashboard/DashboardLayout")));
@@ -123,47 +126,47 @@ const App = () => (
             <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-                  {/* ═══ PUBLIC — Main Pages ═══ */}
+                  {/* ═══ PUBLIC — Aberto a todos (vitrine + legal + auth) ═══ */}
                   <Route path="/" element={<Index />} />
-                  <Route path="/clientes" element={<Clientes />} />
-                  <Route path="/plataforma" element={<Plataforma />} />
-                  <Route path="/servicos" element={<Servicos />} />
-                  <Route path="/investidor" element={<InvestorTools />} />
-                  <Route path="/contato" element={<Contato />} />
                   <Route path="/publicacoes" element={<Publicacoes />} />
                   <Route path="/publicacoes/:slug" element={<PublicacaoDetalhe />} />
-                  <Route path="/consulta" element={<ConsultaIA />} />
-                  <Route path="/demo" element={<OrionDemo />} />
+                  <Route path="/pro-bono" element={<ProBono />} />
+                  <Route path="/depoimentos" element={<Depoimentos />} />
+                  <Route path="/install" element={<InstallApp />} />
+                  <Route path="/advogado/:advogadoId" element={<AdvogadoSite />} />
 
                   {/* ═══ PUBLIC — Auth ═══ */}
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/cadastro" element={<CadastroCliente />} />
                   <Route path="/esqueci-senha" element={<EsqueciSenha />} />
-                  <Route path="/register/biometric" element={<BiometricRegistration />} />
+                  <Route path="/spotify-callback" element={<SpotifyCallback />} />
+                  <Route path="/callback/youtube-music" element={<YouTubeMusicCallback />} />
 
                   {/* ═══ PUBLIC — Legal ═══ */}
                   <Route path="/privacidade" element={<Privacidade />} />
                   <Route path="/termos" element={<Termos />} />
                   <Route path="/lgpd" element={<LGPD />} />
 
-                  {/* ═══ PUBLIC — Docs ═══ */}
-                  <Route path="/docs/rede-neural" element={<DocumentacaoRedeNeural />} />
-                  <Route path="/docs/neurocore" element={<DocumentacaoNeuroCore />} />
+                  {/* ═══ AUTH REQUIRED — Páginas internas (requer cadastro/login) ═══ */}
+                  <Route path="/clientes" element={<AuthGuard><Clientes /></AuthGuard>} />
+                  <Route path="/plataforma" element={<AuthGuard><Plataforma /></AuthGuard>} />
+                  <Route path="/servicos" element={<AuthGuard><Servicos /></AuthGuard>} />
+                  <Route path="/investidor" element={<AuthGuard><InvestorTools /></AuthGuard>} />
+                  <Route path="/contato" element={<AuthGuard><Contato /></AuthGuard>} />
+                  <Route path="/consulta" element={<AuthGuard><ConsultaIA /></AuthGuard>} />
+                  <Route path="/demo" element={<AuthGuard><OrionDemo /></AuthGuard>} />
+                  <Route path="/extension" element={<AuthGuard><OrionExtensionPage /></AuthGuard>} />
+                  <Route path="/register/biometric" element={<AuthGuard><BiometricRegistration /></AuthGuard>} />
 
-                  {/* ═══ PUBLIC — Loja ═══ */}
-                  <Route path="/loja/:creatorId" element={<Loja />} />
-                  <Route path="/loja/:creatorId/sucesso" element={<LojaSucesso />} />
-                  <Route path="/loja/:creatorId/produto/:productId" element={<ProdutoDetalhe />} />
-                  <Route path="/advogado/:advogadoId" element={<AdvogadoSite />} />
+                  {/* ═══ AUTH REQUIRED — Docs técnicos ═══ */}
+                  <Route path="/docs/rede-neural" element={<AuthGuard><DocumentacaoRedeNeural /></AuthGuard>} />
+                  <Route path="/docs/neurocore" element={<AuthGuard><DocumentacaoNeuroCore /></AuthGuard>} />
 
-                  {/* ═══ PUBLIC — Misc ═══ */}
-                  <Route path="/install" element={<InstallApp />} />
-                  <Route path="/extension" element={<OrionExtensionPage />} />
-                  <Route path="/pro-bono" element={<ProBono />} />
-                  <Route path="/depoimentos" element={<Depoimentos />} />
-                  <Route path="/spotify-callback" element={<SpotifyCallback />} />
-                  <Route path="/callback/youtube-music" element={<YouTubeMusicCallback />} />
+                  {/* ═══ AUTH REQUIRED — Loja ═══ */}
+                  <Route path="/loja/:creatorId" element={<AuthGuard><Loja /></AuthGuard>} />
+                  <Route path="/loja/:creatorId/sucesso" element={<AuthGuard><LojaSucesso /></AuthGuard>} />
+                  <Route path="/loja/:creatorId/produto/:productId" element={<AuthGuard><ProdutoDetalhe /></AuthGuard>} />
 
                   {/* ═══ REDIRECTS — Orphan pages → proper destinations ═══ */}
                   <Route path="/nova-pagina" element={<Navigate to="/" replace />} />
@@ -171,7 +174,7 @@ const App = () => (
                   <Route path="/associado" element={<Navigate to="/contato" replace />} />
                   <Route path="/sobre" element={<Navigate to="/" replace />} />
 
-                  {/* ═══ Dashboard Routes ═══ */}
+                  {/* ═══ Dashboard Routes (DashboardLayout already guards auth) ═══ */}
                   <Route path="/dashboard" element={<DashboardLayout />}>
                     <Route index element={<DashboardRouter />} />
 

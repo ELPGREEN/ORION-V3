@@ -131,10 +131,13 @@ export default function Auth() {
   // Face enrollment step (advogado only)
   const [authStep, setAuthStep] = useState<AuthStep>("form");
 
+  // Get returnTo destination from URL params
+  const returnTo = searchParams.get("returnTo") || "/dashboard";
+
   // Redirect if logged in
   useEffect(() => {
-    if (user) navigate("/dashboard");
-  }, [user, navigate]);
+    if (user) navigate(returnTo);
+  }, [user, navigate, returnTo]);
 
   // Sync URL params
   useEffect(() => {
@@ -207,7 +210,7 @@ export default function Auth() {
       }
     } else {
       toast({ title: "Login realizado!", description: "Bem-vindo à plataforma ORION." });
-      navigate("/dashboard");
+      navigate(returnTo);
     }
     setLoading(false);
   };
@@ -255,7 +258,7 @@ export default function Auth() {
         return;
       }
       toast({ title: "Conta criada!", description: `Bem-vindo como ${ACCOUNT_TYPES.find(t => t.value === accountType)?.label}.` });
-      navigate("/dashboard");
+      navigate(returnTo);
     } else if (signInError.message.includes("Email not confirmed")) {
       setEmailNotConfirmed(cadastroForm.email);
       toast({ title: "Conta criada!", description: "Verifique seu e-mail para confirmar a conta." });
@@ -270,12 +273,12 @@ export default function Auth() {
   const handleFaceEnrollComplete = () => {
     setAuthStep("done");
     toast({ title: "Cadastro completo!", description: "Conta de advogado criada com verificação facial." });
-    setTimeout(() => navigate("/dashboard"), 1500);
+    setTimeout(() => navigate(returnTo), 1500);
   };
 
   const handleSkipFaceEnroll = () => {
     toast({ title: "Cadastro criado!", description: "Você poderá configurar o reconhecimento facial depois nas configurações." });
-    navigate("/dashboard");
+    navigate(returnTo);
   };
 
   const handleGoogleLogin = async () => {
@@ -558,7 +561,7 @@ export default function Auth() {
                 <FaceAuthLogin
                   onSuccess={() => {
                     setShowFaceLogin(false);
-                    navigate("/dashboard");
+                    navigate(returnTo);
                   }}
                   onCancel={() => setShowFaceLogin(false)}
                 />
