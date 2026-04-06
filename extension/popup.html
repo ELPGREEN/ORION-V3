@@ -54,17 +54,22 @@
       color: #6b7280;
       margin-top: 2px;
     }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      position: relative;
+      z-index: 1;
+    }
     .status-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      margin-top: 12px;
       padding: 5px 14px;
       border-radius: 20px;
       font-size: 11px;
       font-weight: 600;
-      position: relative;
-      z-index: 1;
     }
     .status-pill.active {
       background: rgba(0,180,212,0.1);
@@ -75,6 +80,32 @@
       background: rgba(255,255,255,0.04);
       color: #555;
       border: 1px solid rgba(255,255,255,0.06);
+    }
+    .vision-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      transition: all 0.3s;
+    }
+    .vision-pill.on {
+      background: rgba(0,255,136,0.12);
+      color: #00ff88;
+      border: 1px solid rgba(0,255,136,0.3);
+      animation: vision-glow 2s infinite;
+    }
+    .vision-pill.off {
+      background: rgba(255,255,255,0.04);
+      color: #555;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    @keyframes vision-glow {
+      0%,100% { box-shadow: 0 0 4px rgba(0,255,136,0.2); }
+      50% { box-shadow: 0 0 12px rgba(0,255,136,0.4); }
     }
     .dot {
       width: 7px; height: 7px;
@@ -89,9 +120,7 @@
     @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
 
     /* Sections */
-    .section {
-      padding: 12px 20px;
-    }
+    .section { padding: 12px 20px; }
     .section-label {
       font-size: 9px;
       text-transform: uppercase;
@@ -109,10 +138,7 @@
       padding: 10px 20px;
       border-bottom: 1px solid rgba(255,255,255,0.03);
     }
-    .toggle-row label {
-      font-size: 12px;
-      color: #9ca3af;
-    }
+    .toggle-row label { font-size: 12px; color: #9ca3af; }
     .toggle {
       position: relative;
       width: 38px; height: 20px;
@@ -143,11 +169,7 @@
       margin-bottom: 3px;
       border: 1px solid rgba(255,255,255,0.03);
     }
-    .cap-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .cap-left { display: flex; align-items: center; gap: 10px; }
     .cap-icon {
       width: 28px; height: 28px;
       border-radius: 6px;
@@ -157,6 +179,7 @@
       font-size: 13px;
       background: rgba(0,180,212,0.06);
     }
+    .cap-icon.vision-active { background: rgba(0,255,136,0.1); }
     .cap-name { font-size: 12px; color: #c9cdd5; }
     .cap-status {
       font-size: 9px;
@@ -198,28 +221,27 @@
       box-shadow: 0 2px 8px rgba(0,151,167,0.2);
     }
     .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,151,167,0.3); }
+    .btn-vision {
+      background: linear-gradient(135deg, #00884a, #006633);
+      color: white;
+      box-shadow: 0 2px 8px rgba(0,136,74,0.2);
+    }
+    .btn-vision:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-vision.active {
+      background: linear-gradient(135deg, #006633, #004422);
+      box-shadow: 0 0 12px rgba(0,255,136,0.2);
+    }
     .btn-secondary {
       background: rgba(255,255,255,0.04);
       color: #9ca3af;
       border: 1px solid rgba(255,255,255,0.06);
     }
     .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #e8eaf0; }
-
     .btn-row { display: flex; gap: 6px; }
     .btn-row .btn { flex: 1; font-size: 11px; padding: 9px 8px; }
 
-    .btn-icon-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
     /* Page info */
-    .page-info {
-      padding: 6px 20px;
-      font-size: 10px;
-      color: #4a4f5c;
-    }
+    .page-info { padding: 6px 20px; font-size: 10px; color: #4a4f5c; }
     .page-info .url {
       color: #0097a7;
       overflow: hidden;
@@ -253,9 +275,27 @@
       color: #2a2b3d;
       border-top: 1px solid rgba(255,255,255,0.03);
     }
-    .footer a {
-      color: #4a5568;
-      text-decoration: none;
+    .footer a { color: #4a5568; text-decoration: none; }
+
+    /* Vision info box */
+    .vision-info {
+      padding: 8px 20px;
+      display: none;
+    }
+    .vision-info.active { display: block; }
+    .vision-info-box {
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(0,255,136,0.04);
+      border: 1px solid rgba(0,255,136,0.15);
+      font-size: 10px;
+      color: #00ff88;
+      line-height: 1.5;
+    }
+    .vision-info-box .hint {
+      color: rgba(0,255,136,0.5);
+      font-size: 9px;
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -265,12 +305,18 @@
       <img src="icon128.png" alt="Orion" class="logo-img" />
       <div class="header-text">
         <h1>ORION</h1>
-        <div class="tagline">Assistente Neural — v2.0</div>
+        <div class="tagline">Assistente Neural — v3.0</div>
       </div>
     </div>
-    <div id="statusBadge" class="status-pill inactive">
-      <span class="dot off" id="statusDot"></span>
-      <span id="statusText">Inativo</span>
+    <div class="status-row">
+      <div id="statusBadge" class="status-pill inactive">
+        <span class="dot off" id="statusDot"></span>
+        <span id="statusText">Inativo</span>
+      </div>
+      <div id="visionPill" class="vision-pill off">
+        <span>👁</span>
+        <span id="visionPillText">Visão OFF</span>
+      </div>
     </div>
   </div>
 
@@ -282,8 +328,8 @@
   <div class="section">
     <div class="section-label">Capacidades</div>
     <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">V</div><span class="cap-name">Visão</span></div>
-      <span class="cap-status unknown" id="cap-vision">—</span>
+      <div class="cap-left"><div class="cap-icon" id="cap-vision-icon">👁</div><span class="cap-name">Visão</span></div>
+      <span class="cap-status offline" id="cap-vision">Offline</span>
     </div>
     <div class="cap-item">
       <div class="cap-left"><div class="cap-icon">A</div><span class="cap-name">Audição</span></div>
@@ -303,6 +349,14 @@
     </div>
   </div>
 
+  <div id="visionInfo" class="vision-info">
+    <div class="vision-info-box">
+      👁 Visão ativa — captura sob demanda<br>
+      Diga: <strong>"Orion, o que você vê?"</strong><br>
+      <div class="hint">Auto-desliga em 15 min sem uso</div>
+    </div>
+  </div>
+
   <div id="pageInfo" class="page-info" style="display:none;">
     <span>Página ativa:</span>
     <span class="url" id="pageUrl"></span>
@@ -310,14 +364,15 @@
 
   <div class="actions">
     <button class="btn btn-primary" id="btnOpen">Abrir Consulta Orion</button>
+    <button class="btn btn-vision" id="btnVision">👁 Ativar Visão (15 min)</button>
     <button class="btn btn-secondary" id="btnDashboard">Dashboard Neural</button>
     <div class="btn-row">
-      <button class="btn btn-secondary" id="btnSummarize"><span class="btn-icon-label">Resumir</span></button>
-      <button class="btn btn-secondary" id="btnScreenshot"><span class="btn-icon-label">Captura</span></button>
+      <button class="btn btn-secondary" id="btnSummarize"><span>Resumir</span></button>
+      <button class="btn btn-secondary" id="btnScreenshot"><span>Captura</span></button>
     </div>
     <div class="btn-row">
-      <button class="btn btn-secondary" id="btnReadAloud"><span class="btn-icon-label">Ler</span></button>
-      <button class="btn btn-secondary" id="btnExtract"><span class="btn-icon-label">Extrair</span></button>
+      <button class="btn btn-secondary" id="btnReadAloud"><span>Ler</span></button>
+      <button class="btn btn-secondary" id="btnExtract"><span>Extrair</span></button>
     </div>
   </div>
 
@@ -326,7 +381,7 @@
   </div>
 
   <div class="footer">
-    Orion v2.0 &mdash; <a href="https://www.iasofthub.com" target="_blank">IASoft Hub</a> &middot; ELP Green Technology
+    Orion v3.0 &mdash; <a href="https://www.iasofthub.com" target="_blank">IASoft Hub</a> &middot; ELP Green Technology
   </div>
 
   <script src="popup.js"></script>

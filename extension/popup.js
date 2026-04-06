@@ -1,6 +1,7 @@
 /**
- * Orion Extension v2.0 — Popup Logic
+ * Orion Extension v3.0 — Popup Logic
  * Connects to iasofthub.com and neural-ops for real AI queries.
+ * Vision toggle with 15min auto-timeout.
  */
 
 const APP_BASE = "https://www.iasofthub.com";
@@ -16,8 +17,13 @@ const btnSummarize = document.getElementById("btnSummarize");
 const btnScreenshot = document.getElementById("btnScreenshot");
 const btnReadAloud = document.getElementById("btnReadAloud");
 const btnExtract = document.getElementById("btnExtract");
+const btnVision = document.getElementById("btnVision");
 const pageInfo = document.getElementById("pageInfo");
 const pageUrl = document.getElementById("pageUrl");
+const visionPill = document.getElementById("visionPill");
+const visionPillText = document.getElementById("visionPillText");
+const visionInfo = document.getElementById("visionInfo");
+const capVisionIcon = document.getElementById("cap-vision-icon");
 
 // Load state
 function refreshState() {
@@ -37,6 +43,15 @@ function updateUI(state) {
     statusDot.className = "dot off";
     statusText.textContent = "Inativo";
   }
+
+  // Vision state
+  const isVisionOn = state.visionActive || state.apiStatus?.vision === "online";
+  visionPill.className = `vision-pill ${isVisionOn ? "on" : "off"}`;
+  visionPillText.textContent = isVisionOn ? "Visão ON" : "Visão OFF";
+  visionInfo.className = `vision-info ${isVisionOn ? "active" : ""}`;
+  capVisionIcon.className = `cap-icon ${isVisionOn ? "vision-active" : ""}`;
+  btnVision.textContent = isVisionOn ? "👁 Desativar Visão" : "👁 Ativar Visão (15 min)";
+  btnVision.className = `btn btn-vision ${isVisionOn ? "active" : ""}`;
 
   if (state.pageContext) {
     pageInfo.style.display = "block";
@@ -82,6 +97,14 @@ btnOpen.addEventListener("click", () => {
 btnDashboard.addEventListener("click", () => {
   chrome.tabs.create({ url: `${APP_BASE}/dashboard/rede-neural` });
   window.close();
+});
+
+// Vision Toggle
+btnVision.addEventListener("click", () => {
+  const isOn = btnVision.classList.contains("active");
+  sendToActiveTab({ type: isOn ? "ORION_DEACTIVATE_VISION" : "ORION_ACTIVATE_VISION" });
+  // Optimistic UI update
+  setTimeout(refreshState, 300);
 });
 
 // Page Actions

@@ -1,7 +1,8 @@
 /**
- * Orion Extension v2.0 — Content Script
+ * Orion Extension v3.0 — Content Script
  * Wake word, page extraction, floating panel with real AI via neural-ops,
- * TTS, structured data extraction. Domain: iasofthub.com
+ * TTS, structured data extraction, VISION on-demand with 15min auto-timeout.
+ * Domain: iasofthub.com
  */
 (function () {
   "use strict";
@@ -13,6 +14,12 @@
   let panel = null;
   let miniOrb = null;
   let panelVisible = false;
+
+  // ─── Vision State ───
+  let visionActive = false;
+  let visionTimer = null;
+  const VISION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+  let lastVisionResponseTime = 0;
 
   // Register with background
   chrome.runtime.sendMessage({ type: "TAB_CONNECTED" }, (response) => {
@@ -26,7 +33,7 @@
     domain: location.hostname,
   });
 
-  // Wake Word Listener
+  // ─── Wake Word Listener ───
   function startListening() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR || isListening) return;
@@ -78,6 +85,23 @@
 
   function handleVoiceCommand(cmd) {
     const lower = cmd.toLowerCase();
+
+    // ─── Vision Commands ───
+    if (lower.includes("ativar visão") || lower.includes("ativar visao") || lower.includes("ativa visão") || lower.includes("ativa visao")) {
+      activateVision();
+      return;
+    }
+    if (lower.includes("desativar visão") || lower.includes("desativar visao") || lower.includes("desativa visão") || lower.includes("parar visão")) {
+      deactivateVision("manual");
+      return;
+    }
+    // Vision queries — only work if vision is active
+    if (visionActive && (lower.includes("o que você vê") || lower.includes("o que voce ve") || lower.includes("o que está vendo") || lower.includes("descreve") || lower.includes("analise o que vê") || lower.includes("veja isso") || lower.includes("olhe") || lower.includes("veja"))) {
+      captureAndAnalyzeVision(cmd);
+      return;
+    }
+
+    // ─── Standard Commands ───
     if (lower.includes("resum")) extractAndAnalyze("summarize");
     else if (lower.includes("traduz")) extractAndAnalyze("translate");
     else if (lower.includes("analis")) extractAndAnalyze("analyze");
@@ -86,7 +110,83 @@
     else sendAIQuery(cmd);
   }
 
-  // Page Extraction
+  // ─── Vision System ───
+
+  function activateVision() {
+    visionActive = true;
+    lastVisionResponseTime = Date.now();
+    showNotification("👁 Visão ativada — diga 'Orion, o que você vê?' para usar. Auto-desliga em 15 min sem uso.", "success");
+    updateOrbVisionState(true);
+    chrome.runtime.sendMessage({ type: "SET_API_STATUS", capability: "vision", status: "online" });
+
+    // Start auto-timeout checker
+    clearVisionTimer();
+    visionTimer = setInterval(() => {
+      if (!visionActive) { clearVisionTimer(); return; }
+      const elapsed = Date.now() - lastVisionResponseTime;
+      if (elapsed >= VISION_TIMEOUT_MS) {
+        deactivateVision("timeout");
+      }
+    }, 30000); // check every 30s
+  }
+
+  function deactivateVision(reason) {
+    visionActive = false;
+    clearVisionTimer();
+    updateOrbVisionState(false);
+    chrome.runtime.sendMessage({ type: "SET_API_STATUS", capability: "vision", status: "offline" });
+
+    if (reason === "timeout") {
+      showNotification("👁 Visão desativada automaticamente (15 min sem uso)", "info");
+    } else {
+      showNotification("👁 Visão desativada", "info");
+    }
+  }
+
+  function clearVisionTimer() {
+    if (visionTimer) { clearInterval(visionTimer); visionTimer = null; }
+  }
+
+  function updateOrbVisionState(active) {
+    if (!miniOrb) return;
+    if (active) {
+      miniOrb.style.borderColor = "#00ff88";
+      miniOrb.style.boxShadow = "0 0 20px rgba(0, 255, 136, 0.4)";
+      miniOrb.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    } else {
+      miniOrb.style.borderColor = "#00E5FF";
+      miniOrb.style.boxShadow = "0 0 20px rgba(0, 229, 255, 0.3)";
+      miniOrb.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00B4D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    }
+  }
+
+  function captureAndAnalyzeVision(userQuery) {
+    if (!visionActive) {
+      showNotification("Visão não está ativa. Diga 'Orion, ativar visão' primeiro.", "error");
+      return;
+    }
+
+    showThinking();
+    showNotification("📸 Capturando tela...", "info");
+
+    // Request screenshot from background (which has access to chrome.tabs.captureVisibleTab)
+    chrome.runtime.sendMessage(
+      { type: "ORION_VISION_CAPTURE", query: userQuery || "Descreva o que você vê nesta tela." },
+      (response) => {
+        hideThinking();
+        if (response?.result?.response) {
+          lastVisionResponseTime = Date.now(); // reset timer on successful response
+          showResponsePanel("👁 " + response.result.response);
+          // TTS the response
+          readPageAloud(response.result.response);
+        } else if (response?.error) {
+          showNotification("Erro na visão: " + response.error, "error");
+        }
+      }
+    );
+  }
+
+  // ─── Page Extraction ───
   function extractPageContent() {
     const main = document.querySelector("main, article, [role='main'], .content, #content");
     const target = main || document.body;
@@ -149,7 +249,7 @@
     sendAIQuery(prompts[mode] || prompts.analyze);
   }
 
-  // AI Query (calls neural-ops via background)
+  // ─── AI Query (calls neural-ops via background) ───
   function sendAIQuery(query) {
     showThinking();
     chrome.runtime.sendMessage(
@@ -170,7 +270,7 @@
     );
   }
 
-  // TTS
+  // ─── TTS ───
   function readPageAloud(customText) {
     const text = customText || extractPageContent().content.substring(0, 2000);
     if (!text) return;
@@ -183,12 +283,11 @@
     showNotification("Lendo em voz alta...", "info");
   }
 
-  // Mini Orb (floating button)
+  // ─── Mini Orb (floating button) ───
   function createMiniOrb() {
     if (miniOrb) return;
     miniOrb = document.createElement("div");
     miniOrb.id = "orion-mini-orb";
-    // Use a simple SVG eye icon instead of emoji
     miniOrb.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00B4D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
     document.body.appendChild(miniOrb);
 
@@ -220,6 +319,9 @@
       document.addEventListener("mousemove", onMove);
       document.addEventListener("mouseup", onUp);
     });
+
+    // Sync vision state
+    if (visionActive) updateOrbVisionState(true);
   }
 
   function pulseOrb() {
@@ -228,7 +330,7 @@
     setTimeout(() => miniOrb.classList.remove("orion-pulse"), 2000);
   }
 
-  // Floating Panel
+  // ─── Floating Panel ───
   function togglePanel() {
     if (panelVisible) { hidePanel(); return; }
     showPanel();
@@ -241,7 +343,10 @@
     panel.innerHTML = `
       <div class="orion-panel-header">
         <span class="orion-panel-title">ORION</span>
-        <button class="orion-panel-close" id="orion-close-panel">×</button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="orion-vision-badge" class="orion-vision-badge ${visionActive ? 'active' : ''}">${visionActive ? '👁 ON' : '👁 OFF'}</span>
+          <button class="orion-panel-close" id="orion-close-panel">×</button>
+        </div>
       </div>
       <div class="orion-panel-body">
         <div class="orion-input-row">
@@ -253,6 +358,8 @@
           <button data-action="analyze" title="Analisar página">Analisar</button>
           <button data-action="read" title="Ler em voz alta">Ler</button>
           <button data-action="extract" title="Extrair dados">Extrair</button>
+          <button data-action="vision-toggle" title="Ativar/desativar visão" id="orion-vision-toggle">${visionActive ? '👁 Desativar' : '👁 Ativar Visão'}</button>
+          ${visionActive ? '<button data-action="vision-look" title="O que Orion vê">👁 O que vê?</button>' : ''}
         </div>
         <div class="orion-response" id="orion-response"></div>
       </div>
@@ -278,6 +385,16 @@
         if (action === "summarize") extractAndAnalyze("summarize");
         else if (action === "analyze") extractAndAnalyze("analyze");
         else if (action === "read") readPageAloud();
+        else if (action === "vision-toggle") {
+          if (visionActive) deactivateVision("manual");
+          else activateVision();
+          // Refresh panel
+          hidePanel();
+          setTimeout(() => showPanel(), 100);
+        }
+        else if (action === "vision-look") {
+          captureAndAnalyzeVision("Descreva detalhadamente o que você vê nesta tela.");
+        }
         else if (action === "extract") {
           const pageData = extractPageContent();
           showResponsePanel(
@@ -315,7 +432,7 @@
     if (el && el.querySelector(".orion-thinking")) el.innerHTML = "";
   }
 
-  // Notifications
+  // ─── Notifications ───
   function showNotification(text, type = "info") {
     const n = document.createElement("div");
     n.className = `orion-notification orion-notif-${type}`;
@@ -329,7 +446,7 @@
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
   }
 
-  // Message Listener
+  // ─── Message Listener ───
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.type) {
       case "ORION_ACTIVATED":
@@ -373,12 +490,21 @@
           `Dados Extraídos\n\nTítulo: ${pageData.title}\nURL: ${pageData.url}\nPalavras: ${pageData.wordCount}\nTítulos: ${pageData.headings.length}\nLinks: ${pageData.links.length}\nImagens: ${pageData.images.length}`
         );
         break;
+      case "ORION_ACTIVATE_VISION":
+        activateVision();
+        break;
+      case "ORION_DEACTIVATE_VISION":
+        deactivateVision("manual");
+        break;
+      case "ORION_VISION_LOOK":
+        captureAndAnalyzeVision(message.query || "O que você vê?");
+        break;
     }
     sendResponse({ ok: true });
     return true;
   });
 
-  // Auto-start
+  // ─── Auto-start ───
   chrome.storage.local.get(["orionWakeWordEnabled"], (result) => {
     if (result.orionWakeWordEnabled !== false) startListening();
   });
