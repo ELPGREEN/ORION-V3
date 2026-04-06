@@ -25,7 +25,7 @@ const corsHeaders = {
 // v11 Base: Adam Optimizer, Multi-Layer QNN, Amplitude Encoding
 // ═══════════════════════════════════════════════════════════════
 
-const EMBEDDING_MODEL = "text-embedding-004"; // Gemini (free, native 768d)
+const EMBEDDING_MODEL = "gemini-embedding-001"; // Gemini (free, native 768d)
 const EMBEDDING_DIMS = 768;
 
 // ═══ v17 iDanae Lacuna 5: Adversarial Query Detection ═══
@@ -2758,7 +2758,7 @@ async function expandQuery(query: string, previousContext?: string, supabaseClie
   return [query];
 }
 
-// ─── Embedding Generation (Gemini text-embedding-004, free) ───
+// ─── Embedding Generation (Gemini gemini-embedding-001, free) ───
 function getGeminiKeys(): string[] {
   return [
     Deno.env.get("GEMINI_API_KEY"),

@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ⚠️ CRITICAL: Gemini text-embedding-004 (768d, FREE) is the SOLE embedding provider.
+// ⚠️ CRITICAL: Gemini gemini-embedding-001 (768d, FREE) is the SOLE embedding provider.
 // ALL functions (neural-search, ai-orchestrator, gerar-documento, neural-training)
 // MUST use the same model to ensure vector space compatibility.
 function getEmbeddingProviders(): Array<{ name: string; apiKey: string }> {

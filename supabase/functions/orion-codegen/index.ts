@@ -26,13 +26,13 @@ async function generateEmbedding(text: string): Promise<number[]> {
   for (const key of keys) {
     try {
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${key}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${key}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: AbortSignal.timeout(10000),
           body: JSON.stringify({
-            model: "models/text-embedding-004",
+            model: "models/gemini-embedding-001",
             content: { parts: [{ text: text.slice(0, 4000) }] },
             outputDimensionality: 768,
           }),
