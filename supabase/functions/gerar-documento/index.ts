@@ -1228,19 +1228,18 @@ async function extractKeywords(query: string): string[] {
   return [...new Set(words)].slice(0, 6);
 }
 
-// Generate query embedding using OpenAI text-embedding-3-small (768 dimensions)
-// Unified with neural-search: same provider, cache, key rotation
-const _badOpenAIKeys = new Set<number>();
-
-function _getOpenAIKeys(): string[] {
+// Generate query embedding using Gemini text-embedding-004 (768d, free)
+// Unified across all functions: same provider ensures vector space compatibility
+function _getGeminiKeys(): string[] {
   return [
-    Deno.env.get("OPENAI_API_KEY"),
-    Deno.env.get("OPENAI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
   ].filter(Boolean) as string[];
 }
 
 async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<typeof createClient>): Promise<number[]> {
-  const truncated = text.slice(0, 8000);
+  const truncated = text.slice(0, 4000);
 
   // Check embedding cache first
   if (supabaseClient) {
@@ -1258,7 +1257,6 @@ async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<
 
       if (cached?.embedding) {
         console.log("  ✅ Embedding cache HIT for document generation");
-        // Parse embedding string "[0.1,0.2,...]" to number[]
         const emb = typeof cached.embedding === "string"
           ? JSON.parse(cached.embedding)
           : cached.embedding;
@@ -1269,43 +1267,39 @@ async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<
     }
   }
 
-  const openaiKeys = _getOpenAIKeys();
-  if (openaiKeys.length === 0) {
-    console.warn("  ⚠️ No OpenAI API keys configured, falling back to text search");
+  const geminiKeys = _getGeminiKeys();
+  if (geminiKeys.length === 0) {
+    console.warn("  ⚠️ No Gemini API keys configured, falling back to text search");
     return [];
   }
 
-  for (let i = 0; i < openaiKeys.length; i++) {
-    if (_badOpenAIKeys.has(i)) continue;
-    const apiKey = openaiKeys[i];
+  for (const apiKey of geminiKeys) {
     try {
-      const response = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        signal: AbortSignal.timeout(10000),
-        body: JSON.stringify({
-          model: "text-embedding-3-small",
-          input: truncated,
-          dimensions: 768,
-        }),
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(10000),
+          body: JSON.stringify({
+            model: "models/text-embedding-004",
+            content: { parts: [{ text: truncated }] },
+            outputDimensionality: 768,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errText = await response.text();
-        console.error(`  ❌ OpenAI embedding key[${i}] error ${response.status}: ${errText.slice(0, 200)}`);
-        if (response.status === 401 || response.status === 403) {
-          _badOpenAIKeys.add(i);
-        }
+        console.error(`  ❌ Gemini embedding error ${response.status}: ${errText.slice(0, 200)}`);
         continue;
       }
 
       const data = await response.json();
-      const embedding = data?.data?.[0]?.embedding;
+      const embedding = data?.embedding?.values;
       if (embedding?.length) {
-        console.log(`  ✅ OpenAI query embedding generated (${embedding.length} dims, key[${i}])`);
+        const finalEmb = embedding.length >= 768 ? embedding.slice(0, 768) : embedding;
+        console.log(`  ✅ Gemini query embedding generated (${finalEmb.length} dims)`);
 
         // Save to cache
         if (supabaseClient) {
@@ -1316,7 +1310,7 @@ async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<
             await supabaseClient.from("query_embedding_cache").upsert({
               query_hash: queryHash,
               query_text: truncated.slice(0, 500),
-              embedding: `[${embedding.join(",")}]`,
+              embedding: `[${finalEmb.join(",")}]`,
               task_type: "document_generation",
               expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
             }, { onConflict: "query_hash" });
@@ -1326,14 +1320,14 @@ async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<
           }
         }
 
-        return embedding;
+        return finalEmb;
       }
     } catch (err: any) {
-      console.error(`  ❌ OpenAI embedding key[${i}] request failed: ${err.message}`);
+      console.error(`  ❌ Gemini embedding request failed: ${err.message}`);
       continue;
     }
   }
-  console.warn("  ⚠️ All OpenAI embedding providers failed, falling back to text search");
+  console.warn("  ⚠️ All Gemini embedding providers failed, falling back to text search");
   return [];
 }
 
@@ -2661,18 +2655,26 @@ function autoScoreQuality(outputText: string, metadata: Record<string, unknown>)
 // ═══════════════════════════════════════════════════════════════
 
 async function generateEmbeddingForCache(text: string): Promise<number[] | null> {
-  const keys = [Deno.env.get("OPENAI_API_KEY"), Deno.env.get("OPENAI_API_KEY_2")].filter(Boolean) as string[];
+  const keys = _getGeminiKeys();
   for (const key of keys) {
     try {
-      const res = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({ model: "text-embedding-3-small", input: text.substring(0, 6000), dimensions: 768 }),
-      });
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(8000),
+          body: JSON.stringify({
+            model: "models/text-embedding-004",
+            content: { parts: [{ text: text.substring(0, 4000) }] },
+            outputDimensionality: 768,
+          }),
+        }
+      );
       if (!res.ok) continue;
       const data = await res.json();
-      return data?.data?.[0]?.embedding || null;
+      const values = data?.embedding?.values;
+      if (values?.length >= 768) return values.slice(0, 768);
     } catch { continue; }
   }
   return null;

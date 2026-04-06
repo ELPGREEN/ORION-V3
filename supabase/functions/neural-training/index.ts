@@ -269,33 +269,34 @@ async function saveWeights(supabase: ReturnType<typeof createClient>, userId: st
 // AÇÕES DO SISTEMA NEURAL
 // ═══════════════════════════════════════════════════════════════
 
-// Generate embedding using OpenAI text-embedding-3-small (768 dims)
+// Generate embedding using Gemini text-embedding-004 (768 dims, free)
 async function generateEmbedding(text: string): Promise<number[] | null> {
-  const openaiKeys = [
-    Deno.env.get("OPENAI_API_KEY"),
-    Deno.env.get("OPENAI_API_KEY_2"),
+  const geminiKeys = [
+    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
   ].filter(Boolean) as string[];
-  if (openaiKeys.length === 0) return null;
+  if (geminiKeys.length === 0) return null;
 
-  const truncated = text.substring(0, 8000);
-  for (const apiKey of openaiKeys) {
+  const truncated = text.substring(0, 4000);
+  for (const apiKey of geminiKeys) {
     try {
-      const response = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "text-embedding-3-small",
-          input: truncated,
-          dimensions: 768,
-        }),
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "models/text-embedding-004",
+            content: { parts: [{ text: truncated }] },
+            outputDimensionality: 768,
+          }),
+        }
+      );
       if (!response.ok) continue;
       const data = await response.json();
-      const embedding = data?.data?.[0]?.embedding || null;
-      if (embedding && embedding.length === 768) return embedding;
+      const embedding = data?.embedding?.values || null;
+      if (embedding && embedding.length >= 768) return embedding.slice(0, 768);
     } catch { continue; }
   }
   return null;

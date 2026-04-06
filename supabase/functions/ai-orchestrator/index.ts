@@ -262,39 +262,8 @@ interface NeuralContext {
   specializations: Array<{ name: string; prompts: Record<string, string> }>;
 }
 
-// Generate query embedding using OpenAI text-embedding-3-small (768d)
+// Generate query embedding using Gemini text-embedding-004 (768d, free)
 async function generateQueryEmbedding(text: string): Promise<number[]> {
-  const openaiKeys = [
-    Deno.env.get("OPENAI_API_KEY"),
-    Deno.env.get("OPENAI_API_KEY_2"),
-  ].filter(Boolean) as string[];
-
-  for (const apiKey of openaiKeys) {
-    try {
-      const response = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        signal: AbortSignal.timeout(10000),
-        body: JSON.stringify({
-          model: "text-embedding-3-small",
-          input: text.substring(0, 8000),
-          dimensions: 768,
-        }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const embedding = data?.data?.[0]?.embedding;
-        if (embedding?.length === 768) return embedding;
-      }
-    } catch (err) {
-      console.warn("OpenAI embedding error:", err);
-    }
-  }
-
-  // Fallback: Gemini text-embedding-004
   const geminiKeys = [
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
@@ -308,18 +277,22 @@ async function generateQueryEmbedding(text: string): Promise<number[]> {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(10000),
           body: JSON.stringify({
             model: "models/text-embedding-004",
-            content: { parts: [{ text: text.substring(0, 8000) }] },
+            content: { parts: [{ text: text.substring(0, 4000) }] },
+            outputDimensionality: 768,
           }),
         }
       );
       if (response.ok) {
         const data = await response.json();
         const embedding = data?.embedding?.values;
-        if (embedding?.length === 768) return embedding;
+        if (embedding?.length >= 768) return embedding.slice(0, 768);
       }
-    } catch { /* continue */ }
+    } catch (err) {
+      console.warn("Gemini embedding error:", err);
+    }
   }
 
   return [];

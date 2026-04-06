@@ -25,7 +25,7 @@ const corsHeaders = {
 // v11 Base: Adam Optimizer, Multi-Layer QNN, Amplitude Encoding
 // ═══════════════════════════════════════════════════════════════
 
-const EMBEDDING_MODEL = "text-embedding-3-small"; // OpenAI
+const EMBEDDING_MODEL = "text-embedding-004"; // Gemini (free, native 768d)
 const EMBEDDING_DIMS = 768;
 
 // ═══ v17 iDanae Lacuna 5: Adversarial Query Detection ═══
