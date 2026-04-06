@@ -81,6 +81,18 @@ const HF_AGENT_REGISTRY: Record<string, string[]> = {
     "coqui/XTTS-v2", "suno/bark", "parler-tts/parler-tts-large-v1",
     "fishaudio/fish-speech-1.5",
   ],
+  // ── Speech Synthesis Core Spaces ──
+  speech_synthesis: [
+    "WariHima/VoiceSpeechMaker-core-Demo",     // Style-Bert-VITS2 voice editor
+    "Eyob-Sol/futurecafe-voice-core",           // Text-to-audio generation
+    "makwanairfan121/neon-memory-core-hud",     // Voice commands + AI memory HUD
+    "shreyas-joshi/CoreReader",                 // Novel narration audio gen
+  ],
+  // ── Voice Cloning ──
+  voice_cloning: [
+    "coqui/XTTS-v2", "RVC-Boss/GPT-SoVITS-WebUI",
+    "Plachta/VALL-E-X",
+  ],
   // ── Translation ──
   translation: [
     "facebook/nllb-200-distilled-600M", "Helsinki-NLP/opus-mt-en-pt",
