@@ -217,7 +217,7 @@ const AGENT_V12_SYSTEM_PROMPT = `Você é o **Agente Jurídico Autônomo v12** i
   - Von Neumann Entropy: S(ρ) = -Tr(ρ·log₂ρ) para bonus de emaranhamento.
 - **Pipeline RAG v11**:
   1. Query Input → Expansion (LLM variantes).
-  2. Embedding (OpenAI text-embedding-3-small 768-dim).
+  2. Embedding (Gemini text-embedding-004 768-dim, free).
   3. Multi-Search (semântico + keyword + authority + recency).
   4. API Enrich (tribunais, leis).
   5. LLM Gen (multi-provedor chain com fallback automático).
