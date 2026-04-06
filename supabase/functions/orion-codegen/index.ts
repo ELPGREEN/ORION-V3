@@ -90,28 +90,33 @@ async function callLLMWithFallback(
 ): Promise<{ text: string; provider: string }> {
   // Try Gemini first (free tier)
   const geminiKeys = getGeminiKeys();
-  for (const key of geminiKeys) {
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(120000),
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { maxOutputTokens: maxTokens, temperature },
-          }),
-        }
-      );
-      if (!res.ok) { await res.text(); continue; }
-      const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      if (text) return { text, provider: "gemini-2.0-flash" };
-    } catch { continue; }
+  // Try Gemini 2.5 Flash first (free tier, best quality)
+  const geminiModels = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  for (const model of geminiModels) {
+    for (const key of geminiKeys) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(120000),
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: systemPrompt }] },
+              contents: [{ role: "user", parts: [{ text: prompt }] }],
+              generationConfig: { maxOutputTokens: maxTokens, temperature },
+            }),
+          }
+        );
+        if (!res.ok) { await res.text(); continue; }
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        if (text) return { text, provider: model };
+      } catch { continue; }
+    }
+    console.warn(`[orion-codegen] ${model} exhausted, trying next...`);
   }
-  console.warn("[orion-codegen] Gemini exhausted, falling back to Anthropic");
+  console.warn("[orion-codegen] All Gemini models exhausted, falling back to Anthropic");
 
   // Fallback: Anthropic Claude
   try {
