@@ -1,12 +1,13 @@
 /**
  * NEUROCORE AI — Voice STT/TTS Hook
- * Free TTS Cascade: Google TTS → Piper WASM → Enhanced Web Speech
- * Zero paid APIs. Maximum naturalness.
+ * Free TTS Cascade: Gemini TTS → Google TTS → Piper WASM → Enhanced Web Speech
+ * Zero paid APIs. Maximum naturalness. Gemini 2.5 Flash Preview TTS as primary.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
+import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
 import { speakWithGoogleTTS, isGoogleTTSAvailable } from "@/lib/tts/googleTTS";
 import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
 
@@ -337,7 +338,8 @@ export function useNeuralVoice(
   /**
    * ═══ Main TTS Cascade (100% FREE) ═══
    * 
-   * Tier 1: Google Translate TTS (edge function proxy) — best PT-BR quality, free
+   * Tier 0: Gemini 2.5 Flash Preview TTS (neural, highest quality, free via 7-key rotation)
+   * Tier 1: Google Translate TTS (edge function proxy) — great PT-BR quality, free
    * Tier 2: Piper WASM (offline neural) — good quality, no network needed
    * Tier 3: Enhanced Web Speech API — browser built-in with prosody variation
    */
@@ -382,6 +384,22 @@ export function useNeuralVoice(
 
     const cleanText = cleanTextForSpeech(text);
     let played = false;
+
+    // ── Tier 0: Gemini 2.5 Flash Preview TTS (neural, free, highest quality) ──
+    if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
+      try {
+        const result = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
+        if (result.played) {
+          played = true;
+          if (result.audio) activeAudioRef.current = result.audio;
+          console.log("[Voice] ✅ Tier 0: Gemini TTS (neural, free)");
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          console.warn("[Voice] Tier 0 Gemini TTS failed, trying Tier 1...");
+        }
+      }
+    }
 
     // ── Tier 1: Google Translate TTS (free, best PT-BR quality) ──
     if (!played && !cascadeAbort.signal.aborted && isGoogleTTSAvailable()) {
