@@ -352,6 +352,7 @@ export function useOrionVoiceClone() {
 
       // If we have a Fish Speech clone, use it
       if (isFishClone && cloneRefPath) {
+        const accessToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fish-speech-clone`,
           {
@@ -359,7 +360,7 @@ export function useOrionVoiceClone() {
             headers: {
               "Content-Type": "application/json",
               apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              Authorization: `Bearer ${accessToken}`,
             },
             body: JSON.stringify({
               text: testText,
