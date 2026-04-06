@@ -432,7 +432,7 @@ export function useOrionVoiceClone() {
     } finally {
       setIsTesting(false);
     }
-  }, [clonedVoiceId, isFishClone, cloneRefPath]);
+  }, [clonedVoiceId, isFishClone, cloneRefPath, session?.access_token]);
 
   const deleteClonedVoice = useCallback(async () => {
     if (!clonedVoiceId) return;
