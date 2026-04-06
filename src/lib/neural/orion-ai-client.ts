@@ -465,6 +465,9 @@ export async function analyzeFrameWithAI(
       const isHelpQuestion = question && /comando|como.faz|onde.fica|central.de.ajuda|instru[çc][aã]o|tutorial|orienta[çc][aã]o/i.test(question);
       const isProposalQuestion = question && /proposta|proposal|apresenta[çc][aã]o|pitch.*invest|investir/i.test(question);
       const isNavigationGuide = question && /onde\s+(fica|est[aá]|acess)|como\s+(chego|acesso|fa[çc]o\s+para)|me\s+lev|navegar|ir\s+(para|pra)|encontrar|acessar/i.test(question);
+      const isLegalQuestion = question && /jur[ií]dic|direito|penal|c[ií]vel|civil|trabalhist|contrato|recurso|apela[çc][aã]o|agravo|embargo|habeas|mandado|peti[çc][aã]o|contesta[çc][aã]o|execu[çc][aã]o|senten[çc]a|processo|tribunal|vara|prazo|audiencia|audi[eê]ncia|peça|pe[çc]a processual|fundamenta[çc][aã]o|jurisprud[eê]ncia|legisla[çc][aã]o|lei\s+\d|artigo\s+\d|c[oó]digo|CPC|CPP|CLT|CC\b|CP\b|STF|STJ|TST|TRT|TJ\b/i.test(question);
+      const isBusinessQuestion = question && /capta[çc][aã]o|recurso.*europ|recursos?\s+eu\b|cordis|horizon|LOI|MOU|term.?sheet|joint.?venture|due.?diligence|supply.?agreement|NDA|parceria.*internac|distribui[çc][aã]o.*internac|compliance|GDPR|LGPD|AML|KYC|empresarial|neg[oó]cio|comercial.*internac|exporta[çc][aã]o|importa[çc][aã]o|invoice|proforma/i.test(question);
+      const isCRMQuestion = question && /cadastr|cliente|CRM|pipeline|lead|contato|oportunidade|deal|neg[oó]cio|como\s+(cadastr|registr|adicionar)|gerenciar\s+(cliente|contato|processo)/i.test(question);
       
       if (isIdentityQuestion) {
         consciousnessContext = buildOrionIdentityPrompt(isOwner);
@@ -477,6 +480,15 @@ export async function analyzeFrameWithAI(
       } else if (isInvestorQuestion || isProposalQuestion) {
         const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
         consciousnessContext = `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQuestion ? `\n\n${buildProposalTemplate()}` : ""}`;
+      } else if (isLegalQuestion) {
+        const { buildBaseContext, buildLegalExpertiseContext } = await import("@/lib/neural/orion-knowledge-base");
+        consciousnessContext = `${buildBaseContext()}\n\n${buildLegalExpertiseContext()}`;
+      } else if (isBusinessQuestion) {
+        const { buildBaseContext, buildBusinessFundraisingContext } = await import("@/lib/neural/orion-knowledge-base");
+        consciousnessContext = `${buildBaseContext()}\n\n${buildBusinessFundraisingContext()}`;
+      } else if (isCRMQuestion) {
+        const { buildBaseContext, buildBusinessFundraisingContext } = await import("@/lib/neural/orion-knowledge-base");
+        consciousnessContext = `${buildBaseContext()}\n\n${buildBusinessFundraisingContext()}`;
       } else if (isProjectQuestion) {
         const { buildBaseContext, buildInvestorContext } = await import("@/lib/neural/orion-knowledge-base");
         consciousnessContext = `${buildBaseContext()}\n\n${buildInvestorContext()}`;
