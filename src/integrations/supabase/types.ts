@@ -5357,6 +5357,77 @@ export type Database = {
           },
         ]
       }
+      orion_autonomous_agents: {
+        Row: {
+          agent_name: string
+          agent_role: string
+          capabilities: Json | null
+          category: string
+          created_at: string | null
+          created_by: string | null
+          creation_reason: string | null
+          failure_count: number | null
+          hf_model_id: string | null
+          id: string
+          invocation_count: number | null
+          is_active: boolean | null
+          metadata: Json | null
+          parent_agent_id: string | null
+          performance_score: number | null
+          success_count: number | null
+          system_prompt: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_name: string
+          agent_role?: string
+          capabilities?: Json | null
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          creation_reason?: string | null
+          failure_count?: number | null
+          hf_model_id?: string | null
+          id?: string
+          invocation_count?: number | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          parent_agent_id?: string | null
+          performance_score?: number | null
+          success_count?: number | null
+          system_prompt?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_name?: string
+          agent_role?: string
+          capabilities?: Json | null
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          creation_reason?: string | null
+          failure_count?: number | null
+          hf_model_id?: string | null
+          id?: string
+          invocation_count?: number | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          parent_agent_id?: string | null
+          performance_score?: number | null
+          success_count?: number | null
+          system_prompt?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orion_autonomous_agents_parent_agent_id_fkey"
+            columns: ["parent_agent_id"]
+            isOneToOne: false
+            referencedRelation: "orion_autonomous_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orion_frameworks: {
         Row: {
           author_agent: string
@@ -5664,6 +5735,39 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      orion_self_analysis: {
+        Row: {
+          agents_created: string[] | null
+          analysis_type: string
+          created_at: string | null
+          difficulty_level: number | null
+          findings: Json | null
+          id: string
+          resolution: string | null
+          target_path: string | null
+        }
+        Insert: {
+          agents_created?: string[] | null
+          analysis_type: string
+          created_at?: string | null
+          difficulty_level?: number | null
+          findings?: Json | null
+          id?: string
+          resolution?: string | null
+          target_path?: string | null
+        }
+        Update: {
+          agents_created?: string[] | null
+          analysis_type?: string
+          created_at?: string | null
+          difficulty_level?: number | null
+          findings?: Json | null
+          id?: string
+          resolution?: string | null
+          target_path?: string | null
         }
         Relationships: []
       }
@@ -7342,6 +7446,48 @@ export type Database = {
           id?: string
           ip_hint?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      voice_profiles: {
+        Row: {
+          created_at: string | null
+          display_name: string
+          elevenlabs_voice_id: string | null
+          id: string
+          is_active: boolean | null
+          is_primary: boolean | null
+          profile_type: string
+          updated_at: string | null
+          user_id: string | null
+          voice_characteristics: Json | null
+          voice_sample_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name: string
+          elevenlabs_voice_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          profile_type?: string
+          updated_at?: string | null
+          user_id?: string | null
+          voice_characteristics?: Json | null
+          voice_sample_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string
+          elevenlabs_voice_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          profile_type?: string
+          updated_at?: string | null
+          user_id?: string | null
+          voice_characteristics?: Json | null
+          voice_sample_url?: string | null
         }
         Relationships: []
       }

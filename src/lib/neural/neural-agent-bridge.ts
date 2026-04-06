@@ -1,8 +1,9 @@
 /**
- * ─── Neural Agent Bridge (v23.0 — 15-Layer Embodied Cognition) ───
+ * ─── Neural Agent Bridge (v24.0 — Autonomous Agent Factory) ───
  * Singleton bridge connecting API agents to the neural society,
- * now enhanced with interoceptive metrics (Layer 6) and somatic
- * marker consultation (Layer 9) for body-informed routing.
+ * now with autonomous agent creation (Orion self-generates agents),
+ * interoceptive metrics (Layer 6), somatic markers (Layer 9),
+ * and 2900+ HF model integration for embodied cognition.
  */
 
 import type { AgentRole, AgentSocietyState, AgentState } from "./multi-agent";
@@ -17,6 +18,7 @@ import { getAgenteEu } from "./agents/self-model-agent";
 import { getCachedInteroceptiveState, type InteroceptiveState } from "./interoception-engine";
 import { consultSomaticMarker, recordSomaticOutcome } from "./somatic-markers";
 import { sendDirect, getP2PPartners, getP2PNetworkStatus, hasResonanceLink, type P2PNetworkMetrics } from "./tesla-wireless-p2p";
+import { orionFactory, type AgentFactoryResult } from "./orion-autonomous-agent";
 
 // ─── Singleton Society State ───
 
@@ -223,4 +225,53 @@ export function resetNeuralBridge(): void {
     const { resetP2PNetwork } = require("./tesla-wireless-p2p");
     resetP2PNetwork();
   } catch { /* optional */ }
+}
+
+/**
+ * Autonomous agent creation: Orion creates a new agent when it
+ * detects difficulty executing, thinking, or reasoning.
+ */
+export async function autoCreateAgentOnDifficulty(
+  taskDescription: string,
+  context: Record<string, unknown>,
+  failedAttempts: number = 0
+): Promise<AgentFactoryResult> {
+  return orionFactory.autoCreateAgent(taskDescription, context, failedAttempts);
+}
+
+/**
+ * Execute a task with auto-recovery: if the primary agent fails,
+ * Orion creates a specialized agent and retries.
+ */
+export async function executeWithAutoRecovery(
+  taskDescription: string,
+  primaryAgentId?: string,
+  maxRetries: number = 2
+): Promise<AgentFactoryResult> {
+  return orionFactory.executeWithAutoRecovery(taskDescription, primaryAgentId, maxRetries);
+}
+
+/**
+ * Get the HF model registry summary (2900+ models).
+ */
+export async function getHFRegistry(): Promise<AgentFactoryResult> {
+  return orionFactory.getRegistry();
+}
+
+/**
+ * Analyze code line-by-line via Orion.
+ */
+export async function orionCodeAnalysis(
+  path?: string,
+  query?: string,
+  mode: "scan" | "find_gaps" | "suggest_improvements" = "scan"
+): Promise<AgentFactoryResult> {
+  return orionFactory.analyzeCode(path, query, mode);
+}
+
+/**
+ * Analyze Supabase schema via Orion.
+ */
+export async function orionSupabaseAnalysis(): Promise<AgentFactoryResult> {
+  return orionFactory.analyzeSupabase();
 }
