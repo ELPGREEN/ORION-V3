@@ -226,3 +226,52 @@ export function resetNeuralBridge(): void {
     resetP2PNetwork();
   } catch { /* optional */ }
 }
+
+/**
+ * Autonomous agent creation: Orion creates a new agent when it
+ * detects difficulty executing, thinking, or reasoning.
+ */
+export async function autoCreateAgentOnDifficulty(
+  taskDescription: string,
+  context: Record<string, unknown>,
+  failedAttempts: number = 0
+): Promise<AgentFactoryResult> {
+  return orionFactory.autoCreateAgent(taskDescription, context, failedAttempts);
+}
+
+/**
+ * Execute a task with auto-recovery: if the primary agent fails,
+ * Orion creates a specialized agent and retries.
+ */
+export async function executeWithAutoRecovery(
+  taskDescription: string,
+  primaryAgentId?: string,
+  maxRetries: number = 2
+): Promise<AgentFactoryResult> {
+  return orionFactory.executeWithAutoRecovery(taskDescription, primaryAgentId, maxRetries);
+}
+
+/**
+ * Get the HF model registry summary (2900+ models).
+ */
+export async function getHFRegistry(): Promise<AgentFactoryResult> {
+  return orionFactory.getRegistry();
+}
+
+/**
+ * Analyze code line-by-line via Orion.
+ */
+export async function orionCodeAnalysis(
+  path?: string,
+  query?: string,
+  mode: "scan" | "find_gaps" | "suggest_improvements" = "scan"
+): Promise<AgentFactoryResult> {
+  return orionFactory.analyzeCode(path, query, mode);
+}
+
+/**
+ * Analyze Supabase schema via Orion.
+ */
+export async function orionSupabaseAnalysis(): Promise<AgentFactoryResult> {
+  return orionFactory.analyzeSupabase();
+}
