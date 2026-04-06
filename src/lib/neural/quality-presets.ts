@@ -4,7 +4,7 @@
  */
 
 export type QualityLevel = 'best' | 'high' | 'default' | 'low' | 'worst';
-export type TTSEngine = 'elevenlabs' | 'piper' | 'browser';
+export type TTSEngine = 'elevenlabs' | 'jarvis' | 'piper' | 'browser';
 
 export interface QualityPreset {
   level: QualityLevel;
