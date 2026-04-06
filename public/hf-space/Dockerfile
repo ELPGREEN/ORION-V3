@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies for pymupdf
+# System dependencies for pymupdf + weasyprint
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libmupdf-dev \
