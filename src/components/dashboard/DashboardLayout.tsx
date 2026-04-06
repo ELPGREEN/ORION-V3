@@ -32,12 +32,39 @@ export default function DashboardLayout() {
   const [hasActiveJob, setHasActiveJob] = useState(false);
   const [dismissedJob, setDismissedJob] = useState(false);
 
+  const location = useLocation();
+  const onboardingCheckedRef = useRef(false);
+
+  // Redirect to auth if not logged in
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
     if (!authLoading && user) {
       syncVoiceEvolutionFromSupabase().catch(() => {});
     }
   }, [user, authLoading, navigate]);
+
+  // First-access onboarding: redirect to ConfigurarIA only once per user
+  useEffect(() => {
+    if (!user || authLoading || onboardingCheckedRef.current) return;
+    // Don't redirect if already on configurar-ia or rede-neural
+    if (location.pathname.includes("configurar-ia") || location.pathname.includes("rede-neural")) {
+      onboardingCheckedRef.current = true;
+      return;
+    }
+    onboardingCheckedRef.current = true;
+    
+    supabase
+      .from("neural_agent_config" as any)
+      .select("onboarding_completed")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data && !(data as any).onboarding_completed) {
+          navigate("/dashboard/rede-neural", { replace: true });
+        }
+      })
+      .catch(() => {});
+  }, [user, authLoading, navigate, location.pathname]);
 
   useEffect(() => {
     const check = () => setHasActiveJob(!!localStorage.getItem(ACTIVE_JOB_KEY));
