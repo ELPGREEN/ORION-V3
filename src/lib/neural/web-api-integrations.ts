@@ -1028,7 +1028,7 @@ export class WebAPIManager {
       .trim();
     if (!text) return null;
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang; u.rate = 1.1; u.pitch = 0.85;
+    u.lang = lang; u.rate = 1.3; u.pitch = 0.85;
     u.onstart = () => { this.env.speechSynthesisActive = true; };
     u.onend = () => { this.env.speechSynthesisActive = false; };
     speechSynthesis.speak(u);
