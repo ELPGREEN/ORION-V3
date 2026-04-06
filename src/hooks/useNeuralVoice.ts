@@ -381,6 +381,7 @@ export function useNeuralVoice(
           voicePrefs.voice_name || "Charon",
           cascadeAbort.signal,
           voicePrefs.style_prompt,
+          voicePrefs.language,
         );
         if (gemResult.played) {
           played = true;

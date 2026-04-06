@@ -19,6 +19,7 @@ export interface VoiceStylePrefs {
   speech_rate: string;
   accent: string;
   tone: string;
+  language: string;
   extra_instructions: string[];
 }
 
@@ -28,6 +29,7 @@ const DEFAULT_PREFS: VoiceStylePrefs = {
   speech_rate: "normal",
   accent: "neutro",
   tone: "profissional",
+  language: "pt-BR",
   extra_instructions: [],
 };
 
@@ -256,6 +258,72 @@ const STYLE_COMMANDS: StyleCommand[] = [
     feedback: "Voz alterada.",
   },
 
+  // Language switching
+  {
+    patterns: [/fal[ea]\s+(em\s+)?ingl[eê]s/i, /speak\s+(in\s+)?english/i, /switch\s+to\s+english/i],
+    apply: () => ({ language: "en-US", accent: "neutro" }),
+    feedback: "Switching to English now.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?espanhol/i, /habla\s+(en\s+)?espa[nñ]ol/i],
+    apply: () => ({ language: "es-ES", accent: "neutro" }),
+    feedback: "Cambiando a español ahora.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?franc[eê]s/i, /parle[rz]?\s+(en\s+)?fran[çc]ais/i],
+    apply: () => ({ language: "fr-FR", accent: "neutro" }),
+    feedback: "Je parle en français maintenant.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?alem[aã]o/i, /sprich\s+deutsch/i],
+    apply: () => ({ language: "de-DE", accent: "neutro" }),
+    feedback: "Ich spreche jetzt Deutsch.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?italiano/i, /parla\s+(in\s+)?italiano/i],
+    apply: () => ({ language: "it-IT", accent: "neutro" }),
+    feedback: "Parlo in italiano adesso.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?japon[eê]s/i, /日本語/],
+    apply: () => ({ language: "ja-JP", accent: "neutro" }),
+    feedback: "日本語で話します。",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?chin[eê]s/i, /fal[ea]\s+(em\s+)?mandarim/i],
+    apply: () => ({ language: "zh-CN", accent: "neutro" }),
+    feedback: "我现在用中文说话。",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?coreano/i, /한국어/],
+    apply: () => ({ language: "ko-KR", accent: "neutro" }),
+    feedback: "한국어로 말하겠습니다.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?[aá]rabe/i],
+    apply: () => ({ language: "ar-SA", accent: "neutro" }),
+    feedback: "سأتحدث بالعربية الآن.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?russo/i],
+    apply: () => ({ language: "ru-RU", accent: "neutro" }),
+    feedback: "Теперь я говорю по-русски.",
+  },
+  {
+    patterns: [/fal[ea]\s+(em\s+)?hindi/i],
+    apply: () => ({ language: "hi-IN", accent: "neutro" }),
+    feedback: "अब मैं हिंदी में बोल रहा हूँ।",
+  },
+  {
+    patterns: [
+      /fal[ea]\s+(em\s+)?portugu[eê]s/i,
+      /volt[ae]\s+(para\s+)?(o\s+)?portugu[eê]s/i,
+      /portugu[eê]s\s+brasileiro/i,
+    ],
+    apply: () => ({ language: "pt-BR", accent: "neutro" }),
+    feedback: "Voltando para português brasileiro.",
+  },
+
   // Reset all
   {
     patterns: [
@@ -273,8 +341,22 @@ const STYLE_COMMANDS: StyleCommand[] = [
 export function buildStylePrompt(prefs: VoiceStylePrefs): string {
   const parts: string[] = [];
 
-  // Base instruction
-  parts.push("Fale de forma natural e fluida em português brasileiro");
+  // Language-aware base instruction
+  const langMap: Record<string, string> = {
+    "pt-BR": "Fale de forma natural e fluida em português brasileiro",
+    "en-US": "Speak naturally and fluently in American English",
+    "es-ES": "Habla de forma natural y fluida en español",
+    "fr-FR": "Parlez de manière naturelle et fluide en français",
+    "de-DE": "Sprechen Sie natürlich und fließend auf Deutsch",
+    "it-IT": "Parla in modo naturale e fluido in italiano",
+    "ja-JP": "自然で流暢な日本語で話してください",
+    "zh-CN": "用自然流畅的中文说话",
+    "ko-KR": "자연스럽고 유창한 한국어로 말하세요",
+    "ar-SA": "تحدث بشكل طبيعي وسلس باللغة العربية",
+    "ru-RU": "Говорите естественно и плавно на русском языке",
+    "hi-IN": "स्वाभाविक और धाराप्रवाह हिंदी में बोलें",
+  };
+  parts.push(langMap[prefs.language] || `Speak naturally in ${prefs.language}`);
 
   // Accent
   if (prefs.accent && prefs.accent !== "neutro") {
@@ -372,6 +454,7 @@ export async function loadVoicePrefs(): Promise<VoiceStylePrefs> {
       speech_rate: data.speech_rate || DEFAULT_PREFS.speech_rate,
       accent: data.accent || DEFAULT_PREFS.accent,
       tone: data.tone || DEFAULT_PREFS.tone,
+      language: (data as any).language || DEFAULT_PREFS.language,
       extra_instructions: data.extra_instructions || [],
     };
     cachedUserId = user.id;
@@ -396,10 +479,11 @@ export async function saveVoicePrefs(prefs: VoiceStylePrefs): Promise<void> {
       speech_rate: prefs.speech_rate,
       accent: prefs.accent,
       tone: prefs.tone,
+      language: prefs.language,
       extra_instructions: prefs.extra_instructions,
-    }, { onConflict: "user_id" });
+    } as any, { onConflict: "user_id" });
 
-    console.log("[Voice Style] ✅ Saved:", prefs.accent, prefs.tone, prefs.speech_rate);
+    console.log("[Voice Style] ✅ Saved:", prefs.language, prefs.accent, prefs.tone);
   } catch (err) {
     console.warn("[Voice Style] Save failed:", err);
   }
