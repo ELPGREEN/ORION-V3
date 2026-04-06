@@ -212,7 +212,7 @@ const App = () => (
                     <Route path="contatos" element={<Navigate to="/dashboard/crm" replace />} />
                     <Route path="tarefas" element={<RoleGuard allowedRoles={["advogado"]}><TarefasPage /></RoleGuard>} />
                     <Route path="escritorio" element={<Navigate to="/dashboard/configuracoes" replace />} />
-                    <Route path="crm" element={<RoleGuard allowedRoles={["advogado"]}><CRMClientes /></RoleGuard>} />
+                    <Route path="crm" element={<RoleGuard allowedRoles={["advogado", "produtor", "nomade", "afiliado"]}><CRMClientes /></RoleGuard>} />
                     <Route path="rede-neural" element={<RoleGuard allowedRoles={["advogado"]}><RedeNeuralPage /></RoleGuard>} />
                     <Route path="publicacoes-admin" element={<RoleGuard allowedRoles={["advogado"]}><PublicacoesAdmin /></RoleGuard>} />
                     <Route path="avaliacoes-admin" element={<Navigate to="/dashboard/publicacoes-admin" replace />} />
