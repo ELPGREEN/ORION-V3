@@ -24,8 +24,8 @@ export function usePrivateKnowledge() {
     setError(null);
 
     try {
-      const { data, error: dbError } = await supabase
-        .from("user_private_knowledge" as any)
+      const { data, error: dbError } = await (supabase as any)
+        .from("user_private_knowledge")
         .select("id, title, encrypted_content, encryption_iv, tags, created_at, updated_at")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
@@ -79,8 +79,8 @@ export function usePrivateKnowledge() {
       try {
         const { ciphertext, iv } = await encryptContent(user.id, content);
 
-        const { data, error: dbError } = await supabase
-          .from("user_private_knowledge" as any)
+        const { data, error: dbError } = await (supabase as any)
+          .from("user_private_knowledge")
           .insert({
             user_id: user.id,
             title,
@@ -110,8 +110,8 @@ export function usePrivateKnowledge() {
     async (id: string) => {
       if (!user?.id) return;
 
-      const { error: dbError } = await supabase
-        .from("user_private_knowledge" as any)
+      const { error: dbError } = await (supabase as any)
+        .from("user_private_knowledge")
         .delete()
         .eq("id", id)
         .eq("user_id", user.id);
@@ -129,8 +129,8 @@ export function usePrivateKnowledge() {
   const deleteAll = useCallback(async () => {
     if (!user?.id) return;
 
-    const { error: dbError } = await supabase
-      .from("user_private_knowledge" as any)
+    const { error: dbError } = await (supabase as any)
+      .from("user_private_knowledge")
       .delete()
       .eq("user_id", user.id);
 
