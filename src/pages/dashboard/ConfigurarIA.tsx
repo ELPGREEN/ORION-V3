@@ -149,11 +149,13 @@ export default function ConfigurarIA() {
     onResult: handleVoiceCommand,
   });
 
-  // High-quality speak (Gemini TTS, not robotic SpeechSynthesis)
+  // Orion's own formant voice (100% offline, zero API)
   const speak = async (text: string) => {
-    if (isGeminiTTSAvailable()) {
-      try { const r = await speakWithGeminiTTS(text, "Iapetus"); if (r.played) return; } catch {}
-    }
+    try {
+      const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
+      const r = await speakWithOrionVoice(text);
+      if (r.played) return;
+    } catch {}
     try { await speakWithPiper(text); } catch {}
   };
 

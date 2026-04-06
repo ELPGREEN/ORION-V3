@@ -35,9 +35,11 @@ export function ProactiveAlerts() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const speak = async (text: string) => {
-    if (isGeminiTTSAvailable()) {
-      try { const r = await speakWithGeminiTTS(text, "Iapetus"); if (r.played) return; } catch {}
-    }
+    try {
+      const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
+      const r = await speakWithOrionVoice(text);
+      if (r.played) return;
+    } catch {}
     try { await speakWithPiper(text); } catch {}
   };
 
