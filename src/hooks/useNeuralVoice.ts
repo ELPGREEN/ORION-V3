@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
 import { speakWithOrionVoice } from "@/lib/tts/orionVoiceEngine";
+import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
 import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/voice-evolution-feedback";
@@ -393,10 +394,37 @@ export function useNeuralVoice(
       }
     }
 
-    // ── Web Speech API REMOVIDO — voz robótica proibida ──
-    // Prefere silêncio a usar SpeechSynthesis robótico
+    // ── FALLBACK 1: Gemini TTS Edge Function (free, natural voice) ──
+    if (!played && !cascadeAbort.signal.aborted) {
+      try {
+        const gemResult = await speakWithGeminiTTS(cleanText, "Iapetus", cascadeAbort.signal);
+        if (gemResult.played) {
+          played = true;
+          if (gemResult.audio) activeAudioRef.current = gemResult.audio;
+          console.log("[Voice] ✅ Gemini TTS");
+        }
+      } catch {}
+    }
+
+    // ── FALLBACK 2: Piper WASM (offline, better than silence) ──
+    if (!played && !cascadeAbort.signal.aborted) {
+      try {
+        played = await speakWithPiper(cleanText);
+        if (played) console.log("[Voice] ✅ Piper WASM fallback");
+      } catch {}
+    }
+
+    // ── LAST RESORT: Web Speech API (robotic but audible) ──
+    if (!played && !cascadeAbort.signal.aborted) {
+      try {
+        await browserSpeak(cleanText);
+        played = true;
+        console.log("[Voice] ✅ Web Speech API fallback");
+      } catch {}
+    }
+
     if (!played) {
-      console.warn("[Voice] Nenhum engine TTS disponível — silêncio preferido a voz robótica");
+      console.warn("[Voice] Nenhum engine TTS disponível");
     }
 
     // ── Feed self-synthesis for evolution reinforcement ──
