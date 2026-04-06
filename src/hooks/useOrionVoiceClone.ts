@@ -394,7 +394,7 @@ export function useOrionVoiceClone() {
           },
           body: JSON.stringify({
             text: testText,
-            voice: "Charon",
+            voice: "Iapetus",
           }),
         }
       );

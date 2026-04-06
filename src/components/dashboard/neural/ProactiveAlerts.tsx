@@ -36,7 +36,7 @@ export function ProactiveAlerts() {
   const [loading, setLoading] = useState(true);
   const speak = async (text: string) => {
     if (isGeminiTTSAvailable()) {
-      try { const r = await speakWithGeminiTTS(text, "Charon"); if (r.played) return; } catch {}
+      try { const r = await speakWithGeminiTTS(text, "Iapetus"); if (r.played) return; } catch {}
     }
     try { await speakWithPiper(text); } catch {}
   };

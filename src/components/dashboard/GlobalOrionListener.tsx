@@ -15,7 +15,7 @@ async function orionSpeak(text: string): Promise<void> {
   try {
     const { speakWithGeminiTTS, isGeminiTTSAvailable } = await import("@/lib/tts/geminiTTS");
     if (isGeminiTTSAvailable()) {
-      const result = await speakWithGeminiTTS(text, "Charon");
+      const result = await speakWithGeminiTTS(text, "Iapetus");
       if (result.played) return;
     }
   } catch {}

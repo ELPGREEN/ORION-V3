@@ -36,7 +36,7 @@ async function speakHighQuality(text: string, abortSignal?: AbortSignal): Promis
   // Try Gemini TTS first
   if (isGeminiTTSAvailable()) {
     try {
-      const result = await speakWithGeminiTTS(clean, "Charon", abortSignal);
+      const result = await speakWithGeminiTTS(clean, "Iapetus", abortSignal);
       if (result.played) return;
     } catch {}
   }

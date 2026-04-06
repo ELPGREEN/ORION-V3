@@ -271,7 +271,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       // Try Gemini TTS first (high quality, free)
       const { speakWithGeminiTTS, isGeminiTTSAvailable } = await import("@/lib/tts/geminiTTS");
       if (isGeminiTTSAvailable()) {
-        const result = await speakWithGeminiTTS(text, "Charon");
+        const result = await speakWithGeminiTTS(text, "Iapetus");
         if (result.played) {
           if (result.audio) audioRef.current = result.audio;
           finalize();
