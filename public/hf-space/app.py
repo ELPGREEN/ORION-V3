@@ -1506,3 +1506,130 @@ async def dataset_statistics(request: Request):
         "total_fields": len(all_keys),
         "fields": field_stats,
     })
+
+
+# ── Text Analysis Endpoints (NEW v7.1) ──
+
+@app.post("/agents/text/detect-ai")
+async def text_detect_ai(request: Request):
+    """Detect if text is AI-generated or human-written."""
+    body = await request.json()
+    text = body.get("text", "")
+    if not text:
+        raise HTTPException(400, "text field required")
+    return JSONResponse(content=detect_ai_text(text))
+
+
+@app.post("/agents/text/grammar")
+async def text_grammar(request: Request):
+    """Check grammar and style issues in text."""
+    body = await request.json()
+    text = body.get("text", "")
+    if not text:
+        raise HTTPException(400, "text field required")
+    return JSONResponse(content=analyze_grammar(text))
+
+
+@app.post("/agents/text/emotion")
+async def text_emotion(request: Request):
+    """Detect emotions in text (joy, sadness, anger, fear, surprise, disgust)."""
+    body = await request.json()
+    text = body.get("text", "")
+    if not text:
+        raise HTTPException(400, "text field required")
+    return JSONResponse(content=detect_emotion(text))
+
+
+@app.post("/agents/text/readability")
+async def text_readability(request: Request):
+    """Compute readability metrics (Flesch Reading Ease, Flesch-Kincaid Grade)."""
+    body = await request.json()
+    text = body.get("text", "")
+    if not text:
+        raise HTTPException(400, "text field required")
+    return JSONResponse(content=analyze_readability(text))
+
+
+@app.post("/agents/text/clickbait")
+async def text_clickbait(request: Request):
+    """Detect clickbait patterns in headlines and text."""
+    body = await request.json()
+    text = body.get("text", "")
+    if not text:
+        raise HTTPException(400, "text field required")
+    return JSONResponse(content=detect_clickbait(text))
+
+
+@app.post("/agents/text/prompt-injection")
+async def text_prompt_injection(request: Request):
+    """Detect prompt injection attempts in text input."""
+    body = await request.json()
+    text = body.get("text", "")
+    if not text:
+        raise HTTPException(400, "text field required")
+    return JSONResponse(content=detect_prompt_injection(text))
+
+
+@app.post("/agents/text/zero-shot")
+async def text_zero_shot(request: Request):
+    """Zero-shot text classification — classify without training.
+    
+    Body: { "text": "...", "labels": ["positive", "negative", "neutral"] }
+    """
+    body = await request.json()
+    text = body.get("text", "")
+    labels = body.get("labels", [])
+    if not text or not labels:
+        raise HTTPException(400, "text and labels fields required")
+    return JSONResponse(content={
+        "status": "ready",
+        "text": text[:200],
+        "candidate_labels": labels,
+        "agents": ["zero_shot_classification", "modernbert_similarity"],
+        "message": "Zero-shot classification requires LLM backend. Use /agents/orchestrate with 'zero-shot classify' query.",
+    })
+
+
+@app.post("/agents/text/semantic-search")
+async def text_semantic_search(request: Request):
+    """Semantic search with embeddings — find similar passages.
+    
+    Body: { "query": "...", "documents": ["doc1", "doc2", ...], "top_k": 5 }
+    """
+    body = await request.json()
+    query = body.get("query", "")
+    documents = body.get("documents", [])
+    if not query:
+        raise HTTPException(400, "query field required")
+    return JSONResponse(content={
+        "status": "ready",
+        "query": query,
+        "document_count": len(documents),
+        "agents": ["semantic_search", "retrieve_and_rerank", "embedding_similarity", "modernbert_similarity"],
+        "models": ["sentence_transformers", "modernbert", "gliner_multiv2"],
+        "message": "Semantic search requires embedding model. Use /agents/orchestrate with 'semantic search' query.",
+    })
+
+
+@app.post("/agents/text/tokenize")
+async def text_tokenize(request: Request):
+    """Analyze text tokenization — compare tokenizers.
+    
+    Body: { "text": "...", "tokenizer": "gpt2|llama|bert|..." }
+    """
+    body = await request.json()
+    text = body.get("text", "")
+    if not text:
+        raise HTTPException(400, "text field required")
+    # Basic whitespace tokenization for demo
+    words = text.split()
+    chars = list(text)
+    return JSONResponse(content={
+        "text": text[:500],
+        "word_tokens": len(words),
+        "char_tokens": len(chars),
+        "words": words[:50],
+        "available_tokenizers": ["gpt2", "llama", "bert", "modernbert", "turkish_bpe", "hindi_bpe", "darija"],
+        "agents": ["tokenizer_playground", "tokenizer_comparison", "bpe_encoder", "chunk_visualizer"],
+        "message": "For model-specific tokenization, use /agents/orchestrate with 'tokenize' query.",
+    })
