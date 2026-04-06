@@ -1,11 +1,11 @@
 /**
- * Orion Formant Speech Synthesizer v3
+ * Orion Formant Speech Synthesizer v4
  * 
- * v3 improvements:
- * - Per-harmonic amplitude profile from 66s of real voice data
- * - Exact harmonic structure: H1=1.0, H2=0.886, H3=0.24, H4=0.088...
- * - OQ=0.504, SQ=2.02, H1-H2=0.4dB (modal phonation)
- * - Spectral tilt 29.3dB via 1-pole filter
+ * v4 improvements:
+ * - 77s of voice data across 9 samples
+ * - 10-harmonic amplitude profile: H1=1.0, H2=0.59, H3=0.63, H4=0.42...
+ * - F0 median=124.4Hz, OQ=0.546, SQ=2.21, H1-H2=4.6dB (breathy-modal)
+ * - Spectral tilt 26.3dB, jitter 8.8%, shimmer 36.9%
  * 
  * 100% client-side, zero API, zero dependencies.
  */
@@ -109,7 +109,7 @@ function tickTilt(state: OnePoleState, input: number): number {
  */
 export async function synthesizeFormant(text: string): Promise<Blob> {
   const phonemes = textToPhonemes(text);
-  console.log(`[Formant TTS v2] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
+  console.log(`[Formant TTS v4] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
   
   const samples = renderPhonemes(phonemes);
   const normalized = normalizeAudio(samples);
@@ -142,7 +142,7 @@ export async function speakFormant(
 
     return { played: !signal?.aborted, audio };
   } catch (err) {
-    console.warn("[Formant TTS v2] Error:", err);
+    console.warn("[Formant TTS v4] Error:", err);
     return { played: false, audio: null };
   }
 }
