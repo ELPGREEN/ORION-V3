@@ -318,25 +318,75 @@ export function useNeuralVoice(
   // speakFast defined after speak below
 
   /**
-   * ═══ Orion Voice — EM CONSTRUÇÃO ═══
-   * 
-   * Voz desativada. Orion apenas ouve e aprende comandos de estilo/idioma.
-   * Quando a voz estiver pronta, reativar com Gemini TTS (Charon).
-   * Config preservada: Gemini TTS + Charon + multi-idioma.
+   * ═══ TTS — Gemini TTS (Charon) — Única voz ativa ═══
+   * Orion TTS desativado. Apenas Gemini Charon funciona.
    */
   const speak = useCallback(async (text: string) => {
     if (!ttsRef.current || typeof window === "undefined") return;
     
-    // Voice is disabled (under construction) — just log and skip
-    console.log("[Voice] 🚧 Voz em construção — resposta apenas em texto");
-    
-    // Still feed AI response to evolution engine for learning
+    try { speechSynthesis.cancel(); } catch {}
+    if (activeAudioRef.current) {
+      try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
+      activeAudioRef.current = null;
+    }
+    speakingRef.current = true;
+    updateAiResponding(true);
+    lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
+    lastSpokenAtRef.current = Date.now();
+    speechBufferRef.current = "";
+    if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
+    clearRestartTimer();
+    try { recRef.current?.stop(); } catch {}
+
+    const cascadeAbort = new AbortController();
+    abortControllerRef.current = cascadeAbort;
+
+    const safetyTimer = setTimeout(() => {
+      if (speakingRef.current) {
+        cascadeAbort.abort();
+        speakingRef.current = false;
+        updateAiResponding(false);
+        resumeSTT();
+      }
+    }, 60000);
+
+    const cleanText = cleanTextForSpeech(text);
     feedAIResponse(text);
-    
-    // Don't speak, just update state
+
+    const voicePrefs = getCachedVoicePrefs();
+    let played = false;
+
+    // ── ONLY: Gemini TTS Charon ──
+    if (!cascadeAbort.signal.aborted) {
+      try {
+        const gemResult = await speakWithGeminiTTS(
+          cleanText,
+          "Charon",
+          cascadeAbort.signal,
+          voicePrefs.style_prompt,
+          voicePrefs.language,
+        );
+        if (gemResult.played) {
+          played = true;
+          if (gemResult.audio) activeAudioRef.current = gemResult.audio;
+          console.log("[Voice] ✅ Gemini TTS Charon");
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          console.warn("[Voice] Gemini TTS failed:", (err as Error)?.message);
+        }
+      }
+    }
+
+    if (!played) console.warn("[Voice] Gemini TTS indisponível — sem fallback");
+
+    clearTimeout(safetyTimer);
+    abortControllerRef.current = null;
+    activeAudioRef.current = null;
     speakingRef.current = false;
     updateAiResponding(false);
-  }, [updateAiResponding]);
+    resumeSTT();
+  }, [clearRestartTimer, resumeSTT, updateAiResponding]);
 
   /** speakFast: delegates to speak (no robotic SpeechSynthesis) */
   const speakFast = useCallback(async (text: string) => {
