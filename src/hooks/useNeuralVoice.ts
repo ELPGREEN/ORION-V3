@@ -366,47 +366,37 @@ export function useNeuralVoice(
     // ── Feed AI response to voice evolution engine ──
     feedAIResponse(text);
 
-    // ── TIER 0: Evolved Voice (level ≥ 70% — voz própria, zero API) ──
-    if (!played && !cascadeAbort.signal.aborted) {
-      try {
-        played = await speakWithEvolvedVoice(cleanText);
-        if (played) {
-          console.log("[Voice] 🧬 Voz Evoluída — síntese autônoma!");
-        }
-      } catch {
-        console.warn("[Voice] Evolved voice não pronta, continuando cascade...");
-      }
-    }
-
-    // ── PRIMARY: Orion Voice Engine (Cache → HF → Gemini → Piper) ──
+    // ── PRIMARY: Orion Formant DNA (100% seu código, zero API) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
         const result = await speakWithOrionVoice(cleanText, cascadeAbort.signal);
         if (result.played) {
           played = true;
           if (result.audio) activeAudioRef.current = result.audio;
-          console.log(`[Voice] ✅ Orion Voice Engine (${result.engine})`);
+          console.log(`[Voice] ✅ Formant DNA (${result.engine}) — voz própria!`);
+        } else {
+          console.warn("[Voice] Formant DNA gerou resultado mas played=false");
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Orion Voice Engine falhou...");
+          console.error("[Voice] ❌ Formant DNA falhou:", (err as Error)?.message);
         }
       }
     }
 
-    // ── FALLBACK 1: Gemini TTS Edge Function (free, natural voice) ──
+    // ── FALLBACK 1: Gemini TTS (só se formant falhar) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
         const gemResult = await speakWithGeminiTTS(cleanText, "Iapetus", cascadeAbort.signal);
         if (gemResult.played) {
           played = true;
           if (gemResult.audio) activeAudioRef.current = gemResult.audio;
-          console.log("[Voice] ✅ Gemini TTS");
+          console.log("[Voice] ✅ Gemini TTS fallback");
         }
       } catch {}
     }
 
-    // ── FALLBACK 2: Piper WASM (offline, better than silence) ──
+    // ── FALLBACK 2: Piper WASM ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
         played = await speakWithPiper(cleanText);
@@ -414,12 +404,12 @@ export function useNeuralVoice(
       } catch {}
     }
 
-    // ── LAST RESORT: Web Speech API (robotic but audible) ──
+    // ── FALLBACK 3: Web Speech API (último recurso) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
         await browserSpeak(cleanText);
         played = true;
-        console.log("[Voice] ✅ Web Speech API fallback");
+        console.log("[Voice] ✅ Web Speech fallback");
       } catch {}
     }
 
