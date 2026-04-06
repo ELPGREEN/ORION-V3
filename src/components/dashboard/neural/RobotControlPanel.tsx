@@ -10,6 +10,7 @@ import {
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Square, RotateCcw,
   Crosshair, Activity, Thermometer, Clock, Send, Zap,
   Cpu, Radio, Mic, Truck, Factory, Globe, Shield,
+  BarChart3, Camera, ScanSearch, Workflow,
 } from "lucide-react";
 import { ros2Bridge, type RobotState, type ROS2CommandLog } from "@/lib/neural/ros2-protocol-bridge";
 import { iotBridge } from "@/lib/neural/iot-device-bridge";
@@ -23,6 +24,10 @@ const ROS2AdvancedPanel = lazy(() => import("./ROS2AdvancedPanel"));
 const IndustrialProtocolsPanel = lazy(() => import("./IndustrialProtocolsPanel"));
 const NetworkIoTPanel = lazy(() => import("./NetworkIoTPanel"));
 const SecurityCompliancePanel = lazy(() => import("./SecurityCompliancePanel"));
+const RobotTelemetryPanel = lazy(() => import("./RobotTelemetryPanel"));
+const WebRTCCameraViewer = lazy(() => import("./WebRTCCameraViewer"));
+const YOLOv8InspectionPanel = lazy(() => import("./YOLOv8InspectionPanel"));
+const NodeREDPanel = lazy(() => import("./NodeREDPanel"));
 
 // ─── Joystick Component ───
 
@@ -566,6 +571,18 @@ export default function RobotControlPanel() {
           <TabsTrigger value="security" className="gap-1.5">
             <Shield className="h-3.5 w-3.5" /> Segurança
           </TabsTrigger>
+          <TabsTrigger value="telemetry" className="gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" /> Telemetria
+          </TabsTrigger>
+          <TabsTrigger value="camera" className="gap-1.5">
+            <Camera className="h-3.5 w-3.5" /> Câmera
+          </TabsTrigger>
+          <TabsTrigger value="yolov8" className="gap-1.5">
+            <ScanSearch className="h-3.5 w-3.5" /> YOLOv8
+          </TabsTrigger>
+          <TabsTrigger value="nodered" className="gap-1.5">
+            <Workflow className="h-3.5 w-3.5" /> Node-RED
+          </TabsTrigger>
         </TabsList>
 
         <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm">Carregando...</div>}>
@@ -595,6 +612,18 @@ export default function RobotControlPanel() {
           </TabsContent>
           <TabsContent value="security">
             <SecurityCompliancePanel />
+          </TabsContent>
+          <TabsContent value="telemetry">
+            <RobotTelemetryPanel />
+          </TabsContent>
+          <TabsContent value="camera">
+            <WebRTCCameraViewer />
+          </TabsContent>
+          <TabsContent value="yolov8">
+            <YOLOv8InspectionPanel />
+          </TabsContent>
+          <TabsContent value="nodered">
+            <NodeREDPanel />
           </TabsContent>
         </Suspense>
       </Tabs>
