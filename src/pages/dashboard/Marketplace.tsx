@@ -12,13 +12,18 @@ export default function Marketplace() {
   const queryClient = useQueryClient();
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ["marketplace-products"],
+    queryKey: ["marketplace-products", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("products")
         .select("*")
         .eq("status", "active")
         .order("created_at", { ascending: false });
+      // Don't show user's own products in marketplace
+      if (user) {
+        query = query.neq("creator_id", user.id);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
