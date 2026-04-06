@@ -80,14 +80,26 @@ export function GlobalOrionListener() {
     }
   }, []);
 
+  // On mobile, use much longer delays to prevent rapid mic on/off loop
+  // which causes OS-level activation sounds on every restart
+  const MAX_RESTART_ATTEMPTS = isMobile ? 5 : 10;
+
   const getRestartDelay = useCallback((reason?: string) => {
-    if (typeof document !== "undefined" && document.hidden) return 5000;
+    if (typeof document !== "undefined" && document.hidden) return 10000;
     const attempts = restartAttemptsRef.current;
-    // Exponential backoff: 500ms, 1s, 2s, 4s, 5s cap
+    if (isMobile) {
+      // Mobile: aggressive backoff to avoid mic loop sounds
+      // 2s, 4s, 8s, 15s, 30s — then stop
+      const backoff = Math.min(2000 * Math.pow(2, attempts), 30000);
+      if (reason === "no-speech" || reason === "end") return Math.max(backoff, 3000);
+      if (reason === "aborted") return Math.max(backoff, 5000);
+      return Math.max(backoff, 3000);
+    }
+    // Desktop: faster restart is fine (no audible mic sounds)
     const backoff = Math.min(500 * Math.pow(2, attempts), 5000);
     if (reason === "aborted") return Math.max(backoff, 1500);
     if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 2000);
-    if (reason === "no-speech" || reason === "end") return Math.max(backoff, isMobile ? 800 : 500);
+    if (reason === "no-speech" || reason === "end") return Math.max(backoff, 500);
     return Math.max(backoff, 1000);
   }, [isMobile]);
 
@@ -172,7 +184,7 @@ export function GlobalOrionListener() {
     try {
       const rec = new SR();
       rec.lang = "pt-BR";
-      rec.continuous = true;
+      rec.continuous = !isMobile; // On mobile, don't use continuous — it causes rapid onend loops
       rec.interimResults = true;
       rec.maxAlternatives = 3;
 
@@ -239,7 +251,15 @@ export function GlobalOrionListener() {
           return;
         }
 
-        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 10);
+        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
+        
+        // On mobile, stop restarting after max attempts to prevent loop
+        if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
+          console.log("[GlobalOrion] Max restart attempts reached on mobile, stopping wake word listener");
+          setWakeWordActive(false);
+          return;
+        }
+        
         const delay = getRestartDelay("end");
         console.log(`[GlobalOrion] Will restart in ${delay}ms (attempt ${restartAttemptsRef.current})`);
         setWakeWordActive(true);
@@ -270,7 +290,14 @@ export function GlobalOrionListener() {
           return;
         }
 
-        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 10);
+        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
+        
+        if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
+          console.log("[GlobalOrion] Max restart attempts reached after errors, stopping");
+          setWakeWordActive(false);
+          return;
+        }
+        
         const delay = getRestartDelay(e.error);
         console.log(`[GlobalOrion] Will restart after error "${e.error}" in ${delay}ms (attempt ${restartAttemptsRef.current})`);
         setWakeWordActive(true);
@@ -343,7 +370,7 @@ export function GlobalOrionListener() {
     }
 
     wakeWordEnabledRef.current = true;
-    const timer = setTimeout(() => startWakeWordListener(), isMobile ? 800 : 400);
+    const timer = setTimeout(() => startWakeWordListener(), isMobile ? 2000 : 400);
     return () => {
       clearTimeout(timer);
       stopWakeWordListener();
