@@ -204,9 +204,9 @@ export function useOrionVoiceClone() {
 
     setIsCloning(true);
     try {
-      // Voice samples are saved in Supabase Storage for future use.
-      // Voice identity is managed locally (Web Speech API voice selection + prosody tuning).
-      // No paid API needed — Orion uses free TTS cascade (Google TTS → Kokoro → Piper → Browser).
+      // Voice samples are saved in Supabase Storage for voice profile reference.
+      // TTS uses Google Gemini 2.5 Flash Preview TTS (100% gratuito, 7-key rotation).
+      // Available voices: Zephyr, Puck, Charon, Kore, Fenrir, Leda, Orus, Aoede.
       const persistedCount = samples.filter((s) => s.persisted).length;
       
       if (persistedCount < 1) {
@@ -214,15 +214,16 @@ export function useOrionVoiceClone() {
         return;
       }
 
-      // Save a local voice profile marker
-      const profileId = `local_${user.id.slice(0, 8)}_${Date.now()}`;
+      // Select voice based on user profile — creator gets special voice
+      const selectedVoice = isCreator ? "Charon" : "Puck";
+      const profileId = `gemini_${selectedVoice}_${user.id.slice(0, 8)}_${Date.now()}`;
       const saved = await updateConfig({ orion_voice_id: profileId } as any);
       
       if (saved) {
         toast.success(
           isCreator
-            ? "Perfil vocal do criador registrado! Orion usará voz otimizada."
-            : "Perfil vocal registrado! Orion adaptará a voz."
+            ? `Perfil vocal Gemini "${selectedVoice}" do criador registrado!`
+            : `Perfil vocal Gemini "${selectedVoice}" registrado! Orion usará voz neural.`
         );
       }
 
@@ -238,9 +239,14 @@ export function useOrionVoiceClone() {
   const testVoice = useCallback(async (text?: string) => {
     setIsTesting(true);
     try {
-      // Use Google TTS (free) for voice testing
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-tts`,
+      // Extract Gemini voice from profile ID (e.g., "gemini_Charon_abc12345_...")
+      const voiceFromProfile = clonedVoiceId?.startsWith("gemini_")
+        ? clonedVoiceId.split("_")[1]
+        : "Charon";
+
+      // Primary: Gemini TTS (free, neural quality)
+      let response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-tts`,
         {
           method: "POST",
           headers: {
@@ -249,16 +255,36 @@ export function useOrionVoiceClone() {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            text: text || "Olá! Esta é a voz do Orion. O que achou?",
-            lang: "pt-br",
+            text: text || "Olá! Eu sou o Orion, seu assistente neural. Minha voz é gerada pelo Google Gemini, totalmente gratuita.",
+            voice: voiceFromProfile,
           }),
         }
       );
 
-      if (!response.ok) throw new Error("TTS failed");
-
+      // Check if Gemini returned audio or fallback signal
       const contentType = response.headers.get("Content-Type") || "";
-      if (contentType.includes("audio")) {
+      if (!response.ok || !contentType.includes("audio")) {
+        console.warn("[TestVoice] Gemini TTS unavailable, falling back to Google Translate TTS");
+        // Fallback: Google Translate TTS (always works)
+        response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-tts`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              text: text || "Olá! Eu sou o Orion, seu assistente neural.",
+              lang: "pt-br",
+            }),
+          }
+        );
+      }
+
+      const finalContentType = response.headers.get("Content-Type") || "";
+      if (finalContentType.includes("audio")) {
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
@@ -273,7 +299,7 @@ export function useOrionVoiceClone() {
     } finally {
       setIsTesting(false);
     }
-  }, []);
+  }, [clonedVoiceId]);
 
   const deleteClonedVoice = useCallback(async () => {
     if (!clonedVoiceId) return;
