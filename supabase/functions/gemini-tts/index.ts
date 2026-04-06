@@ -23,7 +23,7 @@ const DEFAULT_PROMPT = "Fale de forma natural, clara e fluida em português bras
 /**
  * Round-robin key rotation across 7 Gemini API keys
  */
-function getGeminiKey(): string {
+function getAllGeminiKeys(): string[] {
   const keys = [
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
@@ -35,8 +35,9 @@ function getGeminiKey(): string {
   ].filter(Boolean) as string[];
 
   if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured");
+  // Shuffle starting from round-robin index so we spread load
   const idx = Math.floor(Date.now() / 1000) % keys.length;
-  return keys[idx];
+  return [...keys.slice(idx), ...keys.slice(0, idx)];
 }
 
 /**
