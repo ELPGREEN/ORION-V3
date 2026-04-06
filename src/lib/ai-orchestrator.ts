@@ -90,6 +90,9 @@ export interface AIResponse {
     pipelineCompletenessScore?: number;
     pipelineJudgeGrade?: string;
     pipelineCacheHit?: boolean;
+    antiHallucinationConfidence?: number;
+    antiHallucinationFE?: number;
+    antiHallucinationGrounding?: number;
   };
   // Full pipeline output for components that need it
   pipelineOutput?: PipelineOutput;
