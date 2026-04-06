@@ -1,12 +1,12 @@
 /**
- * Orion Voice Engine — Formant + RVC Voice Conversion
+ * Orion Voice Engine — Formant Synthesis (100% local)
  * 
  * CASCADE:
  * 1. Local Cache (IndexedDB) → instant, 0ms
  * 2. Formant Synthesis → ~50ms, 100% offline
- * 3. RVC Post-processing → ~2-5s, converts to cloned voice via HF Space
  * 
- * If RVC is unavailable, falls back to raw formant voice.
+ * RVC post-processing disabled (no Spaces deployed).
+ * Re-enable when HF Spaces are live.
  */
 
 import { getCachedAudio, cacheAudio } from "./voiceCache";
@@ -17,24 +17,8 @@ export interface OrionVoiceResult {
   engine: string;
 }
 
-// RVC availability cache (check once per session)
-let _rvcAvailable: boolean | null = null;
-let _rvcCheckPromise: Promise<boolean> | null = null;
-
-async function checkRVCOnce(): Promise<boolean> {
-  if (_rvcAvailable !== null) return _rvcAvailable;
-  if (_rvcCheckPromise) return _rvcCheckPromise;
-  
-  _rvcCheckPromise = import("./rvcClient").then(m => m.isRVCAvailable()).catch(() => false);
-  _rvcAvailable = await _rvcCheckPromise;
-  _rvcCheckPromise = null;
-  
-  console.log(`[Orion Voice] RVC available: ${_rvcAvailable}`);
-  return _rvcAvailable;
-}
-
 /**
- * Synthesize speech using Orion's formant engine + RVC voice conversion
+ * Synthesize speech using Orion's formant engine
  */
 export async function speakWithOrionVoice(
   text: string,
@@ -80,42 +64,11 @@ export async function speakWithOrionVoice(
 
   if (signal?.aborted) return fail;
 
-  // ── 3. RVC POST-PROCESSING (if available) ──
-  let finalBlob = formantBlob;
-  let engine = "formant-iapetus";
+  // ── 3. CACHE & PLAY ──
+  const engine = "formant-iapetus";
+  cacheAudio(cleanText, formantBlob, engine).catch(() => {});
 
-  try {
-    const rvcReady = await checkRVCOnce();
-    if (rvcReady && !signal?.aborted) {
-      console.log("[Orion Voice] Sending to RVC for voice conversion...");
-      const { convertWithRVC, convertWithRVCDirect } = await import("./rvcClient");
-      
-      // Try Gradio client first, then direct HTTP
-      let rvcBlob = await convertWithRVC(formantBlob, undefined, signal);
-      if (!rvcBlob && !signal?.aborted) {
-        rvcBlob = await convertWithRVCDirect(formantBlob, undefined, signal);
-      }
-
-      if (rvcBlob && rvcBlob.size > 100) {
-        finalBlob = rvcBlob;
-        engine = "rvc-orion";
-        console.log(`[Orion Voice] RVC conversion successful: ${rvcBlob.size} bytes`);
-      } else {
-        console.log("[Orion Voice] RVC unavailable, using raw formant");
-      }
-    }
-  } catch (err: any) {
-    if (err?.name !== "AbortError") {
-      console.warn("[Orion Voice] RVC post-processing failed, using formant:", err?.message);
-    }
-  }
-
-  if (signal?.aborted) return fail;
-
-  // ── 4. CACHE & PLAY ──
-  cacheAudio(cleanText, finalBlob, engine).catch(() => {});
-
-  const result = await playBlob(finalBlob, signal);
+  const result = await playBlob(formantBlob, signal);
   if (result.played) {
     return { ...result, engine };
   }
@@ -163,7 +116,7 @@ async function playBlob(blob: Blob, signal?: AbortSignal): Promise<OrionVoiceRes
   }
 }
 
-/** Orion voice is always available — formant is local, RVC is bonus */
+/** Orion voice is always available — formant is 100% local */
 export function isOrionVoiceAvailable(): boolean {
   return true;
 }
