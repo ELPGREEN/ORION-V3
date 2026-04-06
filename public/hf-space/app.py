@@ -2195,3 +2195,162 @@ async def qa_recommend(request: Request):
             "answer_verification",
         ],
     })
+
+
+# ── Document Analysis Endpoints (NEW v7.4) ──
+
+DOCUMENT_ANALYSIS_MODELS = {
+    "mineru_v1": {"type": "ocr_extraction", "output": ["markdown", "json"], "speed": "medium", "description": "MinerU: PDF to Markdown/JSON extraction"},
+    "paddleocr_v4": {"type": "ocr", "languages": 80, "speed": "fast", "description": "PaddleOCR-VL: multilingual OCR with visual language"},
+    "surya_v2": {"type": "ocr_layout", "languages": 90, "speed": "medium", "description": "Surya: OCR + layout + reading order + table recognition"},
+    "nougat_base": {"type": "academic_ocr", "output": ["markup", "latex"], "speed": "slow", "description": "Nougat: academic PDF to markup (equations, formulas)"},
+    "donut_base": {"type": "document_understanding", "tasks": ["parsing", "classification", "qa"], "speed": "fast", "description": "Donut: OCR-free document understanding transformer"},
+    "dit_base": {"type": "layout_analysis", "classes": ["text", "title", "list", "table", "figure"], "speed": "fast", "description": "DiT: document image transformer for layout analysis"},
+    "layoutlmv3": {"type": "layout_understanding", "tasks": ["ner", "classification", "qa"], "speed": "medium", "description": "LayoutLMv3: multimodal document AI"},
+    "grobid": {"type": "bibliography", "output": ["tei_xml", "bibtex"], "speed": "fast", "description": "GROBID: machine learning for extracting bibliographic data"},
+    "got_ocr2": {"type": "general_ocr", "modalities": ["text", "math", "sheet_music", "charts"], "speed": "medium", "description": "GOT-OCR2: general OCR theory model"},
+    "trocr_large": {"type": "handwriting_ocr", "tasks": ["printed", "handwritten"], "speed": "medium", "description": "TrOCR: transformer-based OCR for printed and handwritten text"},
+    "pix2struct_base": {"type": "visual_qa", "tasks": ["chart_qa", "infographic_qa", "ui_understanding"], "speed": "medium", "description": "Pix2Struct: screenshot parsing for visual language understanding"},
+    "doctr_v1": {"type": "ocr_detection", "tasks": ["detection", "recognition"], "speed": "fast", "description": "docTR: document text recognition with deep learning"},
+}
+
+DOCUMENT_ANALYSIS_PIPELINES = {
+    "pdf_to_markdown": {
+        "steps": ["text_extraction", "layout_analysis", "table_extraction", "markdown_conversion"],
+        "models": ["mineru_v1", "surya_v2", "nougat_base"],
+        "description": "Convert PDF to structured Markdown preserving layout",
+    },
+    "receipt_parsing": {
+        "steps": ["ocr", "field_extraction", "structured_output"],
+        "models": ["donut_base", "paddleocr_v4", "doctr_v1"],
+        "description": "Extract structured data from receipts and invoices",
+    },
+    "academic_paper": {
+        "steps": ["bibliography_extraction", "equation_detection", "figure_extraction", "abstract_extraction"],
+        "models": ["grobid", "nougat_base", "dit_base"],
+        "description": "Parse academic papers extracting citations, equations, figures",
+    },
+    "legal_analysis": {
+        "steps": ["clause_extraction", "entity_detection", "redaction", "compliance_check"],
+        "models": ["layoutlmv3", "dit_base", "doctr_v1"],
+        "description": "Analyze legal documents for clauses, entities, compliance",
+    },
+    "resume_screening": {
+        "steps": ["text_extraction", "skill_extraction", "experience_parsing", "scoring"],
+        "models": ["donut_base", "layoutlmv3", "paddleocr_v4"],
+        "description": "Parse and score resumes for ATS compatibility",
+    },
+    "handwriting_recognition": {
+        "steps": ["detection", "segmentation", "recognition", "post_processing"],
+        "models": ["trocr_large", "got_ocr2", "surya_v2"],
+        "description": "Recognize handwritten text from documents and forms",
+    },
+}
+
+
+def recommend_doc_model(task: str, has_tables: bool = False, has_equations: bool = False) -> list:
+    """Recommend best document analysis models for a task."""
+    t = task.lower()
+    if any(kw in t for kw in ["receipt", "invoice", "form", "id card"]):
+        return ["donut_base", "paddleocr_v4", "doctr_v1"]
+    if any(kw in t for kw in ["academic", "paper", "arxiv", "citation", "bibliography"]):
+        return ["grobid", "nougat_base", "dit_base"]
+    if any(kw in t for kw in ["handwrit", "manuscri"]):
+        return ["trocr_large", "got_ocr2", "surya_v2"]
+    if any(kw in t for kw in ["resume", "cv", "curriculum"]):
+        return ["donut_base", "layoutlmv3", "paddleocr_v4"]
+    if any(kw in t for kw in ["legal", "contract", "clause"]):
+        return ["layoutlmv3", "dit_base", "doctr_v1"]
+    if has_equations:
+        return ["nougat_base", "got_ocr2", "pix2struct_base"]
+    if has_tables:
+        return ["surya_v2", "mineru_v1", "dit_base"]
+    return ["mineru_v1", "surya_v2", "paddleocr_v4", "doctr_v1"]
+
+
+@app.get("/agents/documents/models")
+async def doc_models():
+    """List all document analysis models with capabilities."""
+    return JSONResponse(content={
+        "models": DOCUMENT_ANALYSIS_MODELS,
+        "total_models": len(DOCUMENT_ANALYSIS_MODELS),
+    })
+
+
+@app.get("/agents/documents/pipelines")
+async def doc_pipelines():
+    """List pre-built document analysis pipelines."""
+    return JSONResponse(content={
+        "pipelines": DOCUMENT_ANALYSIS_PIPELINES,
+        "total_pipelines": len(DOCUMENT_ANALYSIS_PIPELINES),
+    })
+
+
+@app.post("/agents/documents/recommend")
+async def doc_recommend(request: Request):
+    """Recommend best document analysis approach."""
+    body = await request.json()
+    task = body.get("task", "")
+    if not task:
+        raise HTTPException(400, "task field required")
+
+    has_tables = body.get("has_tables", False)
+    has_equations = body.get("has_equations", False)
+    recommended = recommend_doc_model(task, has_tables, has_equations)
+
+    # Match pipeline
+    matched_pipeline = None
+    t = task.lower()
+    for name, pipeline in DOCUMENT_ANALYSIS_PIPELINES.items():
+        if any(kw in t for kw in name.split("_")):
+            matched_pipeline = name
+            break
+
+    return JSONResponse(content={
+        "task": task,
+        "recommended_models": recommended[:5],
+        "model_details": {m: DOCUMENT_ANALYSIS_MODELS[m] for m in recommended[:5] if m in DOCUMENT_ANALYSIS_MODELS},
+        "matched_pipeline": matched_pipeline,
+        "pipeline_info": DOCUMENT_ANALYSIS_PIPELINES.get(matched_pipeline, {}) if matched_pipeline else None,
+        "agents_available": sum(len(v) for v in AGENT_CATEGORIES.get("pdf", {}).values() if isinstance(v, list)),
+    })
+
+
+@app.post("/agents/documents/analyze")
+async def doc_analyze(request: Request):
+    """Route document analysis request to optimal pipeline.
+
+    Body: { "task": "...", "document_type": "pdf|image|receipt|academic|legal|resume", "language": "en" }
+    """
+    body = await request.json()
+    task = body.get("task", "extract text")
+    doc_type = body.get("document_type", "pdf")
+    language = body.get("language", "en")
+
+    type_to_pipeline = {
+        "receipt": "receipt_parsing",
+        "invoice": "receipt_parsing",
+        "academic": "academic_paper",
+        "paper": "academic_paper",
+        "legal": "legal_analysis",
+        "contract": "legal_analysis",
+        "resume": "resume_screening",
+        "cv": "resume_screening",
+        "handwritten": "handwriting_recognition",
+    }
+
+    pipeline = type_to_pipeline.get(doc_type, "pdf_to_markdown")
+    recommended = recommend_doc_model(task)
+    pipeline_info = DOCUMENT_ANALYSIS_PIPELINES.get(pipeline, {})
+
+    return JSONResponse(content={
+        "status": "ready",
+        "task": task,
+        "document_type": doc_type,
+        "language": language,
+        "pipeline": pipeline,
+        "pipeline_info": pipeline_info,
+        "recommended_models": recommended,
+        "agents": [pipeline, recommended[0] if recommended else "mineru_v1", "post_processing"],
+        "message": f"Document analysis via {pipeline} pipeline. Use /agents/orchestrate with your document task for full routing.",
+    })

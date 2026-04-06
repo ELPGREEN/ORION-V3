@@ -7,9 +7,9 @@ sdk: docker
 pinned: false
 ---
 
-# ELP Neural Proxy v7.3
+# ELP Neural Proxy v7.4
 
-Complete AI Agent Swarm with **3000+ agents** — PDF, Vision, **Object Detection**, Code Generation, Code Analysis, Text Analysis, **Question Answering**, Fine-Tuning, Dataset Creation, Image/Video/Audio Generation, 3D, NLP, Benchmarking.
+Complete AI Agent Swarm with **3100+ agents** — PDF, Vision, **Object Detection**, Code Generation, Code Analysis, Text Analysis, **Question Answering**, **Document Analysis**, Fine-Tuning, Dataset Creation, Image/Video/Audio Generation, 3D, NLP, Benchmarking.
 
 ## Endpoints
 
