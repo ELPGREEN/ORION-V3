@@ -10,6 +10,7 @@ import {
 import { VS } from "@/components/dashboard/neural/useVisionProcessing";
 import { matchLearnedPriors, learnFromDetection, canIdentifyLocally, getLearningStats } from "@/lib/neural/vision-local-learning";
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
+import { runVisionGate, buildGatedResponse, type LocalDetectionContext } from "@/lib/neural/hf-vision-gate";
 
 // ═══ Local-first mode flag — set to true for 100% offline operation ═══
 let _localFirstMode = true;
