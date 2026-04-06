@@ -68,7 +68,7 @@ export function GlobalOrionListener() {
   const restartAttemptsRef = useRef(0);
   const startInFlightRef = useRef(false);
 
-  const isOnNeuralPage = location.pathname.includes("rede-neural");
+  const isOnNeuralPage = location.pathname.includes("rede-neural") || location.pathname === "/consulta";
   const isMobile = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
 
   const clearRestartTimer = useCallback(() => {
