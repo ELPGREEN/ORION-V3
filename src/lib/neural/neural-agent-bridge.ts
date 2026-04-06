@@ -18,6 +18,7 @@ import { getAgenteEu } from "./agents/self-model-agent";
 import { getCachedInteroceptiveState, type InteroceptiveState } from "./interoception-engine";
 import { consultSomaticMarker, recordSomaticOutcome } from "./somatic-markers";
 import { sendDirect, getP2PPartners, getP2PNetworkStatus, hasResonanceLink, type P2PNetworkMetrics } from "./tesla-wireless-p2p";
+import { orionFactory, type AgentFactoryResult } from "./orion-autonomous-agent";
 
 // ─── Singleton Society State ───
 
