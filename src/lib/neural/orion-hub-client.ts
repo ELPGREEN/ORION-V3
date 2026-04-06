@@ -112,14 +112,16 @@ export async function speakJarvis(text: string, speed = 1.0): Promise<TTSResult>
   let audioBlob: Blob;
   let audioUrl: string;
 
-  if (result && typeof result === "object" && "data" in result) {
+  const resultAny = result as any;
+
+  if (resultAny && typeof resultAny === "object" && "data" in resultAny) {
     // Base64 audio data
-    const binaryStr = atob(result.data);
+    const binaryStr = atob(resultAny.data);
     const bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
     audioBlob = new Blob([bytes], { type: "audio/wav" });
     audioUrl = URL.createObjectURL(audioBlob);
-  } else if (typeof result === "string" && result.startsWith("http")) {
+  } else if (typeof resultAny === "string" && resultAny.startsWith("http")) {
     // File URL from Gradio
     audioUrl = result;
     const resp = await fetch(result);
