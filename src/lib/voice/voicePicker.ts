@@ -129,17 +129,14 @@ export function initVoicePicker(): void {
 }
 
 /**
- * Speech parameters tuned for warm, natural masculine voice.
+ * Speech parameters tuned for fast, real conversational voice.
  * 
- * rate 1.05 — Natural conversational pace (not rushed)
- * pitch 0.85 — Warm baritone range, not too deep to distort
- * volume 0.95 — Slightly below max to avoid clipping
- * 
- * These values work best with neural/natural voices.
- * On robotic synthesizers, pitch < 0.8 causes unnatural artifacts.
+ * rate 1.18 — Fluent conversational pace (like a real person talking)
+ * pitch 0.92 — Close to natural pitch, not artificially deep
+ * volume 0.92 — Clean without clipping
  */
 export const ORION_VOICE_PARAMS = {
-  rate: 1.05,
-  pitch: 0.85,
-  volume: 0.95,
+  rate: 1.18,
+  pitch: 0.92,
+  volume: 0.92,
 } as const;
