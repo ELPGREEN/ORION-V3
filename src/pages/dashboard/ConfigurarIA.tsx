@@ -144,10 +144,18 @@ export default function ConfigurarIA() {
     personality_prompt: "",
   });
 
-  const { isListening, isSupported, isSpeaking, toggleListening, speak, stopSpeaking } = useVoiceInput({
+  const { isListening, isSupported, isSpeaking, toggleListening, stopSpeaking } = useVoiceInput({
     lang: "pt-BR",
     onResult: handleVoiceCommand,
   });
+
+  // High-quality speak (Gemini TTS, not robotic SpeechSynthesis)
+  const speak = async (text: string) => {
+    if (isGeminiTTSAvailable()) {
+      try { const r = await speakWithGeminiTTS(text, "Charon"); if (r.played) return; } catch {}
+    }
+    try { await speakWithPiper(text); } catch {}
+  };
 
   // Load config into local state
   useEffect(() => {
