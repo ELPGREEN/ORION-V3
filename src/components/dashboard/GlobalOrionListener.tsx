@@ -37,6 +37,7 @@ function orionSpeak(text: string): Promise<void> {
 const ORION_WAKE_REGEX = /([óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\b/i;
 
 const PERMISSIONS_KEY = "orion_permissions_granted";
+const PERMISSIONS_DISMISSED_KEY = "orion_permissions_dismissed";
 
 /** Extract command portion after the wake word */
 function extractCommand(transcript: string): string {
