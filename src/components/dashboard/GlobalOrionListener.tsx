@@ -8,7 +8,25 @@ import { PlasmaCore } from "@/components/home/PlasmaCore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserPlan } from "@/hooks/useUserPlan";
 import { OrionAccessGate } from "@/components/OrionAccessGate";
+import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 
+/** Speak text using the unified Orion voice */
+function orionSpeak(text: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis) { resolve(); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "pt-BR";
+    u.rate = ORION_VOICE_PARAMS.rate;
+    u.pitch = ORION_VOICE_PARAMS.pitch;
+    u.volume = ORION_VOICE_PARAMS.volume;
+    const voice = getOrionVoice();
+    if (voice) u.voice = voice;
+    u.onend = () => resolve();
+    u.onerror = () => resolve();
+    window.speechSynthesis.speak(u);
+  });
+}
 // ═══════════════════════════════════════════════════════════
 // ⚡ Audição Relâmpago — Lightning Hearing Engine
 // Global Orion Listener — Alexa-style wake word + command capture
