@@ -316,10 +316,10 @@ export function useNeuralVoice(
   /**
    * ═══ Main TTS — Gemini TTS Primário (100% FREE, ~2s latência) ═══
    * 
-   * PRIMARY: Gemini TTS (Charon voice — rápido, natural, gratuito)
-   * CLONE BONUS: Se Fish Speech clone está disponível E já tem cache, usa clone
-   * FALLBACK: Piper WASM → Web Speech API
-   * Google Translate TTS removido — qualidade inferior.
+   * PRIMARY: Gemini TTS (Iapetus voice — rápido, natural, gratuito)
+   * FALLBACK 1: Orion Formant DNA (100% offline)
+   * FALLBACK 2: Piper WASM
+   * FALLBACK 3: Web Speech API
    */
   const speak = useCallback(async (text: string) => {
     if (!ttsRef.current || typeof window === "undefined") return;
