@@ -236,7 +236,9 @@ export function GlobalOrionListener() {
           return;
         }
 
-        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 6);
+        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 10);
+        const delay = getRestartDelay("end");
+        console.log(`[GlobalOrion] Will restart in ${delay}ms (attempt ${restartAttemptsRef.current})`);
         setWakeWordActive(true);
         clearRestartTimer();
         restartTimerRef.current = setTimeout(() => {
@@ -245,7 +247,7 @@ export function GlobalOrionListener() {
           } else {
             setWakeWordActive(false);
           }
-        }, getRestartDelay("end") + restartAttemptsRef.current * 80);
+        }, delay);
       };
 
       rec.onerror = (e: any) => {
@@ -265,7 +267,9 @@ export function GlobalOrionListener() {
           return;
         }
 
-        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 6);
+        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 10);
+        const delay = getRestartDelay(e.error);
+        console.log(`[GlobalOrion] Will restart after error "${e.error}" in ${delay}ms (attempt ${restartAttemptsRef.current})`);
         setWakeWordActive(true);
         clearRestartTimer();
         restartTimerRef.current = setTimeout(() => {
@@ -274,7 +278,7 @@ export function GlobalOrionListener() {
           } else {
             setWakeWordActive(false);
           }
-        }, getRestartDelay(e.error) + restartAttemptsRef.current * 80);
+        }, delay);
       };
 
       wakeRecRef.current = rec;
