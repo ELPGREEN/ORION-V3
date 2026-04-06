@@ -293,7 +293,21 @@ Deno.serve(async (req) => {
             }
           } catch (e) {
             console.error(`❌ Legal batch failed:`, e.message);
-            results.legal.failed += batch.length;
+            // Fallback: one-by-one with HF support
+            for (const b of batch) {
+              const text = `${b.title}\n\n${b.content}`.trim();
+              try {
+                const { embedding } = await generateEmbedding(text, providers);
+                const vectorStr = `[${embedding.join(",")}]`;
+                await supabase.from("legal_embeddings")
+                  .update({ embedding: vectorStr })
+                  .eq("id", b.id);
+                results.legal.processed++;
+                console.log(`✅ Legal [fallback]: ${b.title?.slice(0, 60)}...`);
+              } catch {
+                results.legal.failed++;
+              }
+            }
           }
 
           if (i + BATCH_SIZE < legalItems.length) {
