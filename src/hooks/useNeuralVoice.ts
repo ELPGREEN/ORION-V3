@@ -11,7 +11,7 @@ import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
 import { speakWithFishClone, isFishCloneAvailable, getClonedVoiceRefPath } from "@/lib/tts/fishSpeechTTS";
 import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
-import { speakWithGoogleTTS, isGoogleTTSAvailable } from "@/lib/tts/googleTTS";
+// Google Translate TTS removido — qualidade inferior, latência inconsistente
 import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
 import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 
