@@ -7,15 +7,22 @@ sdk: docker
 pinned: false
 ---
 
-# ELP Neural Proxy v7.2
+# ELP Neural Proxy v7.3
 
-Complete AI Agent Swarm with **2900+ agents** — PDF, Vision, **Object Detection**, Code Generation, Code Analysis, Text Analysis, Fine-Tuning, Dataset Creation, Image/Video/Audio Generation, 3D, NLP, Benchmarking.
+Complete AI Agent Swarm with **3000+ agents** — PDF, Vision, **Object Detection**, Code Generation, Code Analysis, Text Analysis, **Question Answering**, Fine-Tuning, Dataset Creation, Image/Video/Audio Generation, 3D, NLP, Benchmarking.
 
 ## Endpoints
 
 ### Core
 - `GET /` — Health + capability manifest
 - `POST /` — PDF → JSON | `POST /markdown` — PDF → MD | `POST /html` — PDF → HTML | `POST /generate-pdf` — HTML → PDF
+
+### Question Answering (NEW v7.3)
+- `GET /agents/qa/domains` — All QA domain specializations (medical, legal, financial, scientific, education, general)
+- `GET /agents/qa/models` — QA models with capabilities (extractive, generative, visual, table, audio)
+- `POST /agents/qa/classify` — Classify QA type and recommend models
+- `POST /agents/qa/answer` — Route QA request to optimal agent pipeline
+- `POST /agents/qa/recommend` — Recommend best QA approach for a use case
 
 ### Agent Orchestration
 - `POST /agents/orchestrate` — Route query → optimal agent pipeline
@@ -38,7 +45,7 @@ Complete AI Agent Swarm with **2900+ agents** — PDF, Vision, **Object Detectio
 - `GET /finetune/methods` | `/models` | `/datasets` | `POST /finetune/configure` | `/estimate`
 - `GET /dataset/schemas` | `/formats` | `POST /dataset/configure` | `/validate` | `/convert` | `/deduplicate` | `/statistics`
 
-## Categories (2900+ agents)
+## Categories (3000+ agents)
 
 | Category | Agents | Key |
 |----------|--------|-----|
@@ -46,6 +53,7 @@ Complete AI Agent Swarm with **2900+ agents** — PDF, Vision, **Object Detectio
 | `code_gen` | 300+ | 42 langs, 19 models, 11 webapp builders |
 | `code_analysis` | 350+ | Security, quality, intelligence |
 | `text_nlp` | 250+ | Analysis, search, tokenization, classification, multilingual |
+| `question_answering` | **120+** | Extractive, Generative, Document, Visual, Domain, Multilingual, Table, Audio QA |
 | `reasoning` | 300+ | Legal, financial, medical |
 | `fine_tuning` | 200+ | LoRA to GGUF |
 | `dataset_creation` | 180+ | Generate, convert, label |
@@ -78,7 +86,35 @@ Complete AI Agent Swarm with **2900+ agents** — PDF, Vision, **Object Detectio
 - Object counting with ROI
 - Abandoned object detection
 
+## Question Answering v7.3
+
+### QA Types
+| Type | Models | Use Case |
+|------|--------|----------|
+| Extractive | mDeBERTa, RoBERTa, XLM-R, Longformer | Find answers in given text |
+| Generative | Flan-T5, UnifiedQA, Qwen3, LLaMA3 | Generate comprehensive answers |
+| Document QA | PDF-QA-RAG, Kotaemon, GenAI Doc QnA | Q&A over uploaded PDFs/documents |
+| Visual QA | MiniCPM-o, Qwen2-VL, LLaVA-Next | Answer questions about images |
+| Table QA | TAPAS, TableLlama, SQL-QA | Query structured data |
+| Domain QA | Medical, Legal, Financial, Scientific | Specialized knowledge Q&A |
+| Multilingual | 13 languages, XLM-R, mDeBERTa | Cross-lingual Q&A |
+| Audio QA | Music Flamingo, Audio QA | Answer from audio/music |
+
+### Features
+- Automatic QA type classification from question + context
+- Domain-aware model routing (medical, legal, financial, scientific, education)
+- 100+ language support via multilingual models
+- RAG pipeline integration for document-based QA
+- Visual QA for charts, infographics, diagrams, scene understanding
+- Table QA with SQL-like operations (select, aggregate, compare)
+
 ## Example
+```bash
+curl -X POST https://your-space.hf.space/agents/qa/classify \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What are the side effects of aspirin?", "domain": "medical", "language": "en"}'
+```
+
 ```bash
 curl -X POST https://your-space.hf.space/agents/detection/recommend \
   -H "Content-Type: application/json" \
