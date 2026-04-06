@@ -130,6 +130,9 @@ export function useNeuralVoice(
     // Pre-load Piper in background for faster first speak
     preloadPiper();
     
+    // Pre-load voice style preferences
+    loadVoicePrefs().catch(() => {});
+    
     const handler = () => {
       const v = getOrionVoice();
       if (v) maleVoiceRef.current = v;
