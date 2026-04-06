@@ -1221,6 +1221,8 @@ async def health():
         "code_gen_models": AGENT_CATEGORIES["code_gen"]["models"],
         "webapp_builders": AGENT_CATEGORIES["code_gen"]["webapp_builders"],
         "text_analysis_types": list(AGENT_CATEGORIES["text_nlp"].keys()),
+        "object_detection_models": AGENT_CATEGORIES["vision"]["models"],
+        "detection_domains": list(AGENT_CATEGORIES["vision"].keys()),
     }
 
 
