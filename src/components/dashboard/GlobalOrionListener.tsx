@@ -81,10 +81,10 @@ export function GlobalOrionListener() {
 
   const getRestartDelay = useCallback((reason?: string) => {
     if (typeof document !== "undefined" && document.hidden) return 2400;
-    const base = isMobile ? 1200 : 450;
-    if (reason === "audio-capture" || reason === "network") return base + 700;
+    const base = isMobile ? 600 : 200;
+    if (reason === "audio-capture" || reason === "network") return base + 500;
     if (reason === "no-speech" || reason === "aborted" || reason === "end") return base;
-    return base + 350;
+    return base + 200;
   }, [isMobile]);
 
   useEffect(() => {
