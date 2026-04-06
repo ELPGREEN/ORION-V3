@@ -241,7 +241,7 @@ function ConnectionCurves({ paused }: { paused: boolean }) {
       const mat = new THREE.LineBasicMaterial({
         color: curve.color,
         transparent: true,
-        opacity: 0.1,
+        opacity: 0.18,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
@@ -253,7 +253,7 @@ function ConnectionCurves({ paused }: { paused: boolean }) {
     if (paused || !linesRef.current) return;
     const t = clock.elapsedTime;
     lineObjects.forEach((obj, i) => {
-      (obj.material as THREE.LineBasicMaterial).opacity = 0.08 + Math.sin(t * 1.5 + i * 0.3) * 0.04;
+      (obj.material as THREE.LineBasicMaterial).opacity = 0.12 + Math.sin(t * 2.0 + i * 0.3) * 0.08;
     });
   });
 
@@ -374,7 +374,7 @@ function FlowBeams({ paused }: { paused: boolean }) {
     Array.from({ length: NUM_FLOW_BEAMS }, () => ({
       progress: Math.random(),
       connIdx: Math.floor(Math.random() * Math.max(1, CONNECTIONS.length)),
-      speed: 0.15 + Math.random() * 0.35,
+      speed: 0.25 + Math.random() * 0.55,
     }))
   );
 
@@ -385,7 +385,7 @@ function FlowBeams({ paused }: { paused: boolean }) {
       if (b.progress > 1) {
         b.progress = 0;
         b.connIdx = Math.floor(Math.random() * validConns.length);
-        b.speed = 0.15 + Math.random() * 0.35;
+        b.speed = 0.25 + Math.random() * 0.55;
       }
       const conn = validConns[b.connIdx % validConns.length];
       if (!conn) return;
@@ -400,9 +400,9 @@ function FlowBeams({ paused }: { paused: boolean }) {
         .add(mid.clone().multiplyScalar(2 * (1 - t) * t))
         .add(conn.to.clone().multiplyScalar(t * t));
       child.position.copy(pos);
-      const scale = Math.sin(t * Math.PI) * 0.12 + 0.04;
+      const scale = Math.sin(t * Math.PI) * 0.18 + 0.06;
       child.scale.setScalar(scale);
-      (child.material as THREE.MeshBasicMaterial).opacity = Math.sin(t * Math.PI) * 0.8;
+      (child.material as THREE.MeshBasicMaterial).opacity = Math.sin(t * Math.PI) * 0.95;
     });
   });
 
@@ -474,13 +474,13 @@ function CosmicParticles({ paused }: { paused: boolean }) {
   return (
     <points geometry={geo}>
       <pointsMaterial
-        size={0.05}
+        size={0.06}
         transparent
         vertexColors
         sizeAttenuation
         blending={THREE.AdditiveBlending}
         depthWrite={false}
-        opacity={0.4}
+        opacity={0.55}
       />
     </points>
   );
@@ -503,7 +503,7 @@ function PostFX() {
   return (
     <Effects disableGamma>
       {/* @ts-ignore */}
-      <unrealBloomPass args={[new THREE.Vector2(size.width, size.height), 0.7, 0.3, 0.5]} />
+      <unrealBloomPass args={[new THREE.Vector2(size.width, size.height), 1.2, 0.25, 0.35]} />
     </Effects>
   );
 }
@@ -521,11 +521,13 @@ function NeuralScene({ paused, showLabels }: { paused: boolean; showLabels: bool
         <FlowBeams paused={paused} />
       </GlobeRotation>
       <CosmicParticles paused={paused} />
-      <ambientLight intensity={0.06} />
-      <pointLight position={[0, 15, 20]} intensity={1.0} color="#4488ff" distance={60} />
-      <pointLight position={[-15, -8, 10]} intensity={0.5} color="#ff80ab" distance={40} />
-      <pointLight position={[15, 8, -10]} intensity={0.5} color="#69f0ae" distance={40} />
-      <pointLight position={[0, 0, 0]} intensity={0.3} color="#b388ff" distance={20} />
+      <ambientLight intensity={0.08} />
+      <pointLight position={[0, 15, 20]} intensity={1.5} color="#4488ff" distance={60} />
+      <pointLight position={[-15, -8, 10]} intensity={0.8} color="#ff80ab" distance={40} />
+      <pointLight position={[15, 8, -10]} intensity={0.8} color="#69f0ae" distance={40} />
+      <pointLight position={[0, 0, 0]} intensity={0.5} color="#b388ff" distance={25} />
+      <pointLight position={[10, -12, 15]} intensity={0.4} color="#ffd740" distance={35} />
+      <pointLight position={[-10, 12, -15]} intensity={0.3} color="#00e5ff" distance={35} />
       <PostFX />
       <OrbitControls
         enableDamping
