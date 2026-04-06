@@ -91,7 +91,16 @@ export async function speakWithOrionVoice(
 
   if (signal?.aborted) return fail;
 
-  // ── 4. PIPER WASM (offline) ──
+  // ── 4. FORMANT SYNTH (100% offline, Iapetus voice DNA) ──
+  try {
+    const { speakFormant } = await import("./formantSynth");
+    const result = await speakFormant(cleanText, signal);
+    if (result.played) {
+      return { played: true, audio: result.audio, engine: "formant-iapetus" };
+    }
+  } catch {}
+
+  // ── 5. PIPER WASM (offline fallback) ──
   try {
     const { speakWithPiper } = await import("./piperTTS");
     await speakWithPiper(cleanText);
