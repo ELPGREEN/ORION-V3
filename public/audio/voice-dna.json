@@ -1,0 +1,22 @@
+{
+  "f0_mean": 124.2,
+  "f0_std": 16.8,
+  "f0_min": 99.7,
+  "f0_max": 154.8,
+  "formants": {
+    "F1": 1615.0,
+    "F2": 3421.0,
+    "F3": 5826.0,
+    "F4": 8485.0
+  },
+  "formant_bandwidths": {
+    "F1_bw": 80,
+    "F2_bw": 120,
+    "F3_bw": 150,
+    "F4_bw": 200
+  },
+  "jitter_percent": 5.92,
+  "spectral_tilt_db": 34.7,
+  "sample_rate": 24000,
+  "samples_analyzed": 5
+}
