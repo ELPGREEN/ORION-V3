@@ -23,7 +23,7 @@ const DEFAULT_PROMPT = "Fale de forma natural, clara e fluida em português bras
 /**
  * Round-robin key rotation across 7 Gemini API keys
  */
-function getGeminiKey(): string {
+function getAllGeminiKeys(): string[] {
   const keys = [
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
@@ -35,8 +35,9 @@ function getGeminiKey(): string {
   ].filter(Boolean) as string[];
 
   if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured");
+  // Shuffle starting from round-robin index so we spread load
   const idx = Math.floor(Date.now() / 1000) % keys.length;
-  return keys[idx];
+  return [...keys.slice(idx), ...keys.slice(0, idx)];
 }
 
 /**
@@ -89,13 +90,11 @@ Deno.serve(async (req) => {
     const selectedVoice = voice || DEFAULT_VOICE;
     const selectedLang = lang || DEFAULT_LANG;
     const stylePrompt = prompt || DEFAULT_PROMPT;
-    const apiKey = getGeminiKey();
+    const keys = getAllGeminiKeys();
 
-    console.log(`[Gemini TTS] Synthesizing ${cleanText.length} chars, voice="${selectedVoice}", lang="${selectedLang}"`);
+    console.log(`[Gemini TTS] Synthesizing ${cleanText.length} chars, voice="${selectedVoice}", lang="${selectedLang}", keys=${keys.length}`);
 
-    // Build the correct request format for gemini-2.5-flash-tts
-    // This model uses the dedicated TTS format with prompt + text in contents
-    // and speechConfig with languageCode + voiceConfig
+    // Build request body
     const requestBody: any = {
       contents: [{
         parts: [{ text: `${stylePrompt}: ${cleanText}` }]
@@ -128,26 +127,42 @@ Deno.serve(async (req) => {
       };
     }
 
-    const url = `${API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
+    // Try all keys until one works (handles 403 blocked keys)
+    let response: Response | null = null;
+    let lastError = "";
+    for (const apiKey of keys) {
+      const url = `${API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    });
+      if (r.ok) {
+        response = r;
+        break;
+      }
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error(`[Gemini TTS] API error ${response.status}:`, errText);
+      const errText = await r.text();
+      lastError = errText.slice(0, 200);
+      console.warn(`[Gemini TTS] Key failed (${r.status}): ${lastError.slice(0, 100)}`);
 
-      if (response.status === 429) {
+      if (r.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limited, try again shortly", fallback: true }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      throw new Error(`Gemini TTS failed: ${response.status} - ${errText.slice(0, 200)}`);
+      // 403 = key blocked, try next key
+      if (r.status === 403 || r.status === 400) continue;
+      
+      // Other errors, stop trying
+      break;
+    }
+
+    if (!response) {
+      throw new Error(`All ${keys.length} keys failed. Last: ${lastError}`);
     }
 
     const data = await response.json();

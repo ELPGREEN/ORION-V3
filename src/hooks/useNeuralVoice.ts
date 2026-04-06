@@ -369,7 +369,7 @@ export function useNeuralVoice(
     // ── PRIMARY: Gemini TTS (fast ~2s, neural quality, FREE) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
-        const gemResult = await speakWithGeminiTTS(cleanText, "Iapetus", cascadeAbort.signal);
+        const gemResult = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
         if (gemResult.played) {
           played = true;
           if (gemResult.audio) activeAudioRef.current = gemResult.audio;
