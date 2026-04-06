@@ -47,14 +47,50 @@ async function generateEmbedding(text: string): Promise<number[]> {
   throw new Error("All Gemini embedding keys exhausted");
 }
 
-async function callGeminiLLM(
+async function callAnthropicLLM(
   prompt: string,
   systemPrompt: string,
   maxTokens = 8192,
   temperature = 0.3
 ): Promise<string> {
-  const keys = getGeminiKeys();
-  for (const key of keys) {
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    signal: AbortSignal.timeout(120000),
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: maxTokens,
+      temperature,
+      system: systemPrompt,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Anthropic error ${res.status}: ${errText}`);
+  }
+
+  const data = await res.json();
+  return data?.content?.[0]?.text || "";
+}
+
+async function callLLMWithFallback(
+  prompt: string,
+  systemPrompt: string,
+  maxTokens = 8192,
+  temperature = 0.3
+): Promise<{ text: string; provider: string }> {
+  // Try Gemini first (free tier)
+  const geminiKeys = getGeminiKeys();
+  for (const key of geminiKeys) {
     try {
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
@@ -65,22 +101,27 @@ async function callGeminiLLM(
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: systemPrompt }] },
             contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: {
-              maxOutputTokens: maxTokens,
-              temperature,
-            },
+            generationConfig: { maxOutputTokens: maxTokens, temperature },
           }),
         }
       );
-      if (!res.ok) {
-        await res.text();
-        continue;
-      }
+      if (!res.ok) { await res.text(); continue; }
       const data = await res.json();
-      return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (text) return { text, provider: "gemini-2.0-flash" };
     } catch { continue; }
   }
-  throw new Error("All Gemini LLM keys exhausted");
+  console.warn("[orion-codegen] Gemini exhausted, falling back to Anthropic");
+
+  // Fallback: Anthropic Claude
+  try {
+    const text = await callAnthropicLLM(prompt, systemPrompt, maxTokens, temperature);
+    return { text, provider: "claude-sonnet-4" };
+  } catch (e) {
+    console.error("[orion-codegen] Anthropic also failed:", e);
+  }
+
+  throw new Error("All LLM providers exhausted (Gemini + Anthropic)");
 }
 
 // ─── RAG Search ───
@@ -273,27 +314,27 @@ ${prompt}${codeTypeHint}${extraCtx}
 
 Gere o código solicitado usando o contexto da base de conhecimento acima como referência. Adapte padrões encontrados quando relevante.`;
 
-    // Step 4: Generate code via LLM
-    const generatedCode = await callGeminiLLM(
+    // Step 4: Generate code via LLM (Gemini → Anthropic fallback)
+    const { text: generatedCode, provider: usedProvider } = await callLLMWithFallback(
       augmentedPrompt,
       CODEGEN_SYSTEM_PROMPT,
       maxTokens,
       temperature
     );
     const totalTime = Math.round(performance.now() - startTime);
-    console.log(`  ✅ Code generated in ${totalTime}ms (${generatedCode.length} chars)`);
+    console.log(`  ✅ Code generated via ${usedProvider} in ${totalTime}ms (${generatedCode.length} chars)`);
 
     // Step 5: Log metrics
     try {
       await supabase.from("ai_metrics").insert({
-        provider: "gemini-codegen",
+        provider: usedProvider,
         query: prompt.slice(0, 500),
         total_duration_ms: totalTime,
         phase1_duration_ms: embeddingTime,
         phase2_duration_ms: totalTime - embeddingTime,
         response_length: generatedCode.length,
         data_sources_used: ragResults.map(r => r.source),
-        tools_used: ["rag-search", "gemini-llm"],
+        tools_used: ["rag-search", usedProvider],
         success: true,
         user_id: userId !== "service-role" ? userId : null,
       });
@@ -302,6 +343,7 @@ Gere o código solicitado usando o contexto da base de conhecimento acima como r
     return new Response(
       JSON.stringify({
         code: generatedCode,
+        provider: usedProvider,
         rag_sources: ragResults.map(r => ({
           title: r.title,
           source: r.source,
@@ -312,6 +354,7 @@ Gere o código solicitado usando o contexto da base de conhecimento acima como r
           rag_results: ragResults.length,
           total_ms: totalTime,
           output_chars: generatedCode.length,
+          provider: usedProvider,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
