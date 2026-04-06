@@ -3,18 +3,14 @@
     "mean": 129.0,
     "median": 125.7,
     "std": 18.8,
-    "p5": 102.6,
+    "p5": 103.0,
     "p95": 169.0
   },
   "formants": {
-    "F1": 1261,
-    "F2": 2611,
+    "F1": 1260,
+    "F2": 2612,
     "F3": 4048,
-    "F4": 6046,
-    "F1_std": 439,
-    "F2_std": 534,
-    "F3_std": 670,
-    "F4_std": 544
+    "F4": 6042
   },
   "bandwidths": {
     "BW1": 500,
@@ -26,17 +22,17 @@
     "open_quotient": 0.533,
     "speed_quotient": 2.16,
     "H1_H2_db": 3.3,
-    "harmonic_decay_db": 2.9
+    "harmonic_decay_db": 3.9
   },
   "dynamics": {
     "spectral_tilt_db": 29.9,
-    "jitter_percent": 2.84,
-    "shimmer_percent": 20.46
+    "jitter_percent": 2.82,
+    "shimmer_percent": 20.24
   },
   "meta": {
     "sample_rate": 24000,
-    "total_audio_seconds": 44.16,
-    "samples_count": 4,
-    "voiced_frames": 2889
+    "total_audio_seconds": 55.2,
+    "samples_count": 5,
+    "voiced_frames": 3604
   }
 }
