@@ -1,15 +1,15 @@
-import { Brain, FileText, Users, CreditCard, MessageSquare, Shield, Globe, Zap, BarChart3 } from "lucide-react";
+import { IconNeuralAI, IconDocuments, IconCRM, IconPayment, IconChat, IconShield, IconAutomation, IconDashboard, IconGlobe } from "@/components/icons/SumerianTronIcons";
 
 const modules = [
-  { icon: Brain, title: "Motor Neural", desc: "Inteligência artificial proprietária com raciocínio avançado, aprendizado contínuo e respostas precisas.", color: "text-primary" },
-  { icon: FileText, title: "Documentos Inteligentes", desc: "Geração automática de 100+ tipos de documentos profissionais com revisão e formatação por IA.", color: "text-primary" },
-  { icon: Users, title: "CRM & Pipeline", desc: "Gestão completa de clientes, leads e negócios com automação de follow-ups e scoring inteligente.", color: "text-primary" },
-  { icon: CreditCard, title: "Faturamento Integrado", desc: "Cobranças automáticas, planos de assinatura, faturas e comissões — tudo em um só lugar.", color: "text-primary" },
-  { icon: MessageSquare, title: "Comunicação em Tempo Real", desc: "Chat ao vivo com clientes, assistente IA 24/7, histórico completo e notificações instantâneas.", color: "text-primary" },
-  { icon: Shield, title: "Segurança Empresarial", desc: "Proteção de nível bancário com criptografia avançada, conformidade LGPD/GDPR e auditoria completa.", color: "text-primary" },
-  { icon: Zap, title: "Automação de Processos", desc: "Fluxos automatizados que eliminam tarefas repetitivas e aceleram a operação da sua empresa.", color: "text-primary" },
-  { icon: BarChart3, title: "Analytics & Insights", desc: "Dashboard com métricas em tempo real, relatórios automatizados e inteligência de negócios.", color: "text-primary" },
-  { icon: Globe, title: "Multi-idioma", desc: "Interface em 5 idiomas com detecção automática e tradução inteligente de documentos.", color: "text-primary" },
+  { Icon: IconNeuralAI, title: "Motor Neural", desc: "Inteligência artificial proprietária com raciocínio avançado, aprendizado contínuo e respostas precisas." },
+  { Icon: IconDocuments, title: "Documentos Inteligentes", desc: "Geração automática de 100+ tipos de documentos profissionais com revisão e formatação por IA." },
+  { Icon: IconCRM, title: "CRM & Pipeline", desc: "Gestão completa de clientes, leads e negócios com automação de follow-ups e scoring inteligente." },
+  { Icon: IconPayment, title: "Faturamento Integrado", desc: "Cobranças automáticas, planos de assinatura, faturas e comissões — tudo em um só lugar." },
+  { Icon: IconChat, title: "Comunicação em Tempo Real", desc: "Chat ao vivo com clientes, assistente IA 24/7, histórico completo e notificações instantâneas." },
+  { Icon: IconShield, title: "Segurança Empresarial", desc: "Proteção de nível bancário com criptografia avançada, conformidade LGPD/GDPR e auditoria completa." },
+  { Icon: IconAutomation, title: "Automação de Processos", desc: "Fluxos automatizados que eliminam tarefas repetitivas e aceleram a operação da sua empresa." },
+  { Icon: IconDashboard, title: "Analytics & Insights", desc: "Dashboard com métricas em tempo real, relatórios automatizados e inteligência de negócios." },
+  { Icon: IconGlobe, title: "Multi-idioma", desc: "Interface em 5 idiomas com detecção automática e tradução inteligente de documentos." },
 ];
 
 export function SystemArchitectureSection() {
@@ -41,7 +41,7 @@ export function SystemArchitectureSection() {
               <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-primary/40 group-hover:border-primary/80 transition-colors" />
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                 style={{ boxShadow: "inset 0 0 30px hsl(var(--primary) / 0.05), 0 0 15px hsl(var(--primary) / 0.05)" }} />
-              <mod.icon className={`h-7 w-7 ${mod.color} mb-4 group-hover:scale-110 transition-transform duration-300`} />
+              <mod.Icon className="h-8 w-8 text-primary mb-4 group-hover:scale-110 transition-transform duration-300" />
               <h3 className="text-sm font-semibold text-foreground mb-2 tracking-wide">{mod.title}</h3>
               <p className="text-[11px] text-muted-foreground leading-relaxed">{mod.desc}</p>
             </div>

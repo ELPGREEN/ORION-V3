@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ChevronDown, Zap, ShieldAlert, Globe, Brain } from "lucide-react";
-import logoElp from "@/assets/logo-elp.webp";
+import { ArrowRight, ChevronDown } from "lucide-react";
+import { IconAutomation, IconShield, IconGlobe, IconNeuralAI } from "@/components/icons/SumerianTronIcons";
 import { Button } from "@/components/ui/button";
 import { HeroThreeBackground } from "./HeroThreeBackground";
 import { PlasmaCore } from "./PlasmaCore";
@@ -44,14 +44,11 @@ export function HeroSection({ t }: HeroSectionProps) {
 
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
-      {/* Three.js Spotlight Background */}
       <HeroThreeBackground />
 
-      {/* Overlay gradients */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background z-[1]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.5)_70%,hsl(var(--background))_100%)] z-[1]" />
 
-      {/* Main content */}
       <div
         className="container relative z-10 py-16 sm:py-20 px-4 sm:px-6"
         style={{
@@ -60,7 +57,6 @@ export function HeroSection({ t }: HeroSectionProps) {
         }}
       >
         <div className="max-w-4xl mx-auto text-center">
-          {/* Plasma Core */}
           <div
             className="mb-6 sm:mb-8"
             style={{
@@ -74,7 +70,6 @@ export function HeroSection({ t }: HeroSectionProps) {
             </div>
           </div>
 
-          {/* Title */}
           <div
             style={{
               opacity: loaded ? 1 : 0,
@@ -107,7 +102,6 @@ export function HeroSection({ t }: HeroSectionProps) {
             INTELIGÊNCIA ARTIFICIAL EMPRESARIAL
           </p>
 
-          {/* Feature pills */}
           <div
             className="flex flex-wrap justify-center gap-3 mb-8 sm:mb-10"
             style={{
@@ -117,13 +111,13 @@ export function HeroSection({ t }: HeroSectionProps) {
             }}
           >
             {[
-              { icon: Zap, label: "Automação Inteligente" },
-              { icon: ShieldAlert, label: "Orion Shield" },
-              { icon: Globe, label: "Multi-idioma" },
-              { icon: Brain, label: "IA Avançada" },
+              { Icon: IconAutomation, label: "Automação Inteligente" },
+              { Icon: IconShield, label: "Orion Shield" },
+              { Icon: IconGlobe, label: "Multi-idioma" },
+              { Icon: IconNeuralAI, label: "IA Avançada" },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-2 px-4 py-2 border border-primary/20 bg-primary/5 text-xs text-muted-foreground backdrop-blur-sm">
-                <item.icon className="h-3.5 w-3.5 text-primary" />
+                <item.Icon className="h-4 w-4 text-primary" />
                 {item.label}
               </div>
             ))}
@@ -137,8 +131,8 @@ export function HeroSection({ t }: HeroSectionProps) {
               transition: 'opacity 0.8s ease 0.8s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.8s',
             }}
           >
-            Plataforma de IA empresarial desenvolvida pela ELP Green Technology S.R.L. 
-            Automatize processos, gerencie documentos, clientes e equipes com 
+            Plataforma de IA empresarial para automação de processos, 
+            gestão de documentos, clientes e equipes com 
             inteligência artificial de última geração.
           </p>
 
@@ -163,7 +157,6 @@ export function HeroSection({ t }: HeroSectionProps) {
             </Button>
           </div>
 
-          {/* By ELP credit */}
           <p
             className="mt-8 text-[10px] text-muted-foreground/50 tracking-[0.2em] uppercase"
             style={{
@@ -171,12 +164,11 @@ export function HeroSection({ t }: HeroSectionProps) {
               transition: 'opacity 1s ease 1.4s',
             }}
           >
-            Desenvolvido por ELP Green Technology S.R.L. • VAT IT02712340062
+            Desenvolvido por ELP® Green Technology
           </p>
         </div>
       </div>
 
-      {/* Scroll indicator */}
       <button
         onClick={scrollToContent}
         className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 text-primary/60 hover:text-primary transition-colors z-10"
