@@ -582,7 +582,7 @@ export default function InvestorTools() {
                 Fundador & Empresa
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "rgba(255,255,255,0.9)" }}>
-                Ericson R. Piccoli <span className="text-lg font-normal" style={{ color: "rgba(255,255,255,0.4)" }}>(愛立信)</span>
+                Ericson Piccoli <span className="text-lg font-normal" style={{ color: "rgba(255,255,255,0.4)" }}>(愛立信)</span>
               </h2>
               <p className="text-sm font-medium mb-4" style={{ color: "#c9a84c" }}>
                 General Director & Founder — ORION AI Platform

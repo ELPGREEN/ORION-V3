@@ -144,7 +144,7 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
                 <p className="text-[9px] text-muted-foreground/60 mt-0.5">CNPJ 42.501.190/0001-70 • VAT IT02712340062</p>
               </li>
               <li className="text-[11px] text-muted-foreground">
-                <p className="text-foreground/80 font-medium">Mr. Ericson R. Piccoli</p>
+                <p className="text-foreground/80 font-medium">Mr. Ericson Piccoli</p>
                 <p className="text-[9px] text-muted-foreground/60 mt-0.5">General Director & Founder</p>
                 <p className="text-[9px] text-muted-foreground/50 mt-0.5">ORION AI Platform</p>
               </li>

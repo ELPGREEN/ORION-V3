@@ -51,7 +51,7 @@ export default function Sobre() {
   return <MainLayout>
       <SEO 
         title="Sobre | ORION IA by ELP® Green Technology" 
-        description="Conheça a ORION — plataforma de IA empresarial criada por Ericson R. Piccoli, fundador da ELP® Green Technology (CNPJ 42.501.190/0001-70). NeuroCore, Lumen7 e AquaMonkey®."
+        description="Conheça a ORION — plataforma de IA empresarial criada por Ericson Piccoli, fundador da ELP® Green Technology (CNPJ 42.501.190/0001-70). NeuroCore, Lumen7 e AquaMonkey®."
         image="https://www.iasofthub.com/og-images/og-sobre.jpg"
         keywords="ELP Green Technology, Ericson Piccoli, ORION IA, sobre, empresa, fundador"
         jsonLd={{
@@ -65,7 +65,7 @@ export default function Sobre() {
           "taxID": "42.501.190/0001-70",
           "founder": {
             "@type": "Person",
-            "name": "Ericson R. Piccoli",
+            "name": "Ericson Piccoli",
             "jobTitle": "General Director & Founder, Systems Engineer"
           },
           "brand": [
@@ -100,7 +100,7 @@ export default function Sobre() {
                 <div className="absolute -top-3 -left-3 w-full h-full border border-primary/30" />
                 <div className="relative bg-card border border-border">
                   <div className="aspect-square overflow-hidden">
-                    <img alt="Mr. Ericson R. Piccoli - General Director & Founder, ELP Green Technology" loading="lazy" decoding="async" className="w-full h-full object-cover object-[center_50%]" src="/lovable-uploads/98b93bd2-01cc-4086-b53a-83853e58b171.jpg" />
+                    <img alt="Mr. Ericson Piccoli - General Director & Founder, ELP Green Technology" loading="lazy" decoding="async" className="w-full h-full object-cover object-[center_50%]" src="/lovable-uploads/98b93bd2-01cc-4086-b53a-83853e58b171.jpg" />
                   </div>
                   <div className="p-6">
                     <h2 className="text-xl font-serif text-foreground tracking-wide mb-1">
