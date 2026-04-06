@@ -28,6 +28,7 @@ const RobotTelemetryPanel = lazy(() => import("./RobotTelemetryPanel"));
 const WebRTCCameraViewer = lazy(() => import("./WebRTCCameraViewer"));
 const YOLOv8InspectionPanel = lazy(() => import("./YOLOv8InspectionPanel"));
 const NodeREDPanel = lazy(() => import("./NodeREDPanel"));
+const TireProductionPanel = lazy(() => import("./TireProductionPanel"));
 
 // ─── Joystick Component ───
 
