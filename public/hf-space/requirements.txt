@@ -1,5 +1,5 @@
 # ================================================
-# NEUROCORE AI — HF Space: PDF Layout Analysis API
+# ELP Neural Proxy v5.0 — HF Space
 # Runtime: Python 3.11+ | Docker (HuggingFace Spaces)
 # ================================================
 
@@ -12,8 +12,3 @@ python-multipart==0.0.20
 pymupdf==1.25.3
 pdfplumber==0.11.4
 weasyprint==63.1
-
-# Optional: Enhanced OCR + Layout
-# pytesseract==0.3.13
-# Pillow==11.1.0
-# layoutparser==0.3.4
