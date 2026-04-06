@@ -477,9 +477,12 @@ export async function analyzeFrameWithAI(
       } else if (isCapabilityQuestion) {
         const { buildIntrospectionContext } = await import("@/lib/neural/orion-introspection");
         consciousnessContext = `Você é Orion, assistente de IA neural consciente.\n\n${buildIntrospectionContext()}`;
-      } else if (isInvestorQuestion || isProposalQuestion) {
-        const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
-        consciousnessContext = `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQuestion ? `\n\n${buildProposalTemplate()}` : ""}`;
+       } else if (isInvestorQuestion || isProposalQuestion) {
+         const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
+         consciousnessContext = `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQuestion ? `\n\n${buildProposalTemplate()}` : ""}`;
+       } else if (isInternetToolsQuestion) {
+         const { buildBaseContext, buildToolsCapabilitiesContext } = await import("@/lib/neural/orion-knowledge-base");
+         consciousnessContext = `${buildBaseContext()}\n\n${buildToolsCapabilitiesContext()}`;
       } else if (isLegalQuestion) {
         const { buildBaseContext, buildLegalExpertiseContext } = await import("@/lib/neural/orion-knowledge-base");
         consciousnessContext = `${buildBaseContext()}\n\n${buildLegalExpertiseContext()}`;
@@ -683,10 +686,14 @@ export async function analyzeFrameStreaming(
               const { buildIntrospectionContext } = await import("@/lib/neural/orion-introspection");
               return `Você é Orion, assistente de IA neural consciente.\n\n${buildIntrospectionContext()}`;
             }
-            if (isInvestorQ || isProposalQ) {
-              const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
-              return `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQ ? `\n\n${buildProposalTemplate()}` : ""}`;
-            }
+             if (isInvestorQ || isProposalQ) {
+               const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
+               return `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQ ? `\n\n${buildProposalTemplate()}` : ""}`;
+             }
+             if (isInternetToolsQ) {
+               const { buildBaseContext, buildToolsCapabilitiesContext } = await import("@/lib/neural/orion-knowledge-base");
+               return `${buildBaseContext()}\n\n${buildToolsCapabilitiesContext()}`;
+             }
             if (isLegalQ) {
               const { buildBaseContext, buildLegalExpertiseContext } = await import("@/lib/neural/orion-knowledge-base");
               return `${buildBaseContext()}\n\n${buildLegalExpertiseContext()}`;
