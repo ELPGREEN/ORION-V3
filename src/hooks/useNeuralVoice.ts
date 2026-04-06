@@ -393,10 +393,25 @@ export function useNeuralVoice(
       }
     }
 
-    // ── Web Speech API REMOVIDO — voz robótica proibida ──
-    // Prefere silêncio a usar SpeechSynthesis robótico
+    // ── FALLBACK: Piper WASM (offline, better than silence) ──
+    if (!played && !cascadeAbort.signal.aborted) {
+      try {
+        played = await speakWithPiper(cleanText);
+        if (played) console.log("[Voice] ✅ Piper WASM fallback");
+      } catch {}
+    }
+
+    // ── LAST RESORT: Web Speech API (robotic but audible) ──
+    if (!played && !cascadeAbort.signal.aborted) {
+      try {
+        await browserSpeak(cleanText);
+        played = true;
+        console.log("[Voice] ✅ Web Speech API fallback");
+      } catch {}
+    }
+
     if (!played) {
-      console.warn("[Voice] Nenhum engine TTS disponível — silêncio preferido a voz robótica");
+      console.warn("[Voice] Nenhum engine TTS disponível");
     }
 
     // ── Feed self-synthesis for evolution reinforcement ──
