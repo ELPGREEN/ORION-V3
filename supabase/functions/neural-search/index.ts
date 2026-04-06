@@ -2481,7 +2481,7 @@ function getGeminiKeysLLM(): string[] {
 
 let keyIndex = 0;
 function getNextGeminiKey(): string {
-  const keys = getGeminiKeys();
+  const keys = getGeminiKeysLLM();
   if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured");
   const key = keys[keyIndex % keys.length];
   keyIndex++;
@@ -2638,7 +2638,7 @@ async function callProviderLLM(
       return data.content?.[0]?.text || null;
     }
     case "gemini": {
-      const keys = getGeminiKeys();
+      const keys = getGeminiKeysLLM();
       if (!keys.length) throw new Error("No Gemini keys");
       for (const key of keys) {
         try {
