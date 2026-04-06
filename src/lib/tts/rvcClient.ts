@@ -11,6 +11,10 @@ const RVC_SPACE_URL = "https://ericsonv12-adv.hf.space";
 const RVC_ENDPOINT = "/rvc_convert";
 const RVC_TIMEOUT_MS = 30_000;
 
+// Model files hosted in the Space
+const RVC_MODEL_URL = "https://huggingface.co/spaces/Ericsonv12/adv/resolve/main/ToothBrushing.pth";
+const RVC_INDEX_URL = "https://huggingface.co/spaces/Ericsonv12/adv/resolve/main/added_IVF120_Flat_nprobe_1_ToothBrushing_v2.index";
+
 export interface RVCConvertOptions {
   /** Pitch shift in semitones (default: 0) */
   pitchShift?: number;
