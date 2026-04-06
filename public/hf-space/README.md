@@ -114,7 +114,37 @@ Complete AI Agent Swarm with **3100+ agents** — PDF, Vision, **Object Detectio
 - Visual QA for charts, infographics, diagrams, scene understanding
 - Table QA with SQL-like operations (select, aggregate, compare)
 
-## Example
+## Document Analysis v7.4
+
+### Models
+| Model | Type | Key Feature |
+|-------|------|-------------|
+| MinerU | OCR+Extraction | PDF → Markdown/JSON with layout preservation |
+| PaddleOCR-VL | OCR | 80+ languages, visual language model |
+| Surya | OCR+Layout | OCR + layout + reading order + table recognition |
+| Nougat | Academic OCR | PDF → LaTeX/markup (equations, formulas) |
+| Donut | Doc Understanding | OCR-free transformer for receipts, forms, IDs |
+| DiT | Layout Analysis | Document image transformer (text, title, table, figure) |
+| LayoutLMv3 | Multimodal | NER, classification, QA on documents |
+| GROBID | Bibliography | Extract citations, references, BibTeX from papers |
+| GOT-OCR2 | General OCR | Text, math, sheet music, charts |
+| TrOCR | Handwriting | Printed and handwritten text recognition |
+
+### Pipelines
+- **pdf_to_markdown**: Layout-aware PDF to structured Markdown
+- **receipt_parsing**: Structured data from receipts/invoices
+- **academic_paper**: Citations, equations, figures from papers
+- **legal_analysis**: Clause extraction, entity detection, compliance
+- **resume_screening**: ATS parsing, skill extraction, scoring
+- **handwriting_recognition**: Handwritten document digitization
+
+## Examples
+```bash
+curl -X POST https://your-space.hf.space/agents/documents/recommend \
+  -H "Content-Type: application/json" \
+  -d '{"task": "extract tables and text from scanned invoice", "has_tables": true}'
+```
+
 ```bash
 curl -X POST https://your-space.hf.space/agents/qa/classify \
   -H "Content-Type: application/json" \
