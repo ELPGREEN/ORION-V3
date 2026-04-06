@@ -80,11 +80,14 @@ export function GlobalOrionListener() {
   }, []);
 
   const getRestartDelay = useCallback((reason?: string) => {
-    if (typeof document !== "undefined" && document.hidden) return 2400;
-    const base = isMobile ? 600 : 200;
-    if (reason === "audio-capture" || reason === "network") return base + 500;
-    if (reason === "no-speech" || reason === "aborted" || reason === "end") return base;
-    return base + 200;
+    if (typeof document !== "undefined" && document.hidden) return 5000;
+    const attempts = restartAttemptsRef.current;
+    // Exponential backoff: 500ms, 1s, 2s, 4s, 5s cap
+    const backoff = Math.min(500 * Math.pow(2, attempts), 5000);
+    if (reason === "aborted") return Math.max(backoff, 1500);
+    if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 2000);
+    if (reason === "no-speech" || reason === "end") return Math.max(backoff, isMobile ? 800 : 500);
+    return Math.max(backoff, 1000);
   }, [isMobile]);
 
   useEffect(() => {
