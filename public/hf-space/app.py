@@ -1,7 +1,9 @@
 """
-ELP Neural Proxy v7.2 — Complete AI Agent Swarm
-PDF + Vision + Object Detection + Code Generation + Code Analysis + Text Analysis + Fine-Tuning + Dataset Creation + Media Generation
-2500+ Neural Agents covering ALL HuggingFace Spaces categories
+ELP Neural Proxy v7.3 — Complete AI Agent Swarm
+PDF + Vision + Object Detection + Code Generation + Code Analysis + Text Analysis + Question Answering + Fine-Tuning + Dataset Creation + Media Generation
+3000+ Neural Agents covering ALL HuggingFace Spaces categories
+Runs on 2GB RAM (HF Spaces free tier)
+"""
 Runs on 2GB RAM (HF Spaces free tier)
 """
 
@@ -34,7 +36,8 @@ app.add_middleware(
 )
 
 # ============================================================
-# AGENT REGISTRY — 2500+ Neural Agents (ALL HF Categories)
+# AGENT REGISTRY — 3000+ Neural Agents (ALL HF Categories)
+# ============================================================
 # ============================================================
 
 AGENT_CATEGORIES = {
@@ -387,6 +390,67 @@ AGENT_CATEGORIES = {
             "header_footer_detection", "page_classification",
             "citation_extraction", "bibliography_parser",
             "legal_document_parser", "invoice_parser",
+        ],
+    },
+    # ── Question Answering (120+ agents) — NEW v7.3 ──
+    "question_answering": {
+        "extractive_qa": [
+            "squad_v2_qa", "mdeberta_squad", "roberta_squad", "xlm_roberta_qa",
+            "albert_squad", "electra_squad", "longformer_qa", "bigbird_qa",
+            "distilbert_qa", "minilm_qa", "tinybert_qa", "mobilebert_qa",
+        ],
+        "generative_qa": [
+            "llama3_qa", "qwen3_qa", "gemma4_qa", "mistral_qa", "deepseek_qa",
+            "phi3_qa", "command_r_qa", "lfm_qa", "abliterated_llama_qa",
+        ],
+        "document_qa": [
+            "pdf_qa_rag", "pdf_chatter", "rag_pdf_chatbot", "multi_pdf_qa",
+            "document_qa_vision", "genai_document_qna", "audit_assistant",
+            "kotaemon_rag", "pci_dss_qa", "legal_document_qa",
+            "invoice_qa", "contract_qa", "medical_report_qa",
+        ],
+        "visual_qa": [
+            "minicpm_o_vqa", "llava_vqa", "blip2_vqa", "idefics_vqa",
+            "paligemma_vqa", "florence_vqa", "qwen_vl_qa", "internvl_qa",
+            "mkg_analogy_multimodal", "chart_qa", "infographic_qa",
+            "scene_text_qa", "diagram_qa",
+        ],
+        "domain_qa": [
+            "medical_qa", "menstrual_qa", "clinical_trial_qa",
+            "legal_qa_agent", "case_law_qa", "statute_qa",
+            "financial_qa", "earnings_call_qa", "sec_filing_qa",
+            "scientific_qa", "arxiv_qa", "pubmed_qa",
+            "education_qa", "course_qa", "textbook_qa",
+            "climate_qa", "environmental_qa",
+        ],
+        "multilingual_qa": [
+            "japanese_qa_rag", "turkish_qa", "persian_qa", "korean_qa",
+            "arabic_qa", "hindi_qa", "chinese_qa", "spanish_qa",
+            "french_qa", "german_qa", "portuguese_qa", "italian_qa",
+            "multilingual_qa_universal",
+        ],
+        "open_domain_qa": [
+            "open_researcher", "web_search_qa", "wikipedia_qa",
+            "knowledge_graph_qa", "zero_pal_qa", "retrieval_augmented_qa",
+            "dense_passage_retrieval", "colbert_qa", "hyde_qa",
+        ],
+        "conversational_qa": [
+            "chatbot_qa", "multi_turn_qa", "context_tracking_qa",
+            "clarification_qa", "follow_up_qa", "dialogue_state_qa",
+        ],
+        "music_audio_qa": [
+            "music_flamingo", "audio_qa", "speech_qa",
+            "podcast_qa", "lecture_qa",
+        ],
+        "table_qa": [
+            "tapas_table_qa", "tablellama_qa", "spreadsheet_qa",
+            "sql_qa", "csv_qa", "database_qa",
+        ],
+        "models": [
+            "mdeberta_v3", "roberta_large_squad2", "xlm_roberta_large",
+            "longformer_4096", "bigbird_pegasus", "flan_t5_qa",
+            "unifiedqa_v2", "macaw_qa", "minicpm_o_26",
+            "llava_next", "qwen2_vl", "internvl2",
         ],
     },
 }
