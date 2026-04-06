@@ -5,7 +5,8 @@ import { AlertTriangle, Bell, CheckCircle2, Clock, TrendingUp, Shield, Brain, X,
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
+import { speakWithPiper } from "@/lib/tts/piperTTS";
 import { toast } from "sonner";
 
 // ═══════════════════════════════════════════════════════════
