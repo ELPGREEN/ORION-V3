@@ -94,6 +94,10 @@ export default function BiometriaConfigPanel() {
         <TabsContent value="vocal" className="mt-4">
           <VoiceIDPanel />
         </TabsContent>
+
+        <TabsContent value="visitantes" className="mt-4">
+          <GuestSessionsLog />
+        </TabsContent>
       </Tabs>
     </div>
   );
