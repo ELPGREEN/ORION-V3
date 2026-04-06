@@ -145,14 +145,57 @@ Deno.serve(async (req) => {
       if (!session_id) throw new Error("Session ID não informado");
 
       const session = await stripe.checkout.sessions.retrieve(session_id);
+      const isProductCheckout = session.metadata?.type === "product_checkout";
 
       if (session.payment_status === "paid") {
-        await supabaseAdmin.from("consultas").update({ payment_status: "pago", status: "confirmada" }).eq("payment_id", session_id);
-        await supabaseAdmin.from("notificacoes").insert({
-          user_id: user.id, tipo: "consulta", titulo: "✅ Consulta confirmada",
-          descricao: `Sua ${session.metadata?.tipo_servico || "consulta"} foi confirmada com pagamento aprovado.${session.metadata?.data_hora ? ` Agendada para ${new Date(session.metadata.data_hora).toLocaleString("pt-BR")}.` : ""}`,
-          link: "/dashboard/consultas",
-        });
+        if (isProductCheckout) {
+          // Update product orders to paid
+          await supabaseAdmin.from("orders").update({ status: "paid" }).eq("stripe_session_id", session_id);
+
+          // Update affiliate commissions and link conversions
+          const affiliateUserId = session.metadata?.affiliate_user_id;
+          const affiliateLinkId = session.metadata?.affiliate_link_id;
+          if (affiliateUserId) {
+            await supabaseAdmin.from("affiliate_commissions")
+              .update({ status: "pending" }) // confirmed but not yet paid out
+              .eq("order_id", session_id);
+          }
+          if (affiliateLinkId) {
+            // Increment conversions on the affiliate link
+            const { data: linkData } = await supabaseAdmin
+              .from("affiliate_links").select("conversions").eq("id", affiliateLinkId).single();
+            if (linkData) {
+              await supabaseAdmin.from("affiliate_links")
+                .update({ conversions: (linkData.conversions || 0) + 1 })
+                .eq("id", affiliateLinkId);
+            }
+          }
+
+          // Notify buyer
+          await supabaseAdmin.from("notificacoes").insert({
+            user_id: user.id, tipo: "compra", titulo: "✅ Compra confirmada",
+            descricao: "Seu pagamento foi processado com sucesso!",
+            link: "/dashboard",
+          }).catch(() => {});
+
+          // Notify creator
+          const creatorId = session.metadata?.creator_id;
+          if (creatorId) {
+            await supabaseAdmin.from("notificacoes").insert({
+              user_id: creatorId, tipo: "venda", titulo: "🎉 Nova venda!",
+              descricao: `Você recebeu uma nova venda no valor de R$ ${((session.amount_total || 0) / 100).toFixed(2)}.`,
+              link: "/dashboard",
+            }).catch(() => {});
+          }
+        } else {
+          // Consulta payment
+          await supabaseAdmin.from("consultas").update({ payment_status: "pago", status: "confirmada" }).eq("payment_id", session_id);
+          await supabaseAdmin.from("notificacoes").insert({
+            user_id: user.id, tipo: "consulta", titulo: "✅ Consulta confirmada",
+            descricao: `Sua ${session.metadata?.tipo_servico || "consulta"} foi confirmada com pagamento aprovado.${session.metadata?.data_hora ? ` Agendada para ${new Date(session.metadata.data_hora).toLocaleString("pt-BR")}.` : ""}`,
+            link: "/dashboard/consultas",
+          });
+        }
 
         // Send email via notifications function
         try {
@@ -162,8 +205,11 @@ Deno.serve(async (req) => {
               method: "POST",
               headers: { "Content-Type": "application/json", "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}` },
               body: JSON.stringify({
-                type: "consulta_confirmada", to: userEmail,
-                data: { consultaTipo: session.metadata?.tipo_servico || "Consulta", consultaDate: session.metadata?.data_hora ? new Date(session.metadata.data_hora).toLocaleString("pt-BR") : undefined, valor: session.amount_total ? session.amount_total / 100 : undefined },
+                type: isProductCheckout ? "compra_confirmada" : "consulta_confirmada",
+                to: userEmail,
+                data: isProductCheckout
+                  ? { valor: session.amount_total ? session.amount_total / 100 : undefined }
+                  : { consultaTipo: session.metadata?.tipo_servico || "Consulta", consultaDate: session.metadata?.data_hora ? new Date(session.metadata.data_hora).toLocaleString("pt-BR") : undefined, valor: session.amount_total ? session.amount_total / 100 : undefined },
               }),
             });
           }

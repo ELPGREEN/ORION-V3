@@ -43,8 +43,8 @@ export default function Afiliados() {
   const totalEarnings = commissions?.reduce((sum: number, c: any) => sum + (c.amount_cents || 0), 0) || 0;
   const pendingEarnings = commissions?.filter((c: any) => c.status === "pending").reduce((s: number, c: any) => s + c.amount_cents, 0) || 0;
 
-  const copyLink = (hash: string, slug: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/p/${slug}?ref=${hash}`);
+  const copyLink = (hash: string, creatorId: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}/loja/${creatorId}?ref=${hash}`);
     toast.success("Link copiado!");
   };
 
@@ -98,7 +98,7 @@ export default function Afiliados() {
                     <p className="font-medium text-sm truncate">{(l as any).products?.title || "Produto"}</p>
                     <p className="text-xs text-muted-foreground">{l.clicks} cliques · {l.conversions} conversões</p>
                   </div>
-                  <Button size="sm" variant="outline" className="gap-1 flex-shrink-0" onClick={() => copyLink(l.hash, (l as any).products?.slug || "")}>
+                  <Button size="sm" variant="outline" className="gap-1 flex-shrink-0" onClick={() => copyLink(l.hash, (l as any).products?.creator_id || "")}>
                     <Copy className="h-3 w-3" /> Copiar
                   </Button>
                 </CardContent>
