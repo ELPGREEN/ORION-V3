@@ -485,144 +485,78 @@ Deno.serve(async (req) => {
     }
 
     async function callProvider(p: typeof provider): Promise<string> {
-      if (p.id === "gemini") {
-        const resp = await fetch(`${p.endpoint}?key=${p.key}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(60000),
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: `${finalSystemPrompt}\n\n${conversation[conversation.length - 1].content}` }] }],
-            generationConfig: { temperature, maxOutputTokens: maxTokens },
-          }),
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          console.error(`❌ Gemini API error ${resp.status}:`, JSON.stringify(data).substring(0, 500));
-          throw new Error(`Gemini API error ${resp.status}: ${data?.error?.message || 'Unknown'}`);
-        }
-        if (data?.usageMetadata) {
-          tokenUsage = {
-            prompt_tokens: data.usageMetadata.promptTokenCount || 0,
-            completion_tokens: data.usageMetadata.candidatesTokenCount || 0,
-            total_tokens: data.usageMetadata.totalTokenCount || 0,
-          };
-        }
-        return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      } else if (p.id === "anthropic" || p.id === "anthropic_sonnet") {
-        const resp = await fetch(p.endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": p.key!,
-            "anthropic-version": "2023-06-01",
-          },
-          signal: AbortSignal.timeout(60000),
-          body: JSON.stringify({
-            model: p.model,
-            max_tokens: maxTokens,
-            system: finalSystemPrompt,
-            messages: conversation.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content })),
-            temperature,
-          }),
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          console.error(`❌ Anthropic API error ${resp.status}:`, JSON.stringify(data).substring(0, 500));
-          throw new Error(`Anthropic API error ${resp.status}: ${data?.error?.message || 'Unknown'}`);
-        }
-        if (data?.usage) {
-          tokenUsage = {
-            prompt_tokens: data.usage.input_tokens || 0,
-            completion_tokens: data.usage.output_tokens || 0,
-            total_tokens: (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0),
-          };
-        }
-        return data?.content?.[0]?.text || "";
-      } else {
-        // OpenAI-compatible: DeepSeek, Groq, Mistral, OpenAI, GitHub Models
-        const isDeepSeek = p.id.startsWith("deepseek");
-        const isReasoner = p.id === "deepseek_reasoner";
-        const useThinking = thinking_enabled && isDeepSeek;
+      // ALL providers are Gemini (free) — use Gemini REST API format
+      // On 429 (rate limit), try next key automatically
+      const keysToTry = _getGeminiKeys();
+      let startIdx = keysToTry.indexOf(p.key!);
+      if (startIdx < 0) startIdx = 0;
+
+      for (let ki = 0; ki < keysToTry.length; ki++) {
+        const currentKey = keysToTry[(startIdx + ki) % keysToTry.length];
+        const endpoint = p.endpoint;
         
-        // Per V3.2 paper: deepseek-reasoner max output 64K, deepseek-chat max 8K
-        const effectiveMaxTokens = isReasoner 
-          ? Math.min(Math.max(maxTokens, 32768), 65536)
-          : useThinking 
-            ? Math.max(maxTokens, 8192)
-            : maxTokens;
-
-        const requestBody: Record<string, unknown> = {
-          model: p.model,
-          messages: [{ role: "system", content: finalSystemPrompt }, ...conversation],
-          max_tokens: effectiveMaxTokens,
-        };
-
-        // DeepSeek V3.2 Thinking Mode — temperature/top_p are ignored when thinking is enabled (per paper)
-        if (useThinking) {
-          requestBody.thinking = { type: "enabled" };
-          // Per paper Section 3.1: temperature is managed by GRPO internally, don't set it
-        } else {
-          requestBody.temperature = temperature;
-        }
-
-        // Tool calls support (DeepSeek V3.2 supports thinking + tools simultaneously per Section 3.2)
-        // Per paper: "We recommend utilizing non-thinking models for Terminus-style frameworks"
-        if (tools && Array.isArray(tools) && tools.length > 0) {
-          requestBody.tools = tools;
-        }
-
-        // Per paper: Thinking mode needs longer timeout (complex reasoning can take 2+ minutes)
-        const timeoutMs = isReasoner ? 180000 : useThinking ? 120000 : 60000;
-
-        const resp = await fetch(p.endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${p.key}`,
-          },
-          signal: AbortSignal.timeout(timeoutMs),
-          body: JSON.stringify(requestBody),
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          const errBody = JSON.stringify(data).substring(0, 500);
-          console.error(`❌ ${p.id} API error ${resp.status}:`, errBody);
-          // DeepSeek-specific error handling
-          if (resp.status === 402) throw new Error(`${p.id}: Saldo insuficiente (402)`);
-          if (resp.status === 429) throw new Error(`${p.id}: Rate limit atingido (429) — aguarde antes de reenviar`);
-          if (resp.status === 503) throw new Error(`${p.id}: Servidor sobrecarregado (503) — tentando fallback`);
-          throw new Error(`${p.id} API error ${resp.status}: ${data?.error?.message || 'Unknown'}`);
-        }
-
-        // Extract reasoning_content (DeepSeek V3.2 Thinking Mode CoT)
-        if (data?.choices?.[0]?.message?.reasoning_content) {
-          reasoningContent = data.choices[0].message.reasoning_content;
-          console.log(`🧠 DeepSeek V3.2 reasoning (${reasoningContent.length} chars): ${reasoningContent.substring(0, 200)}...`);
-        }
-
-        // Extract tool_calls if present
-        const toolCalls = data?.choices?.[0]?.message?.tool_calls || null;
-
-        // Extract usage (OpenAI-compatible format)
-        if (data?.usage) {
-          tokenUsage = {
-            prompt_tokens: data.usage.prompt_tokens || 0,
-            completion_tokens: data.usage.completion_tokens || 0,
-            total_tokens: data.usage.total_tokens || 0,
-          };
-          // DeepSeek V3.2 may also report reasoning_tokens separately
-          if (data.usage.reasoning_tokens) {
-            console.log(`🧠 Reasoning tokens: ${data.usage.reasoning_tokens}`);
+        try {
+          // Build Gemini multi-turn conversation format
+          const geminiContents = [];
+          
+          // Add system instruction as first user message context
+          geminiContents.push({
+            role: "user",
+            parts: [{ text: finalSystemPrompt }]
+          });
+          geminiContents.push({
+            role: "model",
+            parts: [{ text: "Entendido. Vou seguir todas as diretrizes." }]
+          });
+          
+          // Add conversation history
+          for (const msg of conversation) {
+            geminiContents.push({
+              role: msg.role === "assistant" ? "model" : "user",
+              parts: [{ text: msg.content }]
+            });
           }
-        }
 
-        // If tool_calls returned, return them for client-side execution
-        if (toolCalls) {
-          return JSON.stringify({ __tool_calls: toolCalls, reasoning_content: reasoningContent });
-        }
+          const resp = await fetch(`${endpoint}?key=${currentKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(90000),
+            body: JSON.stringify({
+              contents: geminiContents,
+              generationConfig: { 
+                temperature, 
+                maxOutputTokens: maxTokens,
+                topP: 0.95,
+              },
+            }),
+          });
 
-        return data?.choices?.[0]?.message?.content || "";
+          if (resp.status === 429) {
+            console.warn(`⚠️ Gemini key ${ki + 1}/${keysToTry.length} rate limited (429), rotating...`);
+            continue; // Try next key
+          }
+
+          const data = await resp.json();
+          if (!resp.ok) {
+            console.error(`❌ Gemini ${p.model} error ${resp.status}:`, JSON.stringify(data).substring(0, 300));
+            if (resp.status === 403 || resp.status === 400) continue; // Try next key
+            throw new Error(`Gemini ${p.model} error ${resp.status}: ${data?.error?.message || 'Unknown'}`);
+          }
+
+          if (data?.usageMetadata) {
+            tokenUsage = {
+              prompt_tokens: data.usageMetadata.promptTokenCount || 0,
+              completion_tokens: data.usageMetadata.candidatesTokenCount || 0,
+              total_tokens: data.usageMetadata.totalTokenCount || 0,
+            };
+          }
+          return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        } catch (e) {
+          if (ki === keysToTry.length - 1) throw e;
+          console.warn(`⚠️ Gemini key ${ki + 1} failed: ${(e as Error).message}, trying next...`);
+        }
       }
+      throw new Error(`All ${keysToTry.length} Gemini keys exhausted for ${p.model}`);
     }
 
     // Retry with exponential backoff + provider fallback
