@@ -592,8 +592,14 @@ Retorne APENAS o JSON.`,
 
   } catch (err) {
     console.error("ai-autocomplete error:", err);
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const errorMsg = err instanceof Error ? err.message : "Unknown error";
+    const isRateLimit = errorMsg.includes("429") || errorMsg.includes("rate limit") || errorMsg.includes("Rate limit") || errorMsg.includes("All providers failed");
+    const status = isRateLimit ? 429 : 500;
+    const userMessage = isRateLimit 
+      ? "Todos os provedores de IA estão temporariamente sobrecarregados. Aguarde alguns segundos e tente novamente."
+      : errorMsg;
+    return new Response(JSON.stringify({ error: userMessage, retryable: isRateLimit }), {
+      status, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
