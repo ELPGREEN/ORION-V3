@@ -67,6 +67,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef } = useNeuralVoice();
   const bgTranscriptsGetterRef = useRef<() => import("./useWakeWord").BackgroundTranscript[]>(() => []);
   const { thought, log, aiDescription, askAI, askInput, setAskInput, chatHistory, isProcessing, detectedObjects } = useOrionReasoning(active, speak, canvasRef, identificationMode, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, () => bgTranscriptsGetterRef.current());
+  const voiceClone = useOrionVoiceClone();
 
   // ═══ Voice Identity Guard ═══
   const {
