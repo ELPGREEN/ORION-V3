@@ -14,7 +14,7 @@ const MODEL = "gemini-2.5-flash-preview-tts";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 // Default voice for Orion — Charon is informative male
-const DEFAULT_VOICE = "Iapetus";
+const DEFAULT_VOICE = "Charon";
 const DEFAULT_LANG = "pt-BR";
 
 // Style prompt for natural Portuguese speech
