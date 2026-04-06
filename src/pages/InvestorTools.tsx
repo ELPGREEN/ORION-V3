@@ -612,13 +612,9 @@ export default function InvestorTools() {
                 </div>
                 <div className="space-y-3 text-sm">
                   {[
-                    { label: "Sede", value: "Alessandria, Piemonte, Itália" },
-                    { label: "Base Operacional", value: "Valenza (AL), Itália" },
-                    { label: "P.IVA (IT)", value: "IT02712340062" },
-                    { label: "CNPJ (BR)", value: "42.501.190/0001-70" },
-                    { label: "Email", value: "info@iasofthub.com" },
+                    { label: "Sede", value: "Itália (UE)" },
+                    { label: "Setor", value: "IA Empresarial & Soluções Sustentáveis" },
                     { label: "Website", value: "www.iasofthub.com" },
-                    { label: "Trademark ELP®", value: "Process nº 927739054 (Cat. 42) · 927739038 (Cat. 40) · 927738945 (Cat. 7) · 927738996 (Cat. 35) · 927739089 (Cat. 1)" },
                     { label: "Marcas Registradas", value: "ELP® · ORION" },
                     { label: "Copyright", value: "© 2023 ELP® Green Technology — All Rights Reserved" },
                   ].map(item => (
