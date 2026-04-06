@@ -7,28 +7,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Embedding providers — Mistral (primary), HuggingFace, OpenAI, Gemini fallback
+// ⚠️ CRITICAL: OpenAI text-embedding-3-small (768d) MUST be primary.
+// neural-search uses OpenAI for query embeddings — document embeddings MUST match.
+// Using different models (Mistral, HF) produces incompatible vector spaces.
 function getEmbeddingProviders(): Array<{ name: string; apiKey: string; type: string }> {
   const providers: Array<{ name: string; apiKey: string; type: string }> = [];
 
-  // Mistral first (most reliable)
-  const mistralKey = Deno.env.get("MISTRAL_API_KEY");
-  if (mistralKey) {
-    providers.push({ name: "mistral", apiKey: mistralKey, type: "mistral" });
-  }
-
-  // HuggingFace second (free, reliable)
-  const hfKeys = [
-    Deno.env.get("HF_TOKEN"),
-    Deno.env.get("HF_WRITE_TOKEN"),
-    Deno.env.get("HUGGINGFACE_API_KEY"),
-    Deno.env.get("CHAVE_API_HUGGINGFACE"),
-  ].filter(Boolean);
-  if (hfKeys.length > 0) {
-    providers.push({ name: "huggingface", apiKey: hfKeys[0]!, type: "huggingface" });
-  }
-
-  // OpenAI keys as fallback
+  // OpenAI FIRST — matches neural-search query embeddings (text-embedding-3-small 768d)
   const openaiKeys = [
     Deno.env.get("OPENAI_API_KEY"),
     Deno.env.get("OPENAI_API_KEY_2"),
@@ -37,7 +22,7 @@ function getEmbeddingProviders(): Array<{ name: string; apiKey: string; type: st
     providers.push({ name: "openai", apiKey: key!, type: "openai" });
   }
 
-  // Gemini as last resort
+  // Gemini as fallback (can output 768d natively)
   const geminiKeys = [
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
@@ -46,6 +31,10 @@ function getEmbeddingProviders(): Array<{ name: string; apiKey: string; type: st
   for (const key of geminiKeys) {
     providers.push({ name: "gemini", apiKey: key!, type: "gemini" });
   }
+
+  // NOTE: Mistral and HuggingFace REMOVED from pipeline.
+  // They produce embeddings in different vector spaces (1024d truncated / 384d padded)
+  // which are incompatible with OpenAI query embeddings in neural-search.
 
   return providers;
 }
