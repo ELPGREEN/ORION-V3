@@ -255,21 +255,53 @@ AGENT_CATEGORIES = {
             "reconviagen", "multiview_generation",
         ],
     },
-    # ── Text & NLP (120+) ──
+    # ── Text & NLP (250+ agents) — EXPANDED v7.1 ──
     "text_nlp": {
         "generation": [
             "text_completion", "chat", "instruction_following",
             "creative_writing", "code_generation", "translation",
-            "summarization", "paraphrase",
+            "summarization", "paraphrase", "grammar_correction",
         ],
         "analysis": [
-            "sentiment_analysis", "ner_extraction", "topic_classification",
+            "sentiment_analysis", "aspect_based_sentiment", "emotion_detection",
+            "ner_extraction", "relation_extraction", "topic_classification",
             "toxicity_detection", "language_detection", "keyword_extraction",
-            "text_similarity", "question_answering",
+            "text_similarity", "question_answering", "zero_shot_classification",
+            "word_sense_disambiguation", "clickbait_detection", "fake_news_detection",
+            "ai_text_detection", "ai_text_humanizer", "prompt_injection_detection",
+            "text_quality_scoring", "readability_analysis", "cefr_proficiency",
+            "hallucination_detection", "content_trigger_detection",
+        ],
+        "search": [
+            "semantic_search", "retrieve_and_rerank", "patent_search",
+            "scientific_search", "embedding_similarity", "modernbert_similarity",
+            "code_search_semantic", "product_search", "course_search",
+        ],
+        "tokenization": [
+            "tokenizer_playground", "tokenizer_comparison", "bpe_encoder",
+            "multilingual_tokenizer", "chunk_visualizer", "number_tokenization",
+        ],
+        "explainability": [
+            "attention_rollout", "attention_visualization", "tuned_lens",
+            "exbert_explorer", "pivotal_token_visualizer", "graphrag",
+        ],
+        "classification": [
+            "nda_clause_classifier", "email_triage", "bank_complaint_classifier",
+            "ecommerce_product_classifier", "news_classifier", "device_feedback_classifier",
+            "error_log_analyzer", "bot_detector", "employee_attrition_predictor",
+            "clinical_trial_predictor", "academic_impact_predictor",
+            "patentability_scorer", "talent_matcher", "compliance_auditor",
+        ],
+        "multilingual": [
+            "arabic_nlp", "turkish_ner", "turkish_zero_shot", "turkish_morphological",
+            "hindi_bpe", "darija_tokenizer", "italian_legal_ner", "korean_llm",
+            "egyptian_arabic_translation", "spanish_toxicity", "vietnamese_sentiment",
+            "portuguese_clickbait", "multilingual_qa",
         ],
         "models": [
             "qwen3_5", "gemma4", "llama3", "mistral", "deepseek_v3",
-            "command_r", "phi3", "lfm2_5_moe",
+            "command_r", "phi3", "lfm2_5_moe", "modernbert", "distilbert",
+            "gliner_multiv2", "glirel", "sentence_transformers",
         ],
     },
     # ── Benchmarking (30+) ──
