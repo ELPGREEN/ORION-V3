@@ -175,6 +175,8 @@ export default function PerfilAdmin() {
             />
           </div>
         </div>
+          </div>
+        </div>
       </div>
 
       {/* Timbre Config - Advogado only */}
