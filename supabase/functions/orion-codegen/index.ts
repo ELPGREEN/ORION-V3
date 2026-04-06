@@ -47,14 +47,50 @@ async function generateEmbedding(text: string): Promise<number[]> {
   throw new Error("All Gemini embedding keys exhausted");
 }
 
-async function callGeminiLLM(
+async function callAnthropicLLM(
   prompt: string,
   systemPrompt: string,
   maxTokens = 8192,
   temperature = 0.3
 ): Promise<string> {
-  const keys = getGeminiKeys();
-  for (const key of keys) {
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    signal: AbortSignal.timeout(120000),
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: maxTokens,
+      temperature,
+      system: systemPrompt,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Anthropic error ${res.status}: ${errText}`);
+  }
+
+  const data = await res.json();
+  return data?.content?.[0]?.text || "";
+}
+
+async function callLLMWithFallback(
+  prompt: string,
+  systemPrompt: string,
+  maxTokens = 8192,
+  temperature = 0.3
+): Promise<{ text: string; provider: string }> {
+  // Try Gemini first (free tier)
+  const geminiKeys = getGeminiKeys();
+  for (const key of geminiKeys) {
     try {
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
@@ -65,22 +101,27 @@ async function callGeminiLLM(
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: systemPrompt }] },
             contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: {
-              maxOutputTokens: maxTokens,
-              temperature,
-            },
+            generationConfig: { maxOutputTokens: maxTokens, temperature },
           }),
         }
       );
-      if (!res.ok) {
-        await res.text();
-        continue;
-      }
+      if (!res.ok) { await res.text(); continue; }
       const data = await res.json();
-      return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (text) return { text, provider: "gemini-2.0-flash" };
     } catch { continue; }
   }
-  throw new Error("All Gemini LLM keys exhausted");
+  console.warn("[orion-codegen] Gemini exhausted, falling back to Anthropic");
+
+  // Fallback: Anthropic Claude
+  try {
+    const text = await callAnthropicLLM(prompt, systemPrompt, maxTokens, temperature);
+    return { text, provider: "claude-sonnet-4" };
+  } catch (e) {
+    console.error("[orion-codegen] Anthropic also failed:", e);
+  }
+
+  throw new Error("All LLM providers exhausted (Gemini + Anthropic)");
 }
 
 // ─── RAG Search ───
