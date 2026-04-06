@@ -21,12 +21,13 @@ export interface VoiceProfile {
 }
 
 // Iapetus voice fingerprint (extracted from sample)
+// Iapetus voice fingerprint (averaged from 4 samples — high confidence)
 export const IAPETUS_PROFILE: VoiceProfile = {
-  pitchF0: 113.7,
-  spectralCentroid: 2093.4,
-  spectralRolloff: 8552.4,
-  dynamicRange: 21.8,
-  formants: [126.4, 126.7, 125.5, 125.6, 125.9, 127.3],
+  pitchF0: 117.1,
+  spectralCentroid: 1718.4,
+  spectralRolloff: 5456.5,
+  dynamicRange: 16.9,
+  formants: [121.0, 122.4, 126.5, 128.5, 130.0, 132.2],
   sampleRate: 24000,
 };
 
@@ -56,39 +57,39 @@ export async function applyIapetusSignature(
     const source = offlineCtx.createBufferSource();
     source.buffer = audioBuffer;
 
-    // ── 1. Low-shelf boost for chest resonance (F0 ~114 Hz) ──
+    // ── 1. Low-shelf boost for chest resonance (F0 ~117 Hz) ──
     const lowShelf = offlineCtx.createBiquadFilter();
     lowShelf.type = "lowshelf";
-    lowShelf.frequency.value = profile.pitchF0 * 1.2; // ~136 Hz
-    lowShelf.gain.value = 3.0; // Boost low fundamentals
+    lowShelf.frequency.value = profile.pitchF0 * 1.15; // ~135 Hz
+    lowShelf.gain.value = 3.5; // Boost low fundamentals
 
     // ── 2. Peaking EQ for warmth at formant region ──
     const warmth = offlineCtx.createBiquadFilter();
     warmth.type = "peaking";
-    warmth.frequency.value = 250; // Male chest resonance
-    warmth.Q.value = 1.2;
-    warmth.gain.value = 2.5;
+    warmth.frequency.value = 230; // Male chest resonance (refined)
+    warmth.Q.value = 1.0;
+    warmth.gain.value = 2.8;
 
     // ── 3. Presence peak at spectral centroid ──
     const presence = offlineCtx.createBiquadFilter();
     presence.type = "peaking";
-    presence.frequency.value = profile.spectralCentroid; // ~2093 Hz
-    presence.Q.value = 0.8;
-    presence.gain.value = 1.5;
+    presence.frequency.value = profile.spectralCentroid; // ~1718 Hz (warmer than before)
+    presence.Q.value = 0.7;
+    presence.gain.value = 2.0;
 
     // ── 4. High-shelf rolloff to match Iapetus timbre ──
     const highShelf = offlineCtx.createBiquadFilter();
     highShelf.type = "highshelf";
-    highShelf.frequency.value = profile.spectralRolloff; // ~8552 Hz
-    highShelf.gain.value = -2.0; // Gentle rolloff for warmth
+    highShelf.frequency.value = profile.spectralRolloff; // ~5457 Hz (tighter rolloff)
+    highShelf.gain.value = -3.5; // Stronger rolloff for warm, focused voice
 
     // ── 5. Gentle compression for natural dynamics ──
     const compressor = offlineCtx.createDynamicsCompressor();
-    compressor.threshold.value = -18;
-    compressor.knee.value = 12;
-    compressor.ratio.value = 2.5;
+    compressor.threshold.value = -20;
+    compressor.knee.value = 10;
+    compressor.ratio.value = 3.0;
     compressor.attack.value = 0.003;
-    compressor.release.value = 0.15;
+    compressor.release.value = 0.12;
 
     // ── 6. Output gain normalization ──
     const outputGain = offlineCtx.createGain();
@@ -126,32 +127,32 @@ export function createIapetusPlaybackChain(
 ): AudioNode {
   const lowShelf = audioContext.createBiquadFilter();
   lowShelf.type = "lowshelf";
-  lowShelf.frequency.value = profile.pitchF0 * 1.2;
-  lowShelf.gain.value = 3.0;
+  lowShelf.frequency.value = profile.pitchF0 * 1.15;
+  lowShelf.gain.value = 3.5;
 
   const warmth = audioContext.createBiquadFilter();
   warmth.type = "peaking";
-  warmth.frequency.value = 250;
-  warmth.Q.value = 1.2;
-  warmth.gain.value = 2.5;
+  warmth.frequency.value = 230;
+  warmth.Q.value = 1.0;
+  warmth.gain.value = 2.8;
 
   const presence = audioContext.createBiquadFilter();
   presence.type = "peaking";
   presence.frequency.value = profile.spectralCentroid;
-  presence.Q.value = 0.8;
-  presence.gain.value = 1.5;
+  presence.Q.value = 0.7;
+  presence.gain.value = 2.0;
 
   const highShelf = audioContext.createBiquadFilter();
   highShelf.type = "highshelf";
   highShelf.frequency.value = profile.spectralRolloff;
-  highShelf.gain.value = -2.0;
+  highShelf.gain.value = -3.5;
 
   const compressor = audioContext.createDynamicsCompressor();
-  compressor.threshold.value = -18;
-  compressor.knee.value = 12;
-  compressor.ratio.value = 2.5;
+  compressor.threshold.value = -20;
+  compressor.knee.value = 10;
+  compressor.ratio.value = 3.0;
   compressor.attack.value = 0.003;
-  compressor.release.value = 0.15;
+  compressor.release.value = 0.12;
 
   source.connect(lowShelf);
   lowShelf.connect(warmth);
