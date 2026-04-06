@@ -1,6 +1,6 @@
 """
-ELP Neural Proxy v7.0 — Complete AI Agent Swarm
-PDF + Vision + Code Generation + Code Analysis + Fine-Tuning + Dataset Creation + Media Generation
+ELP Neural Proxy v7.1 — Complete AI Agent Swarm
+PDF + Vision + Code Generation + Code Analysis + Text Analysis + Fine-Tuning + Dataset Creation + Media Generation
 2500+ Neural Agents covering ALL HuggingFace Spaces categories
 Runs on 2GB RAM (HF Spaces free tier)
 """
@@ -912,7 +912,12 @@ def route_to_agents(query: str) -> Dict[str, Any]:
         "speech_audio": ["tts", "speech", "voice", "transcri", "asr", "whisper", "music",
                          "voice clon", "rvc", "vocal", "audio"],
         "modeling_3d": ["3d", "mesh", "point cloud", "gaussian", "trellis", "hunyuan3d"],
-        "text_nlp": ["summariz", "translat", "sentiment", "ner", "topic", "paraphras", "chat"],
+        "text_nlp": ["summariz", "translat", "sentiment", "ner", "topic", "paraphras",
+                     "grammar", "emotion", "ai detect", "ai text", "fake news", "clickbait",
+                     "semantic search", "tokeniz", "zero-shot", "classify text",
+                     "keyword", "similar", "embed", "attention", "explainab",
+                     "prompt injection", "hallucin", "readabil", "proficienc",
+                     "bot detect", "email triage", "complaint", "talent match"],
         "benchmarking": ["benchmark", "leaderboard", "evaluate model", "compare model",
                          "bigcodebench", "navitrace"],
         "pdf": ["pdf", "document", "extract text", "table extract", "layout"],
