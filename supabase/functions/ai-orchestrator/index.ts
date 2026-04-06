@@ -262,7 +262,29 @@ interface NeuralContext {
   specializations: Array<{ name: string; prompts: Record<string, string> }>;
 }
 
-// Generate query embedding using Gemini gemini-embedding-001 (768d, free)
+// HuggingFace fallback: all-MiniLM-L6-v2 (384d → zero-pad to 768d)
+async function generateEmbeddingHF(text: string): Promise<number[]> {
+  const hfKey = Deno.env.get("HUGGINGFACE_API_KEY") || Deno.env.get("HF_TOKEN") || Deno.env.get("CHAVE_API_HUGGINGFACE");
+  if (!hfKey) return [];
+  try {
+    const res = await fetch(
+      "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
+      {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${hfKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ inputs: text.substring(0, 4000), options: { wait_for_model: true } }),
+      }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const values = Array.isArray(data[0]) ? data[0] : data;
+    if (!values?.length) return [];
+    console.warn(`⚠️ HF fallback used (384d→768d zero-padded)`);
+    return values.length >= 768 ? values.slice(0, 768) : [...values, ...new Array(768 - values.length).fill(0)];
+  } catch { return []; }
+}
+
+// Generate query embedding using Gemini gemini-embedding-001 (768d, free) + HF fallback
 async function generateQueryEmbedding(text: string): Promise<number[]> {
   const geminiKeys = [
     Deno.env.get("GEMINI_API_KEY"),
@@ -295,7 +317,9 @@ async function generateQueryEmbedding(text: string): Promise<number[]> {
     }
   }
 
-  return [];
+  // Fallback: HuggingFace
+  console.warn("⚠️ All Gemini keys exhausted — HuggingFace fallback");
+  return await generateEmbeddingHF(text);
 }
 
 // ═══════════════════════════════════════════════════════════════

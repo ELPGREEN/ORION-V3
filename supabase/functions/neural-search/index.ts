@@ -2771,6 +2771,26 @@ function getGeminiKeys(): string[] {
   ].filter(Boolean) as string[];
 }
 
+// HuggingFace fallback: all-MiniLM-L6-v2 (384d → zero-pad to 768d)
+async function generateEmbeddingHF(text: string): Promise<number[]> {
+  const hfKey = Deno.env.get("HUGGINGFACE_API_KEY") || Deno.env.get("HF_TOKEN") || Deno.env.get("CHAVE_API_HUGGINGFACE");
+  if (!hfKey) throw new Error("No HuggingFace API key for fallback");
+  const res = await fetch(
+    "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
+    {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${hfKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ inputs: text.substring(0, 4000), options: { wait_for_model: true } }),
+    }
+  );
+  if (!res.ok) throw new Error(`HF error ${res.status}`);
+  const data = await res.json();
+  const values = Array.isArray(data[0]) ? data[0] : data;
+  if (!values?.length) throw new Error("No HF embedding");
+  console.warn(`⚠️ HF fallback used (384d→768d zero-padded)`);
+  return values.length >= EMBEDDING_DIMS ? values.slice(0, EMBEDDING_DIMS) : [...values, ...new Array(EMBEDDING_DIMS - values.length).fill(0)];
+}
+
 async function generateEmbedding(text: string, retryCount = 0): Promise<number[]> {
   const truncated = text.substring(0, 4000);
   const keys = getGeminiKeys();
@@ -2805,7 +2825,14 @@ async function generateEmbedding(text: string, retryCount = 0): Promise<number[]
       if (values?.length > 0) return [...values, ...new Array(EMBEDDING_DIMS - values.length).fill(0)];
     } catch (err) { console.warn(`Gemini embedding error: ${err}`); }
   }
-  throw new Error("All Gemini keys exhausted for embedding");
+  // Fallback: HuggingFace
+  try {
+    console.warn("⚠️ All Gemini keys exhausted — HuggingFace fallback");
+    return await generateEmbeddingHF(text);
+  } catch (hfErr) {
+    console.error("❌ HF fallback failed:", hfErr);
+  }
+  throw new Error("All embedding providers failed (Gemini + HuggingFace)");
 }
 
 async function generateQueryEmbeddingCached(supabase: any, query: string): Promise<{ embedding: number[]; cached: boolean }> {
