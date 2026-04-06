@@ -292,9 +292,9 @@ const API_REGISTRY: OrionAPI[] = [
   {
     id: "ibm_runtime", name: "IBM Quantum Runtime", brandName: "Orion Quantum Cloud",
     capability: "quantum_compute", tier: "secondary", runtime: "cloud",
-    library: "qiskit-runtime", version: "0.28",
+    library: "qiskit-runtime", version: "2.0",
     health: "online", lastLatencyMs: 0, errorCount: 0,
-    features: ["127 qubits", "Eagle r3", "ZNE/M3/PEC", "5 QPUs"],
+    features: ["156 qubits", "Heron r3/r2", "Nighthawk r1", "ZNE/M3/PEC", "Noise Learner", "10 QPUs", "OpenQASM 3"],
     checkHealth: () => "online",
   },
 ];
