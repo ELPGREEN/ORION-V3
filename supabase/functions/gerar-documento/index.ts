@@ -2677,7 +2677,25 @@ async function generateEmbeddingForCache(text: string): Promise<number[] | null>
       if (values?.length >= 768) return values.slice(0, 768);
     } catch { continue; }
   }
-  return null;
+  // Fallback: HuggingFace all-MiniLM-L6-v2 (384d → 768d zero-padded)
+  try {
+    const hfKey = Deno.env.get("HUGGINGFACE_API_KEY") || Deno.env.get("HF_TOKEN") || Deno.env.get("CHAVE_API_HUGGINGFACE");
+    if (!hfKey) return null;
+    console.warn("⚠️ Gemini exhausted for cache embedding — HF fallback");
+    const res = await fetch(
+      "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
+      {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${hfKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ inputs: text.substring(0, 4000), options: { wait_for_model: true } }),
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const values = Array.isArray(data[0]) ? data[0] : data;
+    if (!values?.length) return null;
+    return values.length >= 768 ? values.slice(0, 768) : [...values, ...new Array(768 - values.length).fill(0)];
+  } catch { return null; }
 }
 
 // Save generated document to neural cache with full text + embedding

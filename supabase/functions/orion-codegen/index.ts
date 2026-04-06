@@ -44,7 +44,28 @@ async function generateEmbedding(text: string): Promise<number[]> {
       if (values?.length >= 768) return values.slice(0, 768);
     } catch { continue; }
   }
-  throw new Error("All Gemini embedding keys exhausted");
+  // Fallback: HuggingFace all-MiniLM-L6-v2 (384d → 768d zero-padded)
+  try {
+    const hfKey = Deno.env.get("HUGGINGFACE_API_KEY") || Deno.env.get("HF_TOKEN") || Deno.env.get("CHAVE_API_HUGGINGFACE");
+    if (!hfKey) throw new Error("No HF key");
+    console.warn("⚠️ Gemini exhausted — HF fallback for codegen embedding");
+    const res = await fetch(
+      "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
+      {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${hfKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ inputs: text.slice(0, 4000), options: { wait_for_model: true } }),
+      }
+    );
+    if (!res.ok) throw new Error(`HF error ${res.status}`);
+    const data = await res.json();
+    const values = Array.isArray(data[0]) ? data[0] : data;
+    if (!values?.length) throw new Error("No HF embedding");
+    return values.length >= 768 ? values.slice(0, 768) : [...values, ...new Array(768 - values.length).fill(0)];
+  } catch (hfErr) {
+    console.error("❌ HF fallback failed:", hfErr);
+  }
+  throw new Error("All embedding providers failed (Gemini + HuggingFace)");
 }
 
 async function callAnthropicLLM(

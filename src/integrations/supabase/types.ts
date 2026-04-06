@@ -3590,51 +3590,6 @@ export type Database = {
         }
         Relationships: []
       }
-      knowledge_embeddings: {
-        Row: {
-          content: string
-          content_type: string | null
-          created_at: string
-          embedding: string | null
-          hit_count: number | null
-          id: string
-          metadata: Json | null
-          published_date: string | null
-          source: string
-          tags: string[] | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          content: string
-          content_type?: string | null
-          created_at?: string
-          embedding?: string | null
-          hit_count?: number | null
-          id?: string
-          metadata?: Json | null
-          published_date?: string | null
-          source?: string
-          tags?: string[] | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          content?: string
-          content_type?: string | null
-          created_at?: string
-          embedding?: string | null
-          hit_count?: number | null
-          id?: string
-          metadata?: Json | null
-          published_date?: string | null
-          source?: string
-          tags?: string[] | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       lawyer_presence: {
         Row: {
           id: string
@@ -7775,21 +7730,6 @@ export type Database = {
       is_client_owner: {
         Args: { _client_profile_id: string; _user_id: string }
         Returns: boolean
-      }
-      match_knowledge: {
-        Args: {
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          content: string
-          content_type: string
-          id: string
-          similarity: number
-          source: string
-          title: string
-        }[]
       }
       match_neural_knowledge: {
         Args: {

@@ -269,14 +269,13 @@ async function saveWeights(supabase: ReturnType<typeof createClient>, userId: st
 // AÇÕES DO SISTEMA NEURAL
 // ═══════════════════════════════════════════════════════════════
 
-// Generate embedding using Gemini gemini-embedding-001 (768 dims, free)
+// Generate embedding using Gemini gemini-embedding-001 (768 dims, free) + HF fallback
 async function generateEmbedding(text: string): Promise<number[] | null> {
   const geminiKeys = [
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
     Deno.env.get("GEMINI_API_KEY_3"),
   ].filter(Boolean) as string[];
-  if (geminiKeys.length === 0) return null;
 
   const truncated = text.substring(0, 4000);
   for (const apiKey of geminiKeys) {
@@ -299,7 +298,25 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
       if (embedding && embedding.length >= 768) return embedding.slice(0, 768);
     } catch { continue; }
   }
-  return null;
+  // Fallback: HuggingFace all-MiniLM-L6-v2 (384d → 768d zero-padded)
+  try {
+    const hfKey = Deno.env.get("HUGGINGFACE_API_KEY") || Deno.env.get("HF_TOKEN") || Deno.env.get("CHAVE_API_HUGGINGFACE");
+    if (!hfKey) return null;
+    console.warn("⚠️ Gemini exhausted — HF fallback for training embedding");
+    const res = await fetch(
+      "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
+      {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${hfKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ inputs: truncated, options: { wait_for_model: true } }),
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const values = Array.isArray(data[0]) ? data[0] : data;
+    if (!values?.length) return null;
+    return values.length >= 768 ? values.slice(0, 768) : [...values, ...new Array(768 - values.length).fill(0)];
+  } catch { return null; }
 }
 
 // ADD KNOWLEDGE — with embedding generation

@@ -73,6 +73,33 @@ async function generateEmbeddingBatch(texts: string[], apiKey: string): Promise<
   });
 }
 
+// HuggingFace fallback: all-MiniLM-L6-v2 (384d → zero-pad to 768d)
+async function generateEmbeddingHF(text: string): Promise<number[]> {
+  const hfKey = Deno.env.get("HUGGINGFACE_API_KEY") || Deno.env.get("HF_TOKEN") || Deno.env.get("CHAVE_API_HUGGINGFACE");
+  if (!hfKey) throw new Error("No HuggingFace API key configured");
+  const truncated = text.slice(0, 4000);
+  const response = await fetch(
+    "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2",
+    {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${hfKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ inputs: truncated, options: { wait_for_model: true } }),
+    }
+  );
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`HF embedding error ${response.status}: ${err.slice(0, 200)}`);
+  }
+  const data = await response.json();
+  // HF returns nested array [[...384 floats...]]
+  const values = Array.isArray(data[0]) ? data[0] : data;
+  if (!values || values.length === 0) throw new Error("No embedding from HuggingFace");
+  // Zero-pad 384d → 768d for vector space compatibility
+  const padded = values.length >= 768 ? values.slice(0, 768) : [...values, ...new Array(768 - values.length).fill(0)];
+  console.warn(`⚠️ HF fallback used (384d→768d zero-padded). Quality may differ from Gemini.`);
+  return padded;
+}
+
 async function generateEmbedding(
   text: string,
   providers: Array<{ name: string; apiKey: string }>
@@ -88,7 +115,15 @@ async function generateEmbedding(
       continue;
     }
   }
-  throw new Error("All embedding providers failed");
+  // Fallback: HuggingFace all-MiniLM-L6-v2
+  try {
+    console.warn("⚠️ All Gemini keys exhausted — falling back to HuggingFace");
+    const embedding = await generateEmbeddingHF(text);
+    return { embedding, provider: "huggingface-fallback" };
+  } catch (hfErr) {
+    console.error("❌ HuggingFace fallback also failed:", hfErr.message);
+  }
+  throw new Error("All embedding providers failed (Gemini + HuggingFace)");
 }
 
 Deno.serve(async (req) => {
@@ -258,7 +293,21 @@ Deno.serve(async (req) => {
             }
           } catch (e) {
             console.error(`❌ Legal batch failed:`, e.message);
-            results.legal.failed += batch.length;
+            // Fallback: one-by-one with HF support
+            for (const b of batch) {
+              const text = `${b.title}\n\n${b.content}`.trim();
+              try {
+                const { embedding } = await generateEmbedding(text, providers);
+                const vectorStr = `[${embedding.join(",")}]`;
+                await supabase.from("legal_embeddings")
+                  .update({ embedding: vectorStr })
+                  .eq("id", b.id);
+                results.legal.processed++;
+                console.log(`✅ Legal [fallback]: ${b.title?.slice(0, 60)}...`);
+              } catch {
+                results.legal.failed++;
+              }
+            }
           }
 
           if (i + BATCH_SIZE < legalItems.length) {
