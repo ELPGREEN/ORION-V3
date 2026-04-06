@@ -1,12 +1,14 @@
 /**
  * NEUROCORE AI — Voice STT/TTS Hook
- * Primary: Piper TTS (neural WASM, offline, free)
- * Fallback: Browser Web Speech (masculine PT-BR)
+ * Free TTS Cascade: Google TTS → Piper WASM → Enhanced Web Speech
+ * Zero paid APIs. Maximum naturalness.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
+import { speakWithGoogleTTS, isGoogleTTSAvailable } from "@/lib/tts/googleTTS";
+import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
 
 
 // ═══ Text Cleaning for Natural Speech ═══
@@ -119,6 +121,9 @@ export function useNeuralVoice(
     initVoicePicker();
     const voice = getOrionVoice();
     if (voice) maleVoiceRef.current = voice;
+    
+    // Pre-load Piper in background for faster first speak
+    preloadPiper();
     
     const handler = () => {
       const v = getOrionVoice();
