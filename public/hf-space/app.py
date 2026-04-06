@@ -4,8 +4,6 @@ PDF + Vision + Object Detection + Code Generation + Code Analysis + Text Analysi
 3100+ Neural Agents covering ALL HuggingFace Spaces categories
 Runs on 2GB RAM (HF Spaces free tier)
 """
-Runs on 2GB RAM (HF Spaces free tier)
-"""
 
 import io
 import os
@@ -27,7 +25,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # ============================================================
 # App Init
 # ============================================================
-app = FastAPI(title="ELP Neural Proxy", version="7.0.0")
+app = FastAPI(title="ELP Neural Proxy", version="7.4.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,7 +35,6 @@ app.add_middleware(
 
 # ============================================================
 # AGENT REGISTRY — 3100+ Neural Agents (ALL HF Categories)
-# ============================================================
 # ============================================================
 
 AGENT_CATEGORIES = {
@@ -126,7 +123,6 @@ AGENT_CATEGORIES = {
             "strategic_planning", "negotiation_analysis", "patent_analysis",
         ],
     },
-    # ── Vision (200+) ──
     # ── Vision & Object Detection (350+ agents) — EXPANDED v7.2 ──
     "vision": {
         "face": [
