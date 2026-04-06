@@ -43,8 +43,8 @@ export default function Afiliados() {
   const totalEarnings = commissions?.reduce((sum: number, c: any) => sum + (c.amount_cents || 0), 0) || 0;
   const pendingEarnings = commissions?.filter((c: any) => c.status === "pending").reduce((s: number, c: any) => s + c.amount_cents, 0) || 0;
 
-  const copyLink = (hash: string, slug: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/p/${slug}?ref=${hash}`);
+  const copyLink = (hash: string, creatorId: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}/loja/${creatorId}?ref=${hash}`);
     toast.success("Link copiado!");
   };
 
