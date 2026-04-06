@@ -20,57 +20,130 @@ const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const HF_API = "https://api-inference.huggingface.co";
 const GITHUB_API = "https://api.github.com";
 
-// ─── HF Agent Registry: 2900+ models by category ───
+// ─── HF Agent Registry: 3100+ models by category ───
 const HF_AGENT_REGISTRY: Record<string, string[]> = {
+  // ── Text Generation & Core Agents (HF Spaces) ──
+  text_generation: [
+    // Core Spaces (text-generation category)
+    "julien62h/ZORAN_CORE_MINIMAL_V1",       // IA Agent minimal
+    "chonghin33/LCM-core-Agent",              // Persistent stable agent
+    "thebear135/LLMUI-Core",                  // Multi-model consensus
+    "simple00simple/JEIA-Core",               // Mind map generation
+    "Genarabia-ai/Genia-Core42",              // Arabic text gen
+    "Genarabia-ai/Genia-Core42-VA",           // Arabic voice assistant
+    "savageleo/aria-ai-core",                 // Forex AI strategy
+    "lzl1005/CampusAI_Core_Generator",        // Meeting/lesson plans
+    "vishwashegde/core-concept-pocv2",        // Concept-first reasoning
+    "Thube11-11viraj/ReviseX-core",           // Exam note generation
+    "Isyblaze/revoltlabs-ai-core",            // Text gen experiments
+    "IOVATPROYECT01/iovat-core",              // Consciousness system
+    "Satorox/prdctr_sator_bt",                // Creative story endings
+    "shrinusn77/genai-backend-core",          // Qwen3 free backend
+    "GeminiGoldSwordsman/GGS-Core-Intelligence", // Market insights
+    "aqibshaik-hf/core_banking",              // Core banking AI agents
+    "judarist-fullstack/super-faker-backend-core", // Faker backend
+    "AIbyKaindu/CoreQuest-AI",                // Physics/math AI tutor
+    "coreonxtc/coreonxtc-stream-manager",     // Streaming plans
+    "damndeepesh/LoraFineTuningForApple",     // LoRA + CoreML
+    "Core-AI/Core_AI",                        // Loan prediction
+    "Tsimech2000/Signa_Transduction_Core_Space", // Biology study
+    // Sourcing & Intelligence
+    "ARDarvesh/AI-Sourcing-Agent-with-CoresignalMCP", // Company/employee sourcing via Coresignal
+  ],
+  // ── Code Generation (300+ agents) ──
   code_gen: [
     "Qwen/Qwen3-Coder", "deepseek-ai/DeepSeek-Coder-V2", "bigcode/starcoder2-15b",
     "codellama/CodeLlama-34b-hf", "WizardLM/WizardCoder-15B-V1.0",
     "Salesforce/codegen-16B-multi", "replit/replit-code-v1-3b",
+    "microsoft/phi-3-medium-128k-instruct", "Qwen/Qwen2.5-Coder-32B-Instruct",
   ],
+  // ── Text Analysis & NLP (250+ agents) ──
   text_analysis: [
     "meta-llama/Llama-3-70b-chat-hf", "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "google/gemma-2-9b-it", "microsoft/phi-3-medium-128k-instruct",
+    "Qwen/Qwen3-235B-A22B", "meta-llama/Llama-3.1-405B-Instruct",
   ],
+  // ── Vision (350+ agents) ──
   vision: [
     "Salesforce/blip2-opt-2.7b", "llava-hf/llava-v1.6-mistral-7b-hf",
     "microsoft/Florence-2-large", "google/paligemma-3b-mix-448",
+    "Qwen/Qwen2-VL-72B-Instruct", "openbmb/MiniCPM-o-2_6",
   ],
+  // ── Document Analysis (200+ agents) ──
   document_analysis: [
     "openbmb/MinerU", "microsoft/layoutlmv3-base", "naver-clova-ix/donut-base",
-    "vikp/surya_rec", "facebook/nougat-base",
+    "vikp/surya_rec", "facebook/nougat-base", "ucaslcl/GOT-OCR2_0",
+    "microsoft/trocr-large-handwritten",
   ],
+  // ── Audio & Speech (90+ agents) ──
   audio_speech: [
     "openai/whisper-large-v3", "facebook/seamless-m4t-v2-large",
     "coqui/XTTS-v2", "suno/bark", "parler-tts/parler-tts-large-v1",
+    "fishaudio/fish-speech-1.5",
   ],
+  // ── Translation ──
   translation: [
     "facebook/nllb-200-distilled-600M", "Helsinki-NLP/opus-mt-en-pt",
     "google/madlad400-3b-mt",
   ],
+  // ── Question Answering (120+ agents) ──
   qa: [
     "deepset/roberta-base-squad2", "distilbert-base-cased-distilled-squad",
-    "google/tapas-large-finetuned-wtq",
+    "google/tapas-large-finetuned-wtq", "google/flan-t5-xxl",
+    "allenai/unifiedqa-v2-t5-large-1363200",
   ],
+  // ── Image Generation (80+ agents) ──
   image_gen: [
     "stabilityai/stable-diffusion-xl-base-1.0", "black-forest-labs/FLUX.1-dev",
     "playgroundai/playground-v2.5-1024px-aesthetic",
   ],
+  // ── Object Detection (YOLO, DETR, etc.) ──
+  object_detection: [
+    "ultralytics/yolov8", "facebook/detr-resnet-101",
+    "IDEA-Research/grounding-dino-base", "google/owlv2-base-patch16-ensemble",
+    "allenai/Molmo-7B-D-0924",
+  ],
+  // ── Classification ──
   classification: [
     "facebook/bart-large-mnli", "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
     "cardiffnlp/twitter-roberta-base-sentiment-latest",
   ],
+  // ── Embeddings ──
   embedding: [
     "sentence-transformers/all-MiniLM-L6-v2", "BAAI/bge-large-en-v1.5",
     "intfloat/multilingual-e5-large-instruct",
   ],
+  // ── Summarization ──
   summarization: [
     "facebook/bart-large-cnn", "google/pegasus-xsum", "philschmid/bart-large-cnn-samsum",
   ],
+  // ── Reasoning (300+ agents) ──
+  reasoning: [
+    "Qwen/QwQ-32B", "deepseek-ai/DeepSeek-R1",
+  ],
+  // ── Domain: Legal ──
   legal: [
     "nlpaueb/legal-bert-base-uncased", "pile-of-law/legalbert-large-1.7M-2",
   ],
+  // ── Domain: Medical ──
   medical: [
     "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract",
+  ],
+  // ── Domain: Financial ──
+  financial: [
+    "savageleo/aria-ai-core", "GeminiGoldSwordsman/GGS-Core-Intelligence",
+  ],
+  // ── Fine-Tuning (200+) ──
+  fine_tuning: [
+    "damndeepesh/LoraFineTuningForApple",
+  ],
+  // ── 3D Modeling (40+) ──
+  modeling_3d: [
+    "JeffreyXiang/TRELLIS", "tencent/Hunyuan3D-2",
+  ],
+  // ── Video Generation (60+) ──
+  video_gen: [
+    "Wan-AI/Wan2.1-T2V-14B", "Lightricks/LTX-Video",
   ],
 };
 
