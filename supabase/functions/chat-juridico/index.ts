@@ -294,7 +294,7 @@ interface NeuralSearchResult {
 }
 
 // ====== MULTI-LLM PROVIDER ======
-type LLMProvider = "groq" | "gemini" | "openai" | "anthropic";
+type LLMProvider = "groq" | "gemini" | "openai" | "anthropic" | "deepseek";
 
 interface LLMConfig {
   provider: LLMProvider;
