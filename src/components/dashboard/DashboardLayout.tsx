@@ -110,6 +110,7 @@ export default function DashboardLayout() {
       <div className="min-h-screen bg-background flex flex-col relative">
         <DashboardBackground />
         <MouseTrailEffect />
+        {orionListener}
         <div className="relative z-10 flex flex-col flex-1">
           <ClienteNavbar onMobileMenuToggle={() => setMobileOpen(!mobileOpen)} />
           <GenerationBanner hasActiveJob={hasActiveJob} dismissed={dismissedJob} onDismiss={() => setDismissedJob(true)} />
