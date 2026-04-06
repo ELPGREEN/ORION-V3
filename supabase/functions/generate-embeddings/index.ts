@@ -39,8 +39,15 @@ function getEmbeddingProviders(): Array<{ name: string; apiKey: string; type: st
   return providers;
 }
 
+// Single text embedding
 async function generateEmbeddingOpenAI(text: string, apiKey: string): Promise<number[]> {
-  const truncated = text.slice(0, 8000);
+  const results = await generateEmbeddingOpenAIBatch([text], apiKey);
+  return results[0] || [];
+}
+
+// Batch embedding — sends up to 20 texts in ONE API call to save tokens/requests
+async function generateEmbeddingOpenAIBatch(texts: string[], apiKey: string): Promise<number[][]> {
+  const truncated = texts.map(t => t.slice(0, 4000)); // 4k chars ≈ ~1k tokens each
   const response = await fetch("https://api.openai.com/v1/embeddings", {
     method: "POST",
     headers: {
@@ -60,7 +67,9 @@ async function generateEmbeddingOpenAI(text: string, apiKey: string): Promise<nu
   }
 
   const data = await response.json();
-  return data?.data?.[0]?.embedding || [];
+  // Sort by index to maintain order
+  const sorted = (data?.data || []).sort((a: any, b: any) => a.index - b.index);
+  return sorted.map((d: any) => d.embedding || []);
 }
 
 async function generateEmbeddingGemini(text: string, apiKey: string): Promise<number[]> {
