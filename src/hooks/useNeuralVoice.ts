@@ -340,11 +340,12 @@ export function useNeuralVoice(
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
 
   /**
-   * ═══ Main TTS — Síntese Vocal Clonada (100% FREE) ═══
+   * ═══ Main TTS — Gemini TTS Primário (100% FREE, ~2s latência) ═══
    * 
-   * PRIMARY: Fish Speech v1.5 Clone (sua voz clonada — uso exclusivo após configuração)
-   * EMERGENCY FALLBACK (só quando Fish Clone falha):
-   *   → Gemini TTS → Google TTS → Piper WASM → Web Speech
+   * PRIMARY: Gemini TTS (Charon voice — rápido, natural, gratuito)
+   * CLONE BONUS: Se Fish Speech clone está disponível E já tem cache, usa clone
+   * FALLBACK: Piper WASM → Web Speech API
+   * Google Translate TTS removido — qualidade inferior.
    */
   const speak = useCallback(async (text: string) => {
     if (!ttsRef.current || typeof window === "undefined") return;
@@ -388,7 +389,23 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
-    // ── PRIMARY: Fish Speech Clone (sua voz clonada — uso exclusivo) ──
+    // ── PRIMARY: Gemini TTS (rápido ~2s, voz Charon, 100% grátis) ──
+    if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
+      try {
+        const result = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
+        if (result.played) {
+          played = true;
+          if (result.audio) activeAudioRef.current = result.audio;
+          console.log("[Voice] ✅ Gemini TTS (Charon) — primário");
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          console.warn("[Voice] Gemini TTS falhou, tentando próximo...");
+        }
+      }
+    }
+
+    // ── SECONDARY: Fish Speech Clone (se configurado e disponível) ──
     const voiceId = (config as any)?.orion_voice_id as string | undefined;
     const fishRefPath = getClonedVoiceRefPath(voiceId);
     const hasClonedVoice = !!fishRefPath;
@@ -399,70 +416,32 @@ export function useNeuralVoice(
         if (result.played) {
           played = true;
           if (result.audio) activeAudioRef.current = result.audio;
-          console.log("[Voice] ✅ Síntese vocal clonada (Fish Speech v1.5)");
+          console.log("[Voice] ✅ Fish Speech Clone (voz clonada)");
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Clone TTS falhou, usando fallback de emergência...");
+          console.warn("[Voice] Fish Clone falhou...");
         }
       }
     }
 
-    // ══ EMERGENCY FALLBACK — só ativado quando voz clonada não está disponível ══
+    // ── FALLBACK 1: Piper WASM (offline) ──
     if (!played && !cascadeAbort.signal.aborted) {
-      if (hasClonedVoice) {
-        console.warn("[Voice] ⚠️ Voz clonada indisponível — fallback de emergência");
+      try {
+        played = await speakWithPiper(cleanText);
+        if (played) console.log("[Voice] ⚠️ Fallback: Piper WASM");
+      } catch {
+        console.warn("[Voice] Piper falhou...");
       }
+    }
 
-      // Fallback 1: Gemini TTS
-      if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
-        try {
-          const result = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
-          if (result.played) {
-            played = true;
-            if (result.audio) activeAudioRef.current = result.audio;
-            console.log("[Voice] ⚠️ Fallback: Gemini TTS");
-          }
-        } catch (err) {
-          if ((err as Error)?.name !== "AbortError") {
-            console.warn("[Voice] Gemini TTS falhou...");
-          }
-        }
-      }
-
-      // Fallback 2: Google Translate TTS
-      if (!played && !cascadeAbort.signal.aborted && isGoogleTTSAvailable()) {
-        try {
-          const result = await speakWithGoogleTTS(cleanText, "pt-br", cascadeAbort.signal);
-          if (result.played) {
-            played = true;
-            if (result.audio) activeAudioRef.current = result.audio;
-            console.log("[Voice] ⚠️ Fallback: Google TTS");
-          }
-        } catch (err) {
-          if ((err as Error)?.name !== "AbortError") {
-            console.warn("[Voice] Google TTS falhou...");
-          }
-        }
-      }
-
-      // Fallback 3: Piper WASM (offline)
-      if (!played && !cascadeAbort.signal.aborted) {
-        try {
-          played = await speakWithPiper(cleanText);
-          if (played) console.log("[Voice] ⚠️ Fallback: Piper WASM");
-        } catch {
-          console.warn("[Voice] Piper falhou...");
-        }
-      }
-
-      // Fallback 4: Web Speech API (último recurso)
-      if (!played && !cascadeAbort.signal.aborted && "speechSynthesis" in window) {
-        try {
-          await browserSpeak(text);
-          played = true;
-          console.log("[Voice] ⚠️ Fallback: Web Speech (último recurso)");
-        } catch {}
+    // ── FALLBACK 2: Web Speech API (último recurso) ──
+    if (!played && !cascadeAbort.signal.aborted && "speechSynthesis" in window) {
+      try {
+        await browserSpeak(text);
+        played = true;
+        console.log("[Voice] ⚠️ Fallback: Web Speech (último recurso)");
+      } catch {}
       }
     }
     
