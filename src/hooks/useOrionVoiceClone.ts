@@ -271,16 +271,11 @@ export function useOrionVoiceClone() {
   }, [user?.id, samples, updateConfig, isCreator]);
 
   const testVoice = useCallback(async (text?: string) => {
-    const voiceId = clonedVoiceId;
-    if (!voiceId) {
-      toast.error("Nenhuma voz clonada ativa");
-      return;
-    }
-
     setIsTesting(true);
     try {
+      // Use Google TTS (free) for voice testing
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-tts`,
         {
           method: "POST",
           headers: {
@@ -289,8 +284,8 @@ export function useOrionVoiceClone() {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            text: text || "Olá! Esta é a minha nova voz. O que achou?",
-            voiceId,
+            text: text || "Olá! Esta é a voz do Orion. O que achou?",
+            lang: "pt-br",
           }),
         }
       );
@@ -305,7 +300,7 @@ export function useOrionVoiceClone() {
         audio.onended = () => URL.revokeObjectURL(url);
         await audio.play();
       } else {
-        toast.error("Falha ao reproduzir voz clonada");
+        toast.error("Falha ao reproduzir voz");
       }
     } catch (err) {
       console.error("Test voice error:", err);
@@ -313,7 +308,7 @@ export function useOrionVoiceClone() {
     } finally {
       setIsTesting(false);
     }
-  }, [clonedVoiceId]);
+  }, []);
 
   const deleteClonedVoice = useCallback(async () => {
     if (!clonedVoiceId) return;
