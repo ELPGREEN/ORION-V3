@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageToLocale } from "@/i18n";
 import { cleanTextForSpeech } from "@/hooks/useNeuralVoice";
-import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
 import { speakWithPiper } from "@/lib/tts/piperTTS";
 
 // ═══════════════════════════════════════════════════════════

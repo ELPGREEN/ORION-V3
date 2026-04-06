@@ -5,7 +5,6 @@ import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
 import { OrionVoiceStudio } from "@/components/dashboard/neural/OrionVoiceStudio";
 import { useNeuralConfig, VisionRule, CustomCommand } from "@/hooks/useNeuralConfig";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
 import { speakWithPiper } from "@/lib/tts/piperTTS";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
