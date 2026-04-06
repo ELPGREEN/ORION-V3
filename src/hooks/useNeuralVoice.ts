@@ -551,6 +551,10 @@ export function useNeuralVoice(
 
           lastProcessedTranscriptRef.current = normalized;
           lastProcessedAtRef.current = now;
+          
+          // Feed user speech to voice evolution engine
+          feedUserSpeech(fullText);
+          
           onCmdRef.current(fullText);
         }, silenceMs);
       };
