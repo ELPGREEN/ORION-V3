@@ -9,6 +9,7 @@ import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
 import { speakWithOrionVoice } from "@/lib/tts/orionVoiceEngine";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
+import { loadVoicePrefs, detectStyleCommand, saveVoicePrefs, getCachedVoicePrefs, type VoiceStylePrefs } from "@/lib/voice/adaptiveVoiceStyle";
 import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
 import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/voice-evolution-feedback";
@@ -128,6 +129,9 @@ export function useNeuralVoice(
     
     // Pre-load Piper in background for faster first speak
     preloadPiper();
+    
+    // Pre-load voice style preferences
+    loadVoicePrefs().catch(() => {});
     
     const handler = () => {
       const v = getOrionVoice();
@@ -366,14 +370,22 @@ export function useNeuralVoice(
     // ── Feed AI response to voice evolution engine ──
     feedAIResponse(text);
 
+    // ── Load adaptive voice preferences ──
+    const voicePrefs = getCachedVoicePrefs();
+
     // ── PRIMARY: Gemini TTS (fast ~2s, neural quality, FREE) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
-        const gemResult = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
+        const gemResult = await speakWithGeminiTTS(
+          cleanText,
+          voicePrefs.voice_name || "Charon",
+          cascadeAbort.signal,
+          voicePrefs.style_prompt,
+        );
         if (gemResult.played) {
           played = true;
           if (gemResult.audio) activeAudioRef.current = gemResult.audio;
-          console.log("[Voice] ✅ Gemini TTS (primary)");
+          console.log(`[Voice] ✅ Gemini TTS (${voicePrefs.voice_name}, ${voicePrefs.accent})`);
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
@@ -517,6 +529,15 @@ export function useNeuralVoice(
           
           // Feed user speech to voice evolution engine
           feedUserSpeech(fullText);
+          
+          // ── Adaptive Voice Style: detect style commands ──
+          const styleResult = detectStyleCommand(fullText, getCachedVoicePrefs());
+          if (styleResult.matched) {
+            saveVoicePrefs(styleResult.updatedPrefs);
+            // Speak the feedback using the NEW style immediately
+            speak(styleResult.feedback);
+            return; // Don't pass style commands to the AI
+          }
           
           onCmdRef.current(fullText);
         }, silenceMs);

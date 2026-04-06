@@ -20,6 +20,7 @@ export async function speakWithGeminiTTS(
   text: string,
   voice: string = "Charon",
   signal?: AbortSignal,
+  stylePrompt?: string,
 ): Promise<GeminiTTSResult> {
   const fail: GeminiTTSResult = { played: false, audio: null };
   if (!text?.trim()) return fail;
@@ -48,7 +49,7 @@ export async function speakWithGeminiTTS(
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ text: text.trim().slice(0, 5000), voice }),
+        body: JSON.stringify({ text: text.trim().slice(0, 5000), voice, prompt: stylePrompt }),
         signal: controller.signal,
       });
     } finally {

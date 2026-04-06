@@ -7521,6 +7521,45 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_style_preferences: {
+        Row: {
+          accent: string | null
+          created_at: string | null
+          extra_instructions: string[] | null
+          id: string
+          speech_rate: string | null
+          style_prompt: string
+          tone: string | null
+          updated_at: string | null
+          user_id: string
+          voice_name: string
+        }
+        Insert: {
+          accent?: string | null
+          created_at?: string | null
+          extra_instructions?: string[] | null
+          id?: string
+          speech_rate?: string | null
+          style_prompt?: string
+          tone?: string | null
+          updated_at?: string | null
+          user_id: string
+          voice_name?: string
+        }
+        Update: {
+          accent?: string | null
+          created_at?: string | null
+          extra_instructions?: string[] | null
+          id?: string
+          speech_rate?: string | null
+          style_prompt?: string
+          tone?: string | null
+          updated_at?: string | null
+          user_id?: string
+          voice_name?: string
+        }
+        Relationships: []
+      }
       webhook_subscriptions: {
         Row: {
           callback_url: string
