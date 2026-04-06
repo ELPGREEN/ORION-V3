@@ -53,7 +53,7 @@ export type CloneFlowStep =
   | "complete";       // Done!
 
 export function useOrionVoiceClone() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { config, updateConfig } = useNeuralConfig();
   const [samples, setSamples] = useState<VoiceSample[]>([]);
   const [isRecording, setIsRecording] = useState(false);
