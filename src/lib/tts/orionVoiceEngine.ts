@@ -88,12 +88,12 @@ export async function speakWithOrionVoice(
     const rvcReady = await checkRVCOnce();
     if (rvcReady && !signal?.aborted) {
       console.log("[Orion Voice] Sending to RVC for voice conversion...");
-      const { convertWithRVC, convertWithRVCGradio } = await import("./rvcClient");
+      const { convertWithRVC, convertWithRVCDirect } = await import("./rvcClient");
       
-      // Try direct HTTP first, then Gradio
+      // Try Gradio client first, then direct HTTP
       let rvcBlob = await convertWithRVC(formantBlob, undefined, signal);
       if (!rvcBlob && !signal?.aborted) {
-        rvcBlob = await convertWithRVCGradio(formantBlob, undefined, signal);
+        rvcBlob = await convertWithRVCDirect(formantBlob, undefined, signal);
       }
 
       if (rvcBlob && rvcBlob.size > 100) {
