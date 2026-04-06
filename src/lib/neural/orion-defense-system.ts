@@ -623,7 +623,7 @@ const TRUSTED_URL_PATTERNS = [
   "serpapi.com",               // SerpAPI
   "firecrawl.dev",             // Firecrawl
   "resend.com",                // Resend email
-  "elevenlabs.io",             // ElevenLabs
+  "translate.google.com",      // Google TTS
   "courtlistener.com",         // CourtListener
   // ─── Bluetooth / IoT / Smart Home / Wireless ───
   "hivemq",                    // HiveMQ MQTT broker

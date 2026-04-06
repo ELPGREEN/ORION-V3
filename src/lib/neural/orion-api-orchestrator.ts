@@ -139,7 +139,7 @@ const API_REGISTRY: OrionAPI[] = [
   },
   {
     id: "whisper_browser", name: "Whisper Browser STT", brandName: "Orion Audição Neural",
-    capability: "hearing", tier: "secondary", runtime: "local",
+    capability: "hearing", tier: "secondary", runtime: "local_browser",
     library: "Web Speech API", version: "Nativo",
     health: "online", lastLatencyMs: 0, errorCount: 0,
     features: ["Transcrição gratuita", "Multi-idioma", "Reconhecimento contínuo"],

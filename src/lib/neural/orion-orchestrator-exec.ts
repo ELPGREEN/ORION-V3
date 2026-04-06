@@ -108,7 +108,7 @@ export async function orchestratorSee(
   };
 }
 
-// ─── Hearing: Web Speech API → ElevenLabs Scribe ───
+// ─── Hearing: Web Speech API (free, browser-native) ───
 
 export async function orchestratorListen(): Promise<ListenResult> {
   const apis = getAPIsForCapability("hearing");
@@ -150,7 +150,7 @@ export async function orchestratorListen(): Promise<ListenResult> {
         return { transcript, source: "web-speech", latencyMs: latency };
       }
 
-      // ElevenLabs Scribe would go here via edge function call
+      // Enhanced STT via browser-native API (free)
     } catch (e) {
       const latency = Date.now() - start;
       reportAPILatency(api.id, latency, false);
