@@ -344,9 +344,10 @@ export default function RedeNeuralPage() {
 
   useEffect(() => {
     loadData();
+    initialLoadDone.current = true;
   }, []);
 
-  useRefreshOnFocus(useCallback(() => loadData(), []));
+  useRefreshOnFocus(useCallback(() => { if (initialLoadDone.current) loadData(true); }, []));
 
   async function loadData(silent = false) {
     if (!silent) setLoading(true);
