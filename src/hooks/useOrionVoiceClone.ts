@@ -237,12 +237,12 @@ export function useOrionVoiceClone() {
   const startCloneFlow = useCallback((): string => {
     setCloneFlowStep("intro");
     return isCreator
-      ? "Ericson! Vou configurar minha voz com a sua. Preciso que você leia algumas frases em voz alta. " +
-        "Cada gravação deve ter entre 10 e 30 segundos. Quanto mais natural, melhor o resultado. " +
-        `Quando estiver pronto, clique em gravar e leia: "${GUIDE_PHRASES[0]}"`
-      : "Vamos clonar sua voz para que eu passe a usá-la! " +
-        "Preciso de pelo menos uma gravação de 10 a 30 segundos. " +
-        `Quando estiver pronto, clique em gravar e leia: "${GUIDE_PHRASES[0]}"`;
+      ? "Ericson! Vou clonar sua voz agora. Quando eu terminar de falar, a gravação começa automaticamente. " +
+        "Você terá 15 segundos para falar naturalmente. Diga qualquer coisa: conte uma história, leia um texto, ou fale sobre seu dia. " +
+        "Quanto mais natural, melhor o resultado. Preparado? A gravação começa em 3, 2, 1..."
+      : "Vamos clonar sua voz agora! Quando eu terminar de falar, a gravação começa automaticamente. " +
+        "Você terá 15 segundos para falar naturalmente. Diga qualquer coisa: conte uma história ou fale sobre seu dia. " +
+        "Preparado? A gravação começa em 3, 2, 1...";
   }, [isCreator]);
 
   /**
