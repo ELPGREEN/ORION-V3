@@ -131,15 +131,15 @@ export function initVoicePicker(): void {
 /**
  * Speech parameters tuned for warm, natural masculine voice.
  * 
- * rate 1.12 — Slightly above normal for fluency without sounding rushed
- * pitch 0.82 — Deep but not distorted; warm baritone range
- * volume 1.0  — Full volume
+ * rate 1.05 — Natural conversational pace (not rushed)
+ * pitch 0.85 — Warm baritone range, not too deep to distort
+ * volume 0.95 — Slightly below max to avoid clipping
  * 
  * These values work best with neural/natural voices.
  * On robotic synthesizers, pitch < 0.8 causes unnatural artifacts.
  */
 export const ORION_VOICE_PARAMS = {
-  rate: 1.12,
-  pitch: 0.82,
-  volume: 1.0,
+  rate: 1.05,
+  pitch: 0.85,
+  volume: 0.95,
 } as const;
