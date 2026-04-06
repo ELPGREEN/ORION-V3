@@ -37,6 +37,27 @@ const ONBOARDING_STEPS = [
     voicePrompt: "Olá! Eu sou a Ana, sua assistente virtual. Vamos configurar juntos como eu devo me comportar. Diga 'próximo' para continuar.",
   },
   {
+    id: "voice_register",
+    title: "Cadastro de Voz",
+    description: "Grave uma amostra da sua voz para que eu possa te reconhecer.",
+    icon: Mic,
+    voicePrompt: "Vamos cadastrar sua voz. Grave uma amostra falando normalmente para que eu aprenda a te reconhecer. Clique no botão de gravar.",
+  },
+  {
+    id: "face_register",
+    title: "Cadastro Facial",
+    description: "Registre seu rosto para autenticação segura e personalizada.",
+    icon: Camera,
+    voicePrompt: "Agora vamos cadastrar seu rosto. Posicione-se de frente para a câmera e siga as instruções na tela.",
+  },
+  {
+    id: "profile_info",
+    title: "Informações do Perfil",
+    description: "Complete seus dados para uma experiência personalizada.",
+    icon: Settings2,
+    voicePrompt: "Preencha as informações complementares do seu perfil. Isso me ajuda a personalizar suas respostas. Diga próximo quando terminar.",
+  },
+  {
     id: "persona",
     title: "Escolha a Personalidade",
     description: "Como você quer que eu me comunique com você?",
