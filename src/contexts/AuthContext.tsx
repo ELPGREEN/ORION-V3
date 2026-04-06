@@ -32,6 +32,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Profile-based redirect on fresh sign-in
+        if ((event === 'SIGNED_IN') && session?.user && !redirectedRef.current) {
+          redirectedRef.current = true;
+          // Check onboarding via neural config (deferred to avoid blocking)
+          setTimeout(async () => {
+            try {
+              const { data } = await supabase
+                .from('neural_agent_config' as any)
+                .select('onboarding_completed')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+
+              if (data && !(data as any).onboarding_completed) {
+                window.location.href = '/dashboard/configurar-ia';
+              } else {
+                window.location.href = '/dashboard';
+              }
+            } catch {
+              window.location.href = '/dashboard';
+            }
+          }, 100);
+        }
       }
     );
 
