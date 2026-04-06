@@ -364,6 +364,55 @@ export default function ConfigurarIA() {
                 <p className="text-muted-foreground text-sm">{step.description}</p>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* === NEW: Voice Registration Step === */}
+                {step.id === "voice_register" && (
+                  <div className="space-y-4">
+                    <VoiceIDPanel />
+                    <p className="text-xs text-muted-foreground text-center">
+                      Grave uma amostra de voz para identificação. Clique em próximo quando terminar.
+                    </p>
+                  </div>
+                )}
+
+                {/* === NEW: Face Registration Step === */}
+                {step.id === "face_register" && (
+                  <div className="space-y-4">
+                    <FaceAuthEnroll onComplete={() => nextStep()} />
+                    <p className="text-xs text-muted-foreground text-center">
+                      Posicione seu rosto na câmera. O cadastro é automático.
+                    </p>
+                  </div>
+                )}
+
+                {/* === NEW: Profile Info Step === */}
+                {step.id === "profile_info" && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm">Apelido / Como quer ser chamado</Label>
+                      <Input
+                        value={localConfig.nickname}
+                        onChange={e => setLocalConfig(prev => ({ ...prev, nickname: e.target.value }))}
+                        placeholder="Ex: Dr. Silva, Maria, João"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Área de atuação / Interesse</Label>
+                      <Input
+                        placeholder="Ex: Direito Trabalhista, Logística, Robótica"
+                        onChange={e => setLocalConfig(prev => ({
+                          ...prev,
+                          custom_instructions: prev.custom_instructions
+                            ? prev.custom_instructions + `\nÁrea: ${e.target.value}`
+                            : `Área: ${e.target.value}`,
+                        }))}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Esses dados ajudam a personalizar suas respostas.
+                    </p>
+                  </div>
+                )}
+
                 {/* Step-specific content */}
                 {step.id === "persona" && (
                   <div className="grid grid-cols-2 gap-3">
