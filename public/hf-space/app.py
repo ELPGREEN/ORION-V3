@@ -1,6 +1,6 @@
 """
-ELP Neural Proxy v7.1 — Complete AI Agent Swarm
-PDF + Vision + Code Generation + Code Analysis + Text Analysis + Fine-Tuning + Dataset Creation + Media Generation
+ELP Neural Proxy v7.2 — Complete AI Agent Swarm
+PDF + Vision + Object Detection + Code Generation + Code Analysis + Text Analysis + Fine-Tuning + Dataset Creation + Media Generation
 2500+ Neural Agents covering ALL HuggingFace Spaces categories
 Runs on 2GB RAM (HF Spaces free tier)
 """
