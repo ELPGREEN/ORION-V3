@@ -1,0 +1,214 @@
+##############################################################
+# ORION Robotic Line — Docker Compose (Robot-Side Deploy)
+# Tested on: Jetson Orin, Raspberry Pi 5, Industrial PC
+#
+# Usage:
+#   docker compose -f docker-compose.rosbridge.yml up -d
+#
+# Prerequisites:
+#   - Docker 24+ with compose v2
+#   - ROS2 Humble/Jazzy base installed (or use the ros2 service below)
+#   - Network: robot and frontend on same LAN or VPN
+##############################################################
+
+version: "3.9"
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  # ═══════════════════════════════════════════════════════════
+  #  1. ROSBridge WebSocket Server
+  #     Bridges ROS2 ↔ WebSocket for frontend communication
+  # ═══════════════════════════════════════════════════════════
+  rosbridge:
+    <<: *common
+    image: ros:humble-ros-base
+    container_name: orion-rosbridge
+    network_mode: host
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+      - RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+    command: >
+      bash -c "
+        source /opt/ros/humble/setup.bash &&
+        apt-get update -qq &&
+        apt-get install -y -qq ros-humble-rosbridge-suite ros-humble-tf2-web-republisher > /dev/null 2>&1 &&
+        ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+          port:=${ROSBRIDGE_PORT:-9090}
+          address:=0.0.0.0
+          ssl:=${ROSBRIDGE_SSL:-false}
+          certfile:=${ROSBRIDGE_CERT:-}
+          keyfile:=${ROSBRIDGE_KEY:-}
+          authenticate:=false
+          max_message_size:=10000000
+          unregister_timeout:=30.0
+      "
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/${ROSBRIDGE_PORT:-9090}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - /tmp/ros2_logs:/root/.ros/log
+
+  # ═══════════════════════════════════════════════════════════
+  #  2. WebRTC Camera Streamer (GStreamer + webrtcbin)
+  #     Low-latency H264 camera stream to browser
+  # ═══════════════════════════════════════════════════════════
+  webrtc-camera:
+    <<: *common
+    build:
+      context: ./webrtc-server
+      dockerfile: Dockerfile
+    container_name: orion-webrtc-camera
+    network_mode: host
+    environment:
+      - CAMERA_DEVICE=${CAMERA_DEVICE:-/dev/video0}
+      - CAMERA_WIDTH=${CAMERA_WIDTH:-1280}
+      - CAMERA_HEIGHT=${CAMERA_HEIGHT:-720}
+      - CAMERA_FPS=${CAMERA_FPS:-30}
+      - WEBRTC_PORT=${WEBRTC_PORT:-8443}
+      - STUN_SERVER=${STUN_SERVER:-stun:stun.l.google.com:19302}
+      - TURN_SERVER=${TURN_SERVER:-}
+      - TURN_USER=${TURN_USER:-}
+      - TURN_PASS=${TURN_PASS:-}
+    devices:
+      - ${CAMERA_DEVICE:-/dev/video0}:${CAMERA_DEVICE:-/dev/video0}
+    depends_on:
+      rosbridge:
+        condition: service_healthy
+
+  # ═══════════════════════════════════════════════════════════
+  #  3. MQTT Broker (HiveMQ CE)
+  #     For IoT telemetry + edge device communication
+  # ═══════════════════════════════════════════════════════════
+  mqtt:
+    <<: *common
+    image: hivemq/hivemq-ce:latest
+    container_name: orion-mqtt
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+      - "${MQTT_WS_PORT:-8083}:8000"
+    volumes:
+      - mqtt_data:/opt/hivemq/data
+      - ./mqtt/config.xml:/opt/hivemq/conf/config.xml:ro
+    environment:
+      - HIVEMQ_ALLOW_ALL_CLIENTS=true
+
+  # ═══════════════════════════════════════════════════════════
+  #  4. Foxglove Bridge (optional — for debugging with Foxglove Studio)
+  # ═══════════════════════════════════════════════════════════
+  foxglove-bridge:
+    <<: *common
+    image: ros:humble-ros-base
+    container_name: orion-foxglove
+    network_mode: host
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+    command: >
+      bash -c "
+        source /opt/ros/humble/setup.bash &&
+        apt-get update -qq &&
+        apt-get install -y -qq ros-humble-foxglove-bridge > /dev/null 2>&1 &&
+        ros2 launch foxglove_bridge foxglove_bridge_launch.xml
+          port:=${FOXGLOVE_PORT:-8765}
+          address:=0.0.0.0
+      "
+    profiles:
+      - debug
+
+  # ═══════════════════════════════════════════════════════════
+  #  5. InfluxDB (time-series telemetry storage)
+  # ═══════════════════════════════════════════════════════════
+  influxdb:
+    <<: *common
+    image: influxdb:2.7-alpine
+    container_name: orion-influxdb
+    ports:
+      - "${INFLUXDB_PORT:-8086}:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUX_USER:-orion}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUX_PASS:-orion_telemetry_2024}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUX_ORG:-orion-robotics}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUX_BUCKET:-robot_telemetry}
+      - DOCKER_INFLUXDB_INIT_RETENTION=30d
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUX_TOKEN:-orion-super-secret-token}
+    profiles:
+      - telemetry
+
+  # ═══════════════════════════════════════════════════════════
+  #  6. Grafana (dashboards — optional)
+  # ═══════════════════════════════════════════════════════════
+  grafana:
+    <<: *common
+    image: grafana/grafana:latest
+    container_name: orion-grafana
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS:-orion2024}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+    depends_on:
+      - influxdb
+    profiles:
+      - telemetry
+
+  # ═══════════════════════════════════════════════════════════
+  #  7. Node-RED (visual automation)
+  # ═══════════════════════════════════════════════════════════
+  nodered:
+    <<: *common
+    image: nodered/node-red:latest
+    container_name: orion-nodered
+    ports:
+      - "${NODERED_PORT:-1880}:1880"
+    volumes:
+      - nodered_data:/data
+    environment:
+      - TZ=America/Sao_Paulo
+    profiles:
+      - automation
+
+  # ═══════════════════════════════════════════════════════════
+  #  8. ROS2-MQTT Bridge (bidirectional ROS2 ↔ MQTT)
+  # ═══════════════════════════════════════════════════════════
+  ros2-mqtt-bridge:
+    <<: *common
+    image: ros:humble-ros-base
+    container_name: orion-ros2-mqtt
+    network_mode: host
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+      - MQTT_HOST=${MQTT_HOST:-localhost}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+    command: >
+      bash -c "
+        source /opt/ros/humble/setup.bash &&
+        apt-get update -qq &&
+        apt-get install -y -qq ros-humble-mqtt-client > /dev/null 2>&1 &&
+        ros2 launch mqtt_client standalone.launch.py
+      "
+    depends_on:
+      - mqtt
+      - rosbridge
+
+volumes:
+  mqtt_data:
+  influxdb_data:
+  influxdb_config:
+  grafana_data:
+  nodered_data:

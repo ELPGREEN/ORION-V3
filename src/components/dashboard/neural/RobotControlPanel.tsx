@@ -28,6 +28,7 @@ const RobotTelemetryPanel = lazy(() => import("./RobotTelemetryPanel"));
 const WebRTCCameraViewer = lazy(() => import("./WebRTCCameraViewer"));
 const YOLOv8InspectionPanel = lazy(() => import("./YOLOv8InspectionPanel"));
 const NodeREDPanel = lazy(() => import("./NodeREDPanel"));
+const TireProductionPanel = lazy(() => import("./TireProductionPanel"));
 
 // ─── Joystick Component ───
 
@@ -583,6 +584,9 @@ export default function RobotControlPanel() {
           <TabsTrigger value="nodered" className="gap-1.5">
             <Workflow className="h-3.5 w-3.5" /> Node-RED
           </TabsTrigger>
+          <TabsTrigger value="tireline" className="gap-1.5">
+            <Factory className="h-3.5 w-3.5" /> Linha Pneus
+          </TabsTrigger>
         </TabsList>
 
         <Suspense fallback={<div className="py-8 text-center text-muted-foreground text-sm">Carregando...</div>}>
@@ -624,6 +628,9 @@ export default function RobotControlPanel() {
           </TabsContent>
           <TabsContent value="nodered">
             <NodeREDPanel />
+          </TabsContent>
+          <TabsContent value="tireline">
+            <TireProductionPanel />
           </TabsContent>
         </Suspense>
       </Tabs>
