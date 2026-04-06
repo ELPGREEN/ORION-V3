@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Orion — Assistente Neural",
-  "version": "2.0.0",
-  "description": "Assistente IA neural com visão, fala, raciocínio e análise de páginas. Wake word 'Orion' ativo em qualquer aba.",
+  "version": "4.0.0",
+  "description": "Assistente IA neural com visão, fala, raciocínio, pesquisa web, scraping, links externos e anti-alucinação. Wake word 'Orion' ativo em qualquer aba.",
   "permissions": [
     "activeTab",
     "storage",
