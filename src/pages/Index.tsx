@@ -2,19 +2,14 @@ import { Link } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { SEO } from '@/components/SEO';
-import { TechDivider } from '@/components/ui/TechDivider';
 import {
   HeroSection,
-  ImpactStatsSection,
   WhyOrionSection,
-  BenefitsSection,
-  SystemArchitectureSection,
-  TechStackSection,
   ComparisonSection,
   CtaSection,
-  SecurityShieldSection,
   OrionVideoShowcase,
 } from '@/components/home';
+import { WhoIsItForSection } from '@/components/home/WhoIsItForSection';
 import { useTranslation } from '@/contexts/LanguageContext';
 
 export default function Index() {
@@ -45,31 +40,23 @@ export default function Index() {
 
       <Header />
 
-      {/* Hero + Impact Stats */}
+      {/* 1. Hero — proposta de valor */}
       <HeroSection t={t} />
-      <OrionVideoShowcase />
-      <ImpactStatsSection />
 
-      {/* Why Choose ORION */}
+      {/* 2. Vídeo showcase */}
+      <OrionVideoShowcase />
+
+      {/* 3. Para quem é — cards de perfil com link direto */}
+      <WhoIsItForSection />
+
+      {/* 4. Por que escolher o ORION — diferenciais */}
       <WhyOrionSection />
 
-      {/* Features & Benefits */}
-      <BenefitsSection />
-
-      {/* Neon divider */}
-      <TechDivider />
-
-      {/* System Architecture */}
-      <SystemArchitectureSection />
-
-      {/* Tech Stack */}
-      <TechStackSection />
-
-      {/* Comparison */}
+      {/* 5. Comparativo — ORION vs outros */}
       <ComparisonSection />
 
-      {/* Security Shield */}
-      <SecurityShieldSection />
+      {/* 6. CTA Final */}
+      <CtaSection />
 
       {/* Privacy Note */}
       <section className="py-6 bg-muted/10 border-t border-border/20">
@@ -81,7 +68,6 @@ export default function Index() {
         </div>
       </section>
 
-      <CtaSection />
       <Footer />
     </div>
   );
