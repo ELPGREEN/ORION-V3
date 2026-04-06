@@ -173,7 +173,7 @@ const TOOLS: OrionTool[] = [
       const { buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
       return buildProposalTemplate();
     },
-    format: (r: any) => r.proposal || "Não foi possível gerar a proposta no momento.",
+    
   },
   // ═══ HELP / CAPABILITIES ═══
   {
