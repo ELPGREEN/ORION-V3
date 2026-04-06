@@ -442,7 +442,6 @@ export function useNeuralVoice(
         played = true;
         console.log("[Voice] ⚠️ Fallback: Web Speech (último recurso)");
       } catch {}
-      }
     }
     
     clearTimeout(safetyTimer);
@@ -451,7 +450,7 @@ export function useNeuralVoice(
     speakingRef.current = false;
     updateAiResponding(false);
     resumeSTT();
-  }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
+  }, [config, browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
 
   // No-op startThinking (filler audio removed)
   const startThinking = useCallback(() => {}, []);
