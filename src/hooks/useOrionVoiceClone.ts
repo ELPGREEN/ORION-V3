@@ -339,7 +339,7 @@ export function useOrionVoiceClone() {
     } finally {
       setIsCloning(false);
     }
-  }, [user?.id, samples, updateConfig, isCreator]);
+  }, [user?.id, samples, updateConfig, isCreator, session?.access_token]);
 
   /**
    * Test the cloned voice (or Gemini TTS fallback)
