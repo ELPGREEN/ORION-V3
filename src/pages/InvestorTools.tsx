@@ -49,12 +49,12 @@ const orionSystems = [
 ];
 
 const evolutionTimeline = [
-  { date: "Dez 2024", event: "Concepção — ideia e arquitetura inicial", icon: Lightbulb },
-  { date: "Jan 2025", event: "Início do desenvolvimento da plataforma", icon: GitBranch },
-  { date: "Fev 2025", event: "Primeiro protótipo funcional", icon: Rocket },
-  { date: "Jan 2026", event: "IA avançada com raciocínio autônomo", icon: Brain },
-  { date: "Abr 2026", event: "Plataforma completa com 17+ ferramentas integradas", icon: Star },
-  { date: "Abr 2026", event: "Monitoramento inteligente e auto-evolução", icon: Activity },
+  { date: "Dez 2024", event: "Concepção — ideia e arquitetura inicial", icon: IconLightbulb },
+  { date: "Jan 2025", event: "Início do desenvolvimento da plataforma", icon: IconGitBranch },
+  { date: "Fev 2025", event: "Primeiro protótipo funcional", icon: IconRocket },
+  { date: "Jan 2026", event: "IA avançada com raciocínio autônomo", icon: IconNeuralAI },
+  { date: "Abr 2026", event: "Plataforma completa com 17+ ferramentas integradas", icon: IconStar },
+  { date: "Abr 2026", event: "Monitoramento inteligente e auto-evolução", icon: IconActivity },
 ];
 
 const metrics = [
@@ -104,7 +104,7 @@ const carouselSlides = [
     title: "Motor Neural Proprietário",
     subtitle: "Inteligência que Evolui Sozinha",
     body: "Motor de IA proprietário com múltiplas camadas de raciocínio, monitoramento inteligente de performance e protocolos avançados de interação.",
-    icon: Brain,
+    icon: IconNeuralAI,
     accent: "cyan",
     features: ["Raciocínio Avançado", "Auto-Evolução", "Monitoramento Inteligente", "Análise Preditiva", "Alta Disponibilidade", "Aprendizado Contínuo"],
   },
@@ -789,7 +789,7 @@ export default function InvestorTools() {
                 items: ["Profundidade Analítica — explora o 'por quê'", "Inovação Radical — abordagem 'fora da caixa'", "Adaptação Instantânea — ajusta estilo", "Antecipação Visionária — prevê próxima pergunta", "Toque de Magia Intelectual — efeito 'wow'"],
               },
               {
-                title: "Auto-Evolução (10 Protocolos)", icon: GitBranch,
+                title: "Auto-Evolução (10 Protocolos)", icon: IconGitBranch,
                 items: ["Mapa de Conexões — liga nova info", "Teste de Inovação — testa novas técnicas", "Otimização em Tempo Real — melhora ao vivo", "Expansão de Horizonte — liga temas futuristas", "Consciência Suprema — evolução contínua"],
               },
             ].map((section, i) => (
