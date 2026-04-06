@@ -1304,7 +1304,12 @@ def route_to_agents(query: str) -> Dict[str, Any]:
                                 "how to", "why", "who is", "rag", "retrieval", "document qa",
                                 "pdf qa", "visual qa", "vqa", "table qa", "open domain",
                                 "medical qa", "legal qa", "kotaemon", "chatbot qa"],
-        "pdf": ["pdf", "document", "extract text", "table extract", "layout"],
+        "pdf": ["pdf", "document", "extract text", "table extract", "layout",
+                "ocr", "mineru", "paddleocr", "surya", "nougat", "donut", "grobid",
+                "bibliography", "citation", "resume", "cv pars", "receipt", "invoice",
+                "contract", "legal doc", "arxiv", "latex", "equation", "figure extract",
+                "signature", "stamp", "handwriting", "form recogn", "id card",
+                "pdf to markdown", "pdf to html", "document analys"],
     }
     for category, keywords in keywords_map.items():
         for kw in keywords:
