@@ -280,6 +280,7 @@ export default function RedeNeuralPage() {
   const { logNeural } = useNeuralFeedback();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
+  const initialLoadDone = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [evolutionTriggered, setEvolutionTriggered] = useState(false);
 
@@ -343,12 +344,13 @@ export default function RedeNeuralPage() {
 
   useEffect(() => {
     loadData();
+    initialLoadDone.current = true;
   }, []);
 
-  useRefreshOnFocus(useCallback(() => loadData(), []));
+  useRefreshOnFocus(useCallback(() => { if (initialLoadDone.current) loadData(true); }, []));
 
-  async function loadData() {
-    setLoading(true);
+  async function loadData(silent = false) {
+    if (!silent) setLoading(true);
     try {
       const { data: specs } = await supabase
         .from("neural_specializations")
