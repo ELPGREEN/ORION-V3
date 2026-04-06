@@ -314,27 +314,27 @@ ${prompt}${codeTypeHint}${extraCtx}
 
 Gere o código solicitado usando o contexto da base de conhecimento acima como referência. Adapte padrões encontrados quando relevante.`;
 
-    // Step 4: Generate code via LLM
-    const generatedCode = await callGeminiLLM(
+    // Step 4: Generate code via LLM (Gemini → Anthropic fallback)
+    const { text: generatedCode, provider: usedProvider } = await callLLMWithFallback(
       augmentedPrompt,
       CODEGEN_SYSTEM_PROMPT,
       maxTokens,
       temperature
     );
     const totalTime = Math.round(performance.now() - startTime);
-    console.log(`  ✅ Code generated in ${totalTime}ms (${generatedCode.length} chars)`);
+    console.log(`  ✅ Code generated via ${usedProvider} in ${totalTime}ms (${generatedCode.length} chars)`);
 
     // Step 5: Log metrics
     try {
       await supabase.from("ai_metrics").insert({
-        provider: "gemini-codegen",
+        provider: usedProvider,
         query: prompt.slice(0, 500),
         total_duration_ms: totalTime,
         phase1_duration_ms: embeddingTime,
         phase2_duration_ms: totalTime - embeddingTime,
         response_length: generatedCode.length,
         data_sources_used: ragResults.map(r => r.source),
-        tools_used: ["rag-search", "gemini-llm"],
+        tools_used: ["rag-search", usedProvider],
         success: true,
         user_id: userId !== "service-role" ? userId : null,
       });
