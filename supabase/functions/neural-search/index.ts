@@ -25,7 +25,7 @@ const corsHeaders = {
 // v11 Base: Adam Optimizer, Multi-Layer QNN, Amplitude Encoding
 // ═══════════════════════════════════════════════════════════════
 
-const EMBEDDING_MODEL = "text-embedding-3-small"; // OpenAI
+const EMBEDDING_MODEL = "text-embedding-004"; // Gemini (free, native 768d)
 const EMBEDDING_DIMS = 768;
 
 // ═══ v17 iDanae Lacuna 5: Adversarial Query Detection ═══
@@ -2467,17 +2467,21 @@ function getOpenAIKeys(): string[] {
   ].filter((k): k is string => Boolean(k) && !badKeys.has(k));
 }
 
-function getGeminiKeys(): string[] {
+function getGeminiKeysLLM(): string[] {
   return [
+    Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
     Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
   ].filter((k): k is string => Boolean(k) && !badKeys.has(k));
 }
 
 let keyIndex = 0;
 function getNextGeminiKey(): string {
-  const keys = getGeminiKeys();
+  const keys = getGeminiKeysLLM();
   if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured");
   const key = keys[keyIndex % keys.length];
   keyIndex++;
@@ -2634,7 +2638,7 @@ async function callProviderLLM(
       return data.content?.[0]?.text || null;
     }
     case "gemini": {
-      const keys = getGeminiKeys();
+      const keys = getGeminiKeysLLM();
       if (!keys.length) throw new Error("No Gemini keys");
       for (const key of keys) {
         try {
@@ -2754,23 +2758,41 @@ async function expandQuery(query: string, previousContext?: string, supabaseClie
   return [query];
 }
 
-// ─── Embedding Generation ───
+// ─── Embedding Generation (Gemini text-embedding-004, free) ───
+function getGeminiKeys(): string[] {
+  return [
+    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
+  ].filter(Boolean) as string[];
+}
+
 async function generateEmbedding(text: string, retryCount = 0): Promise<number[]> {
-  const truncated = text.substring(0, 8000);
-  const keys = getOpenAIKeys();
+  const truncated = text.substring(0, 4000);
+  const keys = getGeminiKeys();
   const MAX_RETRIES = 2;
   for (const key of keys) {
     try {
-      const response = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
-        signal: AbortSignal.timeout(10000),
-        body: JSON.stringify({ model: EMBEDDING_MODEL, input: truncated, dimensions: EMBEDDING_DIMS }),
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(10000),
+          body: JSON.stringify({
+            model: `models/${EMBEDDING_MODEL}`,
+            content: { parts: [{ text: truncated }] },
+            outputDimensionality: EMBEDDING_DIMS,
+          }),
+        }
+      );
       if (!response.ok) {
         const status = response.status;
         await response.text();
-        if (status === 400) { badKeys.add(key); continue; }
         if (status === 429 && retryCount < MAX_RETRIES) {
           await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, retryCount)));
           return generateEmbedding(text, retryCount + 1);
@@ -2778,42 +2800,55 @@ async function generateEmbedding(text: string, retryCount = 0): Promise<number[]
         continue;
       }
       const data = await response.json();
-      return data?.data?.[0]?.embedding || [];
-    } catch (err) { console.warn(`Embedding error: ${err}`); }
+      const values = data?.embedding?.values;
+      if (values?.length >= EMBEDDING_DIMS) return values.slice(0, EMBEDDING_DIMS);
+      if (values?.length > 0) return [...values, ...new Array(EMBEDDING_DIMS - values.length).fill(0)];
+    } catch (err) { console.warn(`Gemini embedding error: ${err}`); }
   }
-  throw new Error("All OpenAI keys exhausted for embedding");
+  throw new Error("All Gemini keys exhausted for embedding");
 }
 
 async function generateQueryEmbeddingCached(supabase: any, query: string): Promise<{ embedding: number[]; cached: boolean }> {
   const qHash = hashQuery(query);
   const cached = await getCachedEmbedding(supabase, qHash);
   if (cached && cached.length === EMBEDDING_DIMS) return { embedding: cached, cached: true };
-  const keys = getOpenAIKeys();
-  for (const key of keys) {
-    try {
-      const response = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
-        signal: AbortSignal.timeout(10000),
-        body: JSON.stringify({ model: EMBEDDING_MODEL, input: query, dimensions: EMBEDDING_DIMS }),
-      });
-      if (!response.ok) { if (response.status === 400) badKeys.add(key); await response.text(); continue; }
-      const data = await response.json();
-      const embedding = data?.data?.[0]?.embedding || [];
-      if (embedding.length > 0) { setCachedEmbedding(supabase, qHash, query, embedding); return { embedding, cached: false }; }
-    } catch { continue; }
-  }
-  throw new Error("All OpenAI keys exhausted for query embedding");
+  const embedding = await generateEmbedding(query);
+  if (embedding.length > 0) { setCachedEmbedding(supabase, qHash, query, embedding); return { embedding, cached: false }; }
+  throw new Error("Failed to generate query embedding");
 }
 
 async function generateBatchEmbeddings(texts: string[]): Promise<number[][]> {
-  const BATCH_SIZE = 5;
+  const keys = getGeminiKeys();
+  if (keys.length === 0) throw new Error("No Gemini keys for batch embeddings");
+  const BATCH_SIZE = 20;
   const results: number[][] = [];
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
     const batch = texts.slice(i, i + BATCH_SIZE);
-    const embeddings = await Promise.all(batch.map((text) => generateEmbedding(text)));
-    results.push(...embeddings);
-    if (i + BATCH_SIZE < texts.length) await new Promise((r) => setTimeout(r, 500));
+    const requests = batch.map(t => ({
+      model: `models/${EMBEDDING_MODEL}`,
+      content: { parts: [{ text: t.substring(0, 4000) }] },
+      outputDimensionality: EMBEDDING_DIMS,
+    }));
+    const keyIdx = Math.floor(i / BATCH_SIZE) % keys.length;
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:batchEmbedContents?key=${keys[keyIdx]}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ requests }),
+        }
+      );
+      if (!response.ok) throw new Error(`Batch failed ${response.status}`);
+      const data = await response.json();
+      for (const e of (data?.embeddings || [])) {
+        const v = e?.values || [];
+        results.push(v.length >= EMBEDDING_DIMS ? v.slice(0, EMBEDDING_DIMS) : [...v, ...new Array(EMBEDDING_DIMS - v.length).fill(0)]);
+      }
+    } catch {
+      for (const t of batch) results.push(await generateEmbedding(t));
+    }
+    if (i + BATCH_SIZE < texts.length) await new Promise((r) => setTimeout(r, 300));
   }
   return results;
 }
