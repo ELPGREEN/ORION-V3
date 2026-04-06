@@ -109,7 +109,7 @@ export function GlobalOrionListener() {
     setWakeWordActive(false);
   }, [clearRestartTimer]);
 
-  const activateWithCommand = useCallback((command: string) => {
+  const activateWithCommand = useCallback(async (command: string) => {
     if (cooldownRef.current) return;
     cooldownRef.current = true;
     wakeDetectedRef.current = false;
@@ -122,13 +122,6 @@ export function GlobalOrionListener() {
     }
 
     const cleanCmd = command.trim();
-    toast("🐒 Ativando sistema AquaMonkey...", { duration: 2000 });
-    setTimeout(() => {
-      toast.success("⚡ Bem-vindo ao Orion!", { duration: 3000 });
-    }, 1200);
-    if (cleanCmd.length > 2) {
-      console.log(`[OrionDashboard] command: "${cleanCmd}"`);
-    }
 
     try { wakeRecRef.current?.abort?.(); } catch {}
     try { wakeRecRef.current?.stop?.(); } catch {}
@@ -137,7 +130,20 @@ export function GlobalOrionListener() {
     wakeWordEnabledRef.current = false;
     setWakeWordActive(false);
     setInitialCommand(cleanCmd);
+
+    // ── Boot sequence: show plasma loading + speak "Iniciando sistema" ──
+    setBooting(true);
+    initVoicePicker();
+    await orionSpeak("Iniciando sistema");
+
+    // Wait for plasma animation (2.5s total boot time)
+    await new Promise(r => setTimeout(r, 2500));
+
+    // ── System ready: open panel + speak welcome ──
+    setBooting(false);
     setOrionOpen(true);
+    orionSpeak("Sistema ativado. Seja bem-vindo.");
+
     setTimeout(() => { cooldownRef.current = false; }, 1200);
   }, [clearRestartTimer]);
 
