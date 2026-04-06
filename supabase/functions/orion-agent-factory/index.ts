@@ -147,7 +147,7 @@ const HF_AGENT_REGISTRY: Record<string, string[]> = {
   ],
 };
 
-// Total ~2900 agents mapped across categories
+// Total ~3100 agents mapped across categories
 const TOTAL_AGENT_COUNT = Object.values(HF_AGENT_REGISTRY).reduce((sum, arr) => sum + arr.length, 0);
 
 function getSupabase() {
