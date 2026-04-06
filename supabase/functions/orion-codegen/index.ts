@@ -343,6 +343,7 @@ Gere o código solicitado usando o contexto da base de conhecimento acima como r
     return new Response(
       JSON.stringify({
         code: generatedCode,
+        provider: usedProvider,
         rag_sources: ragResults.map(r => ({
           title: r.title,
           source: r.source,
@@ -353,6 +354,7 @@ Gere o código solicitado usando o contexto da base de conhecimento acima como r
           rag_results: ragResults.length,
           total_ms: totalTime,
           output_chars: generatedCode.length,
+          provider: usedProvider,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
