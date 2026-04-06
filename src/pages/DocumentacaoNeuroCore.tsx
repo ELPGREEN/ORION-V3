@@ -17,7 +17,7 @@ const components = [
   { layer: 3, module: "Memory & Context System", responsibility: "Memória episódica + histórico", tech: "Chroma + FAISS + Transformer-XL" },
   { layer: 3, module: "Predictive Maintenance", responsibility: "Diagnóstico preditivo de hardware", tech: "LSTM + Autoencoders + Digital Twin" },
   { layer: 4, module: "Orquestrador Cognitivo", responsibility: "Integração + decisões autônomas", tech: "LangGraph + AutoGen" },
-  { layer: 5, module: "Human-Robot Interface", responsibility: "NLP + voz + gestos + comandos", tech: "Whisper + ElevenLabs + Gesture-to-Text" },
+  { layer: 5, module: "Human-Robot Interface", responsibility: "NLP + voz + gestos + comandos", tech: "Whisper + Gemini TTS + Piper WASM + Gesture-to-Text" },
   { layer: 5, module: "Virtual Assistant Bridge", responsibility: "Integração com assistentes virtuais", tech: "WebSocket + MQTT + Google/Alexa/Siri" },
 ];
 
