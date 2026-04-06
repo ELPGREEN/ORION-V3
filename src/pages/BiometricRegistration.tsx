@@ -360,7 +360,7 @@ export default function BiometricRegistration() {
                 {/* Role Selector */}
                 <div>
                   <label className="text-xs font-medium text-orange-300/80 tracking-wider uppercase mb-1.5 block">Perfil</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {(Object.keys(roleLabels) as RoleOption[]).map((r) => (
                       <button
                         key={r}
