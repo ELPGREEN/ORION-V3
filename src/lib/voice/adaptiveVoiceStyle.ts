@@ -19,6 +19,7 @@ export interface VoiceStylePrefs {
   speech_rate: string;
   accent: string;
   tone: string;
+  language: string;
   extra_instructions: string[];
 }
 
@@ -28,6 +29,7 @@ const DEFAULT_PREFS: VoiceStylePrefs = {
   speech_rate: "normal",
   accent: "neutro",
   tone: "profissional",
+  language: "pt-BR",
   extra_instructions: [],
 };
 
