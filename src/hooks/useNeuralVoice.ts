@@ -201,14 +201,13 @@ export function useNeuralVoice(
     const text = cleanTextForSpeech(rawText);
     if (!text) return Promise.resolve();
     
-    // Split into smaller chunks (~160 chars) to avoid Chrome's ~15s cutoff
-    const splitIntoChunks = (t: string): string[] => {
-      if (t.length <= 160) return [t];
-      const sentences = t.match(/[^.!?…;:]+[.!?…;:]+\s*/g) || [t];
+    // Split into sentence-level chunks for natural prosody variation
+    const splitIntoSentences = (t: string): string[] => {
+      const sentences = t.match(/[^.!?…;]+[.!?…;]+\s*/g) || [t];
       const chunks: string[] = [];
       let current = "";
       for (const s of sentences) {
-        if (current.length + s.length > 160 && current.length > 0) {
+        if (current.length + s.length > 180 && current.length > 0) {
           chunks.push(current.trim());
           current = s;
         } else {
@@ -219,10 +218,33 @@ export function useNeuralVoice(
       return chunks;
     };
 
-    const chunks = splitIntoChunks(text);
+    const chunks = splitIntoSentences(text);
+
+    // ── Prosody variation for natural speech ──
+    // Slight rate/pitch changes per sentence to avoid monotone
+    const getProsodyForChunk = (chunk: string, idx: number, total: number) => {
+      const isQuestion = /\?/.test(chunk);
+      const isExclamation = /!/.test(chunk);
+      const isLast = idx === total - 1;
+      const isFirst = idx === 0;
+      
+      // Base rate with slight natural variation (±0.05)
+      let rate = ORION_VOICE_PARAMS.rate + (Math.sin(idx * 1.7) * 0.04);
+      let pitch = ORION_VOICE_PARAMS.pitch;
+      
+      // Questions: slightly higher pitch, slower end
+      if (isQuestion) { pitch += 0.08; rate -= 0.03; }
+      // Exclamations: slightly faster, more energy
+      if (isExclamation) { rate += 0.05; pitch += 0.04; }
+      // Last sentence: slow down slightly (natural conclusion)
+      if (isLast && total > 1) { rate -= 0.06; }
+      // First sentence: slightly more deliberate
+      if (isFirst && total > 1) { rate -= 0.02; }
+      
+      return { rate: Math.max(0.8, Math.min(1.3, rate)), pitch: Math.max(0.6, Math.min(1.2, pitch)) };
+    };
 
     return new Promise<void>((resolve) => {
-      // Safety timeout: 60s max for entire speech (was 15s — too aggressive)
       const webSpeechTimeout = setTimeout(() => {
         try { speechSynthesis.cancel(); } catch {}
         if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
@@ -232,7 +254,6 @@ export function useNeuralVoice(
         resolve();
       }, 60000);
 
-      // Chrome bug workaround: pause/resume every 10s to prevent auto-stop
       const keepAlive = setInterval(() => {
         if (speechSynthesis.speaking && !speechSynthesis.paused) {
           speechSynthesis.pause();
@@ -254,27 +275,33 @@ export function useNeuralVoice(
             resolve();
             return;
           }
-          const u = new SpeechSynthesisUtterance(chunks[idx]);
-          u.lang = "pt-BR";
-          u.rate = ORION_VOICE_PARAMS.rate;
-          u.pitch = ORION_VOICE_PARAMS.pitch;
-          u.volume = ORION_VOICE_PARAMS.volume;
-          if (maleVoiceRef.current) u.voice = maleVoiceRef.current;
-          u.onend = () => speakNextChunk(idx + 1);
-          u.onerror = (ev) => {
-            // If canceled (barge-in), stop chain
-            if ((ev as any)?.error === "canceled" || (ev as any)?.error === "interrupted") {
-              clearTimeout(webSpeechTimeout);
-              if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-              speakingRef.current = false;
-              updateAiResponding(false);
-              resumeSTT();
-              resolve();
-              return;
-            }
-            speakNextChunk(idx + 1);
-          };
-          speechSynthesis.speak(u);
+
+          // Add natural micro-pause between sentences (80-200ms)
+          const pauseMs = idx > 0 ? 80 + Math.random() * 120 : 0;
+          
+          setTimeout(() => {
+            const prosody = getProsodyForChunk(chunks[idx], idx, chunks.length);
+            const u = new SpeechSynthesisUtterance(chunks[idx]);
+            u.lang = "pt-BR";
+            u.rate = prosody.rate;
+            u.pitch = prosody.pitch;
+            u.volume = ORION_VOICE_PARAMS.volume;
+            if (maleVoiceRef.current) u.voice = maleVoiceRef.current;
+            u.onend = () => speakNextChunk(idx + 1);
+            u.onerror = (ev) => {
+              if ((ev as any)?.error === "canceled" || (ev as any)?.error === "interrupted") {
+                clearTimeout(webSpeechTimeout);
+                if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
+                speakingRef.current = false;
+                updateAiResponding(false);
+                resumeSTT();
+                resolve();
+                return;
+              }
+              speakNextChunk(idx + 1);
+            };
+            speechSynthesis.speak(u);
+          }, pauseMs);
         };
         
         speakNextChunk(0);
@@ -292,7 +319,6 @@ export function useNeuralVoice(
   /** speakFast: Web Speech API only (machine voice, zero latency) */
   const speakFast = useCallback(async (text: string) => {
     if (!ttsRef.current || typeof window === "undefined") return;
-    // Cancel any ongoing speech to prevent overlap
     try { speechSynthesis.cancel(); } catch {}
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
@@ -308,10 +334,8 @@ export function useNeuralVoice(
     clearRestartTimer();
     try { recRef.current?.stop(); } catch {}
 
-    // Web Speech API only (machine voice — no external APIs)
     if ("speechSynthesis" in window) {
       await browserSpeak(text);
-      console.log("[Voice] ✅ speakFast: Web Speech (machine voice)");
     }
 
     speakingRef.current = false;
@@ -319,9 +343,16 @@ export function useNeuralVoice(
     resumeSTT();
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
 
+  /**
+   * ═══ Main TTS Cascade (100% FREE) ═══
+   * 
+   * Tier 1: Google Translate TTS (edge function proxy) — best PT-BR quality, free
+   * Tier 2: Piper WASM (offline neural) — good quality, no network needed
+   * Tier 3: Enhanced Web Speech API — browser built-in with prosody variation
+   */
   const speak = useCallback(async (text: string) => {
     if (!ttsRef.current || typeof window === "undefined") return;
-    // Cancel ALL ongoing speech to prevent dual-voice overlap
+    // Cancel ALL ongoing speech
     try { speechSynthesis.cancel(); } catch {}
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
@@ -339,9 +370,13 @@ export function useNeuralVoice(
     clearRestartTimer();
     try { recRef.current?.stop(); } catch {}
 
-    // Safety timeout: 60s max
+    // Create abort controller for cascade cancellation
+    const cascadeAbort = new AbortController();
+    abortControllerRef.current = cascadeAbort;
+
     const safetyTimer = setTimeout(() => {
       if (speakingRef.current) {
+        cascadeAbort.abort();
         try { speechSynthesis.cancel(); } catch {}
         if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
         if (activeAudioRef.current) {
@@ -355,13 +390,42 @@ export function useNeuralVoice(
     }, 60000);
 
     const cleanText = cleanTextForSpeech(text);
+    let played = false;
 
-    // ── TTS: Web Speech API only (no external APIs) ──
-    if ("speechSynthesis" in window) {
-      try { speechSynthesis.cancel(); } catch {}
+    // ── Tier 1: Google Translate TTS (free, best PT-BR quality) ──
+    if (!played && !cascadeAbort.signal.aborted && isGoogleTTSAvailable()) {
+      try {
+        const result = await speakWithGoogleTTS(cleanText, "pt-br", cascadeAbort.signal);
+        if (result.played) {
+          played = true;
+          if (result.audio) activeAudioRef.current = result.audio;
+          console.log("[Voice] ✅ Tier 1: Google TTS (free, natural)");
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          console.warn("[Voice] Tier 1 Google TTS failed, trying Tier 2...");
+        }
+      }
+    }
+
+    // ── Tier 2: Piper WASM (offline neural, free) ──
+    if (!played && !cascadeAbort.signal.aborted) {
+      try {
+        played = await speakWithPiper(cleanText);
+        if (played) {
+          console.log("[Voice] ✅ Tier 2: Piper WASM (offline neural)");
+        }
+      } catch {
+        console.warn("[Voice] Tier 2 Piper failed, trying Tier 3...");
+      }
+    }
+
+    // ── Tier 3: Enhanced Web Speech API (prosody variation) ──
+    if (!played && !cascadeAbort.signal.aborted && "speechSynthesis" in window) {
       try {
         await browserSpeak(text);
-        console.log("[Voice] ✅ Web Speech API (local)");
+        played = true;
+        console.log("[Voice] ✅ Tier 3: Web Speech (enhanced prosody)");
       } catch {}
     }
     
