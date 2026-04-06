@@ -294,7 +294,7 @@ interface NeuralSearchResult {
 }
 
 // ====== MULTI-LLM PROVIDER ======
-type LLMProvider = "groq" | "gemini" | "openai" | "anthropic";
+type LLMProvider = "groq" | "gemini" | "openai" | "anthropic" | "deepseek";
 
 interface LLMConfig {
   provider: LLMProvider;
@@ -311,23 +311,33 @@ function getAvailableLLMs(): LLMConfig[] {
     llms.push({ provider: "groq", model: "llama-3.3-70b-versatile", apiKey: groqKey });
   }
   
-  // Gemini — múltiplas chaves em round-robin
+  // DeepSeek V3.2 (raciocínio profundo, custo baixo)
+  const deepseekKey = Deno.env.get("DEEPSEEK_API_KEY");
+  if (deepseekKey) {
+    llms.push({ provider: "deepseek" as LLMProvider, model: "deepseek-chat", apiKey: deepseekKey });
+  }
+
+  // Gemini — múltiplas chaves em round-robin (todas as 7 keys)
   const geminiKeys = [
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
     Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
   ].filter(Boolean) as string[];
   for (const key of geminiKeys) {
     llms.push({ provider: "gemini", model: "gemini-2.5-flash", apiKey: key });
   }
   
-  // Anthropic Claude 3.5 Sonnet (modelo real disponível)
+  // Anthropic Claude 3.5 Sonnet
   const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("MOTHER_ANTHROPIC_API_KEY");
   if (anthropicKey) {
     llms.push({ provider: "anthropic", model: "claude-3-5-sonnet-20241022", apiKey: anthropicKey });
   }
   
-  // OpenAI GPT-4o (gpt-5.3-codex não existe — usar gpt-4o)
+  // OpenAI GPT-4o
   const openaiKey = Deno.env.get("OPENAI_API_KEY") || Deno.env.get("OPENAI_API_KEY_2") || Deno.env.get("MOTHER_OPENAI_API_KEY");
   if (openaiKey) {
     llms.push({ provider: "openai", model: "gpt-4o", apiKey: openaiKey });
@@ -483,6 +493,21 @@ async function callLLM(
       const ad = await resp.json();
       return ad?.content?.[0]?.text || "";
     }
+    case "deepseek": {
+      const resp = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${llm.apiKey}` },
+        body: JSON.stringify({
+          model: llm.model,
+          messages: [{ role: "system", content: systemPrompt }, ...messages],
+          temperature: 0.3,
+          max_tokens: 4096,
+        }),
+      });
+      if (!resp.ok) throw new Error(`DeepSeek error: ${resp.status}`);
+      const dd = await resp.json();
+      return dd?.choices?.[0]?.message?.content || "";
+    }
     default:
       throw new Error(`Unknown provider: ${llm.provider}`);
   }
@@ -495,11 +520,14 @@ async function callLLMStream(
   systemPrompt: string
 ): Promise<ReadableStream<Uint8Array> | null> {
   // Only OpenAI-compatible APIs support streaming easily (groq, openai)
-  if (llm.provider !== "groq" && llm.provider !== "openai") return null;
+  if (llm.provider !== "groq" && llm.provider !== "openai" && llm.provider !== "deepseek") return null;
 
-  const url = llm.provider === "groq"
-    ? "https://api.groq.com/openai/v1/chat/completions"
-    : "https://api.openai.com/v1/chat/completions";
+  const urlMap: Record<string, string> = {
+    groq: "https://api.groq.com/openai/v1/chat/completions",
+    openai: "https://api.openai.com/v1/chat/completions",
+    deepseek: "https://api.deepseek.com/chat/completions",
+  };
+  const url = urlMap[llm.provider];
 
   const response = await fetch(url, {
     method: "POST",

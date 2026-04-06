@@ -280,16 +280,6 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
   const truncated = text.substring(0, 8000);
   for (const apiKey of openaiKeys) {
     try {
-    // FIX: A1 — Validate service-role or authenticated access
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Autenticação obrigatória." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-
       const response = await fetch("https://api.openai.com/v1/embeddings", {
         method: "POST",
         headers: {
