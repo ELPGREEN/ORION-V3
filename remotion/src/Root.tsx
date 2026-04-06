@@ -4,6 +4,7 @@ import { OrionLogoVideo } from "./OrionLogoVideo";
 import { TutorialVideo } from "./tutorial/TutorialVideo";
 import { PromoVideo } from "./promo/PromoVideo";
 import { InvestorVideo } from "./investor/InvestorVideo";
+import { FuturisticVideo } from "./FuturisticVideo";
 
 export const RemotionRoot = () => (
   <>
@@ -43,6 +44,14 @@ export const RemotionRoot = () => (
       id="orion-investor"
       component={InvestorVideo}
       durationInFrames={830}
+      fps={30}
+      width={1920}
+      height={1080}
+    />
+    <Composition
+      id="orion-futuristic"
+      component={FuturisticVideo}
+      durationInFrames={890}
       fps={30}
       width={1920}
       height={1080}
