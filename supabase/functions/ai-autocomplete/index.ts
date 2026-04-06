@@ -16,6 +16,8 @@ interface AIProvider {
   call: (msgs: Array<{ role: string; content: string }>, maxTokens: number, temperature: number) => Promise<string>;
 }
 
+function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
+
 function getProviders(): AIProvider[] {
   const providers: AIProvider[] = [];
 
@@ -31,14 +33,14 @@ function getProviders(): AIProvider[] {
           signal: AbortSignal.timeout(15000),
           body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: msgs, temperature, max_tokens: maxTokens }),
         });
-        if (!res.ok) throw new Error(`Groq ${res.status}`);
+        if (!res.ok) { const t = await res.text(); throw new Error(`Groq ${res.status}: ${t.substring(0, 100)}`); }
         const data = await res.json();
         return data.choices?.[0]?.message?.content || "";
       },
     });
   }
 
-  // Lovable AI Gateway (reliable fallback, OpenAI-compatible)
+  // Lovable AI Gateway
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   if (lovableKey) {
     providers.push({
@@ -60,10 +62,21 @@ function getProviders(): AIProvider[] {
     });
   }
 
-  const geminiKey = Deno.env.get("GEMINI_API_KEY");
-  if (geminiKey) {
+  // Multiple Gemini keys for rate limit resilience
+  const geminiKeys = [
+    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
+  ].filter(Boolean) as string[];
+
+  for (let i = 0; i < geminiKeys.length; i++) {
+    const geminiKey = geminiKeys[i];
     providers.push({
-      name: "Gemini/2.5-flash",
+      name: `Gemini/2.5-flash-key${i + 1}`,
       call: async (msgs, maxTokens, temperature) => {
         const contents = msgs.filter(m => m.role !== "system").map(m => ({
           role: m.role === "assistant" ? "model" : "user",
@@ -80,9 +93,47 @@ function getProviders(): AIProvider[] {
             generationConfig: { temperature, maxOutputTokens: maxTokens },
           }),
         });
-        if (!res.ok) throw new Error(`Gemini ${res.status}`);
+        if (!res.ok) { const t = await res.text(); throw new Error(`Gemini ${res.status}: ${t.substring(0, 100)}`); }
         const data = await res.json();
         return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      },
+    });
+  }
+
+  // DeepSeek as ultimate fallback
+  const deepseekKey = Deno.env.get("DEEPSEEK_API_KEY");
+  if (deepseekKey) {
+    providers.push({
+      name: "DeepSeek/chat",
+      call: async (msgs, maxTokens, temperature) => {
+        const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${deepseekKey}` },
+          signal: AbortSignal.timeout(25000),
+          body: JSON.stringify({ model: "deepseek-chat", messages: msgs, temperature, max_tokens: maxTokens }),
+        });
+        if (!res.ok) { const t = await res.text(); throw new Error(`DeepSeek ${res.status}: ${t.substring(0, 100)}`); }
+        const data = await res.json();
+        return data.choices?.[0]?.message?.content || "";
+      },
+    });
+  }
+
+  // OpenAI as last resort
+  const openaiKey = Deno.env.get("OPENAI_API_KEY");
+  if (openaiKey) {
+    providers.push({
+      name: "OpenAI/gpt-4o-mini",
+      call: async (msgs, maxTokens, temperature) => {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+          signal: AbortSignal.timeout(25000),
+          body: JSON.stringify({ model: "gpt-4o-mini", messages: msgs, temperature, max_tokens: maxTokens }),
+        });
+        if (!res.ok) { const t = await res.text(); throw new Error(`OpenAI ${res.status}: ${t.substring(0, 100)}`); }
+        const data = await res.json();
+        return data.choices?.[0]?.message?.content || "";
       },
     });
   }
@@ -96,15 +147,22 @@ async function callWithFallback(
   maxTokens: number,
   temperature: number
 ): Promise<string> {
+  const errors: string[] = [];
   for (const provider of providers) {
     try {
       const content = await provider.call(messages, maxTokens, temperature);
       if (content) return content;
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      errors.push(`${provider.name}: ${msg}`);
+      // If rate limited (429), add small delay before next provider
+      if (msg.includes("429")) {
+        await sleep(300);
+      }
       console.warn(`${provider.name} failed:`, err);
     }
   }
-  throw new Error("All providers failed");
+  throw new Error(`All providers failed (${providers.length} tried): ${errors.slice(0, 3).join(" | ")}`);
 }
 
 Deno.serve(async (req) => {
