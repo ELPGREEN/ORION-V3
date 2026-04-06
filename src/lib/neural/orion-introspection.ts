@@ -386,14 +386,14 @@ export const JARVIS_COMPARISON: JarvisComparisonEntry[] = [
     jarvisDescription: "Conversão instantânea de fala para texto com wake word persistente",
     orionImplementation: [
       "Web Speech API com wake word 'Orion' e variações fonéticas (Órion, Oreon)",
-      "ElevenLabs Scribe (realtime STT via WebSocket)",
+      "Web Speech API contínuo com detecção de atividade vocal (VAD)",
       "Whisper-large-v3-turbo para áudio complexo",
       "Voice Activity Detection (VAD) integrada",
       "Suporte a interrupção em tempo real (barge-in)",
     ],
     orionAdvantages: [
       "Wake word persistente com reconhecimento fonético fuzzy",
-      "3 camadas de ASR (Web Speech → Scribe → Whisper)",
+      "ASR nativo gratuito com wake word persistente",
       "Barge-in cancela fala da IA quando usuário interrompe",
     ],
     status: "surpassed",
@@ -436,16 +436,16 @@ export const JARVIS_COMPARISON: JarvisComparisonEntry[] = [
     jarvisMethod: "TTS (Text-to-Speech)",
     jarvisDescription: "Conversão de respostas em fala sintetizada",
     orionImplementation: [
-      "ElevenLabs com clonagem vocal (3-5 amostras)",
+      "Google Translate TTS (gratuito, qualidade natural PT-BR)",
+      "Kokoro TTS neural in-browser via WebGPU/WASM (82M params)",
       "Piper TTS offline via WebAssembly como fallback",
       "SpeechSynthesis nativo do navegador como último recurso",
       "Identidade Vocal Evolutiva (voz cresce com uso)",
-      "Request stitching para textos longos com prosódia consistente",
     ],
     orionAdvantages: [
-      "Voz clonada personalizada por usuário",
-      "3 camadas de fallback garantem voz sempre disponível",
-      "Fluxo especial de identidade para o criador (Ericson Piccoli)",
+      "100% gratuito — zero custo de API",
+      "4 camadas de fallback garantem voz sempre disponível",
+      "Kokoro com 100+ vozes neurais in-browser",
     ],
     status: "surpassed",
   },
@@ -835,7 +835,7 @@ export const SOURCE_CODE_MAP: ModuleMapEntry[] = [
   // ═══ VOICE ═══
   {
     file: "src/lib/neural/voice-clone-engine.ts",
-    description: "Motor de clonagem vocal — ElevenLabs + Piper TTS fallback",
+    description: "Motor de síntese vocal — Google TTS + Kokoro + Piper TTS (100% gratuito)",
     exports: ["VoiceCloneEngine", "synthesizeSpeech"],
     dependencies: ["@mintplex-labs/piper-tts-web"],
     linesEstimate: 400,

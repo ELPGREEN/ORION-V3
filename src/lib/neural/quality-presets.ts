@@ -4,7 +4,7 @@
  */
 
 export type QualityLevel = 'best' | 'high' | 'default' | 'low' | 'worst';
-export type TTSEngine = 'elevenlabs' | 'jarvis' | 'piper' | 'browser';
+export type TTSEngine = 'google_tts' | 'kokoro' | 'piper' | 'browser';
 
 export interface QualityPreset {
   level: QualityLevel;
@@ -26,7 +26,7 @@ export const QUALITY_PRESETS: Record<QualityLevel, QualityPreset> = {
     fpsCap: 30,
     frameIntervalMs: 33,
     jpegQuality: 0.9,
-    ttsEngine: 'elevenlabs',
+    ttsEngine: 'google_tts',
     videoBitrate: 4_000_000,
     frameSkip: 0,
   },
@@ -37,7 +37,7 @@ export const QUALITY_PRESETS: Record<QualityLevel, QualityPreset> = {
     fpsCap: 15,
     frameIntervalMs: 67,
     jpegQuality: 0.8,
-    ttsEngine: 'jarvis',
+    ttsEngine: 'kokoro',
     videoBitrate: 2_500_000,
     frameSkip: 1,
   },

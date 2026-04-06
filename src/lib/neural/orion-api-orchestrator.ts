@@ -138,12 +138,12 @@ const API_REGISTRY: OrionAPI[] = [
     checkHealth: checkBrowserSTT,
   },
   {
-    id: "elevenlabs_scribe", name: "ElevenLabs Scribe", brandName: "Orion Audição Premium",
-    capability: "hearing", tier: "secondary", runtime: "cloud",
-    library: "ElevenLabs API", version: "scribe_v2",
+    id: "whisper_browser", name: "Whisper Browser STT", brandName: "Orion Audição Neural",
+    capability: "hearing", tier: "secondary", runtime: "local",
+    library: "Web Speech API", version: "Nativo",
     health: "online", lastLatencyMs: 0, errorCount: 0,
-    features: ["Transcrição de alta precisão", "Diarização", "99+ idiomas"],
-    checkHealth: alwaysCloud,
+    features: ["Transcrição gratuita", "Multi-idioma", "Reconhecimento contínuo"],
+    checkHealth: checkBrowserSTT,
   },
 
   // ═══ 🗣️ FALAR ═══
@@ -156,11 +156,11 @@ const API_REGISTRY: OrionAPI[] = [
     checkHealth: () => "online",
   },
   {
-    id: "elevenlabs_tts", name: "ElevenLabs TTS", brandName: "Orion Voz Premium",
+    id: "google_translate_tts", name: "Google Translate TTS", brandName: "Orion Voz Google",
     capability: "speech", tier: "secondary", runtime: "cloud",
-    library: "ElevenLabs API", version: "eleven_multilingual_v2",
+    library: "Google Translate", version: "gTTS",
     health: "online", lastLatencyMs: 0, errorCount: 0,
-    features: ["Streaming TTS", "Clonagem de voz", "29 idiomas"],
+    features: ["TTS gratuito ilimitado", "PT-BR natural", "Zero custo"],
     checkHealth: alwaysCloud,
   },
   {
