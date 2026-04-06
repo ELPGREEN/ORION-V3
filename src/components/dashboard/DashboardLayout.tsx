@@ -1,10 +1,11 @@
-import { useEffect, useState, Suspense } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState, Suspense, useRef } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSignatureRealtime } from "@/hooks/useSignatureRealtime";
 import { syncVoiceEvolutionFromSupabase } from "@/lib/neural/orion-voice-evolution";
+import { supabase } from "@/integrations/supabase/client";
 import { ClienteNavbar } from "./ClienteNavbar";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardHeader } from "./DashboardHeader";
@@ -12,6 +13,7 @@ import { GenerationBanner } from "./GenerationBanner";
 import { MobileSidebarOverlay } from "./MobileSidebarOverlay";
 import { DashboardBackground } from "./DashboardBackground";
 import { MouseTrailEffect } from "./MouseTrailEffect";
+import { GlobalOrionListener } from "./GlobalOrionListener";
 
 import { ProdutorSidebar } from "./ProdutorSidebar";
 import { AfiliadoSidebar } from "./AfiliadoSidebar";
