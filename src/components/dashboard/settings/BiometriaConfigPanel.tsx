@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScanFace, Mic, ShieldCheck, Trash2, RefreshCw } from "lucide-react";
 import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
 import { VoiceIDPanel } from "@/components/dashboard/neural/VoiceIDPanel";
+import { GuestSessionsLog } from "@/components/dashboard/neural/GuestSessionsLog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function BiometriaConfigPanel() {
@@ -31,6 +32,10 @@ export default function BiometriaConfigPanel() {
           <TabsTrigger value="vocal" className="text-xs gap-1.5">
             <Mic className="h-3.5 w-3.5" />
             Identificação Vocal
+          </TabsTrigger>
+          <TabsTrigger value="visitantes" className="text-xs gap-1.5">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Visitantes
           </TabsTrigger>
         </TabsList>
 
@@ -88,6 +93,10 @@ export default function BiometriaConfigPanel() {
 
         <TabsContent value="vocal" className="mt-4">
           <VoiceIDPanel />
+        </TabsContent>
+
+        <TabsContent value="visitantes" className="mt-4">
+          <GuestSessionsLog />
         </TabsContent>
       </Tabs>
     </div>
