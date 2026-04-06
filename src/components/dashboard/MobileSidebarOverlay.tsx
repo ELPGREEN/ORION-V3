@@ -17,7 +17,7 @@ import { useState } from "react";
 interface MobileSidebarOverlayProps {
   open: boolean;
   onClose: () => void;
-  role: "advogado" | "cliente" | "produtor" | "afiliado";
+  role: "advogado" | "cliente" | "produtor" | "afiliado" | "nomade";
   label: string;
 }
 
@@ -159,11 +159,30 @@ const afiliadoSections: MenuSection[] = [
   },
 ];
 
+const nomadeSections: MenuSection[] = [
+  {
+    label: "Principal",
+    items: [
+      { id: "home", label: "Meu Painel", icon: ShoppingBag, path: "/dashboard" },
+      { id: "meus-produtos", label: "Meus Produtos", icon: Package, path: "/dashboard/meus-produtos" },
+      { id: "marketplace", label: "Marketplace", icon: ShoppingBag, path: "/dashboard/marketplace" },
+      { id: "afiliados", label: "Afiliados", icon: Link2, path: "/dashboard/afiliados" },
+      { id: "meu-site", label: "Minha Loja", icon: Globe, path: "/dashboard/escritorio" },
+      { id: "pagamentos", label: "Pagamentos", icon: DollarSign, path: "/dashboard/pagamentos" },
+      { id: "orion-ia", label: "Orion IA", icon: Brain, path: "/consulta" },
+      { id: "plano", label: "Meu Plano", icon: Crown, path: "/dashboard/plano" },
+      { id: "configuracoes", label: "Configurações", icon: Settings, path: "/dashboard/configuracoes" },
+      { id: "notificacoes", label: "Notificações", icon: Bell, path: "/dashboard/notificacoes" },
+    ],
+  },
+];
+
 function getSections(role: string): MenuSection[] {
   switch (role) {
     case "advogado": return advogadoSections;
     case "produtor": return produtorSections;
     case "afiliado": return afiliadoSections;
+    case "nomade": return nomadeSections;
     default: return clienteSections;
   }
 }
