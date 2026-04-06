@@ -236,9 +236,9 @@ export function getQPUStatus(id: QPUId): { status: string; queueDepth: number; a
 // ═══════════════════════════════════════════
 
 const PLAN_LIMITS: Record<RuntimePlan, { qubits: number; depth: number; shots: number; seconds: number }> = {
-  open: { qubits: 127, depth: 300, shots: 4_000, seconds: 600 },
-  standard: { qubits: 127, depth: 1_000, shots: 100_000, seconds: 36_000 },
-  premium: { qubits: 127, depth: 5_000, shots: 1_000_000, seconds: 360_000 },
+  open: { qubits: 156, depth: 300, shots: 4_000, seconds: 600 },
+  standard: { qubits: 156, depth: 1_000, shots: 100_000, seconds: 36_000 },
+  premium: { qubits: 156, depth: 5_000, shots: 1_000_000, seconds: 360_000 },
 };
 
 let instanceCounter = 0;
