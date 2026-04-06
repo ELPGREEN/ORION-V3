@@ -14,8 +14,8 @@ const highlights = [
 
 export function SecurityShieldSection() {
   return (
-    <section className="py-20 sm:py-28 bg-background relative overflow-hidden">
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+    <section className="py-20 sm:py-28 section-cinematic relative overflow-hidden neural-ambient scanlines">
+      <div className="absolute top-0 inset-x-0 cinematic-divider" />
 
       <div className="container px-4 sm:px-6 relative z-10">
         <div className="text-center mb-14">
@@ -61,7 +61,7 @@ export function SecurityShieldSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 max-w-6xl mx-auto">
           {highlights.map((layer, i) => (
             <ScrollReveal key={layer.name} direction="up" delay={i * 0.05}>
-              <div className="group relative p-5 border border-border/20 bg-card/20 hover:border-primary/40 transition-all duration-500 h-full">
+              <div className="group relative p-5 border border-border/20 bg-card/20 hover:border-primary/40 transition-all duration-500 h-full holo-card">
                 <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-primary/40 group-hover:border-primary/80 transition-colors" />
                 <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-primary/40 group-hover:border-primary/80 transition-colors" />
                 <div

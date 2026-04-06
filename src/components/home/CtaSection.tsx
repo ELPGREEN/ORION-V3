@@ -12,9 +12,9 @@ const socialProof = [
 
 export function CtaSection() {
   return (
-    <section className="py-16 sm:py-24 bg-gradient-to-b from-muted/10 to-background relative overflow-hidden">
+    <section className="py-16 sm:py-24 section-cinematic relative overflow-hidden neural-ambient">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-primary/[0.03] rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+      <div className="absolute top-0 inset-x-0 cinematic-divider" />
       
       <div className="container px-4 sm:px-6 relative z-10">
         <div className="max-w-2xl mx-auto text-center">

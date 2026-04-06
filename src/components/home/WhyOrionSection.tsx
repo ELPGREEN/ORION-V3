@@ -45,12 +45,12 @@ const reasons = [
 
 export function WhyOrionSection() {
   return (
-    <section className="py-16 sm:py-24 bg-background relative overflow-hidden">
+    <section className="py-16 sm:py-24 section-cinematic relative overflow-hidden neural-ambient">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-0 w-[400px] h-[400px] bg-primary/[0.03] rounded-full blur-[150px]" />
         <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-primary/[0.02] rounded-full blur-[120px]" />
       </div>
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      <div className="absolute top-0 inset-x-0 cinematic-divider" />
 
       <div className="container px-4 sm:px-6 relative">
         <div className="text-center mb-12 sm:mb-16">
@@ -78,7 +78,7 @@ export function WhyOrionSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 max-w-6xl mx-auto">
           {reasons.map((reason, i) => (
             <ScrollReveal key={reason.title} direction="up" delay={i * 0.08}>
-              <div className="group relative h-full p-5 sm:p-6 border border-border/20 bg-card/20 hover:border-primary/30 transition-all duration-500">
+              <div className="group relative h-full p-5 sm:p-6 border border-border/20 bg-card/20 hover:border-primary/30 transition-all duration-500 holo-card hud-frame">
                 <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t border-l border-primary/30 group-hover:border-primary/60 transition-colors" />
                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r border-primary/30 group-hover:border-primary/60 transition-colors" />
                 <div
