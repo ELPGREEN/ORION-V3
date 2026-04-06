@@ -54,8 +54,8 @@ function scoreVoice(v: SpeechSynthesisVoice): number {
   // ── Penalize female voices heavily ──
   if (FEMALE_NAMES.some(name => n.includes(name))) score -= 300;
 
-  // ── Penalize Google voices (robotic/metallic) ──
-  if (n.includes("google")) score -= 250;
+  // ── Penalize Google voices slightly (often robotic but usable) ──
+  if (n.includes("google")) score -= 80;
 
   // ── Penalize default/generic voices ──
   if (v.default) score -= 20;
