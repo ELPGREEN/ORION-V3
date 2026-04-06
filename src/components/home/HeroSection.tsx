@@ -87,10 +87,10 @@ export function HeroSection({ t }: HeroSectionProps) {
           transform: `translate3d(0, ${heroTranslateY}px, 0)`,
         }}
       >
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Plasma orb */}
+        <div className="max-w-5xl mx-auto text-center">
+          {/* Plasma orb — tighter spacing */}
           <div
-            className="mb-6 sm:mb-8"
+            className="mb-2 sm:mb-3"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0) scale(1)' : 'translate3d(0, 30px, 0) scale(0.7)',
@@ -98,41 +98,61 @@ export function HeroSection({ t }: HeroSectionProps) {
             }}
           >
             <div className="flex items-center justify-center">
-              <PlasmaCore className="w-40 h-40 sm:w-52 sm:h-52 md:w-64 md:h-64 lg:w-72 lg:h-72" />
+              <PlasmaCore className="w-44 h-44 sm:w-56 sm:h-56 md:w-72 md:h-72 lg:w-80 lg:h-80" />
             </div>
           </div>
 
-          {/* Metallic 3D ORION title — real image, not CSS */}
+          {/* Metallic 3D ORION title — BIG with gold reflection */}
           <div
+            className="relative"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 20px, 0)',
               transition: 'opacity 0.8s ease 0.4s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.4s',
             }}
           >
+            {/* Main title */}
             <img
               src={orionTitle}
               alt="ORION"
-              className="h-28 sm:h-36 md:h-48 lg:h-60 xl:h-72 mx-auto mb-2 drop-shadow-[0_0_40px_hsl(var(--primary)/0.4)]"
-              style={{ filter: 'drop-shadow(0 0 60px hsl(30 85% 52% / 0.3))' }}
+              className="h-32 sm:h-44 md:h-56 lg:h-72 xl:h-80 mx-auto drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
+              style={{
+                filter: 'drop-shadow(0 0 80px hsl(30 85% 52% / 0.4)) drop-shadow(0 0 120px hsl(30 85% 52% / 0.2))',
+              }}
+            />
+            {/* Gold reflection below */}
+            <img
+              src={orionTitle}
+              alt=""
+              aria-hidden="true"
+              className="h-32 sm:h-44 md:h-56 lg:h-72 xl:h-80 mx-auto pointer-events-none select-none"
+              style={{
+                transform: 'scaleY(-1) translateY(8px)',
+                opacity: 0.15,
+                filter: 'blur(4px) drop-shadow(0 0 40px hsl(30 85% 52% / 0.3))',
+                maskImage: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)',
+                WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)',
+              }}
             />
           </div>
 
           <div
-            className="w-16 sm:w-24 h-1 bg-primary mx-auto mb-4 sm:mb-6 plasma-glow"
+            className="w-20 sm:w-32 h-1 bg-primary mx-auto mb-3 sm:mb-4 plasma-glow"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'scaleX(1)' : 'scaleX(0)',
               transition: 'opacity 0.8s ease 0.5s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.5s',
+              boxShadow: '0 0 20px hsl(30 85% 52% / 0.6), 0 4px 30px hsl(30 85% 52% / 0.3)',
             }}
           />
 
           <p
-            className="text-primary uppercase tracking-[0.2em] sm:tracking-[0.3em] text-xs sm:text-sm md:text-base mb-6 sm:mb-8"
+            className="text-primary uppercase tracking-[0.2em] sm:tracking-[0.3em] text-xs sm:text-sm md:text-base mb-4 sm:mb-6"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 30px, 0)',
               transition: 'opacity 0.8s ease 0.6s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s',
+              textShadow: '0 0 20px hsl(30 85% 52% / 0.4)',
             }}
           >
             ENTERPRISE AI PLATFORM
