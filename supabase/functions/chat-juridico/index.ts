@@ -293,8 +293,8 @@ interface NeuralSearchResult {
   similarity?: number;
 }
 
-// ====== MULTI-LLM PROVIDER ======
-type LLMProvider = "groq" | "gemini" | "openai" | "anthropic" | "deepseek";
+// ====== FREE-ONLY MULTI-LLM PROVIDER (Gemini 7-key rotation) ======
+type LLMProvider = "gemini";
 
 interface LLMConfig {
   provider: LLMProvider;
@@ -305,19 +305,7 @@ interface LLMConfig {
 function getAvailableLLMs(): LLMConfig[] {
   const llms: LLMConfig[] = [];
   
-  // Groq (prioridade - gratuito e rápido)
-  const groqKey = Deno.env.get("GROQ_API_KEY") || Deno.env.get("MOTHER_GROQ_API_KEY");
-  if (groqKey) {
-    llms.push({ provider: "groq", model: "llama-3.3-70b-versatile", apiKey: groqKey });
-  }
-  
-  // DeepSeek V3.2 (raciocínio profundo, custo baixo)
-  const deepseekKey = Deno.env.get("DEEPSEEK_API_KEY");
-  if (deepseekKey) {
-    llms.push({ provider: "deepseek" as LLMProvider, model: "deepseek-chat", apiKey: deepseekKey });
-  }
-
-  // Gemini — múltiplas chaves em round-robin (todas as 7 keys)
+  // Gemini FREE — 7 keys in round-robin, multiple models
   const geminiKeys = [
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
@@ -327,20 +315,18 @@ function getAvailableLLMs(): LLMConfig[] {
     Deno.env.get("GEMINI_API_KEY_6"),
     Deno.env.get("GEMINI_API_KEY_7"),
   ].filter(Boolean) as string[];
+
+  // Primary: Gemini 2.5 Flash (10 RPM, 250 RPD)
   for (const key of geminiKeys) {
     llms.push({ provider: "gemini", model: "gemini-2.5-flash", apiKey: key });
   }
-  
-  // Anthropic Claude 3.5 Sonnet
-  const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("MOTHER_ANTHROPIC_API_KEY");
-  if (anthropicKey) {
-    llms.push({ provider: "anthropic", model: "claude-3-5-sonnet-20241022", apiKey: anthropicKey });
+  // Fallback: Gemini 2.5 Flash-Lite (15 RPM, 1000 RPD)
+  for (const key of geminiKeys) {
+    llms.push({ provider: "gemini", model: "gemini-2.5-flash-lite", apiKey: key });
   }
-  
-  // OpenAI GPT-4o
-  const openaiKey = Deno.env.get("OPENAI_API_KEY") || Deno.env.get("OPENAI_API_KEY_2") || Deno.env.get("MOTHER_OPENAI_API_KEY");
-  if (openaiKey) {
-    llms.push({ provider: "openai", model: "gpt-4o", apiKey: openaiKey });
+  // Heavy: Gemini 2.5 Pro (5 RPM, 100 RPD)
+  if (geminiKeys.length > 0) {
+    llms.push({ provider: "gemini", model: "gemini-2.5-pro", apiKey: geminiKeys[0] });
   }
   
   return llms;
