@@ -397,7 +397,7 @@ export function useNeuralVoice(
     // ── FALLBACK 1: Gemini TTS Edge Function (free, natural voice) ──
     if (!played && !cascadeAbort.signal.aborted) {
       try {
-        const gemResult = await speakWithGeminiTTS(cleanText, cascadeAbort.signal);
+        const gemResult = await speakWithGeminiTTS(cleanText, "Iapetus", cascadeAbort.signal);
         if (gemResult.played) {
           played = true;
           if (gemResult.audio) activeAudioRef.current = gemResult.audio;
