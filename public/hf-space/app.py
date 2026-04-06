@@ -1,7 +1,7 @@
 """
-ELP Neural Proxy v7.3 — Complete AI Agent Swarm
-PDF + Vision + Object Detection + Code Generation + Code Analysis + Text Analysis + Question Answering + Fine-Tuning + Dataset Creation + Media Generation
-3000+ Neural Agents covering ALL HuggingFace Spaces categories
+ELP Neural Proxy v7.4 — Complete AI Agent Swarm
+PDF + Vision + Object Detection + Code Generation + Code Analysis + Text Analysis + Question Answering + Document Analysis + Fine-Tuning + Dataset Creation + Media Generation
+3100+ Neural Agents covering ALL HuggingFace Spaces categories
 Runs on 2GB RAM (HF Spaces free tier)
 """
 Runs on 2GB RAM (HF Spaces free tier)
@@ -36,7 +36,7 @@ app.add_middleware(
 )
 
 # ============================================================
-# AGENT REGISTRY — 3000+ Neural Agents (ALL HF Categories)
+# AGENT REGISTRY — 3100+ Neural Agents (ALL HF Categories)
 # ============================================================
 # ============================================================
 
@@ -382,14 +382,71 @@ AGENT_CATEGORIES = {
             "bigcodebench", "navitrace_leaderboard",
         ],
     },
-    # ── PDF (110+) ──
+    # ── PDF & Document Analysis (200+ agents) — EXPANDED v7.4 ──
     "pdf": {
-        "types": [
-            "layout_analysis", "table_extraction", "text_extraction",
-            "form_recognition", "signature_detection", "stamp_detection",
-            "header_footer_detection", "page_classification",
+        "layout_analysis": [
+            "layout_analysis", "dit_document_layout", "publaynet_detector",
+            "doctr_layout", "yolo_doc_layout", "layoutlmv3",
+            "page_classification", "header_footer_detection",
+            "reading_order_detection", "column_detection",
+        ],
+        "table_extraction": [
+            "table_extraction", "table_transformer", "camelot_tables",
+            "tabula_extract", "pdfplumber_tables", "unitable",
+            "table_structure_recognition", "html_table_extract",
+        ],
+        "text_extraction": [
+            "text_extraction", "pymupdf_extract", "pdfminer_extract",
+            "tika_extract", "textract_extract", "pdf_text_extractor",
+        ],
+        "ocr": [
+            "mineru_ocr", "paddleocr_vl", "surya_ocr", "nougat_ocr",
+            "tesseract_ocr", "easyocr", "doctr_ocr", "trocr",
+            "got_ocr2", "rapidocr", "manga_ocr", "handwriting_ocr",
+        ],
+        "document_parsing": [
+            "donut_parser", "donut_receipt", "donut_cord",
+            "pix2struct", "udop", "docowl",
+            "invoice_parser", "receipt_parser", "id_card_parser",
+            "business_card_parser", "form_parser",
+        ],
+        "bibliography": [
+            "grobid", "grobid_crf", "acl_pubcheck",
             "citation_extraction", "bibliography_parser",
-            "legal_document_parser", "invoice_parser",
+            "reference_linking", "doi_resolver",
+        ],
+        "resume_analysis": [
+            "resume_ats_analyzer", "cv_parser", "skill_extractor",
+            "job_matcher", "resume_scorer", "experience_extractor",
+        ],
+        "scientific_documents": [
+            "arxiv_parser", "latex_parser", "equation_detector",
+            "figure_extraction", "abstract_extractor",
+            "paper_summarizer", "research_tracker",
+        ],
+        "legal_documents": [
+            "legal_document_parser", "contract_parser",
+            "clause_extractor", "entity_redactor",
+            "compliance_checker", "regulation_parser",
+        ],
+        "document_conversion": [
+            "pdf_to_markdown", "pdf_to_html", "pdf_to_json",
+            "pdf_to_docx", "image_to_pdf", "html_to_pdf",
+            "markdown_to_pdf", "epub_converter",
+        ],
+        "document_comparison": [
+            "diff_checker", "version_comparator", "merge_detector",
+            "change_highlighter", "redline_generator",
+        ],
+        "signature_stamp": [
+            "signature_detection", "stamp_detection",
+            "handwriting_verification", "seal_recognition",
+        ],
+        "models": [
+            "layoutlmv3", "dit_base", "donut_base", "nougat_base",
+            "pix2struct_base", "udop_large", "docowl_15",
+            "paddleocr_v4", "surya_v2", "mineru_v1",
+            "got_ocr2", "trocr_large", "doctr_v1",
         ],
     },
     # ── Question Answering (120+ agents) — NEW v7.3 ──
