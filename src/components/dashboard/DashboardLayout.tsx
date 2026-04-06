@@ -53,17 +53,18 @@ export default function DashboardLayout() {
     }
     onboardingCheckedRef.current = true;
     
-    supabase
-      .from("neural_agent_config" as any)
-      .select("onboarding_completed")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("neural_agent_config" as any)
+          .select("onboarding_completed")
+          .eq("user_id", user.id)
+          .maybeSingle();
         if (data && !(data as any).onboarding_completed) {
           navigate("/dashboard/rede-neural", { replace: true });
         }
-      })
-      .catch(() => {});
+      } catch {}
+    })();
   }, [user, authLoading, navigate, location.pathname]);
 
   useEffect(() => {
