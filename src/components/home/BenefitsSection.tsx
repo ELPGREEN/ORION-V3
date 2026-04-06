@@ -1,25 +1,25 @@
-import { 
-  Brain, FileText, Users, MessageSquare, Calendar, CreditCard, 
-  Search, PenTool, BarChart3, Shield, Globe, Zap,
-  Scan, Layers, Bell
-} from "lucide-react";
+import {
+  IconNeuralAI, IconDocuments, IconCRM, IconChat, IconCalendar, IconPayment,
+  IconSearch, IconSignature, IconDashboard, IconShield, IconGlobe, IconAutomation,
+  IconCompliance, IconSaaS, IconNotification
+} from "@/components/icons/SumerianTronIcons";
 
 const benefits = [
-  { icon: Brain, title: "Assistente IA Neural", desc: "Chat com motor de IA proprietário multicamadas, respostas inteligentes e aprendizado contínuo." },
-  { icon: FileText, title: "Geração de Documentos", desc: "100+ tipos de documentos profissionais gerados automaticamente com modelos inteligentes e IA." },
-  { icon: Users, title: "CRM Completo", desc: "Gerencie clientes, leads e pipeline de vendas com scoring automático e follow-ups." },
-  { icon: MessageSquare, title: "Chat ao Vivo", desc: "Comunicação em tempo real entre equipe e clientes com notificações push." },
-  { icon: Calendar, title: "Agendamento", desc: "Sistema de consultas e reuniões integrado com pagamentos e confirmações automáticas." },
-  { icon: CreditCard, title: "Pagamentos Integrados", desc: "Faturas automáticas, planos de assinatura, comissões de afiliados e checkout integrado." },
-  { icon: Search, title: "Pesquisa Inteligente", desc: "Busca avançada com IA em bases de dados, legislação e documentos internos." },
-  { icon: PenTool, title: "Assinatura Digital", desc: "Assine documentos digitalmente com validade jurídica e rastreamento completo." },
-  { icon: BarChart3, title: "Dashboard Analytics", desc: "Métricas em tempo real de performance, qualidade e KPIs de negócio." },
-  { icon: Shield, title: "Segurança Empresarial", desc: "Orion Shield com múltiplas camadas de proteção, criptografia avançada e conformidade LGPD/GDPR." },
-  { icon: Globe, title: "Multi-idioma", desc: "Interface completa em Português, English, Español, Italiano e 中文 com detecção automática." },
-  { icon: Zap, title: "Automação", desc: "Fluxos automatizados, notificações inteligentes e processos que rodam sozinhos." },
-  { icon: Scan, title: "Compliance", desc: "Verificação de conformidade com consulta a listas de sanções internacionais e PEPs." },
-  { icon: Layers, title: "Gestão SaaS", desc: "Planos de assinatura, trial, marketplace de serviços e painel de afiliados." },
-  { icon: Bell, title: "Notificações Push", desc: "Alertas em tempo real via push, email e in-app com configuração granular." },
+  { icon: IconNeuralAI, title: "Assistente IA Neural", desc: "Chat com motor de IA proprietário multicamadas, respostas inteligentes e aprendizado contínuo." },
+  { icon: IconDocuments, title: "Geração de Documentos", desc: "100+ tipos de documentos profissionais gerados automaticamente com modelos inteligentes e IA." },
+  { icon: IconCRM, title: "CRM Completo", desc: "Gerencie clientes, leads e pipeline de vendas com scoring automático e follow-ups." },
+  { icon: IconChat, title: "Chat ao Vivo", desc: "Comunicação em tempo real entre equipe e clientes com notificações push." },
+  { icon: IconCalendar, title: "Agendamento", desc: "Sistema de consultas e reuniões integrado com pagamentos e confirmações automáticas." },
+  { icon: IconPayment, title: "Pagamentos Integrados", desc: "Faturas automáticas, planos de assinatura, comissões de afiliados e checkout integrado." },
+  { icon: IconSearch, title: "Pesquisa Inteligente", desc: "Busca avançada com IA em bases de dados, legislação e documentos internos." },
+  { icon: IconSignature, title: "Assinatura Digital", desc: "Assine documentos digitalmente com validade jurídica e rastreamento completo." },
+  { icon: IconDashboard, title: "Dashboard Analytics", desc: "Métricas em tempo real de performance, qualidade e KPIs de negócio." },
+  { icon: IconShield, title: "Segurança Empresarial", desc: "Orion Shield com múltiplas camadas de proteção, criptografia avançada e conformidade LGPD/GDPR." },
+  { icon: IconGlobe, title: "Multi-idioma", desc: "Interface completa em Português, English, Español, Italiano e 中文 com detecção automática." },
+  { icon: IconAutomation, title: "Automação", desc: "Fluxos automatizados, notificações inteligentes e processos que rodam sozinhos." },
+  { icon: IconCompliance, title: "Compliance", desc: "Verificação de conformidade com consulta a listas de sanções internacionais e PEPs." },
+  { icon: IconSaaS, title: "Gestão SaaS", desc: "Planos de assinatura, trial, marketplace de serviços e painel de afiliados." },
+  { icon: IconNotification, title: "Notificações Push", desc: "Alertas em tempo real via push, email e in-app com configuração granular." },
 ];
 
 export function BenefitsSection() {
