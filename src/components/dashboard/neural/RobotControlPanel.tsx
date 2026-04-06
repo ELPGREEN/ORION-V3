@@ -440,7 +440,7 @@ export default function RobotControlPanel() {
             <SecurityCompliancePanel />
           </TabsContent>
           <TabsContent value="telemetry">
-            <RobotTelemetryPanel rosbridgeUrl={rosbridgeUrl} />
+            <RobotTelemetryPanel />
           </TabsContent>
           <TabsContent value="camera">
             <WebRTCCameraViewer rosbridgeUrl={rosbridgeUrl} />
