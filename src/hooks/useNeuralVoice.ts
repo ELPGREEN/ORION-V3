@@ -14,6 +14,8 @@ import { speakWithGeminiTTS, isGeminiTTSAvailable } from "@/lib/tts/geminiTTS";
 // Google Translate TTS removido — qualidade inferior, latência inconsistente
 import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
 import { useNeuralConfig } from "@/hooks/useNeuralConfig";
+import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/voice-evolution-feedback";
+import { speakWithEvolvedVoice } from "@/lib/neural/orion-voice-evolution";
 
 // ═══ Text Cleaning for Natural Speech ═══
 
