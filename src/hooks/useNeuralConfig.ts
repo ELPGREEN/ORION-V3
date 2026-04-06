@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -72,6 +72,7 @@ export function useNeuralConfig() {
   const { user } = useAuth();
   const [config, setConfig] = useState<NeuralAgentConfig | null>(null);
   const [loading, setLoading] = useState(true);
+  const channelNameRef = useRef(`neural_config_changes_${Math.random().toString(36).slice(2)}`);
 
   // Load config
   useEffect(() => {
@@ -79,6 +80,8 @@ export function useNeuralConfig() {
       setLoading(false);
       return;
     }
+
+    let cancelled = false;
 
     const loadConfig = async () => {
       try {
@@ -92,6 +95,8 @@ export function useNeuralConfig() {
           console.error("Error loading neural config:", error);
         }
 
+        if (cancelled) return;
+
         if (data) {
           setConfig(data as any);
         } else {
@@ -102,14 +107,14 @@ export function useNeuralConfig() {
             .select()
             .single();
 
-          if (!insertErr && newConfig) {
+          if (!cancelled && !insertErr && newConfig) {
             setConfig(newConfig as any);
           }
         }
       } catch (e) {
         console.error("Failed to load neural config:", e);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
@@ -117,7 +122,7 @@ export function useNeuralConfig() {
 
     // Realtime subscription
     const channel = supabase
-      .channel("neural_config_changes")
+      .channel(channelNameRef.current)
       .on(
         "postgres_changes",
         {
@@ -127,7 +132,7 @@ export function useNeuralConfig() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          if (payload.new) {
+          if (!cancelled && payload.new) {
             setConfig(payload.new as any);
           }
         }
@@ -135,6 +140,7 @@ export function useNeuralConfig() {
       .subscribe();
 
     return () => {
+      cancelled = true;
       supabase.removeChannel(channel);
     };
   }, [user?.id]);
