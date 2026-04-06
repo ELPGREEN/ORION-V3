@@ -220,28 +220,19 @@ export function useNeuralVoice(
 
     const chunks = splitIntoSentences(text);
 
-    // ── Prosody variation for natural speech ──
-    // Slight rate/pitch changes per sentence to avoid monotone
+    // ── Subtle prosody variation — just enough to avoid monotone ──
     const getProsodyForChunk = (chunk: string, idx: number, total: number) => {
       const isQuestion = /\?/.test(chunk);
-      const isExclamation = /!/.test(chunk);
       const isLast = idx === total - 1;
-      const isFirst = idx === 0;
       
-      // Base rate with slight natural variation (±0.05)
-      let rate = ORION_VOICE_PARAMS.rate + (Math.sin(idx * 1.7) * 0.04);
+      // Minimal variation — sounds robotic when overdone
+      let rate = ORION_VOICE_PARAMS.rate + (Math.sin(idx * 2.1) * 0.02);
       let pitch = ORION_VOICE_PARAMS.pitch;
       
-      // Questions: slightly higher pitch, slower end
-      if (isQuestion) { pitch += 0.08; rate -= 0.03; }
-      // Exclamations: slightly faster, more energy
-      if (isExclamation) { rate += 0.05; pitch += 0.04; }
-      // Last sentence: slow down slightly (natural conclusion)
-      if (isLast && total > 1) { rate -= 0.06; }
-      // First sentence: slightly more deliberate
-      if (isFirst && total > 1) { rate -= 0.02; }
+      if (isQuestion) { pitch += 0.04; }
+      if (isLast && total > 2) { rate -= 0.03; }
       
-      return { rate: Math.max(0.8, Math.min(1.3, rate)), pitch: Math.max(0.6, Math.min(1.2, pitch)) };
+      return { rate: Math.max(0.9, Math.min(1.35, rate)), pitch: Math.max(0.75, Math.min(1.1, pitch)) };
     };
 
     return new Promise<void>((resolve) => {
@@ -276,8 +267,8 @@ export function useNeuralVoice(
             return;
           }
 
-          // Add natural micro-pause between sentences (80-200ms)
-          const pauseMs = idx > 0 ? 80 + Math.random() * 120 : 0;
+          // Tiny natural pause between sentences (30-80ms)
+          const pauseMs = idx > 0 ? 30 + Math.random() * 50 : 0;
           
           setTimeout(() => {
             const prosody = getProsodyForChunk(chunks[idx], idx, chunks.length);
