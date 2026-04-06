@@ -18,7 +18,7 @@ export interface GeminiTTSResult {
  */
 export async function speakWithGeminiTTS(
   text: string,
-  voice: string = "Charon",
+  voice: string = "Iapetus",
   signal?: AbortSignal,
 ): Promise<GeminiTTSResult> {
   const fail: GeminiTTSResult = { played: false, audio: null };

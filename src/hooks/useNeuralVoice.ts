@@ -384,11 +384,11 @@ export function useNeuralVoice(
     // ── PRIMARY: Gemini TTS (rápido ~2s, voz Charon, 100% grátis) ──
     if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
       try {
-        const result = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
+        const result = await speakWithGeminiTTS(cleanText, "Iapetus", cascadeAbort.signal);
         if (result.played) {
           played = true;
           if (result.audio) activeAudioRef.current = result.audio;
-          console.log("[Voice] ✅ Gemini TTS (Charon) — primário");
+          console.log("[Voice] ✅ Gemini TTS (Iapetus) — primário");
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {

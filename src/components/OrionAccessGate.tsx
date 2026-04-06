@@ -54,7 +54,7 @@ async function speakText(text: string) {
 
   if (isGeminiTTSAvailable()) {
     try {
-      const result = await speakWithGeminiTTS(text, "Charon");
+      const result = await speakWithGeminiTTS(text, "Iapetus");
       if (result.played) return;
     } catch {}
   }
