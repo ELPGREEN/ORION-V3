@@ -33,7 +33,8 @@ function orionSpeak(text: string): Promise<void> {
 // Detects "Orion" wake word, waits for the full command, then opens overlay
 // ═══════════════════════════════════════════════════════════
 
-const ORION_WAKE_REGEX = /([óòôõo][. ]*r[iíìeéè][. ]*[oóòôõ][. ]*[nmn]|oreo[nm]|oria[nm]|orie[nm]|ore[oó][nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm])\b/i;
+// Expanded regex: catches "orion", "órion", "oreon", "oriom", "o rion", "orían", "orian", etc.
+const ORION_WAKE_REGEX = /([óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\b/i;
 
 const PERMISSIONS_KEY = "orion_permissions_granted";
 
