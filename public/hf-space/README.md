@@ -17,7 +17,13 @@ Complete AI Agent Swarm with **3100+ agents** — PDF, Vision, **Object Detectio
 - `GET /` — Health + capability manifest
 - `POST /` — PDF → JSON | `POST /markdown` — PDF → MD | `POST /html` — PDF → HTML | `POST /generate-pdf` — HTML → PDF
 
-### Question Answering (NEW v7.3)
+### Document Analysis (NEW v7.4)
+- `GET /agents/documents/models` — All document analysis models (MinerU, PaddleOCR, Surya, Nougat, Donut, DiT, GROBID, GOT-OCR2, TrOCR)
+- `GET /agents/documents/pipelines` — Pre-built pipelines (pdf_to_markdown, receipt_parsing, academic_paper, legal_analysis, resume_screening, handwriting)
+- `POST /agents/documents/recommend` — Recommend best model/pipeline for document task
+- `POST /agents/documents/analyze` — Route document analysis to optimal pipeline
+
+### Question Answering (v7.3)
 - `GET /agents/qa/domains` — All QA domain specializations (medical, legal, financial, scientific, education, general)
 - `GET /agents/qa/models` — QA models with capabilities (extractive, generative, visual, table, audio)
 - `POST /agents/qa/classify` — Classify QA type and recommend models
