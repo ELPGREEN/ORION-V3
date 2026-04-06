@@ -387,18 +387,36 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
-    // ── Tier 0: Gemini 2.5 Flash Preview TTS (neural, free, highest quality) ──
+    // ── Tier 0: Fish Speech Clone (user's own cloned voice, free) ──
+    const voiceId = (config as any)?.orion_voice_id as string | undefined;
+    const fishRefPath = getClonedVoiceRefPath(voiceId);
+    if (!played && !cascadeAbort.signal.aborted && fishRefPath && isFishCloneAvailable()) {
+      try {
+        const result = await speakWithFishClone(cleanText, fishRefPath, undefined, cascadeAbort.signal);
+        if (result.played) {
+          played = true;
+          if (result.audio) activeAudioRef.current = result.audio;
+          console.log("[Voice] ✅ Tier 0: Fish Speech Clone (sua voz!)");
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          console.warn("[Voice] Tier 0 Fish Clone failed, trying Tier 1...");
+        }
+      }
+    }
+
+    // ── Tier 1: Gemini 2.5 Flash Preview TTS (neural, free) ──
     if (!played && !cascadeAbort.signal.aborted && isGeminiTTSAvailable()) {
       try {
         const result = await speakWithGeminiTTS(cleanText, "Charon", cascadeAbort.signal);
         if (result.played) {
           played = true;
           if (result.audio) activeAudioRef.current = result.audio;
-          console.log("[Voice] ✅ Tier 0: Gemini TTS (neural, free)");
+          console.log("[Voice] ✅ Tier 1: Gemini TTS (neural, free)");
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
-          console.warn("[Voice] Tier 0 Gemini TTS failed, trying Tier 1...");
+          console.warn("[Voice] Tier 1 Gemini TTS failed, trying Tier 2...");
         }
       }
     }
