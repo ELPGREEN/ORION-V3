@@ -40,7 +40,7 @@ let cachedUserId: string | null = null;
 
 interface StyleCommand {
   patterns: RegExp[];
-  apply: (prefs: VoiceStylePrefs) => Partial<VoiceStylePrefs>;
+  apply: (prefs: VoiceStylePrefs, match?: RegExpMatchArray | null) => Partial<VoiceStylePrefs>;
   feedback: string;
 }
 
