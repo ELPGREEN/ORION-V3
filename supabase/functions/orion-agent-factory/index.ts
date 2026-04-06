@@ -497,6 +497,110 @@ function handleGetRegistry() {
   };
 }
 
+// ─── Action: Speech synthesis via HF Spaces or ElevenLabs ───
+async function handleSpeechSynthesis(body: Record<string, unknown>) {
+  const { text, voice_profile_id, engine, language } = body;
+  if (!text) throw new Error("text is required");
+
+  const ELEVENLABS_KEY = Deno.env.get("ELEVENLABS_API_KEY");
+  const HF_TOKEN = Deno.env.get("HF_TOKEN") || Deno.env.get("HUGGINGFACE_API_KEY");
+  const sb = getSupabase();
+
+  // If voice_profile_id provided, get ElevenLabs voice ID
+  let elevenLabsVoiceId: string | null = null;
+  if (voice_profile_id) {
+    const { data: profile } = await sb
+      .from("voice_profiles")
+      .select("elevenlabs_voice_id")
+      .eq("id", voice_profile_id)
+      .single();
+    elevenLabsVoiceId = profile?.elevenlabs_voice_id || null;
+  }
+
+  // Engine selection: elevenlabs (premium) > hf_spaces (free) > browser fallback
+  const selectedEngine = engine || (elevenLabsVoiceId && ELEVENLABS_KEY ? "elevenlabs" : "hf_spaces");
+
+  if (selectedEngine === "elevenlabs" && ELEVENLABS_KEY) {
+    const voiceId = elevenLabsVoiceId || "JBFqnCBsd6RMkjVDRZzb"; // George default
+    const ttsRes = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
+      {
+        method: "POST",
+        headers: {
+          "xi-api-key": ELEVENLABS_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: String(text),
+          model_id: "eleven_multilingual_v2",
+          voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.3 },
+        }),
+      }
+    );
+
+    if (!ttsRes.ok) {
+      const errText = await ttsRes.text();
+      throw new Error(`ElevenLabs TTS failed: ${ttsRes.status} ${errText}`);
+    }
+
+    // Return as base64
+    const audioBuffer = await ttsRes.arrayBuffer();
+    const bytes = new Uint8Array(audioBuffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    const audioBase64 = btoa(binary);
+
+    return {
+      success: true,
+      engine: "elevenlabs",
+      audio_base64: audioBase64,
+      mime_type: "audio/mpeg",
+      voice_id: voiceId,
+    };
+  }
+
+  // HF Spaces fallback — use Style-Bert-VITS2 or other speech models
+  if (HF_TOKEN) {
+    // Try parler-tts via HF inference API
+    const hfRes = await fetch(`${HF_API}/models/parler-tts/parler-tts-large-v1`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${HF_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        inputs: String(text),
+      }),
+    });
+
+    if (hfRes.ok) {
+      const audioBuffer = await hfRes.arrayBuffer();
+      const bytes = new Uint8Array(audioBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const audioBase64 = btoa(binary);
+
+      return {
+        success: true,
+        engine: "hf_parler_tts",
+        audio_base64: audioBase64,
+        mime_type: "audio/flac",
+        model: "parler-tts/parler-tts-large-v1",
+      };
+    }
+  }
+
+  // No engine available — return speech synthesis config for browser-side
+  return {
+    success: true,
+    engine: "browser_fallback",
+    text: String(text),
+    language: language || "pt-BR",
+    available_spaces: HF_AGENT_REGISTRY.speech_synthesis || [],
+    message: "Use Web Speech API no browser ou configure ELEVENLABS_API_KEY para síntese premium",
+  };
+}
+
 // ─── Main Handler ───
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
