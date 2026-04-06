@@ -1,7 +1,8 @@
 /**
- * NEUROCORE AI — Voice STT/TTS Hook
- * Free TTS Cascade: Fish Clone → Gemini TTS → Google TTS → Piper WASM → Web Speech
- * Zero paid APIs. Maximum naturalness. Voice cloning via Fish Speech v1.5.
+ * NEUROCORE AI — Voice Synthesis Hook
+ * PRIMARY: Fish Speech v1.5 Clone (síntese vocal clonada do usuário)
+ * EMERGENCY FALLBACK: Gemini TTS → Google TTS → Piper WASM → Web Speech
+ * Zero paid APIs. Voice cloning via Fish Speech v1.5.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
