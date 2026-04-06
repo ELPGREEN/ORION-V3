@@ -553,23 +553,23 @@ function getDefaultPatternConfig(pattern: ArchitecturePattern): PatternConfig {
   const inferenceByPattern: Record<ArchitecturePattern, InferenceLayerConfig> = {
     ml_inference_pipeline: {
       modelTier: "custom_ml", enableRAG: false, enableGrounding: false,
-      maxTokens: 1024, temperature: 0, fallbackChain: ["lite"],
+      maxTokens: 2048, temperature: 0, fallbackChain: ["lite"],
     },
     agentic_orchestration: {
       modelTier: "pro", enableRAG: true, enableGrounding: true,
-      maxTokens: 4096, temperature: 0.7, fallbackChain: ["lite", "micro"],
+      maxTokens: 8192, temperature: 0.7, fallbackChain: ["lite", "micro"],
     },
     edge_inference: {
       modelTier: "micro", enableRAG: false, enableGrounding: false,
-      maxTokens: 512, temperature: 0, fallbackChain: [],
+      maxTokens: 1024, temperature: 0, fallbackChain: [],
     },
     multi_stage_workflow: {
       modelTier: "pro", enableRAG: true, enableGrounding: false,
-      maxTokens: 4096, temperature: 0.3, fallbackChain: ["lite"],
+      maxTokens: 8192, temperature: 0.3, fallbackChain: ["lite"],
     },
     grounded_agent: {
       modelTier: "premier", enableRAG: true, enableGrounding: true,
-      maxTokens: 8192, temperature: 0.5, fallbackChain: ["pro", "lite"],
+      maxTokens: 16384, temperature: 0.5, fallbackChain: ["pro", "lite"],
     },
   };
 
