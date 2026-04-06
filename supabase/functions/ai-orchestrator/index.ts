@@ -132,22 +132,23 @@ function applyThinkingContextManagement(
   return processed;
 }
 
-// Model type → provider order mapping
-// Updated per V3.2 benchmarks: deepseek_reasoner for reasoning/analysis (AIME 93.1%, GPQA 82.4%)
+// Model type → provider order mapping (ALL FREE Gemini models)
 function getProviderOrder(modelType?: string): string[] {
   switch (modelType) {
     case "fast":
-      return ["groq", "deepseek", "mistral", "gemini", "github_models", "openai_4o", "anthropic"];
+      // Flash-Lite: 15 RPM, 1000 RPD — most requests, fastest
+      return ["gemini_flash_lite", "gemini_flash", "gemini_3_flash"];
     case "balanced":
-      return ["deepseek", "mistral", "groq", "gemini", "anthropic", "openai", "github_models"];
+      // Flash: 10 RPM, 250 RPD — best balance
+      return ["gemini_flash", "gemini_3_flash", "gemini_flash_lite", "gemini_pro"];
     case "reasoning":
     case "analysis":
-      // V3.2 paper: deepseek-reasoner achieves AIME 93.1%, HMMT 92.5%, comparable to GPT-5
-      return ["deepseek_reasoner", "anthropic", "anthropic_sonnet", "gemini", "deepseek", "mistral", "groq", "openai"];
+      // Pro: 5 RPM, 100 RPD — best reasoning, limited quota
+      return ["gemini_pro", "gemini_3_flash", "gemini_flash"];
     case "secure":
-      return ["anthropic", "anthropic_sonnet"];
+      return ["gemini_pro", "gemini_flash"];
     default:
-      return ["gemini", "deepseek", "groq", "mistral", "github_models", "anthropic", "openai", "anthropic_sonnet", "openai_4o"];
+      return ["gemini_flash", "gemini_3_flash", "gemini_flash_lite", "gemini_pro"];
   }
 }
 
