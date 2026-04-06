@@ -80,6 +80,7 @@ export function useNeuralVoice(
   const [supported, setSupported] = useState(false);
   const [ttsOn, setTtsOn] = useState(true);
   const ttsRef = useRef(true);
+  const { config } = useNeuralConfig();
   const recRef = useRef<any>(null);
   const speakingRef = useRef(false);
   const maleVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
