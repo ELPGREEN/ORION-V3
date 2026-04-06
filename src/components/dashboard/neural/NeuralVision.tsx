@@ -119,9 +119,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   }, []);
   const { currentGesture, gesturesEnabled, setGesturesEnabled } = useGestureDetection(active, canvasRef, handleGestureAction);
 
-  // ═══ Face Detection (4-tier fallback) ═══
-  const { detectFaces, detectionTier: faceTier, faces: detectedFacesRaw } = useFaceDetection();
-  const faceApiResultRef = useRef<FaceApiDetection | null>(null);
+  // Face detection now handled by detectRealTime() unified pipeline
+  const lastRtVisionRef = useRef<RealTimeVisionResult | null>(null);
 
   const hasGreetedRef = useRef(false);
 
