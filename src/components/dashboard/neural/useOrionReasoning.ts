@@ -461,11 +461,34 @@ export function useOrionReasoning(
         }
       }
 
-      // ═══ VOICE AUTH GATE — Only respond to authenticated/enrolled users ═══
-      // Public intents (greeting, explanation, time_date, humor, philosophy) skip this gate
+      // 0. Short greetings — respond instantly, NO auth check needed
+      const greetingPatterns = /^(senhor|senhora|oi|olá|ola|ei|hey|eai|e\s*aí|fala|bom\s*dia|boa\s*tarde|boa\s*noite|tudo\s*bem|beleza|opa)[\s!?.]*$/i;
+      if (greetingPatterns.test(qLow)) {
+        const greetings = [
+          "Estou ouvindo. O que precisa?",
+          "Às ordens. Como posso ajudar?",
+          "Estou aqui. Diga.",
+          "Pode falar, estou atento.",
+        ];
+        const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+        setChatHistory(prev => {
+          const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+          return [...clean, { role: "ai" as const, text: greeting, time: new Date().toLocaleTimeString("pt-BR") }];
+        });
+        setThought(greeting);
+        try { await speak(greeting); } catch {}
+        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        somLearn(question, "greeting");
+        return;
+      }
+
+      // ═══ VOICE AUTH GATE — Only for sensitive intents (lazy, cached) ═══
       const PUBLIC_INTENTS = new Set(["greeting", "self_identity", "owner_identity", "time_date", "humor", "philosophy", "explanation", "general_llm"]);
+      const VOICE_AUTH_INTENTS = new Set(["auto_construct", "self_evolve", "security_query", "iot_light", "iot_temperature", "iot_robot", "iot_status", "bluetooth"]);
       const needsAuth = !PUBLIC_INTENTS.has(somResult.handler);
-      if (needsAuth) {
+      const needsBiometric = VOICE_AUTH_INTENTS.has(somResult.handler);
+
+      if (needsAuth || needsBiometric) {
         try {
           const { data: { user: authGateUser } } = await supabase.auth.getUser();
           if (!authGateUser) {
@@ -481,63 +504,35 @@ export function useOrionReasoning(
             return;
           }
 
-          // For sensitive intents, verify voice enrollment
-          const VOICE_AUTH_INTENTS = new Set(["auto_construct", "self_evolve", "security_query", "iot_light", "iot_temperature", "iot_robot", "iot_status", "bluetooth"]);
-          if (VOICE_AUTH_INTENTS.has(somResult.handler)) {
-            const { data: voiceEnrollment } = await supabase
-              .from("voice_auth_enrollments" as any)
-              .select("is_active, enrollment_quality, user_id")
-              .eq("user_id", authGateUser.id)
-              .eq("is_active", true)
-              .maybeSingle();
-
-            const { data: faceEnrollment } = await supabase
-              .from("face_auth_enrollments")
-              .select("is_active, user_id")
-              .eq("user_id", authGateUser.id)
-              .eq("is_active", true)
-              .maybeSingle();
-
-            // Owner always passes (email check)
+          // Only check biometric for sensitive intents — run both queries in parallel
+          if (needsBiometric) {
             const { isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
             const isOwner = isOwnerEmail(authGateUser.email);
 
-            if (!isOwner && !voiceEnrollment && !faceEnrollment) {
-              const enrollMsg = "Este comando requer autenticação biométrica. Cadastre seu Voice ID ou Face ID na área de segurança do painel para executar comandos sensíveis.";
-              setChatHistory(prev => {
-                const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
-                return [...clean, { role: "ai" as const, text: `🔐 ${enrollMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
-              });
-              setThought(enrollMsg);
-              try { await speak(enrollMsg); } catch {}
-              aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
-              processNextInQueue();
-              return;
+            if (!isOwner) {
+              const [voiceRes, faceRes] = await Promise.all([
+                supabase.from("voice_auth_enrollments" as any).select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+                supabase.from("face_auth_enrollments").select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+              ]);
+
+              if (!voiceRes.data && !faceRes.data) {
+                const enrollMsg = "Este comando requer autenticação biométrica. Cadastre seu Voice ID ou Face ID na área de segurança.";
+                setChatHistory(prev => {
+                  const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+                  return [...clean, { role: "ai" as const, text: `🔐 ${enrollMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
+                });
+                setThought(enrollMsg);
+                try { await speak(enrollMsg); } catch {}
+                aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+                processNextInQueue();
+                return;
+              }
             }
           }
         } catch (authErr) {
           console.warn("[Orion] Voice auth gate error:", authErr);
-          // Fall through — don't block on auth errors
         }
       }
-
-      // 0. Short greetings / filler — respond locally ONLY for exact greeting phrases
-      const greetingPatterns = /^(senhor|senhora|oi|olá|ola|ei|hey|eai|e\s*aí|fala|bom\s*dia|boa\s*tarde|boa\s*noite|tudo\s*bem|beleza|opa)[\s!?.]*$/i;
-      if (_isSpecialCmd && greetingPatterns.test(qLow)) {
-        const greetings = [
-          "Estou ouvindo. O que precisa?",
-          "Às ordens. Como posso ajudar?",
-          "Estou aqui. Diga.",
-          "Pode falar, estou atento.",
-        ];
-        const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-        setChatHistory(prev => {
-          const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
-          return [...clean, { role: "ai" as const, text: greeting, time: new Date().toLocaleTimeString("pt-BR") }];
-        });
-        setThought(greeting);
-        try { await speak(greeting); } catch {}
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
         somLearn(question, "greeting");
         return;
       }
