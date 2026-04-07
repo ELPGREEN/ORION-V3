@@ -4,6 +4,7 @@ import ClienteDashboard from "./ClienteDashboard";
 import ProdutorDashboard from "./ProdutorDashboard";
 import AfiliadoDashboard from "./AfiliadoDashboard";
 import NomadeDigitalDashboard from "./NomadeDigitalDashboard";
+import AdvogadoDashboard from "./AdvogadoDashboard";
 import { Loader2 } from "lucide-react";
 
 export default function DashboardRouter() {
