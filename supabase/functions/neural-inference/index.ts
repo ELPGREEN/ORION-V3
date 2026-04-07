@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// NEURAL INFERENCE ENGINE v2 — Gemini-First (FREE)
-// Primary: Gemini 2.5 Flash (7 keys rotation) — 100% gratuito
-// Fallback: HuggingFace (grátis) → Groq → DeepSeek
+// NEURAL INFERENCE ENGINE v3 — Multi-Provider FREE
+// Chain: Gemini Flash → Mistral (1B/mês) → Groq Llama → HuggingFace
+// ALL 100% gratuito, zero custo
 // ═══════════════════════════════════════════════════════════════
 
 interface InferenceRequest {
@@ -20,25 +20,18 @@ interface InferenceRequest {
   stream?: boolean;
 }
 
-function getGeminiKeys(): string[] {
-  return [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter((k): k is string => !!k);
-}
-
-// RAG: search neural knowledge base for relevant context
+// ── RAG: search neural knowledge base ──
 async function searchKnowledge(
   supabase: ReturnType<typeof createClient>,
   query: string,
   limit = 5
 ): Promise<Array<{ title: string; content: string; similarity: number }>> {
   try {
-    // Generate embedding via Gemini for semantic search
-    const keys = getGeminiKeys();
-    if (keys.length > 0) {
+    const geminiKey = Deno.env.get("GEMINI_API_KEY");
+    if (geminiKey) {
       try {
         const embResp = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${keys[0]}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${geminiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -84,48 +77,114 @@ async function searchKnowledge(
   }
 }
 
-// Call Gemini directly (FREE — 7 key rotation)
+// ── Provider 1: Gemini 2.5 Flash (FREE — AI Studio) ──
 async function callGemini(systemPrompt: string, userPrompt: string, stream: boolean): Promise<Response | string> {
-  const keys = getGeminiKeys();
-  if (keys.length === 0) throw new Error("No Gemini keys configured");
+  const key = Deno.env.get("GEMINI_API_KEY");
+  if (!key) throw new Error("No GEMINI_API_KEY");
 
-  for (const key of keys) {
-    try {
-      const endpoint = stream ? "streamGenerateContent?alt=sse" : "generateContent";
-      const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:${endpoint}&key=${key}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
-          }),
-          signal: AbortSignal.timeout(25000),
-        }
-      );
-
-      if (resp.status === 429) { await resp.text(); continue; }
-      if (!resp.ok) { await resp.text(); continue; }
-
-      if (stream) return resp;
-
-      const data = await resp.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      if (text) return text;
-    } catch (e) {
-      console.warn(`[Inference] Gemini key failed:`, e);
+  const endpoint = stream ? "streamGenerateContent?alt=sse" : "generateContent";
+  const resp = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:${endpoint}&key=${key}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+      }),
+      signal: AbortSignal.timeout(25000),
     }
-  }
-  throw new Error("All Gemini keys failed");
+  );
+
+  if (resp.status === 429) throw new Error("Gemini rate limited");
+  if (!resp.ok) throw new Error(`Gemini ${resp.status}`);
+  if (stream) return resp;
+
+  const data = await resp.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  if (!text) throw new Error("Gemini empty response");
+  return text;
 }
 
-// HuggingFace fallback (FREE)
+// ── Provider 2: Mistral (FREE — 1B tokens/mês, 2 RPM) ──
+async function callMistral(systemPrompt: string, userPrompt: string): Promise<string> {
+  const apiKey = Deno.env.get("MISTRAL_API_KEY");
+  if (!apiKey) throw new Error("No MISTRAL_API_KEY");
+
+  const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "mistral-small-latest",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: 4096,
+      temperature: 0.7,
+    }),
+    signal: AbortSignal.timeout(30000),
+  });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    throw new Error(`Mistral ${resp.status}: ${errText.slice(0, 200)}`);
+  }
+  const data = await resp.json();
+  const text = data.choices?.[0]?.message?.content || "";
+  if (!text) throw new Error("Mistral empty response");
+  return text;
+}
+
+// ── Provider 3: Groq Llama (FREE — 30 RPM, 1.000 RPD) ──
+async function callGroq(systemPrompt: string, userPrompt: string): Promise<string> {
+  const apiKey = Deno.env.get("GROQ_API_KEY");
+  if (!apiKey) throw new Error("No GROQ_API_KEY");
+
+  // Try 70B first (better quality), fallback to 8B (higher limits)
+  const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+  for (const model of models) {
+    try {
+      const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          max_tokens: 4096,
+          temperature: 0.7,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (resp.status === 429) continue; // Try next model
+      if (!resp.ok) continue;
+
+      const data = await resp.json();
+      const text = data.choices?.[0]?.message?.content || "";
+      if (text) return text;
+    } catch {
+      continue;
+    }
+  }
+  throw new Error("All Groq models failed");
+}
+
+// ── Provider 4: HuggingFace (FREE) ──
 async function callHuggingFace(systemPrompt: string, userPrompt: string): Promise<string> {
   const apiKey = Deno.env.get("HF_TOKEN") || Deno.env.get("HUGGINGFACE_API_KEY");
   if (!apiKey) throw new Error("No HF_TOKEN");
-  
+
   const models = ["google/gemma-3n-E4B", "Qwen/Qwen2.5-72B-Instruct", "meta-llama/Llama-3.2-3B-Instruct"];
   for (const model of models) {
     try {
@@ -135,11 +194,12 @@ async function callHuggingFace(systemPrompt: string, userPrompt: string): Promis
         body: JSON.stringify({
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt }
+            { role: "user", content: userPrompt },
           ],
           max_tokens: 4096,
           temperature: 0.7,
         }),
+        signal: AbortSignal.timeout(20000),
       });
       if (!resp.ok) continue;
       const data = await resp.json();
@@ -150,28 +210,7 @@ async function callHuggingFace(systemPrompt: string, userPrompt: string): Promis
   throw new Error("All HuggingFace models failed");
 }
 
-// Groq fallback (free tier)
-async function callGroqFallback(systemPrompt: string, userPrompt: string): Promise<string> {
-  const apiKey = Deno.env.get("GROQ_API_KEY");
-  if (!apiKey) throw new Error("Missing GROQ_API_KEY");
-  const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      max_tokens: 4096,
-      temperature: 0.7,
-    }),
-  });
-  if (!resp.ok) throw new Error(`Groq ${resp.status}`);
-  const data = await resp.json();
-  return data.choices?.[0]?.message?.content || "";
-}
-
+// ── Main handler ──
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -179,7 +218,7 @@ Deno.serve(async (req) => {
 
   try {
     const body: InferenceRequest = await req.json();
-    const { query, userId, privateContext, domain, stream } = body;
+    const { query, userId, privateContext, stream } = body;
 
     if (!query || typeof query !== "string") {
       return new Response(JSON.stringify({ error: "query string required" }), {
@@ -193,7 +232,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. RAG: search knowledge base (uses Gemini embeddings — FREE)
+    // 1. RAG
     const ragResults = await searchKnowledge(supabase, query);
 
     // 2. Build context
@@ -212,16 +251,17 @@ Deno.serve(async (req) => {
       "Cite fontes quando possível. Seja proativo em identificar nuances e implicações." +
       (contextBlock ? `\n\nContexto relevante:${contextBlock}` : "");
 
-    // 3. Call provider: Gemini (FREE) → HuggingFace (FREE) → Groq
+    // 3. Call provider chain: Gemini → Mistral → Groq → HuggingFace
     const startTime = Date.now();
     let response = "";
     let providerUsed = "gemini";
+    let modelUsed = "gemini-2.5-flash";
 
+    // Streaming (Gemini only)
     if (stream) {
       try {
         const streamResp = await callGemini(systemPrompt, query, true);
         if (streamResp instanceof Response && streamResp.body) {
-          // Transform Gemini SSE to OpenAI-compatible SSE
           const reader = streamResp.body.getReader();
           const decoder = new TextDecoder();
           const encoder = new TextEncoder();
@@ -263,21 +303,33 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Non-streaming path
+    // Non-streaming: Gemini → Mistral → Groq → HuggingFace
     try {
       const result = await callGemini(systemPrompt, query, false);
       if (typeof result === "string") response = result;
-    } catch {
-      providerUsed = "huggingface";
+    } catch (e1) {
+      console.warn("[Inference] Gemini failed:", e1);
+      providerUsed = "mistral";
+      modelUsed = "mistral-small-latest";
       try {
-        response = await callHuggingFace(systemPrompt, query);
-      } catch {
+        response = await callMistral(systemPrompt, query);
+      } catch (e2) {
+        console.warn("[Inference] Mistral failed:", e2);
         providerUsed = "groq";
+        modelUsed = "llama-3.3-70b";
         try {
-          response = await callGroqFallback(systemPrompt, query);
-        } catch {
-          response = "Desculpe, estou com dificuldades técnicas. Tente novamente.";
-          providerUsed = "none";
+          response = await callGroq(systemPrompt, query);
+        } catch (e3) {
+          console.warn("[Inference] Groq failed:", e3);
+          providerUsed = "huggingface";
+          modelUsed = "gemma-3n-E4B";
+          try {
+            response = await callHuggingFace(systemPrompt, query);
+          } catch {
+            response = "Desculpe, estou com dificuldades técnicas. Tente novamente em instantes.";
+            providerUsed = "none";
+            modelUsed = "none";
+          }
         }
       }
     }
@@ -287,7 +339,7 @@ Deno.serve(async (req) => {
       await supabase.from("ai_metrics").insert({
         provider: `inference:${providerUsed}`,
         total_duration_ms: Date.now() - startTime,
-        success: !!response,
+        success: providerUsed !== "none",
         query: query.slice(0, 500),
         user_id: userId || null,
         data_sources_used: ragResults.map((r) => r.title),
@@ -296,13 +348,14 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        success: true,
+        success: providerUsed !== "none",
         response,
         metadata: {
           provider: providerUsed,
-          model: providerUsed === "gemini" ? "gemini-2.5-flash" : providerUsed === "huggingface" ? "gemma-3n-E4B" : "llama-3.3-70b",
+          model: modelUsed,
           ragSourcesUsed: ragResults.length,
           privateContextUsed: privateContext?.length || 0,
+          latency_ms: Date.now() - startTime,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
