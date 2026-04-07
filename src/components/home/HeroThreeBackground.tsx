@@ -11,7 +11,7 @@ uniform float u_time;
 uniform vec2 u_resolution;
 
 #define GOLD vec3(0.788, 0.659, 0.298)
-#define CYAN vec3(0.0, 0.55, 0.75)
+#define CYAN vec3(0.231, 0.510, 0.918)
 #define DARK vec3(0.035, 0.035, 0.055)
 #define VIOLET vec3(0.35, 0.15, 0.55)
 
@@ -82,7 +82,7 @@ void main() {
     float glowZ = smoothstep(0.1, 0.0, 1.0 - gridZ) * 0.12;
     
     col += GOLD * (lineX + lineZ + glowX + glowZ) * gridFade * perspFade * 0.6;
-    col += CYAN * (lineX * lineZ) * gridFade * perspFade * 0.4;
+    col += CYAN * (lineX * lineZ) * gridFade * perspFade * 0.2;
   }
   
   // === TOP GRID (subtle) ===
@@ -133,7 +133,7 @@ void main() {
   // === HORIZONTAL SCAN LINE ===
   float scanY = fract(t * 0.06);
   float scanLine = exp(-pow(uv.y - scanY, 2.0) / 0.00015) * 0.08;
-  col += CYAN * scanLine;
+  col += mix(GOLD, CYAN, 0.3) * scanLine;
   
   // === CHROMATIC ABERRATION (subtle) ===
   vec2 caOffset = centered * 0.003;

@@ -13,7 +13,7 @@ uniform vec2 u_mouse;
 
 #define GOLD vec3(0.788, 0.659, 0.298)
 #define GOLD_LIGHT vec3(0.85, 0.75, 0.45)
-#define CYAN vec3(0.0, 0.6, 0.8)
+#define CYAN vec3(0.231, 0.510, 0.918)
 #define DARK vec3(0.039, 0.039, 0.059)
 #define ACCENT vec3(0.9, 0.55, 0.2)
 

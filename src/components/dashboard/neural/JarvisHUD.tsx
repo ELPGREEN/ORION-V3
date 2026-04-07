@@ -27,10 +27,10 @@ interface JarvisHUDProps {
 
 /* ─── Animated Waveform ─── */
 function Waveform({ bars = 20, color = "cyan", height = 32, label }: { bars?: number; color?: "cyan" | "gold"; height?: number; label?: string }) {
-  const colorClass = color === "gold" ? "bg-[#c9a84c]" : "bg-[#00d4ff]";
+  const colorClass = color === "gold" ? "bg-[#c9a84c]" : "bg-[#3B82F6]";
   return (
     <div>
-      {label && <div className="text-[7px] font-mono uppercase tracking-[0.2em] mb-0.5" style={{ color: color === "gold" ? "#c9a84c66" : "#00d4ff66" }}>{label}</div>}
+      {label && <div className="text-[7px] font-mono uppercase tracking-[0.2em] mb-0.5" style={{ color: color === "gold" ? "#c9a84c66" : "#3B82F666" }}>{label}</div>}
       <div className="flex items-end gap-[1px]" style={{ height }}>
         {Array.from({ length: bars }).map((_, i) => (
           <div key={i} className={cn("w-[2px] rounded-t-sm opacity-60", colorClass)}
@@ -47,7 +47,7 @@ function Waveform({ bars = 20, color = "cyan", height = 32, label }: { bars?: nu
 /* ─── Mini Graph (sparkline) ─── */
 function MiniGraph({ data, color = "cyan", height = 32 }: { data: number[]; color?: "cyan" | "gold"; height?: number }) {
   const max = Math.max(...data, 1);
-  const stroke = color === "gold" ? "#c9a84c" : "#00d4ff";
+  const stroke = color === "gold" ? "#c9a84c" : "#3B82F6";
   const points = data.map((v, i) => `${(i / (data.length - 1)) * 100},${100 - (v / max) * 80}`).join(" ");
   return (
     <svg viewBox="0 0 100 100" className="w-full" style={{ height }} preserveAspectRatio="none">
@@ -64,7 +64,7 @@ function MiniGraph({ data, color = "cyan", height = 32 }: { data: number[]; colo
 }
 
 /* ─── Circular Gauge ─── */
-function CircularGauge({ value, label, size = 56, color = "#00d4ff" }: { value: number; label: string; size?: number; color?: string }) {
+function CircularGauge({ value, label, size = 56, color = "#3B82F6" }: { value: number; label: string; size?: number; color?: string }) {
   const r = (size - 8) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (value / 100) * circ;
@@ -86,7 +86,7 @@ function CircularGauge({ value, label, size = 56, color = "#00d4ff" }: { value: 
 
 /* ─── Triangular Faceted Core ─── */
 function OrionCore({ health, status }: { health: number; status: string }) {
-  const coreColor = status === "online" ? "#00d4ff" : status === "warning" ? "#c9a84c" : "#ff4444";
+  const coreColor = status === "online" ? "#3B82F6" : status === "warning" ? "#c9a84c" : "#ff4444";
   return (
     <div className="relative flex items-center justify-center" style={{ width: 200, height: 200 }}>
       {/* Outer ring with segments */}
@@ -163,26 +163,26 @@ function StatPanel({ icon, label, value, sub, status, onClick, sparkline }: {
   icon: React.ReactNode; label: string; value: string | number; sub?: string;
   status?: "online" | "warning" | "offline"; onClick?: () => void; sparkline?: number[];
 }) {
-  const borderColor = status === "online" ? "border-[#00d4ff]/15" : status === "warning" ? "border-[#c9a84c]/15" : "border-red-500/15";
-  const dotColor = status === "online" ? "bg-[#00d4ff]" : status === "warning" ? "bg-[#c9a84c]" : "bg-red-500";
+  const borderColor = status === "online" ? "border-[#3B82F6]/15" : status === "warning" ? "border-[#c9a84c]/15" : "border-red-500/15";
+  const dotColor = status === "online" ? "bg-[#3B82F6]" : status === "warning" ? "bg-[#c9a84c]" : "bg-red-500";
   return (
     <button
       onClick={onClick}
       className={cn(
         "relative flex items-start gap-2 p-2 rounded border bg-[#0a0a0f]/80 backdrop-blur-sm",
-        "hover:bg-[#00d4ff]/5 transition-all duration-300 text-left w-full group",
+        "hover:bg-[#3B82F6]/5 transition-all duration-300 text-left w-full group",
         borderColor, onClick && "cursor-pointer"
       )}
     >
       {status && <span className={cn("absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full", dotColor, status === "online" && "animate-pulse")} />}
-      <div className="text-[#00d4ff]/50 group-hover:text-[#00d4ff] transition-colors mt-0.5">{icon}</div>
+      <div className="text-[#3B82F6]/50 group-hover:text-[#3B82F6] transition-colors mt-0.5">{icon}</div>
       <div className="flex-1 min-w-0">
-        <div className="text-[8px] font-mono uppercase tracking-[0.15em] text-[#00d4ff]/35">{label}</div>
+        <div className="text-[8px] font-mono uppercase tracking-[0.15em] text-[#3B82F6]/35">{label}</div>
         <div className="text-sm font-bold font-mono text-[#e0e0e0]">{value}</div>
         {sub && <div className="text-[8px] font-mono text-[#c9a84c]/50 truncate">{sub}</div>}
         {sparkline && <MiniGraph data={sparkline} color="cyan" height={18} />}
       </div>
-      {onClick && <ChevronRight className="h-3 w-3 text-[#00d4ff]/15 group-hover:text-[#00d4ff]/50 mt-1 transition-colors" />}
+      {onClick && <ChevronRight className="h-3 w-3 text-[#3B82F6]/15 group-hover:text-[#3B82F6]/50 mt-1 transition-colors" />}
     </button>
   );
 }
@@ -194,10 +194,10 @@ function LCDClock({ time }: { time: Date }) {
   const s = time.getSeconds().toString().padStart(2, "0");
   return (
     <div className="flex items-baseline gap-0.5">
-      <span className="text-2xl font-mono font-black tracking-wider text-[#00d4ff]" style={{
-        textShadow: "0 0 10px #00d4ff55, 0 0 20px #00d4ff22"
+      <span className="text-2xl font-mono font-black tracking-wider text-[#3B82F6]" style={{
+        textShadow: "0 0 10px #3B82F655, 0 0 20px #3B82F622"
       }}>{h}:{m}</span>
-      <span className="text-xs font-mono font-bold text-[#00d4ff]/50">{s}</span>
+      <span className="text-xs font-mono font-bold text-[#3B82F6]/50">{s}</span>
     </div>
   );
 }
@@ -206,8 +206,8 @@ function LCDClock({ time }: { time: Date }) {
 function MicroMetric({ label, value, unit }: { label: string; value: string | number; unit?: string }) {
   return (
     <div className="flex items-center gap-1.5 px-2 py-0.5">
-      <span className="text-[7px] font-mono uppercase tracking-wider text-[#00d4ff]/30">{label}</span>
-      <span className="text-[10px] font-mono font-bold text-[#00d4ff]/70">{value}</span>
+      <span className="text-[7px] font-mono uppercase tracking-wider text-[#3B82F6]/30">{label}</span>
+      <span className="text-[10px] font-mono font-bold text-[#3B82F6]/70">{value}</span>
       {unit && <span className="text-[7px] font-mono text-[#c9a84c]/40">{unit}</span>}
     </div>
   );
@@ -229,14 +229,14 @@ function UserProfileCard() {
   }, []);
 
   return (
-    <div className="flex items-center gap-2 p-2 rounded border border-[#00d4ff]/10 bg-[#0a0a0f]/80">
-      <div className="h-8 w-8 rounded-full border border-[#00d4ff]/30 bg-[#00d4ff]/10 flex items-center justify-center">
-        <User className="h-4 w-4 text-[#00d4ff]/60" />
+    <div className="flex items-center gap-2 p-2 rounded border border-[#3B82F6]/10 bg-[#0a0a0f]/80">
+      <div className="h-8 w-8 rounded-full border border-[#3B82F6]/30 bg-[#3B82F6]/10 flex items-center justify-center">
+        <User className="h-4 w-4 text-[#3B82F6]/60" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-[9px] font-mono font-bold text-[#e0e0e0] truncate">{user?.name || "Operador"}</div>
         <div className="text-[7px] font-mono text-[#c9a84c]/50 truncate">{user?.email || "—"}</div>
-        <div className="text-[7px] font-mono text-[#00d4ff]/30">ORION v22.3 • CLEARANCE L5</div>
+        <div className="text-[7px] font-mono text-[#3B82F6]/30">ORION v22.3 • CLEARANCE L5</div>
       </div>
     </div>
   );
@@ -264,20 +264,20 @@ function EnvironmentalBlock() {
   }, []);
 
   return (
-    <div className="p-2 rounded border border-[#00d4ff]/10 bg-[#0a0a0f]/60">
-      <div className="text-[7px] font-mono uppercase tracking-[0.2em] text-[#00d4ff]/30 mb-1.5">AMBIENTE</div>
+    <div className="p-2 rounded border border-[#3B82F6]/10 bg-[#0a0a0f]/60">
+      <div className="text-[7px] font-mono uppercase tracking-[0.2em] text-[#3B82F6]/30 mb-1.5">AMBIENTE</div>
       <div className="grid grid-cols-2 gap-1.5">
         <div className="flex items-center gap-1">
           <Thermometer className="h-3 w-3 text-[#c9a84c]/50" />
           <span className="text-[10px] font-mono text-[#e0e0e0]">{env.temp.toFixed(1)}°C</span>
         </div>
         <div className="flex items-center gap-1">
-          <Droplets className="h-3 w-3 text-[#00d4ff]/50" />
+          <Droplets className="h-3 w-3 text-[#3B82F6]/50" />
           <span className="text-[10px] font-mono text-[#e0e0e0]">{env.humidity.toFixed(0)}%</span>
         </div>
         <div className="col-span-2 flex items-center gap-1">
-          <Globe className="h-3 w-3 text-[#00d4ff]/30" />
-          <span className="text-[8px] font-mono text-[#00d4ff]/30">
+          <Globe className="h-3 w-3 text-[#3B82F6]/30" />
+          <span className="text-[8px] font-mono text-[#3B82F6]/30">
             {env.lat !== 0 ? `${env.lat.toFixed(4)}, ${env.lng.toFixed(4)}` : "GPS aguardando…"}
           </span>
         </div>
@@ -386,29 +386,29 @@ export function JarvisHUD({ metrics, className = "" }: JarvisHUDProps) {
         @keyframes orion-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
       `}</style>
 
-      <div className={cn("relative overflow-hidden rounded-xl border border-[#00d4ff]/10 bg-[#0a0a0f]", className)}>
+      <div className={cn("relative overflow-hidden rounded-xl border border-[#3B82F6]/10 bg-[#0a0a0f]", className)}>
         {/* Scan line */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#00d4ff]/20 to-transparent"
+          <div className="absolute left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#3B82F6]/20 to-transparent"
             style={{ animation: "orion-scan 4s linear infinite" }} />
         </div>
 
         {/* Grid background */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
-          style={{ backgroundImage: "linear-gradient(#00d4ff 1px, transparent 1px), linear-gradient(90deg, #00d4ff 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+          style={{ backgroundImage: "linear-gradient(#3B82F6 1px, transparent 1px), linear-gradient(90deg, #3B82F6 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
 
         {/* ═══ TOP MICRO-METRICS BAR ═══ */}
-        <div className="relative flex items-center justify-between px-3 py-1 border-b border-[#00d4ff]/5 bg-[#0a0a0f]/90 overflow-x-auto">
+        <div className="relative flex items-center justify-between px-3 py-1 border-b border-[#3B82F6]/5 bg-[#0a0a0f]/90 overflow-x-auto">
           <div className="flex items-center gap-0.5">
             <div className="relative mr-2">
-              <div className={cn("h-2 w-2 rounded-full", healthStatus === "online" ? "bg-[#00d4ff]" : healthStatus === "warning" ? "bg-[#c9a84c]" : "bg-red-500")} />
-              {healthStatus === "online" && <div className="absolute inset-0 h-2 w-2 rounded-full bg-[#00d4ff]/40 animate-ping" />}
+              <div className={cn("h-2 w-2 rounded-full", healthStatus === "online" ? "bg-[#3B82F6]" : healthStatus === "warning" ? "bg-[#c9a84c]" : "bg-red-500")} />
+              {healthStatus === "online" && <div className="absolute inset-0 h-2 w-2 rounded-full bg-[#3B82F6]/40 animate-ping" />}
             </div>
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#00d4ff]/60 mr-1">ORION OS</span>
+            <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#3B82F6]/60 mr-1">ORION OS</span>
             <span className="text-[8px] font-mono text-[#c9a84c]/40">v22.3</span>
             {realtimeEvent && <span className="text-[8px] font-mono text-[#c9a84c] animate-pulse ml-2">⚡ {realtimeEvent}</span>}
           </div>
-          <div className="flex items-center gap-0 divide-x divide-[#00d4ff]/5 hidden md:flex">
+          <div className="flex items-center gap-0 divide-x divide-[#3B82F6]/5 hidden md:flex">
             <MicroMetric label="BITRATE" value="1.2" unit="Gbps" />
             <MicroMetric label="HOPS" value="7" />
             <MicroMetric label="LATÊNCIA" value="12" unit="ms" />
@@ -418,14 +418,14 @@ export function JarvisHUD({ metrics, className = "" }: JarvisHUDProps) {
         </div>
 
         {/* ═══ SECOND BAR: Clock + Date ═══ */}
-        <div className="relative flex items-center justify-between px-4 py-2 border-b border-[#00d4ff]/5">
+        <div className="relative flex items-center justify-between px-4 py-2 border-b border-[#3B82F6]/5">
           <LCDClock time={time} />
-          <div className="text-[9px] font-mono text-[#00d4ff]/30 tracking-wider">{dateStr}</div>
+          <div className="text-[9px] font-mono text-[#3B82F6]/30 tracking-wider">{dateStr}</div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded border border-[#00d4ff]/10">
-              <Radio className="h-3 w-3 text-[#00d4ff]/40" />
-              <span className="text-[8px] font-mono text-[#00d4ff]/40">MQTT</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-[#00d4ff]/40" />
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded border border-[#3B82F6]/10">
+              <Radio className="h-3 w-3 text-[#3B82F6]/40" />
+              <span className="text-[8px] font-mono text-[#3B82F6]/40">MQTT</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#3B82F6]/40" />
             </div>
             <div className="flex items-center gap-1 px-2 py-0.5 rounded border border-[#c9a84c]/10">
               <Server className="h-3 w-3 text-[#c9a84c]/40" />
@@ -444,17 +444,17 @@ export function JarvisHUD({ metrics, className = "" }: JarvisHUDProps) {
             <UserProfileCard />
 
             {/* CPU + Memory Gauges */}
-            <div className="p-2.5 rounded border border-[#00d4ff]/10 bg-[#0a0a0f]/60">
-              <div className="text-[7px] font-mono uppercase tracking-[0.2em] text-[#00d4ff]/30 mb-2">PROCESSAMENTO</div>
+            <div className="p-2.5 rounded border border-[#3B82F6]/10 bg-[#0a0a0f]/60">
+              <div className="text-[7px] font-mono uppercase tracking-[0.2em] text-[#3B82F6]/30 mb-2">PROCESSAMENTO</div>
               <div className="flex items-start gap-3">
                 <div className="relative flex flex-col items-center">
-                  <CircularGauge value={cpuLoad} label="CPU" size={52} color="#00d4ff" />
+                  <CircularGauge value={cpuLoad} label="CPU" size={52} color="#3B82F6" />
                 </div>
                 <div className="relative flex flex-col items-center">
                   <CircularGauge value={memLoad} label="MEM" size={52} color="#c9a84c" />
                 </div>
                 <div className="flex-1 flex flex-col gap-1 min-w-0">
-                  <div className="text-[7px] font-mono text-[#00d4ff]/30">CPU HIST</div>
+                  <div className="text-[7px] font-mono text-[#3B82F6]/30">CPU HIST</div>
                   <MiniGraph data={sparkCpu} color="cyan" height={20} />
                   <div className="text-[7px] font-mono text-[#c9a84c]/30">MEM HIST</div>
                   <MiniGraph data={sparkMem} color="gold" height={20} />
@@ -471,10 +471,10 @@ export function JarvisHUD({ metrics, className = "" }: JarvisHUDProps) {
               onClick={() => navigate("/dashboard/rede-neural")} />
 
             {/* Network waveforms UP/DOWN */}
-            <div className="p-2 rounded border border-[#00d4ff]/10 bg-[#0a0a0f]/60">
+            <div className="p-2 rounded border border-[#3B82F6]/10 bg-[#0a0a0f]/60">
               <div className="flex items-center gap-2 mb-1">
-                <ArrowUp className="h-3 w-3 text-[#00d4ff]/50" />
-                <span className="text-[7px] font-mono uppercase tracking-wider text-[#00d4ff]/30">UPLOAD 847 Kbps</span>
+                <ArrowUp className="h-3 w-3 text-[#3B82F6]/50" />
+                <span className="text-[7px] font-mono uppercase tracking-wider text-[#3B82F6]/30">UPLOAD 847 Kbps</span>
               </div>
               <Waveform bars={30} color="cyan" height={22} />
               <div className="flex items-center gap-2 mt-2 mb-1">
@@ -492,16 +492,16 @@ export function JarvisHUD({ metrics, className = "" }: JarvisHUDProps) {
             {/* Below core: mini status bar */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                <HardDrive className="h-3 w-3 text-[#00d4ff]/30" />
-                <span className="text-[8px] font-mono text-[#00d4ff]/40">{m.knowledgeBase.toLocaleString("pt-BR")} docs</span>
+                <HardDrive className="h-3 w-3 text-[#3B82F6]/30" />
+                <span className="text-[8px] font-mono text-[#3B82F6]/40">{m.knowledgeBase.toLocaleString("pt-BR")} docs</span>
               </div>
               <div className="flex items-center gap-1">
                 <Zap className="h-3 w-3 text-[#c9a84c]/30" />
                 <span className="text-[8px] font-mono text-[#c9a84c]/40">{m.activeConnections} providers</span>
               </div>
               <div className="flex items-center gap-1">
-                <Shield className="h-3 w-3 text-[#00d4ff]/30" />
-                <span className="text-[8px] font-mono text-[#00d4ff]/40">9 modelos</span>
+                <Shield className="h-3 w-3 text-[#3B82F6]/30" />
+                <span className="text-[8px] font-mono text-[#3B82F6]/40">9 modelos</span>
               </div>
             </div>
           </div>
@@ -533,15 +533,15 @@ export function JarvisHUD({ metrics, className = "" }: JarvisHUDProps) {
             </div>
 
             {/* Neural activity sparkline */}
-            <div className="p-2 rounded border border-[#00d4ff]/10 bg-[#0a0a0f]/60">
-              <div className="text-[7px] font-mono uppercase tracking-[0.2em] text-[#00d4ff]/30 mb-1">EMBEDDINGS FLUX</div>
+            <div className="p-2 rounded border border-[#3B82F6]/10 bg-[#0a0a0f]/60">
+              <div className="text-[7px] font-mono uppercase tracking-[0.2em] text-[#3B82F6]/30 mb-1">EMBEDDINGS FLUX</div>
               <MiniGraph data={sparkEmbed} color="cyan" height={28} />
             </div>
           </div>
         </div>
 
         {/* ═══ BOTTOM BAR ═══ */}
-        <div className="relative flex items-center gap-2 px-3 py-2 border-t border-[#00d4ff]/8 flex-wrap">
+        <div className="relative flex items-center gap-2 px-3 py-2 border-t border-[#3B82F6]/8 flex-wrap">
           <span className="text-[7px] font-mono uppercase tracking-[0.2em] text-[#c9a84c]/35 mr-1">ACESSO RÁPIDO</span>
           {[
             { label: "PESQUISAR", icon: Search, path: "/dashboard/pesquisa" },
@@ -552,14 +552,14 @@ export function JarvisHUD({ metrics, className = "" }: JarvisHUDProps) {
           ].map((item) => (
             <button key={item.label} onClick={() => navigate(item.path)}
               className="flex items-center gap-1.5 px-2 py-1 text-[8px] font-mono tracking-wider rounded
-                border border-[#00d4ff]/8 bg-[#00d4ff]/[0.02] text-[#00d4ff]/40
-                hover:text-[#00d4ff] hover:border-[#00d4ff]/25 hover:bg-[#00d4ff]/5
-                hover:shadow-[0_0_8px_rgba(0,212,255,0.12)] transition-all duration-300">
+                border border-[#3B82F6]/8 bg-[#3B82F6]/[0.02] text-[#3B82F6]/40
+                hover:text-[#3B82F6] hover:border-[#3B82F6]/25 hover:bg-[#3B82F6]/5
+                hover:shadow-[0_0_8px_rgba(59,130,246,0.12)] transition-all duration-300">
               <item.icon className="h-3 w-3" />
               {item.label}
             </button>
           ))}
-          <div className="ml-auto text-[7px] font-mono text-[#00d4ff]/15 tracking-widest hidden sm:block">
+          <div className="ml-auto text-[7px] font-mono text-[#3B82F6]/15 tracking-widest hidden sm:block">
             ORION NEURAL SYSTEMS • IIT Φ ACTIVE
           </div>
         </div>

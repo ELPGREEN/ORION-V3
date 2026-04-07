@@ -46,7 +46,7 @@ interface ConsultaAgendada {
 
 const statusConfig: Record<string, { color: string; glow: string; label: string }> = {
   ativo: { color: "#22c55e", glow: "0 0 12px #22c55e40", label: "Ativo" },
-  em_andamento: { color: "#00D4FF", glow: "0 0 12px #00D4FF40", label: "Em Andamento" },
+  em_andamento: { color: "#3B82F6", glow: "0 0 12px #3B82F640", label: "Em Andamento" },
   arquivado: { color: "#6b7280", glow: "none", label: "Arquivado" },
   encerrado: { color: "#6b7280", glow: "none", label: "Encerrado" },
   suspenso: { color: "#f59e0b", glow: "0 0 12px #f59e0b40", label: "Suspenso" },
@@ -89,7 +89,7 @@ export default function PortalCliente() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#00D4FF]" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#3B82F6]" />
       </div>
     );
   }
@@ -105,17 +105,17 @@ export default function PortalCliente() {
         {/* Hero Header */}
         <div className="relative overflow-hidden rounded-xl p-6"
           style={{
-            background: "linear-gradient(135deg, rgba(0,212,255,0.08), rgba(212,175,55,0.05), rgba(10,10,15,0.9))",
-            border: "1px solid rgba(0,212,255,0.15)",
-            boxShadow: "0 0 30px rgba(0,212,255,0.05), inset 0 1px 0 rgba(255,255,255,0.03)",
+            background: "linear-gradient(135deg, #3B82F60.08), rgba(212,175,55,0.05), rgba(10,10,15,0.9))",
+            border: "1px solid #3B82F60.15)",
+            boxShadow: "0 0 30px #3B82F60.05), inset 0 1px 0 rgba(255,255,255,0.03)",
           }}>
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00D4FF]/40 to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#3B82F6]/40 to-transparent" />
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <p className="text-[10px] font-mono tracking-[0.3em] uppercase mb-1" style={{ color: "rgba(0,212,255,0.5)" }}>
+              <p className="text-[10px] font-mono tracking-[0.3em] uppercase mb-1" style={{ color: "#3B82F60.5)" }}>
                 ■ PORTAL DO CLIENTE
               </p>
-              <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "#00D4FF", textShadow: "0 0 20px rgba(0,212,255,0.3)" }}>
+              <h1 className="text-2xl md:text-3xl font-bold" style={{ color: "#3B82F6", textShadow: "0 0 20px #3B82F60.3)" }}>
                 Olá, {clientName}
               </h1>
               <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
@@ -126,7 +126,7 @@ export default function PortalCliente() {
               <Button
                 size="sm"
                 className="gap-1.5 text-xs"
-                style={{ background: "linear-gradient(135deg, #00D4FF, #0099CC)", color: "#000" }}
+                style={{ background: "linear-gradient(135deg, #3B82F6, #0099CC)", color: "#000" }}
                 onClick={() => navigate("/dashboard/chat-ao-vivo")}
               >
                 <MessageSquare className="h-3.5 w-3.5" />
@@ -148,7 +148,7 @@ export default function PortalCliente() {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: Scale, label: "Processos Ativos", value: activeProcesses, color: "#00D4FF" },
+            { icon: Scale, label: "Processos Ativos", value: activeProcesses, color: "#3B82F6" },
             { icon: FileText, label: "Documentos", value: documentos.length, color: "#D4AF37" },
             { icon: Calendar, label: "Consultas Agendadas", value: pendingConsultas, color: "#22c55e" },
             { icon: Shield, label: "Status Geral", value: activeProcesses > 0 ? "Em acompanhamento" : "Sem pendências", color: "#8B5CF6", isText: true },
@@ -173,7 +173,7 @@ export default function PortalCliente() {
         {/* Main Content Tabs */}
         <Tabs defaultValue="processos" className="space-y-4">
           <TabsList className="bg-card/50 border border-border/30 p-1">
-            <TabsTrigger value="processos" className="text-xs gap-1.5 data-[state=active]:bg-[#00D4FF]/10 data-[state=active]:text-[#00D4FF]">
+            <TabsTrigger value="processos" className="text-xs gap-1.5 data-[state=active]:bg-[#3B82F6]/10 data-[state=active]:text-[#3B82F6]">
               <Scale className="h-3.5 w-3.5" /> Processos
             </TabsTrigger>
             <TabsTrigger value="documentos" className="text-xs gap-1.5 data-[state=active]:bg-[#D4AF37]/10 data-[state=active]:text-[#D4AF37]">
@@ -189,7 +189,7 @@ export default function PortalCliente() {
             {processos.length === 0 ? (
               <Card className="border-border/20" style={{ backgroundColor: "rgba(10,10,15,0.6)" }}>
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                  <Scale className="h-12 w-12 mb-4" style={{ color: "rgba(0,212,255,0.2)" }} />
+                  <Scale className="h-12 w-12 mb-4" style={{ color: "#3B82F60.2)" }} />
                   <p className="text-sm text-muted-foreground">Nenhum processo encontrado</p>
                   <p className="text-xs text-muted-foreground/60 mt-1">Seus processos aparecerão aqui quando cadastrados</p>
                 </CardContent>
@@ -294,7 +294,7 @@ export default function PortalCliente() {
             ) : (
               consultas.map((c) => {
                 const isPast = new Date(c.data_hora) < new Date();
-                const statusColor = c.status === "concluida" ? "#22c55e" : c.status === "cancelada" ? "#ef4444" : "#00D4FF";
+                const statusColor = c.status === "concluida" ? "#22c55e" : c.status === "cancelada" ? "#ef4444" : "#3B82F6";
                 return (
                   <Card key={c.id} className="relative overflow-hidden border-0"
                     style={{ backgroundColor: "rgba(10,10,15,0.7)", border: `1px solid ${statusColor}15`, opacity: isPast ? 0.7 : 1 }}>

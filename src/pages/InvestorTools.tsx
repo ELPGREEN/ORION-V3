@@ -261,7 +261,7 @@ function InvestorCarousel() {
                       <div className="inline-flex items-center gap-2 px-3 py-1 mb-4 border text-[10px] font-semibold tracking-[0.25em] uppercase"
                         style={{
                           borderColor: slide.accent === "gold" ? "rgba(201,168,76,0.4)" : "hsl(var(--primary),0.4)",
-                          color: slide.accent === "gold" ? "#c9a84c" : "#00d4ff",
+                          color: slide.accent === "gold" ? "#c9a84c" : "#3B82F6",
                           background: slide.accent === "gold" ? "rgba(201,168,76,0.08)" : "hsl(var(--primary),0.08)",
                         }}
                       >
@@ -270,7 +270,7 @@ function InvestorCarousel() {
                       </div>
                       
                       <h3 className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-2 ${slide.accent === "gold" ? "tron-glow-gold" : "tron-glow-cyan"}`}
-                        style={{ color: slide.accent === "gold" ? "#c9a84c" : "#00d4ff" }}
+                        style={{ color: slide.accent === "gold" ? "#c9a84c" : "#3B82F6" }}
                       >
                         {slide.title}
                       </h3>
@@ -286,7 +286,7 @@ function InvestorCarousel() {
                         <div className="grid grid-cols-2 gap-2">
                           {slide.features.map((f, j) => (
                             <div key={j} className="flex items-center gap-2 text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
-                              <div className="h-1.5 w-1.5 rounded-full" style={{ background: slide.accent === "gold" ? "#c9a84c" : "#00d4ff" }} />
+                              <div className="h-1.5 w-1.5 rounded-full" style={{ background: slide.accent === "gold" ? "#c9a84c" : "#3B82F6" }} />
                               {f}
                             </div>
                           ))}
@@ -328,7 +328,7 @@ function InvestorCarousel() {
                             Agendar Reunião <ArrowRight className="ml-2 h-4 w-4" />
                           </Button>
                           <Button variant="outline" size="lg" className="px-8 h-12 text-sm"
-                            style={{ borderColor: "hsl(var(--primary),0.4)", color: "#00d4ff" }}
+                            style={{ borderColor: "hsl(var(--primary),0.4)", color: "#3B82F6" }}
                             onClick={() => navigate("/plataforma")}
                           >
                             Ver Plataforma <ExternalLink className="ml-2 h-4 w-4" />
@@ -357,7 +357,7 @@ function InvestorCarousel() {
                             animation: "plasmaRingSpin 12s linear infinite",
                           }}>
                             <div className="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rounded-full" style={{
-                              background: slide.accent === "gold" ? "#c9a84c" : "#00d4ff",
+                              background: slide.accent === "gold" ? "#c9a84c" : "#3B82F6",
                               boxShadow: `0 0 8px ${slide.accent === "gold" ? "rgba(201,168,76,0.6)" : "hsl(var(--primary),0.6)"}`,
                             }} />
                           </div>
@@ -378,12 +378,12 @@ function InvestorCarousel() {
 
       {/* Navigation arrows */}
       <button onClick={scrollPrev} className="absolute left-1 md:left-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 flex items-center justify-center transition-all hover:scale-110"
-        style={{ background: "rgba(10,10,15,0.8)", border: "1px solid hsl(var(--primary),0.3)", color: "#00d4ff" }}
+        style={{ background: "rgba(10,10,15,0.8)", border: "1px solid hsl(var(--primary),0.3)", color: "#3B82F6" }}
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
       <button onClick={scrollNext} className="absolute right-1 md:right-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 flex items-center justify-center transition-all hover:scale-110"
-        style={{ background: "rgba(10,10,15,0.8)", border: "1px solid hsl(var(--primary),0.3)", color: "#00d4ff" }}
+        style={{ background: "rgba(10,10,15,0.8)", border: "1px solid hsl(var(--primary),0.3)", color: "#3B82F6" }}
       >
         <ChevronRight className="h-5 w-5" />
       </button>
@@ -449,9 +449,9 @@ export default function InvestorTools() {
               <p className="text-base md:text-lg mb-4 leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
                 Plataforma de inteligência artificial proprietária com{" "}
                 <span style={{ color: "#c9a84c" }}>múltiplas camadas de inteligência</span>,{" "}
-                <span style={{ color: "#00d4ff" }}>monitoramento inteligente</span>,{" "}
+                <span style={{ color: "#3B82F6" }}>monitoramento inteligente</span>,{" "}
                 <span style={{ color: "#c9a84c" }}>auto-evolução</span> e{" "}
-                <span style={{ color: "#00d4ff" }}>17+ ferramentas integradas</span>.
+                <span style={{ color: "#3B82F6" }}>17+ ferramentas integradas</span>.
               </p>
               <p className="text-sm mb-10" style={{ color: "rgba(255,255,255,0.35)" }}>
                 Desenvolvido por <span style={{ color: "rgba(255,255,255,0.6)" }}>ELP Green Technology S.R.L.</span> — Alessandria, Piemonte, Itália
@@ -464,7 +464,7 @@ export default function InvestorTools() {
                   Falar com Investor Relations <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="lg" className="px-8 h-12 text-sm tracking-wide"
-                  style={{ borderColor: "hsl(var(--primary),0.4)", color: "#00d4ff", background: "transparent" }}
+                  style={{ borderColor: "hsl(var(--primary),0.4)", color: "#3B82F6", background: "transparent" }}
                   onClick={() => navigate("/plataforma")}
                 >
                   Ver Plataforma <ExternalLink className="ml-2 h-4 w-4" />
@@ -505,7 +505,7 @@ export default function InvestorTools() {
       <section className="relative py-16 lg:py-24 tron-grid-bg" style={{ background: "hsl(var(--background))" }}>
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
-            <div className="text-xs font-semibold tracking-[0.25em] uppercase mb-3" style={{ color: "#00d4ff" }}>
+            <div className="text-xs font-semibold tracking-[0.25em] uppercase mb-3" style={{ color: "#3B82F6" }}>
               Apresentação Interativa
             </div>
             <h2 className="text-2xl md:text-3xl font-bold tron-glow-gold" style={{ color: "#c9a84c" }}>
@@ -522,7 +522,7 @@ export default function InvestorTools() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-              <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#00d4ff" }}>
+              <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#3B82F6" }}>
                 Gênese & Identidade
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: "rgba(255,255,255,0.9)" }}>
@@ -549,7 +549,7 @@ export default function InvestorTools() {
 
             {/* Timeline */}
             <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-              <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-6" style={{ color: "#00d4ff" }}>
+              <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-6" style={{ color: "#3B82F6" }}>
                 Linha do Tempo Evolutiva
               </div>
               <div className="relative">
@@ -578,7 +578,7 @@ export default function InvestorTools() {
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-              <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#00d4ff" }}>
+              <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#3B82F6" }}>
                 Fundador & Empresa
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: "rgba(255,255,255,0.9)" }}>
@@ -636,7 +636,7 @@ export default function InvestorTools() {
         <div className="absolute inset-0 tron-grid-bg opacity-20" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-            <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#00d4ff" }}>
+            <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#3B82F6" }}>
               Plataforma Completa
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tron-glow-gold mb-4" style={{ color: "#c9a84c" }}>
@@ -662,7 +662,7 @@ export default function InvestorTools() {
                 )}
                 <div className="flex items-start gap-3 mb-3">
                   <div className="h-9 w-9 flex items-center justify-center shrink-0"
-                    style={{ background: tool.highlight ? "rgba(201,168,76,0.15)" : "hsl(var(--primary),0.08)", color: tool.highlight ? "#c9a84c" : "#00d4ff" }}
+                    style={{ background: tool.highlight ? "rgba(201,168,76,0.15)" : "hsl(var(--primary),0.08)", color: tool.highlight ? "#c9a84c" : "#3B82F6" }}
                   >
                     <tool.icon className="h-4 w-4" />
                   </div>
@@ -689,7 +689,7 @@ export default function InvestorTools() {
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-              <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#00d4ff" }}>
+              <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#3B82F6" }}>
                 Por Que Investir
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-6" style={{ color: "rgba(255,255,255,0.9)" }}>
@@ -722,7 +722,7 @@ export default function InvestorTools() {
         <div className="absolute inset-0 tron-grid-bg opacity-20" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold tron-glow-cyan mb-4" style={{ color: "#00d4ff" }}>Arquitetura — 8 Camadas</h2>
+            <h2 className="text-3xl md:text-4xl font-bold tron-glow-cyan mb-4" style={{ color: "#3B82F6" }}>Arquitetura — 8 Camadas</h2>
             <p className="max-w-xl mx-auto" style={{ color: "rgba(255,255,255,0.4)" }}>
               Infraestrutura proprietária com camadas de inteligência, monitoramento, cognição e segurança.
             </p>
@@ -747,7 +747,7 @@ export default function InvestorTools() {
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full" style={{ background: i % 2 === 0 ? "#c9a84c" : "#00d4ff" }} />
+                      <div className="h-2 w-2 rounded-full" style={{ background: i % 2 === 0 ? "#c9a84c" : "#3B82F6" }} />
                       <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>{layer.label}</span>
                     </div>
                     <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{layer.sub}</span>
@@ -763,7 +763,7 @@ export default function InvestorTools() {
       <section className="relative py-20 lg:py-28" style={{ background: "hsl(var(--background))" }}>
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-            <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#00d4ff" }}>
+            <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#3B82F6" }}>
               Diferencial Competitivo Único
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tron-glow-gold mb-4" style={{ color: "#c9a84c" }}>
@@ -837,7 +837,7 @@ export default function InvestorTools() {
                 Agendar Reunião <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button variant="outline" size="lg" className="px-8 h-13 text-sm"
-                style={{ borderColor: "hsl(var(--primary),0.4)", color: "#00d4ff", background: "transparent" }}
+                style={{ borderColor: "hsl(var(--primary),0.4)", color: "#3B82F6", background: "transparent" }}
                 onClick={() => navigate("/docs/rede-neural")}
               >
                 Documentação Técnica

@@ -19,7 +19,7 @@ export default function OrionDemo() {
     <>
       <div className="min-h-screen bg-[#0a0a0f] text-foreground overflow-x-hidden">
         {/* Scanline overlay */}
-        <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.03]" style={{ background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.08) 2px, rgba(0,212,255,0.08) 4px)" }} />
+        <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.03]" style={{ background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59,130,246,0.08) 2px, rgba(59,130,246,0.08) 4px)" }} />
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-8 space-y-12">
           {/* ─── HERO ─── */}
