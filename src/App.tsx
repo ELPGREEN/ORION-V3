@@ -186,7 +186,7 @@ const App = () => (
                   <Route path="/nova-pagina" element={<Navigate to="/" replace />} />
                   <Route path="/diferencial" element={<Navigate to="/plataforma" replace />} />
                   <Route path="/associado" element={<Navigate to="/contato" replace />} />
-                  <Route path="/sobre" element={<Navigate to="/" replace />} />
+                  <Route path="/sobre" element={<Navigate to="/plataforma" replace />} />
 
                   {/* ═══ Dashboard Routes (DashboardLayout already guards auth) ═══ */}
                   <Route path="/dashboard" element={<DashboardLayout />}>
