@@ -286,8 +286,11 @@ function renderPhonemes(phonemes: string[]): Float32Array {
     }
 
     const numSamples = Math.floor((phonemeDuration / 1000) * SR);
-    // Extended transition: 80ms for smoother coarticulation (was 45ms)
-    const transitionSamples = Math.min(Math.floor(0.08 * SR), numSamples);
+    // FAST transition for consonants (20ms), slower for vowels (50ms)
+    // Consonant-vowel transitions carry most speech information
+    const isConsonant = params.plosive || params.fricative || params.nasal;
+    const transMs = isConsonant ? 0.02 : 0.05;
+    const transitionSamples = Math.min(Math.floor(transMs * SR), numSamples);
     const sentPos = pi / Math.max(phonemes.length - 1, 1);
 
     // F0 for this segment with phrase-level prosody
