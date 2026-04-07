@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 const PREMIUM_PLANS = ["professional", "business", "enterprise"];
 const OWNER_EMAIL = "info@elpgreen.com";
+const FREE_TRIAL_TOKENS = 1000;
 
 export function useUserPlan() {
   const { user } = useAuth();
@@ -13,7 +14,7 @@ export function useUserPlan() {
     queryFn: async () => {
       const { data } = await supabase
         .from("user_plans")
-        .select("plan_type")
+        .select("plan_type, ai_tokens_remaining")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data;
@@ -24,6 +25,16 @@ export function useUserPlan() {
 
   const isOwner = user?.email === OWNER_EMAIL;
   const isPremium = !!user && (isOwner || PREMIUM_PLANS.includes(plan?.plan_type ?? ""));
+  const tokensRemaining = plan?.ai_tokens_remaining ?? FREE_TRIAL_TOKENS;
+  const hasOrionAccess = isPremium || (!!user && tokensRemaining > 0);
 
-  return { isPremium, isOwner, planType: plan?.plan_type ?? null, loading: isLoading };
+  return {
+    isPremium,
+    isOwner,
+    planType: plan?.plan_type ?? null,
+    loading: isLoading,
+    tokensRemaining,
+    hasOrionAccess,
+    freeTrialTokens: FREE_TRIAL_TOKENS,
+  };
 }
