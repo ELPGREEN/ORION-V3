@@ -18,7 +18,7 @@ function confidenceColor(c: number): string {
 }
 
 function confidenceBg(c: number): string {
-  if (c >= 0.75) return "rgba(0, 212, 255, 0.15)";
+  if (c >= 0.75) return "rgba(59,130,246, 0.15)";
   if (c >= 0.55) return "rgba(212, 175, 55, 0.15)";
   if (c >= 0.35) return "rgba(255, 193, 7, 0.15)";
   return "rgba(255, 82, 82, 0.15)";
@@ -61,8 +61,8 @@ export function TeslaCoilVoltagePanel() {
           className="ml-auto text-[7px] font-mono font-bold px-1.5 py-0.5 rounded-full border"
           style={{
             color: voltage.shouldExecute ? "rgb(0, 212, 255)" : "rgb(255, 82, 82)",
-            borderColor: voltage.shouldExecute ? "rgba(0, 212, 255, 0.3)" : "rgba(255, 82, 82, 0.3)",
-            background: voltage.shouldExecute ? "rgba(0, 212, 255, 0.1)" : "rgba(255, 82, 82, 0.1)",
+            borderColor: voltage.shouldExecute ? "rgba(59,130,246, 0.3)" : "rgba(255, 82, 82, 0.3)",
+            background: voltage.shouldExecute ? "rgba(59,130,246, 0.1)" : "rgba(255, 82, 82, 0.1)",
           }}
         >
           {voltage.shouldExecute ? "EXECUTAR" : "CLARIFICAR"}

@@ -510,7 +510,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       <div className="relative flex flex-wrap items-center gap-2 rounded-lg p-2.5 overflow-hidden"
         style={{ backgroundColor: "rgba(10,10,15,0.7)", border: "1px solid rgba(212,175,55,0.15)", boxShadow: "0 0 15px rgba(212,175,55,0.05)" }}>
         <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent)" }} />
-        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(0,212,255,0.2), transparent)" }} />
+        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.2), transparent)" }} />
         {!active && wakeWordActive && (
           <Badge variant="outline" className="text-[10px] h-6 font-mono border-amber-500/30 text-amber-400 animate-pulse gap-1.5 px-3">
             <Mic className="h-3.5 w-3.5" /> 👂 Diga <strong>"Orion"</strong> para ativar
@@ -568,18 +568,18 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         height: "clamp(450px, 65vh, 680px)",
         backgroundColor: "#030508",
         border: "1px solid rgba(212,175,55,0.12)",
-        boxShadow: "0 0 30px rgba(212,175,55,0.05), 0 0 60px rgba(0,212,255,0.03)",
+        boxShadow: "0 0 30px rgba(212,175,55,0.05), 0 0 60px rgba(59,130,246,0.03)",
       }}>
         {/* Top gold accent line */}
         <div className="absolute top-0 left-0 right-0 h-px z-[6]" style={{ background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.5), transparent)" }} />
-        <div className="absolute bottom-0 left-0 right-0 h-px z-[6]" style={{ background: "linear-gradient(90deg, transparent, rgba(0,212,255,0.3), transparent)" }} />
+        <div className="absolute bottom-0 left-0 right-0 h-px z-[6]" style={{ background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.3), transparent)" }} />
         
         {/* Tron grid subtle */}
         <div className="absolute inset-0 pointer-events-none z-[1] opacity-[0.02]"
           style={{
             backgroundImage: `
-              linear-gradient(rgba(0,212,255,0.4) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(0,212,255,0.4) 1px, transparent 1px)
+              linear-gradient(rgba(59,130,246,0.4) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(59,130,246,0.4) 1px, transparent 1px)
             `,
             backgroundSize: "80px 80px",
           }} />
@@ -799,10 +799,10 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
         {/* Top-right: Plasma label */}
         <div className="absolute top-3 right-3 lg:right-[240px] xl:right-[270px] z-20 pointer-events-none">
-          <div className="rounded px-2.5 py-1.5" style={{ backgroundColor: "rgba(0,0,0,0.7)", border: "1px solid rgba(0,212,255,0.15)" }}>
+          <div className="rounded px-2.5 py-1.5" style={{ backgroundColor: "rgba(0,0,0,0.7)", border: "1px solid rgba(59,130,246,0.15)" }}>
             <div className="flex items-center gap-1.5">
               <Zap className="h-3 w-3" style={{ color: "#D4AF37", filter: "drop-shadow(0 0 4px rgba(212,175,55,0.5))" }} />
-              <span className="text-[9px] font-mono" style={{ color: "rgba(0,212,255,0.5)" }}>Plasma Neural</span>
+              <span className="text-[9px] font-mono" style={{ color: "rgba(59,130,246,0.5)" }}>Plasma Neural</span>
             </div>
           </div>
         </div>
@@ -812,7 +812,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           <div className="rounded px-3 py-1.5" style={{ backgroundColor: "rgba(0,0,0,0.8)", border: "1px solid rgba(212,175,55,0.12)" }}>
             <div className="flex items-center gap-2">
               <Brain className="h-3 w-3 shrink-0" style={{ color: "#D4AF37", filter: "drop-shadow(0 0 4px rgba(212,175,55,0.4))" }} />
-              <p className="text-[10px] font-mono truncate" style={{ color: "rgba(0,212,255,0.6)" }}>{thought}</p>
+              <p className="text-[10px] font-mono truncate" style={{ color: "rgba(59,130,246,0.6)" }}>{thought}</p>
             </div>
           </div>
         </div>
