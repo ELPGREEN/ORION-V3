@@ -298,12 +298,12 @@ export default function Publicacoes() {
                     className="w-full aspect-video"
                     style={{ background: "#0a0a0f" }}
                   >
-                    <source src="/videos/orion-investor.mp4" type="video/mp4" />
+                    <source src="/videos/orion-publicacoes.mp4" type="video/mp4" />
                     Seu navegador não suporta vídeo HTML5.
                   </video>
                   <div className="p-4 sm:p-6 text-center">
                     <h3 className="text-lg font-bold text-foreground mb-1">ORION — Inteligência Artificial Empresarial</h3>
-                    <p className="text-xs text-muted-foreground">Conheça a plataforma, módulos e oportunidades de investimento</p>
+                    <p className="text-xs text-muted-foreground">Conheça a plataforma e as soluções para advogados, produtores digitais, afiliados e indústria</p>
                   </div>
                 </div>
               </div>
