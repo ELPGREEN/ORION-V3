@@ -146,6 +146,9 @@ export default function AdminOwnerDashboard() {
             <TabsTrigger value="quick-actions" className="text-xs gap-1.5 data-[state=active]:bg-[#D4AF37]/10 data-[state=active]:text-[#D4AF37]">
               <Settings className="h-3.5 w-3.5" /> Ações Rápidas
             </TabsTrigger>
+            <TabsTrigger value="bigquery" className="text-xs gap-1.5 data-[state=active]:bg-[#22c55e]/10 data-[state=active]:text-[#22c55e]">
+              <Database className="h-3.5 w-3.5" /> BigQuery
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="space-y-3">
