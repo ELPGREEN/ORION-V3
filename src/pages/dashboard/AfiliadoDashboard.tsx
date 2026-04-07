@@ -201,6 +201,19 @@ export default function AfiliadoDashboard() {
                           <Copy className="h-3.5 w-3.5 mr-1" /> Copiar Link
                         </Button>
                       )}
+                      <Button
+                        variant="ghost" size="sm"
+                        onClick={() => generateCopy(product)}
+                        disabled={!!copyLoading}
+                        className="gap-1 text-xs"
+                      >
+                        {copyLoading === product?.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                        Copy IA
+                      </Button>
+                      <Badge variant="secondary" className="text-xs">{link?.clicks || 0} cliques</Badge>
+                    </div>
+                        </Button>
+                      )}
                       <Badge variant="secondary" className="text-xs">{link?.clicks || 0} cliques</Badge>
                     </div>
                   </CardContent>
