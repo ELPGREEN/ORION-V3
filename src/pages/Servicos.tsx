@@ -93,11 +93,15 @@ export default function Servicos() {
             {profiles.map((profile, index) => (
               <div 
                 key={profile.titulo} 
-                className="group bg-card border border-border p-8 hover-lift hover-gold-glow animate-fade-in-up"
-                style={{ animationDelay: `${(index % 4 + 1) * 100}ms` }}
+                className={`group bg-card border border-border p-8 hover-lift hover-gold-glow animate-fade-in-up ${
+                  index === profiles.length - 1 ? "lg:col-span-2 border-primary/30" : ""
+                }`}
+                style={{ animationDelay: `${(index % 5 + 1) * 100}ms` }}
               >
                 <div className="flex items-start gap-6">
-                  <div className="h-14 w-14 border border-primary/40 flex items-center justify-center flex-shrink-0 group-hover:border-primary transition-all">
+                  <div className={`h-14 w-14 border flex items-center justify-center flex-shrink-0 group-hover:border-primary transition-all ${
+                    index === profiles.length - 1 ? "border-primary/60 bg-primary/5" : "border-primary/40"
+                  }`}>
                     <profile.icon className="h-7 w-7 text-primary" />
                   </div>
                   <div className="flex-1">
@@ -108,7 +112,7 @@ export default function Servicos() {
                       {profile.descricao}
                     </p>
                     
-                    <ul className="space-y-2">
+                    <ul className={`space-y-2 ${index === profiles.length - 1 ? "sm:grid sm:grid-cols-2 sm:gap-x-8 sm:space-y-0 sm:gap-y-2" : ""}`}>
                       {profile.servicos.map((servico: string) => (
                         <li key={servico} className="flex items-center gap-3 text-sm text-muted-foreground">
                           <div className="h-1.5 w-1.5 bg-primary flex-shrink-0" />
