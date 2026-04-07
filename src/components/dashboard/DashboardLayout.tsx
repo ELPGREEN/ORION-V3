@@ -41,6 +41,8 @@ export default function DashboardLayout() {
     if (!authLoading && !user) navigate("/auth");
     if (!authLoading && user) {
       syncVoiceEvolutionFromSupabase().catch(() => {});
+      // Auto-boost voice evolution if below autonomous level
+      try { boostEvolution(); } catch {}
     }
   }, [user, authLoading, navigate]);
 
