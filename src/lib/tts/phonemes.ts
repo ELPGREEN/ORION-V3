@@ -99,7 +99,7 @@ export const PT_PHONEMES: Record<string, PhonemeParams> = {
   // ── LIQUIDS ──
   'l':  { f1: 350, f2: 1100, f3: 2400, f4: 3300, bw1: 80,  bw2: 100, bw3: 160, bw4: 230, voiced: true, nasal: false, fricative: false, plosive: false, duration: 90, amplitude: 0.68 },
   'ʎ':  { f1: 320, f2: 1800, f3: 2600, f4: 3500, bw1: 80,  bw2: 100, bw3: 160, bw4: 230, voiced: true, nasal: false, fricative: false, plosive: false, duration: 95, amplitude: 0.68 },
-  'ɾ':  { f1: 350, f2: 1300, f3: 2400, f4: 3300, bw1: 80,  bw2: 100, bw3: 160, bw4: 230, voiced: true, nasal: false, fricative: false, plosive: false, duration: 45, amplitude: 0.63 },
+  'ɾ':  { f1: 400, f2: 1600, f3: 2700, f4: 3500, bw1: 120, bw2: 150, bw3: 200, bw4: 280, voiced: true, nasal: false, fricative: false, plosive: false, duration: 28, amplitude: 0.50 },
   'R':  { f1: 300, f2: 1100, f3: 2400, f4: 3300, bw1: 110, bw2: 140, bw3: 190, bw4: 260, voiced: true, nasal: false, fricative: true, plosive: false, duration: 110, amplitude: 0.58 },
 
   // ── SEMIVOWELS ──
