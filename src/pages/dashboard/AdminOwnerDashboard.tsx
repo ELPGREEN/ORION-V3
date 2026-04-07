@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users, DollarSign, Scale, ShoppingBag, TrendingUp, Activity,
-  Shield, Eye, Loader2, Settings, BarChart3, Zap, Globe, Crown
+  Shield, Eye, Loader2, Settings, BarChart3, Zap, Globe, Crown, Database
 } from "lucide-react";
+import { BigQueryPanel } from "@/components/admin/BigQueryPanel";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -145,6 +146,9 @@ export default function AdminOwnerDashboard() {
             <TabsTrigger value="quick-actions" className="text-xs gap-1.5 data-[state=active]:bg-[#D4AF37]/10 data-[state=active]:text-[#D4AF37]">
               <Settings className="h-3.5 w-3.5" /> Ações Rápidas
             </TabsTrigger>
+            <TabsTrigger value="bigquery" className="text-xs gap-1.5 data-[state=active]:bg-[#22c55e]/10 data-[state=active]:text-[#22c55e]">
+              <Database className="h-3.5 w-3.5" /> BigQuery
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="space-y-3">
@@ -190,6 +194,9 @@ export default function AdminOwnerDashboard() {
                 </CardContent>
               </Card>
             ))}
+          </TabsContent>
+          <TabsContent value="bigquery">
+            <BigQueryPanel />
           </TabsContent>
         </Tabs>
       </div>
