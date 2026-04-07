@@ -19,10 +19,14 @@ import {
   VOICE_DNA,
   type PhonemeParams,
 } from "./phonemes";
+import { computeMFCCCorrections, type MFCCSynthCorrection } from "./mfccEngine";
 
 const SR = VOICE_DNA.sampleRate; // 24000
 const TWO_PI = 2 * Math.PI;
 const NUM_HARMONICS = 40; // Up to ~5500 Hz at F0=137
+
+// MFCC-derived corrections (computed once)
+const MFCC_FIX = computeMFCCCorrections();
 
 // ═══════════════════════════════════════════════════════════
 // FORMANT ENVELOPE: compute amplitude at a given frequency
@@ -187,15 +191,15 @@ function renderPhonemes(phonemes: string[]): Float32Array {
     const params = PT_PHONEMES[phoneme];
     if (!params) continue;
 
-    // Targets
-    const tgtF1 = params.f1 || curF1;
-    const tgtF2 = params.f2 || curF2;
-    const tgtF3 = params.f3 || curF3;
-    const tgtF4 = params.f4 || curF4;
-    const tgtBw1 = params.bw1 || curBw1;
-    const tgtBw2 = params.bw2 || curBw2;
-    const tgtBw3 = params.bw3 || curBw3;
-    const tgtBw4 = params.bw4 || curBw4;
+    // Targets — apply MFCC formant corrections
+    const tgtF1 = (params.f1 || curF1) * MFCC_FIX.formantScale[0];
+    const tgtF2 = (params.f2 || curF2) * MFCC_FIX.formantScale[1];
+    const tgtF3 = (params.f3 || curF3) * MFCC_FIX.formantScale[2];
+    const tgtF4 = (params.f4 || curF4) * MFCC_FIX.formantScale[3];
+    const tgtBw1 = (params.bw1 || curBw1) * MFCC_FIX.bandwidthScale[0];
+    const tgtBw2 = (params.bw2 || curBw2) * MFCC_FIX.bandwidthScale[1];
+    const tgtBw3 = (params.bw3 || curBw3) * MFCC_FIX.bandwidthScale[2];
+    const tgtBw4 = (params.bw4 || curBw4) * MFCC_FIX.bandwidthScale[3];
     const tgtAmp = params.amplitude;
 
     const startF1 = curF1, startF2 = curF2, startF3 = curF3, startF4 = curF4;
@@ -250,7 +254,7 @@ function renderPhonemes(phonemes: string[]): Float32Array {
       // VOICED: Additive harmonic synthesis
       // ═════════════════════════════════════
       if (params.voiced) {
-        // F0 with jitter
+        // F0 with jitter — use MFCC-corrected F0 target
         const f0 = baseF0 * (1 + (Math.random() - 0.5) * jitterAmt);
 
         // Pre-compute formant envelope values (cache per sample for speed)
@@ -264,9 +268,19 @@ function renderPhonemes(phonemes: string[]): Float32Array {
           if (harmonicPhases[h] > TWO_PI) harmonicPhases[h] -= TWO_PI;
 
           // Source amplitude: voice DNA harmonic profile (natural decay)
-          const sourceAmp = h < harmonicProfile.length
+          let sourceAmp = h < harmonicProfile.length
             ? harmonicProfile[h]
             : harmonicProfile[harmonicProfile.length - 1] * Math.exp(-0.3 * (h - harmonicProfile.length + 1));
+
+          // MFCC correction: boost higher harmonics for brightness
+          const hBoost = h < MFCC_FIX.harmonicBoost.length
+            ? MFCC_FIX.harmonicBoost[h]
+            : MFCC_FIX.harmonicBoost[MFCC_FIX.harmonicBoost.length - 1];
+          sourceAmp *= hBoost;
+
+          // Spectral tilt compensation: progressively boost high harmonics
+          const tiltBoost = 1 + (h / NUM_HARMONICS) * MFCC_FIX.spectralTiltCompensation * 0.1;
+          sourceAmp *= tiltBoost;
 
           // Filter: formant envelope at this frequency
           const filterGain = formantEnvelope(freq, f1, f2, f3, f4, bw1, bw2, bw3, bw4);
@@ -278,17 +292,15 @@ function renderPhonemes(phonemes: string[]): Float32Array {
           sample += Math.sin(harmonicPhases[h]) * sourceAmp * filterGain * shimmer;
         }
 
-        // Add slight breathiness (aspiration noise)
-        sample += (Math.random() * 2 - 1) * 0.015;
+        // MFCC-corrected breathiness (more natural aspiration noise)
+        sample += (Math.random() * 2 - 1) * MFCC_FIX.breathiness;
 
-        // Nasal: boost low formant, add nasal murmur
+        // Nasal: MFCC-corrected coupling (reduced from analysis)
         if (params.nasal) {
-          // Nasal murmur around 250-300 Hz adds characteristic quality
-          sample *= 0.75; // reduce oral energy
-          // Add nasal resonance (low-freq buzz)
+          sample *= (1 - MFCC_FIX.nasalReduction); // reduce oral energy less
           const nasalFreq = 270;
           const nasalPhase = harmonicPhases[0] * (nasalFreq / (baseF0 || 130));
-          sample += Math.sin(nasalPhase) * 0.2;
+          sample += Math.sin(nasalPhase) * 0.12; // reduced nasal resonance
         }
       }
 
@@ -344,18 +356,24 @@ function renderPhonemes(phonemes: string[]): Float32Array {
 // PROSODY
 // ═══════════════════════════════════════════════════════════
 function getProsodyF0(sentencePos: number): number {
-  const { mean, p5, p95 } = VOICE_DNA.f0;
+  // Use MFCC-corrected F0 target instead of voice DNA mean
+  const targetF0 = MFCC_FIX.f0Target; // 150 Hz from reference analysis
+  const { p5, p95 } = VOICE_DNA.f0;
 
-  let f0 = mean;
+  let f0 = targetF0;
   if (sentencePos < 0.15) {
-    f0 = mean * (1.0 + sentencePos * 0.15);
+    // Slight rise at sentence start
+    f0 = targetF0 * (1.0 + sentencePos * 0.12);
   } else if (sentencePos > 0.75) {
-    f0 = mean * (1.02 - (sentencePos - 0.75) * 0.15);
+    // Declarative fall at end
+    f0 = targetF0 * (1.01 - (sentencePos - 0.75) * 0.12);
   } else {
-    f0 = mean * 1.02;
+    // Mid-sentence: gentle variation
+    f0 = targetF0 * (1.01 + Math.sin(sentencePos * Math.PI * 3) * 0.02);
   }
 
-  f0 += (Math.random() - 0.5) * 3;
+  // Micro-prosody: slight random variation for naturalness
+  f0 += (Math.random() - 0.5) * 4;
   return Math.max(p5, Math.min(p95, f0));
 }
 
@@ -380,20 +398,29 @@ function getEnvelope(pos: number, durationMs: number, isPlosive: boolean): numbe
 }
 
 // ═══════════════════════════════════════════════════════════
-// POST-PROCESSING: Normalize only
+// POST-PROCESSING: Gentle MFCC-guided spectral shaping + Normalize
 // ═══════════════════════════════════════════════════════════
 function postProcess(samples: Float32Array): Float32Array {
+  // 1. Very gentle pre-emphasis (just enough for brightness, not aggressive)
+  const preEmph = 0.35; // Much gentler than full 0.97
+  const processed = new Float32Array(samples.length);
+  processed[0] = samples[0];
+  for (let i = 1; i < samples.length; i++) {
+    processed[i] = samples[i] - preEmph * samples[i - 1];
+  }
+
+  // 2. Normalize
   let peak = 0;
-  for (let i = 0; i < samples.length; i++) {
-    const a = Math.abs(samples[i]);
+  for (let i = 0; i < processed.length; i++) {
+    const a = Math.abs(processed[i]);
     if (a > peak) peak = a;
   }
-  if (peak === 0) return samples;
+  if (peak === 0) return processed;
 
   const gain = 0.89 / peak;
-  const out = new Float32Array(samples.length);
-  for (let i = 0; i < samples.length; i++) {
-    out[i] = samples[i] * gain;
+  const out = new Float32Array(processed.length);
+  for (let i = 0; i < processed.length; i++) {
+    out[i] = processed[i] * gain;
   }
   return out;
 }
