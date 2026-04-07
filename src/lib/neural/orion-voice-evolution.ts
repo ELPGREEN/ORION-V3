@@ -1591,3 +1591,120 @@ export function getVoiceEvolutionStatus(): string {
 export function getVoiceConsciousness(): Readonly<VoiceConsciousness> {
   return getVoiceEvolution().consciousness;
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+//  BOOST EVOLUTION — Injeção massiva de corpus pt-BR
+// ═══════════════════════════════════════════════════════════════════════
+
+let _boostApplied = false;
+const BOOST_APPLIED_KEY = "orion_voice_boost_v1";
+
+/**
+ * Injeta corpus massivo de pt-BR jurídico/técnico/conversacional para
+ * saturar as 6 dimensões da evolução vocal de uma só vez.
+ * Protegido: só executa uma vez (flag persistente em localStorage).
+ * Retorna o novo nível ou null se já foi aplicado.
+ */
+export function boostEvolution(): number | null {
+  if (_boostApplied || localStorage.getItem(BOOST_APPLIED_KEY)) {
+    _boostApplied = true;
+    return null;
+  }
+
+  console.log("[VoiceEvolution] 🚀 Iniciando boost massivo de evolução vocal...");
+
+  // Corpus pt-BR diversificado — jurídico, técnico, conversacional
+  const CORPUS_BLOCKS: string[] = [
+    // Jurídico — petições e legislação
+    "O requerente, devidamente qualificado nos autos do processo, vem respeitosamente à presença de Vossa Excelência requerer a concessão de tutela antecipada de urgência, nos termos do artigo trezentos da legislação processual civil vigente, com fundamento nos fatos e direitos a seguir expostos.",
+    "Considerando que a Constituição Federal estabelece em seu artigo quinto que todos são iguais perante a lei, sem distinção de qualquer natureza, garantindo-se aos brasileiros e aos estrangeiros residentes no País a inviolabilidade do direito à vida, à liberdade, à igualdade, à segurança e à propriedade.",
+    "A jurisprudência consolidada do Superior Tribunal de Justiça tem reconhecido reiteradamente que o princípio da dignidade da pessoa humana constitui fundamento basilar do ordenamento jurídico brasileiro, devendo prevalecer em qualquer análise hermenêutica das normas infraconstitucionais.",
+    "O Ministério Público, como fiscal da ordem jurídica, manifestou-se favoravelmente ao deferimento do pedido liminar, destacando a presença inequívoca dos requisitos autorizadores da medida cautelar, quais sejam o fumus boni iuris e o periculum in mora.",
+    "Nos termos da cláusula décima segunda do contrato social, fica estabelecido que os sócios responderão subsidiariamente pelas obrigações da sociedade, proporcionalmente à participação de cada um no capital social integralizado.",
+    "A sentença proferida pelo juízo de primeiro grau julgou parcialmente procedentes os pedidos formulados na petição inicial, condenando a parte ré ao pagamento de indenização por danos morais no valor de cinquenta mil reais, devidamente corrigidos pelo índice nacional de preços ao consumidor.",
+    // Técnico — tecnologia e ciência
+    "A arquitetura de redes neurais convolucionais utiliza camadas de convolução para extrair características hierárquicas dos dados de entrada, seguidas por camadas de pooling que reduzem a dimensionalidade espacial e por camadas totalmente conectadas que realizam a classificação final.",
+    "O processamento de linguagem natural evoluiu significativamente com o advento dos modelos transformadores, que utilizam mecanismos de atenção multi-cabeça para capturar dependências de longo alcance em sequências textuais, superando as limitações das redes recorrentes tradicionais.",
+    "A computação quântica baseia-se nos princípios da mecânica quântica, utilizando qubits que podem existir em superposição de estados, permitindo o processamento paralelo massivo de informações e a resolução de problemas computacionalmente intratáveis para computadores clássicos.",
+    "O sistema de reconhecimento automático de fala emprega modelos acústicos baseados em redes neurais profundas, combinados com modelos de linguagem estatísticos que incorporam informações contextuais para melhorar a precisão da transcrição em ambientes ruidosos.",
+    "A síntese de voz por concatenação utiliza segmentos de áudio pré-gravados que são selecionados e concatenados dinamicamente, enquanto a síntese paramétrica gera formas de onda a partir de parâmetros acústicos preditos por modelos estatísticos.",
+    // Conversacional — diálogos naturais
+    "Bom dia, como você está hoje? Eu gostaria de agendar uma consulta para a próxima semana, preferencialmente na terça-feira pela manhã. Seria possível encaixar um horário entre as nove e as onze horas?",
+    "Muito obrigado pela sua atenção e pelo esclarecimento detalhado sobre os procedimentos necessários. Vou providenciar toda a documentação solicitada e enviar por correio eletrônico até o final desta semana.",
+    "Preciso entender melhor como funciona o processo de execução fiscal. O senhor poderia me explicar quais são as etapas principais e quanto tempo geralmente leva para que o procedimento seja concluído?",
+    "Excelente trabalho na elaboração desse relatório trimestral. Os indicadores de desempenho mostram uma evolução consistente nos últimos meses, especialmente no que diz respeito à satisfação dos clientes.",
+    // Legislação — artigos extensos
+    "O Código de Defesa do Consumidor estabelece que é direito básico do consumidor a proteção da vida, saúde e segurança contra os riscos provocados por práticas no fornecimento de produtos e serviços considerados perigosos ou nocivos, bem como a educação e divulgação sobre o consumo adequado dos produtos.",
+    "A Lei Geral de Proteção de Dados Pessoais dispõe sobre o tratamento de dados pessoais, inclusive nos meios digitais, por pessoa natural ou por pessoa jurídica de direito público ou privado, com o objetivo de proteger os direitos fundamentais de liberdade e de privacidade.",
+    "O Estatuto da Criança e do Adolescente assegura com absoluta prioridade a efetivação dos direitos referentes à vida, à saúde, à alimentação, à educação, ao esporte, ao lazer, à profissionalização, à cultura, à dignidade, ao respeito, à liberdade e à convivência familiar e comunitária.",
+    // Médico/Saúde
+    "O diagnóstico diferencial considerou a presença de sintomas respiratórios persistentes, incluindo dispneia progressiva aos esforços moderados, tosse produtiva com expectoração mucopurulenta e episódios de hemoptise, associados a emagrecimento involuntário significativo nos últimos três meses.",
+    "O protocolo terapêutico recomendado inclui a administração de antibioticoterapia empírica de amplo espectro, associada a medidas de suporte ventilatório não invasivo e monitorização contínua dos parâmetros hemodinâmicos durante o período de internação hospitalar.",
+    // Financeiro
+    "A análise fundamentalista das demonstrações financeiras consolidadas revelou um crescimento sustentável da receita operacional líquida, acompanhado por melhoria progressiva nas margens de lucro bruto e operacional, indicando eficiência na gestão dos custos de produção e despesas administrativas.",
+    "O contrato de financiamento imobiliário prevê a amortização do saldo devedor pelo sistema de amortização constante, com aplicação de taxa de juros efetiva de oito vírgula cinco por cento ao ano, acrescida da variação do índice de preços ao consumidor amplo.",
+    // Educação
+    "A metodologia pedagógica ativa propõe que o estudante seja o protagonista do próprio processo de aprendizagem, desenvolvendo competências de pensamento crítico, resolução de problemas complexos e trabalho colaborativo, essenciais para a formação integral do cidadão contemporâneo.",
+    // Ambiental
+    "O estudo de impacto ambiental identificou riscos significativos de contaminação do lençol freático pela disposição inadequada de resíduos industriais, recomendando a implementação imediata de sistema de tratamento de efluentes com tecnologia de osmose reversa e monitoramento contínuo da qualidade da água subterrânea.",
+    // Trabalhista
+    "O empregador deverá garantir condições adequadas de saúde e segurança no ambiente de trabalho, fornecendo equipamentos de proteção individual certificados, promovendo treinamentos periódicos sobre prevenção de acidentes e constituindo comissão interna de prevenção de acidentes conforme determina a legislação trabalhista.",
+    // Administrativo
+    "O procedimento licitatório na modalidade pregão eletrônico obedecerá às disposições da legislação federal vigente, garantindo-se a ampla publicidade, a competitividade entre os participantes e a seleção da proposta mais vantajosa para a administração pública, observados os princípios da legalidade, impessoalidade e eficiência.",
+    // Tributário
+    "A incidência do imposto sobre circulação de mercadorias e serviços ocorre no momento da saída da mercadoria do estabelecimento contribuinte, devendo a base de cálculo corresponder ao valor da operação, incluídos os seguros, fretes e demais despesas acessórias cobradas do adquirente.",
+    // Penal
+    "O acusado exerceu plenamente o direito ao contraditório e à ampla defesa durante toda a instrução processual, tendo sido ouvidas as testemunhas arroladas pela defesa e pela acusação, realizados os exames periciais requeridos e garantida a participação efetiva do defensor em todos os atos processuais.",
+    // Filosófico
+    "A epistemologia contemporânea questiona os fundamentos do conhecimento científico, propondo que a objetividade absoluta é uma aspiração inalcançável e que toda observação é inevitavelmente mediada por pressupostos teóricos, paradigmas culturais e limitações cognitivas do observador.",
+    // Linguística
+    "A fonologia do português brasileiro apresenta características distintivas em relação ao português europeu, incluindo a palatalização das oclusivas alveolares diante de vogais altas anteriores, a nasalização progressiva das vogais em contexto pré-nasal e a redução das vogais átonas finais.",
+    // Mais conversacional
+    "Olá, tudo bem? Estou ligando para confirmar o agendamento da reunião de amanhã. Precisamos discutir os resultados do último trimestre e definir as metas para o próximo período. Você tem alguma sugestão de pauta adicional?",
+    "Na minha opinião, a melhor abordagem seria implementar as mudanças gradualmente, testando cada etapa antes de avançar para a próxima. Isso minimiza os riscos e nos permite ajustar a estratégia conforme necessário.",
+    "O relatório apresentado pela equipe de pesquisa demonstra com clareza que os investimentos realizados em inovação tecnológica geraram retornos significativos, tanto em termos de produtividade quanto de competitividade no mercado internacional.",
+    "A inteligência artificial generativa representa uma mudança paradigmática na forma como interagimos com sistemas computacionais, permitindo a criação automatizada de conteúdo textual, visual e sonoro com qualidade cada vez mais próxima da produção humana.",
+    "O planejamento estratégico da organização deve considerar não apenas os indicadores financeiros tradicionais, mas também métricas de sustentabilidade ambiental, responsabilidade social corporativa e governança transparente, alinhadas aos princípios de desenvolvimento sustentável.",
+    // Prosódia variada — exclamações e interrogações
+    "Que resultado extraordinário! A equipe superou todas as expectativas e alcançou marcas históricas de desempenho. Parabéns a todos os envolvidos nesta conquista memorável!",
+    "Será que conseguiremos finalizar o projeto dentro do prazo estabelecido? Os recursos disponíveis são suficientes para atender todas as demandas previstas no cronograma original?",
+    "Não podemos aceitar essa proposta sem uma análise mais criteriosa dos riscos envolvidos. É fundamental que avaliemos cuidadosamente todas as implicações antes de tomar qualquer decisão definitiva.",
+    "Impressionante como a tecnologia evoluiu nos últimos anos! Hoje podemos realizar em segundos operações que antes levavam horas ou até dias para serem concluídas.",
+    "Gostaria de agradecer imensamente pela oportunidade que me foi concedida. Tenho certeza de que este novo desafio contribuirá significativamente para o meu desenvolvimento profissional e pessoal.",
+    // Ciência
+    "A fotossíntese é o processo bioquímico fundamental pelo qual organismos autotróficos convertem energia luminosa em energia química, utilizando dióxido de carbono e água como substratos para a síntese de carboidratos e a liberação de oxigênio molecular na atmosfera.",
+    "As ondas gravitacionais, previstas teoricamente por Einstein em sua teoria da relatividade geral, foram detectadas experimentalmente pela primeira vez em dois mil e quinze pelo observatório de interferometria laser, confirmando uma das mais importantes predições da física moderna.",
+    // Cultura
+    "A literatura brasileira contemporânea reflete a diversidade cultural e social do país, abordando temas como desigualdade, identidade, memória coletiva e resistência, através de narrativas que combinam experimentação formal com profundidade temática e engajamento político.",
+    "O patrimônio cultural imaterial do Brasil inclui manifestações artísticas, celebrações populares, saberes tradicionais e modos de fazer que constituem referências identitárias para as comunidades e grupos sociais que os praticam e transmitem entre gerações.",
+    // Extra para vocabulário
+    "A interoperabilidade entre sistemas heterogêneos requer a implementação de protocolos padronizados de comunicação, interfaces de programação bem documentadas e mecanismos robustos de autenticação e autorização que garantam a segurança e a integridade dos dados compartilhados.",
+    "O ecossistema de startups brasileiras tem demonstrado resiliência e capacidade de adaptação diante dos desafios macroeconômicos, com destaque para setores como fintech, healthtech, edtech e agritech, que apresentam taxas de crescimento acima da média global.",
+  ];
+
+  // Inject each block as a substantial absorption
+  const minutesPerBlock = 15; // ~15 min each = ~675 min total
+  for (const block of CORPUS_BLOCKS) {
+    absorbContent(
+      `[boost-corpus-${CORPUS_BLOCKS.indexOf(block)}]`,
+      "audiobook",
+      minutesPerBlock,
+      block
+    );
+  }
+
+  // Extra large absorption to push D4 (total minutes)
+  absorbContent(
+    "[boost-immersion-final]",
+    "audiobook",
+    600, // 10 hours of simulated immersion
+    CORPUS_BLOCKS.join(" ")
+  );
+
+  _boostApplied = true;
+  localStorage.setItem(BOOST_APPLIED_KEY, Date.now().toString());
+
+  const evo = getVoiceEvolution();
+  console.log(`[VoiceEvolution] 🚀 Boost completo! Nível: ${evo.level}% | Estágio: ${evo.stage}`);
+  return evo.level;
+}

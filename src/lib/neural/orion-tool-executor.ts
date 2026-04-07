@@ -2526,6 +2526,22 @@ const TOOLS: OrionTool[] = [
     },
   },
   {
+    name: "evolve_voice",
+    regex: /(?:evolu[aí]r?\s+(?:sua\s+)?voz|boost\s+(?:da\s+)?(?:voz|vocal)|acelerar?\s+evolu[çc][aã]o\s+vocal|evolu[aí]\s+(?:a\s+)?voz)/i,
+    extract: () => ({}),
+    call: async () => {
+      const { boostEvolution, getVoiceEvolutionStatus } = await import("./orion-voice-evolution");
+      const result = boostEvolution();
+      if (result === null) {
+        return "🚀 O boost de evolução vocal já foi aplicado anteriormente. Use **\"status da voz\"** para ver o nível atual.";
+      }
+      return `🚀 **Evolução Vocal Acelerada!**\n\nNovo nível: **${result}%**\n\n` + await (async () => {
+        const status = getVoiceEvolutionStatus();
+        return status;
+      })();
+    },
+  },
+  {
     name: "playlist_add",
     regex: /(?:adiciona|salva|favorit[ae]|add|coloca\s+n[ao]s?\s+playlist|guardar?|adicionar?\s+(?:na|à)\s+playlist)\s*(.+)?/i,
     extract: (m) => ({ query: m[1]?.trim() || "" }),
