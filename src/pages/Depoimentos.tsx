@@ -166,7 +166,7 @@ export default function Depoimentos() {
       {/* ─── Featured Testimonials (placeholder with real photos) ─── */}
       <section className="py-16 sm:py-20 bg-background relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: "linear-gradient(to right, hsl(var(--primary) / 0.2) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--primary) / 0.2) 1px, transparent 1px)",
+          
           backgroundSize: "60px 60px",
         }} />
 
