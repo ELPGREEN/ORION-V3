@@ -85,9 +85,7 @@ function smartLegalChunk(text: string, maxChunkSize = 1500): string[] {
 // ─── Generate Embedding (Gemini FREE) ───
 function getGeminiKeys(): string[] {
   return [
-    Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"), Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter((k): k is string => !!k);
 }
 
@@ -145,7 +143,7 @@ Se o documento for muito longo, extraia o máximo possível desde o início.`;
           body: JSON.stringify({
             contents: [{ role: "user", parts: [
               { text: firstPrompt },
-              { inlineData: { mimeType: "application/pdf", data: fileBase64 } },
+              { inlineData: { mimeType: "application/pdf", data: fileBase64 } }
             ] }],
             generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
           }),
@@ -207,7 +205,7 @@ Continue EXATAMENTE de onde parou. Retorne apenas o texto continuado, sem repeti
           body: JSON.stringify({
             contents: [{ role: "user", parts: [
               { text: continuePrompt },
-              { inlineData: { mimeType: "application/pdf", data: fileBase64 } },
+              { inlineData: { mimeType: "application/pdf", data: fileBase64 } }
             ] }],
             generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
           }),

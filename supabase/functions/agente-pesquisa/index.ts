@@ -7,7 +7,7 @@ const SEARXNG_INSTANCES = [
   "https://search.sapti.me",
   "https://searx.tiekoetter.com",
   "https://search.bus-hit.me",
-  "https://priv.au",
+  "https://priv.au"
 ];
 
 async function searchSearXNG(query: string, lang?: string): Promise<{ results: any[] } | null> {
@@ -110,7 +110,7 @@ async function searchDuckDuckGo(query: string): Promise<any | null> {
 // Quality gate: skip noise, duplicates, and low-value content
 const NOISE_PATTERNS = [
   /^create\s+table/i, /^alter\s+table/i, /^insert\s+into/i,
-  /source_tracker/i, /migration/i, /schema\s+dump/i,
+  /source_tracker/i, /migration/i, /schema\s+dump/i
 ];
 
 function isNoise(text: string): boolean {
@@ -542,7 +542,7 @@ Forneça uma análise PROFISSIONAL e DETALHADA:
                 model: "sonar",
                 messages: [
                   { role: "system", content: "Você é um pesquisador jurídico profissional. Responda em português brasileiro com citações de fontes. Priorize fontes oficiais e acadêmicas." },
-                  { role: "user", content: query },
+                  { role: "user", content: query }
                 ],
                 ...(domain_filter ? { search_domain_filter: domain_filter } : {}),
               }),
@@ -653,8 +653,7 @@ Sintetize as informações de forma profissional e detalhada em português.`;
         // ═══ STEP 1: Generate embedding via Gemini (FREE) ═══
         let embeddingResults: unknown[] = [];
         const geminiEmbKeys = [
-          Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
-          Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"),
+          Deno.env.get("GEMINI_API_KEY")
         ].filter((k): k is string => !!k);
         
         if (geminiEmbKeys.length > 0) {
@@ -852,7 +851,7 @@ REGRAS:
         // ═══ Try Gemini embedding-based search first (FREE) ═══
         let kbResults: unknown[] = [];
         const geminiEmbKeys2 = [
-          Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+          Deno.env.get("GEMINI_API_KEY")
         ].filter((k): k is string => !!k);
 
         if (geminiEmbKeys2.length > 0) {
@@ -982,13 +981,13 @@ O plano DEVE conter:
         const [camaraResults, senadoResults, datajudResults2] = await Promise.all([
           searchCamara(query, tipo_proposicao),
           searchSenado(query),
-          searchDataJud(query, tribunal),
+          searchDataJud(query, tribunal)
         ]);
 
         const allLegResults = [
           ...(camaraResults || []).map((r: any) => ({ ...r, source: "camara" })),
           ...(senadoResults || []).map((r: any) => ({ ...r, source: "senado" })),
-          ...(datajudResults2 || []).map((r: any) => ({ ...r, source: "datajud" })),
+          ...(datajudResults2 || []).map((r: any) => ({ ...r, source: "datajud" }))
         ];
 
         // Auto-ingest all results
@@ -1042,7 +1041,7 @@ Produza uma análise consolidada:
 
         const [ibgeResults, bcbResults] = await Promise.all([
           searchIBGE(query),
-          searchBCB(query),
+          searchBCB(query)
         ]);
 
         const hasData = (ibgeResults && ibgeResults.length > 0) || (bcbResults && bcbResults.length > 0);
@@ -1152,7 +1151,7 @@ REGRAS OBRIGATÓRIAS:
           model: "llama-3.3-70b-versatile",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: prompt },
+            { role: "user", content: prompt }
           ],
           temperature: 0.2,
           max_tokens: 8000,
@@ -1186,7 +1185,7 @@ REGRAS OBRIGATÓRIAS:
           model: "mistral-small-latest",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: prompt },
+            { role: "user", content: prompt }
           ],
           temperature: 0.2,
           max_tokens: 8000,

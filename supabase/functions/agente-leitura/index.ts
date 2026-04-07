@@ -121,7 +121,7 @@ ${plainContent.slice(0, 6000)}
 
         const allowedTables = [
           "documents", "processos", "client_profiles", "andamentos",
-          "consultas", "invoices", "publicacoes",
+          "consultas", "invoices", "publicacoes"
         ];
 
         if (!allowedTables.includes(table)) {
@@ -349,7 +349,7 @@ REGRAS:
         model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: prompt }
         ],
         temperature: 0.15,
         max_tokens: 6000,

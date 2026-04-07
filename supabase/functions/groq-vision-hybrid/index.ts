@@ -32,12 +32,12 @@ const VISION_PROVIDERS: VisionProvider[] = [
     name: "Gemini 2.5 Flash (Direct)",
     endpoint: (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
     model: "gemini-2.5-flash",
-    keyEnv: ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"],
+    keyEnv: ["GEMINI_API_KEY"],
     supportsVision: true,
     buildBody: (sys, usr, img, mime) => ({
       contents: [{ parts: [
         { text: `${sys}\n\n${usr}` },
-        { inlineData: { mimeType: mime, data: img } },
+        { inlineData: { mimeType: mime, data: img } }
       ]}],
       generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
     }),
@@ -58,8 +58,8 @@ const VISION_PROVIDERS: VisionProvider[] = [
         { role: "system", content: sys },
         { role: "user", content: [
           { type: "text", text: usr },
-          { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } },
-        ]},
+          { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } }
+        ]}
       ],
       temperature: 0.1,
       max_tokens: 2000,
@@ -81,8 +81,8 @@ const VISION_PROVIDERS: VisionProvider[] = [
         { role: "system", content: sys },
         { role: "user", content: [
           { type: "text", text: usr },
-          { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } },
-        ]},
+          { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } }
+        ]}
       ],
       temperature: 0.1,
       max_tokens: 2000,
@@ -102,14 +102,14 @@ const VISION_PROVIDERS: VisionProvider[] = [
       model: "deepseek-chat",
       messages: [
         { role: "system", content: sys },
-        { role: "user", content: usr },
+        { role: "user", content: usr }
       ],
       temperature: 0.1,
       max_tokens: 2000,
     }),
     extractText: (d: any) => d.choices?.[0]?.message?.content || "",
     buildHeaders: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
-  },
+  }
 ];
 
 const SYSTEM_PROMPT = `Você é o Orion Vision — sistema de visão computacional de ultra-precisão com análise facial/corporal/emocional completa.
@@ -310,7 +310,7 @@ async function refineWithDeepSeek(rawResult: VisionResponse): Promise<VisionResp
         model: "deepseek-chat",
         messages: [
           { role: "system", content: DEEPSEEK_REFINE_PROMPT },
-          { role: "user", content: `Refine estes protocolos de visão:\n${JSON.stringify(rawResult, null, 2)}` },
+          { role: "user", content: `Refine estes protocolos de visão:\n${JSON.stringify(rawResult, null, 2)}` }
         ],
         temperature: 0.1,
         max_tokens: 2000,
@@ -354,7 +354,7 @@ async function storeProtocol(
     `\n**Regras de Matching**:`,
     ...(obj.protocolos || [`${obj.nome}: ${obj.descricao}`]).map((p, i) => `${i + 1}. ${p}`),
     `\n**Categorias**: ${(obj.categorias || ["geral"]).join(", ")}`,
-    `\n_Auto-criado pelo Orion Vision Hybrid v3_`,
+    `\n_Auto-criado pelo Orion Vision Hybrid v3_`
   ].join("\n");
 
   await supabase.from("neural_knowledge_base").insert({
@@ -521,7 +521,7 @@ serve(async (req) => {
           descricao: [
             refined.cena ? `**Cena**: ${refined.cena}` : "",
             refined.texto_detectado ? `**Texto**: ${refined.texto_detectado}` : "",
-            refined.sentimento_visual ? `**Sentimento**: ${refined.sentimento_visual}` : "",
+            refined.sentimento_visual ? `**Sentimento**: ${refined.sentimento_visual}` : ""
           ].filter(Boolean).join("\n"),
           confianca: 100,
           source: "scene_analysis",

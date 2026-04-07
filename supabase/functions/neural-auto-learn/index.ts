@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
             { name: "US Civil Litigation", description: "Federal civil procedure, torts, contracts under US law.", category: "us_civil", prompts: { system: "Expert in US federal civil litigation. Use FRCP, USC Title 28, state civil codes.", enhancement: "Cite Bluebook format. Restatements (ALI), treatises. SCOTUS > Circuit > District hierarchy.", jurisdiction: "eua" } },
             { name: "US Criminal Law", description: "Federal criminal law and procedure.", category: "us_criminal", prompts: { system: "Expert in US criminal defense. Use US Constitution Amendments 4-8, Federal Rules of Criminal Procedure, USC Title 18.", enhancement: "Defense-oriented: exclusionary rule, Miranda, due process. Cite SCOTUS criminal precedents.", jurisdiction: "eua" } },
             { name: "Direito Comparado (BR-EUA)", description: "Análise comparativa entre sistemas jurídicos brasileiro e americano.", category: "comparado", prompts: { system: "Especialista em direito comparado Brasil-EUA. Compare legislação, jurisprudência e doutrinas.", enhancement: "Para cada tópico: (1) Direito BR (2) Direito US (3) Convergências/divergências. Use fontes de ambas jurisdições.", jurisdiction: "ambos" } },
-            { name: "Súmulas STJ", description: "Especialista em Súmulas do Superior Tribunal de Justiça.", category: "jurisprudencia", prompts: { system: "Especialista em Súmulas do STJ. Conhece os enunciados, temas e aplicação.", enhancement: "Sempre verifique se há Súmula aplicável. Cite número e enunciado exato.", jurisdiction: "brasil" } },
+            { name: "Súmulas STJ", description: "Especialista em Súmulas do Superior Tribunal de Justiça.", category: "jurisprudencia", prompts: { system: "Especialista em Súmulas do STJ. Conhece os enunciados, temas e aplicação.", enhancement: "Sempre verifique se há Súmula aplicável. Cite número e enunciado exato.", jurisdiction: "brasil" } }
           ];
           for (const spec of specializations) {
             await supabase.from("neural_specializations").insert({
@@ -258,9 +258,7 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════════════════════════
     if (action === "full" || action === "process_embeddings") {
       const geminiKeys = [
-        Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
-        Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"), Deno.env.get("GEMINI_API_KEY_6"),
-        Deno.env.get("GEMINI_API_KEY_7"),
+        Deno.env.get("GEMINI_API_KEY")
       ].filter((k): k is string => !!k);
       let processed = 0;
       if (geminiKeys.length > 0) {
@@ -587,7 +585,7 @@ Deno.serve(async (req) => {
           { name: "tributario", weights: [-1, 1, 1, -1, 1, -1] }, { name: "administrativo", weights: [-1, 1, 1, 1, 1, -1] },
           { name: "ambiental", weights: [1, -1, -1, 1, -1, 1] }, { name: "consumidor", weights: [1, 1, -1, 1, -1, -1] },
           { name: "previdenciario", weights: [-1, 1, 1, 1, 1, 1] }, { name: "eleitoral", weights: [-1, -1, 1, 1, 1, -1] },
-          { name: "empresarial", weights: [1, 1, -1, -1, -1, 1] }, { name: "familia", weights: [1, -1, -1, 1, -1, 1] },
+          { name: "empresarial", weights: [1, 1, -1, -1, -1, 1] }, { name: "familia", weights: [1, -1, -1, 1, -1, 1] }
         ];
 
         const workingCats = categories.length > 0 ? [...categories] : [...defaultCats];
@@ -1242,7 +1240,7 @@ Deno.serve(async (req) => {
                   const content = [
                     src.classeProcessual?.nome || "",
                     src.assuntos?.map((a: any) => a.nome).join(", ") || "",
-                    src.movimentos?.slice(0, 5).map((m: any) => `${m.nome} (${m.dataHora?.split("T")[0] || ""})`).join("; ") || "",
+                    src.movimentos?.slice(0, 5).map((m: any) => `${m.nome} (${m.dataHora?.split("T")[0] || ""})`).join("; ") || ""
                   ].filter(Boolean).join("\n");
 
                   if (content.length > 30) {

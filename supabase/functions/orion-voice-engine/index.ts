@@ -26,7 +26,7 @@ function getHFToken(): string {
     Deno.env.get("HUGGINGFACE_API_KEY"),
     Deno.env.get("HF_TOKEN"),
     Deno.env.get("HF_WRITE_TOKEN"),
-    Deno.env.get("CHAVE_API_HUGGINGFACE"),
+    Deno.env.get("CHAVE_API_HUGGINGFACE")
   ].filter(Boolean) as string[];
   
   if (tokens.length === 0) throw new Error("No HuggingFace token configured");

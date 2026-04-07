@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
                 contents: [{
                   parts: [
                     { text: prompt },
-                    { inlineData: { mimeType: "application/pdf", data: pdfBase64 } },
+                    { inlineData: { mimeType: "application/pdf", data: pdfBase64 } }
                   ],
                 }],
               }),

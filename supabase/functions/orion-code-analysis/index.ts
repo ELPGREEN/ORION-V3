@@ -126,7 +126,7 @@ serve(async (req) => {
         const fileList = [
           ...flattenTree(neuralFiles, "src/lib/neural"),
           ...flattenTree(componentFiles, "src/components/dashboard/neural"),
-          ...flattenTree(edgeFunctions, "supabase/functions"),
+          ...flattenTree(edgeFunctions, "supabase/functions")
         ];
 
         if (GEMINI_KEY) {
@@ -300,11 +300,7 @@ function estimateComplexity(code: string): { cyclomatic: number; linesOfCode: nu
 
 function getGeminiKeysRotated(primaryKey: string): string[] {
   return [
-    primaryKey,
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
+    primaryKey
   ].filter((k): k is string => !!k);
 }
 

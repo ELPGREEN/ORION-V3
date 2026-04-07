@@ -272,9 +272,7 @@ async function saveWeights(supabase: ReturnType<typeof createClient>, userId: st
 // Generate embedding using Gemini gemini-embedding-001 (768 dims, free) + HF fallback
 async function generateEmbedding(text: string): Promise<number[] | null> {
   const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter(Boolean) as string[];
 
   const truncated = text.substring(0, 4000);
@@ -677,7 +675,7 @@ async function trainSpecializationReal(
       weights.semantic_weight,
       weights.keyword_weight, 
       weights.authority_weight,
-      weights.recency_weight,
+      weights.recency_weight
     ]);
     let bias = weights.confidence_bias;
 
@@ -717,7 +715,7 @@ async function trainSpecializationReal(
         normalizeDynamic(outputLen, statsOutputLen),
         normalizeDynamic(jurisCount, statsJurisCount),
         meta.neuralContextUsed ? 1.0 : 0.0,
-        normalizeDynamic(age, statsTimestamp),
+        normalizeDynamic(age, statsTimestamp)
       ];
     };
 
@@ -891,7 +889,7 @@ async function trainSpecializationReal(
             weights: Array.from({ length: 1 }, () => nguyenWidrowInit(1, 4, new Array(4).fill(0.5))),
             biases: [0],
             activation: "sigmoid",
-          },
+          }
         ];
         
         const mlpAdam = { m: [] as number[][][], v: [] as number[][][], mB: [] as number[][], vB: [] as number[][], iter: 0 };
@@ -1719,7 +1717,7 @@ async function neuralLearnUnified(
       const teacherLayers: MLPLayer[] = [
         { weights: [[0.5, 0.3, 0.4, 0.2], [0.3, 0.5, 0.2, 0.4], [0.4, 0.2, 0.5, 0.3]], biases: [0, 0, 0], activation: "sigmoid" },
         { weights: [[0.4, 0.3, 0.5], [0.5, 0.4, 0.3]], biases: [0, 0], activation: "sigmoid" },
-        { weights: [[0.5, 0.5]], biases: [0], activation: "sigmoid" },
+        { weights: [[0.5, 0.5]], biases: [0], activation: "sigmoid" }
       ];
 
       steps.distillation = await distillToStudentModel(supabase, userId, teacherLayers, trainingData);
@@ -1843,7 +1841,7 @@ Deno.serve(async (req) => {
           { name: "previdenciario", weights: [-1, 1, 1, 1, 1, 1] },
           { name: "eleitoral", weights: [-1, -1, 1, 1, 1, -1] },
           { name: "empresarial", weights: [1, 1, -1, -1, -1, 1] },
-          { name: "familia", weights: [1, -1, -1, 1, -1, 1] },
+          { name: "familia", weights: [1, -1, -1, 1, -1, 1] }
         ];
         
         let totalUpdates = 0;

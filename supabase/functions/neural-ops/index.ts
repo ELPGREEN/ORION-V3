@@ -51,7 +51,7 @@ async function handleExportFull() {
     sb.from("neural_specializations").select("id, name, category, description, prompts, training_data, accuracy_score, is_active"),
     sb.from("neural_knowledge_base").select("id, title, content, source_type, source_reference, tags, is_processed"),
     sb.from("neural_learning_data").select("interaction_type, input_text, output_text, quality_score, metadata")
-      .eq("learned", true).gte("quality_score", 0.7).order("created_at", { ascending: false }).limit(100),
+      .eq("learned", true).gte("quality_score", 0.7).order("created_at", { ascending: false }).limit(100)
   ]);
   return {
     success: true,
@@ -86,7 +86,7 @@ async function handleStatus() {
   const [specCount, kbCount, modelsCount] = await Promise.all([
     sb.from("neural_specializations").select("id", { count: "exact", head: true }),
     sb.from("neural_knowledge_base").select("id", { count: "exact", head: true }),
-    sb.from("neural_learning_data").select("id", { count: "exact", head: true }).eq("learned", true),
+    sb.from("neural_learning_data").select("id", { count: "exact", head: true }).eq("learned", true)
   ]);
   return {
     success: true,
@@ -336,7 +336,7 @@ function buildArchitecture(role: string) {
         { name: "jurisprudence_search", category: "retrieval", weight: 0.95 },
         { name: "case_strategy", category: "planning", weight: 0.8 },
         { name: "client_communication", category: "language", weight: 0.75 },
-        { name: "contract_review", category: "analysis", weight: 0.88 },
+        { name: "contract_review", category: "analysis", weight: 0.88 }
       ],
       learning_rate: 0.0008,
     };
@@ -348,7 +348,7 @@ function buildArchitecture(role: string) {
       { name: "case_understanding", category: "comprehension", weight: 0.85 },
       { name: "document_navigation", category: "retrieval", weight: 0.7 },
       { name: "communication", category: "language", weight: 0.8 },
-      { name: "status_tracking", category: "monitoring", weight: 0.75 },
+      { name: "status_tracking", category: "monitoring", weight: 0.75 }
     ],
     learning_rate: 0.001,
   };
@@ -887,7 +887,7 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   // Fire all async lookups in parallel (was sequential — saved ~800ms)
   const [identityKnowledge, ragContext] = await Promise.all([
     isIdentityQuery ? fetchIdentityKnowledge() : Promise.resolve(""),
-    (questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve(""),
+    (questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve("")
   ]);
 
   if (isArchitectureQuery) {
@@ -1047,7 +1047,7 @@ async function buildOrionMessages(body: Record<string, unknown>) {
       role: "user",
       content: [
         { type: "text", text: question || "Descreva o que você vê." },
-        { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
+        { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
       ],
     });
   } else {
@@ -1319,7 +1319,7 @@ const HF_MODELS = [
   "google/gemma-3n-E2B",
   "Qwen/Qwen2.5-72B-Instruct",
   "meta-llama/Llama-3.2-3B-Instruct",
-  "google/gemma-2-9b-it",
+  "google/gemma-2-9b-it"
 ];
 
 async function callHuggingFaceFallback(messages: any[]): Promise<string> {
@@ -1379,9 +1379,7 @@ async function callHuggingFaceStreaming(messages: any[]): Promise<Response> {
 // ═══ GEMINI EMBED (for RAG query embedding — FREE, 768d, 1s timeout) ═══
 async function generateQueryEmbedding(queryText: string): Promise<number[] | null> {
   const keys = [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter(Boolean) as string[];
   if (keys.length === 0) return null;
   
@@ -1602,13 +1600,7 @@ const GEMINI_MODEL = "gemini-2.5-flash";
 
 function getGeminiKeys(): string[] {
   return [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter((k): k is string => !!k);
 }
 
@@ -1708,7 +1700,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     : isComplexQuery ? 8192 : 4096;
   (messages as any).__maxTokens = requestedMaxTokens || defaultMax;
 
-  const geminiKeys = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"];
+  const geminiKeys = ["GEMINI_API_KEY"];
   const hasImage = messages.some((m: any) => Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url"));
 
   // ═══ STREAMING MODE ═══
@@ -2003,7 +1995,7 @@ Gere reflexão cognitiva PROFUNDA em JSON.`;
 
   const msgs = [
     { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt },
+    { role: "user", content: userPrompt }
   ];
 
   // Try providers: Gemini → Mistral → DeepSeek → HuggingFace
@@ -2043,7 +2035,7 @@ Gere reflexão cognitiva PROFUNDA em JSON.`;
       if (!resp.ok) throw new Error(`HF ${resp.status}`);
       const data = await resp.json();
       return data.choices?.[0]?.message?.content || "{}";
-    }},
+    }}
   ];
 
   for (const provider of providers) {

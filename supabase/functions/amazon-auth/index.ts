@@ -13,7 +13,7 @@ const ALLOWED_API_HOSTS = [
   'api.amazon.com',
   'api.amazonalexa.com',
   'layla.amazon.com',
-  'alexa.amazon.com',
+  'alexa.amazon.com'
 ]
 
 function isAllowedUrl(urlStr: string): boolean {
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
       return jsonResponse({
         client_id: AMAZON_CLIENT_ID,
         scopes: [
-          'profile',
+          'profile'
         ],
       })
     }

@@ -59,8 +59,7 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
     {
       name: "gemini",
       getKeys: () => [
-        Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
-        Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"),
+        Deno.env.get("GEMINI_API_KEY")
       ].filter((k): k is string => !!k),
     },
     {
@@ -76,7 +75,7 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
         response_format: { type: "json_object" },
       }),
       extract: (d: any) => d.choices?.[0]?.message?.content,
-    },
+    }
   ];
 
   // Try Gemini first (FREE)
@@ -163,7 +162,7 @@ function layer1FeatureExtraction(content: string): {
     { name: "PREÂMBULO", pattern: /^[\s\S]*?(?=(?:I\s*[-–—]\s*D[OA]S?\s+FATOS|DOS?\s+FATOS|EMENTA|RELATÓRIO))/i },
     { name: "DOS FATOS", pattern: /(?:I\s*[-–—]\s*)?D[OA]S?\s+FATOS[\s\S]*?(?=(?:I{2,}\s*[-–—]|D[OA]\s+DIREITO|DO\s+MÉRITO|FUNDAMENTAÇÃO|D[OA]S?\s+PEDIDOS))/i },
     { name: "DO DIREITO", pattern: /(?:I{2,}\s*[-–—]\s*)?(?:D[OA]\s+DIREITO|DO\s+MÉRITO|FUNDAMENTAÇÃO)[\s\S]*?(?=(?:I{2,}\s*[-–—]|D[OA]S?\s+PEDIDOS|REQUERIMENTOS|DISPOSITIVO))/i },
-    { name: "DOS PEDIDOS", pattern: /(?:I{2,}\s*[-–—]\s*)?(?:D[OA]S?\s+PEDIDOS|REQUERIMENTOS|DISPOSITIVO)[\s\S]*/i },
+    { name: "DOS PEDIDOS", pattern: /(?:I{2,}\s*[-–—]\s*)?(?:D[OA]S?\s+PEDIDOS|REQUERIMENTOS|DISPOSITIVO)[\s\S]*/i }
   ];
   const sections: Array<{ name: string; content: string }> = [];
   for (const sp of sectionPatterns) {
@@ -176,10 +175,10 @@ function layer1FeatureExtraction(content: string): {
 
   // Entity extraction
   const parties = [...new Set([
-    ...Array.from(text.matchAll(/(?:autor|réu|requerente|requerido|reclamante|reclamado|apelante|apelado|impetrante|impetrado|querelante|querelado|paciente|acusad[oa])\s*[:\-–]\s*([^\n,;]{3,60})/gi)).map(m => m[1]?.trim()),
+    ...Array.from(text.matchAll(/(?:autor|réu|requerente|requerido|reclamante|reclamado|apelante|apelado|impetrante|impetrado|querelante|querelado|paciente|acusad[oa])\s*[:\-–]\s*([^\n,;]{3,60})/gi)).map(m => m[1]?.trim())
   ].filter(Boolean))] as string[];
 
-  const values = [...new Set(Array.from(text.matchAll(/R\$\s*[\d.,]+(?:\s*\(?[\w\s]+\)?)?/g)).map(m => m[0]))];
+  const values = [...new Set(Array.from(text.matchAll(/R\$\s*[\d.]+(?:\s*\(?[\w\s]+\)?)?/g)).map(m => m[0]))];
   const dates = [...new Set(Array.from(text.matchAll(/\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4}/g)).map(m => m[0]))];
   const processNumbers = [...new Set(Array.from(text.matchAll(/\d{7}[-.]?\d{2}[.]?\d{4}[.]?\d[.]?\d{2}[.]?\d{4}/g)).map(m => m[0]))];
 

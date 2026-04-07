@@ -22,7 +22,7 @@ const corsHeaders = {
 const FISH_SPEECH_SPACES = [
   "fishaudio/fish-speech-1",
   "pc206044/fishaudio-fish-speech-1.5",
-  "Tonic/fish-speech",
+  "Tonic/fish-speech"
 ];
 
 /**
@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
           voices: [
             { id: "clone", label: "Sua Voz Clonada", type: "clone" },
             { id: "Charon", label: "Charon (Gemini)", type: "gemini" },
-            { id: "Puck", label: "Puck (Gemini)", type: "gemini" },
+            { id: "Puck", label: "Puck (Gemini)", type: "gemini" }
           ],
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

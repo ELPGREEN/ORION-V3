@@ -334,7 +334,7 @@ function searchLexML(query: string): Promise<SearchResult[]> {
       { title: "Lei de Improbidade", urn: "urn:lex:br:federal:lei:1992-06-02;8429", keywords: ["improbidade","administrativa","enriquecimento ilícito"], tipo: "lei", date: "02/06/1992" },
       { title: "Lei Anticrime", urn: "urn:lex:br:federal:lei:2019-12-24;13964", keywords: ["anticrime","acordo de não persecução"], tipo: "lei", date: "24/12/2019" },
       { title: "Código de Trânsito", urn: "urn:lex:br:federal:lei:1997-09-23;9503", keywords: ["trânsito","CTB","veículo","infração","multa"], tipo: "lei", date: "23/09/1997" },
-      { title: "Lei de Falências", urn: "urn:lex:br:federal:lei:2005-02-09;11101", keywords: ["falência","recuperação judicial","credor"], tipo: "lei", date: "09/02/2005" },
+      { title: "Lei de Falências", urn: "urn:lex:br:federal:lei:2005-02-09;11101", keywords: ["falência","recuperação judicial","credor"], tipo: "lei", date: "09/02/2005" }
     ];
 
     const qLower = query.toLowerCase();
@@ -442,7 +442,7 @@ async function searchSTF(query: string): Promise<SearchResult[]> {
       description: `Busque súmulas vinculantes e não-vinculantes do STF relacionadas a "${query}".`,
       url: `https://jurisprudencia.stf.jus.br/pages/search?base=sumulas&queryString=${encodedQuery}&sort=_score&sortBy=desc`,
       type: 'jurisprudencia' as const, metadata: { fallback: true },
-    },
+    }
   ];
 }
 
@@ -456,7 +456,7 @@ async function searchCNJ(query: string): Promise<SearchResult[]> {
       url: `https://painel-estatistica.stg.cloud.cnj.jus.br/estatisticas.html`,
       type: 'estatistica' as const,
       metadata: { fallback: true, portais: ['https://www.cnj.jus.br/pesquisas-judiciarias/justica-em-numeros/'] },
-    },
+    }
   ];
 }
 
@@ -517,7 +517,7 @@ async function searchDatajud(query: string, tribunal: string): Promise<SearchRes
               { match: { "assuntos.nome": { query, boost: 3 } } },
               { match: { "classe.nome": { query, boost: 2 } } },
               { match: { "movimentos.nome": { query, boost: 1 } } },
-              { match_phrase: { "numeroProcesso": query } },
+              { match_phrase: { "numeroProcesso": query } }
             ],
             minimum_should_match: 1,
           },
@@ -525,7 +525,7 @@ async function searchDatajud(query: string, tribunal: string): Promise<SearchRes
         sort: [{ "dataAjuizamento": { order: "desc" } }],
         _source: [
           "numeroProcesso", "classe.nome", "assuntos.nome", "orgaoJulgador.nome",
-          "dataAjuizamento", "movimentos", "grau", "tribunal",
+          "dataAjuizamento", "movimentos", "grau", "tribunal"
         ],
       }),
     });
@@ -872,7 +872,7 @@ async function refineQueryWithAI(rawQuery: string): Promise<{ refinedQuery: stri
     
     // Determine which keys to try based on enabled providers (fallback to env keys)
     const groqKey = Deno.env.get("GROQ_API_KEY") || "";
-    const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_API_KEY_2") || Deno.env.get("GEMINI_API_KEY_3") || "";
+    const geminiKey = Deno.env.get("GEMINI_API_KEY") || || || "";
     const openaiKey = Deno.env.get("OPENAI_API_KEY") || Deno.env.get("OPENAI_API_KEY_2") || "";
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") || "";
     
@@ -920,7 +920,7 @@ REGRAS CRÍTICAS:
               model: "llama-3.1-8b-instant",
               messages: [
                 { role: "system", content: "Retorne APENAS JSON válido, sem markdown." },
-                { role: "user", content: refinePrompt },
+                { role: "user", content: refinePrompt }
               ],
               temperature: 0.1, max_tokens: 300,
             }),
@@ -955,7 +955,7 @@ REGRAS CRÍTICAS:
               model: "gpt-4o-mini",
               messages: [
                 { role: "system", content: "Retorne APENAS JSON válido, sem markdown." },
-                { role: "user", content: refinePrompt },
+                { role: "user", content: refinePrompt }
               ],
               temperature: 0.1, max_tokens: 300,
             }),
@@ -1076,7 +1076,7 @@ const TXT_KNOWLEDGE_FILES_UNI: Array<{ url: string; label: string; tipo: "doutri
   { url: "sumulas-stj-completas-v4.txt", label: "📚 Súmulas STJ v4 (fallback)", tipo: "sumula" },
   { url: "aury-lopes-direito-processual-penal-v3.txt", label: "📚 Aury Lopes Jr. v3 (fallback)", tipo: "doutrina" },
   { url: "tematica-jurisprudencia-stf-v5.txt", label: "📚 Coletânea STF v5 (fallback)", tipo: "jurisprudencia" },
-  { url: "nocoes-direito-processual-penal-v4.txt", label: "📚 Noções DPP v4 (fallback)", tipo: "doutrina" },
+  { url: "nocoes-direito-processual-penal-v4.txt", label: "📚 Noções DPP v4 (fallback)", tipo: "doutrina" }
 ];
 
 const _txtCacheUni = new Map<string, { content: string; loadedAt: number }>();
@@ -1198,7 +1198,7 @@ Deno.serve(async (req) => {
       'datajud_tjsp', 'datajud_tjrj', 'datajud_tjrs', 'datajud_tjmg',
       'datajud_tjpr', 'datajud_tjba', 'datajud_tjpe', 'datajud_tjsc',
       'datajud_tjce', 'datajud_tjgo', 'datajud_tjdft', 'datajud_tjpa', 'datajud_tjma',
-      'brasilapi', 'senado_legislacao', 'catalogo_leis',
+      'brasilapi', 'senado_legislacao', 'catalogo_leis'
     ];
 
     const allResults: SearchResult[] = [];
@@ -1272,7 +1272,7 @@ Deno.serve(async (req) => {
       'datajud_tse', 'datajud_stm', 'datajud_trf1', 'datajud_trf2', 'datajud_trf3',
       'datajud_trf5', 'datajud_trf6', 'datajud_tjrj', 'datajud_tjmg',
       'datajud_tjpr', 'datajud_tjba', 'datajud_tjpe', 'datajud_tjsc',
-      'datajud_tjce', 'datajud_tjgo', 'datajud_tjdft', 'datajud_tjpa', 'datajud_tjma',
+      'datajud_tjce', 'datajud_tjgo', 'datajud_tjdft', 'datajud_tjpa', 'datajud_tjma'
     ];
     const activeDatejud = datajudPriority.filter(s => datajudSources.includes(s) && datajudMap[s]);
 

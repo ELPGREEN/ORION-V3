@@ -102,9 +102,9 @@ const MOCK_ORGANIZATION = [
     name: "ORION IA by ELP",
     accounts: [
       { uid: "acc-001", name: "Escritório Principal", customFields: { cnpj: "12.345.678/0001-90", responsavel: "[Nome do Advogado]" } },
-      { uid: "acc-002", name: "Filial São Paulo", customFields: { cnpj: "12.345.678/0002-71", responsavel: "Associado SP" } },
+      { uid: "acc-002", name: "Filial São Paulo", customFields: { cnpj: "12.345.678/0002-71", responsavel: "Associado SP" } }
     ],
-  },
+  }
 ];
 
 const MOCK_ROLES = [
@@ -113,7 +113,7 @@ const MOCK_ROLES = [
   { acc: "acc-001", code: "EST", id: "role-003", name: "Estagiário de Direito", context: { brazil: { cbo: "3519-05", escolaridadeMinima: "superior_incompleto" } } },
   { acc: "acc-001", code: "SEC", id: "role-004", name: "Secretária Jurídica", context: { brazil: { cbo: "4110-10", escolaridadeMinima: "medio_completo" } } },
   { acc: "acc-001", code: "PARA", id: "role-005", name: "Paralegal", context: { brazil: { cbo: "3519-05", escolaridadeMinima: "superior_incompleto" } } },
-  { acc: "acc-002", code: "ADV-PL", id: "role-006", name: "Advogado Pleno", context: { brazil: { cbo: "2411-05", escolaridadeMinima: "superior_completo" } } },
+  { acc: "acc-002", code: "ADV-PL", id: "role-006", name: "Advogado Pleno", context: { brazil: { cbo: "2411-05", escolaridadeMinima: "superior_completo" } } }
 ];
 
 const MOCK_DEPARTMENTS = [
@@ -124,7 +124,7 @@ const MOCK_DEPARTMENTS = [
   { acc: "acc-001", code: "JUR-ADM", id: "dept-005", name: "Direito Administrativo" },
   { acc: "acc-001", code: "ADM", id: "dept-006", name: "Administrativo" },
   { acc: "acc-002", code: "JUR-EMP", id: "dept-007", name: "Direito Empresarial" },
-  { acc: "acc-002", code: "JUR-CONS", id: "dept-008", name: "Direito do Consumidor" },
+  { acc: "acc-002", code: "JUR-CONS", id: "dept-008", name: "Direito do Consumidor" }
 ];
 
 const MOCK_BENEFITS = [
@@ -134,7 +134,7 @@ const MOCK_BENEFITS = [
   { id: "ben-004", category: "alimentacao", name: "Vale Alimentação", description: "Alelo Alimentação", valor: 600.00, ativo: true },
   { id: "ben-005", category: "transporte", name: "Vale Transporte", description: "6% desconto legal", valor: 440.00, ativo: true },
   { id: "ben-006", category: "educacao", name: "Auxílio Educação", description: "Cursos de pós-graduação e especializações jurídicas", valor: 1500.00, ativo: true },
-  { id: "ben-007", category: "seguro", name: "Seguro de Vida", description: "Seguro de vida em grupo - 24x salário", valor: 85.00, ativo: true },
+  { id: "ben-007", category: "seguro", name: "Seguro de Vida", description: "Seguro de vida em grupo - 24x salário", valor: 85.00, ativo: true }
 ];
 
 const MOCK_POSITIONS = [
@@ -155,20 +155,20 @@ const MOCK_POSITIONS = [
     cargo: "Paralegal", departamento: "Administrativo",
     salario: { valor: 5500, recorrencia: "mensalista" }, vinculo: "clt",
     requisitos: "Experiência em rotina jurídica, organização de processos",
-  },
+  }
 ];
 
 const MOCK_ATTACHMENTS = [
   { id: "att-001", name: "Contrato Social.pdf", type: "application/pdf", size: 245000, created: "2026-01-10T08:00:00Z" },
   { id: "att-002", name: "Procuração.pdf", type: "application/pdf", size: 120000, created: "2026-01-12T10:30:00Z" },
-  { id: "att-003", name: "CNPJ Comprovante.pdf", type: "application/pdf", size: 98000, created: "2026-01-05T14:00:00Z" },
+  { id: "att-003", name: "CNPJ Comprovante.pdf", type: "application/pdf", size: 98000, created: "2026-01-05T14:00:00Z" }
 ];
 
 const MOCK_MODELS = [
   { id: "mod-001", type: "admissao", name: "Carta de Admissão Padrão", account: "acc-001" },
   { id: "mod-002", type: "demissao", name: "Carta de Demissão", account: "acc-001" },
   { id: "mod-003", type: "advertencia", name: "Carta de Advertência", account: "acc-001" },
-  { id: "mod-004", type: "ferias", name: "Aviso de Férias", account: "acc-001" },
+  { id: "mod-004", type: "ferias", name: "Aviso de Férias", account: "acc-001" }
 ];
 
 const MOCK_IBGE: Record<string, Record<string, string>> = {

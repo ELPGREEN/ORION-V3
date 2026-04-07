@@ -42,17 +42,17 @@ const OFFICIAL_URL_PATTERNS: Record<string, RegExp[]> = {
     /tjrj\.jus\.br/i,
     /senado\.leg\.br/i,
     /camara\.leg\.br/i,
-    /jusbrasil\.com\.br/i,
+    /jusbrasil\.com\.br/i
   ],
   US: [
     /uscode\.house\.gov/i,
     /law\.cornell\.edu/i,
     /supremecourt\.gov/i,
-    /congress\.gov/i,
+    /congress\.gov/i
   ],
   EU: [
     /eur-lex\.europa\.eu/i,
-    /curia\.europa\.eu/i,
+    /curia\.europa\.eu/i
   ],
   PT: [/dre\.pt/i],
   IT: [/normattiva\.it/i, /gazzettaufficiale\.it/i],
@@ -195,7 +195,7 @@ function extractCitationsFromText(text: string): CitationInput[] {
   const citations: CitationInput[] = [];
 
   // Pattern: Brazilian laws (Lei nº X.XXX/YYYY, Art. X)
-  const lawPattern = /(?:Lei|Decreto|Medida Provisória|Emenda Constitucional|Lei Complementar)\s+(?:n[ºo°]?\s*)?[\d.,]+(?:\/\d{4})?/gi;
+  const lawPattern = /(?:Lei|Decreto|Medida Provisória|Emenda Constitucional|Lei Complementar)\s+(?:n[ºo°]?\s*)?[\d.]+(?:\/\d{4})?/gi;
   const lawMatches = text.match(lawPattern) || [];
   for (const match of lawMatches) {
     citations.push({

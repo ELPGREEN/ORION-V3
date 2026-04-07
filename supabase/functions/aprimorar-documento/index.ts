@@ -49,7 +49,7 @@ const TIMBRE_TYPES = new Set([
   "contrato-prestacao", "contrato-compra-venda", "contrato-locacao", "contrato-social",
   "contrato-honorarios", "contrato-trabalho", "procuracao-publica", "procuracao-particular",
   "procuracao-ad-judicia", "notificacao-extrajudicial", "declaracao-geral", "atestado",
-  "distrato", "termo-acordo", "termo-quitacao",
+  "distrato", "termo-acordo", "termo-quitacao"
 ]);
 
 const ABNT_TYPES = new Set([
@@ -57,7 +57,7 @@ const ABNT_TYPES = new Set([
   "recurso-extraordinario", "habeas-corpus", "mandado-seguranca", "acao-popular",
   "embargos-declaracao", "embargos-execucao", "impugnacao", "reconvencao",
   "denuncia", "queixa-crime", "alegacoes-finais", "memoriais",
-  "reclamacao-trabalhista", "defesa-trabalhista", "recurso-ordinario-tst",
+  "reclamacao-trabalhista", "defesa-trabalhista", "recurso-ordinario-tst"
 ]);
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1452,7 +1452,7 @@ function getProviders(): AIProvider[] {
     }
   }
 
-  const geminiKeys = [Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3")].filter(Boolean) as string[];
+  const geminiKeys = [Deno.env.get("GEMINI_API_KEY")].filter(Boolean) as string[];
   for (const key of geminiKeys) {
     providers.push({
       name: "Gemini/2.5-flash",
@@ -1535,7 +1535,7 @@ async function searchLegalBases(query: string, documentType: string): Promise<{ 
       if (!res.ok) return [];
       const data = await res.json();
       return data.results || [];
-    })(),
+    })()
   ]);
 
   if (neuralRes.status === "fulfilled") results.push(...neuralRes.value);
@@ -1826,7 +1826,7 @@ function validateDocument(doc: string, isJudicial: boolean): ValidationCheck {
   const score = passed / total;
 
   const issues = Object.entries(checks)
-    .filter(([, v]) => !v)
+    .filter(([ v]) => !v)
     .map(([k]) => {
       const labels: Record<string, string> = {
         hasSignature: "Falta assinatura do advogado",
@@ -1952,7 +1952,7 @@ const TXT_KNOWLEDGE_FILES_AP: Array<{ url: string; label: string; tipo: "doutrin
   { url: "sumulas-stj-completas-v4.txt", label: "Súmulas STJ v4 (fallback)", tipo: "sumula", areas: ["civil","penal","trabalhista","consumidor","tributario","administrativo","previdenciario","familia","bancario","imobiliario","ambiental","empresarial","processual_penal"] },
   { url: "aury-lopes-direito-processual-penal-v3.txt", label: "Aury Lopes Jr. v3 (fallback)", tipo: "doutrina", areas: ["penal","processual_penal"] },
   { url: "tematica-jurisprudencia-stf-v5.txt", label: "Coletânea STF v5 (fallback)", tipo: "jurisprudencia", areas: ["penal","processual_penal"] },
-  { url: "nocoes-direito-processual-penal-v4.txt", label: "Noções DPP v4 (fallback)", tipo: "doutrina", areas: ["penal","processual_penal"] },
+  { url: "nocoes-direito-processual-penal-v4.txt", label: "Noções DPP v4 (fallback)", tipo: "doutrina", areas: ["penal","processual_penal"] }
 ];
 
 const _txtCacheAP = new Map<string, { content: string; loadedAt: number }>();
@@ -2251,7 +2251,7 @@ REGRAS:
       const messages = [
         { role: "system", content: systemOverride || defaultSystemPrompt },
         ...(chatHistory || []).slice(-10),
-        { role: "user", content: query || "" },
+        { role: "user", content: query || "" }
       ];
 
       const result = await callWithFallback(providers, messages, 16384, 0.4);
@@ -2309,14 +2309,14 @@ ${responsesText}`;
       if (chunks.length > 1) {
         const result = await processChunked(chunks, providers, (chunkText, idx, total, _ctx) => [
           { role: "system", content: `${refinementPrompt}\n\nEsta é a SEÇÃO ${idx + 1} de ${total}. Integre os detalhes APENAS nesta seção onde pertinente.` },
-          { role: "user", content: `Integre os detalhes do usuário nesta seção:\n\n${chunkText}` },
+          { role: "user", content: `Integre os detalhes do usuário nesta seção:\n\n${chunkText}` }
         ], 32768, 0.3);
         enrichedRaw = result.content;
         provider = result.provider;
       } else {
         const result = await callWithFallback(providers, [
           { role: "system", content: refinementPrompt },
-          { role: "user", content: `Integre os detalhes do usuário no documento abaixo. Retorne o documento COMPLETO personalizado:\n\n${plainText}` },
+          { role: "user", content: `Integre os detalhes do usuário no documento abaixo. Retorne o documento COMPLETO personalizado:\n\n${plainText}` }
         ], 32768, 0.3);
         enrichedRaw = result.content;
         provider = result.provider;
@@ -2388,7 +2388,7 @@ REGRAS:
         providers,
         [
           { role: "system", content: planningPrompt },
-          { role: "user", content: `Analise e crie o plano de ação para este documento (${documentType || "jurídico"}):\n\n${plainText}` },
+          { role: "user", content: `Analise e crie o plano de ação para este documento (${documentType || "jurídico"}):\n\n${plainText}` }
         ],
         16384,
         0.3,
@@ -2464,7 +2464,7 @@ Retorne APENAS o JSON, sem texto extra. Seja tecnicamente preciso como um correg
 
       const posResult = await callWithFallback(providers, [
         { role: "system", content: "Você é um advogado sênior da Corregedoria-Geral realizando auditoria técnica de peça jurídica. Retorne EXCLUSIVAMENTE um objeto JSON válido conforme instruído. Nenhum texto, comentário ou markdown fora do JSON." },
-        { role: "user", content: positionPrompt },
+        { role: "user", content: positionPrompt }
       ], 4000, 0.2);
 
       let analysisResult: {
@@ -2525,7 +2525,7 @@ Retorne APENAS o JSON, sem texto extra. Seja tecnicamente preciso como um correg
       const docKnowledge = getDocumentKnowledgePrompt(documentTypeId, category);
 
       const responsesText = Object.entries(aggregateResponses)
-        .filter(([, v]) => v.trim())
+        .filter(([ v]) => v.trim())
         .map(([q, a]) => `LACUNA IDENTIFICADA: ${q}\nRESPOSTA DO ADVOGADO: ${a}`)
         .join("\n\n");
 
@@ -2561,14 +2561,14 @@ DOCUMENTO ORIGINAL (CADA PALAVRA DEVE PERMANECER INTACTA NO RESULTADO):`;
       if (chunks.length > 1) {
         const result = await processChunked(chunks, providers, (chunkText, idx, total, _ctx) => [
           { role: "system", content: `${aggregatePrompt}\n\nEsta é a SEÇÃO ${idx + 1} de ${total}. Agregue os argumentos defensivos APENAS onde pertinente nesta seção. Preserve tudo. Não resuma.` },
-          { role: "user", content: `Agregue os novos argumentos a esta seção preservando TUDO:\n\n${chunkText}` },
+          { role: "user", content: `Agregue os novos argumentos a esta seção preservando TUDO:\n\n${chunkText}` }
         ], 32768, 0.3);
         enrichedRaw = result.content;
         provider = result.provider;
       } else {
         const result = await callWithFallback(providers, [
           { role: "system", content: aggregatePrompt },
-          { role: "user", content: `Agregue os novos argumentos defensivos ao documento abaixo. Retorne o documento COMPLETO — cada seção, cada parágrafo do original — com os novos argumentos integrados nos locais corretos:\n\n${plainText}` },
+          { role: "user", content: `Agregue os novos argumentos defensivos ao documento abaixo. Retorne o documento COMPLETO — cada seção, cada parágrafo do original — com os novos argumentos integrados nos locais corretos:\n\n${plainText}` }
         ], 32768, 0.3);
         enrichedRaw = result.content;
         provider = result.provider;
@@ -2672,7 +2672,7 @@ REGRAS ABSOLUTAS:
 3. NÃO use Markdown. Retorne texto puro.
 4. Retorne esta seção COMPLETA reformatada.${docKnowledgeForPrompt}`,
           },
-          { role: "user", content: `Corrija apenas a formatação ABNT desta seção:\n\n${chunkText}` },
+          { role: "user", content: `Corrija apenas a formatação ABNT desta seção:\n\n${chunkText}` }
         ], 32768, 0.1);
         enrichedRaw = result.content;
         provider = result.provider;
@@ -2684,7 +2684,7 @@ REGRAS ABSOLUTAS:
               role: "system",
               content: `Você é um especialista em formatação ABNT de documentos jurídicos brasileiros.
 ${ANTI_SUMMARY_INSTRUCTION}
-${formattingOptions && formattingOptions.length > 0 ? `\nFOCO DO USUÁRIO (aplique APENAS estas verificações):\n${formattingOptions.includes("grammar") ? "- Corrigir gramática e ortografia\n" : ""}${formattingOptions.includes("alignment") ? "- Verificar alinhamento e espaçamento\n" : ""}${formattingOptions.includes("punctuation") ? "- Padronizar pontuação (., , -)\n" : ""}${formattingOptions.includes("lists") ? "- Organizar listas e numeração\n" : ""}` : ""}
+${formattingOptions && formattingOptions.length > 0 ? `\nFOCO DO USUÁRIO (aplique APENAS estas verificações):\n${formattingOptions.includes("grammar") ? "- Corrigir gramática e ortografia\n" : ""}${formattingOptions.includes("alignment") ? "- Verificar alinhamento e espaçamento\n" : ""}${formattingOptions.includes("punctuation") ? "- Padronizar pontuação (., -)\n" : ""}${formattingOptions.includes("lists") ? "- Organizar listas e numeração\n" : ""}` : ""}
 REGRAS ABSOLUTAS:
 1. NÃO altere o conteúdo — nenhuma palavra pode ser adicionada ou removida.
 2. Corrija APENAS a formatação e estrutura:
@@ -2701,7 +2701,7 @@ REGRAS ABSOLUTAS:
             {
               role: "user",
               content: `Corrija apenas a formatação ABNT deste documento jurídico. Retorne o documento completo reformatado:\n\n${plainText}`,
-            },
+            }
           ],
           32768,
           0.1
@@ -2735,7 +2735,7 @@ REGRAS ADICIONAIS:
             {
               role: "user",
               content: userQuery,
-            },
+            }
           ],
           16384,
           0.2
@@ -2751,7 +2751,7 @@ Esta é a SEÇÃO ${idx + 1} de ${total} do documento. Corrija APENAS esta seç�
 
 REGRAS: Corrija APENAS erros gramaticais e de concordância. NÃO adicione novos parágrafos. NÃO use Markdown. Retorne esta seção COMPLETA corrigida.${docKnowledgeForPrompt}`,
           },
-          { role: "user", content: `Corrija gramática e estilo desta seção:\n\n${chunkText}` },
+          { role: "user", content: `Corrija gramática e estilo desta seção:\n\n${chunkText}` }
         ], 32768, 0.15);
         enrichedRaw = result.content;
         provider = result.provider;
@@ -2779,7 +2779,7 @@ REGRAS ABSOLUTAS:
             {
               role: "user",
               content: `Corrija gramática e estilo deste documento jurídico. Retorne o documento completo corrigido:\n\n${plainText}`,
-            },
+            }
           ],
           32768,
           0.15
@@ -2796,7 +2796,7 @@ REGRAS ABSOLUTAS:
 
       const [searchData, txtResults] = await Promise.all([
         searchLegalBases(searchQuery, documentType),
-        searchTxtKnowledgeBaseAP(searchQuery, txtKeywords, detectedArea || undefined),
+        searchTxtKnowledgeBaseAP(searchQuery, txtKeywords, detectedArea || undefined)
       ]);
       searchResults = searchData.results;
       citations = searchData.citations;
@@ -2843,7 +2843,7 @@ ${researchData ? `\n══════ DADOS REAIS DA PESQUISA NEURAL ═══�
             role: "system",
             content: `${legalSystemPrompt}\n\nEsta é a SEÇÃO ${idx + 1} de ${total}. Enriqueça APENAS esta seção com fundamentação legal. NÃO resuma.`,
           },
-          { role: "user", content: `Adicione fundamentação legal a esta seção:\n\n${chunkText}` },
+          { role: "user", content: `Adicione fundamentação legal a esta seção:\n\n${chunkText}` }
         ], 32768, 0.25);
         enrichedRaw = result.content;
         provider = result.provider;
@@ -2852,7 +2852,7 @@ ${researchData ? `\n══════ DADOS REAIS DA PESQUISA NEURAL ═══�
           providers,
           [
             { role: "system", content: legalSystemPrompt },
-            { role: "user", content: `Adicione fundamentação legal a este documento. Retorne o documento completo enriquecido:\n\n${plainText}` },
+            { role: "user", content: `Adicione fundamentação legal a este documento. Retorne o documento completo enriquecido:\n\n${plainText}` }
           ],
           32768,
           0.25
@@ -2869,7 +2869,7 @@ ${researchData ? `\n══════ DADOS REAIS DA PESQUISA NEURAL ═══�
 
       const [searchData, txtResultsFull] = await Promise.all([
         searchLegalBases(searchQuery, documentType),
-        searchTxtKnowledgeBaseAP(searchQuery, txtKeywordsFull, detectedAreaFull || undefined),
+        searchTxtKnowledgeBaseAP(searchQuery, txtKeywordsFull, detectedAreaFull || undefined)
       ]);
       searchResults = searchData.results;
       citations = searchData.citations;
@@ -2914,7 +2914,7 @@ ${txtSectionFull}
 ${docKnowledgeForPrompt}
 ${ANTI_HALLUCINATION_FULL}`,
           },
-          { role: "user", content: `Aprimore esta seção do documento jurídico. Retorne a seção COMPLETA aprimorada:\n\n${chunkText}` },
+          { role: "user", content: `Aprimore esta seção do documento jurídico. Retorne a seção COMPLETA aprimorada:\n\n${chunkText}` }
         ], 32768, 0.25);
         enrichedRaw = result.content;
         provider = result.provider;
@@ -2927,7 +2927,7 @@ ${ANTI_HALLUCINATION_FULL}`,
             { role: "system", content: `Você é um revisor jurídico sênior. Retorne o documento aprimorado completo. REGRAS INVIOLÁVEIS: 1) TEXTO PURO — proibido #, ##, **, *, -, \`\`\`, Markdown. 2) Proibido [fonte:]. 3) Proibido instruções de formatação (margens, fontes). 4) NÃO remova nenhuma palavra do original. 5) Títulos em CAIXA ALTA sem prefixos.${ANTI_SUMMARY_INSTRUCTION}
 ${txtSectionFull}
 ${ANTI_HALLUCINATION_FULL}` },
-            { role: "user", content: enrichPrompt },
+            { role: "user", content: enrichPrompt }
           ],
           32768,
           0.25
