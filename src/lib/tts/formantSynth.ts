@@ -1,13 +1,17 @@
 /**
- * Orion Formant Speech Synthesizer v18 — 5 Resonators + Nasal Anti-Formant
+ * Orion Formant Speech Synthesizer v19 — Spectrographic Calibration
  * 
- * Improvements over v17:
- * 1. 5 resonators (F1-F5) instead of 3 — fuller spectrum
- * 2. Nasal anti-formant (zero) for nasal vowels/consonants
- * 3. 50% coarticulation window (was 30%) — smoother transitions
- * 4. Per-segment amplitude envelope (attack/sustain/release)
- * 5. Consonant energy boost — plosives/fricatives louder relative to vowels
- * 6. Shimmer (amplitude jitter) from Voice DNA
+ * Calibrated from: Beber & Cielo (2012) — "Características da espectrografia
+ * de banda larga e estreita da emissão vocal de homens com laringe sem afecções"
+ * 
+ * Key findings applied (n=150 spectrograms, 25 healthy male voices):
+ * 1. F1/F2 intensity STRONG (48-53%) — maintained as dominant
+ * 2. F3 definition POOR (61%, p=0.002) — widened F3 BW significantly  
+ * 3. 3.2kHz noise MUCH (73%, p=0.04) — aspiration noise layer added
+ * 4. Tracing regularity POOR (61-69%, p<0.001) — higher jitter/shimmer
+ * 5. Anti-resonance MEDIAN (73-84%, p<0.001) — global damping filter
+ * 6. Low-freq noise MEDIAN (68%, p<0.001) — moderate rumble
+ * 7. Whole-spectrum intensity WEAK (46%) — stronger spectral tilt
  * 
  * 100% client-side, zero API, zero dependencies.
  */
