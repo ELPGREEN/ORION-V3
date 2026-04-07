@@ -390,7 +390,6 @@ export function useOrionReasoning(
 
   const askAIInternal = useCallback(async (question: string) => {
     const now = Date.now();
-    const LAYER_BUDGET_MS = 1000; // 1 second per layer, 4 layers = 4s max
     bargedInRef.current = false;
     aiPendingRef.current = true;
     setIsProcessing(true);
@@ -405,28 +404,28 @@ export function useOrionReasoning(
     if (abortControllerRef) abortControllerRef.current = controller;
 
     try {
-      // ═══ LAYER -1: Auto-Reformulation for comprehension ═══
-      // Expand abbreviations/slang BEFORE any processing so all layers understand the user
+      // ═══ FAST PRE-PROCESSING: Reformulation + Intent + SOM in parallel (~5ms total) ═══
       const comprehension = analyzeComprehension(question);
       let processedInput = question;
       if (comprehension.score < 0.85 || comprehension.isColloquial) {
         processedInput = quickLocalReformulate(question);
-        if (processedInput !== question) {
-          addLog(`🔄 Reformulado: "${question}" → "${processedInput}"`);
-        }
       }
 
-      // ═══ LAYER 0: Tesla Coil Intent Amplification ═══
+      // Run Tesla Coil + SOM + Intent in parallel (all <5ms each)
       const voltage = amplifyIntent(processedInput, {
         hasWorkingMemory: true,
-        recentHistory: chatHistoryRef.current.slice(-5).map(m => m.text),
+        recentHistory: chatHistoryRef.current.slice(-3).map(m => m.text),
       });
-      // Emit voltage event for TeslaCoilVoltagePanel
       window.dispatchEvent(new CustomEvent("tesla-coil-voltage", { detail: voltage }));
-      const layer0Ms = Date.now() - now;
-      addLog(`⚡ Tesla Coil: ${(voltage.confidence * 100).toFixed(0)}% conf, ${voltage.intent}, ${voltage.amplificationRatio.toFixed(1)}x amp [${layer0Ms}ms]`);
 
-      // If confidence too low, ask clarification instead of executing
+      const intentType = classifyIntent(voltage.normalizedInput);
+      const somResult = somClassify(question);
+      const _isSpecialCmd = somResult.isSpecialCmd || intentType === "auto_construct" || intentType === "self_evolve";
+
+      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType} | SOM=${somResult.handler}(${(somResult.confidence * 100).toFixed(0)}%)`);
+      window.dispatchEvent(new CustomEvent("som-routing", { detail: somResult }));
+
+      // If confidence too low, ask clarification
       if (!voltage.shouldExecute && !voltage.isConfirmation) {
         const clarifyMsg = voltage.suggestedQuestion || "Pode detalhar melhor o que deseja?";
         setChatHistory(prev => {
@@ -440,29 +439,14 @@ export function useOrionReasoning(
         return;
       }
 
-      // ═══ LAYER 1: Intent classification (<50ms) ═══
       let processedQuestion = voltage.normalizedInput;
-      const intentType = classifyIntent(processedQuestion);
-      const layer1Ms = Date.now() - now;
-      addLog(`🎯 Intent: ${intentType} [${layer1Ms}ms]`);
-
       const qLow = (processedInput || question).toLowerCase().trim();
 
-      // ═══ SOM FAST-PATH DETECTION — Self-Organizing Map (<2ms) ═══
-      // Replaces sequential regex matching with trained Kohonen network
-      const somResult = somClassify(question);
-      const _isSpecialCmd = somResult.isSpecialCmd || intentType === "auto_construct" || intentType === "self_evolve";
-      addLog(`🗺️ SOM: ${somResult.handler} (${(somResult.confidence * 100).toFixed(0)}%, ${somResult.matchTimeMs.toFixed(1)}ms, neuron=${somResult.neuronIdx})`);
-      window.dispatchEvent(new CustomEvent("som-routing", { detail: somResult }));
-
+      // ═══ INSTANT CACHE CHECK — skip everything if cached (<5ms) ═══
       if (!_isSpecialCmd || isUltraFastPathActive()) {
-        const rIdx = getResonanceIndex();
-        addLog(`⚡ Fast-path: skip intercepts${rIdx >= 0.85 ? ` [Tesla R=${rIdx.toFixed(2)} ULTRA]` : ""} [${Date.now() - now}ms]`);
-
-        // ═══ INSTANT CACHE CHECK — "Na ponta da língua" (<5ms) ═══
         const instantHit = getInstantResponse(processedInput || question);
         if (instantHit && instantHit.confidence >= 0.88) {
-          addLog(`⚡ InstantCache HIT: ${instantHit.category}, conf=${(instantHit.confidence * 100).toFixed(0)}% [${Date.now() - now}ms]`);
+          addLog(`⚡ InstantCache HIT: ${instantHit.category} [${Date.now() - now}ms]`);
           setChatHistory(prev => {
             const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
             return [...clean, { role: "ai" as const, text: instantHit.answer, time: new Date().toLocaleTimeString("pt-BR") }];
