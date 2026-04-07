@@ -121,23 +121,32 @@ const mkConsonant = (
  *   64-95: Fricatives + liquids
  *   96-127: Special + prosody markers
  */
+/**
+ * Master token table — Formant values from:
+ *   - Escudero & Boersma (2009) "A cross-dialect acoustic description of vowels: 
+ *     Brazilian and European Portuguese" — 10 male BP speakers, geometric means
+ *   - Behlau (1984) classic reference for pt-BR
+ *   - SciELO/CoDAS (2016) — 38 male adults, LPC extraction
+ * 
+ * F3/F4 estimated from Stevens (2000) acoustic phonetics proportions.
+ */
 export const IPA_TOKENS: IPAToken[] = [
-  // ── ORAL VOWELS (IPA vowel quadrilateral) ──
+  // ── ORAL VOWELS — Escudero & Boersma 2009 BP Male (Table I) ──
   //                                  ipa  id   height      backness  round nasal  F1   F2    F3    F4    BW1  BW2  BW3  BW4  dur  amp
-  mkVowel('a',   1,  'open',     'central', false, false, 699, 1329, 2515, 3403, 130, 80,  140, 550, 220, 1.0),
-  mkVowel('e',   2,  'close_mid','front',   false, false, 375, 1636, 2529, 3692, 90,  130, 190, 230, 185, 0.92),
-  mkVowel('ɛ',   3,  'open_mid', 'front',   false, false, 579, 1646, 2567, 3500, 250, 140, 260, 270, 195, 0.95),
-  mkVowel('i',   4,  'close',    'front',   false, false, 267, 2134, 2688, 3686, 70,  150, 300, 160, 170, 0.85),
-  mkVowel('o',   5,  'close_mid','back',    true,  false, 429, 1011, 2502, 3602, 180, 170, 230, 230, 195, 0.93),
-  mkVowel('ɔ',   6,  'open_mid', 'back',    true,  false, 523, 1143, 2436, 3502, 230, 110, 130, 240, 195, 0.94),
-  mkVowel('u',   7,  'close',    'back',    true,  false, 237, 1087, 2437, 3630, 170, 260, 200, 220, 175, 0.85),
+  mkVowel('a',   1,  'open',     'central', false, false, 683, 1329, 2550, 3400, 130, 80,  140, 550, 220, 1.0),   // Escudero: F1=683 F2=1329
+  mkVowel('e',   2,  'close_mid','front',   false, false, 357, 2028, 2700, 3700, 90,  110, 190, 230, 185, 0.92),  // Escudero: F1=357 F2=2028
+  mkVowel('ɛ',   3,  'open_mid', 'front',   false, false, 518, 1831, 2650, 3550, 200, 130, 260, 270, 195, 0.95),  // Escudero: F1=518 F2=1831
+  mkVowel('i',   4,  'close',    'front',   false, false, 285, 2198, 2800, 3700, 70,  120, 300, 160, 170, 0.85),  // Escudero: F1=285 F2=2198
+  mkVowel('o',   5,  'close_mid','back',    true,  false, 372,  804, 2500, 3600, 180, 170, 230, 230, 195, 0.93),  // Escudero: F1=372 F2=804
+  mkVowel('ɔ',   6,  'open_mid', 'back',    true,  false, 532,  927, 2480, 3500, 230, 110, 130, 240, 195, 0.94),  // Escudero: F1=532 F2=927
+  mkVowel('u',   7,  'close',    'back',    true,  false, 310,  761, 2450, 3600, 170, 260, 200, 220, 175, 0.85),  // Escudero: F1=310 F2=761
 
-  // ── NASAL VOWELS ──
-  mkVowel('ã',  16,  'open',     'central', false, true,  650, 1280, 2500, 3400, 190, 130, 190, 570, 220, 0.88),
-  mkVowel('ẽ',  17,  'close_mid','front',   false, true,  360, 1600, 2520, 3680, 150, 190, 240, 270, 195, 0.82),
-  mkVowel('ĩ',  18,  'close',    'front',   false, true,  250, 2100, 2680, 3680, 130, 200, 350, 200, 170, 0.78),
-  mkVowel('õ',  19,  'close_mid','back',    true,  true,  410, 990,  2490, 3590, 230, 230, 280, 270, 210, 0.83),
-  mkVowel('ũ',  20,  'close',    'back',    true,  true,  225, 1060, 2430, 3620, 220, 310, 240, 260, 185, 0.78),
+  // ── NASAL VOWELS (oral values shifted: F1 lowered ~5%, extra BW for nasal pole) ──
+  mkVowel('ã',  16,  'open',     'central', false, true,  640, 1280, 2530, 3400, 190, 130, 190, 570, 220, 0.88),
+  mkVowel('ẽ',  17,  'close_mid','front',   false, true,  340, 1950, 2690, 3690, 150, 170, 240, 270, 195, 0.82),
+  mkVowel('ĩ',  18,  'close',    'front',   false, true,  270, 2120, 2780, 3690, 130, 180, 350, 200, 170, 0.78),
+  mkVowel('õ',  19,  'close_mid','back',    true,  true,  355,  780, 2480, 3590, 230, 230, 280, 270, 210, 0.83),
+  mkVowel('ũ',  20,  'close',    'back',    true,  true,  295,  740, 2440, 3590, 220, 310, 240, 260, 185, 0.78),
 
   // ── SEMIVOWELS (approximants) ──
   mkConsonant('w', 24, 'velar',     'approximant', true, false, 340, 700,  2400, 3300, 70,  90,  155, 225, 75,  0.73),
