@@ -155,7 +155,14 @@ export function textToPhonemes(text: string): string[] {
         else phonemes.push('k');
         break;
       case 'ç': phonemes.push('s'); break;
-      case 'd': phonemes.push('d'); break;
+      case 'd':
+        // pt-BR palatalization: d before i/e → d͡ʒ
+        if (next === 'i' || next === 'í' || (next === 'e' && (!next2 || ' .,'.includes(next2)))) {
+          phonemes.push('d͡ʒ');
+        } else {
+          phonemes.push('d');
+        }
+        break;
       case 'e':
         if (!next || ' .,'.includes(next)) phonemes.push('i');
         else phonemes.push('e');
@@ -208,7 +215,14 @@ export function textToPhonemes(text: string): string[] {
         if (vowels.includes(next) && vowels.includes(prev)) phonemes.push('z');
         else phonemes.push('s');
         break;
-      case 't': phonemes.push('t'); break;
+      case 't':
+        // pt-BR palatalization: t before i/e → t͡ʃ
+        if (next === 'i' || next === 'í' || (next === 'e' && (!next2 || ' .,'.includes(next2)))) {
+          phonemes.push('t͡ʃ');
+        } else {
+          phonemes.push('t');
+        }
+        break;
       case 'u': case 'ú': case 'ü': phonemes.push('u'); break;
       case 'v': phonemes.push('v'); break;
       case 'w': phonemes.push('w'); break;
