@@ -48,17 +48,26 @@ export function HeroSection({ t }: HeroSectionProps) {
 
   return (
     <section className="relative min-h-[75vh] min-h-[75svh] flex items-center justify-center overflow-visible">
+      {/* HD photorealistic background */}
+      <img
+        src={bgHdHero}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover z-[0] opacity-40"
+        width={1920}
+        height={1080}
+      />
+
       <HeroThreeBackground />
 
       {/* Neural network background image */}
       <img
         src={neuralBg}
         alt=""
-        className="absolute inset-0 w-full h-full object-cover z-[1] opacity-[0.07] mix-blend-screen pointer-events-none"
+        className="absolute inset-0 w-full h-full object-cover z-[1] opacity-[0.05] mix-blend-screen pointer-events-none"
       />
 
-      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background z-[2]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.5)_70%,hsl(var(--background))_100%)] z-[2]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-background z-[2]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.4)_70%,hsl(var(--background))_100%)] z-[2]" />
 
       {/* Holographic HUD element — right side */}
       <img
