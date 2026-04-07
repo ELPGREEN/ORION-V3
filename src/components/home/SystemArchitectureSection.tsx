@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { IconNeuralAI, IconDocuments, IconCRM, IconPayment, IconChat, IconShield, IconAutomation, IconDashboard, IconGlobe } from "@/components/icons/SumerianTronIcons";
 import bgTronCircuit from "@/assets/bg-tron-circuit.jpg";
+import bgHdSection from "@/assets/bg-hd-section.jpg";
 
 const TronGridBackground = lazy(() =>
   import("@/components/ui/TronGridBackground").then(m => ({ default: m.TronGridBackground }))
@@ -21,7 +22,8 @@ const modules = [
 export function SystemArchitectureSection() {
   return (
     <section className="py-12 sm:py-16 bg-background relative overflow-hidden tron-ambient">
-      <img src={bgTronCircuit} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.05] pointer-events-none mix-blend-screen" />
+      <img src={bgHdSection} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.12] pointer-events-none" />
+      <img src={bgTronCircuit} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.04] pointer-events-none mix-blend-screen" />
       <Suspense fallback={null}>
         <TronGridBackground className="opacity-25" blockCount={30} />
       </Suspense>

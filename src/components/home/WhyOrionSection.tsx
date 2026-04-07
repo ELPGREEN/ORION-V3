@@ -5,6 +5,7 @@ import { IconNeuralAI, IconClock, IconTrending, IconShield, IconCRM, IconSparkle
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import bgTronEnergy from "@/assets/bg-tron-energy.jpg";
+import bgHdSection from "@/assets/bg-hd-section.jpg";
 
 const NeonCorridorBackground = lazy(() =>
   import("@/components/ui/NeonCorridorBackground").then(m => ({ default: m.NeonCorridorBackground }))
