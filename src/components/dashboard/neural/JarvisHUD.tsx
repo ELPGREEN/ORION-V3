@@ -554,7 +554,7 @@ export function JarvisHUD({ metrics, className = "" }: JarvisHUDProps) {
               className="flex items-center gap-1.5 px-2 py-1 text-[8px] font-mono tracking-wider rounded
                 border border-[#3B82F6]/8 bg-[#3B82F6]/[0.02] text-[#3B82F6]/40
                 hover:text-[#3B82F6] hover:border-[#3B82F6]/25 hover:bg-[#3B82F6]/5
-                hover:shadow-[0_0_8px_rgba(0,212,255,0.12)] transition-all duration-300">
+                hover:shadow-[0_0_8px_rgba(59,130,246,0.12)] transition-all duration-300">
               <item.icon className="h-3 w-3" />
               {item.label}
             </button>

@@ -45,7 +45,7 @@ export function OrionVideoShowcase() {
           <div
             className="absolute inset-0 pointer-events-none z-10"
             style={{
-              background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.02) 2px, rgba(0,212,255,0.02) 4px)',
+              background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59,130,246,0.02) 2px, rgba(59,130,246,0.02) 4px)',
             }}
           />
 

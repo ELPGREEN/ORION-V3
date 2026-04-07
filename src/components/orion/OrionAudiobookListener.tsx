@@ -94,7 +94,7 @@ export function OrionAudiobookListener() {
 
       // Gradient background
       const grd = ctx.createLinearGradient(0, 0, W, 0);
-      grd.addColorStop(0, "rgba(0, 212, 255, 0.05)");
+      grd.addColorStop(0, "rgba(59,130,246, 0.05)");
       grd.addColorStop(0.5, "rgba(139, 92, 246, 0.05)");
       grd.addColorStop(1, "rgba(16, 185, 129, 0.05)");
       ctx.fillStyle = grd;
@@ -124,7 +124,7 @@ export function OrionAudiobookListener() {
         const avg = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
         const glowSize = 20 + (avg / 255) * 40;
         const glow = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, glowSize);
-        glow.addColorStop(0, `rgba(0, 212, 255, ${0.1 + (avg / 255) * 0.3})`);
+        glow.addColorStop(0, `rgba(59,130,246, ${0.1 + (avg / 255) * 0.3})`);
         glow.addColorStop(1, "transparent");
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, W, H);
