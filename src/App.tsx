@@ -92,6 +92,7 @@ const VitrineAfiliado = lazy(lazyRetry(() => import("./pages/VitrineAfiliado")))
 const MarketplaceModules = lazy(lazyRetry(() => import("./pages/dashboard/MarketplaceModules")));
 const EditorPaginaVendas = lazy(lazyRetry(() => import("./pages/dashboard/EditorPaginaVendas")));
 const CampanhasEmail = lazy(lazyRetry(() => import("./pages/dashboard/CampanhasEmail")));
+const ProdutorAfiliados = lazy(lazyRetry(() => import("./pages/dashboard/ProdutorAfiliados")));
 const DashboardDocumentosInternacionais = lazy(lazyRetry(() => import("./pages/dashboard/DashboardDocumentosInternacionais")));
 const InstrucoesPlataforma = lazy(lazyRetry(() => import("./pages/dashboard/InstrucoesPlataforma")));
 const ControleRobotico = lazy(lazyRetry(() => import("./pages/dashboard/ControleRobotico")));
@@ -208,6 +209,7 @@ const App = () => (
                     <Route path="editor-vendas" element={<RoleGuard allowedRoles={["produtor", "nomade"]}><EditorPaginaVendas /></RoleGuard>} />
                     <Route path="campanhas-email" element={<RoleGuard allowedRoles={["produtor", "nomade"]}><CampanhasEmail /></RoleGuard>} />
                     <Route path="afiliados" element={<RoleGuard allowedRoles={["advogado", "afiliado", "nomade"]}><AfiliadosPage /></RoleGuard>} />
+                    <Route path="produtor-afiliados" element={<RoleGuard allowedRoles={["produtor", "nomade"]}><ProdutorAfiliados /></RoleGuard>} />
                     <Route path="documentos-internacionais" element={<RoleGuard allowedRoles={["advogado", "produtor", "nomade"]}><DashboardDocumentosInternacionais /></RoleGuard>} />
 
                     {/* Advogado-only */}
