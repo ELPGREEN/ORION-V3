@@ -193,7 +193,7 @@ export default function Servicos() {
                 </Link>
               </Button>
               <Button asChild className="btn-outline-gold px-10">
-                <Link to="/clientes">
+                <Link to="/servicos">
                   {s.seeProfiles}
                 </Link>
               </Button>
