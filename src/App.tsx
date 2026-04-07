@@ -88,6 +88,7 @@ const MarketplacePage = lazy(lazyRetry(() => import("./pages/dashboard/Marketpla
 const AfiliadosPage = lazy(lazyRetry(() => import("./pages/dashboard/Afiliados")));
 const PortalCliente = lazy(lazyRetry(() => import("./pages/dashboard/PortalCliente")));
 const AdminOwnerDashboard = lazy(lazyRetry(() => import("./pages/dashboard/AdminOwnerDashboard")));
+const VitrineAfiliado = lazy(lazyRetry(() => import("./pages/VitrineAfiliado")));
 const MarketplaceModules = lazy(lazyRetry(() => import("./pages/dashboard/MarketplaceModules")));
 const DashboardDocumentosInternacionais = lazy(lazyRetry(() => import("./pages/dashboard/DashboardDocumentosInternacionais")));
 const InstrucoesPlataforma = lazy(lazyRetry(() => import("./pages/dashboard/InstrucoesPlataforma")));
@@ -167,6 +168,9 @@ const App = () => (
                   <Route path="/loja/:creatorId" element={<AuthGuard><Loja /></AuthGuard>} />
                   <Route path="/loja/:creatorId/sucesso" element={<AuthGuard><LojaSucesso /></AuthGuard>} />
                   <Route path="/loja/:creatorId/produto/:productId" element={<AuthGuard><ProdutoDetalhe /></AuthGuard>} />
+
+                  {/* ═══ PUBLIC — Vitrine do Afiliado ═══ */}
+                  <Route path="/vitrine/:affiliateId" element={<VitrineAfiliado />} />
 
                   {/* ═══ REDIRECTS — Orphan pages → proper destinations ═══ */}
                   <Route path="/nova-pagina" element={<Navigate to="/" replace />} />
