@@ -787,13 +787,14 @@ function samplesToWav(samples: Float32Array, sampleRate: number): Blob {
 
 export async function synthesizeFormant(text: string): Promise<Blob> {
   const phonemes = textToPhonemes(text);
-  console.log(`[Formant v20-Grok] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
+  console.log(`[Formant v22-GrokUltra] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
 
   glottalPhase = 0;
   subHarmonicPhase = 0;
+  vibratoPhase = 0;
 
   const segments = buildSegments(phonemes);
-  console.log(`[Formant v20-Grok] ${segments.length} segments built`);
+  console.log(`[Formant v22-GrokUltra] ${segments.length} segments built`);
 
   const samples = synthesize(segments);
   const processed = postProcess(samples);
@@ -823,7 +824,7 @@ export async function speakFormant(
 
     return { played: !signal?.aborted, audio };
   } catch (err) {
-    console.warn("[Formant v20-Grok] Error:", err);
+    console.warn("[Formant v22-GrokUltra] Error:", err);
     return { played: false, audio: null };
   }
 }
