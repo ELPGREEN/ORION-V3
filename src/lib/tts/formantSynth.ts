@@ -251,20 +251,16 @@ function renderPhonemes(phonemes: string[]): Float32Array {
     const prevP = pi > 0 ? PT_PHONEMES[phonemes[pi - 1]] : null;
     const nextP = pi < phonemes.length - 1 ? PT_PHONEMES[phonemes[pi + 1]] : null;
 
-    // Apply MFCC formant corrections + coarticulation blending
+    // Apply MFCC formant corrections
     let tgtF1 = (params.f1 || curF1) * MFCC_FIX.formantScale[0];
     let tgtF2 = (params.f2 || curF2) * MFCC_FIX.formantScale[1];
     let tgtF3 = (params.f3 || curF3) * MFCC_FIX.formantScale[2];
     let tgtF4 = (params.f4 || curF4) * MFCC_FIX.formantScale[3];
 
-    // Coarticulation: blend formants toward neighbors (20% influence)
-    if (nextP && nextP.voiced && params.voiced) {
-      tgtF1 = tgtF1 * 0.85 + (nextP.f1 || tgtF1) * MFCC_FIX.formantScale[0] * 0.15;
-      tgtF2 = tgtF2 * 0.82 + (nextP.f2 || tgtF2) * MFCC_FIX.formantScale[1] * 0.18;
-    }
-    if (prevP && prevP.voiced && params.voiced) {
-      tgtF1 = tgtF1 * 0.9 + (prevP.f1 || tgtF1) * MFCC_FIX.formantScale[0] * 0.1;
-      tgtF2 = tgtF2 * 0.88 + (prevP.f2 || tgtF2) * MFCC_FIX.formantScale[1] * 0.12;
+    // Minimal coarticulation — only 8% blending (was 15-18%)
+    // Too much blending destroys vowel identity
+    if (nextP && nextP.voiced && params.voiced && !params.plosive) {
+      tgtF2 = tgtF2 * 0.92 + (nextP.f2 || tgtF2) * MFCC_FIX.formantScale[1] * 0.08;
     }
 
     const tgtBw1 = (params.bw1 || curBw1) * MFCC_FIX.bandwidthScale[0];
