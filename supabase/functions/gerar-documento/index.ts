@@ -2057,11 +2057,10 @@ async function callTripleChainMode(
   const tripleStartTime = Date.now();
   try {
     const groqKey = getAvailableKey(AI_PROVIDERS.groq.apiKeyEnvs);
-    const anthropicKey = getAvailableKey(AI_PROVIDERS.anthropic.apiKeyEnvs);
-    const openaiKey = getAvailableKey(AI_PROVIDERS.openai.apiKeyEnvs);
+    const geminiKey = getAvailableKey(AI_PROVIDERS.gemini_25_flash.apiKeyEnvs);
 
-    if (!groqKey || !anthropicKey || !openaiKey) {
-      throw new Error("Modo Profissional Máximo requer chaves do Groq, Anthropic e OpenAI");
+    if (!groqKey || !geminiKey) {
+      throw new Error("Modo Profissional Máximo requer chaves do Groq e Gemini");
     }
 
     // Check if globally aborted
