@@ -93,89 +93,123 @@ Deno.serve(async (req) => {
 
     console.log(`[Gemini TTS] Synthesizing ${cleanText.length} chars, voice="${selectedVoice}", lang="${selectedLang}", keys=${keys.length}`);
 
-    // Build request body — separate system instruction from text for faster processing
-    const requestBody: any = {
-      systemInstruction: {
-        parts: [{ text: stylePrompt }]
-      },
-      contents: [{
-        parts: [{ text: cleanText }]
-      }],
-      generationConfig: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          languageCode: selectedLang,
-          voiceConfig: {
-            prebuiltVoiceConfig: {
-              voiceName: selectedVoice
+    const buildSingleSpeakerRequest = (options: { includePrompt: boolean; includeLanguage: boolean }) => {
+      const body: any = {
+        contents: [{
+          role: "user",
+          parts: [{ text: cleanText }]
+        }],
+        generationConfig: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: selectedVoice
+              }
             }
           }
         }
+      };
+
+      if (options.includePrompt && stylePrompt?.trim()) {
+        body.systemInstruction = {
+          role: "system",
+          parts: [{ text: stylePrompt.trim().slice(0, 500) }]
+        };
       }
+
+      if (options.includeLanguage && selectedLang?.trim()) {
+        body.generationConfig.speechConfig.languageCode = selectedLang;
+      }
+
+      return body;
     };
 
-    // Multi-speaker support
-    if (multispeaker && Array.isArray(multispeaker) && multispeaker.length > 0) {
-      requestBody.generationConfig.speechConfig = {
-        languageCode: selectedLang,
-        multiSpeakerVoiceConfig: {
-          speakerVoiceConfigs: multispeaker.map((s: any) => ({
-            speaker: s.speaker,
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: s.voice || DEFAULT_VOICE }
+    const requestVariants: Array<{ label: string; body: any }> = (multispeaker && Array.isArray(multispeaker) && multispeaker.length > 0)
+      ? [{
+          label: "multispeaker",
+          body: {
+            contents: [{
+              role: "user",
+              parts: [{ text: cleanText }]
+            }],
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                languageCode: selectedLang,
+                multiSpeakerVoiceConfig: {
+                  speakerVoiceConfigs: multispeaker.map((s: any) => ({
+                    speaker: s.speaker,
+                    voiceConfig: {
+                      prebuiltVoiceConfig: { voiceName: s.voice || DEFAULT_VOICE }
+                    }
+                  }))
+                }
+              }
             }
-          }))
-        }
-      };
-    }
+          }
+        }]
+      : [
+          { label: "single/full", body: buildSingleSpeakerRequest({ includePrompt: true, includeLanguage: true }) },
+          { label: "single/no-lang", body: buildSingleSpeakerRequest({ includePrompt: true, includeLanguage: false }) },
+          { label: "single/plain", body: buildSingleSpeakerRequest({ includePrompt: false, includeLanguage: false }) },
+        ];
 
-    // Retry logic with up to 3 attempts (handles transient 500 errors)
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    // Try payload variants with retries — Gemini preview TTS can return transient 500s
     let response: Response | null = null;
     let lastError = "";
     const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 1200;
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      if (attempt > 0) {
-        // Wait 1s between retries
-        await new Promise(r => setTimeout(r, 1000));
-        console.log(`[Gemini TTS] Retry attempt ${attempt + 1}/${MAX_RETRIES}`);
-      }
-
-      const apiKey = keys[0];
+    for (const apiKey of keys) {
       const url = `${API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
 
-      if (r.ok) {
-        response = r;
-        break;
+      for (const variant of requestVariants) {
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+          const r = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(variant.body),
+          });
+
+          if (r.ok) {
+            response = r;
+            console.log(`[Gemini TTS] Success via ${variant.label} on attempt ${attempt}/${MAX_RETRIES}`);
+            break;
+          }
+
+          const errText = await r.text();
+          lastError = errText.slice(0, 300);
+          console.warn(`[Gemini TTS] ${variant.label} attempt ${attempt}/${MAX_RETRIES} failed (${r.status}): ${lastError.slice(0, 120)}`);
+
+          if (r.status === 429) {
+            return new Response(
+              JSON.stringify({ error: "Rate limited, try again shortly", fallback: true }),
+              { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+
+          if (r.status === 403) {
+            failedKeyCache[apiKey] = Date.now();
+            break;
+          }
+
+          if (r.status >= 500 && attempt < MAX_RETRIES) {
+            await sleep(RETRY_DELAY_MS * attempt);
+            continue;
+          }
+
+          break;
+        }
+
+        if (response || failedKeyCache[apiKey]) break;
       }
 
-      const errText = await r.text();
-      lastError = errText.slice(0, 200);
-      console.warn(`[Gemini TTS] Attempt ${attempt + 1} failed (${r.status}): ${lastError.slice(0, 100)}`);
-
-      if (r.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limited, try again shortly", fallback: true }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      if (r.status === 403) {
-        failedKeyCache[apiKey] = Date.now();
-        break; // No other keys to try
-      }
-
-      // 500 = transient, retry; 400 = bad request, stop
-      if (r.status === 400) break;
-      // 500 continues to next attempt
+      if (response) break;
     }
 
-    if (!response) {
       throw new Error(`All ${keys.length} keys failed. Last: ${lastError}`);
     }
 
