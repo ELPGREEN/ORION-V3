@@ -157,9 +157,9 @@ export default function PublicacaoDetalhe() {
       />
 
       {/* Tron Hero with WebGL */}
-      <section className="relative flex items-center justify-center overflow-hidden" style={{ minHeight: "50vh", background: "#0a0a0f" }}>
+      <section className="relative flex items-center justify-center overflow-hidden" style={{ minHeight: "50vh", background: "hsl(var(--background))" }}>
         <HeroThreeBackground />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/40 via-transparent to-[#0a0a0f]/70 z-[1]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--background))]/40 via-transparent to-[hsl(var(--background))]/70 z-[1]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(10,10,15,0.5)_70%,rgba(10,10,15,0.9)_100%)] z-[1]" />
 
         <div className="container relative z-10 py-16 sm:py-24 px-4 sm:px-6 text-center">
@@ -189,10 +189,10 @@ export default function PublicacaoDetalhe() {
       <SectionDivider variant="beam" />
 
       {/* Content Section */}
-      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "#080810" }}>
-        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.2 }} />
+      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "hsl(var(--background))" }}>
+        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(hsl(var(--primary),0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary),0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.2 }} />
         {/* Decorative elements */}
-        <div className="absolute -right-20 top-20 w-96 h-96 border rotate-45 opacity-50 hidden sm:block" style={{ borderColor: "rgba(0,212,255,0.05)" }} />
+        <div className="absolute -right-20 top-20 w-96 h-96 border rotate-45 opacity-50 hidden sm:block" style={{ borderColor: "hsl(var(--primary),0.05)" }} />
         <div className="absolute -left-32 bottom-0 w-64 h-64 rounded-full blur-3xl hidden sm:block" style={{ background: "rgba(201,168,76,0.04)" }} />
 
         <div className="container max-w-4xl px-4 sm:px-6 relative">

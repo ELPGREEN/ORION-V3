@@ -97,9 +97,9 @@ const TRON_CSS = `
 @keyframes tronPulse { 0%,100%{opacity:0.04} 50%{opacity:0.08} }
 @keyframes tronScanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
 @keyframes floatParticle { 0%,100%{transform:translateY(0) translateX(0);opacity:0} 10%{opacity:0.6} 90%{opacity:0.6} 50%{transform:translateY(-40px) translateX(20px)} }
-.tron-grid{background-image:linear-gradient(rgba(0,212,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.05) 1px,transparent 1px);background-size:60px 60px;animation:tronPulse 4s ease-in-out infinite}
-.tron-scanline{background:linear-gradient(to bottom,transparent,rgba(0,212,255,0.03),transparent);height:200px;animation:tronScanline 8s linear infinite}
-.tron-glow{box-shadow:0 0 40px rgba(0,212,255,0.08),0 0 80px rgba(0,212,255,0.04)}
+.tron-grid{background-image:linear-gradient(hsl(var(--primary),0.05) 1px,transparent 1px),linear-gradient(90deg,hsl(var(--primary),0.05) 1px,transparent 1px);background-size:60px 60px;animation:tronPulse 4s ease-in-out infinite}
+.tron-scanline{background:linear-gradient(to bottom,transparent,hsl(var(--primary),0.03),transparent);height:200px;animation:tronScanline 8s linear infinite}
+.tron-glow{box-shadow:0 0 40px hsl(var(--primary),0.08),0 0 80px hsl(var(--primary),0.04)}
 .gold-glow-text{text-shadow:0 0 20px rgba(212,168,83,0.3)}
 .particle{position:absolute;width:2px;height:2px;background:rgba(212,168,83,0.5);border-radius:50%;animation:floatParticle 6s ease-in-out infinite}
 `;
@@ -418,7 +418,7 @@ export default function Auth() {
       <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden bg-[#0a0a0f]">
         <div className="absolute inset-0 tron-grid" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none"><div className="tron-scanline w-full" /></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,212,255,0.03)_0%,transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary),0.03)_0%,transparent_70%)]" />
         <div className="absolute inset-0 pointer-events-none">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="particle" style={{ left: `${10 + i * 12}%`, top: `${20 + (i % 3) * 25}%`, animationDelay: `${i * 0.8}s`, animationDuration: `${5 + i * 0.5}s` }} />

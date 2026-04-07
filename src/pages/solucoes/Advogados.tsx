@@ -46,15 +46,15 @@ export default function SolucoesAdvogados() {
       <style>{`
         .tron-grid-bg-adv {
           background-image:
-            linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            linear-gradient(hsl(var(--primary), 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(var(--primary), 0.03) 1px, transparent 1px);
           background-size: 60px 60px;
         }
         .tron-scanline-adv::after {
           content: '';
           position: absolute;
           inset: 0;
-          background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 212, 255, 0.008) 2px, rgba(0, 212, 255, 0.008) 4px);
+          background: repeating-linear-gradient(0deg, transparent, transparent 2px, hsl(var(--primary), 0.008) 2px, hsl(var(--primary), 0.008) 4px);
           pointer-events: none;
         }
       `}</style>

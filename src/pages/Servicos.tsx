@@ -32,7 +32,7 @@ const profiles = [
     ],
     cta: "Criar Conta como Advogado",
     ctaLink: "/cadastro",
-    color: "from-blue-500/10 to-transparent",
+    color: "from-primary/10 to-transparent",
   },
   {
     anchor: "produtores",
@@ -50,7 +50,7 @@ const profiles = [
     ],
     cta: "Criar Conta como Produtor",
     ctaLink: "/cadastro",
-    color: "from-emerald-500/10 to-transparent",
+    color: "from-primary/10 to-transparent",
   },
   {
     anchor: "afiliados",
@@ -68,7 +68,7 @@ const profiles = [
     ],
     cta: "Criar Conta como Afiliado",
     ctaLink: "/cadastro",
-    color: "from-amber-500/10 to-transparent",
+    color: "from-primary/10 to-transparent",
   },
   {
     anchor: "industria",
@@ -86,7 +86,7 @@ const profiles = [
     ],
     cta: "Falar com Vendas Enterprise",
     ctaLink: "/contato?plano=enterprise",
-    color: "from-purple-500/10 to-transparent",
+    color: "from-primary/15 to-transparent",
     fullWidth: true,
   },
 ];
@@ -106,15 +106,15 @@ export default function Servicos() {
       <style>{`
         .tron-grid-bg-s {
           background-image:
-            linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            linear-gradient(hsl(var(--primary) / 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(var(--primary) / 0.03) 1px, transparent 1px);
           background-size: 60px 60px;
         }
         .tron-scanline-s::after {
           content: '';
           position: absolute;
           inset: 0;
-          background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 212, 255, 0.008) 2px, rgba(0, 212, 255, 0.008) 4px);
+          background: repeating-linear-gradient(0deg, transparent, transparent 2px, hsl(var(--primary) / 0.008) 2px, hsl(var(--primary) / 0.008) 4px);
           pointer-events: none;
         }
       `}</style>
