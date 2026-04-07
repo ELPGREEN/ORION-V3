@@ -1790,89 +1790,79 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   }
 
   // ═══ NON-STREAMING MODE ═══
-  const isAnalysis = intentType === "analysis" || intentType === "legal_search";
+  // REGRA: Gemini SEMPRE primeiro — é gratuito e orquestra tudo anti-alucinação.
 
-  // Analysis/Legal: DeepSeek first (deep reasoning)
-  if (!hasImage && isAnalysis && Deno.env.get("DEEPSEEK_API_KEY")) {
-    try {
-      const text = await callDeepSeekFallback(messages);
-      if (text) {
-        console.log("[Orion] Non-stream via DeepSeek (primary — analysis/legal)");
-        return parseOrionResponse(text);
-      }
-    } catch (e) {
-      console.warn("[Orion] DeepSeek non-stream failed:", e);
-    }
-  }
-
-  // Text queries: Groq first (fastest)
-  if (!hasImage) {
-    try {
-      const text = await callGroqFallback(messages);
-      if (text) {
-        console.log("[Orion] Non-stream via Groq (primary — text)");
-        return parseOrionResponse(text);
-      }
-    } catch (e) {
-      console.warn("[Orion] Groq non-stream failed:", e);
-    }
-  }
-
-  // DeepSeek fallback for non-analysis
-  if (!hasImage && !isAnalysis && Deno.env.get("DEEPSEEK_API_KEY")) {
-    try {
-      const text = await callDeepSeekFallback(messages);
-      if (text) {
-        console.log("[Orion] Non-stream via DeepSeek (fallback)");
-        return parseOrionResponse(text);
-      }
-    } catch {}
-  }
-
-  // Vision or previous failed: Gemini
+  // ── PRIMARY: Gemini (7 keys rotation) — SEMPRE PRIMEIRO ──
   for (const keyEnv of geminiKeys) {
-    if (!Deno.env.get(keyEnv)) continue;
+    if (!Deno.env.get(keyEnv) || isProviderCoolingDown(`gemini_${keyEnv}`)) continue;
     try {
       const geminiResp = await callGeminiAPI(messages, false, keyEnv);
       if (!geminiResp.ok) {
+        if (geminiResp.status === 429) markProviderFailed(`gemini_${keyEnv}`, 429);
         console.warn(`[Orion] Gemini ${keyEnv} returned ${geminiResp.status}`);
         continue;
       }
       const data = await geminiResp.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      if (text) return parseOrionResponse(text);
+      if (text) {
+        console.log(`[Orion] ✅ Non-stream via Gemini (${keyEnv}) — PRIMARY orchestrator`);
+        return parseOrionResponse(text);
+      }
     } catch (e) {
-      console.warn(`Gemini non-stream failed (${keyEnv}):`, e);
+      console.warn(`[Orion] Gemini non-stream failed (${keyEnv}):`, e);
     }
   }
 
-  // Mistral fallback
+  // ── FALLBACK 1: HuggingFace (grátis) ──
   try {
-    const text = await callMistralFallback(messages);
-    if (text) return parseOrionResponse(text);
+    const text = await callHuggingFaceFallback(messages);
+    if (text) {
+      console.log("[Orion] Non-stream via HuggingFace (fallback 1)");
+      return parseOrionResponse(text);
+    }
   } catch {}
 
-  // OpenRouter fallback
-  if (Deno.env.get("OPENROUTER_API_KEY")) {
+  // ── FALLBACK 2: Groq ──
+  if (!hasImage) {
     try {
-      const text = await callOpenRouterFallback(messages);
+      const text = await callGroqFallback(messages);
       if (text) {
-        console.log("[Orion] Non-stream via OpenRouter (fallback)");
+        console.log("[Orion] Non-stream via Groq (fallback 2)");
         return parseOrionResponse(text);
       }
     } catch {}
   }
 
-  // HuggingFace fallback
+  // ── FALLBACK 3: DeepSeek ──
+  if (Deno.env.get("DEEPSEEK_API_KEY")) {
+    try {
+      const text = await callDeepSeekFallback(messages);
+      if (text) {
+        console.log("[Orion] Non-stream via DeepSeek (fallback 3)");
+        return parseOrionResponse(text);
+      }
+    } catch {}
+  }
+
+  // ── FALLBACK 4: Mistral ──
   try {
-    const text = await callHuggingFaceFallback(messages);
+    const text = await callMistralFallback(messages);
     if (text) {
-      console.log("[Orion] Non-stream via HuggingFace (fallback)");
+      console.log("[Orion] Non-stream via Mistral (fallback 4)");
       return parseOrionResponse(text);
     }
   } catch {}
 
-  // (Lovable AI removido — sem saldo)
+  // ── FALLBACK 5: OpenRouter ──
+  if (Deno.env.get("OPENROUTER_API_KEY")) {
+    try {
+      const text = await callOpenRouterFallback(messages);
+      if (text) {
+        console.log("[Orion] Non-stream via OpenRouter (fallback 5)");
+        return parseOrionResponse(text);
+      }
+    } catch {}
+  }
 
   return { description: "Desculpe, estou com dificuldades técnicas. Reformule sua pergunta.", learnedFacts: [], identifiedObjects: [] };
 }
