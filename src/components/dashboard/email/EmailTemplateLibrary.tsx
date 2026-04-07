@@ -151,4 +151,4 @@ export default function EmailTemplateLibrary({ onSelectTemplate }: EmailTemplate
   );
 }
 
-export type { EmailTemplate };
+
