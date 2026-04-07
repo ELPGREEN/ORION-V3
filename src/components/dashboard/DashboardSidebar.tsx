@@ -200,10 +200,22 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
 
   return (
     <aside
-      className={`bg-secondary/20 backdrop-blur-xl flex flex-col z-50 transition-all duration-300 h-full border-r border-cyan/10 shadow-[inset_0_0_60px_rgba(0,188,212,0.03)] ${
+      className={`bg-secondary/20 backdrop-blur-xl flex flex-col z-50 transition-all duration-300 h-full border-r border-cyan/10 shadow-[inset_0_0_60px_rgba(0,188,212,0.03)] relative overflow-hidden ${
         collapsed ? "w-[72px]" : "w-72"
       }`}
     >
+      {/* HUD circuit accent lines */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Vertical circuit line */}
+        <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-cyan/8 to-transparent" />
+        {/* Diagonal accent */}
+        <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.03 }}>
+          <line x1="0" y1="70" x2="100%" y2="70" stroke="hsl(42 70% 50%)" strokeWidth="1" />
+          <line x1="15%" y1="100%" x2="15%" y2="85%" stroke="hsl(195 90% 50%)" strokeWidth="1" strokeDasharray="2 6" />
+        </svg>
+        {/* Bottom corner bracket */}
+        <div className="absolute bottom-4 left-4 w-4 h-4 border-b border-l border-cyan/10" />
+      </div>
       {/* Logo + Toggle */}
       <div className="px-4 py-5 border-b border-border/20 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
