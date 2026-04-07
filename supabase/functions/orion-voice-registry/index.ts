@@ -78,16 +78,12 @@ async function handleRegisterVoice(body: Record<string, unknown>, userId: string
   return { success: true, profile: data };
 }
 
-// ─── Clone voice via ElevenLabs ───
+// ─── Clone voice (Fish Speech placeholder) ───
 async function handleCloneVoice(body: Record<string, unknown>, userId: string) {
   const sb = getSupabase();
-  const ELEVENLABS_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-  if (!ELEVENLABS_KEY) throw new Error("ELEVENLABS_API_KEY not configured");
-
-  const { profile_id, voice_name, voice_description } = body;
+  const { profile_id, voice_name } = body;
   if (!profile_id) throw new Error("profile_id required");
 
-  // Get profile
   const { data: profile, error: profileError } = await sb
     .from("voice_profiles")
     .select("*")
@@ -98,86 +94,58 @@ async function handleCloneVoice(body: Record<string, unknown>, userId: string) {
   if (profileError || !profile) throw new Error("Voice profile not found");
   if (!profile.voice_sample_url) throw new Error("No voice sample uploaded");
 
-  // Download the sample
-  const sampleRes = await fetch(profile.voice_sample_url);
-  const sampleBlob = await sampleRes.blob();
-
-  // Clone via ElevenLabs
-  const formData = new FormData();
-  formData.append("name", String(voice_name || profile.display_name));
-  formData.append("description", String(voice_description || `Voice clone for ${profile.display_name}`));
-  formData.append("files", sampleBlob, "voice_sample.wav");
-
-  const cloneRes = await fetch(`${ELEVENLABS_API}/voices/add`, {
-    method: "POST",
-    headers: { "xi-api-key": ELEVENLABS_KEY },
-    body: formData,
-  });
-
-  const cloneData = await cloneRes.json();
-  if (!cloneRes.ok) throw new Error(`ElevenLabs clone failed: ${JSON.stringify(cloneData)}`);
-
-  // Update profile with voice ID
+  // Mark as cloned (Fish Speech integration placeholder)
   await sb.from("voice_profiles").update({
-    elevenlabs_voice_id: cloneData.voice_id,
     voice_characteristics: {
       ...profile.voice_characteristics,
       cloned: true,
-      elevenlabs_name: cloneData.name,
+      clone_engine: "fish_speech",
+      clone_name: voice_name || profile.display_name,
     },
   }).eq("id", profile_id);
 
-  return { success: true, voice_id: cloneData.voice_id, message: `Voz clonada: ${cloneData.name}` };
+  return { success: true, message: `Voz registrada: ${voice_name || profile.display_name}. Clone via Fish Speech pendente.` };
 }
 
-// ─── Synthesize speech ───
-async function handleSynthesize(body: Record<string, unknown>, userId: string) {
-  const ELEVENLABS_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-  if (!ELEVENLABS_KEY) throw new Error("ELEVENLABS_API_KEY not configured");
-
-  const { text, profile_id, voice_id: directVoiceId } = body;
+// ─── Synthesize speech via Gemini TTS (FREE) ───
+async function handleSynthesize(body: Record<string, unknown>, _userId: string) {
+  const { text } = body;
   if (!text) throw new Error("text required");
 
-  let voiceId = directVoiceId as string;
+  const geminiKeys = [
+    Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+  ].filter((k): k is string => !!k);
 
-  // Lookup voice from profile if no direct ID
-  if (!voiceId && profile_id) {
-    const sb = getSupabase();
-    const { data: profile } = await sb
-      .from("voice_profiles")
-      .select("elevenlabs_voice_id")
-      .eq("id", profile_id)
-      .eq("user_id", userId)
-      .single();
+  for (const key of geminiKeys) {
+    try {
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: `Leia em voz alta: ${String(text)}` }] }],
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Charon" } } },
+            },
+          }),
+        }
+      );
 
-    voiceId = profile?.elevenlabs_voice_id;
+      if (!resp.ok) { await resp.text(); continue; }
+      const data = await resp.json();
+      const audioData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (audioData) {
+        const audioBuffer = Uint8Array.from(atob(audioData), c => c.charCodeAt(0));
+        return new Response(audioBuffer.buffer, {
+          headers: { ...corsHeaders, "Content-Type": "audio/wav" },
+        });
+      }
+    } catch { continue; }
   }
 
-  if (!voiceId) voiceId = "JBFqnCBsd6RMkjVDRZzb"; // fallback: George
-
-  const ttsRes = await fetch(
-    `${ELEVENLABS_API}/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
-    {
-      method: "POST",
-      headers: {
-        "xi-api-key": ELEVENLABS_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text: String(text),
-        model_id: "eleven_multilingual_v2",
-        voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.5 },
-      }),
-    }
-  );
-
-  if (!ttsRes.ok) throw new Error(`TTS failed: ${ttsRes.status}`);
-
-  const audioBuffer = await ttsRes.arrayBuffer();
-
-  return new Response(audioBuffer, {
-    headers: { ...corsHeaders, "Content-Type": "audio/mpeg" },
-  });
+  throw new Error("Gemini TTS failed with all keys");
 }
 
 // ─── List voices ───
@@ -198,24 +166,6 @@ async function handleListVoices(userId: string) {
 async function handleDeleteVoice(body: Record<string, unknown>, userId: string) {
   const sb = getSupabase();
   const { profile_id } = body;
-
-  const { data: profile } = await sb
-    .from("voice_profiles")
-    .select("elevenlabs_voice_id")
-    .eq("id", profile_id)
-    .eq("user_id", userId)
-    .single();
-
-  // Remove from ElevenLabs if cloned
-  if (profile?.elevenlabs_voice_id) {
-    const ELEVENLABS_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-    if (ELEVENLABS_KEY) {
-      await fetch(`${ELEVENLABS_API}/voices/${profile.elevenlabs_voice_id}`, {
-        method: "DELETE",
-        headers: { "xi-api-key": ELEVENLABS_KEY },
-      });
-    }
-  }
 
   await sb.from("voice_profiles").update({ is_active: false }).eq("id", profile_id).eq("user_id", userId);
   return { success: true, message: "Perfil de voz removido" };
