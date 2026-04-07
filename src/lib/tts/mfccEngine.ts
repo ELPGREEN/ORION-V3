@@ -15,41 +15,28 @@
 // ═══════════════════════════════════════════════════════════
 
 export const IAPETUS_MFCC_PROFILE = {
-  /** Mean MFCC coefficients (13) from reference audio */
+  /** Mean MFCC coefficients (13) — REAL analysis from chirp3-hd-iapetus-14.wav */
   mfccMean: [
-    -137.766, -4.189, 3.025, 1.982, 4.991,
-    0.318, -1.955, -2.195, -2.256, -2.652,
-    0.650, 0.187, 0.275,
+    -119.877, -6.304, 3.593, 0.836, 8.455,
+    2.574, -2.920, -4.467, -2.826, -1.668,
+    -0.082, -0.081, 0.542,
   ],
-  /** Standard deviation per coefficient */
-  mfccStd: [
-    95.697, 28.018, 14.120, 12.276, 10.454,
-    8.397, 7.220, 7.055, 6.142, 5.736,
-    6.197, 4.521, 3.510,
-  ],
-  /** Mel spectrogram mean energies (26 bands) */
+  /** Mel spectrogram mean energies (26 bands) — REAL */
   melMean: [
-    -5.558, -5.316, -5.196, -5.118, -5.071, -6.223, -6.635, -5.917,
-    -5.934, -5.480, -5.202, -4.876, -5.488, -5.305, -5.052, -4.892,
-    -5.026, -5.340, -5.635, -5.275, -5.024, -5.107, -5.389, -4.988,
-    -4.366, -4.852,
+    -4.919, -3.955, -4.526, -4.084, -4.610, -6.023, -6.499, -5.991,
+    -5.527, -4.971, -4.241, -3.909, -4.378, -4.122, -4.519, -5.001,
+    -4.793, -4.633, -5.170, -4.656, -4.185, -4.075, -4.417, -3.699,
+    -3.303, -3.671,
   ],
-  /** LPC coefficients (order 12) from voiced segment */
-  lpc: [
-    1.00000, -1.53371, 0.46873, -0.22969, 0.66235,
-    -0.67222, 0.60280, -0.67204, 0.46574, 0.02728,
-    0.01574, -0.25101, 0.13198,
-  ],
-  /** Reference spectral characteristics */
-  spectralCentroid: 4180.5,
-  f0: 150.0,
-  /** LPC-derived formant corrections */
+  /** Reference spectral characteristics — REAL */
+  spectralCentroid: 3155.4,
+  f0: 125.7,
+  /** Formant corrections from MFCC diff analysis */
   formantCorrections: {
-    // These shift formant frequencies to better match the reference
-    f1Scale: 1.02,   // Slightly wider F1
-    f2Scale: 1.05,   // More spread F2 for clarity  
-    f3Boost: 1.15,   // Boost F3 significantly for brightness
-    f4Boost: 1.10,   // Boost F4 for air/presence
+    f1Scale: 1.0,    // F1 is OK
+    f2Scale: 1.03,   // Slight F2 adjustment
+    f3Boost: 1.08,   // Moderate F3 boost
+    f4Boost: 1.05,   // Slight F4 boost
   },
 };
 
@@ -78,53 +65,53 @@ export interface MFCCSynthCorrection {
 }
 
 /**
- * Compute synthesis corrections based on MFCC analysis diff.
+ * Compute synthesis corrections based on REAL MFCC analysis diff.
  * 
- * The diff between reference and synthesized MFCCs tells us:
- * - c0 (+18.5): Synth has less energy → boost gain
- * - c1 (-2.4): Spectral tilt too steep → add more high-freq energy
- * - c3 (+10.6): Too much nasality → reduce nasal coupling
- * - c4 (+10.0): Not enough brightness → boost F3/F4
- * - Centroid 1431 vs 4180: WAY too dark → massive high-freq boost needed
+ * MFCC diff (v11 synth vs Iapetus reference):
+ * - c0: -32 → synth has MUCH less energy → boost fundamental
+ * - c1: +7.6 → spectral tilt too flat → boost low harmonics more
+ * - c2: -14.4 → spectral shape wrong → fix formant balance
+ * - c4: -17.3 → formant mismatch → adjust F1/F2 weights
+ * - Mel bands 0-1: -8.7 vs -4.9 → 4dB gap at fundamental!
+ * - Centroid: 3587 vs 3155 → synth slightly too bright
  */
 export function computeMFCCCorrections(): MFCCSynthCorrection {
   return {
-    // F0 should target 150 Hz (not 183)
-    f0Target: 150.0,
+    // F0 target from real analysis
+    f0Target: 125.7,
 
-    // Boost higher harmonics to raise spectral centroid from 1431→4180
-    // Harmonics 1-3 stay similar, 4+ get progressively boosted
+    // Boost LOW harmonics (H1-H3) to fix the 4dB low-freq energy gap
+    // Reduce high harmonic boost (synth is already slightly too bright)
     harmonicBoost: [
-      1.0,    // H1 (fundamental)
-      1.05,   // H2
-      1.15,   // H3
-      1.35,   // H4 — significant boost
-      1.55,   // H5 — big boost for brightness
-      1.70,   // H6
-      1.80,   // H7
-      1.85,   // H8
-      1.80,   // H9
-      1.70,   // H10
+      1.8,    // H1 — MAJOR boost (fundamental was way too weak)
+      1.5,    // H2 — strong boost
+      1.3,    // H3
+      1.15,   // H4
+      1.1,    // H5
+      1.05,   // H6
+      1.0,    // H7
+      0.95,   // H8 — slight reduction (centroid too high)
+      0.90,   // H9
+      0.85,   // H10
     ],
 
-    // Formant shifts to match reference LPC
-    // F3 and F4 need the most adjustment (brightness)
-    formantScale: [1.02, 1.05, 1.15, 1.10],
+    // Formant scale — reduced from before (was overcorrecting)
+    formantScale: [1.0, 1.03, 1.08, 1.05],
     
-    // Slightly wider bandwidths for more natural resonance
-    bandwidthScale: [0.85, 0.90, 0.80, 0.85],
+    // Wider bandwidths for more natural resonance (less robotic)
+    bandwidthScale: [1.0, 1.0, 0.95, 0.95],
 
-    // Add more breathiness for naturalness
-    breathiness: 0.035,
+    // Reduced breathiness (reference is cleaner than we thought)
+    breathiness: 0.02,
 
-    // Reduce nasal coupling (c3 diff was +10.6)
-    nasalReduction: 0.45,
+    // Less nasal reduction
+    nasalReduction: 0.3,
 
-    // Compensate spectral tilt — boost high frequencies
-    spectralTiltCompensation: 2.8,
+    // Minimal spectral tilt compensation (voice DNA handles it)
+    spectralTiltCompensation: 0.5,
 
-    // Pre-emphasis for synthesis output
-    preEmphasis: 0.97,
+    // Gentle pre-emphasis
+    preEmphasis: 0.25,
   };
 }
 
