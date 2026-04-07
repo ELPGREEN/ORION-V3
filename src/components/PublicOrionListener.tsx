@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { PlasmaCore } from "@/components/home/PlasmaCore";
 import { detectNavigationIntent } from "@/lib/neural/orion-nav-map";
-
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserPlan } from "@/hooks/useUserPlan";
 /**
  * PublicOrionListener — lightweight Orion orb for public pages.
  * Listens for "Orion" wake word and handles navigation commands.
@@ -21,6 +22,8 @@ function extractCommand(transcript: string): string {
 export function PublicOrionListener() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const { hasOrionAccess, loading: planLoading } = useUserPlan();
   const [listening, setListening] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [micGranted, setMicGranted] = useState(() => localStorage.getItem(PUBLIC_MIC_KEY) === "true");
@@ -35,7 +38,7 @@ export function PublicOrionListener() {
   // Don't show on auth pages or dashboard
   const isDashboard = location.pathname.startsWith("/dashboard");
   const isAuthPage = ["/auth", "/cadastro", "/esqueci-senha"].includes(location.pathname);
-  const shouldHide = isDashboard || isAuthPage;
+  const shouldHide = isDashboard || isAuthPage || (!planLoading && !hasOrionAccess);
 
   const showFeedback = useCallback((msg: string, duration = 3000) => {
     setFeedback(msg);
