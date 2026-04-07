@@ -478,12 +478,13 @@ export function useOrionReasoning(
       }
 
       // ═══ VOICE AUTH GATE — Only respond to authenticated/enrolled users ═══
-      // Public intents (greeting, explanation, time_date, humor, philosophy) skip this gate
+      // Public intents skip this gate. Use cached session instead of getUser() to save ~200ms.
       const PUBLIC_INTENTS = new Set(["greeting", "self_identity", "owner_identity", "time_date", "humor", "philosophy", "explanation", "general_llm"]);
       const needsAuth = !PUBLIC_INTENTS.has(somResult.handler);
       if (needsAuth) {
         try {
-          const { data: { user: authGateUser } } = await supabase.auth.getUser();
+          const { data: { session: authSession } } = await supabase.auth.getSession();
+          const authGateUser = authSession?.user;
           if (!authGateUser) {
             const authMsg = "Você precisa estar logado para usar esse recurso. Faça login para continuar.";
             setChatHistory(prev => {
@@ -497,28 +498,19 @@ export function useOrionReasoning(
             return;
           }
 
-          // For sensitive intents, verify voice enrollment
+          // For sensitive intents, verify voice/face enrollment IN PARALLEL
           const VOICE_AUTH_INTENTS = new Set(["auto_construct", "self_evolve", "security_query", "iot_light", "iot_temperature", "iot_robot", "iot_status", "bluetooth"]);
           if (VOICE_AUTH_INTENTS.has(somResult.handler)) {
-            const { data: voiceEnrollment } = await supabase
-              .from("voice_auth_enrollments" as any)
-              .select("is_active, enrollment_quality, user_id")
-              .eq("user_id", authGateUser.id)
-              .eq("is_active", true)
-              .maybeSingle();
-
-            const { data: faceEnrollment } = await supabase
-              .from("face_auth_enrollments")
-              .select("is_active, user_id")
-              .eq("user_id", authGateUser.id)
-              .eq("is_active", true)
-              .maybeSingle();
+            const [voiceRes, faceRes] = await Promise.all([
+              supabase.from("voice_auth_enrollments" as any).select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+              supabase.from("face_auth_enrollments").select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+            ]);
 
             // Owner always passes (email check)
             const { isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
             const isOwner = isOwnerEmail(authGateUser.email);
 
-            if (!isOwner && !voiceEnrollment && !faceEnrollment) {
+            if (!isOwner && !voiceRes.data && !faceRes.data) {
               const enrollMsg = "Este comando requer autenticação biométrica. Cadastre seu Voice ID ou Face ID na área de segurança do painel para executar comandos sensíveis.";
               setChatHistory(prev => {
                 const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
@@ -1401,7 +1393,6 @@ export function useOrionReasoning(
       );
       if (timeEstimate.isDeep && timeEstimate.message) {
         addLog(`⏱️ DeepEstimate: ${timeEstimate.complexity}, ~${timeEstimate.estimatedMs}ms`);
-        // Show estimation message to user
         setChatHistory(prev => {
           const last = prev[prev.length - 1];
           if (last?.role === "ai" && last.text.startsWith("⏳")) {
@@ -1410,8 +1401,8 @@ export function useOrionReasoning(
           return prev;
         });
         setThought(timeEstimate.message);
-        // Speak the estimation (non-blocking, short)
-        try { await speak(timeEstimate.spokenMessage); } catch {}
+        // NON-BLOCKING: fire-and-forget speak so we don't delay the LLM call
+        speak(timeEstimate.spokenMessage).catch(() => {});
       }
 
       // ═══ LAYER 2: NLP Semantics + Cognition Context ═══

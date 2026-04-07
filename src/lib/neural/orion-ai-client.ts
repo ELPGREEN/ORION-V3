@@ -389,13 +389,13 @@ export async function fetchDashboardContext(): Promise<string> {
   }
   const parts: string[] = [];
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return "";
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return "";
     const [processosRes, clientsRes, docsRes, consultasRes] = await Promise.all([
-      supabase.from("processos").select("id, numero_processo, tipo, status", { count: "exact", head: false }).eq("user_id", user.id).limit(5),
-      supabase.from("client_profiles").select("id, nome, status", { count: "exact", head: false }).eq("user_id", user.id).limit(5),
-      supabase.from("documents").select("id, title, document_type", { count: "exact", head: false }).eq("user_id", user.id).limit(5),
-      supabase.from("consultas").select("id, status, data_hora, tipo", { count: "exact", head: false }).eq("cliente_id", user.id).limit(5),
+      supabase.from("processos").select("id", { count: "exact", head: true }).eq("user_id", session.user.id).limit(1),
+      supabase.from("client_profiles").select("id", { count: "exact", head: true }).eq("user_id", session.user.id).limit(1),
+      supabase.from("documents").select("id", { count: "exact", head: true }).eq("user_id", session.user.id).limit(1),
+      supabase.from("consultas").select("id", { count: "exact", head: true }).eq("cliente_id", session.user.id).limit(1),
     ]);
     if (processosRes.count) parts.push(`${processosRes.count} processos.`);
     if (clientsRes.count) parts.push(`${clientsRes.count} clientes.`);
@@ -512,8 +512,8 @@ export async function analyzeFrameWithAI(
     let consciousnessContext = "";
     try {
       const { buildOrionIdentityPrompt, isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
-      const { data: { user } } = await supabase.auth.getUser();
-      const isOwner = isOwnerEmail(user?.email);
+      const { data: { session } } = await supabase.auth.getSession();
+      const isOwner = isOwnerEmail(session?.user?.email);
       const isIdentityQuestion = question && /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
       const isCapabilityQuestion = question && /que\s+(sistema|m[oó]dulo|capacidade|funcionalidade)|o\s+que\s+(falta|precisa|melhorar)|suas?\s+(limita[çc][oõ]es|lacunas|gaps)|what.*(missing|need|improve|lack)/i.test(question);
       const isJarvisComparison = question && /jarvis|compara[çc][aã]o|diferen[çc]a.*entre|vs\s+orion|orion\s+vs|supera|vantagem/i.test(question);
@@ -691,9 +691,7 @@ export async function analyzeFrameStreaming(
       const tCtx = tempCanvas.getContext("2d");
       if (!tCtx) return { description: null, learnedFacts: [], identifiedObjects: [] };
       tCtx.drawImage(canvas, 0, 0, sw, sh);
-
-      // Apply CLAHE contrast enhancement (same as non-streaming path)
-      applyContrastEnhancement(tCtx, sw, sh);
+      // SKIP CLAHE in streaming path — saves ~50-80ms per call
 
       // Validate frame is not blank — check pixel variance in a small sample
       const sampleSize = 64;
@@ -725,8 +723,8 @@ export async function analyzeFrameStreaming(
         withTimeout((async (): Promise<string> => {
           try {
             const { buildOrionIdentityPrompt, isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
-            const { data: { user } } = await supabase.auth.getUser();
-            const isOwner = isOwnerEmail(user?.email);
+            const { data: { session } } = await supabase.auth.getSession();
+            const isOwner = isOwnerEmail(session?.user?.email);
             const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
             const isCapabilityQuestion = /que\s+(sistema|m[oó]dulo|capacidade|funcionalidade)|o\s+que\s+(falta|precisa|melhorar)|suas?\s+(limita[çc][oõ]es|lacunas|gaps)|what.*(missing|need|improve|lack)/i.test(question);
             const isJarvisComparison = /jarvis|compara[çc][aã]o|diferen[çc]a.*entre|vs\s+orion|orion\s+vs|supera|vantagem/i.test(question);
@@ -817,7 +815,7 @@ export async function analyzeFrameStreaming(
         imageBase64, context: streamContext, question,
         userMemory: getUserMemory(),
         dashboardContext: dashboardCtx,
-        chatHistory: chatHistory?.slice(-6),
+        chatHistory: chatHistory?.slice(-4),
         identificationMode, intentType,
         stream: true,
         localDetections: buildLocalDetections(),
