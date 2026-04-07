@@ -475,22 +475,50 @@
       "lawyers": {
         "title": "Para Advogados",
         "desc": "IA jurídica completa: gere petições, pesquise jurisprudência, gerencie processos e clientes com inteligência artificial.",
-        "items": ["Geração de petições com IA", "Pesquisa jurisprudencial inteligente", "Gestão de processos e prazos", "Análise de contratos automatizada", "Portal do cliente em tempo real", "Relatórios e métricas de desempenho"]
+        "items": [
+          "Geração de petições com IA",
+          "Pesquisa jurisprudencial inteligente",
+          "Gestão de processos e prazos",
+          "Análise de contratos automatizada",
+          "Portal do cliente em tempo real",
+          "Relatórios e métricas de desempenho"
+        ]
       },
       "offices": {
         "title": "Para Escritórios & Empresas",
         "desc": "CRM jurídico, gestão de equipe, faturamento e dashboard completo para escritórios e empresas de todos os tamanhos.",
-        "items": ["CRM com pipeline de clientes", "Gestão de equipe e permissões", "Faturamento e controle financeiro", "Dashboard gerencial com métricas", "Multi-usuários com níveis de acesso", "Integração com calendário e e-mail"]
+        "items": [
+          "CRM com pipeline de clientes",
+          "Gestão de equipe e permissões",
+          "Faturamento e controle financeiro",
+          "Dashboard gerencial com métricas",
+          "Multi-usuários com níveis de acesso",
+          "Integração com calendário e e-mail"
+        ]
       },
       "producers": {
         "title": "Para Produtores Digitais",
         "desc": "Crie sua loja, configure checkout, gerencie produtos e acompanhe vendas com dashboard completo e programa de afiliados.",
-        "items": ["Loja própria com domínio personalizado", "Checkout otimizado para conversão", "Gestão de produtos e categorias", "Dashboard de vendas em tempo real", "Programa de afiliados integrado", "Páginas de venda com editor visual"]
+        "items": [
+          "Loja própria com domínio personalizado",
+          "Checkout otimizado para conversão",
+          "Gestão de produtos e categorias",
+          "Dashboard de vendas em tempo real",
+          "Programa de afiliados integrado",
+          "Páginas de venda com editor visual"
+        ]
       },
       "affiliates": {
         "title": "Para Afiliados",
         "desc": "Links rastreáveis, comissões automáticas e marketplace de produtos para promover e ganhar comissões.",
-        "items": ["Links rastreáveis com analytics", "Comissões automáticas por venda", "Marketplace de produtos disponíveis", "Dashboard de performance", "Cupons personalizados", "Relatórios de conversão detalhados"]
+        "items": [
+          "Links rastreáveis com analytics",
+          "Comissões automáticas por venda",
+          "Marketplace de produtos disponíveis",
+          "Dashboard de performance",
+          "Cupons personalizados",
+          "Relatórios de conversão detalhados"
+        ]
       }
     },
     "differentials": [
@@ -545,10 +573,22 @@
     "techSecurityHighlight": "Segurança",
     "techSecurityDesc": "O escritório emprega padrões de segurança de nível bancário para proteger os dados de seus clientes, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018) e o Estatuto da Advocacia (Lei nº 8.906/1994).",
     "techItems": {
-      "tls": { "title": "Criptografia TLS/HTTPS", "desc": "Todas as comunicações são protegidas por criptografia de ponta a ponta" },
-      "rls": { "title": "Row Level Security (RLS)", "desc": "Isolamento de dados por cliente com políticas de segurança a nível de banco de dados" },
-      "lgpd": { "title": "Conformidade LGPD", "desc": "Tratamento de dados conforme as bases legais da Lei nº 13.709/2018" },
-      "secrecy": { "title": "Sigilo Profissional", "desc": "Proteção inviolável conforme art. 7º do Estatuto da OAB" }
+      "tls": {
+        "title": "Criptografia TLS/HTTPS",
+        "desc": "Todas as comunicações são protegidas por criptografia de ponta a ponta"
+      },
+      "rls": {
+        "title": "Row Level Security (RLS)",
+        "desc": "Isolamento de dados por cliente com políticas de segurança a nível de banco de dados"
+      },
+      "lgpd": {
+        "title": "Conformidade LGPD",
+        "desc": "Tratamento de dados conforme as bases legais da Lei nº 13.709/2018"
+      },
+      "secrecy": {
+        "title": "Sigilo Profissional",
+        "desc": "Proteção inviolável conforme art. 7º do Estatuto da OAB"
+      }
     },
     "ctaTitle": "Converse com o Escritório",
     "ctaDescription": "Agende uma consulta e descubra como a combinação de expertise jurídica internacional e tecnologia de ponta pode fazer a diferença no seu caso."
@@ -574,22 +614,42 @@
       "tracking": {
         "title": "Automação e Monitoramento em Tempo Real",
         "desc": "Painel inteligente onde você visualiza processos, operações, KPIs e métricas em tempo real. O sistema monitora automaticamente todas as atividades e exibe o status de cada etapa.",
-        "items": ["Dashboard com KPIs e métricas em tempo real", "Notificações automáticas de eventos críticos", "Histórico completo e auditável", "Acesso 24/7 via navegador, de qualquer dispositivo"]
+        "items": [
+          "Dashboard com KPIs e métricas em tempo real",
+          "Notificações automáticas de eventos críticos",
+          "Histórico completo e auditável",
+          "Acesso 24/7 via navegador, de qualquer dispositivo"
+        ]
       },
       "communication": {
         "title": "Assistente IA Orion Integrado",
         "desc": "Converse com o Orion, nosso assistente de IA treinado para auxiliar em documentação empresarial, análise de dados, compliance e estratégia de negócios internacionais.",
-        "items": ["Chat com IA contextual dentro da plataforma", "Geração de documentos empresariais com IA", "Análise inteligente de dados e relatórios", "Suporte multi-idioma (PT, EN, IT, ES, ZH)"]
+        "items": [
+          "Chat com IA contextual dentro da plataforma",
+          "Geração de documentos empresariais com IA",
+          "Análise inteligente de dados e relatórios",
+          "Suporte multi-idioma (PT, EN, IT, ES, ZH)"
+        ]
       },
       "documents": {
         "title": "Gestão Documental Inteligente",
         "desc": "Crie, gerencie e compartilhe documentos empresariais com IA. Contratos internacionais, LOIs, NDAs, propostas comerciais e relatórios de compliance organizados em pastas inteligentes.",
-        "items": ["Geração de documentos com IA (15+ tipos)", "Templates bilíngues (EN/PT) para negócios internacionais", "Organização automática por categorias", "Armazenamento seguro em nuvem com versionamento"]
+        "items": [
+          "Geração de documentos com IA (15+ tipos)",
+          "Templates bilíngues (EN/PT) para negócios internacionais",
+          "Organização automática por categorias",
+          "Armazenamento seguro em nuvem com versionamento"
+        ]
       },
       "security": {
         "title": "Segurança e Compliance",
         "desc": "Infraestrutura protegida por autenticação robusta, criptografia TLS e políticas de segurança em nível de banco de dados (RLS). Conformidade com GDPR e LGPD.",
-        "items": ["Conexão criptografada via HTTPS/TLS", "Controle de acesso por perfil (Row Level Security)", "Conformidade GDPR e LGPD", "Auditoria completa de ações"]
+        "items": [
+          "Conexão criptografada via HTTPS/TLS",
+          "Controle de acesso por perfil (Row Level Security)",
+          "Conformidade GDPR e LGPD",
+          "Auditoria completa de ações"
+        ]
       }
     },
     "benefitsLabel": "Vantagens",
@@ -606,25 +666,144 @@
     "howItWorksTitle1": "Três passos para a",
     "howItWorksTitle2": "transformação digital",
     "steps": {
-      "create": { "title": "Crie sua conta", "desc": "Cadastro rápido e seguro. Em poucos minutos você tem acesso completo à plataforma ORION." },
-      "access": { "title": "Configure seu ambiente", "desc": "Defina seu perfil, conecte fontes de dados e personalize os módulos para sua operação." },
-      "control": { "title": "Automatize e escale", "desc": "Use IA para gerar documentos, analisar dados, gerenciar equipes e tomar decisões mais inteligentes." }
+      "create": {
+        "title": "Crie sua conta",
+        "desc": "Cadastro rápido e seguro. Em poucos minutos você tem acesso completo à plataforma ORION."
+      },
+      "access": {
+        "title": "Configure seu ambiente",
+        "desc": "Defina seu perfil, conecte fontes de dados e personalize os módulos para sua operação."
+      },
+      "control": {
+        "title": "Automatize e escale",
+        "desc": "Use IA para gerar documentos, analisar dados, gerenciar equipes e tomar decisões mais inteligentes."
+      }
     },
     "showcaseLabel": "Conheça a Plataforma",
     "showcaseTitle1": "Visão geral da",
     "showcaseTitle2": "plataforma",
     "showcaseDescription": "Descubra os módulos e funcionalidades que tornam a gestão empresarial mais eficiente, automatizada e inteligente.",
     "showcase": {
-      "platform": { "title": "Plataforma ORION IA", "desc": "Painel completo para gestão empresarial com IA. Monitore operações, gerencie equipes e automatize processos com transparência total e acesso 24/7." },
-      "ai": { "title": "Assistente Orion com IA", "desc": "Consulte dúvidas empresariais com inteligência artificial treinada em legislação internacional, compliance e estratégia de negócios. Respostas contextuais e fundamentadas." },
-      "docs": { "title": "Geração de Documentos com IA", "desc": "Crie contratos internacionais, LOIs, NDAs, propostas comerciais e relatórios com auxílio de IA. Templates bilíngues profissionais que agilizam operações." },
-      "register": { "title": "Cadastro e Acesso Empresarial", "desc": "Registre sua empresa em poucos minutos e tenha acesso a todas as funcionalidades. Área restrita com segurança e privacidade garantidas por perfil." },
-      "dashboard": { "title": "Dashboard Empresarial Inteligente", "desc": "Visão geral completa com métricas, operações ativas, tarefas pendentes e notificações em tempo real. Tudo organizado em um painel intuitivo e responsivo." }
+      "platform": {
+        "title": "Plataforma ORION IA",
+        "desc": "Painel completo para gestão empresarial com IA. Monitore operações, gerencie equipes e automatize processos com transparência total e acesso 24/7."
+      },
+      "ai": {
+        "title": "Assistente Orion com IA",
+        "desc": "Consulte dúvidas empresariais com inteligência artificial treinada em legislação internacional, compliance e estratégia de negócios. Respostas contextuais e fundamentadas."
+      },
+      "docs": {
+        "title": "Geração de Documentos com IA",
+        "desc": "Crie contratos internacionais, LOIs, NDAs, propostas comerciais e relatórios com auxílio de IA. Templates bilíngues profissionais que agilizam operações."
+      },
+      "register": {
+        "title": "Cadastro e Acesso Empresarial",
+        "desc": "Registre sua empresa em poucos minutos e tenha acesso a todas as funcionalidades. Área restrita com segurança e privacidade garantidas por perfil."
+      },
+      "dashboard": {
+        "title": "Dashboard Empresarial Inteligente",
+        "desc": "Visão geral completa com métricas, operações ativas, tarefas pendentes e notificações em tempo real. Tudo organizado em um painel intuitivo e responsivo."
+      }
     },
     "ctaLabel": "Comece Agora",
     "ctaTitle1": "Pronto para a",
     "ctaTitle2": "transformação digital",
     "ctaTitle3": "da sua empresa?",
     "ctaDescription": "Cadastre-se gratuitamente e experimente uma nova forma de gerenciar sua empresa com inteligência artificial, automação e compliance integrados."
+  },
+  "escritorio": {
+    "heroTitle": "Serviços",
+    "heroTitleHighlight": "Jurídicos",
+    "heroDescription": "Excelência jurídica em diversas especialidades do Direito, com formação internacional e atuação personalizada.",
+    "explore": "Explore",
+    "whyChoose": "Por que escolher o",
+    "whyChooseHighlight": "escritório?",
+    "whyChooseDescription": "Combinamos formação acadêmica de excelência internacional com tecnologia jurídica avançada e um atendimento próximo e transparente, garantindo a melhor estratégia para cada caso.",
+    "scheduleConsultation": "AGENDAR CONSULTA",
+    "notFoundTitle": "Não encontrou sua área?",
+    "notFoundDescription": "Entre em contato e nos conte seu caso. O escritório conta com uma rede de parceiros especializados para atender todas as demandas jurídicas.",
+    "meetOffice": "CONHECER O ESCRITÓRIO",
+    "areas": {
+      "criminal": {
+        "title": "Direito Penal",
+        "desc": "Defesa técnica especializada em todas as fases do processo penal, do inquérito policial ao Tribunal do Júri.",
+        "items": [
+          "Defesa em inquéritos policiais",
+          "Habeas Corpus e liberdade provisória",
+          "Tribunal do Júri",
+          "Execução penal e progressão de regime",
+          "Crimes econômicos e financeiros",
+          "Recursos criminais"
+        ]
+      },
+      "international": {
+        "title": "Direito Internacional",
+        "desc": "Assessoria jurídica em questões transfronteiriças, tratados internacionais e cooperação jurídica internacional.",
+        "items": [
+          "Cooperação jurídica internacional",
+          "Extradição e deportação",
+          "Direito Internacional Público e Privado",
+          "Homologação de sentenças estrangeiras",
+          "Imigração e vistos",
+          "Arbitragem internacional"
+        ]
+      },
+      "humanRights": {
+        "title": "Direitos Humanos",
+        "desc": "Proteção e promoção dos direitos fundamentais perante cortes nacionais e organismos internacionais.",
+        "items": [
+          "Litigância perante a CIDH",
+          "Proteção de minorias e grupos vulneráveis",
+          "Liberdade de expressão e imprensa",
+          "Direito dos refugiados",
+          "Violência institucional",
+          "Advocacia perante a ONU"
+        ]
+      },
+      "labor": {
+        "title": "Direito do Trabalho",
+        "desc": "Atuação em demandas trabalhistas individuais e coletivas, tanto para empregados quanto para empregadores.",
+        "items": [
+          "Reclamações trabalhistas",
+          "Assédio moral e sexual",
+          "Acidente de trabalho",
+          "Negociações coletivas",
+          "Consultoria preventiva empresarial",
+          "Verbas rescisórias e FGTS"
+        ]
+      },
+      "business": {
+        "title": "Direito Empresarial",
+        "desc": "Assessoria jurídica para empresas em questões societárias, contratuais e de compliance.",
+        "items": [
+          "Constituição e alteração societária",
+          "Contratos comerciais",
+          "Compliance e governança",
+          "Recuperação judicial",
+          "Due diligence jurídica",
+          "Proteção de propriedade intelectual"
+        ]
+      },
+      "civil": {
+        "title": "Direito Civil",
+        "desc": "Atuação em demandas cíveis, incluindo responsabilidade civil, contratos e direito de família.",
+        "items": [
+          "Responsabilidade civil e indenizações",
+          "Revisão e elaboração de contratos",
+          "Inventários e sucessões",
+          "Direito do consumidor",
+          "Direito imobiliário",
+          "Mediação e arbitragem"
+        ]
+      }
+    },
+    "differentials": [
+      "Formação em Harvard e UC Berkeley",
+      "Atuação em 8+ países",
+      "Tecnologia jurídica com IA",
+      "Conformidade total com LGPD",
+      "Programa Pro Bono estruturado",
+      "Portal do cliente em tempo real"
+    ]
   }
 }
