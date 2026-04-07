@@ -1800,63 +1800,69 @@ span[data-suggestion-id] {
   pointer-events: none;
 }
 
-/* ═══ TRON VISUAL EFFECTS SYSTEM ═══ */
+/* ═══ TRON VISUAL EFFECTS SYSTEM — HD NEON ═══ */
 
 /* Tron neon border glow */
 .tron-border {
-  border: 1px solid hsl(var(--primary) / 0.2);
+  border: 1px solid hsl(var(--primary) / 0.15);
   box-shadow: 
-    inset 0 0 20px hsl(var(--primary) / 0.03),
-    0 0 15px hsl(var(--primary) / 0.05);
-  transition: box-shadow 0.4s ease, border-color 0.4s ease;
+    inset 0 0 30px hsl(var(--primary) / 0.03),
+    0 0 20px hsl(var(--primary) / 0.04);
+  transition: box-shadow 0.5s ease, border-color 0.5s ease;
 }
 .tron-border:hover {
   border-color: hsl(var(--primary) / 0.4);
   box-shadow: 
-    inset 0 0 30px hsl(var(--primary) / 0.05),
-    0 0 25px hsl(var(--primary) / 0.1),
-    0 0 50px hsl(var(--primary) / 0.05);
+    inset 0 0 40px hsl(var(--primary) / 0.06),
+    0 0 30px hsl(var(--primary) / 0.1),
+    0 0 80px hsl(var(--primary) / 0.04);
 }
 
-/* Tron ambient neon glow — replaces hex grid */
+/* Tron ambient neon atmosphere — deep radial glows */
 .tron-hex-grid {
   background:
-    radial-gradient(ellipse 600px 300px at 20% 50%, hsl(var(--primary) / 0.025) 0%, transparent 70%),
-    radial-gradient(ellipse 500px 250px at 80% 30%, hsl(var(--secondary) / 0.02) 0%, transparent 70%);
+    radial-gradient(ellipse 800px 400px at 15% 50%, hsl(var(--primary) / 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 600px 300px at 85% 30%, hsl(var(--secondary) / 0.03) 0%, transparent 60%),
+    radial-gradient(ellipse 400px 400px at 50% 80%, hsl(var(--primary) / 0.02) 0%, transparent 50%);
 }
 
-/* Tron data stream — subtle vertical light rays */
+/* Tron light ray — single thin vertical neon line */
 .tron-data-stream::before {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, transparent 0%, transparent 20%, hsl(var(--primary) / 0.015) 20.5%, transparent 21%, transparent 50%, hsl(var(--secondary) / 0.01) 50.5%, transparent 51%, transparent 80%, hsl(var(--primary) / 0.012) 80.5%, transparent 81%);
+    linear-gradient(90deg, 
+      transparent 19.8%, hsl(var(--primary) / 0.04) 20%, transparent 20.2%,
+      transparent 49.8%, hsl(var(--secondary) / 0.03) 50%, transparent 50.2%,
+      transparent 79.8%, hsl(var(--primary) / 0.03) 80%, transparent 80.2%
+    );
   pointer-events: none;
 }
 
-/* Tron horizontal scan pulse */
+/* Tron horizontal scan pulse — neon light sweep */
 .tron-scan-pulse::after {
   content: '';
   position: absolute;
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.3), transparent);
-  box-shadow: 0 0 20px 4px hsl(var(--primary) / 0.08);
-  animation: tronScanPulse 8s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.5), hsl(var(--primary) / 0.8), hsl(var(--primary) / 0.5), transparent);
+  box-shadow: 
+    0 0 15px 3px hsl(var(--primary) / 0.15),
+    0 0 40px 6px hsl(var(--primary) / 0.06);
+  animation: tronScanPulse 10s ease-in-out infinite;
   pointer-events: none;
 }
 
 @keyframes tronScanPulse {
   0%, 100% { top: 0; opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  95% { opacity: 0; }
-  50% { top: 100%; }
+  5% { opacity: 0.8; }
+  50% { top: 100%; opacity: 0.8; }
+  55% { opacity: 0; }
 }
 
-/* Tron corner accents */
+/* Tron corner accents — sharper, brighter */
 .tron-corners {
   position: relative;
 }
@@ -1864,10 +1870,11 @@ span[data-suggestion-id] {
 .tron-corners::after {
   content: '';
   position: absolute;
-  width: 16px;
-  height: 16px;
-  border-color: hsl(var(--primary) / 0.3);
+  width: 20px;
+  height: 20px;
+  border-color: hsl(var(--primary) / 0.25);
   pointer-events: none;
+  transition: border-color 0.4s, box-shadow 0.4s;
 }
 .tron-corners::before {
   top: -1px;
@@ -1881,27 +1888,34 @@ span[data-suggestion-id] {
   border-bottom: 1px solid;
   border-right: 1px solid;
 }
+.tron-corners:hover::before,
+.tron-corners:hover::after {
+  border-color: hsl(var(--primary) / 0.6);
+  filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.3));
+}
 
-/* Tron glow text */
+/* Tron glow text — HD neon bloom */
 .tron-glow-gold {
   color: hsl(var(--primary));
   text-shadow: 
-    0 0 10px hsl(var(--primary) / 0.5),
-    0 0 30px hsl(var(--primary) / 0.2),
-    0 0 60px hsl(var(--primary) / 0.1);
+    0 0 8px hsl(var(--primary) / 0.6),
+    0 0 25px hsl(var(--primary) / 0.3),
+    0 0 50px hsl(var(--primary) / 0.15),
+    0 0 80px hsl(var(--primary) / 0.08);
 }
 
 .tron-glow-blue {
   color: hsl(var(--secondary));
   text-shadow: 
-    0 0 10px hsl(var(--secondary) / 0.5),
-    0 0 30px hsl(var(--secondary) / 0.2);
+    0 0 8px hsl(var(--secondary) / 0.6),
+    0 0 25px hsl(var(--secondary) / 0.3),
+    0 0 50px hsl(var(--secondary) / 0.12);
 }
 
-/* Tron card with animated border */
+/* Tron card with animated top-border light sweep */
 .tron-card {
   background: hsl(var(--card));
-  border: 1px solid hsl(var(--primary) / 0.15);
+  border: 1px solid hsl(var(--primary) / 0.12);
   position: relative;
   overflow: hidden;
 }
@@ -1910,38 +1924,40 @@ span[data-suggestion-id] {
   position: absolute;
   top: 0;
   left: -100%;
-  width: 100%;
+  width: 60%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.6), transparent);
-  animation: tronBorderSweep 4s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.7), transparent);
+  box-shadow: 0 0 10px hsl(var(--primary) / 0.3);
+  animation: tronBorderSweep 5s ease-in-out infinite;
 }
 
 @keyframes tronBorderSweep {
-  0% { left: -100%; }
+  0% { left: -60%; }
   50% { left: 100%; }
-  50.01%, 100% { left: -100%; }
+  50.01%, 100% { left: -60%; }
 }
 
-/* Tron section divider */
+/* Tron section divider — neon line with bloom */
 .tron-divider {
   height: 1px;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    hsl(var(--primary) / 0.1) 15%,
-    hsl(var(--primary) / 0.4) 50%,
-    hsl(var(--primary) / 0.1) 85%,
+    hsl(var(--primary) / 0.08) 10%,
+    hsl(var(--primary) / 0.5) 50%,
+    hsl(var(--primary) / 0.08) 90%,
     transparent 100%
   );
-  box-shadow: 0 0 8px hsl(var(--primary) / 0.1);
+  box-shadow: 
+    0 0 10px hsl(var(--primary) / 0.15),
+    0 0 30px hsl(var(--primary) / 0.06);
 }
 
-/* Tron ambient dot field — nearly invisible, just depth texture */
+/* Tron dot grid — removed, clean dark only */
 .tron-dot-grid {
-  background-image: radial-gradient(hsl(var(--primary) / 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background: transparent;
 }
 
-/* Tron energy pulse on sections */
+/* Tron energy pulse — ambient neon breathing */
 .tron-energy {
   position: relative;
 }
@@ -1949,14 +1965,34 @@ span[data-suggestion-id] {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.04) 0%, transparent 70%);
-  animation: tronEnergyPulse 5s ease-in-out infinite;
+  background: radial-gradient(ellipse at center, hsl(var(--primary) / 0.05) 0%, transparent 60%);
+  animation: tronEnergyPulse 6s ease-in-out infinite;
   pointer-events: none;
 }
 
 @keyframes tronEnergyPulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.8; }
+}
+
+/* Tron neon underline — for section headers */
+.tron-neon-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.6), transparent);
+  box-shadow: 0 0 8px hsl(var(--primary) / 0.2), 0 0 20px hsl(var(--primary) / 0.08);
+}
+
+/* Tron ambient section — subtle edge lighting */
+.tron-ambient {
+  position: relative;
+}
+.tron-ambient::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 5%, hsl(var(--primary) / 0.3) 50%, transparent 95%);
+  box-shadow: 0 0 12px hsl(var(--primary) / 0.1);
 }
 
 /* Hero scroll bounce */

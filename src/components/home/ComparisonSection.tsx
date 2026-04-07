@@ -19,8 +19,9 @@ const rows = [
 
 export function ComparisonSection() {
   return (
-    <section className="py-12 sm:py-16 bg-muted/10 relative overflow-hidden">
+    <section className="py-12 sm:py-16 bg-muted/10 relative overflow-hidden tron-ambient">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
+      <div className="absolute bottom-0 left-1/4 w-[500px] h-[300px] bg-secondary/[0.025] rounded-full blur-[180px] pointer-events-none" />
       <div className="container relative px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center mb-8 sm:mb-10">
           <ScrollReveal direction="fade">
