@@ -99,8 +99,8 @@ serve(async (req) => {
         }
 
         // Use AI to analyze the file
-        if (LOVABLE_API_KEY) {
-          const analysis = await analyzeWithAI(LOVABLE_API_KEY, content, path, query || "Analyze this code for bugs, gaps, and improvement opportunities.");
+        if (GEMINI_KEY) {
+          const analysis = await analyzeWithGemini(GEMINI_KEY, content, path, query || "Analyze this code for bugs, gaps, and improvement opportunities.");
           result = { mode: "analyze_file", path, analysis, linesOfCode: content.split("\n").length };
         } else {
           // Basic static analysis
@@ -129,9 +129,9 @@ serve(async (req) => {
           ...flattenTree(edgeFunctions, "supabase/functions"),
         ];
 
-        if (LOVABLE_API_KEY) {
-          const gapAnalysis = await analyzeWithAI(
-            LOVABLE_API_KEY,
+        if (GEMINI_KEY) {
+          const gapAnalysis = await analyzeWithGemini(
+            GEMINI_KEY,
             JSON.stringify(fileList, null, 2),
             "project-structure",
             query || "Based on this file structure, identify missing modules, disconnected components, dead code paths, and architectural gaps. Focus on: 1) Files that exist but aren't imported anywhere, 2) Missing error handling patterns, 3) Incomplete integrations, 4) Security vulnerabilities in the architecture."
@@ -155,9 +155,9 @@ serve(async (req) => {
           if (content) sampleFiles.push(`=== ${f.path} ===\n${content.substring(0, 2000)}\n`);
         }
 
-        if (LOVABLE_API_KEY) {
-          const suggestions = await analyzeWithAI(
-            LOVABLE_API_KEY,
+        if (GEMINI_KEY) {
+          const suggestions = await analyzeWithGemini(
+            GEMINI_KEY,
             sampleFiles.join("\n---\n"),
             targetPath,
             query || "Review these code samples and suggest specific improvements: performance optimizations, better error handling, missing TypeScript types, code deduplication, and architectural patterns that should be applied."
@@ -296,41 +296,38 @@ function estimateComplexity(code: string): { cyclomatic: number; linesOfCode: nu
   return { cyclomatic: branches + 1, linesOfCode: lines.length, functions, classes };
 }
 
-// ─── AI Analysis ───
+// ─── AI Analysis (Direct Gemini — FREE) ───
 
-async function analyzeWithAI(apiKey: string, content: string, filePath: string, query: string): Promise<string> {
-  try {
-    const res = await fetch(AI_GATEWAY, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: `Você é o motor de auto-análise do Orion — uma IA neural avançada. Analise o código-fonte fornecido com rigor técnico máximo. Identifique: bugs potenciais, lacunas de segurança, oportunidades de otimização, padrões ausentes, e sugestões de melhoria. Responda em português brasileiro, de forma estruturada com bullet points.`,
-          },
-          {
-            role: "user",
-            content: `Arquivo/Contexto: ${filePath}\n\nQuery: ${query}\n\nCódigo:\n${content.substring(0, 12000)}`,
-          },
-        ],
-      }),
-    });
+function getGeminiKeysRotated(primaryKey: string): string[] {
+  return [
+    primaryKey,
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+  ].filter((k): k is string => !!k);
+}
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("AI analysis failed:", res.status, errText);
-      return `Análise AI indisponível (${res.status}). Use modo estático.`;
+async function analyzeWithGemini(apiKey: string, content: string, filePath: string, query: string): Promise<string> {
+  const keys = getGeminiKeysRotated(apiKey);
+  for (const key of keys) {
+    try {
+      const res = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${key}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: `Você é o motor de auto-análise do Orion — uma IA neural avançada. Analise o código-fonte fornecido com rigor técnico máximo. Identifique: bugs potenciais, lacunas de segurança, oportunidades de otimização, padrões ausentes, e sugestões de melhoria. Responda em português brasileiro, de forma estruturada com bullet points.` }] },
+          contents: [{ role: "user", parts: [{ text: `Arquivo/Contexto: ${filePath}\n\nQuery: ${query}\n\nCódigo:\n${content.substring(0, 12000)}` }] }],
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta da análise AI.";
+      }
+      await res.text();
+    } catch (e) {
+      console.error("Gemini analysis error:", e);
     }
-
-    const data = await res.json();
-    return data.choices?.[0]?.message?.content || "Sem resposta da análise AI.";
-  } catch (e) {
-    console.error("AI analysis error:", e);
-    return "Erro na análise AI.";
   }
+  return "Análise AI indisponível — todas as chaves falharam.";
 }
