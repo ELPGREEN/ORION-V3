@@ -26,10 +26,11 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Use HuggingFace Inference API with YOLOv8 model
+    // Use HuggingFace Inference API with object detection model
+    // facebook/detr-resnet-50 is reliable and actively maintained
     const modelId = model === "yolov8s" 
-      ? "hustvl/yolos-small" 
-      : "hustvl/yolos-tiny";
+      ? "facebook/detr-resnet-101" 
+      : "facebook/detr-resnet-50";
 
     const imageBytes = Uint8Array.from(atob(image), (c) => c.charCodeAt(0));
 
