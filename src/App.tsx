@@ -127,6 +127,8 @@ const App = () => (
           <CopyProtection />
           <OrionShield />
           {/* GlobalOrionListener lives inside DashboardLayout now */}
+          {/* PublicOrionListener — lightweight orb for public pages */}
+          <PublicOrionListener />
           <MouseTrailEffect />
           <CookieConsent />
           <AffiliateTracker />
