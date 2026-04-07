@@ -214,7 +214,62 @@ export default function MeusProdutos() {
             </DialogHeader>
             <div className="space-y-4">
               <Input placeholder="Título do produto" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
-              
+
+              {/* Image upload */}
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Imagem do Produto</label>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                {form.image_url ? (
+                  <div className="relative group">
+                    <img
+                      src={form.image_url}
+                      alt="Preview"
+                      className="w-full h-40 object-cover rounded-md border border-border/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, image_url: "" }))}
+                      className="absolute top-2 right-2 h-7 w-7 rounded-full bg-destructive/90 text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="absolute bottom-2 right-2 text-xs gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => imageInputRef.current?.click()}
+                    >
+                      <ImagePlus className="h-3 w-3" /> Trocar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-32 border-dashed border-2 gap-2 flex-col"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={uploadingImage}
+                  >
+                    {uploadingImage ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    ) : (
+                      <>
+                        <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Clique para enviar uma imagem</span>
+                        <span className="text-[10px] text-muted-foreground/60">Qualquer tamanho — será ajustada automaticamente</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+
               <Select value={form.product_type} onValueChange={(v) => setForm(f => ({ ...f, product_type: v }))}>
                 <SelectTrigger><SelectValue placeholder="Tipo de produto" /></SelectTrigger>
                 <SelectContent>
