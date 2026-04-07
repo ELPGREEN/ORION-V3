@@ -1,14 +1,14 @@
 /**
- * Orion Voice Registry v1.0
+ * Orion Voice Registry v2.0
  * ─────────────────────────────────────────────────────────────
  * Voice profile management for owner, clients, and users.
- * Integrates with ElevenLabs for voice cloning and TTS.
+ * Uses Gemini TTS for synthesis (FREE). Voice cloning via Fish Speech.
  *
  * Actions:
  *   register_voice   — Upload voice sample and create profile
  *   list_voices       — List voice profiles for a user
- *   clone_voice       — Clone voice via ElevenLabs
- *   synthesize        — Generate speech from text using a profile
+ *   clone_voice       — Clone voice (placeholder — Fish Speech)
+ *   synthesize        — Generate speech from text using Gemini TTS
  *   delete_voice      — Remove a voice profile
  */
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -19,8 +19,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-const ELEVENLABS_API = "https://api.elevenlabs.io/v1";
 
 function getSupabase(authHeader?: string) {
   if (authHeader) {

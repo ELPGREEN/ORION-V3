@@ -331,42 +331,42 @@ async function tryGroq(img: ImageData) {
 }
 
 async function tryOpenAI(img: ImageData) {
-  const keys = [Deno.env.get("OPENAI_API_KEY"), Deno.env.get("OPENAI_API_KEY_2")].filter(Boolean) as string[];
-  if (!keys.length) throw new Error("No OpenAI keys");
+  // Use Gemini Vision instead (FREE)
+  const geminiKeys = [
+    Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"),
+  ].filter((k): k is string => !!k);
+  if (!geminiKeys.length) throw new Error("No Gemini keys");
 
-  for (const key of keys) {
+  for (const key of geminiKeys) {
     try {
-      const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{
-            role: "user",
-            content: [
-              { type: "text", text: OCR_PROMPT },
-              { type: "image_url", image_url: { url: `data:${img.mimeType};base64,${img.base64}` } },
-            ],
-          }],
-          max_tokens: 8192,
-          temperature: 0.1,
-        }),
-      });
-      if (!resp.ok) {
-        const errBody = await resp.text();
-        console.warn(`OpenAI [${resp.status}]:`, errBody.substring(0, 300));
-        continue;
-      }
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [
+              { text: OCR_PROMPT },
+              { inlineData: { mimeType: img.mimeType, data: img.base64 } },
+            ] }],
+            generationConfig: { maxOutputTokens: 8192, temperature: 0.1 },
+          }),
+        }
+      );
+      if (!resp.ok) { await resp.text(); continue; }
       const data = await resp.json();
-      const text = data.choices?.[0]?.message?.content || "";
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       if (!text) continue;
-      return await buildResult(text, "openai", img);
+      return await buildResult(text, "gemini", img);
     } catch { continue; }
   }
-  throw new Error("OpenAI failed");
+  throw new Error("Gemini OCR failed");
 }
 
-async function tryAnthropic(img: ImageData) {
+async function tryAnthropic(_img: ImageData) {
+  // Anthropic removed — use Gemini instead (routed through tryOpenAI/tryGemini)
+  throw new Error("Anthropic disabled — using Gemini FREE");
   const key = Deno.env.get("ANTHROPIC_API_KEY");
   if (!key) throw new Error("No Anthropic key");
 
