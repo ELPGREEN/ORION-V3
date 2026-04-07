@@ -93,6 +93,7 @@ export function useNeuralVoice(
   const abortControllerRef = useRef<AbortController | null>(null);
   const speechQueueRef = useRef<string[]>([]);
   const bargeInCallbackRef = useRef<(() => void) | null>(null);
+  const bargeInFnRef = useRef<(() => void) | null>(null);
   const speechBufferRef = useRef("");
   const speechDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSpokenTextRef = useRef("");
@@ -141,6 +142,66 @@ export function useNeuralVoice(
     return () => speechSynthesis?.removeEventListener?.("voiceschanged", handler);
   }, []);
 
+  const createAndStartRecognition = useCallback(() => {
+    const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    if (!SR || !onCmdRef.current) { setListening(false); return; }
+    try {
+      try { recRef.current?.stop(); } catch {}
+      const rec = new SR();
+      rec.lang = "pt-BR";
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+      rec.onstart = () => setListening(true);
+      rec.onresult = (e: any) => {
+        const lastResult = e.results[e.results.length - 1];
+        const transcript = lastResult?.[0]?.transcript?.trim() || "";
+        const isFinal = lastResult?.isFinal;
+        if (!transcript) return;
+        if (speakingRef.current || VoiceState.aiResponding) {
+          if (STOP_PATTERNS.test(transcript.trim())) { bargeInFnRef.current?.(); speechBufferRef.current = ""; return; }
+          if (isFinal && transcript.split(/\s+/).length >= 3) bargeInFnRef.current?.();
+        }
+        if (!isFinal) return;
+        speechBufferRef.current = speechBufferRef.current ? `${speechBufferRef.current} ${transcript}` : transcript;
+        if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
+        const turnState = detectTurnState(speechBufferRef.current, "pt-BR");
+        const silenceMs = getOptimalSilenceDuration(turnState);
+        speechDebounceRef.current = setTimeout(() => {
+          const fullText = speechBufferRef.current.trim();
+          speechBufferRef.current = "";
+          if (!fullText || !onCmdRef.current) return;
+          const normalized = normalizeSpeechText(fullText);
+          const now = Date.now();
+          if (normalized.length < 3) return;
+          const isDuplicate = normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000;
+          const isEcho = Boolean(lastSpokenTextRef.current && now - lastSpokenAtRef.current < 6000 && normalized.length > 12 && lastSpokenTextRef.current.includes(normalized.slice(0, 30)));
+          if (isDuplicate || isEcho) return;
+          lastProcessedTranscriptRef.current = normalized;
+          lastProcessedAtRef.current = now;
+          feedUserSpeech(fullText);
+          const styleResult = detectStyleCommand(fullText, getCachedVoicePrefs());
+          if (styleResult.matched) { saveVoicePrefs(styleResult.updatedPrefs); console.log("[Voice Style] 🎓 Learned:", styleResult.feedback); return; }
+          onCmdRef.current(fullText);
+        }, silenceMs);
+      };
+      rec.onend = () => {
+        if (intentionalStopRef.current) { setListening(false); return; }
+        if (!speakingRef.current && onCmdRef.current) { scheduleRecognitionRestart(150); return; }
+        if (!speakingRef.current) setListening(false);
+      };
+      rec.onerror = (e: any) => {
+        if (intentionalStopRef.current || e.error === "aborted") return;
+        if (e.error === "not-allowed" || e.error === "service-not-allowed") { setListening(false); toast.error("Permissão do microfone bloqueada"); return; }
+        if (e.error === "no-speech") { scheduleRecognitionRestart(150); return; }
+        scheduleRecognitionRestart(400);
+      };
+      recRef.current = rec;
+      rec.start();
+      setListening(true);
+    } catch { setListening(false); }
+  }, []);
+
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
     clearRestartTimer();
     if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
@@ -157,14 +218,9 @@ export function useNeuralVoice(
         setListening(false);
         return;
       }
-      try {
-        recRef.current?.start();
-        setListening(true);
-      } catch {
-        setListening(false);
-      }
+      createAndStartRecognition();
     }, restartDelay);
-  }, [clearRestartTimer]);
+  }, [clearRestartTimer, createAndStartRecognition]);
 
   const resumeSTT = useCallback(() => {
     if (listeningRef.current && onCmdRef.current && !intentionalStopRef.current) {
@@ -204,6 +260,9 @@ export function useNeuralVoice(
     updateAiResponding(false);
     if (bargeInCallbackRef.current) bargeInCallbackRef.current();
   }, [updateAiResponding]);
+
+  // Keep bargeInFnRef in sync
+  bargeInFnRef.current = bargeIn;
 
   const browserSpeak = useCallback((rawText: string) => {
     const text = cleanTextForSpeech(rawText);
@@ -402,123 +461,8 @@ export function useNeuralVoice(
     intentionalStopRef.current = false;
     clearRestartTimer();
     onCmdRef.current = onCmd;
-
-    try {
-      try { recRef.current?.stop(); } catch {}
-      const rec = new SR();
-      rec.lang = "pt-BR";
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.maxAlternatives = 1;
-      
-      rec.onstart = () => setListening(true);
-      
-      rec.onresult = (e: any) => {
-        const lastResult = e.results[e.results.length - 1];
-        const transcript = lastResult?.[0]?.transcript?.trim() || "";
-        const isFinal = lastResult?.isFinal;
-        
-        if (!transcript) return;
-
-        // Barge-in: if AI is speaking and user says stop command
-        if (speakingRef.current || VoiceState.aiResponding) {
-          if (STOP_PATTERNS.test(transcript.trim())) {
-            bargeIn();
-            speechBufferRef.current = "";
-            return;
-          }
-          // If user speaks 3+ words while AI is speaking, barge in
-          if (isFinal && transcript.split(/\s+/).length >= 3) {
-            bargeIn();
-          }
-        }
-
-        if (!isFinal) return;
-
-        speechBufferRef.current = speechBufferRef.current
-          ? `${speechBufferRef.current} ${transcript}`
-          : transcript;
-
-        if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
-        
-        // ── Dynamic Turn Detection: adapt silence based on phrase completeness ──
-        const turnState = detectTurnState(speechBufferRef.current, "pt-BR");
-        const silenceMs = getOptimalSilenceDuration(turnState);
-
-        speechDebounceRef.current = setTimeout(() => {
-          const fullText = speechBufferRef.current.trim();
-          speechBufferRef.current = "";
-          if (!fullText || !onCmdRef.current) return;
-
-          const normalized = normalizeSpeechText(fullText);
-          const now = Date.now();
-          
-          if (normalized.length < 3) return;
-          
-          // Duplicate check
-          const isDuplicate = normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000;
-          
-          // Echo detection (simple)
-          const isEcho = Boolean(
-            lastSpokenTextRef.current &&
-            now - lastSpokenAtRef.current < 6000 &&
-            normalized.length > 12 &&
-            lastSpokenTextRef.current.includes(normalized.slice(0, 30))
-          );
-
-          if (isDuplicate || isEcho) return;
-
-          lastProcessedTranscriptRef.current = normalized;
-          lastProcessedAtRef.current = now;
-          
-          // Feed user speech to voice evolution engine
-          feedUserSpeech(fullText);
-          
-          // ── Adaptive Voice Style: detect style commands (learn silently) ──
-          const styleResult = detectStyleCommand(fullText, getCachedVoicePrefs());
-          if (styleResult.matched) {
-            saveVoicePrefs(styleResult.updatedPrefs);
-            console.log("[Voice Style] 🎓 Learned:", styleResult.feedback);
-            return; // Don't pass style commands to the AI, just learn silently
-          }
-          
-          onCmdRef.current(fullText);
-        }, silenceMs);
-      };
-      
-      rec.onend = () => {
-        if (intentionalStopRef.current) {
-          setListening(false);
-          return;
-        }
-        if (!speakingRef.current && onCmdRef.current) {
-          scheduleRecognitionRestart(150);
-          return;
-        }
-        if (!speakingRef.current) setListening(false);
-      };
-      
-      rec.onerror = (e: any) => {
-        if (intentionalStopRef.current || e.error === "aborted") return;
-        if (e.error === "not-allowed" || e.error === "service-not-allowed") {
-          setListening(false);
-          toast.error("Permissão do microfone bloqueada");
-          return;
-        }
-        if (e.error === "no-speech") {
-          scheduleRecognitionRestart(150);
-          return;
-        }
-        scheduleRecognitionRestart(400);
-      };
-      
-      recRef.current = rec;
-      rec.start();
-      setListening(true);
-    } catch {
-      setListening(false);
-    }
-  }, [bargeIn, clearRestartTimer, scheduleRecognitionRestart]);
+    createAndStartRecognition();
+  }, [clearRestartTimer, createAndStartRecognition]);
 
   const stop = useCallback(() => {
     intentionalStopRef.current = true;
