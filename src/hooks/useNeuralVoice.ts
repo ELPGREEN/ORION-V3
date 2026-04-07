@@ -358,14 +358,17 @@ export function useNeuralVoice(
     const cascadeAbort = new AbortController();
     abortControllerRef.current = cascadeAbort;
 
+    // Dynamic safety timer: ~4s base + ~80ms per char (accounts for multi-sentence Gemini TTS)
+    const safetyMs = Math.min(45000, Math.max(12000, 4000 + text.length * 80));
     const safetyTimer = setTimeout(() => {
       if (speakingRef.current) {
+        console.warn(`[Voice] Safety timer fired after ${safetyMs}ms — aborting TTS`);
         cascadeAbort.abort();
         speakingRef.current = false;
         updateAiResponding(false);
         resumeSTT();
       }
-    }, 12000); // 12s max — faster recovery from hung TTS
+    }, safetyMs);
 
     const cleanText = cleanTextForSpeech(text);
     feedAIResponse(text);
@@ -476,15 +479,26 @@ export function useNeuralVoice(
         // Duplicate check
         const isDuplicate = normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000;
         
-        // Echo detection (simple)
-        const isEcho = Boolean(
-          lastSpokenTextRef.current &&
-          now - lastSpokenAtRef.current < 6000 &&
-          normalized.length > 12 &&
-          lastSpokenTextRef.current.includes(normalized.slice(0, 30))
-        );
+        // Echo detection — bidirectional substring match + Jaccard similarity
+        const isEcho = (() => {
+          if (!lastSpokenTextRef.current || now - lastSpokenAtRef.current > 8000) return false;
+          if (normalized.length < 8) return false;
+          const spoken = lastSpokenTextRef.current;
+          // Substring match (either direction)
+          if (spoken.includes(normalized.slice(0, 40)) || normalized.includes(spoken.slice(0, 40))) return true;
+          // Jaccard word overlap: >60% match = echo
+          const wordsA = new Set(normalized.split(/\s+/).filter(w => w.length > 2));
+          const wordsB = new Set(spoken.split(/\s+/).filter(w => w.length > 2));
+          if (wordsA.size < 3 || wordsB.size < 3) return false;
+          let overlap = 0;
+          wordsA.forEach(w => { if (wordsB.has(w)) overlap++; });
+          return overlap / Math.min(wordsA.size, wordsB.size) > 0.6;
+        })();
 
-        if (isDuplicate || isEcho) return;
+        if (isDuplicate || isEcho) {
+          if (isEcho) console.log("[Voice] Echo suppressed:", normalized.slice(0, 50));
+          return;
+        }
 
         lastProcessedTranscriptRef.current = normalized;
         lastProcessedAtRef.current = now;
