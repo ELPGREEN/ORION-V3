@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   Package, DollarSign, TrendingUp, ShoppingBag, ArrowRight, Share2, Store,
   Users, FileText, MessageSquare, BarChart3, Globe, Brain, Crown,
-  Tag, Star, CreditCard, FileEdit,
+  Tag, Star, CreditCard, FileEdit, Mail,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +70,7 @@ export default function ProdutorDashboard() {
     { label: "Minha Loja", icon: Store, path: `/loja/${user?.id}`, desc: "Visualizar sua loja pública" },
     { label: "Meus Produtos", icon: Package, path: "/dashboard/meus-produtos", desc: "Criar e gerenciar produtos digitais" },
     { label: "Editor de Vendas", icon: FileEdit, path: "/dashboard/editor-vendas", desc: "Criar páginas de vendas profissionais" },
+    { label: "Email Marketing", icon: Mail, path: "/dashboard/campanhas-email", desc: "Campanhas e automações de email" },
     { label: "Marketplace", icon: ShoppingBag, path: "/dashboard/marketplace", desc: "Explorar o marketplace" },
     { label: "Afiliados", icon: Share2, path: "/dashboard/afiliados", desc: "Ver quem promove seus produtos" },
     { label: "Vendas & Receita", icon: CreditCard, path: "/dashboard/pagamentos", desc: "Configurar Stripe e pagamentos" },
