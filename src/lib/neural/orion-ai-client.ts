@@ -216,12 +216,9 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
       }
     }
 
-    // If no real-time detections and no heuristic data, return minimal context
-    // (DON'T return undefined — the camera image itself is still valuable for Gemini)
+    // If no real-time detections and no heuristic data, skip
     if (!realTimeObjects && !realTimeFaces && !realTimeHands &&
-        regions.length === 0 && (!motion || motion.intensity < 5)) {
-      return { hint: "Sem detecções locais — enviar imagem bruta ao Gemini para análise visual direta." };
-    }
+        regions.length === 0 && (!motion || motion.intensity < 5)) return undefined;
 
     // Extract scene context if available
     let sceneCtx: any | undefined;
