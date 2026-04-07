@@ -1,6 +1,11 @@
+import { lazy, Suspense } from "react";
 import { IconShield, IconCheckMark, IconFingerprint, IconEye, IconGlobe, IconCompliance, IconActivity, IconSearch } from "@/components/icons/SumerianTronIcons";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import bgTronCore from "@/assets/bg-tron-core.jpg";
+
+const CircuitRingsBackground = lazy(() =>
+  import("@/components/ui/CircuitRingsBackground").then(m => ({ default: m.CircuitRingsBackground }))
+);
 
 const highlights = [
   { Icon: IconShield, name: "Defesa Multicamada", desc: "Múltiplas barreiras de proteção ativas 24/7 que detectam e neutralizam ameaças automaticamente." },
@@ -17,6 +22,9 @@ export function SecurityShieldSection() {
   return (
     <section className="py-12 sm:py-16 section-cinematic relative overflow-hidden neural-ambient tron-energy">
       <img src={bgTronCore} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.06] pointer-events-none mix-blend-screen" />
+      <Suspense fallback={null}>
+        <CircuitRingsBackground className="opacity-30" />
+      </Suspense>
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background pointer-events-none" />
       <div className="absolute top-0 inset-x-0 tron-divider" />
       <div className="absolute top-1/3 left-0 w-[500px] h-[400px] bg-primary/[0.04] rounded-full blur-[200px] pointer-events-none" />

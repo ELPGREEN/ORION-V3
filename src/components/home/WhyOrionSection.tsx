@@ -1,9 +1,14 @@
+import { lazy, Suspense } from "react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { ArrowRight } from "lucide-react";
 import { IconNeuralAI, IconClock, IconTrending, IconShield, IconCRM, IconSparkles, IconAutomation } from "@/components/icons/SumerianTronIcons";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import bgTronEnergy from "@/assets/bg-tron-energy.jpg";
+
+const NeonCorridorBackground = lazy(() =>
+  import("@/components/ui/NeonCorridorBackground").then(m => ({ default: m.NeonCorridorBackground }))
+);
 
 const reasons = [
   {
