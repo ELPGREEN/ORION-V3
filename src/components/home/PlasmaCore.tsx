@@ -1,12 +1,11 @@
 import { useRef, useState, useCallback, useEffect } from "react";
+import plasmaCoreHd from "@/assets/plasma-core-hd.png";
 
 /**
- * Interactive ORION Plasma Core — HD concentric rings + WebGL arcs
- * Enhanced with HUD arc segments, circuit traces, and multi-layered glow
+ * Interactive ORION Plasma Core — HD image + WebGL arcs + HUD overlays
  */
 
 // ── WebGL electric arcs overlay ──
-
 const ARC_VERT = `
 attribute vec2 a_position;
 void main() { gl_Position = vec4(a_position, 0.0, 1.0); }
@@ -58,32 +57,27 @@ void main() {
   float dist = length(uv);
   vec3 col = vec3(0.0);
 
-  // Electric arcs radiating from center
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 12; i++) {
     float fi = float(i);
-    float arcAngle = fi * PI * 2.0 / 10.0 + u_time * 0.25 + sin(u_time * 0.6 + fi) * 0.5;
+    float arcAngle = fi * PI * 2.0 / 12.0 + u_time * 0.25 + sin(u_time * 0.6 + fi) * 0.5;
     float seed = fi * 13.37;
     float visibility = smoothstep(0.2, 0.7, sin(u_time * 0.7 + fi * 2.1));
-    float arcVal = arc(uv, arcAngle, 0.003, seed) * visibility;
+    float arcVal = arc(uv, arcAngle, 0.004, seed) * visibility;
     vec3 arcColor = mix(GOLD, CYAN, sin(fi * 0.7 + u_time * 0.4) * 0.5 + 0.5);
-    col += arcColor * arcVal * (0.7 + u_hover * 0.5);
+    col += arcColor * arcVal * (0.8 + u_hover * 0.6);
 
-    // Secondary thinner arc
     float arcAngle2 = arcAngle + 0.12 + noise(vec2(u_time * 0.8 + fi, 0.0)) * 0.25;
-    float arcVal2 = arc(uv, arcAngle2, 0.0015, seed + 50.0) * visibility * 0.4;
-    col += CYAN * arcVal2 * 0.3;
+    float arcVal2 = arc(uv, arcAngle2, 0.002, seed + 50.0) * visibility * 0.5;
+    col += CYAN * arcVal2 * 0.4;
   }
 
-  // Subtle energy haze between rings
-  float haze = noise(vec2(dist * 15.0, u_time * 1.5)) * 0.15;
-  haze *= smoothstep(0.45, 0.2, dist) * smoothstep(0.0, 0.08, dist);
+  float haze = noise(vec2(dist * 15.0, u_time * 1.5)) * 0.18;
+  haze *= smoothstep(0.48, 0.15, dist) * smoothstep(0.0, 0.08, dist);
   col += GOLD * haze;
 
-  // Circular vignette
-  float vignette = smoothstep(0.48, 0.2, dist);
+  float vignette = smoothstep(0.5, 0.15, dist);
   col *= vignette;
   float alpha = vignette * clamp(length(col) * 2.5, 0.0, 1.0);
-
   gl_FragColor = vec4(col, alpha);
 }
 `;
@@ -117,17 +111,23 @@ function initArcGL(canvas: HTMLCanvasElement) {
 // ── HUD arc segments SVG overlay ──
 function HudArcSegments({ hover, time }: { hover: boolean; time: number }) {
   const segments = [
-    { r: 46, start: 15, end: 75, color: "hsl(var(--primary))", width: 2, speed: 0.3 },
-    { r: 46, start: 200, end: 250, color: "hsl(var(--primary))", width: 1.5, speed: 0.3 },
-    { r: 40, start: 60, end: 140, color: "hsl(var(--secondary))", width: 1.5, speed: -0.2 },
-    { r: 40, start: 260, end: 310, color: "hsl(var(--secondary))", width: 1, speed: -0.2 },
-    { r: 34, start: 0, end: 50, color: "hsl(var(--primary) / 0.6)", width: 1.5, speed: 0.15 },
-    { r: 34, start: 130, end: 200, color: "hsl(var(--primary) / 0.6)", width: 1, speed: 0.15 },
-    { r: 34, start: 280, end: 340, color: "hsl(var(--secondary) / 0.5)", width: 1, speed: 0.15 },
+    { r: 46, start: 15, end: 75, color: "hsl(var(--primary))", width: 2.5, speed: 0.3 },
+    { r: 46, start: 200, end: 250, color: "hsl(var(--primary))", width: 2, speed: 0.3 },
+    { r: 40, start: 60, end: 140, color: "hsl(var(--secondary))", width: 2, speed: -0.2 },
+    { r: 40, start: 260, end: 310, color: "hsl(var(--secondary))", width: 1.5, speed: -0.2 },
+    { r: 34, start: 0, end: 50, color: "hsl(var(--primary) / 0.7)", width: 2, speed: 0.15 },
+    { r: 34, start: 130, end: 200, color: "hsl(var(--primary) / 0.7)", width: 1.5, speed: 0.15 },
+    { r: 34, start: 280, end: 340, color: "hsl(var(--secondary) / 0.6)", width: 1.5, speed: 0.15 },
   ];
 
   return (
-    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" style={{ zIndex: 1 }}>
+    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" style={{ zIndex: 4 }}>
+      <defs>
+        <filter id="hud-glow">
+          <feGaussianBlur stdDeviation="1" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
       {segments.map((seg, i) => {
         const rotation = (time * seg.speed * 30) % 360;
         const r = seg.r;
@@ -146,20 +146,19 @@ function HudArcSegments({ hover, time }: { hover: boolean; time: number }) {
             fill="none"
             stroke={seg.color}
             strokeWidth={seg.width}
-            opacity={hover ? 0.7 : 0.35}
+            opacity={hover ? 0.85 : 0.45}
+            filter={hover ? "url(#hud-glow)" : undefined}
             style={{
               transform: `rotate(${rotation}deg)`,
               transformOrigin: "50px 50px",
               transition: "opacity 0.5s ease",
-              filter: hover ? `drop-shadow(0 0 3px ${seg.color})` : "none",
             }}
           />
         );
       })}
 
-      {/* Circuit trace lines radiating out */}
+      {/* Radial circuit traces */}
       {[0, 45, 120, 200, 270, 330].map((angle, i) => {
-        const rad = (angle * Math.PI) / 180;
         const rotation = (time * 0.1 * 30) % 360;
         const adjRad = ((angle + rotation) * Math.PI) / 180;
         const innerR = 24;
@@ -173,28 +172,29 @@ function HudArcSegments({ hover, time }: { hover: boolean; time: number }) {
           <line
             key={`trace-${i}`}
             x1={x1} y1={y1} x2={x2} y2={y2}
-            stroke={i % 2 === 0 ? "hsl(var(--primary) / 0.2)" : "hsl(var(--secondary) / 0.15)"}
-            strokeWidth={0.5}
+            stroke={i % 2 === 0 ? "hsl(var(--primary) / 0.25)" : "hsl(var(--secondary) / 0.2)"}
+            strokeWidth={0.8}
             strokeDasharray="2 3"
           />
         );
       })}
 
-      {/* Data node dots on outer ring */}
+      {/* Orbiting data nodes */}
       {[30, 90, 150, 210, 270, 330].map((angle, i) => {
         const rotation = (time * 0.08 * 30) % 360;
         const adjRad = ((angle + rotation) * Math.PI) / 180;
         const r = 44;
         const cx = 50 + Math.cos(adjRad) * r;
         const cy = 50 + Math.sin(adjRad) * r;
-        const pulse = 0.4 + Math.sin(time * 3 + i * 1.2) * 0.3;
+        const pulse = 0.5 + Math.sin(time * 3 + i * 1.2) * 0.4;
 
         return (
           <circle
             key={`node-${i}`}
-            cx={cx} cy={cy} r={1.2}
+            cx={cx} cy={cy} r={1.5}
             fill={i % 2 === 0 ? "hsl(var(--primary))" : "hsl(var(--secondary))"}
             opacity={pulse}
+            filter={hover ? "url(#hud-glow)" : undefined}
           />
         );
       })}
@@ -203,7 +203,6 @@ function HudArcSegments({ hover, time }: { hover: boolean; time: number }) {
 }
 
 // ── Component ──
-
 export function PlasmaCore({ className = "" }: { className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -222,7 +221,6 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
     setMouse({ x: dx, y: dy });
   }, []);
 
-  // SVG time driver
   useEffect(() => {
     let raf: number;
     const t0 = performance.now();
@@ -234,7 +232,6 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // WebGL arc overlay
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -271,24 +268,24 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
       onMouseMove={handleMove}
       style={{ perspective: "600px" }}
     >
-      {/* Outer ambient glow — enhanced with dual-color */}
+      {/* Outer ambient glow */}
       <div
         className="absolute inset-0 rounded-full transition-all duration-700"
         style={{
-          background: `radial-gradient(circle, hsl(var(--primary) / ${hover ? 0.3 : 0.15}) 0%, hsl(var(--secondary) / ${hover ? 0.12 : 0.06}) 40%, transparent 70%)`,
-          filter: `blur(${hover ? 45 : 30}px)`,
-          transform: `scale(${hover ? 1.4 : 1.15})`,
+          background: `radial-gradient(circle, hsl(var(--primary) / ${hover ? 0.35 : 0.18}) 0%, hsl(var(--secondary) / ${hover ? 0.15 : 0.08}) 40%, transparent 70%)`,
+          filter: `blur(${hover ? 50 : 35}px)`,
+          transform: `scale(${hover ? 1.5 : 1.2})`,
         }}
       />
 
-      {/* Secondary outer pulse ring */}
+      {/* Outer pulse ring */}
       <div
         className="absolute rounded-full"
         style={{
-          inset: "-8%",
-          border: `1px solid hsl(var(--secondary) / ${hover ? 0.15 : 0.06})`,
+          inset: "-10%",
+          border: `1.5px solid hsl(var(--secondary) / ${hover ? 0.2 : 0.08})`,
           animation: "plasmaRingSpin 20s linear infinite",
-          filter: hover ? "drop-shadow(0 0 6px hsl(var(--secondary) / 0.2))" : "none",
+          filter: hover ? "drop-shadow(0 0 8px hsl(var(--secondary) / 0.25))" : "none",
           transition: "filter 0.5s, border-color 0.5s",
         }}
       />
@@ -300,17 +297,30 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
           transform: `rotateY(${mouse.x * 15}deg) rotateX(${-mouse.y * 15}deg)`,
         }}
       >
+        {/* HD Plasma Core image — base layer */}
+        <img
+          src={plasmaCoreHd}
+          alt="Orion Plasma Core"
+          className="absolute inset-0 w-full h-full object-contain rounded-full"
+          style={{
+            zIndex: 1,
+            animation: "plasmaRingSpin 30s linear infinite",
+            filter: `brightness(${hover ? 1.3 : 1}) contrast(${hover ? 1.1 : 1}) drop-shadow(0 0 30px hsl(var(--primary) / 0.5))`,
+            transition: "filter 0.5s ease",
+            mixBlendMode: "screen",
+          }}
+        />
+
         {/* HUD arc segments SVG */}
         <HudArcSegments hover={hover} time={time} />
 
-        {/* Ring layers — each ring is a CSS border circle with animation */}
+        {/* Ring layers — CSS border circles with glow */}
         {[
-          { size: "100%", border: 3, delay: "0s", dur: "8s", opacity: 0.9 },
-          { size: "82%", border: 2, delay: "0.3s", dur: "6s", opacity: 0.7 },
-          { size: "64%", border: 4, delay: "0.6s", dur: "10s", opacity: 0.85 },
-          { size: "48%", border: 2, delay: "0.9s", dur: "5s", opacity: 0.6 },
-          { size: "34%", border: 3, delay: "1.2s", dur: "7s", opacity: 0.8 },
-          { size: "22%", border: 2, delay: "0.5s", dur: "4s", opacity: 0.5 },
+          { size: "98%", border: 2, dur: "8s", opacity: 0.5 },
+          { size: "80%", border: 1.5, dur: "6s", opacity: 0.4 },
+          { size: "62%", border: 2.5, dur: "10s", opacity: 0.5 },
+          { size: "46%", border: 1.5, dur: "5s", opacity: 0.35 },
+          { size: "32%", border: 2, dur: "7s", opacity: 0.45 },
         ].map((ring, i) => (
           <div
             key={i}
@@ -321,84 +331,85 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
               transform: "translate(-50%, -50%)",
               border: `${ring.border}px solid hsl(var(--primary) / ${ring.opacity})`,
               boxShadow: `
-                0 0 ${hover ? 20 : 10}px hsl(var(--primary) / ${ring.opacity * 0.5}),
-                inset 0 0 ${hover ? 15 : 8}px hsl(var(--primary) / ${ring.opacity * 0.3})
+                0 0 ${hover ? 25 : 12}px hsl(var(--primary) / ${ring.opacity * 0.5}),
+                inset 0 0 ${hover ? 18 : 8}px hsl(var(--primary) / ${ring.opacity * 0.3})
               `,
               animation: `plasmaRingSpin${i % 2 === 0 ? "" : "Reverse"} ${ring.dur} linear infinite`,
-              animationDelay: ring.delay,
               transition: "box-shadow 0.5s ease",
+              zIndex: 2,
             }}
           />
         ))}
 
-        {/* Radial tick marks on outer ring */}
-        {Array.from({ length: 24 }).map((_, i) => (
+        {/* Radial tick marks */}
+        {Array.from({ length: 36 }).map((_, i) => (
           <div
             key={`tick-${i}`}
             className="absolute top-1/2 left-1/2"
             style={{
               width: "1px",
               height: i % 3 === 0 ? "8%" : "4%",
-              background: `linear-gradient(to bottom, hsl(var(--primary) / ${i % 3 === 0 ? 0.6 : 0.3}), transparent)`,
+              background: `linear-gradient(to bottom, hsl(var(--primary) / ${i % 3 === 0 ? 0.5 : 0.25}), transparent)`,
               transformOrigin: "center 0",
-              transform: `translate(-50%, 0) rotate(${i * 15}deg) translateY(-48%)`,
-              animation: `plasmaRingSpin 12s linear infinite`,
+              transform: `translate(-50%, 0) rotate(${i * 10}deg) translateY(-49%)`,
+              animation: "plasmaRingSpin 15s linear infinite",
+              zIndex: 3,
             }}
           />
         ))}
 
-        {/* WebGL electric arcs overlay */}
+        {/* WebGL electric arcs */}
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full rounded-full"
-          style={{ pointerEvents: "none", zIndex: 2 }}
+          style={{ pointerEvents: "none", zIndex: 5 }}
         />
 
-        {/* Inner bright core — enhanced with layered glow */}
+        {/* Inner bright core */}
         <div
           className="absolute top-1/2 left-1/2 rounded-full transition-all duration-500"
           style={{
-            width: "14%",
-            height: "14%",
+            width: "16%",
+            height: "16%",
             transform: "translate(-50%, -50%)",
             background: `radial-gradient(circle, hsl(0 0% 100% / ${hover ? 0.95 : 0.85}), hsl(var(--primary) / 0.9) 60%, transparent 100%)`,
             boxShadow: `
-              0 0 ${hover ? 40 : 20}px hsl(var(--primary) / 0.8),
-              0 0 ${hover ? 80 : 40}px hsl(var(--primary) / 0.4),
-              0 0 ${hover ? 120 : 60}px hsl(var(--primary) / 0.2),
-              0 0 ${hover ? 160 : 80}px hsl(var(--secondary) / 0.1)
+              0 0 ${hover ? 50 : 25}px hsl(var(--primary) / 0.9),
+              0 0 ${hover ? 100 : 50}px hsl(var(--primary) / 0.5),
+              0 0 ${hover ? 150 : 75}px hsl(var(--primary) / 0.25),
+              0 0 ${hover ? 200 : 100}px hsl(var(--secondary) / 0.15)
             `,
             animation: "plasmaPulse 3s ease-in-out infinite",
-            zIndex: 3,
+            zIndex: 6,
           }}
         />
 
-        {/* Mid glow ring */}
+        {/* Mid energy rings */}
         <div
           className="absolute top-1/2 left-1/2 rounded-full transition-all duration-500"
           style={{
-            width: "30%",
-            height: "30%",
+            width: "32%",
+            height: "32%",
             transform: "translate(-50%, -50%)",
-            background: `radial-gradient(circle, hsl(var(--primary) / ${hover ? 0.3 : 0.15}) 0%, transparent 70%)`,
+            background: `radial-gradient(circle, hsl(var(--primary) / ${hover ? 0.35 : 0.18}) 0%, transparent 70%)`,
             animation: "plasmaPulse 4s ease-in-out infinite reverse",
+            zIndex: 5,
           }}
         />
 
-        {/* Secondary mid glow — cyan accent */}
         <div
           className="absolute top-1/2 left-1/2 rounded-full transition-all duration-700"
           style={{
             width: "55%",
             height: "55%",
             transform: "translate(-50%, -50%)",
-            background: `radial-gradient(circle, hsl(var(--secondary) / ${hover ? 0.08 : 0.03}) 0%, transparent 60%)`,
+            background: `radial-gradient(circle, hsl(var(--secondary) / ${hover ? 0.1 : 0.04}) 0%, transparent 60%)`,
             animation: "plasmaPulse 5s ease-in-out infinite",
+            zIndex: 5,
           }}
         />
       </div>
 
-      {/* CSS keyframes */}
       <style>{`
         @keyframes plasmaRingSpin {
           from { transform: translate(-50%, -50%) rotate(0deg); }

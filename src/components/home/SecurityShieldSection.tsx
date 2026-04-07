@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { IconShield, IconCheckMark, IconFingerprint, IconEye, IconGlobe, IconCompliance, IconActivity, IconSearch } from "@/components/icons/SumerianTronIcons";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import bgTronCore from "@/assets/bg-tron-core.jpg";
+import bgHdSection from "@/assets/bg-hd-section.jpg";
 
 const CircuitRingsBackground = lazy(() =>
   import("@/components/ui/CircuitRingsBackground").then(m => ({ default: m.CircuitRingsBackground }))
@@ -21,7 +22,8 @@ const highlights = [
 export function SecurityShieldSection() {
   return (
     <section className="py-12 sm:py-16 section-cinematic relative overflow-hidden neural-ambient tron-energy">
-      <img src={bgTronCore} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.06] pointer-events-none mix-blend-screen" />
+      <img src={bgHdSection} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.15] pointer-events-none" />
+      <img src={bgTronCore} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.04] pointer-events-none mix-blend-screen" />
       <Suspense fallback={null}>
         <CircuitRingsBackground className="opacity-30" />
       </Suspense>
