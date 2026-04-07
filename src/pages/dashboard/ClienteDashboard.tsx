@@ -179,6 +179,10 @@ export default function ClienteDashboard() {
   const [myConsultas, setMyConsultas] = useState<any[]>([]);
   const [pendingInvoices, setPendingInvoices] = useState(0);
   const [iaConversationCount, setIaConversationCount] = useState(0);
+  const [myProducts, setMyProducts] = useState<any[]>([]);
+  const [featuredStores, setFeaturedStores] = useState<any[]>([]);
+  const [orionShopping, setOrionShopping] = useState<string | null>(null);
+  const [loadingOrion, setLoadingOrion] = useState(false);
 
   const loadClientData = useCallback(async () => {
       if (!user) return;
