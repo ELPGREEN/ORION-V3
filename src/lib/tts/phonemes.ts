@@ -217,7 +217,6 @@ export function textToPhonemes(text: string): string[] {
           phonemes.push('χ'); // uvular fricative (carro, rato) — standard pt-BR
         else phonemes.push('ɾ'); // alveolar tap (caro, para)
         break;
-        break;
       case 's':
         if (vowels.includes(next) && vowels.includes(prev)) phonemes.push('z');
         else phonemes.push('s');
