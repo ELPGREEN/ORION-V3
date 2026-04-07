@@ -261,6 +261,9 @@ export function useNeuralVoice(
     if (bargeInCallbackRef.current) bargeInCallbackRef.current();
   }, [updateAiResponding]);
 
+  // Keep bargeInFnRef in sync
+  bargeInFnRef.current = bargeIn;
+
   const browserSpeak = useCallback((rawText: string) => {
     const text = cleanTextForSpeech(rawText);
     if (!text) return Promise.resolve();
