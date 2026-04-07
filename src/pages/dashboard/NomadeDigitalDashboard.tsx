@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Store, Package, DollarSign, TrendingUp, Users, Share2,
   Globe, CreditCard, FileText, MessageSquare, ArrowRight,
-  Laptop, Wallet, ShoppingBag, BarChart3,
+  Laptop, Wallet, ShoppingBag, BarChart3, Mail,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,7 @@ export default function NomadeDigitalDashboard() {
     { label: "Minha Loja", icon: Store, path: `/loja/${user?.id}`, desc: "Visualizar sua loja pública" },
     { label: "Meus Produtos", icon: Package, path: "/dashboard/meus-produtos", desc: "Criar e gerenciar produtos digitais" },
     { label: "Marketplace", icon: ShoppingBag, path: "/dashboard/marketplace", desc: "Explorar o marketplace" },
+    { label: "Email Marketing", icon: Mail, path: "/dashboard/campanhas-email", desc: "Campanhas e automações de email" },
     { label: "Afiliados", icon: Share2, path: "/dashboard/afiliados", desc: "Gerenciar links de afiliados e comissões" },
     { label: "Pagamentos", icon: CreditCard, path: "/dashboard/pagamentos", desc: "Configurar Stripe e receber pagamentos" },
     { label: "Documentos", icon: FileText, path: "/dashboard/documentos", desc: "Seus documentos e contratos" },
