@@ -915,7 +915,11 @@ async function buildOrionMessages(body: Record<string, unknown>) {
 
     if (localDetections.realTimeObjects && Array.isArray(localDetections.realTimeObjects) && localDetections.realTimeObjects.length > 0) {
       const objDesc = localDetections.realTimeObjects
-        .map((o: any) => `${o.namePt || o.name}(conf=${(o.confidence * 100).toFixed(0)}%, fonte=${o.source})`)
+        .map((o: any) => {
+          const parts = [`${o.namePt || o.name}(conf=${(o.confidence * 100).toFixed(0)}%, fonte=${o.source})`];
+          if (o.isMoving) parts.push(`[MOVENDO→${o.direction || "?"}]`);
+          return parts.join(" ");
+        })
         .join("; ");
       ldParts.push(`🎯 OBJETOS ML REAL: ${objDesc}`);
     }
@@ -924,31 +928,85 @@ async function buildOrionMessages(body: Record<string, unknown>) {
       ldParts.push(`🤚 MÃOS: ${localDetections.realTimeHands.map((h: any) => `${h.handedness}(${(h.confidence * 100).toFixed(0)}%)`).join("; ")}`);
     }
 
-    if (localDetections.realTimeFaces && Array.isArray(localDetections.realTimeFaces) && localDetections.realTimeFaces.length > 0) {
-      ldParts.push(`👤 ROSTOS: ${localDetections.realTimeFaces.length} detectado(s)`);
-    } else if (localDetections.realFaceDetection?.count > 0) {
-      ldParts.push(`👤 ROSTOS: ${localDetections.realFaceDetection.count}`);
+    // ═══ Hand Gestures (MediaPipe GestureRecognizer) ═══
+    if (localDetections.handGestures && Array.isArray(localDetections.handGestures) && localDetections.handGestures.length > 0) {
+      const gestDesc = localDetections.handGestures.map((g: any) => `${g.hand}: ${g.gesture}(${(g.confidence * 100).toFixed(0)}%)`).join("; ");
+      ldParts.push(`✋ GESTOS: ${gestDesc}`);
     }
 
+    // ═══ Face Detection + Expression (enriched) ═══
+    if (localDetections.realTimeFaces && Array.isArray(localDetections.realTimeFaces) && localDetections.realTimeFaces.length > 0) {
+      const faceDescs = localDetections.realTimeFaces.map((f: any) => {
+        const parts = [`rosto(conf=${(f.confidence * 100).toFixed(0)}%)`];
+        if (f.expression && f.expression !== "neutro") parts.push(`expr=${f.expression}`);
+        if (f.lipMovement && f.lipMovement !== "neutro") parts.push(`lábios=${f.lipMovement}`);
+        if (f.gazeDirection) parts.push(`olhar=${f.gazeDirection}`);
+        return parts.join(",");
+      });
+      ldParts.push(`👤 ROSTOS: ${faceDescs.join("; ")}`);
+    } else if (localDetections.realFaceDetection?.count > 0) {
+      ldParts.push(`👤 ROSTOS: ${localDetections.realFaceDetection.count} detectado(s)`);
+    }
+
+    // ═══ Face-API.js Analysis (expressions, age, emotion) — ENHANCED ═══
     if (localDetections.faceApiAnalysis) {
       const fa = localDetections.faceApiAnalysis;
       const parts: string[] = [];
-      if (fa.expressions) {
+      
+      // Use pre-computed top expressions if available
+      if (fa.topExpressions && Array.isArray(fa.topExpressions) && fa.topExpressions.length > 0) {
+        parts.push(`EMOÇÕES=[${fa.topExpressions.map((e: any) => `${e.emotion}:${e.score}%`).join(", ")}]`);
+        parts.push(`dominante=${fa.dominantExpression}(${fa.dominantExpressionScore}%)`);
+      } else if (fa.expressions) {
         const topExpr = Object.entries(fa.expressions as Record<string, number>)
           .sort((a, b) => (b[1] as number) - (a[1] as number))
-          .slice(0, 2)
+          .slice(0, 3)
           .map(([k, v]) => `${k}=${((v as number) * 100).toFixed(0)}%`);
         parts.push(`expr=[${topExpr.join(",")}]`);
       }
-      if (fa.age) parts.push(`idade~${Math.round(fa.age)}`);
-      if (parts.length > 0) ldParts.push(`Face-API: ${parts.join(", ")}`);
+      if (fa.age) parts.push(`idade~${fa.age}`);
+      if (fa.gender) parts.push(`gênero=${fa.gender}(${fa.genderProbability || "?"}%)`);
+      if (fa.landmarks68 > 0) parts.push(`landmarks=${fa.landmarks68}`);
+      if (parts.length > 0) ldParts.push(`🧠 FACE-API: ${parts.join(", ")}`);
     }
 
-    if (localDetections.motion?.intensity > 10) {
-      ldParts.push(`Movimento: ${localDetections.motion.intensity.toFixed(0)}% ${localDetections.motion.direction}`);
+    // ═══ Pose Analysis (MediaPipe PoseLandmarker) ═══
+    if (localDetections.poseAnalysis) {
+      const pose = localDetections.poseAnalysis;
+      const poseParts: string[] = [];
+      if (pose.posture) poseParts.push(`postura=${pose.posture}`);
+      if (pose.gestureType) poseParts.push(`gesto_corporal=${pose.gestureType}`);
+      if (pose.isMoving) poseParts.push("EM_MOVIMENTO");
+      if (pose.bodyAngle) poseParts.push(`ângulo=${pose.bodyAngle}°`);
+      if (poseParts.length > 0) ldParts.push(`🏃 POSE: ${poseParts.join(", ")}`);
     }
 
-    if (ldParts.length > 0) systemParts.push(ldParts.join("\n"));
+    // ═══ Motion Analysis (enriched) ═══
+    if (localDetections.motion) {
+      const m = localDetections.motion;
+      if (m.intensity > 5) {
+        ldParts.push(`💨 MOVIMENTO: ${m.level || "ativo"} (${m.intensity?.toFixed?.(0) || m.intensity}%) dir=${m.direction}`);
+      }
+    }
+
+    // ═══ Movement Analysis (YOLOFrameX object tracking) ═══
+    if (localDetections.movementAnalysis) {
+      const ma = localDetections.movementAnalysis;
+      if (ma.objectsInMotion?.length > 0) {
+        const movDesc = ma.objectsInMotion.slice(0, 3).map((o: any) => `${o.name || o.id}→${o.direction || "?"}`).join("; ");
+        ldParts.push(`📐 RASTREAMENTO: ${movDesc}${ma.globalMotion ? ` | global=${ma.globalMotion}` : ""}`);
+      }
+    }
+
+    // ═══ Scene context ═══
+    if (localDetections.sceneClassification) {
+      const sc = localDetections.sceneClassification;
+      ldParts.push(`🌍 CENA: ${sc.label}(${(sc.confidence * 100).toFixed(0)}%) luz=${sc.lighting} ${sc.isIndoor ? "interior" : "exterior"}`);
+    }
+
+    if (ldParts.length > 0) {
+      systemParts.push(`═══ DETECÇÕES ML LOCAIS (anti-alucinação: use como PISTAS, confirme visualmente) ═══\n${ldParts.join("\n")}`);
+    }
   }
   if (context) systemParts.push(context);
   if (dashboardContext) systemParts.push(`Dashboard: ${dashboardContext}`);
