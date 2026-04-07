@@ -160,15 +160,32 @@ export const NAV_MAP: Record<string, { path: string; label: string }> = {
 
 export function detectNavigationIntent(text: string): { path: string; label: string } | null {
   const lower = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  // "Voltar para o painel / dashboard"
+  if (/volt[ae]r?\s*(para|pro|pra|ao)?\s*(painel|dashboard|inicio|home)/i.test(lower)) {
+    return NAV_MAP["dashboard"];
+  }
+  // "Voltar para a página inicial / site"
+  if (/volt[ae]r?\s*(para|pro|pra|ao?)?\s*(site|pagina\s*inicial)/i.test(lower)) {
+    return NAV_MAP["pagina inicial"];
+  }
+  // "Quero ver os planos" / "Me mostra os preços"
+  if (/(?:ver|mostrar?|quais?\s*s[aã]o)\s*(?:os|as)?\s*(?:planos|precos|preços)/i.test(lower)) {
+    return NAV_MAP["planos"];
+  }
+  // "Quero contratar" / "quero assinar"
+  if (/(?:quero|desejo|gostaria)\s*(?:de)?\s*(?:contratar|assinar|comprar)/i.test(lower)) {
+    return NAV_MAP["planos"];
+  }
+
   const navPatterns = [
-    /(?:abr[aie]|ir\s*(?:para|pra|pro)|naveg(?:ar|ue)|mostr[ae]|acesse|vá\s*(?:para|pra)|leve\s*(?:me|para)|me\s*lev[ae])\s+(?:a|o|os|as|ao|à|no|na|nos|nas)?\s*(.+)/i,
+    /(?:abr[aie]|ir\s*(?:para|pra|pro)|naveg(?:ar|ue)|mostr[ae]|acesse|va\s*(?:para|pra)|leve\s*(?:me|para)|me\s*lev[ae])\s+(?:a|o|os|as|ao|a|no|na|nos|nas)?\s*(.+)/i,
     /(?:quero\s*(?:ver|ir|acessar|abrir))\s+(?:a|o|os|as)?\s*(.+)/i,
   ];
   for (const pattern of navPatterns) {
     const match = lower.match(pattern);
     if (match) {
       const target = match[1].trim().replace(/[.!?,]$/, "");
-      // Try longest match first to avoid partial matches
       const sortedKeys = Object.keys(NAV_MAP).sort((a, b) => b.length - a.length);
       for (const key of sortedKeys) {
         if (target.includes(key)) return NAV_MAP[key];
