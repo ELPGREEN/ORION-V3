@@ -492,7 +492,9 @@ serve(async (req) => {
       const { result, provider, durationMs } = await callVisionCascade(image_base64, mime_type, prompt, true);
       usedProvider = provider;
 
-      const refined = await refineWithDeepSeek(result);
+      // ═══ PERF FIX: Skip DeepSeek refinement for identify/describe (saves 5-15s) ═══
+      // Only refine for teach/analyze modes where precision matters more than speed
+      const refined = (mode === "teach" || mode === "analyze") ? await refineWithDeepSeek(result) : result;
 
       for (const obj of refined.objetos) {
         const labelKey = obj.nome.toLowerCase();
