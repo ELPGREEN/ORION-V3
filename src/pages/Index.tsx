@@ -57,15 +57,15 @@ export default function Index() {
       <section id="about" className="py-16 sm:py-20 bg-muted/5 border-y border-border/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-10 max-w-4xl text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">
-            What is Orion IA Platform?
+            About IASoftHub
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-6">
-            <strong>Orion IA Platform</strong> is an enterprise artificial intelligence solution developed by <strong>ELP® Green Technology</strong>. 
-            It helps businesses automate workflows, manage documents, organize client data, and streamline internal processes — 
-            all powered by next-generation neural intelligence with bank-grade security (<em>Orion Shield</em>).
+            <strong>IASoftHub</strong> is an enterprise artificial intelligence platform featuring <strong>Orion IA</strong> — 
+            our flagship AI assistant for workflow automation, document management, client organization, and business process optimization. 
+            Powered by next-generation neural intelligence with bank-grade security (<em>Orion Shield</em>).
           </p>
           <p className="text-sm text-muted-foreground/80 leading-relaxed">
-            Orion IA Platform uses your Google account solely for secure authentication and sign-in. 
+            IASoftHub uses your Google account solely for secure authentication and sign-in. 
             No email content, contacts, or sensitive data is accessed or stored beyond basic profile information (name and email) 
             needed to create your account.
           </p>
