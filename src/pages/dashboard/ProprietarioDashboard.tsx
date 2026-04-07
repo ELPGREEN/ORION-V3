@@ -6,6 +6,7 @@ import { Loader2, FileText, FolderOpen, Users, MessageSquare, Store, ShoppingCar
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { lazy, Suspense } from "react";
+import { ThemedHeader, ThemedStatCard, ThemedSection, StatusLED } from "@/components/dashboard/DashboardTheme";
 
 const OrionComandoTotal = lazy(() => import("@/components/dashboard/OrionComandoTotal"));
 
@@ -43,17 +44,18 @@ export default function ProprietarioDashboard() {
   });
 
   const statCards = [
-    { label: "Clientes", value: stats?.clients ?? 0, icon: Users, gradient: "from-primary/20 to-primary/5" },
-    { label: "Processos", value: stats?.processos ?? 0, icon: FolderOpen, gradient: "from-accent/20 to-accent/5" },
-    { label: "Produtos", value: stats?.products ?? 0, icon: Store, gradient: "from-primary/15 to-transparent" },
-    { label: "Pedidos", value: stats?.orders ?? 0, icon: ShoppingCart, gradient: "from-accent/15 to-transparent" },
-    { label: "Documentos", value: stats?.docs ?? 0, icon: FileText, gradient: "from-primary/10 to-transparent" },
-    { label: "Conversas", value: stats?.conversations ?? 0, icon: MessageSquare, gradient: "from-accent/10 to-transparent" },
+    { label: "Clientes", value: stats?.clients ?? 0, icon: Users },
+    { label: "Processos", value: stats?.processos ?? 0, icon: FolderOpen },
+    { label: "Produtos", value: stats?.products ?? 0, icon: Store },
+    { label: "Pedidos", value: stats?.orders ?? 0, icon: ShoppingCart },
+    { label: "Documentos", value: stats?.docs ?? 0, icon: FileText },
+    { label: "Conversas", value: stats?.conversations ?? 0, icon: MessageSquare },
   ];
 
   const sections = [
     {
       title: "Jurídico",
+      icon: Gavel,
       items: [
         { title: "Processos", icon: FolderOpen, path: "/dashboard/processos" },
         { title: "CRM Clientes", icon: Users, path: "/dashboard/crm" },
@@ -67,6 +69,7 @@ export default function ProprietarioDashboard() {
     },
     {
       title: "Produtos & Vendas",
+      icon: Store,
       items: [
         { title: "Meus Produtos", icon: Store, path: "/dashboard/meus-produtos" },
         { title: "Marketplace", icon: ShoppingCart, path: "/dashboard/marketplace" },
@@ -74,10 +77,12 @@ export default function ProprietarioDashboard() {
         { title: "Editor de Vendas", icon: ScrollText, path: "/dashboard/editor-vendas" },
         { title: "Campanhas Email", icon: Globe2, path: "/dashboard/campanhas-email" },
         { title: "Explorar Lojas", icon: Store, path: "/dashboard/explorar-lojas" },
+        { title: "Loja Orion Industrial", icon: Bot, path: "/loja-orion" },
       ],
     },
     {
       title: "Centro de Comando Orion",
+      icon: Brain,
       items: [
         { title: "Rede Neural", icon: Cpu, path: "/dashboard/rede-neural" },
         { title: "Laboratório IA", icon: FlaskConical, path: "/dashboard/laboratorio-ia" },
@@ -97,38 +102,31 @@ export default function ProprietarioDashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden border border-primary/20 bg-gradient-to-br from-card via-card/95 to-primary/8 p-6 sm:p-8 rounded-lg">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-20 -right-20 w-72 h-72 bg-primary/10 blur-[120px] animate-pulse" style={{ animationDuration: "4s" }} />
-          <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-accent/8 blur-[100px] animate-pulse" style={{ animationDuration: "6s", animationDelay: "2s" }} />
+      {/* Hero Header — Owner HUD style */}
+      <ThemedHeader
+        role="owner"
+        greeting={greeting}
+        userName={userName}
+        subtitle="Painel do Proprietário — Acesso Total"
+        icon={Shield}
+        badgeLabel="COMANDO TOTAL"
+      >
+        <div className="flex items-center gap-3">
+          <StatusLED status="online" label="SISTEMAS" />
+          <StatusLED status="online" label="ORION" />
         </div>
-        <div className="relative z-10">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-primary/60 mb-1.5 font-sans">{greeting}</p>
-          <h1 className="text-2xl sm:text-3xl font-serif text-foreground">
-            <span className="text-gold-shine">{userName}</span>
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2 max-w-lg leading-relaxed flex items-center gap-1.5">
-            <Shield className="h-3.5 w-3.5 text-primary" />
-            Painel do Proprietário — Acesso Total
-          </p>
-        </div>
-      </div>
+      </ThemedHeader>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {statCards.map((s) => (
-          <Card key={s.label} className={`bg-gradient-to-br ${s.gradient} border-border/50`}>
-            <CardContent className="p-4 flex flex-col items-center text-center">
-              <s.icon className="h-5 w-5 text-primary/70 mb-1" />
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              ) : (
-                <span className="text-xl font-bold text-foreground">{s.value}</span>
-              )}
-              <span className="text-[10px] text-muted-foreground mt-0.5">{s.label}</span>
-            </CardContent>
-          </Card>
+          isLoading ? (
+            <div key={s.label} className="p-4 rounded-lg border border-border/50 bg-card/80 flex items-center justify-center">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <ThemedStatCard key={s.label} role="owner" label={s.label} value={s.value} icon={s.icon} />
+          )
         ))}
       </div>
 
@@ -139,23 +137,22 @@ export default function ProprietarioDashboard() {
 
       {/* Tool Sections */}
       {sections.map((section) => (
-        <div key={section.title} className="space-y-3">
-          <h2 className="text-sm font-semibold tracking-wide uppercase text-muted-foreground">{section.title}</h2>
+        <ThemedSection key={section.title} role="owner" title={section.title} icon={section.icon}>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {section.items.map((item) => (
               <Button
                 key={item.path}
                 variant="outline"
-                className="justify-start gap-2 h-auto py-3 px-3 group hover:border-primary/40 transition-colors"
+                className="justify-start gap-2 h-auto py-3 px-3 group hover:border-[hsl(30,85%,52%,0.4)] transition-colors border-border/50"
                 onClick={() => navigate(item.path)}
               >
-                <item.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
+                <item.icon className="h-4 w-4 text-muted-foreground group-hover:text-[hsl(30,85%,52%)] shrink-0 transition-colors" />
                 <span className="text-xs font-medium truncate">{item.title}</span>
                 <ArrowUpRight className="h-3 w-3 text-muted-foreground/50 ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Button>
             ))}
           </div>
-        </div>
+        </ThemedSection>
       ))}
     </div>
   );
