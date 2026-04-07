@@ -46,22 +46,28 @@ export const VOICE_DNA = {
  * F1/F2 values are standard for male BR-PT speakers,
  * F3/F4 adjusted to Iapetus spectral characteristics
  */
+/**
+ * Formant values from Escudero & Boersma (2009):
+ * "A cross-dialect acoustic description of vowels: Brazilian and European Portuguese"
+ * 10 male BP speakers, geometric means of F1/F2.
+ * F3/F4 from Stevens (2000) proportions + Iapetus spectral match.
+ */
 export const PT_PHONEMES: Record<string, PhonemeParams> = {
-  // ── ORAL VOWELS — durations extended 50% for intelligibility ──
-  'a':  { f1: 699, f2: 1329, f3: 2515, f4: 3403, bw1: 153, bw2: 86,  bw3: 142, bw4: 557, voiced: true, nasal: false, fricative: false, plosive: false, duration: 220, amplitude: 1.0 },
-  'e':  { f1: 375, f2: 1636, f3: 2529, f4: 3692, bw1: 108, bw2: 145, bw3: 197, bw4: 240, voiced: true, nasal: false, fricative: false, plosive: false, duration: 185, amplitude: 0.92 },
-  'ɛ':  { f1: 579, f2: 1646, f3: 2567, f4: 3500, bw1: 281, bw2: 148, bw3: 269, bw4: 277, voiced: true, nasal: false, fricative: false, plosive: false, duration: 195, amplitude: 0.95 },
-  'i':  { f1: 267, f2: 2134, f3: 2688, f4: 3686, bw1: 82,  bw2: 159, bw3: 315, bw4: 168, voiced: true, nasal: false, fricative: false, plosive: false, duration: 170, amplitude: 0.85 },
-  'o':  { f1: 429, f2: 1011, f3: 2502, f4: 3602, bw1: 194, bw2: 185, bw3: 241, bw4: 235, voiced: true, nasal: false, fricative: false, plosive: false, duration: 195, amplitude: 0.93 },
-  'ɔ':  { f1: 523, f2: 1143, f3: 2436, f4: 3502, bw1: 247, bw2: 115, bw3: 136, bw4: 246, voiced: true, nasal: false, fricative: false, plosive: false, duration: 195, amplitude: 0.94 },
-  'u':  { f1: 237, f2: 1087, f3: 2437, f4: 3630, bw1: 185, bw2: 270, bw3: 204, bw4: 226, voiced: true, nasal: false, fricative: false, plosive: false, duration: 175, amplitude: 0.85 },
+  // ── ORAL VOWELS — Escudero & Boersma 2009 BP Male (Table I) ──
+  'a':  { f1: 683, f2: 1329, f3: 2550, f4: 3400, bw1: 130, bw2: 80,  bw3: 140, bw4: 550, voiced: true, nasal: false, fricative: false, plosive: false, duration: 220, amplitude: 1.0 },
+  'e':  { f1: 357, f2: 2028, f3: 2700, f4: 3700, bw1: 90,  bw2: 110, bw3: 190, bw4: 230, voiced: true, nasal: false, fricative: false, plosive: false, duration: 185, amplitude: 0.92 },
+  'ɛ':  { f1: 518, f2: 1831, f3: 2650, f4: 3550, bw1: 200, bw2: 130, bw3: 260, bw4: 270, voiced: true, nasal: false, fricative: false, plosive: false, duration: 195, amplitude: 0.95 },
+  'i':  { f1: 285, f2: 2198, f3: 2800, f4: 3700, bw1: 70,  bw2: 120, bw3: 300, bw4: 160, voiced: true, nasal: false, fricative: false, plosive: false, duration: 170, amplitude: 0.85 },
+  'o':  { f1: 372, f2: 804,  f3: 2500, f4: 3600, bw1: 180, bw2: 170, bw3: 230, bw4: 230, voiced: true, nasal: false, fricative: false, plosive: false, duration: 195, amplitude: 0.93 },
+  'ɔ':  { f1: 532, f2: 927,  f3: 2480, f4: 3500, bw1: 230, bw2: 110, bw3: 130, bw4: 240, voiced: true, nasal: false, fricative: false, plosive: false, duration: 195, amplitude: 0.94 },
+  'u':  { f1: 310, f2: 761,  f3: 2450, f4: 3600, bw1: 170, bw2: 260, bw3: 200, bw4: 220, voiced: true, nasal: false, fricative: false, plosive: false, duration: 175, amplitude: 0.85 },
 
-  // ── NASAL VOWELS ──
-  'ã':  { f1: 650, f2: 1280, f3: 2500, f4: 3400, bw1: 200, bw2: 140, bw3: 200, bw4: 580, voiced: true, nasal: true, fricative: false, plosive: false, duration: 220, amplitude: 0.88 },
-  'ẽ':  { f1: 360, f2: 1600, f3: 2520, f4: 3680, bw1: 160, bw2: 200, bw3: 250, bw4: 280, voiced: true, nasal: true, fricative: false, plosive: false, duration: 195, amplitude: 0.82 },
-  'ĩ':  { f1: 250, f2: 2100, f3: 2680, f4: 3680, bw1: 140, bw2: 210, bw3: 360, bw4: 210, voiced: true, nasal: true, fricative: false, plosive: false, duration: 170, amplitude: 0.78 },
-  'õ':  { f1: 410, f2: 990,  f3: 2490, f4: 3590, bw1: 240, bw2: 240, bw3: 290, bw4: 275, voiced: true, nasal: true, fricative: false, plosive: false, duration: 210, amplitude: 0.83 },
-  'ũ':  { f1: 225, f2: 1060, f3: 2430, f4: 3620, bw1: 230, bw2: 320, bw3: 250, bw4: 265, voiced: true, nasal: true, fricative: false, plosive: false, duration: 185, amplitude: 0.78 },
+  // ── NASAL VOWELS (oral values shifted: F1 lowered ~5%, extra BW for nasal pole) ──
+  'ã':  { f1: 640, f2: 1280, f3: 2530, f4: 3400, bw1: 190, bw2: 130, bw3: 190, bw4: 570, voiced: true, nasal: true, fricative: false, plosive: false, duration: 220, amplitude: 0.88 },
+  'ẽ':  { f1: 340, f2: 1950, f3: 2690, f4: 3690, bw1: 150, bw2: 170, bw3: 240, bw4: 270, voiced: true, nasal: true, fricative: false, plosive: false, duration: 195, amplitude: 0.82 },
+  'ĩ':  { f1: 270, f2: 2120, f3: 2780, f4: 3690, bw1: 130, bw2: 180, bw3: 350, bw4: 200, voiced: true, nasal: true, fricative: false, plosive: false, duration: 170, amplitude: 0.78 },
+  'õ':  { f1: 355, f2: 780,  f3: 2480, f4: 3590, bw1: 230, bw2: 230, bw3: 280, bw4: 270, voiced: true, nasal: true, fricative: false, plosive: false, duration: 210, amplitude: 0.83 },
+  'ũ':  { f1: 295, f2: 740,  f3: 2440, f4: 3590, bw1: 220, bw2: 310, bw3: 240, bw4: 260, voiced: true, nasal: true, fricative: false, plosive: false, duration: 185, amplitude: 0.78 },
 
   // ── PLOSIVES — longer burst + aspiration for perception ──
   'p':  { f1: 300, f2: 800,  f3: 2300, f4: 3200, bw1: 200, bw2: 200, bw3: 200, bw4: 250, voiced: false, nasal: false, fricative: false, plosive: true, duration: 45,  amplitude: 0.7 },
@@ -210,7 +216,6 @@ export function textToPhonemes(text: string): string[] {
         if (i === 0 || prev === ' ' || prev === 'n' || prev === 'l' || prev === 's')
           phonemes.push('χ'); // uvular fricative (carro, rato) — standard pt-BR
         else phonemes.push('ɾ'); // alveolar tap (caro, para)
-        break;
         break;
       case 's':
         if (vowels.includes(next) && vowels.includes(prev)) phonemes.push('z');

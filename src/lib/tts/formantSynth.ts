@@ -273,9 +273,16 @@ function renderPhonemes(phonemes: string[], tokenSeq?: import("./ipaTokenizer").
       }
     }
 
-    // Minimal coarticulation — only 8% blending
+    // Coarticulation — 30% anticipatory blending (was 8%, too low!)
+    // Real speech has strong anticipatory coarticulation (20-40%)
     if (nextP && nextP.voiced && params.voiced && !params.plosive) {
-      tgtF2 = tgtF2 * 0.92 + (nextP.f2 || tgtF2) * MFCC_FIX.formantScale[1] * 0.08;
+      tgtF1 = tgtF1 * 0.75 + (nextP.f1 || tgtF1) * MFCC_FIX.formantScale[0] * 0.25;
+      tgtF2 = tgtF2 * 0.70 + (nextP.f2 || tgtF2) * MFCC_FIX.formantScale[1] * 0.30;
+      tgtF3 = tgtF3 * 0.85 + (nextP.f3 || tgtF3) * MFCC_FIX.formantScale[2] * 0.15;
+    }
+    // Carryover coarticulation from previous phoneme
+    if (prevP && prevP.voiced && params.voiced && !prevP.plosive) {
+      tgtF2 = tgtF2 * 0.88 + (prevP.f2 || tgtF2) * MFCC_FIX.formantScale[1] * 0.12;
     }
 
     const tgtBw1 = (params.bw1 || curBw1) * MFCC_FIX.bandwidthScale[0];
@@ -297,11 +304,11 @@ function renderPhonemes(phonemes: string[], tokenSeq?: import("./ipaTokenizer").
     }
 
     const numSamples = Math.floor((phonemeDuration / 1000) * SR);
-    // FAST transition for consonants (20ms), slower for vowels (50ms)
-    // Consonant-vowel transitions carry most speech information
+    // Transition times: consonants need FAST transitions (25ms) for place perception
+    // Vowels need longer transitions (60ms) for smooth coarticulation
     const isConsonant = params.plosive || params.fricative || params.nasal;
-    const transMs = isConsonant ? 0.02 : 0.05;
-    const transitionSamples = Math.min(Math.floor(transMs * SR), numSamples);
+    const transMs = isConsonant ? 0.025 : 0.060;
+    const transitionSamples = Math.min(Math.floor(transMs * SR), Math.floor(numSamples * 0.6));
     const sentPos = pi / Math.max(phonemes.length - 1, 1);
 
     // F0 for this segment with phrase-level prosody
