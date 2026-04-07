@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Scale, Shield, Heart } from "lucide-react";
+import { IconScale, IconShield, IconHeart } from "@/components/icons/SumerianTronIcons";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionDivider } from "@/components/ui/SectionDivider";

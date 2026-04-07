@@ -1,5 +1,5 @@
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { Globe, MapPin } from "lucide-react";
+import { IconGlobe, IconMapPin } from "@/components/icons/SumerianTronIcons";
 
 const regions = [
   { name: "Europa", countries: "Itália, Alemanha, Espanha", flag: "🇪🇺" },

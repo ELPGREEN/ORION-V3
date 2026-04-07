@@ -1,13 +1,14 @@
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { Bot, Cpu, Zap, Settings, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { IconBot, IconCpu, IconZap, IconSettings } from "@/components/icons/SumerianTronIcons";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 const features = [
-  { icon: Bot, title: "Robótica Autônoma", desc: "Linha robótica inteligente que processa pneus OTR gigantes de 57'' a 63'' com precisão milimétrica." },
-  { icon: Cpu, title: "IA Integrada", desc: "Sistema de visão computacional e machine learning para otimização contínua do processo." },
-  { icon: Zap, title: "Alta Performance", desc: "Capacidade de processamento de até 4 pneus OTR por hora com eficiência energética superior." },
-  { icon: Settings, title: "Modular & Escalável", desc: "Plantas modulares adaptáveis a diferentes volumes e tipos de pneus fora-de-estrada." },
+  { icon: IconBot, title: "Robótica Autônoma", desc: "Linha robótica inteligente que processa pneus OTR gigantes de 57'' a 63'' com precisão milimétrica." },
+  { icon: IconCpu, title: "IA Integrada", desc: "Sistema de visão computacional e machine learning para otimização contínua do processo." },
+  { icon: IconZap, title: "Alta Performance", desc: "Capacidade de processamento de até 4 pneus OTR por hora com eficiência energética superior." },
+  { icon: IconSettings, title: "Modular & Escalável", desc: "Plantas modulares adaptáveis a diferentes volumes e tipos de pneus fora-de-estrada." },
 ];
 
 export function SmartOtrSection() {

@@ -1,11 +1,11 @@
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { Leaf, Award, FileCheck, Shield } from "lucide-react";
+import { IconLeaf, IconAward, IconFileCheck, IconShield } from "@/components/icons/SumerianTronIcons";
 
 const certs = [
-  { icon: FileCheck, title: "ISO 14001", desc: "Sistema de Gestão Ambiental certificado internacionalmente." },
-  { icon: Award, title: "B-Corp Certified", desc: "Empresa certificada B-Corp por impacto social e ambiental positivo." },
-  { icon: Leaf, title: "Carbon Neutral", desc: "Operações com neutralidade de carbono verificada e auditada." },
-  { icon: Shield, title: "ESG Rating AA", desc: "Classificação ESG de alto nível por agências independentes." },
+  { icon: IconFileCheck, title: "ISO 14001", desc: "Sistema de Gestão Ambiental certificado internacionalmente." },
+  { icon: IconAward, title: "B-Corp Certified", desc: "Empresa certificada B-Corp por impacto social e ambiental positivo." },
+  { icon: IconLeaf, title: "Carbon Neutral", desc: "Operações com neutralidade de carbono verificada e auditada." },
+  { icon: IconShield, title: "ESG Rating AA", desc: "Classificação ESG de alto nível por agências independentes." },
 ];
 
 export function EsgCertificationsSection() {
