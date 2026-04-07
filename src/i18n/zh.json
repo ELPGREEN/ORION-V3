@@ -519,6 +519,20 @@
           "Custom coupons",
           "Detailed conversion reports"
         ]
+      },
+      "enterprise": {
+        "title": "Orion Enterprise — 工业与机器人",
+        "desc": "机器人自动化解决方案、智能回收生产线、AI驱动的工业系统以及ROS2集成，适用于大规模运营。",
+        "items": [
+          "Smart OTR巨型轮胎机器人生产线",
+          "计算机视觉工业自动化",
+          "AI集成SCADA和IoT系统",
+          "ROS2集成与自主机器人",
+          "可扩展模块化工厂",
+          "实时监控仪表板",
+          "机器学习预测性维护",
+          "机器人化与工业4.0咨询"
+        ]
       }
     },
     "differentials": [

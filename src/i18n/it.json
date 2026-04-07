@@ -519,6 +519,20 @@
           "Custom coupons",
           "Detailed conversion reports"
         ]
+      },
+      "enterprise": {
+        "title": "Orion Enterprise — Industria e Robotica",
+        "desc": "Soluzioni di automazione robotica, linee di riciclaggio intelligenti, sistemi industriali con IA e integrazione ROS2 per operazioni su larga scala.",
+        "items": [
+          "Linea robotica Smart OTR per pneumatici giganti",
+          "Automazione industriale con visione artificiale",
+          "Sistemi SCADA e IoT integrati con IA",
+          "Integrazione ROS2 e robotica autonoma",
+          "Impianti modulari scalabili",
+          "Dashboard di monitoraggio in tempo reale",
+          "Manutenzione predittiva con machine learning",
+          "Consulenza in robotizzazione e Industria 4.0"
+        ]
       }
     },
     "differentials": [

@@ -519,6 +519,20 @@
           "Custom coupons",
           "Detailed conversion reports"
         ]
+      },
+      "enterprise": {
+        "title": "Orion Enterprise — Endüstri ve Robotik",
+        "desc": "Robotik otomasyon çözümleri, akıllı geri dönüşüm hatları, yapay zeka destekli endüstriyel sistemler ve büyük ölçekli operasyonlar için ROS2 entegrasyonu.",
+        "items": [
+          "Dev lastikler için Smart OTR robot hattı",
+          "Bilgisayar görüşü ile endüstriyel otomasyon",
+          "Yapay zeka entegreli SCADA ve IoT sistemleri",
+          "ROS2 entegrasyonu ve otonom robotik",
+          "Ölçeklenebilir modüler tesisler",
+          "Gerçek zamanlı izleme panosu",
+          "Makine öğrenimi ile öngörücü bakım",
+          "Robotlaştırma ve Endüstri 4.0 danışmanlığı"
+        ]
       }
     },
     "differentials": [

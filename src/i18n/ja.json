@@ -519,6 +519,20 @@
           "Custom coupons",
           "Detailed conversion reports"
         ]
+      },
+      "enterprise": {
+        "title": "Orion Enterprise — 産業・ロボティクス",
+        "desc": "ロボット自動化ソリューション、スマートリサイクルライン、AI搭載産業システム、大規模運用向けROS2統合。",
+        "items": [
+          "巨大タイヤ用Smart OTRロボットライン",
+          "コンピュータビジョンによる産業自動化",
+          "AI統合SCADAおよびIoTシステム",
+          "ROS2統合と自律ロボティクス",
+          "スケーラブルなモジュラープラント",
+          "リアルタイム監視ダッシュボード",
+          "機械学習による予知保全",
+          "ロボット化とインダストリー4.0コンサルティング"
+        ]
       }
     },
     "differentials": [
