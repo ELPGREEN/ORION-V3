@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users, DollarSign, Scale, ShoppingBag, TrendingUp, Activity,
-  Shield, Eye, Loader2, Settings, BarChart3, Zap, Globe, Crown
+  Shield, Eye, Loader2, Settings, BarChart3, Zap, Globe, Crown, Database
 } from "lucide-react";
+import { BigQueryPanel } from "@/components/admin/BigQueryPanel";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
