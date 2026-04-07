@@ -500,14 +500,14 @@ export async function analyzeFrameWithAI(
     let imageBase64: string | undefined;
     if (includeImage && canvas) {
       const tempCanvas = document.createElement("canvas");
-      // ═══ COST OPTIMIZATION: Reduce image size (was 1024x768, now 640x480) ═══
-      tempCanvas.width = Math.min(canvas.width || 640, 640);
-      tempCanvas.height = Math.min(canvas.height || 480, 480);
+      // ═══ SPEED: Small image (320x240) + low quality for ≤3s response ═══
+      tempCanvas.width = Math.min(canvas.width || 320, 320);
+      tempCanvas.height = Math.min(canvas.height || 240, 240);
       const tCtx = tempCanvas.getContext("2d");
       if (!tCtx) return { description: null, learnedFacts: [], identifiedObjects: [] };
       tCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-      applyContrastEnhancement(tCtx, tempCanvas.width, tempCanvas.height);
-      imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.82).split(",")[1]; // Reduced quality 0.92→0.82
+      // Skip contrast enhancement — saves ~50ms per frame
+      imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.65).split(",")[1];
     }
     let consciousnessContext = "";
     try {
