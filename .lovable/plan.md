@@ -1,41 +1,89 @@
 
 
-# Plano: Tornar o Formant Synth Inteligível (v6)
+# Auditoria Completa dos 5 Painéis de Controle
 
-## Diagnóstico
+## Situação Atual — O que cada painel TEM e o que FALTA
 
-O som sai mas é ininteligível por 3 razões técnicas principais:
+### 1. PAINEL DO CLIENTE
+**Tem:** Processos, Documentos, Chat ao Vivo, Orion IA, Agendar Consulta, Pagamentos, Notificações, Assinatura Digital, Perfil
+**Falta:**
+- Marketplace (cliente pode comprar produtos digitais mas não tem acesso)
+- Central de Ajuda / Instruções (existe na sidebar mobile mas não aparece bem no dashboard)
+- Meu Plano (redireciona para configurações, deveria ter card dedicado)
+- Histórico de Consultas IA (mostrar quantas consultas fez com Orion)
 
-1. **Ressonadores em paralelo** — O modelo atual soma F1+F2+F3+F4 em paralelo. Para fala, o trato vocal é uma **cascata** (série): a saída de F1 alimenta F2, que alimenta F3, etc. Paralelo funciona para análise, cascata para síntese realista.
+### 2. PAINEL DO AFILIADO
+**Tem:** Links, Cliques, Conversões, Comissões, Marketplace, Perfil Público
+**Falta:**
+- Documentos (contratos de afiliação, termos)
+- Chat / Suporte (não tem acesso ao chat)
+- Materiais de Marketing (banners, copy, materiais para divulgação)
+- Relatórios de Performance (gráficos de cliques/conversões ao longo do tempo)
+- Central de Ajuda
+- Dashboard muito básico — só 4 stats e 3 botões de acesso rápido
 
-2. **Fonte glotal muito simples** — O Rosenberg C produz um pulso limpo demais. Falta a riqueza harmônica real do Iapetus. Precisa usar o `harmonicProfile` de 10 harmônicos diretamente na geração do pulso.
+### 3. PAINEL DO PRODUTOR (Lojista)
+**Tem:** Produtos, Receita, Vendas, Loja Pública, Marketplace, Pagamentos
+**Falta:**
+- Afiliados do Produto (ver quem está promovendo seus produtos)
+- Documentos (contratos, termos de venda)
+- Chat / Suporte
+- Cupons de Desconto (criar promoções)
+- Analytics de Produto (visualizações, taxa de conversão por produto)
+- Avaliações dos Clientes
+- Central de Ajuda
+- Docs Internacionais (está na sidebar desktop mas não no dashboard home)
 
-3. **Duração dos fonemas muito curta** — Vogais com 80-110ms são rápidas demais para o cérebro processar. Fala natural em PT-BR usa 120-180ms para vogais tônicas.
+### 4. PAINEL DO ADVOGADO (DashboardHome)
+**Tem:** Stats completos, Geração de Docs judicial/extrajudicial, CRM, Processos, Orion IA, Pesquisa, Chat, Consultas, Marketplace, Analytics, Secretary AI, Admin tools
+**Falta:** Este é o mais completo. Pequenas melhorias:
+- Widget de Prazos Urgentes (tarefas com prazo próximo)
+- Resumo de Assinaturas Pendentes
+- Link direto para Docs Internacionais no quick nav
 
-## Mudanças Técnicas
+### 5. PAINEL DO PROPRIETÁRIO (AdminOwnerDashboard)
+**Tem:** KPIs globais (usuários, advogados, clientes, produtores, produtos, pedidos, docs, processos), Usuários recentes, BigQuery, Ações rápidas
+**Falta:**
+- Receita Total da Plataforma (faturamento geral)
+- Logs de Atividade (quem fez o quê)
+- Gestão de Planos/Assinaturas
+- Moderação de Produtos (aprovar/rejeitar produtos no marketplace)
+- Envio de Notificações em Massa
+- Status dos Serviços (edge functions, APIs, etc.)
+- Gestão de Afiliados (ver todos os afiliados e comissões)
+- Publicações / Blog Admin (existe rota mas não está no painel)
+- Controle Robótico e Rede Neural (existe na sidebar do advogado mas não no painel owner)
 
-### 1. `formantSynth.ts` — Reescrever motor (v6)
+---
 
-- **Trocar paralelo → cascata**: F1 → F2 → F3 → F4 em série
-- **Fonte glotal com harmônicos reais**: Usar os 10 harmônicos do `VOICE_DNA.harmonicProfile` para construir o pulso, em vez do Rosenberg C simplificado
-- **Aumentar ganho do F1/F2**: São os formantes que definem identidade da vogal
-- **Reduzir pre-emphasis**: De 0.4 para 0.15 (menos agressivo)
-- **Adicionar anti-zeroing nasal**: Zeros nasais em ~500Hz para nasais reais
+## Plano de Implementação
 
-### 2. `phonemes.ts` — Aumentar durações
+### Etapa 1 — Enriquecer Painel do Afiliado
+- Adicionar seções: Materiais de Marketing, Documentos, Suporte, Gráfico de Performance
+- Organizar dashboard em grid com cards informativos como o do Nômade Digital
 
-- Vogais orais: +40% duração (ex: 'a' de 110→155ms, 'i' de 80→115ms)  
-- Vogais nasais: +30%
-- Plosivas: manter curtas (realista)
-- Fricativas: +20%
-- Pausas: manter
+### Etapa 2 — Enriquecer Painel do Produtor
+- Adicionar: Afiliados do Produto, Analytics por Produto, Cupons, Avaliações, Suporte
+- Cards de acesso rápido no estilo do Nômade Digital (que já está mais completo)
 
-### 3. Verificação
+### Etapa 3 — Enriquecer Painel do Cliente
+- Adicionar cards: Marketplace, Meu Plano, Histórico IA, Central de Ajuda
+- Melhorar organização visual das ações rápidas
 
-- Gerar WAV de teste com frase "Olá, eu sou o Orion" e validar espectrograma
-- Comparar com sample Iapetus-11 enviado
+### Etapa 4 — Enriquecer Painel do Proprietário
+- Adicionar: Receita total, Status dos serviços, Moderação de produtos, Notificações em massa
+- Adicionar mais tabs: Afiliados, Publicações, Logs
 
-## Resultado Esperado
+### Etapa 5 — Pequenos ajustes no Painel do Advogado
+- Widget de Prazos Urgentes, Assinaturas Pendentes, link Docs Internacionais
 
-Vogais distinguíveis entre si (a/e/i/o/u), consoantes audíveis, ritmo natural de PT-BR. Ainda será voz sintética, mas **compreensível**.
+---
+
+## Detalhes Técnicos
+
+- Todos os dashboards já seguem o padrão de `useQuery` + cards + grid
+- As rotas já existem para a maioria das páginas (marketplace, pagamentos, documentos, etc.) — o problema é que os dashboards não linkam para elas
+- O NomadeDigitalDashboard é o melhor modelo de referência (grid de ferramentas com ícones + descrições)
+- Sidebars (desktop e mobile) precisam ser sincronizadas com os novos itens dos dashboards
+- Nenhuma migração de banco necessária — tudo usa tabelas existentes
 
