@@ -103,7 +103,8 @@ const ControleRobotico = lazy(lazyRetry(() => import("./pages/dashboard/Controle
 const DeviceIntegrationPage = lazy(lazyRetry(() => import("./pages/dashboard/DeviceIntegrationPage")));
 const MeusAcessos = lazy(lazyRetry(() => import("./pages/dashboard/MeusAcessos")));
 const ExplorarLojas = lazy(lazyRetry(() => import("./pages/dashboard/ExplorarLojas")));
-
+const ConfigurarIA = lazy(lazyRetry(() => import("./pages/dashboard/ConfigurarIA")));
+const PlanoUsuario = lazy(lazyRetry(() => import("./pages/dashboard/PlanoUsuario")));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -257,10 +258,10 @@ const App = () => (
                     <Route path="webhooks" element={<Navigate to="/dashboard/configuracoes" replace />} />
                     <Route path="biblioteca-univates" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="prazos" element={<Navigate to="/dashboard/tarefas" replace />} />
-                    <Route path="configurar-ia" element={<Navigate to="/dashboard/rede-neural" replace />} />
+                    <Route path="configurar-ia" element={<ConfigurarIA />} />
                     <Route path="arquitetura-ia" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="dispositivos" element={<Navigate to="/dashboard/rede-neural" replace />} />
-                    <Route path="plano" element={<Navigate to="/dashboard/configuracoes" replace />} />
+                    <Route path="plano" element={<PlanoUsuario />} />
                     <Route path="orion" element={<Navigate to="/consulta" replace />} />
                   </Route>
 
