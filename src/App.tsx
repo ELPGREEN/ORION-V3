@@ -38,6 +38,7 @@ const Publicacoes = lazy(lazyRetry(() => import("./pages/Publicacoes")));
 const PublicacaoDetalhe = lazy(lazyRetry(() => import("./pages/PublicacaoDetalhe")));
 const ProBono = lazy(lazyRetry(() => import("./pages/ProBono")));
 const Depoimentos = lazy(lazyRetry(() => import("./pages/Depoimentos")));
+const Escritorio = lazy(lazyRetry(() => import("./pages/Escritorio")));
 
 // ─── Auth-Required Pages (visible only after login) ───
 const ConsultaIA = lazy(lazyRetry(() => import("./pages/ConsultaIA")));
@@ -141,6 +142,7 @@ const App = () => (
                   <Route path="/depoimentos" element={<Depoimentos />} />
                   <Route path="/install" element={<InstallApp />} />
                   <Route path="/advogado/:advogadoId" element={<AdvogadoSite />} />
+                  <Route path="/escritorio" element={<Escritorio />} />
 
                   {/* ═══ PUBLIC — Auth ═══ */}
                   <Route path="/auth" element={<Auth />} />
