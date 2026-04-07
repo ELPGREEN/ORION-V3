@@ -157,12 +157,12 @@ const App = () => (
                   <Route path="/termos" element={<Termos />} />
                   <Route path="/lgpd" element={<LGPD />} />
 
-                  {/* ═══ AUTH REQUIRED — Páginas internas (requer cadastro/login) ═══ */}
-                  <Route path="/clientes" element={<AuthGuard><Clientes /></AuthGuard>} />
-                  <Route path="/plataforma" element={<AuthGuard><Plataforma /></AuthGuard>} />
+                  {/* ═══ PUBLIC — Páginas vitrine da plataforma ═══ */}
+                  <Route path="/clientes" element={<Clientes />} />
+                  <Route path="/plataforma" element={<Plataforma />} />
                   <Route path="/servicos" element={<Servicos />} />
-                  <Route path="/investidor" element={<AuthGuard><InvestorTools /></AuthGuard>} />
-                  <Route path="/contato" element={<AuthGuard><Contato /></AuthGuard>} />
+                  <Route path="/contato" element={<Contato />} />
+                  <Route path="/investidor" element={<InvestorTools />} />
                   <Route path="/consulta" element={<AuthGuard><ConsultaIA /></AuthGuard>} />
                   <Route path="/demo" element={<AuthGuard><OrionDemo /></AuthGuard>} />
                   <Route path="/extension" element={<AuthGuard><OrionExtensionPage /></AuthGuard>} />
