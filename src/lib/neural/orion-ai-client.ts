@@ -389,13 +389,13 @@ export async function fetchDashboardContext(): Promise<string> {
   }
   const parts: string[] = [];
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return "";
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return "";
     const [processosRes, clientsRes, docsRes, consultasRes] = await Promise.all([
-      supabase.from("processos").select("id, numero_processo, tipo, status", { count: "exact", head: false }).eq("user_id", user.id).limit(5),
-      supabase.from("client_profiles").select("id, nome, status", { count: "exact", head: false }).eq("user_id", user.id).limit(5),
-      supabase.from("documents").select("id, title, document_type", { count: "exact", head: false }).eq("user_id", user.id).limit(5),
-      supabase.from("consultas").select("id, status, data_hora, tipo", { count: "exact", head: false }).eq("cliente_id", user.id).limit(5),
+      supabase.from("processos").select("id", { count: "exact", head: true }).eq("user_id", session.user.id).limit(1),
+      supabase.from("client_profiles").select("id", { count: "exact", head: true }).eq("user_id", session.user.id).limit(1),
+      supabase.from("documents").select("id", { count: "exact", head: true }).eq("user_id", session.user.id).limit(1),
+      supabase.from("consultas").select("id", { count: "exact", head: true }).eq("cliente_id", session.user.id).limit(1),
     ]);
     if (processosRes.count) parts.push(`${processosRes.count} processos.`);
     if (clientsRes.count) parts.push(`${clientsRes.count} clientes.`);
