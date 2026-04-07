@@ -124,8 +124,49 @@ function msToSamples(ms: number): number {
   return Math.round(SR * ms / 1000);
 }
 
+/**
+ * Fricative spectral peaks — for noise-excited phonemes, the resonator
+ * frequencies represent WHERE noise energy concentrates, NOT traditional
+ * vowel formants. This is the key insight from the C++ reference.
+ * /s/ needs energy at 5-8kHz, /ʃ/ at 3-6kHz, etc.
+ */
+const FRICATIVE_SPECTRAL: Record<string, SegmentParams> = {
+  's':  { f1: 200, f2: 5500, f3: 7500, bw1: 500, bw2: 3000, bw3: 2000, gain: 0.4, source: 'noise' },
+  'z':  { f1: 200, f2: 5500, f3: 7500, bw1: 500, bw2: 3000, bw3: 2000, gain: 0.3, source: 'mixed' },
+  'ʃ':  { f1: 200, f2: 3800, f3: 6000, bw1: 500, bw2: 2500, bw3: 2000, gain: 0.4, source: 'noise' },
+  'ʒ':  { f1: 200, f2: 3800, f3: 6000, bw1: 500, bw2: 2500, bw3: 2000, gain: 0.3, source: 'mixed' },
+  'f':  { f1: 200, f2: 2500, f3: 4000, bw1: 500, bw2: 3000, bw3: 2000, gain: 0.15, source: 'noise' },
+  'v':  { f1: 220, f2: 2500, f3: 4000, bw1: 500, bw2: 3000, bw3: 2000, gain: 0.2, source: 'mixed' },
+  'h':  { f1: 500, f2: 1500, f3: 2500, bw1: 200, bw2: 300, bw3: 400, gain: 0.15, source: 'noise' },
+  'χ':  { f1: 300, f2: 1100, f3: 2400, bw1: 400, bw2: 400, bw3: 400, gain: 0.4, source: 'noise' },
+  'R':  { f1: 300, f2: 1100, f3: 2400, bw1: 110, bw2: 140, bw3: 190, gain: 0.5, source: 'mixed' },
+};
+
+/**
+ * Context-dependent /h/ allophone — /h/ takes formants of following vowel
+ * (like C++ kFricH_A, kFricH_E, kFricH_O)
+ */
+function getHAllophone(nextPhoneme: string | undefined): SegmentParams {
+  const vowelParams = nextPhoneme ? PT_PHONEMES[nextPhoneme] : null;
+  if (vowelParams && vowelParams.voiced && !vowelParams.fricative && !vowelParams.plosive) {
+    return {
+      f1: vowelParams.f1 || 500,
+      f2: vowelParams.f2 || 1500,
+      f3: vowelParams.f3 || 2500,
+      bw1: 200, bw2: 300, bw3: 400,
+      gain: 0.15,
+      source: 'noise',
+    };
+  }
+  return FRICATIVE_SPECTRAL['h'];
+}
+
 /** Convert PhonemeParams to SegmentParams */
-function phonemeToSegment(p: PhonemeParams): SegmentParams {
+function phonemeToSegment(p: PhonemeParams, phoneme: string): SegmentParams {
+  // For fricatives, use spectral peak table (not acoustic formants)
+  const fricSpec = FRICATIVE_SPECTRAL[phoneme];
+  if (fricSpec) return fricSpec;
+
   let source: 'impulse' | 'noise' | 'mixed' = 'impulse';
   if (p.fricative && !p.voiced) source = 'noise';
   else if (p.fricative && p.voiced) source = 'mixed';
@@ -143,7 +184,7 @@ function phonemeToSegment(p: PhonemeParams): SegmentParams {
   };
 }
 
-// Plosive modeling: closure → burst → VOT (like the Python reference)
+// Plosive modeling: closure → burst → VOT (like the C++ reference)
 const PLOSIVE_RULES: Record<string, {
   closureMs: number;
   burstMs: number;
@@ -164,30 +205,42 @@ const PLOSIVE_RULES: Record<string, {
 const SILENCE_SEG: SegmentParams = { f1: 100, f2: 100, f3: 100, bw1: 100, bw2: 100, bw3: 100, gain: 0, source: 'impulse' };
 const VOICEBAR_SEG: SegmentParams = { f1: 200, f2: 200, f3: 200, bw1: 100, bw2: 200, bw3: 300, gain: 0.08, source: 'impulse' };
 
+/** Burst params per place of articulation — from C++ reference */
+const BURST_BY_PLACE: Record<string, SegmentParams> = {
+  'p': { f1: 300, f2: 1000, f3: 2300, bw1: 500, bw2: 1500, bw3: 2000, gain: 0.30, source: 'noise' },
+  'b': { f1: 300, f2: 1000, f3: 2300, bw1: 500, bw2: 1500, bw3: 2000, gain: 0.30, source: 'noise' },
+  't': { f1: 300, f2: 4000, f3: 5000, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.35, source: 'noise' },
+  'd': { f1: 300, f2: 4000, f3: 5000, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.35, source: 'noise' },
+  'k': { f1: 300, f2: 1800, f3: 2600, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.30, source: 'noise' },
+  'g': { f1: 300, f2: 1800, f3: 2600, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.30, source: 'noise' },
+  't͡ʃ': { f1: 300, f2: 3800, f3: 6000, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.35, source: 'noise' },
+  'd͡ʒ': { f1: 300, f2: 3800, f3: 6000, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.35, source: 'noise' },
+};
+
 function getBurstParams(phoneme: string): SegmentParams {
-  const p = PT_PHONEMES[phoneme];
-  if (!p) return { f1: 300, f2: 1000, f3: 2300, bw1: 500, bw2: 1500, bw3: 2000, gain: 0.3, source: 'noise' };
-  // Burst uses noise shaped through the consonant's formants, wider bandwidths
-  return {
-    f1: p.f1 || 300,
-    f2: p.f2 || 1500,
-    f3: p.f3 || 2500,
-    bw1: 500,
-    bw2: 1500,
-    bw3: 2000,
-    gain: 0.35,
-    source: 'noise',
-  };
+  return BURST_BY_PLACE[phoneme] || { f1: 300, f2: 1000, f3: 2300, bw1: 500, bw2: 1500, bw3: 2000, gain: 0.3, source: 'noise' };
 }
 
-function getVOTParams(phoneme: string): SegmentParams {
-  // VOT is aspiration noise shaped by the following vowel's vicinity
+/** VOT adapts to following vowel — uses vowel formants with wider BW and low gain */
+function getVOTParams(phoneme: string, nextPhoneme?: string): SegmentParams {
   // For affricates, VOT is the fricative portion
   if (phoneme === 't͡ʃ') {
     return { f1: 200, f2: 3800, f3: 6000, bw1: 500, bw2: 2500, bw3: 2000, gain: 0.4, source: 'noise' };
   }
   if (phoneme === 'd͡ʒ') {
     return { f1: 200, f2: 3800, f3: 6000, bw1: 500, bw2: 2500, bw3: 2000, gain: 0.3, source: 'mixed' };
+  }
+  // For regular plosives, VOT uses following vowel's formants with wider BW
+  const vowel = nextPhoneme ? PT_PHONEMES[nextPhoneme] : null;
+  if (vowel && vowel.voiced && !vowel.fricative && !vowel.plosive) {
+    return {
+      f1: vowel.f1 || 500,
+      f2: vowel.f2 || 1500,
+      f3: vowel.f3 || 2500,
+      bw1: 300, bw2: 400, bw3: 500,
+      gain: 0.10,
+      source: 'noise',
+    };
   }
   return {
     f1: 500, f2: 1500, f3: 2500,
