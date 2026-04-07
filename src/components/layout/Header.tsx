@@ -42,6 +42,7 @@ const navLinks: NavItem[] = [
       { href: "/clientes?perfil=escritorios", label: "Escritórios", icon: Building2, desc: "Gestão completa com CRM e equipe" },
       { href: "/clientes?perfil=produtores", label: "Produtores Digitais", icon: ShoppingBag, desc: "Loja, checkout e afiliados" },
       { href: "/clientes?perfil=afiliados", label: "Afiliados", icon: Briefcase, desc: "Links rastreáveis e comissões" },
+      { href: "/servicos", label: "Enterprise & Indústria", icon: Cpu, desc: "Robótica, automação e Indústria 4.0" },
     ],
   },
   {
@@ -50,17 +51,13 @@ const navLinks: NavItem[] = [
     children: [
       { href: "/plataforma", label: "Funcionalidades", icon: Brain, desc: "Tudo que o ORION faz por você" },
       { href: "/plataforma#seguranca", label: "Segurança", icon: Shield, desc: "LGPD, criptografia e compliance" },
-      { href: "/demo", label: "Demo ao vivo", icon: Bot, desc: "Teste o ORION agora mesmo" },
     ],
   },
   {
     label: "Serviços",
     icon: Briefcase,
     children: [
-      { href: "/clientes?perfil=advogados", label: "Para Advogados", icon: Scale, desc: "IA jurídica, petições e processos" },
-      { href: "/clientes?perfil=escritorios", label: "Para Empresas", icon: Building2, desc: "CRM, gestão de equipe e faturamento" },
-      { href: "/clientes?perfil=produtores", label: "Para Produtores", icon: ShoppingBag, desc: "Loja, checkout e vendas" },
-      { href: "/servicos", label: "Todos os Serviços", icon: Briefcase, desc: "Visão completa da plataforma" },
+      { href: "/servicos", label: "Todos os Serviços", icon: Briefcase, desc: "SaaS, IA e automação industrial" },
       { href: "/escritorio", label: "Escritório Jurídico", icon: Gavel, desc: "Áreas de atuação do escritório" },
     ],
   },
