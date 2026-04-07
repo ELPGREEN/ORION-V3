@@ -73,7 +73,7 @@ export interface AmplificationContext {
 
 // ─── Constants ───
 
-const EXECUTION_THRESHOLD = 0.6;
+const EXECUTION_THRESHOLD = 0.35;
 const SUPERCOHERENCE_BONUS = 0.08;
 const COIL_VOLTAGE_LABELS = ["~120V", "~1kV", "~10kV", "~100kV", "~500kV", "~1MV"];
 

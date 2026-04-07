@@ -426,18 +426,25 @@ export function useOrionReasoning(
       const layer0Ms = Date.now() - now;
       addLog(`⚡ Tesla Coil: ${(voltage.confidence * 100).toFixed(0)}% conf, ${voltage.intent}, ${voltage.amplificationRatio.toFixed(1)}x amp [${layer0Ms}ms]`);
 
-      // If confidence too low, ask clarification instead of executing
+      // If confidence too low AND intent is not visual/mixed, ask clarification
+      // Visual queries should ALWAYS proceed (the camera provides context)
       if (!voltage.shouldExecute && !voltage.isConfirmation) {
-        const clarifyMsg = voltage.suggestedQuestion || "Pode detalhar melhor o que deseja?";
-        setChatHistory(prev => {
-          const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
-          return [...clean, { role: "ai" as const, text: `🔌 ${clarifyMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
-        });
-        setThought(clarifyMsg);
-        try { await speak(clarifyMsg); } catch {}
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
-        processNextInQueue();
-        return;
+        const intentCheck = classifyIntent(processedInput);
+        const isVisualQuery = intentCheck === "visual" || intentCheck === "mixed";
+        if (!isVisualQuery) {
+          const clarifyMsg = voltage.suggestedQuestion || "Pode detalhar melhor o que deseja?";
+          setChatHistory(prev => {
+            const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+            return [...clean, { role: "ai" as const, text: `🔌 ${clarifyMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
+          });
+          setThought(clarifyMsg);
+          try { await speak(clarifyMsg); } catch {}
+          aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+          processNextInQueue();
+          return;
+        }
+        // Visual query — proceed even with low confidence
+        addLog(`👁️ Visual query: bypassing confidence gate (${(voltage.confidence * 100).toFixed(0)}%)`);
       }
 
       // ═══ LAYER 1: Intent classification (<50ms) ═══
