@@ -158,11 +158,13 @@ export function WelcomeSplash({ onDismiss }: WelcomeSplashProps) {
                 transition={{ delay: 0.3, duration: 0.8, type: "spring" }}
                 className="relative"
               >
-                <img
-                  src={orionLogo}
-                  alt="ORION Enterprise AI Platform"
-                  className="w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 object-contain drop-shadow-[0_0_40px_rgba(212,175,55,0.4)]"
-                />
+                <div className="w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 rounded-full border-2 border-[hsl(43,74%,49%)] shadow-[0_0_30px_rgba(212,175,55,0.3),inset_0_0_20px_rgba(212,175,55,0.1)] overflow-hidden flex items-center justify-center bg-black/40">
+                  <img
+                    src={orionLogo}
+                    alt="ORION Enterprise AI Platform"
+                    className="w-[85%] h-[85%] object-contain drop-shadow-[0_0_40px_rgba(212,175,55,0.4)]"
+                  />
+                </div>
               </motion.div>
 
               {/* Title — English */}
