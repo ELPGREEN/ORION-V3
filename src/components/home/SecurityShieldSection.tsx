@@ -58,7 +58,7 @@ export function SecurityShieldSection() {
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-6xl mx-auto">
           {highlights.map((layer, i) => (
             <ScrollReveal key={layer.name} direction="up" delay={i * 0.05}>
               <div className="group relative p-5 border border-border/20 bg-card/20 hover:border-primary/40 transition-all duration-500 h-full holo-card">

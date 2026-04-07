@@ -90,9 +90,9 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
       )}
 
       <div className="relative container px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
-          <div className="col-span-2 sm:col-span-2 lg:col-span-1 space-y-5">
+          <div className="col-span-1 sm:col-span-2 lg:col-span-1 space-y-5">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <img src={logoElp} alt="ELP Global Company" className="h-10 w-10 object-contain relative z-10" />
@@ -165,17 +165,27 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
           <div>
             <h4 className="text-[9px] text-primary uppercase tracking-[0.3em] font-medium mb-5 flex items-center gap-2">
               <span className="w-3 h-px bg-primary/40" />
-              EMPRESA
+              EMPRESA & CONTATO
             </h4>
             <ul className="space-y-3">
               <li className="text-[11px] text-muted-foreground">
                 <p className="text-foreground/80 font-medium">ELP® Green Technology</p>
-                <p className="text-[9px] text-muted-foreground/60 mt-0.5">CNPJ 42.501.190/0001-70 • VAT IT02712340062</p>
+                <p className="text-[9px] text-muted-foreground/60 mt-0.5">CNPJ 42.501.190/0001-70</p>
               </li>
               <li className="text-[11px] text-muted-foreground">
                 <p className="text-foreground/80 font-medium">Mr. Ericson Piccoli</p>
                 <p className="text-[9px] text-muted-foreground/60 mt-0.5">General Director & Founder</p>
-                <p className="text-[9px] text-muted-foreground/50 mt-0.5">ORION AI Platform</p>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/393501021359"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-[10px] text-muted-foreground/60 hover:text-primary transition-colors"
+                >
+                  <Phone className="h-3 w-3 text-primary/40 flex-shrink-0" />
+                  +39 350 1021359
+                </a>
               </li>
               <li className="flex items-center gap-2 text-[10px] text-muted-foreground/60">
                 <Mail className="h-3 w-3 text-primary/40 flex-shrink-0" />
@@ -184,57 +194,13 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
                 </a>
               </li>
               <li className="flex items-center gap-2 text-[10px] text-muted-foreground/60">
-                <Globe className="h-3 w-3 text-primary/40 flex-shrink-0" />
-                <a href="https://www.iasofthub.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
-                  www.iasofthub.com
-                </a>
+                <MapPin className="h-3 w-3 text-primary/40 flex-shrink-0" />
+                <span>Alessandria, Italy</span>
               </li>
             </ul>
           </div>
 
-          {/* Contact */}
-          <div>
-            <h4 className="text-[9px] text-primary uppercase tracking-[0.3em] font-medium mb-5 flex items-center gap-2">
-              <span className="w-3 h-px bg-primary/40" />
-              CONTATO
-            </h4>
-            <ul className="space-y-4">
-              <li>
-                <a
-                  href="https://wa.me/393501021359"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center gap-2.5 text-[11px] text-muted-foreground hover:text-primary transition-colors duration-300"
-                >
-                  <div className="relative h-7 w-7 border border-primary/20 flex items-center justify-center group-hover:border-primary/50 group-hover:shadow-[0_0_10px_hsl(var(--primary)/0.15)] transition-all duration-500">
-                    <div className="absolute top-0 left-0 w-1 h-1 border-t border-l border-primary/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-primary/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <Phone className="h-3 w-3 text-primary/60" />
-                  </div>
-                  +39 350 1021359
-                </a>
-              </li>
-              <li>
-                <a
-                  href="mailto:info@iasofthub.com"
-                  className="group flex items-center gap-2.5 text-[11px] text-muted-foreground hover:text-primary transition-colors duration-300"
-                >
-                  <div className="relative h-7 w-7 border border-primary/20 flex items-center justify-center group-hover:border-primary/50 group-hover:shadow-[0_0_10px_hsl(var(--primary)/0.15)] transition-all duration-500">
-                    <div className="absolute top-0 left-0 w-1 h-1 border-t border-l border-primary/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-primary/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <Mail className="h-3 w-3 text-primary/60" />
-                  </div>
-                  info@iasofthub.com
-                </a>
-              </li>
-              <li className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
-                <div className="h-7 w-7 border border-primary/20 flex items-center justify-center">
-                  <MapPin className="h-3 w-3 text-primary/60" />
-                </div>
-                Alessandria, Piemonte, Italy
-              </li>
-            </ul>
-          </div>
+          {/* Contact — merged into Empresa column */}
         </div>
       </div>
 
@@ -244,7 +210,7 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
         <div className="container px-4 sm:px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2 text-[9px] text-muted-foreground/50 uppercase tracking-[0.15em]">
             <Zap className="h-3 w-3 text-primary/30" />
-            <span>© 2023-{currentYear} ELP® Green Technology • CNPJ 42.501.190/0001-70 • VAT IT02712340062 • ELP® PROPERTY</span>
+            <span>© 2023-{currentYear} ELP® Green Technology<span className="hidden sm:inline"> • CNPJ 42.501.190/0001-70 • VAT IT02712340062</span> • ELP® PROPERTY</span>
           </div>
 
           <div className="flex items-center gap-6 text-[9px] text-muted-foreground/50 uppercase tracking-[0.15em]">
