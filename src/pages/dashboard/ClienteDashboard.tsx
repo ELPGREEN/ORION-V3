@@ -539,14 +539,14 @@ export default function ClienteDashboard() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Welcome Hero */}
-      <div className="relative overflow-hidden border border-primary/15 bg-gradient-to-br from-card via-card to-primary/5 p-6 sm:p-8">
+      {/* Welcome Hero — Soft blue portal theme */}
+      <div className="relative overflow-hidden border border-[hsl(210,70%,50%,0.15)] bg-gradient-to-br from-card via-card to-[hsl(210,70%,50%,0.06)] p-6 sm:p-8 rounded-xl">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-16 -right-16 w-56 h-56 bg-primary/8 blur-[100px] animate-pulse" style={{ animationDuration: '5s' }} />
+          <div className="absolute -top-16 -right-16 w-56 h-56 blur-[100px] animate-pulse" style={{ background: "hsl(210,70%,50%,0.08)", animationDuration: '5s' }} />
         </div>
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-primary/60 mb-1 font-sans">Plataforma ORION</p>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[hsl(210,70%,55%,0.6)] mb-1 font-sans">Plataforma ORION</p>
             <h1 className="text-2xl md:text-3xl font-serif text-foreground">
               Olá, <span className="text-gold-shine">{userName}</span>
             </h1>
@@ -562,8 +562,8 @@ export default function ClienteDashboard() {
               { label: "Pendentes", value: pendingInvoices, icon: Wallet },
             ].map((s) => (
               <div key={s.label} className="text-center">
-                <div className="h-8 w-8 mx-auto mb-1 bg-primary/10 border border-primary/20 flex items-center justify-center">
-                  <s.icon className="h-3.5 w-3.5 text-primary" />
+                <div className="h-8 w-8 mx-auto mb-1 rounded-lg bg-[hsl(210,70%,50%,0.1)] border border-[hsl(210,70%,50%,0.2)] flex items-center justify-center">
+                  <s.icon className="h-3.5 w-3.5 text-[hsl(210,70%,55%)]" />
                 </div>
                 <p className="text-lg font-serif text-foreground">{s.value}</p>
                 <p className="text-[8px] text-muted-foreground/70 uppercase tracking-wider">{s.label}</p>

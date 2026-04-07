@@ -3,10 +3,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Brain, Cpu, Bot, Wifi, Shield, Activity, Zap, Server } from "lucide-react";
 import { toast } from "sonner";
+import { StatusLED } from "@/components/dashboard/DashboardTheme";
 
 interface SubsystemStatus {
   name: string;
@@ -55,36 +55,45 @@ export default function OrionComandoTotal() {
   ];
 
   return (
-    <Card className="border-primary/30 bg-gradient-to-br from-card to-primary/5">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg font-serif">
-          <Brain className="h-5 w-5 text-primary" />
-          Orion — Comando Total
+    <Card className="border-[hsl(30,85%,52%,0.2)] bg-gradient-to-br from-card to-[hsl(30,85%,52%,0.04)] overflow-hidden relative">
+      {/* Industrial grid overlay */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: "linear-gradient(hsl(30,85%,52%,0.02) 1px, transparent 1px), linear-gradient(90deg, hsl(30,85%,52%,0.02) 1px, transparent 1px)",
+        backgroundSize: "30px 30px",
+      }} />
+      <CardHeader className="pb-3 relative z-10">
+        <CardTitle className="flex items-center justify-between text-lg font-serif">
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-[hsl(30,85%,52%)]" />
+            Orion — Comando Total
+          </div>
+          <div className="flex items-center gap-3">
+            <StatusLED status="online" label="CORE" />
+            <StatusLED status={rosEnabled ? "online" : "offline"} label="ROS2" />
+          </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 relative z-10">
         {/* Subsystems Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {subsystems.map((s) => (
-            <div key={s.name} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/50">
+            <div key={s.name} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-[hsl(220,20%,6%)] border border-[hsl(30,85%,52%,0.1)] hover:border-[hsl(30,85%,52%,0.25)] transition-colors">
               <s.icon className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium truncate">{s.name}</p>
+                <p className="text-xs font-mono font-medium truncate text-foreground">{s.name}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{s.description}</p>
               </div>
-              <Badge variant={s.status === "online" ? "default" : "secondary"} className="text-[9px] px-1.5 py-0 shrink-0">
-                {s.status === "online" ? "ON" : "OFF"}
-              </Badge>
+              <StatusLED status={s.status} />
             </div>
           ))}
         </div>
 
         {/* ROS2 Toggle */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/50">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(220,20%,6%)] border border-[hsl(30,85%,52%,0.1)]">
           <div className="flex items-center gap-2">
-            <Bot className="h-4 w-4 text-primary" />
+            <Bot className="h-4 w-4 text-[hsl(30,85%,52%)]" />
             <div>
-              <p className="text-sm font-medium">Automação Robótica via Orion</p>
+              <p className="text-sm font-medium font-mono">Automação Robótica via Orion</p>
               <p className="text-[10px] text-muted-foreground">Habilitar comandos ROS2 pelo Orion IA</p>
             </div>
           </div>
@@ -98,13 +107,13 @@ export default function OrionComandoTotal() {
               key={a.action}
               variant="outline"
               size="sm"
-              className="justify-start gap-2 h-auto py-2"
+              className="justify-start gap-2 h-auto py-2.5 border-[hsl(30,85%,52%,0.15)] hover:border-[hsl(30,85%,52%,0.4)] hover:bg-[hsl(30,85%,52%,0.05)]"
               disabled={loading !== null}
               onClick={() => callOwnerAction(a.action, a.label)}
             >
-              {loading === a.action ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <a.icon className="h-3.5 w-3.5" />}
+              {loading === a.action ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <a.icon className="h-3.5 w-3.5 text-[hsl(30,85%,52%)]" />}
               <div className="text-left">
-                <p className="text-xs font-medium">{a.label}</p>
+                <p className="text-xs font-mono font-medium">{a.label}</p>
                 <p className="text-[10px] text-muted-foreground">{a.desc}</p>
               </div>
             </Button>
@@ -113,8 +122,8 @@ export default function OrionComandoTotal() {
 
         {/* AI Response */}
         {aiResponse && (
-          <div className="p-3 rounded-lg bg-muted/30 border border-primary/20 max-h-48 overflow-y-auto">
-            <p className="text-xs whitespace-pre-wrap">{aiResponse}</p>
+          <div className="p-3 rounded-lg bg-[hsl(220,20%,6%)] border border-[hsl(30,85%,52%,0.15)] max-h-48 overflow-y-auto">
+            <p className="text-xs font-mono whitespace-pre-wrap text-foreground/80">{aiResponse}</p>
           </div>
         )}
       </CardContent>
