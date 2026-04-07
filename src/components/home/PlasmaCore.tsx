@@ -20,7 +20,7 @@ uniform float u_hover;
 
 #define PI 3.14159265
 #define GOLD vec3(0.788, 0.659, 0.298)
-#define CYAN vec3(0.0, 0.831, 1.0)
+#define CYAN vec3(0.231, 0.510, 0.918)
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);

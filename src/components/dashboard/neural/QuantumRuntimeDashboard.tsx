@@ -50,7 +50,7 @@ interface JobHistoryEntry {
   timestamp: Date;
 }
 
-const ACCENT = "#00D4FF";
+const ACCENT = "#3B82F6";
 const GOLD = "#D4AF37";
 const GREEN = "#22c55e";
 const RED = "#ef4444";

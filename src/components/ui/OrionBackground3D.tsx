@@ -3,7 +3,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Points, PointMaterial } from "@react-three/drei";
 import * as THREE from "three";
 
-function ParticleField({ count = 800, color = "#00D4FF" }: { count?: number; color?: string }) {
+function ParticleField({ count = 800, color = "#D4AF37" }: { count?: number; color?: string }) {
   const ref = useRef<THREE.Points>(null);
   const positions = useMemo(() => {
     const arr = new Float32Array(count * 3);
@@ -39,7 +39,7 @@ function GridPlane() {
   return (
     <gridHelper
       ref={ref}
-      args={[40, 40, "#D4AF3715", "#00D4FF08"]}
+      args={[40, 40, "#D4AF3715", "#3B82F610"]}
       position={[0, -3, 0]}
       rotation={[0, 0, 0]}
     />
@@ -54,7 +54,7 @@ interface OrionBackground3DProps {
 
 export function OrionBackground3D({ variant = "default", intensity = "medium", className = "" }: OrionBackground3DProps) {
   const count = intensity === "low" ? 400 : intensity === "high" ? 1200 : 800;
-  const color = variant === "gold" ? "#D4AF37" : variant === "cyan" ? "#00D4FF" : "#00D4FF";
+  const color = variant === "gold" ? "#D4AF37" : variant === "cyan" ? "#3B82F6" : "#D4AF37";
 
   return (
     <div className={`absolute inset-0 pointer-events-none ${className}`}>
@@ -73,7 +73,7 @@ export function OrionBackground3D({ variant = "default", intensity = "medium", c
       <div
         className="absolute inset-0"
         style={{
-          background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.015) 2px, rgba(0,212,255,0.015) 4px)",
+          background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,175,55,0.015) 2px, rgba(212,175,55,0.015) 4px)",
           pointerEvents: "none",
         }}
       />
