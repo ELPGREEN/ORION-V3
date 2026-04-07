@@ -53,10 +53,10 @@ export default function AfiliadoDashboard() {
   ];
 
   const tools = [
+    { label: "Minha Vitrine", icon: Globe, path: `/vitrine/${user?.id}`, desc: "Sua loja pública de produtos afiliados" },
     { label: "Meus Links", icon: Link2, path: "/dashboard/afiliados", desc: "Gerenciar links de afiliado" },
     { label: "Marketplace", icon: ShoppingBag, path: "/dashboard/marketplace", desc: "Encontrar produtos para promover" },
     { label: "Comissões", icon: DollarSign, path: "/dashboard/pagamentos", desc: "Histórico de comissões e saques" },
-    { label: "Perfil Público", icon: Globe, path: "/dashboard/escritorio", desc: "Seu perfil de afiliado público" },
     { label: "Materiais", icon: Image, path: "/dashboard/marketplace", desc: "Banners e materiais de divulgação" },
     { label: "Documentos", icon: FileText, path: "/dashboard/documentos", desc: "Contratos e termos de afiliação" },
     { label: "Orion IA", icon: Brain, path: "/consulta", desc: "Assistente IA para estratégias" },
