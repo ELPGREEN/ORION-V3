@@ -2102,6 +2102,51 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_access: {
+        Row: {
+          expires_at: string | null
+          granted_at: string
+          id: string
+          is_active: boolean
+          order_id: string | null
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          is_active?: boolean
+          order_id?: string | null
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          is_active?: boolean
+          order_id?: string | null
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_access_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_access_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           closed_at: string | null
@@ -6512,6 +6557,94 @@ export type Database = {
           },
         ]
       }
+      product_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size_bytes: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          product_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size_bytes?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          product_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size_bytes?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          product_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_files_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_modules: {
+        Row: {
+          content_type: string | null
+          content_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean
+          product_id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_type?: string | null
+          content_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          product_id: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_type?: string | null
+          content_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          product_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_modules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string | null
@@ -6528,6 +6661,7 @@ export type Database = {
           name: string | null
           original_price_cents: number | null
           price_cents: number
+          product_type: string
           sales_page_content: Json | null
           sales_page_published: boolean | null
           short_description: string | null
@@ -6537,6 +6671,7 @@ export type Database = {
           title: string
           trailer_url: string | null
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           category?: string | null
@@ -6553,6 +6688,7 @@ export type Database = {
           name?: string | null
           original_price_cents?: number | null
           price_cents?: number
+          product_type?: string
           sales_page_content?: Json | null
           sales_page_published?: boolean | null
           short_description?: string | null
@@ -6562,6 +6698,7 @@ export type Database = {
           title: string
           trailer_url?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           category?: string | null
@@ -6578,6 +6715,7 @@ export type Database = {
           name?: string | null
           original_price_cents?: number | null
           price_cents?: number
+          product_type?: string
           sales_page_content?: Json | null
           sales_page_published?: boolean | null
           short_description?: string | null
@@ -6587,6 +6725,7 @@ export type Database = {
           title?: string
           trailer_url?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }
