@@ -31,12 +31,6 @@ function getAllGeminiKeys(): string[] {
   const now = Date.now();
   const keys = [
     Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
   ].filter((k): k is string => {
     if (!k) return false;
     const failedAt = failedKeyCache[k];
@@ -45,8 +39,7 @@ function getAllGeminiKeys(): string[] {
   });
 
   if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured (all keys cooling down)");
-  const idx = Math.floor(Date.now() / 1000) % keys.length;
-  return [...keys.slice(idx), ...keys.slice(0, idx)];
+  return keys;
 }
 
 /**
