@@ -61,6 +61,7 @@ const navLinks: NavItem[] = [
       { href: "/clientes?perfil=escritorios", label: "Para Empresas", icon: Building2, desc: "CRM, gestão de equipe e faturamento" },
       { href: "/clientes?perfil=produtores", label: "Para Produtores", icon: ShoppingBag, desc: "Loja, checkout e vendas" },
       { href: "/servicos", label: "Todos os Serviços", icon: Briefcase, desc: "Visão completa da plataforma" },
+      { href: "/escritorio", label: "Escritório Jurídico", icon: Gavel, desc: "Áreas de atuação do escritório" },
     ],
   },
   { href: "/investidor", label: "Investidores", icon: TrendingUp },

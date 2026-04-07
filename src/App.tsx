@@ -38,16 +38,18 @@ const Publicacoes = lazy(lazyRetry(() => import("./pages/Publicacoes")));
 const PublicacaoDetalhe = lazy(lazyRetry(() => import("./pages/PublicacaoDetalhe")));
 const ProBono = lazy(lazyRetry(() => import("./pages/ProBono")));
 const Depoimentos = lazy(lazyRetry(() => import("./pages/Depoimentos")));
-
-// ─── Auth-Required Pages (visible only after login) ───
-const ConsultaIA = lazy(lazyRetry(() => import("./pages/ConsultaIA")));
-const DocumentacaoRedeNeural = lazy(lazyRetry(() => import("./pages/DocumentacaoRedeNeural")));
-const DocumentacaoNeuroCore = lazy(lazyRetry(() => import("./pages/DocumentacaoNeuroCore")));
+const Escritorio = lazy(lazyRetry(() => import("./pages/Escritorio")));
+// ─── Public Showcase Pages ───
 const Servicos = lazy(lazyRetry(() => import("./pages/Servicos")));
 const Plataforma = lazy(lazyRetry(() => import("./pages/Plataforma")));
 const Clientes = lazy(lazyRetry(() => import("./pages/Clientes")));
 const Contato = lazy(lazyRetry(() => import("./pages/Contato")));
 const InvestorTools = lazy(lazyRetry(() => import("./pages/InvestorTools")));
+
+// ─── Auth-Required Pages (visible only after login) ───
+const ConsultaIA = lazy(lazyRetry(() => import("./pages/ConsultaIA")));
+const DocumentacaoRedeNeural = lazy(lazyRetry(() => import("./pages/DocumentacaoRedeNeural")));
+const DocumentacaoNeuroCore = lazy(lazyRetry(() => import("./pages/DocumentacaoNeuroCore")));
 const BiometricRegistration = lazy(lazyRetry(() => import("./pages/BiometricRegistration")));
 const OrionDemo = lazy(lazyRetry(() => import("./pages/OrionDemo")));
 const OrionExtensionPage = lazy(lazyRetry(() => import("./pages/OrionExtensionPage")));
@@ -141,6 +143,7 @@ const App = () => (
                   <Route path="/depoimentos" element={<Depoimentos />} />
                   <Route path="/install" element={<InstallApp />} />
                   <Route path="/advogado/:advogadoId" element={<AdvogadoSite />} />
+                  <Route path="/escritorio" element={<Escritorio />} />
 
                   {/* ═══ PUBLIC — Auth ═══ */}
                   <Route path="/auth" element={<Auth />} />
@@ -155,12 +158,12 @@ const App = () => (
                   <Route path="/termos" element={<Termos />} />
                   <Route path="/lgpd" element={<LGPD />} />
 
-                  {/* ═══ AUTH REQUIRED — Páginas internas (requer cadastro/login) ═══ */}
-                  <Route path="/clientes" element={<AuthGuard><Clientes /></AuthGuard>} />
-                  <Route path="/plataforma" element={<AuthGuard><Plataforma /></AuthGuard>} />
+                  {/* ═══ PUBLIC — Páginas vitrine da plataforma ═══ */}
+                  <Route path="/clientes" element={<Clientes />} />
+                  <Route path="/plataforma" element={<Plataforma />} />
                   <Route path="/servicos" element={<Servicos />} />
-                  <Route path="/investidor" element={<AuthGuard><InvestorTools /></AuthGuard>} />
-                  <Route path="/contato" element={<AuthGuard><Contato /></AuthGuard>} />
+                  <Route path="/contato" element={<Contato />} />
+                  <Route path="/investidor" element={<InvestorTools />} />
                   <Route path="/consulta" element={<AuthGuard><ConsultaIA /></AuthGuard>} />
                   <Route path="/demo" element={<AuthGuard><OrionDemo /></AuthGuard>} />
                   <Route path="/extension" element={<AuthGuard><OrionExtensionPage /></AuthGuard>} />

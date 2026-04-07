@@ -475,22 +475,50 @@
       "lawyers": {
         "title": "For Lawyers",
         "desc": "Complete legal AI: generate petitions, research case law, manage cases and clients with artificial intelligence.",
-        "items": ["AI-powered petition drafting", "Smart case law research", "Case and deadline management", "Automated contract analysis", "Real-time client portal", "Performance reports and metrics"]
+        "items": [
+          "AI-powered petition drafting",
+          "Smart case law research",
+          "Case and deadline management",
+          "Automated contract analysis",
+          "Real-time client portal",
+          "Performance reports and metrics"
+        ]
       },
       "offices": {
         "title": "For Firms & Companies",
         "desc": "Legal CRM, team management, billing and complete dashboard for firms and companies of all sizes.",
-        "items": ["CRM with client pipeline", "Team management and permissions", "Billing and financial control", "Management dashboard with metrics", "Multi-user with access levels", "Calendar and email integration"]
+        "items": [
+          "CRM with client pipeline",
+          "Team management and permissions",
+          "Billing and financial control",
+          "Management dashboard with metrics",
+          "Multi-user with access levels",
+          "Calendar and email integration"
+        ]
       },
       "producers": {
         "title": "For Digital Producers",
         "desc": "Create your store, set up checkout, manage products and track sales with a complete dashboard and affiliate program.",
-        "items": ["Custom domain store", "Conversion-optimized checkout", "Product and category management", "Real-time sales dashboard", "Integrated affiliate program", "Visual landing page editor"]
+        "items": [
+          "Custom domain store",
+          "Conversion-optimized checkout",
+          "Product and category management",
+          "Real-time sales dashboard",
+          "Integrated affiliate program",
+          "Visual landing page editor"
+        ]
       },
       "affiliates": {
         "title": "For Affiliates",
         "desc": "Trackable links, automatic commissions and product marketplace to promote and earn commissions.",
-        "items": ["Trackable links with analytics", "Automatic per-sale commissions", "Available product marketplace", "Performance dashboard", "Custom coupons", "Detailed conversion reports"]
+        "items": [
+          "Trackable links with analytics",
+          "Automatic per-sale commissions",
+          "Available product marketplace",
+          "Performance dashboard",
+          "Custom coupons",
+          "Detailed conversion reports"
+        ]
       }
     },
     "differentials": [
@@ -545,10 +573,22 @@
     "techSecurityHighlight": "Security",
     "techSecurityDesc": "The firm employs bank-level security standards to protect client data, in compliance with the General Data Protection Law (Law No. 13,709/2018) and the Advocacy Statute (Law No. 8,906/1994).",
     "techItems": {
-      "tls": { "title": "TLS/HTTPS Encryption", "desc": "All communications are protected by end-to-end encryption" },
-      "rls": { "title": "Row Level Security (RLS)", "desc": "Client data isolation with database-level security policies" },
-      "lgpd": { "title": "LGPD Compliance", "desc": "Data processing according to the legal bases of Law No. 13,709/2018" },
-      "secrecy": { "title": "Professional Secrecy", "desc": "Inviolable protection as per art. 7 of the OAB Statute" }
+      "tls": {
+        "title": "TLS/HTTPS Encryption",
+        "desc": "All communications are protected by end-to-end encryption"
+      },
+      "rls": {
+        "title": "Row Level Security (RLS)",
+        "desc": "Client data isolation with database-level security policies"
+      },
+      "lgpd": {
+        "title": "LGPD Compliance",
+        "desc": "Data processing according to the legal bases of Law No. 13,709/2018"
+      },
+      "secrecy": {
+        "title": "Professional Secrecy",
+        "desc": "Inviolable protection as per art. 7 of the OAB Statute"
+      }
     },
     "ctaTitle": "Talk to the Firm",
     "ctaDescription": "Schedule a consultation and discover how the combination of international legal expertise and cutting-edge technology can make the difference in your case."
@@ -574,22 +614,42 @@
       "tracking": {
         "title": "Real-Time Automation & Monitoring",
         "desc": "Intelligent panel where you view processes, operations, KPIs and metrics in real time. The system automatically monitors all activities and displays the status of each stage.",
-        "items": ["Dashboard with real-time KPIs and metrics", "Automatic notifications of critical events", "Complete and auditable history", "24/7 access via browser, from any device"]
+        "items": [
+          "Dashboard with real-time KPIs and metrics",
+          "Automatic notifications of critical events",
+          "Complete and auditable history",
+          "24/7 access via browser, from any device"
+        ]
       },
       "communication": {
         "title": "Integrated Orion AI Assistant",
         "desc": "Chat with Orion, our AI assistant trained to help with business documentation, data analysis, compliance and international business strategy.",
-        "items": ["Contextual AI chat within the platform", "AI-powered business document generation", "Intelligent data analysis and reporting", "Multi-language support (PT, EN, IT, ES, ZH)"]
+        "items": [
+          "Contextual AI chat within the platform",
+          "AI-powered business document generation",
+          "Intelligent data analysis and reporting",
+          "Multi-language support (PT, EN, IT, ES, ZH)"
+        ]
       },
       "documents": {
         "title": "Intelligent Document Management",
         "desc": "Create, manage and share business documents with AI. International contracts, LOIs, NDAs, commercial proposals and compliance reports organized in smart folders.",
-        "items": ["AI document generation (15+ types)", "Bilingual templates (EN/PT) for international business", "Automatic organization by categories", "Secure cloud storage with versioning"]
+        "items": [
+          "AI document generation (15+ types)",
+          "Bilingual templates (EN/PT) for international business",
+          "Automatic organization by categories",
+          "Secure cloud storage with versioning"
+        ]
       },
       "security": {
         "title": "Security & Compliance",
         "desc": "Infrastructure protected by robust authentication, TLS encryption and database-level security policies (RLS). GDPR and LGPD compliant.",
-        "items": ["Encrypted connection via HTTPS/TLS", "Profile-based access control (Row Level Security)", "GDPR and LGPD compliance", "Complete action audit trail"]
+        "items": [
+          "Encrypted connection via HTTPS/TLS",
+          "Profile-based access control (Row Level Security)",
+          "GDPR and LGPD compliance",
+          "Complete action audit trail"
+        ]
       }
     },
     "benefitsLabel": "Advantages",
@@ -606,25 +666,144 @@
     "howItWorksTitle1": "Three steps to",
     "howItWorksTitle2": "digital transformation",
     "steps": {
-      "create": { "title": "Create your account", "desc": "Quick and secure registration. In a few minutes you have full access to the ORION platform." },
-      "access": { "title": "Set up your environment", "desc": "Define your profile, connect data sources and customize modules for your operation." },
-      "control": { "title": "Automate and scale", "desc": "Use AI to generate documents, analyze data, manage teams and make smarter decisions." }
+      "create": {
+        "title": "Create your account",
+        "desc": "Quick and secure registration. In a few minutes you have full access to the ORION platform."
+      },
+      "access": {
+        "title": "Set up your environment",
+        "desc": "Define your profile, connect data sources and customize modules for your operation."
+      },
+      "control": {
+        "title": "Automate and scale",
+        "desc": "Use AI to generate documents, analyze data, manage teams and make smarter decisions."
+      }
     },
     "showcaseLabel": "Discover the Platform",
     "showcaseTitle1": "Overview of the",
     "showcaseTitle2": "platform",
     "showcaseDescription": "Discover the modules and features that make business management more efficient, automated and intelligent.",
     "showcase": {
-      "platform": { "title": "ORION AI Platform", "desc": "Complete panel for AI-powered business management. Monitor operations, manage teams and automate processes with total transparency and 24/7 access." },
-      "ai": { "title": "Orion AI Assistant", "desc": "Consult business questions with AI trained in international legislation, compliance and business strategy. Contextual and substantiated answers." },
-      "docs": { "title": "AI Document Generation", "desc": "Create international contracts, LOIs, NDAs, commercial proposals and reports with AI assistance. Professional bilingual templates that streamline operations." },
-      "register": { "title": "Business Registration & Access", "desc": "Register your company in minutes and access all features. Restricted area with profile-based security and privacy." },
-      "dashboard": { "title": "Smart Business Dashboard", "desc": "Complete overview with metrics, active operations, pending tasks and real-time notifications. Everything organized in an intuitive and responsive panel." }
+      "platform": {
+        "title": "ORION AI Platform",
+        "desc": "Complete panel for AI-powered business management. Monitor operations, manage teams and automate processes with total transparency and 24/7 access."
+      },
+      "ai": {
+        "title": "Orion AI Assistant",
+        "desc": "Consult business questions with AI trained in international legislation, compliance and business strategy. Contextual and substantiated answers."
+      },
+      "docs": {
+        "title": "AI Document Generation",
+        "desc": "Create international contracts, LOIs, NDAs, commercial proposals and reports with AI assistance. Professional bilingual templates that streamline operations."
+      },
+      "register": {
+        "title": "Business Registration & Access",
+        "desc": "Register your company in minutes and access all features. Restricted area with profile-based security and privacy."
+      },
+      "dashboard": {
+        "title": "Smart Business Dashboard",
+        "desc": "Complete overview with metrics, active operations, pending tasks and real-time notifications. Everything organized in an intuitive and responsive panel."
+      }
     },
     "ctaLabel": "Start Now",
     "ctaTitle1": "Ready for the",
     "ctaTitle2": "digital transformation",
     "ctaTitle3": "of your business?",
     "ctaDescription": "Register for free and experience a new way to manage your business with artificial intelligence, automation and integrated compliance."
+  },
+  "escritorio": {
+    "heroTitle": "Legal",
+    "heroTitleHighlight": "Services",
+    "heroDescription": "Legal excellence across multiple specialties of Law, with international education and personalized practice.",
+    "explore": "Explore",
+    "whyChoose": "Why choose the",
+    "whyChooseHighlight": "firm?",
+    "whyChooseDescription": "We combine internationally acclaimed academic training with advanced legal technology and close, transparent service, ensuring the best strategy for each case.",
+    "scheduleConsultation": "SCHEDULE CONSULTATION",
+    "notFoundTitle": "Didn't find your area?",
+    "notFoundDescription": "Get in touch and tell us about your case. The firm has a network of specialized partners to handle all legal demands.",
+    "meetOffice": "LEARN ABOUT THE FIRM",
+    "areas": {
+      "criminal": {
+        "title": "Criminal Law",
+        "desc": "Specialized technical defense in all phases of criminal proceedings.",
+        "items": [
+          "Defense in police investigations",
+          "Habeas Corpus and provisional release",
+          "Jury Trial",
+          "Criminal execution and regime progression",
+          "Economic and financial crimes",
+          "Criminal appeals"
+        ]
+      },
+      "international": {
+        "title": "International Law",
+        "desc": "Legal advisory on cross-border issues, international treaties and international legal cooperation.",
+        "items": [
+          "International legal cooperation",
+          "Extradition and deportation",
+          "Public and Private International Law",
+          "Recognition of foreign judgments",
+          "Immigration and visas",
+          "International arbitration"
+        ]
+      },
+      "humanRights": {
+        "title": "Human Rights",
+        "desc": "Protection and promotion of fundamental rights before national courts and international organizations.",
+        "items": [
+          "Litigation before the IACHR",
+          "Protection of minorities and vulnerable groups",
+          "Freedom of expression and press",
+          "Refugee rights",
+          "Institutional violence",
+          "Advocacy before the UN"
+        ]
+      },
+      "labor": {
+        "title": "Labor Law",
+        "desc": "Practice in individual and collective labor disputes, for both employees and employers.",
+        "items": [
+          "Labor claims",
+          "Moral and sexual harassment",
+          "Work accidents",
+          "Collective bargaining",
+          "Preventive business consulting",
+          "Severance pay and FGTS"
+        ]
+      },
+      "business": {
+        "title": "Business Law",
+        "desc": "Legal advisory for companies on corporate, contractual and compliance matters.",
+        "items": [
+          "Company formation and changes",
+          "Commercial contracts",
+          "Compliance and governance",
+          "Judicial recovery",
+          "Legal due diligence",
+          "Intellectual property protection"
+        ]
+      },
+      "civil": {
+        "title": "Civil Law",
+        "desc": "Practice in civil matters, including civil liability, contracts and family law.",
+        "items": [
+          "Civil liability and damages",
+          "Contract review and drafting",
+          "Estates and successions",
+          "Consumer law",
+          "Real estate law",
+          "Mediation and arbitration"
+        ]
+      }
+    },
+    "differentials": [
+      "Harvard and UC Berkeley trained",
+      "Practice in 8+ countries",
+      "AI-powered legal technology",
+      "Full LGPD compliance",
+      "Structured Pro Bono program",
+      "Real-time client portal"
+    ]
   }
 }
