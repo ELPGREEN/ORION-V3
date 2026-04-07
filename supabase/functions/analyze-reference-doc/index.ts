@@ -145,8 +145,8 @@ Deno.serve(async (req) => {
       }
     }
 
-
     const body = await req.json();
+    const { content, title, document_type } = body;
 
 // ─── LAYER 1: Feature Extraction (Regex-based) ───
 function layer1FeatureExtraction(content: string): {
