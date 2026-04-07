@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { Loader2 } from "lucide-react";
 import { type ReactNode } from "react";
 
@@ -11,10 +12,11 @@ interface RoleGuardProps {
 
 /**
  * Protects dashboard routes by checking the user's role.
- * If the user's role is not in allowedRoles, redirects to fallbackPath.
+ * Admin/Owner always has full bypass access.
  */
 export function RoleGuard({ allowedRoles, children, fallbackPath = "/dashboard" }: RoleGuardProps) {
-  const { role, loading } = useUserRole();
+  const { role, loading, isAdmin } = useUserRole();
+  const { isOwner } = useAdminAccess();
 
   if (loading) {
     return (
@@ -22,6 +24,11 @@ export function RoleGuard({ allowedRoles, children, fallbackPath = "/dashboard" 
         <Loader2 className="h-6 w-6 text-primary animate-spin" />
       </div>
     );
+  }
+
+  // Admin/Owner bypass — full access to all routes
+  if (isOwner || isAdmin) {
+    return <>{children}</>;
   }
 
   if (!role || !allowedRoles.includes(role)) {
