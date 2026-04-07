@@ -554,6 +554,44 @@ const TRAINING_EXAMPLES: Array<{ query: string; handler: SOMHandler }> = [
   { query: "o que você lembra sobre mim", handler: "memory_recall" },
   { query: "o que sabe sobre o cliente", handler: "memory_recall" },
   { query: "lembra do que guardei", handler: "memory_recall" },
+  // Industrial SCADA
+  { query: "alarmes ativos do scada", handler: "industrial_scada" },
+  { query: "status do clp", handler: "industrial_scada" },
+  { query: "abrir sinóptico", handler: "industrial_scada" },
+  { query: "ler setpoint", handler: "industrial_scada" },
+  { query: "iniciar batelada", handler: "industrial_scada" },
+  { query: "variáveis opc-ua", handler: "industrial_scada" },
+  // Industrial Fleet
+  { query: "status da frota", handler: "industrial_fleet" },
+  { query: "despachar agv", handler: "industrial_fleet" },
+  { query: "criar missão para o robô", handler: "industrial_fleet" },
+  { query: "carga dos veículos", handler: "industrial_fleet" },
+  { query: "status vda5050", handler: "industrial_fleet" },
+  // Industrial Quality
+  { query: "oee atual", handler: "industrial_quality" },
+  { query: "carta spc", handler: "industrial_quality" },
+  { query: "registrar defeito", handler: "industrial_quality" },
+  { query: "rastreabilidade do lote", handler: "industrial_quality" },
+  { query: "cpk do processo", handler: "industrial_quality" },
+  // Industrial Maintenance
+  { query: "criar ordem de serviço", handler: "industrial_maintenance" },
+  { query: "manutenção preventiva", handler: "industrial_maintenance" },
+  { query: "alertas preditivos", handler: "industrial_maintenance" },
+  { query: "peças de reposição", handler: "industrial_maintenance" },
+  { query: "mtbf do equipamento", handler: "industrial_maintenance" },
+  // Enterprise ERP
+  { query: "verificar estoque", handler: "enterprise_erp" },
+  { query: "ordem de produção", handler: "enterprise_erp" },
+  { query: "rodar mrp", handler: "enterprise_erp" },
+  { query: "lista de materiais", handler: "enterprise_erp" },
+  // Enterprise HR
+  { query: "listar funcionários", handler: "enterprise_hr" },
+  { query: "registro de ponto", handler: "enterprise_hr" },
+  { query: "escala de férias", handler: "enterprise_hr" },
+  // Enterprise Logistics
+  { query: "rastrear expedição", handler: "enterprise_logistics" },
+  { query: "cotação de frete", handler: "enterprise_logistics" },
+  { query: "status das entregas", handler: "enterprise_logistics" },
 ];
 
 // ═══ Singleton Instance ═══
