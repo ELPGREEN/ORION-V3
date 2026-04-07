@@ -254,7 +254,7 @@ function renderPhonemes(phonemes: string[]): Float32Array {
       // VOICED: Additive harmonic synthesis
       // ═════════════════════════════════════
       if (params.voiced) {
-        // F0 with jitter
+        // F0 with jitter — use MFCC-corrected F0 target
         const f0 = baseF0 * (1 + (Math.random() - 0.5) * jitterAmt);
 
         // Pre-compute formant envelope values (cache per sample for speed)
@@ -268,9 +268,19 @@ function renderPhonemes(phonemes: string[]): Float32Array {
           if (harmonicPhases[h] > TWO_PI) harmonicPhases[h] -= TWO_PI;
 
           // Source amplitude: voice DNA harmonic profile (natural decay)
-          const sourceAmp = h < harmonicProfile.length
+          let sourceAmp = h < harmonicProfile.length
             ? harmonicProfile[h]
             : harmonicProfile[harmonicProfile.length - 1] * Math.exp(-0.3 * (h - harmonicProfile.length + 1));
+
+          // MFCC correction: boost higher harmonics for brightness
+          const hBoost = h < MFCC_FIX.harmonicBoost.length
+            ? MFCC_FIX.harmonicBoost[h]
+            : MFCC_FIX.harmonicBoost[MFCC_FIX.harmonicBoost.length - 1];
+          sourceAmp *= hBoost;
+
+          // Spectral tilt compensation: progressively boost high harmonics
+          const tiltBoost = 1 + (h / NUM_HARMONICS) * MFCC_FIX.spectralTiltCompensation * 0.1;
+          sourceAmp *= tiltBoost;
 
           // Filter: formant envelope at this frequency
           const filterGain = formantEnvelope(freq, f1, f2, f3, f4, bw1, bw2, bw3, bw4);
@@ -282,17 +292,15 @@ function renderPhonemes(phonemes: string[]): Float32Array {
           sample += Math.sin(harmonicPhases[h]) * sourceAmp * filterGain * shimmer;
         }
 
-        // Add slight breathiness (aspiration noise)
-        sample += (Math.random() * 2 - 1) * 0.015;
+        // MFCC-corrected breathiness (more natural aspiration noise)
+        sample += (Math.random() * 2 - 1) * MFCC_FIX.breathiness;
 
-        // Nasal: boost low formant, add nasal murmur
+        // Nasal: MFCC-corrected coupling (reduced from analysis)
         if (params.nasal) {
-          // Nasal murmur around 250-300 Hz adds characteristic quality
-          sample *= 0.75; // reduce oral energy
-          // Add nasal resonance (low-freq buzz)
+          sample *= (1 - MFCC_FIX.nasalReduction); // reduce oral energy less
           const nasalFreq = 270;
           const nasalPhase = harmonicPhases[0] * (nasalFreq / (baseF0 || 130));
-          sample += Math.sin(nasalPhase) * 0.2;
+          sample += Math.sin(nasalPhase) * 0.12; // reduced nasal resonance
         }
       }
 
