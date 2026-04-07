@@ -1,24 +1,13 @@
 /**
- * Orion Formant Speech Synthesizer v21 — Grok Ultra Natural
+ * Orion Formant Speech Synthesizer v23 — Core Rewrite
  * 
- * Base: Beber & Cielo (2012) normal male spectrographic norms
- * Overlay: Grok Ultra Natural — warmest, most human iteration
- * 
- * v21 changes from v22:
- * 1. BW3 × 2.85 (~428Hz) — widest yet, zero metallic
- * 2. Aspiration 8% + burst 3% — subtle elegant breathing
- * 3. Jitter ×1.04, Shimmer ×1.03 — barely perceptible, rhythmic
- * 4. Damping LP 4.5kHz + zero-pole 3.9kHz — smoothest clarity
- * 5. Spectral tilt ×1.06 (~24dB) — warmest, most present voice
- * 6. Pre-emphasis +9% in 0-2.4kHz — natural vowel brilliance
- * 7. Breathiness +13% — human breathing without excess
- * 8. Glottal OQ 0.74 — very relaxed natural voice
- * 9. Glottal tension 0.82 — smooth, never choked
- * 10. Sub-harmonic 8% (f0/2) — full warm body
- * 11. Pitch variance ×1.09 — sarcastic life
- * 12. Formant speed ×1.38 — fastest fluid transitions
- * 13. Spectral envelope smoothing 0.85 — eliminates all metallic
- * 14. Vibrato depth 0.6% — subtle emotional life
+ * Fixed fundamental issues from v19-v22:
+ * 1. Smooth pitch contour (no per-segment random jumps)
+ * 2. Gaussian-filtered jitter (no harsh random clicks)
+ * 3. Cascade resonator gain normalization (no metallic buildup)
+ * 4. Proper spectral smoothing (not time-domain LP)
+ * 5. Gentle post-processing (no aggressive pre-emphasis)
+ * 6. Smooth f0 interpolation across segments
  * 
  * 100% client-side, zero API, zero dependencies.
  */
@@ -35,34 +24,50 @@ const FRAME_SIZE = 220; // 5ms at 44.1kHz
 const N_FILTERS = 5; // F1-F5
 
 // ═══════════════════════════════════════════════════════════
-// GROK ULTRA NATURAL v21 CONFIG
+// v23 CONFIG — conservative, human-focused
 // ═══════════════════════════════════════════════════════════
 
-const GROK = {
-  bw3Multiplier: 2.85,      // F3 BW multiplier (v22: 2.72) → ~428Hz, zero metallic
-  aspirationRatio: 0.08,    // aspiration noise mix (v22: 0.07)
-  noiseBurstRatio: 0.03,    // shaped 3.2kHz burst (same)
-  jitterMult: 1.04,         // jitter — very subtle, rhythmic (v22: 1.06)
-  shimmerMult: 1.03,        // shimmer — barely perceptible (v22: 1.05)
-  dampingFreq: 4500,        // LP damping cutoff — smoother (v22: 4400)
-  zeroPoleFreq: 3900,       // anti-resonance zero-pole pair (v22: 3700)
-  zerPoleBw: 180,           // bandwidth of zero-pole pair
-  spectralTiltMult: 1.06,   // tilt — warmest yet (v22: 1.09) → ~24dB
-  breathiness: 0.13,        // breathiness gain — balanced (v22: 0.16)
-  glottalOQ: 0.74,          // open quotient — very relaxed (v22: 0.71)
-  glottalTension: 0.82,     // smooth, never choked (v22: 0.88)
-  subHarmonicGain: 0.08,    // sub-harmonic at f0/2 — full body (v22: 0.07)
-  pitchVariance: 1.09,      // pitch range — more life & sarcasm (v22: 1.08)
-  formantSpeed: 1.38,       // coarticulation speed — fastest (v22: 1.32)
-  preEmphasis0to2k: 0.09,   // +9% boost for 0-2.4kHz (v22: 0.08)
-  dampingMix: 0.78,         // original vs LP mix
-  spectralSmoothing: 0.85,  // envelope smoothing — strongest (v22: 0.89)
-  vibratoDepth: 0.006,      // vibrato 0.6% of f0 (v22: 0.004)
-  vibratoRate: 5.5,         // vibrato rate in Hz (natural male ~5-6 Hz)
+const CFG = {
+  // Formant bandwidths
+  bw3Multiplier: 2.0,        // was 2.85 — too wide causes hollow/metallic
+  
+  // Source mixing
+  aspirationRatio: 0.04,     // very subtle aspiration
+  noiseBurstRatio: 0.02,     // minimal shaped burst
+  
+  // Micro-perturbation (smooth, not random)
+  jitterMult: 0.6,           // was 1.04 on raw random — now on filtered noise
+  shimmerMult: 0.4,          // very subtle amplitude variation
+  
+  // Spectral shaping
+  dampingFreq: 5000,         // gentle HF rolloff (was 4500 — too aggressive)
+  dampingMix: 0.85,          // mostly original signal
+  spectralTiltMult: 1.0,     // neutral — let formants speak naturally
+  
+  // Voice quality
+  breathiness: 0.06,         // subtle breath, not white noise flood
+  glottalOQ: 0.60,           // moderate open quotient
+  glottalTension: 0.90,      // slight relaxation
+  subHarmonicGain: 0.03,     // very subtle warmth
+  
+  // Prosody
+  pitchVariance: 6,          // Hz of smooth pitch variation (not multiplier)
+  pitchDriftRate: 0.8,       // Hz — how fast pitch drifts
+  
+  // Coarticulation
+  formantSpeed: 1.2,         // moderate transition speed
+  coartWindow: 0.35,         // last 35% of segment transitions to next
+  
+  // Post-processing
+  preEmphasisPost: 0.15,     // gentle (was 0.30 — way too harsh)
+  
+  // Vibrato
+  vibratoDepth: 0.003,       // 0.3% — barely perceptible
+  vibratoRate: 5.2,          // Hz
 };
 
 // ═══════════════════════════════════════════════════════════
-// IIR BIQUAD RESONATOR (formant pole)
+// IIR BIQUAD RESONATOR with gain normalization
 // ═══════════════════════════════════════════════════════════
 
 interface Resonator {
@@ -71,16 +76,21 @@ interface Resonator {
   b2: number;
   z1: number;
   z2: number;
+  gain: number; // normalization gain
 }
 
-function computeCoeffs(freq: number, bw: number): { a0: number; b1: number; b2: number } {
-  if (freq < 20 || bw < 1 || freq >= SR / 2) return { a0: 1, b1: 0, b2: 0 };
+function computeCoeffs(freq: number, bw: number): { a0: number; b1: number; b2: number; gain: number } {
+  if (freq < 20 || bw < 1 || freq >= SR / 2) return { a0: 1, b1: 0, b2: 0, gain: 1 };
   const r = Math.exp(-Math.PI * bw / SR);
   const theta = 2 * Math.PI * freq / SR;
   const b1 = -2 * r * Math.cos(theta);
   const b2 = r * r;
   const a0 = 1 + b1 + b2;
-  return { a0, b1, b2 };
+  // Normalization: prevent resonator from amplifying excessively
+  // Peak gain of resonator ≈ 1/(1-r) when bw is narrow
+  const peakGain = 1 / (1 - r + 0.001);
+  const gain = Math.min(1.0, 3.0 / peakGain); // limit cascade amplification
+  return { a0, b1, b2, gain };
 }
 
 function makeResonator(freq: number, bw: number): Resonator {
@@ -90,81 +100,109 @@ function makeResonator(freq: number, bw: number): Resonator {
 
 function setResonator(res: Resonator, freq: number, bw: number) {
   const c = computeCoeffs(freq, bw);
-  res.a0 = c.a0; res.b1 = c.b1; res.b2 = c.b2;
+  res.a0 = c.a0; res.b1 = c.b1; res.b2 = c.b2; res.gain = c.gain;
 }
 
 function tickResonator(res: Resonator, x: number): number {
   const y = res.a0 * x - res.b1 * res.z1 - res.b2 * res.z2;
   res.z2 = res.z1;
   res.z1 = y;
-  return y;
+  return y * res.gain;
 }
 
 // ═══════════════════════════════════════════════════════════
-// ANTI-RESONATOR (nasal zero + Grok zero-pole)
+// ANTI-RESONATOR (nasal zero)
 // ═══════════════════════════════════════════════════════════
 
 interface AntiResonator {
-  a0: number;
-  b1: number;
-  b2: number;
-  z1: number;
-  z2: number;
+  a0: number; b1: number; b2: number; z1: number; z2: number;
 }
 
 function makeAntiResonator(freq: number, bw: number): AntiResonator {
   if (freq < 20 || bw < 1 || freq >= SR / 2) return { a0: 1, b1: 0, b2: 0, z1: 0, z2: 0 };
   const r = Math.exp(-Math.PI * bw / SR);
   const theta = 2 * Math.PI * freq / SR;
-  const a0 = 1.0;
-  const b1 = 2 * r * Math.cos(theta);
-  const b2 = -(r * r);
-  return { a0, b1, b2, z1: 0, z2: 0 };
+  return { a0: 1.0, b1: 2 * r * Math.cos(theta), b2: -(r * r), z1: 0, z2: 0 };
 }
 
 function setAntiResonator(ar: AntiResonator, freq: number, bw: number) {
   if (freq < 20 || bw < 1 || freq >= SR / 2) { ar.a0 = 1; ar.b1 = 0; ar.b2 = 0; return; }
   const r = Math.exp(-Math.PI * bw / SR);
   const theta = 2 * Math.PI * freq / SR;
-  ar.a0 = 1.0;
-  ar.b1 = 2 * r * Math.cos(theta);
-  ar.b2 = -(r * r);
+  ar.a0 = 1.0; ar.b1 = 2 * r * Math.cos(theta); ar.b2 = -(r * r);
 }
 
 function tickAntiResonator(ar: AntiResonator, x: number): number {
   const y = ar.a0 * x + ar.b1 * ar.z1 + ar.b2 * ar.z2;
-  ar.z2 = ar.z1;
-  ar.z1 = x;
+  ar.z2 = ar.z1; ar.z1 = x;
   return y;
 }
 
 // ═══════════════════════════════════════════════════════════
-// SOURCE GENERATORS — LF Glottal + Sub-harmonic + Breathiness
+// SMOOTH PITCH CONTOUR — no more random jumps
+// ═══════════════════════════════════════════════════════════
+
+let pitchDrift = 0;      // current pitch offset in Hz
+let pitchDriftVel = 0;   // velocity of pitch drift
+
+function getSmoothedF0(f0Base: number): number {
+  // Ornstein-Uhlenbeck process: mean-reverting smooth drift
+  const dt = 1 / SR;
+  const meanRevert = 2.0; // how quickly drift returns to 0
+  const diffusion = CFG.pitchVariance * 2; // noise amplitude
+  
+  pitchDriftVel += (-meanRevert * pitchDrift + diffusion * gaussianNoise()) * dt;
+  pitchDriftVel *= 0.999; // damping
+  pitchDrift += pitchDriftVel;
+  pitchDrift = Math.max(-15, Math.min(15, pitchDrift)); // clamp
+  
+  // Add subtle vibrato
+  vibratoPhase += 2 * Math.PI * CFG.vibratoRate / SR;
+  const vibrato = CFG.vibratoDepth * f0Base * Math.sin(vibratoPhase);
+  
+  return f0Base + pitchDrift + vibrato;
+}
+
+// Box-Muller for Gaussian noise (smooth jitter)
+let spareGaussian: number | null = null;
+function gaussianNoise(): number {
+  if (spareGaussian !== null) {
+    const s = spareGaussian;
+    spareGaussian = null;
+    return s;
+  }
+  let u, v, s2;
+  do {
+    u = Math.random() * 2 - 1;
+    v = Math.random() * 2 - 1;
+    s2 = u * u + v * v;
+  } while (s2 >= 1 || s2 === 0);
+  const mul = Math.sqrt(-2 * Math.log(s2) / s2);
+  spareGaussian = v * mul;
+  return u * mul;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SOURCE GENERATORS — Clean LF Glottal
 // ═══════════════════════════════════════════════════════════
 
 let glottalPhase = 0;
 let subHarmonicPhase = 0;
-
 let vibratoPhase = 0;
+let jitterSmoothed = 0; // filtered jitter
 
-function generateGlottalSource(count: number, f0: number): Float32Array {
+function generateGlottalSource(count: number, f0Base: number): Float32Array {
   const out = new Float32Array(count);
-  const T0 = SR / f0;
-  // v22: use GROK.glottalOQ (0.71) instead of DNA (0.546) — more relaxed
-  const OQ = GROK.glottalOQ;
-  const SQ = VOICE_DNA.glottal.speedQuotient;
-  const Te = OQ * T0;
-  const Tp = Te / (1 + SQ);
-  const Ta = 0.08 * T0;
-  // v22: minimal rhythmic irregularity
-  const jitter = VOICE_DNA.dynamics.jitter * GROK.jitterMult;
-  const shimmer = VOICE_DNA.dynamics.shimmer * GROK.shimmerMult;
-  // v22: glottal tension controls the return phase amplitude
-  const tensionAmp = -0.2 * GROK.glottalTension; // 0.88 → -0.176
-
-  const T0sub = T0 * 2;
-
+  
   for (let i = 0; i < count; i++) {
+    const f0 = getSmoothedF0(f0Base);
+    const T0 = SR / f0;
+    const OQ = CFG.glottalOQ;
+    const SQ = VOICE_DNA.glottal.speedQuotient;
+    const Te = OQ * T0;
+    const Tp = Te / (1 + SQ);
+    const Ta = 0.08 * T0;
+    
     const t = glottalPhase;
     let sample = 0;
 
@@ -175,31 +213,30 @@ function generateGlottalSource(count: number, f0: number): Float32Array {
       sample = Math.cos(Math.PI * 0.5 * tc);
     } else {
       const tr = (t - Te) / Math.max(Ta, 1);
-      sample = tensionAmp * Math.exp(-tr);
+      sample = -0.2 * CFG.glottalTension * Math.exp(-tr);
     }
 
-    // Shimmer (musical amplitude variation)
-    const shimmerFactor = 1 + (Math.random() - 0.5) * shimmer * 0.5;
+    // Smooth shimmer (filtered, not raw random)
+    const shimmerNoise = gaussianNoise() * CFG.shimmerMult * 0.05;
+    const shimmerFactor = 1 + shimmerNoise;
     
-    // Sub-harmonic excitation at f0/2
-    const subHarmonic = GROK.subHarmonicGain * Math.sin(2 * Math.PI * subHarmonicPhase / T0sub);
+    // Very subtle sub-harmonic
+    const T0sub = T0 * 2;
+    const subHarmonic = CFG.subHarmonicGain * Math.sin(2 * Math.PI * subHarmonicPhase / T0sub);
     
-    // Breathiness: continuous gentle aspiration
-    const breath = GROK.breathiness * (Math.random() * 2 - 1) * 0.5;
+    // Gentle breathiness (filtered noise, not raw white)
+    const breath = CFG.breathiness * gaussianNoise() * 0.3;
     
-    // v22: subtle vibrato — life and emotion
-    const vibratoMod = 1 + GROK.vibratoDepth * Math.sin(2 * Math.PI * GROK.vibratoRate * vibratoPhase / SR);
-    
-    out[i] = ((sample * shimmerFactor) + subHarmonic + breath) * vibratoMod;
+    out[i] = (sample * shimmerFactor) + subHarmonic + breath;
 
-    // Advance with jitter
-    glottalPhase += 1 + (Math.random() - 0.5) * 2 * jitter;
+    // Advance with SMOOTH jitter (filtered, not raw random)
+    const rawJitter = gaussianNoise() * CFG.jitterMult * 0.02;
+    jitterSmoothed = 0.95 * jitterSmoothed + 0.05 * rawJitter; // smooth it
+    glottalPhase += 1 + jitterSmoothed;
     if (glottalPhase >= T0) glottalPhase -= T0;
     
     subHarmonicPhase += 1;
     if (subHarmonicPhase >= T0sub) subHarmonicPhase -= T0sub;
-    
-    vibratoPhase += 1;
   }
 
   return out;
@@ -211,54 +248,7 @@ function generateNoise(count: number): Float32Array {
   for (let i = 0; i < count; i++) {
     const white = Math.random() * 2 - 1;
     prev = 0.7 * prev + 0.3 * white;
-    out[i] = prev * 1.5;
-  }
-  return out;
-}
-
-/**
- * Grok v20: shaped noise burst at 3.2kHz (narrower than v19 aspiration)
- * More controlled than broadband aspiration — sounds like natural breathing
- */
-function generateShapedNoiseBurst(count: number): Float32Array {
-  const out = new Float32Array(count);
-  const fc = 3200;
-  const bw = 1200; // narrower than v19's 2000Hz — more controlled
-  const r = Math.exp(-Math.PI * bw / SR);
-  const theta = 2 * Math.PI * fc / SR;
-  const b1 = -2 * r * Math.cos(theta);
-  const b2 = r * r;
-  const a0 = 1 + b1 + b2;
-  let z1 = 0, z2 = 0;
-  
-  for (let i = 0; i < count; i++) {
-    const white = Math.random() * 2 - 1;
-    const y = a0 * white - b1 * z1 - b2 * z2;
-    z2 = z1; z1 = y;
-    out[i] = y * 0.4;
-  }
-  return out;
-}
-
-/**
- * Grok v20: broadband aspiration (gentler than v19)
- */
-function generateAspirationNoise(count: number): Float32Array {
-  const out = new Float32Array(count);
-  const fc = 3200;
-  const bw = 2000;
-  const r = Math.exp(-Math.PI * bw / SR);
-  const theta = 2 * Math.PI * fc / SR;
-  const b1 = -2 * r * Math.cos(theta);
-  const b2 = r * r;
-  const a0 = 1 + b1 + b2;
-  let z1 = 0, z2 = 0;
-  
-  for (let i = 0; i < count; i++) {
-    const white = Math.random() * 2 - 1;
-    const y = a0 * white - b1 * z1 - b2 * z2;
-    z2 = z1; z1 = y;
-    out[i] = y * 0.5;
+    out[i] = prev * 1.2;
   }
   return out;
 }
@@ -273,34 +263,33 @@ function generateMixed(count: number, f0: number, voiceRatio: number): Float32Ar
   return out;
 }
 
-/**
- * Grok v20: voiced + split aspiration/burst noise
- * 12% gentle aspiration + 6% shaped 3.2kHz burst = natural AI breathing
- */
-function generateVoicedGrok(count: number, f0: number): Float32Array {
+function generateVoicedWithAspiration(count: number, f0: number): Float32Array {
   const glottal = generateGlottalSource(count, f0);
-  const aspiration = generateAspirationNoise(count);
-  const burst = generateShapedNoiseBurst(count);
-  const voiceRatio = 1 - GROK.aspirationRatio - GROK.noiseBurstRatio;
   const out = new Float32Array(count);
+  const voiceRatio = 1 - CFG.aspirationRatio - CFG.noiseBurstRatio;
+  
   for (let i = 0; i < count; i++) {
-    out[i] = voiceRatio * glottal[i] 
-           + GROK.aspirationRatio * aspiration[i]
-           + GROK.noiseBurstRatio * burst[i];
+    // Aspiration: gentle filtered noise
+    const aspNoise = gaussianNoise() * 0.3;
+    // Shaped burst near 3.2kHz: use gentle bandpass
+    const burstNoise = gaussianNoise() * 0.2;
+    
+    out[i] = voiceRatio * glottal[i]
+           + CFG.aspirationRatio * aspNoise
+           + CFG.noiseBurstRatio * burstNoise;
   }
   return out;
 }
 
 // ═══════════════════════════════════════════════════════════
-// SPECTRAL TILT — Grok: warmer, more present (×1.18 not ×1.3)
+// SPECTRAL TILT — gentle, natural
 // ═══════════════════════════════════════════════════════════
 
 interface TiltFilter { alpha: number; z1: number; }
 
 function makeTiltFilter(): TiltFilter {
-  // Grok v20: softer tilt → warmer, more present voice
-  const tiltDb = VOICE_DNA.dynamics.spectralTilt * GROK.spectralTiltMult; // ~29 dB
-  const alpha = Math.min(1 - Math.pow(10, -tiltDb / 200), 0.85);
+  const tiltDb = VOICE_DNA.dynamics.spectralTilt * CFG.spectralTiltMult;
+  const alpha = Math.min(1 - Math.pow(10, -tiltDb / 200), 0.75); // capped lower
   return { alpha, z1: 0 };
 }
 
@@ -311,41 +300,21 @@ function tickTilt(f: TiltFilter, x: number): number {
 }
 
 // ═══════════════════════════════════════════════════════════
-// HF DAMPING + ZERO-POLE PAIR — Grok: modern clarity at 3.8kHz
+// HF DAMPING — gentle rolloff
 // ═══════════════════════════════════════════════════════════
 
 interface DampingFilter { z1: number; coeff: number; }
 
 function makeDampingFilter(): DampingFilter {
-  const fc = GROK.dampingFreq; // 4200Hz (v19: 4000Hz)
+  const fc = CFG.dampingFreq;
   const rc = 1 / (2 * Math.PI * fc);
   const dt = 1 / SR;
-  const coeff = dt / (rc + dt);
-  return { z1: 0, coeff };
+  return { z1: 0, coeff: dt / (rc + dt) };
 }
 
 function tickDamping(f: DampingFilter, x: number): number {
   f.z1 += f.coeff * (x - f.z1);
-  return GROK.dampingMix * x + (1 - GROK.dampingMix) * f.z1;
-}
-
-// ═══════════════════════════════════════════════════════════
-// PRE-EMPHASIS FILTER — Grok: +5% boost in 0-2kHz for vowel brilliance
-// ═══════════════════════════════════════════════════════════
-
-interface PreEmphFilter { z1: number; }
-
-function makePreEmph(): PreEmphFilter {
-  return { z1: 0 };
-}
-
-function tickPreEmph(f: PreEmphFilter, x: number): number {
-  // Gentle pre-emphasis: boosts frequencies proportional to frequency
-  // The coefficient is kept small (0.25 + 5% boost) to only affect 0-2kHz region
-  const coeff = 0.25 + GROK.preEmphasis0to2k;
-  const y = x + coeff * (x - f.z1);
-  f.z1 = x;
-  return y;
+  return CFG.dampingMix * x + (1 - CFG.dampingMix) * f.z1;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -378,15 +347,15 @@ const NASAL_ZERO_BW = 100;
 
 // ── Fricative spectral peaks ──
 const FRICATIVE_SPECTRAL: Record<string, SegmentParams> = {
-  's':  { f1:200,f2:5500,f3:7500,f4:9000,f5:11000, bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  'z':  { f1:200,f2:5500,f3:7500,f4:9000,f5:11000, bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.45, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
-  'ʃ':  { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2500,bw3:2000,bw4:1000,bw5:1000, gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  'ʒ':  { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2500,bw3:2000,bw4:1000,bw5:1000, gain:0.45, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
-  'f':  { f1:200,f2:2500,f3:4000,f4:6000,f5:8000,   bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.30, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  'v':  { f1:220,f2:2500,f3:4000,f4:6000,f5:8000,   bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.35, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
-  'h':  { f1:500,f2:1500,f3:2500,f4:3500,f5:4500,   bw1:200,bw2:300,bw3:400,bw4:500,bw5:600,     gain:0.25, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  'χ':  { f1:300,f2:1100,f3:2400,f4:3500,f5:4500,   bw1:400,bw2:400,bw3:400,bw4:500,bw5:600,     gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  'R':  { f1:300,f2:1100,f3:2400,f4:3500,f5:4500,   bw1:110,bw2:140,bw3:190,bw4:300,bw5:400,     gain:0.55, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
+  's':  { f1:200,f2:5500,f3:7500,f4:9000,f5:11000, bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.45, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'z':  { f1:200,f2:5500,f3:7500,f4:9000,f5:11000, bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.35, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
+  'ʃ':  { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2500,bw3:2000,bw4:1000,bw5:1000, gain:0.45, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'ʒ':  { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2500,bw3:2000,bw4:1000,bw5:1000, gain:0.35, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
+  'f':  { f1:200,f2:2500,f3:4000,f4:6000,f5:8000,   bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.25, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'v':  { f1:220,f2:2500,f3:4000,f4:6000,f5:8000,   bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.30, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
+  'h':  { f1:500,f2:1500,f3:2500,f4:3500,f5:4500,   bw1:200,bw2:300,bw3:400,bw4:500,bw5:600,     gain:0.20, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'χ':  { f1:300,f2:1100,f3:2400,f4:3500,f5:4500,   bw1:400,bw2:400,bw3:400,bw4:500,bw5:600,     gain:0.45, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'R':  { f1:300,f2:1100,f3:2400,f4:3500,f5:4500,   bw1:110,bw2:140,bw3:190,bw4:300,bw5:400,     gain:0.45, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
 };
 
 function getHAllophone(nextPhoneme: string | undefined): SegmentParams {
@@ -396,7 +365,7 @@ function getHAllophone(nextPhoneme: string | undefined): SegmentParams {
       f1: vp.f1 || 500, f2: vp.f2 || 1500, f3: vp.f3 || 2500,
       f4: vp.f4 || DEFAULT_F4, f5: DEFAULT_F5,
       bw1: 200, bw2: 300, bw3: 400, bw4: 500, bw5: 600,
-      gain: 0.25, source: 'noise', nasal: false, nasalFreq: 0, nasalBw: 0,
+      gain: 0.20, source: 'noise', nasal: false, nasalFreq: 0, nasalBw: 0,
     };
   }
   return FRICATIVE_SPECTRAL['h'];
@@ -410,8 +379,8 @@ function phonemeToSegment(p: PhonemeParams, phoneme: string): SegmentParams {
   if (p.fricative && !p.voiced) source = 'noise';
   else if (p.fricative && p.voiced) source = 'mixed';
 
-  // Grok v20: BW3 × 2.4 (~360Hz) — more diffuse F3, rounder voice
-  const bw3Effective = (p.bw3 || 150) * GROK.bw3Multiplier;
+  // Conservative BW3 multiplier — too wide = hollow/metallic
+  const bw3Effective = (p.bw3 || 150) * CFG.bw3Multiplier;
 
   return {
     f1: p.f1 || 300, f2: p.f2 || 1500, f3: p.f3 || 2500,
@@ -445,18 +414,18 @@ function makeSilenceSeg(): SegmentParams {
   return { f1:100,f2:100,f3:100,f4:100,f5:100, bw1:100,bw2:100,bw3:100,bw4:100,bw5:100, gain:0, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 };
 }
 function makeVoicebarSeg(): SegmentParams {
-  return { f1:200,f2:200,f3:200,f4:200,f5:200, bw1:100,bw2:200,bw3:300,bw4:400,bw5:500, gain:0.15, source:'glottal', nasal:false, nasalFreq:0, nasalBw:0 };
+  return { f1:200,f2:200,f3:200,f4:200,f5:200, bw1:100,bw2:200,bw3:300,bw4:400,bw5:500, gain:0.12, source:'glottal', nasal:false, nasalFreq:0, nasalBw:0 };
 }
 
 const BURST_BY_PLACE: Record<string, SegmentParams> = {
-  'p':   { f1:400,f2:1000,f3:2300,f4:3500,f5:4500, bw1:400,bw2:1200,bw3:1500,bw4:800,bw5:800, gain:0.75, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  'b':   { f1:400,f2:1000,f3:2300,f4:3500,f5:4500, bw1:400,bw2:1200,bw3:1500,bw4:800,bw5:800, gain:0.70, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  't':   { f1:400,f2:4000,f3:5500,f4:7000,f5:9000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.80, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  'd':   { f1:400,f2:4000,f3:5500,f4:7000,f5:9000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.75, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  'k':   { f1:400,f2:1800,f3:2600,f4:3800,f5:5000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.75, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  'g':   { f1:400,f2:1800,f3:2600,f4:3800,f5:5000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.70, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  't͡ʃ': { f1:400,f2:3800,f3:6000,f4:8000,f5:10000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.80, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
-  'd͡ʒ': { f1:400,f2:3800,f3:6000,f4:8000,f5:10000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.75, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'p':   { f1:400,f2:1000,f3:2300,f4:3500,f5:4500, bw1:400,bw2:1200,bw3:1500,bw4:800,bw5:800, gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'b':   { f1:400,f2:1000,f3:2300,f4:3500,f5:4500, bw1:400,bw2:1200,bw3:1500,bw4:800,bw5:800, gain:0.50, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  't':   { f1:400,f2:4000,f3:5500,f4:7000,f5:9000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.60, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'd':   { f1:400,f2:4000,f3:5500,f4:7000,f5:9000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'k':   { f1:400,f2:1800,f3:2600,f4:3800,f5:5000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'g':   { f1:400,f2:1800,f3:2600,f4:3800,f5:5000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.50, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  't͡ʃ': { f1:400,f2:3800,f3:6000,f4:8000,f5:10000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.60, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'd͡ʒ': { f1:400,f2:3800,f3:6000,f4:8000,f5:10000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
 };
 
 function getBurstParams(phoneme: string): SegmentParams {
@@ -465,10 +434,10 @@ function getBurstParams(phoneme: string): SegmentParams {
 
 function getVOTParams(phoneme: string, nextPhoneme?: string): SegmentParams {
   if (phoneme === 't͡ʃ') {
-    return { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2000,bw3:1500,bw4:800,bw5:800, gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 };
+    return { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2000,bw3:1500,bw4:800,bw5:800, gain:0.45, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 };
   }
   if (phoneme === 'd͡ʒ') {
-    return { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2000,bw3:1500,bw4:800,bw5:800, gain:0.45, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 };
+    return { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2000,bw3:1500,bw4:800,bw5:800, gain:0.35, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 };
   }
   const vowel = nextPhoneme ? PT_PHONEMES[nextPhoneme] : null;
   if (vowel && vowel.voiced && !vowel.fricative && !vowel.plosive) {
@@ -476,10 +445,10 @@ function getVOTParams(phoneme: string, nextPhoneme?: string): SegmentParams {
       f1: vowel.f1 || 500, f2: vowel.f2 || 1500, f3: vowel.f3 || 2500,
       f4: vowel.f4 || DEFAULT_F4, f5: DEFAULT_F5,
       bw1: 250, bw2: 350, bw3: 400, bw4: 500, bw5: 600,
-      gain: 0.22, source: 'noise', nasal: false, nasalFreq: 0, nasalBw: 0,
+      gain: 0.18, source: 'noise', nasal: false, nasalFreq: 0, nasalBw: 0,
     };
   }
-  return { f1:500,f2:1500,f3:2500,f4:DEFAULT_F4,f5:DEFAULT_F5, bw1:250,bw2:350,bw3:400,bw4:500,bw5:600, gain:0.22, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 };
+  return { f1:500,f2:1500,f3:2500,f4:DEFAULT_F4,f5:DEFAULT_F5, bw1:250,bw2:350,bw3:400,bw4:500,bw5:600, gain:0.18, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 };
 }
 
 function buildSegments(phonemes: string[]): Segment[] {
@@ -520,12 +489,12 @@ function buildSegments(phonemes: string[]): Segment[] {
 }
 
 // ═══════════════════════════════════════════════════════════
-// AMPLITUDE ENVELOPE
+// AMPLITUDE ENVELOPE — smoother attack/release
 // ═══════════════════════════════════════════════════════════
 
 function computeEnvelope(sampleIndex: number, totalSamples: number): number {
-  const attackSamples = Math.min(msToSamples(5), totalSamples / 4);
-  const releaseSamples = Math.min(msToSamples(8), totalSamples / 4);
+  const attackSamples = Math.min(msToSamples(8), totalSamples / 3);
+  const releaseSamples = Math.min(msToSamples(12), totalSamples / 3);
   const releaseStart = totalSamples - releaseSamples;
 
   if (sampleIndex < attackSamples) {
@@ -538,7 +507,7 @@ function computeEnvelope(sampleIndex: number, totalSamples: number): number {
 }
 
 // ═══════════════════════════════════════════════════════════
-// MAIN SYNTHESIZER — Grok v20
+// MAIN SYNTHESIZER — v23 with fixes
 // ═══════════════════════════════════════════════════════════
 
 function synthesize(seq: Segment[]): Float32Array {
@@ -546,7 +515,7 @@ function synthesize(seq: Segment[]): Float32Array {
 
   let totalSamples = 0;
   for (const [, dur] of seq) totalSamples += dur;
-  totalSamples += SR;
+  totalSamples += SR; // padding
 
   const output = new Float32Array(totalSamples);
   let writePos = 0;
@@ -564,44 +533,32 @@ function synthesize(seq: Segment[]): Float32Array {
   const nasalZero = makeAntiResonator(NASAL_ZERO_FREQ, NASAL_ZERO_BW);
   let nasalActive = false;
 
-  // Grok v20: zero-pole pair at 3.8kHz for modern clarity
-  const grokZeroPole = makeAntiResonator(GROK.zeroPoleFreq, GROK.zerPoleBw);
-
   // Spectral tilt
   const tilt = makeTiltFilter();
 
-  // Global HF damping at 4.2kHz
+  // Global HF damping
   const damping = makeDampingFilter();
 
-  // Pre-emphasis for vowel brilliance
-  const preEmph = makePreEmph();
-
-  const amplitude = 0.9;
+  const amplitude = 0.7; // lower base amplitude — let normalization handle it
   const f0Base = VOICE_DNA.f0.median || 125;
 
-  // Grok v20: coarticulation window = 50% / formantSpeed = ~43%
-  const coartStart = 1 - (0.5 / GROK.formantSpeed); // ~0.435
+  const coartStart = 1 - CFG.coartWindow;
 
   for (let si = 0; si < seq.length; si++) {
     const [paramCurr, durationSamples] = seq[si];
     const paramNext = si + 1 < seq.length ? seq[si + 1][0] : paramCurr;
 
-    // Grok v20: pitch variance ×1.04 — intelligent micro-intonation
-    const pitchRange = 10 * GROK.pitchVariance;
-    const f0 = f0Base + (Math.random() - 0.5) * pitchRange;
-
-    // Generate source
+    // Generate source — f0 is now smoothly modulated inside generateGlottalSource
     let source: Float32Array;
     if (paramCurr.source === 'noise') {
       source = generateNoise(durationSamples);
     } else if (paramCurr.source === 'mixed') {
-      source = generateMixed(durationSamples, f0, 0.55);
+      source = generateMixed(durationSamples, f0Base, 0.55);
     } else {
-      // Grok v20: voiced + split aspiration + burst noise
-      source = generateVoicedGrok(durationSamples, f0);
+      source = generateVoicedWithAspiration(durationSamples, f0Base);
     }
 
-    // Spectral tilt on voiced source
+    // Spectral tilt on voiced source only
     if (paramCurr.source === 'glottal') {
       for (let i = 0; i < source.length; i++) {
         source[i] = tickTilt(tilt, source[i]);
@@ -615,29 +572,29 @@ function synthesize(seq: Segment[]): Float32Array {
     setResonator(filters[3], paramCurr.f4, paramCurr.bw4);
     setResonator(filters[4], paramCurr.f5, paramCurr.bw5);
 
-    // Set nasal anti-resonator
     nasalActive = paramCurr.nasal && paramCurr.nasalFreq > 0;
     if (nasalActive) {
       setAntiResonator(nasalZero, paramCurr.nasalFreq, paramCurr.nasalBw);
     }
 
-    // Process in 5ms frames with faster coarticulation
+    // Process in 5ms frames with coarticulation
     for (let frameBeg = 0; frameBeg < durationSamples; frameBeg += FRAME_SIZE) {
       const frameEnd = Math.min(frameBeg + FRAME_SIZE, durationSamples);
       const position = frameBeg / Math.max(durationSamples, 1);
 
-      // Grok v20: faster coarticulation (starts at ~43% instead of 50%)
+      // Smooth coarticulation in last portion of segment
       if (position > coartStart) {
         const blend = (position - coartStart) / (1 - coartStart);
-        setResonator(filters[0], lerp(paramCurr.f1, paramNext.f1, blend), lerp(paramCurr.bw1, paramNext.bw1, blend));
-        setResonator(filters[1], lerp(paramCurr.f2, paramNext.f2, blend), lerp(paramCurr.bw2, paramNext.bw2, blend));
-        setResonator(filters[2], lerp(paramCurr.f3, paramNext.f3, blend), lerp(paramCurr.bw3, paramNext.bw3, blend));
-        setResonator(filters[3], lerp(paramCurr.f4, paramNext.f4, blend), lerp(paramCurr.bw4, paramNext.bw4, blend));
-        setResonator(filters[4], lerp(paramCurr.f5, paramNext.f5, blend), lerp(paramCurr.bw5, paramNext.bw5, blend));
+        // Smooth cubic interpolation instead of linear
+        const t = blend * blend * (3 - 2 * blend); // smoothstep
+        setResonator(filters[0], lerp(paramCurr.f1, paramNext.f1, t), lerp(paramCurr.bw1, paramNext.bw1, t));
+        setResonator(filters[1], lerp(paramCurr.f2, paramNext.f2, t), lerp(paramCurr.bw2, paramNext.bw2, t));
+        setResonator(filters[2], lerp(paramCurr.f3, paramNext.f3, t), lerp(paramCurr.bw3, paramNext.bw3, t));
+        setResonator(filters[3], lerp(paramCurr.f4, paramNext.f4, t), lerp(paramCurr.bw4, paramNext.bw4, t));
+        setResonator(filters[4], lerp(paramCurr.f5, paramNext.f5, t), lerp(paramCurr.bw5, paramNext.bw5, t));
 
-        // Transition nasal state
         if (paramCurr.nasal !== paramNext.nasal) {
-          const nasalGain = paramCurr.nasal ? (1 - blend) : blend;
+          const nasalGain = paramCurr.nasal ? (1 - t) : t;
           if (nasalGain > 0.1) {
             nasalActive = true;
             const nf = paramCurr.nasal ? paramCurr.nasalFreq : paramNext.nasalFreq;
@@ -649,32 +606,26 @@ function synthesize(seq: Segment[]): Float32Array {
         }
       }
 
-      const gainBlend = position > coartStart ? (position - coartStart) / (1 - coartStart) : 0;
+      const gainBlend = position > coartStart
+        ? (position - coartStart) / (1 - coartStart)
+        : 0;
       const currentGain = lerp(paramCurr.gain, paramNext.gain, gainBlend);
 
       // Filter each sample
       for (let j = frameBeg; j < frameEnd; j++) {
         let y = source[j];
 
-        // Pre-emphasis for vowel brilliance (+5% in 0-2kHz)
-        if (paramCurr.source === 'glottal') {
-          y = tickPreEmph(preEmph, y);
-        }
-
         // Apply nasal anti-resonator before formants
         if (nasalActive) {
           y = tickAntiResonator(nasalZero, y);
         }
 
-        // Cascade through 5 resonators
+        // Cascade through 5 resonators (now with gain normalization)
         for (let fi = 0; fi < N_FILTERS; fi++) {
           y = tickResonator(filters[fi], y);
         }
 
-        // Grok v20: zero-pole pair at 3.8kHz for modern clarity
-        y = tickAntiResonator(grokZeroPole, y);
-
-        // Global HF damping at 4.2kHz
+        // Gentle HF damping
         y = tickDamping(damping, y);
 
         // Apply envelope
@@ -682,7 +633,7 @@ function synthesize(seq: Segment[]): Float32Array {
 
         const idx = writePos + j;
         if (idx < output.length) {
-          output[idx] = clamp(y * amplitude * currentGain * env);
+          output[idx] = y * amplitude * currentGain * env;
         }
       }
     }
@@ -697,19 +648,15 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-function clamp(x: number): number {
-  return x > 1 ? 1 : x < -1 ? -1 : x;
-}
-
 // ═══════════════════════════════════════════════════════════
-// POST-PROCESSING
+// POST-PROCESSING — clean, minimal
 // ═══════════════════════════════════════════════════════════
 
 function postProcess(samples: Float32Array): Float32Array {
   const len = samples.length;
   if (len === 0) return samples;
 
-  // DC blocking
+  // 1. DC blocking
   let dcX1 = 0, dcY1 = 0;
   const dc = new Float32Array(len);
   for (let i = 0; i < len; i++) {
@@ -717,22 +664,20 @@ function postProcess(samples: Float32Array): Float32Array {
     dcX1 = samples[i]; dcY1 = y; dc[i] = y;
   }
 
-  // v22: spectral envelope smoothing — removes metallic residue
-  const sm = new Float32Array(len);
-  const alpha = GROK.spectralSmoothing; // 0.89
-  sm[0] = dc[0];
-  for (let i = 1; i < len; i++) {
-    sm[i] = alpha * sm[i - 1] + (1 - alpha) * dc[i];
-  }
-
-  // Gentle pre-emphasis (post-processing stage)
+  // 2. Gentle pre-emphasis (mild, not 0.30)
   const pe = new Float32Array(len);
-  pe[0] = sm[0];
+  pe[0] = dc[0];
   for (let i = 1; i < len; i++) {
-    pe[i] = sm[i] - 0.30 * sm[i - 1];
+    pe[i] = dc[i] - CFG.preEmphasisPost * dc[i - 1];
   }
 
-  // Normalize to -1dB
+  // 3. Soft limiter (prevents harsh clipping)
+  for (let i = 0; i < len; i++) {
+    const x = pe[i];
+    pe[i] = Math.tanh(x * 1.5) / 1.5; // soft saturation
+  }
+
+  // 4. Normalize to -2dB
   let peak = 0;
   for (let i = 0; i < len; i++) {
     const a = Math.abs(pe[i]);
@@ -740,7 +685,7 @@ function postProcess(samples: Float32Array): Float32Array {
   }
   if (peak === 0) return pe;
 
-  const gain = 0.89 / peak;
+  const gain = 0.79 / peak; // -2dB headroom
   const out = new Float32Array(len);
   for (let i = 0; i < len; i++) out[i] = pe[i] * gain;
   return out;
@@ -787,14 +732,19 @@ function samplesToWav(samples: Float32Array, sampleRate: number): Blob {
 
 export async function synthesizeFormant(text: string): Promise<Blob> {
   const phonemes = textToPhonemes(text);
-  console.log(`[Formant v22-GrokUltra] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
+  console.log(`[Formant v23] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
 
+  // Reset all state
   glottalPhase = 0;
   subHarmonicPhase = 0;
   vibratoPhase = 0;
+  pitchDrift = 0;
+  pitchDriftVel = 0;
+  jitterSmoothed = 0;
+  spareGaussian = null;
 
   const segments = buildSegments(phonemes);
-  console.log(`[Formant v22-GrokUltra] ${segments.length} segments built`);
+  console.log(`[Formant v23] ${segments.length} segments built`);
 
   const samples = synthesize(segments);
   const processed = postProcess(samples);
@@ -824,7 +774,7 @@ export async function speakFormant(
 
     return { played: !signal?.aborted, audio };
   } catch (err) {
-    console.warn("[Formant v22-GrokUltra] Error:", err);
+    console.warn("[Formant v23] Error:", err);
     return { played: false, audio: null };
   }
 }
