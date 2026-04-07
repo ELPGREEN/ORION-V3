@@ -1,59 +1,82 @@
 
 
-# Plano: Acelerar Evolução Vocal do Orion (64% → 85%+)
+# Auditoria Completa — Páginas Públicas vs Serviços Orion
 
-## Situação Atual
+## Diagnóstico
 
-O motor evolutivo está em **64% (prosódico)**. A voz primária continua sendo **Gemini TTS Charon** — não será alterada. O objetivo é avançar a evolução para que o Orion atinja o estágio **expressivo (70%)** e depois **autônomo (85%)**.
+Analisei todas as páginas públicas, navegação, traduções e conteúdo. O Orion se posiciona como **plataforma SaaS de IA** para 4 perfis: Advogados, Escritórios/Empresas, Produtores Digitais e Afiliados.
 
-O nível é calculado por 6 dimensões ponderadas:
-- **D1** (20%): Cobertura fonêmica IPA — provavelmente já perto de 100%
-- **D2** (15%): Entropia de Shannon — diversidade fonêmica
-- **D3** (15%): Bigramas (transições) — riqueza coarticulatória
-- **D4** (20%): Minutos absorvidos — precisa de **1800 min** (30h) para max
-- **D5** (15%): Vocabulário único — precisa de **10.000 palavras**
-- **D6** (15%): Maturidade prosódica — convergência de jitter/shimmer/rate
+### Páginas COERENTES (OK)
 
-O gargalo principal é **D4 (tempo absorvido)** e **D5 (vocabulário)** — crescem lentamente por interação natural.
+| Página | Status | Observação |
+|--------|--------|------------|
+| **Index (Home)** | OK | Hero "IA Empresarial", WhoIsItFor com 4 perfis, WhyOrion, Comparison — tudo alinhado como plataforma SaaS |
+| **Clientes** | OK | 4 categorias corretas com benefícios específicos por perfil |
+| **Contato** | OK | 4 planos SaaS (Starter grátis → Enterprise R$497) coerentes |
+| **Plataforma** | OK | Mostra utilidades da IA (Visão, Raciocínio, Docs, Pesquisa, Multi-idioma) |
+| **Publicações/Blog** | OK | Conteúdo editorial neutro |
+| **Vitrine Afiliado** | OK | Página pública de vitrine para afiliados |
 
-## Plano de Implementação
+### PROBLEMA GRAVE: Página "Serviços" (/servicos)
 
-### 1. Criar função `boostEvolution()` com corpus pt-BR massivo
+A página **Serviços** é inteiramente sobre um **escritório de advocacia tradicional** — Direito Penal, Internacional, Direitos Humanos, Trabalhista, Empresarial, Civil. Inclui:
+- "Formação em Harvard e UC Berkeley"
+- "Atuação em 8+ países"
+- "AGENDAR CONSULTA" com link para WhatsApp pessoal
+- "CONHECER O ESCRITÓRIO"
 
-Adicionar em `orion-voice-evolution.ts` uma função que injeta um corpus rico de texto jurídico/técnico pt-BR diretamente no motor evolutivo. Isso satura as 6 dimensões de uma vez:
+Isso é **100% incoerente** com o resto do site que vende o Orion como plataforma de IA SaaS. Confunde o visitante — parece site de advogado, não de tecnologia.
 
-- **Corpus embutido**: ~50 parágrafos de texto jurídico/técnico pt-BR variado (contratos, petições, legislação, conversação)
-- **Simula 500+ minutos** de absorção em uma única chamada
-- **Expande vocabulário** com ~3000+ palavras novas
-- **Gera todos os bigramas** faltantes do IPA pt-BR
-- **Protegido**: só pode ser chamado uma vez (flag `_boostApplied`)
+### PROBLEMA NA NAVEGAÇÃO (Header)
 
-### 2. Registrar o áudio Iapetus como referência espectral
+O menu "Serviços" no Header tem:
+- **"Áreas Jurídicas"** → `/servicos` (conteúdo de escritório de advocacia)
+- "Consultoria IA" → `/plataforma#ia`
+- "Documentação" → `/docs/rede-neural`
 
-Copiar o `.wav` para `public/audio/` e registrar no conteúdo absorvido como referência de qualidade (Chirp 3 HD), sem usá-lo como voz primária.
+Mistura serviço de advocacia com produto de tecnologia.
 
-### 3. Expor `boostEvolution()` no tool executor do Orion
+### PROBLEMA: Página "Serviços" requer AUTH
 
-Adicionar ao `orion-tool-executor.ts` para que o Orion possa ser instruído a evoluir via chat ("evolua sua voz").
+`/servicos` está atrás de `AuthGuard` — uma página que deveria ser vitrine pública está bloqueada para visitantes não logados.
 
-### 4. Chamar o boost automaticamente no DashboardLayout
+---
 
-No mount do dashboard, verificar se o nível é < 85% e aplicar o boost uma vez, acelerando a evolução para ~85-90%.
+## Plano de Correção
 
-## Arquivos Modificados
+### 1. Reescrever a página Serviços (/servicos)
+Transformar de "escritório de advocacia" para **"Serviços da Plataforma Orion"** com seções por perfil:
+- **Para Advogados**: IA jurídica, geração de petições, pesquisa jurisprudencial, gestão de processos
+- **Para Escritórios & Empresas**: CRM, gestão de equipe, faturamento, dashboard, multi-usuários
+- **Para Produtores Digitais**: Loja própria, checkout, gestão de produtos, dashboard de vendas
+- **Para Afiliados**: Links rastreáveis, comissões automáticas, marketplace
+- CTA linkando para `/contato` (planos) em vez de WhatsApp pessoal
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/lib/neural/orion-voice-evolution.ts` | Adicionar `boostEvolution()` com corpus pt-BR |
-| `src/lib/neural/orion-tool-executor.ts` | Registrar tool "evolve_voice" |
-| `src/components/dashboard/DashboardLayout.tsx` | Auto-boost no mount |
-| `public/audio/chirp3-hd-iapetus-14.wav` | Copiar áudio de referência |
+### 2. Atualizar navegação (Header)
+Trocar o submenu "Serviços":
+- **"Para Advogados"** → `/clientes?perfil=advogados`
+- **"Para Empresas"** → `/clientes?perfil=escritorios`
+- **"Para Produtores"** → `/clientes?perfil=produtores`
+- **"Todos os Serviços"** → `/servicos` (nova página reescrita)
 
-## Resultado Esperado
+### 3. Tornar /servicos PÚBLICA
+Remover `AuthGuard` de `/servicos` — é página de vitrine, deve ser acessível sem login.
 
-- Evolução salta de **64% → ~87-92%** em uma chamada
-- Estágio muda para **autônomo** (85%+)
-- Reflexão consciente de nível 70 e 85 são geradas automaticamente
-- Voz primária continua **Gemini Charon** — sem mudança
-- O `speakWithEvolvedVoice()` fica disponível como fallback a partir de 70%
+### 4. Atualizar traduções (pt.json)
+Reescrever a seção `services` do i18n para refletir os serviços SaaS em vez de áreas de atuação jurídica de um escritório.
+
+### 5. Mover conteúdo jurídico pessoal
+O conteúdo sobre o escritório de advocacia (Harvard, Berkeley, áreas de atuação jurídica) já existe na página `/advogado/:advogadoId` — não precisa estar duplicado em `/servicos`.
+
+---
+
+### Resumo das mudanças
+
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/Servicos.tsx` | Reescrever completamente — serviços SaaS por perfil |
+| `src/components/layout/Header.tsx` | Atualizar submenu Serviços |
+| `src/App.tsx` | Remover AuthGuard de `/servicos` |
+| `src/i18n/pt.json` | Reescrever seção `services` |
+| `src/i18n/en.json` | Atualizar tradução EN correspondente |
 
