@@ -161,7 +161,7 @@ export function WelcomeSplash({ onDismiss }: WelcomeSplashProps) {
                 <img
                   src={orionLogo}
                   alt="ORION Enterprise AI Platform"
-                  className="w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 object-contain rounded-2xl drop-shadow-[0_0_40px_rgba(212,175,55,0.4)]"
+                  className="w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 object-contain rounded-[2rem] drop-shadow-[0_0_40px_rgba(212,175,55,0.4)]"
                 />
               </motion.div>
 
