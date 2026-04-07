@@ -216,8 +216,6 @@ Respond in JSON:
     agentSpec = JSON.parse(jsonMatch?.[0] || "{}");
   } catch {
     agentSpec = {};
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    agentSpec = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
   }
 
   // Store the new agent
@@ -286,27 +284,24 @@ async function handleInvokeAgent(body: Record<string, unknown>) {
     }
   }
 
-  // Fallback or primary: use Lovable AI with agent's system prompt
+  // Fallback or primary: use direct Gemini API with agent's system prompt
   if (!result || result.fallback) {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("No AI key available");
+    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_KEY) throw new Error("No Gemini key available");
 
-    const aiRes = await fetch(AI_GATEWAY, {
+    const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: agent.system_prompt || `You are ${agent.agent_name}, a specialized ${agent.agent_role} agent.` },
-          ...(context ? [{ role: "system", content: `Context: ${JSON.stringify(context)}` }] : []),
-          { role: "user", content: String(input) },
+        systemInstruction: { parts: [{ text: agent.system_prompt || `You are ${agent.agent_name}, a specialized ${agent.agent_role} agent.` }] },
+        contents: [
+          ...(context ? [{ role: "user", parts: [{ text: `Context: ${JSON.stringify(context)}` }] }] : []),
+          { role: "user", parts: [{ text: String(input) }] },
         ],
       }),
     });
-    result = await aiRes.json();
+    const data = await aiRes.json();
+    result = { text: data.candidates?.[0]?.content?.parts?.[0]?.text || "" };
   }
 
   // Update invocation stats
