@@ -121,32 +121,26 @@ export default function Servicos() {
 
       {/* Hero Section */}
       <section 
-        className="min-h-[55vh] flex items-center relative overflow-hidden"
+        className="min-h-[45vh] flex items-center relative overflow-hidden"
         style={{ background: "hsl(var(--background))" }}
       >
         <HeroThreeBackground />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/70 z-[1]" />
-        <div className="container py-16 sm:py-20 px-4 sm:px-6 relative" style={{ zIndex: 2 }}>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/30 to-background/80" style={{ zIndex: 1 }} />
+        <div className="container py-14 sm:py-18 px-4 sm:px-6 relative" style={{ zIndex: 5 }}>
           <div className="max-w-3xl">
-            <ScrollReveal direction="fade">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="h-px w-8 bg-primary" />
-                <p className="text-primary uppercase tracking-[0.35em] text-[11px] font-medium">
-                  SOLUÇÕES POR PERFIL
-                </p>
-              </div>
-            </ScrollReveal>
-            <ScrollReveal direction="up" delay={0.1}>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-foreground leading-tight mb-6">
-                Soluções <span className="text-primary">Inteligentes</span>
-              </h1>
-            </ScrollReveal>
-            <ScrollReveal direction="up" delay={0.2}>
-              <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl">
-                A plataforma ORION oferece ferramentas de IA sob medida para cada perfil profissional. 
-                Advogados, produtores, afiliados e indústria — tudo integrado em um único ecossistema.
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-px w-8 bg-primary" />
+              <p className="text-primary uppercase tracking-[0.35em] text-[11px] font-medium">
+                SOLUÇÕES POR PERFIL
               </p>
-            </ScrollReveal>
+            </div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-foreground leading-tight mb-6">
+              Soluções <span className="text-primary">Inteligentes</span>
+            </h1>
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl">
+              A plataforma ORION oferece ferramentas de IA sob medida para cada perfil profissional. 
+              Advogados, produtores, afiliados e indústria — tudo integrado em um único ecossistema.
+            </p>
           </div>
         </div>
       </section>
@@ -175,11 +169,11 @@ export default function Servicos() {
             </ScrollReveal>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             {profiles.map((profile, index) => {
               const ProfileIcon = profile.icon;
               return (
-                <ScrollReveal key={profile.anchor} direction="up" delay={index * 0.08}>
+                <div key={profile.anchor}>
                   <div
                     id={profile.anchor}
                     className={`group scroll-mt-24 border border-border/30 bg-card/30 backdrop-blur-sm hover:border-primary/30 transition-all duration-500 overflow-hidden ${
@@ -238,7 +232,7 @@ export default function Servicos() {
                       </Button>
                     </div>
                   </div>
-                </ScrollReveal>
+                </div>
               );
             })}
           </div>
