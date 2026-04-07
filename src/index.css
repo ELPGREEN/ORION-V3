@@ -1818,37 +1818,21 @@ span[data-suggestion-id] {
     0 0 50px hsl(var(--primary) / 0.05);
 }
 
-/* Tron hex grid background */
+/* Tron ambient neon glow — replaces hex grid */
 .tron-hex-grid {
-  background-image:
-    linear-gradient(30deg, hsl(var(--primary) / 0.03) 12%, transparent 12.5%, transparent 87%, hsl(var(--primary) / 0.03) 87.5%, hsl(var(--primary) / 0.03)),
-    linear-gradient(150deg, hsl(var(--primary) / 0.03) 12%, transparent 12.5%, transparent 87%, hsl(var(--primary) / 0.03) 87.5%, hsl(var(--primary) / 0.03)),
-    linear-gradient(30deg, hsl(var(--primary) / 0.03) 12%, transparent 12.5%, transparent 87%, hsl(var(--primary) / 0.03) 87.5%, hsl(var(--primary) / 0.03)),
-    linear-gradient(150deg, hsl(var(--primary) / 0.03) 12%, transparent 12.5%, transparent 87%, hsl(var(--primary) / 0.03) 87.5%, hsl(var(--primary) / 0.03)),
-    linear-gradient(60deg, hsl(var(--primary) / 0.04) 25%, transparent 25.5%, transparent 75%, hsl(var(--primary) / 0.04) 75%, hsl(var(--primary) / 0.04)),
-    linear-gradient(60deg, hsl(var(--primary) / 0.04) 25%, transparent 25.5%, transparent 75%, hsl(var(--primary) / 0.04) 75%, hsl(var(--primary) / 0.04));
-  background-size: 40px 70px;
-  background-position: 0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px;
+  background:
+    radial-gradient(ellipse 600px 300px at 20% 50%, hsl(var(--primary) / 0.025) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 250px at 80% 30%, hsl(var(--secondary) / 0.02) 0%, transparent 70%);
 }
 
-/* Tron data stream — vertical flowing lines */
+/* Tron data stream — subtle vertical light rays */
 .tron-data-stream::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background:
-    repeating-linear-gradient(90deg, transparent, transparent 60px, hsl(var(--primary) / 0.03) 60px, hsl(var(--primary) / 0.03) 61px),
-    repeating-linear-gradient(0deg, transparent, transparent 40px, hsl(var(--secondary) / 0.02) 40px, hsl(var(--secondary) / 0.02) 41px);
+    linear-gradient(90deg, transparent 0%, transparent 20%, hsl(var(--primary) / 0.015) 20.5%, transparent 21%, transparent 50%, hsl(var(--secondary) / 0.01) 50.5%, transparent 51%, transparent 80%, hsl(var(--primary) / 0.012) 80.5%, transparent 81%);
   pointer-events: none;
-  animation: tronDataFlow 20s linear infinite;
-}
-
-@keyframes tronDataFlow {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-40px); }
 }
 
 /* Tron horizontal scan pulse */
@@ -1858,9 +1842,9 @@ span[data-suggestion-id] {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.4), transparent);
-  box-shadow: 0 0 15px 3px hsl(var(--primary) / 0.15);
-  animation: tronScanPulse 6s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.3), transparent);
+  box-shadow: 0 0 20px 4px hsl(var(--primary) / 0.08);
+  animation: tronScanPulse 8s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -1951,10 +1935,10 @@ span[data-suggestion-id] {
   box-shadow: 0 0 8px hsl(var(--primary) / 0.1);
 }
 
-/* Tron animated dot grid */
+/* Tron ambient dot field — nearly invisible, just depth texture */
 .tron-dot-grid {
-  background-image: radial-gradient(hsl(var(--primary) / 0.08) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: radial-gradient(hsl(var(--primary) / 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 /* Tron energy pulse on sections */
