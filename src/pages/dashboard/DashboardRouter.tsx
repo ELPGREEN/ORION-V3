@@ -21,6 +21,8 @@ export default function DashboardRouter() {
   switch (role) {
     case "cliente":
       return <ClienteDashboard />;
+    case "advogado":
+      return <AdvogadoDashboard />;
     case "produtor":
       return <ProdutorDashboard />;
     case "afiliado":
