@@ -1,5 +1,5 @@
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, Settings, Building2, Crown, Webhook, ScanFace, Radio, ShoppingCart, Mic } from "lucide-react";
+import { Loader2, Settings, Building2, Crown, Webhook, ScanFace, Radio, ShoppingCart, Mic, Store } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -12,6 +12,8 @@ const BiometriaConfigPage = lazy(() => import("@/components/dashboard/settings/B
 const DispositivosConfigPage = lazy(() => import("@/components/dashboard/settings/DispositivosConfigPanel"));
 const AmazonConfigPage = lazy(() => import("@/components/dashboard/settings/AmazonIntegrationPanel"));
 const MicrophoneHardwarePage = lazy(() => import("@/components/dashboard/settings/MicrophoneHardwarePanel"));
+const MeusProdutos = lazy(() => import("./MeusProdutos"));
+const EditorPaginaVendas = lazy(() => import("./EditorPaginaVendas"));
 
 const TabFallback = () => (
   <div className="flex items-center justify-center py-12">
@@ -82,6 +84,10 @@ export default function ConfiguracoesRouter() {
             <Mic className="h-3.5 w-3.5" />
             Microfone
           </TabsTrigger>
+          <TabsTrigger value="loja" className="text-xs gap-1.5">
+            <Store className="h-3.5 w-3.5" />
+            Minha Loja
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="perfil">
@@ -129,6 +135,15 @@ export default function ConfiguracoesRouter() {
         <TabsContent value="microfone">
           <Suspense fallback={<TabFallback />}>
             <MicrophoneHardwarePage />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="loja">
+          <Suspense fallback={<TabFallback />}>
+            <div className="space-y-8">
+              <MeusProdutos />
+              <EditorPaginaVendas />
+            </div>
           </Suspense>
         </TabsContent>
       </Tabs>
