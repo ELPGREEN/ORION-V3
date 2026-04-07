@@ -702,6 +702,145 @@ const ROBOTICS_COMMANDS: NeuralCommand[] = [
   cmd("rob020", "robotics", "twin", ["rollback configuração", "reverter robô"], "Rollback de configuração", "robot_twin_rollback", "LAM"),
 ];
 
+// ════════════════════════════════════════════════════════════
+// INDUSTRIAL SCADA COMMANDS (20)
+// ════════════════════════════════════════════════════════════
+
+const SCADA_COMMANDS: NeuralCommand[] = [
+  cmd("scada001", "robotics", "scada", ["alarmes ativos", "listar alarmes", "alarmes do scada"], "Listar alarmes ativos", "scada_alarm_list", "LAM"),
+  cmd("scada002", "robotics", "scada", ["reconhecer alarme", "ack alarme", "confirmar alarme"], "Reconhecer alarme", "scada_alarm_ack", "LAM"),
+  cmd("scada003", "robotics", "scada", ["silenciar alarme", "calar alarme", "mute alarm"], "Silenciar alarme", "scada_alarm_silence", "LAM"),
+  cmd("scada004", "robotics", "scada", ["ler setpoint", "valor do setpoint", "setpoint atual"], "Ler setpoint", "scada_setpoint_read", "LAM"),
+  cmd("scada005", "robotics", "scada", ["alterar setpoint", "mudar setpoint", "ajustar setpoint"], "Alterar setpoint", "scada_setpoint_write", "LAM", 0.95),
+  cmd("scada006", "robotics", "scada", ["ver tendência", "trend do processo", "gráfico de tendência"], "Ver tendência", "scada_trend_view", "LAM"),
+  cmd("scada007", "robotics", "scada", ["exportar trend", "exportar histórico", "download histórico"], "Exportar histórico", "scada_trend_export", "LAM"),
+  cmd("scada008", "robotics", "scada", ["carregar receita", "load recipe", "receita de produção"], "Carregar receita", "scada_recipe_load", "LAM"),
+  cmd("scada009", "robotics", "scada", ["listar receitas", "receitas disponíveis"], "Listar receitas", "scada_recipe_list", "LAM"),
+  cmd("scada010", "robotics", "scada", ["iniciar batelada", "start batch", "começar lote"], "Iniciar batelada", "scada_batch_start", "LAM", 0.95),
+  cmd("scada011", "robotics", "scada", ["status da batelada", "batch status", "andamento do lote"], "Status da batelada", "scada_batch_status", "LAM"),
+  cmd("scada012", "robotics", "scada", ["relatório de batelada", "batch report"], "Relatório de batelada", "scada_batch_report", "LAM"),
+  cmd("scada013", "robotics", "scada", ["status do clp", "plc status", "status controlador"], "Status do CLP", "scada_plc_status", "LAM"),
+  cmd("scada014", "robotics", "scada", ["diagnóstico do clp", "plc diagnostics"], "Diagnóstico do CLP", "scada_plc_diagnostics", "LAM"),
+  cmd("scada015", "robotics", "scada", ["navegar opc-ua", "browse opcua", "variáveis opc"], "Navegar OPC-UA", "scada_opcua_browse", "LAM"),
+  cmd("scada016", "robotics", "scada", ["ler variável opc", "read opc tag"], "Ler variável OPC-UA", "scada_opcua_read", "LAM"),
+  cmd("scada017", "robotics", "scada", ["consultar historiador", "historian query"], "Consultar historiador", "scada_historian_query", "LAM"),
+  cmd("scada018", "robotics", "scada", ["abrir sinóptico", "abrir mímico", "tela do processo"], "Abrir sinóptico", "scada_mimic_open", "LAM"),
+  cmd("scada019", "robotics", "scada", ["status intertravamento", "interlock status"], "Status intertravamentos", "scada_interlock_status", "LAM"),
+  cmd("scada020", "robotics", "scada", ["parada de emergência scada", "e-stop scada", "emergency stop planta"], "Parada emergência SCADA", "scada_emergency_stop", "LAM", 0.95),
+];
+
+// ════════════════════════════════════════════════════════════
+// FLEET MANAGEMENT COMMANDS (20)
+// ════════════════════════════════════════════════════════════
+
+const FLEET_COMMANDS: NeuralCommand[] = [
+  cmd("fleet001", "robotics", "fleet", ["status da frota", "fleet status", "como está a frota"], "Status da frota", "fleet_status", "LAM"),
+  cmd("fleet002", "robotics", "fleet", ["despachar agv", "enviar agv", "dispatch agv"], "Despachar AGV", "fleet_dispatch", "LAM"),
+  cmd("fleet003", "robotics", "fleet", ["criar missão", "nova missão", "new mission"], "Criar missão", "fleet_mission_create", "LAM"),
+  cmd("fleet004", "robotics", "fleet", ["cancelar missão", "abortar missão"], "Cancelar missão", "fleet_mission_cancel", "LAM"),
+  cmd("fleet005", "robotics", "fleet", ["listar missões", "missões ativas", "mission list"], "Listar missões", "fleet_mission_list", "LAM"),
+  cmd("fleet006", "robotics", "fleet", ["otimizar rotas", "rota ótima", "optimize routes"], "Otimizar rotas", "fleet_route_optimize", "LAM"),
+  cmd("fleet007", "robotics", "fleet", ["carga dos veículos", "bateria da frota", "charge status"], "Status de carga", "fleet_charge_status", "LAM"),
+  cmd("fleet008", "robotics", "fleet", ["enviar para carga", "carregar veículo"], "Enviar para carga", "fleet_charge_send", "LAM"),
+  cmd("fleet009", "robotics", "fleet", ["atualizar mapa", "update map", "mapa de navegação"], "Atualizar mapa", "fleet_map_update", "LAM"),
+  cmd("fleet010", "robotics", "fleet", ["status vda5050", "vda 5050", "protocolo vda"], "Status VDA 5050", "fleet_vda5050_status", "LAM"),
+  cmd("fleet011", "robotics", "fleet", ["ordem vda5050", "enviar ordem vda"], "Enviar ordem VDA 5050", "fleet_vda5050_order", "LAM"),
+  cmd("fleet012", "robotics", "fleet", ["verificar colisão", "collision check", "zona de colisão"], "Verificar colisão", "fleet_collision_check", "LAM"),
+  cmd("fleet013", "robotics", "fleet", ["pickup carga", "carga pickup", "recolher carga"], "Pickup de carga", "fleet_load_pickup", "LAM"),
+  cmd("fleet014", "robotics", "fleet", ["dropoff carga", "descarga", "entregar carga"], "Dropoff de carga", "fleet_load_dropoff", "LAM"),
+  cmd("fleet015", "robotics", "fleet", ["bloquear zona", "block zone", "fechar zona"], "Bloquear zona", "fleet_zone_block", "LAM"),
+  cmd("fleet016", "robotics", "fleet", ["liberar zona", "release zone", "abrir zona"], "Liberar zona", "fleet_zone_release", "LAM"),
+  cmd("fleet017", "robotics", "fleet", ["relatório diário frota", "daily fleet report"], "Relatório diário frota", "fleet_report_daily", "LAM"),
+  cmd("fleet018", "robotics", "fleet", ["eficiência da frota", "fleet efficiency"], "Eficiência da frota", "fleet_report_efficiency", "LAM"),
+  cmd("fleet019", "robotics", "fleet", ["registrar veículo", "add vehicle", "novo agv"], "Registrar veículo", "fleet_vehicle_register", "LAM"),
+  cmd("fleet020", "robotics", "fleet", ["aposentar veículo", "retire vehicle", "desativar agv"], "Aposentar veículo", "fleet_vehicle_retire", "LAM"),
+];
+
+// ════════════════════════════════════════════════════════════
+// QUALITY COMMANDS (15)
+// ════════════════════════════════════════════════════════════
+
+const QUALITY_COMMANDS: NeuralCommand[] = [
+  cmd("qual001", "robotics", "quality", ["oee atual", "ver oee", "eficiência geral"], "OEE atual", "quality_oee_read", "LAM"),
+  cmd("qual002", "robotics", "quality", ["relatório oee", "oee report"], "Relatório OEE", "quality_oee_report", "LAM"),
+  cmd("qual003", "robotics", "quality", ["carta spc", "controle estatístico", "spc chart"], "Carta SPC", "quality_spc_chart", "LAM"),
+  cmd("qual004", "robotics", "quality", ["alerta spc", "spc alert", "fora de controle"], "Alerta SPC", "quality_spc_alert", "LAM"),
+  cmd("qual005", "robotics", "quality", ["registrar defeito", "log defeito", "novo defeito"], "Registrar defeito", "quality_defect_log", "LAM"),
+  cmd("qual006", "robotics", "quality", ["relatório defeitos", "defect report"], "Relatório defeitos", "quality_defect_report", "LAM"),
+  cmd("qual007", "robotics", "quality", ["iniciar inspeção", "start inspection"], "Iniciar inspeção", "quality_inspection_start", "LAM"),
+  cmd("qual008", "robotics", "quality", ["resultado inspeção", "inspection result"], "Resultado inspeção", "quality_inspection_result", "LAM"),
+  cmd("qual009", "robotics", "quality", ["rastreabilidade", "rastrear lote", "traceability"], "Rastreabilidade", "quality_traceability", "LAM"),
+  cmd("qual010", "robotics", "quality", ["causa raiz", "root cause", "análise de causa"], "Análise causa raiz", "quality_root_cause", "LLM"),
+  cmd("qual011", "robotics", "quality", ["cpk do processo", "índice cpk", "capability"], "Calcular Cpk", "quality_cpk_calculate", "LAM"),
+  cmd("qual012", "robotics", "quality", ["calibração instrumentos", "calibration check"], "Verificar calibração", "quality_calibration_check", "LAM"),
+  cmd("qual013", "robotics", "quality", ["abrir não conformidade", "nova nc", "nonconformity"], "Abrir não-conformidade", "quality_nonconformity_open", "LAM"),
+  cmd("qual014", "robotics", "quality", ["agenda de auditoria", "audit schedule"], "Agenda auditorias", "quality_audit_schedule", "LAM"),
+  cmd("qual015", "robotics", "quality", ["relatório six sigma", "six sigma report"], "Relatório Six Sigma", "quality_sixsigma_report", "LAM"),
+];
+
+// ════════════════════════════════════════════════════════════
+// MAINTENANCE COMMANDS (15)
+// ════════════════════════════════════════════════════════════
+
+const MAINTENANCE_COMMANDS: NeuralCommand[] = [
+  cmd("maint001", "robotics", "maintenance", ["criar ordem de serviço", "nova os", "work order"], "Criar OS", "maint_wo_create", "LAM"),
+  cmd("maint002", "robotics", "maintenance", ["listar ordens de serviço", "os pendentes", "work orders"], "Listar OS", "maint_wo_list", "LAM"),
+  cmd("maint003", "robotics", "maintenance", ["fechar ordem de serviço", "encerrar os"], "Fechar OS", "maint_wo_close", "LAM"),
+  cmd("maint004", "robotics", "maintenance", ["preventiva agendada", "cronograma preventiva"], "Preventiva agendada", "maint_preventive_schedule", "LAM"),
+  cmd("maint005", "robotics", "maintenance", ["gerar plano preventiva", "plano de manutenção"], "Gerar plano preventiva", "maint_preventive_generate", "LAM"),
+  cmd("maint006", "robotics", "maintenance", ["preditiva status", "alertas preditivos", "predictive maintenance"], "Status preditiva", "maint_predictive_status", "LAM"),
+  cmd("maint007", "robotics", "maintenance", ["mtbf mttr", "indicadores manutenção", "reliability report"], "MTBF/MTTR", "maint_mtbf_report", "LAM"),
+  cmd("maint008", "robotics", "maintenance", ["peças de reposição", "spare parts", "estoque peças"], "Verificar spare parts", "maint_spare_check", "LAM"),
+  cmd("maint009", "robotics", "maintenance", ["solicitar peça", "request spare"], "Solicitar peça", "maint_spare_request", "LAM"),
+  cmd("maint010", "robotics", "maintenance", ["cronograma calibração", "calibration schedule"], "Cronograma calibração", "maint_calibration_schedule", "LAM"),
+  cmd("maint011", "robotics", "maintenance", ["registrar calibração", "calibration result"], "Registrar calibração", "maint_calibration_register", "LAM"),
+  cmd("maint012", "robotics", "maintenance", ["histórico equipamento", "equipment history"], "Histórico equipamento", "maint_equipment_history", "LAM"),
+  cmd("maint013", "robotics", "maintenance", ["registrar parada", "downtime log", "parada máquina"], "Registrar downtime", "maint_downtime_log", "LAM"),
+  cmd("maint014", "robotics", "maintenance", ["relatório downtime", "downtime report"], "Relatório downtime", "maint_downtime_report", "LAM"),
+  cmd("maint015", "robotics", "maintenance", ["plano lubrificação", "lubrication plan"], "Plano lubrificação", "maint_lubrication_plan", "LAM"),
+];
+
+// ════════════════════════════════════════════════════════════
+// ERP / LOGISTICS COMMANDS (10)
+// ════════════════════════════════════════════════════════════
+
+const ERP_COMMANDS: NeuralCommand[] = [
+  cmd("erp001", "platform", "erp", ["verificar estoque", "stock check", "nível de estoque"], "Verificar estoque", "erp_stock_check", "LAM"),
+  cmd("erp002", "platform", "erp", ["ajustar estoque", "stock adjust", "corrigir estoque"], "Ajustar estoque", "erp_stock_adjust", "LAM"),
+  cmd("erp003", "platform", "erp", ["lista de materiais", "bom", "bill of materials"], "Ver BOM", "erp_bom_view", "LAM"),
+  cmd("erp004", "platform", "erp", ["ordem de produção", "production order", "op nova"], "Ordem de produção", "erp_production_order", "LAM"),
+  cmd("erp005", "platform", "erp", ["status produção", "production status"], "Status produção", "erp_production_status", "LAM"),
+  cmd("erp006", "platform", "erp", ["rodar mrp", "calcular mrp", "mrp run"], "Executar MRP", "erp_mrp_run", "LAM"),
+  cmd("erp007", "platform", "erp", ["contagem inventário", "inventory count"], "Contagem inventário", "erp_inventory_count", "LAM"),
+  cmd("erp008", "platform", "erp", ["requisição de compra", "purchase request"], "Requisição de compra", "erp_purchase_request", "LAM"),
+  cmd("erp009", "platform", "erp", ["custo de produção", "production cost"], "Custo de produção", "erp_cost_report", "LAM"),
+  cmd("erp010", "platform", "erp", ["relatório de perdas", "waste report", "scrap report"], "Relatório de perdas", "erp_waste_report", "LAM"),
+];
+
+// ════════════════════════════════════════════════════════════
+// HR COMMANDS (5)
+// ════════════════════════════════════════════════════════════
+
+const HR_COMMANDS: NeuralCommand[] = [
+  cmd("hr001", "platform", "hr", ["listar funcionários", "employee list", "equipe"], "Listar funcionários", "hr_employee_list", "LAM"),
+  cmd("hr002", "platform", "hr", ["registro de ponto", "timesheet", "check ponto"], "Registro de ponto", "hr_timesheet_check", "LAM"),
+  cmd("hr003", "platform", "hr", ["escala de férias", "vacation schedule"], "Escala de férias", "hr_vacation_schedule", "LAM"),
+  cmd("hr004", "platform", "hr", ["status folha", "payroll status"], "Status folha", "hr_payroll_status", "LAM"),
+  cmd("hr005", "platform", "hr", ["admissão", "novo funcionário", "hiring"], "Processo admissão", "hr_admission_start", "LAM"),
+];
+
+// ════════════════════════════════════════════════════════════
+// LOGISTICS COMMANDS (5)
+// ════════════════════════════════════════════════════════════
+
+const LOGISTICS_COMMANDS: NeuralCommand[] = [
+  cmd("log001", "platform", "logistics", ["rastrear expedição", "track shipment"], "Rastrear expedição", "logistics_shipment_track", "LAM"),
+  cmd("log002", "platform", "logistics", ["criar expedição", "new shipment"], "Criar expedição", "logistics_shipment_create", "LAM"),
+  cmd("log003", "platform", "logistics", ["cotação frete", "freight quote"], "Cotação frete", "logistics_freight_quote", "LAM"),
+  cmd("log004", "platform", "logistics", ["status entregas", "delivery status"], "Status entregas", "logistics_delivery_status", "LAM"),
+  cmd("log005", "platform", "logistics", ["planejar rota", "route plan", "rota de entrega"], "Planejar rota", "logistics_route_plan", "LAM"),
+];
+
 export const NEURAL_COMMAND_REGISTRY: NeuralCommand[] = [
   // Voice (250)
   ...VOICE_GREETINGS, ...VOICE_NAVIGATION, ...VOICE_CRM, ...VOICE_DOCUMENTS,
@@ -724,6 +863,15 @@ export const NEURAL_COMMAND_REGISTRY: NeuralCommand[] = [
   ...SECURITY_COMMANDS,
   // Robotics (20)
   ...ROBOTICS_COMMANDS,
+  // Industrial (80+)
+  ...SCADA_COMMANDS,
+  ...FLEET_COMMANDS,
+  ...QUALITY_COMMANDS,
+  ...MAINTENANCE_COMMANDS,
+  // Enterprise (20)
+  ...ERP_COMMANDS,
+  ...HR_COMMANDS,
+  ...LOGISTICS_COMMANDS,
 ];
 
 // ─── Lookup Functions ───

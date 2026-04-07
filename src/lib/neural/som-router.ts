@@ -24,7 +24,9 @@ export type SOMHandler =
   | "media_music" | "auto_construct" | "self_evolve" | "general_llm"
   | "legal_query" | "financial_query" | "calendar_query" | "crm_query"
   | "time_date" | "calculation" | "translation" | "humor" | "philosophy"
-  | "security_query" | "reporting" | "explanation" | "analysis";
+  | "security_query" | "reporting" | "explanation" | "analysis"
+  | "industrial_scada" | "industrial_fleet" | "industrial_quality"
+  | "industrial_maintenance" | "enterprise_erp" | "enterprise_hr" | "enterprise_logistics";
 
 interface SOMNeuron {
   weights: number[];        // Weight vector (same dim as input features)
@@ -88,6 +90,13 @@ const KEYWORD_GROUPS: Record<string, string[]> = {
   reporting: ["relatório", "relatorio", "métricas", "metricas", "estatísticas", "estatisticas", "dashboard", "resumo do dia", "resumo semanal"],
   explanation: ["explique", "o que é", "o que e", "como funciona", "me ensine", "tutorial", "defina", "significa"],
   analysis: ["analise", "analisar", "sentimento", "resumo", "sumarize", "avalie", "avaliação", "avaliacao"],
+  industrial_scada: ["scada", "supervisório", "supervisorio", "alarme industrial", "setpoint", "opc-ua", "opcua", "plc", "clp", "batelada", "batch", "historiador", "sinóptico", "mimic"],
+  industrial_fleet: ["frota", "fleet", "agv", "amr", "despachar", "missão", "missao", "vda5050", "vda 5050", "zona de colisão", "pickup", "dropoff"],
+  industrial_quality: ["oee", "qualidade", "spc", "defeito", "inspeção", "inspecao", "cpk", "six sigma", "não conformidade", "rastreabilidade", "auditoria"],
+  industrial_maintenance: ["manutenção", "manutencao", "preventiva", "preditiva", "mtbf", "mttr", "ordem de serviço", "spare parts", "peça de reposição", "calibração", "calibracao", "downtime", "lubrificação"],
+  enterprise_erp: ["estoque", "inventário", "inventario", "bom", "bill of materials", "mrp", "ordem de produção", "producao", "requisição de compra"],
+  enterprise_hr: ["funcionário", "funcionario", "folha de pagamento", "ponto", "férias", "ferias", "admissão", "admissao", "rh", "recursos humanos"],
+  enterprise_logistics: ["expedição", "expedicao", "rastreamento", "frete", "entrega", "shipment", "logística", "logistica"],
 };
 
 const HANDLER_MAP: Record<string, SOMHandler> = {
@@ -124,6 +133,13 @@ const HANDLER_MAP: Record<string, SOMHandler> = {
   reporting: "reporting",
   explanation: "explanation",
   analysis: "analysis",
+  industrial_scada: "industrial_scada",
+  industrial_fleet: "industrial_fleet",
+  industrial_quality: "industrial_quality",
+  industrial_maintenance: "industrial_maintenance",
+  enterprise_erp: "enterprise_erp",
+  enterprise_hr: "enterprise_hr",
+  enterprise_logistics: "enterprise_logistics",
 };
 
 const FEATURE_DIM = Object.keys(KEYWORD_GROUPS).length + 4; // keyword groups + length features
@@ -184,6 +200,8 @@ const LOCAL_HANDLERS = new Set<SOMHandler>([
   "iot_temperature", "iot_robot", "iot_status", "native_device",
   "media_music", "auto_construct", "self_evolve",
   "time_date", "calculation", "humor", "security_query",
+  "industrial_scada", "industrial_fleet", "industrial_quality",
+  "industrial_maintenance", "enterprise_erp", "enterprise_hr", "enterprise_logistics",
 ]);
 
 class SelfOrganizingMap {
