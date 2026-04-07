@@ -148,7 +148,6 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
     let movementAnalysis: any | undefined;
 
     if (multiTask) {
-      // Full multi-task result available
       if (multiTask.objects?.length > 0) {
         realTimeObjects = multiTask.objects.map((o: any) => ({
           name: o.class,
@@ -193,7 +192,6 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
         };
       }
     } else if (rtv) {
-      // Fallback to legacy realTimeVision format
       if (rtv.allObjects?.length > 0) {
         realTimeObjects = rtv.allObjects.map((o: any) => ({
           name: o.name || o.namePt,
@@ -254,16 +252,32 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
       }
     } catch {}
 
-    // Face-api.js analysis (expressions, landmarks, descriptor)
+    // ═══ Face-api.js analysis (expressions, landmarks, descriptor) — ENHANCED ═══
     let faceApiData: any | undefined;
     try {
       const faceApi = (VS as any).faceApiDetection;
       if (faceApi) {
+        // Extract top 3 expressions with scores for richer Gemini analysis
+        let topExpressions: Array<{emotion: string; score: number}> | undefined;
+        if (faceApi.expressions && typeof faceApi.expressions === "object") {
+          topExpressions = Object.entries(faceApi.expressions as Record<string, number>)
+            .filter(([, v]) => (v as number) > 0.05)
+            .sort((a, b) => (b[1] as number) - (a[1] as number))
+            .slice(0, 3)
+            .map(([k, v]) => ({ emotion: k, score: Math.round((v as number) * 100) }));
+        }
+
         faceApiData = {
           expressions: faceApi.expressions,
+          topExpressions,
+          dominantExpression: topExpressions?.[0]?.emotion || "unknown",
+          dominantExpressionScore: topExpressions?.[0]?.score || 0,
           landmarks68: faceApi.landmarks?.length || 0,
           hasDescriptor: !!faceApi.descriptor,
           score: faceApi.score,
+          age: faceApi.age ? Math.round(faceApi.age) : undefined,
+          gender: faceApi.gender,
+          genderProbability: faceApi.genderProbability ? Math.round(faceApi.genderProbability * 100) : undefined,
           box: faceApi.box ? {
             x: Math.round(faceApi.box.x),
             y: Math.round(faceApi.box.y),
@@ -271,6 +285,35 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
             h: Math.round(faceApi.box.height),
           } : undefined,
         };
+      }
+    } catch {}
+
+    // ═══ Pose detection data (MediaPipe PoseLandmarker) ═══
+    let poseData: any | undefined;
+    try {
+      const pose = (VS as any).poseDetection;
+      if (pose) {
+        poseData = {
+          landmarks: pose.landmarks?.length || 0,
+          posture: pose.posture || "unknown", // standing, sitting, lying, etc.
+          bodyAngle: pose.bodyAngle,
+          isMoving: pose.isMoving,
+          gestureType: pose.gestureType, // pointing, waving, etc.
+        };
+      }
+    } catch {}
+
+    // ═══ Hand gesture analysis ═══
+    let gestureData: any | undefined;
+    try {
+      const gestures = (VS as any).handGestures;
+      if (gestures && Array.isArray(gestures) && gestures.length > 0) {
+        gestureData = gestures.slice(0, 2).map((g: any) => ({
+          hand: g.handedness || "unknown",
+          gesture: g.gesture || g.categoryName || "none",
+          confidence: g.confidence || g.score || 0,
+          landmarks: g.landmarks?.length || 0,
+        }));
       }
     } catch {}
 
@@ -289,6 +332,16 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
       }
     } catch {}
 
+    // ═══ Motion analysis enrichment ═══
+    const motionEnriched = motion ? {
+      intensity: motion.intensity,
+      direction: motion.direction,
+      zones: motion.zones,
+      isActive: motion.intensity > 15,
+      level: motion.intensity < 5 ? "estático" : motion.intensity < 25 ? "leve" : motion.intensity < 50 ? "moderado" : "intenso",
+      vectorCount: motion.vectors?.length || 0,
+    } : undefined;
+
     return {
       // ═══ YOLO FrameX Multi-Task detections — HIGH confidence ═══
       realTimeObjects,
@@ -299,14 +352,18 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
       movementAnalysis,
       realTimeInferenceMs: multiTask?.inferenceMs || rtv?.inferenceMs,
       realTimeStatus: multiTask?.sources || rtv?.status,
-      // ═══ Legacy heuristic data (supplementary) ═══
+      // ═══ Face & Expression analysis (face-api.js) ═══
       faceCount: (realTimeFaces?.length || 0) || faces.length,
       realFaceDetection: faceDetectionData,
       faceApiAnalysis: faceApiData,
-      motion: motion ? { intensity: motion.intensity, direction: motion.direction } : undefined,
+      // ═══ Pose & Gesture data ═══
+      poseAnalysis: poseData,
+      handGestures: gestureData,
+      // ═══ Motion & Environment ═══
+      motion: motionEnriched,
       sceneContext: sceneCtx,
       imageQuality: qualityHints,
-      hint: "DETECÇÕES REAIS do YOLOFrameX (MediaPipe + YOLO v8n multi-task). Inclui: classificação de cenário, rastreamento com IDs persistentes, OCR, leitura labial e análise de movimento. CONFIE nestas detecções — são modelos ML reais rodando localmente."
+      hint: "DETECÇÕES REAIS do YOLOFrameX (MediaPipe + YOLO v8n multi-task). Inclui: classificação de cenário, rastreamento com IDs persistentes, OCR, leitura labial, expressão facial, gestos de mão, pose corporal e análise de movimento. CONFIE nestas detecções — são modelos ML reais rodando localmente."
     };
   } catch {
     return undefined;
