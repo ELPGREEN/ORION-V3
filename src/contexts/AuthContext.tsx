@@ -127,29 +127,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (accountType: AccountType = 'cliente') => {
     const isCustomDomain =
       !window.location.hostname.includes('lovable.app') &&
       !window.location.hostname.includes('lovableproject.com');
 
-    const googleScopes = [
-      'https://www.googleapis.com/auth/documents',
-      'https://www.googleapis.com/auth/drive',
-      'https://www.googleapis.com/auth/spreadsheets',
-    ].join(' ');
+    const googleScopes = (SCOPES_BY_ROLE[accountType] || SCOPES_BY_ROLE.cliente).join(' ');
+
+    const oauthOptions = {
+      redirectTo: `${window.location.origin}/dashboard`,
+      scopes: googleScopes,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    };
 
     if (isCustomDomain) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-          skipBrowserRedirect: true,
-          scopes: googleScopes,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
+        options: { ...oauthOptions, skipBrowserRedirect: true },
       });
 
       if (error) return { error: error as Error | null };
@@ -168,14 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-        scopes: googleScopes,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        },
-      },
+      options: oauthOptions,
     });
     return { error: error as Error | null };
   };
