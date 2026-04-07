@@ -143,20 +143,24 @@ export function GlobalOrionListener() {
     setWakeWordActive(false);
     setInitialCommand(cleanCmd);
 
-    // ── Boot sequence: show plasma loading + speak "Iniciando sistema" ──
+    // ── Fast boot: show plasma + fire TTS in parallel (non-blocking) ──
     setBooting(true);
     initVoicePicker();
-    await orionSpeak("Iniciando sistema");
+    
+    // Fire TTS and animation in parallel — don't await TTS before showing UI
+    orionSpeak("Iniciando sistema").catch(() => {});
+    
+    // Short plasma animation (1.5s instead of 2.5s)
+    await new Promise(r => setTimeout(r, 1500));
 
-    // Wait for plasma animation (2.5s total boot time)
-    await new Promise(r => setTimeout(r, 2500));
-
-    // ── System ready: open panel + speak welcome ──
+    // ── System ready: open panel immediately ──
     setBooting(false);
     setOrionOpen(true);
-    orionSpeak("Sistema ativado. Seja bem-vindo.");
+    
+    // Welcome speech fires in background — doesn't block UI
+    orionSpeak("Sistema ativado").catch(() => {});
 
-    setTimeout(() => { cooldownRef.current = false; }, 1200);
+    setTimeout(() => { cooldownRef.current = false; }, 800);
   }, [clearRestartTimer]);
 
   const startWakeWordListener = useCallback(() => {
