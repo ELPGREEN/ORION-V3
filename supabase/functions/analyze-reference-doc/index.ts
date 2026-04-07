@@ -55,31 +55,21 @@ interface DocumentAnalysis {
 
 // ─── LLM Call with Fallback ───
 async function callLLM(systemPrompt: string, userPrompt: string): Promise<string> {
-  const providers = [
-    {
-      name: "gemini",
-      getKeys: () => [
-        Deno.env.get("GEMINI_API_KEY")
-      ].filter((k): k is string => !!k),
-    },
-    {
-      name: "groq",
-      url: "https://api.groq.com/openai/v1/chat/completions",
-      key: Deno.env.get("GROQ_API_KEY"),
+  const geminiKeys = [Deno.env.get("GEMINI_API_KEY")].filter((k): k is string => !!k);
+  const groq = {
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    key: Deno.env.get("GROQ_API_KEY"),
+    format: (s: string, u: string) => ({
       model: "llama-3.3-70b-versatile",
-      format: (s: string, u: string) => ({
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "system", content: s }, { role: "user", content: u }],
-        temperature: 0.2,
-        max_tokens: 4000,
-        response_format: { type: "json_object" },
-      }),
-      extract: (d: any) => d.choices?.[0]?.message?.content,
-    }
-  ];
+      messages: [{ role: "system", content: s }, { role: "user", content: u }],
+      temperature: 0.2,
+      max_tokens: 4000,
+      response_format: { type: "json_object" },
+    }),
+    extract: (d: any) => d.choices?.[0]?.message?.content,
+  };
 
   // Try Gemini first (FREE)
-  const geminiKeys = providers[0].getKeys();
   for (const key of geminiKeys) {
     try {
       const resp = await fetch(
@@ -102,7 +92,6 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
   }
 
   // Groq fallback
-  const groq = providers[1];
   if (groq.key) {
     try {
       const resp = await fetch(groq.url!, {
