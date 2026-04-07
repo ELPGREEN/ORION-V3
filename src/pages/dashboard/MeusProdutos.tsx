@@ -145,6 +145,27 @@ export default function MeusProdutos() {
   const openCreate = () => { setEditingId(null); setForm(emptyForm); setOpen(true); };
   const handleSave = () => { editingId ? updateProduct.mutate() : createProduct.mutate(); };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("product-files")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("product-files").getPublicUrl(path);
+      setForm(f => ({ ...f, image_url: urlData.publicUrl }));
+      toast.success("Imagem enviada!");
+    } catch {
+      toast.error("Erro ao enviar imagem");
+    }
+    setUploadingImage(false);
+    if (imageInputRef.current) imageInputRef.current.value = "";
+  };
+
   const callOrion = async (action: string) => {
     setAiLoading(action);
     try {
