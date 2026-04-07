@@ -121,7 +121,7 @@ export default function Loja() {
       {/* Hero - Orion Futuristic */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, rgba(0,212,255,0.05) 0%, transparent 50%)"
+          background: "radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, hsl(var(--primary),0.05) 0%, transparent 50%)"
         }} />
         {/* Grid lines */}
         <div className="absolute inset-0" style={{
@@ -130,7 +130,7 @@ export default function Loja() {
         }} />
         {/* Scanlines */}
         <div className="absolute inset-0" style={{
-          background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.01) 2px, rgba(0,212,255,0.01) 4px)"
+          background: "repeating-linear-gradient(0deg, transparent, transparent 2px, hsl(var(--primary),0.01) 2px, hsl(var(--primary),0.01) 4px)"
         }} />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent" />
 
@@ -142,7 +142,7 @@ export default function Loja() {
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold mb-3" style={{ color: "#D4AF37", textShadow: "0 0 30px rgba(212,175,55,0.2)" }}>
             Loja de Produtos{" "}
-            <span style={{ color: "#00D4FF", textShadow: "0 0 25px rgba(0,212,255,0.3)" }}>Digitais</span>
+            <span style={{ color: "#00D4FF", textShadow: "0 0 25px hsl(var(--primary),0.3)" }}>Digitais</span>
           </h1>
           <p className="max-w-2xl mx-auto text-sm md:text-base" style={{ color: "rgba(255,255,255,0.45)" }}>
             Cursos, e-books e ferramentas profissionais de{" "}
@@ -262,7 +262,7 @@ export default function Loja() {
                   <button
                     onClick={(e) => { e.stopPropagation(); handleShare(); }}
                     className="absolute top-3 right-3 h-8 w-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ background: "rgba(10,10,15,0.8)", border: "1px solid rgba(0,212,255,0.2)" }}
+                    style={{ background: "rgba(10,10,15,0.8)", border: "1px solid hsl(var(--primary),0.2)" }}
                   >
                     <Share2 className="h-3.5 w-3.5" style={{ color: "#00D4FF" }} />
                   </button>
@@ -302,7 +302,7 @@ export default function Loja() {
                       variant="ghost"
                       className="w-full gap-2 text-xs h-8"
                       size="sm"
-                      style={{ color: "rgba(0,212,255,0.7)" }}
+                      style={{ color: "hsl(var(--primary),0.7)" }}
                       onClick={() => navigate(`/loja/${creatorId}/produto/${product.id}`)}
                     >
                       Ver Detalhes

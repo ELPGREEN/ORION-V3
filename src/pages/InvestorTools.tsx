@@ -147,12 +147,12 @@ const tronStyles = `
   .tron-card {
     position: relative;
     background: rgba(10, 10, 15, 0.85);
-    border: 1px solid rgba(0, 212, 255, 0.15);
+    border: 1px solid hsl(var(--primary), 0.15);
     transition: all 0.4s ease;
   }
   .tron-card:hover {
-    border-color: rgba(0, 212, 255, 0.4);
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.08), inset 0 0 20px rgba(0, 212, 255, 0.03);
+    border-color: hsl(var(--primary), 0.4);
+    box-shadow: 0 0 20px hsl(var(--primary), 0.08), inset 0 0 20px hsl(var(--primary), 0.03);
   }
   .tron-card::before, .tron-card::after {
     content: '';
@@ -182,12 +182,12 @@ const tronStyles = `
     text-shadow: 0 0 20px rgba(201, 168, 76, 0.4), 0 0 40px rgba(201, 168, 76, 0.15);
   }
   .tron-glow-cyan {
-    text-shadow: 0 0 20px rgba(0, 212, 255, 0.4), 0 0 40px rgba(0, 212, 255, 0.15);
+    text-shadow: 0 0 20px hsl(var(--primary), 0.4), 0 0 40px hsl(var(--primary), 0.15);
   }
   .tron-grid-bg {
     background-image:
-      linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      linear-gradient(hsl(var(--primary), 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary), 0.03) 1px, transparent 1px);
     background-size: 60px 60px;
   }
   .tron-scanline::after {
@@ -198,8 +198,8 @@ const tronStyles = `
       0deg,
       transparent,
       transparent 2px,
-      rgba(0, 212, 255, 0.01) 2px,
-      rgba(0, 212, 255, 0.01) 4px
+      hsl(var(--primary), 0.01) 2px,
+      hsl(var(--primary), 0.01) 4px
     );
     pointer-events: none;
   }
@@ -207,7 +207,7 @@ const tronStyles = `
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    border: 1px solid rgba(0, 212, 255, 0.4);
+    border: 1px solid hsl(var(--primary), 0.4);
     background: transparent;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -260,9 +260,9 @@ function InvestorCarousel() {
                     <div>
                       <div className="inline-flex items-center gap-2 px-3 py-1 mb-4 border text-[10px] font-semibold tracking-[0.25em] uppercase"
                         style={{
-                          borderColor: slide.accent === "gold" ? "rgba(201,168,76,0.4)" : "rgba(0,212,255,0.4)",
+                          borderColor: slide.accent === "gold" ? "rgba(201,168,76,0.4)" : "hsl(var(--primary),0.4)",
                           color: slide.accent === "gold" ? "#c9a84c" : "#00d4ff",
-                          background: slide.accent === "gold" ? "rgba(201,168,76,0.08)" : "rgba(0,212,255,0.08)",
+                          background: slide.accent === "gold" ? "rgba(201,168,76,0.08)" : "hsl(var(--primary),0.08)",
                         }}
                       >
                         <slide.icon className="h-3 w-3" />
@@ -299,7 +299,7 @@ function InvestorCarousel() {
                           {metrics.map((m, j) => (
                             <div key={j} className="tron-card p-3 text-center">
                               <div className="text-xl font-bold tron-glow-gold" style={{ color: "#c9a84c" }}>{m.value}</div>
-                              <div className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(0,212,255,0.6)" }}>{m.label}</div>
+                              <div className="text-[10px] uppercase tracking-wider" style={{ color: "hsl(var(--primary),0.6)" }}>{m.label}</div>
                             </div>
                           ))}
                         </div>
@@ -311,7 +311,7 @@ function InvestorCarousel() {
                           {evolutionTimeline.map((t, j) => (
                             <div key={j} className="flex items-center gap-3">
                               <div className="text-[10px] font-mono w-20 shrink-0" style={{ color: "#c9a84c" }}>{t.date}</div>
-                              <div className="h-px flex-1" style={{ background: "rgba(0,212,255,0.2)" }} />
+                              <div className="h-px flex-1" style={{ background: "hsl(var(--primary),0.2)" }} />
                               <div className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>{t.event.split("—")[0]}</div>
                             </div>
                           ))}
@@ -328,7 +328,7 @@ function InvestorCarousel() {
                             Agendar Reunião <ArrowRight className="ml-2 h-4 w-4" />
                           </Button>
                           <Button variant="outline" size="lg" className="px-8 h-12 text-sm"
-                            style={{ borderColor: "rgba(0,212,255,0.4)", color: "#00d4ff" }}
+                            style={{ borderColor: "hsl(var(--primary),0.4)", color: "#00d4ff" }}
                             onClick={() => navigate("/plataforma")}
                           >
                             Ver Plataforma <ExternalLink className="ml-2 h-4 w-4" />
@@ -346,23 +346,23 @@ function InvestorCarousel() {
                       ) : (
                         <div className="relative w-48 h-48">
                           <div className="absolute inset-0 rounded-full" style={{
-                            background: `radial-gradient(circle, ${slide.accent === "gold" ? "rgba(201,168,76,0.15)" : "rgba(0,212,255,0.15)"} 0%, transparent 70%)`,
+                            background: `radial-gradient(circle, ${slide.accent === "gold" ? "rgba(201,168,76,0.15)" : "hsl(var(--primary),0.15)"} 0%, transparent 70%)`,
                           }} />
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <slide.icon className="h-20 w-20" style={{ color: slide.accent === "gold" ? "rgba(201,168,76,0.3)" : "rgba(0,212,255,0.3)" }} />
+                            <slide.icon className="h-20 w-20" style={{ color: slide.accent === "gold" ? "rgba(201,168,76,0.3)" : "hsl(var(--primary),0.3)" }} />
                           </div>
                           {/* Animated ring */}
                           <div className="absolute inset-4 rounded-full border" style={{
-                            borderColor: slide.accent === "gold" ? "rgba(201,168,76,0.2)" : "rgba(0,212,255,0.2)",
+                            borderColor: slide.accent === "gold" ? "rgba(201,168,76,0.2)" : "hsl(var(--primary),0.2)",
                             animation: "plasmaRingSpin 12s linear infinite",
                           }}>
                             <div className="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rounded-full" style={{
                               background: slide.accent === "gold" ? "#c9a84c" : "#00d4ff",
-                              boxShadow: `0 0 8px ${slide.accent === "gold" ? "rgba(201,168,76,0.6)" : "rgba(0,212,255,0.6)"}`,
+                              boxShadow: `0 0 8px ${slide.accent === "gold" ? "rgba(201,168,76,0.6)" : "hsl(var(--primary),0.6)"}`,
                             }} />
                           </div>
                           <div className="absolute inset-10 rounded-full border" style={{
-                            borderColor: slide.accent === "gold" ? "rgba(201,168,76,0.12)" : "rgba(0,212,255,0.12)",
+                            borderColor: slide.accent === "gold" ? "rgba(201,168,76,0.12)" : "hsl(var(--primary),0.12)",
                             animation: "plasmaRingSpinReverse 8s linear infinite",
                           }} />
                         </div>
@@ -378,12 +378,12 @@ function InvestorCarousel() {
 
       {/* Navigation arrows */}
       <button onClick={scrollPrev} className="absolute left-1 md:left-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 flex items-center justify-center transition-all hover:scale-110"
-        style={{ background: "rgba(10,10,15,0.8)", border: "1px solid rgba(0,212,255,0.3)", color: "#00d4ff" }}
+        style={{ background: "rgba(10,10,15,0.8)", border: "1px solid hsl(var(--primary),0.3)", color: "#00d4ff" }}
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
       <button onClick={scrollNext} className="absolute right-1 md:right-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 flex items-center justify-center transition-all hover:scale-110"
-        style={{ background: "rgba(10,10,15,0.8)", border: "1px solid rgba(0,212,255,0.3)", color: "#00d4ff" }}
+        style={{ background: "rgba(10,10,15,0.8)", border: "1px solid hsl(var(--primary),0.3)", color: "#00d4ff" }}
       >
         <ChevronRight className="h-5 w-5" />
       </button>
@@ -464,7 +464,7 @@ export default function InvestorTools() {
                   Falar com Investor Relations <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="lg" className="px-8 h-12 text-sm tracking-wide"
-                  style={{ borderColor: "rgba(0,212,255,0.4)", color: "#00d4ff", background: "transparent" }}
+                  style={{ borderColor: "hsl(var(--primary),0.4)", color: "#00d4ff", background: "transparent" }}
                   onClick={() => navigate("/plataforma")}
                 >
                   Ver Plataforma <ExternalLink className="ml-2 h-4 w-4" />
@@ -488,13 +488,13 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Metrics Bar — Tron Style ═══ */}
-      <section className="relative tron-scanline" style={{ background: "#0a0a0f", borderTop: "1px solid rgba(0,212,255,0.15)", borderBottom: "1px solid rgba(0,212,255,0.15)" }}>
+      <section className="relative tron-scanline" style={{ background: "#0a0a0f", borderTop: "1px solid hsl(var(--primary),0.15)", borderBottom: "1px solid hsl(var(--primary),0.15)" }}>
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {metrics.map((m, i) => (
               <motion.div key={m.label} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center">
                 <div className="text-3xl md:text-4xl font-bold tron-glow-gold mb-1" style={{ color: "#c9a84c" }}>{m.value}</div>
-                <div className="text-[10px] tracking-[0.2em] uppercase" style={{ color: "rgba(0,212,255,0.6)" }}>{m.label}</div>
+                <div className="text-[10px] tracking-[0.2em] uppercase" style={{ color: "hsl(var(--primary),0.6)" }}>{m.label}</div>
               </motion.div>
             ))}
           </div>
@@ -553,7 +553,7 @@ export default function InvestorTools() {
                 Linha do Tempo Evolutiva
               </div>
               <div className="relative">
-                <div className="absolute left-5 top-0 bottom-0 w-px" style={{ background: "rgba(0,212,255,0.2)" }} />
+                <div className="absolute left-5 top-0 bottom-0 w-px" style={{ background: "hsl(var(--primary),0.2)" }} />
                 {evolutionTimeline.map((item, i) => (
                   <motion.div key={i} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="relative flex items-start gap-4 mb-6 last:mb-0">
                     <div className="relative z-10 h-10 w-10 flex items-center justify-center shrink-0"
@@ -618,7 +618,7 @@ export default function InvestorTools() {
                     { label: "Marcas Registradas", value: "ELP® · ORION" },
                     { label: "Copyright", value: "© 2023 ELP® Green Technology — All Rights Reserved" },
                   ].map(item => (
-                    <div key={item.label} className="flex justify-between items-start gap-4 py-2" style={{ borderBottom: "1px solid rgba(0,212,255,0.08)" }}>
+                    <div key={item.label} className="flex justify-between items-start gap-4 py-2" style={{ borderBottom: "1px solid hsl(var(--primary),0.08)" }}>
                       <span style={{ color: "rgba(255,255,255,0.4)" }}>{item.label}</span>
                       <span className="text-right" style={{ color: "rgba(255,255,255,0.7)" }}>{item.value}</span>
                     </div>
@@ -631,7 +631,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Systems Grid — Tron HUD Cards ═══ */}
-      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "#080810", borderTop: "1px solid rgba(0,212,255,0.12)", borderBottom: "1px solid rgba(0,212,255,0.12)" }}>
+      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "#080810", borderTop: "1px solid hsl(var(--primary),0.12)", borderBottom: "1px solid hsl(var(--primary),0.12)" }}>
         <GatewayBackground opacity={0.25} />
         <div className="absolute inset-0 tron-grid-bg opacity-20" />
         <div className="container mx-auto px-4 relative z-10">
@@ -662,7 +662,7 @@ export default function InvestorTools() {
                 )}
                 <div className="flex items-start gap-3 mb-3">
                   <div className="h-9 w-9 flex items-center justify-center shrink-0"
-                    style={{ background: tool.highlight ? "rgba(201,168,76,0.15)" : "rgba(0,212,255,0.08)", color: tool.highlight ? "#c9a84c" : "#00d4ff" }}
+                    style={{ background: tool.highlight ? "rgba(201,168,76,0.15)" : "hsl(var(--primary),0.08)", color: tool.highlight ? "#c9a84c" : "#00d4ff" }}
                   >
                     <tool.icon className="h-4 w-4" />
                   </div>
@@ -672,7 +672,7 @@ export default function InvestorTools() {
                 <div className="flex flex-wrap gap-1.5">
                   {tool.tags.map(tag => (
                     <span key={tag} className="text-[10px] px-2 py-0.5 tracking-wide"
-                      style={{ background: "rgba(0,212,255,0.06)", color: "rgba(0,212,255,0.6)", border: "1px solid rgba(0,212,255,0.12)" }}
+                      style={{ background: "hsl(var(--primary),0.06)", color: "hsl(var(--primary),0.6)", border: "1px solid hsl(var(--primary),0.12)" }}
                     >
                       {tag}
                     </span>
@@ -718,7 +718,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Architecture Overview ═══ */}
-      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "#080810", borderTop: "1px solid rgba(201,168,76,0.12)", borderBottom: "1px solid rgba(0,212,255,0.12)" }}>
+      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "#080810", borderTop: "1px solid rgba(201,168,76,0.12)", borderBottom: "1px solid hsl(var(--primary),0.12)" }}>
         <div className="absolute inset-0 tron-grid-bg opacity-20" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
@@ -733,16 +733,16 @@ export default function InvestorTools() {
               {architectureLayers.map((layer, i) => (
                 <div key={layer.label} className="relative p-4 md:p-5 mb-3 last:mb-0 transition-colors"
                   style={{
-                    background: "rgba(0,212,255,0.02)",
-                    border: `1px solid ${i % 2 === 0 ? "rgba(201,168,76,0.15)" : "rgba(0,212,255,0.12)"}`,
+                    background: "hsl(var(--primary),0.02)",
+                    border: `1px solid ${i % 2 === 0 ? "rgba(201,168,76,0.15)" : "hsl(var(--primary),0.12)"}`,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(0,212,255,0.06)";
-                    e.currentTarget.style.borderColor = i % 2 === 0 ? "rgba(201,168,76,0.35)" : "rgba(0,212,255,0.3)";
+                    e.currentTarget.style.background = "hsl(var(--primary),0.06)";
+                    e.currentTarget.style.borderColor = i % 2 === 0 ? "rgba(201,168,76,0.35)" : "hsl(var(--primary),0.3)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(0,212,255,0.02)";
-                    e.currentTarget.style.borderColor = i % 2 === 0 ? "rgba(201,168,76,0.15)" : "rgba(0,212,255,0.12)";
+                    e.currentTarget.style.background = "hsl(var(--primary),0.02)";
+                    e.currentTarget.style.borderColor = i % 2 === 0 ? "rgba(201,168,76,0.15)" : "hsl(var(--primary),0.12)";
                   }}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -837,7 +837,7 @@ export default function InvestorTools() {
                 Agendar Reunião <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button variant="outline" size="lg" className="px-8 h-13 text-sm"
-                style={{ borderColor: "rgba(0,212,255,0.4)", color: "#00d4ff", background: "transparent" }}
+                style={{ borderColor: "hsl(var(--primary),0.4)", color: "#00d4ff", background: "transparent" }}
                 onClick={() => navigate("/docs/rede-neural")}
               >
                 Documentação Técnica

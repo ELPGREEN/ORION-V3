@@ -196,7 +196,7 @@ export default function Publicacoes() {
       <SectionDivider variant="beam" />
 
       {/* Tab Navigation */}
-      <section className="py-3 backdrop-blur-xl border-b sticky top-0 z-40" style={{ background: "rgba(10,10,15,0.85)", borderColor: "rgba(0,212,255,0.1)" }}>
+      <section className="py-3 backdrop-blur-xl border-b sticky top-0 z-40" style={{ background: "rgba(10,10,15,0.85)", borderColor: "hsl(var(--primary),0.1)" }}>
         <div className="container px-4 sm:px-6">
           <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
             <button
@@ -228,7 +228,7 @@ export default function Publicacoes() {
       {/* ═══ ORION INSIGHTS TAB ═══ */}
       {activeTab === "insights" && (
         <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "#0a0a0f" }}>
-          <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.3 }} />
+          <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(hsl(var(--primary),0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary),0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.3 }} />
           <GatewayBackground opacity={0.2} />
           <div className="container px-4 sm:px-6 relative z-10">
             {/* Key Metrics Banner */}
@@ -381,7 +381,7 @@ export default function Publicacoes() {
 
           {/* Content */}
           <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "#080810" }}>
-            <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.2 }} />
+            <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(hsl(var(--primary),0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary),0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.2 }} />
             <div className="container px-4 sm:px-6 relative z-10">
               {loading ? (
                 <div className="flex items-center justify-center py-20">

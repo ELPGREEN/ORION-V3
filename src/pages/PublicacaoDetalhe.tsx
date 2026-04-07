@@ -190,9 +190,9 @@ export default function PublicacaoDetalhe() {
 
       {/* Content Section */}
       <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "#080810" }}>
-        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.2 }} />
+        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(hsl(var(--primary),0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary),0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.2 }} />
         {/* Decorative elements */}
-        <div className="absolute -right-20 top-20 w-96 h-96 border rotate-45 opacity-50 hidden sm:block" style={{ borderColor: "rgba(0,212,255,0.05)" }} />
+        <div className="absolute -right-20 top-20 w-96 h-96 border rotate-45 opacity-50 hidden sm:block" style={{ borderColor: "hsl(var(--primary),0.05)" }} />
         <div className="absolute -left-32 bottom-0 w-64 h-64 rounded-full blur-3xl hidden sm:block" style={{ background: "rgba(201,168,76,0.04)" }} />
 
         <div className="container max-w-4xl px-4 sm:px-6 relative">

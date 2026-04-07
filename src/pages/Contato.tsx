@@ -148,7 +148,7 @@ export default function Contato() {
 
       {/* ═══ PLANOS ═══ */}
       <section className="py-16 sm:py-20 relative" style={{ background: "#080810" }}>
-        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
+        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(hsl(var(--primary),0.02) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary),0.02) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
         <div className="container relative z-10">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
             {planos.map((plano, i) => {
@@ -252,7 +252,7 @@ export default function Contato() {
       </section>
 
       {/* ═══ CONTATO — Formulário + Info ═══ */}
-      <section id="contato-form" className="py-16 sm:py-24 scroll-mt-20 relative" style={{ background: "#0a0a0f", borderTop: "1px solid rgba(0,212,255,0.1)" }}>
+      <section id="contato-form" className="py-16 sm:py-24 scroll-mt-20 relative" style={{ background: "#0a0a0f", borderTop: "1px solid hsl(var(--primary),0.1)" }}>
         <div className="container">
           <ScrollReveal direction="fade">
             <div className="text-center mb-12">

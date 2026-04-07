@@ -146,7 +146,7 @@ export default function Clientes() {
       <SectionDivider variant="beam" />
 
       {/* Category Filter — sticky */}
-      <section className="py-3 backdrop-blur-xl sticky top-0 z-40" style={{ background: "rgba(10,10,15,0.85)", borderBottom: "1px solid rgba(0,212,255,0.1)" }}>
+      <section className="py-3 backdrop-blur-xl sticky top-0 z-40" style={{ background: "rgba(10,10,15,0.85)", borderBottom: "1px solid hsl(var(--primary),0.1)" }}>
         <div className="container px-4">
           <div className="flex overflow-x-auto no-scrollbar gap-2 justify-start sm:justify-center pb-1">
             <button
@@ -182,7 +182,7 @@ export default function Clientes() {
 
       {/* Categories Grid */}
       <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "#0a0a0f" }}>
-        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.3 }} />
+        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(hsl(var(--primary),0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary),0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.3 }} />
         <GatewayBackground opacity={0.15} />
         <div className="container px-4 relative z-10">
           <ScrollReveal direction="fade">
@@ -202,16 +202,16 @@ export default function Clientes() {
                 return (
                   <ScrollReveal key={cat.id} direction="up" delay={i * 0.1}>
                     <div className="group relative p-6 border bg-card/10 backdrop-blur-sm hover:bg-card/20 transition-all duration-500"
-                      style={{ borderColor: "rgba(0,212,255,0.12)" }}
+                      style={{ borderColor: "hsl(var(--primary),0.12)" }}
                     >
                       {/* Neon corners */}
-                      <div className="absolute top-0 left-0 w-3 h-3 border-t border-l transition-colors" style={{ borderColor: "rgba(0,212,255,0.2)" }} />
-                      <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r transition-colors" style={{ borderColor: "rgba(0,212,255,0.2)" }} />
+                      <div className="absolute top-0 left-0 w-3 h-3 border-t border-l transition-colors" style={{ borderColor: "hsl(var(--primary),0.2)" }} />
+                      <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r transition-colors" style={{ borderColor: "hsl(var(--primary),0.2)" }} />
                       <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-transparent to-transparent group-hover:via-primary/40 transition-all duration-500" />
 
                       <div className="flex items-center gap-3 mb-4">
                         <div className="h-10 w-10 border flex items-center justify-center group-hover:border-primary/40 transition-colors"
-                          style={{ borderColor: "rgba(0,212,255,0.15)", background: "rgba(0,212,255,0.03)" }}
+                          style={{ borderColor: "hsl(var(--primary),0.15)", background: "hsl(var(--primary),0.03)" }}
                         >
                           <Icon className="h-5 w-5 text-primary" />
                         </div>
@@ -245,7 +245,7 @@ export default function Clientes() {
 
       {/* Diferenciais */}
       <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "#080810", borderTop: "1px solid rgba(201,168,76,0.1)" }}>
-        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.2 }} />
+        <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(hsl(var(--primary),0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary),0.03) 1px, transparent 1px)", backgroundSize: "60px 60px", opacity: 0.2 }} />
         <div className="container px-4 relative z-10">
           <ScrollReveal direction="fade">
             <div className="text-center mb-12">
@@ -262,10 +262,10 @@ export default function Clientes() {
               return (
                 <ScrollReveal key={d.title} direction="up" delay={i * 0.08}>
                   <div className="group relative p-5 border bg-card/10 backdrop-blur-sm hover:bg-card/20 transition-all duration-500"
-                    style={{ borderColor: "rgba(0,212,255,0.1)" }}
+                    style={{ borderColor: "hsl(var(--primary),0.1)" }}
                   >
-                    <div className="absolute top-0 left-0 w-2 h-2 border-t border-l" style={{ borderColor: "rgba(0,212,255,0.15)" }} />
-                    <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r" style={{ borderColor: "rgba(0,212,255,0.15)" }} />
+                    <div className="absolute top-0 left-0 w-2 h-2 border-t border-l" style={{ borderColor: "hsl(var(--primary),0.15)" }} />
+                    <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r" style={{ borderColor: "hsl(var(--primary),0.15)" }} />
                     <Icon className="h-6 w-6 text-primary mb-3" />
                     <h3 className="font-serif text-sm font-semibold text-foreground mb-2">{d.title}</h3>
                     <p className="text-xs text-muted-foreground leading-relaxed">{d.desc}</p>
@@ -278,7 +278,7 @@ export default function Clientes() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "#0a0a0f", borderTop: "1px solid rgba(0,212,255,0.1)" }}>
+      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "#0a0a0f", borderTop: "1px solid hsl(var(--primary),0.1)" }}>
         <HeroThreeBackground />
         <div className="absolute inset-0 bg-[#0a0a0f]/60 z-[1]" />
         <div className="container text-center px-4 relative z-10">
