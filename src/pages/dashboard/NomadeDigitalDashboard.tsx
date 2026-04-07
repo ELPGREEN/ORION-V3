@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Store, Package, DollarSign, TrendingUp, Users, Share2,
   Globe, CreditCard, FileText, MessageSquare, ArrowRight,
-  Laptop, Wallet, ShoppingBag, BarChart3,
+  Laptop, Wallet, ShoppingBag, BarChart3, Mail,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
