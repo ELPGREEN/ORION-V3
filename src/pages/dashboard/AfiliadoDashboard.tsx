@@ -212,10 +212,6 @@ export default function AfiliadoDashboard() {
                       </Button>
                       <Badge variant="secondary" className="text-xs">{link?.clicks || 0} cliques</Badge>
                     </div>
-                        </Button>
-                      )}
-                      <Badge variant="secondary" className="text-xs">{link?.clicks || 0} cliques</Badge>
-                    </div>
                   </CardContent>
                 </Card>
               );
