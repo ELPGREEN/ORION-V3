@@ -20,6 +20,7 @@ import {
   type PhonemeParams,
 } from "./phonemes";
 import { computeMFCCCorrections, type MFCCSynthCorrection } from "./mfccEngine";
+import { tokenize, getDiphoneTransition, getToken, type IPAToken } from "./ipaTokenizer";
 
 const SR = VOICE_DNA.sampleRate; // 24000
 const TWO_PI = 2 * Math.PI;
@@ -160,11 +161,14 @@ function lowpass1(x: number, coeff: number): number {
 
 export async function synthesizeFormant(text: string): Promise<Blob> {
   const phonemes = textToPhonemes(text);
-  console.log(`[Formant v9] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
+  
+  // IPA tokenization — compute diphone transitions
+  const tokenSeq = tokenize(phonemes);
+  console.log(`[Formant v14] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes, ${tokenSeq.transitions.filter(t => t).length} diphone transitions`);
 
   // Reset filter state
   dcX1 = 0; dcY1 = 0; lpY1 = 0;
-  const samples = renderPhonemes(phonemes);
+  const samples = renderPhonemes(phonemes, tokenSeq);
   const processed = postProcess(samples);
   return samplesToWav(processed, SR);
 }
