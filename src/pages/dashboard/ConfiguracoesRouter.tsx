@@ -127,9 +127,42 @@ export default function ConfiguracoesRouter() {
 
   if (isCliente) {
     return (
-      <Suspense fallback={<TabFallback />}>
-        <PerfilCliente />
-      </Suspense>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-serif text-foreground">Minha Conta</h1>
+          <p className="text-muted-foreground text-sm">
+            Perfil, plano e segurança da sua conta
+          </p>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList
+            className="bg-card border border-border w-full overflow-x-auto justify-start scrollbar-hide"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <TabsTrigger value="perfil" className="text-xs gap-1.5">
+              <Settings className="h-3.5 w-3.5" />
+              Meu Perfil
+            </TabsTrigger>
+            <TabsTrigger value="plano" className="text-xs gap-1.5">
+              <Crown className="h-3.5 w-3.5" />
+              Meu Plano
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="perfil">
+            <Suspense fallback={<TabFallback />}>
+              <PerfilCliente />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="plano">
+            <Suspense fallback={<TabFallback />}>
+              <PlanoUsuario />
+            </Suspense>
+          </TabsContent>
+        </Tabs>
+      </div>
     );
   }
 

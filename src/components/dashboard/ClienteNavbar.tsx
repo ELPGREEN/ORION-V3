@@ -28,10 +28,11 @@ const clienteMenuItems = [
   { id: "meus-processos", label: "Processos", icon: Scale, path: "/dashboard/meus-processos" },
   { id: "documentos", label: "Documentos", icon: FolderOpen, path: "/dashboard/documentos" },
   { id: "chat-ao-vivo", label: "Chat", icon: MessageSquare, path: "/dashboard/chat-ao-vivo" },
+  { id: "marketplace", label: "Loja", icon: Bot, path: "/dashboard/marketplace" },
   { id: "consultas", label: "Agendar", icon: Calendar, path: "/dashboard/consultas" },
   { id: "pagamentos", label: "Pagamentos", icon: CreditCard, path: "/dashboard/pagamentos" },
   { id: "notificacoes", label: "Notificações", icon: Bell, path: "/dashboard/notificacoes" },
-  { id: "plano", label: "Meu Plano", icon: Crown, path: "/dashboard/plano" },
+  { id: "configuracoes", label: "Conta", icon: Settings, path: "/dashboard/configuracoes" },
 ];
 
 interface ClienteNavbarProps {
