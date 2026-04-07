@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import orionVideo from '@/assets/orion-tron-video.mp4';
+import orionLogo from '@/assets/orion-logo-circle-gold.png';
 
 export function OrionVideoShowcase() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -28,6 +29,17 @@ export function OrionVideoShowcase() {
             playsInline
             className="w-full h-full object-cover"
           />
+
+          {/* Round Logo Overlay */}
+          <div className="absolute top-4 left-4 z-20">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-primary/40 shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+              <img
+                src={orionLogo}
+                alt="Orion Logo"
+                className="w-full h-full object-cover rounded-full"
+              />
+            </div>
+          </div>
 
           {/* Scanline overlay */}
           <div
