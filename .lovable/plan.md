@@ -1,143 +1,149 @@
 
 
-# Plano: Loja do Afiliado + Fluxo Completo Produtor → Afiliado → Cliente + Orion IA
+# Plano: Painel Completo do Advogado + Integração Advogado ↔ Cliente + Orion IA
 
 ## Estado Atual
 
-O sistema já tem:
-- **Produtor**: Dashboard com stats, MeusProdutos (CRUD + upload + módulos), ProdutorAfiliados (gerenciar programa), Loja pública (`/loja/:creatorId`), ProdutoDetalhe, Editor de Vendas, Orion Insights
-- **Afiliado**: Dashboard com marketplace de programas, links/cupons, vendas, Vitrine pública (`/vitrine/:affiliateId`), botão "Copy IA"
-- **Cliente**: MeusAcessos (área de membros com arquivos, módulos, Orion FAQ)
-- **Checkout**: Loja com CartContext, mas sem entrega automática (customer_access) nem registro de affiliate_sales no fluxo de pagamento
-- **Edge Function**: `orion-produtor-ai` (descrição, preço, módulos, copy, FAQ, performance)
+O sistema JA possui bastante infraestrutura para advogados, mas espalhada e sem painel dedicado:
 
-## O que FALTA para fechar o ciclo
+- **DashboardHome** (default para advogado): stats genéricos (docs, processos, clientes, conversas), ações rápidas judiciais/extrajudiciais, navegação admin
+- **ChatHumano**: chat em tempo real entre advogado e cliente (conversations + messages)
+- **ClientesPage/CRMClientes**: CRUD de clientes com CRM Pipeline + Contatos
+- **ClientFolderDialog**: pasta do cliente com tabs (info, documentos, chat) -- ja robusto (837 linhas)
+- **ProcessosPage**: CRUD completo de processos (1755 linhas)
+- **GerarDocumento**: geração de peças jurídicas com IA
+- **PesquisaUnificada**: pesquisa jurisprudencial com RAG
+- **ClienteDashboard**: painel do cliente (1448 linhas) com docs, assinaturas, processos, consultas
+- **PortalCliente**: visão resumida dos processos/docs do cliente
+
+**O que falta:**
+1. Advogado NAO tem painel dedicado no DashboardRouter (cai no `default: DashboardHome`)
+2. Falta visao unificada: pastas de clientes + chat + processos + prazos num painel coeso
+3. Orion nao auxilia o advogado no dia-a-dia (análise de prazos, resumo de caso, sugestao de estratégia)
+4. Cliente nao recebe updates automáticos do advogado
+5. Falta timeline de atividades por caso/cliente
+
+---
+
+## Arquitetura do Fluxo
 
 ```text
-PRODUTOR cria produto → ativa programa afiliados
-     ↓
-AFILIADO encontra no marketplace → solicita → aprovado → recebe link/cupom
-     ↓
-AFILIADO divulga link → CLIENTE acessa loja do produtor com ?ref=HASH
-     ↓
-CLIENTE compra → checkout → pagamento confirmado
-     ↓
-SISTEMA automaticamente:
-  1. Cria customer_access (acesso ao conteúdo)
-  2. Detecta ref/cupom → registra affiliate_sale + comissão
-  3. Notifica produtor + afiliado
-     ↓
-CLIENTE acessa /dashboard/meus-acessos (área de membros)
-AFILIADO vê venda no dashboard
-PRODUTOR vê receita e comissão paga
+┌──────────────────────────────────────────────────────┐
+│                  ADVOGADO                             │
+│                                                      │
+│  ┌─────────┐  ┌───────────┐  ┌──────────────────┐   │
+│  │ Pastas  │  │  Chat     │  │  Processos/Prazos│   │
+│  │ Cliente │  │  Ao Vivo  │  │  Documentos      │   │
+│  └────┬────┘  └─────┬─────┘  └────────┬─────────┘   │
+│       │             │                  │             │
+│       └─────────────┼──────────────────┘             │
+│                     │                                │
+│              ┌──────▼──────┐                         │
+│              │  ORION IA   │                         │
+│              │ Resumo Caso │                         │
+│              │ Prazos IA   │                         │
+│              │ Estratégia  │                         │
+│              │ Minutas     │                         │
+│              └──────┬──────┘                         │
+│                     │                                │
+│              ┌──────▼──────┐                         │
+│              │   CLIENTE   │                         │
+│              │ Portal      │                         │
+│              │ Notificação │                         │
+│              │ Chat        │                         │
+│              └─────────────┘                         │
+└──────────────────────────────────────────────────────┘
 ```
-
-### Gaps identificados:
-
-1. **Afiliado NÃO tem loja própria** — a vitrine mostra produtos mas redireciona para loja do produtor. O afiliado precisa de uma **loja/vitrine aprimorada** com branding próprio
-2. **Checkout NÃO cria `customer_access`** — compra não libera acesso automático
-3. **Checkout NÃO registra `affiliate_sales`** — ref/cupom tracking não efetiva venda
-4. **Vitrine do afiliado é básica** — sem categorias, sem busca avançada, sem SEO
-5. **Orion não ajuda no checkout** — sem assistente de dúvidas na loja
-6. **Afiliado não tem analytics detalhado** — sem gráficos de conversão/tendência
 
 ---
 
 ## Etapas de Implementação
 
-### 1. Vitrine do Afiliado Aprimorada (Loja do Afiliado)
+### 1. Criar `AdvogadoDashboard.tsx` — Painel Dedicado
 
-Refatorar `VitrineAfiliado.tsx` para ser uma loja completa:
-- Header com foto, nome e bio do afiliado (branding pessoal)
-- Grid de produtos com categorias, busca, filtros e ordenação (similar à Loja do produtor)
-- Cada produto mostra preço, tipo, comissão (badge "Recomendo")
-- Botão "Comprar" leva à loja do produtor com `?ref=HASH` preservado
-- SEO com DynamicMeta por produto
-- Botão "Perguntar ao Orion" para dúvidas sobre qualquer produto da vitrine
+Novo componente com visão executiva:
+- **Header**: Saudação + stats (clientes ativos, processos em andamento, prazos da semana, mensagens nao lidas)
+- **Seção "Meus Clientes"**: Grid compacto dos clientes ativos com badges de status, ultimo contato, click abre a pasta
+- **Seção "Prazos Urgentes"**: Lista dos proximos 7 dias com cores (vermelho = vence hoje, amarelo = 3 dias)
+- **Seção "Mensagens Recentes"**: Ultimas mensagens do chat com clientes (preview + unread count)
+- **Seção "Atividade Recente"**: Timeline de atividades (novos docs, movimentações, mensagens)
+- **Widget "Orion Insights"**: Resumo IA do dia (prazos, pendências, sugestões)
+- **Navegação rápida**: Gerar Documento, Pesquisa, CRM, Processos, Chat, Consultas
 
-**Modificado**: `src/pages/VitrineAfiliado.tsx`
+Registrar no `DashboardRouter`:
+```
+case "advogado": return <AdvogadoDashboard />;
+```
 
-### 2. Checkout com Entrega Automática + Rastreamento de Afiliado
+### 2. Expandir Pasta do Cliente (ClientFolderDialog)
 
-Criar edge function `process-sale` que é chamada após confirmação de pagamento:
+A pasta ja tem tabs info/documentos. Adicionar:
+- **Tab "Processos"**: Lista de processos vinculados ao cliente (via `processos.client_profile_id`)
+- **Tab "Timeline"**: Histórico cronológico de todas interações (mensagens, docs, movimentações, consultas)
+- **Tab "Orion"**: Botão "Resumo do Caso" que gera resumo IA completo do cliente (docs + processos + chat)
 
-1. Recebe `order_id` 
-2. Busca order → cria `customer_access` (libera conteúdo)
-3. Verifica se há `ref` (cookie/param) ou cupom → busca `affiliate_links` pelo hash
-4. Se afiliado encontrado → calcula comissão via `affiliate_programs.commission_percent`
-5. Insere `affiliate_sales` com `amount_cents`, `commission_cents`, `tracking_type`
-6. Retorna confirmação
+### 3. Chat Advogado ↔ Cliente Aprimorado
 
-**Novo**: `supabase/functions/process-sale/index.ts`
-**Modificado**: Componente de checkout/pagamento para chamar esta function após pagamento
+O ChatHumano ja funciona. Melhorias:
+- **Indicador de presença** (ja tem `useLawyerPresence` -- garantir funcionalidade)
+- **Botão "Orion: Redigir Resposta"**: Sugere resposta ao advogado baseado no contexto da conversa
+- **Botão "Resumir Conversa"**: Orion resume toda a conversa em 3-5 pontos
+- **Anexo de documento**: Permitir enviar arquivos no chat (upload para Storage)
+- **Notificação push**: Ao enviar mensagem, criar `notificacoes` para o destinatário
 
-### 3. Orion Assistente na Loja (Widget de Dúvidas)
+### 4. Integração Orion IA para Advogado
 
-Componente flutuante na Loja e Vitrine que permite o cliente perguntar ao Orion sobre produtos antes de comprar:
-- Botão flutuante "Dúvidas? Pergunte ao Orion"
-- Mini-chat que chama `orion-produtor-ai` action `product_faq`
-- Contexto: dados do produto atual (título, descrição, preço)
+Nova edge function `orion-advogado-ai` com actions:
+- `case_summary`: Resumo completo de um caso (agrega processos, docs, chat, consultas de um cliente)
+- `deadline_analysis`: Analisa prazos processuais e sugere prioridades
+- `draft_response`: Sugere resposta para mensagem de cliente
+- `strategy_suggestion`: Sugere estratégia jurídica baseada nos dados do caso
+- `document_review`: Revisa documento e sugere melhorias
 
-**Novo**: `src/components/store/OrionStoreAssistant.tsx`
-**Modificado**: `src/pages/Loja.tsx`, `src/pages/ProdutoDetalhe.tsx`, `src/pages/VitrineAfiliado.tsx`
+Usa Gemini free API (7-key rotation), stack existente.
 
-### 4. Dashboard do Afiliado — Analytics Avançado
+### 5. Sistema de Notificações Advogado ↔ Cliente
 
-Adicionar tab "Analytics" ao AfiliadoDashboard:
-- Gráfico de cliques/conversões por período (últimos 7/30 dias)
-- Taxa de conversão por produto
-- Produtos mais vendidos (ranking)
-- Widget "Orion: Análise de Performance" com sugestões IA
+Usar tabela `notificacoes` existente para:
+- Advogado adiciona documento → notifica cliente
+- Advogado muda status do processo → notifica cliente
+- Cliente envia mensagem → notifica advogado
+- Prazo se aproxima (3 dias) → notifica advogado
+- Consulta agendada → notifica ambos
 
-**Modificado**: `src/pages/dashboard/AfiliadoDashboard.tsx`
+### 6. Dashboard do Cliente — Melhorias de Conexão
 
-### 5. Orion Copiloto Completo para Afiliado
-
-Expandir edge function `orion-produtor-ai` com novas actions:
-- `affiliate_strategy`: Sugere estratégia de divulgação baseada nos dados do afiliado
-- `best_products`: Recomenda produtos do marketplace com maior potencial
-- `social_calendar`: Sugere calendário de postagens para redes sociais
-
-**Modificado**: `supabase/functions/orion-produtor-ai/index.ts`
-
-### 6. Notificações Produtor ↔ Afiliado
-
-Adicionar registros na tabela `notifications` (se existir) ou criar sistema simples:
-- Produtor recebe notificação quando afiliado solicita programa
-- Afiliado recebe notificação quando aprovado/rejeitado
-- Produtor recebe notificação de venda via afiliado
-- Afiliado recebe notificação de comissão ganho
-
-**Novo**: Migration para tabela `sale_notifications` (se notifications não existir)
+Atualizar `ClienteDashboard.tsx`:
+- Mostrar nome e foto do advogado vinculado
+- Badge de "advogado online" (presença)
+- Botão direto "Enviar Mensagem" que abre chat com o advogado
+- Seção "Atualizações" mostrando ações recentes do advogado no caso
 
 ---
 
 ## Detalhes Técnicos
 
 ### Arquivos a criar:
-1. `supabase/functions/process-sale/index.ts` — entrega automática + tracking afiliado
-2. `src/components/store/OrionStoreAssistant.tsx` — widget de dúvidas na loja
+1. `src/pages/dashboard/AdvogadoDashboard.tsx` — painel dedicado do advogado
+2. `src/components/dashboard/OrionAdvogadoInsights.tsx` — widget de insights IA
+3. `supabase/functions/orion-advogado-ai/index.ts` — edge function IA do advogado
 
 ### Arquivos a modificar:
-1. `src/pages/VitrineAfiliado.tsx` — refatorar para loja completa
-2. `src/pages/dashboard/AfiliadoDashboard.tsx` — tab Analytics + Orion strategy
-3. `src/pages/Loja.tsx` — adicionar OrionStoreAssistant
-4. `src/pages/ProdutoDetalhe.tsx` — adicionar OrionStoreAssistant
-5. `supabase/functions/orion-produtor-ai/index.ts` — novas actions (affiliate_strategy, best_products, social_calendar)
+1. `src/pages/dashboard/DashboardRouter.tsx` — adicionar case "advogado"
+2. `src/components/dashboard/clients/ClientFolderDialog.tsx` — novas tabs (processos, timeline, orion)
+3. `src/pages/dashboard/ChatHumano.tsx` — botoes Orion (redigir resposta, resumir)
+4. `src/pages/dashboard/ClienteDashboard.tsx` — info do advogado + updates
 
-### Fluxo de venda completo:
-```text
-Cliente acessa /loja/CREATOR?ref=HASH
-     → AffiliateTracker salva ref em cookie (já existe)
-     → Adiciona ao carrinho → Checkout → Pagamento (Stripe)
-     → Webhook/callback chama process-sale
-     → process-sale:
-        1. INSERT customer_access
-        2. Detecta ref cookie → busca affiliate_links.hash
-        3. Busca affiliate_programs.commission_percent
-        4. INSERT affiliate_sales (amount, commission, tracking_type)
-     → Cliente redirecionado para /dashboard/meus-acessos
-     → Afiliado vê venda no dashboard
-     → Produtor vê receita no dashboard
-```
+### Database:
+- Nenhuma migration necessaria — todas as tabelas ja existem (client_profiles, processos, chat_conversations, chat_messages, notificacoes, documents, consultas)
+- Relacao advogado-cliente ja via `client_profiles.advogado_id` e `chat_conversations.advogado_id`
+
+### Edge function actions:
+| Action | Input | Output |
+|--------|-------|--------|
+| `case_summary` | client_profile_id | Resumo estruturado do caso |
+| `deadline_analysis` | user_id (advogado) | Lista priorizada de prazos |
+| `draft_response` | conversation_id, last_message | Sugestao de resposta |
+| `strategy_suggestion` | processo_id | Analise e sugestoes |
+| `document_review` | document_id | Revisao com pontos de melhoria |
 
