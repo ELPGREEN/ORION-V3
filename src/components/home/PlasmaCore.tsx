@@ -339,8 +339,8 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
           />
         ))}
 
-        {/* Radial tick marks */}
-        {Array.from({ length: 36 }).map((_, i) => (
+        {/* Radial tick marks — 12 ticks (was 36) */}
+        {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={`tick-${i}`}
             className="absolute top-1/2 left-1/2"
@@ -349,7 +349,7 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
               height: i % 3 === 0 ? "8%" : "4%",
               background: `linear-gradient(to bottom, hsl(var(--primary) / ${i % 3 === 0 ? 0.5 : 0.25}), transparent)`,
               transformOrigin: "center 0",
-              transform: `translate(-50%, 0) rotate(${i * 10}deg) translateY(-49%)`,
+              transform: `translate(-50%, 0) rotate(${i * 30}deg) translateY(-49%)`,
               animation: "plasmaRingSpin 15s linear infinite",
               zIndex: 3,
             }}
