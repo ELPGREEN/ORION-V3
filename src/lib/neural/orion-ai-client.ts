@@ -815,7 +815,7 @@ export async function analyzeFrameStreaming(
         imageBase64, context: streamContext, question,
         userMemory: getUserMemory(),
         dashboardContext: dashboardCtx,
-        chatHistory: chatHistory?.slice(-6),
+        chatHistory: chatHistory?.slice(-4),
         identificationMode, intentType,
         stream: true,
         localDetections: buildLocalDetections(),
