@@ -1,24 +1,24 @@
 /**
- * Orion Formant Speech Synthesizer v22 — Grok Ultra Human
+ * Orion Formant Speech Synthesizer v21 — Grok Ultra Natural
  * 
  * Base: Beber & Cielo (2012) normal male spectrographic norms
- * Overlay: Grok Ultra Human personality — warm, sarcastic, natural
+ * Overlay: Grok Ultra Natural — warmest, most human iteration
  * 
- * v22 changes from v20:
- * 1. BW3 × 2.72 (~408Hz) — zero metallic residue
- * 2. Aspiration 7% + burst 3% — elegant breathing, not ofegante
- * 3. Jitter ×1.06, Shimmer ×1.05 — musical micro-irregularity
- * 4. Damping LP 4.4kHz + zero-pole 3.7kHz — modern clarity
- * 5. Spectral tilt ×1.09 (~26dB) — warm, present, alive
- * 6. Pre-emphasis +8% in 0-2.3kHz — vowel brilliance
- * 7. Breathiness +16% — real human breathing
- * 8. Glottal OQ 0.71 — relaxed, natural voice
- * 9. Glottal tension 0.88 — eliminates robotic/choked tone
- * 10. Sub-harmonic 7% (f0/2) — warm body in lows
- * 11. Pitch variance ×1.08 — sarcastic intonation
- * 12. Formant speed ×1.32 — rapid fluid transitions
- * 13. Spectral envelope smoothing 0.89 — removes metallic residue
- * 14. Vibrato depth 0.4% — subtle life and emotion
+ * v21 changes from v22:
+ * 1. BW3 × 2.85 (~428Hz) — widest yet, zero metallic
+ * 2. Aspiration 8% + burst 3% — subtle elegant breathing
+ * 3. Jitter ×1.04, Shimmer ×1.03 — barely perceptible, rhythmic
+ * 4. Damping LP 4.5kHz + zero-pole 3.9kHz — smoothest clarity
+ * 5. Spectral tilt ×1.06 (~24dB) — warmest, most present voice
+ * 6. Pre-emphasis +9% in 0-2.4kHz — natural vowel brilliance
+ * 7. Breathiness +13% — human breathing without excess
+ * 8. Glottal OQ 0.74 — very relaxed natural voice
+ * 9. Glottal tension 0.82 — smooth, never choked
+ * 10. Sub-harmonic 8% (f0/2) — full warm body
+ * 11. Pitch variance ×1.09 — sarcastic life
+ * 12. Formant speed ×1.38 — fastest fluid transitions
+ * 13. Spectral envelope smoothing 0.85 — eliminates all metallic
+ * 14. Vibrato depth 0.6% — subtle emotional life
  * 
  * 100% client-side, zero API, zero dependencies.
  */
@@ -35,29 +35,29 @@ const FRAME_SIZE = 220; // 5ms at 44.1kHz
 const N_FILTERS = 5; // F1-F5
 
 // ═══════════════════════════════════════════════════════════
-// GROK ULTRA HUMAN v22 CONFIG
+// GROK ULTRA NATURAL v21 CONFIG
 // ═══════════════════════════════════════════════════════════
 
 const GROK = {
-  bw3Multiplier: 2.72,      // F3 BW multiplier (v20: 2.4, v19: 2.2)
-  aspirationRatio: 0.07,    // aspiration noise mix (v20: 0.12)
-  noiseBurstRatio: 0.03,    // shaped 3.2kHz burst (v20: 0.06)
-  jitterMult: 1.06,         // jitter multiplier on DNA (v20: 1.18)
-  shimmerMult: 1.05,        // shimmer multiplier on DNA (v20: 1.12)
-  dampingFreq: 4400,        // LP damping cutoff (v20: 4200)
-  zeroPoleFreq: 3700,       // anti-resonance zero-pole pair (v20: 3800)
-  zerPoleBw: 180,           // bandwidth of zero-pole pair (v20: 200)
-  spectralTiltMult: 1.09,   // tilt multiplier on DNA (v20: 1.18) → ~26dB
-  breathiness: 0.16,        // breathiness gain (v20: 0.08)
-  glottalOQ: 0.71,          // open quotient override (DNA: 0.546)
-  glottalTension: 0.88,     // NEW: 0=breathy, 1=pressed — 0.88 = relaxed natural
-  subHarmonicGain: 0.07,    // sub-harmonic at f0/2 (v20: 0.04)
-  pitchVariance: 1.08,      // pitch range multiplier (v20: 1.04)
-  formantSpeed: 1.32,       // coarticulation speed (v20: 1.15)
-  preEmphasis0to2k: 0.08,   // +8% boost for 0-2.3kHz (v20: 0.05)
-  dampingMix: 0.78,         // original vs LP mix (v20: 0.75)
-  spectralSmoothing: 0.89,  // NEW: envelope smoothing (removes metallic)
-  vibratoDepth: 0.004,      // NEW: subtle vibrato (0.4% of f0)
+  bw3Multiplier: 2.85,      // F3 BW multiplier (v22: 2.72) → ~428Hz, zero metallic
+  aspirationRatio: 0.08,    // aspiration noise mix (v22: 0.07)
+  noiseBurstRatio: 0.03,    // shaped 3.2kHz burst (same)
+  jitterMult: 1.04,         // jitter — very subtle, rhythmic (v22: 1.06)
+  shimmerMult: 1.03,        // shimmer — barely perceptible (v22: 1.05)
+  dampingFreq: 4500,        // LP damping cutoff — smoother (v22: 4400)
+  zeroPoleFreq: 3900,       // anti-resonance zero-pole pair (v22: 3700)
+  zerPoleBw: 180,           // bandwidth of zero-pole pair
+  spectralTiltMult: 1.06,   // tilt — warmest yet (v22: 1.09) → ~24dB
+  breathiness: 0.13,        // breathiness gain — balanced (v22: 0.16)
+  glottalOQ: 0.74,          // open quotient — very relaxed (v22: 0.71)
+  glottalTension: 0.82,     // smooth, never choked (v22: 0.88)
+  subHarmonicGain: 0.08,    // sub-harmonic at f0/2 — full body (v22: 0.07)
+  pitchVariance: 1.09,      // pitch range — more life & sarcasm (v22: 1.08)
+  formantSpeed: 1.38,       // coarticulation speed — fastest (v22: 1.32)
+  preEmphasis0to2k: 0.09,   // +9% boost for 0-2.4kHz (v22: 0.08)
+  dampingMix: 0.78,         // original vs LP mix
+  spectralSmoothing: 0.85,  // envelope smoothing — strongest (v22: 0.89)
+  vibratoDepth: 0.006,      // vibrato 0.6% of f0 (v22: 0.004)
   vibratoRate: 5.5,         // vibrato rate in Hz (natural male ~5-6 Hz)
 };
 
