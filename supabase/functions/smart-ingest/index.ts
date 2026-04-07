@@ -136,43 +136,42 @@ Se o documento for muito longo, extraia o máximo possível desde o início.`;
   // Pass 1: initial extraction
   for (const key of keys) {
     try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        signal: AbortSignal.timeout(120_000),
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{
-            role: "user",
-            content: [
-              { type: "text", text: firstPrompt },
-              { type: "image_url", image_url: { url: `data:application/pdf;base64,${fileBase64}` } },
-            ],
-          }],
-          max_tokens: 16384,
-          temperature: 0.1,
-        }),
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(120_000),
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [
+              { text: firstPrompt },
+              { inlineData: { mimeType: "application/pdf", data: fileBase64 } },
+            ] }],
+            generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
+          }),
+        }
+      );
 
       if (!response.ok) {
-        console.warn(`OpenAI pass 1 failed (${response.status})`);
+        console.warn(`Gemini pass 1 failed (${response.status})`);
+        await response.text();
         continue;
       }
 
       const data = await response.json();
-      const text = data.choices?.[0]?.message?.content || "";
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       if (text.length > 100) {
         fullText = text;
         keyIndex = keys.indexOf(key);
-        console.log(`✅ OpenAI pass 1: ${text.length} chars from ${fileName}`);
+        console.log(`✅ Gemini pass 1: ${text.length} chars from ${fileName}`);
         break;
       }
     } catch (err: any) {
-      console.warn(`OpenAI pass 1 error: ${err.message}`);
+      console.warn(`Gemini pass 1 error: ${err.message}`);
     }
   }
 
-  if (!fullText) throw new Error("OpenAI text extraction failed with all keys");
+  if (!fullText) throw new Error("Gemini text extraction failed with all keys");
 
   // Multi-pass continuation: keep asking for more text if the output was likely truncated
   // GPT-4o-mini max output is ~16K tokens ≈ ~50K chars for Portuguese
@@ -199,31 +198,30 @@ Continue EXATAMENTE de onde parou. Retorne apenas o texto continuado, sem repeti
 
     const key = keys[keyIndex % keys.length];
     try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        signal: AbortSignal.timeout(Math.min(90_000, deadline - Date.now() - 10000)),
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{
-            role: "user",
-            content: [
-              { type: "text", text: continuePrompt },
-              { type: "image_url", image_url: { url: `data:application/pdf;base64,${fileBase64}` } },
-            ],
-          }],
-          max_tokens: 16384,
-          temperature: 0.1,
-        }),
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(Math.min(90_000, deadline - Date.now() - 10000)),
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [
+              { text: continuePrompt },
+              { inlineData: { mimeType: "application/pdf", data: fileBase64 } },
+            ] }],
+            generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
+          }),
+        }
+      );
 
       if (!response.ok) {
-        console.warn(`OpenAI pass ${pass} failed (${response.status})`);
+        console.warn(`Gemini pass ${pass} failed (${response.status})`);
+        await response.text();
         break;
       }
 
       const data = await response.json();
-      const moreText = data.choices?.[0]?.message?.content || "";
+      const moreText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       if (moreText.length < 500) {
         console.log(`📄 Pass ${pass}: only ${moreText.length} chars, document likely complete`);
         break;
@@ -233,7 +231,7 @@ Continue EXATAMENTE de onde parou. Retorne apenas o texto continuado, sem repeti
       console.log(`📖 Pass ${pass}: +${moreText.length} chars (total: ${fullText.length})`);
       keyIndex++;
     } catch (err: any) {
-      console.warn(`OpenAI pass ${pass} error: ${err.message}`);
+      console.warn(`Gemini pass ${pass} error: ${err.message}`);
       break;
     }
   }
