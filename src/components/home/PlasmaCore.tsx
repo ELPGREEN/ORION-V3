@@ -299,6 +299,8 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
         <img
           src={plasmaCoreHd}
           alt="Orion Plasma Core"
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-contain rounded-full"
           style={{
             zIndex: 1,
