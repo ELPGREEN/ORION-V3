@@ -54,17 +54,17 @@ export default function Index() {
       <HeroSection t={t} />
 
       {/* App purpose section — required for Google OAuth verification */}
-      <section id="about" className="py-16 sm:py-20 bg-muted/5 border-y border-border/10">
+      <section id="about" className="py-10 sm:py-14 bg-muted/5 border-y border-border/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-10 max-w-4xl text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">
             About IASoftHub
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-6">
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-4">
             <strong>IASoftHub</strong> is an enterprise artificial intelligence platform featuring <strong>Orion IA</strong> — 
             our flagship AI assistant for workflow automation, document management, client organization, and business process optimization. 
             Powered by next-generation neural intelligence with bank-grade security (<em>Orion Shield</em>).
           </p>
-          <p className="text-sm text-muted-foreground/80 leading-relaxed">
+          <p className="text-xs text-muted-foreground/80 leading-relaxed">
             IASoftHub uses your Google account solely for secure authentication and sign-in. 
             No email content, contacts, or sensitive data is accessed or stored beyond basic profile information (name and email) 
             needed to create your account.

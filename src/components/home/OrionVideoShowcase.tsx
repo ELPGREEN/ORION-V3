@@ -17,7 +17,7 @@ export function OrionVideoShowcase() {
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent z-10" />
 
       {/* Video container */}
-      <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
+      <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="relative aspect-video rounded-sm overflow-hidden border border-primary/10">
           {/* Video */}
           <video

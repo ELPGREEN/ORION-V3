@@ -7,35 +7,35 @@ const profiles = [
     icon: Scale,
     title: "Advogados",
     desc: "Pesquisa jurisprudencial com IA, geração de petições, gestão de processos e prazos.",
-    href: "/clientes?perfil=advogados",
+    href: "/servicos#advogados",
     highlight: "IA Jurídica",
   },
   {
     icon: Building2,
     title: "Escritórios & Empresas",
     desc: "CRM, gestão de equipe, faturamento, dashboard de métricas e multi-usuários.",
-    href: "/clientes?perfil=escritorios",
+    href: "/servicos#industria",
     highlight: "Gestão Completa",
   },
   {
     icon: ShoppingBag,
     title: "Produtores Digitais",
     desc: "Loja própria, checkout integrado, gestão de produtos e dashboard de vendas.",
-    href: "/clientes?perfil=produtores",
+    href: "/servicos#produtores",
     highlight: "E-commerce IA",
   },
   {
     icon: Briefcase,
     title: "Afiliados",
     desc: "Links rastreáveis, comissões automáticas, dashboard de performance e marketplace.",
-    href: "/clientes?perfil=afiliados",
+    href: "/servicos#afiliados",
     highlight: "Renda Passiva",
   },
 ];
 
 export function WhoIsItForSection() {
   return (
-    <section className="py-16 sm:py-24 bg-background relative overflow-hidden">
+    <section className="py-12 sm:py-16 bg-background relative overflow-hidden">
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
       <div className="container px-4 sm:px-6">
