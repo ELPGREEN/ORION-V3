@@ -75,22 +75,36 @@ function formantEnvelope(
   f1: number, f2: number, f3: number, f4: number,
   bw1: number, bw2: number, bw3: number, bw4: number,
 ): number {
-  // Parallel formant model with proper amplitude weighting
-  // F1/F2 carry vowel identity, F3 speaker identity, F4 "air"
+  // Parallel formant model — sharper peaks for better vowel differentiation
+  // F1/F2 carry vowel identity (strongest), F3 speaker identity, F4 "air"
   const g1 = formantGain(freq, f1, bw1) * 1.0;
-  const g2 = formantGain(freq, f2, bw2) * 0.75;
-  const g3 = formantGain(freq, f3, bw3) * 0.35;
-  const g4 = formantGain(freq, f4, bw4) * 0.18;
+  const g2 = formantGain(freq, f2, bw2) * 0.85;
+  const g3 = formantGain(freq, f3, bw3) * 0.40;
+  const g4 = formantGain(freq, f4, bw4) * 0.20;
   
-  return g1 + g2 + g3 + g4;
+  // Anti-resonance between F1 and F2 for vowel clarity
+  // This dip between formants is what distinguishes vowels
+  const midFreq = (f1 + f2) * 0.5;
+  const midBw = (f2 - f1) * 0.3;
+  const antiR = midBw > 50 ? 1 - 0.4 * formantGainRaw(freq, midFreq, midBw) : 1;
+  
+  return (g1 + g2 + g3 + g4) * antiR;
 }
 
+/** Sharp formant gain — uses 4th-order rolloff for tighter peaks */
 function formantGain(freq: number, formantFreq: number, bandwidth: number): number {
   if (formantFreq < 10) return 0;
+  const delta = (freq - formantFreq) / (bandwidth * 0.4); // narrower peaks (was 0.5)
+  // 4th-order: delta^4 gives MUCH sharper peaks than delta^2
+  const d2 = delta * delta;
+  return 1.0 / (1.0 + d2 * d2);
+}
+
+/** Raw Lorentzian (for anti-resonance) */
+function formantGainRaw(freq: number, formantFreq: number, bandwidth: number): number {
+  if (formantFreq < 10 || bandwidth < 10) return 0;
   const delta = (freq - formantFreq) / (bandwidth * 0.5);
-  // Skewed Lorentzian — slight asymmetry for more natural resonance
-  const asym = freq > formantFreq ? 1.0 : 0.92;
-  return asym / (1.0 + delta * delta);
+  return 1.0 / (1.0 + delta * delta);
 }
 
 // ═══════════════════════════════════════════════════════════
