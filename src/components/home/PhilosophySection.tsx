@@ -61,9 +61,9 @@ export function PhilosophySection({ t }: PhilosophySectionProps) {
               <ScrollReveal direction="up" delay={0.4}>
                 <div className="flex gap-6 sm:gap-8 pt-6 sm:pt-8 border-t border-border">
                   {[
-                    { icon: Scale, label: t.philosophy.ethics },
-                    { icon: Shield, label: t.philosophy.excellence },
-                    { icon: Heart, label: t.philosophy.results },
+                    { icon: IconScale, label: t.philosophy.ethics },
+                    { icon: IconShield, label: t.philosophy.excellence },
+                    { icon: IconHeart, label: t.philosophy.results },
                   ].map(({ icon: Icon, label }) => (
                     <div key={label} className="group">
                       <div className="w-12 h-12 sm:w-16 sm:h-16 border border-primary/20 flex items-center justify-center mb-3 sm:mb-4 group-hover:border-primary/40 group-hover:bg-primary/5 transition-all duration-500">
