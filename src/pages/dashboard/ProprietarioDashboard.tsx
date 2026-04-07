@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, FileText, FolderOpen, Users, MessageSquare, Store, ShoppingCart, Brain, Bot, Cpu, FlaskConical, Globe2, Chrome, ScrollText, UserCog, Wifi, PenTool, Search, Calendar, Gavel, BarChart3, Shield, ArrowUpRight } from "lucide-react";
+import { Loader2, FileText, FolderOpen, Users, MessageSquare, Store, ShoppingCart, Brain, Bot, Cpu, FlaskConical, Globe2, Chrome, ScrollText, UserCog, Wifi, PenTool, Search, Calendar, Gavel, BarChart3, Shield, ArrowUpRight, Bell, CreditCard, ListTodo, Globe, HelpCircle, Settings, Crown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { lazy, Suspense } from "react";
@@ -60,11 +60,24 @@ export default function ProprietarioDashboard() {
         { title: "Processos", icon: FolderOpen, path: "/dashboard/processos" },
         { title: "CRM Clientes", icon: Users, path: "/dashboard/crm" },
         { title: "Documentos", icon: FileText, path: "/dashboard/documentos" },
+        { title: "Tarefas & Prazos", icon: ListTodo, path: "/dashboard/tarefas" },
         { title: "Pesquisa Jurídica", icon: Search, path: "/dashboard/pesquisa-unificada" },
         { title: "Chat ao Vivo", icon: MessageSquare, path: "/dashboard/chat-ao-vivo" },
-        { title: "Assinaturas", icon: PenTool, path: "/dashboard/assinaturas" },
+        { title: "Assinatura Digital", icon: PenTool, path: "/dashboard/assinatura-digital" },
         { title: "Gerar Documento", icon: Gavel, path: "/dashboard/gerar-documento" },
+        { title: "Docs Internacionais", icon: Globe, path: "/dashboard/documentos-internacionais" },
         { title: "Consultas", icon: Calendar, path: "/dashboard/consultas" },
+      ],
+    },
+    {
+      title: "Comunicação & Financeiro",
+      icon: MessageSquare,
+      items: [
+        { title: "Notificações", icon: Bell, path: "/dashboard/notificacoes" },
+        { title: "Pagamentos", icon: CreditCard, path: "/dashboard/pagamentos" },
+        { title: "Central de Ajuda", icon: HelpCircle, path: "/dashboard/instrucoes" },
+        { title: "Meu Escritório", icon: Settings, path: "/dashboard/configuracoes" },
+        { title: "Meu Plano", icon: Crown, path: "/dashboard/plano" },
       ],
     },
     {
