@@ -253,33 +253,38 @@ function getVOTParams(phoneme: string, nextPhoneme?: string): SegmentParams {
 /** Build the segment sequence from phonemes — the key conversion step */
 function buildSegments(phonemes: string[]): Segment[] {
   const seq: Segment[] = [];
-  const vowelSamples = msToSamples(120);
 
-  for (const phoneme of phonemes) {
+  for (let pi = 0; pi < phonemes.length; pi++) {
+    const phoneme = phonemes[pi];
     const params = PT_PHONEMES[phoneme];
     if (!params) continue;
+
+    const nextPhoneme = pi + 1 < phonemes.length ? phonemes[pi + 1] : undefined;
 
     // Handle plosives with proper closure → burst → VOT
     const plosiveRule = PLOSIVE_RULES[phoneme];
     if (plosiveRule) {
       const { closureMs, burstMs, votMs, closureType } = plosiveRule;
-      // 1. Closure
       if (closureMs > 0) {
         seq.push([closureType === 'silence' ? SILENCE_SEG : VOICEBAR_SEG, msToSamples(closureMs)]);
       }
-      // 2. Burst
       if (burstMs > 0) {
         seq.push([getBurstParams(phoneme), msToSamples(burstMs)]);
       }
-      // 3. VOT (aspiration or fricative portion)
       if (votMs > 0) {
-        seq.push([getVOTParams(phoneme), msToSamples(votMs)]);
+        seq.push([getVOTParams(phoneme, nextPhoneme), msToSamples(votMs)]);
       }
       continue;
     }
 
+    // Context-dependent /h/ allophone
+    if (phoneme === 'h') {
+      seq.push([getHAllophone(nextPhoneme), msToSamples(params.duration)]);
+      continue;
+    }
+
     // Regular phonemes
-    const seg = phonemeToSegment(params);
+    const seg = phonemeToSegment(params, phoneme);
     const dur = msToSamples(params.duration);
     seq.push([seg, dur]);
   }
