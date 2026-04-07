@@ -46,7 +46,7 @@ export function HeroSection({ t }: HeroSectionProps) {
   const heroTranslateY = scrollY * 0.15;
 
   return (
-    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[85svh] flex items-center justify-center overflow-hidden">
       <HeroThreeBackground />
 
       {/* Neural network background image */}
@@ -98,7 +98,7 @@ export function HeroSection({ t }: HeroSectionProps) {
             }}
           >
             <div className="flex items-center justify-center">
-              <PlasmaCore className="w-32 h-32 sm:w-40 sm:h-40 md:w-52 md:h-52 lg:w-60 lg:h-60" />
+              <PlasmaCore className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48" />
             </div>
           </div>
 
@@ -114,7 +114,7 @@ export function HeroSection({ t }: HeroSectionProps) {
             <img
               src={orionTitle}
               alt="ORION"
-              className="h-24 sm:h-32 md:h-44 lg:h-56 xl:h-64 mx-auto drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
+              className="h-20 sm:h-28 md:h-36 lg:h-44 xl:h-52 mx-auto drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
               style={{
                 filter: 'drop-shadow(0 0 80px hsl(30 85% 52% / 0.4)) drop-shadow(0 0 120px hsl(30 85% 52% / 0.2))',
               }}
@@ -124,7 +124,7 @@ export function HeroSection({ t }: HeroSectionProps) {
               src={orionTitle}
               alt=""
               aria-hidden="true"
-              className="h-16 sm:h-20 md:h-28 lg:h-32 mx-auto pointer-events-none select-none"
+              className="h-12 sm:h-16 md:h-20 lg:h-24 mx-auto pointer-events-none select-none"
               style={{
                 transform: 'scaleY(-1) translateY(4px)',
                 opacity: 0.12,
