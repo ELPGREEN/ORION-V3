@@ -40,27 +40,7 @@ function getProviders(): AIProvider[] {
     });
   }
 
-  // Lovable AI Gateway
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-  if (lovableKey) {
-    providers.push({
-      name: "Lovable/gemini-3-flash",
-      call: async (msgs, maxTokens, temperature) => {
-        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}` },
-          signal: AbortSignal.timeout(20000),
-          body: JSON.stringify({ model: "google/gemini-3-flash-preview", messages: msgs, temperature, max_tokens: maxTokens }),
-        });
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(`Lovable AI ${res.status}: ${t.substring(0, 200)}`);
-        }
-        const data = await res.json();
-        return data.choices?.[0]?.message?.content || "";
-      },
-    });
-  }
+  // (Lovable AI Gateway removed — using direct Gemini keys below for free usage)
 
   // Multiple Gemini keys for rate limit resilience
   const geminiKeys = [

@@ -16,7 +16,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const HF_API = "https://api-inference.huggingface.co";
 const GITHUB_API = "https://api.github.com";
 
@@ -174,8 +174,8 @@ async function handleAutoCreate(body: Record<string, unknown>) {
   const sb = getSupabase();
   const { task_description, difficulty_context, failed_attempts } = body;
 
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+  const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+  if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not configured");
 
   // Ask AI to decide what agent to create
   const decisionPrompt = `You are Orion, an AI system that creates specialized autonomous agents.
@@ -198,36 +198,11 @@ Respond in JSON:
   "creation_reason": "why this agent is needed"
 }`;
 
-  const aiRes = await fetch(AI_GATEWAY, {
+  const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [{ role: "user", content: decisionPrompt }],
-      tools: [{
-        type: "function",
-        function: {
-          name: "create_agent",
-          description: "Create a new autonomous agent",
-          parameters: {
-            type: "object",
-            properties: {
-              agent_name: { type: "string" },
-              agent_role: { type: "string" },
-              category: { type: "string" },
-              hf_model_id: { type: "string" },
-              system_prompt: { type: "string" },
-              capabilities: { type: "array", items: { type: "string" } },
-              creation_reason: { type: "string" },
-            },
-            required: ["agent_name", "agent_role", "category", "creation_reason"],
-          },
-        },
-      }],
-      tool_choice: { type: "function", function: { name: "create_agent" } },
+      contents: [{ role: "user", parts: [{ text: decisionPrompt }] }],
     }),
   });
 
@@ -235,13 +210,12 @@ Respond in JSON:
   let agentSpec: Record<string, unknown>;
 
   try {
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    agentSpec = JSON.parse(toolCall?.function?.arguments || "{}");
+    // Gemini native format: parse JSON from text response
+    const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    agentSpec = JSON.parse(jsonMatch?.[0] || "{}");
   } catch {
-    // Fallback: parse from content
-    const content = aiData.choices?.[0]?.message?.content || "{}";
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    agentSpec = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+    agentSpec = {};
   }
 
   // Store the new agent
@@ -310,27 +284,24 @@ async function handleInvokeAgent(body: Record<string, unknown>) {
     }
   }
 
-  // Fallback or primary: use Lovable AI with agent's system prompt
+  // Fallback or primary: use direct Gemini API with agent's system prompt
   if (!result || result.fallback) {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("No AI key available");
+    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_KEY) throw new Error("No Gemini key available");
 
-    const aiRes = await fetch(AI_GATEWAY, {
+    const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: agent.system_prompt || `You are ${agent.agent_name}, a specialized ${agent.agent_role} agent.` },
-          ...(context ? [{ role: "system", content: `Context: ${JSON.stringify(context)}` }] : []),
-          { role: "user", content: String(input) },
+        systemInstruction: { parts: [{ text: agent.system_prompt || `You are ${agent.agent_name}, a specialized ${agent.agent_role} agent.` }] },
+        contents: [
+          ...(context ? [{ role: "user", parts: [{ text: `Context: ${JSON.stringify(context)}` }] }] : []),
+          { role: "user", parts: [{ text: String(input) }] },
         ],
       }),
     });
-    result = await aiRes.json();
+    const data = await aiRes.json();
+    result = { text: data.candidates?.[0]?.content?.parts?.[0]?.text || "" };
   }
 
   // Update invocation stats
@@ -363,9 +334,9 @@ async function handleCodeAnalysis(body: Record<string, unknown>) {
   const sb = getSupabase();
   const { path, query: userQuery, mode } = body;
   const GITHUB_PAT = Deno.env.get("GITHUB_PAT_CHILD") || Deno.env.get("CHILD_GIT_TOKEN");
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
 
-  if (!GITHUB_PAT || !LOVABLE_API_KEY) throw new Error("Missing GitHub PAT or AI key");
+  if (!GITHUB_PAT || !GEMINI_KEY) throw new Error("Missing GitHub PAT or Gemini key");
 
   const ghHeaders = {
     Authorization: `Bearer ${GITHUB_PAT}`,
@@ -408,20 +379,16 @@ ${codeContent.substring(0, 15000)}
 
 Analyze line by line. Be specific about line numbers. Respond in Portuguese (BR).`;
 
-  const aiRes = await fetch(AI_GATEWAY, {
+  const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [{ role: "user", content: analysisPrompt }],
+      contents: [{ role: "user", parts: [{ text: analysisPrompt }] }],
     }),
   });
 
   const aiData = await aiRes.json();
-  const analysis = aiData.choices?.[0]?.message?.content || "Análise não disponível";
+  const analysis = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Análise não disponível";
 
   // Log
   await sb.from("orion_self_analysis").insert({
@@ -437,8 +404,8 @@ Analyze line by line. Be specific about line numbers. Respond in Portuguese (BR)
 // ─── Action: Supabase schema analysis ───
 async function handleSupabaseAnalysis() {
   const sb = getSupabase();
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+  const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+  if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not configured");
 
   // Get all tables info
   const tables = [
@@ -456,23 +423,18 @@ async function handleSupabaseAnalysis() {
     } catch { tableCounts[table] = -1; }
   }
 
-  const aiRes = await fetch(AI_GATEWAY, {
+  const prompt = `You are Orion analyzing a Supabase database. Tables and row counts:\n${JSON.stringify(tableCounts, null, 2)}\n\nProvide:\n1. Health assessment\n2. Missing indexes or optimizations\n3. Suggested new agents based on data patterns\n4. Storage and performance recommendations\n\nRespond in Portuguese (BR).`;
+
+  const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [{
-        role: "user",
-        content: `You are Orion analyzing a Supabase database. Tables and row counts:\n${JSON.stringify(tableCounts, null, 2)}\n\nProvide:\n1. Health assessment\n2. Missing indexes or optimizations\n3. Suggested new agents based on data patterns\n4. Storage and performance recommendations\n\nRespond in Portuguese (BR).`,
-      }],
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
     }),
   });
 
   const aiData = await aiRes.json();
-  const analysis = aiData.choices?.[0]?.message?.content || "";
+  const analysis = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
   await sb.from("orion_self_analysis").insert({
     analysis_type: "supabase_schema",

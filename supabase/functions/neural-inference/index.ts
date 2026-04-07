@@ -88,9 +88,9 @@ async function searchKnowledge(
   limit = 5
 ): Promise<Array<{ title: string; content: string; similarity: number }>> {
   try {
-    // Use the Lovable AI gateway for embedding
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) return [];
+    // Text search fallback (no Lovable Gateway needed — embeddings via Gemini)
+    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_KEY) return [];
 
     // Try to find cached or direct text search as fallback
     const { data } = await supabase
