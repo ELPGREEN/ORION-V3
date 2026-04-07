@@ -136,7 +136,7 @@ export function textToPhonemes(text: string): string[] {
     if (di === 'ch') { phonemes.push('ʃ'); i += 2; continue; }
     if (di === 'lh') { phonemes.push('ʎ'); i += 2; continue; }
     if (di === 'nh') { phonemes.push('ɲ'); i += 2; continue; }
-    if (di === 'rr') { phonemes.push('R'); i += 2; continue; }
+    if (di === 'rr') { phonemes.push('χ'); i += 2; continue; }
     if (di === 'ss') { phonemes.push('s'); i += 2; continue; }
     if (di === 'qu') { phonemes.push('k'); i += 2; continue; }
     if (di === 'gu' && 'ei'.includes(next2)) { phonemes.push('g'); i += 2; continue; }
