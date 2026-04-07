@@ -158,8 +158,8 @@ export function useNeuralVoice(
         const isFinal = lastResult?.isFinal;
         if (!transcript) return;
         if (speakingRef.current || VoiceState.aiResponding) {
-          if (STOP_PATTERNS.test(transcript.trim())) { bargeIn(); speechBufferRef.current = ""; return; }
-          if (isFinal && transcript.split(/\s+/).length >= 3) bargeIn();
+          if (STOP_PATTERNS.test(transcript.trim())) { bargeInCallbackRef.current?.(); speechBufferRef.current = ""; return; }
+          if (isFinal && transcript.split(/\s+/).length >= 3) bargeInCallbackRef.current?.();
         }
         if (!isFinal) return;
         speechBufferRef.current = speechBufferRef.current ? `${speechBufferRef.current} ${transcript}` : transcript;
