@@ -159,7 +159,7 @@ export default function Depoimentos() {
                   {t.testimonials.seeGoogleReviews}
                 </p>
                 <Button asChild className="btn-gold">
-                  <a href="https://www.elpgreen.com/" target="_blank" rel="noopener noreferrer">
+                  <a href="https://www.iasofthub.com/" target="_blank" rel="noopener noreferrer">
                     {t.testimonials.viewGoogleReviews}
                     <ExternalLink className="ml-2 h-4 w-4" />
                   </a>
@@ -210,7 +210,7 @@ export default function Depoimentos() {
               <Link to="/cadastro">Começar Agora</Link>
             </Button>
             <Button size="lg" className="btn-outline-gold" asChild>
-              <a href="https://www.elpgreen.com/" target="_blank" rel="noopener noreferrer">
+              <a href="https://www.iasofthub.com/" target="_blank" rel="noopener noreferrer">
                 Fale Conosco
                 <ArrowRight className="ml-2 h-4 w-4" />
               </a>

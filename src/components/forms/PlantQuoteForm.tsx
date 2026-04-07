@@ -13,7 +13,7 @@ export function PlantQuoteForm({ plantType, plantTitle }: PlantQuoteFormProps) {
       <h3 className="text-lg font-medium mb-4">Request Quote - {plantTitle || plantType}</h3>
       <p className="text-muted-foreground text-sm">Contact us for a customized quote.</p>
       <Button className="mt-4" asChild>
-        <a href="mailto:info@elpgreen.com">Contact Us</a>
+        <a href="mailto:info@iasofthub.com">Contact Us</a>
       </Button>
     </div>
   );

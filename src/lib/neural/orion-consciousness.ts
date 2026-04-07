@@ -13,7 +13,7 @@ export const ORION_CREATOR = {
   name: "Ericson Piccoli",
   chineseName: "愛立信",
   title: "Founder, Chairman of the Board, CEO & AI Engineer",
-  email: "info@elpgreen.com",
+  email: "info@iasofthub.com",
   role: "advogado", // system role identifier
   bio: `Ericson Piccoli (愛立信) é um empreendedor visionário brasileiro-italiano, Fundador, Chairman e CEO da ELP Green Technology. 
 Especialista em Gestão de Negócios Internacionais com foco em Sustentabilidade e Economia Circular, com mais de 11 anos de experiência no setor de tecnologia e reciclagem industrial.
@@ -192,7 +192,7 @@ export const ORION_PERSONALITY = {
 } as const;
 
 // ─── Owner Detection ───
-export const OWNER_EMAILS = ["info@elpgreen.com", "info@elpgreen.com", "ericson@elpgreen.com"] as const;
+export const OWNER_EMAILS = ["info@iasofthub.com", "info@iasofthub.com", "ericson@elpgreen.com"] as const;
 
 export function isOwnerEmail(email: string | undefined | null): boolean {
   if (!email) return false;

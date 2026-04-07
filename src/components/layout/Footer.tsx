@@ -150,13 +150,13 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
               </li>
               <li className="flex items-center gap-2 text-[10px] text-muted-foreground/60">
                 <Mail className="h-3 w-3 text-primary/40 flex-shrink-0" />
-                <a href="mailto:info@elpgreen.com" className="hover:text-primary transition-colors">
+                <a href="mailto:info@iasofthub.com" className="hover:text-primary transition-colors">
                   info@elpgreen.com
                 </a>
               </li>
               <li className="flex items-center gap-2 text-[10px] text-muted-foreground/60">
                 <Globe className="h-3 w-3 text-primary/40 flex-shrink-0" />
-                <a href="https://www.elpgreen.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                <a href="https://www.iasofthub.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
                   www.elpgreen.com
                 </a>
               </li>
@@ -187,7 +187,7 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
               </li>
               <li>
                 <a
-                  href="mailto:info@elpgreen.com"
+                  href="mailto:info@iasofthub.com"
                   className="group flex items-center gap-2.5 text-[11px] text-muted-foreground hover:text-primary transition-colors duration-300"
                 >
                   <div className="relative h-7 w-7 border border-primary/20 flex items-center justify-center group-hover:border-primary/50 group-hover:shadow-[0_0_10px_hsl(var(--primary)/0.15)] transition-all duration-500">
