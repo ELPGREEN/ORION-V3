@@ -137,6 +137,15 @@ export default function ConfiguracoesRouter() {
             <MicrophoneHardwarePage />
           </Suspense>
         </TabsContent>
+
+        <TabsContent value="loja">
+          <Suspense fallback={<TabFallback />}>
+            <div className="space-y-8">
+              <MeusProdutos />
+              <EditorPaginaVendas />
+            </div>
+          </Suspense>
+        </TabsContent>
       </Tabs>
     </div>
   );
