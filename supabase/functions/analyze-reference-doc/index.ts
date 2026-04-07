@@ -146,25 +146,7 @@ Deno.serve(async (req) => {
     }
 
 
-      const headers: Record<string, string> = { "Content-Type": "application/json", ...(p.headers || {}) };
-      if (p.name === "anthropic") {
-        headers["x-api-key"] = p.key;
-      } else {
-        headers["Authorization"] = `Bearer ${p.key}`;
-      }
-      const res = await fetch(p.url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(p.format(systemPrompt, userPrompt)),
-      });
-      if (!res.ok) { await res.text(); continue; }
-      const data = await res.json();
-      const text = p.extract(data);
-      if (text) return text;
-    } catch { continue; }
-  }
-  throw new Error("All LLM providers failed");
-}
+    const body = await req.json();
 
 // ─── LAYER 1: Feature Extraction (Regex-based) ───
 function layer1FeatureExtraction(content: string): {
