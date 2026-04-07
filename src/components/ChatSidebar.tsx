@@ -79,7 +79,7 @@ export function ChatSidebar({
             <Mail className="h-3 w-3" />
             info@elpgreen.com
           </a>
-          <a href="https://www.elpgreen.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-primary transition-colors px-2">
+          <a href="https://www.iasofthub.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-primary transition-colors px-2">
             <Globe className="h-3 w-3" />
             www.elpgreen.com
           </a>

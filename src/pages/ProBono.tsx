@@ -133,7 +133,7 @@ export default function ProBono() {
           "@context": "https://schema.org",
           "@type": "WebPage",
           "name": "ORION Social - Acesso Gratuito",
-          "url": "https://www.elpgreen.com/pro-bono",
+          "url": "https://www.iasofthub.com/pro-bono",
           "description": "Programa de acesso gratuito à plataforma ORION para organizações e pessoas em vulnerabilidade",
           "isPartOf": { "@type": "WebSite", "name": "ORION IA by ELP Green Technology", "url": "https://www.elpgreen.com" }
         }}

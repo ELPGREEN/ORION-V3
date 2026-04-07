@@ -160,7 +160,7 @@ export default function Publicacoes() {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
           "name": "Publicações & Insights - ORION IA",
-          "url": "https://www.elpgreen.com/publicacoes",
+          "url": "https://www.iasofthub.com/publicacoes",
           "isPartOf": { "@type": "WebSite", "name": "ORION by ELP Green Technology", "url": "https://www.elpgreen.com" }
         }}
       />

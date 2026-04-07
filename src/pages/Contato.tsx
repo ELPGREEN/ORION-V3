@@ -276,7 +276,7 @@ export default function Contato() {
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Email</p>
-                      <p className="text-sm text-foreground">contato@elpgreen.com</p>
+                      <p className="text-sm text-foreground">contato@iasofthub.com</p>
                     </div>
                   </div>
                 </div>

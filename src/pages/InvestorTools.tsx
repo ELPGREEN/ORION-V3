@@ -614,7 +614,7 @@ export default function InvestorTools() {
                   {[
                     { label: "Sede", value: "Itália (UE)" },
                     { label: "Setor", value: "IA Empresarial & Soluções Sustentáveis" },
-                    { label: "Website", value: "www.elpgreen.com" },
+                    { label: "Website", value: "www.iasofthub.com" },
                     { label: "Marcas Registradas", value: "ELP® · ORION" },
                     { label: "Copyright", value: "© 2023 ELP® Green Technology — All Rights Reserved" },
                   ].map(item => (

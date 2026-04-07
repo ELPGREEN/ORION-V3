@@ -139,7 +139,7 @@ export default function Servicos() {
               </p>
               
               <Button asChild className="btn-gold">
-                <a href="https://www.elpgreen.com/" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.iasofthub.com/" target="_blank" rel="noopener noreferrer">
                   {s.scheduleConsultation}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </a>
