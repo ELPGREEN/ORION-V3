@@ -512,8 +512,8 @@ export async function analyzeFrameWithAI(
     let consciousnessContext = "";
     try {
       const { buildOrionIdentityPrompt, isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
-      const { data: { user } } = await supabase.auth.getUser();
-      const isOwner = isOwnerEmail(user?.email);
+      const { data: { session } } = await supabase.auth.getSession();
+      const isOwner = isOwnerEmail(session?.user?.email);
       const isIdentityQuestion = question && /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
       const isCapabilityQuestion = question && /que\s+(sistema|m[oó]dulo|capacidade|funcionalidade)|o\s+que\s+(falta|precisa|melhorar)|suas?\s+(limita[çc][oõ]es|lacunas|gaps)|what.*(missing|need|improve|lack)/i.test(question);
       const isJarvisComparison = question && /jarvis|compara[çc][aã]o|diferen[çc]a.*entre|vs\s+orion|orion\s+vs|supera|vantagem/i.test(question);
