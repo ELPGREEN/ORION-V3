@@ -300,18 +300,37 @@ const plasmaFragSrc = `
       }
     }
 
-    float outerG = exp(-(r - 0.55) * (r - 0.55) / (0.012 + react * 0.025)) * 0.4;
+    // Outer atmospheric glow
+    float outerG = exp(-(r - 0.55) * (r - 0.55) / (0.015 + react * 0.03)) * 0.5;
     outerG *= smoothstep(0.42, 0.60, r);
-    col += c1 * outerG * (0.8 + react * 0.7);
-    col += c1 * exp(-r * r * 1.5) * 0.05;
+    col += c1 * outerG * (1.0 + react * 0.8);
+    
+    // Volumetric inner fill
+    col += c1 * exp(-r * r * 1.2) * 0.08;
+    
+    // Secondary outer bloom ring
+    float outerBloom = exp(-(r - 0.62) * (r - 0.62) / 0.008) * 0.2;
+    col += mix(c1, c2, 0.5) * outerBloom;
 
     col *= (1.0 - darkCore * 0.75);
 
-    col = pow(min(col, 5.0), vec3(0.88));
-    vec3 bg = vec3(0.002, 0.003, 0.012);
-    bg += c1 * exp(-r * r * 1.2) * 0.02;
-    bg += c1 * hexGrid(uv, 12.0) * 0.015;
-    gl_FragColor = vec4(bg + col, 1.0);
+    // HDR tone mapping for richer colors
+    col = col / (1.0 + col * 0.3);
+    col = pow(min(col, 5.0), vec3(0.85));
+    
+    // Subtle film grain for realism
+    float grain = (noise(vec3(gl_FragCoord.xy * 0.5, t * 2.0)) - 0.5) * 0.015;
+    col += grain;
+    
+    // Rich dark background with subtle atmosphere
+    vec3 bg = vec3(0.003, 0.004, 0.015);
+    bg += c1 * exp(-r * r * 0.8) * 0.03;
+    bg += c1 * hexGrid(uv, 12.0) * 0.02;
+    
+    // Vignette for cinematic depth
+    float vignette = 1.0 - smoothstep(0.5, 0.85, r) * 0.3;
+    
+    gl_FragColor = vec4((bg + col) * vignette, 1.0);
   }
 `;
 
