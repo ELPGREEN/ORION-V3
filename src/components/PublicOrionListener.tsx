@@ -194,6 +194,8 @@ export function PublicOrionListener() {
     return () => document.removeEventListener("visibilitychange", handler);
   }, [micGranted, startListener, stopListener]);
 
+  if (shouldHide) return null;
+
   return (
     <>
       {/* Floating Orb */}
