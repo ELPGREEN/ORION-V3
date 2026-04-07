@@ -157,9 +157,19 @@ export function useNeuralVoice(
         setListening(false);
         return;
       }
+      // Create a fresh SpeechRecognition instance — old ones can't be restarted after stop()
+      const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      if (!SR) { setListening(false); return; }
       try {
-        recRef.current?.start();
-        setListening(true);
+        try { recRef.current?.stop(); } catch {}
+        const savedCallback = onCmdRef.current;
+        if (savedCallback) {
+          // Re-invoke startListening with the stored callback for a clean instance
+          intentionalStopRef.current = false;
+          startListeningInternal(savedCallback);
+        } else {
+          setListening(false);
+        }
       } catch {
         setListening(false);
       }
