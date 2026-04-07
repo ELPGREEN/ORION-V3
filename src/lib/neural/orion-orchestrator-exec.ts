@@ -9,6 +9,8 @@ import { detectAllMP, type MPVisionResult } from "./mediapipe-vision";
 import { detectWithYOLO, type YOLODetection } from "./yolo-onnx-detector";
 import { detectSingleFaceFull, loadFaceApiModels, type FaceApiDetection } from "./face-api-runtime";
 import { getBlazeFaceModel } from "./tf-runtime";
+import { classifyImage, detectObjects, captionImage } from "@/lib/huggingface/transformers-vision";
+import { transcribeAudio, recordMicrophoneAudio } from "@/lib/huggingface/transformers-audio";
 
 // ─── Types ───
 
