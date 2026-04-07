@@ -198,6 +198,19 @@ export async function orchestratorListen(): Promise<ListenResult> {
     }
   }
 
+  // ─── Ultimate fallback: Whisper in browser (free, offline) ───
+  try {
+    const start = Date.now();
+    const audioData = await recordMicrophoneAudio(5000);
+    const result = await transcribeAudio(audioData, "Xenova/whisper-tiny", "pt");
+    const latency = Date.now() - start;
+    if (result.text.trim()) {
+      return { transcript: result.text.trim(), source: "whisper-browser", latencyMs: latency };
+    }
+  } catch (e) {
+    console.warn("⚠️ [Orchestrator] Whisper browser fallback failed:", e);
+  }
+
   return { transcript: "", source: "none", latencyMs: 0 };
 }
 
