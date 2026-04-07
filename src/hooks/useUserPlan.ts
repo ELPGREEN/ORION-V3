@@ -14,7 +14,7 @@ export function useUserPlan() {
     queryFn: async () => {
       const { data } = await supabase
         .from("user_plans")
-        .select("plan_type, ai_tokens_remaining")
+        .select("plan_type, ai_tokens_remaining, stripe_subscription_id, expires_at")
         .eq("user_id", user!.id)
         .maybeSingle();
       return data;
@@ -24,8 +24,16 @@ export function useUserPlan() {
   });
 
   const isOwner = user?.email === OWNER_EMAIL;
-  const isPremium = !!user && (isOwner || PREMIUM_PLANS.includes(plan?.plan_type ?? ""));
+
+  // Premium = owner OR has a confirmed Stripe subscription with a premium plan
+  const hasConfirmedSubscription = !!plan?.stripe_subscription_id && PREMIUM_PLANS.includes(plan?.plan_type ?? "");
+  const isExpired = plan?.expires_at ? new Date(plan.expires_at) < new Date() : false;
+  const isPremium = !!user && (isOwner || (hasConfirmedSubscription && !isExpired));
+
+  // Tokens: premium users get plan tokens, free users get trial tokens
   const tokensRemaining = plan?.ai_tokens_remaining ?? FREE_TRIAL_TOKENS;
+
+  // Orion access: premium (confirmed payment) OR free trial tokens > 0
   const hasOrionAccess = isPremium || (!!user && tokensRemaining > 0);
 
   return {
@@ -35,6 +43,7 @@ export function useUserPlan() {
     loading: isLoading,
     tokensRemaining,
     hasOrionAccess,
+    hasConfirmedSubscription,
     freeTrialTokens: FREE_TRIAL_TOKENS,
   };
 }
