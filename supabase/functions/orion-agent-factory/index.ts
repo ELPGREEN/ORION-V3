@@ -205,39 +205,17 @@ Respond in JSON:
       contents: [{ role: "user", parts: [{ text: decisionPrompt }] }],
     }),
   });
-      tools: [{
-        type: "function",
-        function: {
-          name: "create_agent",
-          description: "Create a new autonomous agent",
-          parameters: {
-            type: "object",
-            properties: {
-              agent_name: { type: "string" },
-              agent_role: { type: "string" },
-              category: { type: "string" },
-              hf_model_id: { type: "string" },
-              system_prompt: { type: "string" },
-              capabilities: { type: "array", items: { type: "string" } },
-              creation_reason: { type: "string" },
-            },
-            required: ["agent_name", "agent_role", "category", "creation_reason"],
-          },
-        },
-      }],
-      tool_choice: { type: "function", function: { name: "create_agent" } },
-    }),
-  });
 
   const aiData = await aiRes.json();
   let agentSpec: Record<string, unknown>;
 
   try {
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    agentSpec = JSON.parse(toolCall?.function?.arguments || "{}");
+    // Gemini native format: parse JSON from text response
+    const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    agentSpec = JSON.parse(jsonMatch?.[0] || "{}");
   } catch {
-    // Fallback: parse from content
-    const content = aiData.choices?.[0]?.message?.content || "{}";
+    agentSpec = {};
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     agentSpec = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
   }
