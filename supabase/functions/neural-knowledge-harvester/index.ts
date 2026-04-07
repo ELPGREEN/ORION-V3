@@ -24,24 +24,17 @@ interface ProviderConfig {
 
 const PROVIDERS: ProviderConfig[] = [
   {
-    name: "groq",
-    apiKeyEnv: "GROQ_API_KEY",
-    endpoint: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.3-70b-versatile",
-    maxTokens: 4096,
-  },
-  {
-    name: "openai",
-    apiKeyEnv: "OPENAI_API_KEY",
-    endpoint: "https://api.openai.com/v1/chat/completions",
-    model: "gpt-4o-mini",
-    maxTokens: 4096,
-  },
-  {
     name: "gemini",
     apiKeyEnv: "GEMINI_API_KEY",
     endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
     model: "gemini-2.5-flash",
+    maxTokens: 4096,
+  },
+  {
+    name: "groq",
+    apiKeyEnv: "GROQ_API_KEY",
+    endpoint: "https://api.groq.com/openai/v1/chat/completions",
+    model: "llama-3.3-70b-versatile",
     maxTokens: 4096,
   },
   {

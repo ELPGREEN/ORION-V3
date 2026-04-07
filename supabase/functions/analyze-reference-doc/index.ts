@@ -57,18 +57,11 @@ interface DocumentAnalysis {
 async function callLLM(systemPrompt: string, userPrompt: string): Promise<string> {
   const providers = [
     {
-      name: "openai",
-      url: "https://api.openai.com/v1/chat/completions",
-      key: Deno.env.get("OPENAI_API_KEY") || Deno.env.get("OPENAI_API_KEY_2"),
-      model: "gpt-4o-mini",
-      format: (s: string, u: string) => ({
-        model: "gpt-4o-mini",
-        messages: [{ role: "system", content: s }, { role: "user", content: u }],
-        temperature: 0.2,
-        max_tokens: 4000,
-        response_format: { type: "json_object" },
-      }),
-      extract: (d: any) => d.choices?.[0]?.message?.content,
+      name: "gemini",
+      getKeys: () => [
+        Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+        Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"),
+      ].filter((k): k is string => !!k),
     },
     {
       name: "groq",
@@ -84,20 +77,49 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
       }),
       extract: (d: any) => d.choices?.[0]?.message?.content,
     },
-    {
-      name: "anthropic",
-      url: "https://api.anthropic.com/v1/messages",
-      key: Deno.env.get("ANTHROPIC_API_KEY"),
-      model: "claude-3-5-sonnet-20241022",
-      format: (s: string, u: string) => ({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 4000,
-        system: s,
-        messages: [{ role: "user", content: u }],
-      }),
-      extract: (d: any) => d.content?.[0]?.text,
-      headers: { "anthropic-version": "2023-06-01" },
-    },
+  ];
+
+  // Try Gemini first (FREE)
+  const geminiKeys = providers[0].getKeys();
+  for (const key of geminiKeys) {
+    try {
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 4000, responseMimeType: "application/json" },
+          }),
+        }
+      );
+      if (!resp.ok) { await resp.text(); continue; }
+      const data = await resp.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+    } catch { continue; }
+  }
+
+  // Groq fallback
+  const groq = providers[1];
+  if (groq.key) {
+    try {
+      const resp = await fetch(groq.url!, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${groq.key}` },
+        body: JSON.stringify(groq.format!(systemPrompt, userPrompt)),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const text = groq.extract!(data);
+        if (text) return text;
+      } else { await resp.text(); }
+    } catch { /* skip */ }
+  }
+
+  throw new Error("All LLM providers failed");
   ];
 
   for (const p of providers) {
