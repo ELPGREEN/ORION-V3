@@ -457,98 +457,77 @@
     }
   },
   "services": {
-    "heroTitle": "Legal",
-    "heroTitleHighlight": "Services",
-    "heroDescription": "Legal excellence across multiple specialties of Law, with international education and personalized practice.",
+    "heroTitle": "Smart",
+    "heroTitleHighlight": "Solutions",
+    "heroDescription": "The ORION platform offers tailored AI tools for lawyers, firms, digital producers, and affiliates. All in one place.",
     "explore": "Explore",
-    "whyChoose": "Why choose the",
-    "whyChooseHighlight": "firm?",
-    "whyChooseDescription": "We combine internationally acclaimed academic training with advanced legal technology and close, transparent service, ensuring the best strategy for each case.",
-    "scheduleConsultation": "SCHEDULE CONSULTATION",
-    "notFoundTitle": "Didn't find your area?",
-    "notFoundDescription": "Get in touch and tell us about your case. The firm has a network of specialized partners to handle all legal demands.",
-    "meetOffice": "LEARN ABOUT THE FIRM",
+    "sectionTitle": "Services by Profile",
+    "sectionSubtitle": "Each profile has exclusive tools designed to maximize productivity and results.",
+    "whyChoose": "Why choose",
+    "whyChooseHighlight": "ORION?",
+    "whyChooseDescription": "We combine cutting-edge artificial intelligence with a complete management, sales, and automation platform — all with security, LGPD compliance, and dedicated support.",
+    "seePlans": "SEE PLANS & PRICING",
+    "ctaTitle": "Start now for free",
+    "ctaDescription": "Create your free account and explore all ORION platform tools. No commitment, no credit card required.",
+    "startFree": "START FREE",
+    "seeProfiles": "SEE CLIENT PROFILES",
     "areas": {
-      "criminal": {
-        "title": "Criminal Law",
-        "desc": "Specialized technical defense in all phases of criminal proceedings, from police investigation to jury trial.",
+      "lawyers": {
+        "title": "For Lawyers",
+        "desc": "Complete legal AI: generate petitions, research case law, manage cases and clients with artificial intelligence.",
         "items": [
-          "Defense in police investigations",
-          "Habeas Corpus and provisional release",
-          "Jury Trial",
-          "Criminal execution and regime progression",
-          "Economic and financial crimes",
-          "Criminal appeals"
+          "AI-powered petition drafting",
+          "Smart case law research",
+          "Case and deadline management",
+          "Automated contract analysis",
+          "Real-time client portal",
+          "Performance reports and metrics"
         ]
       },
-      "international": {
-        "title": "International Law",
-        "desc": "Legal advisory on cross-border issues, international treaties and international legal cooperation.",
+      "offices": {
+        "title": "For Firms & Companies",
+        "desc": "Legal CRM, team management, billing and complete dashboard for firms and companies of all sizes.",
         "items": [
-          "International legal cooperation",
-          "Extradition and deportation",
-          "Public and Private International Law",
-          "Recognition of foreign judgments",
-          "Immigration and visas",
-          "International arbitration"
+          "CRM with client pipeline",
+          "Team management and permissions",
+          "Billing and financial control",
+          "Management dashboard with metrics",
+          "Multi-user with access levels",
+          "Calendar and email integration"
         ]
       },
-      "humanRights": {
-        "title": "Human Rights",
-        "desc": "Protection and promotion of fundamental rights before national courts and international organizations.",
+      "producers": {
+        "title": "For Digital Producers",
+        "desc": "Create your store, set up checkout, manage products and track sales with a complete dashboard and affiliate program.",
         "items": [
-          "Litigation before the IACHR",
-          "Protection of minorities and vulnerable groups",
-          "Freedom of expression and press",
-          "Refugee rights",
-          "Institutional violence",
-          "Advocacy before the UN"
+          "Custom domain store",
+          "Conversion-optimized checkout",
+          "Product and category management",
+          "Real-time sales dashboard",
+          "Integrated affiliate program",
+          "Visual landing page editor"
         ]
       },
-      "labor": {
-        "title": "Labor Law",
-        "desc": "Practice in individual and collective labor disputes, for both employees and employers.",
+      "affiliates": {
+        "title": "For Affiliates",
+        "desc": "Trackable links, automatic commissions and product marketplace to promote and earn commissions.",
         "items": [
-          "Labor claims",
-          "Moral and sexual harassment",
-          "Work accidents",
-          "Collective bargaining",
-          "Preventive business consulting",
-          "Severance pay and FGTS"
-        ]
-      },
-      "business": {
-        "title": "Business Law",
-        "desc": "Legal advisory for companies on corporate, contractual and compliance matters.",
-        "items": [
-          "Company formation and changes",
-          "Commercial contracts",
-          "Compliance and governance",
-          "Judicial recovery",
-          "Legal due diligence",
-          "Intellectual property protection"
-        ]
-      },
-      "civil": {
-        "title": "Civil Law",
-        "desc": "Practice in civil matters, including civil liability, contracts and family law.",
-        "items": [
-          "Civil liability and damages",
-          "Contract review and drafting",
-          "Estates and successions",
-          "Consumer law",
-          "Real estate law",
-          "Mediation and arbitration"
+          "Trackable links with analytics",
+          "Automatic per-sale commissions",
+          "Available product marketplace",
+          "Performance dashboard",
+          "Custom coupons",
+          "Detailed conversion reports"
         ]
       }
     },
     "differentials": [
-      "Harvard and UC Berkeley trained",
-      "Practice in 8+ countries",
-      "AI-powered legal technology",
-      "Full LGPD compliance",
-      "Structured Pro Bono program",
-      "Real-time client portal"
+      "Natively integrated Gemini AI",
+      "100% LGPD compliant",
+      "Free plan to get started",
+      "Dedicated technical support",
+      "Real-time dashboard",
+      "Multi-language (PT, EN, ES, IT, ZH)"
     ]
   },
   "diferencial": {

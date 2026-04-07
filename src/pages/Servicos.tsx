@@ -2,29 +2,24 @@ import { MainLayout } from "@/components/layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ParticleBackground } from "@/components/ui/ParticleBackground";
-import { TechLine, GlassCard, TechGridOverlay, TechSectionLabel } from "@/components/ui/TechElements";
+import { TechLine } from "@/components/ui/TechElements";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { HeroThreeBackground } from "@/components/home/HeroThreeBackground";
 import { GatewayBackground } from "@/components/ui/GatewayBackground";
-import heroBg from "@/assets/bg-carbon-hero.jpg";
 import { 
-  Gavel, Globe, Heart, Briefcase, Shield,
-  Scale,
-  ArrowRight,
-  CheckCircle2,
-  MessageSquare,
+  Scale, Building2, ShoppingBag, Briefcase,
+  ArrowRight, CheckCircle2, MessageSquare, Sparkles,
 } from "lucide-react";
 
-const areaIcons = [Gavel, Globe, Heart, Briefcase, Shield, Scale];
-const areaKeys = ["criminal", "international", "humanRights", "labor", "business", "civil"] as const;
+const profileIcons = [Scale, Building2, ShoppingBag, Briefcase];
+const profileKeys = ["lawyers", "offices", "producers", "affiliates"] as const;
 
 export default function Servicos() {
   const { t } = useTranslation();
   const s = t.services;
 
-  const areasAtuacao = areaKeys.map((key, idx) => ({
-    icon: areaIcons[idx],
+  const profiles = profileKeys.map((key, idx) => ({
+    icon: profileIcons[idx],
     titulo: s.areas[key].title,
     descricao: s.areas[key].desc,
     servicos: s.areas[key].items,
@@ -33,12 +28,11 @@ export default function Servicos() {
   return (
     <MainLayout>
       <SEO 
-        title={`${s.heroTitle} ${s.heroTitleHighlight} | ORION IA by ELP`}
+        title={`${s.heroTitle} ${s.heroTitleHighlight} | ORION IA`}
         description={s.heroDescription}
         image="https://www.iasofthub.com/og-images/og-servicos.jpg"
       />
 
-      {/* Tron styles */}
       <style>{`
         .tron-grid-bg-s {
           background-image:
@@ -58,10 +52,10 @@ export default function Servicos() {
       {/* Hero Section */}
       <section 
         className="min-h-[60vh] flex items-center relative overflow-hidden"
-        style={{ background: "#0a0a0f" }}
+        style={{ background: "hsl(var(--background))" }}
       >
         <HeroThreeBackground />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/50 via-transparent to-[#0a0a0f]/70 z-[1]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/70 z-[1]" />
         <div className="container py-16 sm:py-24 px-4 sm:px-6 relative" style={{ zIndex: 2 }}>
           <div className="max-w-3xl">
             <div className="gold-line w-20 mb-8 animate-fade-in" />
@@ -82,32 +76,40 @@ export default function Servicos() {
 
       <TechLine />
 
-      {/* Áreas de Atuação */}
-      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanline-s" style={{ background: "#080810", borderTop: "1px solid rgba(0,212,255,0.1)" }}>
+      {/* Serviços por Perfil */}
+      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanline-s" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
         <div className="absolute inset-0 tron-grid-bg-s opacity-30 pointer-events-none" />
         <GatewayBackground opacity={0.2} />
         <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
+          <div className="text-center mb-16">
+            <div className="gold-line w-16 mx-auto mb-6" />
+            <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-4">
+              {s.sectionTitle}
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">{s.sectionSubtitle}</p>
+          </div>
+
           <div className="grid lg:grid-cols-2 gap-8">
-            {areasAtuacao.map((area, index) => (
+            {profiles.map((profile, index) => (
               <div 
-                key={area.titulo} 
+                key={profile.titulo} 
                 className="group bg-card border border-border p-8 hover-lift hover-gold-glow animate-fade-in-up"
                 style={{ animationDelay: `${(index % 4 + 1) * 100}ms` }}
               >
                 <div className="flex items-start gap-6">
                   <div className="h-14 w-14 border border-primary/40 flex items-center justify-center flex-shrink-0 group-hover:border-primary transition-all">
-                    <area.icon className="h-7 w-7 text-primary" />
+                    <profile.icon className="h-7 w-7 text-primary" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-serif text-foreground mb-3 tracking-wide group-hover:text-primary transition-colors">
-                      {area.titulo}
+                      {profile.titulo}
                     </h3>
                     <p className="text-muted-foreground text-sm leading-relaxed mb-6 text-justify">
-                      {area.descricao}
+                      {profile.descricao}
                     </p>
                     
                     <ul className="space-y-2">
-                      {area.servicos.map((servico: string) => (
+                      {profile.servicos.map((servico: string) => (
                         <li key={servico} className="flex items-center gap-3 text-sm text-muted-foreground">
                           <div className="h-1.5 w-1.5 bg-primary flex-shrink-0" />
                           {servico}
@@ -125,7 +127,7 @@ export default function Servicos() {
       <TechLine />
 
       {/* Diferenciais */}
-      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "#0a0a0f", borderTop: "1px solid rgba(201,168,76,0.1)" }}>
+      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--border))" }}>
         <div className="absolute inset-0 tron-grid-bg-s opacity-20 pointer-events-none" />
         <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
           <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -139,10 +141,10 @@ export default function Servicos() {
               </p>
               
               <Button asChild className="btn-gold">
-                <a href="https://www.iasofthub.com/" target="_blank" rel="noopener noreferrer">
-                  {s.scheduleConsultation}
+                <Link to="/contato">
+                  {s.seePlans}
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
+                </Link>
               </Button>
             </div>
             
@@ -163,29 +165,29 @@ export default function Servicos() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanline-s" style={{ background: "#080810", borderTop: "1px solid rgba(0,212,255,0.1)" }}>
+      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanline-s" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
         <HeroThreeBackground />
-        <div className="absolute inset-0 bg-[#080810]/60 z-[1]" />
+        <div className="absolute inset-0 bg-background/60 z-[1]" />
         
         <div className="container relative px-4 sm:px-6" style={{ zIndex: 2 }}>
           <div className="max-w-2xl mx-auto text-center">
             <div className="gold-line w-16 mx-auto mb-8" />
             <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-6 animate-fade-in">
-              {s.notFoundTitle}
+              {s.ctaTitle}
             </h2>
             <p className="text-muted-foreground mb-10 animate-fade-in delay-100 text-justify">
-              {s.notFoundDescription}
+              {s.ctaDescription}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up delay-200">
               <Button asChild className="btn-gold px-10 shimmer">
-                <a href="https://wa.me/393501021359" target="_blank" rel="noopener noreferrer">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  {t.cta.whatsapp}
-                </a>
+                <Link to="/contato">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  {s.startFree}
+                </Link>
               </Button>
               <Button asChild className="btn-outline-gold px-10">
-                <Link to="/sobre">
-                  {s.meetOffice}
+                <Link to="/clientes">
+                  {s.seeProfiles}
                 </Link>
               </Button>
             </div>

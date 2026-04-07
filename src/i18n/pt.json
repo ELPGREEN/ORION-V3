@@ -457,56 +457,49 @@
     }
   },
   "services": {
-    "heroTitle": "Serviços",
-    "heroTitleHighlight": "Jurídicos",
-    "heroDescription": "Excelência jurídica em diversas especialidades do Direito, com formação internacional e atuação personalizada.",
+    "heroTitle": "Soluções",
+    "heroTitleHighlight": "Inteligentes",
+    "heroDescription": "A plataforma ORION oferece ferramentas de IA sob medida para advogados, escritórios, produtores digitais e afiliados. Tudo em um só lugar.",
     "explore": "Explore",
-    "whyChoose": "Por que escolher o",
-    "whyChooseHighlight": "escritório?",
-    "whyChooseDescription": "Combinamos formação acadêmica de excelência internacional com tecnologia jurídica avançada e um atendimento próximo e transparente, garantindo a melhor estratégia para cada caso.",
-    "scheduleConsultation": "AGENDAR CONSULTA",
-    "notFoundTitle": "Não encontrou sua área?",
-    "notFoundDescription": "Entre em contato e nos conte seu caso. O escritório conta com uma rede de parceiros especializados para atender todas as demandas jurídicas.",
-    "meetOffice": "CONHECER O ESCRITÓRIO",
+    "sectionTitle": "Serviços por Perfil",
+    "sectionSubtitle": "Cada perfil tem ferramentas exclusivas pensadas para maximizar produtividade e resultados.",
+    "whyChoose": "Por que escolher a",
+    "whyChooseHighlight": "ORION?",
+    "whyChooseDescription": "Combinamos inteligência artificial de ponta com uma plataforma completa de gestão, vendas e automação — tudo com segurança, LGPD e suporte dedicado.",
+    "seePlans": "VER PLANOS E PREÇOS",
+    "ctaTitle": "Comece agora gratuitamente",
+    "ctaDescription": "Crie sua conta grátis e explore todas as ferramentas da plataforma ORION. Sem compromisso, sem cartão de crédito.",
+    "startFree": "COMEÇAR GRÁTIS",
+    "seeProfiles": "VER PERFIS DE CLIENTES",
     "areas": {
-      "criminal": {
-        "title": "Direito Penal",
-        "desc": "Defesa técnica especializada em todas as fases do processo penal, do inquérito policial ao Tribunal do Júri.",
-        "items": ["Defesa em inquéritos policiais", "Habeas Corpus e liberdade provisória", "Tribunal do Júri", "Execução penal e progressão de regime", "Crimes econômicos e financeiros", "Recursos criminais"]
+      "lawyers": {
+        "title": "Para Advogados",
+        "desc": "IA jurídica completa: gere petições, pesquise jurisprudência, gerencie processos e clientes com inteligência artificial.",
+        "items": ["Geração de petições com IA", "Pesquisa jurisprudencial inteligente", "Gestão de processos e prazos", "Análise de contratos automatizada", "Portal do cliente em tempo real", "Relatórios e métricas de desempenho"]
       },
-      "international": {
-        "title": "Direito Internacional",
-        "desc": "Assessoria jurídica em questões transfronteiriças, tratados internacionais e cooperação jurídica internacional.",
-        "items": ["Cooperação jurídica internacional", "Extradição e deportação", "Direito Internacional Público e Privado", "Homologação de sentenças estrangeiras", "Imigração e vistos", "Arbitragem internacional"]
+      "offices": {
+        "title": "Para Escritórios & Empresas",
+        "desc": "CRM jurídico, gestão de equipe, faturamento e dashboard completo para escritórios e empresas de todos os tamanhos.",
+        "items": ["CRM com pipeline de clientes", "Gestão de equipe e permissões", "Faturamento e controle financeiro", "Dashboard gerencial com métricas", "Multi-usuários com níveis de acesso", "Integração com calendário e e-mail"]
       },
-      "humanRights": {
-        "title": "Direitos Humanos",
-        "desc": "Proteção e promoção dos direitos fundamentais perante cortes nacionais e organismos internacionais.",
-        "items": ["Litigância perante a CIDH", "Proteção de minorias e grupos vulneráveis", "Liberdade de expressão e imprensa", "Direito dos refugiados", "Violência institucional", "Advocacia perante a ONU"]
+      "producers": {
+        "title": "Para Produtores Digitais",
+        "desc": "Crie sua loja, configure checkout, gerencie produtos e acompanhe vendas com dashboard completo e programa de afiliados.",
+        "items": ["Loja própria com domínio personalizado", "Checkout otimizado para conversão", "Gestão de produtos e categorias", "Dashboard de vendas em tempo real", "Programa de afiliados integrado", "Páginas de venda com editor visual"]
       },
-      "labor": {
-        "title": "Direito do Trabalho",
-        "desc": "Atuação em demandas trabalhistas individuais e coletivas, tanto para empregados quanto para empregadores.",
-        "items": ["Reclamações trabalhistas", "Assédio moral e sexual", "Acidente de trabalho", "Negociações coletivas", "Consultoria preventiva empresarial", "Verbas rescisórias e FGTS"]
-      },
-      "business": {
-        "title": "Direito Empresarial",
-        "desc": "Assessoria jurídica para empresas em questões societárias, contratuais e de compliance.",
-        "items": ["Constituição e alteração societária", "Contratos comerciais", "Compliance e governança", "Recuperação judicial", "Due diligence jurídica", "Proteção de propriedade intelectual"]
-      },
-      "civil": {
-        "title": "Direito Civil",
-        "desc": "Atuação em demandas cíveis, incluindo responsabilidade civil, contratos e direito de família.",
-        "items": ["Responsabilidade civil e indenizações", "Revisão e elaboração de contratos", "Inventários e sucessões", "Direito do consumidor", "Direito imobiliário", "Mediação e arbitragem"]
+      "affiliates": {
+        "title": "Para Afiliados",
+        "desc": "Links rastreáveis, comissões automáticas e marketplace de produtos para promover e ganhar comissões.",
+        "items": ["Links rastreáveis com analytics", "Comissões automáticas por venda", "Marketplace de produtos disponíveis", "Dashboard de performance", "Cupons personalizados", "Relatórios de conversão detalhados"]
       }
     },
     "differentials": [
-      "Formação em Harvard e UC Berkeley",
-      "Atuação em 8+ países",
-      "Tecnologia jurídica com IA",
-      "Conformidade total com LGPD",
-      "Programa Pro Bono estruturado",
-      "Portal do cliente em tempo real"
+      "IA Gemini integrada nativamente",
+      "100% compatível com LGPD",
+      "Plano gratuito para começar",
+      "Suporte técnico dedicado",
+      "Dashboard em tempo real",
+      "Multi-idioma (PT, EN, ES, IT, ZH)"
     ]
   },
   "diferencial": {
