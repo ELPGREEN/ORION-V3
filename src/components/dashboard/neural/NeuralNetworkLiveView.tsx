@@ -1,8 +1,7 @@
 import { useRef, useMemo, useState, useEffect, useCallback } from "react";
-import { Canvas, useFrame, useThree, extend } from "@react-three/fiber";
-import { OrbitControls, Effects, Text, Billboard } from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrbitControls, Text, Billboard } from "@react-three/drei";
 import * as THREE from "three";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +12,7 @@ import {
 import { getDefenseMetrics, getRecentThreats } from "@/lib/neural/orion-defense-system";
 import { supabase } from "@/integrations/supabase/client";
 
-extend({ UnrealBloomPass });
+
 
 // ─── ORION BRAIN ARCHITECTURE: Nodes on a Globe ───
 // Each node maps to a real neural network architecture type (ref: IAExpert Academy / Asimov Institute Zoo)
@@ -497,15 +496,9 @@ function GlobeRotation({ paused, children }: { paused: boolean; children: React.
   return <group ref={groupRef}>{children}</group>;
 }
 
-// ─── Post Processing ───
+// ─── Post Processing (disabled — Effects/UnrealBloomPass crashes in Vite worker) ───
 function PostFX() {
-  const { size } = useThree();
-  return (
-    <Effects disableGamma>
-      {/* @ts-ignore */}
-      <unrealBloomPass args={[new THREE.Vector2(size.width, size.height), 0.7, 0.3, 0.5]} />
-    </Effects>
-  );
+  return null;
 }
 
 // ─── Scene ───
