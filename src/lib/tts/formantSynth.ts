@@ -356,18 +356,24 @@ function renderPhonemes(phonemes: string[]): Float32Array {
 // PROSODY
 // ═══════════════════════════════════════════════════════════
 function getProsodyF0(sentencePos: number): number {
-  const { mean, p5, p95 } = VOICE_DNA.f0;
+  // Use MFCC-corrected F0 target instead of voice DNA mean
+  const targetF0 = MFCC_FIX.f0Target; // 150 Hz from reference analysis
+  const { p5, p95 } = VOICE_DNA.f0;
 
-  let f0 = mean;
+  let f0 = targetF0;
   if (sentencePos < 0.15) {
-    f0 = mean * (1.0 + sentencePos * 0.15);
+    // Slight rise at sentence start
+    f0 = targetF0 * (1.0 + sentencePos * 0.12);
   } else if (sentencePos > 0.75) {
-    f0 = mean * (1.02 - (sentencePos - 0.75) * 0.15);
+    // Declarative fall at end
+    f0 = targetF0 * (1.01 - (sentencePos - 0.75) * 0.12);
   } else {
-    f0 = mean * 1.02;
+    // Mid-sentence: gentle variation
+    f0 = targetF0 * (1.01 + Math.sin(sentencePos * Math.PI * 3) * 0.02);
   }
 
-  f0 += (Math.random() - 0.5) * 3;
+  // Micro-prosody: slight random variation for naturalness
+  f0 += (Math.random() - 0.5) * 4;
   return Math.max(p5, Math.min(p95, f0));
 }
 
