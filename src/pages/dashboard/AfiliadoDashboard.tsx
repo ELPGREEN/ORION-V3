@@ -20,6 +20,27 @@ export default function AfiliadoDashboard() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [copyLoading, setCopyLoading] = useState<string | null>(null);
+
+  const generateCopy = async (product: any) => {
+    setCopyLoading(product.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("orion-produtor-ai", {
+        body: {
+          action: "generate_copy",
+          product_title: product.title || product.name,
+          product_description: product.description,
+          context: `R$ ${((product.price_cents || 0) / 100).toFixed(2)}`,
+        },
+      });
+      if (error) throw error;
+      toast.info(data.result, { duration: 15000 });
+    } catch {
+      toast.error("Erro ao gerar copy");
+    } finally {
+      setCopyLoading(null);
+    }
+  };
 
   const { data: myRequests } = useQuery({
     queryKey: ["affiliate-requests", user?.id],
