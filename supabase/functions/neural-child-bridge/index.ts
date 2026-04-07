@@ -131,7 +131,7 @@ async function reportToMother(): Promise<Record<string, unknown>> {
   const mainTables = [
     "neural_learning_data", "neural_knowledge_base", "neural_specializations",
     "documents", "client_profiles", "processos", "chat_ia_messages",
-    "legal_embeddings", "ai_metrics", "blooms",
+    "legal_embeddings", "ai_metrics", "blooms"
   ];
 
   const tableCounts: Record<string, number> = {};
@@ -197,7 +197,7 @@ async function exposeTables(): Promise<Record<string, unknown>> {
       "user_roles", "shared_documents", "rate_limits", "query_embedding_cache",
       "catalogo_dados_senado", "Contrato", "avencas", "banco de dados senado",
       "empresa contratadas", "licitações", "lovable_events", "lovable_users",
-      "lovable_webhook_requests",
+      "lovable_webhook_requests"
     ];
 
     const schema: Record<string, { count: number; sample_columns: string[] }> = {};

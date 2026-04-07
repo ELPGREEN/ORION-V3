@@ -205,7 +205,7 @@ Retorne APENAS o JSON.`,
           content: topic
             ? `Crie um ${articleType === "parecer" ? "parecer técnico" : articleType === "analise_caso" ? "análise de caso" : articleType === "noticia" ? "notícia jurisprudencial" : "artigo de opinião"} sobre: ${topic}`
             : `Crie um artigo jurídico atual e de alto impacto na área de ${categoria || "direito"}. Escolha um tema relevante de 2025-2026.`,
-        },
+        }
       ], 6000, 0.55);
 
       let parsed: any = {};
@@ -269,7 +269,7 @@ Retorne APENAS o JSON.`,
         {
           role: "user",
           content: `Sugira 10 temas de artigos jurídicos atuais${categoria ? ` na área de ${categoria}` : ""}.`,
-        },
+        }
       ], 4000, 0.7);
 
       let parsed: any = { temas: [] };
@@ -348,7 +348,7 @@ Retorne APENAS o JSON.`,
         {
           role: "user",
           content: `${titulo ? `Título: ${titulo}\n\n` : ""}Revise este artigo:\n\n${conteudo}`,
-        },
+        }
       ], 6000, isGrokRewrite ? 0.5 : 0.25);
 
       let parsed: any = {};
@@ -424,7 +424,7 @@ Retorne APENAS o JSON.`,
         {
           role: "user",
           content: `${titulo ? `Título atual: ${titulo}\n\n` : ""}Analise o SEO deste artigo jurídico:\n\n${plainText.substring(0, 4000)}`,
-        },
+        }
       ], 2000, 0.3);
 
       let parsed: any = {};
@@ -522,7 +522,7 @@ Retorne APENAS o JSON.`,
           content: topic
             ? `Gere conteúdo usando o template "${tmpl.name}" sobre: ${topic}`
             : `Gere conteúdo usando o template "${tmpl.name}". Escolha um tema relevante e atual.`,
-        },
+        }
       ], 5000, 0.5);
 
       let parsed: any = {};
@@ -591,7 +591,7 @@ Retorne APENAS o JSON.`,
         {
           role: "user",
           content: `Analise o potencial de engajamento:\n\nTítulo: ${titulo || "Sem título"}\nResumo: ${resumo || "Sem resumo"}\nCategoria: ${categoria || "geral"}\n\nConteúdo:\n${plainText.substring(0, 3000)}`,
-        },
+        }
       ], 2000, 0.4);
 
       let parsed: any = {};

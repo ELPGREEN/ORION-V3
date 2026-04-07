@@ -22,13 +22,7 @@ interface InferenceRequest {
 
 function getGeminiKeys(): string[] {
   return [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter((k): k is string => !!k);
 }
 
@@ -141,7 +135,7 @@ async function callHuggingFace(systemPrompt: string, userPrompt: string): Promis
         body: JSON.stringify({
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
+            { role: "user", content: userPrompt }
           ],
           max_tokens: 4096,
           temperature: 0.7,
@@ -167,7 +161,7 @@ async function callGroqFallback(systemPrompt: string, userPrompt: string): Promi
       model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPrompt }
       ],
       max_tokens: 4096,
       temperature: 0.7,

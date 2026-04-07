@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
         const year = params.year || new Date().getFullYear();
         const [nagerRes, brRes] = await Promise.allSettled([
           fetch(`https://date.nager.at/api/v3/publicholidays/${year}/BR`),
-          fetch(`https://brasilapi.com.br/api/feriados/v1/${year}`),
+          fetch(`https://brasilapi.com.br/api/feriados/v1/${year}`)
         ]);
 
         const holidays: { date: string; name: string; source: string }[] = [];
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
         // Fetch holidays for current and next year
         const [h1, h2] = await Promise.all([
           fetch(`https://brasilapi.com.br/api/feriados/v1/${year}`).then((r) => r.ok ? r.json() : []),
-          fetch(`https://brasilapi.com.br/api/feriados/v1/${year + 1}`).then((r) => r.ok ? r.json() : []),
+          fetch(`https://brasilapi.com.br/api/feriados/v1/${year + 1}`).then((r) => r.ok ? r.json() : [])
         ]);
         const holidaySet = new Set([...h1, ...h2].map((h: any) => h.date));
 

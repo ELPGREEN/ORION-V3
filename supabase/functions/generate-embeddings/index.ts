@@ -12,13 +12,7 @@ const corsHeaders = {
 // MUST use the same model to ensure vector space compatibility.
 function getEmbeddingProviders(): Array<{ name: string; apiKey: string }> {
   const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter(Boolean) as string[];
   return geminiKeys.map(k => ({ name: "gemini", apiKey: k }));
 }

@@ -43,7 +43,7 @@ const PROVIDERS: ProviderConfig[] = [
     endpoint: "https://api.deepseek.com/v1/chat/completions",
     model: "deepseek-chat",
     maxTokens: 4096,
-  },
+  }
 ];
 
 interface HarvestResult {
@@ -84,7 +84,7 @@ async function queryOpenAICompatible(
         model: provider.model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: prompt }
         ],
         max_tokens: provider.maxTokens,
         temperature: 0.7,
@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
                 const pr = r.allResults.find((ar) => ar.provider === p.name);
                 return sum + (pr?.latencyMs || 0);
               }, 0) / Math.max(1, harvestResults.length),
-          },
+          }
         ])
       ),
       trainingResult,

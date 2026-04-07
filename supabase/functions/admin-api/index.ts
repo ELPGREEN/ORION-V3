@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
             .eq("user_id", user_id).order("name"),
           supabaseAdmin.from("client_documents").select("id, file_name, file_type, file_size, categoria, created_at, storage_path")
             .eq("user_id", user_id).order("created_at", { ascending: false }).limit(50),
-          supabaseAdmin.from("client_profiles").select("*").eq("user_id", user_id).maybeSingle(),
+          supabaseAdmin.from("client_profiles").select("*").eq("user_id", user_id).maybeSingle()
         ]);
         const { data: sharedDocs } = await supabaseAdmin
           .from("shared_documents").select("id, document_id, created_at").eq("shared_with", user_id);

@@ -282,7 +282,7 @@ async function getFullBriefing(query?: string, lat?: number, lon?: number, city?
     searchNews(query || "Brasil hoje", "pt-BR", 5),
     getMarketData(),
     getWeather(lat, lon, city),
-    getLegalData(query),
+    getLegalData(query)
   ]);
 
   return {
@@ -335,7 +335,7 @@ async function checkMonitors() {
           const m = result.market;
           alertContent = [
             m.usd_brl ? `USD/BRL: R$${m.usd_brl.cotacaoCompra?.toFixed(4)}` : null,
-            m.selic ? `SELIC: ${m.selic.valor}%` : null,
+            m.selic ? `SELIC: ${m.selic.valor}%` : null
           ].filter(Boolean).join(" | ");
           break;
         case "legal":

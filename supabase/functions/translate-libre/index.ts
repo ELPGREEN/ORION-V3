@@ -9,7 +9,7 @@ const corsHeaders = {
 const LIBRE_MIRRORS = [
   "https://libretranslate.com",
   "https://translate.argosopentech.com",
-  "https://translate.terraprint.co",
+  "https://translate.terraprint.co"
 ];
 
 async function tryLibreTranslate(

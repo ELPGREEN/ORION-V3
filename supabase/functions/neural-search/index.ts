@@ -535,7 +535,7 @@ function getDefaultAttentionWeights(): AttentionWeights {
       { name: "recency", weight: 0.10, bias: 0, description: "Boost temporal: documentos recentes > antigos" },
       { name: "jurisdiction", weight: 0.10, bias: 0, description: "Relevância jurisdicional: tribunal/vara compatível" },
       { name: "depth", weight: 0.05, bias: 0, description: "Profundidade do conteúdo (extensão, citações, fundamentação)" },
-      { name: "sumula_match", weight: 0.10, bias: 0.1, description: "Relevância de Súmulas STJ/STF (boost em precedentes vinculantes)" },
+      { name: "sumula_match", weight: 0.10, bias: 0.1, description: "Relevância de Súmulas STJ/STF (boost em precedentes vinculantes)" }
     ],
     version: "v18-attention-pe-dropout-layernorm-qkv",
     globalBias: 0.1,
@@ -564,7 +564,7 @@ function getDefaultLayerWeights(): number[][] {
     Array.from({ length: QUBITS * PARAMS_PER_QUBIT }, () => {
       const w = xavierInit(fanIn, fanOut);
       return Math.max(0.1, Math.min(2.0, 1.0 + w * 0.1));
-    }),
+    })
   ];
 }
 
@@ -924,7 +924,7 @@ const QUANTUM_LEGAL_CATEGORIES: QuantumCategoryWeights[] = [
   { name: "previdenciario", weights: [-1, +1, +1, +1, +1, +1] },
   { name: "eleitoral",      weights: [-1, -1, +1, +1, +1, -1] },
   { name: "empresarial",    weights: [+1, +1, -1, -1, -1, +1] },
-  { name: "familia",        weights: [+1, -1, -1, +1, -1, +1] },
+  { name: "familia",        weights: [+1, -1, -1, +1, -1, +1] }
 ];
 
 // ═══ v19 Rauber UFES — Aprendizagem Competitiva (Seção II.4.3, V) ═══
@@ -1203,7 +1203,7 @@ function computeAdaptiveThreshold(results: any[]): number {
 const NEGATION_OPERATORS = [
   "exceto", "salvo", "não se aplica", "excludente", "exceção",
   "ressalvado", "excluído", "inaplicável", "afastado", "não incide",
-  "não se enquadra", "não abrange", "vedado", "proibido",
+  "não se enquadra", "não abrange", "vedado", "proibido"
 ];
 
 function detectNegation(query: string): boolean {
@@ -2247,7 +2247,7 @@ async function processSearchFeedback(
     // Save adjusted weights, Adam state (with TD + traces + Q-table + Kalman + v14 neuro), and category weights
     await Promise.all([
       saveQuantumCategoryWeights(supabase, categories, f1),
-      saveAdamState(supabase, adamState),
+      saveAdamState(supabase, adamState)
     ]);
     
     // Record feedback with comprehensive metrics
@@ -2463,19 +2463,13 @@ const badKeys = new Set<string>();
 function getOpenAIKeys(): string[] {
   return [
     Deno.env.get("OPENAI_API_KEY"),
-    Deno.env.get("OPENAI_API_KEY_2"),
+    Deno.env.get("OPENAI_API_KEY_2")
   ].filter((k): k is string => Boolean(k) && !badKeys.has(k));
 }
 
 function getGeminiKeysLLM(): string[] {
   return [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter((k): k is string => Boolean(k) && !badKeys.has(k));
 }
 
@@ -2760,13 +2754,7 @@ async function expandQuery(query: string, previousContext?: string, supabaseClie
 // ─── Embedding Generation (Gemini gemini-embedding-001, free) ───
 function getGeminiKeys(): string[] {
   return [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter(Boolean) as string[];
 }
 
@@ -2898,7 +2886,7 @@ function isPlaceholderContent(title: string, content: string): boolean {
     /o portal retorna ementas completas/i,
     /pesquise entidades relacionadas/i,
     /pesquise livros jurídicos sobre/i,
-    /inclui dados de produtividade, tempo de tramitação/i,
+    /inclui dados de produtividade, tempo de tramitação/i
   ];
   if (placeholderPatterns.some(p => p.test(content))) return true;
   if (placeholderPatterns.some(p => p.test(title))) return true;
@@ -3026,7 +3014,7 @@ async function fetchFromUnifiedSearch(supabase: any, query: string): Promise<Ind
           "datajud_tjpr", "datajud_tjba", "datajud_tjpe", "datajud_tjsc",
           "datajud_tjce", "datajud_tjgo", "datajud_tjdft", "datajud_tjpa", "datajud_tjma",
           "datajud_trf1", "datajud_trf2", "datajud_trf3", "datajud_trf4", "datajud_trf5",
-          "brasilapi", "oab_cna", "senado_legislacao", "catalogo_leis",
+          "brasilapi", "oab_cna", "senado_legislacao", "catalogo_leis"
         ],
       }),
     });
@@ -3281,7 +3269,7 @@ Deno.serve(async (req) => {
           quality_score: loser.score ?? 0.2,
           learned: false,
           metadata: { provider: loser.provider, dpo_role: "loser", source: "neural_search_dpo" },
-        }),
+        })
       ]).catch(() => {});
 
       return new Response(JSON.stringify({

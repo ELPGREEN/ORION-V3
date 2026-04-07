@@ -57,13 +57,13 @@ serve(async (req) => {
       ? [
           { name: "anthropic", fn: () => tryAnthropic(imgData) },
           { name: "gemini", fn: () => tryGemini(imgData) },
-          { name: "groq", fn: () => tryGroq(imgData) },
+          { name: "groq", fn: () => tryGroq(imgData) }
         ]
       : [
           { name: "groq", fn: () => tryGroq(imgData) },
           { name: "openai", fn: () => tryOpenAI(imgData) },
           { name: "anthropic", fn: () => tryAnthropic(imgData) },
-          { name: "gemini", fn: () => tryGemini(imgData) },
+          { name: "gemini", fn: () => tryGemini(imgData) }
         ];
 
     for (const provider of providers) {
@@ -130,7 +130,7 @@ const DOCUMENT_CATEGORIES: Array<{ key: string; label: string; patterns: RegExp[
   { key: "habeas_corpus", label: "Habeas Corpus", patterns: [/habeas\s+corpus/i, /paciente.*coator/i, /liberdade\s+de\s+locomo[cç][aã]o/i] },
   { key: "recurso", label: "Recurso", patterns: [/recurso\s+(de\s+)?(apela[cç][aã]o|especial|extraordin[aá]rio|ordin[aá]rio)/i] },
   { key: "contestacao", label: "Contestação", patterns: [/contesta[cç][aã]o/i, /r[eé]u.*contesta/i] },
-  { key: "sentenca", label: "Sentença", patterns: [/senten[cç]a/i, /julgo\s+(procedente|improcedente)/i] },
+  { key: "sentenca", label: "Sentença", patterns: [/senten[cç]a/i, /julgo\s+(procedente|improcedente)/i] }
 ];
 
 function classifyDocument(text: string): { category: string; label: string; confidence: number } {
@@ -272,7 +272,7 @@ async function buildResult(fullText: string, provider: string, img?: ImageData) 
       { key: "nome", q: "What is the person's name?" },
       { key: "cpf", q: "What is the CPF number?" },
       { key: "data", q: "What is the date?" },
-      { key: "numero_documento", q: "What is the document number?" },
+      { key: "numero_documento", q: "What is the document number?" }
     ];
     
     const fieldPromises = questions.map(async ({ key, q }) => {
@@ -313,7 +313,7 @@ async function tryGroq(img: ImageData) {
         role: "user",
         content: [
           { type: "text", text: OCR_PROMPT },
-          { type: "image_url", image_url: { url: `data:${img.mimeType};base64,${img.base64}` } },
+          { type: "image_url", image_url: { url: `data:${img.mimeType};base64,${img.base64}` } }
         ],
       }],
       max_tokens: 8192,
@@ -333,8 +333,7 @@ async function tryGroq(img: ImageData) {
 async function tryOpenAI(img: ImageData) {
   // Use Gemini Vision instead (FREE)
   const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter((k): k is string => !!k);
   if (!geminiKeys.length) throw new Error("No Gemini keys");
 
@@ -348,7 +347,7 @@ async function tryOpenAI(img: ImageData) {
           body: JSON.stringify({
             contents: [{ role: "user", parts: [
               { text: OCR_PROMPT },
-              { inlineData: { mimeType: img.mimeType, data: img.base64 } },
+              { inlineData: { mimeType: img.mimeType, data: img.base64 } }
             ] }],
             generationConfig: { maxOutputTokens: 8192, temperature: 0.1 },
           }),
@@ -392,7 +391,7 @@ async function tryAnthropic(_img: ImageData) {
         role: "user",
         content: [
           sourceBlock,
-          { type: "text", text: OCR_PROMPT },
+          { type: "text", text: OCR_PROMPT }
         ],
       }],
     }),
@@ -410,9 +409,7 @@ async function tryAnthropic(_img: ImageData) {
 
 async function tryGemini(img: ImageData) {
   const keys = [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter(Boolean) as string[];
   if (!keys.length) throw new Error("No Gemini keys");
 
@@ -426,7 +423,7 @@ async function tryGemini(img: ImageData) {
           body: JSON.stringify({
             contents: [{ parts: [
               { text: OCR_PROMPT },
-              { inline_data: { mime_type: img.mimeType, data: img.base64 } },
+              { inline_data: { mime_type: img.mimeType, data: img.base64 } }
             ]}],
             generationConfig: { temperature: 0.1, maxOutputTokens: 8192 },
           }),

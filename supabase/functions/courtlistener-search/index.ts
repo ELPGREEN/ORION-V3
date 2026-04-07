@@ -194,7 +194,7 @@ async function extractPACERData(docketId: number, caseName: string, courtId: str
   const [entries, partiesData, attorneysData] = await Promise.all([
     getDocketEntries(docketId, apiKey, 15),
     getParties(docketId, apiKey),
-    getAttorneys(docketId, apiKey),
+    getAttorneys(docketId, apiKey)
   ]);
 
   // Format docket entries
@@ -323,7 +323,7 @@ Texto corrido acadêmico em português. Compare com o direito brasileiro quando 
   }
 
   // Gemini
-  for (const key of [Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"), Deno.env.get("GEMINI_API_KEY")].filter(Boolean) as string[]) {
+  for (const key of [ Deno.env.get("GEMINI_API_KEY")].filter(Boolean) as string[]) {
     const r = await tryProvider("gemini", async () => {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -439,7 +439,7 @@ Deno.serve(async (req) => {
           `Juiz Referido: ${docket.referred_to_str || "N/A"}`,
           `Demanda Júri: ${docket.jury_demand || "N/A"}`,
           `PACER Case ID: ${docket.pacer_case_id || "N/A"}`,
-          `URL: https://www.courtlistener.com${docket.absolute_url || ""}`,
+          `URL: https://www.courtlistener.com${docket.absolute_url || ""}`
         ].join("\n");
 
         const fullContent = [meta, "", pacer.parties, "", pacer.attorneys, "", pacer.entries]
@@ -753,7 +753,7 @@ Deno.serve(async (req) => {
               `Download Original: ${downloadUrl || "N/A"}`,
               `MP3 Otimizado: ${mp3Path ? `https://www.courtlistener.com/${mp3Path}` : "N/A"}`,
               `URL: ${r.absolute_url || `https://www.courtlistener.com/audio/${r.id}/`}`,
-              `Área: ${areaKey}`,
+              `Área: ${areaKey}`
             ].join("\n");
 
             const analysis = detail
@@ -832,7 +832,7 @@ Deno.serve(async (req) => {
               `Jurisdição: ${detail?.jurisdiction_type || "N/A"}`,
               `PACER ID: ${detail?.pacer_case_id || "N/A"}`,
               `URL: ${r.absolute_url || detail?.absolute_url || ""}`,
-              `Área: ${areaKey}`,
+              `Área: ${areaKey}`
             ].join("\n");
 
             const analysisSource = pacerSection

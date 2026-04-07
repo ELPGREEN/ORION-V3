@@ -26,13 +26,7 @@ interface AIProvider {
 // Helper: Get all available Gemini keys for rotation
 function _getGeminiKeys(): string[] {
   return [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter(Boolean) as string[];
 }
 
@@ -264,9 +258,7 @@ async function generateEmbeddingHF(text: string): Promise<number[]> {
 // Generate query embedding using Gemini gemini-embedding-001 (768d, free) + HF fallback
 async function generateQueryEmbedding(text: string): Promise<number[]> {
   const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter(Boolean) as string[];
 
   for (const apiKey of geminiKeys) {
@@ -382,7 +374,7 @@ Deno.serve(async (req) => {
 
         const contextItems = [
           ...(legalData || []).map((i: any) => `[PRECEDENTE] ${i.title}: ${i.content.substring(0, 500)}... (Fonte: ${i.source_label})`),
-          ...(kbData || []).map((i: any) => `[CONHECIMENTO] ${i.title}: ${i.content.substring(0, 500)}... (Fonte: ${i.source_type})`),
+          ...(kbData || []).map((i: any) => `[CONHECIMENTO] ${i.title}: ${i.content.substring(0, 500)}... (Fonte: ${i.source_type})`)
         ];
 
         if (contextItems.length > 0) {
@@ -397,7 +389,7 @@ Deno.serve(async (req) => {
       { id: "gemini_flash", key: geminiKey, model: "gemini-2.5-flash", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" },
       { id: "gemini_3_flash", key: geminiKey, model: "gemini-3-flash-preview", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent" },
       { id: "gemini_flash_lite", key: geminiKey, model: "gemini-2.5-flash-lite", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent" },
-      { id: "gemini_pro", key: geminiKey, model: "gemini-2.5-pro", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent" },
+      { id: "gemini_pro", key: geminiKey, model: "gemini-2.5-pro", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent" }
     ];
 
     // Use model_type routing or preferredProvider or default order

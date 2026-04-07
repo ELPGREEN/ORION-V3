@@ -243,7 +243,7 @@ const GOOGLE_WORKSPACE_SCOPES = [
   "https://www.googleapis.com/auth/cloud-platform",
   "https://www.googleapis.com/auth/datastore",
   "https://www.googleapis.com/auth/analytics.readonly",
-  "https://www.googleapis.com/auth/dialogflow",
+  "https://www.googleapis.com/auth/dialogflow"
 ].join(" ");
 
 // ─── User OAuth2 Token Management ─────────────────────────
@@ -256,7 +256,7 @@ const GOOGLE_OAUTH_SCOPES = [
   "https://www.googleapis.com/auth/drive.file",
   "https://www.googleapis.com/auth/drive.readonly",
   "https://www.googleapis.com/auth/contacts.readonly",
-  "https://www.googleapis.com/auth/tasks",
+  "https://www.googleapis.com/auth/tasks"
 ].join(" ");
 
 async function exchangeOAuthCode(code: string, redirectUri: string): Promise<{
@@ -434,7 +434,7 @@ async function googleGmailSend(token: string, to: string, subject: string, bodyT
     `Subject: ${subject}`,
     `Content-Type: text/plain; charset=utf-8`,
     "",
-    bodyText,
+    bodyText
   ].join("\r\n");
   
   const encodedMessage = btoa(unescape(encodeURIComponent(rawEmail)))

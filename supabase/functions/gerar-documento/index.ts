@@ -731,7 +731,7 @@ OUTORGADO: [NOME DO ADVOGADO]
       "CF/88 (dispositivos constitucionais aplicáveis ao tema)",
       "Legislação infraconstitucional pertinente",
       "Súmulas Vinculantes do STF (se aplicáveis)",
-      "Súmulas do STJ (se aplicáveis)",
+      "Súmulas do STJ (se aplicáveis)"
     ],
     estrutura: `O documento DEVE ser uma PESQUISA JURISPRUDENCIAL COMPLETA, organizada assim:
 
@@ -820,7 +820,7 @@ function isJudicialType(tipo: string): boolean {
     "acao-popular", "acao-civil-publica", "reclamacao-constitucional",
     "embargos-execucao", "embargos-terceiro", "recurso-inominado", "peticao-inicial-jec",
     "reclamacao-trabalhista", "contestacao-trabalhista", "recurso-ordinario-trabalhista",
-    "recurso-revista", "acao-rescisoria-trab",
+    "recurso-revista", "acao-rescisoria-trab"
   ];
   return judicialTypes.includes(tipo);
 }
@@ -853,7 +853,7 @@ async function searchExternalAPIs(query: string): Promise<NeuralContext["externa
               bool: {
                 should: [
                   { match: { "assuntos.nome": { query, boost: 3 } } },
-                  { match: { "classe.nome": { query, boost: 2 } } },
+                  { match: { "classe.nome": { query, boost: 2 } } }
                 ],
                 minimum_should_match: 1,
               },
@@ -901,7 +901,7 @@ async function searchExternalAPIs(query: string): Promise<NeuralContext["externa
       { title: "Lei de Licitações e Contratos", urn: "urn:lex:br:federal:lei:2021-04-01;14133", keywords: ["licitação","contrato","administrativo","pregão","concorrência","público"], tipo: "lei", date: "01/04/2021" },
       { title: "Lei do Mandado de Segurança", urn: "urn:lex:br:federal:lei:2009-08-07;12016", keywords: ["mandado","segurança","direito","líquido","certo","autoridade"], tipo: "lei", date: "07/08/2009" },
       { title: "Lei da Ação Civil Pública", urn: "urn:lex:br:federal:lei:1985-07-24;7347", keywords: ["civil","pública","difuso","coletivo","meio","ambiente","consumidor"], tipo: "lei", date: "24/07/1985" },
-      { title: "Lei Maria da Penha", urn: "urn:lex:br:federal:lei:2006-08-07;11340", keywords: ["maria","penha","violência","doméstica","mulher","proteção"], tipo: "lei", date: "07/08/2006" },
+      { title: "Lei Maria da Penha", urn: "urn:lex:br:federal:lei:2006-08-07;11340", keywords: ["maria","penha","violência","doméstica","mulher","proteção"], tipo: "lei", date: "07/08/2006" }
     ];
     const qLower = query.toLowerCase();
     const qWords = qLower.split(/\s+/).filter(w => w.length > 3);
@@ -1013,17 +1013,17 @@ const AREA_BOOK_PRIORITY: Record<string, string[]> = {
     "direito-processual-penal-completo.txt",
     "tematica-jurisprudencia-stf-completa.txt",
     "principios-processuais-penais.txt",
-    "sumulas-stj-inteiro-teor.txt",
+    "sumulas-stj-inteiro-teor.txt"
   ],
   processual_penal: [
     "direito-processual-penal-completo.txt",
     "principios-processuais-penais.txt",
     "tematica-jurisprudencia-stf-completa.txt",
-    "sumulas-stj-inteiro-teor.txt",
+    "sumulas-stj-inteiro-teor.txt"
   ],
   civil: [
     "sumulas-stj-inteiro-teor.txt",
-    "tematica-jurisprudencia-stf-completa.txt",
+    "tematica-jurisprudencia-stf-completa.txt"
   ],
   consumidor: ["sumulas-stj-inteiro-teor.txt","tematica-jurisprudencia-stf-completa.txt"],
   trabalhista: ["sumulas-stj-inteiro-teor.txt","tematica-jurisprudencia-stf-completa.txt"],
@@ -1057,7 +1057,7 @@ const TXT_KNOWLEDGE_FILES: Array<{
   { url: "nocoes-direito-processual-penal-v4.txt", label: "Noções DPP v4 (fallback)", tipo: "doutrina", areas: ["penal","processual_penal"] },
   // === Legacy ===
   { url: "sumulas-stj-completas-v3.txt", label: "Súmulas STJ v3 (legado)", tipo: "sumula", areas: ["civil","penal","trabalhista","consumidor","tributario"] },
-  { url: "jurisprudencia-stf-penal.txt", label: "Jurisprudência STF Penal (legado)", tipo: "jurisprudencia", areas: ["penal"] },
+  { url: "jurisprudencia-stf-penal.txt", label: "Jurisprudência STF Penal (legado)", tipo: "jurisprudencia", areas: ["penal"] }
 ];
 
 // In-memory cache for TXT files (persists across requests in same isolate)
@@ -1232,9 +1232,7 @@ async function extractKeywords(query: string): string[] {
 // Unified across all functions: same provider ensures vector space compatibility
 function _getGeminiKeys(): string[] {
   return [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter(Boolean) as string[];
 }
 
@@ -1815,19 +1813,19 @@ interface AIProvider {
 const AI_PROVIDERS: Record<string, AIProvider> = {
   gemini_pro: {
     name: "Gemini 2.5 Pro",
-    apiKeyEnvs: ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3"],
+    apiKeyEnvs: ["GEMINI_API_KEY"],
     maxTokens: 32768,
     temperature: 0.3,
   },
   gemini_flash: {
     name: "Gemini 2.0 Flash",
-    apiKeyEnvs: ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3"],
+    apiKeyEnvs: ["GEMINI_API_KEY"],
     maxTokens: 16384,
     temperature: 0.3,
   },
   gemini_25_flash: {
     name: "Gemini 2.5 Flash (FREE)",
-    apiKeyEnvs: ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"],
+    apiKeyEnvs: ["GEMINI_API_KEY"],
     maxTokens: 16384,
     temperature: 0.3,
   },
@@ -1914,7 +1912,7 @@ async function callOpenAI(
       model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPrompt }
       ],
       max_tokens: config.maxTokens,
       temperature: config.temperature,
@@ -1976,7 +1974,7 @@ async function callGroq(
       model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPrompt }
       ],
       max_tokens: config.maxTokens,
       temperature: config.temperature,
@@ -2008,7 +2006,7 @@ async function callMistral(
       model: "mistral-small-latest",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPrompt }
       ],
       max_tokens: config.maxTokens,
       temperature: config.temperature,
@@ -2033,7 +2031,7 @@ async function callCombinedMode(
 
   console.log("🧠 [COMBINED] Gemini 2.5 Flash generating + refining...");
   const content = await callGemini(geminiKey, "gemini-2.5-flash", [
-    { role: "user", parts: [{ text: enhancedSystemPrompt + "\n\n" + userPrompt }] },
+    { role: "user", parts: [{ text: enhancedSystemPrompt + "\n\n" + userPrompt }] }
   ], { maxTokens: 16384, temperature: 0.3 });
 
   if (!content || content.length < 500) throw new Error("Gemini gerou documento muito curto");
@@ -2136,7 +2134,7 @@ Gere o documento COMPLETO, expandindo cada seção do esqueleto com argumentaç�
         maxTokens: 8192,
         temperature: 0.3,
       }),
-      new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Anthropic phase 2 timeout (45s)")), 45000)),
+      new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Anthropic phase 2 timeout (45s)")), 45000))
     ]);
     
     if (!phase2 || phase2.length < 500) {
@@ -2266,14 +2264,14 @@ async function callAIWithFallback(
         const messages = [
           { role: "user", parts: [{ text: enhancedSystemPrompt }] },
           { role: "model", parts: [{ text: "Entendido. Vou gerar documentos jurídicos COMPLETOS com todas as seções, citando a jurisprudência neural fornecida." }] },
-          { role: "user", parts: [{ text: userPrompt }] },
+          { role: "user", parts: [{ text: userPrompt }] }
         ];
         content = await callGemini(apiKey, "gemini-2.5-pro", messages, config);
       } else if (providerKey === "gemini_flash") {
         const messages = [
           { role: "user", parts: [{ text: enhancedSystemPrompt }] },
           { role: "model", parts: [{ text: "Entendido. Vou gerar documentos jurídicos COMPLETOS com todas as seções, citando a jurisprudência neural fornecida." }] },
-          { role: "user", parts: [{ text: userPrompt }] },
+          { role: "user", parts: [{ text: userPrompt }] }
         ];
         content = await callGemini(apiKey, "gemini-2.5-flash", messages, config);
       } else if (providerKey === "openai") {
@@ -2402,7 +2400,7 @@ function validateABNT(content: string, tipo: string): ABNTValidation {
   // 1. Títulos de seção devem estar em CAIXA ALTA
   const sectionPatterns = [
     /^(dos? fatos?|da fundamenta[çc][aã]o|dos? pedidos?|dos? requerimentos?|do direito|da conclus[aã]o|do m[eé]rito)/im,
-    /^(das? preliminares?|da compet[eê]ncia|do valor da causa|das? provas?)/im,
+    /^(das? preliminares?|da compet[eê]ncia|do valor da causa|das? provas?)/im
   ];
   for (const pattern of sectionPatterns) {
     const match = content.match(pattern);
@@ -2446,7 +2444,7 @@ function validateABNT(content: string, tipo: string): ABNTValidation {
     "peticao-inicial", "contestacao", "recurso-apelacao", "recurso-agravo",
     "embargos-declaracao", "mandado-seguranca", "habeas-corpus", "habeas-data",
     "acao-popular", "acao-civil-publica", "execucao-titulo", "cumprimento-sentenca",
-    "impugnacao", "manifestacao", "replica",
+    "impugnacao", "manifestacao", "replica"
   ]);
 
   if (JUDICIAL_TYPES.has(tipo)) {
@@ -2552,7 +2550,7 @@ function isDocumentComplete(content: string): boolean {
 // Extract search terms for neural search
 function extractSearchTerms(prompt: string): string {
   const factosMatch = prompt.match(/Fatos?:\s*([^\n]+)/i);
-  const tipoMatch = prompt.match(/Gere\s+(?:uma?|um)\s+([^\n,]+)/i);
+  const tipoMatch = prompt.match(/Gere\s+(?:uma?|um)\s+([^\n]+)/i);
   const pedidosMatch = prompt.match(/Pedidos?:\s*([^\n]+)/i);
   
   const terms: string[] = [];
@@ -2586,7 +2584,7 @@ function autoScoreQuality(outputText: string, metadata: Record<string, unknown>)
   if (/OAB\/RS|assinatura|testemunha/i.test(outputText)) score += 0.05;
 
   // +0.1 if document cites real court case numbers (REsp, HC, ADI, etc.)
-  const acordaoRegex = /\b(REsp|HC|ADI|ADPF|AgRg|RE|RHC|MS|MC|AREsp|RMS|EDcl)\s*n?[ºo.]?\s*[\d.,]+/gi;
+  const acordaoRegex = /\b(REsp|HC|ADI|ADPF|AgRg|RE|RHC|MS|MC|AREsp|RMS|EDcl)\s*n?[ºo.]?\s*[\d.]+/gi;
   const acordaoMatches = outputText.match(acordaoRegex);
   if (acordaoMatches && acordaoMatches.length >= 1) score += 0.1;
 
@@ -3052,7 +3050,7 @@ Deno.serve(async (req) => {
       const shouldSearchBrazilAPIs = jurisdicao !== "eua";
       
       const researchPromises: Promise<any>[] = [
-        fetchNeuralContext(supabase, searchTerms || prompt.substring(0, 300), tipo),
+        fetchNeuralContext(supabase, searchTerms || prompt.substring(0, 300), tipo)
       ];
       if (shouldSearchBrazilAPIs) {
         researchPromises.push(searchExternalAPIs(searchTerms || prompt.substring(0, 200)));
@@ -3438,7 +3436,7 @@ ${activeVersion.content}
       "aditivo-contratual", "termo-encerramento", "termo-confidencialidade", "termos-uso",
       "procuracao-ad-judicia", "procuracao-ad-negotia",
       "notificacao-extrajudicial", "acordo-extrajudicial", "acordo-extrajudicial-trabalhista",
-      "declaracao", "parecer-juridico", "atestado",
+      "declaracao", "parecer-juridico", "atestado"
     ]);
     const isExtrajudicialDoc = EXTRAJUDICIAL_TYPES.has(tipo || "");
     
@@ -3777,7 +3775,7 @@ NÃO repita o endereçamento, qualificação ou fatos. NÃO gere o documento int
         },
         sources: [
           ...neuralContext.jurisprudence.map(j => ({ source: j.source, title: j.title, url: j.url })),
-          ...neuralContext.externalResults.map(e => ({ source: e.source, title: e.title, url: e.url })),
+          ...neuralContext.externalResults.map(e => ({ source: e.source, title: e.title, url: e.url }))
         ],
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

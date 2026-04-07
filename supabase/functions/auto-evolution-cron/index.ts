@@ -48,7 +48,7 @@ const CATALOGO_LEIS_EVOLUTION = [
   { titulo: "Estatuto do Idoso - Lei 10.741/2003", sigla: "Est. Idoso", url: "https://www.planalto.gov.br/ccivil_03/leis/2003/l10.741.htm", areas: ["civil"] },
   { titulo: "Lei de Execução Penal - Lei 7.210/1984", sigla: "LEP", url: "https://www.planalto.gov.br/ccivil_03/leis/l7210.htm", areas: ["penal"] },
   { titulo: "Lei de Drogas - Lei 11.343/2006", sigla: "Lei Drogas", url: "https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11343.htm", areas: ["penal"] },
-  { titulo: "Lei de Improbidade Administrativa - Lei 8.429/1992", sigla: "LIA", url: "https://www.planalto.gov.br/ccivil_03/leis/l8429.htm", areas: ["administrativo"] },
+  { titulo: "Lei de Improbidade Administrativa - Lei 8.429/1992", sigla: "LIA", url: "https://www.planalto.gov.br/ccivil_03/leis/l8429.htm", areas: ["administrativo"] }
 ];
 
 function fetchLexMLCatalogo(): Array<{ title: string; content: string; url: string; date: string }> {
@@ -156,7 +156,7 @@ async function fetchDatajudRecent(): Promise<Array<{ title: string; content: str
                       gte: monthAgo.toISOString().split("T")[0],
                     },
                   },
-                },
+                }
               ],
             },
           },
@@ -173,7 +173,7 @@ async function fetchDatajudRecent(): Promise<Array<{ title: string; content: str
         const content = [
           src.classeProcessual?.nome || "",
           src.assuntos?.map((a: any) => a.nome).join(", ") || "",
-          src.movimentos?.slice(0, 3).map((m: any) => m.nome).join("; ") || "",
+          src.movimentos?.slice(0, 3).map((m: any) => m.nome).join("; ") || ""
         ]
           .filter(Boolean)
           .join("\n");
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
     Promise.resolve(fetchLexMLCatalogo()),
     fetchSTFRecent(),
     fetchCamaraRecent(),
-    fetchDatajudRecent(),
+    fetchDatajudRecent()
   ]);
 
   // 1b. Trigger dados.gov.br and STF BigQuery ingestion (async, fire-and-forget)
@@ -326,7 +326,7 @@ Deno.serve(async (req) => {
     { items: lexmlItems, source: "lexml_catalogo", label: "Catálogo LexML (47 Leis)", type: "lei" },
     { items: stfItems, source: "stf", label: "Dados Abertos STF", type: "jurisprudencia" },
     { items: camaraItems, source: "camara", label: "Câmara dos Deputados", type: "proposicao" },
-    { items: datajudItems, source: "datajud_auto", label: "Datajud CNJ (Auto)", type: "jurisprudencia" },
+    { items: datajudItems, source: "datajud_auto", label: "Datajud CNJ (Auto)", type: "jurisprudencia" }
   ];
 
   for (const src of sources) {
@@ -381,7 +381,7 @@ Deno.serve(async (req) => {
     { title: "GAIA-X & International Data Spaces (IDSA)", content: "GAIA-X é a iniciativa europeia para uma infraestrutura de dados federada, soberana e interoperável. Princípios: soberania de dados, transparência, portabilidade, interoperabilidade. IDSA fornece a arquitetura de referência para Data Spaces setoriais: manufatura, mobilidade, saúde, agricultura, energia. Conectores IDS permitem troca de dados segura com controle de uso. Catena-X (automotivo) e Manufacturing-X são implementações industriais.", source_type: "technical", category: "data_spaces", tags: ["gaia-x", "idsa", "data-spaces", "data-sovereignty", "catena-x"] },
     { title: "IoT Standards: Matter, Thread & Industrial IoT", content: "Matter (anteriormente CHIP) é o padrão unificado para smart home, apoiado por Apple, Google, Amazon e Samsung. Thread é o protocolo mesh de baixa potência baseado em IPv6 para IoT. Para IoT industrial: OPC UA (comunicação máquina-máquina), MQTT (telemetria leve), TSN (Time-Sensitive Networking para determinismo). Edge computing com AWS Greengrass, Azure IoT Edge. Segurança: certificação IEC 62443 para sistemas industriais.", source_type: "technical", category: "iot_sensors", tags: ["matter", "thread", "mqtt", "opc-ua", "industrial-iot", "edge-computing"] },
     { title: "ISO/TS 15066 - Collaborative Robot Safety", content: "ISO/TS 15066 define requisitos de segurança para operação colaborativa de robôs industriais. Quatro modos de colaboração: parada monitorada de segurança, guia manual, monitoramento de velocidade e separação, limitação de potência e força. Limites biomecânicos de dor e lesão para 29 áreas do corpo. Complementa ISO 10218-1/2 (robôs industriais). Cobots principais: Universal Robots, FANUC CRX, ABB YuMi, KUKA LBR iiwa. Certificação CE obrigatória na UE.", source_type: "regulation", category: "human_robot_collaboration", tags: ["iso-15066", "cobots", "collaborative-robots", "safety", "human-robot"] },
-    { title: "CSRD, DORA & Supply Chain Resilience", content: "CSRD (Corporate Sustainability Reporting Directive) exige relatórios de sustentabilidade baseados nos ESRS (European Sustainability Reporting Standards). Afeta empresas com 250+ funcionários ou faturamento >€40M. DORA (Digital Operational Resilience Act) exige gestão de riscos ICT para o setor financeiro: testes de penetração, gestão de incidentes, supervisão de terceiros. Supply chain resilience: EU Chips Act (€43B para semicondutores), Critical Raw Materials Act, Net-Zero Industry Act. Due diligence obrigatória via CS3D (Corporate Sustainability Due Diligence Directive).", source_type: "regulation", category: "resilience_supply_chain", tags: ["csrd", "dora", "supply-chain", "resilience", "esrs", "eu-chips-act"] },
+    { title: "CSRD, DORA & Supply Chain Resilience", content: "CSRD (Corporate Sustainability Reporting Directive) exige relatórios de sustentabilidade baseados nos ESRS (European Sustainability Reporting Standards). Afeta empresas com 250+ funcionários ou faturamento >€40M. DORA (Digital Operational Resilience Act) exige gestão de riscos ICT para o setor financeiro: testes de penetração, gestão de incidentes, supervisão de terceiros. Supply chain resilience: EU Chips Act (€43B para semicondutores), Critical Raw Materials Act, Net-Zero Industry Act. Due diligence obrigatória via CS3D (Corporate Sustainability Due Diligence Directive).", source_type: "regulation", category: "resilience_supply_chain", tags: ["csrd", "dora", "supply-chain", "resilience", "esrs", "eu-chips-act"] }
   ];
 
   // Insert strategic knowledge (idempotent via title match)

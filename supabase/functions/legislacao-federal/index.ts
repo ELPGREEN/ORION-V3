@@ -396,7 +396,7 @@ const CATALOGO_LEIS: CodigoLei[] = [
   // ═══ EMPRESARIAL (expansão) ═══
   { sigla: "Lei EIRELI/SLU", nome: "Lei 12.441/2011", tipo: "LEI", numero: "12441", ano: "2011", area: "empresarial", descricao: "Empresa Individual de Responsabilidade Limitada (EIRELI).", url: "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2011/lei/l12441.htm", palavrasChave: ["EIRELI", "empresa individual", "sociedade limitada unipessoal"] },
   { sigla: "Lei Registro Empr", nome: "Lei 8.934/1994", tipo: "LEI", numero: "8934", ano: "1994", area: "empresarial", descricao: "Registro público de empresas mercantis.", url: "https://www.planalto.gov.br/ccivil_03/leis/l8934.htm", palavrasChave: ["junta comercial", "registro empresa", "CNPJ"] },
-  { sigla: "Lei Microempreend", nome: "LC 128/2008", tipo: "LCP", numero: "128", ano: "2008", area: "empresarial", descricao: "Microempreendedor Individual (MEI).", url: "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp128.htm", palavrasChave: ["MEI", "microempreendedor", "formalização"] },
+  { sigla: "Lei Microempreend", nome: "LC 128/2008", tipo: "LCP", numero: "128", ano: "2008", area: "empresarial", descricao: "Microempreendedor Individual (MEI).", url: "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp128.htm", palavrasChave: ["MEI", "microempreendedor", "formalização"] }
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -761,7 +761,7 @@ const LEXML_CATALOG = [
   { title: "Lei do Habeas Data", urn: "urn:lex:br:federal:lei:1997-11-12;9507", date: "12/11/1997", keywords: ["habeas data","informação pessoal"] },
   { title: "Reforma da Previdência", urn: "urn:lex:br:federal:emenda.constitucional:2019-11-12;103", date: "12/11/2019", keywords: ["previdência","aposentadoria","EC 103","idade mínima"] },
   { title: "Lei de Benefícios do INSS", urn: "urn:lex:br:federal:lei:1991-07-24;8213", date: "24/07/1991", keywords: ["INSS","aposentadoria","auxílio-doença","pensão por morte","BPC"] },
-  { title: "Ação Civil Pública", urn: "urn:lex:br:federal:lei:1985-07-24;7347", date: "24/07/1985", keywords: ["ação civil pública","interesse difuso","coletivo"] },
+  { title: "Ação Civil Pública", urn: "urn:lex:br:federal:lei:1985-07-24;7347", date: "24/07/1985", keywords: ["ação civil pública","interesse difuso","coletivo"] }
 ];
 
 // Strategy 1: LexML SRU (Z39.50 over HTTP)
@@ -960,7 +960,7 @@ async function buscaUnificadaLegislacao(query: string): Promise<LegislacaoResult
           });
         });
       } catch { /* sigla format miss */ }
-    })(),
+    })()
   ]);
   settled.forEach((s, i) => {
     if (s.status === "rejected") console.warn(`[busca] source ${i} error:`, s.reason);
@@ -1336,7 +1336,7 @@ Deno.serve(async (req) => {
       ...Object.keys(SENADO_ACTIONS),
       ...Object.keys(CAMARA_ACTIONS),
       ...Object.keys(ADM_ACTIONS),
-      "busca", "search", "catalogo", "ingest_codigos", "lexml",
+      "busca", "search", "catalogo", "ingest_codigos", "lexml"
     ].sort();
 
     return json({

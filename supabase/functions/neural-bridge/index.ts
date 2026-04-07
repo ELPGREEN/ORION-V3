@@ -52,7 +52,7 @@ async function handleExportFull() {
       .eq("learned", true)
       .gte("quality_score", 0.7)
       .order("created_at", { ascending: false })
-      .limit(100),
+      .limit(100)
   ]);
 
   return {
@@ -106,7 +106,7 @@ async function handleStatus() {
   const [specCount, kbCount, modelsCount] = await Promise.all([
     sb.from("neural_specializations").select("id", { count: "exact", head: true }),
     sb.from("neural_knowledge_base").select("id", { count: "exact", head: true }),
-    sb.from("neural_learning_data").select("id", { count: "exact", head: true }).eq("learned", true),
+    sb.from("neural_learning_data").select("id", { count: "exact", head: true }).eq("learned", true)
   ]);
 
   return {

@@ -32,7 +32,7 @@ Deno.serve(async (req: Request) => {
     const models = [
       { id: "facebook/detr-resnet-50", url: "https://router.huggingface.co/hf-inference/models/facebook/detr-resnet-50" },
       { id: "hustvl/yolos-tiny", url: "https://router.huggingface.co/hf-inference/models/hustvl/yolos-tiny" },
-      { id: "facebook/detr-resnet-50", url: "https://api-inference.huggingface.co/models/facebook/detr-resnet-50" },
+      { id: "facebook/detr-resnet-50", url: "https://api-inference.huggingface.co/models/facebook/detr-resnet-50" }
     ];
 
     let lastError = "";

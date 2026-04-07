@@ -44,13 +44,7 @@ function getProviders(): AIProvider[] {
 
   // Multiple Gemini keys for rate limit resilience
   const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter(Boolean) as string[];
 
   for (let i = 0; i < geminiKeys.length; i++) {
@@ -203,7 +197,7 @@ REGRAS ESTRITAS:
         {
           role: "user",
           content: `Contexto do documento:\n"""${contextWindow}"""\n\nComplete a partir de: "${cursorText}"`,
-        },
+        }
       ], 180, adaptiveTemp);
 
       // Clean the completion
@@ -257,7 +251,7 @@ REGRAS:
         {
           role: "user",
           content: `${fullContext ? `Contexto do documento:\n"""${fullContext.substring(0, 2000)}"""\n\n` : ""}Reformule este trecho:\n\n"${text}"`,
-        },
+        }
       ], 1024, 0.4);
 
       let cleaned = rewritten.trim().replace(/^["']|["']$/g, "");
@@ -289,19 +283,19 @@ REGRAS:
       // ─── AGENT 1: REVISOR (grammar, style) ───
       const agentRevisor = callWithFallback(providers, [
         { role: "system", content: `═══ AGENTE: REVISOR ═══\nFUNÇÃO: Revisar gramática, ortografia, pontuação, concordância, regência, crase e estilo formal jurídico.\nPara cada erro, forneça o trecho literal e a correção exata.\nNUNCA altere conteúdo substantivo — corrija apenas a forma.\n\n${coreRules}\n\nCategorias: "grammar" ou "style". headSource: "revisor"\nRetorne APENAS: [...]` },
-        { role: "user", content: `Tipo: ${docTypeLabel}\n\nDocumento:\n${docSnippet}` },
+        { role: "user", content: `Tipo: ${docTypeLabel}\n\nDocumento:\n${docSnippet}` }
       ], 2000, 0.1);
 
       // ─── AGENT 2: PESQUISADOR JURÍDICO (legal, consistency) ───
       const agentLegal = callWithFallback(providers, [
         { role: "system", content: `═══ AGENTE: PESQUISADOR JURÍDICO ═══\nFUNÇÃO: Verificar fundamentação legal, citações de artigos/leis/súmulas e consistência.\nIdentifique: artigos citados incorretamente, leis inexistentes, contradições entre argumentos.\nPROIBIDO inventar números de leis ou súmulas.\n\n${coreRules}\n\nCategorias: "legal" ou "consistency". headSource: "pesquisador"\nRetorne APENAS: [...]` },
-        { role: "user", content: `Tipo: ${docTypeLabel}\n\nDocumento:\n${docSnippet}` },
+        { role: "user", content: `Tipo: ${docTypeLabel}\n\nDocumento:\n${docSnippet}` }
       ], 2000, 0.1);
 
       // ─── AGENT 3: FORMATADOR (structure) ───
       const agentFormato = callWithFallback(providers, [
         { role: "system", content: `═══ AGENTE: FORMATADOR ═══\nFUNÇÃO: Avaliar estrutura, organização e completude do documento.\nVerifique: hierarquia de seções, numeração, seções obrigatórias, ordem lógica.\nPara seções faltantes, marque autoApplicable=false.\n\n${coreRules}\n\nCategoria: "structure". headSource: "formatador"\nRetorne APENAS: [...]` },
-        { role: "user", content: `Tipo: ${docTypeLabel}\n\nDocumento:\n${docSnippet}` },
+        { role: "user", content: `Tipo: ${docTypeLabel}\n\nDocumento:\n${docSnippet}` }
       ], 1500, 0.15);
 
       // ─── ORCHESTRATOR: Run all agents in parallel, merge ───
@@ -380,7 +374,7 @@ Retorne APENAS o JSON.`,
         {
           role: "user",
           content: `Analise a estrutura deste documento:\n\n${plainText.substring(0, 5000)}`,
-        },
+        }
       ], 3000, 0.2);
 
       let analysis: any = { score: 0, missingSections: [], presentSections: [], summary: "" };
@@ -427,7 +421,7 @@ Retorne APENAS o JSON.`,
           content: topic
             ? `Gere um artigo jurídico sobre: ${topic}`
             : `Gere um artigo jurídico atual e relevante na área de ${categoria || "direito"}. Escolha um tema em alta.`,
-        },
+        }
       ], 4000, 0.6);
 
       let parsed: any = {};
@@ -466,7 +460,7 @@ Retorne APENAS o JSON.`,
         {
           role: "user",
           content: "Sugira 5 temas de artigos jurídicos atuais e relevantes para publicação.",
-        },
+        }
       ], 2000, 0.7);
 
       let parsed: any = { temas: [] };
@@ -513,7 +507,7 @@ Retorne APENAS o HTML do texto melhorado.`,
         {
           role: "user",
           content: `${titulo ? `Título: ${titulo}\n\n` : ""}Melhore este artigo:\n\n${conteudo}`,
-        },
+        }
       ], 4000, 0.3);
 
       // Strip code fences if AI wrapped response in ```html ... ```
@@ -551,7 +545,7 @@ Retorne APENAS o JSON.`,
         {
           role: "user",
           content: `${titulo ? `Título: ${titulo}\n\n` : ""}Gere SEO para:\n\n${plainText.substring(0, 3000)}`,
-        },
+        }
       ], 500, 0.3);
 
       let parsed: any = {};

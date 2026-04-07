@@ -1591,7 +1591,7 @@ function validatePatchSyntax(code: string): number {
     { pattern: /new\s+Response\(/i, weight: 0.1, name: "has_response" },
     { pattern: /JSON\.stringify/i, weight: 0.05, name: "has_json" },
     { pattern: /createClient/i, weight: 0.1, name: "has_supabase_client" },
-    { pattern: /Content-Type/i, weight: 0.05, name: "has_content_type" },
+    { pattern: /Content-Type/i, weight: 0.05, name: "has_content_type" }
   ];
 
   for (const check of checks) {

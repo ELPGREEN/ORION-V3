@@ -460,7 +460,7 @@ Be STRICT: reject if any spoofing indicators, poor lighting, or single-angle onl
     // Fallback: Direct Gemini API (FREE — no Lovable Gateway)
     if (!text && geminiKey) {
       try {
-        const fallbackKeys = [geminiKey, Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3")].filter(Boolean) as string[];
+        const fallbackKeys = [geminiKey].filter(Boolean) as string[];
         for (const k of fallbackKeys) {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
             method: "POST",
@@ -628,7 +628,7 @@ Prefer false negatives over false positives (reject uncertain matches).`,
     // Fallback: Direct Gemini API (FREE)
     if (!text && geminiKey) {
       try {
-        const fallbackKeys = [geminiKey, Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3")].filter(Boolean) as string[];
+        const fallbackKeys = [geminiKey].filter(Boolean) as string[];
         for (const k of fallbackKeys) {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
             method: "POST",

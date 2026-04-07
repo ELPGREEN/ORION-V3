@@ -113,7 +113,7 @@ async function handleSynthesize(body: Record<string, unknown>, _userId: string) 
   if (!text) throw new Error("text required");
 
   const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter((k): k is string => !!k);
 
   for (const key of geminiKeys) {

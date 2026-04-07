@@ -30,13 +30,7 @@ const KEY_COOLDOWN_MS = 5 * 60 * 1000; // 5 min cooldown for 403 keys
 function getAllGeminiKeys(): string[] {
   const now = Date.now();
   const keys = [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter((k): k is string => {
     if (!k) return false;
     // Skip keys that recently failed with 403

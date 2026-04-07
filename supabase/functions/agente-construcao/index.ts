@@ -478,7 +478,7 @@ Retorne o código COMPLETO modificado.`;
 
         const errorContext = [
           ...(error_logs || []).map(e => `[LOG ERROR] ${e}`),
-          ...(console_errors || []).map(e => `[CONSOLE] ${e}`),
+          ...(console_errors || []).map(e => `[CONSOLE] ${e}`)
         ].join("\n").substring(0, 3000);
 
         if (!errorContext && !feIntent) return json({ success: false, error: "error_logs, console_errors or intent required" }, 400);
@@ -682,7 +682,7 @@ REGRAS ABSOLUTAS:
           model: "llama-3.3-70b-versatile",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: prompt },
+            { role: "user", content: prompt }
           ],
           temperature: 0.15,
           max_tokens: 8000,
@@ -716,7 +716,7 @@ REGRAS ABSOLUTAS:
           model: "mistral-small-latest",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: prompt },
+            { role: "user", content: prompt }
           ],
           temperature: 0.15,
           max_tokens: 8000,

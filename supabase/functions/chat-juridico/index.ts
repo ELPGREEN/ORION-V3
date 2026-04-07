@@ -307,13 +307,7 @@ function getAvailableLLMs(): LLMConfig[] {
   
   // Gemini FREE — 7 keys in round-robin, multiple models
   const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter(Boolean) as string[];
 
   // Primary: Gemini 2.5 Flash (10 RPM, 250 RPD)
@@ -365,7 +359,7 @@ async function getAvailableLLMsDynamic(supabaseAdmin: ReturnType<typeof createCl
         return key ? [{ provider: "groq" as LLMProvider, model: "llama-3.3-70b-versatile", apiKey: key }] : [];
       },
       gemini: () => {
-        const keys = [Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3")].filter(Boolean) as string[];
+        const keys = [Deno.env.get("GEMINI_API_KEY")].filter(Boolean) as string[];
         return keys.map(key => ({ provider: "gemini" as LLMProvider, model: "gemini-2.5-flash", apiKey: key }));
       },
       openai: () => {
@@ -407,7 +401,7 @@ async function callOpenAIChat(
       model: llm.model, // gpt-4o — modelo real
       messages: [
         { role: "system", content: systemPrompt },
-        ...messages,
+        ...messages
       ],
       temperature: 0.3,
       max_tokens: 4096,
@@ -435,7 +429,7 @@ async function callLLM(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [
-              { role: "user", parts: [{ text: systemPrompt + "\n\n" + messages.map(m => `${m.role}: ${m.content}`).join("\n") }] },
+              { role: "user", parts: [{ text: systemPrompt + "\n\n" + messages.map(m => `${m.role}: ${m.content}`).join("\n") }] }
             ],
             generationConfig: { temperature: 0.3, maxOutputTokens: 4096 },
           }),
@@ -560,8 +554,7 @@ async function callWithFallback(
 // ====== EMBEDDING (Gemini embedding-001 — 768 dims, FREE) ======
 async function generateEmbedding(text: string): Promise<number[]> {
   const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY")
   ].filter((k): k is string => !!k);
 
   const truncated = text.substring(0, 8000);
@@ -839,7 +832,7 @@ async function searchExternalAPIs(query: string, searchQueries?: Record<string, 
             size: 3,
             query: { bool: { should: [
               { match: { "assuntos.nome": { query: datajudQuery, boost: 3 } } },
-              { match: { "classe.nome": { query: datajudQuery, boost: 2 } } },
+              { match: { "classe.nome": { query: datajudQuery, boost: 2 } } }
             ], minimum_should_match: 1 } },
             sort: [{ dataAjuizamento: { order: "desc" } }],
             _source: ["numeroProcesso", "classe.nome", "assuntos.nome", "orgaoJulgador.nome", "dataAjuizamento"],
@@ -941,7 +934,7 @@ async function searchExternalAPIs(query: string, searchQueries?: Record<string, 
           });
         }
       } catch (e) { console.warn("Senado Processos error:", e); }
-    })(),
+    })()
   ]);
 
   console.log(`📡 External APIs: Found ${results.length} results (optimized queries: ${Object.keys(queriesUsed).length})`);
@@ -988,7 +981,7 @@ const TXT_KNOWLEDGE_FILES_CHAT: Array<{ url: string; label: string; tipo: "doutr
   { url: "sumulas-stj-completas-v4.txt", label: "Súmulas STJ v4 (fallback)", tipo: "sumula", areas: ["civil","penal","trabalhista","consumidor","tributario","administrativo","previdenciario","familia","bancario","imobiliario","ambiental","empresarial","processual_penal"] },
   { url: "tematica-jurisprudencia-stf-v5.txt", label: "Coletânea STF v5 (fallback)", tipo: "jurisprudencia", areas: ["penal","processual_penal"] },
   { url: "aury-lopes-direito-processual-penal-v3.txt", label: "Aury Lopes Jr. v3 (fallback)", tipo: "doutrina", areas: ["penal","processual_penal"] },
-  { url: "nocoes-direito-processual-penal-v4.txt", label: "Noções DPP v4 (fallback)", tipo: "doutrina", areas: ["penal","processual_penal"] },
+  { url: "nocoes-direito-processual-penal-v4.txt", label: "Noções DPP v4 (fallback)", tipo: "doutrina", areas: ["penal","processual_penal"] }
 ];
 
 const _txtCacheChat = new Map<string, { content: string; loadedAt: number }>();
@@ -1145,7 +1138,7 @@ Deno.serve(async (req: Request) => {
       const [neuralResult, externalResult, txtResult] = await Promise.allSettled([
         searchNeuralContext(lastUserMessage, supabaseAdmin, { tribunal: intent.params.tribunal }),
         searchExternalAPIs(lastUserMessage, intent.searchQueries),
-        searchTxtKnowledgeBaseChat(lastUserMessage, intent.params?.area),
+        searchTxtKnowledgeBaseChat(lastUserMessage, intent.params?.area)
       ]);
 
       if (neuralResult.status === "fulfilled") {
@@ -1247,7 +1240,7 @@ Use Bluebook para citações americanas, formato BR para citações nacionais.`,
         params.tribunal ? `Tribunal: ${params.tribunal}` : "",
         params.foro ? `Foro: ${params.foro}` : "",
         params.comarca ? `Comarca: ${params.comarca}` : "",
-        params.vara ? `Vara: ${params.vara}` : "",
+        params.vara ? `Vara: ${params.vara}` : ""
       ].filter(Boolean).join(" | ");
       intentContext += `\n\n═══ JURISDIÇÃO IDENTIFICADA ═══\n${foroInfo}`;
     }

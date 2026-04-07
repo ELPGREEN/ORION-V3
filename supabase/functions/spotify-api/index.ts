@@ -51,7 +51,7 @@ serve(async (req) => {
           "user-read-currently-playing", "user-top-read",
           "user-read-recently-played", "streaming",
           "playlist-read-private", "playlist-read-collaborative",
-          "playlist-modify-public", "playlist-modify-private",
+          "playlist-modify-public", "playlist-modify-private"
         ].join(" ");
         const state = crypto.randomUUID();
         const authUrl = `${SPOTIFY_ACCOUNTS}/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}`;

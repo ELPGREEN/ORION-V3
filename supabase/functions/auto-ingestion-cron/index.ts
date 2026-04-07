@@ -21,7 +21,7 @@ const TRIBUNAIS_CRON = [
   { id: "tjsp", nome: "TJ de São Paulo", url: "https://api-publica.datajud.cnj.jus.br/api_publica_tjsp/_search" },
   { id: "tjrj", nome: "TJ do Rio de Janeiro", url: "https://api-publica.datajud.cnj.jus.br/api_publica_tjrj/_search" },
   { id: "tjmg", nome: "TJ de Minas Gerais", url: "https://api-publica.datajud.cnj.jus.br/api_publica_tjmg/_search" },
-  { id: "tjpr", nome: "TJ do Paraná", url: "https://api-publica.datajud.cnj.jus.br/api_publica_tjpr/_search" },
+  { id: "tjpr", nome: "TJ do Paraná", url: "https://api-publica.datajud.cnj.jus.br/api_publica_tjpr/_search" }
 ];
 
 const TEMAS_INGESTION = [
@@ -29,7 +29,7 @@ const TEMAS_INGESTION = [
   "consumidor responsabilidade",
   "trabalhista rescisão",
   "família divórcio alimentos",
-  "contrato inadimplemento",
+  "contrato inadimplemento"
 ];
 
 const CATALOGO_LEIS = [
@@ -79,7 +79,7 @@ const CATALOGO_LEIS = [
   { titulo: "Lei do Divórcio - Lei 6.515/1977", sigla: "Lei Divórcio", url: "https://www.planalto.gov.br/ccivil_03/leis/l6515.htm", areas: ["família"] },
   { titulo: "Lei de Alienação Parental - Lei 12.318/2010", sigla: "Lei Alien. Parental", url: "https://www.planalto.gov.br/ccivil_03/_ato2007-2010/2010/lei/l12318.htm", areas: ["família"] },
   { titulo: "Lei da Guarda Compartilhada - Lei 13.058/2014", sigla: "Lei Guarda Comp.", url: "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2014/lei/l13058.htm", areas: ["família"] },
-  { titulo: "Marco Legal das Startups - LC 182/2021", sigla: "Marco Startups", url: "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp182.htm", areas: ["empresarial", "digital"] },
+  { titulo: "Marco Legal das Startups - LC 182/2021", sigla: "Marco Startups", url: "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp182.htm", areas: ["empresarial", "digital"] }
 ];
 
 interface IngestionStats {
@@ -113,7 +113,7 @@ async function fetchDataJud(
           bool: {
             should: [
               { match: { "assuntos.nome": { query: tema, boost: 3 } } },
-              { match: { "classe.nome": { query: tema, boost: 2 } } },
+              { match: { "classe.nome": { query: tema, boost: 2 } } }
             ],
             minimum_should_match: 1,
           },
@@ -121,7 +121,7 @@ async function fetchDataJud(
         sort: [{ dataAjuizamento: { order: "desc" } }],
         _source: [
           "numeroProcesso", "classe.nome", "assuntos.nome",
-          "orgaoJulgador.nome", "dataAjuizamento", "movimentos",
+          "orgaoJulgador.nome", "dataAjuizamento", "movimentos"
         ],
       }),
     });
@@ -144,7 +144,7 @@ async function fetchDataJud(
           `Classe: ${src.classe?.nome || "N/A"}`,
           `Assuntos: ${assuntos.join(", ") || "N/A"}`,
           `Órgão Julgador: ${src.orgaoJulgador?.nome || "N/A"}`,
-          movimentos.length > 0 ? `Movimentos: ${movimentos.join("; ")}` : "",
+          movimentos.length > 0 ? `Movimentos: ${movimentos.join("; ")}` : ""
         ].filter(Boolean).join("\n"),
         numero: src.numeroProcesso || "",
         data: src.dataAjuizamento || "",
@@ -182,7 +182,7 @@ async function ingestLexMLCatalogo(
         `${lei.titulo} (${lei.sigla})`,
         `Áreas: ${lei.areas.join(", ")}`,
         `Legislação fundamental do ordenamento jurídico brasileiro.`,
-        `Disponível em: ${lei.url}`,
+        `Disponível em: ${lei.url}`
       ].join("\n");
 
       const { error: insertError } = await supabase
