@@ -9,6 +9,8 @@ import { detectAllMP, type MPVisionResult } from "./mediapipe-vision";
 import { detectWithYOLO, type YOLODetection } from "./yolo-onnx-detector";
 import { detectSingleFaceFull, loadFaceApiModels, type FaceApiDetection } from "./face-api-runtime";
 import { getBlazeFaceModel } from "./tf-runtime";
+import { classifyImage, detectObjects, captionImage } from "@/lib/huggingface/transformers-vision";
+import { transcribeAudio, recordMicrophoneAudio } from "@/lib/huggingface/transformers-audio";
 
 // ─── Types ───
 
@@ -89,8 +91,10 @@ export async function orchestratorSee(
         };
       }
 
-      // Cloud vision APIs (gemini_vision, llava_vision) are handled externally
-      // via analyzeFrameWithAI in orion-ai-client.ts — not duplicated here
+      // ─── Transformers.js Vision (100% free, browser-side) ───
+      if (api.id === "transformersjs_vision" || api.id === "yolo_onnx") {
+        // After YOLO, try Transformers.js as ultimate free fallback
+      }
     } catch (e) {
       const latency = Date.now() - start;
       reportAPILatency(api.id, latency, false);
@@ -99,7 +103,42 @@ export async function orchestratorSee(
     }
   }
 
-  // Graceful degradation — return empty rather than throw
+  // ─── Ultimate fallback: Transformers.js vision (free, browser) ───
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      const start = Date.now();
+
+      const [classifications, detections] = await Promise.all([
+        classifyImage(dataUrl, "Xenova/vit-base-patch16-224", 3).catch(() => []),
+        detectObjects(dataUrl, "Xenova/detr-resnet-50", 0.5).catch(() => []),
+      ]);
+
+      const latency = Date.now() - start;
+      const objects = [
+        ...detections.map(d => ({ label: d.label, confidence: d.score, bbox: [d.box.xmin, d.box.ymin, d.box.xmax - d.box.xmin, d.box.ymax - d.box.ymin] })),
+        ...classifications.map(c => ({ label: c.label, confidence: c.score })),
+      ];
+
+      if (objects.length > 0) {
+        return {
+          description: `TJS: ${objects.map(o => `${o.label}(${(o.confidence * 100).toFixed(0)}%)`).join(", ")}`,
+          objects,
+          source: "transformers-js",
+          latencyMs: latency,
+        };
+      }
+    }
+  } catch (e) {
+    console.warn("⚠️ [Orchestrator] Transformers.js vision fallback failed:", e);
+  }
+
+  // Graceful degradation
   return {
     description: lastError ? `Visão indisponível: ${lastError.message}` : "Nenhum sensor de visão disponível",
     objects: [],
@@ -157,6 +196,19 @@ export async function orchestratorListen(): Promise<ListenResult> {
       lastError = e instanceof Error ? e : new Error(String(e));
       console.warn(`⚠️ [Orchestrator] ${api.id} STT falhou:`, e);
     }
+  }
+
+  // ─── Ultimate fallback: Whisper in browser (free, offline) ───
+  try {
+    const start = Date.now();
+    const audioData = await recordMicrophoneAudio(5000);
+    const result = await transcribeAudio(audioData, "Xenova/whisper-tiny", "pt");
+    const latency = Date.now() - start;
+    if (result.text.trim()) {
+      return { transcript: result.text.trim(), source: "whisper-browser", latencyMs: latency };
+    }
+  } catch (e) {
+    console.warn("⚠️ [Orchestrator] Whisper browser fallback failed:", e);
   }
 
   return { transcript: "", source: "none", latencyMs: 0 };

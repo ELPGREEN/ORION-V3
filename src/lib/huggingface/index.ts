@@ -24,6 +24,24 @@ export {
   getLoadedPipelines,
 } from "./transformers-browser";
 
+// Browser-side Vision (Transformers.js — 100% free, offline)
+export {
+  classifyImage,
+  detectObjects,
+  classifyImageZeroShot,
+  captionImage,
+  estimateDepth,
+  clearVisionCache,
+} from "./transformers-vision";
+
+// Browser-side Audio (Transformers.js — 100% free, offline)
+export {
+  transcribeAudio,
+  classifyAudio,
+  recordMicrophoneAudio,
+  clearAudioCache,
+} from "./transformers-audio";
+
 // Gradio Space client
 export {
   checkSpaceHealth,
