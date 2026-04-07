@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSignatureRealtime } from "@/hooks/useSignatureRealtime";
 import { syncVoiceEvolutionFromSupabase } from "@/lib/neural/orion-voice-evolution";
+import { boostEvolution } from "@/lib/neural/orion-voice-evolution";
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteNavbar } from "./ClienteNavbar";
 import { DashboardSidebar } from "./DashboardSidebar";
