@@ -1,92 +1,119 @@
 
 
-# Plano: Painel Unificado do Cliente — Produtos Digitais + Serviços Jurídicos + Lojas + Orion IA
+# Plano: Painel do Proprietário (Owner) — Acesso Total + Robótica + Orion Completo
 
 ## Estado Atual
 
-O `ClienteDashboard.tsx` (1448 linhas) ja tem:
-- Stats (processos, mensagens, pendentes)
-- Seleção de advogado, assinaturas digitais, processos, andamentos, consultas, documentos, pagamentos
-- quickActions com links para: Suporte, Orion IA, Processos, Documentos, Marketplace, Consultas, Pagamentos, Plano, Perfil, Notificações, Central de Ajuda
-- Marketplace ja aparece como quickAction (path `/dashboard/marketplace`)
+- O **proprietário** (info@elpgreen.com) é detectado via `useAdminAccess` (`isOwner`) e tem role `admin` no DB
+- `useUserRole` resolve `admin` como `advogado` — então cai no `AdvogadoDashboard` que é focado em advocacia
+- `DashboardHome` tem ferramentas admin (robótica, rede neural, lab IA) mas só aparece no `default` case
+- Rotas avançadas (controle-robotico, rede-neural, lab-ia, IoT) estão restritas a `allowedRoles: ["advogado"]`
+- **Problema**: O proprietário NÃO tem painel próprio que unifique TODAS as ferramentas (jurídico + produtos + afiliados + robótica + Orion total)
 
-`MeusAcessos.tsx` (241 linhas) existe mas esta isolado — nao aparece no quickActions do cliente.
+## Arquitetura Proposta
 
-**O que falta:**
-1. **MeusAcessos nao esta integrado** no painel do cliente — o cliente nao ve seus produtos comprados no dashboard
-2. **Nao ha discovery de lojas** — cliente nao consegue explorar lojas de produtores/afiliados
-3. **Orion nao auxilia compras** — nenhum assistente de compras no dashboard do cliente
-4. **Painel juridico e digital sao desconectados** — o cliente ve processos mas nao ve produtos comprados no mesmo painel
-5. **Nenhum widget de "Produtos Recentes"** ou "Continuar Aprendendo" para cursos
+```text
+PROPRIETÁRIO (info@elpgreen.com / role: admin)
+     │
+     ├── VISÃO EXECUTIVA (stats globais de TODOS os roles)
+     │     ├── Clientes totais, Processos, Vendas, Comissões
+     │     ├── Produtos ativos, Afiliados, Receita
+     │     └── Dispositivos IoT, Agentes IA, Uptime
+     │
+     ├── FERRAMENTAS JURÍDICAS (tudo do advogado)
+     │     ├── CRM, Processos, Documentos, Chat
+     │     └── Pesquisa Jurídica, Assinaturas
+     │
+     ├── FERRAMENTAS PRODUTOR (tudo do produtor)
+     │     ├── Meus Produtos, Programa Afiliados
+     │     └── Editor de Vendas, Orion Insights
+     │
+     ├── FERRAMENTAS AFILIADO (visão de afiliados)
+     │     ├── Analytics de vendas, Marketplace
+     │     └── Links, Cupons
+     │
+     ├── CENTRO DE COMANDO ORION
+     │     ├── Rede Neural, Lab IA, Reformulação
+     │     ├── Controle Robótico, IoT/MQTT
+     │     ├── Ferramentas Google, Extensão Chrome
+     │     └── Recursos EU, Usuários
+     │
+     └── ORION IA (capacidade total)
+           ├── Todas as actions de todos os edge functions
+           ├── Integração robótica direta
+           └── Automação de tarefas cross-role
+```
 
 ## Etapas de Implementação
 
-### 1. Integrar Produtos Comprados no Dashboard do Cliente
+### 1. Criar `ProprietarioDashboard.tsx`
 
-Adicionar ao `ClienteDashboard.tsx`:
-- **Nova seção "Meus Produtos Digitais"** entre Resumo do Caso e Acesso Rápido
-- Grid compacto mostrando ultimos 3-4 produtos de `customer_access` com capa, titulo, tipo
-- Badge de progresso para cursos (modulos completados)
-- Botão "Ver Todos" leva para `/dashboard/meus-acessos`
-- Se nao tem produtos: card motivacional "Explore o Marketplace"
+Painel dedicado com seções:
+- **Header executivo**: Stats globais (total clientes, processos, vendas, produtos, dispositivos)
+- **Seção "Jurídico"**: Cards compactos linkando a Processos, CRM, Documentos, Pesquisa, Chat
+- **Seção "Produtos & Vendas"**: Cards para MeusProdutos, Marketplace, Afiliados, Analytics
+- **Seção "Centro de Comando Orion"**: Grid completo com Rede Neural, Lab IA, Controle Robótico, IoT, Ferramentas Google, Extensão Chrome, Reformulação
+- **Widget "Orion Status"**: Mostra status dos agentes IA, dispositivos conectados, health do sistema
+- **Widget "Atividade Global"**: Timeline de ações recentes de TODOS os roles (vendas, processos, mensagens)
 
-Adicionar quickAction "Meus Produtos" apontando para `/dashboard/meus-acessos`.
+### 2. Atualizar `DashboardRouter.tsx`
 
-### 2. Seção "Explorar Lojas" no Dashboard
+Detectar admin/owner e rotear para o novo painel:
+- Importar `useAdminAccess` ou checar role admin
+- Antes do switch de roles, se `isOwner || role === "admin"` → `<ProprietarioDashboard />`
 
-Nova seção compacta mostrando:
-- Grid de 3-4 lojas ativas (produtores com produtos publicados) com nome, foto, contagem de produtos
-- Click leva para `/loja/:creatorId`
-- Possibilidade de ver vitrines de afiliados tambem
-- Busca simples por nome ou categoria
+### 3. Abrir TODAS as rotas para admin
 
-### 3. Página de Discovery: Explorar Lojas e Vitrines
+Atualizar `RoleGuard.tsx` para sempre permitir role `admin`/owner:
+- Dentro do RoleGuard, checar se user é admin → bypass automático
+- Isso libera controle-robotico, rede-neural, lab-ia, IoT, etc. sem listar em cada rota
 
-Nova página `/dashboard/explorar-lojas` (link no quickActions):
-- Lista de todas as lojas de produtores com produtos ativos
-- Lista de vitrines de afiliados
-- Filtros por categoria de produto, tipo (curso, ebook, template)
-- Busca por nome de produtor/afiliado ou produto
-- Orion: botão "Me ajude a escolher" para recomendações personalizadas
+### 4. Widget "Orion Comando Total"
 
-### 4. Widget Orion Assistente de Compras no Dashboard
+Componente `OrionComandoTotal.tsx` no dashboard do proprietário:
+- Painel de status de todos os subsistemas (agentes IA, TTS, RAG, robótica)
+- Botões de ação direta: "Analisar sistema", "Scan de segurança", "Health check IoT"
+- Integração com `orion-advogado-ai` + `orion-produtor-ai` — o proprietário acessa TODAS as actions
+- Toggle para conectar automação robótica ao Orion (habilitar/desabilitar comandos ROS2 via Orion)
 
-Adicionar mini-widget no dashboard do cliente:
-- "Orion: O que devo estudar?" — recomenda produtos baseado no perfil e historico
-- "Orion: Resumo dos meus cursos" — progresso consolidado
-- Usa a edge function `orion-produtor-ai` action `product_faq` existente + nova action `recommend_products`
+### 5. Expandir Edge Function para Owner Actions
 
-### 5. Unificar Painel Jurídico + Digital
-
-O dashboard ja mostra processos/consultas. Integrar visualmente:
-- Seção "Meus Serviços" agrupando: processos ativos + consultas agendadas + advogado vinculado
-- Seção "Meus Conteúdos" agrupando: produtos comprados + cursos em progresso
-- Ambas sections lado a lado em telas grandes, empilhadas em mobile
-- Isso cria uma experiência unificada sem separar os dois mundos
-
-### 6. Expandir Orion Edge Function
-
-Adicionar action `recommend_products` ao `orion-produtor-ai`:
-- Input: historico de compras do cliente + categorias existentes
-- Output: 3-5 sugestoes de produtos com justificativa
+Adicionar ao `orion-produtor-ai` (ou criar `orion-owner-ai`):
+- `system_health`: Status completo de todos os subsistemas
+- `global_analytics`: Métricas consolidadas cross-role
+- `automation_command`: Enviar comandos para dispositivos robóticos/IoT via Orion
+- `security_audit`: Auditoria de acessos e ações
 
 ---
 
 ## Detalhes Técnicos
 
 ### Arquivos a criar:
-1. `src/pages/dashboard/ExplorarLojas.tsx` — discovery de lojas/vitrines com busca e filtros
+1. `src/pages/dashboard/ProprietarioDashboard.tsx` — painel completo do owner
+2. `src/components/dashboard/OrionComandoTotal.tsx` — widget de comando total
 
 ### Arquivos a modificar:
-1. `src/pages/dashboard/ClienteDashboard.tsx` — adicionar seções "Meus Produtos Digitais", "Explorar Lojas", widget Orion compras
-2. `src/App.tsx` — rota `/dashboard/explorar-lojas`
-3. `supabase/functions/orion-produtor-ai/index.ts` — nova action `recommend_products`
+1. `src/pages/dashboard/DashboardRouter.tsx` — adicionar detecção de admin/owner antes do switch
+2. `src/components/dashboard/RoleGuard.tsx` — bypass automático para admin
+3. `src/hooks/useUserRole.ts` — expor `isAdmin` flag separado
+4. `supabase/functions/orion-produtor-ai/index.ts` — novas actions owner-only
 
-### Queries necessarias:
-- Produtos comprados: `customer_access` JOIN `products` WHERE `user_id = auth.uid()` AND `is_active = true`
-- Lojas ativas: `products` GROUP BY `creator_id` JOIN `profiles` WHERE `status = 'active'`
-- Vitrines ativas: `affiliate_links` JOIN `profiles` GROUP BY `affiliate_user_id`
+### Lógica de detecção:
+```text
+DashboardRouter:
+  1. useUserRole() → role
+  2. useAdminAccess() → isOwner
+  3. if (isOwner || role === "admin") → ProprietarioDashboard
+  4. else → switch normal (cliente, advogado, produtor, etc.)
 
-### Nenhuma migration necessaria:
-- Todas as tabelas ja existem (`customer_access`, `products`, `product_modules`, `product_files`, `affiliate_links`, `profiles`)
+RoleGuard:
+  1. Checar useAdminAccess().isOwner
+  2. Se owner → render children (bypass total)
+  3. Senão → lógica normal de allowedRoles
+```
+
+### Nenhuma migration necessária:
+- Role `admin` já existe no enum `app_role`
+- `user_roles` já suporta admin
+- Todas as tabelas já existem
 
