@@ -133,6 +133,34 @@ serve(async (req) => {
         );
         break;
       }
+      case "system_health": {
+        result = await callGemini(
+          `Sistema ORION — Status Report\nTimestamp: ${new Date().toISOString()}\nSubsistemas: LLM Gemini (7 keys), TTS Piper+Gemini, RAG Hybrid Search v3, ROSBridge WS, MQTT HiveMQ, Neural Knowledge Base\nContexto: ${context || "N/A"}\n\nGere um relatório de saúde do sistema com status de cada subsistema, recomendações de otimização e alertas potenciais.`,
+          "Você é um engenheiro de sistemas sênior. Analise o status dos subsistemas e gere relatório técnico conciso com métricas e recomendações. PT-BR."
+        );
+        break;
+      }
+      case "global_analytics": {
+        result = await callGemini(
+          `Dados da plataforma ORION:\n${context || "Sem dados"}\n\nAnalise as métricas globais da plataforma (clientes, processos, vendas, produtos, afiliados) e forneça:\n1. Resumo executivo\n2. Top 3 métricas de crescimento\n3. Top 3 áreas de atenção\n4. Recomendações estratégicas`,
+          "Você é um analista de dados executivo. Forneça insights acionáveis e métricas claras. Foco em crescimento e otimização. PT-BR."
+        );
+        break;
+      }
+      case "automation_command": {
+        result = await callGemini(
+          `Comando de automação solicitado:\n${context || "Sem comando"}\n\nInterprete este comando de automação para sistemas robóticos/IoT. Retorne:\n1. Dispositivos alvo\n2. Ações a executar\n3. Parâmetros de segurança\n4. Confirmação necessária (sim/não)\n5. Estimativa de tempo`,
+          "Você é um engenheiro de automação industrial. Interprete comandos de forma segura, sempre priorizando safety-first. Valide parâmetros antes de confirmar execução. PT-BR."
+        );
+        break;
+      }
+      case "security_audit": {
+        result = await callGemini(
+          `Auditoria de segurança — ORION Platform\nTimestamp: ${new Date().toISOString()}\nContexto: ${context || "Auditoria geral"}\n\nRealize uma análise de segurança cobrindo:\n1. Autenticação e controle de acesso (RLS, JWT)\n2. Rate limiting e proteção contra abuso\n3. Exposição de dados sensíveis\n4. Integridade de edge functions\n5. Recomendações de hardening`,
+          "Você é um especialista em segurança cibernética. Analise a postura de segurança e forneça recomendações práticas com prioridade. PT-BR."
+        );
+        break;
+      }
       default:
         return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400, headers: corsHeaders });
     }

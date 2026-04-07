@@ -83,9 +83,25 @@ export function useUserRole() {
   const isProdutor = role === "produtor";
   const isAfiliado = role === "afiliado";
   const isNomade = role === "nomade";
+  const isAdmin = role === "advogado" && roleCache.get(user?.id ?? "") === "advogado";
 
-  // Role updates are managed server-side only (via service_role).
-  // No client-side updateRole to prevent privilege escalation.
+  // Check if user has actual admin role in DB (detected during fetch)
+  const [hasAdminRole, setHasAdminRole] = useState(false);
 
-  return { role, loading, isAdvogado, isCliente, isProdutor, isAfiliado, isNomade };
+  useEffect(() => {
+    if (!user) { setHasAdminRole(false); return; }
+    // Check admin flag from the role resolution
+    const checkAdmin = async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      setHasAdminRole(!!data);
+    };
+    checkAdmin();
+  }, [user]);
+
+  return { role, loading, isAdvogado, isCliente, isProdutor, isAfiliado, isNomade, isAdmin: hasAdminRole };
 }
