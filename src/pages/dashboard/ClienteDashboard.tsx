@@ -834,6 +834,142 @@ export default function ClienteDashboard() {
           </div>
         </div>
       )}
+
+      {/* ═══ Meus Produtos Digitais + Lojas + Orion Shopping ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Meus Conteúdos */}
+        <div className="bg-card border border-border p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-serif text-foreground flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-primary" />
+              Meus Produtos Digitais
+            </h2>
+            <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => navigate("/dashboard/meus-acessos")}>
+              Ver Todos <ChevronRight className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
+          {myProducts.length > 0 ? (
+            <div className="space-y-2">
+              {myProducts.slice(0, 4).map((item: any) => (
+                <button
+                  key={item.id}
+                  onClick={() => navigate("/dashboard/meus-acessos")}
+                  className="w-full flex items-center gap-3 p-2.5 border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left group"
+                >
+                  <div className="h-10 w-10 bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {item.products?.cover_url ? (
+                      <img src={item.products.cover_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <ShoppingBag className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-foreground truncate group-hover:text-primary transition-colors">
+                      {item.products?.title || "Produto"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {item.products?.product_type === "online_course" ? "Curso Online" :
+                       item.products?.product_type === "ebook" ? "E-book" : "Digital"}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="text-[8px]">{item.products?.category || "geral"}</Badge>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <ShoppingBag className="h-8 w-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground mb-2">Nenhum produto comprado ainda</p>
+              <Button variant="outline" size="sm" className="text-xs" onClick={() => navigate("/dashboard/marketplace")}>
+                Explorar Marketplace
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Explorar Lojas */}
+        <div className="bg-card border border-border p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-serif text-foreground flex items-center gap-2">
+              <Store className="h-4 w-4 text-primary" />
+              Lojas em Destaque
+            </h2>
+            <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => navigate("/dashboard/explorar-lojas")}>
+              Ver Todas <ChevronRight className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
+          {featuredStores.length > 0 ? (
+            <div className="space-y-2">
+              {featuredStores.map((store: any) => (
+                <button
+                  key={store.creator_id}
+                  onClick={() => navigate(`/loja/${store.creator_id}`)}
+                  className="w-full flex items-center gap-3 p-2.5 border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left group"
+                >
+                  <div className="h-10 w-10 bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {store.avatar_url ? (
+                      <img src={store.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <Store className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-foreground truncate group-hover:text-primary transition-colors">{store.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{store.count} produto{store.count !== 1 ? "s" : ""}</p>
+                  </div>
+                  <ChevronRight className="h-3 w-3 text-muted-foreground/40 group-hover:text-primary" />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <Store className="h-8 w-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground">Nenhuma loja disponível ainda</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Orion Shopping Assistant */}
+      <div className="bg-card border border-primary/20 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <div>
+              <h3 className="text-sm font-serif text-foreground">Orion: O que devo estudar?</h3>
+              <p className="text-[10px] text-muted-foreground">Recomendações personalizadas de produtos digitais</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={async () => {
+              setLoadingOrion(true);
+              try {
+                const history = myProducts.map((p: any) => p.products?.title).filter(Boolean).join(", ") || "Nenhum produto";
+                const { data, error } = await supabase.functions.invoke("orion-produtor-ai", {
+                  body: { action: "recommend_products", context: `Produtos do cliente: ${history}` },
+                });
+                if (error) throw error;
+                setOrionShopping(data.result);
+              } catch (err: any) {
+                toast({ title: "Erro", description: err.message, variant: "destructive" });
+              } finally {
+                setLoadingOrion(false);
+              }
+            }}
+            disabled={loadingOrion}
+            className="gap-1"
+          >
+            {loadingOrion ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+            Recomendar
+          </Button>
+        </div>
+        {orionShopping && (
+          <div className="mt-3 pt-3 border-t border-border text-sm text-muted-foreground whitespace-pre-wrap">{orionShopping}</div>
+        )}
+      </div>
+
       <div className="bg-card border border-border p-5">
         <div className="flex items-center gap-2 mb-3">
           <HelpCircle className="h-5 w-5 text-primary" />
