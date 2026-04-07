@@ -165,10 +165,7 @@ export default function Depoimentos() {
 
       {/* ─── Featured Testimonials (placeholder with real photos) ─── */}
       <section className="py-16 sm:py-20 bg-background relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          
-          backgroundSize: "60px 60px",
-        }} />
+        <div className="absolute inset-0 opacity-[0.02]" />
 
         <div className="container px-4 sm:px-6 relative z-10">
           <div className="text-center mb-12">
