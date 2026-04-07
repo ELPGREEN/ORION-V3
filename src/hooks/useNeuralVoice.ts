@@ -199,7 +199,7 @@ export function useNeuralVoice(
       rec.start();
       setListening(true);
     } catch { setListening(false); }
-  }, [bargeIn]);
+  }, []);
 
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
     clearRestartTimer();
