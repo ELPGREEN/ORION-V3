@@ -212,6 +212,20 @@ TOKEN_BY_IPA.set('_', PAUSE_TOKEN);
 TOKEN_BY_IPA.set('.', PERIOD_TOKEN);
 TOKEN_BY_IPA.set(',', COMMA_TOKEN);
 
+/**
+ * X-SAMPA → IPA mapping (Amazon Polly pt-BR standard)
+ * Allows using SAMPA notation as input
+ */
+export const XSAMPA_TO_IPA: Record<string, string> = {
+  '4': 'ɾ', 'b': 'b', 'd': 'd', 'dZ': 'd͡ʒ', 'f': 'f', 'g': 'g',
+  'j': 'j', 'k': 'k', 'l': 'l', 'L': 'ʎ', 'm': 'm', 'n': 'n',
+  'J': 'ɲ', 'p': 'p', 's': 's', 'S': 'ʃ', 't': 't', 'tS': 't͡ʃ',
+  'v': 'v', 'w': 'w', 'X': 'χ', 'z': 'z', 'Z': 'ʒ',
+  'a': 'a', 'a~': 'ã', 'e': 'e', 'e~': 'ẽ', 'E': 'ɛ',
+  'i': 'i', 'i~': 'ĩ', 'o': 'o', 'o~': 'õ', 'O': 'ɔ',
+  'u': 'u', 'u~': 'ũ',
+};
+
 const TOKEN_BY_ID = new Map<number, IPAToken>();
 for (const t of [...IPA_TOKENS, PAUSE_TOKEN, PERIOD_TOKEN, COMMA_TOKEN]) {
   TOKEN_BY_ID.set(t.id, t);

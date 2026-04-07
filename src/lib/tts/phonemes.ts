@@ -79,6 +79,11 @@ export const PT_PHONEMES: Record<string, PhonemeParams> = {
   'ʃ':  { f1: 200, f2: 1600, f3: 3800, f4: 6000, bw1: 350, bw2: 350, bw3: 450, bw4: 550, voiced: false, nasal: false, fricative: true, plosive: false, duration: 155, amplitude: 0.6 },
   'ʒ':  { f1: 220, f2: 1600, f3: 3800, f4: 6000, bw1: 300, bw2: 300, bw3: 400, bw4: 500, voiced: true,  nasal: false, fricative: true, plosive: false, duration: 125, amplitude: 0.65 },
   'h':  { f1: 500, f2: 1500, f3: 2500, f4: 3500, bw1: 500, bw2: 500, bw3: 500, bw4: 500, voiced: false, nasal: false, fricative: true, plosive: false, duration: 90,  amplitude: 0.3 },
+  'χ':  { f1: 300, f2: 1100, f3: 2400, f4: 3300, bw1: 400, bw2: 400, bw3: 400, bw4: 450, voiced: false, nasal: false, fricative: true, plosive: false, duration: 110, amplitude: 0.5 },
+
+  // ── AFFRICATES (pt-BR: noite → [ˈnojt͡ʃi], cidade → [siˈdad͡ʒi]) ──
+  't͡ʃ': { f1: 200, f2: 1700, f3: 3800, f4: 6000, bw1: 300, bw2: 300, bw3: 400, bw4: 500, voiced: false, nasal: false, fricative: true, plosive: true, duration: 90, amplitude: 0.65 },
+  'd͡ʒ': { f1: 220, f2: 1700, f3: 3800, f4: 6000, bw1: 250, bw2: 250, bw3: 350, bw4: 450, voiced: true,  nasal: false, fricative: true, plosive: true, duration: 80, amplitude: 0.65 },
 
   // ── NASALS — extended for resonance ──
   'm':  { f1: 280, f2: 900,  f3: 2300, f4: 3200, bw1: 110, bw2: 140, bw3: 180, bw4: 250, voiced: true, nasal: true, fricative: false, plosive: false, duration: 110, amplitude: 0.78 },
