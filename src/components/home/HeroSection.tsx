@@ -46,7 +46,7 @@ export function HeroSection({ t }: HeroSectionProps) {
   const heroTranslateY = scrollY * 0.15;
 
   return (
-    <section className="relative min-h-[85vh] min-h-[85svh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[85vh] min-h-[85svh] flex items-center justify-center overflow-visible">
       <HeroThreeBackground />
 
       {/* Neural network background image */}
@@ -81,7 +81,7 @@ export function HeroSection({ t }: HeroSectionProps) {
       />
 
       <div
-        className="container relative z-10 py-6 sm:py-8 px-4 sm:px-6"
+        className="container relative z-[15] py-6 sm:py-8 px-4 sm:px-6 pt-20 sm:pt-24"
         style={{
           opacity: heroOpacity,
           transform: `translate3d(0, ${heroTranslateY}px, 0)`,
