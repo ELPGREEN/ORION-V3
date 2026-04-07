@@ -109,7 +109,7 @@ export const NAV_MAP: Record<string, { path: string; label: string }> = {
   "planos": { path: "/contato", label: "Planos e Preços" },
   "preços": { path: "/contato", label: "Planos e Preços" },
   "precos": { path: "/contato", label: "Planos e Preços" },
-  "clientes site": { path: "/clientes", label: "Página de Clientes" },
+  "clientes site": { path: "/servicos", label: "Soluções e Serviços" },
 
   // ── PUBLIC SITE PAGES ──
   "home site": { path: "/", label: "Página Inicial" },
@@ -141,10 +141,10 @@ export const NAV_MAP: Record<string, { path: string; label: string }> = {
   "publicações site": { path: "/publicacoes", label: "Publicações e Insights" },
   "blog": { path: "/publicacoes", label: "Blog e Publicações" },
   "insights": { path: "/publicacoes", label: "Insights Orion" },
-  "escritório": { path: "/escritorio", label: "Escritório Jurídico" },
-  "escritorio": { path: "/escritorio", label: "Escritório Jurídico" },
-  "pro bono": { path: "/pro-bono", label: "Pro Bono" },
-  "depoimentos": { path: "/depoimentos", label: "Depoimentos" },
+  "escritório": { path: "/servicos#advogados", label: "Soluções para Advogados" },
+  "escritorio": { path: "/servicos#advogados", label: "Soluções para Advogados" },
+  "depoimentos": { path: "/depoimentos", label: "Casos de Sucesso" },
+  "casos de sucesso": { path: "/depoimentos", label: "Casos de Sucesso" },
   "privacidade": { path: "/privacidade", label: "Política de Privacidade" },
   "termos": { path: "/termos", label: "Termos de Uso" },
   "lgpd": { path: "/lgpd", label: "LGPD" },

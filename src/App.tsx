@@ -37,13 +37,10 @@ const YouTubeMusicCallback = lazy(lazyRetry(() => import("./pages/callback/YouTu
 const AdvogadoSite = lazy(lazyRetry(() => import("./pages/AdvogadoSite")));
 const Publicacoes = lazy(lazyRetry(() => import("./pages/Publicacoes")));
 const PublicacaoDetalhe = lazy(lazyRetry(() => import("./pages/PublicacaoDetalhe")));
-const ProBono = lazy(lazyRetry(() => import("./pages/ProBono")));
 const Depoimentos = lazy(lazyRetry(() => import("./pages/Depoimentos")));
-const Escritorio = lazy(lazyRetry(() => import("./pages/Escritorio")));
 // ─── Public Showcase Pages ───
 const Servicos = lazy(lazyRetry(() => import("./pages/Servicos")));
 const Plataforma = lazy(lazyRetry(() => import("./pages/Plataforma")));
-const Clientes = lazy(lazyRetry(() => import("./pages/Clientes")));
 const Contato = lazy(lazyRetry(() => import("./pages/Contato")));
 const InvestorTools = lazy(lazyRetry(() => import("./pages/InvestorTools")));
 
@@ -143,11 +140,9 @@ const App = () => (
                   <Route path="/" element={<Index />} />
                   <Route path="/publicacoes" element={<Publicacoes />} />
                   <Route path="/publicacoes/:slug" element={<PublicacaoDetalhe />} />
-                  <Route path="/pro-bono" element={<ProBono />} />
                   <Route path="/depoimentos" element={<Depoimentos />} />
                   <Route path="/install" element={<InstallApp />} />
                   <Route path="/advogado/:advogadoId" element={<AdvogadoSite />} />
-                  <Route path="/escritorio" element={<Escritorio />} />
 
                   {/* ═══ PUBLIC — Auth ═══ */}
                   <Route path="/auth" element={<Auth />} />
@@ -163,7 +158,6 @@ const App = () => (
                   <Route path="/lgpd" element={<LGPD />} />
 
                   {/* ═══ PUBLIC — Páginas vitrine da plataforma ═══ */}
-                  <Route path="/clientes" element={<Clientes />} />
                   <Route path="/plataforma" element={<Plataforma />} />
                   <Route path="/servicos" element={<Servicos />} />
                   <Route path="/contato" element={<Contato />} />
@@ -191,6 +185,9 @@ const App = () => (
                   <Route path="/diferencial" element={<Navigate to="/plataforma" replace />} />
                   <Route path="/associado" element={<Navigate to="/contato" replace />} />
                   <Route path="/sobre" element={<Navigate to="/plataforma" replace />} />
+                  <Route path="/escritorio" element={<Navigate to="/servicos#advogados" replace />} />
+                  <Route path="/pro-bono" element={<Navigate to="/contato" replace />} />
+                  <Route path="/clientes" element={<Navigate to="/servicos" replace />} />
 
                   {/* ═══ Dashboard Routes (DashboardLayout already guards auth) ═══ */}
                   <Route path="/dashboard" element={<DashboardLayout />}>

@@ -9,10 +9,16 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
 
   const navLinks = [
     { href: "/", label: t.nav.home },
-    { href: "/publicacoes", label: t.nav.publications },
+    { href: "/servicos", label: "Soluções" },
     { href: "/plataforma", label: t.nav.platform },
+    { href: "/contato", label: "Planos" },
+    { href: "/publicacoes", label: t.nav.publications },
+  ];
+
+  const resourceLinks = [
     { href: "/investidor", label: "Investidores" },
-    { href: "/contato", label: t.nav.contact },
+    { href: "/depoimentos", label: "Casos de Sucesso" },
+    { href: "/install", label: "Instalar App" },
   ];
 
   return (
@@ -132,7 +138,26 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
             </ul>
           </div>
 
-          {/* Company Info */}
+          {/* Resources */}
+          <div>
+            <h4 className="text-[9px] text-primary uppercase tracking-[0.3em] font-medium mb-5 flex items-center gap-2">
+              <span className="w-3 h-px bg-primary/40" />
+              RECURSOS
+            </h4>
+            <ul className="space-y-2.5">
+              {resourceLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    to={link.href}
+                    className="group flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors duration-300"
+                  >
+                    <ChevronRight className="h-2.5 w-2.5 text-primary/0 group-hover:text-primary/60 transition-all duration-300 -ml-3 group-hover:ml-0" />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
           <div>
             <h4 className="text-[9px] text-primary uppercase tracking-[0.3em] font-medium mb-5 flex items-center gap-2">
               <span className="w-3 h-px bg-primary/40" />
