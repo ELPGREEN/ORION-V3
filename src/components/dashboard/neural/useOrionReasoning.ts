@@ -533,9 +533,6 @@ export function useOrionReasoning(
           console.warn("[Orion] Voice auth gate error:", authErr);
         }
       }
-        somLearn(question, "greeting");
-        return;
-      }
 
       // 0b. OWNER REGISTRATION: "cadastrar" / "eu sou o Ericson" / "registrar proprietário"
       const cadastrarMatch = /\b(cadastr|registr)\w*\b.*\b(ericson|proprietário|proprietario|dono|criador|fundador)\b/i.test(qLow) ||
