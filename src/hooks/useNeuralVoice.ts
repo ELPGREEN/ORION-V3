@@ -141,6 +141,66 @@ export function useNeuralVoice(
     return () => speechSynthesis?.removeEventListener?.("voiceschanged", handler);
   }, []);
 
+  const createAndStartRecognition = useCallback(() => {
+    const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    if (!SR || !onCmdRef.current) { setListening(false); return; }
+    try {
+      try { recRef.current?.stop(); } catch {}
+      const rec = new SR();
+      rec.lang = "pt-BR";
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+      rec.onstart = () => setListening(true);
+      rec.onresult = (e: any) => {
+        const lastResult = e.results[e.results.length - 1];
+        const transcript = lastResult?.[0]?.transcript?.trim() || "";
+        const isFinal = lastResult?.isFinal;
+        if (!transcript) return;
+        if (speakingRef.current || VoiceState.aiResponding) {
+          if (STOP_PATTERNS.test(transcript.trim())) { bargeIn(); speechBufferRef.current = ""; return; }
+          if (isFinal && transcript.split(/\s+/).length >= 3) bargeIn();
+        }
+        if (!isFinal) return;
+        speechBufferRef.current = speechBufferRef.current ? `${speechBufferRef.current} ${transcript}` : transcript;
+        if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
+        const turnState = detectTurnState(speechBufferRef.current, "pt-BR");
+        const silenceMs = getOptimalSilenceDuration(turnState);
+        speechDebounceRef.current = setTimeout(() => {
+          const fullText = speechBufferRef.current.trim();
+          speechBufferRef.current = "";
+          if (!fullText || !onCmdRef.current) return;
+          const normalized = normalizeSpeechText(fullText);
+          const now = Date.now();
+          if (normalized.length < 3) return;
+          const isDuplicate = normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000;
+          const isEcho = Boolean(lastSpokenTextRef.current && now - lastSpokenAtRef.current < 6000 && normalized.length > 12 && lastSpokenTextRef.current.includes(normalized.slice(0, 30)));
+          if (isDuplicate || isEcho) return;
+          lastProcessedTranscriptRef.current = normalized;
+          lastProcessedAtRef.current = now;
+          feedUserSpeech(fullText);
+          const styleResult = detectStyleCommand(fullText, getCachedVoicePrefs());
+          if (styleResult.matched) { saveVoicePrefs(styleResult.updatedPrefs); console.log("[Voice Style] 🎓 Learned:", styleResult.feedback); return; }
+          onCmdRef.current(fullText);
+        }, silenceMs);
+      };
+      rec.onend = () => {
+        if (intentionalStopRef.current) { setListening(false); return; }
+        if (!speakingRef.current && onCmdRef.current) { scheduleRecognitionRestart(150); return; }
+        if (!speakingRef.current) setListening(false);
+      };
+      rec.onerror = (e: any) => {
+        if (intentionalStopRef.current || e.error === "aborted") return;
+        if (e.error === "not-allowed" || e.error === "service-not-allowed") { setListening(false); toast.error("Permissão do microfone bloqueada"); return; }
+        if (e.error === "no-speech") { scheduleRecognitionRestart(150); return; }
+        scheduleRecognitionRestart(400);
+      };
+      recRef.current = rec;
+      rec.start();
+      setListening(true);
+    } catch { setListening(false); }
+  }, [bargeIn]);
+
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
     clearRestartTimer();
     if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
@@ -157,24 +217,9 @@ export function useNeuralVoice(
         setListening(false);
         return;
       }
-      // Create a fresh SpeechRecognition instance — old ones can't be restarted after stop()
-      const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      if (!SR) { setListening(false); return; }
-      try {
-        try { recRef.current?.stop(); } catch {}
-        const savedCallback = onCmdRef.current;
-        if (savedCallback) {
-          // Re-invoke startListening with the stored callback for a clean instance
-          intentionalStopRef.current = false;
-          startListeningInternal(savedCallback);
-        } else {
-          setListening(false);
-        }
-      } catch {
-        setListening(false);
-      }
+      createAndStartRecognition();
     }, restartDelay);
-  }, [clearRestartTimer]);
+  }, [clearRestartTimer, createAndStartRecognition]);
 
   const resumeSTT = useCallback(() => {
     if (listeningRef.current && onCmdRef.current && !intentionalStopRef.current) {
