@@ -5,6 +5,7 @@
  */
 
 import { pipeline, type ImageToTextPipeline } from "@huggingface/transformers";
+import { isHuggingFaceAvailable } from "./hf-connectivity";
 
 // ─── Types ───
 export interface OCRResult {
