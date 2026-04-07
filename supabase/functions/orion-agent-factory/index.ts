@@ -404,8 +404,8 @@ Analyze line by line. Be specific about line numbers. Respond in Portuguese (BR)
 // ─── Action: Supabase schema analysis ───
 async function handleSupabaseAnalysis() {
   const sb = getSupabase();
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+  const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+  if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not configured");
 
   // Get all tables info
   const tables = [
@@ -423,23 +423,18 @@ async function handleSupabaseAnalysis() {
     } catch { tableCounts[table] = -1; }
   }
 
-  const aiRes = await fetch(AI_GATEWAY, {
+  const prompt = `You are Orion analyzing a Supabase database. Tables and row counts:\n${JSON.stringify(tableCounts, null, 2)}\n\nProvide:\n1. Health assessment\n2. Missing indexes or optimizations\n3. Suggested new agents based on data patterns\n4. Storage and performance recommendations\n\nRespond in Portuguese (BR).`;
+
+  const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [{
-        role: "user",
-        content: `You are Orion analyzing a Supabase database. Tables and row counts:\n${JSON.stringify(tableCounts, null, 2)}\n\nProvide:\n1. Health assessment\n2. Missing indexes or optimizations\n3. Suggested new agents based on data patterns\n4. Storage and performance recommendations\n\nRespond in Portuguese (BR).`,
-      }],
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
     }),
   });
 
   const aiData = await aiRes.json();
-  const analysis = aiData.choices?.[0]?.message?.content || "";
+  const analysis = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
   await sb.from("orion_self_analysis").insert({
     analysis_type: "supabase_schema",
