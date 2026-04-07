@@ -528,7 +528,7 @@ export function useEditorActions(params: UseEditorActionsParams) {
       if (savedDocId) {
         const updateData: Record<string, any> = { content: cleanContent, watermark: formData.watermark, folder_id: folderId, updated_at: new Date().toISOString(), metadata };
         if (pdfStoragePath) updateData.pdf_url = pdfStoragePath;
-        const { error } = await supabase.from("documents").update(updateData).eq("id", savedDocId);
+        const { error } = await supabase.from("documents").update(updateData as any).eq("id", savedDocId);
         if (error) throw error;
         toast({ title: "Documento atualizado!" });
         learnDocumentStyle(user.id, formData.tipo, editedContent).catch(() => {});

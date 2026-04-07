@@ -255,7 +255,7 @@ export function ProactiveAlerts() {
     try {
       const { error } = await supabase
         .from("neural_evolution_proposals")
-        .update({ status: "approved", approved_at: new Date().toISOString(), approved_by: user?.id })
+        .update({ status: "approved", approved_at: new Date().toISOString(), approved_by: user?.id } as any)
         .eq("status", "pending");
 
       if (error) throw error;

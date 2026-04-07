@@ -96,7 +96,7 @@ export function ShareDocumentDialog({
         shared_by: user.id,
         shared_with: selectedClient.user_id,
         message: message || null,
-      });
+      } as any);
 
       if (shareError) throw shareError;
 
