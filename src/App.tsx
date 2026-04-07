@@ -98,6 +98,7 @@ const InstrucoesPlataforma = lazy(lazyRetry(() => import("./pages/dashboard/Inst
 const ControleRobotico = lazy(lazyRetry(() => import("./pages/dashboard/ControleRobotico")));
 const DeviceIntegrationPage = lazy(lazyRetry(() => import("./pages/dashboard/DeviceIntegrationPage")));
 const MeusAcessos = lazy(lazyRetry(() => import("./pages/dashboard/MeusAcessos")));
+const ExplorarLojas = lazy(lazyRetry(() => import("./pages/dashboard/ExplorarLojas")));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -202,6 +203,7 @@ const App = () => (
                     <Route path="marketplace" element={<MarketplacePage />} />
                     <Route path="marketplace-modules" element={<MarketplaceModules />} />
                     <Route path="meus-acessos" element={<MeusAcessos />} />
+                    <Route path="explorar-lojas" element={<ExplorarLojas />} />
 
                     {/* Admin */}
                     <Route path="admin" element={<RoleGuard allowedRoles={["advogado"]}><AdminOwnerDashboard /></RoleGuard>} />

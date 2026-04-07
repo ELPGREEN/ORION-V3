@@ -104,6 +104,18 @@ const quickActions = [
     path: "/dashboard/marketplace",
   },
   {
+    title: "Meus Produtos",
+    desc: "Acesse seus produtos comprados",
+    icon: ShoppingBag,
+    path: "/dashboard/meus-acessos",
+  },
+  {
+    title: "Explorar Lojas",
+    desc: "Descubra lojas e vitrines de afiliados",
+    icon: Store,
+    path: "/dashboard/explorar-lojas",
+  },
+  {
     title: "Agendar Consulta",
     desc: "Marque uma consulta presencial ou online",
     icon: Calendar,
