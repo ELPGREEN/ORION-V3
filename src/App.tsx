@@ -10,6 +10,7 @@ import { CopyProtection } from "@/components/CopyProtection";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { OrionShield } from "@/components/common/OrionShield";
 // GlobalOrionListener moved to DashboardLayout — no mic prompts on public pages
+import { PublicOrionListener } from "@/components/PublicOrionListener";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import { PageLoader } from "@/components/common/PageLoader";
 import { AuthGuard } from "@/components/common/AuthGuard";
