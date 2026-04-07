@@ -3,12 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   Menu, X, LogIn, UserPlus, LogOut, User, Download,
-  Home, BookOpen, LayoutDashboard, Mail, Users,
-  Zap, Terminal, TrendingUp, ChevronDown,
-  Scale, Building2, ShoppingBag, Briefcase,
-  Brain, Shield, Cpu, Mic, FileText, Search,
-  Gavel, Globe, Heart, Bot,
-  CreditCard, HelpCircle, MessageSquare
+  Home, BookOpen, LayoutDashboard,
+  Zap, ChevronDown,
+  Scale, ShoppingBag, Briefcase,
+  Cpu,
+  CreditCard
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
