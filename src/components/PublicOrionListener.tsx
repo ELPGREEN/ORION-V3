@@ -163,6 +163,16 @@ export function PublicOrionListener() {
   }, [micGranted, handleCommand]);
 
   const handleOrbClick = useCallback(async () => {
+    if (!user) {
+      showFeedback("🔒 Faça login para usar o Orion por voz");
+      setTimeout(() => navigate("/auth"), 1500);
+      return;
+    }
+    if (!hasOrionAccess) {
+      showFeedback("⚡ Seus tokens gratuitos acabaram. Faça upgrade para continuar usando o Orion.");
+      setTimeout(() => navigate("/contato"), 2000);
+      return;
+    }
     if (!micGranted) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -178,7 +188,7 @@ export function PublicOrionListener() {
     }
     // If already listening, show help
     showFeedback('💡 Diga "Orion" + comando. Ex: "Orion, ir para soluções"');
-  }, [micGranted, startListener, showFeedback]);
+  }, [user, hasOrionAccess, micGranted, startListener, showFeedback, navigate]);
 
   // Start on mount if mic already granted
   useEffect(() => {
