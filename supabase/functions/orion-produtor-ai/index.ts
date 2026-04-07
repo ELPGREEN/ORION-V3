@@ -105,6 +105,27 @@ serve(async (req) => {
         );
         break;
       }
+      case "affiliate_strategy": {
+        result = await callGemini(
+          `Dados do afiliado:\n${context || "Sem dados"}\n\nCrie uma estratégia completa de divulgação para este afiliado. Inclua: canais recomendados, tipo de conteúdo, frequência de postagens, e dicas de conversão. Seja prático e actionable.`,
+          "Você é um consultor de marketing de afiliados expert. Crie estratégias práticas e detalhadas para maximizar vendas. PT-BR."
+        );
+        break;
+      }
+      case "best_products": {
+        result = await callGemini(
+          `Produtos disponíveis no marketplace:\n${context || "Sem dados"}\n\nRecomende os 3-5 melhores produtos para um afiliado promover, considerando potencial de conversão, comissão e demanda de mercado. Justifique cada escolha.`,
+          "Você é um analista de marketplace de produtos digitais. Recomende produtos com maior potencial de vendas para afiliados. PT-BR."
+        );
+        break;
+      }
+      case "social_calendar": {
+        result = await callGemini(
+          `Produto: "${product_title}"\nDescrição: ${product_description || "N/A"}\nDados adicionais: ${context || "N/A"}\n\nCrie um calendário de postagens para 7 dias com:\n- Dia e horário sugerido\n- Plataforma (Instagram, Twitter, TikTok, WhatsApp)\n- Tipo de conteúdo (story, post, reels, thread)\n- Texto pronto para usar (com emoji e CTA)\n\nFormato claro e organizado.`,
+          "Você é um social media manager expert em produtos digitais. Crie calendários editoriais práticos e eficazes. PT-BR."
+        );
+        break;
+      }
       default:
         return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400, headers: corsHeaders });
     }
