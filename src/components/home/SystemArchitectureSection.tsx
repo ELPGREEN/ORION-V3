@@ -14,8 +14,10 @@ const modules = [
 
 export function SystemArchitectureSection() {
   return (
-    <section className="py-12 sm:py-16 bg-background relative overflow-hidden">
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+    <section className="py-12 sm:py-16 bg-background relative overflow-hidden tron-ambient">
+      <div className="absolute top-0 inset-x-0 tron-divider" />
+      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-primary/[0.03] rounded-full blur-[200px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] bg-secondary/[0.02] rounded-full blur-[180px] pointer-events-none" />
       
       <div className="container px-4 sm:px-6 relative z-10">
         <div className="text-center mb-14">
