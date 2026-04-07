@@ -88,7 +88,7 @@ export function DocumentFeedback({
           contentLength: generatedContent.length,
           timestamp: new Date().toISOString(),
         } as any,
-      });
+      } as any);
 
       if (learningError) throw learningError;
 

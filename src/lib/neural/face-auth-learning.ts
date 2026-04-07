@@ -79,7 +79,7 @@ async function _persistLearning(payload: FaceAuthLearningPayload): Promise<void>
       errorMessage: payload.errorMessage ?? null,
       timestamp: new Date().toISOString(),
     },
-  });
+  } as any);
 
   // 2. Feed reward loop
   const signal: FeedbackSignal = {

@@ -118,7 +118,7 @@ export function ShareDocumentDialog({
         link: "/dashboard/documentos",
         referencia_id: documentId,
         referencia_tipo: "document",
-      });
+      } as any);
 
       if (notifyError) {
       }
