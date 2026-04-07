@@ -316,10 +316,14 @@ function phonemeToSegment(p: PhonemeParams, phoneme: string): SegmentParams {
   if (p.fricative && !p.voiced) source = 'noise';
   else if (p.fricative && p.voiced) source = 'mixed';
 
+  // Paper: F3 poorly defined (61%, p=0.002) → widen BW3 significantly
+  // F1/F2 strong (48-53%) → keep tight bandwidths
+  const bw3Effective = (p.bw3 || 150) * 2.2; // ~330Hz instead of 150Hz
+
   return {
     f1: p.f1 || 300, f2: p.f2 || 1500, f3: p.f3 || 2500,
     f4: p.f4 || DEFAULT_F4, f5: DEFAULT_F5,
-    bw1: p.bw1 || 100, bw2: p.bw2 || 120, bw3: p.bw3 || 150,
+    bw1: p.bw1 || 100, bw2: p.bw2 || 120, bw3: bw3Effective,
     bw4: p.bw4 || DEFAULT_BW4, bw5: DEFAULT_BW5,
     gain: p.amplitude,
     source,
@@ -472,6 +476,9 @@ function synthesize(seq: Segment[]): Float32Array {
   // Spectral tilt
   const tilt = makeTiltFilter();
 
+  // Global HF damping (paper: anti-resonance MEDIAN 73-84%)
+  const damping = makeDampingFilter();
+
   const amplitude = 0.9;
   const f0Base = VOICE_DNA.f0.median || 125;
 
@@ -481,14 +488,16 @@ function synthesize(seq: Segment[]): Float32Array {
 
     const f0 = f0Base + (Math.random() - 0.5) * 10;
 
-    // Generate source
+    // Generate source — voiced segments now include aspiration noise (paper finding)
     let source: Float32Array;
     if (paramCurr.source === 'noise') {
       source = generateNoise(durationSamples);
     } else if (paramCurr.source === 'mixed') {
       source = generateMixed(durationSamples, f0, 0.55);
     } else {
-      source = generateGlottalSource(durationSamples, f0);
+      // Paper: 70-73% of male voices have "much noise" in spectrum
+      // Use voiced+aspiration instead of pure glottal
+      source = generateVoicedWithAspiration(durationSamples, f0, 0.18);
     }
 
     // Spectral tilt on voiced source
