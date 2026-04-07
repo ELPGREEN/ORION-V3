@@ -104,25 +104,88 @@ export const NAV_MAP: Record<string, { path: string; label: string }> = {
   "orion": { path: "/consulta", label: "Orion IA" },
   "orion ia": { path: "/consulta", label: "Orion IA" },
 
-  // ── EXTERNAL PAGES ──
+  // ── EXTERNAL / PUBLIC PAGES ──
   "contato": { path: "/contato", label: "Contato e Planos" },
   "planos": { path: "/contato", label: "Planos e Preços" },
   "preços": { path: "/contato", label: "Planos e Preços" },
   "precos": { path: "/contato", label: "Planos e Preços" },
   "clientes site": { path: "/clientes", label: "Página de Clientes" },
+
+  // ── PUBLIC SITE PAGES ──
+  "home site": { path: "/", label: "Página Inicial" },
+  "página inicial": { path: "/", label: "Página Inicial" },
+  "pagina inicial": { path: "/", label: "Página Inicial" },
+  "site": { path: "/", label: "Página Inicial" },
+  "serviços": { path: "/servicos", label: "Soluções e Serviços" },
+  "servicos": { path: "/servicos", label: "Soluções e Serviços" },
+  "soluções": { path: "/servicos", label: "Soluções e Serviços" },
+  "solucoes": { path: "/servicos", label: "Soluções e Serviços" },
+  "advogados": { path: "/servicos#advogados", label: "Soluções para Advogados" },
+  "para advogados": { path: "/servicos#advogados", label: "Soluções para Advogados" },
+  "produtores digitais": { path: "/servicos#produtores", label: "Soluções para Produtores Digitais" },
+  "para produtores": { path: "/servicos#produtores", label: "Soluções para Produtores Digitais" },
+  "afiliados site": { path: "/servicos#afiliados", label: "Soluções para Afiliados" },
+  "para afiliados": { path: "/servicos#afiliados", label: "Soluções para Afiliados" },
+  "indústria": { path: "/servicos#industria", label: "Soluções para Indústria" },
+  "industria": { path: "/servicos#industria", label: "Soluções para Indústria" },
+  "para indústria": { path: "/servicos#industria", label: "Soluções para Indústria" },
+  "robotica": { path: "/servicos#industria", label: "Robótica e Automação" },
+  "robótica": { path: "/servicos#industria", label: "Robótica e Automação" },
+  "automação": { path: "/servicos#industria", label: "Automação Industrial" },
+  "automacao": { path: "/servicos#industria", label: "Automação Industrial" },
+  "plataforma": { path: "/plataforma", label: "Plataforma Orion" },
+  "funcionalidades": { path: "/plataforma", label: "Funcionalidades" },
+  "investidor": { path: "/investidor", label: "Portal do Investidor" },
+  "investidores": { path: "/investidor", label: "Portal do Investidor" },
+  "investir": { path: "/investidor", label: "Portal do Investidor" },
+  "publicações site": { path: "/publicacoes", label: "Publicações e Insights" },
+  "blog": { path: "/publicacoes", label: "Blog e Publicações" },
+  "insights": { path: "/publicacoes", label: "Insights Orion" },
+  "escritório": { path: "/escritorio", label: "Escritório Jurídico" },
+  "escritorio": { path: "/escritorio", label: "Escritório Jurídico" },
+  "pro bono": { path: "/pro-bono", label: "Pro Bono" },
+  "depoimentos": { path: "/depoimentos", label: "Depoimentos" },
+  "privacidade": { path: "/privacidade", label: "Política de Privacidade" },
+  "termos": { path: "/termos", label: "Termos de Uso" },
+  "lgpd": { path: "/lgpd", label: "LGPD" },
+  "login": { path: "/auth", label: "Login" },
+  "entrar": { path: "/auth", label: "Fazer Login" },
+  "cadastro": { path: "/cadastro", label: "Cadastrar" },
+  "cadastrar": { path: "/cadastro", label: "Cadastrar" },
+  "criar conta": { path: "/cadastro", label: "Criar Conta" },
+  "instalar": { path: "/install", label: "Instalar App" },
+  "instalar app": { path: "/install", label: "Instalar App" },
+  "download": { path: "/install", label: "Instalar App" },
 };
 
 export function detectNavigationIntent(text: string): { path: string; label: string } | null {
   const lower = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  // "Voltar para o painel / dashboard"
+  if (/volt[ae]r?\s*(para|pro|pra|ao)?\s*(painel|dashboard|inicio|home)/i.test(lower)) {
+    return NAV_MAP["dashboard"];
+  }
+  // "Voltar para a página inicial / site"
+  if (/volt[ae]r?\s*(para|pro|pra|ao?)?\s*(site|pagina\s*inicial)/i.test(lower)) {
+    return NAV_MAP["pagina inicial"];
+  }
+  // "Quero ver os planos" / "Me mostra os preços"
+  if (/(?:ver|mostrar?|quais?\s*s[aã]o)\s*(?:os|as)?\s*(?:planos|precos|preços)/i.test(lower)) {
+    return NAV_MAP["planos"];
+  }
+  // "Quero contratar" / "quero assinar"
+  if (/(?:quero|desejo|gostaria)\s*(?:de)?\s*(?:contratar|assinar|comprar)/i.test(lower)) {
+    return NAV_MAP["planos"];
+  }
+
   const navPatterns = [
-    /(?:abr[aie]|ir\s*(?:para|pra|pro)|naveg(?:ar|ue)|mostr[ae]|acesse|vá\s*(?:para|pra)|leve\s*(?:me|para)|me\s*lev[ae])\s+(?:a|o|os|as|ao|à|no|na|nos|nas)?\s*(.+)/i,
+    /(?:abr[aie]|ir\s*(?:para|pra|pro)|naveg(?:ar|ue)|mostr[ae]|acesse|va\s*(?:para|pra)|leve\s*(?:me|para)|me\s*lev[ae])\s+(?:a|o|os|as|ao|a|no|na|nos|nas)?\s*(.+)/i,
     /(?:quero\s*(?:ver|ir|acessar|abrir))\s+(?:a|o|os|as)?\s*(.+)/i,
   ];
   for (const pattern of navPatterns) {
     const match = lower.match(pattern);
     if (match) {
       const target = match[1].trim().replace(/[.!?,]$/, "");
-      // Try longest match first to avoid partial matches
       const sortedKeys = Object.keys(NAV_MAP).sort((a, b) => b.length - a.length);
       for (const key of sortedKeys) {
         if (target.includes(key)) return NAV_MAP[key];
