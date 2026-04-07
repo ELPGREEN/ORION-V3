@@ -1,0 +1,16 @@
+---
+name: Google Cloud Project - Orion
+description: Google Cloud project linked with Gemini API key, AI Studio access, and GDP premium benefits
+type: reference
+---
+- Project name: orion-d3734
+- Project number: 550674472945
+- Credits: €1,127 (Trial €867 + Free €260)
+- Trial credit expiry: April 2027
+- Free credit expiry: July 2026
+- Gemini API Key: active (ending in ...irYA)
+- Google AI Studio: linked
+- Available models: Gemini 3 Flash Preview, Nano Banana (image gen), Veo (video), Speech/Music, Gemini Live (real-time)
+- GDP Premium benefits: Google Cloud credits ($10/mo AI Pro, $100/mo AI Ultra)
+- Deploy targets: Vertex AI, Cloud Run
+- Migration plan: Create API keys in GCP Console (not AI Studio) to consume credits via same generativelanguage.googleapis.com endpoint
