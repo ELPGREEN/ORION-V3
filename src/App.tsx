@@ -265,6 +265,7 @@ const App = () => (
                     <Route path="webhooks" element={<Navigate to="/dashboard/configuracoes" replace />} />
                     <Route path="biblioteca-univates" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="prazos" element={<Navigate to="/dashboard/tarefas" replace />} />
+                    <Route path="central-ajuda" element={<Navigate to="/dashboard/instrucoes" replace />} />
                     <Route path="configurar-ia" element={<ConfigurarIA />} />
                     <Route path="arquitetura-ia" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="dispositivos" element={<Navigate to="/dashboard/rede-neural" replace />} />
