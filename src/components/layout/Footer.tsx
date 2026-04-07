@@ -27,7 +27,7 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
       <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
 
       {/* Subtle grid bg */}
-      <div className="absolute inset-0 pointer-events-none tron-dot-grid opacity-30" aria-hidden="true" />
+      <div className="absolute inset-0 pointer-events-none opacity-0" aria-hidden="true" />
 
       {/* CTA — compact */}
       {!hideCta && (
