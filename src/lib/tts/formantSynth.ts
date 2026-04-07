@@ -565,6 +565,9 @@ function synthesize(seq: Segment[]): Float32Array {
           y = tickResonator(filters[fi], y);
         }
 
+        // Global HF damping (paper: anti-resonance median)
+        y = tickDamping(damping, y);
+
         // Apply envelope
         const env = computeEnvelope(j, durationSamples);
 
@@ -667,12 +670,12 @@ function samplesToWav(samples: Float32Array, sampleRate: number): Blob {
 
 export async function synthesizeFormant(text: string): Promise<Blob> {
   const phonemes = textToPhonemes(text);
-  console.log(`[Formant v18] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
+  console.log(`[Formant v19] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
 
   glottalPhase = 0;
 
   const segments = buildSegments(phonemes);
-  console.log(`[Formant v18] ${segments.length} segments built`);
+  console.log(`[Formant v19] ${segments.length} segments built`);
 
   const samples = synthesize(segments);
   const processed = postProcess(samples);
@@ -702,7 +705,7 @@ export async function speakFormant(
 
     return { played: !signal?.aborted, audio };
   } catch (err) {
-    console.warn("[Formant v18] Error:", err);
+    console.warn("[Formant v19] Error:", err);
     return { played: false, audio: null };
   }
 }
