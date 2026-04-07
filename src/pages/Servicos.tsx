@@ -7,12 +7,12 @@ import { useTranslation } from "@/contexts/LanguageContext";
 import { HeroThreeBackground } from "@/components/home/HeroThreeBackground";
 import { GatewayBackground } from "@/components/ui/GatewayBackground";
 import { 
-  Scale, Building2, ShoppingBag, Briefcase,
+  Scale, Building2, ShoppingBag, Briefcase, Factory,
   ArrowRight, CheckCircle2, MessageSquare, Sparkles,
 } from "lucide-react";
 
-const profileIcons = [Scale, Building2, ShoppingBag, Briefcase];
-const profileKeys = ["lawyers", "offices", "producers", "affiliates"] as const;
+const profileIcons = [Scale, Building2, ShoppingBag, Briefcase, Factory];
+const profileKeys = ["lawyers", "offices", "producers", "affiliates", "enterprise"] as const;
 
 export default function Servicos() {
   const { t } = useTranslation();
