@@ -16,7 +16,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const HF_API = "https://api-inference.huggingface.co";
 const GITHUB_API = "https://api.github.com";
 
@@ -174,8 +174,8 @@ async function handleAutoCreate(body: Record<string, unknown>) {
   const sb = getSupabase();
   const { task_description, difficulty_context, failed_attempts } = body;
 
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+  const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+  if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not configured");
 
   // Ask AI to decide what agent to create
   const decisionPrompt = `You are Orion, an AI system that creates specialized autonomous agents.
@@ -198,15 +198,13 @@ Respond in JSON:
   "creation_reason": "why this agent is needed"
 }`;
 
-  const aiRes = await fetch(AI_GATEWAY, {
+  const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [{ role: "user", content: decisionPrompt }],
+      contents: [{ role: "user", parts: [{ text: decisionPrompt }] }],
+    }),
+  });
       tools: [{
         type: "function",
         function: {
