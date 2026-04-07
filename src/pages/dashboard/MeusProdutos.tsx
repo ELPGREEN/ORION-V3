@@ -35,6 +35,8 @@ export default function MeusProdutos() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["my-products", user?.id],
@@ -60,6 +62,7 @@ export default function MeusProdutos() {
         commission_percent: parseFloat(form.commission),
         category: form.category || null,
         product_type: form.product_type,
+        image_url: form.image_url || null,
         slug: slugify(form.title) + "-" + Date.now().toString(36),
         status: "draft",
       });
@@ -85,6 +88,7 @@ export default function MeusProdutos() {
           commission_percent: parseFloat(form.commission),
           category: form.category || null,
           product_type: form.product_type,
+          image_url: form.image_url || null,
         })
         .eq("id", editingId)
         .eq("creator_id", user!.id);
@@ -133,6 +137,7 @@ export default function MeusProdutos() {
       commission: String(p.commission_percent || 10),
       category: p.category || "",
       product_type: p.product_type || "digital_download",
+      image_url: p.image_url || "",
     });
     setOpen(true);
   };
