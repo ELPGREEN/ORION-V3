@@ -1,0 +1,121 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const GEMINI_KEYS = [
+  Deno.env.get("GEMINI_API_KEY"),
+  Deno.env.get("GEMINI_API_KEY_2"),
+  Deno.env.get("GEMINI_API_KEY_3"),
+  Deno.env.get("GEMINI_API_KEY_4"),
+  Deno.env.get("GEMINI_API_KEY_5"),
+  Deno.env.get("GEMINI_API_KEY_6"),
+  Deno.env.get("GEMINI_API_KEY_7"),
+].filter(Boolean) as string[];
+
+function getGeminiKey(): string {
+  return GEMINI_KEYS[Math.floor(Math.random() * GEMINI_KEYS.length)];
+}
+
+async function callGemini(prompt: string, systemPrompt: string): Promise<string> {
+  const key = getGeminiKey();
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+      }),
+    }
+  );
+  if (!res.ok) throw new Error(`Gemini error: ${res.status}`);
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta.";
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader || "" } } }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+
+    // Rate limit
+    const { data: allowed } = await supabase.rpc("check_rate_limit", {
+      _user_id: user.id, _function_name: "orion-produtor-ai", _max_requests: 20, _window_minutes: 5,
+    });
+    if (!allowed) return new Response(JSON.stringify({ error: "Rate limit exceeded" }), { status: 429, headers: corsHeaders });
+
+    const { action, product_title, product_description, product_category, product_type, context } = await req.json();
+
+    let result = "";
+
+    switch (action) {
+      case "generate_description": {
+        result = await callGemini(
+          `Produto: "${product_title}"\nCategoria: ${product_category || "geral"}\nTipo: ${product_type || "digital_download"}\n\nGere uma descrição persuasiva de vendas para este produto digital em português do Brasil. Máximo 3 parágrafos.`,
+          "Você é um copywriter expert em produtos digitais. Escreva descrições que convertem, destacando benefícios e valor. Sempre em PT-BR."
+        );
+        break;
+      }
+      case "suggest_price": {
+        result = await callGemini(
+          `Produto: "${product_title}"\nDescrição: ${product_description || "N/A"}\nCategoria: ${product_category || "geral"}\nTipo: ${product_type || "digital_download"}\n\nSugira 3 faixas de preço (econômico, padrão, premium) para este produto digital no mercado brasileiro. Justifique cada faixa brevemente.`,
+          "Você é um consultor de pricing para produtos digitais no Brasil. Analise o mercado e sugira preços realistas em Reais (R$). Seja direto."
+        );
+        break;
+      }
+      case "generate_modules": {
+        result = await callGemini(
+          `Curso: "${product_title}"\nDescrição: ${product_description || "N/A"}\nCategoria: ${product_category || "geral"}\n\nCrie uma estrutura completa de módulos/aulas para este curso online. Inclua 4-6 módulos com 3-5 aulas cada. Formato:\n\nMódulo 1: [Título]\n- Aula 1.1: [Título]\n- Aula 1.2: [Título]\n...`,
+          "Você é um designer instrucional expert. Crie estruturas de cursos online logicamente organizadas e progressivas. PT-BR."
+        );
+        break;
+      }
+      case "analyze_performance": {
+        result = await callGemini(
+          `Dados do produtor:\n${context || "Sem dados disponíveis"}\n\nAnalise a performance deste produtor digital e dê 3-5 sugestões práticas de melhoria. Seja específico e actionable.`,
+          "Você é um consultor de negócios digitais. Analise dados de vendas/conversão e dê insights práticos em PT-BR. Seja conciso."
+        );
+        break;
+      }
+      case "generate_copy": {
+        result = await callGemini(
+          `Produto: "${product_title}"\nDescrição: ${product_description || "N/A"}\nPreço: ${context || "N/A"}\n\nGere 3 textos de promoção para redes sociais (Instagram, Twitter, WhatsApp). Cada um com no máximo 280 caracteres. Inclua emoji e call-to-action.`,
+          "Você é um social media manager expert. Crie copies virais e persuasivas para produtos digitais. PT-BR."
+        );
+        break;
+      }
+      case "product_faq": {
+        result = await callGemini(
+          `Produto: "${product_title}"\nDescrição: ${product_description || "N/A"}\nPergunta do cliente: ${context || "O que este produto oferece?"}\n\nResponda a pergunta do cliente de forma clara e útil.`,
+          "Você é um assistente de suporte ao cliente para produtos digitais. Responda de forma amigável e objetiva em PT-BR."
+        );
+        break;
+      }
+      default:
+        return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400, headers: corsHeaders });
+    }
+
+    return new Response(JSON.stringify({ result }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    console.error("orion-produtor-ai error:", e);
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

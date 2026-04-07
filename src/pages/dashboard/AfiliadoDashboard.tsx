@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   Share2, DollarSign, TrendingUp, MousePointer, ArrowRight, Eye,
   ShoppingBag, Brain, Crown, Globe, Link2, Copy,
-  CheckCircle, Clock, XCircle, Search, Loader2,
+  CheckCircle, Clock, XCircle, Search, Loader2, Sparkles,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,27 @@ export default function AfiliadoDashboard() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [copyLoading, setCopyLoading] = useState<string | null>(null);
+
+  const generateCopy = async (product: any) => {
+    setCopyLoading(product.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("orion-produtor-ai", {
+        body: {
+          action: "generate_copy",
+          product_title: product.title || product.name,
+          product_description: product.description,
+          context: `R$ ${((product.price_cents || 0) / 100).toFixed(2)}`,
+        },
+      });
+      if (error) throw error;
+      toast.info(data.result, { duration: 15000 });
+    } catch {
+      toast.error("Erro ao gerar copy");
+    } finally {
+      setCopyLoading(null);
+    }
+  };
 
   const { data: myRequests } = useQuery({
     queryKey: ["affiliate-requests", user?.id],
@@ -180,6 +201,15 @@ export default function AfiliadoDashboard() {
                           <Copy className="h-3.5 w-3.5 mr-1" /> Copiar Link
                         </Button>
                       )}
+                      <Button
+                        variant="ghost" size="sm"
+                        onClick={() => generateCopy(product)}
+                        disabled={!!copyLoading}
+                        className="gap-1 text-xs"
+                      >
+                        {copyLoading === product?.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                        Copy IA
+                      </Button>
                       <Badge variant="secondary" className="text-xs">{link?.clicks || 0} cliques</Badge>
                     </div>
                   </CardContent>

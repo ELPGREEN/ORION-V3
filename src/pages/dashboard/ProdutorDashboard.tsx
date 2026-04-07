@@ -5,11 +5,12 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Package, DollarSign, TrendingUp, ShoppingBag, ArrowRight, Share2, Store,
-  Users, FileText, MessageSquare, BarChart3, Globe, Brain, Crown,
-  Tag, Star, CreditCard, FileEdit, Mail,
+  Users, FileText, BarChart3, Globe, Brain, Crown,
+  Star, CreditCard, FileEdit, Mail, BookOpen,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { OrionProductInsights } from "@/components/dashboard/OrionProductInsights";
 
 export default function ProdutorDashboard() {
   const { user } = useAuth();
@@ -55,6 +56,21 @@ export default function ProdutorDashboard() {
     enabled: !!user && !!products && products.length > 0,
   });
 
+  const { data: customerAccessCount } = useQuery({
+    queryKey: ["produtor-customers", user?.id],
+    queryFn: async () => {
+      if (!products || products.length === 0) return 0;
+      const productIds = products.map((p) => p.id);
+      const { count } = await supabase
+        .from("customer_access")
+        .select("*", { count: "exact", head: true })
+        .in("product_id", productIds)
+        .eq("is_active", true);
+      return count || 0;
+    },
+    enabled: !!user && !!products && products.length > 0,
+  });
+
   const totalRevenue = orders?.reduce((sum, o) => sum + (o.amount_cents || 0), 0) || 0;
   const activeProducts = products?.filter((p) => p.status === "active")?.length || 0;
   const totalAffiliates = affiliateLinks?.length || 0;
@@ -64,6 +80,7 @@ export default function ProdutorDashboard() {
     { label: "Receita Total", value: `R$ ${(totalRevenue / 100).toFixed(2)}`, icon: DollarSign, color: "text-emerald-500" },
     { label: "Vendas", value: orders?.length || 0, icon: TrendingUp, color: "text-cyan-500" },
     { label: "Afiliados", value: totalAffiliates, icon: Users, color: "text-amber-500" },
+    { label: "Clientes Ativos", value: customerAccessCount || 0, icon: BookOpen, color: "text-violet-500" },
   ];
 
   const tools = [
@@ -100,7 +117,7 @@ export default function ProdutorDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {stats.map((stat) => (
           <Card key={stat.label} className="bg-card/80 backdrop-blur-sm border-border/40">
             <CardContent className="p-4">
@@ -197,6 +214,12 @@ export default function ProdutorDashboard() {
         </Card>
       )}
 
+      {/* Orion Insights */}
+      {products && products.length > 0 && (
+        <OrionProductInsights
+          context={`Produtos ativos: ${activeProducts}, Vendas: ${orders?.length || 0}, Receita: R$${(totalRevenue / 100).toFixed(2)}, Afiliados: ${totalAffiliates}, Clientes ativos: ${customerAccessCount || 0}`}
+        />
+      )}
       {/* Empty state */}
       {(!products || products.length === 0) && (
         <Card className="bg-card/60 border-dashed border-primary/30">

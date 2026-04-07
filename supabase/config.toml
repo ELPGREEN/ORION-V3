@@ -2,3 +2,6 @@ project_id = "dlwafedtlvbvuoaopvsl"
 
 [functions.gemini-tts]
 verify_jwt = false
+
+[functions.orion-produtor-ai]
+verify_jwt = false

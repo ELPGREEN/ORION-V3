@@ -8,14 +8,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Package, Edit, Archive, Eye, Trash2, Save } from "lucide-react";
+import { Plus, Package, Edit, Archive, Eye, Trash2, Save, Brain, Loader2, Sparkles } from "lucide-react";
+import { ProductFileManager } from "@/components/dashboard/product/ProductFileManager";
+import { ProductModuleManager } from "@/components/dashboard/product/ProductModuleManager";
 
 function slugify(text: string) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-const emptyForm = { title: "", description: "", price: "", commission: "10", category: "" };
+const emptyForm = { title: "", description: "", price: "", commission: "10", category: "", product_type: "digital_download" };
+
+const productTypes = [
+  { value: "digital_download", label: "Download Digital" },
+  { value: "course", label: "Curso Online" },
+  { value: "ebook", label: "E-book" },
+  { value: "template", label: "Template" },
+  { value: "membership", label: "Assinatura" },
+];
 
 export default function MeusProdutos() {
   const { user } = useAuth();
@@ -23,6 +34,7 @@ export default function MeusProdutos() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["my-products", user?.id],
@@ -47,6 +59,7 @@ export default function MeusProdutos() {
         price_cents: Math.round(parseFloat(form.price) * 100),
         commission_percent: parseFloat(form.commission),
         category: form.category || null,
+        product_type: form.product_type,
         slug: slugify(form.title) + "-" + Date.now().toString(36),
         status: "draft",
       });
@@ -71,6 +84,7 @@ export default function MeusProdutos() {
           price_cents: Math.round(parseFloat(form.price) * 100),
           commission_percent: parseFloat(form.commission),
           category: form.category || null,
+          product_type: form.product_type,
         })
         .eq("id", editingId)
         .eq("creator_id", user!.id);
@@ -108,11 +122,7 @@ export default function MeusProdutos() {
     onError: () => toast.error("Erro ao remover produto"),
   });
 
-  const closeDialog = () => {
-    setOpen(false);
-    setEditingId(null);
-    setForm(emptyForm);
-  };
+  const closeDialog = () => { setOpen(false); setEditingId(null); setForm(emptyForm); };
 
   const openEdit = (p: any) => {
     setEditingId(p.id);
@@ -122,28 +132,43 @@ export default function MeusProdutos() {
       price: (p.price_cents / 100).toFixed(2),
       commission: String(p.commission_percent || 10),
       category: p.category || "",
+      product_type: p.product_type || "digital_download",
     });
     setOpen(true);
   };
 
-  const openCreate = () => {
-    setEditingId(null);
-    setForm(emptyForm);
-    setOpen(true);
-  };
+  const openCreate = () => { setEditingId(null); setForm(emptyForm); setOpen(true); };
+  const handleSave = () => { editingId ? updateProduct.mutate() : createProduct.mutate(); };
 
-  const handleSave = () => {
-    if (editingId) {
-      updateProduct.mutate();
-    } else {
-      createProduct.mutate();
+  const callOrion = async (action: string) => {
+    setAiLoading(action);
+    try {
+      const { data, error } = await supabase.functions.invoke("orion-produtor-ai", {
+        body: {
+          action,
+          product_title: form.title,
+          product_description: form.description,
+          product_category: form.category,
+          product_type: form.product_type,
+        },
+      });
+      if (error) throw error;
+      if (action === "generate_description") {
+        setForm((f) => ({ ...f, description: data.result }));
+      } else {
+        toast.info(data.result, { duration: 10000 });
+      }
+    } catch {
+      toast.error("Erro ao consultar Orion");
+    } finally {
+      setAiLoading(null);
     }
   };
 
   const statusColors: Record<string, string> = {
     draft: "bg-muted text-muted-foreground",
-    active: "bg-green-500/20 text-green-400",
-    archived: "bg-red-500/20 text-red-400",
+    active: "bg-emerald-500/20 text-emerald-400",
+    archived: "bg-destructive/20 text-destructive",
   };
 
   return (
@@ -157,18 +182,71 @@ export default function MeusProdutos() {
           <DialogTrigger asChild>
             <Button className="gap-2"><Plus className="h-4 w-4" /> Novo Produto</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Produto" : "Criar Produto"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <Input placeholder="Título do produto" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
-              <Textarea placeholder="Descrição" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+              
+              <Select value={form.product_type} onValueChange={(v) => setForm(f => ({ ...f, product_type: v }))}>
+                <SelectTrigger><SelectValue placeholder="Tipo de produto" /></SelectTrigger>
+                <SelectContent>
+                  {productTypes.map(t => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="space-y-1">
+                <Textarea placeholder="Descrição" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={4} />
+                <div className="flex gap-1">
+                  <Button
+                    type="button" size="sm" variant="ghost"
+                    onClick={() => callOrion("generate_description")}
+                    disabled={!form.title || !!aiLoading}
+                    className="text-xs gap-1"
+                  >
+                    {aiLoading === "generate_description" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Brain className="h-3 w-3" />}
+                    Orion: Gerar Descrição
+                  </Button>
+                  <Button
+                    type="button" size="sm" variant="ghost"
+                    onClick={() => callOrion("suggest_price")}
+                    disabled={!form.title || !!aiLoading}
+                    className="text-xs gap-1"
+                  >
+                    {aiLoading === "suggest_price" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    Sugerir Preço
+                  </Button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <Input placeholder="Preço (R$)" type="number" step="0.01" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
                 <Input placeholder="Comissão (%)" type="number" value={form.commission} onChange={e => setForm(f => ({ ...f, commission: e.target.value }))} />
               </div>
               <Input placeholder="Categoria" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} />
+
+              {/* File manager for existing products */}
+              {editingId && <ProductFileManager productId={editingId} />}
+
+              {/* Module manager for courses */}
+              {editingId && form.product_type === "course" && (
+                <>
+                  <ProductModuleManager productId={editingId} />
+                  <Button
+                    type="button" size="sm" variant="ghost"
+                    onClick={() => callOrion("generate_modules")}
+                    disabled={!form.title || !!aiLoading}
+                    className="text-xs gap-1"
+                  >
+                    {aiLoading === "generate_modules" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Brain className="h-3 w-3" />}
+                    Orion: Sugerir Módulos
+                  </Button>
+                </>
+              )}
+
               <Button
                 onClick={handleSave}
                 disabled={!form.title || !form.price || createProduct.isPending || updateProduct.isPending}
@@ -198,7 +276,12 @@ export default function MeusProdutos() {
             <Card key={p.id} className="bg-card/80 backdrop-blur-sm border-border/40">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-base font-semibold">{p.title}</CardTitle>
+                  <div>
+                    <CardTitle className="text-base font-semibold">{p.title}</CardTitle>
+                    <Badge variant="outline" className="text-xs mt-1">
+                      {productTypes.find(t => t.value === p.product_type)?.label || p.product_type}
+                    </Badge>
+                  </div>
                   <Badge className={statusColors[p.status] || ""}>{p.status}</Badge>
                 </div>
               </CardHeader>
@@ -208,7 +291,7 @@ export default function MeusProdutos() {
                   <span className="text-primary font-bold">R$ {(p.price_cents / 100).toFixed(2)}</span>
                   <span className="text-muted-foreground">{p.commission_percent}% comissão</span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button size="sm" variant="outline" onClick={() => openEdit(p)} className="gap-1">
                     <Edit className="h-3 w-3" /> Editar
                   </Button>
