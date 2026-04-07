@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Package, Edit, Archive, Eye, Trash2, Save, Brain, Loader2, Sparkles } from "lucide-react";
+import { Plus, Package, Edit, Archive, Eye, Trash2, Save, Brain, Loader2, Sparkles, ImagePlus, X } from "lucide-react";
 import { ProductFileManager } from "@/components/dashboard/product/ProductFileManager";
 import { ProductModuleManager } from "@/components/dashboard/product/ProductModuleManager";
 
@@ -18,7 +18,7 @@ function slugify(text: string) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-const emptyForm = { title: "", description: "", price: "", commission: "10", category: "", product_type: "digital_download" };
+const emptyForm = { title: "", description: "", price: "", commission: "10", category: "", product_type: "digital_download", image_url: "" };
 
 const productTypes = [
   { value: "digital_download", label: "Download Digital" },
@@ -35,6 +35,8 @@ export default function MeusProdutos() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["my-products", user?.id],
@@ -60,6 +62,7 @@ export default function MeusProdutos() {
         commission_percent: parseFloat(form.commission),
         category: form.category || null,
         product_type: form.product_type,
+        image_url: form.image_url || null,
         slug: slugify(form.title) + "-" + Date.now().toString(36),
         status: "draft",
       });
@@ -85,6 +88,7 @@ export default function MeusProdutos() {
           commission_percent: parseFloat(form.commission),
           category: form.category || null,
           product_type: form.product_type,
+          image_url: form.image_url || null,
         })
         .eq("id", editingId)
         .eq("creator_id", user!.id);
@@ -133,12 +137,34 @@ export default function MeusProdutos() {
       commission: String(p.commission_percent || 10),
       category: p.category || "",
       product_type: p.product_type || "digital_download",
+      image_url: p.image_url || "",
     });
     setOpen(true);
   };
 
   const openCreate = () => { setEditingId(null); setForm(emptyForm); setOpen(true); };
   const handleSave = () => { editingId ? updateProduct.mutate() : createProduct.mutate(); };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("product-files")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("product-files").getPublicUrl(path);
+      setForm(f => ({ ...f, image_url: urlData.publicUrl }));
+      toast.success("Imagem enviada!");
+    } catch {
+      toast.error("Erro ao enviar imagem");
+    }
+    setUploadingImage(false);
+    if (imageInputRef.current) imageInputRef.current.value = "";
+  };
 
   const callOrion = async (action: string) => {
     setAiLoading(action);
@@ -188,7 +214,62 @@ export default function MeusProdutos() {
             </DialogHeader>
             <div className="space-y-4">
               <Input placeholder="Título do produto" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
-              
+
+              {/* Image upload */}
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Imagem do Produto</label>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                {form.image_url ? (
+                  <div className="relative group">
+                    <img
+                      src={form.image_url}
+                      alt="Preview"
+                      className="w-full h-40 object-cover rounded-md border border-border/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, image_url: "" }))}
+                      className="absolute top-2 right-2 h-7 w-7 rounded-full bg-destructive/90 text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="absolute bottom-2 right-2 text-xs gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => imageInputRef.current?.click()}
+                    >
+                      <ImagePlus className="h-3 w-3" /> Trocar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-32 border-dashed border-2 gap-2 flex-col"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={uploadingImage}
+                  >
+                    {uploadingImage ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    ) : (
+                      <>
+                        <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Clique para enviar uma imagem</span>
+                        <span className="text-[10px] text-muted-foreground/60">Qualquer tamanho — será ajustada automaticamente</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+
               <Select value={form.product_type} onValueChange={(v) => setForm(f => ({ ...f, product_type: v }))}>
                 <SelectTrigger><SelectValue placeholder="Tipo de produto" /></SelectTrigger>
                 <SelectContent>
