@@ -443,18 +443,18 @@ export default function SalesPageEditor({ productId }: SalesPageEditorProps) {
         {/* Advanced Editor Mode - Fullscreen Wix-Style Editor - FORA do form */}
         <FullscreenWixEditor
           productId={productId}
-          productName={product?.name || ''}
-          productDescription={product?.short_description || ''}
-          productPrice={product?.price || 0}
-          productOriginalPrice={product?.original_price || null}
-          productImage={product?.cover_image_url || ''}
+          productName={(product as any)?.name || product?.title || ''}
+          productDescription={(product as any)?.short_description || product?.description || ''}
+          productPrice={(product as any)?.price || (product?.price_cents ? product.price_cents / 100 : 0)}
+          productOriginalPrice={(product as any)?.original_price || (product?.original_price_cents ? (product as any).original_price_cents / 100 : null)}
+          productImage={(product as any)?.cover_image_url || product?.image_url || ''}
           initialBlocks={(() => {
             // Carregar blocos existentes do produto
-            if (product?.sales_page_content) {
+            if ((product as any)?.sales_page_content) {
               try {
-                const content = typeof product.sales_page_content === 'string' 
-                  ? JSON.parse(product.sales_page_content) 
-                  : product.sales_page_content;
+                const content = typeof (product as any).sales_page_content === 'string' 
+                  ? JSON.parse((product as any).sales_page_content) 
+                  : (product as any).sales_page_content;
                 if (content.blocks && Array.isArray(content.blocks)) {
                   return content.blocks;
                 }
@@ -467,49 +467,33 @@ export default function SalesPageEditor({ productId }: SalesPageEditorProps) {
           onSave={async (blocks) => {
             console.log('[SalesPageEditor] Saving blocks:', blocks.length);
             
-            // Preserve existing simple editor data when saving blocks
             let existingContent: any = {};
             try {
-              existingContent = product?.sales_page_content 
-                ? (typeof product.sales_page_content === 'string' 
-                    ? JSON.parse(product.sales_page_content) 
-                    : product.sales_page_content)
+              existingContent = (product as any)?.sales_page_content 
+                ? (typeof (product as any).sales_page_content === 'string' 
+                    ? JSON.parse((product as any).sales_page_content) 
+                    : (product as any).sales_page_content)
                 : {};
             } catch (parseError) {
-              console.warn('[SalesPageEditor] Could not parse existing content, starting fresh:', parseError);
+              console.warn('[SalesPageEditor] Could not parse existing content:', parseError);
             }
             
-            const newContent = { 
-              ...existingContent,
-              blocks // Only update blocks, keep other fields
-            };
-            
-            console.log('[SalesPageEditor] Saving content to database...');
+            const newContent = { ...existingContent, blocks };
             
             const { error } = await supabase
               .from('products')
               .update({ 
-                sales_page_content: JSON.stringify(newContent),
+                sales_page_content: JSON.stringify(newContent) as any,
                 updated_at: new Date().toISOString()
-              })
+              } as any)
               .eq('id', productId);
             
-            if (error) {
-              console.error('[SalesPageEditor] Save error:', error);
-              throw error;
-            }
+            if (error) throw error;
             
-            console.log('[SalesPageEditor] Save successful, invalidating cache...');
             await queryClient.invalidateQueries({ queryKey: ['product-sales-page', productId] });
-            await queryClient.invalidateQueries({ queryKey: ['product', productId] });
-            
-            // Also refetch to get updated data
             await refetch();
-            
             toast.success('Página salva com sucesso!');
           }}
-          onClose={() => setEditorMode('classic')}
-          isSaving={saveMutation.isPending}
         />
       </div>
     );
