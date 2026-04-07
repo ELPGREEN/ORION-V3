@@ -42,11 +42,11 @@ export function HeroSection({ t }: HeroSectionProps) {
     window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
   };
 
-  const heroOpacity = Math.max(0, 1 - scrollY / 600);
-  const heroTranslateY = scrollY * 0.15;
+  const heroOpacity = Math.max(0, 1 - scrollY / 900);
+  const heroTranslateY = scrollY * 0.08;
 
   return (
-    <section className="relative min-h-[85vh] min-h-[85svh] flex items-center justify-center overflow-visible">
+    <section className="relative min-h-[75vh] min-h-[75svh] flex items-center justify-center overflow-visible">
       <HeroThreeBackground />
 
       {/* Neural network background image */}
@@ -81,7 +81,7 @@ export function HeroSection({ t }: HeroSectionProps) {
       />
 
       <div
-        className="container relative z-[15] py-6 sm:py-8 px-4 sm:px-6 pt-20 sm:pt-24"
+        className="container relative z-[15] py-4 sm:py-6 px-4 sm:px-6 pt-16 sm:pt-20"
         style={{
           opacity: heroOpacity,
           transform: `translate3d(0, ${heroTranslateY}px, 0)`,
@@ -90,7 +90,7 @@ export function HeroSection({ t }: HeroSectionProps) {
         <div className="max-w-5xl mx-auto text-center">
           {/* Plasma orb — compact */}
           <div
-            className="mb-1 sm:mb-2"
+            className="mb-0"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0) scale(1)' : 'translate3d(0, 30px, 0) scale(0.7)',
@@ -98,7 +98,7 @@ export function HeroSection({ t }: HeroSectionProps) {
             }}
           >
             <div className="flex items-center justify-center">
-              <PlasmaCore className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48" />
+              <PlasmaCore className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-36 lg:h-36" />
             </div>
           </div>
 
@@ -114,7 +114,7 @@ export function HeroSection({ t }: HeroSectionProps) {
             <img
               src={orionTitle}
               alt="ORION"
-              className="h-20 sm:h-28 md:h-36 lg:h-44 xl:h-52 mx-auto drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
+              className="h-16 sm:h-20 md:h-28 lg:h-32 xl:h-40 mx-auto drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
               style={{
                 filter: 'drop-shadow(0 0 80px hsl(30 85% 52% / 0.4)) drop-shadow(0 0 120px hsl(30 85% 52% / 0.2))',
               }}
@@ -124,7 +124,7 @@ export function HeroSection({ t }: HeroSectionProps) {
               src={orionTitle}
               alt=""
               aria-hidden="true"
-              className="h-12 sm:h-16 md:h-20 lg:h-24 mx-auto pointer-events-none select-none"
+              className="h-8 sm:h-10 md:h-14 lg:h-16 mx-auto pointer-events-none select-none"
               style={{
                 transform: 'scaleY(-1) translateY(4px)',
                 opacity: 0.12,
