@@ -1,84 +1,66 @@
 
 
-# Auditoria de Responsividade e Correções — Todas as Páginas Públicas
+# Varredura de Estilo — Three.js, WebGL e Consistência Tron
 
-## Problemas Encontrados
+## Diagnóstico
 
-### 1. Footer: Grid com 5 colunas em layout de 4
-O Footer tem 5 blocos (Brand, Navegação, Recursos, Empresa, Contato) mas usa `grid-cols-2 lg:grid-cols-4`. No desktop, a 5ª coluna (Contato) cai para uma nova linha sozinha. No mobile (2 colunas), o Brand ocupa `col-span-2` mas sobram 4 itens em grid de 2 — funciona, porém "Empresa" e "Contato" ficam apertados em telas 320px.
+Há uma **incoerência fundamental** entre o design system CSS e os componentes WebGL/Three.js:
 
-**Fix**: Mudar para `lg:grid-cols-5` ou consolidar Empresa + Contato numa única coluna. Recomendo consolidar (manter 4 colunas) para evitar texto muito estreito.
+```text
+Design System (index.css):
+  --cyan: 210 70% 50%  →  #2563EB (azul metálico)
+  --gold: 30 85% 52%   →  #D4AF37 (dourado)
 
-### 2. Header: Desktop nav usa `xl:` (1280px) — gap entre 768-1279px
-O menu desktop só aparece a partir de `xl:` (1280px). Entre 768px e 1279px (tablets), o usuário vê apenas o menu hambúrguer mobile. Isso é funcional mas não ideal para tablets landscape.
+WebGL/Three.js (hardcoded):
+  #00D4FF              →  cyan puro (ERRADO)
+  vec3(0.0, 0.831, 1.0) → cyan neon (ERRADO)
+  vec3(0.0, 0.55, 0.75) → teal (inconsistente)
+```
 
-**Fix**: Mudar breakpoint de `xl:` para `lg:` (1024px) e reduzir padding/tracking dos links para caber. Ou manter `xl:` se o menu for complexo demais (6 items + dropdown) — aceitável.
+O `#00D4FF` é cyan neon genérico — não é Orion. O estilo Tron do Orion usa **dourado dominante + azul metálico como acento sutil**.
 
-### 3. Hero: `min-h-[85svh]` sem fallback para navegadores antigos
-`svh` não é suportado em Safari < 15.4 e Chrome < 108.
+## Arquivos com problemas
 
-**Fix**: Adicionar `min-h-[85vh]` como fallback antes de `min-h-[85svh]` → `min-h-[85vh] min-h-[85svh]`.
-
-### 4. ComparisonSection: Colunas de 70px muito apertadas em 320px
-A tabela comparativa usa `grid-cols-[1fr,70px,70px]` no mobile. Com padding, sobram ~180px para o texto da feature — apertado em 320px.
-
-**Fix**: Reduzir para `grid-cols-[1fr,56px,56px]` no mobile e manter `sm:grid-cols-[1fr,120px,120px]`.
-
-### 5. Solução pages: Hero `min-h-[45vh]` pode ser excessivo em landscape mobile
-Em phones landscape (altura ~320px), 45vh = 144px — na verdade é OK. Sem fix necessário.
-
-### 6. Footer bottom bar: Texto longo demais em mobile 320px
-A linha `© 2023-2026 ELP® Green Technology • CNPJ ... • VAT ... • ELP® PROPERTY` é muito longa e quebra de forma deselegante em 320px.
-
-**Fix**: Esconder CNPJ/VAT em mobile, mostrar apenas no `sm:`.
-
-### 7. SecurityShieldSection: `grid-cols-4` com 8 items — 2 rows perfeitas em desktop, mas `md:grid-cols-3` cria 3 rows com 2 items na última (desalinhado).
-
-**Fix**: Mudar para `sm:grid-cols-2 lg:grid-cols-4` (remover `md:grid-cols-3`) para ter 2→4 colunas diretamente.
-
-### 8. SystemArchitectureSection: 9 items em `lg:grid-cols-4` — última row tem 1 item sozinho
-
-**Fix**: Mudar para `lg:grid-cols-3` (9 items = 3 rows perfeitas de 3).
-
-### 9. Touch targets no mobile menu
-Os links do dropdown mobile (`py-2.5`) têm ~32px de altura. O mínimo recomendado para mobile é 44px.
-
-**Fix**: Aumentar para `py-3` nos sub-items do dropdown mobile.
-
-### 10. Falta `<meta name="viewport">` check
-Preciso confirmar que o viewport meta tag está correto no `index.html`.
-
-## Plano de Implementação
-
-### Passo 1 — Footer: Consolidar Empresa + Contato
-Mesclar os blocos "Empresa" e "Contato" em uma única coluna. Footer fica com 4 colunas limpas: Brand | Navegação | Recursos | Empresa & Contato.
-
-### Passo 2 — Footer bottom bar: Responsive text
-Esconder detalhes CNPJ/VAT em mobile, manter no `sm:inline`.
-
-### Passo 3 — ComparisonSection: Colunas menores no mobile
-Mudar `grid-cols-[1fr,70px,70px]` → `grid-cols-[1fr,56px,56px]`.
-
-### Passo 4 — SecurityShieldSection: Grid fix
-Remover `md:grid-cols-3`, usar `sm:grid-cols-2 lg:grid-cols-4`.
-
-### Passo 5 — SystemArchitectureSection: Grid fix
-Mudar `lg:grid-cols-4` → `lg:grid-cols-3` (9 items, 3 rows perfeitas).
-
-### Passo 6 — Hero: svh fallback
-Adicionar `min-h-[85vh]` como fallback.
-
-### Passo 7 — Mobile menu touch targets
-Aumentar padding dos sub-items do dropdown mobile de `py-2.5` para `py-3`.
-
-## Arquivos a modificar
-
-| Arquivo | Mudança |
+| Arquivo | Problema |
 |---|---|
-| `src/components/layout/Footer.tsx` | Consolidar colunas + responsive bottom text |
-| `src/components/home/ComparisonSection.tsx` | Grid columns mobile |
-| `src/components/home/SecurityShieldSection.tsx` | Grid breakpoints |
-| `src/components/home/SystemArchitectureSection.tsx` | Grid 3 cols |
-| `src/components/home/HeroSection.tsx` | svh fallback |
-| `src/components/layout/Header.tsx` | Touch targets dropdown mobile |
+| `OrionBackground3D.tsx` | `#00D4FF` como cor default de partículas + grid |
+| `HeroThreeBackground.tsx` | Shader CYAN muito presente (scan line, streams) |
+| `PlasmaCore.tsx` | `CYAN vec3(0.0, 0.831, 1.0)` — neon puro |
+| `GatewayBackground.tsx` | `CYAN vec3(0.0, 0.6, 0.8)` — inconsistente |
+| `Loja.tsx` | 4x `#00D4FF` hardcoded |
+| `InvestorTools.tsx` | 8x `#00d4ff` hardcoded |
+| `QuantumRuntimeDashboard.tsx` | `ACCENT = "#00D4FF"` |
+
+## Correções
+
+### 1. OrionBackground3D.tsx
+- Mudar default de `#00D4FF` → `#D4AF37` (gold)
+- Grid secondary de `#00D4FF08` → `#3B82F610` (azul metálico sutil)
+- Scanline overlay de `rgba(0,212,255,...)` → `rgba(212,175,55,...)`
+
+### 2. HeroThreeBackground.tsx (shader)
+- `CYAN vec3(0.0, 0.55, 0.75)` → `vec3(0.231, 0.510, 0.918)` (azul metálico #3B82EB)
+- Reduzir peso do CYAN nos energy streams (0.4 → 0.2)
+- Scan line de CYAN puro → mix GOLD 70% + CYAN 30%
+
+### 3. PlasmaCore.tsx (shader)
+- `CYAN vec3(0.0, 0.831, 1.0)` → `vec3(0.231, 0.510, 0.918)` (azul metálico)
+
+### 4. GatewayBackground.tsx (shader)
+- `CYAN vec3(0.0, 0.6, 0.8)` → `vec3(0.231, 0.510, 0.918)` (azul metálico)
+
+### 5. Loja.tsx
+- Substituir 4x `#00D4FF` → `hsl(var(--secondary))` ou `#3B82F6`
+
+### 6. InvestorTools.tsx
+- Substituir 8x `#00d4ff` → `hsl(var(--secondary))` ou `#3B82F6`
+
+### 7. QuantumRuntimeDashboard.tsx
+- `ACCENT = "#00D4FF"` → `"#3B82F6"`
+
+## Resultado
+- Cor única de "azul" em todo o sistema: `#3B82F6` (azul metálico) como acento secundário
+- Dourado `#D4AF37` como cor dominante nos efeitos WebGL
+- Zero `#00D4FF` no codebase (exceto Remotion videos que são isolados)
+- Estética Tron coerente: dark + gold dominant + metallic blue accent
 
