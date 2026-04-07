@@ -1,20 +1,24 @@
 /**
- * Orion Formant Speech Synthesizer v20 — Grok Autonomous Calibration
+ * Orion Formant Speech Synthesizer v22 — Grok Ultra Human
  * 
  * Base: Beber & Cielo (2012) normal male spectrographic norms
- * Overlay: Grok-specific voice personality tuning
+ * Overlay: Grok Ultra Human personality — warm, sarcastic, natural
  * 
- * v20 changes from v19:
- * 1. BW3 × 2.4 (~360Hz) — more diffuse F3, rounder voice
- * 2. Aspiration 12% + shaped noise burst 6% at 3.2kHz — controlled breathing
- * 3. Jitter ×1.18, Shimmer ×1.12 — rhythmic irregularity, not random
- * 4. Damping LP at 4.2kHz + zero-pole pair at 3.8kHz — modern clarity
- * 5. Spectral tilt ×1.18 (~29dB) — warmer, more present voice
- * 6. Pre-emphasis +5% in 0-2kHz — vowel brilliance
- * 7. Breathiness gain +8% — "AI that breathes"
- * 8. Sub-harmonic excitation 4% (f0/2) — body/warmth in lows
- * 9. Pitch variance ×1.04 — intelligent micro-intonation
- * 10. Formant transition speed ×1.15 — faster, more natural coarticulation
+ * v22 changes from v20:
+ * 1. BW3 × 2.72 (~408Hz) — zero metallic residue
+ * 2. Aspiration 7% + burst 3% — elegant breathing, not ofegante
+ * 3. Jitter ×1.06, Shimmer ×1.05 — musical micro-irregularity
+ * 4. Damping LP 4.4kHz + zero-pole 3.7kHz — modern clarity
+ * 5. Spectral tilt ×1.09 (~26dB) — warm, present, alive
+ * 6. Pre-emphasis +8% in 0-2.3kHz — vowel brilliance
+ * 7. Breathiness +16% — real human breathing
+ * 8. Glottal OQ 0.71 — relaxed, natural voice
+ * 9. Glottal tension 0.88 — eliminates robotic/choked tone
+ * 10. Sub-harmonic 7% (f0/2) — warm body in lows
+ * 11. Pitch variance ×1.08 — sarcastic intonation
+ * 12. Formant speed ×1.32 — rapid fluid transitions
+ * 13. Spectral envelope smoothing 0.89 — removes metallic residue
+ * 14. Vibrato depth 0.4% — subtle life and emotion
  * 
  * 100% client-side, zero API, zero dependencies.
  */
@@ -31,25 +35,30 @@ const FRAME_SIZE = 220; // 5ms at 44.1kHz
 const N_FILTERS = 5; // F1-F5
 
 // ═══════════════════════════════════════════════════════════
-// GROK v20 CONFIG — all tuning knobs in one place
+// GROK ULTRA HUMAN v22 CONFIG
 // ═══════════════════════════════════════════════════════════
 
 const GROK = {
-  bw3Multiplier: 2.4,       // F3 bandwidth multiplier (v19: 2.2)
-  aspirationRatio: 0.12,    // aspiration noise mix (v19: 0.18)
-  noiseBurstRatio: 0.06,    // shaped 3.2kHz burst (v19: 0)
-  jitterMult: 1.18,         // jitter multiplier on DNA (v19: 1.35)
-  shimmerMult: 1.12,        // shimmer multiplier on DNA (v19: 1.2)
-  dampingFreq: 4200,        // LP damping cutoff (v19: 4000)
-  zeroPoleFreq: 3800,       // anti-resonance zero-pole pair (v19: none)
-  zerPoleBw: 200,           // bandwidth of zero-pole pair
-  spectralTiltMult: 1.18,   // tilt multiplier on DNA (v19: 1.3)
-  breathiness: 0.08,        // breathiness gain added to voiced (v19: 0)
-  subHarmonicGain: 0.04,    // sub-harmonic at f0/2 (v19: 0)
-  pitchVariance: 1.04,      // pitch range multiplier (v19: 1.0)
-  formantSpeed: 1.15,       // coarticulation speed (v19: 1.0 → 50% window)
-  preEmphasis0to2k: 0.05,   // +5% boost for 0-2kHz vowel brilliance (v19: 0)
-  dampingMix: 0.75,         // original vs LP mix (v19: 0.70/0.30)
+  bw3Multiplier: 2.72,      // F3 BW multiplier (v20: 2.4, v19: 2.2)
+  aspirationRatio: 0.07,    // aspiration noise mix (v20: 0.12)
+  noiseBurstRatio: 0.03,    // shaped 3.2kHz burst (v20: 0.06)
+  jitterMult: 1.06,         // jitter multiplier on DNA (v20: 1.18)
+  shimmerMult: 1.05,        // shimmer multiplier on DNA (v20: 1.12)
+  dampingFreq: 4400,        // LP damping cutoff (v20: 4200)
+  zeroPoleFreq: 3700,       // anti-resonance zero-pole pair (v20: 3800)
+  zerPoleBw: 180,           // bandwidth of zero-pole pair (v20: 200)
+  spectralTiltMult: 1.09,   // tilt multiplier on DNA (v20: 1.18) → ~26dB
+  breathiness: 0.16,        // breathiness gain (v20: 0.08)
+  glottalOQ: 0.71,          // open quotient override (DNA: 0.546)
+  glottalTension: 0.88,     // NEW: 0=breathy, 1=pressed — 0.88 = relaxed natural
+  subHarmonicGain: 0.07,    // sub-harmonic at f0/2 (v20: 0.04)
+  pitchVariance: 1.08,      // pitch range multiplier (v20: 1.04)
+  formantSpeed: 1.32,       // coarticulation speed (v20: 1.15)
+  preEmphasis0to2k: 0.08,   // +8% boost for 0-2.3kHz (v20: 0.05)
+  dampingMix: 0.78,         // original vs LP mix (v20: 0.75)
+  spectralSmoothing: 0.89,  // NEW: envelope smoothing (removes metallic)
+  vibratoDepth: 0.004,      // NEW: subtle vibrato (0.4% of f0)
+  vibratoRate: 5.5,         // vibrato rate in Hz (natural male ~5-6 Hz)
 };
 
 // ═══════════════════════════════════════════════════════════
