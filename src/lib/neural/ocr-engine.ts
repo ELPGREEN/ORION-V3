@@ -53,6 +53,10 @@ function cropToCanvas(
 
 export async function preloadOCR(): Promise<boolean> {
   if (ocrPipeline || loading) return !!ocrPipeline;
+  if (!await isHuggingFaceAvailable()) {
+    console.log("[OCREngine] Skipping — HuggingFace unreachable");
+    return false;
+  }
   loading = true;
   try {
     ocrPipeline = await pipeline(
