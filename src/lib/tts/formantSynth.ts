@@ -337,36 +337,30 @@ function renderPhonemes(phonemes: string[]): Float32Array {
           harmonicPhases[h] += TWO_PI * freq / SR;
           if (harmonicPhases[h] > TWO_PI) harmonicPhases[h] -= TWO_PI;
 
-          // Source amplitude from voice DNA
+          // Source amplitude from voice DNA (already contains natural spectral decay)
           let sourceAmp = h < harmonicProfile.length
             ? harmonicProfile[h]
-            : harmonicProfile[harmonicProfile.length - 1] * Math.exp(-0.3 * (h - harmonicProfile.length + 1));
+            : harmonicProfile[harmonicProfile.length - 1] * Math.exp(-0.15 * (h - harmonicProfile.length + 1));
 
-          // Natural spectral tilt: -12dB/octave (human voice characteristic)
-          // This is the KEY to sounding human vs robotic
-          const tiltDb = -12 * Math.log2(Math.max(1, h + 1));
-          const tiltFactor = Math.pow(10, tiltDb / 40); // gentler application
-          sourceAmp *= tiltFactor;
+          // GENTLE spectral tilt: -3dB/octave only (voice DNA already has natural decay!)
+          // Previous -12dB/oct was killing all harmonics above H2
+          const tiltDb = -3 * Math.log2(Math.max(1, h + 1));
+          sourceAmp *= Math.pow(10, tiltDb / 20);
 
-          // MFCC correction: boost higher harmonics to compensate
+          // MFCC correction: boost higher harmonics for brightness
           const hBoost = h < MFCC_FIX.harmonicBoost.length
             ? MFCC_FIX.harmonicBoost[h]
             : MFCC_FIX.harmonicBoost[MFCC_FIX.harmonicBoost.length - 1];
           sourceAmp *= hBoost;
 
-          // Additional spectral tilt compensation from MFCC analysis
-          const tiltComp = 1 + (h / NUM_HARMONICS) * MFCC_FIX.spectralTiltCompensation * 0.08;
-          sourceAmp *= tiltComp;
-
-          // Formant envelope (vocal tract filter)
+          // Formant envelope (vocal tract filter) — THIS creates the vowel identity
           const filterGain = formantEnvelope(freq, f1, f2, f3, f4, bw1, bw2, bw3, bw4);
 
-          // Shimmer (cycle-to-cycle amplitude variation)
+          // Shimmer
           const shimmer = 1 + (Math.random() - 0.5) * shimmerAmt;
 
-          // Mix: glottal pulse shape modulates the harmonic
-          // This gives each harmonic the natural LF spectral envelope
-          const glottalMod = 0.6 + 0.4 * glottalSample; // blend sine + LF
+          // LF glottal modulation (subtle — don't kill amplitude)
+          const glottalMod = 0.75 + 0.25 * glottalSample;
           
           sample += Math.sin(harmonicPhases[h]) * sourceAmp * filterGain * shimmer * glottalMod;
         }
@@ -400,20 +394,21 @@ function renderPhonemes(phonemes: string[]): Float32Array {
         let noise = Math.random() * 2 - 1;
 
         if (params.plosive) {
-          const burstEnd = Math.floor(0.008 * SR);
-          const aspEnd = Math.floor((0.008 + aspirationMs / 1000) * SR);
+          const burstEnd = Math.floor(0.012 * SR); // longer burst (12ms)
+          const aspEnd = Math.floor((0.012 + aspirationMs / 1000) * SR);
 
           if (n < burstEnd) {
-            noise *= 0.85 * (1 - n / burstEnd);
+            // Strong burst — essential for consonant perception
+            noise *= 1.2 * (1 - n / burstEnd);
           } else if (n < aspEnd) {
             const aspProg = (n - burstEnd) / (aspEnd - burstEnd);
-            // More natural aspiration decay (exponential, not linear)
-            noise *= 0.5 * Math.exp(-2 * aspProg);
+            noise *= 0.7 * Math.exp(-1.5 * aspProg);
           } else {
-            noise *= 0.02;
+            noise *= 0.03;
           }
         } else {
-          noise *= 0.32;
+          // Fricatives need to be LOUD enough to be perceived
+          noise *= 0.55;
         }
 
         // Shape noise through formant-tuned bandpass
