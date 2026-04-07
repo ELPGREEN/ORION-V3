@@ -8,6 +8,7 @@ import { PlasmaCore } from "./PlasmaCore";
 import orionTitle from "@/assets/orion-title-metallic.png";
 import hudElement from "@/assets/hud-element.png";
 import neuralBg from "@/assets/neural-bg.png";
+import bgHdHero from "@/assets/bg-hd-hero.jpg";
 
 interface HeroSectionProps {
   t: any;
