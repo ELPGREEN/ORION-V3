@@ -849,27 +849,34 @@ REGRAS:
         };
         if (!query) return json({ success: false, error: "query required" }, 400);
 
-        // ═══ Try embedding-based search first ═══
+        // ═══ Try Gemini embedding-based search first (FREE) ═══
         let kbResults: unknown[] = [];
-        const openaiKey2 = Deno.env.get("OPENAI_API_KEY");
+        const geminiEmbKeys2 = [
+          Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+        ].filter((k): k is string => !!k);
 
-        if (openaiKey2) {
+        if (geminiEmbKeys2.length > 0) {
           try {
-            const embResp = await fetch("https://api.openai.com/v1/embeddings", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${openaiKey2}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ model: "text-embedding-3-small", input: query }),
-            });
+            const embResp = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${geminiEmbKeys2[0]}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  model: "models/gemini-embedding-001",
+                  content: { parts: [{ text: query.slice(0, 2000) }] },
+                  outputDimensionality: 768,
+                }),
+              }
+            );
 
             if (embResp.ok) {
               const embData = await embResp.json();
-              const embedding = embData.data?.[0]?.embedding;
-              if (embedding) {
+              const embedding = embData?.embedding?.values;
+              if (embedding && embedding.length > 0) {
+                const padded = embedding.length >= 768 ? embedding.slice(0, 768) : [...embedding, ...new Array(768 - embedding.length).fill(0)];
                 const { data: neuralResults } = await supabase.rpc("search_neural_knowledge", {
-                  query_embedding: JSON.stringify(embedding),
+                  query_embedding: JSON.stringify(padded),
                   query_text: query,
                   match_count: 15,
                   filter_type: source_type || null,
