@@ -219,8 +219,10 @@ function generateVoicedWithAspiration(count: number, f0: number, aspirationRatio
 interface TiltFilter { alpha: number; z1: number; }
 
 function makeTiltFilter(): TiltFilter {
-  const tiltDb = VOICE_DNA.dynamics.spectralTilt;
-  const alpha = Math.min(1 - Math.pow(10, -tiltDb / 200), 0.80);
+  // Paper: whole-spectrum intensity WEAK (46%), 3.2kHz WEAK (62%)
+  // Need stronger tilt than DNA alone suggests
+  const tiltDb = VOICE_DNA.dynamics.spectralTilt * 1.3; // ~34 dB effective
+  const alpha = Math.min(1 - Math.pow(10, -tiltDb / 200), 0.85);
   return { alpha, z1: 0 };
 }
 
@@ -228,6 +230,26 @@ function tickTilt(f: TiltFilter, x: number): number {
   const y = x - f.alpha * f.z1;
   f.z1 = x;
   return y;
+}
+
+// ── HIGH-FREQUENCY DAMPING ──
+// Paper: anti-resonance MEDIAN in 73-84% of male voices
+// Implements gentle broadband damping above ~3kHz
+interface DampingFilter { z1: number; coeff: number; }
+
+function makeDampingFilter(): DampingFilter {
+  // Low-pass at ~4kHz to simulate median anti-resonance/damping
+  const fc = 4000;
+  const rc = 1 / (2 * Math.PI * fc);
+  const dt = 1 / SR;
+  const coeff = dt / (rc + dt);
+  return { z1: 0, coeff };
+}
+
+function tickDamping(f: DampingFilter, x: number): number {
+  f.z1 += f.coeff * (x - f.z1);
+  // Mix: 70% original + 30% low-passed = gentle HF reduction
+  return 0.70 * x + 0.30 * f.z1;
 }
 
 // ═══════════════════════════════════════════════════════════
