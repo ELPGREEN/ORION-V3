@@ -254,16 +254,16 @@ Deno.serve(async (req) => {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // 4. PROCESS EMBEDDINGS — usa OpenAI text-embedding-3-small (768d)
-    // Alinhado com generate-embeddings function (Gap D fix)
+    // 4. PROCESS EMBEDDINGS — usa Gemini embedding-001 (768d) — FREE
     // ═══════════════════════════════════════════════════════════
     if (action === "full" || action === "process_embeddings") {
-      const openaiKeys = [
-        Deno.env.get("OPENAI_API_KEY"),
-        Deno.env.get("OPENAI_API_KEY_2"),
-      ].filter(Boolean) as string[];
+      const geminiKeys = [
+        Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+        Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"), Deno.env.get("GEMINI_API_KEY_6"),
+        Deno.env.get("GEMINI_API_KEY_7"),
+      ].filter((k): k is string => !!k);
       let processed = 0;
-      if (openaiKeys.length > 0) {
+      if (geminiKeys.length > 0) {
         const { data: unprocessed } = await supabase
           .from("neural_knowledge_base")
           .select("id, title, content")
@@ -273,39 +273,41 @@ Deno.serve(async (req) => {
         let keyIdx = 0;
         for (const entry of unprocessed || []) {
           try {
-            const apiKey = openaiKeys[keyIdx % openaiKeys.length];
+            const apiKey = geminiKeys[keyIdx % geminiKeys.length];
             keyIdx++;
             const text = `${entry.title}\n\n${entry.content}`.substring(0, 8000);
-            const response = await fetch("https://api.openai.com/v1/embeddings", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${apiKey}`,
-              },
-              body: JSON.stringify({
-                model: "text-embedding-3-small",
-                input: text,
-                dimensions: 768,
-              }),
-            });
+            const response = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  model: "models/gemini-embedding-001",
+                  content: { parts: [{ text }] },
+                  outputDimensionality: 768,
+                }),
+              }
+            );
             if (response.ok) {
               const data = await response.json();
-              const embedding = data?.data?.[0]?.embedding;
-              if (embedding && embedding.length === 768) {
+              const embedding = data?.embedding?.values;
+              if (embedding && embedding.length > 0) {
+                const padded = embedding.length >= 768 ? embedding.slice(0, 768) : [...embedding, ...new Array(768 - embedding.length).fill(0)];
                 await supabase
                   .from("neural_knowledge_base")
-                  .update({ embedding: `[${embedding.join(",")}]`, is_processed: true })
+                  .update({ embedding: `[${padded.join(",")}]`, is_processed: true })
                   .eq("id", entry.id);
                 processed++;
               }
             } else {
-              console.warn(`OpenAI embedding error ${response.status} for ${entry.id}`);
+              console.warn(`Gemini embedding error ${response.status} for ${entry.id}`);
+              await response.text();
             }
           } catch (e) { console.warn(`Embedding failed for ${entry.id}:`, e); }
         }
       }
-      results.process_embeddings = { processed, apiKeyConfigured: openaiKeys.length > 0, provider: "openai_text-embedding-3-small" };
-      console.log(`✅ Processed ${processed} embeddings via OpenAI`);
+      results.process_embeddings = { processed, apiKeyConfigured: geminiKeys.length > 0, provider: "gemini_embedding-001" };
+      console.log(`✅ Processed ${processed} embeddings via Gemini`);
     }
 
     // ═══════════════════════════════════════════════════════════
