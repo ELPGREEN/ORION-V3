@@ -87,9 +87,17 @@ function CircularGauge({ value, label, size = 56, color = "#3B82F6" }: { value: 
 /* ─── Triangular Faceted Core ─── */
 function OrionCore({ health, status }: { health: number; status: string }) {
   const coreColor = status === "online" ? "#3B82F6" : status === "warning" ? "#c9a84c" : "#ff4444";
+  const goldAccent = "#c9a84c";
   return (
     <div className="relative flex items-center justify-center" style={{ width: 200, height: 200 }}>
-      {/* Outer ring with segments */}
+      {/* Ambient outer glow */}
+      <div className="absolute rounded-full" style={{
+        width: 210, height: 210,
+        background: `radial-gradient(circle, ${coreColor}15 0%, ${coreColor}08 40%, transparent 65%)`,
+        filter: "blur(8px)",
+      }} />
+
+      {/* Outer ring with tick marks */}
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200" style={{ animation: "orion-spin 25s linear infinite" }}>
         <circle cx="100" cy="100" r="95" fill="none" stroke={coreColor} strokeWidth="0.5" opacity="0.2" />
         <circle cx="100" cy="100" r="95" fill="none" stroke={coreColor} strokeWidth="1.5" strokeDasharray="8 4 2 4" opacity="0.5" />
@@ -106,51 +114,109 @@ function OrionCore({ health, status }: { health: number; status: string }) {
         })}
       </svg>
 
+      {/* HUD arc segments — broken arcs rotating */}
+      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200" style={{ animation: "orion-spin-reverse 35s linear infinite" }}>
+        {[
+          { r: 88, start: 20, end: 80 },
+          { r: 88, start: 140, end: 190 },
+          { r: 88, start: 240, end: 310 },
+        ].map((seg, i) => {
+          const startRad = (seg.start * Math.PI) / 180;
+          const endRad = (seg.end * Math.PI) / 180;
+          const x1 = 100 + seg.r * Math.cos(startRad);
+          const y1 = 100 + seg.r * Math.sin(startRad);
+          const x2 = 100 + seg.r * Math.cos(endRad);
+          const y2 = 100 + seg.r * Math.sin(endRad);
+          const large = seg.end - seg.start > 180 ? 1 : 0;
+          return (
+            <path key={i}
+              d={`M ${x1} ${y1} A ${seg.r} ${seg.r} 0 ${large} 1 ${x2} ${y2}`}
+              fill="none" stroke={i % 2 === 0 ? coreColor : goldAccent}
+              strokeWidth="2" opacity="0.4"
+              style={{ filter: `drop-shadow(0 0 3px ${i % 2 === 0 ? coreColor : goldAccent})` }}
+            />
+          );
+        })}
+      </svg>
+
       {/* Second ring */}
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200" style={{ animation: "orion-spin-reverse 18s linear infinite" }}>
         <circle cx="100" cy="100" r="72" fill="none" stroke={coreColor} strokeWidth="0.5" opacity="0.15" />
         <circle cx="100" cy="100" r="72" fill="none" stroke={coreColor} strokeWidth="1" strokeDasharray="20 8" opacity="0.4" />
       </svg>
 
-      {/* Inner ring */}
+      {/* Inner ring with gold accent */}
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200" style={{ animation: "orion-spin 10s linear infinite" }}>
         <circle cx="100" cy="100" r="50" fill="none" stroke={coreColor} strokeWidth="0.5" opacity="0.2" />
-        <circle cx="100" cy="100" r="50" fill="none" stroke="#c9a84c" strokeWidth="1" strokeDasharray="6 10" opacity="0.35" />
+        <circle cx="100" cy="100" r="50" fill="none" stroke={goldAccent} strokeWidth="1" strokeDasharray="6 10" opacity="0.35" />
       </svg>
 
-      {/* Health arc */}
+      {/* Health arc — thicker with glow */}
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="62" fill="none" stroke={coreColor} strokeWidth="3"
+        <circle cx="100" cy="100" r="62" fill="none" stroke={coreColor} strokeWidth="3.5"
           strokeDasharray={`${(health / 100) * 390} 390`}
-          strokeLinecap="round" opacity="0.7"
+          strokeLinecap="round" opacity="0.8"
           transform="rotate(-90 100 100)"
-          style={{ transition: "stroke-dasharray 1s ease" }} />
+          style={{
+            transition: "stroke-dasharray 1s ease",
+            filter: `drop-shadow(0 0 6px ${coreColor})`,
+          }} />
+      </svg>
+
+      {/* Circuit trace lines radiating outward */}
+      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200" style={{ animation: "orion-spin 40s linear infinite" }}>
+        {[0, 60, 120, 180, 240, 300].map((angle, i) => {
+          const rad = (angle * Math.PI) / 180;
+          const innerR = 52;
+          const outerR = 92;
+          return (
+            <line key={i}
+              x1={100 + Math.cos(rad) * innerR} y1={100 + Math.sin(rad) * innerR}
+              x2={100 + Math.cos(rad) * outerR} y2={100 + Math.sin(rad) * outerR}
+              stroke={i % 2 === 0 ? coreColor : goldAccent}
+              strokeWidth="0.4" opacity="0.2" strokeDasharray="3 5"
+            />
+          );
+        })}
+      </svg>
+
+      {/* Data node dots orbiting */}
+      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200" style={{ animation: "orion-spin-reverse 15s linear infinite" }}>
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => {
+          const rad = (angle * Math.PI) / 180;
+          const r = 78;
+          return (
+            <circle key={i}
+              cx={100 + Math.cos(rad) * r} cy={100 + Math.sin(rad) * r}
+              r="2" fill={i % 2 === 0 ? coreColor : goldAccent}
+              opacity="0.5"
+            />
+          );
+        })}
       </svg>
 
       {/* Triangular faceted center */}
       <svg className="absolute" viewBox="0 0 80 80" width="80" height="80" style={{ animation: "orion-spin-reverse 30s linear infinite" }}>
-        {/* Main triangle */}
         <polygon points="40,8 72,62 8,62" fill="none" stroke={coreColor} strokeWidth="1" opacity="0.6" />
-        {/* Inner triangle (inverted) */}
         <polygon points="40,58 24,28 56,28" fill="none" stroke={coreColor} strokeWidth="0.7" opacity="0.4" />
-        {/* Connecting lines for faceted look */}
         <line x1="40" y1="8" x2="40" y2="58" stroke={coreColor} strokeWidth="0.3" opacity="0.25" />
         <line x1="72" y1="62" x2="24" y2="28" stroke={coreColor} strokeWidth="0.3" opacity="0.25" />
         <line x1="8" y1="62" x2="56" y2="28" stroke={coreColor} strokeWidth="0.3" opacity="0.25" />
       </svg>
 
-      {/* Core glow */}
+      {/* Core glow — enhanced multi-layer */}
       <div className="absolute rounded-full" style={{
-        width: 50, height: 50,
-        background: `radial-gradient(circle, ${coreColor}44 0%, ${coreColor}11 50%, transparent 70%)`,
+        width: 55, height: 55,
+        background: `radial-gradient(circle, ${coreColor}55 0%, ${coreColor}22 40%, transparent 70%)`,
         animation: "orion-pulse 2.5s ease-in-out infinite",
+        boxShadow: `0 0 30px ${coreColor}33, 0 0 60px ${coreColor}11`,
       }} />
 
       {/* Center text */}
       <div className="relative z-10 flex flex-col items-center">
         <div className="text-[9px] font-mono tracking-[0.4em] uppercase" style={{ color: coreColor }}>ORION</div>
-        <div className="text-xl font-bold font-mono" style={{ color: coreColor }}>{health.toFixed(1)}%</div>
-        <div className="text-[7px] font-mono uppercase tracking-wider" style={{ color: "#c9a84c" }}>
+        <div className="text-xl font-bold font-mono" style={{ color: coreColor, textShadow: `0 0 12px ${coreColor}66` }}>{health.toFixed(1)}%</div>
+        <div className="text-[7px] font-mono uppercase tracking-wider" style={{ color: goldAccent }}>
           {status === "online" ? "OPERACIONAL" : status === "warning" ? "ATENÇÃO" : "OFFLINE"}
         </div>
       </div>
