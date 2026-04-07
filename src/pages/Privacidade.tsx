@@ -5,7 +5,7 @@ import { Shield, Lock, Eye, FileText, Mail, Trash2, Database, Globe, AlertTriang
 export default function Privacidade() {
   return (
     <MainLayout hideFooterCta>
-      <SEO title="Política de Privacidade — ORION IA by ELP® Green Technology" description="Como a ELP® Green Technology protege seus dados em conformidade com LGPD, GDPR e Google API Services User Data Policy." image="https://www.iasofthub.com/og-images/og-privacidade.jpg" keywords="privacidade, proteção de dados, LGPD, GDPR" />
+      <SEO title="Política de Privacidade — ORION IA by ELP® Green Technology" description="Como a ELP® Green Technology protege seus dados em conformidade com LGPD, GDPR e Google API Services User Data Policy." image="https://www.elpgreen.com/og-images/og-privacidade.jpg" keywords="privacidade, proteção de dados, LGPD, GDPR" />
       <section className="pt-32 pb-20 bg-background">
         <div className="container max-w-4xl">
           <div className="text-center mb-12">
@@ -24,7 +24,7 @@ export default function Privacidade() {
           {/* App & Organization identification */}
           <div className="bg-primary/5 border border-primary/20 p-6 mb-8 text-sm text-muted-foreground leading-relaxed">
             <p>
-              Esta Política de Privacidade se aplica ao site <strong className="text-foreground">iasofthub.com</strong> e 
+              Esta Política de Privacidade se aplica ao site <strong className="text-foreground">elpgreen.com</strong> e 
               à plataforma <strong className="text-foreground">ORION IA</strong>, 
               desenvolvida e mantida por <strong className="text-foreground">ELP Green Technology S.R.L.</strong> (VAT IT02712340062), 
               com sede em Alessandria, Itália.
@@ -214,7 +214,7 @@ export default function Privacidade() {
               </ul>
               <p className="text-muted-foreground leading-relaxed mt-4">
                 Para solicitar a exclusão de seus dados, envie um e-mail para{" "}
-                <a href="mailto:info@iasofthub.com" className="text-primary hover:underline">info@iasofthub.com</a>. 
+                <a href="mailto:info@elpgreen.com" className="text-primary hover:underline">info@elpgreen.com</a>. 
                 Confirmaremos o recebimento e processaremos sua solicitação em até 15 dias úteis.
               </p>
             </section>
@@ -272,7 +272,7 @@ export default function Privacidade() {
               </p>
               <ul className="list-none text-muted-foreground space-y-2 mt-4">
                 <li><strong>E-mail:</strong>{" "}
-                  <a href="mailto:info@iasofthub.com" className="text-primary hover:underline">info@iasofthub.com</a>
+                  <a href="mailto:info@elpgreen.com" className="text-primary hover:underline">info@elpgreen.com</a>
                 </li>
                 <li><strong>Responsável:</strong> Ericson Piccoli — Chairman & Founder</li>
                 <li><strong>Empresa:</strong> ELP Green Technology S.R.L. — VAT IT02712340062</li>

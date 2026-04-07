@@ -362,7 +362,7 @@ export function NeuralPDFReport() {
       doc.line(ML, 275, ML + CW, 275);
       doc.setFontSize(8); doc.setFont("times", "italic"); doc.setTextColor(120);
       doc.text("ELP Green Technology -- Rede Neural Conexao v11 -- Confidencial", ML, 280);
-      doc.text("info@iasofthub.com | www.iasofthub.com | [OAB]", ML, 284);
+      doc.text("info@elpgreen.com | www.elpgreen.com | [OAB]", ML, 284);
       doc.setTextColor(0);
 
       // ══════ TOC ══════

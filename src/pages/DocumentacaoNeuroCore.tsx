@@ -52,7 +52,7 @@ export default function DocumentacaoNeuroCore() {
       <SEO
         title="NeuroCore Engine — Documentação | ELP® Green Technology"
         description="Documentação técnica do NeuroCore Engine — motor neural com visão computacional, LIBRAS, IoT e integração robótica. By ELP® Green Technology."
-        image="https://www.iasofthub.com/og-images/og-neurocore.jpg"
+        image="https://www.elpgreen.com/og-images/og-neurocore.jpg"
         keywords="NeuroCore, documentação, visão computacional, LIBRAS, IoT, robótica, ELP Green Technology"
       />
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 print:py-2 print:space-y-4">

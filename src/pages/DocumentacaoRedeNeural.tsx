@@ -20,7 +20,7 @@ const DocumentacaoRedeNeural = () => {
       <SEO
         title="Rede Neural ORION — Documentação | ELP® Green Technology"
         description="Documentação técnica da Rede Neural Conexão do sistema ORION IA. Arquitetura, módulos e APIs. By ELP® Green Technology."
-        image="https://www.iasofthub.com/og-images/og-rede-neural.jpg"
+        image="https://www.elpgreen.com/og-images/og-rede-neural.jpg"
         keywords="rede neural, documentação, ORION IA, arquitetura neural, API, ELP Green Technology"
       />
       {/* Header */}

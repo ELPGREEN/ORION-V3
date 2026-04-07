@@ -154,14 +154,14 @@ export default function Publicacoes() {
       <SEO 
         title="Publicações & Insights | ORION IA by ELP® Green Technology" 
         description="Atualizações, insights técnicos e publicações sobre o ecossistema Orion — IA neural, visão computacional, LegalTech e inovação pela ELP® Green Technology."
-        image="https://www.iasofthub.com/og-images/og-publicacoes.jpg"
+        image="https://www.elpgreen.com/og-images/og-publicacoes.jpg"
         keywords="publicações, insights, artigos, IA neural, LegalTech, ELP Green Technology"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "CollectionPage",
           "name": "Publicações & Insights - ORION IA",
-          "url": "https://www.iasofthub.com/publicacoes",
-          "isPartOf": { "@type": "WebSite", "name": "ORION by ELP Green Technology", "url": "https://www.iasofthub.com" }
+          "url": "https://www.elpgreen.com/publicacoes",
+          "isPartOf": { "@type": "WebSite", "name": "ORION by ELP Green Technology", "url": "https://www.elpgreen.com" }
         }}
       />
 
