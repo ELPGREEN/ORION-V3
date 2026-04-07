@@ -195,6 +195,9 @@ export default function AdminOwnerDashboard() {
               </Card>
             ))}
           </TabsContent>
+          <TabsContent value="bigquery">
+            <BigQueryPanel />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
