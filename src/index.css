@@ -1436,11 +1436,22 @@ span[data-suggestion-id] {
 .fade-scroll-x {
   position: relative;
   overflow-x: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.3) transparent;
 }
 
 .fade-scroll-x::-webkit-scrollbar {
-  display: none;
+  height: 4px;
+}
+.fade-scroll-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+.fade-scroll-x::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.25);
+  border-radius: 2px;
+}
+.fade-scroll-x::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
 }
 
 .fade-scroll-container {
