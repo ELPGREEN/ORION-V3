@@ -36,40 +36,16 @@ const navLinks: NavItem[] = [
   { href: "/", label: "Home", icon: Home },
   {
     label: "Soluções",
-    icon: Users,
+    icon: Zap,
     children: [
-      { href: "/clientes?perfil=advogados", label: "Advogados", icon: Scale, desc: "IA jurídica, petições e processos" },
-      { href: "/clientes?perfil=escritorios", label: "Escritórios", icon: Building2, desc: "Gestão completa com CRM e equipe" },
-      { href: "/clientes?perfil=produtores", label: "Produtores Digitais", icon: ShoppingBag, desc: "Loja, checkout e afiliados" },
-      { href: "/clientes?perfil=afiliados", label: "Afiliados", icon: Briefcase, desc: "Links rastreáveis e comissões" },
-      { href: "/servicos", label: "Enterprise & Indústria", icon: Cpu, desc: "Robótica, automação e Indústria 4.0" },
+      { href: "/servicos#advogados", label: "Para Advogados", icon: Scale, desc: "IA jurídica, petições e gestão processual" },
+      { href: "/servicos#produtores", label: "Para Produtores Digitais", icon: ShoppingBag, desc: "Loja, checkout, páginas de venda" },
+      { href: "/servicos#afiliados", label: "Para Afiliados", icon: Briefcase, desc: "Links rastreáveis e comissões automáticas" },
+      { href: "/servicos#industria", label: "Para Indústria", icon: Cpu, desc: "Robótica, automação e Indústria 4.0" },
     ],
   },
-  {
-    label: "Plataforma",
-    icon: LayoutDashboard,
-    children: [
-      { href: "/plataforma", label: "Funcionalidades", icon: Brain, desc: "Tudo que o ORION faz por você" },
-      { href: "/plataforma#seguranca", label: "Segurança", icon: Shield, desc: "LGPD, criptografia e compliance" },
-    ],
-  },
-  {
-    label: "Serviços",
-    icon: Briefcase,
-    children: [
-      { href: "/servicos", label: "Todos os Serviços", icon: Briefcase, desc: "SaaS, IA e automação industrial" },
-      { href: "/escritorio", label: "Escritório Jurídico", icon: Gavel, desc: "Áreas de atuação do escritório" },
-    ],
-  },
-  { href: "/investidor", label: "Investidores", icon: TrendingUp },
-  {
-    label: "Preços",
-    icon: CreditCard,
-    children: [
-      { href: "/contato", label: "Planos & Preços", icon: CreditCard, desc: "Starter, Pro, Business, Enterprise" },
-      { href: "/contato#contato-form", label: "Falar com Vendas", icon: MessageSquare, desc: "Contato direto com a equipe" },
-    ],
-  },
+  { href: "/plataforma", label: "Plataforma", icon: LayoutDashboard },
+  { href: "/contato", label: "Preços", icon: CreditCard },
   { href: "/publicacoes", label: "Blog", icon: BookOpen },
 ];
 
