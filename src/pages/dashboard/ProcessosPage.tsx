@@ -682,7 +682,7 @@ export default function ProcessosPage() {
               descricao: `Processo ${processo?.numero_processo || ""}: ${andamentoForm.descricao.trim().slice(0, 100)}`,
               referencia_id: andamentoProcessoId,
               referencia_tipo: "processo",
-            });
+            } as any);
           }
         }
 

@@ -100,12 +100,11 @@ export default function ContactDetailsDialog({
     const { error } = await supabase
       .from("contacts")
       .update({
-        nome: formData.nome,
+        name: formData.nome,
         email: formData.email,
-        empresa: formData.empresa || null,
-        telefone: formData.telefone || null,
-        notas: formData.notas || null,
-      })
+        company: formData.empresa || null,
+        message: formData.notas || "",
+      } as any)
       .eq("id", contact.id);
 
     setSaving(false);

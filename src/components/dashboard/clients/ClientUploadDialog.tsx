@@ -208,7 +208,7 @@ export function ClientUploadDialog({
         file_size: file.size,
         categoria: categoria,
         notas: notas || null,
-      });
+      } as any);
 
       if (insertError) {
         await supabase.storage.from("documents").remove([fileName]);

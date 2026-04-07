@@ -314,7 +314,7 @@ export function ChatJuridico() {
                           feedback: "positive",
                           quality_score: 1.0,
                           user_id: user?.id,
-                        });
+                        } as any);
                       }}
                       className="p-1 rounded hover:bg-emerald-500/10 transition-colors group"
                     >
@@ -330,7 +330,7 @@ export function ChatJuridico() {
                           feedback: "negative",
                           quality_score: 0.0,
                           user_id: user?.id,
-                        });
+                        } as any);
                       }}
                       className="p-1 rounded hover:bg-red-500/10 transition-colors group"
                     >

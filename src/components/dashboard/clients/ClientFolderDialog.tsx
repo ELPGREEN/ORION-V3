@@ -300,7 +300,7 @@ export default function ClientFolderDialog({
       file_type: file.type,
       file_size: file.size,
       categoria: uploadCategoria,
-    });
+    } as any);
 
     setUploading(false);
 
@@ -320,7 +320,7 @@ export default function ClientFolderDialog({
             descricao: `O advogado adicionou o documento "${file.name}" (${categoriaOptions.find(c => c.value === uploadCategoria)?.label || uploadCategoria}) à sua pasta.`,
             link: "/dashboard/documentos",
             referencia_tipo: "client_document",
-          });
+          } as any);
         }
       } catch (notifErr) {
       }

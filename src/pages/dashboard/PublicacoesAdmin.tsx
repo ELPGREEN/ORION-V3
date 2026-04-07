@@ -229,13 +229,13 @@ export default function PublicacoesAdmin() {
     if (editingId) {
       const { error: updateError } = await supabase
         .from("publicacoes")
-        .update(payload)
+        .update(payload as any)
         .eq("id", editingId);
       error = updateError;
     } else {
       const { error: insertError } = await supabase
         .from("publicacoes")
-        .insert([payload]);
+        .insert([payload] as any);
       error = insertError;
     }
 

@@ -96,7 +96,7 @@ export function ShareDocumentDialog({
         shared_by: user.id,
         shared_with: selectedClient.user_id,
         message: message || null,
-      });
+      } as any);
 
       if (shareError) throw shareError;
 
@@ -118,7 +118,7 @@ export function ShareDocumentDialog({
         link: "/dashboard/documentos",
         referencia_id: documentId,
         referencia_tipo: "document",
-      });
+      } as any);
 
       if (notifyError) {
       }

@@ -58,7 +58,7 @@ export function AIFeedbackButtons({
           ...metadata,
           timestamp: new Date().toISOString(),
         },
-      });
+      } as any);
 
       if (error) throw error;
       setFeedback(type);

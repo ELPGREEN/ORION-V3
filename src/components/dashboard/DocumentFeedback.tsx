@@ -69,6 +69,7 @@ export function DocumentFeedback({
       const { data: { user } } = await supabase.auth.getUser();
 
       const { error: learningError } = await supabase.from("neural_learning_data").insert({
+
         interaction_type: "document_feedback",
         input_text: `[Feedback] Tipo: ${documentType} | Avaliação: ${thumbs} | Estrelas: ${stars}/5`,
         output_text: generatedContent.substring(0, 10000),
@@ -87,7 +88,7 @@ export function DocumentFeedback({
           contentLength: generatedContent.length,
           timestamp: new Date().toISOString(),
         } as any,
-      });
+      } as any);
 
       if (learningError) throw learningError;
 
