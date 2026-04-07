@@ -58,7 +58,7 @@ export const ELP_COMPANY = {
   cnpjBrasil: "42.501.190/0001-70",
   headquarters: "Alessandria, Piemonte, Italia",
   operationalBase: "Valenza (AL), Italia",
-  website: "https://www.elpgreen.com",
+  website: "https://www.iasofthub.com",
   sector: "Tecnologia de IA Empresarial & Soluções Sustentáveis",
   registeredTrademarks: ["ORION IA", "Smart Robotic Line", "ELP Green Technology"],
 } as const;

@@ -165,7 +165,7 @@ export default function Termos() {
               <p className="text-muted-foreground leading-relaxed">
                 Em caso de dúvidas sobre estes Termos de Uso, entre em contato através do e-mail: 
                 <a href="mailto:info@iasofthub.com" className="text-primary hover:underline ml-1">
-                info@elpgreen.com</a>
+                info@iasofthub.com</a>
               </p>
             </section>
           </div>

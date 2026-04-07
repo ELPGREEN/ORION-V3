@@ -147,7 +147,7 @@ export default function LGPD() {
                 <p className="text-foreground font-medium">ELP® Green Technology</p>
                 <p className="text-muted-foreground text-sm">Encarregado de Proteção de Dados</p>
                 <a href="mailto:info@iasofthub.com" className="text-primary hover:underline text-sm">
-                  info@elpgreen.com
+                  info@iasofthub.com
                 </a>
               </div>
             </section>
