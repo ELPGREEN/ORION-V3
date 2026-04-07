@@ -407,6 +407,48 @@ export default function ClienteDashboard() {
         .eq("user_id", user.id);
       setIaConversationCount(iaCount || 0);
 
+      // Fetch purchased products
+      const { data: accessData } = await supabase
+        .from("customer_access")
+        .select("id, product_id, is_active, products(id, title, cover_url, product_type, category)")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(4);
+      setMyProducts(accessData || []);
+
+      // Fetch featured stores (top 3 producers)
+      const { data: activeProducts } = await supabase
+        .from("products")
+        .select("creator_id")
+        .eq("status", "active")
+        .limit(100);
+      if (activeProducts && activeProducts.length > 0) {
+        const creatorCounts = new Map<string, number>();
+        activeProducts.forEach((p: any) => {
+          creatorCounts.set(p.creator_id, (creatorCounts.get(p.creator_id) || 0) + 1);
+        });
+        const topCreators = Array.from(creatorCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([id]) => id);
+        const { data: storeProfiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, avatar_url")
+          .in("user_id", topCreators);
+        setFeaturedStores(
+          topCreators.map((cid) => {
+            const prof = storeProfiles?.find((p: any) => p.user_id === cid);
+            return {
+              creator_id: cid,
+              name: prof?.full_name || "Produtor",
+              avatar_url: prof?.avatar_url,
+              count: creatorCounts.get(cid) || 0,
+            };
+          })
+        );
+      }
+
       // Verificar avaliação existente
       const { data: review } = await supabase
         .from("avaliacoes")
