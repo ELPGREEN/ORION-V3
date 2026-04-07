@@ -1,5 +1,6 @@
 import { IconShield, IconCheckMark, IconFingerprint, IconEye, IconGlobe, IconCompliance, IconActivity, IconSearch } from "@/components/icons/SumerianTronIcons";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import bgTronCore from "@/assets/bg-tron-core.jpg";
 
 const highlights = [
   { Icon: IconShield, name: "Defesa Multicamada", desc: "Múltiplas barreiras de proteção ativas 24/7 que detectam e neutralizam ameaças automaticamente." },
@@ -15,6 +16,8 @@ const highlights = [
 export function SecurityShieldSection() {
   return (
     <section className="py-12 sm:py-16 section-cinematic relative overflow-hidden neural-ambient tron-energy">
+      <img src={bgTronCore} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.06] pointer-events-none mix-blend-screen" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background pointer-events-none" />
       <div className="absolute top-0 inset-x-0 tron-divider" />
       <div className="absolute top-1/3 left-0 w-[500px] h-[400px] bg-primary/[0.04] rounded-full blur-[200px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-secondary/[0.03] rounded-full blur-[180px] pointer-events-none" />

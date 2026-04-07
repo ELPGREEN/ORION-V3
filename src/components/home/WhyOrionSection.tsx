@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { IconNeuralAI, IconClock, IconTrending, IconShield, IconCRM, IconSparkles, IconAutomation } from "@/components/icons/SumerianTronIcons";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import bgTronEnergy from "@/assets/bg-tron-energy.jpg";
 
 const reasons = [
   {
@@ -46,11 +47,13 @@ const reasons = [
 export function WhyOrionSection() {
   return (
     <section className="py-12 sm:py-16 section-cinematic relative overflow-hidden neural-ambient tron-energy">
+      <img src={bgTronEnergy} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.05] pointer-events-none mix-blend-screen" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/75 to-background pointer-events-none" />
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-0 w-[400px] h-[400px] bg-primary/[0.03] rounded-full blur-[150px]" />
         <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-primary/[0.02] rounded-full blur-[120px]" />
       </div>
-      <div className="absolute top-0 inset-x-0 cinematic-divider" />
+      <div className="absolute top-0 inset-x-0 tron-divider" />
 
       <div className="container px-4 sm:px-6 relative">
         <div className="text-center mb-8 sm:mb-10">
