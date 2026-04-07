@@ -52,6 +52,9 @@ export function HeroSection({ t }: HeroSectionProps) {
       <img
         src={bgHdHero}
         alt=""
+        loading="eager"
+        decoding="async"
+        fetchPriority="high"
         className="absolute inset-0 w-full h-full object-cover z-[0] opacity-40"
         width={1920}
         height={1080}
@@ -63,6 +66,8 @@ export function HeroSection({ t }: HeroSectionProps) {
       <img
         src={neuralBg}
         alt=""
+        loading="lazy"
+        decoding="async"
         className="absolute inset-0 w-full h-full object-cover z-[1] opacity-[0.05] mix-blend-screen pointer-events-none"
       />
 
@@ -73,6 +78,8 @@ export function HeroSection({ t }: HeroSectionProps) {
       <img
         src={hudElement}
         alt=""
+        loading="lazy"
+        decoding="async"
         className="absolute right-[-5%] top-1/2 -translate-y-1/2 w-[250px] sm:w-[350px] lg:w-[420px] opacity-[0.08] z-[2] pointer-events-none"
         style={{
           transform: `translate3d(0, calc(-50% + ${scrollY * 0.05}px), 0)`,
@@ -84,6 +91,8 @@ export function HeroSection({ t }: HeroSectionProps) {
       <img
         src={hudElement}
         alt=""
+        loading="lazy"
+        decoding="async"
         className="absolute left-[-8%] top-[30%] w-[180px] sm:w-[240px] opacity-[0.04] z-[2] pointer-events-none"
         style={{
           transform: `scaleX(-1) translate3d(0, ${scrollY * 0.03}px, 0)`,
