@@ -142,7 +142,7 @@ export default function Loja() {
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold mb-3" style={{ color: "#D4AF37", textShadow: "0 0 30px rgba(212,175,55,0.2)" }}>
             Loja de Produtos{" "}
-            <span style={{ color: "#00D4FF", textShadow: "0 0 25px hsl(var(--primary),0.3)" }}>Digitais</span>
+            <span style={{ color: "#3B82F6", textShadow: "0 0 25px hsl(var(--primary),0.3)" }}>Digitais</span>
           </h1>
           <p className="max-w-2xl mx-auto text-sm md:text-base" style={{ color: "rgba(255,255,255,0.45)" }}>
             Cursos, e-books e ferramentas profissionais de{" "}
@@ -158,7 +158,7 @@ export default function Loja() {
             </Button>
           )}
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00D4FF]/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#3B82F6]/20 to-transparent" />
       </div>
 
       {/* Filters Bar */}
@@ -264,7 +264,7 @@ export default function Loja() {
                     className="absolute top-3 right-3 h-8 w-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{ background: "rgba(10,10,15,0.8)", border: "1px solid hsl(var(--primary),0.2)" }}
                   >
-                    <Share2 className="h-3.5 w-3.5" style={{ color: "#00D4FF" }} />
+                    <Share2 className="h-3.5 w-3.5" style={{ color: "#3B82F6" }} />
                   </button>
                 </div>
 
