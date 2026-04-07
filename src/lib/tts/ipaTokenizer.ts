@@ -164,6 +164,11 @@ export const IPA_TOKENS: IPAToken[] = [
   mkConsonant('ʃ', 68, 'postalveolar','fricative', false, false, 200, 1600, 3800, 6000, 350, 350, 450, 550, 155, 0.60),
   mkConsonant('ʒ', 69, 'postalveolar','fricative', true,  false, 220, 1600, 3800, 6000, 300, 300, 400, 500, 125, 0.65),
   mkConsonant('h', 70, 'glottal',     'fricative', false, false, 500, 1500, 2500, 3500, 500, 500, 500, 500, 90,  0.30),
+  mkConsonant('χ', 71, 'uvular',      'fricative', false, false, 300, 1100, 2400, 3300, 400, 400, 400, 450, 110, 0.50), // carro (uvular R)
+
+  // ── AFFRICATES (missing from original — critical for pt-BR!) ──
+  mkConsonant('t͡ʃ', 72, 'postalveolar','plosive', false, false, 200, 1700, 3800, 6000, 300, 300, 400, 500, 90, 0.65, { aspirated: true }),  // noite
+  mkConsonant('d͡ʒ', 73, 'postalveolar','plosive', true,  false, 220, 1700, 3800, 6000, 250, 250, 350, 450, 80, 0.65),  // cidade
 
   // ── TAP / TRILL / LATERAL ──
   mkConsonant('ɾ', 80, 'alveolar',    'tap',                true, false, 350, 1300, 2400, 3300, 80,  100, 160, 230, 45,  0.63),
