@@ -348,7 +348,7 @@ export function useNeuralVoice(
         updateAiResponding(false);
         resumeSTT();
       }
-    }, 60000);
+    }, 20000); // 20s max — prevents hung TTS from blocking interaction
 
     const cleanText = cleanTextForSpeech(text);
     feedAIResponse(text);
