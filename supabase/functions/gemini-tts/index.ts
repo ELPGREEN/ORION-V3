@@ -1,7 +1,7 @@
 /**
- * Gemini TTS — Free text-to-speech using Gemini 2.5 Flash TTS (GA)
- * Uses the dedicated TTS model with prompt/text separation for natural speech.
- * Returns WAV audio. PT-BR optimized with voice selection and style prompts.
+ * Gemini TTS — text-to-speech using Gemini 2.5 Flash Preview TTS
+ * Uses a minimal request shape with fallback variants because the preview API
+ * can return intermittent INTERNAL 500 errors for some payload combinations.
  */
 
 const corsHeaders = {
@@ -13,40 +13,53 @@ const corsHeaders = {
 const MODEL = "gemini-2.5-flash-preview-tts";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-// Default voice for Orion — Charon is informative male
 const DEFAULT_VOICE = "Charon";
 const DEFAULT_LANG = "pt-BR";
-
-// Style prompt for natural Portuguese speech
 const DEFAULT_PROMPT = "Fale de forma natural, clara e fluida em português brasileiro. Use um tom profissional mas amigável.";
 
-/**
- * Round-robin key rotation across 7 Gemini API keys
- * Caches failed keys (403) for 5 minutes to avoid wasting time
- */
 const failedKeyCache: Record<string, number> = {};
-const KEY_COOLDOWN_MS = 5 * 60 * 1000; // 5 min cooldown for 403 keys
+const KEY_COOLDOWN_MS = 5 * 60 * 1000;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1200;
+const TRANSIENT_STATUS_CODES = new Set([408, 500, 502, 503, 504]);
+
+type MultiSpeakerVoice = {
+  speaker: string;
+  voice?: string;
+};
+
+type RequestVariant = {
+  label: string;
+  body: Record<string, unknown>;
+};
 
 function getAllGeminiKeys(): string[] {
   const now = Date.now();
-  const keys = [
-    Deno.env.get("GEMINI_API_KEY"),
-  ].filter((k): k is string => {
-    if (!k) return false;
-    const failedAt = failedKeyCache[k];
-    if (failedAt && (now - failedAt) < KEY_COOLDOWN_MS) return false;
+  const keys = [Deno.env.get("GEMINI_API_KEY")].filter((key): key is string => {
+    if (!key) return false;
+    const failedAt = failedKeyCache[key];
+    if (failedAt && now - failedAt < KEY_COOLDOWN_MS) return false;
     return true;
   });
 
-  if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured (all keys cooling down)");
+  if (keys.length === 0) {
+    throw new Error("No GEMINI_API_KEY configured (or key is cooling down)");
+  }
+
   return keys;
 }
 
-/**
- * Decode base64 PCM data into WAV buffer
- */
-function pcmToWav(pcmBase64: string, sampleRate = 24000, channels = 1, bitsPerSample = 16): Uint8Array {
-  const pcmBytes = Uint8Array.from(atob(pcmBase64), c => c.charCodeAt(0));
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function pcmToWav(
+  pcmBase64: string,
+  sampleRate = 24000,
+  channels = 1,
+  bitsPerSample = 16,
+): Uint8Array {
+  const pcmBytes = Uint8Array.from(atob(pcmBase64), (c) => c.charCodeAt(0));
   const dataSize = pcmBytes.length;
   const wav = new Uint8Array(44 + dataSize);
   const view = new DataView(wav.buffer);
@@ -69,110 +82,206 @@ function pcmToWav(pcmBase64: string, sampleRate = 24000, channels = 1, bitsPerSa
   return wav;
 }
 
+function buildSingleSpeakerRequest(
+  cleanText: string,
+  selectedVoice: string,
+  selectedLang: string,
+  stylePrompt: string,
+  options: { includePrompt: boolean; includeLanguage: boolean },
+): Record<string, unknown> {
+  const speechConfig: Record<string, unknown> = {
+    voiceConfig: {
+      prebuiltVoiceConfig: {
+        voiceName: selectedVoice,
+      },
+    },
+  };
+
+  if (options.includeLanguage && selectedLang.trim()) {
+    speechConfig.languageCode = selectedLang;
+  }
+
+  const body: Record<string, unknown> = {
+    contents: [{
+      parts: [{ text: cleanText }],
+    }],
+    generationConfig: {
+      responseModalities: ["AUDIO"],
+      speechConfig,
+    },
+  };
+
+  if (options.includePrompt && stylePrompt.trim()) {
+    body.systemInstruction = {
+      parts: [{ text: stylePrompt.trim().slice(0, 500) }],
+    };
+  }
+
+  return body;
+}
+
+function buildMultiSpeakerRequest(
+  cleanText: string,
+  selectedLang: string,
+  multispeaker: MultiSpeakerVoice[],
+  includeLanguage: boolean,
+): Record<string, unknown> {
+  const speechConfig: Record<string, unknown> = {
+    multiSpeakerVoiceConfig: {
+      speakerVoiceConfigs: multispeaker
+        .filter((speaker) => typeof speaker?.speaker === "string" && speaker.speaker.trim().length > 0)
+        .map((speaker) => ({
+          speaker: speaker.speaker,
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: speaker.voice || DEFAULT_VOICE,
+            },
+          },
+        })),
+    },
+  };
+
+  if (includeLanguage && selectedLang.trim()) {
+    speechConfig.languageCode = selectedLang;
+  }
+
+  return {
+    contents: [{
+      parts: [{ text: cleanText }],
+    }],
+    generationConfig: {
+      responseModalities: ["AUDIO"],
+      speechConfig,
+    },
+  };
+}
+
+async function requestGeminiAudio(
+  keys: string[],
+  requestVariants: RequestVariant[],
+): Promise<{ response: Response | null; lastError: string; rateLimited: boolean }> {
+  let lastError = "";
+
+  for (const apiKey of keys) {
+    const url = `${API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
+
+    for (const variant of requestVariants) {
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(variant.body),
+        });
+
+        if (response.ok) {
+          console.log(`[Gemini TTS] Success via ${variant.label} on attempt ${attempt}/${MAX_RETRIES}`);
+          return { response, lastError, rateLimited: false };
+        }
+
+        const errText = await response.text();
+        lastError = errText.slice(0, 300);
+        console.warn(
+          `[Gemini TTS] ${variant.label} attempt ${attempt}/${MAX_RETRIES} failed (${response.status}): ${lastError.slice(0, 120)}`,
+        );
+
+        if (response.status === 429) {
+          return { response: null, lastError, rateLimited: true };
+        }
+
+        if (response.status === 403) {
+          failedKeyCache[apiKey] = Date.now();
+          break;
+        }
+
+        if (TRANSIENT_STATUS_CODES.has(response.status) && attempt < MAX_RETRIES) {
+          await sleep(RETRY_DELAY_MS * attempt);
+          continue;
+        }
+
+        break;
+      }
+
+      if (failedKeyCache[apiKey]) {
+        break;
+      }
+    }
+  }
+
+  return { response: null, lastError, rateLimited: false };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { text, voice, lang, prompt, multispeaker } = await req.json();
+    const body = await req.json();
+    const text = typeof body?.text === "string" ? body.text : "";
+    const voice = typeof body?.voice === "string" ? body.voice : DEFAULT_VOICE;
+    const lang = typeof body?.lang === "string" ? body.lang : DEFAULT_LANG;
+    const prompt = typeof body?.prompt === "string" ? body.prompt : DEFAULT_PROMPT;
+    const multispeaker = Array.isArray(body?.multispeaker) ? body.multispeaker as MultiSpeakerVoice[] : undefined;
 
-    if (!text || text.trim().length === 0) {
+    if (!text.trim()) {
       return new Response(
         JSON.stringify({ error: "Text is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const cleanText = text.trim().slice(0, 4000);
-
+    const cleanText = text.trim().slice(0, 2500);
     const selectedVoice = voice || DEFAULT_VOICE;
     const selectedLang = lang || DEFAULT_LANG;
     const stylePrompt = prompt || DEFAULT_PROMPT;
     const keys = getAllGeminiKeys();
 
-    console.log(`[Gemini TTS] Synthesizing ${cleanText.length} chars, voice="${selectedVoice}", lang="${selectedLang}", keys=${keys.length}`);
+    console.log(
+      `[Gemini TTS] Synthesizing ${cleanText.length} chars, voice="${selectedVoice}", lang="${selectedLang}", keys=${keys.length}`,
+    );
 
-    // Build request body — separate system instruction from text for faster processing
-    const requestBody: any = {
-      systemInstruction: {
-        parts: [{ text: stylePrompt }]
-      },
-      contents: [{
-        parts: [{ text: cleanText }]
-      }],
-      generationConfig: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          languageCode: selectedLang,
-          voiceConfig: {
-            prebuiltVoiceConfig: {
-              voiceName: selectedVoice
-            }
-          }
-        }
-      }
-    };
+    const requestVariants: RequestVariant[] = multispeaker && multispeaker.length > 0
+      ? [
+          {
+            label: "multispeaker/with-lang",
+            body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, true),
+          },
+          {
+            label: "multispeaker/no-lang",
+            body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, false),
+          },
+        ]
+      : [
+          {
+            label: "single/full",
+            body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, {
+              includePrompt: true,
+              includeLanguage: true,
+            }),
+          },
+          {
+            label: "single/no-lang",
+            body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, {
+              includePrompt: true,
+              includeLanguage: false,
+            }),
+          },
+          {
+            label: "single/plain",
+            body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, {
+              includePrompt: false,
+              includeLanguage: false,
+            }),
+          },
+        ];
 
-    // Multi-speaker support
-    if (multispeaker && Array.isArray(multispeaker) && multispeaker.length > 0) {
-      requestBody.generationConfig.speechConfig = {
-        languageCode: selectedLang,
-        multiSpeakerVoiceConfig: {
-          speakerVoiceConfigs: multispeaker.map((s: any) => ({
-            speaker: s.speaker,
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: s.voice || DEFAULT_VOICE }
-            }
-          }))
-        }
-      };
-    }
+    const { response, lastError, rateLimited } = await requestGeminiAudio(keys, requestVariants);
 
-    // Retry logic with up to 3 attempts (handles transient 500 errors)
-    let response: Response | null = null;
-    let lastError = "";
-    const MAX_RETRIES = 3;
-
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      if (attempt > 0) {
-        // Wait 1s between retries
-        await new Promise(r => setTimeout(r, 1000));
-        console.log(`[Gemini TTS] Retry attempt ${attempt + 1}/${MAX_RETRIES}`);
-      }
-
-      const apiKey = keys[0];
-      const url = `${API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (r.ok) {
-        response = r;
-        break;
-      }
-
-      const errText = await r.text();
-      lastError = errText.slice(0, 200);
-      console.warn(`[Gemini TTS] Attempt ${attempt + 1} failed (${r.status}): ${lastError.slice(0, 100)}`);
-
-      if (r.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limited, try again shortly", fallback: true }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      if (r.status === 403) {
-        failedKeyCache[apiKey] = Date.now();
-        break; // No other keys to try
-      }
-
-      // 500 = transient, retry; 400 = bad request, stop
-      if (r.status === 400) break;
-      // 500 continues to next attempt
+    if (rateLimited) {
+      return new Response(
+        JSON.stringify({ error: "Rate limited, try again shortly", fallback: true }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     if (!response) {
@@ -180,22 +289,20 @@ Deno.serve(async (req) => {
     }
 
     const data = await response.json();
-
-    const candidate = data.candidates?.[0];
-    const audioPart = candidate?.content?.parts?.find((p: any) => p.inlineData?.mimeType?.startsWith("audio/"));
+    const candidate = data?.candidates?.[0];
+    const audioPart = candidate?.content?.parts?.find((part: any) => part?.inlineData?.mimeType?.startsWith("audio/"));
 
     if (!audioPart?.inlineData?.data) {
-      console.error("[Gemini TTS] No audio in response:", JSON.stringify(data).slice(0, 500));
+      console.error("[Gemini TTS] No audio in response:", JSON.stringify(data).slice(0, 600));
       throw new Error("No audio data in Gemini response");
     }
 
-    const mimeType = audioPart.inlineData.mimeType;
+    const mimeType = audioPart.inlineData.mimeType || "audio/wav";
     const audioBase64 = audioPart.inlineData.data;
 
-    // Gemini TTS returns raw PCM L16 at 24kHz — convert to WAV
     if (mimeType.includes("L16") || mimeType.includes("pcm") || mimeType.includes("raw")) {
       const wav = pcmToWav(audioBase64, 24000);
-      console.log(`[Gemini TTS] ✅ WAV ${(wav.length / 1024).toFixed(1)}KB`);
+      console.log(`[Gemini TTS] WAV ${(wav.length / 1024).toFixed(1)}KB`);
       return new Response(wav.buffer, {
         headers: {
           ...corsHeaders,
@@ -205,22 +312,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Other formats (mp3/wav/ogg) — pass through
-    const audioBytes = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0));
-    console.log(`[Gemini TTS] ✅ ${mimeType} ${(audioBytes.length / 1024).toFixed(1)}KB`);
+    const audioBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
+    console.log(`[Gemini TTS] ${mimeType} ${(audioBytes.length / 1024).toFixed(1)}KB`);
 
     return new Response(audioBytes.buffer, {
       headers: {
         ...corsHeaders,
-        "Content-Type": mimeType || "audio/wav",
+        "Content-Type": mimeType,
         "Content-Length": String(audioBytes.length),
       },
     });
   } catch (error: any) {
-    console.error("[Gemini TTS] Error:", error.message);
+    console.error("[Gemini TTS] Error:", error?.message || error);
     return new Response(
-      JSON.stringify({ error: error.message, fallback: true }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: error?.message || "Unknown error", fallback: true }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
