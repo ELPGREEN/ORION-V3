@@ -519,6 +519,20 @@
           "Custom coupons",
           "Detailed conversion reports"
         ]
+      },
+      "enterprise": {
+        "title": "Orion Enterprise — Industry & Robotics",
+        "desc": "Robotic automation solutions, smart recycling lines, AI-powered industrial systems, and ROS2 integration for large-scale operations.",
+        "items": [
+          "Smart OTR robotic line for giant tires",
+          "Industrial automation with computer vision",
+          "SCADA and IoT systems integrated with AI",
+          "ROS2 integration and autonomous robotics",
+          "Scalable modular plants",
+          "Real-time monitoring dashboard",
+          "Predictive maintenance with machine learning",
+          "Robotization and Industry 4.0 consulting"
+        ]
       }
     },
     "differentials": [
