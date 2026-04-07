@@ -22,8 +22,13 @@ const DEFAULT_PROMPT = "Fale de forma natural, clara e fluida em português bras
 
 /**
  * Round-robin key rotation across 7 Gemini API keys
+ * Caches failed keys (403) for 5 minutes to avoid wasting time
  */
+const failedKeyCache: Record<string, number> = {};
+const KEY_COOLDOWN_MS = 5 * 60 * 1000; // 5 min cooldown for 403 keys
+
 function getAllGeminiKeys(): string[] {
+  const now = Date.now();
   const keys = [
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
@@ -32,9 +37,15 @@ function getAllGeminiKeys(): string[] {
     Deno.env.get("GEMINI_API_KEY_5"),
     Deno.env.get("GEMINI_API_KEY_6"),
     Deno.env.get("GEMINI_API_KEY_7"),
-  ].filter(Boolean) as string[];
+  ].filter((k): k is string => {
+    if (!k) return false;
+    // Skip keys that recently failed with 403
+    const failedAt = failedKeyCache[k];
+    if (failedAt && (now - failedAt) < KEY_COOLDOWN_MS) return false;
+    return true;
+  });
 
-  if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured");
+  if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured (all keys cooling down)");
   // Shuffle starting from round-robin index so we spread load
   const idx = Math.floor(Date.now() / 1000) % keys.length;
   return [...keys.slice(idx), ...keys.slice(0, idx)];
@@ -154,8 +165,12 @@ Deno.serve(async (req) => {
         );
       }
 
-      // 403 = key blocked, try next key
-      if (r.status === 403 || r.status === 400) continue;
+      // 403 = key blocked, cache it and try next
+      if (r.status === 403) {
+        failedKeyCache[apiKey] = Date.now();
+        continue;
+      }
+      if (r.status === 400) continue;
       
       // Other errors, stop trying
       break;
