@@ -187,8 +187,16 @@ export default function ConfigurarIA() {
         mirroring_enabled: config.mirroring_enabled !== false,
         personality_prompt: config.personality_prompt || "",
       });
-      if (!config.onboarding_completed) {
+      // Auto-start onboarding: either first time OR coming from payment
+      if (!config.onboarding_completed || fromPayment) {
         setShowOnboarding(true);
+        setCurrentStep(0);
+        // Auto-speak welcome when coming from payment
+        if (fromPayment) {
+          setTimeout(() => {
+            speak(ONBOARDING_STEPS[0].voicePrompt);
+          }, 1000);
+        }
       }
     }
   }, [config]);
