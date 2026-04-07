@@ -1,6 +1,7 @@
 import { useUserRole } from "@/hooks/useUserRole";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { Loader2, Settings, Building2, Crown, Webhook, ScanFace, Radio, ShoppingCart, Mic, Store } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const PerfilAdmin = lazy(() => import("./PerfilAdmin"));
@@ -21,9 +22,100 @@ const TabFallback = () => (
   </div>
 );
 
+interface TabDef {
+  value: string;
+  label: string;
+  icon: React.ElementType;
+  roles: string[]; // "all" = everyone, "owner" = proprietário only
+  content: React.ReactNode;
+}
+
 export default function ConfiguracoesRouter() {
-  const { isCliente, loading } = useUserRole();
+  const { isCliente, isAdvogado, isProdutor, isNomade, isAdmin, loading } = useUserRole();
+  const { isOwner } = useAdminAccess();
   const [activeTab, setActiveTab] = useState("perfil");
+
+  const tabs = useMemo<TabDef[]>(() => [
+    {
+      value: "perfil",
+      label: "Perfil",
+      icon: Settings,
+      roles: ["all"],
+      content: <PerfilAdmin />,
+    },
+    {
+      value: "escritorio",
+      label: "Escritório",
+      icon: Building2,
+      roles: ["owner", "advogado"],
+      content: <ConfiguracoesEscritorio />,
+    },
+    {
+      value: "plano",
+      label: "Meu Plano",
+      icon: Crown,
+      roles: ["all"],
+      content: <PlanoUsuario />,
+    },
+    {
+      value: "webhooks",
+      label: "Webhooks",
+      icon: Webhook,
+      roles: ["owner"],
+      content: <WebhooksPage />,
+    },
+    {
+      value: "biometria",
+      label: "Biometria",
+      icon: ScanFace,
+      roles: ["owner", "advogado"],
+      content: <BiometriaConfigPage />,
+    },
+    {
+      value: "dispositivos",
+      label: "Dispositivos",
+      icon: Radio,
+      roles: ["owner"],
+      content: <DispositivosConfigPage />,
+    },
+    {
+      value: "amazon",
+      label: "Amazon",
+      icon: ShoppingCart,
+      roles: ["owner"],
+      content: <AmazonConfigPage />,
+    },
+    {
+      value: "microfone",
+      label: "Microfone",
+      icon: Mic,
+      roles: ["owner"],
+      content: <MicrophoneHardwarePage />,
+    },
+    {
+      value: "loja",
+      label: "Minha Loja",
+      icon: Store,
+      roles: ["owner", "produtor", "nomade"],
+      content: (
+        <div className="space-y-8">
+          <MeusProdutos />
+          <EditorPaginaVendas />
+        </div>
+      ),
+    },
+  ], []);
+
+  // Resolve current user's effective role key for tab filtering
+  const userRoleKey = isOwner ? "owner" : isAdvogado ? "advogado" : isProdutor ? "produtor" : isNomade ? "nomade" : "other";
+
+  const visibleTabs = useMemo(() => {
+    return tabs.filter((tab) => {
+      if (tab.roles.includes("all")) return true;
+      if (isOwner || isAdmin) return true; // Proprietário/admin sees everything
+      return tab.roles.includes(userRoleKey);
+    });
+  }, [tabs, isOwner, isAdmin, userRoleKey]);
 
   if (loading) {
     return (
@@ -44,108 +136,36 @@ export default function ConfiguracoesRouter() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-serif text-foreground">Meu Escritório & Configurações</h1>
+        <h1 className="text-2xl font-serif text-foreground">
+          {isOwner ? "Comando Orion — Configurações" : "Meu Escritório & Configurações"}
+        </h1>
         <p className="text-muted-foreground text-sm">
-          Perfil, escritório, plano e integrações
+          {isOwner
+            ? "Perfil, escritório, plano, integrações e controle total"
+            : "Perfil, escritório, plano e integrações"}
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-card border border-border w-full overflow-x-auto justify-start scrollbar-hide"  style={{ WebkitOverflowScrolling: 'touch' }}>
-          <TabsTrigger value="perfil" className="text-xs gap-1.5">
-            <Settings className="h-3.5 w-3.5" />
-            Perfil
-          </TabsTrigger>
-          <TabsTrigger value="escritorio" className="text-xs gap-1.5">
-            <Building2 className="h-3.5 w-3.5" />
-            Escritório
-          </TabsTrigger>
-          <TabsTrigger value="plano" className="text-xs gap-1.5">
-            <Crown className="h-3.5 w-3.5" />
-            Meu Plano
-          </TabsTrigger>
-          <TabsTrigger value="webhooks" className="text-xs gap-1.5">
-            <Webhook className="h-3.5 w-3.5" />
-            Webhooks
-          </TabsTrigger>
-          <TabsTrigger value="biometria" className="text-xs gap-1.5">
-            <ScanFace className="h-3.5 w-3.5" />
-            Biometria
-          </TabsTrigger>
-          <TabsTrigger value="dispositivos" className="text-xs gap-1.5">
-            <Radio className="h-3.5 w-3.5" />
-            Dispositivos
-          </TabsTrigger>
-          <TabsTrigger value="amazon" className="text-xs gap-1.5">
-            <ShoppingCart className="h-3.5 w-3.5" />
-            Amazon
-          </TabsTrigger>
-          <TabsTrigger value="microfone" className="text-xs gap-1.5">
-            <Mic className="h-3.5 w-3.5" />
-            Microfone
-          </TabsTrigger>
-          <TabsTrigger value="loja" className="text-xs gap-1.5">
-            <Store className="h-3.5 w-3.5" />
-            Minha Loja
-          </TabsTrigger>
+        <TabsList
+          className="bg-card border border-border w-full overflow-x-auto justify-start scrollbar-hide"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          {visibleTabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} className="text-xs gap-1.5">
+              <tab.icon className="h-3.5 w-3.5" />
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value="perfil">
-          <Suspense fallback={<TabFallback />}>
-            <PerfilAdmin />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="escritorio">
-          <Suspense fallback={<TabFallback />}>
-            <ConfiguracoesEscritorio />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="plano">
-          <Suspense fallback={<TabFallback />}>
-            <PlanoUsuario />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="webhooks">
-          <Suspense fallback={<TabFallback />}>
-            <WebhooksPage />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="biometria">
-          <Suspense fallback={<TabFallback />}>
-            <BiometriaConfigPage />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="dispositivos">
-          <Suspense fallback={<TabFallback />}>
-            <DispositivosConfigPage />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="amazon">
-          <Suspense fallback={<TabFallback />}>
-            <AmazonConfigPage />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="microfone">
-          <Suspense fallback={<TabFallback />}>
-            <MicrophoneHardwarePage />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="loja">
-          <Suspense fallback={<TabFallback />}>
-            <div className="space-y-8">
-              <MeusProdutos />
-              <EditorPaginaVendas />
-            </div>
-          </Suspense>
-        </TabsContent>
+        {visibleTabs.map((tab) => (
+          <TabsContent key={tab.value} value={tab.value}>
+            <Suspense fallback={<TabFallback />}>
+              {tab.content}
+            </Suspense>
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
