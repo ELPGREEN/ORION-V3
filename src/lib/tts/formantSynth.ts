@@ -205,7 +205,7 @@ export async function speakFormant(
 // CORE SYNTHESIS v9: LF Glottal + Additive Source-Filter
 // ═══════════════════════════════════════════════════════════
 
-function renderPhonemes(phonemes: string[]): Float32Array {
+function renderPhonemes(phonemes: string[], tokenSeq?: import("./ipaTokenizer").TokenSequence): Float32Array {
   // Calculate total duration
   let totalMs = 0;
   for (const p of phonemes) {
@@ -230,7 +230,7 @@ function renderPhonemes(phonemes: string[]): Float32Array {
   const oq = VOICE_DNA.glottal.openQuotient;
   const sq = VOICE_DNA.glottal.speedQuotient;
   const harmonicProfile = VOICE_DNA.harmonicProfile;
-  const jitterAmt = VOICE_DNA.dynamics.jitter * 0.12; // slightly reduced for smoothness
+  const jitterAmt = VOICE_DNA.dynamics.jitter * 0.12;
   const shimmerAmt = VOICE_DNA.dynamics.shimmer * 0.05;
 
   let offset = 0;
@@ -251,7 +251,6 @@ function renderPhonemes(phonemes: string[]): Float32Array {
     if (!params) continue;
 
     // ── CONTEXT-DEPENDENT FORMANT LOCI ──
-    // Adjacent phonemes influence formant targets (coarticulation)
     const prevP = pi > 0 ? PT_PHONEMES[phonemes[pi - 1]] : null;
     const nextP = pi < phonemes.length - 1 ? PT_PHONEMES[phonemes[pi + 1]] : null;
 
@@ -261,8 +260,20 @@ function renderPhonemes(phonemes: string[]): Float32Array {
     let tgtF3 = (params.f3 || curF3) * MFCC_FIX.formantScale[2];
     let tgtF4 = (params.f4 || curF4) * MFCC_FIX.formantScale[3];
 
-    // Minimal coarticulation — only 8% blending (was 15-18%)
-    // Too much blending destroys vowel identity
+    // ── IPA DIPHONE TRANSITIONS ──
+    // Use F2 locus from IPA articulatory features for C→V and V→C transitions
+    const transition = tokenSeq?.transitions[pi];
+    if (transition && transition.f2Locus > 0) {
+      // Apply the diphone F2 locus — this is THE key to consonant perception
+      // The F2 transition from consonant locus to vowel target carries place-of-articulation info
+      const locusInfluence = transition.strength;
+      if (params.plosive || params.fricative || params.nasal) {
+        // For consonants: start F2 at the locus
+        tgtF2 = transition.f2Locus * locusInfluence + tgtF2 * (1 - locusInfluence);
+      }
+    }
+
+    // Minimal coarticulation — only 8% blending
     if (nextP && nextP.voiced && params.voiced && !params.plosive) {
       tgtF2 = tgtF2 * 0.92 + (nextP.f2 || tgtF2) * MFCC_FIX.formantScale[1] * 0.08;
     }
