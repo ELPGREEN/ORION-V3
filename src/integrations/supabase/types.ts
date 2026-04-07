@@ -2516,6 +2516,122 @@ export type Database = {
         }
         Relationships: []
       }
+      email_automation_rules: {
+        Row: {
+          created_at: string | null
+          delay_minutes: number | null
+          html_content: string
+          id: string
+          is_active: boolean | null
+          name: string
+          product_id: string | null
+          stats: Json | null
+          subject: string
+          template_name: string | null
+          trigger_event: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          delay_minutes?: number | null
+          html_content?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          product_id?: string | null
+          stats?: Json | null
+          subject: string
+          template_name?: string | null
+          trigger_event: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          delay_minutes?: number | null
+          html_content?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          product_id?: string | null
+          stats?: Json | null
+          subject?: string
+          template_name?: string | null
+          trigger_event?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_automation_rules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_campaigns: {
+        Row: {
+          click_count: number | null
+          created_at: string | null
+          esp_id: string | null
+          html_content: string
+          id: string
+          name: string
+          open_count: number | null
+          recipients: Json | null
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number | null
+          status: string
+          subject: string
+          text_content: string | null
+          total_recipients: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          click_count?: number | null
+          created_at?: string | null
+          esp_id?: string | null
+          html_content?: string
+          id?: string
+          name: string
+          open_count?: number | null
+          recipients?: Json | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject: string
+          text_content?: string | null
+          total_recipients?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          click_count?: number | null
+          created_at?: string | null
+          esp_id?: string | null
+          html_content?: string
+          id?: string
+          name?: string
+          open_count?: number | null
+          recipients?: Json | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number | null
+          status?: string
+          subject?: string
+          text_content?: string | null
+          total_recipients?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_signature_settings: {
         Row: {
           company_email: string | null
