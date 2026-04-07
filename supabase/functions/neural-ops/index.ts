@@ -1376,28 +1376,37 @@ async function callHuggingFaceStreaming(messages: any[]): Promise<Response> {
   throw new Error("All HuggingFace streaming models failed");
 }
 
-// ═══ MISTRAL EMBED (for RAG query embedding — 500ms timeout) ═══
+// ═══ GEMINI EMBED (for RAG query embedding — FREE, 768d, 1s timeout) ═══
 async function generateQueryEmbedding(queryText: string): Promise<number[] | null> {
-  const apiKey = Deno.env.get("MISTRAL_API_KEY");
-  if (!apiKey) return null;
+  const keys = [
+    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
+  ].filter(Boolean) as string[];
+  if (keys.length === 0) return null;
+  
+  // Rotate key based on time
+  const key = keys[Math.floor(Date.now() / 1000) % keys.length];
+  
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 500);
-    const resp = await fetch("https://api.mistral.ai/v1/embeddings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: "mistral-embed", input: [queryText.slice(0, 512)] }),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${key}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "models/gemini-embedding-001",
+          content: { parts: [{ text: queryText.slice(0, 2000) }] },
+          outputDimensionality: 768,
+        }),
+        signal: AbortSignal.timeout(1000),
+      }
+    );
     if (!resp.ok) return null;
     const data = await resp.json();
-    const emb = data?.data?.[0]?.embedding;
-    if (!emb || !Array.isArray(emb)) return null;
-    // Normalize to 768 dims (pad or truncate)
-    if (emb.length === 768) return emb;
-    if (emb.length > 768) return emb.slice(0, 768);
-    return [...emb, ...new Array(768 - emb.length).fill(0)];
+    const emb = data?.embedding?.values;
+    if (!emb || !Array.isArray(emb) || emb.length === 0) return null;
+    return emb.length >= 768 ? emb.slice(0, 768) : [...emb, ...new Array(768 - emb.length).fill(0)];
   } catch {
     return null;
   }
