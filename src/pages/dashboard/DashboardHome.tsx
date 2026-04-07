@@ -124,6 +124,8 @@ export default function DashboardHome() {
     { title: "Agendar Consulta", icon: Calendar, path: "/dashboard/consultas" },
     { title: "Chat ao Vivo", icon: MessageSquare, path: "/dashboard/chat-ao-vivo" },
     { title: "Marketplace", icon: Store, path: "/dashboard/marketplace" },
+    { title: "Docs Internacionais", icon: Globe2, path: "/dashboard/documentos-internacionais" },
+    { title: "Assinaturas", icon: PenTool, path: "/dashboard/assinaturas" },
   ];
 
   const adminTools = [

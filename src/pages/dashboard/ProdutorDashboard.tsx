@@ -1,11 +1,15 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, DollarSign, TrendingUp, ShoppingBag, ArrowRight, Share2, Store } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import {
+  Package, DollarSign, TrendingUp, ShoppingBag, ArrowRight, Share2, Store,
+  Users, FileText, MessageSquare, BarChart3, Globe, Brain, Crown,
+  Tag, Star, CreditCard,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function ProdutorDashboard() {
   const { user } = useAuth();
@@ -37,31 +41,69 @@ export default function ProdutorDashboard() {
     enabled: !!user,
   });
 
+  const { data: affiliateLinks } = useQuery({
+    queryKey: ["produtor-affiliates", user?.id],
+    queryFn: async () => {
+      if (!products || products.length === 0) return [];
+      const productIds = products.map((p) => p.id);
+      const { data } = await supabase
+        .from("affiliate_links")
+        .select("*")
+        .in("product_id", productIds);
+      return data || [];
+    },
+    enabled: !!user && !!products && products.length > 0,
+  });
+
   const totalRevenue = orders?.reduce((sum, o) => sum + (o.amount_cents || 0), 0) || 0;
   const activeProducts = products?.filter((p) => p.status === "active")?.length || 0;
+  const totalAffiliates = affiliateLinks?.length || 0;
 
   const stats = [
     { label: "Produtos Ativos", value: activeProducts, icon: Package, color: "text-primary" },
     { label: "Receita Total", value: `R$ ${(totalRevenue / 100).toFixed(2)}`, icon: DollarSign, color: "text-emerald-500" },
-    { label: "Vendas Recentes", value: orders?.length || 0, icon: TrendingUp, color: "text-cyan-500" },
-    { label: "Total Produtos", value: products?.length || 0, icon: ShoppingBag, color: "text-amber-500" },
+    { label: "Vendas", value: orders?.length || 0, icon: TrendingUp, color: "text-cyan-500" },
+    { label: "Afiliados", value: totalAffiliates, icon: Users, color: "text-amber-500" },
+  ];
+
+  const tools = [
+    { label: "Minha Loja", icon: Store, path: `/loja/${user?.id}`, desc: "Visualizar sua loja pública" },
+    { label: "Meus Produtos", icon: Package, path: "/dashboard/meus-produtos", desc: "Criar e gerenciar produtos digitais" },
+    { label: "Marketplace", icon: ShoppingBag, path: "/dashboard/marketplace", desc: "Explorar o marketplace" },
+    { label: "Afiliados", icon: Share2, path: "/dashboard/afiliados", desc: "Ver quem promove seus produtos" },
+    { label: "Vendas & Receita", icon: CreditCard, path: "/dashboard/pagamentos", desc: "Configurar Stripe e pagamentos" },
+    { label: "Documentos", icon: FileText, path: "/dashboard/documentos", desc: "Contratos e termos de venda" },
+    { label: "Docs Internacionais", icon: Globe, path: "/dashboard/documentos-internacionais", desc: "Documentos internacionais" },
+    { label: "Orion IA", icon: Brain, path: "/consulta", desc: "Assistente IA para negócios" },
+    { label: "Analytics", icon: BarChart3, path: "/dashboard/rede-neural", desc: "Métricas e inteligência artificial" },
+    { label: "Avaliações", icon: Star, path: "/dashboard/marketplace", desc: "Ver avaliações dos clientes" },
+    { label: "Meu Plano", icon: Crown, path: "/dashboard/plano", desc: "Ver plano e limites" },
+    { label: "Perfil Público", icon: Globe, path: "/dashboard/escritorio", desc: "Configurar site / loja pública" },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Painel do Produtor</h1>
-        <p className="text-muted-foreground text-sm mt-1">Gerencie seus produtos e acompanhe suas vendas</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Store className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Painel do Produtor</h1>
+          </div>
+          <p className="text-muted-foreground text-sm mt-1">Gerencie seus produtos, vendas e afiliados</p>
+        </div>
+        <Badge variant="outline" className="border-primary/30 text-primary">
+          <Package className="h-3 w-3 mr-1" />
+          Produtor
+        </Badge>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
           <Card key={stat.label} className="bg-card/80 backdrop-blur-sm border-border/40">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-muted/50 ${stat.color}`}>
-                  <stat.icon className="h-5 w-5" />
-                </div>
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
                 <div>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                   <p className="text-lg font-bold text-foreground">{stat.value}</p>
@@ -72,59 +114,99 @@ export default function ProdutorDashboard() {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="bg-card/80 backdrop-blur-sm border-border/40">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Acesso Rápido</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button
-              variant="default"
-              className="w-full justify-between btn-gold"
-              onClick={() => {
-                const url = `${window.location.origin}/loja/${user?.id}`;
-                navigator.clipboard.writeText(url);
-                toast.success("Link da sua loja copiado!");
-              }}
-            >
-              <span className="flex items-center gap-2"><Store className="h-4 w-4" /> Minha Loja</span>
-              <Share2 className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" className="w-full justify-between" onClick={() => navigate(`/loja/${user?.id}`)}>
-              Ver Loja <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" className="w-full justify-between" onClick={() => navigate("/dashboard/meus-produtos")}>
-              Meus Produtos <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" className="w-full justify-between" onClick={() => navigate("/dashboard/marketplace")}>
-              Marketplace <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" className="w-full justify-between" onClick={() => navigate("/dashboard/pagamentos")}>
-              Vendas & Receita <ArrowRight className="h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Copy Store Link */}
+      <Card className="bg-card/80 border-primary/20">
+        <CardContent className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Store className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Link da sua Loja</p>
+              <p className="text-xs text-muted-foreground">{window.location.origin}/loja/{user?.id?.slice(0, 8)}...</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(`${window.location.origin}/loja/${user?.id}`);
+              toast.success("Link copiado!");
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors"
+          >
+            <Share2 className="h-3 w-3" /> Copiar
+          </button>
+        </CardContent>
+      </Card>
 
-        <Card className="bg-card/80 backdrop-blur-sm border-border/40">
+      {/* Tools Grid */}
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-3">Ferramentas</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {tools.map((tool) => (
+            <Card
+              key={tool.label}
+              className="bg-card/60 border-border/30 hover:border-primary/40 transition-all cursor-pointer group"
+              onClick={() => navigate(tool.path)}
+            >
+              <CardContent className="p-4 flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <tool.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">{tool.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{tool.desc}</p>
+                </div>
+                <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors mt-1 flex-shrink-0" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Orders */}
+      {orders && orders.length > 0 && (
+        <Card className="bg-card/80 border-border/40">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Vendas Recentes</CardTitle>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              Vendas Recentes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {orders && orders.length > 0 ? (
-              <div className="space-y-2">
-                {orders.slice(0, 5).map((order) => (
-                  <div key={order.id} className="flex justify-between items-center text-sm py-1.5 border-b border-border/20 last:border-0">
-                    <span className="text-muted-foreground truncate">{order.buyer_user_id?.slice(0, 8) || "—"}</span>
-                    <span className="font-medium text-foreground">R$ {((order.amount_cents || 0) / 100).toFixed(2)}</span>
+            <div className="space-y-2">
+              {orders.slice(0, 5).map((order: any) => (
+                <div key={order.id} className="flex items-center justify-between py-2 border-b border-border/20 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Pedido #{order.id.slice(0, 8)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(order.created_at).toLocaleDateString("pt-BR")}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-6">Nenhuma venda ainda</p>
-            )}
+                  <div className="flex items-center gap-2">
+                    <Badge variant={order.status === "paid" ? "default" : "secondary"} className="text-xs">
+                      {order.status === "paid" ? "Pago" : order.status}
+                    </Badge>
+                    <span className="text-sm font-semibold text-foreground">
+                      R$ {((order.amount_cents || 0) / 100).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
-      </div>
+      )}
+
+      {/* Empty state */}
+      {(!products || products.length === 0) && (
+        <Card className="bg-card/60 border-dashed border-primary/30">
+          <CardContent className="p-8 text-center">
+            <Store className="h-12 w-12 text-primary/40 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-foreground mb-1">Sua loja está vazia</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Crie seu primeiro produto digital e comece a vender
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

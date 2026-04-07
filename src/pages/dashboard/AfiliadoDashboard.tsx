@@ -1,10 +1,14 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Link2, MousePointerClick, DollarSign, TrendingUp, ArrowRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import {
+  Link2, MousePointerClick, DollarSign, TrendingUp, ArrowRight,
+  ShoppingBag, FileText, MessageSquare, HelpCircle, BarChart3,
+  Image, Globe, Brain, Crown, Users,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function AfiliadoDashboard() {
   const { user } = useAuth();
@@ -39,6 +43,7 @@ export default function AfiliadoDashboard() {
   const totalConversions = links?.reduce((sum, l) => sum + (l.conversions || 0), 0) || 0;
   const pendingCommission = commissions?.filter((c) => c.status === "pending").reduce((sum, c) => sum + (c.amount_cents || 0), 0) || 0;
   const paidCommission = commissions?.filter((c) => c.status === "paid").reduce((sum, c) => sum + (c.amount_cents || 0), 0) || 0;
+  const conversionRate = totalClicks > 0 ? ((totalConversions / totalClicks) * 100).toFixed(1) : "0.0";
 
   const stats = [
     { label: "Links Ativos", value: links?.length || 0, icon: Link2, color: "text-primary" },
@@ -47,21 +52,40 @@ export default function AfiliadoDashboard() {
     { label: "Comissões Pendentes", value: `R$ ${(pendingCommission / 100).toFixed(2)}`, icon: DollarSign, color: "text-amber-500" },
   ];
 
+  const tools = [
+    { label: "Meus Links", icon: Link2, path: "/dashboard/afiliados", desc: "Gerenciar links de afiliado" },
+    { label: "Marketplace", icon: ShoppingBag, path: "/dashboard/marketplace", desc: "Encontrar produtos para promover" },
+    { label: "Comissões", icon: DollarSign, path: "/dashboard/pagamentos", desc: "Histórico de comissões e saques" },
+    { label: "Perfil Público", icon: Globe, path: "/dashboard/escritorio", desc: "Seu perfil de afiliado público" },
+    { label: "Materiais", icon: Image, path: "/dashboard/marketplace", desc: "Banners e materiais de divulgação" },
+    { label: "Documentos", icon: FileText, path: "/dashboard/documentos", desc: "Contratos e termos de afiliação" },
+    { label: "Orion IA", icon: Brain, path: "/consulta", desc: "Assistente IA para estratégias" },
+    { label: "Meu Plano", icon: Crown, path: "/dashboard/plano", desc: "Ver plano e limites" },
+  ];
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Painel do Afiliado</h1>
-        <p className="text-muted-foreground text-sm mt-1">Acompanhe seus links, cliques e comissões</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Users className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Painel do Afiliado</h1>
+          </div>
+          <p className="text-muted-foreground text-sm mt-1">Acompanhe seus links, cliques e comissões</p>
+        </div>
+        <Badge variant="outline" className="border-primary/30 text-primary">
+          <Link2 className="h-3 w-3 mr-1" />
+          Afiliado
+        </Badge>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
           <Card key={stat.label} className="bg-card/80 backdrop-blur-sm border-border/40">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-muted/50 ${stat.color}`}>
-                  <stat.icon className="h-5 w-5" />
-                </div>
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
                 <div>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                   <p className="text-lg font-bold text-foreground">{stat.value}</p>
@@ -72,48 +96,103 @@ export default function AfiliadoDashboard() {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="bg-card/80 backdrop-blur-sm border-border/40">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Acesso Rápido</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button variant="outline" className="w-full justify-between" onClick={() => navigate("/dashboard/afiliados")}>
-              Meus Links <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" className="w-full justify-between" onClick={() => navigate("/dashboard/marketplace")}>
-              Marketplace <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" className="w-full justify-between" onClick={() => navigate("/dashboard/pagamentos")}>
-              Comissões <ArrowRight className="h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Performance Summary */}
+      <Card className="bg-card/80 backdrop-blur-sm border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            Performance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-3 bg-muted/30 rounded-lg">
+              <p className="text-2xl font-bold text-foreground">{conversionRate}%</p>
+              <p className="text-xs text-muted-foreground mt-1">Taxa de Conversão</p>
+            </div>
+            <div className="text-center p-3 bg-muted/30 rounded-lg">
+              <p className="text-2xl font-bold text-emerald-500">R$ {(paidCommission / 100).toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Comissões Pagas</p>
+            </div>
+            <div className="text-center p-3 bg-muted/30 rounded-lg">
+              <p className="text-2xl font-bold text-amber-500">R$ {(pendingCommission / 100).toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Pendentes</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card className="bg-card/80 backdrop-blur-sm border-border/40">
+      {/* Tools Grid */}
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-3">Ferramentas</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {tools.map((tool) => (
+            <Card
+              key={tool.label}
+              className="bg-card/60 border-border/30 hover:border-primary/40 transition-all cursor-pointer group"
+              onClick={() => navigate(tool.path)}
+            >
+              <CardContent className="p-4 flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <tool.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">{tool.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{tool.desc}</p>
+                </div>
+                <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors mt-1 flex-shrink-0" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Commissions */}
+      {commissions && commissions.length > 0 && (
+        <Card className="bg-card/80 border-border/40">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Performance</CardTitle>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-primary" />
+              Comissões Recentes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Taxa de Conversão</span>
-                <span className="font-bold text-foreground">
-                  {totalClicks > 0 ? ((totalConversions / totalClicks) * 100).toFixed(1) : "0.0"}%
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Comissões Pagas</span>
-                <span className="font-bold text-emerald-500">R$ {(paidCommission / 100).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Comissões Pendentes</span>
-                <span className="font-bold text-amber-500">R$ {(pendingCommission / 100).toFixed(2)}</span>
-              </div>
+            <div className="space-y-2">
+              {commissions.slice(0, 5).map((c: any) => (
+                <div key={c.id} className="flex items-center justify-between py-2 border-b border-border/20 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Comissão #{c.id.slice(0, 8)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={c.status === "paid" ? "default" : "secondary"} className="text-xs">
+                      {c.status === "paid" ? "Pago" : "Pendente"}
+                    </Badge>
+                    <span className="text-sm font-semibold text-foreground">
+                      R$ {((c.amount_cents || 0) / 100).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
+
+      {/* Empty state */}
+      {(!links || links.length === 0) && (
+        <Card className="bg-card/60 border-dashed border-primary/30">
+          <CardContent className="p-8 text-center">
+            <Link2 className="h-12 w-12 text-primary/40 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-foreground mb-1">Nenhum link de afiliado</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Explore o marketplace e gere seu primeiro link de afiliado
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

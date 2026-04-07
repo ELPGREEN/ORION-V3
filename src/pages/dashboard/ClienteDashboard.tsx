@@ -93,10 +93,10 @@ const quickActions = [
     path: "/dashboard/documentos",
   },
   {
-    title: "Consulta com IA",
-    desc: "Tire dúvidas jurídicas com nosso assistente",
-    icon: MessageSquare,
-    path: "/consulta",
+    title: "Marketplace",
+    desc: "Explore produtos e serviços digitais",
+    icon: Star,
+    path: "/dashboard/marketplace",
   },
   {
     title: "Agendar Consulta",
@@ -111,6 +111,12 @@ const quickActions = [
     path: "/dashboard/pagamentos",
   },
   {
+    title: "Meu Plano",
+    desc: "Veja seu plano e benefícios",
+    icon: Star,
+    path: "/dashboard/plano",
+  },
+  {
     title: "Meu Perfil",
     desc: "Atualize seus dados pessoais",
     icon: Users,
@@ -121,6 +127,12 @@ const quickActions = [
     desc: "Acompanhe atualizações do seu caso",
     icon: Bell,
     path: "/dashboard/notificacoes",
+  },
+  {
+    title: "Central de Ajuda",
+    desc: "Instruções e perguntas frequentes",
+    icon: HelpCircle,
+    path: "/dashboard/central-ajuda",
   },
 ];
 
