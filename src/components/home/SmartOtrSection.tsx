@@ -49,7 +49,7 @@ export function SmartOtrSection() {
         <ScrollReveal direction="up" delay={0.5}>
           <div className="text-center mt-10">
             <Button className="btn-outline-gold" asChild>
-              <Link to="/servicos#industria">
+              <Link to="/solucoes/industria">
                 Conheça Nossa Tecnologia <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

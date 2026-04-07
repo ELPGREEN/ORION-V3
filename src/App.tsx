@@ -43,6 +43,11 @@ const Servicos = lazy(lazyRetry(() => import("./pages/Servicos")));
 const Plataforma = lazy(lazyRetry(() => import("./pages/Plataforma")));
 const Contato = lazy(lazyRetry(() => import("./pages/Contato")));
 const InvestorTools = lazy(lazyRetry(() => import("./pages/InvestorTools")));
+// ─── Soluções por perfil (páginas dedicadas) ───
+const SolucoesAdvogados = lazy(lazyRetry(() => import("./pages/solucoes/Advogados")));
+const SolucoesProdutores = lazy(lazyRetry(() => import("./pages/solucoes/Produtores")));
+const SolucoesAfiliados = lazy(lazyRetry(() => import("./pages/solucoes/Afiliados")));
+const SolucoesIndustria = lazy(lazyRetry(() => import("./pages/solucoes/Industria")));
 
 // ─── Auth-Required Pages (visible only after login) ───
 const ConsultaIA = lazy(lazyRetry(() => import("./pages/ConsultaIA")));
@@ -162,6 +167,11 @@ const App = () => (
                   <Route path="/servicos" element={<Servicos />} />
                   <Route path="/contato" element={<Contato />} />
                   <Route path="/investidor" element={<InvestorTools />} />
+                  {/* ═══ PUBLIC — Soluções por perfil ═══ */}
+                  <Route path="/solucoes/advogados" element={<SolucoesAdvogados />} />
+                  <Route path="/solucoes/produtores" element={<SolucoesProdutores />} />
+                  <Route path="/solucoes/afiliados" element={<SolucoesAfiliados />} />
+                  <Route path="/solucoes/industria" element={<SolucoesIndustria />} />
                   <Route path="/consulta" element={<AuthGuard><ConsultaIA /></AuthGuard>} />
                   <Route path="/demo" element={<AuthGuard><OrionDemo /></AuthGuard>} />
                   <Route path="/extension" element={<AuthGuard><OrionExtensionPage /></AuthGuard>} />
@@ -185,7 +195,7 @@ const App = () => (
                   <Route path="/diferencial" element={<Navigate to="/plataforma" replace />} />
                   <Route path="/associado" element={<Navigate to="/contato" replace />} />
                   <Route path="/sobre" element={<Navigate to="/plataforma" replace />} />
-                  <Route path="/escritorio" element={<Navigate to="/servicos#advogados" replace />} />
+                  <Route path="/escritorio" element={<Navigate to="/solucoes/advogados" replace />} />
                   <Route path="/pro-bono" element={<Navigate to="/contato" replace />} />
                   <Route path="/clientes" element={<Navigate to="/servicos" replace />} />
 

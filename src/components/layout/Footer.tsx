@@ -9,7 +9,11 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
 
   const navLinks = [
     { href: "/", label: t.nav.home },
-    { href: "/servicos", label: "Soluções" },
+    { href: "/solucoes/advogados", label: "Para Advogados" },
+    { href: "/solucoes/produtores", label: "Para Produtores" },
+    { href: "/solucoes/afiliados", label: "Para Afiliados" },
+    { href: "/solucoes/industria", label: "Para Indústria" },
+    { href: "/servicos", label: "Visão Geral" },
     { href: "/plataforma", label: t.nav.platform },
     { href: "/contato", label: "Planos" },
     { href: "/publicacoes", label: t.nav.publications },
