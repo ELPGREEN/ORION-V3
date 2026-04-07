@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, FileText, FolderOpen, Users, MessageSquare, Store, ShoppingCart, Brain, Bot, Cpu, FlaskConical, Globe2, Chrome, ScrollText, UserCog, Wifi, PenTool, Search, Calendar, Gavel, BarChart3, Shield, ArrowUpRight } from "lucide-react";
+import { Loader2, FileText, FolderOpen, Users, MessageSquare, Store, ShoppingCart, Brain, Bot, Cpu, FlaskConical, Globe2, Chrome, ScrollText, UserCog, Wifi, PenTool, Search, Calendar, Gavel, BarChart3, Shield, ArrowUpRight, Bell, CreditCard, ListTodo, Globe, HelpCircle, Settings, Crown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { lazy, Suspense } from "react";
