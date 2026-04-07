@@ -825,6 +825,38 @@ export function useOrionReasoning(
         } catch (vcErr) { console.warn("Voice config error:", vcErr); }
       }
 
+      // ═══ COMMAND REGISTRY FAST-PATH — Deterministic execution (<10ms) ═══
+      // matchCommand connects 1000+ catalogued commands to real execution
+      try {
+        const { matchCommand } = await import("@/lib/neural/orion-command-registry");
+        const { executeVoiceCommand } = await import("@/lib/neural/orion-voice-executor");
+        const cmdMatch = matchCommand(processedQuestion || question);
+        if (cmdMatch && cmdMatch.confidence >= 0.8) {
+          const execResult = await executeVoiceCommand(cmdMatch, question, navigate);
+          if (execResult.handled) {
+            addLog(`🎯 CommandRegistry HIT: ${cmdMatch.action} (${cmdMatch.subcategory}) [${Date.now() - now}ms]`);
+            setChatHistory(prev => {
+              const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+              return [...clean, { role: "ai" as const, text: execResult.response, time: new Date().toLocaleTimeString("pt-BR") }];
+            });
+            setThought(execResult.response);
+            try { await speak(execResult.response); } catch {}
+            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+            somLearn(question, somResult.handler);
+            saveToNeuralLearning(question, execResult.response, "command_registry", 0.95, { action: cmdMatch.action }).catch(() => {});
+            recordLatency(intentType, "fast", Date.now() - now);
+            processNextInQueue();
+            return;
+          }
+          // If requiresLLM, fall through to LLM pipeline
+          if (execResult.requiresLLM) {
+            addLog(`📋 CommandRegistry → LLM: ${cmdMatch.action} requires generative response`);
+          }
+        }
+      } catch (cmdErr) {
+        console.warn("[Orion] Command registry error:", cmdErr);
+      }
+
       // ═══ NAVIGATION: "abra documentos", "vá para clientes" ═══
       const navIntent = (await import("@/lib/neural/orion-nav-map")).detectNavigationIntent(question);
       if (navIntent) {
