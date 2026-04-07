@@ -16,9 +16,9 @@ const PLANS = [
     icon: Zap,
     price: "Grátis",
     priceId: null,
-    tokens: 10,
+    tokens: 1000,
     features: [
-      { name: "Chat IA básico", limit: "10 msgs/mês", available: true },
+      { name: "Chat IA básico", limit: "1000 tokens trial", available: true },
       { name: "Documentos", limit: "3/mês", available: true },
       { name: "1 usuário", limit: "", available: true },
       { name: "Pesquisa IA avançada", limit: "", available: false },
