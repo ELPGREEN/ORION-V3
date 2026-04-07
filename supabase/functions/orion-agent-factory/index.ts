@@ -334,9 +334,9 @@ async function handleCodeAnalysis(body: Record<string, unknown>) {
   const sb = getSupabase();
   const { path, query: userQuery, mode } = body;
   const GITHUB_PAT = Deno.env.get("GITHUB_PAT_CHILD") || Deno.env.get("CHILD_GIT_TOKEN");
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
 
-  if (!GITHUB_PAT || !LOVABLE_API_KEY) throw new Error("Missing GitHub PAT or AI key");
+  if (!GITHUB_PAT || !GEMINI_KEY) throw new Error("Missing GitHub PAT or Gemini key");
 
   const ghHeaders = {
     Authorization: `Bearer ${GITHUB_PAT}`,
