@@ -5,6 +5,7 @@
  */
 
 import { pipeline, type DepthEstimationPipeline } from "@huggingface/transformers";
+import { isHuggingFaceAvailable } from "./hf-connectivity";
 
 // ─── Types ───
 export interface DepthEstimationResult {
@@ -66,6 +67,10 @@ function canvasToDataURL(canvas: HTMLCanvasElement): string {
 
 export async function preloadDepthEstimation(): Promise<boolean> {
   if (depthPipeline || loading) return !!depthPipeline;
+  if (!await isHuggingFaceAvailable()) {
+    console.log("[DepthEngine] Skipping — HuggingFace unreachable");
+    return false;
+  }
   loading = true;
   try {
     depthPipeline = await pipeline("depth-estimation", "Xenova/depth-anything-small-hf", {

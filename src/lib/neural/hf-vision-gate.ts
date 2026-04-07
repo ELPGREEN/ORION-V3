@@ -10,6 +10,7 @@
  */
 
 import { pipeline, type ImageClassificationPipeline, type ImageToTextPipeline } from "@huggingface/transformers";
+import { isHuggingFaceAvailable } from "./hf-connectivity";
 
 // ─── State ───
 let classifierPipeline: ImageClassificationPipeline | null = null;
@@ -51,6 +52,10 @@ const MAX_IMAGE_DIM_FOR_HF = 224; // MobileNet expects 224x224
 // ─── Preloading ───
 
 export async function preloadHFVisionGate(): Promise<boolean> {
+  if (!await isHuggingFaceAvailable()) {
+    console.log("[HFVisionGate] Skipping — HuggingFace unreachable");
+    return false;
+  }
   const results = await Promise.allSettled([
     preloadClassifier(),
     preloadCaptioner(),
