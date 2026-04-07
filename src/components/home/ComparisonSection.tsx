@@ -44,7 +44,7 @@ export function ComparisonSection() {
 
         <ScrollReveal direction="up" delay={0.2}>
           <div className="max-w-2xl mx-auto border border-border/20 bg-card/20 backdrop-blur-sm overflow-hidden">
-            <div className="grid grid-cols-[1fr,70px,70px] sm:grid-cols-[1fr,120px,120px] bg-primary/5 p-3 sm:p-4 text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground border-b border-border/20">
+            <div className="grid grid-cols-[1fr,56px,56px] sm:grid-cols-[1fr,120px,120px] bg-primary/5 p-3 sm:p-4 text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground border-b border-border/20">
               <span>Funcionalidade</span>
               <span className="text-center text-primary font-medium">ORION</span>
               <span className="text-center">Outros</span>
@@ -52,7 +52,7 @@ export function ComparisonSection() {
             {rows.map((row) => (
               <div
                 key={row.feature}
-                className="group grid grid-cols-[1fr,70px,70px] sm:grid-cols-[1fr,120px,120px] p-3 sm:p-4 border-t border-border/10 text-xs sm:text-sm hover:bg-primary/[0.02] transition-colors"
+                className="group grid grid-cols-[1fr,56px,56px] sm:grid-cols-[1fr,120px,120px] p-3 sm:p-4 border-t border-border/10 text-xs sm:text-sm hover:bg-primary/[0.02] transition-colors"
               >
                 <span className="text-foreground text-[11px] sm:text-xs leading-snug">{row.feature}</span>
                 <span className="flex justify-center">
@@ -63,7 +63,7 @@ export function ComparisonSection() {
                 </span>
               </div>
             ))}
-            <div className="grid grid-cols-[1fr,70px,70px] sm:grid-cols-[1fr,120px,120px] p-3 sm:p-4 border-t border-primary/20 bg-primary/5">
+            <div className="grid grid-cols-[1fr,56px,56px] sm:grid-cols-[1fr,120px,120px] p-3 sm:p-4 border-t border-primary/20 bg-primary/5">
               <span className="text-foreground text-[11px] sm:text-xs font-semibold">Total de funcionalidades</span>
               <span className="text-center text-primary font-bold text-sm">13/13</span>
               <span className="text-center text-muted-foreground/50 font-bold text-sm">2/13</span>

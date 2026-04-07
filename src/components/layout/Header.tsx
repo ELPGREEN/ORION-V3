@@ -455,7 +455,7 @@ export function Header() {
                                       key={child.href}
                                       to={child.href}
                                       onClick={() => setMobileMenuOpen(false)}
-                                      className="flex items-center gap-3 py-2.5 px-3 text-[11px] tracking-[0.15em] uppercase font-mono text-muted-foreground/60 hover:text-foreground hover:bg-primary/5 transition-all"
+                                      className="flex items-center gap-3 py-3 px-3 text-[11px] tracking-[0.15em] uppercase font-mono text-muted-foreground/60 hover:text-foreground hover:bg-primary/5 transition-all"
                                     >
                                       <ChildIcon className="h-3.5 w-3.5 text-primary/50" />
                                       <div>

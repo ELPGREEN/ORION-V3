@@ -46,7 +46,7 @@ export function HeroSection({ t }: HeroSectionProps) {
   const heroTranslateY = scrollY * 0.15;
 
   return (
-    <section className="relative min-h-[85svh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[85vh] min-h-[85svh] flex items-center justify-center overflow-hidden">
       <HeroThreeBackground />
 
       {/* Neural network background image */}
