@@ -1,13 +1,17 @@
 /**
- * Orion Formant Speech Synthesizer v18 — 5 Resonators + Nasal Anti-Formant
+ * Orion Formant Speech Synthesizer v19 — Spectrographic Calibration
  * 
- * Improvements over v17:
- * 1. 5 resonators (F1-F5) instead of 3 — fuller spectrum
- * 2. Nasal anti-formant (zero) for nasal vowels/consonants
- * 3. 50% coarticulation window (was 30%) — smoother transitions
- * 4. Per-segment amplitude envelope (attack/sustain/release)
- * 5. Consonant energy boost — plosives/fricatives louder relative to vowels
- * 6. Shimmer (amplitude jitter) from Voice DNA
+ * Calibrated from: Beber & Cielo (2012) — "Características da espectrografia
+ * de banda larga e estreita da emissão vocal de homens com laringe sem afecções"
+ * 
+ * Key findings applied (n=150 spectrograms, 25 healthy male voices):
+ * 1. F1/F2 intensity STRONG (48-53%) — maintained as dominant
+ * 2. F3 definition POOR (61%, p=0.002) — widened F3 BW significantly  
+ * 3. 3.2kHz noise MUCH (73%, p=0.04) — aspiration noise layer added
+ * 4. Tracing regularity POOR (61-69%, p<0.001) — higher jitter/shimmer
+ * 5. Anti-resonance MEDIAN (73-84%, p<0.001) — global damping filter
+ * 6. Low-freq noise MEDIAN (68%, p<0.001) — moderate rumble
+ * 7. Whole-spectrum intensity WEAK (46%) — stronger spectral tilt
  * 
  * 100% client-side, zero API, zero dependencies.
  */
@@ -116,8 +120,11 @@ function generateGlottalSource(count: number, f0: number): Float32Array {
   const Te = OQ * T0;
   const Tp = Te / (1 + SQ);
   const Ta = 0.08 * T0;
-  const jitter = VOICE_DNA.dynamics.jitter;
-  const shimmer = VOICE_DNA.dynamics.shimmer;
+  // Paper: irregularity is the NORM for male voices (61-69%)
+  // Increase jitter from DNA 8.82% → effective ~12% for natural irregularity
+  const jitter = VOICE_DNA.dynamics.jitter * 1.35;
+  // Shimmer also elevated for tracing irregularity
+  const shimmer = VOICE_DNA.dynamics.shimmer * 1.2;
 
   for (let i = 0; i < count; i++) {
     const t = glottalPhase;
@@ -133,11 +140,9 @@ function generateGlottalSource(count: number, f0: number): Float32Array {
       sample = -0.2 * Math.exp(-tr);
     }
 
-    // Shimmer (amplitude variation per cycle)
     const shimmerFactor = 1 + (Math.random() - 0.5) * shimmer * 0.5;
     out[i] = sample * shimmerFactor;
 
-    // Advance with jitter
     glottalPhase += 1 + (Math.random() - 0.5) * 2 * jitter;
     if (glottalPhase >= T0) glottalPhase -= T0;
   }
@@ -156,12 +161,53 @@ function generateNoise(count: number): Float32Array {
   return out;
 }
 
+/**
+ * Paper finding: noise MUCH present at 3.2kHz (73%) and whole spectrum (70%)
+ * Normal male voices have significant aspiration noise mixed with voicing.
+ * This generates noise shaped toward 3.2kHz region.
+ */
+function generateAspirationNoise(count: number): Float32Array {
+  const out = new Float32Array(count);
+  // Bandpass around 3.2kHz using simple IIR
+  const fc = 3200;
+  const bw = 2000; // wide band
+  const r = Math.exp(-Math.PI * bw / SR);
+  const theta = 2 * Math.PI * fc / SR;
+  const b1 = -2 * r * Math.cos(theta);
+  const b2 = r * r;
+  const a0 = 1 + b1 + b2;
+  let z1 = 0, z2 = 0;
+  
+  for (let i = 0; i < count; i++) {
+    const white = Math.random() * 2 - 1;
+    const y = a0 * white - b1 * z1 - b2 * z2;
+    z2 = z1; z1 = y;
+    out[i] = y * 0.5;
+  }
+  return out;
+}
+
 function generateMixed(count: number, f0: number, voiceRatio: number): Float32Array {
   const glottal = generateGlottalSource(count, f0);
   const noise = generateNoise(count);
   const out = new Float32Array(count);
   for (let i = 0; i < count; i++) {
     out[i] = voiceRatio * glottal[i] + (1 - voiceRatio) * noise[i];
+  }
+  return out;
+}
+
+/**
+ * Voiced source with aspiration noise layer.
+ * Paper: 70-73% of normal male voice spectrograms show "much noise"
+ * aspirationRatio: 0.0 = pure voice, 0.20 = natural male aspiration
+ */
+function generateVoicedWithAspiration(count: number, f0: number, aspirationRatio: number = 0.18): Float32Array {
+  const glottal = generateGlottalSource(count, f0);
+  const aspiration = generateAspirationNoise(count);
+  const out = new Float32Array(count);
+  for (let i = 0; i < count; i++) {
+    out[i] = (1 - aspirationRatio) * glottal[i] + aspirationRatio * aspiration[i];
   }
   return out;
 }
@@ -173,8 +219,10 @@ function generateMixed(count: number, f0: number, voiceRatio: number): Float32Ar
 interface TiltFilter { alpha: number; z1: number; }
 
 function makeTiltFilter(): TiltFilter {
-  const tiltDb = VOICE_DNA.dynamics.spectralTilt;
-  const alpha = Math.min(1 - Math.pow(10, -tiltDb / 200), 0.80);
+  // Paper: whole-spectrum intensity WEAK (46%), 3.2kHz WEAK (62%)
+  // Need stronger tilt than DNA alone suggests
+  const tiltDb = VOICE_DNA.dynamics.spectralTilt * 1.3; // ~34 dB effective
+  const alpha = Math.min(1 - Math.pow(10, -tiltDb / 200), 0.85);
   return { alpha, z1: 0 };
 }
 
@@ -182,6 +230,26 @@ function tickTilt(f: TiltFilter, x: number): number {
   const y = x - f.alpha * f.z1;
   f.z1 = x;
   return y;
+}
+
+// ── HIGH-FREQUENCY DAMPING ──
+// Paper: anti-resonance MEDIAN in 73-84% of male voices
+// Implements gentle broadband damping above ~3kHz
+interface DampingFilter { z1: number; coeff: number; }
+
+function makeDampingFilter(): DampingFilter {
+  // Low-pass at ~4kHz to simulate median anti-resonance/damping
+  const fc = 4000;
+  const rc = 1 / (2 * Math.PI * fc);
+  const dt = 1 / SR;
+  const coeff = dt / (rc + dt);
+  return { z1: 0, coeff };
+}
+
+function tickDamping(f: DampingFilter, x: number): number {
+  f.z1 += f.coeff * (x - f.z1);
+  // Mix: 70% original + 30% low-passed = gentle HF reduction
+  return 0.70 * x + 0.30 * f.z1;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -248,10 +316,14 @@ function phonemeToSegment(p: PhonemeParams, phoneme: string): SegmentParams {
   if (p.fricative && !p.voiced) source = 'noise';
   else if (p.fricative && p.voiced) source = 'mixed';
 
+  // Paper: F3 poorly defined (61%, p=0.002) → widen BW3 significantly
+  // F1/F2 strong (48-53%) → keep tight bandwidths
+  const bw3Effective = (p.bw3 || 150) * 2.2; // ~330Hz instead of 150Hz
+
   return {
     f1: p.f1 || 300, f2: p.f2 || 1500, f3: p.f3 || 2500,
     f4: p.f4 || DEFAULT_F4, f5: DEFAULT_F5,
-    bw1: p.bw1 || 100, bw2: p.bw2 || 120, bw3: p.bw3 || 150,
+    bw1: p.bw1 || 100, bw2: p.bw2 || 120, bw3: bw3Effective,
     bw4: p.bw4 || DEFAULT_BW4, bw5: DEFAULT_BW5,
     gain: p.amplitude,
     source,
@@ -404,6 +476,9 @@ function synthesize(seq: Segment[]): Float32Array {
   // Spectral tilt
   const tilt = makeTiltFilter();
 
+  // Global HF damping (paper: anti-resonance MEDIAN 73-84%)
+  const damping = makeDampingFilter();
+
   const amplitude = 0.9;
   const f0Base = VOICE_DNA.f0.median || 125;
 
@@ -413,14 +488,16 @@ function synthesize(seq: Segment[]): Float32Array {
 
     const f0 = f0Base + (Math.random() - 0.5) * 10;
 
-    // Generate source
+    // Generate source — voiced segments now include aspiration noise (paper finding)
     let source: Float32Array;
     if (paramCurr.source === 'noise') {
       source = generateNoise(durationSamples);
     } else if (paramCurr.source === 'mixed') {
       source = generateMixed(durationSamples, f0, 0.55);
     } else {
-      source = generateGlottalSource(durationSamples, f0);
+      // Paper: 70-73% of male voices have "much noise" in spectrum
+      // Use voiced+aspiration instead of pure glottal
+      source = generateVoicedWithAspiration(durationSamples, f0, 0.18);
     }
 
     // Spectral tilt on voiced source
@@ -487,6 +564,9 @@ function synthesize(seq: Segment[]): Float32Array {
         for (let fi = 0; fi < N_FILTERS; fi++) {
           y = tickResonator(filters[fi], y);
         }
+
+        // Global HF damping (paper: anti-resonance median)
+        y = tickDamping(damping, y);
 
         // Apply envelope
         const env = computeEnvelope(j, durationSamples);
@@ -590,12 +670,12 @@ function samplesToWav(samples: Float32Array, sampleRate: number): Blob {
 
 export async function synthesizeFormant(text: string): Promise<Blob> {
   const phonemes = textToPhonemes(text);
-  console.log(`[Formant v18] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
+  console.log(`[Formant v19] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
 
   glottalPhase = 0;
 
   const segments = buildSegments(phonemes);
-  console.log(`[Formant v18] ${segments.length} segments built`);
+  console.log(`[Formant v19] ${segments.length} segments built`);
 
   const samples = synthesize(segments);
   const processed = postProcess(samples);
@@ -625,7 +705,7 @@ export async function speakFormant(
 
     return { played: !signal?.aborted, audio };
   } catch (err) {
-    console.warn("[Formant v18] Error:", err);
+    console.warn("[Formant v19] Error:", err);
     return { played: false, audio: null };
   }
 }
