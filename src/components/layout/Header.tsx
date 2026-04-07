@@ -41,11 +41,13 @@ const navLinks: NavItem[] = [
       { href: "/servicos#produtores", label: "Para Produtores Digitais", icon: ShoppingBag, desc: "Loja, checkout, páginas de venda" },
       { href: "/servicos#afiliados", label: "Para Afiliados", icon: Briefcase, desc: "Links rastreáveis e comissões automáticas" },
       { href: "/servicos#industria", label: "Para Indústria", icon: Cpu, desc: "Robótica, automação e Indústria 4.0" },
+      { href: "/depoimentos", label: "Casos de Sucesso", icon: BookOpen, desc: "Depoimentos e resultados reais" },
     ],
   },
   { href: "/plataforma", label: "Plataforma", icon: LayoutDashboard },
-  { href: "/contato", label: "Preços", icon: CreditCard },
+  { href: "/contato", label: "Planos", icon: CreditCard },
   { href: "/publicacoes", label: "Blog", icon: BookOpen },
+  { href: "/investidor", label: "Investidores", icon: Briefcase },
 ];
 
 export function Header() {

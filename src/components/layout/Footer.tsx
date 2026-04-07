@@ -9,10 +9,16 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
 
   const navLinks = [
     { href: "/", label: t.nav.home },
-    { href: "/publicacoes", label: t.nav.publications },
+    { href: "/servicos", label: "Soluções" },
     { href: "/plataforma", label: t.nav.platform },
+    { href: "/contato", label: "Planos" },
+    { href: "/publicacoes", label: t.nav.publications },
+  ];
+
+  const resourceLinks = [
     { href: "/investidor", label: "Investidores" },
-    { href: "/contato", label: t.nav.contact },
+    { href: "/depoimentos", label: "Casos de Sucesso" },
+    { href: "/install", label: "Instalar App" },
   ];
 
   return (
