@@ -25,6 +25,11 @@ import {
   HelpCircle,
   Bot,
   Wallet,
+  ShoppingBag,
+  Store,
+  Brain,
+  Sparkles,
+  BookOpen,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -99,6 +104,18 @@ const quickActions = [
     path: "/dashboard/marketplace",
   },
   {
+    title: "Meus Produtos",
+    desc: "Acesse seus produtos comprados",
+    icon: ShoppingBag,
+    path: "/dashboard/meus-acessos",
+  },
+  {
+    title: "Explorar Lojas",
+    desc: "Descubra lojas e vitrines de afiliados",
+    icon: Store,
+    path: "/dashboard/explorar-lojas",
+  },
+  {
     title: "Agendar Consulta",
     desc: "Marque uma consulta presencial ou online",
     icon: Calendar,
@@ -162,6 +179,10 @@ export default function ClienteDashboard() {
   const [myConsultas, setMyConsultas] = useState<any[]>([]);
   const [pendingInvoices, setPendingInvoices] = useState(0);
   const [iaConversationCount, setIaConversationCount] = useState(0);
+  const [myProducts, setMyProducts] = useState<any[]>([]);
+  const [featuredStores, setFeaturedStores] = useState<any[]>([]);
+  const [orionShopping, setOrionShopping] = useState<string | null>(null);
+  const [loadingOrion, setLoadingOrion] = useState(false);
 
   const loadClientData = useCallback(async () => {
       if (!user) return;
@@ -385,6 +406,48 @@ export default function ClienteDashboard() {
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id);
       setIaConversationCount(iaCount || 0);
+
+      // Fetch purchased products
+      const { data: accessData } = await supabase
+        .from("customer_access")
+        .select("id, product_id, is_active, products(id, title, cover_url, product_type, category)")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(4);
+      setMyProducts(accessData || []);
+
+      // Fetch featured stores (top 3 producers)
+      const { data: activeProducts } = await supabase
+        .from("products")
+        .select("creator_id")
+        .eq("status", "active")
+        .limit(100);
+      if (activeProducts && activeProducts.length > 0) {
+        const creatorCounts = new Map<string, number>();
+        activeProducts.forEach((p: any) => {
+          creatorCounts.set(p.creator_id, (creatorCounts.get(p.creator_id) || 0) + 1);
+        });
+        const topCreators = Array.from(creatorCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([id]) => id);
+        const { data: storeProfiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, avatar_url")
+          .in("user_id", topCreators);
+        setFeaturedStores(
+          topCreators.map((cid) => {
+            const prof = storeProfiles?.find((p: any) => p.user_id === cid);
+            return {
+              creator_id: cid,
+              name: prof?.full_name || "Produtor",
+              avatar_url: prof?.avatar_url,
+              count: creatorCounts.get(cid) || 0,
+            };
+          })
+        );
+      }
 
       // Verificar avaliação existente
       const { data: review } = await supabase
@@ -771,6 +834,142 @@ export default function ClienteDashboard() {
           </div>
         </div>
       )}
+
+      {/* ═══ Meus Produtos Digitais + Lojas + Orion Shopping ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Meus Conteúdos */}
+        <div className="bg-card border border-border p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-serif text-foreground flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-primary" />
+              Meus Produtos Digitais
+            </h2>
+            <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => navigate("/dashboard/meus-acessos")}>
+              Ver Todos <ChevronRight className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
+          {myProducts.length > 0 ? (
+            <div className="space-y-2">
+              {myProducts.slice(0, 4).map((item: any) => (
+                <button
+                  key={item.id}
+                  onClick={() => navigate("/dashboard/meus-acessos")}
+                  className="w-full flex items-center gap-3 p-2.5 border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left group"
+                >
+                  <div className="h-10 w-10 bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {item.products?.cover_url ? (
+                      <img src={item.products.cover_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <ShoppingBag className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-foreground truncate group-hover:text-primary transition-colors">
+                      {item.products?.title || "Produto"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {item.products?.product_type === "online_course" ? "Curso Online" :
+                       item.products?.product_type === "ebook" ? "E-book" : "Digital"}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="text-[8px]">{item.products?.category || "geral"}</Badge>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <ShoppingBag className="h-8 w-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground mb-2">Nenhum produto comprado ainda</p>
+              <Button variant="outline" size="sm" className="text-xs" onClick={() => navigate("/dashboard/marketplace")}>
+                Explorar Marketplace
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Explorar Lojas */}
+        <div className="bg-card border border-border p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-serif text-foreground flex items-center gap-2">
+              <Store className="h-4 w-4 text-primary" />
+              Lojas em Destaque
+            </h2>
+            <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={() => navigate("/dashboard/explorar-lojas")}>
+              Ver Todas <ChevronRight className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
+          {featuredStores.length > 0 ? (
+            <div className="space-y-2">
+              {featuredStores.map((store: any) => (
+                <button
+                  key={store.creator_id}
+                  onClick={() => navigate(`/loja/${store.creator_id}`)}
+                  className="w-full flex items-center gap-3 p-2.5 border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left group"
+                >
+                  <div className="h-10 w-10 bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {store.avatar_url ? (
+                      <img src={store.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <Store className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-foreground truncate group-hover:text-primary transition-colors">{store.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{store.count} produto{store.count !== 1 ? "s" : ""}</p>
+                  </div>
+                  <ChevronRight className="h-3 w-3 text-muted-foreground/40 group-hover:text-primary" />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <Store className="h-8 w-8 text-muted-foreground/30 mb-2" />
+              <p className="text-xs text-muted-foreground">Nenhuma loja disponível ainda</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Orion Shopping Assistant */}
+      <div className="bg-card border border-primary/20 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            <div>
+              <h3 className="text-sm font-serif text-foreground">Orion: O que devo estudar?</h3>
+              <p className="text-[10px] text-muted-foreground">Recomendações personalizadas de produtos digitais</p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={async () => {
+              setLoadingOrion(true);
+              try {
+                const history = myProducts.map((p: any) => p.products?.title).filter(Boolean).join(", ") || "Nenhum produto";
+                const { data, error } = await supabase.functions.invoke("orion-produtor-ai", {
+                  body: { action: "recommend_products", context: `Produtos do cliente: ${history}` },
+                });
+                if (error) throw error;
+                setOrionShopping(data.result);
+              } catch (err: any) {
+                toast({ title: "Erro", description: err.message, variant: "destructive" });
+              } finally {
+                setLoadingOrion(false);
+              }
+            }}
+            disabled={loadingOrion}
+            className="gap-1"
+          >
+            {loadingOrion ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+            Recomendar
+          </Button>
+        </div>
+        {orionShopping && (
+          <div className="mt-3 pt-3 border-t border-border text-sm text-muted-foreground whitespace-pre-wrap">{orionShopping}</div>
+        )}
+      </div>
+
       <div className="bg-card border border-border p-5">
         <div className="flex items-center gap-2 mb-3">
           <HelpCircle className="h-5 w-5 text-primary" />

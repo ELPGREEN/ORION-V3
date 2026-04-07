@@ -126,6 +126,13 @@ serve(async (req) => {
         );
         break;
       }
+      case "recommend_products": {
+        result = await callGemini(
+          `Dados do cliente:\n${context || "Sem dados"}\n\nCom base no histórico de compras e categorias disponíveis, recomende 3-5 produtos digitais que este cliente deveria explorar. Justifique cada sugestão com base no perfil. Seja prático e direto.`,
+          "Você é um consultor de produtos digitais. Recomende produtos relevantes baseado no perfil e histórico do cliente. Seja persuasivo mas honesto. PT-BR."
+        );
+        break;
+      }
       default:
         return new Response(JSON.stringify({ error: "Invalid action" }), { status: 400, headers: corsHeaders });
     }
