@@ -7,17 +7,10 @@ const corsHeaders = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// NEURAL INFERENCE ENGINE
-// Post-training inference with learned weights, RAG context,
-// and provider routing based on trained synaptic weights
+// NEURAL INFERENCE ENGINE v2 — Gemini-First (FREE)
+// Primary: Gemini 2.5 Flash (7 keys rotation) — 100% gratuito
+// Fallback: HuggingFace (grátis) → Groq → DeepSeek
 // ═══════════════════════════════════════════════════════════════
-
-interface SynapticWeights {
-  provider_scores: Record<string, number>;
-  domain_weights: Record<string, number>;
-  confidence_threshold: number;
-  routing_bias: Record<string, number>;
-}
 
 interface InferenceRequest {
   query: string;
@@ -27,58 +20,16 @@ interface InferenceRequest {
   stream?: boolean;
 }
 
-// Provider configurations for inference
-const INFERENCE_PROVIDERS = [
-  { name: "groq", keyEnv: "GROQ_API_KEY", endpoint: "https://api.groq.com/openai/v1/chat/completions", model: "llama-3.3-70b-versatile" },
-  { name: "openai", keyEnv: "OPENAI_API_KEY", endpoint: "https://api.openai.com/v1/chat/completions", model: "gpt-4o-mini" },
-  { name: "deepseek", keyEnv: "DEEPSEEK_API_KEY", endpoint: "https://api.deepseek.com/v1/chat/completions", model: "deepseek-chat" },
-];
-
-// Load trained synaptic weights from neural_knowledge_base
-async function loadWeights(supabase: ReturnType<typeof createClient>): Promise<SynapticWeights> {
-  const defaults: SynapticWeights = {
-    provider_scores: { groq: 0.7, openai: 0.9, deepseek: 0.8 },
-    domain_weights: { legal: 0.9, general: 0.7, technical: 0.8 },
-    confidence_threshold: 0.6,
-    routing_bias: { groq: 0.1, openai: 0.0, deepseek: 0.05 },
-  };
-
-  try {
-    const { data } = await supabase
-      .from("neural_knowledge_base")
-      .select("content, metadata")
-      .eq("title", "__synaptic_weights__")
-      .eq("source_type", "system_weights")
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (data?.content) {
-      const parsed = JSON.parse(data.content);
-      return { ...defaults, ...parsed };
-    }
-  } catch (e) {
-    console.error("Failed to load weights:", e);
-  }
-
-  return defaults;
-}
-
-// Load distilled model prompts
-async function loadDistilledModel(supabase: ReturnType<typeof createClient>): Promise<string | null> {
-  try {
-    const { data } = await supabase
-      .from("neural_knowledge_base")
-      .select("content")
-      .eq("source_type", "distilled_model")
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    return data?.content || null;
-  } catch {
-    return null;
-  }
+function getGeminiKeys(): string[] {
+  return [
+    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
+  ].filter((k): k is string => !!k);
 }
 
 // RAG: search neural knowledge base for relevant context
@@ -88,11 +39,44 @@ async function searchKnowledge(
   limit = 5
 ): Promise<Array<{ title: string; content: string; similarity: number }>> {
   try {
-    // Text search fallback (no Lovable Gateway needed — embeddings via Gemini)
-    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_KEY) return [];
+    // Generate embedding via Gemini for semantic search
+    const keys = getGeminiKeys();
+    if (keys.length > 0) {
+      try {
+        const embResp = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${keys[0]}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "models/gemini-embedding-001",
+              content: { parts: [{ text: query.slice(0, 2000) }] },
+              outputDimensionality: 768,
+            }),
+            signal: AbortSignal.timeout(3000),
+          }
+        );
+        if (embResp.ok) {
+          const embData = await embResp.json();
+          const embedding = embData?.embedding?.values;
+          if (embedding && embedding.length > 0) {
+            const padded = embedding.length >= 768 ? embedding.slice(0, 768) : [...embedding, ...new Array(768 - embedding.length).fill(0)];
+            const { data } = await supabase.rpc("match_neural_knowledge", {
+              query_embedding: `[${padded.join(",")}]`,
+              match_threshold: 0.35,
+              match_count: limit,
+            });
+            if (data && data.length > 0) {
+              return data.map((d: any) => ({ title: d.title || "", content: (d.content || "").slice(0, 1000), similarity: d.similarity || 0.7 }));
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("[RAG] Gemini embedding failed:", e);
+      }
+    }
 
-    // Try to find cached or direct text search as fallback
+    // Fallback: text search
     const { data } = await supabase
       .from("neural_knowledge_base")
       .select("title, content")
@@ -106,63 +90,91 @@ async function searchKnowledge(
   }
 }
 
-// Select best provider based on trained weights
-function selectProvider(
-  weights: SynapticWeights,
-  domain: string,
-  availableKeys: Record<string, string>
-): { name: string; key: string; endpoint: string; model: string } {
-  const scored = INFERENCE_PROVIDERS
-    .filter((p) => availableKeys[p.name])
-    .map((p) => ({
-      ...p,
-      key: availableKeys[p.name],
-      score:
-        (weights.provider_scores[p.name] || 0.5) *
-        (weights.domain_weights[domain] || 0.7) +
-        (weights.routing_bias[p.name] || 0),
-    }))
-    .sort((a, b) => b.score - a.score);
+// Call Gemini directly (FREE — 7 key rotation)
+async function callGemini(systemPrompt: string, userPrompt: string, stream: boolean): Promise<Response | string> {
+  const keys = getGeminiKeys();
+  if (keys.length === 0) throw new Error("No Gemini keys configured");
 
-  if (scored.length === 0) throw new Error("No providers available");
-  return scored[0];
+  for (const key of keys) {
+    try {
+      const endpoint = stream ? "streamGenerateContent?alt=sse" : "generateContent";
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:${endpoint}&key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+          }),
+          signal: AbortSignal.timeout(25000),
+        }
+      );
+
+      if (resp.status === 429) { await resp.text(); continue; }
+      if (!resp.ok) { await resp.text(); continue; }
+
+      if (stream) return resp;
+
+      const data = await resp.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (text) return text;
+    } catch (e) {
+      console.warn(`[Inference] Gemini key failed:`, e);
+    }
+  }
+  throw new Error("All Gemini keys failed");
 }
 
-// Call the selected provider
-async function callProvider(
-  provider: { endpoint: string; model: string; key: string; name: string },
-  systemPrompt: string,
-  userPrompt: string,
-  stream: boolean
-): Promise<Response | string> {
-  const res = await fetch(provider.endpoint, {
+// HuggingFace fallback (FREE)
+async function callHuggingFace(systemPrompt: string, userPrompt: string): Promise<string> {
+  const apiKey = Deno.env.get("HF_TOKEN") || Deno.env.get("HUGGINGFACE_API_KEY");
+  if (!apiKey) throw new Error("No HF_TOKEN");
+  
+  const models = ["google/gemma-3n-E4B", "Qwen/Qwen2.5-72B-Instruct", "meta-llama/Llama-3.2-3B-Instruct"];
+  for (const model of models) {
+    try {
+      const resp = await fetch(`https://api-inference.huggingface.co/models/${model}/v1/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          max_tokens: 4096,
+          temperature: 0.7,
+        }),
+      });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const text = data.choices?.[0]?.message?.content || "";
+      if (text) return text;
+    } catch { continue; }
+  }
+  throw new Error("All HuggingFace models failed");
+}
+
+// Groq fallback (free tier)
+async function callGroqFallback(systemPrompt: string, userPrompt: string): Promise<string> {
+  const apiKey = Deno.env.get("GROQ_API_KEY");
+  if (!apiKey) throw new Error("Missing GROQ_API_KEY");
+  const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${provider.key}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: provider.model,
+      model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
       max_tokens: 4096,
       temperature: 0.7,
-      stream,
     }),
   });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Provider ${provider.name} error: ${res.status} — ${err.slice(0, 200)}`);
-  }
-
-  if (stream) {
-    return res;
-  }
-
-  const data = await res.json();
+  if (!resp.ok) throw new Error(`Groq ${resp.status}`);
+  const data = await resp.json();
   return data.choices?.[0]?.message?.content || "";
 }
 
@@ -187,16 +199,10 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Load trained weights
-    const weights = await loadWeights(supabase);
-
-    // 2. Load distilled model system prompt
-    const distilledPrompt = await loadDistilledModel(supabase);
-
-    // 3. RAG: search knowledge base
+    // 1. RAG: search knowledge base (uses Gemini embeddings — FREE)
     const ragResults = await searchKnowledge(supabase, query);
 
-    // 4. Build context
+    // 2. Build context
     let contextBlock = "";
     if (ragResults.length > 0) {
       contextBlock += "\n\n--- Conhecimento Base ---\n" +
@@ -207,60 +213,102 @@ Deno.serve(async (req) => {
         privateContext.map((c) => `[${c.title}]: ${c.content}`).join("\n\n");
     }
 
-    const systemPrompt = (distilledPrompt || 
-      "Você é JARVIS, uma inteligência artificial avançada treinada com múltiplas fontes de conhecimento. " +
+    const systemPrompt = "Você é Orion, uma inteligência artificial neural avançada. " +
       "Responda com precisão, profundidade e clareza. Use o contexto fornecido quando relevante. " +
-      "Cite fontes quando possível. Seja proativo em identificar nuances e implicações.") +
+      "Cite fontes quando possível. Seja proativo em identificar nuances e implicações." +
       (contextBlock ? `\n\nContexto relevante:${contextBlock}` : "");
 
-    // 5. Select provider based on trained weights
-    const availableKeys: Record<string, string> = {};
-    for (const p of INFERENCE_PROVIDERS) {
-      const key = Deno.env.get(p.keyEnv);
-      if (key) availableKeys[p.name] = key;
-    }
+    // 3. Call provider: Gemini (FREE) → HuggingFace (FREE) → Groq
+    const startTime = Date.now();
+    let response = "";
+    let providerUsed = "gemini";
 
-    const selectedProvider = selectProvider(weights, domain || "general", availableKeys);
-
-    // 6. Call provider
     if (stream) {
-      const streamRes = await callProvider(selectedProvider, systemPrompt, query, true);
-      if (streamRes instanceof Response) {
-        return new Response(streamRes.body, {
-          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-        });
+      try {
+        const streamResp = await callGemini(systemPrompt, query, true);
+        if (streamResp instanceof Response && streamResp.body) {
+          // Transform Gemini SSE to OpenAI-compatible SSE
+          const reader = streamResp.body.getReader();
+          const decoder = new TextDecoder();
+          const encoder = new TextEncoder();
+          let buf = "";
+
+          const transformStream = new ReadableStream({
+            async pull(controller) {
+              const { done, value } = await reader.read();
+              if (done) {
+                controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+                controller.close();
+                return;
+              }
+              buf += decoder.decode(value, { stream: true });
+              const lines = buf.split("\n");
+              buf = lines.pop() || "";
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const payload = line.slice(6).trim();
+                if (!payload || payload === "[DONE]") continue;
+                try {
+                  const parsed = JSON.parse(payload);
+                  const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                  if (text) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`));
+                  }
+                } catch {}
+              }
+            },
+            cancel() { reader.cancel(); },
+          });
+
+          return new Response(transformStream, {
+            headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+          });
+        }
+      } catch (e) {
+        console.warn("[Inference] Gemini streaming failed:", e);
       }
     }
 
-    const response = await callProvider(selectedProvider, systemPrompt, query, false);
+    // Non-streaming path
+    try {
+      const result = await callGemini(systemPrompt, query, false);
+      if (typeof result === "string") response = result;
+    } catch {
+      providerUsed = "huggingface";
+      try {
+        response = await callHuggingFace(systemPrompt, query);
+      } catch {
+        providerUsed = "groq";
+        try {
+          response = await callGroqFallback(systemPrompt, query);
+        } catch {
+          response = "Desculpe, estou com dificuldades técnicas. Tente novamente.";
+          providerUsed = "none";
+        }
+      }
+    }
 
-    // 7. Cache result
-    const startTime = Date.now();
+    // 4. Log metrics
     try {
       await supabase.from("ai_metrics").insert({
-        provider: `inference:${selectedProvider.name}`,
+        provider: `inference:${providerUsed}`,
         total_duration_ms: Date.now() - startTime,
-        success: true,
+        success: !!response,
         query: query.slice(0, 500),
         user_id: userId || null,
         data_sources_used: ragResults.map((r) => r.title),
       });
-    } catch {
-      // Non-critical
-    }
+    } catch {}
 
     return new Response(
       JSON.stringify({
         success: true,
         response,
         metadata: {
-          provider: selectedProvider.name,
-          model: selectedProvider.model,
+          provider: providerUsed,
+          model: providerUsed === "gemini" ? "gemini-2.5-flash" : providerUsed === "huggingface" ? "gemma-3n-E4B" : "llama-3.3-70b",
           ragSourcesUsed: ragResults.length,
           privateContextUsed: privateContext?.length || 0,
-          confidenceScore: weights.provider_scores[selectedProvider.name] || 0.5,
-          distilledModelActive: !!distilledPrompt,
-          weightsLoaded: true,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
