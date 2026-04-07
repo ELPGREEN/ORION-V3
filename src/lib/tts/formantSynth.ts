@@ -145,19 +145,23 @@ function tickAntiResonator(ar: AntiResonator, x: number): number {
 let glottalPhase = 0;
 let subHarmonicPhase = 0;
 
+let vibratoPhase = 0;
+
 function generateGlottalSource(count: number, f0: number): Float32Array {
   const out = new Float32Array(count);
   const T0 = SR / f0;
-  const OQ = VOICE_DNA.glottal.openQuotient;
+  // v22: use GROK.glottalOQ (0.71) instead of DNA (0.546) — more relaxed
+  const OQ = GROK.glottalOQ;
   const SQ = VOICE_DNA.glottal.speedQuotient;
   const Te = OQ * T0;
   const Tp = Te / (1 + SQ);
   const Ta = 0.08 * T0;
-  // Grok v20: rhythmic irregularity, not random noise
+  // v22: minimal rhythmic irregularity
   const jitter = VOICE_DNA.dynamics.jitter * GROK.jitterMult;
   const shimmer = VOICE_DNA.dynamics.shimmer * GROK.shimmerMult;
+  // v22: glottal tension controls the return phase amplitude
+  const tensionAmp = -0.2 * GROK.glottalTension; // 0.88 → -0.176
 
-  // Sub-harmonic period (f0/2)
   const T0sub = T0 * 2;
 
   for (let i = 0; i < count; i++) {
@@ -171,19 +175,22 @@ function generateGlottalSource(count: number, f0: number): Float32Array {
       sample = Math.cos(Math.PI * 0.5 * tc);
     } else {
       const tr = (t - Te) / Math.max(Ta, 1);
-      sample = -0.2 * Math.exp(-tr);
+      sample = tensionAmp * Math.exp(-tr);
     }
 
-    // Shimmer (rhythmic amplitude variation)
+    // Shimmer (musical amplitude variation)
     const shimmerFactor = 1 + (Math.random() - 0.5) * shimmer * 0.5;
     
-    // Sub-harmonic excitation: adds body at f0/2
+    // Sub-harmonic excitation at f0/2
     const subHarmonic = GROK.subHarmonicGain * Math.sin(2 * Math.PI * subHarmonicPhase / T0sub);
     
-    // Breathiness: gentle continuous aspiration
+    // Breathiness: continuous gentle aspiration
     const breath = GROK.breathiness * (Math.random() * 2 - 1) * 0.5;
     
-    out[i] = (sample * shimmerFactor) + subHarmonic + breath;
+    // v22: subtle vibrato — life and emotion
+    const vibratoMod = 1 + GROK.vibratoDepth * Math.sin(2 * Math.PI * GROK.vibratoRate * vibratoPhase / SR);
+    
+    out[i] = ((sample * shimmerFactor) + subHarmonic + breath) * vibratoMod;
 
     // Advance with jitter
     glottalPhase += 1 + (Math.random() - 0.5) * 2 * jitter;
@@ -191,6 +198,8 @@ function generateGlottalSource(count: number, f0: number): Float32Array {
     
     subHarmonicPhase += 1;
     if (subHarmonicPhase >= T0sub) subHarmonicPhase -= T0sub;
+    
+    vibratoPhase += 1;
   }
 
   return out;
