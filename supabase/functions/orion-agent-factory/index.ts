@@ -379,20 +379,16 @@ ${codeContent.substring(0, 15000)}
 
 Analyze line by line. Be specific about line numbers. Respond in Portuguese (BR).`;
 
-  const aiRes = await fetch(AI_GATEWAY, {
+  const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [{ role: "user", content: analysisPrompt }],
+      contents: [{ role: "user", parts: [{ text: analysisPrompt }] }],
     }),
   });
 
   const aiData = await aiRes.json();
-  const analysis = aiData.choices?.[0]?.message?.content || "Análise não disponível";
+  const analysis = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Análise não disponível";
 
   // Log
   await sb.from("orion_self_analysis").insert({
