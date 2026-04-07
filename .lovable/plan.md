@@ -1,153 +1,143 @@
 
 
-# Plano: Sistema Completo do Produtor Digital + Integração Afiliados/Clientes + Orion IA
+# Plano: Loja do Afiliado + Fluxo Completo Produtor → Afiliado → Cliente + Orion IA
 
-## Contexto Atual
+## Estado Atual
 
-O sistema já possui:
-- Tabela `products` (título, preço, slug, status) -- sem suporte a arquivos digitais ou tipos de conteúdo
-- Tabela `orders`, `affiliate_links`, `affiliate_programs`, `affiliate_requests`, `affiliate_sales`
-- Dashboard do Produtor com stats, ferramentas, vendas recentes
-- Dashboard do Afiliado com marketplace, links, vendas
-- MeusProdutos: CRUD básico (título, descrição, preço, comissão) -- sem upload de arquivos
-- Nenhuma tabela para conteúdo digital (arquivos, módulos, aulas), área de membros, ou entrega automática
+O sistema já tem:
+- **Produtor**: Dashboard com stats, MeusProdutos (CRUD + upload + módulos), ProdutorAfiliados (gerenciar programa), Loja pública (`/loja/:creatorId`), ProdutoDetalhe, Editor de Vendas, Orion Insights
+- **Afiliado**: Dashboard com marketplace de programas, links/cupons, vendas, Vitrine pública (`/vitrine/:affiliateId`), botão "Copy IA"
+- **Cliente**: MeusAcessos (área de membros com arquivos, módulos, Orion FAQ)
+- **Checkout**: Loja com CartContext, mas sem entrega automática (customer_access) nem registro de affiliate_sales no fluxo de pagamento
+- **Edge Function**: `orion-produtor-ai` (descrição, preço, módulos, copy, FAQ, performance)
 
-## O que falta para funcionar como Hotmart
+## O que FALTA para fechar o ciclo
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│                    PRODUTOR                              │
-│  Cria Produto → Upload Arquivos → Define Preço          │
-│  Ativa Afiliação → Gerencia Programa                    │
-│         │                                                │
-│         ▼                                                │
-│  ┌─────────────┐    ┌──────────────┐                    │
-│  │  Página de   │◄──│   Afiliado    │                    │
-│  │   Vendas     │   │  (link/cupom) │                    │
-│  └──────┬──────┘    └──────────────┘                    │
-│         │                                                │
-│         ▼                                                │
-│  ┌─────────────┐                                        │
-│  │   CLIENTE    │                                        │
-│  │  Compra →    │                                        │
-│  │  Acesso auto │                                        │
-│  │  Área Membros│                                        │
-│  └─────────────┘                                        │
-│                                                          │
-│  ┌─────────────┐                                        │
-│  │  ORION IA   │ Auxilia Produtor, Afiliado e Cliente   │
-│  └─────────────┘                                        │
-└─────────────────────────────────────────────────────────┘
+PRODUTOR cria produto → ativa programa afiliados
+     ↓
+AFILIADO encontra no marketplace → solicita → aprovado → recebe link/cupom
+     ↓
+AFILIADO divulga link → CLIENTE acessa loja do produtor com ?ref=HASH
+     ↓
+CLIENTE compra → checkout → pagamento confirmado
+     ↓
+SISTEMA automaticamente:
+  1. Cria customer_access (acesso ao conteúdo)
+  2. Detecta ref/cupom → registra affiliate_sale + comissão
+  3. Notifica produtor + afiliado
+     ↓
+CLIENTE acessa /dashboard/meus-acessos (área de membros)
+AFILIADO vê venda no dashboard
+PRODUTOR vê receita e comissão paga
 ```
+
+### Gaps identificados:
+
+1. **Afiliado NÃO tem loja própria** — a vitrine mostra produtos mas redireciona para loja do produtor. O afiliado precisa de uma **loja/vitrine aprimorada** com branding próprio
+2. **Checkout NÃO cria `customer_access`** — compra não libera acesso automático
+3. **Checkout NÃO registra `affiliate_sales`** — ref/cupom tracking não efetiva venda
+4. **Vitrine do afiliado é básica** — sem categorias, sem busca avançada, sem SEO
+5. **Orion não ajuda no checkout** — sem assistente de dúvidas na loja
+6. **Afiliado não tem analytics detalhado** — sem gráficos de conversão/tendência
 
 ---
 
 ## Etapas de Implementação
 
-### 1. Database: Conteúdo Digital + Área de Membros
+### 1. Vitrine do Afiliado Aprimorada (Loja do Afiliado)
 
-Nova migration com 3 tabelas:
+Refatorar `VitrineAfiliado.tsx` para ser uma loja completa:
+- Header com foto, nome e bio do afiliado (branding pessoal)
+- Grid de produtos com categorias, busca, filtros e ordenação (similar à Loja do produtor)
+- Cada produto mostra preço, tipo, comissão (badge "Recomendo")
+- Botão "Comprar" leva à loja do produtor com `?ref=HASH` preservado
+- SEO com DynamicMeta por produto
+- Botão "Perguntar ao Orion" para dúvidas sobre qualquer produto da vitrine
 
-**`product_files`** — Arquivos do produto (PDFs, vídeos, ZIPs)
-- `product_id`, `file_name`, `file_url` (Supabase Storage), `file_type`, `file_size_bytes`, `sort_order`
-- RLS: produtor dono lê/escreve, compradores lêem
+**Modificado**: `src/pages/VitrineAfiliado.tsx`
 
-**`product_modules`** — Módulos/aulas (para cursos)
-- `product_id`, `title`, `description`, `sort_order`, `is_published`
-- RLS: produtor dono gerencia, compradores lêem módulos publicados
+### 2. Checkout com Entrega Automática + Rastreamento de Afiliado
 
-**`customer_access`** — Controle de acesso pós-compra
-- `user_id`, `product_id`, `order_id`, `granted_at`, `expires_at`, `is_active`
-- RLS: usuário vê seus acessos, service_role gerencia
-- Permite entrega automática: ao confirmar pagamento → insert nesta tabela
+Criar edge function `process-sale` que é chamada após confirmação de pagamento:
 
-Adicionar coluna `product_type` na tabela `products`:
-- Valores: `digital_download`, `course`, `membership`, `ebook`, `template`
+1. Recebe `order_id` 
+2. Busca order → cria `customer_access` (libera conteúdo)
+3. Verifica se há `ref` (cookie/param) ou cupom → busca `affiliate_links` pelo hash
+4. Se afiliado encontrado → calcula comissão via `affiliate_programs.commission_percent`
+5. Insere `affiliate_sales` com `amount_cents`, `commission_cents`, `tracking_type`
+6. Retorna confirmação
 
-Criar bucket de Storage `product-files` (privado).
+**Novo**: `supabase/functions/process-sale/index.ts`
+**Modificado**: Componente de checkout/pagamento para chamar esta function após pagamento
 
-### 2. Página "Meus Produtos" Aprimorada
+### 3. Orion Assistente na Loja (Widget de Dúvidas)
 
-Expandir `MeusProdutos.tsx`:
-- Seletor de tipo de produto (`digital_download`, `course`, etc.)
-- Upload de arquivos via Supabase Storage → `product_files`
-- Para cursos: gerenciador de módulos (CRUD inline) com drag-to-reorder
-- Preview do produto antes de publicar
-- Botão "Ativar Afiliação" direto (cria `affiliate_program` inline)
+Componente flutuante na Loja e Vitrine que permite o cliente perguntar ao Orion sobre produtos antes de comprar:
+- Botão flutuante "Dúvidas? Pergunte ao Orion"
+- Mini-chat que chama `orion-produtor-ai` action `product_faq`
+- Contexto: dados do produto atual (título, descrição, preço)
 
-### 3. Área de Membros do Cliente
+**Novo**: `src/components/store/OrionStoreAssistant.tsx`
+**Modificado**: `src/pages/Loja.tsx`, `src/pages/ProdutoDetalhe.tsx`, `src/pages/VitrineAfiliado.tsx`
 
-Nova página `/dashboard/meus-acessos` (para role `cliente`):
-- Lista produtos comprados via `customer_access`
-- Acesso aos arquivos e módulos
-- Progresso em cursos (opcionalmente `module_progress` table)
-- Download direto dos arquivos com URL assinada do Storage
+### 4. Dashboard do Afiliado — Analytics Avançado
 
-### 4. Checkout + Entrega Automática
+Adicionar tab "Analytics" ao AfiliadoDashboard:
+- Gráfico de cliques/conversões por período (últimos 7/30 dias)
+- Taxa de conversão por produto
+- Produtos mais vendidos (ranking)
+- Widget "Orion: Análise de Performance" com sugestões IA
 
-Atualizar o fluxo de compra:
-- Após `order.status = 'paid'` → inserir `customer_access`
-- Se veio via afiliado → registrar `affiliate_sales` + calcular comissão
-- Enviar email de boas-vindas via automação existente (`email_automation_rules` trigger `purchase`)
+**Modificado**: `src/pages/dashboard/AfiliadoDashboard.tsx`
 
-### 5. Dashboard do Produtor: Novos Widgets
+### 5. Orion Copiloto Completo para Afiliado
 
-Adicionar ao `ProdutorDashboard.tsx`:
-- **Clientes Ativos**: count de `customer_access` ativos
-- **Ranking de Afiliados**: top afiliados por vendas
-- **Receita por Produto**: breakdown visual
-- Link para "Área de Membros" (ver o que o cliente vê)
+Expandir edge function `orion-produtor-ai` com novas actions:
+- `affiliate_strategy`: Sugere estratégia de divulgação baseada nos dados do afiliado
+- `best_products`: Recomenda produtos do marketplace com maior potencial
+- `social_calendar`: Sugere calendário de postagens para redes sociais
 
-### 6. Integração Orion IA (via edge function existente + Gemini free)
+**Modificado**: `supabase/functions/orion-produtor-ai/index.ts`
 
-Orion será integrado em 4 pontos funcionais:
+### 6. Notificações Produtor ↔ Afiliado
 
-**a) Produtor — Assistente de Criação**
-- No formulário de produto: botão "Orion: Gerar Descrição" → chama edge function com Gemini
-- "Orion: Sugerir Preço" baseado em categoria e mercado
-- "Orion: Criar Módulos" para cursos → sugere estrutura de aulas
+Adicionar registros na tabela `notifications` (se existir) ou criar sistema simples:
+- Produtor recebe notificação quando afiliado solicita programa
+- Afiliado recebe notificação quando aprovado/rejeitado
+- Produtor recebe notificação de venda via afiliado
+- Afiliado recebe notificação de comissão ganho
 
-**b) Produtor — Análise de Performance**
-- Widget no dashboard: "Orion Insights" → análise das vendas/conversões
-- Sugestões automáticas: "Seu produto X tem baixa conversão, tente..."
-
-**c) Afiliado — Copiloto de Vendas**
-- No AfiliadoDashboard: "Orion: Gerar Copy" → texto de promoção para redes sociais
-- "Orion: Melhor Horário" → sugestão baseada em dados de cliques
-
-**d) Cliente — Suporte Inteligente**
-- Na área de membros: "Perguntar ao Orion" sobre o conteúdo do produto
-- FAQ automático baseado na descrição do produto
-
-Todas essas chamadas usam o stack existente: edge function → Gemini free API (7-key rotation).
-
-### 7. Edge Function: `orion-produtor-ai`
-
-Nova edge function que centraliza as chamadas de IA do produtor:
-- Actions: `generate_description`, `suggest_price`, `generate_modules`, `analyze_performance`, `generate_copy`
-- Usa `GEMINI_API_KEY` com rotation
-- Rate limit via `check_rate_limit` existente
+**Novo**: Migration para tabela `sale_notifications` (se notifications não existir)
 
 ---
 
 ## Detalhes Técnicos
 
 ### Arquivos a criar:
-1. `supabase/migrations/XXXX_product_content.sql` — tabelas `product_files`, `product_modules`, `customer_access` + alter `products`
-2. `supabase/functions/orion-produtor-ai/index.ts` — edge function IA
-3. `src/pages/dashboard/MeusAcessos.tsx` — área de membros do cliente
-4. `src/components/dashboard/product/ProductFileManager.tsx` — upload de arquivos
-5. `src/components/dashboard/product/ProductModuleManager.tsx` — módulos de curso
-6. `src/components/dashboard/OrionProductInsights.tsx` — widget de insights IA
+1. `supabase/functions/process-sale/index.ts` — entrega automática + tracking afiliado
+2. `src/components/store/OrionStoreAssistant.tsx` — widget de dúvidas na loja
 
-### Arquivos a editar:
-1. `src/pages/dashboard/MeusProdutos.tsx` — adicionar tipo, upload, módulos
-2. `src/pages/dashboard/ProdutorDashboard.tsx` — novos stats + insights
-3. `src/pages/dashboard/AfiliadoDashboard.tsx` — botão "Gerar Copy" Orion
-4. `src/App.tsx` — rota `/dashboard/meus-acessos`
+### Arquivos a modificar:
+1. `src/pages/VitrineAfiliado.tsx` — refatorar para loja completa
+2. `src/pages/dashboard/AfiliadoDashboard.tsx` — tab Analytics + Orion strategy
+3. `src/pages/Loja.tsx` — adicionar OrionStoreAssistant
+4. `src/pages/ProdutoDetalhe.tsx` — adicionar OrionStoreAssistant
+5. `supabase/functions/orion-produtor-ai/index.ts` — novas actions (affiliate_strategy, best_products, social_calendar)
 
-### RLS resumo:
-- `product_files`: SELECT para compradores (via `customer_access`), ALL para `creator_id`
-- `product_modules`: SELECT para compradores, ALL para `creator_id`
-- `customer_access`: SELECT own, ALL service_role
+### Fluxo de venda completo:
+```text
+Cliente acessa /loja/CREATOR?ref=HASH
+     → AffiliateTracker salva ref em cookie (já existe)
+     → Adiciona ao carrinho → Checkout → Pagamento (Stripe)
+     → Webhook/callback chama process-sale
+     → process-sale:
+        1. INSERT customer_access
+        2. Detecta ref cookie → busca affiliate_links.hash
+        3. Busca affiliate_programs.commission_percent
+        4. INSERT affiliate_sales (amount, commission, tracking_type)
+     → Cliente redirecionado para /dashboard/meus-acessos
+     → Afiliado vê venda no dashboard
+     → Produtor vê receita no dashboard
+```
 
