@@ -124,9 +124,9 @@ export default function Contato() {
       />
 
       {/* ═══ HERO — Planos ═══ */}
-      <section className="relative py-20 sm:py-28 overflow-hidden" style={{ background: "#0a0a0f" }}>
+      <section className="relative py-20 sm:py-28 overflow-hidden" style={{ background: "hsl(var(--background))" }}>
         <HeroThreeBackground />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/50 via-transparent to-[#0a0a0f]/80 z-[1]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--background))]/50 via-transparent to-[hsl(var(--background))]/80 z-[1]" />
         <div className="container relative z-10 text-center">
           <ScrollReveal direction="fade">
             <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/5 backdrop-blur-sm">
@@ -147,7 +147,7 @@ export default function Contato() {
       </section>
 
       {/* ═══ PLANOS ═══ */}
-      <section className="py-16 sm:py-20 relative" style={{ background: "#080810" }}>
+      <section className="py-16 sm:py-20 relative" style={{ background: "hsl(var(--background))" }}>
         <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(hsl(var(--primary),0.02) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary),0.02) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
         <div className="container relative z-10">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
@@ -210,7 +210,7 @@ export default function Contato() {
       </section>
 
       {/* ═══ GARANTIAS ═══ */}
-      <section className="py-6 border-y border-border/10" style={{ background: "#0a0a0f" }}>
+      <section className="py-6 border-y border-border/10" style={{ background: "hsl(var(--background))" }}>
         <div className="container">
           <div className="flex flex-wrap justify-center gap-8 text-center">
             <div className="flex items-center gap-2 text-muted-foreground text-xs">
@@ -230,7 +230,7 @@ export default function Contato() {
       </section>
 
       {/* ═══ FAQ ═══ */}
-      <section className="py-16 sm:py-20" style={{ background: "#080810" }}>
+      <section className="py-16 sm:py-20" style={{ background: "hsl(var(--background))" }}>
         <div className="container max-w-3xl">
           <ScrollReveal direction="fade">
             <div className="text-center mb-10">
@@ -252,7 +252,7 @@ export default function Contato() {
       </section>
 
       {/* ═══ CONTATO — Formulário + Info ═══ */}
-      <section id="contato-form" className="py-16 sm:py-24 scroll-mt-20 relative" style={{ background: "#0a0a0f", borderTop: "1px solid hsl(var(--primary),0.1)" }}>
+      <section id="contato-form" className="py-16 sm:py-24 scroll-mt-20 relative" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--primary),0.1)" }}>
         <div className="container">
           <ScrollReveal direction="fade">
             <div className="text-center mb-12">

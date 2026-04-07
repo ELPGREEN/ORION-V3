@@ -322,7 +322,7 @@ function InvestorCarousel() {
                       {slide.showCTA && (
                         <div className="flex flex-col sm:flex-row gap-3">
                           <Button size="lg" className="px-8 h-12 text-sm font-semibold tracking-wide" 
-                            style={{ background: "#c9a84c", color: "#0a0a0f" }}
+                            style={{ background: "#c9a84c", color: "hsl(var(--background))" }}
                             onClick={() => navigate("/contato")}
                           >
                             Agendar Reunião <ArrowRight className="ml-2 h-4 w-4" />
@@ -424,10 +424,10 @@ export default function InvestorTools() {
       <style>{tronStyles}</style>
 
       {/* ═══ HERO with WebGL Tron Background ═══ */}
-      <section className="relative overflow-hidden py-20 lg:py-32" style={{ background: "#0a0a0f" }}>
+      <section className="relative overflow-hidden py-20 lg:py-32" style={{ background: "hsl(var(--background))" }}>
         <HeroThreeBackground />
         {/* Extra dark overlay for readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/60 via-transparent to-[#0a0a0f]/80 z-[1]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--background))]/60 via-transparent to-[hsl(var(--background))]/80 z-[1]" />
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -458,7 +458,7 @@ export default function InvestorTools() {
               </p>
               <div className="flex flex-col sm:flex-row items-start gap-4">
                 <Button size="lg" className="px-8 h-12 text-sm font-semibold tracking-wide"
-                  style={{ background: "#c9a84c", color: "#0a0a0f" }}
+                  style={{ background: "#c9a84c", color: "hsl(var(--background))" }}
                   onClick={() => navigate("/contato")}
                 >
                   Falar com Investor Relations <ArrowRight className="ml-2 h-4 w-4" />
@@ -488,7 +488,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Metrics Bar — Tron Style ═══ */}
-      <section className="relative tron-scanline" style={{ background: "#0a0a0f", borderTop: "1px solid hsl(var(--primary),0.15)", borderBottom: "1px solid hsl(var(--primary),0.15)" }}>
+      <section className="relative tron-scanline" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--primary),0.15)", borderBottom: "1px solid hsl(var(--primary),0.15)" }}>
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {metrics.map((m, i) => (
@@ -502,7 +502,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Interactive Presentation Carousel ═══ */}
-      <section className="relative py-16 lg:py-24 tron-grid-bg" style={{ background: "#0a0a0f" }}>
+      <section className="relative py-16 lg:py-24 tron-grid-bg" style={{ background: "hsl(var(--background))" }}>
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-10">
             <div className="text-xs font-semibold tracking-[0.25em] uppercase mb-3" style={{ color: "#00d4ff" }}>
@@ -517,7 +517,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Genesis & Identity + Timeline ═══ */}
-      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "#080810", borderTop: "1px solid rgba(201,168,76,0.12)" }}>
+      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "hsl(var(--background))", borderTop: "1px solid rgba(201,168,76,0.12)" }}>
         <div className="absolute inset-0 tron-grid-bg opacity-30" />
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
@@ -574,7 +574,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Founder & Company ═══ */}
-      <section className="relative py-20 lg:py-28" style={{ background: "#0a0a0f" }}>
+      <section className="relative py-20 lg:py-28" style={{ background: "hsl(var(--background))" }}>
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
@@ -631,7 +631,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Systems Grid — Tron HUD Cards ═══ */}
-      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "#080810", borderTop: "1px solid hsl(var(--primary),0.12)", borderBottom: "1px solid hsl(var(--primary),0.12)" }}>
+      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--primary),0.12)", borderBottom: "1px solid hsl(var(--primary),0.12)" }}>
         <GatewayBackground opacity={0.25} />
         <div className="absolute inset-0 tron-grid-bg opacity-20" />
         <div className="container mx-auto px-4 relative z-10">
@@ -685,7 +685,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Investment Highlights ═══ */}
-      <section className="relative py-20 lg:py-28" style={{ background: "#0a0a0f" }}>
+      <section className="relative py-20 lg:py-28" style={{ background: "hsl(var(--background))" }}>
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
@@ -698,7 +698,7 @@ export default function InvestorTools() {
               <p className="leading-relaxed mb-8" style={{ color: "rgba(255,255,255,0.5)" }}>
                 O ORION é a única plataforma que combina IA proprietária com consciência neural, compliance nativo e infraestrutura multilíngue em um ecossistema all-in-one.
               </p>
-              <Button size="lg" className="px-8" style={{ background: "#c9a84c", color: "#0a0a0f" }} onClick={() => navigate("/contato")}>
+              <Button size="lg" className="px-8" style={{ background: "#c9a84c", color: "hsl(var(--background))" }} onClick={() => navigate("/contato")}>
                 Solicitar Pitch Deck <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </motion.div>
@@ -718,7 +718,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Architecture Overview ═══ */}
-      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "#080810", borderTop: "1px solid rgba(201,168,76,0.12)", borderBottom: "1px solid hsl(var(--primary),0.12)" }}>
+      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "hsl(var(--background))", borderTop: "1px solid rgba(201,168,76,0.12)", borderBottom: "1px solid hsl(var(--primary),0.12)" }}>
         <div className="absolute inset-0 tron-grid-bg opacity-20" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
@@ -760,7 +760,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ Lumen7 Protocols ═══ */}
-      <section className="relative py-20 lg:py-28" style={{ background: "#0a0a0f" }}>
+      <section className="relative py-20 lg:py-28" style={{ background: "hsl(var(--background))" }}>
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
             <div className="text-xs font-semibold tracking-[0.2em] uppercase mb-4" style={{ color: "#00d4ff" }}>
@@ -813,7 +813,7 @@ export default function InvestorTools() {
       </section>
 
       {/* ═══ CTA Final ═══ */}
-      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "#080810", borderTop: "1px solid rgba(201,168,76,0.2)" }}>
+      <section className="relative py-20 lg:py-28 tron-scanline" style={{ background: "hsl(var(--background))", borderTop: "1px solid rgba(201,168,76,0.2)" }}>
         <GatewayBackground opacity={0.2} />
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-2xl mx-auto">
@@ -831,7 +831,7 @@ export default function InvestorTools() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="px-10 h-13 text-sm font-semibold tracking-wide"
-                style={{ background: "#c9a84c", color: "#0a0a0f" }}
+                style={{ background: "#c9a84c", color: "hsl(var(--background))" }}
                 onClick={() => navigate("/contato")}
               >
                 Agendar Reunião <ArrowRight className="ml-2 h-4 w-4" />

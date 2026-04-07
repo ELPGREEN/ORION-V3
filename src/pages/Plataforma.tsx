@@ -209,10 +209,10 @@ export default function Plataforma() {
       {/* ═══ HERO ═══ */}
       <section
         className="min-h-[80vh] flex items-center relative overflow-hidden"
-        style={{ background: "#0a0a0f" }}
+        style={{ background: "hsl(var(--background))" }}
       >
         <HeroThreeBackground />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/50 via-transparent to-[#0a0a0f]/70 z-[1]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--background))]/50 via-transparent to-[hsl(var(--background))]/70 z-[1]" />
 
         <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 2 }}>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] border rotate-45 hidden lg:block" style={{ borderColor: "hsl(var(--primary),0.06)" }} />
@@ -312,7 +312,7 @@ export default function Plataforma() {
       <TechLine />
 
       {/* ═══ O QUE O ORION FAZ — NEW SECTION ═══ */}
-      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanlines" style={{ background: "#080810" }}>
+      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanlines" style={{ background: "hsl(var(--background))" }}>
         <div className="absolute inset-0 tron-grid-overlay opacity-40 pointer-events-none" />
         <GatewayBackground opacity={0.2} />
         <div className="absolute inset-0 pointer-events-none">
@@ -371,7 +371,7 @@ export default function Plataforma() {
       <TechLine />
 
       {/* ═══ FEATURES ═══ */}
-      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanlines" style={{ background: "#0a0a0f" }}>
+      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanlines" style={{ background: "hsl(var(--background))" }}>
         <div className="absolute inset-0 tron-grid-overlay opacity-30 pointer-events-none" />
 
         <div className="container px-4 sm:px-6 relative">
@@ -442,7 +442,7 @@ export default function Plataforma() {
       <TechLine />
 
       {/* ═══ BENEFITS — DARK THEMED ═══ */}
-      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "#080810", borderTop: "1px solid hsl(var(--primary),0.1)", borderBottom: "1px solid hsl(var(--primary),0.1)" }}>
+      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--primary),0.1)", borderBottom: "1px solid hsl(var(--primary),0.1)" }}>
         <StarfieldBackground starCount={50} speed={0.02} depth={500} className="opacity-25" />
         <div className="absolute inset-0 tron-grid-overlay opacity-20 pointer-events-none" />
         <div className="absolute inset-0 pointer-events-none">
@@ -487,7 +487,7 @@ export default function Plataforma() {
       <TechLine />
 
       {/* ═══ HOW IT WORKS ═══ */}
-      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanlines" style={{ background: "#0a0a0f" }}>
+      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanlines" style={{ background: "hsl(var(--background))" }}>
         <div className="absolute inset-0 tron-grid-overlay opacity-25 pointer-events-none" />
 
         <div className="container px-4 sm:px-6 relative">
@@ -541,7 +541,7 @@ export default function Plataforma() {
       {/* ═══ PLATFORM SHOWCASE — AUTO-PLAY ═══ */}
       <section
         className="py-16 sm:py-24 relative overflow-hidden"
-        style={{ background: "#080810", borderTop: "1px solid rgba(201,168,76,0.1)" }}
+        style={{ background: "hsl(var(--background))", borderTop: "1px solid rgba(201,168,76,0.1)" }}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -637,9 +637,9 @@ export default function Plataforma() {
       <TechLine />
 
       {/* ═══ FINAL CTA — DARK THEMED ═══ */}
-      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanlines" style={{ background: "#0a0a0f", borderTop: "1px solid hsl(var(--primary),0.1)" }}>
+      <section className="py-16 sm:py-24 relative overflow-hidden tron-scanlines" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--primary),0.1)" }}>
         <HeroThreeBackground />
-        <div className="absolute inset-0 bg-[#0a0a0f]/60 z-[1]" />
+        <div className="absolute inset-0 bg-[hsl(var(--background))]/60 z-[1]" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 2 }}>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] border rotate-45 hidden sm:block" style={{ borderColor: "hsl(var(--primary),0.05)" }} />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border rotate-[22deg] hidden sm:block" style={{ borderColor: "rgba(201,168,76,0.05)" }} />
