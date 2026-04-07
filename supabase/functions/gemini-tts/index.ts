@@ -30,17 +30,21 @@ const KEY_COOLDOWN_MS = 5 * 60 * 1000; // 5 min cooldown for 403 keys
 function getAllGeminiKeys(): string[] {
   const now = Date.now();
   const keys = [
-    Deno.env.get("GEMINI_API_KEY")
+    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
   ].filter((k): k is string => {
     if (!k) return false;
-    // Skip keys that recently failed with 403
     const failedAt = failedKeyCache[k];
     if (failedAt && (now - failedAt) < KEY_COOLDOWN_MS) return false;
     return true;
   });
 
   if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured (all keys cooling down)");
-  // Shuffle starting from round-robin index so we spread load
   const idx = Math.floor(Date.now() / 1000) % keys.length;
   return [...keys.slice(idx), ...keys.slice(0, idx)];
 }
@@ -164,7 +168,8 @@ Deno.serve(async (req) => {
         failedKeyCache[apiKey] = Date.now();
         continue;
       }
-      if (r.status === 400) continue;
+      // 400/500 = try next key
+      if (r.status === 400 || r.status === 500) continue;
       
       // Other errors, stop trying
       break;
