@@ -72,7 +72,7 @@ export default function ProdutorDashboard() {
     { label: "Editor de Vendas", icon: FileEdit, path: "/dashboard/editor-vendas", desc: "Criar páginas de vendas profissionais" },
     { label: "Email Marketing", icon: Mail, path: "/dashboard/campanhas-email", desc: "Campanhas e automações de email" },
     { label: "Marketplace", icon: ShoppingBag, path: "/dashboard/marketplace", desc: "Explorar o marketplace" },
-    { label: "Afiliados", icon: Share2, path: "/dashboard/afiliados", desc: "Ver quem promove seus produtos" },
+    { label: "Gerenciar Afiliados", icon: Share2, path: "/dashboard/produtor-afiliados", desc: "Programas, solicitações e comissões" },
     { label: "Vendas & Receita", icon: CreditCard, path: "/dashboard/pagamentos", desc: "Configurar Stripe e pagamentos" },
     { label: "Documentos", icon: FileText, path: "/dashboard/documentos", desc: "Contratos e termos de venda" },
     { label: "Docs Internacionais", icon: Globe, path: "/dashboard/documentos-internacionais", desc: "Documentos internacionais" },

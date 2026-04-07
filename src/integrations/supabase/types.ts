@@ -166,6 +166,50 @@ export type Database = {
           },
         ]
       }
+      affiliate_coupons: {
+        Row: {
+          affiliate_user_id: string
+          code: string
+          created_at: string
+          discount_percent: number | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          program_id: string
+          uses: number
+        }
+        Insert: {
+          affiliate_user_id: string
+          code: string
+          created_at?: string
+          discount_percent?: number | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          program_id: string
+          uses?: number
+        }
+        Update: {
+          affiliate_user_id?: string
+          code?: string
+          created_at?: string
+          discount_percent?: number | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          program_id?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_coupons_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_links: {
         Row: {
           affiliate_user_id: string
@@ -197,6 +241,148 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "affiliate_links_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_programs: {
+        Row: {
+          allow_coupon: boolean
+          auto_approve: boolean
+          commission_percent: number
+          cookie_days: number
+          created_at: string
+          creator_id: string
+          id: string
+          is_active: boolean
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          allow_coupon?: boolean
+          auto_approve?: boolean
+          commission_percent?: number
+          cookie_days?: number
+          created_at?: string
+          creator_id: string
+          id?: string
+          is_active?: boolean
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          allow_coupon?: boolean
+          auto_approve?: boolean
+          commission_percent?: number
+          cookie_days?: number
+          created_at?: string
+          creator_id?: string
+          id?: string
+          is_active?: boolean
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_programs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_requests: {
+        Row: {
+          affiliate_user_id: string
+          created_at: string
+          id: string
+          message: string | null
+          program_id: string
+          reviewed_at: string | null
+          status: string
+        }
+        Insert: {
+          affiliate_user_id: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          program_id: string
+          reviewed_at?: string | null
+          status?: string
+        }
+        Update: {
+          affiliate_user_id?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          program_id?: string
+          reviewed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_requests_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_sales: {
+        Row: {
+          affiliate_user_id: string
+          amount_cents: number
+          buyer_email: string | null
+          commission_cents: number
+          created_at: string
+          id: string
+          order_id: string | null
+          product_id: string
+          status: string
+          tracking_ref: string | null
+          tracking_type: string
+        }
+        Insert: {
+          affiliate_user_id: string
+          amount_cents?: number
+          buyer_email?: string | null
+          commission_cents?: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id: string
+          status?: string
+          tracking_ref?: string | null
+          tracking_type?: string
+        }
+        Update: {
+          affiliate_user_id?: string
+          amount_cents?: number
+          buyer_email?: string | null
+          commission_cents?: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          product_id?: string
+          status?: string
+          tracking_ref?: string | null
+          tracking_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_sales_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_sales_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
