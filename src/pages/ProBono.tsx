@@ -93,7 +93,7 @@ export default function ProBono() {
         await supabase.functions.invoke("notifications", {
           body: {
             type: "pro_bono_request",
-            to: "info@elpgreen.com",
+            to: "info@iasofthub.com",
             data: {
               nome: form.nome,
               email: form.email,
@@ -128,14 +128,14 @@ export default function ProBono() {
       <SEO 
         title="ORION Social | Programa de Acesso Gratuito" 
         description="Programa ORION Social — acesso gratuito à plataforma para pessoas e organizações em situação de vulnerabilidade."
-        image="https://www.elpgreen.com/og-images/og-pro-bono.jpg"
+        image="https://www.iasofthub.com/og-images/og-pro-bono.jpg"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebPage",
           "name": "ORION Social - Acesso Gratuito",
-          "url": "https://www.elpgreen.com/pro-bono",
+          "url": "https://www.iasofthub.com/pro-bono",
           "description": "Programa de acesso gratuito à plataforma ORION para organizações e pessoas em vulnerabilidade",
-          "isPartOf": { "@type": "WebSite", "name": "ORION IA by ELP Green Technology", "url": "https://www.elpgreen.com" }
+          "isPartOf": { "@type": "WebSite", "name": "ORION IA by ELP Green Technology", "url": "https://www.iasofthub.com" }
         }}
       />
       <PageHero

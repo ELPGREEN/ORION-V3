@@ -185,7 +185,7 @@ export default function Plataforma() {
       <SEO
         title={`${p.heroLabel} | ORION IA by ELP® Green Technology`}
         description={p.heroDescription}
-        image="https://www.elpgreen.com/og-images/og-plataforma.jpg"
+        image="https://www.iasofthub.com/og-images/og-plataforma.jpg"
         keywords="plataforma, IA empresarial, automação, gestão inteligente, ELP Green Technology"
       />
 
@@ -253,7 +253,7 @@ export default function Plataforma() {
                     </Link>
                   </Button>
                   <Button variant="outline" className="btn-outline-gold px-8 py-5 text-sm tracking-wide" asChild>
-                    <a href="https://www.elpgreen.com/" target="_blank" rel="noopener noreferrer">
+                    <a href="https://www.iasofthub.com/" target="_blank" rel="noopener noreferrer">
                       {p.talkToLawyer}
                       <ArrowRight className="ml-3 h-4 w-4" />
                     </a>
@@ -681,7 +681,7 @@ export default function Plataforma() {
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="btn-outline-gold px-10 py-6 text-sm tracking-wide" asChild>
-                  <a href="https://www.elpgreen.com/" target="_blank" rel="noopener noreferrer">
+                  <a href="https://www.iasofthub.com/" target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="mr-3 h-4 w-4" />
                     {p.talkToLawyer}
                   </a>

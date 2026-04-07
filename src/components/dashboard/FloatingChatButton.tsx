@@ -72,7 +72,7 @@ export const FloatingChatButton = forwardRef<HTMLDivElement>(function FloatingCh
 
           {/* Email */}
           <a
-            href="mailto:info@elpgreen.com"
+            href="mailto:info@iasofthub.com"
             className="flex items-center gap-3 p-3 rounded-md bg-accent/10 hover:bg-accent/20 transition-colors group"
           >
             <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
@@ -80,14 +80,14 @@ export const FloatingChatButton = forwardRef<HTMLDivElement>(function FloatingCh
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">E-mail</p>
-              <p className="text-xs text-muted-foreground">info@elpgreen.com</p>
+              <p className="text-xs text-muted-foreground">info@iasofthub.com</p>
             </div>
             <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
           </a>
 
           {/* Website ELP */}
           <a
-            href="https://www.elpgreen.com/"
+            href="https://www.iasofthub.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 p-3 rounded-md bg-accent/10 hover:bg-accent/20 transition-colors group"
@@ -97,7 +97,7 @@ export const FloatingChatButton = forwardRef<HTMLDivElement>(function FloatingCh
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">Site ELP</p>
-              <p className="text-xs text-muted-foreground">elpgreen.com</p>
+              <p className="text-xs text-muted-foreground">iasofthub.com</p>
             </div>
             <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
           </a>

@@ -75,13 +75,13 @@ export function ChatSidebar({
           </div>
         </div>
         <div className="space-y-2">
-          <a href="mailto:info@elpgreen.com" className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-primary transition-colors px-2">
+          <a href="mailto:info@iasofthub.com" className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-primary transition-colors px-2">
             <Mail className="h-3 w-3" />
-            info@elpgreen.com
+            info@iasofthub.com
           </a>
-          <a href="https://www.elpgreen.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-primary transition-colors px-2">
+          <a href="https://www.iasofthub.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-primary transition-colors px-2">
             <Globe className="h-3 w-3" />
-            www.elpgreen.com
+            www.iasofthub.com
           </a>
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground px-2">
             <MapPin className="h-3 w-3" />

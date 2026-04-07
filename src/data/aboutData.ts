@@ -18,7 +18,7 @@ export const values = [
 ];
 
 export const getLeadershipTeam = (t?: any) => [
-  { name: "Ericson Piccoli", role: "CEO & Founder", image: "/placeholder.svg", location: "Valenza, Italy", bio: "Founder with 20+ years in recycling technology and sustainable innovation.", linkedin: "https://linkedin.com/in/ericsonpiccoli", email: "ericson@elpgreen.com", phone: "+39 350 102 1359" },
+  { name: "Ericson Piccoli", role: "CEO & Founder", image: "/placeholder.svg", location: "Valenza, Italy", bio: "Founder with 20+ years in recycling technology and sustainable innovation.", linkedin: "https://linkedin.com/in/ericsonpiccoli", email: "ericson@iasofthub.com", phone: "+39 350 102 1359" },
 ];
 
 export const getHeadquarters = (t?: any) => [

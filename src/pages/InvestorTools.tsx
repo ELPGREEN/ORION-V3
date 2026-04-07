@@ -418,7 +418,7 @@ export default function InvestorTools() {
       <SEO
         title="Investidores | ORION IA — ELP® Green Technology"
         description="Conheça a plataforma ORION — IA empresarial proprietária com 17+ ferramentas integradas. Oportunidade de investimento em tecnologia de alto crescimento."
-        image="https://www.elpgreen.com/og-images/og-investidor.jpg"
+        image="https://www.iasofthub.com/og-images/og-investidor.jpg"
         keywords="investidores, investimento, IA empresarial, plataforma SaaS, ELP Green Technology"
       />
       <style>{tronStyles}</style>
@@ -614,7 +614,7 @@ export default function InvestorTools() {
                   {[
                     { label: "Sede", value: "Itália (UE)" },
                     { label: "Setor", value: "IA Empresarial & Soluções Sustentáveis" },
-                    { label: "Website", value: "www.elpgreen.com" },
+                    { label: "Website", value: "www.iasofthub.com" },
                     { label: "Marcas Registradas", value: "ELP® · ORION" },
                     { label: "Copyright", value: "© 2023 ELP® Green Technology — All Rights Reserved" },
                   ].map(item => (
