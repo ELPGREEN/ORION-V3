@@ -55,11 +55,12 @@ const navLinks: NavItem[] = [
   },
   {
     label: "Serviços",
-    icon: Gavel,
+    icon: Briefcase,
     children: [
-      { href: "/servicos", label: "Áreas Jurídicas", icon: Scale, desc: "Penal, Internacional, Trabalhista" },
-      { href: "/plataforma#ia", label: "Consultoria IA", icon: Cpu, desc: "Automação e inteligência artificial" },
-      { href: "/docs/rede-neural", label: "Documentação", icon: FileText, desc: "Guias técnicos e APIs" },
+      { href: "/clientes?perfil=advogados", label: "Para Advogados", icon: Scale, desc: "IA jurídica, petições e processos" },
+      { href: "/clientes?perfil=escritorios", label: "Para Empresas", icon: Building2, desc: "CRM, gestão de equipe e faturamento" },
+      { href: "/clientes?perfil=produtores", label: "Para Produtores", icon: ShoppingBag, desc: "Loja, checkout e vendas" },
+      { href: "/servicos", label: "Todos os Serviços", icon: Briefcase, desc: "Visão completa da plataforma" },
     ],
   },
   { href: "/investidor", label: "Investidores", icon: TrendingUp },

@@ -158,7 +158,7 @@ const App = () => (
                   {/* ═══ AUTH REQUIRED — Páginas internas (requer cadastro/login) ═══ */}
                   <Route path="/clientes" element={<AuthGuard><Clientes /></AuthGuard>} />
                   <Route path="/plataforma" element={<AuthGuard><Plataforma /></AuthGuard>} />
-                  <Route path="/servicos" element={<AuthGuard><Servicos /></AuthGuard>} />
+                  <Route path="/servicos" element={<Servicos />} />
                   <Route path="/investidor" element={<AuthGuard><InvestorTools /></AuthGuard>} />
                   <Route path="/contato" element={<AuthGuard><Contato /></AuthGuard>} />
                   <Route path="/consulta" element={<AuthGuard><ConsultaIA /></AuthGuard>} />
