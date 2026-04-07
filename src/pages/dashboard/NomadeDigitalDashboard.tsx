@@ -79,29 +79,38 @@ export default function NomadeDigitalDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Laptop className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Painel Nômade Digital</h1>
-          </div>
-          <p className="text-muted-foreground text-sm mt-1">
-            Gerencie sua loja, produtos, afiliados e finanças
-          </p>
+      {/* Header — Amber/Orange global hub theme */}
+      <div className="relative overflow-hidden border border-[hsl(25,80%,50%,0.2)] bg-gradient-to-br from-[hsl(25,30%,7%)] via-card to-[hsl(25,80%,50%,0.06)] p-6 sm:p-8 rounded-lg">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-20 -right-20 w-72 h-72 blur-[120px] animate-pulse" style={{ background: "hsl(25,80%,50%,0.1)", animationDuration: "6s" }} />
         </div>
-        <Badge variant="outline" className="border-primary/30 text-primary">
-          <Globe className="h-3 w-3 mr-1" />
-          Nômade Digital
-        </Badge>
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[hsl(25,80%,55%,0.6)] mb-1.5 font-sans">HUB GLOBAL</p>
+            <h1 className="text-2xl sm:text-3xl font-serif text-foreground flex items-center gap-2">
+              <Globe className="h-6 w-6 text-[hsl(25,80%,55%)] animate-[spin_20s_linear_infinite]" />
+              Painel Nômade Digital
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Gerencie sua loja, produtos, afiliados e finanças
+            </p>
+          </div>
+          <Badge variant="outline" className="bg-[hsl(25,80%,50%,0.1)] text-[hsl(25,70%,60%)] border-[hsl(25,80%,50%,0.3)]">
+            <Globe className="h-3 w-3 mr-1" />
+            Nômade Digital
+          </Badge>
+        </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats — amber accent */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="bg-card/80 backdrop-blur-sm border-border/40">
+          <Card key={stat.label} className="bg-card/80 border-[hsl(25,80%,50%,0.12)] hover:border-[hsl(25,80%,50%,0.3)] transition-all hover:scale-[1.02]">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                <div className="h-9 w-9 rounded-lg bg-[hsl(25,80%,50%,0.1)] flex items-center justify-center">
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                   <p className="text-lg font-bold text-foreground">{stat.value}</p>

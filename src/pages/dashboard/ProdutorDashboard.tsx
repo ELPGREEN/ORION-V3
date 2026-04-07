@@ -102,27 +102,36 @@ export default function ProdutorDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Store className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Painel do Produtor</h1>
-          </div>
-          <p className="text-muted-foreground text-sm mt-1">Gerencie seus produtos, vendas e afiliados</p>
+      {/* Header — Violet/Purple vibrant theme */}
+      <div className="relative overflow-hidden border border-[hsl(270,60%,50%,0.2)] bg-gradient-to-br from-[hsl(270,30%,8%)] via-card to-[hsl(270,60%,50%,0.08)] p-6 sm:p-8 rounded-lg">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-20 -right-20 w-72 h-72 blur-[120px] animate-pulse" style={{ background: "hsl(270,60%,50%,0.1)", animationDuration: "4s" }} />
         </div>
-        <Badge variant="outline" className="border-primary/30 text-primary">
-          <Package className="h-3 w-3 mr-1" />
-          Produtor
-        </Badge>
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[hsl(270,60%,60%,0.6)] mb-1.5 font-sans">PAINEL DO PRODUTOR</p>
+            <h1 className="text-2xl sm:text-3xl font-serif text-foreground flex items-center gap-2">
+              <Store className="h-6 w-6 text-[hsl(270,60%,55%)]" />
+              Seus Produtos & Vendas
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">Gerencie produtos, vendas e afiliados</p>
+          </div>
+          <Badge variant="outline" className="bg-[hsl(270,60%,50%,0.1)] text-[hsl(270,50%,65%)] border-[hsl(270,60%,50%,0.3)]">
+            <Package className="h-3 w-3 mr-1" />
+            Produtor
+          </Badge>
+        </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats — violet accent */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="bg-card/80 backdrop-blur-sm border-border/40">
+          <Card key={stat.label} className="bg-card/80 border-[hsl(270,60%,50%,0.12)] hover:border-[hsl(270,60%,50%,0.3)] transition-all hover:scale-[1.02]">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                <div className="h-9 w-9 rounded-lg bg-[hsl(270,60%,50%,0.1)] flex items-center justify-center">
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                   <p className="text-lg font-bold text-foreground">{stat.value}</p>

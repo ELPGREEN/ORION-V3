@@ -175,25 +175,39 @@ export default function AfiliadoDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Share2 className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Painel do Afiliado</h1>
-          </div>
-          <p className="text-muted-foreground text-sm mt-1">Promova produtos e ganhe comissões</p>
+      {/* Header — Cyan/Sky analytics theme */}
+      <div className="relative overflow-hidden border border-[hsl(190,70%,45%,0.2)] bg-gradient-to-br from-[hsl(190,30%,6%)] via-card to-[hsl(190,70%,45%,0.06)] p-6 sm:p-8 rounded-lg">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-20 -right-20 w-72 h-72 blur-[120px] animate-pulse" style={{ background: "hsl(190,70%,45%,0.08)", animationDuration: "5s" }} />
+          {/* Grid lines for data-driven feel */}
+          <div className="absolute inset-0" style={{
+            backgroundImage: "linear-gradient(hsl(190,70%,45%,0.02) 1px, transparent 1px), linear-gradient(90deg, hsl(190,70%,45%,0.02) 1px, transparent 1px)",
+            backgroundSize: "50px 50px",
+          }} />
         </div>
-        <Badge variant="outline" className="border-primary/30 text-primary">
-          <Share2 className="h-3 w-3 mr-1" />Afiliado
-        </Badge>
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[hsl(190,70%,55%,0.6)] mb-1.5 font-sans">PAINEL DE PERFORMANCE</p>
+            <h1 className="text-2xl sm:text-3xl font-serif text-foreground flex items-center gap-2">
+              <Share2 className="h-6 w-6 text-[hsl(190,70%,55%)]" />
+              Painel do Afiliado
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">Promova produtos e ganhe comissões</p>
+          </div>
+          <Badge variant="outline" className="bg-[hsl(190,70%,45%,0.1)] text-[hsl(190,60%,60%)] border-[hsl(190,70%,45%,0.3)]">
+            <Share2 className="h-3 w-3 mr-1" />Afiliado
+          </Badge>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="bg-card/80 backdrop-blur-sm border-border/40">
+          <Card key={stat.label} className="bg-card/80 border-[hsl(190,70%,45%,0.12)] hover:border-[hsl(190,70%,45%,0.3)] transition-all hover:scale-[1.02]">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                <div className="h-9 w-9 rounded-lg bg-[hsl(190,70%,45%,0.1)] flex items-center justify-center">
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
                   <p className="text-lg font-bold text-foreground">{stat.value}</p>

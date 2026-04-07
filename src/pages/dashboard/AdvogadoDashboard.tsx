@@ -106,27 +106,37 @@ export default function AdvogadoDashboard() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{greeting}, {userName} ⚖️</h1>
-          <p className="text-muted-foreground text-sm mt-1">Painel do Advogado — {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}</p>
+      {/* Header — Emerald/Teal legal theme */}
+      <div className="relative overflow-hidden border border-[hsl(160,60%,40%,0.2)] bg-gradient-to-br from-[hsl(160,30%,6%)] via-card to-[hsl(160,60%,40%,0.06)] p-6 sm:p-8 rounded-lg">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-20 -right-20 w-72 h-72 blur-[120px] animate-pulse" style={{ background: "hsl(160,60%,40%,0.1)", animationDuration: "5s" }} />
+        </div>
+        <div className="relative z-10">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-[hsl(160,60%,50%,0.6)] mb-1.5 font-sans">{greeting}</p>
+          <h1 className="text-2xl sm:text-3xl font-serif text-foreground">
+            <span className="text-gold-shine">{userName}</span> <span className="text-[hsl(160,60%,50%)]">⚖️</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Painel do Advogado — {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
+          </p>
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats — emerald accent */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {statCards.map((s) => (
           <Card
             key={s.label}
-            className={`cursor-pointer hover:border-primary/40 transition-colors ${s.highlight ? "border-primary/60 bg-primary/5" : ""}`}
+            className={`cursor-pointer transition-all hover:border-[hsl(160,60%,40%,0.4)] hover:scale-[1.02] ${s.highlight ? "border-[hsl(160,60%,40%,0.5)] bg-[hsl(160,60%,40%,0.06)]" : "border-border/50"}`}
             onClick={() => navigate(s.route)}
           >
             <CardContent className="p-4 flex items-center gap-3">
-              <s.icon className="h-5 w-5 text-primary shrink-0" />
+              <div className="h-9 w-9 rounded-lg bg-[hsl(160,60%,40%,0.1)] flex items-center justify-center">
+                <s.icon className="h-4 w-4 text-[hsl(160,60%,45%)]" />
+              </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{s.value}</p>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
+                <p className="text-xl font-bold text-foreground">{s.value}</p>
+                <p className="text-[10px] text-muted-foreground">{s.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -145,10 +155,10 @@ export default function AdvogadoDashboard() {
 
       {/* Main Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Prazos Urgentes */}
-        <Card className="lg:col-span-1">
+      {/* Prazos Urgentes — left border color coding */}
+        <Card className="lg:col-span-1 border-l-2 border-l-destructive/60">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="text-base flex items-center gap-2 font-serif">
               <AlertTriangle className="h-4 w-4 text-destructive" />
               Prazos Urgentes
             </CardTitle>
