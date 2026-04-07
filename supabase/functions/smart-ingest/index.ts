@@ -82,37 +82,48 @@ function smartLegalChunk(text: string, maxChunkSize = 1500): string[] {
   return chunks.length > 0 ? chunks : [text.substring(0, maxChunkSize)];
 }
 
-// ─── Generate Embedding ───
-async function generateEmbedding(text: string, signal?: AbortSignal): Promise<number[]> {
-  const keys = [
-    Deno.env.get("OPENAI_API_KEY"),
-    Deno.env.get("OPENAI_API_KEY_2"),
-  ].filter(Boolean) as string[];
-
-  for (const key of keys) {
-    try {
-      const response = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        signal: signal || AbortSignal.timeout(10000),
-        body: JSON.stringify({ model: EMBEDDING_MODEL, input: text.substring(0, 8000), dimensions: EMBEDDING_DIMS }),
-      });
-      if (!response.ok) { await response.text(); continue; }
-      const data = await response.json();
-      return data?.data?.[0]?.embedding || [];
-    } catch { continue; }
-  }
-  throw new Error("All OpenAI keys exhausted for embedding");
+// ─── Generate Embedding (Gemini FREE) ───
+function getGeminiKeys(): string[] {
+  return [
+    Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"), Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
+  ].filter((k): k is string => !!k);
 }
 
-// ─── Extract text from PDF using OpenAI Vision (GPT-4o-mini) — multi-pass ───
-async function extractTextWithOpenAI(fileBase64: string, fileName: string, deadline: number): Promise<string> {
-  const keys = [
-    Deno.env.get("OPENAI_API_KEY"),
-    Deno.env.get("OPENAI_API_KEY_2"),
-  ].filter(Boolean) as string[];
+async function generateEmbedding(text: string, signal?: AbortSignal): Promise<number[]> {
+  const keys = getGeminiKeys();
+  if (keys.length === 0) throw new Error("No Gemini keys configured for embeddings");
+  for (const key of keys) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: signal || AbortSignal.timeout(10000),
+          body: JSON.stringify({
+            model: "models/gemini-embedding-001",
+            content: { parts: [{ text: text.substring(0, 8000) }] },
+            outputDimensionality: 768,
+          }),
+        }
+      );
+      if (!response.ok) { await response.text(); continue; }
+      const data = await response.json();
+      const emb = data?.embedding?.values;
+      if (emb && emb.length > 0) {
+        return emb.length >= 768 ? emb.slice(0, 768) : [...emb, ...new Array(768 - emb.length).fill(0)];
+      }
+    } catch { continue; }
+  }
+  throw new Error("All Gemini keys exhausted for embedding");
+}
 
-  if (keys.length === 0) throw new Error("No OpenAI API keys configured");
+// ─── Extract text from PDF using Gemini Vision (FREE) ───
+async function extractTextWithOpenAI(fileBase64: string, fileName: string, deadline: number): Promise<string> {
+  const keys = getGeminiKeys();
+  if (keys.length === 0) throw new Error("No Gemini API keys configured");
 
   const firstPrompt = `Extraia TODO o texto deste documento PDF de forma completa e fiel ao original.
 Mantenha a estrutura de parágrafos, títulos, artigos e numeração.

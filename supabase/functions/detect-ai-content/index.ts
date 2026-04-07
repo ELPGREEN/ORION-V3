@@ -36,22 +36,8 @@ ${text.slice(0, 3000)}
 
     let result;
 
-    // Try OpenAI first, fallback to Gemini
-    if (OPENAI_API_KEY) {
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${OPENAI_API_KEY}` },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: analysisPrompt }],
-          temperature: 0.1,
-          response_format: { type: "json_object" },
-        }),
-      });
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content;
-      if (content) result = JSON.parse(content);
-    } else if (GEMINI_API_KEY) {
+    // Use Gemini (FREE)
+    if (GEMINI_API_KEY) {
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
