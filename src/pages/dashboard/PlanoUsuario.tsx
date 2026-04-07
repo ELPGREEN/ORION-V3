@@ -1,12 +1,13 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Zap, Crown, Building2, Rocket, Check, X, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const PLANS = [
@@ -87,7 +88,31 @@ const PLANS = [
 export default function PlanoUsuario() {
   const { user } = useAuth();
   const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
+  // Detect successful Stripe payment return
+  useEffect(() => {
+    const success = searchParams.get("success");
+    const planType = searchParams.get("plan");
+    if (success === "true" && planType && user) {
+      // Invalidate plan cache to fetch fresh data
+      queryClient.invalidateQueries({ queryKey: ["user-plan-gate", user.id] });
+      queryClient.invalidateQueries({ queryKey: ["user-plan", user.id] });
+
+      toast.success(`🚀 Pagamento confirmado! Plano ${planType} ativado.`, {
+        description: "Orion será ativado agora. Iniciando configurações...",
+        duration: 5000,
+      });
+
+      // Redirect to Orion onboarding after short delay
+      const timer = setTimeout(() => {
+        navigate("/dashboard/configurar-ia?from=payment&plan=" + planType, { replace: true });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, user, navigate, queryClient]);
   const { data: plan } = useQuery({
     queryKey: ["user-plan", user?.id],
     queryFn: async () => {
