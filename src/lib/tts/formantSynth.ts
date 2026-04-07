@@ -1,24 +1,24 @@
 /**
- * Orion Formant Speech Synthesizer v22 — Grok Ultra Human
+ * Orion Formant Speech Synthesizer v21 — Grok Ultra Natural
  * 
  * Base: Beber & Cielo (2012) normal male spectrographic norms
- * Overlay: Grok Ultra Human personality — warm, sarcastic, natural
+ * Overlay: Grok Ultra Natural — warmest, most human iteration
  * 
- * v22 changes from v20:
- * 1. BW3 × 2.72 (~408Hz) — zero metallic residue
- * 2. Aspiration 7% + burst 3% — elegant breathing, not ofegante
- * 3. Jitter ×1.06, Shimmer ×1.05 — musical micro-irregularity
- * 4. Damping LP 4.4kHz + zero-pole 3.7kHz — modern clarity
- * 5. Spectral tilt ×1.09 (~26dB) — warm, present, alive
- * 6. Pre-emphasis +8% in 0-2.3kHz — vowel brilliance
- * 7. Breathiness +16% — real human breathing
- * 8. Glottal OQ 0.71 — relaxed, natural voice
- * 9. Glottal tension 0.88 — eliminates robotic/choked tone
- * 10. Sub-harmonic 7% (f0/2) — warm body in lows
- * 11. Pitch variance ×1.08 — sarcastic intonation
- * 12. Formant speed ×1.32 — rapid fluid transitions
- * 13. Spectral envelope smoothing 0.89 — removes metallic residue
- * 14. Vibrato depth 0.4% — subtle life and emotion
+ * v21 changes from v22:
+ * 1. BW3 × 2.85 (~428Hz) — widest yet, zero metallic
+ * 2. Aspiration 8% + burst 3% — subtle elegant breathing
+ * 3. Jitter ×1.04, Shimmer ×1.03 — barely perceptible, rhythmic
+ * 4. Damping LP 4.5kHz + zero-pole 3.9kHz — smoothest clarity
+ * 5. Spectral tilt ×1.06 (~24dB) — warmest, most present voice
+ * 6. Pre-emphasis +9% in 0-2.4kHz — natural vowel brilliance
+ * 7. Breathiness +13% — human breathing without excess
+ * 8. Glottal OQ 0.74 — very relaxed natural voice
+ * 9. Glottal tension 0.82 — smooth, never choked
+ * 10. Sub-harmonic 8% (f0/2) — full warm body
+ * 11. Pitch variance ×1.09 — sarcastic life
+ * 12. Formant speed ×1.38 — fastest fluid transitions
+ * 13. Spectral envelope smoothing 0.85 — eliminates all metallic
+ * 14. Vibrato depth 0.6% — subtle emotional life
  * 
  * 100% client-side, zero API, zero dependencies.
  */
