@@ -1393,7 +1393,6 @@ export function useOrionReasoning(
       );
       if (timeEstimate.isDeep && timeEstimate.message) {
         addLog(`⏱️ DeepEstimate: ${timeEstimate.complexity}, ~${timeEstimate.estimatedMs}ms`);
-        // Show estimation message to user
         setChatHistory(prev => {
           const last = prev[prev.length - 1];
           if (last?.role === "ai" && last.text.startsWith("⏳")) {
@@ -1402,8 +1401,8 @@ export function useOrionReasoning(
           return prev;
         });
         setThought(timeEstimate.message);
-        // Speak the estimation (non-blocking, short)
-        try { await speak(timeEstimate.spokenMessage); } catch {}
+        // NON-BLOCKING: fire-and-forget speak so we don't delay the LLM call
+        speak(timeEstimate.spokenMessage).catch(() => {});
       }
 
       // ═══ LAYER 2: NLP Semantics + Cognition Context ═══

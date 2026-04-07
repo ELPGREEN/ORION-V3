@@ -691,9 +691,7 @@ export async function analyzeFrameStreaming(
       const tCtx = tempCanvas.getContext("2d");
       if (!tCtx) return { description: null, learnedFacts: [], identifiedObjects: [] };
       tCtx.drawImage(canvas, 0, 0, sw, sh);
-
-      // Apply CLAHE contrast enhancement (same as non-streaming path)
-      applyContrastEnhancement(tCtx, sw, sh);
+      // SKIP CLAHE in streaming path — saves ~50-80ms per call
 
       // Validate frame is not blank — check pixel variance in a small sample
       const sampleSize = 64;
