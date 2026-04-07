@@ -1587,47 +1587,76 @@ function buildLovableMessages(messages: any[]) {
   });
 }
 
-// Circuit breaker: skip Lovable AI for 10 minutes after credits exhausted
-let lovableDisabledUntil = 0;
+// ─── Direct Gemini API (FREE) — replaces Lovable AI Gateway ───
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_MODEL = "gemini-2.5-flash";
 
-async function callLovableAI(messages: any[], stream: boolean): Promise<Response> {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
-  if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+function getGeminiKeys(): string[] {
+  return [
+    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
+  ].filter((k): k is string => !!k);
+}
 
-  // Skip if circuit breaker is active
-  if (Date.now() < lovableDisabledUntil) {
-    throw new Error("Lovable AI circuit breaker active — skipping");
+function convertToGeminiFormat(messages: any[]): any {
+  const systemParts: string[] = [];
+  const contents: any[] = [];
+
+  for (const m of messages) {
+    const role = m.role === "assistant" ? "model" : m.role;
+    if (role === "system") {
+      systemParts.push(typeof m.content === "string" ? m.content : JSON.stringify(m.content));
+      continue;
+    }
+    const text = typeof m.content === "string" ? m.content : m.content?.filter?.((c: any) => c.type === "text").map((c: any) => c.text).join(" ") || String(m.content);
+    contents.push({ role: role === "user" ? "user" : "model", parts: [{ text }] });
   }
 
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: buildLovableMessages(messages),
-      stream,
-    }),
-  });
+  const body: any = { contents, generationConfig: { temperature: 0.7 } };
+  if (systemParts.length > 0) {
+    body.systemInstruction = { parts: [{ text: systemParts.join("\n\n") }] };
+  }
+  return body;
+}
 
-  if (resp.status === 429) {
-    lovableDisabledUntil = Date.now() + 60_000; // 1 min cooldown
-    throw new Error("Lovable AI rate limited (429)");
+async function callGeminiDirect(messages: any[], stream: boolean): Promise<Response> {
+  const keys = getGeminiKeys();
+  if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured");
+
+  const geminiBody = convertToGeminiFormat(buildLovableMessages(messages));
+  const endpoint = stream ? "streamGenerateContent?alt=sse" : "generateContent";
+
+  for (const key of keys) {
+    const url = `${GEMINI_API_BASE}/${GEMINI_MODEL}:${endpoint}&key=${key}`;
+    try {
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(geminiBody),
+      });
+      if (resp.ok) return resp;
+      if (resp.status === 429) { await resp.text(); continue; }
+      const errText = await resp.text();
+      console.warn(`[neural-ops] Gemini key failed (${resp.status}): ${errText.slice(0, 100)}`);
+      continue;
+    } catch (e) {
+      console.warn(`[neural-ops] Gemini key error:`, e);
+      continue;
+    }
   }
-  if (resp.status === 402) {
-    lovableDisabledUntil = Date.now() + 10 * 60_000; // 10 min cooldown
-    throw new Error("Lovable AI credits exhausted (402)");
-  }
-  if (!resp.ok) {
-    const errText = await resp.text();
-    throw new Error(`Lovable AI ${resp.status}: ${errText}`);
-  }
-  return resp;
+  throw new Error(`All ${keys.length} Gemini keys failed`);
 }
 
 async function callLovableAIFallback(messages: any[]): Promise<string> {
-  const resp = await callLovableAI(messages, false);
+  const resp = await callGeminiDirect(messages, false);
   const data = await resp.json();
-  return data.choices?.[0]?.message?.content || "";
+  // Gemini native format
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
 function parseOrionResponse(text: string) {

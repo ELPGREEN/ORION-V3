@@ -457,31 +457,28 @@ Be STRICT: reject if any spoofing indicators, poor lighting, or single-angle onl
       }
     }
     
-    // Fallback: Lovable AI Gateway
-    if (!text && lovableKey) {
+    // Fallback: Direct Gemini API (FREE — no Lovable Gateway)
+    if (!text && geminiKey) {
       try {
-        const imgMessages = imageContents.map((p: any) => ({
-          type: "image_url" as const,
-          image_url: { url: `data:${p.inlineData.mimeType};base64,${p.inlineData.data}` },
-        }));
-        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [{ role: "user", content: [...imgMessages, { type: "text", text: prompt }] }],
-            temperature: 0.1,
-            max_tokens: 800,
-          }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          text = data.choices?.[0]?.message?.content || "";
-        } else {
-          console.error("LovableAI face-auth error:", res.status);
+        const fallbackKeys = [geminiKey, Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3")].filter(Boolean) as string[];
+        for (const k of fallbackKeys) {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [...imageContents, { text: prompt }] }],
+              generationConfig: { temperature: 0.1, maxOutputTokens: 800 },
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            break;
+          }
+          await res.text();
         }
       } catch (e) {
-        console.error("LovableAI face-auth fetch error:", e);
+        console.error("Gemini fallback face-auth error:", e);
       }
     }
     
@@ -628,30 +625,28 @@ Prefer false negatives over false positives (reject uncertain matches).`,
       }
     }
     
-    if (!text && lovableKey) {
+    // Fallback: Direct Gemini API (FREE)
+    if (!text && geminiKey) {
       try {
-        const imgMessages = imageContents.map((p: any) => ({
-          type: "image_url" as const,
-          image_url: { url: `data:${p.inlineData.mimeType};base64,${p.inlineData.data}` },
-        }));
-        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [{ role: "user", content: [...imgMessages, { type: "text", text: prompt }] }],
-            temperature: 0.1,
-            max_tokens: 400,
-          }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          text = data.choices?.[0]?.message?.content || "";
-        } else {
-          console.error("LovableAI verify error:", res.status);
+        const fallbackKeys = [geminiKey, Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3")].filter(Boolean) as string[];
+        for (const k of fallbackKeys) {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [...imageContents, { text: prompt }] }],
+              generationConfig: { temperature: 0.1, maxOutputTokens: 400 },
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            break;
+          }
+          await res.text();
         }
       } catch (e) {
-        console.error("LovableAI verify fetch error:", e);
+        console.error("Gemini fallback verify error:", e);
       }
     }
     

@@ -13,7 +13,7 @@ const corsHeaders = {
 
 const GITHUB_API = "https://api.github.com";
 const OWNER = "lovable-dev"; // Will be overridden by repo info
-const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 interface AnalysisRequest {
   mode: "scan" | "analyze_file" | "find_gaps" | "suggest_improvements" | "architecture_map";
@@ -27,7 +27,7 @@ serve(async (req) => {
 
   try {
     const GITHUB_PAT = Deno.env.get("GITHUB_PAT_CHILD") || Deno.env.get("CHILD_GIT_TOKEN");
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
 
     if (!GITHUB_PAT) {
       return new Response(JSON.stringify({ error: "GitHub PAT not configured" }), {
