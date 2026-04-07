@@ -59,7 +59,7 @@ export default function Depoimentos() {
       <SEO 
         title="Depoimentos | ORION IA by ELP Green Technology" 
         description="Veja o que nossos clientes dizem sobre a plataforma ORION. Avaliações reais de usuários da plataforma de IA empresarial."
-        image="https://www.iasofthub.com/og-images/og-depoimentos.jpg"
+        image="https://www.elpgreen.com/og-images/og-depoimentos.jpg"
       />
       <PageHero
         label={t.testimonials.title}
@@ -159,7 +159,7 @@ export default function Depoimentos() {
                   {t.testimonials.seeGoogleReviews}
                 </p>
                 <Button asChild className="btn-gold">
-                  <a href="https://www.iasofthub.com/" target="_blank" rel="noopener noreferrer">
+                  <a href="https://www.elpgreen.com/" target="_blank" rel="noopener noreferrer">
                     {t.testimonials.viewGoogleReviews}
                     <ExternalLink className="ml-2 h-4 w-4" />
                   </a>
@@ -210,7 +210,7 @@ export default function Depoimentos() {
               <Link to="/cadastro">Começar Agora</Link>
             </Button>
             <Button size="lg" className="btn-outline-gold" asChild>
-              <a href="https://www.iasofthub.com/" target="_blank" rel="noopener noreferrer">
+              <a href="https://www.elpgreen.com/" target="_blank" rel="noopener noreferrer">
                 Fale Conosco
                 <ArrowRight className="ml-2 h-4 w-4" />
               </a>

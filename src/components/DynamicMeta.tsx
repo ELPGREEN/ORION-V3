@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 const SITE_NAME = "ORION IA by ELP® Green Technology";
-const BASE_URL = "https://www.iasofthub.com";
+const BASE_URL = "https://www.elpgreen.com";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-images/og-home.jpg`;
 const DEFAULT_KEYWORDS =
   "ORION IA, ELP Green Technology, inteligência artificial empresarial, IA jurídica, LegalTech, NeuroCore, Lumen7 Engine, AquaMonkey, AI platform, artificial intelligence, legal technology, tecnologia sustentável, CRM inteligente, automação neural";
@@ -32,8 +32,8 @@ function buildBaseJsonLd(url: string) {
         "@type": "Organization",
         name: "ELP® Green Technology",
         legalName: "ELP Green Technology S.R.L.",
-        url: "https://www.iasofthub.com",
-        email: "info@iasofthub.com",
+        url: "https://www.elpgreen.com",
+        email: "info@elpgreen.com",
         description:
           "Empresa de tecnologia especializada em inteligência artificial empresarial, LegalTech e soluções sustentáveis. CNPJ 42.501.190/0001-70.",
         founder: {
@@ -42,7 +42,7 @@ function buildBaseJsonLd(url: string) {
           jobTitle: "General Director & Founder, Systems Engineer",
         },
         taxID: "42.501.190/0001-70",
-        sameAs: ["https://www.iasofthub.com"],
+        sameAs: ["https://www.elpgreen.com"],
       },
       {
         "@type": "SoftwareApplication",

@@ -32,20 +32,20 @@ export default function Index() {
       <SEO
         title="ORION IA | Inteligência Artificial Empresarial — ELP® Green Technology"
         description="Plataforma de IA empresarial para automação de processos, gestão de documentos e clientes. Orion Shield com proteção de nível bancário. By ELP® Green Technology."
-        image="https://www.iasofthub.com/og-images/og-home.jpg"
-        canonical="https://www.iasofthub.com"
+        image="https://www.elpgreen.com/og-images/og-home.jpg"
+        canonical="https://www.elpgreen.com"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
           "name": "ORION - IA Empresarial",
-          "url": "https://www.iasofthub.com",
+          "url": "https://www.elpgreen.com",
           "description": "Plataforma de inteligência artificial empresarial para automação, gestão de documentos, clientes e processos.",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
           "creator": {
             "@type": "Organization",
             "name": "ELP® Green Technology",
-            "url": "https://www.iasofthub.com",
+            "url": "https://www.elpgreen.com",
           },
         }}
       />

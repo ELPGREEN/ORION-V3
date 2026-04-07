@@ -144,7 +144,7 @@ const OrionExtensionPage = () => {
         {/* Footer */}
         <div className="text-center text-xs text-muted-foreground">
           <a
-            href="https://www.iasofthub.com"
+            href="https://www.elpgreen.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 hover:text-foreground transition-colors"

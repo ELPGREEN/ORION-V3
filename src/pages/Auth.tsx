@@ -408,7 +408,7 @@ export default function Auth() {
       <SEO
         title="Acesso Seguro | ORION IA by ELP® Green Technology"
         description="Faça login ou crie sua conta na plataforma ORION IA. Acesso seguro com autenticação biométrica facial e por voz. ELP® Green Technology."
-        image="https://www.iasofthub.com/og-images/og-auth.jpg"
+        image="https://www.elpgreen.com/og-images/og-auth.jpg"
         keywords="login, cadastro, acesso seguro, autenticação, biometria, ORION IA"
         noIndex
       />
