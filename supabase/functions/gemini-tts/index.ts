@@ -127,10 +127,9 @@ Deno.serve(async (req) => {
       };
     }
 
-    // Try all keys until one works (handles 403 blocked keys AND 429 rate limits)
+    // Try all keys until one works (handles 403 blocked keys)
     let response: Response | null = null;
     let lastError = "";
-    let all429 = true;
     for (const apiKey of keys) {
       const url = `${API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
       const r = await fetch(url, {
@@ -141,7 +140,6 @@ Deno.serve(async (req) => {
 
       if (r.ok) {
         response = r;
-        all429 = false;
         break;
       }
 
@@ -149,22 +147,18 @@ Deno.serve(async (req) => {
       lastError = errText.slice(0, 200);
       console.warn(`[Gemini TTS] Key failed (${r.status}): ${lastError.slice(0, 100)}`);
 
-      // 429 or 403 or 400 = try next key
-      if (r.status === 429 || r.status === 403 || r.status === 400) {
-        if (r.status !== 429) all429 = false;
-        continue;
+      if (r.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limited, try again shortly", fallback: true }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
+
+      // 403 = key blocked, try next key
+      if (r.status === 403 || r.status === 400) continue;
       
-      all429 = false;
       // Other errors, stop trying
       break;
-    }
-
-    if (!response && all429) {
-      return new Response(
-        JSON.stringify({ error: "Rate limited, try again shortly", fallback: true }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
     if (!response) {
