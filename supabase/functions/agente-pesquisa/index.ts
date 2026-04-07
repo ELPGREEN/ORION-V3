@@ -650,35 +650,39 @@ Sintetize as informações de forma profissional e detalhada em português.`;
         };
         if (!query) return json({ success: false, error: "query required" }, 400);
 
-        // ═══ STEP 1: Generate embedding via OpenAI ═══
+        // ═══ STEP 1: Generate embedding via Gemini (FREE) ═══
         let embeddingResults: unknown[] = [];
-        const openaiKey = Deno.env.get("OPENAI_API_KEY");
+        const geminiEmbKeys = [
+          Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+          Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"),
+        ].filter((k): k is string => !!k);
         
-        if (openaiKey) {
+        if (geminiEmbKeys.length > 0) {
           try {
-            const embResponse = await fetch("https://api.openai.com/v1/embeddings", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${openaiKey}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model: "text-embedding-3-small",
-                input: query,
-                dimensions: 768,
-              }),
-            });
+            const embResponse = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${geminiEmbKeys[0]}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  model: "models/gemini-embedding-001",
+                  content: { parts: [{ text: query.slice(0, 2000) }] },
+                  outputDimensionality: 768,
+                }),
+              }
+            );
 
             if (embResponse.ok) {
               const embData = await embResponse.json();
-              const embedding = embData.data?.[0]?.embedding;
+              const embedding = embData?.embedding?.values;
 
-              if (embedding) {
+              if (embedding && embedding.length > 0) {
+                const padded = embedding.length >= 768 ? embedding.slice(0, 768) : [...embedding, ...new Array(768 - embedding.length).fill(0)];
                 // ═══ STEP 2: Hybrid search with v3 function ═══
                 const { data: hybridResults, error: searchErr } = await supabase.rpc(
                   "hybrid_search_legal_v3",
                   {
-                    query_embedding: JSON.stringify(embedding),
+                    query_embedding: JSON.stringify(padded),
                     query_text: query,
                     match_count: 20,
                     semantic_weight: 0.55,
@@ -693,12 +697,12 @@ Sintetize as informações de forma profissional e detalhada em português.`;
 
                 if (!searchErr && hybridResults?.length > 0) {
                   embeddingResults = hybridResults;
-                  console.log(`[legal_search] Hybrid v3: ${hybridResults.length} results (embedding)`);
+                  console.log(`[legal_search] Hybrid v3: ${hybridResults.length} results (Gemini embedding)`);
                 }
               }
             }
           } catch (e) {
-            console.warn("Embedding search failed, falling back to text search:", e);
+            console.warn("Gemini embedding search failed, falling back to text search:", e);
           }
         }
 
@@ -793,7 +797,7 @@ REGRAS:
           results_count: embeddingResults.length,
           knowledge_count: knowledgeResults.length,
           datajud_count: datajudResults.length,
-          search_method: openaiKey ? "hybrid_embedding_v3" : "text_fallback",
+          search_method: geminiEmbKeys.length > 0 ? "hybrid_gemini_embedding" : "text_fallback",
           raw_results: (embeddingResults as Array<{ id: string; title: string; source: string; source_label: string; url: string; published_date: string; combined_score?: number }>)
             .slice(0, 12)
             .map((r) => ({
@@ -845,27 +849,34 @@ REGRAS:
         };
         if (!query) return json({ success: false, error: "query required" }, 400);
 
-        // ═══ Try embedding-based search first ═══
+        // ═══ Try Gemini embedding-based search first (FREE) ═══
         let kbResults: unknown[] = [];
-        const openaiKey2 = Deno.env.get("OPENAI_API_KEY");
+        const geminiEmbKeys2 = [
+          Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+        ].filter((k): k is string => !!k);
 
-        if (openaiKey2) {
+        if (geminiEmbKeys2.length > 0) {
           try {
-            const embResp = await fetch("https://api.openai.com/v1/embeddings", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${openaiKey2}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ model: "text-embedding-3-small", input: query }),
-            });
+            const embResp = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${geminiEmbKeys2[0]}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  model: "models/gemini-embedding-001",
+                  content: { parts: [{ text: query.slice(0, 2000) }] },
+                  outputDimensionality: 768,
+                }),
+              }
+            );
 
             if (embResp.ok) {
               const embData = await embResp.json();
-              const embedding = embData.data?.[0]?.embedding;
-              if (embedding) {
+              const embedding = embData?.embedding?.values;
+              if (embedding && embedding.length > 0) {
+                const padded = embedding.length >= 768 ? embedding.slice(0, 768) : [...embedding, ...new Array(768 - embedding.length).fill(0)];
                 const { data: neuralResults } = await supabase.rpc("search_neural_knowledge", {
-                  query_embedding: JSON.stringify(embedding),
+                  query_embedding: JSON.stringify(padded),
                   query_text: query,
                   match_count: 15,
                   filter_type: source_type || null,

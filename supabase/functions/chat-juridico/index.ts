@@ -557,35 +557,37 @@ async function callWithFallback(
   throw new Error("All LLM providers failed");
 }
 
-// ====== EMBEDDING (OpenAI text-embedding-3-small — 768 dims) ======
+// ====== EMBEDDING (Gemini embedding-001 — 768 dims, FREE) ======
 async function generateEmbedding(text: string): Promise<number[]> {
-  const openaiKeys = [
-    Deno.env.get("OPENAI_API_KEY"),
-    Deno.env.get("OPENAI_API_KEY_2"),
-  ].filter(Boolean) as string[];
+  const geminiKeys = [
+    Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"),
+  ].filter((k): k is string => !!k);
 
   const truncated = text.substring(0, 8000);
-  for (const apiKey of openaiKeys) {
+  for (const key of geminiKeys) {
     try {
-      const response = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "text-embedding-3-small",
-          input: truncated,
-          dimensions: 768,
-        }),
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "models/gemini-embedding-001",
+            content: { parts: [{ text: truncated }] },
+            outputDimensionality: 768,
+          }),
+        }
+      );
       if (response.ok) {
         const data = await response.json();
-        const embedding = data?.data?.[0]?.embedding || [];
-        if (embedding.length === 768) return embedding;
-      }
+        const emb = data?.embedding?.values;
+        if (emb && emb.length > 0) {
+          return emb.length >= 768 ? emb.slice(0, 768) : [...emb, ...new Array(768 - emb.length).fill(0)];
+        }
+      } else { await response.text(); }
     } catch (err) {
-      console.warn("OpenAI embedding error:", err);
+      console.warn("Gemini embedding error:", err);
     }
   }
   

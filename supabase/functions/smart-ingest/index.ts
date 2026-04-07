@@ -82,37 +82,48 @@ function smartLegalChunk(text: string, maxChunkSize = 1500): string[] {
   return chunks.length > 0 ? chunks : [text.substring(0, maxChunkSize)];
 }
 
-// ─── Generate Embedding ───
-async function generateEmbedding(text: string, signal?: AbortSignal): Promise<number[]> {
-  const keys = [
-    Deno.env.get("OPENAI_API_KEY"),
-    Deno.env.get("OPENAI_API_KEY_2"),
-  ].filter(Boolean) as string[];
-
-  for (const key of keys) {
-    try {
-      const response = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        signal: signal || AbortSignal.timeout(10000),
-        body: JSON.stringify({ model: EMBEDDING_MODEL, input: text.substring(0, 8000), dimensions: EMBEDDING_DIMS }),
-      });
-      if (!response.ok) { await response.text(); continue; }
-      const data = await response.json();
-      return data?.data?.[0]?.embedding || [];
-    } catch { continue; }
-  }
-  throw new Error("All OpenAI keys exhausted for embedding");
+// ─── Generate Embedding (Gemini FREE) ───
+function getGeminiKeys(): string[] {
+  return [
+    Deno.env.get("GEMINI_API_KEY"), Deno.env.get("GEMINI_API_KEY_2"), Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"), Deno.env.get("GEMINI_API_KEY_5"), Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
+  ].filter((k): k is string => !!k);
 }
 
-// ─── Extract text from PDF using OpenAI Vision (GPT-4o-mini) — multi-pass ───
-async function extractTextWithOpenAI(fileBase64: string, fileName: string, deadline: number): Promise<string> {
-  const keys = [
-    Deno.env.get("OPENAI_API_KEY"),
-    Deno.env.get("OPENAI_API_KEY_2"),
-  ].filter(Boolean) as string[];
+async function generateEmbedding(text: string, signal?: AbortSignal): Promise<number[]> {
+  const keys = getGeminiKeys();
+  if (keys.length === 0) throw new Error("No Gemini keys configured for embeddings");
+  for (const key of keys) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: signal || AbortSignal.timeout(10000),
+          body: JSON.stringify({
+            model: "models/gemini-embedding-001",
+            content: { parts: [{ text: text.substring(0, 8000) }] },
+            outputDimensionality: 768,
+          }),
+        }
+      );
+      if (!response.ok) { await response.text(); continue; }
+      const data = await response.json();
+      const emb = data?.embedding?.values;
+      if (emb && emb.length > 0) {
+        return emb.length >= 768 ? emb.slice(0, 768) : [...emb, ...new Array(768 - emb.length).fill(0)];
+      }
+    } catch { continue; }
+  }
+  throw new Error("All Gemini keys exhausted for embedding");
+}
 
-  if (keys.length === 0) throw new Error("No OpenAI API keys configured");
+// ─── Extract text from PDF using Gemini Vision (FREE) ───
+async function extractTextWithOpenAI(fileBase64: string, fileName: string, deadline: number): Promise<string> {
+  const keys = getGeminiKeys();
+  if (keys.length === 0) throw new Error("No Gemini API keys configured");
 
   const firstPrompt = `Extraia TODO o texto deste documento PDF de forma completa e fiel ao original.
 Mantenha a estrutura de parágrafos, títulos, artigos e numeração.
@@ -125,43 +136,42 @@ Se o documento for muito longo, extraia o máximo possível desde o início.`;
   // Pass 1: initial extraction
   for (const key of keys) {
     try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        signal: AbortSignal.timeout(120_000),
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{
-            role: "user",
-            content: [
-              { type: "text", text: firstPrompt },
-              { type: "image_url", image_url: { url: `data:application/pdf;base64,${fileBase64}` } },
-            ],
-          }],
-          max_tokens: 16384,
-          temperature: 0.1,
-        }),
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(120_000),
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [
+              { text: firstPrompt },
+              { inlineData: { mimeType: "application/pdf", data: fileBase64 } },
+            ] }],
+            generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
+          }),
+        }
+      );
 
       if (!response.ok) {
-        console.warn(`OpenAI pass 1 failed (${response.status})`);
+        console.warn(`Gemini pass 1 failed (${response.status})`);
+        await response.text();
         continue;
       }
 
       const data = await response.json();
-      const text = data.choices?.[0]?.message?.content || "";
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       if (text.length > 100) {
         fullText = text;
         keyIndex = keys.indexOf(key);
-        console.log(`✅ OpenAI pass 1: ${text.length} chars from ${fileName}`);
+        console.log(`✅ Gemini pass 1: ${text.length} chars from ${fileName}`);
         break;
       }
     } catch (err: any) {
-      console.warn(`OpenAI pass 1 error: ${err.message}`);
+      console.warn(`Gemini pass 1 error: ${err.message}`);
     }
   }
 
-  if (!fullText) throw new Error("OpenAI text extraction failed with all keys");
+  if (!fullText) throw new Error("Gemini text extraction failed with all keys");
 
   // Multi-pass continuation: keep asking for more text if the output was likely truncated
   // GPT-4o-mini max output is ~16K tokens ≈ ~50K chars for Portuguese
@@ -188,31 +198,30 @@ Continue EXATAMENTE de onde parou. Retorne apenas o texto continuado, sem repeti
 
     const key = keys[keyIndex % keys.length];
     try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        signal: AbortSignal.timeout(Math.min(90_000, deadline - Date.now() - 10000)),
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [{
-            role: "user",
-            content: [
-              { type: "text", text: continuePrompt },
-              { type: "image_url", image_url: { url: `data:application/pdf;base64,${fileBase64}` } },
-            ],
-          }],
-          max_tokens: 16384,
-          temperature: 0.1,
-        }),
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: AbortSignal.timeout(Math.min(90_000, deadline - Date.now() - 10000)),
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [
+              { text: continuePrompt },
+              { inlineData: { mimeType: "application/pdf", data: fileBase64 } },
+            ] }],
+            generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
+          }),
+        }
+      );
 
       if (!response.ok) {
-        console.warn(`OpenAI pass ${pass} failed (${response.status})`);
+        console.warn(`Gemini pass ${pass} failed (${response.status})`);
+        await response.text();
         break;
       }
 
       const data = await response.json();
-      const moreText = data.choices?.[0]?.message?.content || "";
+      const moreText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       if (moreText.length < 500) {
         console.log(`📄 Pass ${pass}: only ${moreText.length} chars, document likely complete`);
         break;
@@ -222,7 +231,7 @@ Continue EXATAMENTE de onde parou. Retorne apenas o texto continuado, sem repeti
       console.log(`📖 Pass ${pass}: +${moreText.length} chars (total: ${fullText.length})`);
       keyIndex++;
     } catch (err: any) {
-      console.warn(`OpenAI pass ${pass} error: ${err.message}`);
+      console.warn(`Gemini pass ${pass} error: ${err.message}`);
       break;
     }
   }

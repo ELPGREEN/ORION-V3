@@ -887,10 +887,8 @@ async function refineQueryWithAI(rawQuery: string): Promise<{ refinedQuery: stri
       for (const p of enabledProviders) tryOrder.push(p.provider_name);
     } else {
       // Fallback order
-      if (groqKey) tryOrder.push("groq");
       if (geminiKey) tryOrder.push("gemini");
-      if (openaiKey) tryOrder.push("openai");
-      if (anthropicKey) tryOrder.push("anthropic");
+      if (groqKey) tryOrder.push("groq");
     }
     
     let aiResponse = "";

@@ -83,29 +83,7 @@ function getProviders(): AIProvider[] {
     });
   }
 
-  const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
-  if (anthropicKey) {
-    providers.push({
-      name: "Claude/sonnet",
-      call: async (msgs, maxTokens, temperature) => {
-        const systemMsg = msgs.find(m => m.role === "system")?.content || "";
-        const userMsgs = msgs.filter(m => m.role !== "system").map(m => ({ role: m.role, content: m.content }));
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": anthropicKey,
-            "anthropic-version": "2023-06-01",
-          },
-          signal: AbortSignal.timeout(45000),
-          body: JSON.stringify({ model: "claude-sonnet-4-20250514", system: systemMsg, messages: userMsgs, max_tokens: maxTokens, temperature }),
-        });
-        if (!res.ok) throw new Error(`Anthropic ${res.status}`);
-        const data = await res.json();
-        return data.content?.[0]?.text || "";
-      },
-    });
-  }
+  // Anthropic removed — Gemini + Groq handle all LLM calls (FREE)
 
   return providers;
 }

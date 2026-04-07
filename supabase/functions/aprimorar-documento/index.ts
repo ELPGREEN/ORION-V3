@@ -1475,43 +1475,7 @@ function getProviders(): AIProvider[] {
     });
   }
 
-  const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
-  if (anthropicKey) {
-    providers.push({
-      name: "Anthropic/claude-3-5-sonnet",
-      call: async (msgs, maxTokens, temperature) => {
-        const systemMsg = msgs.find((m) => m.role === "system")?.content || "";
-        const chatMsgs = msgs.filter((m) => m.role !== "system").map((m) => ({ role: m.role, content: m.content }));
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": anthropicKey, "anthropic-version": "2023-06-01" },
-          signal: AbortSignal.timeout(90000),
-          body: JSON.stringify({ model: "claude-3-5-sonnet-20241022", max_tokens: maxTokens, temperature, system: systemMsg, messages: chatMsgs }),
-        });
-        if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
-        const data = await res.json();
-        return data.content?.[0]?.text || "";
-      },
-    });
-  }
-
-  const openaiKeys = [Deno.env.get("OPENAI_API_KEY"), Deno.env.get("OPENAI_API_KEY_2")].filter(Boolean) as string[];
-  for (const key of openaiKeys) {
-    providers.push({
-      name: "OpenAI/gpt-4o",
-      call: async (msgs, maxTokens, temperature) => {
-        const res = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-          signal: AbortSignal.timeout(90000),
-          body: JSON.stringify({ model: "gpt-4o", messages: msgs, temperature, max_tokens: maxTokens }),
-        });
-        if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
-        const data = await res.json();
-        return data.choices?.[0]?.message?.content || "";
-      },
-    });
-  }
+  // Anthropic and OpenAI removed — Gemini handles all LLM calls above (FREE)
 
   return providers;
 }

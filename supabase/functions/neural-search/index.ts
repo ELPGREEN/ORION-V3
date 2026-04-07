@@ -2537,11 +2537,10 @@ async function callLLM(
   const ordered = getProvidersForUseCase(providers, useCase);
   
   if (ordered.length === 0) {
-    // Fallback: try all known providers
+    // Fallback: Gemini first (FREE), then Groq free tier
     ordered.push(
-      { provider_name: "groq", is_enabled: true, priority: 1, use_for: [useCase], fallback_to: "openai" },
-      { provider_name: "openai", is_enabled: true, priority: 2, use_for: [useCase], fallback_to: "anthropic" },
-      { provider_name: "anthropic", is_enabled: true, priority: 3, use_for: [useCase], fallback_to: null },
+      { provider_name: "gemini", is_enabled: true, priority: 1, use_for: [useCase], fallback_to: "groq" },
+      { provider_name: "groq", is_enabled: true, priority: 2, use_for: [useCase], fallback_to: null },
     );
   }
 
