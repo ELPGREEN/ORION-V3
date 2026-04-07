@@ -1590,30 +1590,16 @@ export function useOrionReasoning(
           try { await speak(humanizedSpeech); spokeOrQueued = true; } catch {}
         }
 
-        // ═══ Follow-up prompt — "Precisa de mais alguma coisa?" ═══
-        // Wait for speech queue to finish, THEN check if anything was spoken
-        const waitForQueue = async () => {
+        // Wait for speech queue to finish before cleanup
+        if (isSpeakingQueue || localQueue.length > 0) {
           let waited = 0;
-          while (!queueFinished && isSpeakingQueue && waited < 30000) {
+          while (!queueFinished && (isSpeakingQueue || localQueue.length > 0) && waited < 30000 && !bargedInRef.current) {
             await new Promise(r => setTimeout(r, 500));
             waited += 500;
           }
-        };
-        await waitForQueue();
-
-        // Only speak follow-up if nothing was spoken at all and no barge-in
-        if (!bargedInRef.current && !spokeOrQueued) {
-          const followUps = [
-            "Precisa de mais alguma coisa?",
-            "Posso ajudar com algo mais?",
-            "Tem mais alguma dúvida?",
-            "Quer que eu aprofunde em algo?",
-            "Algo mais que eu possa fazer?",
-          ];
-          const followUp = followUps[Math.floor(Math.random() * followUps.length)];
-          setChatHistory(prev => [...prev, { role: "ai" as const, text: followUp, time: new Date().toLocaleTimeString("pt-BR") }]);
-          try { await speak(followUp); } catch {}
         }
+
+        // Follow-up removed — was causing incoherent extra utterances after responses
 
         const latencyMs = Date.now() - now;
         addLog(`⏱️ Total: ${latencyMs}ms (L1+L2+L3+L3.5+L4)`);
