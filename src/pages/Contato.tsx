@@ -118,7 +118,7 @@ export default function Contato() {
       <DynamicMeta
         title="Planos e Contato | ORION IA by ELP® Green Technology"
         description="Escolha o plano ideal para seu negócio. Starter, Professional, Business ou Enterprise — IA neural, CRM, loja digital e mais. ELP® Green Technology."
-        image="https://www.elpgreen.com/og-images/og-contato.jpg"
+        image="https://www.iasofthub.com/og-images/og-contato.jpg"
         keywords="planos, contato, preços, ORION IA, ELP Green Technology"
       />
 

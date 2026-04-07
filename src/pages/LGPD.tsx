@@ -5,7 +5,7 @@ import { Shield, Database, UserCheck, Lock, FileSearch, Mail, AlertCircle } from
 export default function LGPD() {
   return (
     <MainLayout hideFooterCta>
-      <SEO title="LGPD | Proteção de Dados — ELP® Green Technology" description="Compromisso da ELP® Green Technology com a LGPD e GDPR. Transparência no tratamento de dados pessoais na plataforma ORION IA." image="https://www.elpgreen.com/og-images/og-lgpd.jpg" keywords="LGPD, proteção de dados, GDPR, privacidade, compliance" />
+      <SEO title="LGPD | Proteção de Dados — ELP® Green Technology" description="Compromisso da ELP® Green Technology com a LGPD e GDPR. Transparência no tratamento de dados pessoais na plataforma ORION IA." image="https://www.iasofthub.com/og-images/og-lgpd.jpg" keywords="LGPD, proteção de dados, GDPR, privacidade, compliance" />
       <section className="pt-32 pb-20 bg-background">
         <div className="container max-w-4xl">
           <div className="text-center mb-12">

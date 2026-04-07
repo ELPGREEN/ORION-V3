@@ -185,7 +185,7 @@ export default function Plataforma() {
       <SEO
         title={`${p.heroLabel} | ORION IA by ELP® Green Technology`}
         description={p.heroDescription}
-        image="https://www.elpgreen.com/og-images/og-plataforma.jpg"
+        image="https://www.iasofthub.com/og-images/og-plataforma.jpg"
         keywords="plataforma, IA empresarial, automação, gestão inteligente, ELP Green Technology"
       />
 

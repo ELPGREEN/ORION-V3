@@ -128,7 +128,7 @@ export default function ProBono() {
       <SEO 
         title="ORION Social | Programa de Acesso Gratuito" 
         description="Programa ORION Social — acesso gratuito à plataforma para pessoas e organizações em situação de vulnerabilidade."
-        image="https://www.elpgreen.com/og-images/og-pro-bono.jpg"
+        image="https://www.iasofthub.com/og-images/og-pro-bono.jpg"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebPage",

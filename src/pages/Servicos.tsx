@@ -35,7 +35,7 @@ export default function Servicos() {
       <SEO 
         title={`${s.heroTitle} ${s.heroTitleHighlight} | ORION IA by ELP`}
         description={s.heroDescription}
-        image="https://www.elpgreen.com/og-images/og-servicos.jpg"
+        image="https://www.iasofthub.com/og-images/og-servicos.jpg"
       />
 
       {/* Tron styles */}

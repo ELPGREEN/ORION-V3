@@ -110,7 +110,7 @@ export default function Clientes() {
       <DynamicMeta
         title="Soluções para Clientes | ORION IA by ELP® Green Technology"
         description="Advogados, escritórios, produtores digitais e afiliados — descubra como a plataforma ORION IA da ELP® Green Technology transforma negócios com IA neural."
-        image="https://www.elpgreen.com/og-images/og-clientes.jpg"
+        image="https://www.iasofthub.com/og-images/og-clientes.jpg"
         keywords="clientes, advogados, escritórios, produtores digitais, afiliados, ORION IA"
       />
 

@@ -133,7 +133,7 @@ export default function InstallApp() {
       <SEO
         title="Instalar App — ORION IA by ELP® Green Technology"
         description="Instale o ORION IA no seu dispositivo para acesso rápido e offline. Disponível para Android, iOS e Desktop."
-        image="https://www.elpgreen.com/og-images/og-install.jpg"
+        image="https://www.iasofthub.com/og-images/og-install.jpg"
         keywords="instalar, app, download, ORION IA, PWA, Android, iOS"
       />
       <section className="min-h-[70vh] flex items-center justify-center py-16 px-4">

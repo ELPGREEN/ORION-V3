@@ -5,7 +5,7 @@ import { Shield, Lock, Eye, FileText, Mail, Trash2, Database, Globe, AlertTriang
 export default function Privacidade() {
   return (
     <MainLayout hideFooterCta>
-      <SEO title="Política de Privacidade — ORION IA by ELP® Green Technology" description="Como a ELP® Green Technology protege seus dados em conformidade com LGPD, GDPR e Google API Services User Data Policy." image="https://www.elpgreen.com/og-images/og-privacidade.jpg" keywords="privacidade, proteção de dados, LGPD, GDPR" />
+      <SEO title="Política de Privacidade — ORION IA by ELP® Green Technology" description="Como a ELP® Green Technology protege seus dados em conformidade com LGPD, GDPR e Google API Services User Data Policy." image="https://www.iasofthub.com/og-images/og-privacidade.jpg" keywords="privacidade, proteção de dados, LGPD, GDPR" />
       <section className="pt-32 pb-20 bg-background">
         <div className="container max-w-4xl">
           <div className="text-center mb-12">

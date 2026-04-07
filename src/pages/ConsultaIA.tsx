@@ -215,7 +215,7 @@ export default function ConsultaIA() {
       <SEO
         title="Orion IA — Assistente Neural com Voz e Visão | ELP® Green Technology"
         description="Converse com o Orion usando voz e visão computacional. Assistente com motor NeuroCore e Lumen7 Engine. By ELP® Green Technology."
-        image="https://www.elpgreen.com/og-images/og-consulta.jpg"
+        image="https://www.iasofthub.com/og-images/og-consulta.jpg"
         keywords="assistente IA, voz, visão computacional, NeuroCore, Lumen7, consulta"
       />
 

@@ -5,7 +5,7 @@ import { FileText, Scale, AlertTriangle, Users, Gavel, Mail, Shield, Globe } fro
 export default function Termos() {
   return (
     <MainLayout hideFooterCta>
-      <SEO title="Termos de Uso — ORION IA by ELP® Green Technology" description="Termos de uso da plataforma ORION IA. Condições gerais, propriedade intelectual ELP® PROPERTY e integração com Google API Services." image="https://www.elpgreen.com/og-images/og-termos.jpg" keywords="termos de uso, condições gerais, propriedade intelectual" />
+      <SEO title="Termos de Uso — ORION IA by ELP® Green Technology" description="Termos de uso da plataforma ORION IA. Condições gerais, propriedade intelectual ELP® PROPERTY e integração com Google API Services." image="https://www.iasofthub.com/og-images/og-termos.jpg" keywords="termos de uso, condições gerais, propriedade intelectual" />
       <section className="pt-32 pb-20 bg-background">
         <div className="container max-w-4xl">
           <div className="text-center mb-12">

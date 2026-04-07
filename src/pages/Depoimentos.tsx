@@ -59,7 +59,7 @@ export default function Depoimentos() {
       <SEO 
         title="Depoimentos | ORION IA by ELP Green Technology" 
         description="Veja o que nossos clientes dizem sobre a plataforma ORION. Avaliações reais de usuários da plataforma de IA empresarial."
-        image="https://www.elpgreen.com/og-images/og-depoimentos.jpg"
+        image="https://www.iasofthub.com/og-images/og-depoimentos.jpg"
       />
       <PageHero
         label={t.testimonials.title}
