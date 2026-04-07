@@ -91,6 +91,8 @@ export default function ChatHumano() {
   const [showInstructionDialog, setShowInstructionDialog] = useState(false);
   const [lawyerInstructions, setLawyerInstructions] = useState("");
   const [conversationModes, setConversationModes] = useState<Record<string, { mode: string; instructions?: string }>>({});
+  const [orionLoading, setOrionLoading] = useState(false);
+  const [orionResult, setOrionResult] = useState<string | null>(null);
 
   // Fetch conversations
   useEffect(() => {
@@ -931,8 +933,74 @@ export default function ChatHumano() {
               </div>
             </ScrollArea>
 
+            {/* Orion AI Result */}
+            {orionResult && (
+              <div className="px-4 py-2 border-t border-border bg-primary/5">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-primary flex items-center gap-1"><Bot className="h-3 w-3" /> Orion IA</span>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setInput(orionResult); setOrionResult(null); }}>Usar</Button>
+                    <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setOrionResult(null)}>✕</Button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap max-h-32 overflow-auto">{orionResult}</p>
+              </div>
+            )}
+
             {/* Input */}
             <div className="p-4 border-t border-border">
+              {/* Orion buttons for advogado */}
+              {isAdvogado && activeConversation && (
+                <div className="flex gap-2 mb-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1"
+                    disabled={orionLoading}
+                    onClick={async () => {
+                      setOrionLoading(true);
+                      try {
+                        const lastMsg = messages[messages.length - 1]?.content || "";
+                        const { data, error } = await supabase.functions.invoke("orion-advogado-ai", {
+                          body: { action: "draft_response", conversation_id: activeConversation, last_message: lastMsg },
+                        });
+                        if (error) throw error;
+                        setOrionResult(data?.result || "");
+                      } catch (e: any) {
+                        toast({ title: "Erro Orion", description: e.message, variant: "destructive" });
+                      } finally {
+                        setOrionLoading(false);
+                      }
+                    }}
+                  >
+                    <Bot className="h-3 w-3" />
+                    {orionLoading ? "..." : "Redigir Resposta"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1"
+                    disabled={orionLoading}
+                    onClick={async () => {
+                      setOrionLoading(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke("orion-advogado-ai", {
+                          body: { action: "summarize_conversation", conversation_id: activeConversation },
+                        });
+                        if (error) throw error;
+                        setOrionResult(data?.result || "");
+                      } catch (e: any) {
+                        toast({ title: "Erro Orion", description: e.message, variant: "destructive" });
+                      } finally {
+                        setOrionLoading(false);
+                      }
+                    }}
+                  >
+                    <Bot className="h-3 w-3" />
+                    {orionLoading ? "..." : "Resumir Conversa"}
+                  </Button>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Input
                   value={input}
