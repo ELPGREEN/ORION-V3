@@ -19,10 +19,14 @@ import {
   VOICE_DNA,
   type PhonemeParams,
 } from "./phonemes";
+import { computeMFCCCorrections, type MFCCSynthCorrection } from "./mfccEngine";
 
 const SR = VOICE_DNA.sampleRate; // 24000
 const TWO_PI = 2 * Math.PI;
 const NUM_HARMONICS = 40; // Up to ~5500 Hz at F0=137
+
+// MFCC-derived corrections (computed once)
+const MFCC_FIX = computeMFCCCorrections();
 
 // ═══════════════════════════════════════════════════════════
 // FORMANT ENVELOPE: compute amplitude at a given frequency
