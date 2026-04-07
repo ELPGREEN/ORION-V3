@@ -164,6 +164,11 @@ export const IPA_TOKENS: IPAToken[] = [
   mkConsonant('ʃ', 68, 'postalveolar','fricative', false, false, 200, 1600, 3800, 6000, 350, 350, 450, 550, 155, 0.60),
   mkConsonant('ʒ', 69, 'postalveolar','fricative', true,  false, 220, 1600, 3800, 6000, 300, 300, 400, 500, 125, 0.65),
   mkConsonant('h', 70, 'glottal',     'fricative', false, false, 500, 1500, 2500, 3500, 500, 500, 500, 500, 90,  0.30),
+  mkConsonant('χ', 71, 'uvular',      'fricative', false, false, 300, 1100, 2400, 3300, 400, 400, 400, 450, 110, 0.50), // carro (uvular R)
+
+  // ── AFFRICATES (missing from original — critical for pt-BR!) ──
+  mkConsonant('t͡ʃ', 72, 'postalveolar','plosive', false, false, 200, 1700, 3800, 6000, 300, 300, 400, 500, 90, 0.65, { aspirated: true }),  // noite
+  mkConsonant('d͡ʒ', 73, 'postalveolar','plosive', true,  false, 220, 1700, 3800, 6000, 250, 250, 350, 450, 80, 0.65),  // cidade
 
   // ── TAP / TRILL / LATERAL ──
   mkConsonant('ɾ', 80, 'alveolar',    'tap',                true, false, 350, 1300, 2400, 3300, 80,  100, 160, 230, 45,  0.63),
@@ -206,6 +211,20 @@ for (const t of IPA_TOKENS) TOKEN_BY_IPA.set(t.ipa, t);
 TOKEN_BY_IPA.set('_', PAUSE_TOKEN);
 TOKEN_BY_IPA.set('.', PERIOD_TOKEN);
 TOKEN_BY_IPA.set(',', COMMA_TOKEN);
+
+/**
+ * X-SAMPA → IPA mapping (Amazon Polly pt-BR standard)
+ * Allows using SAMPA notation as input
+ */
+export const XSAMPA_TO_IPA: Record<string, string> = {
+  '4': 'ɾ', 'b': 'b', 'd': 'd', 'dZ': 'd͡ʒ', 'f': 'f', 'g': 'g',
+  'j': 'j', 'k': 'k', 'l': 'l', 'L': 'ʎ', 'm': 'm', 'n': 'n',
+  'J': 'ɲ', 'p': 'p', 's': 's', 'S': 'ʃ', 't': 't', 'tS': 't͡ʃ',
+  'v': 'v', 'w': 'w', 'X': 'χ', 'z': 'z', 'Z': 'ʒ',
+  'a': 'a', 'a~': 'ã', 'e': 'e', 'e~': 'ẽ', 'E': 'ɛ',
+  'i': 'i', 'i~': 'ĩ', 'o': 'o', 'o~': 'õ', 'O': 'ɔ',
+  'u': 'u', 'u~': 'ũ',
+};
 
 const TOKEN_BY_ID = new Map<number, IPAToken>();
 for (const t of [...IPA_TOKENS, PAUSE_TOKEN, PERIOD_TOKEN, COMMA_TOKEN]) {
