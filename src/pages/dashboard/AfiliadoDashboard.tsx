@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   Share2, DollarSign, TrendingUp, MousePointer, ArrowRight, Eye,
   ShoppingBag, Brain, Crown, Globe, Link2, Copy,
-  CheckCircle, Clock, XCircle, Search, Loader2,
+  CheckCircle, Clock, XCircle, Search, Loader2, Sparkles,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
