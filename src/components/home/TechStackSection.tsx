@@ -11,7 +11,7 @@ const stacks = [
 
 export function TechStackSection() {
   return (
-    <section className="py-12 sm:py-16 bg-muted/10 relative overflow-hidden">
+    <section className="py-12 sm:py-16 bg-muted/10 relative overflow-hidden tron-dot-grid">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
       
       <div className="container px-4 sm:px-6 relative z-10">

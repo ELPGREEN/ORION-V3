@@ -32,7 +32,7 @@ export default function Index() {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background overflow-hidden scanlines">
       <SEO
         title="ORION IA | Inteligência Artificial Empresarial — ELP® Green Technology"
         description="Plataforma de IA empresarial para automação de processos, gestão de documentos e clientes. Orion Shield com proteção de nível bancário. By ELP® Green Technology."
@@ -58,7 +58,7 @@ export default function Index() {
       <HeroSection t={t} />
 
       {/* App purpose section — required for Google OAuth verification */}
-      <section id="about" className="py-6 sm:py-8 bg-muted/5 border-y border-border/10">
+      <section id="about" className="relative py-6 sm:py-8 bg-muted/5 border-y border-border/10 tron-data-stream">
         <div className="container mx-auto px-4 sm:px-6 lg:px-10 max-w-4xl text-center">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">
             About IASoftHub

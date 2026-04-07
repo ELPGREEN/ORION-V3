@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
-import { FloatingChatButton } from "@/components/dashboard/FloatingChatButton";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -24,7 +23,6 @@ export function MainLayout({ children, showFooter = true, hideFooterCta = true }
         {children}
       </main>
       {showFooter && <Footer hideCta={hideFooterCta} />}
-      <FloatingChatButton />
     </div>
   );
 }
