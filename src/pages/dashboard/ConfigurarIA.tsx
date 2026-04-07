@@ -120,10 +120,14 @@ export default function ConfigurarIA() {
   const { config, loading, updateConfig } = useNeuralConfig();
   const [currentStep, setCurrentStep] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [fromPayment] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("from") === "payment";
+  });
   const [localConfig, setLocalConfig] = useState({
     persona: "profissional",
     custom_instructions: "",
-    wake_word: "Ana",
+    wake_word: "Orion",
     voice_enabled: true,
     voice_language: "pt-BR",
     voice_speed: 0.92,
