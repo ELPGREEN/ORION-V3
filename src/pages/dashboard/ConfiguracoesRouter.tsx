@@ -84,6 +84,10 @@ export default function ConfiguracoesRouter() {
             <Mic className="h-3.5 w-3.5" />
             Microfone
           </TabsTrigger>
+          <TabsTrigger value="loja" className="text-xs gap-1.5">
+            <Store className="h-3.5 w-3.5" />
+            Minha Loja
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="perfil">
