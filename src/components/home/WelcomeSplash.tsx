@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroThreeBackground } from "./HeroThreeBackground";
 import orionVideo from "@/assets/orion-tron-video.mp4";
-import orionLogo from "@/assets/orion-splash-logo.png";
+import orionLogo from "@/assets/orion-splash-logo-circle.png";
 import { LogIn, UserPlus, Eye, Shield, Zap, Brain } from "lucide-react";
 
 type Phase = "video" | "welcome";
