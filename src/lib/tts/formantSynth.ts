@@ -191,15 +191,15 @@ function renderPhonemes(phonemes: string[]): Float32Array {
     const params = PT_PHONEMES[phoneme];
     if (!params) continue;
 
-    // Targets
-    const tgtF1 = params.f1 || curF1;
-    const tgtF2 = params.f2 || curF2;
-    const tgtF3 = params.f3 || curF3;
-    const tgtF4 = params.f4 || curF4;
-    const tgtBw1 = params.bw1 || curBw1;
-    const tgtBw2 = params.bw2 || curBw2;
-    const tgtBw3 = params.bw3 || curBw3;
-    const tgtBw4 = params.bw4 || curBw4;
+    // Targets — apply MFCC formant corrections
+    const tgtF1 = (params.f1 || curF1) * MFCC_FIX.formantScale[0];
+    const tgtF2 = (params.f2 || curF2) * MFCC_FIX.formantScale[1];
+    const tgtF3 = (params.f3 || curF3) * MFCC_FIX.formantScale[2];
+    const tgtF4 = (params.f4 || curF4) * MFCC_FIX.formantScale[3];
+    const tgtBw1 = (params.bw1 || curBw1) * MFCC_FIX.bandwidthScale[0];
+    const tgtBw2 = (params.bw2 || curBw2) * MFCC_FIX.bandwidthScale[1];
+    const tgtBw3 = (params.bw3 || curBw3) * MFCC_FIX.bandwidthScale[2];
+    const tgtBw4 = (params.bw4 || curBw4) * MFCC_FIX.bandwidthScale[3];
     const tgtAmp = params.amplitude;
 
     const startF1 = curF1, startF2 = curF2, startF3 = curF3, startF4 = curF4;
