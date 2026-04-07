@@ -708,10 +708,40 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           )}
         </div>
 
-        {/* ═══ CENTER: Plasma Core ═══ */}
+        {/* ═══ CENTER: Plasma Core — HD Enhanced ═══ */}
         <div className="absolute inset-0 flex items-center justify-center z-0">
-          <PlasmaCanvas />
+          {/* Volumetric ambient glow layers */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-[70%] h-[70%] rounded-full" style={{
+              background: "radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, hsl(var(--secondary) / 0.04) 40%, transparent 70%)",
+              filter: "blur(60px)",
+              animation: "plasmaPulseVision 4s ease-in-out infinite",
+            }} />
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-[50%] h-[50%] rounded-full" style={{
+              background: "radial-gradient(circle, hsl(var(--secondary) / 0.06) 0%, transparent 60%)",
+              filter: "blur(40px)",
+              animation: "plasmaPulseVision 5s ease-in-out infinite reverse",
+            }} />
+          </div>
+          {/* Main plasma canvas with bloom filter */}
+          <div className="w-full h-full" style={{
+            filter: "contrast(1.05) saturate(1.15)",
+          }}>
+            <PlasmaCanvas />
+          </div>
+          {/* Outer bloom overlay */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: "radial-gradient(circle at center, transparent 30%, hsl(var(--background) / 0.4) 80%, hsl(var(--background) / 0.9) 100%)",
+          }} />
         </div>
+        <style>{`
+          @keyframes plasmaPulseVision {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.08); }
+          }
+        `}</style>
 
         {/* Hidden video/canvas */}
         <video ref={videoRef} playsInline muted style={{ position: "absolute", top: -9999, left: -9999, width: 640, height: 480 }} />
