@@ -6,14 +6,15 @@ import { toast } from "sonner";
 import {
   Share2, DollarSign, TrendingUp, MousePointer, ArrowRight, Eye,
   ShoppingBag, Brain, Crown, Globe, Link2, Copy,
-  CheckCircle, Clock, XCircle, Search, Loader2, Sparkles,
+  Clock, Search, Loader2, Sparkles, BarChart3, CalendarDays, Target, Lightbulb,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from "recharts";
 
 export default function AfiliadoDashboard() {
   const { user } = useAuth();
@@ -21,6 +22,25 @@ export default function AfiliadoDashboard() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [copyLoading, setCopyLoading] = useState<string | null>(null);
+  const [orionLoading, setOrionLoading] = useState<string | null>(null);
+  const [orionResult, setOrionResult] = useState<string | null>(null);
+
+  const callOrion = async (action: string, extra: Record<string, string> = {}) => {
+    setOrionLoading(action);
+    setOrionResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("orion-produtor-ai", {
+        body: { action, ...extra },
+      });
+      if (error) throw error;
+      setOrionResult(data.result);
+      toast.success("Orion respondeu!");
+    } catch {
+      toast.error("Erro ao consultar Orion");
+    } finally {
+      setOrionLoading(null);
+    }
+  };
 
   const generateCopy = async (product: any) => {
     setCopyLoading(product.id);
@@ -112,17 +132,45 @@ export default function AfiliadoDashboard() {
   const totalCommission = sales?.reduce((s: number, v: any) => s + (v.commission_cents || 0), 0) || 0;
   const totalClicks = myLinks?.reduce((s: number, l: any) => s + (l.clicks || 0), 0) || 0;
   const totalConversions = myLinks?.reduce((s: number, l: any) => s + (l.conversions || 0), 0) || 0;
+  const conversionRate = totalClicks > 0 ? ((totalConversions / totalClicks) * 100).toFixed(1) : "0";
 
   const filteredPrograms = programs?.filter((p: any) => {
     if (!search) return true;
     return (p.products?.name?.toLowerCase() || "").includes(search.toLowerCase());
   }) || [];
 
+  // Analytics data
+  const salesByProduct = useMemo(() => {
+    if (!sales || sales.length === 0) return [];
+    const map: Record<string, { name: string; vendas: number; comissao: number }> = {};
+    sales.forEach((s: any) => {
+      const name = s.products?.name || "Desconhecido";
+      if (!map[name]) map[name] = { name, vendas: 0, comissao: 0 };
+      map[name].vendas++;
+      map[name].comissao += (s.commission_cents || 0) / 100;
+    });
+    return Object.values(map).sort((a, b) => b.vendas - a.vendas);
+  }, [sales]);
+
+  const salesByDay = useMemo(() => {
+    if (!sales || sales.length === 0) return [];
+    const map: Record<string, { dia: string; vendas: number; receita: number }> = {};
+    const last30 = new Date();
+    last30.setDate(last30.getDate() - 30);
+    sales.filter((s: any) => new Date(s.created_at) > last30).forEach((s: any) => {
+      const dia = new Date(s.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+      if (!map[dia]) map[dia] = { dia, vendas: 0, receita: 0 };
+      map[dia].vendas++;
+      map[dia].receita += (s.commission_cents || 0) / 100;
+    });
+    return Object.values(map);
+  }, [sales]);
+
   const stats = [
     { label: "Produtos Ativos", value: approvedRequests.length, icon: ShoppingBag, color: "text-primary" },
     { label: "Comissões", value: `R$ ${(totalCommission / 100).toFixed(2)}`, icon: DollarSign, color: "text-emerald-500" },
     { label: "Cliques", value: totalClicks, icon: MousePointer, color: "text-cyan-500" },
-    { label: "Conversões", value: totalConversions, icon: TrendingUp, color: "text-amber-500" },
+    { label: "Conversão", value: `${conversionRate}%`, icon: TrendingUp, color: "text-amber-500" },
   ];
 
   return (
@@ -157,13 +205,20 @@ export default function AfiliadoDashboard() {
       </div>
 
       <Tabs defaultValue="products" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="products">Meus Produtos</TabsTrigger>
           <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
           <TabsTrigger value="sales">Vendas</TabsTrigger>
           <TabsTrigger value="links">Links & Cupons</TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1">
+            <BarChart3 className="h-3 w-3" /> Analytics
+          </TabsTrigger>
+          <TabsTrigger value="orion" className="gap-1">
+            <Brain className="h-3 w-3" /> Orion IA
+          </TabsTrigger>
         </TabsList>
 
+        {/* ── Products Tab ── */}
         <TabsContent value="products" className="space-y-3">
           {approvedRequests.length === 0 ? (
             <Card className="bg-card/60 border-dashed border-primary/30">
@@ -180,7 +235,7 @@ export default function AfiliadoDashboard() {
               const link = myLinks?.find((l: any) => l.product_id === product?.id);
               return (
                 <Card key={req.id} className="bg-card/80 border-border/40">
-                  <CardContent className="p-4 flex items-center justify-between">
+                  <CardContent className="p-4 flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-primary/10">
                         <ShoppingBag className="h-4 w-4 text-primary" />
@@ -192,21 +247,16 @@ export default function AfiliadoDashboard() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {link && (
                         <Button variant="outline" size="sm" onClick={() => {
                           navigator.clipboard.writeText(`${window.location.origin}/vitrine/${user?.id}?ref=${link.hash}`);
                           toast.success("Link copiado!");
                         }}>
-                          <Copy className="h-3.5 w-3.5 mr-1" /> Copiar Link
+                          <Copy className="h-3.5 w-3.5 mr-1" /> Link
                         </Button>
                       )}
-                      <Button
-                        variant="ghost" size="sm"
-                        onClick={() => generateCopy(product)}
-                        disabled={!!copyLoading}
-                        className="gap-1 text-xs"
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => generateCopy(product)} disabled={!!copyLoading} className="gap-1 text-xs">
                         {copyLoading === product?.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                         Copy IA
                       </Button>
@@ -235,6 +285,7 @@ export default function AfiliadoDashboard() {
           )}
         </TabsContent>
 
+        {/* ── Marketplace Tab ── */}
         <TabsContent value="marketplace" className="space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -270,6 +321,7 @@ export default function AfiliadoDashboard() {
           })}
         </TabsContent>
 
+        {/* ── Sales Tab ── */}
         <TabsContent value="sales" className="space-y-3">
           {(!sales || sales.length === 0) ? (
             <Card className="bg-card/60 border-dashed">
@@ -295,6 +347,7 @@ export default function AfiliadoDashboard() {
           ))}
         </TabsContent>
 
+        {/* ── Links Tab ── */}
         <TabsContent value="links" className="space-y-3">
           {myLinks?.map((link: any) => (
             <Card key={link.id} className="bg-card/80 border-border/40">
@@ -319,11 +372,170 @@ export default function AfiliadoDashboard() {
             </Card>
           ))}
         </TabsContent>
+
+        {/* ── Analytics Tab ── */}
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Sales by Product */}
+            <Card className="bg-card/80 border-border/40">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Target className="h-4 w-4 text-primary" /> Vendas por Produto
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {salesByProduct.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">Sem dados ainda</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={salesByProduct}>
+                      <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} />
+                      <Tooltip />
+                      <Bar dataKey="vendas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Sales Trend */}
+            <Card className="bg-card/80 border-border/40">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-emerald-500" /> Tendência (30 dias)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {salesByDay.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">Sem dados ainda</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={salesByDay}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                      <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="receita" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Conversion funnel */}
+          <Card className="bg-card/80 border-border/40">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-cyan-500" /> Funil de Conversão
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 text-center p-4 rounded-lg bg-muted/30">
+                  <p className="text-2xl font-bold text-foreground">{totalClicks}</p>
+                  <p className="text-xs text-muted-foreground">Cliques</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div className="flex-1 text-center p-4 rounded-lg bg-muted/30">
+                  <p className="text-2xl font-bold text-foreground">{totalConversions}</p>
+                  <p className="text-xs text-muted-foreground">Conversões</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div className="flex-1 text-center p-4 rounded-lg bg-primary/10">
+                  <p className="text-2xl font-bold text-primary">{conversionRate}%</p>
+                  <p className="text-xs text-muted-foreground">Taxa</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Orion IA Tab ── */}
+        <TabsContent value="orion" className="space-y-4">
+          <div className="grid sm:grid-cols-3 gap-3">
+            <Card className="bg-card/60 border-border/30 hover:border-primary/40 transition-all cursor-pointer group"
+              onClick={() => callOrion("affiliate_strategy", {
+                context: `Produtos: ${approvedRequests.length}. Cliques totais: ${totalClicks}. Conversões: ${totalConversions}. Taxa: ${conversionRate}%. Comissão total: R$ ${(totalCommission / 100).toFixed(2)}`
+              })}>
+              <CardContent className="p-4 flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <Target className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Estratégia de Vendas</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Orion analisa seus dados e sugere ações</p>
+                </div>
+                {orionLoading === "affiliate_strategy" && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/60 border-border/30 hover:border-primary/40 transition-all cursor-pointer group"
+              onClick={() => callOrion("best_products", {
+                context: programs?.map((p: any) => `${p.products?.name}: ${p.commission_percent}% comissão, R$ ${((p.products?.price_cents || 0) / 100).toFixed(2)}`).join("\n") || "Sem dados"
+              })}>
+              <CardContent className="p-4 flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-colors">
+                  <Lightbulb className="h-4 w-4 text-emerald-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Melhores Produtos</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Recomendações do marketplace</p>
+                </div>
+                {orionLoading === "best_products" && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/60 border-border/30 hover:border-primary/40 transition-all cursor-pointer group"
+              onClick={() => {
+                const firstProduct = approvedRequests[0]?.affiliate_programs?.products;
+                callOrion("social_calendar", {
+                  product_title: firstProduct?.name || "Produto digital",
+                  product_description: firstProduct?.description || "",
+                  context: `Afiliado com ${approvedRequests.length} produtos ativos`
+                });
+              }}>
+              <CardContent className="p-4 flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-cyan-500/10 group-hover:bg-cyan-500/20 transition-colors">
+                  <CalendarDays className="h-4 w-4 text-cyan-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">Calendário Social</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Plano de postagens 7 dias</p>
+                </div>
+                {orionLoading === "social_calendar" && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Orion Result */}
+          {orionResult && (
+            <Card className="bg-card/80 border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-primary" /> Resposta do Orion
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                  {orionResult}
+                </div>
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => {
+                  navigator.clipboard.writeText(orionResult);
+                  toast.success("Copiado!");
+                }}>
+                  <Copy className="h-3 w-3 mr-1" /> Copiar
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
       </Tabs>
 
       <div className="grid sm:grid-cols-3 gap-3">
         {[
-          { label: "Vitrine Pública", icon: Globe, path: `/vitrine/${user?.id}`, desc: "Sua vitrine de afiliado" },
+          { label: "Vitrine Pública", icon: Globe, path: `/vitrine/${user?.id}`, desc: "Sua loja de afiliado" },
           { label: "Orion IA", icon: Brain, path: "/consulta", desc: "Assistente para vendas" },
           { label: "Meu Plano", icon: Crown, path: "/dashboard/configuracoes", desc: "Ver limites" },
         ].map((tool) => (
