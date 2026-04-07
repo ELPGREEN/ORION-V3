@@ -717,11 +717,19 @@ function postProcess(samples: Float32Array): Float32Array {
     dcX1 = samples[i]; dcY1 = y; dc[i] = y;
   }
 
+  // v22: spectral envelope smoothing — removes metallic residue
+  const sm = new Float32Array(len);
+  const alpha = GROK.spectralSmoothing; // 0.89
+  sm[0] = dc[0];
+  for (let i = 1; i < len; i++) {
+    sm[i] = alpha * sm[i - 1] + (1 - alpha) * dc[i];
+  }
+
   // Gentle pre-emphasis (post-processing stage)
   const pe = new Float32Array(len);
-  pe[0] = dc[0];
+  pe[0] = sm[0];
   for (let i = 1; i < len; i++) {
-    pe[i] = dc[i] - 0.30 * dc[i - 1];
+    pe[i] = sm[i] - 0.30 * sm[i - 1];
   }
 
   // Normalize to -1dB
