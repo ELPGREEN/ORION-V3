@@ -372,10 +372,8 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
             transform: "translate(-50%, -50%)",
             background: `radial-gradient(circle, hsl(0 0% 100% / ${hover ? 0.95 : 0.85}), hsl(var(--primary) / 0.9) 60%, transparent 100%)`,
             boxShadow: `
-              0 0 ${hover ? 50 : 25}px hsl(var(--primary) / 0.9),
-              0 0 ${hover ? 100 : 50}px hsl(var(--primary) / 0.5),
-              0 0 ${hover ? 150 : 75}px hsl(var(--primary) / 0.25),
-              0 0 ${hover ? 200 : 100}px hsl(var(--secondary) / 0.15)
+              0 0 ${hover ? 60 : 30}px hsl(var(--primary) / 0.8),
+              0 0 ${hover ? 120 : 60}px hsl(var(--primary) / 0.3)
             `,
             animation: "plasmaPulse 3s ease-in-out infinite",
             zIndex: 6,
