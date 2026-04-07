@@ -1,11 +1,11 @@
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { Handshake, DollarSign, Shield, TrendingUp } from "lucide-react";
+import { IconDollarSign, IconHandshake, IconShield, IconTrending } from "@/components/icons/SumerianTronIcons";
 
 const benefits = [
-  { icon: DollarSign, title: "Zero Investimento Inicial", desc: "Modelo de parceria sem custos de instalação. A ELP fornece toda a infraestrutura e tecnologia." },
-  { icon: Handshake, title: "Revenue Sharing", desc: "Divisão de receita justa baseada nos materiais reciclados e subprodutos gerados." },
-  { icon: Shield, title: "Compliance Garantido", desc: "Conformidade total com regulamentações ambientais locais e internacionais." },
-  { icon: TrendingUp, title: "ROI Comprovado", desc: "Retorno sobre investimento demonstrado em todas as operações ativas globalmente." },
+  { icon: IconDollarSign, title: "Zero Investimento Inicial", desc: "Modelo de parceria sem custos de instalação. A ELP fornece toda a infraestrutura e tecnologia." },
+  { icon: IconHandshake, title: "Revenue Sharing", desc: "Divisão de receita justa baseada nos materiais reciclados e subprodutos gerados." },
+  { icon: IconShield, title: "Compliance Garantido", desc: "Conformidade total com regulamentações ambientais locais e internacionais." },
+  { icon: IconTrending, title: "ROI Comprovado", desc: "Retorno sobre investimento demonstrado em todas as operações ativas globalmente." },
 ];
 
 export function PartnershipModelSection() {

@@ -530,3 +530,76 @@ export const IconCloud: React.FC<IconProps> = ({ className, style }) => (
     <circle cx="24" cy="20" r="2" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
   </svg>
 );
+
+export const IconLeaf: React.FC<IconProps> = ({ className, style }) => (
+  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
+    {/* Folha sagrada suméria — natureza/sustentabilidade */}
+    <path d="M12 40C12 40 10 28 16 20C22 12 36 8 36 8C36 8 38 20 32 28C26 36 12 40 12 40Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="bevel" />
+    <path d="M36 8C28 16 20 28 12 40" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
+    <path d="M26 16L22 24L28 28" stroke="currentColor" strokeWidth="0.8" opacity="0.3" />
+    <circle cx="24" cy="22" r="2" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+  </svg>
+);
+
+export const IconFileCheck: React.FC<IconProps> = ({ className, style }) => (
+  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
+    {/* Selo de certificação cuneiforme */}
+    <rect x="10" y="6" width="28" height="36" rx="1" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M10 14H38" stroke="currentColor" strokeWidth="1" opacity="0.3" />
+    <path d="M20 24L24 28L32 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="bevel" />
+    <line x1="16" y1="34" x2="32" y2="34" stroke="currentColor" strokeWidth="0.6" opacity="0.3" />
+    <line x1="16" y1="37" x2="28" y2="37" stroke="currentColor" strokeWidth="0.6" opacity="0.2" />
+  </svg>
+);
+
+export const IconHandshake: React.FC<IconProps> = ({ className, style }) => (
+  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
+    {/* Aperto de mãos cerimonial sumério */}
+    <path d="M4 28L14 18L22 22L30 16L38 20L44 14" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="bevel" />
+    <path d="M14 18L20 28L28 24L34 30" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="bevel" opacity="0.5" />
+    <circle cx="22" cy="22" r="2.5" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+    <circle cx="30" cy="16" r="2.5" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+    <path d="M10 36H38" stroke="currentColor" strokeWidth="0.6" opacity="0.2" />
+  </svg>
+);
+
+export const IconDollarSign: React.FC<IconProps> = ({ className, style }) => (
+  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
+    {/* Moeda cuneiforme — valor/investimento */}
+    <circle cx="24" cy="24" r="16" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="24" cy="24" r="11" stroke="currentColor" strokeWidth="0.6" opacity="0.3" />
+    <line x1="24" y1="12" x2="24" y2="36" stroke="currentColor" strokeWidth="1.2" opacity="0.8" />
+    <path d="M18 18C18 18 20 16 24 16C28 16 30 18 30 20C30 22 28 24 24 24C20 24 18 26 18 28C18 30 20 32 24 32C28 32 30 30 30 30" stroke="currentColor" strokeWidth="1.2" />
+  </svg>
+);
+
+export const IconMapPin: React.FC<IconProps> = ({ className, style }) => (
+  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
+    {/* Marcador de localização — ziggurat */}
+    <path d="M24 44L10 26C6 20 6 14 12 10C16 7 20 6 24 6C28 6 32 7 36 10C42 14 42 20 38 26L24 44Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="bevel" />
+    <circle cx="24" cy="20" r="6" stroke="currentColor" strokeWidth="1.2" />
+    <circle cx="24" cy="20" r="2.5" fill="currentColor" opacity="0.4" />
+  </svg>
+);
+
+export const IconSettings: React.FC<IconProps> = ({ className, style }) => (
+  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
+    {/* Engrenagem suméria — configuração */}
+    <circle cx="24" cy="24" r="8" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="24" cy="24" r="3" fill="currentColor" opacity="0.3" />
+    <path d="M24 4V12M24 36V44M4 24H12M36 24H44M10 10L16 16M32 32L38 38M38 10L32 16M16 32L10 38" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <circle cx="24" cy="4" r="1.5" fill="currentColor" opacity="0.4" />
+    <circle cx="24" cy="44" r="1.5" fill="currentColor" opacity="0.4" />
+    <circle cx="4" cy="24" r="1.5" fill="currentColor" opacity="0.4" />
+    <circle cx="44" cy="24" r="1.5" fill="currentColor" opacity="0.4" />
+  </svg>
+);
+
+export const IconZap: React.FC<IconProps> = ({ className, style }) => (
+  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={style}>
+    {/* Raio de energia — poder divino sumério */}
+    <path d="M28 4L12 26H24L20 44L36 22H24L28 4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="bevel" />
+    <path d="M28 4L12 26H24L20 44L36 22H24L28 4Z" fill="currentColor" fillOpacity="0.08" />
+    <line x1="18" y1="14" x2="22" y2="20" stroke="currentColor" strokeWidth="0.6" opacity="0.3" />
+  </svg>
+);
