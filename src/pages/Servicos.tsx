@@ -103,21 +103,6 @@ export default function Servicos() {
         image="https://www.iasofthub.com/og-images/og-servicos.jpg"
       />
 
-      <style>{`
-        .tron-grid-bg-s {
-          background-image:
-            linear-gradient(hsl(var(--primary) / 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(var(--primary) / 0.03) 1px, transparent 1px);
-          background-size: 60px 60px;
-        }
-        .tron-scanline-s::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: repeating-linear-gradient(0deg, transparent, transparent 2px, hsl(var(--primary) / 0.008) 2px, hsl(var(--primary) / 0.008) 4px);
-          pointer-events: none;
-        }
-      `}</style>
 
       {/* Hero Section */}
       <section 
@@ -148,8 +133,7 @@ export default function Servicos() {
       <TechLine />
 
       {/* Profiles Section */}
-      <section className="py-16 sm:py-20 relative overflow-hidden tron-scanline-s" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
-        <div className="absolute inset-0 tron-grid-bg-s opacity-30 pointer-events-none" />
+      <section className="py-16 sm:py-20 relative overflow-hidden" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
         <GatewayBackground opacity={0.15} />
         <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
           <div className="text-center mb-14">
@@ -243,7 +227,6 @@ export default function Servicos() {
 
       {/* Differentials */}
       <section className="py-16 sm:py-20 relative overflow-hidden" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--border))" }}>
-        <div className="absolute inset-0 tron-grid-bg-s opacity-20 pointer-events-none" />
         <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <ScrollReveal direction="up" delay={0.1}>
@@ -295,7 +278,7 @@ export default function Servicos() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 sm:py-20 relative overflow-hidden tron-scanline-s" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
+      <section className="py-16 sm:py-20 relative overflow-hidden" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
         <HeroThreeBackground />
         <div className="absolute inset-0 bg-background/60 z-[1]" />
         

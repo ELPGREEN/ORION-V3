@@ -90,7 +90,7 @@ export default function LojaOrion() {
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0" style={{
-          backgroundImage: "linear-gradient(hsl(210,70%,50%,0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(210,70%,50%,0.03) 1px, transparent 1px)",
+          
           backgroundSize: "60px 60px",
         }} />
         <div className="absolute inset-0" style={{

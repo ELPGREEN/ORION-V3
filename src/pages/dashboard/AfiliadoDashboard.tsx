@@ -181,7 +181,7 @@ export default function AfiliadoDashboard() {
           <div className="absolute -top-20 -right-20 w-72 h-72 blur-[120px] animate-pulse" style={{ background: "hsl(190,70%,45%,0.08)", animationDuration: "5s" }} />
           {/* Grid lines for data-driven feel */}
           <div className="absolute inset-0" style={{
-            backgroundImage: "linear-gradient(hsl(190,70%,45%,0.02) 1px, transparent 1px), linear-gradient(90deg, hsl(190,70%,45%,0.02) 1px, transparent 1px)",
+            
             backgroundSize: "50px 50px",
           }} />
         </div>

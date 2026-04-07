@@ -43,21 +43,6 @@ export default function SolucoesAfiliados() {
         description="Ganhe comissões promovendo produtos. Links rastreáveis, vitrine personalizada, cupons e 0% de taxa da plataforma. Programa de afiliados ORION."
       />
 
-      <style>{`
-        .tron-grid-bg-afil {
-          background-image:
-            linear-gradient(hsl(var(--primary), 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(var(--primary), 0.03) 1px, transparent 1px);
-          background-size: 60px 60px;
-        }
-        .tron-scanline-afil::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: repeating-linear-gradient(0deg, transparent, transparent 2px, hsl(var(--primary), 0.008) 2px, hsl(var(--primary), 0.008) 4px);
-          pointer-events: none;
-        }
-      `}</style>
 
       {/* Hero */}
       <section className="min-h-[45vh] flex items-center relative overflow-hidden" style={{ background: "hsl(var(--background))" }}>
@@ -83,8 +68,7 @@ export default function SolucoesAfiliados() {
       <TechLine />
 
       {/* Features */}
-      <section className="py-12 sm:py-16 relative overflow-hidden tron-scanline-afil" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
-        <div className="absolute inset-0 tron-grid-bg-afil opacity-30 pointer-events-none" />
+      <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
         <GatewayBackground opacity={0.15} />
         <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
           <div className="text-center mb-12">
@@ -121,7 +105,6 @@ export default function SolucoesAfiliados() {
 
       {/* Differentials */}
       <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--border))" }}>
-        <div className="absolute inset-0 tron-grid-bg-afil opacity-20 pointer-events-none" />
         <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <ScrollReveal direction="up">
@@ -162,7 +145,7 @@ export default function SolucoesAfiliados() {
       </section>
 
       {/* CTA */}
-      <section className="py-12 sm:py-16 relative overflow-hidden tron-scanline-afil" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
+      <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
         <HeroThreeBackground />
         <div className="absolute inset-0 bg-background/60 z-[1]" />
         <div className="container relative px-4 sm:px-6" style={{ zIndex: 2 }}>
