@@ -398,20 +398,39 @@ function getEnvelope(pos: number, durationMs: number, isPlosive: boolean): numbe
 }
 
 // ═══════════════════════════════════════════════════════════
-// POST-PROCESSING: Normalize only
+// POST-PROCESSING: Pre-emphasis + Normalize (MFCC-guided)
 // ═══════════════════════════════════════════════════════════
 function postProcess(samples: Float32Array): Float32Array {
+  // 1. Pre-emphasis filter — boosts high frequencies to match reference centroid
+  const preEmph = MFCC_FIX.preEmphasis;
+  const emphasized = new Float32Array(samples.length);
+  emphasized[0] = samples[0];
+  for (let i = 1; i < samples.length; i++) {
+    emphasized[i] = samples[i] - preEmph * samples[i - 1];
+  }
+
+  // 2. Gentle high-shelf boost (simulate brighter spectral tilt)
+  // Simple 1-pole high-pass adds brightness
+  let prev = 0;
+  for (let i = 0; i < emphasized.length; i++) {
+    const hp = emphasized[i] - prev;
+    prev = emphasized[i];
+    // Mix: 70% original + 30% high-passed for brightness
+    emphasized[i] = emphasized[i] * 0.7 + hp * 0.3;
+  }
+
+  // 3. Normalize
   let peak = 0;
-  for (let i = 0; i < samples.length; i++) {
-    const a = Math.abs(samples[i]);
+  for (let i = 0; i < emphasized.length; i++) {
+    const a = Math.abs(emphasized[i]);
     if (a > peak) peak = a;
   }
-  if (peak === 0) return samples;
+  if (peak === 0) return emphasized;
 
   const gain = 0.89 / peak;
-  const out = new Float32Array(samples.length);
-  for (let i = 0; i < samples.length; i++) {
-    out[i] = samples[i] * gain;
+  const out = new Float32Array(emphasized.length);
+  for (let i = 0; i < emphasized.length; i++) {
+    out[i] = emphasized[i] * gain;
   }
   return out;
 }
