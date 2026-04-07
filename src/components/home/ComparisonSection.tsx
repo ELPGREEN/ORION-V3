@@ -19,10 +19,10 @@ const rows = [
 
 export function ComparisonSection() {
   return (
-    <section className="py-16 sm:py-24 bg-muted/10 relative overflow-hidden">
+    <section className="py-12 sm:py-16 bg-muted/10 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
       <div className="container relative px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto text-center mb-10 sm:mb-14">
+        <div className="max-w-4xl mx-auto text-center mb-8 sm:mb-10">
           <ScrollReveal direction="fade">
             <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">COMPARATIVO</p>
           </ScrollReveal>

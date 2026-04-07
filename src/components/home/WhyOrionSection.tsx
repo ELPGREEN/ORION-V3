@@ -45,7 +45,7 @@ const reasons = [
 
 export function WhyOrionSection() {
   return (
-    <section className="py-16 sm:py-24 section-cinematic relative overflow-hidden neural-ambient">
+    <section className="py-12 sm:py-16 section-cinematic relative overflow-hidden neural-ambient">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-0 w-[400px] h-[400px] bg-primary/[0.03] rounded-full blur-[150px]" />
         <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-primary/[0.02] rounded-full blur-[120px]" />
@@ -53,7 +53,7 @@ export function WhyOrionSection() {
       <div className="absolute top-0 inset-x-0 cinematic-divider" />
 
       <div className="container px-4 sm:px-6 relative">
-        <div className="text-center mb-12 sm:mb-16">
+        <div className="text-center mb-8 sm:mb-10">
           <ScrollReveal direction="fade">
             <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3 font-medium">
               POR QUE ESCOLHER O ORION
