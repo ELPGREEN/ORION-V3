@@ -53,7 +53,8 @@ const reasons = [
 export function WhyOrionSection() {
   return (
     <section className="py-12 sm:py-16 section-cinematic relative overflow-hidden neural-ambient tron-energy">
-      <img src={bgTronEnergy} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.05] pointer-events-none mix-blend-screen" />
+      <img src={bgHdSection} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.12] pointer-events-none" />
+      <img src={bgTronEnergy} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.04] pointer-events-none mix-blend-screen" />
       <Suspense fallback={null}>
         <NeonCorridorBackground className="opacity-20" />
       </Suspense>
