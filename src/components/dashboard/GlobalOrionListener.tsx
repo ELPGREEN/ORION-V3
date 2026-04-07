@@ -9,23 +9,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserPlan } from "@/hooks/useUserPlan";
 import { OrionAccessGate } from "@/components/OrionAccessGate";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
+import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 
-/** Speak text using Orion's own formant voice (100% offline, zero API) */
+/** Speak text using Gemini TTS Charon (primary voice for all Orion speech) */
 async function orionSpeak(text: string): Promise<void> {
   try {
-    const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
-    const result = await speakWithOrionVoice(text);
+    const result = await speakWithGeminiTTS(text, "Charon");
     if (result.played) return;
   } catch {}
 
-  // Fallback: Piper WASM (still offline)
-  try {
-    const { speakWithPiper } = await import("@/lib/tts/piperTTS");
-    const played = await speakWithPiper(text);
-    if (played) return;
-  } catch {}
-
-  // Skip robotic SpeechSynthesis — prefer silence over bad quality
+  // Silent fallback — prefer silence over bad formant/robotic quality
 }
 // ═══════════════════════════════════════════════════════════
 // ⚡ Audição Relâmpago — Lightning Hearing Engine
