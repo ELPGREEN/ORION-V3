@@ -41,7 +41,7 @@ import {
   MessageSquare, AlertTriangle, Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { FullscreenWixEditor } from './BlockEditor/FullscreenWixEditor';
+import { FullscreenWixEditor } from './FullscreenWixEditor';
 import SortableItem from '@/components/admin/SortableItem';
 
 // ============= Schemas Zod =============

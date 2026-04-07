@@ -28,9 +28,9 @@ import {
   DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { Block, BlockType, BLOCK_TEMPLATES } from './BlockEditor/types';
-import { BlockSettings } from './BlockEditor/BlockSettings';
-import { createBlock, getDefaultLayout } from './BlockEditor/blockFactory';
+import { Block, BlockType, BLOCK_TEMPLATES } from './types';
+import { BlockSettings } from './BlockSettings';
+import { createBlock, getDefaultLayout } from './blockFactory';
 import { toast } from 'sonner';
 
 // ============= Preview Button Component =============
