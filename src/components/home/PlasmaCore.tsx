@@ -221,15 +221,13 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
     setMouse({ x: dx, y: dy });
   }, []);
 
+  // Throttled time updates — 10fps instead of 60fps for HUD SVG animations
   useEffect(() => {
-    let raf: number;
     const t0 = performance.now();
-    const tick = () => {
+    const interval = setInterval(() => {
       setTime((performance.now() - t0) / 1000);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    }, 100); // 10fps is enough for rotating SVG arcs
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -301,6 +299,8 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
         <img
           src={plasmaCoreHd}
           alt="Orion Plasma Core"
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-contain rounded-full"
           style={{
             zIndex: 1,
@@ -341,8 +341,8 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
           />
         ))}
 
-        {/* Radial tick marks */}
-        {Array.from({ length: 36 }).map((_, i) => (
+        {/* Radial tick marks — 12 ticks (was 36) */}
+        {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={`tick-${i}`}
             className="absolute top-1/2 left-1/2"
@@ -351,7 +351,7 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
               height: i % 3 === 0 ? "8%" : "4%",
               background: `linear-gradient(to bottom, hsl(var(--primary) / ${i % 3 === 0 ? 0.5 : 0.25}), transparent)`,
               transformOrigin: "center 0",
-              transform: `translate(-50%, 0) rotate(${i * 10}deg) translateY(-49%)`,
+              transform: `translate(-50%, 0) rotate(${i * 30}deg) translateY(-49%)`,
               animation: "plasmaRingSpin 15s linear infinite",
               zIndex: 3,
             }}
@@ -374,10 +374,8 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
             transform: "translate(-50%, -50%)",
             background: `radial-gradient(circle, hsl(0 0% 100% / ${hover ? 0.95 : 0.85}), hsl(var(--primary) / 0.9) 60%, transparent 100%)`,
             boxShadow: `
-              0 0 ${hover ? 50 : 25}px hsl(var(--primary) / 0.9),
-              0 0 ${hover ? 100 : 50}px hsl(var(--primary) / 0.5),
-              0 0 ${hover ? 150 : 75}px hsl(var(--primary) / 0.25),
-              0 0 ${hover ? 200 : 100}px hsl(var(--secondary) / 0.15)
+              0 0 ${hover ? 60 : 30}px hsl(var(--primary) / 0.8),
+              0 0 ${hover ? 120 : 60}px hsl(var(--primary) / 0.3)
             `,
             animation: "plasmaPulse 3s ease-in-out infinite",
             zIndex: 6,
