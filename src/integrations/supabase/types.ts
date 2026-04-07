@@ -6214,46 +6214,76 @@ export type Database = {
         Row: {
           category: string | null
           commission_percent: number
+          cover_image_url: string | null
           created_at: string
           creator_id: string
           currency: string
           description: string | null
+          faq: Json | null
+          guarantee_days: number | null
           id: string
           image_url: string | null
+          name: string | null
+          original_price_cents: number | null
           price_cents: number
+          sales_page_content: Json | null
+          sales_page_published: boolean | null
+          short_description: string | null
           slug: string
           status: string
+          testimonials: Json | null
           title: string
+          trailer_url: string | null
           updated_at: string
         }
         Insert: {
           category?: string | null
           commission_percent?: number
+          cover_image_url?: string | null
           created_at?: string
           creator_id: string
           currency?: string
           description?: string | null
+          faq?: Json | null
+          guarantee_days?: number | null
           id?: string
           image_url?: string | null
+          name?: string | null
+          original_price_cents?: number | null
           price_cents?: number
+          sales_page_content?: Json | null
+          sales_page_published?: boolean | null
+          short_description?: string | null
           slug: string
           status?: string
+          testimonials?: Json | null
           title: string
+          trailer_url?: string | null
           updated_at?: string
         }
         Update: {
           category?: string | null
           commission_percent?: number
+          cover_image_url?: string | null
           created_at?: string
           creator_id?: string
           currency?: string
           description?: string | null
+          faq?: Json | null
+          guarantee_days?: number | null
           id?: string
           image_url?: string | null
+          name?: string | null
+          original_price_cents?: number | null
           price_cents?: number
+          sales_page_content?: Json | null
+          sales_page_published?: boolean | null
+          short_description?: string | null
           slug?: string
           status?: string
+          testimonials?: Json | null
           title?: string
+          trailer_url?: string | null
           updated_at?: string
         }
         Relationships: []
