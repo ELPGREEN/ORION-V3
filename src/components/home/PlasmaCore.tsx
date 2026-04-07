@@ -221,15 +221,13 @@ export function PlasmaCore({ className = "" }: { className?: string }) {
     setMouse({ x: dx, y: dy });
   }, []);
 
+  // Throttled time updates — 10fps instead of 60fps for HUD SVG animations
   useEffect(() => {
-    let raf: number;
     const t0 = performance.now();
-    const tick = () => {
+    const interval = setInterval(() => {
       setTime((performance.now() - t0) / 1000);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    }, 100); // 10fps is enough for rotating SVG arcs
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
