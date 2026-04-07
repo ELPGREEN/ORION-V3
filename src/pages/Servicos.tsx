@@ -11,8 +11,9 @@ import {
   ArrowRight, CheckCircle2, MessageSquare, Sparkles,
 } from "lucide-react";
 
-const profileIcons = [Scale, Building2, ShoppingBag, Briefcase, Factory];
-const profileKeys = ["lawyers", "offices", "producers", "affiliates", "enterprise"] as const;
+const profileIcons = [Scale, ShoppingBag, Briefcase, Factory];
+const profileKeys = ["lawyers", "producers", "affiliates", "enterprise"] as const;
+const profileAnchors = ["advogados", "produtores", "afiliados", "industria"];
 
 export default function Servicos() {
   const { t } = useTranslation();
@@ -20,6 +21,7 @@ export default function Servicos() {
 
   const profiles = profileKeys.map((key, idx) => ({
     icon: profileIcons[idx],
+    anchor: profileAnchors[idx],
     titulo: s.areas[key].title,
     descricao: s.areas[key].desc,
     servicos: s.areas[key].items,
@@ -91,12 +93,13 @@ export default function Servicos() {
 
           <div className="grid lg:grid-cols-2 gap-8">
             {profiles.map((profile, index) => (
-              <div 
+              <div
+                id={profile.anchor}
                 key={profile.titulo} 
-                className={`group bg-card border border-border p-8 hover-lift hover-gold-glow animate-fade-in-up ${
+                className={`group bg-card border border-border p-8 hover-lift hover-gold-glow animate-fade-in-up scroll-mt-24 ${
                   index === profiles.length - 1 ? "lg:col-span-2 border-primary/30" : ""
                 }`}
-                style={{ animationDelay: `${(index % 5 + 1) * 100}ms` }}
+                style={{ animationDelay: `${(index % 4 + 1) * 100}ms` }}
               >
                 <div className="flex items-start gap-6">
                   <div className={`h-14 w-14 border flex items-center justify-center flex-shrink-0 group-hover:border-primary transition-all ${
