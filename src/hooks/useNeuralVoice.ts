@@ -93,6 +93,7 @@ export function useNeuralVoice(
   const abortControllerRef = useRef<AbortController | null>(null);
   const speechQueueRef = useRef<string[]>([]);
   const bargeInCallbackRef = useRef<(() => void) | null>(null);
+  const bargeInFnRef = useRef<(() => void) | null>(null);
   const speechBufferRef = useRef("");
   const speechDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSpokenTextRef = useRef("");
