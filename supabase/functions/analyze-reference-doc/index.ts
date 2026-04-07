@@ -120,11 +120,11 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
   }
 
   throw new Error("All LLM providers failed");
-  ];
+}
 
-  for (const p of providers) {
-    if (!p.key) continue;
-    try {
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  try {
     // FIX: A1 — Validate user authentication
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
