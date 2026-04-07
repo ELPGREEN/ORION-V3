@@ -149,7 +149,7 @@ const quickActions = [
     title: "Central de Ajuda",
     desc: "Instruções e perguntas frequentes",
     icon: HelpCircle,
-    path: "/dashboard/central-ajuda",
+    path: "/dashboard/instrucoes",
   },
 ];
 
