@@ -390,7 +390,6 @@ export function useOrionReasoning(
 
   const askAIInternal = useCallback(async (question: string) => {
     const now = Date.now();
-    const LAYER_BUDGET_MS = 1000; // 1 second per layer, 4 layers = 4s max
     bargedInRef.current = false;
     aiPendingRef.current = true;
     setIsProcessing(true);
@@ -405,28 +404,28 @@ export function useOrionReasoning(
     if (abortControllerRef) abortControllerRef.current = controller;
 
     try {
-      // ═══ LAYER -1: Auto-Reformulation for comprehension ═══
-      // Expand abbreviations/slang BEFORE any processing so all layers understand the user
+      // ═══ FAST PRE-PROCESSING: Reformulation + Intent + SOM in parallel (~5ms total) ═══
       const comprehension = analyzeComprehension(question);
       let processedInput = question;
       if (comprehension.score < 0.85 || comprehension.isColloquial) {
         processedInput = quickLocalReformulate(question);
-        if (processedInput !== question) {
-          addLog(`🔄 Reformulado: "${question}" → "${processedInput}"`);
-        }
       }
 
-      // ═══ LAYER 0: Tesla Coil Intent Amplification ═══
+      // Run Tesla Coil + SOM + Intent in parallel (all <5ms each)
       const voltage = amplifyIntent(processedInput, {
         hasWorkingMemory: true,
-        recentHistory: chatHistoryRef.current.slice(-5).map(m => m.text),
+        recentHistory: chatHistoryRef.current.slice(-3).map(m => m.text),
       });
-      // Emit voltage event for TeslaCoilVoltagePanel
       window.dispatchEvent(new CustomEvent("tesla-coil-voltage", { detail: voltage }));
-      const layer0Ms = Date.now() - now;
-      addLog(`⚡ Tesla Coil: ${(voltage.confidence * 100).toFixed(0)}% conf, ${voltage.intent}, ${voltage.amplificationRatio.toFixed(1)}x amp [${layer0Ms}ms]`);
 
-      // If confidence too low, ask clarification instead of executing
+      const intentType = classifyIntent(voltage.normalizedInput);
+      const somResult = somClassify(question);
+      const _isSpecialCmd = somResult.isSpecialCmd || intentType === "auto_construct" || intentType === "self_evolve";
+
+      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType} | SOM=${somResult.handler}(${(somResult.confidence * 100).toFixed(0)}%)`);
+      window.dispatchEvent(new CustomEvent("som-routing", { detail: somResult }));
+
+      // If confidence too low, ask clarification
       if (!voltage.shouldExecute && !voltage.isConfirmation) {
         const clarifyMsg = voltage.suggestedQuestion || "Pode detalhar melhor o que deseja?";
         setChatHistory(prev => {
@@ -440,29 +439,14 @@ export function useOrionReasoning(
         return;
       }
 
-      // ═══ LAYER 1: Intent classification (<50ms) ═══
       let processedQuestion = voltage.normalizedInput;
-      const intentType = classifyIntent(processedQuestion);
-      const layer1Ms = Date.now() - now;
-      addLog(`🎯 Intent: ${intentType} [${layer1Ms}ms]`);
-
       const qLow = (processedInput || question).toLowerCase().trim();
 
-      // ═══ SOM FAST-PATH DETECTION — Self-Organizing Map (<2ms) ═══
-      // Replaces sequential regex matching with trained Kohonen network
-      const somResult = somClassify(question);
-      const _isSpecialCmd = somResult.isSpecialCmd || intentType === "auto_construct" || intentType === "self_evolve";
-      addLog(`🗺️ SOM: ${somResult.handler} (${(somResult.confidence * 100).toFixed(0)}%, ${somResult.matchTimeMs.toFixed(1)}ms, neuron=${somResult.neuronIdx})`);
-      window.dispatchEvent(new CustomEvent("som-routing", { detail: somResult }));
-
+      // ═══ INSTANT CACHE CHECK — skip everything if cached (<5ms) ═══
       if (!_isSpecialCmd || isUltraFastPathActive()) {
-        const rIdx = getResonanceIndex();
-        addLog(`⚡ Fast-path: skip intercepts${rIdx >= 0.85 ? ` [Tesla R=${rIdx.toFixed(2)} ULTRA]` : ""} [${Date.now() - now}ms]`);
-
-        // ═══ INSTANT CACHE CHECK — "Na ponta da língua" (<5ms) ═══
         const instantHit = getInstantResponse(processedInput || question);
         if (instantHit && instantHit.confidence >= 0.88) {
-          addLog(`⚡ InstantCache HIT: ${instantHit.category}, conf=${(instantHit.confidence * 100).toFixed(0)}% [${Date.now() - now}ms]`);
+          addLog(`⚡ InstantCache HIT: ${instantHit.category} [${Date.now() - now}ms]`);
           setChatHistory(prev => {
             const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
             return [...clean, { role: "ai" as const, text: instantHit.answer, time: new Date().toLocaleTimeString("pt-BR") }];
@@ -477,69 +461,9 @@ export function useOrionReasoning(
         }
       }
 
-      // ═══ VOICE AUTH GATE — Only respond to authenticated/enrolled users ═══
-      // Public intents (greeting, explanation, time_date, humor, philosophy) skip this gate
-      const PUBLIC_INTENTS = new Set(["greeting", "self_identity", "owner_identity", "time_date", "humor", "philosophy", "explanation", "general_llm"]);
-      const needsAuth = !PUBLIC_INTENTS.has(somResult.handler);
-      if (needsAuth) {
-        try {
-          const { data: { user: authGateUser } } = await supabase.auth.getUser();
-          if (!authGateUser) {
-            const authMsg = "Você precisa estar logado para usar esse recurso. Faça login para continuar.";
-            setChatHistory(prev => {
-              const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
-              return [...clean, { role: "ai" as const, text: `🔒 ${authMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
-            });
-            setThought(authMsg);
-            try { await speak(authMsg); } catch {}
-            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
-            processNextInQueue();
-            return;
-          }
-
-          // For sensitive intents, verify voice enrollment
-          const VOICE_AUTH_INTENTS = new Set(["auto_construct", "self_evolve", "security_query", "iot_light", "iot_temperature", "iot_robot", "iot_status", "bluetooth"]);
-          if (VOICE_AUTH_INTENTS.has(somResult.handler)) {
-            const { data: voiceEnrollment } = await supabase
-              .from("voice_auth_enrollments" as any)
-              .select("is_active, enrollment_quality, user_id")
-              .eq("user_id", authGateUser.id)
-              .eq("is_active", true)
-              .maybeSingle();
-
-            const { data: faceEnrollment } = await supabase
-              .from("face_auth_enrollments")
-              .select("is_active, user_id")
-              .eq("user_id", authGateUser.id)
-              .eq("is_active", true)
-              .maybeSingle();
-
-            // Owner always passes (email check)
-            const { isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
-            const isOwner = isOwnerEmail(authGateUser.email);
-
-            if (!isOwner && !voiceEnrollment && !faceEnrollment) {
-              const enrollMsg = "Este comando requer autenticação biométrica. Cadastre seu Voice ID ou Face ID na área de segurança do painel para executar comandos sensíveis.";
-              setChatHistory(prev => {
-                const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
-                return [...clean, { role: "ai" as const, text: `🔐 ${enrollMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
-              });
-              setThought(enrollMsg);
-              try { await speak(enrollMsg); } catch {}
-              aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
-              processNextInQueue();
-              return;
-            }
-          }
-        } catch (authErr) {
-          console.warn("[Orion] Voice auth gate error:", authErr);
-          // Fall through — don't block on auth errors
-        }
-      }
-
-      // 0. Short greetings / filler — respond locally ONLY for exact greeting phrases
+      // 0. Short greetings — respond instantly, NO auth check needed
       const greetingPatterns = /^(senhor|senhora|oi|olá|ola|ei|hey|eai|e\s*aí|fala|bom\s*dia|boa\s*tarde|boa\s*noite|tudo\s*bem|beleza|opa)[\s!?.]*$/i;
-      if (_isSpecialCmd && greetingPatterns.test(qLow)) {
+      if (greetingPatterns.test(qLow)) {
         const greetings = [
           "Estou ouvindo. O que precisa?",
           "Às ordens. Como posso ajudar?",
@@ -556,6 +480,58 @@ export function useOrionReasoning(
         aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
         somLearn(question, "greeting");
         return;
+      }
+
+      // ═══ VOICE AUTH GATE — Only for sensitive intents (lazy, cached) ═══
+      const PUBLIC_INTENTS = new Set(["greeting", "self_identity", "owner_identity", "time_date", "humor", "philosophy", "explanation", "general_llm"]);
+      const VOICE_AUTH_INTENTS = new Set(["auto_construct", "self_evolve", "security_query", "iot_light", "iot_temperature", "iot_robot", "iot_status", "bluetooth"]);
+      const needsAuth = !PUBLIC_INTENTS.has(somResult.handler);
+      const needsBiometric = VOICE_AUTH_INTENTS.has(somResult.handler);
+
+      if (needsAuth || needsBiometric) {
+        try {
+          const { data: { user: authGateUser } } = await supabase.auth.getUser();
+          if (!authGateUser) {
+            const authMsg = "Você precisa estar logado para usar esse recurso. Faça login para continuar.";
+            setChatHistory(prev => {
+              const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+              return [...clean, { role: "ai" as const, text: `🔒 ${authMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
+            });
+            setThought(authMsg);
+            try { await speak(authMsg); } catch {}
+            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+            processNextInQueue();
+            return;
+          }
+
+          // Only check biometric for sensitive intents — run both queries in parallel
+          if (needsBiometric) {
+            const { isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
+            const isOwner = isOwnerEmail(authGateUser.email);
+
+            if (!isOwner) {
+              const [voiceRes, faceRes] = await Promise.all([
+                supabase.from("voice_auth_enrollments" as any).select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+                supabase.from("face_auth_enrollments").select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+              ]);
+
+              if (!voiceRes.data && !faceRes.data) {
+                const enrollMsg = "Este comando requer autenticação biométrica. Cadastre seu Voice ID ou Face ID na área de segurança.";
+                setChatHistory(prev => {
+                  const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+                  return [...clean, { role: "ai" as const, text: `🔐 ${enrollMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
+                });
+                setThought(enrollMsg);
+                try { await speak(enrollMsg); } catch {}
+                aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+                processNextInQueue();
+                return;
+              }
+            }
+          }
+        } catch (authErr) {
+          console.warn("[Orion] Voice auth gate error:", authErr);
+        }
       }
 
       // 0b. OWNER REGISTRATION: "cadastrar" / "eu sou o Ericson" / "registrar proprietário"

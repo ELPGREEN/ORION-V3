@@ -413,6 +413,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   useEffect(() => {
     if (!active) return;
     let running = true;
+    let frameCount = 0;
     const loop = () => {
       if (!running) return;
       const video = videoRef.current;
@@ -420,19 +421,19 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       if (!video || !canvas || video.readyState < 2) { animRef.current = requestAnimationFrame(loop); return; }
       const w = video.videoWidth || 640;
       const h = video.videoHeight || 480;
-      // Only resize canvas when dimensions change — setting width/height clears the canvas
-      // which causes a race condition where frame capture gets a blank image
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       if (!ctx) { animRef.current = requestAnimationFrame(loop); return; }
       ctx.save(); ctx.scale(-1, 1); ctx.drawImage(video, -w, 0, w, h); ctx.restore();
 
+      frameCount++;
       fpsC.current++;
       const now = Date.now();
       if (now - lastFpsT.current >= 1000) { setFps(fpsC.current); fpsC.current = 0; lastFpsT.current = now; }
       VS.frames++;
 
-      if (VS.frames % 6 === 0) {
+      // Throttle processFrame to every 10 frames (was 6) — saves ~40% CPU
+      if (frameCount % 10 === 0) {
         const result = processFrame(ctx, w, h, prevRef.current);
         VS.regions = result.regions; VS.motion = result.motion;
         VS.shapeDescriptors = result.shapeDescriptors || [];
@@ -445,18 +446,15 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         setRegions(result.regions); setMotion(result.motion);
         if (!prevRef.current || prevRef.current.length !== result.pixels.length) prevRef.current = new Uint8ClampedArray(result.pixels);
         else prevRef.current.set(result.pixels);
-
       }
 
-      // ═══ Unified ML Vision: detectRealTime (MediaPipe + YOLO + Depth + OCR + 3D + Faces) ═══
-      if (VS.frames % 12 === 0 && !rtInferenceRunningRef.current) {
+      // Throttle ML detection to every 20 frames (was 12) — saves GPU cycles
+      if (frameCount % 20 === 0 && !rtInferenceRunningRef.current) {
         rtInferenceRunningRef.current = true;
         detectRealTime(video).then(rtResult => {
-          // Store properly typed result
           VS.realTimeVision = rtResult;
           lastRtVisionRef.current = rtResult;
 
-          // FrameX multi-task data (if available)
           if (rtResult.frameXResult) {
             (VS as any).multiTaskResult = rtResult.frameXResult;
             (VS as any).sceneClassification = rtResult.frameXResult.scenario;
@@ -465,11 +463,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
             (VS as any).frameXFaces = rtResult.frameXResult.faces;
           }
 
-          // Face data from unified pipeline (replaces 3 separate face detectors)
           (VS as any).detectedFaces = rtResult.faces;
           (VS as any).faceAttributes = rtResult.faceAttributes;
 
-          // Merge all objects into UI detections for BoundingBoxOverlay
           if (rtResult.allObjects.length > 0) {
             const mlObjects = rtResult.allObjects.map(o => ({
               name: o.namePt,
@@ -487,7 +483,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           rtInferenceRunningRef.current = false;
         });
       }
-      sendSuperNetFrame();
+      // Throttle SuperNet frames to every 15 frames
+      if (frameCount % 15 === 0) sendSuperNetFrame();
       animRef.current = requestAnimationFrame(loop);
     };
     animRef.current = requestAnimationFrame(loop);

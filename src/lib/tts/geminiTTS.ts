@@ -141,7 +141,7 @@ export async function speakWithGeminiTTS(
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000); // 15s max per TTS call
+    const timeout = setTimeout(() => controller.abort(), 8000); // 8s max per TTS call (was 15s)
     const onExternalAbort = () => controller.abort();
     signal?.addEventListener("abort", onExternalAbort, { once: true });
 
