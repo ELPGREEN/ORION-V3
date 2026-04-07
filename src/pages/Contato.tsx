@@ -384,20 +384,6 @@ export default function Contato() {
         </div>
       </section>
 
-      {/* WhatsApp Float */}
-      <a
-        href="https://wa.me/393501021359?text=Olá! Gostaria de saber mais sobre a plataforma ORION."
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 group"
-        aria-label="Falar no WhatsApp"
-      >
-        <div className="relative h-14 w-14 flex items-center justify-center border border-primary/40 bg-background/80 backdrop-blur-sm hover:border-primary hover:shadow-[0_0_20px_hsl(var(--primary)/0.3)] transition-all duration-500">
-          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary/60" />
-          <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary/60" />
-          <MessageCircle className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
-        </div>
-      </a>
     </MainLayout>
   );
 }
