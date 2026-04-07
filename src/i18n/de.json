@@ -457,56 +457,77 @@
     }
   },
   "services": {
-    "heroTitle": "Juristische",
-    "heroTitleHighlight": "Dienstleistungen",
-    "heroDescription": "Juristische Exzellenz in verschiedenen Rechtsgebieten, mit internationaler Ausbildung und persönlicher Betreuung.",
-    "explore": "Entdecken",
-    "whyChoose": "Warum die",
-    "whyChooseHighlight": "Kanzlei wählen?",
-    "whyChooseDescription": "Wir verbinden international anerkannte akademische Ausbildung mit fortschrittlicher Rechtstechnologie und einem nahen, transparenten Service, der die beste Strategie für jeden Fall gewährleistet.",
-    "scheduleConsultation": "BERATUNG VEREINBAREN",
-    "notFoundTitle": "Ihr Rechtsgebiet nicht gefunden?",
-    "notFoundDescription": "Kontaktieren Sie uns und erzählen Sie uns von Ihrem Fall. Die Kanzlei verfügt über ein Netzwerk spezialisierter Partner für alle rechtlichen Anforderungen.",
-    "meetOffice": "DIE KANZLEI KENNENLERNEN",
+    "heroTitle": "Smart",
+    "heroTitleHighlight": "Solutions",
+    "heroDescription": "The ORION platform offers tailored AI tools for lawyers, firms, digital producers, and affiliates. All in one place.",
+    "explore": "Explore",
+    "sectionTitle": "Services by Profile",
+    "sectionSubtitle": "Each profile has exclusive tools designed to maximize productivity and results.",
+    "whyChoose": "Why choose",
+    "whyChooseHighlight": "ORION?",
+    "whyChooseDescription": "We combine cutting-edge artificial intelligence with a complete management, sales, and automation platform — all with security, LGPD compliance, and dedicated support.",
+    "seePlans": "SEE PLANS & PRICING",
+    "ctaTitle": "Start now for free",
+    "ctaDescription": "Create your free account and explore all ORION platform tools. No commitment, no credit card required.",
+    "startFree": "START FREE",
+    "seeProfiles": "SEE CLIENT PROFILES",
     "areas": {
-      "criminal": {
-        "title": "Strafrecht",
-        "desc": "Spezialisierte technische Verteidigung in allen Phasen des Strafverfahrens, von der polizeilichen Ermittlung bis zum Geschworenengericht.",
-        "items": ["Verteidigung in polizeilichen Ermittlungen", "Habeas Corpus und vorläufige Freilassung", "Geschworenengericht", "Strafvollzug und Vollzugslockerung", "Wirtschafts- und Finanzkriminalität", "Strafrechtliche Berufungen"]
+      "lawyers": {
+        "title": "For Lawyers",
+        "desc": "Complete legal AI: generate petitions, research case law, manage cases and clients with artificial intelligence.",
+        "items": [
+          "AI-powered petition drafting",
+          "Smart case law research",
+          "Case and deadline management",
+          "Automated contract analysis",
+          "Real-time client portal",
+          "Performance reports and metrics"
+        ]
       },
-      "international": {
-        "title": "Internationales Recht",
-        "desc": "Rechtsberatung in grenzüberschreitenden Fragen, internationalen Verträgen und internationaler Rechtshilfe.",
-        "items": ["Internationale Rechtshilfe", "Auslieferung und Abschiebung", "Öffentliches und privates Völkerrecht", "Anerkennung ausländischer Urteile", "Einwanderung und Visa", "Internationale Schiedsgerichtsbarkeit"]
+      "offices": {
+        "title": "For Firms & Companies",
+        "desc": "Legal CRM, team management, billing and complete dashboard for firms and companies of all sizes.",
+        "items": [
+          "CRM with client pipeline",
+          "Team management and permissions",
+          "Billing and financial control",
+          "Management dashboard with metrics",
+          "Multi-user with access levels",
+          "Calendar and email integration"
+        ]
       },
-      "humanRights": {
-        "title": "Menschenrechte",
-        "desc": "Schutz und Förderung der Grundrechte vor nationalen Gerichten und internationalen Organisationen.",
-        "items": ["Prozessführung vor der IAGMR", "Schutz von Minderheiten und vulnerablen Gruppen", "Meinungs- und Pressefreiheit", "Flüchtlingsrecht", "Institutionelle Gewalt", "Advocacy vor der UN"]
+      "producers": {
+        "title": "For Digital Producers",
+        "desc": "Create your store, set up checkout, manage products and track sales with a complete dashboard and affiliate program.",
+        "items": [
+          "Custom domain store",
+          "Conversion-optimized checkout",
+          "Product and category management",
+          "Real-time sales dashboard",
+          "Integrated affiliate program",
+          "Visual landing page editor"
+        ]
       },
-      "labor": {
-        "title": "Arbeitsrecht",
-        "desc": "Vertretung in individuellen und kollektiven Arbeitsstreitigkeiten, sowohl für Arbeitnehmer als auch für Arbeitgeber.",
-        "items": ["Arbeitsklagen", "Mobbing und sexuelle Belästigung", "Arbeitsunfälle", "Tarifverhandlungen", "Präventive Unternehmensberatung", "Abfindungen und FGTS"]
-      },
-      "business": {
-        "title": "Wirtschaftsrecht",
-        "desc": "Rechtsberatung für Unternehmen in gesellschaftsrechtlichen, vertraglichen und Compliance-Fragen.",
-        "items": ["Unternehmensgründung und -änderung", "Handelsverträge", "Compliance und Governance", "Gerichtliche Sanierung", "Juristische Due Diligence", "Schutz des geistigen Eigentums"]
-      },
-      "civil": {
-        "title": "Zivilrecht",
-        "desc": "Vertretung in Zivilsachen, einschließlich zivilrechtlicher Haftung, Verträge und Familienrecht.",
-        "items": ["Zivilrechtliche Haftung und Schadensersatz", "Vertragsüberprüfung und -erstellung", "Erbschaften und Nachfolge", "Verbraucherrecht", "Immobilienrecht", "Mediation und Schiedsverfahren"]
+      "affiliates": {
+        "title": "For Affiliates",
+        "desc": "Trackable links, automatic commissions and product marketplace to promote and earn commissions.",
+        "items": [
+          "Trackable links with analytics",
+          "Automatic per-sale commissions",
+          "Available product marketplace",
+          "Performance dashboard",
+          "Custom coupons",
+          "Detailed conversion reports"
+        ]
       }
     },
     "differentials": [
-      "Ausbildung an Harvard und UC Berkeley",
-      "Praxis in 8+ Ländern",
-      "KI-gestützte Rechtstechnologie",
-      "Vollständige LGPD-Konformität",
-      "Strukturiertes Pro-Bono-Programm",
-      "Echtzeit-Kundenportal"
+      "Natively integrated Gemini AI",
+      "100% LGPD compliant",
+      "Free plan to get started",
+      "Dedicated technical support",
+      "Real-time dashboard",
+      "Multi-language (PT, EN, ES, IT, ZH)"
     ]
   },
   "diferencial": {
@@ -552,10 +573,22 @@
     "techSecurityHighlight": "Sicherheit",
     "techSecurityDesc": "Die Kanzlei verwendet Sicherheitsstandards auf Bankniveau zum Schutz der Mandantendaten, in Übereinstimmung mit dem Allgemeinen Datenschutzgesetz (Gesetz Nr. 13.709/2018) und dem Anwaltsstatut (Gesetz Nr. 8.906/1994).",
     "techItems": {
-      "tls": { "title": "TLS/HTTPS-Verschlüsselung", "desc": "Alle Kommunikationen sind durch Ende-zu-Ende-Verschlüsselung geschützt" },
-      "rls": { "title": "Row Level Security (RLS)", "desc": "Mandantendatenisolierung mit Sicherheitsrichtlinien auf Datenbankebene" },
-      "lgpd": { "title": "LGPD-Konformität", "desc": "Datenverarbeitung gemäß den Rechtsgrundlagen des Gesetzes Nr. 13.709/2018" },
-      "secrecy": { "title": "Berufsgeheimnis", "desc": "Unverletzlicher Schutz gemäß Art. 7 des OAB-Statuts" }
+      "tls": {
+        "title": "TLS/HTTPS-Verschlüsselung",
+        "desc": "Alle Kommunikationen sind durch Ende-zu-Ende-Verschlüsselung geschützt"
+      },
+      "rls": {
+        "title": "Row Level Security (RLS)",
+        "desc": "Mandantendatenisolierung mit Sicherheitsrichtlinien auf Datenbankebene"
+      },
+      "lgpd": {
+        "title": "LGPD-Konformität",
+        "desc": "Datenverarbeitung gemäß den Rechtsgrundlagen des Gesetzes Nr. 13.709/2018"
+      },
+      "secrecy": {
+        "title": "Berufsgeheimnis",
+        "desc": "Unverletzlicher Schutz gemäß Art. 7 des OAB-Statuts"
+      }
     },
     "ctaTitle": "Sprechen Sie mit der Kanzlei",
     "ctaDescription": "Vereinbaren Sie eine Beratung und entdecken Sie, wie die Kombination aus internationaler juristischer Expertise und modernster Technologie den Unterschied in Ihrem Fall machen kann."
@@ -581,22 +614,42 @@
       "tracking": {
         "title": "Echtzeit-Automatisierung & Überwachung",
         "desc": "Intelligentes Panel, in dem Sie Prozesse, Operationen, KPIs und Metriken in Echtzeit einsehen. Das System überwacht automatisch alle Aktivitäten und zeigt den Status jeder Phase.",
-        "items": ["Dashboard mit Echtzeit-KPIs und Metriken", "Automatische Benachrichtigungen bei kritischen Ereignissen", "Vollständiger und prüfbarer Verlauf", "24/7-Zugriff über den Browser, von jedem Gerät"]
+        "items": [
+          "Dashboard mit Echtzeit-KPIs und Metriken",
+          "Automatische Benachrichtigungen bei kritischen Ereignissen",
+          "Vollständiger und prüfbarer Verlauf",
+          "24/7-Zugriff über den Browser, von jedem Gerät"
+        ]
       },
       "communication": {
         "title": "Integrierter Orion KI-Assistent",
         "desc": "Chatten Sie mit Orion, unserem KI-Assistenten, der für Geschäftsdokumentation, Datenanalyse, Compliance und internationale Geschäftsstrategie trainiert ist.",
-        "items": ["Kontextbezogener KI-Chat innerhalb der Plattform", "KI-gestützte Geschäftsdokumentenerstellung", "Intelligente Datenanalyse und Berichterstattung", "Mehrsprachige Unterstützung (PT, EN, IT, ES, ZH)"]
+        "items": [
+          "Kontextbezogener KI-Chat innerhalb der Plattform",
+          "KI-gestützte Geschäftsdokumentenerstellung",
+          "Intelligente Datenanalyse und Berichterstattung",
+          "Mehrsprachige Unterstützung (PT, EN, IT, ES, ZH)"
+        ]
       },
       "documents": {
         "title": "Intelligente Dokumentenverwaltung",
         "desc": "Erstellen, verwalten und teilen Sie Geschäftsdokumente mit KI. Internationale Verträge, LOIs, NDAs, Geschäftsvorschläge und Compliance-Berichte in intelligenten Ordnern.",
-        "items": ["KI-Dokumentenerstellung (15+ Typen)", "Zweisprachige Vorlagen (EN/PT) für internationales Geschäft", "Automatische Organisation nach Kategorien", "Sichere Cloud-Speicherung mit Versionierung"]
+        "items": [
+          "KI-Dokumentenerstellung (15+ Typen)",
+          "Zweisprachige Vorlagen (EN/PT) für internationales Geschäft",
+          "Automatische Organisation nach Kategorien",
+          "Sichere Cloud-Speicherung mit Versionierung"
+        ]
       },
       "security": {
         "title": "Sicherheit & Compliance",
         "desc": "Infrastruktur geschützt durch robuste Authentifizierung, TLS-Verschlüsselung und Sicherheitsrichtlinien auf Datenbankebene (RLS). DSGVO und LGPD konform.",
-        "items": ["Verschlüsselte Verbindung via HTTPS/TLS", "Profilbasierte Zugriffskontrolle (Row Level Security)", "DSGVO- und LGPD-Konformität", "Vollständiges Aktions-Audit-Trail"]
+        "items": [
+          "Verschlüsselte Verbindung via HTTPS/TLS",
+          "Profilbasierte Zugriffskontrolle (Row Level Security)",
+          "DSGVO- und LGPD-Konformität",
+          "Vollständiges Aktions-Audit-Trail"
+        ]
       }
     },
     "benefitsLabel": "Vorteile",
@@ -613,20 +666,44 @@
     "howItWorksTitle1": "Drei Schritte zur",
     "howItWorksTitle2": "digitalen Transformation",
     "steps": {
-      "create": { "title": "Konto erstellen", "desc": "Schnelle und sichere Registrierung. In wenigen Minuten haben Sie vollen Zugang zur ORION-Plattform." },
-      "access": { "title": "Umgebung einrichten", "desc": "Definieren Sie Ihr Profil, verbinden Sie Datenquellen und passen Sie Module für Ihren Betrieb an." },
-      "control": { "title": "Automatisieren und skalieren", "desc": "Nutzen Sie KI zum Erstellen von Dokumenten, Analysieren von Daten, Verwalten von Teams und Treffen intelligenterer Entscheidungen." }
+      "create": {
+        "title": "Konto erstellen",
+        "desc": "Schnelle und sichere Registrierung. In wenigen Minuten haben Sie vollen Zugang zur ORION-Plattform."
+      },
+      "access": {
+        "title": "Umgebung einrichten",
+        "desc": "Definieren Sie Ihr Profil, verbinden Sie Datenquellen und passen Sie Module für Ihren Betrieb an."
+      },
+      "control": {
+        "title": "Automatisieren und skalieren",
+        "desc": "Nutzen Sie KI zum Erstellen von Dokumenten, Analysieren von Daten, Verwalten von Teams und Treffen intelligenterer Entscheidungen."
+      }
     },
     "showcaseLabel": "Entdecken Sie die Plattform",
     "showcaseTitle1": "Überblick über die",
     "showcaseTitle2": "Plattform",
     "showcaseDescription": "Entdecken Sie die Module und Funktionen, die die Unternehmensführung effizienter, automatisierter und intelligenter machen.",
     "showcase": {
-      "platform": { "title": "ORION KI-Plattform", "desc": "Vollständiges Panel für KI-gestützte Unternehmensführung. Überwachen Sie Operationen, verwalten Sie Teams und automatisieren Sie Prozesse mit vollständiger Transparenz und 24/7-Zugang." },
-      "ai": { "title": "Orion KI-Assistent", "desc": "Stellen Sie Geschäftsfragen an KI, die in internationalem Recht, Compliance und Geschäftsstrategie geschult ist. Kontextbezogene und fundierte Antworten." },
-      "docs": { "title": "KI-Dokumentenerstellung", "desc": "Erstellen Sie internationale Verträge, LOIs, NDAs, Geschäftsvorschläge und Berichte mit KI-Unterstützung. Professionelle zweisprachige Vorlagen, die Abläufe beschleunigen." },
-      "register": { "title": "Unternehmensregistrierung & Zugang", "desc": "Registrieren Sie Ihr Unternehmen in Minuten und greifen Sie auf alle Funktionen zu. Geschützter Bereich mit profilbasierter Sicherheit und Datenschutz." },
-      "dashboard": { "title": "Intelligentes Business-Dashboard", "desc": "Vollständiger Überblick mit Metriken, aktiven Operationen, ausstehenden Aufgaben und Echtzeit-Benachrichtigungen. Alles organisiert in einem intuitiven Panel." }
+      "platform": {
+        "title": "ORION KI-Plattform",
+        "desc": "Vollständiges Panel für KI-gestützte Unternehmensführung. Überwachen Sie Operationen, verwalten Sie Teams und automatisieren Sie Prozesse mit vollständiger Transparenz und 24/7-Zugang."
+      },
+      "ai": {
+        "title": "Orion KI-Assistent",
+        "desc": "Stellen Sie Geschäftsfragen an KI, die in internationalem Recht, Compliance und Geschäftsstrategie geschult ist. Kontextbezogene und fundierte Antworten."
+      },
+      "docs": {
+        "title": "KI-Dokumentenerstellung",
+        "desc": "Erstellen Sie internationale Verträge, LOIs, NDAs, Geschäftsvorschläge und Berichte mit KI-Unterstützung. Professionelle zweisprachige Vorlagen, die Abläufe beschleunigen."
+      },
+      "register": {
+        "title": "Unternehmensregistrierung & Zugang",
+        "desc": "Registrieren Sie Ihr Unternehmen in Minuten und greifen Sie auf alle Funktionen zu. Geschützter Bereich mit profilbasierter Sicherheit und Datenschutz."
+      },
+      "dashboard": {
+        "title": "Intelligentes Business-Dashboard",
+        "desc": "Vollständiger Überblick mit Metriken, aktiven Operationen, ausstehenden Aufgaben und Echtzeit-Benachrichtigungen. Alles organisiert in einem intuitiven Panel."
+      }
     },
     "ctaLabel": "Jetzt starten",
     "ctaTitle1": "Bereit für die",
