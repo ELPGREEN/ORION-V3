@@ -120,8 +120,11 @@ function generateGlottalSource(count: number, f0: number): Float32Array {
   const Te = OQ * T0;
   const Tp = Te / (1 + SQ);
   const Ta = 0.08 * T0;
-  const jitter = VOICE_DNA.dynamics.jitter;
-  const shimmer = VOICE_DNA.dynamics.shimmer;
+  // Paper: irregularity is the NORM for male voices (61-69%)
+  // Increase jitter from DNA 8.82% → effective ~12% for natural irregularity
+  const jitter = VOICE_DNA.dynamics.jitter * 1.35;
+  // Shimmer also elevated for tracing irregularity
+  const shimmer = VOICE_DNA.dynamics.shimmer * 1.2;
 
   for (let i = 0; i < count; i++) {
     const t = glottalPhase;
@@ -137,11 +140,9 @@ function generateGlottalSource(count: number, f0: number): Float32Array {
       sample = -0.2 * Math.exp(-tr);
     }
 
-    // Shimmer (amplitude variation per cycle)
     const shimmerFactor = 1 + (Math.random() - 0.5) * shimmer * 0.5;
     out[i] = sample * shimmerFactor;
 
-    // Advance with jitter
     glottalPhase += 1 + (Math.random() - 0.5) * 2 * jitter;
     if (glottalPhase >= T0) glottalPhase -= T0;
   }
@@ -160,12 +161,53 @@ function generateNoise(count: number): Float32Array {
   return out;
 }
 
+/**
+ * Paper finding: noise MUCH present at 3.2kHz (73%) and whole spectrum (70%)
+ * Normal male voices have significant aspiration noise mixed with voicing.
+ * This generates noise shaped toward 3.2kHz region.
+ */
+function generateAspirationNoise(count: number): Float32Array {
+  const out = new Float32Array(count);
+  // Bandpass around 3.2kHz using simple IIR
+  const fc = 3200;
+  const bw = 2000; // wide band
+  const r = Math.exp(-Math.PI * bw / SR);
+  const theta = 2 * Math.PI * fc / SR;
+  const b1 = -2 * r * Math.cos(theta);
+  const b2 = r * r;
+  const a0 = 1 + b1 + b2;
+  let z1 = 0, z2 = 0;
+  
+  for (let i = 0; i < count; i++) {
+    const white = Math.random() * 2 - 1;
+    const y = a0 * white - b1 * z1 - b2 * z2;
+    z2 = z1; z1 = y;
+    out[i] = y * 0.5;
+  }
+  return out;
+}
+
 function generateMixed(count: number, f0: number, voiceRatio: number): Float32Array {
   const glottal = generateGlottalSource(count, f0);
   const noise = generateNoise(count);
   const out = new Float32Array(count);
   for (let i = 0; i < count; i++) {
     out[i] = voiceRatio * glottal[i] + (1 - voiceRatio) * noise[i];
+  }
+  return out;
+}
+
+/**
+ * Voiced source with aspiration noise layer.
+ * Paper: 70-73% of normal male voice spectrograms show "much noise"
+ * aspirationRatio: 0.0 = pure voice, 0.20 = natural male aspiration
+ */
+function generateVoicedWithAspiration(count: number, f0: number, aspirationRatio: number = 0.18): Float32Array {
+  const glottal = generateGlottalSource(count, f0);
+  const aspiration = generateAspirationNoise(count);
+  const out = new Float32Array(count);
+  for (let i = 0; i < count; i++) {
+    out[i] = (1 - aspirationRatio) * glottal[i] + aspirationRatio * aspiration[i];
   }
   return out;
 }
