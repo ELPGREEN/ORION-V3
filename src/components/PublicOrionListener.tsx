@@ -58,6 +58,24 @@ export function PublicOrionListener() {
       return;
     }
 
+    // Local quick answers (no auth needed)
+    const lower = clean.toLowerCase();
+    if (/que\s*hora/i.test(lower)) {
+      showFeedback(`🕐 ${new Date().toLocaleTimeString("pt-BR")} — ${new Date().toLocaleDateString("pt-BR")}`);
+      setTimeout(() => { cooldownRef.current = false; }, 2000);
+      return;
+    }
+    if (/status\s*(do\s*)?(sistema|orion)/i.test(lower)) {
+      showFeedback("✅ Orion operacional. Rede neural ativa, todos os módulos online.");
+      setTimeout(() => { cooldownRef.current = false; }, 2000);
+      return;
+    }
+    if (/\b(ajuda|help|comandos)\b/i.test(lower)) {
+      showFeedback('💡 Comandos: "ir para planos", "abrir soluções", "ver blog", "que horas são". Faça login para acesso completo.');
+      setTimeout(() => { cooldownRef.current = false; }, 3000);
+      return;
+    }
+
     // Try navigation intent
     const navIntent = detectNavigationIntent(clean);
     if (navIntent) {
@@ -67,6 +85,15 @@ export function PublicOrionListener() {
         cooldownRef.current = false;
       }, 800);
       return;
+    }
+
+    // Commands that require auth
+    if (/\b(criar|gerar|buscar|listar|abrir\s+(crm|processo|tarefa|documento))/i.test(lower)) {
+      if (!user) {
+        showFeedback("🔒 Faça login para usar esse comando.");
+        setTimeout(() => { navigate("/auth"); cooldownRef.current = false; }, 1500);
+        return;
+      }
     }
 
     // Fallback — helpful suggestions
