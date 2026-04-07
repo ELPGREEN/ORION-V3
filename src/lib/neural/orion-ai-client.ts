@@ -571,8 +571,11 @@ export async function analyzeFrameWithAI(
 
     const localDetections = buildLocalDetections();
 
+    // ═══ SPEED: Fire dashboard context + API call in parallel ═══
+    const dashCtxPromise = fetchDashboardContext().catch(() => "");
+    
     const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-6), identificationMode, intentType, localDetections },
+      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await dashCtxPromise, chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections },
     });
     if (error) {
       console.warn("[OrionAI] Vision analysis invoke error:", error?.message);
