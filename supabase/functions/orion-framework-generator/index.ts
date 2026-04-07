@@ -12,7 +12,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    const geminiKey = Deno.env.get("GEMINI_API_KEY");
     const supabase = createClient(supabaseUrl, serviceKey);
 
     const { name, type, description, requirements, tags, user_id } = await req.json();
@@ -35,7 +35,7 @@ serve(async (req) => {
     // Use AI to generate richer code if available
     let generatedCode = "";
     
-    if (lovableKey) {
+    if (geminiKey) {
       const aiPrompt = `Generate a complete TypeScript module for: "${name}"
 Type: ${type}
 Description: ${description}
@@ -49,24 +49,18 @@ Rules:
 - Return ONLY the TypeScript code, no markdown fences`;
 
       try {
-        const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const aiResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${lovableKey}`,
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
-            messages: [
-              { role: "system", content: "You are Orion Framework Factory. Generate clean, typed, production-ready TypeScript modules. Output ONLY code." },
-              { role: "user", content: aiPrompt },
-            ],
+            systemInstruction: { parts: [{ text: "You are Orion Framework Factory. Generate clean, typed, production-ready TypeScript modules. Output ONLY code." }] },
+            contents: [{ role: "user", parts: [{ text: aiPrompt }] }],
           }),
         });
 
         if (aiResp.ok) {
           const aiData = await aiResp.json();
-          generatedCode = aiData.choices?.[0]?.message?.content || "";
+          generatedCode = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
           // Strip markdown fences if present
           generatedCode = generatedCode.replace(/```(?:typescript|ts)?\n?/g, "").replace(/```$/g, "").trim();
         }
