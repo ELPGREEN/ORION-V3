@@ -1825,15 +1825,15 @@ const AI_PROVIDERS: Record<string, AIProvider> = {
     maxTokens: 16384,
     temperature: 0.3,
   },
-  openai: {
-    name: "GPT-4o",
-    apiKeyEnvs: ["OPENAI_API_KEY", "OPENAI_API_KEY_2"],
+  gemini_25_flash: {
+    name: "Gemini 2.5 Flash (FREE)",
+    apiKeyEnvs: ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"],
     maxTokens: 16384,
     temperature: 0.3,
   },
-  anthropic: {
-    name: "Claude Sonnet 4",
-    apiKeyEnvs: ["ANTHROPIC_API_KEY"],
+  groq: {
+    name: "Llama 3.3 70B (Groq)",
+    apiKeyEnvs: ["GROQ_API_KEY"],
     maxTokens: 8192,
     temperature: 0.3,
   },
@@ -2023,62 +2023,23 @@ async function callMistral(
   return data.choices?.[0]?.message?.content || "";
 }
 
-// Combined mode: Anthropic generates, OpenAI refines
+// Combined mode: Gemini generates + refines (FREE, single-pass)
 async function callCombinedMode(
   enhancedSystemPrompt: string,
   userPrompt: string
 ): Promise<{ content: string; provider: string; fallback: boolean }> {
-  const anthropicKey = getAvailableKey(AI_PROVIDERS.anthropic.apiKeyEnvs);
-  const openaiKey = getAvailableKey(AI_PROVIDERS.openai.apiKeyEnvs);
+  const geminiKey = getAvailableKey(AI_PROVIDERS.gemini_25_flash.apiKeyEnvs);
+  if (!geminiKey) throw new Error("Modo combinado requer chave Gemini");
 
-  if (!anthropicKey || !openaiKey) {
-    throw new Error("Modo combinado requer chaves da Anthropic e OpenAI");
-  }
+  console.log("🧠 [COMBINED] Gemini 2.5 Flash generating + refining...");
+  const content = await callGemini(geminiKey, "gemini-2.5-flash", [
+    { role: "user", parts: [{ text: enhancedSystemPrompt + "\n\n" + userPrompt }] },
+  ], { maxTokens: 16384, temperature: 0.3 });
 
-  // Phase 1: Anthropic generates the document (advanced reasoning)
-  console.log("🧠 [COMBINED] Phase 1: Anthropic Claude generating document...");
-  const phase1 = await callAnthropic(anthropicKey, enhancedSystemPrompt, userPrompt, {
-    maxTokens: AI_PROVIDERS.anthropic.maxTokens,
-    temperature: 0.3,
-  });
+  if (!content || content.length < 500) throw new Error("Gemini gerou documento muito curto");
+  console.log(`  ✅ Done: ${content.length} chars`);
 
-  if (!phase1 || phase1.length < 500) {
-    throw new Error("Anthropic gerou documento muito curto");
-  }
-  console.log(`  ✅ Phase 1 done: ${phase1.length} chars`);
-
-  // Phase 2: OpenAI refines/completes (versatile completion)
-  console.log("🔧 [COMBINED] Phase 2: OpenAI GPT refining document...");
-  const refinePrompt = `Você é um revisor jurídico especializado. Revise e aprimore o documento abaixo gerado por outra IA:
-
-INSTRUÇÕES DE REVISÃO:
-1. Corrija erros gramaticais ou de concordância
-2. Verifique se a fundamentação legal está correta e completa
-3. Complete seções que estejam incompletas (pedidos, assinatura, testemunhas)
-4. Melhore a coesão e a clareza da argumentação
-5. Mantenha o endereçamento e a estrutura original
-6. NÃO remova jurisprudência ou citações legais existentes
-7. Adicione citações complementares se necessário
-8. Garanta que termine com assinatura [Nome do Advogado] – [OAB]
-
-DOCUMENTO A REVISAR:
-${phase1}
-
-Retorne o documento COMPLETO revisado e aprimorado.`;
-
-  const phase2 = await callOpenAI(openaiKey, enhancedSystemPrompt, refinePrompt, {
-    maxTokens: AI_PROVIDERS.openai.maxTokens,
-    temperature: 0.2,
-  });
-
-  const finalContent = (phase2 && phase2.length > phase1.length * 0.5) ? phase2 : phase1;
-  console.log(`  ✅ Phase 2 done: ${finalContent.length} chars (used ${finalContent === phase2 ? "refined" : "original"})`);
-
-  return {
-    content: finalContent,
-    provider: "Anthropic + OpenAI (Combinado)",
-    fallback: false,
-  };
+  return { content, provider: "Gemini 2.5 Flash (Combinado FREE)", fallback: false };
 }
 
 // ═══════════════════════════════════════════════════════════════
