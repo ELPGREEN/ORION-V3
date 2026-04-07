@@ -12,7 +12,7 @@ const features = [
 
 export function SmartOtrSection() {
   return (
-    <section className="py-20 sm:py-28 bg-background relative overflow-hidden">
+    <section className="py-12 sm:py-16 bg-background relative overflow-hidden">
       <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-primary/[0.03] rounded-full blur-[120px] pointer-events-none" />
       <div className="container relative px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center mb-12 sm:mb-16">
@@ -49,7 +49,7 @@ export function SmartOtrSection() {
         <ScrollReveal direction="up" delay={0.5}>
           <div className="text-center mt-10">
             <Button className="btn-outline-gold" asChild>
-              <Link to="/sobre">
+              <Link to="/servicos#industria">
                 Conheça Nossa Tecnologia <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
