@@ -5,13 +5,51 @@ import { supabase } from '@/integrations/supabase';
 import { initializeNeuralProfile } from '@/lib/neural-init';
 import { clearRoleCache } from '@/hooks/useUserRole';
 
+type AccountType = 'advogado' | 'produtor' | 'afiliado' | 'nomade' | 'cliente';
+
+const SCOPES_BY_ROLE: Record<AccountType, string[]> = {
+  advogado: [
+    'https://www.googleapis.com/auth/documents',
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/contacts.readonly',
+  ],
+  produtor: [
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/youtube.readonly',
+  ],
+  nomade: [
+    'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/calendar',
+    'https://www.googleapis.com/auth/youtube.readonly',
+    'https://www.googleapis.com/auth/tasks',
+  ],
+  afiliado: [
+    'https://www.googleapis.com/auth/drive.readonly',
+    'https://www.googleapis.com/auth/spreadsheets.readonly',
+    'https://www.googleapis.com/auth/gmail.send',
+  ],
+  cliente: [
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/calendar.readonly',
+  ],
+};
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string, metadata?: Record<string, unknown>) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithGoogle: (accountType?: AccountType) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
