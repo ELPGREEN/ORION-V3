@@ -35,7 +35,7 @@ export function PublicOrionListener() {
   // Don't show on auth pages or dashboard
   const isDashboard = location.pathname.startsWith("/dashboard");
   const isAuthPage = ["/auth", "/cadastro", "/esqueci-senha"].includes(location.pathname);
-  if (isDashboard || isAuthPage) return null;
+  const shouldHide = isDashboard || isAuthPage;
 
   const showFeedback = useCallback((msg: string, duration = 3000) => {
     setFeedback(msg);
