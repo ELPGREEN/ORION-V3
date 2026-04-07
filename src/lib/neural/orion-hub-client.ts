@@ -170,7 +170,7 @@ function int16ArrayToWavBlob(samples: Int16Array, sampleRate: number): Blob {
   return new Blob([buffer], { type: "audio/wav" });
 }
 
-// ─── LLM Chat ───
+// ─── LLM Chat (Gemma 4 on ZeroGPU) ───
 
 export async function llmChat(
   message: string,
@@ -178,13 +178,45 @@ export async function llmChat(
   maxTokens = 1024,
   temperature = 0.7,
 ): Promise<string> {
-  return callGradio<string>("llm", [message, systemPrompt, maxTokens, temperature], GPU_TIMEOUT);
+  return callGradio<string>("gemma_chat", [message, systemPrompt, maxTokens, temperature], GPU_TIMEOUT);
+}
+
+// ─── Vision Caption (BLIP on ZeroGPU) ───
+
+export interface VisionCaptionResult {
+  caption: string;
+  model: string;
+  source: string;
+}
+
+export async function visionCaption(imageFile: File | Blob): Promise<VisionCaptionResult> {
+  const base64 = await blobToBase64(imageFile);
+  const result = await callGradio<string>("vision_caption", [base64], GPU_TIMEOUT);
+  return typeof result === "string" ? JSON.parse(result) : result;
+}
+
+// ─── Whisper STT (on ZeroGPU) ───
+
+export interface WhisperSTTResult {
+  text: string;
+  language: string;
+  model: string;
+  source: string;
+}
+
+export async function whisperSTT(
+  audioBlob: Blob,
+  language = "pt"
+): Promise<WhisperSTTResult> {
+  // Convert blob to numpy-compatible format via base64
+  const base64 = await blobToBase64(audioBlob);
+  const result = await callGradio<string>("whisper_stt", [base64, language], GPU_TIMEOUT);
+  return typeof result === "string" ? JSON.parse(result) : result;
 }
 
 // ─── OCR ───
 
 export async function ocrExtract(imageFile: File | Blob): Promise<OCRResult> {
-  // Convert to base64 for Gradio
   const base64 = await blobToBase64(imageFile);
   const result = await callGradio<string>("ocr", [base64], GPU_TIMEOUT);
   return typeof result === "string" ? JSON.parse(result) : result;
