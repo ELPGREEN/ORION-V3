@@ -569,10 +569,11 @@ export async function analyzeFrameWithAI(
       ? `${consciousnessContext}\n\n${context || ""}` 
       : context;
 
+    // ═══ PERF FIX: buildLocalDetections only ONCE (was called 2x — streaming path duplicates this) ═══
     const localDetections = buildLocalDetections();
 
     const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-6), identificationMode, intentType, localDetections },
+      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections },
     });
     if (error) {
       console.warn("[OrionAI] Vision analysis invoke error:", error?.message);
