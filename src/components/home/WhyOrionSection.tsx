@@ -45,7 +45,7 @@ const reasons = [
 
 export function WhyOrionSection() {
   return (
-    <section className="py-12 sm:py-16 section-cinematic relative overflow-hidden neural-ambient tron-energy tron-data-stream">
+    <section className="py-12 sm:py-16 section-cinematic relative overflow-hidden neural-ambient tron-energy">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-0 w-[400px] h-[400px] bg-primary/[0.03] rounded-full blur-[150px]" />
         <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-primary/[0.02] rounded-full blur-[120px]" />
