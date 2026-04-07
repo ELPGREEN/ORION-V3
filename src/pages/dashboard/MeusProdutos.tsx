@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Package, Edit, Archive, Eye, Trash2, Save, Brain, Loader2, Sparkles } from "lucide-react";
+import { Plus, Package, Edit, Archive, Eye, Trash2, Save, Brain, Loader2, Sparkles, ImagePlus, X } from "lucide-react";
 import { ProductFileManager } from "@/components/dashboard/product/ProductFileManager";
 import { ProductModuleManager } from "@/components/dashboard/product/ProductModuleManager";
 
@@ -18,7 +18,7 @@ function slugify(text: string) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-const emptyForm = { title: "", description: "", price: "", commission: "10", category: "", product_type: "digital_download" };
+const emptyForm = { title: "", description: "", price: "", commission: "10", category: "", product_type: "digital_download", image_url: "" };
 
 const productTypes = [
   { value: "digital_download", label: "Download Digital" },
