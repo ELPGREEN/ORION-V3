@@ -31,12 +31,6 @@ function getAllGeminiKeys(): string[] {
   const now = Date.now();
   const keys = [
     Deno.env.get("GEMINI_API_KEY"),
-    Deno.env.get("GEMINI_API_KEY_2"),
-    Deno.env.get("GEMINI_API_KEY_3"),
-    Deno.env.get("GEMINI_API_KEY_4"),
-    Deno.env.get("GEMINI_API_KEY_5"),
-    Deno.env.get("GEMINI_API_KEY_6"),
-    Deno.env.get("GEMINI_API_KEY_7"),
   ].filter((k): k is string => {
     if (!k) return false;
     const failedAt = failedKeyCache[k];
@@ -45,8 +39,7 @@ function getAllGeminiKeys(): string[] {
   });
 
   if (keys.length === 0) throw new Error("No GEMINI_API_KEY configured (all keys cooling down)");
-  const idx = Math.floor(Date.now() / 1000) % keys.length;
-  return [...keys.slice(idx), ...keys.slice(0, idx)];
+  return keys;
 }
 
 /**
@@ -136,10 +129,19 @@ Deno.serve(async (req) => {
       };
     }
 
-    // Try all keys until one works (handles 403 blocked keys)
+    // Retry logic with up to 3 attempts (handles transient 500 errors)
     let response: Response | null = null;
     let lastError = "";
-    for (const apiKey of keys) {
+    const MAX_RETRIES = 3;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      if (attempt > 0) {
+        // Wait 1s between retries
+        await new Promise(r => setTimeout(r, 1000));
+        console.log(`[Gemini TTS] Retry attempt ${attempt + 1}/${MAX_RETRIES}`);
+      }
+
+      const apiKey = keys[0];
       const url = `${API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
       const r = await fetch(url, {
         method: "POST",
@@ -154,7 +156,7 @@ Deno.serve(async (req) => {
 
       const errText = await r.text();
       lastError = errText.slice(0, 200);
-      console.warn(`[Gemini TTS] Key failed (${r.status}): ${lastError.slice(0, 100)}`);
+      console.warn(`[Gemini TTS] Attempt ${attempt + 1} failed (${r.status}): ${lastError.slice(0, 100)}`);
 
       if (r.status === 429) {
         return new Response(
@@ -163,16 +165,14 @@ Deno.serve(async (req) => {
         );
       }
 
-      // 403 = key blocked, cache it and try next
       if (r.status === 403) {
         failedKeyCache[apiKey] = Date.now();
-        continue;
+        break; // No other keys to try
       }
-      // 400/500 = try next key
-      if (r.status === 400 || r.status === 500) continue;
-      
-      // Other errors, stop trying
-      break;
+
+      // 500 = transient, retry; 400 = bad request, stop
+      if (r.status === 400) break;
+      // 500 continues to next attempt
     }
 
     if (!response) {
