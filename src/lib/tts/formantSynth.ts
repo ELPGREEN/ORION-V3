@@ -571,7 +571,7 @@ function samplesToWav(samples: Float32Array, sampleRate: number): Blob {
   v.setUint16(22, 1, true);
   v.setUint32(24, sampleRate, true);
   v.setUint32(28, sampleRate * 2, true);
-  v.setUInt16(32, 2, true);
+  v.setUint16(32, 2, true);
   v.setUint16(34, 16, true);
   writeStr(36, "data");
   v.setUint32(40, dataLen, true);
