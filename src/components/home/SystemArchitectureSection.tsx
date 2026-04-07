@@ -1,4 +1,5 @@
 import { IconNeuralAI, IconDocuments, IconCRM, IconPayment, IconChat, IconShield, IconAutomation, IconDashboard, IconGlobe } from "@/components/icons/SumerianTronIcons";
+import bgTronCircuit from "@/assets/bg-tron-circuit.jpg";
 
 const modules = [
   { Icon: IconNeuralAI, title: "Motor Neural", desc: "Inteligência artificial proprietária com raciocínio avançado, aprendizado contínuo e respostas precisas." },
@@ -15,6 +16,8 @@ const modules = [
 export function SystemArchitectureSection() {
   return (
     <section className="py-12 sm:py-16 bg-background relative overflow-hidden tron-ambient">
+      <img src={bgTronCircuit} alt="" loading="lazy" width={1920} height={1080} className="absolute inset-0 w-full h-full object-cover opacity-[0.05] pointer-events-none mix-blend-screen" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background pointer-events-none" />
       <div className="absolute top-0 inset-x-0 tron-divider" />
       <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-primary/[0.03] rounded-full blur-[200px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] bg-secondary/[0.02] rounded-full blur-[180px] pointer-events-none" />
