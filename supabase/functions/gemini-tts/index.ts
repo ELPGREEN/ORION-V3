@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
     console.error("[Gemini TTS] Error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message, fallback: true }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
