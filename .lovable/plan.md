@@ -1,82 +1,115 @@
 
 
-# Auditoria Completa — Páginas Públicas vs Serviços Orion
+# Auditoria Completa do Site Orion IA — Reorganização Total
 
-## Diagnóstico
+## Diagnóstico: O que esta errado
 
-Analisei todas as páginas públicas, navegação, traduções e conteúdo. O Orion se posiciona como **plataforma SaaS de IA** para 4 perfis: Advogados, Escritórios/Empresas, Produtores Digitais e Afiliados.
+### PROBLEMA 1: Paginas que nao pertencem ao site
+O Orion e uma **plataforma SaaS de IA empresarial**. Porem, existem 3 paginas publicas que sao de um **escritorio de advocacia pessoal**, completamente fora de contexto:
 
-### Páginas COERENTES (OK)
+| Pagina | Conteudo atual | Problema |
+|--------|---------------|----------|
+| `/escritorio` | Direito Penal, Internacional, Trabalhista, Direitos Humanos, Civil, Empresarial. CTA "AGENDAR CONSULTA" via WhatsApp pessoal | 100% escritorio de advocacia, nada a ver com SaaS |
+| `/pro-bono` | Formulario para pedir assistencia juridica gratuita, criterios de vulnerabilidade social | Servico de escritorio de advocacia, nao da plataforma |
+| `/depoimentos` | Avaliacoes de clientes (pode ser de qualquer coisa) | Desconectado — nao referenciado no menu |
 
-| Página | Status | Observação |
-|--------|--------|------------|
-| **Index (Home)** | OK | Hero "IA Empresarial", WhoIsItFor com 4 perfis, WhyOrion, Comparison — tudo alinhado como plataforma SaaS |
-| **Clientes** | OK | 4 categorias corretas com benefícios específicos por perfil |
-| **Contato** | OK | 4 planos SaaS (Starter grátis → Enterprise R$497) coerentes |
-| **Plataforma** | OK | Mostra utilidades da IA (Visão, Raciocínio, Docs, Pesquisa, Multi-idioma) |
-| **Publicações/Blog** | OK | Conteúdo editorial neutro |
-| **Vitrine Afiliado** | OK | Página pública de vitrine para afiliados |
+### PROBLEMA 2: Duplicacao de conteudo
+- `/servicos` e `/clientes` cobrem o MESMO tema (perfis de usuario e beneficios por perfil) com layouts diferentes
+- `/plataforma` repete capacidades que ja estao em `/servicos`
 
-### PROBLEMA GRAVE: Página "Serviços" (/servicos)
+### PROBLEMA 3: Navegacao incoerente
 
-A página **Serviços** é inteiramente sobre um **escritório de advocacia tradicional** — Direito Penal, Internacional, Direitos Humanos, Trabalhista, Empresarial, Civil. Inclui:
-- "Formação em Harvard e UC Berkeley"
-- "Atuação em 8+ países"
-- "AGENDAR CONSULTA" com link para WhatsApp pessoal
-- "CONHECER O ESCRITÓRIO"
+**Header (menu atual):**
+```text
+Home | Solucoes (dropdown) | Plataforma | Precos | Blog
+```
+- "Solucoes" dropdown tem 4 itens que linkam para anchors em `/servicos` — OK
+- Faltam links para paginas que existem: `/clientes`, `/investidor`, `/escritorio`, `/pro-bono`, `/depoimentos`
+- `/contato` se chama "Precos" no menu mas a pagina mistura pricing + formulario de contato
 
-Isso é **100% incoerente** com o resto do site que vende o Orion como plataforma de IA SaaS. Confunde o visitante — parece site de advogado, não de tecnologia.
+**Footer:**
+```text
+Home | Publicacoes | Plataforma | Investidores | Contato
+```
+- Diferente do Header — confuso
+- Nao tem Servicos, Clientes, Pro Bono, Depoimentos, Escritorio
 
-### PROBLEMA NA NAVEGAÇÃO (Header)
+### PROBLEMA 4: Paginas orfas (sem link de nenhum menu)
+- `/escritorio` — nenhum link no Header ou Footer
+- `/pro-bono` — nenhum link
+- `/depoimentos` — nenhum link
+- `/clientes` — nenhum link no Header
+- `/investidor` — so no Footer
 
-O menu "Serviços" no Header tem:
-- **"Áreas Jurídicas"** → `/servicos` (conteúdo de escritório de advocacia)
-- "Consultoria IA" → `/plataforma#ia`
-- "Documentação" → `/docs/rede-neural`
-
-Mistura serviço de advocacia com produto de tecnologia.
-
-### PROBLEMA: Página "Serviços" requer AUTH
-
-`/servicos` está atrás de `AuthGuard` — uma página que deveria ser vitrine pública está bloqueada para visitantes não logados.
-
----
-
-## Plano de Correção
-
-### 1. Reescrever a página Serviços (/servicos)
-Transformar de "escritório de advocacia" para **"Serviços da Plataforma Orion"** com seções por perfil:
-- **Para Advogados**: IA jurídica, geração de petições, pesquisa jurisprudencial, gestão de processos
-- **Para Escritórios & Empresas**: CRM, gestão de equipe, faturamento, dashboard, multi-usuários
-- **Para Produtores Digitais**: Loja própria, checkout, gestão de produtos, dashboard de vendas
-- **Para Afiliados**: Links rastreáveis, comissões automáticas, marketplace
-- CTA linkando para `/contato` (planos) em vez de WhatsApp pessoal
-
-### 2. Atualizar navegação (Header)
-Trocar o submenu "Serviços":
-- **"Para Advogados"** → `/clientes?perfil=advogados`
-- **"Para Empresas"** → `/clientes?perfil=escritorios`
-- **"Para Produtores"** → `/clientes?perfil=produtores`
-- **"Todos os Serviços"** → `/servicos` (nova página reescrita)
-
-### 3. Tornar /servicos PÚBLICA
-Remover `AuthGuard` de `/servicos` — é página de vitrine, deve ser acessível sem login.
-
-### 4. Atualizar traduções (pt.json)
-Reescrever a seção `services` do i18n para refletir os serviços SaaS em vez de áreas de atuação jurídica de um escritório.
-
-### 5. Mover conteúdo jurídico pessoal
-O conteúdo sobre o escritório de advocacia (Harvard, Berkeley, áreas de atuação jurídica) já existe na página `/advogado/:advogadoId` — não precisa estar duplicado em `/servicos`.
+### PROBLEMA 5: Links quebrados
+- `/escritorio` CTA "CONHECER O ESCRITÓRIO" linka para `/sobre` que e um redirect para `/plataforma` — incoerente
+- Footer CTA "Criar Conta Grátis" linka para `/cadastro` — OK
 
 ---
 
-### Resumo das mudanças
+## Plano de Correcao
 
-| Arquivo | Ação |
+### Fase 1 — Eliminar paginas incoerentes
+
+1. **Remover `/escritorio`** da rota publica — esse conteudo (areas juridicas de um escritorio pessoal) ja existe em `/advogado/:advogadoId` que e a pagina personalizada de cada advogado cadastrado. Redirect `/escritorio` para `/servicos#advogados`
+
+2. **Remover `/pro-bono`** da rota publica — nao faz sentido para uma plataforma SaaS. Redirect `/pro-bono` para `/contato`
+
+3. **Manter `/depoimentos`** mas integrar no menu como "Casos de Sucesso" — util para credibilidade
+
+### Fase 2 — Consolidar paginas duplicadas
+
+4. **Absorver `/clientes` em `/servicos`** — ambas mostram perfis (Advogados, Produtores, Afiliados, Industria). Manter `/servicos` como pagina principal de solucoes. Redirect `/clientes` para `/servicos`
+
+5. **Separar `/contato` em duas secoes claras**: Pricing (topo) + Formulario de contato (abaixo). Renomear no menu para "Planos & Contato"
+
+### Fase 3 — Reorganizar navegacao
+
+6. **Novo Header:**
+```text
+Home | Solucoes (dropdown) | Plataforma | Planos | Blog | Investidores
+```
+Dropdown "Solucoes":
+- Para Advogados → /servicos#advogados
+- Para Produtores → /servicos#produtores
+- Para Afiliados → /servicos#afiliados
+- Para Industria → /servicos#industria
+- Casos de Sucesso → /depoimentos
+
+7. **Novo Footer — alinhar com Header:**
+```text
+Navegacao: Home | Solucoes | Plataforma | Planos | Blog
+Empresa: ELP info (manter)
+Recursos: Investidores | Casos de Sucesso | Instalar App
+Legal: Privacidade | Termos | LGPD
+```
+
+### Fase 4 — Atualizar rotas e redirects
+
+8. **Novos redirects em App.tsx:**
+- `/escritorio` → `/servicos#advogados`
+- `/pro-bono` → `/contato`
+- `/clientes` → `/servicos`
+
+9. **Limpar imports** — remover lazy imports de paginas eliminadas (Escritorio, ProBono)
+
+### Fase 5 — Atualizar traducoes (i18n)
+
+10. **Remover secao `escritorio`** do pt.json e todos os outros idiomas (13 arquivos)
+11. **Atualizar nav labels** para refletir nova estrutura
+
+---
+
+## Resumo de arquivos a modificar
+
+| Arquivo | Acao |
 |---------|------|
-| `src/pages/Servicos.tsx` | Reescrever completamente — serviços SaaS por perfil |
-| `src/components/layout/Header.tsx` | Atualizar submenu Serviços |
-| `src/App.tsx` | Remover AuthGuard de `/servicos` |
-| `src/i18n/pt.json` | Reescrever seção `services` |
-| `src/i18n/en.json` | Atualizar tradução EN correspondente |
+| `src/App.tsx` | Remover rotas /escritorio e /pro-bono, adicionar redirects, remover imports |
+| `src/components/layout/Header.tsx` | Reorganizar navLinks com nova estrutura + Investidores + Depoimentos |
+| `src/components/layout/Footer.tsx` | Alinhar links com Header, adicionar secao Recursos |
+| `src/i18n/pt.json` + 12 idiomas | Remover secao `escritorio`, atualizar nav labels |
+| `src/lib/neural/orion-nav-map.ts` | Atualizar mapa de navegacao por voz (remover escritorio/pro-bono, ajustar labels) |
+
+Paginas que **NAO serao tocadas** (estao corretas):
+- `/` (Home), `/servicos`, `/plataforma`, `/contato`, `/publicacoes`, `/investidor`, `/advogado/:id`, `/vitrine/:id`
 
