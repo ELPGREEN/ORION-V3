@@ -87,10 +87,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    let cleanText = text.trim().slice(0, 4000);
-    if (cleanText.length < 12) {
-      cleanText = cleanText + "...";
-    }
+    const cleanText = text.trim().slice(0, 4000);
 
     const selectedVoice = voice || DEFAULT_VOICE;
     const selectedLang = lang || DEFAULT_LANG;
@@ -99,10 +96,13 @@ Deno.serve(async (req) => {
 
     console.log(`[Gemini TTS] Synthesizing ${cleanText.length} chars, voice="${selectedVoice}", lang="${selectedLang}", keys=${keys.length}`);
 
-    // Build request body
+    // Build request body — separate system instruction from text for faster processing
     const requestBody: any = {
+      systemInstruction: {
+        parts: [{ text: stylePrompt }]
+      },
       contents: [{
-        parts: [{ text: `${stylePrompt}: ${cleanText}` }]
+        parts: [{ text: cleanText }]
       }],
       generationConfig: {
         responseModalities: ["AUDIO"],
