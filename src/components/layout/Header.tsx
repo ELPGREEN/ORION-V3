@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import {
   Menu, X, LogIn, UserPlus, LogOut, User, Download,
   Home, BookOpen, LayoutDashboard,
-  Zap, ChevronDown,
+  Zap, Terminal, ChevronDown,
   Scale, ShoppingBag, Briefcase,
   Cpu,
   CreditCard
