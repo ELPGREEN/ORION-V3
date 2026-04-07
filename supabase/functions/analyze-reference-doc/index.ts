@@ -55,31 +55,21 @@ interface DocumentAnalysis {
 
 // ─── LLM Call with Fallback ───
 async function callLLM(systemPrompt: string, userPrompt: string): Promise<string> {
-  const providers = [
-    {
-      name: "gemini",
-      getKeys: () => [
-        Deno.env.get("GEMINI_API_KEY")
-      ].filter((k): k is string => !!k),
-    },
-    {
-      name: "groq",
-      url: "https://api.groq.com/openai/v1/chat/completions",
-      key: Deno.env.get("GROQ_API_KEY"),
+  const geminiKeys = [Deno.env.get("GEMINI_API_KEY")].filter((k): k is string => !!k);
+  const groq = {
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    key: Deno.env.get("GROQ_API_KEY"),
+    format: (s: string, u: string) => ({
       model: "llama-3.3-70b-versatile",
-      format: (s: string, u: string) => ({
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "system", content: s }, { role: "user", content: u }],
-        temperature: 0.2,
-        max_tokens: 4000,
-        response_format: { type: "json_object" },
-      }),
-      extract: (d: any) => d.choices?.[0]?.message?.content,
-    }
-  ];
+      messages: [{ role: "system", content: s }, { role: "user", content: u }],
+      temperature: 0.2,
+      max_tokens: 4000,
+      response_format: { type: "json_object" },
+    }),
+    extract: (d: any) => d.choices?.[0]?.message?.content,
+  };
 
   // Try Gemini first (FREE)
-  const geminiKeys = providers[0].getKeys();
   for (const key of geminiKeys) {
     try {
       const resp = await fetch(
@@ -102,7 +92,6 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
   }
 
   // Groq fallback
-  const groq = providers[1];
   if (groq.key) {
     try {
       const resp = await fetch(groq.url!, {
@@ -120,32 +109,6 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
 
   throw new Error("All LLM providers failed");
 }
-
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  try {
-    // FIX: A1 — Validate user authentication
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Autenticação obrigatória." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    {
-      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-      const _sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-      const { data: { user: _authUser }, error: _authErr } = await _sb.auth.getUser(authHeader.replace("Bearer ", ""));
-      if (_authErr || !_authUser) {
-        return new Response(
-          JSON.stringify({ error: "Não autorizado." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
-
-    const body = await req.json();
-    const { content, title, document_type } = body;
 
 // ─── LAYER 1: Feature Extraction (Regex-based) ───
 function layer1FeatureExtraction(content: string): {
@@ -377,6 +340,31 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Autenticação obrigatória." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const token = authHeader.replace("Bearer ", "").trim();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Não autorizado." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { content, fileName, promptRole, documentType } = (await req.json()) as AnalysisRequest;
 
     if (!content || content.length < 50) {
