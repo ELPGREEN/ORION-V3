@@ -52,6 +52,7 @@ const BiometricRegistration = lazy(lazyRetry(() => import("./pages/BiometricRegi
 const OrionDemo = lazy(lazyRetry(() => import("./pages/OrionDemo")));
 const OrionExtensionPage = lazy(lazyRetry(() => import("./pages/OrionExtensionPage")));
 const Loja = lazy(lazyRetry(() => import("./pages/Loja")));
+const LojaOrion = lazy(lazyRetry(() => import("./pages/LojaOrion")));
 const LojaSucesso = lazy(lazyRetry(() => import("./pages/LojaSucesso")));
 const ProdutoDetalhe = lazy(lazyRetry(() => import("./pages/ProdutoDetalhe")));
 
@@ -171,6 +172,7 @@ const App = () => (
 
                   {/* ═══ AUTH REQUIRED — Loja ═══ */}
                   <Route path="/loja/:creatorId" element={<AuthGuard><Loja /></AuthGuard>} />
+                  <Route path="/loja-orion" element={<AuthGuard><LojaOrion /></AuthGuard>} />
                   <Route path="/loja/:creatorId/sucesso" element={<AuthGuard><LojaSucesso /></AuthGuard>} />
                   <Route path="/loja/:creatorId/produto/:productId" element={<AuthGuard><ProdutoDetalhe /></AuthGuard>} />
 
