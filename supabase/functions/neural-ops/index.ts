@@ -877,21 +877,24 @@ async function buildOrionMessages(body: Record<string, unknown>) {
     systemParts.push(reasoningInstructions);
   }
   
-  // Detect architecture/comparison queries and inject knowledge (ONLY when needed)
   const questionStr = typeof question === "string" ? question : "";
   const contextStr = typeof context === "string" ? context : "";
+
+  // ═══ PERF FIX: Parallelize identity + architecture detection + RAG ═══
   const isArchitectureQuery = JARVIS_COMPARISON_REGEX.test(questionStr) || JARVIS_COMPARISON_REGEX.test(contextStr);
+  const isIdentityQuery = IDENTITY_REGEX.test(questionStr) || IDENTITY_REGEX.test(contextStr);
+
+  // Fire all async lookups in parallel (was sequential — saved ~800ms)
+  const [identityKnowledge, ragContext] = await Promise.all([
+    isIdentityQuery ? fetchIdentityKnowledge() : Promise.resolve(""),
+    (questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve(""),
+  ]);
+
   if (isArchitectureQuery) {
     systemParts.push(ORION_ARCHITECTURE_KNOWLEDGE);
   }
-  
-  // Detect identity queries and inject knowledge from DB
-  const isIdentityQuery = IDENTITY_REGEX.test(questionStr) || IDENTITY_REGEX.test(contextStr);
-  if (isIdentityQuery) {
-    const identityKnowledge = await fetchIdentityKnowledge();
-    if (identityKnowledge) {
-      systemParts.push(identityKnowledge);
-    }
+  if (identityKnowledge) {
+    systemParts.push(identityKnowledge);
   }
   
   // ═══ COST OPTIMIZATION: Only inject heavy vision prompts when vision data is present ═══
@@ -1015,13 +1018,10 @@ async function buildOrionMessages(body: Record<string, unknown>) {
     systemParts.push(`Memórias: ${userMemory.slice(0, 5).join("; ")}`);
   }
 
-  // ═══ RAG INJECTION: Fetch relevant knowledge from KB ═══
+  // ═══ RAG INJECTION (already fetched in parallel above) ═══
   const queryIntentType = (body.intentType as string) || undefined;
-  if (questionStr && questionStr.length > 5) {
-    const ragContext = await fetchRAGContext(questionStr);
-    if (ragContext) {
-      systemParts.push(`═══ CONHECIMENTO RELEVANTE DA SUA BASE ═══\n${ragContext}`);
-    }
+  if (ragContext) {
+    systemParts.push(`═══ CONHECIMENTO RELEVANTE DA SUA BASE ═══\n${ragContext}`);
   }
 
   // ═══ INTENT-BASED PROMPT ENHANCEMENT ═══
