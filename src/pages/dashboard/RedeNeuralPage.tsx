@@ -547,8 +547,8 @@ export default function RedeNeuralPage() {
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.04]"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(0,212,255,0.3) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,212,255,0.3) 1px, transparent 1px)
+            linear-gradient(#3B82F60.3) 1px, transparent 1px),
+            linear-gradient(90deg, #3B82F60.3) 1px, transparent 1px)
           `,
           backgroundSize: "60px 60px",
         }}
@@ -556,7 +556,7 @@ export default function RedeNeuralPage() {
       {/* Scanline overlay */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.015]"
         style={{
-          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,212,255,0.08) 2px, rgba(0,212,255,0.08) 4px)",
+          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, #3B82F60.08) 2px, #3B82F60.08) 4px)",
         }}
       />
       {/* Radial vignette */}
@@ -569,7 +569,7 @@ export default function RedeNeuralPage() {
         style={{ boxShadow: "0 0 30px rgba(212,175,55,0.08), inset 0 1px 0 rgba(212,175,55,0.15)" }}>
         {/* Gold accent line */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00D4FF]/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#3B82F6]/30 to-transparent" />
         
         <div className="relative">
           <Brain className="h-7 w-7 md:h-9 md:w-9 shrink-0" style={{ color: "#D4AF37", filter: "drop-shadow(0 0 8px rgba(212,175,55,0.5))" }} />
@@ -588,7 +588,7 @@ export default function RedeNeuralPage() {
             </Badge>
           </div>
           <p className="text-[10px] md:text-xs mt-0.5 hidden sm:block font-mono tracking-wide"
-            style={{ color: "rgba(0,212,255,0.5)" }}>
+            style={{ color: "#3B82F60.5)" }}>
             Painel Admin · IAs · Ingestão · Especializações · Documentação
           </p>
         </div>
@@ -596,8 +596,8 @@ export default function RedeNeuralPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="relative z-10">
-        <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#00D4FF]/15"
-          style={{ backgroundColor: "rgba(10,10,15,0.7)", boxShadow: "0 0 20px rgba(0,212,255,0.05), inset 0 1px 0 rgba(0,212,255,0.1)" }}>
+        <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#3B82F6]/15"
+          style={{ backgroundColor: "rgba(10,10,15,0.7)", boxShadow: "0 0 20px #3B82F60.05), inset 0 1px 0 #3B82F60.1)" }}>
           <TabsTrigger value="overview" className="text-xs shrink-0 gap-1 px-2.5 py-1.5">
             <BarChart3 className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Visão Geral</span>
@@ -747,7 +747,7 @@ export default function RedeNeuralPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
               { icon: Zap, label: "Interações IA", value: learningStats.totalInteractions, sub: `${learningStats.learnedItems} aprendidas`, color: "#D4AF37" },
-              { icon: BookOpen, label: "Base Neural", value: knowledgeTotalCount, sub: `${knowledgeProcessedCount} com embeddings`, color: "#00D4FF" },
+              { icon: BookOpen, label: "Base Neural", value: knowledgeTotalCount, sub: `${knowledgeProcessedCount} com embeddings`, color: "#3B82F6" },
               { icon: Brain, label: "Especializações", value: specializations.filter((s) => s.is_active && s.training_status === "completed").length, sub: `${specializations.filter((s) => s.training_status === "training").length} em treinamento`, color: "#22c55e" },
               { icon: Settings2, label: "Provedores Ativos", value: providers.filter(p => p.is_enabled).length, sub: `de ${providers.length} configurados`, color: "#D4AF37" },
             ].map((card, i) => (
@@ -772,16 +772,16 @@ export default function RedeNeuralPage() {
 
           {/* Active Providers */}
           <Card className="relative overflow-hidden border-0"
-            style={{ backgroundColor: "rgba(10,10,15,0.6)", border: "1px solid rgba(0,212,255,0.12)" }}>
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00D4FF]/30 to-transparent" />
+            style={{ backgroundColor: "rgba(10,10,15,0.6)", border: "1px solid #3B82F60.12)" }}>
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#3B82F6]/30 to-transparent" />
             <CardHeader>
-              <CardTitle className="text-sm font-mono font-medium tracking-wider uppercase" style={{ color: "rgba(0,212,255,0.7)" }}>Provedores de IA Ativos</CardTitle>
+              <CardTitle className="text-sm font-mono font-medium tracking-wider uppercase" style={{ color: "#3B82F60.7)" }}>Provedores de IA Ativos</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {providers
                 .filter((p) => p.is_enabled)
                 .map((provider) => (
-                  <div key={provider.id} className="flex items-center justify-between p-2 rounded-md" style={{ backgroundColor: "rgba(0,212,255,0.03)", border: "1px solid rgba(0,212,255,0.08)" }}>
+                  <div key={provider.id} className="flex items-center justify-between p-2 rounded-md" style={{ backgroundColor: "#3B82F60.03)", border: "1px solid #3B82F60.08)" }}>
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full" style={{ backgroundColor: "#22c55e", boxShadow: "0 0 8px rgba(34,197,94,0.6)" }} />
                       <span className="text-sm font-mono" style={{ color: "rgba(255,255,255,0.7)" }}>{provider.display_name}</span>
@@ -1147,7 +1147,7 @@ export default function RedeNeuralPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { icon: Zap, label: "Interações IA", value: learningStats.totalInteractions, sub: `${learningStats.learnedItems} aprendidas`, color: "#D4AF37" },
-              { icon: Database, label: "Base Neural", value: knowledgeTotalCount, sub: `${knowledgeProcessedCount} com embeddings`, color: "#00D4FF" },
+              { icon: Database, label: "Base Neural", value: knowledgeTotalCount, sub: `${knowledgeProcessedCount} com embeddings`, color: "#3B82F6" },
               { icon: Sparkles, label: "Especializações", value: specializations.filter(s => s.is_active).length, sub: `${specializations.filter(s => s.training_status === "training").length} treinando`, color: "#22c55e" },
               { icon: Settings2, label: "Provedores", value: providers.filter(p => p.is_enabled).length, sub: `de ${providers.length} configurados`, color: "#D4AF37" },
             ].map((card, i) => (
@@ -1185,12 +1185,12 @@ export default function RedeNeuralPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {[
                   { label: "Visão Geral", tab: "overview", icon: BarChart3, desc: "HUD + Health", color: "#D4AF37" },
-                  { label: "Ingestão", tab: "ingestion", icon: Database, desc: "DataJud + Fontes", color: "#00D4FF" },
-                  { label: "Conhecimento", tab: "knowledge", icon: BookOpen, desc: "Upload + Embeddings", color: "#00D4FF" },
+                  { label: "Ingestão", tab: "ingestion", icon: Database, desc: "DataJud + Fontes", color: "#3B82F6" },
+                  { label: "Conhecimento", tab: "knowledge", icon: BookOpen, desc: "Upload + Embeddings", color: "#3B82F6" },
                   { label: "Consciência", tab: "consciousness", icon: Brain, desc: "Loop Neural + A/B", color: "#22c55e" },
                   { label: "Rede ao Vivo", tab: "live", icon: Activity, desc: "Visualização 3D", color: "#22c55e" },
                   { label: "Visão Neural", tab: "vision", icon: Camera, desc: "Gestos + Face Auth", color: "#D4AF37" },
-                  { label: "Web APIs", tab: "webapis", icon: Globe, desc: "APIs Externas", color: "#00D4FF" },
+                  { label: "Web APIs", tab: "webapis", icon: Globe, desc: "APIs Externas", color: "#3B82F6" },
                   { label: "Arquitetura", tab: "docs", icon: Layers, desc: "Diagramas 9 Modelos", color: "#D4AF37" },
                   { label: "Orion Shield", tab: "shield", icon: Shield, desc: "Defesa em Tempo Real", color: "#22c55e" },
                 ].map((item) => (
