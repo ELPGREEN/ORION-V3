@@ -1,13 +1,14 @@
 /**
- * Orion Formant Speech Synthesizer v17 — Full Source-Filter with LF Glottal Model
+ * Orion Formant Speech Synthesizer v18 — 5 Resonators + Nasal Anti-Formant
  * 
- * Fixes from v16:
- * 1. SR raised to 44100 for proper high-frequency fricatives
- * 2. LF glottal waveform replaces sparse impulse train
- * 3. Plosive burst/VOT gains doubled for intelligibility
- * 4. Harmonic-rich source with spectral tilt from Voice DNA
+ * Improvements over v17:
+ * 1. 5 resonators (F1-F5) instead of 3 — fuller spectrum
+ * 2. Nasal anti-formant (zero) for nasal vowels/consonants
+ * 3. 50% coarticulation window (was 30%) — smoother transitions
+ * 4. Per-segment amplitude envelope (attack/sustain/release)
+ * 5. Consonant energy boost — plosives/fricatives louder relative to vowels
+ * 6. Shimmer (amplitude jitter) from Voice DNA
  * 
- * Architecture: Source (LF glottal / noise / mixed) → 3x IIR Resonators → Post-process
  * 100% client-side, zero API, zero dependencies.
  */
 
@@ -18,12 +19,12 @@ import {
   type PhonemeParams,
 } from "./phonemes";
 
-const SR = 44100; // ← FIX #1: raised from 24000 for proper high-freq fricatives
-const FRAME_SIZE = 220; // 5ms frames at 44.1kHz (was 120 at 24kHz)
-const N_FILTERS = 3;
+const SR = 44100;
+const FRAME_SIZE = 220; // 5ms at 44.1kHz
+const N_FILTERS = 5; // F1-F5
 
 // ═══════════════════════════════════════════════════════════
-// IIR BIQUAD RESONATOR
+// IIR BIQUAD RESONATOR (formant pole)
 // ═══════════════════════════════════════════════════════════
 
 interface Resonator {
@@ -62,77 +63,95 @@ function tickResonator(res: Resonator, x: number): number {
 }
 
 // ═══════════════════════════════════════════════════════════
-// SOURCE GENERATORS — FIX #2 & #3: LF Glottal Model
+// ANTI-RESONATOR (nasal zero) — cancels energy at a frequency
+// Transfer: H(z) = 1 + b1*z^-1 + b2*z^-2 (FIR, no feedback)
+// ═══════════════════════════════════════════════════════════
+
+interface AntiResonator {
+  a0: number;
+  b1: number;
+  b2: number;
+  z1: number;
+  z2: number;
+}
+
+function makeAntiResonator(freq: number, bw: number): AntiResonator {
+  if (freq < 20 || bw < 1 || freq >= SR / 2) return { a0: 1, b1: 0, b2: 0, z1: 0, z2: 0 };
+  const r = Math.exp(-Math.PI * bw / SR);
+  const theta = 2 * Math.PI * freq / SR;
+  // Anti-resonator: reciprocal of resonator transfer
+  const a0 = 1.0;
+  const b1 = 2 * r * Math.cos(theta); // note: positive (cancels)
+  const b2 = -(r * r);
+  return { a0, b1, b2, z1: 0, z2: 0 };
+}
+
+function setAntiResonator(ar: AntiResonator, freq: number, bw: number) {
+  if (freq < 20 || bw < 1 || freq >= SR / 2) { ar.a0 = 1; ar.b1 = 0; ar.b2 = 0; return; }
+  const r = Math.exp(-Math.PI * bw / SR);
+  const theta = 2 * Math.PI * freq / SR;
+  ar.a0 = 1.0;
+  ar.b1 = 2 * r * Math.cos(theta);
+  ar.b2 = -(r * r);
+}
+
+function tickAntiResonator(ar: AntiResonator, x: number): number {
+  const y = ar.a0 * x + ar.b1 * ar.z1 + ar.b2 * ar.z2;
+  ar.z2 = ar.z1;
+  ar.z1 = x;
+  return y;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SOURCE GENERATORS — LF Glottal Model
 // ═══════════════════════════════════════════════════════════
 
 let glottalPhase = 0;
 
-/**
- * LF (Liljencrants-Fant) glottal pulse — produces a rich harmonic source
- * instead of the sparse single-impulse approach.
- * 
- * The waveform has:
- * - Opening phase (0→Tp): rising sinusoidal
- * - Closing phase (Tp→Te): falling, with abrupt closure
- * - Return phase (Te→T0): exponential return
- * 
- * Parameters tuned from Iapetus Voice DNA:
- * OQ=0.546, SQ=2.21, H1-H2=4.6dB
- */
 function generateGlottalSource(count: number, f0: number): Float32Array {
   const out = new Float32Array(count);
-  const T0 = SR / f0; // period in samples
-  
-  // LF model parameters from Voice DNA
-  const OQ = VOICE_DNA.glottal.openQuotient; // 0.546
-  const SQ = VOICE_DNA.glottal.speedQuotient; // 2.21
-  
-  const Te = OQ * T0;           // end of open phase
-  const Tp = Te / (1 + SQ);     // peak of glottal pulse
-  const Ta = 0.08 * T0;         // return phase time constant
-  
-  // Jitter from Voice DNA
-  const jitterAmount = VOICE_DNA.dynamics.jitter; // 0.0882
-  
+  const T0 = SR / f0;
+  const OQ = VOICE_DNA.glottal.openQuotient;
+  const SQ = VOICE_DNA.glottal.speedQuotient;
+  const Te = OQ * T0;
+  const Tp = Te / (1 + SQ);
+  const Ta = 0.08 * T0;
+  const jitter = VOICE_DNA.dynamics.jitter;
+  const shimmer = VOICE_DNA.dynamics.shimmer;
+
   for (let i = 0; i < count; i++) {
     const t = glottalPhase;
     let sample = 0;
-    
+
     if (t < Tp) {
-      // Opening phase — rising half-sine
       sample = 0.5 * (1 - Math.cos(Math.PI * t / Tp));
     } else if (t < Te) {
-      // Closing phase — cosine fall with sharper closure
       const tc = (t - Tp) / (Te - Tp);
       sample = Math.cos(Math.PI * 0.5 * tc);
     } else {
-      // Return phase — exponential recovery
       const tr = (t - Te) / Math.max(Ta, 1);
       sample = -0.2 * Math.exp(-tr);
     }
-    
-    out[i] = sample;
-    
-    // Advance phase with jitter
-    const jitter = 1 + (Math.random() - 0.5) * 2 * jitterAmount;
-    glottalPhase += jitter;
-    
-    if (glottalPhase >= T0) {
-      glottalPhase -= T0;
-    }
+
+    // Shimmer (amplitude variation per cycle)
+    const shimmerFactor = 1 + (Math.random() - 0.5) * shimmer * 0.5;
+    out[i] = sample * shimmerFactor;
+
+    // Advance with jitter
+    glottalPhase += 1 + (Math.random() - 0.5) * 2 * jitter;
+    if (glottalPhase >= T0) glottalPhase -= T0;
   }
-  
+
   return out;
 }
 
 function generateNoise(count: number): Float32Array {
   const out = new Float32Array(count);
-  // Slightly colored noise (low-pass at ~10kHz for more natural sound)
   let prev = 0;
   for (let i = 0; i < count; i++) {
     const white = Math.random() * 2 - 1;
-    prev = 0.7 * prev + 0.3 * white; // simple LP filter
-    out[i] = prev * 1.5; // compensate for energy loss
+    prev = 0.7 * prev + 0.3 * white;
+    out[i] = prev * 1.5;
   }
   return out;
 }
@@ -148,21 +167,15 @@ function generateMixed(count: number, f0: number, voiceRatio: number): Float32Ar
 }
 
 // ═══════════════════════════════════════════════════════════
-// SPECTRAL TILT FILTER — shapes harmonics to match Voice DNA
-// Applies the natural roll-off of the voice (26.3 dB spectral tilt)
+// SPECTRAL TILT FILTER
 // ═══════════════════════════════════════════════════════════
 
-interface TiltFilter {
-  alpha: number;
-  z1: number;
-}
+interface TiltFilter { alpha: number; z1: number; }
 
 function makeTiltFilter(): TiltFilter {
-  // Spectral tilt of ~26dB means significant HF roll-off
-  // alpha controls the amount of tilt (higher = more tilt)
-  const tiltDb = VOICE_DNA.dynamics.spectralTilt; // 26.3
-  const alpha = 1 - Math.pow(10, -tiltDb / 200); // ~0.72
-  return { alpha: Math.min(alpha, 0.85), z1: 0 };
+  const tiltDb = VOICE_DNA.dynamics.spectralTilt;
+  const alpha = Math.min(1 - Math.pow(10, -tiltDb / 200), 0.80);
+  return { alpha, z1: 0 };
 }
 
 function tickTilt(f: TiltFilter, x: number): number {
@@ -172,18 +185,17 @@ function tickTilt(f: TiltFilter, x: number): number {
 }
 
 // ═══════════════════════════════════════════════════════════
-// SEGMENT BUILDER
+// SEGMENT PARAMS — now with F4/F5 and nasal flag
 // ═══════════════════════════════════════════════════════════
 
 interface SegmentParams {
-  f1: number;
-  f2: number;
-  f3: number;
-  bw1: number;
-  bw2: number;
-  bw3: number;
+  f1: number; f2: number; f3: number; f4: number; f5: number;
+  bw1: number; bw2: number; bw3: number; bw4: number; bw5: number;
   gain: number;
   source: 'glottal' | 'noise' | 'mixed';
+  nasal: boolean;
+  nasalFreq: number;  // anti-formant frequency (for nasal zero)
+  nasalBw: number;    // anti-formant bandwidth
 }
 
 type Segment = [SegmentParams, number];
@@ -192,32 +204,42 @@ function msToSamples(ms: number): number {
   return Math.round(SR * ms / 1000);
 }
 
-// Fricative spectral peaks — noise resonators at actual spectral energy locations
+// Default F4/F5 for male voice
+const DEFAULT_F4 = 3500;
+const DEFAULT_F5 = 4500;
+const DEFAULT_BW4 = 350;
+const DEFAULT_BW5 = 500;
+
+// Nasal anti-formant: typically ~250Hz for nasals, cancels oral F1
+const NASAL_ZERO_FREQ = 270;
+const NASAL_ZERO_BW = 100;
+
+// ── Fricative spectral peaks ──
 const FRICATIVE_SPECTRAL: Record<string, SegmentParams> = {
-  's':  { f1: 200, f2: 5500, f3: 7500, bw1: 500, bw2: 3000, bw3: 2000, gain: 0.50, source: 'noise' },
-  'z':  { f1: 200, f2: 5500, f3: 7500, bw1: 500, bw2: 3000, bw3: 2000, gain: 0.40, source: 'mixed' },
-  'ʃ':  { f1: 200, f2: 3800, f3: 6000, bw1: 500, bw2: 2500, bw3: 2000, gain: 0.50, source: 'noise' },
-  'ʒ':  { f1: 200, f2: 3800, f3: 6000, bw1: 500, bw2: 2500, bw3: 2000, gain: 0.40, source: 'mixed' },
-  'f':  { f1: 200, f2: 2500, f3: 4000, bw1: 500, bw2: 3000, bw3: 2000, gain: 0.25, source: 'noise' },
-  'v':  { f1: 220, f2: 2500, f3: 4000, bw1: 500, bw2: 3000, bw3: 2000, gain: 0.30, source: 'mixed' },
-  'h':  { f1: 500, f2: 1500, f3: 2500, bw1: 200, bw2: 300, bw3: 400, gain: 0.20, source: 'noise' },
-  'χ':  { f1: 300, f2: 1100, f3: 2400, bw1: 400, bw2: 400, bw3: 400, gain: 0.50, source: 'noise' },
-  'R':  { f1: 300, f2: 1100, f3: 2400, bw1: 110, bw2: 140, bw3: 190, gain: 0.55, source: 'mixed' },
+  's':  { f1:200,f2:5500,f3:7500,f4:9000,f5:11000, bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'z':  { f1:200,f2:5500,f3:7500,f4:9000,f5:11000, bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.45, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
+  'ʃ':  { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2500,bw3:2000,bw4:1000,bw5:1000, gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'ʒ':  { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2500,bw3:2000,bw4:1000,bw5:1000, gain:0.45, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
+  'f':  { f1:200,f2:2500,f3:4000,f4:6000,f5:8000,   bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.30, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'v':  { f1:220,f2:2500,f3:4000,f4:6000,f5:8000,   bw1:500,bw2:3000,bw3:2000,bw4:1000,bw5:1000, gain:0.35, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
+  'h':  { f1:500,f2:1500,f3:2500,f4:3500,f5:4500,   bw1:200,bw2:300,bw3:400,bw4:500,bw5:600,     gain:0.25, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'χ':  { f1:300,f2:1100,f3:2400,f4:3500,f5:4500,   bw1:400,bw2:400,bw3:400,bw4:500,bw5:600,     gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'R':  { f1:300,f2:1100,f3:2400,f4:3500,f5:4500,   bw1:110,bw2:140,bw3:190,bw4:300,bw5:400,     gain:0.55, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 },
 };
 
-/** Context-dependent /h/ — takes formants of following vowel */
 function getHAllophone(nextPhoneme: string | undefined): SegmentParams {
   const vp = nextPhoneme ? PT_PHONEMES[nextPhoneme] : null;
   if (vp && vp.voiced && !vp.fricative && !vp.plosive) {
     return {
       f1: vp.f1 || 500, f2: vp.f2 || 1500, f3: vp.f3 || 2500,
-      bw1: 200, bw2: 300, bw3: 400, gain: 0.20, source: 'noise',
+      f4: vp.f4 || DEFAULT_F4, f5: DEFAULT_F5,
+      bw1: 200, bw2: 300, bw3: 400, bw4: 500, bw5: 600,
+      gain: 0.25, source: 'noise', nasal: false, nasalFreq: 0, nasalBw: 0,
     };
   }
   return FRICATIVE_SPECTRAL['h'];
 }
 
-/** Convert PhonemeParams to SegmentParams */
 function phonemeToSegment(p: PhonemeParams, phoneme: string): SegmentParams {
   const fricSpec = FRICATIVE_SPECTRAL[phoneme];
   if (fricSpec) return fricSpec;
@@ -228,65 +250,73 @@ function phonemeToSegment(p: PhonemeParams, phoneme: string): SegmentParams {
 
   return {
     f1: p.f1 || 300, f2: p.f2 || 1500, f3: p.f3 || 2500,
+    f4: p.f4 || DEFAULT_F4, f5: DEFAULT_F5,
     bw1: p.bw1 || 100, bw2: p.bw2 || 120, bw3: p.bw3 || 150,
+    bw4: p.bw4 || DEFAULT_BW4, bw5: DEFAULT_BW5,
     gain: p.amplitude,
     source,
+    nasal: p.nasal,
+    nasalFreq: p.nasal ? NASAL_ZERO_FREQ : 0,
+    nasalBw: p.nasal ? NASAL_ZERO_BW : 0,
   };
 }
 
-// ── FIX #3: Plosive gains DOUBLED for intelligibility ──
+// ── Plosive rules — stronger bursts and VOT ──
 const PLOSIVE_RULES: Record<string, {
   closureMs: number; burstMs: number; votMs: number;
   closureType: 'silence' | 'voicebar';
 }> = {
-  'p':   { closureMs: 70, burstMs: 12, votMs: 20,  closureType: 'silence' },
-  'b':   { closureMs: 50, burstMs: 8,  votMs: 5,   closureType: 'voicebar' },
-  't':   { closureMs: 70, burstMs: 12, votMs: 25,  closureType: 'silence' },
-  'd':   { closureMs: 50, burstMs: 8,  votMs: 5,   closureType: 'voicebar' },
-  'k':   { closureMs: 80, burstMs: 15, votMs: 35,  closureType: 'silence' },
-  'g':   { closureMs: 60, burstMs: 8,  votMs: 5,   closureType: 'voicebar' },
-  't͡ʃ': { closureMs: 70, burstMs: 8,  votMs: 90,  closureType: 'silence' },
-  'd͡ʒ': { closureMs: 40, burstMs: 8,  votMs: 70,  closureType: 'voicebar' },
+  'p':   { closureMs: 60, burstMs: 15, votMs: 25,  closureType: 'silence' },
+  'b':   { closureMs: 40, burstMs: 10, votMs: 8,   closureType: 'voicebar' },
+  't':   { closureMs: 60, burstMs: 15, votMs: 30,  closureType: 'silence' },
+  'd':   { closureMs: 40, burstMs: 10, votMs: 8,   closureType: 'voicebar' },
+  'k':   { closureMs: 70, burstMs: 18, votMs: 40,  closureType: 'silence' },
+  'g':   { closureMs: 50, burstMs: 10, votMs: 8,   closureType: 'voicebar' },
+  't͡ʃ': { closureMs: 60, burstMs: 10, votMs: 100, closureType: 'silence' },
+  'd͡ʒ': { closureMs: 35, burstMs: 10, votMs: 80,  closureType: 'voicebar' },
 };
 
-const SILENCE_SEG: SegmentParams = { f1: 100, f2: 100, f3: 100, bw1: 100, bw2: 100, bw3: 100, gain: 0, source: 'noise' };
-const VOICEBAR_SEG: SegmentParams = { f1: 200, f2: 200, f3: 200, bw1: 100, bw2: 200, bw3: 300, gain: 0.12, source: 'glottal' };
+function makeSilenceSeg(): SegmentParams {
+  return { f1:100,f2:100,f3:100,f4:100,f5:100, bw1:100,bw2:100,bw3:100,bw4:100,bw5:100, gain:0, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 };
+}
+function makeVoicebarSeg(): SegmentParams {
+  return { f1:200,f2:200,f3:200,f4:200,f5:200, bw1:100,bw2:200,bw3:300,bw4:400,bw5:500, gain:0.15, source:'glottal', nasal:false, nasalFreq:0, nasalBw:0 };
+}
 
-// Burst gains ~2x higher than v16
 const BURST_BY_PLACE: Record<string, SegmentParams> = {
-  'p':   { f1: 300, f2: 1000, f3: 2300, bw1: 500, bw2: 1500, bw3: 2000, gain: 0.60, source: 'noise' },
-  'b':   { f1: 300, f2: 1000, f3: 2300, bw1: 500, bw2: 1500, bw3: 2000, gain: 0.55, source: 'noise' },
-  't':   { f1: 300, f2: 4000, f3: 5500, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.70, source: 'noise' },
-  'd':   { f1: 300, f2: 4000, f3: 5500, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.65, source: 'noise' },
-  'k':   { f1: 300, f2: 1800, f3: 2600, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.60, source: 'noise' },
-  'g':   { f1: 300, f2: 1800, f3: 2600, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.55, source: 'noise' },
-  't͡ʃ': { f1: 300, f2: 3800, f3: 6000, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.70, source: 'noise' },
-  'd͡ʒ': { f1: 300, f2: 3800, f3: 6000, bw1: 500, bw2: 2000, bw3: 2000, gain: 0.65, source: 'noise' },
+  'p':   { f1:400,f2:1000,f3:2300,f4:3500,f5:4500, bw1:400,bw2:1200,bw3:1500,bw4:800,bw5:800, gain:0.75, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'b':   { f1:400,f2:1000,f3:2300,f4:3500,f5:4500, bw1:400,bw2:1200,bw3:1500,bw4:800,bw5:800, gain:0.70, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  't':   { f1:400,f2:4000,f3:5500,f4:7000,f5:9000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.80, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'd':   { f1:400,f2:4000,f3:5500,f4:7000,f5:9000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.75, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'k':   { f1:400,f2:1800,f3:2600,f4:3800,f5:5000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.75, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'g':   { f1:400,f2:1800,f3:2600,f4:3800,f5:5000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.70, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  't͡ʃ': { f1:400,f2:3800,f3:6000,f4:8000,f5:10000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.80, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
+  'd͡ʒ': { f1:400,f2:3800,f3:6000,f4:8000,f5:10000, bw1:400,bw2:1500,bw3:1500,bw4:800,bw5:800, gain:0.75, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 },
 };
 
 function getBurstParams(phoneme: string): SegmentParams {
   return BURST_BY_PLACE[phoneme] || BURST_BY_PLACE['p'];
 }
 
-/** VOT adapts to following vowel */
 function getVOTParams(phoneme: string, nextPhoneme?: string): SegmentParams {
   if (phoneme === 't͡ʃ') {
-    return { f1: 200, f2: 3800, f3: 6000, bw1: 500, bw2: 2500, bw3: 2000, gain: 0.50, source: 'noise' };
+    return { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2000,bw3:1500,bw4:800,bw5:800, gain:0.55, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 };
   }
   if (phoneme === 'd͡ʒ') {
-    return { f1: 200, f2: 3800, f3: 6000, bw1: 500, bw2: 2500, bw3: 2000, gain: 0.40, source: 'mixed' };
+    return { f1:200,f2:3800,f3:6000,f4:8000,f5:10000, bw1:500,bw2:2000,bw3:1500,bw4:800,bw5:800, gain:0.45, source:'mixed', nasal:false, nasalFreq:0, nasalBw:0 };
   }
   const vowel = nextPhoneme ? PT_PHONEMES[nextPhoneme] : null;
   if (vowel && vowel.voiced && !vowel.fricative && !vowel.plosive) {
     return {
       f1: vowel.f1 || 500, f2: vowel.f2 || 1500, f3: vowel.f3 || 2500,
-      bw1: 300, bw2: 400, bw3: 500, gain: 0.18, source: 'noise',
+      f4: vowel.f4 || DEFAULT_F4, f5: DEFAULT_F5,
+      bw1: 250, bw2: 350, bw3: 400, bw4: 500, bw5: 600,
+      gain: 0.22, source: 'noise', nasal: false, nasalFreq: 0, nasalBw: 0,
     };
   }
-  return { f1: 500, f2: 1500, f3: 2500, bw1: 300, bw2: 400, bw3: 500, gain: 0.18, source: 'noise' };
+  return { f1:500,f2:1500,f3:2500,f4:DEFAULT_F4,f5:DEFAULT_F5, bw1:250,bw2:350,bw3:400,bw4:500,bw5:600, gain:0.22, source:'noise', nasal:false, nasalFreq:0, nasalBw:0 };
 }
 
-/** Build the segment sequence from phonemes */
 function buildSegments(phonemes: string[]): Segment[] {
   const seq: Segment[] = [];
 
@@ -297,12 +327,11 @@ function buildSegments(phonemes: string[]): Segment[] {
 
     const nextPhoneme = pi + 1 < phonemes.length ? phonemes[pi + 1] : undefined;
 
-    // Plosives: closure → burst → VOT
     const plosiveRule = PLOSIVE_RULES[phoneme];
     if (plosiveRule) {
       const { closureMs, burstMs, votMs, closureType } = plosiveRule;
       if (closureMs > 0) {
-        seq.push([closureType === 'silence' ? SILENCE_SEG : VOICEBAR_SEG, msToSamples(closureMs)]);
+        seq.push([closureType === 'silence' ? makeSilenceSeg() : makeVoicebarSeg(), msToSamples(closureMs)]);
       }
       if (burstMs > 0) {
         seq.push([getBurstParams(phoneme), msToSamples(burstMs)]);
@@ -313,13 +342,11 @@ function buildSegments(phonemes: string[]): Segment[] {
       continue;
     }
 
-    // Context-dependent /h/
     if (phoneme === 'h') {
       seq.push([getHAllophone(nextPhoneme), msToSamples(params.duration)]);
       continue;
     }
 
-    // Regular phonemes
     const seg = phonemeToSegment(params, phoneme);
     seq.push([seg, msToSamples(params.duration)]);
   }
@@ -328,7 +355,27 @@ function buildSegments(phonemes: string[]): Segment[] {
 }
 
 // ═══════════════════════════════════════════════════════════
-// MAIN SYNTHESIZER
+// AMPLITUDE ENVELOPE — smooth attack/release per segment
+// ═══════════════════════════════════════════════════════════
+
+function computeEnvelope(sampleIndex: number, totalSamples: number): number {
+  const attackSamples = Math.min(msToSamples(5), totalSamples / 4);  // 5ms attack
+  const releaseSamples = Math.min(msToSamples(8), totalSamples / 4); // 8ms release
+  const releaseStart = totalSamples - releaseSamples;
+
+  if (sampleIndex < attackSamples) {
+    // Smooth attack (raised cosine)
+    return 0.5 * (1 - Math.cos(Math.PI * sampleIndex / attackSamples));
+  } else if (sampleIndex >= releaseStart) {
+    // Smooth release
+    const releasePos = (sampleIndex - releaseStart) / releaseSamples;
+    return 0.5 * (1 + Math.cos(Math.PI * releasePos));
+  }
+  return 1.0;
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAIN SYNTHESIZER — 5 resonators + anti-formant + envelope
 // ═══════════════════════════════════════════════════════════
 
 function synthesize(seq: Segment[]): Float32Array {
@@ -336,19 +383,25 @@ function synthesize(seq: Segment[]): Float32Array {
 
   let totalSamples = 0;
   for (const [, dur] of seq) totalSamples += dur;
-  totalSamples += SR; // padding
+  totalSamples += SR;
 
   const output = new Float32Array(totalSamples);
   let writePos = 0;
 
-  // Persistent filter state
+  // 5 persistent resonators
   const filters: Resonator[] = [
     makeResonator(500, 100),
     makeResonator(1500, 120),
     makeResonator(2500, 150),
+    makeResonator(3500, 350),
+    makeResonator(4500, 500),
   ];
 
-  // Spectral tilt filter
+  // Nasal anti-resonator
+  const nasalZero = makeAntiResonator(NASAL_ZERO_FREQ, NASAL_ZERO_BW);
+  let nasalActive = false;
+
+  // Spectral tilt
   const tilt = makeTiltFilter();
 
   const amplitude = 0.9;
@@ -358,10 +411,9 @@ function synthesize(seq: Segment[]): Float32Array {
     const [paramCurr, durationSamples] = seq[si];
     const paramNext = si + 1 < seq.length ? seq[si + 1][0] : paramCurr;
 
-    // F0 with natural micro-variation
-    const f0 = f0Base + (Math.random() - 0.5) * 8;
+    const f0 = f0Base + (Math.random() - 0.5) * 10;
 
-    // Generate source — FIX #4: glottal model instead of impulse
+    // Generate source
     let source: Float32Array;
     if (paramCurr.source === 'noise') {
       source = generateNoise(durationSamples);
@@ -371,50 +423,77 @@ function synthesize(seq: Segment[]): Float32Array {
       source = generateGlottalSource(durationSamples, f0);
     }
 
-    // Apply spectral tilt to voiced source only
+    // Spectral tilt on voiced source
     if (paramCurr.source === 'glottal') {
       for (let i = 0; i < source.length; i++) {
         source[i] = tickTilt(tilt, source[i]);
       }
     }
 
-    // Set resonators
+    // Set all 5 resonators
     setResonator(filters[0], paramCurr.f1, paramCurr.bw1);
     setResonator(filters[1], paramCurr.f2, paramCurr.bw2);
     setResonator(filters[2], paramCurr.f3, paramCurr.bw3);
+    setResonator(filters[3], paramCurr.f4, paramCurr.bw4);
+    setResonator(filters[4], paramCurr.f5, paramCurr.bw5);
 
-    // Process in 5ms frames with coarticulation
+    // Set nasal anti-resonator
+    nasalActive = paramCurr.nasal && paramCurr.nasalFreq > 0;
+    if (nasalActive) {
+      setAntiResonator(nasalZero, paramCurr.nasalFreq, paramCurr.nasalBw);
+    }
+
+    // Process in 5ms frames with 50% coarticulation window
     for (let frameBeg = 0; frameBeg < durationSamples; frameBeg += FRAME_SIZE) {
       const frameEnd = Math.min(frameBeg + FRAME_SIZE, durationSamples);
       const position = frameBeg / Math.max(durationSamples, 1);
 
-      // Interpolation in last 30%
-      if (position > 0.7) {
-        const blend = (position - 0.7) / 0.3;
-        setResonator(filters[0],
-          paramCurr.f1 + (paramNext.f1 - paramCurr.f1) * blend,
-          paramCurr.bw1 + (paramNext.bw1 - paramCurr.bw1) * blend);
-        setResonator(filters[1],
-          paramCurr.f2 + (paramNext.f2 - paramCurr.f2) * blend,
-          paramCurr.bw2 + (paramNext.bw2 - paramCurr.bw2) * blend);
-        setResonator(filters[2],
-          paramCurr.f3 + (paramNext.f3 - paramCurr.f3) * blend,
-          paramCurr.bw3 + (paramNext.bw3 - paramCurr.bw3) * blend);
+      // Coarticulation in last 50% (was 30% in v17)
+      if (position > 0.5) {
+        const blend = (position - 0.5) / 0.5;
+        setResonator(filters[0], lerp(paramCurr.f1, paramNext.f1, blend), lerp(paramCurr.bw1, paramNext.bw1, blend));
+        setResonator(filters[1], lerp(paramCurr.f2, paramNext.f2, blend), lerp(paramCurr.bw2, paramNext.bw2, blend));
+        setResonator(filters[2], lerp(paramCurr.f3, paramNext.f3, blend), lerp(paramCurr.bw3, paramNext.bw3, blend));
+        setResonator(filters[3], lerp(paramCurr.f4, paramNext.f4, blend), lerp(paramCurr.bw4, paramNext.bw4, blend));
+        setResonator(filters[4], lerp(paramCurr.f5, paramNext.f5, blend), lerp(paramCurr.bw5, paramNext.bw5, blend));
+
+        // Transition nasal state
+        if (paramCurr.nasal !== paramNext.nasal) {
+          const nasalGain = paramCurr.nasal ? (1 - blend) : blend;
+          if (nasalGain > 0.1) {
+            nasalActive = true;
+            const nf = paramCurr.nasal ? paramCurr.nasalFreq : paramNext.nasalFreq;
+            const nb = paramCurr.nasal ? paramCurr.nasalBw : paramNext.nasalBw;
+            if (nf > 0) setAntiResonator(nasalZero, nf, nb);
+          } else {
+            nasalActive = false;
+          }
+        }
       }
 
-      // Interpolate gain
-      const gainBlend = position > 0.7 ? (position - 0.7) / 0.3 : 0;
-      const currentGain = paramCurr.gain + (paramNext.gain - paramCurr.gain) * gainBlend;
+      const gainBlend = position > 0.5 ? (position - 0.5) / 0.5 : 0;
+      const currentGain = lerp(paramCurr.gain, paramNext.gain, gainBlend);
 
-      // Filter through cascade
+      // Filter each sample
       for (let j = frameBeg; j < frameEnd; j++) {
         let y = source[j];
+
+        // Apply nasal anti-resonator before formants
+        if (nasalActive) {
+          y = tickAntiResonator(nasalZero, y);
+        }
+
+        // Cascade through 5 resonators
         for (let fi = 0; fi < N_FILTERS; fi++) {
           y = tickResonator(filters[fi], y);
         }
+
+        // Apply envelope
+        const env = computeEnvelope(j, durationSamples);
+
         const idx = writePos + j;
         if (idx < output.length) {
-          output[idx] = clamp(y * amplitude * currentGain);
+          output[idx] = clamp(y * amplitude * currentGain * env);
         }
       }
     }
@@ -423,6 +502,10 @@ function synthesize(seq: Segment[]): Float32Array {
   }
 
   return output.slice(0, writePos);
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
 }
 
 function clamp(x: number): number {
@@ -437,36 +520,32 @@ function postProcess(samples: Float32Array): Float32Array {
   const len = samples.length;
   if (len === 0) return samples;
 
-  // DC blocking filter
+  // DC blocking
   let dcX1 = 0, dcY1 = 0;
   const dc = new Float32Array(len);
   for (let i = 0; i < len; i++) {
     const y = samples[i] - dcX1 + 0.997 * dcY1;
-    dcX1 = samples[i];
-    dcY1 = y;
-    dc[i] = y;
+    dcX1 = samples[i]; dcY1 = y; dc[i] = y;
   }
 
-  // Gentle pre-emphasis to brighten (compensate for LF model warmth)
-  const preEmph = new Float32Array(len);
-  preEmph[0] = dc[0];
+  // Gentle pre-emphasis
+  const pe = new Float32Array(len);
+  pe[0] = dc[0];
   for (let i = 1; i < len; i++) {
-    preEmph[i] = dc[i] - 0.35 * dc[i - 1];
+    pe[i] = dc[i] - 0.30 * dc[i - 1];
   }
 
   // Normalize to -1dB
   let peak = 0;
   for (let i = 0; i < len; i++) {
-    const a = Math.abs(preEmph[i]);
+    const a = Math.abs(pe[i]);
     if (a > peak) peak = a;
   }
-  if (peak === 0) return preEmph;
+  if (peak === 0) return pe;
 
   const gain = 0.89 / peak;
   const out = new Float32Array(len);
-  for (let i = 0; i < len; i++) {
-    out[i] = preEmph[i] * gain;
-  }
+  for (let i = 0; i < len; i++) out[i] = pe[i] * gain;
   return out;
 }
 
@@ -511,13 +590,12 @@ function samplesToWav(samples: Float32Array, sampleRate: number): Blob {
 
 export async function synthesizeFormant(text: string): Promise<Blob> {
   const phonemes = textToPhonemes(text);
-  console.log(`[Formant v17] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
+  console.log(`[Formant v18] "${text.slice(0, 50)}..." → ${phonemes.length} phonemes`);
 
-  // Reset glottal phase
   glottalPhase = 0;
 
   const segments = buildSegments(phonemes);
-  console.log(`[Formant v17] ${segments.length} segments built`);
+  console.log(`[Formant v18] ${segments.length} segments built`);
 
   const samples = synthesize(segments);
   const processed = postProcess(samples);
@@ -547,7 +625,7 @@ export async function speakFormant(
 
     return { played: !signal?.aborted, audio };
   } catch (err) {
-    console.warn("[Formant v17] Error:", err);
+    console.warn("[Formant v18] Error:", err);
     return { played: false, audio: null };
   }
 }
