@@ -9,6 +9,10 @@ import {
   ComparisonSection,
   CtaSection,
   OrionVideoShowcase,
+  SystemArchitectureSection,
+  SmartOtrSection,
+  TechStackSection,
+  SecurityShieldSection,
 } from '@/components/home';
 import { WhoIsItForSection } from '@/components/home/WhoIsItForSection';
 import { WelcomeSplash } from '@/components/home/WelcomeSplash';
@@ -74,6 +78,10 @@ export default function Index() {
 
       <OrionVideoShowcase />
       <WhoIsItForSection />
+      <SystemArchitectureSection />
+      <SmartOtrSection />
+      <TechStackSection />
+      <SecurityShieldSection />
       <WhyOrionSection />
       <ComparisonSection />
       <CtaSection />

@@ -14,7 +14,7 @@ const highlights = [
 
 export function SecurityShieldSection() {
   return (
-    <section className="py-20 sm:py-28 section-cinematic relative overflow-hidden neural-ambient scanlines">
+    <section className="py-12 sm:py-16 section-cinematic relative overflow-hidden neural-ambient scanlines">
       <div className="absolute top-0 inset-x-0 cinematic-divider" />
 
       <div className="container px-4 sm:px-6 relative z-10">
