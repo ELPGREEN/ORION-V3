@@ -208,8 +208,9 @@ export function textToPhonemes(text: string): string[] {
       case 'p': phonemes.push('p'); break;
       case 'r':
         if (i === 0 || prev === ' ' || prev === 'n' || prev === 'l' || prev === 's')
-          phonemes.push('R');
-        else phonemes.push('ɾ');
+          phonemes.push('χ'); // uvular fricative (carro, rato) — standard pt-BR
+        else phonemes.push('ɾ'); // alveolar tap (caro, para)
+        break;
         break;
       case 's':
         if (vowels.includes(next) && vowels.includes(prev)) phonemes.push('z');
