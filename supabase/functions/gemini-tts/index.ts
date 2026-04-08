@@ -176,7 +176,7 @@ function buildSingleSpeakerRequest(
   if (opts.includeLanguage && selectedLang.trim()) speechConfig.languageCode = selectedLang;
 
   const body: Record<string, unknown> = {
-    contents: [{ parts: [{ text: cleanText }] }],
+    contents: [{ role: "user", parts: [{ text: cleanText }] }],
     generationConfig: { responseModalities: ["AUDIO"], speechConfig },
   };
   if (opts.includePrompt && stylePrompt.trim()) {
@@ -201,7 +201,7 @@ function buildMultiSpeakerRequest(
   };
   if (includeLanguage && selectedLang.trim()) speechConfig.languageCode = selectedLang;
   return {
-    contents: [{ parts: [{ text: cleanText }] }],
+    contents: [{ role: "user", parts: [{ text: cleanText }] }],
     generationConfig: { responseModalities: ["AUDIO"], speechConfig },
   };
 }
@@ -345,12 +345,20 @@ Deno.serve(async (req) => {
     const selectedLang = lang || DEFAULT_LANG;
     const stylePrompt = prompt || DEFAULT_PROMPT;
 
-    // Build variants
-    const variants: RequestVariant[] = multispeaker && multispeaker.length > 0
+    // Build variants — Vertex AI does NOT support systemInstruction for TTS
+    const vertexVariants: RequestVariant[] = multispeaker && multispeaker.length > 0
       ? [
           { label: "multi/lang", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, true) },
           { label: "multi/plain", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, false) },
         ]
+      : [
+          { label: "lang", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: true }) },
+          { label: "plain", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: false }) },
+        ];
+
+    // AI Studio supports systemInstruction
+    const studioVariants: RequestVariant[] = multispeaker && multispeaker.length > 0
+      ? vertexVariants
       : [
           { label: "full", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: true }) },
           { label: "no-lang", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: false }) },
@@ -361,7 +369,7 @@ Deno.serve(async (req) => {
     const sa = getServiceAccount();
     if (sa) {
       console.log(`[TTS] ${cleanText.length} chars → Vertex AI (project: ${sa.project_id})`);
-      const vertex = await requestVertexAI(sa, variants);
+      const vertex = await requestVertexAI(sa, vertexVariants);
       if (vertex.response) {
         const data = await vertex.response.json();
         const audioResp = parseAudioResponse(data);
@@ -378,7 +386,7 @@ Deno.serve(async (req) => {
     const keys = getAllGeminiKeys();
     if (keys.length > 0) {
       console.log(`[TTS] Fallback AI Studio (${keys.length} keys)`);
-      const { response, lastError, rateLimited } = await requestAIStudio(keys, variants);
+      const { response, lastError, rateLimited } = await requestAIStudio(keys, studioVariants);
 
       if (rateLimited && !response) {
         return fallbackResponse("Rate limited", { rate_limited: true, retry_after_ms: CLIENT_RETRY_AFTER_MS });
