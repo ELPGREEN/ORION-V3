@@ -1388,7 +1388,7 @@ export function useOrionReasoning(
         isSpeakingQueue = true;
 
         // Stop mic ONCE at queue start — not per-sentence
-        try { voiceRef?.current?.stop?.(); } catch {}
+        try { stop(); } catch {}
 
         try {
           while (localQueue.length > 0 && !bargedInRef.current) {
