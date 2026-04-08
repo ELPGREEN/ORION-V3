@@ -671,6 +671,18 @@ export function NeuralConsciousnessLoop() {
       riskLevel: (meta?.riskLevel ?? prev.riskLevel) as "safe" | "caution" | "warning" | "critical",
       activeSkillsList: meta?.activeSkills?.map(s => ({ name: s.name, category: s.category, contribution: s.contribution, active: s.active })) ?? prev.activeSkillsList,
       reflectionChain: meta?.reflectionChain ?? prev.reflectionChain,
+      // v27: LLM Metacognition
+      reasoningMode: meta?.reasoningMode?.mode ?? prev.reasoningMode,
+      reasoningSystem1: meta?.reasoningMode?.system1Activation ?? prev.reasoningSystem1,
+      reasoningSystem2: meta?.reasoningMode?.system2Activation ?? prev.reasoningSystem2,
+      reasoningShouldEscalate: meta?.reasoningMode?.shouldEscalate ?? prev.reasoningShouldEscalate,
+      hallucinationSnapshotRisk: meta?.hallucinationSnapshot?.snapshotRisk ?? prev.hallucinationSnapshotRisk,
+      hallucinationContradiction: meta?.hallucinationSnapshot?.contradictionDetected ?? prev.hallucinationContradiction,
+      hallucinationGrounding: meta?.hallucinationSnapshot?.groundingCoherence ?? prev.hallucinationGrounding,
+      alignmentScore: meta?.alignmentAudit?.alignmentScore ?? prev.alignmentScore,
+      alignmentFlags: meta?.alignmentAudit?.flags ?? prev.alignmentFlags,
+      alignmentTransparency: meta?.alignmentAudit?.transparencyScore ?? prev.alignmentTransparency,
+      alignmentBiasSignal: meta?.alignmentAudit?.biasSignal ?? prev.alignmentBiasSignal,
       // v25: Bridge snapshot
       bridgeSnapshot: (() => {
         const snap = getLastConsciousnessSnapshot();
