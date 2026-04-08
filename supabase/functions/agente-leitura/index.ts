@@ -312,7 +312,7 @@ REGRAS:
   const geminiKeys = keyNames.map(n => Deno.env.get(n)).filter((k): k is string => !!k);
   // Shuffle for load distribution
   for (let i = geminiKeys.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [geminiKeys[i], geminiKeys[j]] = [geminiKeys[j], geminiKeys[i]]; }
-  const geminiKey = geminiKeys[0];
+  for (const geminiKey of geminiKeys) {
     try {
       const geminiResp = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
@@ -335,7 +335,8 @@ REGRAS:
         }
       }
     } catch (e) {
-      console.warn(`Gemini failed for ${context}:`, e);
+      console.warn(`Gemini key failed for ${context}:`, e);
+      continue;
     }
   }
 
