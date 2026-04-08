@@ -386,6 +386,37 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     return () => clearTimeout(timer);
   }, [initialCommand, location.state, skipWakeWord, speakFast, speechOk, startDirectVoiceCapture]);
 
+  // ═══ Centralized command router — ALL entry points pass through here ═══
+  const routeOrionCommand = useCallback((cmd: string) => {
+    const q = cmd.toLowerCase().trim();
+    
+    // Local vision commands — intercept BEFORE LLM
+    const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+    const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+
+    if (isActivateVision) {
+      if (!active) {
+        speakFast("Ativando visão neural.").catch(() => {});
+        startCamera({ announce: false }).catch(() => {});
+      } else {
+        speakFast("Visão já está ativa.").catch(() => {});
+      }
+      return;
+    }
+    if (isDeactivateVision) {
+      if (active) {
+        speakFast("Desativando visão.").catch(() => {});
+        stopCamera();
+      } else {
+        speakFast("Visão já está desativada.").catch(() => {});
+      }
+      return;
+    }
+    
+    // Everything else → LLM
+    askAI(cmd);
+  }, [active, startCamera, stopCamera, speakFast, askAI]);
+
   // Auto-activate when navigated from OrionGlobalListener or via initialCommand prop
   useEffect(() => {
     if (autoActivatedRef.current) return;
@@ -393,7 +424,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (initialCommand && initialCommand.length > 2) {
       autoActivatedRef.current = true;
       activateByWakeWord();
-      setTimeout(() => askAI(initialCommand), 300);
+      // Route through centralized handler (catches "ativar visão" locally)
+      setTimeout(() => routeOrionCommand(initialCommand), 300);
       return;
     }
 
@@ -403,11 +435,12 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       autoActivatedRef.current = true;
       activateByWakeWord();
       if (state.autoCommand && typeof state.autoCommand === "string") {
-        setTimeout(() => askAI(state.autoCommand), 300);
+        // Route through centralized handler
+        setTimeout(() => routeOrionCommand(state.autoCommand), 300);
       }
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, initialCommand, activateByWakeWord, askAI]);
+  }, [location.state, initialCommand, activateByWakeWord, routeOrionCommand]);
 
   // Re-enable wake word ONLY when user explicitly stops (not during auto-cycles)
   const wakeWordStabilityRef = useRef(0);
@@ -490,6 +523,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         rtInferenceRunningRef.current = true;
         detectRealTime(video).then(rtResult => {
           VS.realTimeVision = rtResult;
+          (window as any).__orion_last_rt_vision_ts__ = Date.now();
           lastRtVisionRef.current = rtResult;
 
           if (rtResult.frameXResult) {

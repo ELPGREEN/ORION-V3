@@ -56,55 +56,8 @@ export const VoiceState = {
   aiResponding: false,
 };
 
-// ═══ Global Singleton Guard ═══
-// Ensures only ONE SpeechRecognition instance exists across HMR reloads.
-// Each mount gets a unique ID; if a newer mount exists, older ones yield.
-const VOICE_GLOBAL_KEY = "__orion_voice_singleton__";
-
-interface VoiceSingleton {
-  activeId: number;
-  rec: any | null;
-  wakeRec: any | null;
-  cleanup: (() => void) | null;
-}
-
-function getVoiceSingleton(): VoiceSingleton {
-  const w = window as any;
-  if (!w[VOICE_GLOBAL_KEY]) {
-    w[VOICE_GLOBAL_KEY] = { activeId: 0, rec: null, wakeRec: null, cleanup: null };
-  }
-  return w[VOICE_GLOBAL_KEY];
-}
-
-/** Kill any existing global recognition instances before starting new ones */
-function claimVoiceSingleton(): number {
-  const s = getVoiceSingleton();
-  // Kill previous instances
-  if (s.cleanup) { try { s.cleanup(); } catch {} }
-  try { s.rec?.abort?.(); } catch {}
-  try { s.rec?.stop?.(); } catch {}
-  try { s.wakeRec?.abort?.(); } catch {}
-  try { s.wakeRec?.stop?.(); } catch {}
-  s.rec = null;
-  s.wakeRec = null;
-  s.activeId++;
-  return s.activeId;
-}
-
-/** Check if this mount is still the active owner */
-function isActiveOwner(id: number): boolean {
-  return getVoiceSingleton().activeId === id;
-}
-
-/** Register the current recognition instance globally */
-function registerGlobalRec(rec: any) {
-  getVoiceSingleton().rec = rec;
-}
-
-/** Register cleanup function for this mount */
-function registerGlobalCleanup(fn: () => void) {
-  getVoiceSingleton().cleanup = fn;
-}
+// ═══ Unified Mic Arbiter — single global owner ═══
+import { claimMic, isMicOwner, registerMicRec, registerMicCleanup } from "@/lib/voice/micArbiter";
 
 export interface UseNeuralVoiceReturn {
   listening: boolean;
@@ -179,11 +132,11 @@ export function useNeuralVoice(
     }
   }, []);
 
-  // ═══ Singleton claim: kill ALL previous HMR instances ═══
+  // ═══ Unified arbiter claim: kill ALL previous HMR instances ═══
   useEffect(() => {
-    const myId = claimVoiceSingleton();
+    const myId = claimMic("idle");
     singletonIdRef.current = myId;
-    console.log("[Voice] Singleton claimed, id:", myId);
+    console.log("[Voice] Mic arbiter claimed, id:", myId);
 
     const cleanup = () => {
       voiceActiveRef.current = false;
@@ -193,7 +146,7 @@ export function useNeuralVoice(
       recRef.current = null;
       clearRestartTimer();
     };
-    registerGlobalCleanup(cleanup);
+    registerMicCleanup(cleanup);
 
     initVoicePicker();
     const voice = getOrionVoice();
@@ -216,7 +169,7 @@ export function useNeuralVoice(
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
     clearRestartTimer();
     // Stale HMR instance guard
-    if (!isActiveOwner(singletonIdRef.current)) { setListening(false); return; }
+    if (!isMicOwner(singletonIdRef.current)) { setListening(false); return; }
     if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
       setListening(false);
       return;
@@ -644,7 +597,7 @@ export function useNeuralVoice(
 
   const startListeningFresh = useCallback((onCmd: (c: string) => void) => {
     // Stale HMR instance guard
-    if (!isActiveOwner(singletonIdRef.current)) { setListening(false); return; }
+    if (!isMicOwner(singletonIdRef.current)) { setListening(false); return; }
     intentionalStopRef.current = false;
     try { recRef.current?.abort?.(); } catch {}
     try { recRef.current?.stop(); } catch {}
@@ -652,7 +605,7 @@ export function useNeuralVoice(
     const rec = createRecognition(onCmd);
     if (!rec) { setListening(false); return; }
     recRef.current = rec;
-    registerGlobalRec(rec);
+    registerMicRec(rec, "command");
     try {
       rec.start();
       setListening(true);
@@ -660,7 +613,7 @@ export function useNeuralVoice(
       setListening(false);
       recRef.current = null;
       setTimeout(() => {
-        if (!intentionalStopRef.current && onCmdRef.current === onCmd && isActiveOwner(singletonIdRef.current)) {
+        if (!intentionalStopRef.current && onCmdRef.current === onCmd && isMicOwner(singletonIdRef.current)) {
           startListeningFresh(onCmd);
         }
       }, 250);

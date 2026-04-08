@@ -433,9 +433,26 @@ export function PlasmaCanvas({ className = "" }: { className?: string }) {
         lastModeChange = now;
       }
 
-      OrbState.awareness = OrbState.active
-        ? Math.min(100, 55 + OrbState.regions.length * 6 + (OrbState.aiResponding ? 20 : 0))
-        : 25 + Math.sin(t * 0.5) * 8;
+      // ═══ Real consciousness score: derived from actual subsystem health ═══
+      if (OrbState.active) {
+        let score = 30; // base: camera active
+        score += OrbState.regions.length > 0 ? 15 : 0; // vision detecting regions
+        score += OrbState.aiResponding ? 15 : 0; // reasoning pipeline active
+        // Check mic arbiter health via window global
+        const micState = (window as any).__orion_mic_arbiter__;
+        if (micState && micState.rec) score += 15; // mic has active owner
+        if (micState && micState.mode === "command") score += 10; // in command mode (STT active)
+        // Recent frame detection
+        const rtv = (window as any).__orion_last_rt_vision_ts__;
+        if (rtv && Date.now() - rtv < 5000) score += 15; // fresh frame within 5s
+        OrbState.awareness = Math.min(100, score);
+      } else {
+        // Idle but check if mic is at least listening for wake word
+        let idleScore = 15;
+        const micState = (window as any).__orion_mic_arbiter__;
+        if (micState && micState.rec && micState.mode === "wake") idleScore += 10;
+        OrbState.awareness = idleScore + Math.sin(t * 0.5) * 5;
+      }
 
       gl.uniform1f(timeLoc, t);
       gl.uniform2f(resLoc, canvas.width, canvas.height);
