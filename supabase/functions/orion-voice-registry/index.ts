@@ -112,14 +112,15 @@ async function handleSynthesize(body: Record<string, unknown>, _userId: string) 
   const { text } = body;
   if (!text) throw new Error("text required");
 
-  const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter((k): k is string => !!k);
+  const keyNames = ["GEMINI_API_KEY_GCP", "GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"];
+  const geminiKeys = keyNames.map(n => Deno.env.get(n)).filter((k): k is string => !!k);
+  // Shuffle for load distribution
+  for (let i = geminiKeys.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [geminiKeys[i], geminiKeys[j]] = [geminiKeys[j], geminiKeys[i]]; }
 
   for (const key of geminiKeys) {
     try {
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${key}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
