@@ -84,9 +84,8 @@ function smartLegalChunk(text: string, maxChunkSize = 1500): string[] {
 
 // ─── Generate Embedding (Gemini FREE) ───
 function getGeminiKeys(): string[] {
-  return [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter((k): k is string => !!k);
+  return ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"]
+    .map(n => Deno.env.get(n)).filter((k): k is string => !!k);
 }
 
 async function generateEmbedding(text: string, signal?: AbortSignal): Promise<number[]> {

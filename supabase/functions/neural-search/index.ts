@@ -2468,9 +2468,8 @@ function getOpenAIKeys(): string[] {
 }
 
 function getGeminiKeysLLM(): string[] {
-  return [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter((k): k is string => Boolean(k) && !badKeys.has(k));
+  return ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"]
+    .map(n => Deno.env.get(n)).filter((k): k is string => Boolean(k) && !badKeys.has(k));
 }
 
 let keyIndex = 0;
@@ -2753,9 +2752,8 @@ async function expandQuery(query: string, previousContext?: string, supabaseClie
 
 // ─── Embedding Generation (Gemini gemini-embedding-001, free) ───
 function getGeminiKeys(): string[] {
-  return [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter(Boolean) as string[];
+  return ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"]
+    .map(n => Deno.env.get(n)).filter(Boolean) as string[];
 }
 
 // HuggingFace fallback: all-MiniLM-L6-v2 (384d → zero-pad to 768d)

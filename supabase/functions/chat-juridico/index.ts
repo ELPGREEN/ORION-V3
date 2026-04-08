@@ -306,9 +306,7 @@ function getAvailableLLMs(): LLMConfig[] {
   const llms: LLMConfig[] = [];
   
   // Gemini FREE — 7 keys in round-robin, multiple models
-  const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter(Boolean) as string[];
+  const geminiKeys = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"].map(n => Deno.env.get(n)).filter(Boolean) as string[];
 
   // Primary: Gemini 2.5 Flash (10 RPM, 250 RPD)
   for (const key of geminiKeys) {
@@ -553,9 +551,7 @@ async function callWithFallback(
 
 // ====== EMBEDDING (Gemini embedding-001 — 768 dims, FREE) ======
 async function generateEmbedding(text: string): Promise<number[]> {
-  const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter((k): k is string => !!k);
+  const geminiKeys = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"].map(n => Deno.env.get(n)).filter((k): k is string => !!k);
 
   const truncated = text.substring(0, 8000);
   for (const key of geminiKeys) {

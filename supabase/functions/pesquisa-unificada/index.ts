@@ -872,7 +872,8 @@ async function refineQueryWithAI(rawQuery: string): Promise<{ refinedQuery: stri
     
     // Determine which keys to try based on enabled providers (fallback to env keys)
     const groqKey = Deno.env.get("GROQ_API_KEY") || "";
-    const geminiKey = Deno.env.get("GEMINI_API_KEY") || "";
+    const _gkN6 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
+    const geminiKey = _gkN6.map(n => Deno.env.get(n)).filter(Boolean)[Math.floor(Math.random() * 8)] as string || "";
     const openaiKey = Deno.env.get("OPENAI_API_KEY") || Deno.env.get("OPENAI_API_KEY_2") || "";
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") || "";
     

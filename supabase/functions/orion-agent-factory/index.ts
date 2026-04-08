@@ -174,7 +174,8 @@ async function handleAutoCreate(body: Record<string, unknown>) {
   const sb = getSupabase();
   const { task_description, difficulty_context, failed_attempts } = body;
 
-  const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+  const _gkN3 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
+  const GEMINI_KEY = _gkN3.map(n => Deno.env.get(n)).filter(Boolean)[Math.floor(Math.random() * 8)] as string || "";
   if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not configured");
 
   // Ask AI to decide what agent to create
@@ -286,7 +287,8 @@ async function handleInvokeAgent(body: Record<string, unknown>) {
 
   // Fallback or primary: use direct Gemini API with agent's system prompt
   if (!result || result.fallback) {
-    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+    const _gkN3 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
+  const GEMINI_KEY = _gkN3.map(n => Deno.env.get(n)).filter(Boolean)[Math.floor(Math.random() * 8)] as string || "";
     if (!GEMINI_KEY) throw new Error("No Gemini key available");
 
     const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
@@ -334,7 +336,8 @@ async function handleCodeAnalysis(body: Record<string, unknown>) {
   const sb = getSupabase();
   const { path, query: userQuery, mode } = body;
   const GITHUB_PAT = Deno.env.get("GITHUB_PAT_CHILD") || Deno.env.get("CHILD_GIT_TOKEN");
-  const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+  const _gkN3 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
+  const GEMINI_KEY = _gkN3.map(n => Deno.env.get(n)).filter(Boolean)[Math.floor(Math.random() * 8)] as string || "";
 
   if (!GITHUB_PAT || !GEMINI_KEY) throw new Error("Missing GitHub PAT or Gemini key");
 
@@ -404,7 +407,8 @@ Analyze line by line. Be specific about line numbers. Respond in Portuguese (BR)
 // ─── Action: Supabase schema analysis ───
 async function handleSupabaseAnalysis() {
   const sb = getSupabase();
-  const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+  const _gkN3 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
+  const GEMINI_KEY = _gkN3.map(n => Deno.env.get(n)).filter(Boolean)[Math.floor(Math.random() * 8)] as string || "";
   if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not configured");
 
   // Get all tables info

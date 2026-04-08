@@ -18,7 +18,8 @@ serve(async (req) => {
     }
 
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    const _gkN2 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
+    const GEMINI_API_KEY = _gkN2.map(n => Deno.env.get(n)).filter(Boolean)[Math.floor(Math.random() * 8) % _gkN2.length] || "";
 
     const analysisPrompt = `Analyze the following text and determine if it was likely written by an AI or a human.
 Return ONLY a JSON object with this exact structure:

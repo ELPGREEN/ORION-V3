@@ -43,9 +43,7 @@ function getProviders(): AIProvider[] {
   // (Lovable AI Gateway removed — using direct Gemini keys below for free usage)
 
   // Multiple Gemini keys for rate limit resilience
-  const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter(Boolean) as string[];
+  const geminiKeys = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"].map(n => Deno.env.get(n)).filter(Boolean) as string[];
 
   for (let i = 0; i < geminiKeys.length; i++) {
     const geminiKey = geminiKeys[i];
