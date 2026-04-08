@@ -793,13 +793,13 @@ export function GlobalOrionListener() {
       {/* ═══ Expanded Orion overlay ═══ */}
       {orionOpen && (
         !user ? (
-          <OrionAccessGate mode="not_logged" onClose={() => setOrionOpen(false)} />
+          <OrionAccessGate mode="not_logged" onClose={() => { releaseMic(micOwnerIdRef.current); setOrionOpen(false); }} />
         ) : !isPremium && !planLoading ? (
-          <OrionAccessGate mode="not_premium" onClose={() => setOrionOpen(false)} />
+          <OrionAccessGate mode="not_premium" onClose={() => { releaseMic(micOwnerIdRef.current); setOrionOpen(false); }} />
         ) : (
           <OrionFloatingOverlay
-            onMinimize={() => setOrionOpen(false)}
-            onClose={() => setOrionOpen(false)}
+            onMinimize={() => { releaseMic(micOwnerIdRef.current); setOrionOpen(false); }}
+            onClose={() => { releaseMic(micOwnerIdRef.current); setOrionOpen(false); }}
             initialCommand={initialCommand}
           />
         )
