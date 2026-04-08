@@ -70,6 +70,7 @@ export interface UseNeuralVoiceReturn {
   abortControllerRef: React.MutableRefObject<AbortController | null>;
   speechQueueRef: React.MutableRefObject<string[]>;
   bargeInCallbackRef: React.MutableRefObject<(() => void) | null>;
+  voiceActiveRef: React.MutableRefObject<boolean>;
 }
 
 // Simple barge-in patterns (user wants AI to stop)
