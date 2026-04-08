@@ -79,15 +79,21 @@ export async function analyzeSentiment(
 
 /**
  * Extração de embeddings no browser
- * Model default: Xenova/all-MiniLM-L6-v2 (~23MB)
+ * Model default: Xenova/all-MiniLM-L6-v2 (~23MB, 384d)
+ * Use padTo768=true when embeddings will be compared against Gemini 768d vectors in DB
  */
 export async function extractEmbeddings(
   text: string | string[],
-  model?: string
+  model?: string,
+  padTo768 = false
 ): Promise<number[][]> {
   const extractor = await getPipeline("feature-extraction", model || "Xenova/all-MiniLM-L6-v2") as (text: string | string[], options?: Record<string, unknown>) => Promise<{ tolist: () => number[][] }>;
   const result = await extractor(text, { pooling: "mean", normalize: true });
-  return result.tolist();
+  const vectors = result.tolist();
+  if (padTo768) {
+    return vectors.map(v => v.length >= 768 ? v.slice(0, 768) : [...v, ...new Array(768 - v.length).fill(0)]);
+  }
+  return vectors;
 }
 
 /**
