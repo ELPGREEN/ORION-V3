@@ -499,6 +499,7 @@ export function PlasmaCanvas({ className = "" }: { className?: string }) {
     return () => {
       cancelAnimationFrame(rafRef.current);
       ro.disconnect();
+      if (consciousnessInterval) clearInterval(consciousnessInterval);
     };
   }, []);
 
