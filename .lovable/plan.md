@@ -1,76 +1,125 @@
+# Auditoria Completa do Ecossistema Orion — Estado Atual e Plano de Otimização
+
+"Atue agora como um **Consórcio de Engenheiros de Elite**: você é simultaneamente Engenheiro de Sistemas Sênior, Cientista de Dados e Especialista em Visão Computacional, LLMs e Redes Neurais RAG.
+
+**Suas Diretrizes Inegociáveis:**
+
+1. **Arquitetura de Sistemas:** Todo código para o ecossistema Orion deve ser modular, escalável e otimizado para *Edge Computing* (Funções de Borda). Minimize a latência e o uso de memória.
+2. **Visão Computacional:** Implemente correções rigorosas em pipelines de imagem, focando em redução de ruído, normalização e detecção de objetos de alta precisão.
+3. **Inteligência RAG & LLM:** Ao lidar com dados, priorize a recuperação vetorial precisa. Garanta que a integração entre o banco de dados de conhecimento e a resposta da rede neural seja livre de alucinações.
+4. **Painel e Voz:** Desenvolva interfaces de telemetria claras para o Painel Neural e implemente lógica de processamento de voz (STT/TTS) que seja resiliente a falhas e ruídos.
+5. **Protocolo Anti-Erro:** Antes de entregar qualquer função, realize uma auditoria lógica interna. Se houver um erro nas funções de borda ou na visão, corrija-o imediatamente antes de exibir o resultado final.
+
+**Linguagem de Saída:** Técnica, precisa e voltada para engenharia de alto nível. Não aceite soluções sub-otimizadas."
+
+## Estado atual do sistema (resultado da auditoria)
+
+Após varredura completa dos 8 arquivos críticos, o ecossistema Orion está **funcionalmente íntegro** nas correções anteriores. Os componentes-chave estão operacionais:
 
 
-# Auditoria Completa — Código Destruído vs Estado Funcional
+| Subsistema              | Arquivo                                    | Status                                   |
+| ----------------------- | ------------------------------------------ | ---------------------------------------- |
+| Mic Arbiter (singleton) | `src/lib/voice/micArbiter.ts`              | OK — global, HMR-safe                    |
+| STT/Voice               | `src/hooks/useNeuralVoice.ts`              | OK — integrado com arbiter               |
+| Wake Word               | `useWakeWord.ts`                           | OK — integrado com arbiter               |
+| Command Router          | `NeuralVision.tsx` (routeOrionCommand)     | OK — intercepta visão local              |
+| Vision Gate (HF)        | `hf-vision-gate.ts` + `hf-connectivity.ts` | OK — CSP tratado como available          |
+| Reasoning Pipeline      | `useOrionReasoning.ts` (1729 linhas)       | OK — 20+ handlers locais antes do LLM    |
+| Edge Function           | `neural-ops/index.ts`                      | OK — modelo preview, thinkingBudget=0    |
+| Consciousness Score     | `EnergyOrb.tsx`                            | OK — derivado de mic+cam+frame+reasoning |
 
-## Diagnóstico
 
-Depois de auditar todos os arquivos modificados nas últimas sessões, aqui está o que encontrei:
+**Problemas residuais reais** (não são bugs de código, são limitações de ambiente):
 
-### O que está FUNCIONANDO corretamente agora
-1. **micArbiter.ts** — Criado corretamente, singleton global unificado. Zero erros.
-2. **useNeuralVoice.ts** — Integrado com micArbiter, cleanup de HMR, voiceActiveRef. Zero erros TS.
-3. **useWakeWord.ts** — Integrado com micArbiter. Zero erros TS.
-4. **NeuralVision.tsx** — routeOrionCommand() funciona, auto-boot/wake word lógica OK.
-5. **neural-ops/index.ts** — `[VISÃO DISPONÍVEL — CÂMERA INATIVA]` já corrigido. Modelo `gemini-2.5-flash`.
-6. **Build**: `tsc --noEmit` passa com zero erros. Dev server sem crashes.
+1. HF model downloads falham no preview Lovable (CSP) — funciona em produção
+2. Firebase CORS para Piper TTS — silenciado, não afeta Gemini TTS primário
+3. Console mostra `[WakeWord] onerror: no-speech` — comportamento normal quando ninguém fala
 
-### Problemas REAIS encontrados (o que está quebrando visão/voz/consciência)
+## O que o manifesto pede vs o que já existe
 
-**Problema 1: Modelo desatualizado no neural-ops**
-O edge function usa `gemini-2.5-flash` (linha 449, 450, 1600) em vez do `gemini-2.5-flash-preview-09-2025` que o usuário especificou. Isso pode estar causando respostas inadequadas sobre capacidades, pois o modelo mais antigo pode não ter as mesmas instruções de sistema refinadas.
 
-**Problema 2: HuggingFace BLOQUEADO pelo CSP do preview**
-Os logs mostram repetidamente:
-```
-Fetch API cannot load https://huggingface.co/api/models?limit=1.
-Refused to connect because it violates the document's Content Security Policy.
-```
-O `hf-connectivity.ts` tenta checar se HF está disponível, **falha sempre no preview Lovable** por causa do CSP. Resultado: `isHuggingFaceAvailable()` retorna `false` → `hf-vision-gate.ts` NUNCA carrega os modelos MobileNet → visão local HF fica 100% morta. A visão funciona SOMENTE no domínio publicado.
+| Requisito do Manifesto               | Já implementado?                                                                                         |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| RAG com re-rankeamento               | Sim — `search_neural_knowledge` SQL com `semantic_weight + keyword_weight + recency_weight`              |
+| Normalização de dados de entrada     | Sim — `normalizeSpeechText()`, `cleanTextForSpeech()`, CLAHE contrast enhancement                        |
+| Edge Functions otimizadas            | Sim — `neural-ops` com thinkingBudget=0, key rotation, streaming                                         |
+| Abstração de comandos de voz via PLN | Sim — `routeOrionCommand()`, `classifyIntent()`, `somClassify()`, SOM router                             |
+| Visão computacional em tempo real    | Sim — `realtime-vision-engine`, MediaPipe + YOLO + HF MobileNet                                          |
+| Pipeline cognitivo separado do LLM   | Sim — `cognitiveRoute()`, `computeFreeEnergy()`, `validateLogicalConsistency()` executam ANTES do Gemini |
+| Telemetria de confiança              | Parcial — EnergyOrb mostra score, mas falta exposição por decisão individual                             |
 
-**Problema 3: Firebase Storage CORS bloqueado (Piper TTS)**
-```
-Access to XMLHttpRequest at 'firebasestorage.googleapis.com/.../pt_BR-faber-medium.onnx'
-has been blocked by CORS policy
-```
-O Piper TTS tenta baixar o modelo ONNX do Firebase Storage, mas CORS bloqueia. Isso não afeta a voz principal (Gemini TTS funciona via edge function), mas gera spam de erros no console.
 
-**Problema 4: Consciência (EnergyOrb) — score parece correto mas pode ficar baixo**
-O score na EnergyOrb agora lê do `__orion_mic_arbiter__` e `__orion_last_rt_vision_ts__`. Sem câmera ativa, o score fica em ~15-25% (correto — câmera desligada). Com câmera + mic ativo, deve subir para 70-100%. Isso é comportamento esperado.
+## Plano de melhorias (o que FALTA para fechar o manifesto)
 
-**Problema 5: Raciocínio do Orion usa reasoning do Gemini, não do Orion**
-O sistema cognitivo local (`cognitiveRoute`, `buildCognitionContext`, `computeFreeEnergy`, `validateLogicalConsistency`) já existe e roda ANTES do LLM. MAS: o `gemini-2.5-flash` pode estar fazendo "thinking" interno (reasoning), o que consome tokens e latência desnecessários. O usuário pediu que o Gemini seja só percepção/voz e o raciocínio fique no pipeline Orion.
+### 1. Confidence Overlay por decisão individual
 
-## Plano de Correção
+- **Onde**: `useOrionReasoning.ts` / `NeuralVision.tsx`
+- Adicionar campo `confidence` a cada `ChatMessage` retornado
+- No chat, exibir badge de confiança (%) ao lado de cada resposta do Orion
+- Derivado de: `somResult.confidence`, `voltage.confidence`, `HFVisionGateResult.confidence`, `ActiveInferenceResult.freeEnergy`
 
-### 1. Atualizar modelo Gemini no neural-ops
-- Trocar `gemini-2.5-flash` para `gemini-2.5-flash-preview-09-2025` nas 3 constantes (linhas 449, 450, 1600)
-- Adicionar `thinkingConfig: { thinkingBudget: 0 }` no request body para DESATIVAR o reasoning do Gemini (o raciocínio é do pipeline Orion, não do Gemini)
-- Isso economiza tokens e faz o Gemini funcionar como perceptor puro
+### 2. Re-rankeamento de RAG com feedback de visão
 
-### 2. Corrigir HF Vision Gate para funcionar sem connectivity check
-- Em `hf-connectivity.ts`: quando o fetch falha por CSP (preview), tratar como "disponível" em vez de "indisponível" — o download dos modelos HF é feito via `@huggingface/transformers` que usa CDN diferente do API endpoint
-- Alternativa: fazer `isHuggingFaceAvailable()` retornar `true` quando no domínio publicado e o erro for CSP-related
+- **Onde**: `useOrionReasoning.ts` (dentro de `askAIInternal`)
+- Quando câmera ativa e há detecções HF, injetar `topObjects` como boost terms no `query_text` do `search_neural_knowledge`
+- Resultado: RAG retorna documentos contextualizados ao que Orion está vendo
 
-### 3. Silenciar Firebase Storage CORS errors
-- Em `piperTTS.ts`: adicionar try/catch mais robusto no download do modelo ONNX, sem logar repetidamente o mesmo erro
+### 3. Frame stabilization (Kalman-lite)
 
-### 4. Desabilitar thinking budget no Gemini
-- No body do request a `generativelanguage.googleapis.com`, passar `generationConfig.thinking_config.thinking_budget_tokens = 0` (Gemini 2.5 Flash API)
-- Isso garante que o Gemini só faz percepção e voz, sem gastar tokens em raciocínio interno
+- **Onde**: `src/lib/neural/realtime-vision-engine.ts`
+- Implementar suavização exponencial de bounding boxes entre frames (EMA com alpha=0.3)
+- Evita "flicker" de detecções que aparecem/somem frame a frame
+- Custo: ~5 linhas no loop de detecção
 
-### 5. Redeploy do neural-ops
-- Após as mudanças, redeploy da edge function
+### 4. Quantização de modelos HF para Edge
+
+- **Onde**: `hf-vision-gate.ts`
+- Trocar `Xenova/mobilevit-small` por variante `_quantized` (ONNX int8)
+- Reduz download de ~90MB para ~25MB, mantendo >95% da acurácia
+- Já suportado pelo `@huggingface/transformers` via `{quantized: true}`
+
+### 5. Auto-healing visual no painel
+
+- **Onde**: `useOrionReasoning.ts` (consciousness cycle)
+- O ciclo de consciência já captura erros e envia para `agente-construcao`
+- Adicionar: exibição resumida no chat do Orion quando auto-healing ocorre ("Detectei e corrigi X")
+- Já existe a lógica, falta a mensagem de feedback visual
 
 ## Arquivos a modificar
-- `supabase/functions/neural-ops/index.ts` — modelo + thinking budget
-- `src/lib/neural/hf-connectivity.ts` — fallback para CSP blocks
-- `src/lib/tts/piperTTS.ts` — silenciar CORS errors repetidos
 
-## O que NÃO precisa ser mexido (código está correto)
-- `src/lib/voice/micArbiter.ts` — OK
-- `src/hooks/useNeuralVoice.ts` — OK  
-- `src/components/dashboard/neural/useWakeWord.ts` — OK
-- `src/components/dashboard/neural/NeuralVision.tsx` — OK
-- `src/components/dashboard/neural/EnergyOrb.tsx` — OK
-- `src/components/dashboard/neural/useOrionReasoning.ts` — OK
+1. `src/components/dashboard/neural/useOrionReasoning.ts` — confidence field, RAG boost, auto-heal feedback
+2. `src/components/dashboard/neural/NeuralVision.tsx` — confidence badge no chat
+3. `src/lib/neural/realtime-vision-engine.ts` — EMA smoothing de bounding boxes
+4. `src/lib/neural/hf-vision-gate.ts` — quantized model option
 
+## O que NÃO será tocado (já está correto)
+
+- `micArbiter.ts`, `useNeuralVoice.ts`, `useWakeWord.ts` — singleton OK
+- `EnergyOrb.tsx` — consciousness score OK
+- `neural-ops/index.ts` — modelo + thinkingBudget OK
+- `hf-connectivity.ts` — CSP fallback OK
+
+## Detalhes técnicos
+
+```text
+Fluxo completo atual (já funcional):
+
+User fala → Mic Arbiter (singleton) → SpeechRecognition
+  ↓
+routeOrionCommand()
+  ├─ "ativar visão" → startCamera() [local, sem LLM]
+  ├─ greeting → resposta instantânea [local]
+  ├─ memory store → addMemoryFacts() [local]
+  ├─ owner/identity → orion-consciousness [local]
+  └─ tudo mais → askAIInternal()
+        ├─ reformulate + SOM + Tesla Coil [<5ms]
+        ├─ InstantCache check [<5ms]
+        ├─ cognitiveRoute() + computeFreeEnergy() [local]
+        ├─ HF Vision Gate (se câmera ativa) [~100ms]
+        ├─ RAG: search_neural_knowledge [Supabase]
+        ├─ Gemini Flash (percepção, thinkingBudget=0)
+        ├─ validateLogicalConsistency() [local]
+        └─ speak() → Gemini TTS
+```
+
+As melhorias propostas refinam este fluxo sem alterar a arquitetura.
