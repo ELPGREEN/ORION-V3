@@ -335,12 +335,21 @@ export function GlobalOrionListener() {
     console.log("[GlobalOrion] startWakeWordListener called", { isOnNeuralPage, orionOpen, permissionsGranted, hidden, hasRef: !!wakeRecRef.current });
     if (hidden || isOnNeuralPage || orionOpen || !permissionsGranted || wakeRecRef.current || startInFlightRef.current) return;
 
+    // ═══ FIX: Don't start if another component (useNeuralVoice) owns the mic in command mode ═══
+    const currentMode = getMicMode();
+    if (currentMode === "command") {
+      console.log("[GlobalOrion] Mic in command mode — skipping wake word start");
+      return;
+    }
+
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (!SR) {
       console.warn("[GlobalOrion] SpeechRecognition API not available");
       return;
     }
 
+    // ═══ FIX: Claim mic via arbiter — prevents conflicts with useNeuralVoice/useWakeWord ═══
+    micOwnerIdRef.current = claimMic("wake");
     wakeWordEnabledRef.current = true;
     clearRestartTimer();
     startInFlightRef.current = true;
