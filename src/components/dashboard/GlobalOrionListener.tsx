@@ -12,14 +12,31 @@ import { OrionAccessGate } from "@/components/OrionAccessGate";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 
-/** Speak text using Gemini TTS Algieba (primary voice for all Orion speech) */
+/** Speak text using Gemini TTS Algieba with browser TTS fallback */
 async function orionSpeak(text: string): Promise<void> {
+  // Try Gemini TTS first
   try {
     const result = await speakWithGeminiTTS(text, "Algieba");
     if (result.played) return;
   } catch {}
 
-  // Silent fallback — prefer silence over bad formant/robotic quality
+  // Fallback: browser SpeechSynthesis (always available)
+  try {
+    const voice = getOrionVoice();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "pt-BR";
+    u.rate = ORION_VOICE_PARAMS.rate;
+    u.pitch = ORION_VOICE_PARAMS.pitch;
+    u.volume = ORION_VOICE_PARAMS.volume;
+    if (voice) u.voice = voice;
+    await new Promise<void>((resolve) => {
+      u.onend = () => resolve();
+      u.onerror = () => resolve();
+      speechSynthesis.speak(u);
+      // Safety timeout
+      setTimeout(resolve, 8000);
+    });
+  } catch {}
 }
 // ═══════════════════════════════════════════════════════════
 // ⚡ Audição Relâmpago — Lightning Hearing Engine
