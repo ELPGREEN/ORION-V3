@@ -1,127 +1,76 @@
 
-Objetivo
 
-- Consertar a `/consulta` sem mexer no visual.
-- Eliminar duplicatas reais de voz/visão.
-- Fazer “ativar visão” ligar a câmera de forma local e imediata.
-- Interligar visão + voz + memória/RAG + cognição do Orion.
-- Manter Gemini como camada de voz/visão, mas deixar a decisão final sob o pipeline cognitivo do Orion.
+# Auditoria Completa — Código Destruído vs Estado Funcional
 
-Principais achados
+## Diagnóstico
 
-- O loop de microfone ainda nasce de concorrência entre instâncias diferentes de `SpeechRecognition`. O console mostra versões HMR diferentes de `useNeuralVoice.ts` rodando ao mesmo tempo.
-- Hoje existe proteção parcial, mas ela está quebrada em dois singletons separados:
-  - `src/hooks/useNeuralVoice.ts`
-  - `src/components/dashboard/neural/useWakeWord.ts`
-  Isso evita parte do problema, mas não cria um único “dono” do microfone.
-- Em `src/components/dashboard/neural/NeuralVision.tsx`, o comando “ativar visão” funciona quando passa por `handleVoice()`, mas quando entra por `initialCommand` / `location.state.autoCommand` ele cai em `askAI(...)` direto. Aí o Orion conversa sobre visão em vez de ligar a câmera.
-- A resposta do print é compatível com `supabase/functions/neural-ops/index.ts`: quando não há imagem pronta, o backend injeta `[SEM VISÃO] Nenhum dado visual disponível.`. Isso empurra o modelo a responder como se Orion não tivesse capacidade visual.
-- `PublicOrionListener` e `GlobalOrionListener` não são o foco em `/consulta`; o conflito principal está no próprio `NeuralVision`. `OrionGlobalListener.tsx` parece código órfão e deve ser tirado do caminho para não voltar a gerar duplicata no futuro.
-- A “consciência %” mostrada hoje não representa saúde real do pipeline; ela não está amarrada de verdade a mic + câmera + frame fresco + raciocínio.
+Depois de auditar todos os arquivos modificados nas últimas sessões, aqui está o que encontrei:
 
-Plano de implementação
+### O que está FUNCIONANDO corretamente agora
+1. **micArbiter.ts** — Criado corretamente, singleton global unificado. Zero erros.
+2. **useNeuralVoice.ts** — Integrado com micArbiter, cleanup de HMR, voiceActiveRef. Zero erros TS.
+3. **useWakeWord.ts** — Integrado com micArbiter. Zero erros TS.
+4. **NeuralVision.tsx** — routeOrionCommand() funciona, auto-boot/wake word lógica OK.
+5. **neural-ops/index.ts** — `[VISÃO DISPONÍVEL — CÂMERA INATIVA]` já corrigido. Modelo `gemini-2.5-flash`.
+6. **Build**: `tsc --noEmit` passa com zero erros. Dev server sem crashes.
 
-1. Unificar o dono do microfone
-- Criar um árbitro único de fala/mic para wake word, STT principal e handoff pós-TTS.
-- Refatorar `useNeuralVoice` e `useWakeWord` para usarem o mesmo registro global, com:
-  - `ownerId`
-  - `mode` (`wake`, `command`, `idle`)
-  - instância atual de recognition
-  - cleanup centralizado para HMR
-- Resultado: só uma instância viva por vez, mesmo durante hot reload.
+### Problemas REAIS encontrados (o que está quebrando visão/voz/consciência)
 
-2. Centralizar toda entrada de comando do Orion
-- Criar em `NeuralVision` uma rota única de comando, algo como `routeOrionCommand()`.
-- Todos os caminhos devem passar por ela:
-  - botão “Falar”
-  - wake word
-  - `initialCommand`
-  - `location.state.autoActivate/autoCommand`
-- Dentro dela, comandos locais terão prioridade absoluta:
-  - `ativar visão` / `ligar câmera` -> `startCamera()`
-  - `desativar visão` -> `stopCamera()`
-  - só o resto vai para `askAI()`
-- Isso elimina o bug em que “ativar visão” vira pergunta para a LLM.
+**Problema 1: Modelo desatualizado no neural-ops**
+O edge function usa `gemini-2.5-flash` (linha 449, 450, 1600) em vez do `gemini-2.5-flash-preview-09-2025` que o usuário especificou. Isso pode estar causando respostas inadequadas sobre capacidades, pois o modelo mais antigo pode não ter as mesmas instruções de sistema refinadas.
 
-3. Corrigir o pipeline de visão para nunca “negar capacidade”
-- Em `supabase/functions/neural-ops/index.ts`, substituir o estado transitório `[SEM VISÃO]` por algo não-destrutivo, por exemplo:
-  - `[VISÃO INICIALIZANDO]` quando a câmera foi ativada mas ainda não há frame útil
-  - `[VISÃO LOCAL — SEM IMAGEM]` quando só houver HF/YOLO/MediaPipe
-- Regra nova: ausência momentânea de frame não significa “Orion não tem visão”.
-- Se a intenção for visual e a câmera estiver ligando, responder localmente “visão ativando” em vez de mandar o modelo concluir incapacidade.
-
-4. Interligar HF + visão local + RAG do Orion
-- Promover as detecções locais/HF para contexto cognitivo antes da resposta final:
-  - objetos
-  - rostos
-  - cena
-  - OCR
-  - movimento
-- Alimentar `environmental_context` / memória de sessão assim que houver detecção local confiável, e não só depois da resposta final da LLM.
-- Aproveitar o que já existe em:
-  - `src/lib/neural/hf-vision-gate.ts`
-  - `src/lib/neural/orion-ai-client.ts`
-  - `src/components/dashboard/neural/useOrionReasoning.ts`
-- Resultado: o RAG do Orion passa a “saber o que está vendo” no mesmo ciclo da fala.
-
-5. Separar percepção Gemini do raciocínio Orion
-- Manter Gemini como camada multimodal de percepção/voz.
-- Fazer o Orion decidir a resposta final usando o que já existe no cliente:
-  - `cognitiveRoute`
-  - `buildCognitionContext`
-  - `computeFreeEnergy`
-  - `validateLogicalConsistency`
-  - memória/RAG
-- Na prática: Gemini deixa de “declarar capacidade ou incapacidade do sistema” e passa a atuar como extrator/perceptor; o enunciado final fica sob o pipeline Orion.
-- Atualizar o model id de visão em `neural-ops` para `gemini-2.5-flash-preview-09-2025` (mantendo fallback para o atual se esse preview não estiver disponível no projeto).
-
-6. Fazer a consciência refletir estado real
-- Trocar o percentual de consciência por um score derivado de saúde real:
-  - microfone com dono válido
-  - câmera ativa
-  - frame recente
-  - detecções locais disponíveis
-  - pipeline de raciocínio sem erro
-  - TTS/STT sem abort loop
-- Isso evita número “solto” como 23% sem ligação com os subsistemas.
-
-Arquivos que entram no ajuste
-
-- `src/components/dashboard/neural/NeuralVision.tsx`
-- `src/hooks/useNeuralVoice.ts`
-- `src/components/dashboard/neural/useWakeWord.ts`
-- `src/components/dashboard/neural/useOrionReasoning.ts`
-- `src/lib/neural/orion-ai-client.ts`
-- `src/lib/neural/hf-vision-gate.ts`
-- `supabase/functions/neural-ops/index.ts`
-- opcional de higiene: desativar/remover o caminho órfão de `src/components/OrionGlobalListener.tsx`
-
-Detalhes técnicos
-
-```text
-wake word / botão / autoCommand
-        ↓
-   Speech Arbiter único
-        ↓
-  routeOrionCommand()
-        ├─ comando local de visão -> start/stop camera
-        ├─ frame local -> HF + YOLO + MediaPipe
-        ├─ resumo visual -> memória/RAG/contexto
-        ├─ Gemini visão -> só quando necessário
-        ├─ Orion cognition -> decisão final
-        └─ Gemini TTS -> fala
+**Problema 2: HuggingFace BLOQUEADO pelo CSP do preview**
+Os logs mostram repetidamente:
 ```
+Fetch API cannot load https://huggingface.co/api/models?limit=1.
+Refused to connect because it violates the document's Content Security Policy.
+```
+O `hf-connectivity.ts` tenta checar se HF está disponível, **falha sempre no preview Lovable** por causa do CSP. Resultado: `isHuggingFaceAvailable()` retorna `false` → `hf-vision-gate.ts` NUNCA carrega os modelos MobileNet → visão local HF fica 100% morta. A visão funciona SOMENTE no domínio publicado.
 
-- A voz já está em Gemini TTS; não precisa reescrever isso.
-- O maior conserto é impedir que “ativar visão” chegue na LLM antes de chegar no roteador local.
-- O texto do print deve desaparecer quando o backend parar de empurrar `[SEM VISÃO]` em estados transitórios.
+**Problema 3: Firebase Storage CORS bloqueado (Piper TTS)**
+```
+Access to XMLHttpRequest at 'firebasestorage.googleapis.com/.../pt_BR-faber-medium.onnx'
+has been blocked by CORS policy
+```
+O Piper TTS tenta baixar o modelo ONNX do Firebase Storage, mas CORS bloqueia. Isso não afeta a voz principal (Gemini TTS funciona via edge function), mas gera spam de erros no console.
 
-Validação após implementar
+**Problema 4: Consciência (EnergyOrb) — score parece correto mas pode ficar baixo**
+O score na EnergyOrb agora lê do `__orion_mic_arbiter__` e `__orion_last_rt_vision_ts__`. Sem câmera ativa, o score fica em ~15-25% (correto — câmera desligada). Com câmera + mic ativo, deve subir para 70-100%. Isso é comportamento esperado.
 
-- Hard reload da `/consulta`.
-- Confirmar que só existe 1 instância ativa de `SpeechRecognition` por vez.
-- Dizer “Orion” -> ele acorda sem spam de `aborted`.
-- Dizer “ativar visão” -> câmera liga imediatamente, sem resposta do tipo “não tenho visão”.
-- Com câmera ativa, perguntar “o que você está vendo?” -> resposta usa HF/visão local + contexto do Orion.
-- Testar entrada por `initialCommand` / `autoCommand` para garantir que “ativar visão” não cai mais em `askAI`.
-- Testar HMR com a página aberta para confirmar que o arbiter mata a instância velha e evita duplicata.
+**Problema 5: Raciocínio do Orion usa reasoning do Gemini, não do Orion**
+O sistema cognitivo local (`cognitiveRoute`, `buildCognitionContext`, `computeFreeEnergy`, `validateLogicalConsistency`) já existe e roda ANTES do LLM. MAS: o `gemini-2.5-flash` pode estar fazendo "thinking" interno (reasoning), o que consome tokens e latência desnecessários. O usuário pediu que o Gemini seja só percepção/voz e o raciocínio fique no pipeline Orion.
+
+## Plano de Correção
+
+### 1. Atualizar modelo Gemini no neural-ops
+- Trocar `gemini-2.5-flash` para `gemini-2.5-flash-preview-09-2025` nas 3 constantes (linhas 449, 450, 1600)
+- Adicionar `thinkingConfig: { thinkingBudget: 0 }` no request body para DESATIVAR o reasoning do Gemini (o raciocínio é do pipeline Orion, não do Gemini)
+- Isso economiza tokens e faz o Gemini funcionar como perceptor puro
+
+### 2. Corrigir HF Vision Gate para funcionar sem connectivity check
+- Em `hf-connectivity.ts`: quando o fetch falha por CSP (preview), tratar como "disponível" em vez de "indisponível" — o download dos modelos HF é feito via `@huggingface/transformers` que usa CDN diferente do API endpoint
+- Alternativa: fazer `isHuggingFaceAvailable()` retornar `true` quando no domínio publicado e o erro for CSP-related
+
+### 3. Silenciar Firebase Storage CORS errors
+- Em `piperTTS.ts`: adicionar try/catch mais robusto no download do modelo ONNX, sem logar repetidamente o mesmo erro
+
+### 4. Desabilitar thinking budget no Gemini
+- No body do request a `generativelanguage.googleapis.com`, passar `generationConfig.thinking_config.thinking_budget_tokens = 0` (Gemini 2.5 Flash API)
+- Isso garante que o Gemini só faz percepção e voz, sem gastar tokens em raciocínio interno
+
+### 5. Redeploy do neural-ops
+- Após as mudanças, redeploy da edge function
+
+## Arquivos a modificar
+- `supabase/functions/neural-ops/index.ts` — modelo + thinking budget
+- `src/lib/neural/hf-connectivity.ts` — fallback para CSP blocks
+- `src/lib/tts/piperTTS.ts` — silenciar CORS errors repetidos
+
+## O que NÃO precisa ser mexido (código está correto)
+- `src/lib/voice/micArbiter.ts` — OK
+- `src/hooks/useNeuralVoice.ts` — OK  
+- `src/components/dashboard/neural/useWakeWord.ts` — OK
+- `src/components/dashboard/neural/NeuralVision.tsx` — OK
+- `src/components/dashboard/neural/EnergyOrb.tsx` — OK
+- `src/components/dashboard/neural/useOrionReasoning.ts` — OK
+
