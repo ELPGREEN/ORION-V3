@@ -185,10 +185,11 @@ export function GlobalOrionListener() {
       if (reason === "aborted") return Math.max(backoff, 5000);
       return Math.max(backoff, 3000);
     }
-    const backoff = Math.min(500 * Math.pow(2, attempts), 5000);
-    if (reason === "aborted") return Math.max(backoff, 1500);
-    if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 2000);
-    if (reason === "no-speech" || reason === "end") return Math.max(backoff, 500);
+    const backoff = Math.min(500 * Math.pow(2, attempts), 10000);
+    if (reason === "aborted") return Math.max(backoff, 3000);
+    if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 3000);
+    if (reason === "no-speech" || reason === "end") return Math.max(backoff, 200);
+    if (reason === "normal-end") return 150; // Fast restart for non-continuous mode
     return Math.max(backoff, 1000);
   }, [isMobile]);
 
