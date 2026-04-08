@@ -19,21 +19,24 @@ const PT_BR_VOICE = "pt_BR-faber-medium";
 
 // Firebase Storage path for custom model (optional override)
 let firebaseModelUrl: string | null = null;
+let firebaseModelChecked = false; // Only log once
 
 /**
  * Try to resolve model URL from Firebase Storage.
  * If the model is uploaded there, use it; otherwise fall back to default CDN.
+ * Silently handles CORS/network errors to avoid console spam.
  */
 async function resolveFirebaseModelUrl(): Promise<string | null> {
   if (firebaseModelUrl) return firebaseModelUrl;
+  if (firebaseModelChecked) return null; // Already tried and failed, don't retry
+  firebaseModelChecked = true;
   try {
     const modelRef = ref(firebaseStorage, `tts-models/${PT_BR_VOICE}.onnx`);
     firebaseModelUrl = await getDownloadURL(modelRef);
     console.log("[Piper TTS] Model URL resolved from Firebase Storage");
     return firebaseModelUrl;
   } catch {
-    // Model not uploaded to Firebase — will use default CDN
-    console.log("[Piper TTS] No Firebase model found, using default CDN");
+    // Model not uploaded to Firebase or CORS blocked — silently skip
     return null;
   }
 }
@@ -58,7 +61,7 @@ async function ensurePiper(): Promise<typeof import("@mintplex-labs/piper-tts-we
 
   piperLoading = true;
   try {
-    // Pre-resolve Firebase model URL in parallel with module load
+    // Pre-resolve Firebase model URL in parallel with module load (silent)
     resolveFirebaseModelUrl().catch(() => {});
     
     piperModule = await import("@mintplex-labs/piper-tts-web");

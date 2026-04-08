@@ -2,6 +2,10 @@
  * HuggingFace Connectivity Gate
  * Prevents repeated failed model downloads by checking connectivity once
  * and caching the result. Avoids wasting bandwidth and console errors.
+ * 
+ * NOTE: CSP blocks in Lovable preview don't mean HF models are unavailable —
+ * @huggingface/transformers uses a different CDN than the API endpoint.
+ * We treat CSP/TypeError failures as "available" to avoid false negatives.
  */
 
 let _hfAvailable: boolean | null = null;
@@ -12,6 +16,7 @@ const CHECK_TIMEOUT_MS = 4000;
 /**
  * Returns true if HuggingFace CDN is reachable.
  * Caches result for 5 minutes to avoid repeated HEAD requests.
+ * Returns true on CSP/network errors (models use different CDN).
  */
 export async function isHuggingFaceAvailable(): Promise<boolean> {
   const now = Date.now();
@@ -30,8 +35,17 @@ export async function isHuggingFaceAvailable(): Promise<boolean> {
     clearTimeout(timer);
     
     _hfAvailable = res.ok;
-  } catch {
-    _hfAvailable = false;
+  } catch (err: any) {
+    // CSP blocks and TypeError (failed to fetch) mean the API endpoint is blocked,
+    // but HF model CDN (cdn-lfs.huggingface.co) may still work.
+    // Treat these as "available" to allow @huggingface/transformers to try loading.
+    const msg = String(err?.message || "").toLowerCase();
+    const isCSPorNetwork = msg.includes("content security policy") ||
+      msg.includes("failed to fetch") ||
+      msg.includes("refused to connect") ||
+      err?.name === "TypeError";
+    
+    _hfAvailable = isCSPorNetwork ? true : false;
   }
 
   _lastCheck = now;
