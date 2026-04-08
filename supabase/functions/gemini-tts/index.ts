@@ -384,7 +384,10 @@ Deno.serve(async (req) => {
       if (vertex.response) {
         const data = await vertex.response.json();
         const audioResp = parseAudioResponse(data);
-        if (audioResp) return audioResp;
+        if (audioResp) {
+          audioResp.headers.set("X-TTS-Model", vertex.usedModel);
+          return audioResp;
+        }
         console.error("[Vertex TTS] No audio:", JSON.stringify(data).slice(0, 400));
       } else {
         console.warn("[Vertex TTS] Failed:", vertex.lastError.slice(0, 150));
@@ -397,7 +400,7 @@ Deno.serve(async (req) => {
     const keys = getAllGeminiKeys();
     if (keys.length > 0) {
       console.log(`[TTS] Fallback AI Studio (${keys.length} keys)`);
-      const { response, lastError, rateLimited } = await requestAIStudio(keys, studioVariants);
+      const { response, lastError, rateLimited, usedModel } = await requestAIStudio(keys, studioVariants);
 
       if (rateLimited && !response) {
         return fallbackResponse("Rate limited", { rate_limited: true, retry_after_ms: CLIENT_RETRY_AFTER_MS });
@@ -405,7 +408,10 @@ Deno.serve(async (req) => {
       if (response) {
         const data = await response.json();
         const audioResp = parseAudioResponse(data);
-        if (audioResp) return audioResp;
+        if (audioResp) {
+          audioResp.headers.set("X-TTS-Model", usedModel);
+          return audioResp;
+        }
       }
       return fallbackResponse("TTS unavailable", { details: lastError, retry_after_ms: 10000 });
     }
