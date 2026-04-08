@@ -20,8 +20,8 @@ export const NAV_MAP: Record<string, { path: string; label: string }> = {
   "faturas": { path: "/dashboard/pagamentos", label: "Pagamentos" },
   "financeiro": { path: "/dashboard/pagamentos", label: "Financeiro" },
   "timbre": { path: "/dashboard/configuracoes", label: "Timbre e Identidade" },
-  "meu plano": { path: "/dashboard/meu-plano", label: "Meu Plano" },
-  "plano": { path: "/dashboard/meu-plano", label: "Meu Plano" },
+  "meu plano": { path: "/dashboard/plano", label: "Meu Plano" },
+  "plano": { path: "/dashboard/plano", label: "Meu Plano" },
   "ajuda": { path: "/dashboard/instrucoes", label: "Central de Ajuda" },
   "instrucoes": { path: "/dashboard/instrucoes", label: "Central de Ajuda" },
   "instruções": { path: "/dashboard/instrucoes", label: "Central de Ajuda" },
@@ -72,8 +72,8 @@ export const NAV_MAP: Record<string, { path: string; label: string }> = {
   // ── INTELIGÊNCIA ARTIFICIAL ──
   "rede neural": { path: "/dashboard/rede-neural", label: "Rede Neural" },
   "neural": { path: "/dashboard/rede-neural", label: "Rede Neural" },
-  "metricas": { path: "/dashboard/metricas-ia", label: "Métricas IA" },
-  "métricas": { path: "/dashboard/metricas-ia", label: "Métricas IA" },
+  "metricas": { path: "/dashboard/rede-neural", label: "Métricas IA" },
+  "métricas": { path: "/dashboard/rede-neural", label: "Métricas IA" },
   "laboratorio": { path: "/dashboard/laboratorio-ia", label: "Laboratório IA" },
   "laboratório": { path: "/dashboard/laboratorio-ia", label: "Laboratório IA" },
   "laboratorio ia": { path: "/dashboard/laboratorio-ia", label: "Laboratório IA" },
@@ -82,7 +82,7 @@ export const NAV_MAP: Record<string, { path: string; label: string }> = {
   "gmail": { path: "/dashboard/ferramentas-google?tab=gmail", label: "Gmail" },
   "agenda": { path: "/dashboard/ferramentas-google?tab=calendar", label: "Agenda" },
   "calendar": { path: "/dashboard/ferramentas-google?tab=calendar", label: "Calendar" },
-  "bloom": { path: "/dashboard/bloom", label: "Bloom Network" },
+  "bloom": { path: "/dashboard/rede-neural", label: "Bloom Network" },
 
   // ── IOT & SMART HOME ──
   "controle robótico": { path: "/dashboard/controle-robotico", label: "Controle Robótico" },
@@ -100,9 +100,9 @@ export const NAV_MAP: Record<string, { path: string; label: string }> = {
   "fleet": { path: "/dashboard/controle-robotico", label: "Fleet Management" },
   "agv": { path: "/dashboard/controle-robotico", label: "AGVs / AMRs" },
   "amr": { path: "/dashboard/controle-robotico", label: "AGVs / AMRs" },
-  "qualidade": { path: "/dashboard/metricas-ia", label: "Qualidade & OEE" },
-  "oee": { path: "/dashboard/metricas-ia", label: "OEE" },
-  "spc": { path: "/dashboard/metricas-ia", label: "Controle Estatístico" },
+  "qualidade": { path: "/dashboard/rede-neural", label: "Qualidade & OEE" },
+  "oee": { path: "/dashboard/rede-neural", label: "OEE" },
+  "spc": { path: "/dashboard/rede-neural", label: "Controle Estatístico" },
   "manutenção": { path: "/dashboard/tarefas", label: "Manutenção" },
   "manutencao": { path: "/dashboard/tarefas", label: "Manutenção" },
   "estoque": { path: "/dashboard/marketplace", label: "Estoque" },
@@ -125,11 +125,11 @@ export const NAV_MAP: Record<string, { path: string; label: string }> = {
   "afiliados": { path: "/dashboard/afiliados", label: "Afiliados" },
 
   // ── EXTENSÃO ──
-  "extensão": { path: "/extension", label: "Extensão Chrome" },
-  "extensao": { path: "/extension", label: "Extensão Chrome" },
+  "extensão": { path: "/dashboard/extension", label: "Extensão Chrome" },
+  "extensao": { path: "/dashboard/extension", label: "Extensão Chrome" },
 
   // ── ADMIN ──
-  "webhooks": { path: "/dashboard/webhooks", label: "Webhooks" },
+  "webhooks": { path: "/dashboard/configuracoes", label: "Webhooks" },
   "usuarios": { path: "/dashboard/usuarios", label: "Usuários" },
   "usuários": { path: "/dashboard/usuarios", label: "Usuários" },
 
