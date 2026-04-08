@@ -1,10 +1,10 @@
 ---
 name: Free voice system
-description: Gemini TTS Algieba (GA model gemini-2.5-flash-tts) is the ONLY active voice for Orion.
+description: Gemini TTS Algieba (preview model gemini-2.5-flash-preview-tts) is the ONLY active voice for Orion.
 type: preference
 ---
 - PRIMARY & ONLY voice: Gemini TTS Algieba (via edge function gemini-tts)
-- Model: gemini-2.5-flash-tts (GA stable, NOT preview)
+- Model: gemini-2.5-flash-preview-tts (TTS GA não disponível ainda, manter preview)
 - Formant synth v23: SILENT — only absorbs voice patterns for future evolution, never speaks
 - No Piper, no SpeechSynthesis, no Google Translate TTS
 - Orion boot messages ("Iniciando sistema", "Sistema ativado") also use Gemini TTS
