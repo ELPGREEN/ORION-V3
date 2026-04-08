@@ -164,6 +164,16 @@ export interface ConsciousnessCycleSnapshot {
   coherenceTime: number;
   /** v4: Whether Tesla resonance ultra-fast-path is active */
   teslaResonanceActive: boolean;
+  /** v24: Quantum Metacognition — uncertainty score */
+  quantumUncertainty: number;
+  /** v24: Hallucination risk */
+  quantumHallucinationRisk: number;
+  /** v24: Risk level */
+  quantumRiskLevel: string;
+  /** v24: Active skills count */
+  quantumActiveSkills: number;
+  /** v24: Reflective CoT chain */
+  quantumReflectionChain: string[];
 }
 
 export interface ReasoningContext {
@@ -478,6 +488,11 @@ export function runConsciousnessBridge(
     resonanceIndex: resonanceMetrics.resonanceIndex,
     coherenceTime: resonanceMetrics.coherenceTime,
     teslaResonanceActive: resonanceMetrics.isSupercoherent,
+    quantumUncertainty: cycleResult.metacognition?.uncertaintyScore ?? 0,
+    quantumHallucinationRisk: cycleResult.metacognition?.hallucinationRisk ?? 0,
+    quantumRiskLevel: cycleResult.metacognition?.riskLevel ?? "safe",
+    quantumActiveSkills: cycleResult.metacognition?.activeSkills?.filter(s => s.active).length ?? 0,
+    quantumReflectionChain: cycleResult.metacognition?.reflectionChain ?? [],
   };
 
   _lastCycleResult = snapshot;
