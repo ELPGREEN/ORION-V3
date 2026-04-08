@@ -30,7 +30,6 @@ export interface GeminiLiveOptions {
 interface TokenResponse {
   mode: "ephemeral" | "direct";
   token?: string;
-  apiKey?: string;
   model: string;
   wsUrl: string;
   voice: string;
