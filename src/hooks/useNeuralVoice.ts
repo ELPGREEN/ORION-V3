@@ -442,7 +442,7 @@ export function useNeuralVoice(
     rec.interimResults = true;
     rec.maxAlternatives = 1;
     
-    rec.onstart = () => setListening(true);
+    rec.onstart = () => { consecutiveAbortsRef.current = 0; setListening(true); };
     
     rec.onresult = (e: any) => {
       const lastResult = e.results[e.results.length - 1];
@@ -546,7 +546,13 @@ export function useNeuralVoice(
       recRef.current = null;
       if (intentionalStopRef.current) return;
       if (e.error === "aborted") {
-        scheduleRecognitionRestart(120);
+        consecutiveAbortsRef.current++;
+        if (consecutiveAbortsRef.current >= MAX_CONSECUTIVE_ABORTS) {
+          console.warn("[Voice] Too many consecutive aborts — stopping restart loop");
+          setListening(false);
+          return;
+        }
+        scheduleRecognitionRestart(120 * Math.pow(2, consecutiveAbortsRef.current));
         return;
       }
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
