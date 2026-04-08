@@ -309,7 +309,7 @@ export function GlobalOrionListener() {
     setWakeWordActive(false);
   }, [clearRestartTimer, stopCommandCapture]);
 
-
+  const startWakeWordListener = useCallback(() => {
     const hidden = typeof document !== "undefined" && document.hidden;
     console.log("[GlobalOrion] startWakeWordListener called", { isOnNeuralPage, orionOpen, permissionsGranted, hidden, hasRef: !!wakeRecRef.current });
     if (hidden || isOnNeuralPage || orionOpen || !permissionsGranted || wakeRecRef.current || startInFlightRef.current) return;
