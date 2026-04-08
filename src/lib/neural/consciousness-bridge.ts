@@ -242,6 +242,10 @@ export interface ConsciousnessCycleSnapshot {
   hearingAcousticSentiment: number;
   hearingAudioQuality: number;
   hearingShouldRepeat: boolean;
+  /** v30: Real audio metrics from AudioWorklet */
+  hearingRawEnergy: number;
+  hearingSTTProvider: string;
+  hearingSTTLatencyMs: number;
   /** v29: Quantum Cognition */
   qcSuperpositionCardinality: number;
   qcCollapsed: boolean;
@@ -649,6 +653,9 @@ export function runConsciousnessBridge(
         hearingAcousticSentiment: hr?.prosody.acousticSentiment ?? 0,
         hearingAudioQuality: hr?.metaFilter.audioQuality ?? 0,
         hearingShouldRepeat: hr?.metaFilter.shouldRequestRepeat ?? false,
+        hearingRawEnergy: hr?.rawEnergy ?? -1,
+        hearingSTTProvider: hr?.sttProvider ?? "unknown",
+        hearingSTTLatencyMs: hr?.sttLatencyMs ?? -1,
       };
     })(),
     // v29: Quantum Cognition

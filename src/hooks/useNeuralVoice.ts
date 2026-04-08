@@ -605,8 +605,16 @@ export function useNeuralVoice(
         toast.error("Permissão do microfone bloqueada");
         return;
       }
-      if (e.error === "no-speech") {
-        scheduleRecognitionRestart(80);
+      // ═══ STT Fallback: On network/no-speech errors, try Groq→Browser Whisper ═══
+      if (e.error === "network" || e.error === "no-speech") {
+        // For no-speech, just restart normally
+        if (e.error === "no-speech") {
+          scheduleRecognitionRestart(80);
+          return;
+        }
+        // For network errors: attempt fallback STT with any buffered audio
+        console.warn("[Voice] Network error — STT fallback chain available via sttFallbackChain.ts");
+        scheduleRecognitionRestart(500);
         return;
       }
       scheduleRecognitionRestart(200);

@@ -108,17 +108,27 @@ export function processVoiceTranscript(
   durationMs: number = 3000,
   speechConfidence: number = 0.8,
   textSpikeTimes: number[] = [],
+  /** v30: Real audio energy from AudioWorklet (0-1), -1 if unavailable */
+  rawAudioEnergy: number = -1,
+  /** v30: STT provider that produced this transcript */
+  sttProvider: "web-speech" | "groq-whisper" | "browser-whisper" | "unknown" = "unknown",
+  /** v30: STT latency in ms */
+  sttLatencyMs: number = -1,
 ): AudioBridgeResult {
   const metrics = extractVocalMetrics(transcript, durationMs, speechConfidence);
   const audioFeatures = metricsToAudioFeatures(metrics);
 
-  // v29: Run metacognitive hearing analysis
+  // v30: Run metacognitive hearing with real audio data when available
   const hearingResult = processMetacognitiveHearing(
     transcript,
     speechConfidence,
     durationMs,
     metrics.energyLevel,
     false, // not ongoing (final transcript)
+    undefined,
+    rawAudioEnergy,
+    sttProvider,
+    sttLatencyMs,
   );
 
   // Split into chunks for the pipeline (simulate 300ms windows)

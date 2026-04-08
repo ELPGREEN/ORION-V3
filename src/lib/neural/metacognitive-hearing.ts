@@ -128,6 +128,12 @@ export interface MetacognitiveHearingResult {
   hearingHealth: number;
   /** Summary verdict for consciousness bridge */
   verdict: "clear" | "degraded" | "confused" | "interrupted";
+  /** v30: Real audio energy from AudioWorklet (0-1), -1 if not available */
+  rawEnergy: number;
+  /** v30: STT provider that produced this transcript */
+  sttProvider: "web-speech" | "groq-whisper" | "browser-whisper" | "unknown";
+  /** v30: STT latency in ms (-1 if not measured) */
+  sttLatencyMs: number;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -434,17 +440,26 @@ export function processMetacognitiveHearing(
   energyLevel: number = 0.5,
   isOngoing: boolean = false,
   speakerHint?: SpeakerIdentity,
+  /** v30: Real audio energy from AudioWorklet */
+  rawAudioEnergy: number = -1,
+  /** v30: STT provider */
+  sttProvider: MetacognitiveHearingResult["sttProvider"] = "unknown",
+  /** v30: STT latency */
+  sttLatencyMs: number = -1,
 ): MetacognitiveHearingResult {
   const now = Date.now();
+
+  // Use real audio energy when available, otherwise use text-proxy energy
+  const effectiveEnergy = rawAudioEnergy >= 0 ? rawAudioEnergy : energyLevel;
 
   // Layer 1: Primary Perception
   const perception = analyzePerception(transcript, confidence, durationMs, isOngoing);
 
-  // Layer 2: Prosody Monitoring
-  const prosody = analyzeProsody(transcript, perception.wordsPerMinute, energyLevel);
+  // Layer 2: Prosody Monitoring — use real energy when available
+  const prosody = analyzeProsody(transcript, perception.wordsPerMinute, effectiveEnergy);
 
   // Layer 3: Auditory Metacognitive Filter
-  const metaFilter = analyzeMetaFilter(transcript, confidence, energyLevel, speakerHint);
+  const metaFilter = analyzeMetaFilter(transcript, confidence, effectiveEnergy, speakerHint);
 
   // Layer 4: Reasoning Integration
   const reasoning = analyzeReasoningIntegration(transcript, isOngoing);
@@ -456,7 +471,7 @@ export function processMetacognitiveHearing(
     confidence,
     durationMs,
     prosodySignal: prosody.dominantSignal,
-    energyLevel,
+    energyLevel: effectiveEnergy,
     speakerIdentity: metaFilter.speakerIdentity,
   });
   const echoicMemory = reAnalyzeEchoicMemory(metaFilter.adjustedConfidence);
@@ -485,6 +500,9 @@ export function processMetacognitiveHearing(
     echoicMemory,
     hearingHealth,
     verdict,
+    rawEnergy: rawAudioEnergy,
+    sttProvider,
+    sttLatencyMs,
   };
 
   return _lastHearingResult;

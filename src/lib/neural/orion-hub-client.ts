@@ -174,7 +174,7 @@ async function callGradio<T>(
     }
 
     // GPU success tracking
-    const GPU_ENDPOINTS = ["gemma_chat", "vision_caption", "whisper_stt"];
+    const GPU_ENDPOINTS = ["vision_caption", "whisper_stt"];
     if (GPU_ENDPOINTS.includes(apiName)) {
       markGpuSuccess();
     }
@@ -242,9 +242,20 @@ export async function checkOrionHub(): Promise<OrionHubHealth> {
   }
 }
 
-// ─── TTS (JARVIS — CPU) ───
+// ─── TTS (JARVIS — CPU, may fail if Piper not installed) ───
+// NOTE: TTS on HF Space is unreliable (Piper install issues on CPU).
+// Primary TTS is Gemini TTS via edge function. This is a secondary option.
 
 export async function speakJarvis(text: string, speed = 1.0): Promise<TTSResult> {
+  // Check health first — don't attempt if Space TTS is known broken
+  try {
+    const health = await checkOrionHub();
+    const ttsStatus = health.endpoint_status?.tts ?? health.endpoint_status?.["tts"];
+    if (ttsStatus === "error" || health.status === "error") {
+      throw new Error("[OrionHub] TTS endpoint unavailable on Space");
+    }
+  } catch {}
+
   const result = await callGradio<unknown>("tts", { text, speed }, GPU_TIMEOUT);
 
   let audioBlob: Blob;
@@ -301,24 +312,19 @@ function int16ArrayToWavBlob(samples: Int16Array, sampleRate: number): Blob {
   return new Blob([buffer], { type: "audio/wav" });
 }
 
-// ─── LLM Chat (Gemma 4 GPU → graceful error) ───
+// ─── LLM Chat (Gemma 4 GPU — endpoint may not exist) ───
+// NOTE: /gemma_chat endpoint was removed from the Space.
+// This function is kept for API compatibility but returns a fallback message.
+// Use Gemini via edge functions for actual LLM chat.
 
 export async function llmChat(
   message: string,
-  systemPrompt = "Você é o ORION, assistente jurídico neural avançado. Responda em português.",
-  maxTokens = 1024,
-  temperature = 0.7,
+  _systemPrompt = "Você é o ORION, assistente jurídico neural avançado. Responda em português.",
+  _maxTokens = 1024,
+  _temperature = 0.7,
 ): Promise<string> {
-  return callGpuWithFallback<string>(
-    "gemma_chat",
-    { message, system_prompt: systemPrompt, max_tokens: maxTokens, temperature },
-    async () => {
-      console.warn("[OrionHub] LLM fallback: GPU unavailable");
-      return `[Modo CPU] Quota GPU ZeroGPU excedida. Gemma 4 temporariamente indisponível. ` +
-        `Tente em ${Math.ceil(getGpuQuotaState().cooldownRemainingMs / 60_000)} min.`;
-    },
-    GPU_TIMEOUT,
-  );
+  console.warn("[OrionHub] llmChat: /gemma_chat endpoint removed from Space. Use Gemini edge functions.");
+  return `[Orion] LLM via HF Space indisponível. Use Gemini API (edge function) para chat.`;
 }
 
 // ─── Vision Caption (BLIP GPU → OCR CPU fallback) ───
