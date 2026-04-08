@@ -57,7 +57,7 @@ export const VoiceState = {
 };
 
 // ═══ Unified Mic Arbiter — single global owner ═══
-import { claimMic, isMicOwner, registerMicRec, registerMicCleanup } from "@/lib/voice/micArbiter";
+import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
 
 export interface UseNeuralVoiceReturn {
   listening: boolean;

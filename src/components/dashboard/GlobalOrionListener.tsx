@@ -223,10 +223,10 @@ export function GlobalOrionListener() {
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (!SR) { openOrionOverlay(""); return; }
 
-    // ═══ FIX: Claim mic for command capture to avoid conflict with other STT instances ═══
+    stopCommandCapture();
+    // ═══ FIX: Claim mic AFTER stopping previous capture ═══
     micOwnerIdRef.current = claimMic("command");
 
-    stopCommandCapture();
     setConversationalStatus("listening");
     toast.success("🎯 Orion ativado!", { duration: 2000 });
 

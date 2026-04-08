@@ -166,11 +166,13 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
         console.log("[VoiceInput] No speech detected, ending session");
       }
 
+      releaseMic(micOwnerIdRef.current);
       setIsListening(false);
     };
 
     recognition.onend = () => {
       if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
+      releaseMic(micOwnerIdRef.current);
       setIsListening(false);
       
       // Only fire onEnd if stop was NOT intentional
