@@ -114,6 +114,8 @@ export function useWakeWord(
   }, []);
 
   const startWakeWordListener = useCallback(() => {
+    // Stale HMR instance guard
+    if (!isWakeOwner(wakeSingletonIdRef.current)) return;
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     const hidden = typeof document !== "undefined" && document.hidden;
     if (!speechOkRef.current || !SR || listeningRef.current || hidden) return;
