@@ -67,6 +67,7 @@ import {
 } from "./neural-telemetry-hub";
 
 import { computeProviderHealth, type ProviderHealth } from "./provider-health";
+import { getHearingSummaryForBridge, getLastHearingResult } from "./metacognitive-hearing";
 
 // ─── v3 Integrations: QHRL, Temporal Binding, Agent Planner ───
 
@@ -228,6 +229,19 @@ export interface ConsciousnessCycleSnapshot {
   userExpertiseEstimate: number;
   workingMemoryLoad: number;
   semanticActivation: number;
+  /** v29: Metacognitive Hearing */
+  hearingVerdict: string;
+  hearingConfidence: number;
+  hearingProsody: string;
+  hearingInterrupt: boolean;
+  hearingAnticipatedIntent: string;
+  hearingEchoicSnapshots: number;
+  hearingHealth: number;
+  hearingUrgency: number;
+  hearingStress: number;
+  hearingAcousticSentiment: number;
+  hearingAudioQuality: number;
+  hearingShouldRepeat: boolean;
 }
 
 export interface ReasoningContext {
@@ -602,6 +616,25 @@ export function runConsciousnessBridge(
     userExpertiseEstimate: cycleResult.metacognition?.infrastructure?.userExpertiseEstimate ?? 0.5,
     workingMemoryLoad: cycleResult.metacognition?.infrastructure?.workingMemoryLoad ?? 0,
     semanticActivation: cycleResult.metacognition?.infrastructure?.semanticActivation ?? 0.5,
+    // v29: Metacognitive Hearing
+    ...(() => {
+      const hs = getHearingSummaryForBridge();
+      const hr = getLastHearingResult();
+      return {
+        hearingVerdict: hs.verdict,
+        hearingConfidence: hs.confidence,
+        hearingProsody: hs.prosody,
+        hearingInterrupt: hs.interrupt,
+        hearingAnticipatedIntent: hs.anticipatedIntent,
+        hearingEchoicSnapshots: hs.echoicSnapshots,
+        hearingHealth: hr?.hearingHealth ?? 0,
+        hearingUrgency: hr?.prosody.urgencyLevel ?? 0,
+        hearingStress: hr?.prosody.stressLevel ?? 0,
+        hearingAcousticSentiment: hr?.prosody.acousticSentiment ?? 0,
+        hearingAudioQuality: hr?.metaFilter.audioQuality ?? 0,
+        hearingShouldRepeat: hr?.metaFilter.shouldRequestRepeat ?? false,
+      };
+    })(),
   };
 
   _lastCycleResult = snapshot;
