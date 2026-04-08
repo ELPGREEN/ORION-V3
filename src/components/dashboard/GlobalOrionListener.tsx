@@ -514,9 +514,8 @@ export function GlobalOrionListener() {
           return;
         }
 
-        // "aborted" errors on short sessions are usually Chrome killing the recognition
-        // Don't count "no-speech" as a real error — it just means silence
-        const isHarmless = e.error === "no-speech" || (e.error === "aborted" && sessionDuration < 2000);
+        // "aborted" and "no-speech" are normal in non-continuous mode — never count them
+        const isHarmless = e.error === "no-speech" || e.error === "aborted";
 
         const willRestart = wakeWordEnabledRef.current && !orionOpen && !isOnNeuralPage && permissionsGranted && !cooldownRef.current && !(typeof document !== "undefined" && document.hidden);
         if (!willRestart) {
@@ -524,6 +523,7 @@ export function GlobalOrionListener() {
           return;
         }
 
+        // Only count genuine errors (network, audio-capture) toward restart limit
         if (!isHarmless) {
           restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
         }
