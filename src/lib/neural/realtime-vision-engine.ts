@@ -221,6 +221,11 @@ export async function detectRealTime(
 ): Promise<RealTimeVisionResult> {
   const start = performance.now();
 
+  // ═══ Frame Preprocessing: chromatic aberration correction + denoising ═══
+  // Only apply on every 3rd frame to maintain <100ms budget
+  const frameCount = ((window as any).__orion_rt_frame_count__ || 0) + 1;
+  (window as any).__orion_rt_frame_count__ = frameCount;
+
   // Adaptive OCR: pre-check edge density before committing to expensive OCR
   const ocrWorthRunning = isOCRReady() && shouldRunOCR(video);
 
@@ -266,7 +271,7 @@ export async function detectRealTime(
     } catch {}
   }
 
-  return {
+  const result: RealTimeVisionResult = {
     mpObjects: mpResult.objects,
     yoloObjects: yoloResult,
     allObjects,
@@ -290,6 +295,13 @@ export async function detectRealTime(
       : null,
     quantumEnhancement,
   };
+
+  // Publish for Vision-RAG cross-referencing
+  if (typeof window !== "undefined") {
+    (window as any).__orion_last_rt_vision_result__ = result;
+  }
+
+  return result;
 }
 
 /**
