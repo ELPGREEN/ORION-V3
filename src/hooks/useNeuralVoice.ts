@@ -375,7 +375,7 @@ export function useNeuralVoice(
    * ═══ TTS — Gemini TTS (Algieba) — Única voz ativa ═══
    * Orion TTS desativado. Apenas Gemini Algieba funciona.
    */
-  const speak = useCallback(async (text: string) => {
+  const speak = useCallback(async (text: string, options?: { skipMicToggle?: boolean }) => {
     if (!ttsRef.current || typeof window === "undefined") return;
     
     try { speechSynthesis.cancel(); } catch {}
@@ -391,7 +391,10 @@ export function useNeuralVoice(
     speechBufferRef.current = "";
     if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
     clearRestartTimer();
-    try { recRef.current?.stop(); } catch {}
+    // Only stop mic if not managed externally (queue handles its own mic lifecycle)
+    if (!options?.skipMicToggle) {
+      try { recRef.current?.stop(); } catch {}
+    }
 
     const cascadeAbort = new AbortController();
     abortControllerRef.current = cascadeAbort;
@@ -404,7 +407,7 @@ export function useNeuralVoice(
         cascadeAbort.abort();
         speakingRef.current = false;
         updateAiResponding(false);
-        resumeSTT();
+        if (!options?.skipMicToggle) resumeSTT();
       }
     }, safetyMs);
 
@@ -457,7 +460,8 @@ export function useNeuralVoice(
     speakingRef.current = false;
     markTTSEnd(); // v31: TTS pipeline latency
     updateAiResponding(false);
-    resumeSTT();
+    // Only resume mic if not managed externally
+    if (!options?.skipMicToggle) resumeSTT();
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
 
   /** speakFast: delegates to speak (no robotic SpeechSynthesis) */
