@@ -215,6 +215,8 @@ export function useNeuralVoice(
 
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
     clearRestartTimer();
+    // Stale HMR instance guard
+    if (!isActiveOwner(singletonIdRef.current)) { setListening(false); return; }
     if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
       setListening(false);
       return;
