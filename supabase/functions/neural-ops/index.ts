@@ -1878,6 +1878,19 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
 
     // ── Last resort: non-streaming wrapped as SSE ──
     console.warn(`[Orion] All streaming providers failed. Attempted: [${attemptedProviders.join(" → ")}]. Falling back to non-streaming.`);
+    
+    // If we had an image, inject vision-context notice so text-only fallbacks don't deny vision capability
+    if (hasImage) {
+      const sysMsg = messages.find((m: any) => m.role === "system");
+      if (sysMsg) {
+        sysMsg.content = (typeof sysMsg.content === "string" ? sysMsg.content : "") + 
+          "\n\n[AVISO INTERNO: A imagem da câmera foi capturada mas o provedor de visão (Gemini) está temporariamente indisponível. " +
+          "Use os dados dos sensores ML locais (YOLO/MediaPipe) disponíveis no contexto para descrever o que foi detectado. " +
+          "NÃO diga que você não tem capacidade de visão — você tem, mas o feed está temporariamente indisponível. " +
+          "Descreva o que os sensores locais detectaram.]";
+      }
+    }
+    
     let fallbackText = "";
     try { fallbackText = await callHuggingFaceFallback(messages); } catch {
       try { fallbackText = await callGroqFallback(messages); } catch {
