@@ -117,6 +117,21 @@ interface ConsciousnessState {
   riskLevel: "safe" | "caution" | "warning" | "critical";
   activeSkillsList: Array<{ name: string; category: string; contribution: number; active: boolean }>;
   reflectionChain: string[];
+  // v25: Bridge metrics
+  bridgeSnapshot: {
+    gammaHealth: number;
+    gammaSubBand: string;
+    gammaCTC: number;
+    thetaGammaMI: number;
+    resonanceIndex: number;
+    coherenceTime: number;
+    teslaResonanceActive: boolean;
+    qhrlAdvantage: number;
+    taskComplexity: string;
+    temporalSynchrony: number;
+    interoception: { valence: number; arousal: number; painIndex: number; energyLevel: number; dominantSignal: string } | null;
+    anomalySeverity: string | null;
+  } | null;
 }
 
 // ─── Rome timezone helpers ───
