@@ -897,15 +897,8 @@ export function NeuralConsciousnessLoop() {
         </Card>
       </div>
 
-      {/* IoT & BLE Awareness — moved to its own row */}
-      <Card className="border-border">
-                <span className="text-foreground/80 font-medium">Metacognição:</span> {state.metacognitionRecommendation}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* IoT & BLE Awareness */}
+      {/* IoT & BLE Awareness */}
+      <div className="grid grid-cols-1 gap-4">
         <Card className="border-border">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
