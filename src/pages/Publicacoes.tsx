@@ -292,8 +292,12 @@ export default function Publicacoes() {
                   <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-primary/40" />
                   <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-primary/40" />
                   <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
                     controls
-                    preload="metadata"
+                    preload="auto"
                     poster="/og-images/og-publicacoes.jpg"
                     className="w-full aspect-video"
                     style={{ background: "hsl(var(--background))" }}
