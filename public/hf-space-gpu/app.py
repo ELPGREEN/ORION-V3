@@ -42,18 +42,8 @@ _models = {}
 
 
 def get_tts():
-    """Load Piper TTS with Jarvis voice (ONNX CPU)"""
-    if "tts" not in _models:
-        try:
-            from piper import PiperVoice
-            from huggingface_hub import hf_hub_download
-            model_path = hf_hub_download("jgkawell/jarvis", "en/en_GB/jarvis/medium/jarvis-medium.onnx")
-            config_path = hf_hub_download("jgkawell/jarvis", "en/en_GB/jarvis/medium/jarvis-medium.onnx.json")
-            _models["tts"] = PiperVoice.load(model_path, config_path)
-        except Exception as e:
-            print(f"[TTS] Failed to load Piper: {e}")
-            raise
-    return _models["tts"]
+    """edge-tts is async, no model loading needed"""
+    return None
 
 
 def get_embedder():
@@ -82,25 +72,39 @@ def _check_gpu():
 
 
 # ============================================================
-# TTS — JARVIS Voice (CPU, no GPU needed)
+# TTS — Edge TTS (Microsoft, free, no API key, CPU)
 # ============================================================
 
 def tts_speak(text: str, speed: float = 1.0) -> tuple:
     if not text or not text.strip():
-        return (22050, np.zeros(1, dtype=np.int16))
+        return (24000, np.zeros(1, dtype=np.int16))
     try:
-        voice = get_tts()
-        audio_buffer = io.BytesIO()
-        with wave.open(audio_buffer, "wb") as wav:
-            wav.setnchannels(1)
-            wav.setsampwidth(2)
-            wav.setframerate(22050)
-            voice.synthesize(text.strip(), wav, length_scale=1.0 / max(speed, 0.5))
-        audio_buffer.seek(0)
-        with wave.open(audio_buffer, "rb") as wav:
-            frames = wav.readframes(wav.getnframes())
-            audio_array = np.frombuffer(frames, dtype=np.int16)
-        return (22050, audio_array)
+        import edge_tts
+        import asyncio
+        import tempfile
+
+        voice = "en-GB-RyanNeural"  # Deep male voice (JARVIS-like)
+        rate_str = f"+{int((speed - 1) * 100)}%" if speed >= 1 else f"{int((speed - 1) * 100)}%"
+
+        async def _generate():
+            comm = edge_tts.Communicate(text.strip(), voice, rate=rate_str)
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+                tmp_path = tmp.name
+            await comm.save(tmp_path)
+            return tmp_path
+
+        loop = asyncio.new_event_loop()
+        tmp_path = loop.run_until_complete(_generate())
+        loop.close()
+
+        # Convert MP3 to WAV numpy array
+        from pydub import AudioSegment
+        audio_seg = AudioSegment.from_mp3(tmp_path)
+        audio_seg = audio_seg.set_channels(1).set_frame_rate(24000).set_sample_width(2)
+        audio_array = np.frombuffer(audio_seg.raw_data, dtype=np.int16)
+
+        os.unlink(tmp_path)
+        return (24000, audio_array)
     except Exception as e:
         print(f"[TTS] Error: {traceback.format_exc()}")
         raise gr.Error(f"TTS failed: {str(e)}")
