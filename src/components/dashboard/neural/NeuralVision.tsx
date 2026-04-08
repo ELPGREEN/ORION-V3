@@ -341,6 +341,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     startWakeWordListener();
   }, [enableWakeWord, skipWakeWord, startDirectVoiceCapture, startWakeWordListener]);
 
+  const autoActivatedRef = useRef(false);
+  const autoBootedRef = useRef(false);
+
   // Auto-start wake word on mount (ONLY if not auto-booting)
   useEffect(() => {
     if (skipWakeWord) return;
@@ -363,9 +366,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }
     return () => { try { wakeRecRef.current?.stop(); } catch {} };
   }, [skipWakeWord, active, listening, speechOk, enableWakeWord, startWakeWordListener, wakeRecRef, initialCommand, location.state]);
-
-  const autoActivatedRef = useRef(false);
-  const autoBootedRef = useRef(false);
 
   // Auto-connect mic (NOT camera) when entering Orion after permissions were granted
   useEffect(() => {
