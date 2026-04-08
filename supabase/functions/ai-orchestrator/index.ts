@@ -256,9 +256,7 @@ async function generateEmbeddingHF(text: string): Promise<number[]> {
 
 // Generate query embedding using Gemini gemini-embedding-001 (768d, free) + HF fallback
 async function generateQueryEmbedding(text: string): Promise<number[]> {
-  const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter(Boolean) as string[];
+  const geminiKeys = _getGeminiKeys();
 
   for (const apiKey of geminiKeys) {
     try {
