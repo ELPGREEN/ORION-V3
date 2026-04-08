@@ -766,6 +766,7 @@ REGRAS ABSOLUTAS:
       console.warn(`Gemini key failed for ${context}:`, e);
       continue;
     }
+  }
 
   throw new Error("No LLM provider available");
 }
