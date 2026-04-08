@@ -1,7 +1,7 @@
 /**
  * Unified Microphone Arbiter — single global owner for all SpeechRecognition.
  * Prevents duplicate instances from HMR, wake word vs STT conflicts, etc.
- * 
+ *
  * Modes: idle | wake | command
  * Only ONE recognition instance can exist at a time.
  */
@@ -30,6 +30,7 @@ export function claimMic(mode: MicMode = "idle"): number {
   const s = getState();
   // Run previous cleanup
   if (s.cleanup) { try { s.cleanup(); } catch {} }
+  s.cleanup = null;
   // Kill existing recognition
   try { s.rec?.abort?.(); } catch {}
   try { s.rec?.stop?.(); } catch {}
@@ -37,6 +38,19 @@ export function claimMic(mode: MicMode = "idle"): number {
   s.mode = mode;
   s.ownerId++;
   return s.ownerId;
+}
+
+/** Release mic ONLY if this owner is still current */
+export function releaseMic(ownerId: number, nextMode: MicMode = "idle"): boolean {
+  const s = getState();
+  if (s.ownerId !== ownerId) return false;
+  if (s.cleanup) { try { s.cleanup(); } catch {} }
+  s.cleanup = null;
+  try { s.rec?.abort?.(); } catch {}
+  try { s.rec?.stop?.(); } catch {}
+  s.rec = null;
+  s.mode = nextMode;
+  return true;
 }
 
 /** Check if given ID is still the active owner */
@@ -51,7 +65,7 @@ export function registerMicRec(rec: any, mode: MicMode) {
   s.mode = mode;
 }
 
-/** Register cleanup function for this mount cycle */
+/** Register cleanup function for the ACTIVE owner */
 export function registerMicCleanup(fn: () => void) {
   getState().cleanup = fn;
 }
@@ -69,6 +83,8 @@ export function setMicMode(mode: MicMode) {
 /** Force-kill any active recognition (e.g., before TTS) */
 export function killMicRec() {
   const s = getState();
+  if (s.cleanup) { try { s.cleanup(); } catch {} }
+  s.cleanup = null;
   try { s.rec?.abort?.(); } catch {}
   try { s.rec?.stop?.(); } catch {}
   s.rec = null;
