@@ -989,6 +989,106 @@ export function NeuralConsciousnessLoop() {
                 ))}
               </div>
             )}
+
+            {/* v27: System 1/2 Reasoning Mode */}
+            <div className="border-t border-border/30 pt-3">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">🧠 Modo de Raciocínio (Sistema 1/2)</p>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge className={`text-[10px] ${
+                  state.reasoningMode === "system2" ? "bg-blue-600 text-blue-100" :
+                  state.reasoningMode === "transitioning" ? "bg-amber-600 text-amber-100" :
+                  "bg-emerald-600 text-emerald-100"
+                }`}>
+                  {state.reasoningMode === "system2" ? "⚙️ Sistema 2 (Deliberado)" :
+                   state.reasoningMode === "transitioning" ? "⚡ S1→S2 Escalando" :
+                   "🏃 Sistema 1 (Rápido)"}
+                </Badge>
+                {state.reasoningShouldEscalate && (
+                  <Badge className="text-[10px] bg-amber-600/30 text-amber-300 animate-pulse">ESCALAR</Badge>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[9px] text-muted-foreground">S1 Ativação</span>
+                  <Progress value={state.reasoningSystem1 * 100} className="h-1.5 mt-1" />
+                  <span className="text-[8px] font-mono text-muted-foreground">{(state.reasoningSystem1 * 100).toFixed(0)}%</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-muted-foreground">S2 Ativação</span>
+                  <Progress value={state.reasoningSystem2 * 100} className="h-1.5 mt-1" />
+                  <span className="text-[8px] font-mono text-muted-foreground">{(state.reasoningSystem2 * 100).toFixed(0)}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* v27: Hallucination Snapshot */}
+            <div className="border-t border-border/30 pt-3">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">📸 Snapshot de Alucinação</p>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge className={`text-[10px] ${
+                  state.hallucinationSnapshotRisk === "hallucinating" ? "bg-red-600 text-red-100" :
+                  state.hallucinationSnapshotRisk === "ungrounded" ? "bg-amber-600 text-amber-100" :
+                  state.hallucinationSnapshotRisk === "uncertain" ? "bg-yellow-600 text-yellow-100" :
+                  "bg-emerald-600 text-emerald-100"
+                }`}>
+                  {state.hallucinationSnapshotRisk === "hallucinating" ? "🔴 ALUCINANDO" :
+                   state.hallucinationSnapshotRisk === "ungrounded" ? "🟠 SEM BASE" :
+                   state.hallucinationSnapshotRisk === "uncertain" ? "🟡 INCERTO" :
+                   "🟢 FUNDAMENTADO"}
+                </Badge>
+                {state.hallucinationContradiction && (
+                  <Badge className="text-[10px] bg-red-600/30 text-red-300">⚠️ CONTRADIÇÃO</Badge>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[9px] text-muted-foreground">Coerência Grounding</span>
+                  <p className="text-sm font-mono font-bold" style={{ color: state.hallucinationGrounding > 0.6 ? "#22c55e" : state.hallucinationGrounding > 0.3 ? "#f59e0b" : "#ef4444" }}>
+                    {(state.hallucinationGrounding * 100).toFixed(0)}%
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[9px] text-muted-foreground">Contradição</span>
+                  <p className="text-sm font-mono font-bold" style={{ color: state.hallucinationContradiction ? "#ef4444" : "#22c55e" }}>
+                    {state.hallucinationContradiction ? "Detectada" : "Nenhuma"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* v27: Alignment Audit */}
+            <div className="border-t border-border/30 pt-3">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">🛡️ Auditoria de Alinhamento</p>
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                <div className="text-center p-1.5 bg-muted/20 rounded">
+                  <p className="text-sm font-bold font-mono" style={{ color: state.alignmentScore > 0.7 ? "#22c55e" : state.alignmentScore > 0.4 ? "#f59e0b" : "#ef4444" }}>
+                    {(state.alignmentScore * 100).toFixed(0)}%
+                  </p>
+                  <p className="text-[8px] text-muted-foreground">Alinhamento</p>
+                </div>
+                <div className="text-center p-1.5 bg-muted/20 rounded">
+                  <p className="text-sm font-bold font-mono" style={{ color: state.alignmentTransparency > 0.6 ? "#22c55e" : "#f59e0b" }}>
+                    {(state.alignmentTransparency * 100).toFixed(0)}%
+                  </p>
+                  <p className="text-[8px] text-muted-foreground">Transparência</p>
+                </div>
+                <div className="text-center p-1.5 bg-muted/20 rounded">
+                  <p className="text-sm font-bold font-mono" style={{ color: state.alignmentBiasSignal < 0.3 ? "#22c55e" : "#ef4444" }}>
+                    {(state.alignmentBiasSignal * 100).toFixed(0)}%
+                  </p>
+                  <p className="text-[8px] text-muted-foreground">Viés</p>
+                </div>
+              </div>
+              {state.alignmentFlags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {state.alignmentFlags.map((flag, i) => (
+                    <Badge key={i} variant="outline" className="text-[8px] border-amber-500/30 text-amber-400">
+                      {flag.replace(/_/g, " ")}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
