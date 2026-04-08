@@ -548,6 +548,8 @@ export function runMetacognition(
     regulation: quantumMeta?.regulation,
     retrospective: quantumMeta?.retrospective,
     infrastructure: quantumMeta?.infrastructure,
+    // v29: Quantum Cognition
+    quantumCognition: quantumMeta?.quantumCognition,
   };
 }
 
