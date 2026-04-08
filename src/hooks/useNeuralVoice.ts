@@ -184,7 +184,8 @@ export function useNeuralVoice(
   }, [clearRestartTimer]);
 
   const resumeSTT = useCallback(() => {
-    if (listeningRef.current && onCmdRef.current && !intentionalStopRef.current) {
+    // Always try to restart if we have a command handler, even if listeningRef drifted
+    if (onCmdRef.current && !intentionalStopRef.current) {
       if (speechBufferRef.current.trim() && onCmdRef.current) {
         const pending = speechBufferRef.current.trim();
         speechBufferRef.current = "";
