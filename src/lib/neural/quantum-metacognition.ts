@@ -31,7 +31,7 @@ import type { SelfModelState, ConsciousState, MetacognitionResult } from "./glob
 export interface SkillAbstraction {
   name: string;
   category: "reasoning" | "perception" | "memory" | "planning" | "communication" | "self_regulation";
-  contribution: number; // 0-1
+  contribution: number;
   active: boolean;
   description: string;
 }
@@ -47,6 +47,56 @@ export interface AdaptivePlanAction {
   type: "increase_caution" | "boost_exploration" | "narrow_focus" | "expand_modalities" | "recalibrate" | "deepen_reasoning" | "switch_strategy" | "maintain";
   score: number;
   rationale: string;
+}
+
+/** v27: System 1/2 reasoning mode detection */
+export type ReasoningMode = "system1" | "system2" | "transitioning";
+
+export interface ReasoningModeState {
+  /** Current reasoning mode */
+  mode: ReasoningMode;
+  /** System 1 activation (0-1): fast, intuitive, pattern-matching */
+  system1Activation: number;
+  /** System 2 activation (0-1): slow, deliberate, analytical */
+  system2Activation: number;
+  /** Should switch to System 2? (detected need for deliberation) */
+  shouldEscalate: boolean;
+  /** Reason for current mode */
+  rationale: string;
+}
+
+/** v27: Hallucination snapshot — cognitive state capture at decision point */
+export interface HallucinationSnapshot {
+  /** Timestamp of snapshot */
+  timestamp: number;
+  /** Confidence at decision point */
+  confidenceAtDecision: number;
+  /** Entropy at decision point */
+  entropyAtDecision: number;
+  /** Contradiction detected between agents? */
+  contradictionDetected: boolean;
+  /** Number of supporting memories */
+  groundingMemories: number;
+  /** Coherence between output probability and grounding */
+  groundingCoherence: number;
+  /** Risk classification at this point */
+  snapshotRisk: "grounded" | "uncertain" | "ungrounded" | "hallucinating";
+}
+
+/** v27: Alignment audit trail */
+export interface AlignmentAudit {
+  /** Overall alignment score (0=misaligned, 1=perfectly aligned) */
+  alignmentScore: number;
+  /** Goal congruence: are sub-goals aligned with stated objective? */
+  goalCongruence: number;
+  /** Value consistency: is reasoning consistent with safety constraints? */
+  valueConsistency: number;
+  /** Transparency: can the reasoning be explained? (opacity = risk) */
+  transparencyScore: number;
+  /** Bias detection score (0=no detected bias, 1=strong bias signal) */
+  biasSignal: number;
+  /** Audit flags */
+  flags: string[];
 }
 
 export interface QuantumMetacognitionResult {
@@ -68,6 +118,12 @@ export interface QuantumMetacognitionResult {
   quantumMetrics: WaveFunctionMetrics;
   /** Risk level classification */
   riskLevel: "safe" | "caution" | "warning" | "critical";
+  /** v27: System 1/2 reasoning mode */
+  reasoningMode: ReasoningModeState;
+  /** v27: Hallucination snapshot at decision point */
+  hallucinationSnapshot: HallucinationSnapshot;
+  /** v27: Alignment audit */
+  alignmentAudit: AlignmentAudit;
 }
 
 // ═══ Calibration History (ring buffer) ═══
