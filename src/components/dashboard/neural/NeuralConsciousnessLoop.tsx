@@ -130,7 +130,14 @@ interface ConsciousnessState {
     qhrlAdvantage: number;
     taskComplexity: string;
     temporalSynchrony: number;
-    interoception: { valence: number; arousal: number; painIndex: number; energyLevel: number; dominantSignal: string } | null;
+    interoception: {
+      valence: number; arousal: number; painIndex: number; energyLevel: number; dominantSignal: string;
+      robotic: {
+        proprioceptionError: number; hardwareIntegrity: number; biofeedbackQuality: number;
+        iaaPredictiveRisk: number; mechanicalWear: number; equilibriumConfidence: number;
+        activeInternalSensors: number; thermalMap: Record<string, number>;
+      };
+    } | null;
     anomalySeverity: string | null;
   } | null;
 }
