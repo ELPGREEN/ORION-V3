@@ -132,11 +132,11 @@ export function useNeuralVoice(
     }
   }, []);
 
-  // ═══ Singleton claim: kill ALL previous HMR instances ═══
+  // ═══ Unified arbiter claim: kill ALL previous HMR instances ═══
   useEffect(() => {
-    const myId = claimVoiceSingleton();
+    const myId = claimMic("idle");
     singletonIdRef.current = myId;
-    console.log("[Voice] Singleton claimed, id:", myId);
+    console.log("[Voice] Mic arbiter claimed, id:", myId);
 
     const cleanup = () => {
       voiceActiveRef.current = false;
@@ -146,7 +146,7 @@ export function useNeuralVoice(
       recRef.current = null;
       clearRestartTimer();
     };
-    registerGlobalCleanup(cleanup);
+    registerMicCleanup(cleanup);
 
     initVoicePicker();
     const voice = getOrionVoice();
@@ -169,7 +169,7 @@ export function useNeuralVoice(
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
     clearRestartTimer();
     // Stale HMR instance guard
-    if (!isActiveOwner(singletonIdRef.current)) { setListening(false); return; }
+    if (!isMicOwner(singletonIdRef.current)) { setListening(false); return; }
     if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
       setListening(false);
       return;

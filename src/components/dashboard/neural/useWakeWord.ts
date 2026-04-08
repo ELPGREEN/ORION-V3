@@ -39,9 +39,9 @@ export function useWakeWord(
   const backgroundTranscriptsRef = useRef<BackgroundTranscript[]>([]);
   const speakerCounterRef = useRef(0);
 
-  // Claim wake singleton on mount — kills any previous HMR instance
+  // Claim mic arbiter on mount — kills any previous HMR instance
   useEffect(() => {
-    wakeSingletonIdRef.current = claimWakeSingleton();
+    wakeSingletonIdRef.current = claimMic("wake");
     return () => {
       try { wakeRecRef.current?.abort?.(); } catch {}
       try { wakeRecRef.current?.stop?.(); } catch {}
