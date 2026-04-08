@@ -1387,8 +1387,7 @@ export function useOrionReasoning(
         if (isSpeakingQueue || localQueue.length === 0) return;
         isSpeakingQueue = true;
 
-        // Stop mic ONCE at queue start — not per-sentence
-        try { stop(); } catch {}
+        // Mic already stopped by previous speak() or AI flow — no toggle here
 
         try {
           while (localQueue.length > 0 && !bargedInRef.current) {
