@@ -482,6 +482,16 @@ export function runConsciousnessBridge(
 
   _lastCycleResult = snapshot;
 
+  // Publish to global for EnergyOrb awareness sync
+  if (typeof window !== "undefined") {
+    (window as any).__orion_consciousness_snapshot__ = {
+      phi: snapshot.phi,
+      globalPLV: snapshot.globalPLV,
+      consciousnessLevel: snapshot.consciousnessLevel,
+      gammaHealth: snapshot.gammaHealth,
+      timestamp: snapshot.timestamp,
+    };
+  }
   console.log(
     `🌐 [Consciousness] Level=${snapshot.consciousnessLevel} Φ=${snapshot.phi.toFixed(3)} ` +
      `PLV=${snapshot.globalPLV.toFixed(3)} γ-CTC=${snapshot.gammaCTC.toFixed(3)} ` +
