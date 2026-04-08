@@ -16,6 +16,7 @@ import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/
 import { speakWithEvolvedVoice } from "@/lib/neural/orion-voice-evolution";
 import { fallbackTranscribe, chunksToWavBlob, getSTTFallbackState } from "@/lib/voice/sttFallbackChain";
 import { getAudioWorkletManager } from "@/lib/voice/audioWorkletManager";
+import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural/pipeline-latency-tracker";
 
 // ═══ Text Cleaning for Natural Speech ═══
 
