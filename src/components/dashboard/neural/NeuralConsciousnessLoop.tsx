@@ -130,7 +130,14 @@ interface ConsciousnessState {
     qhrlAdvantage: number;
     taskComplexity: string;
     temporalSynchrony: number;
-    interoception: { valence: number; arousal: number; painIndex: number; energyLevel: number; dominantSignal: string } | null;
+    interoception: {
+      valence: number; arousal: number; painIndex: number; energyLevel: number; dominantSignal: string;
+      robotic: {
+        proprioceptionError: number; hardwareIntegrity: number; biofeedbackQuality: number;
+        iaaPredictiveRisk: number; mechanicalWear: number; equilibriumConfidence: number;
+        activeInternalSensors: number; thermalMap: Record<string, number>;
+      };
+    } | null;
     anomalySeverity: string | null;
   } | null;
 }
@@ -661,6 +668,11 @@ export function NeuralConsciousnessLoop() {
             painIndex: snap.interoception.painIndex,
             energyLevel: snap.interoception.energyLevel,
             dominantSignal: snap.interoception.dominantSignal,
+            robotic: snap.interoception.robotic ?? {
+              proprioceptionError: 0, hardwareIntegrity: 1, biofeedbackQuality: 1,
+              iaaPredictiveRisk: 0, mechanicalWear: 0, equilibriumConfidence: 1,
+              activeInternalSensors: 4, thermalMap: {},
+            },
           } : null,
           anomalySeverity: snap.anomalySeverity,
         };
@@ -1133,37 +1145,108 @@ export function NeuralConsciousnessLoop() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Heart className="h-4 w-4 text-rose-400" />
-                Interocepção (Body-Sense)
+                Interocepção (Body-Sense + Robótica)
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-3">
               {state.bridgeSnapshot.interoception ? (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[9px] text-muted-foreground">Valência</span>
-                    <p className="text-sm font-mono font-bold">{state.bridgeSnapshot.interoception.valence.toFixed(2)}</p>
+                <>
+                  {/* Classic interoception */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[9px] text-muted-foreground">Valência</span>
+                      <p className="text-sm font-mono font-bold">{state.bridgeSnapshot.interoception.valence.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-muted-foreground">Arousal</span>
+                      <p className="text-sm font-mono font-bold">{state.bridgeSnapshot.interoception.arousal.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-muted-foreground">Dor</span>
+                      <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.painIndex > 0.5 ? "#ef4444" : "#22c55e" }}>
+                        {(state.bridgeSnapshot.interoception.painIndex * 100).toFixed(0)}%
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-muted-foreground">Energia</span>
+                      <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.energyLevel > 0.5 ? "#22c55e" : "#f59e0b" }}>
+                        {(state.bridgeSnapshot.interoception.energyLevel * 100).toFixed(0)}%
+                      </p>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-[9px] text-muted-foreground">Sinal Dominante</span>
+                      <p className="text-sm font-mono font-bold capitalize">{state.bridgeSnapshot.interoception.dominantSignal}</p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[9px] text-muted-foreground">Arousal</span>
-                    <p className="text-sm font-mono font-bold">{state.bridgeSnapshot.interoception.arousal.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <span className="text-[9px] text-muted-foreground">Dor</span>
-                    <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.painIndex > 0.5 ? "#ef4444" : "#22c55e" }}>
-                      {(state.bridgeSnapshot.interoception.painIndex * 100).toFixed(0)}%
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-[9px] text-muted-foreground">Energia</span>
-                    <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.energyLevel > 0.5 ? "#22c55e" : "#f59e0b" }}>
-                      {(state.bridgeSnapshot.interoception.energyLevel * 100).toFixed(0)}%
-                    </p>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-[9px] text-muted-foreground">Sinal Dominante</span>
-                    <p className="text-sm font-mono font-bold capitalize">{state.bridgeSnapshot.interoception.dominantSignal}</p>
-                  </div>
-                </div>
+
+                  {/* v26: Robotic Interoception */}
+                  {state.bridgeSnapshot.interoception.robotic && (
+                    <>
+                      <div className="border-t border-border/30 pt-2">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">🤖 Interocepção Robótica</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-[9px] text-muted-foreground">Propriocepção Visual</span>
+                            <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.robotic.proprioceptionError < 0.2 ? "#22c55e" : state.bridgeSnapshot.interoception.robotic.proprioceptionError < 0.5 ? "#f59e0b" : "#ef4444" }}>
+                              {(state.bridgeSnapshot.interoception.robotic.proprioceptionError * 100).toFixed(0)}% erro
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-muted-foreground">Integridade HW</span>
+                            <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.robotic.hardwareIntegrity > 0.7 ? "#22c55e" : "#ef4444" }}>
+                              {(state.bridgeSnapshot.interoception.robotic.hardwareIntegrity * 100).toFixed(0)}%
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-muted-foreground">Equilíbrio</span>
+                            <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.robotic.equilibriumConfidence > 0.7 ? "#22c55e" : "#f59e0b" }}>
+                              {(state.bridgeSnapshot.interoception.robotic.equilibriumConfidence * 100).toFixed(0)}%
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-muted-foreground">Desgaste Mecânico</span>
+                            <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.robotic.mechanicalWear < 0.3 ? "#22c55e" : "#ef4444" }}>
+                              {(state.bridgeSnapshot.interoception.robotic.mechanicalWear * 100).toFixed(0)}%
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-muted-foreground">Biofeedback</span>
+                            <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.robotic.biofeedbackQuality > 0.7 ? "#22c55e" : "#f59e0b" }}>
+                              {(state.bridgeSnapshot.interoception.robotic.biofeedbackQuality * 100).toFixed(0)}%
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-[9px] text-muted-foreground">Risco IAA</span>
+                            <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.robotic.iaaPredictiveRisk < 0.3 ? "#22c55e" : "#ef4444" }}>
+                              {(state.bridgeSnapshot.interoception.robotic.iaaPredictiveRisk * 100).toFixed(0)}%
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Thermal Map */}
+                      {Object.keys(state.bridgeSnapshot.interoception.robotic.thermalMap).length > 0 && (
+                        <div className="border-t border-border/30 pt-2">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">🌡️ Mapa Térmico</p>
+                          <div className="grid grid-cols-4 gap-1">
+                            {Object.entries(state.bridgeSnapshot.interoception.robotic.thermalMap).map(([comp, temp]) => (
+                              <div key={comp} className="text-center p-1.5 bg-muted/20 rounded">
+                                <p className="text-[8px] text-muted-foreground uppercase">{comp}</p>
+                                <p className="text-xs font-mono font-bold" style={{ color: temp > 0.8 ? "#ef4444" : temp > 0.5 ? "#f59e0b" : "#22c55e" }}>
+                                  {(temp * 100).toFixed(0)}°
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="text-[9px] text-muted-foreground">
+                        Sensores internos ativos: <span className="font-mono text-foreground">{state.bridgeSnapshot.interoception.robotic.activeInternalSensors}</span>
+                      </div>
+                    </>
+                  )}
+                </>
               ) : (
                 <p className="text-[10px] text-muted-foreground text-center py-3">Aguardando dados interoceptivos...</p>
               )}

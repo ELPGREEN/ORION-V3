@@ -145,6 +145,17 @@ export interface ConsciousnessCycleSnapshot {
     dominantSignal: string;
     isInPain: boolean;
     isEnergyLow: boolean;
+    /** v26: Robotic interoception */
+    robotic: {
+      proprioceptionError: number;
+      hardwareIntegrity: number;
+      biofeedbackQuality: number;
+      iaaPredictiveRisk: number;
+      mechanicalWear: number;
+      equilibriumConfidence: number;
+      activeInternalSensors: number;
+      thermalMap: Record<string, number>;
+    };
   } | null;
   /** v2: Telemetry anomaly severity (null = no anomaly) */
   anomalySeverity: string | null;
@@ -478,6 +489,20 @@ export function runConsciousnessBridge(
       dominantSignal: intero.dominantSignal,
       isInPain: telemetry?.isInPain ?? false,
       isEnergyLow: telemetry?.isEnergyLow ?? false,
+      robotic: intero.robotic ? {
+        proprioceptionError: intero.robotic.proprioceptionError,
+        hardwareIntegrity: intero.robotic.hardwareIntegrity,
+        biofeedbackQuality: intero.robotic.biofeedbackQuality,
+        iaaPredictiveRisk: intero.robotic.iaaPredictiveRisk,
+        mechanicalWear: intero.robotic.mechanicalWear,
+        equilibriumConfidence: intero.robotic.equilibriumConfidence,
+        activeInternalSensors: intero.robotic.activeInternalSensors,
+        thermalMap: intero.robotic.thermalMap,
+      } : {
+        proprioceptionError: 0, hardwareIntegrity: 1, biofeedbackQuality: 1,
+        iaaPredictiveRisk: 0, mechanicalWear: 0, equilibriumConfidence: 1,
+        activeInternalSensors: 4, thermalMap: {},
+      },
     } : null,
     anomalySeverity: telemetry?.anomaly?.severity ?? null,
     pipelineHealth: telemetry ? "healthy" : "unknown",

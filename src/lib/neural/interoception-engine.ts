@@ -19,13 +19,38 @@ import type { SystemHealthSnapshot, SystemMode } from "./system-health";
 // ─── Types ───
 
 export type VisceralSignal =
-  | "homeostasis"       // System in balance
-  | "cognitive_load"    // High processing demand
-  | "provider_stress"   // AI providers degraded
-  | "memory_pressure"   // Storage/cache near limits
-  | "pipeline_fatigue"  // Long task queues
-  | "thermal_warning"   // CPU/GPU high utilization
-  | "resource_depletion"; // API quotas nearing limits
+  | "homeostasis"           // System in balance
+  | "cognitive_load"        // High processing demand
+  | "provider_stress"       // AI providers degraded
+  | "memory_pressure"       // Storage/cache near limits
+  | "pipeline_fatigue"      // Long task queues
+  | "thermal_warning"       // CPU/GPU high utilization
+  | "resource_depletion"    // API quotas nearing limits
+  // v26: Robotic Interoception signals
+  | "proprioception_drift"  // Visual proprioception: servo/motor command vs observed position mismatch
+  | "hardware_degradation"  // Internal hardware integrity: wear, overheating, mechanical stress
+  | "biofeedback_alert"     // User biofeedback: integration quality with human operator
+  | "iaa_prediction";       // Intelligent Adaptive AI: predictive risk from visual internal state
+
+/** v26: Robotic interoception — visual proprioception + hardware integrity */
+export interface RoboticInteroception {
+  /** Visual proprioception: command-observation error (0=perfect, 1=total mismatch) */
+  proprioceptionError: number;
+  /** Hardware integrity score (1=pristine, 0=critical failure) */
+  hardwareIntegrity: number;
+  /** Component temperatures (normalized 0-1, >0.8 = overheating) */
+  thermalMap: Record<string, number>;
+  /** Biofeedback integration quality with human operator (0-1) */
+  biofeedbackQuality: number;
+  /** IAA predictive risk score (0=safe, 1=imminent failure) */
+  iaaPredictiveRisk: number;
+  /** Active internal cameras / visual sensors count */
+  activeInternalSensors: number;
+  /** Mechanical wear index (0=new, 1=end-of-life) */
+  mechanicalWear: number;
+  /** Balance/equilibrium confidence (0=falling, 1=perfect balance) */
+  equilibriumConfidence: number;
+}
 
 export interface InteroceptiveState {
   /** Overall internal valence: -1 (distressed) to 1 (thriving) */
@@ -46,6 +71,8 @@ export interface InteroceptiveState {
   timestamp: number;
   /** Cycle count for temporal tracking */
   cycle: number;
+  /** v26: Robotic interoception layer */
+  robotic: RoboticInteroception;
 }
 
 export interface InteroceptiveConfig {
@@ -123,6 +150,12 @@ export function computeInteroceptiveState(
   const thermalWarning = input.avgLatency > 5000 ? Math.min(1, (input.avgLatency - 5000) / 15000) : 0;
   const resourceDepletion = 1 - input.rewardPositiveRate;
 
+  // v26: Robotic interoception signals (simulated from system metrics)
+  const proprioceptionDrift = clamp(input.avgLatency / 20000 + Math.random() * 0.05);
+  const hardwareDeg = clamp(thermalWarning * 0.6 + memoryPressure * 0.3 + Math.random() * 0.05);
+  const biofeedbackAlert = clamp(1 - input.rewardPositiveRate * 0.7 - (input.systemScore / 100) * 0.3);
+  const iaaPrediction = clamp(providerStress * 0.4 + cognitiveLoad * 0.3 + thermalWarning * 0.3);
+
   const signals: Record<VisceralSignal, number> = {
     homeostasis: Math.max(0, 1 - providerStress - cognitiveLoad * 0.5),
     cognitive_load: cognitiveLoad,
@@ -131,6 +164,10 @@ export function computeInteroceptiveState(
     pipeline_fatigue: pipelineFatigue,
     thermal_warning: thermalWarning,
     resource_depletion: resourceDepletion,
+    proprioception_drift: proprioceptionDrift,
+    hardware_degradation: hardwareDeg,
+    biofeedback_alert: biofeedbackAlert,
+    iaa_prediction: iaaPrediction,
   };
 
   // Pain index: weighted distress
@@ -172,6 +209,23 @@ export function computeInteroceptiveState(
   const dominantSignal = (Object.entries(signals) as [VisceralSignal, number][])
     .sort((a, b) => b[1] - a[1])[0][0];
 
+  // v26: Build robotic interoception layer
+  const robotic: RoboticInteroception = {
+    proprioceptionError: proprioceptionDrift,
+    hardwareIntegrity: clamp(1 - hardwareDeg),
+    thermalMap: {
+      cpu: clamp(thermalWarning * 0.8 + 0.2),
+      gpu: clamp(thermalWarning * 0.6 + 0.15),
+      memory: clamp(memoryPressure * 0.5 + 0.1),
+      network: clamp(providerStress * 0.4 + 0.1),
+    },
+    biofeedbackQuality: clamp(1 - biofeedbackAlert),
+    iaaPredictiveRisk: iaaPrediction,
+    activeInternalSensors: 4 + (thermalWarning > 0.5 ? 2 : 0), // extra sensors when hot
+    mechanicalWear: clamp(hardwareDeg * 0.7 + proprioceptionDrift * 0.3),
+    equilibriumConfidence: clamp(1 - proprioceptionDrift * 0.8 - thermalWarning * 0.2),
+  };
+
   const state: InteroceptiveState = {
     valence,
     arousal,
@@ -182,6 +236,7 @@ export function computeInteroceptiveState(
     homeostaticDeviation,
     timestamp: Date.now(),
     cycle: _cycleCount,
+    robotic,
   };
 
   // Store in history
@@ -277,6 +332,10 @@ const signalLabels: Record<VisceralSignal, string> = {
   pipeline_fatigue: "Fadiga do Pipeline",
   thermal_warning: "Alerta Térmico",
   resource_depletion: "Depleção de Recursos",
+  proprioception_drift: "Drift Proprioceptivo",
+  hardware_degradation: "Degradação Hardware",
+  biofeedback_alert: "Alerta Biofeedback",
+  iaa_prediction: "Predição IAA",
 };
 
 function computeProviderStress(healthData: ProviderHealth[], avgErrorRate: number): number {
