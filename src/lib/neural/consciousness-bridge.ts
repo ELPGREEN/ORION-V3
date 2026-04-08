@@ -68,6 +68,7 @@ import {
 
 import { computeProviderHealth, type ProviderHealth } from "./provider-health";
 import { getHearingSummaryForBridge, getLastHearingResult } from "./metacognitive-hearing";
+import { getPipelineLatency } from "./pipeline-latency-tracker";
 
 // ─── v3 Integrations: QHRL, Temporal Binding, Agent Planner ───
 
