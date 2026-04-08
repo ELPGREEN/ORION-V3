@@ -1,6 +1,5 @@
 # ================================================
-# ORION Neural Hub — CPU Free Tier
-# Lightweight: fits in 2 vCPU + 16GB RAM
+# ORION Neural Hub — ZeroGPU
 # ================================================
 
 # Core
@@ -9,11 +8,11 @@ gradio==5.33.0
 # PDF Processing
 pymupdf==1.25.3
 
-# TTS (Piper ONNX — CPU only, lightweight)
-# piper-tts removed: piper-phonemize incompatible with Python 3.13
-# Using piper-tts via pre-built wheel or direct ONNX inference
+# TTS (edge-tts — Microsoft Edge free TTS, no API key needed)
+edge-tts>=6.1.0
+
+# ONNX Runtime (for vision/other models)
 onnxruntime==1.20.1
-piper-phonemize==1.1.0; python_version < "3.13"
 
 # OCR (CPU mode)
 easyocr>=1.7.2
