@@ -108,6 +108,13 @@ interface ConsciousnessState {
   metacognitionRecommendation: string;
   // v22.5: IoT awareness
   iotAwareness: IoTAwarenessState;
+  // v24: Quantum Metacognition
+  uncertaintyScore: number;
+  hallucinationRisk: number;
+  calibrationError: number;
+  riskLevel: "safe" | "caution" | "warning" | "critical";
+  activeSkillsList: Array<{ name: string; category: string; contribution: number; active: boolean }>;
+  reflectionChain: string[];
 }
 
 // ─── Rome timezone helpers ───
@@ -399,6 +406,12 @@ export function NeuralConsciousnessLoop() {
         deviceCommandsSent: 0,
         environmentalContext: "unknown",
       },
+      uncertaintyScore: 0.1,
+      hallucinationRisk: 0.05,
+      calibrationError: 0.1,
+      riskLevel: "safe" as const,
+      activeSkillsList: [],
+      reflectionChain: [],
     };
   });
 
@@ -597,6 +610,13 @@ export function NeuralConsciousnessLoop() {
       autobiographicalMemories: cycleResult.selfModel.autobiographicalMemory.length,
       metacognitionRecommendation: meta?.recommendation ?? prev.metacognitionRecommendation,
       iotAwareness: iotState,
+      // v24: Quantum Metacognition
+      uncertaintyScore: meta?.uncertaintyScore ?? prev.uncertaintyScore,
+      hallucinationRisk: meta?.hallucinationRisk ?? prev.hallucinationRisk,
+      calibrationError: meta?.calibrationError ?? prev.calibrationError,
+      riskLevel: (meta?.riskLevel ?? prev.riskLevel) as "safe" | "caution" | "warning" | "critical",
+      activeSkillsList: meta?.activeSkills?.map(s => ({ name: s.name, category: s.category, contribution: s.contribution, active: s.active })) ?? prev.activeSkillsList,
+      reflectionChain: meta?.reflectionChain ?? prev.reflectionChain,
     }));
   }, [addLogEntry]);
 
@@ -787,7 +807,98 @@ export function NeuralConsciousnessLoop() {
           </CardContent>
         </Card>
 
-        {/* IoT & BLE Awareness */}
+        {/* v24: Quantum Metacognition Panel */}
+        <Card className="border-border" style={{ boxShadow: `0 0 20px ${config.glowColor}` }}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" style={{ color: 
+                state.riskLevel === "critical" ? "#ef4444" :
+                state.riskLevel === "warning" ? "#f59e0b" :
+                state.riskLevel === "caution" ? "#eab308" : "#22c55e"
+              }} />
+              Metacognição Quântica v24
+            </CardTitle>
+            <CardDescription className="text-[10px]">Incerteza • Alucinação • Calibração • Habilidades • CoT Reflexivo</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* Risk Level Badge */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Nível de Risco</span>
+              <Badge className={`text-[10px] ${
+                state.riskLevel === "critical" ? "bg-red-600 text-red-100" :
+                state.riskLevel === "warning" ? "bg-amber-600 text-amber-100" :
+                state.riskLevel === "caution" ? "bg-yellow-600 text-yellow-100" :
+                "bg-emerald-600 text-emerald-100"
+              }`}>
+                {state.riskLevel === "critical" ? "🔴 CRÍTICO" :
+                 state.riskLevel === "warning" ? "🟡 ALERTA" :
+                 state.riskLevel === "caution" ? "🟠 CAUTELA" :
+                 "🟢 SEGURO"}
+              </Badge>
+            </div>
+
+            {/* Core Quantum Metrics */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center p-2 bg-muted/20 rounded-lg">
+                <p className="text-lg font-bold font-mono" style={{ color: state.uncertaintyScore > 0.6 ? "#ef4444" : state.uncertaintyScore > 0.3 ? "#f59e0b" : "#22c55e" }}>
+                  {(state.uncertaintyScore * 100).toFixed(0)}%
+                </p>
+                <p className="text-[8px] text-muted-foreground uppercase">Incerteza</p>
+              </div>
+              <div className="text-center p-2 bg-muted/20 rounded-lg">
+                <p className="text-lg font-bold font-mono" style={{ color: state.hallucinationRisk > 0.6 ? "#ef4444" : state.hallucinationRisk > 0.3 ? "#f59e0b" : "#22c55e" }}>
+                  {(state.hallucinationRisk * 100).toFixed(0)}%
+                </p>
+                <p className="text-[8px] text-muted-foreground uppercase">Risco Alucinação</p>
+              </div>
+              <div className="text-center p-2 bg-muted/20 rounded-lg">
+                <p className="text-lg font-bold font-mono" style={{ color: state.calibrationError > 0.3 ? "#f59e0b" : "#22c55e" }}>
+                  {(state.calibrationError * 100).toFixed(0)}%
+                </p>
+                <p className="text-[8px] text-muted-foreground uppercase">ECE</p>
+              </div>
+            </div>
+
+            {/* Metric Bars */}
+            <div className="grid grid-cols-2 gap-2">
+              <MetricBar label="Incerteza Quântica" value={state.uncertaintyScore} color={state.uncertaintyScore > 0.6 ? "#ef4444" : "#22c55e"} />
+              <MetricBar label="Risco Alucinação" value={state.hallucinationRisk} color={state.hallucinationRisk > 0.5 ? "#ef4444" : "#22c55e"} />
+            </div>
+
+            {/* Active Skills */}
+            {state.activeSkillsList.length > 0 && (
+              <div>
+                <p className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wider">Habilidades Ativas</p>
+                <div className="grid grid-cols-2 gap-1">
+                  {state.activeSkillsList.map((skill) => (
+                    <div key={skill.name} className={`flex items-center gap-1.5 p-1.5 rounded text-[10px] ${skill.active ? "bg-muted/30" : "bg-muted/10 opacity-50"}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${skill.active ? "animate-pulse" : ""}`}
+                        style={{ backgroundColor: skill.active ? (skill.contribution > 0.7 ? "#22c55e" : skill.contribution > 0.4 ? "#f59e0b" : "#6b7280") : "#6b7280" }} />
+                      <span className="truncate">{skill.name}</span>
+                      <span className="ml-auto font-mono text-[8px]">{(skill.contribution * 100).toFixed(0)}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Reflective CoT */}
+            {state.reflectionChain.length > 0 && (
+              <div className="p-2 bg-muted/10 rounded-lg border border-border/30 space-y-1">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Chain-of-Thought Reflexivo</p>
+                {state.reflectionChain.map((step, i) => (
+                  <p key={i} className="text-[9px] text-muted-foreground font-mono leading-relaxed">
+                    {step}
+                  </p>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* IoT & BLE Awareness */}
+      <div className="grid grid-cols-1 gap-4">
         <Card className="border-border">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -872,6 +983,7 @@ export function NeuralConsciousnessLoop() {
           </CardContent>
         </Card>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-border">
           <CardHeader className="pb-2">

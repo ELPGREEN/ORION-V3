@@ -16,6 +16,7 @@
 
 import type { AgentRole, NeuromodulationState } from "./multi-agent";
 import type { InteroceptiveState } from "./interoception-engine";
+import { runQuantumMetacognition, recordCalibration } from "./quantum-metacognition";
 
 // ─── Types ───
 
@@ -114,6 +115,20 @@ export interface MetacognitionResult {
   recommendation: string;        // Natural language self-reflection
   shouldAdjust: boolean;         // Whether to change strategy
   adjustmentType?: "attention" | "strategy" | "modality" | "agent_swap";
+  /** v24: Quantum Metacognition — calibrated uncertainty */
+  uncertaintyScore?: number;
+  /** v24: Hallucination risk (0=safe, 1=critical) */
+  hallucinationRisk?: number;
+  /** v24: Expected Calibration Error */
+  calibrationError?: number;
+  /** v24: Active skill abstractions */
+  activeSkills?: Array<{ name: string; category: string; contribution: number; active: boolean; description: string }>;
+  /** v24: Reflective Chain-of-Thought */
+  reflectionChain?: string[];
+  /** v24: Adaptive plan score */
+  adaptivePlanScore?: number;
+  /** v24: Risk level */
+  riskLevel?: "safe" | "caution" | "warning" | "critical";
 }
 
 // ─── Helper Functions ───
@@ -480,6 +495,14 @@ export function runMetacognition(
   // Generate natural language self-reflection
   const recommendation = generateSelfReflection(selfAwareness, goalAlignment, coherence, confidence, shouldAdjust);
 
+  // v24: Enrich with Quantum Metacognition
+  let quantumMeta;
+  try {
+    quantumMeta = runQuantumMetacognition(selfModel, workspace);
+  } catch (e) {
+    console.warn("[Metacognition] Quantum metacognition error:", e);
+  }
+
   return {
     timestamp: Date.now(),
     selfAwareness: Math.max(0, Math.min(1, selfAwareness)),
@@ -489,6 +512,14 @@ export function runMetacognition(
     recommendation,
     shouldAdjust,
     adjustmentType,
+    // v24: Quantum Metacognition fields
+    uncertaintyScore: quantumMeta?.uncertaintyScore,
+    hallucinationRisk: quantumMeta?.hallucinationRisk,
+    calibrationError: quantumMeta?.calibrationError,
+    activeSkills: quantumMeta?.activeSkills,
+    reflectionChain: quantumMeta?.reflectionChain,
+    adaptivePlanScore: quantumMeta?.adaptivePlanScore,
+    riskLevel: quantumMeta?.riskLevel,
   };
 }
 
