@@ -29,7 +29,7 @@ import type { BackgroundTranscript } from "./useWakeWord";
 export interface ChatMessage { role: "user" | "ai" | "system"; text: string; time: string; confidence?: number; }
 
 export function useOrionReasoning(
-  active: boolean, speak: (t: string) => Promise<void>, canvasRef: React.RefObject<HTMLCanvasElement | null>,
+  active: boolean, speak: (t: string, options?: { skipMicToggle?: boolean }) => Promise<void>, canvasRef: React.RefObject<HTMLCanvasElement | null>,
   identificationMode: string = "universal",
   bargeIn?: () => void,
   abortControllerRef?: React.MutableRefObject<AbortController | null>,
