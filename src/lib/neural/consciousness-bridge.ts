@@ -688,6 +688,8 @@ export function runConsciousnessBridge(
         qcCoherenceTimeMs: qc?.cognitiveCoherenceTimeMs ?? 10,
       };
     })(),
+    // v31: Pipeline latency
+    pipelineLatency: getPipelineLatency(),
   };
 
   _lastCycleResult = snapshot;
