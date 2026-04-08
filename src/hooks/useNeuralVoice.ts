@@ -643,6 +643,8 @@ export function useNeuralVoice(
   }, [bargeIn, scheduleRecognitionRestart]);
 
   const startListeningFresh = useCallback((onCmd: (c: string) => void) => {
+    // Stale HMR instance guard
+    if (!isActiveOwner(singletonIdRef.current)) { setListening(false); return; }
     intentionalStopRef.current = false;
     try { recRef.current?.abort?.(); } catch {}
     try { recRef.current?.stop(); } catch {}
@@ -650,6 +652,7 @@ export function useNeuralVoice(
     const rec = createRecognition(onCmd);
     if (!rec) { setListening(false); return; }
     recRef.current = rec;
+    registerGlobalRec(rec);
     try {
       rec.start();
       setListening(true);
@@ -657,7 +660,7 @@ export function useNeuralVoice(
       setListening(false);
       recRef.current = null;
       setTimeout(() => {
-        if (!intentionalStopRef.current && onCmdRef.current === onCmd) {
+        if (!intentionalStopRef.current && onCmdRef.current === onCmd && isActiveOwner(singletonIdRef.current)) {
           startListeningFresh(onCmd);
         }
       }, 250);
