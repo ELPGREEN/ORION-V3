@@ -201,7 +201,7 @@ function buildMultiSpeakerRequest(
   };
   if (includeLanguage && selectedLang.trim()) speechConfig.languageCode = selectedLang;
   return {
-    contents: [{ parts: [{ text: cleanText }] }],
+    contents: [{ role: "user", parts: [{ text: cleanText }] }],
     generationConfig: { responseModalities: ["AUDIO"], speechConfig },
   };
 }
