@@ -422,7 +422,7 @@ export function useNeuralVoice(
       try {
         const gemResult = await speakWithGeminiTTS(
           cleanText,
-          voicePrefs.voice_name || "Orus",
+          voicePrefs.voice_name || "Charon",
           cascadeAbort.signal,
           voicePrefs.style_prompt,
           voicePrefs.language,
