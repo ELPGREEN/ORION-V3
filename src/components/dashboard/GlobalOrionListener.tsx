@@ -89,9 +89,10 @@ export function GlobalOrionListener() {
   const { config } = useNeuralConfig();
   const [wakeWordActive, setWakeWordActive] = useState(false);
   const [orionOpen, setOrionOpen] = useState(false);
-  const [booting, setBooting] = useState(false);
+  
   const [initialCommand, setInitialCommand] = useState<string>("");
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
+  const [conversationalStatus, setConversationalStatus] = useState<"idle" | "listening" | "processing" | "speaking">("idle");
   const [permissionsGranted, setPermissionsGranted] = useState(() => {
     return localStorage.getItem(PERMISSIONS_KEY) === "true";
   });
@@ -104,6 +105,9 @@ export function GlobalOrionListener() {
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restartAttemptsRef = useRef(0);
   const startInFlightRef = useRef(false);
+  /** Command capture recognition (separate from wake word) */
+  const cmdRecRef = useRef<any>(null);
+  const cmdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isOnNeuralPage = location.pathname.includes("rede-neural") || location.pathname === "/consulta";
   const isMobile = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
@@ -155,14 +159,11 @@ export function GlobalOrionListener() {
     if (typeof document !== "undefined" && document.hidden) return 10000;
     const attempts = restartAttemptsRef.current;
     if (isMobile) {
-      // Mobile: aggressive backoff to avoid mic loop sounds
-      // 2s, 4s, 8s, 15s, 30s — then stop
       const backoff = Math.min(2000 * Math.pow(2, attempts), 30000);
       if (reason === "no-speech" || reason === "end") return Math.max(backoff, 3000);
       if (reason === "aborted") return Math.max(backoff, 5000);
       return Math.max(backoff, 3000);
     }
-    // Desktop: faster restart is fine (no audible mic sounds)
     const backoff = Math.min(500 * Math.pow(2, attempts), 5000);
     if (reason === "aborted") return Math.max(backoff, 1500);
     if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 2000);
@@ -170,30 +171,94 @@ export function GlobalOrionListener() {
     return Math.max(backoff, 1000);
   }, [isMobile]);
 
-  useEffect(() => {
-    if (permissionsGranted) return;
-    // Don't show again if user already dismissed it
-    if (localStorage.getItem(PERMISSIONS_DISMISSED_KEY) === "true") return;
-    const timer = setTimeout(() => setShowPermissionPrompt(true), 1500);
-    return () => clearTimeout(timer);
-  }, [permissionsGranted]);
+  /** ═══ Conversational Command Capture ═══
+   * After wake word detected:
+   * 1. Start new recognition for 4 seconds
+   * 2. If no speech → Orion says "Estou ouvindo" and opens overlay
+   * 3. If speech → open overlay with command
+   */
+  const stopCommandCapture = useCallback(() => {
+    if (cmdTimeoutRef.current) { clearTimeout(cmdTimeoutRef.current); cmdTimeoutRef.current = null; }
+    try { cmdRecRef.current?.abort?.(); } catch {}
+    try { cmdRecRef.current?.stop?.(); } catch {}
+    cmdRecRef.current = null;
+  }, []);
 
-  const stopWakeWordListener = useCallback(() => {
-    wakeWordEnabledRef.current = false;
-    wakeDetectedRef.current = false;
-    pendingCommandRef.current = "";
-    clearRestartTimer();
-    restartAttemptsRef.current = 0;
-    startInFlightRef.current = false;
-    if (commandTimeoutRef.current) {
-      clearTimeout(commandTimeoutRef.current);
-      commandTimeoutRef.current = null;
+  const openOrionOverlay = useCallback((command: string) => {
+    stopCommandCapture();
+    setConversationalStatus("idle");
+    setInitialCommand(command);
+    setOrionOpen(true);
+    initVoicePicker();
+    // Brief activation TTS (non-blocking)
+    if (command.trim()) {
+      orionSpeak("Processando").catch(() => {});
     }
-    try { wakeRecRef.current?.abort?.(); } catch {}
-    try { wakeRecRef.current?.stop?.(); } catch {}
-    wakeRecRef.current = null;
-    setWakeWordActive(false);
-  }, [clearRestartTimer]);
+    setTimeout(() => { cooldownRef.current = false; }, 800);
+  }, [stopCommandCapture]);
+
+  const startCommandCapture = useCallback(() => {
+    const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    if (!SR) { openOrionOverlay(""); return; }
+
+    stopCommandCapture();
+    setConversationalStatus("listening");
+    toast.success("🎯 Orion ativado!", { duration: 2000 });
+
+    let captured = "";
+    let gotFinal = false;
+
+    const rec = new SR();
+    rec.lang = "pt-BR";
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+
+    rec.onresult = (e: any) => {
+      const last = e.results[e.results.length - 1];
+      const transcript = (last?.[0]?.transcript || "").trim();
+      // Remove wake word from captured command
+      const cleaned = extractCommand(transcript, wakeWordRegexes);
+      if (cleaned.length > captured.length) captured = cleaned;
+
+      if (last?.isFinal && cleaned.length > 2) {
+        gotFinal = true;
+        if (cmdTimeoutRef.current) { clearTimeout(cmdTimeoutRef.current); cmdTimeoutRef.current = null; }
+        console.log(`[GlobalOrion] ✅ Command captured: "${cleaned}"`);
+        openOrionOverlay(cleaned);
+      }
+    };
+
+    rec.onend = () => {
+      cmdRecRef.current = null;
+      if (!gotFinal && captured.length > 2) {
+        gotFinal = true;
+        if (cmdTimeoutRef.current) { clearTimeout(cmdTimeoutRef.current); cmdTimeoutRef.current = null; }
+        openOrionOverlay(captured);
+      }
+    };
+
+    rec.onerror = (e: any) => {
+      console.warn("[GlobalOrion] Command capture error:", e.error);
+      cmdRecRef.current = null;
+    };
+
+    cmdRecRef.current = rec;
+    try { rec.start(); } catch { openOrionOverlay(""); return; }
+
+    // 4-second timeout
+    cmdTimeoutRef.current = setTimeout(() => {
+      cmdTimeoutRef.current = null;
+      if (gotFinal) return;
+      // No speech in 4s — open overlay anyway, Orion will greet
+      console.log("[GlobalOrion] ⏱️ 4s timeout — no command, opening with prompt");
+      try { cmdRecRef.current?.stop?.(); } catch {}
+      cmdRecRef.current = null;
+      // Orion says "Estou ouvindo" and opens for continued conversation
+      orionSpeak("Estou ouvindo. Pode falar.").catch(() => {});
+      openOrionOverlay("");
+    }, 4000);
+  }, [openOrionOverlay, stopCommandCapture, wakeWordRegexes]);
 
   const activateWithCommand = useCallback(async (command: string) => {
     if (cooldownRef.current) return;
@@ -207,35 +272,42 @@ export function GlobalOrionListener() {
       commandTimeoutRef.current = null;
     }
 
-    const cleanCmd = command.trim();
-
+    // Stop wake word listener
     try { wakeRecRef.current?.abort?.(); } catch {}
     try { wakeRecRef.current?.stop?.(); } catch {}
     wakeRecRef.current = null;
     startInFlightRef.current = false;
     wakeWordEnabledRef.current = false;
     setWakeWordActive(false);
-    setInitialCommand(cleanCmd);
 
-    // ── Fast boot: show plasma + fire TTS in parallel (non-blocking) ──
-    setBooting(true);
-    initVoicePicker();
-    
-    // Fire TTS and animation in parallel — don't await TTS before showing UI
-    orionSpeak("Iniciando sistema").catch(() => {});
-    
-    // Short plasma animation (1.5s instead of 2.5s)
-    await new Promise(r => setTimeout(r, 1500));
+    const cleanCmd = command.trim();
 
-    // ── System ready: open panel immediately ──
-    setBooting(false);
-    setOrionOpen(true);
-    
-    // Welcome speech fires in background — doesn't block UI
-    orionSpeak("Sistema ativado").catch(() => {});
+    if (cleanCmd.length > 2) {
+      // Already have a command from wake word phase — open directly
+      openOrionOverlay(cleanCmd);
+    } else {
+      // Wake word only (e.g. "Orion") — start 4s command capture
+      startCommandCapture();
+    }
+  }, [clearRestartTimer, openOrionOverlay, startCommandCapture]);
 
-    setTimeout(() => { cooldownRef.current = false; }, 800);
-  }, [clearRestartTimer]);
+  const stopWakeWordListener = useCallback(() => {
+    wakeWordEnabledRef.current = false;
+    wakeDetectedRef.current = false;
+    pendingCommandRef.current = "";
+    clearRestartTimer();
+    restartAttemptsRef.current = 0;
+    startInFlightRef.current = false;
+    stopCommandCapture();
+    if (commandTimeoutRef.current) {
+      clearTimeout(commandTimeoutRef.current);
+      commandTimeoutRef.current = null;
+    }
+    try { wakeRecRef.current?.abort?.(); } catch {}
+    try { wakeRecRef.current?.stop?.(); } catch {}
+    wakeRecRef.current = null;
+    setWakeWordActive(false);
+  }, [clearRestartTimer, stopCommandCapture]);
 
   const startWakeWordListener = useCallback(() => {
     const hidden = typeof document !== "undefined" && document.hidden;
@@ -533,39 +605,13 @@ export function GlobalOrionListener() {
 
   return (
     <>
-      {/* ═══ Boot Screen — Plasma loading with "Iniciando sistema" ═══ */}
-      {booting && (
-        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-background/95 backdrop-blur-xl animate-fade-in">
-          <div className="relative w-32 h-32 mb-6">
-            <PlasmaCore className="w-full h-full" />
-            <div
-              className="absolute inset-0 rounded-full"
-              style={{
-                background: "radial-gradient(circle, hsl(var(--primary) / 0.3) 0%, transparent 70%)",
-                filter: "blur(20px)",
-                transform: "scale(2)",
-                animation: "orbBreath 1.5s ease-in-out infinite",
-              }}
-            />
+      {/* ═══ Command Capture Status — shows "Ouvindo…" when capturing command after wake word ═══ */}
+      {conversationalStatus === "listening" && !orionOpen && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] animate-fade-in">
+          <div className="flex items-center gap-2 bg-card/95 backdrop-blur-xl border border-primary/30 rounded-full px-4 py-2 shadow-lg">
+            <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-sm font-mono text-primary">Ouvindo…</span>
           </div>
-          <p className="text-sm font-mono tracking-[0.3em] text-primary/80 uppercase animate-pulse">
-            Iniciando Sistema
-          </p>
-          <div className="mt-4 w-48 h-1 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full"
-              style={{ animation: "bootProgress 2.5s ease-out forwards" }}
-            />
-          </div>
-          <style>{`
-            @keyframes bootProgress {
-              0% { width: 0%; }
-              30% { width: 40%; }
-              60% { width: 70%; }
-              90% { width: 95%; }
-              100% { width: 100%; }
-            }
-          `}</style>
         </div>
       )}
 
@@ -678,11 +724,15 @@ export function GlobalOrionListener() {
           <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
             <span className={cn(
               "text-[9px] font-mono tracking-wider px-2 py-0.5 rounded-full border backdrop-blur-sm",
-              wakeWordActive
-                ? "text-primary border-primary/40 bg-primary/10 animate-pulse"
-                : "text-muted-foreground/60 border-border/30 bg-card/50"
+              conversationalStatus === "listening"
+                ? "text-emerald-400 border-emerald-400/40 bg-emerald-400/10 animate-pulse"
+                : wakeWordActive
+                  ? "text-primary border-primary/40 bg-primary/10 animate-pulse"
+                  : "text-muted-foreground/60 border-border/30 bg-card/50"
             )}>
-              {wakeWordActive ? `⚡ Diga "${wakeWordHint}"` : wakeWordHint}
+              {conversationalStatus === "listening"
+                ? "🎙️ Ouvindo…"
+                : wakeWordActive ? `⚡ Diga "${wakeWordHint}"` : wakeWordHint}
             </span>
           </div>
 
