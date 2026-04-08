@@ -1087,8 +1087,8 @@ async function callGeminiAPI(messages: any[], stream: boolean, apiKeyEnv: string
     });
 
   const requestedMaxTokens = (messages as any).__maxTokens;
-  const defaultTextTokens = requestedMaxTokens || 1536;  // Reduced from 2048
-  const defaultVisionTokens = requestedMaxTokens || 3072; // Reduced from 4096
+  const defaultTextTokens = requestedMaxTokens || 4096;
+  const defaultVisionTokens = requestedMaxTokens || 6144;
 
   const geminiBody: any = {
     contents,
@@ -1122,7 +1122,7 @@ async function callGroqFallback(messages: any[]): Promise<string> {
       : String(m.content),
   }));
 
-  const maxTokens = (messages as any).__maxTokens || 2048;
+  const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -1169,7 +1169,7 @@ async function callGroqStreaming(messages: any[]): Promise<Response> {
       : String(m.content),
   }));
 
-  const maxTokens = (messages as any).__maxTokens || 2048;
+  const maxTokens = (messages as any).__maxTokens || 4096;
   const doFetch = () => fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -1207,7 +1207,7 @@ async function callMistralFallback(messages: any[]): Promise<string> {
       : String(m.content),
   }));
 
-  const maxTokens = (messages as any).__maxTokens || 2048;
+  const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -1228,7 +1228,7 @@ async function callMistralStreaming(messages: any[]): Promise<Response> {
       ? m.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
       : String(m.content),
   }));
-  const maxTokens = (messages as any).__maxTokens || 2048;
+  const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -1252,7 +1252,7 @@ async function callDeepSeekFallback(messages: any[]): Promise<string> {
   const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
   if (!apiKey) throw new Error("Missing DEEPSEEK_API_KEY");
   if (isProviderCoolingDown("deepseek")) throw new Error("DeepSeek cooling down (recent failure)");
-  const maxTokens = (messages as any).__maxTokens || 2048;
+  const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://api.deepseek.com/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -1270,7 +1270,7 @@ async function callDeepSeekStreaming(messages: any[]): Promise<Response> {
   const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
   if (!apiKey) throw new Error("Missing DEEPSEEK_API_KEY");
   if (isProviderCoolingDown("deepseek")) throw new Error("DeepSeek cooling down (recent failure)");
-  const maxTokens = (messages as any).__maxTokens || 2048;
+  const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://api.deepseek.com/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -1287,7 +1287,7 @@ async function callDeepSeekStreaming(messages: any[]): Promise<Response> {
 async function callOpenRouterFallback(messages: any[]): Promise<string> {
   const apiKey = Deno.env.get("OPENROUTER_API_KEY");
   if (!apiKey) throw new Error("Missing OPENROUTER_API_KEY");
-  const maxTokens = (messages as any).__maxTokens || 2048;
+  const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}`, "X-Title": "Orion Neural" },
@@ -1301,7 +1301,7 @@ async function callOpenRouterFallback(messages: any[]): Promise<string> {
 async function callOpenRouterStreaming(messages: any[]): Promise<Response> {
   const apiKey = Deno.env.get("OPENROUTER_API_KEY");
   if (!apiKey) throw new Error("Missing OPENROUTER_API_KEY");
-  const maxTokens = (messages as any).__maxTokens || 2048;
+  const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}`, "X-Title": "Orion Neural" },
