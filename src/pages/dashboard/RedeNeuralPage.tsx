@@ -1092,7 +1092,24 @@ export default function RedeNeuralPage() {
 
         {/* Neural Consciousness - Dedicated Loop + A/B Testing */}
         <TabsContent value="consciousness" className="space-y-4">
+          {/* Energy Orb */}
+          <NeuralErrorBoundary fallbackTitle="Erro no Energy Orb">
+            <Suspense fallback={null}>
+              <div className="flex justify-center">
+                <PlasmaCanvas className="w-48 h-48" />
+              </div>
+            </Suspense>
+          </NeuralErrorBoundary>
+
           <NeuralConsciousnessLoop />
+
+          {/* Hopfield Visualization */}
+          <NeuralErrorBoundary fallbackTitle="Erro no Hopfield">
+            <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+              <HopfieldVisualization />
+            </Suspense>
+          </NeuralErrorBoundary>
+
           <NeuralErrorBoundary fallbackTitle="Erro nas Métricas A/B">
             <ABMetricsDashboard />
           </NeuralErrorBoundary>
