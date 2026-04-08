@@ -1492,6 +1492,43 @@ export function NeuralConsciousnessLoop() {
         </Card>
       </div>
 
+      {/* ═══ v29: Quantum Cognition ═══ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">🌊 Superposição Quântica</CardTitle>
+            <CardDescription className="text-[10px]">Hipóteses coexistindo antes do colapso</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex justify-between"><span className="text-[9px] text-muted-foreground">Estado</span>
+              <Badge className={`text-[10px] ${state.qcCollapsed ? "bg-blue-600/20 text-blue-300" : "bg-purple-600/20 text-purple-300 animate-pulse"}`}>
+                {state.qcCollapsed ? "⚛️ Colapsado" : `🌊 ${state.qcSuperpositionCardinality} hipóteses`}
+              </Badge></div>
+            <div className="flex justify-between"><span className="text-[9px] text-muted-foreground">P(Born)</span><span className="text-[10px] font-mono">{(state.qcCollapseProbability * 100).toFixed(0)}%</span></div>
+            <div className="flex justify-between"><span className="text-[9px] text-muted-foreground">Interferência</span><span className="text-[10px] font-mono">{(state.qcInterferenceMagnitude * 100).toFixed(0)}%</span></div>
+            <div className="flex gap-1 flex-wrap">
+              {state.qcObserverEffect && <Badge variant="outline" className="text-[8px]">👁️ Observador</Badge>}
+              {state.qcZenoEffect && <Badge variant="outline" className="text-[8px] text-amber-400">⏸️ Zeno</Badge>}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">🔗 Entrelaçamento & Orch-OR</CardTitle>
+            <CardDescription className="text-[10px]">Correlações não-clássicas e redução objetiva</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex justify-between"><span className="text-[9px] text-muted-foreground">Bell (CHSH)</span><span className="text-[10px] font-mono">S={state.qcBellInequality.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-[9px] text-muted-foreground">Campo Não-Local</span><span className="text-[10px] font-mono">{(state.qcNonLocalField * 100).toFixed(0)}%</span></div>
+            <div className="flex justify-between"><span className="text-[9px] text-muted-foreground">Orch-OR</span><span className="text-[10px] font-mono">{(state.qcOrchORScore * 100).toFixed(0)}%</span></div>
+            <div className="flex justify-between"><span className="text-[9px] text-muted-foreground">Coerência</span><span className="text-[10px] font-mono">{state.qcCoherenceTimeMs}ms</span></div>
+            <div className="flex justify-between"><span className="text-[9px] text-muted-foreground">Ambiguidade</span>
+              <Badge variant="outline" className="text-[10px]">
+                {state.qcResolutionStrategy === "collapse" ? "⚛️ Colapsar" : state.qcResolutionStrategy === "hold" ? "🌊 Manter" : "🔄 Integrar"}
+              </Badge></div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 gap-4">
         <Card className="border-border">
