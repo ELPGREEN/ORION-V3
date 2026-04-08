@@ -20,6 +20,7 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { AffiliateTracker } from "@/components/AffiliateTracker";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { AnalyticsProvider } from "@/components/common/AnalyticsProvider";
 
 // ─── Public Pages (no auth required) ───
 const Index = lazy(lazyRetry(() => import("./pages/Index")));
@@ -127,6 +128,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <AnalyticsProvider />
           <ScrollToTop />
           <CopyProtection />
           <OrionShield />
