@@ -789,14 +789,14 @@ export function GlobalOrionListener() {
             )}>
               {conversationalStatus === "listening"
                 ? "🎙️ Ouvindo…"
-                : wakeWordActive ? `⚡ Diga "${wakeWordHint}"` : wakeWordHint}
+                : wakeWordActive ? "⚡ Ativo" : "Orion"}
             </span>
           </div>
 
           {/* Hover tooltip */}
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
             <div className="bg-card/95 backdrop-blur-sm text-[10px] font-mono text-foreground/70 px-2 py-1 rounded border border-border/30 whitespace-nowrap shadow-lg">
-              {wakeWordActive ? `⚡ Relâmpago Vivo — Diga "${wakeWordHint}"` : "Abrir Orion"}
+              {wakeWordActive ? "⚡ Escutando…" : "Abrir Orion"}
             </div>
           </div>
         </div>
