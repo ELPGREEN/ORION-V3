@@ -57,13 +57,12 @@ export async function connectGeminiLive(options: GeminiLiveOptions = {}): Promis
 
   console.log(`[Gemini Live] Connecting in ${tokenData.mode} mode, voice: ${tokenData.voice}`);
 
-  // Build the WebSocket URL for BidiGenerateContent
-  let wsUrl: string;
-  if (tokenData.mode === "direct" && tokenData.apiKey) {
-    wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${tokenData.apiKey}`;
-  } else {
-    wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?access_token=${tokenData.token}`;
-  }
+  // The edge function already provides the full wsUrl with credentials embedded.
+  // We need to rewrite it to use the BidiGenerateContent WebSocket endpoint.
+  const baseUrl = tokenData.wsUrl;
+  const paramSeparator = baseUrl.includes("?") ? "&" : "?";
+  const credParam = baseUrl.split("?")[1] || "";
+  const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?${credParam}`;
 
   const ws = new WebSocket(wsUrl);
   let _connected = false;
