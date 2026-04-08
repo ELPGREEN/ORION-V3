@@ -6,10 +6,28 @@
 
 let geminiTTSDisabled = false;
 let geminiTTSRetryAfter = 0;
+const DEFAULT_FALLBACK_RETRY_MS = 15_000;
 
 export interface GeminiTTSResult {
   played: boolean;
   audio: HTMLAudioElement | null;
+}
+
+function disableGeminiTTS(retryAfterMs: number, reason: string): void {
+  const safeRetryMs = Math.max(5000, Math.min(retryAfterMs, 5 * 60_000));
+  geminiTTSDisabled = true;
+  geminiTTSRetryAfter = Date.now() + safeRetryMs;
+  console.warn(`[Gemini TTS] ${reason}; disabled for ${Math.ceil(safeRetryMs / 1000)}s`);
+}
+
+function isGeminiTTSCoolingDown(): boolean {
+  if (!geminiTTSDisabled) return false;
+  if (Date.now() >= geminiTTSRetryAfter) {
+    geminiTTSDisabled = false;
+    geminiTTSRetryAfter = 0;
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -28,7 +46,7 @@ function splitIntoSentences(text: string): string[] {
     }
   }
   if (current.trim()) chunks.push(current.trim());
-  return chunks.filter(c => c.length > 2);
+  return chunks.filter((c) => c.length > 2);
 }
 
 /**
@@ -42,7 +60,8 @@ async function fetchGeminiAudio(
   stylePrompt?: string,
   lang?: string,
 ): Promise<Blob | null> {
-  // Per-sentence abort with 10s timeout
+  if (signal.aborted || isGeminiTTSCoolingDown()) return null;
+
   const sentenceController = new AbortController();
   const sentenceTimeout = setTimeout(() => sentenceController.abort(), 10000);
   const onParentAbort = () => sentenceController.abort();
@@ -64,21 +83,32 @@ async function fetchGeminiAudio(
     if (sentenceController.signal.aborted || signal.aborted) return null;
 
     if (response.status === 429) {
-      geminiTTSDisabled = true;
-      geminiTTSRetryAfter = Date.now() + 30_000;
-      console.warn("[Gemini TTS] Rate limited, disabled for 30s");
+      disableGeminiTTS(30_000, "Rate limited by edge function");
       return null;
     }
 
     const contentType = response.headers.get("content-type") || "";
-    
-    // If response is JSON, it's an error (even if status 200)
+
     if (!contentType.includes("audio/")) {
       const data = await response.json().catch(() => null);
+
       if (data?.fallback || data?.error) {
-        console.warn("[Gemini TTS] Server error:", data?.error);
-        // Don't disable for long — retry next sentence
+        const retryAfterMs = typeof data?.retry_after_ms === "number" && Number.isFinite(data.retry_after_ms)
+          ? data.retry_after_ms
+          : data?.rate_limited
+            ? 30_000
+            : DEFAULT_FALLBACK_RETRY_MS;
+
+        if (data?.rate_limited || data?.retry_after_ms) {
+          disableGeminiTTS(retryAfterMs, data?.error || "Fallback response from Gemini TTS");
+        }
+
+        console.warn("[Gemini TTS] Server fallback:", data?.error);
         return null;
+      }
+
+      if (!response.ok) {
+        disableGeminiTTS(DEFAULT_FALLBACK_RETRY_MS, `Edge function error ${response.status}`);
       }
       return null;
     }
@@ -103,8 +133,11 @@ async function fetchGeminiAudio(
  */
 function playAudioBlob(blob: Blob, signal: AbortSignal): Promise<HTMLAudioElement | null> {
   return new Promise((resolve) => {
-    if (signal.aborted) { resolve(null); return; }
-    
+    if (signal.aborted) {
+      resolve(null);
+      return;
+    }
+
     const audioUrl = URL.createObjectURL(blob);
     const audio = new Audio(audioUrl);
 
@@ -150,14 +183,8 @@ export async function speakWithGeminiTTS(
 ): Promise<GeminiTTSResult> {
   const fail: GeminiTTSResult = { played: false, audio: null };
   if (!text?.trim()) return fail;
-  if (signal?.aborted) return fail;
+  if (signal?.aborted || isGeminiTTSCoolingDown()) return fail;
 
-  if (geminiTTSDisabled && Date.now() < geminiTTSRetryAfter) return fail;
-  if (geminiTTSDisabled && Date.now() >= geminiTTSRetryAfter) {
-    geminiTTSDisabled = false;
-  }
-
-  // Use a local abort controller that respects the parent signal
   const localController = new AbortController();
   const onExternalAbort = () => localController.abort();
   signal?.addEventListener("abort", onExternalAbort, { once: true });
@@ -167,14 +194,11 @@ export async function speakWithGeminiTTS(
     let anyPlayed = false;
     let lastAudio: HTMLAudioElement | null = null;
     let consecutiveFailures = 0;
-
-    // Pipeline: fetch next while playing current
     let nextBlobPromise: Promise<Blob | null> | null = null;
 
     for (let i = 0; i < sentences.length; i++) {
-      if (localController.signal.aborted) break;
+      if (localController.signal.aborted || isGeminiTTSCoolingDown()) break;
 
-      // Get current blob (either pre-fetched or fetch now)
       let currentBlob: Blob | null;
       if (nextBlobPromise) {
         currentBlob = await nextBlobPromise;
@@ -187,9 +211,8 @@ export async function speakWithGeminiTTS(
 
       if (!currentBlob) {
         consecutiveFailures++;
-        // If first 2 sentences fail, abort early — Gemini TTS is down
-        if (consecutiveFailures >= 2) {
-          console.warn("[Gemini TTS] 2+ consecutive failures — aborting pipeline");
+        if (isGeminiTTSCoolingDown() || consecutiveFailures >= 2) {
+          console.warn("[Gemini TTS] 2+ consecutive failures or cooldown triggered — aborting pipeline");
           break;
         }
         continue;
@@ -197,12 +220,10 @@ export async function speakWithGeminiTTS(
 
       consecutiveFailures = 0;
 
-      // Start fetching next sentence while current plays
-      if (i + 1 < sentences.length && !localController.signal.aborted) {
+      if (i + 1 < sentences.length && !localController.signal.aborted && !isGeminiTTSCoolingDown()) {
         nextBlobPromise = fetchGeminiAudio(sentences[i + 1], voice, localController.signal, stylePrompt, lang);
       }
 
-      // Play current
       const audio = await playAudioBlob(currentBlob, localController.signal);
       if (audio) {
         anyPlayed = true;
@@ -225,7 +246,7 @@ export async function speakWithGeminiTTS(
 
 /** Check if Gemini TTS is currently available */
 export function isGeminiTTSAvailable(): boolean {
-  return !geminiTTSDisabled || Date.now() >= geminiTTSRetryAfter;
+  return !isGeminiTTSCoolingDown();
 }
 
 /** Available Gemini TTS voices */
