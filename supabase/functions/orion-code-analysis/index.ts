@@ -27,7 +27,8 @@ serve(async (req) => {
 
   try {
     const GITHUB_PAT = Deno.env.get("GITHUB_PAT_CHILD") || Deno.env.get("CHILD_GIT_TOKEN");
-    const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
+    const _gkN4 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
+    const GEMINI_KEY = _gkN4.map(n => Deno.env.get(n)).filter(Boolean)[Math.floor(Math.random() * 8)] as string || "";
 
     if (!GITHUB_PAT) {
       return new Response(JSON.stringify({ error: "GitHub PAT not configured" }), {

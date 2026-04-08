@@ -323,7 +323,8 @@ Texto corrido acadêmico em português. Compare com o direito brasileiro quando 
   }
 
   // Gemini
-  for (const key of [ Deno.env.get("GEMINI_API_KEY")].filter(Boolean) as string[]) {
+  const _gkN1 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
+  for (const key of _gkN1.map(n => Deno.env.get(n)).filter((k): k is string => !!k)) {
     const r = await tryProvider("gemini", async () => {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
         method: "POST", headers: { "Content-Type": "application/json" },
