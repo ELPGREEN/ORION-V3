@@ -291,29 +291,6 @@ export interface QuantumMetacognitionResult {
   /** v29: Quantum cognition layer */
   quantumCognition: QuantumCognitionLayer;
 }
-  uncertaintyScore: number;
-  hallucinationRisk: number;
-  calibrationError: number;
-  activeSkills: SkillAbstraction[];
-  reflectionChain: string[];
-  adaptivePlanScore: number;
-  adaptiveAction: AdaptivePlanAction;
-  quantumMetrics: WaveFunctionMetrics;
-  riskLevel: "safe" | "caution" | "warning" | "critical";
-  reasoningMode: ReasoningModeState;
-  hallucinationSnapshot: HallucinationSnapshot;
-  alignmentAudit: AlignmentAudit;
-  /** v28: Prospective monitoring (before task) */
-  prospective: ProspectiveMonitoring;
-  /** v28: Online monitoring (during execution) */
-  online: OnlineMonitoring;
-  /** v28: Regulation & control (metacognitive action) */
-  regulation: RegulationControl;
-  /** v28: Retrospective evaluation (after task) */
-  retrospective: RetrospectiveEvaluation;
-  /** v28: Support infrastructure */
-  infrastructure: SupportInfrastructure;
-}
 
 // ═══════════════════════════════════════════════════════════════════
 //  CALIBRATION HISTORY (ring buffer)
