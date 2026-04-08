@@ -433,25 +433,33 @@ export function PlasmaCanvas({ className = "" }: { className?: string }) {
         lastModeChange = now;
       }
 
-      // ═══ Real consciousness score: derived from actual subsystem health ═══
+      // ═══ Real consciousness score: IIT Phi base + subsystem bonuses ═══
+      // The consciousness engine (Global Workspace) runs independently and provides
+      // the real phi/PLV values. We use those as the foundation (60-85% range),
+      // then add bonuses for active subsystems (vision, mic, reasoning).
+      const consciousnessState = (window as any).__orion_consciousness_snapshot__;
+      const basePhi = consciousnessState?.phi ?? 0.5; // IIT Phi from consciousness engine
+      const basePLV = consciousnessState?.globalPLV ?? 0.5;
+      // Base: phi-weighted consciousness floor (50-85% when engine is running)
+      const consciousnessBase = Math.round((basePhi * 0.6 + basePLV * 0.4) * 85);
+
       if (OrbState.active) {
-        let score = 30; // base: camera active
-        score += OrbState.regions.length > 0 ? 15 : 0; // vision detecting regions
-        score += OrbState.aiResponding ? 15 : 0; // reasoning pipeline active
-        // Check mic arbiter health via window global
+        let bonus = 5; // camera active bonus
+        bonus += OrbState.regions.length > 0 ? 5 : 0; // vision detecting regions
+        bonus += OrbState.aiResponding ? 5 : 0; // reasoning pipeline active
         const micState = (window as any).__orion_mic_arbiter__;
-        if (micState && micState.rec) score += 15; // mic has active owner
-        if (micState && micState.mode === "command") score += 10; // in command mode (STT active)
-        // Recent frame detection
+        if (micState && micState.rec) bonus += 3; // mic has active owner
+        if (micState && micState.mode === "command") bonus += 2; // STT active
         const rtv = (window as any).__orion_last_rt_vision_ts__;
-        if (rtv && Date.now() - rtv < 5000) score += 15; // fresh frame within 5s
-        OrbState.awareness = Math.min(100, score);
+        if (rtv && Date.now() - rtv < 5000) bonus += 5; // fresh frame within 5s
+        OrbState.awareness = Math.min(100, consciousnessBase + bonus);
       } else {
-        // Idle but check if mic is at least listening for wake word
-        let idleScore = 15;
+        // Idle: consciousness engine still provides base awareness
+        let idleBonus = 0;
         const micState = (window as any).__orion_mic_arbiter__;
-        if (micState && micState.rec && micState.mode === "wake") idleScore += 10;
-        OrbState.awareness = idleScore + Math.sin(t * 0.5) * 5;
+        if (micState && micState.rec && micState.mode === "wake") idleBonus += 5;
+        // Small oscillation for organic feel
+        OrbState.awareness = Math.max(10, Math.min(100, consciousnessBase + idleBonus + Math.sin(t * 0.5) * 3));
       }
 
       gl.uniform1f(timeLoc, t);
