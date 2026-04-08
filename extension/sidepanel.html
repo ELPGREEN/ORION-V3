@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orion — Painel Lateral</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #08091a;
+      color: #e8eaf0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sp-header {
+      padding: 16px;
+      background: linear-gradient(160deg, #0c1230, #0e0a24);
+      border-bottom: 1px solid rgba(0, 180, 212, 0.15);
+    }
+    .sp-header-row { display: flex; align-items: center; gap: 10px; }
+    .sp-logo { width: 32px; height: 32px; border-radius: 8px; }
+    .sp-header h1 { font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+    .sp-header .sp-version { font-size: 10px; color: #555; margin-top: 2px; }
+    .sp-status { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .sp-badge { font-size: 9px; padding: 3px 8px; border-radius: 10px; font-weight: 600; }
+    .sp-badge.on { background: rgba(0,180,212,0.1); color: #00B4D4; border: 1px solid rgba(0,180,212,0.2); }
+    .sp-badge.off { background: rgba(255,255,255,0.04); color: #555; border: 1px solid rgba(255,255,255,0.06); }
+    .sp-badge.vision { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.2); }
+
+    /* Tabs */
+    .sp-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.2); }
+    .sp-tab { flex: 1; padding: 10px 8px; text-align: center; font-size: 11px; font-weight: 600; cursor: pointer; color: #6b7280; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .sp-tab.active { color: #00B4D4; border-bottom-color: #00B4D4; background: rgba(0,180,212,0.05); }
+    .sp-tab:hover { color: #9ca3af; }
+
+    /* Tab Content */
+    .sp-content { flex: 1; overflow-y: auto; }
+    .sp-tab-panel { display: none; padding: 12px; }
+    .sp-tab-panel.active { display: block; }
+
+    /* Chat Tab */
+    .sp-messages { min-height: 200px; max-height: calc(100vh - 340px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
+    .sp-msg { padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.5; max-width: 90%; word-break: break-word; }
+    .sp-msg.user { background: rgba(0,180,212,0.12); color: #e8eaf0; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .sp-msg.assistant { background: rgba(255,255,255,0.05); color: #ccc; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .sp-msg.system { background: rgba(124,77,255,0.1); color: #b794f4; align-self: center; font-size: 11px; text-align: center; }
+    .sp-input-area { display: flex; gap: 8px; padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.2); }
+    .sp-input-area input { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 14px; color: #e8eaf0; font-size: 13px; outline: none; }
+    .sp-input-area input:focus { border-color: #00B4D4; }
+    .sp-input-area input::placeholder { color: #555; }
+    .sp-send-btn { background: linear-gradient(135deg, #00B8D4, #7C4DFF); border: none; border-radius: 10px; padding: 10px 16px; color: white; font-weight: 600; font-size: 12px; cursor: pointer; transition: opacity 0.2s; }
+    .sp-send-btn:hover { opacity: 0.85; }
+
+    /* Tools Tab */
+    .sp-tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .sp-tool-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); cursor: pointer; transition: all 0.2s; color: #c9cdd5; }
+    .sp-tool-btn:hover { background: rgba(0,180,212,0.08); border-color: rgba(0,180,212,0.2); transform: translateY(-1px); }
+    .sp-tool-btn .icon { font-size: 20px; }
+    .sp-tool-btn .label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Notes Tab */
+    .sp-note-item { padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 6px; }
+    .sp-note-text { font-size: 12px; color: #ccc; line-height: 1.4; }
+    .sp-note-meta { font-size: 9px; color: #555; margin-top: 4px; display: flex; justify-content: space-between; }
+    .sp-note-delete { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 10px; opacity: 0.6; }
+    .sp-note-delete:hover { opacity: 1; }
+    .sp-empty { text-align: center; color: #555; padding: 40px 20px; font-size: 12px; }
+
+    /* Links Tab */
+    .sp-links-section { margin-bottom: 16px; }
+    .sp-links-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: #4a4f5c; margin-bottom: 8px; font-weight: 600; }
+    .sp-links-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .sp-link-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s; color: inherit; text-decoration: none; }
+    .sp-link-btn:hover { background: rgba(0,180,212,0.08); border-color: rgba(0,180,212,0.15); }
+    .sp-link-icon { font-size: 18px; }
+    .sp-link-label { font-size: 9px; color: #6b7280; text-align: center; line-height: 1.2; }
+
+    /* Capabilities */
+    .sp-caps { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
+    .sp-cap-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border-radius: 6px; }
+    .sp-cap-name { font-size: 11px; color: #9ca3af; display: flex; align-items: center; gap: 6px; }
+    .sp-cap-status { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    .sp-cap-status.online { background: rgba(34,197,94,0.1); color: #22c55e; }
+    .sp-cap-status.offline { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .sp-cap-status.unknown { background: rgba(100,116,139,0.08); color: #64748b; }
+
+    .sp-section-title { font-size: 11px; font-weight: 600; color: #6b7280; margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Search input in tools */
+    .sp-search-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 8px 12px; color: #e8eaf0; font-size: 12px; outline: none; margin-bottom: 8px; }
+    .sp-search-input:focus { border-color: #00B4D4; }
+    .sp-search-input::placeholder { color: #444; }
+    .sp-result-item { padding: 8px 10px; border-radius: 6px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); margin-bottom: 4px; cursor: pointer; }
+    .sp-result-item:hover { background: rgba(0,180,212,0.06); }
+    .sp-result-title { font-size: 12px; color: #ccc; }
+    .sp-result-url { font-size: 9px; color: #0097a7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <div class="sp-header">
+    <div class="sp-header-row">
+      <img src="icon128.png" alt="Orion" class="sp-logo" />
+      <div>
+        <h1>ORION</h1>
+        <div class="sp-version">Assistente Neural v5.0 — Side Panel</div>
+      </div>
+    </div>
+    <div class="sp-status">
+      <span class="sp-badge on" id="sp-status-badge">● Ativo</span>
+      <span class="sp-badge off" id="sp-vision-badge">👁 Visão OFF</span>
+    </div>
+  </div>
+
+  <div class="sp-tabs">
+    <div class="sp-tab active" data-tab="chat">💬 Chat</div>
+    <div class="sp-tab" data-tab="tools">🔧 Ferramentas</div>
+    <div class="sp-tab" data-tab="notes">📝 Notas</div>
+    <div class="sp-tab" data-tab="links">🔗 Links</div>
+  </div>
+
+  <div class="sp-content">
+    <!-- Chat Tab -->
+    <div class="sp-tab-panel active" id="tab-chat">
+      <div class="sp-messages" id="sp-messages">
+        <div class="sp-msg system">Orion v5.0 — Pergunte qualquer coisa</div>
+      </div>
+    </div>
+
+    <!-- Tools Tab -->
+    <div class="sp-tab-panel" id="tab-tools">
+      <div class="sp-tools-grid">
+        <button class="sp-tool-btn" data-tool="summarize"><span class="icon">📝</span><span class="label">Resumir</span></button>
+        <button class="sp-tool-btn" data-tool="analyze"><span class="icon">🔎</span><span class="label">Analisar</span></button>
+        <button class="sp-tool-btn" data-tool="vision"><span class="icon">👁</span><span class="label">Visão</span></button>
+        <button class="sp-tool-btn" data-tool="screenshot"><span class="icon">📸</span><span class="label">Captura</span></button>
+        <button class="sp-tool-btn" data-tool="read"><span class="icon">🔊</span><span class="label">Ler</span></button>
+        <button class="sp-tool-btn" data-tool="extract"><span class="icon">📊</span><span class="label">Extrair</span></button>
+        <button class="sp-tool-btn" data-tool="scrape"><span class="icon">🕸</span><span class="label">Scrape</span></button>
+        <button class="sp-tool-btn" data-tool="translate"><span class="icon">🌐</span><span class="label">Traduzir</span></button>
+      </div>
+
+      <div class="sp-section-title">🔍 Pesquisa Web</div>
+      <input type="text" class="sp-search-input" id="sp-web-search" placeholder="Pesquisar na web..." />
+      <div id="sp-search-results"></div>
+
+      <div class="sp-section-title">🔖 Bookmarks</div>
+      <input type="text" class="sp-search-input" id="sp-bookmark-search" placeholder="Buscar nos favoritos..." />
+      <div id="sp-bookmark-results"></div>
+
+      <div class="sp-section-title">🕐 Histórico</div>
+      <input type="text" class="sp-search-input" id="sp-history-search" placeholder="Buscar no histórico..." />
+      <div id="sp-history-results"></div>
+
+      <div class="sp-section-title">Capacidades</div>
+      <div class="sp-caps" id="sp-caps"></div>
+    </div>
+
+    <!-- Notes Tab -->
+    <div class="sp-tab-panel" id="tab-notes">
+      <div id="sp-notes-list"><div class="sp-empty">Nenhuma nota salva.<br>Selecione texto → botão direito → "Orion: Salvar como nota"</div></div>
+    </div>
+
+    <!-- Links Tab -->
+    <div class="sp-tab-panel" id="tab-links">
+      <div class="sp-links-section">
+        <div class="sp-links-label">IASoft Hub</div>
+        <div class="sp-links-grid">
+          <a class="sp-link-btn" data-link="dashboard"><span class="sp-link-icon">🧠</span><span class="sp-link-label">Dashboard</span></a>
+          <a class="sp-link-btn" data-link="chat"><span class="sp-link-icon">💬</span><span class="sp-link-label">Chat IA</span></a>
+          <a class="sp-link-btn" data-link="documentos"><span class="sp-link-icon">📄</span><span class="sp-link-label">Documentos</span></a>
+          <a class="sp-link-btn" data-link="processos"><span class="sp-link-icon">📋</span><span class="sp-link-label">Processos</span></a>
+          <a class="sp-link-btn" data-link="pesquisa"><span class="sp-link-icon">⚖️</span><span class="sp-link-label">Pesquisa</span></a>
+          <a class="sp-link-btn" data-link="clientes"><span class="sp-link-icon">👥</span><span class="sp-link-label">Clientes</span></a>
+          <a class="sp-link-btn" data-link="agenda"><span class="sp-link-icon">📅</span><span class="sp-link-label">Agenda</span></a>
+          <a class="sp-link-btn" data-link="financeiro"><span class="sp-link-icon">💰</span><span class="sp-link-label">Financeiro</span></a>
+          <a class="sp-link-btn" data-link="aml"><span class="sp-link-icon">🛡</span><span class="sp-link-label">AML/KYC</span></a>
+          <a class="sp-link-btn" data-link="loja"><span class="sp-link-icon">🛒</span><span class="sp-link-label">Loja</span></a>
+          <a class="sp-link-btn" data-link="extension"><span class="sp-link-icon">🧩</span><span class="sp-link-label">Extensão</span></a>
+          <a class="sp-link-btn" data-link="plano"><span class="sp-link-icon">👑</span><span class="sp-link-label">Plano</span></a>
+        </div>
+      </div>
+      <div class="sp-links-section">
+        <div class="sp-links-label">Jurídico</div>
+        <div class="sp-links-grid">
+          <a class="sp-link-btn" data-link="stf"><span class="sp-link-icon">🏛</span><span class="sp-link-label">STF</span></a>
+          <a class="sp-link-btn" data-link="stj"><span class="sp-link-icon">⚖️</span><span class="sp-link-label">STJ</span></a>
+          <a class="sp-link-btn" data-link="cnj"><span class="sp-link-icon">🏛</span><span class="sp-link-label">CNJ</span></a>
+          <a class="sp-link-btn" data-link="lexml"><span class="sp-link-icon">📚</span><span class="sp-link-label">LexML</span></a>
+          <a class="sp-link-btn" data-link="planalto"><span class="sp-link-icon">🇧🇷</span><span class="sp-link-label">Planalto</span></a>
+          <a class="sp-link-btn" data-link="datajud"><span class="sp-link-icon">📊</span><span class="sp-link-label">DataJud</span></a>
+          <a class="sp-link-btn" data-link="tjsp"><span class="sp-link-icon">⚖️</span><span class="sp-link-label">TJSP</span></a>
+          <a class="sp-link-btn" data-link="courtlistener"><span class="sp-link-icon">🔍</span><span class="sp-link-label">CourtListener</span></a>
+          <a class="sp-link-btn" data-link="google_scholar"><span class="sp-link-icon">📖</span><span class="sp-link-label">Scholar</span></a>
+        </div>
+      </div>
+      <div class="sp-links-section">
+        <div class="sp-links-label">Dev & IA</div>
+        <div class="sp-links-grid">
+          <a class="sp-link-btn" data-link="huggingface"><span class="sp-link-icon">🤗</span><span class="sp-link-label">HuggingFace</span></a>
+          <a class="sp-link-btn" data-link="github"><span class="sp-link-icon">🐙</span><span class="sp-link-label">GitHub</span></a>
+          <a class="sp-link-btn" data-link="camara"><span class="sp-link-icon">🏛</span><span class="sp-link-label">Câmara</span></a>
+          <a class="sp-link-btn" data-link="senado"><span class="sp-link-icon">🏛</span><span class="sp-link-label">Senado</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sp-input-area">
+    <input type="text" id="sp-chat-input" placeholder="Pergunte ao Orion..." autocomplete="off" />
+    <button class="sp-send-btn" id="sp-send-btn">Enviar</button>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
