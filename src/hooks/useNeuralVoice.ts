@@ -681,7 +681,7 @@ export function useNeuralVoice(
         const worklet = getAudioWorkletManager({ sampleRate: 16000, chunkSize: 4096 });
         worklet.initialize().then((ok) => {
           if (!ok) return;
-          worklet.onChunk((chunk) => {
+          worklet.onAudioChunk((chunk) => {
             // Keep last ~5s of audio (16000 * 5 / 4096 ≈ 20 chunks)
             audioChunksRef.current.push(chunk);
             if (audioChunksRef.current.length > 20) audioChunksRef.current.shift();

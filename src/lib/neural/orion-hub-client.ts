@@ -338,12 +338,12 @@ export async function visionCaption(imageFile: File | Blob): Promise<VisionCapti
       try {
         const { captionImage } = await import("@/lib/huggingface/transformers-vision");
         const imageUrl = URL.createObjectURL(imageFile);
-        const result = await captionImage(imageUrl);
+        const captionText = await captionImage(imageUrl);
         URL.revokeObjectURL(imageUrl);
-        if (result && result.length > 0 && result[0]?.generated_text) {
+        if (captionText && captionText.length > 0) {
           console.log("[OrionHub] Vision caption via local Transformers.js");
           return {
-            caption: result[0].generated_text,
+            caption: captionText,
             model: "vit-gpt2-local",
             source: "transformers-js-browser",
           };
