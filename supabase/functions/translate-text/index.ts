@@ -88,7 +88,7 @@ serve(async (req) => {
         `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_API_KEY}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
           body: JSON.stringify(translatePayload),
         }
       );
@@ -113,7 +113,7 @@ serve(async (req) => {
             `https://translation.googleapis.com/language/translate/v2/detect?key=${GOOGLE_API_KEY}`,
             {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
               body: JSON.stringify(detectPayload),
             }
           );

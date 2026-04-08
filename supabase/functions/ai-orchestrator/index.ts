@@ -264,7 +264,7 @@ async function generateQueryEmbedding(text: string): Promise<number[]> {
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
           signal: AbortSignal.timeout(10000),
           body: JSON.stringify({
             model: "models/gemini-embedding-001",
@@ -502,7 +502,7 @@ Deno.serve(async (req) => {
 
           const resp = await fetch(`${endpoint}?key=${currentKey}`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
             signal: AbortSignal.timeout(90000),
             body: JSON.stringify({
               contents: geminiContents,

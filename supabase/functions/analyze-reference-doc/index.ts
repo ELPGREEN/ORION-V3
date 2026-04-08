@@ -76,7 +76,7 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: systemPrompt }] },
             contents: [{ role: "user", parts: [{ text: userPrompt }] }],

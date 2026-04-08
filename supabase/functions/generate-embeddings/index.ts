@@ -21,7 +21,7 @@ async function generateEmbeddingSingle(text: string, apiKey: string): Promise<nu
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "models/gemini-embedding-001",
         content: { parts: [{ text: truncated }] },
@@ -50,7 +50,7 @@ async function generateEmbeddingBatch(texts: string[], apiKey: string): Promise<
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents?key=${apiKey}`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       body: JSON.stringify({ requests }),
     }
   );

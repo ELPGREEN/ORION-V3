@@ -319,7 +319,7 @@ Adapte suas respostas conforme essas orientações, mantendo seu tom profissiona
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
             body: JSON.stringify({
               systemInstruction: { parts: [{ text: fullSystemPrompt }] },
               contents: messages.map((m: any) => ({

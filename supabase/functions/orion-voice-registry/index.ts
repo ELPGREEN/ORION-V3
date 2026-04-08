@@ -123,7 +123,7 @@ async function handleSynthesize(body: Record<string, unknown>, _userId: string) 
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${key}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ role: "user", parts: [{ text: `Leia em voz alta: ${String(text)}` }] }],
             generationConfig: {
