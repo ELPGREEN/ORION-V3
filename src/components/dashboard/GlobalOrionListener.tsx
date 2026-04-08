@@ -12,7 +12,7 @@ import { OrionAccessGate } from "@/components/OrionAccessGate";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 // ═══ FIX: Integrate with Mic Arbiter to prevent SpeechRecognition conflicts ═══
-import { claimMic, isMicOwner, registerMicRec, getMicMode } from "@/lib/voice/micArbiter";
+import { claimMic, isMicOwner, registerMicRec, getMicMode, releaseMic } from "@/lib/voice/micArbiter";
 
 /** Speak text using Gemini TTS Algieba with browser TTS fallback */
 async function orionSpeak(text: string): Promise<void> {
@@ -203,6 +203,7 @@ export function GlobalOrionListener() {
     try { cmdRecRef.current?.abort?.(); } catch {}
     try { cmdRecRef.current?.stop?.(); } catch {}
     cmdRecRef.current = null;
+    releaseMic(micOwnerIdRef.current);
   }, []);
 
   const openOrionOverlay = useCallback((command: string) => {
@@ -222,6 +223,9 @@ export function GlobalOrionListener() {
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (!SR) { openOrionOverlay(""); return; }
 
+    // ═══ FIX: Claim mic for command capture to avoid conflict with other STT instances ═══
+    micOwnerIdRef.current = claimMic("command");
+
     stopCommandCapture();
     setConversationalStatus("listening");
     toast.success("🎯 Orion ativado!", { duration: 2000 });
@@ -236,9 +240,9 @@ export function GlobalOrionListener() {
     rec.maxAlternatives = 1;
 
     rec.onresult = (e: any) => {
+      if (!isMicOwner(micOwnerIdRef.current)) return;
       const last = e.results[e.results.length - 1];
       const transcript = (last?.[0]?.transcript || "").trim();
-      // Remove wake word from captured command
       const cleaned = extractCommand(transcript, wakeWordRegexes);
       if (cleaned.length > captured.length) captured = cleaned;
 
@@ -252,6 +256,7 @@ export function GlobalOrionListener() {
 
     rec.onend = () => {
       cmdRecRef.current = null;
+      if (!isMicOwner(micOwnerIdRef.current)) return;
       if (!gotFinal && captured.length > 2) {
         gotFinal = true;
         if (cmdTimeoutRef.current) { clearTimeout(cmdTimeoutRef.current); cmdTimeoutRef.current = null; }
@@ -265,6 +270,7 @@ export function GlobalOrionListener() {
     };
 
     cmdRecRef.current = rec;
+    registerMicRec(rec, "command");
     try { rec.start(); } catch { openOrionOverlay(""); return; }
 
     // 4-second timeout
