@@ -11,10 +11,10 @@ import { OrionAccessGate } from "@/components/OrionAccessGate";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 
-/** Speak text using Gemini TTS Charon (primary voice for all Orion speech) */
+/** Speak text using Gemini TTS Algieba (primary voice for all Orion speech) */
 async function orionSpeak(text: string): Promise<void> {
   try {
-    const result = await speakWithGeminiTTS(text, "Charon");
+    const result = await speakWithGeminiTTS(text, "Algieba");
     if (result.played) return;
   } catch {}
 

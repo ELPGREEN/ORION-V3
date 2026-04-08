@@ -335,8 +335,8 @@ export function useNeuralVoice(
   // speakFast defined after speak below
 
   /**
-   * ═══ TTS — Gemini TTS (Charon) — Única voz ativa ═══
-   * Orion TTS desativado. Apenas Gemini Charon funciona.
+   * ═══ TTS — Gemini TTS (Algieba) — Única voz ativa ═══
+   * Orion TTS desativado. Apenas Gemini Algieba funciona.
    */
   const speak = useCallback(async (text: string) => {
     if (!ttsRef.current || typeof window === "undefined") return;
@@ -376,12 +376,12 @@ export function useNeuralVoice(
     const voicePrefs = getCachedVoicePrefs();
     let played = false;
 
-    // ── PRIMARY: Gemini TTS Charon ──
+    // ── PRIMARY: Gemini TTS Algieba ──
     if (!cascadeAbort.signal.aborted) {
       try {
         const gemResult = await speakWithGeminiTTS(
           cleanText,
-          "Charon",
+          "Algieba",
           cascadeAbort.signal,
           voicePrefs.style_prompt,
           voicePrefs.language,

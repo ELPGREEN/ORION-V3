@@ -1,11 +1,13 @@
 ---
 name: Free voice system
-description: Gemini TTS Charon is the ONLY active voice for Orion. Formant synth only absorbs patterns for evolution.
+description: Gemini TTS Algieba (GA model gemini-2.5-flash-tts) is the ONLY active voice for Orion.
 type: preference
 ---
-- PRIMARY & ONLY voice: Gemini TTS Charon (via edge function gemini-tts)
+- PRIMARY & ONLY voice: Gemini TTS Algieba (via edge function gemini-tts)
+- Model: gemini-2.5-flash-tts (GA stable, NOT preview)
 - Formant synth v23: SILENT — only absorbs voice patterns for future evolution, never speaks
 - No Piper, no SpeechSynthesis, no Google Translate TTS
 - Orion boot messages ("Iniciando sistema", "Sistema ativado") also use Gemini TTS
 - If Gemini TTS fails: silence (prefer no audio over bad quality)
 - Groq LLaVA vision fallback: NOT free, keep deprecated, don't update
+- STT reference: github.com/Steven-Low/gemini_cloud_stt (Home Assistant integration, future reference)
