@@ -626,7 +626,14 @@ export function useNeuralVoice(
     setListening(false);
   }, [clearRestartTimer]);
 
-  useEffect(() => () => clearRestartTimer(), [clearRestartTimer]);
+  useEffect(() => () => {
+    clearRestartTimer();
+    voiceActiveRef.current = false;
+    intentionalStopRef.current = true;
+    try { recRef.current?.abort?.(); } catch {}
+    try { recRef.current?.stop(); } catch {}
+    recRef.current = null;
+  }, [clearRestartTimer]);
 
   return { listening, supported, ttsOn, setTtsOn, speak, speakFast, startListening, stop, bargeIn, startThinking, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef };
 }
