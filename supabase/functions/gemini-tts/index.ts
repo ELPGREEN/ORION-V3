@@ -1,8 +1,12 @@
 /**
- * Gemini TTS — text-to-speech using Gemini 2.5 Flash Native Audio (GA, free)
- * PRIMARY: gemini-2.5-flash-native-audio-dialog (GA since Dec 2025, free tier)
- * FALLBACK: gemini-2.5-flash-preview-tts (preview)
- * Both via Vertex AI (GCP credits) + AI Studio (free keys)
+ * Gemini TTS — text-to-speech using Gemini 2.5 Flash TTS
+ * 
+ * NOTE: gemini-live-2.5-flash-native-audio (GA, free) is for Live API (WebSocket)
+ * only — it does NOT support generateContent. For HTTP TTS we use the dedicated
+ * TTS model via generateContent with responseModalities=["AUDIO"].
+ * 
+ * PRIMARY: Vertex AI endpoint (uses GCP credits via service account JWT)
+ * FALLBACK: AI Studio API keys (free tier)
  */
 
 const corsHeaders = {
@@ -11,9 +15,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// GA native audio model (free) → fallback to TTS preview
 const MODELS = [
-  "gemini-2.5-flash-native-audio-dialog",
   "gemini-2.5-flash-preview-tts",
 ];
 const VERTEX_LOCATION = "us-central1";
