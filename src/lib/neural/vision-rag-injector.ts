@@ -67,7 +67,7 @@ function buildVisualQuery(detections: UnifiedDetection[], visionResult: RealTime
   // Top 5 unique objects by confidence
   const seen = new Set<string>();
   for (const det of detections.slice(0, 8)) {
-    const label = det.namePt || det.label;
+    const label = det.namePt || det.name;
     if (!seen.has(label)) {
       parts.push(label);
       seen.add(label);
@@ -85,8 +85,9 @@ function buildVisualQuery(detections: UnifiedDetection[], visionResult: RealTime
   }
 
   // OCR text (first 50 chars)
-  if (visionResult.ocrResult?.text) {
-    const ocrText = visionResult.ocrResult.text.slice(0, 50);
+  const ocrTexts = visionResult.ocrResult?.texts;
+  if (ocrTexts && ocrTexts.length > 0) {
+    const ocrText = ocrTexts.join(" ").slice(0, 50);
     if (ocrText.length > 3) parts.push(`texto:"${ocrText}"`);
   }
 
