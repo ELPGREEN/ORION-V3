@@ -352,7 +352,7 @@ async function getUserGoogleToken(supabaseClient: any, userId: string): Promise<
 }
 
 async function getGoogleWorkspaceToken(sa: ServiceAccount): Promise<string> {
-  const impersonateEmail = Deno.env.get("GOOGLE_IMPERSONATE_EMAIL");
+  const impersonateEmail = Deno.env.get("GOOGLE_IMPERSONATE_EMAIL")?.trim();
   if (impersonateEmail) {
     return getAccessToken(sa, GOOGLE_WORKSPACE_SCOPES, impersonateEmail);
   }
@@ -842,12 +842,19 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action } = body;
+    const action = typeof body?.action === "string" ? body.action : "";
+    if (!action) {
+      return new Response(JSON.stringify({ error: "Missing action" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const sa = getServiceAccount();
     
-    // Resolve user's Google OAuth token (or fallback to SA) for Google Workspace actions
-    const isGoogleAction = action.startsWith("google.");
-    const gToken = isGoogleAction ? await getEffectiveToken(sa, supabase, user.id) : "";
+    // Resolve Google's effective token only for actual Workspace API calls.
+    // OAuth helper actions manage token state and must not depend on Workspace impersonation.
+    const requiresGoogleWorkspaceToken =
+      action.startsWith("google.") && !action.startsWith("google.oauth.");
+    const gToken = requiresGoogleWorkspaceToken ? await getEffectiveToken(sa, supabase, user.id) : "";
 
     let result: unknown;
 
