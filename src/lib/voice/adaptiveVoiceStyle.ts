@@ -24,11 +24,11 @@ export interface VoiceStylePrefs {
 }
 
 const DEFAULT_PREFS: VoiceStylePrefs = {
-  style_prompt: "Fale de forma natural, clara e fluida em português brasileiro. Use um tom profissional mas amigável.",
-  voice_name: "Algieba",
+  style_prompt: "Fale de forma calma, pausada e confiante em português brasileiro. Use um tom grave, sereno e elegante, como um assistente de IA sofisticado. Sem pressa, sem emoção excessiva. Projete autoridade tranquila.",
+  voice_name: "Orus",
   speech_rate: "normal",
   accent: "neutro",
-  tone: "profissional",
+  tone: "calmo",
   language: "pt-BR",
   extra_instructions: [],
 };
