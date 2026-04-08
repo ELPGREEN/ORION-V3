@@ -464,28 +464,31 @@ export function GlobalOrionListener() {
           return;
         }
 
-        // If session was very short (<2s) and got no results, it's an unstable abort — use longer delay
-        const isUnstableSession = sessionDuration < 2000 && !sessionStartRef.gotResult;
+        // In non-continuous mode, sessions end naturally after speech/silence
+        // Only count as unstable if it was truly a broken session (<1.5s with no result)
+        const isUnstableSession = sessionDuration < 1500 && !sessionStartRef.gotResult;
         if (isUnstableSession) {
           restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
+        } else {
+          // Healthy session — reset attempts
+          restartAttemptsRef.current = Math.max(0, restartAttemptsRef.current - 1);
         }
         
         if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
-          console.log("[GlobalOrion] Max restart attempts reached, pausing for 15s then retry");
+          console.log("[GlobalOrion] Max restart attempts reached, pausing for 30s then retry");
           setWakeWordActive(false);
-          // Don't give up permanently — retry after 15s cooldown
           clearRestartTimer();
           restartTimerRef.current = setTimeout(() => {
             restartAttemptsRef.current = 0;
             if (wakeWordEnabledRef.current && !wakeRecRef.current && !startInFlightRef.current && !orionOpen && !isOnNeuralPage && permissionsGranted && !(typeof document !== "undefined" && document.hidden)) {
               startWakeWordListener();
             }
-          }, 15000);
+          }, 30000);
           return;
         }
         
-        // Stable sessions (>3s) restart quickly; unstable ones use backoff
-        const delay = isUnstableSession ? getRestartDelay("end") : 300;
+        // Normal end in non-continuous mode — restart quickly
+        const delay = isUnstableSession ? getRestartDelay("end") : getRestartDelay("normal-end");
         console.log(`[GlobalOrion] Will restart in ${delay}ms (attempt ${restartAttemptsRef.current})`);
         setWakeWordActive(true);
         clearRestartTimer();
