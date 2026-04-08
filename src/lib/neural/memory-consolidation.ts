@@ -83,7 +83,7 @@ function loadEpisodes(): MemoryEntry[] {
       ...e,
       accessCount: e.accessCount ?? 1,
       priority: e.priority ?? 0.5,
-      lastAccessed: e.lastAccessed ?? Date.parse(e.endTime) || Date.now(),
+      lastAccessed: e.lastAccessed ?? (Date.parse(e.endTime) || Date.now()),
     }));
   } catch {
     return [];
