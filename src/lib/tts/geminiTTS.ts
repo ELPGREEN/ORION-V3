@@ -33,13 +33,18 @@ function isGeminiTTSCoolingDown(): boolean {
 
 /**
  * Split text into sentence-level chunks for progressive playback.
+ * Uses large chunks (800 chars) to avoid choppy pauses between sentences.
+ * Short texts (≤1000 chars) are sent as a single chunk.
  */
 function splitIntoSentences(text: string): string[] {
-  const sentences = text.match(/[^.!?…;]+[.!?…;]+\s*/g) || [text];
+  // Short texts → single chunk (no splitting = no pauses)
+  if (text.length <= 1000) return [text.trim()];
+
+  const sentences = text.match(/[^.!?…]+[.!?…]+\s*/g) || [text];
   const chunks: string[] = [];
   let current = "";
   for (const s of sentences) {
-    if (current.length + s.length > 200 && current.length > 0) {
+    if (current.length + s.length > 800 && current.length > 0) {
       chunks.push(current.trim());
       current = s;
     } else {
