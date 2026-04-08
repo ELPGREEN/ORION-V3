@@ -374,7 +374,10 @@ export function GlobalOrionListener() {
       try {
       const rec = new SR();
       rec.lang = "pt-BR";
-      rec.continuous = true;
+      // ═══ FIX: Use non-continuous mode to prevent Chrome iframe "aborted" loops ═══
+      // continuous=true gets killed after ~1s in iframes/preview contexts
+      // Instead we use short sessions and restart on onend for the same effect
+      rec.continuous = false;
       rec.interimResults = true;
       rec.maxAlternatives = 3;
 
