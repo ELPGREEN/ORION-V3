@@ -19,13 +19,38 @@ import type { SystemHealthSnapshot, SystemMode } from "./system-health";
 // ─── Types ───
 
 export type VisceralSignal =
-  | "homeostasis"       // System in balance
-  | "cognitive_load"    // High processing demand
-  | "provider_stress"   // AI providers degraded
-  | "memory_pressure"   // Storage/cache near limits
-  | "pipeline_fatigue"  // Long task queues
-  | "thermal_warning"   // CPU/GPU high utilization
-  | "resource_depletion"; // API quotas nearing limits
+  | "homeostasis"           // System in balance
+  | "cognitive_load"        // High processing demand
+  | "provider_stress"       // AI providers degraded
+  | "memory_pressure"       // Storage/cache near limits
+  | "pipeline_fatigue"      // Long task queues
+  | "thermal_warning"       // CPU/GPU high utilization
+  | "resource_depletion"    // API quotas nearing limits
+  // v26: Robotic Interoception signals
+  | "proprioception_drift"  // Visual proprioception: servo/motor command vs observed position mismatch
+  | "hardware_degradation"  // Internal hardware integrity: wear, overheating, mechanical stress
+  | "biofeedback_alert"     // User biofeedback: integration quality with human operator
+  | "iaa_prediction";       // Intelligent Adaptive AI: predictive risk from visual internal state
+
+/** v26: Robotic interoception — visual proprioception + hardware integrity */
+export interface RoboticInteroception {
+  /** Visual proprioception: command-observation error (0=perfect, 1=total mismatch) */
+  proprioceptionError: number;
+  /** Hardware integrity score (1=pristine, 0=critical failure) */
+  hardwareIntegrity: number;
+  /** Component temperatures (normalized 0-1, >0.8 = overheating) */
+  thermalMap: Record<string, number>;
+  /** Biofeedback integration quality with human operator (0-1) */
+  biofeedbackQuality: number;
+  /** IAA predictive risk score (0=safe, 1=imminent failure) */
+  iaaPredictiveRisk: number;
+  /** Active internal cameras / visual sensors count */
+  activeInternalSensors: number;
+  /** Mechanical wear index (0=new, 1=end-of-life) */
+  mechanicalWear: number;
+  /** Balance/equilibrium confidence (0=falling, 1=perfect balance) */
+  equilibriumConfidence: number;
+}
 
 export interface InteroceptiveState {
   /** Overall internal valence: -1 (distressed) to 1 (thriving) */
@@ -46,6 +71,8 @@ export interface InteroceptiveState {
   timestamp: number;
   /** Cycle count for temporal tracking */
   cycle: number;
+  /** v26: Robotic interoception layer */
+  robotic: RoboticInteroception;
 }
 
 export interface InteroceptiveConfig {
