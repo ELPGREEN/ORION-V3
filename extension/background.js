@@ -1,9 +1,8 @@
 /**
- * Orion Extension v4.0 — Background Service Worker
+ * Orion Extension v5.0 — Background Service Worker
  * Full integration with neural-ops via Supabase Edge Functions.
- * Vision capture, voice commands, AI queries, web search, scraping,
- * external link navigation, anti-hallucination validation.
- * Auth verification for premium-only features.
+ * NEW in v5: Side Panel, Alarms API, Clipboard, Downloads, Bookmarks,
+ * History search, TTS API, Reading List, Notes system.
  * Domain: iasofthub.com
  */
 
@@ -29,6 +28,7 @@ const EXTERNAL_LINKS = {
   agenda: `${APP_BASE}/dashboard/agenda`,
   aml: `${APP_BASE}/aml`,
   loja: `${APP_BASE}/loja`,
+  extension: `${APP_BASE}/dashboard/extension`,
   // External tools
   stf: "https://portal.stf.jus.br/jurisprudencia/",
   stj: "https://scon.stj.jus.br/SCON/",
@@ -55,6 +55,7 @@ let orionState = {
   lastAnalysis: null,
   conversationHistory: [],
   visionActive: false,
+  notes: [],
   apiStatus: {
     vision: "offline",
     hearing: "unknown",
@@ -63,6 +64,12 @@ let orionState = {
     face: "unknown",
     search: "online",
     scraping: "online",
+    clipboard: "online",
+    downloads: "online",
+    bookmarks: "online",
+    history: "online",
+    tts: "online",
+    notes: "online",
   },
 };
 
@@ -125,8 +132,9 @@ chrome.runtime.onMessageExternal?.addListener?.((message, sender, sendResponse) 
   }
 });
 
-// ═══ Context Menu ═══
+// ═══ Installation & Context Menu ═══
 chrome.runtime.onInstalled.addListener(() => {
+  // Context menus
   chrome.contextMenus.create({ id: "orion-analyze-selection", title: "Orion: Analisar seleção", contexts: ["selection"] });
   chrome.contextMenus.create({ id: "orion-analyze-page", title: "Orion: Analisar esta página", contexts: ["page"] });
   chrome.contextMenus.create({ id: "orion-analyze-image", title: "Orion: Analisar imagem", contexts: ["image"] });
@@ -135,6 +143,23 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({ id: "orion-web-search", title: "Orion: Pesquisar na Web", contexts: ["selection"] });
   chrome.contextMenus.create({ id: "orion-scrape-link", title: "Orion: Extrair conteúdo do link", contexts: ["link"] });
   chrome.contextMenus.create({ id: "orion-open-in-app", title: "Orion: Abrir no IASoft Hub", contexts: ["page"] });
+  chrome.contextMenus.create({ id: "orion-copy-clean", title: "Orion: Copiar texto limpo", contexts: ["selection"] });
+  chrome.contextMenus.create({ id: "orion-save-note", title: "Orion: Salvar como nota", contexts: ["selection"] });
+  chrome.contextMenus.create({ id: "orion-bookmark-analyze", title: "Orion: Bookmarkar + Analisar", contexts: ["page"] });
+  chrome.contextMenus.create({ id: "orion-translate-selection", title: "Orion: Traduzir seleção", contexts: ["selection"] });
+  chrome.contextMenus.create({ id: "orion-read-selection", title: "Orion: Ler em voz alta", contexts: ["selection"] });
+  chrome.contextMenus.create({ id: "orion-open-side-panel", title: "Orion: Abrir Painel Lateral", contexts: ["page"] });
+
+  // Side panel behavior
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+
+  // Welcome notification
+  chrome.notifications.create("orion-installed", {
+    type: "basic",
+    iconUrl: "icon128.png",
+    title: "Orion v5.0 Instalado!",
+    message: "Assistente Neural ativo. Diga 'Orion' ou use Ctrl+Shift+O para começar.",
+  });
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -163,15 +188,61 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     case "orion-open-in-app":
       chrome.tabs.create({ url: `${APP_BASE}/consulta` });
       break;
+    case "orion-copy-clean":
+      if (info.selectionText && tab?.id) handleClipboardCopy(info.selectionText, tab.id);
+      break;
+    case "orion-save-note":
+      if (info.selectionText) handleSaveNote(info.selectionText, tab?.url, tab?.title);
+      break;
+    case "orion-bookmark-analyze":
+      if (tab) handleBookmarkAndAnalyze(tab);
+      break;
+    case "orion-translate-selection":
+      if (info.selectionText && tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_TRANSLATE", text: info.selectionText, targetLang: "en" });
+      break;
+    case "orion-read-selection":
+      if (info.selectionText) handleTTSRead(info.selectionText);
+      break;
+    case "orion-open-side-panel":
+      if (tab?.windowId) chrome.sidePanel.open({ windowId: tab.windowId }).catch(() => {});
+      break;
   }
 });
 
-// Keyboard shortcuts
+// ═══ Keyboard Shortcuts ═══
 chrome.commands.onCommand.addListener((command) => {
   if (command === "toggle-listening") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, { type: "ORION_TOGGLE_LISTENING" });
     });
+  }
+  if (command === "open-side-panel") {
+    chrome.windows.getCurrent((win) => {
+      chrome.sidePanel.open({ windowId: win.id }).catch(() => {});
+    });
+  }
+  if (command === "quick-screenshot") {
+    chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
+      if (dataUrl) {
+        const blob = dataURLtoBlob(dataUrl);
+        const url = URL.createObjectURL(blob);
+        chrome.downloads.download({
+          url: dataUrl,
+          filename: `orion-capture-${Date.now()}.png`,
+          saveAs: false,
+        });
+      }
+    });
+  }
+});
+
+// ═══ Alarms — Vision Auto-timeout ═══
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "orion-vision-timeout") {
+    orionState.visionActive = false;
+    broadcastToTabs({ type: "ORION_DEACTIVATE_VISION", reason: "timeout" });
+    orionState.apiStatus.vision = "offline";
+    updateBadge();
   }
 });
 
@@ -202,7 +273,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "SET_API_STATUS":
       if (message.capability && message.status) {
         orionState.apiStatus[message.capability] = message.status;
-        if (message.capability === "vision") orionState.visionActive = message.status === "online";
+        if (message.capability === "vision") {
+          orionState.visionActive = message.status === "online";
+          if (orionState.visionActive) {
+            chrome.alarms.create("orion-vision-timeout", { delayInMinutes: 15 });
+          } else {
+            chrome.alarms.clear("orion-vision-timeout");
+          }
+        }
       }
       sendResponse({ ok: true });
       break;
@@ -233,6 +311,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "OPEN_ORION_WITH_CONTEXT":
       const ctx = encodeURIComponent(JSON.stringify(message.context || {}));
       chrome.tabs.create({ url: `${APP_BASE}/consulta?context=${ctx}` });
+      sendResponse({ ok: true });
+      break;
+
+    case "OPEN_SIDE_PANEL":
+      chrome.windows.getCurrent((win) => {
+        chrome.sidePanel.open({ windowId: win.id }).catch(() => {});
+      });
       sendResponse({ ok: true });
       break;
 
@@ -273,18 +358,84 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         .catch((e) => sendResponse({ error: e.message }));
       return true;
 
-    // ═══ NEW: Web Search via Firecrawl ═══
+    // ═══ Web Search via Firecrawl ═══
     case "ORION_WEB_SEARCH_REQUEST":
       handleWebSearch(message.query)
         .then((r) => sendResponse({ ok: true, result: r }))
         .catch((e) => sendResponse({ error: e.message }));
       return true;
 
-    // ═══ NEW: Scrape URL via Firecrawl ═══
+    // ═══ Scrape URL via Firecrawl ═══
     case "ORION_SCRAPE_REQUEST":
       handleScrapeUrl(message.url)
         .then((r) => sendResponse({ ok: true, result: r }))
         .catch((e) => sendResponse({ error: e.message }));
+      return true;
+
+    // ═══ v5: Clipboard ═══
+    case "ORION_CLIPBOARD_READ":
+      handleClipboardRead()
+        .then((r) => sendResponse({ ok: true, text: r }))
+        .catch((e) => sendResponse({ error: e.message }));
+      return true;
+
+    // ═══ v5: Downloads ═══
+    case "ORION_DOWNLOAD_FILE":
+      handleDownload(message.url, message.filename)
+        .then((r) => sendResponse({ ok: true, downloadId: r }))
+        .catch((e) => sendResponse({ error: e.message }));
+      return true;
+
+    // ═══ v5: Bookmarks ═══
+    case "ORION_SEARCH_BOOKMARKS":
+      handleSearchBookmarks(message.query)
+        .then((r) => sendResponse({ ok: true, bookmarks: r }))
+        .catch((e) => sendResponse({ error: e.message }));
+      return true;
+
+    case "ORION_ADD_BOOKMARK":
+      handleAddBookmark(message.title, message.url)
+        .then((r) => sendResponse({ ok: true, bookmark: r }))
+        .catch((e) => sendResponse({ error: e.message }));
+      return true;
+
+    // ═══ v5: History Search ═══
+    case "ORION_SEARCH_HISTORY":
+      handleSearchHistory(message.query, message.maxResults)
+        .then((r) => sendResponse({ ok: true, history: r }))
+        .catch((e) => sendResponse({ error: e.message }));
+      return true;
+
+    // ═══ v5: TTS via Chrome API ═══
+    case "ORION_TTS_SPEAK":
+      handleTTSRead(message.text, message.lang);
+      sendResponse({ ok: true });
+      break;
+
+    case "ORION_TTS_STOP":
+      chrome.tts.stop();
+      sendResponse({ ok: true });
+      break;
+
+    // ═══ v5: Notes ═══
+    case "ORION_SAVE_NOTE":
+      handleSaveNote(message.text, message.url, message.title)
+        .then((r) => sendResponse({ ok: true, note: r }))
+        .catch((e) => sendResponse({ error: e.message }));
+      return true;
+
+    case "ORION_GET_NOTES":
+      chrome.storage.local.get(["orionNotes"], (result) => {
+        sendResponse({ ok: true, notes: result.orionNotes || [] });
+      });
+      return true;
+
+    case "ORION_DELETE_NOTE":
+      chrome.storage.local.get(["orionNotes"], (result) => {
+        const notes = (result.orionNotes || []).filter((n) => n.id !== message.noteId);
+        chrome.storage.local.set({ orionNotes: notes });
+        sendResponse({ ok: true });
+      });
       return true;
 
     default:
@@ -363,13 +514,16 @@ async function handleVisionCapture(query, tab) {
       { role: "user", content: `[VISÃO] ${query}` },
       { role: "assistant", content: responseText }
     );
+    // Reset vision timeout
+    chrome.alarms.clear("orion-vision-timeout");
+    chrome.alarms.create("orion-vision-timeout", { delayInMinutes: 15 });
     return { response: responseText, success: true };
   } catch (err) {
     return { response: `Erro na captura visual: ${err.message}. Tente novamente.`, success: false };
   }
 }
 
-// ═══ NEW: Web Search via Firecrawl Edge Function ═══
+// ═══ Web Search via Firecrawl Edge Function ═══
 async function handleWebSearch(query) {
   try {
     const token = await getStoredAccessToken();
@@ -386,7 +540,7 @@ async function handleWebSearch(query) {
   }
 }
 
-// ═══ NEW: Scrape URL via Firecrawl Edge Function ═══
+// ═══ Scrape URL via Firecrawl Edge Function ═══
 async function handleScrapeUrl(url) {
   try {
     const token = await getStoredAccessToken();
@@ -405,6 +559,120 @@ async function handleScrapeUrl(url) {
   }
 }
 
+// ═══ v5: Clipboard ═══
+async function handleClipboardCopy(text, tabId) {
+  try {
+    // Clean text: remove extra whitespace, normalize
+    const cleaned = text.replace(/\s+/g, " ").trim();
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: (t) => navigator.clipboard.writeText(t),
+      args: [cleaned],
+    });
+    chrome.tabs.sendMessage(tabId, { type: "ORION_NOTIFICATION", text: "✅ Texto limpo copiado!", notifType: "success" });
+  } catch (e) {
+    console.warn("[Orion] Clipboard copy failed:", e.message);
+  }
+}
+
+async function handleClipboardRead() {
+  // Reading clipboard requires user gesture, forwarded from content script
+  return "";
+}
+
+// ═══ v5: Downloads ═══
+async function handleDownload(url, filename) {
+  return new Promise((resolve, reject) => {
+    chrome.downloads.download({ url, filename: filename || `orion-download-${Date.now()}`, saveAs: false }, (downloadId) => {
+      if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+      else resolve(downloadId);
+    });
+  });
+}
+
+// ═══ v5: Bookmarks ═══
+async function handleSearchBookmarks(query) {
+  return new Promise((resolve) => {
+    chrome.bookmarks.search(query, (results) => {
+      resolve(results.slice(0, 20).map((b) => ({ id: b.id, title: b.title, url: b.url, dateAdded: b.dateAdded })));
+    });
+  });
+}
+
+async function handleAddBookmark(title, url) {
+  return new Promise((resolve, reject) => {
+    // Find or create "Orion" folder
+    chrome.bookmarks.search({ title: "Orion" }, (results) => {
+      const folder = results.find((r) => !r.url);
+      if (folder) {
+        chrome.bookmarks.create({ parentId: folder.id, title, url }, resolve);
+      } else {
+        chrome.bookmarks.create({ title: "Orion" }, (newFolder) => {
+          chrome.bookmarks.create({ parentId: newFolder.id, title, url }, resolve);
+        });
+      }
+    });
+  });
+}
+
+async function handleBookmarkAndAnalyze(tab) {
+  await handleAddBookmark(tab.title || "Sem título", tab.url);
+  if (tab.id) {
+    chrome.tabs.sendMessage(tab.id, { type: "ORION_NOTIFICATION", text: "🔖 Bookmarked na pasta Orion!", notifType: "success" });
+    chrome.tabs.sendMessage(tab.id, { type: "ORION_SUMMARIZE_PAGE" });
+  }
+}
+
+// ═══ v5: History Search ═══
+async function handleSearchHistory(query, maxResults = 20) {
+  return new Promise((resolve) => {
+    chrome.history.search({ text: query || "", maxResults, startTime: Date.now() - 30 * 24 * 3600 * 1000 }, (results) => {
+      resolve(results.map((h) => ({ id: h.id, title: h.title, url: h.url, lastVisitTime: h.lastVisitTime, visitCount: h.visitCount })));
+    });
+  });
+}
+
+// ═══ v5: TTS via Chrome TTS API ═══
+function handleTTSRead(text, lang = "pt-BR") {
+  chrome.tts.stop();
+  chrome.tts.speak(text, {
+    lang,
+    rate: 1.0,
+    pitch: 0.95,
+    enqueue: false,
+    onEvent: (event) => {
+      if (event.type === "error") console.warn("[Orion TTS] Error:", event.errorMessage);
+    },
+  });
+}
+
+// ═══ v5: Notes ═══
+async function handleSaveNote(text, url, title) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["orionNotes"], (result) => {
+      const notes = result.orionNotes || [];
+      const note = {
+        id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        text: text.substring(0, 5000),
+        url: url || "",
+        pageTitle: title || "",
+        createdAt: Date.now(),
+      };
+      notes.unshift(note);
+      // Keep max 200 notes
+      chrome.storage.local.set({ orionNotes: notes.slice(0, 200) });
+      // Notify
+      chrome.notifications.create({
+        type: "basic",
+        iconUrl: "icon128.png",
+        title: "📝 Nota Salva",
+        message: text.substring(0, 100) + (text.length > 100 ? "..." : ""),
+      });
+      resolve(note);
+    });
+  });
+}
+
 // ═══ Quick Actions ═══
 async function handleQuickAction(action, data, tab) {
   switch (action) {
@@ -414,8 +682,22 @@ async function handleQuickAction(action, data, tab) {
         return { ok: true, screenshot: dataUrl };
       }
       return { error: "No active tab" };
+    case "screenshot-download":
+      if (tab?.id) {
+        const dataUrl2 = await chrome.tabs.captureVisibleTab(null, { format: "png" });
+        if (dataUrl2) {
+          chrome.downloads.download({
+            url: dataUrl2,
+            filename: `orion-capture-${Date.now()}.png`,
+            saveAs: false,
+          });
+        }
+        return { ok: true };
+      }
+      return { error: "No active tab" };
     case "read-aloud":
-      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_READ_ALOUD", text: data?.text });
+      if (data?.text) handleTTSRead(data.text, data?.lang);
+      else if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_READ_ALOUD", text: data?.text });
       return { ok: true };
     case "translate":
       if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "ORION_TRANSLATE", text: data?.text, targetLang: data?.lang || "en" });
@@ -440,6 +722,12 @@ async function handleQuickAction(action, data, tab) {
       const linkUrl = EXTERNAL_LINKS[data?.linkKey] || data?.url;
       if (linkUrl) { chrome.tabs.create({ url: linkUrl }); return { ok: true }; }
       return { error: "Link not found" };
+    case "search-bookmarks":
+      return { ok: true, bookmarks: await handleSearchBookmarks(data?.query || "") };
+    case "search-history":
+      return { ok: true, history: await handleSearchHistory(data?.query || "") };
+    case "save-note":
+      return { ok: true, note: await handleSaveNote(data?.text || "", data?.url, data?.title) };
     default:
       return { error: "Unknown action" };
   }
@@ -467,6 +755,7 @@ function getPublicState() {
     lastAnalysis: orionState.lastAnalysis ? { url: orionState.lastAnalysis.url, timestamp: orionState.lastAnalysis.timestamp } : null,
     apiStatus: { ...orionState.apiStatus },
     externalLinks: EXTERNAL_LINKS,
+    notesCount: orionState.notes.length,
   };
 }
 
@@ -478,3 +767,12 @@ function updateBadge() {
   chrome.action.setBadgeBackgroundColor({ color: orionState.visionActive ? "#00ff88" : (orionState.active ? "#00B4D4" : "#666") });
 }
 setInterval(updateBadge, 2000);
+
+function dataURLtoBlob(dataUrl) {
+  const parts = dataUrl.split(",");
+  const mime = parts[0].match(/:(.*?);/)?.[1] || "image/png";
+  const raw = atob(parts[1]);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Orion — Assistente Neural",
-  "version": "4.0.0",
-  "description": "Assistente IA neural com visão, fala, raciocínio, pesquisa web, scraping, links externos e anti-alucinação. Wake word 'Orion' ativo em qualquer aba.",
+  "version": "5.0.0",
+  "description": "Assistente IA neural com visão, fala, raciocínio, pesquisa web, scraping, clipboard, downloads, side panel, tradução, notas, bookmarks e anti-alucinação. Wake word 'Orion' ativo em qualquer aba.",
   "permissions": [
     "activeTab",
     "storage",
@@ -11,7 +11,15 @@
     "sidePanel",
     "contextMenus",
     "notifications",
-    "offscreen"
+    "offscreen",
+    "alarms",
+    "clipboardRead",
+    "clipboardWrite",
+    "downloads",
+    "bookmarks",
+    "history",
+    "tts",
+    "readingList"
   ],
   "host_permissions": ["<all_urls>"],
   "action": {
@@ -24,6 +32,9 @@
   "background": {
     "service_worker": "background.js",
     "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
   "content_scripts": [
     {
@@ -45,6 +56,20 @@
     "toggle-listening": {
       "suggested_key": { "default": "Ctrl+Shift+L", "mac": "Command+Shift+L" },
       "description": "Ativar/desativar escuta"
+    },
+    "open-side-panel": {
+      "suggested_key": { "default": "Ctrl+Shift+P", "mac": "Command+Shift+P" },
+      "description": "Abrir painel lateral"
+    },
+    "quick-screenshot": {
+      "suggested_key": { "default": "Ctrl+Shift+S", "mac": "Command+Shift+S" },
+      "description": "Captura rápida de tela"
     }
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icon128.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

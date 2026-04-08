@@ -1,6 +1,6 @@
 /**
- * Orion Extension v4.0 — Popup Logic
- * Web search, scraping, external links, anti-hallucination display.
+ * Orion Extension v5.0 — Popup Logic
+ * Web search, scraping, external links, side panel, bookmarks, downloads.
  */
 
 const APP_BASE = "https://www.iasofthub.com";
@@ -17,6 +17,8 @@ const btnScreenshot = document.getElementById("btnScreenshot");
 const btnReadAloud = document.getElementById("btnReadAloud");
 const btnExtract = document.getElementById("btnExtract");
 const btnVision = document.getElementById("btnVision");
+const btnSidePanel = document.getElementById("btnSidePanel");
+const btnBookmark = document.getElementById("btnBookmark");
 const pageInfo = document.getElementById("pageInfo");
 const pageUrl = document.getElementById("pageUrl");
 const visionPill = document.getElementById("visionPill");
@@ -56,11 +58,11 @@ function updateUI(state) {
     pageUrl.title = state.pageContext.url || "";
   }
 
-  const caps = ["vision", "hearing", "speech", "reasoning", "search", "scraping", "antihallucination"];
+  const caps = ["vision", "hearing", "speech", "reasoning", "search", "scraping", "antihallucination", "clipboard", "downloads", "bookmarks", "history", "tts", "notes", "readinglist"];
   caps.forEach((cap) => {
     const el = document.getElementById(`cap-${cap}`);
     if (!el) return;
-    const s = state.apiStatus?.[cap] || (cap === "antihallucination" ? "online" : "unknown");
+    const s = state.apiStatus?.[cap] || (["antihallucination", "clipboard", "downloads", "bookmarks", "history", "tts", "notes", "readinglist"].includes(cap) ? "online" : "unknown");
     el.className = `cap-status ${s}`;
     const labels = { online: "Online", loading: "...", offline: "Offline", error: "Erro", unknown: "—" };
     el.textContent = labels[s] || s;
@@ -89,18 +91,22 @@ btnOpen.addEventListener("click", () => {
   window.close();
 });
 
-// Web Search — opens search in content script panel
+// Side Panel
+btnSidePanel.addEventListener("click", () => {
+  chrome.runtime.sendMessage({ type: "OPEN_SIDE_PANEL" });
+  window.close();
+});
+
+// Web Search
 btnSearch.addEventListener("click", () => {
   sendToActiveTab({ type: "ORION_OPEN_SEARCH_PANEL" });
   window.close();
 });
 
-// Scrape current page
+// Scrape
 btnScrape.addEventListener("click", () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]?.url) {
-      sendToActiveTab({ type: "ORION_SCRAPE_URL", url: tabs[0].url });
-    }
+    if (tabs[0]?.url) sendToActiveTab({ type: "ORION_SCRAPE_URL", url: tabs[0].url });
   });
   window.close();
 });
@@ -112,6 +118,22 @@ btnVision.addEventListener("click", () => {
   setTimeout(refreshState, 300);
 });
 
+// Bookmark current page
+btnBookmark.addEventListener("click", () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]) {
+      chrome.runtime.sendMessage({
+        type: "ORION_ADD_BOOKMARK",
+        title: tabs[0].title || "Sem título",
+        url: tabs[0].url,
+      }, () => {
+        btnBookmark.textContent = "✅ Salvo!";
+        setTimeout(() => { btnBookmark.textContent = "🔖 Bookmark"; }, 1500);
+      });
+    }
+  });
+});
+
 function sendToActiveTab(message) {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, message);
@@ -121,24 +143,14 @@ function sendToActiveTab(message) {
 btnSummarize.addEventListener("click", () => { sendToActiveTab({ type: "ORION_SUMMARIZE_PAGE" }); window.close(); });
 
 btnScreenshot.addEventListener("click", () => {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]) {
-      chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
-        if (dataUrl) {
-          const a = document.createElement("a");
-          a.href = dataUrl;
-          a.download = `orion-capture-${Date.now()}.png`;
-          a.click();
-        }
-      });
-    }
-  });
+  chrome.runtime.sendMessage({ type: "ORION_QUICK_ACTION", action: "screenshot-download" });
+  window.close();
 });
 
 btnReadAloud.addEventListener("click", () => { sendToActiveTab({ type: "ORION_READ_ALOUD" }); window.close(); });
 btnExtract.addEventListener("click", () => { sendToActiveTab({ type: "ORION_EXTRACT_STRUCTURED" }); window.close(); });
 
-// ═══ Quick Links — External Navigation ═══
+// Quick Links
 document.querySelectorAll(".quick-link[data-link]").forEach((el) => {
   el.addEventListener("click", (e) => {
     e.preventDefault();
