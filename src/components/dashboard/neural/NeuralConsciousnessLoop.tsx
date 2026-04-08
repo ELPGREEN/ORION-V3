@@ -21,6 +21,8 @@ import {
   Heart, Battery, MapPin, Vibrate, Shield, AlertTriangle,
 } from "lucide-react";
 import { sigmoid } from "@/lib/neural/activations";
+import { recordCalibration } from "@/lib/neural/quantum-metacognition";
+import { getLastConsciousnessSnapshot, type ConsciousnessCycleSnapshot as BridgeSnapshot } from "@/lib/neural/consciousness-bridge";
 import { localJudgeScore } from "@/lib/neural/llm-judge";
 import { buildConceptEmbedding } from "@/lib/neural/concept-model";
 import { runLAMPipeline } from "@/lib/neural/large-action-model";
@@ -768,7 +770,7 @@ export function NeuralConsciousnessLoop() {
               <MetricBar label="Autoconsciência" value={state.selfAwareness} color="#8b5cf6" />
               <MetricBar label="Alinhamento" value={state.goalAlignment} color="#34d399" />
               <MetricBar label="Coerência" value={state.coherence} color="#06b6d4" />
-              <MetricBar label="Confiança" value={state.phi} color="#facc15" />
+              <MetricBar label="Confiança" value={selfModelRef.current.confidenceLevel} color="#facc15" />
             </div>
 
             {/* Emotional State */}
