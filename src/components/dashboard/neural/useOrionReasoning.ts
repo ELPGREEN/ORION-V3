@@ -29,7 +29,7 @@ import type { BackgroundTranscript } from "./useWakeWord";
 export interface ChatMessage { role: "user" | "ai" | "system"; text: string; time: string; confidence?: number; }
 
 export function useOrionReasoning(
-  active: boolean, speak: (t: string) => Promise<void>, canvasRef: React.RefObject<HTMLCanvasElement | null>,
+  active: boolean, speak: (t: string, options?: { skipMicToggle?: boolean }) => Promise<void>, canvasRef: React.RefObject<HTMLCanvasElement | null>,
   identificationMode: string = "universal",
   bargeIn?: () => void,
   abortControllerRef?: React.MutableRefObject<AbortController | null>,
@@ -1386,12 +1386,16 @@ export function useOrionReasoning(
         if (bargedInRef.current) return;
         if (isSpeakingQueue || localQueue.length === 0) return;
         isSpeakingQueue = true;
+
+        // Mic already stopped by previous speak() or AI flow — no toggle here
+
         try {
           while (localQueue.length > 0 && !bargedInRef.current) {
             // Batch all queued sentences into one speak() call to avoid pauses
             const batch = localQueue.splice(0, localQueue.length).join(" ");
             if (!batch.trim()) continue;
-            await speak(batch);
+            // skipMicToggle: mic is managed here, not inside speak()
+            await speak(batch, { skipMicToggle: true });
           }
         } finally {
           isSpeakingQueue = false;
@@ -1399,6 +1403,7 @@ export function useOrionReasoning(
             void processSpeechQueue();
           } else {
             queueFinished = true;
+            // Resume mic ONCE after all speech is done
           }
         }
       };
