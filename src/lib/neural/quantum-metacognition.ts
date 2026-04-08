@@ -185,8 +185,112 @@ export interface SupportInfrastructure {
   patternCacheHits: number;
 }
 
-/** Full v28 result */
+// ═══ v29: Quantum Cognition Types ═══
+
+/** Superposition of multiple decision hypotheses before collapse */
+export interface QuantumSuperpositionState {
+  /** Active hypotheses maintained simultaneously */
+  hypotheses: Array<{ label: string; amplitude: number; phase: number }>;
+  /** Number of coexisting hypotheses (superposition cardinality) */
+  superpositionCardinality: number;
+  /** Has the decision collapsed to a single choice? */
+  collapsed: boolean;
+  /** Winning hypothesis after collapse (null if still in superposition) */
+  collapsedChoice: string | null;
+  /** Born rule probability of the chosen outcome */
+  collapseProbability: number;
+}
+
+/** Quantum interference: context-dependent probability amplification/cancellation */
+export interface QuantumInterference {
+  /** Constructive interference: amplified pathways */
+  constructivePathways: string[];
+  /** Destructive interference: cancelled/suppressed pathways */
+  destructivePathways: string[];
+  /** Net interference magnitude (0=no effect, 1=maximum) */
+  interferenceMagnitude: number;
+  /** Context vector that caused the interference pattern */
+  contextInfluence: number;
+}
+
+/** Quantum entanglement: cross-module correlations */
+export interface CognitiveEntanglement {
+  /** Entangled module pairs with correlation strength */
+  entangledPairs: Array<{ moduleA: string; moduleB: string; correlation: number }>;
+  /** Bell inequality violation (>2 = non-classical correlations) */
+  bellInequality: number;
+  /** Global entanglement entropy */
+  entanglementEntropy: number;
+  /** Non-local binding field strength */
+  nonLocalFieldStrength: number;
+}
+
+/** Context-dependent collapse: observer effect on cognition */
+export interface ContextualCollapse {
+  /** Did observation/attention change the cognitive state? */
+  observerEffectDetected: boolean;
+  /** State before observation */
+  preObservationEntropy: number;
+  /** State after observation */
+  postObservationEntropy: number;
+  /** Entropy reduction from attention (information gained) */
+  informationGain: number;
+  /** Zeno effect: repeated observation freezing state evolution */
+  zenoEffectActive: boolean;
+}
+
+/** Ambiguity tolerance: holding contradictory ideas simultaneously */
+export interface AmbiguityTolerance {
+  /** Can maintain dual contradictory states? (quantum thinking) */
+  dualStateCapability: number;
+  /** Number of contradictory beliefs held simultaneously */
+  activeContradictions: number;
+  /** Cognitive dissonance level (0=resolved, 1=maximum) */
+  cognitiveDissonance: number;
+  /** Resolution strategy: "collapse" | "integrate" | "hold" */
+  resolutionStrategy: "collapse" | "integrate" | "hold";
+}
+
+/** Full quantum cognition layer (v29) */
+export interface QuantumCognitionLayer {
+  superposition: QuantumSuperpositionState;
+  interference: QuantumInterference;
+  entanglement: CognitiveEntanglement;
+  contextCollapse: ContextualCollapse;
+  ambiguityTolerance: AmbiguityTolerance;
+  /** Orchestrated Objective Reduction (Penrose-Hameroff inspired) score */
+  orchestratedReductionScore: number;
+  /** Quantum coherence time before decoherence (cognitive ms) */
+  cognitiveCoherenceTimeMs: number;
+}
+
+/** Full v29 result */
 export interface QuantumMetacognitionResult {
+  uncertaintyScore: number;
+  hallucinationRisk: number;
+  calibrationError: number;
+  activeSkills: SkillAbstraction[];
+  reflectionChain: string[];
+  adaptivePlanScore: number;
+  adaptiveAction: AdaptivePlanAction;
+  quantumMetrics: WaveFunctionMetrics;
+  riskLevel: "safe" | "caution" | "warning" | "critical";
+  reasoningMode: ReasoningModeState;
+  hallucinationSnapshot: HallucinationSnapshot;
+  alignmentAudit: AlignmentAudit;
+  /** v28: Prospective monitoring (before task) */
+  prospective: ProspectiveMonitoring;
+  /** v28: Online monitoring (during execution) */
+  online: OnlineMonitoring;
+  /** v28: Regulation & control (metacognitive action) */
+  regulation: RegulationControl;
+  /** v28: Retrospective evaluation (after task) */
+  retrospective: RetrospectiveEvaluation;
+  /** v28: Support infrastructure */
+  infrastructure: SupportInfrastructure;
+  /** v29: Quantum cognition layer */
+  quantumCognition: QuantumCognitionLayer;
+}
   uncertaintyScore: number;
   hallucinationRisk: number;
   calibrationError: number;
