@@ -463,12 +463,15 @@ export function useNeuralVoice(
     rec.interimResults = true;
     rec.maxAlternatives = 1;
     
-    rec.onstart = () => { consecutiveAbortsRef.current = 0; setListening(true); };
+    rec.onstart = () => { setListening(true); };
     
     rec.onresult = (e: any) => {
       const lastResult = e.results[e.results.length - 1];
       const transcript = lastResult?.[0]?.transcript?.trim() || "";
       const isFinal = lastResult?.isFinal;
+      
+      // Reset abort counter only on actual speech data (not just onstart)
+      consecutiveAbortsRef.current = 0;
       
       if (!transcript) return;
 
