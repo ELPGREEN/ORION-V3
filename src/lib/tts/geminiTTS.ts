@@ -84,7 +84,7 @@ async function fetchGeminiAudio(
     if (sentenceController.signal.aborted || signal.aborted) return null;
 
     if (response.status === 429) {
-      disableGeminiTTS(30_000, "Rate limited by edge function");
+      disableGeminiTTS(15_000, "Rate limited by edge function");
       return null;
     }
 
@@ -94,22 +94,21 @@ async function fetchGeminiAudio(
       const data = await response.json().catch(() => null);
 
       if (data?.fallback || data?.error) {
-        const retryAfterMs = typeof data?.retry_after_ms === "number" && Number.isFinite(data.retry_after_ms)
-          ? data.retry_after_ms
-          : data?.rate_limited
-            ? 30_000
-            : DEFAULT_FALLBACK_RETRY_MS;
-
-        if (data?.rate_limited || data?.retry_after_ms) {
-          disableGeminiTTS(retryAfterMs, data?.error || "Fallback response from Gemini TTS");
+        // Only cooldown on ACTUAL rate limits, not generic server errors
+        if (data?.rate_limited) {
+          const retryAfterMs = typeof data?.retry_after_ms === "number" && Number.isFinite(data.retry_after_ms)
+            ? data.retry_after_ms
+            : 15_000;
+          disableGeminiTTS(retryAfterMs, data?.error || "Rate limited");
+        } else {
+          console.warn("[Gemini TTS] Server fallback (no cooldown):", data?.error);
         }
-
-        console.warn("[Gemini TTS] Server fallback:", data?.error);
         return null;
       }
 
       if (!response.ok) {
-        disableGeminiTTS(DEFAULT_FALLBACK_RETRY_MS, `Edge function error ${response.status}`);
+        // Don't cooldown on server errors — let next call retry fresh
+        console.warn(`[Gemini TTS] Edge function error ${response.status} — will retry next call`);
       }
       return null;
     }
