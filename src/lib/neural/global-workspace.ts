@@ -145,6 +145,8 @@ export interface MetacognitionResult {
   retrospective?: { selfCorrectionTriggered: boolean; corrections: string[]; estimatedSuccess: number; errorsLogged: number; heuristicUpdates: string[] };
   /** v28: Support infrastructure */
   infrastructure?: { workingMemoryLoad: number; scratchpadSnapshots: number; observerVerdict: string; observerCritique: string; userExpertiseEstimate: number; userIntentEstimate: string; semanticActivation: number; patternCacheHits: number };
+  /** v29: Quantum Cognition */
+  quantumCognition?: { superposition: { superpositionCardinality: number; collapsed: boolean; collapseProbability: number }; interference: { interferenceMagnitude: number; contextInfluence: number }; entanglement: { bellInequality: number; entanglementEntropy: number; nonLocalFieldStrength: number }; contextCollapse: { observerEffectDetected: boolean; informationGain: number; zenoEffectActive: boolean }; ambiguityTolerance: { dualStateCapability: number; cognitiveDissonance: number; resolutionStrategy: string }; orchestratedReductionScore: number; cognitiveCoherenceTimeMs: number };
 }
 
 // ─── Helper Functions ───
@@ -546,6 +548,8 @@ export function runMetacognition(
     regulation: quantumMeta?.regulation,
     retrospective: quantumMeta?.retrospective,
     infrastructure: quantumMeta?.infrastructure,
+    // v29: Quantum Cognition
+    quantumCognition: quantumMeta?.quantumCognition,
   };
 }
 
