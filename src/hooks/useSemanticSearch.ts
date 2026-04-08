@@ -30,12 +30,18 @@ export function useSemanticSearch() {
 
     try {
       // Generate embedding client-side via Transformers.js (WASM)
+      // MiniLM-L6-v2 outputs 384d — we zero-pad to 768d to match Gemini embeddings in DB
       const { extractEmbeddings } = await import("@/lib/huggingface/transformers-browser");
       const embeddings = await extractEmbeddings(query);
-      const queryEmbedding = embeddings[0];
+      let queryEmbedding = embeddings[0];
 
       if (!queryEmbedding || queryEmbedding.length === 0) {
         throw new Error("Failed to generate embedding");
+      }
+
+      // Zero-pad 384d → 768d for vector space compatibility with stored Gemini embeddings
+      if (queryEmbedding.length < 768) {
+        queryEmbedding = [...queryEmbedding, ...new Array(768 - queryEmbedding.length).fill(0)];
       }
 
       // Search against Supabase using the RPC function
