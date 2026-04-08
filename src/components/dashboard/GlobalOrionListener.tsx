@@ -124,6 +124,8 @@ export function GlobalOrionListener() {
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restartAttemptsRef = useRef(0);
   const startInFlightRef = useRef(false);
+  /** Mic arbiter ownership ID for this component */
+  const micOwnerIdRef = useRef(0);
   /** Command capture recognition (separate from wake word) */
   const cmdRecRef = useRef<any>(null);
   const cmdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
