@@ -528,7 +528,7 @@ export function GlobalOrionListener() {
         }
         
         if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
-          console.log("[GlobalOrion] Max restart attempts, pausing 15s");
+          console.log("[GlobalOrion] Max restart attempts from errors, pausing 30s");
           setWakeWordActive(false);
           clearRestartTimer();
           restartTimerRef.current = setTimeout(() => {
@@ -536,7 +536,7 @@ export function GlobalOrionListener() {
             if (wakeWordEnabledRef.current && !wakeRecRef.current && !startInFlightRef.current && !orionOpen && !isOnNeuralPage && permissionsGranted && !(typeof document !== "undefined" && document.hidden)) {
               startWakeWordListener();
             }
-          }, 15000);
+          }, 30000);
           return;
         }
         
