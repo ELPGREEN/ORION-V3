@@ -1379,6 +1379,8 @@ export function useOrionReasoning(
       let isSpeakingQueue = false;
       let spokeOrQueued = false;
       let queueFinished = false;
+      let batchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+      let streamEnded = false;
 
       const processSpeechQueue = async () => {
         if (bargedInRef.current) return;
@@ -1386,9 +1388,10 @@ export function useOrionReasoning(
         isSpeakingQueue = true;
         try {
           while (localQueue.length > 0 && !bargedInRef.current) {
-            const sentence = localQueue.shift();
-            if (!sentence) continue;
-            await speak(sentence);
+            // Batch all queued sentences into one speak() call to avoid pauses
+            const batch = localQueue.splice(0, localQueue.length).join(" ");
+            if (!batch.trim()) continue;
+            await speak(batch);
           }
         } finally {
           isSpeakingQueue = false;
@@ -1398,6 +1401,20 @@ export function useOrionReasoning(
             queueFinished = true;
           }
         }
+      };
+
+      // Debounced queue trigger: wait 600ms for more sentences to accumulate
+      // before starting TTS, so we send larger chunks = fewer HTTP calls = no pauses
+      const triggerQueueDebounced = () => {
+        if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
+        // If stream already ended, process immediately
+        if (streamEnded) {
+          void processSpeechQueue();
+          return;
+        }
+        batchDebounceTimer = setTimeout(() => {
+          void processSpeechQueue();
+        }, 600);
       };
 
       let streamingText = "";
