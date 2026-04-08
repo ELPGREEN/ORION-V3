@@ -33,7 +33,7 @@ export default function AdvogadoSite() {
         .eq("user_id", advogadoId!)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as any;
     },
     enabled: !!advogadoId,
   });
