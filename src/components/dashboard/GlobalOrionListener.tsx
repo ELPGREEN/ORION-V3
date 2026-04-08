@@ -699,7 +699,7 @@ export function GlobalOrionListener() {
                 </div>
                  <div>
                    <p className="text-sm font-medium text-foreground">⚡ Audição Relâmpago</p>
-                    <p className="text-xs text-muted-foreground">Diga "{wakeWordHint}" para ativar no painel</p>
+                    <p className="text-xs text-muted-foreground">Reconhecimento de voz sempre ativo</p>
                  </div>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
