@@ -336,13 +336,13 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // Auto-connect mic (NOT camera) when entering Orion after permissions were granted
   useEffect(() => {
-    if (autoBootedRef.current || !speechOk || skipWakeWord) return;
+    if (autoBootedRef.current || !speechOk) return;
     const state = location.state as any;
-    if (initialCommand || state?.autoActivate || state?.autoCommand) return;
+    if (!skipWakeWord && (initialCommand || state?.autoActivate || state?.autoCommand)) return;
 
     autoBootedRef.current = true;
     const timer = setTimeout(() => {
-      if (!hasGreetedRef.current) {
+      if (!skipWakeWord && !hasGreetedRef.current) {
         hasGreetedRef.current = true;
         speakFast("Orion ativo. Diga ativar visão para ligar a câmera.").catch(() => {});
       }
@@ -351,7 +351,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         stopWakeWordListener();
         setTimeout(() => startListening(handleVoice), 80);
       }
-    }, 200);
+    }, skipWakeWord ? 400 : 200);
 
     return () => clearTimeout(timer);
   }, [handleVoice, initialCommand, listening, location.state, skipWakeWord, speakFast, speechOk, startListening, stopWakeWordListener]);
@@ -382,6 +382,10 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   // Re-enable wake word ONLY when user explicitly stops (not during auto-cycles)
   const wakeWordStabilityRef = useRef(0);
   useEffect(() => {
+    // When opened from GlobalOrionListener overlay, skip wake word entirely
+    // to avoid SpeechRecognition conflicts with voice input
+    if (skipWakeWord) return;
+
     // When main listener is active, stop wake word (mutual exclusion)
     if (listening && wakeRecRef.current) {
       stopWakeWordListener();
@@ -401,7 +405,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     enableWakeWord();
     const timer = setTimeout(() => startWakeWordListener(), 1500);
     return () => clearTimeout(timer);
-  }, [active, listening, speechOk, wakeWordActive, enableWakeWord, startWakeWordListener, stopWakeWordListener, wakeRecRef]);
+  }, [skipWakeWord, active, listening, speechOk, wakeWordActive, enableWakeWord, startWakeWordListener, stopWakeWordListener, wakeRecRef]);
 
   // Awareness sync
   useEffect(() => {
