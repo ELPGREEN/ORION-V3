@@ -1386,12 +1386,17 @@ export function useOrionReasoning(
         if (bargedInRef.current) return;
         if (isSpeakingQueue || localQueue.length === 0) return;
         isSpeakingQueue = true;
+
+        // Stop mic ONCE at queue start — not per-sentence
+        try { voiceRef?.current?.stop?.(); } catch {}
+
         try {
           while (localQueue.length > 0 && !bargedInRef.current) {
             // Batch all queued sentences into one speak() call to avoid pauses
             const batch = localQueue.splice(0, localQueue.length).join(" ");
             if (!batch.trim()) continue;
-            await speak(batch);
+            // skipMicToggle: mic is managed here, not inside speak()
+            await speak(batch, { skipMicToggle: true });
           }
         } finally {
           isSpeakingQueue = false;
@@ -1399,6 +1404,7 @@ export function useOrionReasoning(
             void processSpeechQueue();
           } else {
             queueFinished = true;
+            // Resume mic ONCE after all speech is done
           }
         }
       };
