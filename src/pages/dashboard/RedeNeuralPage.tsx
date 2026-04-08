@@ -597,7 +597,9 @@ export default function RedeNeuralPage() {
           </p>
         </div>
         <NeuralPDFReport />
-      </div>
+        <Suspense fallback={null}>
+          <ScreenRecorder />
+        </Suspense>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="relative z-10">
         <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#3B82F6]/15"
@@ -829,6 +831,17 @@ export default function RedeNeuralPage() {
         <TabsContent value="knowledge" className="space-y-4">
           {/* Smart Upload (Fase 9.3) */}
           <SmartUploadPanel userId={user?.id} onUploaded={loadData} />
+          {/* Knowledge Harvester + Private Knowledge */}
+          <NeuralErrorBoundary fallbackTitle="Erro no Knowledge Harvester">
+            <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+              <KnowledgeHarvester />
+            </Suspense>
+          </NeuralErrorBoundary>
+          <NeuralErrorBoundary fallbackTitle="Erro no Private Knowledge">
+            <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+              <PrivateKnowledge />
+            </Suspense>
+          </NeuralErrorBoundary>
           {/* Semantic Search */}
           <NeuralSemanticSearch />
           <Card className="bg-card border-border">
