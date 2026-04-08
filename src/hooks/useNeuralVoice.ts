@@ -621,6 +621,9 @@ export function useNeuralVoice(
   }, [createRecognition]);
 
   const startListening = useCallback((onCmd: (c: string) => void) => {
+    // ═══ FIX: Re-claim mic ownership for command mode ═══
+    // Without this, wake word's mount claim invalidates our singletonId
+    singletonIdRef.current = claimMic("command");
     intentionalStopRef.current = false;
     voiceActiveRef.current = true;
     clearRestartTimer();

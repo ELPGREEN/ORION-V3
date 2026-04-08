@@ -1616,8 +1616,24 @@ function convertToGeminiFormat(messages: any[]): any {
       systemParts.push(typeof m.content === "string" ? m.content : JSON.stringify(m.content));
       continue;
     }
-    const text = typeof m.content === "string" ? m.content : m.content?.filter?.((c: any) => c.type === "text").map((c: any) => c.text).join(" ") || String(m.content);
-    contents.push({ role: role === "user" ? "user" : "model", parts: [{ text }] });
+    // ═══ FIX: Preserve image_url parts (was stripping them → "no vision" hallucination) ═══
+    const parts: any[] = [];
+    if (typeof m.content === "string") {
+      parts.push({ text: m.content });
+    } else if (Array.isArray(m.content)) {
+      for (const c of m.content) {
+        if (c.type === "text") parts.push({ text: c.text });
+        else if (c.type === "image_url") {
+          const base64 = c.image_url?.url?.replace(/^data:image\/\w+;base64,/, "") || "";
+          if (base64) parts.push({ inlineData: { mimeType: "image/jpeg", data: base64 } });
+        }
+      }
+    } else {
+      parts.push({ text: String(m.content) });
+    }
+    if (parts.length > 0) {
+      contents.push({ role: role === "user" ? "user" : "model", parts });
+    }
   }
 
   const body: any = { contents, generationConfig: { temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } } };
