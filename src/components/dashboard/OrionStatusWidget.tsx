@@ -109,7 +109,7 @@ export default function OrionStatusWidget() {
           <div className="bg-muted/20 border border-dashed border-border p-3 text-center">
             <Mic className="h-4 w-4 text-muted-foreground/40 mx-auto mb-1" />
             <p className="text-[10px] text-muted-foreground">
-              Diga <span className="text-primary font-medium">"Orion"</span> para começar
+              Aguardando comando de voz
             </p>
           </div>
         )}
