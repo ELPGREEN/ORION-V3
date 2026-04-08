@@ -534,9 +534,11 @@ export function GlobalOrionListener() {
       };
 
       wakeRecRef.current = rec;
+      // ═══ FIX: Register with mic arbiter ═══
+      registerMicRec(rec, "wake");
       rec.start();
       setWakeWordActive(true);
-      console.log("[GlobalOrion] ✅ Wake word listener started successfully");
+      console.log("[GlobalOrion] ✅ Wake word listener started (mic arbiter registered)");
       } catch (err) {
         startInFlightRef.current = false;
         setWakeWordActive(false);
