@@ -123,6 +123,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // Face detection now handled by detectRealTime() unified pipeline
   const lastRtVisionRef = useRef<RealTimeVisionResult | null>(null);
+  const directVoiceStartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hasGreetedRef = useRef(false);
 
@@ -315,11 +316,20 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   useEffect(() => { bgTranscriptsGetterRef.current = getBackgroundTranscripts; }, [getBackgroundTranscripts]);
 
   const startDirectVoiceCapture = useCallback(() => {
-    stopWakeWordListener();
-    if (!listening) {
-      setTimeout(() => startListening(handleVoice), 80);
+    if (directVoiceStartTimerRef.current) {
+      clearTimeout(directVoiceStartTimerRef.current);
+      directVoiceStartTimerRef.current = null;
     }
-  }, [handleVoice, listening, startListening, stopWakeWordListener]);
+
+    stopWakeWordListener();
+    stopListen();
+
+    const isMobile = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+    directVoiceStartTimerRef.current = setTimeout(() => {
+      directVoiceStartTimerRef.current = null;
+      startListening(handleVoice);
+    }, isMobile ? 420 : 180);
+  }, [handleVoice, startListening, stopListen, stopWakeWordListener]);
 
   const handleActivateVoiceButton = useCallback(() => {
     if (skipWakeWord) {
@@ -548,21 +558,13 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           <>
             <div className="h-5 w-px bg-white/10" />
             <Button size="sm" variant={listening ? "default" : "ghost"} className="h-7 text-[11px] gap-1"
-              onClick={() => listening ? stopListen() : startListening(handleVoice)} disabled={!speechOk}>
+              onClick={() => listening ? stopListen() : startDirectVoiceCapture()} disabled={!speechOk}>
               {listening ? <Mic className="h-3 w-3 text-red-400 animate-pulse" /> : <MicOff className="h-3 w-3" />}
               {listening ? "Ouvindo..." : "Falar"}
             </Button>
-            <Button size="sm" variant="ghost" className="h-7 text-[11px] gap-1" onClick={() => setTtsOn(!ttsOn)}>
-              {ttsOn ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
-            </Button>
-          </>
-        )}
-
-        {active && (
-          <>
-            <div className="h-5 w-px bg-white/10" />
+...
             <Button size="sm" variant={listening ? "default" : "ghost"} className="h-7 text-[11px] gap-1"
-              onClick={() => listening ? stopListen() : startListening(handleVoice)} disabled={!speechOk}>
+              onClick={() => listening ? stopListen() : startDirectVoiceCapture()} disabled={!speechOk}>
               {listening ? <Mic className="h-3 w-3 text-red-400 animate-pulse" /> : <MicOff className="h-3 w-3" />}
             </Button>
             <Button size="sm" variant="ghost" className="h-7 text-[11px] gap-1" onClick={() => setTtsOn(!ttsOn)}>

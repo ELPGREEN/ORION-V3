@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { vsLog } from "./useVisionProcessing";
 
-// Expanded regex: catches "orion", "órion", "oreon", "oriom", "o rion", "orían", "orian", etc.
 const ORION_WAKE_REGEX = /([óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\b/i;
 
 export interface BackgroundTranscript {
@@ -30,9 +29,19 @@ export function useWakeWord(
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restartAttemptsRef = useRef(0);
   const startInFlightRef = useRef(false);
+  const listeningRef = useRef(listening);
+  const speechOkRef = useRef(speechOk);
 
   const backgroundTranscriptsRef = useRef<BackgroundTranscript[]>([]);
   const speakerCounterRef = useRef(0);
+
+  useEffect(() => {
+    listeningRef.current = listening;
+  }, [listening]);
+
+  useEffect(() => {
+    speechOkRef.current = speechOk;
+  }, [speechOk]);
 
   const clearRestartTimer = useCallback(() => {
     if (restartTimerRef.current) {
@@ -78,7 +87,7 @@ export function useWakeWord(
   const startWakeWordListener = useCallback(() => {
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     const hidden = typeof document !== "undefined" && document.hidden;
-    if (!speechOk || !SR || listening || hidden) return;
+    if (!speechOkRef.current || !SR || listeningRef.current || hidden) return;
     if (!wakeWordEnabledRef.current || wakeRecRef.current || startInFlightRef.current) return;
 
     clearRestartTimer();
@@ -105,7 +114,6 @@ export function useWakeWord(
             const isOrion = ORION_WAKE_REGEX.test(transcript);
 
             if (isOrion && !wakeWordCooldownRef.current) {
-              // Very low threshold — interim results often have 0 confidence
               if (e.results[i].isFinal && confidence < 0.08) {
                 vsLog(`👂 Wake word ignorado (confiança muito baixa: ${(confidence * 100).toFixed(0)}%)`);
                 addBackgroundTranscript(transcript, confidence);
@@ -136,18 +144,16 @@ export function useWakeWord(
       rec.onend = () => {
         wakeRecRef.current = null;
         startInFlightRef.current = false;
-        const shouldRestart = wakeWordEnabledRef.current && speechOk && !listening && !wakeWordCooldownRef.current && !(typeof document !== "undefined" && document.hidden);
+        const shouldRestart = wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeWordCooldownRef.current && !(typeof document !== "undefined" && document.hidden);
         if (!shouldRestart) {
           setWakeWordActive(false);
           return;
         }
 
-        // KEEP wakeWordActive=true during restart gap to prevent visual flickering
-        // and to prevent NeuralVision's Effect 2 from re-triggering a competing restart
         restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 6);
         clearRestartTimer();
         restartTimerRef.current = setTimeout(() => {
-          if (wakeWordEnabledRef.current && speechOk && !listening && !wakeRecRef.current && !startInFlightRef.current && !(typeof document !== "undefined" && document.hidden)) {
+          if (wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeRecRef.current && !startInFlightRef.current && !(typeof document !== "undefined" && document.hidden)) {
             startWakeWordListener();
           } else {
             setWakeWordActive(false);
@@ -165,17 +171,16 @@ export function useWakeWord(
           return;
         }
 
-        const shouldRestart = wakeWordEnabledRef.current && speechOk && !listening && !wakeWordCooldownRef.current && !(typeof document !== "undefined" && document.hidden);
+        const shouldRestart = wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeWordCooldownRef.current && !(typeof document !== "undefined" && document.hidden);
         if (!shouldRestart) {
           setWakeWordActive(false);
           return;
         }
 
-        // KEEP wakeWordActive=true during error recovery to prevent oscillation
         restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 6);
         clearRestartTimer();
         restartTimerRef.current = setTimeout(() => {
-          if (wakeWordEnabledRef.current && speechOk && !listening && !wakeRecRef.current && !startInFlightRef.current && !(typeof document !== "undefined" && document.hidden)) {
+          if (wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeRecRef.current && !startInFlightRef.current && !(typeof document !== "undefined" && document.hidden)) {
             startWakeWordListener();
           } else {
             setWakeWordActive(false);
@@ -192,7 +197,7 @@ export function useWakeWord(
       setWakeWordActive(false);
       console.warn("Wake word listener failed:", err);
     }
-  }, [addBackgroundTranscript, clearRestartTimer, getRestartDelay, listening, onActivate, speechOk]);
+  }, [addBackgroundTranscript, clearRestartTimer, getRestartDelay, onActivate]);
 
   const stopWakeWordListener = useCallback(() => {
     wakeWordEnabledRef.current = false;
@@ -232,14 +237,14 @@ export function useWakeWord(
         return;
       }
 
-      if (wakeWordEnabledRef.current && speechOk && !listening && !wakeRecRef.current && !startInFlightRef.current) {
+      if (wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeRecRef.current && !startInFlightRef.current) {
         startWakeWordListener();
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [clearRestartTimer, listening, speechOk, startWakeWordListener]);
+  }, [clearRestartTimer, startWakeWordListener]);
 
   useEffect(() => () => {
     clearRestartTimer();
