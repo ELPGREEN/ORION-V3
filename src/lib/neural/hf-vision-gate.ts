@@ -70,7 +70,7 @@ async function preloadClassifier(): Promise<boolean> {
     classifierPipeline = await pipeline(
       "image-classification",
       "Xenova/mobilevit-small",
-      { device: "wasm" }
+      { device: "wasm", quantized: true }
     ) as ImageClassificationPipeline;
     console.log("[HFVisionGate] ✅ MobileViT classifier loaded (free, local)");
     return true;
@@ -89,7 +89,7 @@ async function preloadCaptioner(): Promise<boolean> {
     captionerPipeline = await pipeline(
       "image-to-text",
       "Xenova/vit-gpt2-image-captioning",
-      { device: "wasm" }
+      { device: "wasm", quantized: true }
     ) as ImageToTextPipeline;
     console.log("[HFVisionGate] ✅ ViT-GPT2 captioner loaded (free, local)");
     return true;

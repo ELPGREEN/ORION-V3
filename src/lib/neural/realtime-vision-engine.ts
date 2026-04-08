@@ -62,6 +62,34 @@ export interface UnifiedDetection {
   height: number;
 }
 
+// ─── EMA Bounding Box Stabilization ───
+const EMA_ALPHA = 0.3;
+const _emaBoxes = new Map<string, { x: number; y: number; width: number; height: number; lastSeen: number }>();
+
+function stabilizeBBox(det: UnifiedDetection): UnifiedDetection {
+  const key = `${det.source}_${det.name}`;
+  const now = performance.now();
+  const prev = _emaBoxes.get(key);
+  if (prev && now - prev.lastSeen < 500) {
+    const x = EMA_ALPHA * det.x + (1 - EMA_ALPHA) * prev.x;
+    const y = EMA_ALPHA * det.y + (1 - EMA_ALPHA) * prev.y;
+    const width = EMA_ALPHA * det.width + (1 - EMA_ALPHA) * prev.width;
+    const height = EMA_ALPHA * det.height + (1 - EMA_ALPHA) * prev.height;
+    _emaBoxes.set(key, { x, y, width, height, lastSeen: now });
+    return { ...det, x, y, width, height };
+  }
+  _emaBoxes.set(key, { x: det.x, y: det.y, width: det.width, height: det.height, lastSeen: now });
+  return det;
+}
+
+// Prune stale EMA entries every 5s
+setInterval(() => {
+  const now = performance.now();
+  for (const [k, v] of _emaBoxes) {
+    if (now - v.lastSeen > 2000) _emaBoxes.delete(k);
+  }
+}, 5000);
+
 // ─── Portuguese name mapping for MediaPipe classes ───
 const MP_CLASS_PT: Record<string, string> = {
   person: "pessoa", car: "carro", chair: "cadeira", cup: "caneca/copo",
@@ -130,7 +158,7 @@ function mergeDetections(
     }
   }
 
-  return merged.sort((a, b) => b.confidence - a.confidence);
+  return merged.map(stabilizeBBox).sort((a, b) => b.confidence - a.confidence);
 }
 
 function computeIoU(
