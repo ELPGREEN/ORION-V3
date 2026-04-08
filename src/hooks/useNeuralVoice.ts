@@ -16,6 +16,7 @@ import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/
 import { speakWithEvolvedVoice } from "@/lib/neural/orion-voice-evolution";
 import { fallbackTranscribe, chunksToWavBlob, getSTTFallbackState } from "@/lib/voice/sttFallbackChain";
 import { getAudioWorkletManager } from "@/lib/voice/audioWorkletManager";
+import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural/pipeline-latency-tracker";
 
 // ═══ Text Cleaning for Natural Speech ═══
 
@@ -383,6 +384,7 @@ export function useNeuralVoice(
       activeAudioRef.current = null;
     }
     speakingRef.current = true;
+    markTTSStart(); // v31: TTS pipeline latency
     updateAiResponding(true);
     lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
     lastSpokenAtRef.current = Date.now();
@@ -453,6 +455,7 @@ export function useNeuralVoice(
     abortControllerRef.current = null;
     activeAudioRef.current = null;
     speakingRef.current = false;
+    markTTSEnd(); // v31: TTS pipeline latency
     updateAiResponding(false);
     resumeSTT();
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
@@ -475,7 +478,7 @@ export function useNeuralVoice(
     rec.interimResults = true;
     rec.maxAlternatives = 1;
     
-    rec.onstart = () => { setListening(true); };
+    rec.onstart = () => { setListening(true); markSTTStart(); };
     
     rec.onresult = (e: any) => {
       const lastResult = e.results[e.results.length - 1];
@@ -560,6 +563,7 @@ export function useNeuralVoice(
           return; // Don't pass style commands to the AI, just learn silently
         }
         
+        markSTTEnd(); // v31: STT pipeline latency
         onCmdRef.current(fullText);
       }, silenceMs);
     };

@@ -68,6 +68,7 @@ import {
 
 import { computeProviderHealth, type ProviderHealth } from "./provider-health";
 import { getHearingSummaryForBridge, getLastHearingResult } from "./metacognitive-hearing";
+import { getPipelineLatency } from "./pipeline-latency-tracker";
 
 // ─── v3 Integrations: QHRL, Temporal Binding, Agent Planner ───
 
@@ -262,6 +263,14 @@ export interface ConsciousnessCycleSnapshot {
   qcResolutionStrategy: string;
   qcOrchORScore: number;
   qcCoherenceTimeMs: number;
+  /** v31: End-to-end pipeline latency tracking */
+  pipelineLatency: {
+    sttMs: number;      // STT transcription latency
+    llmMs: number;      // LLM inference latency
+    ttsMs: number;      // TTS synthesis latency
+    totalMs: number;    // End-to-end STT→LLM→TTS
+    visionMs: number;   // Vision pipeline latency (if active)
+  };
 }
 
 export interface ReasoningContext {
@@ -679,6 +688,8 @@ export function runConsciousnessBridge(
         qcCoherenceTimeMs: qc?.cognitiveCoherenceTimeMs ?? 10,
       };
     })(),
+    // v31: Pipeline latency
+    pipelineLatency: getPipelineLatency(),
   };
 
   _lastCycleResult = snapshot;
