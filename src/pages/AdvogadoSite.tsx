@@ -28,12 +28,12 @@ export default function AdvogadoSite() {
     queryKey: ["advogado-site-config", advogadoId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("escritorio_config")
+        .from("escritorio_public_view" as any)
         .select("*")
         .eq("user_id", advogadoId!)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as any;
     },
     enabled: !!advogadoId,
   });
