@@ -435,13 +435,25 @@ export function runMetacognition(
   const selfAwareness = (workspace.globalPLV * 0.4 + modalityRichness * 0.3 + selfModel.confidenceLevel * 0.3);
 
   // Goal alignment: is the current focus related to the user's goal?
+  // Uses character n-gram overlap for better fuzzy matching (word overlap misses related terms)
   let goalAlignment = 0.5;
   if (selfModel.currentGoal && selfModel.attentionFocus) {
-    // Simple word overlap (in production, use embedding similarity)
-    const goalWords = new Set(selfModel.currentGoal.toLowerCase().split(/\s+/));
-    const focusWords = selfModel.attentionFocus.toLowerCase().split(/\s+/);
-    const overlap = focusWords.filter(w => goalWords.has(w)).length;
-    goalAlignment = Math.min(1, overlap / Math.max(1, goalWords.size) + 0.3);
+    const goal = selfModel.currentGoal.toLowerCase();
+    const focus = selfModel.attentionFocus.toLowerCase();
+    // Extract 3-grams for fuzzy match
+    const getNgrams = (s: string, n: number) => {
+      const grams = new Set<string>();
+      for (let i = 0; i <= s.length - n; i++) grams.add(s.slice(i, i + n));
+      return grams;
+    };
+    const goalGrams = getNgrams(goal, 3);
+    const focusGrams = getNgrams(focus, 3);
+    if (goalGrams.size > 0 && focusGrams.size > 0) {
+      let overlap = 0;
+      for (const g of focusGrams) { if (goalGrams.has(g)) overlap++; }
+      const jaccard = overlap / (goalGrams.size + focusGrams.size - overlap);
+      goalAlignment = Math.min(1, jaccard * 3 + 0.35); // base 0.35 + boosted jaccard
+    }
   }
 
   // Coherence: internal consistency (low variance in neuromodulators = high coherence)
