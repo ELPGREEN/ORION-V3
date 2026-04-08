@@ -384,6 +384,7 @@ export function useNeuralVoice(
       activeAudioRef.current = null;
     }
     speakingRef.current = true;
+    markTTSStart(); // v31: TTS pipeline latency
     updateAiResponding(true);
     lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
     lastSpokenAtRef.current = Date.now();
