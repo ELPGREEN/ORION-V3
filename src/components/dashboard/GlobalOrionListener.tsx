@@ -465,13 +465,14 @@ export function GlobalOrionListener() {
         }
 
         // In non-continuous mode, sessions end naturally after speech/silence
-        // Only count as unstable if it was truly a broken session (<1.5s with no result)
-        const isUnstableSession = sessionDuration < 1500 && !sessionStartRef.gotResult;
+        // Only count as unstable if it crashed instantly (<400ms with no result)
+        // Normal "no speech" sessions last 3-8s and are perfectly healthy
+        const isUnstableSession = sessionDuration < 400 && !sessionStartRef.gotResult;
         if (isUnstableSession) {
           restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
         } else {
-          // Healthy session — reset attempts
-          restartAttemptsRef.current = Math.max(0, restartAttemptsRef.current - 1);
+          // Healthy session — aggressively reset attempts to keep listener alive
+          restartAttemptsRef.current = 0;
         }
         
         if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
@@ -513,9 +514,8 @@ export function GlobalOrionListener() {
           return;
         }
 
-        // "aborted" errors on short sessions are usually Chrome killing the recognition
-        // Don't count "no-speech" as a real error — it just means silence
-        const isHarmless = e.error === "no-speech" || (e.error === "aborted" && sessionDuration < 2000);
+        // "aborted" and "no-speech" are normal in non-continuous mode — never count them
+        const isHarmless = e.error === "no-speech" || e.error === "aborted";
 
         const willRestart = wakeWordEnabledRef.current && !orionOpen && !isOnNeuralPage && permissionsGranted && !cooldownRef.current && !(typeof document !== "undefined" && document.hidden);
         if (!willRestart) {
@@ -523,6 +523,7 @@ export function GlobalOrionListener() {
           return;
         }
 
+        // Only count genuine errors (network, audio-capture) toward restart limit
         if (!isHarmless) {
           restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
         }
