@@ -8,7 +8,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       width: 380px;
-      min-height: 560px;
+      min-height: 580px;
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: #08091a;
       color: #e8eaf0;
@@ -57,51 +57,51 @@
     .toggle .thumb { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #e8eaf0; border-radius: 50%; transition: transform 0.3s; }
     .toggle.on .thumb { transform: translateX(18px); }
 
-    .cap-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 3px; border: 1px solid rgba(255,255,255,0.03); }
+    .cap-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 2px; border: 1px solid rgba(255,255,255,0.03); }
     .cap-left { display: flex; align-items: center; gap: 10px; }
-    .cap-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; background: rgba(0,180,212,0.06); }
+    .cap-icon { width: 24px; height: 24px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; background: rgba(0,180,212,0.06); }
     .cap-icon.vision-active { background: rgba(0,255,136,0.1); }
-    .cap-name { font-size: 12px; color: #c9cdd5; }
-    .cap-status { font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .cap-name { font-size: 11px; color: #c9cdd5; }
+    .cap-status { font-size: 8px; padding: 2px 6px; border-radius: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .cap-status.online { background: rgba(34,197,94,0.1); color: #22c55e; }
     .cap-status.loading { background: rgba(234,179,8,0.1); color: #eab308; }
     .cap-status.offline { background: rgba(239,68,68,0.1); color: #ef4444; }
     .cap-status.unknown { background: rgba(100,116,139,0.08); color: #64748b; }
 
-    .actions { padding: 12px 20px; display: flex; flex-direction: column; gap: 6px; }
-    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px; }
+    .actions { padding: 8px 20px; display: flex; flex-direction: column; gap: 5px; }
+    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 14px; border-radius: 8px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px; }
     .btn-primary { background: linear-gradient(135deg, #0097a7, #00838f); color: white; box-shadow: 0 2px 8px rgba(0,151,167,0.2); }
     .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,151,167,0.3); }
-    .btn-vision { background: linear-gradient(135deg, #00884a, #006633); color: white; box-shadow: 0 2px 8px rgba(0,136,74,0.2); }
-    .btn-vision:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-vision { background: linear-gradient(135deg, #00884a, #006633); color: white; }
+    .btn-vision:hover { opacity: 0.9; }
     .btn-vision.active { background: linear-gradient(135deg, #006633, #004422); box-shadow: 0 0 12px rgba(0,255,136,0.2); }
     .btn-secondary { background: rgba(255,255,255,0.04); color: #9ca3af; border: 1px solid rgba(255,255,255,0.06); }
     .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #e8eaf0; }
-    .btn-search { background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white; box-shadow: 0 2px 8px rgba(124,58,237,0.2); }
-    .btn-search:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn-row { display: flex; gap: 6px; }
-    .btn-row .btn { flex: 1; font-size: 11px; padding: 9px 8px; }
+    .btn-search { background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white; }
+    .btn-search:hover { opacity: 0.9; }
+    .btn-panel { background: linear-gradient(135deg, #0e7490, #155e75); color: white; }
+    .btn-panel:hover { opacity: 0.9; }
+    .btn-row { display: flex; gap: 4px; }
+    .btn-row .btn { flex: 1; font-size: 10px; padding: 8px 6px; }
 
     .page-info { padding: 6px 20px; font-size: 10px; color: #4a4f5c; }
     .page-info .url { color: #0097a7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; display: block; }
 
-    /* Quick Links */
-    .quick-links { padding: 8px 20px; }
-    .quick-links-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-    .quick-link { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s; text-decoration: none; color: inherit; }
-    .quick-link:hover { background: rgba(0,180,212,0.08); border-color: rgba(0,180,212,0.15); transform: translateY(-1px); }
-    .quick-link-icon { font-size: 16px; }
-    .quick-link-label { font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; line-height: 1.2; }
+    .quick-links { padding: 6px 20px; }
+    .quick-links-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+    .quick-link { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 6px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s; text-decoration: none; color: inherit; }
+    .quick-link:hover { background: rgba(0,180,212,0.08); border-color: rgba(0,180,212,0.15); }
+    .quick-link-icon { font-size: 14px; }
+    .quick-link-label { font-size: 7px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; line-height: 1.2; }
 
-    .shortcuts { padding: 10px 20px; font-size: 10px; color: #3a3f4c; border-top: 1px solid rgba(255,255,255,0.03); }
-    .shortcuts kbd { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 3px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 9px; color: #6b7280; }
-    .footer { padding: 10px 20px; text-align: center; font-size: 9px; color: #2a2b3d; border-top: 1px solid rgba(255,255,255,0.03); }
+    .shortcuts { padding: 8px 20px; font-size: 9px; color: #3a3f4c; border-top: 1px solid rgba(255,255,255,0.03); }
+    .shortcuts kbd { background: rgba(255,255,255,0.06); padding: 2px 5px; border-radius: 3px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 8px; color: #6b7280; }
+    .footer { padding: 8px 20px; text-align: center; font-size: 9px; color: #2a2b3d; border-top: 1px solid rgba(255,255,255,0.03); }
     .footer a { color: #4a5568; text-decoration: none; }
 
-    .vision-info { padding: 8px 20px; display: none; }
+    .vision-info { padding: 6px 20px; display: none; }
     .vision-info.active { display: block; }
-    .vision-info-box { padding: 8px 12px; border-radius: 8px; background: rgba(0,255,136,0.04); border: 1px solid rgba(0,255,136,0.15); font-size: 10px; color: #00ff88; line-height: 1.5; }
-    .vision-info-box .hint { color: rgba(0,255,136,0.5); font-size: 9px; margin-top: 4px; }
+    .vision-info-box { padding: 6px 10px; border-radius: 6px; background: rgba(0,255,136,0.04); border: 1px solid rgba(0,255,136,0.15); font-size: 9px; color: #00ff88; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -110,7 +110,7 @@
       <img src="icon128.png" alt="Orion" class="logo-img" />
       <div class="header-text">
         <h1>ORION</h1>
-        <div class="tagline">Assistente Neural — v4.0</div>
+        <div class="tagline">Assistente Neural — v5.0</div>
       </div>
     </div>
     <div class="status-row">
@@ -131,7 +131,7 @@
   </div>
 
   <div class="section">
-    <div class="section-label">Capacidades</div>
+    <div class="section-label">Capacidades (14 online)</div>
     <div class="cap-item">
       <div class="cap-left"><div class="cap-icon" id="cap-vision-icon">👁</div><span class="cap-name">Visão</span></div>
       <span class="cap-status offline" id="cap-vision">Offline</span>
@@ -160,13 +160,40 @@
       <div class="cap-left"><div class="cap-icon">🛡</div><span class="cap-name">Anti-Alucinação</span></div>
       <span class="cap-status online" id="cap-antihallucination">Online</span>
     </div>
+    <div class="cap-item">
+      <div class="cap-left"><div class="cap-icon">📋</div><span class="cap-name">Clipboard</span></div>
+      <span class="cap-status online" id="cap-clipboard">Online</span>
+    </div>
+    <div class="cap-item">
+      <div class="cap-left"><div class="cap-icon">📥</div><span class="cap-name">Downloads</span></div>
+      <span class="cap-status online" id="cap-downloads">Online</span>
+    </div>
+    <div class="cap-item">
+      <div class="cap-left"><div class="cap-icon">🔖</div><span class="cap-name">Bookmarks</span></div>
+      <span class="cap-status online" id="cap-bookmarks">Online</span>
+    </div>
+    <div class="cap-item">
+      <div class="cap-left"><div class="cap-icon">🕐</div><span class="cap-name">Histórico</span></div>
+      <span class="cap-status online" id="cap-history">Online</span>
+    </div>
+    <div class="cap-item">
+      <div class="cap-left"><div class="cap-icon">🔊</div><span class="cap-name">TTS Chrome</span></div>
+      <span class="cap-status online" id="cap-tts">Online</span>
+    </div>
+    <div class="cap-item">
+      <div class="cap-left"><div class="cap-icon">📝</div><span class="cap-name">Notas</span></div>
+      <span class="cap-status online" id="cap-notes">Online</span>
+    </div>
+    <div class="cap-item">
+      <div class="cap-left"><div class="cap-icon">📖</div><span class="cap-name">Reading List</span></div>
+      <span class="cap-status online" id="cap-readinglist">Online</span>
+    </div>
   </div>
 
   <div id="visionInfo" class="vision-info">
     <div class="vision-info-box">
       👁 Visão ativa — captura sob demanda<br>
-      Diga: <strong>"Orion, o que você vê?"</strong><br>
-      <div class="hint">Auto-desliga em 15 min sem uso</div>
+      Diga: <strong>"Orion, o que você vê?"</strong>
     </div>
   </div>
 
@@ -177,20 +204,21 @@
 
   <div class="actions">
     <button class="btn btn-primary" id="btnOpen">🚀 Abrir Consulta Orion</button>
+    <button class="btn btn-panel" id="btnSidePanel">📐 Abrir Painel Lateral</button>
     <button class="btn btn-search" id="btnSearch">🔍 Pesquisa Web Inteligente</button>
     <button class="btn btn-vision" id="btnVision">👁 Ativar Visão (15 min)</button>
-    <button class="btn btn-secondary" id="btnScrape">🕸 Extrair Página Atual</button>
     <div class="btn-row">
-      <button class="btn btn-secondary" id="btnSummarize"><span>📝 Resumir</span></button>
-      <button class="btn btn-secondary" id="btnScreenshot"><span>📸 Captura</span></button>
+      <button class="btn btn-secondary" id="btnScrape">🕸 Scrape</button>
+      <button class="btn btn-secondary" id="btnSummarize">📝 Resumir</button>
+      <button class="btn btn-secondary" id="btnScreenshot">📸 Captura</button>
     </div>
     <div class="btn-row">
-      <button class="btn btn-secondary" id="btnReadAloud"><span>🔊 Ler</span></button>
-      <button class="btn btn-secondary" id="btnExtract"><span>📊 Extrair</span></button>
+      <button class="btn btn-secondary" id="btnReadAloud">🔊 Ler</button>
+      <button class="btn btn-secondary" id="btnExtract">📊 Extrair</button>
+      <button class="btn btn-secondary" id="btnBookmark">🔖 Bookmark</button>
     </div>
   </div>
 
-  <!-- Quick External Links -->
   <div class="quick-links">
     <div class="section-label">Links Rápidos</div>
     <div class="quick-links-grid">
@@ -210,11 +238,11 @@
   </div>
 
   <div class="shortcuts">
-    <kbd>Ctrl+Shift+O</kbd> Abrir &nbsp;&middot;&nbsp; <kbd>Ctrl+Shift+L</kbd> Escuta
+    <kbd>Ctrl+Shift+O</kbd> Abrir &nbsp;&middot;&nbsp; <kbd>Ctrl+Shift+L</kbd> Escuta &nbsp;&middot;&nbsp; <kbd>Ctrl+Shift+P</kbd> Painel &nbsp;&middot;&nbsp; <kbd>Ctrl+Shift+S</kbd> Captura
   </div>
 
   <div class="footer">
-    Orion v4.0 &mdash; <a href="https://www.iasofthub.com" target="_blank">IASoft Hub</a> &middot; ELP Green Technology
+    Orion v5.0 &mdash; <a href="https://www.iasofthub.com" target="_blank">IASoft Hub</a> &middot; ELP Green Technology
   </div>
 
   <script src="popup.js"></script>
