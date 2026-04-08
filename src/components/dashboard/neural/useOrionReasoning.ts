@@ -445,6 +445,25 @@ export function useOrionReasoning(
       let processedQuestion = voltage.normalizedInput;
       const qLow = (processedInput || question).toLowerCase().trim();
 
+      // ═══ VISION COMMAND INTERCEPT — handle locally, NEVER send to LLM ═══
+      const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow);
+      const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow);
+      if (isActivateVision || isDeactivateVision) {
+        const action = isActivateVision ? "activate_vision" : "deactivate_vision";
+        const msg = isActivateVision ? "Ativando visão neural." : "Desativando visão.";
+        // Dispatch event for NeuralVision to handle camera start/stop
+        window.dispatchEvent(new CustomEvent("orion-vision-command", { detail: { action } }));
+        setChatHistory(prev => {
+          const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+          return [...clean, { role: "ai" as const, text: `👁️ ${msg}`, time: new Date().toLocaleTimeString("pt-BR") }];
+        });
+        setThought(msg);
+        try { await speak(msg); } catch {}
+        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        processNextInQueue();
+        return;
+      }
+
       // ═══ INSTANT CACHE CHECK — skip everything if cached (<5ms) ═══
       if (!_isSpecialCmd || isUltraFastPathActive()) {
         const instantHit = getInstantResponse(processedInput || question);
