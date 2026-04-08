@@ -114,6 +114,7 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user, signIn, signUp, signInWithGoogle } = useAuth();
+  const { verify: verifyRecaptcha } = useRecaptcha();
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -199,6 +200,19 @@ export default function Auth() {
     setLoading(true);
     setEmailNotConfirmed(null);
 
+    // reCAPTCHA v3 verification
+    const token = await verifyRecaptcha("login");
+    if (token) {
+      try {
+        const { data: captchaResult } = await supabase.functions.invoke("verify-recaptcha", { body: { token, action: "login" } });
+        if (captchaResult && !captchaResult.success) {
+          toast({ title: "Verificação falhou", description: "Atividade suspeita detectada. Tente novamente.", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+      } catch { /* Allow through if verification service is down */ }
+    }
+
     const { error } = await signIn(loginForm.email, loginForm.senha);
     if (error) {
       if (error.message.includes("Email not confirmed")) {
@@ -220,6 +234,19 @@ export default function Auth() {
     e.preventDefault();
     if (!validateCadastro()) return;
     setLoading(true);
+
+    // reCAPTCHA v3 verification
+    const token = await verifyRecaptcha("signup");
+    if (token) {
+      try {
+        const { data: captchaResult } = await supabase.functions.invoke("verify-recaptcha", { body: { token, action: "signup" } });
+        if (captchaResult && !captchaResult.success) {
+          toast({ title: "Verificação falhou", description: "Atividade suspeita detectada. Tente novamente.", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+      } catch { /* Allow through if verification service is down */ }
+    }
 
     // Build metadata for trigger handle_new_user
     const metadata: Record<string, unknown> = {
