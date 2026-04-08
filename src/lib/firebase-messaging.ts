@@ -39,12 +39,12 @@ export async function requestNotificationPermission(): Promise<string | null> {
     if (token) {
       console.log("[FCM] Token obtained:", token.slice(0, 20) + "...");
       
-      // Save token to Supabase for the current user
+      // Save token to user's profile metadata
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from("profiles").update({
           fcm_token: token,
-        }).eq("user_id", user.id);
+        } as any).eq("user_id", user.id);
       }
       
       return token;
