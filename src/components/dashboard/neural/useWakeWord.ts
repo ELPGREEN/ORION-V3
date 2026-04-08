@@ -220,6 +220,7 @@ export function useWakeWord(
       };
 
       wakeRecRef.current = rec;
+      registerWakeRec(rec);
       rec.start();
       setWakeWordActive(true);
       vsLog("👂 Wake word listener ativo — diga 'Orion' (estável no mobile)");
