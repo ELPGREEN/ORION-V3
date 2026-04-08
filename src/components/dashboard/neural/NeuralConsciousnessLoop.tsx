@@ -639,6 +639,31 @@ export function NeuralConsciousnessLoop() {
       riskLevel: (meta?.riskLevel ?? prev.riskLevel) as "safe" | "caution" | "warning" | "critical",
       activeSkillsList: meta?.activeSkills?.map(s => ({ name: s.name, category: s.category, contribution: s.contribution, active: s.active })) ?? prev.activeSkillsList,
       reflectionChain: meta?.reflectionChain ?? prev.reflectionChain,
+      // v25: Bridge snapshot
+      bridgeSnapshot: (() => {
+        const snap = getLastConsciousnessSnapshot();
+        if (!snap) return prev.bridgeSnapshot;
+        return {
+          gammaHealth: snap.gammaHealth,
+          gammaSubBand: snap.gammaSubBand,
+          gammaCTC: snap.gammaCTC,
+          thetaGammaMI: snap.thetaGammaMI,
+          resonanceIndex: snap.resonanceIndex,
+          coherenceTime: snap.coherenceTime,
+          teslaResonanceActive: snap.teslaResonanceActive,
+          qhrlAdvantage: snap.qhrlAdvantage,
+          taskComplexity: snap.taskComplexity,
+          temporalSynchrony: snap.temporalSynchrony,
+          interoception: snap.interoception ? {
+            valence: snap.interoception.valence,
+            arousal: snap.interoception.arousal,
+            painIndex: snap.interoception.painIndex,
+            energyLevel: snap.interoception.energyLevel,
+            dominantSignal: snap.interoception.dominantSignal,
+          } : null,
+          anomalySeverity: snap.anomalySeverity,
+        };
+      })(),
     }));
   }, [addLogEntry]);
 
