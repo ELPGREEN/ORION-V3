@@ -1,5 +1,5 @@
 /**
- * Gemini TTS — Free neural TTS using Google Gemini 2.5 Flash Preview TTS
+ * Gemini TTS — Free neural TTS using Google Gemini 2.5 Flash TTS (GA stable)
  * Tier 0 (highest quality) in Orion's voice cascade.
  * Uses edge function with key rotation. Falls back on 429/error.
  */
