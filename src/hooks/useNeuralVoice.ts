@@ -14,6 +14,8 @@ import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperT
 import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/voice-evolution-feedback";
 import { speakWithEvolvedVoice } from "@/lib/neural/orion-voice-evolution";
+import { fallbackTranscribe, chunksToWavBlob, getSTTFallbackState } from "@/lib/voice/sttFallbackChain";
+import { getAudioWorkletManager } from "@/lib/voice/audioWorkletManager";
 
 // ═══ Text Cleaning for Natural Speech ═══
 
@@ -112,6 +114,9 @@ export function useNeuralVoice(
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   /** Singleton ID — this mount's unique ownership token */
   const singletonIdRef = useRef(0);
+  /** v30: AudioWorklet chunks for STT fallback */
+  const audioChunksRef = useRef<Float32Array[]>([]);
+  const audioWorkletActiveRef = useRef(false);
 
   const updateAiResponding = useCallback((val: boolean) => {
     VoiceState.aiResponding = val;
@@ -605,15 +610,28 @@ export function useNeuralVoice(
         toast.error("Permissão do microfone bloqueada");
         return;
       }
-      // ═══ STT Fallback: On network/no-speech errors, try Groq→Browser Whisper ═══
+      // ═══ STT Fallback v30: On network/no-speech errors, try Groq→Browser Whisper ═══
       if (e.error === "network" || e.error === "no-speech") {
-        // For no-speech, just restart normally
         if (e.error === "no-speech") {
           scheduleRecognitionRestart(80);
           return;
         }
-        // For network errors: attempt fallback STT with any buffered audio
-        console.warn("[Voice] Network error — STT fallback chain available via sttFallbackChain.ts");
+        // Network error: use STT fallback chain with buffered audio chunks
+        console.warn("[Voice] Network error — activating STT fallback chain");
+        const chunks = audioChunksRef.current;
+        if (chunks.length > 0) {
+          const wavBlob = chunksToWavBlob(chunks, 16000);
+          audioChunksRef.current = [];
+          fallbackTranscribe(wavBlob).then(({ text, provider, latencyMs }) => {
+            if (text && text.trim().length > 2 && onCmdRef.current) {
+              console.log(`[Voice] STT fallback success via ${provider} (${latencyMs.toFixed(0)}ms): ${text.slice(0, 60)}`);
+              feedUserSpeech(text);
+              onCmdRef.current(text);
+            }
+          }).catch(err => {
+            console.warn("[Voice] STT fallback chain failed:", err);
+          });
+        }
         scheduleRecognitionRestart(500);
         return;
       }
@@ -649,14 +667,30 @@ export function useNeuralVoice(
   }, [createRecognition]);
 
   const startListening = useCallback((onCmd: (c: string) => void) => {
-    // ═══ FIX: Re-claim mic ownership for command mode ═══
-    // Without this, wake word's mount claim invalidates our singletonId
     singletonIdRef.current = claimMic("command");
     intentionalStopRef.current = false;
     voiceActiveRef.current = true;
     clearRestartTimer();
     onCmdRef.current = onCmd;
     setListening(false);
+
+    // v30: Start AudioWorklet to collect chunks for STT fallback
+    if (!audioWorkletActiveRef.current) {
+      audioWorkletActiveRef.current = true;
+      try {
+        const worklet = getAudioWorkletManager({ sampleRate: 16000, chunkSize: 4096 });
+        worklet.initialize().then((ok) => {
+          if (!ok) return;
+          worklet.onAudioChunk((chunk) => {
+            // Keep last ~5s of audio (16000 * 5 / 4096 ≈ 20 chunks)
+            audioChunksRef.current.push(chunk);
+            if (audioChunksRef.current.length > 20) audioChunksRef.current.shift();
+          });
+          worklet.start();
+        }).catch(() => {});
+      } catch {}
+    }
+
     startListeningFresh(onCmd);
   }, [clearRestartTimer, startListeningFresh]);
 
