@@ -839,6 +839,22 @@ export function NeuralConsciousnessLoop() {
           hearingAcousticSentiment: snap.hearingAcousticSentiment ?? prev.hearingAcousticSentiment,
           hearingAudioQuality: snap.hearingAudioQuality ?? prev.hearingAudioQuality,
           hearingShouldRepeat: snap.hearingShouldRepeat ?? prev.hearingShouldRepeat,
+          // v29: Quantum Cognition
+          qcSuperpositionCardinality: snap.qcSuperpositionCardinality ?? prev.qcSuperpositionCardinality,
+          qcCollapsed: snap.qcCollapsed ?? prev.qcCollapsed,
+          qcCollapseProbability: snap.qcCollapseProbability ?? prev.qcCollapseProbability,
+          qcInterferenceMagnitude: snap.qcInterferenceMagnitude ?? prev.qcInterferenceMagnitude,
+          qcBellInequality: snap.qcBellInequality ?? prev.qcBellInequality,
+          qcEntanglementEntropy: snap.qcEntanglementEntropy ?? prev.qcEntanglementEntropy,
+          qcNonLocalField: snap.qcNonLocalField ?? prev.qcNonLocalField,
+          qcObserverEffect: snap.qcObserverEffect ?? prev.qcObserverEffect,
+          qcInformationGain: snap.qcInformationGain ?? prev.qcInformationGain,
+          qcZenoEffect: snap.qcZenoEffect ?? prev.qcZenoEffect,
+          qcAmbiguityTolerance: snap.qcAmbiguityTolerance ?? prev.qcAmbiguityTolerance,
+          qcCognitiveDissonance: snap.qcCognitiveDissonance ?? prev.qcCognitiveDissonance,
+          qcResolutionStrategy: snap.qcResolutionStrategy ?? prev.qcResolutionStrategy,
+          qcOrchORScore: snap.qcOrchORScore ?? prev.qcOrchORScore,
+          qcCoherenceTimeMs: snap.qcCoherenceTimeMs ?? prev.qcCoherenceTimeMs,
         };
       })(),
       // v25: Bridge snapshot
