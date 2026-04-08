@@ -56,6 +56,56 @@ export const VoiceState = {
   aiResponding: false,
 };
 
+// ═══ Global Singleton Guard ═══
+// Ensures only ONE SpeechRecognition instance exists across HMR reloads.
+// Each mount gets a unique ID; if a newer mount exists, older ones yield.
+const VOICE_GLOBAL_KEY = "__orion_voice_singleton__";
+
+interface VoiceSingleton {
+  activeId: number;
+  rec: any | null;
+  wakeRec: any | null;
+  cleanup: (() => void) | null;
+}
+
+function getVoiceSingleton(): VoiceSingleton {
+  const w = window as any;
+  if (!w[VOICE_GLOBAL_KEY]) {
+    w[VOICE_GLOBAL_KEY] = { activeId: 0, rec: null, wakeRec: null, cleanup: null };
+  }
+  return w[VOICE_GLOBAL_KEY];
+}
+
+/** Kill any existing global recognition instances before starting new ones */
+function claimVoiceSingleton(): number {
+  const s = getVoiceSingleton();
+  // Kill previous instances
+  if (s.cleanup) { try { s.cleanup(); } catch {} }
+  try { s.rec?.abort?.(); } catch {}
+  try { s.rec?.stop?.(); } catch {}
+  try { s.wakeRec?.abort?.(); } catch {}
+  try { s.wakeRec?.stop?.(); } catch {}
+  s.rec = null;
+  s.wakeRec = null;
+  s.activeId++;
+  return s.activeId;
+}
+
+/** Check if this mount is still the active owner */
+function isActiveOwner(id: number): boolean {
+  return getVoiceSingleton().activeId === id;
+}
+
+/** Register the current recognition instance globally */
+function registerGlobalRec(rec: any) {
+  getVoiceSingleton().rec = rec;
+}
+
+/** Register cleanup function for this mount */
+function registerGlobalCleanup(fn: () => void) {
+  getVoiceSingleton().cleanup = fn;
+}
+
 export interface UseNeuralVoiceReturn {
   listening: boolean;
   supported: boolean;
