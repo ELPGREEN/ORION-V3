@@ -11,6 +11,8 @@ import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { OrionAccessGate } from "@/components/OrionAccessGate";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
+// ═══ FIX: Integrate with Mic Arbiter to prevent SpeechRecognition conflicts ═══
+import { claimMic, isMicOwner, registerMicRec, getMicMode } from "@/lib/voice/micArbiter";
 
 /** Speak text using Gemini TTS Algieba with browser TTS fallback */
 async function orionSpeak(text: string): Promise<void> {
@@ -122,6 +124,8 @@ export function GlobalOrionListener() {
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restartAttemptsRef = useRef(0);
   const startInFlightRef = useRef(false);
+  /** Mic arbiter ownership ID for this component */
+  const micOwnerIdRef = useRef(0);
   /** Command capture recognition (separate from wake word) */
   const cmdRecRef = useRef<any>(null);
   const cmdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -331,12 +335,21 @@ export function GlobalOrionListener() {
     console.log("[GlobalOrion] startWakeWordListener called", { isOnNeuralPage, orionOpen, permissionsGranted, hidden, hasRef: !!wakeRecRef.current });
     if (hidden || isOnNeuralPage || orionOpen || !permissionsGranted || wakeRecRef.current || startInFlightRef.current) return;
 
+    // ═══ FIX: Don't start if another component (useNeuralVoice) owns the mic in command mode ═══
+    const currentMode = getMicMode();
+    if (currentMode === "command") {
+      console.log("[GlobalOrion] Mic in command mode — skipping wake word start");
+      return;
+    }
+
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (!SR) {
       console.warn("[GlobalOrion] SpeechRecognition API not available");
       return;
     }
 
+    // ═══ FIX: Claim mic via arbiter — prevents conflicts with useNeuralVoice/useWakeWord ═══
+    micOwnerIdRef.current = claimMic("wake");
     wakeWordEnabledRef.current = true;
     clearRestartTimer();
     startInFlightRef.current = true;
@@ -422,6 +435,13 @@ export function GlobalOrionListener() {
         console.log("[GlobalOrion] onend", { wakeDetected: wakeDetectedRef.current, enabled: wakeWordEnabledRef.current, sessionMs: sessionDuration, gotResult: sessionStartRef.gotResult });
         wakeRecRef.current = null;
         startInFlightRef.current = false;
+
+        // ═══ FIX: If another component claimed the mic, don't restart ═══
+        if (!isMicOwner(micOwnerIdRef.current)) {
+          console.log("[GlobalOrion] Mic ownership lost — not restarting");
+          setWakeWordActive(false);
+          return;
+        }
 
         if (wakeDetectedRef.current) {
           activateWithCommand(pendingCommandRef.current);
@@ -521,9 +541,11 @@ export function GlobalOrionListener() {
       };
 
       wakeRecRef.current = rec;
+      // ═══ FIX: Register with mic arbiter ═══
+      registerMicRec(rec, "wake");
       rec.start();
       setWakeWordActive(true);
-      console.log("[GlobalOrion] ✅ Wake word listener started successfully");
+      console.log("[GlobalOrion] ✅ Wake word listener started (mic arbiter registered)");
       } catch (err) {
         startInFlightRef.current = false;
         setWakeWordActive(false);

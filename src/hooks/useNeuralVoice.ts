@@ -209,6 +209,12 @@ export function useNeuralVoice(
   const resumeSTT = useCallback(() => {
     // Always try to restart if we have a command handler, even if listeningRef drifted
     if (onCmdRef.current && !intentionalStopRef.current) {
+      // ═══ FIX: Re-claim mic ownership after TTS ═══
+      // During TTS, wake word or GlobalOrionListener may have claimed the mic.
+      // We must re-claim before restarting, otherwise isMicOwner checks fail
+      // and STT never restarts (the "listen→speak→DEAD" bug).
+      singletonIdRef.current = claimMic("command");
+
       if (speechBufferRef.current.trim() && onCmdRef.current) {
         const pending = speechBufferRef.current.trim();
         speechBufferRef.current = "";
@@ -558,11 +564,17 @@ export function useNeuralVoice(
         setListening(false);
         return;
       }
-      if (!speakingRef.current && onCmdRef.current) {
+      if (speakingRef.current) {
+        // ═══ FIX: During TTS, set listening=false (no active recognition) ═══
+        // resumeSTT() will restart STT after TTS finishes.
+        setListening(false);
+        return;
+      }
+      if (onCmdRef.current) {
         scheduleRecognitionRestart(80);
         return;
       }
-      if (!speakingRef.current) setListening(false);
+      setListening(false);
     };
     
     rec.onerror = (e: any) => {
