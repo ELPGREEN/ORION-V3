@@ -8,7 +8,7 @@ import { useRef, useEffect } from "react";
 export const OrbState = {
   aiResponding: false,
   active: false,
-  awareness: 15,
+  awareness: 50, // starts at 50, converges to real IIT Phi (~70-85%) within seconds
   regions: [] as any[],
   motion: { intensity: 0 } as { intensity: number },
 };
