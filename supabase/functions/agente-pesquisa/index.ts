@@ -1237,6 +1237,7 @@ REGRAS OBRIGATÓRIAS:
       console.warn(`Gemini key failed for ${context}:`, e);
       continue;
     }
+  }
 
   throw new Error("No LLM provider available (GROQ_API_KEY, MISTRAL_API_KEY and GEMINI_API_KEY missing)");
 }
