@@ -1087,8 +1087,8 @@ async function callGeminiAPI(messages: any[], stream: boolean, apiKeyEnv: string
     });
 
   const requestedMaxTokens = (messages as any).__maxTokens;
-  const defaultTextTokens = requestedMaxTokens || 1536;  // Reduced from 2048
-  const defaultVisionTokens = requestedMaxTokens || 3072; // Reduced from 4096
+  const defaultTextTokens = requestedMaxTokens || 4096;
+  const defaultVisionTokens = requestedMaxTokens || 6144;
 
   const geminiBody: any = {
     contents,
