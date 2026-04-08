@@ -651,6 +651,27 @@ export function runConsciousnessBridge(
         hearingShouldRepeat: hr?.metaFilter.shouldRequestRepeat ?? false,
       };
     })(),
+    // v29: Quantum Cognition
+    ...(() => {
+      const qc = cycleResult.metacognition?.quantumCognition;
+      return {
+        qcSuperpositionCardinality: qc?.superposition.superpositionCardinality ?? 1,
+        qcCollapsed: qc?.superposition.collapsed ?? true,
+        qcCollapseProbability: qc?.superposition.collapseProbability ?? 1,
+        qcInterferenceMagnitude: qc?.interference.interferenceMagnitude ?? 0,
+        qcBellInequality: qc?.entanglement.bellInequality ?? 2,
+        qcEntanglementEntropy: qc?.entanglement.entanglementEntropy ?? 0,
+        qcNonLocalField: qc?.entanglement.nonLocalFieldStrength ?? 0,
+        qcObserverEffect: qc?.contextCollapse.observerEffectDetected ?? false,
+        qcInformationGain: qc?.contextCollapse.informationGain ?? 0,
+        qcZenoEffect: qc?.contextCollapse.zenoEffectActive ?? false,
+        qcAmbiguityTolerance: qc?.ambiguityTolerance.dualStateCapability ?? 0,
+        qcCognitiveDissonance: qc?.ambiguityTolerance.cognitiveDissonance ?? 0,
+        qcResolutionStrategy: qc?.ambiguityTolerance.resolutionStrategy ?? "collapse",
+        qcOrchORScore: qc?.orchestratedReductionScore ?? 0,
+        qcCoherenceTimeMs: qc?.cognitiveCoherenceTimeMs ?? 10,
+      };
+    })(),
   };
 
   _lastCycleResult = snapshot;
