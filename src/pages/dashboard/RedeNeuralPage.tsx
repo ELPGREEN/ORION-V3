@@ -600,6 +600,7 @@ export default function RedeNeuralPage() {
         <Suspense fallback={null}>
           <ScreenRecorder />
         </Suspense>
+      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="relative z-10">
         <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#3B82F6]/15"
