@@ -175,6 +175,7 @@ export function useWakeWord(
       rec.onend = () => {
         wakeRecRef.current = null;
         startInFlightRef.current = false;
+        if (!isWakeOwner(wakeSingletonIdRef.current)) { setWakeWordActive(false); return; }
         const shouldRestart = wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeWordCooldownRef.current && !(typeof document !== "undefined" && document.hidden);
         if (!shouldRestart) {
           setWakeWordActive(false);
@@ -184,6 +185,7 @@ export function useWakeWord(
         restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 6);
         clearRestartTimer();
         restartTimerRef.current = setTimeout(() => {
+          if (!isWakeOwner(wakeSingletonIdRef.current)) { setWakeWordActive(false); return; }
           if (wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeRecRef.current && !startInFlightRef.current && !(typeof document !== "undefined" && document.hidden)) {
             startWakeWordListener();
           } else {
