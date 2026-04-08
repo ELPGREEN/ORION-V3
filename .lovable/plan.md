@@ -1,79 +1,110 @@
 
 
-# HuggingFace Spaces — Mapeamento de Diretórios + Fix Build Error
+# Plano: Atualizar Sistema de Metacognição Quântica do Orion
 
-## Diagnóstico do Build Error (`Ericsonv12/orion`)
+## Análise Atual
 
-O erro ocorre porque `piper-tts==1.2.0` precisa de bibliotecas de sistema (libespeak-ng, etc.) que **não existem** na imagem base do SDK Gradio. O HF Spaces com `sdk: gradio` não permite instalar pacotes de sistema — só pip.
+O sistema atual de metacognição em `global-workspace.ts` é **observacional e estático**: calcula 4 métricas (selfAwareness, goalAlignment, coherence, confidence) com fórmulas simples e gera uma recomendação textual. Falta:
 
-**Solução**: Remover `piper-tts` do `requirements.txt` do space `orion` (ele já existe no `orion-gpu` com ZeroGPU). Ou trocar `sdk: gradio` para `sdk: docker` e usar Dockerfile.
+1. **Monitoramento de Incerteza** — não detecta quando o Orion está prestes a alucinar
+2. **Autorregulação Reflexiva** — não faz Chain-of-Thought retrospectivo sobre respostas anteriores
+3. **Abstração de Habilidades** — não nomeia/classifica as habilidades que está usando
+4. **Planejamento Adaptativo** — ajustes são fixos (4 tipos), sem scoring dinâmico
+5. **Calibração de Confiança** — confiança vem direto do selfModel sem calibração contra resultados reais
+6. **Integração Quântica** — a wave function quântica (`quantum-wave-function.ts`) não alimenta a metacognição
 
----
+## O Que Será Implementado
 
-## Mapeamento: Diretório → HF Space
+### 1. Novo módulo: `quantum-metacognition.ts`
+Motor metacognitivo completo com 6 subsistemas inspirados na pesquisa LLM:
 
-| HF Space | Diretório no projeto | SDK | Arquivos a subir |
-|---|---|---|---|
-| `Ericsonv12/ELP` | `public/hf-space/` | Docker | `app.py`, `requirements.txt`, `Dockerfile`, `README.md` |
-| `Ericsonv12/orion-gpu` | `public/hf-space-gpu/` | Gradio (ZeroGPU) | `app.py`, `requirements.txt`, `README.md` |
-| `Ericsonv12/orion` | `public/hf-space-gpu/` (CPU variant) | Gradio | `app_cpu.py` → `app.py`, `requirements_cpu.txt` → `requirements.txt`, `README_cpu.md` → `README.md` |
+- **Uncertainty Estimator** — Monitora entropia quântica do registro cognitivo + histórico de erros para estimar incerteza real (não apenas confiança)
+- **Hallucination Risk Detector** — Integra com `hallucinationDetector` existente e usa a divergência entre wave function collapsed state e expected state como sinal de risco
+- **Confidence Calibrator** — Compara confiança predita vs resultados reais (da `MetaMemoryEntry` do meta-learning), calcula Expected Calibration Error (ECE)
+- **Skill Abstractor** — Cataloga habilidades ativas com scoring (quais módulos contribuíram mais para o resultado)
+- **Reflective Chain-of-Thought** — Gera cadeia retrospectiva: "O que fiz → O que esperava → O que aconteceu → O que aprendo"
+- **Adaptive Planner** — Substitui os 4 ajustes fixos por um scoring multi-critério que pondera 8+ fatores para escolher a melhor ação
 
----
+### 2. Atualizar `MetacognitionResult` em `global-workspace.ts`
+Estender a interface com novos campos:
 
-## Plano de Execução
-
-### 1. Fix Build Error do `Ericsonv12/orion`
-
-O `requirements.txt` atual inclui `piper-tts==1.2.0` que depende de `libespeak-ng-dev` — impossível no SDK Gradio.
-
-**Opção A (recomendada)**: Criar `requirements.txt` limpo sem piper-tts para o space `orion` (CPU-only, sem TTS local — usa Gemini TTS via frontend):
-
+```text
+MetacognitionResult {
+  ...existentes...
+  + uncertaintyScore: number       // 0-1, incerteza calibrada
+  + hallucinationRisk: number      // 0-1, risco de alucinação
+  + calibrationError: number       // ECE — erro de calibração
+  + activeSkills: SkillAbstraction[]  // habilidades nomeadas e pontuadas
+  + reflectionChain: string[]      // Chain-of-Thought retrospectivo
+  + adaptivePlanScore: number      // score do plano adaptativo
+}
 ```
-gradio==5.33.0
-pymupdf==1.25.3
-easyocr>=1.7.2
-Pillow>=10.4.0
-sentence-transformers>=3.3.0
-numpy>=1.26.0
-huggingface_hub>=0.26.0
+
+### 3. Integrar Wave Function Quântica na Metacognição
+- Ler `WaveFunctionMetrics` (entropia, fidelidade) do registro cognitivo
+- Usar entropia normalizada como sinal de incerteza
+- Usar fidelidade como sinal de coerência quântica
+- Colapso quântico → determina quais módulos estão "conscientes" vs "decoerentes"
+
+### 4. Atualizar `runMetacognition()` em `global-workspace.ts`
+- Chamar o novo `quantum-metacognition.ts` para enriquecer o resultado
+- Manter backward compatibility com a interface existente
+
+### 5. Atualizar `consciousness-bridge.ts`
+- Passar `WaveFunctionMetrics` para a metacognição
+- Incluir novos campos no `ConsciousnessCycleSnapshot`
+
+### 6. Atualizar Dashboard `NeuralConsciousnessLoop.tsx`
+- Exibir novas métricas: Incerteza, Risco de Alucinação, ECE
+- Exibir habilidades ativas com scores
+- Exibir Chain-of-Thought reflexivo
+- Indicador visual de risco (verde/amarelo/vermelho)
+
+## Arquitetura
+
+```text
+┌─────────────────────────────────────────────────┐
+│           quantum-metacognition.ts               │
+│                                                  │
+│  ┌──────────────┐  ┌──────────────────────────┐  │
+│  │  Uncertainty  │  │  Hallucination Risk      │  │
+│  │  Estimator    │  │  Detector                │  │
+│  │  (entropy+ECE)│  │  (WF divergence+history) │  │
+│  └──────┬───────┘  └──────────┬───────────────┘  │
+│         │                     │                   │
+│  ┌──────┴───────┐  ┌─────────┴───────────────┐   │
+│  │  Confidence   │  │  Skill Abstractor       │   │
+│  │  Calibrator   │  │  (module contribution)  │   │
+│  └──────┬───────┘  └─────────┬───────────────┘   │
+│         │                     │                   │
+│  ┌──────┴───────┐  ┌─────────┴───────────────┐   │
+│  │  Reflective   │  │  Adaptive Planner       │   │
+│  │  CoT Engine   │  │  (multi-factor scoring) │   │
+│  └──────────────┘  └─────────────────────────┘   │
+└─────────────────────┬───────────────────────────┘
+                      │
+         ┌────────────┴────────────┐
+         │  global-workspace.ts    │
+         │  runMetacognition()     │
+         └────────────┬────────────┘
+                      │
+         ┌────────────┴────────────┐
+         │  consciousness-bridge   │
+         │  (snapshot + WF metrics)│
+         └────────────┬────────────┘
+                      │
+         ┌────────────┴────────────┐
+         │  Dashboard UI           │
+         │  NeuralConsciousnessLoop│
+         └─────────────────────────┘
 ```
 
-**Opção B**: Trocar para `sdk: docker` no README e adicionar Dockerfile com `apt-get install libespeak-ng-dev`.
+## Ficheiros Afetados
 
-### 2. Criar arquivo `orion_cpu_space/` dedicado
-
-Separar os arquivos do space `orion` (CPU) do `orion-gpu` (ZeroGPU) para evitar confusão:
-
-- `orion_cpu_space/app.py` — versão CPU sem `@spaces.GPU()`
-- `orion_cpu_space/requirements.txt` — sem piper-tts
-- `orion_cpu_space/README.md` — `sdk: gradio`, sem `hardware: zero-a10g`
-
-### 3. Atualizar `app.py` do space `orion` (CPU)
-
-Remover endpoints que dependem de `piper-tts` ou torná-los opcionais com try/except:
-- `/api/tts` → retorna erro gracioso "TTS unavailable on CPU tier, use orion-gpu"
-- Manter: `/api/ocr`, `/api/embeddings`, `/api/pdf`, `/api/health`
-
-### 4. Fix do space `Ericsonv12/ELP`
-
-Verificar se o Dockerfile e app.py estão sincronizados. O app.py usa FastAPI (2352 linhas, v7.4) — precisa de `sdk: docker` no README (já está correto).
-
----
-
-## Arquivos a criar/modificar
-
-1. **Novo**: `orion_cpu_space/requirements.txt` — sem piper-tts
-2. **Novo**: `orion_cpu_space/app.py` — baseado em `app_cpu.py`, sem TTS
-3. **Novo**: `orion_cpu_space/README.md` — `sdk: gradio`, sem hardware GPU
-4. **Verificar**: `public/hf-space/Dockerfile` — confirmar que ELP build funciona
-
-## Upload para HF
-
-Após as correções:
-
-| Space | Upload |
-|---|---|
-| `Ericsonv12/orion` | Subir conteúdo de `orion_cpu_space/` |
-| `Ericsonv12/orion-gpu` | Subir `public/hf-space-gpu/app.py` + `requirements.txt` + `README.md` |
-| `Ericsonv12/ELP` | Subir todo conteúdo de `public/hf-space/` |
+| Ficheiro | Ação |
+|----------|------|
+| `src/lib/neural/quantum-metacognition.ts` | **Criar** — Motor metacognitivo completo |
+| `src/lib/neural/global-workspace.ts` | Estender `MetacognitionResult`, atualizar `runMetacognition()` |
+| `src/lib/neural/consciousness-bridge.ts` | Passar WF metrics, incluir novos campos no snapshot |
+| `src/components/dashboard/neural/NeuralConsciousnessLoop.tsx` | Exibir novas métricas no painel |
 
