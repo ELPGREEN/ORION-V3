@@ -610,15 +610,28 @@ export function useNeuralVoice(
         toast.error("Permissão do microfone bloqueada");
         return;
       }
-      // ═══ STT Fallback: On network/no-speech errors, try Groq→Browser Whisper ═══
+      // ═══ STT Fallback v30: On network/no-speech errors, try Groq→Browser Whisper ═══
       if (e.error === "network" || e.error === "no-speech") {
-        // For no-speech, just restart normally
         if (e.error === "no-speech") {
           scheduleRecognitionRestart(80);
           return;
         }
-        // For network errors: attempt fallback STT with any buffered audio
-        console.warn("[Voice] Network error — STT fallback chain available via sttFallbackChain.ts");
+        // Network error: use STT fallback chain with buffered audio chunks
+        console.warn("[Voice] Network error — activating STT fallback chain");
+        const chunks = audioChunksRef.current;
+        if (chunks.length > 0) {
+          const wavBlob = chunksToWavBlob(chunks, 16000);
+          audioChunksRef.current = [];
+          fallbackTranscribe(wavBlob).then(({ text, provider, latencyMs }) => {
+            if (text && text.trim().length > 2 && onCmdRef.current) {
+              console.log(`[Voice] STT fallback success via ${provider} (${latencyMs.toFixed(0)}ms): ${text.slice(0, 60)}`);
+              feedUserSpeech(text);
+              onCmdRef.current(text);
+            }
+          }).catch(err => {
+            console.warn("[Voice] STT fallback chain failed:", err);
+          });
+        }
         scheduleRecognitionRestart(500);
         return;
       }
