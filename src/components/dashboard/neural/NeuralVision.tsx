@@ -1009,19 +1009,34 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
         {/* ═══ Mobile layout - below plasma ═══ */}
         <div className="lg:hidden absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-[#030508] via-[#030508]/95 to-transparent p-3 pt-8">
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: "Awareness", value: `${awareness.toFixed(0)}%`, color: "#00e5ff" },
-              { label: "Objetos", value: `${regions.length}`, color: "#ffd740" },
-              { label: "Movimento", value: `${motion.intensity.toFixed(0)}%`, color: "#b388ff" },
-              { label: "Plasma", value: VS.aiResponding ? "ON" : "OFF", color: VS.aiResponding ? "#ff5252" : "#69f0ae" },
-            ].map((m, i) => (
-              <div key={i} className="flex justify-between bg-black/60 rounded px-2 py-1 border border-cyan-500/10">
-                <span className="text-[8px] font-mono text-white/25">{m.label}</span>
-                <span className="text-[9px] font-mono font-bold" style={{ color: m.color }}>{m.value}</span>
-              </div>
-            ))}
-          </div>
+          {active && (
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {[
+                { label: "Awareness", value: `${awareness.toFixed(0)}%`, color: "#00e5ff" },
+                { label: "Objetos", value: `${regions.length}`, color: "#ffd740" },
+                { label: "Movimento", value: `${motion.intensity.toFixed(0)}%`, color: "#b388ff" },
+                { label: "Plasma", value: VS.aiResponding ? "ON" : "OFF", color: VS.aiResponding ? "#ff5252" : "#69f0ae" },
+              ].map((m, i) => (
+                <div key={i} className="flex justify-between bg-black/60 rounded px-2 py-1 border border-cyan-500/10">
+                  <span className="text-[8px] font-mono text-white/25">{m.label}</span>
+                  <span className="text-[9px] font-mono font-bold" style={{ color: m.color }}>{m.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Mobile chat input — always visible */}
+          <form className="flex gap-1" onSubmit={(e) => {
+            e.preventDefault();
+            if (askInput.trim() && !isProcessing) { askAI(askInput.trim()); setAskInput(""); }
+          }}>
+            <input type="text" value={askInput} onChange={(e) => setAskInput(e.target.value)}
+              placeholder="Pergunte ao Orion..."
+              disabled={isProcessing}
+              className="flex-1 text-[10px] font-mono bg-black/70 border border-cyan-500/20 rounded px-3 py-2 text-white/70 placeholder:text-white/20 focus:outline-none focus:border-cyan-400/40 disabled:opacity-30" />
+            <Button type="submit" size="sm" variant="ghost" className="h-8 w-8 p-0 text-cyan-400/60 hover:text-cyan-400" disabled={isProcessing || !askInput.trim()}>
+              <MessageCircle className="h-4 w-4" />
+            </Button>
+          </form>
         </div>
       </div>
     </div>
