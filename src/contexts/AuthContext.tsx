@@ -4,6 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase';
 import { initializeNeuralProfile } from '@/lib/neural-init';
 import { clearRoleCache } from '@/hooks/useUserRole';
+import { OrionAnalytics } from '@/lib/firebase-analytics-events';
 
 type AccountType = 'advogado' | 'produtor' | 'afiliado' | 'nomade' | 'cliente';
 
@@ -115,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       initializeNeuralProfile(data.user.id, (metadata?.account_type as "advogado" | "cliente") || "cliente");
     }
     
+    OrionAnalytics.signUp('email');
     return { error: null };
   };
 
@@ -124,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     });
     
+    if (!error) OrionAnalytics.login('email');
     return { error: error as Error | null };
   };
 
