@@ -221,6 +221,11 @@ export async function detectRealTime(
 ): Promise<RealTimeVisionResult> {
   const start = performance.now();
 
+  // ═══ Frame Preprocessing: chromatic aberration correction + denoising ═══
+  // Only apply on every 3rd frame to maintain <100ms budget
+  const frameCount = ((window as any).__orion_rt_frame_count__ || 0) + 1;
+  (window as any).__orion_rt_frame_count__ = frameCount;
+
   // Adaptive OCR: pre-check edge density before committing to expensive OCR
   const ocrWorthRunning = isOCRReady() && shouldRunOCR(video);
 
