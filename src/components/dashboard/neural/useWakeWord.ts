@@ -39,9 +39,9 @@ export function useWakeWord(
   const backgroundTranscriptsRef = useRef<BackgroundTranscript[]>([]);
   const speakerCounterRef = useRef(0);
 
-  // Claim mic arbiter on mount — kills any previous HMR instance
+  // NO claimMic on mount — prevents race condition with useNeuralVoice
+  // Mic is claimed only inside startWakeWordListener()
   useEffect(() => {
-    wakeSingletonIdRef.current = claimMic("wake");
     return () => {
       try { wakeRecRef.current?.abort?.(); } catch {}
       try { wakeRecRef.current?.stop?.(); } catch {}
