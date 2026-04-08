@@ -14,6 +14,8 @@ import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperT
 import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/voice-evolution-feedback";
 import { speakWithEvolvedVoice } from "@/lib/neural/orion-voice-evolution";
+import { fallbackTranscribe, chunksToWavBlob, getSTTFallbackState } from "@/lib/voice/sttFallbackChain";
+import { getAudioWorkletManager } from "@/lib/voice/audioWorkletManager";
 
 // ═══ Text Cleaning for Natural Speech ═══
 
