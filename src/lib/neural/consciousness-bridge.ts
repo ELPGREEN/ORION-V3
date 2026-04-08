@@ -262,6 +262,14 @@ export interface ConsciousnessCycleSnapshot {
   qcResolutionStrategy: string;
   qcOrchORScore: number;
   qcCoherenceTimeMs: number;
+  /** v31: End-to-end pipeline latency tracking */
+  pipelineLatency: {
+    sttMs: number;      // STT transcription latency
+    llmMs: number;      // LLM inference latency
+    ttsMs: number;      // TTS synthesis latency
+    totalMs: number;    // End-to-end STT→LLM→TTS
+    visionMs: number;   // Vision pipeline latency (if active)
+  };
 }
 
 export interface ReasoningContext {
