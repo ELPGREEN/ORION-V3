@@ -6736,6 +6736,7 @@ export type Database = {
           created_at: string
           email: string | null
           face_descriptor: Json | null
+          fcm_token: string | null
           full_name: string | null
           id: string
           oab_number: string | null
@@ -6751,6 +6752,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           face_descriptor?: Json | null
+          fcm_token?: string | null
           full_name?: string | null
           id?: string
           oab_number?: string | null
@@ -6766,6 +6768,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           face_descriptor?: Json | null
+          fcm_token?: string | null
           full_name?: string | null
           id?: string
           oab_number?: string | null
