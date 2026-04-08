@@ -78,7 +78,11 @@ const AmazonMusicPlayer = lazy(lazyRetry(() => import("@/components/amazon/Amazo
 const YouTubeMusicPlayer = lazy(lazyRetry(() => import("@/components/youtube-music/YouTubeMusicPlayer").then(m => ({ default: m.YouTubeMusicPlayer }))));
 const OrionAPIStatusDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neural/OrionAPIStatusDashboard").then(m => ({ default: m.OrionAPIStatusDashboard }))));
 const QuantumRuntimeDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neural/QuantumRuntimeDashboard").then(m => ({ default: m.QuantumRuntimeDashboard }))));
-
+const ScreenRecorder = lazy(lazyRetry(() => import("@/components/dashboard/neural/ScreenRecorder").then(m => ({ default: m.ScreenRecorder }))));
+const KnowledgeHarvester = lazy(lazyRetry(() => import("@/components/dashboard/neural/KnowledgeHarvester").then(m => ({ default: m.KnowledgeHarvester }))));
+const PrivateKnowledge = lazy(lazyRetry(() => import("@/components/dashboard/neural/PrivateKnowledge").then(m => ({ default: m.PrivateKnowledge }))));
+const HopfieldVisualization = lazy(lazyRetry(() => import("@/components/dashboard/neural/HopfieldVisualization").then(m => ({ default: m.HopfieldVisualization }))));
+const EnergyOrb = lazy(lazyRetry(() => import("@/components/dashboard/neural/EnergyOrb").then(m => ({ default: m.EnergyOrb }))));
 // ─── Fase 9.3: Smart Upload Panel ───
 function SmartUploadPanel({ userId, onUploaded }: { userId?: string; onUploaded: () => void }) {
   const { toast } = useToast();
