@@ -318,7 +318,7 @@ export function OrionGlobalListener() {
         {wakeWordHeard
           ? "🎯 Ouvindo comando..."
           : wakeWordActive
-            ? "👂 Diga 'Orion' ou 'Painel'"
+            ? "⚡ Escutando..."
             : "🔇 Voz (toque para ativar)"}
       </Badge>
     </div>
