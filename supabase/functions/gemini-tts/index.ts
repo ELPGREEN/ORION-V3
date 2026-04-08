@@ -216,43 +216,46 @@ function buildMultiSpeakerRequest(
 async function requestVertexAI(
   sa: { client_email: string; private_key: string; project_id: string },
   variants: RequestVariant[],
-): Promise<{ response: Response | null; lastError: string }> {
+): Promise<{ response: Response | null; lastError: string; usedModel: string }> {
   const token = await getVertexToken(sa);
-  if (!token) return { response: null, lastError: "Failed to get Vertex AI access token" };
+  if (!token) return { response: null, lastError: "Failed to get Vertex AI access token", usedModel: "" };
 
-  const url = `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${sa.project_id}/locations/${VERTEX_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
   let lastError = "";
 
-  for (const variant of variants) {
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(variant.body),
-      });
+  for (const model of MODELS) {
+    const url = `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${sa.project_id}/locations/${VERTEX_LOCATION}/publishers/google/models/${model}:generateContent`;
 
-      if (resp.ok) {
-        console.log(`[Vertex TTS] ✅ ${variant.label} attempt ${attempt}`);
-        return { response: resp, lastError: "" };
+    for (const variant of variants) {
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(variant.body),
+        });
+
+        if (resp.ok) {
+          console.log(`[Vertex TTS] ✅ ${model} ${variant.label} attempt ${attempt}`);
+          return { response: resp, lastError: "", usedModel: model };
+        }
+
+        const errText = await resp.text();
+        lastError = errText.slice(0, 300);
+        console.warn(`[Vertex TTS] ${model} ${variant.label} attempt ${attempt} (${resp.status}): ${lastError.slice(0, 120)}`);
+
+        if (resp.status === 429 || resp.status === 403 || resp.status === 401) {
+          if (resp.status !== 429) cachedAccessToken = null;
+          break; // try next model
+        }
+
+        if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) {
+          await sleep(RETRY_DELAY_MS * attempt);
+          continue;
+        }
+        break;
       }
-
-      const errText = await resp.text();
-      lastError = errText.slice(0, 300);
-      console.warn(`[Vertex TTS] ${variant.label} attempt ${attempt} (${resp.status}): ${lastError.slice(0, 120)}`);
-
-      if (resp.status === 429 || resp.status === 403 || resp.status === 401) {
-        if (resp.status !== 429) cachedAccessToken = null;
-        return { response: null, lastError };
-      }
-
-      if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) {
-        await sleep(RETRY_DELAY_MS * attempt);
-        continue;
-      }
-      break;
     }
   }
-  return { response: null, lastError };
+  return { response: null, lastError, usedModel: "" };
 }
 
 // ─── AI Studio fallback (free tier) ──────────────────────
