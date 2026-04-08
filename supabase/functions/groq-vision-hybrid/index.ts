@@ -318,6 +318,11 @@ function resolveKey(provider: VisionProvider): string | null {
   if (typeof provider.keyEnv === "string") {
     return Deno.env.get(provider.keyEnv) || null;
   }
+  // For Gemini providers, return first available (non-exhausted) key
+  if (provider.isGemini) {
+    const available = getAvailableKeys(provider.model);
+    return available.length > 0 ? available[0] : null;
+  }
   // Multi-key: try each until one is found
   for (const envName of provider.keyEnv) {
     const k = Deno.env.get(envName);
@@ -326,7 +331,7 @@ function resolveKey(provider: VisionProvider): string | null {
   return null;
 }
 
-// ─── Multi-provider cascade call ───
+// ─── Multi-provider cascade with per-key rotation for Gemini ───
 async function callVisionCascade(
   imageB64: string,
   mimeType: string,
@@ -339,6 +344,66 @@ async function callVisionCascade(
     : VISION_PROVIDERS;
 
   for (const provider of providers) {
+    if (provider.isGemini) {
+      // Rotate through ALL keys for this Gemini model
+      const keys = getAvailableKeys(provider.model);
+      if (keys.length === 0) {
+        errors.push(`${provider.id}: all ${getAllGeminiKeys().length} keys exhausted`);
+        continue;
+      }
+
+      for (const key of keys) {
+        const start = Date.now();
+        try {
+          const body = provider.buildBody(
+            isVisionTask ? SYSTEM_PROMPT : DEEPSEEK_REFINE_PROMPT,
+            prompt, imageB64, mimeType
+          );
+          const endpoint = typeof provider.endpoint === "function"
+            ? provider.endpoint(key) : provider.endpoint;
+
+          const resp = await fetch(endpoint, {
+            method: "POST",
+            headers: provider.buildHeaders(key),
+            body: JSON.stringify(body),
+            signal: AbortSignal.timeout(30000),
+          });
+
+          if (resp.status === 429) {
+            markKeyExhausted(provider.model, key);
+            errors.push(`${provider.id}: key exhausted (429), rotating...`);
+            continue;
+          }
+
+          if (!resp.ok) {
+            const errText = await resp.text();
+            if (resp.status === 403 || resp.status === 401) {
+              markKeyExhausted(provider.model, key);
+            }
+            errors.push(`${provider.id} [${resp.status}]: ${errText.substring(0, 200)}`);
+            continue;
+          }
+
+          const data = await resp.json();
+          const text = provider.extractText(data);
+          if (!text) {
+            errors.push(`${provider.id}: empty response`);
+            continue;
+          }
+
+          const durationMs = Date.now() - start;
+          console.log(`✅ ${provider.name} responded in ${durationMs}ms (key rotation: ${keys.indexOf(key) + 1}/${keys.length})`);
+          return { result: parseVisionResponse(text), provider: provider.id, durationMs };
+        } catch (e) {
+          errors.push(`${provider.id}: ${e instanceof Error ? e.message : "unknown"}`);
+        }
+      }
+      // All keys failed for this model, cascade to next model
+      errors.push(`${provider.id}: all keys tried, moving to next model`);
+      continue;
+    }
+
+    // Non-Gemini provider (standard single-key)
     const key = resolveKey(provider);
     if (!key) {
       errors.push(`${provider.id}: no key`);
@@ -349,14 +414,10 @@ async function callVisionCascade(
     try {
       const body = provider.buildBody(
         isVisionTask ? SYSTEM_PROMPT : DEEPSEEK_REFINE_PROMPT,
-        prompt,
-        imageB64,
-        mimeType
+        prompt, imageB64, mimeType
       );
-
       const endpoint = typeof provider.endpoint === "function"
-        ? provider.endpoint(key)
-        : provider.endpoint;
+        ? provider.endpoint(key) : provider.endpoint;
 
       const resp = await fetch(endpoint, {
         method: "POST",
