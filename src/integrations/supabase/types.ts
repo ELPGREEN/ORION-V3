@@ -8156,6 +8156,51 @@ export type Database = {
         }
         Relationships: []
       }
+      escritorio_public_view: {
+        Row: {
+          areas_atuacao: string[] | null
+          banner_url: string | null
+          bio: string | null
+          experiencia_anos: number | null
+          frase_impacto: string | null
+          id: string | null
+          instagram_url: string | null
+          linkedin_url: string | null
+          logo_url: string | null
+          meta_description: string | null
+          nome_escritorio: string | null
+          site_ativo: boolean | null
+        }
+        Insert: {
+          areas_atuacao?: string[] | null
+          banner_url?: string | null
+          bio?: string | null
+          experiencia_anos?: number | null
+          frase_impacto?: string | null
+          id?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          logo_url?: string | null
+          meta_description?: string | null
+          nome_escritorio?: string | null
+          site_ativo?: boolean | null
+        }
+        Update: {
+          areas_atuacao?: string[] | null
+          banner_url?: string | null
+          bio?: string | null
+          experiencia_anos?: number | null
+          frase_impacto?: string | null
+          id?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          logo_url?: string | null
+          meta_description?: string | null
+          nome_escritorio?: string | null
+          site_ativo?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_rate_limit: {
