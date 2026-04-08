@@ -201,7 +201,7 @@ Respond in JSON:
 
   const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ role: "user", parts: [{ text: decisionPrompt }] }],
     }),
@@ -293,7 +293,7 @@ async function handleInvokeAgent(body: Record<string, unknown>) {
 
     const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: agent.system_prompt || `You are ${agent.agent_name}, a specialized ${agent.agent_role} agent.` }] },
         contents: [
@@ -384,7 +384,7 @@ Analyze line by line. Be specific about line numbers. Respond in Portuguese (BR)
 
   const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ role: "user", parts: [{ text: analysisPrompt }] }],
     }),
@@ -431,7 +431,7 @@ async function handleSupabaseAnalysis() {
 
   const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     }),

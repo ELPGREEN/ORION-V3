@@ -341,7 +341,7 @@ async function tryOpenAI(img: ImageData) {
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ role: "user", parts: [
               { text: OCR_PROMPT },
@@ -415,7 +415,7 @@ async function tryGemini(img: ImageData) {
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [
               { text: OCR_PROMPT },

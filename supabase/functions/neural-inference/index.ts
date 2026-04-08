@@ -36,7 +36,7 @@ async function searchKnowledge(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${geminiKey}`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: "models/gemini-embedding-001",
               content: { parts: [{ text: query.slice(0, 2000) }] },
@@ -90,7 +90,7 @@ async function callGemini(systemPrompt: string, userPrompt: string, stream: bool
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:${endpoint}${separator}key=${key}`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: "user", parts: [{ text: userPrompt }] }],

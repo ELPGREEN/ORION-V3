@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
 
     const response = await fetchWithRetry(generateUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
       body: JSON.stringify({ html }),
     });
     console.log(`[generate-pdf] Response: ${response.status} ${response.statusText} (content-type: ${response.headers.get("content-type")})`);

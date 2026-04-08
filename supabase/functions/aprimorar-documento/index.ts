@@ -1464,7 +1464,7 @@ function getProviders(): AIProvider[] {
         const systemInstruction = msgs.find((m) => m.role === "system")?.content || "";
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
           signal: AbortSignal.timeout(90000),
           body: JSON.stringify({ systemInstruction: { parts: [{ text: systemInstruction }] }, contents, generationConfig: { temperature, maxOutputTokens: maxTokens } }),
         });
