@@ -1526,10 +1526,17 @@ export function useOrionReasoning(
           if (bargedInRef.current) return;
           spokeOrQueued = true;
           localQueue.push(sentence);
-          void processSpeechQueue();
+          triggerQueueDebounced();
         },
         controller.signal,
       );
+
+      // Stream ended — flush remaining sentences immediately
+      streamEnded = true;
+      if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
+      if (localQueue.length > 0 && !bargedInRef.current) {
+        void processSpeechQueue();
+      }
 
       if (bargedInRef.current) {
         if (streamingText) {
