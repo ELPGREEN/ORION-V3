@@ -15,41 +15,49 @@ Deno.serve(async (req) => {
     })
   }
 
+  const authHeaders = {
+    Authorization: `Bearer ${hfToken}`,
+    "Content-Type": "application/json"
+  }
+
+  const results: Record<string, unknown> = {}
+
   try {
-    // Test 1: Check space runtime status
-    const runtimeRes = await fetch("https://huggingface.co/api/spaces/Ericsonv12/llm-orion/runtime", {
+    // 1. Runtime status
+    const rtRes = await fetch("https://huggingface.co/api/spaces/Ericsonv12/llm-orion/runtime", {
       headers: { Authorization: `Bearer ${hfToken}` }
     })
-    const runtimeData = await runtimeRes.json()
+    results.runtime = await rtRes.json()
 
-    // Test 2: Try to reach the Gradio API
-    let gradioStatus = "unknown"
-    try {
-      const gradioRes = await fetch("https://ericsonv12-llm-orion.hf.space/api/predict", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${hfToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ data: ["Olá", 0.7, 200, 40] })
-      })
-      gradioStatus = `${gradioRes.status} ${gradioRes.statusText}`
-      await gradioRes.text() // consume body
-    } catch (e) {
-      gradioStatus = `error: ${e.message}`
-    }
+    // 2. Test root (GET)
+    const rootRes = await fetch("https://ericsonv12-llm-orion.hf.space/", {
+      headers: { Authorization: `Bearer ${hfToken}` }
+    })
+    results.root_status = rootRes.status
+    await rootRes.text()
 
-    return new Response(JSON.stringify({
-      success: true,
-      space: "Ericsonv12/llm-orion",
-      runtime: runtimeData,
-      gradio_test: gradioStatus,
-      token_present: true
-    }, null, 2), {
+    // 3. Test /info
+    const infoRes = await fetch("https://ericsonv12-llm-orion.hf.space/info", {
+      headers: { Authorization: `Bearer ${hfToken}` }
+    })
+    results.info_status = infoRes.status
+    try { results.info_data = await infoRes.json() } catch { results.info_data = await infoRes.text() }
+
+    // 4. Test /run/predict (POST)
+    const predictRes = await fetch("https://ericsonv12-llm-orion.hf.space/run/predict", {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({ data: ["Olá", 0.7, 200, 40] })
+    })
+    results.predict_status = predictRes.status
+    const predictBody = await predictRes.text()
+    try { results.predict_data = JSON.parse(predictBody) } catch { results.predict_data = predictBody.substring(0, 500) }
+
+    return new Response(JSON.stringify(results, null, 2), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: e.message, partial: results }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }
