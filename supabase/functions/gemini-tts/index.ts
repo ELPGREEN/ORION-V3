@@ -1,6 +1,6 @@
 /**
  * Gemini TTS — text-to-speech using Gemini 2.5 Flash Preview TTS
- * PRIMARY: Vertex AI (uses GCP credits via service account)
+ * PRIMARY: GCP Console API key (consumes GCP credits €1.126)
  * FALLBACK: AI Studio API keys (free tier)
  */
 
@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 const MODEL = "gemini-2.5-flash-preview-tts";
-const VERTEX_LOCATION = "us-central1";
+const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 const DEFAULT_VOICE = "Algieba";
 const DEFAULT_LANG = "pt-BR";
@@ -22,14 +22,9 @@ const RETRY_DELAY_MS = 1200;
 const CLIENT_RETRY_AFTER_MS = 30_000;
 const TRANSIENT_STATUS_CODES = new Set([408, 500, 502, 503, 504]);
 
-// ─── Cooldown cache for API keys fallback ─────────────────
 const failedKeyCache: Record<string, number> = {};
 const KEY_AUTH_COOLDOWN_MS = 5 * 60 * 1000;
 const KEY_RATE_LIMIT_COOLDOWN_MS = 60 * 1000;
-
-// ─── Vertex AI token cache ────────────────────────────────
-let cachedAccessToken: string | null = null;
-let tokenExpiresAt = 0;
 
 type MultiSpeakerVoice = { speaker: string; voice?: string };
 type RequestVariant = { label: string; body: Record<string, unknown> };
@@ -51,94 +46,12 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-// ─── JWT / Vertex AI Auth ─────────────────────────────────
-
-function base64url(data: Uint8Array): string {
-  return btoa(String.fromCharCode(...data))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-async function createJWT(sa: { client_email: string; private_key: string }): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  const header = { alg: "RS256", typ: "JWT" };
-  const payload = {
-    iss: sa.client_email,
-    scope: "https://www.googleapis.com/auth/cloud-platform",
-    aud: "https://oauth2.googleapis.com/token",
-    iat: now,
-    exp: now + 3600,
-  };
-
-  const enc = new TextEncoder();
-  const headerB64 = base64url(enc.encode(JSON.stringify(header)));
-  const payloadB64 = base64url(enc.encode(JSON.stringify(payload)));
-  const unsignedToken = `${headerB64}.${payloadB64}`;
-
-  // Parse PEM private key
-  const pemBody = sa.private_key
-    .replace(/-----BEGIN PRIVATE KEY-----/, "")
-    .replace(/-----END PRIVATE KEY-----/, "")
-    .replace(/\s/g, "");
-  const keyBytes = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0));
-
-  const cryptoKey = await crypto.subtle.importKey(
-    "pkcs8",
-    keyBytes,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-
-  const signature = new Uint8Array(
-    await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, enc.encode(unsignedToken)),
-  );
-
-  return `${unsignedToken}.${base64url(signature)}`;
-}
-
-async function getVertexAccessToken(sa: { client_email: string; private_key: string }): Promise<string | null> {
-  try {
-    if (cachedAccessToken && Date.now() < tokenExpiresAt - 60_000) {
-      return cachedAccessToken;
-    }
-
-    const jwt = await createJWT(sa);
-    const resp = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
-    });
-
-    if (!resp.ok) {
-      console.error("[Vertex Auth] Token exchange failed:", resp.status, await resp.text());
-      return null;
-    }
-
-    const data = await resp.json();
-    cachedAccessToken = data.access_token;
-    tokenExpiresAt = Date.now() + (data.expires_in || 3600) * 1000;
-    console.log("[Vertex Auth] Access token obtained, expires in", data.expires_in, "s");
-    return cachedAccessToken;
-  } catch (err: any) {
-    console.error("[Vertex Auth] Error:", err?.message);
-    return null;
-  }
-}
-
-// ─── Service Account loader ──────────────────────────────
-
-function getServiceAccount(): { client_email: string; private_key: string; project_id: string } | null {
-  try {
-    const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_KEY");
-    if (!raw) return null;
-    const sa = JSON.parse(raw);
-    if (sa.client_email && sa.private_key && sa.project_id) return sa;
-    return null;
-  } catch {
-    return null;
-  }
+function markKeyCooldown(key: string, ms: number): void { failedKeyCache[key] = Date.now() + ms; }
+function isKeyCoolingDown(key: string, now = Date.now()): boolean {
+  const u = failedKeyCache[key];
+  if (!u) return false;
+  if (u <= now) { delete failedKeyCache[key]; return false; }
+  return true;
 }
 
 // ─── PCM → WAV ───────────────────────────────────────────
@@ -208,91 +121,49 @@ function buildMultiSpeakerRequest(
   };
 }
 
-// ─── Vertex AI request (PRIMARY — uses GCP credits) ──────
+// ─── Get ordered API keys (GCP first, then AI Studio) ────
 
-async function requestVertexAI(
-  sa: { client_email: string; private_key: string; project_id: string },
-  variants: RequestVariant[],
-): Promise<{ response: Response | null; lastError: string }> {
-  const token = await getVertexAccessToken(sa);
-  if (!token) return { response: null, lastError: "Failed to obtain Vertex AI access token" };
-
-  const url = `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${sa.project_id}/locations/${VERTEX_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
-  let lastError = "";
-
-  for (const variant of variants) {
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(variant.body),
-      });
-
-      if (resp.ok) {
-        console.log(`[Vertex TTS] ✅ Success via ${variant.label} attempt ${attempt}`);
-        return { response: resp, lastError: "" };
-      }
-
-      const errText = await resp.text();
-      lastError = errText.slice(0, 300);
-      console.warn(`[Vertex TTS] ${variant.label} attempt ${attempt} failed (${resp.status}): ${lastError.slice(0, 120)}`);
-
-      if (resp.status === 429) {
-        // Rate limited on Vertex — break to fallback
-        return { response: null, lastError: "Vertex AI rate limited" };
-      }
-
-      if (resp.status === 403 || resp.status === 401) {
-        cachedAccessToken = null; // invalidate token
-        return { response: null, lastError: `Vertex auth error: ${resp.status}` };
-      }
-
-      if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) {
-        await sleep(RETRY_DELAY_MS * attempt);
-        continue;
-      }
-      break;
-    }
-  }
-  return { response: null, lastError };
-}
-
-// ─── AI Studio fallback (free tier API keys) ─────────────
-
-function markKeyCooldown(apiKey: string, cooldownMs: number): void {
-  failedKeyCache[apiKey] = Date.now() + cooldownMs;
-}
-function isKeyCoolingDown(apiKey: string, now = Date.now()): boolean {
-  const u = failedKeyCache[apiKey];
-  if (!u) return false;
-  if (u <= now) { delete failedKeyCache[apiKey]; return false; }
-  return true;
-}
-
-function getAllGeminiKeys(): string[] {
+function getOrderedKeys(): { key: string; label: string }[] {
   const now = Date.now();
-  const names = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"];
-  const keys = names.map((n) => Deno.env.get(n)).filter((k): k is string => Boolean(k) && !isKeyCoolingDown(k, now));
-  // shuffle
-  for (let i = keys.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [keys[i], keys[j]] = [keys[j], keys[i]];
+  const result: { key: string; label: string }[] = [];
+
+  // GCP Console key FIRST (consumes credits)
+  const gcpKey = Deno.env.get("GEMINI_API_KEY_GCP");
+  if (gcpKey && !isKeyCoolingDown(gcpKey, now)) {
+    result.push({ key: gcpKey, label: "GCP-credits" });
   }
-  return keys;
+
+  // Then free-tier AI Studio keys as fallback
+  const freeNames = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"];
+  const freeKeys = freeNames
+    .map((n) => ({ key: Deno.env.get(n), name: n }))
+    .filter((x): x is { key: string; name: string } => Boolean(x.key) && !isKeyCoolingDown(x.key!, now));
+
+  // Shuffle free keys for load distribution
+  for (let i = freeKeys.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [freeKeys[i], freeKeys[j]] = [freeKeys[j], freeKeys[i]];
+  }
+
+  for (const fk of freeKeys) result.push({ key: fk.key, label: `free:${fk.name}` });
+  return result;
 }
 
-async function requestAIStudio(
-  keys: string[], variants: RequestVariant[],
-): Promise<{ response: Response | null; lastError: string; rateLimited: boolean }> {
+// ─── Main request loop ───────────────────────────────────
+
+async function requestGeminiAudio(
+  variants: RequestVariant[],
+): Promise<{ response: Response | null; lastError: string; rateLimited: boolean; usedLabel: string }> {
+  const keys = getOrderedKeys();
+  if (keys.length === 0) {
+    return { response: null, lastError: "No API keys available", rateLimited: false, usedLabel: "" };
+  }
+
   let lastError = "";
   let hadRateLimit = false;
-  const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-  for (const apiKey of keys) {
-    const url = `${API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
+  for (const { key, label } of keys) {
+    const url = `${API_BASE}/${MODEL}:generateContent?key=${key}`;
     let skipKey = false;
 
     for (const variant of variants) {
@@ -302,30 +173,46 @@ async function requestAIStudio(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(variant.body),
         });
+
         if (resp.ok) {
-          console.log(`[AI Studio TTS] ✅ ${variant.label} attempt ${attempt}`);
-          return { response: resp, lastError, rateLimited: false };
+          console.log(`[TTS] ✅ ${label} / ${variant.label} attempt ${attempt}`);
+          return { response: resp, lastError: "", rateLimited: false, usedLabel: label };
         }
+
         const errText = await resp.text();
         lastError = errText.slice(0, 300);
-        console.warn(`[AI Studio TTS] ${variant.label} attempt ${attempt} (${resp.status})`);
+        console.warn(`[TTS] ${label}/${variant.label} attempt ${attempt} (${resp.status}): ${lastError.slice(0, 100)}`);
 
-        if (resp.status === 429) { hadRateLimit = true; markKeyCooldown(apiKey, KEY_RATE_LIMIT_COOLDOWN_MS); skipKey = true; break; }
-        if (resp.status === 403) { markKeyCooldown(apiKey, KEY_AUTH_COOLDOWN_MS); skipKey = true; break; }
-        if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) { await sleep(RETRY_DELAY_MS * attempt); continue; }
+        if (resp.status === 429) {
+          hadRateLimit = true;
+          markKeyCooldown(key, KEY_RATE_LIMIT_COOLDOWN_MS);
+          skipKey = true;
+          break;
+        }
+        if (resp.status === 403) {
+          markKeyCooldown(key, KEY_AUTH_COOLDOWN_MS);
+          skipKey = true;
+          break;
+        }
+        if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) {
+          await sleep(RETRY_DELAY_MS * attempt);
+          continue;
+        }
         break;
       }
       if (skipKey) break;
     }
   }
-  return { response: null, lastError, rateLimited: hadRateLimit };
+
+  return { response: null, lastError, rateLimited: hadRateLimit, usedLabel: "" };
 }
 
 // ─── Audio response parser ───────────────────────────────
 
 function parseAudioResponse(data: any): Response | null {
-  const candidate = data?.candidates?.[0];
-  const audioPart = candidate?.content?.parts?.find((p: any) => p?.inlineData?.mimeType?.startsWith("audio/"));
+  const audioPart = data?.candidates?.[0]?.content?.parts?.find(
+    (p: any) => p?.inlineData?.mimeType?.startsWith("audio/"),
+  );
   if (!audioPart?.inlineData?.data) return null;
 
   const mimeType = audioPart.inlineData.mimeType || "audio/wav";
@@ -366,58 +253,37 @@ Deno.serve(async (req) => {
     const selectedLang = lang || DEFAULT_LANG;
     const stylePrompt = prompt || DEFAULT_PROMPT;
 
-    console.log(`[TTS] ${cleanText.length} chars, voice="${selectedVoice}", lang="${selectedLang}"`);
+    const hasGcp = !!Deno.env.get("GEMINI_API_KEY_GCP");
+    console.log(`[TTS] ${cleanText.length} chars, voice="${selectedVoice}", GCP=${hasGcp}`);
 
-    // Build request variants
+    // Build variants
     const variants: RequestVariant[] = multispeaker && multispeaker.length > 0
       ? [
-          { label: "multi/with-lang", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, true) },
-          { label: "multi/no-lang", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, false) },
+          { label: "multi/lang", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, true) },
+          { label: "multi/plain", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, false) },
         ]
       : [
-          { label: "single/full", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: true }) },
-          { label: "single/no-lang", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: false }) },
-          { label: "single/plain", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: false }) },
+          { label: "full", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: true }) },
+          { label: "no-lang", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: false }) },
+          { label: "plain", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: false }) },
         ];
 
-    // ── 1) Try Vertex AI (GCP credits) ──
-    const sa = getServiceAccount();
-    if (sa) {
-      console.log("[TTS] Trying Vertex AI (GCP credits)...");
-      const vertex = await requestVertexAI(sa, variants);
-      if (vertex.response) {
-        const data = await vertex.response.json();
-        const audioResp = parseAudioResponse(data);
-        if (audioResp) return audioResp;
-        console.error("[Vertex TTS] No audio in response:", JSON.stringify(data).slice(0, 400));
-      } else {
-        console.warn("[Vertex TTS] Failed:", vertex.lastError);
-      }
-    } else {
-      console.warn("[TTS] No service account found, skipping Vertex AI");
+    const { response, lastError, rateLimited, usedLabel } = await requestGeminiAudio(variants);
+
+    if (rateLimited && !response) {
+      return fallbackResponse("Rate limited", { rate_limited: true, retry_after_ms: CLIENT_RETRY_AFTER_MS });
     }
 
-    // ── 2) Fallback: AI Studio API keys ──
-    const keys = getAllGeminiKeys();
-    if (keys.length > 0) {
-      console.log(`[TTS] Fallback to AI Studio (${keys.length} keys)...`);
-      const { response, lastError, rateLimited } = await requestAIStudio(keys, variants);
-
-      if (rateLimited && !response) {
-        return fallbackResponse("Rate limited, try again shortly", { rate_limited: true, retry_after_ms: CLIENT_RETRY_AFTER_MS });
-      }
-
-      if (response) {
-        const data = await response.json();
-        const audioResp = parseAudioResponse(data);
-        if (audioResp) return audioResp;
-        console.error("[AI Studio TTS] No audio:", JSON.stringify(data).slice(0, 400));
-      }
-
-      return fallbackResponse("TTS unavailable", { details: lastError || undefined, retry_after_ms: 10000 });
+    if (!response) {
+      return fallbackResponse("TTS unavailable", { details: lastError, retry_after_ms: 10000 });
     }
 
-    return fallbackResponse("No TTS backends configured", { retry_after_ms: CLIENT_RETRY_AFTER_MS });
+    const data = await response.json();
+    const audioResp = parseAudioResponse(data);
+    if (audioResp) return audioResp;
+
+    console.error("[TTS] No audio in response:", JSON.stringify(data).slice(0, 400));
+    return fallbackResponse("No audio in response", { retry_after_ms: 10000 });
   } catch (error: any) {
     console.error("[TTS] Error:", error?.message || error);
     return fallbackResponse(error?.message || "Unknown error", { retry_after_ms: CLIENT_RETRY_AFTER_MS });
