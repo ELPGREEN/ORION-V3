@@ -181,14 +181,22 @@ export function GlobalOrionListener() {
     try {
       const rec = new SR();
       rec.lang = "pt-BR";
-      rec.continuous = !isMobile; // On mobile, don't use continuous — it causes rapid onend loops
+      rec.continuous = true;
       rec.interimResults = true;
       rec.maxAlternatives = 3;
 
+      const sessionStartRef = { time: 0, gotResult: false };
+
       rec.onstart = () => {
         startInFlightRef.current = false;
-        restartAttemptsRef.current = 0;
+        sessionStartRef.time = Date.now();
+        sessionStartRef.gotResult = false;
+        // Only reset restart counter if session lasted >3s (stable session)
+        if (restartAttemptsRef.current > 0) {
+          // Don't reset — let onresult reset it when we actually get audio
+        }
         setWakeWordActive(true);
+        console.log("[GlobalOrion] 🎙️ Recognition session started");
       };
 
       rec.onresult = (e: any) => {
