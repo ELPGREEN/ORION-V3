@@ -132,12 +132,8 @@ export function useNeuralVoice(
     }
   }, []);
 
-  // ═══ Unified arbiter claim: kill ALL previous HMR instances ═══
+  // ═══ Init voice picker + cleanup — NO claimMic on mount (prevents race with wake word) ═══
   useEffect(() => {
-    const myId = claimMic("idle");
-    singletonIdRef.current = myId;
-    console.log("[Voice] Mic arbiter claimed, id:", myId);
-
     const cleanup = () => {
       voiceActiveRef.current = false;
       intentionalStopRef.current = true;

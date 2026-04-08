@@ -1718,7 +1718,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     : isComplexQuery ? 8192 : 4096;
   (messages as any).__maxTokens = requestedMaxTokens || defaultMax;
 
-  const geminiKeys = ["GEMINI_API_KEY"];
+  const geminiKeys = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7", "GEMINI_API_KEY_GCP"];
   const hasImage = messages.some((m: any) => Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url"));
 
   // ═══ STREAMING MODE ═══
@@ -1878,6 +1878,19 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
 
     // ── Last resort: non-streaming wrapped as SSE ──
     console.warn(`[Orion] All streaming providers failed. Attempted: [${attemptedProviders.join(" → ")}]. Falling back to non-streaming.`);
+    
+    // If we had an image, inject vision-context notice so text-only fallbacks don't deny vision capability
+    if (hasImage) {
+      const sysMsg = messages.find((m: any) => m.role === "system");
+      if (sysMsg) {
+        sysMsg.content = (typeof sysMsg.content === "string" ? sysMsg.content : "") + 
+          "\n\n[AVISO INTERNO: A imagem da câmera foi capturada mas o provedor de visão (Gemini) está temporariamente indisponível. " +
+          "Use os dados dos sensores ML locais (YOLO/MediaPipe) disponíveis no contexto para descrever o que foi detectado. " +
+          "NÃO diga que você não tem capacidade de visão — você tem, mas o feed está temporariamente indisponível. " +
+          "Descreva o que os sensores locais detectaram.]";
+      }
+    }
+    
     let fallbackText = "";
     try { fallbackText = await callHuggingFaceFallback(messages); } catch {
       try { fallbackText = await callGroqFallback(messages); } catch {
@@ -1916,6 +1929,17 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       }
     } catch (e) {
       console.warn(`[Orion] Gemini non-stream failed (${keyEnv}):`, e);
+    }
+  }
+
+  // If vision query but Gemini failed, inject fallback context for text-only providers
+  if (hasImage) {
+    const sysMsg = messages.find((m: any) => m.role === "system");
+    if (sysMsg) {
+      sysMsg.content = (typeof sysMsg.content === "string" ? sysMsg.content : "") +
+        "\n\n[AVISO INTERNO: A imagem da câmera foi capturada mas o Gemini está temporariamente indisponível. " +
+        "Use os dados dos sensores ML locais para descrever o que foi detectado. " +
+        "NÃO diga que não tem capacidade de visão.]";
     }
   }
 
