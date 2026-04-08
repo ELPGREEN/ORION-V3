@@ -2,80 +2,83 @@
  * ORION Neural Hub — Unified HF Space Client (ZeroGPU)
  * Connects to Ericsonv12/orion-gpu Gradio Space
  *
+ * GPU→CPU Fallback: When ZeroGPU quota is exhausted (429/quota errors),
+ * GPU endpoints automatically fall back to CPU-only alternatives on the same Space.
+ *
  * Capabilities: TTS, LLM, OCR, Vision, Embeddings, PDF
- * Hardware: ZeroGPU H200/A100
+ * Hardware: ZeroGPU H200/A100 (GPU) + CPU fallback
  */
 
 const ORION_HUB_URL = "https://ericsonv12-orion-gpu.hf.space";
 const DEFAULT_TIMEOUT = 60_000;
-const GPU_TIMEOUT = 180_000; // GPU tasks can take longer (cold start + inference)
+const GPU_TIMEOUT = 180_000;
+
+// ─── GPU Quota Tracker ───
+
+interface QuotaState {
+  exhausted: boolean;
+  exhaustedAt: number;
+  cooldownMs: number; // how long to skip GPU before retrying
+  consecutiveFailures: number;
+}
+
+const _quota: QuotaState = {
+  exhausted: false,
+  exhaustedAt: 0,
+  cooldownMs: 5 * 60_000, // 5 min cooldown before retrying GPU
+  consecutiveFailures: 0,
+};
+
+/** Check if GPU quota is likely available */
+function isGpuAvailable(): boolean {
+  if (!_quota.exhausted) return true;
+  // After cooldown, try GPU again
+  if (Date.now() - _quota.exhaustedAt > _quota.cooldownMs) {
+    _quota.exhausted = false;
+    _quota.consecutiveFailures = 0;
+    console.log("[OrionHub] GPU cooldown expired, retrying GPU path");
+    return true;
+  }
+  return false;
+}
+
+function markGpuExhausted() {
+  _quota.exhausted = true;
+  _quota.exhaustedAt = Date.now();
+  _quota.consecutiveFailures++;
+  // Exponential backoff: 5min, 10min, 20min... max 60min
+  _quota.cooldownMs = Math.min(5 * 60_000 * Math.pow(2, _quota.consecutiveFailures - 1), 60 * 60_000);
+  console.warn(`[OrionHub] GPU quota exhausted. Cooldown: ${Math.round(_quota.cooldownMs / 60_000)}min`);
+}
+
+function markGpuSuccess() {
+  _quota.exhausted = false;
+  _quota.consecutiveFailures = 0;
+  _quota.cooldownMs = 5 * 60_000;
+}
+
+/** Check if an error indicates GPU quota exhaustion */
+function isQuotaError(status: number, body: string): boolean {
+  if (status === 429) return true;
+  const lower = body.toLowerCase();
+  return lower.includes("quota") || lower.includes("gpu quota")
+    || lower.includes("exceeded") || lower.includes("zerogpu")
+    || lower.includes("no gpu") || lower.includes("rate limit");
+}
+
+/** Get current quota state for UI */
+export function getGpuQuotaState() {
+  return {
+    exhausted: _quota.exhausted,
+    cooldownRemainingMs: _quota.exhausted
+      ? Math.max(0, _quota.cooldownMs - (Date.now() - _quota.exhaustedAt))
+      : 0,
+    consecutiveFailures: _quota.consecutiveFailures,
+    gpuAvailable: isGpuAvailable(),
+  };
+}
 
 // ─── Types ───
-
-export interface OrionHubHealth {
-  status: "online" | "sleeping" | "error";
-  gpu: { available: boolean; name: string; vram_gb: number };
-  models_loaded: string[];
-  capabilities: string[];
-}
-
-export interface TTSResult {
-  audioUrl: string;
-  audioBlob: Blob;
-  sampleRate: number;
-  durationMs: number;
-}
-
-export interface OCRResult {
-  texts: string[];
-  full_text: string;
-  details: Array<{ text: string; confidence: number; bbox: number[][] }>;
-  total_blocks: number;
-}
-
-export interface VisionResult {
-  label: string;
-  score: number;
-}
-
-export interface EmbeddingResult {
-  embeddings: number[][];
-  dimensions: number;
-  count: number;
-}
-
-// ─── Gradio API Helper ───
-
-async function callGradio<T>(
-  apiName: string,
-  data: unknown[],
-  timeout = DEFAULT_TIMEOUT,
-): Promise<T> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    // Gradio API endpoint format
-    const url = `${ORION_HUB_URL}/api/${apiName}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data }),
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Gradio API [${apiName}] failed (${response.status}): ${errText}`);
-    }
-
-    const result = await response.json();
-    // Gradio wraps results in { data: [...] }
-    return result.data?.[0] ?? result.data ?? result;
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 // ─── Health Check ───
 
