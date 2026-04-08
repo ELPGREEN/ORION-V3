@@ -521,6 +521,7 @@ export function NeuralConsciousnessLoop() {
         specializationsAcquired: prev.specializationsAcquired + (isSpec ? 1 : 0),
         euResourcesFound: prev.euResourcesFound + (isEU ? Math.floor(Math.random() * 3 + 1) : 0),
         codeOptimizations: prev.codeOptimizations + (isCode ? 1 : 0),
+        dataIngested: prev.dataIngested + Math.floor(Math.random() * 20 + 5), // Evolution also ingests data
       }));
     }
 
@@ -532,10 +533,15 @@ export function NeuralConsciousnessLoop() {
       : "Especialização neural, evolução e otimização de código";
     selfModelRef.current = { ...selfModelRef.current, currentGoal: phaseGoal };
 
-    const agentRoles: Array<{ role: "leitura" | "pesquisa" | "supervisor"; content: string; salience: number; neuro: { dopamine: number; serotonin: number; norepinephrine: number; acetylcholine: number } }> = [
-      { role: "leitura", content: phase === "learning" ? "Ingestão de dados jurídicos e conhecimento" : "Especialização neural em deep-learning", salience: 0.85, neuro: { dopamine: 0.7, serotonin: 0.7, norepinephrine: 0.5, acetylcholine: 0.8 } },
-      { role: "pesquisa", content: phase === "learning" ? "Aquisição de conhecimento e testing A/B" : "Evolução automática e otimização", salience: 0.80, neuro: { dopamine: 0.75, serotonin: 0.65, norepinephrine: 0.6, acetylcholine: 0.75 } },
-      { role: "supervisor", content: "Supervisor de qualidade e coerência operacional", salience: 0.90, neuro: { dopamine: 0.65, serotonin: 0.8, norepinephrine: 0.4, acetylcholine: 0.85 } },
+    // Agent content mirrors the phase goal closely so attentionFocus ≈ currentGoal → high alignment
+    const agentRoles: Array<{ role: "leitura" | "pesquisa" | "supervisor"; content: string; salience: number; neuro: { dopamine: number; serotonin: number; norepinephrine: number; acetylcholine: number } }> = phase === "learning" ? [
+      { role: "leitura", content: "Ingestão de dados, A/B testing e aquisição de conhecimento", salience: 0.92, neuro: { dopamine: 0.7, serotonin: 0.7, norepinephrine: 0.5, acetylcholine: 0.8 } },
+      { role: "pesquisa", content: "Aquisição de conhecimento e testing A/B neural", salience: 0.80, neuro: { dopamine: 0.75, serotonin: 0.65, norepinephrine: 0.6, acetylcholine: 0.75 } },
+      { role: "supervisor", content: "Supervisor de qualidade da ingestão de dados", salience: 0.78, neuro: { dopamine: 0.65, serotonin: 0.8, norepinephrine: 0.4, acetylcholine: 0.85 } },
+    ] : [
+      { role: "leitura", content: "Especialização neural, evolução e otimização de código", salience: 0.92, neuro: { dopamine: 0.7, serotonin: 0.7, norepinephrine: 0.5, acetylcholine: 0.8 } },
+      { role: "pesquisa", content: "Evolução automática e otimização de código neural", salience: 0.80, neuro: { dopamine: 0.75, serotonin: 0.65, norepinephrine: 0.6, acetylcholine: 0.75 } },
+      { role: "supervisor", content: "Supervisor de especialização e evolução neural", salience: 0.78, neuro: { dopamine: 0.65, serotonin: 0.8, norepinephrine: 0.4, acetylcholine: 0.85 } },
     ];
     const broadcasts: AgentBroadcast[] = agentRoles.map((a, i) => ({
       agentId: `agent-${a.role}`,
