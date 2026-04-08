@@ -63,7 +63,7 @@ async function fetchGeminiAudio(
   if (signal.aborted || isGeminiTTSCoolingDown()) return null;
 
   const sentenceController = new AbortController();
-  const sentenceTimeout = setTimeout(() => sentenceController.abort(), 10000);
+  const sentenceTimeout = setTimeout(() => sentenceController.abort(), 20000);
   const onParentAbort = () => sentenceController.abort();
   signal.addEventListener("abort", onParentAbort, { once: true });
 
