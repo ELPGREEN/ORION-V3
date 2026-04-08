@@ -82,7 +82,7 @@ const ScreenRecorder = lazy(lazyRetry(() => import("@/components/dashboard/neura
 const KnowledgeHarvester = lazy(lazyRetry(() => import("@/components/dashboard/neural/KnowledgeHarvester").then(m => ({ default: m.KnowledgeHarvester }))));
 const PrivateKnowledge = lazy(lazyRetry(() => import("@/components/dashboard/neural/PrivateKnowledge").then(m => ({ default: m.PrivateKnowledge }))));
 const HopfieldVisualization = lazy(lazyRetry(() => import("@/components/dashboard/neural/HopfieldVisualization").then(m => ({ default: m.HopfieldVisualization }))));
-const EnergyOrb = lazy(lazyRetry(() => import("@/components/dashboard/neural/EnergyOrb").then(m => ({ default: m.EnergyOrb }))));
+const PlasmaCanvas = lazy(lazyRetry(() => import("@/components/dashboard/neural/EnergyOrb").then(m => ({ default: m.PlasmaCanvas }))));
 // ─── Fase 9.3: Smart Upload Panel ───
 function SmartUploadPanel({ userId, onUploaded }: { userId?: string; onUploaded: () => void }) {
   const { toast } = useToast();
