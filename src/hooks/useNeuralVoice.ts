@@ -455,6 +455,7 @@ export function useNeuralVoice(
     abortControllerRef.current = null;
     activeAudioRef.current = null;
     speakingRef.current = false;
+    markTTSEnd(); // v31: TTS pipeline latency
     updateAiResponding(false);
     resumeSTT();
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
