@@ -1,179 +1,117 @@
+PARA AS SEGUINTES MUDANÇAS NÃO PODE ALTERAR A VOZ E VIDEO DO ORION CONFORME O PROTOCOLO ANTERIOR ESTAMOS TRABALHANDO NA LLM AGORA 
+
+# Análise Completa: Mapeamento Cérebro → LLM vs. Implementação Atual
+
+## O que JÁ EXISTE (implementado)
 
 
-# Auditoria Completa: Conexoes TTS / STT / Visao Computacional
+| Sistema Cerebral                 | Componente LLM                    | Arquivo Implementado                                    | Status     |
+| -------------------------------- | --------------------------------- | ------------------------------------------------------- | ---------- |
+| **Córtex Cerebral** (camadas)    | Transformer Blocks + Residual     | `neural-pipeline.ts` (9 stages)                         | ✅ Completo |
+| **Núcleos da Base** (gating)     | MoE Gating + Synergy              | `moe-gating.ts` (12 experts, synergy pairs)             | ✅ Completo |
+| **Substância Branca** (conexões) | RoPE + Residual                   | `rope.ts` (RoPE completo)                               | ✅ Completo |
+| **Tálamo** (atenção seletiva)    | Multi-Head Attention + Router     | `slim-model-router.ts` + `cross-attention.ts`           | ✅ Completo |
+| **Cerebelo** (correção de erro)  | FFN + SwiGLU + Residual           | `neural-pipeline.ts` (MLM stage)                        | ✅ Completo |
+| **Sistema Ventricular** (fluido) | KV-Cache + Sliding Window         | `kv-cache-augmented.ts` + `semantic-cache.ts`           | ✅ Completo |
+| **Meninges** (proteção)          | Safety Filters + Guardrails       | `orion-defense-system.ts`                               | ✅ Existe   |
+| **Barreira Hematoencefálica**    | LayerNorm + Outlier Suppression   | `activations.ts` (safeNum guards)                       | ✅ Parcial  |
+| **Sistema Sensorial**            | Input Embeddings + Multimodal     | `multimodal-fusion.ts` + `cross-modal-embeddings.ts`    | ✅ Completo |
+| **Sistema Motor**                | Output / Action Execution         | `large-action-model.ts` (LAM)                           | ✅ Completo |
+| **Sistema Límbico**              | Reward + Episodic Memory          | `reward-loop.ts` + `episodic-memory.ts`                 | ✅ Completo |
+| **ARAS** (vigília)               | Attention Threshold + Temperature | `quality-presets.ts`                                    | ✅ Parcial  |
+| **Sistema Dopaminérgico**        | RLHF / DPO loop                   | `reward-loop.ts` (PPO-like feedback)                    | ✅ Completo |
+| **Córtex Pré-Frontal**           | Chain-of-Thought / Reasoning      | `cognitive-fast-reasoner.ts` + `drafter-critic-loop.ts` | ✅ Existe   |
+| **Sistema Vestibular**           | RoPE / ALiBi Positions            | `rope.ts`                                               | ✅ Completo |
+| **Corpo Caloso**                 | All-to-All MHA + Residual         | `cross-attention.ts` + pipeline residual                | ✅ Completo |
+| **Neuroplasticidade**            | Fine-tuning / LoRA                | `meta-learning.ts` + `neural-training.ts`               | ✅ Existe   |
+| **Consciência / GWT**            | Global Workspace Theory           | `global-workspace.ts` (774 linhas, Baars+Tononi)        | ✅ Completo |
+| **Theory of Mind**               | User Mental Model                 | `theory-of-mind.ts` (327 linhas)                        | ✅ Completo |
+| **Raciocínio Causal**            | SCM + Counterfactuals             | `causal-reasoning.ts` (342 linhas)                      | ✅ Completo |
+| **Marcadores Somáticos**         | Gut-feeling decisions             | `somatic-markers.ts` (345 linhas)                       | ✅ Completo |
+| **Interocepcão**                 | Internal state awareness          | `interoception-engine.ts` (357 linhas)                  | ✅ Completo |
+| **STDP**                         | Spike-Timing Plasticity           | `stdp.ts` (377 linhas)                                  | ✅ Completo |
+| **Gamma Oscillations**           | PING/ING + CTC                    | `gamma-oscillations.ts`                                 | ✅ Completo |
+| **Temporal Binding**             | Cross-modal binding               | `temporal-binding.ts`                                   | ✅ Completo |
+| **Head Pruning**                 | SHAP-based MHA pruning            | `head-pruning.ts`                                       | ✅ Completo |
+| **Meta-Learning**                | MAML / Self-Optimization          | `meta-learning.ts` (377 linhas)                         | ✅ Completo |
+| **Hierarchical RL**              | Options Framework / UCB1          | `hierarchical-rl.ts`                                    | ✅ Completo |
+| **Metacognição**                 | Self-Model + Confidence           | `quantum-metacognition.ts` + `orion-introspection.ts`   | ✅ Existe   |
 
-## Resumo do Estado Atual
-
-O sistema possui **4 camadas de AI/ML** com **~25 conexoes** entre frontend, edge functions, e servicos externos. A auditoria identificou **7 problemas criticos** e **5 melhorias necessarias**.
 
 ---
 
-## Arquitetura Atual (Mapa de Conexoes)
+## O que FALTA ou está INCOMPLETO
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│                    TTS (Sintese de Voz)                  │
-├─────────────────────────────────────────────────────────┤
-│ Tier 0: Gemini TTS (Algieba) ─→ edge/gemini-tts    ✅  │
-│ Tier 1: Formant Synth (Iapetus) ─→ 100% local      ✅  │
-│ Tier 2: Piper WASM ─→ @mintplex-labs/piper-tts-web ⚠️  │
-│ Tier 3: Browser SpeechSynthesis ─→ Web API          ✅  │
-│                                                         │
-│ DESCONECTADOS (edge functions existem, nao chamados):   │
-│  - kokoro-tts (edge) ─→ DeepInfra (pago?)           ❌  │
-│  - jarvis-tts (edge) ─→ HF Piper model              ❌  │
-│  - fish-speech-clone (edge)                          ❌  │
-│  - google-tts (edge) ─→ removido da cascata          ❌  │
-│  - hf-voice-tts (edge)                               ❌  │
-│  - orion-voice-engine (edge)                          ❌  │
-│  - orion-voice-clone (edge)                           ❌  │
-│  - elevenlabs-tts (edge) ─→ PROIBIDO (constraint)    ❌  │
-│  - HF Space /tts ─→ orion-hub-client.speakJarvis()   ⚠️  │
-└─────────────────────────────────────────────────────────┘
+Após mapear todos os ~30 sistemas cerebrais do seu documento contra o código existente, identifiquei **5 gaps**:
 
-┌─────────────────────────────────────────────────────────┐
-│                    STT (Reconhecimento de Voz)           │
-├─────────────────────────────────────────────────────────┤
-│ Primary: Web Speech API (SpeechRecognition)          ✅  │
-│ Fallback 1: Groq Whisper ─→ edge/groq-whisper-stt   ✅  │
-│ Fallback 2: HF Space Whisper ─→ orion-hub-client     ⚠️  │
-│ Fallback 3: Transformers.js Whisper (browser)        ⚠️  │
-│                                                         │
-│ PROBLEMAS:                                              │
-│  - Groq/HF Whisper fallbacks NAO integrados na cascata  │
-│    useNeuralVoice.ts usa APENAS Web Speech API          │
-│  - transformers-audio.ts existe mas nao e chamado       │
-│    pela cadeia principal de STT                         │
-│  - metacognitive-hearing.ts processa metricas mas       │
-│    nao recebe audio real (apenas proxy de texto)        │
-└─────────────────────────────────────────────────────────┘
+### 1. Hipotálamo → Value Head de Alinhamento (PARCIAL)
 
-┌─────────────────────────────────────────────────────────┐
-│                 Visao Computacional                      │
-├─────────────────────────────────────────────────────────┤
-│ Layer 1: MediaPipe (local WASM/WebGL)                ✅  │
-│   - ObjectDetector, FaceDetector, FaceLandmarker        │
-│   - HandLandmarker, PoseLandmarker                      │
-│ Layer 2: YOLO ONNX (local browser)                   ✅  │
-│ Layer 3: HF Vision Gate (Transformers.js)            ✅  │
-│   - MobileViT classifier, ViT-GPT2 captioner           │
-│ Layer 4: Gemini Vision (via edge function)            ✅  │
-│ Layer 5: HF Space Vision ─→ orion-hub-client          ⚠️  │
-│                                                         │
-│ TF.js Runtime (BlazeFace, LiteRT)                    ✅  │
-│ face-api-runtime.ts                                  ✅  │
-│ depth-estimation, OCR, scene-reconstruction          ✅  │
-│                                                         │
-│ PROBLEMAS:                                              │
-│  - HF Space GPU offline (CPU only, endpoints falhando)  │
-│  - orion-hub-client usa @gradio/client mas endpoint     │
-│    /gemma_chat nao existe no Space                      │
-│  - visionClassify chama /vision_classify (CPU) OK       │
-│  - visionCaption chama /vision_caption (GPU) ❌ falha   │
-└─────────────────────────────────────────────────────────┘
+- **Existe**: `reward-loop.ts` faz feedback por thumbs up/down
+- **Falta**: **Reward Model separado** com scalar head `r = W_r · h_last` que rode em tempo real durante inference — um "Value Head" dedicado que avalie CADA resposta antes de enviar, não só após feedback
 
-┌─────────────────────────────────────────────────────────┐
-│              Metacognicao Quantica (v28)                 │
-├─────────────────────────────────────────────────────────┤
-│ quantum-metacognition.ts ─→ consciousness-bridge     ✅  │
-│ metacognitive-hearing.ts ─→ audio-stream-bridge      ✅  │
-│ global-workspace.ts ─→ NeuralConsciousnessLoop       ✅  │
-│                                                         │
-│ PROBLEMAS:                                              │
-│  - Metacognitive hearing recebe apenas proxy de texto,  │
-│    nao audio real (energyLevel e prosody sao simulados) │
-│  - audio-stream-bridge.ts gera "pseudo audio features"  │
-│    a partir de texto, nao de audio real                 │
-└─────────────────────────────────────────────────────────┘
-```
+### 2. Sistema Autônomo (Simpático/Parassimpático) → Dynamic Decoding Control (FRACO)
+
+- **Existe**: `quality-presets.ts` com presets fixos de temperature
+- **Falta**: **Controle dinâmico automático** que ajuste temperature, top-p, repetition_penalty em tempo real baseado no estado interoceptivo (stress alto → mais conservador, calmo → mais criativo)
+
+### 3. Sonho / Consolidação de Memória → Experience Replay (NÃO EXISTE)
+
+- **Falta**: Um **cron de consolidação** que periodicamente revise episódios em `episodic-memory`, comprima memórias redundantes, fortaleça conexões frequentes (replay buffer) e faça "garbage collection" de memórias fracas
+
+### 4. Sistema Olfatório → Bypass Attention para Tokens Raros (NÃO EXISTE)
+
+- **Falta**: Um **fast-path** que detecte tokens especiais (comandos urgentes, alertas, nomes do usuário) e os processe diretamente sem passar pelo pipeline completo — bypass do "tálamo"
+
+### 5. Barreira Hematoencefálica → Input Sanitization Completa (PARCIAL)
+
+- **Existe**: `safeNum()` em activations, defense system
+- **Falta**: **Embedding normalization com outlier suppression** no pipeline de entrada — detectar e atenuar embeddings anômalos (prompt injection, adversarial tokens) antes do Stage 1
 
 ---
 
-## 7 Problemas Criticos Encontrados
+## Plano de Implementação (5 melhorias, SEM tocar voz/visão/TTS)
 
-### P1. STT sem fallback real (useNeuralVoice.ts)
-A cascata TTS e robusta (Gemini → Formant → Browser), mas o **STT usa APENAS Web Speech API**. Se falhar, nao ha fallback para Groq Whisper ou Transformers.js Whisper. As edge functions e bibliotecas existem mas nao estao conectadas.
+### Tarefa 1: Value Head — Avaliação Pré-Resposta
 
-### P2. Edge functions TTS orfas
-7 edge functions de TTS existem mas NAO sao chamadas pelo codigo: `kokoro-tts`, `jarvis-tts`, `fish-speech-clone`, `google-tts`, `hf-voice-tts`, `orion-voice-engine`, `orion-voice-clone`. Sao peso morto no deploy.
+- Criar `src/lib/neural/value-head.ts`
+- Implementar `evaluateResponse(response, context) → {score, pass, adjustments}`
+- Score baseado em: coerência com contexto, comprimento adequado, tom emocional, toxicidade
+- Integrar no pipeline de resposta (após LLM, antes de enviar ao user)
 
-### P3. HF Space GPU offline
-`Ericsonv12/orion-gpu` roda em CPU. Endpoints GPU (vision_caption, whisper_stt) falham. O endpoint `/gemma_chat` nao existe. O `orion-hub-client.ts` tenta chama-lo e recebe erro.
+### Tarefa 2: Autonomic Decoding Controller
 
-### P4. Metacognitive Hearing sem audio real
-`metacognitive-hearing.ts` e `audio-stream-bridge.ts` simulam features de audio a partir de texto (WPM, capslock ratio, keyword matching). Nao recebem dados reais de espectro, pitch ou energia do microfone.
+- Criar `src/lib/neural/autonomic-controller.ts`
+- Lê `InteroceptiveState` e ajusta automaticamente: temperature (0.3–1.2), top_p (0.7–0.95), repetition_penalty (1.0–1.3)
+- Regras: stress alto → T↓, p↓ (mais seguro); calmo + criativo → T↑, p↑
+- Integrar no `neural-pipeline.ts` Stage 1 (routing)
 
-### P5. Transformers.js Audio desconectado
-`transformers-audio.ts` (Whisper browser, audio classification) existe e e exportado via `index.ts`, mas so e importado em `orion-orchestrator-exec.ts`. Nao esta na cadeia principal de STT do usuario.
+### Tarefa 3: Memory Consolidation Cron (Sonho)
 
-### P6. TTS duplicadas em paths diferentes
-`src/lib/tts/kokoroTTS.ts` e `src/lib/voice/kokoroTTS.ts` — dois arquivos Kokoro em locais diferentes. O de `voice/` chama a edge function, o de `tts/` parece nao existir separadamente. Confusao de imports.
+- Criar `src/lib/neural/memory-consolidation.ts`
+- Funções: `consolidateEpisodes()`, `pruneWeakMemories()`, `strengthenFrequent()`
+- Compressão: episódios similares (>0.85 similarity) → merge
+- Fortalecimento: memórias acessadas >3x → boost priority
+- Pode rodar como `auto-evolution-cron` task ou client-side idle
 
-### P7. Piper TTS depende do Firebase Storage
-`piperTTS.ts` tenta resolver URL do modelo via Firebase Storage primeiro. Se o modelo nao esta la e o CDN default falha, Piper fica inoperante silenciosamente.
+### Tarefa 4: Olfactory Bypass (Fast-Path para Tokens Urgentes)
 
----
+- Criar `src/lib/neural/olfactory-bypass.ts`
+- Padrões de bypass: nome do usuário, "urgente", "pare", "emergência", comandos diretos
+- Retorna resposta rápida sem pipeline completo (skip stages 4-7)
+- Integrar no `neural-pipeline.ts` antes do Stage 1
 
-## Plano de Integracao (Sem Demoras no Sistema Cognitivo)
+### Tarefa 5: Input Barrier (Barreira Hematoencefálica Reforçada)
 
-### Etapa 1 — Conectar STT Fallback Chain
-**Arquivo:** `src/hooks/useNeuralVoice.ts`
-- Quando Web Speech API falha (onError `no-speech`, `network`, `not-allowed`), chamar automaticamente `groq-whisper-stt` edge function
-- Se Groq falhar (429), cair para `transcribeAudio()` do `transformers-audio.ts` (Whisper browser)
-- Alimentar `metacognitive-hearing.ts` com confianca real do STT
+- Criar `src/lib/neural/input-barrier.ts`
+- Embedding normalization: `x̂ = (x - μ) / σ · γ + β`
+- Outlier detection: tokens com embedding L2 norm > 3σ → atenuados
+- Prompt injection patterns → flag + sanitize
+- Integrar no `neural-pipeline.ts` Stage 0 (pré-tokenização)
 
-### Etapa 2 — Conectar Audio Real ao Metacognitive Hearing
-**Arquivos:** `src/lib/voice/audioWorkletManager.ts` → `metacognitive-hearing.ts`
-- O AudioWorkletManager ja extrai `energy` e `isSpeech` do microfone
-- Conectar esses dados reais ao `processMetacognitiveHearing()` em vez dos proxies de texto
-- Adicionar campo `rawEnergy` e `spectralFeatures` ao MetacognitiveHearingResult
+### Arquivos que NÃO serão tocados
 
-### Etapa 3 — Limpar Edge Functions Orfas
-- Remover imports mortos de `kokoro-tts`, `jarvis-tts`, `fish-speech-clone`, `google-tts` do frontend
-- Manter as edge functions no Supabase (podem ser uteis no futuro) mas remover chamadas do client
-- Consolidar `src/lib/voice/kokoroTTS.ts` e `src/lib/tts/kokoroTTS.ts` — manter apenas um
-
-### Etapa 4 — Corrigir orion-hub-client.ts
-- Remover referencia ao endpoint `/gemma_chat` (nao existe)
-- Adicionar fallback: quando visionCaption falha (GPU offline), usar `classifyImage()` do `transformers-vision.ts` (browser local) em vez de OCR
-- Corrigir `speakJarvis()` — nao usar quando Space esta em CPU
-
-### Etapa 5 — Conectar Quantum Metacognition ao Pipeline Real
-**Arquivo:** `src/lib/neural/consciousness-bridge.ts`
-- Garantir que o ciclo de consciencia recebe dados reais do STT (confianca, latencia) e da visao (MediaPipe FPS, gate stats)
-- Alimentar o S1/S2 Transition Gate com entropia real dos LLM responses (quando disponivel via Gemini API response metadata)
-
-### Etapa 6 — Pipeline Zero-Latency
-- Pre-carregar MediaPipe + HF Vision Gate no `neural-init.ts` (ja parcialmente feito)
-- Garantir que `audioWorkletManager` inicia junto com o primeiro `startListening()`
-- Adicionar metricas de latencia end-to-end: STT → LLM → TTS no consciousness snapshot
-
----
-
-## Secao Tecnica: Detalhes de Implementacao
-
-**STT Fallback (Etapa 1):**
-```text
-Web Speech API (0ms setup, streaming)
-  ↓ onError/timeout
-Groq Whisper edge function (~2s, free tier)
-  ↓ 429/error  
-Transformers.js Whisper browser (~5s first load, then ~3s)
-```
-
-**Audio Real → Metacognition (Etapa 2):**
-```text
-Microphone → AudioWorklet (16kHz chunks)
-  ├→ energy/isSpeech → metacognitive-hearing
-  ├→ Float32Array → Whisper (when STT fallback needed)
-  └→ spectral proxy → audio-stream-bridge → Mamba pipeline
-```
-
-**Arquivos editados (~6 files):**
-1. `src/hooks/useNeuralVoice.ts` — STT fallback chain
-2. `src/lib/neural/metacognitive-hearing.ts` — accept real audio data
-3. `src/lib/neural/audio-stream-bridge.ts` — wire AudioWorklet data
-4. `src/lib/neural/orion-hub-client.ts` — fix dead endpoints
-5. `src/lib/neural/consciousness-bridge.ts` — real metrics wiring
-6. `src/lib/neural/realtime-vision-engine.ts` — minor: add gate stats to result
-
+- `src/hooks/useNeuralVoice.ts` — intocado
+- `src/lib/voice/*` — intocado
+- `src/lib/tts/*` — intocado
+- `supabase/functions/neural-ops/index.ts` — intocado (visão/emoção)
+- `supabase/functions/gemini-tts/*` — intocado
