@@ -605,39 +605,13 @@ export function GlobalOrionListener() {
 
   return (
     <>
-      {/* ═══ Boot Screen — Plasma loading with "Iniciando sistema" ═══ */}
-      {booting && (
-        <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-background/95 backdrop-blur-xl animate-fade-in">
-          <div className="relative w-32 h-32 mb-6">
-            <PlasmaCore className="w-full h-full" />
-            <div
-              className="absolute inset-0 rounded-full"
-              style={{
-                background: "radial-gradient(circle, hsl(var(--primary) / 0.3) 0%, transparent 70%)",
-                filter: "blur(20px)",
-                transform: "scale(2)",
-                animation: "orbBreath 1.5s ease-in-out infinite",
-              }}
-            />
+      {/* ═══ Command Capture Status — shows "Ouvindo…" when capturing command after wake word ═══ */}
+      {conversationalStatus === "listening" && !orionOpen && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[70] animate-fade-in">
+          <div className="flex items-center gap-2 bg-card/95 backdrop-blur-xl border border-primary/30 rounded-full px-4 py-2 shadow-lg">
+            <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-sm font-mono text-primary">Ouvindo…</span>
           </div>
-          <p className="text-sm font-mono tracking-[0.3em] text-primary/80 uppercase animate-pulse">
-            Iniciando Sistema
-          </p>
-          <div className="mt-4 w-48 h-1 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full"
-              style={{ animation: "bootProgress 2.5s ease-out forwards" }}
-            />
-          </div>
-          <style>{`
-            @keyframes bootProgress {
-              0% { width: 0%; }
-              30% { width: 40%; }
-              60% { width: 70%; }
-              90% { width: 95%; }
-              100% { width: 100%; }
-            }
-          `}</style>
         </div>
       )}
 
