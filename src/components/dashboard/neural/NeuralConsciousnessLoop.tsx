@@ -1031,6 +1031,149 @@ export function NeuralConsciousnessLoop() {
         </Card>
       </div>
 
+      {/* v25: Bridge Metrics — Tesla Resonance, Gamma, QHRL, Interoception */}
+      {state.bridgeSnapshot && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Tesla Resonance */}
+          <Card className="border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Zap className="h-4 w-4 text-amber-400" />
+                Tesla Resonance (Kuramoto)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Índice R (Ordem)</span>
+                <span className="font-mono font-bold" style={{ color: state.bridgeSnapshot.resonanceIndex > 0.8 ? "#22c55e" : "#f59e0b" }}>
+                  {state.bridgeSnapshot.resonanceIndex.toFixed(3)}
+                </span>
+              </div>
+              <MetricBar label="Ressonância" value={state.bridgeSnapshot.resonanceIndex} color="#f59e0b" />
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Estado</span>
+                <Badge className={`text-[10px] ${state.bridgeSnapshot.teslaResonanceActive ? "bg-red-600 text-red-100" : "bg-muted text-muted-foreground"}`}>
+                  {state.bridgeSnapshot.teslaResonanceActive ? "🔴 SUPERCOERENTE" : "Normal"}
+                </Badge>
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                Tempo coerência: <span className="font-mono text-foreground">{state.bridgeSnapshot.coherenceTime}ms</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Gamma Oscillations */}
+          <Card className="border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Activity className="h-4 w-4 text-emerald-400" />
+                Oscilações Gamma
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[9px] text-muted-foreground">CTC</span>
+                  <p className="text-sm font-mono font-bold">{state.bridgeSnapshot.gammaCTC.toFixed(3)}</p>
+                </div>
+                <div>
+                  <span className="text-[9px] text-muted-foreground">θ-γ MI</span>
+                  <p className="text-sm font-mono font-bold">{state.bridgeSnapshot.thetaGammaMI.toFixed(4)}</p>
+                </div>
+                <div>
+                  <span className="text-[9px] text-muted-foreground">Sub-banda</span>
+                  <p className="text-sm font-mono font-bold capitalize">{state.bridgeSnapshot.gammaSubBand}</p>
+                </div>
+                <div>
+                  <span className="text-[9px] text-muted-foreground">Saúde</span>
+                  <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.gammaHealth > 0.7 ? "#22c55e" : "#f59e0b" }}>
+                    {(state.bridgeSnapshot.gammaHealth * 100).toFixed(0)}%
+                  </p>
+                </div>
+              </div>
+              <MetricBar label="Gamma Health" value={state.bridgeSnapshot.gammaHealth} color="#10b981" />
+            </CardContent>
+          </Card>
+
+          {/* QHRL & Temporal */}
+          <Card className="border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Cpu className="h-4 w-4 text-cyan-400" />
+                QHRL & Sincronia Temporal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2 bg-muted/20 rounded">
+                  <p className="text-sm font-mono font-bold">{state.bridgeSnapshot.qhrlAdvantage.toFixed(2)}</p>
+                  <p className="text-[8px] text-muted-foreground">Q-Advantage</p>
+                </div>
+                <div className="p-2 bg-muted/20 rounded">
+                  <p className="text-sm font-mono font-bold">{(state.bridgeSnapshot.temporalSynchrony * 100).toFixed(0)}%</p>
+                  <p className="text-[8px] text-muted-foreground">Sincronia</p>
+                </div>
+                <div className="p-2 bg-muted/20 rounded">
+                  <p className="text-sm font-mono font-bold capitalize">{state.bridgeSnapshot.taskComplexity}</p>
+                  <p className="text-[8px] text-muted-foreground">Complexidade</p>
+                </div>
+              </div>
+              {state.bridgeSnapshot.anomalySeverity && (
+                <div className="flex items-center gap-2 p-2 bg-red-500/10 rounded text-xs text-red-400">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Anomalia: {state.bridgeSnapshot.anomalySeverity}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Interoception */}
+          <Card className="border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Heart className="h-4 w-4 text-rose-400" />
+                Interocepção (Body-Sense)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {state.bridgeSnapshot.interoception ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[9px] text-muted-foreground">Valência</span>
+                    <p className="text-sm font-mono font-bold">{state.bridgeSnapshot.interoception.valence.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-muted-foreground">Arousal</span>
+                    <p className="text-sm font-mono font-bold">{state.bridgeSnapshot.interoception.arousal.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-muted-foreground">Dor</span>
+                    <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.painIndex > 0.5 ? "#ef4444" : "#22c55e" }}>
+                      {(state.bridgeSnapshot.interoception.painIndex * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-muted-foreground">Energia</span>
+                    <p className="text-sm font-mono font-bold" style={{ color: state.bridgeSnapshot.interoception.energyLevel > 0.5 ? "#22c55e" : "#f59e0b" }}>
+                      {(state.bridgeSnapshot.interoception.energyLevel * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-[9px] text-muted-foreground">Sinal Dominante</span>
+                    <p className="text-sm font-mono font-bold capitalize">{state.bridgeSnapshot.interoception.dominantSignal}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[10px] text-muted-foreground text-center py-3">Aguardando dados interoceptivos...</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* v25: Agent Co-Activation Graph */}
+      <AgentCoActivationGraph />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-border">
           <CardHeader className="pb-2">
