@@ -89,7 +89,7 @@ export function GlobalOrionListener() {
   const { config } = useNeuralConfig();
   const [wakeWordActive, setWakeWordActive] = useState(false);
   const [orionOpen, setOrionOpen] = useState(false);
-  const [_booting] = useState(false); // kept for future use
+  
   const [initialCommand, setInitialCommand] = useState<string>("");
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const [conversationalStatus, setConversationalStatus] = useState<"idle" | "listening" | "processing" | "speaking">("idle");
