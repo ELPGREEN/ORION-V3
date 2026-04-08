@@ -327,14 +327,32 @@ export async function llmChat(
   return `[Orion] LLM via HF Space indisponível. Use Gemini API (edge function) para chat.`;
 }
 
-// ─── Vision Caption (BLIP GPU → OCR CPU fallback) ───
+// ─── Vision Caption (BLIP GPU → Local Transformers.js → OCR CPU fallback) ───
 
 export async function visionCaption(imageFile: File | Blob): Promise<VisionCaptionResult> {
   return callGpuWithFallback<VisionCaptionResult>(
     "vision_caption",
     { image: imageFile },
     async () => {
-      console.warn("[OrionHub] Vision caption fallback: using OCR (CPU)");
+      // v30: Try local Transformers.js captioning before OCR fallback
+      try {
+        const { captionImage } = await import("@/lib/huggingface/transformers-vision");
+        const imageUrl = URL.createObjectURL(imageFile);
+        const result = await captionImage(imageUrl);
+        URL.revokeObjectURL(imageUrl);
+        if (result && result.length > 0 && result[0]?.generated_text) {
+          console.log("[OrionHub] Vision caption via local Transformers.js");
+          return {
+            caption: result[0].generated_text,
+            model: "vit-gpt2-local",
+            source: "transformers-js-browser",
+          };
+        }
+      } catch (e) {
+        console.warn("[OrionHub] Local vision caption failed, falling back to OCR:", e);
+      }
+
+      // Final fallback: OCR on CPU
       try {
         const ocrResult = await callGradio<OCRResult>("ocr", { image: imageFile }, DEFAULT_TIMEOUT);
         const parsed = typeof ocrResult === "string" ? JSON.parse(ocrResult as string) : ocrResult;

@@ -667,14 +667,30 @@ export function useNeuralVoice(
   }, [createRecognition]);
 
   const startListening = useCallback((onCmd: (c: string) => void) => {
-    // ═══ FIX: Re-claim mic ownership for command mode ═══
-    // Without this, wake word's mount claim invalidates our singletonId
     singletonIdRef.current = claimMic("command");
     intentionalStopRef.current = false;
     voiceActiveRef.current = true;
     clearRestartTimer();
     onCmdRef.current = onCmd;
     setListening(false);
+
+    // v30: Start AudioWorklet to collect chunks for STT fallback
+    if (!audioWorkletActiveRef.current) {
+      audioWorkletActiveRef.current = true;
+      try {
+        const worklet = getAudioWorkletManager({ sampleRate: 16000, chunkSize: 4096 });
+        worklet.initialize().then((ok) => {
+          if (!ok) return;
+          worklet.onChunk((chunk) => {
+            // Keep last ~5s of audio (16000 * 5 / 4096 ≈ 20 chunks)
+            audioChunksRef.current.push(chunk);
+            if (audioChunksRef.current.length > 20) audioChunksRef.current.shift();
+          });
+          worklet.start();
+        }).catch(() => {});
+      } catch {}
+    }
+
     startListeningFresh(onCmd);
   }, [clearRestartTimer, startListeningFresh]);
 
