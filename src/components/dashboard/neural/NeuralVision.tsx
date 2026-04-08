@@ -925,8 +925,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           <CognitiveRouterBadge />
           <ActiveInferenceIndicator />
 
-          {/* Chat */}
-          {active && (
+          {/* Chat — always visible (works without camera) */}
+          {(
             <div className="relative bg-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-sm overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-cyan-400/30" />
               <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
