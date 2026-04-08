@@ -114,6 +114,9 @@ export function useNeuralVoice(
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   /** Singleton ID — this mount's unique ownership token */
   const singletonIdRef = useRef(0);
+  /** v30: AudioWorklet chunks for STT fallback */
+  const audioChunksRef = useRef<Float32Array[]>([]);
+  const audioWorkletActiveRef = useRef(false);
 
   const updateAiResponding = useCallback((val: boolean) => {
     VoiceState.aiResponding = val;
