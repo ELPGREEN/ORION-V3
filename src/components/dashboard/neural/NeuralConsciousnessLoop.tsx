@@ -449,6 +449,18 @@ export function NeuralConsciousnessLoop() {
       riskLevel: "safe" as const,
       activeSkillsList: [],
       reflectionChain: [],
+      // v27: LLM metacognition defaults
+      reasoningMode: "system1",
+      reasoningSystem1: 0.7,
+      reasoningSystem2: 0.3,
+      reasoningShouldEscalate: false,
+      hallucinationSnapshotRisk: "grounded",
+      hallucinationContradiction: false,
+      hallucinationGrounding: 1,
+      alignmentScore: 1,
+      alignmentFlags: [],
+      alignmentTransparency: 1,
+      alignmentBiasSignal: 0,
       bridgeSnapshot: null,
     };
   });

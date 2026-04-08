@@ -532,6 +532,18 @@ export function runConsciousnessBridge(
     quantumRiskLevel: cycleResult.metacognition?.riskLevel ?? "safe",
     quantumActiveSkills: cycleResult.metacognition?.activeSkills?.filter(s => s.active).length ?? 0,
     quantumReflectionChain: cycleResult.metacognition?.reflectionChain ?? [],
+    // v27: LLM metacognition
+    reasoningMode: cycleResult.metacognition?.reasoningMode?.mode ?? "system1",
+    reasoningSystem1: cycleResult.metacognition?.reasoningMode?.system1Activation ?? 0.7,
+    reasoningSystem2: cycleResult.metacognition?.reasoningMode?.system2Activation ?? 0.3,
+    reasoningShouldEscalate: cycleResult.metacognition?.reasoningMode?.shouldEscalate ?? false,
+    hallucinationSnapshotRisk: cycleResult.metacognition?.hallucinationSnapshot?.snapshotRisk ?? "grounded",
+    hallucinationContradiction: cycleResult.metacognition?.hallucinationSnapshot?.contradictionDetected ?? false,
+    hallucinationGrounding: cycleResult.metacognition?.hallucinationSnapshot?.groundingCoherence ?? 1,
+    alignmentScore: cycleResult.metacognition?.alignmentAudit?.alignmentScore ?? 1,
+    alignmentFlags: cycleResult.metacognition?.alignmentAudit?.flags ?? [],
+    alignmentTransparency: cycleResult.metacognition?.alignmentAudit?.transparencyScore ?? 1,
+    alignmentBiasSignal: cycleResult.metacognition?.alignmentAudit?.biasSignal ?? 0,
   };
 
   _lastCycleResult = snapshot;
