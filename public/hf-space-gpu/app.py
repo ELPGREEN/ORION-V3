@@ -42,18 +42,8 @@ _models = {}
 
 
 def get_tts():
-    """Load Piper TTS with Jarvis voice (ONNX CPU)"""
-    if "tts" not in _models:
-        try:
-            from piper import PiperVoice
-            from huggingface_hub import hf_hub_download
-            model_path = hf_hub_download("jgkawell/jarvis", "en/en_GB/jarvis/medium/jarvis-medium.onnx")
-            config_path = hf_hub_download("jgkawell/jarvis", "en/en_GB/jarvis/medium/jarvis-medium.onnx.json")
-            _models["tts"] = PiperVoice.load(model_path, config_path)
-        except Exception as e:
-            print(f"[TTS] Failed to load Piper: {e}")
-            raise
-    return _models["tts"]
+    """edge-tts is async, no model loading needed"""
+    return None
 
 
 def get_embedder():
