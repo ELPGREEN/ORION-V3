@@ -417,7 +417,21 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     askAI(cmd);
   }, [active, startCamera, stopCamera, speakFast, askAI]);
 
-  // Auto-activate when navigated from OrionGlobalListener or via initialCommand prop
+  // ═══ Listen for vision commands from text chat (useOrionReasoning) ═══
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.action === "activate_vision" && !active) {
+        startCamera({ announce: false }).catch(() => {});
+      } else if (detail?.action === "deactivate_vision" && active) {
+        stopCamera();
+      }
+    };
+    window.addEventListener("orion-vision-command", handler);
+    return () => window.removeEventListener("orion-vision-command", handler);
+  }, [active, startCamera, stopCamera]);
+
+
   useEffect(() => {
     if (autoActivatedRef.current) return;
 
