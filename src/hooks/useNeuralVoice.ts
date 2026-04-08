@@ -157,6 +157,8 @@ export function useNeuralVoice(
   const voiceActiveRef = useRef(false);
   /** Active Audio element for barge-in cancellation (Google TTS / Kokoro) */
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+  /** Singleton ID — this mount's unique ownership token */
+  const singletonIdRef = useRef(0);
 
   const updateAiResponding = useCallback((val: boolean) => {
     VoiceState.aiResponding = val;
