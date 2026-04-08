@@ -523,6 +523,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         rtInferenceRunningRef.current = true;
         detectRealTime(video).then(rtResult => {
           VS.realTimeVision = rtResult;
+          (window as any).__orion_last_rt_vision_ts__ = Date.now();
           lastRtVisionRef.current = rtResult;
 
           if (rtResult.frameXResult) {
