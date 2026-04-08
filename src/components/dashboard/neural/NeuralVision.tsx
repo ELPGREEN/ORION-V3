@@ -1035,9 +1035,18 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                         msg.role === "user" ? "bg-cyan-500/10 border border-cyan-500/15"
                         : "bg-white/[0.03] border border-white/[0.06]"
                       }`}>
-                        <p className={`text-[8px] font-mono leading-relaxed ${
-                          msg.role === "user" ? "text-cyan-300/70" : "text-white/50"
-                        }`}>{msg.text}</p>
+                        <div className="flex items-start gap-1">
+                          <p className={`text-[8px] font-mono leading-relaxed flex-1 ${
+                            msg.role === "user" ? "text-cyan-300/70" : "text-white/50"
+                          }`}>{msg.text}</p>
+                          {msg.role === "ai" && msg.confidence != null && (
+                            <span className={`text-[6px] font-mono shrink-0 px-1 rounded ${
+                              msg.confidence >= 0.7 ? "text-emerald-400/70 bg-emerald-400/10"
+                              : msg.confidence >= 0.4 ? "text-amber-400/70 bg-amber-400/10"
+                              : "text-red-400/70 bg-red-400/10"
+                            }`}>{(msg.confidence * 100).toFixed(0)}%</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1135,9 +1144,18 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                   : msg.role === "system" ? "bg-amber-500/5 border border-amber-500/10"
                   : "bg-white/[0.03] border border-white/[0.06]"
                 }`}>
-                  <p className={`text-[10px] font-mono leading-relaxed ${
-                    msg.role === "user" ? "text-cyan-300/70" : msg.role === "system" ? "text-amber-300/50" : "text-white/60"
-                  }`}>{msg.text}</p>
+                  <div className="flex items-start gap-1.5">
+                    <p className={`text-[10px] font-mono leading-relaxed flex-1 ${
+                      msg.role === "user" ? "text-cyan-300/70" : msg.role === "system" ? "text-amber-300/50" : "text-white/60"
+                    }`}>{msg.text}</p>
+                    {msg.role === "ai" && msg.confidence != null && (
+                      <span className={`text-[7px] font-mono shrink-0 px-1 py-0.5 rounded ${
+                        msg.confidence >= 0.7 ? "text-emerald-400/80 bg-emerald-400/10"
+                        : msg.confidence >= 0.4 ? "text-amber-400/80 bg-amber-400/10"
+                        : "text-red-400/80 bg-red-400/10"
+                      }`}>{(msg.confidence * 100).toFixed(0)}%</span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

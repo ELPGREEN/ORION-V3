@@ -26,7 +26,7 @@ import { estimateResponseTime, recordLatency } from "@/lib/neural/query-time-est
 import { somClassify, somLearn, type SOMHandler } from "@/lib/neural/som-router";
 import type { BackgroundTranscript } from "./useWakeWord";
 
-export interface ChatMessage { role: "user" | "ai" | "system"; text: string; time: string; }
+export interface ChatMessage { role: "user" | "ai" | "system"; text: string; time: string; confidence?: number; }
 
 export function useOrionReasoning(
   active: boolean, speak: (t: string) => Promise<void>, canvasRef: React.RefObject<HTMLCanvasElement | null>,
@@ -242,6 +242,9 @@ export function useOrionReasoning(
           // If self-healable, Orion handles it silently
           if (canSelfHeal) {
             vsLog(`✅ Auto-cura aplicada: ${analysisData.self_heal_action || "config update"}`);
+            // Auto-heal feedback visible in chat
+            const healMsg = `🔧 Detectei e corrigi: ${analysisData.self_heal_action || analysisData.diagnosis}`;
+            setChatHistory(prev => [...prev.slice(-19), { role: "system" as const, text: healMsg, time: new Date().toLocaleTimeString("pt-BR") }]);
           }
 
           // If frontend changes needed, log for Orion to report to owner
@@ -252,7 +255,7 @@ export function useOrionReasoning(
               .join("\n");
             vsLog(`📋 Instruções frontend (${instructions.length}):\n${instructionsSummary}`);
 
-            // Add to chat only for critical issues
+            // Add to chat for critical/high issues OR when self-heal wasn't enough
             if (severity === "critical" || severity === "high") {
               const alertMsg = `⚠️ Detectei ${meaningfulErrors.length} erro(s) no sistema. Diagnóstico: ${analysisData.diagnosis}. ${canSelfHeal ? "Apliquei correção automática." : `São necessárias ${instructions.length} modificação(ões) no frontend.`}`;
               setChatHistory(prev => [...prev.slice(-19), { role: "system" as const, text: alertMsg, time: new Date().toLocaleTimeString("pt-BR") }]);
@@ -1517,6 +1520,7 @@ export function useOrionReasoning(
       if (result.description) {
         // ═══ LAYER 3.5: Active Inference Guard — anti-hallucination + logical consistency ═══
         let finalResponse = result.description;
+        let adjustedFE = 30; // default moderate confidence
         let wasRefined = false;
         try {
           const inferenceResult = computeFreeEnergy(
@@ -1532,7 +1536,7 @@ export function useOrionReasoning(
           }
 
           // Combine free energy with logic score
-          const adjustedFE = Math.min(100, inferenceResult.freeEnergy + (logicCheck.consistent ? 0 : 15));
+          adjustedFE = Math.min(100, inferenceResult.freeEnergy + (logicCheck.consistent ? 0 : 15));
           const adjustedSeverity = adjustedFE >= 60 ? "high" : adjustedFE >= 35 ? "low" : "none";
 
           addLog(`🛡️ ActiveInference: FE=${adjustedFE}(raw=${inferenceResult.freeEnergy}), logic=${logicCheck.score}, passed=${adjustedSeverity === "none"}, ${inferenceResult.timestamp.toFixed(1)}ms`);
@@ -1581,9 +1585,16 @@ export function useOrionReasoning(
 
         setAiDescription(humanizedText);
         setThought(humanizedText);
+        // Compute confidence from available signals
+        const aiConfidence = Math.min(1, Math.max(0,
+          ((somResult?.confidence ?? 0.5) * 0.3) +
+          ((voltage?.confidence ?? 0.5) * 0.3) +
+          ((1 - (adjustedFE ?? 30) / 100) * 0.4)
+        ));
+
         setChatHistory(prev => {
           const withoutPlaceholder = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
-          return [...withoutPlaceholder, { role: "ai" as const, text: humanizedText, time: new Date().toLocaleTimeString("pt-BR") }];
+          return [...withoutPlaceholder, { role: "ai" as const, text: humanizedText, time: new Date().toLocaleTimeString("pt-BR"), confidence: aiConfidence }];
         });
         addLog(`🧠 IA: ${humanizedText.slice(0, 100)}...`);
         if (!spokeOrQueued && !bargedInRef.current) {
