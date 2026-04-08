@@ -229,7 +229,7 @@ export default function ConfigurarIA() {
 
     if (step.id === "wake_word") {
       // Use whatever the user said as the wake word
-      const word = text.trim().split(" ").pop() || "Ana";
+      const word = text.trim().split(" ").pop() || "Orion";
       setLocalConfig(prev => ({ ...prev, wake_word: word }));
       speak(`Entendido! Agora você pode me chamar de ${word}. Diga próximo para continuar.`);
       return;
@@ -465,7 +465,7 @@ export default function ConfigurarIA() {
                     <Input
                       value={localConfig.wake_word}
                       onChange={e => setLocalConfig(prev => ({ ...prev, wake_word: e.target.value }))}
-                      placeholder="Nome da IA (ex: Ana, Jarvis, Nova)"
+                      placeholder="Nome da IA (ex: Orion, Jarvis, Nova)"
                       className="text-center text-lg"
                     />
                     <p className="text-xs text-muted-foreground text-center">

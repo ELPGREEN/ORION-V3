@@ -885,7 +885,7 @@ export default function ChatHumano() {
                         >
                           {isSecretary && (
                             <div className="flex items-center gap-1.5 mb-1">
-                              <span className="text-[9px] text-accent-foreground/70 tracking-wider uppercase font-medium">Secretária IA • Ana</span>
+                              <span className="text-[9px] text-accent-foreground/70 tracking-wider uppercase font-medium">Secretária IA • Orion</span>
                             </div>
                           )}
                           {isSecretary ? (
