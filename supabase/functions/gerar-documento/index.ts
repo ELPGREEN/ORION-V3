@@ -1231,9 +1231,7 @@ async function extractKeywords(query: string): string[] {
 // Generate query embedding using Gemini gemini-embedding-001 (768d, free)
 // Unified across all functions: same provider ensures vector space compatibility
 function _getGeminiKeys(): string[] {
-  return [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter(Boolean) as string[];
+  return ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"].map(n => Deno.env.get(n)).filter(Boolean) as string[];
 }
 
 async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<typeof createClient>): Promise<number[]> {
