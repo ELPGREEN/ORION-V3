@@ -140,6 +140,7 @@ export function useNeuralVoice(
       try { recRef.current?.abort?.(); } catch {}
       try { recRef.current?.stop?.(); } catch {}
       recRef.current = null;
+      releaseMic(singletonIdRef.current);
       clearRestartTimer();
     };
     registerMicCleanup(cleanup);
@@ -670,6 +671,7 @@ export function useNeuralVoice(
     try { speechSynthesis.cancel(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
+    releaseMic(singletonIdRef.current);
     setListening(false);
   }, [clearRestartTimer]);
 
@@ -680,6 +682,7 @@ export function useNeuralVoice(
     try { recRef.current?.abort?.(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
+    releaseMic(singletonIdRef.current);
   }, [clearRestartTimer]);
 
   return { listening, supported, ttsOn, setTtsOn, speak, speakFast, startListening, stop, bargeIn, startThinking, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef };
