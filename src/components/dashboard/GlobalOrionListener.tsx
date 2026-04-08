@@ -436,6 +436,13 @@ export function GlobalOrionListener() {
         wakeRecRef.current = null;
         startInFlightRef.current = false;
 
+        // ═══ FIX: If another component claimed the mic, don't restart ═══
+        if (!isMicOwner(micOwnerIdRef.current)) {
+          console.log("[GlobalOrion] Mic ownership lost — not restarting");
+          setWakeWordActive(false);
+          return;
+        }
+
         if (wakeDetectedRef.current) {
           activateWithCommand(pendingCommandRef.current);
           return;
