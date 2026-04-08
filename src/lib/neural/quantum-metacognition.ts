@@ -974,7 +974,285 @@ function clamp(v: number, min = 0, max = 1): number {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  MAIN: Run Quantum Metacognition v28
+//  QUANTUM COGNITION LAYER (v29)
+//  Superposition, Interference, Entanglement, Contextual Collapse,
+//  Ambiguity Tolerance, Orchestrated Objective Reduction
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Compute quantum superposition of decision hypotheses.
+ * Multiple possibilities coexist with amplitudes before "collapsing" to one.
+ */
+function computeSuperpositionState(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  wfMetrics: WaveFunctionMetrics,
+  cognitiveWF: WaveFunction
+): QuantumSuperpositionState {
+  // Each conscious agent represents a hypothesis
+  const hypotheses = workspace.consciousAgents.map((agent, i) => ({
+    label: `${agent.role}:${agent.content.slice(0, 30)}`,
+    amplitude: wfMetrics.probabilities[i % wfMetrics.probabilities.length] ?? 0.5,
+    phase: (i * Math.PI * 2) / Math.max(1, workspace.consciousAgents.length),
+  }));
+
+  // Add implicit hypotheses from modalities
+  for (const mod of selfModel.activeModalities) {
+    if (!hypotheses.some(h => h.label.includes(mod))) {
+      hypotheses.push({
+        label: `modality:${mod}`,
+        amplitude: 0.3 + selfModel.confidenceLevel * 0.2,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+  }
+
+  const superpositionCardinality = hypotheses.length;
+
+  // Collapse decision: entropy < 0.3 = collapsed, > 0.7 = full superposition
+  const collapsed = wfMetrics.normalizedEntropy < 0.3 && selfModel.confidenceLevel > 0.7;
+
+  // Find winner via Born rule (|amplitude|²)
+  let collapsedChoice: string | null = null;
+  let collapseProbability = 0;
+  if (collapsed && hypotheses.length > 0) {
+    const sorted = [...hypotheses].sort((a, b) => b.amplitude - a.amplitude);
+    collapsedChoice = sorted[0].label;
+    const totalAmp2 = hypotheses.reduce((s, h) => s + h.amplitude * h.amplitude, 0);
+    collapseProbability = totalAmp2 > 0 ? (sorted[0].amplitude ** 2) / totalAmp2 : 0;
+  }
+
+  return {
+    hypotheses: hypotheses.slice(0, 8), // Cap for performance
+    superpositionCardinality,
+    collapsed,
+    collapsedChoice,
+    collapseProbability: clamp(collapseProbability),
+  };
+}
+
+/**
+ * Compute quantum interference patterns.
+ * Context causes some cognitive pathways to amplify (constructive)
+ * and others to cancel (destructive).
+ */
+function computeInterference(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  wfMetrics: WaveFunctionMetrics,
+  online: OnlineMonitoring
+): QuantumInterference {
+  const constructivePathways: string[] = [];
+  const destructivePathways: string[] = [];
+
+  // Constructive: high-confidence pathways reinforced by context
+  for (let i = 0; i < wfMetrics.probabilities.length; i++) {
+    const p = wfMetrics.probabilities[i];
+    if (p > 0.7) {
+      constructivePathways.push(`dim_${i}:amplified(${(p * 100).toFixed(0)}%)`);
+    } else if (p < 0.2) {
+      destructivePathways.push(`dim_${i}:cancelled(${(p * 100).toFixed(0)}%)`);
+    }
+  }
+
+  // Context influence: how much does the current context modify probabilities
+  // High drift = context is shifting pathways
+  const contextInfluence = clamp(
+    online.driftScore * 0.3 +
+    online.conflictSignal * 0.3 +
+    wfMetrics.variance * 0.4
+  );
+
+  // Interference magnitude: sum of constructive - destructive amplitudes
+  const constructiveSum = wfMetrics.probabilities.filter(p => p > 0.6).reduce((s, p) => s + p, 0);
+  const destructiveSum = wfMetrics.probabilities.filter(p => p < 0.3).reduce((s, p) => s + (1 - p), 0);
+  const interferenceMagnitude = clamp(Math.abs(constructiveSum - destructiveSum) / Math.max(1, wfMetrics.probabilities.length));
+
+  return {
+    constructivePathways,
+    destructivePathways,
+    interferenceMagnitude,
+    contextInfluence,
+  };
+}
+
+/**
+ * Compute cognitive entanglement: non-classical correlations between modules.
+ * When two cognitive modules are entangled, measuring one instantly affects the other.
+ */
+function computeEntanglement(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  wfMetrics: WaveFunctionMetrics
+): CognitiveEntanglement {
+  const entangledPairs: CognitiveEntanglement["entangledPairs"] = [];
+
+  // Compute correlations between pairs of conscious agents
+  const agents = workspace.consciousAgents;
+  for (let i = 0; i < agents.length; i++) {
+    for (let j = i + 1; j < agents.length; j++) {
+      // Correlation = similarity of salience × PLV coherence
+      const correlation = Math.abs(agents[i].salience - agents[j].salience) < 0.2
+        ? 0.7 + workspace.globalPLV * 0.3
+        : workspace.globalPLV * 0.5;
+      entangledPairs.push({
+        moduleA: agents[i].role,
+        moduleB: agents[j].role,
+        correlation: clamp(correlation),
+      });
+    }
+  }
+
+  // Bell inequality: >2.0 indicates non-classical correlations
+  // Classical max = 2 (CHSH). Quantum max = 2√2 ≈ 2.83
+  const avgCorrelation = entangledPairs.length > 0
+    ? entangledPairs.reduce((s, p) => s + p.correlation, 0) / entangledPairs.length
+    : 0.5;
+  const bellInequality = 2 + avgCorrelation * 0.83; // Scale to [2, 2.83]
+
+  // Entanglement entropy: how much info is shared non-locally
+  const entanglementEntropy = clamp(wfMetrics.entropy / Math.max(0.01, wfMetrics.maxEntropy));
+
+  // Non-local field: inspired by Penrose-Hameroff microtubule theory
+  // Strength depends on coherence + agent coupling
+  const nonLocalFieldStrength = clamp(
+    workspace.globalPLV * 0.4 +
+    avgCorrelation * 0.3 +
+    (1 - wfMetrics.normalizedEntropy) * 0.3
+  );
+
+  return {
+    entangledPairs: entangledPairs.slice(0, 10),
+    bellInequality,
+    entanglementEntropy,
+    nonLocalFieldStrength,
+  };
+}
+
+/**
+ * Compute contextual collapse: how attention/observation changes cognitive state.
+ * The quantum Zeno effect: repeatedly observing a state freezes its evolution.
+ */
+function computeContextualCollapse(
+  selfModel: SelfModelState,
+  wfMetrics: WaveFunctionMetrics
+): ContextualCollapse {
+  // Pre-observation: entropy before attention is applied
+  const preObservationEntropy = wfMetrics.normalizedEntropy;
+
+  // Post-observation: entropy reduced by confidence (attention collapses superposition)
+  const postObservationEntropy = clamp(preObservationEntropy * (1 - selfModel.confidenceLevel * 0.5));
+
+  // Information gain = entropy reduction
+  const informationGain = clamp(preObservationEntropy - postObservationEntropy);
+
+  // Observer effect: did attention significantly change the state?
+  const observerEffectDetected = informationGain > 0.15;
+
+  // Zeno effect: if scratchpad shows stable states (repeated observation), evolution freezes
+  const recentStable = _scratchpad.slice(-5).filter(s => s.verdict === "stable").length;
+  const zenoEffectActive = recentStable >= 4;
+
+  return {
+    observerEffectDetected,
+    preObservationEntropy,
+    postObservationEntropy,
+    informationGain,
+    zenoEffectActive,
+  };
+}
+
+/**
+ * Compute ambiguity tolerance: ability to hold contradictory ideas simultaneously.
+ * "Quantum thinking" — maintaining superposition of contradictory beliefs.
+ */
+function computeAmbiguityTolerance(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  online: OnlineMonitoring,
+  wfMetrics: WaveFunctionMetrics
+): AmbiguityTolerance {
+  // Dual state capability: can maintain contradictions?
+  // High entropy + high confidence = can hold ambiguity (not confused, but aware of duality)
+  const dualStateCapability = clamp(
+    wfMetrics.normalizedEntropy * selfModel.confidenceLevel * 2
+  );
+
+  // Active contradictions: conflicts detected by online monitoring
+  const activeContradictions = online.conflictSignal > 0.3
+    ? Math.ceil(online.conflictSignal * workspace.consciousAgents.length)
+    : 0;
+
+  // Cognitive dissonance: high conflict + low tolerance = dissonance
+  const cognitiveDissonance = clamp(
+    online.conflictSignal * (1 - dualStateCapability)
+  );
+
+  // Resolution strategy
+  let resolutionStrategy: AmbiguityTolerance["resolutionStrategy"];
+  if (cognitiveDissonance > 0.6) {
+    resolutionStrategy = "collapse"; // Too much dissonance — force a decision
+  } else if (dualStateCapability > 0.6) {
+    resolutionStrategy = "hold"; // Can tolerate ambiguity — maintain superposition
+  } else {
+    resolutionStrategy = "integrate"; // Try to synthesize contradictory views
+  }
+
+  return {
+    dualStateCapability,
+    activeContradictions,
+    cognitiveDissonance,
+    resolutionStrategy,
+  };
+}
+
+/**
+ * Run the complete Quantum Cognition Layer.
+ * Penrose-Hameroff Orchestrated Objective Reduction (Orch OR) inspired.
+ */
+function runQuantumCognitionLayer(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  wfMetrics: WaveFunctionMetrics,
+  cognitiveWF: WaveFunction,
+  online: OnlineMonitoring
+): QuantumCognitionLayer {
+  const superposition = computeSuperpositionState(selfModel, workspace, wfMetrics, cognitiveWF);
+  const interference = computeInterference(selfModel, workspace, wfMetrics, online);
+  const entanglement = computeEntanglement(selfModel, workspace, wfMetrics);
+  const contextCollapse = computeContextualCollapse(selfModel, wfMetrics);
+  const ambiguityTolerance = computeAmbiguityTolerance(selfModel, workspace, online, wfMetrics);
+
+  // Orchestrated Objective Reduction score (Penrose-Hameroff)
+  // Combines: coherence × entanglement × non-local field
+  // Higher = more "quantum" the cognitive process
+  const orchestratedReductionScore = clamp(
+    entanglement.nonLocalFieldStrength * 0.3 +
+    (1 - contextCollapse.postObservationEntropy) * 0.25 +
+    superposition.collapseProbability * 0.2 +
+    workspace.globalPLV * 0.25
+  );
+
+  // Cognitive coherence time: how long quantum superposition persists (ms)
+  // Inspired by Tegmark's decoherence times for neural processes
+  const baseCoherenceMs = 10; // ~10ms baseline
+  const coherenceMultiplier = 1 + entanglement.nonLocalFieldStrength * 5 +
+    (1 - wfMetrics.normalizedEntropy) * 3;
+  const cognitiveCoherenceTimeMs = Math.round(baseCoherenceMs * coherenceMultiplier);
+
+  return {
+    superposition,
+    interference,
+    entanglement,
+    contextCollapse,
+    ambiguityTolerance,
+    orchestratedReductionScore,
+    cognitiveCoherenceTimeMs,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MAIN: Run Quantum Metacognition v29
 // ═══════════════════════════════════════════════════════════════════
 
 function buildCognitiveWaveFunction(selfModel: SelfModelState, workspace: ConsciousState): WaveFunction {
@@ -991,14 +1269,15 @@ function buildCognitiveWaveFunction(selfModel: SelfModelState, workspace: Consci
 }
 
 /**
- * Execute quantum metacognition analysis (v28).
+ * Execute quantum metacognition analysis (v29).
  * 
- * Full 5-layer metacognitive architecture:
+ * Full 5-layer metacognitive architecture + Quantum Cognition Layer:
  * - Prospective monitoring (before task)
  * - Online monitoring (during execution) 
  * - Regulation & control (metacognitive action)
  * - Retrospective evaluation (after task)
  * - Support infrastructure (observer, ToM, scratchpad)
+ * - Quantum Cognition (superposition, interference, entanglement, collapse, ambiguity)
  */
 export function runQuantumMetacognition(
   selfModel: SelfModelState,
@@ -1032,6 +1311,9 @@ export function runQuantumMetacognition(
   // Layer 5: Support Infrastructure
   const infrastructure = evaluateInfrastructure(selfModel, workspace, quantumMetrics, online, hallucinationRisk);
 
+  // Layer 6: Quantum Cognition (v29)
+  const quantumCognition = runQuantumCognitionLayer(selfModel, workspace, quantumMetrics, cognitiveWF, online);
+
   // Existing subsystems
   const adaptiveAction = computeAdaptivePlan(uncertaintyScore, hallucinationRisk, calibrationError, quantumMetrics, selfModel, workspace);
   const riskLevel = classifyRisk(uncertaintyScore, hallucinationRisk, calibrationError);
@@ -1055,6 +1337,29 @@ export function runQuantumMetacognition(
     reflectionChain.push(`[ALINHAMENTO] 🔍 ${alignmentAudit.flags.join(", ")}`);
   }
 
+  // v29: Quantum cognition enrichment
+  if (!quantumCognition.superposition.collapsed) {
+    reflectionChain.push(`[QUÂNTICO] 🌊 Superposição ativa: ${quantumCognition.superposition.superpositionCardinality} hipóteses coexistindo`);
+  } else {
+    reflectionChain.push(`[QUÂNTICO] ⚛️ Colapso: "${quantumCognition.superposition.collapsedChoice}" (P=${(quantumCognition.superposition.collapseProbability * 100).toFixed(0)}%)`);
+  }
+  if (quantumCognition.interference.interferenceMagnitude > 0.3) {
+    reflectionChain.push(`[INTERFERÊNCIA] 🔀 ${quantumCognition.interference.constructivePathways.length} construtivas, ${quantumCognition.interference.destructivePathways.length} destrutivas`);
+  }
+  if (quantumCognition.entanglement.bellInequality > 2.4) {
+    reflectionChain.push(`[ENTRELAÇAMENTO] 🔗 Bell=${quantumCognition.entanglement.bellInequality.toFixed(2)} — correlações não-clássicas entre ${quantumCognition.entanglement.entangledPairs.length} pares`);
+  }
+  if (quantumCognition.contextCollapse.observerEffectDetected) {
+    reflectionChain.push(`[COLAPSO] 👁️ Efeito observador: ganho informacional ${(quantumCognition.contextCollapse.informationGain * 100).toFixed(0)}%`);
+  }
+  if (quantumCognition.contextCollapse.zenoEffectActive) {
+    reflectionChain.push(`[ZENO] ⏸️ Efeito Zeno ativo — observação repetida congelando evolução`);
+  }
+  if (quantumCognition.ambiguityTolerance.activeContradictions > 0) {
+    reflectionChain.push(`[AMBIGUIDADE] ☯️ ${quantumCognition.ambiguityTolerance.activeContradictions} contradições mantidas (estratégia: ${quantumCognition.ambiguityTolerance.resolutionStrategy})`);
+  }
+  reflectionChain.push(`[ORCH-OR] 🧬 Redução objetiva: ${(quantumCognition.orchestratedReductionScore * 100).toFixed(0)}% | Coerência: ${quantumCognition.cognitiveCoherenceTimeMs}ms`);
+
   return {
     uncertaintyScore,
     hallucinationRisk,
@@ -1073,5 +1378,6 @@ export function runQuantumMetacognition(
     regulation,
     retrospective,
     infrastructure,
+    quantumCognition,
   };
 }
