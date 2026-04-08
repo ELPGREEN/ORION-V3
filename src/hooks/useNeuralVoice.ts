@@ -56,6 +56,56 @@ export const VoiceState = {
   aiResponding: false,
 };
 
+// ═══ Global Singleton Guard ═══
+// Ensures only ONE SpeechRecognition instance exists across HMR reloads.
+// Each mount gets a unique ID; if a newer mount exists, older ones yield.
+const VOICE_GLOBAL_KEY = "__orion_voice_singleton__";
+
+interface VoiceSingleton {
+  activeId: number;
+  rec: any | null;
+  wakeRec: any | null;
+  cleanup: (() => void) | null;
+}
+
+function getVoiceSingleton(): VoiceSingleton {
+  const w = window as any;
+  if (!w[VOICE_GLOBAL_KEY]) {
+    w[VOICE_GLOBAL_KEY] = { activeId: 0, rec: null, wakeRec: null, cleanup: null };
+  }
+  return w[VOICE_GLOBAL_KEY];
+}
+
+/** Kill any existing global recognition instances before starting new ones */
+function claimVoiceSingleton(): number {
+  const s = getVoiceSingleton();
+  // Kill previous instances
+  if (s.cleanup) { try { s.cleanup(); } catch {} }
+  try { s.rec?.abort?.(); } catch {}
+  try { s.rec?.stop?.(); } catch {}
+  try { s.wakeRec?.abort?.(); } catch {}
+  try { s.wakeRec?.stop?.(); } catch {}
+  s.rec = null;
+  s.wakeRec = null;
+  s.activeId++;
+  return s.activeId;
+}
+
+/** Check if this mount is still the active owner */
+function isActiveOwner(id: number): boolean {
+  return getVoiceSingleton().activeId === id;
+}
+
+/** Register the current recognition instance globally */
+function registerGlobalRec(rec: any) {
+  getVoiceSingleton().rec = rec;
+}
+
+/** Register cleanup function for this mount */
+function registerGlobalCleanup(fn: () => void) {
+  getVoiceSingleton().cleanup = fn;
+}
+
 export interface UseNeuralVoiceReturn {
   listening: boolean;
   supported: boolean;
@@ -107,6 +157,8 @@ export function useNeuralVoice(
   const voiceActiveRef = useRef(false);
   /** Active Audio element for barge-in cancellation (Google TTS / Kokoro) */
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+  /** Singleton ID — this mount's unique ownership token */
+  const singletonIdRef = useRef(0);
 
   const updateAiResponding = useCallback((val: boolean) => {
     VoiceState.aiResponding = val;
@@ -127,15 +179,27 @@ export function useNeuralVoice(
     }
   }, []);
 
+  // ═══ Singleton claim: kill ALL previous HMR instances ═══
   useEffect(() => {
+    const myId = claimVoiceSingleton();
+    singletonIdRef.current = myId;
+    console.log("[Voice] Singleton claimed, id:", myId);
+
+    const cleanup = () => {
+      voiceActiveRef.current = false;
+      intentionalStopRef.current = true;
+      try { recRef.current?.abort?.(); } catch {}
+      try { recRef.current?.stop?.(); } catch {}
+      recRef.current = null;
+      clearRestartTimer();
+    };
+    registerGlobalCleanup(cleanup);
+
     initVoicePicker();
     const voice = getOrionVoice();
     if (voice) maleVoiceRef.current = voice;
     
-    // Pre-load Piper in background for faster first speak
     preloadPiper();
-    
-    // Pre-load voice style preferences
     loadVoicePrefs().catch(() => {});
     
     const handler = () => {
@@ -143,11 +207,16 @@ export function useNeuralVoice(
       if (v) maleVoiceRef.current = v;
     };
     speechSynthesis?.addEventListener?.("voiceschanged", handler);
-    return () => speechSynthesis?.removeEventListener?.("voiceschanged", handler);
-  }, []);
+    return () => {
+      speechSynthesis?.removeEventListener?.("voiceschanged", handler);
+      cleanup();
+    };
+  }, [clearRestartTimer]);
 
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
     clearRestartTimer();
+    // Stale HMR instance guard
+    if (!isActiveOwner(singletonIdRef.current)) { setListening(false); return; }
     if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
       setListening(false);
       return;
@@ -574,6 +643,8 @@ export function useNeuralVoice(
   }, [bargeIn, scheduleRecognitionRestart]);
 
   const startListeningFresh = useCallback((onCmd: (c: string) => void) => {
+    // Stale HMR instance guard
+    if (!isActiveOwner(singletonIdRef.current)) { setListening(false); return; }
     intentionalStopRef.current = false;
     try { recRef.current?.abort?.(); } catch {}
     try { recRef.current?.stop(); } catch {}
@@ -581,6 +652,7 @@ export function useNeuralVoice(
     const rec = createRecognition(onCmd);
     if (!rec) { setListening(false); return; }
     recRef.current = rec;
+    registerGlobalRec(rec);
     try {
       rec.start();
       setListening(true);
@@ -588,7 +660,7 @@ export function useNeuralVoice(
       setListening(false);
       recRef.current = null;
       setTimeout(() => {
-        if (!intentionalStopRef.current && onCmdRef.current === onCmd) {
+        if (!intentionalStopRef.current && onCmdRef.current === onCmd && isActiveOwner(singletonIdRef.current)) {
           startListeningFresh(onCmd);
         }
       }, 250);
