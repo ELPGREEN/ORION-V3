@@ -245,13 +245,13 @@ export function isGeminiTTSAvailable(): boolean {
 
 /** Available Gemini TTS voices */
 export const GEMINI_VOICES = [
-  { id: "Algieba", label: "Algieba (Padrão Orion)" },
+  { id: "Orus", label: "Orus (Padrão Orion — Calmo/JARVIS)" },
+  { id: "Charon", label: "Charon (Informativo)" },
+  { id: "Algieba", label: "Algieba (Neutro)" },
+  { id: "Kore", label: "Kore (Firme)" },
   { id: "Zephyr", label: "Zephyr (Brilhante)" },
   { id: "Puck", label: "Puck (Animado)" },
-  { id: "Charon", label: "Charon (Informativo)" },
-  { id: "Kore", label: "Kore (Firme)" },
   { id: "Fenrir", label: "Fenrir (Empolgado)" },
   { id: "Leda", label: "Leda (Jovem)" },
-  { id: "Orus", label: "Orus (Firme)" },
   { id: "Aoede", label: "Aoede (Brisa)" },
 ] as const;
