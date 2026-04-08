@@ -105,7 +105,7 @@ export function useNeuralVoice(
   const lastProcessedAtRef = useRef(0);
   const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consecutiveAbortsRef = useRef(0);
-  const MAX_CONSECUTIVE_ABORTS = 5;
+  const MAX_CONSECUTIVE_ABORTS = 3;
   /** voiceActiveRef: stays true across STT restart gaps — use to prevent wake word conflicts */
   const voiceActiveRef = useRef(false);
   /** Active Audio element for barge-in cancellation (Google TTS / Kokoro) */
@@ -463,12 +463,15 @@ export function useNeuralVoice(
     rec.interimResults = true;
     rec.maxAlternatives = 1;
     
-    rec.onstart = () => { consecutiveAbortsRef.current = 0; setListening(true); };
+    rec.onstart = () => { setListening(true); };
     
     rec.onresult = (e: any) => {
       const lastResult = e.results[e.results.length - 1];
       const transcript = lastResult?.[0]?.transcript?.trim() || "";
       const isFinal = lastResult?.isFinal;
+      
+      // Reset abort counter only on actual speech data (not just onstart)
+      consecutiveAbortsRef.current = 0;
       
       if (!transcript) return;
 
@@ -569,11 +572,19 @@ export function useNeuralVoice(
       if (e.error === "aborted") {
         consecutiveAbortsRef.current++;
         if (consecutiveAbortsRef.current >= MAX_CONSECUTIVE_ABORTS) {
-          console.warn("[Voice] Too many consecutive aborts — stopping restart loop");
+          console.warn(`[Voice] ${MAX_CONSECUTIVE_ABORTS} consecutive aborts — pausing STT for 5s`);
           setListening(false);
+          // Auto-retry after 5s cooldown instead of permanently stopping
+          setTimeout(() => {
+            if (!intentionalStopRef.current && onCmdRef.current && isMicOwner(singletonIdRef.current)) {
+              consecutiveAbortsRef.current = 0;
+              startListeningFresh(onCmdRef.current);
+            }
+          }, 5000);
           return;
         }
-        scheduleRecognitionRestart(120 * Math.pow(2, consecutiveAbortsRef.current));
+        // Capped exponential backoff: 250ms, 500ms, 1000ms
+        scheduleRecognitionRestart(250 * Math.pow(2, consecutiveAbortsRef.current - 1));
         return;
       }
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
