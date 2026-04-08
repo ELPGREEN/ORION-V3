@@ -1718,7 +1718,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     : isComplexQuery ? 8192 : 4096;
   (messages as any).__maxTokens = requestedMaxTokens || defaultMax;
 
-  const geminiKeys = ["GEMINI_API_KEY"];
+  const geminiKeys = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7", "GEMINI_API_KEY_GCP"];
   const hasImage = messages.some((m: any) => Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url"));
 
   // ═══ STREAMING MODE ═══
