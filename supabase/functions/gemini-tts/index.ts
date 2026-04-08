@@ -10,12 +10,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MODEL = "gemini-2.5-flash-preview-tts";
+const MODEL = "gemini-2.5-flash-tts";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 const DEFAULT_VOICE = "Algieba";
 const DEFAULT_LANG = "pt-BR";
-const DEFAULT_PROMPT = "Fale de forma natural, clara e fluida em português brasileiro. Use um tom profissional mas amigável.";
+const DEFAULT_PROMPT = "Fale de forma natural, clara e fluida em português brasileiro. Use um tom profissional mas amigável, com ritmo conversacional.";
 
 const failedKeyCache: Record<string, number> = {};
 const KEY_COOLDOWN_MS = 5 * 60 * 1000;
