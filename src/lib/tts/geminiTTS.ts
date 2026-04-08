@@ -175,9 +175,9 @@ function playAudioBlob(blob: Blob, signal: AbortSignal): Promise<HTMLAudioElemen
 }
 
 /**
- * Synthesize speech via Gemini TTS with progressive sentence-by-sentence playback.
- * Fetches next sentence while current one plays (pipeline).
- * NO global timeout — each sentence has its own 10s fetch timeout.
+ * Synthesize speech via Gemini TTS with parallel fetch + sequential playback.
+ * ALL sentences are fetched in parallel upfront, then played in order.
+ * This eliminates the 3-6s gap between sentences caused by sequential HTTP calls.
  */
 export async function speakWithGeminiTTS(
   text: string,
@@ -196,40 +196,29 @@ export async function speakWithGeminiTTS(
 
   try {
     const sentences = splitIntoSentences(text);
+
+    // ── Fetch ALL sentences in parallel ──
+    const blobPromises = sentences.map((s) =>
+      fetchGeminiAudio(s, voice, localController.signal, stylePrompt, lang)
+    );
+    const blobs = await Promise.all(blobPromises);
+
+    if (localController.signal.aborted) {
+      signal?.removeEventListener("abort", onExternalAbort);
+      return fail;
+    }
+
+    // ── Play sequentially (no network wait between sentences) ──
     let anyPlayed = false;
     let lastAudio: HTMLAudioElement | null = null;
-    let consecutiveFailures = 0;
-    let nextBlobPromise: Promise<Blob | null> | null = null;
 
-    for (let i = 0; i < sentences.length; i++) {
+    for (let i = 0; i < blobs.length; i++) {
       if (localController.signal.aborted || isGeminiTTSCoolingDown()) break;
 
-      let currentBlob: Blob | null;
-      if (nextBlobPromise) {
-        currentBlob = await nextBlobPromise;
-        nextBlobPromise = null;
-      } else {
-        currentBlob = await fetchGeminiAudio(sentences[i], voice, localController.signal, stylePrompt, lang);
-      }
+      const blob = blobs[i];
+      if (!blob) continue;
 
-      if (localController.signal.aborted) break;
-
-      if (!currentBlob) {
-        consecutiveFailures++;
-        if (isGeminiTTSCoolingDown() || consecutiveFailures >= 3) {
-          console.warn(`[Gemini TTS] ${consecutiveFailures} consecutive failures — aborting pipeline`);
-          break;
-        }
-        continue;
-      }
-
-      consecutiveFailures = 0;
-
-      if (i + 1 < sentences.length && !localController.signal.aborted && !isGeminiTTSCoolingDown()) {
-        nextBlobPromise = fetchGeminiAudio(sentences[i + 1], voice, localController.signal, stylePrompt, lang);
-      }
-
-      const audio = await playAudioBlob(currentBlob, localController.signal);
+      const audio = await playAudioBlob(blob, localController.signal);
       if (audio) {
         anyPlayed = true;
         lastAudio = audio;
