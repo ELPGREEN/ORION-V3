@@ -209,7 +209,7 @@ export function useWakeWord(
       };
 
       wakeRecRef.current = rec;
-      registerMicRec(rec);
+      registerMicRec(rec, "wake");
       rec.start();
       setWakeWordActive(true);
       vsLog("👂 Wake word listener ativo — diga 'Orion' (estável no mobile)");

@@ -605,7 +605,7 @@ export function useNeuralVoice(
     const rec = createRecognition(onCmd);
     if (!rec) { setListening(false); return; }
     recRef.current = rec;
-    registerMicRec(rec);
+    registerMicRec(rec, "command");
     try {
       rec.start();
       setListening(true);
