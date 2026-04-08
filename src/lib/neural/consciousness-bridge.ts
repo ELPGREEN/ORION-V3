@@ -185,6 +185,20 @@ export interface ConsciousnessCycleSnapshot {
   quantumActiveSkills: number;
   /** v24: Reflective CoT chain */
   quantumReflectionChain: string[];
+  /** v27: System 1/2 reasoning mode */
+  reasoningMode: string;
+  reasoningSystem1: number;
+  reasoningSystem2: number;
+  reasoningShouldEscalate: boolean;
+  /** v27: Hallucination snapshot risk */
+  hallucinationSnapshotRisk: string;
+  hallucinationContradiction: boolean;
+  hallucinationGrounding: number;
+  /** v27: Alignment audit */
+  alignmentScore: number;
+  alignmentFlags: string[];
+  alignmentTransparency: number;
+  alignmentBiasSignal: number;
 }
 
 export interface ReasoningContext {

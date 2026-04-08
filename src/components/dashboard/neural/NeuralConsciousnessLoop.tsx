@@ -118,6 +118,18 @@ interface ConsciousnessState {
   riskLevel: "safe" | "caution" | "warning" | "critical";
   activeSkillsList: Array<{ name: string; category: string; contribution: number; active: boolean }>;
   reflectionChain: string[];
+  // v27: LLM metacognition
+  reasoningMode: string;
+  reasoningSystem1: number;
+  reasoningSystem2: number;
+  reasoningShouldEscalate: boolean;
+  hallucinationSnapshotRisk: string;
+  hallucinationContradiction: boolean;
+  hallucinationGrounding: number;
+  alignmentScore: number;
+  alignmentFlags: string[];
+  alignmentTransparency: number;
+  alignmentBiasSignal: number;
   // v25: Bridge metrics
   bridgeSnapshot: {
     gammaHealth: number;
