@@ -736,6 +736,35 @@ export function NeuralConsciousnessLoop() {
       alignmentFlags: meta?.alignmentAudit?.flags ?? prev.alignmentFlags,
       alignmentTransparency: meta?.alignmentAudit?.transparencyScore ?? prev.alignmentTransparency,
       alignmentBiasSignal: meta?.alignmentAudit?.biasSignal ?? prev.alignmentBiasSignal,
+      // v28: Transition gate
+      shannonEntropy: meta?.reasoningMode?.shannonEntropy ?? prev.shannonEntropy,
+      klDivergence: meta?.reasoningMode?.klDivergence ?? prev.klDivergence,
+      effectiveTemperature: meta?.reasoningMode?.effectiveTemperature ?? prev.effectiveTemperature,
+      likelihoodRatio: meta?.reasoningMode?.likelihoodRatio ?? prev.likelihoodRatio,
+      // v28: Prospective
+      competenceEstimate: meta?.prospective?.competenceEstimate ?? prev.competenceEstimate,
+      judgmentOfLearning: meta?.prospective?.judgmentOfLearning ?? prev.judgmentOfLearning,
+      needsExternalSearch: meta?.prospective?.needsExternalSearch ?? prev.needsExternalSearch,
+      // v28: Online
+      feelingOfKnowing: meta?.online?.feelingOfKnowing ?? prev.feelingOfKnowing,
+      conflictSignal: meta?.online?.conflictSignal ?? prev.conflictSignal,
+      stepConfidence: meta?.online?.stepConfidence ?? prev.stepConfidence,
+      driftScore: meta?.online?.driftScore ?? prev.driftScore,
+      consistencyScore: meta?.online?.consistencyScore ?? prev.consistencyScore,
+      // v28: Regulation
+      effortAllocation: meta?.regulation?.effortAllocation ?? prev.effortAllocation,
+      strategySwitchNeeded: meta?.regulation?.strategySwitchNeeded ?? prev.strategySwitchNeeded,
+      externalSearchNeeded: meta?.regulation?.externalSearchNeeded ?? prev.externalSearchNeeded,
+      // v28: Retrospective
+      selfCorrectionTriggered: meta?.retrospective?.selfCorrectionTriggered ?? prev.selfCorrectionTriggered,
+      estimatedSuccess: meta?.retrospective?.estimatedSuccess ?? prev.estimatedSuccess,
+      errorsLogged: meta?.retrospective?.errorsLogged ?? prev.errorsLogged,
+      // v28: Infrastructure
+      observerVerdict: meta?.infrastructure?.observerVerdict ?? prev.observerVerdict,
+      observerCritique: meta?.infrastructure?.observerCritique ?? prev.observerCritique,
+      userExpertiseEstimate: meta?.infrastructure?.userExpertiseEstimate ?? prev.userExpertiseEstimate,
+      workingMemoryLoad: meta?.infrastructure?.workingMemoryLoad ?? prev.workingMemoryLoad,
+      semanticActivation: meta?.infrastructure?.semanticActivation ?? prev.semanticActivation,
       // v25: Bridge snapshot
       bridgeSnapshot: (() => {
         const snap = getLastConsciousnessSnapshot();
