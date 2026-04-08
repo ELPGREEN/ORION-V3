@@ -273,38 +273,41 @@ function getAllGeminiKeys(): string[] {
 
 async function requestAIStudio(
   keys: string[], variants: RequestVariant[],
-): Promise<{ response: Response | null; lastError: string; rateLimited: boolean }> {
+): Promise<{ response: Response | null; lastError: string; rateLimited: boolean; usedModel: string }> {
   let lastError = "";
   let hadRateLimit = false;
 
-  for (const apiKey of keys) {
-    const url = `${AI_STUDIO_BASE}/${MODEL}:generateContent?key=${apiKey}`;
-    let skipKey = false;
+  for (const model of MODELS) {
+    for (const apiKey of keys) {
+      const url = `${AI_STUDIO_BASE}/${model}:generateContent?key=${apiKey}`;
+      let skipKey = false;
 
-    for (const variant of variants) {
-      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-        const resp = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(variant.body),
-        });
-        if (resp.ok) {
-          console.log(`[AI Studio] ✅ ${variant.label} attempt ${attempt}`);
-          return { response: resp, lastError, rateLimited: false };
+      for (const variant of variants) {
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(variant.body),
+          });
+          if (resp.ok) {
+            console.log(`[AI Studio] ✅ ${model} ${variant.label} attempt ${attempt}`);
+            return { response: resp, lastError, rateLimited: false, usedModel: model };
+          }
+          const errText = await resp.text();
+          lastError = errText.slice(0, 300);
+          console.warn(`[AI Studio] ${model} ${variant.label} attempt ${attempt} (${resp.status})`);
+
+          if (resp.status === 429) { hadRateLimit = true; markKeyCooldown(apiKey, KEY_RATE_LIMIT_COOLDOWN_MS); skipKey = true; break; }
+          if (resp.status === 403) { markKeyCooldown(apiKey, KEY_AUTH_COOLDOWN_MS); skipKey = true; break; }
+          if (resp.status === 404) { break; } // model not available, try next
+          if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) { await sleep(RETRY_DELAY_MS * attempt); continue; }
+          break;
         }
-        const errText = await resp.text();
-        lastError = errText.slice(0, 300);
-        console.warn(`[AI Studio] ${variant.label} attempt ${attempt} (${resp.status})`);
-
-        if (resp.status === 429) { hadRateLimit = true; markKeyCooldown(apiKey, KEY_RATE_LIMIT_COOLDOWN_MS); skipKey = true; break; }
-        if (resp.status === 403) { markKeyCooldown(apiKey, KEY_AUTH_COOLDOWN_MS); skipKey = true; break; }
-        if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) { await sleep(RETRY_DELAY_MS * attempt); continue; }
-        break;
+        if (skipKey) break;
       }
-      if (skipKey) break;
     }
   }
-  return { response: null, lastError, rateLimited: hadRateLimit };
+  return { response: null, lastError, rateLimited: hadRateLimit, usedModel: "" };
 }
 
 // ─── Audio response parser ───────────────────────────────
