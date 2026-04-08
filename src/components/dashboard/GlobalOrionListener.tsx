@@ -603,6 +603,18 @@ export function GlobalOrionListener() {
     localStorage.setItem(PERMISSIONS_DISMISSED_KEY, "true");
   }, []);
 
+  // ═══ Show permission prompt proactively on first visit ═══
+  useEffect(() => {
+    if (!permissionsGranted && !showPermissionPrompt) {
+      const dismissed = localStorage.getItem(PERMISSIONS_DISMISSED_KEY) === "true";
+      if (!dismissed) {
+        // Show after a short delay so the dashboard loads first
+        const timer = setTimeout(() => setShowPermissionPrompt(true), 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [permissionsGranted, showPermissionPrompt]);
+
   useEffect(() => {
     if (isOnNeuralPage || orionOpen || !permissionsGranted) {
       stopWakeWordListener();
