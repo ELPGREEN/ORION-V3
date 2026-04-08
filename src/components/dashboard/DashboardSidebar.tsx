@@ -1,41 +1,4 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  FileText,
-  MessageSquare,
-  FolderOpen,
-  TrendingUp,
-  Settings,
-  LogOut,
-  User,
-  Sparkles,
-  Search,
-  Globe,
-  PenTool,
-  BookUser,
-  ListTodo,
-  CreditCard,
-  Calendar,
-  Users,
-  MessagesSquare,
-  Brain,
-  BookOpen,
-  Star,
-  BarChart3,
-  Scale,
-  Webhook,
-  FlaskConical,
-  UserCog,
-  Bell,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Crown,
-  ScrollText,
-  Chrome,
-  HelpCircle,
-  Bot,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +16,19 @@ import {
 import { Input } from "@/components/ui/input";
 import logoElp from "@/assets/logo-elp.webp";
 
+import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
+import {
+  getOrionIcon,
+  IconChevronDown,
+  IconChevronLeft,
+  IconChevronRight,
+  IconPlus,
+  IconUser,
+  IconSettings,
+  IconLogout,
+  IconBrain,
+} from "./icons/OrionIcons";
+
 interface DashboardSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -60,7 +36,7 @@ interface DashboardSidebarProps {
 
 interface MenuSection {
   label: string;
-  items: { id: string; label: string; icon: any; path: string }[];
+  items: { id: string; label: string; path: string }[];
   restricted?: boolean;
   defaultOpen?: boolean;
 }
@@ -78,61 +54,61 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
       label: "Principal",
       defaultOpen: true,
       items: [
-        { id: "home", label: t.dashboard.home, icon: TrendingUp, path: "/dashboard" },
-        { id: "gerar", label: t.dashboard.generateDocument, icon: Sparkles, path: "/dashboard/gerar-documento" },
-        { id: "documentos", label: t.dashboard.myDocuments, icon: FolderOpen, path: "/dashboard/documentos" },
-        { id: "orion-ia", label: "Orion IA", icon: Brain, path: "/consulta" },
+        { id: "home", label: t.dashboard.home, path: "/dashboard" },
+        { id: "gerar", label: t.dashboard.generateDocument, path: "/dashboard/gerar-documento" },
+        { id: "documentos", label: t.dashboard.myDocuments, path: "/dashboard/documentos" },
+        { id: "orion-ia", label: "Orion IA", path: "/consulta" },
       ],
     },
     {
       label: "Gestão Jurídica",
       defaultOpen: true,
       items: [
-        { id: "crm", label: "CRM & Clientes", icon: Users, path: "/dashboard/crm" },
-        { id: "processos", label: t.dashboard.cases, icon: FileText, path: "/dashboard/processos" },
-        { id: "tarefas", label: "Tarefas & Prazos", icon: ListTodo, path: "/dashboard/tarefas" },
-        { id: "assinatura", label: t.dashboard.digitalSignature, icon: PenTool, path: "/dashboard/assinatura-digital" },
-        { id: "docs-internacionais", label: "Docs Internacionais", icon: Globe, path: "/dashboard/documentos-internacionais" },
+        { id: "crm", label: "CRM & Clientes", path: "/dashboard/crm" },
+        { id: "processos", label: t.dashboard.cases, path: "/dashboard/processos" },
+        { id: "tarefas", label: "Tarefas & Prazos", path: "/dashboard/tarefas" },
+        { id: "assinatura", label: t.dashboard.digitalSignature, path: "/dashboard/assinatura-digital" },
+        { id: "docs-internacionais", label: "Docs Internacionais", path: "/dashboard/documentos-internacionais" },
       ],
     },
     {
       label: "Comunicação",
       defaultOpen: true,
       items: [
-        { id: "chat-ao-vivo", label: t.dashboard.liveChat, icon: MessagesSquare, path: "/dashboard/chat-ao-vivo" },
-        { id: "consultas", label: t.dashboard.consultations, icon: Calendar, path: "/dashboard/consultas" },
-        { id: "notificacoes", label: "Notificações", icon: Bell, path: "/dashboard/notificacoes" },
-        { id: "pagamentos", label: t.dashboard.payments, icon: CreditCard, path: "/dashboard/pagamentos" },
+        { id: "chat-ao-vivo", label: t.dashboard.liveChat, path: "/dashboard/chat-ao-vivo" },
+        { id: "consultas", label: t.dashboard.consultations, path: "/dashboard/consultas" },
+        { id: "notificacoes", label: "Notificações", path: "/dashboard/notificacoes" },
+        { id: "pagamentos", label: t.dashboard.payments, path: "/dashboard/pagamentos" },
       ],
     },
     {
       label: "Ferramentas IA",
       defaultOpen: true,
       items: [
-        { id: "pesquisa", label: "Pesquisa Avançada", icon: Search, path: "/dashboard/pesquisa-unificada" },
-        { id: "reformulacao", label: "Reformulação IA", icon: ScrollText, path: "/dashboard/reformulacao" },
-        { id: "laboratorio-ia", label: "Laboratório IA", icon: FlaskConical, path: "/dashboard/laboratorio-ia" },
-        { id: "marketplace", label: "Marketplace", icon: Star, path: "/dashboard/marketplace" },
-        { id: "instrucoes", label: "Central de Ajuda", icon: HelpCircle, path: "/dashboard/instrucoes" },
+        { id: "pesquisa", label: "Pesquisa Avançada", path: "/dashboard/pesquisa-unificada" },
+        { id: "reformulacao", label: "Reformulação IA", path: "/dashboard/reformulacao" },
+        { id: "laboratorio-ia", label: "Laboratório IA", path: "/dashboard/laboratorio-ia" },
+        { id: "marketplace", label: "Marketplace", path: "/dashboard/marketplace" },
+        { id: "instrucoes", label: "Central de Ajuda", path: "/dashboard/instrucoes" },
       ],
     },
     {
       label: "Administração",
       items: [
-        { id: "config", label: "Meu Escritório", icon: Settings, path: "/dashboard/configuracoes" },
+        { id: "config", label: "Meu Escritório", path: "/dashboard/configuracoes" },
       ],
     },
     {
       label: "Proprietário",
       restricted: true,
       items: [
-        { id: "rede-neural", label: "Rede Neural", icon: Brain, path: "/dashboard/rede-neural" },
-        { id: "ferramentas-google", label: "Ferramentas Google", icon: Globe, path: "/dashboard/ferramentas-google" },
-        { id: "controle-robotico", label: "Controle Robótico", icon: Bot, path: "/dashboard/controle-robotico" },
-        { id: "usuarios", label: "Usuários", icon: UserCog, path: "/dashboard/usuarios" },
-        { id: "publicacoes-admin", label: "Publicações", icon: BookOpen, path: "/dashboard/publicacoes-admin" },
-        { id: "recursos-eu", label: "Recursos EU", icon: Globe, path: "/dashboard/recursos-eu" },
-        { id: "extension", label: "Extensão Chrome", icon: Chrome, path: "/dashboard/extension" },
+        { id: "rede-neural", label: "Rede Neural", path: "/dashboard/rede-neural" },
+        { id: "ferramentas-google", label: "Ferramentas Google", path: "/dashboard/ferramentas-google" },
+        { id: "controle-robotico", label: "Controle Robótico", path: "/dashboard/controle-robotico" },
+        { id: "usuarios", label: "Usuários", path: "/dashboard/usuarios" },
+        { id: "publicacoes-admin", label: "Publicações", path: "/dashboard/publicacoes-admin" },
+        { id: "recursos-eu", label: "Recursos EU", path: "/dashboard/recursos-eu" },
+        { id: "extension", label: "Extensão Chrome", path: "/dashboard/extension" },
       ],
     },
   ];
@@ -150,22 +126,22 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
     return location.pathname.startsWith(path);
   };
 
-  const activeSectionIdx = sections.findIndex((s) =>
-    s.items.some((item) => isActive(item.path))
+  const activeSectionIdx = sections.findIndex((sec) =>
+    sec.items.some((item) => isActive(item.path))
   );
 
   const { unlocked: adminUnlocked, validate: validateAdminCode, lock: lockAdmin } = useAdminAccess();
 
-  const allRestrictedItems = sections.filter(s => s.restricted).flatMap(s => s.items);
+  const allRestrictedItems = sections.filter(sec => sec.restricted).flatMap(sec => sec.items);
   const isOnRestrictedRoute = allRestrictedItems.some((item) => isActive(item.path));
 
   const [openSections, setOpenSections] = useState<Record<number, boolean>>(() => {
     const initial: Record<number, boolean> = {};
-    sections.forEach((s, i) => {
-      initial[i] = s.defaultOpen || i === activeSectionIdx;
+    sections.forEach((sec, i) => {
+      initial[i] = sec.defaultOpen || i === activeSectionIdx;
     });
     if (isOnRestrictedRoute || adminUnlocked) {
-      sections.forEach((s, j) => { if (s.restricted) initial[j] = true; });
+      sections.forEach((sec, j) => { if (sec.restricted) initial[j] = true; });
     }
     return initial;
   });
@@ -199,33 +175,17 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
   };
 
   return (
-    <aside
-      className={`bg-secondary/20 backdrop-blur-xl flex flex-col z-50 transition-all duration-300 h-full border-r border-cyan/10 shadow-[inset_0_0_60px_rgba(0,188,212,0.03)] relative overflow-hidden ${
-        collapsed ? "w-[72px]" : "w-72"
-      }`}
-    >
-      {/* HUD circuit accent lines */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Vertical circuit line */}
-        <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-cyan/8 to-transparent" />
-        {/* Diagonal accent */}
-        <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.03 }}>
-          <line x1="0" y1="70" x2="100%" y2="70" stroke="hsl(42 70% 50%)" strokeWidth="1" />
-          <line x1="15%" y1="100%" x2="15%" y2="85%" stroke="hsl(195 90% 50%)" strokeWidth="1" strokeDasharray="2 6" />
-        </svg>
-        {/* Bottom corner bracket */}
-        <div className="absolute bottom-4 left-4 w-4 h-4 border-b border-l border-cyan/10" />
-      </div>
+    <aside className={`${s.aside} ${collapsed ? "w-[72px]" : "w-72"}`}>
+      <JarvisHUDOverlay />
+
       {/* Logo + Toggle */}
-      <div className="px-4 py-5 border-b border-border/20 flex items-center justify-between">
+      <div className={s.logoSection}>
         <Link to="/" className="flex items-center gap-3 group">
-          <img src={logoElp} alt="ELP" className="h-10 w-10 flex-shrink-0 object-contain transition-transform duration-300 group-hover:scale-110" />
+          <img src={logoElp} alt="ELP" className="h-10 w-10 flex-shrink-0 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_0_10px_rgba(0,188,212,0.15)]" />
           {!collapsed && (
             <div className="overflow-hidden">
-              <h1 className="text-sm font-serif text-foreground tracking-[0.2em] font-bold">
-                ORION
-              </h1>
-              <p className="text-[8px] text-primary tracking-[0.15em] mt-0.5 font-medium">
+              <h1 className={s.logoTitle}>ORION</h1>
+              <p className={`${s.logoSubtitle} text-cyan-500/70`}>
                 IA EMPRESARIAL • BY ELP
               </p>
             </div>
@@ -235,22 +195,21 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
           variant="ghost"
           size="icon"
           onClick={onToggle}
-          className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-card/60 flex-shrink-0"
+          className="h-7 w-7 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 flex-shrink-0"
           title={collapsed ? "Expandir menu" : "Recolher menu"}
-          aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
         </Button>
       </div>
 
       {/* Quick Actions */}
       {!collapsed && (
-        <div className="px-3 py-3 border-b border-border/20">
+        <div className="px-3 py-3 border-b border-cyan-500/6">
           <Button
-            className="w-full btn-gold text-[10px] h-9 tracking-wider gap-2"
+            className={s.quickAction}
             onClick={() => navigate("/dashboard/gerar-documento?tipo=contrato-servicos")}
           >
-            <Plus className="h-3.5 w-3.5" />
+            <IconPlus size={14} />
             NOVO DOCUMENTO
           </Button>
         </div>
@@ -263,13 +222,11 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
           return (
             <div key={section.label} className="mb-1">
               {!collapsed && (
-                <button
-                  onClick={() => toggleSection(sIdx)}
-                  className="w-full flex items-center justify-between px-4 py-2 text-[9px] uppercase tracking-[0.18em] text-muted-foreground/60 hover:text-muted-foreground transition-colors font-medium"
-                >
+                <button onClick={() => toggleSection(sIdx)} className={s.sectionHeader}>
                   <span>{section.label}</span>
-                  <ChevronDown
-                    className={`h-3 w-3 transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`}
+                  <IconChevronDown
+                    size={12}
+                    className={`transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`}
                   />
                 </button>
               )}
@@ -281,16 +238,17 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                     setAdminCodeError(false);
                     setShowAdminDialog(true);
                   }}
-                  className="w-full flex items-center justify-center py-2 text-muted-foreground/40 hover:text-primary transition-colors"
+                  className="w-full flex items-center justify-center py-2 text-slate-600 hover:text-cyan-400 transition-colors"
                   title="Área restrita — clique para desbloquear"
                 >
-                  <Brain className="h-4 w-4" />
+                  <IconBrain size={16} />
                 </button>
               )}
               {((collapsed || isOpen) && !(section.restricted && !adminUnlocked)) && (
                 <div className={`${collapsed ? "py-1" : "pb-1"} space-y-0.5`}>
                   {section.items.map((item) => {
                     const active = isActive(item.path);
+                    const Icon = getOrionIcon(item.id);
                     return (
                       <Link
                         key={item.id}
@@ -302,17 +260,13 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                             window.setTimeout(() => navigate(item.path, { replace: true }), 0);
                           }
                         }}
-                        className={`flex items-center gap-3 mx-2 px-3 py-2 text-[11px] tracking-wide transition-all duration-200 relative group ${
-                          active
-                            ? "bg-cyan/10 text-cyan font-medium border-l-2 border-cyan shadow-[0_0_15px_hsl(195_90%_50%/0.1)]"
-                            : "text-muted-foreground hover:text-foreground hover:bg-card/60 border-l-2 border-transparent"
-                        } ${collapsed ? "justify-center mx-1 px-0" : ""}`}
+                        className={`${s.menuItem(active)} ${collapsed ? "justify-center mx-1 px-0" : ""}`}
                         title={collapsed ? item.label : undefined}
                       >
-                        <item.icon className={`h-4 w-4 flex-shrink-0 transition-colors ${active ? "text-cyan" : "text-muted-foreground group-hover:text-foreground"}`} />
+                        <Icon className={s.menuIcon(active)} />
                         {!collapsed && <span>{item.label}</span>}
                         {item.id === "chat-ao-vivo" && unreadCount > 0 && (
-                          <span className="absolute right-2 h-4 min-w-4 px-1 bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                          <span className={s.badge}>
                             {unreadCount > 9 ? "9+" : unreadCount}
                           </span>
                         )}
@@ -328,43 +282,43 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
 
       {/* Disclaimer */}
       {!collapsed && (
-        <div className="px-4 py-2 border-t border-border/20">
-          <p className="text-[8px] text-muted-foreground/40 leading-relaxed">
+        <div className={s.disclaimer}>
+          <p className={s.disclaimerText}>
             ORION IA — Sistema inteligente by ELP Global. Revise sempre os resultados. LGPD aplicável.
           </p>
         </div>
       )}
 
       {/* User Info */}
-      <div className="p-3 border-t border-border/20">
+      <div className={s.userSection}>
         {!collapsed ? (
           <>
             <div className="flex items-center gap-3 mb-3">
-              <div className="h-9 w-9 bg-primary/8 border border-primary/15 flex items-center justify-center flex-shrink-0">
-                <User className="h-4 w-4 text-primary" />
+              <div className={s.userAvatar}>
+                <IconUser size={16} className="text-cyan-400/70" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] text-foreground truncate font-medium">{userName}</p>
-                <p className="text-[9px] text-muted-foreground/60 truncate">{user?.email}</p>
+                <p className={s.userName}>{userName}</p>
+                <p className={s.userEmail}>{user?.email}</p>
               </div>
             </div>
             <div className="flex gap-1.5">
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex-1 text-[9px] text-muted-foreground hover:text-foreground h-7 hover:bg-card/60"
+                className={s.settingsBtn}
                 onClick={() => navigate("/dashboard/configuracoes")}
               >
-                <Settings className="h-3 w-3 mr-1" />
+                <IconSettings size={12} className="mr-1" />
                 {t.dashboard.settings}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex-1 text-[9px] text-muted-foreground hover:text-primary h-7 hover:bg-card/60"
+                className={s.logoutBtn}
                 onClick={handleSignOut}
               >
-                <LogOut className="h-3 w-3 mr-1" />
+                <IconLogout size={12} className="mr-1" />
                 {t.common.logout}
               </Button>
             </div>
@@ -374,11 +328,11 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-primary"
+              className="h-8 w-8 text-slate-500 hover:text-red-400"
               onClick={handleSignOut}
               title={t.common.logout}
             >
-              <LogOut className="h-4 w-4" />
+              <IconLogout size={16} />
             </Button>
           </div>
         )}
@@ -386,11 +340,11 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
 
       {/* Admin Access Code Dialog */}
       <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm bg-[hsl(230_30%_8%)] border-cyan-500/20">
           <DialogHeader>
-            <DialogTitle className="text-sm">🔒 Área Restrita — Desenvolvedor</DialogTitle>
-            <DialogDescription className="text-xs">
-              Esta área é exclusiva para o desenvolvedor proprietário da Rede Neural. Se você é o desenvolvedor, digite a senha de acesso abaixo.
+            <DialogTitle className="text-sm text-cyan-200">🔒 Área Restrita — Desenvolvedor</DialogTitle>
+            <DialogDescription className="text-xs text-slate-400">
+              Esta área é exclusiva para o desenvolvedor proprietário da Rede Neural.
             </DialogDescription>
           </DialogHeader>
           <form
@@ -409,12 +363,12 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                 setAdminCodeError(false);
               }}
               autoFocus
-              className={adminCodeError ? "border-destructive" : ""}
+              className={`bg-slate-900/50 border-cyan-500/20 text-cyan-100 ${adminCodeError ? "border-red-500" : ""}`}
             />
             {adminCodeError && (
-              <p className="text-[10px] text-destructive">Código incorreto. Tente novamente.</p>
+              <p className="text-[10px] text-red-400">Código incorreto. Tente novamente.</p>
             )}
-            <Button type="submit" className="w-full btn-gold text-xs h-9">
+            <Button type="submit" className="w-full bg-cyan-600/20 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-600/30 text-xs h-9">
               Acessar
             </Button>
           </form>
