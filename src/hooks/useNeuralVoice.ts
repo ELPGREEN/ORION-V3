@@ -527,6 +527,7 @@ export function useNeuralVoice(
     };
     
     rec.onend = () => {
+      recRef.current = null;
       if (intentionalStopRef.current) {
         setListening(false);
         return;
@@ -539,7 +540,13 @@ export function useNeuralVoice(
     };
     
     rec.onerror = (e: any) => {
-      if (intentionalStopRef.current || e.error === "aborted") return;
+      console.warn("[Voice] SpeechRecognition error:", e.error);
+      recRef.current = null;
+      if (intentionalStopRef.current) return;
+      if (e.error === "aborted") {
+        scheduleRecognitionRestart(120);
+        return;
+      }
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
         setListening(false);
         toast.error("Permissão do microfone bloqueada");
@@ -556,18 +563,32 @@ export function useNeuralVoice(
   }, [bargeIn, scheduleRecognitionRestart]);
 
   const startListeningFresh = useCallback((onCmd: (c: string) => void) => {
+    intentionalStopRef.current = false;
+    try { recRef.current?.abort?.(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
     const rec = createRecognition(onCmd);
     if (!rec) { setListening(false); return; }
     recRef.current = rec;
-    try { rec.start(); setListening(true); } catch { setListening(false); }
+    try {
+      rec.start();
+      setListening(true);
+    } catch {
+      setListening(false);
+      recRef.current = null;
+      setTimeout(() => {
+        if (!intentionalStopRef.current && onCmdRef.current === onCmd) {
+          startListeningFresh(onCmd);
+        }
+      }, 250);
+    }
   }, [createRecognition]);
 
   const startListening = useCallback((onCmd: (c: string) => void) => {
     intentionalStopRef.current = false;
     clearRestartTimer();
     onCmdRef.current = onCmd;
+    setListening(false);
     startListeningFresh(onCmd);
   }, [clearRestartTimer, startListeningFresh]);
 

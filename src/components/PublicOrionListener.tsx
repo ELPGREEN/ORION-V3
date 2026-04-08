@@ -35,10 +35,11 @@ export function PublicOrionListener() {
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startInFlightRef = useRef(false);
 
-  // Don't show on auth pages or dashboard
+  // Don't show on auth pages, dashboard, or dedicated Orion screens
   const isDashboard = location.pathname.startsWith("/dashboard");
   const isAuthPage = ["/auth", "/cadastro", "/esqueci-senha"].includes(location.pathname);
-  const shouldHide = isDashboard || isAuthPage || (!planLoading && !hasOrionAccess);
+  const isDedicatedOrionPage = location.pathname === "/consulta";
+  const shouldHide = isDashboard || isAuthPage || isDedicatedOrionPage || (!planLoading && !hasOrionAccess);
 
   const showFeedback = useCallback((msg: string, duration = 3000) => {
     setFeedback(msg);
@@ -114,7 +115,7 @@ export function PublicOrionListener() {
   }, []);
 
   const startListener = useCallback(() => {
-    if (recRef.current || startInFlightRef.current || !micGranted) return;
+    if (recRef.current || startInFlightRef.current || !micGranted || shouldHide) return;
     if (typeof document !== "undefined" && document.hidden) return;
 
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
@@ -187,7 +188,7 @@ export function PublicOrionListener() {
     } catch {
       startInFlightRef.current = false;
     }
-  }, [micGranted, handleCommand]);
+  }, [micGranted, shouldHide, handleCommand]);
 
   const handleOrbClick = useCallback(async () => {
     if (!user) {
@@ -219,20 +220,23 @@ export function PublicOrionListener() {
 
   // Start on mount if mic already granted
   useEffect(() => {
-    if (!micGranted) return;
+    if (!micGranted || shouldHide) {
+      stopListener();
+      return;
+    }
     const timer = setTimeout(() => startListener(), 500);
     return () => { clearTimeout(timer); stopListener(); };
-  }, [micGranted, startListener, stopListener]);
+  }, [micGranted, shouldHide, startListener, stopListener]);
 
   // Visibility change
   useEffect(() => {
     const handler = () => {
       if (document.hidden) { stopListener(); }
-      else if (micGranted) { setTimeout(() => startListener(), 500); }
+      else if (micGranted && !shouldHide) { setTimeout(() => startListener(), 500); }
     };
     document.addEventListener("visibilitychange", handler);
     return () => document.removeEventListener("visibilitychange", handler);
-  }, [micGranted, startListener, stopListener]);
+  }, [micGranted, shouldHide, startListener, stopListener]);
 
   if (shouldHide) return null;
 
