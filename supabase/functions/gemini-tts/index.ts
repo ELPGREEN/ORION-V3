@@ -1,5 +1,10 @@
 /**
- * Gemini TTS — text-to-speech using Gemini 2.5 Flash Preview TTS
+ * Gemini TTS — text-to-speech using Gemini 2.5 Flash TTS
+ * 
+ * NOTE: gemini-live-2.5-flash-native-audio (GA, free) is for Live API (WebSocket)
+ * only — it does NOT support generateContent. For HTTP TTS we use the dedicated
+ * TTS model via generateContent with responseModalities=["AUDIO"].
+ * 
  * PRIMARY: Vertex AI endpoint (uses GCP credits via service account JWT)
  * FALLBACK: AI Studio API keys (free tier)
  */
@@ -10,7 +15,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MODEL = "gemini-2.5-flash-preview-tts";
+const MODELS = [
+  "gemini-2.5-flash-preview-tts",
+];
 const VERTEX_LOCATION = "us-central1";
 const AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -211,43 +218,46 @@ function buildMultiSpeakerRequest(
 async function requestVertexAI(
   sa: { client_email: string; private_key: string; project_id: string },
   variants: RequestVariant[],
-): Promise<{ response: Response | null; lastError: string }> {
+): Promise<{ response: Response | null; lastError: string; usedModel: string }> {
   const token = await getVertexToken(sa);
-  if (!token) return { response: null, lastError: "Failed to get Vertex AI access token" };
+  if (!token) return { response: null, lastError: "Failed to get Vertex AI access token", usedModel: "" };
 
-  const url = `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${sa.project_id}/locations/${VERTEX_LOCATION}/publishers/google/models/${MODEL}:generateContent`;
   let lastError = "";
 
-  for (const variant of variants) {
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(variant.body),
-      });
+  for (const model of MODELS) {
+    const url = `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${sa.project_id}/locations/${VERTEX_LOCATION}/publishers/google/models/${model}:generateContent`;
 
-      if (resp.ok) {
-        console.log(`[Vertex TTS] ✅ ${variant.label} attempt ${attempt}`);
-        return { response: resp, lastError: "" };
+    for (const variant of variants) {
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(variant.body),
+        });
+
+        if (resp.ok) {
+          console.log(`[Vertex TTS] ✅ ${model} ${variant.label} attempt ${attempt}`);
+          return { response: resp, lastError: "", usedModel: model };
+        }
+
+        const errText = await resp.text();
+        lastError = errText.slice(0, 300);
+        console.warn(`[Vertex TTS] ${model} ${variant.label} attempt ${attempt} (${resp.status}): ${lastError.slice(0, 120)}`);
+
+        if (resp.status === 429 || resp.status === 403 || resp.status === 401) {
+          if (resp.status !== 429) cachedAccessToken = null;
+          break; // try next model
+        }
+
+        if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) {
+          await sleep(RETRY_DELAY_MS * attempt);
+          continue;
+        }
+        break;
       }
-
-      const errText = await resp.text();
-      lastError = errText.slice(0, 300);
-      console.warn(`[Vertex TTS] ${variant.label} attempt ${attempt} (${resp.status}): ${lastError.slice(0, 120)}`);
-
-      if (resp.status === 429 || resp.status === 403 || resp.status === 401) {
-        if (resp.status !== 429) cachedAccessToken = null;
-        return { response: null, lastError };
-      }
-
-      if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) {
-        await sleep(RETRY_DELAY_MS * attempt);
-        continue;
-      }
-      break;
     }
   }
-  return { response: null, lastError };
+  return { response: null, lastError, usedModel: "" };
 }
 
 // ─── AI Studio fallback (free tier) ──────────────────────
@@ -265,38 +275,41 @@ function getAllGeminiKeys(): string[] {
 
 async function requestAIStudio(
   keys: string[], variants: RequestVariant[],
-): Promise<{ response: Response | null; lastError: string; rateLimited: boolean }> {
+): Promise<{ response: Response | null; lastError: string; rateLimited: boolean; usedModel: string }> {
   let lastError = "";
   let hadRateLimit = false;
 
-  for (const apiKey of keys) {
-    const url = `${AI_STUDIO_BASE}/${MODEL}:generateContent?key=${apiKey}`;
-    let skipKey = false;
+  for (const model of MODELS) {
+    for (const apiKey of keys) {
+      const url = `${AI_STUDIO_BASE}/${model}:generateContent?key=${apiKey}`;
+      let skipKey = false;
 
-    for (const variant of variants) {
-      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-        const resp = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(variant.body),
-        });
-        if (resp.ok) {
-          console.log(`[AI Studio] ✅ ${variant.label} attempt ${attempt}`);
-          return { response: resp, lastError, rateLimited: false };
+      for (const variant of variants) {
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(variant.body),
+          });
+          if (resp.ok) {
+            console.log(`[AI Studio] ✅ ${model} ${variant.label} attempt ${attempt}`);
+            return { response: resp, lastError, rateLimited: false, usedModel: model };
+          }
+          const errText = await resp.text();
+          lastError = errText.slice(0, 300);
+          console.warn(`[AI Studio] ${model} ${variant.label} attempt ${attempt} (${resp.status})`);
+
+          if (resp.status === 429) { hadRateLimit = true; markKeyCooldown(apiKey, KEY_RATE_LIMIT_COOLDOWN_MS); skipKey = true; break; }
+          if (resp.status === 403) { markKeyCooldown(apiKey, KEY_AUTH_COOLDOWN_MS); skipKey = true; break; }
+          if (resp.status === 404) { break; } // model not available, try next
+          if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) { await sleep(RETRY_DELAY_MS * attempt); continue; }
+          break;
         }
-        const errText = await resp.text();
-        lastError = errText.slice(0, 300);
-        console.warn(`[AI Studio] ${variant.label} attempt ${attempt} (${resp.status})`);
-
-        if (resp.status === 429) { hadRateLimit = true; markKeyCooldown(apiKey, KEY_RATE_LIMIT_COOLDOWN_MS); skipKey = true; break; }
-        if (resp.status === 403) { markKeyCooldown(apiKey, KEY_AUTH_COOLDOWN_MS); skipKey = true; break; }
-        if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) { await sleep(RETRY_DELAY_MS * attempt); continue; }
-        break;
+        if (skipKey) break;
       }
-      if (skipKey) break;
     }
   }
-  return { response: null, lastError, rateLimited: hadRateLimit };
+  return { response: null, lastError, rateLimited: hadRateLimit, usedModel: "" };
 }
 
 // ─── Audio response parser ───────────────────────────────
@@ -373,7 +386,10 @@ Deno.serve(async (req) => {
       if (vertex.response) {
         const data = await vertex.response.json();
         const audioResp = parseAudioResponse(data);
-        if (audioResp) return audioResp;
+        if (audioResp) {
+          audioResp.headers.set("X-TTS-Model", vertex.usedModel);
+          return audioResp;
+        }
         console.error("[Vertex TTS] No audio:", JSON.stringify(data).slice(0, 400));
       } else {
         console.warn("[Vertex TTS] Failed:", vertex.lastError.slice(0, 150));
@@ -386,7 +402,7 @@ Deno.serve(async (req) => {
     const keys = getAllGeminiKeys();
     if (keys.length > 0) {
       console.log(`[TTS] Fallback AI Studio (${keys.length} keys)`);
-      const { response, lastError, rateLimited } = await requestAIStudio(keys, studioVariants);
+      const { response, lastError, rateLimited, usedModel } = await requestAIStudio(keys, studioVariants);
 
       if (rateLimited && !response) {
         return fallbackResponse("Rate limited", { rate_limited: true, retry_after_ms: CLIENT_RETRY_AFTER_MS });
@@ -394,7 +410,10 @@ Deno.serve(async (req) => {
       if (response) {
         const data = await response.json();
         const audioResp = parseAudioResponse(data);
-        if (audioResp) return audioResp;
+        if (audioResp) {
+          audioResp.headers.set("X-TTS-Model", usedModel);
+          return audioResp;
+        }
       }
       return fallbackResponse("TTS unavailable", { details: lastError, retry_after_ms: 10000 });
     }
