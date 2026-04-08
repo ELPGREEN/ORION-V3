@@ -18,7 +18,9 @@ const DEFAULT_LANG = "pt-BR";
 const DEFAULT_PROMPT = "Fale de forma natural, clara e fluida em português brasileiro. Use um tom profissional mas amigável, com ritmo conversacional.";
 
 const failedKeyCache: Record<string, number> = {};
-const KEY_COOLDOWN_MS = 5 * 60 * 1000;
+const KEY_AUTH_COOLDOWN_MS = 5 * 60 * 1000;
+const KEY_RATE_LIMIT_COOLDOWN_MS = 60 * 1000;
+const CLIENT_RETRY_AFTER_MS = 30 * 1000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1200;
 const TRANSIENT_STATUS_CODES = new Set([408, 500, 502, 503, 504]);
@@ -33,9 +35,33 @@ type RequestVariant = {
   body: Record<string, unknown>;
 };
 
+function markKeyCooldown(apiKey: string, cooldownMs: number): void {
+  failedKeyCache[apiKey] = Date.now() + cooldownMs;
+}
+
+function isKeyCoolingDown(apiKey: string, now = Date.now()): boolean {
+  const cooldownUntil = failedKeyCache[apiKey];
+  if (!cooldownUntil) return false;
+  if (cooldownUntil <= now) {
+    delete failedKeyCache[apiKey];
+    return false;
+  }
+  return true;
+}
+
+function jsonResponse(payload: Record<string, unknown>, status = 200): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function fallbackResponse(error: string, extra: Record<string, unknown> = {}): Response {
+  return jsonResponse({ error, fallback: true, ...extra }, 200);
+}
+
 function getAllGeminiKeys(): string[] {
   const now = Date.now();
-  // Rotate through all available GEMINI_API_KEY, GEMINI_API_KEY_2 ... GEMINI_API_KEY_7
   const keyNames = [
     "GEMINI_API_KEY",
     "GEMINI_API_KEY_2",
@@ -45,20 +71,15 @@ function getAllGeminiKeys(): string[] {
     "GEMINI_API_KEY_6",
     "GEMINI_API_KEY_7",
   ];
+
   const keys = keyNames
     .map((name) => Deno.env.get(name))
-    .filter((key): key is string => {
-      if (!key) return false;
-      const failedAt = failedKeyCache[key];
-      if (failedAt && now - failedAt < KEY_COOLDOWN_MS) return false;
-      return true;
-    });
+    .filter((key): key is string => Boolean(key) && !isKeyCoolingDown(key, now));
 
   if (keys.length === 0) {
-    throw new Error("No GEMINI_API_KEY configured (or all keys are cooling down)");
+    throw new Error("No GEMINI_API_KEY configured or all keys are temporarily unavailable");
   }
 
-  // Shuffle for load distribution
   for (let i = keys.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [keys[i], keys[j]] = [keys[j], keys[i]];
@@ -179,9 +200,11 @@ async function requestGeminiAudio(
   requestVariants: RequestVariant[],
 ): Promise<{ response: Response | null; lastError: string; rateLimited: boolean }> {
   let lastError = "";
+  let hadRateLimit = false;
 
   for (const apiKey of keys) {
     const url = `${API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
+    let skipRemainingVariantsForKey = false;
 
     for (const variant of requestVariants) {
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
@@ -203,11 +226,15 @@ async function requestGeminiAudio(
         );
 
         if (response.status === 429) {
-          return { response: null, lastError, rateLimited: true };
+          hadRateLimit = true;
+          markKeyCooldown(apiKey, KEY_RATE_LIMIT_COOLDOWN_MS);
+          skipRemainingVariantsForKey = true;
+          break;
         }
 
         if (response.status === 403) {
-          failedKeyCache[apiKey] = Date.now();
+          markKeyCooldown(apiKey, KEY_AUTH_COOLDOWN_MS);
+          skipRemainingVariantsForKey = true;
           break;
         }
 
@@ -219,13 +246,13 @@ async function requestGeminiAudio(
         break;
       }
 
-      if (failedKeyCache[apiKey]) {
+      if (skipRemainingVariantsForKey || isKeyCoolingDown(apiKey)) {
         break;
       }
     }
   }
 
-  return { response: null, lastError, rateLimited: false };
+  return { response: null, lastError, rateLimited: hadRateLimit };
 }
 
 Deno.serve(async (req) => {
@@ -242,10 +269,7 @@ Deno.serve(async (req) => {
     const multispeaker = Array.isArray(body?.multispeaker) ? body.multispeaker as MultiSpeakerVoice[] : undefined;
 
     if (!text.trim()) {
-      return new Response(
-        JSON.stringify({ error: "Text is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return jsonResponse({ error: "Text is required" }, 400);
     }
 
     const cleanText = text.trim().slice(0, 2500);
@@ -296,14 +320,17 @@ Deno.serve(async (req) => {
     const { response, lastError, rateLimited } = await requestGeminiAudio(keys, requestVariants);
 
     if (rateLimited) {
-      return new Response(
-        JSON.stringify({ error: "Rate limited, try again shortly", fallback: true }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return fallbackResponse("Rate limited, try again shortly", {
+        rate_limited: true,
+        retry_after_ms: CLIENT_RETRY_AFTER_MS,
+      });
     }
 
     if (!response) {
-      throw new Error(`All ${keys.length} keys failed. Last: ${lastError}`);
+      return fallbackResponse("Gemini TTS unavailable", {
+        details: lastError || undefined,
+        retry_after_ms: 10000,
+      });
     }
 
     const data = await response.json();
@@ -312,7 +339,7 @@ Deno.serve(async (req) => {
 
     if (!audioPart?.inlineData?.data) {
       console.error("[Gemini TTS] No audio in response:", JSON.stringify(data).slice(0, 600));
-      throw new Error("No audio data in Gemini response");
+      return fallbackResponse("No audio data in Gemini response", { retry_after_ms: 10000 });
     }
 
     const mimeType = audioPart.inlineData.mimeType || "audio/wav";
@@ -342,9 +369,8 @@ Deno.serve(async (req) => {
     });
   } catch (error: any) {
     console.error("[Gemini TTS] Error:", error?.message || error);
-    return new Response(
-      JSON.stringify({ error: error?.message || "Unknown error", fallback: true }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return fallbackResponse(error?.message || "Unknown error", {
+      retry_after_ms: CLIENT_RETRY_AFTER_MS,
+    });
   }
 });
