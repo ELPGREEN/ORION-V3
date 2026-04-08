@@ -129,6 +129,12 @@ export interface MetacognitionResult {
   adaptivePlanScore?: number;
   /** v24: Risk level */
   riskLevel?: "safe" | "caution" | "warning" | "critical";
+  /** v27: System 1/2 reasoning mode */
+  reasoningMode?: { mode: string; system1Activation: number; system2Activation: number; shouldEscalate: boolean; rationale: string };
+  /** v27: Hallucination snapshot */
+  hallucinationSnapshot?: { snapshotRisk: string; contradictionDetected: boolean; groundingCoherence: number; confidenceAtDecision: number; entropyAtDecision: number; groundingMemories: number; timestamp: number };
+  /** v27: Alignment audit */
+  alignmentAudit?: { alignmentScore: number; goalCongruence: number; valueConsistency: number; transparencyScore: number; biasSignal: number; flags: string[] };
 }
 
 // ─── Helper Functions ───
@@ -520,6 +526,10 @@ export function runMetacognition(
     reflectionChain: quantumMeta?.reflectionChain,
     adaptivePlanScore: quantumMeta?.adaptivePlanScore,
     riskLevel: quantumMeta?.riskLevel,
+    // v27: LLM Metacognition
+    reasoningMode: quantumMeta?.reasoningMode,
+    hallucinationSnapshot: quantumMeta?.hallucinationSnapshot,
+    alignmentAudit: quantumMeta?.alignmentAudit,
   };
 }
 
