@@ -396,8 +396,8 @@ export function useNeuralVoice(
     const cascadeAbort = new AbortController();
     abortControllerRef.current = cascadeAbort;
 
-    // Dynamic safety timer: ~4s base + ~80ms per char (accounts for multi-sentence Gemini TTS)
-    const safetyMs = Math.min(45000, Math.max(12000, 4000 + text.length * 80));
+    // Dynamic safety timer: ~10s base + ~100ms per char (Vertex TTS takes 5-8s + playback)
+    const safetyMs = Math.min(60000, Math.max(20000, 10000 + text.length * 100));
     const safetyTimer = setTimeout(() => {
       if (speakingRef.current) {
         console.warn(`[Voice] Safety timer fired after ${safetyMs}ms — aborting TTS`);
