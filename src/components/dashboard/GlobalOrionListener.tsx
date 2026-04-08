@@ -243,7 +243,8 @@ export function GlobalOrionListener() {
       };
 
       rec.onend = () => {
-        console.log("[GlobalOrion] onend", { wakeDetected: wakeDetectedRef.current, enabled: wakeWordEnabledRef.current });
+        const sessionDuration = Date.now() - sessionStartRef.time;
+        console.log("[GlobalOrion] onend", { wakeDetected: wakeDetectedRef.current, enabled: wakeWordEnabledRef.current, sessionMs: sessionDuration, gotResult: sessionStartRef.gotResult });
         wakeRecRef.current = null;
         startInFlightRef.current = false;
 
@@ -258,16 +259,28 @@ export function GlobalOrionListener() {
           return;
         }
 
-        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
+        // If session was very short (<2s) and got no results, it's an unstable abort — use longer delay
+        const isUnstableSession = sessionDuration < 2000 && !sessionStartRef.gotResult;
+        if (isUnstableSession) {
+          restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
+        }
         
-        // On mobile, stop restarting after max attempts to prevent loop
         if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
-          console.log("[GlobalOrion] Max restart attempts reached on mobile, stopping wake word listener");
+          console.log("[GlobalOrion] Max restart attempts reached, pausing for 15s then retry");
           setWakeWordActive(false);
+          // Don't give up permanently — retry after 15s cooldown
+          clearRestartTimer();
+          restartTimerRef.current = setTimeout(() => {
+            restartAttemptsRef.current = 0;
+            if (wakeWordEnabledRef.current && !wakeRecRef.current && !startInFlightRef.current && !orionOpen && !isOnNeuralPage && permissionsGranted && !(typeof document !== "undefined" && document.hidden)) {
+              startWakeWordListener();
+            }
+          }, 15000);
           return;
         }
         
-        const delay = getRestartDelay("end");
+        // Stable sessions (>3s) restart quickly; unstable ones use backoff
+        const delay = isUnstableSession ? getRestartDelay("end") : 300;
         console.log(`[GlobalOrion] Will restart in ${delay}ms (attempt ${restartAttemptsRef.current})`);
         setWakeWordActive(true);
         clearRestartTimer();
