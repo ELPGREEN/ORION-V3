@@ -100,6 +100,8 @@ export function useNeuralVoice(
   const lastProcessedTranscriptRef = useRef("");
   const lastProcessedAtRef = useRef(0);
   const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const consecutiveAbortsRef = useRef(0);
+  const MAX_CONSECUTIVE_ABORTS = 5;
   /** Active Audio element for barge-in cancellation (Google TTS / Kokoro) */
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
 
