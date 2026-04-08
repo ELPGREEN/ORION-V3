@@ -23,6 +23,7 @@ export default function AdvogadoSite() {
   const [contactForm, setContactForm] = useState({ nome: "", email: "", telefone: "", mensagem: "" });
   const [sending, setSending] = useState(false);
   const [contactSuccess, setContactSuccess] = useState(false);
+  const { verify: verifyRecaptcha } = useRecaptcha();
 
   // Fetch lawyer config
   const { data: config, isLoading: configLoading } = useQuery({
@@ -114,6 +115,19 @@ export default function AdvogadoSite() {
     }
     setSending(true);
     try {
+      // reCAPTCHA v3 verification
+      const token = await verifyRecaptcha("contact");
+      if (token) {
+        try {
+          const { data: captchaResult } = await supabase.functions.invoke("verify-recaptcha", { body: { token, action: "contact" } });
+          if (captchaResult && !captchaResult.success) {
+            toast.error("Verificação anti-bot falhou. Tente novamente.");
+            setSending(false);
+            return;
+          }
+        } catch { /* Allow through if service down */ }
+      }
+
       const { error } = await supabase.from("contacts").insert({
         name: contactForm.nome,
         email: contactForm.email,
