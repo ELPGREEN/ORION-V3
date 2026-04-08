@@ -145,6 +145,17 @@ export interface ConsciousnessCycleSnapshot {
     dominantSignal: string;
     isInPain: boolean;
     isEnergyLow: boolean;
+    /** v26: Robotic interoception */
+    robotic: {
+      proprioceptionError: number;
+      hardwareIntegrity: number;
+      biofeedbackQuality: number;
+      iaaPredictiveRisk: number;
+      mechanicalWear: number;
+      equilibriumConfidence: number;
+      activeInternalSensors: number;
+      thermalMap: Record<string, number>;
+    };
   } | null;
   /** v2: Telemetry anomaly severity (null = no anomaly) */
   anomalySeverity: string | null;
