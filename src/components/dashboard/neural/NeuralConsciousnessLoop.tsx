@@ -130,6 +130,35 @@ interface ConsciousnessState {
   alignmentFlags: string[];
   alignmentTransparency: number;
   alignmentBiasSignal: number;
+  // v28: Transition gate
+  shannonEntropy: number;
+  klDivergence: number;
+  effectiveTemperature: number;
+  likelihoodRatio: number;
+  // v28: Prospective
+  competenceEstimate: number;
+  judgmentOfLearning: number;
+  needsExternalSearch: boolean;
+  // v28: Online
+  feelingOfKnowing: number;
+  conflictSignal: number;
+  stepConfidence: number;
+  driftScore: number;
+  consistencyScore: number;
+  // v28: Regulation
+  effortAllocation: string;
+  strategySwitchNeeded: boolean;
+  externalSearchNeeded: boolean;
+  // v28: Retrospective
+  selfCorrectionTriggered: boolean;
+  estimatedSuccess: number;
+  errorsLogged: number;
+  // v28: Infrastructure
+  observerVerdict: string;
+  observerCritique: string;
+  userExpertiseEstimate: number;
+  workingMemoryLoad: number;
+  semanticActivation: number;
   // v25: Bridge metrics
   bridgeSnapshot: {
     gammaHealth: number;
@@ -461,6 +490,30 @@ export function NeuralConsciousnessLoop() {
       alignmentFlags: [],
       alignmentTransparency: 1,
       alignmentBiasSignal: 0,
+      // v28 defaults
+      shannonEntropy: 0.3,
+      klDivergence: 0.1,
+      effectiveTemperature: 0.2,
+      likelihoodRatio: 1.0,
+      competenceEstimate: 0.7,
+      judgmentOfLearning: 0.7,
+      needsExternalSearch: false,
+      feelingOfKnowing: 0,
+      conflictSignal: 0,
+      stepConfidence: 80,
+      driftScore: 0,
+      consistencyScore: 1,
+      effortAllocation: "heuristic",
+      strategySwitchNeeded: false,
+      externalSearchNeeded: false,
+      selfCorrectionTriggered: false,
+      estimatedSuccess: 0.8,
+      errorsLogged: 0,
+      observerVerdict: "approved",
+      observerCritique: "",
+      userExpertiseEstimate: 0.5,
+      workingMemoryLoad: 0,
+      semanticActivation: 0.5,
       bridgeSnapshot: null,
     };
   });
