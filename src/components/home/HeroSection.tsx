@@ -100,7 +100,7 @@ export function HeroSection({ t }: HeroSectionProps) {
       />
 
       <div
-        className="container relative z-[15] py-4 sm:py-6 px-4 sm:px-6 pt-16 sm:pt-20"
+        className="container relative z-[15] py-4 sm:py-6 px-4 sm:px-6 pt-24 sm:pt-28 md:pt-32"
         style={{
           opacity: heroOpacity,
           transform: `translate3d(0, ${heroTranslateY}px, 0)`,
