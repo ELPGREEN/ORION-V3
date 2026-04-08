@@ -627,7 +627,7 @@ const allSections: Section[] = [
     links: [{ label: "Orion IA", path: "/consulta" }],
     steps: [
       "A evolução vocal acontece automaticamente a cada interação.",
-      "O sistema usa Gemini TTS (Charon) como voz primária, 100% gratuito.",
+      "O sistema usa Gemini TTS (Algieba) como voz primária, modelo GA estável, 100% gratuito.",
       "Fish Speech Clone disponível como voz secundária personalizada.",
       "Fallback offline disponível via Piper TTS (WebAssembly).",
       "O perfil vocal sincroniza entre dispositivos via Supabase.",

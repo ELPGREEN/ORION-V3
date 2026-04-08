@@ -13,7 +13,7 @@ const corsHeaders = {
 const MODEL = "gemini-2.5-flash-preview-tts";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-const DEFAULT_VOICE = "Charon";
+const DEFAULT_VOICE = "Algieba";
 const DEFAULT_LANG = "pt-BR";
 const DEFAULT_PROMPT = "Fale de forma natural, clara e fluida em português brasileiro. Use um tom profissional mas amigável.";
 

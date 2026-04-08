@@ -143,7 +143,7 @@ function playAudioBlob(blob: Blob, signal: AbortSignal): Promise<HTMLAudioElemen
  */
 export async function speakWithGeminiTTS(
   text: string,
-  voice: string = "Charon",
+  voice: string = "Algieba",
   signal?: AbortSignal,
   stylePrompt?: string,
   lang?: string,
@@ -230,6 +230,7 @@ export function isGeminiTTSAvailable(): boolean {
 
 /** Available Gemini TTS voices */
 export const GEMINI_VOICES = [
+  { id: "Algieba", label: "Algieba (Padrão Orion)" },
   { id: "Zephyr", label: "Zephyr (Brilhante)" },
   { id: "Puck", label: "Puck (Animado)" },
   { id: "Charon", label: "Charon (Informativo)" },
