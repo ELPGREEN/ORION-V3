@@ -114,6 +114,20 @@ export interface MetacognitionResult {
   recommendation: string;        // Natural language self-reflection
   shouldAdjust: boolean;         // Whether to change strategy
   adjustmentType?: "attention" | "strategy" | "modality" | "agent_swap";
+  /** v24: Quantum Metacognition — calibrated uncertainty */
+  uncertaintyScore?: number;
+  /** v24: Hallucination risk (0=safe, 1=critical) */
+  hallucinationRisk?: number;
+  /** v24: Expected Calibration Error */
+  calibrationError?: number;
+  /** v24: Active skill abstractions */
+  activeSkills?: Array<{ name: string; category: string; contribution: number; active: boolean; description: string }>;
+  /** v24: Reflective Chain-of-Thought */
+  reflectionChain?: string[];
+  /** v24: Adaptive plan score */
+  adaptivePlanScore?: number;
+  /** v24: Risk level */
+  riskLevel?: "safe" | "caution" | "warning" | "critical";
 }
 
 // ─── Helper Functions ───
