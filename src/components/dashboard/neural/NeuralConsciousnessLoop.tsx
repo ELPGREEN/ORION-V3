@@ -43,6 +43,7 @@ import {
 } from "@/lib/neural/global-workspace";
 import { getAgenteEu } from "@/lib/neural/agents/self-model-agent";
 import { Monitor, User, Box, Layers, ScanSearch, Network, FileText, Scissors } from "lucide-react";
+import { AgentCoActivationGraph } from "./AgentCoActivationGraph";
 
 // ─── Types ───
 type Phase = "sleeping" | "learning" | "evolving";
