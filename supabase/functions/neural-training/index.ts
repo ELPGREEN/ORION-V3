@@ -271,9 +271,8 @@ async function saveWeights(supabase: ReturnType<typeof createClient>, userId: st
 
 // Generate embedding using Gemini gemini-embedding-001 (768 dims, free) + HF fallback
 async function generateEmbedding(text: string): Promise<number[] | null> {
-  const geminiKeys = [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter(Boolean) as string[];
+  const keyNames = ["GEMINI_API_KEY_GCP", "GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"];
+  const geminiKeys = keyNames.map(n => Deno.env.get(n)).filter((k): k is string => !!k);
 
   const truncated = text.substring(0, 4000);
   for (const apiKey of geminiKeys) {

@@ -257,9 +257,8 @@ Deno.serve(async (req) => {
     // 4. PROCESS EMBEDDINGS — usa Gemini embedding-001 (768d) — FREE
     // ═══════════════════════════════════════════════════════════
     if (action === "full" || action === "process_embeddings") {
-      const geminiKeys = [
-        Deno.env.get("GEMINI_API_KEY")
-      ].filter((k): k is string => !!k);
+      const keyNames = ["GEMINI_API_KEY_GCP", "GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"];
+      const geminiKeys = keyNames.map(n => Deno.env.get(n)).filter((k): k is string => !!k);
       let processed = 0;
       if (geminiKeys.length > 0) {
         const { data: unprocessed } = await supabase
