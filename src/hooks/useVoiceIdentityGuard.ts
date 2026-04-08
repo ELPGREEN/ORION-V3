@@ -13,8 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { extractVoiceFeaturesFromBlob, compareFeaturesStatic, type VoiceFeatures } from "@/lib/voice/voiceFeatureEngine";
+import { isOwnerEmail, isCreatorByName } from "@/lib/neural/orion-consciousness";
 
-export type IdentityStatus = "unknown" | "verifying" | "owner" | "guest" | "no_enrollment";
+export type IdentityStatus = "unknown" | "verifying" | "owner" | "creator" | "guest" | "no_enrollment";
 
 export interface GuestSession {
   id?: string;
@@ -56,10 +57,14 @@ export function useVoiceIdentityGuard() {
 
       // Match threshold — raised to 0.75 to prevent false positives
       const threshold = 0.75;
+      const isOwner = isOwnerEmail(user?.email);
+      
       if (similarity >= threshold) {
-        setIdentityStatus("owner");
+        // If user email is creator's, set as "creator" (highest trust)
+        const status: IdentityStatus = isOwner ? "creator" : "owner";
+        setIdentityStatus(status);
         setIsCheckingVoice(false);
-        return "owner";
+        return status;
       }
 
       setIdentityStatus("guest");
