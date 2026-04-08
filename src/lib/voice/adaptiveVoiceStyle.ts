@@ -24,11 +24,11 @@ export interface VoiceStylePrefs {
 }
 
 const DEFAULT_PREFS: VoiceStylePrefs = {
-  style_prompt: "Fale de forma calma, pausada e confiante em português brasileiro. Use um tom grave, sereno e elegante, como um assistente de IA sofisticado. Sem pressa, sem emoção excessiva. Projete autoridade tranquila.",
-  voice_name: "Orus",
+  style_prompt: "Fale com voz masculina grave, séria e controlada em português brasileiro. Tom baixo, cadência lenta e firme, sem inflexões emocionais. Projete seriedade e competência como um assistente militar de elite. Pausas curtas entre frases. Nunca soe animado ou casual.",
+  voice_name: "Charon",
   speech_rate: "normal",
   accent: "neutro",
-  tone: "calmo",
+  tone: "sério",
   language: "pt-BR",
   extra_instructions: [],
 };
