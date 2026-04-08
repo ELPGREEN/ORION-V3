@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+const configCreationPromises = new Map<string, Promise<any>>();
+
 export interface NeuralAgentConfig {
   id: string;
   user_id: string;
@@ -47,7 +49,7 @@ export interface CustomCommand {
 const DEFAULT_CONFIG: Partial<NeuralAgentConfig> = {
   persona: "profissional",
   custom_instructions: "",
-  wake_word: "Ana",
+  wake_word: "Orion",
   voice_enabled: true,
   voice_language: "pt-BR",
   voice_speed: 0.92,
@@ -89,6 +91,8 @@ export function useNeuralConfig() {
           .from("neural_agent_config" as any)
           .select("*")
           .eq("user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (error && !error.message.includes("does not exist")) {
@@ -100,14 +104,29 @@ export function useNeuralConfig() {
         if (data) {
           setConfig(data as any);
         } else {
-          // Create default config
-          const { data: newConfig, error: insertErr } = await supabase
-            .from("neural_agent_config" as any)
-            .insert({ user_id: user.id, ...DEFAULT_CONFIG } as any)
-            .select()
-            .single();
+          // Create default config once per user/runtime to avoid duplicate rows
+          let createPromise = configCreationPromises.get(user.id);
+          if (!createPromise) {
+            createPromise = (async () => {
+              try {
+                const { data: newConfig, error: insertErr } = await supabase
+                  .from("neural_agent_config" as any)
+                  .insert({ user_id: user.id, ...DEFAULT_CONFIG } as any)
+                  .select()
+                  .single();
 
-          if (!cancelled && !insertErr && newConfig) {
+                if (insertErr) throw insertErr;
+                return newConfig;
+              } finally {
+                configCreationPromises.delete(user.id);
+              }
+            })();
+
+            configCreationPromises.set(user.id, createPromise);
+          }
+
+          const newConfig = await createPromise;
+          if (!cancelled && newConfig) {
             setConfig(newConfig as any);
           }
         }

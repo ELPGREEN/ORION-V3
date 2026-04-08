@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { toast } from "sonner";
 import { X, Minimize2, Mic, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { useLocation } from "react-router-dom";
 import { PlasmaCore } from "@/components/home/PlasmaCore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserPlan } from "@/hooks/useUserPlan";
+import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { OrionAccessGate } from "@/components/OrionAccessGate";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
@@ -33,8 +34,48 @@ const PERMISSIONS_KEY = "orion_permissions_granted";
 const PERMISSIONS_DISMISSED_KEY = "orion_permissions_dismissed";
 
 /** Extract command portion after the wake word */
-function extractCommand(transcript: string): string {
-  return transcript.replace(ORION_WAKE_REGEX, "").trim();
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeWakeWord(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function createCustomWakeRegex(wakeWord?: string | null): RegExp | null {
+  const normalized = normalizeWakeWord(wakeWord || "").replace(/\s+/g, "");
+  if (!normalized || normalized === "orion" || normalized === "painel") return null;
+
+  const loosePattern = normalized
+    .split("")
+    .map((char) => escapeRegex(char))
+    .join("[\\s.]*");
+
+  return new RegExp(`\\b${loosePattern}\\b`, "i");
+}
+
+function createCustomWakeExtractRegex(wakeWord?: string | null): RegExp | null {
+  const raw = wakeWord?.trim();
+  if (!raw) return null;
+
+  const normalized = normalizeWakeWord(raw);
+  if (!normalized || normalized === "orion" || normalized === "painel") return null;
+
+  const loosePattern = raw
+    .split("")
+    .filter((char) => char.trim().length > 0)
+    .map((char) => escapeRegex(char))
+    .join("[\\s.]*");
+
+  return loosePattern ? new RegExp(`\\b${loosePattern}\\b`, "i") : null;
+}
+
+function extractCommand(transcript: string, wakeRegexes: RegExp[]): string {
+  return wakeRegexes.reduce((command, regex) => command.replace(regex, "").trim(), transcript);
 }
 
 const NeuralVision = lazy(() =>
@@ -45,6 +86,7 @@ export function GlobalOrionListener() {
   const location = useLocation();
   const { user } = useAuth();
   const { isPremium, loading: planLoading } = useUserPlan();
+  const { config } = useNeuralConfig();
   const [wakeWordActive, setWakeWordActive] = useState(false);
   const [orionOpen, setOrionOpen] = useState(false);
   const [booting, setBooting] = useState(false);
@@ -65,6 +107,38 @@ export function GlobalOrionListener() {
 
   const isOnNeuralPage = location.pathname.includes("rede-neural") || location.pathname === "/consulta";
   const isMobile = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+  const configuredWakeWord = (config?.wake_word || "Orion").trim() || "Orion";
+  const customWakeRegex = useMemo(() => createCustomWakeRegex(configuredWakeWord), [configuredWakeWord]);
+  const customWakeExtractRegex = useMemo(() => createCustomWakeExtractRegex(configuredWakeWord), [configuredWakeWord]);
+  const wakeWordRegexes = useMemo(() => {
+    return [ORION_WAKE_REGEX, customWakeExtractRegex].filter(Boolean) as RegExp[];
+  }, [customWakeExtractRegex]);
+  const wakeWordHint = useMemo(() => {
+    return normalizeWakeWord(configuredWakeWord) === "orion" ? "Orion" : `${configuredWakeWord} ou Orion`;
+  }, [configuredWakeWord]);
+
+  const matchesWakeWord = useCallback((transcript: string) => {
+    if (ORION_WAKE_REGEX.test(transcript)) return true;
+    if (!customWakeRegex) return false;
+    return customWakeRegex.test(normalizeWakeWord(transcript));
+  }, [customWakeRegex]);
+
+  const primeMicrophone = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      await new Promise((resolve) => setTimeout(resolve, isMobile ? 180 : 90));
+      stream.getTracks().forEach((track) => track.stop());
+    } catch (error) {
+      console.warn("[GlobalOrion] Microphone priming failed:", error);
+    }
+  }, [isMobile]);
 
   const clearRestartTimer = useCallback(() => {
     if (restartTimerRef.current) {
@@ -178,7 +252,18 @@ export function GlobalOrionListener() {
     clearRestartTimer();
     startInFlightRef.current = true;
 
-    try {
+    const bootRecognition = async () => {
+      if (restartAttemptsRef.current > 0 || isMobile) {
+        await primeMicrophone();
+      }
+
+      const hiddenNow = typeof document !== "undefined" && document.hidden;
+      if (hiddenNow || isOnNeuralPage || orionOpen || !permissionsGranted || wakeRecRef.current) {
+        startInFlightRef.current = false;
+        return;
+      }
+
+      try {
       const rec = new SR();
       rec.lang = "pt-BR";
       rec.continuous = true;
@@ -208,15 +293,16 @@ export function GlobalOrionListener() {
           for (let alt = 0; alt < e.results[i].length; alt++) {
             const transcript = (e.results[i][alt]?.transcript || "").toLowerCase().trim();
             const confidence = e.results[i][alt]?.confidence || 0;
+            const wakeMatched = matchesWakeWord(transcript);
 
             if (transcript.length > 1) {
-              console.log(`[GlobalOrion] heard: "${transcript}" (conf=${(confidence * 100).toFixed(0)}%, final=${isFinal}, wake=${ORION_WAKE_REGEX.test(transcript)})`);
+              console.log(`[GlobalOrion] heard: "${transcript}" (conf=${(confidence * 100).toFixed(0)}%, final=${isFinal}, wake=${wakeMatched})`);
             }
 
-            if (!ORION_WAKE_REGEX.test(transcript)) continue;
+            if (!wakeMatched) continue;
             if (cooldownRef.current) continue;
 
-            const command = extractCommand(transcript);
+            const command = extractCommand(transcript, wakeWordRegexes);
 
             if (!wakeDetectedRef.current) {
               wakeDetectedRef.current = true;
@@ -349,12 +435,15 @@ export function GlobalOrionListener() {
       rec.start();
       setWakeWordActive(true);
       console.log("[GlobalOrion] ✅ Wake word listener started successfully");
-    } catch (err) {
-      startInFlightRef.current = false;
-      setWakeWordActive(false);
-      console.warn("[GlobalOrion] Failed to start:", err);
-    }
-  }, [clearRestartTimer, getRestartDelay, isOnNeuralPage, orionOpen, permissionsGranted, activateWithCommand]);
+      } catch (err) {
+        startInFlightRef.current = false;
+        setWakeWordActive(false);
+        console.warn("[GlobalOrion] Failed to start:", err);
+      }
+    };
+
+    void bootRecognition();
+  }, [clearRestartTimer, getRestartDelay, isMobile, isOnNeuralPage, matchesWakeWord, orionOpen, permissionsGranted, primeMicrophone, activateWithCommand, wakeWordRegexes]);
 
   const handleGrantPermissions = useCallback(async () => {
     let micGranted = false;
@@ -507,7 +596,7 @@ export function GlobalOrionListener() {
                 </div>
                  <div>
                    <p className="text-sm font-medium text-foreground">⚡ Audição Relâmpago</p>
-                   <p className="text-xs text-muted-foreground">Diga "Orion" para ativar de qualquer tela</p>
+                    <p className="text-xs text-muted-foreground">Diga "{wakeWordHint}" para ativar no painel</p>
                  </div>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
@@ -593,14 +682,14 @@ export function GlobalOrionListener() {
                 ? "text-primary border-primary/40 bg-primary/10 animate-pulse"
                 : "text-muted-foreground/60 border-border/30 bg-card/50"
             )}>
-              {wakeWordActive ? '⚡ Diga "Orion"' : "Orion"}
+              {wakeWordActive ? `⚡ Diga "${wakeWordHint}"` : wakeWordHint}
             </span>
           </div>
 
           {/* Hover tooltip */}
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
             <div className="bg-card/95 backdrop-blur-sm text-[10px] font-mono text-foreground/70 px-2 py-1 rounded border border-border/30 whitespace-nowrap shadow-lg">
-              {wakeWordActive ? '⚡ Relâmpago Vivo — Diga "Orion"' : "Abrir Orion"}
+              {wakeWordActive ? `⚡ Relâmpago Vivo — Diga "${wakeWordHint}"` : "Abrir Orion"}
             </div>
           </div>
         </div>
