@@ -25,7 +25,7 @@ interface ProviderConfig {
 const PROVIDERS: ProviderConfig[] = [
   {
     name: "gemini",
-    apiKeyEnv: "GEMINI_API_KEY",
+    apiKeyEnv: "GEMINI_API_KEY_GCP",
     endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
     model: "gemini-2.5-flash",
     maxTokens: 4096,

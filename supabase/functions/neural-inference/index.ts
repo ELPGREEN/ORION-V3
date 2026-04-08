@@ -27,7 +27,9 @@ async function searchKnowledge(
   limit = 5
 ): Promise<Array<{ title: string; content: string; similarity: number }>> {
   try {
-    const geminiKey = Deno.env.get("GEMINI_API_KEY");
+    const _gkNames = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
+  const _gkAll = _gkNames.map(n => Deno.env.get(n)).filter((k): k is string => !!k);
+  const geminiKey = _gkAll[Math.floor(Math.random() * _gkAll.length)] || "";
     if (geminiKey) {
       try {
         const embResp = await fetch(
