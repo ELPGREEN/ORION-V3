@@ -40,7 +40,7 @@ function splitIntoSentences(text: string): string[] {
   // Short texts → single chunk (no splitting = no pauses)
   if (text.length <= 1000) return [text.trim()];
 
-  const sentences = text.match(/[^.!?…]+[.!?…]+\s*/g) || [text];
+  const sentences = text.match(/[^.!?…]+[.!?…]+\s*|[^.!?…]+$/g) || [text];
   const chunks: string[] = [];
   let current = "";
   for (const s of sentences) {

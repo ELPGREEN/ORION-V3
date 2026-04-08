@@ -28,7 +28,7 @@ interface VoiceInputButtonProps {
  * High-quality TTS using Orion's own formant voice (100% offline)
  */
 async function speakHighQuality(text: string, abortSignal?: AbortSignal): Promise<void> {
-  const clean = cleanTextForSpeech(text).slice(0, 1500);
+  const clean = cleanTextForSpeech(text).slice(0, 3000);
   if (!clean) return;
 
   // Orion's own voice engine (formant synthesis from Iapetus DNA)

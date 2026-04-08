@@ -265,7 +265,7 @@ export function useNeuralVoice(
     
     // Split into sentence-level chunks for natural prosody variation
     const splitIntoSentences = (t: string): string[] => {
-      const sentences = t.match(/[^.!?…;]+[.!?…;]+\s*/g) || [t];
+      const sentences = t.match(/[^.!?…;]+[.!?…;]+\s*|[^.!?…;]+$/g) || [t];
       const chunks: string[] = [];
       let current = "";
       for (const s of sentences) {
