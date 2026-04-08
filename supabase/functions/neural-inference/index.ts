@@ -83,8 +83,9 @@ async function callGemini(systemPrompt: string, userPrompt: string, stream: bool
   if (!key) throw new Error("No GEMINI_API_KEY");
 
   const endpoint = stream ? "streamGenerateContent?alt=sse" : "generateContent";
+  const separator = stream ? "&" : "?";
   const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:${endpoint}&key=${key}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:${endpoint}${separator}key=${key}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

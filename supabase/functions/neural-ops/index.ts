@@ -1649,9 +1649,10 @@ async function callGeminiDirect(messages: any[], stream: boolean): Promise<Respo
 
   const geminiBody = convertToGeminiFormat(buildLovableMessages(messages));
   const endpoint = stream ? "streamGenerateContent?alt=sse" : "generateContent";
+  const separator = stream ? "&" : "?";
 
   for (const key of keys) {
-    const url = `${GEMINI_API_BASE}/${GEMINI_MODEL}:${endpoint}&key=${key}`;
+    const url = `${GEMINI_API_BASE}/${GEMINI_MODEL}:${endpoint}${separator}key=${key}`;
     try {
       const resp = await fetch(url, {
         method: "POST",
