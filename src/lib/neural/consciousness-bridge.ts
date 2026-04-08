@@ -190,6 +190,11 @@ export interface ConsciousnessCycleSnapshot {
   reasoningSystem1: number;
   reasoningSystem2: number;
   reasoningShouldEscalate: boolean;
+  /** v28: Transition gate metrics */
+  shannonEntropy: number;
+  klDivergence: number;
+  effectiveTemperature: number;
+  likelihoodRatio: number;
   /** v27: Hallucination snapshot risk */
   hallucinationSnapshotRisk: string;
   hallucinationContradiction: boolean;
@@ -199,6 +204,30 @@ export interface ConsciousnessCycleSnapshot {
   alignmentFlags: string[];
   alignmentTransparency: number;
   alignmentBiasSignal: number;
+  /** v28: Prospective monitoring */
+  competenceEstimate: number;
+  judgmentOfLearning: number;
+  needsExternalSearch: boolean;
+  /** v28: Online monitoring */
+  feelingOfKnowing: number;
+  conflictSignal: number;
+  stepConfidence: number;
+  driftScore: number;
+  consistencyScore: number;
+  /** v28: Regulation control */
+  effortAllocation: string;
+  strategySwitchNeeded: boolean;
+  externalSearchNeeded: boolean;
+  /** v28: Retrospective evaluation */
+  selfCorrectionTriggered: boolean;
+  estimatedSuccess: number;
+  errorsLogged: number;
+  /** v28: Support infrastructure */
+  observerVerdict: string;
+  observerCritique: string;
+  userExpertiseEstimate: number;
+  workingMemoryLoad: number;
+  semanticActivation: number;
 }
 
 export interface ReasoningContext {

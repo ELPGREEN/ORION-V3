@@ -540,6 +540,12 @@ export function runMetacognition(
     reasoningMode: quantumMeta?.reasoningMode,
     hallucinationSnapshot: quantumMeta?.hallucinationSnapshot,
     alignmentAudit: quantumMeta?.alignmentAudit,
+    // v28: Full metacognitive architecture
+    prospective: quantumMeta?.prospective,
+    online: quantumMeta?.online,
+    regulation: quantumMeta?.regulation,
+    retrospective: quantumMeta?.retrospective,
+    infrastructure: quantumMeta?.infrastructure,
   };
 }
 
