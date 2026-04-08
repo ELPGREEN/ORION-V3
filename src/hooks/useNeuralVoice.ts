@@ -476,7 +476,7 @@ export function useNeuralVoice(
     rec.interimResults = true;
     rec.maxAlternatives = 1;
     
-    rec.onstart = () => { setListening(true); };
+    rec.onstart = () => { setListening(true); markSTTStart(); };
     
     rec.onresult = (e: any) => {
       const lastResult = e.results[e.results.length - 1];
