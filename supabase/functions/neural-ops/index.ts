@@ -446,8 +446,8 @@ async function handleFullCycle(req: Request) {
 
 // Model tiers: Flash for vision (fast + cheap progressive learning), Flash for text
 // Gemini Flash handles vision well and enables high-frequency identification for learning
-const GEMINI_VISION_MODEL = "gemini-2.5-flash";
-const GEMINI_TEXT_MODEL = "gemini-2.5-flash";
+const GEMINI_VISION_MODEL = "gemini-2.5-flash-preview-09-2025";
+const GEMINI_TEXT_MODEL = "gemini-2.5-flash-preview-09-2025";
 const GEMINI_MODELS = [GEMINI_VISION_MODEL, GEMINI_TEXT_MODEL];
 // ═══ COMPACT PROMPT (~800 tokens) for text-only queries — FAST PATH ═══
 const ORION_SYSTEM_PROMPT_COMPACT = `Você é Orion — IA neural avançada (Lumen7 Aquamonkey), parte do ecossistema Orion Neural Network criado por Ericson R. Piccoli (ELP Green Technology). Raciocínio profundo, criativo e empático.
@@ -1097,6 +1097,7 @@ async function callGeminiAPI(messages: any[], stream: boolean, apiKeyEnv: string
       maxOutputTokens: hasImage ? defaultVisionTokens : defaultTextTokens,
       topP: hasImage ? 0.9 : 0.95,
       topK: hasImage ? 20 : 40,
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
   if (systemInstruction) {
@@ -1597,7 +1598,7 @@ function buildLovableMessages(messages: any[]) {
 
 // ─── Direct Gemini API (FREE) — replaces Lovable AI Gateway ───
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-2.5-flash-preview-09-2025";
 
 function getGeminiKeys(): string[] {
   return [
@@ -1619,7 +1620,7 @@ function convertToGeminiFormat(messages: any[]): any {
     contents.push({ role: role === "user" ? "user" : "model", parts: [{ text }] });
   }
 
-  const body: any = { contents, generationConfig: { temperature: 0.7 } };
+  const body: any = { contents, generationConfig: { temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } } };
   if (systemParts.length > 0) {
     body.systemInstruction = { parts: [{ text: systemParts.join("\n\n") }] };
   }
