@@ -108,6 +108,13 @@ interface ConsciousnessState {
   metacognitionRecommendation: string;
   // v22.5: IoT awareness
   iotAwareness: IoTAwarenessState;
+  // v24: Quantum Metacognition
+  uncertaintyScore: number;
+  hallucinationRisk: number;
+  calibrationError: number;
+  riskLevel: "safe" | "caution" | "warning" | "critical";
+  activeSkillsList: Array<{ name: string; category: string; contribution: number; active: boolean }>;
+  reflectionChain: string[];
 }
 
 // ─── Rome timezone helpers ───
@@ -399,6 +406,12 @@ export function NeuralConsciousnessLoop() {
         deviceCommandsSent: 0,
         environmentalContext: "unknown",
       },
+      uncertaintyScore: 0.1,
+      hallucinationRisk: 0.05,
+      calibrationError: 0.1,
+      riskLevel: "safe" as const,
+      activeSkillsList: [],
+      reflectionChain: [],
     };
   });
 
@@ -597,6 +610,13 @@ export function NeuralConsciousnessLoop() {
       autobiographicalMemories: cycleResult.selfModel.autobiographicalMemory.length,
       metacognitionRecommendation: meta?.recommendation ?? prev.metacognitionRecommendation,
       iotAwareness: iotState,
+      // v24: Quantum Metacognition
+      uncertaintyScore: meta?.uncertaintyScore ?? prev.uncertaintyScore,
+      hallucinationRisk: meta?.hallucinationRisk ?? prev.hallucinationRisk,
+      calibrationError: meta?.calibrationError ?? prev.calibrationError,
+      riskLevel: (meta?.riskLevel ?? prev.riskLevel) as "safe" | "caution" | "warning" | "critical",
+      activeSkillsList: meta?.activeSkills?.map(s => ({ name: s.name, category: s.category, contribution: s.contribution, active: s.active })) ?? prev.activeSkillsList,
+      reflectionChain: meta?.reflectionChain ?? prev.reflectionChain,
     }));
   }, [addLogEntry]);
 
