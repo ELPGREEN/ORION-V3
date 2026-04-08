@@ -295,6 +295,13 @@ export async function detectRealTime(
       : null,
     quantumEnhancement,
   };
+
+  // Publish for Vision-RAG cross-referencing
+  if (typeof window !== "undefined") {
+    (window as any).__orion_last_rt_vision_result__ = result;
+  }
+
+  return result;
 }
 
 /**
