@@ -1932,6 +1932,17 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     }
   }
 
+  // If vision query but Gemini failed, inject fallback context for text-only providers
+  if (hasImage) {
+    const sysMsg = messages.find((m: any) => m.role === "system");
+    if (sysMsg) {
+      sysMsg.content = (typeof sysMsg.content === "string" ? sysMsg.content : "") +
+        "\n\n[AVISO INTERNO: A imagem da câmera foi capturada mas o Gemini está temporariamente indisponível. " +
+        "Use os dados dos sensores ML locais para descrever o que foi detectado. " +
+        "NÃO diga que não tem capacidade de visão.]";
+    }
+  }
+
   // ── FALLBACK 1: HuggingFace (grátis) ──
   try {
     const text = await callHuggingFaceFallback(messages);
