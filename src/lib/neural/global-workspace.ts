@@ -16,6 +16,7 @@
 
 import type { AgentRole, NeuromodulationState } from "./multi-agent";
 import type { InteroceptiveState } from "./interoception-engine";
+import { runQuantumMetacognition, recordCalibration } from "./quantum-metacognition";
 
 // ─── Types ───
 
@@ -494,6 +495,14 @@ export function runMetacognition(
   // Generate natural language self-reflection
   const recommendation = generateSelfReflection(selfAwareness, goalAlignment, coherence, confidence, shouldAdjust);
 
+  // v24: Enrich with Quantum Metacognition
+  let quantumMeta;
+  try {
+    quantumMeta = runQuantumMetacognition(selfModel, workspace);
+  } catch (e) {
+    console.warn("[Metacognition] Quantum metacognition error:", e);
+  }
+
   return {
     timestamp: Date.now(),
     selfAwareness: Math.max(0, Math.min(1, selfAwareness)),
@@ -503,6 +512,14 @@ export function runMetacognition(
     recommendation,
     shouldAdjust,
     adjustmentType,
+    // v24: Quantum Metacognition fields
+    uncertaintyScore: quantumMeta?.uncertaintyScore,
+    hallucinationRisk: quantumMeta?.hallucinationRisk,
+    calibrationError: quantumMeta?.calibrationError,
+    activeSkills: quantumMeta?.activeSkills,
+    reflectionChain: quantumMeta?.reflectionChain,
+    adaptivePlanScore: quantumMeta?.adaptivePlanScore,
+    riskLevel: quantumMeta?.riskLevel,
   };
 }
 
