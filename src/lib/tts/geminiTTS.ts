@@ -6,7 +6,7 @@
 
 let geminiTTSDisabled = false;
 let geminiTTSRetryAfter = 0;
-const DEFAULT_FALLBACK_RETRY_MS = 15_000;
+const DEFAULT_FALLBACK_RETRY_MS = 5_000; // Reduced from 15s — Vertex AI is stable now
 
 export interface GeminiTTSResult {
   played: boolean;
@@ -14,7 +14,7 @@ export interface GeminiTTSResult {
 }
 
 function disableGeminiTTS(retryAfterMs: number, reason: string): void {
-  const safeRetryMs = Math.max(5000, Math.min(retryAfterMs, 5 * 60_000));
+  const safeRetryMs = Math.max(3000, Math.min(retryAfterMs, 60_000)); // Min 3s (was 5s), max 60s (was 5min)
   geminiTTSDisabled = true;
   geminiTTSRetryAfter = Date.now() + safeRetryMs;
   console.warn(`[Gemini TTS] ${reason}; disabled for ${Math.ceil(safeRetryMs / 1000)}s`);
@@ -25,6 +25,7 @@ function isGeminiTTSCoolingDown(): boolean {
   if (Date.now() >= geminiTTSRetryAfter) {
     geminiTTSDisabled = false;
     geminiTTSRetryAfter = 0;
+    console.log("[Gemini TTS] Cooldown ended, re-enabling");
     return false;
   }
   return true;
