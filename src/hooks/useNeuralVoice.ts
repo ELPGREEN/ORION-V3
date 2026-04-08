@@ -561,6 +561,7 @@ export function useNeuralVoice(
           return; // Don't pass style commands to the AI, just learn silently
         }
         
+        markSTTEnd(); // v31: STT pipeline latency
         onCmdRef.current(fullText);
       }, silenceMs);
     };
