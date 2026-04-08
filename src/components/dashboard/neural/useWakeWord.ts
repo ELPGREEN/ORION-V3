@@ -2,23 +2,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { vsLog } from "./useVisionProcessing";
 
-// ═══ Wake Word Singleton Guard (prevents HMR stacking) ═══
-const WAKE_GLOBAL_KEY = "__orion_wake_singleton__";
-function getWakeSingleton(): { activeId: number; rec: any } {
-  const w = window as any;
-  if (!w[WAKE_GLOBAL_KEY]) w[WAKE_GLOBAL_KEY] = { activeId: 0, rec: null };
-  return w[WAKE_GLOBAL_KEY];
-}
-function claimWakeSingleton(): number {
-  const s = getWakeSingleton();
-  try { s.rec?.abort?.(); } catch {}
-  try { s.rec?.stop?.(); } catch {}
-  s.rec = null;
-  s.activeId++;
-  return s.activeId;
-}
-function isWakeOwner(id: number): boolean { return getWakeSingleton().activeId === id; }
-function registerWakeRec(rec: any) { getWakeSingleton().rec = rec; }
+// ═══ Unified Mic Arbiter — shared with useNeuralVoice ═══
+import { claimMic, isMicOwner, registerMicRec, registerMicCleanup } from "@/lib/voice/micArbiter";
 
 const ORION_WAKE_REGEX = /([óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\b/i;
 
