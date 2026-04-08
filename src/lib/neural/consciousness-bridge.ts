@@ -190,6 +190,11 @@ export interface ConsciousnessCycleSnapshot {
   reasoningSystem1: number;
   reasoningSystem2: number;
   reasoningShouldEscalate: boolean;
+  /** v28: Transition gate metrics */
+  shannonEntropy: number;
+  klDivergence: number;
+  effectiveTemperature: number;
+  likelihoodRatio: number;
   /** v27: Hallucination snapshot risk */
   hallucinationSnapshotRisk: string;
   hallucinationContradiction: boolean;
@@ -199,6 +204,30 @@ export interface ConsciousnessCycleSnapshot {
   alignmentFlags: string[];
   alignmentTransparency: number;
   alignmentBiasSignal: number;
+  /** v28: Prospective monitoring */
+  competenceEstimate: number;
+  judgmentOfLearning: number;
+  needsExternalSearch: boolean;
+  /** v28: Online monitoring */
+  feelingOfKnowing: number;
+  conflictSignal: number;
+  stepConfidence: number;
+  driftScore: number;
+  consistencyScore: number;
+  /** v28: Regulation control */
+  effortAllocation: string;
+  strategySwitchNeeded: boolean;
+  externalSearchNeeded: boolean;
+  /** v28: Retrospective evaluation */
+  selfCorrectionTriggered: boolean;
+  estimatedSuccess: number;
+  errorsLogged: number;
+  /** v28: Support infrastructure */
+  observerVerdict: string;
+  observerCritique: string;
+  userExpertiseEstimate: number;
+  workingMemoryLoad: number;
+  semanticActivation: number;
 }
 
 export interface ReasoningContext {
@@ -537,6 +566,11 @@ export function runConsciousnessBridge(
     reasoningSystem1: cycleResult.metacognition?.reasoningMode?.system1Activation ?? 0.7,
     reasoningSystem2: cycleResult.metacognition?.reasoningMode?.system2Activation ?? 0.3,
     reasoningShouldEscalate: cycleResult.metacognition?.reasoningMode?.shouldEscalate ?? false,
+    // v28: Transition gate metrics
+    shannonEntropy: cycleResult.metacognition?.reasoningMode?.shannonEntropy ?? 0.3,
+    klDivergence: cycleResult.metacognition?.reasoningMode?.klDivergence ?? 0.1,
+    effectiveTemperature: cycleResult.metacognition?.reasoningMode?.effectiveTemperature ?? 0.2,
+    likelihoodRatio: cycleResult.metacognition?.reasoningMode?.likelihoodRatio ?? 1.0,
     hallucinationSnapshotRisk: cycleResult.metacognition?.hallucinationSnapshot?.snapshotRisk ?? "grounded",
     hallucinationContradiction: cycleResult.metacognition?.hallucinationSnapshot?.contradictionDetected ?? false,
     hallucinationGrounding: cycleResult.metacognition?.hallucinationSnapshot?.groundingCoherence ?? 1,
@@ -544,6 +578,30 @@ export function runConsciousnessBridge(
     alignmentFlags: cycleResult.metacognition?.alignmentAudit?.flags ?? [],
     alignmentTransparency: cycleResult.metacognition?.alignmentAudit?.transparencyScore ?? 1,
     alignmentBiasSignal: cycleResult.metacognition?.alignmentAudit?.biasSignal ?? 0,
+    // v28: Prospective monitoring
+    competenceEstimate: cycleResult.metacognition?.prospective?.competenceEstimate ?? 0.7,
+    judgmentOfLearning: cycleResult.metacognition?.prospective?.judgmentOfLearning ?? 0.7,
+    needsExternalSearch: cycleResult.metacognition?.prospective?.needsExternalSearch ?? false,
+    // v28: Online monitoring
+    feelingOfKnowing: cycleResult.metacognition?.online?.feelingOfKnowing ?? 0,
+    conflictSignal: cycleResult.metacognition?.online?.conflictSignal ?? 0,
+    stepConfidence: cycleResult.metacognition?.online?.stepConfidence ?? 80,
+    driftScore: cycleResult.metacognition?.online?.driftScore ?? 0,
+    consistencyScore: cycleResult.metacognition?.online?.consistencyScore ?? 1,
+    // v28: Regulation
+    effortAllocation: cycleResult.metacognition?.regulation?.effortAllocation ?? "heuristic",
+    strategySwitchNeeded: cycleResult.metacognition?.regulation?.strategySwitchNeeded ?? false,
+    externalSearchNeeded: cycleResult.metacognition?.regulation?.externalSearchNeeded ?? false,
+    // v28: Retrospective
+    selfCorrectionTriggered: cycleResult.metacognition?.retrospective?.selfCorrectionTriggered ?? false,
+    estimatedSuccess: cycleResult.metacognition?.retrospective?.estimatedSuccess ?? 0.8,
+    errorsLogged: cycleResult.metacognition?.retrospective?.errorsLogged ?? 0,
+    // v28: Infrastructure
+    observerVerdict: cycleResult.metacognition?.infrastructure?.observerVerdict ?? "approved",
+    observerCritique: cycleResult.metacognition?.infrastructure?.observerCritique ?? "",
+    userExpertiseEstimate: cycleResult.metacognition?.infrastructure?.userExpertiseEstimate ?? 0.5,
+    workingMemoryLoad: cycleResult.metacognition?.infrastructure?.workingMemoryLoad ?? 0,
+    semanticActivation: cycleResult.metacognition?.infrastructure?.semanticActivation ?? 0.5,
   };
 
   _lastCycleResult = snapshot;

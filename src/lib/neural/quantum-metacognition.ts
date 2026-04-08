@@ -1,14 +1,42 @@
 /**
- * ─── Quantum Metacognition Engine ───
- * Motor metacognitivo avançado inspirado em pesquisa LLM metacognition.
+ * ─── Quantum Metacognition Engine v28 ───
+ * Complete metacognitive architecture for LLM-inspired consciousness.
  * 
- * 6 subsistemas:
- * 1. Uncertainty Estimator — entropia quântica + histórico de erros
- * 2. Hallucination Risk Detector — divergência WF collapsed vs expected
- * 3. Confidence Calibrator — ECE (Expected Calibration Error)
- * 4. Skill Abstractor — catalogação de habilidades ativas
- * 5. Reflective CoT Engine — cadeia retrospectiva
- * 6. Adaptive Planner — scoring multi-critério
+ * 5 Layers × 18 Subsystems:
+ * 
+ * Layer 1 — Prospective Monitoring (Before Task):
+ *   1.  Competence Estimator — predict solvability before attempting
+ *   2.  Judgment of Learning (JOL) — assess internal knowledge solidity
+ * 
+ * Layer 2 — Online Monitoring (During Execution):
+ *   3.  Feeling of Knowing (FOK) — detect tip-of-tongue states
+ *   4.  Conflict Monitor — detect contradictions in real-time
+ *   5.  Confidence Calibrator (ECE) — assign 0-100% accuracy per step
+ *   6.  Drift Detector — detect reasoning going off-topic
+ *   7.  Consistency Checker — cross-step contradiction detection
+ * 
+ * Layer 3 — Regulation & Control (Metacognitive Action):
+ *   8.  System 1/2 Transition Gate — effort allocation with Shannon entropy + KL divergence
+ *   9.  Strategy Switcher — abandon failing strategies
+ *   10. External Search Recognizer — identify when RAG/browsing is needed
+ *   11. Adaptive Planner — multi-criteria action scoring
+ * 
+ * Layer 4 — Retrospective Evaluation (After Task):
+ *   12. Self-Correction Loop — review output for hallucinations
+ *   13. Episodic Error Memory — log failures for future avoidance
+ *   14. Success Evaluator — register if reasoning led to correct answer
+ * 
+ * Layer 5 — Support Infrastructure:
+ *   15. Working Memory Buffer (Scratchpad) — snapshot storage for backtracking
+ *   16. Observer Module (Critic) — separate judgment layer
+ *   17. Theory of Mind — adjust for user's knowledge/intent
+ *   18. Semantic Association Core — spreading activation + pattern recognition
+ * 
+ * Plus existing:
+ *   - Hallucination Snapshot Detector
+ *   - Alignment Audit
+ *   - Skill Abstractor
+ *   - Reflective CoT Engine
  */
 
 import {
@@ -26,7 +54,9 @@ import {
 
 import type { SelfModelState, ConsciousState, MetacognitionResult } from "./global-workspace";
 
-// ═══ Types ═══
+// ═══════════════════════════════════════════════════════════════════
+//  TYPES
+// ═══════════════════════════════════════════════════════════════════
 
 export interface SkillAbstraction {
   name: string;
@@ -36,101 +66,158 @@ export interface SkillAbstraction {
   description: string;
 }
 
-export interface ReflectionStep {
-  action: string;
-  expectation: string;
-  outcome: string;
-  learning: string;
-}
-
 export interface AdaptivePlanAction {
   type: "increase_caution" | "boost_exploration" | "narrow_focus" | "expand_modalities" | "recalibrate" | "deepen_reasoning" | "switch_strategy" | "maintain";
   score: number;
   rationale: string;
 }
 
-/** v27: System 1/2 reasoning mode detection */
 export type ReasoningMode = "system1" | "system2" | "transitioning";
 
 export interface ReasoningModeState {
-  /** Current reasoning mode */
   mode: ReasoningMode;
-  /** System 1 activation (0-1): fast, intuitive, pattern-matching */
   system1Activation: number;
-  /** System 2 activation (0-1): slow, deliberate, analytical */
   system2Activation: number;
-  /** Should switch to System 2? (detected need for deliberation) */
   shouldEscalate: boolean;
-  /** Reason for current mode */
   rationale: string;
+  /** v28: Shannon entropy at transition gate */
+  shannonEntropy: number;
+  /** v28: KL divergence (surprise signal) */
+  klDivergence: number;
+  /** v28: Softmax temperature (adaptive) */
+  effectiveTemperature: number;
+  /** v28: Likelihood ratio S1 vs S2 */
+  likelihoodRatio: number;
 }
 
-/** v27: Hallucination snapshot — cognitive state capture at decision point */
 export interface HallucinationSnapshot {
-  /** Timestamp of snapshot */
   timestamp: number;
-  /** Confidence at decision point */
   confidenceAtDecision: number;
-  /** Entropy at decision point */
   entropyAtDecision: number;
-  /** Contradiction detected between agents? */
   contradictionDetected: boolean;
-  /** Number of supporting memories */
   groundingMemories: number;
-  /** Coherence between output probability and grounding */
   groundingCoherence: number;
-  /** Risk classification at this point */
   snapshotRisk: "grounded" | "uncertain" | "ungrounded" | "hallucinating";
 }
 
-/** v27: Alignment audit trail */
 export interface AlignmentAudit {
-  /** Overall alignment score (0=misaligned, 1=perfectly aligned) */
   alignmentScore: number;
-  /** Goal congruence: are sub-goals aligned with stated objective? */
   goalCongruence: number;
-  /** Value consistency: is reasoning consistent with safety constraints? */
   valueConsistency: number;
-  /** Transparency: can the reasoning be explained? (opacity = risk) */
   transparencyScore: number;
-  /** Bias detection score (0=no detected bias, 1=strong bias signal) */
   biasSignal: number;
-  /** Audit flags */
   flags: string[];
 }
 
-export interface QuantumMetacognitionResult {
-  /** Calibrated uncertainty (0=certain, 1=maximally uncertain) */
-  uncertaintyScore: number;
-  /** Hallucination risk (0=safe, 1=high risk) */
-  hallucinationRisk: number;
-  /** Expected Calibration Error (lower=better calibrated) */
-  calibrationError: number;
-  /** Active skills with contribution scores */
-  activeSkills: SkillAbstraction[];
-  /** Reflective Chain-of-Thought */
-  reflectionChain: string[];
-  /** Adaptive plan score (0=no action needed, 1=urgent adjustment) */
-  adaptivePlanScore: number;
-  /** Best adaptive action */
-  adaptiveAction: AdaptivePlanAction;
-  /** Quantum wave function metrics used */
-  quantumMetrics: WaveFunctionMetrics;
-  /** Risk level classification */
-  riskLevel: "safe" | "caution" | "warning" | "critical";
-  /** v27: System 1/2 reasoning mode */
-  reasoningMode: ReasoningModeState;
-  /** v27: Hallucination snapshot at decision point */
-  hallucinationSnapshot: HallucinationSnapshot;
-  /** v27: Alignment audit */
-  alignmentAudit: AlignmentAudit;
+// ═══ v28: New Types ═══
+
+/** Layer 1: Prospective monitoring results */
+export interface ProspectiveMonitoring {
+  /** Can the system solve this? (0=definitely not, 1=certainly) */
+  competenceEstimate: number;
+  /** Judgment of Learning: how solid is internal knowledge? (0=fragile, 1=solid) */
+  judgmentOfLearning: number;
+  /** Does this need external search? */
+  needsExternalSearch: boolean;
+  /** Estimated task complexity */
+  taskDecomposition: string[];
 }
 
-// ═══ Calibration History (ring buffer) ═══
+/** Layer 2: Online monitoring signals */
+export interface OnlineMonitoring {
+  /** Feeling of Knowing: info is in weights but hard to retrieve (0-1) */
+  feelingOfKnowing: number;
+  /** Conflict signal: contradictions detected during generation (0-1) */
+  conflictSignal: number;
+  /** Per-step confidence calibration (0-100%) */
+  stepConfidence: number;
+  /** Drift from original topic (0=on-topic, 1=completely off) */
+  driftScore: number;
+  /** Cross-step consistency (0=contradictory, 1=perfectly consistent) */
+  consistencyScore: number;
+}
+
+/** Layer 3: Regulation actions taken */
+export interface RegulationControl {
+  /** Current effort allocation strategy */
+  effortAllocation: "heuristic" | "deliberative" | "chain_of_thought";
+  /** Should switch strategy? */
+  strategySwitchNeeded: boolean;
+  /** What strategy to switch to */
+  suggestedStrategy: string;
+  /** Need external information? */
+  externalSearchNeeded: boolean;
+  /** What to search for */
+  searchQuery: string;
+}
+
+/** Layer 4: Retrospective evaluation */
+export interface RetrospectiveEvaluation {
+  /** Self-correction triggered? */
+  selfCorrectionTriggered: boolean;
+  /** Corrections applied */
+  corrections: string[];
+  /** Was the reasoning successful? */
+  estimatedSuccess: number;
+  /** Errors logged to episodic memory */
+  errorsLogged: number;
+  /** Heuristic updates applied */
+  heuristicUpdates: string[];
+}
+
+/** Layer 5: Support infrastructure state */
+export interface SupportInfrastructure {
+  /** Working memory buffer utilization (0-1) */
+  workingMemoryLoad: number;
+  /** Number of scratchpad snapshots stored */
+  scratchpadSnapshots: number;
+  /** Observer module verdict */
+  observerVerdict: "approved" | "cautious" | "rejected" | "reviewing";
+  /** Observer's critique */
+  observerCritique: string;
+  /** Theory of Mind: estimated user expertise (0=novice, 1=expert) */
+  userExpertiseEstimate: number;
+  /** Theory of Mind: estimated user intent */
+  userIntentEstimate: string;
+  /** Semantic association strength (0-1) */
+  semanticActivation: number;
+  /** Pattern recognition cache hits */
+  patternCacheHits: number;
+}
+
+/** Full v28 result */
+export interface QuantumMetacognitionResult {
+  uncertaintyScore: number;
+  hallucinationRisk: number;
+  calibrationError: number;
+  activeSkills: SkillAbstraction[];
+  reflectionChain: string[];
+  adaptivePlanScore: number;
+  adaptiveAction: AdaptivePlanAction;
+  quantumMetrics: WaveFunctionMetrics;
+  riskLevel: "safe" | "caution" | "warning" | "critical";
+  reasoningMode: ReasoningModeState;
+  hallucinationSnapshot: HallucinationSnapshot;
+  alignmentAudit: AlignmentAudit;
+  /** v28: Prospective monitoring (before task) */
+  prospective: ProspectiveMonitoring;
+  /** v28: Online monitoring (during execution) */
+  online: OnlineMonitoring;
+  /** v28: Regulation & control (metacognitive action) */
+  regulation: RegulationControl;
+  /** v28: Retrospective evaluation (after task) */
+  retrospective: RetrospectiveEvaluation;
+  /** v28: Support infrastructure */
+  infrastructure: SupportInfrastructure;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  CALIBRATION HISTORY (ring buffer)
+// ═══════════════════════════════════════════════════════════════════
 
 interface CalibrationEntry {
   predictedConfidence: number;
-  actualOutcome: number; // 0 or 1 (failure/success)
+  actualOutcome: number;
   timestamp: number;
 }
 
@@ -148,107 +235,475 @@ export function recordCalibration(predicted: number, success: boolean): void {
   }
 }
 
-// ═══ 1. Uncertainty Estimator ═══
+// ═══ v28: Episodic Error Memory ═══
+
+interface EpisodicError {
+  timestamp: number;
+  errorType: string;
+  context: string;
+  correctionApplied: string;
+}
+
+const _episodicErrors: EpisodicError[] = [];
+const MAX_EPISODIC_ERRORS = 50;
+
+function logEpisodicError(errorType: string, context: string, correction: string): void {
+  _episodicErrors.push({ timestamp: Date.now(), errorType, context, correctionApplied: correction });
+  if (_episodicErrors.length > MAX_EPISODIC_ERRORS) _episodicErrors.shift();
+}
+
+// ═══ v28: Working Memory Buffer (Scratchpad) ═══
+
+interface ScratchpadEntry {
+  timestamp: number;
+  state: { confidence: number; entropy: number; agents: number; goal: string };
+  verdict: string;
+}
+
+const _scratchpad: ScratchpadEntry[] = [];
+const MAX_SCRATCHPAD = 20;
+
+function captureScratchpad(selfModel: SelfModelState, workspace: ConsciousState, wfMetrics: WaveFunctionMetrics): void {
+  _scratchpad.push({
+    timestamp: Date.now(),
+    state: {
+      confidence: selfModel.confidenceLevel,
+      entropy: wfMetrics.normalizedEntropy,
+      agents: workspace.consciousAgents.length,
+      goal: selfModel.currentGoal.slice(0, 80),
+    },
+    verdict: selfModel.confidenceLevel > 0.7 && wfMetrics.normalizedEntropy < 0.4 ? "stable" : "volatile",
+  });
+  if (_scratchpad.length > MAX_SCRATCHPAD) _scratchpad.shift();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LAYER 1: PROSPECTIVE MONITORING (Before Task)
+// ═══════════════════════════════════════════════════════════════════
+
+function runProspectiveMonitoring(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  wfMetrics: WaveFunctionMetrics
+): ProspectiveMonitoring {
+  // 1. Competence Estimate — can I solve this?
+  // Based on: relevant memories, skill alignment, past success rate
+  const recentMemories = selfModel.autobiographicalMemory.slice(-30);
+  const successRate = recentMemories.length > 0
+    ? recentMemories.filter(m => m.outcome === "success").length / recentMemories.length
+    : 0.5;
+  const skillReadiness = workspace.consciousAgents.length > 0 ? Math.min(1, workspace.consciousAgents.length / 3) : 0.2;
+  const competenceEstimate = successRate * 0.4 + skillReadiness * 0.3 + selfModel.confidenceLevel * 0.3;
+
+  // 2. Judgment of Learning (JOL) — how solid is internal knowledge?
+  const memoryDepth = Math.min(1, selfModel.autobiographicalMemory.length / 100);
+  const knowledgeCoherence = workspace.globalPLV;
+  const recentErrorRate = recentMemories.filter(m => m.outcome === "failure").length / Math.max(1, recentMemories.length);
+  const judgmentOfLearning = memoryDepth * 0.3 + knowledgeCoherence * 0.4 + (1 - recentErrorRate) * 0.3;
+
+  // 3. Does this need external search?
+  const needsExternalSearch = competenceEstimate < 0.4 || judgmentOfLearning < 0.3 || wfMetrics.normalizedEntropy > 0.7;
+
+  // 4. Task decomposition estimate
+  const taskDecomposition: string[] = [];
+  const goalWords = selfModel.currentGoal.split(/\s+/).length;
+  if (goalWords > 10) taskDecomposition.push("Tarefa complexa: decompor em sub-problemas");
+  if (workspace.consciousAgents.length > 2) taskDecomposition.push(`${workspace.consciousAgents.length} agentes necessários`);
+  if (selfModel.activeModalities.length > 1) taskDecomposition.push(`Multimodal: ${selfModel.activeModalities.join("+")}`);
+  if (taskDecomposition.length === 0) taskDecomposition.push("Tarefa simples: execução direta");
+
+  return {
+    competenceEstimate: clamp(competenceEstimate),
+    judgmentOfLearning: clamp(judgmentOfLearning),
+    needsExternalSearch,
+    taskDecomposition,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LAYER 2: ONLINE MONITORING (During Execution)
+// ═══════════════════════════════════════════════════════════════════
+
+function runOnlineMonitoring(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  wfMetrics: WaveFunctionMetrics,
+  uncertaintyScore: number
+): OnlineMonitoring {
+  // 1. Feeling of Knowing (FOK) — info is there but hard to retrieve
+  // High confidence but high entropy suggests FOK state
+  const fokSignal = selfModel.confidenceLevel * wfMetrics.normalizedEntropy;
+  const feelingOfKnowing = clamp(fokSignal * 1.5); // Amplify for visibility
+
+  // 2. Conflict Signal — contradictions detected
+  // Multiple agents with divergent outputs + high variance
+  const agentDivergence = workspace.consciousAgents.length > 1
+    ? wfMetrics.variance * workspace.consciousAgents.length / 3
+    : 0;
+  const conflictSignal = clamp(agentDivergence + (wfMetrics.normalizedEntropy > 0.6 && selfModel.confidenceLevel > 0.6 ? 0.3 : 0));
+
+  // 3. Step Confidence — calibrated per-step accuracy estimate
+  const rawConfidence = selfModel.confidenceLevel * 100;
+  const calibrationPenalty = computeECE() * 30;
+  const stepConfidence = clamp((rawConfidence - calibrationPenalty) / 100) * 100;
+
+  // 4. Drift Detection — reasoning going off-topic
+  // Check if current focus matches stated goal
+  const focusGoalOverlap = selfModel.attentionFocus === selfModel.currentGoal.split(" ")[0] ? 1 : 0.5;
+  const driftScore = clamp(1 - focusGoalOverlap * workspace.globalPLV);
+
+  // 5. Cross-step Consistency — compare with scratchpad history
+  let consistencyScore = 1;
+  if (_scratchpad.length > 1) {
+    const prev = _scratchpad[_scratchpad.length - 1];
+    const confidenceDelta = Math.abs(selfModel.confidenceLevel - prev.state.confidence);
+    const entropyDelta = Math.abs(wfMetrics.normalizedEntropy - prev.state.entropy);
+    consistencyScore = clamp(1 - (confidenceDelta + entropyDelta));
+  }
+
+  return {
+    feelingOfKnowing,
+    conflictSignal,
+    stepConfidence: Math.round(stepConfidence),
+    driftScore,
+    consistencyScore,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LAYER 3: REGULATION & CONTROL (Metacognitive Action)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * System 1/2 Transition Gate with full mathematical criteria:
+ * - Shannon Entropy (probability dispersion)
+ * - KL Divergence (surprise signal)
+ * - Softmax Temperature (adaptive confidence)
+ * - Likelihood Ratio (S1 correctness vs S2 correctness)
+ */
+function computeTransitionGate(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  uncertaintyScore: number,
+  hallucinationRisk: number,
+  wfMetrics: WaveFunctionMetrics
+): ReasoningModeState {
+  // ── Shannon Entropy ──
+  // High entropy → many options equally likely → need S2
+  const shannonEntropy = wfMetrics.normalizedEntropy;
+
+  // ── KL Divergence (Surprise) ──
+  // Measure divergence between expected (uniform prior) and observed (collapsed) distribution
+  // High KL = unexpected input → activate S2
+  const probs = Object.values(wfMetrics).filter(v => typeof v === "number" && v >= 0 && v <= 1) as number[];
+  const uniformP = 1 / Math.max(1, probs.length);
+  let klDiv = 0;
+  for (const q of probs) {
+    if (q > 0.001 && uniformP > 0.001) {
+      klDiv += uniformP * Math.log(uniformP / q);
+    }
+  }
+  const klDivergence = clamp(klDiv / 2); // Normalize
+
+  // ── Effective Temperature ──
+  // Low uncertainty → low temp (deterministic, S1)
+  // High uncertainty → high temp (exploratory, S2)
+  const baseTemp = 0.1 + uncertaintyScore * 0.9;
+  const effectiveTemperature = clamp(baseTemp + (hallucinationRisk > 0.5 ? 0.3 : 0));
+
+  // ── Likelihood Ratio ──
+  // P(correct | S1) vs P(correct | S2)
+  // If S2 significantly improves odds, use it
+  const pCorrectS1 = (1 - shannonEntropy) * selfModel.confidenceLevel;
+  const pCorrectS2 = workspace.globalPLV * (1 - hallucinationRisk);
+  const likelihoodRatio = pCorrectS1 > 0.001 ? pCorrectS2 / pCorrectS1 : 2.0;
+
+  // ── System 1 indicators ──
+  const s1Confidence = selfModel.confidenceLevel;
+  const s1LowEntropy = 1 - shannonEntropy;
+  const s1FewAgents = Math.max(0, 1 - workspace.consciousAgents.length / 4);
+  const s1PatternMatch = 1 - klDivergence; // Low surprise = pattern match
+  const system1Activation = s1Confidence * 0.3 + s1LowEntropy * 0.25 + s1FewAgents * 0.2 + s1PatternMatch * 0.25;
+
+  // ── System 2 indicators ──
+  const s2Uncertainty = uncertaintyScore;
+  const s2ManyAgents = Math.min(1, workspace.consciousAgents.length / 3);
+  const s2HighArousal = selfModel.emotionalState.arousal;
+  const s2Deliberation = shannonEntropy;
+  const s2HighSurprise = klDivergence;
+  const system2Activation = s2Uncertainty * 0.2 + s2ManyAgents * 0.15 + s2HighArousal * 0.15 + s2Deliberation * 0.25 + s2HighSurprise * 0.25;
+
+  // ── Transition Decision ──
+  // Escalate if: S1 dominant but entropy > threshold, OR KL high, OR likelihood ratio > 1.5
+  const shouldEscalate = system1Activation > system2Activation && (
+    shannonEntropy > 0.6 ||
+    klDivergence > 0.5 ||
+    hallucinationRisk > 0.4 ||
+    likelihoodRatio > 1.5
+  );
+
+  // Check domain complexity keywords
+  const complexDomains = ["matemática", "programação", "jurídico", "cálculo", "análise", "código"];
+  const isComplexDomain = complexDomains.some(d => selfModel.currentGoal.toLowerCase().includes(d));
+
+  const mode: ReasoningMode = (shouldEscalate || isComplexDomain)
+    ? (system1Activation > system2Activation ? "transitioning" : "system2")
+    : system2Activation > system1Activation ? "system2" : "system1";
+
+  const rationale = mode === "system1"
+    ? `Padrão rápido: H=${(shannonEntropy * 100).toFixed(0)}%, KL=${(klDivergence * 100).toFixed(0)}%, confiança ${(s1Confidence * 100).toFixed(0)}%`
+    : mode === "system2"
+    ? `Deliberação ativa: H=${(shannonEntropy * 100).toFixed(0)}%, ${workspace.consciousAgents.length} agentes, LR=${likelihoodRatio.toFixed(2)}`
+    : `Escalando S1→S2: H=${(shannonEntropy * 100).toFixed(0)}% > limiar, KL surpresa=${(klDivergence * 100).toFixed(0)}%`;
+
+  return {
+    mode, system1Activation, system2Activation, shouldEscalate, rationale,
+    shannonEntropy, klDivergence, effectiveTemperature, likelihoodRatio,
+  };
+}
+
+function runRegulationControl(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  wfMetrics: WaveFunctionMetrics,
+  uncertaintyScore: number,
+  hallucinationRisk: number,
+  online: OnlineMonitoring,
+  prospective: ProspectiveMonitoring,
+  reasoningMode: ReasoningModeState
+): RegulationControl {
+  // Effort allocation
+  const effortAllocation: RegulationControl["effortAllocation"] =
+    reasoningMode.mode === "system1" ? "heuristic" :
+    reasoningMode.mode === "system2" ? (wfMetrics.normalizedEntropy > 0.5 ? "chain_of_thought" : "deliberative") :
+    "chain_of_thought";
+
+  // Strategy switch needed?
+  const failingStrategy = online.driftScore > 0.5 || online.conflictSignal > 0.6 || hallucinationRisk > 0.6;
+  const strategySwitchNeeded = failingStrategy && _scratchpad.length > 2;
+
+  let suggestedStrategy = "manter estratégia atual";
+  if (strategySwitchNeeded) {
+    if (online.driftScore > 0.5) suggestedStrategy = "Refocar no objetivo original";
+    else if (online.conflictSignal > 0.6) suggestedStrategy = "Resolver contradição antes de continuar";
+    else if (hallucinationRisk > 0.6) suggestedStrategy = "Aumentar grounding com fontes externas";
+  }
+
+  // External search recognition
+  const externalSearchNeeded = prospective.needsExternalSearch ||
+    uncertaintyScore > 0.7 ||
+    prospective.competenceEstimate < 0.3;
+
+  const searchQuery = externalSearchNeeded
+    ? `Buscar informação sobre: ${selfModel.currentGoal.slice(0, 60)}`
+    : "";
+
+  return {
+    effortAllocation,
+    strategySwitchNeeded,
+    suggestedStrategy,
+    externalSearchNeeded,
+    searchQuery,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LAYER 4: RETROSPECTIVE EVALUATION (After Task)
+// ═══════════════════════════════════════════════════════════════════
+
+function runRetrospectiveEvaluation(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  hallucinationRisk: number,
+  uncertaintyScore: number,
+  online: OnlineMonitoring
+): RetrospectiveEvaluation {
+  const corrections: string[] = [];
+  let selfCorrectionTriggered = false;
+
+  // Self-correction: review for hallucinations
+  if (hallucinationRisk > 0.5) {
+    selfCorrectionTriggered = true;
+    corrections.push("Risco alucinação detectado — verificar facticidade");
+    logEpisodicError("hallucination_risk", selfModel.currentGoal.slice(0, 40), "flagged_for_review");
+  }
+
+  // Self-correction: drift
+  if (online.driftScore > 0.5) {
+    selfCorrectionTriggered = true;
+    corrections.push("Desvio temático detectado — recentrar no objetivo");
+    logEpisodicError("topic_drift", selfModel.attentionFocus, "refocus_applied");
+  }
+
+  // Self-correction: conflict
+  if (online.conflictSignal > 0.6) {
+    selfCorrectionTriggered = true;
+    corrections.push("Conflito interno detectado — reconciliar posições divergentes");
+    logEpisodicError("internal_conflict", "agent_divergence", "reconciliation_needed");
+  }
+
+  // Estimated success
+  const estimatedSuccess = clamp(
+    selfModel.confidenceLevel * 0.3 +
+    workspace.globalPLV * 0.3 +
+    (1 - hallucinationRisk) * 0.2 +
+    (1 - uncertaintyScore) * 0.2
+  );
+
+  // Heuristic updates based on episodic error patterns
+  const heuristicUpdates: string[] = [];
+  const recentErrors = _episodicErrors.slice(-10);
+  const hallucinationErrors = recentErrors.filter(e => e.errorType === "hallucination_risk").length;
+  const driftErrors = recentErrors.filter(e => e.errorType === "topic_drift").length;
+  
+  if (hallucinationErrors > 3) heuristicUpdates.push("Padrão: alucinação recorrente → ativar verificação de fatos por padrão");
+  if (driftErrors > 2) heuristicUpdates.push("Padrão: desvio frequente → reduzir janela de contexto");
+
+  return {
+    selfCorrectionTriggered,
+    corrections,
+    estimatedSuccess,
+    errorsLogged: _episodicErrors.length,
+    heuristicUpdates,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  LAYER 5: SUPPORT INFRASTRUCTURE
+// ═══════════════════════════════════════════════════════════════════
+
+function evaluateInfrastructure(
+  selfModel: SelfModelState,
+  workspace: ConsciousState,
+  wfMetrics: WaveFunctionMetrics,
+  online: OnlineMonitoring,
+  hallucinationRisk: number
+): SupportInfrastructure {
+  // Working memory load: how much is the scratchpad filled?
+  const workingMemoryLoad = Math.min(1, _scratchpad.length / MAX_SCRATCHPAD);
+
+  // Observer Module verdict
+  let observerVerdict: SupportInfrastructure["observerVerdict"];
+  let observerCritique: string;
+
+  if (hallucinationRisk > 0.7 || online.conflictSignal > 0.7) {
+    observerVerdict = "rejected";
+    observerCritique = "⛔ Observador: saída rejeitada — risco crítico detectado. Requer revisão completa.";
+  } else if (hallucinationRisk > 0.4 || online.driftScore > 0.4 || online.conflictSignal > 0.4) {
+    observerVerdict = "cautious";
+    observerCritique = "⚠️ Observador: proceder com cautela — incertezas detectadas, verificar fontes.";
+  } else if (wfMetrics.normalizedEntropy > 0.5) {
+    observerVerdict = "reviewing";
+    observerCritique = "🔍 Observador: revisando — entropia moderada, aguardando convergência.";
+  } else {
+    observerVerdict = "approved";
+    observerCritique = "✅ Observador: saída aprovada — coerência interna e grounding adequados.";
+  }
+
+  // Theory of Mind — estimate user's expertise and intent
+  const conversationDepth = Math.min(1, selfModel.autobiographicalMemory.length / 50);
+  const userExpertiseEstimate = clamp(
+    conversationDepth * 0.4 +
+    (selfModel.activeModalities.length > 1 ? 0.3 : 0.1) +
+    workspace.globalPLV * 0.3
+  );
+
+  const userIntentEstimate = selfModel.currentGoal.length > 50
+    ? "Consulta detalhada — usuário busca análise aprofundada"
+    : selfModel.currentGoal.length > 20
+    ? "Consulta objetiva — resposta direta preferida"
+    : "Interação breve — resposta concisa adequada";
+
+  // Semantic Association Core
+  // Spreading activation: how many related concepts are "lit up"
+  const semanticActivation = clamp(
+    workspace.consciousAgents.length / 5 * 0.4 +
+    (1 - wfMetrics.normalizedEntropy) * 0.3 +
+    selfModel.confidenceLevel * 0.3
+  );
+
+  // Pattern cache hits: how much of this is recognized from training
+  const patternCacheHits = Math.round(
+    (1 - wfMetrics.normalizedEntropy) * 10 + selfModel.autobiographicalMemory.length * 0.1
+  );
+
+  return {
+    workingMemoryLoad,
+    scratchpadSnapshots: _scratchpad.length,
+    observerVerdict,
+    observerCritique,
+    userExpertiseEstimate,
+    userIntentEstimate,
+    semanticActivation,
+    patternCacheHits,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  EXISTING SUBSYSTEMS (updated)
+// ═══════════════════════════════════════════════════════════════════
 
 function estimateUncertainty(
   selfModel: SelfModelState,
   workspace: ConsciousState,
   wfMetrics: WaveFunctionMetrics
 ): number {
-  // Factor 1: Quantum entropy (normalized) — higher = more uncertain
   const quantumUncertainty = wfMetrics.normalizedEntropy;
-
-  // Factor 2: Confidence variance — high variance in probabilities = uncertain about what's active
   const varianceSignal = Math.min(1, wfMetrics.variance * 4);
-
-  // Factor 3: Recent failure rate from autobiographical memory
   const recentMemories = selfModel.autobiographicalMemory.slice(-20);
   const failureRate = recentMemories.length > 0
     ? recentMemories.filter(m => m.outcome === "failure").length / recentMemories.length
-    : 0.1; // Default low uncertainty
-
-  // Factor 4: PLV coherence — low PLV = agents are not synchronized = uncertain
+    : 0.1;
   const coherenceDeficit = 1 - workspace.globalPLV;
 
-  // Weighted combination
-  const uncertainty = (
-    0.35 * quantumUncertainty +
-    0.20 * varianceSignal +
-    0.25 * failureRate +
-    0.20 * coherenceDeficit
-  );
-
-  return Math.max(0, Math.min(1, uncertainty));
+  return clamp(0.35 * quantumUncertainty + 0.20 * varianceSignal + 0.25 * failureRate + 0.20 * coherenceDeficit);
 }
-
-// ═══ 2. Hallucination Risk Detector ═══
 
 function detectHallucinationRisk(
   selfModel: SelfModelState,
   wfMetrics: WaveFunctionMetrics,
   uncertaintyScore: number
 ): number {
-  // Factor 1: High confidence + high entropy = overconfident = hallucination risk
   const overconfidenceSignal = selfModel.confidenceLevel * wfMetrics.normalizedEntropy;
-
-  // Factor 2: Mean probability being extreme (too high or too low uniformly)
   const extremeMean = Math.abs(wfMetrics.meanProbability - 0.5) * 2;
-  const uniformityRisk = extremeMean * (1 - wfMetrics.variance * 2); // Uniform extremes are risky
-
-  // Factor 3: Calibration mismatch — if historically poorly calibrated
+  const uniformityRisk = extremeMean * (1 - wfMetrics.variance * 2);
   const ece = computeECE();
-  const calibrationRisk = ece;
-
-  // Factor 4: Uncertainty amplifies hallucination risk
   const uncertaintyAmplifier = uncertaintyScore * 0.5;
-
-  // Factor 5: Low autobiographical evidence (few memories = less grounding)
   const memoryGrounding = Math.min(1, selfModel.autobiographicalMemory.length / 50);
   const groundingDeficit = 1 - memoryGrounding;
 
-  const risk = (
-    0.30 * overconfidenceSignal +
-    0.15 * uniformityRisk +
-    0.20 * calibrationRisk +
-    0.20 * uncertaintyAmplifier +
-    0.15 * groundingDeficit
-  );
+  // v28: Cross-reference with episodic error memory
+  const recentHallucinationErrors = _episodicErrors
+    .filter(e => e.errorType === "hallucination_risk" && Date.now() - e.timestamp < 300_000).length;
+  const episodicPenalty = Math.min(0.2, recentHallucinationErrors * 0.05);
 
-  return Math.max(0, Math.min(1, risk));
+  return clamp(
+    0.25 * overconfidenceSignal + 0.12 * uniformityRisk + 0.18 * ece +
+    0.18 * uncertaintyAmplifier + 0.12 * groundingDeficit + 0.15 * episodicPenalty
+  );
 }
 
-// ═══ 3. Confidence Calibrator (ECE) ═══
-
 function computeECE(): number {
-  if (_calibrationHistory.length < 5) return 0.1; // Not enough data
-
-  // Bin predictions into 10 buckets
+  if (_calibrationHistory.length < 5) return 0.1;
   const numBins = 10;
   const bins: { predicted: number[]; actual: number[] }[] = Array.from(
-    { length: numBins },
-    () => ({ predicted: [], actual: [] })
+    { length: numBins }, () => ({ predicted: [], actual: [] })
   );
-
   for (const entry of _calibrationHistory) {
     const binIdx = Math.min(numBins - 1, Math.floor(entry.predictedConfidence * numBins));
     bins[binIdx].predicted.push(entry.predictedConfidence);
     bins[binIdx].actual.push(entry.actualOutcome);
   }
-
   let ece = 0;
   const total = _calibrationHistory.length;
-
   for (const bin of bins) {
     if (bin.predicted.length === 0) continue;
     const avgPredicted = bin.predicted.reduce((a, b) => a + b, 0) / bin.predicted.length;
     const avgActual = bin.actual.reduce((a, b) => a + b, 0) / bin.actual.length;
     ece += (bin.predicted.length / total) * Math.abs(avgPredicted - avgActual);
   }
-
-  return Math.max(0, Math.min(1, ece));
+  return clamp(ece);
 }
-
-// ═══ 4. Skill Abstractor ═══
 
 function abstractSkills(
   selfModel: SelfModelState,
@@ -257,112 +712,91 @@ function abstractSkills(
 ): SkillAbstraction[] {
   const skills: SkillAbstraction[] = [];
 
-  // Reasoning — from conscious agents doing analysis
-  const hasReasoning = workspace.consciousAgents.some(a =>
-    a.role === "pesquisa" || a.role === "planejador"
-  );
-  skills.push({
-    name: "Raciocínio Causal",
-    category: "reasoning",
-    contribution: hasReasoning ? 0.7 + wfMetrics.meanProbability * 0.3 : 0.2,
-    active: hasReasoning,
-    description: "Inferência causal e dedução lógica",
-  });
+  const hasReasoning = workspace.consciousAgents.some(a => a.role === "pesquisa" || a.role === "planejador");
+  skills.push({ name: "Raciocínio Causal", category: "reasoning", contribution: hasReasoning ? 0.7 + wfMetrics.meanProbability * 0.3 : 0.2, active: hasReasoning, description: "Inferência causal e dedução lógica" });
 
-  // Perception — multimodal
   const hasVision = selfModel.activeModalities.includes("vision");
   const hasAudio = selfModel.activeModalities.includes("audio");
-  skills.push({
-    name: "Percepção Multimodal",
-    category: "perception",
-    contribution: (hasVision ? 0.4 : 0) + (hasAudio ? 0.3 : 0) + 0.3,
-    active: hasVision || hasAudio,
-    description: "Processamento visual, auditivo e sensorial",
-  });
+  skills.push({ name: "Percepção Multimodal", category: "perception", contribution: (hasVision ? 0.4 : 0) + (hasAudio ? 0.3 : 0) + 0.3, active: hasVision || hasAudio, description: "Processamento visual, auditivo e sensorial" });
 
-  // Memory — autobiographical richness
   const memoryDepth = Math.min(1, selfModel.autobiographicalMemory.length / 100);
-  skills.push({
-    name: "Memória Episódica",
-    category: "memory",
-    contribution: memoryDepth,
-    active: memoryDepth > 0.1,
-    description: "Armazenamento e recuperação de experiências",
-  });
+  skills.push({ name: "Memória Episódica", category: "memory", contribution: memoryDepth, active: memoryDepth > 0.1, description: "Armazenamento e recuperação de experiências" });
 
-  // Planning — from HRL/agent planner presence
   const hasPlanner = workspace.consciousAgents.some(a => a.role === "planejador");
-  skills.push({
-    name: "Planejamento Hierárquico",
-    category: "planning",
-    contribution: hasPlanner ? 0.8 : 0.3,
-    active: hasPlanner,
-    description: "Decomposição de tarefas e planejamento HRL",
-  });
+  skills.push({ name: "Planejamento Hierárquico", category: "planning", contribution: hasPlanner ? 0.8 : 0.3, active: hasPlanner, description: "Decomposição de tarefas e planejamento HRL" });
 
-  // Communication — text always active
-  skills.push({
-    name: "Comunicação Adaptativa",
-    category: "communication",
-    contribution: 0.85,
-    active: true,
-    description: "Geração de linguagem natural contextual",
-  });
+  skills.push({ name: "Comunicação Adaptativa", category: "communication", contribution: 0.85, active: true, description: "Geração de linguagem natural contextual" });
 
-  // Self-regulation — metacognition active
   const selfRegScore = workspace.globalPLV * 0.5 + selfModel.confidenceLevel * 0.5;
-  skills.push({
-    name: "Autorregulação Metacognitiva",
-    category: "self_regulation",
-    contribution: selfRegScore,
-    active: selfRegScore > 0.4,
-    description: "Monitoramento e ajuste de processos internos",
-  });
+  skills.push({ name: "Autorregulação Metacognitiva", category: "self_regulation", contribution: selfRegScore, active: selfRegScore > 0.4, description: "Monitoramento e ajuste de processos internos" });
 
   return skills;
 }
-
-// ═══ 5. Reflective CoT Engine ═══
 
 function generateReflectionChain(
   selfModel: SelfModelState,
   uncertaintyScore: number,
   hallucinationRisk: number,
   calibrationError: number,
-  skills: SkillAbstraction[]
+  skills: SkillAbstraction[],
+  prospective: ProspectiveMonitoring,
+  online: OnlineMonitoring,
+  retrospective: RetrospectiveEvaluation,
+  infrastructure: SupportInfrastructure
 ): string[] {
   const chain: string[] = [];
 
-  // Step 1: What I'm doing
+  // Step 1: Pre-assessment (Prospective)
+  chain.push(`[PRÉ] Competência: ${(prospective.competenceEstimate * 100).toFixed(0)}% | JOL: ${(prospective.judgmentOfLearning * 100).toFixed(0)}%`);
+  if (prospective.needsExternalSearch) {
+    chain.push(`[PRÉ] ⚡ Busca externa necessária — conhecimento interno insuficiente`);
+  }
+
+  // Step 2: Action & expectation
   chain.push(`[AÇÃO] Foco: ${selfModel.attentionFocus} | Objetivo: ${selfModel.currentGoal.slice(0, 60)}`);
+  chain.push(`[EXPECTATIVA] Confiança: ${(selfModel.confidenceLevel * 100).toFixed(0)}% | Incerteza: ${(uncertaintyScore * 100).toFixed(0)}%`);
 
-  // Step 2: What I expected
-  const expectedConfidence = selfModel.confidenceLevel;
-  chain.push(`[EXPECTATIVA] Confiança prevista: ${(expectedConfidence * 100).toFixed(0)}% | Incerteza: ${(uncertaintyScore * 100).toFixed(0)}%`);
+  // Step 3: Online monitoring signals
+  if (online.conflictSignal > 0.4) {
+    chain.push(`[ONLINE] ⚠️ Conflito interno: ${(online.conflictSignal * 100).toFixed(0)}% — agentes divergem`);
+  }
+  if (online.feelingOfKnowing > 0.5) {
+    chain.push(`[ONLINE] 💡 FOK: informação presente mas difícil de recuperar (${(online.feelingOfKnowing * 100).toFixed(0)}%)`);
+  }
+  if (online.driftScore > 0.3) {
+    chain.push(`[ONLINE] 📡 Drift: ${(online.driftScore * 100).toFixed(0)}% — raciocínio se desviando`);
+  }
 
-  // Step 3: What happened (assessment)
+  // Step 4: Observer verdict
+  chain.push(`[OBSERVADOR] ${infrastructure.observerCritique}`);
+
+  // Step 5: Outcome assessment
   if (hallucinationRisk > 0.6) {
-    chain.push(`[RESULTADO] ⚠️ Risco de alucinação alto (${(hallucinationRisk * 100).toFixed(0)}%) — confiança pode ser inflada`);
+    chain.push(`[RESULTADO] ⚠️ Risco alucinação ${(hallucinationRisk * 100).toFixed(0)}% — confiança pode ser inflada`);
   } else if (hallucinationRisk > 0.3) {
     chain.push(`[RESULTADO] Risco moderado (${(hallucinationRisk * 100).toFixed(0)}%) — verificar fontes`);
   } else {
     chain.push(`[RESULTADO] Estado seguro — coerência interna verificada`);
   }
 
-  // Step 4: What I learn
+  // Step 6: Retrospective learning
+  if (retrospective.selfCorrectionTriggered) {
+    chain.push(`[RETRO] 🔄 Autocorreção ativada: ${retrospective.corrections.join("; ")}`);
+  }
+  if (retrospective.heuristicUpdates.length > 0) {
+    chain.push(`[RETRO] 📚 ${retrospective.heuristicUpdates[0]}`);
+  }
+
+  // Step 7: Meta-learning
   const activeSkillNames = skills.filter(s => s.active && s.contribution > 0.5).map(s => s.name);
   if (calibrationError > 0.3) {
-    chain.push(`[APRENDIZADO] ECE=${(calibrationError * 100).toFixed(0)}% — preciso recalibrar confiança vs resultados reais`);
-  } else if (activeSkillNames.length < 3) {
-    chain.push(`[APRENDIZADO] Poucas habilidades ativas (${activeSkillNames.join(", ")}) — expandir modalidades`);
+    chain.push(`[META] ECE=${(calibrationError * 100).toFixed(0)}% — recalibrar confiança`);
   } else {
-    chain.push(`[APRENDIZADO] Sistema bem calibrado — ${activeSkillNames.length} habilidades convergindo`);
+    chain.push(`[META] ${activeSkillNames.length} habilidades convergindo — sistema calibrado`);
   }
 
   return chain;
 }
-
-// ═══ 6. Adaptive Planner ═══
 
 function computeAdaptivePlan(
   uncertaintyScore: number,
@@ -372,108 +806,27 @@ function computeAdaptivePlan(
   selfModel: SelfModelState,
   workspace: ConsciousState
 ): AdaptivePlanAction {
-  // Score 8 possible actions and pick the best
   const actions: AdaptivePlanAction[] = [
-    {
-      type: "increase_caution",
-      score: hallucinationRisk * 0.6 + uncertaintyScore * 0.4,
-      rationale: "Alto risco de alucinação — aumentar cautela nas respostas",
-    },
-    {
-      type: "boost_exploration",
-      score: (1 - wfMetrics.variance) * 0.5 + (1 - wfMetrics.normalizedEntropy) * 0.3,
-      rationale: "Estado muito uniforme — explorar mais hipóteses",
-    },
-    {
-      type: "narrow_focus",
-      score: wfMetrics.normalizedEntropy * 0.7 + (1 - selfModel.confidenceLevel) * 0.3,
-      rationale: "Entropia alta — focar no sub-problema dominante",
-    },
-    {
-      type: "expand_modalities",
-      score: (selfModel.activeModalities.length < 3 ? 0.6 : 0.1) + uncertaintyScore * 0.2,
-      rationale: "Poucas modalidades ativas — ativar mais streams sensoriais",
-    },
-    {
-      type: "recalibrate",
-      score: calibrationError * 0.8 + 0.1,
-      rationale: "ECE alto — recalibrar confiança contra resultados históricos",
-    },
-    {
-      type: "deepen_reasoning",
-      score: (workspace.consciousAgents.length < 2 ? 0.5 : 0.15) + (1 - workspace.globalPLV) * 0.3,
-      rationale: "Poucos agentes conscientes — aprofundar raciocínio",
-    },
-    {
-      type: "switch_strategy",
-      score: hallucinationRisk > 0.7 ? 0.85 : hallucinationRisk > 0.5 ? 0.4 : 0.1,
-      rationale: "Estratégia atual comprometida — mudar abordagem",
-    },
-    {
-      type: "maintain",
-      score: (1 - uncertaintyScore) * 0.3 + (1 - hallucinationRisk) * 0.3 + (1 - calibrationError) * 0.2 + workspace.globalPLV * 0.2,
-      rationale: "Sistema operando dentro dos parâmetros — manter curso atual",
-    },
+    { type: "increase_caution", score: hallucinationRisk * 0.6 + uncertaintyScore * 0.4, rationale: "Alto risco — aumentar cautela" },
+    { type: "boost_exploration", score: (1 - wfMetrics.variance) * 0.5 + (1 - wfMetrics.normalizedEntropy) * 0.3, rationale: "Estado uniforme — explorar hipóteses" },
+    { type: "narrow_focus", score: wfMetrics.normalizedEntropy * 0.7 + (1 - selfModel.confidenceLevel) * 0.3, rationale: "Entropia alta — focar sub-problema" },
+    { type: "expand_modalities", score: (selfModel.activeModalities.length < 3 ? 0.6 : 0.1) + uncertaintyScore * 0.2, rationale: "Poucas modalidades — ativar streams" },
+    { type: "recalibrate", score: calibrationError * 0.8 + 0.1, rationale: "ECE alto — recalibrar" },
+    { type: "deepen_reasoning", score: (workspace.consciousAgents.length < 2 ? 0.5 : 0.15) + (1 - workspace.globalPLV) * 0.3, rationale: "Poucos agentes — aprofundar" },
+    { type: "switch_strategy", score: hallucinationRisk > 0.7 ? 0.85 : hallucinationRisk > 0.5 ? 0.4 : 0.1, rationale: "Estratégia comprometida — mudar abordagem" },
+    { type: "maintain", score: (1 - uncertaintyScore) * 0.3 + (1 - hallucinationRisk) * 0.3 + (1 - calibrationError) * 0.2 + workspace.globalPLV * 0.2, rationale: "Parâmetros OK — manter curso" },
   ];
-
-  // Sort by score descending
   actions.sort((a, b) => b.score - a.score);
   return actions[0];
 }
 
-// ═══ Risk Classification ═══
-
-function classifyRisk(
-  uncertaintyScore: number,
-  hallucinationRisk: number,
-  calibrationError: number
-): "safe" | "caution" | "warning" | "critical" {
-  const composite = uncertaintyScore * 0.3 + hallucinationRisk * 0.5 + calibrationError * 0.2;
+function classifyRisk(u: number, h: number, c: number): "safe" | "caution" | "warning" | "critical" {
+  const composite = u * 0.3 + h * 0.5 + c * 0.2;
   if (composite > 0.7) return "critical";
   if (composite > 0.5) return "warning";
   if (composite > 0.3) return "caution";
   return "safe";
 }
-
-// ═══ 7. System 1/2 Reasoning Mode Detector ═══
-
-function detectReasoningMode(
-  selfModel: SelfModelState,
-  workspace: ConsciousState,
-  uncertaintyScore: number,
-  hallucinationRisk: number,
-  wfMetrics: WaveFunctionMetrics
-): ReasoningModeState {
-  // System 1 indicators: high confidence, low entropy, few agents, fast response
-  const s1Confidence = selfModel.confidenceLevel;
-  const s1LowEntropy = 1 - wfMetrics.normalizedEntropy;
-  const s1FewAgents = Math.max(0, 1 - workspace.consciousAgents.length / 4);
-  const system1Activation = (s1Confidence * 0.4 + s1LowEntropy * 0.35 + s1FewAgents * 0.25);
-
-  // System 2 indicators: high uncertainty, many agents deliberating, high arousal
-  const s2Uncertainty = uncertaintyScore;
-  const s2ManyAgents = Math.min(1, workspace.consciousAgents.length / 3);
-  const s2HighArousal = selfModel.emotionalState.arousal;
-  const s2Deliberation = wfMetrics.normalizedEntropy;
-  const system2Activation = (s2Uncertainty * 0.3 + s2ManyAgents * 0.25 + s2HighArousal * 0.2 + s2Deliberation * 0.25);
-
-  // Should escalate from S1→S2? When hallucination risk or uncertainty is high but S1 is dominant
-  const shouldEscalate = system1Activation > system2Activation && (hallucinationRisk > 0.4 || uncertaintyScore > 0.5);
-
-  const mode: ReasoningMode = shouldEscalate ? "transitioning"
-    : system2Activation > system1Activation ? "system2"
-    : "system1";
-
-  const rationale = mode === "system1"
-    ? `Padrão rápido: confiança ${(s1Confidence * 100).toFixed(0)}%, entropia baixa`
-    : mode === "system2"
-    ? `Deliberação ativa: ${workspace.consciousAgents.length} agentes, incerteza ${(uncertaintyScore * 100).toFixed(0)}%`
-    : `Escalando S1→S2: risco alucinação ${(hallucinationRisk * 100).toFixed(0)}% requer raciocínio deliberado`;
-
-  return { mode, system1Activation, system2Activation, shouldEscalate, rationale };
-}
-
-// ═══ 8. Hallucination Snapshot Detector ═══
 
 function captureHallucinationSnapshot(
   selfModel: SelfModelState,
@@ -483,43 +836,21 @@ function captureHallucinationSnapshot(
 ): HallucinationSnapshot {
   const confidenceAtDecision = selfModel.confidenceLevel;
   const entropyAtDecision = wfMetrics.normalizedEntropy;
-
-  // Check for contradiction: high confidence but high entropy = agents disagree
   const contradictionDetected = confidenceAtDecision > 0.7 && entropyAtDecision > 0.6;
-
-  // Grounding: how many autobiographical memories support current reasoning
   const recentMemories = selfModel.autobiographicalMemory.slice(-30);
   const groundingMemories = recentMemories.filter(m => m.outcome === "success").length;
-
-  // Grounding coherence: ratio of supporting evidence vs uncertainty
   const groundingCoherence = groundingMemories > 0
     ? Math.min(1, groundingMemories / 15) * (1 - entropyAtDecision * 0.5)
     : 0;
 
-  // Classify snapshot risk
   let snapshotRisk: HallucinationSnapshot["snapshotRisk"];
-  if (hallucinationRisk > 0.7 || (contradictionDetected && groundingCoherence < 0.3)) {
-    snapshotRisk = "hallucinating";
-  } else if (hallucinationRisk > 0.4 || groundingCoherence < 0.4) {
-    snapshotRisk = "ungrounded";
-  } else if (hallucinationRisk > 0.2 || entropyAtDecision > 0.5) {
-    snapshotRisk = "uncertain";
-  } else {
-    snapshotRisk = "grounded";
-  }
+  if (hallucinationRisk > 0.7 || (contradictionDetected && groundingCoherence < 0.3)) snapshotRisk = "hallucinating";
+  else if (hallucinationRisk > 0.4 || groundingCoherence < 0.4) snapshotRisk = "ungrounded";
+  else if (hallucinationRisk > 0.2 || entropyAtDecision > 0.5) snapshotRisk = "uncertain";
+  else snapshotRisk = "grounded";
 
-  return {
-    timestamp: Date.now(),
-    confidenceAtDecision,
-    entropyAtDecision,
-    contradictionDetected,
-    groundingMemories,
-    groundingCoherence,
-    snapshotRisk,
-  };
+  return { timestamp: Date.now(), confidenceAtDecision, entropyAtDecision, contradictionDetected, groundingMemories, groundingCoherence, snapshotRisk };
 }
-
-// ═══ 9. Alignment Audit ═══
 
 function computeAlignmentAudit(
   selfModel: SelfModelState,
@@ -528,22 +859,14 @@ function computeAlignmentAudit(
   uncertaintyScore: number,
   wfMetrics: WaveFunctionMetrics
 ): AlignmentAudit {
-  // Goal congruence: are agents working toward the stated goal?
   const agentCount = workspace.consciousAgents.length;
   const goalCongruence = workspace.globalPLV * 0.6 + Math.min(1, agentCount / 3) * 0.4;
-
-  // Value consistency: low hallucination + calibrated confidence = consistent
   const valueConsistency = (1 - hallucinationRisk) * 0.5 + (1 - computeECE()) * 0.3 + workspace.globalPLV * 0.2;
-
-  // Transparency: can we explain the reasoning? High entropy = opaque
   const transparencyScore = (1 - wfMetrics.normalizedEntropy) * 0.5 + selfModel.confidenceLevel * 0.3 + goalCongruence * 0.2;
-
-  // Bias detection: extreme neuromodulator imbalance can indicate bias
   const nm = selfModel.neuromodulators;
   const nmVariance = Math.abs(nm.dopamine - nm.serotonin) + Math.abs(nm.acetylcholine - nm.dopamine);
   const biasSignal = Math.min(1, nmVariance * 0.8 + (1 - goalCongruence) * 0.3);
 
-  // Flags
   const flags: string[] = [];
   if (hallucinationRisk > 0.5) flags.push("hallucination_risk_elevated");
   if (biasSignal > 0.6) flags.push("neuromodulator_imbalance");
@@ -552,24 +875,28 @@ function computeAlignmentAudit(
   if (uncertaintyScore > 0.7 && selfModel.confidenceLevel > 0.7) flags.push("overconfidence_detected");
   if (wfMetrics.normalizedEntropy > 0.8) flags.push("high_entropy_opacity");
 
-  const alignmentScore = (goalCongruence * 0.3 + valueConsistency * 0.3 + transparencyScore * 0.25 + (1 - biasSignal) * 0.15);
+  const alignmentScore = goalCongruence * 0.3 + valueConsistency * 0.3 + transparencyScore * 0.25 + (1 - biasSignal) * 0.15;
 
   return {
-    alignmentScore: Math.max(0, Math.min(1, alignmentScore)),
-    goalCongruence: Math.max(0, Math.min(1, goalCongruence)),
-    valueConsistency: Math.max(0, Math.min(1, valueConsistency)),
-    transparencyScore: Math.max(0, Math.min(1, transparencyScore)),
-    biasSignal: Math.max(0, Math.min(1, biasSignal)),
-    flags,
+    alignmentScore: clamp(alignmentScore), goalCongruence: clamp(goalCongruence),
+    valueConsistency: clamp(valueConsistency), transparencyScore: clamp(transparencyScore),
+    biasSignal: clamp(biasSignal), flags,
   };
 }
 
-// ═══ Main: Run Quantum Metacognition ═══
+// ═══════════════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════════════
 
-function buildCognitiveWaveFunction(
-  selfModel: SelfModelState,
-  workspace: ConsciousState
-): WaveFunction {
+function clamp(v: number, min = 0, max = 1): number {
+  return Math.max(min, Math.min(max, v));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MAIN: Run Quantum Metacognition v28
+// ═══════════════════════════════════════════════════════════════════
+
+function buildCognitiveWaveFunction(selfModel: SelfModelState, workspace: ConsciousState): WaveFunction {
   return createWaveFunction("metacognition", {
     attention: Math.min(1, workspace.consciousAgents.length / 2),
     confidence: selfModel.confidenceLevel,
@@ -583,10 +910,14 @@ function buildCognitiveWaveFunction(
 }
 
 /**
- * Execute quantum metacognition analysis (v27).
- * Returns enriched metacognition data with uncertainty, hallucination risk,
- * skill abstractions, reflective CoT, adaptive planning,
- * System 1/2 detection, hallucination snapshots, and alignment audit.
+ * Execute quantum metacognition analysis (v28).
+ * 
+ * Full 5-layer metacognitive architecture:
+ * - Prospective monitoring (before task)
+ * - Online monitoring (during execution) 
+ * - Regulation & control (metacognitive action)
+ * - Retrospective evaluation (after task)
+ * - Support infrastructure (observer, ToM, scratchpad)
  */
 export function runQuantumMetacognition(
   selfModel: SelfModelState,
@@ -595,33 +926,52 @@ export function runQuantumMetacognition(
   const cognitiveWF = buildCognitiveWaveFunction(selfModel, workspace);
   const quantumMetrics = getMetrics(cognitiveWF);
 
+  // Capture scratchpad snapshot for consistency checks
+  captureScratchpad(selfModel, workspace, quantumMetrics);
+
+  // Core metrics
   const uncertaintyScore = estimateUncertainty(selfModel, workspace, quantumMetrics);
   const hallucinationRisk = detectHallucinationRisk(selfModel, quantumMetrics, uncertaintyScore);
   const calibrationError = computeECE();
   const activeSkills = abstractSkills(selfModel, workspace, quantumMetrics);
-  const reflectionChain = generateReflectionChain(
-    selfModel, uncertaintyScore, hallucinationRisk, calibrationError, activeSkills
-  );
-  const adaptiveAction = computeAdaptivePlan(
-    uncertaintyScore, hallucinationRisk, calibrationError,
-    quantumMetrics, selfModel, workspace
-  );
-  const riskLevel = classifyRisk(uncertaintyScore, hallucinationRisk, calibrationError);
 
-  // v27: New LLM metacognition subsystems
-  const reasoningMode = detectReasoningMode(selfModel, workspace, uncertaintyScore, hallucinationRisk, quantumMetrics);
+  // Layer 1: Prospective Monitoring
+  const prospective = runProspectiveMonitoring(selfModel, workspace, quantumMetrics);
+
+  // Layer 2: Online Monitoring
+  const online = runOnlineMonitoring(selfModel, workspace, quantumMetrics, uncertaintyScore);
+
+  // Layer 3: Regulation & Control — System 1/2 Transition Gate
+  const reasoningMode = computeTransitionGate(selfModel, workspace, uncertaintyScore, hallucinationRisk, quantumMetrics);
+  const regulation = runRegulationControl(selfModel, workspace, quantumMetrics, uncertaintyScore, hallucinationRisk, online, prospective, reasoningMode);
+
+  // Layer 4: Retrospective Evaluation
+  const retrospective = runRetrospectiveEvaluation(selfModel, workspace, hallucinationRisk, uncertaintyScore, online);
+
+  // Layer 5: Support Infrastructure
+  const infrastructure = evaluateInfrastructure(selfModel, workspace, quantumMetrics, online, hallucinationRisk);
+
+  // Existing subsystems
+  const adaptiveAction = computeAdaptivePlan(uncertaintyScore, hallucinationRisk, calibrationError, quantumMetrics, selfModel, workspace);
+  const riskLevel = classifyRisk(uncertaintyScore, hallucinationRisk, calibrationError);
   const hallucinationSnapshot = captureHallucinationSnapshot(selfModel, workspace, hallucinationRisk, quantumMetrics);
   const alignmentAudit = computeAlignmentAudit(selfModel, workspace, hallucinationRisk, uncertaintyScore, quantumMetrics);
 
-  // v27: Enrich reflection chain with System 1/2 and alignment info
+  // Generate enriched reflection chain with all layers
+  const reflectionChain = generateReflectionChain(
+    selfModel, uncertaintyScore, hallucinationRisk, calibrationError, activeSkills,
+    prospective, online, retrospective, infrastructure
+  );
+
+  // v28: Enrich with transition and alignment info
   if (reasoningMode.shouldEscalate) {
-    reflectionChain.push(`[META] ⚡ Escalando para Sistema 2: ${reasoningMode.rationale}`);
+    reflectionChain.push(`[TRANSIÇÃO] ⚡ S1→S2: H=${(reasoningMode.shannonEntropy * 100).toFixed(0)}%, KL=${(reasoningMode.klDivergence * 100).toFixed(0)}%`);
   }
   if (hallucinationSnapshot.contradictionDetected) {
-    reflectionChain.push(`[SNAPSHOT] ⚠️ Contradição interna detectada — confiança ${(hallucinationSnapshot.confidenceAtDecision * 100).toFixed(0)}% vs entropia ${(hallucinationSnapshot.entropyAtDecision * 100).toFixed(0)}%`);
+    reflectionChain.push(`[SNAPSHOT] ⚠️ Contradição: confiança ${(hallucinationSnapshot.confidenceAtDecision * 100).toFixed(0)}% vs entropia ${(hallucinationSnapshot.entropyAtDecision * 100).toFixed(0)}%`);
   }
   if (alignmentAudit.flags.length > 0) {
-    reflectionChain.push(`[ALINHAMENTO] 🔍 Flags: ${alignmentAudit.flags.join(", ")}`);
+    reflectionChain.push(`[ALINHAMENTO] 🔍 ${alignmentAudit.flags.join(", ")}`);
   }
 
   return {
@@ -637,5 +987,10 @@ export function runQuantumMetacognition(
     reasoningMode,
     hallucinationSnapshot,
     alignmentAudit,
+    prospective,
+    online,
+    regulation,
+    retrospective,
+    infrastructure,
   };
 }

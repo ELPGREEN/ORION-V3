@@ -130,11 +130,21 @@ export interface MetacognitionResult {
   /** v24: Risk level */
   riskLevel?: "safe" | "caution" | "warning" | "critical";
   /** v27: System 1/2 reasoning mode */
-  reasoningMode?: { mode: string; system1Activation: number; system2Activation: number; shouldEscalate: boolean; rationale: string };
+  reasoningMode?: { mode: string; system1Activation: number; system2Activation: number; shouldEscalate: boolean; rationale: string; shannonEntropy?: number; klDivergence?: number; effectiveTemperature?: number; likelihoodRatio?: number };
   /** v27: Hallucination snapshot */
   hallucinationSnapshot?: { snapshotRisk: string; contradictionDetected: boolean; groundingCoherence: number; confidenceAtDecision: number; entropyAtDecision: number; groundingMemories: number; timestamp: number };
   /** v27: Alignment audit */
   alignmentAudit?: { alignmentScore: number; goalCongruence: number; valueConsistency: number; transparencyScore: number; biasSignal: number; flags: string[] };
+  /** v28: Prospective monitoring */
+  prospective?: { competenceEstimate: number; judgmentOfLearning: number; needsExternalSearch: boolean; taskDecomposition: string[] };
+  /** v28: Online monitoring */
+  online?: { feelingOfKnowing: number; conflictSignal: number; stepConfidence: number; driftScore: number; consistencyScore: number };
+  /** v28: Regulation control */
+  regulation?: { effortAllocation: string; strategySwitchNeeded: boolean; suggestedStrategy: string; externalSearchNeeded: boolean; searchQuery: string };
+  /** v28: Retrospective evaluation */
+  retrospective?: { selfCorrectionTriggered: boolean; corrections: string[]; estimatedSuccess: number; errorsLogged: number; heuristicUpdates: string[] };
+  /** v28: Support infrastructure */
+  infrastructure?: { workingMemoryLoad: number; scratchpadSnapshots: number; observerVerdict: string; observerCritique: string; userExpertiseEstimate: number; userIntentEstimate: string; semanticActivation: number; patternCacheHits: number };
 }
 
 // ─── Helper Functions ───
@@ -530,6 +540,12 @@ export function runMetacognition(
     reasoningMode: quantumMeta?.reasoningMode,
     hallucinationSnapshot: quantumMeta?.hallucinationSnapshot,
     alignmentAudit: quantumMeta?.alignmentAudit,
+    // v28: Full metacognitive architecture
+    prospective: quantumMeta?.prospective,
+    online: quantumMeta?.online,
+    regulation: quantumMeta?.regulation,
+    retrospective: quantumMeta?.retrospective,
+    infrastructure: quantumMeta?.infrastructure,
   };
 }
 

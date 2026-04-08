@@ -130,6 +130,35 @@ interface ConsciousnessState {
   alignmentFlags: string[];
   alignmentTransparency: number;
   alignmentBiasSignal: number;
+  // v28: Transition gate
+  shannonEntropy: number;
+  klDivergence: number;
+  effectiveTemperature: number;
+  likelihoodRatio: number;
+  // v28: Prospective
+  competenceEstimate: number;
+  judgmentOfLearning: number;
+  needsExternalSearch: boolean;
+  // v28: Online
+  feelingOfKnowing: number;
+  conflictSignal: number;
+  stepConfidence: number;
+  driftScore: number;
+  consistencyScore: number;
+  // v28: Regulation
+  effortAllocation: string;
+  strategySwitchNeeded: boolean;
+  externalSearchNeeded: boolean;
+  // v28: Retrospective
+  selfCorrectionTriggered: boolean;
+  estimatedSuccess: number;
+  errorsLogged: number;
+  // v28: Infrastructure
+  observerVerdict: string;
+  observerCritique: string;
+  userExpertiseEstimate: number;
+  workingMemoryLoad: number;
+  semanticActivation: number;
   // v25: Bridge metrics
   bridgeSnapshot: {
     gammaHealth: number;
@@ -461,6 +490,30 @@ export function NeuralConsciousnessLoop() {
       alignmentFlags: [],
       alignmentTransparency: 1,
       alignmentBiasSignal: 0,
+      // v28 defaults
+      shannonEntropy: 0.3,
+      klDivergence: 0.1,
+      effectiveTemperature: 0.2,
+      likelihoodRatio: 1.0,
+      competenceEstimate: 0.7,
+      judgmentOfLearning: 0.7,
+      needsExternalSearch: false,
+      feelingOfKnowing: 0,
+      conflictSignal: 0,
+      stepConfidence: 80,
+      driftScore: 0,
+      consistencyScore: 1,
+      effortAllocation: "heuristic",
+      strategySwitchNeeded: false,
+      externalSearchNeeded: false,
+      selfCorrectionTriggered: false,
+      estimatedSuccess: 0.8,
+      errorsLogged: 0,
+      observerVerdict: "approved",
+      observerCritique: "",
+      userExpertiseEstimate: 0.5,
+      workingMemoryLoad: 0,
+      semanticActivation: 0.5,
       bridgeSnapshot: null,
     };
   });
@@ -683,6 +736,35 @@ export function NeuralConsciousnessLoop() {
       alignmentFlags: meta?.alignmentAudit?.flags ?? prev.alignmentFlags,
       alignmentTransparency: meta?.alignmentAudit?.transparencyScore ?? prev.alignmentTransparency,
       alignmentBiasSignal: meta?.alignmentAudit?.biasSignal ?? prev.alignmentBiasSignal,
+      // v28: Transition gate
+      shannonEntropy: meta?.reasoningMode?.shannonEntropy ?? prev.shannonEntropy,
+      klDivergence: meta?.reasoningMode?.klDivergence ?? prev.klDivergence,
+      effectiveTemperature: meta?.reasoningMode?.effectiveTemperature ?? prev.effectiveTemperature,
+      likelihoodRatio: meta?.reasoningMode?.likelihoodRatio ?? prev.likelihoodRatio,
+      // v28: Prospective
+      competenceEstimate: meta?.prospective?.competenceEstimate ?? prev.competenceEstimate,
+      judgmentOfLearning: meta?.prospective?.judgmentOfLearning ?? prev.judgmentOfLearning,
+      needsExternalSearch: meta?.prospective?.needsExternalSearch ?? prev.needsExternalSearch,
+      // v28: Online
+      feelingOfKnowing: meta?.online?.feelingOfKnowing ?? prev.feelingOfKnowing,
+      conflictSignal: meta?.online?.conflictSignal ?? prev.conflictSignal,
+      stepConfidence: meta?.online?.stepConfidence ?? prev.stepConfidence,
+      driftScore: meta?.online?.driftScore ?? prev.driftScore,
+      consistencyScore: meta?.online?.consistencyScore ?? prev.consistencyScore,
+      // v28: Regulation
+      effortAllocation: meta?.regulation?.effortAllocation ?? prev.effortAllocation,
+      strategySwitchNeeded: meta?.regulation?.strategySwitchNeeded ?? prev.strategySwitchNeeded,
+      externalSearchNeeded: meta?.regulation?.externalSearchNeeded ?? prev.externalSearchNeeded,
+      // v28: Retrospective
+      selfCorrectionTriggered: meta?.retrospective?.selfCorrectionTriggered ?? prev.selfCorrectionTriggered,
+      estimatedSuccess: meta?.retrospective?.estimatedSuccess ?? prev.estimatedSuccess,
+      errorsLogged: meta?.retrospective?.errorsLogged ?? prev.errorsLogged,
+      // v28: Infrastructure
+      observerVerdict: meta?.infrastructure?.observerVerdict ?? prev.observerVerdict,
+      observerCritique: meta?.infrastructure?.observerCritique ?? prev.observerCritique,
+      userExpertiseEstimate: meta?.infrastructure?.userExpertiseEstimate ?? prev.userExpertiseEstimate,
+      workingMemoryLoad: meta?.infrastructure?.workingMemoryLoad ?? prev.workingMemoryLoad,
+      semanticActivation: meta?.infrastructure?.semanticActivation ?? prev.semanticActivation,
       // v25: Bridge snapshot
       bridgeSnapshot: (() => {
         const snap = getLastConsciousnessSnapshot();
@@ -1093,7 +1175,173 @@ export function NeuralConsciousnessLoop() {
         </Card>
       </div>
 
-      {/* IoT & BLE Awareness */}
+      {/* v28: Full Metacognitive Architecture Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Prospective Monitoring */}
+        <Card className="border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              🔮 Monitoramento Prospectivo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <span className="text-[9px] text-muted-foreground">Competência Estimada</span>
+                <Progress value={state.competenceEstimate * 100} className="h-1.5 mt-1" />
+                <span className="text-[8px] font-mono text-muted-foreground">{(state.competenceEstimate * 100).toFixed(0)}%</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-muted-foreground">Julgamento de Aprendizado</span>
+                <Progress value={state.judgmentOfLearning * 100} className="h-1.5 mt-1" />
+                <span className="text-[8px] font-mono text-muted-foreground">{(state.judgmentOfLearning * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+            {state.needsExternalSearch && (
+              <Badge className="text-[10px] bg-amber-600/30 text-amber-300">🔍 Busca externa necessária</Badge>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Online Monitoring */}
+        <Card className="border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              📡 Monitoramento On-line
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center p-1.5 bg-muted/20 rounded">
+                <p className="text-sm font-bold font-mono" style={{ color: state.stepConfidence > 70 ? "#22c55e" : state.stepConfidence > 40 ? "#f59e0b" : "#ef4444" }}>
+                  {state.stepConfidence}%
+                </p>
+                <p className="text-[8px] text-muted-foreground">Confiança</p>
+              </div>
+              <div className="text-center p-1.5 bg-muted/20 rounded">
+                <p className="text-sm font-bold font-mono" style={{ color: state.consistencyScore > 0.7 ? "#22c55e" : "#f59e0b" }}>
+                  {(state.consistencyScore * 100).toFixed(0)}%
+                </p>
+                <p className="text-[8px] text-muted-foreground">Consistência</p>
+              </div>
+              <div className="text-center p-1.5 bg-muted/20 rounded">
+                <p className="text-sm font-bold font-mono" style={{ color: state.driftScore < 0.3 ? "#22c55e" : "#ef4444" }}>
+                  {(state.driftScore * 100).toFixed(0)}%
+                </p>
+                <p className="text-[8px] text-muted-foreground">Drift</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-[9px] text-muted-foreground">FOK (Ponta da Língua)</span>
+                <Progress value={state.feelingOfKnowing * 100} className="h-1.5 mt-1" />
+              </div>
+              <div>
+                <span className="text-[9px] text-muted-foreground">Sinal de Conflito</span>
+                <Progress value={state.conflictSignal * 100} className="h-1.5 mt-1" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Transition Gate (System 1/2) */}
+        <Card className="border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              ⚡ Portão de Transição S1↔S2
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-[9px] text-muted-foreground">Entropia Shannon</span>
+                <Progress value={state.shannonEntropy * 100} className="h-1.5 mt-1" />
+                <span className="text-[8px] font-mono text-muted-foreground">H={state.shannonEntropy.toFixed(2)}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-muted-foreground">Divergência KL</span>
+                <Progress value={state.klDivergence * 100} className="h-1.5 mt-1" />
+                <span className="text-[8px] font-mono text-muted-foreground">KL={state.klDivergence.toFixed(2)}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-[9px] text-muted-foreground">Temperatura Efetiva</span>
+                <p className="text-sm font-mono font-bold" style={{ color: state.effectiveTemperature < 0.3 ? "#22c55e" : state.effectiveTemperature < 0.6 ? "#f59e0b" : "#ef4444" }}>
+                  τ={state.effectiveTemperature.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <span className="text-[9px] text-muted-foreground">Razão Verossimilhança</span>
+                <p className="text-sm font-mono font-bold" style={{ color: state.likelihoodRatio < 1.5 ? "#22c55e" : "#f59e0b" }}>
+                  LR={state.likelihoodRatio.toFixed(2)}
+                </p>
+              </div>
+            </div>
+            <Badge className={`text-[10px] ${
+              state.effortAllocation === "chain_of_thought" ? "bg-blue-600 text-blue-100" :
+              state.effortAllocation === "deliberative" ? "bg-indigo-600 text-indigo-100" :
+              "bg-emerald-600 text-emerald-100"
+            }`}>
+              {state.effortAllocation === "chain_of_thought" ? "⛓️ Chain-of-Thought" :
+               state.effortAllocation === "deliberative" ? "🧠 Deliberativo" :
+               "🏃 Heurístico"}
+            </Badge>
+          </CardContent>
+        </Card>
+
+        {/* Observer & Infrastructure */}
+        <Card className="border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              👁️ Módulo Observador
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Badge className={`text-[10px] ${
+              state.observerVerdict === "approved" ? "bg-emerald-600 text-emerald-100" :
+              state.observerVerdict === "cautious" ? "bg-amber-600 text-amber-100" :
+              state.observerVerdict === "rejected" ? "bg-red-600 text-red-100" :
+              "bg-blue-600 text-blue-100"
+            }`}>
+              {state.observerVerdict === "approved" ? "✅ Aprovado" :
+               state.observerVerdict === "cautious" ? "⚠️ Cautela" :
+               state.observerVerdict === "rejected" ? "⛔ Rejeitado" :
+               "🔍 Revisando"}
+            </Badge>
+            {state.observerCritique && (
+              <p className="text-[9px] text-muted-foreground font-mono">{state.observerCritique}</p>
+            )}
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              <div className="text-center p-1.5 bg-muted/20 rounded">
+                <p className="text-sm font-bold font-mono">{(state.workingMemoryLoad * 100).toFixed(0)}%</p>
+                <p className="text-[8px] text-muted-foreground">Memória</p>
+              </div>
+              <div className="text-center p-1.5 bg-muted/20 rounded">
+                <p className="text-sm font-bold font-mono">{(state.semanticActivation * 100).toFixed(0)}%</p>
+                <p className="text-[8px] text-muted-foreground">Semântica</p>
+              </div>
+              <div className="text-center p-1.5 bg-muted/20 rounded">
+                <p className="text-sm font-bold font-mono">{(state.userExpertiseEstimate * 100).toFixed(0)}%</p>
+                <p className="text-[8px] text-muted-foreground">ToM User</p>
+              </div>
+            </div>
+            {state.strategySwitchNeeded && (
+              <Badge className="text-[10px] bg-amber-600/30 text-amber-300 animate-pulse">🔄 Troca de Estratégia</Badge>
+            )}
+            {state.selfCorrectionTriggered && (
+              <Badge className="text-[10px] bg-red-600/30 text-red-300">🔧 Autocorreção Ativada</Badge>
+            )}
+            <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
+              <span>Sucesso: {(state.estimatedSuccess * 100).toFixed(0)}%</span>
+              <span>•</span>
+              <span>Erros: {state.errorsLogged}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+
       <div className="grid grid-cols-1 gap-4">
         <Card className="border-border">
           <CardHeader className="pb-2">
