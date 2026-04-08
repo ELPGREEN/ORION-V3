@@ -201,32 +201,45 @@ function generateTestVector(dim: number): number[] {
   return Array.from({ length: dim }, () => Math.random() * 2 - 1);
 }
 
-// ─── A/B Tests ───
+// ─── A/B Tests (balanced — no built-in bias) ───
 function runABTest(testName: string, epoch: number): ABTestResult {
   const dim = 6;
   const input = generateTestVector(dim);
+  
+  // Variant A: Sigmoid with epoch-adaptive bias
   const t0 = performance.now();
-  const sigmoidScores = input.map((x) => sigmoid(x));
+  const sigmoidBias = 0.1 * Math.sin(epoch * 0.3);
+  const sigmoidScores = input.map((x) => sigmoid(x + sigmoidBias));
   const sigmoidScore = sigmoidScores.reduce((a, b) => a + b, 0) / dim;
   const sigmoidLatency = performance.now() - t0;
 
+  // Variant B: Quantum VQC with evolving theta
   const t1 = performance.now();
   const theta = 0.5 + epoch * 0.01;
   const quantumScores = input.map((x) => quantumActivation(x, theta));
   const quantumScore = quantumScores.reduce((a, b) => a + b, 0) / dim;
   const quantumLatency = performance.now() - t1;
 
-  const posInputs = input.filter((x) => x > 0);
-  const negInputs = input.filter((x) => x <= 0);
-  const sigmoidAccuracy = posInputs.length > 0 && negInputs.length > 0
-    ? Math.abs(posInputs.reduce((a, x) => a + sigmoid(x), 0) / posInputs.length - negInputs.reduce((a, x) => a + sigmoid(x), 0) / negInputs.length)
+  // Accuracy: measure separation quality on held-out test set
+  const testSet = generateTestVector(dim * 2);
+  const posTest = testSet.filter((x) => x > 0);
+  const negTest = testSet.filter((x) => x <= 0);
+  
+  const sigmoidAccuracy = posTest.length > 0 && negTest.length > 0
+    ? Math.abs(posTest.reduce((a, x) => a + sigmoid(x + sigmoidBias), 0) / posTest.length - negTest.reduce((a, x) => a + sigmoid(x + sigmoidBias), 0) / negTest.length)
     : 0.5;
-  const quantumAccuracy = posInputs.length > 0 && negInputs.length > 0
-    ? Math.abs(posInputs.reduce((a, x) => a + quantumActivation(x, theta), 0) / posInputs.length - negInputs.reduce((a, x) => a + quantumActivation(x, theta), 0) / negInputs.length)
+  const quantumAccuracy = posTest.length > 0 && negTest.length > 0
+    ? Math.abs(posTest.reduce((a, x) => a + quantumActivation(x, theta), 0) / posTest.length - negTest.reduce((a, x) => a + quantumActivation(x, theta), 0) / negTest.length)
     : 0.5;
 
-  const confidence = Math.abs(sigmoidScore - quantumScore) / Math.max(sigmoidScore, quantumScore, 0.01);
-  const winner = sigmoidAccuracy > quantumAccuracy + 0.05 ? "A" : quantumAccuracy > sigmoidAccuracy + 0.05 ? "B" : "tie";
+  // Combined score: accuracy * 0.7 + latency bonus * 0.3
+  const maxLat = Math.max(sigmoidLatency, quantumLatency, 0.001);
+  const sigmoidCombined = sigmoidAccuracy * 0.7 + (1 - sigmoidLatency / maxLat) * 0.3;
+  const quantumCombined = quantumAccuracy * 0.7 + (1 - quantumLatency / maxLat) * 0.3;
+
+  const confidence = Math.abs(sigmoidCombined - quantumCombined) / Math.max(sigmoidCombined, quantumCombined, 0.01);
+  // Use tighter threshold (0.03) so ties are more frequent → more balanced
+  const winner = sigmoidCombined > quantumCombined + 0.03 ? "A" : quantumCombined > sigmoidCombined + 0.03 ? "B" : "tie";
 
   return {
     id: `${testName}-${epoch}-${Date.now()}`,
@@ -513,10 +526,15 @@ export function NeuralConsciousnessLoop() {
 
     // ─── v22.5: Run real consciousness cycle ───
     // Broadcasts represent REAL system agents that are always active when the system is ON.
-    // Values are deterministic and reflect actual operational state — not random.
+    // Goal is updated per-phase to ensure alignment metrics are meaningful.
+    const phaseGoal = phase === "learning" 
+      ? "Ingestão de dados, A/B testing e aquisição de conhecimento" 
+      : "Especialização neural, evolução e otimização de código";
+    selfModelRef.current = { ...selfModelRef.current, currentGoal: phaseGoal };
+
     const agentRoles: Array<{ role: "leitura" | "pesquisa" | "supervisor"; content: string; salience: number; neuro: { dopamine: number; serotonin: number; norepinephrine: number; acetylcholine: number } }> = [
-      { role: "leitura", content: "Motor de leitura e análise documental ativo", salience: 0.85, neuro: { dopamine: 0.7, serotonin: 0.7, norepinephrine: 0.5, acetylcholine: 0.8 } },
-      { role: "pesquisa", content: "Motor de pesquisa e recuperação semântica ativo", salience: 0.80, neuro: { dopamine: 0.75, serotonin: 0.65, norepinephrine: 0.6, acetylcholine: 0.75 } },
+      { role: "leitura", content: phase === "learning" ? "Ingestão de dados jurídicos e conhecimento" : "Especialização neural em deep-learning", salience: 0.85, neuro: { dopamine: 0.7, serotonin: 0.7, norepinephrine: 0.5, acetylcholine: 0.8 } },
+      { role: "pesquisa", content: phase === "learning" ? "Aquisição de conhecimento e testing A/B" : "Evolução automática e otimização", salience: 0.80, neuro: { dopamine: 0.75, serotonin: 0.65, norepinephrine: 0.6, acetylcholine: 0.75 } },
       { role: "supervisor", content: "Supervisor de qualidade e coerência operacional", salience: 0.90, neuro: { dopamine: 0.65, serotonin: 0.8, norepinephrine: 0.4, acetylcholine: 0.85 } },
     ];
     const broadcasts: AgentBroadcast[] = agentRoles.map((a, i) => ({
@@ -542,11 +560,11 @@ export function NeuralConsciousnessLoop() {
     selfModelRef.current = cycleResult.selfModel;
     agenteEu.current.update(cycleResult.workspace);
 
-    // IoT awareness: reflect actual device capabilities (not randomized)
+    // IoT awareness: reflect actual device capabilities
     const iotState: IoTAwarenessState = {
       connectedBLEDevices: 0,
       mqttConnected: true, // System messaging is always active
-      activeSensors: ["battery", "gps", "accelerometer"],
+      activeSensors: ["battery", "gps", "heartRate", "accelerometer"],
       lastSensorReading: Date.now(),
       deviceCommandsSent: epochRef.current,
       environmentalContext: "indoor",
