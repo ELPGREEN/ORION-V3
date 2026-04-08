@@ -209,7 +209,9 @@ const VISION_SYSTEM_PROMPT = `Você é um analisador de visão computacional esp
 
 // ─── Gemini/Groq Vision call ───
 async function callVisionAPI(image_base64: string, systemPrompt: string): Promise<{ result: Record<string, unknown>; provider: string }> {
-  const geminiKey = Deno.env.get("GEMINI_API_KEY");
+  const _gkNames = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
+  const _gkAll = _gkNames.map(n => Deno.env.get(n)).filter((k): k is string => !!k);
+  const geminiKey = _gkAll[Math.floor(Math.random() * _gkAll.length)] || "";
   if (geminiKey) {
     try {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
