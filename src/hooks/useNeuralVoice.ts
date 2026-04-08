@@ -105,7 +105,7 @@ export function useNeuralVoice(
   const lastProcessedAtRef = useRef(0);
   const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consecutiveAbortsRef = useRef(0);
-  const MAX_CONSECUTIVE_ABORTS = 5;
+  const MAX_CONSECUTIVE_ABORTS = 3;
   /** voiceActiveRef: stays true across STT restart gaps — use to prevent wake word conflicts */
   const voiceActiveRef = useRef(false);
   /** Active Audio element for barge-in cancellation (Google TTS / Kokoro) */
