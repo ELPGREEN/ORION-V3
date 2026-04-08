@@ -1,7 +1,8 @@
 /**
- * Gemini TTS — text-to-speech using Gemini 2.5 Flash Preview TTS
- * PRIMARY: Vertex AI endpoint (uses GCP credits via service account JWT)
- * FALLBACK: AI Studio API keys (free tier)
+ * Gemini TTS — text-to-speech using Gemini 2.5 Flash Native Audio (GA, free)
+ * PRIMARY: gemini-2.5-flash-native-audio-dialog (GA since Dec 2025, free tier)
+ * FALLBACK: gemini-2.5-flash-preview-tts (preview)
+ * Both via Vertex AI (GCP credits) + AI Studio (free keys)
  */
 
 const corsHeaders = {
@@ -10,7 +11,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MODEL = "gemini-2.5-flash-preview-tts";
+// GA native audio model (free) → fallback to TTS preview
+const MODELS = [
+  "gemini-2.5-flash-native-audio-dialog",
+  "gemini-2.5-flash-preview-tts",
+];
 const VERTEX_LOCATION = "us-central1";
 const AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
