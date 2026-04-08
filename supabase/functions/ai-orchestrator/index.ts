@@ -25,9 +25,8 @@ interface AIProvider {
 
 // Helper: Get all available Gemini keys for rotation
 function _getGeminiKeys(): string[] {
-  return [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter(Boolean) as string[];
+  const names = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7", "GEMINI_API_KEY_GCP"];
+  return names.map(n => Deno.env.get(n)).filter(Boolean) as string[];
 }
 
 // Round-robin key index (persists across requests in same isolate)
