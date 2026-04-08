@@ -296,9 +296,10 @@ Deno.serve(async (req) => {
       }
 
       // Update enrollment stats
+      const matchedEnrollment = activeEnrollments.find(e => e.user_id === bestMatch!.userId) as any;
       await supabase.from("face_auth_enrollments").update({
         last_verified_at: new Date().toISOString(),
-        verification_count: (activeEnrollments.find(e => e.user_id === bestMatch!.userId) as any)?.verification_count || 0 + 1,
+        verification_count: ((matchedEnrollment?.verification_count || 0) + 1),
         failed_attempts: 0,
       }).eq("user_id", bestMatch.userId);
 
