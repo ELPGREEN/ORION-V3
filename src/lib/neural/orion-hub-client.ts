@@ -1,15 +1,15 @@
 /**
  * ORION Neural Hub — Unified HF Space Client (ZeroGPU)
- * Connects to Ericsonv12/orion-gpu Gradio Space
+ * Connects to Ericsonv12/orion-gpu Gradio Space via @gradio/client SDK
  *
- * GPU→CPU Fallback: When ZeroGPU quota is exhausted (429/quota errors),
- * GPU endpoints automatically fall back to CPU-only alternatives on the same Space.
+ * GPU→CPU Fallback: When ZeroGPU quota is exhausted,
+ * GPU endpoints return structured error JSON instead of crashing.
  *
  * Capabilities: TTS, LLM, OCR, Vision, Embeddings, PDF
  * Hardware: ZeroGPU H200/A100 (GPU) + CPU fallback
  */
 
-const ORION_HUB_URL = "https://ericsonv12-orion-gpu.hf.space";
+const ORION_SPACE_ID = "Ericsonv12/orion-gpu";
 const DEFAULT_TIMEOUT = 60_000;
 const GPU_TIMEOUT = 180_000;
 
@@ -18,21 +18,19 @@ const GPU_TIMEOUT = 180_000;
 interface QuotaState {
   exhausted: boolean;
   exhaustedAt: number;
-  cooldownMs: number; // how long to skip GPU before retrying
+  cooldownMs: number;
   consecutiveFailures: number;
 }
 
 const _quota: QuotaState = {
   exhausted: false,
   exhaustedAt: 0,
-  cooldownMs: 5 * 60_000, // 5 min cooldown before retrying GPU
+  cooldownMs: 5 * 60_000,
   consecutiveFailures: 0,
 };
 
-/** Check if GPU quota is likely available */
 function isGpuAvailable(): boolean {
   if (!_quota.exhausted) return true;
-  // After cooldown, try GPU again
   if (Date.now() - _quota.exhaustedAt > _quota.cooldownMs) {
     _quota.exhausted = false;
     _quota.consecutiveFailures = 0;
@@ -46,7 +44,6 @@ function markGpuExhausted() {
   _quota.exhausted = true;
   _quota.exhaustedAt = Date.now();
   _quota.consecutiveFailures++;
-  // Exponential backoff: 5min, 10min, 20min... max 60min
   _quota.cooldownMs = Math.min(5 * 60_000 * Math.pow(2, _quota.consecutiveFailures - 1), 60 * 60_000);
   console.warn(`[OrionHub] GPU quota exhausted. Cooldown: ${Math.round(_quota.cooldownMs / 60_000)}min`);
 }
@@ -57,16 +54,6 @@ function markGpuSuccess() {
   _quota.cooldownMs = 5 * 60_000;
 }
 
-/** Check if an error indicates GPU quota exhaustion */
-function isQuotaError(status: number, body: string): boolean {
-  if (status === 429) return true;
-  const lower = body.toLowerCase();
-  return lower.includes("quota") || lower.includes("gpu quota")
-    || lower.includes("exceeded") || lower.includes("zerogpu")
-    || lower.includes("no gpu") || lower.includes("rate limit");
-}
-
-/** Get current quota state for UI */
 export function getGpuQuotaState() {
   return {
     exhausted: _quota.exhausted,
@@ -84,8 +71,9 @@ export interface OrionHubHealth {
   status: "online" | "sleeping" | "error";
   gpu: { available: boolean; name: string; vram_gb: number };
   models_loaded: string[];
-  capabilities: string[];
+  capabilities: Record<string, string[]> | string[];
   quotaState?: ReturnType<typeof getGpuQuotaState>;
+  endpoint_status?: Record<string, string>;
 }
 
 export interface TTSResult {
@@ -126,65 +114,90 @@ export interface WhisperSTTResult {
   source: string;
 }
 
-// ─── Gradio API Helper (quota-aware) ───
+// ─── Gradio Client Connection ───
 
-class GpuQuotaExhaustedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "GpuQuotaExhaustedError";
+let _clientPromise: Promise<unknown> | null = null;
+
+async function getClient(): Promise<unknown> {
+  if (!_clientPromise) {
+    _clientPromise = (async () => {
+      try {
+        const { Client } = await import("@gradio/client");
+        const client = await Client.connect(ORION_SPACE_ID);
+        console.log("[OrionHub] Connected to Gradio Space");
+        return client;
+      } catch (e) {
+        _clientPromise = null;
+        console.error("[OrionHub] Failed to connect:", e);
+        throw e;
+      }
+    })();
   }
+  return _clientPromise;
 }
+
+/** Reset connection (e.g., after Space restart) */
+export function resetConnection(): void {
+  _clientPromise = null;
+}
+
+// ─── Gradio API Helper ───
 
 async function callGradio<T>(
   apiName: string,
-  data: unknown[],
+  inputs: Record<string, unknown>,
   timeout = DEFAULT_TIMEOUT,
 ): Promise<T> {
+  const client = await getClient() as {
+    predict: (endpoint: string, data: Record<string, unknown>) => Promise<{ data: unknown[] }>;
+  };
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const url = `${ORION_HUB_URL}/api/${apiName}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data }),
-      signal: controller.signal,
-    });
+    const result = await client.predict(`/${apiName}`, inputs);
+    const data = result.data?.[0] ?? result.data;
 
-    if (!response.ok) {
-      const errText = await response.text();
-      if (isQuotaError(response.status, errText)) {
-        markGpuExhausted();
-        throw new GpuQuotaExhaustedError(`GPU quota exhausted on [${apiName}]: ${errText}`);
+    // Check for structured GPU error responses
+    if (typeof data === "string") {
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed?.error === "gpu_unavailable") {
+          markGpuExhausted();
+          console.warn(`[OrionHub] ${apiName}: GPU unavailable (structured response)`);
+        }
+        return parsed as T;
+      } catch {
+        return data as T;
       }
-      throw new Error(`Gradio API [${apiName}] failed (${response.status}): ${errText}`);
     }
 
-    // GPU call succeeded — reset quota tracker
+    // GPU success tracking
     const GPU_ENDPOINTS = ["gemma_chat", "vision_caption", "whisper_stt"];
     if (GPU_ENDPOINTS.includes(apiName)) {
       markGpuSuccess();
     }
 
-    const result = await response.json();
-    return result.data?.[0] ?? result.data ?? result;
+    return data as T;
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const lower = errMsg.toLowerCase();
+    if (lower.includes("quota") || lower.includes("429") || lower.includes("rate limit") || lower.includes("zerogpu")) {
+      markGpuExhausted();
+    }
+    throw err;
   } finally {
     clearTimeout(timer);
   }
 }
 
-/**
- * Call GPU endpoint with automatic CPU fallback.
- * If GPU quota is exhausted (or fails with 429), tries cpuFallbackFn instead.
- */
 async function callGpuWithFallback<T>(
   gpuApiName: string,
-  gpuData: unknown[],
+  gpuInputs: Record<string, unknown>,
   cpuFallbackFn: (() => Promise<T>) | null,
   timeout = GPU_TIMEOUT,
 ): Promise<T> {
-  // If quota known exhausted, skip GPU entirely
   if (!isGpuAvailable()) {
     if (cpuFallbackFn) {
       console.log(`[OrionHub] GPU quota exhausted, using CPU fallback for ${gpuApiName}`);
@@ -194,10 +207,10 @@ async function callGpuWithFallback<T>(
   }
 
   try {
-    return await callGradio<T>(gpuApiName, gpuData, timeout);
+    return await callGradio<T>(gpuApiName, gpuInputs, timeout);
   } catch (err) {
-    if (err instanceof GpuQuotaExhaustedError && cpuFallbackFn) {
-      console.warn(`[OrionHub] ${gpuApiName} quota hit, falling back to CPU`);
+    if (cpuFallbackFn) {
+      console.warn(`[OrionHub] ${gpuApiName} failed, falling back to CPU:`, err);
       return cpuFallbackFn();
     }
     throw err;
@@ -208,13 +221,14 @@ async function callGpuWithFallback<T>(
 
 export async function checkOrionHub(): Promise<OrionHubHealth> {
   try {
-    const result = await callGradio<string>("health", [], 10_000);
-    const parsed = typeof result === "string" ? JSON.parse(result) : result;
+    const result = await callGradio<OrionHubHealth>("health", {}, 10_000);
+    const parsed = typeof result === "string" ? JSON.parse(result as string) : result;
     return {
       status: "online",
       gpu: parsed.gpu ?? { available: false, name: "N/A", vram_gb: 0 },
       models_loaded: parsed.models_loaded ?? [],
       capabilities: parsed.capabilities ?? [],
+      endpoint_status: parsed.endpoint_status,
       quotaState: getGpuQuotaState(),
     };
   } catch {
@@ -228,33 +242,30 @@ export async function checkOrionHub(): Promise<OrionHubHealth> {
   }
 }
 
-// ─── TTS (JARVIS — CPU, no fallback needed) ───
+// ─── TTS (JARVIS — CPU) ───
 
 export async function speakJarvis(text: string, speed = 1.0): Promise<TTSResult> {
-  const result = await callGradio<{ name: string; data: string; is_file?: boolean }>(
-    "tts",
-    [text, speed],
-    GPU_TIMEOUT,
-  );
+  const result = await callGradio<unknown>("tts", { text, speed }, GPU_TIMEOUT);
 
   let audioBlob: Blob;
   let audioUrl: string;
-  const resultAny = result as any;
+  const resultAny = result as Record<string, unknown>;
 
-  if (resultAny && typeof resultAny === "object" && "data" in resultAny) {
-    const binaryStr = atob(resultAny.data);
-    const bytes = new Uint8Array(binaryStr.length);
-    for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-    audioBlob = new Blob([bytes], { type: "audio/wav" });
-    audioUrl = URL.createObjectURL(audioBlob);
-  } else if (typeof resultAny === "string" && resultAny.startsWith("http")) {
-    audioUrl = resultAny as string;
+  // Gradio returns file reference with url
+  if (resultAny && typeof resultAny === "object" && "url" in resultAny) {
+    audioUrl = resultAny.url as string;
     const resp = await fetch(audioUrl);
     audioBlob = await resp.blob();
-  } else {
-    const [sampleRate, audioArray] = resultAny as [number, number[]];
+  } else if (typeof result === "string" && (result as string).startsWith("http")) {
+    audioUrl = result as string;
+    const resp = await fetch(audioUrl);
+    audioBlob = await resp.blob();
+  } else if (Array.isArray(result)) {
+    const [sampleRate, audioArray] = result as [number, number[]];
     audioBlob = int16ArrayToWavBlob(new Int16Array(audioArray), sampleRate);
     audioUrl = URL.createObjectURL(audioBlob);
+  } else {
+    throw new Error(`[OrionHub] Unexpected TTS result: ${JSON.stringify(result).slice(0, 200)}`);
   }
 
   return {
@@ -290,7 +301,7 @@ function int16ArrayToWavBlob(samples: Int16Array, sampleRate: number): Blob {
   return new Blob([buffer], { type: "audio/wav" });
 }
 
-// ─── LLM Chat (Gemma 4 GPU → CPU embeddings-based fallback) ───
+// ─── LLM Chat (Gemma 4 GPU → graceful error) ───
 
 export async function llmChat(
   message: string,
@@ -300,14 +311,11 @@ export async function llmChat(
 ): Promise<string> {
   return callGpuWithFallback<string>(
     "gemma_chat",
-    [message, systemPrompt, maxTokens, temperature],
-    // CPU fallback: use embeddings for semantic search + template response
+    { message, system_prompt: systemPrompt, max_tokens: maxTokens, temperature },
     async () => {
-      console.warn("[OrionHub] LLM fallback: GPU unavailable, returning quota message");
-      return `[Modo CPU] A quota GPU ZeroGPU foi excedida. O modelo Gemma 4 está temporariamente indisponível. ` +
-        `Sua pergunta foi recebida: "${message.slice(0, 100)}..." — ` +
-        `Tente novamente em ${Math.ceil(getGpuQuotaState().cooldownRemainingMs / 60_000)} minutos, ` +
-        `ou use os recursos CPU (TTS, OCR, Embeddings, PDF) que permanecem ilimitados.`;
+      console.warn("[OrionHub] LLM fallback: GPU unavailable");
+      return `[Modo CPU] Quota GPU ZeroGPU excedida. Gemma 4 temporariamente indisponível. ` +
+        `Tente em ${Math.ceil(getGpuQuotaState().cooldownRemainingMs / 60_000)} min.`;
     },
     GPU_TIMEOUT,
   );
@@ -316,26 +324,24 @@ export async function llmChat(
 // ─── Vision Caption (BLIP GPU → OCR CPU fallback) ───
 
 export async function visionCaption(imageFile: File | Blob): Promise<VisionCaptionResult> {
-  const base64 = await blobToBase64(imageFile);
   return callGpuWithFallback<VisionCaptionResult>(
     "vision_caption",
-    [base64],
-    // CPU fallback: use OCR to extract text from image as "caption"
+    { image: imageFile },
     async () => {
       console.warn("[OrionHub] Vision caption fallback: using OCR (CPU)");
       try {
-        const ocrResult = await callGradio<string>("ocr", [base64], DEFAULT_TIMEOUT);
-        const parsed = typeof ocrResult === "string" ? JSON.parse(ocrResult) : ocrResult;
+        const ocrResult = await callGradio<OCRResult>("ocr", { image: imageFile }, DEFAULT_TIMEOUT);
+        const parsed = typeof ocrResult === "string" ? JSON.parse(ocrResult as string) : ocrResult;
         return {
           caption: parsed.full_text
-            ? `[OCR fallback] Texto detectado: ${parsed.full_text.slice(0, 300)}`
-            : "[OCR fallback] Nenhum texto detectado na imagem",
+            ? `[OCR fallback] Texto: ${parsed.full_text.slice(0, 300)}`
+            : "[OCR fallback] Nenhum texto detectado",
           model: "easyocr-cpu-fallback",
           source: "orion-hub-cpu",
         };
       } catch {
         return {
-          caption: "[CPU] Visão GPU indisponível (quota ZeroGPU). Tente novamente mais tarde.",
+          caption: "[CPU] Visão GPU indisponível (quota ZeroGPU).",
           model: "fallback",
           source: "orion-hub-cpu",
         };
@@ -345,27 +351,21 @@ export async function visionCaption(imageFile: File | Blob): Promise<VisionCapti
   );
 }
 
-// ─── Whisper STT (GPU → no CPU fallback, clear error) ───
+// ─── Whisper STT (GPU → graceful error) ───
 
 export async function whisperSTT(
   audioBlob: Blob,
   language = "pt"
 ): Promise<WhisperSTTResult> {
-  const base64 = await blobToBase64(audioBlob);
   return callGpuWithFallback<WhisperSTTResult>(
     "whisper_stt",
-    [base64, language],
-    // CPU fallback: return informative error (no CPU STT available on Space)
-    async () => {
-      console.warn("[OrionHub] Whisper STT fallback: no CPU alternative");
-      return {
-        text: "[Quota GPU excedida] Transcrição de áudio temporariamente indisponível. " +
-          `Tente novamente em ${Math.ceil(getGpuQuotaState().cooldownRemainingMs / 60_000)} minutos.`,
-        language,
-        model: "fallback-no-gpu",
-        source: "orion-hub-cpu",
-      };
-    },
+    { audio: audioBlob, language },
+    async () => ({
+      text: `[Quota GPU excedida] STT indisponível. Tente em ${Math.ceil(getGpuQuotaState().cooldownRemainingMs / 60_000)} min.`,
+      language,
+      model: "fallback-no-gpu",
+      source: "orion-hub-cpu",
+    }),
     GPU_TIMEOUT,
   );
 }
@@ -373,46 +373,31 @@ export async function whisperSTT(
 // ─── OCR (CPU — always available) ───
 
 export async function ocrExtract(imageFile: File | Blob): Promise<OCRResult> {
-  const base64 = await blobToBase64(imageFile);
-  const result = await callGradio<string>("ocr", [base64], DEFAULT_TIMEOUT);
-  return typeof result === "string" ? JSON.parse(result) : result;
+  const result = await callGradio<OCRResult>("ocr", { image: imageFile }, DEFAULT_TIMEOUT);
+  return typeof result === "string" ? JSON.parse(result as string) : result;
 }
 
 // ─── Vision Classification (CPU — always available) ───
 
 export async function visionClassify(imageFile: File | Blob): Promise<VisionResult[]> {
-  const base64 = await blobToBase64(imageFile);
-  const result = await callGradio<string>("vision", [base64], DEFAULT_TIMEOUT);
-  return typeof result === "string" ? JSON.parse(result) : result;
+  const result = await callGradio<VisionResult[]>("vision_classify", { image: imageFile }, DEFAULT_TIMEOUT);
+  return typeof result === "string" ? JSON.parse(result as string) : result;
 }
 
 // ─── Embeddings (CPU — always available) ───
 
 export async function computeEmbeddings(texts: string[]): Promise<EmbeddingResult> {
   const joined = texts.join("\n");
-  const result = await callGradio<string>("embeddings", [joined], DEFAULT_TIMEOUT);
-  return typeof result === "string" ? JSON.parse(result) : result;
+  const result = await callGradio<EmbeddingResult>("embeddings", { texts: joined }, DEFAULT_TIMEOUT);
+  return typeof result === "string" ? JSON.parse(result as string) : result;
 }
 
 // ─── PDF Processing (CPU — always available) ───
 
 export async function pdfToMarkdown(pdfFile: File | Blob): Promise<string> {
-  const base64 = await blobToBase64(pdfFile);
-  return callGradio<string>("pdf", [base64, "Markdown"], DEFAULT_TIMEOUT);
+  return callGradio<string>("pdf", { file: pdfFile, fmt: "Markdown" }, DEFAULT_TIMEOUT);
 }
 
 export async function pdfToHtml(pdfFile: File | Blob): Promise<string> {
-  const base64 = await blobToBase64(pdfFile);
-  return callGradio<string>("pdf", [base64, "HTML"], DEFAULT_TIMEOUT);
-}
-
-// ─── Utils ───
-
-async function blobToBase64(blob: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+  return callGradio<string>("pdf", { file: pdfFile, fmt: "HTML" }, DEFAULT_TIMEOUT);
 }
