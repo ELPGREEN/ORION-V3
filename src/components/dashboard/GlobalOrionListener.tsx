@@ -294,7 +294,8 @@ export function GlobalOrionListener() {
       };
 
       rec.onerror = (e: any) => {
-        console.warn("[GlobalOrion] onerror:", e.error);
+        const sessionDuration = Date.now() - sessionStartRef.time;
+        console.warn("[GlobalOrion] onerror:", e.error, `(session lasted ${sessionDuration}ms)`);
         wakeRecRef.current = null;
         startInFlightRef.current = false;
 
@@ -304,17 +305,30 @@ export function GlobalOrionListener() {
           return;
         }
 
+        // "aborted" errors on short sessions are usually Chrome killing the recognition
+        // Don't count "no-speech" as a real error — it just means silence
+        const isHarmless = e.error === "no-speech" || (e.error === "aborted" && sessionDuration < 2000);
+
         const willRestart = wakeWordEnabledRef.current && !orionOpen && !isOnNeuralPage && permissionsGranted && !cooldownRef.current && !(typeof document !== "undefined" && document.hidden);
         if (!willRestart) {
           setWakeWordActive(false);
           return;
         }
 
-        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
+        if (!isHarmless) {
+          restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
+        }
         
         if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
-          console.log("[GlobalOrion] Max restart attempts reached after errors, stopping");
+          console.log("[GlobalOrion] Max restart attempts, pausing 15s");
           setWakeWordActive(false);
+          clearRestartTimer();
+          restartTimerRef.current = setTimeout(() => {
+            restartAttemptsRef.current = 0;
+            if (wakeWordEnabledRef.current && !wakeRecRef.current && !startInFlightRef.current && !orionOpen && !isOnNeuralPage && permissionsGranted && !(typeof document !== "undefined" && document.hidden)) {
+              startWakeWordListener();
+            }
+          }, 15000);
           return;
         }
         
