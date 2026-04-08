@@ -4,7 +4,7 @@
  * Site key is publishable (safe for client-side).
  */
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "";
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LcDia0sAAAAABs_4aIZI-Thp9lZvcaMNFvQ-_Jq";
 
 let recaptchaLoaded = false;
 let loadPromise: Promise<void> | null = null;
