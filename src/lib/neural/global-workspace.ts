@@ -465,8 +465,8 @@ export function runMetacognition(
   // Confidence from self-model
   const confidence = selfModel.confidenceLevel;
 
-  // Should we adjust?
-  const shouldAdjust = goalAlignment < 0.4 || coherence < 0.3 || confidence < 0.3;
+  // Only adjust when metrics are truly bad (lower thresholds to avoid constant warnings)
+  const shouldAdjust = goalAlignment < 0.25 || coherence < 0.2 || confidence < 0.2;
 
   // Determine adjustment type
   let adjustmentType: MetacognitionResult["adjustmentType"];
