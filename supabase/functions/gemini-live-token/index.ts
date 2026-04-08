@@ -92,7 +92,6 @@ Deno.serve(async (req) => {
             model: MODEL,
             wsUrl,
             voice,
-            apiKey, // Direct mode - client uses key directly
             expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
           }),
           {
