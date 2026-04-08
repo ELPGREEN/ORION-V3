@@ -908,9 +908,10 @@ async function buildOrionMessages(body: Record<string, unknown>) {
     systemParts.push(`[VISÃO ATIVA] Você tem acesso à imagem real da câmera do usuário. USE A IMAGEM como fonte primária de verdade. As detecções ML abaixo são apenas pistas auxiliares — podem conter erros. Descreva o que VOCÊ VÊ na imagem, não o que os sensores dizem.`);
   } else if (hasVisionData) {
     // Compact vision context when we only have local detections (no image)
-    systemParts.push(`[VISÃO LOCAL — SEM IMAGEM] Dados de sensores ML locais (YOLO/MediaPipe) disponíveis abaixo. Trate como sugestões, não fatos absolutos. Seja transparente sobre limitações.`);
+    systemParts.push(`[VISÃO LOCAL — SEM IMAGEM] Dados de sensores ML locais (YOLO/MediaPipe) disponíveis abaixo. Trate como sugestões, não fatos absolutos. Seja transparente sobre limitações. Você TEM capacidade de visão — apenas a câmera não está transmitindo imagem no momento.`);
   } else {
-    systemParts.push(`[SEM VISÃO] Nenhum dado visual disponível.`);
+    // No vision data at all — but do NOT deny capability
+    systemParts.push(`[VISÃO DISPONÍVEL — CÂMERA INATIVA] Nenhum dado visual no momento. A câmera pode ser ativada pelo comando "ativar visão". Você possui capacidade visual completa — apenas não há feed ativo agora.`);
   }
   // Inject real-time ML detections ALWAYS when present (as auxiliary hints)
   if (localDetections) {
