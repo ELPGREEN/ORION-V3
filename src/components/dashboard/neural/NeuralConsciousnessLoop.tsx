@@ -668,6 +668,11 @@ export function NeuralConsciousnessLoop() {
             painIndex: snap.interoception.painIndex,
             energyLevel: snap.interoception.energyLevel,
             dominantSignal: snap.interoception.dominantSignal,
+            robotic: snap.interoception.robotic ?? {
+              proprioceptionError: 0, hardwareIntegrity: 1, biofeedbackQuality: 1,
+              iaaPredictiveRisk: 0, mechanicalWear: 0, equilibriumConfidence: 1,
+              activeInternalSensors: 4, thermalMap: {},
+            },
           } : null,
           anomalySeverity: snap.anomalySeverity,
         };
