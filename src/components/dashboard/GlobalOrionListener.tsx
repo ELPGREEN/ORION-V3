@@ -185,10 +185,11 @@ export function GlobalOrionListener() {
       if (reason === "aborted") return Math.max(backoff, 5000);
       return Math.max(backoff, 3000);
     }
-    const backoff = Math.min(500 * Math.pow(2, attempts), 5000);
-    if (reason === "aborted") return Math.max(backoff, 1500);
-    if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 2000);
-    if (reason === "no-speech" || reason === "end") return Math.max(backoff, 500);
+    const backoff = Math.min(500 * Math.pow(2, attempts), 10000);
+    if (reason === "aborted") return Math.max(backoff, 3000);
+    if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 3000);
+    if (reason === "no-speech" || reason === "end") return Math.max(backoff, 200);
+    if (reason === "normal-end") return 150; // Fast restart for non-continuous mode
     return Math.max(backoff, 1000);
   }, [isMobile]);
 
@@ -374,7 +375,10 @@ export function GlobalOrionListener() {
       try {
       const rec = new SR();
       rec.lang = "pt-BR";
-      rec.continuous = true;
+      // ═══ FIX: Use non-continuous mode to prevent Chrome iframe "aborted" loops ═══
+      // continuous=true gets killed after ~1s in iframes/preview contexts
+      // Instead we use short sessions and restart on onend for the same effect
+      rec.continuous = false;
       rec.interimResults = true;
       rec.maxAlternatives = 3;
 
@@ -460,28 +464,31 @@ export function GlobalOrionListener() {
           return;
         }
 
-        // If session was very short (<2s) and got no results, it's an unstable abort — use longer delay
-        const isUnstableSession = sessionDuration < 2000 && !sessionStartRef.gotResult;
+        // In non-continuous mode, sessions end naturally after speech/silence
+        // Only count as unstable if it was truly a broken session (<1.5s with no result)
+        const isUnstableSession = sessionDuration < 1500 && !sessionStartRef.gotResult;
         if (isUnstableSession) {
           restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, MAX_RESTART_ATTEMPTS);
+        } else {
+          // Healthy session — reset attempts
+          restartAttemptsRef.current = Math.max(0, restartAttemptsRef.current - 1);
         }
         
         if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
-          console.log("[GlobalOrion] Max restart attempts reached, pausing for 15s then retry");
+          console.log("[GlobalOrion] Max restart attempts reached, pausing for 30s then retry");
           setWakeWordActive(false);
-          // Don't give up permanently — retry after 15s cooldown
           clearRestartTimer();
           restartTimerRef.current = setTimeout(() => {
             restartAttemptsRef.current = 0;
             if (wakeWordEnabledRef.current && !wakeRecRef.current && !startInFlightRef.current && !orionOpen && !isOnNeuralPage && permissionsGranted && !(typeof document !== "undefined" && document.hidden)) {
               startWakeWordListener();
             }
-          }, 15000);
+          }, 30000);
           return;
         }
         
-        // Stable sessions (>3s) restart quickly; unstable ones use backoff
-        const delay = isUnstableSession ? getRestartDelay("end") : 300;
+        // Normal end in non-continuous mode — restart quickly
+        const delay = isUnstableSession ? getRestartDelay("end") : getRestartDelay("normal-end");
         console.log(`[GlobalOrion] Will restart in ${delay}ms (attempt ${restartAttemptsRef.current})`);
         setWakeWordActive(true);
         clearRestartTimer();
@@ -521,7 +528,7 @@ export function GlobalOrionListener() {
         }
         
         if (restartAttemptsRef.current >= MAX_RESTART_ATTEMPTS) {
-          console.log("[GlobalOrion] Max restart attempts, pausing 15s");
+          console.log("[GlobalOrion] Max restart attempts from errors, pausing 30s");
           setWakeWordActive(false);
           clearRestartTimer();
           restartTimerRef.current = setTimeout(() => {
@@ -529,7 +536,7 @@ export function GlobalOrionListener() {
             if (wakeWordEnabledRef.current && !wakeRecRef.current && !startInFlightRef.current && !orionOpen && !isOnNeuralPage && permissionsGranted && !(typeof document !== "undefined" && document.hidden)) {
               startWakeWordListener();
             }
-          }, 15000);
+          }, 30000);
           return;
         }
         
