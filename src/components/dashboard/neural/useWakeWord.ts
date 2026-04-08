@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { vsLog } from "./useVisionProcessing";
 
 // ═══ Unified Mic Arbiter — shared with useNeuralVoice ═══
-import { claimMic, isMicOwner, registerMicRec, registerMicCleanup } from "@/lib/voice/micArbiter";
+import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
 
 const ORION_WAKE_REGEX = /([óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\b/i;
 
@@ -230,6 +230,7 @@ export function useWakeWord(
     try { wakeRecRef.current?.abort?.(); } catch {}
     try { wakeRecRef.current?.stop?.(); } catch {}
     wakeRecRef.current = null;
+    releaseMic(wakeSingletonIdRef.current);
     setWakeWordActive(false);
   }, [clearRestartTimer]);
 
@@ -271,9 +272,11 @@ export function useWakeWord(
 
   useEffect(() => () => {
     clearRestartTimer();
+    try { wakeRecRef.current?.abort?.(); } catch {}
     try { wakeRecRef.current?.stop?.(); } catch {}
     wakeRecRef.current = null;
     startInFlightRef.current = false;
+    releaseMic(wakeSingletonIdRef.current);
   }, [clearRestartTimer]);
 
   return {
