@@ -403,7 +403,14 @@ export function useNeuralVoice(
       try {
         await browserSpeak(cleanText);
         played = true;
-      } catch {}
+        console.log("[Voice] Browser TTS fallback played successfully");
+      } catch (err) {
+        console.error("[Voice] Browser TTS fallback also failed:", (err as Error)?.message);
+      }
+    }
+
+    if (!played) {
+      console.error("[Voice] ALL TTS backends failed — Orion is mute for this message");
     }
 
     clearTimeout(safetyTimer);

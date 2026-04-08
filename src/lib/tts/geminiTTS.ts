@@ -211,8 +211,8 @@ export async function speakWithGeminiTTS(
 
       if (!currentBlob) {
         consecutiveFailures++;
-        if (isGeminiTTSCoolingDown() || consecutiveFailures >= 2) {
-          console.warn("[Gemini TTS] 2+ consecutive failures or cooldown triggered — aborting pipeline");
+        if (isGeminiTTSCoolingDown() || consecutiveFailures >= 3) {
+          console.warn(`[Gemini TTS] ${consecutiveFailures} consecutive failures — aborting pipeline`);
           break;
         }
         continue;
