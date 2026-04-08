@@ -44,6 +44,16 @@ const HALLUCINATION_PHRASES = [
   "até minha data de corte",
   "é importante consultar um advogado",
   "não posso garantir a precisão",
+  // ═══ Anti-hallucination: Vision denial phrases ═══
+  "não tenho capacidade de visão",
+  "não consigo ver imagens",
+  "não tenho acesso a imagens",
+  "não posso ver o que você",
+  "como um modelo de texto",
+  "sou um assistente de texto",
+  "não possuo visão",
+  "não tenho olhos",
+  "incapaz de processar imagens",
 ];
 
 const FABRICATION_PATTERNS = [
