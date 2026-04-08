@@ -49,9 +49,20 @@ export function useWakeWord(
   const startInFlightRef = useRef(false);
   const listeningRef = useRef(listening);
   const speechOkRef = useRef(speechOk);
+  const wakeSingletonIdRef = useRef(0);
 
   const backgroundTranscriptsRef = useRef<BackgroundTranscript[]>([]);
   const speakerCounterRef = useRef(0);
+
+  // Claim wake singleton on mount — kills any previous HMR instance
+  useEffect(() => {
+    wakeSingletonIdRef.current = claimWakeSingleton();
+    return () => {
+      try { wakeRecRef.current?.abort?.(); } catch {}
+      try { wakeRecRef.current?.stop?.(); } catch {}
+      wakeRecRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     listeningRef.current = listening;
