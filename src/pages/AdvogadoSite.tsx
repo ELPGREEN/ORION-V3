@@ -28,7 +28,7 @@ export default function AdvogadoSite() {
     queryKey: ["advogado-site-config", advogadoId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("escritorio_config")
+        .from("escritorio_public_view" as any)
         .select("*")
         .eq("user_id", advogadoId!)
         .maybeSingle();
