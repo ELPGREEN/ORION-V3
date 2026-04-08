@@ -386,7 +386,7 @@ Deno.serve(async (req) => {
     const keys = getAllGeminiKeys();
     if (keys.length > 0) {
       console.log(`[TTS] Fallback AI Studio (${keys.length} keys)`);
-      const { response, lastError, rateLimited } = await requestAIStudio(keys, variants);
+      const { response, lastError, rateLimited } = await requestAIStudio(keys, studioVariants);
 
       if (rateLimited && !response) {
         return fallbackResponse("Rate limited", { rate_limited: true, retry_after_ms: CLIENT_RETRY_AFTER_MS });
