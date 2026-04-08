@@ -179,15 +179,27 @@ export function useNeuralVoice(
     }
   }, []);
 
+  // ═══ Singleton claim: kill ALL previous HMR instances ═══
   useEffect(() => {
+    const myId = claimVoiceSingleton();
+    singletonIdRef.current = myId;
+    console.log("[Voice] Singleton claimed, id:", myId);
+
+    const cleanup = () => {
+      voiceActiveRef.current = false;
+      intentionalStopRef.current = true;
+      try { recRef.current?.abort?.(); } catch {}
+      try { recRef.current?.stop?.(); } catch {}
+      recRef.current = null;
+      clearRestartTimer();
+    };
+    registerGlobalCleanup(cleanup);
+
     initVoicePicker();
     const voice = getOrionVoice();
     if (voice) maleVoiceRef.current = voice;
     
-    // Pre-load Piper in background for faster first speak
     preloadPiper();
-    
-    // Pre-load voice style preferences
     loadVoicePrefs().catch(() => {});
     
     const handler = () => {
@@ -195,8 +207,11 @@ export function useNeuralVoice(
       if (v) maleVoiceRef.current = v;
     };
     speechSynthesis?.addEventListener?.("voiceschanged", handler);
-    return () => speechSynthesis?.removeEventListener?.("voiceschanged", handler);
-  }, []);
+    return () => {
+      speechSynthesis?.removeEventListener?.("voiceschanged", handler);
+      cleanup();
+    };
+  }, [clearRestartTimer]);
 
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
     clearRestartTimer();
