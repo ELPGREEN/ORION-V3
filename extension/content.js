@@ -428,7 +428,7 @@
     panel.id = "orion-panel";
     panel.innerHTML = `
       <div class="orion-panel-header">
-        <span class="orion-panel-title">ORION v4.0</span>
+        <span class="orion-panel-title">ORION v5.0</span>
         <div style="display:flex;align-items:center;gap:8px;">
           <span id="orion-vision-badge" class="orion-vision-badge ${visionActive ? 'active' : ''}">${visionActive ? '👁 ON' : '👁 OFF'}</span>
           <button class="orion-panel-close" id="orion-close-panel">×</button>
