@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
+import { claimMic, isMicOwner, registerMicRec, releaseMic } from "@/lib/voice/micArbiter";
 
 // ═══════════════════════════════════════════════════════════
 // R.A.G ELP Voice Engine — 100% Free, No API Key
@@ -30,6 +31,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
   const intentionalStopRef = useRef(false);
   const isSpeakingRef = useRef(false);
   const mountedRef = useRef(true);
+  const micOwnerIdRef = useRef(0);
 
   // Store callbacks in refs to avoid recreating startListening
   const onResultRef = useRef(onResult);
@@ -90,6 +92,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       try { recognitionRef.current.abort(); } catch {}
       recognitionRef.current = null;
     }
+    releaseMic(micOwnerIdRef.current);
   }, []);
 
   const startListening = useCallback(async (): Promise<boolean> => {
@@ -110,6 +113,8 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       currentPermission = "granted";
     }
 
+    micOwnerIdRef.current = claimMic("command");
+
     const recognition = new SpeechRecognition();
     recognition.lang = lang;
     recognition.continuous = continuous;
@@ -117,13 +122,13 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
       intentionalStopRef.current = false;
       setIsListening(true);
     };
     
     recognition.onresult = (event: any) => {
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
       let finalTranscript = "";
       let interimTranscript = "";
       
@@ -145,7 +150,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     };
 
     recognition.onerror = (event: any) => {
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
       
       // "aborted" is expected when we stop intentionally — ignore it
       if (event.error === "aborted") {
@@ -161,11 +166,13 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
         console.log("[VoiceInput] No speech detected, ending session");
       }
 
+      releaseMic(micOwnerIdRef.current);
       setIsListening(false);
     };
 
     recognition.onend = () => {
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
+      releaseMic(micOwnerIdRef.current);
       setIsListening(false);
       
       // Only fire onEnd if stop was NOT intentional
@@ -176,12 +183,14 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     };
 
     recognitionRef.current = recognition;
+    registerMicRec(recognition, "command");
     try {
       recognition.start();
       return true;
     } catch (e) {
       console.warn("[VoiceInput] Failed to start recognition:", e);
       recognitionRef.current = null;
+      releaseMic(micOwnerIdRef.current);
       return false;
     }
   }, [lang, continuous, micPermission, requestMicPermission, destroyRecognition]);

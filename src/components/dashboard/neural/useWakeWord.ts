@@ -99,13 +99,14 @@ export function useWakeWord(
   }, []);
 
   const startWakeWordListener = useCallback(() => {
-    // ═══ FIX: Re-claim mic for wake mode each time we start ═══
-    // Ensures ownership is current after command mode released mic
-    wakeSingletonIdRef.current = claimMic("wake");
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     const hidden = typeof document !== "undefined" && document.hidden;
     if (!speechOkRef.current || !SR || listeningRef.current || hidden) return;
     if (!wakeWordEnabledRef.current || wakeRecRef.current || startInFlightRef.current) return;
+
+    // ═══ FIX: Claim mic ONLY after guards pass ═══
+    // Prevents wake word from stealing command mode during restart gaps.
+    wakeSingletonIdRef.current = claimMic("wake");
 
     clearRestartTimer();
     startInFlightRef.current = true;
