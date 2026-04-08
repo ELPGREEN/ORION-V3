@@ -271,7 +271,7 @@ export async function detectRealTime(
     } catch {}
   }
 
-  return {
+  const result: RealTimeVisionResult = {
     mpObjects: mpResult.objects,
     yoloObjects: yoloResult,
     allObjects,
