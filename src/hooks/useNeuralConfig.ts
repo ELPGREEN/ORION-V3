@@ -107,18 +107,20 @@ export function useNeuralConfig() {
           // Create default config once per user/runtime to avoid duplicate rows
           let createPromise = configCreationPromises.get(user.id);
           if (!createPromise) {
-            createPromise = supabase
-              .from("neural_agent_config" as any)
-              .insert({ user_id: user.id, ...DEFAULT_CONFIG } as any)
-              .select()
-              .single()
-              .then(({ data: newConfig, error: insertErr }) => {
+            createPromise = (async () => {
+              try {
+                const { data: newConfig, error: insertErr } = await supabase
+                  .from("neural_agent_config" as any)
+                  .insert({ user_id: user.id, ...DEFAULT_CONFIG } as any)
+                  .select()
+                  .single();
+
                 if (insertErr) throw insertErr;
                 return newConfig;
-              })
-              .finally(() => {
+              } finally {
                 configCreationPromises.delete(user.id);
-              });
+              }
+            })();
 
             configCreationPromises.set(user.id, createPromise);
           }

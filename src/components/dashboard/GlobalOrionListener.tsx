@@ -120,7 +120,7 @@ export function GlobalOrionListener() {
   const matchesWakeWord = useCallback((transcript: string) => {
     if (ORION_WAKE_REGEX.test(transcript)) return true;
     if (!customWakeRegex) return false;
-    return customWakeRegex.test(normalizeWakeWord(transcript).replace(/\s+/g, ""));
+    return customWakeRegex.test(normalizeWakeWord(transcript));
   }, [customWakeRegex]);
 
   const primeMicrophone = useCallback(async () => {
