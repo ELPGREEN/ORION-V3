@@ -394,6 +394,28 @@ export function PlasmaCanvas({ className = "" }: { className?: string }) {
     ro.observe(canvas);
     resize();
 
+    // ═══ Consciousness Heartbeat: run IIT Phi engine every 4s ═══
+    let consciousnessInterval: ReturnType<typeof setInterval> | null = null;
+    (async () => {
+      try {
+        const { runConsciousnessBridge } = await import("@/lib/neural/consciousness-bridge");
+        const runCycle = () => {
+          try {
+            runConsciousnessBridge({
+              intent: "general",
+              query: "sistema ativo — monitoramento contínuo",
+              hasVision: OrbState.active,
+              hasAudio: !!(window as any).__orion_mic_arbiter__?.rec,
+              memoryFacts: [],
+              activeModules: ["causal-reasoning", "theory-of-mind", "meta-learning"],
+            });
+          } catch {}
+        };
+        runCycle(); // immediate first run
+        consciousnessInterval = setInterval(runCycle, 4000);
+      } catch {}
+    })();
+
     let lastResponding = false;
     let lastModeChange = Date.now();
     let lastAwareness = 0;
