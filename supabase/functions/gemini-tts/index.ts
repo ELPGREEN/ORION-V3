@@ -176,7 +176,7 @@ function buildSingleSpeakerRequest(
   if (opts.includeLanguage && selectedLang.trim()) speechConfig.languageCode = selectedLang;
 
   const body: Record<string, unknown> = {
-    contents: [{ parts: [{ text: cleanText }] }],
+    contents: [{ role: "user", parts: [{ text: cleanText }] }],
     generationConfig: { responseModalities: ["AUDIO"], speechConfig },
   };
   if (opts.includePrompt && stylePrompt.trim()) {
