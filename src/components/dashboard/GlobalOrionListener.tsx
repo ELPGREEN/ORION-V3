@@ -200,6 +200,8 @@ export function GlobalOrionListener() {
       };
 
       rec.onresult = (e: any) => {
+        sessionStartRef.gotResult = true;
+        restartAttemptsRef.current = 0; // Got audio — connection is healthy
         for (let i = e.resultIndex; i < e.results.length; i++) {
           const isFinal = e.results[i].isFinal;
 
