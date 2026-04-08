@@ -7,11 +7,48 @@ const corsHeaders = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// Orion Vision Hybrid v3 — Gemini Flash Primary + Multi-Provider Cascade
-// Gemini 2.5 Flash → Gemini Direct → Groq LLaVA → Mistral → DeepSeek
+// Orion Vision Hybrid v4 — All Free Gemini Models + Multi-Key Rotation
+// Cascade: Gemini 2.5 Flash → 2.5 Flash-Lite → 2.0 Flash → 2.0 Flash-Lite
+//        → Groq LLaVA → Mistral → DeepSeek (text fallback)
+// Each Gemini model rotates through ALL 8 API keys before moving to next model.
 // ═══════════════════════════════════════════════════════════════════
 
 const CONFIDENCE_THRESHOLD = 0.75;
+
+// All available Gemini API keys for rotation
+const GEMINI_KEY_NAMES = [
+  "GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4",
+  "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7", "GEMINI_API_KEY_GCP",
+];
+
+function getAllGeminiKeys(): string[] {
+  return GEMINI_KEY_NAMES.map(n => Deno.env.get(n)).filter(Boolean) as string[];
+}
+
+// Track which keys are temporarily exhausted (429) per model
+const _exhaustedKeys: Record<string, Set<string>> = {};
+const _exhaustedExpiry: Record<string, number> = {};
+
+function markKeyExhausted(model: string, key: string) {
+  if (!_exhaustedKeys[model]) _exhaustedKeys[model] = new Set();
+  _exhaustedKeys[model].add(key);
+  _exhaustedExpiry[`${model}:${key}`] = Date.now() + 60_000; // 1 min cooldown
+}
+
+function isKeyExhausted(model: string, key: string): boolean {
+  const expiry = _exhaustedExpiry[`${model}:${key}`];
+  if (!expiry) return false;
+  if (Date.now() >= expiry) {
+    _exhaustedKeys[model]?.delete(key);
+    delete _exhaustedExpiry[`${model}:${key}`];
+    return false;
+  }
+  return true;
+}
+
+function getAvailableKeys(model: string): string[] {
+  return getAllGeminiKeys().filter(k => !isKeyExhausted(model, k));
+}
 
 interface VisionProvider {
   id: string;
@@ -20,31 +57,108 @@ interface VisionProvider {
   model: string;
   keyEnv: string | string[];
   supportsVision: boolean;
+  isGemini?: boolean;
   buildBody: (systemPrompt: string, userPrompt: string, imageB64: string, mime: string) => unknown;
   extractText: (data: unknown) => string;
   buildHeaders: (key: string) => Record<string, string>;
 }
 
+// Gemini body builder (shared across all Gemini models)
+const geminiBody = (sys: string, usr: string, img: string, mime: string) => ({
+  contents: [{ parts: [
+    { text: `${sys}\n\n${usr}` },
+    { inlineData: { mimeType: mime, data: img } }
+  ]}],
+  generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
+});
+const geminiExtract = (d: any) => d.candidates?.[0]?.content?.parts?.[0]?.text || "";
+const geminiHeaders = (_key: string) => ({ "Content-Type": "application/json" });
+
+// OpenAI-compatible body builder (shared across Groq, Mistral, etc.)
+const openaiBody = (model: string) => (sys: string, usr: string, img: string, mime: string) => ({
+  model,
+  messages: [
+    { role: "system", content: sys },
+    { role: "user", content: [
+      { type: "text", text: usr },
+      { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } }
+    ]}
+  ],
+  temperature: 0.1,
+  max_tokens: 2000,
+});
+const openaiExtract = (d: any) => d.choices?.[0]?.message?.content || "";
+const openaiHeaders = (key: string) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` });
+
 const VISION_PROVIDERS: VisionProvider[] = [
-  // 1. PRIMARY — Gemini 2.5 Flash Direct (suas próprias API keys, sem Lovable Gateway)
+  // ═══ FREE GEMINI MODELS (all have Free Tier for vision input) ═══
+  // 1. Gemini 2.5 Flash — best quality free vision
   {
-    id: "gemini_direct",
-    name: "Gemini 2.5 Flash (Direct)",
+    id: "gemini_2.5_flash",
+    name: "Gemini 2.5 Flash (Free)",
     endpoint: (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
     model: "gemini-2.5-flash",
-    keyEnv: ["GEMINI_API_KEY"],
+    keyEnv: GEMINI_KEY_NAMES,
     supportsVision: true,
-    buildBody: (sys, usr, img, mime) => ({
-      contents: [{ parts: [
-        { text: `${sys}\n\n${usr}` },
-        { inlineData: { mimeType: mime, data: img } }
-      ]}],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
-    }),
-    extractText: (d: any) => d.candidates?.[0]?.content?.parts?.[0]?.text || "",
-    buildHeaders: (_key) => ({ "Content-Type": "application/json" }),
+    isGemini: true,
+    buildBody: geminiBody,
+    extractText: geminiExtract,
+    buildHeaders: geminiHeaders,
   },
-  // 2. Groq LLaVA
+  // 2. Gemini 2.5 Flash-Lite — cheapest, fastest
+  {
+    id: "gemini_2.5_flash_lite",
+    name: "Gemini 2.5 Flash-Lite (Free)",
+    endpoint: (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,
+    model: "gemini-2.5-flash-lite",
+    keyEnv: GEMINI_KEY_NAMES,
+    supportsVision: true,
+    isGemini: true,
+    buildBody: geminiBody,
+    extractText: geminiExtract,
+    buildHeaders: geminiHeaders,
+  },
+  // 3. Gemini 2.0 Flash — previous gen, still free
+  {
+    id: "gemini_2.0_flash",
+    name: "Gemini 2.0 Flash (Free)",
+    endpoint: (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+    model: "gemini-2.0-flash",
+    keyEnv: GEMINI_KEY_NAMES,
+    supportsVision: true,
+    isGemini: true,
+    buildBody: geminiBody,
+    extractText: geminiExtract,
+    buildHeaders: geminiHeaders,
+  },
+  // 4. Gemini 2.0 Flash-Lite — lightest free model
+  {
+    id: "gemini_2.0_flash_lite",
+    name: "Gemini 2.0 Flash-Lite (Free)",
+    endpoint: (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`,
+    model: "gemini-2.0-flash-lite",
+    keyEnv: GEMINI_KEY_NAMES,
+    supportsVision: true,
+    isGemini: true,
+    buildBody: geminiBody,
+    extractText: geminiExtract,
+    buildHeaders: geminiHeaders,
+  },
+  // 5. Gemini 2.5 Pro — free tier available, heavier
+  {
+    id: "gemini_2.5_pro",
+    name: "Gemini 2.5 Pro (Free)",
+    endpoint: (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`,
+    model: "gemini-2.5-pro",
+    keyEnv: GEMINI_KEY_NAMES,
+    supportsVision: true,
+    isGemini: true,
+    buildBody: geminiBody,
+    extractText: geminiExtract,
+    buildHeaders: geminiHeaders,
+  },
+  // ═══ NON-GEMINI FALLBACKS ═══
+  // 6. Groq LLaVA
   {
     id: "groq",
     name: "Groq LLaVA",
@@ -52,22 +166,11 @@ const VISION_PROVIDERS: VisionProvider[] = [
     model: "llama-3.2-90b-vision-preview",
     keyEnv: "GROQ_API_KEY",
     supportsVision: true,
-    buildBody: (sys, usr, img, mime) => ({
-      model: "llama-3.2-90b-vision-preview",
-      messages: [
-        { role: "system", content: sys },
-        { role: "user", content: [
-          { type: "text", text: usr },
-          { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } }
-        ]}
-      ],
-      temperature: 0.1,
-      max_tokens: 2000,
-    }),
-    extractText: (d: any) => d.choices?.[0]?.message?.content || "",
-    buildHeaders: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
+    buildBody: openaiBody("llama-3.2-90b-vision-preview"),
+    extractText: openaiExtract,
+    buildHeaders: openaiHeaders,
   },
-  // 4. Mistral Pixtral
+  // 7. Mistral Pixtral
   {
     id: "mistral",
     name: "Mistral Pixtral",
@@ -75,22 +178,11 @@ const VISION_PROVIDERS: VisionProvider[] = [
     model: "pixtral-large-latest",
     keyEnv: "MISTRAL_API_KEY",
     supportsVision: true,
-    buildBody: (sys, usr, img, mime) => ({
-      model: "pixtral-large-latest",
-      messages: [
-        { role: "system", content: sys },
-        { role: "user", content: [
-          { type: "text", text: usr },
-          { type: "image_url", image_url: { url: `data:${mime};base64,${img}` } }
-        ]}
-      ],
-      temperature: 0.1,
-      max_tokens: 2000,
-    }),
-    extractText: (d: any) => d.choices?.[0]?.message?.content || "",
-    buildHeaders: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
+    buildBody: openaiBody("pixtral-large-latest"),
+    extractText: openaiExtract,
+    buildHeaders: openaiHeaders,
   },
-  // 5. DeepSeek (text-only fallback)
+  // 8. DeepSeek (text-only fallback)
   {
     id: "deepseek",
     name: "DeepSeek (Text Refinement)",
@@ -107,8 +199,8 @@ const VISION_PROVIDERS: VisionProvider[] = [
       temperature: 0.1,
       max_tokens: 2000,
     }),
-    extractText: (d: any) => d.choices?.[0]?.message?.content || "",
-    buildHeaders: (key) => ({ "Content-Type": "application/json", Authorization: `Bearer ${key}` }),
+    extractText: openaiExtract,
+    buildHeaders: openaiHeaders,
   }
 ];
 
@@ -226,6 +318,11 @@ function resolveKey(provider: VisionProvider): string | null {
   if (typeof provider.keyEnv === "string") {
     return Deno.env.get(provider.keyEnv) || null;
   }
+  // For Gemini providers, return first available (non-exhausted) key
+  if (provider.isGemini) {
+    const available = getAvailableKeys(provider.model);
+    return available.length > 0 ? available[0] : null;
+  }
   // Multi-key: try each until one is found
   for (const envName of provider.keyEnv) {
     const k = Deno.env.get(envName);
@@ -234,7 +331,7 @@ function resolveKey(provider: VisionProvider): string | null {
   return null;
 }
 
-// ─── Multi-provider cascade call ───
+// ─── Multi-provider cascade with per-key rotation for Gemini ───
 async function callVisionCascade(
   imageB64: string,
   mimeType: string,
@@ -247,6 +344,66 @@ async function callVisionCascade(
     : VISION_PROVIDERS;
 
   for (const provider of providers) {
+    if (provider.isGemini) {
+      // Rotate through ALL keys for this Gemini model
+      const keys = getAvailableKeys(provider.model);
+      if (keys.length === 0) {
+        errors.push(`${provider.id}: all ${getAllGeminiKeys().length} keys exhausted`);
+        continue;
+      }
+
+      for (const key of keys) {
+        const start = Date.now();
+        try {
+          const body = provider.buildBody(
+            isVisionTask ? SYSTEM_PROMPT : DEEPSEEK_REFINE_PROMPT,
+            prompt, imageB64, mimeType
+          );
+          const endpoint = typeof provider.endpoint === "function"
+            ? provider.endpoint(key) : provider.endpoint;
+
+          const resp = await fetch(endpoint, {
+            method: "POST",
+            headers: provider.buildHeaders(key),
+            body: JSON.stringify(body),
+            signal: AbortSignal.timeout(30000),
+          });
+
+          if (resp.status === 429) {
+            markKeyExhausted(provider.model, key);
+            errors.push(`${provider.id}: key exhausted (429), rotating...`);
+            continue;
+          }
+
+          if (!resp.ok) {
+            const errText = await resp.text();
+            if (resp.status === 403 || resp.status === 401) {
+              markKeyExhausted(provider.model, key);
+            }
+            errors.push(`${provider.id} [${resp.status}]: ${errText.substring(0, 200)}`);
+            continue;
+          }
+
+          const data = await resp.json();
+          const text = provider.extractText(data);
+          if (!text) {
+            errors.push(`${provider.id}: empty response`);
+            continue;
+          }
+
+          const durationMs = Date.now() - start;
+          console.log(`✅ ${provider.name} responded in ${durationMs}ms (key rotation: ${keys.indexOf(key) + 1}/${keys.length})`);
+          return { result: parseVisionResponse(text), provider: provider.id, durationMs };
+        } catch (e) {
+          errors.push(`${provider.id}: ${e instanceof Error ? e.message : "unknown"}`);
+        }
+      }
+      // All keys failed for this model, cascade to next model
+      errors.push(`${provider.id}: all keys tried, moving to next model`);
+      continue;
+    }
+
+    // Non-Gemini provider (standard single-key)
     const key = resolveKey(provider);
     if (!key) {
       errors.push(`${provider.id}: no key`);
@@ -257,14 +414,10 @@ async function callVisionCascade(
     try {
       const body = provider.buildBody(
         isVisionTask ? SYSTEM_PROMPT : DEEPSEEK_REFINE_PROMPT,
-        prompt,
-        imageB64,
-        mimeType
+        prompt, imageB64, mimeType
       );
-
       const endpoint = typeof provider.endpoint === "function"
-        ? provider.endpoint(key)
-        : provider.endpoint;
+        ? provider.endpoint(key) : provider.endpoint;
 
       const resp = await fetch(endpoint, {
         method: "POST",
