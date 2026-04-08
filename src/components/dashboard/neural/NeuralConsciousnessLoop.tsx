@@ -791,6 +791,25 @@ export function NeuralConsciousnessLoop() {
       userExpertiseEstimate: meta?.infrastructure?.userExpertiseEstimate ?? prev.userExpertiseEstimate,
       workingMemoryLoad: meta?.infrastructure?.workingMemoryLoad ?? prev.workingMemoryLoad,
       semanticActivation: meta?.infrastructure?.semanticActivation ?? prev.semanticActivation,
+      // v29: Metacognitive Hearing (from bridge snapshot)
+      ...(() => {
+        const snap = getLastConsciousnessSnapshot();
+        if (!snap) return {};
+        return {
+          hearingVerdict: snap.hearingVerdict ?? prev.hearingVerdict,
+          hearingConfidence: snap.hearingConfidence ?? prev.hearingConfidence,
+          hearingProsody: snap.hearingProsody ?? prev.hearingProsody,
+          hearingInterrupt: snap.hearingInterrupt ?? prev.hearingInterrupt,
+          hearingAnticipatedIntent: snap.hearingAnticipatedIntent ?? prev.hearingAnticipatedIntent,
+          hearingEchoicSnapshots: snap.hearingEchoicSnapshots ?? prev.hearingEchoicSnapshots,
+          hearingHealth: snap.hearingHealth ?? prev.hearingHealth,
+          hearingUrgency: snap.hearingUrgency ?? prev.hearingUrgency,
+          hearingStress: snap.hearingStress ?? prev.hearingStress,
+          hearingAcousticSentiment: snap.hearingAcousticSentiment ?? prev.hearingAcousticSentiment,
+          hearingAudioQuality: snap.hearingAudioQuality ?? prev.hearingAudioQuality,
+          hearingShouldRepeat: snap.hearingShouldRepeat ?? prev.hearingShouldRepeat,
+        };
+      })(),
       // v25: Bridge snapshot
       bridgeSnapshot: (() => {
         const snap = getLastConsciousnessSnapshot();
