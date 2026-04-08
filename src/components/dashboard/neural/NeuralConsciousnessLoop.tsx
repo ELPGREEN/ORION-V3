@@ -429,6 +429,7 @@ export function NeuralConsciousnessLoop() {
       riskLevel: "safe" as const,
       activeSkillsList: [],
       reflectionChain: [],
+      bridgeSnapshot: null,
     };
   });
 
