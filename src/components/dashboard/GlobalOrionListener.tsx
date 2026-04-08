@@ -750,11 +750,15 @@ export function GlobalOrionListener() {
           <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
             <span className={cn(
               "text-[9px] font-mono tracking-wider px-2 py-0.5 rounded-full border backdrop-blur-sm",
-              wakeWordActive
-                ? "text-primary border-primary/40 bg-primary/10 animate-pulse"
-                : "text-muted-foreground/60 border-border/30 bg-card/50"
+              conversationalStatus === "listening"
+                ? "text-emerald-400 border-emerald-400/40 bg-emerald-400/10 animate-pulse"
+                : wakeWordActive
+                  ? "text-primary border-primary/40 bg-primary/10 animate-pulse"
+                  : "text-muted-foreground/60 border-border/30 bg-card/50"
             )}>
-              {wakeWordActive ? `⚡ Diga "${wakeWordHint}"` : wakeWordHint}
+              {conversationalStatus === "listening"
+                ? "🎙️ Ouvindo…"
+                : wakeWordActive ? `⚡ Diga "${wakeWordHint}"` : wakeWordHint}
             </span>
           </div>
 
