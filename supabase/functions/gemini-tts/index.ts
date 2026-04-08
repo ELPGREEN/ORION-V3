@@ -35,15 +35,33 @@ type RequestVariant = {
 
 function getAllGeminiKeys(): string[] {
   const now = Date.now();
-  const keys = [Deno.env.get("GEMINI_API_KEY")].filter((key): key is string => {
-    if (!key) return false;
-    const failedAt = failedKeyCache[key];
-    if (failedAt && now - failedAt < KEY_COOLDOWN_MS) return false;
-    return true;
-  });
+  // Rotate through all available GEMINI_API_KEY, GEMINI_API_KEY_2 ... GEMINI_API_KEY_7
+  const keyNames = [
+    "GEMINI_API_KEY",
+    "GEMINI_API_KEY_2",
+    "GEMINI_API_KEY_3",
+    "GEMINI_API_KEY_4",
+    "GEMINI_API_KEY_5",
+    "GEMINI_API_KEY_6",
+    "GEMINI_API_KEY_7",
+  ];
+  const keys = keyNames
+    .map((name) => Deno.env.get(name))
+    .filter((key): key is string => {
+      if (!key) return false;
+      const failedAt = failedKeyCache[key];
+      if (failedAt && now - failedAt < KEY_COOLDOWN_MS) return false;
+      return true;
+    });
 
   if (keys.length === 0) {
-    throw new Error("No GEMINI_API_KEY configured (or key is cooling down)");
+    throw new Error("No GEMINI_API_KEY configured (or all keys are cooling down)");
+  }
+
+  // Shuffle for load distribution
+  for (let i = keys.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [keys[i], keys[j]] = [keys[j], keys[i]];
   }
 
   return keys;
