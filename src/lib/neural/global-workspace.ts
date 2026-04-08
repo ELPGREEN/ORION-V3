@@ -38,7 +38,7 @@ export interface ConsciousnessConfig {
 
 export const DEFAULT_CONSCIOUSNESS_CONFIG: ConsciousnessConfig = {
   maxConsciousAgents: 2,
-  metacognitionInterval: 7,
+  metacognitionInterval: 2,
   salienceWeights: {
     gamma: 0.30,
     dopamine: 0.25,

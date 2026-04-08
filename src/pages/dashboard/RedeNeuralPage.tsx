@@ -78,7 +78,11 @@ const AmazonMusicPlayer = lazy(lazyRetry(() => import("@/components/amazon/Amazo
 const YouTubeMusicPlayer = lazy(lazyRetry(() => import("@/components/youtube-music/YouTubeMusicPlayer").then(m => ({ default: m.YouTubeMusicPlayer }))));
 const OrionAPIStatusDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neural/OrionAPIStatusDashboard").then(m => ({ default: m.OrionAPIStatusDashboard }))));
 const QuantumRuntimeDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neural/QuantumRuntimeDashboard").then(m => ({ default: m.QuantumRuntimeDashboard }))));
-
+const ScreenRecorder = lazy(lazyRetry(() => import("@/components/dashboard/neural/ScreenRecorder").then(m => ({ default: m.ScreenRecorder }))));
+const KnowledgeHarvester = lazy(lazyRetry(() => import("@/components/dashboard/neural/KnowledgeHarvester").then(m => ({ default: m.KnowledgeHarvester }))));
+const PrivateKnowledge = lazy(lazyRetry(() => import("@/components/dashboard/neural/PrivateKnowledge").then(m => ({ default: m.PrivateKnowledge }))));
+const HopfieldVisualization = lazy(lazyRetry(() => import("@/components/dashboard/neural/HopfieldVisualization").then(m => ({ default: m.HopfieldVisualization }))));
+const PlasmaCanvas = lazy(lazyRetry(() => import("@/components/dashboard/neural/EnergyOrb").then(m => ({ default: m.PlasmaCanvas }))));
 // ─── Fase 9.3: Smart Upload Panel ───
 function SmartUploadPanel({ userId, onUploaded }: { userId?: string; onUploaded: () => void }) {
   const { toast } = useToast();
@@ -593,6 +597,9 @@ export default function RedeNeuralPage() {
           </p>
         </div>
         <NeuralPDFReport />
+        <Suspense fallback={null}>
+          <ScreenRecorder />
+        </Suspense>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="relative z-10">
@@ -825,6 +832,17 @@ export default function RedeNeuralPage() {
         <TabsContent value="knowledge" className="space-y-4">
           {/* Smart Upload (Fase 9.3) */}
           <SmartUploadPanel userId={user?.id} onUploaded={loadData} />
+          {/* Knowledge Harvester + Private Knowledge */}
+          <NeuralErrorBoundary fallbackTitle="Erro no Knowledge Harvester">
+            <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+              <KnowledgeHarvester />
+            </Suspense>
+          </NeuralErrorBoundary>
+          <NeuralErrorBoundary fallbackTitle="Erro no Private Knowledge">
+            <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+              <PrivateKnowledge />
+            </Suspense>
+          </NeuralErrorBoundary>
           {/* Semantic Search */}
           <NeuralSemanticSearch />
           <Card className="bg-card border-border">
@@ -1088,7 +1106,24 @@ export default function RedeNeuralPage() {
 
         {/* Neural Consciousness - Dedicated Loop + A/B Testing */}
         <TabsContent value="consciousness" className="space-y-4">
+          {/* Energy Orb */}
+          <NeuralErrorBoundary fallbackTitle="Erro no Energy Orb">
+            <Suspense fallback={null}>
+              <div className="flex justify-center">
+                <PlasmaCanvas className="w-48 h-48" />
+              </div>
+            </Suspense>
+          </NeuralErrorBoundary>
+
           <NeuralConsciousnessLoop />
+
+          {/* Hopfield Visualization */}
+          <NeuralErrorBoundary fallbackTitle="Erro no Hopfield">
+            <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+              <HopfieldVisualization />
+            </Suspense>
+          </NeuralErrorBoundary>
+
           <NeuralErrorBoundary fallbackTitle="Erro nas Métricas A/B">
             <ABMetricsDashboard />
           </NeuralErrorBoundary>
