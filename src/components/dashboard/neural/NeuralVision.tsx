@@ -336,13 +336,13 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // Auto-connect mic (NOT camera) when entering Orion after permissions were granted
   useEffect(() => {
-    if (autoBootedRef.current || !speechOk || skipWakeWord) return;
+    if (autoBootedRef.current || !speechOk) return;
     const state = location.state as any;
-    if (initialCommand || state?.autoActivate || state?.autoCommand) return;
+    if (!skipWakeWord && (initialCommand || state?.autoActivate || state?.autoCommand)) return;
 
     autoBootedRef.current = true;
     const timer = setTimeout(() => {
-      if (!hasGreetedRef.current) {
+      if (!skipWakeWord && !hasGreetedRef.current) {
         hasGreetedRef.current = true;
         speakFast("Orion ativo. Diga ativar visão para ligar a câmera.").catch(() => {});
       }
@@ -351,7 +351,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         stopWakeWordListener();
         setTimeout(() => startListening(handleVoice), 80);
       }
-    }, 200);
+    }, skipWakeWord ? 400 : 200);
 
     return () => clearTimeout(timer);
   }, [handleVoice, initialCommand, listening, location.state, skipWakeWord, speakFast, speechOk, startListening, stopWakeWordListener]);
