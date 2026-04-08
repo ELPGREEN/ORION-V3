@@ -242,6 +242,22 @@ export interface ConsciousnessCycleSnapshot {
   hearingAcousticSentiment: number;
   hearingAudioQuality: number;
   hearingShouldRepeat: boolean;
+  /** v29: Quantum Cognition */
+  qcSuperpositionCardinality: number;
+  qcCollapsed: boolean;
+  qcCollapseProbability: number;
+  qcInterferenceMagnitude: number;
+  qcBellInequality: number;
+  qcEntanglementEntropy: number;
+  qcNonLocalField: number;
+  qcObserverEffect: boolean;
+  qcInformationGain: number;
+  qcZenoEffect: boolean;
+  qcAmbiguityTolerance: number;
+  qcCognitiveDissonance: number;
+  qcResolutionStrategy: string;
+  qcOrchORScore: number;
+  qcCoherenceTimeMs: number;
 }
 
 export interface ReasoningContext {
