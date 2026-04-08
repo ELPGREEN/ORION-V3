@@ -70,6 +70,7 @@ export interface UseNeuralVoiceReturn {
   abortControllerRef: React.MutableRefObject<AbortController | null>;
   speechQueueRef: React.MutableRefObject<string[]>;
   bargeInCallbackRef: React.MutableRefObject<(() => void) | null>;
+  voiceActiveRef: React.MutableRefObject<boolean>;
 }
 
 // Simple barge-in patterns (user wants AI to stop)
@@ -102,6 +103,8 @@ export function useNeuralVoice(
   const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consecutiveAbortsRef = useRef(0);
   const MAX_CONSECUTIVE_ABORTS = 5;
+  /** voiceActiveRef: stays true across STT restart gaps — use to prevent wake word conflicts */
+  const voiceActiveRef = useRef(false);
   /** Active Audio element for barge-in cancellation (Google TTS / Kokoro) */
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -594,6 +597,7 @@ export function useNeuralVoice(
 
   const startListening = useCallback((onCmd: (c: string) => void) => {
     intentionalStopRef.current = false;
+    voiceActiveRef.current = true;
     clearRestartTimer();
     onCmdRef.current = onCmd;
     setListening(false);
@@ -602,6 +606,7 @@ export function useNeuralVoice(
 
   const stop = useCallback(() => {
     intentionalStopRef.current = true;
+    voiceActiveRef.current = false;
     clearRestartTimer();
     onCmdRef.current = null;
     speakingRef.current = false;
@@ -623,5 +628,5 @@ export function useNeuralVoice(
 
   useEffect(() => () => clearRestartTimer(), [clearRestartTimer]);
 
-  return { listening, supported, ttsOn, setTtsOn, speak, speakFast, startListening, stop, bargeIn, startThinking, abortControllerRef, speechQueueRef, bargeInCallbackRef };
+  return { listening, supported, ttsOn, setTtsOn, speak, speakFast, startListening, stop, bargeIn, startThinking, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef };
 }

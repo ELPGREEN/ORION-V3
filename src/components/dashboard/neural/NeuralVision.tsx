@@ -64,7 +64,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const fpsC = useRef(0);
   const lastFpsT = useRef(Date.now());
 
-  const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef } = useNeuralVoice();
+  const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef } = useNeuralVoice();
   const bgTranscriptsGetterRef = useRef<() => import("./useWakeWord").BackgroundTranscript[]>(() => []);
   const { thought, log, aiDescription, askAI, askInput, setAskInput, chatHistory, isProcessing, detectedObjects } = useOrionReasoning(active, speak, canvasRef, identificationMode, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, () => bgTranscriptsGetterRef.current());
   const voiceClone = useOrionVoiceClone();
@@ -413,7 +413,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const wakeWordStabilityRef = useRef(0);
   useEffect(() => {
     // When opened from GlobalOrionListener overlay, skip wake word entirely
-    // to avoid SpeechRecognition conflicts with voice input
     if (skipWakeWord) return;
 
     // When main listener is active, stop wake word (mutual exclusion)
@@ -421,6 +420,10 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       stopWakeWordListener();
       return;
     }
+
+    // Don't re-enable wake word if the voice system is logically active
+    // (voiceActiveRef stays true across STT restart gaps, unlike listening state)
+    if (voiceActiveRef.current) return;
 
     // Don't re-enable wake word if we're in auto-boot mode or recently activated
     if (active || listening) return;
@@ -435,7 +438,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     enableWakeWord();
     const timer = setTimeout(() => startWakeWordListener(), 1500);
     return () => clearTimeout(timer);
-  }, [skipWakeWord, active, listening, speechOk, wakeWordActive, enableWakeWord, startWakeWordListener, stopWakeWordListener, wakeRecRef]);
+  }, [skipWakeWord, active, listening, speechOk, wakeWordActive, enableWakeWord, startWakeWordListener, stopWakeWordListener, wakeRecRef, voiceActiveRef]);
 
   // Awareness sync
   useEffect(() => {
