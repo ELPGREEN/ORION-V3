@@ -67,7 +67,7 @@ export interface UseNeuralVoiceReturn {
   supported: boolean;
   ttsOn: boolean;
   setTtsOn: (on: boolean) => void;
-  speak: (text: string) => Promise<void>;
+  speak: (text: string, options?: { skipMicToggle?: boolean }) => Promise<void>;
   speakFast: (text: string) => Promise<void>;
   startListening: (onCmd: (c: string) => void) => void;
   stop: () => void;
