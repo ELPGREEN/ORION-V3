@@ -487,6 +487,8 @@ export function NeuralConsciousnessLoop() {
       const test2 = runHopfieldVsCompetitive(epoch);
       const newHeads = simulateAttentionHeads(epoch);
       const hasImprovement = test1.confidence > 0.3 || test2.confidence > 0.3;
+      // v24: Feed calibration with real A/B test outcomes
+      recordCalibration(selfModelRef.current.confidenceLevel, hasImprovement);
       const newLR = Math.max(0.001, 0.01 * Math.exp(-epoch * 0.005));
       const health = Math.min(99.9, 80 + epoch * 0.15 + (hasImprovement ? 2 : 0));
 
@@ -515,6 +517,8 @@ export function NeuralConsciousnessLoop() {
       const test1 = runABTest("GELU vs Mish Evolution", epoch);
       const newHeads = simulateAttentionHeads(epoch);
       const hasImprovement = test1.confidence > 0.25;
+      // v24: Feed calibration with evolution test outcomes
+      recordCalibration(selfModelRef.current.confidenceLevel, hasImprovement);
 
       addLogEntry(phase, actionGroup.action, detail, true);
 
