@@ -526,6 +526,10 @@ export function runMetacognition(
     reflectionChain: quantumMeta?.reflectionChain,
     adaptivePlanScore: quantumMeta?.adaptivePlanScore,
     riskLevel: quantumMeta?.riskLevel,
+    // v27: LLM Metacognition
+    reasoningMode: quantumMeta?.reasoningMode,
+    hallucinationSnapshot: quantumMeta?.hallucinationSnapshot,
+    alignmentAudit: quantumMeta?.alignmentAudit,
   };
 }
 
