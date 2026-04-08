@@ -159,6 +159,19 @@ interface ConsciousnessState {
   userExpertiseEstimate: number;
   workingMemoryLoad: number;
   semanticActivation: number;
+  // v29: Metacognitive Hearing
+  hearingVerdict: string;
+  hearingConfidence: number;
+  hearingProsody: string;
+  hearingInterrupt: boolean;
+  hearingAnticipatedIntent: string;
+  hearingEchoicSnapshots: number;
+  hearingHealth: number;
+  hearingUrgency: number;
+  hearingStress: number;
+  hearingAcousticSentiment: number;
+  hearingAudioQuality: number;
+  hearingShouldRepeat: boolean;
   // v25: Bridge metrics
   bridgeSnapshot: {
     gammaHealth: number;
@@ -514,6 +527,19 @@ export function NeuralConsciousnessLoop() {
       userExpertiseEstimate: 0.5,
       workingMemoryLoad: 0,
       semanticActivation: 0.5,
+      // v29: Metacognitive Hearing
+      hearingVerdict: "idle",
+      hearingConfidence: 0,
+      hearingProsody: "neutral",
+      hearingInterrupt: false,
+      hearingAnticipatedIntent: "none",
+      hearingEchoicSnapshots: 0,
+      hearingHealth: 0,
+      hearingUrgency: 0,
+      hearingStress: 0,
+      hearingAcousticSentiment: 0,
+      hearingAudioQuality: 0,
+      hearingShouldRepeat: false,
       bridgeSnapshot: null,
     };
   });
