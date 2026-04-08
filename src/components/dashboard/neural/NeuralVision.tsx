@@ -314,6 +314,23 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   useEffect(() => { bgTranscriptsGetterRef.current = getBackgroundTranscripts; }, [getBackgroundTranscripts]);
 
+  const startDirectVoiceCapture = useCallback(() => {
+    stopWakeWordListener();
+    if (!listening) {
+      setTimeout(() => startListening(handleVoice), 80);
+    }
+  }, [handleVoice, listening, startListening, stopWakeWordListener]);
+
+  const handleActivateVoiceButton = useCallback(() => {
+    if (skipWakeWord) {
+      startDirectVoiceCapture();
+      return;
+    }
+
+    enableWakeWord();
+    startWakeWordListener();
+  }, [enableWakeWord, skipWakeWord, startDirectVoiceCapture, startWakeWordListener]);
+
   // Auto-start wake word on mount (ONLY if not auto-booting)
   useEffect(() => {
     if (skipWakeWord) return;
@@ -347,14 +364,11 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         speakFast("Orion ativo. Diga ativar visão para ligar a câmera.").catch(() => {});
       }
       // Camera does NOT auto-start — only via "ativar visão" voice command
-      if (!listening) {
-        stopWakeWordListener();
-        setTimeout(() => startListening(handleVoice), 80);
-      }
+      startDirectVoiceCapture();
     }, skipWakeWord ? 400 : 200);
 
     return () => clearTimeout(timer);
-  }, [handleVoice, initialCommand, listening, location.state, skipWakeWord, speakFast, speechOk, startListening, stopWakeWordListener]);
+  }, [initialCommand, location.state, skipWakeWord, speakFast, speechOk, startDirectVoiceCapture]);
 
   // Auto-activate when navigated from OrionGlobalListener or via initialCommand prop
   useEffect(() => {
@@ -519,7 +533,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         )}
         {!active && !wakeWordActive && speechOk && (
           <Button size="sm" variant="ghost" className="h-7 text-[11px] gap-1"
-            onClick={() => { enableWakeWord(); startWakeWordListener(); }}>
+            onClick={handleActivateVoiceButton}>
             <Mic className="h-3 w-3" /> Ativar escuta de voz
           </Button>
         )}
