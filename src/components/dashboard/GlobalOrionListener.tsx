@@ -291,7 +291,25 @@ export function GlobalOrionListener() {
     }
   }, [clearRestartTimer, openOrionOverlay, startCommandCapture]);
 
-  const startWakeWordListener = useCallback(() => {
+  const stopWakeWordListener = useCallback(() => {
+    wakeWordEnabledRef.current = false;
+    wakeDetectedRef.current = false;
+    pendingCommandRef.current = "";
+    clearRestartTimer();
+    restartAttemptsRef.current = 0;
+    startInFlightRef.current = false;
+    stopCommandCapture();
+    if (commandTimeoutRef.current) {
+      clearTimeout(commandTimeoutRef.current);
+      commandTimeoutRef.current = null;
+    }
+    try { wakeRecRef.current?.abort?.(); } catch {}
+    try { wakeRecRef.current?.stop?.(); } catch {}
+    wakeRecRef.current = null;
+    setWakeWordActive(false);
+  }, [clearRestartTimer, stopCommandCapture]);
+
+
     const hidden = typeof document !== "undefined" && document.hidden;
     console.log("[GlobalOrion] startWakeWordListener called", { isOnNeuralPage, orionOpen, permissionsGranted, hidden, hasRef: !!wakeRecRef.current });
     if (hidden || isOnNeuralPage || orionOpen || !permissionsGranted || wakeRecRef.current || startInFlightRef.current) return;
