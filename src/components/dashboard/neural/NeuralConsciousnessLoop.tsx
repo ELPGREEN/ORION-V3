@@ -159,6 +159,19 @@ interface ConsciousnessState {
   userExpertiseEstimate: number;
   workingMemoryLoad: number;
   semanticActivation: number;
+  // v29: Metacognitive Hearing
+  hearingVerdict: string;
+  hearingConfidence: number;
+  hearingProsody: string;
+  hearingInterrupt: boolean;
+  hearingAnticipatedIntent: string;
+  hearingEchoicSnapshots: number;
+  hearingHealth: number;
+  hearingUrgency: number;
+  hearingStress: number;
+  hearingAcousticSentiment: number;
+  hearingAudioQuality: number;
+  hearingShouldRepeat: boolean;
   // v25: Bridge metrics
   bridgeSnapshot: {
     gammaHealth: number;
@@ -514,6 +527,19 @@ export function NeuralConsciousnessLoop() {
       userExpertiseEstimate: 0.5,
       workingMemoryLoad: 0,
       semanticActivation: 0.5,
+      // v29: Metacognitive Hearing
+      hearingVerdict: "idle",
+      hearingConfidence: 0,
+      hearingProsody: "neutral",
+      hearingInterrupt: false,
+      hearingAnticipatedIntent: "none",
+      hearingEchoicSnapshots: 0,
+      hearingHealth: 0,
+      hearingUrgency: 0,
+      hearingStress: 0,
+      hearingAcousticSentiment: 0,
+      hearingAudioQuality: 0,
+      hearingShouldRepeat: false,
       bridgeSnapshot: null,
     };
   });
@@ -765,6 +791,25 @@ export function NeuralConsciousnessLoop() {
       userExpertiseEstimate: meta?.infrastructure?.userExpertiseEstimate ?? prev.userExpertiseEstimate,
       workingMemoryLoad: meta?.infrastructure?.workingMemoryLoad ?? prev.workingMemoryLoad,
       semanticActivation: meta?.infrastructure?.semanticActivation ?? prev.semanticActivation,
+      // v29: Metacognitive Hearing (from bridge snapshot)
+      ...(() => {
+        const snap = getLastConsciousnessSnapshot();
+        if (!snap) return {};
+        return {
+          hearingVerdict: snap.hearingVerdict ?? prev.hearingVerdict,
+          hearingConfidence: snap.hearingConfidence ?? prev.hearingConfidence,
+          hearingProsody: snap.hearingProsody ?? prev.hearingProsody,
+          hearingInterrupt: snap.hearingInterrupt ?? prev.hearingInterrupt,
+          hearingAnticipatedIntent: snap.hearingAnticipatedIntent ?? prev.hearingAnticipatedIntent,
+          hearingEchoicSnapshots: snap.hearingEchoicSnapshots ?? prev.hearingEchoicSnapshots,
+          hearingHealth: snap.hearingHealth ?? prev.hearingHealth,
+          hearingUrgency: snap.hearingUrgency ?? prev.hearingUrgency,
+          hearingStress: snap.hearingStress ?? prev.hearingStress,
+          hearingAcousticSentiment: snap.hearingAcousticSentiment ?? prev.hearingAcousticSentiment,
+          hearingAudioQuality: snap.hearingAudioQuality ?? prev.hearingAudioQuality,
+          hearingShouldRepeat: snap.hearingShouldRepeat ?? prev.hearingShouldRepeat,
+        };
+      })(),
       // v25: Bridge snapshot
       bridgeSnapshot: (() => {
         const snap = getLastConsciousnessSnapshot();
@@ -1336,6 +1381,112 @@ export function NeuralConsciousnessLoop() {
               <span>Sucesso: {(state.estimatedSuccess * 100).toFixed(0)}%</span>
               <span>•</span>
               <span>Erros: {state.errorsLogged}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* v29: Metacognitive Hearing Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              👂 Audição Metacognitiva
+            </CardTitle>
+            <CardDescription className="text-[10px]">Percepção primária, prosódia e filtro auditivo</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Badge className={`text-[10px] ${
+                state.hearingVerdict === "clear" ? "bg-emerald-600 text-emerald-100" :
+                state.hearingVerdict === "degraded" ? "bg-amber-600 text-amber-100" :
+                state.hearingVerdict === "confused" ? "bg-red-600 text-red-100" :
+                state.hearingVerdict === "interrupted" ? "bg-violet-600 text-violet-100" :
+                "bg-muted text-muted-foreground"
+              }`}>
+                {state.hearingVerdict === "clear" ? "✅ Clara" :
+                 state.hearingVerdict === "degraded" ? "⚠️ Degradada" :
+                 state.hearingVerdict === "confused" ? "❌ Confusa" :
+                 state.hearingVerdict === "interrupted" ? "🛑 Interrompida" :
+                 "💤 Idle"}
+              </Badge>
+              <span className="text-[9px] font-mono text-muted-foreground">
+                Prosódia: {state.hearingProsody}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center p-1.5 bg-muted/20 rounded">
+                <p className="text-sm font-bold font-mono" style={{ color: state.hearingConfidence > 0.7 ? "#22c55e" : state.hearingConfidence > 0.4 ? "#f59e0b" : "#ef4444" }}>
+                  {(state.hearingConfidence * 100).toFixed(0)}%
+                </p>
+                <p className="text-[8px] text-muted-foreground">Confiança ASR</p>
+              </div>
+              <div className="text-center p-1.5 bg-muted/20 rounded">
+                <p className="text-sm font-bold font-mono" style={{ color: state.hearingAudioQuality > 0.7 ? "#22c55e" : "#f59e0b" }}>
+                  {(state.hearingAudioQuality * 100).toFixed(0)}%
+                </p>
+                <p className="text-[8px] text-muted-foreground">Qualidade</p>
+              </div>
+              <div className="text-center p-1.5 bg-muted/20 rounded">
+                <p className="text-sm font-bold font-mono" style={{ color: state.hearingHealth > 0.7 ? "#22c55e" : state.hearingHealth > 0.4 ? "#f59e0b" : "#ef4444" }}>
+                  {(state.hearingHealth * 100).toFixed(0)}%
+                </p>
+                <p className="text-[8px] text-muted-foreground">Saúde</p>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <MetricBar label="Urgência" value={state.hearingUrgency} color="#f59e0b" />
+              <MetricBar label="Estresse" value={state.hearingStress} color="#ef4444" />
+              <MetricBar label="Sentimento" value={(state.hearingAcousticSentiment + 1) / 2} color="#3b82f6" />
+            </div>
+            {state.hearingShouldRepeat && (
+              <Badge className="text-[10px] bg-red-600/30 text-red-300 animate-pulse">🔁 Solicitar Repetição</Badge>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              🧠 Integração Auditiva
+            </CardTitle>
+            <CardDescription className="text-[10px]">Antecipação, interrupção e memória ecoica</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] text-muted-foreground">Intenção Antecipada</span>
+              <Badge variant="outline" className="text-[10px] font-mono">
+                {state.hearingAnticipatedIntent === "none" ? "—" : state.hearingAnticipatedIntent.replace(/_/g, " ")}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] text-muted-foreground">Gatilho de Interrupção</span>
+              <Badge className={`text-[10px] ${state.hearingInterrupt ? "bg-red-600 text-red-100 animate-pulse" : "bg-muted text-muted-foreground"}`}>
+                {state.hearingInterrupt ? "⚡ ATIVO" : "Inativo"}
+              </Badge>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[9px] text-muted-foreground">Memória Ecoica</span>
+                <span className="text-[9px] font-mono text-muted-foreground">{state.hearingEchoicSnapshots}/15</span>
+              </div>
+              <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, (state.hearingEchoicSnapshots / 15) * 100)}%`,
+                    backgroundColor: state.hearingEchoicSnapshots > 10 ? "#f59e0b" : "#22c55e",
+                  }}
+                />
+              </div>
+              <p className="text-[8px] text-muted-foreground mt-0.5">Retenção: 30s • Re-análise automática</p>
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              {["ASR", "Prosódia", "Filtro", "Antecipação", "Ecoica"].map((stage, i) => (
+                <span key={stage} className="text-[8px] px-1.5 py-0.5 rounded bg-muted/20 text-muted-foreground">
+                  {i + 1}. {stage}
+                </span>
+              ))}
             </div>
           </CardContent>
         </Card>

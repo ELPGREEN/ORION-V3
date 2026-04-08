@@ -8,6 +8,7 @@
  */
 
 import { processAudioStream, audioToEmbedding, fuseAudioText, type AudioStreamConfig, DEFAULT_AUDIO_CONFIG, type AudioPipelineResult, type AudioEmbedding } from "./multimodal-mamba-audio";
+import { processMetacognitiveHearing, type MetacognitiveHearingResult } from "./metacognitive-hearing";
 
 // ─── Types ───
 
@@ -26,6 +27,7 @@ export interface AudioBridgeResult {
   vocalMetrics: VocalMetrics;
   pipelineResult: AudioPipelineResult;
   streamVector: number[];        // Raw feature vector for fuseStreams
+  hearingResult: MetacognitiveHearingResult | null; // v29: Metacognitive hearing analysis
 }
 
 // ─── Emotion Keywords (Portuguese) ───
@@ -110,6 +112,15 @@ export function processVoiceTranscript(
   const metrics = extractVocalMetrics(transcript, durationMs, speechConfidence);
   const audioFeatures = metricsToAudioFeatures(metrics);
 
+  // v29: Run metacognitive hearing analysis
+  const hearingResult = processMetacognitiveHearing(
+    transcript,
+    speechConfidence,
+    durationMs,
+    metrics.energyLevel,
+    false, // not ongoing (final transcript)
+  );
+
   // Split into chunks for the pipeline (simulate 300ms windows)
   const chunkSize = Math.max(8, Math.floor(audioFeatures.length / 4));
   const chunks: number[][] = [];
@@ -134,6 +145,7 @@ export function processVoiceTranscript(
     vocalMetrics: metrics,
     pipelineResult,
     streamVector: audioFeatures,
+    hearingResult,
   };
 
   return _lastAudioResult;
