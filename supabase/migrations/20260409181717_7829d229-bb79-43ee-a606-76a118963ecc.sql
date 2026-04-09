@@ -1,0 +1,2 @@
+ALTER TABLE public.company_intelligence DROP CONSTRAINT IF EXISTS company_intelligence_created_by_fkey;
+ALTER TABLE public.company_intelligence ADD CONSTRAINT company_intelligence_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL;
