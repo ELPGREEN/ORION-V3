@@ -1949,6 +1949,18 @@ function parseOrionResponse(text: string) {
   return { description: clean, learnedFacts, identifiedObjects };
 }
 
+// ═══ Strip image_url from messages for text-only providers ═══
+function stripImageFromMessages(msgs: any[], hadImage: boolean): any[] {
+  return msgs.map((m: any) => {
+    if (m.role === "user" && Array.isArray(m.content)) {
+      const textParts = m.content.filter((c: any) => c.type === "text").map((c: any) => c.text);
+      const text = textParts.join("\n") || "Olá";
+      return { ...m, content: hadImage ? `[Imagem capturada mas provedor sem suporte a visão. Use dados ML locais do contexto.]\n${text}` : text };
+    }
+    return m;
+  });
+}
+
 async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) {
   const messages = await buildOrionMessages(body);
   const requestedMaxTokens = typeof body.maxTokens === "number" ? body.maxTokens : undefined;
@@ -2102,11 +2114,14 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       }
     }
 
+    // ═══ STRIP image_url for text-only fallback providers ═══
+    const textOnlyMessages = stripImageFromMessages(messages, hasImage);
+
     // ── FALLBACK 1: HuggingFace streaming (100% gratuito) ──
-    if (!hasImage && (Deno.env.get("HF_TOKEN") || Deno.env.get("HUGGINGFACE_API_KEY"))) {
+    if (Deno.env.get("HF_TOKEN") || Deno.env.get("HUGGINGFACE_API_KEY")) {
       try {
         attemptedProviders.push("huggingface");
-        const hfResp = await callHuggingFaceStreaming(messages);
+        const hfResp = await callHuggingFaceStreaming(textOnlyMessages);
         if (hfResp.ok && hfResp.body) {
           console.log("[Orion] Streaming via HuggingFace (fallback 1 — gratuito)");
           return new Response(hfResp.body, {
@@ -2119,10 +2134,10 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     }
 
     // ── FALLBACK 2: Groq streaming (fast, ~200ms first token) ──
-    if (!hasImage && Deno.env.get("GROQ_API_KEY")) {
+    if (Deno.env.get("GROQ_API_KEY")) {
       try {
         attemptedProviders.push("groq");
-        const groqResp = await callGroqStreaming(messages);
+        const groqResp = await callGroqStreaming(textOnlyMessages);
         if (groqResp.ok && groqResp.body) {
           console.log("[Orion] Streaming via Groq (fallback 2)");
           return new Response(groqResp.body, {
@@ -2135,10 +2150,10 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     }
 
     // ── FALLBACK 3: DeepSeek streaming ──
-    if (!hasImage && Deno.env.get("DEEPSEEK_API_KEY")) {
+    if (Deno.env.get("DEEPSEEK_API_KEY")) {
       try {
         attemptedProviders.push("deepseek");
-        const dsResp = await callDeepSeekStreaming(messages);
+        const dsResp = await callDeepSeekStreaming(textOnlyMessages);
         if (dsResp.ok && dsResp.body) {
           console.log("[Orion] Streaming via DeepSeek (fallback 3)");
           return new Response(dsResp.body, {
@@ -2151,10 +2166,10 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     }
 
     // ── FALLBACK 4: Mistral streaming ──
-    if (!hasImage && Deno.env.get("MISTRAL_API_KEY")) {
+    if (Deno.env.get("MISTRAL_API_KEY")) {
       try {
         attemptedProviders.push("mistral");
-        const mistralResp = await callMistralStreaming(messages);
+        const mistralResp = await callMistralStreaming(textOnlyMessages);
         if (mistralResp.ok && mistralResp.body) {
           console.log("[Orion] Streaming via Mistral (fallback 4)");
           return new Response(mistralResp.body, {
@@ -2167,10 +2182,10 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     }
 
     // ── FALLBACK 5: OpenRouter streaming ──
-    if (!hasImage && Deno.env.get("OPENROUTER_API_KEY")) {
+    if (Deno.env.get("OPENROUTER_API_KEY")) {
       try {
         attemptedProviders.push("openrouter");
-        const orResp = await callOpenRouterStreaming(messages);
+        const orResp = await callOpenRouterStreaming(textOnlyMessages);
         if (orResp.ok && orResp.body) {
           console.log("[Orion] Streaming via OpenRouter (fallback 5)");
           return new Response(orResp.body, {
@@ -2185,9 +2200,9 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     // ── Last resort: non-streaming wrapped as SSE ──
     console.warn(`[Orion] All streaming providers failed. Attempted: [${attemptedProviders.join(" → ")}]. Falling back to non-streaming.`);
     
-    // If we had an image, inject vision-context notice so text-only fallbacks don't deny vision capability
+    // Use textOnlyMessages (already stripped) with vision context notice
     if (hasImage) {
-      const sysMsg = messages.find((m: any) => m.role === "system");
+      const sysMsg = textOnlyMessages.find((m: any) => m.role === "system");
       if (sysMsg) {
         sysMsg.content = (typeof sysMsg.content === "string" ? sysMsg.content : "") + 
           "\n\n[AVISO INTERNO: A imagem da câmera foi capturada mas o provedor de visão (Gemini) está temporariamente indisponível. " +
@@ -2198,10 +2213,10 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     }
     
     let fallbackText = "";
-    try { fallbackText = await callHuggingFaceFallback(messages); } catch {
-      try { fallbackText = await callGroqFallback(messages); } catch {
-        try { fallbackText = await callMistralFallback(messages); } catch {
-          try { fallbackText = await callOpenRouterFallback(messages); } catch {
+    try { fallbackText = await callHuggingFaceFallback(textOnlyMessages); } catch {
+      try { fallbackText = await callGroqFallback(textOnlyMessages); } catch {
+        try { fallbackText = await callMistralFallback(textOnlyMessages); } catch {
+          try { fallbackText = await callOpenRouterFallback(textOnlyMessages); } catch {
             console.error(`[Orion] ALL providers exhausted. Cascade: [${attemptedProviders.join(" → ")}]`);
             fallbackText = "Desculpe, estou com dificuldades técnicas no momento. Reformule sua pergunta e tente de novo.";
           }
@@ -2264,9 +2279,12 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     }
   }
 
+  // ═══ Strip image_url for text-only non-streaming fallbacks ═══
+  const textOnlyMsgs = stripImageFromMessages(messages, hasImage);
+
   // ── FALLBACK 1: HuggingFace (grátis) ──
   try {
-    const text = await callHuggingFaceFallback(messages);
+    const text = await callHuggingFaceFallback(textOnlyMsgs);
     if (text) {
       console.log("[Orion] Non-stream via HuggingFace (fallback 1)");
       return parseOrionResponse(text);
@@ -2274,20 +2292,18 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   } catch {}
 
   // ── FALLBACK 2: Groq ──
-  if (!hasImage) {
-    try {
-      const text = await callGroqFallback(messages);
-      if (text) {
-        console.log("[Orion] Non-stream via Groq (fallback 2)");
-        return parseOrionResponse(text);
-      }
-    } catch {}
-  }
+  try {
+    const text = await callGroqFallback(textOnlyMsgs);
+    if (text) {
+      console.log("[Orion] Non-stream via Groq (fallback 2)");
+      return parseOrionResponse(text);
+    }
+  } catch {}
 
   // ── FALLBACK 3: DeepSeek ──
   if (Deno.env.get("DEEPSEEK_API_KEY")) {
     try {
-      const text = await callDeepSeekFallback(messages);
+      const text = await callDeepSeekFallback(textOnlyMsgs);
       if (text) {
         console.log("[Orion] Non-stream via DeepSeek (fallback 3)");
         return parseOrionResponse(text);
@@ -2297,7 +2313,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
 
   // ── FALLBACK 4: Mistral ──
   try {
-    const text = await callMistralFallback(messages);
+    const text = await callMistralFallback(textOnlyMsgs);
     if (text) {
       console.log("[Orion] Non-stream via Mistral (fallback 4)");
       return parseOrionResponse(text);
@@ -2307,7 +2323,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   // ── FALLBACK 5: OpenRouter ──
   if (Deno.env.get("OPENROUTER_API_KEY")) {
     try {
-      const text = await callOpenRouterFallback(messages);
+      const text = await callOpenRouterFallback(textOnlyMsgs);
       if (text) {
         console.log("[Orion] Non-stream via OpenRouter (fallback 5)");
         return parseOrionResponse(text);
