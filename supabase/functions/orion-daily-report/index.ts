@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
 
     // Gather data
     const [ordersRes, entriesRes, clientsRes, metricsRes] = await Promise.all([
-      sb.from("orders").select("total_cents, status, created_at").gte("created_at", d30),
+      sb.from("orders").select("amount_cents, status, created_at").gte("created_at", d30),
       sb.from("orion_financial_entries").select("type, amount_cents, category").gte("date", d30.slice(0, 10)),
       sb.from("client_profiles").select("id, status, created_at").gte("created_at", d30),
       sb.from("ai_metrics").select("success, total_duration_ms").gte("created_at", d7),
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     const clients = clientsRes.data || [];
     const metrics = metricsRes.data || [];
 
-    const revenue = orders.filter(o => o.status === "completed").reduce((s, o) => s + (o.total_cents || 0), 0);
+    const revenue = orders.filter(o => o.status === "completed").reduce((s, o) => s + (o.amount_cents || 0), 0);
     const expenses = entries.filter(e => e.type === "saida").reduce((s, e) => s + e.amount_cents, 0);
     const errorRate = metrics.length > 0 ? (metrics.filter(m => !m.success).length / metrics.length * 100).toFixed(1) : "0";
     const avgDuration = metrics.length > 0 ? (metrics.reduce((s, m) => s + m.total_duration_ms, 0) / metrics.length / 1000).toFixed(1) : "0";

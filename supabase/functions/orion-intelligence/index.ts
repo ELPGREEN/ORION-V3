@@ -56,14 +56,14 @@ async function handleDre(days: number) {
   const since = new Date(Date.now() - days * 86400000).toISOString();
 
   const [ordersRes, entriesRes] = await Promise.all([
-    sb.from("orders").select("total_cents, status, created_at").gte("created_at", since),
+    sb.from("orders").select("amount_cents, status, created_at").gte("created_at", since),
     sb.from("orion_financial_entries").select("type, amount_cents, category, date").gte("date", since.slice(0, 10)),
   ]);
 
   const orders = ordersRes.data || [];
   const entries = entriesRes.data || [];
 
-  const receita = orders.filter(o => o.status === "completed").reduce((s, o) => s + (o.total_cents || 0), 0);
+  const receita = orders.filter(o => o.status === "completed").reduce((s, o) => s + (o.amount_cents || 0), 0);
   const entradasManuais = entries.filter(e => e.type === "entrada").reduce((s, e) => s + e.amount_cents, 0);
   const saidas = entries.filter(e => e.type === "saida").reduce((s, e) => s + e.amount_cents, 0);
 
@@ -81,7 +81,7 @@ async function handleDre(days: number) {
     periodo_dias: days,
     receita_vendas_cents: receita,
     entradas_manuais_cents: entradasManuais,
-    receita_total_cents: receitaTotal,
+    receita_amount_cents: receitaTotal,
     despesas_cents: saidas,
     resultado_cents: resultado,
     margem_bruta_percent: parseFloat(margemBruta),
@@ -99,14 +99,14 @@ async function handleAnomalies() {
   const d30 = new Date(now.getTime() - 30 * 86400000).toISOString();
 
   const [orders7, orders30, metrics7, metrics30] = await Promise.all([
-    sb.from("orders").select("total_cents, status").gte("created_at", d7),
-    sb.from("orders").select("total_cents, status").gte("created_at", d30),
+    sb.from("orders").select("amount_cents, status").gte("created_at", d7),
+    sb.from("orders").select("amount_cents, status").gte("created_at", d30),
     sb.from("ai_metrics").select("success, total_duration_ms").gte("created_at", d7),
     sb.from("ai_metrics").select("success, total_duration_ms").gte("created_at", d30),
   ]);
 
-  const rev7 = (orders7.data || []).filter(o => o.status === "completed").reduce((s, o) => s + (o.total_cents || 0), 0);
-  const rev30 = (orders30.data || []).filter(o => o.status === "completed").reduce((s, o) => s + (o.total_cents || 0), 0);
+  const rev7 = (orders7.data || []).filter(o => o.status === "completed").reduce((s, o) => s + (o.amount_cents || 0), 0);
+  const rev30 = (orders30.data || []).filter(o => o.status === "completed").reduce((s, o) => s + (o.amount_cents || 0), 0);
   const avgRev30Daily = rev30 / 30;
   const avgRev7Daily = rev7 / 7;
 
@@ -154,9 +154,9 @@ async function handleProjections() {
   const dre90 = await handleDre(90);
 
   const prompt = `Dados financeiros reais de uma empresa digital:
-- Últimos 30 dias: Receita R$${(dre30.receita_total_cents / 100).toFixed(2)}, Despesas R$${(dre30.despesas_cents / 100).toFixed(2)}, ${dre30.orders_completed} vendas
-- Últimos 60 dias: Receita R$${(dre60.receita_total_cents / 100).toFixed(2)}, Despesas R$${(dre60.despesas_cents / 100).toFixed(2)}, ${dre60.orders_completed} vendas
-- Últimos 90 dias: Receita R$${(dre90.receita_total_cents / 100).toFixed(2)}, Despesas R$${(dre90.despesas_cents / 100).toFixed(2)}, ${dre90.orders_completed} vendas
+- Últimos 30 dias: Receita R$${(dre30.receita_amount_cents / 100).toFixed(2)}, Despesas R$${(dre30.despesas_cents / 100).toFixed(2)}, ${dre30.orders_completed} vendas
+- Últimos 60 dias: Receita R$${(dre60.receita_amount_cents / 100).toFixed(2)}, Despesas R$${(dre60.despesas_cents / 100).toFixed(2)}, ${dre60.orders_completed} vendas
+- Últimos 90 dias: Receita R$${(dre90.receita_amount_cents / 100).toFixed(2)}, Despesas R$${(dre90.despesas_cents / 100).toFixed(2)}, ${dre90.orders_completed} vendas
 
 Gere projeções para os próximos 30, 60 e 90 dias. Responda APENAS em JSON válido com esta estrutura:
 {"projections":[{"days":30,"receita_cents":0,"despesas_cents":0,"resultado_cents":0},{"days":60,...},{"days":90,...}],"insights":"texto curto com análise"}`;
