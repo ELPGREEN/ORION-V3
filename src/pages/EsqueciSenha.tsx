@@ -114,17 +114,7 @@ export default function EsqueciSenha() {
     setLoading(true);
 
     const hToken = await getHcaptchaToken();
-    if (!hToken) {
-      toast({
-        title: "Verificação indisponível",
-        description: "Não foi possível validar o anti-bot. Recarregue a página e tente novamente.",
-        variant: "destructive",
-      });
-      hcaptchaRef.current?.resetCaptcha();
-      setCaptchaToken(null);
-      setLoading(false);
-      return;
-    }
+    // Captcha is best-effort — don't block recovery if widget fails to load
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback`,
