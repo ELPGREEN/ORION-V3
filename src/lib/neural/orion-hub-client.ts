@@ -1,17 +1,99 @@
 /**
- * ORION Neural Hub — Unified HF Space Client (ZeroGPU)
- * Connects to Ericsonv12/orion-gpu Gradio Space via @gradio/client SDK
- *
- * GPU→CPU Fallback: When ZeroGPU quota is exhausted,
- * GPU endpoints return structured error JSON instead of crashing.
+ * ORION Neural Hub — Unified Client (GCP VM Primary + HF Space Fallback)
+ * 
+ * Priority: GCP VM (dedicated, always-on, cached) → HF Space (ZeroGPU)
+ * VM: proxy/cache, TTS (Piper), STT (Whisper), Vision (DETR), OCR, Embeddings
+ * HF Space: GPU-heavy tasks (BLIP, Phi-3 Vision, Gemma) when VM can't handle
  *
  * Capabilities: TTS, LLM, OCR, Vision, Embeddings, PDF
- * Hardware: ZeroGPU H200/A100 (GPU) + CPU fallback
  */
+
+import { supabase } from "@/integrations/supabase/client";
 
 const ORION_SPACE_ID = "Ericsonv12/orion-gpu";
 const DEFAULT_TIMEOUT = 60_000;
 const GPU_TIMEOUT = 180_000;
+
+// ─── VM Backend State ───
+
+interface VMState {
+  available: boolean;
+  lastCheck: number;
+  consecutiveFailures: number;
+  cooldownMs: number;
+}
+
+const _vm: VMState = {
+  available: true,
+  lastCheck: 0,
+  consecutiveFailures: 0,
+  cooldownMs: 30_000,
+};
+
+function isVmAvailable(): boolean {
+  if (_vm.available) return true;
+  if (Date.now() - _vm.lastCheck > _vm.cooldownMs) {
+    _vm.available = true;
+    _vm.consecutiveFailures = 0;
+    console.log("[OrionHub] VM cooldown expired, retrying");
+    return true;
+  }
+  return false;
+}
+
+function markVmDown() {
+  _vm.available = false;
+  _vm.lastCheck = Date.now();
+  _vm.consecutiveFailures++;
+  _vm.cooldownMs = Math.min(30_000 * Math.pow(2, _vm.consecutiveFailures - 1), 5 * 60_000);
+  console.warn(`[OrionHub] VM down. Cooldown: ${Math.round(_vm.cooldownMs / 1000)}s`);
+}
+
+function markVmUp() {
+  _vm.available = true;
+  _vm.consecutiveFailures = 0;
+  _vm.cooldownMs = 30_000;
+}
+
+/**
+ * Call the VM via edge function proxy.
+ * Returns null if VM is unavailable (caller should fallback to HF Space).
+ */
+async function callVM<T>(action: string, body: Record<string, unknown> = {}, timeout = 15_000): Promise<T | null> {
+  if (!isVmAvailable()) return null;
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+
+    const { data, error } = await supabase.functions.invoke("orion-vm-proxy", {
+      body: { action, ...body },
+    });
+
+    clearTimeout(timer);
+
+    if (error) {
+      console.warn(`[OrionHub] VM proxy error for ${action}:`, error);
+      markVmDown();
+      return null;
+    }
+
+    markVmUp();
+    return data as T;
+  } catch (err) {
+    console.warn(`[OrionHub] VM call failed for ${action}:`, err);
+    markVmDown();
+    return null;
+  }
+}
+
+export function getVmState() {
+  return {
+    available: _vm.available,
+    consecutiveFailures: _vm.consecutiveFailures,
+    cooldownRemainingMs: _vm.available ? 0 : Math.max(0, _vm.cooldownMs - (Date.now() - _vm.lastCheck)),
+  };
+}
 
 // ─── GPU Quota Tracker ───
 
