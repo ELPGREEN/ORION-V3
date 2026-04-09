@@ -5,6 +5,8 @@
  * 100% local, zero API calls, runs in browser via WASM/WebGL.
  */
 
+import { markVisionStart, markVisionEnd } from "./pipeline-latency-tracker";
+
 import { detectAllMP, preloadMediaPipe, isMediaPipeReady, type MPVisionResult, type MPPose } from "./mediapipe-vision";
 import { preloadHFVisionGate } from "./hf-vision-gate";
 import { detectWithYOLO, preloadYOLO, isYOLOReady, type YOLODetection } from "./yolo-onnx-detector";
