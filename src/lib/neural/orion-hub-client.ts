@@ -310,9 +310,23 @@ async function callGpuWithFallback<T>(
   }
 }
 
-// ─── Health Check ───
+// ─── Health Check (VM first, then HF Space) ───
 
 export async function checkOrionHub(): Promise<OrionHubHealth> {
+  // Try VM first
+  const vmHealth = await callVM<any>("health");
+  if (vmHealth) {
+    return {
+      status: "online",
+      gpu: { available: false, name: "GCP-VM-CPU", vram_gb: 0 },
+      models_loaded: vmHealth.models_loaded ?? [],
+      capabilities: ["tts", "stt", "vision", "ocr", "embeddings", "cache"],
+      quotaState: getGpuQuotaState(),
+      endpoint_status: { vm: "online", memory_mb: vmHealth.memory_used_mb },
+    };
+  }
+
+  // Fallback to HF Space
   try {
     const result = await callGradio<OrionHubHealth>("health", {}, 10_000);
     const parsed = typeof result === "string" ? JSON.parse(result as string) : result;
@@ -321,7 +335,7 @@ export async function checkOrionHub(): Promise<OrionHubHealth> {
       gpu: parsed.gpu ?? { available: false, name: "N/A", vram_gb: 0 },
       models_loaded: parsed.models_loaded ?? [],
       capabilities: parsed.capabilities ?? [],
-      endpoint_status: parsed.endpoint_status,
+      endpoint_status: { ...parsed.endpoint_status, vm: "offline" },
       quotaState: getGpuQuotaState(),
     };
   } catch {
