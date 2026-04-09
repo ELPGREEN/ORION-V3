@@ -2,7 +2,7 @@
               ORION AQUAMONKEY — DOCUMENTACAO COMPLETA DO SISTEMA
               Rede Neural Hibrida Quantico-Classica por Ericson Piccoli
               ELP® Green Technology (CNPJ 42.501.190/0001-70)
-              Versao: v8.2 (Database, i18n & Deep Audit)
+              Versao: v8.0 (AquaMonkey Identity & Total Audit)
               Data: 2026-04-08 (Atualizado)
 Fontes de Referencia:
 - Vaswani et al. "Attention Is All You Need" (2017)
@@ -5335,1170 +5335,287 @@ TOTAL DE LINHAS: ~6000+ (era ~4505)
 
 
 ================================================================================
- 93. ARVORE COMPLETA DO PROJETO — ESTRUTURA v8.0
+ 109. ELP NEURAL SWARM — 2.900+ AGENTES HF (v8.3)
 ================================================================================
 
-RAIZ DO PROJETO:
-  /
-  ├── public/                          # Arquivos publicos (docs, assets)
-  │   ├── docs/                        # 26 documentos juridicos (CF88, STJ, STF)
-  │   ├── documentacao-llm.txt         # ESTE DOCUMENTO (v8.0)
-  │   └── favicon, robots.txt, manifest
-  │
-  ├── src/                             # Codigo-fonte principal
-  │   ├── assets/                      # 30+ imagens, logos, videos
-  │   ├── components/                  # 388 componentes React
-  │   ├── hooks/                       # 69 hooks customizados
-  │   ├── lib/                         # 318 modulos TypeScript
-  │   ├── pages/                       # 102 paginas da aplicacao
-  │   ├── integrations/                # Supabase client + types
-  │   ├── i18n/                        # Internacionalizacao (5 idiomas)
-  │   └── App.tsx, main.tsx            # Entry points
-  │
-  ├── supabase/                        # Backend Supabase
-  │   ├── functions/                   # 86 Edge Functions (Deno)
-  │   ├── migrations/                  # Migracoes SQL
-  │   └── config.toml                  # Configuracao Supabase
-  │
-  └── src/Document-Editor--master/     # Editor de documentos A4
+ARQUIVO: src/lib/neural/orion-network-registry.ts (489 linhas)
+VERSAO: v7.2
 
+DESCRICAO: Swarm de agentes neurais hospedados no ELP HuggingFace Space.
+  Cada agente e um modelo ou pipeline especializado registrado no Space.
+  Os agentes sao invocados sob demanda pelo Orion via neural-agent-bridge.ts.
 
-================================================================================
- 94. ARVORE DE PAGINAS — 102 PAGINAS (v8.0 Atualizado)
-================================================================================
+TOTAL REGISTRADO: 2.550 agentes (14 categorias)
+TOTAL ESTIMADO (com variantes): 2.900+
 
-src/pages/
-├── PUBLICAS (13 paginas)
-│   ├── Index.tsx                    # Landing page (iasofthub.com)
-│   ├── Auth.tsx                     # Login / Registro
-│   ├── AuthCallback.tsx             # OAuth callback
-│   ├── Contato.tsx                  # Formulario de contato
-│   ├── Publicacoes.tsx              # Blog / Artigos
-│   ├── PublicacaoDetalhe.tsx         # Detalhe de artigo
-│   ├── Servicos.tsx                 # Servicos oferecidos
-│   ├── Depoimentos.tsx              # Depoimentos de clientes
-│   ├── Plataforma.tsx               # Apresentacao da plataforma
-│   ├── OrionDemo.tsx                # Demo interativa do Orion
-│   ├── InvestorTools.tsx            # Pagina para investidores
-│   ├── ProBono.tsx                  # Servicos pro bono
-│   └── EsqueciSenha.tsx             # Recuperacao de senha
-│
-├── LEGAL (3 paginas)
-│   ├── Termos.tsx                   # Termos de uso
-│   ├── Privacidade.tsx              # Politica de privacidade
-│   └── LGPD.tsx                     # Conformidade LGPD
-│
-├── AUTENTICADAS (6 paginas)
-│   ├── Escritorio.tsx               # Dashboard principal
-│   ├── CadastroCliente.tsx          # Cadastro de clientes
-│   ├── Clientes.tsx                 # Lista de clientes
-│   ├── ConsultaIA.tsx               # Consulta com IA
-│   ├── BiometricRegistration.tsx    # Registro biometrico
-│   └── InstallApp.tsx               # Instalacao PWA
-│
-├── LOJA / MARKETPLACE (5 paginas)
-│   ├── Loja.tsx                     # Marketplace principal
-│   ├── LojaOrion.tsx                # Loja Orion
-│   ├── LojaSucesso.tsx              # Pos-compra
-│   ├── ProdutoDetalhe.tsx           # Detalhe produto
-│   └── VitrineAfiliado.tsx          # Vitrine afiliados
-│
-├── SOLUCOES (4 paginas)
-│   ├── solucoes/Advogados.tsx       # Solucao para advogados
-│   ├── solucoes/Afiliados.tsx       # Solucao para afiliados
-│   ├── solucoes/Industria.tsx       # Solucao para industria
-│   └── solucoes/Produtores.tsx      # Solucao para produtores
-│
-├── PLANTAS INDUSTRIAIS (3 paginas)
-│   ├── plants/OTRPlant.tsx          # Planta OTR
-│   ├── plants/PyrolysisPlant.tsx    # Planta pirolise
-│   └── plants/TireRecyclingPlant.tsx # Reciclagem de pneus
-│
-├── DASHBOARD (65+ paginas)
-│   ├── dashboard/DashboardRouter.tsx      # Router principal
-│   ├── dashboard/DashboardHome.tsx        # Home do dashboard
-│   ├── dashboard/AdminOwnerDashboard.tsx  # Dashboard admin/proprietario
-│   ├── dashboard/AdvogadoDashboard.tsx    # Dashboard advogado
-│   ├── dashboard/ClienteDashboard.tsx     # Dashboard cliente
-│   ├── dashboard/ProdutorDashboard.tsx    # Dashboard produtor
-│   ├── dashboard/AfiliadoDashboard.tsx    # Dashboard afiliado
-│   ├── dashboard/NomadeDigitalDashboard.tsx # Dashboard nomade digital
-│   ├── dashboard/ProprietarioDashboard.tsx  # Dashboard proprietario
-│   │
-│   ├── IA & NEURAL
-│   │   ├── ChatIARouter.tsx          # Router do chat IA
-│   │   ├── ChatIAAdvogado.tsx        # Chat IA advogado
-│   │   ├── ChatJuridico.tsx          # Chat juridico
-│   │   ├── ChatHumano.tsx            # Chat humano
-│   │   ├── ConfigurarIA.tsx          # Configuracoes IA
-│   │   ├── LaboratorioIA.tsx         # Laboratorio de IA
-│   │   ├── ArquiteturaIA.tsx         # Arquitetura neural
-│   │   ├── RedeNeuralPage.tsx        # Dashboard rede neural
-│   │   └── ReformulacaoJuridica.tsx  # Reformulacao juridica
-│   │
-│   ├── DOCUMENTOS
-│   │   ├── GerarDocumento.tsx        # Gerador de documentos
-│   │   ├── MeusDocumentos.tsx        # Meus documentos
-│   │   ├── EditorPaginaVendas.tsx    # Editor pagina de vendas
-│   │   └── DashboardDocumentosInternacionais.tsx # Docs internacionais
-│   │
-│   ├── CRM & CLIENTES
-│   │   ├── CRMClientes.tsx           # CRM clientes
-│   │   ├── CRMPipeline.tsx           # Pipeline CRM
-│   │   ├── ClientesPage.tsx          # Pagina clientes
-│   │   ├── ContatosPage.tsx          # Contatos
-│   │   └── PortalCliente.tsx         # Portal do cliente
-│   │
-│   ├── JURIDICO
-│   │   ├── ProcessosPage.tsx         # Processos
-│   │   ├── MeusProcessosCliente.tsx  # Processos do cliente
-│   │   ├── PesquisaJurisprudencial.tsx # Pesquisa jurisprudencial
-│   │   ├── PesquisaUnificada.tsx     # Pesquisa unificada
-│   │   └── PrazosCalculadora.tsx     # Calculadora de prazos
-│   │
-│   ├── FINANCEIRO
-│   │   ├── PagamentosPage.tsx        # Pagamentos
-│   │   ├── PagamentoSucesso.tsx      # Pagamento sucesso
-│   │   ├── AssinaturaCliente.tsx     # Assinatura cliente
-│   │   ├── AssinaturaDigital.tsx     # Assinatura digital
-│   │   └── PlanoUsuario.tsx          # Plano do usuario
-│   │
-│   ├── MARKETPLACE
-│   │   ├── Marketplace.tsx           # Marketplace
-│   │   ├── MarketplaceModules.tsx    # Modulos marketplace
-│   │   ├── MeusProdutos.tsx          # Meus produtos
-│   │   ├── ExplorarLojas.tsx         # Explorar lojas
-│   │   ├── Afiliados.tsx             # Afiliados
-│   │   └── ProdutorAfiliados.tsx     # Produtor afiliados
-│   │
-│   ├── ADMIN
-│   │   ├── PerfilAdmin.tsx           # Perfil admin
-│   │   ├── PerfilCliente.tsx         # Perfil cliente
-│   │   ├── UsuariosPage.tsx          # Usuarios
-│   │   ├── PublicacoesAdmin.tsx      # Publicacoes admin
-│   │   ├── CampanhasEmail.tsx        # Campanhas email
-│   │   └── WebhooksPage.tsx          # Webhooks
-│   │
-│   ├── CONFIGURACOES
-│   │   ├── ConfiguracoesRouter.tsx   # Router config
-│   │   ├── ConfiguracoesEscritorio.tsx # Config escritorio
-│   │   ├── MeusAcessos.tsx           # Meus acessos
-│   │   └── NotificacoesPage.tsx      # Notificacoes
-│   │
-│   ├── ESPECIALIZADOS
-│   │   ├── ControleRobotico.tsx      # Controle robotico
-│   │   ├── DeviceIntegrationPage.tsx # Integracao dispositivos
-│   │   ├── FerramentasGoogle.tsx     # Ferramentas Google
-│   │   ├── AgendarConsulta.tsx       # Agendar consulta
-│   │   ├── TarefasPage.tsx           # Tarefas
-│   │   ├── TarefasContent.tsx        # Conteudo tarefas
-│   │   ├── InstrucoesPlataforma.tsx  # Instrucoes
-│   │   └── RecursosEU.tsx            # Recursos EU
-│   │
-│   └── DOCUMENTACAO
-│       ├── DocumentacaoNeuroCore.tsx  # Doc NeuroCore
-│       └── DocumentacaoRedeNeural.tsx # Doc rede neural
-│
-├── CALLBACKS (2 paginas)
-│   ├── SpotifyCallback.tsx          # Spotify OAuth
-│   └── callback/YouTubeMusicCallback.tsx # YouTube Music OAuth
-│
-└── ESPECIAIS (3 paginas)
-    ├── AdvogadoSite.tsx             # Site advogado
-    ├── OrionExtensionPage.tsx       # Extensao Orion
-    └── NotFound.tsx                 # Pagina 404
+CATEGORIAS DO SWARM:
+
+  ┌─────────────────────────────────────┬───────┬────────────┐
+  │ CATEGORIA                           │ AGENTS│ STATUS     │
+  ├─────────────────────────────────────┼───────┼────────────┤
+  │ Vision & Object Detection           │   350 │ ● active   │
+  │ Code Analysis & Security            │   350 │ ● active   │
+  │ Code Generation                     │   300 │ ● active   │
+  │ Legal/Financial/Medical Reasoning   │   300 │ ● active   │
+  │ Text Analysis & NLP                 │   250 │ ● active   │
+  │ Fine-Tuning & Training              │   200 │ ● active   │
+  │ PDF & Document Analysis             │   200 │ ● active   │
+  │ Dataset Creation & Engineering      │   180 │ ● active   │
+  │ Question Answering                  │   120 │ ● active   │
+  │ Speech & Audio                      │    90 │ ● active   │
+  │ Image Generation                    │    80 │ ● active   │
+  │ Video Generation                    │    60 │ ● active   │
+  │ 3D Modeling                         │    40 │ ● active   │
+  │ Model Benchmarking                  │    30 │ ○ standby  │
+  ├─────────────────────────────────────┼───────┼────────────┤
+  │ TOTAL                               │ 2.550 │ 13 active  │
+  └─────────────────────────────────────┴───────┴────────────┘
+
+DETALHAMENTO POR CATEGORIA:
+
+1. VISION & OBJECT DETECTION (350 agentes):
+   Subcategorias: Face Detection (8), Pose/Body (8), Object Detection Core (31),
+     Domain Detection (42), Segmentation (9), Scene Understanding (8),
+     Image Processing (8), Detection Models (24)
+   Modelos: YOLO v5-v12/v26, DETR, GroundingDINO, OWLv2, SAM3,
+     MolmoPoint, Qwen2-VL
+   Endpoint: ELP HF Space /agents/detection/*
+
+2. CODE ANALYSIS & SECURITY (350 agentes):
+   Subcategorias: Security Patterns (12), Quality Metrics (14),
+     Intelligence (12), Multi-Agent Code Review (6)
+   Endpoint: ELP HF Space /agents/code/analyze
+
+3. CODE GENERATION (300 agentes):
+   Subcategorias: 42 Languages, 8 Paradigms, 25 Frameworks, 19 Models,
+     11 WebApp Builders, 14 Specialized Agents
+   Modelos: Qwen3-Coder-32B, DeepSeek-Coder-V2, Yi-Coder-9B, StarCoder2
+   Endpoint: ELP HF Space /agents/code/*
+
+4. LEGAL/FINANCIAL/MEDICAL REASONING (300 agentes):
+   Subcategorias: Legal Analysis, Contract Review, Financial Modeling,
+     Medical Reasoning, Scientific Analysis, Case Law Research
+   Endpoint: ELP HF Space /agents/orchestrate
+
+5. TEXT ANALYSIS & NLP (250 agentes):
+   Subcategorias: Generation (9), Analysis (22), Search (9), Tokenization (6),
+     Explainability (6), Classification (14), Multilingual (13)
+   Features: AI Detection, Emotion, Readability, Clickbait, Prompt Injection
+   Endpoint: ELP HF Space /agents/text/*
+
+6. FINE-TUNING & TRAINING (200 agentes):
+   Subcategorias: LoRA/QLoRA, DreamBooth, SDXL/FLUX LoRA, DPO/RLHF,
+     TTS/ASR/RVC, AutoTrain, Quantization (GPTQ/AWQ/GGUF),
+     Model Merging/Pruning/Distillation
+   Endpoint: ELP HF Space /finetune/*
+
+7. PDF & DOCUMENT ANALYSIS (200 agentes):
+   Subcategorias: OCR (12), Layout Analysis (10), Table Extraction (8),
+     Document Parsing (11), Bibliography (7), Resume Analysis (6),
+     Scientific Documents (7), Legal Documents (6), Document Conversion (8),
+     Comparison (5), Signature/Stamp (4), Models (13)
+   Modelos: MinerU, PaddleOCR-VL, Surya, Nougat, Donut, DiT, GROBID,
+     GOT-OCR2, TrOCR, LayoutLMv3
+   Endpoint: ELP HF Space /agents/documents/*
+
+8. DATASET CREATION & ENGINEERING (180 agentes):
+   Subcategorias: Synthetic Data (JSON/JSONL/CSV/Parquet), Format Conversion,
+     Deduplication, Labeling, Data Quality, Bias Detection
+   Endpoint: ELP HF Space /dataset/*
+
+9. QUESTION ANSWERING (120 agentes):
+   Subcategorias: Extractive QA (12), Generative QA (9), Document QA (13),
+     Visual QA (13), Domain QA (17), Multilingual QA (13),
+     Open Domain QA (9), Conversational QA (6), Music/Audio QA (5),
+     Table QA (6)
+   Modelos: mDeBERTa, RoBERTa, Flan-T5, UnifiedQA, MiniCPM-o,
+     Qwen2-VL, TAPAS
+   Endpoint: ELP HF Space /agents/qa/*
+
+10. SPEECH & AUDIO (90 agentes):
+    Subcategorias: TTS (Kokoro/F5/Bark/Piper), ASR (Whisper),
+      Voice Cloning (RVC v2), Music Gen (ACE-Step)
+    Endpoint: ELP HF Space /agents/orchestrate
+
+11. IMAGE GENERATION (80 agentes):
+    Subcategorias: FLUX Dev/Schnell, SDXL, SD3, ControlNet,
+      IP-Adapter, LoRA Composition, Comic/Graphic Novel
+    Endpoint: ELP HF Space /agents/orchestrate
+
+12. VIDEO GENERATION (60 agentes):
+    Subcategorias: Wan2.1, LTX Video, CogVideoX, AnimateDiff,
+      Lipsync, Face Swap, Video Dubbing
+    Endpoint: ELP HF Space /agents/orchestrate
+
+13. 3D MODELING (40 agentes):
+    Subcategorias: TRELLIS 2, Hunyuan3D, TripoSR, InstantMesh,
+      Gaussian Splatting, PBR Materials
+    Endpoint: ELP HF Space /agents/orchestrate
+
+14. MODEL BENCHMARKING (30 agentes — standby):
+    Subcategorias: Open LLM Leaderboard, MTEB, ChatBot Arena,
+      BigCodeBench, VBench, ASR Leaderboard
+    Endpoint: ELP HF Space /agents/orchestrate
+
+ARQUITETURA DE INVOCACAO:
+  Usuario -> Orion -> neural-agent-bridge.ts -> ELP HF Space -> Modelo HF
+                   -> orion-autonomous-agent.ts (selecao de agente)
+                   -> orion-tool-executor.ts (execucao)
+                   -> orion-network-registry.ts (registro/status)
+
+HISTORICO DE EVOLUCAO:
+  v4.0 — 1.500+ agentes (Code + Detection)
+  v6.0 — 2.000+ agentes (+Dataset, +Text NLP)
+  v7.0 — 2.500+ agentes (+Code-Gen massivo, +QA)
+  v7.2 — 2.550 registrados, ~2.900+ com variantes
 
 
 ================================================================================
- 95. ARVORE DE COMPONENTES — 388 COMPONENTES (v8.0)
+ 110. 5 REDES NEURAIS CORE + 6 AGENTES AUTONOMOS (v8.3)
 ================================================================================
 
-src/components/
-├── STANDALONE (11 componentes globais)
-│   ├── AffiliateTracker.tsx         # Rastreamento de afiliados
-│   ├── ChatJuridico.tsx             # Widget chat juridico
-│   ├── ChatSidebar.tsx              # Sidebar do chat
-│   ├── CookieConsent.tsx            # Consentimento cookies (LGPD)
-│   ├── CopyProtection.tsx           # Protecao anti-copia
-│   ├── DynamicMeta.tsx              # Meta tags dinamicas
-│   ├── LanguageSelector.tsx         # Seletor de idioma (5 idiomas)
-│   ├── OrionAccessGate.tsx          # Gate de acesso Orion
-│   ├── OrionGlobalListener.tsx      # Listener global Orion
-│   ├── PublicOrionListener.tsx      # Listener Orion publico
-│   └── PWAUpdateNotification.tsx    # Notificacao PWA
-│
-├── admin/ (2)
-│   ├── BigQueryPanel.tsx            # Painel BigQuery
-│   └── SortableItem.tsx             # Item ordenavel
-│
-├── amazon/ (2)
-│   ├── AmazonMusicPlayer.tsx        # Player Amazon Music
-│   └── AppstoreSDKPanel.tsx         # Painel Appstore SDK
-│
-├── auth/ (2)
-│   ├── FaceAuthEnroll.tsx           # Cadastro facial
-│   └── FaceAuthLogin.tsx            # Login facial
-│
-├── cart/ (1)
-│   └── CartDrawer.tsx               # Drawer de carrinho
-│
-├── citations/ (3)
-│   ├── CitationBadge.tsx            # Badge de citacao
-│   ├── CitationFootnotes.tsx        # Notas de rodape
-│   └── CitationPanel.tsx            # Painel citacoes
-│
-├── common/ (8)
-│   ├── AnalyticsProvider.tsx        # Provider analytics
-│   ├── AuthGuard.tsx                # Guard autenticacao
-│   ├── ErrorBoundary.tsx            # Boundary de erros
-│   ├── IdleCursorProvider.tsx       # Cursor inativo
-│   ├── OrionShield.tsx              # Escudo Orion
-│   ├── PageLoader.tsx               # Loader de pagina
-│   ├── SEO.tsx                      # Componente SEO
-│   └── ScrollToTop.tsx              # Scroll ao topo
-│
-├── dashboard/ (150+ componentes)
-│   ├── LAYOUT
-│   │   ├── DashboardLayout.tsx      # Layout principal
-│   │   ├── DashboardHeader.tsx      # Header
-│   │   ├── DashboardSidebar.tsx     # Sidebar principal
-│   │   ├── DashboardBackground.tsx  # Background
-│   │   ├── DashboardTheme.tsx       # Tema
-│   │   ├── ClienteSidebar.tsx       # Sidebar cliente
-│   │   ├── AfiliadoSidebar.tsx      # Sidebar afiliado
-│   │   ├── ProdutorSidebar.tsx      # Sidebar produtor
-│   │   ├── NomadeSidebar.tsx        # Sidebar nomade
-│   │   ├── MobileNavigation.tsx     # Nav mobile
-│   │   └── MobileSidebarOverlay.tsx # Overlay mobile
-│   │
-│   ├── BlockEditor/                 # Editor de blocos (Wix-style)
-│   ├── clients/                     # Componentes de clientes
-│   ├── consultas/                   # Componentes de consultas
-│   ├── contacts/                    # Componentes de contatos
-│   ├── documents/                   # Componentes de documentos
-│   ├── editor/                      # Editor de documentos
-│   ├── email/                       # Email marketing
-│   ├── google/                      # Integracao Google
-│   ├── icons/                       # Icones customizados
-│   ├── neural/                      # 65 componentes neurais (ver secao 89)
-│   ├── payments/                    # Pagamentos Stripe
-│   ├── pesquisa/                    # Pesquisa juridica
-│   ├── processos/                   # Gestao processos
-│   ├── product/                     # Produtos marketplace
-│   ├── settings/                    # Configuracoes
-│   └── signature/                   # Assinatura digital
-│
-├── demo/ (5)
-│   ├── ArchitectureDiagram.tsx      # Diagrama 15 camadas
-│   ├── LiveMetricsSection.tsx       # Metricas ao vivo
-│   ├── TechSpecsSection.tsx         # Specs tecnicas
-│   ├── NeuralChatDemo.tsx           # Demo chat neural
-│   └── OrionQuoteCarousel.tsx       # Carrossel citacoes
-│
-├── forms/ (formularios reutilizaveis)
-│
-├── home/ (10+ componentes landing)
-│   ├── HeroSection.tsx              # Hero principal
-│   ├── SystemArchitectureSection.tsx # 9 modulos Orion
-│   ├── TestimonialsSection.tsx      # Depoimentos
-│   ├── PricingSection.tsx           # Precos
-│   ├── CTASection.tsx               # Call to action
-│   └── ...mais componentes home
-│
-├── icons/ (icones customizados Tron/Sumerian)
-│
-├── layout/ (layout principal)
-│   ├── Header.tsx                   # Header publico
-│   ├── Footer.tsx                   # Footer publico
-│   └── MobileMenu.tsx              # Menu mobile
-│
-├── maps/ (mapas Leaflet)
-│
-├── media/ (midia players)
-│
-├── neural/ (componentes neurais publicos)
-│
-├── orion/ (componentes Orion dedicados)
-│
-├── plants/ (componentes plantas industriais)
-│
-├── publicacoes/ (blog components)
-│
-├── reformulacao/ (reformulacao juridica)
-│
-├── spotify/ (integracao Spotify)
-│
-├── store/ (loja/marketplace)
-│
-├── ui/ (shadcn/ui + customizados)
-│   ├── 40+ componentes shadcn (button, dialog, input, etc.)
-│   ├── glass-card.tsx               # Card efeito vidro
-│   ├── TronGridBackground.tsx       # Background Tron
-│   └── ...mais componentes UI
-│
-└── youtube-music/ (integracao YouTube Music)
+ARQUIVO: src/lib/neural/orion-network-registry.ts
+
+5 REDES NEURAIS CORE:
+
+  ┌────────────────────┬────────────────────────────────────────────────┐
+  │ REDE               │ FUNCAO                                        │
+  ├────────────────────┼────────────────────────────────────────────────┤
+  │ NET-CORE-01        │ Master predictive network. Market forecasting,│
+  │ Orion-Core         │ opportunity scoring, proposal generation.     │
+  │                    │ Arch: Transformer + LSTM + GNN                │
+  ├────────────────────┼────────────────────────────────────────────────┤
+  │ NET-ANAL-01        │ Real-time data ingestion & feature extraction.│
+  │ Orion-Analysis     │ Market feeds, news sentiment, on-chain data.  │
+  │                    │ Arch: CNN + RNN (time-series) + NLP           │
+  ├────────────────────┼────────────────────────────────────────────────┤
+  │ NET-RISK-01        │ Risk assessment. VaR, Sharpe, drawdown,       │
+  │ Orion-Risk         │ personalized risk tolerance.                  │
+  │                    │ Arch: Monte Carlo + Bayesian Networks         │
+  ├────────────────────┼────────────────────────────────────────────────┤
+  │ NET-MEM-01         │ Vector embedding + long-term memory (pgvector)│
+  │ Orion-Memory       │ Proposals, feedback, agent decisions.         │
+  │                    │ Arch: pgvector + FAISS Similarity Search      │
+  ├────────────────────┼────────────────────────────────────────────────┤
+  │ NET-PRES-01        │ Output formatting. Raw data -> investor-ready │
+  │ Orion-Presentation │ UI, documents, interactive dashboards.        │
+  │                    │ Arch: JSON Mapper -> React Multimodal         │
+  └────────────────────┴────────────────────────────────────────────────┘
+
+6 AGENTES AUTONOMOS CORE:
+
+  ┌──────────────────────┬──────────────────────────────────────────────┐
+  │ AGENTE               │ FUNCAO                                      │
+  ├──────────────────────┼──────────────────────────────────────────────┤
+  │ Analysis Agent       │ Analise de dados, mercado, documentos       │
+  │ Risk Guardian        │ Avaliacao de risco, protecao, compliance    │
+  │ Proposal Architect   │ Construcao de propostas e documentos        │
+  │ Presentation Agent   │ Formatacao e apresentacao de resultados     │
+  │ Operation Overseer   │ Supervisao de operacoes e pipelines         │
+  │ Feedback Learner     │ Aprendizado por feedback, meta-learning     │
+  └──────────────────────┴──────────────────────────────────────────────┘
+
+TOTAL DE AGENTES:
+  - 6 agentes core autonomos
+  - 2.550 agentes swarm HF (14 categorias)
+  - TOTAL: 2.556 agentes registrados (~2.900+ com variantes)
 
 
 ================================================================================
- 96. ARVORE DE BIBLIOTECAS — 318 MODULOS (v8.0)
+ 111. NEURAL AGENT BRIDGE — PONTE DE INVOCACAO (v8.3)
 ================================================================================
 
-src/lib/
-├── neural/                          # 179 modulos neurais (ver secao 85)
-│   ├── agents/                      # Sub-agentes especializados
-│   ├── __tests__/                   # Testes unitarios neurais
-│   └── 179 arquivos .ts             # Motor neural completo
-│
-├── ai/                              # Integracao IA
-│   ├── gemini-client.ts             # Cliente Gemini API
-│   ├── providers.ts                 # Provedores LLM
-│   └── ...modulos IA
-│
-├── amazon/                          # Integracao Amazon
-│   └── amazon-music.ts              # Amazon Music API
-│
-├── analysis/                        # Analise de dados
-│   └── ...modulos de analise
-│
-├── api/                             # Clientes API
-│   └── ...clientes REST
-│
-├── citations/                       # Sistema de citacoes legais
-│   └── ...verificacao, formatacao
-│
-├── commission/                      # Calculo de comissoes
-│   └── ...regras de comissao (10% plataforma)
-│
-├── crypto/                          # Criptografia
-│   └── ...funcoes crypto
-│
-├── document/                        # Processamento de documentos
-│   └── ...geracao, parsing, formatacao
-│
-├── editor/                          # Editor de texto
-│   └── ...extensoes TipTap
-│
-├── generators/                      # Geradores
-│   └── ...geradores de conteudo
-│
-├── huggingface/                     # Integracao HuggingFace
-│   └── ...cliente HF, embeddings
-│
-├── pdf/                             # Processamento PDF
-│   ├── generators/                  # Geradores PDF
-│   └── neural/                      # PDF com IA
-│
-├── robotics/                        # Robotica
-│   └── ...ROS2, VDA5050, digital twin
-│
-├── spotify/                         # Integracao Spotify
-│   └── ...Spotify API client
-│
-├── templates/                       # Templates de documentos
-│   └── ...100+ tipos de documentos
-│
-├── tts/                             # Text-to-Speech
-│   └── ...Gemini TTS, Fish Speech, Piper
-│
-├── voice/                           # Processamento de voz
-│   └── ...STT, VAD, wake word
-│
-├── youtube-music/                   # YouTube Music
-│   └── ...YouTube Music API
-│
-└── __tests__/                       # Testes globais
+ARQUIVO: src/lib/neural/neural-agent-bridge.ts
+
+FUNCAO: Ponte entre o Orion core e os 2.900+ agentes do HF Space.
+  Gerencia invocacao, fallback, cache e telemetria.
+
+FLUXO:
+  1. Orion recebe query do usuario
+  2. orion-autonomous-agent.ts classifica a tarefa
+  3. agent-planner.ts decompoe em sub-tarefas (DAG)
+  4. neural-agent-bridge.ts seleciona agente(s) do swarm
+  5. Chamada ao ELP HF Space (Gradio client)
+  6. Resultado retornado + cache + log de acao
+  7. orion-tool-executor.ts formata resposta final
+
+MODULOS ENVOLVIDOS:
+  - neural-agent-bridge.ts — Ponte principal
+  - orion-network-registry.ts — Registro de 2.900+ agentes
+  - orion-autonomous-agent.ts — Agente autonomo
+  - agent-planner.ts — Planejador DAG (DLPFC-inspired)
+  - multi-agent.ts — Coordenacao multi-agente
+  - multi-tenant-agent.ts — Multi-tenant
+  - orion-agentic-loop.ts — Loop agentico
+  - agentic-patterns-engine.ts — Padroes agenticos
+  - agentic-protocols-tools.ts — Ferramentas de protocolo
+  - orion-tool-executor.ts — Executor de ferramentas
+  - orion-command-registry.ts — Registro de comandos
 
 
 ================================================================================
- 97. ARVORE DE EDGE FUNCTIONS — 86 FUNCOES (v8.0)
+ 112. METRICAS COMPLETAS DO SISTEMA ORION v8.3
 ================================================================================
 
-supabase/functions/
-├── NEURAL & IA (18 funcoes)
-│   ├── neural-ops/              # Operacoes neurais principais
-│   ├── neural-bridge/           # Ponte neural
-│   ├── neural-child-bridge/     # Ponte neural filha
-│   ├── neural-inference/        # Inferencia neural
-│   ├── neural-search/           # Busca semantica
-│   ├── neural-training/         # Treinamento
-│   ├── neural-evolution/        # Evolucao neural
-│   ├── neural-auto-learn/       # Auto-aprendizagem
-│   ├── neural-pipeline-orchestrator/ # Orquestrador de pipeline
-│   ├── neural-knowledge-harvester/   # Colheitador de conhecimento
-│   ├── ai-orchestrator/         # Orquestrador IA
-│   ├── ai-autocomplete/         # Autocomplete IA
-│   ├── detect-ai-content/       # Deteccao conteudo IA
-│   ├── editorial-orchestrator/  # Orquestrador editorial
-│   ├── hf-inference/            # Inferencia HuggingFace
-│   ├── smart-agent-route/       # Roteamento inteligente
-│   ├── orion-agent-factory/     # Fabrica de agentes
-│   └── orion-realtime-intel/    # Inteligencia em tempo real
-│
-├── AGENTES ESPECIALIZADOS (7 funcoes)
-│   ├── orion-advogado-ai/       # Agente advogado
-│   ├── orion-produtor-ai/       # Agente produtor
-│   ├── orion-code-analysis/     # Analise de codigo
-│   ├── orion-codegen/           # Geracao de codigo
-│   ├── orion-framework-generator/ # Gerador de frameworks
-│   ├── agente-construcao/       # Agente construcao docs
-│   ├── agente-leitura/          # Agente leitura
-│   ├── agente-pesquisa/         # Agente pesquisa
-│   └── secretaria-ia/           # Secretaria IA
-│
-├── VOZ / TTS / STT (9 funcoes)
-│   ├── gemini-tts/              # TTS Gemini (primario)
-│   ├── fish-speech-clone/       # Clone de voz
-│   ├── kokoro-tts/              # TTS Kokoro
-│   ├── jarvis-tts/              # TTS JARVIS
-│   ├── hf-voice-tts/            # TTS HuggingFace
-│   ├── orion-voice-engine/      # Motor de voz
-│   ├── orion-voice-clone/       # Clone de voz Orion
-│   ├── orion-voice-registry/    # Registro de vozes
-│   └── groq-whisper-stt/        # STT Groq Whisper
-│
-├── VISAO (4 funcoes)
-│   ├── groq-vision-hybrid/      # Visao hibrida Groq
-│   ├── yolov8-inspect/          # Inspecao YOLOv8
-│   ├── pdf-vision-local/        # Visao PDF local
-│   └── face-auth/               # Autenticacao facial
-│
-├── RAG / INGESTAO (4 funcoes)
-│   ├── generate-embeddings/     # Geracao de embeddings
-│   ├── kb-ingest/               # Ingestao KB
-│   ├── smart-ingest/            # Ingestao inteligente
-│   └── ingest-legal/            # Ingestao legal
-│
-├── DOCUMENTOS (6 funcoes)
-│   ├── gerar-documento/         # Geracao de documentos
-│   ├── generate-pdf/            # Geracao PDF
-│   ├── aprimorar-documento/     # Aprimoramento docs
-│   ├── ocr-document/            # OCR
-│   ├── analyze-reference-doc/   # Analise docs referencia
-│   └── pdf-layout-analysis/     # Analise layout PDF
-│
-├── JURIDICO (8 funcoes)
-│   ├── chat-juridico/           # Chat juridico
-│   ├── legislacao-federal/      # Legislacao federal
-│   ├── courtlistener-search/    # Busca CourtListener
-│   ├── courtlistener-webhook/   # Webhook CourtListener
-│   ├── citation-verifier/       # Verificador citacoes
-│   ├── tribunal-stream/         # Stream tribunais
-│   └── oab-acessorh/            # OAB AcessoRH
-│
-├── PESQUISA (2 funcoes)
-│   ├── pesquisa-unificada/      # Pesquisa unificada
-│   └── firecrawl-search/        # Busca Firecrawl
-│
-├── INTEGRACOES EXTERNAS (8 funcoes)
-│   ├── google-workspace/        # Google Workspace
-│   ├── spotify-api/             # Spotify API
-│   ├── youtube-music-api/       # YouTube Music API
-│   ├── stripe-api/              # Stripe API
-│   ├── stripe-webhook/          # Stripe Webhook
-│   ├── mqtt-bridge/             # MQTT Bridge (IoT)
-│   ├── amazon-auth/             # Amazon Auth
-│   └── ibm-quantum/             # IBM Quantum
-│
-├── AUTENTICACAO (3 funcoes)
-│   ├── firebase-admin/          # Firebase Admin
-│   ├── verify-recaptcha/        # reCAPTCHA
-│   └── clicksign-signature/     # Clicksign
-│
-├── TRADUCAO (2 funcoes)
-│   ├── translate-libre/         # LibreTranslate
-│   └── translate-text/          # Traducao texto
-│
-├── PAGAMENTOS (2 funcoes)
-│   ├── process-sale/            # Processar venda
-│   └── stripe-webhook/          # Webhook Stripe
-│
-├── AUTOMACAO (5 funcoes)
-│   ├── auto-evolution-cron/     # Cron evolucao
-│   ├── auto-ingestion-cron/     # Cron ingestao
-│   ├── queue-worker/            # Worker de fila
-│   ├── webhook-gateway/         # Gateway webhooks
-│   └── notifications/           # Notificacoes
-│
-├── UTILIDADES (6 funcoes)
-│   ├── admin-api/               # API admin
-│   ├── utils-api/               # API utilidades
-│   ├── extract-code/            # Extracao de codigo
-│   ├── create-client-profile/   # Criar perfil cliente
-│   ├── gemini-live-token/       # Token Gemini Live
-│   └── test-hf-space/           # Teste HF Space
-│
-└── DESATIVADAS (2 funcoes)
-    ├── elevenlabs-tts/          # ⛔ PROIBIDO (custo alto)
-    └── google-tts/              # ⛔ REMOVIDO da producao
+  ┌────────────────────────────────────┬──────────┐
+  │ METRICA                            │ VALOR    │
+  ├────────────────────────────────────┼──────────┤
+  │ Modulos neurais (src/lib/neural/)  │      179 │
+  │ Edge Functions (Supabase/Deno)     │       86 │
+  │ Hooks customizados (src/hooks/)    │       69 │
+  │ Paginas da aplicacao               │      102 │
+  │ Componentes React                  │      388 │
+  │ Modulos TypeScript (src/lib/)      │      318 │
+  │ Tabelas Supabase                   │      171 │
+  │ Documentos juridicos RAG           │       26 │
+  │ Idiomas suportados (i18n)          │       14 │
+  │ Chaves Gemini em rotacao           │        7 │
+  │ Protocolos Lumen7                  │       50 │
+  │ Camadas arquitetura cognitiva      │       15 │
+  │ Tipos de redes neurais             │       32 │
+  │ Modulos quantum                    │       12 │
+  │ Protocolos roboticos (ROS2/VDA5050)│        8 │
+  │ Motores TTS                        │        4 │
+  │ Sistemas de visao                  │        3 │
+  │ Dominios                           │        2 │
+  │ Redes neurais core                 │        5 │
+  │ Agentes autonomos core             │        6 │
+  │ Agentes swarm HF                   │    2.550 │
+  │ Agentes swarm (com variantes)      │   ~2.900 │
+  │ Categorias de agentes              │       14 │
+  │ Linhas de codigo Edge Functions    │  ~35.000 │
+  │ Componentes do editor              │       54 │
+  │ Componentes do dashboard neural    │       65 │
+  │ Componentes da landing page        │       22 │
+  │ Secoes desta documentacao          │      113 │
+  └────────────────────────────────────┴──────────┘
 
 
 ================================================================================
- 98. ARVORE DE HOOKS — 69 HOOKS (v8.0)
-================================================================================
-
-src/hooks/
-├── UI / RESPONSIVIDADE
-│   ├── use-mobile.tsx             # Deteccao mobile
-│   ├── use-toast.ts               # Notificacoes toast
-│   ├── useParallax.ts             # Efeito parallax
-│   ├── useScrollReveal.ts         # Reveal ao scroll
-│   ├── useLightbox.ts             # Lightbox de imagens
-│   ├── useIdleCursor.ts           # Cursor inativo
-│   ├── useRefreshOnFocus.ts       # Refresh ao focar
-│   └── useCustomHighlights.ts     # Highlights customizados
-│
-├── IA / NEURAL
-│   ├── useAIAutocomplete.ts       # Autocomplete IA
-│   ├── useAIRealtimeReview.ts     # Revisao em tempo real
-│   ├── useAdaptiveContext.ts      # Contexto adaptativo
-│   ├── useNeuralConfig.ts         # Config neural
-│   ├── useNeuralFeedback.ts       # Feedback neural
-│   ├── useNeuralInference.ts      # Inferencia neural
-│   ├── useMessageNLP.ts           # NLP de mensagens
-│   └── useSemanticSearch.ts       # Busca semantica
-│
-├── VOZ (7 hooks)
-│   ├── useNeuralVoice.ts          # Voz neural (STT+TTS)
-│   ├── useOrionVoiceClone.ts      # Clone de voz
-│   ├── useVoiceAuth.ts            # Auth por voz
-│   ├── useVoiceIdentityGuard.ts   # Guard identidade vocal
-│   ├── useVoiceInput.ts           # Entrada de voz
-│   ├── useVoicePipeline.ts        # Pipeline de voz
-│   └── useVAD.ts                  # Voice Activity Detection
-│
-├── VISAO (3 hooks)
-│   ├── useFaceDetection.ts        # Deteccao facial
-│   ├── useMultimodalVision.ts     # Visao multimodal
-│   └── useTribunalVision.ts       # Visao tribunal
-│
-├── GOOGLE (5 hooks)
-│   ├── useGoogleOAuth.ts          # Google OAuth
-│   ├── useGoogleScopes.ts         # Google Scopes
-│   ├── useGoogleToken.ts          # Google Token
-│   ├── useGoogleDocChangeDetection.ts # Deteccao mudancas Docs
-│   └── useGoogleDocsSync.ts       # Sincronizacao Docs
-│
-├── DOCUMENTOS (5 hooks)
-│   ├── useDocumentDraft.ts        # Rascunho documento
-│   ├── useDocumentLinting.ts      # Linting documento
-│   ├── useDocumentLock.ts         # Lock documento
-│   ├── useDocumentPresence.ts     # Presenca documento
-│   └── useAutoShareDocument.ts    # Auto-compartilhar
-│
-├── COMUNICACAO (3 hooks)
-│   ├── useChatIAPersistence.ts    # Persistencia chat IA
-│   ├── useUnreadMessages.ts       # Mensagens nao lidas
-│   └── useRealtimeNotifications.ts # Notificacoes realtime
-│
-├── ROBOTICA (2 hooks)
-│   ├── useRobotConnection.ts      # Conexao robo
-│   └── useRosBridge.ts            # Bridge ROS
-│
-├── BUSCA JURIDICA (3 hooks)
-│   ├── useJurisprudencialSearch.ts # Busca jurisprudencial
-│   ├── useLegalSearchCache.ts     # Cache busca legal
-│   └── useCitationExtractor.ts    # Extrator citacoes
-│
-├── COLABORACAO (2 hooks)
-│   ├── useCollaboration.ts        # Colaboracao (Yjs)
-│   └── useLawyerPresence.ts       # Presenca advogado
-│
-├── MIDIA (3 hooks)
-│   ├── useScreenRecorder.ts       # Gravador de tela
-│   ├── useSpotifyPlayback.ts      # Playback Spotify
-│   └── useAudioWorklet.ts         # Audio Worklet
-│
-├── AUTENTICACAO (3 hooks)
-│   ├── useAdminAccess.ts          # Acesso admin
-│   ├── useUserPlan.ts             # Plano usuario
-│   └── useUserRole.ts             # Role usuario
-│
-├── PLATAFORMA (4 hooks)
-│   ├── useInstallPrompt.ts        # Prompt instalacao PWA
-│   ├── useFirebaseNotifications.ts # Notificacoes Firebase
-│   ├── useGeminiLive.ts           # Gemini Live
-│   └── useGenerationQueue.ts      # Fila de geracao
-│
-├── DADOS (5 hooks)
-│   ├── useAnalyticsTracker.ts     # Rastreador analytics
-│   ├── useContactForm.ts          # Formulario contato
-│   ├── useGeocode.ts              # Geocodificacao
-│   ├── useCodeSnippets.ts         # Snippets de codigo
-│   └── useIngestionStatus.ts      # Status ingestao
-│
-└── MISC (7 hooks)
-    ├── useAmazonIntegration.ts    # Integracao Amazon
-    ├── useAnaAvatar.ts            # Avatar Ana
-    ├── useAppstoreSDK.ts          # Appstore SDK
-    ├── useCalendarDeadlines.ts    # Prazos calendario
-    ├── useLocalCalendar.ts        # Calendario local
-    ├── usePrivateKnowledge.ts     # Conhecimento privado
-    ├── useRecaptcha.ts            # reCAPTCHA
-    └── useSignatureRealtime.ts    # Assinatura realtime
-
-
-================================================================================
- 99. ARVORE DE DOCUMENTOS JURIDICOS RAG — 26 DOCS (v8.0)
-================================================================================
-
-public/docs/
-├── CONSTITUICAO FEDERAL 1988 (6 partes)
-│   ├── cf88-parte1-estrutura.txt          # Principios fundamentais (Arts 1-17)
-│   ├── cf88-parte2-organizacao.txt        # Organizacao do Estado
-│   ├── cf88-parte3-tributacao-financas.txt # Tributacao e financas
-│   ├── cf88-parte4-ordem-social.txt       # Ordem social
-│   ├── cf88-parte5-disposicoes-gerais.txt # Disposicoes gerais
-│   └── cf88-parte6-garantias-processuais.txt # Garantias processuais
-│
-├── DIREITO PROCESSUAL PENAL (5 versoes)
-│   ├── direito-processual-penal-completo.txt
-│   ├── nocoes-direito-processual-penal.txt
-│   ├── nocoes-direito-processual-penal-v2.txt
-│   ├── nocoes-direito-processual-penal-v3.txt
-│   └── nocoes-direito-processual-penal-v4.txt
-│
-├── AURY LOPES (3 versoes)
-│   ├── aury-lopes-direito-processual-penal.txt
-│   ├── aury-lopes-direito-processual-penal-v2.txt
-│   └── aury-lopes-direito-processual-penal-v3.txt
-│
-├── PRINCIPIOS PROCESSUAIS (1)
-│   └── principios-processuais-penais.txt
-│
-├── SUMULAS STJ (5 versoes)
-│   ├── sumulas-stj-completas.txt
-│   ├── sumulas-stj-completas-v2.txt
-│   ├── sumulas-stj-completas-v3.txt
-│   ├── sumulas-stj-completas-v4.txt
-│   └── sumulas-stj-inteiro-teor.txt
-│
-└── JURISPRUDENCIA STF (6 versoes)
-    ├── jurisprudencia-stf-penal.txt
-    ├── tematica-jurisprudencia-stf.txt
-    ├── tematica-jurisprudencia-stf-completa.txt
-    ├── tematica-jurisprudencia-stf-v3.txt
-    ├── tematica-jurisprudencia-stf-v4.txt
-    └── tematica-jurisprudencia-stf-v5.txt
-
-
-================================================================================
- 100. SISTEMAS INTEGRADOS — MAPA DE DEPENDENCIAS (v8.0)
-================================================================================
-
-FLUXO DE DADOS PRINCIPAL:
-  Usuario -> Frontend (React) -> Supabase Client -> Edge Functions -> APIs Externas
-                                                                   -> Banco de Dados
-                                                                   -> LLM (Gemini)
-                                                                   -> Embeddings
-                                                                   -> TTS/STT
-
-INTERLOCKING DOS SISTEMAS:
-
-  [VISAO] ←→ [NEURAL CORE] ←→ [VOZ]
-     ↑            ↑   ↑           ↑
-     |       [MEMORIA] |          |
-     |            ↑    |          |
-  [YOLO]    [RAG/KB]  [LLM]   [TTS/STT]
-     |            ↑    ↑          |
-  [MediaPipe] [Supabase DB] [Gemini API]
-     |            ↑              |
-  [TensorFlow] [Embeddings] [HuggingFace]
-     |                           |
-  [ONNX Runtime]           [Groq Whisper]
-
-SISTEMAS AUTONOMOS (funcionam offline):
-  - Formant TTS Engine (100% local, zero APIs)
-  - Voice Evolution Engine (aprende localmente)
-  - Vision Local Learning (aprende objetos localmente)
-  - Offline Sync (IndexedDB + service worker)
-  - Piper WASM (TTS local quando evolucao >= 70%)
-
-SISTEMAS DEPENDENTES DE API:
-  - Gemini LLM (7 keys rotacao, free)
-  - Gemini TTS (Vertex AI, free)
-  - Groq Whisper STT (free tier)
-  - HuggingFace Inference (free tier)
-  - Fish Speech (clone de voz)
-  - CourtListener (jurisprudencia USA)
-  - Firecrawl (web scraping)
-  - Stripe (pagamentos)
-  - Google Workspace (Docs, Drive)
-
-CAMADAS DE SEGURANCA:
-  1. Input Barrier (sanitizacao de entrada)
-  2. Orion Defense System (deteccao de ataques)
-  3. Security Compliance Protocols (LGPD/GDPR)
-  4. RLS Policies (Supabase Row Level Security)
-  5. Face Auth (autenticacao facial)
-  6. Voice Identity Guard (identidade vocal)
-  7. reCAPTCHA (protecao bot)
-  8. Copy Protection (anti-copia de conteudo)
-
-CAPACIDADES TOTAL DO SISTEMA ORION v8.0:
-  - 179 modulos neurais
-  - 86 edge functions
-  - 69 hooks customizados
-  - 102 paginas
-  - 388 componentes React
-  - 318 modulos TypeScript (lib/)
-  - 26 documentos juridicos RAG
-  - 14 idiomas suportados
-  - 7 chaves Gemini em rotacao
-  - 50 protocolos Lumen7
-  - 15 camadas de arquitetura cognitiva
-  - 32 tipos de redes neurais
-  - 12 modulos quantum
-  - 8 protocolos roboticos (ROS2/VDA5050)
-  - 4 motores TTS (Gemini, Fish, Kokoro, Piper)
-  - 3 sistemas de visao (YOLO, MediaPipe, TensorFlow)
-  - 2 dominios (iasofthub.com, elpgreen.com)
-
-
-================================================================================
- 101. CHANGELOG v8.0 -> v8.1 "Arvores & Sistemas Completos"
+ 113. CHANGELOG v8.2 -> v8.3 "Neural Swarm Complete"
 ================================================================================
 
 DATA: 2026-04-09
 
-NOVAS SECOES (9):
-  93. Arvore Completa do Projeto
-  94. Arvore de Paginas — 102 paginas (era 33 na v8.0, corrigido)
-  95. Arvore de Componentes — 388 componentes
-  96. Arvore de Bibliotecas — 318 modulos
-  97. Arvore de Edge Functions — 86 funcoes (formato arvore)
-  98. Arvore de Hooks — 69 hooks (formato arvore)
-  99. Arvore de Documentos Juridicos RAG — 26 docs
-  100. Sistemas Integrados — Mapa de Dependencias
-  101. Changelog v8.0 -> v8.1
+NOVAS SECOES (5):
+  109. ELP Neural Swarm — 2.900+ Agentes HF (detalhamento completo)
+  110. 5 Redes Neurais Core + 6 Agentes Autonomos
+  111. Neural Agent Bridge — Ponte de Invocacao
+  112. Metricas Completas do Sistema Orion v8.3
+  113. Changelog v8.2 -> v8.3
 
-CORRECOES DE AUDITORIA:
-  - Paginas: 33 (v8.0) -> 102 (v8.1) — descobertas 69 paginas nao documentadas
-    (65+ dashboard, 4 solucoes, 3 plantas, 2 callbacks)
-  - Componentes: agora 388 (nao estava totalizado)
-  - Lib modules: 318 total (nao estava totalizado)
-  - Hooks: 68 (v8.0) -> 69 (v8.1)
+DESTAQUE:
+  - 2.550 agentes registrados em 14 categorias (tabela completa)
+  - ~2.900 com variantes de modelo
+  - Detalhamento de todas 14 categorias com subcategorias e modelos
+  - 5 redes neurais core documentadas (Transformer+LSTM+GNN, CNN+RNN, etc.)
+  - 6 agentes autonomos core documentados
+  - Fluxo de invocacao neural-agent-bridge completo
+  - Tabela de metricas consolidada do sistema
 
-VERSAO: v8.1 (Arvores & Sistemas Completos)
-TOTAL DE SECOES: 101 (era 92)
+VERSAO: v8.3 (Neural Swarm Complete)
+TOTAL DE SECOES: 113
 TOTAL DE LINHAS: ~7500+
-
-
-
-
-================================================================================
- 102. BANCO DE DADOS SUPABASE — 171 TABELAS (v8.2)
-================================================================================
-
-TOTAL DE TABELAS: 171 (incluindo views e funcoes)
-
-AUTENTICACAO & PERFIS (8):
-  profiles, user_roles, user_plans, user_neural_profiles,
-  face_auth_enrollments, face_auth_log, face_templates,
-  voice_auth_enrollments, voice_auth_log, voice_profiles,
-  voice_guest_sessions, voice_style_preferences
-
-CHAT & COMUNICACAO (6):
-  chat_conversations, chat_messages, chat_ia_conversations,
-  chat_ia_messages, user_communication_context, lawyer_presence
-
-DOCUMENTOS (14):
-  documents, document_drafts, document_folders, document_locks,
-  document_style_memory, document_templates, document_validation_cache,
-  document_validations, document_versions, generated_documents,
-  client_documents, contact_documents, lead_documents, processo_documents
-
-CRM & CLIENTES (8):
-  client_profiles, contacts, consultas, deals, lead_notes,
-  meetings, tarefas, todos
-
-JURIDICO (10):
-  processos, andamentos, legal_citations, legal_embeddings,
-  citation_sources, citation_verifications, courtlistener_webhook_events,
-  catalogo_dados_senado, pro_bono_requests, honorarios_config
-
-MARKETPLACE & AFILIADOS (12):
-  products, product_files, product_modules, orders, invoices,
-  affiliate_programs, affiliate_commissions, affiliate_coupons,
-  affiliate_links, affiliate_requests, affiliate_sales,
-  marketplace_registrations, orion_module_installations, orion_module_ratings
-
-NEURAL & IA (22):
-  ai_metrics, ai_providers, neural_knowledge_base, neural_learning_data,
-  neural_network_configs, neural_agent_config, neural_ab_experiments,
-  neural_child_reports, neural_code_patches, neural_evolution_proposals,
-  neural_orchestrator_cycles, neural_pipeline_state, neural_prompt_versions,
-  neural_routing_weights, neural_runtime_patches, neural_saved_models,
-  neural_specializations, neural_training_log, neuromodulation_signals,
-  interaction_feedback, generation_queue, execution_plans
-
-COMPLIANCE & AML (6):
-  aml_screening_reports, aml_screening_matches, aml_screened_lists,
-  aml_screening_history, cgu_sanctions_cache, security_scan_results,
-  security_scan_runs
-
-CACHE & PERFORMANCE (8):
-  api_cache, barcode_cache, cnpj_cache, cpf_cache, serpapi_cache,
-  query_embedding_cache, elp_response_cache, elp_batch_queue,
-  document_validation_cache, youtube_cache
-
-EMAIL & NOTIFICACOES (7):
-  admin_emails, email_automation_rules, email_campaigns,
-  email_signature_settings, email_templates, notificacoes,
-  push_notifications, push_subscriptions, newsletter_subscribers,
-  notification_webhooks
-
-INTEGRACOES (8):
-  user_google_tokens, user_integration_tokens, user_integrations,
-  google_doc_links, workspace_connector_settings, workspace_settings,
-  stripe_connect_accounts, signed_urls
-
-ESCRITORIO (4):
-  escritorio_config, escritorio_public_view, available_advogados,
-  shared_documents
-
-ASSINATURA DIGITAL (3):
-  signature_envelopes, signature_log, nda_signatures
-
-PUBLICACOES & CONTEUDO (4):
-  articles, publicacoes, avaliacoes, code_snippets
-
-IoT & INDUSTRIAL (6):
-  iot_devices, iot_telemetry, plant_configurations,
-  pyrolysis_readings, environmental_context, feasibility_studies,
-  feasibility_market_data
-
-ORION AUTONOMO (8):
-  orion_autonomous_agents, orion_frameworks, orion_generation_log,
-  orion_realtime_alerts, orion_realtime_monitors, orion_self_analysis,
-  orion_threat_log, orion_traces, orion_voice_samples
-
-ANALYTICS & LOGS (6):
-  audit_log, analises, company_intelligence, lovable_events,
-  lovable_users, lovable_webhook_requests, rate_limits
-
-BLOOMS (mind map) (2):
-  blooms, bloom_shares
-
-PARCEIROS & INVESTIDORES (4):
-  partner_profiles, loi_documents, press_releases, impact_stats,
-  otr_conversion_goals, report_verifications
-
-MISC (5):
-  local_events, customer_access, adaptive_system_prompts,
-  user_private_knowledge, mother_commissions, secretary_summaries,
-  webhook_subscriptions
-
-FUNCOES SQL NOTAVEIS:
-  - match_neural_knowledge — Busca semantica por similaridade vetorial
-  - search_legal_embeddings — Busca em embeddings legais
-  - search_private_knowledge — Busca em conhecimento privado
-  - has_role / get_user_role — Verificacao de roles (seguranca)
-  - is_admin / has_any_admin — Verificacao de admin
-  - clean_expired_cache — Limpeza automatica de cache
-  - increment_cnpj_cache_hit — Contador de hits CNPJ
-  - get_unread_count — Contagem mensagens nao lidas
-  - count_items_needing_embeddings — Itens pendentes de embedding
-
-
-================================================================================
- 103. INTERNACIONALIZACAO — 14 IDIOMAS (v8.2 Corrigido)
-================================================================================
-
-DIRETORIO: src/i18n/
-
-IDIOMAS SUPORTADOS (14 — era documentado como 5):
-  pt.json  — Portugues (Brasil) — PRIMARIO
-  en.json  — English
-  es.json  — Espanol
-  it.json  — Italiano
-  zh.json  — 中文 (Chines)
-  ja.json  — 日本語 (Japones)
-  ko.json  — 한국어 (Coreano)
-  ar.json  — العربية (Arabe)
-  de.json  — Deutsch (Alemao)
-  fr.json  — Francais (Frances)
-  hi.json  — हिन्दी (Hindi)
-  ru.json  — Русский (Russo)
-  tr.json  — Turkce (Turco)
-  index.ts — Configuracao i18next
-
-DETECCAO: Automatica via navegador (navigator.language)
-FALLBACK: pt (Portugues brasileiro)
-COMPONENTE: LanguageSelector.tsx (seletor de idioma no header)
-BIBLIOTECA: react-i18next + i18next
-
-
-================================================================================
- 104. EDITOR DE DOCUMENTOS — 54 COMPONENTES (v8.2)
-================================================================================
-
-DIRETORIO: src/components/dashboard/editor/ (54 componentes)
-
-CORE DO EDITOR:
-  EditorCanvasArea.tsx         — Area principal do canvas A4
-  EditorFormattingToolbar.tsx  — Barra de formatacao (TipTap)
-  EditorBottomPanels.tsx       — Paineis inferiores
-  EditorDialogs.tsx            — Dialogos do editor
-  EditorPageFrame.tsx          — Moldura de pagina A4
-  EditorRuler.tsx              — Regua horizontal
-  EditorVerticalRuler.tsx      — Regua vertical
-  EditorStatusBar.tsx          — Barra de status
-  EditorTabPanels.tsx          — Paineis em abas
-
-ASSISTENCIA IA:
-  AIGhostText.tsx              — Texto fantasma (autocomplete IA)
-  AIProgressIndicator.tsx      — Indicador progresso IA
-  AIReviewPanel.tsx            — Painel de revisao IA
-  AIStructuralPanel.tsx        — Analise estrutural IA
-  DocumentAIChatPanel.tsx      — Chat IA no documento
-  InlineSuggestionTooltip.tsx  — Sugestoes inline
-  SlashCommandMenu.tsx         — Menu de comandos (/)
-  SuggestionsPanel.tsx         — Painel de sugestoes
-
-JURIDICO:
-  ClauseLibraryPanel.tsx       — Biblioteca de clausulas
-  LegalDocumentPreview.tsx     — Preview documento legal
-  LegalPipelinePanel.tsx       — Pipeline legal
-  LegalReferenceSearch.tsx     — Busca referencias legais
-  LegalReferencesPanel.tsx     — Painel de referencias
-  SmartLegalGuidancePanel.tsx  — Orientacao legal inteligente
-
-COLABORACAO:
-  CommentsPanel.tsx            — Painel de comentarios
-  DocumentPresenceBar.tsx      — Barra de presenca (Yjs)
-  GoogleDocsSyncBar.tsx        — Sincronizacao Google Docs
-  ActivityTimeline.tsx         — Timeline de atividades
-  DocRevisionHistory.tsx       — Historico de revisoes
-
-FERRAMENTAS:
-  FindReplaceBar.tsx           — Buscar e substituir
-  RedactionTool.tsx            — Ferramenta de redacao
-  WatermarkOverlay.tsx         — Marca d'agua
-  PageBreakOverlay.tsx         — Quebra de pagina
-  PageNavigator.tsx            — Navegador de paginas
-  FloatingPageIndicator.tsx    — Indicador flutuante
-  BlockHandle.tsx              — Handle de bloco
-
-ANALISE:
-  DocumentComparisonViewer.tsx   — Comparador de documentos
-  DocumentCompletenessGauge.tsx  — Gauge de completude
-  DocumentContextAnalysisPanel.tsx — Analise de contexto
-  DocumentFormatPresets.tsx      — Presets de formato
-  DocumentOutline.tsx            — Outline do documento
-  DicionarioPopover.tsx          — Dicionario popup
-
-PIPELINE IA:
-  PipelineIntakeDialog.tsx     — Dialogo intake pipeline
-  PDFSegmentationViewer.tsx    — Visualizador segmentacao PDF
-  RewriteVariationsPanel.tsx   — Variacoes de reescrita
-  TemplateVariablesPanel.tsx   — Variaveis de template
-  FormFieldExtension.tsx       — Extensao campos formulario
-
-CHAT DO EDITOR (8):
-  chat/AgentSelector.tsx       — Seletor de agente
-  chat/ChatDocContextBar.tsx   — Barra contexto documento
-  chat/ChatHistoryPanel.tsx    — Historico do chat
-  chat/ChatInputArea.tsx       — Area de input
-  chat/ChatMessageList.tsx     — Lista de mensagens
-  chat/ChatQuickActions.tsx    — Acoes rapidas
-  chat/ModeSelector.tsx        — Seletor de modo
-  chat/PendingAttachments.tsx  — Anexos pendentes
-
-TECNOLOGIAS DO EDITOR:
-  - TipTap (editor rich text)
-  - Yjs + y-webrtc (colaboracao em tempo real)
-  - y-indexeddb (persistencia offline)
-  - jsPDF (geracao PDF)
-  - HTML2Canvas (screenshots)
-  - Mammoth (import DOCX)
-
-
-================================================================================
- 105. BIBLIOTECAS DETALHADAS — src/lib/ (v8.2)
-================================================================================
-
-src/lib/voice/ (16 modulos — Pipeline de Voz Completo):
-  adaptiveVoiceStyle.ts      — Estilo de voz adaptativo
-  audioWorkletManager.ts     — Gerenciador AudioWorklet
-  browserVAD.ts              — VAD no navegador
-  conversationStateMachine.ts — Maquina de estados conversa
-  fillerAudio.ts             — Audio de preenchimento
-  framePipeline.ts           — Pipeline de frames
-  geminiLive.ts              — Gemini Live (streaming)
-  humanizer.ts               — Humanizador de voz
-  kokoroTTS.ts               — Kokoro TTS client
-  micArbiter.ts              — Arbitro de microfone
-  sileroVAD.ts               — Silero VAD (modelo ONNX)
-  streamingTTS.ts            — TTS streaming
-  sttFallbackChain.ts        — Chain de fallback STT
-  turnDetection.ts           — Deteccao de turno
-  voiceFeatureEngine.ts      — Motor de features vocais
-  voicePicker.ts             — Seletor de voz
-
-src/lib/tts/ (15 modulos — Motores TTS):
-  geminiTTS.ts               — Gemini TTS (primario)
-  fishSpeechTTS.ts           — Fish Speech (clone)
-  kokoroTTS.ts               — Kokoro TTS
-  jarvisTTS.ts               — JARVIS TTS
-  piperTTS.ts                — Piper WASM (local)
-  marcoVoiceTTS.ts           — Marco Voice TTS
-  googleTTS.ts               — Google TTS (desativado)
-  rvcClient.ts               — RVC Client (voice conversion)
-  formantSynth.ts            — Sintese por formantes (local)
-  ipaTokenizer.ts            — Tokenizador IPA pt-BR
-  mfccEngine.ts              — Motor MFCC
-  phonemes.ts                — Banco de fonemas
-  orionVoiceEngine.ts        — Motor de voz Orion
-  voiceCache.ts              — Cache de voz
-  voiceDSP.ts                — DSP de voz
-
-src/lib/analysis/ (19 modulos — Analise de Documentos):
-  aggressiveTermsDetector.ts   — Detector termos agressivos
-  ambiguityDetector.ts         — Detector de ambiguidade
-  anti-hallucination-engine.ts — Motor anti-alucinacao
-  argumentMiner.ts             — Minerador de argumentos
-  consistencyChecker.ts        — Verificador de consistencia
-  contentTypeDetector.ts       — Detector tipo conteudo
-  contractBenchmarks.ts        — Benchmarks de contrato
-  documentAnonymizer.ts        — Anonimizador (LGPD)
-  documentComparison.ts        — Comparacao de documentos
-  documentReviewEngine.ts      — Motor de revisao
-  hallucinationDetector.ts     — Detector de alucinacao
-  keywordExtractor.ts          — Extrator de keywords
-  missingClausesChecker.ts     — Verificador clausulas faltantes
-  obligationExtractor.ts       — Extrator de obrigacoes
-  qualityPipeline.ts           — Pipeline de qualidade
-  responseQualityChecker.ts    — Verificador qualidade resposta
-  riskPredictor.ts             — Preditor de risco
-  textSimilarity.ts            — Similaridade textual
-
-src/lib/ai/ (4 modulos):
-  local-llm-engine.ts         — Motor LLM local
-  mother-network.ts           — Rede mae (meta-aprendizagem)
-  neural-bridge.ts             — Ponte neural
-  realtime-intel.ts            — Inteligencia em tempo real
-
-src/lib/huggingface/ (6 modulos):
-  gradio-client.ts             — Cliente Gradio
-  hf-inference-client.ts       — Cliente HF Inference
-  transformers-audio.ts        — Transformers audio
-  transformers-browser.ts      — Transformers no browser
-  transformers-vision.ts       — Transformers visao
-
-src/lib/api/ (9 modulos):
-  agentService.ts              — Servico de agentes
-  datajud-api.ts               — API DataJud
-  firecrawl.ts                 — Firecrawl API
-  legislacao-api.ts            — API legislacao
-  neural-search-api.ts         — API busca neural
-  oab-acessorh-api.ts          — API OAB AcessoRH
-  pesquisa-api.ts              — API pesquisa
-  utils-api.ts                 — API utilidades
-
-src/lib/document/ (6 modulos):
-  cleanAIResponse.ts           — Limpeza resposta IA
-  documentStyleMemory.ts       — Memoria de estilo
-  nonDestructiveApply.ts       — Aplicacao nao-destrutiva
-  structured-text-extractor.ts — Extrator texto estruturado
-  stylePreservation.ts         — Preservacao de estilo
-
-src/lib/generators/ (6 modulos):
-  docx-generator.ts            — Gerador DOCX
-  html-pdf-printer.ts          — Impressora HTML->PDF
-  pdf-generator.ts             — Gerador PDF
-  pdf-html-parser.ts           — Parser HTML->PDF
-  receipt-generator.ts         — Gerador de recibos
-
-
-================================================================================
- 106. LANDING PAGE — 22 COMPONENTES HOME (v8.2)
-================================================================================
-
-src/components/home/ (22 componentes):
-
-HERO & ABERTURA:
-  HeroSection.tsx              — Hero principal com Three.js
-  HeroThreeBackground.tsx      — Background 3D (Three.js/R3F)
-  PlasmaCore.tsx               — Animacao plasma core
-  WelcomeSplash.tsx             — Splash screen de boas-vindas
-  OrionVideoShowcase.tsx       — Showcase video Orion
-
-MODULOS & FEATURES:
-  SystemArchitectureSection.tsx — 9 modulos do Ecossistema Orion
-  TechStackSection.tsx         — Stack tecnologico
-  SecurityShieldSection.tsx    — Seguranca empresarial
-  WhyOrionSection.tsx          — Por que Orion?
-  WhoIsItForSection.tsx        — Para quem e?
-  BenefitsSection.tsx          — Beneficios
-  ComparisonSection.tsx        — Comparacao com concorrentes
-
-INDUSTRIAL (ELP Green):
-  SmartOtrSection.tsx          — Smart OTR Tire Recycling
-  ImpactStatsSection.tsx       — Estatisticas de impacto
-  EsgCertificationsSection.tsx — Certificacoes ESG
-  GlobalPresenceSection.tsx    — Presenca global
-  PartnershipModelSection.tsx  — Modelo de parceria
-  PhilosophySection.tsx        — Filosofia da empresa
-
-SOCIAL PROOF:
-  TestimonialsCarousel.tsx     — Carrossel de depoimentos
-  PartnersSection.tsx          — Parceiros
-  NewsSection.tsx              — Noticias / press releases
-
-CTA:
-  CtaSection.tsx               — Call to action final
-
-
-================================================================================
- 107. EDGE FUNCTIONS MAIORES — TOP 15 POR TAMANHO (v8.2)
-================================================================================
-
-RANKING POR LINHAS DE CODIGO:
-  1. neural-search         — 3.882 linhas (busca semantica vetorial)
-  2. gerar-documento       — 3.788 linhas (geracao 100+ tipos docs)
-  3. aprimorar-documento   — 3.034 linhas (aprimoramento com IA)
-  4. neural-ops            — 2.262 linhas (operacoes neurais core)
-  5. neural-training       — 1.914 linhas (treinamento neural)
-  6. chat-juridico         — 1.698 linhas (chat juridico com RAG)
-  7. neural-evolution      — 1.622 linhas (evolucao neural)
-  8. neural-auto-learn     — 1.428 linhas (auto-aprendizagem)
-  9. pesquisa-unificada    — 1.425 linhas (pesquisa multi-fonte)
-  10. legislacao-federal   — 1.365 linhas (legislacao federal BR)
-  11. agente-pesquisa      — 1.243 linhas (agente pesquisador)
-  12. clicksign-signature  — 1.203 linhas (assinatura digital)
-  13. firebase-admin       — 1.192 linhas (admin Firebase)
-  14. courtlistener-search — 880 linhas (busca CourtListener)
-  15. agente-construcao    — 863 linhas (agente construtor docs)
-
-TOTAL ESTIMADO DE CODIGO EDGE: ~35.000+ linhas de TypeScript (Deno)
-
-
-================================================================================
- 108. CHANGELOG v8.1 -> v8.2 "Database, i18n & Deep Audit"
-================================================================================
-
-DATA: 2026-04-09
-
-NOVAS SECOES (7):
-  102. Banco de Dados Supabase — 171 tabelas
-  103. Internacionalizacao — 14 idiomas (corrigido de 5)
-  104. Editor de Documentos — 54 componentes
-  105. Bibliotecas Detalhadas — src/lib/ completo
-  106. Landing Page — 22 componentes home
-  107. Edge Functions Maiores — top 15 por tamanho
-  108. Changelog v8.1 -> v8.2
-
-CORRECOES:
-  - Idiomas: 5 (v8.0) -> 14 (v8.2) — descobertos 9 idiomas nao documentados
-  - Tabelas Supabase: NAO documentado -> 171 tabelas catalogadas
-  - Editor: NAO detalhado -> 54 componentes documentados
-  - Bibliotecas: generico -> detalhamento de 76 modulos em 8 subdiretorios
-  - Home: generico -> 22 componentes listados
-  - Edge functions: ranking por tamanho (~35.000+ linhas total)
-
-VERSAO: v8.2 (Database, i18n & Deep Audit)
-TOTAL DE SECOES: 108 (era 101)
-TOTAL DE LINHAS: ~7800+
 
 
 ================================================================================
