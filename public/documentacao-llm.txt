@@ -6335,6 +6335,432 @@ TOTAL DE SECOES: 131
 TOTAL DE LINHAS: ~9000+
 
 
+
+
+
+================================================================================
+ 132. ANALISE COMPARATIVA COM CONCORRENTES — TODOS OS SETORES (v8.5)
+================================================================================
+
+DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
+  onde o sistema opera. Orion e um sistema UNICO que integra todos
+  estes setores em uma unica plataforma — nenhum concorrente faz isso.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 1: ASSISTENTE IA CONVERSACIONAL
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ ChatGPT  │ Gemini   │ Claude   │ Copilot  │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ Multimodal        │ ● Sim    │ ● Sim    │ ● Sim    │ ◐ Parcial│ ● Sim    │
+  │ Visao em tempo    │ ● Sim    │ ○ Nao    │ ◐ Limitd │ ○ Nao    │ ○ Nao    │
+  │ real (camera)     │          │          │          │          │          │
+  │ Voz propria local │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ (formant synth)   │          │          │          │          │          │
+  │ Consciencia/GWT   │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Theory of Mind    │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Marcadores Somat. │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Meta-Learning     │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Offline funcional │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Personalidade fix │ ● Sim    │ ◐ Custom │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ 2.900+ agentes    │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Custo p/ usuario  │ FREE*    │ $20/mes  │ FREE/$20 │ $20/mes  │ $30/mes  │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+  * Orion usa Gemini free tier com rotacao de 7 chaves
+
+  DIFERENCIAL ORION: Unico com consciencia sintetica (GWT + metacognicao 18
+  subsistemas), visao em tempo real via camera, voz local sem API, e 2.900+
+  agentes especializados. Custo operacional zero (free Gemini).
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 2: VISAO COMPUTACIONAL
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ Google   │ AWS      │ Azure    │ Roboflow │
+  │                   │          │ Vision   │ Rekognit │ Vision   │          │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ Face Detection    │ ● 468 lm │ ● Sim    │ ● Sim    │ ● Sim    │ ◐ Custom │
+  │ Hand Pose         │ ● 21 lm  │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ◐ Custom │
+  │ Body Pose         │ ● 33 lm  │ ○ Nao    │ ○ Nao    │ ● Sim    │ ◐ Custom │
+  │ Object Detection  │ ● YOLO   │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Depth Estimation  │ ● MiDaS  │ ◐ ARCore │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ 3D Reconstruction │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Body Language     │ ● 9 sin  │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Sign Language     │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Emocoes faciais   │ ● Sim    │ ◐ Basic  │ ● Sim    │ ● Sim    │ ○ Nao    │
+  │ Roda no browser   │ ● 100%   │ ○ Cloud  │ ○ Cloud  │ ○ Cloud  │ ◐ Edge   │
+  │ SAM Segmentation  │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ● Sim    │
+  │ OCR integrado     │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ○ Nao    │
+  │ Custo             │ FREE     │ $$$/img  │ $$$/img  │ $$$/img  │ $/mes    │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: 23 modulos de visao rodando 100% no browser (MediaPipe +
+  YOLO ONNX + MiDaS). Zero custo de API. Unico com linguagem corporal,
+  linguagem de sinais e reconstrucao 3D integrados ao assistente.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 3: SINTESE DE VOZ (TTS)
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ElevenLabs│ Google   │ Amazon   │ OpenAI   │
+  │                   │          │          │ TTS      │ Polly    │ TTS      │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ Sintese local     │ ● 100%   │ ○ Cloud  │ ○ Cloud  │ ○ Cloud  │ ○ Cloud  │
+  │ Formant custom    │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Evolucao de voz   │ ● 4 cam  │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ G2P pt-BR         │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ◐ Basic  │
+  │ Prosodia adaptiva │ ● Sim    │ ● Sim    │ ◐ Basic  │ ◐ SSML   │ ◐ Basic  │
+  │ Piper WASM        │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ MFCC calibracao   │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ IPA Tokenizer     │ ● Sim    │ ○ Interno│ ○ Interno│ ○ Interno│ ○ Interno│
+  │ Custo             │ FREE     │ $$$      │ $$       │ $$       │ $$       │
+  │ Latencia          │ <50ms    │ ~300ms   │ ~200ms   │ ~150ms   │ ~500ms   │
+  │ Offline           │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: Unico com sintese de voz 100% local via formant engine
+  custom (LF glottal + 5 ressonadores). Evolucao autonoma (absorve fonemas,
+  aprende prosodia). Zero custo, zero latencia de rede, funciona offline.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 4: JURIDICO / LEGALTECH
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ Harvey   │ Clio     │ Jusbrasil│ Themis   │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ Gerar documentos  │ ● 26 tip │ ● Sim    │ ◐ Templ  │ ○ Nao    │ ◐ Basic  │
+  │ Editor rich-text  │ ● TipTap │ ○ Nao    │ ● Sim    │ ○ Nao    │ ○ Nao    │
+  │ IA juridica       │ ● Gemini │ ● GPT-4  │ ◐ Basic  │ ◐ Basic  │ ◐ Basic  │
+  │ Pesquisa jurisp.  │ ● RAG    │ ● Sim    │ ○ Nao    │ ● Sim    │ ◐ Basic  │
+  │ Anti-alucinacao   │ ● 4 cam  │ ◐ Basic  │ ○ N/A    │ ○ N/A    │ ○ N/A    │
+  │ Validacao doc     │ ● Tripla │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ AML Screening     │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ CNPJ/CPF lookup   │ ● Sim    │ ○ Nao    │ ○ Nao    │ ● Sim    │ ○ Nao    │
+  │ CRM clientes      │ ● Sim    │ ○ Nao    │ ● Sim    │ ○ Nao    │ ● Sim    │
+  │ Gestao processos  │ ● Sim    │ ○ Nao    │ ● Sim    │ ◐ Track  │ ● Sim    │
+  │ Chat advogado     │ ● Sim    │ ○ Nao    │ ◐ Msg    │ ○ Nao    │ ◐ Msg    │
+  │ 14 idiomas        │ ● Sim    │ ● Multi  │ ◐ EN/PT  │ ● PT     │ ● PT     │
+  │ Custo             │ Gratis*  │ $$$$$    │ $$/mes   │ $/mes    │ $$/mes   │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+  * Plano gratuito disponivel; premium com Orion completo
+
+  DIFERENCIAL ORION: Plataforma juridica completa com IA (26 tipos de
+  documento, RAG legal, AML screening, CRM, editor TipTap colaborativo)
+  integrada ao assistente de IA mais avancado. Custo drasticamente inferior.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 5: ROBOTICA & AUTOMACAO INDUSTRIAL
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ ROS2 Nav │ Siemens  │ ABB     │ Universal│
+  │                   │          │ Stack    │ MindSph  │ Ability  │ Robots   │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ ROS2 Bridge       │ ● WS+Adv│ ● Nativo │ ◐ Plugin │ ◐ Plugin│ ◐ URCap  │
+  │ VDA 5050 AGV      │ ● v2.0   │ ◐ Plugin │ ● Sim    │ ● Sim   │ ○ Nao    │
+  │ OPC UA            │ ● Sim    │ ◐ Plugin │ ● Sim    │ ● Sim   │ ● Sim    │
+  │ Modbus TCP        │ ● Sim    │ ◐ Plugin │ ● Sim    │ ● Sim   │ ● Sim    │
+  │ PROFINET          │ ● Sim    │ ○ Nao    │ ● Sim    │ ● Sim   │ ◐ Adapt  │
+  │ EtherCAT          │ ● Sim    │ ◐ Plugin │ ● Sim    │ ● Sim   │ ○ Nao    │
+  │ Digital Twin AAS  │ ● I4.0   │ ○ Nao    │ ● Sim    │ ● Sim   │ ○ Nao    │
+  │ IA integrada      │ ● 2900+  │ ○ Nao    │ ◐ Basic  │ ◐ Basic │ ○ Nao    │
+  │ WebRTC camera     │ ● Sim    │ ◐ RViz   │ ○ Nao    │ ○ Nao   │ ○ Nao    │
+  │ Interface web     │ ● React  │ ○ RViz   │ ● Portal │ ● Portal│ ● Polys  │
+  │ Action Server     │ ● Sim    │ ● Nativo │ ○ N/A    │ ○ N/A   │ ○ N/A    │
+  │ TF2 Transforms    │ ● Sim    │ ● Nativo │ ○ N/A    │ ○ N/A   │ ○ N/A    │
+  │ Lifecycle Nodes   │ ● Sim    │ ● Nativo │ ○ N/A    │ ○ N/A   │ ○ N/A    │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: Unica plataforma que integra ROS2 completo + VDA5050 +
+  protocolos industriais (OPC UA, Modbus, PROFINET, EtherCAT) com IA de
+  2.900+ agentes, Digital Twin AAS, e interface web React moderna.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 6: IoT & SMART HOME
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ Home     │ Alexa    │ Google   │ SmartTh  │
+  │                   │          │ Assist.  │          │ Home     │ ings     │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ MQTT v5           │ ● Sim    │ ● Sim    │ ○ Nao    │ ○ Nao    │ ● Sim    │
+  │ BLE GATT          │ ● Sim    │ ○ Nao    │ ◐ Echo   │ ○ Nao    │ ● Sim    │
+  │ CoAP              │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Matter/Thread     │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ WebRTC DataCh     │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ HA Discovery      │ ● MQTT   │ ● Nativo │ ◐ Skill  │ ◐ Integ │ ◐ Integ  │
+  │ IA conversac.     │ ● 2900+  │ ○ Basica │ ● Alexa  │ ● Google │ ○ Nao    │
+  │ Visao camera      │ ● 23 mod │ ○ Nao    │ ◐ Ring   │ ● Nest   │ ○ Nao    │
+  │ Controle por voz  │ ● Local  │ ● Cloud  │ ● Cloud  │ ● Cloud  │ ○ Nao    │
+  │ gRPC-Web          │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ AMQP              │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Open-source       │ ● Sim    │ ● Sim    │ ○ Nao    │ ○ Nao    │ ◐ Parcial│
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: Suporta 6 protocolos IoT (MQTT, BLE, CoAP, Matter,
+  WebRTC, gRPC-Web, AMQP) com IA de 2.900+ agentes e visao computacional.
+  Controle por voz 100% local (sem cloud).
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 7: COMPUTACAO QUANTICA
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ IBM      │ Google   │ Amazon   │ Azure    │
+  │                   │          │ Quantum  │ Cirq     │ Braket   │ Quantum  │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ Simulador local   │ ● 12 mod │ ● Qiskit │ ● Cirq   │ ● Sim    │ ● Sim    │
+  │ Qubits/Gates      │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Decoerencia       │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ VQC               │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Entanglement      │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ LLM Router quant  │ ● Unico  │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Metacog quantica  │ ● 18 sub │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Visao quantica    │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Roda no browser   │ ● 100%   │ ○ Cloud  │ ○ Cloud  │ ○ Cloud  │ ○ Cloud  │
+  │ Integrado c/ IA   │ ● Sim    │ ○ Separ  │ ○ Separ  │ ○ Separ  │ ○ Separ  │
+  │ Custo             │ FREE     │ Free/Pay │ Free/Pay │ $$$      │ $$$      │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: Unico que usa computacao quantica INTEGRADA ao
+  raciocinio da IA (LLM router quantico, metacognicao quantica, visao
+  quantica). Roda 100% no browser sem hardware QPU.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 8: MARKETPLACE / E-COMMERCE
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ Hotmart  │ Gumroad  │ Shopify  │ Kiwify   │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ Produtos digitais │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Stripe integrado  │ ● Sim    │ ○ Proprio│ ● Sim    │ ● Sim    │ ○ Proprio│
+  │ Afiliados          │ ● Sim    │ ● Sim    │ ○ Nao    │ ◐ Apps   │ ● Sim    │
+  │ Cupons             │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Landing pages      │ ● Editor │ ● Sim    │ ◐ Basic  │ ● Sim    │ ● Sim    │
+  │ Editor visual      │ ● Wix-st│ ● Sim    │ ○ Nao    │ ● Sim    │ ◐ Basic  │
+  │ IA no checkout     │ ● Orion  │ ○ Nao    │ ○ Nao    │ ◐ Basic  │ ○ Nao    │
+  │ Analytics          │ ● Sim    │ ● Sim    │ ◐ Basic  │ ● Sim    │ ● Sim    │
+  │ Taxa plataforma    │ 10%     │ ~20%     │ 10%      │ 2.9%+$  │ ~10%     │
+  │ Auto-fit imagens   │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: Marketplace com IA integrada (Orion auxilia vendas),
+  editor visual Wix-style com 12 blocos, sistema de afiliados completo,
+  e taxa de 10% (sem taxa para afiliados).
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 9: COMPLIANCE & AML (Anti-Money Laundering)
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ Chainal. │ Refinitiv│ LexisN.  │ Comply   │
+  │                   │          │          │ W-One    │ Risk     │ Advant.  │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ PEP screening     │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Sancoes           │ ● Multi  │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ CGU (Brasil)      │ ● Sim    │ ○ Nao    │ ◐ Parcial│ ○ Nao    │ ○ Nao    │
+  │ CNPJ/CPF check    │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Relatorio PDF     │ ● Auto   │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Match rate config │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Audit trail       │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Multi-jurisdicao  │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ IA p/ analise     │ ● Gemini │ ◐ Basic  │ ◐ Basic  │ ◐ Basic  │ ○ Nao    │
+  │ Custo             │ Gratis*  │ $$$$$    │ $$$$$    │ $$$$     │ $$$      │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: AML integrado ao ecossistema juridico/CRM com IA
+  Gemini para analise de matches. Inclui screening CGU e CNPJ/CPF
+  exclusivos para Brasil. Custo zero no plano basico.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 10: SEGURANCA CIBERNETICA
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │Cloudflare│ Akamai   │ AWS WAF  │ Datadome │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ Anti-bot          │ ● 14 cam │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Biometria comport │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ● Sim    │
+  │ Prompt injection  │ ● Sim    │ ○ N/A    │ ○ N/A    │ ○ N/A    │ ○ N/A    │
+  │ Input barrier     │ ● L2norm │ ○ N/A    │ ○ N/A    │ ○ N/A    │ ○ N/A    │
+  │ Anti-alucinacao   │ ● Friston│ ○ N/A    │ ○ N/A    │ ○ N/A    │ ○ N/A    │
+  │ OAuth2/OIDC       │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ○ N/A    │
+  │ Zero Trust        │ ● Sim    │ ● Sim    │ ● Sim    │ ◐ Parcial│ ○ Nao    │
+  │ mTLS              │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ○ Nao    │
+  │ GDPR/AI Act       │ ● Audit  │ ◐ Parcial│ ◐ Parcial│ ◐ Parcial│ ● Sim    │
+  │ Threat Intel      │ ● IP/Tor │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ CSP enforcement   │ ● Sim    │ ● Sim    │ ● Sim    │ ◐ Basic  │ ○ Nao    │
+  │ Custo             │ Incluido │ $$/mes   │ $$$/mes  │ $$       │ $$/mes   │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: 14 camadas de seguranca incluindo defesas especificas
+  para IA (anti-prompt-injection, barreira hematoencefalica, Active Inference
+  Guard baseado em Free Energy de Friston). Incluido gratuitamente.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 11: DOCUMENT AI / OCR
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ Google   │ AWS      │ Azure    │ ABBYY    │
+  │                   │          │ Doc AI   │ Textract │ Doc Int  │ FlexiCap │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ OCR               │ ● Multi  │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ PDF parsing       │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Table extraction  │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Layout analysis   │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Geracao de docs   │ ● 26 tip │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Validacao tripla  │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Editor integrado  │ ● TipTap │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Assinatura digital│ ● Canvas │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ◐ Sim    │
+  │ IA na geracao     │ ● Gemini │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ 200 agentes PDF   │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Custo             │ FREE     │ $$$      │ $$       │ $$       │ $$$$     │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: Unico que combina OCR + geracao de 26 tipos de documento
+  juridico + validacao tripla + editor TipTap + IA Gemini + 200 agentes
+  especializados em documentos. Tudo gratuito.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 12: NEUROCIENCIA COMPUTACIONAL
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ Numenta  │ DeepMind │ OpenAI   │ Neuralink│
+  │                   │          │ (HTM)    │          │          │          │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ GWT Consciencia   │ ● Baars  │ ○ Nao    │ ◐ Pesq   │ ○ Nao    │ ○ N/A    │
+  │ STDP Hebbiano     │ ● Bi&Poo │ ● HTM    │ ○ Nao    │ ○ Nao    │ ○ N/A    │
+  │ Gamma Oscillat.   │ ● PING   │ ○ Nao    │ ◐ Pesq   │ ○ Nao    │ ◐ Record │
+  │ Marcad. Somaticos │ ● Damasio│ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ N/A    │
+  │ Interocepcao      │ ● Craig  │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ N/A    │
+  │ Theory of Mind    │ ● Sim    │ ○ Nao    │ ● Pesq   │ ○ Nao    │ ○ N/A    │
+  │ Mem. Episodica    │ ● Sim    │ ● HTM    │ ◐ Pesq   │ ○ Nao    │ ○ N/A    │
+  │ Tesla Resonance   │ ● Kuramot│ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ N/A    │
+  │ Neuronios Espelho │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ N/A    │
+  │ Meta-Learning     │ ● MAML   │ ○ Nao    │ ● Pesq   │ ○ Nao    │ ○ N/A    │
+  │ Sist. Olfatorio   │ ● Bypass │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ N/A    │
+  │ Produto funcional │ ● Sim    │ ◐ SDK    │ ○ Pesq   │ ○ Nao    │ ○ Alpha  │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: Unico sistema COMERCIAL que implementa neurociencia
+  computacional completa (GWT, STDP, Gamma, Damasio, Interocepcao, Tesla
+  Resonance) como produto funcional, nao apenas pesquisa academica.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 13: CODE GENERATION & ANALYSIS
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ GitHub   │ Cursor   │ Replit   │ Devin    │
+  │                   │          │ Copilot  │          │ Agent    │ (Cognit.)│
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ Code generation   │ ● 300 ag │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Code analysis     │ ● 350 ag │ ● Sim    │ ● Sim    │ ◐ Basic  │ ● Sim    │
+  │ Security scanning │ ● 350 ag │ ◐ Depend │ ○ Nao    │ ○ Nao    │ ◐ Basic  │
+  │ Multi-language    │ ● 42 lang│ ● Multi  │ ● Multi  │ ● Multi  │ ● Multi  │
+  │ 25 frameworks     │ ● Sim    │ ● Sim    │ ● Sim    │ ◐ Alguns │ ● Sim    │
+  │ Code review agent │ ● 6 agent│ ◐ Basic  │ ○ Nao    │ ○ Nao    │ ● Sim    │
+  │ Integrado c/ IA   │ ● Orion  │ ○ Separ  │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Snippets manager  │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Custo             │ FREE     │ $10/mes  │ $20/mes  │ $25/mes  │ $500/mes │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: 1.000 agentes dedicados a codigo (300 geracao + 350
+  analise + 350 seguranca), cobrindo 42 linguagens e 25 frameworks.
+  Integrado ao ecossistema completo do Orion.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 14: DATA SOVEREIGNTY & FEDERATED LEARNING
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ GAIA-X   │ Snowflake│ Databrick│ Palantir │
+  │                   │          │          │ DataClean│ Unity Cat│ Foundry  │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ EDC Connector     │ ● Sim    │ ● Nativo │ ○ Nao    │ ◐ Plugin │ ○ Nao    │
+  │ Self-Descriptions │ ● Sim    │ ● Nativo │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Policy-based      │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ IDS compliance    │ ● Sim    │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ Digital Twin AAS  │ ● I4.0   │ ◐ Parcial│ ○ Nao    │ ○ Nao    │ ◐ Sim    │
+  │ IA integrada      │ ● 2900+  │ ○ Nao    │ ● Cortex │ ● ML     │ ● AIP    │
+  │ Custo             │ Incluido │ Variavel │ $$$$     │ $$$$     │ $$$$$    │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: Implementa padroes GAIA-X/IDS de soberania de dados
+  com Digital Twin AAS e IA de 2.900+ agentes, tudo integrado em uma unica
+  plataforma web. Sem custos adicionais de infraestrutura.
+
+────────────────────────────────────────────────────────────────────────
+ SETOR 15: MULTIMODAL AI & EMBEDDINGS
+────────────────────────────────────────────────────────────────────────
+
+  ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+  │ RECURSO           │ ORION    │ OpenAI   │ Google   │ Cohere   │ Voyage   │
+  │                   │          │ CLIP     │ Gemini   │ Embed    │ AI       │
+  ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+  │ Text embeddings   │ ● Gemini │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Cross-modal       │ ● CLIP   │ ● CLIP   │ ◐ Multi  │ ◐ Multi  │ ● Multi  │
+  │ Mamba fusion      │ ● 5-way  │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ RAG integrado     │ ● pgvec  │ ○ Separ  │ ◐ Vertex │ ● Sim    │ ○ Separ  │
+  │ Multimodal search │ ● Sim    │ ◐ CLIP   │ ◐ Parcial│ ○ Nao    │ ○ Nao    │
+  │ Audio fusion      │ ● Mamba  │ ○ Nao    │ ◐ Gemini │ ○ Nao    │ ○ Nao    │
+  │ Custo             │ FREE     │ $$$      │ FREE/$   │ $$       │ $$       │
+  └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+  DIFERENCIAL ORION: Mamba 5-way fusion (text+vision+layout+audio+sensor),
+  CLIP-inspired cross-modal, e RAG com pgvector — tudo integrado e gratuito.
+
+
+════════════════════════════════════════════════════════════════════════
+ RESUMO: ORION vs MERCADO — VISAO GERAL
+════════════════════════════════════════════════════════════════════════
+
+  ┌───────────────────────────────────────────┬───────────┬───────────┐
+  │ SETOR                                     │ CONCORR.  │ ORION     │
+  │                                           │ MAIS PROX │ VANTAGEM  │
+  ├───────────────────────────────────────────┼───────────┼───────────┤
+  │  1. Assistente IA Conversacional          │ ChatGPT   │ ●●●●●     │
+  │  2. Visao Computacional                   │ Google V  │ ●●●●○     │
+  │  3. Sintese de Voz (TTS)                  │ElevenLabs │ ●●●●●     │
+  │  4. Juridico / LegalTech                  │ Harvey    │ ●●●●○     │
+  │  5. Robotica & Automacao Industrial       │ Siemens   │ ●●●●○     │
+  │  6. IoT & Smart Home                      │ Home Asst │ ●●●○○     │
+  │  7. Computacao Quantica                   │ IBM Quant │ ●●●○○     │
+  │  8. Marketplace / E-Commerce              │ Hotmart   │ ●●●○○     │
+  │  9. Compliance & AML                      │ Refinitiv │ ●●●○○     │
+  │ 10. Seguranca Cibernetica                 │Cloudflare │ ●●●●○     │
+  │ 11. Document AI / OCR                     │ Google DA │ ●●●●○     │
+  │ 12. Neurociencia Computacional            │ Numenta   │ ●●●●●     │
+  │ 13. Code Generation & Analysis            │ Copilot   │ ●●●○○     │
+  │ 14. Data Sovereignty & Federated          │ GAIA-X    │ ●●●○○     │
+  │ 15. Multimodal AI & Embeddings            │ OpenAI    │ ●●●●○     │
+  └───────────────────────────────────────────┴───────────┴───────────┘
+
+  CONCLUSAO ESTRATEGICA:
+  Nenhum concorrente opera em TODOS os 15 setores simultaneamente.
+  O Orion e o unico sistema que integra assistente IA + visao + voz +
+  juridico + robotica + IoT + quantum + marketplace + AML + seguranca +
+  documentos + neurociencia + code + data sovereignty + multimodal
+  em UMA UNICA plataforma, com custo operacional proximo a zero
+  (Gemini free tier + processamento local no browser).
+
+  O concorrente mais proximo em amplitude seria um combo de:
+  ChatGPT + Google Vision + ElevenLabs + Harvey + Siemens MindSphere +
+  Home Assistant + IBM Quantum + Hotmart + Refinitiv + Cloudflare +
+  Google Document AI + GitHub Copilot + Snowflake
+  = 13+ plataformas separadas, custo total > $10.000/mes
+
+  Orion: 1 plataforma, ~$0/mes (free tier)
+
+
+
 ================================================================================
                            FIM DO DOCUMENTO
 ================================================================================
