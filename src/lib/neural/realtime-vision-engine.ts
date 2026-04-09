@@ -14,6 +14,8 @@ import { analyzeFaceAttributes, formatFaceAttributesForAI, type FaceAttributes, 
 import { extractText, preloadOCR, isOCRReady, formatOCRForAI, type OCRResult } from "./ocr-engine";
 import { reconstructScene, format3DForAI, type SceneReconstruction } from "./scene-reconstruction-3d";
 import { enhanceVisionDetections, formatQuantumVisionForAI, type VisionEnhancementResult } from "./quantum-vision-enhancer";
+import { estimateGaze, formatGazeForAI, type GazeResult } from "./gaze-detection";
+import { recognizeHandwritingFromVideo, isTrOCRReady, formatHandwrittenOCRForAI, type HandwrittenOCRResult } from "./trocr-handwritten";
 
 export interface RealTimeVisionResult {
   /** MediaPipe detected objects (EfficientDet) */
@@ -36,6 +38,8 @@ export interface RealTimeVisionResult {
     depth: boolean;
     ocr: boolean;
     faceAttributes: boolean;
+    gaze: boolean;
+    handwrittenOCR: boolean;
   };
   /** Multi-task FrameX result (scene, OCR, movement, expressions) — null if not available */
   frameXResult: MultiTaskResult | null;
@@ -49,6 +53,10 @@ export interface RealTimeVisionResult {
   sceneReconstruction: SceneReconstruction | null;
   /** Quantum-enhanced detection results */
   quantumEnhancement: VisionEnhancementResult | null;
+  /** Gaze direction from iris landmarks */
+  gazeResult: GazeResult | null;
+  /** Handwritten text recognition */
+  handwrittenOCR: HandwrittenOCRResult | null;
 }
 
 export interface UnifiedDetection {
@@ -285,6 +293,8 @@ export async function detectRealTime(
       depth: isDepthReady(),
       ocr: isOCRReady(),
       faceAttributes: true,
+      gaze: true,
+      handwrittenOCR: isTrOCRReady(),
     },
     frameXResult,
     depthResult,
@@ -294,7 +304,24 @@ export async function detectRealTime(
       ? reconstructScene(depthResult, video, allObjects)
       : null,
     quantumEnhancement,
+    gazeResult: null,
+    handwrittenOCR: null,
   };
+
+  // Gaze detection from face landmarks (zero cost — uses existing data)
+  if ((mpResult as any).faceLandmarks?.length > 0) {
+    const firstFaceLandmarks = (mpResult as any).faceLandmarks[0]?.landmarks;
+    if (firstFaceLandmarks) {
+      result.gazeResult = estimateGaze(firstFaceLandmarks);
+    }
+  }
+
+  // Handwritten OCR (every 15th frame to avoid lag)
+  if (isTrOCRReady() && frameCount % 15 === 0) {
+    try {
+      result.handwrittenOCR = await recognizeHandwritingFromVideo(video);
+    } catch {}
+  }
 
   // Publish for Vision-RAG cross-referencing
   if (typeof window !== "undefined") {
@@ -391,7 +418,17 @@ export function formatDetectionsForAI(result: RealTimeVisionResult): string {
     if (qvStr) parts.push(qvStr);
   }
 
-  parts.push(`Inferência local: ${result.inferenceMs}ms | MediaPipe: ${result.status.mediapipe ? "✅" : "⏳"} | YOLO: ${result.status.yolo ? "✅" : "⏳"} | FrameX: ${result.status.frameX ? "✅" : "⏳"} | Depth: ${result.status.depth ? "✅" : "⏳"} | OCR: ${result.status.ocr ? "✅" : "⏳"} | Quantum: ${result.quantumEnhancement ? "✅" : "⏳"}`);
+  // Gaze direction
+  if (result.gazeResult && result.gazeResult.confidence > 0.3) {
+    parts.push(formatGazeForAI(result.gazeResult));
+  }
+
+  // Handwritten OCR
+  if (result.handwrittenOCR?.text) {
+    parts.push(formatHandwrittenOCRForAI(result.handwrittenOCR));
+  }
+
+  parts.push(`Inferência local: ${result.inferenceMs}ms | MediaPipe: ${result.status.mediapipe ? "✅" : "⏳"} | YOLOv10: ${result.status.yolo ? "✅" : "⏳"} | FrameX: ${result.status.frameX ? "✅" : "⏳"} | Depth: ${result.status.depth ? "✅" : "⏳"} | OCR: ${result.status.ocr ? "✅" : "⏳"} | Gaze: ${result.gazeResult ? "✅" : "⏳"} | TrOCR: ${result.status.handwrittenOCR ? "✅" : "⏳"} | Quantum: ${result.quantumEnhancement ? "✅" : "⏳"}`);
 
   return parts.join("\n");
 }
