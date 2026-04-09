@@ -137,6 +137,15 @@ export default function EsqueciSenha() {
         </div>
 
         <div className="bg-secondary border border-border p-8 space-y-6">
+          {/* hCaptcha (invisible) */}
+          <HCaptcha
+            ref={hcaptchaRef}
+            sitekey={HCAPTCHA_SITE_KEY}
+            size="invisible"
+            onVerify={(token) => setCaptchaToken(token)}
+            onExpire={() => setCaptchaToken(null)}
+          />
+
           {/* Step 1: Email */}
           {step === "email" && (
             <div className="animate-fade-in space-y-6">
@@ -144,10 +153,10 @@ export default function EsqueciSenha() {
                 <Mail className="h-10 w-10 text-primary mx-auto" />
                 <h2 className="text-xl font-serif text-foreground">Recuperar Senha</h2>
                 <p className="text-sm text-muted-foreground">
-                  Informe seu e-mail para receber o código de verificação.
+                  Informe seu e-mail para verificação de identidade.
                 </p>
               </div>
-              <form onSubmit={handleSendOtp} className="space-y-5">
+              <form onSubmit={handleCheckEmail} className="space-y-5">
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-foreground tracking-wider uppercase">E-mail</label>
                   <Input
@@ -159,8 +168,8 @@ export default function EsqueciSenha() {
                     className="h-12 bg-background border-border text-foreground focus:border-primary"
                   />
                 </div>
-                <Button type="submit" className="w-full h-12 btn-gold text-sm" disabled={loading}>
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "ENVIAR CÓDIGO"}
+                <Button type="submit" className="w-full h-12 btn-gold text-sm">
+                  CONTINUAR
                 </Button>
               </form>
               <div className="text-center">
@@ -171,7 +180,67 @@ export default function EsqueciSenha() {
             </div>
           )}
 
-          {/* Step 2: OTP */}
+          {/* Step 2: Method Selection */}
+          {step === "method" && (
+            <div className="animate-fade-in space-y-6">
+              <div className="text-center space-y-2">
+                <KeyRound className="h-10 w-10 text-primary mx-auto" />
+                <h2 className="text-xl font-serif text-foreground">Método de Verificação</h2>
+                <p className="text-sm text-muted-foreground">
+                  Escolha como deseja verificar sua identidade para <strong className="text-foreground">{email}</strong>
+                </p>
+              </div>
+              <div className="space-y-3">
+                <Button
+                  onClick={() => handleSendOtp()}
+                  disabled={loading}
+                  className="w-full h-14 btn-gold text-sm flex items-center justify-center gap-3"
+                >
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                    <>
+                      <Mail className="h-5 w-5" />
+                      <div className="text-left">
+                        <div className="font-semibold">CÓDIGO POR E-MAIL</div>
+                        <div className="text-[10px] opacity-70">Receba um código de 6 dígitos</div>
+                      </div>
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={() => setStep("face")}
+                  variant="outline"
+                  className="w-full h-14 border-border text-foreground hover:bg-accent text-sm flex items-center justify-center gap-3"
+                >
+                  <ScanFace className="h-5 w-5 text-primary" />
+                  <div className="text-left">
+                    <div className="font-semibold">RECONHECIMENTO FACIAL</div>
+                    <div className="text-[10px] opacity-70">Verifique com sua câmera</div>
+                  </div>
+                </Button>
+              </div>
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setStep("email")}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors tracking-wider inline-flex items-center gap-1"
+                >
+                  <ArrowLeft className="h-3 w-3" /> Alterar e-mail
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step: Face Recognition */}
+          {step === "face" && (
+            <div className="animate-fade-in">
+              <FaceAuthLoginLazy
+                onSuccess={() => setStep("newPassword")}
+                onCancel={() => setStep("method")}
+              />
+            </div>
+          )}
+
+          {/* Step: OTP */}
           {step === "otp" && (
             <div className="animate-fade-in space-y-6">
               <div className="text-center space-y-2">
@@ -201,7 +270,7 @@ export default function EsqueciSenha() {
               <div className="text-center space-y-2">
                 <button
                   type="button"
-                  onClick={() => { setOtp(""); handleSendOtp({ preventDefault: () => {} } as React.FormEvent); }}
+                  onClick={() => { setOtp(""); handleSendOtp(); }}
                   className="text-xs text-muted-foreground hover:text-primary transition-colors tracking-wider"
                 >
                   Reenviar código
@@ -209,16 +278,16 @@ export default function EsqueciSenha() {
                 <br />
                 <button
                   type="button"
-                  onClick={() => setStep("email")}
+                  onClick={() => setStep("method")}
                   className="text-xs text-muted-foreground hover:text-primary transition-colors tracking-wider inline-flex items-center gap-1"
                 >
-                  <ArrowLeft className="h-3 w-3" /> Alterar e-mail
+                  <ArrowLeft className="h-3 w-3" /> Outro método
                 </button>
               </div>
             </div>
           )}
 
-          {/* Step 3: New Password */}
+          {/* Step: New Password */}
           {step === "newPassword" && (
             <div className="animate-fade-in space-y-6">
               <div className="text-center space-y-2">
