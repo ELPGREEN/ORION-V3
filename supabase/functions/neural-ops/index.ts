@@ -33,6 +33,157 @@ function getSupabase() {
 }
 
 // ═══════════════════════════════════════════════
+// VERTEX AI — OAuth2 Service Account Auth (uses GCP credits)
+// ═══════════════════════════════════════════════
+
+const VERTEX_LOCATION = "us-central1";
+let vertexCachedToken: string | null = null;
+let vertexTokenExpiresAt = 0;
+
+function vertexBase64url(data: Uint8Array): string {
+  return btoa(String.fromCharCode(...data))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function createVertexJWT(sa: { client_email: string; private_key: string }): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const enc = new TextEncoder();
+  const headerB64 = vertexBase64url(enc.encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const payloadB64 = vertexBase64url(enc.encode(JSON.stringify({
+    iss: sa.client_email,
+    scope: "https://www.googleapis.com/auth/cloud-platform",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600,
+  })));
+  const unsigned = `${headerB64}.${payloadB64}`;
+
+  const pemBody = sa.private_key
+    .replace(/-----BEGIN PRIVATE KEY-----/, "")
+    .replace(/-----END PRIVATE KEY-----/, "")
+    .replace(/\\n/g, "")
+    .replace(/\s/g, "");
+  const keyBytes = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0));
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8", keyBytes,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false, ["sign"],
+  );
+
+  const sig = new Uint8Array(await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, enc.encode(unsigned)));
+  return `${unsigned}.${vertexBase64url(sig)}`;
+}
+
+async function getVertexToken(sa: { client_email: string; private_key: string }): Promise<string | null> {
+  try {
+    if (vertexCachedToken && Date.now() < vertexTokenExpiresAt - 60_000) return vertexCachedToken;
+
+    const jwt = await createVertexJWT(sa);
+    const resp = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    });
+
+    if (!resp.ok) {
+      console.error("[Vertex Auth] Token exchange failed:", resp.status, await resp.text());
+      return null;
+    }
+
+    const data = await resp.json();
+    vertexCachedToken = data.access_token;
+    vertexTokenExpiresAt = Date.now() + (data.expires_in || 3600) * 1000;
+    console.log("[Vertex Auth] ✅ Token obtained, expires in", data.expires_in, "s");
+    return vertexCachedToken;
+  } catch (err: any) {
+    console.error("[Vertex Auth] Error:", err?.message);
+    return null;
+  }
+}
+
+function getVertexServiceAccount(): { client_email: string; private_key: string; project_id: string } | null {
+  try {
+    const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_KEY");
+    if (!raw) return null;
+    const sa = JSON.parse(raw);
+    if (sa.client_email && sa.private_key && sa.project_id) return sa;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function callVertexAI(messages: any[], stream: boolean): Promise<Response | null> {
+  const sa = getVertexServiceAccount();
+  if (!sa) return null;
+
+  const token = await getVertexToken(sa);
+  if (!token) return null;
+
+  const hasImage = messages.some((m: any) => Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url"));
+  const model = hasImage ? GEMINI_VISION_MODEL : GEMINI_TEXT_MODEL;
+
+  // Convert OpenAI-style messages to Gemini format
+  const systemInstruction = messages.find((m: any) => m.role === "system");
+  const contents = messages
+    .filter((m: any) => m.role !== "system")
+    .map((m: any) => {
+      const parts: any[] = [];
+      if (typeof m.content === "string") {
+        parts.push({ text: m.content });
+      } else if (Array.isArray(m.content)) {
+        for (const c of m.content) {
+          if (c.type === "text") parts.push({ text: c.text });
+          else if (c.type === "image_url") {
+            const base64 = c.image_url.url.replace(/^data:image\/\w+;base64,/, "");
+            parts.push({ inlineData: { mimeType: "image/jpeg", data: base64 } });
+          }
+        }
+      }
+      return { role: m.role === "assistant" ? "model" : "user", parts };
+    });
+
+  const requestedMaxTokens = (messages as any).__maxTokens;
+  const geminiBody: any = {
+    contents,
+    generationConfig: {
+      temperature: hasImage ? 0.25 : 0.4,
+      maxOutputTokens: requestedMaxTokens || (hasImage ? 6144 : 4096),
+      topP: hasImage ? 0.9 : 0.95,
+      topK: hasImage ? 20 : 40,
+    },
+  };
+  if (systemInstruction) {
+    geminiBody.systemInstruction = { parts: [{ text: typeof systemInstruction.content === "string" ? systemInstruction.content : String(systemInstruction.content) }] };
+  }
+
+  const endpoint = stream ? "streamGenerateContent?alt=sse" : "generateContent";
+  const url = `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${sa.project_id}/locations/${VERTEX_LOCATION}/publishers/google/models/${model}:${endpoint}`;
+
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(geminiBody),
+    });
+
+    if (resp.ok) {
+      console.log(`[Orion] ✅ Vertex AI (${model}) — GCP credits`);
+      return resp;
+    }
+    console.warn(`[Orion] Vertex AI ${model} returned ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
+    return null;
+  } catch (e: any) {
+    console.warn(`[Orion] Vertex AI error:`, e?.message);
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════
 // BRIDGE actions (from neural-bridge)
 // ═══════════════════════════════════════════════
 
