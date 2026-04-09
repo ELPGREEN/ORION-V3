@@ -147,9 +147,6 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
         <p className="text-[8px] text-muted-foreground/20 tracking-[0.15em] uppercase">
           Powered by Orion Neural Engine
         </p>
-        <p className="text-[7px] text-muted-foreground/15 mt-1">
-          Protegido por reCAPTCHA — <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-muted-foreground/30">Privacidade</a> · <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-muted-foreground/30">Termos</a>
-        </p>
       </div>
     </footer>
   );
