@@ -1,17 +1,16 @@
 """
-ORION Neural Hub — ZeroGPU Enhanced
-TTS + OCR + Embeddings + PDF + Gemma 4 LLM + Vision (BLIP) + Whisper STT + Phi-3.5 Vision
-ZeroGPU: free GPU allocation on HuggingFace Spaces
+ORION Neural Hub — ZeroGPU Enhanced v3.0
+TTS + OCR + Embeddings + PDF + Gemma 4 LLM + Vision (BLIP) + Whisper STT
++ Phi-3.5 Vision + CNN Object Detection (DETR) + Feature Extraction + Depth
 
-Usage: Deploy to HF Space with "ZeroGPU" hardware
-Fallback: All GPU endpoints degrade gracefully on CPU-only hardware
+ZeroGPU: free GPU allocation on HuggingFace Spaces
+CNN Knowledge: Convolutional layers, pooling, stride, feature maps applied
 """
 
 import io
 import os
 import json
 import time
-import wave
 import base64
 import traceback
 from typing import Optional
@@ -71,6 +70,22 @@ def _check_gpu():
         return False
 
 
+def _handle_image_input(image) -> Image.Image:
+    """Unified image input handler — accepts numpy, base64, path, PIL"""
+    if isinstance(image, np.ndarray):
+        return Image.fromarray(image).convert("RGB")
+    elif isinstance(image, str):
+        if image.startswith("data:"):
+            img_data = base64.b64decode(image.split(",")[1])
+            return Image.open(io.BytesIO(img_data)).convert("RGB")
+        else:
+            return Image.open(image).convert("RGB")
+    elif isinstance(image, Image.Image):
+        return image.convert("RGB")
+    else:
+        return Image.open(image).convert("RGB")
+
+
 # ============================================================
 # TTS — Edge TTS (Microsoft, free, no API key, CPU)
 # ============================================================
@@ -83,7 +98,7 @@ def tts_speak(text: str, speed: float = 1.0) -> tuple:
         import asyncio
         import tempfile
 
-        voice = "en-GB-RyanNeural"  # Deep male voice (JARVIS-like)
+        voice = "en-GB-RyanNeural"
         rate_str = f"+{int((speed - 1) * 100)}%" if speed >= 1 else f"{int((speed - 1) * 100)}%"
 
         async def _generate():
@@ -97,7 +112,6 @@ def tts_speak(text: str, speed: float = 1.0) -> tuple:
         tmp_path = loop.run_until_complete(_generate())
         loop.close()
 
-        # Convert MP3 to WAV numpy array
         from pydub import AudioSegment
         audio_seg = AudioSegment.from_mp3(tmp_path)
         audio_seg = audio_seg.set_channels(1).set_frame_rate(24000).set_sample_width(2)
@@ -123,8 +137,7 @@ def gemma_chat(message: str, system_prompt: str = "", max_tokens: int = 1024, te
     if not _check_gpu():
         return json.dumps({
             "error": "gpu_unavailable",
-            "message": "Gemma 4 requires GPU (ZeroGPU). Currently running on CPU only. "
-                       "Change Space hardware to ZeroGPU in Settings.",
+            "message": "Gemma 4 requires GPU (ZeroGPU).",
             "fallback": True,
         })
 
@@ -176,7 +189,7 @@ def vision_caption(image) -> str:
     if not _check_gpu():
         return json.dumps({
             "error": "gpu_unavailable",
-            "message": "BLIP Vision requires GPU. Running on CPU only.",
+            "message": "BLIP Vision requires GPU.",
             "fallback": True,
         })
 
@@ -193,19 +206,7 @@ def vision_caption(image) -> str:
     processor = _models["blip2_processor"]
     model = _models["blip2"]
 
-    # Handle various image input types
-    if isinstance(image, np.ndarray):
-        img = Image.fromarray(image)
-    elif isinstance(image, str):
-        if image.startswith("data:"):
-            img_data = base64.b64decode(image.split(",")[1])
-            img = Image.open(io.BytesIO(img_data))
-        else:
-            img = Image.open(image)
-    else:
-        img = image
-
-    img = img.convert("RGB")
+    img = _handle_image_input(image)
     inputs = processor(img, return_tensors="pt").to("cuda", torch.float16)
 
     with torch.no_grad():
@@ -235,28 +236,399 @@ def vision_classify(image) -> str:
         _models["classifier"] = pipeline(
             "image-classification",
             model="google/vit-base-patch16-224",
-            device=-1,  # CPU
+            device=-1,
         )
 
-    # Handle various image input types
-    if isinstance(image, np.ndarray):
-        img = Image.fromarray(image)
-    elif isinstance(image, str):
-        if image.startswith("data:"):
-            img_data = base64.b64decode(image.split(",")[1])
-            img = Image.open(io.BytesIO(img_data))
-        else:
-            img = Image.open(image)
-    else:
-        img = image
-
-    img = img.convert("RGB")
+    img = _handle_image_input(image)
     results = _models["classifier"](img)
 
     return json.dumps([
         {"label": r["label"], "score": round(r["score"], 4)}
         for r in results[:5]
     ])
+
+
+# ============================================================
+# CNN Object Detection — DETR (GPU)
+# Uses CNN backbone (ResNet-50) + Transformer decoder
+# Feature maps from Conv layers → position encodings → attention
+# ============================================================
+
+@spaces.GPU(duration=45)
+def cnn_detect_objects(image, threshold: float = 0.7) -> str:
+    """Detect objects using DETR (CNN ResNet-50 backbone + Transformer)
+    
+    Architecture: Input → ResNet-50 CNN (conv→pool→conv→pool...) → 
+    Feature Maps → Positional Encoding → Transformer Encoder/Decoder → 
+    FFN → Bounding Boxes + Class Labels
+    
+    The CNN backbone extracts hierarchical feature maps:
+    - Early layers: edges, textures (like learned Sobel/Prewitt filters)
+    - Mid layers: parts, shapes (nose, wheel, window)
+    - Deep layers: whole objects (face, car, building)
+    """
+    if image is None:
+        return json.dumps({"error": "No image"})
+
+    if not _check_gpu():
+        # CPU fallback with smaller model
+        return _cnn_detect_objects_cpu(image, threshold)
+
+    import torch
+    from transformers import DetrImageProcessor, DetrForObjectDetection
+
+    model_id = "facebook/detr-resnet-50"
+    if "detr" not in _models:
+        _models["detr_processor"] = DetrImageProcessor.from_pretrained(model_id)
+        _models["detr"] = DetrForObjectDetection.from_pretrained(model_id).to("cuda")
+
+    processor = _models["detr_processor"]
+    model = _models["detr"]
+
+    img = _handle_image_input(image)
+    inputs = processor(images=img, return_tensors="pt")
+    inputs = {k: v.to("cuda") for k, v in inputs.items()}
+
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    target_sizes = torch.tensor([img.size[::-1]]).to("cuda")
+    results = processor.post_process_object_detection(outputs, target_sizes=target_sizes, threshold=threshold)[0]
+
+    detections = []
+    for score, label, box in zip(results["scores"], results["labels"], results["boxes"]):
+        box = [round(b, 2) for b in box.tolist()]
+        detections.append({
+            "label": model.config.id2label[label.item()],
+            "confidence": round(score.item(), 4),
+            "bbox": {"x": box[0], "y": box[1], "w": box[2] - box[0], "h": box[3] - box[1]},
+        })
+
+    return json.dumps({
+        "detections": detections,
+        "count": len(detections),
+        "model": model_id,
+        "source": "detr-gpu",
+        "architecture": "CNN(ResNet-50) + Transformer",
+    }, ensure_ascii=False)
+
+
+def _cnn_detect_objects_cpu(image, threshold: float = 0.7) -> str:
+    """CPU fallback for object detection using DETR"""
+    from transformers import DetrImageProcessor, DetrForObjectDetection
+    import torch
+
+    model_id = "facebook/detr-resnet-50"
+    if "detr_cpu" not in _models:
+        _models["detr_cpu_processor"] = DetrImageProcessor.from_pretrained(model_id)
+        _models["detr_cpu"] = DetrForObjectDetection.from_pretrained(model_id)
+
+    processor = _models["detr_cpu_processor"]
+    model = _models["detr_cpu"]
+
+    img = _handle_image_input(image)
+    inputs = processor(images=img, return_tensors="pt")
+
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    target_sizes = torch.tensor([img.size[::-1]])
+    results = processor.post_process_object_detection(outputs, target_sizes=target_sizes, threshold=threshold)[0]
+
+    detections = []
+    for score, label, box in zip(results["scores"], results["labels"], results["boxes"]):
+        box = [round(b, 2) for b in box.tolist()]
+        detections.append({
+            "label": model.config.id2label[label.item()],
+            "confidence": round(score.item(), 4),
+            "bbox": {"x": box[0], "y": box[1], "w": box[2] - box[0], "h": box[3] - box[1]},
+        })
+
+    return json.dumps({
+        "detections": detections,
+        "count": len(detections),
+        "model": model_id,
+        "source": "detr-cpu",
+        "architecture": "CNN(ResNet-50) + Transformer",
+        "note": "Running on CPU — slower but functional",
+    }, ensure_ascii=False)
+
+
+# ============================================================
+# CNN Feature Extraction — ResNet-50 intermediate layers (CPU)
+# Extracts feature maps from different CNN depths
+# ============================================================
+
+def cnn_extract_features(image) -> str:
+    """Extract CNN feature maps from ResNet-50 at different depths.
+    
+    Shows how convolutional layers build hierarchical representations:
+    - Layer 1 (64 filters, 7×7 conv + maxpool): edges, gradients
+    - Layer 2 (256 filters): textures, patterns  
+    - Layer 3 (512 filters): object parts
+    - Layer 4 (2048 filters): high-level semantics
+    
+    Returns per-layer statistics (mean activation, spatial dims)
+    useful for transfer learning and feature similarity.
+    """
+    if image is None:
+        return json.dumps({"error": "No image"})
+
+    import torch
+    from torchvision import models, transforms
+
+    if "resnet_feat" not in _models:
+        model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+        model.eval()
+        _models["resnet_feat"] = model
+
+    model = _models["resnet_feat"]
+    img = _handle_image_input(image)
+
+    preprocess = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+    tensor = preprocess(img).unsqueeze(0)
+
+    # Hook into intermediate CNN layers
+    features = {}
+    hooks = []
+
+    def make_hook(name):
+        def hook_fn(module, input, output):
+            features[name] = output.detach()
+        return hook_fn
+
+    # Register hooks on each ResNet layer block
+    layer_map = {
+        "conv1_7x7": model.conv1,         # 64 filters, stride 2
+        "maxpool": model.maxpool,           # 3×3 maxpool, stride 2
+        "layer1_256ch": model.layer1,       # 256 channels
+        "layer2_512ch": model.layer2,       # 512 channels
+        "layer3_1024ch": model.layer3,      # 1024 channels
+        "layer4_2048ch": model.layer4,      # 2048 channels
+    }
+
+    for name, layer in layer_map.items():
+        hooks.append(layer.register_forward_hook(make_hook(name)))
+
+    with torch.no_grad():
+        output = model(tensor)
+        probs = torch.nn.functional.softmax(output[0], dim=0)
+        top5 = torch.topk(probs, 5)
+
+    # Remove hooks
+    for h in hooks:
+        h.remove()
+
+    # Build feature analysis
+    feature_analysis = {}
+    for name, feat in features.items():
+        f = feat[0]  # batch dim
+        feature_analysis[name] = {
+            "channels": int(f.shape[0]),
+            "spatial": f"{f.shape[1]}×{f.shape[2]}",
+            "mean_activation": round(float(f.mean()), 4),
+            "max_activation": round(float(f.max()), 4),
+            "sparsity": round(float((f == 0).sum()) / float(f.numel()) * 100, 1),
+        }
+
+    # Top-5 ImageNet predictions
+    weights = models.ResNet50_Weights.IMAGENET1K_V2
+    categories = weights.meta["categories"]
+    predictions = [
+        {"label": categories[idx], "score": round(score.item(), 4)}
+        for score, idx in zip(top5.values, top5.indices)
+    ]
+
+    # Compute 2048-d feature vector (global average pooling of layer4)
+    if "layer4_2048ch" in features:
+        feat_vec = features["layer4_2048ch"][0].mean(dim=[1, 2])  # GAP
+        feat_norm = feat_vec / feat_vec.norm()
+        embedding = feat_norm.tolist()
+    else:
+        embedding = []
+
+    return json.dumps({
+        "predictions": predictions,
+        "feature_layers": feature_analysis,
+        "embedding_dim": len(embedding),
+        "embedding": embedding[:32],  # First 32 dims (full is 2048)
+        "model": "resnet50",
+        "source": "cnn-features-cpu",
+        "architecture_notes": {
+            "conv1": "7×7 conv, stride 2 → learns edge/gradient filters (like Sobel but optimized)",
+            "maxpool": "3×3 maxpool, stride 2 → translation invariance, downsample 2x",
+            "layer1-4": "Residual blocks with 3×3 convs, batch norm, ReLU → hierarchical features",
+            "gap": "Global Average Pooling → spatial dims collapsed to 1×1 → 2048-d vector",
+        },
+    }, ensure_ascii=False)
+
+
+# ============================================================
+# CNN Depth Estimation — DPT/MiDaS (GPU with CPU fallback)
+# Uses CNN encoder for monocular depth from single image
+# ============================================================
+
+@spaces.GPU(duration=30)
+def cnn_depth_estimate(image) -> str:
+    """Estimate depth map from single image using DPT (CNN-based).
+    
+    DPT uses a Vision Transformer with CNN-like convolution heads
+    to produce dense per-pixel depth predictions.
+    The feature pyramid (multi-scale CNN concept) fuses features
+    from different transformer stages.
+    """
+    if image is None:
+        return json.dumps({"error": "No image"})
+
+    import torch
+    from transformers import DPTForDepthEstimation, DPTImageProcessor
+
+    model_id = "Intel/dpt-large"
+    use_gpu = _check_gpu()
+    device = "cuda" if use_gpu else "cpu"
+    cache_key = f"dpt_{device}"
+
+    if cache_key not in _models:
+        _models[f"{cache_key}_processor"] = DPTImageProcessor.from_pretrained(model_id)
+        dtype = torch.float16 if use_gpu else torch.float32
+        _models[cache_key] = DPTForDepthEstimation.from_pretrained(
+            model_id, torch_dtype=dtype
+        ).to(device)
+
+    processor = _models[f"{cache_key}_processor"]
+    model = _models[cache_key]
+
+    img = _handle_image_input(image)
+    inputs = processor(images=img, return_tensors="pt")
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+
+    with torch.no_grad():
+        outputs = model(**inputs)
+        depth = outputs.predicted_depth
+
+    # Normalize depth to 0-255 for visualization
+    depth_np = depth.squeeze().cpu().numpy()
+    depth_min = depth_np.min()
+    depth_max = depth_np.max()
+    depth_norm = ((depth_np - depth_min) / (depth_max - depth_min + 1e-8) * 255).astype(np.uint8)
+
+    # Resize to original image size
+    depth_img = Image.fromarray(depth_norm)
+    depth_img = depth_img.resize(img.size, Image.BILINEAR)
+
+    # Encode depth map as base64
+    buf = io.BytesIO()
+    depth_img.save(buf, format="PNG")
+    depth_b64 = base64.b64encode(buf.getvalue()).decode()
+
+    # Compute depth statistics
+    return json.dumps({
+        "depth_map_b64": depth_b64,
+        "stats": {
+            "min_depth": round(float(depth_min), 2),
+            "max_depth": round(float(depth_max), 2),
+            "mean_depth": round(float(depth_np.mean()), 2),
+            "std_depth": round(float(depth_np.std()), 2),
+        },
+        "resolution": f"{depth_norm.shape[1]}×{depth_norm.shape[0]}",
+        "model": model_id,
+        "source": f"dpt-{'gpu' if use_gpu else 'cpu'}",
+    }, ensure_ascii=False)
+
+
+# ============================================================
+# CNN Image Segmentation — SegFormer (GPU with CPU fallback)
+# Semantic segmentation: per-pixel classification via CNN decoder
+# ============================================================
+
+@spaces.GPU(duration=30)
+def cnn_segment(image) -> str:
+    """Semantic segmentation using SegFormer (CNN decoder head).
+    
+    SegFormer: Mix Transformer encoder + lightweight All-MLP decoder.
+    The decoder uses 1×1 convolutions (pointwise conv) to fuse
+    multi-scale features — a key CNN concept for dense prediction.
+    Output: per-pixel class labels (150 ADE20K categories).
+    """
+    if image is None:
+        return json.dumps({"error": "No image"})
+
+    import torch
+    from transformers import SegformerImageProcessor, SegformerForSemanticSegmentation
+
+    model_id = "nvidia/segformer-b0-finetuned-ade-512-512"
+    use_gpu = _check_gpu()
+    device = "cuda" if use_gpu else "cpu"
+    cache_key = f"segformer_{device}"
+
+    if cache_key not in _models:
+        _models[f"{cache_key}_processor"] = SegformerImageProcessor.from_pretrained(model_id)
+        _models[cache_key] = SegformerForSemanticSegmentation.from_pretrained(model_id).to(device)
+
+    processor = _models[f"{cache_key}_processor"]
+    model = _models[cache_key]
+
+    img = _handle_image_input(image)
+    inputs = processor(images=img, return_tensors="pt")
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    logits = outputs.logits  # (1, num_classes, H, W)
+    upsampled = torch.nn.functional.interpolate(
+        logits, size=img.size[::-1], mode="bilinear", align_corners=False
+    )
+    seg_map = upsampled.argmax(dim=1)[0].cpu().numpy()
+
+    # Count unique segments
+    unique_ids, counts = np.unique(seg_map, return_counts=True)
+    total_pixels = seg_map.size
+
+    # ADE20K label names (top categories)
+    ade20k_labels = {
+        0: "wall", 1: "building", 2: "sky", 3: "floor", 4: "tree", 5: "ceiling",
+        6: "road", 7: "bed", 8: "windowpane", 9: "grass", 10: "cabinet",
+        11: "sidewalk", 12: "person", 13: "earth", 14: "door", 15: "table",
+        16: "mountain", 17: "plant", 18: "curtain", 19: "chair", 20: "car",
+        21: "water", 22: "painting", 23: "sofa", 24: "shelf", 25: "house",
+        26: "sea", 27: "mirror", 28: "rug", 29: "field", 30: "armchair",
+        31: "seat", 32: "fence", 33: "desk", 34: "rock", 35: "wardrobe",
+        36: "lamp", 37: "bathtub", 38: "railing", 39: "cushion", 40: "base",
+        41: "box", 42: "column", 43: "signboard", 44: "chest", 45: "counter",
+        46: "sand", 47: "sink", 48: "skyscraper", 49: "fireplace", 50: "refrigerator",
+    }
+
+    segments = []
+    for uid, count in sorted(zip(unique_ids, counts), key=lambda x: -x[1]):
+        label = ade20k_labels.get(int(uid), f"class_{uid}")
+        pct = round(count / total_pixels * 100, 1)
+        if pct >= 0.5:  # Only report segments > 0.5% area
+            segments.append({"id": int(uid), "label": label, "area_pct": pct})
+
+    # Create colored segmentation mask
+    np.random.seed(42)
+    palette = np.random.randint(0, 255, (151, 3), dtype=np.uint8)
+    palette[0] = [0, 0, 0]
+    color_seg = palette[seg_map]
+    seg_img = Image.fromarray(color_seg)
+
+    buf = io.BytesIO()
+    seg_img.save(buf, format="PNG")
+    seg_b64 = base64.b64encode(buf.getvalue()).decode()
+
+    return json.dumps({
+        "segments": segments[:20],
+        "total_classes": len(unique_ids),
+        "segmentation_map_b64": seg_b64,
+        "model": model_id,
+        "source": f"segformer-{'gpu' if use_gpu else 'cpu'}",
+    }, ensure_ascii=False)
 
 
 # ============================================================
@@ -272,7 +644,7 @@ def whisper_stt(audio, language: str = "pt") -> str:
     if not _check_gpu():
         return json.dumps({
             "error": "gpu_unavailable",
-            "message": "Whisper STT requires GPU. Running on CPU only.",
+            "message": "Whisper STT requires GPU.",
             "fallback": True,
         })
 
@@ -323,7 +695,7 @@ def whisper_stt(audio, language: str = "pt") -> str:
 
 
 # ============================================================
-# OCR — EasyOCR (CPU) — FIXED numpy array handling
+# OCR — EasyOCR (CPU)
 # ============================================================
 
 def ocr_extract(image) -> str:
@@ -331,17 +703,10 @@ def ocr_extract(image) -> str:
         return json.dumps({"error": "No image provided"})
     try:
         reader = get_ocr()
-        # Handle input types safely (numpy arrays need special handling)
         if isinstance(image, np.ndarray):
             img_array = image
-        elif isinstance(image, str):
-            img = Image.open(image)
-            img_array = np.array(img)
-        elif isinstance(image, Image.Image):
-            img_array = np.array(image)
         else:
-            # Try treating as file-like
-            img = Image.open(image)
+            img = _handle_image_input(image)
             img_array = np.array(img)
 
         results = reader.readtext(img_array)
@@ -431,15 +796,12 @@ def pdf_to_html(pdf_file) -> str:
 
 
 # ============================================================
-# Phi-3.5 Vision — Multimodal VQA (GPU) — UPGRADED from Phi-3
-# Supports multi-image + video summarization + better benchmarks
-# Install flash_attn at runtime (like ysharma's reference Space)
+# Phi-3.5 Vision — Multimodal VQA (GPU)
 # ============================================================
 
 _phi3v_flash_installed = False
 
 def _ensure_flash_attn():
-    """Install flash_attn at runtime with SKIP_CUDA_BUILD to avoid build errors"""
     global _phi3v_flash_installed
     if _phi3v_flash_installed:
         return
@@ -458,7 +820,7 @@ def _ensure_flash_attn():
 
 @spaces.GPU(duration=120)
 def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
-    """Analyze image with Phi-3.5-vision-instruct on GPU (upgraded from Phi-3)"""
+    """Analyze image with Phi-3.5-vision-instruct on GPU"""
     if image is None:
         return json.dumps({"error": "No image provided"})
 
@@ -477,22 +839,17 @@ def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
 
     model_id = "microsoft/Phi-3.5-vision-instruct"
     if "phi3v" not in _models:
-        # Try installing flash_attn for faster inference (~2x speedup)
         _ensure_flash_attn()
 
-        # num_crops=16 for single-frame (best quality), 4 for multi-frame
         _models["phi3v_processor"] = AutoProcessor.from_pretrained(
             model_id, trust_remote_code=True, num_crops=16
         )
 
-        # flash_attn if available, else eager fallback
         try:
             import flash_attn  # noqa: F401
             attn_impl = "flash_attention_2"
-            print("[Phi3.5V] Using flash_attention_2")
         except ImportError:
             attn_impl = "eager"
-            print("[Phi3.5V] Using eager attention (flash_attn not available)")
 
         _models["phi3v"] = AutoModelForCausalLM.from_pretrained(
             model_id,
@@ -505,20 +862,8 @@ def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
     processor = _models["phi3v_processor"]
     model = _models["phi3v"]
 
-    # Handle image input
-    if isinstance(image, np.ndarray):
-        img = Image.fromarray(image)
-    elif isinstance(image, str):
-        if image.startswith("data:"):
-            img_data = base64.b64decode(image.split(",")[1])
-            img = Image.open(io.BytesIO(img_data))
-        else:
-            img = Image.open(image)
-    else:
-        img = image
-    img = img.convert("RGB")
+    img = _handle_image_input(image)
 
-    # Build chat template
     messages = [
         {"role": "user", "content": f"<|image_1|>\n{prompt.strip()}"},
     ]
@@ -537,7 +882,6 @@ def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
             eos_token_id=processor.tokenizer.eos_token_id,
         )
 
-    # Decode only new tokens
     generated = ids[:, inputs["input_ids"].shape[-1]:]
     text = processor.batch_decode(generated, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
 
@@ -569,7 +913,7 @@ def health_check() -> str:
     return json.dumps({
         "status": "online",
         "space": "ORION Neural Hub",
-        "version": "2.2.0",
+        "version": "3.0.0",
         "hardware": "ZeroGPU" if (HAS_ZEROGPU and gpu_available) else "CPU Free",
         "gpu": {
             "available": gpu_available,
@@ -579,15 +923,25 @@ def health_check() -> str:
         },
         "models_loaded": list(_models.keys()),
         "capabilities": {
-            "gpu": ["gemma4_llm", "blip_vision", "whisper_stt", "phi3_vision"],
-            "cpu": ["tts", "ocr", "embeddings", "pdf", "vision_classify"],
+            "gpu": ["gemma4_llm", "blip_vision", "whisper_stt", "phi3_vision", "detr_detection", "depth_estimation", "segmentation"],
+            "cpu": ["tts", "ocr", "embeddings", "pdf", "vision_classify", "cnn_features", "detr_detection_cpu", "segmentation_cpu", "depth_cpu"],
             "always_available": ["health"],
+        },
+        "cnn_architecture_notes": {
+            "detr": "ResNet-50 CNN backbone → Transformer encoder/decoder → bbox + class",
+            "segformer": "Mix Transformer encoder → 1×1 conv (pointwise) MLP decoder → per-pixel labels",
+            "dpt": "ViT encoder → CNN reassemble layers → dense depth prediction",
+            "resnet50": "7×7 conv→maxpool→residual blocks(3×3 conv)→GAP→FC classification",
         },
         "endpoint_status": {
             "gemma_chat": "gpu_required" if not gpu_available else "ready",
             "vision_caption": "gpu_required" if not gpu_available else "ready",
             "whisper_stt": "gpu_required" if not gpu_available else "ready",
             "phi3_vision": "gpu_required" if not gpu_available else "ready",
+            "cnn_detect": "ready (gpu+cpu)",
+            "cnn_features": "ready (cpu)",
+            "cnn_depth": "ready (gpu+cpu)",
+            "cnn_segment": "ready (gpu+cpu)",
             "vision_classify": "ready",
             "tts": "ready",
             "ocr": "ready",
@@ -602,8 +956,8 @@ def health_check() -> str:
 # Gradio Interface
 # ============================================================
 
-with gr.Blocks(title="ORION Neural Hub v2.1", theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# 🧠 ORION Neural Hub v2.3\n**ZeroGPU** — Gemma 4, Phi-3.5 Vision, BLIP, Whisper STT, JARVIS TTS, OCR, Embeddings, PDF")
+with gr.Blocks(title="ORION Neural Hub v3.0", theme=gr.themes.Soft()) as demo:
+    gr.Markdown("# 🧠 ORION Neural Hub v3.0\n**ZeroGPU** — Gemma 4, Phi-3.5 Vision, BLIP, Whisper STT, JARVIS TTS, OCR, Embeddings, PDF\n**NEW CNN:** DETR Detection, Segmentation, Depth, Feature Extraction")
 
     with gr.Tab("💬 Gemma 4 Chat"):
         gr.Markdown("Chat with Google Gemma 4 (4B) on free ZeroGPU")
@@ -629,6 +983,35 @@ with gr.Blocks(title="ORION Neural Hub v2.1", theme=gr.themes.Soft()) as demo:
         cls_btn = gr.Button("🏷️ Classify", variant="primary")
         cls_btn.click(fn=vision_classify, inputs=cls_image, outputs=cls_output, api_name="vision_classify")
 
+    with gr.Tab("📦 CNN Detection (DETR)"):
+        gr.Markdown("**Object detection** with DETR (CNN ResNet-50 backbone + Transformer decoder)\n\nGPU accelerated with CPU fallback. Detects 91 COCO categories.")
+        det_image = gr.Image(label="Upload Image", type="numpy")
+        det_thresh = gr.Slider(0.3, 0.95, value=0.7, step=0.05, label="Confidence Threshold")
+        det_output = gr.JSON(label="Detections")
+        det_btn = gr.Button("📦 Detect Objects", variant="primary")
+        det_btn.click(fn=cnn_detect_objects, inputs=[det_image, det_thresh], outputs=det_output, api_name="cnn_detect")
+
+    with gr.Tab("🧬 CNN Features"):
+        gr.Markdown("**Feature extraction** from ResNet-50 CNN layers\n\nShows activation maps at different depths: edges → textures → parts → objects")
+        feat_image = gr.Image(label="Upload Image", type="numpy")
+        feat_output = gr.JSON(label="Feature Analysis")
+        feat_btn = gr.Button("🧬 Extract Features", variant="primary")
+        feat_btn.click(fn=cnn_extract_features, inputs=feat_image, outputs=feat_output, api_name="cnn_features")
+
+    with gr.Tab("🗺️ CNN Segmentation"):
+        gr.Markdown("**Semantic segmentation** with SegFormer (1×1 conv decoder)\n\nPer-pixel classification into 150 categories (ADE20K)")
+        seg_image = gr.Image(label="Upload Image", type="numpy")
+        seg_output = gr.JSON(label="Segmentation Result")
+        seg_btn = gr.Button("🗺️ Segment", variant="primary")
+        seg_btn.click(fn=cnn_segment, inputs=seg_image, outputs=seg_output, api_name="cnn_segment")
+
+    with gr.Tab("🌊 CNN Depth"):
+        gr.Markdown("**Monocular depth estimation** with DPT (CNN reassemble heads)\n\nEstimates relative depth from a single image")
+        dep_image = gr.Image(label="Upload Image", type="numpy")
+        dep_output = gr.JSON(label="Depth Result")
+        dep_btn = gr.Button("🌊 Estimate Depth", variant="primary")
+        dep_btn.click(fn=cnn_depth_estimate, inputs=dep_image, outputs=dep_output, api_name="cnn_depth")
+
     with gr.Tab("🎤 Whisper STT"):
         gr.Markdown("Speech-to-text with Whisper Large v3 Turbo on GPU")
         stt_audio = gr.Audio(label="Record/Upload Audio", type="numpy")
@@ -638,7 +1021,7 @@ with gr.Blocks(title="ORION Neural Hub v2.1", theme=gr.themes.Soft()) as demo:
         stt_btn.click(fn=whisper_stt, inputs=[stt_audio, stt_lang], outputs=stt_output, api_name="whisper_stt")
 
     with gr.Tab("🗣️ JARVIS TTS"):
-        gr.Markdown("Generate speech with JARVIS voice (Piper ONNX, CPU)")
+        gr.Markdown("Generate speech with JARVIS voice (Edge TTS, CPU)")
         tts_input = gr.Textbox(label="Text", placeholder="System initialized. All modules operational.", lines=3)
         tts_speed = gr.Slider(0.5, 2.0, value=1.0, step=0.1, label="Speed")
         tts_output = gr.Audio(label="Audio Output", type="numpy")
@@ -667,7 +1050,7 @@ with gr.Blocks(title="ORION Neural Hub v2.1", theme=gr.themes.Soft()) as demo:
         pdf_btn.click(fn=pdf_convert, inputs=[pdf_file, pdf_format], outputs=pdf_output, api_name="pdf")
 
     with gr.Tab("🧿 Phi-3.5 Vision"):
-        gr.Markdown("Multimodal image analysis with Phi-3.5-vision-instruct on GPU (multi-image + video support)")
+        gr.Markdown("Multimodal image analysis with Phi-3.5-vision-instruct on GPU")
         phi3_image = gr.Image(label="Upload Image", type="numpy")
         phi3_prompt = gr.Textbox(label="Prompt", value="Describe this image in detail.", lines=2)
         phi3_output = gr.JSON(label="Analysis Result")
