@@ -181,7 +181,7 @@ export default function ConsultaIA() {
   });
 
   const isLoading = roleLoading || planLoading;
-  const isOwner = user?.email === "info@elpgreen.com";
+  const isOwner = user?.email === "ericsonpiccoli.dev@gmail.com";
   const isClient = userRole === "cliente" || userRole === null; // null = no role assigned = treat as client
   const isSubscriber = !!user && (isOwner || plan?.plan_type === "professional" || plan?.plan_type === "business" || plan?.plan_type === "enterprise");
 

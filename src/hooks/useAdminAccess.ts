@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const ADMIN_SESSION_KEY = "orion_admin_unlocked";
 const ADMIN_CODE_HASH = "b3Jpb24tYWRtaW4tRmFuY3VsbzA5MTcwNzExJCQ="; // base64 encoded
-const OWNER_EMAIL = "info@elpgreen.com";
+const OWNER_EMAIL = "ericsonpiccoli.dev@gmail.com";
 
 function hashCode(code: string): string {
   return btoa(`orion-admin-${code}`);
