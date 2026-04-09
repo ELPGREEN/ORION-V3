@@ -16,7 +16,7 @@ import { extractText, preloadOCR, isOCRReady, formatOCRForAI, type OCRResult } f
 import { reconstructScene, format3DForAI, type SceneReconstruction } from "./scene-reconstruction-3d";
 import { enhanceVisionDetections, formatQuantumVisionForAI, type VisionEnhancementResult } from "./quantum-vision-enhancer";
 import { estimateGaze, formatGazeForAI, type GazeResult } from "./gaze-detection";
-import { recognizeHandwritingFromVideo, isTrOCRReady, formatHandwrittenOCRForAI, type HandwrittenOCRResult } from "./trocr-handwritten";
+import { recognizeHandwritingFromVideo, isTrOCRReady, formatHandwrittenOCRForAI, preloadTrOCRPrinted, type HandwrittenOCRResult } from "./trocr-handwritten";
 import { visionTemporalBuffer } from "./vision-temporal-buffer";
 import { prepareRegionalDescriptions, formatRegionalForAI, type RegionalDescription } from "./vision-regional-description";
 import { parseDocumentLayout, formatLayoutForAI, type DocumentLayout } from "./vision-layout-parser";
@@ -368,7 +368,7 @@ export async function detectRealTime(
  * Preload all models (call early for faster first detection).
  */
 export async function preloadAllVision(): Promise<void> {
-  await Promise.allSettled([preloadMediaPipe(), preloadYOLO(), preloadDepthEstimation(), preloadOCR(), preloadHFVisionGate()]);
+  await Promise.allSettled([preloadMediaPipe(), preloadYOLO(), preloadDepthEstimation(), preloadOCR(), preloadHFVisionGate(), preloadTrOCRPrinted()]);
 }
 
 /**
