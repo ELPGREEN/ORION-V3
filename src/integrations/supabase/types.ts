@@ -7195,6 +7195,7 @@ export type Database = {
       cleanup_expired_embedding_cache: { Args: never; Returns: number }
       cleanup_expired_locks: { Args: never; Returns: number }
       cleanup_expired_rate_limits: { Args: never; Returns: number }
+      cleanup_old_logs: { Args: never; Returns: Json }
       count_items_needing_embeddings: { Args: never; Returns: number }
       get_items_needing_embeddings: {
         Args: { batch_limit?: number }
