@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,6 @@ import { ArrowLeft, Loader2, Mail, KeyRound, CheckCircle, ScanFace, Brain, Shiel
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import logoElp from "@/assets/logo-elp.webp";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { HCAPTCHA_SITE_KEY } from "@/lib/hcaptcha-config";
 
 type Step = "email" | "method" | "otp" | "newPassword";
 
@@ -57,8 +55,6 @@ export default function EsqueciSenha() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const hcaptchaRef = useRef<HCaptcha>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   // If redirected from AuthCallback with recovery session, go straight to newPassword
   useEffect(() => {
@@ -86,40 +82,13 @@ export default function EsqueciSenha() {
     setStep("method");
   };
 
-  const getHcaptchaToken = async () => {
-    if (captchaToken) return captchaToken;
-
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const captchaPromise = hcaptchaRef.current?.execute({ async: true });
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("captcha timeout")), 8000));
-        const res = await Promise.race([captchaPromise, timeoutPromise]) as { response?: string } | undefined;
-        const token = res?.response ?? null;
-        if (token) {
-          setCaptchaToken(token);
-          return token;
-        }
-      } catch {
-        // retry once after a short delay
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 400));
-    }
-
-    return null;
-  };
-
   const handleSendOtp = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setLoading(true);
 
-    const hToken = await getHcaptchaToken();
-    // Captcha is best-effort — don't block recovery if widget fails to load
-
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback`,
-      captchaToken: hToken,
-    } as any);
+    });
 
     if (error) {
       const isRateLimit = error.message?.toLowerCase().includes('rate') || error.status === 429;
@@ -137,8 +106,6 @@ export default function EsqueciSenha() {
       });
       setStep("otp");
     }
-    hcaptchaRef.current?.resetCaptcha();
-    setCaptchaToken(null);
     setLoading(false);
   };
 
@@ -290,14 +257,6 @@ export default function EsqueciSenha() {
               </div>
             </div>
 
-            {/* hCaptcha (invisible) */}
-            <HCaptcha
-              ref={hcaptchaRef}
-              sitekey={HCAPTCHA_SITE_KEY}
-              size="invisible"
-              onVerify={(token) => setCaptchaToken(token)}
-              onExpire={() => setCaptchaToken(null)}
-            />
 
             {/* Step 1: Email */}
             {step === "email" && (

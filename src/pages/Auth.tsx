@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Fingerprint, Eye, EyeOff, LogIn, UserPlus, Loader2, Mail, Brain, Shield, Zap, Users, Briefcase, Link2, Scale, ScanFace, CheckCircle, Music } from "lucide-react";
 import { SEO } from "@/components/SEO";
@@ -13,8 +13,6 @@ import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { z } from "zod";
 import logoElp from "@/assets/logo-elp.webp";
 import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { HCAPTCHA_SITE_KEY } from "@/lib/hcaptcha-config";
 
 // ═══════════════════════════════════════
 // Types & Constants
@@ -131,8 +129,6 @@ export default function Auth() {
   const [loginForm, setLoginForm] = useState({ email: "", senha: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showFaceLogin, setShowFaceLogin] = useState(false);
-  const hcaptchaRef = useRef<HCaptcha>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   // Face enrollment step (advogado only)
   const [authStep, setAuthStep] = useState<AuthStep>("form");
 
@@ -197,35 +193,11 @@ export default function Auth() {
     setResendLoading(false);
   };
 
-  const getHcaptchaToken = async () => {
-    if (captchaToken) return captchaToken;
-
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const res = await hcaptchaRef.current?.execute({ async: true });
-        const token = res?.response ?? null;
-        if (token) {
-          setCaptchaToken(token);
-          return token;
-        }
-      } catch {
-        // retry once after a short delay
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 400));
-    }
-
-    return null;
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateLogin()) return;
     setLoading(true);
     setEmailNotConfirmed(null);
-
-    const hToken = await getHcaptchaToken();
-    // Captcha is best-effort — don't block login if widget fails to load
 
     const token = await verifyRecaptcha("login");
     if (token) {
@@ -234,8 +206,6 @@ export default function Auth() {
         if (captchaResult && !captchaResult.success) {
           toast({ title: "Verificação falhou", description: "Atividade suspeita detectada. Tente novamente.", variant: "destructive" });
           setLoading(false);
-          hcaptchaRef.current?.resetCaptcha();
-          setCaptchaToken(null);
           return;
         }
       } catch {
@@ -243,7 +213,7 @@ export default function Auth() {
       }
     }
 
-    const { error } = await signIn(loginForm.email, loginForm.senha, hToken);
+    const { error } = await signIn(loginForm.email, loginForm.senha);
     if (error) {
       if (error.message.includes("Email not confirmed")) {
         setEmailNotConfirmed(loginForm.email);
@@ -257,8 +227,6 @@ export default function Auth() {
       toast({ title: "Login realizado!", description: "Bem-vindo à plataforma ORION." });
       navigate(returnTo);
     }
-    hcaptchaRef.current?.resetCaptcha();
-    setCaptchaToken(null);
     setLoading(false);
   };
 
@@ -267,9 +235,6 @@ export default function Auth() {
     if (!validateCadastro()) return;
     setLoading(true);
 
-    const hToken = await getHcaptchaToken();
-    // Captcha is best-effort — don't block signup if widget fails to load
-
     const token = await verifyRecaptcha("signup");
     if (token) {
       try {
@@ -277,8 +242,6 @@ export default function Auth() {
         if (captchaResult && !captchaResult.success) {
           toast({ title: "Verificação falhou", description: "Atividade suspeita detectada. Tente novamente.", variant: "destructive" });
           setLoading(false);
-          hcaptchaRef.current?.resetCaptcha();
-          setCaptchaToken(null);
           return;
         }
       } catch {
@@ -303,15 +266,13 @@ export default function Auth() {
       metadata.areas_atuacao = cadastroForm.areasAtuacao;
     }
 
-    const { error } = await signUp(cadastroForm.email, cadastroForm.senha, metadata, hToken);
+    const { error } = await signUp(cadastroForm.email, cadastroForm.senha, metadata);
     if (error) {
       let msg = "Erro ao criar conta. Tente novamente.";
       if (error.message.includes("User already registered")) msg = "Este e-mail já está cadastrado. Tente fazer login.";
       else if (error.message.includes("Password")) msg = "Senha muito fraca. Use letras, números e símbolos.";
       toast({ title: "Erro no cadastro", description: msg, variant: "destructive" });
       setLoading(false);
-      hcaptchaRef.current?.resetCaptcha();
-      setCaptchaToken(null);
       return;
     }
 
@@ -332,8 +293,6 @@ export default function Auth() {
       setLoginForm({ email: cadastroForm.email, senha: "" });
       toast({ title: "Conta criada!", description: "Faça login com suas credenciais." });
     }
-    hcaptchaRef.current?.resetCaptcha();
-    setCaptchaToken(null);
     setLoading(false);
   };
 
@@ -601,13 +560,6 @@ export default function Auth() {
 
                 {renderEmailConfirmation()}
 
-                <HCaptcha
-                  ref={hcaptchaRef}
-                  sitekey={HCAPTCHA_SITE_KEY}
-                  size="invisible"
-                  onVerify={(token) => setCaptchaToken(token)}
-                  onExpire={() => setCaptchaToken(null)}
-                />
 
                 <Button type="submit" disabled={loading}
                   className="w-full h-12 bg-gradient-to-r from-[#d4a853] to-[#b8942e] hover:from-[#e0b65e] hover:to-[#c9a33a] text-[#0a0a0f] font-semibold text-sm tracking-wider">
