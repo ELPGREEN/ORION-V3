@@ -4,7 +4,6 @@ import * as React from 'npm:react@18.3.1'
 
 import {
   Body,
-  Button,
   Container,
   Head,
   Heading,
@@ -15,28 +14,32 @@ import {
 
 interface MagicLinkEmailProps {
   siteName: string
-  confirmationUrl: string
+  confirmationUrl?: string
+  token?: string
 }
 
 export const MagicLinkEmail = ({
   siteName,
-  confirmationUrl,
+  token = '123456',
 }: MagicLinkEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Your login link for {siteName}</Preview>
+    <Preview>Seu código de login para {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Your login link</Heading>
+        <Heading style={h1}>Seu código de login</Heading>
         <Text style={text}>
-          Click the button below to log in to {siteName}. This link will expire
-          shortly.
+          Use o código abaixo para entrar em <strong>{siteName}</strong>. Ele expira em poucos minutos.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Log In
-        </Button>
+        <Container style={codeBox}>
+          <Text style={codeLabel}>Código de acesso</Text>
+          <Text style={code}>{token}</Text>
+        </Container>
+        <Text style={text}>
+          Digite esse código no site para fazer login.
+        </Text>
         <Text style={footer}>
-          If you didn't request this link, you can safely ignore this email.
+          Se você não solicitou este código, pode ignorar este e-mail.
         </Text>
       </Container>
     </Body>
@@ -59,12 +62,20 @@ const text = {
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
+const codeBox = {
+  backgroundColor: '#f4f4f5',
+  borderRadius: '12px',
+  padding: '20px 16px',
+  margin: '0 0 24px',
+  textAlign: 'center' as const,
+}
+const codeLabel = { fontSize: '12px', color: '#71717a', margin: '0 0 8px', textTransform: 'uppercase' as const, letterSpacing: '0.08em' }
+const code = {
+  fontSize: '32px',
+  lineHeight: '1',
+  fontWeight: 'bold' as const,
+  color: '#000000',
+  letterSpacing: '0.22em',
+  margin: '0',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

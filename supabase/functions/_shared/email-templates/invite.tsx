@@ -9,42 +9,34 @@ import {
   Head,
   Heading,
   Html,
-  Link,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
 interface InviteEmailProps {
   siteName: string
-  siteUrl: string
+  siteUrl?: string
   confirmationUrl: string
 }
 
 export const InviteEmail = ({
   siteName,
-  siteUrl,
   confirmationUrl,
 }: InviteEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>You've been invited to join {siteName}</Preview>
+    <Preview>Você foi convidado para {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
+        <Heading style={h1}>Você foi convidado!</Heading>
         <Text style={text}>
-          You've been invited to join{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          . Click the button below to accept the invitation and create your
-          account.
+          Você recebeu um convite para criar sua conta em <strong>{siteName}</strong>. Clique no botão abaixo para aceitar o convite.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Accept Invitation
+          Aceitar Convite
         </Button>
         <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
+          Se você não esperava este convite, pode ignorar este e-mail.
         </Text>
       </Container>
     </Body>
@@ -67,7 +59,6 @@ const text = {
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
   backgroundColor: '#000000',
   color: '#ffffff',
