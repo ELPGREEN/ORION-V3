@@ -482,17 +482,22 @@ export async function visionCaption(imageFile: File | Blob): Promise<VisionCapti
   );
 }
 
-// ─── Whisper STT (GPU → graceful error) ───
+// ─── Whisper STT (VM first → GPU → graceful error) ───
 
 export async function whisperSTT(
   audioBlob: Blob,
   language = "pt"
 ): Promise<WhisperSTTResult> {
+  // Try VM first (dedicated Whisper-tiny)
+  const vmResult = await callVM<WhisperSTTResult>("stt", { language });
+  if (vmResult && vmResult.text) return vmResult;
+
+  // Fallback to HF Space GPU
   return callGpuWithFallback<WhisperSTTResult>(
     "whisper_stt",
     { audio: audioBlob, language },
     async () => ({
-      text: `[Quota GPU excedida] STT indisponível. Tente em ${Math.ceil(getGpuQuotaState().cooldownRemainingMs / 60_000)} min.`,
+      text: `[Indisponível] STT offline. VM e GPU indisponíveis.`,
       language,
       model: "fallback-no-gpu",
       source: "orion-hub-cpu",
@@ -501,23 +506,36 @@ export async function whisperSTT(
   );
 }
 
-// ─── OCR (CPU — always available) ───
+// ─── OCR (VM first → HF Space CPU) ───
 
 export async function ocrExtract(imageFile: File | Blob): Promise<OCRResult> {
+  // Try VM first
+  const vmResult = await callVM<OCRResult>("ocr");
+  if (vmResult && vmResult.texts) return vmResult;
+
+  // Fallback to HF Space
   const result = await callGradio<OCRResult>("ocr", { image: imageFile }, DEFAULT_TIMEOUT);
   return typeof result === "string" ? JSON.parse(result as string) : result;
 }
 
-// ─── Vision Classification (CPU — always available) ───
+// ─── Vision Classification (VM first → HF Space CPU) ───
 
 export async function visionClassify(imageFile: File | Blob): Promise<VisionResult[]> {
+  // Try VM first (DETR-based)
+  const vmResult = await callVM<VisionResult[]>("classify");
+  if (vmResult && Array.isArray(vmResult)) return vmResult;
+
+  // Fallback to HF Space
   const result = await callGradio<VisionResult[]>("vision_classify", { image: imageFile }, DEFAULT_TIMEOUT);
   return typeof result === "string" ? JSON.parse(result as string) : result;
 }
 
-// ─── Embeddings (CPU — always available) ───
+// ─── Embeddings (VM first → HF Space CPU) ───
 
 export async function computeEmbeddings(texts: string[]): Promise<EmbeddingResult> {
+  // Try VM first
+  const vmResult = await callVM<EmbeddingResult>("embeddings", { texts: texts.join("\n") });
+  if (vmResult && vmResult.embeddings) return vmResult;
   const joined = texts.join("\n");
   const result = await callGradio<EmbeddingResult>("embeddings", { texts: joined }, DEFAULT_TIMEOUT);
   return typeof result === "string" ? JSON.parse(result as string) : result;
