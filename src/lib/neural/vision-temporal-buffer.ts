@@ -67,7 +67,7 @@ class VisionTemporalBuffer {
       handCount: result.hands.length,
       poseCount: (result as any).poses?.length ?? 0,
       sceneLabel: result.frameXResult?.scenario?.label ?? null,
-      ocrText: result.ocrResult?.text ?? null,
+      ocrText: result.ocrResult?.texts?.join(" ") ?? null,
       dominantEmotion: result.faceAttributes?.[0]?.emotion ?? null,
     };
 

@@ -10,95 +10,48 @@ export interface LayoutElement {
   type: "heading" | "paragraph" | "table" | "list" | "code" | "caption" | "footer" | "header" | "image_region" | "separator";
   content: string;
   confidence: number;
-  /** Bounding box in pixels */
   bounds: { x: number; y: number; width: number; height: number };
-  /** Reading order index */
   order: number;
-  /** For tables: parsed rows/columns */
   tableData?: string[][];
-  /** Nesting level (for lists/headings) */
   level?: number;
 }
 
 export interface DocumentLayout {
   elements: LayoutElement[];
-  /** Detected document type */
   documentType: "letter" | "report" | "invoice" | "form" | "article" | "presentation" | "unknown";
-  /** Reading direction */
   direction: "ltr" | "rtl";
-  /** Total text blocks found */
   blockCount: number;
-  /** Structured markdown representation */
   markdown: string;
 }
 
 /**
- * Parse document layout from OCR result.
- * Uses text size, position, and spacing heuristics.
+ * Parse document layout from OCR result (texts array based).
+ * Uses heuristic analysis of text patterns.
  */
 export function parseDocumentLayout(
   ocrResult: OCRResult,
-  frameWidth: number = 640,
-  frameHeight: number = 480
+  _frameWidth: number = 640,
+  _frameHeight: number = 480
 ): DocumentLayout {
-  if (!ocrResult?.lines || ocrResult.lines.length === 0) {
-    return {
-      elements: [],
-      documentType: "unknown",
-      direction: "ltr",
-      blockCount: 0,
-      markdown: ""
-    };
+  const texts = ocrResult?.texts ?? [];
+  if (texts.length === 0) {
+    return { elements: [], documentType: "unknown", direction: "ltr", blockCount: 0, markdown: "" };
   }
 
   const elements: LayoutElement[] = [];
   let order = 0;
+  const medianHeight = 16;
 
-  // Analyze line heights to determine base font size
-  const lineHeights = ocrResult.lines
-    .filter((l: any) => l.bbox)
-    .map((l: any) => l.bbox.height ?? (l.bbox.y2 - l.bbox.y1) ?? 16);
-  const medianHeight = lineHeights.length > 0
-    ? lineHeights.sort((a: number, b: number) => a - b)[Math.floor(lineHeights.length / 2)]
-    : 16;
+  for (const text of texts) {
+    const trimmed = text.trim();
+    if (!trimmed) continue;
 
-  // Group lines into blocks by vertical proximity
-  const sortedLines = [...(ocrResult.lines || [])].sort((a: any, b: any) => {
-    const ay = a.bbox?.y ?? a.bbox?.y1 ?? 0;
-    const by = b.bbox?.y ?? b.bbox?.y1 ?? 0;
-    return ay - by;
-  });
-
-  let currentBlock: any[] = [];
-  let lastY = -999;
-
-  for (const line of sortedLines) {
-    const y = line.bbox?.y ?? line.bbox?.y1 ?? 0;
-    const height = line.bbox?.height ?? (line.bbox?.y2 - line.bbox?.y1) ?? medianHeight;
-    const text = (line.text || "").trim();
-    if (!text) continue;
-
-    const gap = y - lastY;
-    const isNewBlock = gap > medianHeight * 1.8;
-
-    if (isNewBlock && currentBlock.length > 0) {
-      elements.push(classifyBlock(currentBlock, medianHeight, frameWidth, order++));
-      currentBlock = [];
-    }
-
-    currentBlock.push({ text, y, height, x: line.bbox?.x ?? line.bbox?.x1 ?? 0, width: line.bbox?.width ?? (line.bbox?.x2 - line.bbox?.x1) ?? frameWidth });
-    lastY = y + height;
+    const bounds = { x: 0, y: order * 20, width: 600, height: medianHeight };
+    elements.push(classifyTextBlock(trimmed, medianHeight, bounds, order++));
   }
 
-  // Last block
-  if (currentBlock.length > 0) {
-    elements.push(classifyBlock(currentBlock, medianHeight, frameWidth, order++));
-  }
-
-  // Detect document type
-  const documentType = detectDocumentType(elements, ocrResult.text ?? "");
-
-  // Generate structured markdown
+  const fullText = texts.join(" ");
+  const documentType = detectDocumentType(elements, fullText);
   const markdown = generateMarkdown(elements);
 
   return {
