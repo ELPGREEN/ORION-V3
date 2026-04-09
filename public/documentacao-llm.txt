@@ -2,7 +2,7 @@
               ORION AQUAMONKEY — DOCUMENTACAO COMPLETA DO SISTEMA
               Rede Neural Hibrida Quantico-Classica por Ericson Piccoli
               ELP® Green Technology (CNPJ 42.501.190/0001-70)
-              Versao: v8.1 (Arvores & Sistemas Completos)
+              Versao: v8.2 (Database, i18n & Deep Audit)
               Data: 2026-04-08 (Atualizado)
 Fontes de Referencia:
 - Vaswani et al. "Attention Is All You Need" (2017)
@@ -6042,7 +6042,7 @@ CAPACIDADES TOTAL DO SISTEMA ORION v8.0:
   - 388 componentes React
   - 318 modulos TypeScript (lib/)
   - 26 documentos juridicos RAG
-  - 5 idiomas suportados
+  - 14 idiomas suportados
   - 7 chaves Gemini em rotacao
   - 50 protocolos Lumen7
   - 15 camadas de arquitetura cognitiva
@@ -6081,6 +6081,424 @@ CORRECOES DE AUDITORIA:
 VERSAO: v8.1 (Arvores & Sistemas Completos)
 TOTAL DE SECOES: 101 (era 92)
 TOTAL DE LINHAS: ~7500+
+
+
+
+
+================================================================================
+ 102. BANCO DE DADOS SUPABASE — 171 TABELAS (v8.2)
+================================================================================
+
+TOTAL DE TABELAS: 171 (incluindo views e funcoes)
+
+AUTENTICACAO & PERFIS (8):
+  profiles, user_roles, user_plans, user_neural_profiles,
+  face_auth_enrollments, face_auth_log, face_templates,
+  voice_auth_enrollments, voice_auth_log, voice_profiles,
+  voice_guest_sessions, voice_style_preferences
+
+CHAT & COMUNICACAO (6):
+  chat_conversations, chat_messages, chat_ia_conversations,
+  chat_ia_messages, user_communication_context, lawyer_presence
+
+DOCUMENTOS (14):
+  documents, document_drafts, document_folders, document_locks,
+  document_style_memory, document_templates, document_validation_cache,
+  document_validations, document_versions, generated_documents,
+  client_documents, contact_documents, lead_documents, processo_documents
+
+CRM & CLIENTES (8):
+  client_profiles, contacts, consultas, deals, lead_notes,
+  meetings, tarefas, todos
+
+JURIDICO (10):
+  processos, andamentos, legal_citations, legal_embeddings,
+  citation_sources, citation_verifications, courtlistener_webhook_events,
+  catalogo_dados_senado, pro_bono_requests, honorarios_config
+
+MARKETPLACE & AFILIADOS (12):
+  products, product_files, product_modules, orders, invoices,
+  affiliate_programs, affiliate_commissions, affiliate_coupons,
+  affiliate_links, affiliate_requests, affiliate_sales,
+  marketplace_registrations, orion_module_installations, orion_module_ratings
+
+NEURAL & IA (22):
+  ai_metrics, ai_providers, neural_knowledge_base, neural_learning_data,
+  neural_network_configs, neural_agent_config, neural_ab_experiments,
+  neural_child_reports, neural_code_patches, neural_evolution_proposals,
+  neural_orchestrator_cycles, neural_pipeline_state, neural_prompt_versions,
+  neural_routing_weights, neural_runtime_patches, neural_saved_models,
+  neural_specializations, neural_training_log, neuromodulation_signals,
+  interaction_feedback, generation_queue, execution_plans
+
+COMPLIANCE & AML (6):
+  aml_screening_reports, aml_screening_matches, aml_screened_lists,
+  aml_screening_history, cgu_sanctions_cache, security_scan_results,
+  security_scan_runs
+
+CACHE & PERFORMANCE (8):
+  api_cache, barcode_cache, cnpj_cache, cpf_cache, serpapi_cache,
+  query_embedding_cache, elp_response_cache, elp_batch_queue,
+  document_validation_cache, youtube_cache
+
+EMAIL & NOTIFICACOES (7):
+  admin_emails, email_automation_rules, email_campaigns,
+  email_signature_settings, email_templates, notificacoes,
+  push_notifications, push_subscriptions, newsletter_subscribers,
+  notification_webhooks
+
+INTEGRACOES (8):
+  user_google_tokens, user_integration_tokens, user_integrations,
+  google_doc_links, workspace_connector_settings, workspace_settings,
+  stripe_connect_accounts, signed_urls
+
+ESCRITORIO (4):
+  escritorio_config, escritorio_public_view, available_advogados,
+  shared_documents
+
+ASSINATURA DIGITAL (3):
+  signature_envelopes, signature_log, nda_signatures
+
+PUBLICACOES & CONTEUDO (4):
+  articles, publicacoes, avaliacoes, code_snippets
+
+IoT & INDUSTRIAL (6):
+  iot_devices, iot_telemetry, plant_configurations,
+  pyrolysis_readings, environmental_context, feasibility_studies,
+  feasibility_market_data
+
+ORION AUTONOMO (8):
+  orion_autonomous_agents, orion_frameworks, orion_generation_log,
+  orion_realtime_alerts, orion_realtime_monitors, orion_self_analysis,
+  orion_threat_log, orion_traces, orion_voice_samples
+
+ANALYTICS & LOGS (6):
+  audit_log, analises, company_intelligence, lovable_events,
+  lovable_users, lovable_webhook_requests, rate_limits
+
+BLOOMS (mind map) (2):
+  blooms, bloom_shares
+
+PARCEIROS & INVESTIDORES (4):
+  partner_profiles, loi_documents, press_releases, impact_stats,
+  otr_conversion_goals, report_verifications
+
+MISC (5):
+  local_events, customer_access, adaptive_system_prompts,
+  user_private_knowledge, mother_commissions, secretary_summaries,
+  webhook_subscriptions
+
+FUNCOES SQL NOTAVEIS:
+  - match_neural_knowledge — Busca semantica por similaridade vetorial
+  - search_legal_embeddings — Busca em embeddings legais
+  - search_private_knowledge — Busca em conhecimento privado
+  - has_role / get_user_role — Verificacao de roles (seguranca)
+  - is_admin / has_any_admin — Verificacao de admin
+  - clean_expired_cache — Limpeza automatica de cache
+  - increment_cnpj_cache_hit — Contador de hits CNPJ
+  - get_unread_count — Contagem mensagens nao lidas
+  - count_items_needing_embeddings — Itens pendentes de embedding
+
+
+================================================================================
+ 103. INTERNACIONALIZACAO — 14 IDIOMAS (v8.2 Corrigido)
+================================================================================
+
+DIRETORIO: src/i18n/
+
+IDIOMAS SUPORTADOS (14 — era documentado como 5):
+  pt.json  — Portugues (Brasil) — PRIMARIO
+  en.json  — English
+  es.json  — Espanol
+  it.json  — Italiano
+  zh.json  — 中文 (Chines)
+  ja.json  — 日本語 (Japones)
+  ko.json  — 한국어 (Coreano)
+  ar.json  — العربية (Arabe)
+  de.json  — Deutsch (Alemao)
+  fr.json  — Francais (Frances)
+  hi.json  — हिन्दी (Hindi)
+  ru.json  — Русский (Russo)
+  tr.json  — Turkce (Turco)
+  index.ts — Configuracao i18next
+
+DETECCAO: Automatica via navegador (navigator.language)
+FALLBACK: pt (Portugues brasileiro)
+COMPONENTE: LanguageSelector.tsx (seletor de idioma no header)
+BIBLIOTECA: react-i18next + i18next
+
+
+================================================================================
+ 104. EDITOR DE DOCUMENTOS — 54 COMPONENTES (v8.2)
+================================================================================
+
+DIRETORIO: src/components/dashboard/editor/ (54 componentes)
+
+CORE DO EDITOR:
+  EditorCanvasArea.tsx         — Area principal do canvas A4
+  EditorFormattingToolbar.tsx  — Barra de formatacao (TipTap)
+  EditorBottomPanels.tsx       — Paineis inferiores
+  EditorDialogs.tsx            — Dialogos do editor
+  EditorPageFrame.tsx          — Moldura de pagina A4
+  EditorRuler.tsx              — Regua horizontal
+  EditorVerticalRuler.tsx      — Regua vertical
+  EditorStatusBar.tsx          — Barra de status
+  EditorTabPanels.tsx          — Paineis em abas
+
+ASSISTENCIA IA:
+  AIGhostText.tsx              — Texto fantasma (autocomplete IA)
+  AIProgressIndicator.tsx      — Indicador progresso IA
+  AIReviewPanel.tsx            — Painel de revisao IA
+  AIStructuralPanel.tsx        — Analise estrutural IA
+  DocumentAIChatPanel.tsx      — Chat IA no documento
+  InlineSuggestionTooltip.tsx  — Sugestoes inline
+  SlashCommandMenu.tsx         — Menu de comandos (/)
+  SuggestionsPanel.tsx         — Painel de sugestoes
+
+JURIDICO:
+  ClauseLibraryPanel.tsx       — Biblioteca de clausulas
+  LegalDocumentPreview.tsx     — Preview documento legal
+  LegalPipelinePanel.tsx       — Pipeline legal
+  LegalReferenceSearch.tsx     — Busca referencias legais
+  LegalReferencesPanel.tsx     — Painel de referencias
+  SmartLegalGuidancePanel.tsx  — Orientacao legal inteligente
+
+COLABORACAO:
+  CommentsPanel.tsx            — Painel de comentarios
+  DocumentPresenceBar.tsx      — Barra de presenca (Yjs)
+  GoogleDocsSyncBar.tsx        — Sincronizacao Google Docs
+  ActivityTimeline.tsx         — Timeline de atividades
+  DocRevisionHistory.tsx       — Historico de revisoes
+
+FERRAMENTAS:
+  FindReplaceBar.tsx           — Buscar e substituir
+  RedactionTool.tsx            — Ferramenta de redacao
+  WatermarkOverlay.tsx         — Marca d'agua
+  PageBreakOverlay.tsx         — Quebra de pagina
+  PageNavigator.tsx            — Navegador de paginas
+  FloatingPageIndicator.tsx    — Indicador flutuante
+  BlockHandle.tsx              — Handle de bloco
+
+ANALISE:
+  DocumentComparisonViewer.tsx   — Comparador de documentos
+  DocumentCompletenessGauge.tsx  — Gauge de completude
+  DocumentContextAnalysisPanel.tsx — Analise de contexto
+  DocumentFormatPresets.tsx      — Presets de formato
+  DocumentOutline.tsx            — Outline do documento
+  DicionarioPopover.tsx          — Dicionario popup
+
+PIPELINE IA:
+  PipelineIntakeDialog.tsx     — Dialogo intake pipeline
+  PDFSegmentationViewer.tsx    — Visualizador segmentacao PDF
+  RewriteVariationsPanel.tsx   — Variacoes de reescrita
+  TemplateVariablesPanel.tsx   — Variaveis de template
+  FormFieldExtension.tsx       — Extensao campos formulario
+
+CHAT DO EDITOR (8):
+  chat/AgentSelector.tsx       — Seletor de agente
+  chat/ChatDocContextBar.tsx   — Barra contexto documento
+  chat/ChatHistoryPanel.tsx    — Historico do chat
+  chat/ChatInputArea.tsx       — Area de input
+  chat/ChatMessageList.tsx     — Lista de mensagens
+  chat/ChatQuickActions.tsx    — Acoes rapidas
+  chat/ModeSelector.tsx        — Seletor de modo
+  chat/PendingAttachments.tsx  — Anexos pendentes
+
+TECNOLOGIAS DO EDITOR:
+  - TipTap (editor rich text)
+  - Yjs + y-webrtc (colaboracao em tempo real)
+  - y-indexeddb (persistencia offline)
+  - jsPDF (geracao PDF)
+  - HTML2Canvas (screenshots)
+  - Mammoth (import DOCX)
+
+
+================================================================================
+ 105. BIBLIOTECAS DETALHADAS — src/lib/ (v8.2)
+================================================================================
+
+src/lib/voice/ (16 modulos — Pipeline de Voz Completo):
+  adaptiveVoiceStyle.ts      — Estilo de voz adaptativo
+  audioWorkletManager.ts     — Gerenciador AudioWorklet
+  browserVAD.ts              — VAD no navegador
+  conversationStateMachine.ts — Maquina de estados conversa
+  fillerAudio.ts             — Audio de preenchimento
+  framePipeline.ts           — Pipeline de frames
+  geminiLive.ts              — Gemini Live (streaming)
+  humanizer.ts               — Humanizador de voz
+  kokoroTTS.ts               — Kokoro TTS client
+  micArbiter.ts              — Arbitro de microfone
+  sileroVAD.ts               — Silero VAD (modelo ONNX)
+  streamingTTS.ts            — TTS streaming
+  sttFallbackChain.ts        — Chain de fallback STT
+  turnDetection.ts           — Deteccao de turno
+  voiceFeatureEngine.ts      — Motor de features vocais
+  voicePicker.ts             — Seletor de voz
+
+src/lib/tts/ (15 modulos — Motores TTS):
+  geminiTTS.ts               — Gemini TTS (primario)
+  fishSpeechTTS.ts           — Fish Speech (clone)
+  kokoroTTS.ts               — Kokoro TTS
+  jarvisTTS.ts               — JARVIS TTS
+  piperTTS.ts                — Piper WASM (local)
+  marcoVoiceTTS.ts           — Marco Voice TTS
+  googleTTS.ts               — Google TTS (desativado)
+  rvcClient.ts               — RVC Client (voice conversion)
+  formantSynth.ts            — Sintese por formantes (local)
+  ipaTokenizer.ts            — Tokenizador IPA pt-BR
+  mfccEngine.ts              — Motor MFCC
+  phonemes.ts                — Banco de fonemas
+  orionVoiceEngine.ts        — Motor de voz Orion
+  voiceCache.ts              — Cache de voz
+  voiceDSP.ts                — DSP de voz
+
+src/lib/analysis/ (19 modulos — Analise de Documentos):
+  aggressiveTermsDetector.ts   — Detector termos agressivos
+  ambiguityDetector.ts         — Detector de ambiguidade
+  anti-hallucination-engine.ts — Motor anti-alucinacao
+  argumentMiner.ts             — Minerador de argumentos
+  consistencyChecker.ts        — Verificador de consistencia
+  contentTypeDetector.ts       — Detector tipo conteudo
+  contractBenchmarks.ts        — Benchmarks de contrato
+  documentAnonymizer.ts        — Anonimizador (LGPD)
+  documentComparison.ts        — Comparacao de documentos
+  documentReviewEngine.ts      — Motor de revisao
+  hallucinationDetector.ts     — Detector de alucinacao
+  keywordExtractor.ts          — Extrator de keywords
+  missingClausesChecker.ts     — Verificador clausulas faltantes
+  obligationExtractor.ts       — Extrator de obrigacoes
+  qualityPipeline.ts           — Pipeline de qualidade
+  responseQualityChecker.ts    — Verificador qualidade resposta
+  riskPredictor.ts             — Preditor de risco
+  textSimilarity.ts            — Similaridade textual
+
+src/lib/ai/ (4 modulos):
+  local-llm-engine.ts         — Motor LLM local
+  mother-network.ts           — Rede mae (meta-aprendizagem)
+  neural-bridge.ts             — Ponte neural
+  realtime-intel.ts            — Inteligencia em tempo real
+
+src/lib/huggingface/ (6 modulos):
+  gradio-client.ts             — Cliente Gradio
+  hf-inference-client.ts       — Cliente HF Inference
+  transformers-audio.ts        — Transformers audio
+  transformers-browser.ts      — Transformers no browser
+  transformers-vision.ts       — Transformers visao
+
+src/lib/api/ (9 modulos):
+  agentService.ts              — Servico de agentes
+  datajud-api.ts               — API DataJud
+  firecrawl.ts                 — Firecrawl API
+  legislacao-api.ts            — API legislacao
+  neural-search-api.ts         — API busca neural
+  oab-acessorh-api.ts          — API OAB AcessoRH
+  pesquisa-api.ts              — API pesquisa
+  utils-api.ts                 — API utilidades
+
+src/lib/document/ (6 modulos):
+  cleanAIResponse.ts           — Limpeza resposta IA
+  documentStyleMemory.ts       — Memoria de estilo
+  nonDestructiveApply.ts       — Aplicacao nao-destrutiva
+  structured-text-extractor.ts — Extrator texto estruturado
+  stylePreservation.ts         — Preservacao de estilo
+
+src/lib/generators/ (6 modulos):
+  docx-generator.ts            — Gerador DOCX
+  html-pdf-printer.ts          — Impressora HTML->PDF
+  pdf-generator.ts             — Gerador PDF
+  pdf-html-parser.ts           — Parser HTML->PDF
+  receipt-generator.ts         — Gerador de recibos
+
+
+================================================================================
+ 106. LANDING PAGE — 22 COMPONENTES HOME (v8.2)
+================================================================================
+
+src/components/home/ (22 componentes):
+
+HERO & ABERTURA:
+  HeroSection.tsx              — Hero principal com Three.js
+  HeroThreeBackground.tsx      — Background 3D (Three.js/R3F)
+  PlasmaCore.tsx               — Animacao plasma core
+  WelcomeSplash.tsx             — Splash screen de boas-vindas
+  OrionVideoShowcase.tsx       — Showcase video Orion
+
+MODULOS & FEATURES:
+  SystemArchitectureSection.tsx — 9 modulos do Ecossistema Orion
+  TechStackSection.tsx         — Stack tecnologico
+  SecurityShieldSection.tsx    — Seguranca empresarial
+  WhyOrionSection.tsx          — Por que Orion?
+  WhoIsItForSection.tsx        — Para quem e?
+  BenefitsSection.tsx          — Beneficios
+  ComparisonSection.tsx        — Comparacao com concorrentes
+
+INDUSTRIAL (ELP Green):
+  SmartOtrSection.tsx          — Smart OTR Tire Recycling
+  ImpactStatsSection.tsx       — Estatisticas de impacto
+  EsgCertificationsSection.tsx — Certificacoes ESG
+  GlobalPresenceSection.tsx    — Presenca global
+  PartnershipModelSection.tsx  — Modelo de parceria
+  PhilosophySection.tsx        — Filosofia da empresa
+
+SOCIAL PROOF:
+  TestimonialsCarousel.tsx     — Carrossel de depoimentos
+  PartnersSection.tsx          — Parceiros
+  NewsSection.tsx              — Noticias / press releases
+
+CTA:
+  CtaSection.tsx               — Call to action final
+
+
+================================================================================
+ 107. EDGE FUNCTIONS MAIORES — TOP 15 POR TAMANHO (v8.2)
+================================================================================
+
+RANKING POR LINHAS DE CODIGO:
+  1. neural-search         — 3.882 linhas (busca semantica vetorial)
+  2. gerar-documento       — 3.788 linhas (geracao 100+ tipos docs)
+  3. aprimorar-documento   — 3.034 linhas (aprimoramento com IA)
+  4. neural-ops            — 2.262 linhas (operacoes neurais core)
+  5. neural-training       — 1.914 linhas (treinamento neural)
+  6. chat-juridico         — 1.698 linhas (chat juridico com RAG)
+  7. neural-evolution      — 1.622 linhas (evolucao neural)
+  8. neural-auto-learn     — 1.428 linhas (auto-aprendizagem)
+  9. pesquisa-unificada    — 1.425 linhas (pesquisa multi-fonte)
+  10. legislacao-federal   — 1.365 linhas (legislacao federal BR)
+  11. agente-pesquisa      — 1.243 linhas (agente pesquisador)
+  12. clicksign-signature  — 1.203 linhas (assinatura digital)
+  13. firebase-admin       — 1.192 linhas (admin Firebase)
+  14. courtlistener-search — 880 linhas (busca CourtListener)
+  15. agente-construcao    — 863 linhas (agente construtor docs)
+
+TOTAL ESTIMADO DE CODIGO EDGE: ~35.000+ linhas de TypeScript (Deno)
+
+
+================================================================================
+ 108. CHANGELOG v8.1 -> v8.2 "Database, i18n & Deep Audit"
+================================================================================
+
+DATA: 2026-04-09
+
+NOVAS SECOES (7):
+  102. Banco de Dados Supabase — 171 tabelas
+  103. Internacionalizacao — 14 idiomas (corrigido de 5)
+  104. Editor de Documentos — 54 componentes
+  105. Bibliotecas Detalhadas — src/lib/ completo
+  106. Landing Page — 22 componentes home
+  107. Edge Functions Maiores — top 15 por tamanho
+  108. Changelog v8.1 -> v8.2
+
+CORRECOES:
+  - Idiomas: 5 (v8.0) -> 14 (v8.2) — descobertos 9 idiomas nao documentados
+  - Tabelas Supabase: NAO documentado -> 171 tabelas catalogadas
+  - Editor: NAO detalhado -> 54 componentes documentados
+  - Bibliotecas: generico -> detalhamento de 76 modulos em 8 subdiretorios
+  - Home: generico -> 22 componentes listados
+  - Edge functions: ranking por tamanho (~35.000+ linhas total)
+
+VERSAO: v8.2 (Database, i18n & Deep Audit)
+TOTAL DE SECOES: 108 (era 101)
+TOTAL DE LINHAS: ~7800+
 
 
 ================================================================================
