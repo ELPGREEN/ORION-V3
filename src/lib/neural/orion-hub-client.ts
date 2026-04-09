@@ -107,6 +107,17 @@ export interface VisionCaptionResult {
   source: string;
 }
 
+/**
+ * Phi-3 Vision result — advanced multimodal understanding.
+ * Can answer complex questions about images with 128k context.
+ */
+export interface Phi3VisionResult {
+  answer: string;
+  model: string;
+  source: string;
+  inferenceMs: number;
+}
+
 export interface WhisperSTTResult {
   text: string;
   language: string;
