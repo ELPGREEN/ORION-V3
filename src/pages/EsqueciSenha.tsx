@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import logoElp from "@/assets/logo-elp.webp";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { HCAPTCHA_SITE_KEY } from "@/lib/hcaptcha-config";
+import { FaceAuthLogin } from "@/components/auth/FaceAuthLogin";
 
 type Step = "email" | "method" | "otp" | "face" | "newPassword";
 
@@ -233,7 +234,7 @@ export default function EsqueciSenha() {
           {/* Step: Face Recognition */}
           {step === "face" && (
             <div className="animate-fade-in">
-              <FaceAuthLoginLazy
+              <FaceAuthLogin
                 onSuccess={() => setStep("newPassword")}
                 onCancel={() => setStep("method")}
               />
