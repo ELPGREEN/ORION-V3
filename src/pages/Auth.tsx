@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Fingerprint, Eye, EyeOff, LogIn, UserPlus, Loader2, Mail, Brain, Shield, Zap, Users, Briefcase, Link2, Scale, ScanFace, CheckCircle, Music } from "lucide-react";
 import { SEO } from "@/components/SEO";
@@ -13,6 +13,8 @@ import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { z } from "zod";
 import logoElp from "@/assets/logo-elp.webp";
 import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { HCAPTCHA_SITE_KEY } from "@/lib/hcaptcha-config";
 
 // ═══════════════════════════════════════
 // Types & Constants
@@ -129,7 +131,8 @@ export default function Auth() {
   const [loginForm, setLoginForm] = useState({ email: "", senha: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showFaceLogin, setShowFaceLogin] = useState(false);
-
+  const hcaptchaRef = useRef<HCaptcha>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   // Face enrollment step (advogado only)
   const [authStep, setAuthStep] = useState<AuthStep>("form");
 
@@ -200,7 +203,16 @@ export default function Auth() {
     setLoading(true);
     setEmailNotConfirmed(null);
 
-    // reCAPTCHA v3 verification
+    // Get hCaptcha token for Supabase
+    let hToken = captchaToken;
+    if (!hToken) {
+      try {
+        const res = await hcaptchaRef.current?.execute({ async: true });
+        hToken = res?.response ?? null;
+      } catch { /* fallback */ }
+    }
+
+    // reCAPTCHA v3 verification (additional layer)
     const token = await verifyRecaptcha("login");
     if (token) {
       try {
@@ -208,12 +220,14 @@ export default function Auth() {
         if (captchaResult && !captchaResult.success) {
           toast({ title: "Verificação falhou", description: "Atividade suspeita detectada. Tente novamente.", variant: "destructive" });
           setLoading(false);
+          hcaptchaRef.current?.resetCaptcha();
+          setCaptchaToken(null);
           return;
         }
       } catch { /* Allow through if verification service is down */ }
     }
 
-    const { error } = await signIn(loginForm.email, loginForm.senha);
+    const { error } = await signIn(loginForm.email, loginForm.senha, hToken || undefined);
     if (error) {
       if (error.message.includes("Email not confirmed")) {
         setEmailNotConfirmed(loginForm.email);
@@ -227,6 +241,8 @@ export default function Auth() {
       toast({ title: "Login realizado!", description: "Bem-vindo à plataforma ORION." });
       navigate(returnTo);
     }
+    hcaptchaRef.current?.resetCaptcha();
+    setCaptchaToken(null);
     setLoading(false);
   };
 
@@ -235,7 +251,16 @@ export default function Auth() {
     if (!validateCadastro()) return;
     setLoading(true);
 
-    // reCAPTCHA v3 verification
+    // Get hCaptcha token for Supabase
+    let hToken = captchaToken;
+    if (!hToken) {
+      try {
+        const res = await hcaptchaRef.current?.execute({ async: true });
+        hToken = res?.response ?? null;
+      } catch { /* fallback */ }
+    }
+
+    // reCAPTCHA v3 verification (additional layer)
     const token = await verifyRecaptcha("signup");
     if (token) {
       try {
@@ -243,6 +268,8 @@ export default function Auth() {
         if (captchaResult && !captchaResult.success) {
           toast({ title: "Verificação falhou", description: "Atividade suspeita detectada. Tente novamente.", variant: "destructive" });
           setLoading(false);
+          hcaptchaRef.current?.resetCaptcha();
+          setCaptchaToken(null);
           return;
         }
       } catch { /* Allow through if verification service is down */ }
@@ -266,17 +293,19 @@ export default function Auth() {
       metadata.areas_atuacao = cadastroForm.areasAtuacao;
     }
 
-    const { error } = await signUp(cadastroForm.email, cadastroForm.senha, metadata);
+    const { error } = await signUp(cadastroForm.email, cadastroForm.senha, metadata, hToken || undefined);
     if (error) {
       let msg = "Erro ao criar conta. Tente novamente.";
       if (error.message.includes("User already registered")) msg = "Este e-mail já está cadastrado. Tente fazer login.";
       else if (error.message.includes("Password")) msg = "Senha muito fraca. Use letras, números e símbolos.";
       toast({ title: "Erro no cadastro", description: msg, variant: "destructive" });
       setLoading(false);
+      hcaptchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
       return;
     }
 
-    // Try auto-login
+    // Try auto-login (no captcha needed for auto-login after signup)
     const { error: signInError } = await signIn(cadastroForm.email, cadastroForm.senha);
     if (!signInError) {
       // For advogados: require face enrollment before proceeding
@@ -295,6 +324,8 @@ export default function Auth() {
       setLoginForm({ email: cadastroForm.email, senha: "" });
       toast({ title: "Conta criada!", description: "Faça login com suas credenciais." });
     }
+    hcaptchaRef.current?.resetCaptcha();
+    setCaptchaToken(null);
     setLoading(false);
   };
 
@@ -561,6 +592,14 @@ export default function Auth() {
                 </div>
 
                 {renderEmailConfirmation()}
+
+                <HCaptcha
+                  ref={hcaptchaRef}
+                  sitekey={HCAPTCHA_SITE_KEY}
+                  size="invisible"
+                  onVerify={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                />
 
                 <Button type="submit" disabled={loading}
                   className="w-full h-12 bg-gradient-to-r from-[#d4a853] to-[#b8942e] hover:from-[#e0b65e] hover:to-[#c9a33a] text-[#0a0a0f] font-semibold text-sm tracking-wider">
