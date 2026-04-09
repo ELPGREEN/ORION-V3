@@ -66,14 +66,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         initializedRef.current = true;
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Profile-based redirect is handled by Auth page (returnTo param) 
-        // and DashboardLayout (auth guard). No hard redirect needed here.
+        // After Google OAuth signup, apply the saved account type as role
+        if (event === 'SIGNED_IN' && session?.user) {
+          const pendingType = localStorage.getItem('pending_google_account_type');
+          if (pendingType && pendingType !== 'cliente') {
+            localStorage.removeItem('pending_google_account_type');
+            try {
+              await supabase.functions.invoke('admin-api', {
+                body: { action: 'assign_role', user_id: session.user.id, role: pendingType },
+              });
+              clearRoleCache(session.user.id);
+            } catch { /* ignore — fallback to cliente */ }
+          } else if (pendingType) {
+            localStorage.removeItem('pending_google_account_type');
+          }
+        }
       }
     );
 
