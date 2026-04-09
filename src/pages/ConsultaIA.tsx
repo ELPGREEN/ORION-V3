@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
 import { useQuery } from "@tanstack/react-query";
 import { NeuralVision } from "@/components/dashboard/neural/NeuralVision";
 import { AlienCoreBackground } from "@/components/ui/AlienCoreBackground";

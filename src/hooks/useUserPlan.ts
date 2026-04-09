@@ -23,7 +23,7 @@ export function useUserPlan() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isOwner = user?.email === OWNER_EMAIL;
+  const isOwner = isOwnerEmail(user?.email);
 
   // Premium = owner OR has a confirmed Stripe subscription with a premium plan
   const hasConfirmedSubscription = !!plan?.stripe_subscription_id && PREMIUM_PLANS.includes(plan?.plan_type ?? "");
