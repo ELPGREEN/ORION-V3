@@ -129,8 +129,6 @@ export default function Auth() {
   const [loginForm, setLoginForm] = useState({ email: "", senha: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showFaceLogin, setShowFaceLogin] = useState(false);
-  const hcaptchaRef = useRef<HCaptcha>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   // Face enrollment step (advogado only)
   const [authStep, setAuthStep] = useState<AuthStep>("form");
 
