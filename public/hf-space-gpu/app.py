@@ -431,7 +431,8 @@ def pdf_to_html(pdf_file) -> str:
 
 
 # ============================================================
-# Phi-3 Vision — Multimodal VQA (GPU)
+# Phi-3.5 Vision — Multimodal VQA (GPU) — UPGRADED from Phi-3
+# Supports multi-image + video summarization + better benchmarks
 # Install flash_attn at runtime (like ysharma's reference Space)
 # ============================================================
 
@@ -451,13 +452,13 @@ def _ensure_flash_attn():
             timeout=120,
         )
         _phi3v_flash_installed = True
-        print("[Phi3V] ✅ flash_attn installed at runtime")
+        print("[Phi3.5V] ✅ flash_attn installed at runtime")
     except Exception as e:
-        print(f"[Phi3V] ⚠️ flash_attn install failed, using eager fallback: {e}")
+        print(f"[Phi3.5V] ⚠️ flash_attn install failed, using eager fallback: {e}")
 
 @spaces.GPU(duration=120)
 def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
-    """Analyze image with Phi-3-vision-128k-instruct on GPU"""
+    """Analyze image with Phi-3.5-vision-instruct on GPU (upgraded from Phi-3)"""
     if image is None:
         return json.dumps({"error": "No image provided"})
 
@@ -467,31 +468,31 @@ def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
     if not _check_gpu():
         return json.dumps({
             "error": "gpu_unavailable",
-            "message": "Phi-3 Vision requires GPU (ZeroGPU).",
+            "message": "Phi-3.5 Vision requires GPU (ZeroGPU).",
             "fallback": True,
         })
 
     import torch
     from transformers import AutoModelForCausalLM, AutoProcessor
 
-    model_id = "microsoft/Phi-3-vision-128k-instruct"
+    model_id = "microsoft/Phi-3.5-vision-instruct"
     if "phi3v" not in _models:
         # Try installing flash_attn for faster inference (~2x speedup)
         _ensure_flash_attn()
 
+        # num_crops=16 for single-frame (best quality), 4 for multi-frame
         _models["phi3v_processor"] = AutoProcessor.from_pretrained(
-            model_id, trust_remote_code=True
+            model_id, trust_remote_code=True, num_crops=16
         )
 
-        # Use torch_dtype="auto" (like ysharma's reference) — picks best dtype for hardware
         # flash_attn if available, else eager fallback
         try:
             import flash_attn  # noqa: F401
             attn_impl = "flash_attention_2"
-            print("[Phi3V] Using flash_attention_2")
+            print("[Phi3.5V] Using flash_attention_2")
         except ImportError:
             attn_impl = "eager"
-            print("[Phi3V] Using eager attention (flash_attn not available)")
+            print("[Phi3.5V] Using eager attention (flash_attn not available)")
 
         _models["phi3v"] = AutoModelForCausalLM.from_pretrained(
             model_id,
@@ -543,7 +544,7 @@ def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
     return json.dumps({
         "response": text.strip(),
         "model": model_id,
-        "source": "phi3-vision-gpu",
+        "source": "phi3.5-vision-gpu",
         "prompt": prompt.strip(),
     }, ensure_ascii=False)
 
