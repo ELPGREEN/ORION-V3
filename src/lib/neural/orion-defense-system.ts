@@ -385,25 +385,18 @@ function analyzeBehavior() {
 // ─── Camada 2: Threat Intelligence (NOVA v2) ───
 
 async function checkThreatIntel(): Promise<void> {
-  try {
-    const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data.ip) {
-      _threatIntel = {
-        ip: data.ip || "",
-        country: data.country_name || "",
-        isTor: false,
-        isProxy: false,
-        isVpn: false,
-        isp: data.org || "",
-        abuseScore: 0,
-        checked: true,
-      };
-    }
-  } catch {
-    // Fail silently
-  }
+  // Skip external IP lookup to avoid CORS/rate-limit issues with ipapi.co
+  // Basic threat intel is still available via Supabase edge functions if needed
+  _threatIntel = {
+    ip: "",
+    country: "",
+    isTor: false,
+    isProxy: false,
+    isVpn: false,
+    isp: "",
+    abuseScore: 0,
+    checked: true,
+  };
 }
 
 // ─── Camada 3: CSP Enforcement (NOVA v2) ───
