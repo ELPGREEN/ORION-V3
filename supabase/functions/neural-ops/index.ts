@@ -2200,9 +2200,9 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     // ── Last resort: non-streaming wrapped as SSE ──
     console.warn(`[Orion] All streaming providers failed. Attempted: [${attemptedProviders.join(" → ")}]. Falling back to non-streaming.`);
     
-    // If we had an image, inject vision-context notice so text-only fallbacks don't deny vision capability
+    // Use textOnlyMessages (already stripped) with vision context notice
     if (hasImage) {
-      const sysMsg = messages.find((m: any) => m.role === "system");
+      const sysMsg = textOnlyMessages.find((m: any) => m.role === "system");
       if (sysMsg) {
         sysMsg.content = (typeof sysMsg.content === "string" ? sysMsg.content : "") + 
           "\n\n[AVISO INTERNO: A imagem da câmera foi capturada mas o provedor de visão (Gemini) está temporariamente indisponível. " +
@@ -2213,10 +2213,10 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     }
     
     let fallbackText = "";
-    try { fallbackText = await callHuggingFaceFallback(messages); } catch {
-      try { fallbackText = await callGroqFallback(messages); } catch {
-        try { fallbackText = await callMistralFallback(messages); } catch {
-          try { fallbackText = await callOpenRouterFallback(messages); } catch {
+    try { fallbackText = await callHuggingFaceFallback(textOnlyMessages); } catch {
+      try { fallbackText = await callGroqFallback(textOnlyMessages); } catch {
+        try { fallbackText = await callMistralFallback(textOnlyMessages); } catch {
+          try { fallbackText = await callOpenRouterFallback(textOnlyMessages); } catch {
             console.error(`[Orion] ALL providers exhausted. Cascade: [${attemptedProviders.join(" → ")}]`);
             fallbackText = "Desculpe, estou com dificuldades técnicas no momento. Reformule sua pergunta e tente de novo.";
           }
