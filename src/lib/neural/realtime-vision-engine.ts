@@ -198,12 +198,9 @@ function computeIoU(
 }
 
 /**
- * Run full vision pipeline on a video frame.
- * Uses MediaPipe for faces/hands/objects + YOLO for 80-class object detection.
- */
-/**
  * Detect if frame likely contains text via fast edge density check.
  * Used to skip expensive OCR on frames without text.
+ */
 // Reusable OCR edge-density check canvas
 let _ocrCheckCanvas: OffscreenCanvas | null = null;
 let _ocrCheckCtx: OffscreenCanvasRenderingContext2D | null = null;
