@@ -102,7 +102,7 @@ export default function EsqueciSenha() {
     } else {
       toast({
         title: "Código enviado!",
-        description: "Verifique seu e-mail para o código de 6 dígitos. Você também pode clicar no link enviado.",
+        description: "Verifique seu e-mail para o código de 6 dígitos.",
       });
       setStep("otp");
     }
