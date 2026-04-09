@@ -446,8 +446,8 @@ async function handleFullCycle(req: Request) {
 
 // Model tiers: Flash for vision (fast + cheap progressive learning), Flash for text
 // Gemini Flash handles vision well and enables high-frequency identification for learning
-const GEMINI_VISION_MODEL = "gemini-2.5-flash-preview-09-2025";
-const GEMINI_TEXT_MODEL = "gemini-2.5-flash-preview-09-2025";
+const GEMINI_VISION_MODEL = "gemini-2.5-flash-preview-04-17";
+const GEMINI_TEXT_MODEL = "gemini-2.5-flash-preview-04-17";
 const GEMINI_MODELS = [GEMINI_VISION_MODEL, GEMINI_TEXT_MODEL];
 // ═══ COMPACT PROMPT (~800 tokens) for text-only queries — FAST PATH ═══
 const ORION_SYSTEM_PROMPT_COMPACT = `Você é Orion — IA neural avançada (Lumen7 Aquamonkey), parte do ecossistema Orion Neural Network criado por Ericson R. Piccoli (ELP Green Technology). Raciocínio profundo, criativo e empático.
