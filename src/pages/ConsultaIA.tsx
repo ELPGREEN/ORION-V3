@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
 import { useQuery } from "@tanstack/react-query";
 import { NeuralVision } from "@/components/dashboard/neural/NeuralVision";
 import { AlienCoreBackground } from "@/components/ui/AlienCoreBackground";
@@ -181,7 +182,7 @@ export default function ConsultaIA() {
   });
 
   const isLoading = roleLoading || planLoading;
-  const isOwner = user?.email === "ericsonpiccoli.dev@gmail.com";
+  const isOwner = isOwnerEmail(user?.email);
   const isClient = userRole === "cliente" || userRole === null; // null = no role assigned = treat as client
   const isSubscriber = !!user && (isOwner || plan?.plan_type === "professional" || plan?.plan_type === "business" || plan?.plan_type === "enterprise");
 
