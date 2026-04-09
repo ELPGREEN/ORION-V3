@@ -324,6 +324,8 @@ export default function Auth() {
       setLoginForm({ email: cadastroForm.email, senha: "" });
       toast({ title: "Conta criada!", description: "Faça login com suas credenciais." });
     }
+    hcaptchaRef.current?.resetCaptcha();
+    setCaptchaToken(null);
     setLoading(false);
   };
 
