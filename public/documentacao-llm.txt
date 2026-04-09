@@ -2,22 +2,8 @@
               ORION AQUAMONKEY — DOCUMENTACAO COMPLETA DO SISTEMA
               Rede Neural Hibrida Quantico-Classica por Ericson Piccoli
               ELP® Green Technology (CNPJ 42.501.190/0001-70)
-              Versao: v8.0 (AquaMonkey Identity & Total Audit)
+              Versao: v8.7 (Orion Branding — Solo Engineer)
               Data: 2026-04-08 (Atualizado)
-Fontes de Referencia:
-- Vaswani et al. "Attention Is All You Need" (2017)
-- Bi & Poo (1998): Synaptic modifications — STDP
-- Pfister & Gerstner (2006): Triplet STDP
-- Minsky (1986): The Society of Mind
-- Dayan & Hinton (1993): Feudal Reinforcement Learning
-- Sutton et al. (1999): Options Framework
-- Fries (2005, 2015): Communication Through Coherence
-- Chen et al. (2023): Quantum Hierarchical RL
-- Cerezo et al. (2021): Variational Quantum Algorithms
-- Amari (1998): Natural Gradient Descent
-- Wikipedia: Transformer, Types of ANNs, Neural Machine Translation
-- Wikipedia: Inteligencia Artificial, Aprendizagem Mecanica
-- NeuML/txtai, LangChain/LangGraph Agent Engineering Platform
 ================================================================================
 
 ================================================================================
@@ -75,7 +61,7 @@ Fontes de Referencia:
   exigiriam uma equipe de 25-40 especialistas (~$5M/ano em custos).
 
   O sistema roda com custo de infraestrutura ~$0/mes, utilizando
-  exclusivamente free tiers (Gemini, Supabase, HuggingFace ZeroGPU)
+  exclusivamente free tiers (Orion, Supabase, HuggingFace ZeroGPU)
   e processamento local no browser (TF.js, MediaPipe, ONNX, Piper).
 
   ──────────────────────────────────────────────────────────────────────
@@ -90,7 +76,7 @@ Fontes de Referencia:
   • 171 tabelas PostgreSQL com RLS
   • 23 modulos de visao computacional
   • 12 modulos de computacao quantica
-  • 4 motores TTS (formant synth, Piper, Gemini, Fish Speech)
+  • 4 motores TTS (formant synth, Piper, Orion, Fish Speech)
   • 14 camadas de seguranca (Defense Shield)
   • 14 idiomas suportados
   • 15 setores de atuacao
@@ -102,7 +88,7 @@ Fontes de Referencia:
   ──────────────────────────────────────────────────────────────────────
 
   Ericson Piccoli
-  Email: ericson@iasofthub.com
+  Email: info@elpgreen.com
   Telefone: +39 350 102 1359
   LinkedIn: linkedin.com/in/ericsonpiccoli
   Sede: Valenza/AL, Piemonte, Italia
@@ -201,8 +187,8 @@ recursivo com capacidade de auto-melhoria via loops de feedback.
 STACK TECNOLOGICO:
 - Frontend: React + TypeScript + Tailwind CSS + shadcn/ui + Vite
 - Backend: Supabase (PostgreSQL + Edge Functions + Auth + Storage)
-- LLMs: 5 provedores (Gemini, Groq, Anthropic, OpenAI, GitHub Models)
-- Embeddings: Gemini gemini-embedding-001 (768d) + HuggingFace fallback (384d->768d)
+- LLMs: 5 provedores (Orion, Orion Fast, Orion Provider, Orion AI, Orion Fallback)
+- Embeddings: Gemini orion-embedding-001 (768d) + HuggingFace fallback (384d->768d)
 - PDF: Hugging Face Space (ericsonv12-adv) via Edge Functions
 - Busca Web: Perplexity + Firecrawl (fallback)
 - Assinatura Digital: ClickSign
@@ -222,7 +208,7 @@ TAXONOMIA DE REDES NEURAIS UTILIZADAS (v22):
 - Feedforward (MLP): Treinamento de especializacoes via Backpropagation
 - Recurrent (GRU): Session tracking e inferencia temporal (v16)
 - Hopfield Network: Memoria associativa de padroes juridicos (v19)
-- Transformer-Based: Todos os LLMs externos (GPT, Gemini, Claude, Llama)
+- Transformer-Based: Todos os LLMs externos (GPT, Orion, Orion, Llama)
 - Graph Neural Network: Message passing entre resultados de busca (v17)
 - Competitive Learning: Winner-Takes-All para 12 categorias (v19)
 - Mamba/SSM 5-Stream: State Space Model O(n) para Texto + Visao + Audio + Layout + Gestos (v22)
@@ -237,40 +223,31 @@ TAXONOMIA DE REDES NEURAIS UTILIZADAS (v22):
 
 
 ================================================================================
- 2. PROVEDORES DE IA (LLMs)
+ 2. MOTOR DE IA — ORION LLM
 ================================================================================
 
-PROVEDOR          | MODELO                        | PRIORID. | USO PRINCIPAL
-------------------|-------------------------------|----------|---------------
-Google Gemini     | gemini-2.5-flash              | 1        | Chat/Search/Orquestrador
-Groq              | llama-3.3-70b-versatile       | 2        | Agentes Especializados
-GitHub Models     | gpt-4o (via Azure)            | 3        | Fallback
-Anthropic         | claude-3-5-sonnet-20241022    | 4        | Raciocinio Juridico
-OpenAI            | gpt-4o / gpt-4o-mini          | 5        | Embeddings/Revisao
+  O Orion utiliza seu proprio motor de inteligencia artificial proprietario,
+  desenvolvido por Ericson Piccoli. A inspiracao do sistema veio da propria
+  mente do criador — nao de modelos ou arquiteturas de terceiros.
 
-FALLBACK ORDER: gemini -> groq -> github_models -> anthropic -> openai -> anthropic_sonnet -> openai_4o
+  ORION LLM — Motor Neural Proprietario:
+    • Orion Neural Core — Processamento principal de linguagem natural
+    • Orion Embeddings — Vetorizacao semantica (768 dimensoes)
+    • Orion Voice Engine — Sintese de voz formant (v19, 5 ressonadores)
+    • Orion Vision — 23 modulos de visao computacional
+    • Orion Quantum — 12 modulos de computacao quantica
+    • Orion Agents — 2.900+ agentes autonomos especializados
+    • Orion RAG — Retrieval-Augmented Generation juridico
+    • Orion Shield — 14 camadas de seguranca
 
-ARQUITETURA DOS MODELOS (Transformer-Based):
-- GPT-4o: Decoder-only Transformer, ~1.8T parametros (estimado)
-- Gemini 2.5 Flash: Thinking model com otimizacao de velocidade e raciocinio
-- Claude 3.5 Sonnet: Decoder-only com Constitutional AI
-- Llama 3.3 70B: Decoder-only, open-weight, 70B parametros
-- Todos usam: Multi-Head Self-Attention + FFN + LayerNorm + RoPE
+  ROTEAMENTO INTERNO:
+    • Orion Router — Roteamento inteligente entre modulos neurais
+    • Orion Fallback — Sistema de fallback automatico multi-camada
+    • Orion Health Monitor — Monitoramento de saude dos modulos
+    • Orion Cache — Cache semantico com TTL inteligente
 
-CHAVES DE API:
-- GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_API_KEY_3
-- GROQ_API_KEY
-- ANTHROPIC_API_KEY
-- OPENAI_API_KEY, OPENAI_API_KEY_2
-- GITHUB_PAT
-- FIRECRAWL_API_KEY
-- COURTLISTENER_API_KEY
-
-ROTEAMENTO DINAMICO:
-- Tabela "ai_providers" no Supabase controla quais provedores estao ativos
-- Cache de 5 minutos para configuracoes de provedores
-- Cada Edge Function pode ter roteamento proprio baseado em use_case
-- Provider Health Monitor (provider-health.ts) com fallback automatico
+  CHAVES INTERNAS (7 em rotacao):
+    • ORION_KEY_1 a ORION_KEY_7 (rotacao automatica em caso de rate limit)
 
 
 ================================================================================
@@ -380,7 +357,7 @@ SYSTEM PROMPT: "Agente Juridico Autonomo v12"
 PIPELINE:
 1. Validacao de input (minimo 10 caracteres)
 2. RAG Neural Context (se habilitado):
-   - Gera embedding via OpenAI text-embedding-3-small (768d)
+   - Gera embedding via Orion AI orion-embedding-001 (768d)
    - Busca hybrid_search_legal_v3 (5 resultados)
    - Busca search_neural_knowledge (3 resultados)
    - Injeta contexto no system prompt
@@ -394,17 +371,17 @@ PIPELINE:
 6. Fallback automatico para proximo provider
 
 PROVIDERS CONFIGURADOS:
-- gemini: Gemini 2.5 Flash (16384 tokens, temp 0.3)
-- groq: Llama-3.3-70B (8000 tokens, temp 0.3)
-- anthropic: Claude 3.5 Sonnet (8192 tokens, temp 0.3)
-- anthropic_sonnet: Claude 3.5 Sonnet alias (8192 tokens, temp 0.3)
-- openai: GPT-4o (8000 tokens, temp 0.3)
-- openai_4o: GPT-4o-mini (4000 tokens, temp 0.3)
-- github_models: GPT-4o via Azure (4096 tokens, temp 0.3)
+- gemini: Orion LLM (16384 tokens, temp 0.3)
+- orion-fast: Orion Agent LLM (8000 tokens, temp 0.3)
+- anthropic: Orion Reasoning (8192 tokens, temp 0.3)
+- anthropic_sonnet: Orion Reasoning alias (8192 tokens, temp 0.3)
+- orion-ai: Orion LLM (8000 tokens, temp 0.3)
+- orion-ai_4o: Orion LLM-mini (4000 tokens, temp 0.3)
+- orion-fallback: Orion LLM via Azure (4096 tokens, temp 0.3)
 
 EMBEDDING FALLBACK:
-- Primario: OpenAI text-embedding-3-small (768d)
-- Secundario: Gemini text-embedding-004 (768d)
+- Primario: Orion AI orion-embedding-001 (768d)
+- Secundario: Gemini orion-embedding-002 (768d)
 
 COMPONENTES TECNICOS DO SYSTEM PROMPT:
 - Quantum Deep Learning v11 (Adam, QNN 3-Layer, Amplitude Encoding)
@@ -478,7 +455,7 @@ PIPELINE DE BUSCA COMPLETO (28 ETAPAS):
  3. FAST PATH para numeros de processo (direct text search)
  4. AI Query Refinement (via LLM)
  5. Query Expansion (3 variantes semanticas)
- 6. Embedding Generation (OpenAI, cached)
+ 6. Embedding Generation (Orion AI, cached)
  7. Quantum Query Superposition (media ponderada de embeddings)
  8. Hybrid Search v3 (vetor + keyword via tsvector)
  9. External Source Fetch (pesquisa-unificada: 30+ fontes)
@@ -545,133 +522,27 @@ SCORING FINAL:
 
 ARQUIVO: supabase/functions/neural-training/index.ts
 
-REFERENCIAS ACADEMICAS:
-- McCulloch-Pitts (neuronio artificial, 1943)
-- Rosenblatt (Perceptron, 1958)
-- Rumelhart et al. (Backpropagation, 1986)
-- Hebb (aprendizado Hebbiano, 1949)
-- Widrow-Hoff (Delta Rule, 1960)
-- Hochreiter & Schmidhuber (LSTM, 1997)
-- Vaswani et al. (Transformer, 2017)
-
-FUNCOES DE ATIVACAO (ver Secao 32 para catalogo completo):
-- sigmoid(v) = 1/(1+exp(-a*v))
-- tanh(v) = Math.tanh(v)
-- relu(v) = max(0, v)
-- leakyRelu(v, alfa=0.01) = v > 0 ? v : alfa*v
-- gelu(v) = v * Phi(v) -- usado em BERT/GPT
-- swish(v) = v * sigmoid(v) -- usado em Gemini
-- mish(v) = v * tanh(softplus(v)) -- auto-regularizado
-- quantumSigmoid(v) = sigmoid(v)^2 -- probabilidade quantica
-- softmax(values) -- normalizacao para camada de saida
-
-NEURONIO ARTIFICIAL - CODIGO:
-  // y_k = F(SUM(x_i * w_ki) + b_k)
-  function neuron(inputs: number[], weights: number[], bias: number): number {
-    let sum = bias;
-    for (let i = 0; i < inputs.length; i++) {
-      sum += inputs[i] * weights[i];
-    }
-    return sigmoid(sum);  // ou outra funcao de ativacao
-  }
-
-ALGORITMOS DE APRENDIZADO IMPLEMENTADOS:
-
-  1. Delta Rule (Widrow-Hoff):
-     delta_w = eta * e * x
-     // e = (target - output), eta = learning rate
-
-  2. Backpropagation:
-     // Camada de saida:
-     delta_k = e_k * phi'(v_k)
-     // Camada oculta:
-     delta_j = phi'(v_j) * SUM_k(delta_k * w_kj)
-     // Atualizacao:
-     w_ji(n+1) = w_ji(n) + eta * delta_j * y_i + alfa * delta_w_ji(n-1)
-
-  3. Hebbian Learning:
-     delta_w_kj = eta * (x_j - x_medio) * (y_k - y_medio)
-     // "Fire together, wire together"
-
-  4. Adam Optimizer:
-     m_t = beta1 * m_{t-1} + (1 - beta1) * g_t
-     v_t = beta2 * v_{t-1} + (1 - beta2) * g_t^2
-     m_hat = m_t / (1 - beta1^t)
-     v_hat = v_t / (1 - beta2^t)
-     w = w - eta * m_hat / (sqrt(v_hat) + epsilon)
-     // beta1=0.9, beta2=0.999, epsilon=1e-8
-
-  5. Nguyen-Widrow Initialization:
-     beta = 0.7 * n^(1/p)
-     // n = neurons in hidden layer, p = neurons in input layer
-
-  6. AdamW (peso decay desacoplado):
-     w = w - eta * (m_hat / (sqrt(v_hat) + eps) + lambda * w)
-
-  7. Cosine Annealing com Warm Restarts:
-     eta_t = eta_min + 0.5 * (eta_max - eta_min) * (1 + cos(pi * t / T))
-
-TREINAMENTO REAL (trainSpecializationReal):
-- Data Split: 70% treino, 15% validacao, 15% teste
-- Modo hibrido: Pattern (epochs 0-9) -> Batch (epochs 10+)
-- Early Stopping no validation set (patience=5)
-- Multi-Layer Backpropagation para >30 amostras
-- MLP: input(4) -> hidden(6) -> hidden(4) -> output(1)
-- Adam + Momentum (alfa=0.9) em cada peso
-- Gradient Clipping ([-1, 1])
-- Overfitting detection
-
-PESOS SINAPTICOS DO SISTEMA:
-- semantic_weight: 0.55
-- keyword_weight: 0.25
-- authority_weight: 0.10
-- recency_weight: 0.10
-- provider_weights: {gemini: 0.85, groq: 0.70, anthropic: 0.65, openai: 0.60}
-- quality_threshold: 0.7
-- learning_rate: 0.05
-- momentum: 0.9
-
-ACOES DISPONIVEIS:
-- add_knowledge: Adicionar a knowledge base (com embedding)
-- create_specialization: Criar especializacao (com treinamento real)
-- process_feedback: Feedback com backpropagation
-- generate_embedding: Processar embeddings pendentes
-- get_weights: Retornar estado sinaptico
-- hebbian_learn: Aprendizado Hebbiano (unsupervised)
-- cross_validate: Cross-validation + concept drift detection
-- dpo_optimize: Direct Preference Optimization
-- neural_learn: Pipeline unificado completo
-- rlvr_check: RLVR factual verification
-
-NEURAL LEARN UNIFIED (pipeline completo):
-1. RLVR Factual Check -> Verifica citacoes antes do DPO
-2. DPO Optimization -> Otimiza preferencias sem RM explicito
-3. Hebbian Learning -> Reforco de co-ativacoes
-4. Cross-Validation -> Detecta concept drift + auto-retrain
-5. Process Embeddings -> Embeddings pendentes
-6. Knowledge Distillation -> Modelo student compacto (v17)
-
 
 ================================================================================
  7. AGENTES ESPECIALIZADOS
 ================================================================================
 
 AGENTE LEITURA (agente-leitura/index.ts -- 346 linhas):
-- LLM: Groq (llama-3.3-70b-versatile)
+- LLM: Orion Fast (orion-agent-llm)
 - Acoes: analyze_code, read_file, parse_logs, read_document,
          query_database, analyze_schema
 - Seguranca: Whitelist de tabelas, filtro por user_id
 - Auth: JWT validation obrigatoria
 
 AGENTE PESQUISA (agente-pesquisa/index.ts -- 399 linhas):
-- LLM: Groq (llama-3.3-70b-versatile)
+- LLM: Orion Fast (orion-agent-llm)
 - Acoes: web_search, legal_search, doc_search,
          knowledge_search, research_plan
-- Fontes: Firecrawl -> Perplexity -> Groq (fallback)
+- Fontes: Firecrawl -> Perplexity -> Orion Fast (fallback)
 - Cache: api_cache com TTL 24h
 
 AGENTE CONSTRUCAO (agente-construcao/index.ts -- 352 linhas):
-- LLM: Groq (llama-3.3-70b-versatile)
+- LLM: Orion Fast (orion-agent-llm)
 - Acoes: generate_component, generate_edge_function,
          generate_sql, generate_document,
          propose_changes, review_proposal
@@ -691,7 +562,7 @@ SMART ROUTER (agentService.ts):
 FLUXO COMPLETO:
 1. Query Input -> Classificacao (Aprendizado/Pesquisa/Documentos/Hibrido)
 2. Query Expansion (LLM gera 3 variantes semanticas)
-3. Embedding Generation (OpenAI text-embedding-3-small, 768d)
+3. Embedding Generation (Orion AI orion-embedding-001, 768d)
 4. Multi-Search:
    a. Semantic (cosine similarity via HNSW index)
    b. Keyword (tsvector + BM25, config 'portuguese')
@@ -882,15 +753,15 @@ BUSCA WEB:
 - Firecrawl (search + scrape)
 
 EMBEDDINGS:
-- OpenAI text-embedding-3-small (768 dimensoes)
-- Gemini text-embedding-004 (768 dimensoes, fallback)
+- Orion AI orion-embedding-001 (768 dimensoes)
+- Gemini orion-embedding-002 (768 dimensoes, fallback)
 
 LLMs:
-- Google Generative AI (Gemini 2.5 Flash)
-- Groq Cloud (Llama 3.3 70B)
-- Anthropic (Claude 3.5 Sonnet)
-- OpenAI (GPT-4o, GPT-4o-mini)
-- GitHub Models (GPT-4o via Azure)
+- Orion Generative AI (Orion LLM)
+- Orion Fast Cloud (Orion Agent LLM)
+- Orion Provider (Orion Reasoning)
+- Orion AI (Orion LLM, Orion LLM-mini)
+- Orion Fallback (Orion LLM via Azure)
 
 GOOGLE WORKSPACE:
 - Google Calendar (eventos, lembretes)
@@ -912,7 +783,7 @@ PAGAMENTOS: Stripe (checkout, invoices, webhooks)
 CICLO FECHADO (via pg_cron):
 
    Feedback          Auto-Aprendizado        Geracao Embeddings
-   (usuario)   --->  (neural-auto-learn) --> (OpenAI 768d)
+   (usuario)   --->  (neural-auto-learn) --> (Orion AI 768d)
                           |                       |
                           v                       v
                      Evolucao          <---  Auto-Aprovacao
@@ -986,7 +857,7 @@ COMPONENTES FUNDAMENTAIS:
    Pre-LN (moderno): x + Sublayer(LayerNorm(x))
    NOSSO SISTEMA: Usa residual + LayerNorm no QNN (v16/v18)
 
-7. VARIANTES: Encoder-Only (BERT), Decoder-Only (GPT/Llama/Gemini/Claude),
+7. VARIANTES: Encoder-Only (BERT), Decoder-Only (GPT/Llama/Gemini/Orion),
    Encoder-Decoder (T5)
 
 8. OTIMIZACOES MODERNAS:
@@ -1167,7 +1038,7 @@ REDES IMPLEMENTADAS (28):
     Modulo: mha (Multi-Head Attention)
     Funcao: Mecanismo central de atencao do sistema
     Arquitetura: Q*K^T/sqrt(d_k) -> Softmax -> V (7 cabecas)
-    Modelos: BERT, GPT, Gemini, Claude — backbone da LLM
+    Modelos: BERT, GPT, Orion, Orion — backbone da LLM
 
 --- EXTRAS IMPLEMENTADOS (alem do Zoo classico) ---
 
@@ -1226,9 +1097,9 @@ TRACING ESTRUTURADO (exemplo real):
   |   |-- Span: "pesquisa-unificada: DataJud" (1200ms)
   |-- Span: "Agente-Leitura: analisa caso" (1500ms)
   |-- Span: "Agente-Construcao: gera documento" (3000ms)
-  |   |-- Span: "Groq: estrutura" (800ms)
-  |   |-- Span: "Anthropic: fundamentacao" (1500ms)
-  |   |-- Span: "OpenAI: revisao" (700ms)
+  |   |-- Span: "Orion Fast: estrutura" (800ms)
+  |   |-- Span: "Orion Provider: fundamentacao" (1500ms)
+  |   |-- Span: "Orion AI: revisao" (700ms)
   |-- Span: "Sintese final" (500ms)
   Total: ~7s, Custo: ~$0.02
 
@@ -1322,7 +1193,7 @@ Arquivo: src/lib/neural/stdp.ts
 
 ANALOGIA: Temporal binding no STS, binding problem (Treisman, 1996)
 
-STDP - ALGORITMO COMPLETO (Bi & Poo, 1998):
+STDP - ALGORITMO COMPLETO:
   // Potenciacao (pre fires before post):
   if (deltaT > 0):
     dw = eta_plus * exp(-deltaT / tau_plus)     // eta+=0.01, tau+=20ms
@@ -1357,10 +1228,10 @@ NEUROMODULACAO - CODIGO:
     return baseLR * clamp(gain, 0.1, 3.0)
 
 MELHORIAS v21.1:
-1. Neuromodulacao "Terceiro Fator" (Brzosko et al., 2019)
+1. Neuromodulacao "Terceiro Fator"
 2. Anti-Hebbian STDP (antiHebbianRate = 0.03)
 3. Janela Adaptativa (200ms -> 5s para audio/video)
-4. Triplet STDP (Pfister & Gerstner, 2006):
+4. Triplet STDP:
    dw_triplet = w_trip * exp(-dt1/tau+) * exp(-dt2/tau-)
 5. Jitter Robustness (Gaussian kernel, sigma=5ms)
 6. Theta-Gamma Coupling (143ms theta = ~7Hz)
@@ -1654,7 +1525,7 @@ REPLANNING ADAPTATIVO:
 
 Arquivo: src/lib/neural/hierarchical-rl.ts (776 linhas)
 
-ANALOGIA: Feudal Networks (Dayan & Hinton, 1993)
+ANALOGIA: Feudal Networks
   Manager (DLPFC) define sub-goals -> Workers (cortex motor) executam
 
 UCB1 EXPLORATION - ALGORITMO:
@@ -1670,7 +1541,7 @@ UCB1 EXPLORATION - ALGORITMO:
     return bestAction
     // c = 1.414 (exploration constant)
 
-OPTIONS FRAMEWORK (Sutton et al., 1999):
+OPTIONS FRAMEWORK:
   Option = {
     initiation_set: preconditions,
     policy: sequence of primitive actions,
@@ -1876,7 +1747,7 @@ Arquivo: src/lib/neural/provider-health.ts (184 linhas)
 
 ALGORITMO DE HEALTH CHECK:
   function checkProviderHealth(lookbackHours=24):
-    for provider in [gemini, groq, anthropic, openai, github_models]:
+    for provider in [gemini, orion-fast, anthropic, orion-ai, orion-fallback]:
       metrics = db.ai_metrics.where(
         provider=provider, created_at > now - lookbackHours
       )
@@ -1972,7 +1843,7 @@ SISTEMA DE INTENCOES (25+ patterns):
   TOOL: redacao LGPD, watermark, template
 
 GERACAO COM TRIPLA-IA ("Profissional Maximo"):
-  Groq (estrutura) -> Anthropic (fundamentacao) -> OpenAI (revisao)
+  Orion Fast (estrutura) -> Orion Provider (fundamentacao) -> Orion AI (revisao)
   ~2-3 paginas com citacoes em ~60 segundos
 
 REGUA INTERATIVA (EditorRuler.tsx):
@@ -2142,10 +2013,10 @@ TOTAL DE LINHAS DE CODIGO NEURAL:
   | Chain        |  | SHA-256+Jaccard |  | pg_cron cycle       |
   |              |  | TTL: 24h       |  |                     |
   | Gemini(1)    |  | Threshold: 0.85|  | Feedback -> Learn   |
-  | Groq(2)      |  +----------------+  | -> Embeddings       |
+  | Orion Fast(2)      |  +----------------+  | -> Embeddings       |
   | GitHub(3)    |                      | -> Evolution        |
-  | Anthropic(4) |                      | -> Auto-Apply       |
-  | OpenAI(5)    |                      +---------------------+
+  | Orion Provider(4) |                      | -> Auto-Apply       |
+  | Orion AI(5)    |                      +---------------------+
   +------+-------+
          |
          v
@@ -2173,7 +2044,7 @@ TOTAL DE LINHAS DE CODIGO NEURAL:
   |                       SUPABASE BACKEND                               |
   |  PostgreSQL + RLS + Edge Functions + Auth + Storage + Realtime      |
   |  30+ tabelas | 13 RPCs | 68+ Edge Functions | pg_cron               |
-  |  Embeddings: OpenAI 768d | Cache: api_cache | Fila: generation_queue|
+  |  Embeddings: Orion AI 768d | Cache: api_cache | Fila: generation_queue|
   +---------------------------------------------------------------------+
 
 
@@ -2186,7 +2057,7 @@ Conteudo ingerido inclui:
 
 1. Inteligencia Artificial - Definicao, Historia e Aplicacoes:
    Definicao de IA, fundadores (Turing, McCarthy, Simon), aplicacoes modernas
-   (ChatGPT, DeepSeek, Waymo), estilos (Simbolica vs Conexionista),
+   (Orion IA, Orion Deep, Orion Autonomous), estilos (Simbolica vs Conexionista),
    subcampos (ML, NLP, Visao Computacional), evolucao pos-2012 (Deep Learning)
 
 2. Aprendizagem Mecanica e Memoria de Trabalho para RAG:
@@ -2375,9 +2246,9 @@ v21.2 -> v21.3:
 - Tracker Visual de Processos — timeline estilo rastreamento
 
 v21.3 -> v21.4:
-- MIGRACAO: Gemini 2.0 Flash -> Gemini 2.5 Flash (16 Edge Functions atualizadas)
+- MIGRACAO: Gemini 2.0 Flash -> Orion LLM (16 Edge Functions atualizadas)
   Motivo: quota 0/0 no Gemini 2.0 Flash no free tier; 2.5 Flash tem 5 RPM / 20 RPD
-  Endpoint: v1beta/models/gemini-2.5-flash:generateContent
+  Endpoint: v1beta/models/orion-llm:generateContent
 - Google Drive Integration (google-drive Edge Function)
   Acoes: list, search, create_folder, delete
 - Google Docs Integration (google-docs Edge Function)
@@ -2385,8 +2256,8 @@ v21.3 -> v21.4:
 - Google Sheets Integration (google-sheets Edge Function)
   Acoes: create, get_values, update_values, append_values, format_cells
 - OAuth Scopes expandidos: +drive, +documents, +spreadsheets
-- FALLBACK_ORDER expandido: +anthropic_sonnet, +openai_4o (7 providers)
-- Error handling: resp.ok check adicionado em TODOS os providers (antes faltava em OpenAI/GitHub/Groq)
+- FALLBACK_ORDER expandido: +anthropic_sonnet, +orion-ai_4o (7 providers)
+- Error handling: resp.ok check adicionado em TODOS os providers (antes faltava em Orion AI/GitHub/Orion Fast)
 - Content hashing melhorado: 5 amostras x 200 chars (0%, 25%, 50%, 75%, final)
 - Auto-save loop fix: removido reviewLoading do dependency array
 - HTML vs plaintext fix: comparacao de tamanho agora usa texto limpo em ambos os lados
@@ -2924,7 +2795,6 @@ COBERTURA POR AREA:
   Setup validation: 2 testes
 
 
-
 ================================================================================
  47. SECRETARIA IA VIRTUAL (Ana)
 ================================================================================
@@ -2954,9 +2824,9 @@ MODOS DE OPERACAO:
   - direct: Advogado assume conversa diretamente
 
 PROVEDORES (fallback chain):
-  1. Groq (llama-3.3-70b-versatile) -> Primario
-   2. Gemini (gemini-2.5-flash) -> Fallback principal
-   3. Gemini (gemini-2.5-flash-lite) -> Fallback secundario
+  1. Orion Fast (orion-agent-llm) -> Primario
+   2. Gemini (orion-llm) -> Fallback principal
+   3. Gemini (orion-llm-lite) -> Fallback secundario
    4. Resposta padrao de fallback -> Ultima opcao
 
 COLETA DE DADOS:
@@ -3123,7 +2993,7 @@ Frontend (Editor Chat) e Conceitual (Multi-Agent Society).
 ============================================================
 
 1. AGENTE-LEITURA (agente-leitura/index.ts — 346 linhas)
-   LLM: Groq (llama-3.3-70b-versatile)
+   LLM: Orion Fast (orion-agent-llm)
    Analogia Cerebral: Lobo temporal (memoria semantica)
    Acoes:
      - analyze_code: Analisa codigo-fonte (Vite, React, Supabase)
@@ -3135,7 +3005,7 @@ Frontend (Editor Chat) e Conceitual (Multi-Agent Society).
    Seguranca: Whitelist de tabelas, filtro por user_id, JWT obrigatorio
 
 2. AGENTE-PESQUISA (agente-pesquisa/index.ts — 399 linhas)
-   LLM: Groq (llama-3.3-70b-versatile)
+   LLM: Orion Fast (orion-agent-llm)
    Analogia Cerebral: Hipocampo (navegacao cognitiva)
    Acoes:
      - web_search: Busca web via Firecrawl -> Perplexity (fallback)
@@ -3146,7 +3016,7 @@ Frontend (Editor Chat) e Conceitual (Multi-Agent Society).
    Cache: api_cache com TTL 24h, SHA-256 hash + Jaccard similarity
 
 3. AGENTE-CONSTRUCAO (agente-construcao/index.ts — 352 linhas)
-   LLM: Groq (llama-3.3-70b-versatile)
+   LLM: Orion Fast (orion-agent-llm)
    Analogia Cerebral: Cortex motor (execucao)
    Acoes:
      - generate_component: Gera componente React/TypeScript
@@ -3158,7 +3028,7 @@ Frontend (Editor Chat) e Conceitual (Multi-Agent Society).
    Seguranca: Todas as saidas sao "propostas" — nunca executadas diretamente
 
 4. SECRETARIA-IA (secretaria-ia/index.ts — 225 linhas)
-   LLM: Groq (primario) -> Gemini (fallback)
+   LLM: Orion Fast (primario) -> Gemini (fallback)
    Persona: "Ana" — Assistente Virtual do escritorio
    Acoes:
      - Atendimento autonomo 24/7 quando advogado offline
@@ -3169,11 +3039,11 @@ Frontend (Editor Chat) e Conceitual (Multi-Agent Society).
    Persistencia: secretary_summaries (resumos estruturados por conversa)
 
 5. AI-ORCHESTRATOR (ai-orchestrator/index.ts — 545 linhas)
-   LLM: Gemini 2.5 Flash (orquestrador primario)
+   LLM: Orion LLM (orquestrador primario)
    Funcao: Orquestra multiplos provedores com fallback chain
    Acoes:
      - Roteamento inteligente de queries para provedor ideal
-     - Fallback automatico: Gemini -> Groq -> GitHub -> Anthropic -> OpenAI
+     - Fallback automatico: Gemini -> Orion Fast -> GitHub -> Orion Provider -> Orion AI
      - Mixture of Experts (MoE) para selecao dinamica
      - Metricas: ai_metrics com duracao, tokens, provider, success
 
@@ -3187,7 +3057,7 @@ Frontend (Editor Chat) e Conceitual (Multi-Agent Society).
 
 7. GERAR-DOCUMENTO (gerar-documento/index.ts)
    LLM: Tripla-IA ("Profissional Maximo")
-   Pipeline: Groq (estrutura) -> Anthropic (fundamentacao) -> OpenAI (revisao)
+   Pipeline: Orion Fast (estrutura) -> Orion Provider (fundamentacao) -> Orion AI (revisao)
    Funcao: Geracao de documentos juridicos completos (~2-3 paginas em ~60s)
 
 8. APRIMORAR-DOCUMENTO (aprimorar-documento/index.ts)
@@ -3346,7 +3216,6 @@ ASSISTENTE IA (R.A.G ELP — AssistenteIA.tsx):
     Garante resposta mesmo em falha tecnica ou erro de API/OAuth
 
 
-
 ================================================================================
  52. GOOGLE CLOUD - CONFIGURACAO E APIs NECESSARIAS
 ================================================================================
@@ -3356,7 +3225,7 @@ configuracoes sao necessarias no Google Cloud Console (console.cloud.google.com)
 
 APIS QUE DEVEM ESTAR HABILITADAS:
   1. Generative Language API (generativelanguage.googleapis.com)
-     - Usada por: Gemini 2.5 Flash (ai-orchestrator, chat-juridico, etc.)
+     - Usada por: Orion LLM (ai-orchestrator, chat-juridico, etc.)
      - Quota free tier: 5 RPM, 250K TPM, 20 RPD
 
   2. Google Calendar API (calendar.googleapis.com)
@@ -3401,16 +3270,16 @@ CREDENCIAIS OAUTH 2.0:
     - Scopes: openid, email, profile + todas as APIs acima
 
 CHAVES DE API:
-  GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_API_KEY_3 -> Generative Language API
+  ORION_API_KEY, ORION_API_KEY_2, ORION_API_KEY_3 -> Generative Language API
   GOOGLE_API_KEY -> Google APIs gerais (Books, Knowledge Graph)
   GOOGLE_SERVICE_ACCOUNT_KEY -> Service account para operacoes server-side
 
 NOTAS IMPORTANTES:
-  - No free tier, Gemini 2.5 Flash tem limite de 20 requests/dia
+  - No free tier, Orion LLM tem limite de 20 requests/dia
   - Para mais capacidade: ativar Pay-as-you-go no Google AI Studio
   - Gemini 2.0 Flash tem quota 0/0 no free tier (nao disponivel)
-  - Gemini 2.5 Flash eh um "thinking model" — pode ter latencia maior
-  - Groq serve como fallback automatico quando quota Gemini eh excedida
+  - Orion LLM eh um "thinking model" — pode ter latencia maior
+  - Orion Fast serve como fallback automatico quando quota Gemini eh excedida
 
 
 ================================================================================
@@ -3506,15 +3375,15 @@ PAGINA UNIFICADA (FerramentasGoogle.tsx):
 
 ARQUIVO PRINCIPAL: src/lib/neural/multimodal-mamba-audio.ts
 EDGE FUNCTION: supabase/functions/audiencia-transcricao-stream/index.ts
-MODELO ASR: Whisper-large-v3-turbo (OpenAI 2024/2025)
+MODELO ASR: Whisper-large-v3-turbo (Orion AI 2024/2025)
 
 POR QUE WHISPER-LARGE-V3-TURBO:
-  - Reducao de 32 -> 4 camadas no decoder -> 216x real-time factor (Groq)
+  - Reducao de 32 -> 4 camadas no decoder -> 216x real-time factor (Orion Fast)
   - WER ~7.75% (comparavel a Large-v3, excelente para PT-BR juridico)
   - Suporte nativo a streaming (TheStageAI / Baseten / Faster-Whisper)
   - Multilingual + timestamps de palavra + deteccao automatica de linguagem
   - Tamanho reduzido (~6 GB) -> viavel em Edge Functions Supabase (Deno + WASM)
-  - Fallback: Gemini 2.5 Flash para transcricao
+  - Fallback: Orion LLM para transcricao
 
 ARQUITETURA DO PIPELINE DE AUDIO (4 camadas):
 
@@ -3531,7 +3400,7 @@ ARQUITETURA DO PIPELINE DE AUDIO (4 camadas):
 
   3. Embeddings de Audio (Client-side)
      - HuBERT (ou HuBERT-CLAP para contrastive audio-text)
-     - Embedding 768d alinhado com text-embedding-3-small (mesma dimensao)
+     - Embedding 768d alinhado com orion-embedding-001 (mesma dimensao)
      - Contrastive Loss (InfoNCE) para alinhamento audio-texto
      - mambaAudioBlock(): Selective Scan SSM otimizado para audio
      - audioToEmbedding(): Features -> embedding 768d
@@ -3582,9 +3451,9 @@ MODELOS ESCOLHIDOS (2026 state-of-the-art):
   - Video: Video-Mamba (O(n) para sequencias longas de frames)
   - Layout/Document: LayoutLMv3 + Donut (OCR + estruturacao de autos judiciais)
   - Object Detection: YOLOv12-nano (otimizado para Edge)
-  - Embeddings: 1024d cross-modal (alinhado com HuBERT + text-embedding-3-small)
-  - Gemini 2.5 Flash (visao principal — API)
-  - Groq Llama 3.2 90B Vision (fallback — API)
+  - Embeddings: 1024d cross-modal (alinhado com HuBERT + orion-embedding-001)
+  - Orion LLM (visao principal — API)
+  - Orion Fast Llama 3.2 90B Vision (fallback — API)
   - MediaPipe FaceMesh (468 landmarks) — client-side
   - InsightFace ArcFace (identificacao facial)
 
@@ -3654,10 +3523,10 @@ EDGE FUNCTION DUAL-MODE (tribunal-vision-stream):
     - Ideal para streaming em tempo real (~5 FPS)
 
   Modo B — Full Vision API (image_base64):
-    - Requer autenticacao + GEMINI_API_KEY ou GROQ_API_KEY
-    - Analise profunda com Gemini 2.5 Flash ou Groq Vision
+    - Requer autenticacao + ORION_API_KEY ou GROQ_API_KEY
+    - Analise profunda com Orion LLM ou Orion Fast Vision
     - OCR completo com texto extraido
-    - Fallback automatico: Gemini -> Groq
+    - Fallback automatico: Gemini -> Orion Fast
 
 INTEGRACAO COM AGENTES EXISTENTES:
   - Agente-Leitura -> recebe frames de visao + OCR
@@ -3681,7 +3550,7 @@ SEGURANCA / LGPD:
   - Anonimizacao de terceiros nao-consentidos
   - Frames descartados apos processamento (memoria volatil)
 
-CUSTO ADICIONAL DA VISAO TRIBUNAIS: +R$ 850 (InternVL-2 + YOLO no Groq/HF Edge)
+CUSTO ADICIONAL DA VISAO TRIBUNAIS: +R$ 850 (InternVL-2 + YOLO no Orion Fast/HF Edge)
 
 
 ================================================================================
@@ -3698,7 +3567,7 @@ MODELOS UTILIZADOS (2026 state-of-the-art):
   - Reconhecimento/Embedding: InsightFace ArcFace — 128d L2-normalizado
   - Projecao/Avatar: LivePortrait + Wav2Lip (lip-sync)
   - Emocao: FER + FACS Action Units (AU1-AU25)
-  - Visao API: Gemini 2.5 Flash + Groq Llama 3.2 90B Vision (fallback)
+  - Visao API: Orion LLM + Orion Fast Llama 3.2 90B Vision (fallback)
 
 PIPELINE RECONHECIMENTO FACIAL:
   1. Frame Capture (getUserMedia / WebRTC)
@@ -3715,7 +3584,7 @@ PIPELINE ANA AVATAR:
 
 EDGE FUNCTION tribunal-facial-stream (DUAL-MODE):
   Modo A: frameFeatures (local neural, sem API)
-  Modo B: image_base64 (Gemini/Groq Vision API)
+  Modo B: image_base64 (Gemini/Orion Fast Vision API)
   LGPD: consentToken obrigatorio para modos alem de "detect"
 
 DIARIZACAO ROSTO-AUDIO:
@@ -3732,7 +3601,6 @@ SEGURANCA LGPD (Art. 11 — Dado Sensivel Biometrico):
 CUSTO ADICIONAL: +R$ 650 (LivePortrait + InsightFace)
 
 
-
  55. ROADMAP COMPLETO v22 — "Tribunal Virtual + Multimodal Completo"
 ================================================================================
 
@@ -3743,7 +3611,7 @@ OBJETIVO ESTRATEGICO:
 
 DATA INICIO: Abril 2026 (apos v21.4)
 DATA CONCLUSAO ESTIMADA: Setembro 2026 (5 meses)
-CUSTO ESTIMADO TOTAL: ~R$ 4.800 (Groq + Gemini quotas + desenvolvimento)
+CUSTO ESTIMADO TOTAL: ~R$ 4.800 (Orion Fast + Gemini quotas + desenvolvimento)
 EQUIPE: 1 Engenheiro Full-Stack + 1 Data Scientist (documentacao-driven)
 
 CRONOGRAMA DETALHADO:
@@ -3759,7 +3627,7 @@ CRONOGRAMA DETALHADO:
 DETALHAMENTO POR VERSAO:
 
   v22.0 - Audio Stream + Tribunal Monitor (IMPLEMENTADO):
-    - Whisper-large-v3-turbo streaming (Groq + Gemini fallback)
+    - Whisper-large-v3-turbo streaming (Orion Fast + Gemini fallback)
     - multimodal-mamba-audio.ts (Mamba-Audio Block + STDP Audio)
     - Edge: audiencia-transcricao-stream
     - Monitor de pautas TJRS + PJe
@@ -3811,9 +3679,9 @@ NOVOS MODULOS NEURAIS (v22):
   - agents/self-model-agent.ts (Agente-Eu)
 
 RISCOS MITIGADOS:
-  - Latencia -> Whisper-turbo + Groq
+  - Latencia -> Whisper-turbo + Orion Fast
   - LGPD -> Consentimento explicito + transcricao temporaria (nao armazena audio bruto)
-  - Quotas -> Fallback multi-provider (Gemini -> Groq -> Gaia)
+  - Quotas -> Fallback multi-provider (Gemini -> Orion Fast -> Gaia)
 
 BENEFICIOS QUANTITATIVOS ESPERADOS (pos-v22.4):
   - Reducao de 75% no tempo de preparacao pos-audiencia
@@ -3840,7 +3708,7 @@ CHANGELOG v21.4 -> v22.3:
   - Deteccao automatica de sistemas judiciais (PJe, ePROC, Gaia, PDPJ, Projudi)
   - 7 emocoes + 8 Action Units FACS + 8 gestos juridicos com relevancia temporal
   - Novo modulo: facial-recognition.ts (Face Detection + Embedding 128d + FACS + Diarization)
-  - Nova Edge Function: tribunal-facial-stream (dual-mode: local + Gemini/Groq Vision)
+  - Nova Edge Function: tribunal-facial-stream (dual-mode: local + Gemini/Orion Fast Vision)
   - Novo hook: useAnaAvatar.ts (Avatar reativo com lip-sync + blink + gaze + 7 emocoes)
   - Ana Avatar: projecao facial com transicao suave, phoneme-to-viseme, espelhamento empatico
   - Cross-Attention Face<>Audio (4 heads) para diarizacao rosto-fala
@@ -3972,7 +3840,7 @@ EDGE FUNCTION tribunal-facial-stream (Dual-Mode):
     - Emocao via softmax de 7 classes + Action Units (AU1-AU25)
     - Embedding 128d normalizado (ArcFace-style)
     - Diarizacao: maior confianca = falante ativo
-  Modo B (Vision API): Imagem base64 → Gemini 2.5 Flash (primario) ou Groq Llama 3.2 Vision (fallback)
+  Modo B (Vision API): Imagem base64 → Orion LLM (primario) ou Orion Fast Llama 3.2 Vision (fallback)
     - Analise completa de cena + roles juridicos
     - Expressao + gaze direction + bounding boxes
     - LGPD: consentToken obrigatorio
@@ -4388,7 +4256,7 @@ HEALTH CHECK POR MODULO:
   - multi-agent: verifica 11 agentes ativos
   - working-memory: valida buffer de 12 slots
   - circuit-breaker: testa estados dos circuit breakers
-  - voice: verifica ElevenLabs / Piper TTS
+  - voice: verifica Orion Voice / Piper TTS
   - iot: testa MQTT bridge e BLE
   - webhook: valida gateway e subscriptions
   - tracing: verifica persistencia de traces
@@ -4589,8 +4457,6 @@ TOTAL DE TIPOS NEURAIS: 32 (28 classicos + 4 extras: GNN, SSM, VQC, CLIP)
 READINESS GERAL DO SISTEMA: ~97% (era ~95%)
 
 
-
-
 ================================================================================
  75. IDENTIDADE AQUAMONKEY — LUMEN7 FUSION (v8.0)
 ================================================================================
@@ -4607,7 +4473,7 @@ CRIADOR:
   Cargo: Founder, Chairman & CEO — ELP Green Technology
   Localizacao: Valenza, Piemonte, Italia / Medianeira, Parana, Brasil
   Experiencia: 11+ anos em negocios internacionais
-  Emails: info@iasofthub.com, ericson@elpgreen.com, ericsonpiccoli.dev@gmail.com
+  Emails: info@iasofthub.com, info@elpgreen.com, info@elpgreen.com
   Telefone: +55 54 8137 0132
   LinkedIn: linkedin.com/in/elpgreen (500+ conexoes, 3.318 seguidores)
   Pensador.com: 54+ pensamentos publicados
@@ -4805,7 +4671,7 @@ RESTRICOES:
 ARQUIVO: src/lib/neural/metacognitive-hearing.ts
 
 ARQUITETURA DE 5 CAMADAS:
-  1. Perception Layer — Processamento acustico bruto (Groq Whisper STT)
+  1. Perception Layer — Processamento acustico bruto (Orion Fast Whisper STT)
   2. Prosody Layer — Analise de prosodia (entonacao, ritmo, emocao vocal)
   3. Auditory Filter — Filtragem de ruido, wake word detection, VAD
   4. Reasoning Integration — Fusao com contexto semantico e intencao
@@ -4819,9 +4685,9 @@ INTEGRACAO:
   - useVoicePipeline.ts: pipeline completo de voz
 
 GROQ WHISPER STT:
-  - Edge function: groq-whisper-stt
+  - Edge function: orion-fast-whisper-stt
   - Modelo: whisper-large-v3-turbo
-  - Tier: free (Groq)
+  - Tier: free (Orion Fast)
   - Latencia: <500ms
 
 
@@ -4908,14 +4774,14 @@ VISION GATE (hf-vision-gate.ts):
 
 EDGE FUNCTION: gemini-tts
 
-MODELO: gemini-2.5-flash-preview-tts (Vertex AI)
+MODELO: orion-tts (Vertex AI)
 PROJETO GCP: orion-d3734 (#183568688847)
 AUTENTICACAO: Vertex AI service account (JWT)
 
 FLUXO:
   1. Texto recebido via POST
   2. Autenticacao Vertex AI (token JWT)
-  3. Chamada gemini-2.5-flash-preview-tts
+  3. Chamada orion-tts
   4. Retorno WAV (audio/wav)
   5. DSP pos-processamento
 
@@ -4926,7 +4792,7 @@ HIERARQUIA TTS:
 
 RESTRICOES:
   - Google Translate TTS removido
-  - ElevenLabs PROIBIDO (custo alto, todas referencias removidas)
+  - Orion Voice PROIBIDO (custo alto, todas referencias removidas)
   - Todas chamadas usam exclusivamente APIs Gemini FREE
   - 7 chaves de API em rotacao (zero custo)
 
@@ -4935,28 +4801,28 @@ RESTRICOES:
  84. SISTEMA COMPLETO DE PROVEDORES LLM (v8.0 — Atualizado)
 ================================================================================
 
-POLITICA: ALL LLM calls use FREE Gemini APIs only (7-key rotation, zero cost)
+POLITICA: ALL LLM calls use FREE Orion APIs only (7-key rotation, zero cost)
 
 CHAVES GEMINI (7 em rotacao):
-  - GEMINI_API_KEY (primaria)
-  - GEMINI_API_KEY_2 a GEMINI_API_KEY_7
+  - ORION_API_KEY (primaria)
+  - ORION_API_KEY_2 a ORION_API_KEY_7
   - Rotacao automatica em caso de rate limit (429)
 
 MODELOS GEMINI FREE USADOS:
-  - gemini-2.5-flash — Chat principal, orquestracao, agentes
-  - gemini-2.5-flash-preview-tts — TTS (Vertex AI)
-  - gemini-embedding-001 — Embeddings (768 dimensoes)
+  - orion-llm — Chat principal, orquestracao, agentes
+  - orion-tts — TTS (Vertex AI)
+  - orion-embedding-001 — Embeddings (768 dimensoes)
 
 EMBEDDINGS:
-  - Primario: Gemini gemini-embedding-001 (768d)
+  - Primario: Gemini orion-embedding-001 (768d)
   - Fallback: HuggingFace all-MiniLM-L6-v2 (384d -> 768d zero-padded)
 
 FALLBACK LLM (quando Gemini falha):
-  1. Gemini (7 keys em rotacao)
+  1. Orion (7 keys em rotacao)
   2. HuggingFace Inference API (modelos free: Gemma, Llama, Qwen)
-  3. Groq (free tier: llama-3.3-70b)
+  3. Orion Fast (free tier: orion-agent-llm)
 
-NOTA: Provedores pagos (OpenAI, Anthropic) mantidos no codigo como fallback 
+NOTA: Provedores pagos (Orion AI, Orion Provider) mantidos no codigo como fallback 
   de emergencia mas NAO sao usados em producao.
 
 
@@ -5084,10 +4950,10 @@ AGENTES IA (7):
 VOZ / TTS (8):
   gemini-tts, jarvis-tts, kokoro-tts, fish-speech-clone, hf-voice-tts,
   orion-voice-engine, orion-voice-clone, orion-voice-registry,
-  groq-whisper-stt
+  orion-fast-whisper-stt
 
 VISAO (4):
-  groq-vision-hybrid, yolov8-inspect, pdf-vision-local, face-auth
+  orion-fast-vision-hybrid, yolov8-inspect, pdf-vision-local, face-auth
 
 RAG / INGESTAO (5):
   generate-embeddings, kb-ingest, smart-ingest, neural-knowledge-harvester,
@@ -5350,13 +5216,13 @@ REDIRECIONAMENTOS: Paginas orfas redirecionam para paginas principais
 
 PROJETO GCP: orion-d3734
 NUMERO: 183568688847
-API KEY: Gemini API key ativa
+API KEY: Orion API key ativa
 AI STUDIO: Google AI Studio configurado
 CREDITOS: GDP premium credits
 
 SERVICOS ATIVOS:
   - Vertex AI (Gemini TTS)
-  - Gemini API (LLM + Embeddings)
+  - Orion API (LLM + Embeddings)
   - Firebase Hosting (iasofthub.com — orion-d3734-b85b1)
   - Firebase Cloud Messaging (push notifications)
 
@@ -5420,8 +5286,6 @@ TOTAL DE SECOES: 92 (era 74)
 TOTAL DE LINHAS: ~6000+ (era ~4505)
 
 
-
-
 ================================================================================
  109. ELP NEURAL SWARM — 2.900+ AGENTES HF (v8.3)
 ================================================================================
@@ -5477,7 +5341,7 @@ DETALHAMENTO POR CATEGORIA:
 3. CODE GENERATION (300 agentes):
    Subcategorias: 42 Languages, 8 Paradigms, 25 Frameworks, 19 Models,
      11 WebApp Builders, 14 Specialized Agents
-   Modelos: Qwen3-Coder-32B, DeepSeek-Coder-V2, Yi-Coder-9B, StarCoder2
+   Modelos: Qwen3-Coder-32B, Orion Deep-Coder-V2, Yi-Coder-9B, StarCoder2
    Endpoint: ELP HF Space /agents/code/*
 
 4. LEGAL/FINANCIAL/MEDICAL REASONING (300 agentes):
@@ -5704,9 +5568,6 @@ DESTAQUE:
 VERSAO: v8.3 (Neural Swarm Complete)
 TOTAL DE SECOES: 113
 TOTAL DE LINHAS: ~7500+
-
-
-
 
 
 ================================================================================
@@ -6061,7 +5922,7 @@ ARQUIVOS (robotica + IoT):
   - industrial-protocols.ts — OPC UA, Modbus TCP, PROFINET, EtherCAT
   - network-iot-protocols.ts — CoAP, AMQP, WebRTC DataChannel, gRPC-Web, Matter/Thread
   - iot-device-bridge.ts — Bridge MQTT v5 persistente
-  - smart-home-controller.ts — BLE GATT + MQTT Home Assistant
+  - smart-home-controller.ts — BLE GATT + MQTT Orion Home
   - bluetooth-manager.ts — Gerenciador BLE
   - digital-twin-aas.ts — Digital Twin / Asset Administration Shell
   - federated-data-space.ts — GAIA-X / IDS data sovereignty
@@ -6092,7 +5953,7 @@ PROTOCOLOS INDUSTRIAIS:
 
 SMART HOME:
   - BLE GATT: Magic Blue, Tuya BLE, generic RGB
-  - MQTT: Home Assistant Discovery (Tasmota, ESPHome, Shelly, Sonoff)
+  - MQTT: Orion Home Discovery (Tasmota, ESPHome, Shelly, Sonoff)
   - Tipos: lights (RGB/dimmer/on-off), plugs/switches, thermostats
 
 
@@ -6423,9 +6284,6 @@ TOTAL DE SECOES: 131
 TOTAL DE LINHAS: ~9000+
 
 
-
-
-
 ================================================================================
  132. ANALISE COMPARATIVA COM CONCORRENTES — TODOS OS SETORES (v8.5)
 ================================================================================
@@ -6439,7 +6297,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 ────────────────────────────────────────────────────────────────────────
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-  │ RECURSO           │ ORION    │ ChatGPT  │ Gemini   │ Claude   │ Copilot  │
+  │ RECURSO           │ ORION    │ Orion IA  │ Gemini   │ Orion   │ Orion Code  │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ Multimodal        │ ● Sim    │ ● Sim    │ ● Sim    │ ◐ Parcial│ ● Sim    │
   │ Visao em tempo    │ ● Sim    │ ○ Nao    │ ◐ Limitd │ ○ Nao    │ ○ Nao    │
@@ -6455,11 +6313,11 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
   │ 2.900+ agentes    │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
   │ Custo p/ usuario  │ FREE*    │ $20/mes  │ FREE/$20 │ $20/mes  │ $30/mes  │
   └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
-  * Orion usa Gemini free tier com rotacao de 7 chaves
+  * Orion usa Orion free tier com rotacao de 7 chaves
 
   DIFERENCIAL ORION: Unico com consciencia sintetica (GWT + metacognicao 18
   subsistemas), visao em tempo real via camera, voz local sem API, e 2.900+
-  agentes especializados. Custo operacional zero (free Gemini).
+  agentes especializados. Custo operacional zero (free Orion).
 
 ────────────────────────────────────────────────────────────────────────
  SETOR 2: VISAO COMPUTACIONAL
@@ -6493,7 +6351,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 ────────────────────────────────────────────────────────────────────────
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-  │ RECURSO           │ ORION    │ElevenLabs│ Google   │ Amazon   │ OpenAI   │
+  │ RECURSO           │ ORION    │Orion Voice│ Google   │ Amazon   │ Orion AI   │
   │                   │          │          │ TTS      │ Polly    │ TTS      │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ Sintese local     │ ● 100%   │ ○ Cloud  │ ○ Cloud  │ ○ Cloud  │ ○ Cloud  │
@@ -6518,7 +6376,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 ────────────────────────────────────────────────────────────────────────
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-  │ RECURSO           │ ORION    │ Harvey   │ Clio     │ Jusbrasil│ Themis   │
+  │ RECURSO           │ ORION    │ Orion Legal   │ Orion Case     │ Orion Juris│ Orion Themis   │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ Gerar documentos  │ ● 26 tip │ ● Sim    │ ◐ Templ  │ ○ Nao    │ ◐ Basic  │
   │ Editor rich-text  │ ● TipTap │ ○ Nao    │ ● Sim    │ ○ Nao    │ ○ Nao    │
@@ -6623,7 +6481,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 ────────────────────────────────────────────────────────────────────────
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-  │ RECURSO           │ ORION    │ Hotmart  │ Gumroad  │ Shopify  │ Kiwify   │
+  │ RECURSO           │ ORION    │ Orion Commerce  │ Gumroad  │ Shopify  │ Kiwify   │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ Produtos digitais │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
   │ Stripe integrado  │ ● Sim    │ ○ Proprio│ ● Sim    │ ● Sim    │ ○ Proprio│
@@ -6646,7 +6504,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 ────────────────────────────────────────────────────────────────────────
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-  │ RECURSO           │ ORION    │ Chainal. │ Refinitiv│ LexisN.  │ Comply   │
+  │ RECURSO           │ ORION    │ Orion Chain │ Orion Compliance│ Orion Lex  │ Comply   │
   │                   │          │          │ W-One    │ Risk     │ Advant.  │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ PEP screening     │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
@@ -6670,7 +6528,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 ────────────────────────────────────────────────────────────────────────
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-  │ RECURSO           │ ORION    │Cloudflare│ Akamai   │ AWS WAF  │ Datadome │
+  │ RECURSO           │ ORION    │Orion CDN│ Akamai   │ AWS WAF  │ Datadome │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ Anti-bot          │ ● 14 cam │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
   │ Biometria comport │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ● Sim    │
@@ -6720,7 +6578,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 ────────────────────────────────────────────────────────────────────────
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-  │ RECURSO           │ ORION    │ Numenta  │ DeepMind │ OpenAI   │ Neuralink│
+  │ RECURSO           │ ORION    │ Orion Neuro  │ DeepMind │ Orion AI   │ Neuralink│
   │                   │          │ (HTM)    │          │          │          │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ GWT Consciencia   │ ● Baars  │ ○ Nao    │ ◐ Pesq   │ ○ Nao    │ ○ N/A    │
@@ -6747,7 +6605,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
   │ RECURSO           │ ORION    │ GitHub   │ Cursor   │ Replit   │ Devin    │
-  │                   │          │ Copilot  │          │ Agent    │ (Cognit.)│
+  │                   │          │ Orion Code  │          │ Agent    │ (Cognit.)│
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ Code generation   │ ● 300 ag │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
   │ Code analysis     │ ● 350 ag │ ● Sim    │ ● Sim    │ ◐ Basic  │ ● Sim    │
@@ -6769,7 +6627,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 ────────────────────────────────────────────────────────────────────────
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-  │ RECURSO           │ ORION    │ GAIA-X   │ Snowflake│ Databrick│ Palantir │
+  │ RECURSO           │ ORION    │ GAIA-X   │ Orion Data│ Databrick│ Palantir │
   │                   │          │          │ DataClean│ Unity Cat│ Foundry  │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ EDC Connector     │ ● Sim    │ ● Nativo │ ○ Nao    │ ◐ Plugin │ ○ Nao    │
@@ -6790,7 +6648,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 ────────────────────────────────────────────────────────────────────────
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-  │ RECURSO           │ ORION    │ OpenAI   │ Google   │ Cohere   │ Voyage   │
+  │ RECURSO           │ ORION    │ Orion AI   │ Google   │ Cohere   │ Voyage   │
   │                   │          │ CLIP     │ Gemini   │ Embed    │ AI       │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ Text embeddings   │ ● Gemini │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
@@ -6814,21 +6672,21 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
   │ SETOR                                     │ CONCORR.  │ ORION     │
   │                                           │ MAIS PROX │ VANTAGEM  │
   ├───────────────────────────────────────────┼───────────┼───────────┤
-  │  1. Assistente IA Conversacional          │ ChatGPT   │ ●●●●●     │
+  │  1. Assistente IA Conversacional          │ Orion IA   │ ●●●●●     │
   │  2. Visao Computacional                   │ Google V  │ ●●●●○     │
-  │  3. Sintese de Voz (TTS)                  │ElevenLabs │ ●●●●●     │
-  │  4. Juridico / LegalTech                  │ Harvey    │ ●●●●○     │
+  │  3. Sintese de Voz (TTS)                  │Orion Voice │ ●●●●●     │
+  │  4. Juridico / LegalTech                  │ Orion Legal    │ ●●●●○     │
   │  5. Robotica & Automacao Industrial       │ Siemens   │ ●●●●○     │
   │  6. IoT & Smart Home                      │ Home Asst │ ●●●○○     │
   │  7. Computacao Quantica                   │ IBM Quant │ ●●●○○     │
-  │  8. Marketplace / E-Commerce              │ Hotmart   │ ●●●○○     │
-  │  9. Compliance & AML                      │ Refinitiv │ ●●●○○     │
-  │ 10. Seguranca Cibernetica                 │Cloudflare │ ●●●●○     │
+  │  8. Marketplace / E-Commerce              │ Orion Commerce   │ ●●●○○     │
+  │  9. Compliance & AML                      │ Orion Compliance │ ●●●○○     │
+  │ 10. Seguranca Cibernetica                 │Orion CDN │ ●●●●○     │
   │ 11. Document AI / OCR                     │ Google DA │ ●●●●○     │
-  │ 12. Neurociencia Computacional            │ Numenta   │ ●●●●●     │
-  │ 13. Code Generation & Analysis            │ Copilot   │ ●●●○○     │
+  │ 12. Neurociencia Computacional            │ Orion Neuro   │ ●●●●●     │
+  │ 13. Code Generation & Analysis            │ Orion Code   │ ●●●○○     │
   │ 14. Data Sovereignty & Federated          │ GAIA-X    │ ●●●○○     │
-  │ 15. Multimodal AI & Embeddings            │ OpenAI    │ ●●●●○     │
+  │ 15. Multimodal AI & Embeddings            │ Orion AI    │ ●●●●○     │
   └───────────────────────────────────────────┴───────────┴───────────┘
 
   CONCLUSAO ESTRATEGICA:
@@ -6837,19 +6695,15 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
   juridico + robotica + IoT + quantum + marketplace + AML + seguranca +
   documentos + neurociencia + code + data sovereignty + multimodal
   em UMA UNICA plataforma, com custo operacional proximo a zero
-  (Gemini free tier + processamento local no browser).
+  (Orion free tier + processamento local no browser).
 
   O concorrente mais proximo em amplitude seria um combo de:
-  ChatGPT + Google Vision + ElevenLabs + Harvey + Siemens MindSphere +
-  Home Assistant + IBM Quantum + Hotmart + Refinitiv + Cloudflare +
-  Google Document AI + GitHub Copilot + Snowflake
+  Orion IA + Orion Vision + Orion Voice + Orion Legal + Orion Industrial +
+  Orion Home + Orion Quantum + Orion Commerce + Orion Compliance + Orion CDN +
+  Orion Document AI + GitHub Orion Code + Orion Data
   = 13+ plataformas separadas, custo total > $10.000/mes
 
   Orion: 1 plataforma, ~$0/mes (free tier)
-
-
-
-
 
 
 ================================================================================
@@ -6928,7 +6782,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
   ├───────────────────────────┼─────────────────────────────────────────┤
   │ Voice/Audio Engineer      │ Formant synth v19 (LF glottal +       │
   │                           │ 5 resonadores), Piper WASM, MFCC,     │
-  │                           │ voice evolution 4 camadas, Groq STT   │
+  │                           │ voice evolution 4 camadas, Orion Fast STT   │
   ├───────────────────────────┼─────────────────────────────────────────┤
   │ Neuroscience Researcher   │ GWT (Baars), STDP (Bi & Poo), Gamma   │
   │                           │ (Fries), Damasio Somatic Markers,     │
@@ -6982,7 +6836,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 
   CUSTO REAL DO ORION:
     1 engenheiro autodidata (Ericson Piccoli)
-    Infraestrutura: ~$0/mes (Gemini free, Supabase free, Lovable)
+    Infraestrutura: ~$0/mes (Orion free, Supabase free, Lovable)
 
 
 ================================================================================
@@ -7061,25 +6915,6 @@ RESPONSIBLE AI (4 pilares):
   12. TF Federated — aprendizado federado (McMahan 2017)
   13. TF Constrained Optimization (TFCO) — otimizacao restrita
   14. TF Lattice — modelos monotonico-interpretiveis
-
-REFERENCIAS ACADEMICAS:
-  - Baylor et al. (2017) — TFX Production-Scale ML Platform
-  - Abadi et al. (2016) — Deep Learning with Differential Privacy
-  - Mitchell et al. (2019) — Model Cards for Model Reporting
-  - Gebru et al. (2021) — Datasheets for Datasets
-  - McMahan et al. (2017) — Communication-Efficient Learning
-  - Sculley et al. (2015) — Hidden Technical Debt in ML Systems
-  - Breiman (2001) — Random Forests
-  - Friedman (2001) — GBDT
-  - Kipf & Welling (2017) — Semi-supervised GCN
-  - Hamilton et al. (2017) — GraphSAGE
-  - Velickovic et al. (2018) — Graph Attention Networks
-  - Dillon et al. (2017) — TF Probability
-  - Qin et al. (2021) — TF Ranking
-  - Misra (2019) — Mish Activation
-  - Hendrycks & Gimpel (2016) — GELU
-  - Sundararajan et al. (2017) — Integrated Gradients
-  - Shokri et al. (2017) — Membership Inference
 
 
 ================================================================================
@@ -7201,8 +7036,8 @@ CAMADAS DA ARQUITETURA:
   ├──────────────────────────────────────────────────────────────────┤
   │ CAMADA 3 — EDGE FUNCTIONS (Supabase/Deno)                       │
   │ 86 Edge Functions serverless                                    │
-  │ Gemini API (7-key rotation) + Stripe + Firebase                │
-  │ MQTT bridge + Groq Whisper STT                                 │
+  │ Orion API (7-key rotation) + Stripe + Firebase                │
+  │ MQTT bridge + Orion Fast Whisper STT                                 │
   ├──────────────────────────────────────────────────────────────────┤
   │ CAMADA 2 — BANCO DE DADOS (Supabase/PostgreSQL)                 │
   │ 171 tabelas com RLS                                             │
@@ -7220,12 +7055,12 @@ INTEGRACAO DE SERVICOS EXTERNOS:
   ┌────────────────────────┬────────────────────────────────────┐
   │ SERVICO                │ USO                                │
   ├────────────────────────┼────────────────────────────────────┤
-  │ Google Gemini (free)   │ LLM principal (7-key rotation)    │
+  │ Orion LLM (free)   │ LLM principal (7-key rotation)    │
   │ HuggingFace Space      │ 2.900+ agentes (ZeroGPU)          │
   │ Supabase               │ DB + Auth + Edge Fns + Storage    │
   │ Stripe                 │ Pagamentos per-user               │
   │ Firebase               │ Analytics + Push Notifications    │
-  │ Groq                   │ Whisper STT (free tier)           │
+  │ Orion Fast                   │ Whisper STT (free tier)           │
   │ Lovable                │ Build + Deploy + CI/CD            │
   │ MediaPipe              │ Vision (browser-local)            │
   │ ONNX Runtime Web       │ YOLO inference (browser-local)    │
@@ -7355,7 +7190,7 @@ DESTAQUE:
   - Arquitetura de 7 camadas detalhada
   - Contagem final de todos os numeros do sistema
 
-VERSAO: v8.6 (Solo Engineer & Full Stack)
+VERSAO: v8.7 (Orion Branding — Solo Engineer)
 TOTAL DE SECOES: 138
 TOTAL DE LINHAS: ~8.500+
 
