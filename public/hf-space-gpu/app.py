@@ -1,6 +1,6 @@
 """
 ORION Neural Hub — ZeroGPU Enhanced
-TTS + OCR + Embeddings + PDF + Gemma 4 LLM + Vision (BLIP) + Whisper STT
+TTS + OCR + Embeddings + PDF + Gemma 4 LLM + Vision (BLIP) + Whisper STT + Phi-3 Vision
 ZeroGPU: free GPU allocation on HuggingFace Spaces
 
 Usage: Deploy to HF Space with "ZeroGPU" hardware
@@ -431,6 +431,88 @@ def pdf_to_html(pdf_file) -> str:
 
 
 # ============================================================
+# Phi-3 Vision — Multimodal VQA (GPU)
+# ============================================================
+
+@spaces.GPU(duration=120)
+def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
+    """Analyze image with Phi-3-vision-128k-instruct on GPU"""
+    if image is None:
+        return json.dumps({"error": "No image provided"})
+
+    if not prompt or not prompt.strip():
+        prompt = "Describe this image in detail."
+
+    if not _check_gpu():
+        return json.dumps({
+            "error": "gpu_unavailable",
+            "message": "Phi-3 Vision requires GPU (ZeroGPU).",
+            "fallback": True,
+        })
+
+    import torch
+    from transformers import AutoModelForCausalLM, AutoProcessor
+
+    model_id = "microsoft/Phi-3-vision-128k-instruct"
+    if "phi3v" not in _models:
+        _models["phi3v_processor"] = AutoProcessor.from_pretrained(
+            model_id, trust_remote_code=True
+        )
+        _models["phi3v"] = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16,
+            trust_remote_code=True,
+            device_map="auto",
+            _attn_implementation="eager",
+        )
+
+    processor = _models["phi3v_processor"]
+    model = _models["phi3v"]
+
+    # Handle image input
+    if isinstance(image, np.ndarray):
+        img = Image.fromarray(image)
+    elif isinstance(image, str):
+        if image.startswith("data:"):
+            img_data = base64.b64decode(image.split(",")[1])
+            img = Image.open(io.BytesIO(img_data))
+        else:
+            img = Image.open(image)
+    else:
+        img = image
+    img = img.convert("RGB")
+
+    # Build chat template
+    messages = [
+        {"role": "user", "content": f"<|image_1|>\n{prompt.strip()}"},
+    ]
+    chat_prompt = processor.tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True
+    )
+
+    inputs = processor(chat_prompt, [img], return_tensors="pt").to(model.device)
+
+    with torch.no_grad():
+        ids = model.generate(
+            **inputs,
+            max_new_tokens=1024,
+            do_sample=False,
+            eos_token_id=processor.tokenizer.eos_token_id,
+        )
+
+    # Decode only new tokens
+    generated = ids[:, inputs["input_ids"].shape[-1]:]
+    text = processor.batch_decode(generated, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+
+    return json.dumps({
+        "response": text.strip(),
+        "model": model_id,
+        "source": "phi3-vision-gpu",
+        "prompt": prompt.strip(),
+    }, ensure_ascii=False)
+
+
+# ============================================================
 # Health Check
 # ============================================================
 
@@ -450,7 +532,7 @@ def health_check() -> str:
     return json.dumps({
         "status": "online",
         "space": "ORION Neural Hub",
-        "version": "2.1.0",
+        "version": "2.2.0",
         "hardware": "ZeroGPU" if (HAS_ZEROGPU and gpu_available) else "CPU Free",
         "gpu": {
             "available": gpu_available,
@@ -460,7 +542,7 @@ def health_check() -> str:
         },
         "models_loaded": list(_models.keys()),
         "capabilities": {
-            "gpu": ["gemma4_llm", "blip_vision", "whisper_stt"],
+            "gpu": ["gemma4_llm", "blip_vision", "whisper_stt", "phi3_vision"],
             "cpu": ["tts", "ocr", "embeddings", "pdf", "vision_classify"],
             "always_available": ["health"],
         },
@@ -468,6 +550,7 @@ def health_check() -> str:
             "gemma_chat": "gpu_required" if not gpu_available else "ready",
             "vision_caption": "gpu_required" if not gpu_available else "ready",
             "whisper_stt": "gpu_required" if not gpu_available else "ready",
+            "phi3_vision": "gpu_required" if not gpu_available else "ready",
             "vision_classify": "ready",
             "tts": "ready",
             "ocr": "ready",
@@ -483,7 +566,7 @@ def health_check() -> str:
 # ============================================================
 
 with gr.Blocks(title="ORION Neural Hub v2.1", theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# 🧠 ORION Neural Hub v2.1\n**ZeroGPU** — Gemma 4, BLIP Vision, Whisper STT, JARVIS TTS, OCR, Embeddings, PDF")
+    gr.Markdown("# 🧠 ORION Neural Hub v2.2\n**ZeroGPU** — Gemma 4, Phi-3 Vision, BLIP, Whisper STT, JARVIS TTS, OCR, Embeddings, PDF")
 
     with gr.Tab("💬 Gemma 4 Chat"):
         gr.Markdown("Chat with Google Gemma 4 (4B) on free ZeroGPU")
@@ -545,6 +628,14 @@ with gr.Blocks(title="ORION Neural Hub v2.1", theme=gr.themes.Soft()) as demo:
         def pdf_convert(file, fmt):
             return pdf_to_html(file) if fmt == "HTML" else pdf_to_markdown(file)
         pdf_btn.click(fn=pdf_convert, inputs=[pdf_file, pdf_format], outputs=pdf_output, api_name="pdf")
+
+    with gr.Tab("🧿 Phi-3 Vision"):
+        gr.Markdown("Multimodal image analysis with Phi-3-vision-128k on GPU")
+        phi3_image = gr.Image(label="Upload Image", type="numpy")
+        phi3_prompt = gr.Textbox(label="Prompt", value="Describe this image in detail.", lines=2)
+        phi3_output = gr.JSON(label="Analysis Result")
+        phi3_btn = gr.Button("🧿 Analyze", variant="primary")
+        phi3_btn.click(fn=phi3_vision, inputs=[phi3_image, phi3_prompt], outputs=phi3_output, api_name="phi3_vision")
 
     with gr.Tab("❤️ Health"):
         health_output = gr.JSON(label="Status")
