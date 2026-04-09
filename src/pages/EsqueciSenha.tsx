@@ -25,6 +25,13 @@ interface PasswordStrength {
   };
 }
 
+function isRateLimitError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const maybeError = error as { message?: string; status?: number };
+  return maybeError.message?.toLowerCase().includes("rate") === true || maybeError.status === 429;
+}
+
 function evaluatePassword(password: string): PasswordStrength {
   const checks = {
     length: password.length >= 8,
@@ -105,7 +112,7 @@ export default function EsqueciSenha() {
     const { error } = await requestRecoveryCode();
 
     if (error) {
-      const isRateLimit = error.message?.toLowerCase().includes('rate') || error.status === 429;
+      const isRateLimit = isRateLimitError(error);
       toast({
         title: isRateLimit ? "Aguarde um momento" : "Erro",
         description: isRateLimit
@@ -130,7 +137,7 @@ export default function EsqueciSenha() {
     const { error } = await requestRecoveryCode();
 
     if (error) {
-      const isRateLimit = error.message?.toLowerCase().includes('rate') || error.status === 429;
+      const isRateLimit = isRateLimitError(error);
       toast({
         title: isRateLimit ? "Aguarde um momento" : "Erro",
         description: isRateLimit
