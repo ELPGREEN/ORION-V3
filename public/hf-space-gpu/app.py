@@ -1,6 +1,6 @@
 """
 ORION Neural Hub — ZeroGPU Enhanced
-TTS + OCR + Embeddings + PDF + Gemma 4 LLM + Vision (BLIP) + Whisper STT + Phi-3 Vision
+TTS + OCR + Embeddings + PDF + Gemma 4 LLM + Vision (BLIP) + Whisper STT + Phi-3.5 Vision
 ZeroGPU: free GPU allocation on HuggingFace Spaces
 
 Usage: Deploy to HF Space with "ZeroGPU" hardware
@@ -603,7 +603,7 @@ def health_check() -> str:
 # ============================================================
 
 with gr.Blocks(title="ORION Neural Hub v2.1", theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# 🧠 ORION Neural Hub v2.2\n**ZeroGPU** — Gemma 4, Phi-3 Vision, BLIP, Whisper STT, JARVIS TTS, OCR, Embeddings, PDF")
+    gr.Markdown("# 🧠 ORION Neural Hub v2.3\n**ZeroGPU** — Gemma 4, Phi-3.5 Vision, BLIP, Whisper STT, JARVIS TTS, OCR, Embeddings, PDF")
 
     with gr.Tab("💬 Gemma 4 Chat"):
         gr.Markdown("Chat with Google Gemma 4 (4B) on free ZeroGPU")
@@ -666,8 +666,8 @@ with gr.Blocks(title="ORION Neural Hub v2.1", theme=gr.themes.Soft()) as demo:
             return pdf_to_html(file) if fmt == "HTML" else pdf_to_markdown(file)
         pdf_btn.click(fn=pdf_convert, inputs=[pdf_file, pdf_format], outputs=pdf_output, api_name="pdf")
 
-    with gr.Tab("🧿 Phi-3 Vision"):
-        gr.Markdown("Multimodal image analysis with Phi-3-vision-128k on GPU")
+    with gr.Tab("🧿 Phi-3.5 Vision"):
+        gr.Markdown("Multimodal image analysis with Phi-3.5-vision-instruct on GPU (multi-image + video support)")
         phi3_image = gr.Image(label="Upload Image", type="numpy")
         phi3_prompt = gr.Textbox(label="Prompt", value="Describe this image in detail.", lines=2)
         phi3_output = gr.JSON(label="Analysis Result")
