@@ -71,7 +71,8 @@ let loadPromise: Promise<void> | null = null;
 let isLoaded = false;
 
 // YOLOv8n ONNX model URL — hosted publicly
-const YOLO_MODEL_URL = "https://media.roboflow.com/onnx/yolov8n.onnx";
+// YOLOv10n — more accurate than v8n, same size (~6.5MB), NMS-free architecture
+const YOLO_MODEL_URL = "https://huggingface.co/onnx-community/yolov10n/resolve/main/onnx/model.onnx";
 const INPUT_SIZE = 640;
 
 async function loadModel(): Promise<void> {
@@ -81,6 +82,7 @@ async function loadModel(): Promise<void> {
   loadPromise = (async () => {
     try {
       console.log("[YOLO-ONNX] Loading YOLOv8n model...");
+      console.log("[YOLO-ONNX] Upgrading to YOLOv10n...");
 
       // Configure ONNX Runtime for browser
       ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/";
@@ -91,7 +93,7 @@ async function loadModel(): Promise<void> {
       });
 
       isLoaded = true;
-      console.log("[YOLO-ONNX] Model loaded successfully");
+      console.log("[YOLO-ONNX] YOLOv10n model loaded successfully");
     } catch (e) {
       console.error("[YOLO-ONNX] Model load failed:", e);
       loadPromise = null;
@@ -205,66 +207,102 @@ export async function detectWithYOLO(
     const output = results[session.outputNames[0]];
     const outputData = output.data as Float32Array;
 
-    // YOLOv8 output shape: [1, 84, 8400] (4 bbox + 80 classes, 8400 predictions)
-    const numDetections = output.dims[2]; // 8400
-    const numClasses = 80;
     const detections: YOLODetection[] = [];
+
+    // YOLOv10 output shape: [1, N, 6] (x1, y1, x2, y2, score, classId)
+    // Falls back to YOLOv8 format [1, 84, 8400] if needed
+    const dims = output.dims;
+    const isV10Format = dims.length === 3 && dims[2] === 6;
 
     const vw = (video as any).videoWidth || (video as any).width || INPUT_SIZE;
     const vh = (video as any).videoHeight || (video as any).height || INPUT_SIZE;
 
-    // Letterbox padding: scale factor determines newW/newH, pad fills the rest
     const scale = Math.min(INPUT_SIZE / vw, INPUT_SIZE / vh);
     const newW = Math.round(vw * scale);
     const newH = Math.round(vh * scale);
     const padX = (INPUT_SIZE - newW) / 2;
     const padY = (INPUT_SIZE - newH) / 2;
 
-    for (let i = 0; i < numDetections; i++) {
-      // Find max class score
-      let maxScore = 0;
-      let maxClassId = 0;
-      for (let c = 0; c < numClasses; c++) {
-        const score = outputData[(4 + c) * numDetections + i];
-        if (score > maxScore) {
-          maxScore = score;
-          maxClassId = c;
-        }
+    if (isV10Format) {
+      // YOLOv10 NMS-free: each row is [x1, y1, x2, y2, score, classId]
+      const numRows = dims[1];
+      for (let i = 0; i < numRows; i++) {
+        const offset = i * 6;
+        const score = outputData[offset + 4];
+        if (score < confThreshold) continue;
+
+        const classId = Math.round(outputData[offset + 5]);
+        const x1 = (outputData[offset + 0] - padX) / scale;
+        const y1 = (outputData[offset + 1] - padY) / scale;
+        const x2 = (outputData[offset + 2] - padX) / scale;
+        const y2 = (outputData[offset + 3] - padY) / scale;
+        const bw = x2 - x1;
+        const bh = y2 - y1;
+
+        const className = COCO_CLASSES[classId] || "unknown";
+        detections.push({
+          name: className,
+          namePt: CLASS_PT[className] || className,
+          classId,
+          confidence: Math.round(score * 100) / 100,
+          x: Math.max(0, x1),
+          y: Math.max(0, y1),
+          width: bw,
+          height: bh,
+          nx: (x1 / vw) * 2 - 1,
+          ny: -((y1 / vh) * 2 - 1),
+          nw: (bw / vw) * 2,
+          nh: (bh / vh) * 2,
+        });
       }
+      // YOLOv10 is NMS-free, no need for nms()
+      return detections;
+    } else {
+      // Fallback: YOLOv8 format [1, 84, 8400]
+      const numDetections = dims[2];
+      const numClasses = 80;
 
-      if (maxScore < confThreshold) continue;
+      for (let i = 0; i < numDetections; i++) {
+        let maxScore = 0;
+        let maxClassId = 0;
+        for (let c = 0; c < numClasses; c++) {
+          const score = outputData[(4 + c) * numDetections + i];
+          if (score > maxScore) {
+            maxScore = score;
+            maxClassId = c;
+          }
+        }
 
-      // YOLO outputs center x, center y, width, height
-      const cx = outputData[0 * numDetections + i];
-      const cy = outputData[1 * numDetections + i];
-      const w = outputData[2 * numDetections + i];
-      const h = outputData[3 * numDetections + i];
+        if (maxScore < confThreshold) continue;
 
-      // Convert from letterboxed coords back to original image space
-      // 1) Remove padding offset, 2) Divide by scale to get original coords
-      const x = ((cx - w / 2) - padX) / scale;
-      const y = ((cy - h / 2) - padY) / scale;
-      const bw = w / scale;
-      const bh = h / scale;
+        const cx = outputData[0 * numDetections + i];
+        const cy = outputData[1 * numDetections + i];
+        const w = outputData[2 * numDetections + i];
+        const h = outputData[3 * numDetections + i];
 
-      const className = COCO_CLASSES[maxClassId] || "unknown";
-      detections.push({
-        name: className,
-        namePt: CLASS_PT[className] || className,
-        classId: maxClassId,
-        confidence: Math.round(maxScore * 100) / 100,
-        x: Math.max(0, x),
-        y: Math.max(0, y),
-        width: bw,
-        height: bh,
-        nx: (x / vw) * 2 - 1,
-        ny: -((y / vh) * 2 - 1),
-        nw: (bw / vw) * 2,
-        nh: (bh / vh) * 2,
-      });
+        const x = ((cx - w / 2) - padX) / scale;
+        const y = ((cy - h / 2) - padY) / scale;
+        const bw = w / scale;
+        const bh = h / scale;
+
+        const className = COCO_CLASSES[maxClassId] || "unknown";
+        detections.push({
+          name: className,
+          namePt: CLASS_PT[className] || className,
+          classId: maxClassId,
+          confidence: Math.round(maxScore * 100) / 100,
+          x: Math.max(0, x),
+          y: Math.max(0, y),
+          width: bw,
+          height: bh,
+          nx: (x / vw) * 2 - 1,
+          ny: -((y / vh) * 2 - 1),
+          nw: (bw / vw) * 2,
+          nh: (bh / vh) * 2,
+        });
+      }
+      return nms(detections);
     }
-
-    return nms(detections);
   } catch (e) {
     console.warn("[YOLO-ONNX] Inference error:", e);
     return [];
