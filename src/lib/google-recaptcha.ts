@@ -4,7 +4,7 @@
  * Site key is publishable (safe for client-side).
  */
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LcDia0sAAAAABs_4aIZI-Thp9lZvcaMNFvQ-_Jq";
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6Le7eq8sAAAAAOAx1JsHy279Sxg3Ak_mscz7owTI";
 const RECAPTCHA_LOAD_TIMEOUT_MS = 8000;
 const RECAPTCHA_EXEC_TIMEOUT_MS = 8000;
 
