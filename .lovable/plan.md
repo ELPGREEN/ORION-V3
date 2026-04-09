@@ -1,81 +1,97 @@
+# Plano — Integração "Thomas" como Orquestrador Digital Central
 
+## Visão Geral
 
-# Diagnóstico de Egress — Causas e Otimizações
+O "ORION" descrito nas imagens é um **orquestrador digital central** para todas as empresas, com 3 domínios: **Operacional**, **Financeiro** e **Comercial**. Analisando o sistema atual, já existem peças significativas que podem ser conectadas sob essa camada de orquestração.
 
-## Causa Principal: Cron Jobs Excessivos
-
-Existem **6 cron jobs ativos** no pg_cron que fazem HTTP POST para edge functions constantemente, mesmo sem trabalho real.
-
-### Consumo atual estimado (calls/dia)
+## NOME SO DEVE SER CITADO NOS CODIGO ORION Mapeamento: O que já existe vs. O que falta
 
 ```text
-Job  Função                  Frequência     Calls/dia   Trabalho real
-───  ──────────────────────  ─────────────  ─────────   ─────────────
-#5   queue-worker            */1 min        1.440       ~0 (logs mostram "No pending jobs" 100%)
-#3   generate-embeddings     */10 min       144         ~0 (0 processed, 0 remaining)
-#1   neural-auto-learn       */30 min       48          Mínimo
-#4   auto-approve proposals  1h (SQL only)  24          OK (não gera egress)
-#2   neural-child-receiver   6h             4           Mínimo
-#6   auto-ingestion-cron     6h             4           Mínimo
+DOMÍNIO          JÁ EXISTE                           FALTA
+─────────────────────────────────────────────────────────────────
+OPERACIONAL      • ai-orchestrator (Gemini 7-key)     • Dashboard unificado de fluxos
+                 • queue-worker (fila de tarefas)      • Feedback loops automáticos
+                 • neural-auto-learn (aprendizado)     • Detecção de gargalos em tempo real
+                 • digital-twin-aas.ts (Industry 4.0)  • KPIs operacionais com alertas
+                 • Controle Robótico (ROS2)
+
+FINANCEIRO       • PagamentosPage (Stripe)             • Fluxo de caixa (entradas/saídas)
+                 • orders, products (tabelas)           • DRE automático (receitas - custos)
+                 • stripe-api, stripe-webhook            • Projeções preditivas (Gemini)
+                 • process-sale                         • Detecção de anomalias financeiras
+                                                        • KPIs financeiros (margem, CAC, LTV)
+
+COMERCIAL        • CRM Pipeline (clientes/status)      • Lead scoring automático (Gemini)
+                 • Marketplace, Afiliados               • Funil de vendas visual
+                 • campanhas-email                      • Segmentação comportamental
+                 • orion-produtor-ai                    • Automação de retenção
+                                                        • Métricas de conversão
 ```
 
-**Total estimado: ~1.640 edge function calls/dia = ~49.200/mês**
-
-Cada call gera egress (request + response), mesmo retornando `{"processed": 0}`.
-Com ~500 bytes por call vazia do queue-worker: **1.440 × 500B × 30 dias ≈ 21 MB/mês só do queue-worker vazio.**
-
-Mas o egress real é maior porque cada call também inclui headers HTTP, TLS overhead, e queries ao banco (`generation_queue` SELECT + possível UPDATE).
-
-### Tabelas grandes (potencial egress em queries)
+## Arquitetura Proposta
 
 ```text
-Tabela                        Tamanho    Linhas
-neural_knowledge_base         44 MB      2.721
-neural_evolution_proposals    24 MB      433
-code_snippets                 18 MB      2.579
-orion_threat_log              6.4 MB     14.535
-legal_embeddings              6 MB       557
+┌─────────────────────────────────────────────────┐
+│              THOMAS — Painel Central             │
+│         /dashboard/thomas (nova página)          │
+├────────────────┬────────────┬───────────────────┤
+│  OPERACIONAL   │ FINANCEIRO │    COMERCIAL      │
+│  ────────────  │ ────────── │  ──────────────   │
+│  Tasks ativas  │ Caixa hoje │  Leads novos      │
+│  Gargalos      │ DRE mensal │  Funil pipeline   │
+│  KPIs robótica │ Projeções  │  Conversão %      │
+│  Alertas       │ Anomalias  │  Retenção         │
+└────────────────┴────────────┴───────────────────┘
+         ↓               ↓              ↓
+   ai-orchestrator   stripe-api    CRM + orion-ai
+   queue-worker      orders/sales  client_profiles
+   digital-twin      products      affiliate_sales
 ```
 
----
+## Passos de Implementação
 
-## Plano de Otimização (3 passos)
+### Passo 1 — Tabela `thomas_financial_entries`
 
-### Passo 1 — Reduzir frequência dos cron jobs
+Nova tabela para registrar entradas/saídas financeiras (o que o Stripe não cobre: custos operacionais, despesas manuais). Migração SQL com RLS.
 
-| Job | Frequência atual | Nova frequência | Redução |
-|-----|-----------------|-----------------|---------|
-| #5 queue-worker | 1 min | **5 min** | -80% (1440→288 calls/dia) |
-| #3 generate-embeddings | 10 min | **1h** | -83% (144→24 calls/dia) |
-| #1 neural-auto-learn | 30 min | **2h** | -75% (48→12 calls/dia) |
+### Passo 2 — Edge Function `thomas-intelligence`
 
-Migração SQL com `cron.alter_job()` para cada um.
+Uma edge function que usa Gemini (free) para:
 
-### Passo 2 — Limpar dados acumulados desnecessários
+- Calcular DRE automático (consulta orders + financial_entries)
+- Gerar projeções preditivas (tendência dos últimos 90 dias)
+- Lead scoring (analisa client_profiles + histórico de interações)
+- Detectar anomalias (variações >30% em métricas)
 
-- `orion_threat_log`: 14.535 linhas. Manter só últimos 30 dias, deletar o resto.
-- `neural_evolution_proposals`: 24 MB / 433 linhas. Limpar proposals com status `approved` ou `rejected` com mais de 7 dias.
-- `ai_metrics`: 947 linhas. Limpar métricas com mais de 30 dias.
+### Passo 3 — Página `/dashboard/thomas`
 
-Migração SQL com DELETE + VACUUM.
+Dashboard unificado com 3 abas (Operacional, Financeiro, Comercial), cada uma com:
 
-### Passo 3 — Adicionar early-exit no queue-worker
+- Cards de KPIs em tempo real
+- Gráficos de tendência (Recharts, já no projeto)
+- Alertas inteligentes gerados pelo Gemini
+- Ações rápidas (links para CRM, Pagamentos, etc.)
 
-Adicionar cache local no queue-worker: se não houver jobs pendentes nas últimas 3 execuções consecutivas, retornar imediatamente sem fazer queries ao banco. Isso reduz egress de DB queries desnecessários.
+### Passo 4 — Integração no ProprietarioDashboard
 
----
+Adicionar seção "Thomas — Orquestrador" no dashboard do proprietário com widget resumo e link para a página completa.
 
-## Impacto esperado
+### Passo 5 — Cron Job `thomas-daily-report`
 
-- **Edge function calls**: de ~49.200/mês para ~9.720/mês (-80%)
-- **Egress de cron vazio**: redução proporcional
-- **DB egress**: menor com cleanup de dados antigos
-- **Zero impacto funcional**: queue-worker a cada 5 min ainda processa jobs com latência aceitável
+Job diário (6h) que gera relatório consolidado via Gemini e salva em `thomas_reports`. Disponível no dashboard como "Relatório do dia".
+
+## Detalhes Técnicos
+
+- **LLM**: Gemini free (7-key rotation existente) — zero custo adicional
+- **Dados financeiros**: `orders` + `products` + `affiliate_sales` + nova `thomas_financial_entries`
+- **Dados comerciais**: `client_profiles` + `chat_conversations` + `affiliate_requests`
+- **Dados operacionais**: `generation_queue` + `ai_metrics` + digital-twin AAS
+- **Gráficos**: Recharts (já instalado no projeto)
+- **Nenhum serviço pago adicional**
 
 ## O que NÃO será tocado
 
-- Nenhuma edge function será deletada
-- Nenhuma tabela será deletada
-- Job #4 (SQL puro, sem egress HTTP) fica igual
-- Jobs #2 e #6 (6h) já são eficientes
-
+- Orion (continua independente como IA conversacional)
+- RAG / embeddings / neural-auto-learn (intactos)
+- Queue-worker (mantém frequência atual de 1 min)
+- Edge functions existentes
