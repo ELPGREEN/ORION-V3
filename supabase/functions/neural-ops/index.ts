@@ -1188,7 +1188,6 @@ async function callGeminiAPI(messages: any[], stream: boolean, apiKeyEnv: string
       maxOutputTokens: hasImage ? defaultVisionTokens : defaultTextTokens,
       topP: hasImage ? 0.9 : 0.95,
       topK: hasImage ? 20 : 40,
-      thinkingConfig: { thinkingBudget: 0 },
     },
   };
   if (systemInstruction) {
