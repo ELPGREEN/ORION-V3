@@ -203,7 +203,16 @@ export default function Auth() {
     setLoading(true);
     setEmailNotConfirmed(null);
 
-    // reCAPTCHA v3 verification
+    // Get hCaptcha token for Supabase
+    let hToken = captchaToken;
+    if (!hToken) {
+      try {
+        const res = await hcaptchaRef.current?.execute({ async: true });
+        hToken = res?.response ?? null;
+      } catch { /* fallback */ }
+    }
+
+    // reCAPTCHA v3 verification (additional layer)
     const token = await verifyRecaptcha("login");
     if (token) {
       try {
@@ -211,12 +220,14 @@ export default function Auth() {
         if (captchaResult && !captchaResult.success) {
           toast({ title: "Verificação falhou", description: "Atividade suspeita detectada. Tente novamente.", variant: "destructive" });
           setLoading(false);
+          hcaptchaRef.current?.resetCaptcha();
+          setCaptchaToken(null);
           return;
         }
       } catch { /* Allow through if verification service is down */ }
     }
 
-    const { error } = await signIn(loginForm.email, loginForm.senha);
+    const { error } = await signIn(loginForm.email, loginForm.senha, hToken || undefined);
     if (error) {
       if (error.message.includes("Email not confirmed")) {
         setEmailNotConfirmed(loginForm.email);
