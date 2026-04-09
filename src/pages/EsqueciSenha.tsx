@@ -55,8 +55,6 @@ export default function EsqueciSenha() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const hcaptchaRef = useRef<HCaptcha>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   // If redirected from AuthCallback with recovery session, go straight to newPassword
   useEffect(() => {

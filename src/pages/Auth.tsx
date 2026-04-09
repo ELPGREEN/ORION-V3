@@ -560,13 +560,6 @@ export default function Auth() {
 
                 {renderEmailConfirmation()}
 
-                <HCaptcha
-                  ref={hcaptchaRef}
-                  sitekey={HCAPTCHA_SITE_KEY}
-                  size="invisible"
-                  onVerify={(token) => setCaptchaToken(token)}
-                  onExpire={() => setCaptchaToken(null)}
-                />
 
                 <Button type="submit" disabled={loading}
                   className="w-full h-12 bg-gradient-to-r from-[#d4a853] to-[#b8942e] hover:from-[#e0b65e] hover:to-[#c9a33a] text-[#0a0a0f] font-semibold text-sm tracking-wider">
