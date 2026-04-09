@@ -88,11 +88,15 @@ Deno.serve(async (req) => {
   }
 
   if (!jobs || jobs.length === 0) {
-    console.log("✅ No pending jobs.");
+    consecutiveEmptyRuns++;
+    console.log(`✅ No pending jobs. (empty streak: ${consecutiveEmptyRuns})`);
     return new Response(JSON.stringify({ processed: 0 }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  // Reset counter when work is found
+  consecutiveEmptyRuns = 0;
 
   console.log(`📋 Found ${jobs.length} pending job(s)`);
   let processed = 0;
