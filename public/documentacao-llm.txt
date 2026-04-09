@@ -28,7 +28,7 @@
   ┌────────────────┬───────────────────────────────────────────────────┐
   │ FASE           │ DESCRICAO                                         │
   ├────────────────┼───────────────────────────────────────────────────┤
-  │ MEADOS 2025    │ INICIO DO DESENVOLVIMENTO                        │
+  │ DEZEMBRO 2024  │ INICIO DO DESENVOLVIMENTO                        │
   │                │ Concepcao da arquitetura, primeiros modulos       │
   │                │ neurais, setup Supabase, design system,           │
   │                │ prototipagem do Orion Neural Core.                │
