@@ -93,9 +93,11 @@ export default function EsqueciSenha() {
     let hToken = captchaToken;
     if (!hToken) {
       try {
-        const res = await hcaptchaRef.current?.execute({ async: true });
+        const captchaPromise = hcaptchaRef.current?.execute({ async: true });
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("captcha timeout")), 5000));
+        const res = await Promise.race([captchaPromise, timeoutPromise]) as any;
         hToken = res?.response ?? null;
-      } catch { /* fallback */ }
+      } catch { /* captcha failed or timed out — proceed without it */ }
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
