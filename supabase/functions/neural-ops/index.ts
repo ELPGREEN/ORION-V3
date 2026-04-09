@@ -2212,9 +2212,24 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   }
 
   // ═══ NON-STREAMING MODE ═══
-  // REGRA: Gemini SEMPRE primeiro — é gratuito e orquestra tudo anti-alucinação.
+  // REGRA: Vertex AI primeiro (GCP credits) → Gemini API keys → fallbacks
 
-  // ── PRIMARY: Gemini (7 keys rotation) — SEMPRE PRIMEIRO ──
+  // ── PRIMARY: Vertex AI (GCP credits) ──
+  try {
+    const vertexResp = await callVertexAI(messages, false);
+    if (vertexResp && vertexResp.ok) {
+      const data = await vertexResp.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (text) {
+        console.log("[Orion] ✅ Non-stream via Vertex AI — GCP credits");
+        return parseOrionResponse(text);
+      }
+    }
+  } catch (e) {
+    console.warn("[Orion] Vertex AI non-stream failed:", e);
+  }
+
+  // ── FALLBACK: Gemini API keys (free tier) ──
   for (const keyEnv of geminiKeys) {
     if (!Deno.env.get(keyEnv) || isProviderCoolingDown(`gemini_${keyEnv}`)) continue;
     try {
