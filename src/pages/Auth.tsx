@@ -311,7 +311,9 @@ export default function Auth() {
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
-    const { error } = await signInWithGoogle();
+    // Pass the selected account type so the role is assigned correctly after OAuth
+    const typeToPass = activeTab === "cadastro" ? accountType : "cliente";
+    const { error } = await signInWithGoogle(typeToPass);
     if (error) {
       toast({ title: "Erro com Google", description: "Não foi possível iniciar o login.", variant: "destructive" });
       setGoogleLoading(false);
