@@ -1,10 +1,11 @@
 /**
  * Unified Real-Time Vision Engine
- * Combines MediaPipe (faces, hands, objects) + YOLO ONNX (80 COCO classes)
+ * Combines MediaPipe (faces, hands, objects, poses) + YOLO ONNX (80 COCO classes)
+ * + Temporal Buffer + Regional Description + Layout Parsing
  * 100% local, zero API calls, runs in browser via WASM/WebGL.
  */
 
-import { detectAllMP, preloadMediaPipe, isMediaPipeReady, type MPVisionResult } from "./mediapipe-vision";
+import { detectAllMP, preloadMediaPipe, isMediaPipeReady, type MPVisionResult, type MPPose } from "./mediapipe-vision";
 import { preloadHFVisionGate } from "./hf-vision-gate";
 import { detectWithYOLO, preloadYOLO, isYOLOReady, type YOLODetection } from "./yolo-onnx-detector";
 import { yoloFrameX } from "./yolo-framex-engine";
@@ -16,6 +17,9 @@ import { reconstructScene, format3DForAI, type SceneReconstruction } from "./sce
 import { enhanceVisionDetections, formatQuantumVisionForAI, type VisionEnhancementResult } from "./quantum-vision-enhancer";
 import { estimateGaze, formatGazeForAI, type GazeResult } from "./gaze-detection";
 import { recognizeHandwritingFromVideo, isTrOCRReady, formatHandwrittenOCRForAI, type HandwrittenOCRResult } from "./trocr-handwritten";
+import { visionTemporalBuffer } from "./vision-temporal-buffer";
+import { prepareRegionalDescriptions, formatRegionalForAI, type RegionalDescription } from "./vision-regional-description";
+import { parseDocumentLayout, formatLayoutForAI, type DocumentLayout } from "./vision-layout-parser";
 
 export interface RealTimeVisionResult {
   /** MediaPipe detected objects (EfficientDet) */
