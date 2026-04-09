@@ -60,23 +60,53 @@ export function loadRecaptcha(): Promise<void> {
  */
 export async function executeRecaptcha(action: string = "submit"): Promise<string | null> {
   if (!RECAPTCHA_SITE_KEY) return null;
-  
+
   try {
+    console.info("[reCAPTCHA] executeRecaptcha start", { action, hasSiteKey: !!RECAPTCHA_SITE_KEY });
     await withTimeout(loadRecaptcha(), RECAPTCHA_LOAD_TIMEOUT_MS);
     const grecaptcha = (window as any).grecaptcha;
-    if (!grecaptcha || typeof grecaptcha.ready !== "function" || typeof grecaptcha.execute !== "function") return null;
+    const hasReady = typeof grecaptcha?.ready === "function";
+    const hasExecute = typeof grecaptcha?.execute === "function";
+
+    console.info("[reCAPTCHA] grecaptcha availability", {
+      action,
+      exists: !!grecaptcha,
+      hasReady,
+      hasExecute,
+    });
+
+    if (!grecaptcha || !hasReady || !hasExecute) return null;
 
     return await withTimeout(
       new Promise<string | null>((resolve) => {
         grecaptcha.ready(() => {
+          console.info("[reCAPTCHA] ready callback fired", { action });
           Promise.resolve(grecaptcha.execute(RECAPTCHA_SITE_KEY, { action }))
-            .then((token: string | null) => resolve(token ?? null))
-            .catch(() => resolve(null));
+            .then((token: string | null) => {
+              const normalizedToken = typeof token === "string" ? token.trim() : "";
+              console.info("[reCAPTCHA] execute result", {
+                action,
+                tokenType: typeof token,
+                tokenLength: normalizedToken.length,
+              });
+              resolve(normalizedToken || null);
+            })
+            .catch((error: unknown) => {
+              console.error("[reCAPTCHA] execute failed", {
+                action,
+                message: error instanceof Error ? error.message : String(error),
+              });
+              resolve(null);
+            });
         });
       }),
       RECAPTCHA_EXEC_TIMEOUT_MS,
     );
-  } catch {
+  } catch (error) {
+    console.error("[reCAPTCHA] executeRecaptcha failed", {
+      action,
+      message: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }

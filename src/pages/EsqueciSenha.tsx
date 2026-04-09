@@ -87,20 +87,34 @@ export default function EsqueciSenha() {
 
   const requestRecoveryCode = async () => {
     const captchaToken = await verifyRecaptcha("recover");
+    const normalizedCaptchaToken = typeof captchaToken === "string" ? captchaToken.trim() : "";
+    const redirectTo = `${window.location.origin}/auth/callback`;
 
-    if (!captchaToken) {
+    console.info("[PasswordRecovery] captcha token state", {
+      tokenType: typeof captchaToken,
+      tokenLength: normalizedCaptchaToken.length,
+      hasToken: normalizedCaptchaToken.length > 0,
+    });
+
+    if (!normalizedCaptchaToken) {
+      console.warn("[PasswordRecovery] blocking resetPasswordForEmail due to empty captcha token");
       toast({
         title: "Verificação falhou",
         description: "Não foi possível validar a solicitação. Recarregue a página e tente novamente.",
         variant: "destructive",
       });
 
-      return { error: new Error("captcha_token_missing") };
+      return { error: new Error("captcha_token_missing_or_empty") };
     }
 
+    console.info("[PasswordRecovery] calling resetPasswordForEmail", {
+      redirectTo,
+      captchaTokenLength: normalizedCaptchaToken.length,
+    });
+
     return supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback`,
-      captchaToken,
+      redirectTo,
+      captchaToken: normalizedCaptchaToken,
     });
   };
 
