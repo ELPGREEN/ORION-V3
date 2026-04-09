@@ -22,6 +22,7 @@ Hardware: **ZeroGPU** (dynamic A100/H200) — Free tier ~300s GPU/day!
 |---|---|---|---|
 | `/api/gemma_chat` | Gemma 4 LLM chat (bfloat16) | google/gemma-4-4b-it | ✅ |
 | `/api/vision_caption` | Image captioning (float16) | Salesforce/blip-image-captioning-large | ✅ |
+| `/api/phi3_vision` | Multimodal VQA (float16) | microsoft/Phi-3-vision-128k-instruct | ✅ |
 | `/api/whisper_stt` | Speech-to-text multi-language | openai/whisper-large-v3-turbo | ✅ |
 
 ## CPU Capabilities (Unlimited)
