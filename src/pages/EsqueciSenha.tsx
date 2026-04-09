@@ -24,14 +24,29 @@ export default function EsqueciSenha() {
   const hcaptchaRef = useRef<HCaptcha>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
+    setStep("method");
+  };
+
+  const handleSendOtp = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setLoading(true);
+
+    // Get hCaptcha token
+    let hToken = captchaToken;
+    if (!hToken) {
+      try {
+        const res = await hcaptchaRef.current?.execute({ async: true });
+        hToken = res?.response ?? null;
+      } catch { /* fallback */ }
+    }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback`,
-    });
+      captchaToken: hToken || undefined,
+    } as any);
 
     if (error) {
       const isRateLimit = error.message?.toLowerCase().includes('rate') || error.status === 429;
@@ -49,6 +64,8 @@ export default function EsqueciSenha() {
       });
       setStep("otp");
     }
+    hcaptchaRef.current?.resetCaptcha();
+    setCaptchaToken(null);
     setLoading(false);
   };
 
