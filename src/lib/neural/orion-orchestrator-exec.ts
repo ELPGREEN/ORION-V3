@@ -11,6 +11,9 @@ import { detectSingleFaceFull, loadFaceApiModels, type FaceApiDetection } from "
 import { getBlazeFaceModel } from "./tf-runtime";
 import { classifyImage, detectObjects, captionImage } from "@/lib/huggingface/transformers-vision";
 import { transcribeAudio, recordMicrophoneAudio } from "@/lib/huggingface/transformers-audio";
+import { askAboutImage, isSmolVLMReady, type VLMResult } from "./smolvlm-engine";
+import { recognizeHandwritingFromVideo, isTrOCRReady, type HandwrittenOCRResult } from "./trocr-handwritten";
+import { estimateGaze, type GazeResult } from "./gaze-detection";
 
 // ─── Types ───
 
@@ -19,6 +22,9 @@ export interface VisionResult {
   objects: Array<{ label: string; confidence: number; bbox?: number[] }>;
   source: string;
   latencyMs: number;
+  vlmDescription?: string;
+  handwrittenText?: string;
+  gaze?: GazeResult | null;
 }
 
 export interface FaceResult {
