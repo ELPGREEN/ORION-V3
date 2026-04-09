@@ -1,31 +1,88 @@
 
 
-# Remoção Cirúrgica — Somente Edge Functions Fantasma Comprovadas
+# Plano Revisado — DROP Tabelas Órfãs + Limpeza de Código
 
-Verificação feita função por função, com busca no `src/` inteiro e em todas as outras edge functions.
+## Correção crítica da auditoria anterior
 
-## O que será removido (5 edge functions com ZERO referências)
+A busca anterior só verificou `src/` mas **ignorou edge functions**. Resultado: 5 tabelas que foram marcadas como "órfãs" são **ativamente usadas** por edge functions:
 
-| Edge Function | Linhas | Prova |
-|---|---|---|
-| `elevenlabs-tts` | ~20 | Stub desabilitado. 0 refs em `src/`, 0 refs em outras functions. Constraint de memória proíbe. |
-| `extract-code` | ~80 | Nunca chamada. 0 refs em `src/`, 0 refs em outras functions. |
-| `google-workspace` | ~490 | Nunca integrada. 0 refs em `src/`, 0 refs em outras functions. |
-| `translate-libre` | ? | Substituída por `translate-text`. 0 refs em `src/`, 0 refs em outras functions. |
-| `ibm-quantum` | ~120 | Experimental. 0 refs em `src/`, 0 refs em outras functions. |
+| Tabela | Usada por |
+|--------|-----------|
+| `webhook_subscriptions` | `webhook-gateway` (CRUD completo) |
+| `user_neural_profiles` | `neural-ops` (init neural profile) |
+| `adaptive_system_prompts` | `secretaria-ia` (prompt adaptativo) |
+| `user_integrations` | `amazon-auth` (OAuth tokens) |
+| `stripe_connect_accounts` | `stripe-api` (Stripe Connect) |
+
+**Estas 5 NÃO serão tocadas.**
+
+---
+
+## Tabelas realmente órfãs confirmadas (26 tabelas)
+
+Zero referências em `src/` (exceto types.ts auto-gerado) E zero referências em edge functions:
+
+| # | Tabela |
+|---|--------|
+| 1 | `analises` |
+| 2 | `barcode_cache` |
+| 3 | `cgu_sanctions_cache` |
+| 4 | `cpf_cache` |
+| 5 | `document_validation_cache` |
+| 6 | `document_validations` |
+| 7 | `document_versions` |
+| 8 | `email_signature_settings` |
+| 9 | `execution_plans` |
+| 10 | `face_templates` |
+| 11 | `feasibility_market_data` |
+| 12 | `impact_stats` |
+| 13 | `lead_documents` |
+| 14 | `lead_notes` |
+| 15 | `loi_documents` |
+| 16 | `neural_evolution_log` |
+| 17 | `push_subscriptions` |
+| 18 | `pyrolysis_readings` |
+| 19 | `security_scan_results` |
+| 20 | `security_scan_runs` |
+| 21 | `serpapi_cache` |
+| 22 | `signature_log` |
+| 23 | `signed_urls` |
+| 24 | `workspace_connector_settings` |
+| 25 | `workspace_settings` |
+| 26 | `youtube_cache` |
+
+---
+
+## Funções DB obsoletas (3 funções — não pgvector)
+
+| Função | Motivo |
+|--------|--------|
+| `increment_loi_download` | Referencia `loi_documents` (será removida) |
+| `clean_expired_cache` | Referencia `cpf_cache` e `cgu_sanctions_cache` (serão removidas) |
+| `get_child_network_stats` | Referencia `neural_child_reports` sem uso real |
+
+**`increment_report_views` será mantida** — `report_verifications` não está na lista de remoção.
+
+---
+
+## Passos de implementação
+
+### Passo 1 — Migração SQL
+Uma única migração com `DROP TABLE IF EXISTS CASCADE` para as 26 tabelas + `DROP FUNCTION IF EXISTS` para as 3 funções DB.
+
+### Passo 2 — Nada mais
+- `types.ts` se regenera automaticamente pelo Supabase
+- Nenhum arquivo em `src/` referencia essas tabelas
+- Nenhuma edge function referencia essas tabelas
+- Zero alterações em código
+
+---
 
 ## O que NÃO será tocado
 
-- Nenhuma tabela do banco de dados
-- Nenhuma função DB
-- Nenhum arquivo no `src/`
-- Nenhuma outra edge function
-
-## Passos
-
-1. **Deletar os 5 diretórios** de edge functions: `elevenlabs-tts`, `extract-code`, `google-workspace`, `translate-libre`, `ibm-quantum`
-2. **Remover do deploy** usando a ferramenta de delete de edge functions
-3. **Nada mais** — zero alterações em código, banco ou configuração
-
-Somente remoção de código morto. Sem efeitos colaterais.
+- Nenhum arquivo em `src/`
+- Nenhuma edge function
+- Tabelas ativas: `webhook_subscriptions`, `user_neural_profiles`, `adaptive_system_prompts`, `user_integrations`, `stripe_connect_accounts`
+- Funções pgvector (são do extension)
+- `email_templates` (variável local no auth-email-hook, não a tabela — mas para segurança, será mantida)
 
