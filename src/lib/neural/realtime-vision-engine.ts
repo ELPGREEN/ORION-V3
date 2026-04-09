@@ -256,6 +256,9 @@ export async function detectRealTime(
   // Handwritten OCR (run in parallel instead of sequentially — was blocking return)
   const shouldRunHandwritten = isTrOCRReady() && frameCount % 15 === 0;
 
+  // Depth estimation: throttle to every 5th frame (expensive, ~40-80ms)
+  const shouldRunDepth = isDepthReady() && frameCount % 5 === 0;
+
   // Run ALL detectors in parallel (FrameX uses yoloFrameXProxy to avoid duplicate ML inference)
   const [mpResult, yoloResult, depthResult, ocrResult, frameXResult, handwrittenOCRResult] = await Promise.all([
     isMediaPipeReady()
@@ -264,7 +267,7 @@ export async function detectRealTime(
     isYOLOReady()
       ? detectWithYOLO(video).catch(() => [])
       : Promise.resolve([] as YOLODetection[]),
-    isDepthReady()
+    shouldRunDepth
       ? estimateDepth(video).catch(() => null)
       : Promise.resolve(null as DepthEstimationResult | null),
     ocrWorthRunning
