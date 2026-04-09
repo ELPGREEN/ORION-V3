@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Brain, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Users, Cpu, BarChart3, Activity, Target, Zap, PieChart, ArrowUpRight, Plus, RefreshCw } from "lucide-react";
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList } from "recharts";
+import { Loader2, Brain, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Users, Cpu, BarChart3, Activity, Target, Zap, Plus, RefreshCw } from "lucide-react";
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 
 function formatBRL(cents: number) {
