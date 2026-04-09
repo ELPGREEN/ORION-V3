@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Fingerprint, Eye, EyeOff, LogIn, UserPlus, Loader2, Mail, Brain, Shield, Zap, Users, Briefcase, Link2, Scale, ScanFace, CheckCircle, Music } from "lucide-react";
 import { SEO } from "@/components/SEO";
@@ -13,6 +13,8 @@ import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { z } from "zod";
 import logoElp from "@/assets/logo-elp.webp";
 import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { HCAPTCHA_SITE_KEY } from "@/lib/hcaptcha-config";
 
 // ═══════════════════════════════════════
 // Types & Constants
@@ -129,7 +131,8 @@ export default function Auth() {
   const [loginForm, setLoginForm] = useState({ email: "", senha: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showFaceLogin, setShowFaceLogin] = useState(false);
-
+  const hcaptchaRef = useRef<HCaptcha>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   // Face enrollment step (advogado only)
   const [authStep, setAuthStep] = useState<AuthStep>("form");
 
