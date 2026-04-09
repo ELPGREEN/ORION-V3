@@ -404,8 +404,56 @@ export function formatDetectionsForAI(result: RealTimeVisionResult): string {
     );
   }
 
+  // ─── POSE DATA (MediaPipe 33 body landmarks) ───
+  if (result.poses.length > 0) {
+    const poseDescriptions = result.poses.map((pose, i) => {
+      const lm = pose.landmarks;
+      // Interpret body position from key landmarks
+      const nose = lm[0];
+      const leftShoulder = lm[11];
+      const rightShoulder = lm[12];
+      const leftWrist = lm[15];
+      const rightWrist = lm[16];
+      const leftHip = lm[23];
+      const rightHip = lm[24];
+
+      const parts: string[] = [];
+
+      // Standing vs sitting detection
+      if (leftHip && rightHip && leftShoulder && rightShoulder) {
+        const hipY = (leftHip.y + rightHip.y) / 2;
+        const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+        const torsoRatio = Math.abs(hipY - shoulderY);
+        if (torsoRatio < 0.15) parts.push("sentado(a)");
+        else parts.push("em pé");
+      }
+
+      // Arms raised detection
+      if (leftWrist && leftShoulder && leftWrist.y < leftShoulder.y) {
+        parts.push("braço esq. levantado");
+      }
+      if (rightWrist && rightShoulder && rightWrist.y < rightShoulder.y) {
+        parts.push("braço dir. levantado");
+      }
+
+      // Head tilt
+      if (nose && leftShoulder && rightShoulder) {
+        const shoulderMidX = (leftShoulder.x + rightShoulder.x) / 2;
+        const tilt = nose.x - shoulderMidX;
+        if (Math.abs(tilt) > 0.05) {
+          parts.push(`cabeça inclinada para ${tilt > 0 ? "direita" : "esquerda"}`);
+        }
+      }
+
+      const posture = parts.length > 0 ? parts.join(", ") : "postura neutra";
+      const conf = (pose.confidence * 100).toFixed(0);
+      return `Pessoa ${i + 1}: ${posture} (${conf}%)`;
+    });
+    parts.push(`POSTURA CORPORAL (MediaPipe Pose): ${poseDescriptions.join(" | ")}`);
+  }
+
   if (parts.length === 0) {
-    parts.push("Nenhum objeto/rosto/mão detectado localmente neste frame.");
+    parts.push("Nenhum objeto/rosto/mão/pose detectado localmente neste frame.");
   }
 
   // FrameX multi-task data (scene, OCR, movement)
@@ -422,18 +470,18 @@ export function formatDetectionsForAI(result: RealTimeVisionResult): string {
     }
   }
 
-  // NEW: Depth estimation data
+  // Depth estimation data
   if (result.depthResult && result.allObjects.length > 0) {
     const depthStr = formatDepthForAI(result.depthResult, result.allObjects, 640, 480);
     if (depthStr) parts.push(depthStr);
   }
 
-  // NEW: Face attributes (age/gender/emotion)
+  // Face attributes (age/gender/emotion)
   if (result.faceAttributes.length > 0) {
     parts.push(formatFaceAttributesForAI(result.faceAttributes));
   }
 
-  // NEW: Real OCR
+  // Real OCR
   if (result.ocrResult) {
     const ocrStr = formatOCRForAI(result.ocrResult);
     if (ocrStr) parts.push(ocrStr);
@@ -461,7 +509,23 @@ export function formatDetectionsForAI(result: RealTimeVisionResult): string {
     parts.push(formatHandwrittenOCRForAI(result.handwrittenOCR));
   }
 
-  parts.push(`Inferência local: ${result.inferenceMs}ms | MediaPipe: ${result.status.mediapipe ? "✅" : "⏳"} | YOLOv10: ${result.status.yolo ? "✅" : "⏳"} | FrameX: ${result.status.frameX ? "✅" : "⏳"} | Depth: ${result.status.depth ? "✅" : "⏳"} | OCR: ${result.status.ocr ? "✅" : "⏳"} | Gaze: ${result.gazeResult ? "✅" : "⏳"} | TrOCR: ${result.status.handwrittenOCR ? "✅" : "⏳"} | Quantum: ${result.quantumEnhancement ? "✅" : "⏳"}`);
+  // ─── NEW: Regional descriptions ───
+  if (result.regionalDescriptions.length > 0) {
+    const regionStr = formatRegionalForAI(result.regionalDescriptions);
+    if (regionStr) parts.push(regionStr);
+  }
+
+  // ─── NEW: Document layout parsing ───
+  if (result.documentLayout && result.documentLayout.blockCount > 0) {
+    const layoutStr = formatLayoutForAI(result.documentLayout);
+    if (layoutStr) parts.push(layoutStr);
+  }
+
+  // ─── NEW: Temporal context (events, tracking, scene stability) ───
+  const temporalStr = visionTemporalBuffer.formatForAI();
+  if (temporalStr) parts.push(temporalStr);
+
+  parts.push(`Inferência local: ${result.inferenceMs}ms | MediaPipe: ${result.status.mediapipe ? "✅" : "⏳"} | YOLOv10: ${result.status.yolo ? "✅" : "⏳"} | FrameX: ${result.status.frameX ? "✅" : "⏳"} | Depth: ${result.status.depth ? "✅" : "⏳"} | OCR: ${result.status.ocr ? "✅" : "⏳"} | Gaze: ${result.gazeResult ? "✅" : "⏳"} | TrOCR: ${result.status.handwrittenOCR ? "✅" : "⏳"} | Quantum: ${result.quantumEnhancement ? "✅" : "⏳"} | Pose: ${result.status.pose ? "✅" : "⏳"} | Layout: ${result.status.layout ? "✅" : "⏳"}`);
 
   return parts.join("\n");
 }
