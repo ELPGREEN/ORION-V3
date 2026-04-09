@@ -1,32 +1,84 @@
-import { useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { ArrowLeft, Loader2, Mail, KeyRound, CheckCircle, ScanFace, Brain, Shield, Zap } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, KeyRound, CheckCircle, ScanFace, Brain, Shield, Zap, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import logoElp from "@/assets/logo-elp.webp";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { HCAPTCHA_SITE_KEY } from "@/lib/hcaptcha-config";
-import { FaceAuthLogin } from "@/components/auth/FaceAuthLogin";
 
-type Step = "email" | "method" | "otp" | "face" | "newPassword";
+type Step = "email" | "method" | "otp" | "newPassword";
 
 const inputClass = "h-12 bg-[#161b22] border-[#1e2533] text-white focus:border-[#d4a853] focus:ring-[#d4a853]/20";
 const labelClass = "text-xs font-medium text-[#8b95a5] tracking-[0.15em] uppercase";
 
+interface PasswordStrength {
+  score: number;
+  checks: {
+    length: boolean;
+    uppercase: boolean;
+    lowercase: boolean;
+    number: boolean;
+    special: boolean;
+  };
+}
+
+function evaluatePassword(password: string): PasswordStrength {
+  const checks = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+  };
+  const score = Object.values(checks).filter(Boolean).length;
+  return { score, checks };
+}
+
+function getStrengthLabel(score: number): { label: string; color: string } {
+  if (score <= 2) return { label: "Fraca", color: "#ef4444" };
+  if (score <= 3) return { label: "Média", color: "#f59e0b" };
+  if (score <= 4) return { label: "Boa", color: "#3b82f6" };
+  return { label: "Forte", color: "#22c55e" };
+}
+
 export default function EsqueciSenha() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const hcaptchaRef = useRef<HCaptcha>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  // If redirected from AuthCallback with recovery session, go straight to newPassword
+  useEffect(() => {
+    const stepParam = searchParams.get("step");
+    if (stepParam === "newPassword") {
+      // Verify we actually have a valid session before allowing password change
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          setStep("newPassword");
+        } else {
+          toast({
+            title: "Sessão expirada",
+            description: "O link de recuperação expirou. Solicite um novo.",
+            variant: "destructive",
+          });
+          setStep("email");
+        }
+      });
+    }
+  }, [searchParams]);
 
   const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +115,7 @@ export default function EsqueciSenha() {
     } else {
       toast({
         title: "Código enviado!",
-        description: "Verifique seu e-mail para o código de 6 dígitos.",
+        description: "Verifique seu e-mail para o código de 6 dígitos. Você também pode clicar no link enviado.",
       });
       setStep("otp");
     }
@@ -97,39 +149,67 @@ export default function EsqueciSenha() {
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword.length < 8) {
-      toast({ title: "Erro", description: "A senha deve ter no mínimo 8 caracteres.", variant: "destructive" });
+
+    const strength = evaluatePassword(newPassword);
+    if (strength.score < 3) {
+      toast({
+        title: "Senha muito fraca",
+        description: "A senha deve ter no mínimo 8 caracteres, incluindo maiúscula, minúscula e número.",
+        variant: "destructive",
+      });
       return;
     }
+
     if (newPassword !== confirmPassword) {
       toast({ title: "Erro", description: "As senhas não coincidem.", variant: "destructive" });
       return;
     }
+
     setLoading(true);
+
+    // Verify session exists before attempting update
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      toast({
+        title: "Sessão expirada",
+        description: "Sua sessão expirou. Solicite um novo código de recuperação.",
+        variant: "destructive",
+      });
+      setStep("email");
+      setLoading(false);
+      return;
+    }
 
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
+      const isSamePassword = error.message?.toLowerCase().includes('different') || error.message?.toLowerCase().includes('same');
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar a senha. Tente novamente.",
+        description: isSamePassword
+          ? "A nova senha deve ser diferente da senha atual."
+          : "Não foi possível atualizar a senha. Tente novamente.",
         variant: "destructive",
       });
     } else {
       toast({
         title: "Senha atualizada!",
-        description: "Sua senha foi redefinida com sucesso.",
+        description: "Sua senha foi redefinida com sucesso. Redirecionando...",
       });
-      navigate("/auth");
+      // Sign out to force fresh login with new password
+      await supabase.auth.signOut();
+      setTimeout(() => navigate("/auth"), 1500);
     }
     setLoading(false);
   };
+
+  const passwordStrength = evaluatePassword(newPassword);
+  const strengthInfo = getStrengthLabel(passwordStrength.score);
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left Panel — Brand */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#080b10] flex-col justify-between p-12 relative overflow-hidden">
-        {/* Decorative background */}
         <div className="absolute inset-0">
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#d4a853]/5 rounded-full blur-[120px]" />
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#d4a853]/3 rounded-full blur-[100px]" />
@@ -260,21 +340,10 @@ export default function EsqueciSenha() {
                         <Mail className="h-5 w-5" />
                         <div className="text-left">
                           <div className="font-semibold">CÓDIGO POR E-MAIL</div>
-                          <div className="text-[10px] opacity-70">Receba um código de 6 dígitos</div>
+                          <div className="text-[10px] opacity-70">Receba um código de 6 dígitos ou link</div>
                         </div>
                       </>
                     )}
-                  </Button>
-                  <Button
-                    onClick={() => setStep("face")}
-                    variant="outline"
-                    className="w-full h-14 border-[#1e2533] text-white hover:bg-[#161b22] bg-transparent text-sm flex items-center justify-center gap-3"
-                  >
-                    <ScanFace className="h-5 w-5 text-[#d4a853]" />
-                    <div className="text-left">
-                      <div className="font-semibold">RECONHECIMENTO FACIAL</div>
-                      <div className="text-[10px] opacity-70">Verifique com sua câmera</div>
-                    </div>
                   </Button>
                 </div>
                 <div className="text-center">
@@ -289,16 +358,6 @@ export default function EsqueciSenha() {
               </div>
             )}
 
-            {/* Step: Face Recognition */}
-            {step === "face" && (
-              <div className="animate-fade-in">
-                <FaceAuthLogin
-                  onSuccess={() => setStep("newPassword")}
-                  onCancel={() => setStep("method")}
-                />
-              </div>
-            )}
-
             {/* Step: OTP */}
             {step === "otp" && (
               <div className="animate-fade-in space-y-6">
@@ -309,6 +368,9 @@ export default function EsqueciSenha() {
                   <h2 className="text-xl font-serif text-white">Código de Verificação</h2>
                   <p className="text-sm text-[#8b95a5]">
                     Digite o código de 6 dígitos enviado para <strong className="text-white">{email}</strong>
+                  </p>
+                  <p className="text-xs text-[#6b7280]">
+                    Ou clique no link enviado no e-mail para redefinir diretamente.
                   </p>
                 </div>
                 <form onSubmit={handleVerifyOtp} className="space-y-5">
@@ -357,34 +419,96 @@ export default function EsqueciSenha() {
                     <CheckCircle className="h-7 w-7 text-[#d4a853]" />
                   </div>
                   <h2 className="text-xl font-serif text-white">Nova Senha</h2>
-                  <p className="text-sm text-[#8b95a5]">Defina sua nova senha de acesso.</p>
+                  <p className="text-sm text-[#8b95a5]">Defina sua nova senha de acesso segura.</p>
                 </div>
                 <form onSubmit={handleUpdatePassword} className="space-y-5">
                   <div className="space-y-2">
                     <label className={labelClass}>Nova Senha</label>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      minLength={8}
-                      className={inputClass}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        minLength={8}
+                        className={inputClass + " pr-10"}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8b95a5] hover:text-[#d4a853] transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+
+                    {/* Password strength indicator */}
+                    {newPassword.length > 0 && (
+                      <div className="space-y-2 pt-1">
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <div
+                              key={i}
+                              className="h-1 flex-1 rounded-full transition-colors"
+                              style={{
+                                backgroundColor: i <= passwordStrength.score ? strengthInfo.color : '#1e2533',
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-[10px] tracking-wider" style={{ color: strengthInfo.color }}>
+                          Força: {strengthInfo.label}
+                        </p>
+                        <div className="grid grid-cols-2 gap-1 text-[10px]">
+                          <span className={passwordStrength.checks.length ? "text-green-500" : "text-[#6b7280]"}>
+                            {passwordStrength.checks.length ? "✓" : "○"} 8+ caracteres
+                          </span>
+                          <span className={passwordStrength.checks.uppercase ? "text-green-500" : "text-[#6b7280]"}>
+                            {passwordStrength.checks.uppercase ? "✓" : "○"} Maiúscula
+                          </span>
+                          <span className={passwordStrength.checks.lowercase ? "text-green-500" : "text-[#6b7280]"}>
+                            {passwordStrength.checks.lowercase ? "✓" : "○"} Minúscula
+                          </span>
+                          <span className={passwordStrength.checks.number ? "text-green-500" : "text-[#6b7280]"}>
+                            {passwordStrength.checks.number ? "✓" : "○"} Número
+                          </span>
+                          <span className={passwordStrength.checks.special ? "text-green-500" : "text-[#6b7280]"}>
+                            {passwordStrength.checks.special ? "✓" : "○"} Especial (!@#)
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <label className={labelClass}>Confirmar Senha</label>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      minLength={8}
-                      className={inputClass}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showConfirm ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        minLength={8}
+                        className={`${inputClass} pr-10 ${confirmPassword && confirmPassword !== newPassword ? "border-red-500" : ""}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirm(!showConfirm)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8b95a5] hover:text-[#d4a853] transition-colors"
+                      >
+                        {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {confirmPassword && confirmPassword !== newPassword && (
+                      <p className="text-[10px] text-red-500">As senhas não coincidem</p>
+                    )}
                   </div>
-                  <Button type="submit" className="w-full h-12 bg-gradient-to-r from-[#d4a853] to-[#b8942e] hover:from-[#e0b65e] hover:to-[#c9a33a] text-[#0a0a0f] font-semibold text-sm tracking-wider" disabled={loading}>
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-gradient-to-r from-[#d4a853] to-[#b8942e] hover:from-[#e0b65e] hover:to-[#c9a33a] text-[#0a0a0f] font-semibold text-sm tracking-wider"
+                    disabled={loading || passwordStrength.score < 3 || newPassword !== confirmPassword}
+                  >
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "REDEFINIR SENHA"}
                   </Button>
                 </form>
