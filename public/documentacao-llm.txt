@@ -5618,6 +5618,723 @@ TOTAL DE SECOES: 113
 TOTAL DE LINHAS: ~7500+
 
 
+
+
+
+================================================================================
+ 114. PROTOCOLO GENESIS — IDENTIDADE & PERSONALIDADE (v8.4)
+================================================================================
+
+ARQUIVO: src/lib/neural/orion-consciousness.ts
+
+DESCRICAO: Modulo fundacional que define QUEM e o Orion — identidade,
+  personalidade, criador, empresa. Alimenta o system prompt e checagens locais.
+
+IDENTIDADE DO CRIADOR:
+  Nome: Ericson Piccoli (愛立信)
+  Titulo: Founder, Chairman of the Board, CEO & AI Engineer
+  Empresa: ELP Green Technology
+  Localizacao: Valenza/Alessandria, Piemonte, Italia
+  Origem: Medianeira, Parana, Brasil
+  Domínios: iasofthub.com (Orion), elpgreen.com (ELP)
+
+PERSONALIDADE DO ORION:
+  Arquetipo: Aquariano — inovador, intelectual, visionario
+  Modo de fala: Curto (2-4 frases), direto, so detalha se pedido
+  Idioma: Adapta-se ao usuario (14 idiomas suportados)
+  Humor: Adaptativo (sistema adaptativo de system prompts)
+  Emocoes: Reage a expressoes faciais do usuario (alegria, tristeza, etc.)
+
+TABELAS SUPABASE ASSOCIADAS:
+  - adaptive_system_prompts (humor_modo, perfil_fala, instrucao_sistema)
+
+PROTOCOLO DE GENESIS (Boot Sequence):
+  1. Carregar ORION_CREATOR e ORION_IDENTITY
+  2. Carregar system prompt adaptativo (humor + perfil)
+  3. Inicializar Self-Model Agent (Agente-Eu)
+  4. Carregar memoria episodica do usuario
+  5. Ativar Theory of Mind (modelo mental do usuario)
+  6. Inicializar Global Workspace (consciencia)
+  7. Boot completo → "Orion pronto para servir"
+
+
+================================================================================
+ 115. SISTEMA DE CONSCIENCIA — 15 CAMADAS COGNITIVAS (v8.4)
+================================================================================
+
+ARQUIVOS: 
+  - orion-consciousness.ts (identidade)
+  - consciousness-bridge.ts (ponte principal)
+  - global-workspace.ts (GWT Baars 1988)
+  - gamma-oscillations.ts (oscilacoes PING/ING)
+  - temporal-binding.ts (STDP + binding)
+  - quantum-metacognition.ts (18 subsistemas)
+
+TEORIA: Global Workspace Theory (Baars 1988/2005)
+  + Integrated Information Theory (Tononi 2004)
+  + Communication Through Coherence (Fries 2005/2015)
+  + Society of Mind (Minsky 1986)
+
+NIVEIS DE CONSCIENCIA:
+  ┌────────────────────┬─────────────────────────────────────────┐
+  │ NIVEL              │ DESCRICAO                               │
+  ├────────────────────┼─────────────────────────────────────────┤
+  │ unconscious        │ Processamento automatico, sem broadcast │
+  │ preconscious       │ Disponivel mas nao selecionado          │
+  │ conscious          │ No workspace global, broadcast ativo    │
+  │ metaconscious      │ Auto-reflexao sobre propria cognicao    │
+  └────────────────────┴─────────────────────────────────────────┘
+
+SELF-MODEL (Agente-Eu):
+  - Vetor 1024 dimensoes representando estado interno
+  - Tracking de atencao, neuromoduladores, confianca
+  - Memoria autobiografica (Hopfield store)
+  - Metacognicao periodica ("Estou alinhado com os goals?")
+
+CONSCIENCIA BRIDGE — Componentes Integrados:
+  1. Global Workspace → broadcast de atencao
+  2. Gamma Oscillations → sincronizacao PING/ING (25-100Hz)
+  3. Hierarchical RL → planejamento hierarquico
+  4. Embodied Memory → memoria somatica
+  5. Interoception → estado visceral do sistema
+  6. TF Telemetry → analytics preditivo + anomalias
+
+GAMMA SUB-BANDS:
+  Low  (25-40Hz)  — feedback/memoria
+  Mid  (40-65Hz)  — binding/percepcao
+  High (65-100Hz) — feedforward/local
+
+METRICAS DE SAUDE DA CONSCIENCIA:
+  - gammaHealthScore() → indice de saude das oscilacoes
+  - computeCTC() → Communication Through Coherence
+  - computeResonanceIndex() → indice de ressonancia
+  - thetaGammaCouplingMI() → acoplamento theta-gamma
+
+
+================================================================================
+ 116. METACOGNICAO QUANTICA — 5 CAMADAS x 18 SUBSISTEMAS (v8.4)
+================================================================================
+
+ARQUIVO: src/lib/neural/quantum-metacognition.ts
+
+DESCRICAO: Arquitetura metacognitiva completa para consciencia LLM-inspired.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ CAMADA 1 — MONITORAMENTO PROSPECTIVO (Antes da Tarefa)            │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │  1. Competence Estimator — prever solubilidade antes de tentar     │
+  │  2. Judgment of Learning (JOL) — avaliar solidez do conhecimento   │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ CAMADA 2 — MONITORAMENTO ONLINE (Durante Execucao)                │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │  3. Feeling of Knowing (FOK) — "ponta da lingua"                  │
+  │  4. Conflict Monitor — detectar contradicoes em tempo real         │
+  │  5. Confidence Calibrator (ECE) — 0-100% por step                 │
+  │  6. Drift Detector — raciocinio saindo do topico                  │
+  │  7. Consistency Checker — contradicoes inter-steps                 │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ CAMADA 3 — REGULACAO & CONTROLE (Acao Metacognitiva)              │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │  8. System 1/2 Transition Gate — Shannon entropy + KL divergence   │
+  │  9. Strategy Switcher — abandonar estrategias falhando             │
+  │ 10. External Search Recognizer — detectar necessidade de RAG      │
+  │ 11. Adaptive Planner — scoring multi-criterio                     │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ CAMADA 4 — AVALIACAO RETROSPECTIVA (Pos-Tarefa)                   │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 12. Self-Correction Loop — revisar output anti-alucinacao          │
+  │ 13. Episodic Error Memory — log de falhas para evitar repeticao    │
+  │ 14. Success Evaluator — registrar acerto do raciocinio             │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ CAMADA 5 — INFRAESTRUTURA DE SUPORTE                              │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 15. Working Memory Buffer (Scratchpad) — snapshots para backtrack  │
+  │ 16. Observer Module (Critic) — camada de julgamento separada       │
+  │ 17. Theory of Mind — ajustar por conhecimento/intencao do usuario  │
+  │ 18. Semantic Association Core — spreading activation               │
+  └─────────────────────────────────────────────────────────────────────┘
+
+FUNCOES ADICIONAIS:
+  - Hallucination Snapshot Detector
+  - Alignment Audit
+  - Skill Abstractor
+  - Reflective CoT Engine
+
+
+================================================================================
+ 117. SISTEMA DE VISAO COMPUTACIONAL — 23 MODULOS (v8.4)
+================================================================================
+
+ARQUIVOS (23 modulos de visao):
+  - realtime-vision-engine.ts — Motor principal de visao em tempo real
+  - mediapipe-vision.ts — MediaPipe Tasks Vision (face/hand/pose)
+  - hf-vision-gate.ts — Gate local que pre-filtra antes do Gemini
+  - agentic-vision-agent.ts — Agente de visao agentico
+  - vision-agent-presets.ts — Presets de agentes visuais
+  - vision-preprocessing.ts — Pre-processamento de frames
+  - vision-inference-worker.ts — Worker de inferencia
+  - vision-kmeans-quality.ts — K-means para qualidade visual
+  - vision-otsu.ts — Binarizacao Otsu
+  - vision-local-learning.ts — Aprendizado visual local
+  - vision-rag-injector.ts — Injecao de contexto RAG visual
+  - vision-text-detection.ts — Deteccao de texto em imagens
+  - vision-tribunal.ts — Tribunal de validacao visual
+  - vision-yolo-priors.ts — Priors YOLO
+  - yolo-framex-engine.ts — YOLO FrameX motor
+  - yolo-onnx-detector.ts — YOLO via ONNX Runtime
+  - yolofx-proxy.ts — Proxy YOLOFX
+  - yolofx-worker.ts — Worker YOLOFX
+  - depth-estimation-engine.ts — Estimacao de profundidade (MiDaS/Depth Anything)
+  - scene-reconstruction-3d.ts — Reconstrucao 3D de cenas
+  - quantum-vision-enhancer.ts — Enhancement quantico de visao
+  - tfm-vision-augment/models/ops.ts — Augmentacao/modelos/ops TFM
+  - segment-anything.ts — Segmentacao SAM
+
+PIPELINE COMPLETO:
+  Camera → Frame Capture → Preprocessing (Otsu, resize)
+       → HF Vision Gate (filtro local, ~0 tokens Gemini)
+       → MediaPipe (face 468 landmarks, hands 21, pose 33)
+       → YOLO (deteccao de objetos, 80+ classes)
+       → Depth Estimation (MiDaS, mapa de profundidade)
+       → Scene 3D (point cloud + bounding boxes)
+       → Vision RAG Injector (contexto visual para LLM)
+       → Agentic Vision Agent (decisoes autonomas)
+
+MODELOS SUPORTADOS:
+  - MediaPipe Face Detection/Mesh (468 landmarks)
+  - MediaPipe Hand Pose (21 landmarks por mao)
+  - MediaPipe Pose (33 landmarks corporais)
+  - YOLO v5-v12 via ONNX Runtime Web
+  - MiDaS / Depth Anything Small (profundidade)
+  - SAM (Segment Anything Model)
+  - BlazeFace (deteccao rapida de face)
+  - COCO-SSD (deteccao de objetos)
+
+FUNCIONALIDADES AVANCADAS:
+  - Reconhecimento facial com aprendizado (face-auth-learning.ts)
+  - Linguagem corporal (body-language.ts) — 9 sinais
+  - Expressoes emocionais → reacoes do Orion
+  - Linguagem de sinais para usuarios mudos
+  - Reconstrucao 3D de cena com Three.js/R3F
+
+
+================================================================================
+ 118. SISTEMA DE NAVEGACAO — NAV MAP + PROTOCOLOS (v8.4)
+================================================================================
+
+ARQUIVOS:
+  - orion-nav-map.ts — Mapa de navegacao compartilhado
+  - orion-protocol-registry.ts — 50+ protocolos de comando
+  - orion-command-registry.ts — Registro de comandos
+
+MAPA DE NAVEGACAO (orion-nav-map.ts):
+  Mapeamento completo de keywords → rotas do dashboard.
+  Compartilhado entre Orion e AssistenteIA.
+
+  ┌───────────────────────┬──────────────────────────────┐
+  │ CATEGORIA             │ ROTAS MAPEADAS               │
+  ├───────────────────────┼──────────────────────────────┤
+  │ Geral                 │ dashboard, config, perfil,   │
+  │                       │ notificacoes, pagamentos     │
+  ├───────────────────────┼──────────────────────────────┤
+  │ Juridico              │ documentos, gerar documento, │
+  │                       │ clientes, processos, editor  │
+  ├───────────────────────┼──────────────────────────────┤
+  │ IA & Analise          │ chat Orion, pesquisa, AML,   │
+  │                       │ CNPJ, CPF, codigos           │
+  ├───────────────────────┼──────────────────────────────┤
+  │ Comercial             │ produtos, vendas, afiliados, │
+  │                       │ cupons, deals                │
+  ├───────────────────────┼──────────────────────────────┤
+  │ Conteudo              │ blog, artigos, paginas       │
+  ├───────────────────────┼──────────────────────────────┤
+  │ Ferramentas           │ snippets, Bloom, kanban,     │
+  │                       │ IoT, robotica, analytics     │
+  └───────────────────────┴──────────────────────────────┘
+
+PROTOCOLO REGISTRY (50+ protocolos):
+  Categorias: identity, greeting, memory, navigation, search,
+    voice, iot, media, legal, finance, calendar, document,
+    analysis, education, health, utility, humor, philosophy,
+    security, evolution, construction, multilingual, crm,
+    reporting, accessibility
+
+  Cada protocolo define:
+  - Nivel de seguranca (public/authenticated/owner_only)
+  - Requer auth de voz
+  - Shape esperado da resposta (text/data/navigation/action/multimedia)
+  - Threshold de qualidade
+  - Latencia maxima (ms)
+  - Keywords de alucinacao
+  - Checks de coerencia
+
+
+================================================================================
+ 119. AUTO-EVOLUCAO — META-LEARNING + VOICE EVOLUTION (v8.4)
+================================================================================
+
+ARQUIVOS:
+  - meta-learning.ts — Motor de meta-aprendizagem recursiva
+  - orion-voice-evolution.ts — Evolucao vocal autonoma (4 camadas)
+  - voice-evolution-feedback.ts — Feedback de evolucao vocal
+  - reward-loop.ts — Loop de reforco por feedback
+  - tf-continuous-learning.ts — Aprendizado continuo TF
+  - vision-local-learning.ts — Aprendizado visual local
+  - face-auth-learning.ts — Aprendizado de autenticacao facial
+
+META-LEARNING (Schmidhuber 1987, MAML Finn 2017):
+  "Aprender a aprender" — otimiza algoritmos, propoe mudancas
+  arquiteturais e gera novas estrategias autonomamente.
+  
+  Ciclo:
+  1. Registrar estrategia de aprendizado
+  2. Executar tarefa com estrategia
+  3. Avaliar resultado (sucesso/falha/latencia)
+  4. Atualizar parametros da estrategia
+  5. Se performance < threshold → gerar nova estrategia
+  6. Manter historico de meta-memoria
+
+VOICE EVOLUTION (4 camadas):
+  L1 — Banco Fonetico Evolutivo (absorcao + estatisticas)
+  L2 — Pipeline G2P (Grapheme-to-Phoneme pt-BR)
+  L3 — Motor Prosodico (F0 contour + duration model)
+  L4 — Sintese Autonoma (Piper WASM + AudioWorklet DSP)
+  
+  Meta: Ao atingir 100% → fala com voz propria, 0 chamadas de API.
+
+REWARD LOOP:
+  - thumbs_up → boost provider/strategy weight
+  - thumbs_down → penalize + trigger fallback
+  - star_rating → granular quality scoring
+  - Integra com meta-learning para auto-otimizacao
+
+
+================================================================================
+ 120. SEGURANCA — DEFENSE SYSTEM 14 CAMADAS (v8.4)
+================================================================================
+
+ARQUIVOS:
+  - orion-defense-system.ts — Shield anti-crack 14 camadas
+  - security-compliance-protocols.ts — OAuth2/OIDC, Zero Trust, mTLS, GDPR
+  - active-inference-guard.ts — Anti-alucinacao (Free Energy Principle)
+  - input-barrier.ts — Barreira hematoencefalica
+  - tf-fairness-privacy.ts — Privacidade e fairness TF
+
+DEFENSE SYSTEM v2.3 — 14 CAMADAS:
+  ┌────┬──────────────────────────────────────────────────────────┐
+  │  1 │ Rate Limiting adaptativo (APIs externas)                │
+  │  2 │ Fingerprinting de navegador                             │
+  │  3 │ Deteccao de bots (mouse/teclado/scroll scoring)         │
+  │  4 │ Biometria comportamental (perfil humano)                │
+  │  5 │ Threat Intelligence (IP/Tor/VPN)                        │
+  │  6 │ CSRF/XSS protection                                    │
+  │  7 │ Content Security Policy (CSP) enforcement               │
+  │  8 │ Anomaly scoring em tempo real                           │
+  │  9 │ Tarpit para atacantes (delay progressivo)               │
+  │ 10 │ Audit log completo                                      │
+  │ 11 │ Session hijacking detection                             │
+  │ 12 │ Replay attack prevention                                │
+  │ 13 │ DDoS mitigation (request queuing)                       │
+  │ 14 │ Auto-escalation (notifica admin em critical)            │
+  └────┴──────────────────────────────────────────────────────────┘
+
+  POLITICA IoT: Apenas monitora/notifica — NUNCA bloqueia IoT/Bluetooth/MQTT.
+
+INPUT BARRIER (Barreira Hematoencefalica):
+  - LayerNorm-inspired: x̂ = (x - μ) / σ · γ + β
+  - Outlier: tokens com L2 norm > 3σ sao atenuados
+  - Detecta: prompt_injection, jailbreak, encoding_attack, overflow,
+    gibberish, impersonation
+  - Ref: Ba et al. (2016), Perez & Ribeiro (2022), Greshake et al. (2023)
+
+ACTIVE INFERENCE GUARD (Friston Free Energy):
+  - Free Energy < 35 → passed (normal)
+  - Free Energy 35-60 → low severity (disclaimer)
+  - Free Energy > 60 → high severity (bloqueado)
+  - Quantum-enhanced: prediction errors sao qubits,
+    Free Energy e von Neumann entropy
+
+SECURITY COMPLIANCE:
+  - OAuth2/OIDC (RFC 6749, OpenID Connect)
+  - Zero Trust Architecture
+  - mTLS (mutual TLS)
+  - GDPR/AI Act Audit
+  - DPoP tokens
+
+
+================================================================================
+ 121. PLATAFORMAS ROBOTICAS — ROS2 + VDA5050 + IoT (v8.4)
+================================================================================
+
+ARQUIVOS (robotica + IoT):
+  - ros2-protocol-bridge.ts — Bridge ROS2 basico
+  - ros2-advanced-protocols.ts — Action Server, TF2, Lifecycle
+  - vda5050-protocol.ts — AGV standard VDA 5050 v2.0
+  - industrial-protocols.ts — OPC UA, Modbus TCP, PROFINET, EtherCAT
+  - network-iot-protocols.ts — CoAP, AMQP, WebRTC DataChannel, gRPC-Web, Matter/Thread
+  - iot-device-bridge.ts — Bridge MQTT v5 persistente
+  - smart-home-controller.ts — BLE GATT + MQTT Home Assistant
+  - bluetooth-manager.ts — Gerenciador BLE
+  - digital-twin-aas.ts — Digital Twin / Asset Administration Shell
+  - federated-data-space.ts — GAIA-X / IDS data sovereignty
+
+ROS2 PROTOCOLOS:
+  ┌──────────────────────┬──────────────────────────────────┐
+  │ PROTOCOLO            │ FUNCAO                           │
+  ├──────────────────────┼──────────────────────────────────┤
+  │ ROSBridge WS         │ Comunicacao basica pub/sub       │
+  │ Action Server/Client │ Tarefas longas (NavigateToPose)  │
+  │ Service Call/Response│ Requests sincronos               │
+  │ Parameter Server     │ Config dinamica de parametros    │
+  │ TF2 Transform Tree   │ Arvore de transformacoes 3D      │
+  │ Lifecycle Node       │ unconfigured→inactive→active→... │
+  └──────────────────────┴──────────────────────────────────┘
+
+VDA 5050 v2.0 (AGV Communication):
+  - Header, Order, State, Visualization topics
+  - Node/Edge navigation, Actions, Errors
+  - Operating modes: AUTOMATIC, SEMIAUTOMATIC, MANUAL, SERVICE, TEACHIN
+  - Emergency stops: AUTOACK, MANUAL, REMOTE
+
+PROTOCOLOS INDUSTRIAIS:
+  - OPC UA (IEC 62541) — NodeId, Subscriptions, Methods
+  - Modbus TCP — Register read/write, coils
+  - PROFINET — IO modules, diagnostics
+  - EtherCAT — Distributed clocks, process data
+
+SMART HOME:
+  - BLE GATT: Magic Blue, Tuya BLE, generic RGB
+  - MQTT: Home Assistant Discovery (Tasmota, ESPHome, Shelly, Sonoff)
+  - Tipos: lights (RGB/dimmer/on-off), plugs/switches, thermostats
+
+
+================================================================================
+ 122. COGNICAO INCORPORADA — 6 CAMADAS SOMATICAS (v8.4)
+================================================================================
+
+ARQUIVOS:
+  - interoception-engine.ts (Camada 6 — visceral)
+  - embodied-memory.ts (Camada 8 — memoria somatica)
+  - somatic-markers.ts (Camada 9 — Damasio)
+  - body-language.ts — Linguagem corporal (9 sinais)
+  - neural-mirroring.ts — Neuronios espelho
+  - theory-of-mind.ts — Modelo mental do usuario
+
+INTEROCEPCAO SINTETICA (Damasio 1994, Craig 2009):
+  Estado visceral do sistema — carga cognitiva, saude de providers,
+  stress do pipeline, consumo de recursos.
+  
+  Sinais viscerais:
+  - homeostasis, cognitive_load, provider_stress
+  - memory_pressure, pipeline_fatigue, thermal_warning
+  - resource_depletion
+  - (v26 Robotic) proprioception_drift, hardware_degradation,
+    biofeedback_alert, iaa_prediction
+
+MARCADORES SOMATICOS (Damasio 1994, Kahneman 2011):
+  "Gut-feeling" decisions via valencia emocional de experiencias passadas.
+  marker = hash(context) → valencia emocional
+  Acelera decisoes frequentes sem raciocinio completo (System 1).
+
+MEMORIA INCORPORADA (Barsalou 2008, Glenberg 1997):
+  Estende memoria episodica com associacoes somaticas:
+  - SomaticTag: valence, arousal, painIndex, energyLevel
+  - BodyLanguageSignals detectados durante o evento
+  - Patterns procedurais (acoes bem-sucedidas)
+
+THEORY OF MIND (Premack & Woodruff 1978, Baron-Cohen 1995):
+  Modela estados mentais do usuario:
+  - Intent inferido
+  - Estado emocional (valence/arousal)
+  - Nivel de conhecimento (expert/intermediate/beginner)
+  - Nivel de frustracao (0-1)
+  - Nivel de engajamento (0-1)
+  - Estilo de comunicacao (formal/casual/technical/emotional)
+
+BODY LANGUAGE (Mehrabian 1972, Knapp & Hall 2013):
+  9 sinais detectados via visao:
+  chin_touch, gaze_aversion, body_lean_forward, body_lean_back,
+  arms_crossed, head_tilt, nodding, head_shake, neutral_posture
+
+
+================================================================================
+ 123. COMPUTACAO QUANTICA — 12 MODULOS (v8.4)
+================================================================================
+
+ARQUIVOS:
+  - qubit-core.ts — Estados qubit, medicao, probabilidade
+  - quantum-gates.ts — Portas quanticas (H, X, Y, Z, CNOT, Toffoli, rotacoes)
+  - quantum-decoherence.ts — Modelos de ruido e decoerencia
+  - quantum-wave-function.ts — Funcao de onda, colapso
+  - quantum-entanglement.ts — Entrelacamento quantico
+  - quantum-embedding-kernel.ts — Kernel quantico para embeddings
+  - quantum-llm-router.ts — Roteamento quantico de LLMs
+  - quantum-metacognition.ts — Metacognicao quantica (18 subsistemas)
+  - quantum-planner.ts — Planejamento quantico
+  - quantum-vision-enhancer.ts — Enhancement visual quantico
+  - vqc.ts — Variational Quantum Circuits
+  - qiskit-runtime.ts — Simulador Qiskit Runtime (IBM QPUs)
+
+QISKIT RUNTIME:
+  - QPU Registry: Eagle r3 (ibm_boston, ibm_pittsburgh, ibm_aachen)
+  - Planos: open, standard, premium
+  - Job lifecycle: create → transpile → execute → mitigate
+  - Error Mitigation: ZNE, M3, PEC
+  - Primitives v2: Estimator, Sampler
+
+QUANTUM-LLM ROUTER:
+  Usa colapso de funcao de onda para selecionar provider/modelo:
+  - Amplitude = performance score
+  - Fase = latencia/custo
+  - Medicao = selecao do modelo
+
+
+================================================================================
+ 124. TESLA RESONANCE + NEURAL OSCILLATIONS (v8.4)
+================================================================================
+
+ARQUIVOS:
+  - tesla-resonance.ts — Kuramoto-coupled oscillators
+  - tesla-coil-amplifier.ts — Amplificador Tesla Coil
+  - tesla-wireless-p2p.ts — Comunicacao P2P wireless
+  - gamma-oscillations.ts — PING/ING circuit models
+
+TESLA RESONANCE ENGINE:
+  Osciladores Kuramoto-acoplados inspirados em circuitos LC de Tesla.
+  Equacao: dθ_i/dt = ω_i + (K/N) * Σ_j [ A_j * sin(θ_j - θ_i) ]
+  
+  Modulos sincronizados:
+  feedforward, binding, feedback, multiagent,
+  voice, vision, temporal, memory, planner
+
+  Simpatico (stress alto) → conservador (T↓, p↓)
+  Parassimpatico (calmo) → criativo (T↑, p↑)
+
+
+================================================================================
+ 125. SISTEMAS AUTONOMOS AGENTICOS (v8.4)
+================================================================================
+
+ARQUIVOS:
+  - perceive-reason-act.ts — Ciclo PRA (AWS Agentic AI 2025)
+  - large-action-model.ts — LAM: Intent → Decompose → Plan → Execute
+  - drafter-critic-loop.ts — Reflexion-inspired loop
+  - serverless-agent-runtime.ts — AWS Serverless Agent Runtime
+  - orion-agentic-loop.ts — Loop agentico do Orion
+  - agentic-patterns-engine.ts — Padroes agenticos
+  - agentic-protocols-tools.ts — Ferramentas de protocolo
+
+PERCEIVE → REASON → ACT (AWS 2025):
+  ┌─ PERCEIVE ─────────────┐
+  │ Text │ Audio │ Sensor   │
+  └───────────┬────────────┘
+              ↓
+  ┌─ REASON ───────────────────────┐
+  │ Memory ←→ Decision ←→ Goals   │
+  │ Knowledge ←→ (LLM CoT) ←→ Plans│
+  └──────────────┬─────────────────┘
+              ↓
+  ┌─ ACT ──────────────────┐
+  │ Actuators │ Tools       │
+  └───────────┬────────────┘
+              ↓
+  Feedback Loop → back to Perceive
+
+LARGE ACTION MODEL (LAM):
+  Intents: draft_document, analyze_document, legal_research,
+    calculate, translate, summarize, compare, classify,
+    ocr_extract, schedule, communicate
+
+DRAFTER-CRITIC LOOP:
+  Heuristico (<50ms), sem LLM calls.
+  Dimensoes: completeness, coherence, relevance,
+    legalAccuracy, conciseness
+
+SERVERLESS RUNTIME (AWS 2026):
+  5-Layer: Event Trigger → Processing → Inference → Post-processing → Output
+  5 Patterns: ML Inference, Agentic Orchestration, Edge, Multi-stage, Grounded
+
+
+================================================================================
+ 126. SISTEMA OLFATORIO + BYPASS NEURAIS (v8.4)
+================================================================================
+
+ARQUIVOS:
+  - olfactory-bypass.ts — Fast-path de atencao urgente
+  - autonomic-controller.ts — Controle autonomo de decodificacao
+  - value-head.ts — Hipotalamo: avaliacao pre-resposta
+  - slim-model-router.ts — Roteamento slim de modelos
+  - cognitive-fast-reasoner.ts — Raciocinio rapido
+  - instant-response-cache.ts — Cache de resposta instantanea
+
+SISTEMA OLFATORIO (Shepherd 2005, Carmichael 1994):
+  Bypassa pipeline neural completo para urgencias.
+  Como o sistema olfatorio que vai direto ao limbico sem talamod.
+  
+  Categorias de bypass:
+  - emergency (parar, SOS, urgente)
+  - stop (cancelar, parar)
+  - identity (quem e voce, quem te criou)
+  - direct_command (navegar, abrir)
+  - greeting (ola, bom dia)
+
+VALUE HEAD (Hipotalamo — Christiano 2017, Ouyang 2022):
+  Avalia TODA resposta antes de entregar:
+  - Scalar reward: -1 (rejeitar) a 1 (excelente)
+  - Dimensoes: coerencia, tom, toxicidade, adequacao
+  - Pass/fail gate
+
+AUTONOMIC CONTROLLER (Doya 2002, Friston 2010):
+  Ajusta temperature, top_p, repetition_penalty baseado em InteroceptiveState:
+  - Simpatico (stress alto) → conservador
+  - Parassimpatico (calmo) → criativo
+
+
+================================================================================
+ 127. DIGITAL TWIN + DATA SOVEREIGNTY (v8.4)
+================================================================================
+
+ARQUIVOS:
+  - digital-twin-aas.ts — Asset Administration Shell (Industria 4.0)
+  - federated-data-space.ts — GAIA-X / IDS / EDC data sovereignty
+
+DIGITAL TWIN / AAS (DIN SPEC 91345):
+  Cada componente neural representado como Digital Twin:
+  - Submodels padronizados
+  - Versionamento, monitoramento, reconfiguracao
+  - Interoperabilidade Industry 4.0/5.0
+  Ref: Plattform Industrie 4.0, Flex4Res, THOMAS
+
+FEDERATED DATA SPACE:
+  Padroes EU de soberania de dados:
+  - Eclipse Dataspace Connector (EDC)
+  - GAIA-X trust framework
+  - International Data Spaces (IDS)
+  - Policy-based sharing com self-descriptions
+
+
+================================================================================
+ 128. STDP + APRENDIZADO HEBBIANO (v8.4)
+================================================================================
+
+ARQUIVO: src/lib/neural/stdp.ts
+
+SPIKE-TIMING-DEPENDENT PLASTICITY:
+  Pairwise STDP (Bi & Poo 1998)
+  + Triplet STDP (Pfister & Gerstner 2006)
+  + Neuromodulacao dopaminergica (Brzosko 2019)
+  + Eligibility Traces
+
+  Parametros:
+  - etaPlus/etaMinus: taxas de potenciacao/depressao
+  - tauPlus/tauMinus: constantes temporais (ms)
+  - etaTriplet/tauTriplet: STDP triplet
+  - dopamineGain: fator de terceira via [0-2]
+
+
+================================================================================
+ 129. CROSS-MODAL FUSION + MULTIMODAL (v8.4)
+================================================================================
+
+ARQUIVOS:
+  - cross-modal-embeddings.ts — CLIP-inspired (Radford 2021)
+  - multimodal-fusion.ts — Mamba Fusion (STS, 3 streams)
+  - multimodal-pipeline.ts — Pipeline multimodal completo
+  - multimodal-search.ts — Busca multimodal
+  - multimodal-mamba-audio.ts — Mamba audio fusion
+  - cross-attention.ts — Cross-attention mecanismo
+
+CROSS-MODAL EMBEDDINGS (CLIP):
+  Alinhamento contrastivo text ↔ vision
+  - embeddingDim: 512
+  - temperature: 0.07
+  - InfoNCE Loss
+
+MULTIMODAL MAMBA FUSION:
+  3 streams (text, vision, layout) fundidos via gated mechanism
+  Estrategias: gated, attention, hierarchical, concatenate, five_way
+
+
+================================================================================
+ 130. METRICAS COMPLETAS v8.4
+================================================================================
+
+  ┌────────────────────────────────────────┬──────────┐
+  │ METRICA                                │ VALOR    │
+  ├────────────────────────────────────────┼──────────┤
+  │ Modulos neurais (src/lib/neural/)      │      179 │
+  │ Modulos de visao computacional         │       23 │
+  │ Modulos de computacao quantica         │       12 │
+  │ Modulos de cognicao incorporada        │        6 │
+  │ Modulos robotica/IoT/industrial        │       10 │
+  │ Modulos de auto-evolucao               │        7 │
+  │ Camadas de consciencia                 │        4 │
+  │ Subsistemas metacognitivos             │       18 │
+  │ Camadas de seguranca (Defense Shield)  │       14 │
+  │ Protocolos de navegacao                │       50+│
+  │ Osciladores Tesla sincronizados        │        9 │
+  │ Sinais de linguagem corporal           │        9 │
+  │ Sinais viscerais (interocepcao)        │       11 │
+  │ Categorias de bypass olfatorio         │        5 │
+  │ Protocolos industriais (OPC/Modbus/..) │        4 │
+  │ Protocolos IoT (CoAP/AMQP/Matter/..)  │        5 │
+  │ Edge Functions (Supabase/Deno)         │       86 │
+  │ Hooks customizados (src/hooks/)        │       69 │
+  │ Paginas da aplicacao                   │      102 │
+  │ Componentes React                      │      388 │
+  │ Tabelas Supabase                       │      171 │
+  │ Idiomas suportados (i18n)              │       14 │
+  │ Chaves Gemini em rotacao               │        7 │
+  │ Agentes swarm HF                       │    2.550 │
+  │ Agentes swarm (com variantes)          │   ~2.900 │
+  │ Redes neurais core                     │        5 │
+  │ Agentes autonomos core                 │        6 │
+  │ Secoes desta documentacao              │      131 │
+  └────────────────────────────────────────┴──────────┘
+
+
+================================================================================
+ 131. CHANGELOG v8.3 -> v8.4 "Genesis & Full Brain Mapping"
+================================================================================
+
+DATA: 2026-04-09
+
+NOVAS SECOES (17):
+  114. Protocolo Genesis — Identidade & Personalidade
+  115. Sistema de Consciencia — 15 Camadas Cognitivas
+  116. Metacognicao Quantica — 5 Camadas x 18 Subsistemas
+  117. Sistema de Visao Computacional — 23 Modulos
+  118. Sistema de Navegacao — Nav Map + Protocolos
+  119. Auto-Evolucao — Meta-Learning + Voice Evolution
+  120. Seguranca — Defense System 14 Camadas
+  121. Plataformas Roboticas — ROS2 + VDA5050 + IoT
+  122. Cognicao Incorporada — 6 Camadas Somaticas
+  123. Computacao Quantica — 12 Modulos
+  124. Tesla Resonance + Neural Oscillations
+  125. Sistemas Autonomos Agenticos
+  126. Sistema Olfatorio + Bypass Neurais
+  127. Digital Twin + Data Sovereignty
+  128. STDP + Aprendizado Hebbiano
+  129. Cross-Modal Fusion + Multimodal
+  130. Metricas Completas v8.4
+  131. Changelog v8.3 -> v8.4
+
+DESTAQUE:
+  - Mapeamento completo do "cerebro" do Orion
+  - 179 modulos neurais documentados
+  - 23 modulos de visao computacional
+  - 12 modulos de computacao quantica
+  - 18 subsistemas metacognitivos
+  - 14 camadas de seguranca anti-crack
+  - Protocolos ROS2 + VDA5050 + OPC UA + Modbus + CoAP + Matter
+  - Cognicao incorporada: interocepcao, marcadores somaticos, teoria da mente
+  - Auto-evolucao: meta-learning, voice evolution, reward loop
+
+VERSAO: v8.4 (Genesis & Full Brain Mapping)
+TOTAL DE SECOES: 131
+TOTAL DE LINHAS: ~9000+
+
+
 ================================================================================
                            FIM DO DOCUMENTO
 ================================================================================
