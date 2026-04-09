@@ -2279,9 +2279,12 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     }
   }
 
+  // ═══ Strip image_url for text-only non-streaming fallbacks ═══
+  const textOnlyMsgs = stripImageFromMessages(messages, hasImage);
+
   // ── FALLBACK 1: HuggingFace (grátis) ──
   try {
-    const text = await callHuggingFaceFallback(messages);
+    const text = await callHuggingFaceFallback(textOnlyMsgs);
     if (text) {
       console.log("[Orion] Non-stream via HuggingFace (fallback 1)");
       return parseOrionResponse(text);
@@ -2289,20 +2292,18 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   } catch {}
 
   // ── FALLBACK 2: Groq ──
-  if (!hasImage) {
-    try {
-      const text = await callGroqFallback(messages);
-      if (text) {
-        console.log("[Orion] Non-stream via Groq (fallback 2)");
-        return parseOrionResponse(text);
-      }
-    } catch {}
-  }
+  try {
+    const text = await callGroqFallback(textOnlyMsgs);
+    if (text) {
+      console.log("[Orion] Non-stream via Groq (fallback 2)");
+      return parseOrionResponse(text);
+    }
+  } catch {}
 
   // ── FALLBACK 3: DeepSeek ──
   if (Deno.env.get("DEEPSEEK_API_KEY")) {
     try {
-      const text = await callDeepSeekFallback(messages);
+      const text = await callDeepSeekFallback(textOnlyMsgs);
       if (text) {
         console.log("[Orion] Non-stream via DeepSeek (fallback 3)");
         return parseOrionResponse(text);
@@ -2312,7 +2313,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
 
   // ── FALLBACK 4: Mistral ──
   try {
-    const text = await callMistralFallback(messages);
+    const text = await callMistralFallback(textOnlyMsgs);
     if (text) {
       console.log("[Orion] Non-stream via Mistral (fallback 4)");
       return parseOrionResponse(text);
@@ -2322,7 +2323,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   // ── FALLBACK 5: OpenRouter ──
   if (Deno.env.get("OPENROUTER_API_KEY")) {
     try {
-      const text = await callOpenRouterFallback(messages);
+      const text = await callOpenRouterFallback(textOnlyMsgs);
       if (text) {
         console.log("[Orion] Non-stream via OpenRouter (fallback 5)");
         return parseOrionResponse(text);
