@@ -127,10 +127,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   const hasGreetedRef = useRef(false);
 
-  // ═══ Eagerly preload all vision models on mount ═══
-  useEffect(() => {
-    preloadAllVision().catch(() => console.warn("[Vision] Eager model preload failed"));
-  }, []);
+  // ═══ Vision models preload deferred to camera activation ═══
+  // preloadAllVision() is called inside startCamera() instead of mount
+  // This prevents excessive WebGL context creation and GPU usage on boot
 
   // ═══ Camera controls ═══
   const startCamera = useCallback(async (options?: { announce?: boolean }) => {
