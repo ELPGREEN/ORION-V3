@@ -39,7 +39,7 @@ function GridPlane() {
   return (
     <gridHelper
       ref={ref}
-      args={[40, 40, "#D4AF3715", "#3B82F610"]}
+      args={[40, 40, "#D4AF37", "#3B82F6"]}
       position={[0, -3, 0]}
       rotation={[0, 0, 0]}
     />

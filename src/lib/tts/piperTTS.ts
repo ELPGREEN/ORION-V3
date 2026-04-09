@@ -27,18 +27,8 @@ let firebaseModelChecked = false; // Only log once
  * Silently handles CORS/network errors to avoid console spam.
  */
 async function resolveFirebaseModelUrl(): Promise<string | null> {
-  if (firebaseModelUrl) return firebaseModelUrl;
-  if (firebaseModelChecked) return null; // Already tried and failed, don't retry
-  firebaseModelChecked = true;
-  try {
-    const modelRef = ref(firebaseStorage, `tts-models/${PT_BR_VOICE}.onnx`);
-    firebaseModelUrl = await getDownloadURL(modelRef);
-    console.log("[Piper TTS] Model URL resolved from Firebase Storage");
-    return firebaseModelUrl;
-  } catch {
-    // Model not uploaded to Firebase or CORS blocked — silently skip
-    return null;
-  }
+  // Firebase Storage CORS is broken for this model — skip entirely to prevent retry loops
+  return null;
 }
 
 /**

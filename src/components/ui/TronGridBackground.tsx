@@ -101,7 +101,7 @@ function GridFloor() {
   return (
     <gridHelper
       ref={ref}
-      args={[30, 30, "#00bcd415", "#D4AF3708"]}
+      args={[30, 30, "#00bcd4", "#D4AF37"]}
       position={[0, -3.5, -5]}
     />
   );
