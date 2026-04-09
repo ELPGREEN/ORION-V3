@@ -122,7 +122,8 @@ async function callVertexAI(messages: any[], stream: boolean): Promise<Response 
   if (!token) return null;
 
   const hasImage = messages.some((m: any) => Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url"));
-  const model = hasImage ? GEMINI_VISION_MODEL : GEMINI_TEXT_MODEL;
+  // Vertex AI uses different model IDs than generativelanguage.googleapis.com
+  const model = "gemini-2.5-flash";
 
   // Convert OpenAI-style messages to Gemini format
   const systemInstruction = messages.find((m: any) => m.role === "system");
