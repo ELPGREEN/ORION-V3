@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { translations, Language, TranslationKeys, defaultLanguage } from '@/i18n';
+import { loadTranslation, getLoadedTranslation, Language, TranslationKeys, defaultLanguage } from '@/i18n';
+import pt from '@/i18n/pt.json';
 
 interface LanguageContextType {
   language: Language;
@@ -13,32 +14,43 @@ const STORAGE_KEY = 'preferred-language';
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
-    // Try to get saved language from localStorage
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(STORAGE_KEY) as Language;
-      if (saved && translations[saved]) {
+      if (saved && ['pt','en','de','es','fr','it','zh','ja','ko','ru','ar','hi','tr'].includes(saved)) {
         return saved;
       }
     }
     return defaultLanguage;
   });
 
+  const [currentTranslation, setCurrentTranslation] = useState<TranslationKeys>(pt);
+
+  // Load translation on mount and language change
+  useEffect(() => {
+    let cancelled = false;
+    loadTranslation(language).then((t) => {
+      if (!cancelled) setCurrentTranslation(t);
+    });
+    return () => { cancelled = true; };
+  }, [language]);
+
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem(STORAGE_KEY, lang);
-    // Update HTML lang attribute
     document.documentElement.lang = lang;
+    // Pre-load translation eagerly
+    const cached = getLoadedTranslation(lang);
+    if (cached) {
+      setCurrentTranslation(cached);
+    }
   }, []);
 
   useEffect(() => {
-    // Set initial HTML lang attribute
     document.documentElement.lang = language;
   }, [language]);
 
-  const t = translations[language] as TranslationKeys;
-
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t: currentTranslation }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -47,17 +59,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (!context) {
-    // Return default values instead of throwing to handle edge cases during HMR/initial render
     return {
       language: defaultLanguage,
       setLanguage: () => {},
-      t: translations[defaultLanguage],
+      t: pt as TranslationKeys,
     };
   }
   return context;
 }
 
-// Utility hook for getting a specific translation path
 export function useTranslation() {
   const { t, language, setLanguage } = useLanguage();
   return { t, language, setLanguage };
