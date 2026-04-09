@@ -5018,6 +5018,45 @@ export type Database = {
           },
         ]
       }
+      orion_financial_entries: {
+        Row: {
+          amount_cents: number
+          category: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          tags: string[] | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       orion_frameworks: {
         Row: {
           author_agent: string
@@ -5325,6 +5364,36 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      orion_reports: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          period_end: string | null
+          period_start: string | null
+          report_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          report_type?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          report_type?: string
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -108,6 +108,7 @@ const MeusAcessos = lazy(lazyRetry(() => import("./pages/dashboard/MeusAcessos")
 const ExplorarLojas = lazy(lazyRetry(() => import("./pages/dashboard/ExplorarLojas")));
 const ConfigurarIA = lazy(lazyRetry(() => import("./pages/dashboard/ConfigurarIA")));
 const PlanoUsuario = lazy(lazyRetry(() => import("./pages/dashboard/PlanoUsuario")));
+const OrionOrchestratorPage = lazy(lazyRetry(() => import("./pages/dashboard/OrionOrchestratorPage")));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -272,6 +273,7 @@ const App = () => (
                     <Route path="arquitetura-ia" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="dispositivos" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="plano" element={<PlanoUsuario />} />
+                    <Route path="orion-orchestrator" element={<RoleGuard allowedRoles={["advogado"]}><OrionOrchestratorPage /></RoleGuard>} />
                     <Route path="orion" element={<Navigate to="/consulta" replace />} />
                   </Route>
 
