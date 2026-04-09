@@ -219,6 +219,25 @@ export default function ApiKeysPanel() {
         </CardHeader>
       </Card>
 
+      {/* Orion Activation Info */}
+      <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
+        <Zap className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-foreground">⚡ Ativação instantânea do Orion</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Ao adicionar uma chave de API, o <strong>Orion é ativado imediatamente</strong> — mesmo sem assinatura paga.
+            Sua chave alimenta o Orion diretamente, sem intermediários.
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Se você remover a chave ou ela expirar, o Orion será desativado por essa via.
+            Porém, <strong>a ativação via assinatura premium continua funcionando normalmente</strong> — são dois caminhos independentes.
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+            Resumindo: <span className="text-primary">Chave API = Orion ligado</span>. Sem chave + sem assinatura = Orion no modo compartilhado.
+          </p>
+        </div>
+      </div>
+
       {/* Security Info */}
       <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/20 border border-border/40">
         <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
