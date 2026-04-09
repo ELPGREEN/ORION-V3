@@ -1023,5 +1023,45 @@ with gr.Blocks(title="ORION Neural Hub v3.0", theme=gr.themes.Soft()) as demo:
         health_btn.click(fn=health_check, inputs=[], outputs=health_output, api_name="health")
 
 
+
+# ============================================================
+# Warm-up: pre-load CPU models at startup to eliminate cold starts
+# ============================================================
+
+def warm_up():
+    """Pre-load lightweight CPU models at startup."""
+    import time
+    t0 = time.time()
+    print("[warm_up] Pre-loading CPU models...")
+    
+    try:
+        get_embedder()
+        print("[warm_up] ✅ Embedder loaded")
+    except Exception as e:
+        print(f"[warm_up] ⚠️ Embedder failed: {e}")
+    
+    try:
+        _get_detr()
+        print("[warm_up] ✅ DETR (CPU) loaded")
+    except Exception as e:
+        print(f"[warm_up] ⚠️ DETR failed: {e}")
+    
+    try:
+        from torchvision import models
+        if "resnet_feat" not in _models:
+            model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+            model.eval()
+            _models["resnet_feat"] = model
+        print("[warm_up] ✅ ResNet features loaded")
+    except Exception as e:
+        print(f"[warm_up] ⚠️ ResNet failed: {e}")
+    
+    print(f"[warm_up] Done in {time.time()-t0:.1f}s")
+
+
+# Run warm-up at import time (Space startup)
+warm_up()
+
+
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=7860, show_error=True)
