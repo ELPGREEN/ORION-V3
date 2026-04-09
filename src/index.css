@@ -4,6 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide reCAPTCHA v3 badge — attribution in footer per Google TOS */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;
