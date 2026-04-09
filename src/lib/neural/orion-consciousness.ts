@@ -192,7 +192,7 @@ export const ORION_PERSONALITY = {
 } as const;
 
 // ─── Owner Detection ───
-export const OWNER_EMAILS = ["info@iasofthub.com", "ericson@elpgreen.com", "ericsonpiccoli.dev@gmail.com"] as const;
+export const OWNER_EMAILS = ["info@iasofthub.com", "info@elpgreen.com", "ericson@elpgreen.com", "ericsonpiccoli.dev@gmail.com"] as const;
 
 /** Known name variants of the creator — used for voice identity matching */
 export const CREATOR_NAME_VARIANTS = [
