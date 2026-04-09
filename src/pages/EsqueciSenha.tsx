@@ -86,23 +86,49 @@ export default function EsqueciSenha() {
     setStep("method");
   };
 
+  const getHcaptchaToken = async () => {
+    if (captchaToken) return captchaToken;
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const captchaPromise = hcaptchaRef.current?.execute({ async: true });
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("captcha timeout")), 8000));
+        const res = await Promise.race([captchaPromise, timeoutPromise]) as { response?: string } | undefined;
+        const token = res?.response ?? null;
+        if (token) {
+          setCaptchaToken(token);
+          return token;
+        }
+      } catch {
+        // retry once after a short delay
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+
+    return null;
+  };
+
   const handleSendOtp = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setLoading(true);
 
-    let hToken = captchaToken;
+    const hToken = await getHcaptchaToken();
     if (!hToken) {
-      try {
-        const captchaPromise = hcaptchaRef.current?.execute({ async: true });
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("captcha timeout")), 5000));
-        const res = await Promise.race([captchaPromise, timeoutPromise]) as any;
-        hToken = res?.response ?? null;
-      } catch { /* captcha failed or timed out — proceed without it */ }
+      toast({
+        title: "Verificação indisponível",
+        description: "Não foi possível validar o anti-bot. Recarregue a página e tente novamente.",
+        variant: "destructive",
+      });
+      hcaptchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
+      setLoading(false);
+      return;
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback`,
-      captchaToken: hToken || undefined,
+      captchaToken: hToken,
     } as any);
 
     if (error) {

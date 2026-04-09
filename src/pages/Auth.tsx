@@ -197,22 +197,46 @@ export default function Auth() {
     setResendLoading(false);
   };
 
+  const getHcaptchaToken = async () => {
+    if (captchaToken) return captchaToken;
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await hcaptchaRef.current?.execute({ async: true });
+        const token = res?.response ?? null;
+        if (token) {
+          setCaptchaToken(token);
+          return token;
+        }
+      } catch {
+        // retry once after a short delay
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+
+    return null;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateLogin()) return;
     setLoading(true);
     setEmailNotConfirmed(null);
 
-    // Get hCaptcha token for Supabase
-    let hToken = captchaToken;
+    const hToken = await getHcaptchaToken();
     if (!hToken) {
-      try {
-        const res = await hcaptchaRef.current?.execute({ async: true });
-        hToken = res?.response ?? null;
-      } catch { /* fallback */ }
+      toast({
+        title: "Verificação indisponível",
+        description: "Não foi possível validar o anti-bot. Recarregue a página e tente novamente.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      hcaptchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
+      return;
     }
 
-    // reCAPTCHA v3 verification (additional layer)
     const token = await verifyRecaptcha("login");
     if (token) {
       try {
@@ -224,10 +248,12 @@ export default function Auth() {
           setCaptchaToken(null);
           return;
         }
-      } catch { /* Allow through if verification service is down */ }
+      } catch {
+        // Allow through if verification service is down
+      }
     }
 
-    const { error } = await signIn(loginForm.email, loginForm.senha, hToken || undefined);
+    const { error } = await signIn(loginForm.email, loginForm.senha, hToken);
     if (error) {
       if (error.message.includes("Email not confirmed")) {
         setEmailNotConfirmed(loginForm.email);
@@ -251,16 +277,19 @@ export default function Auth() {
     if (!validateCadastro()) return;
     setLoading(true);
 
-    // Get hCaptcha token for Supabase
-    let hToken = captchaToken;
+    const hToken = await getHcaptchaToken();
     if (!hToken) {
-      try {
-        const res = await hcaptchaRef.current?.execute({ async: true });
-        hToken = res?.response ?? null;
-      } catch { /* fallback */ }
+      toast({
+        title: "Verificação indisponível",
+        description: "Não foi possível validar o anti-bot. Recarregue a página e tente novamente.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      hcaptchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
+      return;
     }
 
-    // reCAPTCHA v3 verification (additional layer)
     const token = await verifyRecaptcha("signup");
     if (token) {
       try {
@@ -272,10 +301,11 @@ export default function Auth() {
           setCaptchaToken(null);
           return;
         }
-      } catch { /* Allow through if verification service is down */ }
+      } catch {
+        // Allow through if verification service is down
+      }
     }
 
-    // Build metadata for trigger handle_new_user
     const metadata: Record<string, unknown> = {
       full_name: cadastroForm.nome,
       nome: cadastroForm.nome,
@@ -293,7 +323,7 @@ export default function Auth() {
       metadata.areas_atuacao = cadastroForm.areasAtuacao;
     }
 
-    const { error } = await signUp(cadastroForm.email, cadastroForm.senha, metadata, hToken || undefined);
+    const { error } = await signUp(cadastroForm.email, cadastroForm.senha, metadata, hToken);
     if (error) {
       let msg = "Erro ao criar conta. Tente novamente.";
       if (error.message.includes("User already registered")) msg = "Este e-mail já está cadastrado. Tente fazer login.";
@@ -305,10 +335,8 @@ export default function Auth() {
       return;
     }
 
-    // Try auto-login (no captcha needed for auto-login after signup)
     const { error: signInError } = await signIn(cadastroForm.email, cadastroForm.senha);
     if (!signInError) {
-      // For advogados: require face enrollment before proceeding
       if (accountType === "advogado") {
         setAuthStep("face_enroll");
         setLoading(false);
