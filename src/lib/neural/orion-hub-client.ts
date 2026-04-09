@@ -477,13 +477,13 @@ export async function phi3VisionAnalyze(
 
       // Fallback 2: Try local SmolVLM
       try {
-        const { describeImage } = await import("./smolvlm-engine");
+        const { askAboutImage } = await import("./smolvlm-engine");
         const imageUrl = URL.createObjectURL(imageFile);
-        const description = await describeImage(imageUrl, question);
+        const vlmResult = await askAboutImage(imageUrl, question);
         URL.revokeObjectURL(imageUrl);
-        if (description && description.length > 10) {
+        if (vlmResult.answer && vlmResult.answer.length > 10) {
           return {
-            answer: description,
+            answer: vlmResult.answer,
             model: "SmolVLM-256M-local",
             source: "smolvlm-browser",
             inferenceMs: Math.round(performance.now() - start),
