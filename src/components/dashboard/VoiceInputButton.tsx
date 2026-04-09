@@ -35,7 +35,7 @@ async function speakHighQuality(text: string, abortSignal?: AbortSignal): Promis
   // PRIMARY: Gemini TTS via edge function (Vertex AI)
   try {
     const { speakWithGeminiTTS } = await import("@/lib/tts/geminiTTS");
-    const result = await speakWithGeminiTTS(clean, { signal: abortSignal });
+    const result = await speakWithGeminiTTS(clean, "Charon", abortSignal);
     if (result.played) return;
   } catch (e) {
     console.warn("[VoiceButton] Gemini TTS error:", e);
