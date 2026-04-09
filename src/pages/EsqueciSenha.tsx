@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import logoElp from "@/assets/logo-elp.webp";
 
-type Step = "email" | "method" | "otp" | "newPassword";
+type Step = "email" | "otp" | "newPassword";
 
 const inputClass = "h-12 bg-[#161b22] border-[#1e2533] text-white focus:border-[#d4a853] focus:ring-[#d4a853]/20";
 const labelClass = "text-xs font-medium text-[#8b95a5] tracking-[0.15em] uppercase";
