@@ -38,6 +38,8 @@ export interface RealTimeVisionResult {
     depth: boolean;
     ocr: boolean;
     faceAttributes: boolean;
+    gaze: boolean;
+    handwrittenOCR: boolean;
   };
   /** Multi-task FrameX result (scene, OCR, movement, expressions) — null if not available */
   frameXResult: MultiTaskResult | null;
