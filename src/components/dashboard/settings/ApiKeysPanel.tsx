@@ -30,7 +30,7 @@ export default function ApiKeysPanel() {
   const [savedKeys, setSavedKeys] = useState<SavedKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingProvider, setSavingProvider] = useState<string | null>(null);
-  const [deletingProvider, setDeletingProvider] = useState<string | null>(null);
+  
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [showKey, setShowKey] = useState<Record<string, boolean>>({});
   const [userId, setUserId] = useState<string | null>(null);
@@ -172,12 +172,12 @@ export default function ApiKeysPanel() {
                   {saved && (
                     <Button
                       size="sm"
-                      variant="destructive"
-                      onClick={() => deleteKey(p.id)}
-                      disabled={deletingProvider === p.id}
+                      variant="outline"
+                      onClick={() => clearInput(p.id)}
                       className="shrink-0"
+                      title="Limpar campo para nova chave"
                     >
-                      {deletingProvider === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
