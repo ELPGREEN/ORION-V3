@@ -436,3 +436,101 @@ export async function pdfToMarkdown(pdfFile: File | Blob): Promise<string> {
 export async function pdfToHtml(pdfFile: File | Blob): Promise<string> {
   return callGradio<string>("pdf", { file: pdfFile, fmt: "HTML" }, DEFAULT_TIMEOUT);
 }
+
+// ─── Phi-3 Vision (GPU — advanced multimodal understanding) ───
+
+/**
+ * Analyze an image with Phi-3 Vision (microsoft/Phi-3-vision-128k-instruct).
+ * Supports complex visual question answering, document understanding, OCR,
+ * chart/table reading, spatial reasoning — all via ZeroGPU.
+ *
+ * @param imageFile - Image to analyze (JPEG/PNG/WebP)
+ * @param question - Natural language question about the image
+ * @param maxTokens - Maximum response tokens (default 1024)
+ * @returns Phi3VisionResult with detailed answer
+ *
+ * Fallback chain: Phi-3 Vision (GPU) → BLIP caption (GPU) → SmolVLM (local) → OCR (CPU)
+ */
+export async function phi3VisionAnalyze(
+  imageFile: File | Blob,
+  question: string = "Descreva detalhadamente o que você vê nesta imagem.",
+  maxTokens: number = 1024,
+): Promise<Phi3VisionResult> {
+  const start = performance.now();
+
+  return callGpuWithFallback<Phi3VisionResult>(
+    "phi3_vision",
+    { image: imageFile, question, max_tokens: maxTokens },
+    async () => {
+      // Fallback 1: Try BLIP caption via GPU
+      try {
+        const captionResult = await visionCaption(imageFile);
+        if (captionResult.caption && !captionResult.caption.startsWith("[")) {
+          return {
+            answer: captionResult.caption,
+            model: captionResult.model,
+            source: "blip-fallback",
+            inferenceMs: Math.round(performance.now() - start),
+          };
+        }
+      } catch {}
+
+      // Fallback 2: Try local SmolVLM
+      try {
+        const { describeImage } = await import("./smolvlm-engine");
+        const imageUrl = URL.createObjectURL(imageFile);
+        const description = await describeImage(imageUrl, question);
+        URL.revokeObjectURL(imageUrl);
+        if (description && description.length > 10) {
+          return {
+            answer: description,
+            model: "SmolVLM-256M-local",
+            source: "smolvlm-browser",
+            inferenceMs: Math.round(performance.now() - start),
+          };
+        }
+      } catch {}
+
+      // Fallback 3: OCR only
+      try {
+        const ocrResult = await ocrExtract(imageFile);
+        return {
+          answer: ocrResult.full_text
+            ? `[OCR] Texto detectado: ${ocrResult.full_text.slice(0, 500)}`
+            : "[Sem GPU] Análise visual indisponível. Nenhum texto detectado.",
+          model: "easyocr-cpu",
+          source: "ocr-fallback",
+          inferenceMs: Math.round(performance.now() - start),
+        };
+      } catch {
+        return {
+          answer: `[Quota GPU excedida] Phi-3 Vision indisponível. Tente em ${Math.ceil(getGpuQuotaState().cooldownRemainingMs / 60_000)} min.`,
+          model: "fallback",
+          source: "none",
+          inferenceMs: Math.round(performance.now() - start),
+        };
+      }
+    },
+    GPU_TIMEOUT,
+  );
+}
+
+/**
+ * Analyze a document image with Phi-3 Vision.
+ * Specialized for: invoices, forms, tables, charts, diagrams.
+ */
+export async function phi3DocumentAnalyze(
+  imageFile: File | Blob,
+  documentType: "invoice" | "form" | "table" | "chart" | "diagram" | "general" = "general",
+): Promise<Phi3VisionResult> {
+  const prompts: Record<string, string> = {
+    invoice: "Extraia todos os dados desta fatura/nota fiscal: número, data, fornecedor, cliente, itens, valores, total, impostos.",
+    form: "Leia e extraia todos os campos preenchidos deste formulário. Liste cada campo com seu valor.",
+    table: "Extraia os dados desta tabela em formato estruturado. Identifique cabeçalhos e todas as linhas de dados.",
+    chart: "Descreva este gráfico: tipo, eixos, valores, tendências e insights principais.",
+    diagram: "Descreva este diagrama: componentes, conexões, fluxo e significado de cada elemento.",
+    general: "Analise este documento detalhadamente. Identifique tipo, conteúdo principal, dados relevantes e estrutura.",
+  };
+
+  return phi3VisionAnalyze(imageFile, prompts[documentType], 2048);
+}
