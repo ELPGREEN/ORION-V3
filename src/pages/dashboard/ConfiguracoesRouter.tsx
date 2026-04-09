@@ -1,6 +1,6 @@
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
-import { Loader2, Settings, Building2, Crown, Webhook, ScanFace, Radio, ShoppingCart, Mic, Store } from "lucide-react";
+import { Loader2, Settings, Building2, Crown, Webhook, ScanFace, Radio, ShoppingCart, Mic, Store, KeyRound } from "lucide-react";
 import { lazy, Suspense, useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -15,6 +15,7 @@ const AmazonConfigPage = lazy(() => import("@/components/dashboard/settings/Amaz
 const MicrophoneHardwarePage = lazy(() => import("@/components/dashboard/settings/MicrophoneHardwarePanel"));
 const MeusProdutos = lazy(() => import("./MeusProdutos"));
 const EditorPaginaVendas = lazy(() => import("./EditorPaginaVendas"));
+const ApiKeysPanel = lazy(() => import("@/components/dashboard/settings/ApiKeysPanel"));
 
 const TabFallback = () => (
   <div className="flex items-center justify-center py-12">
