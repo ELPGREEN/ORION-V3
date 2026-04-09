@@ -3453,7 +3453,7 @@ MODELOS ESCOLHIDOS (2026 state-of-the-art):
   - Object Detection: YOLOv12-nano (otimizado para Edge)
   - Embeddings: 1024d cross-modal (alinhado com HuBERT + orion-embedding-001)
   - Orion LLM (visao principal — API)
-  - Orion Fast Llama 3.2 90B Vision (fallback — API)
+  - Orion Fast Orion 3.2 90B Vision (fallback — API)
   - MediaPipe FaceMesh (468 landmarks) — client-side
   - InsightFace ArcFace (identificacao facial)
 
@@ -3567,7 +3567,7 @@ MODELOS UTILIZADOS (2026 state-of-the-art):
   - Reconhecimento/Embedding: InsightFace ArcFace — 128d L2-normalizado
   - Projecao/Avatar: LivePortrait + Wav2Lip (lip-sync)
   - Emocao: FER + FACS Action Units (AU1-AU25)
-  - Visao API: Orion LLM + Orion Fast Llama 3.2 90B Vision (fallback)
+  - Visao API: Orion LLM + Orion Fast Orion 3.2 90B Vision (fallback)
 
 PIPELINE RECONHECIMENTO FACIAL:
   1. Frame Capture (getUserMedia / WebRTC)
@@ -3840,7 +3840,7 @@ EDGE FUNCTION tribunal-facial-stream (Dual-Mode):
     - Emocao via softmax de 7 classes + Action Units (AU1-AU25)
     - Embedding 128d normalizado (ArcFace-style)
     - Diarizacao: maior confianca = falante ativo
-  Modo B (Vision API): Imagem base64 → Orion LLM (primario) ou Orion Fast Llama 3.2 Vision (fallback)
+  Modo B (Vision API): Imagem base64 → Orion LLM (primario) ou Orion Fast Orion 3.2 Vision (fallback)
     - Analise completa de cena + roles juridicos
     - Expressao + gaze direction + bounding boxes
     - LGPD: consentToken obrigatorio
