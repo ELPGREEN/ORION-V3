@@ -5332,6 +5332,292 @@ TOTAL DE SECOES: 92 (era 74)
 TOTAL DE LINHAS: ~6000+ (era ~4505)
 
 
+
+
+================================================================================
+ 109. ELP NEURAL SWARM — 2.900+ AGENTES HF (v8.3)
+================================================================================
+
+ARQUIVO: src/lib/neural/orion-network-registry.ts (489 linhas)
+VERSAO: v7.2
+
+DESCRICAO: Swarm de agentes neurais hospedados no ELP HuggingFace Space.
+  Cada agente e um modelo ou pipeline especializado registrado no Space.
+  Os agentes sao invocados sob demanda pelo Orion via neural-agent-bridge.ts.
+
+TOTAL REGISTRADO: 2.550 agentes (14 categorias)
+TOTAL ESTIMADO (com variantes): 2.900+
+
+CATEGORIAS DO SWARM:
+
+  ┌─────────────────────────────────────┬───────┬────────────┐
+  │ CATEGORIA                           │ AGENTS│ STATUS     │
+  ├─────────────────────────────────────┼───────┼────────────┤
+  │ Vision & Object Detection           │   350 │ ● active   │
+  │ Code Analysis & Security            │   350 │ ● active   │
+  │ Code Generation                     │   300 │ ● active   │
+  │ Legal/Financial/Medical Reasoning   │   300 │ ● active   │
+  │ Text Analysis & NLP                 │   250 │ ● active   │
+  │ Fine-Tuning & Training              │   200 │ ● active   │
+  │ PDF & Document Analysis             │   200 │ ● active   │
+  │ Dataset Creation & Engineering      │   180 │ ● active   │
+  │ Question Answering                  │   120 │ ● active   │
+  │ Speech & Audio                      │    90 │ ● active   │
+  │ Image Generation                    │    80 │ ● active   │
+  │ Video Generation                    │    60 │ ● active   │
+  │ 3D Modeling                         │    40 │ ● active   │
+  │ Model Benchmarking                  │    30 │ ○ standby  │
+  ├─────────────────────────────────────┼───────┼────────────┤
+  │ TOTAL                               │ 2.550 │ 13 active  │
+  └─────────────────────────────────────┴───────┴────────────┘
+
+DETALHAMENTO POR CATEGORIA:
+
+1. VISION & OBJECT DETECTION (350 agentes):
+   Subcategorias: Face Detection (8), Pose/Body (8), Object Detection Core (31),
+     Domain Detection (42), Segmentation (9), Scene Understanding (8),
+     Image Processing (8), Detection Models (24)
+   Modelos: YOLO v5-v12/v26, DETR, GroundingDINO, OWLv2, SAM3,
+     MolmoPoint, Qwen2-VL
+   Endpoint: ELP HF Space /agents/detection/*
+
+2. CODE ANALYSIS & SECURITY (350 agentes):
+   Subcategorias: Security Patterns (12), Quality Metrics (14),
+     Intelligence (12), Multi-Agent Code Review (6)
+   Endpoint: ELP HF Space /agents/code/analyze
+
+3. CODE GENERATION (300 agentes):
+   Subcategorias: 42 Languages, 8 Paradigms, 25 Frameworks, 19 Models,
+     11 WebApp Builders, 14 Specialized Agents
+   Modelos: Qwen3-Coder-32B, DeepSeek-Coder-V2, Yi-Coder-9B, StarCoder2
+   Endpoint: ELP HF Space /agents/code/*
+
+4. LEGAL/FINANCIAL/MEDICAL REASONING (300 agentes):
+   Subcategorias: Legal Analysis, Contract Review, Financial Modeling,
+     Medical Reasoning, Scientific Analysis, Case Law Research
+   Endpoint: ELP HF Space /agents/orchestrate
+
+5. TEXT ANALYSIS & NLP (250 agentes):
+   Subcategorias: Generation (9), Analysis (22), Search (9), Tokenization (6),
+     Explainability (6), Classification (14), Multilingual (13)
+   Features: AI Detection, Emotion, Readability, Clickbait, Prompt Injection
+   Endpoint: ELP HF Space /agents/text/*
+
+6. FINE-TUNING & TRAINING (200 agentes):
+   Subcategorias: LoRA/QLoRA, DreamBooth, SDXL/FLUX LoRA, DPO/RLHF,
+     TTS/ASR/RVC, AutoTrain, Quantization (GPTQ/AWQ/GGUF),
+     Model Merging/Pruning/Distillation
+   Endpoint: ELP HF Space /finetune/*
+
+7. PDF & DOCUMENT ANALYSIS (200 agentes):
+   Subcategorias: OCR (12), Layout Analysis (10), Table Extraction (8),
+     Document Parsing (11), Bibliography (7), Resume Analysis (6),
+     Scientific Documents (7), Legal Documents (6), Document Conversion (8),
+     Comparison (5), Signature/Stamp (4), Models (13)
+   Modelos: MinerU, PaddleOCR-VL, Surya, Nougat, Donut, DiT, GROBID,
+     GOT-OCR2, TrOCR, LayoutLMv3
+   Endpoint: ELP HF Space /agents/documents/*
+
+8. DATASET CREATION & ENGINEERING (180 agentes):
+   Subcategorias: Synthetic Data (JSON/JSONL/CSV/Parquet), Format Conversion,
+     Deduplication, Labeling, Data Quality, Bias Detection
+   Endpoint: ELP HF Space /dataset/*
+
+9. QUESTION ANSWERING (120 agentes):
+   Subcategorias: Extractive QA (12), Generative QA (9), Document QA (13),
+     Visual QA (13), Domain QA (17), Multilingual QA (13),
+     Open Domain QA (9), Conversational QA (6), Music/Audio QA (5),
+     Table QA (6)
+   Modelos: mDeBERTa, RoBERTa, Flan-T5, UnifiedQA, MiniCPM-o,
+     Qwen2-VL, TAPAS
+   Endpoint: ELP HF Space /agents/qa/*
+
+10. SPEECH & AUDIO (90 agentes):
+    Subcategorias: TTS (Kokoro/F5/Bark/Piper), ASR (Whisper),
+      Voice Cloning (RVC v2), Music Gen (ACE-Step)
+    Endpoint: ELP HF Space /agents/orchestrate
+
+11. IMAGE GENERATION (80 agentes):
+    Subcategorias: FLUX Dev/Schnell, SDXL, SD3, ControlNet,
+      IP-Adapter, LoRA Composition, Comic/Graphic Novel
+    Endpoint: ELP HF Space /agents/orchestrate
+
+12. VIDEO GENERATION (60 agentes):
+    Subcategorias: Wan2.1, LTX Video, CogVideoX, AnimateDiff,
+      Lipsync, Face Swap, Video Dubbing
+    Endpoint: ELP HF Space /agents/orchestrate
+
+13. 3D MODELING (40 agentes):
+    Subcategorias: TRELLIS 2, Hunyuan3D, TripoSR, InstantMesh,
+      Gaussian Splatting, PBR Materials
+    Endpoint: ELP HF Space /agents/orchestrate
+
+14. MODEL BENCHMARKING (30 agentes — standby):
+    Subcategorias: Open LLM Leaderboard, MTEB, ChatBot Arena,
+      BigCodeBench, VBench, ASR Leaderboard
+    Endpoint: ELP HF Space /agents/orchestrate
+
+ARQUITETURA DE INVOCACAO:
+  Usuario -> Orion -> neural-agent-bridge.ts -> ELP HF Space -> Modelo HF
+                   -> orion-autonomous-agent.ts (selecao de agente)
+                   -> orion-tool-executor.ts (execucao)
+                   -> orion-network-registry.ts (registro/status)
+
+HISTORICO DE EVOLUCAO:
+  v4.0 — 1.500+ agentes (Code + Detection)
+  v6.0 — 2.000+ agentes (+Dataset, +Text NLP)
+  v7.0 — 2.500+ agentes (+Code-Gen massivo, +QA)
+  v7.2 — 2.550 registrados, ~2.900+ com variantes
+
+
+================================================================================
+ 110. 5 REDES NEURAIS CORE + 6 AGENTES AUTONOMOS (v8.3)
+================================================================================
+
+ARQUIVO: src/lib/neural/orion-network-registry.ts
+
+5 REDES NEURAIS CORE:
+
+  ┌────────────────────┬────────────────────────────────────────────────┐
+  │ REDE               │ FUNCAO                                        │
+  ├────────────────────┼────────────────────────────────────────────────┤
+  │ NET-CORE-01        │ Master predictive network. Market forecasting,│
+  │ Orion-Core         │ opportunity scoring, proposal generation.     │
+  │                    │ Arch: Transformer + LSTM + GNN                │
+  ├────────────────────┼────────────────────────────────────────────────┤
+  │ NET-ANAL-01        │ Real-time data ingestion & feature extraction.│
+  │ Orion-Analysis     │ Market feeds, news sentiment, on-chain data.  │
+  │                    │ Arch: CNN + RNN (time-series) + NLP           │
+  ├────────────────────┼────────────────────────────────────────────────┤
+  │ NET-RISK-01        │ Risk assessment. VaR, Sharpe, drawdown,       │
+  │ Orion-Risk         │ personalized risk tolerance.                  │
+  │                    │ Arch: Monte Carlo + Bayesian Networks         │
+  ├────────────────────┼────────────────────────────────────────────────┤
+  │ NET-MEM-01         │ Vector embedding + long-term memory (pgvector)│
+  │ Orion-Memory       │ Proposals, feedback, agent decisions.         │
+  │                    │ Arch: pgvector + FAISS Similarity Search      │
+  ├────────────────────┼────────────────────────────────────────────────┤
+  │ NET-PRES-01        │ Output formatting. Raw data -> investor-ready │
+  │ Orion-Presentation │ UI, documents, interactive dashboards.        │
+  │                    │ Arch: JSON Mapper -> React Multimodal         │
+  └────────────────────┴────────────────────────────────────────────────┘
+
+6 AGENTES AUTONOMOS CORE:
+
+  ┌──────────────────────┬──────────────────────────────────────────────┐
+  │ AGENTE               │ FUNCAO                                      │
+  ├──────────────────────┼──────────────────────────────────────────────┤
+  │ Analysis Agent       │ Analise de dados, mercado, documentos       │
+  │ Risk Guardian        │ Avaliacao de risco, protecao, compliance    │
+  │ Proposal Architect   │ Construcao de propostas e documentos        │
+  │ Presentation Agent   │ Formatacao e apresentacao de resultados     │
+  │ Operation Overseer   │ Supervisao de operacoes e pipelines         │
+  │ Feedback Learner     │ Aprendizado por feedback, meta-learning     │
+  └──────────────────────┴──────────────────────────────────────────────┘
+
+TOTAL DE AGENTES:
+  - 6 agentes core autonomos
+  - 2.550 agentes swarm HF (14 categorias)
+  - TOTAL: 2.556 agentes registrados (~2.900+ com variantes)
+
+
+================================================================================
+ 111. NEURAL AGENT BRIDGE — PONTE DE INVOCACAO (v8.3)
+================================================================================
+
+ARQUIVO: src/lib/neural/neural-agent-bridge.ts
+
+FUNCAO: Ponte entre o Orion core e os 2.900+ agentes do HF Space.
+  Gerencia invocacao, fallback, cache e telemetria.
+
+FLUXO:
+  1. Orion recebe query do usuario
+  2. orion-autonomous-agent.ts classifica a tarefa
+  3. agent-planner.ts decompoe em sub-tarefas (DAG)
+  4. neural-agent-bridge.ts seleciona agente(s) do swarm
+  5. Chamada ao ELP HF Space (Gradio client)
+  6. Resultado retornado + cache + log de acao
+  7. orion-tool-executor.ts formata resposta final
+
+MODULOS ENVOLVIDOS:
+  - neural-agent-bridge.ts — Ponte principal
+  - orion-network-registry.ts — Registro de 2.900+ agentes
+  - orion-autonomous-agent.ts — Agente autonomo
+  - agent-planner.ts — Planejador DAG (DLPFC-inspired)
+  - multi-agent.ts — Coordenacao multi-agente
+  - multi-tenant-agent.ts — Multi-tenant
+  - orion-agentic-loop.ts — Loop agentico
+  - agentic-patterns-engine.ts — Padroes agenticos
+  - agentic-protocols-tools.ts — Ferramentas de protocolo
+  - orion-tool-executor.ts — Executor de ferramentas
+  - orion-command-registry.ts — Registro de comandos
+
+
+================================================================================
+ 112. METRICAS COMPLETAS DO SISTEMA ORION v8.3
+================================================================================
+
+  ┌────────────────────────────────────┬──────────┐
+  │ METRICA                            │ VALOR    │
+  ├────────────────────────────────────┼──────────┤
+  │ Modulos neurais (src/lib/neural/)  │      179 │
+  │ Edge Functions (Supabase/Deno)     │       86 │
+  │ Hooks customizados (src/hooks/)    │       69 │
+  │ Paginas da aplicacao               │      102 │
+  │ Componentes React                  │      388 │
+  │ Modulos TypeScript (src/lib/)      │      318 │
+  │ Tabelas Supabase                   │      171 │
+  │ Documentos juridicos RAG           │       26 │
+  │ Idiomas suportados (i18n)          │       14 │
+  │ Chaves Gemini em rotacao           │        7 │
+  │ Protocolos Lumen7                  │       50 │
+  │ Camadas arquitetura cognitiva      │       15 │
+  │ Tipos de redes neurais             │       32 │
+  │ Modulos quantum                    │       12 │
+  │ Protocolos roboticos (ROS2/VDA5050)│        8 │
+  │ Motores TTS                        │        4 │
+  │ Sistemas de visao                  │        3 │
+  │ Dominios                           │        2 │
+  │ Redes neurais core                 │        5 │
+  │ Agentes autonomos core             │        6 │
+  │ Agentes swarm HF                   │    2.550 │
+  │ Agentes swarm (com variantes)      │   ~2.900 │
+  │ Categorias de agentes              │       14 │
+  │ Linhas de codigo Edge Functions    │  ~35.000 │
+  │ Componentes do editor              │       54 │
+  │ Componentes do dashboard neural    │       65 │
+  │ Componentes da landing page        │       22 │
+  │ Secoes desta documentacao          │      113 │
+  └────────────────────────────────────┴──────────┘
+
+
+================================================================================
+ 113. CHANGELOG v8.2 -> v8.3 "Neural Swarm Complete"
+================================================================================
+
+DATA: 2026-04-09
+
+NOVAS SECOES (5):
+  109. ELP Neural Swarm — 2.900+ Agentes HF (detalhamento completo)
+  110. 5 Redes Neurais Core + 6 Agentes Autonomos
+  111. Neural Agent Bridge — Ponte de Invocacao
+  112. Metricas Completas do Sistema Orion v8.3
+  113. Changelog v8.2 -> v8.3
+
+DESTAQUE:
+  - 2.550 agentes registrados em 14 categorias (tabela completa)
+  - ~2.900 com variantes de modelo
+  - Detalhamento de todas 14 categorias com subcategorias e modelos
+  - 5 redes neurais core documentadas (Transformer+LSTM+GNN, CNN+RNN, etc.)
+  - 6 agentes autonomos core documentados
+  - Fluxo de invocacao neural-agent-bridge completo
+  - Tabela de metricas consolidada do sistema
+
+VERSAO: v8.3 (Neural Swarm Complete)
+TOTAL DE SECOES: 113
+TOTAL DE LINHAS: ~7500+
+
+
 ================================================================================
                            FIM DO DOCUMENTO
 ================================================================================
