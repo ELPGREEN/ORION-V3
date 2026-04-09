@@ -432,7 +432,28 @@ def pdf_to_html(pdf_file) -> str:
 
 # ============================================================
 # Phi-3 Vision — Multimodal VQA (GPU)
+# Install flash_attn at runtime (like ysharma's reference Space)
 # ============================================================
+
+_phi3v_flash_installed = False
+
+def _ensure_flash_attn():
+    """Install flash_attn at runtime with SKIP_CUDA_BUILD to avoid build errors"""
+    global _phi3v_flash_installed
+    if _phi3v_flash_installed:
+        return
+    try:
+        import subprocess
+        subprocess.run(
+            'pip install flash-attn --no-build-isolation',
+            env={**os.environ, 'FLASH_ATTENTION_SKIP_CUDA_BUILD': 'TRUE'},
+            shell=True,
+            timeout=120,
+        )
+        _phi3v_flash_installed = True
+        print("[Phi3V] ✅ flash_attn installed at runtime")
+    except Exception as e:
+        print(f"[Phi3V] ⚠️ flash_attn install failed, using eager fallback: {e}")
 
 @spaces.GPU(duration=120)
 def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
@@ -455,15 +476,29 @@ def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
 
     model_id = "microsoft/Phi-3-vision-128k-instruct"
     if "phi3v" not in _models:
+        # Try installing flash_attn for faster inference (~2x speedup)
+        _ensure_flash_attn()
+
         _models["phi3v_processor"] = AutoProcessor.from_pretrained(
             model_id, trust_remote_code=True
         )
+
+        # Use torch_dtype="auto" (like ysharma's reference) — picks best dtype for hardware
+        # flash_attn if available, else eager fallback
+        try:
+            import flash_attn  # noqa: F401
+            attn_impl = "flash_attention_2"
+            print("[Phi3V] Using flash_attention_2")
+        except ImportError:
+            attn_impl = "eager"
+            print("[Phi3V] Using eager attention (flash_attn not available)")
+
         _models["phi3v"] = AutoModelForCausalLM.from_pretrained(
             model_id,
-            torch_dtype=torch.float16,
+            torch_dtype="auto",
             trust_remote_code=True,
-            device_map="auto",
-            _attn_implementation="eager",
+            device_map="cuda",
+            _attn_implementation=attn_impl,
         )
 
     processor = _models["phi3v_processor"]
@@ -490,13 +525,14 @@ def phi3_vision(image, prompt: str = "Describe this image in detail.") -> str:
         messages, tokenize=False, add_generation_prompt=True
     )
 
-    inputs = processor(chat_prompt, [img], return_tensors="pt").to(model.device)
+    inputs = processor(chat_prompt, [img], return_tensors="pt").to("cuda:0")
 
     with torch.no_grad():
         ids = model.generate(
             **inputs,
             max_new_tokens=1024,
             do_sample=False,
+            temperature=0.0,
             eos_token_id=processor.tokenizer.eos_token_id,
         )
 
