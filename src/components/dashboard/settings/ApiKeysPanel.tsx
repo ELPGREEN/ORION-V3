@@ -30,7 +30,7 @@ export default function ApiKeysPanel() {
   const [savedKeys, setSavedKeys] = useState<SavedKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingProvider, setSavingProvider] = useState<string | null>(null);
-  const [deletingProvider, setDeletingProvider] = useState<string | null>(null);
+  
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [showKey, setShowKey] = useState<Record<string, boolean>>({});
   const [userId, setUserId] = useState<string | null>(null);
@@ -83,20 +83,10 @@ export default function ApiKeysPanel() {
     }
   }
 
-  async function deleteKey(provider: string) {
-    const existing = savedKeys.find(k => k.provider === provider);
-    if (!existing) return;
-
-    setDeletingProvider(provider);
-    try {
-      await supabase.from("user_api_keys").delete().eq("id", existing.id);
-      toast.success(`Chave ${provider.toUpperCase()} removida`);
-      await loadKeys();
-    } catch (e: any) {
-      toast.error(`Erro: ${e.message}`);
-    } finally {
-      setDeletingProvider(null);
-    }
+  function clearInput(provider: string) {
+    // Soft "delete": key stays active in DB, just clears UI so user can enter a new one
+    setInputs(prev => ({ ...prev, [provider]: "" }));
+    toast.info(`Campo liberado para nova chave ${provider.toUpperCase()}. A chave anterior continua ativa até ser substituída.`);
   }
 
   function maskKey(key: string) {
@@ -182,12 +172,12 @@ export default function ApiKeysPanel() {
                   {saved && (
                     <Button
                       size="sm"
-                      variant="destructive"
-                      onClick={() => deleteKey(p.id)}
-                      disabled={deletingProvider === p.id}
+                      variant="outline"
+                      onClick={() => clearInput(p.id)}
                       className="shrink-0"
+                      title="Limpar campo para nova chave"
                     >
-                      {deletingProvider === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
