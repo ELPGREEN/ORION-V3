@@ -364,6 +364,7 @@ export async function detectRealTime(
     (window as any).__orion_last_rt_vision_result__ = result;
   }
 
+  markVisionEnd();
   return result;
 }
 
