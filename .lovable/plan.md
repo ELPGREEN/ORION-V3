@@ -1,94 +1,101 @@
 
 
-# Auditoria Completa: Orion Voice + Vision Pipeline
+# Sistema Centralizado de Chaves API do Usuario
 
-## Diagnóstico — 6 Problemas Críticos Identificados
+## Resumo
+Criar tabela `user_api_keys` no Supabase, uma Edge Function unica `get-api-keys` que coleta chaves do usuario (prioridade) ou do sistema (fallback), e um painel UI para o usuario cadastrar suas chaves. Todas as 36+ edge functions passam a usar essa funcao central. Sem contagem de tokens visivel.
 
-### BUG 1: Loop infinito de SpeechRecognition "aborted" (CAUSA RAIZ DO ORION NÃO RESPONDER)
-Existem **3 componentes** criando instâncias de SpeechRecognition ao mesmo tempo, competindo pelo microfone:
-- `OrionGlobalListener.tsx` — monta nas páginas públicas (ex: `/solucoes/industria`), usa `rec.continuous = true`, sem Mic Arbiter
-- `PublicOrionListener.tsx` — monta nas mesmas páginas públicas, TAMBÉM cria SpeechRecognition
-- `GlobalOrionListener.tsx` — monta no dashboard
+## Arquitetura
 
-Na página atual (`/solucoes/industria`), **DOIS listeners estão rodando simultaneamente** (OrionGlobalListener + PublicOrionListener), cada um matando o outro em loop, gerando centenas de `[Voice] SpeechRecognition error: aborted` por minuto. O Mic Arbiter (`micArbiter.ts`) NÃO é usado por `OrionGlobalListener` nem por `PublicOrionListener`.
+```text
+Usuario → UI "Minhas Chaves" → Salva criptografado (AES-256)
+                                     ↓
+                           Tabela: user_api_keys
+                           (user_id, provider, encrypted_key, iv, is_active)
+                                     ↓
+                Edge Function: get-api-keys (UNICA coleta)
+                - Recebe user_id + provider
+                - Busca chave do usuario → descriptografa server-side
+                - Se nao tiver → rotacao das env vars do sistema
+                - Retorna chave pronta
+                                     ↓
+                36+ edge functions importam helper getApiKey()
+                em vez de duplicar ["GEMINI_API_KEY_GCP",...]
+```
 
-### BUG 2: CSP (Content Security Policy) bloqueando recursos essenciais
-O `index.html` define um CSP via `<meta>` tag que está incompleto:
-- `font-src`: falta `https://cdn.gpteng.co` (bloqueia fontes do Lovable)
-- `connect-src`: falta `https://region1.google-analytics.com` e `https://media.roboflow.com`
-- YOLO modelo bloqueado (`media.roboflow.com/onnx/yolov8n.onnx`)
-- Firebase Storage CORS para Piper TTS (`pt_BR-faber-medium.onnx`) falha repetidamente
+## Implementacao
 
-### BUG 3: THREE.js GridHelper com cores inválidas + Context Lost
-`TronGridBackground.tsx` e `OrionBackground3D.tsx` passam cores com canal alpha (`#00bcd415`, `#D4AF3708`) que THREE.Color não suporta. Múltiplas instâncias de `<Canvas>` (R3F) na mesma página consomem todos os WebGL contexts disponíveis.
+### Passo 1: Migration — Tabela `user_api_keys`
+```sql
+CREATE TABLE public.user_api_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL, -- "gemini", "groq", "openai", etc.
+  encrypted_key TEXT NOT NULL,
+  iv TEXT NOT NULL,
+  label TEXT DEFAULT '',
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.user_api_keys ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage own keys" ON public.user_api_keys
+  FOR ALL TO authenticated
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE UNIQUE INDEX idx_user_api_keys_provider ON public.user_api_keys(user_id, provider);
+```
 
-### BUG 4: Piper TTS retry infinito (CORS Firebase Storage)
-`piperTTS.ts` tenta carregar o modelo `.onnx` de `firebasestorage.googleapis.com` repetidamente a cada 15s. CORS falha, mas o sistema continua tentando sem backoff permanente (apenas `MAX_FAILURES = 2` por sessão, mas o Firebase URL resolution retries independentemente).
+### Passo 2: Edge Function `get-api-keys`
+Nova funcao que serve como ponto unico de coleta:
+- Recebe `{ user_id, provider }` (ex: `"gemini"`)
+- Busca na tabela `user_api_keys` chave ativa do usuario
+- Se encontrar: descriptografa server-side (AES-256-GCM usando user_id como derivacao, mesma logica de `user-encryption.ts`)
+- Se nao encontrar: faz rotacao das env vars do sistema (`GEMINI_API_KEY_GCP`, `GEMINI_API_KEY`, etc.)
+- Retorna `{ key: string, source: "user" | "system" }`
 
-### BUG 5: Supabase auth lock warnings
-Múltiplos componentes competindo pelo client Supabase causam `Lock "lock:sb-..." was not released within 5000ms` — sintoma do excesso de componentes inicializando ao mesmo tempo.
+### Passo 3: Helper compartilhado para Edge Functions
+Criar arquivo helper que as 36+ functions importam:
+- `supabase/functions/get-api-keys/index.ts` — a edge function publica
+- Dentro de cada edge function existente, substituir o bloco `["GEMINI_API_KEY_GCP",...].map(...).filter(Boolean)` por uma chamada interna ao Supabase (usando service role) para buscar a chave do usuario, com fallback para env vars
 
-### BUG 6: Orion não processa comandos por voz
-Com a decisão "Orion só fala no overlay do Orion", os listeners públicos não deveriam existir. Mas como estão montados e roubando o mic, quando o usuário abre o Orion real (NeuralVision), o mic já está corrompido.
+Na pratica, como edge functions nao importam entre si facilmente, o padrao sera:
+1. Cada edge function que recebe `authorization` header extrai o `user_id` do JWT
+2. Faz um SELECT direto na tabela `user_api_keys` usando service role
+3. Se encontrar chave ativa → usa ela (descriptografada)
+4. Se nao → usa env vars do sistema (rotacao atual)
+5. Isso sera um bloco de ~15 linhas que substitui o bloco duplicado atual
 
----
+### Passo 4: UI — Painel "Minhas Chaves API"
+Novo componente acessivel nas configuracoes do Orion:
+- Lista de providers suportados: Gemini, Groq, OpenAI, Mistral
+- Input mascarado (mostra so ultimos 4 chars)
+- Botao "Validar" — testa a chave com chamada real antes de salvar
+- Criptografa client-side usando `user-encryption.ts` existente antes de salvar
+- Indicador visual: "Usando sua chave" vs "Usando chave do sistema"
+- Sem contagem de tokens
 
-## Plano de Correção (Estabilidade → Velocidade → Equilíbrio)
+### Passo 5: Refatorar edge functions prioritarias
+Aplicar o novo padrao nestas functions primeiro (as mais usadas):
+- `neural-ops` (hub central)
+- `chat-juridico` (chat principal)
+- `gemini-tts` (voz)
+- `generate-embeddings` (embeddings)
+- `groq-vision-hybrid` (visao)
+- `ocr-document` (OCR)
+- `ai-autocomplete` (autocomplete)
+- `gerar-documento` / `aprimorar-documento` (documentos)
 
-### Passo 1: Eliminar listeners de voz duplicados nas páginas públicas
-**Arquivos**: `src/components/OrionGlobalListener.tsx`, `src/components/PublicOrionListener.tsx`, `src/App.tsx`
+As demais seguem o mesmo padrao progressivamente.
 
-- Remover `OrionGlobalListener` completamente (não é usado em nenhum layout, só importado para ser desabilitado)
-- Modificar `PublicOrionListener` para NÃO criar SpeechRecognition. Manter apenas o orb visual como botão que navega para `/consulta` ou abre o dashboard Orion
-- Isso elimina 100% dos loops de abort nas páginas públicas
+## Seguranca
+- AES-256-GCM client-side (chave derivada do user_id via PBKDF2, usando `user-encryption.ts`)
+- Descriptografia server-side na edge function com service_role
+- RLS: `auth.uid() = user_id`
+- Chaves nunca em logs ou respostas
 
-### Passo 2: Corrigir CSP no index.html
-**Arquivo**: `index.html`
-
-Atualizar a meta tag CSP:
-- `font-src`: adicionar `https://cdn.gpteng.co`
-- `connect-src`: adicionar `https://region1.google-analytics.com https://media.roboflow.com`
-- Isso desbloqueia YOLO, Analytics e fontes
-
-### Passo 3: Corrigir cores THREE.js e reduzir Canvas instances
-**Arquivos**: `src/components/ui/TronGridBackground.tsx`, `src/components/ui/OrionBackground3D.tsx`
-
-- Trocar `#00bcd415` → `#00bcd4` e `#D4AF3708` → `#D4AF37` (sem alpha no hex)
-- Usar `opacity` via material, não via cor hex com alpha
-
-### Passo 4: Silenciar Piper TTS Firebase retry
-**Arquivo**: `src/lib/tts/piperTTS.ts`
-
-- Marcar `firebaseModelChecked = true` + `return null` imediatamente se CORS falhar uma vez. Não retentar o Firebase URL em sessões subsequentes
-- Piper já é fallback — se Firebase CORS não funcionar, pular silenciosamente
-
-### Passo 5: Otimizar fluxo de mic no NeuralVision/GlobalOrionListener
-**Arquivos**: `src/components/dashboard/GlobalOrionListener.tsx`, `src/hooks/useNeuralVoice.ts`
-
-- `GlobalOrionListener` (dashboard): já usa Mic Arbiter, mas precisa de `rec.continuous = false` (já implementado). Verificar que `restartAttemptsRef` funciona corretamente com backoff
-- `useNeuralVoice`: o fluxo `speak → resumeSTT` já está correto. Garantir que `consecutiveAbortsRef` não acumula entre sessões TTS
-
-### Passo 6: Camera híbrida (on-demand)
-**Arquivo**: `src/components/dashboard/neural/NeuralVision.tsx`
-
-- Não iniciar câmera automaticamente ao abrir overlay
-- Câmera liga apenas quando: (a) comando "ativar visão", (b) clique no botão câmera, (c) a IA detecta que a pergunta precisa de análise visual
-- Isso reduz carga de GPU e previne Context Lost
-
-### Passo 7: Adiar preload de modelos pesados
-**Arquivos**: `src/lib/neural/realtime-vision-engine.ts`, `src/lib/neural/hf-vision-gate.ts`
-
-- `preloadAllVision()` no mount da NeuralVision: manter, mas só executar quando câmera for ativada (não no mount)
-- `preloadHFVisionGate()`: executar lazy (quando primeira query visual chegar)
-- Isso previne excesso de WebGL contexts e reduz tempo de boot
-
----
-
-## Resultado Esperado
-- Zero `SpeechRecognition error: aborted` nas páginas públicas
-- Orion responde apenas no overlay/chat dedicado
-- Câmera liga só quando necessário
-- YOLO e MediaPipe funcionam sem bloqueio CSP
-- TTS Gemini funciona sem interferência de Piper retry
-- WebGL Context Lost eliminado
+## Resultado
+- Usuario com chave propria: sistema usa a chave dele
+- Usuario sem chave: rotacao de 7 chaves do sistema (comportamento atual)
+- Duplicacao de logica eliminada — uma unica funcao de coleta
+- Sem contagem de tokens compartilhada
 
