@@ -21,8 +21,7 @@ Pillow>=10.4.0
 # Embeddings (CPU — small model)
 sentence-transformers>=3.3.0
 
-# Phi-3 Vision (flash-attn optional, eager fallback)
-flash_attn>=2.5.0; sys_platform == "linux"
+# Phi-3 Vision: uses eager attention (no flash_attn needed)
 
 # Utilities
 numpy>=1.26.0
