@@ -4,55 +4,47 @@ import * as React from 'npm:react@18.3.1'
 
 import {
   Body,
-  Button,
   Container,
   Head,
   Heading,
   Html,
-  Link,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
 interface EmailChangeEmailProps {
   siteName: string
-  email: string
-  newEmail: string
-  confirmationUrl: string
+  email?: string
+  newEmail?: string
+  confirmationUrl?: string
+  token?: string
 }
 
 export const EmailChangeEmail = ({
   siteName,
   email,
   newEmail,
-  confirmationUrl,
+  token = '123456',
 }: EmailChangeEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Confirm your email change for {siteName}</Preview>
+    <Preview>Confirme a alteração de e-mail em {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email change</Heading>
+        <Heading style={h1}>Confirme a alteração de e-mail</Heading>
         <Text style={text}>
-          You requested to change your email address for {siteName} from{' '}
-          <Link href={`mailto:${email}`} style={link}>
-            {email}
-          </Link>{' '}
-          to{' '}
-          <Link href={`mailto:${newEmail}`} style={link}>
-            {newEmail}
-          </Link>
-          .
+          Você solicitou a alteração do seu e-mail em {siteName}
+          {email && newEmail ? ` de ${email} para ${newEmail}` : ''}.
         </Text>
+        <Container style={codeBox}>
+          <Text style={codeLabel}>Código de verificação</Text>
+          <Text style={code}>{token}</Text>
+        </Container>
         <Text style={text}>
-          Click the button below to confirm this change:
+          Digite esse código no site para confirmar a alteração.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Confirm Email Change
-        </Button>
         <Text style={footer}>
-          If you didn't request this change, please secure your account
-          immediately.
+          Se você não solicitou essa alteração, proteja sua conta imediatamente.
         </Text>
       </Container>
     </Body>
@@ -75,13 +67,20 @@ const text = {
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
+const codeBox = {
+  backgroundColor: '#f4f4f5',
+  borderRadius: '12px',
+  padding: '20px 16px',
+  margin: '0 0 24px',
+  textAlign: 'center' as const,
+}
+const codeLabel = { fontSize: '12px', color: '#71717a', margin: '0 0 8px', textTransform: 'uppercase' as const, letterSpacing: '0.08em' }
+const code = {
+  fontSize: '32px',
+  lineHeight: '1',
+  fontWeight: 'bold' as const,
+  color: '#000000',
+  letterSpacing: '0.22em',
+  margin: '0',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

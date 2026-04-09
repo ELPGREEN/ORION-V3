@@ -4,54 +4,50 @@ import * as React from 'npm:react@18.3.1'
 
 import {
   Body,
-  Button,
   Container,
   Head,
   Heading,
   Html,
-  Link,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
 interface SignupEmailProps {
   siteName: string
-  siteUrl: string
-  recipient: string
-  confirmationUrl: string
+  siteUrl?: string
+  recipient?: string
+  confirmationUrl?: string
+  token?: string
 }
 
 export const SignupEmail = ({
   siteName,
-  siteUrl,
   recipient,
-  confirmationUrl,
+  token = '123456',
 }: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Confirme seu e-mail para {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
+        <Heading style={h1}>Confirme seu e-mail</Heading>
         <Text style={text}>
-          Thanks for signing up for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
+          Obrigado por se cadastrar em <strong>{siteName}</strong>!
         </Text>
+        {recipient && (
+          <Text style={text}>
+            Confirme seu endereço de e-mail ({recipient}) usando o código abaixo:
+          </Text>
+        )}
+        <Container style={codeBox}>
+          <Text style={codeLabel}>Código de verificação</Text>
+          <Text style={code}>{token}</Text>
+        </Container>
         <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
+          Digite esse código no site para confirmar seu cadastro.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Verify Email
-        </Button>
         <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
+          Se você não criou uma conta, pode ignorar este e-mail.
         </Text>
       </Container>
     </Body>
@@ -74,13 +70,20 @@ const text = {
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
+const codeBox = {
+  backgroundColor: '#f4f4f5',
+  borderRadius: '12px',
+  padding: '20px 16px',
+  margin: '0 0 24px',
+  textAlign: 'center' as const,
+}
+const codeLabel = { fontSize: '12px', color: '#71717a', margin: '0 0 8px', textTransform: 'uppercase' as const, letterSpacing: '0.08em' }
+const code = {
+  fontSize: '32px',
+  lineHeight: '1',
+  fontWeight: 'bold' as const,
+  color: '#000000',
+  letterSpacing: '0.22em',
+  margin: '0',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
