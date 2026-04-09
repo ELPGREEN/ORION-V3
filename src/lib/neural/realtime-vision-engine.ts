@@ -343,7 +343,7 @@ export async function detectRealTime(
       : null,
     quantumEnhancement,
     gazeResult: null,
-    handwrittenOCR: null,
+    handwrittenOCR: handwrittenOCRResult,
     regionalDescriptions,
     documentLayout,
   };
@@ -354,13 +354,6 @@ export async function detectRealTime(
     if (firstFaceLandmarks) {
       result.gazeResult = estimateGaze(firstFaceLandmarks);
     }
-  }
-
-  // Handwritten OCR (every 15th frame to avoid lag)
-  if (isTrOCRReady() && frameCount % 15 === 0) {
-    try {
-      result.handwrittenOCR = await recognizeHandwritingFromVideo(video);
-    } catch {}
   }
 
   // ─── Temporal Buffer: push frame and detect events ───
