@@ -74,6 +74,7 @@ export default defineConfig(() => ({
             "@radix-ui/react-popover",
             "@radix-ui/react-select",
           ],
+          "vendor-icons": ["lucide-react"],
           "vendor-charts": ["recharts"],
           "vendor-editor": ["@tiptap/react", "@tiptap/starter-kit"],
           "vendor-pdf": ["jspdf"],

@@ -254,45 +254,42 @@ def vision_classify(image) -> str:
 # Feature maps from Conv layers → position encodings → attention
 # ============================================================
 
+def _get_detr():
+    """Load DETR once on CPU, shared between GPU and CPU paths"""
+    if "detr" not in _models:
+        from transformers import DetrImageProcessor, DetrForObjectDetection
+        model_id = "facebook/detr-resnet-50"
+        _models["detr_processor"] = DetrImageProcessor.from_pretrained(model_id)
+        _models["detr"] = DetrForObjectDetection.from_pretrained(model_id)  # CPU
+    return _models["detr_processor"], _models["detr"]
+
+
 @spaces.GPU(duration=45)
 def cnn_detect_objects(image, threshold: float = 0.7) -> str:
     """Detect objects using DETR (CNN ResNet-50 backbone + Transformer)
     
-    Architecture: Input → ResNet-50 CNN (conv→pool→conv→pool...) → 
-    Feature Maps → Positional Encoding → Transformer Encoder/Decoder → 
-    FFN → Bounding Boxes + Class Labels
-    
-    The CNN backbone extracts hierarchical feature maps:
-    - Early layers: edges, textures (like learned Sobel/Prewitt filters)
-    - Mid layers: parts, shapes (nose, wheel, window)
-    - Deep layers: whole objects (face, car, building)
+    Single model instance: loads on CPU, moves to GPU only when ZeroGPU
+    allocates one. Falls back to CPU transparently.
     """
     if image is None:
         return json.dumps({"error": "No image"})
 
-    if not _check_gpu():
-        # CPU fallback with smaller model
-        return _cnn_detect_objects_cpu(image, threshold)
-
     import torch
-    from transformers import DetrImageProcessor, DetrForObjectDetection
+    processor, model = _get_detr()
+    use_gpu = _check_gpu()
+    device = "cuda" if use_gpu else "cpu"
 
-    model_id = "facebook/detr-resnet-50"
-    if "detr" not in _models:
-        _models["detr_processor"] = DetrImageProcessor.from_pretrained(model_id)
-        _models["detr"] = DetrForObjectDetection.from_pretrained(model_id).to("cuda")
-
-    processor = _models["detr_processor"]
-    model = _models["detr"]
+    if use_gpu:
+        model = model.to("cuda")
 
     img = _handle_image_input(image)
     inputs = processor(images=img, return_tensors="pt")
-    inputs = {k: v.to("cuda") for k, v in inputs.items()}
+    inputs = {k: v.to(device) for k, v in inputs.items()}
 
     with torch.no_grad():
         outputs = model(**inputs)
 
-    target_sizes = torch.tensor([img.size[::-1]]).to("cuda")
+    target_sizes = torch.tensor([img.size[::-1]]).to(device)
     results = processor.post_process_object_detection(outputs, target_sizes=target_sizes, threshold=threshold)[0]
 
     detections = []
@@ -304,53 +301,16 @@ def cnn_detect_objects(image, threshold: float = 0.7) -> str:
             "bbox": {"x": box[0], "y": box[1], "w": box[2] - box[0], "h": box[3] - box[1]},
         })
 
-    return json.dumps({
-        "detections": detections,
-        "count": len(detections),
-        "model": model_id,
-        "source": "detr-gpu",
-        "architecture": "CNN(ResNet-50) + Transformer",
-    }, ensure_ascii=False)
-
-
-def _cnn_detect_objects_cpu(image, threshold: float = 0.7) -> str:
-    """CPU fallback for object detection using DETR"""
-    from transformers import DetrImageProcessor, DetrForObjectDetection
-    import torch
-
-    model_id = "facebook/detr-resnet-50"
-    if "detr_cpu" not in _models:
-        _models["detr_cpu_processor"] = DetrImageProcessor.from_pretrained(model_id)
-        _models["detr_cpu"] = DetrForObjectDetection.from_pretrained(model_id)
-
-    processor = _models["detr_cpu_processor"]
-    model = _models["detr_cpu"]
-
-    img = _handle_image_input(image)
-    inputs = processor(images=img, return_tensors="pt")
-
-    with torch.no_grad():
-        outputs = model(**inputs)
-
-    target_sizes = torch.tensor([img.size[::-1]])
-    results = processor.post_process_object_detection(outputs, target_sizes=target_sizes, threshold=threshold)[0]
-
-    detections = []
-    for score, label, box in zip(results["scores"], results["labels"], results["boxes"]):
-        box = [round(b, 2) for b in box.tolist()]
-        detections.append({
-            "label": model.config.id2label[label.item()],
-            "confidence": round(score.item(), 4),
-            "bbox": {"x": box[0], "y": box[1], "w": box[2] - box[0], "h": box[3] - box[1]},
-        })
+    # Move back to CPU after GPU use to free VRAM
+    if use_gpu:
+        model = model.to("cpu")
 
     return json.dumps({
         "detections": detections,
         "count": len(detections),
-        "model": model_id,
-        "source": "detr-cpu",
+        "model": "facebook/detr-resnet-50",
+        "source": f"detr-{'gpu' if use_gpu else 'cpu'}",
         "architecture": "CNN(ResNet-50) + Transformer",
-        "note": "Running on CPU — slower but functional",
     }, ensure_ascii=False)
 
 
@@ -1061,6 +1021,46 @@ with gr.Blocks(title="ORION Neural Hub v3.0", theme=gr.themes.Soft()) as demo:
         health_output = gr.JSON(label="Status")
         health_btn = gr.Button("🔄 Check", variant="primary")
         health_btn.click(fn=health_check, inputs=[], outputs=health_output, api_name="health")
+
+
+
+# ============================================================
+# Warm-up: pre-load CPU models at startup to eliminate cold starts
+# ============================================================
+
+def warm_up():
+    """Pre-load lightweight CPU models at startup."""
+    import time
+    t0 = time.time()
+    print("[warm_up] Pre-loading CPU models...")
+    
+    try:
+        get_embedder()
+        print("[warm_up] ✅ Embedder loaded")
+    except Exception as e:
+        print(f"[warm_up] ⚠️ Embedder failed: {e}")
+    
+    try:
+        _get_detr()
+        print("[warm_up] ✅ DETR (CPU) loaded")
+    except Exception as e:
+        print(f"[warm_up] ⚠️ DETR failed: {e}")
+    
+    try:
+        from torchvision import models
+        if "resnet_feat" not in _models:
+            model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+            model.eval()
+            _models["resnet_feat"] = model
+        print("[warm_up] ✅ ResNet features loaded")
+    except Exception as e:
+        print(f"[warm_up] ⚠️ ResNet failed: {e}")
+    
+    print(f"[warm_up] Done in {time.time()-t0:.1f}s")
+
+
+# Run warm-up at import time (Space startup)
+warm_up()
 
 
 if __name__ == "__main__":

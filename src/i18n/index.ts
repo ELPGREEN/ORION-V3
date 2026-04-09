@@ -1,24 +1,40 @@
 import pt from './pt.json';
-import en from './en.json';
-import de from './de.json';
-import es from './es.json';
-import fr from './fr.json';
-import it from './it.json';
-import zh from './zh.json';
-import ja from './ja.json';
-import ko from './ko.json';
-import ru from './ru.json';
-import ar from './ar.json';
-import hi from './hi.json';
-import tr from './tr.json';
 
 export type Language = 'pt' | 'en' | 'de' | 'es' | 'fr' | 'it' | 'zh' | 'ja' | 'ko' | 'ru' | 'ar' | 'hi' | 'tr';
 
-export const translations = {
-  pt, en, de, es, fr, it, zh, ja, ko, ru, ar, hi, tr,
-} as const;
+// Only default language loaded statically; others loaded lazily
+const _loadedTranslations: Record<string, typeof pt> = { pt };
+
+const loaders: Record<Language, () => Promise<{ default: typeof pt }>> = {
+  pt: () => Promise.resolve({ default: pt }),
+  en: () => import('./en.json'),
+  de: () => import('./de.json'),
+  es: () => import('./es.json'),
+  fr: () => import('./fr.json'),
+  it: () => import('./it.json'),
+  zh: () => import('./zh.json'),
+  ja: () => import('./ja.json'),
+  ko: () => import('./ko.json'),
+  ru: () => import('./ru.json'),
+  ar: () => import('./ar.json'),
+  hi: () => import('./hi.json'),
+  tr: () => import('./tr.json'),
+};
+
+export async function loadTranslation(lang: Language): Promise<typeof pt> {
+  if (_loadedTranslations[lang]) return _loadedTranslations[lang];
+  const mod = await loaders[lang]();
+  _loadedTranslations[lang] = mod.default;
+  return mod.default;
+}
+
+export function getLoadedTranslation(lang: Language): typeof pt | undefined {
+  return _loadedTranslations[lang];
+}
 
 export type TranslationKeys = typeof pt;
+
+export const translations = _loadedTranslations as Record<Language, typeof pt>;
 
 export const languages = [
   { code: 'pt' as Language, name: 'Português', flag: '🇧🇷' },
