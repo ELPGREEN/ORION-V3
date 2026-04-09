@@ -1,5 +1,5 @@
 # ================================================
-# ORION Neural Hub — ZeroGPU
+# ORION Neural Hub — ZeroGPU v3.0
 # ================================================
 
 # Core
@@ -11,6 +11,9 @@ pymupdf==1.25.3
 # TTS (edge-tts — Microsoft Edge free TTS, no API key needed)
 edge-tts>=6.1.0
 
+# Audio processing
+pydub>=0.25.1
+
 # ONNX Runtime (for vision/other models)
 onnxruntime==1.20.1
 
@@ -21,7 +24,8 @@ Pillow>=10.4.0
 # Embeddings (CPU — small model)
 sentence-transformers>=3.3.0
 
-# Phi-3 Vision: uses eager attention (no flash_attn needed)
+# CNN models (DETR, SegFormer, DPT, ResNet)
+torchvision>=0.17.0
 
 # Utilities
 numpy>=1.26.0
