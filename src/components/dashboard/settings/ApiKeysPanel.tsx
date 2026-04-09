@@ -83,20 +83,10 @@ export default function ApiKeysPanel() {
     }
   }
 
-  async function deleteKey(provider: string) {
-    const existing = savedKeys.find(k => k.provider === provider);
-    if (!existing) return;
-
-    setDeletingProvider(provider);
-    try {
-      await supabase.from("user_api_keys").delete().eq("id", existing.id);
-      toast.success(`Chave ${provider.toUpperCase()} removida`);
-      await loadKeys();
-    } catch (e: any) {
-      toast.error(`Erro: ${e.message}`);
-    } finally {
-      setDeletingProvider(null);
-    }
+  function clearInput(provider: string) {
+    // Soft "delete": key stays active in DB, just clears UI so user can enter a new one
+    setInputs(prev => ({ ...prev, [provider]: "" }));
+    toast.info(`Campo liberado para nova chave ${provider.toUpperCase()}. A chave anterior continua ativa até ser substituída.`);
   }
 
   function maskKey(key: string) {
