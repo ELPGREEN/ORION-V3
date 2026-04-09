@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,6 @@ import { ArrowLeft, Loader2, Mail, KeyRound, CheckCircle, ScanFace, Brain, Shiel
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import logoElp from "@/assets/logo-elp.webp";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { HCAPTCHA_SITE_KEY } from "@/lib/hcaptcha-config";
 
 type Step = "email" | "method" | "otp" | "newPassword";
 

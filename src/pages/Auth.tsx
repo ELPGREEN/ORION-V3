@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Fingerprint, Eye, EyeOff, LogIn, UserPlus, Loader2, Mail, Brain, Shield, Zap, Users, Briefcase, Link2, Scale, ScanFace, CheckCircle, Music } from "lucide-react";
 import { SEO } from "@/components/SEO";
@@ -13,8 +13,6 @@ import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { z } from "zod";
 import logoElp from "@/assets/logo-elp.webp";
 import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
-import { HCAPTCHA_SITE_KEY } from "@/lib/hcaptcha-config";
 
 // ═══════════════════════════════════════
 // Types & Constants

@@ -48,8 +48,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, metadata?: Record<string, unknown>, captchaToken?: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, metadata?: Record<string, unknown>) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: (accountType?: AccountType) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
