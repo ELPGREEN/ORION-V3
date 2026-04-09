@@ -1,20 +1,34 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const handle = async () => {
       try {
-        // Check URL hash for recovery/email change tokens
+        // Supabase may put tokens in hash OR query params depending on flow
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const type = hashParams.get('type');
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
+        
+        const type = hashParams.get('type') || searchParams.get('type');
+        const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+        const errorParam = hashParams.get('error') || searchParams.get('error');
+        const errorDescription = hashParams.get('error_description') || searchParams.get('error_description');
 
-        // If it's a recovery link, set session and redirect to password reset
+        // Handle error from Supabase (expired link, etc.)
+        if (errorParam) {
+          console.error('Auth callback error param:', errorParam, errorDescription);
+          navigate('/auth', {
+            replace: true,
+            state: { error: errorDescription || 'Link inválido ou expirado. Tente novamente.' },
+          });
+          return;
+        }
+
+        // Recovery flow
         if (type === 'recovery' && accessToken && refreshToken) {
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -23,16 +37,18 @@ export default function AuthCallback() {
 
           if (sessionError) {
             console.error('Recovery session error:', sessionError);
-            navigate('/auth', { replace: true, state: { error: 'Link de recuperação inválido ou expirado.' } });
+            navigate('/esqueci-senha', {
+              replace: true,
+              state: { error: 'Link de recuperação inválido ou expirado. Solicite um novo.' },
+            });
             return;
           }
 
-          // Redirect to password reset page with recovery flag
           navigate('/esqueci-senha?step=newPassword', { replace: true });
           return;
         }
 
-        // If it's an email change confirmation
+        // Email change confirmation
         if (type === 'email_change' && accessToken && refreshToken) {
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -49,9 +65,19 @@ export default function AuthCallback() {
           return;
         }
 
-        // Default: check for existing session (OAuth, signup confirmation, etc.)
+        // Signup confirmation — Supabase may auto-set session via PKCE
+        // Wait briefly for onAuthStateChange to fire
         const { data, error } = await supabase.auth.getSession();
         if (error || !data.session) {
+          // Try exchanging code if present (PKCE flow)
+          const code = searchParams.get('code');
+          if (code) {
+            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+            if (!exchangeError) {
+              navigate('/dashboard', { replace: true });
+              return;
+            }
+          }
           navigate('/auth', { replace: true });
           return;
         }
@@ -64,7 +90,7 @@ export default function AuthCallback() {
     };
 
     handle();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
