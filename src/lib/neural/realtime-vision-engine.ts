@@ -204,7 +204,10 @@ function computeIoU(
 /**
  * Detect if frame likely contains text via fast edge density check.
  * Used to skip expensive OCR on frames without text.
- */
+// Reusable OCR edge-density check canvas
+let _ocrCheckCanvas: OffscreenCanvas | null = null;
+let _ocrCheckCtx: OffscreenCanvasRenderingContext2D | null = null;
+
 function shouldRunOCR(video: HTMLVideoElement): boolean {
   try {
     // Reuse a single OffscreenCanvas for edge density check
