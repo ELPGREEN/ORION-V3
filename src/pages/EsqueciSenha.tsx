@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import logoElp from "@/assets/logo-elp.webp";
 
-type Step = "email" | "method" | "otp" | "newPassword";
+type Step = "email" | "otp" | "newPassword";
 
 const inputClass = "h-12 bg-[#161b22] border-[#1e2533] text-white focus:border-[#d4a853] focus:ring-[#d4a853]/20";
 const labelClass = "text-xs font-medium text-[#8b95a5] tracking-[0.15em] uppercase";
@@ -79,7 +79,28 @@ export default function EsqueciSenha() {
   const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    setStep("method");
+    // Skip method selection, send OTP directly
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    });
+    if (error) {
+      const isRateLimit = error.message?.toLowerCase().includes('rate') || error.status === 429;
+      toast({
+        title: isRateLimit ? "Aguarde um momento" : "Erro",
+        description: isRateLimit
+          ? "Muitas tentativas. Aguarde 1 minuto antes de solicitar um novo código."
+          : "Não foi possível enviar o código. Verifique o e-mail informado.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Código enviado!",
+        description: "Verifique seu e-mail para o código de 6 dígitos.",
+      });
+      setStep("otp");
+    }
+    setLoading(false);
   };
 
   const handleSendOtp = async (e?: React.FormEvent) => {
@@ -282,8 +303,8 @@ export default function EsqueciSenha() {
                       className={inputClass}
                     />
                   </div>
-                  <Button type="submit" className="w-full h-12 bg-gradient-to-r from-[#d4a853] to-[#b8942e] hover:from-[#e0b65e] hover:to-[#c9a33a] text-[#0a0a0f] font-semibold text-sm tracking-wider">
-                    CONTINUAR
+                  <Button type="submit" disabled={loading} className="w-full h-12 bg-gradient-to-r from-[#d4a853] to-[#b8942e] hover:from-[#e0b65e] hover:to-[#c9a33a] text-[#0a0a0f] font-semibold text-sm tracking-wider">
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "ENVIAR CÓDIGO"}
                   </Button>
                 </form>
                 <div className="text-center">
@@ -294,46 +315,8 @@ export default function EsqueciSenha() {
               </div>
             )}
 
-            {/* Step 2: Method Selection */}
-            {step === "method" && (
-              <div className="animate-fade-in space-y-6">
-                <div className="text-center space-y-3">
-                  <div className="h-14 w-14 border border-[#d4a853]/30 flex items-center justify-center bg-[#d4a853]/5 mx-auto">
-                    <KeyRound className="h-7 w-7 text-[#d4a853]" />
-                  </div>
-                  <h2 className="text-xl font-serif text-white">Método de Verificação</h2>
-                  <p className="text-sm text-[#8b95a5]">
-                    Escolha como deseja verificar sua identidade para <strong className="text-white">{email}</strong>
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  <Button
-                    onClick={() => handleSendOtp()}
-                    disabled={loading}
-                    className="w-full h-14 bg-gradient-to-r from-[#d4a853] to-[#b8942e] hover:from-[#e0b65e] hover:to-[#c9a33a] text-[#0a0a0f] font-semibold text-sm flex items-center justify-center gap-3"
-                  >
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                      <>
-                        <Mail className="h-5 w-5" />
-                        <div className="text-left">
-                          <div className="font-semibold">CÓDIGO POR E-MAIL</div>
-                          <div className="text-[10px] opacity-70">Receba um código de 6 dígitos ou link</div>
-                        </div>
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={() => setStep("email")}
-                    className="text-xs text-[#8b95a5] hover:text-[#d4a853] transition-colors tracking-wider inline-flex items-center gap-1"
-                  >
-                    <ArrowLeft className="h-3 w-3" /> Alterar e-mail
-                  </button>
-                </div>
-              </div>
-            )}
+
+
 
             {/* Step: OTP */}
             {step === "otp" && (
@@ -379,10 +362,10 @@ export default function EsqueciSenha() {
                   <br />
                   <button
                     type="button"
-                    onClick={() => setStep("method")}
+                    onClick={() => setStep("email")}
                     className="text-xs text-[#8b95a5] hover:text-[#d4a853] transition-colors tracking-wider inline-flex items-center gap-1"
                   >
-                    <ArrowLeft className="h-3 w-3" /> Outro método
+                    <ArrowLeft className="h-3 w-3" /> Alterar e-mail
                   </button>
                 </div>
               </div>
