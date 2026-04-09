@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { ArrowLeft, Loader2, Mail, KeyRound, CheckCircle } from "lucide-react";
+import { ArrowLeft, Loader2, Mail, KeyRound, CheckCircle, ScanFace } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import logoElp from "@/assets/logo-elp.webp";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { HCAPTCHA_SITE_KEY } from "@/lib/hcaptcha-config";
 
-type Step = "email" | "otp" | "newPassword";
+type Step = "email" | "method" | "otp" | "face" | "newPassword";
 
 export default function EsqueciSenha() {
   const { toast } = useToast();
@@ -19,6 +21,8 @@ export default function EsqueciSenha() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const hcaptchaRef = useRef<HCaptcha>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
