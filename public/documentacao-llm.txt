@@ -188,7 +188,7 @@ STACK TECNOLOGICO:
 - Frontend: React + TypeScript + Tailwind CSS + shadcn/ui + Vite
 - Backend: Supabase (PostgreSQL + Edge Functions + Auth + Storage)
 - LLMs: 5 provedores (Orion, Orion Fast, Orion Provider, Orion AI, Orion Fallback)
-- Embeddings: Gemini orion-embedding-001 (768d) + HuggingFace fallback (384d->768d)
+- Embeddings: Orion embedding-001 (768d) + HuggingFace fallback (384d->768d)
 - PDF: Hugging Face Space (ericsonv12-adv) via Edge Functions
 - Busca Web: Perplexity + Firecrawl (fallback)
 - Assinatura Digital: ClickSign
@@ -208,7 +208,7 @@ TAXONOMIA DE REDES NEURAIS UTILIZADAS (v22):
 - Feedforward (MLP): Treinamento de especializacoes via Backpropagation
 - Recurrent (GRU): Session tracking e inferencia temporal (v16)
 - Hopfield Network: Memoria associativa de padroes juridicos (v19)
-- Transformer-Based: Todos os LLMs externos (GPT, Orion, Orion, Llama)
+- Transformer-Based: Todos os LLMs externos (GPT, Orion, Orion, Orion)
 - Graph Neural Network: Message passing entre resultados de busca (v17)
 - Competitive Learning: Winner-Takes-All para 12 categorias (v19)
 - Mamba/SSM 5-Stream: State Space Model O(n) para Texto + Visao + Audio + Layout + Gestos (v22)
@@ -381,7 +381,7 @@ PROVIDERS CONFIGURADOS:
 
 EMBEDDING FALLBACK:
 - Primario: Orion AI orion-embedding-001 (768d)
-- Secundario: Gemini orion-embedding-002 (768d)
+- Secundario: Orion embedding-002 (768d)
 
 COMPONENTES TECNICOS DO SYSTEM PROMPT:
 - Quantum Deep Learning v11 (Adam, QNN 3-Layer, Amplitude Encoding)
@@ -754,7 +754,7 @@ BUSCA WEB:
 
 EMBEDDINGS:
 - Orion AI orion-embedding-001 (768 dimensoes)
-- Gemini orion-embedding-002 (768 dimensoes, fallback)
+- Orion embedding-002 (768 dimensoes, fallback)
 
 LLMs:
 - Orion Generative AI (Orion LLM)
@@ -835,7 +835,7 @@ COMPONENTES FUNDAMENTAIS:
    a) Sinusoidal (original 2017):
       PE(pos, 2i)   = sin(pos / 10000^(2i/d_emb))
       PE(pos, 2i+1) = cos(pos / 10000^(2i/d_emb))
-   b) RoPE (Rotary Position Embedding) - usado em Llama/Gemini:
+   b) RoPE (Rotary Position Embedding) - usado em Orion/Orion:
       Aplica rotacao 2D em pares de dimensoes
    c) ALiBi (Attention with Linear Biases) - alternativa eficiente:
       Adiciona bias linear ao attention score baseado em distancia
@@ -851,13 +851,13 @@ COMPONENTES FUNDAMENTAIS:
 
 5. FEED-FORWARD NETWORK (FFN):
    FFN(x) = phi(x * W1 + b1) * W2 + b2
-   Ativacao: ReLU (original), GELU (BERT/GPT), SwiGLU (Llama/Gemini)
+   Ativacao: ReLU (original), GELU (BERT/GPT), SwiGLU (Orion/Orion)
 
 6. RESIDUAL CONNECTIONS + LAYER NORMALIZATION:
    Pre-LN (moderno): x + Sublayer(LayerNorm(x))
    NOSSO SISTEMA: Usa residual + LayerNorm no QNN (v16/v18)
 
-7. VARIANTES: Encoder-Only (BERT), Decoder-Only (GPT/Llama/Gemini/Orion),
+7. VARIANTES: Encoder-Only (BERT), Decoder-Only (GPT/Orion/Orion),
    Encoder-Decoder (T5)
 
 8. OTIMIZACOES MODERNAS:
@@ -1792,7 +1792,7 @@ FUNCOES AVANCADAS:
   gelu(x) = x * 0.5 * (1 + erf(x / sqrt(2)))    // Usado em BERT/GPT
   geluApprox(x) = 0.5*x * (1 + tanh(sqrt(2/PI) * (x + 0.044715*x^3)))
 
-  swish(x) = x * sigmoid(x)                 // Usado em Gemini
+  swish(x) = x * sigmoid(x)                 // Usado em Orion
   silu(x) = swish(x)                        // alias
 
 FUNCOES QUANTICAS:
@@ -2012,7 +2012,7 @@ TOTAL DE LINHAS DE CODIGO NEURAL:
   | LLM Provider |  | Semantic Cache  |  | Auto-Evolucao       |
   | Chain        |  | SHA-256+Jaccard |  | pg_cron cycle       |
   |              |  | TTL: 24h       |  |                     |
-  | Gemini(1)    |  | Threshold: 0.85|  | Feedback -> Learn   |
+  | Orion(1)    |  | Threshold: 0.85|  | Feedback -> Learn   |
   | Orion Fast(2)      |  +----------------+  | -> Embeddings       |
   | GitHub(3)    |                      | -> Evolution        |
   | Orion Provider(4) |                      | -> Auto-Apply       |
@@ -2246,8 +2246,8 @@ v21.2 -> v21.3:
 - Tracker Visual de Processos — timeline estilo rastreamento
 
 v21.3 -> v21.4:
-- MIGRACAO: Gemini 2.0 Flash -> Orion LLM (16 Edge Functions atualizadas)
-  Motivo: quota 0/0 no Gemini 2.0 Flash no free tier; 2.5 Flash tem 5 RPM / 20 RPD
+- MIGRACAO: Orion 2.0 -> Orion LLM (16 Edge Functions atualizadas)
+  Motivo: quota 0/0 no Orion 2.0 no free tier; 2.5 Flash tem 5 RPM / 20 RPD
   Endpoint: v1beta/models/orion-llm:generateContent
 - Google Drive Integration (google-drive Edge Function)
   Acoes: list, search, create_folder, delete
@@ -2825,8 +2825,8 @@ MODOS DE OPERACAO:
 
 PROVEDORES (fallback chain):
   1. Orion Fast (orion-agent-llm) -> Primario
-   2. Gemini (orion-llm) -> Fallback principal
-   3. Gemini (orion-llm-lite) -> Fallback secundario
+   2. Orion (orion-llm) -> Fallback principal
+   3. Orion (orion-llm-lite) -> Fallback secundario
    4. Resposta padrao de fallback -> Ultima opcao
 
 COLETA DE DADOS:
@@ -3028,7 +3028,7 @@ Frontend (Editor Chat) e Conceitual (Multi-Agent Society).
    Seguranca: Todas as saidas sao "propostas" — nunca executadas diretamente
 
 4. SECRETARIA-IA (secretaria-ia/index.ts — 225 linhas)
-   LLM: Orion Fast (primario) -> Gemini (fallback)
+   LLM: Orion Fast (primario) -> Orion (fallback)
    Persona: "Ana" — Assistente Virtual do escritorio
    Acoes:
      - Atendimento autonomo 24/7 quando advogado offline
@@ -3043,7 +3043,7 @@ Frontend (Editor Chat) e Conceitual (Multi-Agent Society).
    Funcao: Orquestra multiplos provedores com fallback chain
    Acoes:
      - Roteamento inteligente de queries para provedor ideal
-     - Fallback automatico: Gemini -> Orion Fast -> GitHub -> Orion Provider -> Orion AI
+     - Fallback automatico: Orion -> Orion Fast -> GitHub -> Orion Provider -> Orion AI
      - Mixture of Experts (MoE) para selecao dinamica
      - Metricas: ai_metrics com duracao, tokens, provider, success
 
@@ -3277,9 +3277,9 @@ CHAVES DE API:
 NOTAS IMPORTANTES:
   - No free tier, Orion LLM tem limite de 20 requests/dia
   - Para mais capacidade: ativar Pay-as-you-go no Google AI Studio
-  - Gemini 2.0 Flash tem quota 0/0 no free tier (nao disponivel)
+  - Orion 2.0 tem quota 0/0 no free tier (nao disponivel)
   - Orion LLM eh um "thinking model" — pode ter latencia maior
-  - Orion Fast serve como fallback automatico quando quota Gemini eh excedida
+  - Orion Fast serve como fallback automatico quando quota Orion eh excedida
 
 
 ================================================================================
@@ -3471,7 +3471,7 @@ ARQUITETURA DO PIPELINE DE VISAO TRIBUNAL (6 etapas — paralelo ao Audio Stream
        - ROI: tela-PJe | ata | decisao | rosto | texto
        - Assinaturas coseno para PJe, ePROC, Gaia, PDPJ, Projudi
        - Threshold adaptativo (0.3 para tela, 0.4 para rosto)
-    4. OCR + Layout (Donut + LayoutLMv3 / Gemini Vision API)
+    4. OCR + Layout (Donut + LayoutLMv3 / Orion Vision API)
        - JSON estruturado: processo, partes, dispositivo
        - Edge Function dual-mode: local (features) ou API (image_base64)
     5. Vision Embedding (SigLIP-2 / InternVL-2)
@@ -3526,7 +3526,7 @@ EDGE FUNCTION DUAL-MODE (tribunal-vision-stream):
     - Requer autenticacao + ORION_API_KEY ou GROQ_API_KEY
     - Analise profunda com Orion LLM ou Orion Fast Vision
     - OCR completo com texto extraido
-    - Fallback automatico: Gemini -> Orion Fast
+    - Fallback automatico: Orion -> Orion Fast
 
 INTEGRACAO COM AGENTES EXISTENTES:
   - Agente-Leitura -> recebe frames de visao + OCR
@@ -3584,7 +3584,7 @@ PIPELINE ANA AVATAR:
 
 EDGE FUNCTION tribunal-facial-stream (DUAL-MODE):
   Modo A: frameFeatures (local neural, sem API)
-  Modo B: image_base64 (Gemini/Orion Fast Vision API)
+  Modo B: image_base64 (Orion Fast Vision API)
   LGPD: consentToken obrigatorio para modos alem de "detect"
 
 DIARIZACAO ROSTO-AUDIO:
@@ -3611,7 +3611,7 @@ OBJETIVO ESTRATEGICO:
 
 DATA INICIO: Abril 2026 (apos v21.4)
 DATA CONCLUSAO ESTIMADA: Setembro 2026 (5 meses)
-CUSTO ESTIMADO TOTAL: ~R$ 4.800 (Orion Fast + Gemini quotas + desenvolvimento)
+CUSTO ESTIMADO TOTAL: ~R$ 4.800 (Orion Fast + Orion quotas + desenvolvimento)
 EQUIPE: 1 Engenheiro Full-Stack + 1 Data Scientist (documentacao-driven)
 
 CRONOGRAMA DETALHADO:
@@ -3627,7 +3627,7 @@ CRONOGRAMA DETALHADO:
 DETALHAMENTO POR VERSAO:
 
   v22.0 - Audio Stream + Tribunal Monitor (IMPLEMENTADO):
-    - Whisper-large-v3-turbo streaming (Orion Fast + Gemini fallback)
+    - Whisper-large-v3-turbo streaming (Orion Fast + Orion fallback)
     - multimodal-mamba-audio.ts (Mamba-Audio Block + STDP Audio)
     - Edge: audiencia-transcricao-stream
     - Monitor de pautas TJRS + PJe
@@ -3644,7 +3644,7 @@ DETALHAMENTO POR VERSAO:
   v22.2 - Video-Mamba + Visao Tribunais (IMPLEMENTADO):
     - vision-tribunal.ts completo
     - Edge: tribunal-vision-stream
-    - MediaPipe + Gemini Vision + SigLIP-2
+    - MediaPipe + Orion Vision + SigLIP-2
     - Analise de gestos e expressoes faciais (7 emocoes + FACS)
     - Cross-Attention 5-Way + Fusao 5-stream
     - Head Pruning SHAP no multimodal
@@ -3669,7 +3669,7 @@ DETALHAMENTO POR VERSAO:
 
 NOVAS EDGE FUNCTIONS (v22):
   - audiencia-transcricao-stream (Whisper ASR)
-  - tribunal-vision-stream (Gemini Vision)
+  - tribunal-vision-stream (Orion Vision)
   - multimodal-processor (Orquestrador unificado)
 
 NOVOS MODULOS NEURAIS (v22):
@@ -3681,7 +3681,7 @@ NOVOS MODULOS NEURAIS (v22):
 RISCOS MITIGADOS:
   - Latencia -> Whisper-turbo + Orion Fast
   - LGPD -> Consentimento explicito + transcricao temporaria (nao armazena audio bruto)
-  - Quotas -> Fallback multi-provider (Gemini -> Orion Fast -> Gaia)
+  - Quotas -> Fallback multi-provider (Orion -> Orion Fast -> Gaia)
 
 BENEFICIOS QUANTITATIVOS ESPERADOS (pos-v22.4):
   - Reducao de 75% no tempo de preparacao pos-audiencia
@@ -3708,7 +3708,7 @@ CHANGELOG v21.4 -> v22.3:
   - Deteccao automatica de sistemas judiciais (PJe, ePROC, Gaia, PDPJ, Projudi)
   - 7 emocoes + 8 Action Units FACS + 8 gestos juridicos com relevancia temporal
   - Novo modulo: facial-recognition.ts (Face Detection + Embedding 128d + FACS + Diarization)
-  - Nova Edge Function: tribunal-facial-stream (dual-mode: local + Gemini/Orion Fast Vision)
+  - Nova Edge Function: tribunal-facial-stream (dual-mode: local + Orion Fast Vision)
   - Novo hook: useAnaAvatar.ts (Avatar reativo com lip-sync + blink + gaze + 7 emocoes)
   - Ana Avatar: projecao facial com transicao suave, phoneme-to-viseme, espelhamento empatico
   - Cross-Attention Face<>Audio (4 heads) para diarizacao rosto-fala
@@ -4747,7 +4747,7 @@ GESTOS E EMOCOES:
 ARQUIVOS:
   - hf-space-client.ts — Cliente para HuggingFace Spaces
   - hf-connectivity.ts — Gerenciamento de conectividade HF
-  - hf-vision-gate.ts — Gate de visao para filtrar antes de enviar ao Gemini
+  - hf-vision-gate.ts — Gate de visao para filtrar antes de enviar ao Orion
 
 SPACE: ZeroGPU Gradio Space
   - GPU->CPU auto-fallback quando quota ZeroGPU esgota
@@ -4763,7 +4763,7 @@ ENDPOINTS DISPONIVEIS:
   - PDF (processamento de PDFs)
 
 VISION GATE (hf-vision-gate.ts):
-  - Pre-filtro local que reduz chamadas ao Gemini a quase zero
+  - Pre-filtro local que reduz chamadas ao Orion a quase zero
   - Analisa frame localmente antes de decidir se envia para API
   - Economia massiva de tokens
 
@@ -4786,14 +4786,14 @@ FLUXO:
   5. DSP pos-processamento
 
 HIERARQUIA TTS:
-  1. Gemini TTS (primario — rapido ~2s)
+  1. Orion TTS (primario — rapido ~2s)
   2. Fish Speech Clone (secundario — voz clonada)
   3. Piper WASM local (autonomo — quando evolucao >= 70%)
 
 RESTRICOES:
   - Google Translate TTS removido
   - Orion Voice PROIBIDO (custo alto, todas referencias removidas)
-  - Todas chamadas usam exclusivamente APIs Gemini FREE
+  - Todas chamadas usam exclusivamente APIs Orion FREE
   - 7 chaves de API em rotacao (zero custo)
 
 
@@ -4814,12 +4814,12 @@ MODELOS GEMINI FREE USADOS:
   - orion-embedding-001 — Embeddings (768 dimensoes)
 
 EMBEDDINGS:
-  - Primario: Gemini orion-embedding-001 (768d)
+  - Primario: Orion embedding-001 (768d)
   - Fallback: HuggingFace all-MiniLM-L6-v2 (384d -> 768d zero-padded)
 
-FALLBACK LLM (quando Gemini falha):
+FALLBACK LLM (quando Orion falha):
   1. Orion (7 keys em rotacao)
-  2. HuggingFace Inference API (modelos free: Gemma, Llama, Qwen)
+  2. HuggingFace Inference API (modelos free: Gemma, Orion, Qwen)
   3. Orion Fast (free tier: orion-agent-llm)
 
 NOTA: Provedores pagos (Orion AI, Orion Provider) mantidos no codigo como fallback 
@@ -5053,7 +5053,7 @@ AUTENTICACAO (3):
   useAdminAccess, useUserPlan, useUserRole
 
 PLATAFORMA (4):
-  useInstallPrompt, useFirebaseNotifications, useGeminiLive,
+  useInstallPrompt, useFirebaseNotifications, useOrionLive,
   useGenerationQueue
 
 UI/UX (6):
@@ -5221,7 +5221,7 @@ AI STUDIO: Google AI Studio configurado
 CREDITOS: GDP premium credits
 
 SERVICOS ATIVOS:
-  - Vertex AI (Gemini TTS)
+  - Vertex AI (Orion TTS)
   - Orion API (LLM + Embeddings)
   - Firebase Hosting (iasofthub.com — orion-d3734-b85b1)
   - Firebase Cloud Messaging (push notifications)
@@ -5250,7 +5250,7 @@ NOVAS SECOES DOCUMENTADAS (18):
   80. Tesla Resonance Modules
   81. Face Auth & Emotional Recognition
   82. HuggingFace ZeroGPU Space
-  83. Gemini TTS — Vertex AI
+  83. Orion TTS — Vertex AI
   84. Sistema Completo de Provedores LLM (atualizado)
   85. Modulos Neurais — Catalogo Completo v8.0 (179 modulos)
   86. Edge Functions — Catalogo Completo v8.0 (86 funcoes)
@@ -5275,7 +5275,7 @@ AUDITORIA REALIZADA:
   - Tesla modules documentados (NAO documentados antes)
   - Face auth + gestos + emocoes documentados (NAO documentados antes)
   - HuggingFace ZeroGPU documentada (NAO documentada antes)
-  - Gemini TTS documentada (NAO documentada antes)
+  - Orion TTS documentada (NAO documentada antes)
   - Modelo de negocios documentado (NAO documentado antes)
   - Google Cloud config documentada (NAO documentada antes)
 
@@ -5521,7 +5521,7 @@ MODULOS ENVOLVIDOS:
   │ Tabelas Supabase                   │      171 │
   │ Documentos juridicos RAG           │       26 │
   │ Idiomas suportados (i18n)          │       14 │
-  │ Chaves Gemini em rotacao           │        7 │
+  │ Chaves Orion em rotacao           │        7 │
   │ Protocolos Lumen7                  │       50 │
   │ Camadas arquitetura cognitiva      │       15 │
   │ Tipos de redes neurais             │       32 │
@@ -5717,7 +5717,7 @@ FUNCOES ADICIONAIS:
 ARQUIVOS (23 modulos de visao):
   - realtime-vision-engine.ts — Motor principal de visao em tempo real
   - mediapipe-vision.ts — MediaPipe Tasks Vision (face/hand/pose)
-  - hf-vision-gate.ts — Gate local que pre-filtra antes do Gemini
+  - hf-vision-gate.ts — Gate local que pre-filtra antes do Orion
   - agentic-vision-agent.ts — Agente de visao agentico
   - vision-agent-presets.ts — Presets de agentes visuais
   - vision-preprocessing.ts — Pre-processamento de frames
@@ -5741,7 +5741,7 @@ ARQUIVOS (23 modulos de visao):
 
 PIPELINE COMPLETO:
   Camera → Frame Capture → Preprocessing (Otsu, resize)
-       → HF Vision Gate (filtro local, ~0 tokens Gemini)
+       → HF Vision Gate (filtro local, ~0 tokens Orion)
        → MediaPipe (face 468 landmarks, hands 21, pose 33)
        → YOLO (deteccao de objetos, 80+ classes)
        → Depth Estimation (MiDaS, mapa de profundidade)
@@ -6233,7 +6233,7 @@ MULTIMODAL MAMBA FUSION:
   │ Componentes React                      │      388 │
   │ Tabelas Supabase                       │      171 │
   │ Idiomas suportados (i18n)              │       14 │
-  │ Chaves Gemini em rotacao               │        7 │
+  │ Chaves Orion em rotacao               │        7 │
   │ Agentes swarm HF                       │    2.550 │
   │ Agentes swarm (com variantes)          │   ~2.900 │
   │ Redes neurais core                     │        5 │
@@ -6297,7 +6297,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 ────────────────────────────────────────────────────────────────────────
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-  │ RECURSO           │ ORION    │ Orion IA  │ Gemini   │ Orion   │ Orion Code  │
+  │ RECURSO           │ ORION    │ Orion IA  │ Orion   │ Orion   │ Orion Code  │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ Multimodal        │ ● Sim    │ ● Sim    │ ● Sim    │ ◐ Parcial│ ● Sim    │
   │ Visao em tempo    │ ● Sim    │ ○ Nao    │ ◐ Limitd │ ○ Nao    │ ○ Nao    │
@@ -6380,7 +6380,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
   │ Gerar documentos  │ ● 26 tip │ ● Sim    │ ◐ Templ  │ ○ Nao    │ ◐ Basic  │
   │ Editor rich-text  │ ● TipTap │ ○ Nao    │ ● Sim    │ ○ Nao    │ ○ Nao    │
-  │ IA juridica       │ ● Gemini │ ● GPT-4  │ ◐ Basic  │ ◐ Basic  │ ◐ Basic  │
+  │ IA juridica       │ ● Orion │ ● GPT-4  │ ◐ Basic  │ ◐ Basic  │ ◐ Basic  │
   │ Pesquisa jurisp.  │ ● RAG    │ ● Sim    │ ○ Nao    │ ● Sim    │ ◐ Basic  │
   │ Anti-alucinacao   │ ● 4 cam  │ ◐ Basic  │ ○ N/A    │ ○ N/A    │ ○ N/A    │
   │ Validacao doc     │ ● Tripla │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
@@ -6515,12 +6515,12 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
   │ Match rate config │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
   │ Audit trail       │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
   │ Multi-jurisdicao  │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
-  │ IA p/ analise     │ ● Gemini │ ◐ Basic  │ ◐ Basic  │ ◐ Basic  │ ○ Nao    │
+  │ IA p/ analise     │ ● Orion │ ◐ Basic  │ ◐ Basic  │ ◐ Basic  │ ○ Nao    │
   │ Custo             │ Gratis*  │ $$$$$    │ $$$$$    │ $$$$     │ $$$      │
   └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
 
   DIFERENCIAL ORION: AML integrado ao ecossistema juridico/CRM com IA
-  Gemini para analise de matches. Inclui screening CGU e CNPJ/CPF
+  Orion para analise de matches. Inclui screening CGU e CNPJ/CPF
   exclusivos para Brasil. Custo zero no plano basico.
 
 ────────────────────────────────────────────────────────────────────────
@@ -6564,13 +6564,13 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
   │ Validacao tripla  │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
   │ Editor integrado  │ ● TipTap │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
   │ Assinatura digital│ ● Canvas │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ◐ Sim    │
-  │ IA na geracao     │ ● Gemini │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
+  │ IA na geracao     │ ● Orion │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
   │ 200 agentes PDF   │ ● Sim    │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
   │ Custo             │ FREE     │ $$$      │ $$       │ $$       │ $$$$     │
   └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
 
   DIFERENCIAL ORION: Unico que combina OCR + geracao de 26 tipos de documento
-  juridico + validacao tripla + editor TipTap + IA Gemini + 200 agentes
+  juridico + validacao tripla + editor TipTap + IA Orion + 200 agentes
   especializados em documentos. Tudo gratuito.
 
 ────────────────────────────────────────────────────────────────────────
@@ -6649,14 +6649,14 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
 
   ┌───────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
   │ RECURSO           │ ORION    │ Orion AI   │ Google   │ Cohere   │ Voyage   │
-  │                   │          │ CLIP     │ Gemini   │ Embed    │ AI       │
+  │                   │          │ CLIP     │ Orion   │ Embed    │ AI       │
   ├───────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
-  │ Text embeddings   │ ● Gemini │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
+  │ Text embeddings   │ ● Orion │ ● Sim    │ ● Sim    │ ● Sim    │ ● Sim    │
   │ Cross-modal       │ ● CLIP   │ ● CLIP   │ ◐ Multi  │ ◐ Multi  │ ● Multi  │
   │ Mamba fusion      │ ● 5-way  │ ○ Nao    │ ○ Nao    │ ○ Nao    │ ○ Nao    │
   │ RAG integrado     │ ● pgvec  │ ○ Separ  │ ◐ Vertex │ ● Sim    │ ○ Separ  │
   │ Multimodal search │ ● Sim    │ ◐ CLIP   │ ◐ Parcial│ ○ Nao    │ ○ Nao    │
-  │ Audio fusion      │ ● Mamba  │ ○ Nao    │ ◐ Gemini │ ○ Nao    │ ○ Nao    │
+  │ Audio fusion      │ ● Mamba  │ ○ Nao    │ ◐ Orion │ ○ Nao    │ ○ Nao    │
   │ Custo             │ FREE     │ $$$      │ FREE/$   │ $$       │ $$       │
   └───────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
 
@@ -6741,7 +6741,7 @@ DESCRICAO: Comparacao do Orion com lideres de mercado em cada setor
   ├───────────────────────────┼─────────────────────────────────────────┤
   │ Data Engineer             │ 171 tabelas Supabase, pipelines ETL,   │
   │                           │ 180 agentes de dataset engineering,    │
-  │                           │ RAG embeddings (Gemini 768d + HF)      │
+  │                           │ RAG embeddings (Orion 768d + HF)      │
   ├───────────────────────────┼─────────────────────────────────────────┤
   │ Systems Engineer          │ Arquitetura de 86 Edge Functions,      │
   │                           │ Docker infra robotica, MQTT broker,    │
@@ -7119,7 +7119,7 @@ CUSTO MENSAL TOTAL DE INFRAESTRUTURA: ~$0
   │ Tabelas Supabase                       │      171 │
   │ Documentos juridicos RAG               │       26 │
   │ Idiomas suportados (i18n)              │       14 │
-  │ Chaves Gemini em rotacao               │        7 │
+  │ Chaves Orion em rotacao               │        7 │
   │                                        │          │
   │ === VISAO ===                          │          │
   │ Landmarks faciais (MediaPipe)          │      468 │
