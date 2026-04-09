@@ -1964,12 +1964,73 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   const hasImage = messages.some((m: any) => Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url"));
 
   // ═══ STREAMING MODE ═══
-  // REGRA: Gemini SEMPRE primeiro (7 keys em rotação) — é gratuito e orquestra tudo.
-  // Fallbacks: HuggingFace (grátis) → Groq → DeepSeek → Mistral → OpenRouter
+  // REGRA: Vertex AI primeiro (créditos GCP) → Gemini API keys → fallbacks gratuitos
   if (stream) {
     const attemptedProviders: string[] = [];
 
-    // ── PRIMARY: Gemini streaming (7 keys rotation) — SEMPRE PRIMEIRO ──
+    // ── PRIMARY: Vertex AI streaming (GCP credits — €1.127 disponíveis) ──
+    try {
+      attemptedProviders.push("vertex_ai");
+      const vertexResp = await callVertexAI(messages, true);
+      if (vertexResp && vertexResp.ok && vertexResp.body) {
+        const reader = vertexResp.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+        let readerDone = false;
+        const encoder = new TextEncoder();
+
+        const transformStream = new ReadableStream({
+          async pull(controller) {
+            if (readerDone) {
+              try { controller.enqueue(encoder.encode("data: [DONE]\n\n")); } catch {}
+              controller.close();
+              return;
+            }
+            try {
+              const { done, value } = await reader.read();
+              if (done) {
+                readerDone = true;
+                try { controller.enqueue(encoder.encode("data: [DONE]\n\n")); } catch {}
+                controller.close();
+                return;
+              }
+              buf += decoder.decode(value, { stream: true });
+              const lines = buf.split("\n");
+              buf = lines.pop() || "";
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const payload = line.slice(6).trim();
+                if (!payload || payload === "[DONE]") continue;
+                try {
+                  const parsed = JSON.parse(payload);
+                  const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                  if (text) {
+                    const chunk = JSON.stringify({ choices: [{ delta: { content: text } }] });
+                    controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+                  }
+                } catch {}
+              }
+            } catch (e) {
+              console.error("Vertex stream pull error:", e);
+              readerDone = true;
+              controller.close();
+            }
+          },
+          cancel() {
+            readerDone = true;
+            try { reader.cancel(); } catch {}
+          },
+        });
+
+        return new Response(transformStream, {
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+        });
+      }
+    } catch (e) {
+      console.warn("[Orion] Vertex AI streaming failed:", e);
+    }
+
+    // ── FALLBACK: Gemini API keys streaming (free tier) ──
     for (const keyEnv of geminiKeys) {
       if (!Deno.env.get(keyEnv) || isProviderCoolingDown(`gemini_${keyEnv}`)) continue;
       try {
