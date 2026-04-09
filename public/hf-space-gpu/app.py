@@ -114,7 +114,7 @@ def tts_speak(text: str, speed: float = 1.0) -> tuple:
 # Gemma 4 LLM Chat (GPU with CPU graceful error)
 # ============================================================
 
-@spaces.GPU(duration=120)
+@spaces.GPU(duration=60)
 def gemma_chat(message: str, system_prompt: str = "", max_tokens: int = 1024, temperature: float = 0.7) -> str:
     """Chat with Gemma 4 on ZeroGPU"""
     if not message or not message.strip():
@@ -135,7 +135,7 @@ def gemma_chat(message: str, system_prompt: str = "", max_tokens: int = 1024, te
     if "gemma" not in _models:
         _models["gemma_tokenizer"] = AutoTokenizer.from_pretrained(model_id)
         _models["gemma"] = AutoModelForCausalLM.from_pretrained(
-            model_id, torch_dtype=torch.bfloat16, device_map="auto"
+            model_id, torch_dtype=torch.bfloat16, device_map="cuda"
         )
 
     tokenizer = _models["gemma_tokenizer"]
