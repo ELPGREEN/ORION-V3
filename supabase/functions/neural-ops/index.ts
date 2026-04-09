@@ -1949,6 +1949,18 @@ function parseOrionResponse(text: string) {
   return { description: clean, learnedFacts, identifiedObjects };
 }
 
+// ═══ Strip image_url from messages for text-only providers ═══
+function stripImageFromMessages(msgs: any[], hadImage: boolean): any[] {
+  return msgs.map((m: any) => {
+    if (m.role === "user" && Array.isArray(m.content)) {
+      const textParts = m.content.filter((c: any) => c.type === "text").map((c: any) => c.text);
+      const text = textParts.join("\n") || "Olá";
+      return { ...m, content: hadImage ? `[Imagem capturada mas provedor sem suporte a visão. Use dados ML locais do contexto.]\n${text}` : text };
+    }
+    return m;
+  });
+}
+
 async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) {
   const messages = await buildOrionMessages(body);
   const requestedMaxTokens = typeof body.maxTokens === "number" ? body.maxTokens : undefined;
