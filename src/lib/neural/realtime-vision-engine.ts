@@ -32,6 +32,8 @@ export interface RealTimeVisionResult {
   faces: MPVisionResult["faces"];
   /** Hands from MediaPipe */
   hands: MPVisionResult["hands"];
+  /** Poses from MediaPipe (33 body landmarks) */
+  poses: MPPose[];
   /** Total inference time */
   inferenceMs: number;
   /** Which detectors are active */
@@ -44,6 +46,8 @@ export interface RealTimeVisionResult {
     faceAttributes: boolean;
     gaze: boolean;
     handwrittenOCR: boolean;
+    pose: boolean;
+    layout: boolean;
   };
   /** Multi-task FrameX result (scene, OCR, movement, expressions) — null if not available */
   frameXResult: MultiTaskResult | null;
@@ -61,6 +65,10 @@ export interface RealTimeVisionResult {
   gazeResult: GazeResult | null;
   /** Handwritten text recognition */
   handwrittenOCR: HandwrittenOCRResult | null;
+  /** Regional descriptions of interesting areas */
+  regionalDescriptions: RegionalDescription[];
+  /** Document layout parsing */
+  documentLayout: DocumentLayout | null;
 }
 
 export interface UnifiedDetection {
