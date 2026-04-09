@@ -112,15 +112,7 @@ function FinanceiroTab() {
   const { data: dre, isLoading, refetch } = useQuery({
     queryKey: ["orion-dre"],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("orion-intelligence", {
-        body: null,
-        headers: {},
-      });
-      // Use query params via direct fetch
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/orion-intelligence?action=dre&days=30`, {
-        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`, "Content-Type": "application/json" },
-      });
-      return res.json();
         headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`, "Content-Type": "application/json" },
       });
       return res.json();
