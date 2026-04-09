@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
 const PREMIUM_PLANS = ["professional", "business", "enterprise"];
-const OWNER_EMAIL = "info@elpgreen.com";
+const OWNER_EMAIL = "ericsonpiccoli.dev@gmail.com";
 const FREE_TRIAL_TOKENS = 1000;
 
 export function useUserPlan() {
