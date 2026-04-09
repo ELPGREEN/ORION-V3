@@ -179,6 +179,9 @@ Deno.serve(async (req) => {
         if (data.email) {
           await supabaseAdmin.auth.admin.updateUserById(user_id, { email: data.email });
         }
+        if (data.password) {
+          await supabaseAdmin.auth.admin.updateUserById(user_id, { password: data.password });
+        }
         return json({ ok: true });
       }
 
