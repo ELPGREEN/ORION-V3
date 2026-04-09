@@ -291,12 +291,26 @@ export async function detectRealTime(
     } catch {}
   }
 
+  // Regional descriptions (every 10th frame)
+  const regionalDescriptions: RegionalDescription[] = frameCount % 10 === 0
+    ? prepareRegionalDescriptions(video, allObjects, video.videoWidth || 640, video.videoHeight || 480)
+    : [];
+
+  // Document layout parsing from OCR
+  let documentLayout: DocumentLayout | null = null;
+  if (ocrResult && ocrResult.texts.length > 0) {
+    try {
+      documentLayout = parseDocumentLayout(ocrResult, video.videoWidth || 640, video.videoHeight || 480);
+    } catch {}
+  }
+
   const result: RealTimeVisionResult = {
     mpObjects: mpResult.objects,
     yoloObjects: yoloResult,
     allObjects,
     faces: mpResult.faces,
     hands: mpResult.hands,
+    poses: mpResult.poses ?? [],
     inferenceMs: Math.round(performance.now() - start),
     status: {
       mediapipe: isMediaPipeReady(),
@@ -307,6 +321,8 @@ export async function detectRealTime(
       faceAttributes: true,
       gaze: true,
       handwrittenOCR: isTrOCRReady(),
+      pose: (mpResult.poses?.length ?? 0) > 0,
+      layout: !!documentLayout,
     },
     frameXResult,
     depthResult,
@@ -318,6 +334,8 @@ export async function detectRealTime(
     quantumEnhancement,
     gazeResult: null,
     handwrittenOCR: null,
+    regionalDescriptions,
+    documentLayout,
   };
 
   // Gaze detection from face landmarks (zero cost — uses existing data)
@@ -334,6 +352,9 @@ export async function detectRealTime(
       result.handwrittenOCR = await recognizeHandwritingFromVideo(video);
     } catch {}
   }
+
+  // ─── Temporal Buffer: push frame and detect events ───
+  visionTemporalBuffer.pushFrame(result);
 
   // Publish for Vision-RAG cross-referencing
   if (typeof window !== "undefined") {
