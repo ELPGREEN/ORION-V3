@@ -5,6 +5,8 @@
  * 100% local, zero API calls, runs in browser via WASM/WebGL.
  */
 
+import { markVisionStart, markVisionEnd } from "./pipeline-latency-tracker";
+
 import { detectAllMP, preloadMediaPipe, isMediaPipeReady, type MPVisionResult, type MPPose } from "./mediapipe-vision";
 import { preloadHFVisionGate } from "./hf-vision-gate";
 import { detectWithYOLO, preloadYOLO, isYOLOReady, type YOLODetection } from "./yolo-onnx-detector";
@@ -239,6 +241,7 @@ function getAdaptiveDepthMaxDim(): number {
 export async function detectRealTime(
   video: HTMLVideoElement
 ): Promise<RealTimeVisionResult> {
+  markVisionStart();
   const start = performance.now();
 
   // ═══ Frame Preprocessing: chromatic aberration correction + denoising ═══
@@ -249,8 +252,11 @@ export async function detectRealTime(
   // Adaptive OCR: pre-check edge density before committing to expensive OCR
   const ocrWorthRunning = isOCRReady() && shouldRunOCR(video);
 
-  // Run ALL detectors in parallel (including FrameX — previously sequential)
-  const [mpResult, yoloResult, depthResult, ocrResult, frameXResult] = await Promise.all([
+  // Handwritten OCR (run in parallel instead of sequentially — was blocking return)
+  const shouldRunHandwritten = isTrOCRReady() && frameCount % 15 === 0;
+
+  // Run ALL detectors in parallel (FrameX uses yoloFrameXProxy to avoid duplicate ML inference)
+  const [mpResult, yoloResult, depthResult, ocrResult, frameXResult, handwrittenOCRResult] = await Promise.all([
     isMediaPipeReady()
       ? detectAllMP(video).catch(() => ({ objects: [], faces: [], faceLandmarks: [], hands: [], poses: [], timestamp: 0, inferenceMs: 0 }))
       : Promise.resolve({ objects: [], faces: [], faceLandmarks: [], hands: [], poses: [], timestamp: 0, inferenceMs: 0 } as MPVisionResult),
@@ -265,6 +271,10 @@ export async function detectRealTime(
       : Promise.resolve(null as OCRResult | null),
     // FrameX now runs in parallel instead of sequentially (~30ms gain)
     yoloFrameX.processFrame(video).catch(() => null),
+    // Handwritten OCR moved into parallel batch (was sequential — saved ~20-50ms)
+    shouldRunHandwritten
+      ? recognizeHandwritingFromVideo(video).catch(() => null)
+      : Promise.resolve(null as HandwrittenOCRResult | null),
   ]);
 
   const allObjects = mergeDetections(mpResult.objects, yoloResult);
@@ -333,7 +343,7 @@ export async function detectRealTime(
       : null,
     quantumEnhancement,
     gazeResult: null,
-    handwrittenOCR: null,
+    handwrittenOCR: handwrittenOCRResult,
     regionalDescriptions,
     documentLayout,
   };
@@ -346,13 +356,6 @@ export async function detectRealTime(
     }
   }
 
-  // Handwritten OCR (every 15th frame to avoid lag)
-  if (isTrOCRReady() && frameCount % 15 === 0) {
-    try {
-      result.handwrittenOCR = await recognizeHandwritingFromVideo(video);
-    } catch {}
-  }
-
   // ─── Temporal Buffer: push frame and detect events ───
   visionTemporalBuffer.pushFrame(result);
 
@@ -361,6 +364,7 @@ export async function detectRealTime(
     (window as any).__orion_last_rt_vision_result__ = result;
   }
 
+  markVisionEnd();
   return result;
 }
 
