@@ -1,88 +1,81 @@
 
 
-# Plano Revisado — DROP Tabelas Órfãs + Limpeza de Código
+# Diagnóstico de Egress — Causas e Otimizações
 
-## Correção crítica da auditoria anterior
+## Causa Principal: Cron Jobs Excessivos
 
-A busca anterior só verificou `src/` mas **ignorou edge functions**. Resultado: 5 tabelas que foram marcadas como "órfãs" são **ativamente usadas** por edge functions:
+Existem **6 cron jobs ativos** no pg_cron que fazem HTTP POST para edge functions constantemente, mesmo sem trabalho real.
 
-| Tabela | Usada por |
-|--------|-----------|
-| `webhook_subscriptions` | `webhook-gateway` (CRUD completo) |
-| `user_neural_profiles` | `neural-ops` (init neural profile) |
-| `adaptive_system_prompts` | `secretaria-ia` (prompt adaptativo) |
-| `user_integrations` | `amazon-auth` (OAuth tokens) |
-| `stripe_connect_accounts` | `stripe-api` (Stripe Connect) |
+### Consumo atual estimado (calls/dia)
 
-**Estas 5 NÃO serão tocadas.**
+```text
+Job  Função                  Frequência     Calls/dia   Trabalho real
+───  ──────────────────────  ─────────────  ─────────   ─────────────
+#5   queue-worker            */1 min        1.440       ~0 (logs mostram "No pending jobs" 100%)
+#3   generate-embeddings     */10 min       144         ~0 (0 processed, 0 remaining)
+#1   neural-auto-learn       */30 min       48          Mínimo
+#4   auto-approve proposals  1h (SQL only)  24          OK (não gera egress)
+#2   neural-child-receiver   6h             4           Mínimo
+#6   auto-ingestion-cron     6h             4           Mínimo
+```
 
----
+**Total estimado: ~1.640 edge function calls/dia = ~49.200/mês**
 
-## Tabelas realmente órfãs confirmadas (26 tabelas)
+Cada call gera egress (request + response), mesmo retornando `{"processed": 0}`.
+Com ~500 bytes por call vazia do queue-worker: **1.440 × 500B × 30 dias ≈ 21 MB/mês só do queue-worker vazio.**
 
-Zero referências em `src/` (exceto types.ts auto-gerado) E zero referências em edge functions:
+Mas o egress real é maior porque cada call também inclui headers HTTP, TLS overhead, e queries ao banco (`generation_queue` SELECT + possível UPDATE).
 
-| # | Tabela |
-|---|--------|
-| 1 | `analises` |
-| 2 | `barcode_cache` |
-| 3 | `cgu_sanctions_cache` |
-| 4 | `cpf_cache` |
-| 5 | `document_validation_cache` |
-| 6 | `document_validations` |
-| 7 | `document_versions` |
-| 8 | `email_signature_settings` |
-| 9 | `execution_plans` |
-| 10 | `face_templates` |
-| 11 | `feasibility_market_data` |
-| 12 | `impact_stats` |
-| 13 | `lead_documents` |
-| 14 | `lead_notes` |
-| 15 | `loi_documents` |
-| 16 | `neural_evolution_log` |
-| 17 | `push_subscriptions` |
-| 18 | `pyrolysis_readings` |
-| 19 | `security_scan_results` |
-| 20 | `security_scan_runs` |
-| 21 | `serpapi_cache` |
-| 22 | `signature_log` |
-| 23 | `signed_urls` |
-| 24 | `workspace_connector_settings` |
-| 25 | `workspace_settings` |
-| 26 | `youtube_cache` |
+### Tabelas grandes (potencial egress em queries)
+
+```text
+Tabela                        Tamanho    Linhas
+neural_knowledge_base         44 MB      2.721
+neural_evolution_proposals    24 MB      433
+code_snippets                 18 MB      2.579
+orion_threat_log              6.4 MB     14.535
+legal_embeddings              6 MB       557
+```
 
 ---
 
-## Funções DB obsoletas (3 funções — não pgvector)
+## Plano de Otimização (3 passos)
 
-| Função | Motivo |
-|--------|--------|
-| `increment_loi_download` | Referencia `loi_documents` (será removida) |
-| `clean_expired_cache` | Referencia `cpf_cache` e `cgu_sanctions_cache` (serão removidas) |
-| `get_child_network_stats` | Referencia `neural_child_reports` sem uso real |
+### Passo 1 — Reduzir frequência dos cron jobs
 
-**`increment_report_views` será mantida** — `report_verifications` não está na lista de remoção.
+| Job | Frequência atual | Nova frequência | Redução |
+|-----|-----------------|-----------------|---------|
+| #5 queue-worker | 1 min | **5 min** | -80% (1440→288 calls/dia) |
+| #3 generate-embeddings | 10 min | **1h** | -83% (144→24 calls/dia) |
+| #1 neural-auto-learn | 30 min | **2h** | -75% (48→12 calls/dia) |
+
+Migração SQL com `cron.alter_job()` para cada um.
+
+### Passo 2 — Limpar dados acumulados desnecessários
+
+- `orion_threat_log`: 14.535 linhas. Manter só últimos 30 dias, deletar o resto.
+- `neural_evolution_proposals`: 24 MB / 433 linhas. Limpar proposals com status `approved` ou `rejected` com mais de 7 dias.
+- `ai_metrics`: 947 linhas. Limpar métricas com mais de 30 dias.
+
+Migração SQL com DELETE + VACUUM.
+
+### Passo 3 — Adicionar early-exit no queue-worker
+
+Adicionar cache local no queue-worker: se não houver jobs pendentes nas últimas 3 execuções consecutivas, retornar imediatamente sem fazer queries ao banco. Isso reduz egress de DB queries desnecessários.
 
 ---
 
-## Passos de implementação
+## Impacto esperado
 
-### Passo 1 — Migração SQL
-Uma única migração com `DROP TABLE IF EXISTS CASCADE` para as 26 tabelas + `DROP FUNCTION IF EXISTS` para as 3 funções DB.
-
-### Passo 2 — Nada mais
-- `types.ts` se regenera automaticamente pelo Supabase
-- Nenhum arquivo em `src/` referencia essas tabelas
-- Nenhuma edge function referencia essas tabelas
-- Zero alterações em código
-
----
+- **Edge function calls**: de ~49.200/mês para ~9.720/mês (-80%)
+- **Egress de cron vazio**: redução proporcional
+- **DB egress**: menor com cleanup de dados antigos
+- **Zero impacto funcional**: queue-worker a cada 5 min ainda processa jobs com latência aceitável
 
 ## O que NÃO será tocado
 
-- Nenhum arquivo em `src/`
-- Nenhuma edge function
-- Tabelas ativas: `webhook_subscriptions`, `user_neural_profiles`, `adaptive_system_prompts`, `user_integrations`, `stripe_connect_accounts`
-- Funções pgvector (são do extension)
-- `email_templates` (variável local no auth-email-hook, não a tabela — mas para segurança, será mantida)
+- Nenhuma edge function será deletada
+- Nenhuma tabela será deletada
+- Job #4 (SQL puro, sem egress HTTP) fica igual
+- Jobs #2 e #6 (6h) já são eficientes
 
