@@ -207,13 +207,14 @@ function computeIoU(
  */
 function shouldRunOCR(video: HTMLVideoElement): boolean {
   try {
-    const c = document.createElement("canvas");
-    const size = 64; // tiny sample for speed
-    c.width = size;
-    c.height = size;
-    const ctx = c.getContext("2d")!;
-    ctx.drawImage(video, 0, 0, size, size);
-    const { data } = ctx.getImageData(0, 0, size, size);
+    // Reuse a single OffscreenCanvas for edge density check
+    if (!_ocrCheckCanvas) {
+      _ocrCheckCanvas = new OffscreenCanvas(64, 48);
+      _ocrCheckCtx = _ocrCheckCanvas.getContext("2d", { alpha: false }) as OffscreenCanvasRenderingContext2D;
+    }
+    const size = 64;
+    _ocrCheckCtx!.drawImage(video, 0, 0, size, size);
+    const { data } = _ocrCheckCtx!.getImageData(0, 0, size, size);
     let edgeCount = 0;
     for (let i = 4; i < data.length; i += 8) {
       const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
@@ -221,9 +222,9 @@ function shouldRunOCR(video: HTMLVideoElement): boolean {
       if (Math.abs(gray - prev) > 35) edgeCount++;
     }
     const density = edgeCount / (size * size / 2);
-    return density > 0.12; // Only run OCR when edge density suggests text
+    return density > 0.12;
   } catch {
-    return true; // fallback: always run
+    return true;
   }
 }
 
