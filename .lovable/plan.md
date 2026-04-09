@@ -1,97 +1,68 @@
-# Plano — Integração "Thomas" como Orquestrador Digital Central
 
-## Visão Geral
+# Plano — ORION Orquestrador Digital Central
 
-O "ORION" descrito nas imagens é um **orquestrador digital central** para todas as empresas, com 3 domínios: **Operacional**, **Financeiro** e **Comercial**. Analisando o sistema atual, já existem peças significativas que podem ser conectadas sob essa camada de orquestração.
+## Resumo
 
-## NOME SO DEVE SER CITADO NOS CODIGO ORION Mapeamento: O que já existe vs. O que falta
+Criar o painel orquestrador Orion com 3 domínios (Operacional, Financeiro, Comercial) integrando dados existentes das tabelas `orders`, `products`, `generation_queue`, `ai_metrics`, `client_profiles`, `affiliate_sales`.
 
-```text
-DOMÍNIO          JÁ EXISTE                           FALTA
-─────────────────────────────────────────────────────────────────
-OPERACIONAL      • ai-orchestrator (Gemini 7-key)     • Dashboard unificado de fluxos
-                 • queue-worker (fila de tarefas)      • Feedback loops automáticos
-                 • neural-auto-learn (aprendizado)     • Detecção de gargalos em tempo real
-                 • digital-twin-aas.ts (Industry 4.0)  • KPIs operacionais com alertas
-                 • Controle Robótico (ROS2)
+## Passo 1 — Migração SQL
 
-FINANCEIRO       • PagamentosPage (Stripe)             • Fluxo de caixa (entradas/saídas)
-                 • orders, products (tabelas)           • DRE automático (receitas - custos)
-                 • stripe-api, stripe-webhook            • Projeções preditivas (Gemini)
-                 • process-sale                         • Detecção de anomalias financeiras
-                                                        • KPIs financeiros (margem, CAC, LTV)
+Criar 2 tabelas novas:
 
-COMERCIAL        • CRM Pipeline (clientes/status)      • Lead scoring automático (Gemini)
-                 • Marketplace, Afiliados               • Funil de vendas visual
-                 • campanhas-email                      • Segmentação comportamental
-                 • orion-produtor-ai                    • Automação de retenção
-                                                        • Métricas de conversão
-```
+**`orion_financial_entries`** — entradas/saídas manuais (custos, despesas, investimentos)
+- `id`, `user_id` (FK auth.users), `type` (entrada/saída), `category`, `description`, `amount_cents`, `date`, `tags`, `created_at`
+- RLS: owner só vê os seus; admin vê tudo
 
-## Arquitetura Proposta
+**`orion_reports`** — relatórios diários gerados pelo Gemini
+- `id`, `user_id`, `report_type`, `data` (jsonb), `created_at`
+- RLS: admin-only read
 
-```text
-┌─────────────────────────────────────────────────┐
-│              THOMAS — Painel Central             │
-│         /dashboard/thomas (nova página)          │
-├────────────────┬────────────┬───────────────────┤
-│  OPERACIONAL   │ FINANCEIRO │    COMERCIAL      │
-│  ────────────  │ ────────── │  ──────────────   │
-│  Tasks ativas  │ Caixa hoje │  Leads novos      │
-│  Gargalos      │ DRE mensal │  Funil pipeline   │
-│  KPIs robótica │ Projeções  │  Conversão %      │
-│  Alertas       │ Anomalias  │  Retenção         │
-└────────────────┴────────────┴───────────────────┘
-         ↓               ↓              ↓
-   ai-orchestrator   stripe-api    CRM + orion-ai
-   queue-worker      orders/sales  client_profiles
-   digital-twin      products      affiliate_sales
-```
+## Passo 2 — Edge Function `orion-intelligence`
 
-## Passos de Implementação
+Edge function com 4 actions via query param `action`:
+- `dre` — consulta `orders` + `orion_financial_entries` dos últimos 30/60/90 dias, calcula receitas - custos - despesas, retorna DRE
+- `projections` — últimos 90 dias de dados, envia ao Gemini para projeção 30/60/90 dias
+- `anomalies` — compara últimos 7 dias vs média 30 dias, detecta variações >30%
+- `lead-scoring` — analisa `client_profiles` + `chat_conversations`, Gemini pontua leads
 
-### Passo 1 — Tabela `thomas_financial_entries`
+Usa Gemini free (7-key rotation copiada do `ai-orchestrator`).
 
-Nova tabela para registrar entradas/saídas financeiras (o que o Stripe não cobre: custos operacionais, despesas manuais). Migração SQL com RLS.
+## Passo 3 — Página `/dashboard/orion-orchestrator`
 
-### Passo 2 — Edge Function `thomas-intelligence`
+Nova rota (substituindo o redirect atual de `/dashboard/orion` → `/consulta`). Usa `orion-orchestrator` para não conflitar com o chat existente.
 
-Uma edge function que usa Gemini (free) para:
+3 abas com Tabs component:
 
-- Calcular DRE automático (consulta orders + financial_entries)
-- Gerar projeções preditivas (tendência dos últimos 90 dias)
-- Lead scoring (analisa client_profiles + histórico de interações)
-- Detectar anomalias (variações >30% em métricas)
+**Aba Operacional**: 4 KPI cards (Throughput, Uptime, Taxa de Erro, Tempo Médio) calculados a partir de `generation_queue` + `ai_metrics`. Gráfico de tendência com Recharts.
 
-### Passo 3 — Página `/dashboard/thomas`
+**Aba Financeiro**: 6 KPI cards (Caixa Hoje, Margem Bruta, CAC, LTV, Burn Rate, Payback). Gráfico DRE mensal + Fluxo de caixa. Formulário inline para adicionar entradas manuais em `orion_financial_entries`. Botão para gerar projeções via edge function.
 
-Dashboard unificado com 3 abas (Operacional, Financeiro, Comercial), cada uma com:
+**Aba Comercial**: 5 KPI cards (Conversão, Win Rate, Valor Médio Venda, Churn, Retenção 30d) calculados de `client_profiles` + `orders`. Funil visual com Recharts.
 
-- Cards de KPIs em tempo real
-- Gráficos de tendência (Recharts, já no projeto)
-- Alertas inteligentes gerados pelo Gemini
-- Ações rápidas (links para CRM, Pagamentos, etc.)
+Alertas inteligentes em todas as abas (chama `orion-intelligence?action=anomalies`).
 
-### Passo 4 — Integração no ProprietarioDashboard
+## Passo 4 — Widget no ProprietarioDashboard
 
-Adicionar seção "Thomas — Orquestrador" no dashboard do proprietário com widget resumo e link para a página completa.
+Nova seção "Orion — Orquestrador" com 6 KPIs resumidos (2 por domínio) + botão "Ver Painel Completo" → `/dashboard/orion-orchestrator`.
 
-### Passo 5 — Cron Job `thomas-daily-report`
+## Passo 5 — Cron Job `orion-daily-report`
 
-Job diário (6h) que gera relatório consolidado via Gemini e salva em `thomas_reports`. Disponível no dashboard como "Relatório do dia".
+Edge function que gera relatório consolidado via Gemini e salva em `orion_reports`. Cron a cada 6h via `pg_cron` + `pg_net`.
 
-## Detalhes Técnicos
+## Arquivos a criar/editar
 
-- **LLM**: Gemini free (7-key rotation existente) — zero custo adicional
-- **Dados financeiros**: `orders` + `products` + `affiliate_sales` + nova `thomas_financial_entries`
-- **Dados comerciais**: `client_profiles` + `chat_conversations` + `affiliate_requests`
-- **Dados operacionais**: `generation_queue` + `ai_metrics` + digital-twin AAS
-- **Gráficos**: Recharts (já instalado no projeto)
-- **Nenhum serviço pago adicional**
+| Ação | Arquivo |
+|------|---------|
+| Criar | `supabase/functions/orion-intelligence/index.ts` |
+| Criar | `supabase/functions/orion-daily-report/index.ts` |
+| Criar | `src/pages/dashboard/OrionOrchestratorPage.tsx` |
+| Criar | `src/components/dashboard/OrionOrchestratorWidget.tsx` |
+| Editar | `src/App.tsx` — rota `/dashboard/orion-orchestrator` + manter redirect `/dashboard/orion` → `/consulta` |
+| Editar | `src/pages/dashboard/ProprietarioDashboard.tsx` — adicionar seção widget |
+| Migração SQL | Tabelas + RLS + cron job |
 
 ## O que NÃO será tocado
-
-- Orion (continua independente como IA conversacional)
-- RAG / embeddings / neural-auto-learn (intactos)
-- Queue-worker (mantém frequência atual de 1 min)
+- Orion IA conversacional (rota `/consulta` intacta)
+- RAG / embeddings / neural-auto-learn
+- Queue-worker (1 min)
 - Edge functions existentes
