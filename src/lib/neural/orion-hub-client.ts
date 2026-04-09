@@ -1,17 +1,99 @@
 /**
- * ORION Neural Hub — Unified HF Space Client (ZeroGPU)
- * Connects to Ericsonv12/orion-gpu Gradio Space via @gradio/client SDK
- *
- * GPU→CPU Fallback: When ZeroGPU quota is exhausted,
- * GPU endpoints return structured error JSON instead of crashing.
+ * ORION Neural Hub — Unified Client (GCP VM Primary + HF Space Fallback)
+ * 
+ * Priority: GCP VM (dedicated, always-on, cached) → HF Space (ZeroGPU)
+ * VM: proxy/cache, TTS (Piper), STT (Whisper), Vision (DETR), OCR, Embeddings
+ * HF Space: GPU-heavy tasks (BLIP, Phi-3 Vision, Gemma) when VM can't handle
  *
  * Capabilities: TTS, LLM, OCR, Vision, Embeddings, PDF
- * Hardware: ZeroGPU H200/A100 (GPU) + CPU fallback
  */
+
+import { supabase } from "@/integrations/supabase/client";
 
 const ORION_SPACE_ID = "Ericsonv12/orion-gpu";
 const DEFAULT_TIMEOUT = 60_000;
 const GPU_TIMEOUT = 180_000;
+
+// ─── VM Backend State ───
+
+interface VMState {
+  available: boolean;
+  lastCheck: number;
+  consecutiveFailures: number;
+  cooldownMs: number;
+}
+
+const _vm: VMState = {
+  available: true,
+  lastCheck: 0,
+  consecutiveFailures: 0,
+  cooldownMs: 30_000,
+};
+
+function isVmAvailable(): boolean {
+  if (_vm.available) return true;
+  if (Date.now() - _vm.lastCheck > _vm.cooldownMs) {
+    _vm.available = true;
+    _vm.consecutiveFailures = 0;
+    console.log("[OrionHub] VM cooldown expired, retrying");
+    return true;
+  }
+  return false;
+}
+
+function markVmDown() {
+  _vm.available = false;
+  _vm.lastCheck = Date.now();
+  _vm.consecutiveFailures++;
+  _vm.cooldownMs = Math.min(30_000 * Math.pow(2, _vm.consecutiveFailures - 1), 5 * 60_000);
+  console.warn(`[OrionHub] VM down. Cooldown: ${Math.round(_vm.cooldownMs / 1000)}s`);
+}
+
+function markVmUp() {
+  _vm.available = true;
+  _vm.consecutiveFailures = 0;
+  _vm.cooldownMs = 30_000;
+}
+
+/**
+ * Call the VM via edge function proxy.
+ * Returns null if VM is unavailable (caller should fallback to HF Space).
+ */
+async function callVM<T>(action: string, body: Record<string, unknown> = {}, timeout = 15_000): Promise<T | null> {
+  if (!isVmAvailable()) return null;
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+
+    const { data, error } = await supabase.functions.invoke("orion-vm-proxy", {
+      body: { action, ...body },
+    });
+
+    clearTimeout(timer);
+
+    if (error) {
+      console.warn(`[OrionHub] VM proxy error for ${action}:`, error);
+      markVmDown();
+      return null;
+    }
+
+    markVmUp();
+    return data as T;
+  } catch (err) {
+    console.warn(`[OrionHub] VM call failed for ${action}:`, err);
+    markVmDown();
+    return null;
+  }
+}
+
+export function getVmState() {
+  return {
+    available: _vm.available,
+    consecutiveFailures: _vm.consecutiveFailures,
+    cooldownRemainingMs: _vm.available ? 0 : Math.max(0, _vm.cooldownMs - (Date.now() - _vm.lastCheck)),
+  };
+}
 
 // ─── GPU Quota Tracker ───
 
@@ -228,9 +310,23 @@ async function callGpuWithFallback<T>(
   }
 }
 
-// ─── Health Check ───
+// ─── Health Check (VM first, then HF Space) ───
 
 export async function checkOrionHub(): Promise<OrionHubHealth> {
+  // Try VM first
+  const vmHealth = await callVM<any>("health");
+  if (vmHealth) {
+    return {
+      status: "online",
+      gpu: { available: false, name: "GCP-VM-CPU", vram_gb: 0 },
+      models_loaded: vmHealth.models_loaded ?? [],
+      capabilities: ["tts", "stt", "vision", "ocr", "embeddings", "cache"],
+      quotaState: getGpuQuotaState(),
+      endpoint_status: { vm: "online", memory_mb: vmHealth.memory_used_mb },
+    };
+  }
+
+  // Fallback to HF Space
   try {
     const result = await callGradio<OrionHubHealth>("health", {}, 10_000);
     const parsed = typeof result === "string" ? JSON.parse(result as string) : result;
@@ -239,7 +335,7 @@ export async function checkOrionHub(): Promise<OrionHubHealth> {
       gpu: parsed.gpu ?? { available: false, name: "N/A", vram_gb: 0 },
       models_loaded: parsed.models_loaded ?? [],
       capabilities: parsed.capabilities ?? [],
-      endpoint_status: parsed.endpoint_status,
+      endpoint_status: { ...parsed.endpoint_status, vm: "offline" },
       quotaState: getGpuQuotaState(),
     };
   } catch {
@@ -386,17 +482,22 @@ export async function visionCaption(imageFile: File | Blob): Promise<VisionCapti
   );
 }
 
-// ─── Whisper STT (GPU → graceful error) ───
+// ─── Whisper STT (VM first → GPU → graceful error) ───
 
 export async function whisperSTT(
   audioBlob: Blob,
   language = "pt"
 ): Promise<WhisperSTTResult> {
+  // Try VM first (dedicated Whisper-tiny)
+  const vmResult = await callVM<WhisperSTTResult>("stt", { language });
+  if (vmResult && vmResult.text) return vmResult;
+
+  // Fallback to HF Space GPU
   return callGpuWithFallback<WhisperSTTResult>(
     "whisper_stt",
     { audio: audioBlob, language },
     async () => ({
-      text: `[Quota GPU excedida] STT indisponível. Tente em ${Math.ceil(getGpuQuotaState().cooldownRemainingMs / 60_000)} min.`,
+      text: `[Indisponível] STT offline. VM e GPU indisponíveis.`,
       language,
       model: "fallback-no-gpu",
       source: "orion-hub-cpu",
@@ -405,23 +506,36 @@ export async function whisperSTT(
   );
 }
 
-// ─── OCR (CPU — always available) ───
+// ─── OCR (VM first → HF Space CPU) ───
 
 export async function ocrExtract(imageFile: File | Blob): Promise<OCRResult> {
+  // Try VM first
+  const vmResult = await callVM<OCRResult>("ocr");
+  if (vmResult && vmResult.texts) return vmResult;
+
+  // Fallback to HF Space
   const result = await callGradio<OCRResult>("ocr", { image: imageFile }, DEFAULT_TIMEOUT);
   return typeof result === "string" ? JSON.parse(result as string) : result;
 }
 
-// ─── Vision Classification (CPU — always available) ───
+// ─── Vision Classification (VM first → HF Space CPU) ───
 
 export async function visionClassify(imageFile: File | Blob): Promise<VisionResult[]> {
+  // Try VM first (DETR-based)
+  const vmResult = await callVM<VisionResult[]>("classify");
+  if (vmResult && Array.isArray(vmResult)) return vmResult;
+
+  // Fallback to HF Space
   const result = await callGradio<VisionResult[]>("vision_classify", { image: imageFile }, DEFAULT_TIMEOUT);
   return typeof result === "string" ? JSON.parse(result as string) : result;
 }
 
-// ─── Embeddings (CPU — always available) ───
+// ─── Embeddings (VM first → HF Space CPU) ───
 
 export async function computeEmbeddings(texts: string[]): Promise<EmbeddingResult> {
+  // Try VM first
+  const vmResult = await callVM<EmbeddingResult>("embeddings", { texts: texts.join("\n") });
+  if (vmResult && vmResult.embeddings) return vmResult;
   const joined = texts.join("\n");
   const result = await callGradio<EmbeddingResult>("embeddings", { texts: joined }, DEFAULT_TIMEOUT);
   return typeof result === "string" ? JSON.parse(result as string) : result;

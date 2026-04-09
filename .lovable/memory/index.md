@@ -10,6 +10,7 @@ Orion só fala (TTS) em conversas diretas com ele. Fora do chat do Orion = mudo.
 Orion responde CURTO (2-4 frases). Só detalha se pedido explicitamente.
 Two domains: iasofthub.com = Orion IA site, elpgreen.com = ELP company (auth/legal).
 Platform retains 10% of profits (except affiliates). Orion requires premium sub.
+GCP VM (t2a-standard-1) as primary backend for Orion processing (proxy/cache/TTS/STT/vision).
 
 ## Memories
 - [Domain separation](mem://features/domain-separation) — iasofthub.com for Orion platform, elpgreen.com for ELP company auth/legal
@@ -21,6 +22,7 @@ Platform retains 10% of profits (except affiliates). Orion requires premium sub.
 - [RAG embeddings](mem://features/rag-embeddings) — Gemini embedding-001 (768d) + HuggingFace fallback (384d→768d)
 - [Welcome splash](mem://features/welcome-splash) — 5s video + Three.js welcome, profile redirect, onboarding
 - [Google Cloud - Orion](mem://reference/google-cloud-orion) — GCP project #183568688847, Gemini API key active, AI Studio, GDP premium credits
+- [GCP VM Orion](mem://reference/gcp-vm-orion) — t2a-standard-1 VM with FastAPI (proxy/cache, TTS, STT, DETR, OCR, embeddings)
 - [Free Gemini only](mem://preference/free-gemini-only) — All LLM uses free Gemini models, no paid providers, 7-key rotation
 - [Free voice system](mem://preference/free-voice-system) — Orion 100% local formant synth, no external TTS APIs
 - [No ElevenLabs](mem://constraint/no-elevenlabs) — ElevenLabs forbidden: too expensive, all references removed
