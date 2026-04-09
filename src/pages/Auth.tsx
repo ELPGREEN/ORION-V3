@@ -234,14 +234,13 @@ export default function Auth() {
     if (!validateCadastro()) return;
     setLoading(true);
 
+    // reCAPTCHA v3 — non-blocking (log only, never blocks signup)
     const token = await verifyRecaptcha("signup");
     if (token) {
       try {
         const { data: captchaResult } = await supabase.functions.invoke("verify-recaptcha", { body: { token, action: "signup" } });
         if (captchaResult && !captchaResult.success) {
-          toast({ title: "Verificação falhou", description: "Atividade suspeita detectada. Tente novamente.", variant: "destructive" });
-          setLoading(false);
-          return;
+          console.warn("[Auth] reCAPTCHA low score — allowing signup", captchaResult);
         }
       } catch {
         // Allow through if verification service is down
