@@ -109,50 +109,71 @@ export default function EsqueciSenha() {
     if (!email) return;
 
     setLoading(true);
-    const { error } = await requestRecoveryCode();
 
-    if (error) {
-      const isRateLimit = isRateLimitError(error);
-      toast({
-        title: isRateLimit ? "Aguarde um momento" : "Erro",
-        description: isRateLimit
-          ? "Muitas tentativas. Aguarde 1 minuto antes de solicitar um novo código."
-          : "Não foi possível enviar o código. Verifique o e-mail informado.",
-        variant: "destructive",
-      });
-    } else {
+    try {
+      const { error } = await requestRecoveryCode();
+
+      if (error) {
+        const isRateLimit = isRateLimitError(error);
+        toast({
+          title: isRateLimit ? "Aguarde um momento" : "Erro",
+          description: isRateLimit
+            ? "Muitas tentativas. Aguarde 1 minuto antes de solicitar um novo código."
+            : "Não foi possível enviar o código. Verifique o e-mail informado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Código enviado!",
         description: "Verifique seu e-mail para o código de 6 dígitos.",
       });
       setStep("otp");
+    } catch {
+      toast({
+        title: "Erro",
+        description: "A solicitação demorou demais. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSendOtp = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setLoading(true);
 
-    const { error } = await requestRecoveryCode();
+    try {
+      const { error } = await requestRecoveryCode();
 
-    if (error) {
-      const isRateLimit = isRateLimitError(error);
-      toast({
-        title: isRateLimit ? "Aguarde um momento" : "Erro",
-        description: isRateLimit
-          ? "Muitas tentativas. Aguarde 1 minuto antes de solicitar um novo código."
-          : "Não foi possível enviar o código. Verifique o e-mail informado.",
-        variant: "destructive",
-      });
-    } else {
+      if (error) {
+        const isRateLimit = isRateLimitError(error);
+        toast({
+          title: isRateLimit ? "Aguarde um momento" : "Erro",
+          description: isRateLimit
+            ? "Muitas tentativas. Aguarde 1 minuto antes de solicitar um novo código."
+            : "Não foi possível enviar o código. Verifique o e-mail informado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Código enviado!",
         description: "Verifique seu e-mail para o código de 6 dígitos.",
       });
       setStep("otp");
+    } catch {
+      toast({
+        title: "Erro",
+        description: "A solicitação demorou demais. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
@@ -160,27 +181,37 @@ export default function EsqueciSenha() {
     if (otp.length !== 6) return;
     setLoading(true);
 
-    const captchaToken = await verifyRecaptcha("recover_verify");
+    try {
+      const captchaToken = await verifyRecaptcha("recover_verify");
 
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: otp,
-      type: "recovery",
-      options: {
-        captchaToken: captchaToken || undefined,
-      },
-    });
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: "recovery",
+        options: {
+          captchaToken: captchaToken || undefined,
+        },
+      });
 
-    if (error) {
+      if (error) {
+        toast({
+          title: "Código inválido",
+          description: "O código informado é inválido ou expirou. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setStep("newPassword");
+    } catch {
       toast({
-        title: "Código inválido",
-        description: "O código informado é inválido ou expirou. Tente novamente.",
+        title: "Erro",
+        description: "A verificação demorou demais. Tente novamente.",
         variant: "destructive",
       });
-    } else {
-      setStep("newPassword");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {

@@ -5,9 +5,27 @@
  */
 
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LcDia0sAAAAABs_4aIZI-Thp9lZvcaMNFvQ-_Jq";
+const RECAPTCHA_LOAD_TIMEOUT_MS = 8000;
+const RECAPTCHA_EXEC_TIMEOUT_MS = 8000;
 
 let recaptchaLoaded = false;
 let loadPromise: Promise<void> | null = null;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeoutId = globalThis.setTimeout(() => reject(new Error("reCAPTCHA timeout")), ms);
+
+    promise
+      .then((value) => {
+        globalThis.clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error) => {
+        globalThis.clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
+}
 
 /**
  * Load reCAPTCHA v3 script dynamically
@@ -44,15 +62,20 @@ export async function executeRecaptcha(action: string = "submit"): Promise<strin
   if (!RECAPTCHA_SITE_KEY) return null;
   
   try {
-    await loadRecaptcha();
+    await withTimeout(loadRecaptcha(), RECAPTCHA_LOAD_TIMEOUT_MS);
     const grecaptcha = (window as any).grecaptcha;
-    if (!grecaptcha) return null;
+    if (!grecaptcha || typeof grecaptcha.ready !== "function" || typeof grecaptcha.execute !== "function") return null;
 
-    return new Promise((resolve) => {
-      grecaptcha.ready(() => {
-        grecaptcha.execute(RECAPTCHA_SITE_KEY, { action }).then(resolve).catch(() => resolve(null));
-      });
-    });
+    return await withTimeout(
+      new Promise<string | null>((resolve) => {
+        grecaptcha.ready(() => {
+          Promise.resolve(grecaptcha.execute(RECAPTCHA_SITE_KEY, { action }))
+            .then((token: string | null) => resolve(token ?? null))
+            .catch(() => resolve(null));
+        });
+      }),
+      RECAPTCHA_EXEC_TIMEOUT_MS,
+    );
   } catch {
     return null;
   }
