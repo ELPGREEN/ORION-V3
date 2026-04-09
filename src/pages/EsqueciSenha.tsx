@@ -86,35 +86,27 @@ export default function EsqueciSenha() {
   }, [searchParams]);
 
   const requestRecoveryCode = async () => {
-    const captchaToken = await verifyRecaptcha("recover");
-    const normalizedCaptchaToken = typeof captchaToken === "string" ? captchaToken.trim() : "";
     const redirectTo = `${window.location.origin}/auth/callback`;
 
-    console.info("[PasswordRecovery] captcha token state", {
-      tokenType: typeof captchaToken,
-      tokenLength: normalizedCaptchaToken.length,
-      hasToken: normalizedCaptchaToken.length > 0,
-    });
-
-    if (!normalizedCaptchaToken) {
-      console.warn("[PasswordRecovery] blocking resetPasswordForEmail due to empty captcha token");
-      toast({
-        title: "Verificação falhou",
-        description: "Não foi possível validar a solicitação. Recarregue a página e tente novamente.",
-        variant: "destructive",
+    // reCAPTCHA is optional — if the script is blocked (adblocker, domain not whitelisted,
+    // headless browser, iframe restrictions), proceed without it.
+    // GoTrue will accept the request if CAPTCHA is not enforced server-side.
+    let captchaToken: string | undefined;
+    try {
+      const raw = await verifyRecaptcha("recover");
+      const trimmed = typeof raw === "string" ? raw.trim() : "";
+      captchaToken = trimmed || undefined;
+      console.info("[PasswordRecovery] reCAPTCHA result", {
+        obtained: !!captchaToken,
+        tokenLength: trimmed.length,
       });
-
-      return { error: new Error("captcha_token_missing_or_empty") };
+    } catch {
+      console.warn("[PasswordRecovery] reCAPTCHA failed, proceeding without token");
     }
-
-    console.info("[PasswordRecovery] calling resetPasswordForEmail", {
-      redirectTo,
-      captchaTokenLength: normalizedCaptchaToken.length,
-    });
 
     return supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
-      captchaToken: normalizedCaptchaToken,
+      ...(captchaToken ? { captchaToken } : {}),
     });
   };
 
@@ -196,14 +188,19 @@ export default function EsqueciSenha() {
     setLoading(true);
 
     try {
-      const captchaToken = await verifyRecaptcha("recover_verify");
+      let captchaToken: string | undefined;
+      try {
+        const raw = await verifyRecaptcha("recover_verify");
+        const trimmed = typeof raw === "string" ? raw.trim() : "";
+        captchaToken = trimmed || undefined;
+      } catch {}
 
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
         type: "recovery",
         options: {
-          captchaToken: captchaToken || undefined,
+          captchaToken,
         },
       });
 
