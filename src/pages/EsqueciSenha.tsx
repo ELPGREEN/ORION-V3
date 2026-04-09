@@ -79,7 +79,28 @@ export default function EsqueciSenha() {
   const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    setStep("method");
+    // Skip method selection, send OTP directly
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    });
+    if (error) {
+      const isRateLimit = error.message?.toLowerCase().includes('rate') || error.status === 429;
+      toast({
+        title: isRateLimit ? "Aguarde um momento" : "Erro",
+        description: isRateLimit
+          ? "Muitas tentativas. Aguarde 1 minuto antes de solicitar um novo código."
+          : "Não foi possível enviar o código. Verifique o e-mail informado.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Código enviado!",
+        description: "Verifique seu e-mail para o código de 6 dígitos.",
+      });
+      setStep("otp");
+    }
+    setLoading(false);
   };
 
   const handleSendOtp = async (e?: React.FormEvent) => {
