@@ -33,6 +33,160 @@ function getSupabase() {
 }
 
 // ═══════════════════════════════════════════════
+// VERTEX AI — OAuth2 Service Account Auth (uses GCP credits)
+// ═══════════════════════════════════════════════
+
+const VERTEX_LOCATION = "us-central1";
+let vertexCachedToken: string | null = null;
+let vertexTokenExpiresAt = 0;
+
+function vertexBase64url(data: Uint8Array): string {
+  return btoa(String.fromCharCode(...data))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function createVertexJWT(sa: { client_email: string; private_key: string }): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const enc = new TextEncoder();
+  const headerB64 = vertexBase64url(enc.encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const payloadB64 = vertexBase64url(enc.encode(JSON.stringify({
+    iss: sa.client_email,
+    scope: "https://www.googleapis.com/auth/cloud-platform",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600,
+  })));
+  const unsigned = `${headerB64}.${payloadB64}`;
+
+  const pemBody = sa.private_key
+    .replace(/-----BEGIN PRIVATE KEY-----/, "")
+    .replace(/-----END PRIVATE KEY-----/, "")
+    .replace(/\\n/g, "")
+    .replace(/\s/g, "");
+  const keyBytes = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0));
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8", keyBytes,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false, ["sign"],
+  );
+
+  const sig = new Uint8Array(await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, enc.encode(unsigned)));
+  return `${unsigned}.${vertexBase64url(sig)}`;
+}
+
+async function getVertexToken(sa: { client_email: string; private_key: string }): Promise<string | null> {
+  try {
+    if (vertexCachedToken && Date.now() < vertexTokenExpiresAt - 60_000) return vertexCachedToken;
+
+    const jwt = await createVertexJWT(sa);
+    const resp = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    });
+
+    if (!resp.ok) {
+      console.error("[Vertex Auth] Token exchange failed:", resp.status, await resp.text());
+      return null;
+    }
+
+    const data = await resp.json();
+    vertexCachedToken = data.access_token;
+    vertexTokenExpiresAt = Date.now() + (data.expires_in || 3600) * 1000;
+    console.log("[Vertex Auth] ✅ Token obtained, expires in", data.expires_in, "s");
+    return vertexCachedToken;
+  } catch (err: any) {
+    console.error("[Vertex Auth] Error:", err?.message);
+    return null;
+  }
+}
+
+function getVertexServiceAccount(): { client_email: string; private_key: string; project_id: string } | null {
+  try {
+    const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_KEY");
+    if (!raw) return null;
+    const sa = JSON.parse(raw);
+    if (sa.client_email && sa.private_key && sa.project_id) return sa;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function callVertexAI(messages: any[], stream: boolean): Promise<Response | null> {
+  const sa = getVertexServiceAccount();
+  if (!sa) return null;
+
+  const token = await getVertexToken(sa);
+  if (!token) return null;
+
+  const hasImage = messages.some((m: any) => Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url"));
+  // Vertex AI uses different model IDs than generativelanguage.googleapis.com
+  const model = "gemini-2.5-flash";
+
+  // Convert OpenAI-style messages to Gemini format
+  const systemInstruction = messages.find((m: any) => m.role === "system");
+  const contents = messages
+    .filter((m: any) => m.role !== "system")
+    .map((m: any) => {
+      const parts: any[] = [];
+      if (typeof m.content === "string") {
+        parts.push({ text: m.content });
+      } else if (Array.isArray(m.content)) {
+        for (const c of m.content) {
+          if (c.type === "text") parts.push({ text: c.text });
+          else if (c.type === "image_url") {
+            let base64 = c.image_url.url.replace(/^data:image\/\w+;base64,/, "");
+            // Ensure proper base64 padding for Vertex AI
+            while (base64.length % 4 !== 0) base64 += "=";
+            parts.push({ inlineData: { mimeType: "image/jpeg", data: base64 } });
+          }
+        }
+      }
+      return { role: m.role === "assistant" ? "model" : "user", parts };
+    });
+
+  const requestedMaxTokens = (messages as any).__maxTokens;
+  const geminiBody: any = {
+    contents,
+    generationConfig: {
+      temperature: hasImage ? 0.25 : 0.4,
+      maxOutputTokens: requestedMaxTokens || (hasImage ? 6144 : 4096),
+      topP: hasImage ? 0.9 : 0.95,
+      topK: hasImage ? 20 : 40,
+    },
+  };
+  if (systemInstruction) {
+    geminiBody.systemInstruction = { parts: [{ text: typeof systemInstruction.content === "string" ? systemInstruction.content : String(systemInstruction.content) }] };
+  }
+
+  const endpoint = stream ? "streamGenerateContent?alt=sse" : "generateContent";
+  const url = `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${sa.project_id}/locations/${VERTEX_LOCATION}/publishers/google/models/${model}:${endpoint}`;
+
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(geminiBody),
+    });
+
+    if (resp.ok) {
+      console.log(`[Orion] ✅ Vertex AI (${model}) — GCP credits`);
+      return resp;
+    }
+    console.warn(`[Orion] Vertex AI ${model} returned ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
+    return null;
+  } catch (e: any) {
+    console.warn(`[Orion] Vertex AI error:`, e?.message);
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════
 // BRIDGE actions (from neural-bridge)
 // ═══════════════════════════════════════════════
 
@@ -1813,12 +1967,73 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   const hasImage = messages.some((m: any) => Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url"));
 
   // ═══ STREAMING MODE ═══
-  // REGRA: Gemini SEMPRE primeiro (7 keys em rotação) — é gratuito e orquestra tudo.
-  // Fallbacks: HuggingFace (grátis) → Groq → DeepSeek → Mistral → OpenRouter
+  // REGRA: Vertex AI primeiro (créditos GCP) → Gemini API keys → fallbacks gratuitos
   if (stream) {
     const attemptedProviders: string[] = [];
 
-    // ── PRIMARY: Gemini streaming (7 keys rotation) — SEMPRE PRIMEIRO ──
+    // ── PRIMARY: Vertex AI streaming (GCP credits — €1.127 disponíveis) ──
+    try {
+      attemptedProviders.push("vertex_ai");
+      const vertexResp = await callVertexAI(messages, true);
+      if (vertexResp && vertexResp.ok && vertexResp.body) {
+        const reader = vertexResp.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+        let readerDone = false;
+        const encoder = new TextEncoder();
+
+        const transformStream = new ReadableStream({
+          async pull(controller) {
+            if (readerDone) {
+              try { controller.enqueue(encoder.encode("data: [DONE]\n\n")); } catch {}
+              controller.close();
+              return;
+            }
+            try {
+              const { done, value } = await reader.read();
+              if (done) {
+                readerDone = true;
+                try { controller.enqueue(encoder.encode("data: [DONE]\n\n")); } catch {}
+                controller.close();
+                return;
+              }
+              buf += decoder.decode(value, { stream: true });
+              const lines = buf.split("\n");
+              buf = lines.pop() || "";
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const payload = line.slice(6).trim();
+                if (!payload || payload === "[DONE]") continue;
+                try {
+                  const parsed = JSON.parse(payload);
+                  const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                  if (text) {
+                    const chunk = JSON.stringify({ choices: [{ delta: { content: text } }] });
+                    controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+                  }
+                } catch {}
+              }
+            } catch (e) {
+              console.error("Vertex stream pull error:", e);
+              readerDone = true;
+              controller.close();
+            }
+          },
+          cancel() {
+            readerDone = true;
+            try { reader.cancel(); } catch {}
+          },
+        });
+
+        return new Response(transformStream, {
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+        });
+      }
+    } catch (e) {
+      console.warn("[Orion] Vertex AI streaming failed:", e);
+    }
+
+    // ── FALLBACK: Gemini API keys streaming (free tier) ──
     for (const keyEnv of geminiKeys) {
       if (!Deno.env.get(keyEnv) || isProviderCoolingDown(`gemini_${keyEnv}`)) continue;
       try {
@@ -2000,9 +2215,24 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   }
 
   // ═══ NON-STREAMING MODE ═══
-  // REGRA: Gemini SEMPRE primeiro — é gratuito e orquestra tudo anti-alucinação.
+  // REGRA: Vertex AI primeiro (GCP credits) → Gemini API keys → fallbacks
 
-  // ── PRIMARY: Gemini (7 keys rotation) — SEMPRE PRIMEIRO ──
+  // ── PRIMARY: Vertex AI (GCP credits) ──
+  try {
+    const vertexResp = await callVertexAI(messages, false);
+    if (vertexResp && vertexResp.ok) {
+      const data = await vertexResp.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (text) {
+        console.log("[Orion] ✅ Non-stream via Vertex AI — GCP credits");
+        return parseOrionResponse(text);
+      }
+    }
+  } catch (e) {
+    console.warn("[Orion] Vertex AI non-stream failed:", e);
+  }
+
+  // ── FALLBACK: Gemini API keys (free tier) ──
   for (const keyEnv of geminiKeys) {
     if (!Deno.env.get(keyEnv) || isProviderCoolingDown(`gemini_${keyEnv}`)) continue;
     try {
