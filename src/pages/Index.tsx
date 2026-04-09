@@ -34,14 +34,14 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       <SEO
-        title="ORION IA | Inteligência Artificial Empresarial — ELP® Green Technology"
-        description="Plataforma de IA empresarial para automação de processos, gestão de documentos e clientes. Orion Shield com proteção de nível bancário. By ELP® Green Technology."
+        title="Orion Intelligence Platform | Enterprise AI by ELP® Green Technology"
+        description="Orion Intelligence Platform — enterprise AI for workflow automation, document management, client organization, and business process optimization. Bank-grade security by ELP® Green Technology."
         image="https://www.iasofthub.com/og-images/og-home.jpg"
         canonical="https://www.iasofthub.com"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          "name": "ORION - IA Empresarial",
+          "name": "Orion Intelligence Platform",
           "url": "https://www.iasofthub.com",
           "description": "Plataforma de inteligência artificial empresarial para automação, gestão de documentos, clientes e processos.",
           "applicationCategory": "BusinessApplication",
@@ -58,21 +58,29 @@ export default function Index() {
       <HeroSection t={t} />
 
       {/* App purpose section — required for Google OAuth verification */}
-      <section id="about" className="relative py-6 sm:py-8 bg-muted/5 border-y border-border/10">
+      <section id="about" className="relative py-10 sm:py-14 bg-muted/5 border-y border-border/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-10 max-w-4xl text-center">
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">
-            About IASoftHub
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            Orion Intelligence Platform
           </h2>
+          <p className="text-xs text-primary/70 tracking-[0.3em] uppercase mb-6">by ELP® Green Technology</p>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-4">
-            <strong>IASoftHub</strong> is an enterprise artificial intelligence platform featuring <strong>Orion IA</strong> — 
-            our flagship AI assistant for workflow automation, document management, client organization, and business process optimization. 
-            Powered by next-generation neural intelligence with bank-grade security (<em>Orion Shield</em>).
+            <strong>Orion Intelligence Platform</strong> is an enterprise artificial intelligence platform that helps businesses 
+            automate workflows, manage documents, organize clients, and optimize processes. 
+            It features <strong>Orion IA</strong> — an advanced AI assistant with natural language understanding, 
+            voice interaction, document generation, and real-time analytics — all protected by bank-grade security (<em>Orion Shield</em>).
           </p>
-          <p className="text-xs text-muted-foreground/80 leading-relaxed">
-            IASoftHub uses your Google account solely for secure authentication and sign-in. 
-            No email content, contacts, or sensitive data is accessed or stored beyond basic profile information (name and email) 
-            needed to create your account.
+          <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+            The platform is designed for professionals, law firms, businesses, and enterprises that need intelligent automation, 
+            CRM capabilities, legal document drafting, financial analysis, and AI-powered decision support — accessible from any device.
           </p>
+          <div className="bg-background/50 border border-border/20 rounded-md p-4 max-w-2xl mx-auto">
+            <p className="text-xs text-muted-foreground/80 leading-relaxed">
+              <strong className="text-foreground/70">Google Sign-In disclosure:</strong> Orion Intelligence Platform uses your Google account 
+              solely for secure authentication. We only access your name and email address to create your account. 
+              No email content, contacts, Drive files, or other sensitive data is accessed, collected, or stored.
+            </p>
+          </div>
         </div>
       </section>
 
