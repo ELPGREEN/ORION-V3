@@ -6,12 +6,12 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageToLocale } from "@/i18n";
 import { cleanTextForSpeech } from "@/hooks/useNeuralVoice";
-import { speakWithPiper } from "@/lib/tts/piperTTS";
 
 // ═══════════════════════════════════════════════════════════
 // R.A.G ELP Voice Button — Conversação Contínua Hands-Free
 // Mic → Auto-send → IA responde → Gemini TTS fala → Mic reativa
-// Google Translate / SpeechSynthesis removidos (voz robótica)
+// PRIMARY: Gemini TTS Algieba (via edge function gemini-tts)
+// FALLBACK: Silence (prefer no audio over robotic quality)
 // ═══════════════════════════════════════════════════════════
 
 type VoiceStatus = "idle" | "listening" | "processing" | "speaking";
@@ -25,26 +25,24 @@ interface VoiceInputButtonProps {
 }
 
 /**
- * High-quality TTS using Orion's own formant voice (100% offline)
+ * High-quality TTS — Gemini TTS Algieba as PRIMARY and ONLY voice.
+ * If Gemini fails: silence (no robotic fallbacks).
  */
 async function speakHighQuality(text: string, abortSignal?: AbortSignal): Promise<void> {
   const clean = cleanTextForSpeech(text).slice(0, 3000);
   if (!clean) return;
 
-  // Orion's own voice engine (formant synthesis from Iapetus DNA)
+  // PRIMARY: Gemini TTS via edge function (Vertex AI)
   try {
-    const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
-    const result = await speakWithOrionVoice(clean, abortSignal);
+    const { speakWithGeminiTTS } = await import("@/lib/tts/geminiTTS");
+    const result = await speakWithGeminiTTS(clean, "Charon", abortSignal);
     if (result.played) return;
-  } catch {}
+  } catch (e) {
+    console.warn("[VoiceButton] Gemini TTS error:", e);
+  }
 
-  // Fallback: Piper WASM (still not robotic)
-  try {
-    const played = await speakWithPiper(clean);
-    if (played) return;
-  } catch {}
-
-  console.warn("[VoiceButton] No TTS available, skipping speech");
+  // No fallback — silence is better than robotic voice
+  console.warn("[VoiceButton] Gemini TTS unavailable, staying silent");
 }
 
 export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProcessing, className }: VoiceInputButtonProps) {
