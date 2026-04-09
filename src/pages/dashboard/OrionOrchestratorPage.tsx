@@ -121,6 +121,9 @@ function FinanceiroTab() {
         headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`, "Content-Type": "application/json" },
       });
       return res.json();
+        headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`, "Content-Type": "application/json" },
+      });
+      return res.json();
     },
     staleTime: 60_000,
   });
@@ -255,7 +258,7 @@ function ComercialTab() {
       const d30 = new Date(Date.now() - 30 * 86400000).toISOString();
       const [clientsRes, ordersRes, allClientsRes] = await Promise.all([
         supabase.from("client_profiles").select("id, status, created_at").gte("created_at", d30),
-        supabase.from("orders").select("id, status, total_cents, created_at").gte("created_at", d30),
+        supabase.from("orders").select("id, status, amount_cents, created_at").gte("created_at", d30),
         supabase.from("client_profiles").select("id, status", { count: "exact", head: false }),
       ]);
       const newClients = clientsRes.data || [];
@@ -264,7 +267,7 @@ function ComercialTab() {
       const completed = orders.filter(o => o.status === "completed");
       const conversionRate = newClients.length > 0 ? ((completed.length / newClients.length) * 100).toFixed(1) : "0";
       const winRate = orders.length > 0 ? ((completed.length / orders.length) * 100).toFixed(1) : "0";
-      const avgSale = completed.length > 0 ? Math.round(completed.reduce((s, o) => s + (o.total_cents || 0), 0) / completed.length) : 0;
+      const avgSale = completed.length > 0 ? Math.round(completed.reduce((s, o) => s + (o.amount_cents || 0), 0) / completed.length) : 0;
       const activeClients = allClients.filter(c => c.status === "ativo").length;
       const retention = allClients.length > 0 ? ((activeClients / allClients.length) * 100).toFixed(1) : "0";
 

@@ -33,7 +33,7 @@ export default function OrionOrchestratorWidget() {
 
       const [metricsRes, ordersRes, clientsRes] = await Promise.all([
         supabase.from("ai_metrics").select("success, total_duration_ms").gte("created_at", d7),
-        supabase.from("orders").select("total_cents, status").gte("created_at", d30),
+        supabase.from("orders").select("amount_cents, status").gte("created_at", d30),
         supabase.from("client_profiles").select("id, status", { count: "exact" }),
       ]);
 
@@ -47,7 +47,7 @@ export default function OrionOrchestratorWidget() {
       const uptime = total > 0 ? (((total - errors) / total) * 100).toFixed(0) : "100";
 
       const completed = orders.filter(o => o.status === "completed");
-      const revenue = completed.reduce((s, o) => s + (o.total_cents || 0), 0);
+      const revenue = completed.reduce((s, o) => s + (o.amount_cents || 0), 0);
       const margin = revenue > 0 ? "100" : "0"; // Simplified without expenses query
 
       const active = clients.filter(c => c.status === "ativo").length;
