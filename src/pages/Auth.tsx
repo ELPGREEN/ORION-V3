@@ -241,6 +241,8 @@ export default function Auth() {
       toast({ title: "Login realizado!", description: "Bem-vindo à plataforma ORION." });
       navigate(returnTo);
     }
+    hcaptchaRef.current?.resetCaptcha();
+    setCaptchaToken(null);
     setLoading(false);
   };
 
