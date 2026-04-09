@@ -1384,23 +1384,6 @@ const TOOLS: OrionTool[] = [
     },
   },
 
-  // ═══ Neural — Child Network ═══
-  {
-    name: "neural_children",
-    roles: R_ADV,
-    regex: /rede[s]?\s+filh[ao]s?|child\s+network|neural\s+children/i,
-    extract: () => ({}),
-    call: async () => {
-      try {
-        const { data } = await supabase.rpc("get_child_network_stats");
-        if (!data) return "🌐 Sem dados de rede filha.";
-        const d = data as any;
-        return `🌐 **Rede Neural Filha:**\n• Relatórios: ${d.total_reports || 0}\n• Perfis neurais: ${d.neural_profiles || 0}\n• Comissões: ${d.commissions?.total_reports || 0}`;
-      } catch {
-        return "🌐 Função de estatísticas da rede filha indisponível.";
-      }
-    },
-  },
 
   // ═══ Articles / Blog ═══
   {
