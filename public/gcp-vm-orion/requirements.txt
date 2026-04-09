@@ -1,0 +1,14 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+piper-tts==1.2.0
+faster-whisper==1.1.0
+transformers==4.46.0
+torch==2.5.0
+torchvision==0.20.0
+Pillow==11.0.0
+easyocr==1.7.2
+sentence-transformers==3.3.0
+numpy==1.26.4
+diskcache==5.6.3
+httpx==0.28.0
+python-multipart==0.0.18
