@@ -2102,6 +2102,9 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       }
     }
 
+    // ═══ STRIP image_url for text-only fallback providers ═══
+    const textOnlyMessages = stripImageFromMessages(messages, hasImage);
+
     // ── FALLBACK 1: HuggingFace streaming (100% gratuito) ──
     if (Deno.env.get("HF_TOKEN") || Deno.env.get("HUGGINGFACE_API_KEY")) {
       try {
