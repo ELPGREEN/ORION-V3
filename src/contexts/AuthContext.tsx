@@ -148,6 +148,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       !window.location.hostname.includes('lovable.app') &&
       !window.location.hostname.includes('lovableproject.com');
 
+    // Save the account type for post-OAuth role assignment
+    if (accountType !== 'cliente') {
+      localStorage.setItem('pending_google_account_type', accountType);
+    }
+
     const googleScopes = (SCOPES_BY_ROLE[accountType] || SCOPES_BY_ROLE.cliente).join(' ');
 
     const oauthOptions = {
