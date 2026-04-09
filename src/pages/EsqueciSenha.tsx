@@ -6,6 +6,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { ArrowLeft, Loader2, Mail, KeyRound, CheckCircle, ScanFace, Brain, Shield, Zap, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRecaptcha } from "@/hooks/useRecaptcha";
 import logoElp from "@/assets/logo-elp.webp";
 
 type Step = "email" | "otp" | "newPassword";
@@ -22,6 +23,13 @@ interface PasswordStrength {
     number: boolean;
     special: boolean;
   };
+}
+
+function isRateLimitError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const maybeError = error as { message?: string; status?: number };
+  return maybeError.message?.toLowerCase().includes("rate") === true || maybeError.status === 429;
 }
 
 function evaluatePassword(password: string): PasswordStrength {
@@ -45,6 +53,7 @@ function getStrengthLabel(score: number): { label: string; color: string } {
 
 export default function EsqueciSenha() {
   const { toast } = useToast();
+  const { verify: verifyRecaptcha } = useRecaptcha();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<Step>("email");
@@ -76,16 +85,34 @@ export default function EsqueciSenha() {
     }
   }, [searchParams]);
 
+  const requestRecoveryCode = async () => {
+    const captchaToken = await verifyRecaptcha("recover");
+
+    if (!captchaToken) {
+      toast({
+        title: "Verificação falhou",
+        description: "Não foi possível validar a solicitação. Recarregue a página e tente novamente.",
+        variant: "destructive",
+      });
+
+      return { error: new Error("captcha_token_missing") };
+    }
+
+    return supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback`,
+      captchaToken,
+    });
+  };
+
   const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    // Skip method selection, send OTP directly
+
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    });
+    const { error } = await requestRecoveryCode();
+
     if (error) {
-      const isRateLimit = error.message?.toLowerCase().includes('rate') || error.status === 429;
+      const isRateLimit = isRateLimitError(error);
       toast({
         title: isRateLimit ? "Aguarde um momento" : "Erro",
         description: isRateLimit
@@ -107,12 +134,10 @@ export default function EsqueciSenha() {
     e?.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    });
+    const { error } = await requestRecoveryCode();
 
     if (error) {
-      const isRateLimit = error.message?.toLowerCase().includes('rate') || error.status === 429;
+      const isRateLimit = isRateLimitError(error);
       toast({
         title: isRateLimit ? "Aguarde um momento" : "Erro",
         description: isRateLimit
@@ -135,10 +160,15 @@ export default function EsqueciSenha() {
     if (otp.length !== 6) return;
     setLoading(true);
 
+    const captchaToken = await verifyRecaptcha("recover_verify");
+
     const { error } = await supabase.auth.verifyOtp({
       email,
       token: otp,
       type: "recovery",
+      options: {
+        captchaToken: captchaToken || undefined,
+      },
     });
 
     if (error) {
@@ -328,9 +358,6 @@ export default function EsqueciSenha() {
                   <h2 className="text-xl font-serif text-white">Código de Verificação</h2>
                   <p className="text-sm text-[#8b95a5]">
                     Digite o código de 6 dígitos enviado para <strong className="text-white">{email}</strong>
-                  </p>
-                  <p className="text-xs text-[#6b7280]">
-                    Ou clique no link enviado no e-mail para redefinir diretamente.
                   </p>
                 </div>
                 <form onSubmit={handleVerifyOtp} className="space-y-5">
