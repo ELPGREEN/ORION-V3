@@ -105,6 +105,13 @@ export default function ConfiguracoesRouter() {
         </div>
       ),
     },
+    {
+      value: "api-keys",
+      label: "Chaves API",
+      icon: KeyRound,
+      roles: ["all"],
+      content: <ApiKeysPanel />,
+    },
   ], []);
 
   // Resolve current user's effective role key for tab filtering
