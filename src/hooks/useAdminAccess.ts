@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const ADMIN_SESSION_KEY = "orion_admin_unlocked";
-const ADMIN_CODE_HASH = "b3Jpb24tYWRtaW4tMDkxNzA3MTEkJA=="; // base64 of "orion-admin-09170711$$"
+const ADMIN_CODE_HASH = "b3Jpb24tYWRtaW4tRmFuY3VsbzA5MTcwNzExJCQ="; // base64 encoded
 const OWNER_EMAIL = "info@elpgreen.com";
 
 function hashCode(code: string): string {
