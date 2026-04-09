@@ -47,7 +47,7 @@ export function parseDocumentLayout(
     if (!trimmed) continue;
 
     const bounds = { x: 0, y: order * 20, width: 600, height: medianHeight };
-    elements.push(classifyTextBlock(trimmed, medianHeight, bounds, order++));
+    elements.push(classifyBlock([{ text: trimmed, y: order * 20, height: medianHeight, x: 0, width: 600 }], medianHeight, 600, order++));
   }
 
   const fullText = texts.join(" ");
