@@ -7,6 +7,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Early-exit counter: skip heavy DB queries after consecutive empty runs
+let consecutiveEmptyRuns = 0;
+const MAX_SKIP_RUNS = 3; // After 3 empty runs, do a lightweight count-only check
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -15,6 +19,23 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Early-exit: after consecutive empty runs, do a lightweight count check only
+  if (consecutiveEmptyRuns >= MAX_SKIP_RUNS) {
+    const { count } = await supabase
+      .from("generation_queue")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["pending", "processing"]);
+
+    if (!count || count === 0) {
+      consecutiveEmptyRuns++;
+      return new Response(JSON.stringify({ processed: 0, skipped: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // There's work — reset counter and proceed normally
+    consecutiveEmptyRuns = 0;
+  }
 
   console.log("🔄 Queue Worker: Checking for pending jobs...");
 
