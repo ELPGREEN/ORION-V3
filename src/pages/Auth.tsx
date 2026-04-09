@@ -225,17 +225,7 @@ export default function Auth() {
     setEmailNotConfirmed(null);
 
     const hToken = await getHcaptchaToken();
-    if (!hToken) {
-      toast({
-        title: "Verificação indisponível",
-        description: "Não foi possível validar o anti-bot. Recarregue a página e tente novamente.",
-        variant: "destructive",
-      });
-      setLoading(false);
-      hcaptchaRef.current?.resetCaptcha();
-      setCaptchaToken(null);
-      return;
-    }
+    // Captcha is best-effort — don't block login if widget fails to load
 
     const token = await verifyRecaptcha("login");
     if (token) {
@@ -278,17 +268,7 @@ export default function Auth() {
     setLoading(true);
 
     const hToken = await getHcaptchaToken();
-    if (!hToken) {
-      toast({
-        title: "Verificação indisponível",
-        description: "Não foi possível validar o anti-bot. Recarregue a página e tente novamente.",
-        variant: "destructive",
-      });
-      setLoading(false);
-      hcaptchaRef.current?.resetCaptcha();
-      setCaptchaToken(null);
-      return;
-    }
+    // Captcha is best-effort — don't block signup if widget fails to load
 
     const token = await verifyRecaptcha("signup");
     if (token) {
