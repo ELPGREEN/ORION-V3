@@ -251,7 +251,16 @@ export default function Auth() {
     if (!validateCadastro()) return;
     setLoading(true);
 
-    // reCAPTCHA v3 verification
+    // Get hCaptcha token for Supabase
+    let hToken = captchaToken;
+    if (!hToken) {
+      try {
+        const res = await hcaptchaRef.current?.execute({ async: true });
+        hToken = res?.response ?? null;
+      } catch { /* fallback */ }
+    }
+
+    // reCAPTCHA v3 verification (additional layer)
     const token = await verifyRecaptcha("signup");
     if (token) {
       try {
@@ -259,6 +268,8 @@ export default function Auth() {
         if (captchaResult && !captchaResult.success) {
           toast({ title: "Verificação falhou", description: "Atividade suspeita detectada. Tente novamente.", variant: "destructive" });
           setLoading(false);
+          hcaptchaRef.current?.resetCaptcha();
+          setCaptchaToken(null);
           return;
         }
       } catch { /* Allow through if verification service is down */ }
@@ -282,17 +293,19 @@ export default function Auth() {
       metadata.areas_atuacao = cadastroForm.areasAtuacao;
     }
 
-    const { error } = await signUp(cadastroForm.email, cadastroForm.senha, metadata);
+    const { error } = await signUp(cadastroForm.email, cadastroForm.senha, metadata, hToken || undefined);
     if (error) {
       let msg = "Erro ao criar conta. Tente novamente.";
       if (error.message.includes("User already registered")) msg = "Este e-mail já está cadastrado. Tente fazer login.";
       else if (error.message.includes("Password")) msg = "Senha muito fraca. Use letras, números e símbolos.";
       toast({ title: "Erro no cadastro", description: msg, variant: "destructive" });
       setLoading(false);
+      hcaptchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
       return;
     }
 
-    // Try auto-login
+    // Try auto-login (no captcha needed for auto-login after signup)
     const { error: signInError } = await signIn(cadastroForm.email, cadastroForm.senha);
     if (!signInError) {
       // For advogados: require face enrollment before proceeding
