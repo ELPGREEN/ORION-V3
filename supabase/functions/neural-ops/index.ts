@@ -1116,7 +1116,8 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName } = body as any;
 
   const hasImage = imageBase64 && intentType !== "textual";
-  const isComplexQuery = intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis";
+  const questionStr0 = typeof question === "string" ? question : "";
+  const isComplexQuery = intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis" || questionStr0.length > 120;
   
   // Use compact prompt for simple text queries, full prompt for vision/complex
   const basePrompt = (hasImage || isComplexQuery) ? ORION_SYSTEM_PROMPT_FULL : ORION_SYSTEM_PROMPT_COMPACT;
@@ -1141,9 +1142,11 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const isIdentityQuery = IDENTITY_REGEX.test(questionStr) || IDENTITY_REGEX.test(contextStr);
 
   // Fire all async lookups in parallel (was sequential — saved ~800ms)
+  // Skip RAG for simple short queries (< 30 chars, not legal/analysis/document) — saves ~1-2s
+  const isSimpleQuery = questionStr.length < 30 && !isComplexQuery && intentType !== "legal_search" && intentType !== "document_generation" && intentType !== "analysis";
   const [identityKnowledge, ragContext] = await Promise.all([
     isIdentityQuery ? fetchIdentityKnowledge() : Promise.resolve(""),
-    (questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve("")
+    (!isSimpleQuery && questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve("")
   ]);
 
   if (isArchitectureQuery) {
@@ -1635,9 +1638,7 @@ async function callHuggingFaceStreaming(messages: any[]): Promise<Response> {
 
 // ═══ GEMINI EMBED (for RAG query embedding — FREE, 768d, 1s timeout) ═══
 async function generateQueryEmbedding(queryText: string): Promise<number[] | null> {
-  const keys = [
-    Deno.env.get("GEMINI_API_KEY")
-  ].filter(Boolean) as string[];
+  const keys = getGeminiKeys();
   if (keys.length === 0) return null;
   
   // Rotate key based on time
@@ -1857,7 +1858,14 @@ const GEMINI_MODEL = "gemini-2.5-flash-preview-09-2025";
 
 function getGeminiKeys(): string[] {
   return [
-    Deno.env.get("GEMINI_API_KEY")
+    Deno.env.get("GEMINI_API_KEY"),
+    Deno.env.get("GEMINI_API_KEY_2"),
+    Deno.env.get("GEMINI_API_KEY_3"),
+    Deno.env.get("GEMINI_API_KEY_4"),
+    Deno.env.get("GEMINI_API_KEY_5"),
+    Deno.env.get("GEMINI_API_KEY_6"),
+    Deno.env.get("GEMINI_API_KEY_7"),
+    Deno.env.get("GEMINI_API_KEY_GCP"),
   ].filter((k): k is string => !!k);
 }
 
@@ -1891,7 +1899,8 @@ function convertToGeminiFormat(messages: any[]): any {
     }
   }
 
-  const body: any = { contents, generationConfig: { temperature: 0.7, thinkingConfig: { thinkingBudget: 0 } } };
+  const requestedMaxTokens = (messages as any).__maxTokens;
+  const body: any = { contents, generationConfig: { temperature: 0.7, maxOutputTokens: requestedMaxTokens || 8192, thinkingConfig: { thinkingBudget: 0 } } };
   if (systemParts.length > 0) {
     body.systemInstruction = { parts: [{ text: systemParts.join("\n\n") }] };
   }
