@@ -73,7 +73,7 @@ export interface AmplificationContext {
 
 // ─── Constants ───
 
-const EXECUTION_THRESHOLD = 0.6;
+const EXECUTION_THRESHOLD = 0.40; // Lowered from 0.6: voice input is naturally informal
 const SUPERCOHERENCE_BONUS = 0.08;
 const COIL_VOLTAGE_LABELS = ["~120V", "~1kV", "~10kV", "~100kV", "~500kV", "~1MV"];
 
@@ -115,10 +115,10 @@ function disambiguateCoil(
   const clarity = analyzeClarity(input, ctx.documentContent || "", undefined);
 
   if (clarity.level === "vague") {
-    confidence = Math.min(confidence, 0.4);
+    confidence = Math.min(confidence, 0.5); // was 0.4 — too aggressive for voice
     notes.push(`Vago: ${clarity.reasons.join("; ")}`);
   } else if (clarity.level === "ambiguous") {
-    confidence = Math.min(confidence, 0.55);
+    confidence = Math.min(confidence, 0.6); // was 0.55
     notes.push(`Ambíguo: ${clarity.reasons[0]}`);
   } else {
     // Clear — boost
@@ -392,13 +392,15 @@ export function amplifyIntent(
   currentConfidence = coil5.confidence;
 
   // ═══ Determine execution vs. clarification ═══
-  // Long inputs (>50 chars) are clearly intentional — ALWAYS execute, never ask for clarification
+  // Long inputs (>50 chars) are clearly intentional — ALWAYS execute
+  // Questions (ending with ?) are ALWAYS valid — never ask clarification for questions
   const isLongInput = trimmed.length > 50;
-  const shouldExecute = isLongInput || currentConfidence >= EXECUTION_THRESHOLD;
+  const isQuestion = /\?/.test(trimmed) || /^(o que|quem|qual|quando|onde|como|por que|porque|quanto)\b/i.test(trimmed);
+  const isVoiceNatural = /^[a-záàâãéèêíïóôõöúçñ\s,!?.]+$/i.test(trimmed); // natural language, not code/garbage
+  const shouldExecute = isLongInput || isQuestion || isVoiceNatural || currentConfidence >= EXECUTION_THRESHOLD;
   let suggestedQuestion: string | null = null;
 
   if (!shouldExecute) {
-    // Generate clarification question
     const clarity = analyzeClarity(trimmed, ctx.documentContent || "", coil4.intent);
     suggestedQuestion = clarity.suggestedQuestion
       || "Pode detalhar melhor o que deseja? Assim consigo atender com precisão.";
