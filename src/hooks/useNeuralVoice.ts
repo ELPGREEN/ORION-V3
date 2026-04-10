@@ -442,7 +442,8 @@ export function useNeuralVoice(
     if (!played && !cascadeAbort.signal.aborted) {
       console.warn("[Voice] ⚠️ Gemini TTS indisponível — usando Web Speech como fallback");
       try {
-        played = await browserSpeak(cleanText, cascadeAbort.signal);
+        await browserSpeak(cleanText);
+        played = true;
       } catch (err) {
         console.warn("[Voice] Web Speech fallback also failed:", err);
       }
