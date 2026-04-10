@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserPlan } from "@/hooks/useUserPlan";
 import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { OrionAccessGate } from "@/components/OrionAccessGate";
-import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
+import { initVoicePicker } from "@/lib/voice/voicePicker";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 // ═══ FIX: Integrate with Mic Arbiter to prevent SpeechRecognition conflicts ═══
 import { claimMic, isMicOwner, registerMicRec, getMicMode, releaseMic } from "@/lib/voice/micArbiter";
