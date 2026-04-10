@@ -584,11 +584,14 @@ export async function analyzeFrameWithAI(
     // ═══ PERF FIX: buildLocalDetections only ONCE (was called 2x — streaming path duplicates this) ═══
     const localDetections = buildLocalDetections();
 
-    // Get user name for personalized responses
+    // Get user name for personalized responses (profile > metadata > email)
     let userName: string | undefined;
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
-      userName = authUser?.user_metadata?.nome || authUser?.email?.split("@")[0] || undefined;
+      if (authUser?.id) {
+        const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", authUser.id).maybeSingle();
+        userName = profile?.full_name || authUser?.user_metadata?.full_name || authUser?.user_metadata?.nome || undefined;
+      }
     } catch { /* non-blocking */ }
 
     const { data, error } = await supabase.functions.invoke("neural-ops", {

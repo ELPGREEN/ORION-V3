@@ -1498,7 +1498,10 @@ export function useOrionReasoning(
       // ═══ USER NAME INJECTION for personalized responses ═══
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
-        (window as any).__orionUserName = authUser?.user_metadata?.nome || authUser?.email?.split("@")[0] || undefined;
+        if (authUser?.id) {
+          const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", authUser.id).maybeSingle();
+          (window as any).__orionUserName = profile?.full_name || authUser?.user_metadata?.full_name || authUser?.user_metadata?.nome || undefined;
+        }
       } catch { /* non-blocking */ }
 
       // ═══ LAYER 1.7: Deep Query Estimator — "Aguarde ~X segundos" ═══
