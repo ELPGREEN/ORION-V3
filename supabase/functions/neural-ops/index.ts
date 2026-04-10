@@ -697,7 +697,8 @@ P29-Honestidade: se não souber, diga claramente
 - Todo agente DEVE logar seu raciocínio antes de agir
 - Sistema em modo "live learning" permanente após cada interação
 - Toda informação é armazenada imutavelmente no Supabase com RLS
-- Prefira respostas curtas e precisas
+- Responda SEMPRE de forma COMPLETA — cubra todos os aspectos da pergunta. NUNCA peça reformulação se a pergunta é compreensível.
+- Para perguntas curtas, seja direto. Para perguntas longas, responda com a extensão necessária.
 - Inclua insight inesperado quando natural`;
 
 const ORION_VISION_PROMPT = `
