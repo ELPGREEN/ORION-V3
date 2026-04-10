@@ -1112,6 +1112,139 @@ async function fetchIdentityKnowledge(): Promise<string> {
   return "";
 }
 
+// ═══ WEB SEARCH / URL SCRAPE / YOUTUBE — inline context enrichment ═══
+
+function detectWebSearchIntent(query: string): boolean {
+  return /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|update|news|current|latest|trending)\b/i.test(query);
+}
+
+function detectURLsInQuery(query: string): string[] {
+  const matches = query.match(/https?:\/\/[^\s<>"{}|\\^`\[\]]+/gi);
+  return matches ? matches.slice(0, 2) : [];
+}
+
+function extractYouTubeVideoId(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+async function fetchWebSearchContext(query: string): Promise<string> {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
+    if (!firecrawlKey) return "";
+    
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    
+    const resp = await fetch("https://api.firecrawl.dev/v1/search", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${firecrawlKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ query, limit: 5, lang: "pt-br", country: "br", scrapeOptions: { formats: ["markdown"] } }),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    
+    if (!resp.ok) return "";
+    const data = await resp.json();
+    const results = (data.data || []).slice(0, 5);
+    if (results.length === 0) return "";
+    
+    const formatted = results.map((r: any, i: number) => {
+      const title = r.title || r.metadata?.title || "";
+      const desc = r.description || r.metadata?.description || "";
+      const content = (r.markdown || "").slice(0, 600);
+      return `[${i + 1}] ${title}\n${desc}\n${content}\n🔗 ${r.url || ""}`;
+    }).join("\n---\n");
+    
+    console.log(`[WebSearch] Found ${results.length} results for: "${query.slice(0, 50)}"`);
+    return `\n\n═══ RESULTADOS DE PESQUISA WEB (dados em tempo real) ═══\nUse estas informações para responder com dados ATUALIZADOS. Cite as fontes.\n\n${formatted}`;
+  } catch (e) {
+    console.warn("[WebSearch] Failed:", e);
+    return "";
+  }
+}
+
+async function fetchURLContext(url: string): Promise<string> {
+  try {
+    const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
+    if (!firecrawlKey) return "";
+    
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    
+    const resp = await fetch("https://api.firecrawl.dev/v1/scrape", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${firecrawlKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: true }),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    
+    if (!resp.ok) return "";
+    const data = await resp.json();
+    const markdown = (data.data?.markdown || data.markdown || "").slice(0, 4000);
+    const title = data.data?.metadata?.title || data.metadata?.title || url;
+    
+    if (!markdown) return "";
+    console.log(`[URLContext] Scraped: ${title} (${markdown.length} chars)`);
+    return `\n\n═══ CONTEÚDO DA URL: ${title} ═══\n${markdown}\n🔗 ${url}`;
+  } catch (e) {
+    console.warn("[URLContext] Failed:", e);
+    return "";
+  }
+}
+
+async function fetchYouTubeContext(videoId: string): Promise<string> {
+  try {
+    const ytKey = Deno.env.get("YOUTUBE_API_KEY");
+    if (!ytKey) return "";
+    
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    
+    // Get video snippet (title, description, channel)
+    const snippetResp = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${ytKey}`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timer);
+    
+    if (!snippetResp.ok) return "";
+    const snippetData = await snippetResp.json();
+    const video = snippetData.items?.[0]?.snippet;
+    if (!video) return "";
+    
+    const title = video.title || "";
+    const channel = video.channelTitle || "";
+    const description = (video.description || "").slice(0, 1500);
+    const published = video.publishedAt || "";
+    
+    // Try to get captions list
+    let captionText = "";
+    try {
+      const captionsResp = await fetch(
+        `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${ytKey}`,
+        { signal: AbortSignal.timeout(2000) }
+      );
+      if (captionsResp.ok) {
+        const captionsData = await captionsResp.json();
+        const captions = captionsData.items || [];
+        if (captions.length > 0) {
+          captionText = `\nLegendas disponíveis: ${captions.map((c: any) => c.snippet?.language || "?").join(", ")}`;
+        }
+      }
+    } catch { /* non-fatal */ }
+    
+    console.log(`[YouTube] Video context: "${title}" by ${channel}`);
+    return `\n\n═══ VÍDEO DO YOUTUBE ═══\n📹 Título: ${title}\n📺 Canal: ${channel}\n📅 Publicado: ${published}\n📝 Descrição: ${description}${captionText}\n\nCom base nestas informações, resuma ou responda sobre o conteúdo do vídeo. Se o usuário pedir resumo, use a descrição como base.`;
+  } catch (e) {
+    console.warn("[YouTube] Failed:", e);
+    return "";
+  }
+}
+
 async function buildOrionMessages(body: Record<string, unknown>) {
   const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName } = body as any;
 
@@ -1124,7 +1257,6 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const systemParts = [basePrompt];
 
   // ═══ USER IDENTITY INJECTION ═══
-  // Inject user name so Orion addresses them by name instead of "usuário"
   if (userName && typeof userName === "string" && userName.trim()) {
     systemParts.push(`═══ USUÁRIO ATUAL ═══\nO nome do usuário falando com você é: ${userName.trim()}. Chame-o pelo nome quando apropriado. NUNCA o chame de "usuário" — use o nome dele.`);
   }
@@ -1137,16 +1269,24 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const questionStr = typeof question === "string" ? question : "";
   const contextStr = typeof context === "string" ? context : "";
 
-  // ═══ PERF FIX: Parallelize identity + architecture detection + RAG ═══
+  // ═══ PERF FIX: Parallelize identity + architecture detection + RAG + Web Search + URL/YouTube ═══
   const isArchitectureQuery = JARVIS_COMPARISON_REGEX.test(questionStr) || JARVIS_COMPARISON_REGEX.test(contextStr);
   const isIdentityQuery = IDENTITY_REGEX.test(questionStr) || IDENTITY_REGEX.test(contextStr);
-
-  // Fire all async lookups in parallel (was sequential — saved ~800ms)
-  // Skip RAG for simple short queries (< 30 chars, not legal/analysis/document) — saves ~1-2s
   const isSimpleQuery = questionStr.length < 30 && !isComplexQuery && intentType !== "legal_search" && intentType !== "document_generation" && intentType !== "analysis";
-  const [identityKnowledge, ragContext] = await Promise.all([
+
+  // ═══ OPERA AI: Detect web search, URL, YouTube intents ═══
+  const needsWebSearch = detectWebSearchIntent(questionStr) || intentType === "web_search";
+  const urlsInQuery = detectURLsInQuery(questionStr);
+  const youtubeIds = urlsInQuery.map(u => extractYouTubeVideoId(u)).filter((id): id is string => !!id);
+  const nonYoutubeUrls = urlsInQuery.filter(u => !extractYouTubeVideoId(u));
+
+  // Fire all async lookups in parallel
+  const [identityKnowledge, ragContext, webSearchContext, ...urlContexts] = await Promise.all([
     isIdentityQuery ? fetchIdentityKnowledge() : Promise.resolve(""),
-    (!isSimpleQuery && questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve("")
+    (!isSimpleQuery && questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve(""),
+    needsWebSearch ? fetchWebSearchContext(questionStr) : Promise.resolve(""),
+    ...nonYoutubeUrls.map(u => fetchURLContext(u)),
+    ...youtubeIds.map(id => fetchYouTubeContext(id)),
   ]);
 
   if (isArchitectureQuery) {
