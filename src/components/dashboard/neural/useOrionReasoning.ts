@@ -406,6 +406,9 @@ export function useOrionReasoning(
     addChat("ai", "⏳ ...");
     addLog(`💬 Pergunta [${source}]: ${question}`);
 
+    // Set OrbState to "thinking" — JARVIS-style PROCESSING indicator
+    OrbState.voiceState = "thinking";
+
     const controller = new AbortController();
     if (abortControllerRef) abortControllerRef.current = controller;
 
