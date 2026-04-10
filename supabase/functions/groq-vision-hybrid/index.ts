@@ -287,10 +287,24 @@ interface VisionObject {
   confianca: number;
   categorias?: string[];
   protocolos?: string[];
+  affordances?: string[];
 }
 interface VisionResponse {
   objetos: VisionObject[];
+  pessoas?: Array<{
+    expressao?: string;
+    humor?: string;
+    acao?: string;
+    intencao?: string;
+    gestos?: string;
+    postura?: string;
+  }>;
+  relacoes_espaciais?: Array<{ sujeito: string; relacao: string; objeto_ref: string }>;
+  acoes_inferidas?: Array<{ ator: string; acao: string; intencao?: string }>;
+  narrativa?: string;
   cena?: string;
+  atmosfera?: string;
+  foco_atencao?: string[];
   texto_detectado?: string | null;
   sentimento_visual?: string;
 }
@@ -310,6 +324,7 @@ function parseVisionResponse(text: string): VisionResponse {
           protocolos: parsed.protocolos,
         }],
         cena: parsed.cena,
+        narrativa: parsed.narrativa,
         texto_detectado: parsed.texto_detectado,
         sentimento_visual: parsed.sentimento_visual,
       };
