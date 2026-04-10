@@ -154,37 +154,27 @@ export default function ConsultaIA() {
   const { user } = useAuth();
 
   // Check user role
-  const { data: userRole, isLoading: roleLoading } = useQuery({
-    queryKey: ["user-role-consulta", user?.id],
+  // Parallel gate: fetch role + plan in a single query call
+  const { data: gateData, isLoading: gateLoading } = useQuery({
+    queryKey: ["consulta-gate", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data?.role ?? null;
+      const [roleRes, planRes] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", user!.id).maybeSingle(),
+        supabase.from("user_plans").select("plan_type").eq("user_id", user!.id).maybeSingle(),
+      ]);
+      return {
+        role: roleRes.data?.role ?? null,
+        plan_type: planRes.data?.plan_type ?? null,
+      };
     },
     enabled: !!user,
+    staleTime: 60_000,
   });
 
-  // Check subscription
-  const { data: plan, isLoading: planLoading } = useQuery({
-    queryKey: ["user-plan-gate", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user_plans")
-        .select("plan_type")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const isLoading = roleLoading || planLoading;
+  const isLoading = gateLoading;
   const isOwner = isOwnerEmail(user?.email);
-  const isClient = userRole === "cliente" || userRole === null; // null = no role assigned = treat as client
-  const isSubscriber = !!user && (isOwner || plan?.plan_type === "professional" || plan?.plan_type === "business" || plan?.plan_type === "enterprise");
+  const isClient = gateData?.role === "cliente" || gateData?.role === null;
+  const isSubscriber = !!user && (isOwner || gateData?.plan_type === "professional" || gateData?.plan_type === "business" || gateData?.plan_type === "enterprise");
 
   // Determine gate content
   const renderContent = () => {
