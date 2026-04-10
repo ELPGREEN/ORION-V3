@@ -62,12 +62,12 @@ serve(async (req) => {
     const baseUrl = VM_URL.replace(/\/+$/, "");
     let vmUrl = `${baseUrl}${endpoint}`;
     const GET_ACTIONS = ["health", "cache/stats"];
+    const isGet = GET_ACTIONS.includes(action);
     let fetchOpts: RequestInit = {
-      method: GET_ACTIONS.includes(action) ? "GET" : "POST",
-      headers: { "Content-Type": "application/json" },
+      method: isGet ? "GET" : "POST",
     };
 
-    if (!GET_ACTIONS.includes(action)) {
+    if (!isGet) {
       if (["tts", "stt", "embeddings"].includes(action)) {
         const fd = new FormData();
         for (const [k, v] of Object.entries(body.payload || body)) {
@@ -75,6 +75,7 @@ serve(async (req) => {
         }
         fetchOpts = { method: "POST", body: fd };
       } else {
+        fetchOpts.headers = { "Content-Type": "application/json" };
         fetchOpts.body = JSON.stringify(body.payload || body);
       }
     }
