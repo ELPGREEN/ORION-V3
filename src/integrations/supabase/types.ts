@@ -6228,8 +6228,10 @@ export type Database = {
           expires_at: string | null
           hit_count: number | null
           id: string
+          last_hit_at: string | null
           query_hash: string
           query_text: string
+          task_type: string | null
         }
         Insert: {
           created_at?: string
@@ -6237,8 +6239,10 @@ export type Database = {
           expires_at?: string | null
           hit_count?: number | null
           id?: string
+          last_hit_at?: string | null
           query_hash: string
           query_text: string
+          task_type?: string | null
         }
         Update: {
           created_at?: string
@@ -6246,8 +6250,10 @@ export type Database = {
           expires_at?: string | null
           hit_count?: number | null
           id?: string
+          last_hit_at?: string | null
           query_hash?: string
           query_text?: string
+          task_type?: string | null
         }
         Relationships: []
       }
