@@ -12,8 +12,9 @@ import { matchLearnedPriors, learnFromDetection, canIdentifyLocally, getLearning
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
 import { runVisionGate, buildGatedResponse, type LocalDetectionContext } from "@/lib/neural/hf-vision-gate";
 
-// ═══ Local-first mode flag — set to true for 100% offline operation ═══
-let _localFirstMode = true;
+// ═══ Local-first mode flag — set to true ONLY for 100% offline operation ═══
+// Default OFF: user has cloud APIs + VM active, local SmolLM2 is too slow/imprecise for text
+let _localFirstMode = false;
 
 export function setLocalFirstMode(enabled: boolean) {
   _localFirstMode = enabled;
