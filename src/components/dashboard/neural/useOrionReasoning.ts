@@ -985,7 +985,7 @@ export function useOrionReasoning(
         if (!bluetoothManager.isSupported) {
           const r = "Web Bluetooth nao e suportado neste navegador. Use Chrome ou Edge com HTTPS.";
           setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: r, time: new Date().toLocaleTimeString("pt-BR") }]; });
-          setThought(r); speak(r).catch(() => {}) return;
+          setThought(r); speak(r).catch(() => {}); return;
         }
         const r0 = "Escaneando dispositivos Bluetooth. Selecione um na janela do navegador.";
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: r0, time: new Date().toLocaleTimeString("pt-BR") }]; });
@@ -1011,7 +1011,7 @@ export function useOrionReasoning(
         const { smartHome } = await import("@/lib/neural/smart-home-controller");
         const result = await smartHome.handleVoiceCommand(question);
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        setThought(result); addLog(`🏠 SmartHome: ${result}`); speak(result).catch(() => {}) return;
+        setThought(result); addLog(`🏠 SmartHome: ${result}`); speak(result).catch(() => {}); return;
       }
 
       const iotTempMatch = /\b(temperatura|temp)\b/i.test(qLow) && /\b(qual|quanto|mostr|status|sensor)/i.test(qLow);
@@ -1019,7 +1019,7 @@ export function useOrionReasoning(
         const { iotBridge } = await import("@/lib/neural/iot-device-bridge");
         const result = await iotBridge.getTemperature("temp_sala");
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        setThought(result); addLog(`🌡️ IoT: ${result}`); speak(result).catch(() => {}) return;
+        setThought(result); addLog(`🌡️ IoT: ${result}`); speak(result).catch(() => {}); return;
       }
 
       const iotRobotMatch = /\b(status|estado)\s+(do\s+)?(rob[oô]|robo|robot)\b/i.test(qLow);
@@ -1027,7 +1027,7 @@ export function useOrionReasoning(
         const { iotBridge } = await import("@/lib/neural/iot-device-bridge");
         const result = await iotBridge.getRobotStatus();
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        setThought(result); addLog(`🤖 IoT: ${result}`); speak(result).catch(() => {}) return;
+        setThought(result); addLog(`🤖 IoT: ${result}`); speak(result).catch(() => {}); return;
       }
 
       const iotStatusMatch = /\b(status|estado)\s+(dos\s+)?(sensor|dispositivo|iot|device)/i.test(qLow);
@@ -1038,7 +1038,7 @@ export function useOrionReasoning(
         const bleDevs = bleMgr.isSupported ? ` BLE: ${bleMgr.getDevices().length} dispositivos.` : "";
         const result = `${summary}${bleDevs}`;
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        setThought(result); addLog(`📡 IoT: ${result}`); speak(result).catch(() => {}) return;
+        setThought(result); addLog(`📡 IoT: ${result}`); speak(result).catch(() => {}); return;
       }
 
       // ═══ NATIVE DEVICE: "status do dispositivo", "bateria", "localizacao", "tirar foto" ═══
@@ -1062,7 +1062,7 @@ export function useOrionReasoning(
           result = await getDeviceSummary();
         }
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        setThought(result); addLog(`📱 Nativo: ${result}`); speak(result).catch(() => {}) return;
+        setThought(result); addLog(`📱 Nativo: ${result}`); speak(result).catch(() => {}); return;
       }
 
       // ═══ MEDIA / SPOTIFY: intercept music/search/playlist commands BEFORE AI ═══
@@ -1653,7 +1653,7 @@ export function useOrionReasoning(
         });
         addLog(`🧠 IA: ${humanizedText.slice(0, 100)}...`);
         if (!spokeOrQueued && !bargedInRef.current) {
-          speak(humanizedSpeech); spokeOrQueued = true; } catch {}
+          speak(humanizedSpeech).catch(() => {}); spokeOrQueued = true;
         }
 
         // Wait for speech queue to finish before cleanup
