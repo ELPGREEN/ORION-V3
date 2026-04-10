@@ -11,6 +11,7 @@ import { VS } from "@/components/dashboard/neural/useVisionProcessing";
 import { matchLearnedPriors, learnFromDetection, canIdentifyLocally, getLearningStats } from "@/lib/neural/vision-local-learning";
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
 import { runVisionGate, buildGatedResponse, type LocalDetectionContext } from "@/lib/neural/hf-vision-gate";
+import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
 
 // ═══ Local-first mode flag — set to true ONLY for 100% offline operation ═══
 // Default OFF: user has cloud APIs + VM active, local SmolLM2 is too slow/imprecise for text
@@ -821,6 +822,16 @@ export async function analyzeFrameStreaming(
       ]
     );
 
+    // ═══ VOICE PROTOCOLS: Match 1500 protocols for anti-hallucination + coherence ═══
+    let protocolContext = "";
+    try {
+      const protocols = await matchProtocols(question);
+      if (protocols.systemPromptAddition) {
+        protocolContext = `\n\n${protocols.systemPromptAddition}`;
+      }
+    } catch {}
+    const enrichedContext = streamContext + protocolContext;
+
     const res = await fetch(`${supabaseUrl}/functions/v1/neural-ops`, {
       method: "POST",
       headers: {
@@ -830,7 +841,7 @@ export async function analyzeFrameStreaming(
       },
       signal,
       body: JSON.stringify({
-        imageBase64, context: streamContext, question,
+        imageBase64, context: enrichedContext, question,
         userMemory: getUserMemory(),
         dashboardContext: dashboardCtx,
         chatHistory: chatHistory?.slice(-4),
