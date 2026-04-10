@@ -18,10 +18,10 @@ type: reference
 - Models: whisper-tiny (int8), DETR-resnet-50, EasyOCR, all-MiniLM-L6-v2, Piper pt_BR
 - Priority: VM (primary) → HF Space (fallback) — managed in orion-hub-client.ts
 - Memory limit: systemd MemoryMax=3G
-- Firewall: allow-iap-ssh (tcp:22 from 35.235.240.0/20) created. Needs allow-orion-8080 (tcp:8080) + tag http-server
+- Scopes: cloud-platform ✅
+- Tags: http-server ✅
+- Firewall: allow-iap-ssh (tcp:22), needs allow-orion-8080 (tcp:8080) for external access
 - SSH: gcloud compute ssh instance-20260409-234130 --zone=us-central1-f --tunnel-through-iap
-- PENDING: VM service account lacks Gemini API scopes. Needs:
-  1. Enable "Generative Language API" in GCP Console for project orion-d3734
-  2. Grant roles/aiplatform.user to 550674472945-compute@developer.gserviceaccount.com
-  3. Update VM scopes to cloud-platform (requires stop/start)
-  Current scopes: devstorage.read_only, logging.write, monitoring.write, service.management.readonly, servicecontrol, trace.append
+- Gemini: GEMINI_API_KEY configured in systemd override, use gemini-2.5-flash-lite (2.0-flash-lite deprecated)
+- Status: Health ✅, OCR ✅, Embeddings ✅, Gemini proxy ✅, TTS ❌ (Piper needs espeak-ng), STT ❌ (depends on TTS)
+- PENDING: Install espeak-ng for Piper TTS to work
