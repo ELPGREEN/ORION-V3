@@ -1108,7 +1108,7 @@ async function fetchIdentityKnowledge(): Promise<string> {
 }
 
 async function buildOrionMessages(body: Record<string, unknown>) {
-  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions } = body as any;
+  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName } = body as any;
 
   const hasImage = imageBase64 && intentType !== "textual";
   const isComplexQuery = intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis";
@@ -1116,6 +1116,12 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   // Use compact prompt for simple text queries, full prompt for vision/complex
   const basePrompt = (hasImage || isComplexQuery) ? ORION_SYSTEM_PROMPT_FULL : ORION_SYSTEM_PROMPT_COMPACT;
   const systemParts = [basePrompt];
+
+  // ═══ USER IDENTITY INJECTION ═══
+  // Inject user name so Orion addresses them by name instead of "usuário"
+  if (userName && typeof userName === "string" && userName.trim()) {
+    systemParts.push(`═══ USUÁRIO ATUAL ═══\nO nome do usuário falando com você é: ${userName.trim()}. Chame-o pelo nome quando apropriado. NUNCA o chame de "usuário" — use o nome dele.`);
+  }
 
   // Inject cognitive reasoning instructions from client-side routing
   if (reasoningInstructions && typeof reasoningInstructions === "string") {
