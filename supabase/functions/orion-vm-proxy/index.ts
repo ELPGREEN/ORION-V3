@@ -134,7 +134,8 @@ async function fetchWithAutoStart(
     const resp = await fetch(primaryUrl, { ...opts, signal: controller.signal });
     clearTimeout(timer);
     if (resp.ok) return resp;
-    throw new Error(`VM returned ${resp.status}`);
+    const errBody = await resp.text().catch(() => "");
+    throw new Error(`VM returned ${resp.status}: ${errBody.substring(0, 200)}`);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     const isOffline = errMsg.includes("connection refused") || 
