@@ -8,6 +8,7 @@ Run: uvicorn server:app --host 0.0.0.0 --port 8080
 
 import io
 import os
+import wave
 import json
 import time
 import base64
@@ -225,13 +226,27 @@ async def tts_endpoint(text: str = Form(...), speed: float = Form(1.0)):
         raise HTTPException(503, "Piper TTS not available")
 
     try:
+        normalized_speed = max(0.25, min(speed, 4.0))
+        length_scale = 1.0 / normalized_speed
+
         audio_bytes = io.BytesIO()
-        piper_voice.synthesize(text, audio_bytes, sentence_silence=0.3)
+        with wave.open(audio_bytes, "wb") as wav_file:
+            piper_voice.synthesize(
+                text,
+                wav_file,
+                length_scale=length_scale,
+                sentence_silence=0.3,
+            )
+
         audio_bytes.seek(0)
         return Response(
             content=audio_bytes.read(),
             media_type="audio/wav",
-            headers={"X-Model": "piper-pt-br", "X-Source": "gcp-vm"},
+            headers={
+                "X-Model": "piper-pt-br",
+                "X-Source": "gcp-vm",
+                "X-Sample-Rate": str(piper_voice.config.sample_rate),
+            },
         )
     except Exception as e:
         raise HTTPException(500, f"TTS error: {str(e)}")
