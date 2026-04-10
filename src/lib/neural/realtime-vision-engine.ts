@@ -534,6 +534,16 @@ export function formatDetectionsForAI(result: RealTimeVisionResult): string {
   const temporalStr = visionTemporalBuffer.formatForAI();
   if (temporalStr) parts.push(temporalStr);
 
+  // ─── NEW: Semantic Cortex — human-like scene comprehension ───
+  try {
+    const semanticScene = analyzeSceneSemantics(result);
+    if (semanticScene.narrative && semanticScene.complexity > 0) {
+      parts.push(formatSemanticForAI(semanticScene));
+    }
+  } catch (e) {
+    console.warn("[SemanticCortex] Error:", e);
+  }
+
   parts.push(`Inferência local: ${result.inferenceMs}ms | MediaPipe: ${result.status.mediapipe ? "✅" : "⏳"} | YOLOv10: ${result.status.yolo ? "✅" : "⏳"} | FrameX: ${result.status.frameX ? "✅" : "⏳"} | Depth: ${result.status.depth ? "✅" : "⏳"} | OCR: ${result.status.ocr ? "✅" : "⏳"} | Gaze: ${result.gazeResult ? "✅" : "⏳"} | TrOCR: ${result.status.handwrittenOCR ? "✅" : "⏳"} | Quantum: ${result.quantumEnhancement ? "✅" : "⏳"} | Pose: ${result.status.pose ? "✅" : "⏳"} | Layout: ${result.status.layout ? "✅" : "⏳"}`);
 
   return parts.join("\n");
