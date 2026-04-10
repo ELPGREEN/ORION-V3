@@ -21,9 +21,13 @@ const MODELS = [
 const VERTEX_LOCATION = "us-central1";
 const AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-const DEFAULT_VOICE = "Algieba";
+const DEFAULT_VOICE = "Charon";
 const DEFAULT_LANG = "pt-BR";
-const DEFAULT_PROMPT = "Fale de forma natural, clara e fluida em português brasileiro. Use um tom profissional mas amigável, com ritmo conversacional.";
+const DEFAULT_PROMPT = `Você é ORION, um assistente de IA com personalidade tipo JARVIS.
+Fale com confiança, tom grave e autoridade calma. Articule cada palavra com clareza.
+Ritmo: pausas naturais entre frases, sem pressa. Entonação: profissional e sofisticada.
+Voz: masculina, grave, ressonante. Estilo: como um mordomo digital britânico falando português brasileiro fluente.
+Nunca soe robótico. Seja natural, preciso e elegante.`;
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1200;
