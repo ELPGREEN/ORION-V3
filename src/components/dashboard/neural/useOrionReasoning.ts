@@ -528,8 +528,8 @@ export function useOrionReasoning(
 
           // Only check biometric for sensitive intents — run both queries in parallel
           if (needsBiometric) {
-            const { isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
-            const isOwner = isOwnerEmail(authGateUser.email);
+            const { isOwnerEmail: checkOwner } = await import("@/lib/neural/orion-consciousness");
+            const isOwner = checkOwner(authGateUser.email);
 
             if (!isOwner) {
               const [voiceRes, faceRes] = await Promise.all([
