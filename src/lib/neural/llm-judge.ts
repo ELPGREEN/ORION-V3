@@ -1,5 +1,5 @@
 /**
- * ─── v22: LLM-as-Judge — Synthetic Legal Quality Evaluator ───
+ * ─── v23: LLM-as-Judge — Synthetic Legal Quality Evaluator ───
  * 
  * Evaluates post-edit documents across 8 juridical dimensions:
  * 1. Legal Coherence (CPC/CPP compliance)
@@ -8,15 +8,20 @@
  * 4. Procedural Correctness (deadlines, competência)
  * 5. Linguistic Clarity (readability for judges)
  * 6. LGPD Compliance (data protection)
- * 7. Analytical Depth (chain-of-thought, multi-step reasoning)     ← NEW
- * 8. Cross-Domain Coherence (cross-references between legal areas) ← NEW
+ * 7. Analytical Depth (chain-of-thought, multi-step reasoning)
+ * 8. Cross-Domain Coherence (cross-references between legal areas)
  * 
- * v2 Upgrades:
- * - 8 dimensions (was 6) with rebalanced weights
- * - Logical fallacy detection
- * - Cross-domain coherence analysis
- * - Analytical depth scoring
+ * v23: Added RAG evaluation module (rag-evaluator.ts) with:
+ * - Groundedness scoring (response vs retrieved context)
+ * - Relevance scoring (response vs question intent)
+ * - Helpfulness scoring (comprehensiveness rubric)
+ * - Correctness scoring (ROUGE/BLEU-like vs reference answers)
+ * - Retrieval quality analysis (hallucination detection)
+ * Inspired by Vertex AI RAG Evaluation (Google Codelabs)
  */
+
+// Re-export RAG evaluator for unified access
+export { evaluateRAGResponse, type RAGEvalResult, type RAGMetricScore, type RetrievalQuality } from './rag-evaluator';
 
 export interface JudgeVerdict {
   overallScore: number; // 0-100
