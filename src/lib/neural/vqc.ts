@@ -277,6 +277,44 @@ export function vqcForwardWithRuntime(
   };
 }
 
+// ─── Tensor Mode Re-exports ───
+
+export {
+  tensorVQCForward,
+  tensorParameterShiftGradient,
+  tensorZZFeatureMap,
+  tensorIQPFeatureMap,
+} from "./tensor-vqc";
+
+export type {
+  StateVector,
+  DensityMatrix,
+} from "./tensor-state-vector";
+
+export {
+  tensorZero,
+  basisState,
+  kronecker,
+  kroneckerMatrix,
+  applySingleGate,
+  applyCNOT,
+  applyCZ,
+  applySWAP,
+  qubitProbability,
+  probabilityDistribution,
+  measureQubit,
+  measureAll,
+  densityMatrix,
+  partialTrace,
+  partialTraceFromSV,
+  vonNeumannEntropy,
+  entanglementEntropy,
+  stateFidelity,
+  normalizeSV,
+  H2, X2, Z2, I2,
+  RX2, RY2, RZ2,
+} from "./tensor-state-vector";
+
 // ─── Init ───
 
 export function initVQCParams(config: VQCConfig = DEFAULT_VQC_CONFIG): number[][][] {
