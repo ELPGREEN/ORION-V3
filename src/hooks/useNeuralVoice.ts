@@ -344,8 +344,8 @@ export function useNeuralVoice(
           setTimeout(() => {
             const isQuestion = /\?/.test(chunks[idx]);
             const isLast = idx === chunks.length - 1;
-            let rate = ORION_VOICE_PARAMS.rate + (Math.sin(idx * 2.1) * 0.02);
-            let pitch = ORION_VOICE_PARAMS.pitch;
+            let rate: number = ORION_VOICE_PARAMS.rate + (Math.sin(idx * 2.1) * 0.02);
+            let pitch: number = ORION_VOICE_PARAMS.pitch;
             if (isQuestion) pitch += 0.04;
             if (isLast && chunks.length > 2) rate -= 0.03;
             rate = Math.max(0.9, Math.min(1.35, rate));
