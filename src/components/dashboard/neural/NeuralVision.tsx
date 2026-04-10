@@ -189,7 +189,28 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }, 800);
   }, [speak, stopListen]);
 
-  // ═══ Voice command handler ═══
+  // ═══ Centralized command router — single source of truth for all commands ═══
+  const routeOrionCommand = useCallback((cmd: string) => {
+    const q = cmd.toLowerCase().trim();
+    const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+    const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+    if (isActivateVision) {
+      if (!active) { speakFast("Visão ativada.").catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
+      else { speakFast("Visão já está ativa.").catch(() => {}); }
+      return;
+    }
+    if (isDeactivateVision) {
+      if (active) { speakFast("Desativando visão.").catch(() => {}); stopCamera(); }
+      else { speakFast("Visão já está desativada.").catch(() => {}); }
+      return;
+    }
+    if (q.includes("parar") || q.includes("desligar")) { stopCamera(); return; }
+    if (q.includes("calar") || q.includes("silêncio")) { try { speechSynthesis?.cancel(); } catch {} return; }
+    if (supernetConnected) sendSuperNetQuery(cmd);
+    else askAI(cmd, "voice");
+  }, [active, startCamera, stopCamera, speakFast, askAI, supernetConnected, sendSuperNetQuery]);
+
+
   const handleVoice = useCallback((cmd: string) => {
     const original = cmd.trim();
     const q = original.toLowerCase();
@@ -199,97 +220,50 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       .replace(/^(ativar?|ligar?|acordar?|oi|olá|e\s*aí)\s*/i, "")
       .trim();
 
+    // Pure wake word without command — just greet
     const isJustWakeWord = /^[óòôõo]r[iíìeéè][oóòôõ][nmn]\s*(ativar?|ligar?|acordar?|oi|olá|e\s*aí)?[.!?]?\s*$/i.test(q.trim()) ||
       /^oreo[nm]\s*(ativar?|ligar?|acordar?|oi|olá|e\s*aí)?[.!?]?\s*$/i.test(q.trim());
     if (isJustWakeWord) {
       if (!hasGreetedRef.current) {
         hasGreetedRef.current = true;
-        speakFast("Ativando sistema AquaMonkey. Bem-vindo ao Orion.").catch(() => {});
+        speakFast("Orion ativo.").catch(() => {});
       }
       return;
     }
 
-    // ═══ Vision activation/deactivation via voice ═══
-    const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
-    const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
-
-    if (isActivateVision) {
-      if (!active) {
-        speakFast("Visão ativada.").catch(() => {});
-        startCamera({ announce: false }).catch(() => {});
-      } else {
-        speakFast("Visão já está ativa.").catch(() => {});
-      }
-      return;
-    }
-
-    if (isDeactivateVision) {
-      if (active) {
-        speakFast("Desativando visão.").catch(() => {});
-        stopCamera();
-      } else {
-        speakFast("Visão já está desativada.").catch(() => {});
-      }
-      return;
-    }
-
+    // Orion exit/farewell
     const isOrionExit = /[óòôõo]r[iíìeéè][oóòôõ][nmn]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q) ||
       /oreo[nm]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q);
     if (isOrionExit) { deactivateGracefully(); return; }
 
-    // ═══ Voice Clone Command Detection — FULLY AUTOMATIC FLOW ═══
+    // Voice clone flow
     if (isVoiceCloneCommand(q)) {
-      toast.info("🎙️ Iniciando clonagem de voz automática...");
-      // Stop listening so STT doesn't capture Orion's own speech
       stopListen();
-
       const introMsg = voiceClone.startCloneFlow();
       speak(introMsg).then(async () => {
-        // After Orion finishes speaking, auto-start recording
-        toast.info("🔴 Gravando sua voz por 15 segundos... Fale naturalmente!");
         await voiceClone.startRecording();
-        
-        // Auto-stop after 15 seconds
         setTimeout(async () => {
           voiceClone.stopRecording();
-          toast.info("⏹️ Gravação concluída! Processando...");
-          
-          // Wait a moment for upload to finish, then auto-clone
           setTimeout(async () => {
-            await speak("Gravação concluída. Agora vou processar sua voz. Aguarde um momento.");
+            await speak("Gravação concluída. Processando sua voz.");
             await voiceClone.cloneVoice();
-            const result = voiceClone.getFlowInstruction();
-            await speak(result);
-            // Resume listening
+            await speak(voiceClone.getFlowInstruction());
             startListening(handleVoice);
           }, 3000);
         }, 15000);
       }).catch(() => {
-        // If speak fails, still start recording
         voiceClone.startRecording();
-        setTimeout(() => {
-          voiceClone.stopRecording();
-          setTimeout(() => voiceClone.cloneVoice(), 3000);
-        }, 15000);
+        setTimeout(() => { voiceClone.stopRecording(); setTimeout(() => voiceClone.cloneVoice(), 3000); }, 15000);
       });
       return;
     }
+    if (voiceClone.cloneFlowStep !== "idle" && voiceClone.cloneFlowStep !== "complete") return;
 
-    // ═══ Voice Clone Flow: ignore commands during active clone flow ═══
-    if (voiceClone.cloneFlowStep !== "idle" && voiceClone.cloneFlowStep !== "complete") {
-      // During clone flow, ignore all other commands
-      return;
-    }
-
-    if (cleanedCommand.includes("parar") || cleanedCommand.includes("desligar")) stopCamera();
-    else if (cleanedCommand.includes("calar") || cleanedCommand.includes("silêncio")) speechSynthesis?.cancel();
-    else {
-      const finalCommand = cleanedCommand || original;
-      if (supernetConnected) sendSuperNetQuery(finalCommand);
-      else askAI(finalCommand, "voice");
-    }
-    toast.info(`🎤 "${cleanedCommand || original}"`);
-  }, [active, stopCamera, startCamera, deactivateGracefully, askAI, supernetConnected, sendSuperNetQuery, speak, speakFast, voiceClone]);
+    // Route everything through the centralized command router
+    const finalCommand = cleanedCommand || original;
+    routeOrionCommand(finalCommand);
+    toast.info(`🎤 "${finalCommand}"`);
+  }, [deactivateGracefully, speak, speakFast, voiceClone, startListening, stopListen, routeOrionCommand]);
 
   // ═══ Wake word activation — camera does NOT auto-start, only voice ═══
   const activateByWakeWord = useCallback(async () => {
@@ -396,36 +370,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     return () => clearTimeout(timer);
   }, [initialCommand, location.state, skipWakeWord, speakFast, speechOk, startDirectVoiceCapture]);
 
-  // ═══ Centralized command router — ALL entry points pass through here ═══
-  const routeOrionCommand = useCallback((cmd: string) => {
-    const q = cmd.toLowerCase().trim();
-    
-    // Local vision commands — intercept BEFORE LLM
-    const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
-    const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
-
-    if (isActivateVision) {
-      if (!active) {
-        speakFast("Visão ativada.").catch(() => {});
-        startCamera({ announce: false }).catch(() => {});
-      } else {
-        speakFast("Visão já está ativa.").catch(() => {});
-      }
-      return;
-    }
-    if (isDeactivateVision) {
-      if (active) {
-        speakFast("Desativando visão.").catch(() => {});
-        stopCamera();
-      } else {
-        speakFast("Visão já está desativada.").catch(() => {});
-      }
-      return;
-    }
-    
-    // Everything else → LLM
-    askAI(cmd);
-  }, [active, startCamera, stopCamera, speakFast, askAI]);
+  // (routeOrionCommand moved above handleVoice to avoid forward reference)
 
   // ═══ Listen for vision commands from text chat (useOrionReasoning) ═══
   useEffect(() => {

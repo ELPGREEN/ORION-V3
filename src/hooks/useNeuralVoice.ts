@@ -1,25 +1,41 @@
 /**
- * NEUROCORE AI — Voice Synthesis Hook
- * PRIMARY: Orion Voice Engine (Cache → HuggingFace → Gemini → Piper)
- * All free, no paid APIs. Orion's own voice, independent from Google.
+ * NEUROCORE AI — Voice Synthesis Hook (JARVIS-Grade v2)
+ * 
+ * Pipeline: STT (Web Speech) → Command Handler → TTS (Gemini → Web Speech fallback)
+ * 
+ * Architecture:
+ * - Single mic owner via MicArbiter (prevents duplicate recognition)
+ * - Mic priming on startListening (auto-start without click when permission exists)
+ * - Self-hearing guard (drops transcripts during TTS + echo detection)
+ * - Dynamic turn detection (linguistic pattern matching for silence thresholds)
+ * - Barge-in support (user can interrupt TTS with stop commands or 3+ words)
+ * - STT fallback chain (Groq Whisper → Browser Whisper on network errors)
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { OrbState } from "@/components/dashboard/neural/EnergyOrb";
 import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
-import { speakWithOrionVoice } from "@/lib/tts/orionVoiceEngine";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
-import { loadVoicePrefs, detectStyleCommand, saveVoicePrefs, getCachedVoicePrefs, type VoiceStylePrefs } from "@/lib/voice/adaptiveVoiceStyle";
-import { speakWithPiper, isPiperAvailable, preloadPiper } from "@/lib/tts/piperTTS";
-import { useNeuralConfig } from "@/hooks/useNeuralConfig";
-import { feedUserSpeech, feedAIResponse, feedSelfSynthesis } from "@/lib/neural/voice-evolution-feedback";
-import { speakWithEvolvedVoice } from "@/lib/neural/orion-voice-evolution";
-import { fallbackTranscribe, chunksToWavBlob, getSTTFallbackState } from "@/lib/voice/sttFallbackChain";
+import { loadVoicePrefs, detectStyleCommand, saveVoicePrefs, getCachedVoicePrefs } from "@/lib/voice/adaptiveVoiceStyle";
+import { preloadPiper } from "@/lib/tts/piperTTS";
+import { feedUserSpeech, feedAIResponse } from "@/lib/neural/voice-evolution-feedback";
+import { fallbackTranscribe, chunksToWavBlob } from "@/lib/voice/sttFallbackChain";
 import { getAudioWorkletManager } from "@/lib/voice/audioWorkletManager";
 import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural/pipeline-latency-tracker";
+import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
 
-// ═══ Text Cleaning for Natural Speech ═══
+// ═══ Constants ═══
+const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
+const ECHO_WINDOW_MS = 12000;
+const ECHO_JACCARD_THRESHOLD = 0.45;
+const MAX_CONSECUTIVE_ABORTS = 3;
+const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
+
+// ═══ Shared State ═══
+export const VoiceState = { aiResponding: false };
+
+// ═══ Text Utilities ═══
 
 export function cleanTextForSpeech(text: string): string {
   return text
@@ -56,12 +72,43 @@ export function normalizeSpeechText(text: string): string {
     .trim();
 }
 
-export const VoiceState = {
-  aiResponding: false,
-};
+// ═══ Helpers ═══
 
-// ═══ Unified Mic Arbiter — single global owner ═══
-import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
+function isMobile(): boolean {
+  return typeof navigator !== "undefined" && MOBILE_REGEX.test(navigator.userAgent);
+}
+
+/** Prime microphone hardware (necessary for reliable auto-start without user gesture) */
+async function primeMicrophone(): Promise<void> {
+  if (!navigator.mediaDevices?.getUserMedia) return;
+  try {
+    const perm = await navigator.permissions?.query?.({ name: "microphone" as any });
+    if (perm?.state !== "granted") return;
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
+    await new Promise(r => setTimeout(r, isMobile() ? 80 : 30));
+    stream.getTracks().forEach(t => t.stop());
+  } catch (err) {
+    console.warn("[Voice] Mic priming failed:", err);
+  }
+}
+
+/** Jaccard word-overlap echo detection */
+function isEchoOf(input: string, spoken: string): boolean {
+  if (!spoken || input.length < 5) return false;
+  // Substring match (either direction, first 40 chars)
+  if (spoken.includes(input.slice(0, 40)) || input.includes(spoken.slice(0, 40))) return true;
+  // Jaccard overlap
+  const wordsA = new Set(input.split(/\s+/).filter(w => w.length > 2));
+  const wordsB = new Set(spoken.split(/\s+/).filter(w => w.length > 2));
+  if (wordsA.size < 2 || wordsB.size < 2) return false;
+  let overlap = 0;
+  wordsA.forEach(w => { if (wordsB.has(w)) overlap++; });
+  return overlap / Math.min(wordsA.size, wordsB.size) > ECHO_JACCARD_THRESHOLD;
+}
+
+// ═══ Interface ═══
 
 export interface UseNeuralVoiceReturn {
   listening: boolean;
@@ -80,17 +127,18 @@ export interface UseNeuralVoiceReturn {
   voiceActiveRef: React.MutableRefObject<boolean>;
 }
 
-// Simple barge-in patterns (user wants AI to stop)
-const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
+// ═══ Hook ═══
 
 export function useNeuralVoice(
   setAiResponding?: (val: boolean) => void,
 ): UseNeuralVoiceReturn {
+  // ── State ──
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(false);
   const [ttsOn, setTtsOn] = useState(true);
   const ttsRef = useRef(true);
-  const { config } = useNeuralConfig();
+
+  // ── Refs ──
   const recRef = useRef<any>(null);
   const speakingRef = useRef(false);
   const maleVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
@@ -109,17 +157,13 @@ export function useNeuralVoice(
   const lastProcessedAtRef = useRef(0);
   const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consecutiveAbortsRef = useRef(0);
-  const MAX_CONSECUTIVE_ABORTS = 3;
-  /** voiceActiveRef: stays true across STT restart gaps — use to prevent wake word conflicts */
   const voiceActiveRef = useRef(false);
-  /** Active Audio element for barge-in cancellation (Google TTS / Kokoro) */
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
-  /** Singleton ID — this mount's unique ownership token */
   const singletonIdRef = useRef(0);
-  /** v30: AudioWorklet chunks for STT fallback */
   const audioChunksRef = useRef<Float32Array[]>([]);
   const audioWorkletActiveRef = useRef(false);
 
+  // ── Sync ──
   const updateAiResponding = useCallback((val: boolean) => {
     VoiceState.aiResponding = val;
     setAiResponding?.(val);
@@ -129,9 +173,12 @@ export function useNeuralVoice(
   useEffect(() => { listeningRef.current = listening; }, [listening]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") setSupported("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
+    if (typeof window !== "undefined") {
+      setSupported("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
+    }
   }, []);
 
+  // ── Timer Management ──
   const clearRestartTimer = useCallback(() => {
     if (restartTimerRef.current) {
       clearTimeout(restartTimerRef.current);
@@ -139,7 +186,7 @@ export function useNeuralVoice(
     }
   }, []);
 
-  // ═══ Init voice picker + cleanup — NO claimMic on mount (prevents race with wake word) ═══
+  // ── Init & Cleanup ──
   useEffect(() => {
     const cleanup = () => {
       voiceActiveRef.current = false;
@@ -155,10 +202,10 @@ export function useNeuralVoice(
     initVoicePicker();
     const voice = getOrionVoice();
     if (voice) maleVoiceRef.current = voice;
-    
+
     preloadPiper();
     loadVoicePrefs().catch(() => {});
-    
+
     const handler = () => {
       const v = getOrionVoice();
       if (v) maleVoiceRef.current = v;
@@ -170,31 +217,28 @@ export function useNeuralVoice(
     };
   }, [clearRestartTimer]);
 
+  // ═══ STT Restart Scheduler ═══
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
     clearRestartTimer();
-    // Stale HMR instance guard
     if (!isMicOwner(singletonIdRef.current)) { setListening(false); return; }
     if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
       setListening(false);
       return;
     }
 
-    const isMobile = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
-    const restartDelay = delay ?? (isMobile ? 200 : 50);
-
+    const restartDelay = delay ?? (isMobile() ? 200 : 50);
     setListening(true);
+
     restartTimerRef.current = setTimeout(() => {
       if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
         setListening(false);
         return;
       }
-      // If existing recognition is still alive, don't create a new one
       if (recRef.current) {
         try {
           recRef.current.start();
           setListening(true);
         } catch {
-          // Already running or failed — recreate
           try { recRef.current.stop(); } catch {}
           recRef.current = null;
           if (onCmdRef.current) {
@@ -207,66 +251,53 @@ export function useNeuralVoice(
         }
         return;
       }
-      // No existing rec — create fresh
-      if (onCmdRef.current) {
-        startListeningFresh(onCmdRef.current);
-      }
+      if (onCmdRef.current) startListeningFresh(onCmdRef.current);
     }, restartDelay);
   }, [clearRestartTimer]);
 
+  // ═══ Resume STT after TTS ═══
   const resumeSTT = useCallback(() => {
     OrbState.voiceState = "listening";
-    // Always try to restart if we have a command handler, even if listeningRef drifted
-    if (onCmdRef.current && !intentionalStopRef.current) {
-      // ═══ FIX: Re-claim mic ownership after TTS ═══
-      // During TTS, wake word or GlobalOrionListener may have claimed the mic.
-      // We must re-claim before restarting, otherwise isMicOwner checks fail
-      // and STT never restarts (the "listen→speak→DEAD" bug).
-      singletonIdRef.current = claimMic("command");
+    if (!onCmdRef.current || intentionalStopRef.current) return;
 
-      if (speechBufferRef.current.trim() && onCmdRef.current) {
-        const pending = speechBufferRef.current.trim();
-        speechBufferRef.current = "";
-        if (speechDebounceRef.current) {
-          clearTimeout(speechDebounceRef.current);
-          speechDebounceRef.current = null;
-        }
-        onCmdRef.current(pending);
+    // Re-claim mic (wake word may have claimed it during TTS)
+    singletonIdRef.current = claimMic("command");
+
+    // Flush any pending speech buffer
+    if (speechBufferRef.current.trim() && onCmdRef.current) {
+      const pending = speechBufferRef.current.trim();
+      speechBufferRef.current = "";
+      if (speechDebounceRef.current) {
+        clearTimeout(speechDebounceRef.current);
+        speechDebounceRef.current = null;
       }
-      const isMobile = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
-      scheduleRecognitionRestart(isMobile ? 600 : 100);
+      onCmdRef.current(pending);
     }
+
+    scheduleRecognitionRestart(isMobile() ? 600 : 100);
   }, [scheduleRecognitionRestart]);
 
-  /** Stop all audio: Web Speech, Audio elements, abort controllers */
+  // ═══ Barge-In ═══
   const bargeIn = useCallback(() => {
     try { speechSynthesis.cancel(); } catch {}
     if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-    // Cancel active Audio element (Google TTS / Kokoro)
     if (activeAudioRef.current) {
-      try {
-        activeAudioRef.current.pause();
-        activeAudioRef.current.currentTime = 0;
-        activeAudioRef.current.src = "";
-      } catch {}
+      try { activeAudioRef.current.pause(); activeAudioRef.current.currentTime = 0; activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
     }
     speechQueueRef.current = [];
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
+    if (abortControllerRef.current) { abortControllerRef.current.abort(); abortControllerRef.current = null; }
     speakingRef.current = false;
     updateAiResponding(false);
     OrbState.voiceState = "listening";
     if (bargeInCallbackRef.current) bargeInCallbackRef.current();
   }, [updateAiResponding]);
 
+  // ═══ Web Speech TTS (Fallback) ═══
   const browserSpeak = useCallback((rawText: string) => {
     const text = cleanTextForSpeech(rawText);
     if (!text) return Promise.resolve();
-    
-    // Split into sentence-level chunks for natural prosody variation
+
     const splitIntoSentences = (t: string): string[] => {
       const sentences = t.match(/[^.!?…;]+[.!?…;]+\s*|[^.!?…;]+$/g) || [t];
       const chunks: string[] = [];
@@ -275,9 +306,7 @@ export function useNeuralVoice(
         if (current.length + s.length > 180 && current.length > 0) {
           chunks.push(current.trim());
           current = s;
-        } else {
-          current += s;
-        }
+        } else { current += s; }
       }
       if (current.trim()) chunks.push(current.trim());
       return chunks;
@@ -285,28 +314,10 @@ export function useNeuralVoice(
 
     const chunks = splitIntoSentences(text);
 
-    // ── Subtle prosody variation — just enough to avoid monotone ──
-    const getProsodyForChunk = (chunk: string, idx: number, total: number) => {
-      const isQuestion = /\?/.test(chunk);
-      const isLast = idx === total - 1;
-      
-      // Minimal variation — sounds robotic when overdone
-      let rate = ORION_VOICE_PARAMS.rate + (Math.sin(idx * 2.1) * 0.02);
-      let pitch = ORION_VOICE_PARAMS.pitch;
-      
-      if (isQuestion) { pitch += 0.04; }
-      if (isLast && total > 2) { rate -= 0.03; }
-      
-      return { rate: Math.max(0.9, Math.min(1.35, rate)), pitch: Math.max(0.75, Math.min(1.1, pitch)) };
-    };
-
     return new Promise<void>((resolve) => {
-      const webSpeechTimeout = setTimeout(() => {
+      const safetyTimeout = setTimeout(() => {
         try { speechSynthesis.cancel(); } catch {}
         if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-        speakingRef.current = false;
-        updateAiResponding(false);
-        resumeSTT();
         resolve();
       }, 60000);
 
@@ -318,76 +329,62 @@ export function useNeuralVoice(
       }, 10000);
       keepAliveRef.current = keepAlive;
 
+      const finish = () => {
+        clearTimeout(safetyTimeout);
+        if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
+        resolve();
+      };
+
       try {
         speechSynthesis.cancel();
-        
-        const speakNextChunk = (idx: number) => {
-          if (idx >= chunks.length) {
-            clearTimeout(webSpeechTimeout);
-            if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-            speakingRef.current = false;
-            updateAiResponding(false);
-            resumeSTT();
-            resolve();
-            return;
-          }
 
-          // Tiny natural pause between sentences (30-80ms)
+        const speakChunk = (idx: number) => {
+          if (idx >= chunks.length) { finish(); return; }
           const pauseMs = idx > 0 ? 30 + Math.random() * 50 : 0;
-          
           setTimeout(() => {
-            const prosody = getProsodyForChunk(chunks[idx], idx, chunks.length);
+            const isQuestion = /\?/.test(chunks[idx]);
+            const isLast = idx === chunks.length - 1;
+            let rate: number = ORION_VOICE_PARAMS.rate + (Math.sin(idx * 2.1) * 0.02);
+            let pitch: number = ORION_VOICE_PARAMS.pitch;
+            if (isQuestion) pitch += 0.04;
+            if (isLast && chunks.length > 2) rate -= 0.03;
+            rate = Math.max(0.9, Math.min(1.35, rate));
+            pitch = Math.max(0.75, Math.min(1.1, pitch));
+
             const u = new SpeechSynthesisUtterance(chunks[idx]);
             u.lang = "pt-BR";
-            u.rate = prosody.rate;
-            u.pitch = prosody.pitch;
+            u.rate = rate;
+            u.pitch = pitch;
             u.volume = ORION_VOICE_PARAMS.volume;
             if (maleVoiceRef.current) u.voice = maleVoiceRef.current;
-            u.onend = () => speakNextChunk(idx + 1);
+            u.onend = () => speakChunk(idx + 1);
             u.onerror = (ev) => {
-              if ((ev as any)?.error === "canceled" || (ev as any)?.error === "interrupted") {
-                clearTimeout(webSpeechTimeout);
-                if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-                speakingRef.current = false;
-                updateAiResponding(false);
-                resumeSTT();
-                resolve();
-                return;
-              }
-              speakNextChunk(idx + 1);
+              if ((ev as any)?.error === "canceled" || (ev as any)?.error === "interrupted") { finish(); return; }
+              speakChunk(idx + 1);
             };
             speechSynthesis.speak(u);
           }, pauseMs);
         };
-        
-        speakNextChunk(0);
-      } catch {
-        clearTimeout(webSpeechTimeout);
-        if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-        speakingRef.current = false;
-        updateAiResponding(false);
-        resumeSTT();
-        resolve();
-      }
+
+        speakChunk(0);
+      } catch { finish(); }
     });
-  }, [resumeSTT, updateAiResponding]);
+  }, []);
 
-  // speakFast defined after speak below
-
-  /**
-   * ═══ TTS — Gemini TTS (Algieba) — Única voz ativa ═══
-   * Orion TTS desativado. Apenas Gemini Algieba funciona.
-   */
+  // ═══ PRIMARY TTS — Gemini TTS → Web Speech fallback ═══
   const speak = useCallback(async (text: string, options?: { skipMicToggle?: boolean }) => {
     if (!ttsRef.current || typeof window === "undefined") return;
-    
+
+    // Cancel any ongoing speech
     try { speechSynthesis.cancel(); } catch {}
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
     }
+
+    // Enter speaking state
     speakingRef.current = true;
-    markTTSStart(); // v31: TTS pipeline latency
+    markTTSStart();
     updateAiResponding(true);
     OrbState.voiceState = "speaking";
     lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
@@ -395,17 +392,18 @@ export function useNeuralVoice(
     speechBufferRef.current = "";
     if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
     clearRestartTimer();
-    // ALWAYS stop mic while speaking to prevent self-hearing feedback loop
+
+    // ALWAYS stop mic during TTS
     try { recRef.current?.stop(); } catch {}
 
     const cascadeAbort = new AbortController();
     abortControllerRef.current = cascadeAbort;
 
-    // Dynamic safety timer: ~10s base + ~100ms per char (Vertex TTS takes 5-8s + playback)
-    const safetyMs = Math.min(60000, Math.max(20000, 10000 + text.length * 100));
+    // Safety timer: prevents infinite stuck state
+    const safetyMs = Math.min(60000, Math.max(15000, 8000 + text.length * 80));
     const safetyTimer = setTimeout(() => {
       if (speakingRef.current) {
-        console.warn(`[Voice] Safety timer fired after ${safetyMs}ms — aborting TTS`);
+        console.warn(`[Voice] Safety timer ${safetyMs}ms — aborting TTS`);
         cascadeAbort.abort();
         speakingRef.current = false;
         updateAiResponding(false);
@@ -419,7 +417,7 @@ export function useNeuralVoice(
     const voicePrefs = getCachedVoicePrefs();
     let played = false;
 
-    // ── PRIMARY: Gemini TTS ──
+    // PRIMARY: Gemini TTS
     if (!cascadeAbort.signal.aborted) {
       try {
         const gemResult = await speakWithGeminiTTS(
@@ -440,42 +438,44 @@ export function useNeuralVoice(
       }
     }
 
-    // ── FALLBACK: Web Speech API (robotic but functional) ──
+    // FALLBACK: Web Speech API
     if (!played && !cascadeAbort.signal.aborted) {
-      console.warn("[Voice] ⚠️ Gemini TTS indisponível — usando Web Speech como fallback");
+      console.warn("[Voice] Gemini TTS unavailable — Web Speech fallback");
       try {
         await browserSpeak(cleanText);
         played = true;
       } catch (err) {
-        console.warn("[Voice] Web Speech fallback also failed:", err);
+        console.warn("[Voice] Web Speech fallback failed:", err);
       }
     }
 
     if (!played) {
-      console.error("[Voice] ALL TTS backends failed — Orion is mute for this message");
+      console.error("[Voice] ALL TTS backends failed");
     }
 
+    // Exit speaking state
     clearTimeout(safetyTimer);
     abortControllerRef.current = null;
     activeAudioRef.current = null;
     speakingRef.current = false;
-    markTTSEnd(); // v31: TTS pipeline latency
+    markTTSEnd();
     updateAiResponding(false);
     OrbState.voiceState = "listening";
-    // Only resume mic if not managed externally
+
     if (!options?.skipMicToggle) resumeSTT();
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
 
-  /** speakFast: delegates to speak (no robotic SpeechSynthesis) */
+  /** speakFast: identical to speak (unified pipeline) */
   const speakFast = useCallback(async (text: string) => {
     await speak(text);
   }, [speak]);
 
-  // startThinking — sets OrbState to thinking mode (JARVIS "PROCESSING" indicator)
+  /** startThinking: JARVIS "PROCESSING" indicator */
   const startThinking = useCallback(() => {
     OrbState.voiceState = "thinking";
   }, []);
 
+  // ═══ Speech Recognition Factory ═══
   const createRecognition = useCallback((onCmd: (c: string) => void) => {
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (!SR) return null;
@@ -485,45 +485,40 @@ export function useNeuralVoice(
     rec.continuous = true;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
-    
+
     rec.onstart = () => { setListening(true); markSTTStart(); };
-    
+
     rec.onresult = (e: any) => {
       const lastResult = e.results[e.results.length - 1];
       const transcript = lastResult?.[0]?.transcript?.trim() || "";
       const isFinal = lastResult?.isFinal;
-      
-      // Reset abort counter only on actual speech data (not just onstart)
+
       consecutiveAbortsRef.current = 0;
-      
       if (!transcript) return;
 
-      // ═══ SELF-HEARING GUARD: Drop ALL transcriptions while Orion is speaking ═══
-      // This prevents the feedback loop where Orion hears its own TTS output
+      // ── SELF-HEARING GUARD ──
       if (speakingRef.current || VoiceState.aiResponding) {
-        // Only allow barge-in stop commands through
         if (STOP_PATTERNS.test(transcript.trim())) {
           bargeIn();
           speechBufferRef.current = "";
           return;
         }
-        // If user speaks 3+ words while AI is speaking, barge in
         if (isFinal && transcript.split(/\s+/).length >= 3) {
           bargeIn();
         }
-        // Drop everything else — it's Orion hearing itself
-        return;
+        return; // Drop — it's Orion hearing itself
       }
 
       if (!isFinal) return;
 
+      // Accumulate final transcripts
       speechBufferRef.current = speechBufferRef.current
         ? `${speechBufferRef.current} ${transcript}`
         : transcript;
 
       if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
-      
-      // ── Dynamic Turn Detection: adapt silence based on phrase completeness ──
+
+      // Dynamic turn detection
       const turnState = detectTurnState(speechBufferRef.current, "pt-BR");
       const silenceMs = getOptimalSilenceDuration(turnState);
 
@@ -534,81 +529,56 @@ export function useNeuralVoice(
 
         const normalized = normalizeSpeechText(fullText);
         const now = Date.now();
-        
-        if (normalized.length < 3) return;
-        
-        // Duplicate check
-        const isDuplicate = normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000;
-        
-        // Echo detection — bidirectional substring match + Jaccard similarity
-        const isEcho = (() => {
-          if (!lastSpokenTextRef.current || now - lastSpokenAtRef.current > 15000) return false;
-          if (normalized.length < 5) return false;
-          const spoken = lastSpokenTextRef.current;
-          // Substring match (either direction)
-          if (spoken.includes(normalized.slice(0, 40)) || normalized.includes(spoken.slice(0, 40))) return true;
-          // Jaccard word overlap: >40% match = echo (lowered from 60% for better self-hearing catch)
-          const wordsA = new Set(normalized.split(/\s+/).filter(w => w.length > 2));
-          const wordsB = new Set(spoken.split(/\s+/).filter(w => w.length > 2));
-          if (wordsA.size < 2 || wordsB.size < 2) return false;
-          let overlap = 0;
-          wordsA.forEach(w => { if (wordsB.has(w)) overlap++; });
-          return overlap / Math.min(wordsA.size, wordsB.size) > 0.4;
-        })();
 
-        if (isDuplicate || isEcho) {
-          if (isEcho) console.log("[Voice] Echo suppressed:", normalized.slice(0, 50));
-          return;
+        if (normalized.length < 3) return;
+
+        // Duplicate guard
+        if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
+
+        // Echo guard
+        if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
+          if (isEchoOf(normalized, lastSpokenTextRef.current)) {
+            console.log("[Voice] Echo suppressed:", normalized.slice(0, 50));
+            return;
+          }
         }
 
         lastProcessedTranscriptRef.current = normalized;
         lastProcessedAtRef.current = now;
-        
-        // Feed user speech to voice evolution engine
+
         feedUserSpeech(fullText);
-        
-        // ── Adaptive Voice Style: detect style commands (learn silently) ──
+
+        // Adaptive voice style learning
         const styleResult = detectStyleCommand(fullText, getCachedVoicePrefs());
         if (styleResult.matched) {
           saveVoicePrefs(styleResult.updatedPrefs);
-          console.log("[Voice Style] 🎓 Learned:", styleResult.feedback);
-          return; // Don't pass style commands to the AI, just learn silently
+          console.log("[Voice Style] Learned:", styleResult.feedback);
+          return;
         }
-        
-        markSTTEnd(); // v31: STT pipeline latency
+
+        markSTTEnd();
         onCmdRef.current(fullText);
       }, silenceMs);
     };
-    
+
     rec.onend = () => {
       recRef.current = null;
-      if (intentionalStopRef.current) {
-        setListening(false);
-        return;
-      }
-      if (speakingRef.current) {
-        // ═══ FIX: During TTS, set listening=false (no active recognition) ═══
-        // resumeSTT() will restart STT after TTS finishes.
-        setListening(false);
-        return;
-      }
-      if (onCmdRef.current) {
-        scheduleRecognitionRestart(80);
-        return;
-      }
+      if (intentionalStopRef.current) { setListening(false); return; }
+      if (speakingRef.current) { setListening(false); return; } // resumeSTT handles restart
+      if (onCmdRef.current) { scheduleRecognitionRestart(80); return; }
       setListening(false);
     };
-    
+
     rec.onerror = (e: any) => {
-      console.warn("[Voice] SpeechRecognition error:", e.error);
+      console.warn("[Voice] STT error:", e.error);
       recRef.current = null;
       if (intentionalStopRef.current) return;
+
       if (e.error === "aborted") {
         consecutiveAbortsRef.current++;
         if (consecutiveAbortsRef.current >= MAX_CONSECUTIVE_ABORTS) {
-          console.warn(`[Voice] ${MAX_CONSECUTIVE_ABORTS} consecutive aborts — pausing STT for 5s`);
+          console.warn(`[Voice] ${MAX_CONSECUTIVE_ABORTS} consecutive aborts — cooldown 5s`);
           setListening(false);
-          // Auto-retry after 5s cooldown instead of permanently stopping
           setTimeout(() => {
             if (!intentionalStopRef.current && onCmdRef.current && isMicOwner(singletonIdRef.current)) {
               consecutiveAbortsRef.current = 0;
@@ -617,57 +587,59 @@ export function useNeuralVoice(
           }, 5000);
           return;
         }
-        // Capped exponential backoff: 250ms, 500ms, 1000ms
         scheduleRecognitionRestart(250 * Math.pow(2, consecutiveAbortsRef.current - 1));
         return;
       }
+
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
         setListening(false);
         toast.error("Permissão do microfone bloqueada");
         return;
       }
-      // ═══ STT Fallback v30: On network/no-speech errors, try Groq→Browser Whisper ═══
-      if (e.error === "network" || e.error === "no-speech") {
-        if (e.error === "no-speech") {
-          scheduleRecognitionRestart(80);
-          return;
-        }
-        // Network error: use STT fallback chain with buffered audio chunks
-        console.warn("[Voice] Network error — activating STT fallback chain");
+
+      if (e.error === "no-speech") {
+        scheduleRecognitionRestart(80);
+        return;
+      }
+
+      if (e.error === "network") {
+        console.warn("[Voice] Network error — STT fallback chain");
         const chunks = audioChunksRef.current;
         if (chunks.length > 0) {
           const wavBlob = chunksToWavBlob(chunks, 16000);
           audioChunksRef.current = [];
           fallbackTranscribe(wavBlob).then(({ text, provider, latencyMs }) => {
             if (text && text.trim().length > 2 && onCmdRef.current) {
-              console.log(`[Voice] STT fallback success via ${provider} (${latencyMs.toFixed(0)}ms): ${text.slice(0, 60)}`);
+              console.log(`[Voice] STT fallback via ${provider} (${latencyMs.toFixed(0)}ms): ${text.slice(0, 60)}`);
               feedUserSpeech(text);
               onCmdRef.current(text);
             }
-          }).catch(err => {
-            console.warn("[Voice] STT fallback chain failed:", err);
-          });
+          }).catch(err => console.warn("[Voice] STT fallback failed:", err));
         }
         scheduleRecognitionRestart(500);
         return;
       }
+
       scheduleRecognitionRestart(200);
     };
-    
+
     return rec;
   }, [bargeIn, scheduleRecognitionRestart]);
 
+  // ═══ Start Fresh Recognition Instance ═══
   const startListeningFresh = useCallback((onCmd: (c: string) => void) => {
-    // Stale HMR instance guard
     if (!isMicOwner(singletonIdRef.current)) { setListening(false); return; }
     intentionalStopRef.current = false;
     try { recRef.current?.abort?.(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
+
     const rec = createRecognition(onCmd);
     if (!rec) { setListening(false); return; }
+
     recRef.current = rec;
     registerMicRec(rec, "command");
+
     try {
       rec.start();
       setListening(true);
@@ -682,6 +654,7 @@ export function useNeuralVoice(
     }
   }, [createRecognition]);
 
+  // ═══ Public: Start Listening (with mic priming) ═══
   const startListening = useCallback((onCmd: (c: string) => void) => {
     const boot = async () => {
       singletonIdRef.current = claimMic("command");
@@ -691,34 +664,20 @@ export function useNeuralVoice(
       onCmdRef.current = onCmd;
       setListening(false);
 
-      // Prime microphone first when permission is already granted.
-      // This makes auto-start much more reliable without requiring a click.
-      if (navigator.mediaDevices?.getUserMedia && navigator.permissions?.query) {
-        try {
-          const permission = await navigator.permissions.query({ name: "microphone" as any });
-          if (permission.state === "granted") {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-            });
-            await new Promise((resolve) => setTimeout(resolve, /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent) ? 80 : 30));
-            stream.getTracks().forEach((track) => track.stop());
-          }
-        } catch (error) {
-          console.warn("[Voice] Microphone priming failed:", error);
-        }
-      }
+      // Prime microphone for reliable auto-start
+      await primeMicrophone();
 
+      // Guard against stale state after async prime
       if (intentionalStopRef.current || onCmdRef.current !== onCmd) return;
 
-      // v30: Start AudioWorklet to collect chunks for STT fallback
+      // Start AudioWorklet for STT fallback audio buffering
       if (!audioWorkletActiveRef.current) {
         audioWorkletActiveRef.current = true;
         try {
           const worklet = getAudioWorkletManager({ sampleRate: 16000, chunkSize: 4096 });
-          worklet.initialize().then((ok) => {
+          worklet.initialize().then(ok => {
             if (!ok) return;
-            worklet.onAudioChunk((chunk) => {
-              // Keep last ~5s of audio (16000 * 5 / 4096 ≈ 20 chunks)
+            worklet.onAudioChunk(chunk => {
               audioChunksRef.current.push(chunk);
               if (audioChunksRef.current.length > 20) audioChunksRef.current.shift();
             });
@@ -733,6 +692,7 @@ export function useNeuralVoice(
     void boot();
   }, [clearRestartTimer, startListeningFresh]);
 
+  // ═══ Public: Stop ═══
   const stop = useCallback(() => {
     intentionalStopRef.current = true;
     voiceActiveRef.current = false;
@@ -740,10 +700,7 @@ export function useNeuralVoice(
     onCmdRef.current = null;
     speakingRef.current = false;
     if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-    if (speechDebounceRef.current) {
-      clearTimeout(speechDebounceRef.current);
-      speechDebounceRef.current = null;
-    }
+    if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
@@ -756,6 +713,7 @@ export function useNeuralVoice(
     setListening(false);
   }, [clearRestartTimer]);
 
+  // ── Cleanup on unmount ──
   useEffect(() => () => {
     clearRestartTimer();
     voiceActiveRef.current = false;
@@ -766,5 +724,10 @@ export function useNeuralVoice(
     releaseMic(singletonIdRef.current);
   }, [clearRestartTimer]);
 
-  return { listening, supported, ttsOn, setTtsOn, speak, speakFast, startListening, stop, bargeIn, startThinking, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef };
+  return {
+    listening, supported, ttsOn, setTtsOn,
+    speak, speakFast, startListening, stop,
+    bargeIn, startThinking,
+    abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef,
+  };
 }
