@@ -272,12 +272,10 @@ export function GlobalOrionListener() {
     cmdTimeoutRef.current = setTimeout(() => {
       cmdTimeoutRef.current = null;
       if (gotFinal) return;
-      // No speech in 4s — open overlay anyway, Orion will greet
       console.log("[GlobalOrion] ⏱️ 4s timeout — no command, opening with prompt");
       try { cmdRecRef.current?.stop?.(); } catch {}
       cmdRecRef.current = null;
-      // Orion says "Estou ouvindo" and opens for continued conversation
-      orionSpeak("Estou ouvindo. Pode falar.").catch(() => {});
+      // Open overlay immediately — no blocking TTS
       openOrionOverlay("");
     }, 4000);
   }, [openOrionOverlay, stopCommandCapture, wakeWordRegexes]);
