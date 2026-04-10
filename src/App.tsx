@@ -131,6 +131,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AnalyticsProvider />
+          <OrionVmWakeUp />
           <ScrollToTop />
           <CopyProtection />
           <OrionShield />
