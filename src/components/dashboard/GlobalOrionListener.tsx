@@ -152,13 +152,10 @@ export function GlobalOrionListener() {
     if (!navigator.mediaDevices?.getUserMedia) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
-      await new Promise((resolve) => setTimeout(resolve, isMobile ? 180 : 90));
+      // Reduced priming delay — just enough for hardware init
+      await new Promise((resolve) => setTimeout(resolve, isMobile ? 80 : 30));
       stream.getTracks().forEach((track) => track.stop());
     } catch (error) {
       console.warn("[GlobalOrion] Microphone priming failed:", error);
@@ -180,17 +177,17 @@ export function GlobalOrionListener() {
     if (typeof document !== "undefined" && document.hidden) return 10000;
     const attempts = restartAttemptsRef.current;
     if (isMobile) {
-      const backoff = Math.min(2000 * Math.pow(2, attempts), 30000);
-      if (reason === "no-speech" || reason === "end") return Math.max(backoff, 3000);
-      if (reason === "aborted") return Math.max(backoff, 5000);
-      return Math.max(backoff, 3000);
+      const backoff = Math.min(1500 * Math.pow(1.5, attempts), 15000);
+      if (reason === "no-speech" || reason === "end") return Math.max(backoff, 1500);
+      if (reason === "aborted") return Math.max(backoff, 2000);
+      return Math.max(backoff, 1500);
     }
-    const backoff = Math.min(500 * Math.pow(2, attempts), 10000);
-    if (reason === "aborted") return Math.max(backoff, 3000);
-    if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 3000);
-    if (reason === "no-speech" || reason === "end") return Math.max(backoff, 200);
-    if (reason === "normal-end") return 150; // Fast restart for non-continuous mode
-    return Math.max(backoff, 1000);
+    const backoff = Math.min(300 * Math.pow(1.5, attempts), 5000);
+    if (reason === "aborted") return Math.max(backoff, 1000);
+    if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 1500);
+    if (reason === "no-speech" || reason === "end") return Math.max(backoff, 100);
+    if (reason === "normal-end") return 80;
+    return Math.max(backoff, 500);
   }, [isMobile]);
 
   /** ═══ Conversational Command Capture ═══
@@ -213,11 +210,8 @@ export function GlobalOrionListener() {
     setInitialCommand(command);
     setOrionOpen(true);
     initVoicePicker();
-    // Brief activation TTS (non-blocking)
-    if (command.trim()) {
-      orionSpeak("Processando").catch(() => {});
-    }
-    setTimeout(() => { cooldownRef.current = false; }, 800);
+    // TTS feedback is fire-and-forget — never blocks overlay opening
+    setTimeout(() => { cooldownRef.current = false; }, 400);
   }, [stopCommandCapture]);
 
   const startCommandCapture = useCallback(() => {
