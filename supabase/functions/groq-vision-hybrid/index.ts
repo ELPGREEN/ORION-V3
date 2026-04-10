@@ -722,6 +722,10 @@ serve(async (req) => {
       detections,
       mode,
       provider_used: usedProvider,
+      // ═══ SEMANTIC COMPREHENSION (Córtex Visual) ═══
+      semantic: {
+        narrativa: detections.find(d => d.source === "scene_analysis")?.descricao || null,
+      },
       providers_available: VISION_PROVIDERS.map(p => ({
         id: p.id,
         name: p.name,
