@@ -68,7 +68,7 @@ serve(async (req) => {
     };
 
     if (!isGet) {
-      if (["tts", "stt"].includes(action)) {
+      if (["tts", "stt", "embeddings"].includes(action)) {
         const fd = new FormData();
         for (const [k, v] of Object.entries(body.payload || body)) {
           fd.append(k, String(v));
@@ -134,7 +134,8 @@ async function fetchWithAutoStart(
     const resp = await fetch(primaryUrl, { ...opts, signal: controller.signal });
     clearTimeout(timer);
     if (resp.ok) return resp;
-    throw new Error(`VM returned ${resp.status}`);
+    const errBody = await resp.text().catch(() => "");
+    throw new Error(`VM returned ${resp.status}: ${errBody.substring(0, 200)}`);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     const isOffline = errMsg.includes("connection refused") || 
