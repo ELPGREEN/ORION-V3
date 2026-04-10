@@ -1540,7 +1540,7 @@ export function useOrionReasoning(
           const authUser = await getCachedUser();
           if (authUser?.id) {
             const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", authUser.id).maybeSingle();
-            (window as any).__orionUserName = profile?.full_name || authUser?.user_metadata?.full_name || authUser?.user_metadata?.nome || undefined;
+            (window as any).__orionUserName = profile?.full_name || undefined;
           }
         } catch { /* non-blocking */ }
       }
