@@ -161,12 +161,24 @@ function playAudioBlob(blob: Blob, signal: AbortSignal): Promise<HTMLAudioElemen
       cleanup();
       resolve(audio);
     };
-    audio.onerror = () => {
+    audio.onerror = (e) => {
+      console.warn("[Gemini TTS] Audio playback error:", e);
       signal.removeEventListener("abort", onAbort);
       cleanup();
       resolve(null);
     };
-    audio.play().catch(() => {
+
+    // Unlock AudioContext if suspended (autoplay policy)
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
+      ctx.close().catch(() => {});
+    } catch {}
+
+    audio.play().catch((err) => {
+      console.warn("[Gemini TTS] audio.play() blocked:", err?.message);
       signal.removeEventListener("abort", onAbort);
       cleanup();
       resolve(null);
