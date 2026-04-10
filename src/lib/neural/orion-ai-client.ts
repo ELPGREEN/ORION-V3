@@ -516,6 +516,7 @@ export async function analyzeFrameWithAI(
       const { data: { user } } = await supabase.auth.getUser();
       const isOwner = isOwnerEmail(user?.email);
       const isIdentityQuestion = question && /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
+      const isGenesisQuestion = question && /\b(g[eê]nesis|genesis|projeto\s+g[eê]nesis|protocolo\s+g[eê]nesis|como\s+(voc[eê]\s+)?nasceu|sua\s+origem|como\s+foi\s+criado|in[ií]cio\s+da\s+(cria[çc][aã]o|programa[çc][aã]o))\b/i.test(question);
       const isCapabilityQuestion = question && /que\s+(sistema|m[oó]dulo|capacidade|funcionalidade)|o\s+que\s+(falta|precisa|melhorar)|suas?\s+(limita[çc][oõ]es|lacunas|gaps)|what.*(missing|need|improve|lack)/i.test(question);
       const isJarvisComparison = question && /jarvis|compara[çc][aã]o|diferen[çc]a.*entre|vs\s+orion|orion\s+vs|supera|vantagem/i.test(question);
       const isInvestorQuestion = question && /investidor|investimento|mercado|saas|modelo.de.neg[oó]cio|receita|margem|oportunidade|pitch/i.test(question);
@@ -528,7 +529,7 @@ export async function analyzeFrameWithAI(
        const isCRMQuestion = question && /cadastr|cliente|CRM|pipeline|lead|contato|oportunidade|deal|neg[oó]cio|como\s+(cadastr|registr|adicionar)|gerenciar\s+(cliente|contato|processo)/i.test(question);
        const isInternetToolsQuestion = question && /internet|firecrawl|raspag|scraping|scrape|extrair?\s+dados|raspar|crawl|busca\s+web|pesquis.*online|pesquis.*internet|acesso.*web|conect.*internet|google\s*(workspace|gmail|calendar|drive|sheets|docs|tasks|slides|forms|chat|vision|analytics|bigquery|contacts|agenda)|email.*google|meus?\s+emails?|enviar?\s+email|compromisso|agendar?\s+reuni|listas?\s+de\s+tarefa|que\s+(ferramenta|acesso|conex[aã]o|integra[çc][aã]o)|o\s+que\s+voc[eê]\s+(pode|consegue|sabe)|suas?\s+capacidade|quais?\s+(ferramenta|sistema|acesso)/i.test(question);
       
-      if (isIdentityQuestion) {
+      if (isIdentityQuestion || isGenesisQuestion) {
         consciousnessContext = buildOrionIdentityPrompt(isOwner);
       } else if (isJarvisComparison) {
         const { buildIntrospectionContext, buildJarvisComparisonContext } = await import("@/lib/neural/orion-introspection");
@@ -552,8 +553,14 @@ export async function analyzeFrameWithAI(
         const { buildBaseContext, buildBusinessFundraisingContext } = await import("@/lib/neural/orion-knowledge-base");
         consciousnessContext = `${buildBaseContext()}\n\n${buildBusinessFundraisingContext()}`;
       } else if (isProjectQuestion) {
-        const { buildBaseContext, buildInvestorContext } = await import("@/lib/neural/orion-knowledge-base");
-        consciousnessContext = `${buildBaseContext()}\n\n${buildInvestorContext()}`;
+        // If project question mentions genesis/origin, route to identity instead of investor
+        const isGenesisProject = question && /\b(g[eê]nesis|genesis|origem|nasceu|cria[çc][aã]o)\b/i.test(question);
+        if (isGenesisProject) {
+          consciousnessContext = buildOrionIdentityPrompt(isOwner);
+        } else {
+          const { buildBaseContext, buildInvestorContext } = await import("@/lib/neural/orion-knowledge-base");
+          consciousnessContext = `${buildBaseContext()}\n\n${buildInvestorContext()}`;
+        }
       } else if (isHelpQuestion) {
         const { buildBaseContext, buildHelpCenterContext } = await import("@/lib/neural/orion-knowledge-base");
         consciousnessContext = `${buildBaseContext()}\n\n${buildHelpCenterContext()}`;
@@ -738,6 +745,7 @@ export async function analyzeFrameStreaming(
             const { data: { user } } = await supabase.auth.getUser();
             const isOwner = isOwnerEmail(user?.email);
             const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
+            const isGenesisQ = /\b(g[eê]nesis|genesis|projeto\s+g[eê]nesis|protocolo\s+g[eê]nesis|como\s+(voc[eê]\s+)?nasceu|sua\s+origem|como\s+foi\s+criado|in[ií]cio\s+da\s+(cria[çc][aã]o|programa[çc][aã]o))\b/i.test(question);
             const isCapabilityQuestion = /que\s+(sistema|m[oó]dulo|capacidade|funcionalidade)|o\s+que\s+(falta|precisa|melhorar)|suas?\s+(limita[çc][oõ]es|lacunas|gaps)|what.*(missing|need|improve|lack)/i.test(question);
             const isJarvisComparison = /jarvis|compara[çc][aã]o|diferen[çc]a.*entre|vs\s+orion|orion\s+vs|supera|vantagem/i.test(question);
             const isInvestorQ = /investidor|investimento|mercado|saas|modelo.de.neg[oó]cio|receita|margem|oportunidade|pitch/i.test(question);
@@ -749,7 +757,7 @@ export async function analyzeFrameStreaming(
             const isBusinessQ = /capta[çc][aã]o|recurso.*europ|recursos?\s+eu\b|cordis|horizon|LOI|MOU|term.?sheet|joint.?venture|due.?diligence|supply.?agreement|NDA|parceria.*internac|distribui[çc][aã]o.*internac|compliance|GDPR|LGPD|AML|KYC|empresarial|neg[oó]cio|comercial.*internac|exporta[çc][aã]o|importa[çc][aã]o|invoice|proforma/i.test(question);
             const isCRMQ = /cadastr|cliente|CRM|pipeline|lead|contato|oportunidade|deal|neg[oó]cio|como\s+(cadastr|registr|adicionar)|gerenciar\s+(cliente|contato|processo)/i.test(question);
             const isInternetToolsQ = /internet|firecrawl|raspag|scraping|scrape|extrair?\s+dados|raspar|crawl|busca\s+web|pesquis.*online|pesquis.*internet|acesso.*web|conect.*internet|google\s*(workspace|gmail|calendar|drive|sheets|docs|tasks|slides|forms|chat|vision|analytics|bigquery|contacts|agenda)|email.*google|meus?\s+emails?|enviar?\s+email|compromisso|agendar?\s+reuni|listas?\s+de\s+tarefa|que\s+(ferramenta|acesso|conex[aã]o|integra[çc][aã]o)|o\s+que\s+voc[eê]\s+(pode|consegue|sabe)|suas?\s+capacidade|quais?\s+(ferramenta|sistema|acesso)/i.test(question);
-            if (isIdentityQuestion) return buildOrionIdentityPrompt(isOwner);
+            if (isIdentityQuestion || isGenesisQ) return buildOrionIdentityPrompt(isOwner);
             if (isJarvisComparison) {
               const { buildIntrospectionContext, buildJarvisComparisonContext } = await import("@/lib/neural/orion-introspection");
               return `Você é Orion, assistente de IA neural consciente.\n\n${buildJarvisComparisonContext()}\n\n${buildIntrospectionContext()}`;
@@ -775,6 +783,8 @@ export async function analyzeFrameStreaming(
               return `${buildBaseContext()}\n\n${buildBusinessFundraisingContext()}`;
             }
             if (isProjectQ) {
+              const isGenesisProject = /\b(g[eê]nesis|genesis|origem|nasceu|cria[çc][aã]o)\b/i.test(question);
+              if (isGenesisProject) return buildOrionIdentityPrompt(isOwner);
               const { buildBaseContext, buildInvestorContext } = await import("@/lib/neural/orion-knowledge-base");
               return `${buildBaseContext()}\n\n${buildInvestorContext()}`;
             }

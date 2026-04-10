@@ -56,6 +56,11 @@ function buildIndex(db: ProtocolDB) {
   }
 }
 
+// Normalize accents for voice-to-text matching (ê→e, ã→a, etc.)
+function normalizeAccents(text: string): string {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
 /**
  * Match user query against protocols and return relevant ones.
  * Returns max 30 protocols: quick responses + anti-hallucination guards + connectors
@@ -71,6 +76,7 @@ export async function matchProtocols(query: string): Promise<{
   buildIndex(db);
   
   const q = query.toLowerCase().trim();
+  const qNorm = normalizeAccents(query);
   const result = {
     quickResponse: null as string | null,
     guards: [] as string[],
@@ -84,7 +90,8 @@ export async function matchProtocols(query: string): Promise<{
   for (const cat of quickCats) {
     const protocols = categoryIndex.get(cat) || [];
     for (const p of protocols) {
-      if (q.includes(p.trigger) || p.trigger.includes(q)) {
+      const triggerNorm = normalizeAccents(p.trigger);
+      if (qNorm.includes(triggerNorm) || triggerNorm.includes(qNorm)) {
         result.quickResponse = p.response;
         break;
       }
@@ -95,7 +102,7 @@ export async function matchProtocols(query: string): Promise<{
   // 2. Match anti-hallucination guards based on query content
   const antiHalluc = categoryIndex.get("anti_alucinacao") || [];
   for (const p of antiHalluc) {
-    if (p.guard && q.includes(p.trigger)) {
+    if (p.guard && (q.includes(p.trigger) || qNorm.includes(normalizeAccents(p.trigger)))) {
       result.guards.push(p.guard);
       if (result.guards.length >= 5) break;
     }
@@ -167,7 +174,8 @@ export async function matchProtocols(query: string): Promise<{
   if (!result.quickResponse) {
     const domain = categoryIndex.get("dominio") || [];
     for (const p of domain) {
-      if (q.includes(p.trigger) || p.trigger.includes(q)) {
+      const triggerNorm = normalizeAccents(p.trigger);
+      if (qNorm.includes(triggerNorm) || triggerNorm.includes(qNorm)) {
         result.quickResponse = p.response;
         break;
       }

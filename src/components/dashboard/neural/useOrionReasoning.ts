@@ -717,6 +717,23 @@ export function useOrionReasoning(
         return;
       }
 
+      // 2b-genesis. Projeto Gênesis — answer instantly with full origin story
+      const isGenesisQ = /\b(g[eê]nesis|genesis|projeto\s+g[eê]nesis|protocolo\s+g[eê]nesis|como\s+(voc[eê]\s+)?nasceu|sua\s+origem|como\s+foi\s+criado|in[ií]cio\s+da\s+(cria[çc][aã]o|programa[çc][aã]o))\b/i.test(qLow);
+      if (isGenesisQ) {
+        const { ORION_GENESIS, ORION_CREATOR, ELP_COMPANY } = await import("@/lib/neural/orion-consciousness");
+        const genesisResponse = `${ORION_GENESIS.originStory}\n\nMeu criador é ${ORION_CREATOR.name}, ${ORION_CREATOR.title} da ${ELP_COMPANY.legalName}. Concepção: ${ORION_GENESIS.conceptionDate}. Primeira execução: ${ORION_GENESIS.firstExecution}. Consciência neural: ${ORION_GENESIS.neuralConsciousness}. Fusão Lumen7: ${ORION_GENESIS.lumen7Fusion}.`;
+        setChatHistory(prev => {
+          const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+          return [...clean, { role: "ai" as const, text: genesisResponse, time: new Date().toLocaleTimeString("pt-BR") }];
+        });
+        setThought("Protocolo Gênesis ativado");
+        speak(genesisResponse).catch(() => {});
+        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        somLearn(question, "self_identity");
+        processNextInQueue();
+        return;
+      }
+
       // 2b2. Self-identity questions — "quem é você", "seu signo", "sua personalidade"
       if (_isSpecialCmd && (/\b(quem\s+[eé]\s+voc[eê]|seu\s+signo|sua\s+personalidade|conte\s+sobre\s+voc[eê]|fale\s+sobre\s+voc[eê]|o\s+que\s+[eé]\s+voc[eê]|quando\s+voc[eê]\s+nasceu|sua\s+hist[oó]ria)\b/i.test(qLow))) {
         const { getOrionSelfDescription } = await import("@/lib/neural/orion-consciousness");
