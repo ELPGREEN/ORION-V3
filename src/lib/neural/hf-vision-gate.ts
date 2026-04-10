@@ -110,7 +110,7 @@ async function preloadCaptioner(): Promise<boolean> {
 export async function runVisionGate(
   canvas: HTMLCanvasElement | null,
   localContext: LocalDetectionContext,
-  questionType: "visual" | "textual" | "mixed",
+  questionType: "visual" | "textual" | "mixed" | "web_search" | "url_analysis" | "youtube_summary" | "image_generation",
 ): Promise<HFVisionGateResult> {
   const start = performance.now();
   _gateStats.totalCalls++;
