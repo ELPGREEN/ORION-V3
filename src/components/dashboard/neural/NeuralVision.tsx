@@ -215,7 +215,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     if (isActivateVision) {
       if (!active) {
-        speakFast("Ativando visão neural.").catch(() => {});
+        speakFast("Visão ativada.").catch(() => {});
         startCamera({ announce: false }).catch(() => {});
       } else {
         speakFast("Visão já está ativa.").catch(() => {});
@@ -300,7 +300,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     if (!hasGreetedRef.current) {
       hasGreetedRef.current = true;
-      speakFast("Ativando sistema AquaMonkey. Bem-vindo ao Orion. Diga ativar visão para ligar a câmera.").catch(() => {});
+      speakFast("Sistema Orion ativo.").catch(() => {});
     } else {
       toast.info("⚡ Relâmpago Vivo — Orion pronto", { duration: 1500 });
     }
@@ -377,7 +377,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const timer = setTimeout(() => {
       if (!skipWakeWord && !hasGreetedRef.current) {
         hasGreetedRef.current = true;
-        speakFast("Orion ativo. Diga ativar visão para ligar a câmera.").catch(() => {});
+        speakFast("Orion ativo.").catch(() => {});
       }
       // Camera does NOT auto-start — only via "ativar visão" voice command
       startDirectVoiceCapture();
@@ -396,7 +396,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     if (isActivateVision) {
       if (!active) {
-        speakFast("Ativando visão neural.").catch(() => {});
+        speakFast("Visão ativada.").catch(() => {});
         startCamera({ announce: false }).catch(() => {});
       } else {
         speakFast("Visão já está ativa.").catch(() => {});

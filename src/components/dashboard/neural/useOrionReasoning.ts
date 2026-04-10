@@ -463,7 +463,7 @@ export function useOrionReasoning(
       const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow);
       if (isActivateVision || isDeactivateVision) {
         const action = isActivateVision ? "activate_vision" : "deactivate_vision";
-        const msg = isActivateVision ? "Ativando visão neural." : "Desativando visão.";
+        const msg = isActivateVision ? "Visão ativada." : "Visão desativada.";
         // Dispatch event for NeuralVision to handle camera start/stop
         window.dispatchEvent(new CustomEvent("orion-vision-command", { detail: { action } }));
         setChatHistory(prev => {
