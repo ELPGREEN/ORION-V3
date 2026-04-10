@@ -3,6 +3,7 @@ import { OrbState } from "./EnergyOrb";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeFrameStreaming, analyzeFrameWithAI, classifyIntent } from "@/lib/neural/orion-ai-client";
+import { stripMarkdown } from "@/lib/utils/text-utils";
 import {
   getMemoryFacts, addMemoryFacts, getSessionState, saveSessionState,
   syncMemoryToSupabase, loadMemoryFromSupabase, getLocalMemory,
@@ -53,6 +54,24 @@ export function useOrionReasoning(
   const aiFailCountRef = useRef(0);
   const recentIntentsRef = useRef<string[]>([]);
   const sessionSyncedRef = useRef(false);
+  const ttsWarmedRef = useRef(false);
+  const authUserCacheRef = useRef<{ id: string; email?: string | null } | null>(null);
+
+  /** Centralized cleanup — resets all processing flags. Use in try/finally. */
+  const cleanupProcessing = useCallback(() => {
+    aiPendingRef.current = false;
+    setIsProcessing(false);
+    isProcessingRef.current = false;
+    VS.aiResponding = false;
+  }, []);
+
+  /** Cached getUser — avoids 6+ DB calls per interaction */
+  const getCachedUser = useCallback(async () => {
+    if (authUserCacheRef.current) return authUserCacheRef.current;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) authUserCacheRef.current = { id: user.id, email: user.email };
+    return user;
+  }, []);
 
   // Session restoration
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
