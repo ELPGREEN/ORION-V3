@@ -22,6 +22,7 @@ import { recognizeHandwritingFromVideo, isTrOCRReady, formatHandwrittenOCRForAI,
 import { visionTemporalBuffer } from "./vision-temporal-buffer";
 import { prepareRegionalDescriptions, formatRegionalForAI, type RegionalDescription } from "./vision-regional-description";
 import { parseDocumentLayout, formatLayoutForAI, type DocumentLayout } from "./vision-layout-parser";
+import { analyzeSceneSemantics, formatSemanticForAI } from "./vision-semantic-cortex";
 
 export interface RealTimeVisionResult {
   /** MediaPipe detected objects (EfficientDet) */
