@@ -28,6 +28,8 @@ import type { BackgroundTranscript } from "./useWakeWord";
 
 export interface ChatMessage { role: "user" | "ai" | "system"; text: string; time: string; confidence?: number; }
 
+type OrionInputSource = "voice" | "text";
+
 export function useOrionReasoning(
   active: boolean, speak: (t: string, options?: { skipMicToggle?: boolean }) => Promise<void>, canvasRef: React.RefObject<HTMLCanvasElement | null>,
   identificationMode: string = "universal",
@@ -358,9 +360,9 @@ export function useOrionReasoning(
   }, [bargeInCallbackRef, addLog]);
 
   const lastAskTimeRef = useRef(0);
-  const intentQueueRef = useRef<string[]>([]);
+  const intentQueueRef = useRef<Array<{ question: string; source: OrionInputSource }>>([]);
   const processQueueRef = useRef(false);
-  const askAIInternalRef = useRef<(q: string) => void>();
+  const askAIInternalRef = useRef<(q: string, source?: OrionInputSource) => void>();
 
   // Process next item from intent queue after current finishes
   const processNextInQueue = useCallback(() => {
@@ -370,28 +372,28 @@ export function useOrionReasoning(
     // Small delay to avoid race conditions
     setTimeout(() => {
       processQueueRef.current = false;
-      askAIInternalRef.current?.(next);
+      askAIInternalRef.current?.(next.question, next.source);
     }, 300);
   }, []);
 
-  const askAI = useCallback((question: string) => {
+  const askAI = useCallback((question: string, source: OrionInputSource = "text") => {
     const now = Date.now();
     if (now - lastAskTimeRef.current < 500) return;
     lastAskTimeRef.current = now;
     if (isProcessingRef.current) {
       if (intentQueueRef.current.length < 3) {
-        intentQueueRef.current.push(question);
+        intentQueueRef.current.push({ question, source });
         addChat("system", `📋 Pergunta enfileirada (${intentQueueRef.current.length}/3). Processarei em seguida.`);
-        addLog(`📋 Enfileirada: ${question.slice(0, 50)}`);
+        addLog(`📋 Enfileirada [${source}]: ${question.slice(0, 50)}`);
       } else {
         addChat("system", "⚠️ Fila cheia (3/3). Aguarde o processamento atual.");
       }
       return;
     }
-    askAIInternalRef.current?.(question);
+    askAIInternalRef.current?.(question, source);
   }, [addChat, addLog]);
 
-  const askAIInternal = useCallback(async (question: string) => {
+  const askAIInternal = useCallback(async (question: string, source: OrionInputSource = "text") => {
     const now = Date.now();
     bargedInRef.current = false;
     aiPendingRef.current = true;
@@ -401,7 +403,7 @@ export function useOrionReasoning(
     setThought("🤔 Analisando...");
     addChat("user", question);
     addChat("ai", "⏳ ...");
-    addLog(`💬 Pergunta: ${question}`);
+    addLog(`💬 Pergunta [${source}]: ${question}`);
 
     const controller = new AbortController();
     if (abortControllerRef) abortControllerRef.current = controller;
@@ -1509,6 +1511,7 @@ export function useOrionReasoning(
       addLog(`⏱️ Pre-LLM: ${Date.now() - now}ms`);
 
       const questionForLLM = processedInput || question;
+      (window as any).__orionInputSource = source;
       const result = await analyzeFrameStreaming(
         needsImage ? canvasRef.current : null, questionForLLM, cleanHistory, needsImage,
         identificationMode, intentType,
