@@ -518,36 +518,51 @@ export function useNeuralVoice(
     rec.onstart = () => { setListening(true); markSTTStart(); };
 
     rec.onresult = (e: any) => {
-      const lastResult = e.results[e.results.length - 1];
-      const transcript = lastResult?.[0]?.transcript?.trim() || "";
-      const isFinal = lastResult?.isFinal;
-
       consecutiveAbortsRef.current = 0;
-      if (!transcript) return;
 
-      // ── SELF-HEARING GUARD ──
-      if (speakingRef.current || VoiceState.aiResponding) {
-        if (STOP_PATTERNS.test(transcript.trim())) {
-          bargeIn();
-          speechBufferRef.current = "";
-          return;
+      // ═══ FIX: Collect ALL results from resultIndex, not just the last one ═══
+      // Chrome fires onresult with multiple results — reading only the last one loses words.
+      let hasFinal = false;
+      let fullInterimText = "";
+
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const result = e.results[i];
+        const transcript = result?.[0]?.transcript?.trim() || "";
+        if (!transcript) continue;
+
+        // ── SELF-HEARING GUARD ──
+        if (speakingRef.current || VoiceState.aiResponding) {
+          if (STOP_PATTERNS.test(transcript)) {
+            bargeIn();
+            speechBufferRef.current = "";
+            return;
+          }
+          if (result.isFinal && transcript.split(/\s+/).length >= 3) {
+            bargeIn();
+          }
+          continue; // Drop — it's Orion hearing itself
         }
-        if (isFinal && transcript.split(/\s+/).length >= 3) {
-          bargeIn();
+
+        if (result.isFinal) {
+          hasFinal = true;
+          // Accumulate this final transcript
+          speechBufferRef.current = speechBufferRef.current
+            ? `${speechBufferRef.current} ${transcript}`
+            : transcript;
+        } else {
+          fullInterimText = transcript; // Keep latest interim for context
         }
-        return; // Drop — it's Orion hearing itself
       }
 
-      if (!isFinal) return;
+      // If we're in self-hearing mode, stop here
+      if (speakingRef.current || VoiceState.aiResponding) return;
 
-      // Accumulate final transcripts
-      speechBufferRef.current = speechBufferRef.current
-        ? `${speechBufferRef.current} ${transcript}`
-        : transcript;
+      // If no final results yet, just wait
+      if (!hasFinal) return;
 
       if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
 
-      // Dynamic turn detection
+      // Dynamic turn detection on accumulated buffer
       const turnState = detectTurnState(speechBufferRef.current, "pt-BR");
       const silenceMs = getOptimalSilenceDuration(turnState);
 
