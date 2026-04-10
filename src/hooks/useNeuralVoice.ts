@@ -4,6 +4,7 @@
  * All free, no paid APIs. Orion's own voice, independent from Google.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
+import { OrbState } from "@/components/dashboard/neural/EnergyOrb";
 import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
@@ -214,6 +215,7 @@ export function useNeuralVoice(
   }, [clearRestartTimer]);
 
   const resumeSTT = useCallback(() => {
+    OrbState.voiceState = "listening";
     // Always try to restart if we have a command handler, even if listeningRef drifted
     if (onCmdRef.current && !intentionalStopRef.current) {
       // ═══ FIX: Re-claim mic ownership after TTS ═══
@@ -256,6 +258,7 @@ export function useNeuralVoice(
     }
     speakingRef.current = false;
     updateAiResponding(false);
+    OrbState.voiceState = "listening";
     if (bargeInCallbackRef.current) bargeInCallbackRef.current();
   }, [updateAiResponding]);
 
@@ -386,6 +389,7 @@ export function useNeuralVoice(
     speakingRef.current = true;
     markTTSStart(); // v31: TTS pipeline latency
     updateAiResponding(true);
+    OrbState.voiceState = "speaking";
     lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
     lastSpokenAtRef.current = Date.now();
     speechBufferRef.current = "";
@@ -459,6 +463,7 @@ export function useNeuralVoice(
     speakingRef.current = false;
     markTTSEnd(); // v31: TTS pipeline latency
     updateAiResponding(false);
+    OrbState.voiceState = "listening";
     // Only resume mic if not managed externally
     if (!options?.skipMicToggle) resumeSTT();
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
@@ -468,8 +473,10 @@ export function useNeuralVoice(
     await speak(text);
   }, [speak]);
 
-  // No-op startThinking (filler audio removed)
-  const startThinking = useCallback(() => {}, []);
+  // startThinking — sets OrbState to thinking mode (JARVIS "PROCESSING" indicator)
+  const startThinking = useCallback(() => {
+    OrbState.voiceState = "thinking";
+  }, []);
 
   const createRecognition = useCallback((onCmd: (c: string) => void) => {
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
