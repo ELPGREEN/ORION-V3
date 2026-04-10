@@ -438,7 +438,7 @@ export function useOrionReasoning(
       const somResult = somClassify(question);
       const _isSpecialCmd = somResult.isSpecialCmd || intentType === "auto_construct" || intentType === "self_evolve";
 
-      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType} | SOM=${somResult.handler}(${(somResult.confidence * 100).toFixed(0)}%)`);
+      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType} | SOM=${somResult.handler}(${(somResult.confidence * 100).toFixed(0)}%) | Tesla: conf=${(voltage.confidence * 100).toFixed(0)}% exec=${voltage.shouldExecute} intent=${voltage.intent}`);
       window.dispatchEvent(new CustomEvent("som-routing", { detail: somResult }));
 
       // If confidence too low, ask clarification
@@ -1523,28 +1523,29 @@ export function useOrionReasoning(
       }
 
       // ═══ LAYER 2: NLP Semantics + Cognition Context ═══
-      // Skip Layer 2 for fast mode queries (save ~50-100ms)
+      // Always run semantics (lightweight, <10ms); only run full cognition in deep mode
       let cognitionContextStr = "";
-      if (cognitiveRouteResult?.mode === "deep") {
-        try {
-          const semantics = analyzeSemantics(processedQuestion, chatHistoryRef.current.slice(-3).map(m => m.text).join(" "));
-          addLog(`🧬 NLP: domain=${semantics.domain}, discourse=${semantics.discourseType}, sentiment=${semantics.sentiment.primary}, entities=${semantics.entities.length}, complexity=${semantics.complexity} [${semantics.analysisTimeMs.toFixed(1)}ms]`);
-          window.dispatchEvent(new CustomEvent("nlp-semantics", { detail: semantics }));
+      try {
+        const semantics = analyzeSemantics(processedQuestion, chatHistoryRef.current.slice(-3).map(m => m.text).join(" "));
+        addLog(`🧬 NLP: domain=${semantics.domain}, discourse=${semantics.discourseType}, sentiment=${semantics.sentiment.primary}, entities=${semantics.entities.length}, complexity=${semantics.complexity} [${semantics.analysisTimeMs.toFixed(1)}ms]`);
+        window.dispatchEvent(new CustomEvent("nlp-semantics", { detail: semantics }));
 
-          // Use resolved text if coreferences were found
-          if (semantics.resolvedText !== processedQuestion) {
-            processedQuestion = semantics.resolvedText;
-          }
+        // Use resolved text if coreferences were found
+        if (semantics.resolvedText !== processedQuestion) {
+          processedQuestion = semantics.resolvedText;
+        }
 
+        // Full cognition only for deep mode (expensive)
+        if (cognitiveRouteResult?.mode === "deep") {
           const cognition = await buildCognitionContext(processedQuestion, chatHistoryRef.current, intentType);
           cognitionContextStr = cognition.contextString;
           addLog(`🧠 Cognition: Φ=${cognition.consciousnessLevel.toFixed(2)}, episodic=${cognition.episodicHits}, CL=${cognition.cognitiveLoad.toFixed(2)}, SV=${cognition.somaticValence.toFixed(1)} [${cognition.buildTimeMs.toFixed(1)}ms]`);
           window.dispatchEvent(new CustomEvent("cognition-context", { detail: cognition }));
-        } catch (cognErr) {
-          addLog(`⚠️ Cognition/NLP: ${cognErr}`);
+        } else {
+          addLog(`⚡ Deep cognition SKIPPED (fast mode) — semantics OK [${Date.now() - now}ms]`);
         }
-      } else {
-        addLog(`⚡ Layer 2 SKIPPED (fast mode) [${Date.now() - now}ms]`);
+      } catch (cognErr) {
+        addLog(`⚠️ Cognition/NLP: ${cognErr}`);
       }
 
       // Inject cognition context into cognitive routing window vars

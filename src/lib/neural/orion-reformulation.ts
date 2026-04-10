@@ -78,26 +78,31 @@ export function analyzeComprehension(text: string): ComprehensionAnalysis {
     return { score: 0.1, isAmbiguous: true, isTruncated: true, isColloquial: false, isComplex: false, suggestedMode: "clarify", issues: ["Input muito curto"] };
   }
 
-  // Check ambiguity
+  // Check ambiguity — only penalize if VERY short + ambiguous
   const isAmbiguous = AMBIGUITY_PATTERNS.some(p => p.test(trimmed));
-  if (isAmbiguous) { score -= 0.25; issues.push("Referências ambíguas detectadas"); }
+  if (isAmbiguous && trimmed.split(/\s+/).length <= 3) { score -= 0.15; issues.push("Referências ambíguas detectadas"); }
 
-  // Check truncation
+  // Check truncation — lighter penalty
   const isTruncated = TRUNCATION_PATTERNS.some(p => p.test(trimmed));
-  if (isTruncated) { score -= 0.2; issues.push("Frase aparentemente incompleta"); }
+  if (isTruncated) { score -= 0.1; issues.push("Frase aparentemente incompleta"); }
 
-  // Check colloquial language
+  // Check colloquial language — very light penalty (voice input is naturally colloquial)
   const colloquialMatches = COLLOQUIAL_PATTERNS.filter(p => p.test(trimmed));
   const isColloquial = colloquialMatches.length >= 1;
-  if (isColloquial) { score -= 0.15 * colloquialMatches.length; issues.push("Linguagem coloquial/abreviações"); }
+  if (isColloquial) { score -= 0.05 * Math.min(colloquialMatches.length, 2); issues.push("Linguagem coloquial/abreviações"); }
 
   // Check complexity
   const isComplex = COMPLEX_PATTERNS.some(p => p.test(trimmed));
   if (isComplex && trimmed.length > 200) { score -= 0.1; issues.push("Estrutura complexa com jargão misto"); }
 
-  // Word count penalty for very short but non-truncated inputs
+  // Word count penalty only for single-word non-truncated inputs
   const wordCount = trimmed.split(/\s+/).length;
-  if (wordCount <= 2 && !isTruncated) { score -= 0.1; }
+  if (wordCount <= 1 && !isTruncated) { score -= 0.1; }
+
+  // Questions are inherently comprehensible — boost
+  if (/\?/.test(trimmed) || /^(o que|quem|qual|quando|onde|como|por que|porque|quanto)\b/i.test(trimmed)) {
+    score = Math.min(1, score + 0.15);
+  }
 
   score = Math.max(0, Math.min(1, score));
 
