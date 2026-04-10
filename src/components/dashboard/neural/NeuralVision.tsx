@@ -189,7 +189,28 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }, 800);
   }, [speak, stopListen]);
 
-  // ═══ Voice command handler — delegates to routeOrionCommand ═══
+  // ═══ Centralized command router — single source of truth for all commands ═══
+  const routeOrionCommand = useCallback((cmd: string) => {
+    const q = cmd.toLowerCase().trim();
+    const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+    const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+    if (isActivateVision) {
+      if (!active) { speakFast("Visão ativada.").catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
+      else { speakFast("Visão já está ativa.").catch(() => {}); }
+      return;
+    }
+    if (isDeactivateVision) {
+      if (active) { speakFast("Desativando visão.").catch(() => {}); stopCamera(); }
+      else { speakFast("Visão já está desativada.").catch(() => {}); }
+      return;
+    }
+    if (q.includes("parar") || q.includes("desligar")) { stopCamera(); return; }
+    if (q.includes("calar") || q.includes("silêncio")) { try { speechSynthesis?.cancel(); } catch {} return; }
+    if (supernetConnected) sendSuperNetQuery(cmd);
+    else askAI(cmd, "voice");
+  }, [active, startCamera, stopCamera, speakFast, askAI, supernetConnected, sendSuperNetQuery]);
+
+
   const handleVoice = useCallback((cmd: string) => {
     const original = cmd.trim();
     const q = original.toLowerCase();
