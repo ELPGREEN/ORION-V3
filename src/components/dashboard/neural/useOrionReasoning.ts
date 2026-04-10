@@ -547,7 +547,7 @@ export function useOrionReasoning(
 
       if (needsAuth || needsBiometric) {
         try {
-          const { data: { user: authGateUser } } = await supabase.auth.getUser();
+          const authGateUser = await getCachedUser();
           if (!authGateUser) {
             const authMsg = "Você precisa estar logado para usar esse recurso. Faça login para continuar.";
             setChatHistory(prev => {
@@ -597,7 +597,7 @@ export function useOrionReasoning(
         /\b(cadastr|registr)\w*\s+(eu|meu\s+rosto|minha\s+voz|como\s+(dono|proprietário|proprietario|criador))\b/i.test(qLow);
       if (_isSpecialCmd && cadastrarMatch) {
         try {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const authUser = await getCachedUser();
           if (!authUser) {
             const noAuth = "Você precisa estar logado para se cadastrar como proprietário.";
             addChat("ai", noAuth);
@@ -692,7 +692,7 @@ export function useOrionReasoning(
       // 2. Voice ID questions — answer based on real system state
       if (_isSpecialCmd && (/\b(reconhec[eo]|sabe[s]?|conhec[eo])\s+(a\s+)?(minha\s+)?voz\b/i.test(qLow) || /\bvoice\s*id\b/i.test(qLow))) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const user = await getCachedUser();
           let voiceResponse: string;
           if (user) {
             const { data: enrollment } = await supabase
@@ -773,7 +773,7 @@ export function useOrionReasoning(
       // 2c. "Quem sou eu?" / "me conhece?" — identify via face enrollment + first-user = owner
       if (_isSpecialCmd && (/\b(quem\s+(é|e|sou)\s+eu|me\s+conhece|sabe\s+quem\s+eu\s+sou|meu\s+nome|quem\s+t[aá]\s+falando)\b/i.test(qLow))) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const user = await getCachedUser();
           if (user) {
             // Check face enrollment for biometric confirmation
             const { data: faceEnrollment } = await supabase
@@ -836,7 +836,7 @@ export function useOrionReasoning(
       const voiceConfigMatch = qLow.match(/\b(fal[ae]\s+mais\s+(devagar|r[aá]pido|lento)|aument[ae]\s+(velocidade|pitch|tom|speed)|diminu[ae]\s+(velocidade|pitch|tom|speed)|voz\s+mais\s+(grave|aguda|r[aá]pida|lenta)|mude?\s+(a\s+voz|o\s+tom|o\s+pitch))\b/i);
       if (_isSpecialCmd && (voiceConfigMatch)) {
         try {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const authUser = await getCachedUser();
           if (authUser) {
             const { data: currentCfg } = await supabase
               .from("neural_agent_config" as any)
@@ -929,7 +929,7 @@ export function useOrionReasoning(
         const searchType = searchMatch[3].toLowerCase();
         const searchTerm = searchMatch[4].replace(/[.!?,]+$/, "").trim();
         try {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const authUser = await getCachedUser();
           if (authUser && searchTerm.length > 1) {
             let results: string[] = [];
             let navPath = "";
@@ -1171,7 +1171,7 @@ export function useOrionReasoning(
       // SEGURANÇA: Apenas o proprietário (advogado/admin) pode executar auto-construção
       if (_isSpecialCmd && (intentType === "auto_construct")) {
         // Verify owner identity before proceeding
-        const { data: { user: constructUser } } = await supabase.auth.getUser();
+        const constructUser = await getCachedUser();
         if (constructUser) {
           const { data: constructRole } = await supabase.from("user_roles").select("role").eq("user_id", constructUser.id).maybeSingle();
           const isOwnerOrAdmin = constructRole?.role === "advogado" || constructRole?.role === "admin";
@@ -1537,7 +1537,7 @@ export function useOrionReasoning(
       // ═══ USER NAME INJECTION — cached to avoid blocking DB calls ═══
       if (!(window as any).__orionUserName) {
         try {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const authUser = await getCachedUser();
           if (authUser?.id) {
             const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", authUser.id).maybeSingle();
             (window as any).__orionUserName = profile?.full_name || authUser?.user_metadata?.full_name || authUser?.user_metadata?.nome || undefined;
