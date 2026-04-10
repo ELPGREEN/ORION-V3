@@ -1,85 +1,54 @@
 
 
-# Plano de Otimizacao de Performance — 5 Prioridades
+# Plano: Orion Responde Rápido e Completo (VM + Speed Fix)
 
-## Resumo
-Implementar as 5 otimizacoes ordenadas por impacto para reduzir tempo de carregamento do app, eliminar cold starts do HF Space, e melhorar latencia das edge functions.
+## Problemas Identificados
 
----
+1. **VM não está sendo usada para texto** — A VM (`/proxy/gemini`) suporta proxy Gemini com cache, mas o `neural-ops` nunca a utiliza. Todas as queries de texto vão direto para Vertex AI ou Gemini API keys, ignorando completamente a VM.
 
-## 1. Lucide-react tree-shaking (~100KB bundle reduction)
+2. **`maxOutputTokens` não propagado** — A função `callGeminiAPI` usa `requestedMaxTokens` corretamente, mas `callVertexAI` tem default de apenas **4096 tokens** para texto (linha 155). E `convertToGeminiFormat` (usada por `callGeminiDirect`) **não injeta `maxOutputTokens` nenhum** — fica com o default do modelo que pode truncar.
 
-**Problema**: 374 arquivos importam de `lucide-react`. Vite faz tree-shaking automatico, mas imports como `import { icons } from 'lucide-react'` ou re-exports em barrel files podem impedir isso.
+3. **System prompt GIGANTESCO** — Para queries com visão, o prompt do sistema soma ~15.000+ tokens (ORION_SYSTEM_PROMPT_FULL + ORION_VISION_PROMPT + ORION_FRAMEWORKS_PROMPT + ORION_ARCHITECTURE_KNOWLEDGE). Isso consome tokens do orçamento e **atrasa** o primeiro token.
 
-**Acao**: Verificar se ha imports genericos que bloqueiam tree-shaking. O padrao atual (`import { Camera } from 'lucide-react'`) ja e correto para tree-shaking. Vou auditar se existe algum uso de `icons` map ou dynamic imports que puxe o bundle inteiro, e otimizar o `manualChunks` do Vite para isolar lucide do vendor-ui.
+4. **RAG + Identity + Dashboard Context BLOQUEIAM** — Mesmo que parallelizados, `fetchRAGContext` faz embedding + busca vetorial (~1-2s), e `fetchDashboardContext` no client faz 4 queries ao Supabase. Isso adiciona latência significativa antes de começar a gerar.
 
-**Arquivos**: `vite.config.ts`, qualquer arquivo com `import { icons }` ou `import * as` de lucide.
+5. **7 Gemini keys mas apenas 1 usada** — `getGeminiKeys()` retorna apenas `GEMINI_API_KEY` (1 key). As 7 keys são usadas no fallback loop (`callGeminiAPI`), mas a função principal `callGeminiDirect` (usada pela rota fallback `callLovableAIFallback`) só usa 1 key.
 
----
+## Mudanças Planejadas
 
-## 2. HF Space warm-up (elimina cold start 10-30s)
+### 1. Propagar `maxOutputTokens` em TODOS os providers
+**Arquivo:** `supabase/functions/neural-ops/index.ts`
+- `callVertexAI`: usar `(messages as any).__maxTokens` no `maxOutputTokens` (atualmente ignora e usa 4096/6144)
+- `convertToGeminiFormat`: aceitar e injetar `maxOutputTokens` da mensagem
+- `callGeminiDirect`: passar `maxOutputTokens` para o body do Gemini
 
-**Problema**: Modelos CNN (DETR, SegFormer, DPT, ResNet) so carregam no primeiro request. O DETR tem instancias duplicadas GPU/CPU (90MB extra).
+### 2. Usar VM como proxy Gemini (fast-path para texto)
+**Arquivo:** `supabase/functions/neural-ops/index.ts`
+- Adicionar `callVMGeminiProxy()` como provider antes do fallback chain
+- A VM em `ORION_VM_URL/proxy/gemini` tem cache e latência menor para requests repetitivos
+- Usar somente para queries de texto (sem imagem) — visão continua direto na API
 
-**Acoes**:
-- Adicionar funcao `warm_up()` no final do `app.py` que pre-carrega modelos CPU (embedder, OCR, ResNet features) no startup
-- Unificar DETR GPU/CPU: usar uma unica instancia que roda em CPU por padrao e move para GPU sob `@spaces.GPU`
-- Pre-carregar processadores (tokenizers/image processors) que sao leves
+### 3. Reduzir system prompt para texto simples
+**Arquivo:** `supabase/functions/neural-ops/index.ts`
+- Para queries `intentType === "textual"` SEM visão: usar `ORION_SYSTEM_PROMPT_COMPACT` (já existe mas os frameworks/vision são injetados desnecessariamente)
+- Garantir que `ORION_VISION_PROMPT` e `ORION_FRAMEWORKS_PROMPT` **nunca** sejam injetados em queries puramente textuais
 
-**Arquivo**: `public/hf-space-gpu/app.py`
+### 4. Skip RAG para perguntas simples
+**Arquivo:** `supabase/functions/neural-ops/index.ts`
+- Se a query tem < 30 chars e não é legal/analysis/document, skip RAG (economia de ~1-2s)
+- RAG embedding timeout já é 1s, mas a busca vetorial adiciona mais
 
----
+### 5. Usar todas as 7 Gemini keys no `getGeminiKeys()`
+**Arquivo:** `supabase/functions/neural-ops/index.ts`
+- Expandir `getGeminiKeys()` para incluir GEMINI_API_KEY_2 até _7 e _GCP
+- Isso melhora resiliência contra rate limits (429)
 
-## 3. i18n lazy loading (~30-50KB reducao)
+### 6. Deploy da edge function
+- Redeployar `neural-ops` após as mudanças
 
-**Problema**: 13 arquivos JSON de traducao sao importados estaticamente em `src/i18n/index.ts`. Apenas 1 idioma e usado por vez.
-
-**Acoes**:
-- Converter `src/i18n/index.ts` para carregar apenas `pt` (default) estaticamente
-- Outros idiomas carregados via `import()` dinamico no `LanguageContext.tsx`
-- Cache do idioma carregado em `_models` pattern (ja em memoria apos primeiro load)
-
-**Arquivos**: `src/i18n/index.ts`, `src/contexts/LanguageContext.tsx`
-
----
-
-## 4. DETR modelo compartilhado GPU/CPU (90MB RAM)
-
-**Problema**: `_cnn_detect_objects_cpu()` carrega `detr_cpu` separado do `detr` GPU. Mesmo modelo, 2x memoria.
-
-**Acao**: Remover `_cnn_detect_objects_cpu` separado. Na funcao `cnn_detect_objects`, fazer fallback CPU usando o mesmo modelo (carregado em CPU, movido para GPU apenas durante `@spaces.GPU`). Modelo fica em CPU por padrao.
-
-**Arquivo**: `public/hf-space-gpu/app.py` (linhas 260-354)
-
----
-
-## 5. Neural-ops split (reduz cold start edge functions)
-
-**Problema**: `neural-ops/index.ts` tem 2507 linhas. Deno precisa parsear tudo no primeiro request.
-
-**Acoes**:
-- Extrair handlers pesados (Vertex AI OAuth, vision analyze, pipeline orchestrator) para funcoes separadas:
-  - `neural-vision` — analise de imagem
-  - `neural-pipeline` — orquestracao de pipeline
-- Manter `neural-ops` como router leve que faz `fetch()` interno para sub-funcoes
-- Alternativa mais simples: manter monolitico mas usar lazy imports com `await import()` para blocos pesados
-
-**Arquivos**: `supabase/functions/neural-ops/index.ts`, novas funcoes edge
-
----
-
-## Detalhes Tecnicos
-
-```text
-Impacto estimado:
-┌──────────────────────────┬──────────┬───────────────┐
-│ Otimizacao               │ Ganho    │ Complexidade  │
-├──────────────────────────┼──────────┼───────────────┤
-│ lucide tree-shaking      │ ~100KB   │ Baixa         │
-│ HF warm-up               │ -10-30s  │ Media         │
-│ i18n lazy load           │ ~30-50KB │ Media         │
-│ DETR unificado           │ -90MB    │ Baixa         │
-│ neural-ops split         │ -200ms   │ Alta          │
-└──────────────────────────┴──────────┴───────────────┘
-```
+## Impacto Esperado
+- Primeira resposta ~1-2s mais rápida (menos prompt, skip RAG quando desnecessário)
+- Respostas completas sem truncamento (maxOutputTokens corretos)
+- VM usada como cache/proxy para queries repetitivas
+- Melhor resiliência com 7+ keys Gemini
 
