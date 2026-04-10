@@ -839,6 +839,7 @@ export async function analyzeFrameStreaming(
         maxTokens: (window as any).__cognitiveMaxTokens || undefined,
         reasoningInstructions: (window as any).__cognitiveReasoningInstructions || undefined,
         inputSource: (window as any).__orionInputSource || "text",
+        userName: (() => { try { const u = (window as any).__orionUserName; return u || undefined; } catch { return undefined; } })(),
       }),
     });
 
