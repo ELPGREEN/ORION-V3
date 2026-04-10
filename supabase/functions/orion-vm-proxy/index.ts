@@ -61,8 +61,9 @@ serve(async (req) => {
     // Remove trailing slash from VM_URL to avoid double-slash (e.g. http://x:8080//health)
     const baseUrl = VM_URL.replace(/\/+$/, "");
     let vmUrl = `${baseUrl}${endpoint}`;
+    const GET_ACTIONS = ["health", "cache/stats"];
     let fetchOpts: RequestInit = {
-      method: action === "health" ? "GET" : "POST",
+      method: GET_ACTIONS.includes(action) ? "GET" : "POST",
       headers: { "Content-Type": "application/json" },
     };
 
