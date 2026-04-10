@@ -2148,9 +2148,44 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   if (stream) {
     const attemptedProviders: string[] = [];
 
-    // ── VM Gemini Proxy DISABLED — was adding 3-8s timeout before fallback ──
-    // Vertex AI direct is faster and more reliable. Re-enable when VM IP is stable.
-    // To re-enable: uncomment and update ORION_VM_URL secret with correct IP.
+    // ── ZERO: VM Gemini Proxy (text-only, cached, low-latency) ──
+    // Timeout reduced to 2s — if VM doesn't respond fast, skip to Vertex AI
+    if (!hasImage) {
+      const vmUrl = Deno.env.get("ORION_VM_URL");
+      if (vmUrl) {
+        try {
+          attemptedProviders.push("vm_gemini_proxy");
+          const vmBody = {
+            messages: messages.map((m: any) => ({
+              role: m.role,
+              content: typeof m.content === "string" ? m.content : Array.isArray(m.content)
+                ? m.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
+                : String(m.content),
+            })),
+            max_tokens: (messages as any).__maxTokens || 8192,
+            stream: true,
+          };
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 2000); // 2s timeout (was 8s)
+          const vmResp = await fetch(`${vmUrl}/proxy/gemini`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(vmBody),
+            signal: controller.signal,
+          });
+          clearTimeout(timer);
+          if (vmResp.ok && vmResp.body) {
+            console.log("[Orion] ✅ Streaming via VM Gemini Proxy — FASTEST PATH");
+            return new Response(vmResp.body, {
+              headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+            });
+          }
+          console.warn(`[Orion] VM proxy returned ${vmResp.status}`);
+        } catch (e: any) {
+          console.warn("[Orion] VM Proxy skip (2s timeout):", e?.message?.slice(0, 50));
+        }
+      }
+    }
 
     // ── PRIMARY: Vertex AI streaming (GCP credits — €1.127 disponíveis) ──
     try {
