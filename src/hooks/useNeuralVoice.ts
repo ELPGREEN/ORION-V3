@@ -373,7 +373,11 @@ export function useNeuralVoice(
 
   // ═══ PRIMARY TTS — Gemini TTS → Web Speech fallback ═══
   const speak = useCallback(async (text: string, options?: { skipMicToggle?: boolean }) => {
-    if (!ttsRef.current || typeof window === "undefined") return;
+    console.log("[Voice] speak() called:", text.slice(0, 80), "ttsOn:", ttsRef.current);
+    if (!ttsRef.current || typeof window === "undefined") {
+      console.warn("[Voice] speak() skipped — ttsOn:", ttsRef.current);
+      return;
+    }
 
     // Cancel any ongoing speech
     try { speechSynthesis.cancel(); } catch {}
