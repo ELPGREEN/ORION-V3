@@ -690,13 +690,16 @@ serve(async (req) => {
         });
       }
 
-      if (refined.cena || refined.texto_detectado || refined.sentimento_visual) {
+      if (refined.cena || refined.texto_detectado || refined.sentimento_visual || refined.narrativa) {
         detections.push({
           objeto: "📸 Análise da Cena",
           descricao: [
+            refined.narrativa ? `**Narrativa**: ${refined.narrativa}` : "",
             refined.cena ? `**Cena**: ${refined.cena}` : "",
+            refined.atmosfera ? `**Atmosfera**: ${refined.atmosfera}` : "",
             refined.texto_detectado ? `**Texto**: ${refined.texto_detectado}` : "",
-            refined.sentimento_visual ? `**Sentimento**: ${refined.sentimento_visual}` : ""
+            refined.sentimento_visual ? `**Sentimento**: ${refined.sentimento_visual}` : "",
+            refined.foco_atencao?.length ? `**Foco**: ${refined.foco_atencao.join("; ")}` : "",
           ].filter(Boolean).join("\n"),
           confianca: 100,
           source: "scene_analysis",
