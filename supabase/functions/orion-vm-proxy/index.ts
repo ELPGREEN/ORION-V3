@@ -40,7 +40,7 @@ serve(async (req) => {
       
       const endpoint = mapActionToEndpoint(action);
       const vmResp = await fetchWithAutoStart(
-        `${VM_URL}${endpoint}`,
+        `${VM_URL.replace(/\/+$/, "")}${endpoint}`,
         { method: "POST", body: formData },
         `${HF_SPACE_URL}/api/predict/${action}`,
       );
