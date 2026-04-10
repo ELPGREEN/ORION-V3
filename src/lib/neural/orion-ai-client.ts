@@ -937,7 +937,8 @@ export async function analyzeFrameStreaming(
         throw networkErr;
       }
     } finally {
-      clearTimeout(streamTimeout);
+      clearTimeout(idleTimer);
+      clearTimeout(maxTimer);
     }
 
     const remaining = accumulated.slice(spokenUpTo).trim();
