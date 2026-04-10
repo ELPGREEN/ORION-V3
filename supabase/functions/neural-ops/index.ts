@@ -1529,12 +1529,7 @@ async function callGroqFallback(messages: any[]): Promise<string> {
   const apiKey = Deno.env.get("GROQ_API_KEY");
   if (!apiKey) throw new Error("Missing GROQ_API_KEY");
 
-  const textMessages = messages.map((m: any) => ({
-    role: m.role === "system" ? "system" : m.role === "assistant" ? "assistant" : "user",
-    content: typeof m.content === "string" ? m.content : Array.isArray(m.content)
-      ? m.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
-      : String(m.content),
-  }));
+  const textMessages = extractTextMessages(messages);
 
   const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
