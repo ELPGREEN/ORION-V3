@@ -1066,6 +1066,25 @@ export function useOrionReasoning(
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
         setThought(result); addLog(`📱 Nativo: ${result}`); speak(result).catch(() => {}); return;
       }
+      // ═══ BROWSER ACTIONS: open real browser tabs (YouTube, Flights, Maps, etc.) ═══
+      try {
+        const { detectBrowserAction, executeBrowserAction } = await import("@/lib/neural/orion-browser-actions");
+        const browserAction = detectBrowserAction(question);
+        if (browserAction) {
+          const response = executeBrowserAction(browserAction);
+          setChatHistory(prev => {
+            const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+            return [...clean, { role: "ai", text: response, time: new Date().toLocaleTimeString("pt-BR") }];
+          });
+          setThought(response);
+          addLog(`🌐 Browser Action [${browserAction.type}]: ${response}`);
+          speak(response).catch(() => {});
+          aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+          return;
+        }
+      } catch (browserErr: any) {
+        addLog(`⚠️ Browser action error: ${browserErr?.message || browserErr}`);
+      }
 
       // ═══ MEDIA / SPOTIFY: intercept music/search/playlist commands BEFORE AI ═══
       const mediaPatterns = /\b(tocar?|play|reproduz|busca[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|procura[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|pesquisa[r]?\s+(?:m[uú]sica|musica|artista)|ouvir?\s+(?:m[uú]sica|musica)|escutar?\s+(?:m[uú]sica|musica)|coloca\s+(?:m[uú]sica|musica|uma?\s+m[uú]sica)|minhas?\s+playlists?|criar?\s+playlist|status\s+(?:d[ea]\s+)?(?:m[uú]sica|mídia|media)|parar?\s+(?:a\s+)?m[uú]sica|pausar?\s+(?:a\s+)?m[uú]sica)\b/i;
