@@ -424,6 +424,7 @@ export function useNeuralVoice(
     // PRIMARY: Gemini TTS
     if (!cascadeAbort.signal.aborted) {
       try {
+        console.log("[Voice] Trying Gemini TTS...");
         const gemResult = await speakWithGeminiTTS(
           cleanText,
           voicePrefs.voice_name || "Charon",
@@ -431,6 +432,7 @@ export function useNeuralVoice(
           voicePrefs.style_prompt,
           voicePrefs.language,
         );
+        console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");
         if (gemResult.played) {
           played = true;
           if (gemResult.audio) activeAudioRef.current = gemResult.audio;
@@ -444,17 +446,18 @@ export function useNeuralVoice(
 
     // FALLBACK: Web Speech API
     if (!played && !cascadeAbort.signal.aborted) {
-      console.warn("[Voice] Gemini TTS unavailable — Web Speech fallback");
+      console.warn("[Voice] Gemini TTS unavailable — trying Web Speech fallback");
       try {
         await browserSpeak(cleanText);
         played = true;
+        console.log("[Voice] Web Speech fallback PLAYED");
       } catch (err) {
         console.warn("[Voice] Web Speech fallback failed:", err);
       }
     }
 
     if (!played) {
-      console.error("[Voice] ALL TTS backends failed");
+      console.error("[Voice] ALL TTS backends failed — no audio output");
     }
 
     // Exit speaking state
