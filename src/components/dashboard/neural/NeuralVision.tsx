@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { IdentifiedObjectsPanel } from "./IdentifiedObjectsPanel";
 import { useGestureDetection, GESTURE_ACTIONS, type GestureType, type GestureAction } from "./useGestureDetection";
-import { PlasmaCanvas, OrbState } from "./EnergyOrb";
+import { PlasmaCanvas } from "./EnergyOrb";
+import { VoiceStateIndicator } from "./VoiceStateIndicator";
 import { useNeuralVoice } from "@/hooks/useNeuralVoice";
 import { useOrionVoiceClone, isVoiceCloneCommand } from "@/hooks/useOrionVoiceClone";
 
