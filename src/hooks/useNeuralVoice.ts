@@ -215,6 +215,7 @@ export function useNeuralVoice(
   }, [clearRestartTimer]);
 
   const resumeSTT = useCallback(() => {
+    OrbState.voiceState = "listening";
     // Always try to restart if we have a command handler, even if listeningRef drifted
     if (onCmdRef.current && !intentionalStopRef.current) {
       // ═══ FIX: Re-claim mic ownership after TTS ═══
