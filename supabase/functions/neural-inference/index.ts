@@ -94,7 +94,7 @@ async function callGemini(systemPrompt: string, userPrompt: string, stream: bool
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+        generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
       }),
       signal: AbortSignal.timeout(25000),
     }
@@ -127,7 +127,7 @@ async function callMistral(systemPrompt: string, userPrompt: string): Promise<st
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 4096,
+      max_tokens: 8192,
       temperature: 0.7,
     }),
     signal: AbortSignal.timeout(30000),
