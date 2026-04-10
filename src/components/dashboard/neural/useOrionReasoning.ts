@@ -1456,6 +1456,12 @@ export function useOrionReasoning(
         (window as any).__cognitiveReasoningInstructions = cognitiveRouteResult.reasoningInstructions;
       }
 
+      // ═══ USER NAME INJECTION for personalized responses ═══
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        (window as any).__orionUserName = authUser?.user_metadata?.nome || authUser?.email?.split("@")[0] || undefined;
+      } catch { /* non-blocking */ }
+
       // ═══ LAYER 1.7: Deep Query Estimator — "Aguarde ~X segundos" ═══
       const timeEstimate = estimateResponseTime(
         question,
