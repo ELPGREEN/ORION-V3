@@ -165,7 +165,7 @@ export function buildReasoningPrompt(
   context?: { intentType?: string; cachedPattern?: string }
 ): string {
   if (mode === "fast") {
-    return `[MODO RÁPIDO] Responda de forma direta e concisa. Vá direto ao ponto sem introduções longas. Se for uma pergunta simples, responda em 1-3 frases.`;
+    return `[MODO RÁPIDO] Responda de forma direta, mas COMPLETA. Vá direto ao ponto sem introduções longas. Responda TUDO que foi perguntado — NUNCA peça para o usuário reformular ou pergunte "o que você quer". Se a pergunta é clara, responda integralmente.`;
   }
 
   // Deep mode — structured chain-of-thought
@@ -204,9 +204,9 @@ export function cognitiveRoute(
     cachedPattern: cachedPattern || undefined,
   });
 
-  // Adjust budget based on mode
-  const latencyBudgetMs = mode === "fast" ? 1500 : 4000;
-  const maxTokens = mode === "fast" ? 1024 : (tier === "deep" ? 32768 : 8192);
+  // Adjust budget based on mode — generous tokens to avoid truncation
+  const latencyBudgetMs = mode === "fast" ? 3000 : 8000;
+  const maxTokens = mode === "fast" ? 8192 : (tier === "deep" ? 32768 : 16384);
 
   return {
     mode,
