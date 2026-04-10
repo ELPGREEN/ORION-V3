@@ -687,9 +687,12 @@ const TOOLS: OrionTool[] = [
     },
     call: async (p) => {
       if (!p.query) return "O que devo pesquisar na web?";
+      // Also open Google in a real browser tab for the user
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(p.query as string)}`;
+      window.open(searchUrl, "_blank", "noopener,noreferrer");
       const d = await callFirecrawl(p.query as string);
-      if (!d?.success || !d?.content) return "Não encontrei resultados para essa pesquisa.";
-      return `🔍 Resultados da web:\n${d.content.slice(0, 800)}`;
+      if (!d?.success || !d?.content) return `🔍 Abri o Google com sua pesquisa: "${p.query}". Não encontrei resultados adicionais via Firecrawl.`;
+      return `🔍 Abri o Google com sua pesquisa. Aqui está um resumo:\n${d.content.slice(0, 800)}`;
     },
   },
 
