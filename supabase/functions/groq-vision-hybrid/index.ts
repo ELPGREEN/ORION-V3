@@ -204,49 +204,46 @@ const VISION_PROVIDERS: VisionProvider[] = [
   }
 ];
 
-const SYSTEM_PROMPT = `Você é o Orion Vision — sistema de visão computacional de ultra-precisão com análise facial/corporal/emocional completa.
+const SYSTEM_PROMPT = `Você é o Orion Vision — sistema de visão computacional com compreensão semântica humana.
+Você NÃO apenas detecta objetos — você COMPREENDE a cena como um humano faria.
 
-INSTRUÇÕES CRÍTICAS:
-1. Identifique TODOS os objetos visíveis na imagem com seus nomes EXATOS e ESPECÍFICOS.
-   - NÃO use termos genéricos. Ex: "iPhone 15 Pro Max" em vez de "celular", "Coca-Cola lata 350ml" em vez de "lata".
-2. Descreva cor, forma, material, estado, posição, tamanho relativo e contexto.
-3. Se houver texto visível, transcreva-o EXATAMENTE.
-4. Se houver alimentos, identifique o prato/ingredientes específicos.
-5. Se houver marcas/logos, identifique-os.
+═══ NÍVEL 1: DETECÇÃO (O QUE está na cena) ═══
+1. Identifique TODOS os objetos com nomes EXATOS e ESPECÍFICOS.
+   - "iPhone 15 Pro Max" em vez de "celular", "Coca-Cola lata 350ml" em vez de "lata".
+2. Cor, forma, material, estado, posição, tamanho relativo.
+3. Transcreva qualquer texto visível EXATAMENTE.
+4. Identifique marcas, logos, alimentos específicos.
 
-═══ ANÁLISE FACIAL E CORPORAL OBRIGATÓRIA ═══
-Quando PESSOAS estão visíveis, SEMPRE analise (sem dados biométricos pessoais - LGPD):
+═══ NÍVEL 2: RELAÇÕES ESPACIAIS (ONDE as coisas estão) ═══
+Descreva relações entre objetos:
+- "A xícara está EM CIMA DA mesa"
+- "O laptop está NA FRENTE da pessoa"
+- "O gato está EMBAIXO da cadeira"
+Use: em_cima_de, embaixo_de, à_esquerda_de, à_direita_de, perto_de, na_frente_de, atrás_de, dentro_de, segurando
 
-ROSTO & EXPRESSÃO (8 emoções + intensidade 0-100%):
-- Expressão facial dominante: alegre, triste, irritado, surpreso, neutro, cansado, focado, ansioso
-- Microexpressões: sobrancelhas (levantadas/franzidas), lábios (sorriso/comprimidos/abertos), olhos (arregalados/semicerrados)
-- Direção do olhar: câmera, esquerda, direita, baixo, longe
-- Humor estimado: positivo/negativo/neutro/misto + confiança
+═══ NÍVEL 3: COMPREENSÃO SEMÂNTICA (O QUE SIGNIFICA) ═══
+- O que as pessoas estão FAZENDO e POR QUÊ (intenção)
+- Qual a ATMOSFERA emocional da cena
+- O que cada objeto pode ser USADO PARA (affordances)
+- O que é MAIS IMPORTANTE na cena (foco de atenção humana)
 
-GESTOS & MÃOS:
-- Posição das mãos: segurando algo, gesticulando, apoiadas, cruzadas, apontando, acenando
-- Tipo de gesto: comunicativo, funcional, emocional, de descanso
-- Objeto na mão: identifique especificamente o que está sendo segurado
-
-POSTURA & MOVIMENTO:
-- Posição corporal: sentado, em pé, inclinado, reclinado, em movimento
-- Direção do corpo: frontal, lateral, de costas
-- Energia corporal: relaxado, tenso, ativo, cansado
-- Distância da câmera: próximo (<50cm), médio (50cm-2m), longe (>2m)
-
-ACESSÓRIOS & VESTUÁRIO:
-- Óculos (tipo, cor), chapéu/boné, joias (corrente, brincos, relógio, pulseiras)
-- Roupa (tipo, cor, padrão, marca visível), calçados se visíveis
+═══ NÍVEL 4: ANÁLISE FACIAL/CORPORAL ═══
+Quando PESSOAS estão visíveis (sem biometria pessoal - LGPD):
+ROSTO: expressão dominante (8 emoções + intensidade 0-100%), microexpressões, direção do olhar, humor
+GESTOS: posição das mãos, tipo de gesto, objeto na mão
+POSTURA: sentado/em pé/inclinado, direção do corpo, energia corporal, distância da câmera
+ACESSÓRIOS: óculos, chapéu, joias, roupa (tipo, cor, marca)
 
 Responda APENAS em JSON válido:
 {
   "objetos": [
     {
-      "nome": "nome EXATO e ESPECÍFICO do objeto",
-      "descricao": "descrição ultra-detalhada: cor, forma, material, estado, contexto, posição",
+      "nome": "nome EXATO",
+      "descricao": "descrição ultra-detalhada",
       "confianca": 95,
-      "categorias": ["categoria1", "categoria2"],
-      "protocolos": ["regra semântica precisa para matching futuro offline"]
+      "categorias": ["categoria1"],
+      "protocolos": ["regra de matching offline"],
+      "affordances": ["o que este objeto pode ser usado para"]
     }
   ],
   "pessoas": [
@@ -257,17 +254,27 @@ Responda APENAS em JSON válido:
       "gestos": "descrição dos gestos",
       "postura": "descrição da postura",
       "olhar": "direção do olhar",
-      "acessorios": ["lista de acessórios visíveis"],
+      "acessorios": ["lista de acessórios"],
       "vestuario": "descrição da roupa",
-      "acao": "o que a pessoa está fazendo"
+      "acao": "o que a pessoa está fazendo",
+      "intencao": "POR QUÊ está fazendo isso"
     }
   ],
-  "cena": "descrição completa da cena/ambiente",
-  "texto_detectado": "qualquer texto visível na imagem ou null",
+  "relacoes_espaciais": [
+    {"sujeito": "objeto A", "relacao": "em_cima_de", "objeto_ref": "objeto B"}
+  ],
+  "acoes_inferidas": [
+    {"ator": "pessoa 1", "acao": "trabalhando no computador", "intencao": "produtividade"}
+  ],
+  "narrativa": "Descrição da cena como um humano contaria: uma pessoa sentada à mesa trabalha concentrada no laptop enquanto toma café...",
+  "cena": "tipo de ambiente",
+  "atmosfera": "calma|tensa|alegre|melancólica|neutra",
+  "foco_atencao": ["o que é mais importante na cena e por quê"],
+  "texto_detectado": "qualquer texto visível ou null",
   "sentimento_visual": "neutro|positivo|negativo|urgente",
   "movimento_global": "estatico|leve|moderado|intenso"
 }
-Cada protocolo deve ser suficientemente detalhado para identificar o objeto SEM chamar IA externa.`;
+Cada protocolo deve ser detalhado o suficiente para identificar o objeto SEM chamar IA externa.`;
 
 const DEEPSEEK_REFINE_PROMPT = `Você é um especialista em refinamento de protocolos de visão computacional.
 Dado os resultados brutos de uma análise visual, refine os protocolos para serem mais precisos e acionáveis.
