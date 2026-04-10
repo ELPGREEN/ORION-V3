@@ -58,6 +58,26 @@ MemoryHigh=2.5G
 WantedBy=multi-user.target
 EOF
 
+echo ""
+echo "=== IMPORTANT: GCP API Setup Required ==="
+echo ""
+echo "1. Enable Generative Language API in GCP Console:"
+echo "   https://console.cloud.google.com/apis/library?project=orion-d3734"
+echo "   Search 'Generative Language API' and click ENABLE"
+echo ""
+echo "2. Grant Vertex AI User role to the VM service account:"
+echo "   gcloud projects add-iam-policy-binding orion-d3734 \\"
+echo "     --member='serviceAccount:550674472945-compute@developer.gserviceaccount.com' \\"
+echo "     --role='roles/aiplatform.user'"
+echo ""
+echo "3. Update VM access scopes (requires stop/start):"
+echo "   gcloud compute instances stop instance-20260409-234130 --zone=us-central1-f"
+echo "   gcloud compute instances set-service-account instance-20260409-234130 \\"
+echo "     --zone=us-central1-f \\"
+echo "     --scopes=cloud-platform"
+echo "   gcloud compute instances start instance-20260409-234130 --zone=us-central1-f"
+echo ""
+
 systemctl daemon-reload
 systemctl enable orion
 systemctl start orion
