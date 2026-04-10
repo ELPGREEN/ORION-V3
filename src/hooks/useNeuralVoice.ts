@@ -257,6 +257,7 @@ export function useNeuralVoice(
     }
     speakingRef.current = false;
     updateAiResponding(false);
+    OrbState.voiceState = "listening";
     if (bargeInCallbackRef.current) bargeInCallbackRef.current();
   }, [updateAiResponding]);
 
@@ -387,6 +388,7 @@ export function useNeuralVoice(
     speakingRef.current = true;
     markTTSStart(); // v31: TTS pipeline latency
     updateAiResponding(true);
+    OrbState.voiceState = "speaking";
     lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
     lastSpokenAtRef.current = Date.now();
     speechBufferRef.current = "";
