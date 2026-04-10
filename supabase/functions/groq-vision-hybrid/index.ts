@@ -671,6 +671,7 @@ serve(async (req) => {
       // ═══ PERF FIX: Skip DeepSeek refinement for identify/describe (saves 5-15s) ═══
       // Only refine for teach/analyze modes where precision matters more than speed
       const refined = (mode === "teach" || mode === "analyze") ? await refineWithDeepSeek(result) : result;
+      lastRefined = refined;
 
       for (const obj of refined.objetos) {
         const labelKey = obj.nome.toLowerCase();
