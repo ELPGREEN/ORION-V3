@@ -686,7 +686,7 @@ export function useOrionReasoning(
             return [...clean, { role: "ai" as const, text: voiceResponse, time: new Date().toLocaleTimeString("pt-BR") }];
           });
           setThought(voiceResponse);
-          speak(voiceResponse); } catch (e) { console.warn("[Orion] Voice ID speak error:", e); }
+          speak(voiceResponse).catch(() => {})
           return;
         } catch (e) { console.warn("[Orion] Voice ID check error:", e); /* fall through to normal flow */ }
       }
@@ -700,7 +700,7 @@ export function useOrionReasoning(
           return [...clean, { role: "ai" as const, text: ownerResponse, time: new Date().toLocaleTimeString("pt-BR") }];
         });
         setThought(ownerResponse);
-        speak(ownerResponse); } catch (e) { console.warn("[Orion] Owner speak error:", e); }
+        speak(ownerResponse).catch(() => {})
         return;
       }
 
@@ -714,7 +714,7 @@ export function useOrionReasoning(
           return [...clean, { role: "ai" as const, text: selfResponse, time: new Date().toLocaleTimeString("pt-BR") }];
         });
         setThought(selfResponse);
-        speak(selfResponse); } catch (e) { console.warn("[Orion] Self-identity speak error:", e); }
+        speak(selfResponse).catch(() => {})
         return;
       }
 
@@ -774,7 +774,7 @@ export function useOrionReasoning(
               return [...clean, { role: "ai" as const, text: idResponse, time: new Date().toLocaleTimeString("pt-BR") }];
             });
             setThought(idResponse);
-            speak(idResponse); } catch (e) { console.warn("[Orion] Identity speak error:", e); }
+            speak(idResponse).catch(() => {})
             return;
           }
         } catch (e) { console.warn("[Orion] Identity check error:", e); /* fall through */ }
