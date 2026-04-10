@@ -1651,10 +1651,11 @@ export function useOrionReasoning(
       }
 
       if (result.description) {
-        // ═══ LAYER 3.5: Active Inference Guard — anti-hallucination + logical consistency ═══
+        // ═══ LAYER 3.5: Active Inference Guard — SKIP for conversational mode ═══
         let finalResponse = result.description;
-        let adjustedFE = 30; // default moderate confidence
+        let adjustedFE = 30;
         let wasRefined = false;
+        if (!isConversationalMode) {
         try {
           const inferenceResult = computeFreeEnergy(
             question, result.description,
