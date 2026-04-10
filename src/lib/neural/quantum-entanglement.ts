@@ -2,7 +2,8 @@
  * ─── Entanglement & Multi-Qubit Register ───
  * Bell states, GHZ states, n-qubit registers.
  *
- * n qubits → 2ⁿ estados simultâneos (superposição exponencial).
+ * v2: Dual mode — separable (legacy) + tensor (correct).
+ * Tensor mode uses full 2^n state vector for true entanglement.
  */
 
 import {
@@ -16,7 +17,30 @@ import {
 
 import { hadamard, cnot, pauliX, pauliZ } from "./quantum-gates";
 
-// ─── Bell States (maximally entangled 2-qubit states) ───
+import {
+  type StateVector,
+  tensorZero,
+  basisState,
+  applySingleGate,
+  applyCNOT,
+  applyCZ as tensorCZ,
+  applySWAP,
+  H2,
+  X2,
+  Z2,
+  measureAll as tensorMeasureAll,
+  measureQubit as tensorMeasureQubit,
+  qubitProbability,
+  densityMatrix,
+  partialTrace,
+  vonNeumannEntropy,
+  stateFidelity,
+  entanglementEntropy,
+  normalizeSV,
+  kronecker,
+} from "./tensor-state-vector";
+
+// ─── Bell States (tensor mode: correct 4-amplitude vectors) ───
 
 export interface EntangledPair {
   qubitA: QubitState;
@@ -24,67 +48,130 @@ export interface EntangledPair {
   bellState: "Φ+" | "Φ-" | "Ψ+" | "Ψ-";
   /** Concurrence: 0 = separable, 1 = maximally entangled */
   concurrence: number;
+  /** Full 2-qubit state vector (4 amplitudes) — correct representation */
+  tensorState?: StateVector;
 }
 
 /**
  * Create Bell state |Φ+⟩ = (|00⟩ + |11⟩)/√2
- * Apply H to qubit A, then CNOT(A→B).
+ * Tensor: H on q0, CNOT(0→1)
  */
 export function bellPhiPlus(): EntangledPair {
-  const a = hadamard(qubitZero()); // |+⟩
-  const b = qubitZero();           // |0⟩
+  const n = 2;
+  let sv = tensorZero(n);
+  sv = applySingleGate(H2, 0, n, sv);
+  sv = applyCNOT(0, 1, n, sv);
+
+  // Legacy separable approximation
+  const a = hadamard(qubitZero());
+  const b = qubitZero();
   const { control, target } = cnot(a, b);
-  return { qubitA: control, qubitB: target, bellState: "Φ+", concurrence: 1.0 };
+
+  return {
+    qubitA: control,
+    qubitB: target,
+    bellState: "Φ+",
+    concurrence: 1.0,
+    tensorState: sv,
+  };
 }
 
 /**
  * Create Bell state |Φ-⟩ = (|00⟩ - |11⟩)/√2
- * Correct: apply Z BEFORE CNOT to get phase flip on |11⟩.
+ * Tensor: Z on q0, H on q0, CNOT(0→1)
  */
 export function bellPhiMinus(): EntangledPair {
-  const a = pauliZ(hadamard(qubitZero())); // Z|+⟩ = |−⟩
+  const n = 2;
+  let sv = tensorZero(n);
+  sv = applySingleGate(Z2, 0, n, sv);
+  sv = applySingleGate(H2, 0, n, sv);
+  sv = applyCNOT(0, 1, n, sv);
+
+  const a = pauliZ(hadamard(qubitZero()));
   const b = qubitZero();
   const { control, target } = cnot(a, b);
-  return { qubitA: control, qubitB: target, bellState: "Φ-", concurrence: 1.0 };
+
+  return {
+    qubitA: control,
+    qubitB: target,
+    bellState: "Φ-",
+    concurrence: 1.0,
+    tensorState: sv,
+  };
 }
 
 /**
  * Create Bell state |Ψ+⟩ = (|01⟩ + |10⟩)/√2
- * Correct: apply X to target BEFORE CNOT.
+ * Tensor: H on q0, CNOT(0→1), X on q1
  */
 export function bellPsiPlus(): EntangledPair {
-  const a = hadamard(qubitZero()); // |+⟩
-  const b = pauliX(qubitZero());   // |1⟩
+  const n = 2;
+  let sv = tensorZero(n);
+  sv = applySingleGate(H2, 0, n, sv);
+  sv = applyCNOT(0, 1, n, sv);
+  sv = applySingleGate(X2, 1, n, sv);
+
+  const a = hadamard(qubitZero());
+  const b = pauliX(qubitZero());
   const { control, target } = cnot(a, b);
-  return { qubitA: control, qubitB: target, bellState: "Ψ+", concurrence: 1.0 };
+
+  return {
+    qubitA: control,
+    qubitB: target,
+    bellState: "Ψ+",
+    concurrence: 1.0,
+    tensorState: sv,
+  };
 }
 
 /**
  * Create Bell state |Ψ-⟩ = (|01⟩ - |10⟩)/√2 (singlet)
- * Z on first qubit before H, then X on target, then CNOT.
+ * Tensor: Z on q0, H on q0, CNOT(0→1), X on q1
  */
 export function bellPsiMinus(): EntangledPair {
-  const a = pauliZ(hadamard(qubitZero())); // |−⟩
-  const b = pauliX(qubitZero());            // |1⟩
+  const n = 2;
+  let sv = tensorZero(n);
+  sv = applySingleGate(Z2, 0, n, sv);
+  sv = applySingleGate(H2, 0, n, sv);
+  sv = applyCNOT(0, 1, n, sv);
+  sv = applySingleGate(X2, 1, n, sv);
+
+  const a = pauliZ(hadamard(qubitZero()));
+  const b = pauliX(qubitZero());
   const { control, target } = cnot(a, b);
-  return { qubitA: control, qubitB: target, bellState: "Ψ-", concurrence: 1.0 };
+
+  return {
+    qubitA: control,
+    qubitB: target,
+    bellState: "Ψ-",
+    concurrence: 1.0,
+    tensorState: sv,
+  };
 }
 
 /**
- * Measure entangled pair: when A collapses, B is determined.
+ * Measure entangled pair using tensor state (correct) or legacy.
  */
 export function measureEntangledPair(pair: EntangledPair): {
   outcomeA: number;
   outcomeB: number;
   correlation: "correlated" | "anticorrelated";
 } {
-  const { outcome: outcomeA } = measureCollapse(pair.qubitA);
+  if (pair.tensorState) {
+    // Correct: sample from full 4-amplitude distribution
+    const { outcomes } = tensorMeasureAll(2, pair.tensorState);
+    const isPhiState = pair.bellState.startsWith("Φ");
+    return {
+      outcomeA: outcomes[0],
+      outcomeB: outcomes[1],
+      correlation: isPhiState ? "correlated" : "anticorrelated",
+    };
+  }
 
-  // |Φ⟩ states: same outcomes (correlated)
-  // |Ψ⟩ states: opposite outcomes (anticorrelated)
+  // Legacy fallback
+  const { outcome: outcomeA } = measureCollapse(pair.qubitA);
   const isPhiState = pair.bellState.startsWith("Φ");
   const outcomeB = isPhiState ? outcomeA : (1 - outcomeA);
-
   return {
     outcomeA,
     outcomeB,
@@ -99,8 +186,10 @@ export type EntanglementType = "correlated" | "anticorrelated";
 export interface QubitRegister {
   /** Number of qubits */
   n: number;
-  /** Individual qubit states (separable approximation) */
+  /** Individual qubit states (separable approximation — legacy) */
   qubits: QubitState[];
+  /** Full tensor state vector (correct representation) */
+  tensorState?: StateVector;
   /** Entanglement map: pairs of entangled qubit indices */
   entanglements: Array<{
     i: number;
@@ -112,6 +201,7 @@ export interface QubitRegister {
 
 /**
  * Create n-qubit register, all initialized to |0⟩.
+ * Initializes both separable and tensor representations.
  */
 export function createRegister(n: number): QubitRegister {
   if (n < 1 || n > 20) {
@@ -120,6 +210,7 @@ export function createRegister(n: number): QubitRegister {
   return {
     n,
     qubits: Array.from({ length: n }, () => qubitZero()),
+    tensorState: n <= 12 ? tensorZero(n) : undefined,
     entanglements: [],
   };
 }
@@ -128,9 +219,16 @@ export function createRegister(n: number): QubitRegister {
  * Put all qubits in equal superposition (apply H to each).
  */
 export function superpositionAll(reg: QubitRegister): QubitRegister {
+  let tensorState = reg.tensorState;
+  if (tensorState) {
+    for (let i = 0; i < reg.n; i++) {
+      tensorState = applySingleGate(H2, i, reg.n, tensorState);
+    }
+  }
   return {
     ...reg,
     qubits: reg.qubits.map(q => hadamard(q)),
+    tensorState,
   };
 }
 
@@ -146,17 +244,25 @@ export function entanglePair(
   if (i < 0 || i >= reg.n || j < 0 || j >= reg.n || i === j) {
     return reg;
   }
+
+  // Tensor mode: apply real CNOT
+  let tensorState = reg.tensorState;
+  if (tensorState) {
+    tensorState = applyCNOT(i, j, reg.n, tensorState);
+  }
+
+  // Legacy separable
   const { control, target, entangled } = cnot(reg.qubits[i], reg.qubits[j]);
   const qubits = [...reg.qubits];
   qubits[i] = control;
   qubits[j] = target;
 
   const entanglements = [...reg.entanglements];
-  if (entangled) {
+  if (entangled || tensorState) {
     entanglements.push({ i, j, concurrence: 1.0, type });
   }
 
-  return { ...reg, qubits, entanglements };
+  return { ...reg, qubits, tensorState, entanglements };
 }
 
 /**
@@ -165,9 +271,19 @@ export function entanglePair(
  */
 export function ghzState(n: number): QubitRegister {
   let reg = createRegister(n);
-  // H on first qubit
+
+  // Tensor: H on q0, then CNOT chain
+  if (reg.tensorState) {
+    let sv = reg.tensorState;
+    sv = applySingleGate(H2, 0, n, sv);
+    for (let i = 0; i < n - 1; i++) {
+      sv = applyCNOT(i, i + 1, n, sv);
+    }
+    reg.tensorState = sv;
+  }
+
+  // Legacy
   reg.qubits[0] = hadamard(reg.qubits[0]);
-  // CNOT chain: 0→1, 1→2, ..., (n-2)→(n-1)
   for (let i = 0; i < n - 1; i++) {
     reg = entanglePair(reg, i, i + 1, "correlated");
   }
@@ -175,25 +291,36 @@ export function ghzState(n: number): QubitRegister {
 }
 
 /**
- * Measure entire register. Correctly handles entanglement correlations.
+ * Measure entire register using tensor state vector (correct) or legacy.
  */
 export function measureRegister(reg: QubitRegister): {
   outcomes: number[];
   bitString: string;
   register: QubitRegister;
 } {
+  if (reg.tensorState) {
+    const { outcomes, bitString, postState } = tensorMeasureAll(reg.n, reg.tensorState);
+    const qubits = outcomes.map(o =>
+      o === 0 ? qubitZero() : (normalize([[0, 0], [1, 0]] as QubitState))
+    );
+    return {
+      outcomes,
+      bitString,
+      register: { ...reg, qubits, tensorState: postState, entanglements: [] },
+    };
+  }
+
+  // Legacy measurement
   const outcomes: number[] = new Array(reg.n).fill(-1);
   const qubits = [...reg.qubits];
 
   for (let i = 0; i < reg.n; i++) {
-    // Skip if already determined by entanglement
     if (outcomes[i] !== -1) continue;
 
     const { outcome, postState } = measureCollapse(qubits[i]);
     outcomes[i] = outcome;
     qubits[i] = postState;
 
-    // Collapse entangled partners
     for (const ent of reg.entanglements) {
       const partnerIdx = ent.i === i ? ent.j : ent.j === i ? ent.i : -1;
       if (partnerIdx === -1 || partnerIdx >= reg.n || outcomes[partnerIdx] !== -1) continue;
@@ -218,4 +345,35 @@ export function measureRegister(reg: QubitRegister): {
  */
 export function hilbertSpaceDimension(n: number): number {
   return Math.pow(2, n);
+}
+
+// ─── Tensor Utility Exports ───
+
+/**
+ * Get entanglement entropy between qubit i and the rest of the register.
+ * Only works with tensor state. Returns 0 for separable states.
+ */
+export function registerEntanglementEntropy(
+  reg: QubitRegister,
+  qubitIdx: number
+): number {
+  if (!reg.tensorState || reg.n > 12) return 0;
+  return entanglementEntropy(reg.tensorState, qubitIdx, reg.n);
+}
+
+/**
+ * Tensor state fidelity between two registers.
+ */
+export function registerFidelity(a: QubitRegister, b: QubitRegister): number {
+  if (a.tensorState && b.tensorState) {
+    return stateFidelity(a.tensorState, b.tensorState);
+  }
+  // Legacy: product of per-qubit fidelities
+  const { fidelity } = require("./qubit-core");
+  const n = Math.min(a.n, b.n);
+  let f = 1;
+  for (let i = 0; i < n; i++) {
+    f *= fidelity(a.qubits[i], b.qubits[i]);
+  }
+  return f;
 }
