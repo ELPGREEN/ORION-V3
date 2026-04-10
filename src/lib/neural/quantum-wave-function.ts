@@ -294,9 +294,8 @@ export function collapsePartial(wf: WaveFunction, indices: number[]): CollapseRe
 export function entropy(wf: WaveFunction): number {
   // Tensor mode: use density matrix for correct entropy
   if (wf.register.tensorState) {
-    const { densityMatrix, vonNeumannEntropy } = require("./tensor-state-vector");
-    const rho = densityMatrix(wf.register.tensorState);
-    return vonNeumannEntropy(rho);
+    const rho = tensorDensityMatrix(wf.register.tensorState);
+    return tensorVonNeumannEntropy(rho);
   }
 
   // Legacy: sum of per-qubit binary entropies
@@ -357,8 +356,7 @@ export function getMetrics(wf: WaveFunction): WaveFunctionMetrics {
 export function waveFidelity(a: WaveFunction, b: WaveFunction): number {
   // Use tensor state if both registers have it
   if (a.register.tensorState && b.register.tensorState) {
-    const { stateFidelity } = require("./tensor-state-vector");
-    return stateFidelity(a.register.tensorState, b.register.tensorState);
+    return tensorStateFidelity(a.register.tensorState, b.register.tensorState);
   }
   // Legacy: product of per-qubit fidelities
   const n = Math.min(a.register.n, b.register.n);

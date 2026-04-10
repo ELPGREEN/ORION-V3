@@ -369,9 +369,14 @@ export function registerFidelity(a: QubitRegister, b: QubitRegister): number {
     return stateFidelity(a.tensorState, b.tensorState);
   }
   // Legacy: product of per-qubit fidelities
-  const { fidelity } = require("./qubit-core");
+  const { fidelity: qFidelity } = require("./qubit-core") as typeof import("./qubit-core");
   const n = Math.min(a.n, b.n);
   let f = 1;
+  for (let i = 0; i < n; i++) {
+    f *= qFidelity(a.qubits[i], b.qubits[i]);
+  }
+  return f;
+}
   for (let i = 0; i < n; i++) {
     f *= fidelity(a.qubits[i], b.qubits[i]);
   }
