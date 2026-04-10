@@ -19,3 +19,8 @@ type: reference
 - Priority: VM (primary) → HF Space (fallback) — managed in orion-hub-client.ts
 - Memory limit: systemd MemoryMax=3G
 - Firewall: needs rule allow-orion-8080 (tcp:8080) + tag http-server
+- PENDING: VM service account lacks Gemini API scopes. Needs:
+  1. Enable "Generative Language API" in GCP Console for project orion-d3734
+  2. Grant roles/aiplatform.user to 550674472945-compute@developer.gserviceaccount.com
+  3. Update VM scopes to cloud-platform (requires stop/start)
+  Current scopes: devstorage.read_only, logging.write, monitoring.write, service.management.readonly, servicecontrol, trace.append
