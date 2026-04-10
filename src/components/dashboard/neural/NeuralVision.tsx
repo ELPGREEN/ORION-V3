@@ -370,36 +370,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     return () => clearTimeout(timer);
   }, [initialCommand, location.state, skipWakeWord, speakFast, speechOk, startDirectVoiceCapture]);
 
-  // ═══ Centralized command router — ALL entry points pass through here ═══
-  const routeOrionCommand = useCallback((cmd: string) => {
-    const q = cmd.toLowerCase().trim();
-    
-    // Local vision commands — intercept BEFORE LLM
-    const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
-    const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
-
-    if (isActivateVision) {
-      if (!active) {
-        speakFast("Visão ativada.").catch(() => {});
-        startCamera({ announce: false }).catch(() => {});
-      } else {
-        speakFast("Visão já está ativa.").catch(() => {});
-      }
-      return;
-    }
-    if (isDeactivateVision) {
-      if (active) {
-        speakFast("Desativando visão.").catch(() => {});
-        stopCamera();
-      } else {
-        speakFast("Visão já está desativada.").catch(() => {});
-      }
-      return;
-    }
-    
-    // Everything else → LLM
-    askAI(cmd);
-  }, [active, startCamera, stopCamera, speakFast, askAI]);
+  // (routeOrionCommand moved above handleVoice to avoid forward reference)
 
   // ═══ Listen for vision commands from text chat (useOrionReasoning) ═══
   useEffect(() => {
