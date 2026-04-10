@@ -68,7 +68,7 @@ serve(async (req) => {
     };
 
     if (!isGet) {
-      if (["tts", "stt", "embeddings"].includes(action)) {
+      if (["tts", "stt"].includes(action)) {
         const fd = new FormData();
         for (const [k, v] of Object.entries(body.payload || body)) {
           fd.append(k, String(v));
