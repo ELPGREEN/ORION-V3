@@ -395,10 +395,8 @@ export function useNeuralVoice(
     speechBufferRef.current = "";
     if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
     clearRestartTimer();
-    // Only stop mic if not managed externally (queue handles its own mic lifecycle)
-    if (!options?.skipMicToggle) {
-      try { recRef.current?.stop(); } catch {}
-    }
+    // ALWAYS stop mic while speaking to prevent self-hearing feedback loop
+    try { recRef.current?.stop(); } catch {}
 
     const cascadeAbort = new AbortController();
     abortControllerRef.current = cascadeAbort;
@@ -500,8 +498,10 @@ export function useNeuralVoice(
       
       if (!transcript) return;
 
-      // Barge-in: if AI is speaking and user says stop command
+      // ═══ SELF-HEARING GUARD: Drop ALL transcriptions while Orion is speaking ═══
+      // This prevents the feedback loop where Orion hears its own TTS output
       if (speakingRef.current || VoiceState.aiResponding) {
+        // Only allow barge-in stop commands through
         if (STOP_PATTERNS.test(transcript.trim())) {
           bargeIn();
           speechBufferRef.current = "";
@@ -511,6 +511,8 @@ export function useNeuralVoice(
         if (isFinal && transcript.split(/\s+/).length >= 3) {
           bargeIn();
         }
+        // Drop everything else — it's Orion hearing itself
+        return;
       }
 
       if (!isFinal) return;
@@ -540,18 +542,18 @@ export function useNeuralVoice(
         
         // Echo detection — bidirectional substring match + Jaccard similarity
         const isEcho = (() => {
-          if (!lastSpokenTextRef.current || now - lastSpokenAtRef.current > 8000) return false;
-          if (normalized.length < 8) return false;
+          if (!lastSpokenTextRef.current || now - lastSpokenAtRef.current > 15000) return false;
+          if (normalized.length < 5) return false;
           const spoken = lastSpokenTextRef.current;
           // Substring match (either direction)
           if (spoken.includes(normalized.slice(0, 40)) || normalized.includes(spoken.slice(0, 40))) return true;
-          // Jaccard word overlap: >60% match = echo
+          // Jaccard word overlap: >40% match = echo (lowered from 60% for better self-hearing catch)
           const wordsA = new Set(normalized.split(/\s+/).filter(w => w.length > 2));
           const wordsB = new Set(spoken.split(/\s+/).filter(w => w.length > 2));
-          if (wordsA.size < 3 || wordsB.size < 3) return false;
+          if (wordsA.size < 2 || wordsB.size < 2) return false;
           let overlap = 0;
           wordsA.forEach(w => { if (wordsB.has(w)) overlap++; });
-          return overlap / Math.min(wordsA.size, wordsB.size) > 0.6;
+          return overlap / Math.min(wordsA.size, wordsB.size) > 0.4;
         })();
 
         if (isDuplicate || isEcho) {
