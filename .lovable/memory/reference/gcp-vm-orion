@@ -10,7 +10,7 @@ type: reference
 - Service Account: 550674472945-compute@developer.gserviceaccount.com
 - External IP: 34.28.81.111 (ephemeral — changes on stop/start)
 - Port: 8080
-- Server: FastAPI (public/gcp-vm-orion/server.py)
+- Server: FastAPI — ACTUAL PATH: /home/ericsonpiccoli_dev/orion-vm-bundle/server.py
 - Setup: public/gcp-vm-orion/setup.sh
 - Edge function proxy: supabase/functions/orion-vm-proxy/index.ts
 - Secret: ORION_VM_URL = http://34.28.81.111:8080
@@ -22,6 +22,6 @@ type: reference
 - Tags: http-server ✅
 - Firewall: allow-iap-ssh (tcp:22), needs allow-orion-8080 (tcp:8080) for external access
 - SSH: gcloud compute ssh instance-20260409-234130 --zone=us-central1-f --tunnel-through-iap
-- Gemini: GEMINI_API_KEY configured in systemd override, use gemini-2.5-flash-lite (2.0-flash-lite deprecated)
-- Status: Health ✅, OCR ✅, Embeddings ✅, Gemini proxy ✅, TTS ❌ (Piper needs espeak-ng), STT ❌ (depends on TTS)
-- PENDING: Install espeak-ng for Piper TTS to work
+- Gemini: GEMINI_API_KEY configured in systemd override, use gemini-2.5-flash-lite
+- Status: Health ✅, OCR ✅, Embeddings ✅, Gemini proxy ✅, TTS ✅, STT ❌ (depends on TTS init)
+- IMPORTANT: Systemd runs from /home/ericsonpiccoli_dev/orion-vm-bundle/ NOT /opt/orion/
