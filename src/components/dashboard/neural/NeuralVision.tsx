@@ -224,11 +224,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const handleVoice = useCallback((cmd: string) => {
     const original = cmd.trim();
     const q = original.toLowerCase();
-    const cleanedCommand = original
-      .replace(/^\s*[óòôõo]r[iíìeéè][oóòôõ][nmn][\s,;:-]*/i, "")
-      .replace(/^\s*oreo[nm][\s,;:-]*/i, "")
-      .replace(/^(ativar?|ligar?|acordar?|oi|olá|e\s*aí)\s*/i, "")
-      .trim();
 
     // Pure wake word without command — just greet
     const isJustWakeWord = /^[óòôõo]r[iíìeéè][oóòôõ][nmn]\s*(ativar?|ligar?|acordar?|oi|olá|e\s*aí)?[.!?]?\s*$/i.test(q.trim()) ||
@@ -245,6 +240,24 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const isOrionExit = /[óòôõo]r[iíìeéè][oóòôõ][nmn]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q) ||
       /oreo[nm]\s*(desativ|descans|sair|dormir|parar|deslig|tchau|até|vai embora)/i.test(q);
     if (isOrionExit) { deactivateGracefully(); return; }
+
+    // ═══ CHECK VISION/CAMERA COMMANDS BEFORE stripping "ativar" ═══
+    // Must happen before cleanedCommand — "ativar visão" needs the verb intact
+    const isVisionCmd = /\b(ativar?|ligar?|abrir?)\s*(vis[aã]o|c[aâ]mera|neural)/i.test(q) ||
+      /\b(desativar?|desligar?|fechar?|parar?)\s*(vis[aã]o|c[aâ]mera|neural)/i.test(q) ||
+      /\b(vis[aã]o|c[aâ]mera)\s*(ativar?|ligar?|desativar?|desligar?)/i.test(q);
+    if (isVisionCmd) {
+      routeOrionCommand(original);
+      toast.info(`🎤 "${original}"`);
+      return;
+    }
+
+    // Now safe to strip wake word prefix and greeting verbs
+    const cleanedCommand = original
+      .replace(/^\s*[óòôõo]r[iíìeéè][oóòôõ][nmn][\s,;:-]*/i, "")
+      .replace(/^\s*oreo[nm][\s,;:-]*/i, "")
+      .replace(/^(ativar?|ligar?|acordar?|oi|olá|e\s*aí)\s*/i, "")
+      .trim();
 
     // Voice clone flow
     if (isVoiceCloneCommand(q)) {
