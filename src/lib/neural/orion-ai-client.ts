@@ -421,7 +421,7 @@ export interface AIAnalysisResult {
 export async function analyzeFrameWithAI(
   canvas: HTMLCanvasElement | null, context?: string, question?: string,
   chatHistory?: Array<{ role: string; text: string }>, includeImage: boolean = true, identificationMode: string = "universal",
-  intentType: "visual" | "textual" | "mixed" = "mixed"
+  intentType: "visual" | "textual" | "mixed" | "web_search" | "url_analysis" | "youtube_summary" | "image_generation" = "mixed"
 ): Promise<AIAnalysisResult> {
   try {
     // ═══ PROGRESSIVE LEARNING: Check if we can identify locally first ═══
@@ -637,7 +637,7 @@ export async function analyzeFrameStreaming(
   chatHistory: Array<{ role: string; text: string }>,
   includeImage: boolean,
   identificationMode: string,
-  intentType: "visual" | "textual" | "mixed",
+  intentType: "visual" | "textual" | "mixed" | "web_search" | "url_analysis" | "youtube_summary" | "image_generation",
   onToken: (accumulated: string) => void,
   onSentence: (sentence: string) => void,
   signal?: AbortSignal,
