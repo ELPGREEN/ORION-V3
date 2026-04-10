@@ -725,9 +725,14 @@ serve(async (req) => {
       mode,
       provider_used: usedProvider,
       // ═══ SEMANTIC COMPREHENSION (Córtex Visual) ═══
-      semantic: {
-        narrativa: detections.find(d => d.source === "scene_analysis")?.descricao || null,
-      },
+      semantic: lastRefined ? {
+        narrativa: lastRefined.narrativa || null,
+        atmosfera: lastRefined.atmosfera || "neutra",
+        foco_atencao: lastRefined.foco_atencao || [],
+        relacoes_espaciais: lastRefined.relacoes_espaciais || [],
+        acoes_inferidas: lastRefined.acoes_inferidas || [],
+        pessoas: lastRefined.pessoas || [],
+      } : null,
       providers_available: VISION_PROVIDERS.map(p => ({
         id: p.id,
         name: p.name,
