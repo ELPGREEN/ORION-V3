@@ -324,7 +324,7 @@ export async function analyzeFrameWithAI(
     // ═══ PROGRESSIVE LEARNING: Check if we can identify locally first ═══
     if (includeImage && canvas && intentType === "visual") {
       try {
-        const shapes = extractShapeDescriptors(canvas);
+        const shapes: any[] = [];
         if (shapes.length > 0) {
           const { allLocal, localMatches } = canIdentifyLocally(shapes);
           if (allLocal && localMatches.length > 0) {
@@ -509,7 +509,7 @@ export async function analyzeFrameWithAI(
     if (data?.identifiedObjects?.length > 0) {
       try {
         // Extract shape descriptors from the current canvas
-        const shapes = canvas ? extractShapeDescriptors(canvas) : [];
+        const shapes: any[] = [];
         const descriptor = shapes.length > 0 ? shapes[0] : (VS as any).shapeDescriptors?.[0];
         if (descriptor) {
           for (const obj of data.identifiedObjects) {
