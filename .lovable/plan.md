@@ -1,83 +1,42 @@
 
 
-# Plano: Capacidades "Opera AI" para o Orion
+## Diagnóstico: Pausas longas + Texto cortado no TTS do Orion
 
-## Resumo
+### Problema 1: Pausa longa após interrogação (?)
+**Causa**: O `splitIntoSentences()` em `src/lib/tts/geminiTTS.ts` quebra o texto em pedaços separados por `.!?…`. Cada pedaço vira uma chamada HTTP separada ao edge function `gemini-tts`. Mesmo com fetch paralelo, entre o `audio.onended` de um trecho e o `audio.play()` do próximo há uma lacuna perceptível (~200-500ms), que em `?` fica muito evidente.
 
-Adicionar 4 capacidades ao chat do Orion que replicam funcionalidades do Opera AI, usando infraestrutura já existente (Firecrawl, YouTube API key, Gemini keys).
+### Problema 2: Texto cortado pela metade
+**Causa**: Dois limites de truncamento:
+- **Edge function**: `text.trim().slice(0, 2500)` — textos > 2500 chars são cortados silenciosamente
+- **Gemini TTS model**: O modelo TTS tem limite de áudio gerado (~30-45s). Textos longos podem gerar áudio truncado sem erro
 
-## Arquitetura
+### Plano de correção
 
-```text
-Usuário digita no chat
-        │
-        ▼
-orion-ai-client.ts (detect intent client-side)
-        │
-        ▼
-neural-ops/index.ts (handleOrionQuery)
-        │
-   ┌────┴────┬──────────┬──────────────┐
-   ▼         ▼          ▼              ▼
-Web Search  URL Scrape  YouTube Sum  Image Gen
-(firecrawl) (firecrawl) (YT API+LLM) (Gemini 3)
-   │         │          │              │
-   └────┬────┴──────────┴──────────────┘
-        ▼
-  Inject context into Gemini prompt → Stream response
-```
+#### 1. Eliminar pausas entre sentenças (gap-free playback)
+- Em `src/lib/tts/geminiTTS.ts`, aumentar o threshold de `splitIntoSentences` de 1000 para **2000 chars** antes de dividir (textos médios ficam num único chunk = zero pausas)
+- Para textos > 2000 chars, usar **pre-buffering**: começar o download do próximo chunk enquanto o atual toca, e fazer `audio.play()` imediatamente no `onended` (crossfade de 0ms)
+- Agrupar chunks maiores (de 800 para **1200 chars**) para reduzir o número de requisições
 
-## Mudanças
+#### 2. Corrigir truncamento de texto longo
+- No edge function `gemini-tts/index.ts`, aumentar o limite de `2500` para **5000 chars**
+- No client `geminiTTS.ts`, o `text.slice(0, 5000)` já está correto
+- Para textos muito longos (> 5000), dividir em chunks maiores e encadear o áudio — hoje simplesmente corta
 
-### 1. `supabase/functions/neural-ops/index.ts`
+#### 3. Pre-buffer para playback contínuo
+- Ao invés de `Promise.all` + loop sequencial, usar um padrão produtor-consumidor onde:
+  - Fetch começa em paralelo (como hoje)
+  - Playback inicia assim que o primeiro blob chega
+  - Próximo blob já está pronto quando o atual termina
+  - Resultado: zero gap entre sentenças
 
-**A. Web Search automático** (dentro de `buildOrionMessages`)
-- Adicionar `detectWebSearchIntent(query)` — regex para "hoje", "atual", "notícia", "preço de", "quem é", "quando", "onde fica", datas recentes
-- Se detectado, chamar `firecrawl-search` inline (via fetch ao próprio Supabase) e injetar resultados no system prompt como contexto
-- Timeout de 3s para não bloquear a resposta
+### Arquivos alterados
+| Arquivo | Mudança |
+|---|---|
+| `src/lib/tts/geminiTTS.ts` | Threshold 1000→2000, chunk 800→1200, pre-buffer playback |
+| `supabase/functions/gemini-tts/index.ts` | Limite 2500→5000 chars |
 
-**B. URL Context Analysis** (dentro de `buildOrionMessages`)
-- Detectar URLs na query com regex `https?://\S+`
-- Para cada URL (max 2), chamar `firecrawl-scrape` inline
-- Injetar markdown scraped no contexto (truncado a 4000 chars por URL)
-
-**C. YouTube Summarization** (dentro de `buildOrionMessages`)
-- Detectar links YouTube (`youtube.com/watch`, `youtu.be/`)
-- Extrair video ID, chamar YouTube Data API v3 para captions/snippet
-- Injetar transcript no contexto para Gemini resumir
-- Usar `YOUTUBE_API_KEY` (já existe nos secrets)
-
-**D. Image Generation** (novo action handler no main router)
-- Novo `action === "generate_image"` no handler principal
-- Usar Gemini `gemini-2.0-flash-exp` com `responseModalities: ["IMAGE"]`
-- Retornar base64 da imagem gerada
-- Client detecta intent de geração de imagem ("gere uma imagem", "crie uma imagem", "desenhe")
-
-### 2. `src/lib/neural/orion-ai-client.ts`
-
-- Adicionar detecção de intent no client para marcar:
-  - `intentType: "web_search"` — queries factuais/atuais
-  - `intentType: "url_analysis"` — quando query contém URL
-  - `intentType: "youtube_summary"` — quando query contém link YouTube
-  - `intentType: "image_generation"` — quando query pede geração de imagem
-- Para image generation: chamar neural-ops com `action: "generate_image"` em vez do fluxo normal de streaming
-
-### 3. Nenhuma mudança na VM
-
-A VM não é necessária para estas features — tudo passa pelas edge functions e APIs existentes.
-
-## Ordem de implementação
-
-1. Web Search no chat (maior impacto)
-2. URL context analysis
-3. YouTube summarization  
-4. Image generation
-
-## Detalhes técnicos
-
-- Web search e URL scrape são injetados **antes** do LLM call, como contexto adicional no system prompt
-- YouTube captions usam endpoint `https://www.googleapis.com/youtube/v3/captions` + download
-- Image generation usa modelo diferente do texto — precisa de request separado
-- Todos os fetches paralelos têm timeout de 3s para não degradar latência
-- Citations/fontes são incluídas na resposta para o usuário ver as referências
+### Sem impacto
+- Não muda a VM (problema é no Gemini TTS, não na VM)
+- Não muda o modelo de voz nem o prompt
+- Não afeta o formant synth local
 
