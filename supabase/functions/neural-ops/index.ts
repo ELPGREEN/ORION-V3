@@ -1295,6 +1295,12 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   if (identityKnowledge) {
     systemParts.push(identityKnowledge);
   }
+
+  // ═══ OPERA AI: Inject web search, URL scrape, YouTube context ═══
+  if (webSearchContext) systemParts.push(webSearchContext);
+  for (const uc of urlContexts) {
+    if (uc) systemParts.push(uc);
+  }
   
   // ═══ COST OPTIMIZATION: Only inject heavy vision prompts when vision data is present ═══
   const localDetections = body.localDetections as any;
