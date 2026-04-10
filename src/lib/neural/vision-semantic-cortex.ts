@@ -215,8 +215,11 @@ function inferActions(
   // Person + holdable object nearby → "segurando"
   if (hands.length > 0) {
     for (const hand of hands) {
-      const handCx = hand.x + (hand.width || 30) / 2;
-      const handCy = hand.y + (hand.height || 30) / 2;
+      // Use wrist landmark (index 0) as hand center
+      const wrist = hand.landmarks?.[0];
+      if (!wrist) continue;
+      const handCx = wrist.x * 640; // Normalized → pixel approx
+      const handCy = wrist.y * 480;
 
       for (const obj of objects) {
         const objCx = obj.x + obj.width / 2;
