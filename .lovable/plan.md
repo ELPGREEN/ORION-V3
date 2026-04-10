@@ -1,59 +1,85 @@
 
 
-## Plano: Protocolo Gênesis + Raciocínio Rápido + Protocolos Coerentes
+## Plano: Orion Humanizado — Raciocínio Coerente, Respostas Rápidas, Comportamento Natural
 
-### Problemas identificados
+### Problemas Identificados
 
-1. **"Projeto Gênesis" não é reconhecido**: Nenhuma regex no sistema detecta "gênesis" ou "genesis". O `ORION_GENESIS` existe em `orion-consciousness.ts` com toda a história de origem, mas nunca é injetado quando o usuário pergunta sobre Gênesis.
+1. **Cognição pesada demais para queries simples**: O pipeline executa NLP semantics, Tesla Coil, SOM router, comprehension analysis, reformulation, cognitive routing, E AINDA o buildCognitionContext em modo deep — tudo ANTES de chamar o LLM. São ~500ms de pre-processing desnecessário para perguntas conversacionais.
 
-2. **Protocolos não são ativados corretamente**: O `matchProtocols()` usa `.includes()` simples — falha com variações de voz (ex: "quem é voce" vs "quem é você"). Além disso, tem timeout de 400ms que pode expirar.
+2. **Sistema prompt gigante**: O `ORION_SYSTEM_PROMPT_COMPACT` tem ~800 tokens e o `FULL` tem ~2000+ tokens, cheios de detalhes sobre "5 redes neurais", "6 agentes autônomos", "pipeline de investimento" que confundem o modelo e atrasam a resposta. Isso causa respostas robóticas e desconectadas.
 
-3. **Roteamento de contexto errado**: `isProjectQuestion` (regex "projeto") roteia para `buildInvestorContext()` em vez de injetar a identidade/genesis do Orion.
+3. **Falta instrução de "pensar como pessoa"**: O prompt nunca diz ao LLM para responder como humano em conversas normais. A instrução `REGRA ZERO: NATURALIDADE` existe apenas no vision prompt, não no texto.
 
-4. **Duplicação de lógica**: A detecção de intent está duplicada em 3 lugares (non-streaming em `analyzeFrameWithAI`, streaming em `analyzeFrameStreaming`, e local em `useOrionReasoning.ts`).
+4. **`reasoningInstructions` sempre injeta modo robótico**: O `buildReasoningPrompt` para modo "fast" diz `[MODO RÁPIDO] Responda de forma direta...` — linguagem técnica que o modelo interpreta como "seja seco e formal".
+
+5. **Overhead de layers desnecessárias**: Layer 1.7 (Deep Estimate), Layer 2 (NLP Semantics), Layer 3.5 (Active Inference), Layer 3.7 (Drafter-Critic) adicionam 200-500ms de pós-processamento. Para queries conversacionais, isso é desperdício.
+
+6. **TTS warmup bloqueia**: O fetch de warmup do TTS é fire-and-forget mas cria conexão que pode interferir.
 
 ---
 
 ### Correções
 
-#### 1. Adicionar detecção de "Gênesis" como intent de identidade
-**Arquivos**: `src/lib/neural/orion-ai-client.ts`, `src/components/dashboard/neural/useOrionReasoning.ts`
+#### 1. Novo System Prompt Humanizado
+**Arquivo**: `supabase/functions/neural-ops/index.ts`
 
-- Adicionar regex `isGenesisQuestion` que detecta: `gênesis`, `genesis`, `projeto genesis`, `como você nasceu`, `sua origem`, `como foi criado`, `protocolo genesis`
-- No `useOrionReasoning.ts`: adicionar handler local (como o de "dono/criador") que responde com `ORION_GENESIS.originStory` completo — resposta instantânea sem LLM
-- Nos dois `analyzeFrame*`: rotear `isGenesisQuestion` para `buildOrionIdentityPrompt()` em vez de `buildBaseContext()`
+Criar um terceiro prompt: `ORION_SYSTEM_PROMPT_CONVERSATIONAL` (~300 tokens) para queries simples e conversacionais:
+- Instruir: "Responda como um amigo inteligente falando naturalmente em português"
+- Remover toda a arquitetura neural/agentes/pipeline do prompt conversacional
+- Manter apenas: identidade básica (Orion, criado por Ericson), regras de honestidade, e instrução de naturalidade
+- Usar este prompt quando `inputSource === "voice"` E query < 50 palavras E não é query complexa
 
-#### 2. Adicionar "gênesis" ao protocolo de identidade no JSON
-**Arquivo**: `public/data/orion_voice_protocols.json`
+#### 2. Otimizar `buildReasoningPrompt` para Conversação Natural
+**Arquivo**: `src/lib/neural/cognitive-fast-reasoner.ts`
 
-- Adicionar protocolos de identidade com triggers: "genesis", "gênesis", "projeto genesis", "como nasceu", "sua origem"
-- Responses com resumo da timeline de criação
+- Modo "fast" → nova instrução: "Responda naturalmente como um amigo brasileiro. Direto ao ponto, sem formalidades robóticas. Se a pergunta é clara, responda tudo."
+- Adicionar modo `"conversational"` que retorna instrução mínima: "Fale como pessoa. Seja natural."
+- Classificar greetings e perguntas curtas como `conversational` em vez de `fast`
 
-#### 3. Corrigir roteamento de `isProjectQuestion`
-**Arquivo**: `src/lib/neural/orion-ai-client.ts` (2 locais)
+#### 3. Fast-path para Conversação (Skip Layers)
+**Arquivo**: `src/components/dashboard/neural/useOrionReasoning.ts`
 
-- Quando `isProjectQuestion` é true E a query contém "gênesis/genesis/origem/nasceu", usar `buildOrionIdentityPrompt()` em vez de `buildInvestorContext()`
+- Detectar queries conversacionais (< 15 palavras, sem intent especial, não-técnica)
+- Para estas: SKIP Layer 1.7 (estimador), Layer 2 (NLP/cognição completa), Layer 3.5 (Active Inference), Layer 3.7 (Drafter-Critic)
+- Ir direto: pre-proc rápido → cognitive route → LLM streaming → humanizer → TTS
+- Economia: ~300-500ms de latência
 
-#### 4. Melhorar matching de protocolos para voz
-**Arquivo**: `src/lib/neural/orion-voice-protocols.ts`
+#### 4. Instrução "inputSource=voice" no Edge Function
+**Arquivo**: `supabase/functions/neural-ops/index.ts`
 
-- Normalizar acentos antes do matching (remover diacríticos: ê→e, ã→a, etc.)
-- Usar word boundary matching em vez de substring simples
-- Resultado: "quem e voce" matchará "quem é você"
+- Receber `inputSource` do body
+- Quando `voice`: adicionar instrução ao prompt: "O usuário está falando por voz. Responda de forma natural e concisa, como numa conversa. Evite listas, formatação markdown, e blocos de código na resposta falada."
+- Isso faz o LLM gerar texto otimizado para TTS
+
+#### 5. Cognição Simplificada para Fast Mode
+**Arquivo**: `src/lib/neural/neural-cognition-engine.ts`
+
+- Já faz skip em fast mode (bom) — apenas garantir que o skip é completo
+- Nenhuma mudança necessária aqui
 
 ---
 
-### Arquivos alterados
+### Impacto Esperado
+
+| Métrica | Antes | Depois |
+|---|---|---|
+| Pre-LLM overhead (conversacional) | ~500ms | ~100ms |
+| Tokens do system prompt (conversacional) | ~800 | ~300 |
+| Pós-LLM overhead (conversacional) | ~200ms | ~50ms |
+| Naturalidade da resposta | Robótica | Humana |
+| Tempo total para primeira palavra falada | ~3-5s | ~1.5-3s |
+
+### Arquivos Alterados
 
 | Arquivo | Mudança |
 |---|---|
-| `src/components/dashboard/neural/useOrionReasoning.ts` | Handler local para "gênesis" com resposta instantânea |
-| `src/lib/neural/orion-ai-client.ts` | `isGenesisQuestion` regex em ambos os paths (streaming + non-streaming) |
-| `src/lib/neural/orion-voice-protocols.ts` | Normalização de acentos no matching |
-| `public/data/orion_voice_protocols.json` | Novos protocolos de identidade (genesis) |
+| `supabase/functions/neural-ops/index.ts` | Novo prompt conversacional + `inputSource` handling + redeploy |
+| `src/lib/neural/cognitive-fast-reasoner.ts` | Modo `conversational` + prompt humanizado |
+| `src/components/dashboard/neural/useOrionReasoning.ts` | Fast-path para conversação (skip layers desnecessárias) |
+| `src/lib/neural/orion-ai-client.ts` | Passar `inputSource` no body do streaming call (já passa, confirmar) |
 
-### Sem impacto
-- Não altera o TTS nem a visão
-- Não muda o edge function `neural-ops`
-- Mantém todos os handlers existentes intactos
+### Sem Impacto
+- Não altera TTS, visão, STT, ou protocolos existentes
+- Queries complexas/deep continuam com pipeline completo
+- Não muda edge functions de TTS ou vision
 
