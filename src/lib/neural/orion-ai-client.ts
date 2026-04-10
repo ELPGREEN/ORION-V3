@@ -11,6 +11,7 @@ import { VS } from "@/components/dashboard/neural/useVisionProcessing";
 import { matchLearnedPriors, learnFromDetection, canIdentifyLocally, getLearningStats } from "@/lib/neural/vision-local-learning";
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
 import { runVisionGate, buildGatedResponse, type LocalDetectionContext } from "@/lib/neural/hf-vision-gate";
+import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
 
 // ═══ Local-first mode flag — set to true ONLY for 100% offline operation ═══
 // Default OFF: user has cloud APIs + VM active, local SmolLM2 is too slow/imprecise for text
