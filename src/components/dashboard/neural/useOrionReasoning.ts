@@ -472,7 +472,7 @@ export function useOrionReasoning(
         });
         setThought(clarifyMsg);
         speak(clarifyMsg).catch(() => {});
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         processNextInQueue();
         return;
       }
@@ -494,7 +494,7 @@ export function useOrionReasoning(
         });
         setThought(msg);
         speak(msg).catch(() => {});
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         processNextInQueue();
         return;
       }
@@ -510,7 +510,7 @@ export function useOrionReasoning(
           });
           setThought(instantHit.answer);
           speak(instantHit.answer).catch(() => {});
-          aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+          cleanupProcessing();
           recordLatency(intentType, "fast", Date.now() - now);
           somLearn(question, "general_llm");
           processNextInQueue();
@@ -534,7 +534,7 @@ export function useOrionReasoning(
         });
         setThought(greeting);
         speak(greeting).catch(() => {});
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         somLearn(question, "greeting");
         return;
       }
@@ -556,7 +556,7 @@ export function useOrionReasoning(
             });
             setThought(authMsg);
             speak(authMsg).catch(() => {});
-            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+            cleanupProcessing();
             processNextInQueue();
             return;
           }
@@ -580,7 +580,7 @@ export function useOrionReasoning(
                 });
                 setThought(enrollMsg);
                 speak(enrollMsg).catch(() => {});
-                aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+                cleanupProcessing();
                 processNextInQueue();
                 return;
               }
@@ -750,7 +750,7 @@ export function useOrionReasoning(
         });
         setThought("Protocolo Gênesis ativado");
         speak(genesisResponse).catch(() => {});
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         somLearn(question, "self_identity");
         processNextInQueue();
         return;
@@ -891,7 +891,7 @@ export function useOrionReasoning(
             });
             setThought(execResult.response);
             speak(execResult.response).catch(() => {});
-            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+            cleanupProcessing();
             somLearn(question, somResult.handler);
             saveToNeuralLearning(question, execResult.response, "command_registry", 0.95, { action: cmdMatch.action }).catch(() => {});
             recordLatency(intentType, "fast", Date.now() - now);
@@ -1019,7 +1019,7 @@ export function useOrionReasoning(
         setThought(bgResponse);
         addLog(`👂 Background voice: ${bgResponse.slice(0, 80)}`);
         speak(bgResponse).catch(() => {});
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         return;
       }
 
@@ -1122,7 +1122,7 @@ export function useOrionReasoning(
           setThought(response);
           addLog(`🌐 Browser Action [${browserAction.type}]: ${response}`);
           speak(response).catch(() => {});
-          aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+          cleanupProcessing();
           return;
         }
       } catch (browserErr: any) {
@@ -1159,7 +1159,7 @@ export function useOrionReasoning(
             setThought(mediaResult.response);
             addLog(`🎵 Media [${mediaResult.toolName}]: ${mediaResult.response.slice(0, 80)}`);
             speak(mediaResult.response).catch(() => {});
-            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+            cleanupProcessing();
             return;
           }
         } catch (mediaErr: any) {
@@ -1183,7 +1183,7 @@ export function useOrionReasoning(
             });
             setThought(denied);
             speak(denied).catch(() => {});
-            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+            cleanupProcessing();
             return;
           }
         }
@@ -1299,7 +1299,7 @@ export function useOrionReasoning(
             });
           } catch {}
         }
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         return;
       }
 
@@ -1424,7 +1424,7 @@ export function useOrionReasoning(
           addLog(`❌ Erro na auto-evolução: ${evoErr?.message || evoErr}`);
           speak(errMsg).catch(() => {});
         }
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         return;
       }
 
@@ -1879,7 +1879,7 @@ export function useOrionReasoning(
         }
       }
     } finally {
-      aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+      cleanupProcessing();
       lastAIRef.current = Date.now();
       if (abortControllerRef) abortControllerRef.current = null;
       // Process next queued question
