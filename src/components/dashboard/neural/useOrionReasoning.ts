@@ -1613,18 +1613,7 @@ export function useOrionReasoning(
         (accumulated) => {
           if (bargedInRef.current) return;
           streamingText = accumulated;
-          const display = accumulated
-            .replace(/```json[\s\S]*?```/g, "")
-            .replace(/\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}/g, "")
-            .replace(/\[LEARN:[^\]]+\]/g, "")
-            .replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "")
-            .replace(/#{1,6}\s*/g, "")
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-            .replace(/https?:\/\/\S+/g, "")
-            .replace(/\/\/[^\n]*/g, "")
-            .replace(/<[^>]*>/g, "")
-            .replace(/[─═╔╗╚╝║]/g, "")
-            .trim();
+          const display = stripMarkdown(accumulated);
           setThought(display);
           setChatHistory(prev => {
             const last = prev[prev.length - 1];
@@ -1652,18 +1641,7 @@ export function useOrionReasoning(
 
       if (bargedInRef.current) {
         if (streamingText) {
-          const partial = streamingText
-            .replace(/```json[\s\S]*?```/g, "")
-            .replace(/\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}/g, "")
-            .replace(/\[LEARN:[^\]]+\]/g, "")
-            .replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "")
-            .replace(/#{1,6}\s*/g, "")
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-            .replace(/https?:\/\/\S+/g, "")
-            .replace(/\/\/[^\n]*/g, "")
-            .replace(/<[^>]*>/g, "")
-            .replace(/[─═╔╗╚╝║]/g, "")
-            .trim();
+          const partial = stripMarkdown(streamingText);
           setChatHistory(prev => {
             const cleaned = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
             return [...cleaned, { role: "ai" as const, text: `${partial} ⚡`, time: new Date().toLocaleTimeString("pt-BR") }];
