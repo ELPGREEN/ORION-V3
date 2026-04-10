@@ -417,7 +417,7 @@ export function useNeuralVoice(
     const voicePrefs = getCachedVoicePrefs();
     let played = false;
 
-    // ── PRIMARY: Gemini TTS Algieba ──
+    // ── PRIMARY: Gemini TTS ──
     if (!cascadeAbort.signal.aborted) {
       try {
         const gemResult = await speakWithGeminiTTS(
@@ -438,9 +438,15 @@ export function useNeuralVoice(
       }
     }
 
-    // ── NO FALLBACK: Prefer silence over robotic SpeechSynthesis ──
+    // ── FALLBACK: Web Speech API (robotic but functional) ──
     if (!played && !cascadeAbort.signal.aborted) {
-      console.warn("[Voice] ⚠️ Gemini TTS indisponível — silêncio (sem fallback robótico)");
+      console.warn("[Voice] ⚠️ Gemini TTS indisponível — usando Web Speech como fallback");
+      try {
+        await browserSpeak(cleanText);
+        played = true;
+      } catch (err) {
+        console.warn("[Voice] Web Speech fallback also failed:", err);
+      }
     }
 
     if (!played) {
