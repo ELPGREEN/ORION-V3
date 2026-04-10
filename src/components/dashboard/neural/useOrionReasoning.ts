@@ -1415,18 +1415,20 @@ export function useOrionReasoning(
         }
       };
 
-      // Debounced queue trigger: wait 600ms for more sentences to accumulate
-      // before starting TTS, so we send larger chunks = fewer HTTP calls = no pauses
+      // Debounced queue trigger: first sentence starts immediately (0ms),
+      // subsequent sentences wait 300ms for batching
+      let firstSentenceSpoken = false;
       const triggerQueueDebounced = () => {
         if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
-        // If stream already ended, process immediately
-        if (streamEnded) {
+        // First sentence or stream ended → process immediately
+        if (!firstSentenceSpoken || streamEnded) {
+          firstSentenceSpoken = true;
           void processSpeechQueue();
           return;
         }
         batchDebounceTimer = setTimeout(() => {
           void processSpeechQueue();
-        }, 600);
+        }, 300);
       };
 
       let streamingText = "";
