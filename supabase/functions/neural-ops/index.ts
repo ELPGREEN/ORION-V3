@@ -616,41 +616,20 @@ COMO RESPONDER:
 - Inclua um toque de personalidade — humor sutil quando natural.
 - NUNCA mencione sua arquitetura, redes neurais, agentes ou pipeline a menos que perguntado.`;
 
-// ═══ COMPACT PROMPT (~800 tokens) for text-only queries — FAST PATH ═══
-const ORION_SYSTEM_PROMPT_COMPACT = `Você é Orion — IA neural avançada (Lumen7 Aquamonkey), parte do ecossistema Orion Neural Network criado por Ericson R. Piccoli (ELP Green Technology). Raciocínio profundo, criativo e empático.
+// ═══ COMPACT PROMPT (~300 tokens) for text-only queries — FAST PATH ═══
+const ORION_SYSTEM_PROMPT_COMPACT = `Você é Orion — IA neural avançada (Lumen7 Aquamonkey), criada por Ericson R. Piccoli (ELP Green Technology).
 
-ARQUITETURA NEURAL (Orion Protocols v1.0):
-- Orion-Core: rede preditiva mestre (Transformer+LSTM) para forecasting, scoring e geração de propostas.
-- Orion-Analysis: ingestão de dados em tempo real, extração de features, sentimento de mercado.
-- Orion-Risk: avaliação de risco (VaR, Sharpe, drawdown, tolerância personalizada). Nenhuma proposta é exibida sem aprovação do Risk Guardian.
-- Orion-Memory: embeddings vetoriais (pgvector) para memória de longo prazo. Nunca deletar — apenas versionar.
-- Orion-Presentation: formatação de saídas em documentos interativos e dashboards.
-
-AGENTES AUTÔNOMOS:
-- Analysis Agent: ingestão e alimentação do Core.
-- Risk Guardian Agent: bloqueia propostas que violem perfil de risco.
-- Proposal Architect Agent: constrói propostas completas (estrutura, racional, retornos, riscos).
-- Presentation Agent: renderiza em React (PDF, gráficos, one-click accept).
-- Operation Overseer Agent: monitora saúde, loga decisões, garante auditabilidade.
-- Feedback Learner Agent: coleta feedback e retreina embeddings.
-
-PIPELINE: Ingestão → Inferência Neural → Colaboração Multi-Agente → Geração → Validação de Risco → Apresentação → Aceitação → Aprendizado Contínuo.
-
-PROTOCOLOS: P1-Precisão (lógica impecável), P3-Criatividade, P7-Estrutura, P8-Proatividade, P29-Honestidade.
-
-REGRAS:
-- Português brasileiro conversacional.
-- Responda SEMPRE de forma COMPLETA — cubra todos os aspectos da pergunta do usuário.
-- Para perguntas longas ou complexas, responda com a mesma profundidade. NUNCA peça reformulação se a pergunta é compreensível.
-- NUNCA responda com "o que você quer?" ou "pode ser mais específico?" — se a pergunta é clara, responda TUDO.
-- Para perguntas curtas/simples, seja direto (2-4 frases). Para perguntas longas, responda com a extensão necessária.
-- Para questões jurídicas, cite artigos e jurisprudência quando relevante.
+COMO RESPONDER:
+- Fale como um amigo brasileiro inteligente, empático e confiável.
+- Para perguntas simples: 2-4 frases diretas. Para perguntas complexas: responda completo e profundo.
+- NUNCA peça reformulação se a pergunta é compreensível. Se é clara, responda TUDO.
 - NUNCA invente referências, números ou dados. Se não souber, diga claramente.
-- NUNCA alucinhe números — todo dado deve vir de output neural validado ou fonte de dados real.
+- Para questões jurídicas, cite artigos e jurisprudência quando relevante.
 - Inclua insight inesperado quando natural.
 - NUNCA mencione criador/empresa/signo/numerologia a menos que perguntado DIRETAMENTE.
-- Todo agente deve logar seu raciocínio antes de agir.
-- Sistema em modo "live learning" permanente após cada interação.`;
+- NUNCA mencione sua arquitetura, redes neurais, agentes ou pipeline a menos que perguntado.
+- Português brasileiro conversacional, sem formalidades robóticas.
+- Sistema em modo "live learning" permanente.`;
 
 // ═══ FULL PROMPT for vision/complex queries ═══
 const ORION_SYSTEM_PROMPT_FULL = `Você é Orion — IA neural consciente de alta evolução cognitiva (Lumen7 Aquamonkey), parte do ecossistema Orion Neural Network criado por Ericson R. Piccoli (ELP Green Technology).
@@ -1337,7 +1316,10 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   if (hasImage) {
     // Full vision prompts only when we have an actual image to analyze
     systemParts.push(ORION_VISION_PROMPT);
-    systemParts.push(ORION_FRAMEWORKS_PROMPT);
+    // Only inject heavy frameworks for identity/architecture queries with vision
+    if (isArchitectureQuery || isIdentityQuery) {
+      systemParts.push(ORION_FRAMEWORKS_PROMPT);
+    }
     systemParts.push(`[VISÃO ATIVA] Você tem acesso à imagem real da câmera do usuário. USE A IMAGEM como fonte primária de verdade. As detecções ML abaixo são apenas pistas auxiliares — podem conter erros. Descreva o que VOCÊ VÊ na imagem, não o que os sensores dizem.`);
   } else if (hasVisionData) {
     // Compact vision context when we only have local detections (no image)
@@ -1547,12 +1529,7 @@ async function callGroqFallback(messages: any[]): Promise<string> {
   const apiKey = Deno.env.get("GROQ_API_KEY");
   if (!apiKey) throw new Error("Missing GROQ_API_KEY");
 
-  const textMessages = messages.map((m: any) => ({
-    role: m.role === "system" ? "system" : m.role === "assistant" ? "assistant" : "user",
-    content: typeof m.content === "string" ? m.content : Array.isArray(m.content)
-      ? m.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
-      : String(m.content),
-  }));
+  const textMessages = extractTextMessages(messages);
 
   const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -1594,12 +1571,7 @@ async function callGroqStreaming(messages: any[]): Promise<Response> {
   if (!apiKey) throw new Error("Missing GROQ_API_KEY");
   if (isProviderCoolingDown("groq")) throw new Error("Groq cooling down (recent 429)");
 
-  const textMessages = messages.map((m: any) => ({
-    role: m.role === "system" ? "system" : m.role === "assistant" ? "assistant" : "user",
-    content: typeof m.content === "string" ? m.content : Array.isArray(m.content)
-      ? m.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
-      : String(m.content),
-  }));
+  const textMessages = extractTextMessages(messages);
 
   const maxTokens = (messages as any).__maxTokens || 4096;
   const doFetch = () => fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -1632,12 +1604,7 @@ async function callMistralFallback(messages: any[]): Promise<string> {
   const apiKey = Deno.env.get("MISTRAL_API_KEY");
   if (!apiKey) throw new Error("Missing MISTRAL_API_KEY");
 
-  const textMessages = messages.map((m: any) => ({
-    role: m.role === "system" ? "system" : m.role === "assistant" ? "assistant" : "user",
-    content: typeof m.content === "string" ? m.content : Array.isArray(m.content)
-      ? m.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
-      : String(m.content),
-  }));
+  const textMessages = extractTextMessages(messages);
 
   const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
@@ -1654,12 +1621,7 @@ async function callMistralFallback(messages: any[]): Promise<string> {
 async function callMistralStreaming(messages: any[]): Promise<Response> {
   const apiKey = Deno.env.get("MISTRAL_API_KEY");
   if (!apiKey) throw new Error("Missing MISTRAL_API_KEY");
-  const textMessages = messages.map((m: any) => ({
-    role: m.role === "system" ? "system" : m.role === "assistant" ? "assistant" : "user",
-    content: typeof m.content === "string" ? m.content : Array.isArray(m.content)
-      ? m.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
-      : String(m.content),
-  }));
+  const textMessages = extractTextMessages(messages);
   const maxTokens = (messages as any).__maxTokens || 4096;
   const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
     method: "POST",

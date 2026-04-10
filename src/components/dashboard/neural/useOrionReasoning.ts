@@ -3,6 +3,7 @@ import { OrbState } from "./EnergyOrb";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeFrameStreaming, analyzeFrameWithAI, classifyIntent } from "@/lib/neural/orion-ai-client";
+import { stripMarkdown } from "@/lib/utils/text-utils";
 import {
   getMemoryFacts, addMemoryFacts, getSessionState, saveSessionState,
   syncMemoryToSupabase, loadMemoryFromSupabase, getLocalMemory,
@@ -53,6 +54,24 @@ export function useOrionReasoning(
   const aiFailCountRef = useRef(0);
   const recentIntentsRef = useRef<string[]>([]);
   const sessionSyncedRef = useRef(false);
+  const ttsWarmedRef = useRef(false);
+  const authUserCacheRef = useRef<{ id: string; email?: string | null } | null>(null);
+
+  /** Centralized cleanup — resets all processing flags. Use in try/finally. */
+  const cleanupProcessing = useCallback(() => {
+    aiPendingRef.current = false;
+    setIsProcessing(false);
+    isProcessingRef.current = false;
+    VS.aiResponding = false;
+  }, []);
+
+  /** Cached getUser — avoids 6+ DB calls per interaction */
+  const getCachedUser = useCallback(async () => {
+    if (authUserCacheRef.current) return authUserCacheRef.current;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) authUserCacheRef.current = { id: user.id, email: user.email };
+    return user;
+  }, []);
 
   // Session restoration
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
@@ -412,12 +431,15 @@ export function useOrionReasoning(
     const controller = new AbortController();
     if (abortControllerRef) abortControllerRef.current = controller;
 
-    // ═══ WARMUP: Preemptively warm TTS auth while LLM processes ═══
-    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-tts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-      body: JSON.stringify({ text: ".", voice: "Charon", lang: "pt-BR" }),
-    }).catch(() => {});
+    // ═══ WARMUP: Preemptively warm TTS auth — only ONCE per session ═══
+    if (!ttsWarmedRef.current) {
+      ttsWarmedRef.current = true;
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-tts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ text: ".", voice: "Charon", lang: "pt-BR" }),
+      }).catch(() => {});
+    }
 
     try {
       // ═══ FAST PRE-PROCESSING: Reformulation + Intent + SOM in parallel (~5ms total) ═══
@@ -450,7 +472,7 @@ export function useOrionReasoning(
         });
         setThought(clarifyMsg);
         speak(clarifyMsg).catch(() => {});
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         processNextInQueue();
         return;
       }
@@ -472,7 +494,7 @@ export function useOrionReasoning(
         });
         setThought(msg);
         speak(msg).catch(() => {});
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         processNextInQueue();
         return;
       }
@@ -488,7 +510,7 @@ export function useOrionReasoning(
           });
           setThought(instantHit.answer);
           speak(instantHit.answer).catch(() => {});
-          aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+          cleanupProcessing();
           recordLatency(intentType, "fast", Date.now() - now);
           somLearn(question, "general_llm");
           processNextInQueue();
@@ -512,7 +534,7 @@ export function useOrionReasoning(
         });
         setThought(greeting);
         speak(greeting).catch(() => {});
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         somLearn(question, "greeting");
         return;
       }
@@ -525,7 +547,7 @@ export function useOrionReasoning(
 
       if (needsAuth || needsBiometric) {
         try {
-          const { data: { user: authGateUser } } = await supabase.auth.getUser();
+          const authGateUser = await getCachedUser();
           if (!authGateUser) {
             const authMsg = "Você precisa estar logado para usar esse recurso. Faça login para continuar.";
             setChatHistory(prev => {
@@ -534,7 +556,7 @@ export function useOrionReasoning(
             });
             setThought(authMsg);
             speak(authMsg).catch(() => {});
-            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+            cleanupProcessing();
             processNextInQueue();
             return;
           }
@@ -558,7 +580,7 @@ export function useOrionReasoning(
                 });
                 setThought(enrollMsg);
                 speak(enrollMsg).catch(() => {});
-                aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+                cleanupProcessing();
                 processNextInQueue();
                 return;
               }
@@ -575,7 +597,7 @@ export function useOrionReasoning(
         /\b(cadastr|registr)\w*\s+(eu|meu\s+rosto|minha\s+voz|como\s+(dono|proprietário|proprietario|criador))\b/i.test(qLow);
       if (_isSpecialCmd && cadastrarMatch) {
         try {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const authUser = await getCachedUser();
           if (!authUser) {
             const noAuth = "Você precisa estar logado para se cadastrar como proprietário.";
             addChat("ai", noAuth);
@@ -670,7 +692,7 @@ export function useOrionReasoning(
       // 2. Voice ID questions — answer based on real system state
       if (_isSpecialCmd && (/\b(reconhec[eo]|sabe[s]?|conhec[eo])\s+(a\s+)?(minha\s+)?voz\b/i.test(qLow) || /\bvoice\s*id\b/i.test(qLow))) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const user = await getCachedUser();
           let voiceResponse: string;
           if (user) {
             const { data: enrollment } = await supabase
@@ -728,7 +750,7 @@ export function useOrionReasoning(
         });
         setThought("Protocolo Gênesis ativado");
         speak(genesisResponse).catch(() => {});
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         somLearn(question, "self_identity");
         processNextInQueue();
         return;
@@ -751,7 +773,7 @@ export function useOrionReasoning(
       // 2c. "Quem sou eu?" / "me conhece?" — identify via face enrollment + first-user = owner
       if (_isSpecialCmd && (/\b(quem\s+(é|e|sou)\s+eu|me\s+conhece|sabe\s+quem\s+eu\s+sou|meu\s+nome|quem\s+t[aá]\s+falando)\b/i.test(qLow))) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const user = await getCachedUser();
           if (user) {
             // Check face enrollment for biometric confirmation
             const { data: faceEnrollment } = await supabase
@@ -814,7 +836,7 @@ export function useOrionReasoning(
       const voiceConfigMatch = qLow.match(/\b(fal[ae]\s+mais\s+(devagar|r[aá]pido|lento)|aument[ae]\s+(velocidade|pitch|tom|speed)|diminu[ae]\s+(velocidade|pitch|tom|speed)|voz\s+mais\s+(grave|aguda|r[aá]pida|lenta)|mude?\s+(a\s+voz|o\s+tom|o\s+pitch))\b/i);
       if (_isSpecialCmd && (voiceConfigMatch)) {
         try {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const authUser = await getCachedUser();
           if (authUser) {
             const { data: currentCfg } = await supabase
               .from("neural_agent_config" as any)
@@ -869,7 +891,7 @@ export function useOrionReasoning(
             });
             setThought(execResult.response);
             speak(execResult.response).catch(() => {});
-            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+            cleanupProcessing();
             somLearn(question, somResult.handler);
             saveToNeuralLearning(question, execResult.response, "command_registry", 0.95, { action: cmdMatch.action }).catch(() => {});
             recordLatency(intentType, "fast", Date.now() - now);
@@ -907,7 +929,7 @@ export function useOrionReasoning(
         const searchType = searchMatch[3].toLowerCase();
         const searchTerm = searchMatch[4].replace(/[.!?,]+$/, "").trim();
         try {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const authUser = await getCachedUser();
           if (authUser && searchTerm.length > 1) {
             let results: string[] = [];
             let navPath = "";
@@ -997,7 +1019,7 @@ export function useOrionReasoning(
         setThought(bgResponse);
         addLog(`👂 Background voice: ${bgResponse.slice(0, 80)}`);
         speak(bgResponse).catch(() => {});
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         return;
       }
 
@@ -1100,7 +1122,7 @@ export function useOrionReasoning(
           setThought(response);
           addLog(`🌐 Browser Action [${browserAction.type}]: ${response}`);
           speak(response).catch(() => {});
-          aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+          cleanupProcessing();
           return;
         }
       } catch (browserErr: any) {
@@ -1137,7 +1159,7 @@ export function useOrionReasoning(
             setThought(mediaResult.response);
             addLog(`🎵 Media [${mediaResult.toolName}]: ${mediaResult.response.slice(0, 80)}`);
             speak(mediaResult.response).catch(() => {});
-            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+            cleanupProcessing();
             return;
           }
         } catch (mediaErr: any) {
@@ -1149,7 +1171,7 @@ export function useOrionReasoning(
       // SEGURANÇA: Apenas o proprietário (advogado/admin) pode executar auto-construção
       if (_isSpecialCmd && (intentType === "auto_construct")) {
         // Verify owner identity before proceeding
-        const { data: { user: constructUser } } = await supabase.auth.getUser();
+        const constructUser = await getCachedUser();
         if (constructUser) {
           const { data: constructRole } = await supabase.from("user_roles").select("role").eq("user_id", constructUser.id).maybeSingle();
           const isOwnerOrAdmin = constructRole?.role === "advogado" || constructRole?.role === "admin";
@@ -1161,7 +1183,7 @@ export function useOrionReasoning(
             });
             setThought(denied);
             speak(denied).catch(() => {});
-            aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+            cleanupProcessing();
             return;
           }
         }
@@ -1277,7 +1299,7 @@ export function useOrionReasoning(
             });
           } catch {}
         }
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         return;
       }
 
@@ -1402,7 +1424,7 @@ export function useOrionReasoning(
           addLog(`❌ Erro na auto-evolução: ${evoErr?.message || evoErr}`);
           speak(errMsg).catch(() => {});
         }
-        aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+        cleanupProcessing();
         return;
       }
 
@@ -1515,10 +1537,10 @@ export function useOrionReasoning(
       // ═══ USER NAME INJECTION — cached to avoid blocking DB calls ═══
       if (!(window as any).__orionUserName) {
         try {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const authUser = await getCachedUser();
           if (authUser?.id) {
             const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", authUser.id).maybeSingle();
-            (window as any).__orionUserName = profile?.full_name || authUser?.user_metadata?.full_name || authUser?.user_metadata?.nome || undefined;
+            (window as any).__orionUserName = profile?.full_name || undefined;
           }
         } catch { /* non-blocking */ }
       }
@@ -1591,18 +1613,7 @@ export function useOrionReasoning(
         (accumulated) => {
           if (bargedInRef.current) return;
           streamingText = accumulated;
-          const display = accumulated
-            .replace(/```json[\s\S]*?```/g, "")
-            .replace(/\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}/g, "")
-            .replace(/\[LEARN:[^\]]+\]/g, "")
-            .replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "")
-            .replace(/#{1,6}\s*/g, "")
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-            .replace(/https?:\/\/\S+/g, "")
-            .replace(/\/\/[^\n]*/g, "")
-            .replace(/<[^>]*>/g, "")
-            .replace(/[─═╔╗╚╝║]/g, "")
-            .trim();
+          const display = stripMarkdown(accumulated);
           setThought(display);
           setChatHistory(prev => {
             const last = prev[prev.length - 1];
@@ -1630,18 +1641,7 @@ export function useOrionReasoning(
 
       if (bargedInRef.current) {
         if (streamingText) {
-          const partial = streamingText
-            .replace(/```json[\s\S]*?```/g, "")
-            .replace(/\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}/g, "")
-            .replace(/\[LEARN:[^\]]+\]/g, "")
-            .replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "")
-            .replace(/#{1,6}\s*/g, "")
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-            .replace(/https?:\/\/\S+/g, "")
-            .replace(/\/\/[^\n]*/g, "")
-            .replace(/<[^>]*>/g, "")
-            .replace(/[─═╔╗╚╝║]/g, "")
-            .trim();
+          const partial = stripMarkdown(streamingText);
           setChatHistory(prev => {
             const cleaned = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
             return [...cleaned, { role: "ai" as const, text: `${partial} ⚡`, time: new Date().toLocaleTimeString("pt-BR") }];
@@ -1857,7 +1857,7 @@ export function useOrionReasoning(
         }
       }
     } finally {
-      aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
+      cleanupProcessing();
       lastAIRef.current = Date.now();
       if (abortControllerRef) abortControllerRef.current = null;
       // Process next queued question
