@@ -78,11 +78,16 @@ serve(async (req) => {
       }
     }
 
+    console.log(`[orion-vm-proxy] Fetching: ${vmUrl}`);
+    const startTime = Date.now();
+
     const vmResp = await fetchWithFallback(
       vmUrl,
       fetchOpts,
       null, // no HF fallback for direct JSON endpoints
     );
+
+    console.log(`[orion-vm-proxy] Response in ${Date.now() - startTime}ms, status: ${vmResp.status}`);
 
     const respBody = await vmResp.text();
     return new Response(respBody, {
