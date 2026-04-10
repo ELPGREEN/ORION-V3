@@ -355,18 +355,18 @@ Deno.serve(async (req) => {
           query_text: prompt,
           query_embedding: `[${embedding.join(",")}]`,
           match_count: 5,
-          semantic_weight: 0.6,
-          keyword_weight: 0.2,
-          authority_weight: 0.1,
-          recency_weight: 0.1,
+          semantic_weight: 0.55,
+          keyword_weight: 0.25,
+          authority_weight: 0.10,
+          recency_weight: 0.10,
         });
 
         const { data: kbData } = await supabaseAdmin.rpc("search_neural_knowledge", {
           query_text: prompt,
           query_embedding: `[${embedding.join(",")}]`,
-          match_count: 3,
-          semantic_weight: 0.7,
-          keyword_weight: 0.3,
+          match_count: 5,
+          semantic_weight: 0.55,
+          keyword_weight: 0.25,
         });
 
         const contextItems = [

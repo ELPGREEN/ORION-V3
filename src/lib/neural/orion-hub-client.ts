@@ -521,9 +521,17 @@ export async function ocrExtract(imageFile: File | Blob): Promise<OCRResult> {
 // ─── Vision Classification (VM first → HF Space CPU) ───
 
 export async function visionClassify(imageFile: File | Blob): Promise<VisionResult[]> {
-  // Try VM first (DETR-based)
-  const vmResult = await callVM<VisionResult[]>("classify");
-  if (vmResult && Array.isArray(vmResult)) return vmResult;
+  // Try VM first (DETR-based) — send image as base64
+  if (isVmAvailable()) {
+    try {
+      const arrayBuf = await imageFile.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)));
+      const vmResult = await callVM<VisionResult[]>("classify", { image_base64: base64, mime_type: imageFile.type || "image/jpeg" });
+      if (vmResult && Array.isArray(vmResult)) return vmResult;
+    } catch (err) {
+      console.warn("[OrionHub] visionClassify VM error:", err);
+    }
+  }
 
   // Fallback to HF Space
   const result = await callGradio<VisionResult[]>("vision_classify", { image: imageFile }, DEFAULT_TIMEOUT);

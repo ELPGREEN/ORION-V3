@@ -2938,8 +2938,8 @@ async function semanticSearchV3(
   supabase: any, queryEmbedding: number[], queryText: string,
   options: { matchThreshold?: number; matchCount?: number; filterSource?: string; filterType?: string; filterSources?: string[]; filterDateFrom?: string; filterDateTo?: string; } = {}
 ): Promise<any[]> {
-  const { matchThreshold = 0.3, matchCount = 20, filterSource, filterType, filterSources, filterDateFrom, filterDateTo } = options;
-  const safeMC = Math.min(matchCount, 20);
+  const { matchThreshold = 0.3, matchCount = 8, filterSource, filterType, filterSources, filterDateFrom, filterDateTo } = options;
+  const safeMC = Math.min(matchCount, 15);
 
   // Primary: hybrid search (vector + keyword via tsvector, with authority + recency)
   try {
@@ -3317,8 +3317,8 @@ Deno.serve(async (req) => {
       pipelineStages.push("search_neural_knowledge_rpc");
       const rpcStart = Date.now();
       const { data: nkData, error: nkError } = await supabase.rpc("search_neural_knowledge", {
-        query_embedding: `[${qEmb.join(",")}]`, query_text: query, match_count: matchCount || 20,
-        semantic_weight: 0.7, keyword_weight: 0.3, filter_type: filterType || null,
+        query_embedding: `[${qEmb.join(",")}]`, query_text: query, match_count: matchCount || 8,
+        semantic_weight: 0.55, keyword_weight: 0.25, filter_type: filterType || null,
       });
       timings.neural_knowledge_search_ms = Date.now() - rpcStart;
       if (nkError) throw nkError;
