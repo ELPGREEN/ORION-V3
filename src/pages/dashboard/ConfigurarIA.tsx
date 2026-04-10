@@ -5,7 +5,7 @@ import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
 import { OrionVoiceStudio } from "@/components/dashboard/neural/OrionVoiceStudio";
 import { useNeuralConfig, VisionRule, CustomCommand } from "@/hooks/useNeuralConfig";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
-import { speakWithPiper } from "@/lib/tts/piperTTS";
+import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -152,14 +152,17 @@ export default function ConfigurarIA() {
     onResult: handleVoiceCommand,
   });
 
-  // Orion's own formant voice (100% offline, zero API)
+  // Gemini TTS primary → Formant fallback (no robotic voice)
   const speak = async (text: string) => {
+    try {
+      const r = await speakWithGeminiTTS(text, "Charon");
+      if (r.played) return;
+    } catch {}
     try {
       const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
       const r = await speakWithOrionVoice(text);
       if (r.played) return;
     } catch {}
-    try { await speakWithPiper(text); } catch {}
   };
 
   // Load config into local state

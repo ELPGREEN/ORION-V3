@@ -8,7 +8,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+
 import {
   detectFacesFromFeatures,
   analyzeFacialEmotion,
@@ -153,22 +153,8 @@ export function useMultimodalVision(): MultimodalVisionState & MultimodalVisionA
           : s.emotionHistory,
       }));
 
-      // Periodically send to Edge Function for deep analysis (every 10th frame)
-      if (frameCountRef.current % 10 === 0 && features.length > 0) {
-        try {
-          await supabase.functions.invoke("tribunal-stream", {
-            body: {
-              action: "facial",
-              frameFeatures: features,
-              mode: "full",
-              sessionId: state.sessionId,
-              consentToken: CONSENT_KEY,
-            },
-          });
-        } catch {
-          // Non-critical: deep analysis failure doesn't block local processing
-        }
-      }
+      // Deep analysis removed — local neural processing is sufficient
+      // tribunal-stream edge function calls were unnecessary API overhead
     } catch (err) {
       setState(s => ({
         ...s,

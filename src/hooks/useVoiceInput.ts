@@ -259,7 +259,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     return sentences.map(s => s.trim()).filter(s => s.length > 2);
   }, []);
 
-  // ── TTS: High-quality Gemini TTS → Piper (no robotic SpeechSynthesis) ──
+  // ── TTS: Gemini TTS (primary) → Formant → Piper (no robotic SpeechSynthesis) ──
   const speak = useCallback(async (text: string, options?: { rate?: number; pitch?: number; onComplete?: () => void }) => {
     // Mutual silencing: stop listening before speaking
     destroyRecognition();
@@ -276,8 +276,19 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       options?.onComplete?.();
     };
 
+    // ── PRIMARY: Gemini TTS (human voice) ──
     try {
-      // Orion's own formant voice (100% offline)
+      const { speakWithGeminiTTS } = await import("@/lib/tts/geminiTTS");
+      const result = await speakWithGeminiTTS(text, "Charon");
+      if (result.played) {
+        if (result.audio) audioRef.current = result.audio;
+        finalize();
+        return;
+      }
+    } catch {}
+
+    // ── FALLBACK 1: Formant voice (100% offline) ──
+    try {
       const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
       const result = await speakWithOrionVoice(text);
       if (result.played) {
@@ -287,8 +298,8 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       }
     } catch {}
 
+    // ── FALLBACK 2: Piper WASM ──
     try {
-      // Fallback to Piper WASM
       const { speakWithPiper } = await import("@/lib/tts/piperTTS");
       const played = await speakWithPiper(text);
       if (played) {

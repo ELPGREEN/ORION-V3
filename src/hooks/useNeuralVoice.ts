@@ -438,16 +438,9 @@ export function useNeuralVoice(
       }
     }
 
-    // ── FALLBACK: Browser SpeechSynthesis — ONLY if Gemini completely failed ──
-    // This produces a robotic voice, so we log a clear warning
+    // ── NO FALLBACK: Prefer silence over robotic SpeechSynthesis ──
     if (!played && !cascadeAbort.signal.aborted) {
-      console.warn("[Voice] ⚠️ Gemini TTS indisponível — usando fallback browser (voz robótica)");
-      try {
-        await browserSpeak(cleanText);
-        played = true;
-      } catch (err) {
-        console.error("[Voice] Browser TTS fallback also failed:", (err as Error)?.message);
-      }
+      console.warn("[Voice] ⚠️ Gemini TTS indisponível — silêncio (sem fallback robótico)");
     }
 
     if (!played) {
