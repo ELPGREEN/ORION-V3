@@ -228,15 +228,24 @@ async def tts_endpoint(text: str = Form(...), speed: float = Form(1.0)):
     try:
         normalized_speed = max(0.25, min(speed, 4.0))
         length_scale = 1.0 / normalized_speed
+        sample_rate = int(getattr(piper_voice.config, "sample_rate", 22050))
+        silence_bytes = b"\x00\x00" * int(sample_rate * 0.3)
 
         audio_bytes = io.BytesIO()
         with wave.open(audio_bytes, "wb") as wav_file:
-            piper_voice.synthesize(
+            wav_file.setframerate(sample_rate)
+            wav_file.setsampwidth(2)
+            wav_file.setnchannels(1)
+
+            wrote_audio = False
+            for chunk in piper_voice.synthesize_stream_raw(
                 text,
-                wav_file,
                 length_scale=length_scale,
-                sentence_silence=0.3,
-            )
+            ):
+                if wrote_audio and silence_bytes:
+                    wav_file.writeframes(silence_bytes)
+                wav_file.writeframes(chunk)
+                wrote_audio = True
 
         audio_bytes.seek(0)
         return Response(
@@ -245,10 +254,11 @@ async def tts_endpoint(text: str = Form(...), speed: float = Form(1.0)):
             headers={
                 "X-Model": "piper-pt-br",
                 "X-Source": "gcp-vm",
-                "X-Sample-Rate": str(piper_voice.config.sample_rate),
+                "X-Sample-Rate": str(sample_rate),
             },
         )
     except Exception as e:
+        print(f"[Orion VM] TTS error:\n{traceback.format_exc()}")
         raise HTTPException(500, f"TTS error: {str(e)}")
 
 
