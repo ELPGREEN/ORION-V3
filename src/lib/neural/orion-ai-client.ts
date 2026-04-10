@@ -582,8 +582,15 @@ export async function analyzeFrameWithAI(
     // ═══ PERF FIX: buildLocalDetections only ONCE (was called 2x — streaming path duplicates this) ═══
     const localDetections = buildLocalDetections();
 
+    // Get user name for personalized responses
+    let userName: string | undefined;
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      userName = authUser?.user_metadata?.nome || authUser?.email?.split("@")[0] || undefined;
+    } catch { /* non-blocking */ }
+
     const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections },
+      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections, userName },
     });
     if (error) {
       console.warn("[OrionAI] Vision analysis invoke error:", error?.message);
@@ -832,6 +839,7 @@ export async function analyzeFrameStreaming(
         maxTokens: (window as any).__cognitiveMaxTokens || undefined,
         reasoningInstructions: (window as any).__cognitiveReasoningInstructions || undefined,
         inputSource: (window as any).__orionInputSource || "text",
+        userName: (() => { try { const u = (window as any).__orionUserName; return u || undefined; } catch { return undefined; } })(),
       }),
     });
 
@@ -845,10 +853,10 @@ export async function analyzeFrameStreaming(
     let spokenUpTo = 0;
     let buffer = "";
 
-    // ═══ LAYER 3: LLM Streaming (budget: 15s max, first token should arrive <2s) ═══
+    // ═══ LAYER 3: LLM Streaming (budget: 45s max for long answers, first token should arrive <3s) ═══
     const streamTimeout = setTimeout(() => {
       try { reader.cancel(); } catch (e: any) { console.warn("[OrionAI] Stream cancel:", e?.message); }
-    }, 15000);
+    }, 45000);
 
     try {
       while (true) {

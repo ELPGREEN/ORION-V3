@@ -1108,7 +1108,7 @@ async function fetchIdentityKnowledge(): Promise<string> {
 }
 
 async function buildOrionMessages(body: Record<string, unknown>) {
-  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions } = body as any;
+  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName } = body as any;
 
   const hasImage = imageBase64 && intentType !== "textual";
   const isComplexQuery = intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis";
@@ -1116,6 +1116,12 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   // Use compact prompt for simple text queries, full prompt for vision/complex
   const basePrompt = (hasImage || isComplexQuery) ? ORION_SYSTEM_PROMPT_FULL : ORION_SYSTEM_PROMPT_COMPACT;
   const systemParts = [basePrompt];
+
+  // ═══ USER IDENTITY INJECTION ═══
+  // Inject user name so Orion addresses them by name instead of "usuário"
+  if (userName && typeof userName === "string" && userName.trim()) {
+    systemParts.push(`═══ USUÁRIO ATUAL ═══\nO nome do usuário falando com você é: ${userName.trim()}. Chame-o pelo nome quando apropriado. NUNCA o chame de "usuário" — use o nome dele.`);
+  }
 
   // Inject cognitive reasoning instructions from client-side routing
   if (reasoningInstructions && typeof reasoningInstructions === "string") {
@@ -1964,15 +1970,14 @@ function stripImageFromMessages(msgs: any[], hadImage: boolean): any[] {
 async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) {
   const messages = await buildOrionMessages(body);
   const requestedMaxTokens = typeof body.maxTokens === "number" ? body.maxTokens : undefined;
-  // Default to 4096 for conversational, 12288 for document/legal/analysis, 8192 for visual E-R-C-A
   const intentType = body.intentType as string | undefined;
-  const queryText = String(body.query || body.text || "");
-  const isComplexQuery = queryText.length > 200 || /explique|analise|compare|detalh|paradox|demonstr|resolv/i.test(queryText);
+  const queryText = String(body.query || body.text || body.question || "");
+  const isComplexQuery = queryText.length > 120 || /explique|analise|compare|detalh|paradox|demonstr|resolv|como\s+funciona|por\s*que|qual\s+[aeo]|quais|liste|resuma|descreva|defina|elabore|disserte|argumente|justifique|diferencie|exemplifique|o\s+que\s+[eé]/i.test(queryText);
   const isVisualERCA = intentType?.startsWith("visual_") || intentType === "self_refine";
   const defaultMax = (intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis") 
-    ? 12288 
-    : isVisualERCA ? 8192
-    : isComplexQuery ? 8192 : 4096;
+    ? 16384 
+    : isVisualERCA ? 12288
+    : isComplexQuery ? 12288 : 8192;
   (messages as any).__maxTokens = requestedMaxTokens || defaultMax;
 
   const geminiKeys = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7", "GEMINI_API_KEY_GCP"];
