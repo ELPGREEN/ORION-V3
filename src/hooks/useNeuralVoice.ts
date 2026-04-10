@@ -472,8 +472,10 @@ export function useNeuralVoice(
     await speak(text);
   }, [speak]);
 
-  // No-op startThinking (filler audio removed)
-  const startThinking = useCallback(() => {}, []);
+  // startThinking — sets OrbState to thinking mode (JARVIS "PROCESSING" indicator)
+  const startThinking = useCallback(() => {
+    OrbState.voiceState = "thinking";
+  }, []);
 
   const createRecognition = useCallback((onCmd: (c: string) => void) => {
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
