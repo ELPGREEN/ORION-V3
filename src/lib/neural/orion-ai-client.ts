@@ -822,6 +822,16 @@ export async function analyzeFrameStreaming(
       ]
     );
 
+    // ═══ VOICE PROTOCOLS: Match 1500 protocols for anti-hallucination + coherence ═══
+    let protocolContext = "";
+    try {
+      const protocols = await matchProtocols(question);
+      if (protocols.systemPromptAddition) {
+        protocolContext = `\n\n${protocols.systemPromptAddition}`;
+      }
+    } catch {}
+    const enrichedContext = streamContext + protocolContext;
+
     const res = await fetch(`${supabaseUrl}/functions/v1/neural-ops`, {
       method: "POST",
       headers: {
@@ -831,7 +841,7 @@ export async function analyzeFrameStreaming(
       },
       signal,
       body: JSON.stringify({
-        imageBase64, context: streamContext, question,
+        imageBase64, context: enrichedContext, question,
         userMemory: getUserMemory(),
         dashboardContext: dashboardCtx,
         chatHistory: chatHistory?.slice(-4),
