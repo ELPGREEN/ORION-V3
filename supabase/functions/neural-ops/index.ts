@@ -2678,6 +2678,12 @@ Deno.serve(async (req) => {
         return json(result);
       }
 
+      // ═══ OPERA AI: Image Generation via Gemini ═══
+      if (action === "generate_image") {
+        const result = await handleImageGeneration(body);
+        return json(result);
+      }
+
       return json({ error: `Unknown action: ${action}` }, 400);
     }
 
