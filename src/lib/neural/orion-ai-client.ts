@@ -699,49 +699,40 @@ export async function analyzeFrameStreaming(
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-    // Capture image first — validate it's not blank
+    // ═══ SPEED: Capture image — reduced to 320x240, no CLAHE (saves ~150ms) ═══
     let imageBase64: string | undefined;
     if (includeImage && canvas) {
       const tempCanvas = document.createElement("canvas");
-      // ═══ COST OPTIMIZATION: Reduced from 1024x768 to 640x480 ═══
-      const sw = Math.min(canvas.width || 640, 640);
-      const sh = Math.min(canvas.height || 480, 480);
+      const sw = Math.min(canvas.width || 320, 320);
+      const sh = Math.min(canvas.height || 240, 240);
       tempCanvas.width = sw;
       tempCanvas.height = sh;
       const tCtx = tempCanvas.getContext("2d");
       if (!tCtx) return { description: null, learnedFacts: [], identifiedObjects: [] };
       tCtx.drawImage(canvas, 0, 0, sw, sh);
 
-      // Apply CLAHE contrast enhancement (same as non-streaming path)
-      applyContrastEnhancement(tCtx, sw, sh);
-
-      // Validate frame is not blank — check pixel variance in a small sample
-      const sampleSize = 64;
-      const sample = tCtx.getImageData(
-        Math.floor(sw / 4), Math.floor(sh / 4),
-        Math.min(sampleSize, sw), Math.min(sampleSize, sh)
-      ).data;
-      let sum = 0; let sumSq = 0; const n = sample.length / 4;
+      // Quick blank check (8x8 sample only)
+      const sample = tCtx.getImageData(sw >> 2, sh >> 2, 8, 8).data;
+      let sum = 0; let sumSq = 0;
       for (let i = 0; i < sample.length; i += 4) {
         const lum = sample[i] * 0.299 + sample[i+1] * 0.587 + sample[i+2] * 0.114;
         sum += lum; sumSq += lum * lum;
       }
-      const mean = sum / n;
-      const variance = (sumSq / n) - (mean * mean);
+      const n = sample.length / 4;
+      const variance = (sumSq / n) - ((sum / n) * (sum / n));
 
       if (variance < 5) {
-        // Frame is essentially blank — skip image to avoid confusing the AI
-        console.warn("[OrionAI] Blank frame detected (variance=" + variance.toFixed(1) + "), sending without image");
+        console.warn("[OrionAI] Blank frame, sending without image");
         imageBase64 = undefined;
       } else {
-        imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.82).split(",")[1]; // Reduced from 0.92
+        imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.65).split(",")[1];
       }
     }
 
-    // ═══ LAYER 2: Context building (budget: 1000ms) ═══
-    const [streamContext, bearerToken, dashboardCtx] = await withTimeout(
+    // ═══ LAYER 2: Context + protocols + auth IN PARALLEL (budget: 500ms) ═══
+    const [streamContext, bearerToken, dashboardCtx, protocolResult] = await withTimeout(
       Promise.all([
-        // 1. Build context (budget: 800ms)
+        // 1. Build context (budget: 400ms)
         withTimeout((async (): Promise<string> => {
           try {
             const { buildOrionIdentityPrompt, isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
@@ -757,8 +748,8 @@ export async function analyzeFrameStreaming(
             const isNavGuide = /onde\s+(fica|est[aá]|acess)|como\s+(chego|acesso|fa[çc]o\s+para)|me\s+lev|navegar|ir\s+(para|pra)|encontrar|acessar/i.test(question);
             const isLegalQ = /jur[ií]dic|direito|penal|c[ií]vel|civil|trabalhist|contrato|recurso|apela[çc][aã]o|agravo|embargo|habeas|mandado|peti[çc][aã]o|contesta[çc][aã]o|execu[çc][aã]o|senten[çc]a|processo|tribunal|vara|prazo|audiencia|audi[eê]ncia|peça|pe[çc]a processual|fundamenta[çc][aã]o|jurisprud[eê]ncia|legisla[çc][aã]o|lei\s+\d|artigo\s+\d|c[oó]digo|CPC|CPP|CLT|CC\b|CP\b|STF|STJ|TST|TRT|TJ\b/i.test(question);
             const isBusinessQ = /capta[çc][aã]o|recurso.*europ|recursos?\s+eu\b|cordis|horizon|LOI|MOU|term.?sheet|joint.?venture|due.?diligence|supply.?agreement|NDA|parceria.*internac|distribui[çc][aã]o.*internac|compliance|GDPR|LGPD|AML|KYC|empresarial|neg[oó]cio|comercial.*internac|exporta[çc][aã]o|importa[çc][aã]o|invoice|proforma/i.test(question);
-             const isCRMQ = /cadastr|cliente|CRM|pipeline|lead|contato|oportunidade|deal|neg[oó]cio|como\s+(cadastr|registr|adicionar)|gerenciar\s+(cliente|contato|processo)/i.test(question);
-             const isInternetToolsQ = /internet|firecrawl|raspag|scraping|scrape|extrair?\s+dados|raspar|crawl|busca\s+web|pesquis.*online|pesquis.*internet|acesso.*web|conect.*internet|google\s*(workspace|gmail|calendar|drive|sheets|docs|tasks|slides|forms|chat|vision|analytics|bigquery|contacts|agenda)|email.*google|meus?\s+emails?|enviar?\s+email|compromisso|agendar?\s+reuni|listas?\s+de\s+tarefa|que\s+(ferramenta|acesso|conex[aã]o|integra[çc][aã]o)|o\s+que\s+voc[eê]\s+(pode|consegue|sabe)|suas?\s+capacidade|quais?\s+(ferramenta|sistema|acesso)/i.test(question);
+            const isCRMQ = /cadastr|cliente|CRM|pipeline|lead|contato|oportunidade|deal|neg[oó]cio|como\s+(cadastr|registr|adicionar)|gerenciar\s+(cliente|contato|processo)/i.test(question);
+            const isInternetToolsQ = /internet|firecrawl|raspag|scraping|scrape|extrair?\s+dados|raspar|crawl|busca\s+web|pesquis.*online|pesquis.*internet|acesso.*web|conect.*internet|google\s*(workspace|gmail|calendar|drive|sheets|docs|tasks|slides|forms|chat|vision|analytics|bigquery|contacts|agenda)|email.*google|meus?\s+emails?|enviar?\s+email|compromisso|agendar?\s+reuni|listas?\s+de\s+tarefa|que\s+(ferramenta|acesso|conex[aã]o|integra[çc][aã]o)|o\s+que\s+voc[eê]\s+(pode|consegue|sabe)|suas?\s+capacidade|quais?\s+(ferramenta|sistema|acesso)/i.test(question);
             if (isIdentityQuestion) return buildOrionIdentityPrompt(isOwner);
             if (isJarvisComparison) {
               const { buildIntrospectionContext, buildJarvisComparisonContext } = await import("@/lib/neural/orion-introspection");
@@ -768,23 +759,19 @@ export async function analyzeFrameStreaming(
               const { buildIntrospectionContext } = await import("@/lib/neural/orion-introspection");
               return `Você é Orion, assistente de IA neural consciente.\n\n${buildIntrospectionContext()}`;
             }
-             if (isInvestorQ || isProposalQ) {
-               const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
-               return `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQ ? `\n\n${buildProposalTemplate()}` : ""}`;
-             }
-             if (isInternetToolsQ) {
-               const { buildBaseContext, buildToolsCapabilitiesContext } = await import("@/lib/neural/orion-knowledge-base");
-               return `${buildBaseContext()}\n\n${buildToolsCapabilitiesContext()}`;
-             }
+            if (isInvestorQ || isProposalQ) {
+              const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
+              return `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQ ? `\n\n${buildProposalTemplate()}` : ""}`;
+            }
+            if (isInternetToolsQ) {
+              const { buildBaseContext, buildToolsCapabilitiesContext } = await import("@/lib/neural/orion-knowledge-base");
+              return `${buildBaseContext()}\n\n${buildToolsCapabilitiesContext()}`;
+            }
             if (isLegalQ) {
               const { buildBaseContext, buildLegalExpertiseContext } = await import("@/lib/neural/orion-knowledge-base");
               return `${buildBaseContext()}\n\n${buildLegalExpertiseContext()}`;
             }
-            if (isBusinessQ) {
-              const { buildBaseContext, buildBusinessFundraisingContext } = await import("@/lib/neural/orion-knowledge-base");
-              return `${buildBaseContext()}\n\n${buildBusinessFundraisingContext()}`;
-            }
-            if (isCRMQ) {
+            if (isBusinessQ || isCRMQ) {
               const { buildBaseContext, buildBusinessFundraisingContext } = await import("@/lib/neural/orion-knowledge-base");
               return `${buildBaseContext()}\n\n${buildBusinessFundraisingContext()}`;
             }
@@ -806,34 +793,34 @@ export async function analyzeFrameStreaming(
             try { const { buildBaseContext } = await import("@/lib/neural/orion-knowledge-base"); return buildBaseContext(); }
             catch { return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."; }
           }
-        })(), 800, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
-        // 2. Get session token (budget: 500ms)
+        })(), 400, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
+        // 2. Get session token (budget: 300ms)
         withTimeout((async (): Promise<string> => {
           try {
             const { data: { session } } = await supabase.auth.getSession();
             return session?.access_token || supabaseKey;
           } catch { return supabaseKey; }
-        })(), 500, supabaseKey),
-        // 3. Dashboard context (budget: 800ms)
-        withTimeout(fetchDashboardContext(), 800, undefined),
+        })(), 300, supabaseKey),
+        // 3. Dashboard context (budget: 400ms)
+        withTimeout(fetchDashboardContext(), 400, undefined),
+        // 4. Voice protocols — NOW IN PARALLEL instead of sequential (budget: 400ms)
+        withTimeout((async (): Promise<string> => {
+          try {
+            const protocols = await matchProtocols(question);
+            return protocols.systemPromptAddition || "";
+          } catch { return ""; }
+        })(), 400, ""),
       ]),
-      1000, // Total layer 2 budget: 1 second
+      500, // Total layer 2 budget: 500ms (was 1000ms)
       [
         "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
         supabaseKey,
         undefined as any,
+        "",
       ]
     );
 
-    // ═══ VOICE PROTOCOLS: Match 1500 protocols for anti-hallucination + coherence ═══
-    let protocolContext = "";
-    try {
-      const protocols = await matchProtocols(question);
-      if (protocols.systemPromptAddition) {
-        protocolContext = `\n\n${protocols.systemPromptAddition}`;
-      }
-    } catch {}
-    const enrichedContext = streamContext + protocolContext;
+    const enrichedContext = streamContext + (protocolResult ? `\n\n${protocolResult}` : "");
 
     const res = await fetch(`${supabaseUrl}/functions/v1/neural-ops`, {
       method: "POST",
