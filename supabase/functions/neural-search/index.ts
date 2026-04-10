@@ -2938,8 +2938,8 @@ async function semanticSearchV3(
   supabase: any, queryEmbedding: number[], queryText: string,
   options: { matchThreshold?: number; matchCount?: number; filterSource?: string; filterType?: string; filterSources?: string[]; filterDateFrom?: string; filterDateTo?: string; } = {}
 ): Promise<any[]> {
-  const { matchThreshold = 0.3, matchCount = 20, filterSource, filterType, filterSources, filterDateFrom, filterDateTo } = options;
-  const safeMC = Math.min(matchCount, 20);
+  const { matchThreshold = 0.3, matchCount = 8, filterSource, filterType, filterSources, filterDateFrom, filterDateTo } = options;
+  const safeMC = Math.min(matchCount, 15);
 
   // Primary: hybrid search (vector + keyword via tsvector, with authority + recency)
   try {
