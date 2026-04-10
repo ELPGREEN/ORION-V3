@@ -431,12 +431,15 @@ export function useOrionReasoning(
     const controller = new AbortController();
     if (abortControllerRef) abortControllerRef.current = controller;
 
-    // ═══ WARMUP: Preemptively warm TTS auth while LLM processes ═══
-    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-tts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-      body: JSON.stringify({ text: ".", voice: "Charon", lang: "pt-BR" }),
-    }).catch(() => {});
+    // ═══ WARMUP: Preemptively warm TTS auth — only ONCE per session ═══
+    if (!ttsWarmedRef.current) {
+      ttsWarmedRef.current = true;
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-tts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({ text: ".", voice: "Charon", lang: "pt-BR" }),
+      }).catch(() => {});
+    }
 
     try {
       // ═══ FAST PRE-PROCESSING: Reformulation + Intent + SOM in parallel (~5ms total) ═══
