@@ -1246,14 +1246,24 @@ async function fetchYouTubeContext(videoId: string): Promise<string> {
 }
 
 async function buildOrionMessages(body: Record<string, unknown>) {
-  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName } = body as any;
+  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName, inputSource } = body as any;
 
   const hasImage = imageBase64 && intentType !== "textual";
   const questionStr0 = typeof question === "string" ? question : "";
   const isComplexQuery = intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis" || questionStr0.length > 120;
+  const wordCount = questionStr0.split(/\s+/).length;
+  const isVoiceInput = inputSource === "voice";
+  const isConversationalQuery = !hasImage && !isComplexQuery && wordCount < 20 && isVoiceInput;
   
-  // Use compact prompt for simple text queries, full prompt for vision/complex
-  const basePrompt = (hasImage || isComplexQuery) ? ORION_SYSTEM_PROMPT_FULL : ORION_SYSTEM_PROMPT_COMPACT;
+  // Use conversational prompt for short voice queries, compact for simple text, full for vision/complex
+  let basePrompt: string;
+  if (isConversationalQuery) {
+    basePrompt = ORION_SYSTEM_PROMPT_CONVERSATIONAL;
+  } else if (hasImage || isComplexQuery) {
+    basePrompt = ORION_SYSTEM_PROMPT_FULL;
+  } else {
+    basePrompt = ORION_SYSTEM_PROMPT_COMPACT;
+  }
   const systemParts = [basePrompt];
 
   // ═══ USER IDENTITY INJECTION ═══
