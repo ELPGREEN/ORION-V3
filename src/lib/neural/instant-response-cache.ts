@@ -85,6 +85,12 @@ export function getInstantResponse(question: string): InstantResponse | null {
     return null;
   }
 
+  // BYPASS: Long questions (>80 chars) are complex enough to always need LLM
+  if (question.length > 80) {
+    console.log(`[InstantCache] BYPASS — long query (${question.length} chars), routing to LLM`);
+    return null;
+  }
+
   const THRESHOLD = 0.88; // raised from 0.75 to prevent false positives
   const t0 = performance.now();
   let bestMatch: CacheEntry | null = null;
