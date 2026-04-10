@@ -2148,43 +2148,9 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   if (stream) {
     const attemptedProviders: string[] = [];
 
-    // ── ZERO: VM Gemini Proxy (text-only, cached, low-latency) ──
-    if (!hasImage) {
-      const vmUrl = Deno.env.get("ORION_VM_URL");
-      if (vmUrl) {
-        try {
-          attemptedProviders.push("vm_gemini_proxy");
-          const vmBody = {
-            messages: messages.map((m: any) => ({
-              role: m.role,
-              content: typeof m.content === "string" ? m.content : Array.isArray(m.content)
-                ? m.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
-                : String(m.content),
-            })),
-            max_tokens: (messages as any).__maxTokens || 8192,
-            stream: true,
-          };
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 8000);
-          const vmResp = await fetch(`${vmUrl}/proxy/gemini`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(vmBody),
-            signal: controller.signal,
-          });
-          clearTimeout(timer);
-          if (vmResp.ok && vmResp.body) {
-            console.log("[Orion] ✅ Streaming via VM Gemini Proxy — FASTEST PATH");
-            return new Response(vmResp.body, {
-              headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-            });
-          }
-          console.warn(`[Orion] VM proxy returned ${vmResp.status}`);
-        } catch (e: any) {
-          console.warn("[Orion] VM Gemini Proxy failed:", e?.message);
-        }
-      }
-    }
+    // ── VM Gemini Proxy DISABLED — was adding 3-8s timeout before fallback ──
+    // Vertex AI direct is faster and more reliable. Re-enable when VM IP is stable.
+    // To re-enable: uncomment and update ORION_VM_URL secret with correct IP.
 
     // ── PRIMARY: Vertex AI streaming (GCP credits — €1.127 disponíveis) ──
     try {
