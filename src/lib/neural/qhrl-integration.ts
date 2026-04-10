@@ -1,9 +1,9 @@
 /**
- * ─── v22.0: QHRL-LLM Integration ───
+ * ─── v22.1: QHRL-LLM Integration ───
  * Quantum-enhanced legal AI using proper qubit mechanics.
  * Born rule measurement, wave function collapse, calibration.
  *
- * Ref: Chen et al. (2023), Nielsen & Chuang (2000)
+ * Fixed: VQC params cached per session for reproducibility.
  */
 
 import {
@@ -43,9 +43,10 @@ export interface QHRLSummary {
   quantumAdvantageEstimate: number;
 }
 
-// ─── Calibration (cached per session for error mitigation) ───
+// ─── Cached state (per session) ───
 
 let _calibration: CalibrationMatrix | null = null;
+let _cachedParams: number[][][] | null = null;
 
 function getCalibration(): CalibrationMatrix {
   if (_calibration == null) {
@@ -54,9 +55,17 @@ function getCalibration(): CalibrationMatrix {
   return _calibration;
 }
 
-/** Reset calibration (call when noise model changes) */
+function getCachedParams(): number[][][] {
+  if (_cachedParams == null) {
+    _cachedParams = initVQCParams();
+  }
+  return _cachedParams;
+}
+
+/** Reset calibration and params (call when noise model changes) */
 export function resetCalibration(): void {
   _calibration = null;
+  _cachedParams = null;
 }
 
 // ─── Von Neumann Entropy ───
@@ -67,10 +76,10 @@ function vonNeumannEntropy(probabilities: number[]): number {
     .reduce((s, p) => s + p * Math.log2(p), 0);
 }
 
-// ─── Calibrated VQC measurement ───
+// ─── Calibrated VQC measurement (uses cached params) ───
 
 function calibratedMeasure(input: number[]): { prob: number; entropy: number } {
-  const params = initVQCParams();
+  const params = getCachedParams();
   const rawProb = vqcForward(input, params);
   const cal = getCalibration();
   const prob = applyCalibration(rawProb, cal);
@@ -176,7 +185,6 @@ export function extractQueryFeatures(query: string): number[] {
   for (let i = 0; i < safeQuery.length; i++) {
     features[i % 4] += Math.sin(safeQuery.charCodeAt(i) * 0.01) * 0.1;
   }
-  // Normalize to [0, 1] via sigmoid
   return features.map(f => 1 / (1 + Math.exp(-f)));
 }
 
