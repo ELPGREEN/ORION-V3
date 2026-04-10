@@ -131,7 +131,7 @@ export function recordEpisode(
 
   // 4. Text detected
   if (ocrText && ocrText.length > 5) {
-    const lastTextEvent = _events.findLast(e => e.type === "text_detected");
+    const lastTextEvent = [..._events].reverse().find(e => e.type === "text_detected");
     const lastText = lastTextEvent?.details?.text as string | undefined;
     if (lastText !== ocrText) {
       addEvent({

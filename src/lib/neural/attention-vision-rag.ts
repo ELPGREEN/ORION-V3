@@ -81,13 +81,13 @@ export function computeAttentionWeights(
     const label = (det.namePt || det.name).toLowerCase();
 
     // 1. Spatial salience: distance from center (0=center, 1=corner)
-    const cx = (det.bbox.x + det.bbox.width / 2) / frameWidth;
-    const cy = (det.bbox.y + det.bbox.height / 2) / frameHeight;
+    const cx = (det.x + det.width / 2) / frameWidth;
+    const cy = (det.y + det.height / 2) / frameHeight;
     const distFromCenter = Math.sqrt((cx - 0.5) ** 2 + (cy - 0.5) ** 2) / 0.707; // normalize to 0-1
     const salience = 1 - distFromCenter;
 
     // 2. Size: relative area of bounding box
-    const area = (det.bbox.width * det.bbox.height) / (frameWidth * frameHeight);
+    const area = (det.width * det.height) / (frameWidth * frameHeight);
     const size = Math.min(area * 10, 1); // cap at 1, boost small objects
 
     // 3. Semantic importance
@@ -102,8 +102,8 @@ export function computeAttentionWeights(
     let gaze = 0.5; // default neutral
     if (gazePoint) {
       const gazeDist = Math.sqrt(
-        ((det.bbox.x + det.bbox.width / 2) / frameWidth - gazePoint.x) ** 2 +
-        ((det.bbox.y + det.bbox.height / 2) / frameHeight - gazePoint.y) ** 2
+        ((det.x + det.width / 2) / frameWidth - gazePoint.x) ** 2 +
+        ((det.y + det.height / 2) / frameHeight - gazePoint.y) ** 2
       );
       gaze = Math.max(0, 1 - gazeDist * 2);
     }
