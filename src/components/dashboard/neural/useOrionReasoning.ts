@@ -1495,14 +1495,16 @@ export function useOrionReasoning(
         (window as any).__cognitiveReasoningInstructions = cognitiveRouteResult.reasoningInstructions;
       }
 
-      // ═══ USER NAME INJECTION for personalized responses ═══
-      try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser?.id) {
-          const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", authUser.id).maybeSingle();
-          (window as any).__orionUserName = profile?.full_name || authUser?.user_metadata?.full_name || authUser?.user_metadata?.nome || undefined;
-        }
-      } catch { /* non-blocking */ }
+      // ═══ USER NAME INJECTION — cached to avoid blocking DB calls ═══
+      if (!(window as any).__orionUserName) {
+        try {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser?.id) {
+            const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", authUser.id).maybeSingle();
+            (window as any).__orionUserName = profile?.full_name || authUser?.user_metadata?.full_name || authUser?.user_metadata?.nome || undefined;
+          }
+        } catch { /* non-blocking */ }
+      }
 
       // ═══ LAYER 1.7: Deep Query Estimator — "Aguarde ~X segundos" ═══
       const timeEstimate = estimateResponseTime(
@@ -1512,7 +1514,7 @@ export function useOrionReasoning(
       );
       if (timeEstimate.isDeep && timeEstimate.message) {
         addLog(`⏱️ DeepEstimate: ${timeEstimate.complexity}, ~${timeEstimate.estimatedMs}ms`);
-        // Show estimation message to user
+        // Show estimation message to user (non-blocking — don't wait for TTS)
         setChatHistory(prev => {
           const last = prev[prev.length - 1];
           if (last?.role === "ai" && last.text.startsWith("⏳")) {
@@ -1521,7 +1523,7 @@ export function useOrionReasoning(
           return prev;
         });
         setThought(timeEstimate.message);
-        // Speak the estimation (non-blocking, short)
+        // Fire-and-forget — do NOT await speak here, it delays the LLM call
         speak(timeEstimate.spokenMessage).catch(() => {});
       }
 
