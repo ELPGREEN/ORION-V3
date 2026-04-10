@@ -639,6 +639,7 @@ serve(async (req) => {
       categorias?: string[];
     }> = [];
     let usedProvider = "local_protocol";
+    let lastRefined: VisionResponse | null = null;
 
     const confidentLocal = local_detections.filter((d: any) => d.confidence >= CONFIDENCE_THRESHOLD);
     const uncertainLocal = local_detections.filter((d: any) => d.confidence < CONFIDENCE_THRESHOLD);
