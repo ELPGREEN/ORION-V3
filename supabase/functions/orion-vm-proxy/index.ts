@@ -21,6 +21,8 @@ serve(async (req) => {
     const VM_URL = Deno.env.get("ORION_VM_URL");
     const HF_SPACE_URL = "https://ericsonv12-orion-gpu.hf.space";
 
+    console.log("[orion-vm-proxy] VM_URL:", VM_URL ? `${VM_URL.substring(0, 20)}...` : "NOT SET");
+
     if (!VM_URL) {
       return new Response(
         JSON.stringify({ error: "ORION_VM_URL not configured", fallback: "hf-space" }),
@@ -76,11 +78,16 @@ serve(async (req) => {
       }
     }
 
+    console.log(`[orion-vm-proxy] Fetching: ${vmUrl}`);
+    const startTime = Date.now();
+
     const vmResp = await fetchWithFallback(
       vmUrl,
       fetchOpts,
       null, // no HF fallback for direct JSON endpoints
     );
+
+    console.log(`[orion-vm-proxy] Response in ${Date.now() - startTime}ms, status: ${vmResp.status}`);
 
     const respBody = await vmResp.text();
     return new Response(respBody, {
@@ -118,7 +125,7 @@ async function fetchWithFallback(
 ): Promise<Response> {
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15_000);
+    const timer = setTimeout(() => controller.abort(), 30_000);
     const resp = await fetch(primaryUrl, { ...opts, signal: controller.signal });
     clearTimeout(timer);
     if (resp.ok) return resp;
