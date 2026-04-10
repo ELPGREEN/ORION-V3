@@ -377,8 +377,3 @@ export function registerFidelity(a: QubitRegister, b: QubitRegister): number {
   }
   return f;
 }
-  for (let i = 0; i < n; i++) {
-    f *= fidelity(a.qubits[i], b.qubits[i]);
-  }
-  return f;
-}
