@@ -4,6 +4,7 @@
  * All free, no paid APIs. Orion's own voice, independent from Google.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
+import { OrbState } from "@/components/dashboard/neural/EnergyOrb";
 import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
