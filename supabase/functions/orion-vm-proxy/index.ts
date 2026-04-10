@@ -21,6 +21,8 @@ serve(async (req) => {
     const VM_URL = Deno.env.get("ORION_VM_URL");
     const HF_SPACE_URL = "https://ericsonv12-orion-gpu.hf.space";
 
+    console.log("[orion-vm-proxy] VM_URL:", VM_URL ? `${VM_URL.substring(0, 20)}...` : "NOT SET");
+
     if (!VM_URL) {
       return new Response(
         JSON.stringify({ error: "ORION_VM_URL not configured", fallback: "hf-space" }),
