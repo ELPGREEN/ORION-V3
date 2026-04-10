@@ -609,10 +609,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           </Badge>
         )}
         {!active && !wakeWordActive && speechOk && (
-          <Button size="sm" variant="ghost" className="h-7 text-[11px] gap-1"
-            onClick={handleActivateVoiceButton}>
-            <Mic className="h-3 w-3" /> Ativar escuta de voz
-          </Button>
+          <Badge variant="outline" className="text-[10px] h-6 font-mono border-blue-500/30 text-blue-400 gap-1.5 px-3">
+            <Mic className="h-3.5 w-3.5" /> Escuta automática
+          </Badge>
         )}
         {!active && !speechOk && (
           <Badge variant="outline" className="text-[9px] h-5 font-mono border-red-500/30 text-red-400 gap-1">
