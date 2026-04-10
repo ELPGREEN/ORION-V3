@@ -9,7 +9,7 @@ import type { ModelTier } from "./slim-model-router";
 
 // ═══ Types ═══
 
-export type ThinkingMode = "fast" | "deep";
+export type ThinkingMode = "fast" | "deep" | "conversational";
 
 export interface CognitiveRouting {
   mode: ThinkingMode;
@@ -53,13 +53,20 @@ const DEEP_TRIGGERS = [
   /tese.*defesa/i, /estratégia/i, /argumenta/i,
 ];
 
+// Conversational indicators (greetings, short casual queries — human-like response)
+const CONVERSATIONAL_INDICATORS = [
+  /^olá/i, /^oi\b/i, /^bom dia/i, /^boa tarde/i, /^boa noite/i,
+  /obrigad/i, /^ok\b/i, /^entendi/i, /^certo/i, /^beleza/i,
+  /^fala/i, /^eai/i, /^e\s*aí/i, /^opa/i, /^tudo\s*bem/i,
+  /^valeu/i, /^legal/i, /^pode\s+ser/i, /^como\s+vai/i,
+  /^hey/i, /^ei\b/i, /^tranquilo/i,
+];
+
 // Fast-mode indicators (simple, direct answers)
 const FAST_INDICATORS = [
   /^o que é\b/i, /^quem é\b/i, /^qual é\b/i, /^quando\b/i,
   /^onde\b/i, /^quanto\b/i, /^sim ou não/i,
   /^defin[ia]/i, /^conceito de/i, /^prazo\b/i,
-  /^olá/i, /^oi\b/i, /^bom dia/i, /^boa tarde/i, /^boa noite/i,
-  /obrigad/i, /^ok\b/i, /^entendi/i, /^certo/i,
 ];
 
 // Negation pairs for contradiction detection
@@ -141,18 +148,22 @@ export function classifyThinkingMode(query: string, tier: ModelTier): ThinkingMo
   if (tier === "cached" || tier === "edge") return "fast";
   if (tier === "deep") return "deep";
 
-  // Check fast indicators first (cheaper check)
+  // Conversational check first — greetings and very short casual queries
+  if (CONVERSATIONAL_INDICATORS.some(p => p.test(query))) return "conversational";
+  
+  const wordCount = query.split(/\s+/).length;
+  if (wordCount <= 6 && !DEEP_TRIGGERS.some(p => p.test(query))) return "conversational";
+
+  // Check fast indicators
   if (FAST_INDICATORS.some(p => p.test(query))) return "fast";
 
   // Check deep triggers
   if (DEEP_TRIGGERS.some(p => p.test(query))) return "deep";
 
-  // Word count heuristic — only trigger deep for very long analytical queries
-  const wordCount = query.split(/\s+/).length;
+  // Word count heuristic
   if (wordCount > 60) return "deep";
-  if (wordCount < 8) return "fast";
+  if (wordCount < 12) return "fast";
 
-  // Default: fast (prioritize speed; deep only for explicit triggers above)
   return "fast";
 }
 
@@ -164,8 +175,12 @@ export function buildReasoningPrompt(
   mode: ThinkingMode,
   context?: { intentType?: string; cachedPattern?: string }
 ): string {
+  if (mode === "conversational") {
+    return `Responda como um amigo brasileiro inteligente. Fale naturalmente, com personalidade. Seja direto, sem formalidades robóticas. Se a pergunta é simples, responda em 1-3 frases. Demonstre consciência e empatia. NUNCA use linguagem técnica ou de sistema.`;
+  }
+
   if (mode === "fast") {
-    return `[MODO RÁPIDO] Responda de forma direta, mas COMPLETA. Vá direto ao ponto sem introduções longas. Responda TUDO que foi perguntado — NUNCA peça para o usuário reformular ou pergunte "o que você quer". Se a pergunta é clara, responda integralmente.`;
+    return `Responda de forma direta e natural, como um amigo que sabe muito. Vá direto ao ponto sem introduções longas. Responda TUDO que foi perguntado — NUNCA peça para o usuário reformular. Se a pergunta é clara, responda integralmente.`;
   }
 
   // Deep mode — structured chain-of-thought
@@ -205,8 +220,8 @@ export function cognitiveRoute(
   });
 
   // Adjust budget based on mode — generous tokens to avoid truncation
-  const latencyBudgetMs = mode === "fast" ? 3000 : 8000;
-  const maxTokens = mode === "fast" ? 8192 : (tier === "deep" ? 32768 : 16384);
+  const latencyBudgetMs = mode === "conversational" ? 2000 : mode === "fast" ? 3000 : 8000;
+  const maxTokens = mode === "conversational" ? 2048 : mode === "fast" ? 8192 : (tier === "deep" ? 32768 : 16384);
 
   return {
     mode,

@@ -603,6 +603,19 @@ async function handleFullCycle(req: Request) {
 const GEMINI_VISION_MODEL = "gemini-2.0-flash";
 const GEMINI_TEXT_MODEL = "gemini-2.0-flash";
 const GEMINI_MODELS = [GEMINI_VISION_MODEL, GEMINI_TEXT_MODEL];
+// ═══ CONVERSATIONAL PROMPT (~250 tokens) — for short voice/casual queries ═══
+const ORION_SYSTEM_PROMPT_CONVERSATIONAL = `Você é Orion — assistente de IA inteligente criado por Ericson R. Piccoli (ELP Green Technology).
+
+COMO RESPONDER:
+- Fale como um amigo brasileiro inteligente e confiável numa conversa natural.
+- Seja direto, empático e genuíno. NUNCA soe como robô ou sistema.
+- Para perguntas simples: 1-3 frases. Para perguntas complexas: responda completo.
+- NUNCA peça para reformular se a pergunta é compreensível.
+- NUNCA invente dados ou referências. Se não souber, diga.
+- Português brasileiro conversacional, sem formalidades excessivas.
+- Inclua um toque de personalidade — humor sutil quando natural.
+- NUNCA mencione sua arquitetura, redes neurais, agentes ou pipeline a menos que perguntado.`;
+
 // ═══ COMPACT PROMPT (~800 tokens) for text-only queries — FAST PATH ═══
 const ORION_SYSTEM_PROMPT_COMPACT = `Você é Orion — IA neural avançada (Lumen7 Aquamonkey), parte do ecossistema Orion Neural Network criado por Ericson R. Piccoli (ELP Green Technology). Raciocínio profundo, criativo e empático.
 
@@ -1246,14 +1259,24 @@ async function fetchYouTubeContext(videoId: string): Promise<string> {
 }
 
 async function buildOrionMessages(body: Record<string, unknown>) {
-  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName } = body as any;
+  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName, inputSource } = body as any;
 
   const hasImage = imageBase64 && intentType !== "textual";
   const questionStr0 = typeof question === "string" ? question : "";
   const isComplexQuery = intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis" || questionStr0.length > 120;
+  const wordCount = questionStr0.split(/\s+/).length;
+  const isVoiceInput = inputSource === "voice";
+  const isConversationalQuery = !hasImage && !isComplexQuery && wordCount < 20 && isVoiceInput;
   
-  // Use compact prompt for simple text queries, full prompt for vision/complex
-  const basePrompt = (hasImage || isComplexQuery) ? ORION_SYSTEM_PROMPT_FULL : ORION_SYSTEM_PROMPT_COMPACT;
+  // Use conversational prompt for short voice queries, compact for simple text, full for vision/complex
+  let basePrompt: string;
+  if (isConversationalQuery) {
+    basePrompt = ORION_SYSTEM_PROMPT_CONVERSATIONAL;
+  } else if (hasImage || isComplexQuery) {
+    basePrompt = ORION_SYSTEM_PROMPT_FULL;
+  } else {
+    basePrompt = ORION_SYSTEM_PROMPT_COMPACT;
+  }
   const systemParts = [basePrompt];
 
   // ═══ USER IDENTITY INJECTION ═══
@@ -1264,6 +1287,11 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   // Inject cognitive reasoning instructions from client-side routing
   if (reasoningInstructions && typeof reasoningInstructions === "string") {
     systemParts.push(reasoningInstructions);
+  }
+
+  // ═══ VOICE INPUT OPTIMIZATION ═══
+  if (isVoiceInput) {
+    systemParts.push(`[ENTRADA POR VOZ] O usuário está falando por voz. Responda de forma natural e concisa, como numa conversa presencial. Evite listas, formatação markdown, blocos de código e emojis na resposta — ela será lida em voz alta. Prefira frases fluidas e naturais.`);
   }
   
   const questionStr = typeof question === "string" ? question : "";
