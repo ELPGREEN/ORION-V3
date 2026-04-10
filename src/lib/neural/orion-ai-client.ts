@@ -831,6 +831,7 @@ export async function analyzeFrameStreaming(
         localDetections: buildLocalDetections(),
         maxTokens: (window as any).__cognitiveMaxTokens || undefined,
         reasoningInstructions: (window as any).__cognitiveReasoningInstructions || undefined,
+        inputSource: (window as any).__orionInputSource || "text",
       }),
     });
 

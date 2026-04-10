@@ -1511,7 +1511,7 @@ export function useOrionReasoning(
       addLog(`⏱️ Pre-LLM: ${Date.now() - now}ms`);
 
       const questionForLLM = processedInput || question;
-      const result = await analyzeFrameStreaming(
+      (window as any).__orionInputSource = source;
         needsImage ? canvasRef.current : null, questionForLLM, cleanHistory, needsImage,
         identificationMode, intentType,
         (accumulated) => {
