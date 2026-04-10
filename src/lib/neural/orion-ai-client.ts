@@ -1013,14 +1013,28 @@ export async function analyzeFrameStreaming(
   }
 }
 
-// ═══ Intent Classifier v3 — Enhanced Contextual Reasoning ═══
-export function classifyIntent(question: string, recentIntents?: string[]): "visual" | "textual" | "mixed" | "self_evolve" | "auto_construct" {
+// ═══ Intent Classifier v3 — Enhanced with Opera AI intents ═══
+export function classifyIntent(question: string, recentIntents?: string[]): "visual" | "textual" | "mixed" | "self_evolve" | "auto_construct" | "web_search" | "url_analysis" | "youtube_summary" | "image_generation" {
   const q = question.toLowerCase().trim();
 
   // Skip classification for very short inputs (likely voice artifacts)
   if (q.length < 2) return "mixed";
 
-  // ═══ Auto-construct intent (highest priority) ═══
+  // ═══ OPERA AI: Image generation intent (highest priority) ═══
+  const imageGenPatterns = /\b(gere?\s+(uma?\s+)?imagem|crie?\s+(uma?\s+)?imagem|desenh[ae]|ilustr[ae]|gerar?\s+foto|cri[ae]\s+(uma?\s+)?ilustra[çc][aã]o|generate\s+(an?\s+)?image|draw|create\s+(an?\s+)?image|make\s+(an?\s+)?image|paint|sketch)\b/i;
+  if (imageGenPatterns.test(q)) return "image_generation";
+
+  // ═══ OPERA AI: YouTube summary intent ═══
+  if (/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[a-zA-Z0-9_-]{11}/.test(q)) return "youtube_summary";
+
+  // ═══ OPERA AI: URL analysis intent ═══
+  if (/https?:\/\/[^\s]+/.test(q) && !/youtube\.com|youtu\.be/.test(q)) return "url_analysis";
+
+  // ═══ OPERA AI: Web search intent ═══
+  const webSearchPatterns = /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|pesquis[ae]\s+na\s+web|busca\s+na\s+internet|search\s+for|look\s+up|news|current|latest|trending)\b/i;
+  if (webSearchPatterns.test(q)) return "web_search";
+
+  // ═══ Auto-construct intent ═══
   const autoConstructPatterns = /\b(constru[ai]|programe?|crie?\s+(uma?\s+)?(fun[çc][ãa]o|endpoint|api|componente|tabela|migra[çc][ãa]o)|gere?\s+(c[oó]digo|fun[çc][ãa]o|edge\s*function)|implemente?|desenvolv[ae]|code|build|cri[ae]\s+isso|programa\s+isso|fa[çc]a\s+(uma?\s+)?(fun[çc][ãa]o|api|endpoint)|auto[-\s]?constru|se\s+constru[ai]|construa[-\s]se)\b/i;
   if (autoConstructPatterns.test(q)) return "auto_construct";
 
@@ -1046,9 +1060,7 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
   if (strongVisualAnchors.test(q) && (deicticPatterns.test(q) || bodyRef.test(q) || /o que (é|estou|tô|tenho)\b/.test(q))) {
     return "visual";
   }
-  // "o que estou segurando" — always visual
   if (/o que.*(segurando|usando|vestindo|mostrando)/i.test(q)) return "visual";
-  // "como estou" — always visual
   if (/como\s+(eu\s+)?(estou|tô)\b/i.test(q) && q.length < 40) return "visual";
 
   if (verbIdentify.test(q)) return "visual";
@@ -1105,4 +1117,17 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
   if (visualScore > 0) return "visual";
   if (textualScore > 0) return "textual";
   return q.length < 15 ? "mixed" : "textual";
+}
+
+// ═══ OPERA AI: Image Generation Client Helper ═══
+export async function generateImageWithOrion(prompt: string): Promise<{ success: boolean; image?: string; mimeType?: string; text?: string; error?: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke("neural-ops", {
+      body: { action: "generate_image", prompt },
+    });
+    if (error) return { success: false, error: error.message };
+    return data;
+  } catch (e: any) {
+    return { success: false, error: e?.message || "Unknown error" };
+  }
 }

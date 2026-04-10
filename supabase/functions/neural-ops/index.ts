@@ -2642,9 +2642,63 @@ Gere reflexão cognitiva PROFUNDA em JSON.`;
   };
 }
 
-// ═══════════════════════════════════════════════
-// MAIN HANDLER
-// ═══════════════════════════════════════════════
+// ═══ OPERA AI: IMAGE GENERATION via Gemini ═══
+async function handleImageGeneration(body: Record<string, unknown>) {
+  const prompt = String(body.prompt || body.question || "");
+  if (!prompt) return { error: "prompt is required" };
+
+  const keys = getGeminiKeys();
+  if (keys.length === 0) return { error: "No Gemini keys configured" };
+
+  const model = "gemini-2.0-flash-exp";
+  for (const key of keys) {
+    try {
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseModalities: ["TEXT", "IMAGE"],
+              temperature: 0.8,
+            },
+          }),
+        }
+      );
+      if (!resp.ok) {
+        if (resp.status === 429) continue;
+        console.warn(`[ImageGen] Gemini ${resp.status}`);
+        continue;
+      }
+      const data = await resp.json();
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      let imageBase64 = "";
+      let textResponse = "";
+      for (const part of parts) {
+        if (part.inlineData) {
+          imageBase64 = part.inlineData.data;
+        }
+        if (part.text) {
+          textResponse += part.text;
+        }
+      }
+      if (imageBase64) {
+        console.log(`[ImageGen] ✅ Image generated (${imageBase64.length} chars base64)`);
+        return { success: true, image: imageBase64, mimeType: "image/png", text: textResponse };
+      }
+      if (textResponse) {
+        return { success: false, error: "Model returned text but no image", text: textResponse };
+      }
+    } catch (e: any) {
+      console.warn(`[ImageGen] Key failed:`, e?.message);
+    }
+  }
+  return { error: "Image generation failed with all keys" };
+}
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
