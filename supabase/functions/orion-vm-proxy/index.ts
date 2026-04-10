@@ -40,7 +40,7 @@ serve(async (req) => {
       
       const endpoint = mapActionToEndpoint(action);
       const vmResp = await fetchWithAutoStart(
-        `${VM_URL}${endpoint}`,
+        `${VM_URL.replace(/\/+$/, "")}${endpoint}`,
         { method: "POST", body: formData },
         `${HF_SPACE_URL}/api/predict/${action}`,
       );
@@ -58,13 +58,16 @@ serve(async (req) => {
 
     const endpoint = mapActionToEndpoint(action);
 
-    let vmUrl = `${VM_URL}${endpoint}`;
+    // Remove trailing slash from VM_URL to avoid double-slash (e.g. http://x:8080//health)
+    const baseUrl = VM_URL.replace(/\/+$/, "");
+    let vmUrl = `${baseUrl}${endpoint}`;
+    const GET_ACTIONS = ["health", "cache/stats"];
+    const isGet = GET_ACTIONS.includes(action);
     let fetchOpts: RequestInit = {
-      method: action === "health" ? "GET" : "POST",
-      headers: { "Content-Type": "application/json" },
+      method: isGet ? "GET" : "POST",
     };
 
-    if (action !== "health") {
+    if (!isGet) {
       if (["tts", "stt", "embeddings"].includes(action)) {
         const fd = new FormData();
         for (const [k, v] of Object.entries(body.payload || body)) {
@@ -72,6 +75,7 @@ serve(async (req) => {
         }
         fetchOpts = { method: "POST", body: fd };
       } else {
+        fetchOpts.headers = { "Content-Type": "application/json" };
         fetchOpts.body = JSON.stringify(body.payload || body);
       }
     }
