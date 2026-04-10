@@ -125,9 +125,9 @@ export function getOptimalSilenceDuration(turnState: TurnState): number {
     case "wait":
       return 0; // Immediate action
     case "finished":
-      return 400; // Quick response (was 700ms)
+      return 250; // Faster voice turn-taking
     case "unfinished":
-      return 1500; // Wait longer for user to continue
+      return 1200; // Slightly shorter wait without cutting off the user
   }
 }
 

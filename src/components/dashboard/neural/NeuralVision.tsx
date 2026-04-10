@@ -285,7 +285,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     else {
       const finalCommand = cleanedCommand || original;
       if (supernetConnected) sendSuperNetQuery(finalCommand);
-      else askAI(finalCommand);
+      else askAI(finalCommand, "voice");
     }
     toast.info(`🎤 "${cleanedCommand || original}"`);
   }, [active, stopCamera, startCamera, deactivateGracefully, askAI, supernetConnected, sendSuperNetQuery, speak, speakFast, voiceClone]);

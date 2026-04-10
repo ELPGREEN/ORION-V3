@@ -1512,6 +1512,7 @@ export function useOrionReasoning(
 
       const questionForLLM = processedInput || question;
       (window as any).__orionInputSource = source;
+      const result = await analyzeFrameStreaming(
         needsImage ? canvasRef.current : null, questionForLLM, cleanHistory, needsImage,
         identificationMode, intentType,
         (accumulated) => {
