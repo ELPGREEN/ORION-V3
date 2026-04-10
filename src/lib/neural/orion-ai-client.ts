@@ -854,10 +854,21 @@ export async function analyzeFrameStreaming(
     let spokenUpTo = 0;
     let buffer = "";
 
-    // ═══ LAYER 3: LLM Streaming (budget: 45s max for long answers, first token should arrive <3s) ═══
-    const streamTimeout = setTimeout(() => {
-      try { reader.cancel(); } catch (e: any) { console.warn("[OrionAI] Stream cancel:", e?.message); }
-    }, 45000);
+    // ═══ LAYER 3: LLM Streaming — idle-based timeout (resets on each chunk) ═══
+    // Allows long answers to complete as long as data keeps flowing
+    const STREAM_IDLE_MS = 30000;  // 30s without any chunk = abort
+    const STREAM_MAX_MS = 120000;  // 120s absolute max
+    let idleTimer: ReturnType<typeof setTimeout>;
+    const maxTimer = setTimeout(() => {
+      try { reader.cancel(); } catch (e: any) { console.warn("[OrionAI] Stream max timeout:", e?.message); }
+    }, STREAM_MAX_MS);
+    const resetIdle = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        try { reader.cancel(); } catch (e: any) { console.warn("[OrionAI] Stream idle timeout:", e?.message); }
+      }, STREAM_IDLE_MS);
+    };
+    resetIdle(); // start first idle window
 
     try {
       while (true) {

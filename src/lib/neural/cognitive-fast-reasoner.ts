@@ -147,13 +147,13 @@ export function classifyThinkingMode(query: string, tier: ModelTier): ThinkingMo
   // Check deep triggers
   if (DEEP_TRIGGERS.some(p => p.test(query))) return "deep";
 
-  // Word count heuristic
+  // Word count heuristic — only trigger deep for very long analytical queries
   const wordCount = query.split(/\s+/).length;
-  if (wordCount > 25) return "deep";
+  if (wordCount > 60) return "deep";
   if (wordCount < 8) return "fast";
 
-  // Default: fast for slim, deep for full
-  return tier === "slim" ? "fast" : "deep";
+  // Default: fast (prioritize speed; deep only for explicit triggers above)
+  return "fast";
 }
 
 /**
