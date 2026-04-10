@@ -206,6 +206,28 @@ export function useNeuralVoice(
     preloadPiper();
     loadVoicePrefs().catch(() => {});
 
+    // Prime AudioContext on first user gesture to unlock autoplay
+    const primeAudio = () => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        if (ctx.state === "suspended") ctx.resume().catch(() => {});
+        // Play silent buffer to unlock audio
+        const buf = ctx.createBuffer(1, 1, 22050);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+        console.log("[Voice] AudioContext primed for autoplay");
+        setTimeout(() => ctx.close().catch(() => {}), 100);
+      } catch {}
+      document.removeEventListener("click", primeAudio);
+      document.removeEventListener("touchstart", primeAudio);
+      document.removeEventListener("keydown", primeAudio);
+    };
+    document.addEventListener("click", primeAudio, { once: true });
+    document.addEventListener("touchstart", primeAudio, { once: true });
+    document.addEventListener("keydown", primeAudio, { once: true });
+
     const handler = () => {
       const v = getOrionVoice();
       if (v) maleVoiceRef.current = v;
