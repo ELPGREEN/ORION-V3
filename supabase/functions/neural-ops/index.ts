@@ -1288,6 +1288,11 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   if (reasoningInstructions && typeof reasoningInstructions === "string") {
     systemParts.push(reasoningInstructions);
   }
+
+  // ═══ VOICE INPUT OPTIMIZATION ═══
+  if (isVoiceInput) {
+    systemParts.push(`[ENTRADA POR VOZ] O usuário está falando por voz. Responda de forma natural e concisa, como numa conversa presencial. Evite listas, formatação markdown, blocos de código e emojis na resposta — ela será lida em voz alta. Prefira frases fluidas e naturais.`);
+  }
   
   const questionStr = typeof question === "string" ? question : "";
   const contextStr = typeof context === "string" ? context : "";
