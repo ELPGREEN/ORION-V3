@@ -86,23 +86,33 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // Auto-check voice on first voice interaction
   const handleVoiceIdentityCheck = useCallback(async () => {
-    if (voiceCheckDoneRef.current || identityStatus === "owner" || identityStatus === "no_enrollment") return;
+    if (voiceCheckDoneRef.current || identityStatus === "owner" || identityStatus === "creator" || identityStatus === "no_enrollment") return;
+    console.log("[NeuralVision] 🎤 Starting voice identity check...");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 } });
-      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm" });
       const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(chunks, { type: "audio/webm" });
+        const blob = new Blob(chunks, { type: recorder.mimeType });
+        console.log("[NeuralVision] 🎤 Voice capture complete, blob size:", blob.size, "chunks:", chunks.length);
         voiceCheckDoneRef.current = true;
+        if (blob.size < 1000) {
+          console.warn("[NeuralVision] ⚠️ Audio blob too small, skipping verification");
+          setIdentityStatus("owner");
+          return;
+        }
         await verifyVoiceIdentity(blob);
       };
-      recorder.start();
-      setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, 3000);
-    } catch {
+      recorder.start(500); // collect data every 500ms for reliable chunks
+      setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, 4000); // 4 seconds for better capture
+    } catch (err) {
+      console.warn("[NeuralVision] ⚠️ Mic access failed, skipping voice check:", err);
       voiceCheckDoneRef.current = true;
-      setIdentityStatus("owner"); // Can't access mic = skip
+      setIdentityStatus("owner");
     }
   }, [identityStatus, verifyVoiceIdentity, setIdentityStatus]);
 
