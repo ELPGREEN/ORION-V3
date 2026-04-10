@@ -462,6 +462,7 @@ export function useNeuralVoice(
     speakingRef.current = false;
     markTTSEnd(); // v31: TTS pipeline latency
     updateAiResponding(false);
+    OrbState.voiceState = "listening";
     // Only resume mic if not managed externally
     if (!options?.skipMicToggle) resumeSTT();
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
