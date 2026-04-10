@@ -436,7 +436,7 @@ export function useOrionReasoning(
           return [...clean, { role: "ai" as const, text: `🔌 ${clarifyMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
         });
         setThought(clarifyMsg);
-        try { await speak(clarifyMsg); } catch {}
+        speak(clarifyMsg).catch(() => {})
         aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
         processNextInQueue();
         return;
@@ -458,7 +458,7 @@ export function useOrionReasoning(
           return [...clean, { role: "ai" as const, text: `👁️ ${msg}`, time: new Date().toLocaleTimeString("pt-BR") }];
         });
         setThought(msg);
-        try { await speak(msg); } catch {}
+        speak(msg).catch(() => {})
         aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
         processNextInQueue();
         return;
@@ -474,7 +474,7 @@ export function useOrionReasoning(
             return [...clean, { role: "ai" as const, text: instantHit.answer, time: new Date().toLocaleTimeString("pt-BR") }];
           });
           setThought(instantHit.answer);
-          try { await speak(instantHit.answer); } catch {}
+          speak(instantHit.answer).catch(() => {})
           aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
           recordLatency(intentType, "fast", Date.now() - now);
           somLearn(question, "general_llm");
@@ -498,7 +498,7 @@ export function useOrionReasoning(
           return [...clean, { role: "ai" as const, text: greeting, time: new Date().toLocaleTimeString("pt-BR") }];
         });
         setThought(greeting);
-        try { await speak(greeting); } catch {}
+        speak(greeting).catch(() => {})
         aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
         somLearn(question, "greeting");
         return;
@@ -520,7 +520,7 @@ export function useOrionReasoning(
               return [...clean, { role: "ai" as const, text: `🔒 ${authMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
             });
             setThought(authMsg);
-            try { await speak(authMsg); } catch {}
+            speak(authMsg).catch(() => {})
             aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
             processNextInQueue();
             return;
@@ -544,7 +544,7 @@ export function useOrionReasoning(
                   return [...clean, { role: "ai" as const, text: `🔐 ${enrollMsg}`, time: new Date().toLocaleTimeString("pt-BR") }];
                 });
                 setThought(enrollMsg);
-                try { await speak(enrollMsg); } catch {}
+                speak(enrollMsg).catch(() => {})
                 aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
                 processNextInQueue();
                 return;
@@ -566,7 +566,7 @@ export function useOrionReasoning(
           if (!authUser) {
             const noAuth = "Você precisa estar logado para se cadastrar como proprietário.";
             addChat("ai", noAuth);
-            try { await speak(noAuth); } catch {}
+            speak(noAuth).catch(() => {})
             return;
           }
 
@@ -577,7 +577,7 @@ export function useOrionReasoning(
           if (!isAdvogado) {
             const denied = "Registro de proprietário negado. Apenas o perfil de advogado ou administrador pode se cadastrar como proprietário do sistema.";
             addChat("ai", denied);
-            try { await speak(denied); } catch {}
+            speak(denied).catch(() => {})
             return;
           }
 
@@ -616,7 +616,7 @@ export function useOrionReasoning(
           });
           setThought(successMsg);
           addLog("🔐 Proprietário cadastrado: Ericson Piccoli");
-          try { await speak(successMsg); } catch {}
+          speak(successMsg).catch(() => {})
 
           saveToNeuralLearning(question, successMsg, "owner_registration", 1.0, {
             owner_id: authUser.id, owner_name: "Ericson Piccoli",
@@ -625,7 +625,7 @@ export function useOrionReasoning(
         } catch (regErr) {
           console.warn("Owner registration error:", regErr);
           addChat("ai", "Erro ao processar o cadastro. Tente novamente.");
-          try { await speak("Erro ao processar o cadastro. Tente novamente."); } catch {}
+          speak("Erro ao processar o cadastro. Tente novamente.").catch(() => {})
           return;
         }
       }
@@ -643,12 +643,12 @@ export function useOrionReasoning(
           });
           setThought(response);
           addLog(`🧠 Memória local salva: ${factToStore.slice(0, 50)}`);
-          try { await speak("Memória registrada. Vou lembrar disso."); } catch {}
+          speak("Memória registrada. Vou lembrar disso.").catch(() => {})
           saveToNeuralLearning(question, response, "memory_store", 0.9).catch(() => {});
           somLearn(question, "memory_store");
         } else {
           addChat("ai", "O que você gostaria que eu guardasse na memória?");
-          try { await speak("O que você gostaria que eu guardasse na memória?"); } catch {}
+          speak("O que você gostaria que eu guardasse na memória?").catch(() => {})
         }
         somLearn(question, "memory_store");
         return;
@@ -686,7 +686,7 @@ export function useOrionReasoning(
             return [...clean, { role: "ai" as const, text: voiceResponse, time: new Date().toLocaleTimeString("pt-BR") }];
           });
           setThought(voiceResponse);
-          try { await speak(voiceResponse); } catch (e) { console.warn("[Orion] Voice ID speak error:", e); }
+          speak(voiceResponse); } catch (e) { console.warn("[Orion] Voice ID speak error:", e); }
           return;
         } catch (e) { console.warn("[Orion] Voice ID check error:", e); /* fall through to normal flow */ }
       }
@@ -700,7 +700,7 @@ export function useOrionReasoning(
           return [...clean, { role: "ai" as const, text: ownerResponse, time: new Date().toLocaleTimeString("pt-BR") }];
         });
         setThought(ownerResponse);
-        try { await speak(ownerResponse); } catch (e) { console.warn("[Orion] Owner speak error:", e); }
+        speak(ownerResponse); } catch (e) { console.warn("[Orion] Owner speak error:", e); }
         return;
       }
 
@@ -714,7 +714,7 @@ export function useOrionReasoning(
           return [...clean, { role: "ai" as const, text: selfResponse, time: new Date().toLocaleTimeString("pt-BR") }];
         });
         setThought(selfResponse);
-        try { await speak(selfResponse); } catch (e) { console.warn("[Orion] Self-identity speak error:", e); }
+        speak(selfResponse); } catch (e) { console.warn("[Orion] Self-identity speak error:", e); }
         return;
       }
 
@@ -774,7 +774,7 @@ export function useOrionReasoning(
               return [...clean, { role: "ai" as const, text: idResponse, time: new Date().toLocaleTimeString("pt-BR") }];
             });
             setThought(idResponse);
-            try { await speak(idResponse); } catch (e) { console.warn("[Orion] Identity speak error:", e); }
+            speak(idResponse); } catch (e) { console.warn("[Orion] Identity speak error:", e); }
             return;
           }
         } catch (e) { console.warn("[Orion] Identity check error:", e); /* fall through */ }
@@ -816,7 +816,7 @@ export function useOrionReasoning(
               });
               setThought(response);
               addLog(`🎙️ Config voz: speed=${newSpeed}, pitch=${newPitch}`);
-              try { await speak(response); } catch {}
+              speak(response).catch(() => {})
               return;
             }
           }
@@ -838,7 +838,7 @@ export function useOrionReasoning(
               return [...clean, { role: "ai" as const, text: execResult.response, time: new Date().toLocaleTimeString("pt-BR") }];
             });
             setThought(execResult.response);
-            try { await speak(execResult.response); } catch {}
+            speak(execResult.response).catch(() => {})
             aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
             somLearn(question, somResult.handler);
             saveToNeuralLearning(question, execResult.response, "command_registry", 0.95, { action: cmdMatch.action }).catch(() => {});
@@ -865,7 +865,7 @@ export function useOrionReasoning(
         });
         setThought(response);
         addLog(`🧭 Navegando para: ${navIntent.path}`);
-        try { await speak(response); } catch {}
+        speak(response).catch(() => {})
         somLearn(question, "navigation");
         setTimeout(() => { navigate(navIntent.path); }, 600);
         return;
@@ -937,7 +937,7 @@ export function useOrionReasoning(
             });
             setThought(response);
             addLog(`🔍 Busca ${searchType}: "${searchTerm}" → ${results.length} resultados`);
-            try { await speak(response); } catch {}
+            speak(response).catch(() => {})
             return;
           }
         } catch (sErr) { console.warn("Search error:", sErr); }
@@ -966,7 +966,7 @@ export function useOrionReasoning(
         });
         setThought(bgResponse);
         addLog(`👂 Background voice: ${bgResponse.slice(0, 80)}`);
-        try { await speak(bgResponse); } catch {}
+        speak(bgResponse).catch(() => {})
         aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
         return;
       }
@@ -978,21 +978,21 @@ export function useOrionReasoning(
         if (!bluetoothManager.isSupported) {
           const r = "Web Bluetooth nao e suportado neste navegador. Use Chrome ou Edge com HTTPS.";
           setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: r, time: new Date().toLocaleTimeString("pt-BR") }]; });
-          setThought(r); try { await speak(r); } catch {} return;
+          setThought(r); speak(r).catch(() => {}) return;
         }
         const r0 = "Escaneando dispositivos Bluetooth. Selecione um na janela do navegador.";
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: r0, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        try { await speak(r0); } catch {}
+        speak(r0).catch(() => {})
         const found = await bluetoothManager.scan();
         if (found) {
           const ok = await bluetoothManager.connect(found.id);
           const r1 = ok ? `Conectado ao dispositivo ${found.name}.` : `Nao foi possivel conectar ao ${found.name}.`;
           setChatHistory(prev => [...prev, { role: "ai" as const, text: r1, time: new Date().toLocaleTimeString("pt-BR") }]);
-          setThought(r1); addLog(`🔵 BLE: ${r1}`); try { await speak(r1); } catch {}
+          setThought(r1); addLog(`🔵 BLE: ${r1}`); speak(r1).catch(() => {})
         } else {
           const r2 = "Nenhum dispositivo selecionado.";
           setChatHistory(prev => [...prev, { role: "ai" as const, text: r2, time: new Date().toLocaleTimeString("pt-BR") }]);
-          try { await speak(r2); } catch {}
+          speak(r2).catch(() => {})
         }
         return;
       }
@@ -1004,7 +1004,7 @@ export function useOrionReasoning(
         const { smartHome } = await import("@/lib/neural/smart-home-controller");
         const result = await smartHome.handleVoiceCommand(question);
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        setThought(result); addLog(`🏠 SmartHome: ${result}`); try { await speak(result); } catch {} return;
+        setThought(result); addLog(`🏠 SmartHome: ${result}`); speak(result).catch(() => {}) return;
       }
 
       const iotTempMatch = /\b(temperatura|temp)\b/i.test(qLow) && /\b(qual|quanto|mostr|status|sensor)/i.test(qLow);
@@ -1012,7 +1012,7 @@ export function useOrionReasoning(
         const { iotBridge } = await import("@/lib/neural/iot-device-bridge");
         const result = await iotBridge.getTemperature("temp_sala");
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        setThought(result); addLog(`🌡️ IoT: ${result}`); try { await speak(result); } catch {} return;
+        setThought(result); addLog(`🌡️ IoT: ${result}`); speak(result).catch(() => {}) return;
       }
 
       const iotRobotMatch = /\b(status|estado)\s+(do\s+)?(rob[oô]|robo|robot)\b/i.test(qLow);
@@ -1020,7 +1020,7 @@ export function useOrionReasoning(
         const { iotBridge } = await import("@/lib/neural/iot-device-bridge");
         const result = await iotBridge.getRobotStatus();
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        setThought(result); addLog(`🤖 IoT: ${result}`); try { await speak(result); } catch {} return;
+        setThought(result); addLog(`🤖 IoT: ${result}`); speak(result).catch(() => {}) return;
       }
 
       const iotStatusMatch = /\b(status|estado)\s+(dos\s+)?(sensor|dispositivo|iot|device)/i.test(qLow);
@@ -1031,7 +1031,7 @@ export function useOrionReasoning(
         const bleDevs = bleMgr.isSupported ? ` BLE: ${bleMgr.getDevices().length} dispositivos.` : "";
         const result = `${summary}${bleDevs}`;
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        setThought(result); addLog(`📡 IoT: ${result}`); try { await speak(result); } catch {} return;
+        setThought(result); addLog(`📡 IoT: ${result}`); speak(result).catch(() => {}) return;
       }
 
       // ═══ NATIVE DEVICE: "status do dispositivo", "bateria", "localizacao", "tirar foto" ═══
@@ -1055,7 +1055,7 @@ export function useOrionReasoning(
           result = await getDeviceSummary();
         }
         setChatHistory(prev => { const c = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...c, { role: "ai" as const, text: result, time: new Date().toLocaleTimeString("pt-BR") }]; });
-        setThought(result); addLog(`📱 Nativo: ${result}`); try { await speak(result); } catch {} return;
+        setThought(result); addLog(`📱 Nativo: ${result}`); speak(result).catch(() => {}) return;
       }
 
       // ═══ MEDIA / SPOTIFY: intercept music/search/playlist commands BEFORE AI ═══
@@ -1071,7 +1071,7 @@ export function useOrionReasoning(
             });
             setThought(mediaResult.response);
             addLog(`🎵 Media [${mediaResult.toolName}]: ${mediaResult.response.slice(0, 80)}`);
-            try { await speak(mediaResult.response); } catch {}
+            speak(mediaResult.response).catch(() => {})
             aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
             return;
           }
@@ -1095,7 +1095,7 @@ export function useOrionReasoning(
               return [...clean, { role: "ai" as const, text: denied, time: new Date().toLocaleTimeString("pt-BR") }];
             });
             setThought(denied);
-            try { await speak(denied); } catch {}
+            speak(denied).catch(() => {})
             aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
             return;
           }
@@ -1106,7 +1106,7 @@ export function useOrionReasoning(
           const withoutPlaceholder = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
           return [...withoutPlaceholder, { role: "ai" as const, text: "🏗️ Iniciando construção autônoma via SupAgent...", time: new Date().toLocaleTimeString("pt-BR") }];
         });
-        try { await speak("Entendido. Acionando o SupAgent para construção autônoma. Aguarde."); } catch {}
+        speak("Entendido. Acionando o SupAgent para construção autônoma. Aguarde.").catch(() => {})
 
         try {
           // Detect target type from question
@@ -1186,7 +1186,7 @@ export function useOrionReasoning(
             const withoutConstruct = prev.filter(m => !(m.role === "ai" && m.text.startsWith("🏗️")));
             return [...withoutConstruct, { role: "ai" as const, text: `🏗️ ${summary}`, time: new Date().toLocaleTimeString("pt-BR") }];
           });
-          try { await speak(summary); } catch {}
+          speak(summary).catch(() => {})
 
           saveToNeuralLearning(question, summary, "auto_construct", validationScore, {
             target_type: targetType, risk_level: riskLevel, auto_applied: autoApplied, status, provider, steps: stepsCount,
@@ -1196,7 +1196,7 @@ export function useOrionReasoning(
           const errMsg = "Não consegui completar a construção agora. O SupAgent registrou o erro para aprendizado futuro.";
           addChat("ai", errMsg);
           addLog(`❌ Erro na construção: ${constructErr?.message || constructErr}`);
-          try { await speak(errMsg); } catch {}
+          speak(errMsg).catch(() => {})
 
           // Learn from the error
           try {
@@ -1223,7 +1223,7 @@ export function useOrionReasoning(
           const withoutPlaceholder = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
           return [...withoutPlaceholder, { role: "ai" as const, text: "🧬 Iniciando ciclo de auto-evolução...", time: new Date().toLocaleTimeString("pt-BR") }];
         });
-        try { await speak("Iniciando ciclo de auto-evolução. Aguarde alguns segundos."); } catch {}
+        speak("Iniciando ciclo de auto-evolução. Aguarde alguns segundos.").catch(() => {})
 
         try {
           // ═══ PHASE 1: Neural Evolution (analyze → approve → apply) ═══
@@ -1322,7 +1322,7 @@ export function useOrionReasoning(
             const withoutEvo = prev.filter(m => !(m.role === "ai" && m.text.startsWith("🧬")));
             return [...withoutEvo, { role: "ai" as const, text: `🧬 ${summary}`, time: new Date().toLocaleTimeString("pt-BR") }];
           });
-          try { await speak(summary); } catch {}
+          speak(summary).catch(() => {})
 
           saveToNeuralLearning(question, summary, "self_evolution", 0.95, {
             proposals: propostas, approved: aprovadas, applied: aplicadas, patchesGenerated: patchesGerados,
@@ -1335,7 +1335,7 @@ export function useOrionReasoning(
           const errMsg = "Não consegui completar o ciclo de evolução agora. Tentarei novamente no próximo ciclo automático.";
           addChat("ai", errMsg);
           addLog(`❌ Erro na auto-evolução: ${evoErr?.message || evoErr}`);
-          try { await speak(errMsg); } catch {}
+          speak(errMsg).catch(() => {})
         }
         aiPendingRef.current = false; setIsProcessing(false); isProcessingRef.current = false; VS.aiResponding = false;
         return;
@@ -1356,7 +1356,7 @@ export function useOrionReasoning(
           });
           setThought(displayResponse);
           addLog(`🔧 Tool [${toolResult.toolName}]: ${displayResponse.slice(0, 80)}`);
-          try { await speak(displayResponse); } catch {}
+          speak(displayResponse).catch(() => {})
           
           // Auto-navigate if __NAV__ directive found
           if (navMatch) {
@@ -1463,7 +1463,7 @@ export function useOrionReasoning(
         });
         setThought(timeEstimate.message);
         // Speak the estimation (non-blocking, short)
-        try { await speak(timeEstimate.spokenMessage); } catch {}
+        speak(timeEstimate.spokenMessage).catch(() => {})
       }
 
       // ═══ LAYER 2: NLP Semantics + Cognition Context ═══
@@ -1646,7 +1646,7 @@ export function useOrionReasoning(
         });
         addLog(`🧠 IA: ${humanizedText.slice(0, 100)}...`);
         if (!spokeOrQueued && !bargedInRef.current) {
-          try { await speak(humanizedSpeech); spokeOrQueued = true; } catch {}
+          speak(humanizedSpeech); spokeOrQueued = true; } catch {}
         }
 
         // Wait for speech queue to finish before cleanup
@@ -1700,7 +1700,7 @@ export function useOrionReasoning(
             });
             addLog(`🧠 IA (fallback): ${fallbackResult.description}`);
             if (!bargedInRef.current) {
-              try { await speak(fallbackResult.description); } catch {}
+              speak(fallbackResult.description).catch(() => {})
             }
           } else {
             // Generate a rich contextual local response using vision data
@@ -1731,20 +1731,20 @@ export function useOrionReasoning(
               const factsPart = relevantFacts.length > 0 ? ` Sobre sua pergunta: ${relevantFacts.slice(0, 2).join(". ")}.` : "";
               const localMsg = `Baseado na minha análise visual local: ${visionPart}.${factsPart} Para uma análise mais profunda, repita a pergunta.`;
               addChat("ai", localMsg);
-              try { await speak(localMsg); } catch {}
+              speak(localMsg).catch(() => {})
             } else if (relevantFacts.length > 0) {
               const localMsg = relevantFacts.slice(0, 3).join(". ") + ".";
               addChat("ai", localMsg);
-              try { await speak(localMsg); } catch {}
+              speak(localMsg).catch(() => {})
             } else {
               addChat("ai", "Não tenho informações suficientes para responder a essa pergunta no momento.");
-              try { await speak("Não tenho informações suficientes para responder a essa pergunta no momento."); } catch {}
+              speak("Não tenho informações suficientes para responder a essa pergunta no momento.").catch(() => {})
             }
           }
         } catch (fbErr) {
           console.error("Fallback also failed:", fbErr);
           addChat("ai", "Estou com dificuldade de conexão. Reformule sua pergunta e tente de novo.");
-          try { await speak("Estou com dificuldade de conexão. Reformule sua pergunta e tente de novo."); } catch {}
+          speak("Estou com dificuldade de conexão. Reformule sua pergunta e tente de novo.").catch(() => {})
         }
       }
     } catch (e: any) {
