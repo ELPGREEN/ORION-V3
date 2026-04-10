@@ -300,14 +300,23 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     if (!hasGreetedRef.current) {
       hasGreetedRef.current = true;
-      speakFast("Sistema Orion ativo.").catch(() => {});
+      // Wait for TTS to finish BEFORE starting STT — otherwise mic gets killed mid-TTS
+      speakFast("Sistema Orion ativo.").then(() => {
+        if (!listening) {
+          setTimeout(() => startListening(handleVoice), 200);
+        }
+      }).catch(() => {
+        // TTS failed, start listening anyway
+        if (!listening) {
+          setTimeout(() => startListening(handleVoice), 200);
+        }
+      });
     } else {
       toast.info("⚡ Relâmpago Vivo — Orion pronto", { duration: 1500 });
-    }
-
-    // Camera does NOT start automatically — user must say "ativar visão"
-    if (!listening) {
-      setTimeout(() => startListening(handleVoice), 120);
+      // Camera does NOT start automatically — user must say "ativar visão"
+      if (!listening) {
+        setTimeout(() => startListening(handleVoice), 120);
+      }
     }
   }, [listening, startListening, handleVoice, speakFast]);
 
