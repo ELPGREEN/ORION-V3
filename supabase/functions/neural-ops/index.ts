@@ -2167,7 +2167,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
           };
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 2000); // 2s timeout (was 8s)
-          const vmResp = await fetch(`${vmUrl}/proxy/gemini`, {
+          const vmResp = await fetch(`${vmUrl}/gemini`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(vmBody),
