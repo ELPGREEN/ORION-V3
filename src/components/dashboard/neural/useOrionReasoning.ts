@@ -1711,6 +1711,7 @@ export function useOrionReasoning(
         } catch (e) {
           addLog(`⚠️ ActiveInference: erro na verificação — ${e}`);
         }
+        } // end if (!isConversationalMode) for layers 3.5/3.7
 
         // ═══ HUMANIZER: Strip AI-isms for natural output ═══
         const { humanizeText, humanizeForSpeech } = await import("@/lib/voice/humanizer");
