@@ -383,12 +383,13 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (!skipWakeWord && (initialCommand || state?.autoActivate || state?.autoCommand)) return;
 
     autoBootedRef.current = true;
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (!skipWakeWord && !hasGreetedRef.current) {
         hasGreetedRef.current = true;
-        speakFast("Orion ativo.").catch(() => {});
+        try { await speakFast("Orion ativo."); } catch {}
       }
       // Camera does NOT auto-start — only via "ativar visão" voice command
+      // Start listening AFTER TTS finishes to avoid mic race
       startDirectVoiceCapture();
     }, skipWakeWord ? 400 : 200);
 
