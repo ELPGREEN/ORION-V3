@@ -357,7 +357,7 @@ Deno.serve(async (req) => {
 
     if (!text.trim()) return jsonResponse({ error: "Text is required" }, 400);
 
-    const cleanText = text.trim().slice(0, 2500);
+    const cleanText = text.trim().slice(0, 5000);
     const selectedVoice = voice || DEFAULT_VOICE;
     const selectedLang = lang || DEFAULT_LANG;
     const stylePrompt = prompt || DEFAULT_PROMPT;

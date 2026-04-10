@@ -2,11 +2,12 @@
  * Gemini TTS — Free neural TTS using Google Gemini 2.5 Flash TTS (GA stable)
  * Tier 0 (highest quality) in Orion's voice cascade.
  * Uses edge function with key rotation. Falls back on 429/error.
+ * 
+ * v2: Gap-free playback via pre-buffering + larger chunks
  */
 
 let geminiTTSDisabled = false;
 let geminiTTSRetryAfter = 0;
-const DEFAULT_FALLBACK_RETRY_MS = 5_000; // Reduced from 15s — Vertex AI is stable now
 
 export interface GeminiTTSResult {
   played: boolean;
@@ -14,7 +15,7 @@ export interface GeminiTTSResult {
 }
 
 function disableGeminiTTS(retryAfterMs: number, reason: string): void {
-  const safeRetryMs = Math.max(3000, Math.min(retryAfterMs, 60_000)); // Min 3s (was 5s), max 60s (was 5min)
+  const safeRetryMs = Math.max(3000, Math.min(retryAfterMs, 60_000));
   geminiTTSDisabled = true;
   geminiTTSRetryAfter = Date.now() + safeRetryMs;
   console.warn(`[Gemini TTS] ${reason}; disabled for ${Math.ceil(safeRetryMs / 1000)}s`);
@@ -32,19 +33,18 @@ function isGeminiTTSCoolingDown(): boolean {
 }
 
 /**
- * Split text into sentence-level chunks for progressive playback.
- * Uses large chunks (800 chars) to avoid choppy pauses between sentences.
- * Short texts (≤1000 chars) are sent as a single chunk.
+ * Split text into chunks for TTS. Short texts (≤2000 chars) stay as a single
+ * chunk to avoid any pauses. Longer texts are split at sentence boundaries
+ * into ~1200-char chunks.
  */
 function splitIntoSentences(text: string): string[] {
-  // Short texts → single chunk (no splitting = no pauses)
-  if (text.length <= 1000) return [text.trim()];
+  if (text.length <= 2000) return [text.trim()];
 
   const sentences = text.match(/[^.!?…]+[.!?…]+\s*|[^.!?…]+$/g) || [text];
   const chunks: string[] = [];
   let current = "";
   for (const s of sentences) {
-    if (current.length + s.length > 800 && current.length > 0) {
+    if (current.length + s.length > 1200 && current.length > 0) {
       chunks.push(current.trim());
       current = s;
     } else {
@@ -57,7 +57,6 @@ function splitIntoSentences(text: string): string[] {
 
 /**
  * Fetch audio for a single chunk from Gemini TTS edge function.
- * Per-sentence timeout of 10s to prevent hanging.
  */
 async function fetchGeminiAudio(
   text: string,
@@ -69,7 +68,7 @@ async function fetchGeminiAudio(
   if (signal.aborted || isGeminiTTSCoolingDown()) return null;
 
   const sentenceController = new AbortController();
-  const sentenceTimeout = setTimeout(() => sentenceController.abort(), 20000);
+  const sentenceTimeout = setTimeout(() => sentenceController.abort(), 25000);
   const onParentAbort = () => sentenceController.abort();
   signal.addEventListener("abort", onParentAbort, { once: true });
 
@@ -99,7 +98,6 @@ async function fetchGeminiAudio(
       const data = await response.json().catch(() => null);
 
       if (data?.fallback || data?.error) {
-        // Only cooldown on ACTUAL rate limits, not generic server errors
         if (data?.rate_limited) {
           const retryAfterMs = typeof data?.retry_after_ms === "number" && Number.isFinite(data.retry_after_ms)
             ? data.retry_after_ms
@@ -112,7 +110,6 @@ async function fetchGeminiAudio(
       }
 
       if (!response.ok) {
-        // Don't cooldown on server errors — let next call retry fresh
         console.warn(`[Gemini TTS] Edge function error ${response.status} — will retry next call`);
       }
       return null;
@@ -135,16 +132,29 @@ async function fetchGeminiAudio(
 
 /**
  * Play a single audio blob. Returns a promise that resolves when playback ends.
+ * Accepts an optional `nextBlobUrl` to pre-create the next Audio element for
+ * gap-free transitions.
  */
-function playAudioBlob(blob: Blob, signal: AbortSignal): Promise<HTMLAudioElement | null> {
+function playAudioBlob(
+  blob: Blob,
+  signal: AbortSignal,
+  nextBlobUrl?: string,
+): Promise<{ audio: HTMLAudioElement | null; nextAudio: HTMLAudioElement | null }> {
   return new Promise((resolve) => {
     if (signal.aborted) {
-      resolve(null);
+      resolve({ audio: null, nextAudio: null });
       return;
     }
 
     const audioUrl = URL.createObjectURL(blob);
     const audio = new Audio(audioUrl);
+
+    // Pre-create next audio element for gap-free playback
+    let nextAudio: HTMLAudioElement | null = null;
+    if (nextBlobUrl) {
+      nextAudio = new Audio(nextBlobUrl);
+      nextAudio.preload = "auto";
+    }
 
     const cleanup = () => URL.revokeObjectURL(audioUrl);
     const onAbort = () => {
@@ -152,28 +162,27 @@ function playAudioBlob(blob: Blob, signal: AbortSignal): Promise<HTMLAudioElemen
       audio.currentTime = 0;
       audio.src = "";
       cleanup();
-      resolve(null);
+      if (nextAudio) { nextAudio.src = ""; nextAudio = null; }
+      resolve({ audio: null, nextAudio: null });
     };
     signal.addEventListener("abort", onAbort, { once: true });
 
     audio.onended = () => {
       signal.removeEventListener("abort", onAbort);
       cleanup();
-      resolve(audio);
+      resolve({ audio, nextAudio });
     };
     audio.onerror = (e) => {
       console.warn("[Gemini TTS] Audio playback error:", e);
       signal.removeEventListener("abort", onAbort);
       cleanup();
-      resolve(null);
+      resolve({ audio: null, nextAudio });
     };
 
     // Unlock AudioContext if suspended (autoplay policy)
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      if (ctx.state === "suspended") {
-        ctx.resume().catch(() => {});
-      }
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
       ctx.close().catch(() => {});
     } catch {}
 
@@ -181,15 +190,18 @@ function playAudioBlob(blob: Blob, signal: AbortSignal): Promise<HTMLAudioElemen
       console.warn("[Gemini TTS] audio.play() blocked:", err?.message);
       signal.removeEventListener("abort", onAbort);
       cleanup();
-      resolve(null);
+      resolve({ audio: null, nextAudio });
     });
   });
 }
 
 /**
- * Synthesize speech via Gemini TTS with parallel fetch + sequential playback.
- * ALL sentences are fetched in parallel upfront, then played in order.
- * This eliminates the 3-6s gap between sentences caused by sequential HTTP calls.
+ * Synthesize speech via Gemini TTS with parallel fetch + gap-free sequential playback.
+ * 
+ * Strategy:
+ * 1. ALL chunks are fetched in parallel (unchanged)
+ * 2. Blob URLs are pre-created so the next Audio element can preload
+ *    while the current one plays → zero gap between sentences
  */
 export async function speakWithGeminiTTS(
   text: string,
@@ -220,21 +232,69 @@ export async function speakWithGeminiTTS(
       return fail;
     }
 
-    // ── Play sequentially (no network wait between sentences) ──
+    // Filter to valid blobs and pre-create object URLs
+    const validBlobs: Blob[] = [];
+    const blobUrls: string[] = [];
+    for (const blob of blobs) {
+      if (blob) {
+        validBlobs.push(blob);
+        blobUrls.push(URL.createObjectURL(blob));
+      }
+    }
+
+    if (validBlobs.length === 0) {
+      signal?.removeEventListener("abort", onExternalAbort);
+      return fail;
+    }
+
+    // ── Play sequentially with pre-buffered next element ──
     let anyPlayed = false;
     let lastAudio: HTMLAudioElement | null = null;
 
-    for (let i = 0; i < blobs.length; i++) {
-      if (localController.signal.aborted || isGeminiTTSCoolingDown()) break;
+    for (let i = 0; i < validBlobs.length; i++) {
+      if (localController.signal.aborted) break;
 
-      const blob = blobs[i];
-      if (!blob) continue;
+      // Revoke the pre-created URL since playAudioBlob creates its own
+      URL.revokeObjectURL(blobUrls[i]);
 
-      const audio = await playAudioBlob(blob, localController.signal);
-      if (audio) {
+      // Pass next blob URL for preloading (gap-free transition)
+      const nextUrl = i + 1 < validBlobs.length ? blobUrls[i + 1] : undefined;
+      const result = await playAudioBlob(validBlobs[i], localController.signal, nextUrl);
+
+      if (result.audio) {
         anyPlayed = true;
-        lastAudio = audio;
+        lastAudio = result.audio;
       }
+
+      // If we have a pre-loaded next audio and it's ready, play it immediately
+      if (result.nextAudio && i + 1 < validBlobs.length) {
+        // The nextAudio was pre-created with the blob URL — start it now
+        try {
+          await result.nextAudio.play();
+          // Wait for it to finish
+          await new Promise<void>((resolve) => {
+            result.nextAudio!.onended = () => resolve();
+            result.nextAudio!.onerror = () => resolve();
+            const onAbort = () => {
+              result.nextAudio!.pause();
+              resolve();
+            };
+            localController.signal.addEventListener("abort", onAbort, { once: true });
+          });
+          anyPlayed = true;
+          lastAudio = result.nextAudio;
+          // Clean up the URL
+          URL.revokeObjectURL(blobUrls[i + 1]);
+          i++; // Skip next iteration since we already played it
+        } catch {
+          // Pre-play failed, will be played normally in next loop iteration
+        }
+      }
+    }
+
+    // Clean up any remaining URLs
+    for (let i = 0; i < blobUrls.length; i++) {
+      try { URL.revokeObjectURL(blobUrls[i]); } catch {}
     }
 
     signal?.removeEventListener("abort", onExternalAbort);
