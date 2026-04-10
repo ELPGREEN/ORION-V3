@@ -42,6 +42,12 @@ import {
 
 import { hadamard, rotationY } from "./quantum-gates";
 
+import {
+  densityMatrix as tensorDensityMatrix,
+  vonNeumannEntropy as tensorVonNeumannEntropy,
+  stateFidelity as tensorStateFidelity,
+} from "./tensor-state-vector";
+
 // ═══ Types ═══
 
 export interface WaveFunction {
@@ -281,11 +287,18 @@ export function collapsePartial(wf: WaveFunction, indices: number[]): CollapseRe
 
 /**
  * Calculate von Neumann entropy of the wave function.
- * S = -Σ pᵢ log₂(pᵢ) where pᵢ = P(|1⟩) for each qubit.
  * 
- * Returns 0 for pure certain states, max for maximally mixed.
+ * Tensor mode: computes true S(ρ) = -Tr(ρ log ρ) via density matrix.
+ * Legacy mode: S = -Σ pᵢ log₂(pᵢ) per qubit (sum, not product).
  */
 export function entropy(wf: WaveFunction): number {
+  // Tensor mode: use density matrix for correct entropy
+  if (wf.register.tensorState) {
+    const rho = tensorDensityMatrix(wf.register.tensorState);
+    return tensorVonNeumannEntropy(rho);
+  }
+
+  // Legacy: sum of per-qubit binary entropies
   let s = 0;
   for (const q of wf.register.qubits) {
     const p1 = measureProbability(q);
@@ -338,10 +351,14 @@ export function getMetrics(wf: WaveFunction): WaveFunctionMetrics {
 
 /**
  * Compute fidelity between two wave functions.
- * F = Π fidelity(qᵢ_a, qᵢ_b) — product of per-qubit fidelities.
- * Returns 1 for identical states, 0 for orthogonal.
+ * Uses tensor state vector when available (correct), else product of per-qubit fidelities.
  */
 export function waveFidelity(a: WaveFunction, b: WaveFunction): number {
+  // Use tensor state if both registers have it
+  if (a.register.tensorState && b.register.tensorState) {
+    return tensorStateFidelity(a.register.tensorState, b.register.tensorState);
+  }
+  // Legacy: product of per-qubit fidelities
   const n = Math.min(a.register.n, b.register.n);
   let f = 1;
   for (let i = 0; i < n; i++) {
