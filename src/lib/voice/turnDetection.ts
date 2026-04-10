@@ -107,8 +107,12 @@ export function detectTurnState(text: string, lang: string = "pt-BR"): TurnState
   // Very short utterances without punctuation → likely unfinished
   if (wordCount <= 2 && !/[.!?]$/.test(trimmed)) return "unfinished";
   
-  // Medium-long utterances (5+ words) without trailing connectors → likely finished
-  if (wordCount >= 5) return "finished";
+  // Medium utterances (5-10 words) without punctuation → likely unfinished
+  // User is still constructing the thought
+  if (wordCount >= 5 && wordCount <= 10 && !/[.!?]$/.test(trimmed)) return "unfinished";
+  
+  // Long utterances (11+ words) without trailing connectors → likely finished
+  if (wordCount >= 11) return "finished";
   
   // 3-4 word utterances — use conservative "finished" 
   // (better to respond than leave user hanging)
@@ -125,9 +129,9 @@ export function getOptimalSilenceDuration(turnState: TurnState): number {
     case "wait":
       return 0; // Immediate action
     case "finished":
-      return 250; // Faster voice turn-taking
+      return 450; // Allow brief pauses mid-thought (was 250, too aggressive)
     case "unfinished":
-      return 1200; // Slightly shorter wait without cutting off the user
+      return 1800; // Give user time to continue long thoughts (was 1200)
   }
 }
 
