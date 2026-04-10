@@ -1964,15 +1964,14 @@ function stripImageFromMessages(msgs: any[], hadImage: boolean): any[] {
 async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) {
   const messages = await buildOrionMessages(body);
   const requestedMaxTokens = typeof body.maxTokens === "number" ? body.maxTokens : undefined;
-  // Default to 4096 for conversational, 12288 for document/legal/analysis, 8192 for visual E-R-C-A
   const intentType = body.intentType as string | undefined;
-  const queryText = String(body.query || body.text || "");
-  const isComplexQuery = queryText.length > 200 || /explique|analise|compare|detalh|paradox|demonstr|resolv/i.test(queryText);
+  const queryText = String(body.query || body.text || body.question || "");
+  const isComplexQuery = queryText.length > 120 || /explique|analise|compare|detalh|paradox|demonstr|resolv|como\s+funciona|por\s*que|qual\s+[aeo]|quais|liste|resuma|descreva|defina|elabore|disserte|argumente|justifique|diferencie|exemplifique|o\s+que\s+[eé]/i.test(queryText);
   const isVisualERCA = intentType?.startsWith("visual_") || intentType === "self_refine";
   const defaultMax = (intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis") 
-    ? 12288 
-    : isVisualERCA ? 8192
-    : isComplexQuery ? 8192 : 4096;
+    ? 16384 
+    : isVisualERCA ? 12288
+    : isComplexQuery ? 12288 : 8192;
   (messages as any).__maxTokens = requestedMaxTokens || defaultMax;
 
   const geminiKeys = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7", "GEMINI_API_KEY_GCP"];

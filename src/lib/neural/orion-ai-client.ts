@@ -845,10 +845,10 @@ export async function analyzeFrameStreaming(
     let spokenUpTo = 0;
     let buffer = "";
 
-    // ═══ LAYER 3: LLM Streaming (budget: 15s max, first token should arrive <2s) ═══
+    // ═══ LAYER 3: LLM Streaming (budget: 45s max for long answers, first token should arrive <3s) ═══
     const streamTimeout = setTimeout(() => {
       try { reader.cancel(); } catch (e: any) { console.warn("[OrionAI] Stream cancel:", e?.message); }
-    }, 15000);
+    }, 45000);
 
     try {
       while (true) {
