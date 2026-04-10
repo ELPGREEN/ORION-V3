@@ -683,31 +683,54 @@ export function useNeuralVoice(
   }, [createRecognition]);
 
   const startListening = useCallback((onCmd: (c: string) => void) => {
-    singletonIdRef.current = claimMic("command");
-    intentionalStopRef.current = false;
-    voiceActiveRef.current = true;
-    clearRestartTimer();
-    onCmdRef.current = onCmd;
-    setListening(false);
+    const boot = async () => {
+      singletonIdRef.current = claimMic("command");
+      intentionalStopRef.current = false;
+      voiceActiveRef.current = true;
+      clearRestartTimer();
+      onCmdRef.current = onCmd;
+      setListening(false);
 
-    // v30: Start AudioWorklet to collect chunks for STT fallback
-    if (!audioWorkletActiveRef.current) {
-      audioWorkletActiveRef.current = true;
-      try {
-        const worklet = getAudioWorkletManager({ sampleRate: 16000, chunkSize: 4096 });
-        worklet.initialize().then((ok) => {
-          if (!ok) return;
-          worklet.onAudioChunk((chunk) => {
-            // Keep last ~5s of audio (16000 * 5 / 4096 ≈ 20 chunks)
-            audioChunksRef.current.push(chunk);
-            if (audioChunksRef.current.length > 20) audioChunksRef.current.shift();
-          });
-          worklet.start();
-        }).catch(() => {});
-      } catch {}
-    }
+      // Prime microphone first when permission is already granted.
+      // This makes auto-start much more reliable without requiring a click.
+      if (navigator.mediaDevices?.getUserMedia && navigator.permissions?.query) {
+        try {
+          const permission = await navigator.permissions.query({ name: "microphone" as any });
+          if (permission.state === "granted") {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+            });
+            await new Promise((resolve) => setTimeout(resolve, /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent) ? 80 : 30));
+            stream.getTracks().forEach((track) => track.stop());
+          }
+        } catch (error) {
+          console.warn("[Voice] Microphone priming failed:", error);
+        }
+      }
 
-    startListeningFresh(onCmd);
+      if (intentionalStopRef.current || onCmdRef.current !== onCmd) return;
+
+      // v30: Start AudioWorklet to collect chunks for STT fallback
+      if (!audioWorkletActiveRef.current) {
+        audioWorkletActiveRef.current = true;
+        try {
+          const worklet = getAudioWorkletManager({ sampleRate: 16000, chunkSize: 4096 });
+          worklet.initialize().then((ok) => {
+            if (!ok) return;
+            worklet.onAudioChunk((chunk) => {
+              // Keep last ~5s of audio (16000 * 5 / 4096 ≈ 20 chunks)
+              audioChunksRef.current.push(chunk);
+              if (audioChunksRef.current.length > 20) audioChunksRef.current.shift();
+            });
+            worklet.start();
+          }).catch(() => {});
+        } catch {}
+      }
+
+      startListeningFresh(onCmd);
+    };
+
+    void boot();
   }, [clearRestartTimer, startListeningFresh]);
 
   const stop = useCallback(() => {
