@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { IdentifiedObjectsPanel } from "./IdentifiedObjectsPanel";
 import { useGestureDetection, GESTURE_ACTIONS, type GestureType, type GestureAction } from "./useGestureDetection";
-import { PlasmaCanvas, OrbState } from "./EnergyOrb";
+import { PlasmaCanvas } from "./EnergyOrb";
+import { VoiceStateIndicator } from "./VoiceStateIndicator";
 import { useNeuralVoice } from "@/hooks/useNeuralVoice";
 import { useOrionVoiceClone, isVoiceCloneCommand } from "@/hooks/useOrionVoiceClone";
 
@@ -826,50 +827,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         </div>
 
         {/* ═══ JARVIS-style Voice State Indicator ═══ */}
-        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-          <div className="flex flex-col items-center" style={{ marginTop: "35%" }}>
-            {/* Status dot + text */}
-            <div className="flex items-center gap-2 rounded px-3 py-1" style={{
-              backgroundColor: "rgba(0,0,0,0.6)",
-              border: `1px solid ${
-                OrbState.voiceState === "speaking" ? "rgba(59,130,246,0.4)" :
-                OrbState.voiceState === "listening" ? "rgba(34,197,94,0.4)" :
-                OrbState.voiceState === "thinking" ? "rgba(212,175,55,0.4)" :
-                "rgba(100,100,100,0.2)"
-              }`,
-              backdropFilter: "blur(4px)",
-            }}>
-              <div className={`h-2 w-2 rounded-full ${
-                OrbState.voiceState === "speaking" ? "bg-blue-500 animate-pulse" :
-                OrbState.voiceState === "listening" ? "bg-green-500 animate-pulse" :
-                OrbState.voiceState === "thinking" ? "bg-amber-500 animate-pulse" :
-                "bg-gray-500/50"
-              }`} style={{
-                boxShadow: OrbState.voiceState !== "idle" ? `0 0 8px ${
-                  OrbState.voiceState === "speaking" ? "rgba(59,130,246,0.6)" :
-                  OrbState.voiceState === "listening" ? "rgba(34,197,94,0.6)" :
-                  "rgba(212,175,55,0.6)"
-                }` : "none",
-              }} />
-              <span className="text-[10px] font-mono tracking-[0.2em] uppercase" style={{
-                color: OrbState.voiceState === "speaking" ? "rgba(59,130,246,0.9)" :
-                       OrbState.voiceState === "listening" ? "rgba(34,197,94,0.9)" :
-                       OrbState.voiceState === "thinking" ? "rgba(212,175,55,0.9)" :
-                       "rgba(100,100,100,0.4)",
-                textShadow: OrbState.voiceState !== "idle" ? `0 0 10px ${
-                  OrbState.voiceState === "speaking" ? "rgba(59,130,246,0.4)" :
-                  OrbState.voiceState === "listening" ? "rgba(34,197,94,0.4)" :
-                  "rgba(212,175,55,0.4)"
-                }` : "none",
-              }}>
-                {OrbState.voiceState === "speaking" ? "SPEAKING" :
-                 OrbState.voiceState === "listening" ? "LISTENING" :
-                 OrbState.voiceState === "thinking" ? "PROCESSING" :
-                 "ONLINE"}
-              </span>
-            </div>
-          </div>
-        </div>
+        <VoiceStateIndicator />
         <style>{`
           @keyframes plasmaPulseVision {
             0%, 100% { opacity: 0.6; transform: scale(1); }
