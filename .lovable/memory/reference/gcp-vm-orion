@@ -8,12 +8,14 @@ type: reference
 - Machine: t2a-standard-1 (Arm64, 4GB RAM, CPU only)
 - OS: Debian 12 Bookworm Arm64
 - Service Account: 550674472945-compute@developer.gserviceaccount.com
+- External IP: 35.225.37.124
 - Port: 8080
 - Server: FastAPI (public/gcp-vm-orion/server.py)
 - Setup: public/gcp-vm-orion/setup.sh
 - Edge function proxy: supabase/functions/orion-vm-proxy/index.ts
-- Secret: ORION_VM_URL (set to http://<VM_EXTERNAL_IP>:8080)
+- Secret: ORION_VM_URL = http://35.225.37.124:8080
 - Endpoints: /health, /tts, /stt, /vision/detect, /vision/classify, /ocr, /embeddings, /proxy/gemini, /cache/stats
 - Models: whisper-tiny (int8), DETR-resnet-50, EasyOCR, all-MiniLM-L6-v2, Piper pt_BR
 - Priority: VM (primary) → HF Space (fallback) — managed in orion-hub-client.ts
 - Memory limit: systemd MemoryMax=3G
+- Firewall: needs rule allow-orion-8080 (tcp:8080) + tag http-server
