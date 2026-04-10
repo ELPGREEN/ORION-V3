@@ -438,7 +438,7 @@ export function useOrionReasoning(
       const somResult = somClassify(question);
       const _isSpecialCmd = somResult.isSpecialCmd || intentType === "auto_construct" || intentType === "self_evolve";
 
-      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType} | SOM=${somResult.handler}(${(somResult.confidence * 100).toFixed(0)}%)`);
+      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType} | SOM=${somResult.handler}(${(somResult.confidence * 100).toFixed(0)}%) | Tesla: conf=${(voltage.confidence * 100).toFixed(0)}% exec=${voltage.shouldExecute} intent=${voltage.intent}`);
       window.dispatchEvent(new CustomEvent("som-routing", { detail: somResult }));
 
       // If confidence too low, ask clarification
