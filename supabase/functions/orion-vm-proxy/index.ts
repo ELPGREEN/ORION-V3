@@ -67,7 +67,7 @@ serve(async (req) => {
       headers: { "Content-Type": "application/json" },
     };
 
-    if (action !== "health") {
+    if (!GET_ACTIONS.includes(action)) {
       if (["tts", "stt", "embeddings"].includes(action)) {
         const fd = new FormData();
         for (const [k, v] of Object.entries(body.payload || body)) {
