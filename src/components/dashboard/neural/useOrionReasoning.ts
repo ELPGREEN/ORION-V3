@@ -1523,51 +1523,56 @@ export function useOrionReasoning(
         } catch { /* non-blocking */ }
       }
 
-      // ═══ LAYER 1.7: Deep Query Estimator — "Aguarde ~X segundos" ═══
-      const timeEstimate = estimateResponseTime(
-        question,
-        cognitiveRouteResult?.mode || "fast",
-        intentType,
-      );
-      if (timeEstimate.isDeep && timeEstimate.message) {
-        addLog(`⏱️ DeepEstimate: ${timeEstimate.complexity}, ~${timeEstimate.estimatedMs}ms`);
-        // Show estimation message to user (non-blocking — don't wait for TTS)
-        setChatHistory(prev => {
-          const last = prev[prev.length - 1];
-          if (last?.role === "ai" && last.text.startsWith("⏳")) {
-            return [...prev.slice(0, -1), { ...last, text: timeEstimate.message }];
-          }
-          return prev;
-        });
-        setThought(timeEstimate.message);
-        // Fire-and-forget — do NOT await speak here, it delays the LLM call
-        speak(timeEstimate.spokenMessage).catch(() => {});
+      // ═══ CONVERSATIONAL FAST-PATH: Skip heavy layers for casual queries ═══
+      const isConversationalMode = cognitiveRouteResult?.mode === "conversational";
+
+      // ═══ LAYER 1.7: Deep Query Estimator — SKIP for conversational ═══
+      if (!isConversationalMode) {
+        const timeEstimate = estimateResponseTime(
+          question,
+          cognitiveRouteResult?.mode || "fast",
+          intentType,
+        );
+        if (timeEstimate.isDeep && timeEstimate.message) {
+          addLog(`⏱️ DeepEstimate: ${timeEstimate.complexity}, ~${timeEstimate.estimatedMs}ms`);
+          setChatHistory(prev => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "ai" && last.text.startsWith("⏳")) {
+              return [...prev.slice(0, -1), { ...last, text: timeEstimate.message }];
+            }
+            return prev;
+          });
+          setThought(timeEstimate.message);
+          speak(timeEstimate.spokenMessage).catch(() => {});
+        }
       }
 
-      // ═══ LAYER 2: NLP Semantics + Cognition Context ═══
-      // Always run semantics (lightweight, <10ms); only run full cognition in deep mode
+      // ═══ LAYER 2: NLP Semantics + Cognition Context — SKIP for conversational ═══
       let cognitionContextStr = "";
-      try {
-        const semantics = analyzeSemantics(processedQuestion, chatHistoryRef.current.slice(-3).map(m => m.text).join(" "));
-        addLog(`🧬 NLP: domain=${semantics.domain}, discourse=${semantics.discourseType}, sentiment=${semantics.sentiment.primary}, entities=${semantics.entities.length}, complexity=${semantics.complexity} [${semantics.analysisTimeMs.toFixed(1)}ms]`);
-        window.dispatchEvent(new CustomEvent("nlp-semantics", { detail: semantics }));
+      if (!isConversationalMode) {
+        try {
+          const semantics = analyzeSemantics(processedQuestion, chatHistoryRef.current.slice(-3).map(m => m.text).join(" "));
+          addLog(`🧬 NLP: domain=${semantics.domain}, discourse=${semantics.discourseType}, sentiment=${semantics.sentiment.primary}, entities=${semantics.entities.length}, complexity=${semantics.complexity} [${semantics.analysisTimeMs.toFixed(1)}ms]`);
+          window.dispatchEvent(new CustomEvent("nlp-semantics", { detail: semantics }));
 
-        // Use resolved text if coreferences were found
-        if (semantics.resolvedText !== processedQuestion) {
-          processedQuestion = semantics.resolvedText;
-        }
+          if (semantics.resolvedText !== processedQuestion) {
+            processedQuestion = semantics.resolvedText;
+          }
 
-        // Full cognition only for deep mode (expensive)
-        if (cognitiveRouteResult?.mode === "deep") {
-          const cognition = await buildCognitionContext(processedQuestion, chatHistoryRef.current, intentType);
-          cognitionContextStr = cognition.contextString;
-          addLog(`🧠 Cognition: Φ=${cognition.consciousnessLevel.toFixed(2)}, episodic=${cognition.episodicHits}, CL=${cognition.cognitiveLoad.toFixed(2)}, SV=${cognition.somaticValence.toFixed(1)} [${cognition.buildTimeMs.toFixed(1)}ms]`);
-          window.dispatchEvent(new CustomEvent("cognition-context", { detail: cognition }));
-        } else {
-          addLog(`⚡ Deep cognition SKIPPED (fast mode) — semantics OK [${Date.now() - now}ms]`);
+          // Full cognition only for deep mode
+          if (cognitiveRouteResult?.mode === "deep") {
+            const cognition = await buildCognitionContext(processedQuestion, chatHistoryRef.current, intentType);
+            cognitionContextStr = cognition.contextString;
+            addLog(`🧠 Cognition: Φ=${cognition.consciousnessLevel.toFixed(2)}, episodic=${cognition.episodicHits}, CL=${cognition.cognitiveLoad.toFixed(2)}, SV=${cognition.somaticValence.toFixed(1)} [${cognition.buildTimeMs.toFixed(1)}ms]`);
+            window.dispatchEvent(new CustomEvent("cognition-context", { detail: cognition }));
+          } else {
+            addLog(`⚡ Deep cognition SKIPPED (fast mode) — semantics OK [${Date.now() - now}ms]`);
+          }
+        } catch (cognErr) {
+          addLog(`⚠️ Cognition/NLP: ${cognErr}`);
         }
-      } catch (cognErr) {
-        addLog(`⚠️ Cognition/NLP: ${cognErr}`);
+      } else {
+        addLog(`⚡ NLP+Cognition SKIPPED (conversational mode) [${Date.now() - now}ms]`);
       }
 
       // Inject cognition context into cognitive routing window vars
