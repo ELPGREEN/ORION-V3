@@ -217,7 +217,7 @@ function scoreCorrectness(response: string, reference: string): RAGMetricScore {
   // BLEU-like precision (bigram)
   const refBigrams = getBigrams(referenceLower);
   const respBigrams = getBigrams(responseLower);
-  const bigramHits = respBigrams.filter(b => refBigrams.has(b)).size;
+  const bigramHits = [...respBigrams].filter(b => refBigrams.has(b)).length;
   const precision = bigramHits / Math.max(respBigrams.size, 1);
 
   // Semantic similarity via key concept overlap
