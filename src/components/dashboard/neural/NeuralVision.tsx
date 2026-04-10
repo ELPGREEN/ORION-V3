@@ -564,43 +564,20 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           </Badge>
         )}
 
-        {/* Voice + TTS controls when camera is OFF but overlay is open */}
+        {/* Voice status when camera is OFF — fully automatic, no manual buttons */}
         {!active && (
           <>
             <div className="h-5 w-px bg-white/10" />
-            <Button size="sm" variant={listening ? "default" : "ghost"} className="h-7 text-[11px] gap-1"
-              onClick={() => listening ? stopListen() : startDirectVoiceCapture()} disabled={!speechOk}>
-              {listening ? <Mic className="h-3 w-3 text-red-400 animate-pulse" /> : <MicOff className="h-3 w-3" />}
-              {listening ? "Ouvindo..." : "Falar"}
-            </Button>
-...
-            <Button size="sm" variant={listening ? "default" : "ghost"} className="h-7 text-[11px] gap-1"
-              onClick={() => listening ? stopListen() : startDirectVoiceCapture()} disabled={!speechOk}>
-              {listening ? <Mic className="h-3 w-3 text-red-400 animate-pulse" /> : <MicOff className="h-3 w-3" />}
-            </Button>
+            {listening && (
+              <Badge variant="outline" className="text-[9px] h-5 font-mono border-blue-500/30 text-blue-400 animate-pulse gap-1">
+                <Mic className="h-3 w-3 text-red-400 animate-pulse" /> Ouvindo...
+              </Badge>
+            )}
             <Button size="sm" variant="ghost" className="h-7 text-[11px] gap-1" onClick={() => setTtsOn(!ttsOn)}>
               {ttsOn ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
             </Button>
-            <Badge variant="outline" className={`text-[8px] h-4 font-mono ${
-              listening && active ? "border-purple-500/30 text-purple-400" :
-              listening ? "border-blue-500/30 text-blue-400" :
-              active ? "border-cyan-500/30 text-cyan-400" : "border-white/10 text-white/30"
-            }`}>
-              {listening && active ? "VISÃO+VOZ" : listening ? "VOZ" : active ? "VISÃO" : "OFF"}
-            </Badge>
-            <Button size="sm" variant={gesturesEnabled ? "default" : "ghost"} className="h-7 text-[11px] gap-1"
-              onClick={() => setGesturesEnabled(!gesturesEnabled)}>
-              <Hand className="h-3 w-3" />
-            </Button>
-            {gesturesEnabled && currentGesture.gesture !== "none" && (
-              <Badge variant="outline" className="text-[8px] h-4 font-mono border-amber-500/30 text-amber-400 animate-pulse">
-                {GESTURE_ACTIONS.find(a => a.gesture === currentGesture.gesture)?.emoji || "🖐️"}{" "}
-                {GESTURE_ACTIONS.find(a => a.gesture === currentGesture.gesture)?.label || currentGesture.gesture}
-              </Badge>
-            )}
             <div className="ml-auto flex items-center gap-2">
               <Badge variant="outline" className="text-[9px] border-emerald-500/30 text-emerald-400 animate-pulse font-mono">● CONSCIENTE</Badge>
-              <span className="text-[10px] font-mono text-white/25">{fps} FPS</span>
             </div>
           </>
         )}
