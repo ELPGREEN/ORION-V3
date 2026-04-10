@@ -1,42 +1,59 @@
 
 
-## Diagnóstico: Pausas longas + Texto cortado no TTS do Orion
+## Plano: Protocolo Gênesis + Raciocínio Rápido + Protocolos Coerentes
 
-### Problema 1: Pausa longa após interrogação (?)
-**Causa**: O `splitIntoSentences()` em `src/lib/tts/geminiTTS.ts` quebra o texto em pedaços separados por `.!?…`. Cada pedaço vira uma chamada HTTP separada ao edge function `gemini-tts`. Mesmo com fetch paralelo, entre o `audio.onended` de um trecho e o `audio.play()` do próximo há uma lacuna perceptível (~200-500ms), que em `?` fica muito evidente.
+### Problemas identificados
 
-### Problema 2: Texto cortado pela metade
-**Causa**: Dois limites de truncamento:
-- **Edge function**: `text.trim().slice(0, 2500)` — textos > 2500 chars são cortados silenciosamente
-- **Gemini TTS model**: O modelo TTS tem limite de áudio gerado (~30-45s). Textos longos podem gerar áudio truncado sem erro
+1. **"Projeto Gênesis" não é reconhecido**: Nenhuma regex no sistema detecta "gênesis" ou "genesis". O `ORION_GENESIS` existe em `orion-consciousness.ts` com toda a história de origem, mas nunca é injetado quando o usuário pergunta sobre Gênesis.
 
-### Plano de correção
+2. **Protocolos não são ativados corretamente**: O `matchProtocols()` usa `.includes()` simples — falha com variações de voz (ex: "quem é voce" vs "quem é você"). Além disso, tem timeout de 400ms que pode expirar.
 
-#### 1. Eliminar pausas entre sentenças (gap-free playback)
-- Em `src/lib/tts/geminiTTS.ts`, aumentar o threshold de `splitIntoSentences` de 1000 para **2000 chars** antes de dividir (textos médios ficam num único chunk = zero pausas)
-- Para textos > 2000 chars, usar **pre-buffering**: começar o download do próximo chunk enquanto o atual toca, e fazer `audio.play()` imediatamente no `onended` (crossfade de 0ms)
-- Agrupar chunks maiores (de 800 para **1200 chars**) para reduzir o número de requisições
+3. **Roteamento de contexto errado**: `isProjectQuestion` (regex "projeto") roteia para `buildInvestorContext()` em vez de injetar a identidade/genesis do Orion.
 
-#### 2. Corrigir truncamento de texto longo
-- No edge function `gemini-tts/index.ts`, aumentar o limite de `2500` para **5000 chars**
-- No client `geminiTTS.ts`, o `text.slice(0, 5000)` já está correto
-- Para textos muito longos (> 5000), dividir em chunks maiores e encadear o áudio — hoje simplesmente corta
+4. **Duplicação de lógica**: A detecção de intent está duplicada em 3 lugares (non-streaming em `analyzeFrameWithAI`, streaming em `analyzeFrameStreaming`, e local em `useOrionReasoning.ts`).
 
-#### 3. Pre-buffer para playback contínuo
-- Ao invés de `Promise.all` + loop sequencial, usar um padrão produtor-consumidor onde:
-  - Fetch começa em paralelo (como hoje)
-  - Playback inicia assim que o primeiro blob chega
-  - Próximo blob já está pronto quando o atual termina
-  - Resultado: zero gap entre sentenças
+---
+
+### Correções
+
+#### 1. Adicionar detecção de "Gênesis" como intent de identidade
+**Arquivos**: `src/lib/neural/orion-ai-client.ts`, `src/components/dashboard/neural/useOrionReasoning.ts`
+
+- Adicionar regex `isGenesisQuestion` que detecta: `gênesis`, `genesis`, `projeto genesis`, `como você nasceu`, `sua origem`, `como foi criado`, `protocolo genesis`
+- No `useOrionReasoning.ts`: adicionar handler local (como o de "dono/criador") que responde com `ORION_GENESIS.originStory` completo — resposta instantânea sem LLM
+- Nos dois `analyzeFrame*`: rotear `isGenesisQuestion` para `buildOrionIdentityPrompt()` em vez de `buildBaseContext()`
+
+#### 2. Adicionar "gênesis" ao protocolo de identidade no JSON
+**Arquivo**: `public/data/orion_voice_protocols.json`
+
+- Adicionar protocolos de identidade com triggers: "genesis", "gênesis", "projeto genesis", "como nasceu", "sua origem"
+- Responses com resumo da timeline de criação
+
+#### 3. Corrigir roteamento de `isProjectQuestion`
+**Arquivo**: `src/lib/neural/orion-ai-client.ts` (2 locais)
+
+- Quando `isProjectQuestion` é true E a query contém "gênesis/genesis/origem/nasceu", usar `buildOrionIdentityPrompt()` em vez de `buildInvestorContext()`
+
+#### 4. Melhorar matching de protocolos para voz
+**Arquivo**: `src/lib/neural/orion-voice-protocols.ts`
+
+- Normalizar acentos antes do matching (remover diacríticos: ê→e, ã→a, etc.)
+- Usar word boundary matching em vez de substring simples
+- Resultado: "quem e voce" matchará "quem é você"
+
+---
 
 ### Arquivos alterados
+
 | Arquivo | Mudança |
 |---|---|
-| `src/lib/tts/geminiTTS.ts` | Threshold 1000→2000, chunk 800→1200, pre-buffer playback |
-| `supabase/functions/gemini-tts/index.ts` | Limite 2500→5000 chars |
+| `src/components/dashboard/neural/useOrionReasoning.ts` | Handler local para "gênesis" com resposta instantânea |
+| `src/lib/neural/orion-ai-client.ts` | `isGenesisQuestion` regex em ambos os paths (streaming + non-streaming) |
+| `src/lib/neural/orion-voice-protocols.ts` | Normalização de acentos no matching |
+| `public/data/orion_voice_protocols.json` | Novos protocolos de identidade (genesis) |
 
 ### Sem impacto
-- Não muda a VM (problema é no Gemini TTS, não na VM)
-- Não muda o modelo de voz nem o prompt
-- Não afeta o formant synth local
+- Não altera o TTS nem a visão
+- Não muda o edge function `neural-ops`
+- Mantém todos os handlers existentes intactos
 
