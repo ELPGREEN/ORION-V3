@@ -1576,12 +1576,7 @@ async function callGroqStreaming(messages: any[]): Promise<Response> {
   if (!apiKey) throw new Error("Missing GROQ_API_KEY");
   if (isProviderCoolingDown("groq")) throw new Error("Groq cooling down (recent 429)");
 
-  const textMessages = messages.map((m: any) => ({
-    role: m.role === "system" ? "system" : m.role === "assistant" ? "assistant" : "user",
-    content: typeof m.content === "string" ? m.content : Array.isArray(m.content)
-      ? m.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join(" ")
-      : String(m.content),
-  }));
+  const textMessages = extractTextMessages(messages);
 
   const maxTokens = (messages as any).__maxTokens || 4096;
   const doFetch = () => fetch("https://api.groq.com/openai/v1/chat/completions", {
