@@ -874,6 +874,7 @@ export async function analyzeFrameStreaming(
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        resetIdle(); // chunk received — reset idle timer
         buffer += decoder.decode(value, { stream: true });
 
         const lines = buffer.split("\n");
