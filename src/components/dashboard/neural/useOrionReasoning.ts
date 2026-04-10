@@ -1069,11 +1069,27 @@ export function useOrionReasoning(
 
       // ═══ MEDIA / SPOTIFY: intercept music/search/playlist commands BEFORE AI ═══
       const mediaPatterns = /\b(tocar?|play|reproduz|busca[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|procura[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|pesquisa[r]?\s+(?:m[uú]sica|musica|artista)|ouvir?\s+(?:m[uú]sica|musica)|escutar?\s+(?:m[uú]sica|musica)|coloca\s+(?:m[uú]sica|musica|uma?\s+m[uú]sica)|minhas?\s+playlists?|criar?\s+playlist|status\s+(?:d[ea]\s+)?(?:m[uú]sica|mídia|media)|parar?\s+(?:a\s+)?m[uú]sica|pausar?\s+(?:a\s+)?m[uú]sica)\b/i;
-      if (_isSpecialCmd && (mediaPatterns.test(qLow))) {
+      if (mediaPatterns.test(qLow)) {
         try {
           const { matchAndExecuteTool: mediaToolMatch } = await import("@/lib/neural/orion-tool-executor");
           const mediaResult = await mediaToolMatch(question);
           if (mediaResult.handled) {
+            // Extract search query for the floating player
+            const musicSearchQuery = question
+              .replace(/\b(tocar?|play|reproduz|buscar?|procurar?|pesquisar?|ouvir?|escutar?|colocar?)\b/gi, "")
+              .replace(/\b(uma?\s+)?(m[uú]sica|musica|artista|playlist|banda|cantor)\b/gi, "")
+              .replace(/\b(do|da|de|dos|das|o|a|os|as|um|uma|no|na|por|para|favor)\b/gi, "")
+              .trim();
+            
+            // Dispatch event to open floating YouTube music player with search
+            window.dispatchEvent(new CustomEvent("orion-music-command", {
+              detail: {
+                action: "search_and_play",
+                query: musicSearchQuery || question,
+                fullCommand: question,
+              }
+            }));
+            
             setChatHistory(prev => {
               const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
               return [...clean, { role: "ai", text: mediaResult.response, time: new Date().toLocaleTimeString("pt-BR") }];

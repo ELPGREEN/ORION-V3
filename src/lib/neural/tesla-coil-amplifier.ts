@@ -392,7 +392,9 @@ export function amplifyIntent(
   currentConfidence = coil5.confidence;
 
   // ═══ Determine execution vs. clarification ═══
-  const shouldExecute = currentConfidence >= EXECUTION_THRESHOLD;
+  // Long inputs (>50 chars) are clearly intentional — ALWAYS execute, never ask for clarification
+  const isLongInput = trimmed.length > 50;
+  const shouldExecute = isLongInput || currentConfidence >= EXECUTION_THRESHOLD;
   let suggestedQuestion: string | null = null;
 
   if (!shouldExecute) {
