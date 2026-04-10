@@ -42,6 +42,12 @@ import {
 
 import { hadamard, rotationY } from "./quantum-gates";
 
+import {
+  densityMatrix as tensorDensityMatrix,
+  vonNeumannEntropy as tensorVonNeumannEntropy,
+  stateFidelity as tensorStateFidelity,
+} from "./tensor-state-vector";
+
 // ═══ Types ═══
 
 export interface WaveFunction {
