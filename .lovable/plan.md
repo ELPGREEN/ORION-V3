@@ -1,54 +1,83 @@
 
 
-# Plano: Orion Responde Rápido e Completo (VM + Speed Fix)
+# Plano: Capacidades "Opera AI" para o Orion
 
-## Problemas Identificados
+## Resumo
 
-1. **VM não está sendo usada para texto** — A VM (`/proxy/gemini`) suporta proxy Gemini com cache, mas o `neural-ops` nunca a utiliza. Todas as queries de texto vão direto para Vertex AI ou Gemini API keys, ignorando completamente a VM.
+Adicionar 4 capacidades ao chat do Orion que replicam funcionalidades do Opera AI, usando infraestrutura já existente (Firecrawl, YouTube API key, Gemini keys).
 
-2. **`maxOutputTokens` não propagado** — A função `callGeminiAPI` usa `requestedMaxTokens` corretamente, mas `callVertexAI` tem default de apenas **4096 tokens** para texto (linha 155). E `convertToGeminiFormat` (usada por `callGeminiDirect`) **não injeta `maxOutputTokens` nenhum** — fica com o default do modelo que pode truncar.
+## Arquitetura
 
-3. **System prompt GIGANTESCO** — Para queries com visão, o prompt do sistema soma ~15.000+ tokens (ORION_SYSTEM_PROMPT_FULL + ORION_VISION_PROMPT + ORION_FRAMEWORKS_PROMPT + ORION_ARCHITECTURE_KNOWLEDGE). Isso consome tokens do orçamento e **atrasa** o primeiro token.
+```text
+Usuário digita no chat
+        │
+        ▼
+orion-ai-client.ts (detect intent client-side)
+        │
+        ▼
+neural-ops/index.ts (handleOrionQuery)
+        │
+   ┌────┴────┬──────────┬──────────────┐
+   ▼         ▼          ▼              ▼
+Web Search  URL Scrape  YouTube Sum  Image Gen
+(firecrawl) (firecrawl) (YT API+LLM) (Gemini 3)
+   │         │          │              │
+   └────┬────┴──────────┴──────────────┘
+        ▼
+  Inject context into Gemini prompt → Stream response
+```
 
-4. **RAG + Identity + Dashboard Context BLOQUEIAM** — Mesmo que parallelizados, `fetchRAGContext` faz embedding + busca vetorial (~1-2s), e `fetchDashboardContext` no client faz 4 queries ao Supabase. Isso adiciona latência significativa antes de começar a gerar.
+## Mudanças
 
-5. **7 Gemini keys mas apenas 1 usada** — `getGeminiKeys()` retorna apenas `GEMINI_API_KEY` (1 key). As 7 keys são usadas no fallback loop (`callGeminiAPI`), mas a função principal `callGeminiDirect` (usada pela rota fallback `callLovableAIFallback`) só usa 1 key.
+### 1. `supabase/functions/neural-ops/index.ts`
 
-## Mudanças Planejadas
+**A. Web Search automático** (dentro de `buildOrionMessages`)
+- Adicionar `detectWebSearchIntent(query)` — regex para "hoje", "atual", "notícia", "preço de", "quem é", "quando", "onde fica", datas recentes
+- Se detectado, chamar `firecrawl-search` inline (via fetch ao próprio Supabase) e injetar resultados no system prompt como contexto
+- Timeout de 3s para não bloquear a resposta
 
-### 1. Propagar `maxOutputTokens` em TODOS os providers
-**Arquivo:** `supabase/functions/neural-ops/index.ts`
-- `callVertexAI`: usar `(messages as any).__maxTokens` no `maxOutputTokens` (atualmente ignora e usa 4096/6144)
-- `convertToGeminiFormat`: aceitar e injetar `maxOutputTokens` da mensagem
-- `callGeminiDirect`: passar `maxOutputTokens` para o body do Gemini
+**B. URL Context Analysis** (dentro de `buildOrionMessages`)
+- Detectar URLs na query com regex `https?://\S+`
+- Para cada URL (max 2), chamar `firecrawl-scrape` inline
+- Injetar markdown scraped no contexto (truncado a 4000 chars por URL)
 
-### 2. Usar VM como proxy Gemini (fast-path para texto)
-**Arquivo:** `supabase/functions/neural-ops/index.ts`
-- Adicionar `callVMGeminiProxy()` como provider antes do fallback chain
-- A VM em `ORION_VM_URL/proxy/gemini` tem cache e latência menor para requests repetitivos
-- Usar somente para queries de texto (sem imagem) — visão continua direto na API
+**C. YouTube Summarization** (dentro de `buildOrionMessages`)
+- Detectar links YouTube (`youtube.com/watch`, `youtu.be/`)
+- Extrair video ID, chamar YouTube Data API v3 para captions/snippet
+- Injetar transcript no contexto para Gemini resumir
+- Usar `YOUTUBE_API_KEY` (já existe nos secrets)
 
-### 3. Reduzir system prompt para texto simples
-**Arquivo:** `supabase/functions/neural-ops/index.ts`
-- Para queries `intentType === "textual"` SEM visão: usar `ORION_SYSTEM_PROMPT_COMPACT` (já existe mas os frameworks/vision são injetados desnecessariamente)
-- Garantir que `ORION_VISION_PROMPT` e `ORION_FRAMEWORKS_PROMPT` **nunca** sejam injetados em queries puramente textuais
+**D. Image Generation** (novo action handler no main router)
+- Novo `action === "generate_image"` no handler principal
+- Usar Gemini `gemini-2.0-flash-exp` com `responseModalities: ["IMAGE"]`
+- Retornar base64 da imagem gerada
+- Client detecta intent de geração de imagem ("gere uma imagem", "crie uma imagem", "desenhe")
 
-### 4. Skip RAG para perguntas simples
-**Arquivo:** `supabase/functions/neural-ops/index.ts`
-- Se a query tem < 30 chars e não é legal/analysis/document, skip RAG (economia de ~1-2s)
-- RAG embedding timeout já é 1s, mas a busca vetorial adiciona mais
+### 2. `src/lib/neural/orion-ai-client.ts`
 
-### 5. Usar todas as 7 Gemini keys no `getGeminiKeys()`
-**Arquivo:** `supabase/functions/neural-ops/index.ts`
-- Expandir `getGeminiKeys()` para incluir GEMINI_API_KEY_2 até _7 e _GCP
-- Isso melhora resiliência contra rate limits (429)
+- Adicionar detecção de intent no client para marcar:
+  - `intentType: "web_search"` — queries factuais/atuais
+  - `intentType: "url_analysis"` — quando query contém URL
+  - `intentType: "youtube_summary"` — quando query contém link YouTube
+  - `intentType: "image_generation"` — quando query pede geração de imagem
+- Para image generation: chamar neural-ops com `action: "generate_image"` em vez do fluxo normal de streaming
 
-### 6. Deploy da edge function
-- Redeployar `neural-ops` após as mudanças
+### 3. Nenhuma mudança na VM
 
-## Impacto Esperado
-- Primeira resposta ~1-2s mais rápida (menos prompt, skip RAG quando desnecessário)
-- Respostas completas sem truncamento (maxOutputTokens corretos)
-- VM usada como cache/proxy para queries repetitivas
-- Melhor resiliência com 7+ keys Gemini
+A VM não é necessária para estas features — tudo passa pelas edge functions e APIs existentes.
+
+## Ordem de implementação
+
+1. Web Search no chat (maior impacto)
+2. URL context analysis
+3. YouTube summarization  
+4. Image generation
+
+## Detalhes técnicos
+
+- Web search e URL scrape são injetados **antes** do LLM call, como contexto adicional no system prompt
+- YouTube captions usam endpoint `https://www.googleapis.com/youtube/v3/captions` + download
+- Image generation usa modelo diferente do texto — precisa de request separado
+- Todos os fetches paralelos têm timeout de 3s para não degradar latência
+- Citations/fontes são incluídas na resposta para o usuário ver as referências
 
