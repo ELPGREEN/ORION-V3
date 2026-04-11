@@ -32,8 +32,8 @@ export function OrionIoTPanel() {
 
   const refreshDevices = useCallback(async () => {
     try {
-      setMqttConnected(iotBridge.isConnected);
-      const devices = iotBridge.getDevices();
+      setMqttConnected(iotBridge.connected);
+      const devices = iotBridge.deviceList;
       setIotDevices([...devices]);
       setBleDevices(bluetoothManager.getDevices());
     } catch {}
@@ -76,7 +76,7 @@ export function OrionIoTPanel() {
     try {
       await iotBridge.discoverDevices();
       setTimeout(() => {
-        setIotDevices([...iotBridge.getDevices()]);
+        setIotDevices([...iotBridge.deviceList]);
         setDiscovering(false);
       }, 3000);
     } catch {
@@ -86,8 +86,8 @@ export function OrionIoTPanel() {
 
   const toggleDevice = useCallback(async (device: IoTDevice) => {
     try {
-      const newState = device.state?.on ? "off" : "on";
-      await iotBridge.sendCommand(device.id, { action: "toggle", state: newState });
+      const newState = device.lastValue?.on ? "off" : "on";
+      await iotBridge.publish(device.topic + "/set", { action: "toggle", state: newState });
       toast.success(`${device.name}: ${newState.toUpperCase()}`);
       setTimeout(refreshDevices, 1000);
     } catch (e: any) {
@@ -189,7 +189,7 @@ export function OrionIoTPanel() {
                     </div>
                     {device.connection === "mqtt" && (
                       <Switch
-                        checked={!!(device as IoTDevice).state?.on}
+                        checked={!!(device as IoTDevice).lastValue?.on}
                         onCheckedChange={() => toggleDevice(device as IoTDevice)}
                         className="scale-75"
                       />
