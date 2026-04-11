@@ -240,46 +240,44 @@ function getAdaptiveDepthMaxDim(): number {
   return 128;
 }
 
+// ─── Frame throttle cache for <3s target ───
+let _lastDetectTime = 0;
+let _cachedResult: RealTimeVisionResult | null = null;
+const MIN_INTERVAL = 300; // ms — max ~3 FPS for vision
+
 export async function detectRealTime(
   video: HTMLVideoElement
 ): Promise<RealTimeVisionResult> {
-  markVisionStart();
-  const start = performance.now();
+  // Early return if called within throttle window
+  const now = performance.now();
+  if (_cachedResult && now - _lastDetectTime < MIN_INTERVAL) {
+    return _cachedResult;
+  }
 
-  // ═══ Frame Preprocessing: chromatic aberration correction + denoising ═══
-  // Only apply on every 3rd frame to maintain <100ms budget
+  markVisionStart();
+  const start = now;
+
   const frameCount = ((window as any).__orion_rt_frame_count__ || 0) + 1;
   (window as any).__orion_rt_frame_count__ = frameCount;
 
-  // Adaptive OCR: pre-check edge density before committing to expensive OCR
-  const ocrWorthRunning = isOCRReady() && shouldRunOCR(video);
+  // ─── Lightweight pass: MediaPipe only (every frame) ───
+  const mpResult = isMediaPipeReady()
+    ? await detectAllMP(video).catch(() => ({ objects: [], faces: [], faceLandmarks: [], hands: [], poses: [], timestamp: 0, inferenceMs: 0 } as MPVisionResult))
+    : { objects: [], faces: [], faceLandmarks: [], hands: [], poses: [], timestamp: 0, inferenceMs: 0 } as MPVisionResult;
 
-  // Handwritten OCR (run in parallel instead of sequentially — was blocking return)
-  const shouldRunHandwritten = isTrOCRReady() && frameCount % 15 === 0;
+  // ─── Heavy pass: YOLO, depth, OCR, FrameX — only every Nth frame ───
+  const shouldRunYOLO = isYOLOReady() && frameCount % 3 === 0;
+  const shouldRunDepth = isDepthReady() && frameCount % 30 === 0;
+  const ocrWorthRunning = isOCRReady() && frameCount % 10 === 0 && shouldRunOCR(video);
+  const shouldRunHandwritten = isTrOCRReady() && frameCount % 30 === 0;
+  const shouldRunFrameX = frameCount % 5 === 0;
 
-  // Depth estimation: throttle to every 5th frame (expensive, ~40-80ms)
-  const shouldRunDepth = isDepthReady() && frameCount % 5 === 0;
-
-  // Run ALL detectors in parallel (FrameX uses yoloFrameXProxy to avoid duplicate ML inference)
-  const [mpResult, yoloResult, depthResult, ocrResult, frameXResult, handwrittenOCRResult] = await Promise.all([
-    isMediaPipeReady()
-      ? detectAllMP(video).catch(() => ({ objects: [], faces: [], faceLandmarks: [], hands: [], poses: [], timestamp: 0, inferenceMs: 0 }))
-      : Promise.resolve({ objects: [], faces: [], faceLandmarks: [], hands: [], poses: [], timestamp: 0, inferenceMs: 0 } as MPVisionResult),
-    isYOLOReady()
-      ? detectWithYOLO(video).catch(() => [])
-      : Promise.resolve([] as YOLODetection[]),
-    shouldRunDepth
-      ? estimateDepth(video).catch(() => null)
-      : Promise.resolve(null as DepthEstimationResult | null),
-    ocrWorthRunning
-      ? extractText(video).catch(() => null)
-      : Promise.resolve(null as OCRResult | null),
-    // FrameX now runs in parallel instead of sequentially (~30ms gain)
-    yoloFrameX.processFrame(video).catch(() => null),
-    // Handwritten OCR moved into parallel batch (was sequential — saved ~20-50ms)
-    shouldRunHandwritten
-      ? recognizeHandwritingFromVideo(video).catch(() => null)
-      : Promise.resolve(null as HandwrittenOCRResult | null),
+  const [yoloResult, depthResult, ocrResult, frameXResult, handwrittenOCRResult] = await Promise.all([
+    shouldRunYOLO ? detectWithYOLO(video).catch(() => []) : Promise.resolve(_cachedResult?.yoloObjects ?? [] as YOLODetection[]),
+    shouldRunDepth ? estimateDepth(video).catch(() => null) : Promise.resolve(_cachedResult?.depthResult ?? null),
+    ocrWorthRunning ? extractText(video).catch(() => null) : Promise.resolve(_cachedResult?.ocrResult ?? null),
+    shouldRunFrameX ? yoloFrameX.processFrame(video).catch(() => null) : Promise.resolve(_cachedResult?.frameXResult ?? null),
+    shouldRunHandwritten ? recognizeHandwritingFromVideo(video).catch(() => null) : Promise.resolve(_cachedResult?.handwrittenOCR ?? null),
   ]);
 
   const allObjects = mergeDetections(mpResult.objects, yoloResult);

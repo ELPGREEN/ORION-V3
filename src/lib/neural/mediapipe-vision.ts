@@ -393,14 +393,13 @@ export async function detectAllMP(
 ): Promise<MPVisionResult> {
   const start = performance.now();
 
-  // Each detector gets its own strictly monotonic timestamp
-  const [objects, faces, faceLmks, hands, poses] = await Promise.all([
-    detectObjects(video, nextTs("obj")),
-    detectFacesMP(video, nextTs("face")),
-    detectFaceLandmarks(video, nextTs("lmk")),
-    detectHands(video, nextTs("hand")),
-    detectPose(video, nextTs("pose")),
-  ]);
+  // Run detectors SEQUENTIALLY — they share the same WebGL context,
+  // parallel execution causes GPU contention and timestamp race conditions.
+  const objects = await detectObjects(video, nextTs("obj"));
+  const faces = await detectFacesMP(video, nextTs("face"));
+  const faceLmks = await detectFaceLandmarks(video, nextTs("lmk"));
+  const hands = await detectHands(video, nextTs("hand"));
+  const poses = await detectPose(video, nextTs("pose"));
 
   return {
     objects,
