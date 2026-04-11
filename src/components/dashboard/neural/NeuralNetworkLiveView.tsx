@@ -766,6 +766,7 @@ export function NeuralNetworkLiveView() {
   const [paused, setPaused] = useState(false);
   const [key, setKey] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [showLabels, setShowLabels] = useState(true);
 
   return (
     <Card className="border-cyan-500/10 bg-[#020a12] overflow-hidden shadow-2xl" style={{ boxShadow: "0 0 40px rgba(0,50,80,0.08)" }}>
@@ -798,7 +799,7 @@ export function NeuralNetworkLiveView() {
             dpr={[1, 1.5]}
             onCreated={({ gl }) => { gl.setClearColor("#020a12"); }}
           >
-            <NeuralScene paused={paused} />
+            <NeuralScene paused={paused} showLabels={showLabels} />
           </Canvas>
 
           <CategoryLegend />
@@ -812,6 +813,12 @@ export function NeuralNetworkLiveView() {
 
           {/* Controls */}
           <div className="absolute bottom-3 right-3 flex gap-1.5 z-10">
+            <Button size="sm" variant="outline"
+              className="h-8 w-8 p-0 bg-[#020a12]/90 border-white/[0.08] text-white/30 hover:text-cyan-600 hover:border-cyan-700/25 backdrop-blur-md"
+              onClick={() => setShowLabels(!showLabels)}
+              title={showLabels ? "Ocultar labels" : "Mostrar labels"}>
+              <Tag className={`h-3.5 w-3.5 ${showLabels ? "text-cyan-500" : ""}`} />
+            </Button>
             <Button size="sm" variant="outline"
               className="h-8 w-8 p-0 bg-[#020a12]/90 border-white/[0.08] text-white/30 hover:text-cyan-600 hover:border-cyan-700/25 backdrop-blur-md"
               onClick={() => setExpanded(!expanded)}>
