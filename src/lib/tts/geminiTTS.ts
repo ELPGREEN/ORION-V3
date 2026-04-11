@@ -37,14 +37,20 @@ function isGeminiTTSCoolingDown(): boolean {
  * chunk to avoid any pauses. Longer texts are split at sentence boundaries
  * into ~1200-char chunks.
  */
+/**
+ * Send the ENTIRE text as a single chunk to Gemini TTS.
+ * Gemini handles up to 5000 chars natively — splitting causes
+ * gaps and cut-off words. Only split if truly enormous.
+ */
 function splitIntoSentences(text: string): string[] {
-  if (text.length <= 2000) return [text.trim()];
+  if (text.length <= 4500) return [text.trim()];
 
-  const sentences = text.match(/[^.?…]+[.?…]+\s*|[^.?…]+$/g) || [text];
+  // Only for very long texts: split at sentence boundaries into large ~3000-char chunks
+  const sentences = text.match(/[^.?]+[.?]+\s*|[^.?]+$/g) || [text];
   const chunks: string[] = [];
   let current = "";
   for (const s of sentences) {
-    if (current.length + s.length > 1200 && current.length > 0) {
+    if (current.length + s.length > 3000 && current.length > 0) {
       chunks.push(current.trim());
       current = s;
     } else {
@@ -252,48 +258,18 @@ export async function speakWithGeminiTTS(
       return fail;
     }
 
-    // ── Play sequentially with pre-buffered next element ──
+    // ── Play sequentially — simple and reliable ──
     let anyPlayed = false;
     let lastAudio: HTMLAudioElement | null = null;
 
     for (let i = 0; i < validBlobs.length; i++) {
       if (localController.signal.aborted) break;
-
-      // Revoke the pre-created URL since playAudioBlob creates its own
       URL.revokeObjectURL(blobUrls[i]);
 
-      // Pass next blob URL for preloading (gap-free transition)
-      const nextUrl = i + 1 < validBlobs.length ? blobUrls[i + 1] : undefined;
-      const result = await playAudioBlob(validBlobs[i], localController.signal, nextUrl);
-
+      const result = await playAudioBlob(validBlobs[i], localController.signal);
       if (result.audio) {
         anyPlayed = true;
         lastAudio = result.audio;
-      }
-
-      // If we have a pre-loaded next audio and it's ready, play it immediately
-      if (result.nextAudio && i + 1 < validBlobs.length) {
-        // The nextAudio was pre-created with the blob URL — start it now
-        try {
-          await result.nextAudio.play();
-          // Wait for it to finish
-          await new Promise<void>((resolve) => {
-            result.nextAudio!.onended = () => resolve();
-            result.nextAudio!.onerror = () => resolve();
-            const onAbort = () => {
-              result.nextAudio!.pause();
-              resolve();
-            };
-            localController.signal.addEventListener("abort", onAbort, { once: true });
-          });
-          anyPlayed = true;
-          lastAudio = result.nextAudio;
-          // Clean up the URL
-          URL.revokeObjectURL(blobUrls[i + 1]);
-          i++; // Skip next iteration since we already played it
-        } catch {
-          // Pre-play failed, will be played normally in next loop iteration
-        }
       }
     }
 
