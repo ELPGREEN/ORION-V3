@@ -169,7 +169,7 @@ const ACTION_PATTERNS: ActionPattern[] = [
     },
   },
 
-  // ─── Spotify ───
+  // ─── Spotify / Music search ───
   {
     regex: /\b(?:(?:abrir?|abre?)\s+(?:o\s+)?spotify|(?:buscar?|pesquisar?|procurar?)\s+(?:no\s+)?spotify)\b/i,
     builder: (_m, q) => {
@@ -177,8 +177,22 @@ const ACTION_PATTERNS: ActionPattern[] = [
       return {
         type: "spotify",
         url: spotifySearchUrl(clean || ""),
-        description: `🎵 Abrindo Spotify${clean ? `: "${clean}"` : ""}`,
+        description: `🎵 Buscando: "${clean}"`,
         query: clean || "",
+      };
+    },
+  },
+
+  // ─── Generic "play music" command ───
+  {
+    regex: /\b(?:toca(?:r)?|play|reproduz(?:ir)?|coloca(?:r)?)\s+(?:a\s+)?(?:m[uú]sica|song|track|som)\s+/i,
+    builder: (_m, q) => {
+      const clean = extractCleanQuery(q, /\b(?:toca(?:r)?|play|reproduz(?:ir)?|coloca(?:r)?)\s+(?:a\s+)?(?:m[uú]sica|song|track|som)\b/gi);
+      return {
+        type: "spotify",
+        url: "",
+        description: `🎵 Tocando: "${clean}"`,
+        query: clean || q,
       };
     },
   },
