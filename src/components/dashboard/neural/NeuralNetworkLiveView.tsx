@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Activity, Zap, Brain, Cpu, Database, Eye, Pause, Play,
   RotateCcw, Wifi, Bluetooth, Shield,
-  Maximize2, Minimize2, Layers, Lock, Radio,
+  Maximize2, Minimize2, Layers, Lock, Radio, Tag,
 } from "lucide-react";
 import { getDefenseMetrics } from "@/lib/neural/orion-defense-system";
 import { getPipelineLatency } from "@/lib/neural/pipeline-latency-tracker";
@@ -554,6 +554,52 @@ function BrainCore({ paused }: { paused: boolean }) {
         <icosahedronGeometry args={[2.8, 1]} />
         <meshBasicMaterial color="#152a3a" transparent opacity={0.03} wireframe blending={THREE.AdditiveBlending} />
       </mesh>
+    </group>
+  );
+}
+
+// ─── Node Labels — Html overlays with proximity culling ───
+function NodeLabels({ paused, visible }: { paused: boolean; visible: boolean }) {
+  const positions = useMemo(computeGlobePositions, []);
+  const { camera } = useThree();
+  const [visibleNodes, setVisibleNodes] = useState<number[]>([]);
+
+  useFrame(() => {
+    if (!visible) return;
+    // Calculate distances and show closest 15
+    const dists = positions.map((p, i) => ({ i, d: camera.position.distanceTo(p) }));
+    dists.sort((a, b) => a.d - b.d);
+    const closest = dists.slice(0, 15).map(x => x.i);
+    setVisibleNodes(closest);
+  });
+
+  if (!visible) return null;
+
+  return (
+    <group>
+      {visibleNodes.map(idx => {
+        const node = NEURAL_NODES[idx];
+        const pos = positions[idx];
+        return (
+          <Html
+            key={node.id}
+            position={[pos.x, pos.y + node.size + 0.4, pos.z]}
+            center
+            distanceFactor={18}
+            occlude={false}
+            style={{ pointerEvents: "none" }}
+          >
+            <div className="bg-black/60 backdrop-blur-sm rounded px-1.5 py-0.5 border border-white/[0.08] whitespace-nowrap">
+              <div className="text-[10px] font-mono font-semibold leading-tight" style={{ color: node.color }}>
+                {node.label}
+              </div>
+              <div className="text-[8px] font-mono leading-tight" style={{ color: node.color, opacity: 0.5 }}>
+                {node.arch}
+              </div>
+            </div>
+          </Html>
+        );
+      })}
     </group>
   );
 }
