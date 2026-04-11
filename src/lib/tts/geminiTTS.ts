@@ -243,6 +243,18 @@ export async function speakWithGeminiTTS(
     }
 
     if (validBlobs.length === 0) {
+      // ═══ FALLBACK: Try Google Cloud TTS when Gemini fails ═══
+      console.log("[Gemini TTS] No valid blobs, trying Google Cloud TTS fallback");
+      try {
+        const cloudResult = await fetchGoogleCloudTTSFallback(text, localController.signal);
+        if (cloudResult) {
+          const result = await playAudioBlob(cloudResult, localController.signal);
+          signal?.removeEventListener("abort", onExternalAbort);
+          return { played: !!result.audio, audio: result.audio };
+        }
+      } catch (e) {
+        console.warn("[Gemini TTS] Google Cloud TTS fallback also failed:", e);
+      }
       signal?.removeEventListener("abort", onExternalAbort);
       return fail;
     }
@@ -327,3 +339,46 @@ export const GEMINI_VOICES = [
   { id: "Leda", label: "Leda (Jovem)" },
   { id: "Aoede", label: "Aoede (Brisa)" },
 ] as const;
+
+// ═══ Google Cloud TTS Fallback ═══
+async function fetchGoogleCloudTTSFallback(
+  text: string,
+  signal: AbortSignal,
+): Promise<Blob | null> {
+  if (signal.aborted) return null;
+  try {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-cloud-tts`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({
+        text: text.slice(0, 3000),
+        voice: "neural2-grave",
+        encoding: "OGG_OPUS",
+        speakingRate: 1.05,
+      }),
+      signal,
+    });
+
+    if (signal.aborted) return null;
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("audio/")) {
+      console.warn("[Cloud TTS Fallback] Non-audio response");
+      return null;
+    }
+
+    const blob = await response.blob();
+    if (blob.size < 100) return null;
+    console.log(`[Cloud TTS Fallback] ✅ ${(blob.size / 1024).toFixed(1)}KB audio`);
+    return blob;
+  } catch (err: any) {
+    if (err?.name !== "AbortError") {
+      console.warn("[Cloud TTS Fallback] Error:", err?.message);
+    }
+    return null;
+  }
+}
