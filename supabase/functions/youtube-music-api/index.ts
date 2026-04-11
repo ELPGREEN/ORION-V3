@@ -49,6 +49,11 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
+    // Public search — no OAuth needed, uses API key only
+    if (action === "search_public") {
+      return await handleSearchPublic(body.query);
+    }
+
     // All other actions need a valid token from DB
     if (!userId) return json({ error: "Authentication required" }, 401);
     const accessToken = await getEffectiveToken(supabase, userId);
@@ -266,6 +271,24 @@ async function handleTrending() {
     id: item.id, title: item.snippet?.title || "",
     artist: item.snippet?.channelTitle || "", thumbnail: item.snippet?.thumbnails?.default?.url || "",
     duration: "", videoId: item.id,
+  }));
+  return json({ tracks });
+}
+
+async function handleSearchPublic(query: string) {
+  const apiKey = Deno.env.get("YOUTUBE_API_KEY");
+  if (!apiKey) return json({ tracks: [], error: "YouTube API key not configured" });
+  if (!query) return json({ tracks: [] });
+  const params = new URLSearchParams({
+    part: "snippet", type: "video", videoCategoryId: "10",
+    q: query, maxResults: "20", key: apiKey,
+  });
+  const res = await fetch(`${YOUTUBE_API_BASE}/search?${params}`);
+  const data = await res.json();
+  const tracks = (data.items || []).map((item: any) => ({
+    id: item.id?.videoId || item.id, title: item.snippet?.title || "",
+    artist: item.snippet?.channelTitle || "", thumbnail: item.snippet?.thumbnails?.default?.url || "",
+    duration: "", videoId: item.id?.videoId || "",
   }));
   return json({ tracks });
 }
