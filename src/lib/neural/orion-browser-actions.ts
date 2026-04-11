@@ -208,7 +208,7 @@ export function detectBrowserAction(query: string): BrowserAction | null {
  * Also dispatches an event for the floating player if it's a video/music action.
  */
 export function executeBrowserAction(action: BrowserAction): string {
-  // If it's a YouTube video, dispatch to VideoOverlay instead of opening a new tab
+  // YouTube video → dispatch to VideoOverlay
   if (action.type === "youtube") {
     window.dispatchEvent(new CustomEvent("orion-video-command", {
       detail: {
@@ -221,14 +221,16 @@ export function executeBrowserAction(action: BrowserAction): string {
     return action.description;
   }
 
-  // If it's a Spotify action, dispatch to OrionPlaylistBar
+  // Spotify/music actions → dispatch to OrionPlaylistBar
   if (action.type === "spotify") {
+    const q = action.query;
+    let musicAction = "search_and_play";
+    if (q === "pause") musicAction = "pause";
+    else if (q === "next") musicAction = "next";
+    else if (q === "prev") musicAction = "prev";
+
     window.dispatchEvent(new CustomEvent("orion-music-command", {
-      detail: {
-        action: "search_and_play",
-        query: action.query,
-        fullCommand: action.query,
-      }
+      detail: { action: musicAction, query: q, fullCommand: q }
     }));
     return action.description;
   }
