@@ -389,7 +389,6 @@ function GlobeNodes({ paused, showLabels }: { paused: boolean; showLabels: boole
                   anchorY="bottom"
                   outlineWidth={0.025}
                   outlineColor="#000000"
-                  font="/fonts/Inter-Medium.woff"
                 >
                   {node.label}
                 </Text>
@@ -401,7 +400,6 @@ function GlobeNodes({ paused, showLabels }: { paused: boolean; showLabels: boole
                   anchorY="bottom"
                   outlineWidth={0.012}
                   outlineColor="#000000"
-                  font="/fonts/Inter-Medium.woff"
                   fillOpacity={0.5}
                 >
                   {node.arch}
