@@ -29,6 +29,7 @@ import {
   Cpu,
   Music,
   Play,
+  Radio,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,7 @@ import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { NeuralErrorBoundary } from "@/components/dashboard/neural/NeuralErrorBoundary";
 import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
 import { VideoOverlay } from "@/components/orion/VideoOverlay";
+import { OrionIoTPanel } from "@/components/orion/OrionIoTPanel";
 import { lazyRetry } from "@/lib/lazyRetry";
 
 // Lazy-load all heavy neural panels for code-splitting
@@ -726,6 +728,11 @@ export default function RedeNeuralPage() {
             <span className="sm:hidden">Quantum</span>
             <span className="ml-1 h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse inline-block" />
           </TabsTrigger>
+          <TabsTrigger value="iot-devices" className="text-xs shrink-0 gap-1 px-2.5 py-1.5">
+            <Radio className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">IoT Hub</span>
+            <span className="sm:hidden">IoT</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -1345,6 +1352,11 @@ export default function RedeNeuralPage() {
           <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
             <QuantumRuntimeDashboard />
           </Suspense>
+        </TabsContent>
+
+        {/* IoT Devices Tab */}
+        <TabsContent value="iot-devices" className="space-y-4">
+          <OrionIoTPanel />
         </TabsContent>
       </Tabs>
 

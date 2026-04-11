@@ -59,6 +59,29 @@ function extractCleanQuery(query: string, patternsToRemove: RegExp): string {
 }
 
 const ACTION_PATTERNS: ActionPattern[] = [
+  // ─── Music playback commands (voice) ───
+  {
+    regex: /\b(?:pausa|para|pause|stop)\b/i,
+    builder: (_m, _q) => ({
+      type: "spotify" as const,
+      url: "", description: "⏸ Pausando música", query: "pause",
+    }),
+  },
+  {
+    regex: /\b(?:pr[oó]xima|pula|skip|next)\b/i,
+    builder: (_m, _q) => ({
+      type: "spotify" as const,
+      url: "", description: "⏭ Próxima faixa", query: "next",
+    }),
+  },
+  {
+    regex: /\b(?:volta|anterior|prev(?:ious)?)\b/i,
+    builder: (_m, _q) => ({
+      type: "spotify" as const,
+      url: "", description: "⏮ Faixa anterior", query: "prev",
+    }),
+  },
+
   // ─── YouTube / Videos ───
   {
     regex: /\b(?:(?:abre?|abrir?|open)\s+(?:o\s+)?youtube|(?:tocar?|play|reproduz(?:ir)?|assistir?|ver?)\s+(?:um?\s+)?(?:v[ií]deo|video)|(?:buscar?|pesquisar?|procurar?)\s+(?:no\s+)?youtube|(?:v[ií]deo|video)\s+(?:de|do|da|sobre))\b/i,
@@ -146,7 +169,7 @@ const ACTION_PATTERNS: ActionPattern[] = [
     },
   },
 
-  // ─── Spotify ───
+  // ─── Spotify / Music search ───
   {
     regex: /\b(?:(?:abrir?|abre?)\s+(?:o\s+)?spotify|(?:buscar?|pesquisar?|procurar?)\s+(?:no\s+)?spotify)\b/i,
     builder: (_m, q) => {
@@ -154,8 +177,22 @@ const ACTION_PATTERNS: ActionPattern[] = [
       return {
         type: "spotify",
         url: spotifySearchUrl(clean || ""),
-        description: `🎵 Abrindo Spotify${clean ? `: "${clean}"` : ""}`,
+        description: `🎵 Buscando: "${clean}"`,
         query: clean || "",
+      };
+    },
+  },
+
+  // ─── Generic "play music" command ───
+  {
+    regex: /\b(?:toca(?:r)?|play|reproduz(?:ir)?|coloca(?:r)?)\s+(?:a\s+)?(?:m[uú]sica|song|track|som)\s+/i,
+    builder: (_m, q) => {
+      const clean = extractCleanQuery(q, /\b(?:toca(?:r)?|play|reproduz(?:ir)?|coloca(?:r)?)\s+(?:a\s+)?(?:m[uú]sica|song|track|som)\b/gi);
+      return {
+        type: "spotify",
+        url: "",
+        description: `🎵 Tocando: "${clean}"`,
+        query: clean || q,
       };
     },
   },
@@ -185,7 +222,7 @@ export function detectBrowserAction(query: string): BrowserAction | null {
  * Also dispatches an event for the floating player if it's a video/music action.
  */
 export function executeBrowserAction(action: BrowserAction): string {
-  // If it's a YouTube video, dispatch to VideoOverlay instead of opening a new tab
+  // YouTube video → dispatch to VideoOverlay
   if (action.type === "youtube") {
     window.dispatchEvent(new CustomEvent("orion-video-command", {
       detail: {
@@ -198,14 +235,16 @@ export function executeBrowserAction(action: BrowserAction): string {
     return action.description;
   }
 
-  // If it's a Spotify action, dispatch to OrionPlaylistBar
+  // Spotify/music actions → dispatch to OrionPlaylistBar
   if (action.type === "spotify") {
+    const q = action.query;
+    let musicAction = "search_and_play";
+    if (q === "pause") musicAction = "pause";
+    else if (q === "next") musicAction = "next";
+    else if (q === "prev") musicAction = "prev";
+
     window.dispatchEvent(new CustomEvent("orion-music-command", {
-      detail: {
-        action: "search_and_play",
-        query: action.query,
-        fullCommand: action.query,
-      }
+      detail: { action: musicAction, query: q, fullCommand: q }
     }));
     return action.description;
   }
