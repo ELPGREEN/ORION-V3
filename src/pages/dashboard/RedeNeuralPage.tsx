@@ -45,6 +45,8 @@ import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 
 // Componentes modulares
 import { NeuralErrorBoundary } from "@/components/dashboard/neural/NeuralErrorBoundary";
+import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
+import { VideoOverlay } from "@/components/orion/VideoOverlay";
 import { lazyRetry } from "@/lib/lazyRetry";
 
 // Lazy-load all heavy neural panels for code-splitting
