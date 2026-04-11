@@ -1575,7 +1575,7 @@ export function useOrionReasoning(
         const aiConfidence = Math.min(1, Math.max(0,
           ((somResult?.confidence ?? 0.5) * 0.3) +
           ((voltage?.confidence ?? 0.5) * 0.3) +
-          ((1 - (adjustedFE ?? 30) / 100) * 0.4)
+          0.4 * 0.7
         ));
 
         setChatHistory(prev => {
