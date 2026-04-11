@@ -95,21 +95,35 @@ export function AmazonMusicPlayer() {
     window.open(getAmazonMusicUrl(query || searchQuery), "_blank");
   };
 
+  const [absorbProgress, setAbsorbProgress] = useState(0);
+
   const handleAbsorbBook = useCallback(async (title: string, type: "audiobook" | "kindle") => {
     setAbsorbing(title);
+    setAbsorbProgress(0);
     try {
-      // Simulate reading/listening and absorb content for Orion's evolution
       const contentType = type === "audiobook" ? "amazon_audiobook" : "audiobook";
       const durationMinutes = type === "audiobook" ? 15 : 10;
       const sampleText = `Conteúdo absorvido do livro "${title}". Este material contribui para o desenvolvimento linguístico, ampliação vocabular e refinamento prosódico do sistema neural Orion.`;
       
+      // Progress simulation for visual feedback
+      const progressInterval = setInterval(() => {
+        setAbsorbProgress(prev => Math.min(prev + 20, 90));
+      }, 200);
+
       absorbContent(title, contentType, durationMinutes, sampleText);
       
+      clearInterval(progressInterval);
+      setAbsorbProgress(100);
+
       toast.success(`🧠 Orion absorveu "${title}"`, {
-        description: `+${durationMinutes}min de material ${type === "audiobook" ? "auditivo" : "textual"} processado`,
+        description: `+${durationMinutes}min de material ${type === "audiobook" ? "auditivo" : "textual"} processado. Padrões linguísticos extraídos.`,
+        duration: 4000,
       });
     } finally {
-      setAbsorbing(null);
+      setTimeout(() => {
+        setAbsorbing(null);
+        setAbsorbProgress(0);
+      }, 500);
     }
   }, []);
 

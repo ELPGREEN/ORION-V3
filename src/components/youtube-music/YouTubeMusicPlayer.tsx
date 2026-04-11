@@ -1,47 +1,47 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
-  Music, Search, Play, Pause, SkipForward, SkipBack, Volume2, VolumeX,
-  ListMusic, TrendingUp, Loader2, ExternalLink, LogIn, LogOut, X,
+  Music, Search, Play, ListMusic, TrendingUp, Loader2, ExternalLink, LogIn, LogOut,
+  Brain, Moon, Zap, CloudRain, Palette, Headphones, Sparkles,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   isYTMusicConnected, getYTMusicUser, startYTMusicLogin, disconnectYTMusic,
   searchYTMusic, getYTMusicPlaylists, getPlaylistTracks, getTrending,
   type YTMusicTrack, type YTMusicPlaylist,
 } from "@/lib/youtube-music/youtube-music-service";
 
+const YT_MOODS = [
+  { id: "focus", label: "Foco", icon: <Brain className="h-3 w-3" />, query: "focus music instrumental" },
+  { id: "relax", label: "Relaxar", icon: <Moon className="h-3 w-3" />, query: "relaxing ambient music" },
+  { id: "energy", label: "Energia", icon: <Zap className="h-3 w-3" />, query: "energetic workout music" },
+  { id: "melancholy", label: "Melancolia", icon: <CloudRain className="h-3 w-3" />, query: "melancholic piano" },
+  { id: "creative", label: "Criativo", icon: <Palette className="h-3 w-3" />, query: "creative lo-fi beats" },
+  { id: "ambient", label: "Ambiente", icon: <Headphones className="h-3 w-3" />, query: "ambient soundscape" },
+];
+
 export function YouTubeMusicPlayer() {
-  const { toast } = useToast();
   const [connected, setConnected] = useState(false);
   const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
 
-  // Search
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<YTMusicTrack[]>([]);
   const [searching, setSearching] = useState(false);
 
-  // Playlists
   const [playlists, setPlaylists] = useState<YTMusicPlaylist[]>([]);
   const [playlistTracks, setPlaylistTracks] = useState<YTMusicTrack[]>([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
   const [loadingPlaylists, setLoadingPlaylists] = useState(false);
 
-  // Trending
   const [trending, setTrending] = useState<YTMusicTrack[]>([]);
   const [loadingTrending, setLoadingTrending] = useState(false);
 
-  // Player
-  const [currentTrack, setCurrentTrack] = useState<YTMusicTrack | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
 
-  // Check connection status
   useEffect(() => {
     const check = async () => {
       const c = await isYTMusicConnected();
@@ -63,10 +63,23 @@ export function YouTubeMusicPlayer() {
       const tracks = await searchYTMusic(query);
       setResults(tracks);
     } catch (e: any) {
-      toast({ title: "Erro na busca", description: e.message, variant: "destructive" });
+      toast.error(`Erro na busca: ${e.message}`);
     }
     setSearching(false);
-  }, [query, toast]);
+  }, [query]);
+
+  const handleMoodSearch = useCallback(async (mood: typeof YT_MOODS[0]) => {
+    setSelectedMood(mood.id);
+    setSearching(true);
+    try {
+      const tracks = await searchYTMusic(mood.query);
+      setResults(tracks);
+      toast.success(`🎵 ${mood.label}: ${tracks.length} faixas`);
+    } catch (e: any) {
+      toast.error(`Erro: ${e.message}`);
+    }
+    setSearching(false);
+  }, []);
 
   const loadPlaylists = useCallback(async () => {
     setLoadingPlaylists(true);
@@ -74,10 +87,10 @@ export function YouTubeMusicPlayer() {
       const pl = await getYTMusicPlaylists();
       setPlaylists(pl);
     } catch (e: any) {
-      toast({ title: "Erro ao carregar playlists", description: e.message, variant: "destructive" });
+      toast.error(`Erro ao carregar playlists: ${e.message}`);
     }
     setLoadingPlaylists(false);
-  }, [toast]);
+  }, []);
 
   const loadPlaylistTracks = useCallback(async (playlistId: string) => {
     setSelectedPlaylist(playlistId);
@@ -86,10 +99,10 @@ export function YouTubeMusicPlayer() {
       const tracks = await getPlaylistTracks(playlistId);
       setPlaylistTracks(tracks);
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast.error(`Erro: ${e.message}`);
     }
     setLoadingPlaylists(false);
-  }, [toast]);
+  }, []);
 
   const loadTrending = useCallback(async () => {
     setLoadingTrending(true);
@@ -97,14 +110,21 @@ export function YouTubeMusicPlayer() {
       const tracks = await getTrending();
       setTrending(tracks);
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast.error(`Erro: ${e.message}`);
     }
     setLoadingTrending(false);
-  }, [toast]);
+  }, []);
 
+  // Play via FloatingMusicPlayer
   const playTrack = (track: YTMusicTrack) => {
-    setCurrentTrack(track);
-    setPlaying(true);
+    window.dispatchEvent(new CustomEvent("orion-music-command", {
+      detail: {
+        action: "search_and_play",
+        query: `${track.title} ${track.artist}`,
+        fullCommand: `tocar ${track.title}`,
+      },
+    }));
+    toast.success(`▶ ${track.title}`, { description: track.artist });
   };
 
   const openInYTMusic = (videoId: string) => {
@@ -115,13 +135,12 @@ export function YouTubeMusicPlayer() {
     await disconnectYTMusic();
     setConnected(false);
     setUser(null);
-    setCurrentTrack(null);
-    toast({ title: "YouTube Music desconectado" });
+    toast.info("YouTube Music desconectado");
   };
 
   const TrackRow = ({ track }: { track: YTMusicTrack }) => (
     <div
-      className={`flex items-center gap-3 p-2 rounded hover:bg-muted/40 cursor-pointer transition-colors group ${currentTrack?.id === track.id ? "bg-primary/10 border border-primary/20" : ""}`}
+      className="flex items-center gap-3 p-2 rounded hover:bg-muted/40 cursor-pointer transition-colors group"
       onClick={() => playTrack(track)}
     >
       {track.thumbnail ? (
@@ -153,6 +172,9 @@ export function YouTubeMusicPlayer() {
               <Play className="h-3 w-3 text-white fill-white" />
             </div>
             YouTube Music
+            <Badge variant="outline" className={`text-[7px] ${connected ? "border-green-500/30 text-green-400" : "border-white/10 text-white/30"}`}>
+              {connected ? "CONECTADO" : "PÚBLICO"}
+            </Badge>
           </CardTitle>
           <div className="flex items-center gap-2">
             {connected && user && (
@@ -172,38 +194,20 @@ export function YouTubeMusicPlayer() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Embedded Player */}
-        {currentTrack && (
-          <div className="space-y-2">
-            <div className="relative aspect-video rounded overflow-hidden bg-black">
-              <iframe
-                ref={iframeRef}
-                src={`https://www.youtube.com/embed/${currentTrack.videoId}?autoplay=1&enablejsapi=1${muted ? "&mute=1" : ""}`}
-                className="absolute inset-0 w-full h-full"
-                allow="autoplay; encrypted-media"
-                allowFullScreen
-                title={currentTrack.title}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-foreground truncate">{currentTrack.title}</div>
-                <div className="text-[10px] text-muted-foreground truncate">{currentTrack.artist}</div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setMuted(!muted)}>
-                  {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-                </Button>
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openInYTMusic(currentTrack.videoId)}>
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setCurrentTrack(null); setPlaying(false); }}>
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Mood Grid */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {YT_MOODS.map(m => (
+            <Button
+              key={m.id} size="sm" variant="ghost"
+              className={`h-10 flex-col gap-0.5 text-muted-foreground ${selectedMood === m.id ? "bg-red-500/10 ring-1 ring-red-500/20 text-red-400" : "hover:bg-muted/40"}`}
+              onClick={() => handleMoodSearch(m)}
+              disabled={searching}
+            >
+              {m.icon}
+              <span className="text-[8px] font-mono">{m.label}</span>
+            </Button>
+          ))}
+        </div>
 
         {/* Tabs */}
         <Tabs defaultValue="search" className="w-full">
@@ -213,7 +217,6 @@ export function YouTubeMusicPlayer() {
             <TabsTrigger value="trending" className="text-[10px] gap-1" onClick={loadTrending}><TrendingUp className="h-3 w-3" /> Em Alta</TabsTrigger>
           </TabsList>
 
-          {/* Search */}
           <TabsContent value="search" className="space-y-3 mt-3">
             <div className="flex gap-2">
               <Input
@@ -227,7 +230,7 @@ export function YouTubeMusicPlayer() {
                 {searching ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
               </Button>
             </div>
-            {!connected && (
+            {!connected && results.length === 0 && (
               <div className="text-center py-4">
                 <p className="text-xs text-muted-foreground mb-2">Conecte sua conta Google para buscar e tocar músicas</p>
                 <Button size="sm" variant="outline" className="text-[10px] gap-1" onClick={startYTMusicLogin}>
@@ -240,7 +243,6 @@ export function YouTubeMusicPlayer() {
             </div>
           </TabsContent>
 
-          {/* Playlists */}
           <TabsContent value="playlists" className="space-y-3 mt-3">
             {!connected ? (
               <div className="text-center py-4">
@@ -290,7 +292,6 @@ export function YouTubeMusicPlayer() {
             )}
           </TabsContent>
 
-          {/* Trending */}
           <TabsContent value="trending" className="space-y-3 mt-3">
             {loadingTrending ? (
               <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
@@ -304,6 +305,14 @@ export function YouTubeMusicPlayer() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Info: plays in floating player */}
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-red-500/5 border border-red-500/10">
+          <Sparkles className="h-3 w-3 text-red-400 shrink-0" />
+          <span className="text-[8px] font-mono text-red-400/60">
+            Ao clicar em uma faixa, ela abre no player flutuante do Orion
+          </span>
+        </div>
       </CardContent>
     </Card>
   );
