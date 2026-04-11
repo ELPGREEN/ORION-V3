@@ -285,7 +285,7 @@ export default function ChatIAAdvogado() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="relative h-10 w-10 bg-primary/10 border border-primary/30 flex items-center justify-center">
+          <div className="relative h-10 w-10 glass-panel-light rounded-lg flex items-center justify-center">
             <Sparkles className="h-5 w-5 text-primary" />
             <div className="absolute -inset-0.5 bg-primary/20 blur-sm animate-pulse pointer-events-none" style={{ animationDuration: '3s' }} />
           </div>
@@ -302,7 +302,7 @@ export default function ChatIAAdvogado() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="border border-border bg-card overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <div className="h-[calc(100vh-22rem)] overflow-y-auto">
           <div className="max-w-4xl mx-auto py-6 px-4 md:px-6 space-y-6">
             {loadingMessages ? (
@@ -314,7 +314,7 @@ export default function ChatIAAdvogado() {
                 <div className="text-center mb-10 relative">
                   {/* Animated glow behind icon */}
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/10 blur-[60px] animate-pulse pointer-events-none" style={{ animationDuration: '3s' }} />
-                  <div className="relative h-20 w-20 bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex items-center justify-center mx-auto mb-5">
+                  <div className="relative h-20 w-20 glass-premium rounded-2xl flex items-center justify-center mx-auto mb-5">
                     <Sparkles className="h-10 w-10 text-primary icon-gold-glow" />
                     <div className="absolute -inset-px bg-gradient-to-br from-primary/20 to-transparent opacity-0 animate-pulse" style={{ animationDuration: '2s' }} />
                   </div>
@@ -336,13 +336,13 @@ export default function ChatIAAdvogado() {
                     <button
                       key={tool.label}
                       onClick={() => handleToolClick(tool.prompt)}
-                      className="group p-5 text-left border border-border bg-background hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 animate-fade-in-up relative overflow-hidden"
+                      className="group p-5 text-left glass-card-subtle hover:border-primary/30 transition-all duration-300 animate-fade-in-up relative overflow-hidden rounded-lg"
                       style={{ animationDelay: `${idx * 80}ms` }}
                     >
                       {/* Hover shimmer */}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700 pointer-events-none" />
                       <div className="relative z-10">
-                        <div className="h-9 w-9 bg-primary/10 border border-primary/20 flex items-center justify-center mb-3 group-hover:border-primary/40 transition-colors">
+                        <div className="h-9 w-9 glass-panel-light rounded-lg flex items-center justify-center mb-3 group-hover:border-primary/40 transition-colors">
                           <tool.icon className="h-4.5 w-4.5 text-primary group-hover:scale-110 transition-transform" />
                         </div>
                         <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{tool.label}</p>
@@ -355,12 +355,12 @@ export default function ChatIAAdvogado() {
               messages.map((message) => (
                 <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : ""}`}>
                   {message.role === "assistant" && (
-                    <div className="h-8 w-8 bg-primary/10 border border-primary/30 flex items-center justify-center flex-shrink-0 mt-1">
+                    <div className="h-8 w-8 glass-panel-light rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
                       <Sparkles className="h-4 w-4 text-primary" />
                     </div>
                   )}
                   <div className={`max-w-[85%] ${message.role === "user" ? "order-first" : ""}`}>
-                    <div className={`px-5 py-4 ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-background border border-border"}`}>
+                    <div className={`px-5 py-4 rounded-lg ${message.role === "user" ? "bg-primary text-primary-foreground" : "glass-panel-light"}`}>
                       {message.role === "assistant" && (
                         <div className="flex items-center gap-2 mb-3 flex-wrap">
                           {message.provider && (
