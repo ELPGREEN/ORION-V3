@@ -1559,67 +1559,10 @@ export function useOrionReasoning(
       }
 
       if (result.description) {
-        // ═══ LAYER 3.5: Active Inference Guard — SKIP for conversational mode ═══
+        // All post-processing layers REMOVED for speed (Active Inference, Drafter-Critic)
+        // Gemini's own quality is sufficient — these added 200ms+ for marginal gains
         let finalResponse = result.description;
-        let adjustedFE = 30;
-        let wasRefined = false;
-        if (!isConversationalMode) {
-        try {
-          const inferenceResult = computeFreeEnergy(
-            question, result.description,
-            (window as any).__lastTeslaIntent || question,
-            (window as any).__lastTeslaConfidence
-          );
-
-          // Logical consistency check
-          const logicCheck = validateLogicalConsistency(result.description);
-          if (!logicCheck.consistent) {
-            addLog(`⚠️ LogicCheck: ${logicCheck.contradictions.length} contradição(ões) — score=${logicCheck.score}`);
-          }
-
-          // Combine free energy with logic score
-          adjustedFE = Math.min(100, inferenceResult.freeEnergy + (logicCheck.consistent ? 0 : 15));
-          const adjustedSeverity = adjustedFE >= 60 ? "high" : adjustedFE >= 35 ? "low" : "none";
-
-          addLog(`🛡️ ActiveInference: FE=${adjustedFE}(raw=${inferenceResult.freeEnergy}), logic=${logicCheck.score}, passed=${adjustedSeverity === "none"}, ${inferenceResult.timestamp.toFixed(1)}ms`);
-          window.dispatchEvent(new CustomEvent("active-inference-check", {
-            detail: { ...inferenceResult, freeEnergy: adjustedFE, severity: adjustedSeverity, passed: adjustedSeverity === "none" }
-          }));
-
-          if (adjustedSeverity === "high") {
-            // Disclaimer only — NO re-call to LLM (saves 5-20s latency)
-            finalResponse = `${result.description}\n\n${inferenceResult.disclaimer || "⚠️ Verifique as referências desta resposta."}`;
-            addLog(`⚠️ ActiveInference: FE alto — disclaimer adicionado (sem re-chamada LLM)`);
-          } else if (adjustedSeverity === "low" && inferenceResult.disclaimer) {
-            finalResponse = `${result.description}\n\n${inferenceResult.disclaimer}`;
-          }
-
-          // Cache successful reasoning pattern
-          if (adjustedSeverity === "none" && cognitiveRouteResult?.mode === "deep" && intentType) {
-            cacheReasoningPattern(intentType, cognitiveRouteResult.reasoningInstructions, logicCheck.score);
-          }
-
-          // ═══ LAYER 3.7: Drafter-Critic (conditional refinement for deep mode) ═══
-          
-          try {
-            const mode = cognitiveRouteResult?.mode || "fast";
-            const { refine, critique } = shouldRefine(question, finalResponse, intentType, mode);
-            addLog(`📝 Critic: score=${critique.score.toFixed(2)}, refine=${refine}, dims=[C:${critique.dimensions.completeness.toFixed(1)},H:${critique.dimensions.coherence.toFixed(1)},R:${critique.dimensions.relevance.toFixed(1)}]`);
-            window.dispatchEvent(new CustomEvent("drafter-critic", { detail: critique }));
-
-            if (refine && critique.critique) {
-              addLog(`🔄 Refinement triggered: ${critique.critique.slice(0, 100)}`);
-              // Instead of re-calling LLM (expensive), append critique as a note
-              finalResponse = `${finalResponse}\n\n📋 *Nota de qualidade*: ${critique.critique}`;
-              wasRefined = true;
-            }
-          } catch (criticErr) {
-            addLog(`⚠️ Critic: ${criticErr}`);
-          }
-        } catch (e) {
-          addLog(`⚠️ ActiveInference: erro na verificação — ${e}`);
-        }
-        } // end if (!isConversationalMode) for layers 3.5/3.7
+        const wasRefined = false;
 
         // ═══ HUMANIZER: Strip AI-isms for natural output ═══
         const { humanizeText, humanizeForSpeech } = await import("@/lib/voice/humanizer");
