@@ -614,7 +614,7 @@ function GlobeRotation({ paused, children }: { paused: boolean; children: React.
 }
 
 // ─── Full Scene ───
-function NeuralScene({ paused }: { paused: boolean }) {
+function NeuralScene({ paused, showLabels }: { paused: boolean; showLabels: boolean }) {
   return (
     <>
       <color attach="background" args={["#020a12"]} />
@@ -626,6 +626,7 @@ function NeuralScene({ paused }: { paused: boolean }) {
         <AxonNetwork paused={paused} />
         <NeuronBodies paused={paused} />
         <SynapticImpulses paused={paused} />
+        <NodeLabels paused={paused} visible={showLabels} />
       </GlobeRotation>
 
       <CSFParticles paused={paused} />
