@@ -198,15 +198,21 @@ async function handleApiAction(action: string, body: any, token: string) {
     case "top_artists": return spotifyGet(`/me/top/artists?time_range=${body.time_range || "medium_term"}&limit=${body.limit || 20}`, token);
     case "recently_played": return spotifyGet(`/me/player/recently-played?limit=${body.limit || 20}`, token);
     case "recommendations": {
-      const params = new URLSearchParams();
-      if (body.seed_artists) params.set("seed_artists", body.seed_artists);
-      if (body.seed_tracks) params.set("seed_tracks", body.seed_tracks);
-      if (body.seed_genres) params.set("seed_genres", body.seed_genres);
-      params.set("limit", String(body.limit || 20));
-      if (body.target_energy) params.set("target_energy", body.target_energy);
-      if (body.target_valence) params.set("target_valence", body.target_valence);
-      if (body.target_tempo) params.set("target_tempo", body.target_tempo);
-      return spotifyGet(`/recommendations?${params.toString()}`, token);
+      // Spotify deprecated /recommendations endpoint — use search with genre/mood keywords
+      const genres = (body.seed_genres || "pop").split(",").map((g: string) => g.trim());
+      const energy = parseFloat(body.target_energy || "0.5");
+      const valence = parseFloat(body.target_valence || "0.5");
+      // Build mood-aware search query
+      let moodKeyword = "";
+      if (energy < 0.3 && valence < 0.3) moodKeyword = "sad melancholy";
+      else if (energy < 0.3) moodKeyword = "calm ambient chill";
+      else if (energy > 0.7 && valence > 0.7) moodKeyword = "happy upbeat party";
+      else if (energy > 0.7) moodKeyword = "energetic workout intense";
+      else if (valence > 0.6) moodKeyword = "feel good positive";
+      else moodKeyword = "vibes";
+      const searchQ = `genre:${genres[0]} ${moodKeyword}`;
+      const searchData = await spotifyGet(`/search?q=${encodeURIComponent(searchQ)}&type=track&limit=${body.limit || 20}`, token);
+      return { tracks: searchData?.tracks?.items || [] };
     }
     case "search": return spotifyGet(`/search?q=${encodeURIComponent(body.query || "")}&type=${body.types || "track,artist"}&limit=${body.limit || 10}`, token);
     case "playback_state": return spotifyGet("/me/player", token);
@@ -228,7 +234,8 @@ async function handleApiAction(action: string, body: any, token: string) {
     }
     case "track_features": {
       if (!body.track_id) throw new Error("Missing track_id");
-      return spotifyGet(`/audio-features/${body.track_id}`, token);
+      // audio-features was deprecated — return track info instead
+      return spotifyGet(`/tracks/${body.track_id}`, token);
     }
     case "get_user_profile": return spotifyGet("/me", token);
     case "get_playlists": return spotifyGet(`/me/playlists?limit=${body.limit || 50}`, token);
