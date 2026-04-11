@@ -18,7 +18,6 @@ import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { loadVoicePrefs, detectStyleCommand, saveVoicePrefs, getCachedVoicePrefs } from "@/lib/voice/adaptiveVoiceStyle";
-import { preloadPiper } from "@/lib/tts/piperTTS";
 import { feedUserSpeech, feedAIResponse } from "@/lib/neural/voice-evolution-feedback";
 import { fallbackTranscribe, chunksToWavBlob } from "@/lib/voice/sttFallbackChain";
 import { getAudioWorkletManager } from "@/lib/voice/audioWorkletManager";
@@ -34,6 +33,14 @@ const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
 
 // ═══ Shared State ═══
 export const VoiceState = { aiResponding: false };
+
+let _voiceBootstrapDone = false;
+function ensureVoiceBootstrapOnce() {
+  if (_voiceBootstrapDone) return;
+  _voiceBootstrapDone = true;
+  initVoicePicker();
+  loadVoicePrefs().catch(() => {});
+}
 
 // ═══ Text Utilities ═══
 
@@ -54,6 +61,9 @@ export function cleanTextForSpeech(text: string): string {
     .replace(/\|/g, " ")
     .replace(/[─═╔╗╚╝║╠╣╬┌┐└┘├┤┬┴┼]/g, "")
     .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/g, "")
+    .replace(/[;:]+/g, ", ")
+    .replace(/[–—]+/g, ", ")
+    .replace(/!+/g, ". ")
     .replace(/\.{3,}/g, "...")
     .replace(/([!?.])\1+/g, "$1")
     .replace(/\n+/g, ". ")
@@ -201,34 +211,9 @@ export function useNeuralVoice(
     };
     registerMicCleanup(cleanup);
 
-    initVoicePicker();
+    ensureVoiceBootstrapOnce();
     const voice = getOrionVoice();
     if (voice) maleVoiceRef.current = voice;
-
-    preloadPiper();
-    loadVoicePrefs().catch(() => {});
-
-    // Prime AudioContext on first user gesture to unlock autoplay
-    const primeAudio = () => {
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        if (ctx.state === "suspended") ctx.resume().catch(() => {});
-        // Play silent buffer to unlock audio
-        const buf = ctx.createBuffer(1, 1, 22050);
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        src.connect(ctx.destination);
-        src.start(0);
-        console.log("[Voice] AudioContext primed for autoplay");
-        setTimeout(() => ctx.close().catch(() => {}), 100);
-      } catch {}
-      document.removeEventListener("click", primeAudio);
-      document.removeEventListener("touchstart", primeAudio);
-      document.removeEventListener("keydown", primeAudio);
-    };
-    document.addEventListener("click", primeAudio, { once: true });
-    document.addEventListener("touchstart", primeAudio, { once: true });
-    document.addEventListener("keydown", primeAudio, { once: true });
 
     const handler = () => {
       const v = getOrionVoice();
@@ -323,7 +308,7 @@ export function useNeuralVoice(
     if (!text) return Promise.resolve();
 
     const splitIntoSentences = (t: string): string[] => {
-      const sentences = t.match(/[^.!?…;]+[.!?…;]+\s*|[^.!?…;]+$/g) || [t];
+      const sentences = t.match(/[^.?…]+[.?…]+\s*|[^.?…]+$/g) || [t];
       const chunks: string[] = [];
       let current = "";
       for (const s of sentences) {
@@ -364,7 +349,7 @@ export function useNeuralVoice(
 
         const speakChunk = (idx: number) => {
           if (idx >= chunks.length) { finish(); return; }
-          const pauseMs = idx > 0 ? 30 + Math.random() * 50 : 0;
+          const pauseMs = idx > 0 ? 5 : 0;
           setTimeout(() => {
             const isQuestion = /\?/.test(chunks[idx]);
             const isLast = idx === chunks.length - 1;
