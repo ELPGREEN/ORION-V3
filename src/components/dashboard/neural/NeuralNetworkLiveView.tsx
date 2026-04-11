@@ -1,6 +1,6 @@
 import { useRef, useMemo, useState, useEffect, useCallback } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, Html } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Activity, Zap, Brain, Cpu, Database, Eye, Pause, Play,
   RotateCcw, Wifi, Bluetooth, Shield,
-  Maximize2, Minimize2, Layers, Lock, Radio,
+  Maximize2, Minimize2, Layers, Lock, Radio, Tag,
 } from "lucide-react";
 import { getDefenseMetrics } from "@/lib/neural/orion-defense-system";
 import { getPipelineLatency } from "@/lib/neural/pipeline-latency-tracker";
@@ -558,6 +558,54 @@ function BrainCore({ paused }: { paused: boolean }) {
   );
 }
 
+// ─── Node Labels — Html overlays with proximity culling ───
+function NodeLabels({ paused, visible }: { paused: boolean; visible: boolean }) {
+  const positions = useMemo(computeGlobePositions, []);
+  const { camera } = useThree();
+  const [visibleNodes, setVisibleNodes] = useState<number[]>([]);
+  const frameCount = useRef(0);
+
+  useFrame(() => {
+    if (!visible) return;
+    frameCount.current++;
+    if (frameCount.current % 30 !== 0) return; // Update every ~0.5s
+    const dists = positions.map((p, i) => ({ i, d: camera.position.distanceTo(p) }));
+    dists.sort((a, b) => a.d - b.d);
+    const closest = dists.slice(0, 15).map(x => x.i);
+    setVisibleNodes(closest);
+  });
+
+  if (!visible) return null;
+
+  return (
+    <group>
+      {visibleNodes.map(idx => {
+        const node = NEURAL_NODES[idx];
+        const pos = positions[idx];
+        return (
+          <Html
+            key={node.id}
+            position={[pos.x, pos.y + node.size + 0.4, pos.z]}
+            center
+            distanceFactor={18}
+            occlude={false}
+            style={{ pointerEvents: "none" }}
+          >
+            <div className="bg-black/60 backdrop-blur-sm rounded px-1.5 py-0.5 border border-white/[0.08] whitespace-nowrap">
+              <div className="text-[10px] font-mono font-semibold leading-tight" style={{ color: node.color }}>
+                {node.label}
+              </div>
+              <div className="text-[8px] font-mono leading-tight" style={{ color: node.color, opacity: 0.5 }}>
+                {node.arch}
+              </div>
+            </div>
+          </Html>
+        );
+      })}
+    </group>
+  );
+}
+
 // ─── Globe auto-rotation ───
 function GlobeRotation({ paused, children }: { paused: boolean; children: React.ReactNode }) {
   const ref = useRef<THREE.Group>(null);
@@ -568,7 +616,7 @@ function GlobeRotation({ paused, children }: { paused: boolean; children: React.
 }
 
 // ─── Full Scene ───
-function NeuralScene({ paused }: { paused: boolean }) {
+function NeuralScene({ paused, showLabels }: { paused: boolean; showLabels: boolean }) {
   return (
     <>
       <color attach="background" args={["#020a12"]} />
@@ -580,6 +628,7 @@ function NeuralScene({ paused }: { paused: boolean }) {
         <AxonNetwork paused={paused} />
         <NeuronBodies paused={paused} />
         <SynapticImpulses paused={paused} />
+        <NodeLabels paused={paused} visible={showLabels} />
       </GlobeRotation>
 
       <CSFParticles paused={paused} />
@@ -719,6 +768,7 @@ export function NeuralNetworkLiveView() {
   const [paused, setPaused] = useState(false);
   const [key, setKey] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [showLabels, setShowLabels] = useState(true);
 
   return (
     <Card className="border-cyan-500/10 bg-[#020a12] overflow-hidden shadow-2xl" style={{ boxShadow: "0 0 40px rgba(0,50,80,0.08)" }}>
@@ -751,7 +801,7 @@ export function NeuralNetworkLiveView() {
             dpr={[1, 1.5]}
             onCreated={({ gl }) => { gl.setClearColor("#020a12"); }}
           >
-            <NeuralScene paused={paused} />
+            <NeuralScene paused={paused} showLabels={showLabels} />
           </Canvas>
 
           <CategoryLegend />
@@ -765,6 +815,12 @@ export function NeuralNetworkLiveView() {
 
           {/* Controls */}
           <div className="absolute bottom-3 right-3 flex gap-1.5 z-10">
+            <Button size="sm" variant="outline"
+              className="h-8 w-8 p-0 bg-[#020a12]/90 border-white/[0.08] text-white/30 hover:text-cyan-600 hover:border-cyan-700/25 backdrop-blur-md"
+              onClick={() => setShowLabels(!showLabels)}
+              title={showLabels ? "Ocultar labels" : "Mostrar labels"}>
+              <Tag className={`h-3.5 w-3.5 ${showLabels ? "text-cyan-500" : ""}`} />
+            </Button>
             <Button size="sm" variant="outline"
               className="h-8 w-8 p-0 bg-[#020a12]/90 border-white/[0.08] text-white/30 hover:text-cyan-600 hover:border-cyan-700/25 backdrop-blur-md"
               onClick={() => setExpanded(!expanded)}>
