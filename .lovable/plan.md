@@ -1,62 +1,73 @@
 
 
-# Auditoria & Atualização do Painel Rede Neural — Audiobook, Música & YouTube
+# Plano: Corrigir OAuth + Player Integrado + Projetor de Vídeo + Comandos de Voz
 
-## Diagnóstico Atual
+## Problemas Identificados
 
-A aba "Audiobook" na RedeNeuralPage contém 4 componentes empilhados verticalmente:
-1. **OrionAudiobookListener** — STT local com Speech Recognition API, visualizador de áudio, detecção de padrões linguísticos
-2. **SpotifyPlayer** — Login OAuth, busca por mood, top tracks, recentes (367 linhas)
-3. **AmazonMusicPlayer** — Music, Audible, Kindle, Alexa, Shopping (com absorção neural)
-4. **YouTubeMusicPlayer** — Login Google, busca, playlists, trending, player iframe (310 linhas)
+1. **Google OAuth 400 (YouTube Music)**: O `redirect_uri` configurado no código é `{origin}/callback/youtube-music`, mas esse URI precisa estar cadastrado no Google Cloud Console. Além disso, no ambiente de preview do Lovable, o origin muda — causando mismatch.
 
-### Problemas Identificados
+2. **Spotify redirect_uri_mismatch**: Mesmo problema — o URI `{origin}/spotify-callback` precisa estar no Spotify Developer Dashboard.
 
-1. **Audiobook Learner**: Usa `webkitSpeechRecognition` (browser API) — funciona mas é instável, sem integração com Groq Whisper STT (que já existe como edge function)
-2. **Spotify**: Login OAuth implementado mas sem feedback visual de estado real da conexão; sem playback real (preview_url apenas)
-3. **YouTube Music**: Player usa iframe embed básico; busca/trending dependem de service functions que podem não estar conectadas
-4. **Amazon Music**: Funções `searchAmazonMusic`/`searchAmazonAudiobooks` provavelmente retornam dados mock
-5. **Layout**: 4 cards grandes empilhados = scroll excessivo, sem organização visual clara
-6. **Sem integração cruzada**: Audiobook Learner não absorve de Spotify/YouTube/Amazon
+3. **Busca de música sem redirecionar**: O `OrionPlaylistBar` já busca via Spotify client credentials (sem login), mas só toca previews de 30s. Para YouTube Music, a busca precisa de OAuth.
+
+4. **Comandos de voz do Orion**: Falta integração para que comandos como "toca música X", "pausa", "próxima", "volta" sejam interceptados e executados no player in-app.
+
+5. **Projetor de vídeo**: O `VideoOverlay` já existe mas precisa de melhorias visuais (efeito 3D holográfico) e integração com comandos de voz.
 
 ## Plano de Implementação
 
-### 1. Reorganizar Layout da Aba Audiobook/Música
-- Dividir em **2 seções visuais**: "🧠 Aprendizado" (Audiobook Learner no topo) e "🎵 Música & Mídia" (Spotify + Amazon + YouTube em grid 2-col ou tabs internos)
-- Adicionar sub-tabs dentro da seção música: Spotify | Amazon | YouTube (em vez de empilhar tudo)
+### 1. Corrigir OAuth redirect URIs
+- **YouTube Music**: Atualizar o código para usar um redirect_uri fixo baseado no domínio de produção `https://www.iasofthub.com/callback/youtube-music`
+- **Spotify**: Idem — fixar `https://www.iasofthub.com/spotify-callback`
+- **Documentar** os URIs exatos que você precisa cadastrar nos consoles do Google e Spotify
 
-### 2. Melhorar Audiobook Learner
-- Integrar com **Groq Whisper STT** (edge function `groq-whisper-stt`) como alternativa ao Speech Recognition nativo — melhor precisão
-- Adicionar botão "Absorver para Rede Neural" que salva insights/padrões na base neural via `addNeuralKnowledge`
-- Suporte a drag-and-drop de arquivo de áudio
-- Mostrar progresso real de processamento com barra de progresso
+### 2. Busca de música sem login (YouTube)
+- Adicionar ação `search_public` no edge function `youtube-music-api` que usa apenas a `YOUTUBE_API_KEY` (sem OAuth) para buscar vídeos musicais
+- Reproduzir via iframe embed do YouTube no player in-app (sem precisar de conta conectada)
+- Manter OAuth como opcional para playlists pessoais
 
-### 3. Melhorar Spotify Player
-- Corrigir estado de conexão com indicador visual claro (online/offline badge)
-- Adicionar integração "Absorver Letra" — quando ouvindo, Orion aprende vocabulário da música
-- Melhorar UI do playback com album art maior e controles mais intuitivos
+### 3. Player unificado com comandos de voz
+- Expandir `OrionPlaylistBar` para aceitar eventos de voz: `play`, `pause`, `next`, `prev`, `search`
+- Interceptar no processamento de linguagem natural do Orion frases como:
+  - "toca [música]" → busca + auto-play
+  - "pausa" / "para" → pause
+  - "próxima" / "pula" → next
+  - "volta" / "anterior" → prev
+  - "busca [termo]" → search
+- Usar YouTube embed como fallback quando Spotify preview não disponível
 
-### 4. Melhorar YouTube Music
-- Usar `FloatingMusicPlayer` existente para reprodução (já implementado com YouTube embed)
-- Ao clicar em "Tocar", abrir no FloatingMusicPlayer flutuante em vez de player inline
-- Adicionar busca com sugestões baseadas em mood (reuso dos moods do Spotify)
+### 4. Projetor de vídeo holográfico 3D
+- Melhorar `VideoOverlay` com efeito de projeção 3D:
+  - Cone de luz saindo do avatar do Orion
+  - Bordas holográficas animadas (shimmer)
+  - Perspectiva CSS 3D (transform: perspective + rotateY sutil)
+- Comando "mostra vídeo de X" → busca YouTube → abre no projetor
 
-### 5. Melhorar Amazon Music
-- Manter tabs existentes (Music, Audible, Kindle, Alexa, Shopping)
-- Melhorar visual da função "Absorver" com feedback mais claro (progresso + resultado)
+### 5. Painel IoT (MQTT + Bluetooth + WiFi)
+- Criar seção no painel da Rede Neural para dispositivos conectados
+- Listar dispositivos via MQTT topics (câmeras, lâmpadas, TV, etc.)
+- Interface de controle: on/off, status, stream de câmera
+- Integração com o broker HiveMQ já configurado
 
-### 6. Auditoria Geral — Limpeza
-- Remover estados mortos e console.warns desnecessários
-- Garantir que todos os toasts usam `sonner` consistentemente (YouTube usa `useToast`, resto usa `toast` direto)
-- Unificar padrão de loading/error/empty states
+## Ações Manuais Necessárias (Google Cloud Console)
 
-## Arquivos Modificados
+Você precisa adicionar estes URIs no console correspondente:
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/pages/dashboard/RedeNeuralPage.tsx` | Reorganizar layout da aba audiobook com sub-seções |
-| `src/components/orion/OrionAudiobookListener.tsx` | Integrar Groq Whisper, drag-drop, absorção neural |
-| `src/components/spotify/SpotifyPlayer.tsx` | UI polish, connection badge, absorver letra |
-| `src/components/youtube-music/YouTubeMusicPlayer.tsx` | Migrar para sonner, integrar FloatingMusicPlayer |
-| `src/components/amazon/AmazonMusicPlayer.tsx` | Melhorar feedback de absorção |
+**Google Cloud Console** (YouTube Music):
+- `https://www.iasofthub.com/callback/youtube-music`
+
+**Spotify Developer Dashboard**:
+- `https://www.iasofthub.com/spotify-callback`
+
+## Arquivos a Modificar/Criar
+
+| Arquivo | Ação |
+|---------|------|
+| `src/lib/youtube-music/youtube-music-service.ts` | Fixar redirect_uri para produção, adicionar busca pública |
+| `src/lib/spotify/spotify-service.ts` | Fixar redirect_uri para produção |
+| `supabase/functions/youtube-music-api/index.ts` | Adicionar action `search_public` sem OAuth |
+| `src/components/orion/OrionPlaylistBar.tsx` | Adicionar YouTube embed fallback, mais eventos de voz |
+| `src/components/orion/VideoOverlay.tsx` | Efeitos 3D holográficos, cone de projeção |
+| `src/lib/neural/orion-browser-actions.ts` | Rotear comandos de música/vídeo para componentes in-app |
+| `src/components/orion/OrionIoTPanel.tsx` | Novo — painel de dispositivos IoT |
 
