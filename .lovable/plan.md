@@ -1,76 +1,73 @@
 
 
-# Plano: Tudo que falta — Google Cloud TTS/Vision + Plugins Nativos + Atualizações
+# Auditoria Completa — Rede Neural ao Vivo
 
-## Status atual vs Planejado
+## Problemas Identificados
 
-| Item | Status |
-|------|--------|
-| Google Cloud TTS edge function | **NAO CRIADO** |
-| Google Cloud Vision edge function | **NAO CRIADO** |
-| Atualização imports obsoletos (groq-vision-hybrid) | **NAO FEITO** — ainda `deno.land/std@0.168.0` |
-| CameraStreamPlugin.java | **NAO CRIADO** |
-| NativeSpeechPlugin.java | **NAO CRIADO** |
-| Bridge TS câmera nativa | **NAO CRIADO** |
-| Bridge TS speech nativo | **NAO CRIADO** |
-| Voice cascade com Cloud TTS | **NAO FEITO** — orionVoiceEngine só tem Cache → Formant |
+### 1. Visual: "Bolinhas coloridas" em vez de neurônios reais
+- **NeuronBodies** (L146-275): Usa `SphereGeometry(s, 32, 32)` — esferas lisas com MeshPhysicalMaterial. Parece bola de vidro, não neurônio.
+- **AxonTubes** (L278-331): Tubos de 0.025 de raio com `MeshBasicMaterial` — parecem fios de LED, não axônios biológicos.
+- **SynapticImpulses** (L335-407): Esferas de 6 segmentos viajando pelas curvas — parecem partículas de videogame.
+- **BrainCore** (L467-497): Icosaedro wireframe — parece objeto geométrico, não córtex.
 
-Plugins nativos existentes: `SpotifyPlaybackPlugin.java`, `AmazonAppstoreSDKPlugin.java` — OK.
+### 2. Performance: Lento para responder
+- **4000 CSF particles** atualizadas CADA FRAME com loop `for` (L443-447) — ineficiente, deveria usar shader.
+- **150 impulsos** com meshes individuais (150 draw calls) — deveria ser InstancedMesh.
+- **~120 conexões** como meshes TubeGeometry separadas (~120 draw calls) — deveria ser merge ou instanced.
+- **~60 nós** com 3 meshes cada (corpo + núcleo + halo = 180 draw calls) — deveria ser InstancedMesh.
+- **Total: ~450+ draw calls** por frame — extremamente pesado para WebGL.
+- **Canvas label textures**: 60 canvas 512x144 criados no mount — 60 texturas GPU desnecessárias.
 
-## Implementação (6 passos)
+### 3. Métricas falsas
+- **MetricsOverlay** (L570-627): Gera valores aleatórios a cada 2.5s (`Math.random()`). Não conectado a dados reais.
+- QPS, latência, experts ativos — tudo inventado.
 
-### 1. Criar `supabase/functions/google-cloud-tts/index.ts`
-- REST API: `POST texttospeech.googleapis.com/v1/text:synthesize`
-- Voice: `pt-BR-Neural2-B` (grave, masculino)
-- Audio: `OGG_OPUS` (menor latência)
-- Auth: `GCP_SA_KEY` (service account JSON) — já existe nos secrets
-- Latência esperada: ~500ms
+## Plano de Correção (3 passos)
 
-### 2. Criar `supabase/functions/google-cloud-vision/index.ts`
-- REST API: `POST vision.googleapis.com/v1/images:annotate`
-- Features: `LABEL_DETECTION`, `OBJECT_LOCALIZATION`, `TEXT_DETECTION`, `FACE_DETECTION`
-- Auth: mesmo `GCP_SA_KEY`
-- Latência esperada: ~300ms
+### Passo 1: Neurônios realistas com morfologia orgânica
+**Arquivo:** `NeuralNetworkLiveView.tsx`
 
-### 3. Atualizar `supabase/functions/groq-vision-hybrid/index.ts`
-- Import: `deno.land/std@0.168.0` → remover (usar `Deno.serve` nativo)
-- Import: `supabase-js@2.49.1` → `@2.49.4` ou remover se não usado
-- Adicionar Google Cloud Vision como primeiro provider no cascade (antes do Gemini)
+Substituir esferas por neurônios com corpo celular irregular + dendritos curtos orgânicos:
+- **Corpo celular**: `IcosahedronGeometry` com displacement map procedural (noise) para superfície irregular, como membrana celular real
+- **Material**: `MeshPhysicalMaterial` com `transmission: 0.4`, `thickness: 2`, `roughness: 0.6`, `sheen: 1.0` — aspecto translúcido biológico, não vítreo
+- **Sem dendrites longas** (como pedido) — apenas irregularidade na superfície do soma
+- **InstancedMesh** para todos os 60 nós — 1 draw call em vez de 180
 
-### 4. Atualizar `src/lib/tts/orionVoiceEngine.ts`
-- Cascade atual: Cache → Formant (2 tiers)
-- Novo cascade: Cache → **Cloud TTS** (500ms) → **Gemini TTS** (2-4s) → Formant (50ms offline)
-- Importar e chamar edge function `google-cloud-tts`
-- Se Cloud TTS falhar → Gemini TTS → Formant
+### Passo 2: Axônios e sinapses realistas + performance
+- **Axônios**: Manter TubeGeometry mas com raio variável (mais grosso perto do soma, mais fino longe) e material com `emissive` pulsante — simula mielina bioluminescente
+- **Merge geometries**: Unir todas as TubeGeometry numa única `BufferGeometry` — 1 draw call em vez de 120
+- **Impulsos**: Substituir 150 meshes por 1 `InstancedMesh` com `SphereGeometry` compartilhada — 1 draw call em vez de 150
+- **CSF Particles**: Mover animação para vertex shader custom com `ShaderMaterial` — zero CPU por frame
 
-### 5. Criar plugins nativos Capacitor
-- `android/.../CameraStreamPlugin.java` — streaming contínuo de frames via Camera2 API
-- `android/.../NativeSpeechPlugin.java` — Android `TextToSpeech` + `SpeechRecognizer` nativo
-- `src/lib/capacitor/native-camera-plugin.ts` — bridge TS
-- `src/lib/capacitor/native-speech-plugin.ts` — bridge TS
-- Auto-detect: Capacitor nativo disponível → usar nativo; senão → Web API fallback
+### Passo 3: Labels e métricas otimizados
+- **Labels**: Substituir 60 canvas textures por HTML overlay com `Html` do drei (só renderiza quando visível) ou reduzir para 1 atlas texture
+- **Métricas**: Conectar ao `getPipelineLatency()` real e ao defense system real em vez de `Math.random()`
 
-### 6. Atualizar `google-tts` (hack) → deprecar
-- O hack do Google Translate TTS é instável
-- Substituir referências por Cloud TTS oficial
-- Manter como último fallback se Cloud TTS + Gemini TTS falharem
+## Resultado esperado
 
-## Arquivos
+```text
+ANTES (450+ draw calls):
+┌─ 60 × SphereGeo (corpo)
+├─ 60 × SphereGeo (núcleo)  
+├─ 60 × SphereGeo (halo)
+├─ 120 × TubeGeo (axônios)
+├─ 150 × SphereGeo (impulsos)
+└─ 4000 pts (CSF, CPU-animated)
 
-| Arquivo | Ação |
-|---------|------|
-| `supabase/functions/google-cloud-tts/index.ts` | Criar |
-| `supabase/functions/google-cloud-vision/index.ts` | Criar |
-| `supabase/functions/groq-vision-hybrid/index.ts` | Atualizar imports + adicionar Cloud Vision provider |
-| `src/lib/tts/orionVoiceEngine.ts` | Reescrever cascade: Cache → Cloud TTS → Gemini → Formant |
-| `src/lib/tts/geminiTTS.ts` | Exportar como módulo chamável pelo cascade |
-| `android/.../CameraStreamPlugin.java` | Criar |
-| `android/.../NativeSpeechPlugin.java` | Criar |
-| `src/lib/capacitor/native-camera-plugin.ts` | Criar |
-| `src/lib/capacitor/native-speech-plugin.ts` | Criar |
+DEPOIS (~8 draw calls):
+┌─ 1 × InstancedMesh (corpos, displacement noise)
+├─ 1 × InstancedMesh (núcleos glow)
+├─ 1 × MergedGeo (axônios, raio variável)
+├─ 1 × InstancedMesh (impulsos)
+├─ 1 × Points (CSF, GPU-animated shader)
+├─ 1 × BrainCore
+└─ 1 × Bloom pass
+```
 
-## Custos (free tier GCP)
-- Cloud Vision: 1000 imgs/mês grátis
-- Cloud TTS Neural2: 1M chars/mês grátis
-- GCP project já configurado com créditos
+Performance: ~60x menos draw calls. Visual: membrana celular orgânica translúcida com axônios mielinizados pulsantes em fundo escuro com bloom — estilo microscopia fluorescente real.
+
+## Arquivos alterados
+| Arquivo | Mudança |
+|---------|---------|
+| `src/components/dashboard/neural/NeuralNetworkLiveView.tsx` | Reescrita completa dos componentes 3D |
 
