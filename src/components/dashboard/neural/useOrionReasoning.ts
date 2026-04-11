@@ -1503,8 +1503,6 @@ export function useOrionReasoning(
       );
 
       let firstSentenceSpoken = false;
-      let batchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-      let streamEnded = false;
       const triggerQueueDebounced = () => {
         if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
         if (!firstSentenceSpoken || streamEnded) {
