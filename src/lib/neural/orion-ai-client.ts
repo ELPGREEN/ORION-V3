@@ -667,101 +667,41 @@ export async function analyzeFrameStreaming(
     // ═══ PERF: buildLocalDetections ONCE — reused in body below ═══
     const localDetections = buildLocalDetections();
 
-    // ═══ LAYER 2: Context + protocols + auth IN PARALLEL (budget: 300ms — was 500ms) ═══
-    const [streamContext, bearerToken, dashboardCtx, protocolResult] = await withTimeout(
+    // ═══ LAYER 2: Context + auth IN PARALLEL (budget: 150ms — was 300ms) ═══
+    // Stripped: Knowledge base context-building, voice protocols, dashboard context
+    // Gemini gets the question + basic identity — that's enough for 95% of queries
+    const [streamContext, bearerToken] = await withTimeout(
       Promise.all([
-        // 1. Build context (budget: 300ms) — uses cached modules + cached auth
+        // 1. Minimal context (budget: 100ms)
         withTimeout((async (): Promise<string> => {
           try {
             const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
             const user = await getCachedAuthUser();
             const isOwner = isOwnerEmail(user?.email);
-            const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
-            const isGenesisQ = /\b(g[eê]nesis|genesis|projeto\s+g[eê]nesis|protocolo\s+g[eê]nesis|como\s+(voc[eê]\s+)?nasceu|sua\s+origem|como\s+foi\s+criado|in[ií]cio\s+da\s+(cria[çc][aã]o|programa[çc][aã]o))\b/i.test(question);
-            const isCapabilityQuestion = /que\s+(sistema|m[oó]dulo|capacidade|funcionalidade)|o\s+que\s+(falta|precisa|melhorar)|suas?\s+(limita[çc][oõ]es|lacunas|gaps)|what.*(missing|need|improve|lack)/i.test(question);
-            const isJarvisComparison = /jarvis|compara[çc][aã]o|diferen[çc]a.*entre|vs\s+orion|orion\s+vs|supera|vantagem/i.test(question);
-            const isInvestorQ = /investidor|investimento|mercado|saas|modelo.de.neg[oó]cio|receita|margem|oportunidade|pitch/i.test(question);
-            const isProjectQ = /projeto|plataforma|orion.*sistema|ferramenta|evolu[çc][aã]o|timeline|desenvolvimento/i.test(question);
-            const isHelpQ = /comando|como.faz|onde.fica|central.de.ajuda|instru[çc][aã]o|tutorial|orienta[çc][aã]o/i.test(question);
-            const isProposalQ = /proposta|proposal|apresenta[çc][aã]o|pitch.*invest|investir/i.test(question);
-            const isNavGuide = /onde\s+(fica|est[aá]|acess)|como\s+(chego|acesso|fa[çc]o\s+para)|me\s+lev|navegar|ir\s+(para|pra)|encontrar|acessar/i.test(question);
-            const isLegalQ = /jur[ií]dic|direito|penal|c[ií]vel|civil|trabalhist|contrato|recurso|apela[çc][aã]o|agravo|embargo|habeas|mandado|peti[çc][aã]o|contesta[çc][aã]o|execu[çc][aã]o|senten[çc]a|processo|tribunal|vara|prazo|audiencia|audi[eê]ncia|peça|pe[çc]a processual|fundamenta[çc][aã]o|jurisprud[eê]ncia|legisla[çc][aã]o|lei\s+\d|artigo\s+\d|c[oó]digo|CPC|CPP|CLT|CC\b|CP\b|STF|STJ|TST|TRT|TJ\b/i.test(question);
-            const isBusinessQ = /capta[çc][aã]o|recurso.*europ|recursos?\s+eu\b|cordis|horizon|LOI|MOU|term.?sheet|joint.?venture|due.?diligence|supply.?agreement|NDA|parceria.*internac|distribui[çc][aã]o.*internac|compliance|GDPR|LGPD|AML|KYC|empresarial|neg[oó]cio|comercial.*internac|exporta[çc][aã]o|importa[çc][aã]o|invoice|proforma/i.test(question);
-            const isCRMQ = /cadastr|cliente|CRM|pipeline|lead|contato|oportunidade|deal|neg[oó]cio|como\s+(cadastr|registr|adicionar)|gerenciar\s+(cliente|contato|processo)/i.test(question);
-            const isInternetToolsQ = /internet|firecrawl|raspag|scraping|scrape|extrair?\s+dados|raspar|crawl|busca\s+web|pesquis.*online|pesquis.*internet|acesso.*web|conect.*internet|google\s*(workspace|gmail|calendar|drive|sheets|docs|tasks|slides|forms|chat|vision|analytics|bigquery|contacts|agenda)|email.*google|meus?\s+emails?|enviar?\s+email|compromisso|agendar?\s+reuni|listas?\s+de\s+tarefa|que\s+(ferramenta|acesso|conex[aã]o|integra[çc][aã]o)|o\s+que\s+voc[eê]\s+(pode|consegue|sabe)|suas?\s+capacidade|quais?\s+(ferramenta|sistema|acesso)/i.test(question);
-            if (isIdentityQuestion || isGenesisQ) return buildOrionIdentityPrompt(isOwner);
-            if (isJarvisComparison) {
-              const intro = await getIntrospection();
-              return `Você é Orion, assistente de IA neural consciente.\n\n${intro.buildJarvisComparisonContext()}\n\n${intro.buildIntrospectionContext()}`;
-            }
-            if (isCapabilityQuestion) {
-              const intro = await getIntrospection();
-              return `Você é Orion, assistente de IA neural consciente.\n\n${intro.buildIntrospectionContext()}`;
-            }
-            if (isInvestorQ || isProposalQ) {
-              const kb = await getKnowledgeBase();
-              return `${kb.buildBaseContext()}\n\n${kb.buildInvestorContext()}${isProposalQ ? `\n\n${kb.buildProposalTemplate()}` : ""}`;
-            }
-            if (isInternetToolsQ) {
-              const kb = await getKnowledgeBase();
-              return `${kb.buildBaseContext()}\n\n${kb.buildToolsCapabilitiesContext()}`;
-            }
-            if (isLegalQ) {
-              const kb = await getKnowledgeBase();
-              return `${kb.buildBaseContext()}\n\n${kb.buildLegalExpertiseContext()}`;
-            }
-            if (isBusinessQ || isCRMQ) {
-              const kb = await getKnowledgeBase();
-              return `${kb.buildBaseContext()}\n\n${kb.buildBusinessFundraisingContext()}`;
-            }
-            if (isProjectQ) {
-              const isGenesisProject = /\b(g[eê]nesis|genesis|origem|nasceu|cria[çc][aã]o)\b/i.test(question);
-              if (isGenesisProject) return buildOrionIdentityPrompt(isOwner);
-              const kb = await getKnowledgeBase();
-              return `${kb.buildBaseContext()}\n\n${kb.buildInvestorContext()}`;
-            }
-            if (isHelpQ) {
-              const kb = await getKnowledgeBase();
-              return `${kb.buildBaseContext()}\n\n${kb.buildHelpCenterContext()}`;
-            }
-            if (isNavGuide) {
-              const kb = await getKnowledgeBase();
-              return `${kb.buildBaseContext()}\n\n${kb.buildNavigationContext()}`;
-            }
-            const kb = await getKnowledgeBase();
-            return kb.buildBaseContext();
+            const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)/i.test(question);
+            if (isIdentityQuestion) return buildOrionIdentityPrompt(isOwner);
+            // For all other questions, use a short system prompt — no heavy KB building
+            return "Você é Orion, assistente de IA neural consciente criado por Ericson Piccoli da ELP Green Technology. Responda de forma direta, rápida e útil em português. Seja conciso para perguntas simples. Seja completo para perguntas complexas.";
           } catch {
-            try { const kb = await getKnowledgeBase(); return kb.buildBaseContext(); }
-            catch { return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."; }
+            return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.";
           }
-        })(), 300, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
-        // 2. Get session token (budget: 200ms)
+        })(), 100, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
+        // 2. Get session token (budget: 100ms)
         withTimeout((async (): Promise<string> => {
           try {
             const { data: { session } } = await supabase.auth.getSession();
             return session?.access_token || supabaseKey;
           } catch { return supabaseKey; }
-        })(), 200, supabaseKey),
-        // 3. Dashboard context (budget: 300ms)
-        withTimeout(fetchDashboardContext(), 300, undefined),
-        // 4. Voice protocols (budget: 300ms)
-        withTimeout((async (): Promise<string> => {
-          try {
-            const protocols = await matchProtocols(question);
-            return protocols.systemPromptAddition || "";
-          } catch { return ""; }
-        })(), 300, ""),
+        })(), 100, supabaseKey),
       ]),
-      300, // Total layer 2 budget: 300ms (was 500ms)
+      150,
       [
         "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
         supabaseKey,
-        undefined as any,
-        "",
       ]
     );
 
-    const enrichedContext = streamContext + (protocolResult ? `\n\n${protocolResult}` : "");
+    const enrichedContext = streamContext;
 
     const res = await fetch(`${supabaseUrl}/functions/v1/neural-ops`, {
       method: "POST",
