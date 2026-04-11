@@ -727,6 +727,11 @@ export default function RedeNeuralPage() {
             <span className="sm:hidden">Quantum</span>
             <span className="ml-1 h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse inline-block" />
           </TabsTrigger>
+          <TabsTrigger value="iot-devices" className="text-xs shrink-0 gap-1 px-2.5 py-1.5">
+            <Radio className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">IoT Hub</span>
+            <span className="sm:hidden">IoT</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
