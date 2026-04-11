@@ -232,7 +232,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (isJustWakeWord) {
       if (!hasGreetedRef.current) {
         hasGreetedRef.current = true;
-        speakFast("Orion ativo.").catch(() => {});
+        speakFast("Ativando sistema.").catch(() => {});
       }
       return;
     }
@@ -299,7 +299,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (!hasGreetedRef.current) {
       hasGreetedRef.current = true;
       // Wait for TTS to finish BEFORE starting STT — otherwise mic gets killed mid-TTS
-      speakFast("Sistema Orion ativo.").then(() => {
+      speakFast("Ativando sistema.").then(() => {
         if (!listening) {
           setTimeout(() => startListening(handleVoice), 200);
         }
@@ -384,7 +384,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const timer = setTimeout(async () => {
       if (!skipWakeWord && !hasGreetedRef.current) {
         hasGreetedRef.current = true;
-        try { await speakFast("Orion ativo."); } catch {}
+        try { await speakFast("Ativando sistema."); } catch {}
       }
       // Camera does NOT auto-start — only via "ativar visão" voice command
       // Start listening AFTER TTS finishes to avoid mic race
