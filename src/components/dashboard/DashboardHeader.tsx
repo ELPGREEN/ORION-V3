@@ -14,12 +14,12 @@ export function DashboardHeader({ onMobileMenuOpen, unreadCount, clearUnread }: 
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-30 bg-background/50 backdrop-blur-xl border-b border-cyan/10 shadow-[inset_0_0_40px_rgba(0,188,212,0.02)] relative overflow-hidden">
-      {/* Subtle HUD accent line at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan/15 to-transparent" />
-      {/* Corner dot accents */}
-      <div className="absolute top-2 right-3 w-1.5 h-1.5 rounded-full bg-cyan/20 animate-pulse" />
-      <div className="absolute top-2 right-7 w-1 h-1 rounded-full bg-primary/15" />
+    <header className="sticky top-0 z-30 glass-panel border-b border-border/10 relative overflow-hidden rounded-none">
+      {/* Premium bottom accent line */}
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      {/* Ambient glow spots */}
+      <div className="absolute top-0 left-[20%] w-32 h-full bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none" />
+      <div className="absolute top-0 right-[30%] w-24 h-full bg-gradient-to-b from-secondary/[0.015] to-transparent pointer-events-none" />
 
       <div className="flex items-center justify-between px-4 lg:px-6 h-14">
         <div className="flex items-center gap-3">
@@ -47,7 +47,7 @@ export function DashboardHeader({ onMobileMenuOpen, unreadCount, clearUnread }: 
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
             <Input
               placeholder="Buscar documentos, processos, clientes..."
-              className="pl-9 bg-card/50 border-border/30 h-9 text-xs focus:bg-card focus:border-primary/40 transition-all placeholder:text-muted-foreground/40"
+              className="pl-9 glass-panel-light border-border/20 h-9 text-xs focus:border-primary/40 transition-all placeholder:text-muted-foreground/40 rounded-lg"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
                   navigate(`/dashboard/pesquisa-unificada?q=${encodeURIComponent((e.target as HTMLInputElement).value.trim())}`);
@@ -60,9 +60,9 @@ export function DashboardHeader({ onMobileMenuOpen, unreadCount, clearUnread }: 
 
         <div className="flex items-center gap-3">
           {/* ORION badge with glow ring */}
-          <span className="relative text-[8px] px-3 py-1 border border-secondary/30 text-secondary bg-secondary/5 tracking-[0.15em] uppercase font-semibold shadow-[0_0_10px_hsl(195_90%_50%/0.15)]">
+          <span className="relative text-[8px] px-3 py-1 glass-panel-light border-secondary/20 text-secondary tracking-[0.15em] uppercase font-semibold rounded-md">
             ORION
-            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse" />
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse shadow-[0_0_8px_hsl(142_60%_45%/0.5)]" />
           </span>
           <Button
             variant="ghost"
