@@ -8,12 +8,12 @@ type: reference
 - Machine: e2-standard-4 (4 vCPUs, 16GB RAM, x86_64, CPU only)
 - OS: Debian 12 Bookworm x86_64
 - Service Account: 550674472945-compute@developer.gserviceaccount.com
-- External IP: 35.225.245.224 (ephemeral — changes on stop/start)
+- External IP: 136.114.97.124 (STATIC — orion-static-ip)
 - Internal IP: 10.128.0.3
 - Port: 8080
 - Server: FastAPI — PATH: ~/orion-vm-bundle/server.py
 - Edge function proxy: supabase/functions/orion-vm-proxy/index.ts
-- Secret: ORION_VM_URL = http://35.225.245.224:8080
+- Secret: ORION_VM_URL = http://136.114.97.124:8080
 - Endpoints: /health, /tts, /stt, /vision/detect, /vision/classify, /ocr, /embeddings, /proxy/gemini, /cache/stats
 - Models: whisper-tiny (int8), DETR-resnet-50, EasyOCR, all-MiniLM-L6-v2, Piper pt_BR
 - Priority: VM (primary) → HF Space (fallback) — managed in orion-hub-client.ts
@@ -23,4 +23,4 @@ type: reference
 - Firewall: allow-orion-8080 (tcp:8080, source 0.0.0.0/0, target http-server)
 - SSH: gcloud compute ssh orion-backend --zone=us-central1-f --tunnel-through-iap
 - Gemini: GEMINI_API_KEY configured in systemd override, use gemini-2.5-flash-lite
-- IMPORTANT: IP is ephemeral — update ORION_VM_URL secret after every stop/start
+- IP is now STATIC (orion-static-ip) — no need to update secret after stop/start
