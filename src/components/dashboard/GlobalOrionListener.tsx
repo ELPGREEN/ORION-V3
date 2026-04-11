@@ -194,6 +194,8 @@ export function GlobalOrionListener() {
     setInitialCommand(command);
     setOrionOpen(true);
     initVoicePicker();
+    // Wake VM when Orion is activated
+    wakeOrionVm();
     // TTS feedback is fire-and-forget — never blocks overlay opening
     setTimeout(() => { cooldownRef.current = false; }, 400);
   }, [stopCommandCapture]);
