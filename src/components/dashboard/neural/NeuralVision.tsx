@@ -382,6 +382,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (!skipWakeWord && (initialCommand || state?.autoActivate || state?.autoCommand)) return;
 
     autoBootedRef.current = true;
+    wakeOrionVm();
     const timer = setTimeout(async () => {
       if (!skipWakeWord && !hasGreetedRef.current) {
         hasGreetedRef.current = true;
