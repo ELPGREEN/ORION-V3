@@ -125,7 +125,15 @@ serve(async (req) => {
         break;
       }
 
-      // All API actions — resolve token from DB
+      // Search uses client credentials (public data, no premium needed)
+      case "search": {
+        const cc = await getClientToken(CLIENT_ID, CLIENT_SECRET);
+        if (!cc.access_token) throw new Error("Failed to get Spotify client token");
+        result = await handleApiAction("search", body, cc.access_token);
+        break;
+      }
+
+      // All other API actions — resolve user token from DB
       default: {
         const accessToken = await resolveUserToken(supabase, userId, CLIENT_ID, CLIENT_SECRET, action);
         result = await handleApiAction(action, body, accessToken);
