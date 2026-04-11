@@ -45,6 +45,8 @@ import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 
 // Componentes modulares
 import { NeuralErrorBoundary } from "@/components/dashboard/neural/NeuralErrorBoundary";
+import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
+import { VideoOverlay } from "@/components/orion/VideoOverlay";
 import { lazyRetry } from "@/lib/lazyRetry";
 
 // Lazy-load all heavy neural panels for code-splitting
@@ -604,6 +606,9 @@ export default function RedeNeuralPage() {
           <ScreenRecorder />
         </Suspense>
       </div>
+
+      {/* ═══ Playlist Orion — Horizontal Player Bar ═══ */}
+      <OrionPlaylistBar />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="relative z-10">
         <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#3B82F6]/15"
@@ -1347,6 +1352,9 @@ export default function RedeNeuralPage() {
       <Suspense fallback={null}>
         <FloatingMusicPlayer />
       </Suspense>
+
+      {/* Video Overlay — Orion Projector */}
+      <VideoOverlay />
     </div>
   );
 }

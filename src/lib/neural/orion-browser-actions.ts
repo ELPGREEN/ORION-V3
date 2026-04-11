@@ -185,11 +185,21 @@ export function detectBrowserAction(query: string): BrowserAction | null {
  * Also dispatches an event for the floating player if it's a video/music action.
  */
 export function executeBrowserAction(action: BrowserAction): string {
-  // Open real browser tab
-  window.open(action.url, "_blank", "noopener,noreferrer");
-
-  // If it's a YouTube video, also dispatch to floating player
+  // If it's a YouTube video, dispatch to VideoOverlay instead of opening a new tab
   if (action.type === "youtube") {
+    window.dispatchEvent(new CustomEvent("orion-video-command", {
+      detail: {
+        action: action.url.includes("youtube.com/watch") ? "play_video" : "search_video",
+        url: action.url,
+        query: action.query,
+        title: action.query,
+      }
+    }));
+    return action.description;
+  }
+
+  // If it's a Spotify action, dispatch to OrionPlaylistBar
+  if (action.type === "spotify") {
     window.dispatchEvent(new CustomEvent("orion-music-command", {
       detail: {
         action: "search_and_play",
@@ -197,7 +207,10 @@ export function executeBrowserAction(action: BrowserAction): string {
         fullCommand: action.query,
       }
     }));
+    return action.description;
   }
 
+  // All other actions: open real browser tab
+  window.open(action.url, "_blank", "noopener,noreferrer");
   return action.description;
 }
