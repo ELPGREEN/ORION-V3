@@ -71,14 +71,18 @@ export async function disconnectSpotify() {
 // ── OAuth Flow ──
 
 export async function startSpotifyLogin(redirectUri?: string) {
-  const uri = redirectUri || `${window.location.origin}/spotify-callback`;
+  const uri = redirectUri || (window.location.hostname === "localhost"
+    ? `${window.location.origin}/spotify-callback`
+    : "https://www.iasofthub.com/spotify-callback");
   const data = await callSpotify("auth_url", { redirect_uri: uri });
   if (data.state) sessionStorage.setItem("spotify_oauth_state", data.state);
   window.location.href = data.auth_url;
 }
 
 export async function handleSpotifyCallback(code: string, redirectUri?: string) {
-  const uri = redirectUri || `${window.location.origin}/spotify-callback`;
+  const uri = redirectUri || (window.location.hostname === "localhost"
+    ? `${window.location.origin}/spotify-callback`
+    : "https://www.iasofthub.com/spotify-callback");
   const data = await callSpotify("exchange_code", { code, redirect_uri: uri });
   if (data.success) return true;
   throw new Error(data.error || "Failed to exchange code");

@@ -67,7 +67,9 @@ export async function startYTMusicLogin() {
     throw new Error("Google Client ID não configurado para o YouTube Music");
   }
 
-  const redirectUri = `${window.location.origin}/callback/youtube-music`;
+  const redirectUri = window.location.hostname === "localhost"
+    ? `${window.location.origin}/callback/youtube-music`
+    : "https://www.iasofthub.com/callback/youtube-music";
   const scopes = [
     "https://www.googleapis.com/auth/youtube.readonly",
     "https://www.googleapis.com/auth/youtube",
@@ -102,7 +104,9 @@ export async function handleYTMusicCallback(code: string, state: string): Promis
       body: {
         action: "exchange_code",
         code,
-        redirect_uri: `${window.location.origin}/callback/youtube-music`,
+        redirect_uri: window.location.hostname === "localhost"
+          ? `${window.location.origin}/callback/youtube-music`
+          : "https://www.iasofthub.com/callback/youtube-music",
       },
     });
     if (error) throw new Error(error.message);
@@ -148,5 +152,11 @@ export async function getPlaylistTracks(playlistId: string): Promise<YTMusicTrac
 
 export async function getTrending(): Promise<YTMusicTrack[]> {
   const data = await callYTMusic("trending");
+  return data.tracks || [];
+}
+
+/** Public search — uses only YOUTUBE_API_KEY, no OAuth required */
+export async function searchYTMusicPublic(query: string): Promise<YTMusicTrack[]> {
+  const data = await callYTMusic("search_public", { query });
   return data.tracks || [];
 }
