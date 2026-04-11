@@ -17,7 +17,7 @@ export interface RealTimeVisionResult {
   /** MediaPipe detected objects (EfficientDet) */
   mpObjects: MPVisionResult["objects"];
   /** YOLO detected objects — disabled for performance */
-  yoloObjects: never[];
+  yoloObjects: any[];
   /** Merged unique objects (MediaPipe only now) */
   allObjects: UnifiedDetection[];
   /** Faces from MediaPipe */
@@ -41,26 +41,26 @@ export interface RealTimeVisionResult {
     pose: boolean;
     layout: boolean;
   };
-  /** Multi-task FrameX result — disabled */
-  frameXResult: null;
-  /** Depth estimation result — disabled */
-  depthResult: null;
+  /** Multi-task FrameX result — disabled, always null */
+  frameXResult: { scenario?: { label?: string; confidence?: number }; reading?: { text?: string[] }; movement?: { objectsInMotion?: any[] }; faces?: any[] } | null;
+  /** Depth estimation result — disabled, always null */
+  depthResult: any | null;
   /** Face attributes (age/gender/emotion) for detected faces */
   faceAttributes: FaceAttributes[];
-  /** OCR result — disabled */
-  ocrResult: null;
-  /** 3D scene reconstruction — disabled */
-  sceneReconstruction: null;
-  /** Quantum-enhanced detection — disabled */
-  quantumEnhancement: null;
+  /** OCR result — disabled, always null */
+  ocrResult: { texts?: string[]; regions?: any[] } | null;
+  /** 3D scene reconstruction — disabled, always null */
+  sceneReconstruction: any | null;
+  /** Quantum-enhanced detection — disabled, always null */
+  quantumEnhancement: any | null;
   /** Gaze direction from iris landmarks */
   gazeResult: GazeResult | null;
-  /** Handwritten text recognition — disabled */
-  handwrittenOCR: null;
+  /** Handwritten text recognition — disabled, always null */
+  handwrittenOCR: any | null;
   /** Regional descriptions — disabled */
-  regionalDescriptions: never[];
-  /** Document layout parsing — disabled */
-  documentLayout: null;
+  regionalDescriptions: any[];
+  /** Document layout parsing — disabled, always null */
+  documentLayout: any | null;
 }
 
 export interface UnifiedDetection {
