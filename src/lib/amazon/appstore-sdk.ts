@@ -1,15 +1,23 @@
 /**
  * ─── Amazon Appstore SDK Bridge ───
- * Capacitor-compatible bridge for DRM, IAP, and SSI.
- * On native Android (Fire OS / Amazon Appstore), calls the real SDK.
- * On web, provides mock/fallback responses.
+ * Capacitor-compatible bridge for DRM, IAP, SSI, and UserData.
+ * Aligned with official Amazon Appstore SDK API Reference.
+ * On native Android (Fire OS / Amazon Appstore), calls the real SDK via Capacitor plugin.
+ * On web, provides mock/fallback responses for development.
  */
 
 import { Capacitor } from "@capacitor/core";
 
 // ─── Types ───
 
-export type LicenseStatus = "LICENSED" | "NOT_LICENSED" | "EXPIRED" | "UNKNOWN" | "ERROR";
+export type LicenseStatus =
+  | "LICENSED"
+  | "NOT_LICENSED"
+  | "EXPIRED"
+  | "UNKNOWN"
+  | "ERROR"
+  | "ERROR_VERIFICATION"
+  | "ERROR_INVALID_LICENSING_KEYS";
 
 export interface DRMStatus {
   status: LicenseStatus;
@@ -18,8 +26,19 @@ export interface DRMStatus {
   checkedAt: string;
 }
 
-export type PurchaseRequestStatus = "SUCCESSFUL" | "FAILED" | "INVALID_SKU" | "ALREADY_PURCHASED" | "NOT_SUPPORTED" | "PENDING";
+export type PurchaseRequestStatus =
+  | "SUCCESSFUL"
+  | "FAILED"
+  | "INVALID_SKU"
+  | "ALREADY_PURCHASED"
+  | "NOT_SUPPORTED"
+  | "PENDING";
+
 export type ItemType = "CONSUMABLE" | "ENTITLED" | "SUBSCRIPTION";
+
+export type FulfillmentResult = "FULFILLED" | "UNAVAILABLE";
+
+export type SDKMode = "SANDBOX" | "PRODUCTION" | "UNKNOWN";
 
 export interface ProductItem {
   sku: string;
@@ -44,6 +63,12 @@ export interface PurchaseResult {
   receipt?: PurchaseReceipt;
 }
 
+export interface UserData {
+  userId: string;
+  marketplace: string;
+  countryCode?: string;
+}
+
 export interface SSIStatus {
   signedIn: boolean;
   userId?: string;
@@ -56,12 +81,14 @@ export interface AppstoreSDKState {
   platform: "fire_os" | "android" | "web";
   drm: DRMStatus;
   ssi: SSIStatus;
+  userData: UserData | null;
+  sdkMode: SDKMode;
   purchasedSkus: string[];
 }
 
 // ─── Event bus ───
 
-type AppstoreEventType = "drm_check" | "iap_purchase" | "iap_receipt" | "ssi_status";
+type AppstoreEventType = "drm_check" | "iap_purchase" | "iap_receipt" | "ssi_status" | "user_data";
 type AppstoreListener = (data: unknown) => void;
 
 const listeners = new Map<AppstoreEventType, Set<AppstoreListener>>();
@@ -82,7 +109,6 @@ const isNative = () => Capacitor.isNativePlatform();
 const isFireOS = () => {
   if (!isNative()) return false;
   const ua = navigator.userAgent.toLowerCase();
-  // Detect Fire OS via multiple signals: Silk browser, Kindle/Fire brand, KFTT/KF device codes, or Amazon Build tags
   return ua.includes("silk") || ua.includes("kindle") || ua.includes("fire") ||
     /\bkf[a-z]{2,}\b/.test(ua) || ua.includes("amazon");
 };
@@ -90,7 +116,6 @@ const isFireOS = () => {
 async function callNativePlugin<T>(method: string, args?: Record<string, unknown>): Promise<T | null> {
   if (!isNative()) return null;
   try {
-    // Dynamic import of native bridge — the plugin must be registered on the native side
     const plugin = (window as any).Capacitor?.Plugins?.AmazonAppstoreSDK;
     if (!plugin || typeof plugin[method] !== "function") {
       console.warn(`[AppstoreSDK] Native method "${method}" not available`);
@@ -103,6 +128,42 @@ async function callNativePlugin<T>(method: string, args?: Record<string, unknown
   }
 }
 
+// ─── SDK Mode ───
+
+export async function getAppstoreSDKMode(): Promise<SDKMode> {
+  if (isNative()) {
+    const result = await callNativePlugin<{ mode: SDKMode }>("getAppstoreSDKMode");
+    if (result?.mode) return result.mode;
+  }
+  return "UNKNOWN";
+}
+
+// ─── Enable Pending Purchases (Amazon Kids) ───
+
+export async function enablePendingPurchases(): Promise<void> {
+  await callNativePlugin("enablePendingPurchases");
+}
+
+// ─── User Data ───
+
+export async function getUserData(): Promise<UserData | null> {
+  if (isNative()) {
+    const result = await callNativePlugin<UserData>("getUserData");
+    if (result) {
+      emit("user_data", result);
+      return result;
+    }
+  }
+  // Web fallback
+  const fallback: UserData = {
+    userId: "web-dev-user",
+    marketplace: "ATVPDKIKX0DER",
+    countryCode: "BR",
+  };
+  emit("user_data", fallback);
+  return fallback;
+}
+
 // ─── DRM ───
 
 export async function checkDRMLicense(): Promise<DRMStatus> {
@@ -113,7 +174,6 @@ export async function checkDRMLicense(): Promise<DRMStatus> {
       return result;
     }
   }
-  // Web fallback — always licensed (development mode)
   const fallback: DRMStatus = {
     status: "LICENSED",
     userId: "web-dev-user",
@@ -126,7 +186,7 @@ export async function checkDRMLicense(): Promise<DRMStatus> {
 
 export async function verifyLicenseReceipt(receiptToken: string): Promise<boolean> {
   const result = await callNativePlugin<{ valid: boolean }>("verifyReceipt", { receiptToken });
-  return result?.valid ?? true; // Web fallback: always valid
+  return result?.valid ?? true;
 }
 
 // ─── IAP ───
@@ -136,7 +196,6 @@ export async function getProductData(skus: string[]): Promise<ProductItem[]> {
     const result = await callNativePlugin<{ items: ProductItem[] }>("getProductData", { skus });
     if (result?.items) return result.items;
   }
-  // Web fallback — mock products
   return skus.map((sku) => ({
     sku,
     type: "SUBSCRIPTION" as ItemType,
@@ -154,26 +213,51 @@ export async function purchase(sku: string): Promise<PurchaseResult> {
       return result;
     }
   }
-  const fallback: PurchaseResult = {
-    status: "NOT_SUPPORTED",
-  };
+  const fallback: PurchaseResult = { status: "NOT_SUPPORTED" };
   emit("iap_purchase", fallback);
   return fallback;
 }
 
+/**
+ * Get purchase updates with automatic pagination.
+ * The native SDK may return paginated results (hasMore flag).
+ * This function loops until all receipts are collected.
+ */
 export async function getPurchaseUpdates(reset = false): Promise<PurchaseReceipt[]> {
   if (isNative()) {
-    const result = await callNativePlugin<{ receipts: PurchaseReceipt[] }>("getPurchaseUpdates", { reset });
-    if (result?.receipts) {
+    const allReceipts: PurchaseReceipt[] = [];
+    let hasMore = true;
+    let isFirst = true;
+
+    while (hasMore) {
+      const result = await callNativePlugin<{
+        receipts: PurchaseReceipt[];
+        hasMore: boolean;
+      }>("getPurchaseUpdates", { reset: isFirst ? reset : false });
+
+      if (!result?.receipts) break;
+
+      allReceipts.push(...result.receipts);
       result.receipts.forEach((r) => emit("iap_receipt", r));
-      return result.receipts;
+      hasMore = result.hasMore === true;
+      isFirst = false;
     }
+
+    return allReceipts;
   }
   return [];
 }
 
-export async function notifyFulfillment(receiptId: string, fulfilled: boolean): Promise<void> {
-  await callNativePlugin("notifyFulfillment", { receiptId, fulfilled });
+/**
+ * Notify Amazon that a purchase has been fulfilled or is unavailable.
+ * @param receiptId - The receipt ID from the purchase
+ * @param result - "FULFILLED" or "UNAVAILABLE"
+ */
+export async function notifyFulfillment(
+  receiptId: string,
+  result: FulfillmentResult
+): Promise<void> {
+  await callNativePlugin("notifyFulfillment", { receiptId, fulfillmentResult: result });
 }
 
 // ─── SSI (Simple Sign-In) ───
@@ -186,7 +270,6 @@ export async function getSSIStatus(): Promise<SSIStatus> {
       return result;
     }
   }
-  // Web fallback
   return { signedIn: false };
 }
 
@@ -212,10 +295,12 @@ export async function getAppstoreState(): Promise<AppstoreSDKState> {
   const platform = isFireOS() ? "fire_os" : isNative() ? "android" : "web";
   const available = isNative();
 
-  const [drm, ssi, receipts] = await Promise.all([
+  const [drm, ssi, receipts, userData, sdkMode] = await Promise.all([
     checkDRMLicense(),
     getSSIStatus(),
     getPurchaseUpdates(),
+    getUserData(),
+    getAppstoreSDKMode(),
   ]);
 
   return {
@@ -223,6 +308,8 @@ export async function getAppstoreState(): Promise<AppstoreSDKState> {
     platform,
     drm,
     ssi,
+    userData,
+    sdkMode,
     purchasedSkus: receipts.map((r) => r.sku),
   };
 }

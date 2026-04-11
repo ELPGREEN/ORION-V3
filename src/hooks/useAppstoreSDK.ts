@@ -1,6 +1,6 @@
 /**
  * ─── useAppstoreSDK Hook ───
- * React hook for Amazon Appstore SDK (DRM, IAP, SSI).
+ * React hook for Amazon Appstore SDK (DRM, IAP, SSI, UserData).
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -11,6 +11,8 @@ import {
   type PurchaseResult,
   type DRMStatus,
   type SSIStatus,
+  type UserData,
+  type SDKMode,
   getAppstoreState,
   checkDRMLicense,
   getProductData,
@@ -18,6 +20,9 @@ import {
   getPurchaseUpdates,
   notifyFulfillment,
   getSSIStatus,
+  getUserData,
+  getAppstoreSDKMode,
+  enablePendingPurchases,
   signInWithAmazon,
   signOutAmazon,
   onAppstoreEvent,
@@ -31,11 +36,20 @@ export function useAppstoreSDK() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
 
-  // Initialize
+  // Initialize — includes getUserData + enablePendingPurchases
   useEffect(() => {
-    getAppstoreState()
-      .then(setState)
-      .finally(() => setLoading(false));
+    const init = async () => {
+      try {
+        await enablePendingPurchases();
+        const appState = await getAppstoreState();
+        setState(appState);
+      } catch (e) {
+        console.error("[useAppstoreSDK] Init failed:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
   }, []);
 
   // Listen for events
@@ -46,6 +60,9 @@ export function useAppstoreSDK() {
       }),
       onAppstoreEvent("ssi_status", (data) => {
         setState((s) => s ? { ...s, ssi: data as SSIStatus } : s);
+      }),
+      onAppstoreEvent("user_data", (data) => {
+        setState((s) => s ? { ...s, userData: data as UserData } : s);
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -59,23 +76,35 @@ export function useAppstoreSDK() {
     return items;
   }, []);
 
-  // Purchase
+  // Purchase with PENDING support
   const handlePurchase = useCallback(async (sku: string): Promise<PurchaseResult> => {
     setPurchasing(true);
     try {
       const result = await purchase(sku);
-      if (result.status === "SUCCESSFUL" && result.receipt) {
-        await notifyFulfillment(result.receipt.receiptId, true);
-        toast({ title: "Compra realizada!", description: `SKU: ${sku}` });
-        // Refresh state
-        const newState = await getAppstoreState();
-        setState(newState);
-      } else if (result.status === "NOT_SUPPORTED") {
-        toast({ title: "IAP indisponível", description: "Disponível apenas no Amazon Appstore.", variant: "destructive" });
-      } else if (result.status === "ALREADY_PURCHASED") {
-        toast({ title: "Já adquirido", description: "Você já possui este item." });
-      } else if (result.status === "FAILED") {
-        toast({ title: "Compra falhou", description: "Tente novamente.", variant: "destructive" });
+      switch (result.status) {
+        case "SUCCESSFUL":
+          if (result.receipt) {
+            await notifyFulfillment(result.receipt.receiptId, "FULFILLED");
+            toast({ title: "Compra realizada!", description: `SKU: ${sku}` });
+            const newState = await getAppstoreState();
+            setState(newState);
+          }
+          break;
+        case "PENDING":
+          toast({ title: "Compra pendente", description: "Aguardando aprovação (Amazon Kids)." });
+          break;
+        case "NOT_SUPPORTED":
+          toast({ title: "IAP indisponível", description: "Disponível apenas no Amazon Appstore.", variant: "destructive" });
+          break;
+        case "ALREADY_PURCHASED":
+          toast({ title: "Já adquirido", description: "Você já possui este item." });
+          break;
+        case "INVALID_SKU":
+          toast({ title: "SKU inválido", description: "Produto não encontrado.", variant: "destructive" });
+          break;
+        case "FAILED":
+          toast({ title: "Compra falhou", description: "Tente novamente.", variant: "destructive" });
+          break;
       }
       return result;
     } finally {
@@ -88,6 +117,13 @@ export function useAppstoreSDK() {
     const drm = await checkDRMLicense();
     setState((s) => s ? { ...s, drm } : s);
     return drm;
+  }, []);
+
+  // Refresh user data (call on app resume)
+  const refreshUserData = useCallback(async () => {
+    const userData = await getUserData();
+    setState((s) => s ? { ...s, userData } : s);
+    return userData;
   }, []);
 
   // SSI
@@ -122,8 +158,11 @@ export function useAppstoreSDK() {
     loadProducts,
     handlePurchase,
     recheckLicense,
+    refreshUserData,
     handleSignIn,
     handleSignOut,
     restorePurchases,
+    sdkMode: state?.sdkMode ?? "UNKNOWN" as SDKMode,
+    userData: state?.userData ?? null,
   };
 }
