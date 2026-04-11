@@ -18,10 +18,15 @@ serve(async (req) => {
   }
 
   try {
-    const VM_URL = Deno.env.get("ORION_VM_URL");
+    let VM_URL = Deno.env.get("ORION_VM_URL");
     const HF_SPACE_URL = "https://ericsonv12-orion-gpu.hf.space";
 
-    console.log("[orion-vm-proxy] VM_URL:", VM_URL ? `${VM_URL.substring(0, 20)}...` : "NOT SET");
+    // Ensure port 8080 is included if missing
+    if (VM_URL && !VM_URL.includes(":8080") && !VM_URL.includes(":443")) {
+      VM_URL = VM_URL.replace(/\/+$/, "") + ":8080";
+    }
+
+    console.log("[orion-vm-proxy] VM_URL:", VM_URL || "NOT SET");
 
     if (!VM_URL) {
       return new Response(
