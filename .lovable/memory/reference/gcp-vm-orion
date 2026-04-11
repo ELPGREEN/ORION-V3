@@ -1,27 +1,26 @@
 ---
 name: GCP VM Orion Backend
-description: GCP t2a-standard-1 VM running FastAPI with proxy/cache, TTS, STT, vision for Orion
+description: GCP e2-standard-4 VM running FastAPI with proxy/cache, TTS, STT, vision for Orion
 type: reference
 ---
-- Instance: instance-20260409-234130
+- Instance: orion-backend
 - Zone: us-central1-f
-- Machine: t2a-standard-1 (Arm64, 4GB RAM, CPU only)
-- OS: Debian 12 Bookworm Arm64
+- Machine: e2-standard-4 (4 vCPUs, 16GB RAM, x86_64, CPU only)
+- OS: Debian 12 Bookworm x86_64
 - Service Account: 550674472945-compute@developer.gserviceaccount.com
-- External IP: 34.28.81.111 (ephemeral — changes on stop/start)
+- External IP: 35.225.245.224 (ephemeral — changes on stop/start)
+- Internal IP: 10.128.0.3
 - Port: 8080
-- Server: FastAPI — ACTUAL PATH: /home/ericsonpiccoli_dev/orion-vm-bundle/server.py
-- Setup: public/gcp-vm-orion/setup.sh
+- Server: FastAPI — PATH: ~/orion-vm-bundle/server.py
 - Edge function proxy: supabase/functions/orion-vm-proxy/index.ts
-- Secret: ORION_VM_URL = http://34.28.81.111:8080
+- Secret: ORION_VM_URL = http://35.225.245.224:8080
 - Endpoints: /health, /tts, /stt, /vision/detect, /vision/classify, /ocr, /embeddings, /proxy/gemini, /cache/stats
 - Models: whisper-tiny (int8), DETR-resnet-50, EasyOCR, all-MiniLM-L6-v2, Piper pt_BR
 - Priority: VM (primary) → HF Space (fallback) — managed in orion-hub-client.ts
 - Memory limit: systemd MemoryMax=3G
 - Scopes: cloud-platform ✅
 - Tags: http-server ✅
-- Firewall: allow-iap-ssh (tcp:22), needs allow-orion-8080 (tcp:8080) for external access
-- SSH: gcloud compute ssh instance-20260409-234130 --zone=us-central1-f --tunnel-through-iap
+- Firewall: allow-orion-8080 (tcp:8080, source 0.0.0.0/0, target http-server)
+- SSH: gcloud compute ssh orion-backend --zone=us-central1-f --tunnel-through-iap
 - Gemini: GEMINI_API_KEY configured in systemd override, use gemini-2.5-flash-lite
-- Status: Health ✅, OCR ✅, Embeddings ✅, Gemini proxy ✅, TTS ✅, STT ❌ (depends on TTS init)
-- IMPORTANT: Systemd runs from /home/ericsonpiccoli_dev/orion-vm-bundle/ NOT /opt/orion/
+- IMPORTANT: IP is ephemeral — update ORION_VM_URL secret after every stop/start
