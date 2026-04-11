@@ -55,6 +55,12 @@ export {
   depolarize,
   coherenceLifetime,
   DEFAULT_DECOHERENCE,
+  // Tensor Kraus channels
+  depolarizeTensor,
+  amplitudeDampingTensor,
+  phaseDampingTensor,
+  applyNoiseTensor,
+  applyDecoherenceTensor,
 } from "./quantum-decoherence";
 
 export type { EntangledPair, QubitRegister } from "./quantum-entanglement";
