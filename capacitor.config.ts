@@ -1,11 +1,11 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.a9011a39281d4fa990b80890e1648690',
+  appId: 'app.lovable.fc2105d766374b26bdec2c651f69d311',
   appName: 'ORION IA',
   webDir: 'dist',
   server: {
-    url: 'https://a9011a39-281d-4fa9-90b8-0890e1648690.lovableproject.com?forceHideBadge=true',
+    url: 'https://fc2105d7-6637-4b26-bdec-2c651f69d311.lovableproject.com?forceHideBadge=true',
     cleartext: true,
   },
   plugins: {
