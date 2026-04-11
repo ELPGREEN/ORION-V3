@@ -74,16 +74,7 @@ export function useOrionReasoning(
   }, []);
 
   // Session restoration
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
-    const session = getSessionState();
-    if (session?.chatHistory && session.chatHistory.length > 0) {
-      return [
-        { role: "system" as const, text: `📝 Sessão anterior restaurada (${session.chatHistory.length} mensagens)`, time: new Date().toLocaleTimeString("pt-BR") },
-        ...session.chatHistory.slice(-15),
-      ];
-    }
-    return [];
-  });
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const chatHistoryRef = useRef(chatHistory);
   useEffect(() => { chatHistoryRef.current = chatHistory; }, [chatHistory]);
 
@@ -105,16 +96,7 @@ export function useOrionReasoning(
     })();
   }, []);
 
-  // Auto-save session state
-  useEffect(() => {
-    if (chatHistory.length > 0) {
-      const cleanHistory = chatHistory.filter(m => !m.text.startsWith("⏳") && m.role !== "system");
-      saveSessionState({
-        chatHistory: cleanHistory.slice(-20),
-        totalInteractions: cleanHistory.filter(m => m.role === "user").length,
-      });
-    }
-  }, [chatHistory]);
+  // Session state auto-save removed — messages are persisted via Supabase (useChatIAPersistence)
 
   // Periodic memory sync to Supabase (every 5 min)
   useEffect(() => {
