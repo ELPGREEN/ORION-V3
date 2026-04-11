@@ -928,29 +928,39 @@
 
 
   .dashboard-card {
-    background: linear-gradient(
-      145deg,
-      hsl(20 25% 16%) 0%,
-      hsl(20 22% 14%) 100%
-    );
-    border: 1px solid hsl(25 20% 22%);
+    background: var(--gradient-glass);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+    border: 1px solid hsl(var(--glass-border));
+    border-top-color: hsl(0 0% 100% / 0.06);
+    box-shadow: var(--shadow-glass);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--radius);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dashboard-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, hsl(0 0% 100% / 0.02) 0%, transparent 50%);
+    pointer-events: none;
+    border-radius: inherit;
   }
 
   .dashboard-card:hover {
-    border-color: hsl(45 70% 50% / 0.4);
-    box-shadow: 
-      0 0 20px hsl(45 80% 50% / 0.1),
-      0 10px 40px hsl(0 0% 0% / 0.3);
-    transform: translateY(-4px);
+    border-color: hsl(var(--glass-border-hover));
+    box-shadow: var(--shadow-glass-hover);
+    transform: translateY(-3px);
   }
 
   .dashboard-stat {
-    background: linear-gradient(
-      135deg,
-      hsl(20 28% 13%) 0%,
-      hsl(20 25% 11%) 100%
-    );
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid hsl(var(--glass-border));
+    border-radius: var(--radius);
   }
 }
 
