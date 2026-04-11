@@ -14,6 +14,55 @@ const ORION_SPACE_ID = "Ericsonv12/orion-gpu";
 const DEFAULT_TIMEOUT = 60_000;
 const GPU_TIMEOUT = 180_000;
 
+// ─── VM Boot Status Events ───
+
+export type VmBootStatus = "idle" | "starting" | "online" | "error";
+
+const _bootListeners = new Set<(status: VmBootStatus) => void>();
+let _bootStatus: VmBootStatus = "idle";
+let _bootPolling = false;
+
+function setBootStatus(status: VmBootStatus) {
+  _bootStatus = status;
+  _bootListeners.forEach(fn => fn(status));
+  window.dispatchEvent(new CustomEvent("orion-vm-boot", { detail: { status } }));
+}
+
+export function getBootStatus(): VmBootStatus { return _bootStatus; }
+
+export function onBootStatusChange(fn: (status: VmBootStatus) => void): () => void {
+  _bootListeners.add(fn);
+  return () => { _bootListeners.delete(fn); };
+}
+
+/**
+ * Poll VM health until it responds, then mark as online.
+ */
+async function pollUntilOnline(maxAttempts = 20, intervalMs = 5_000): Promise<boolean> {
+  if (_bootPolling) return false;
+  _bootPolling = true;
+  setBootStatus("starting");
+
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(r => setTimeout(r, intervalMs));
+    try {
+      const { data, error } = await supabase.functions.invoke("orion-vm-proxy", {
+        body: { action: "health" },
+      });
+      if (!error && data && data.status !== "vm_starting") {
+        markVmUp();
+        setBootStatus("online");
+        _bootPolling = false;
+        console.log("[OrionHub] VM is now online after boot");
+        return true;
+      }
+    } catch {}
+  }
+  setBootStatus("error");
+  _bootPolling = false;
+  return false;
+}
+
 // ─── VM Backend State ───
 
 interface VMState {
@@ -57,6 +106,7 @@ function markVmUp() {
 
 /**
  * Call the VM via edge function proxy.
+ * If VM is booting (vm_starting), triggers polling and returns null.
  * Returns null if VM is unavailable (caller should fallback to HF Space).
  */
 async function callVM<T>(action: string, body: Record<string, unknown> = {}, timeout = 15_000): Promise<T | null> {
@@ -73,12 +123,29 @@ async function callVM<T>(action: string, body: Record<string, unknown> = {}, tim
     clearTimeout(timer);
 
     if (error) {
+      // Check if error body indicates vm_starting
+      const errStr = typeof error === "string" ? error : JSON.stringify(error);
+      if (errStr.includes("vm_starting")) {
+        console.log("[OrionHub] VM is booting up, starting poll...");
+        pollUntilOnline().catch(() => {});
+        return null;
+      }
       console.warn(`[OrionHub] VM proxy error for ${action}:`, error);
       markVmDown();
       return null;
     }
 
+    // Check if data itself indicates vm_starting
+    if (data?.status === "vm_starting") {
+      console.log("[OrionHub] VM is booting up (data response), starting poll...");
+      pollUntilOnline().catch(() => {});
+      return null;
+    }
+
     markVmUp();
+    if (_bootStatus === "starting" || _bootStatus === "idle") {
+      setBootStatus("online");
+    }
     return data as T;
   } catch (err) {
     console.warn(`[OrionHub] VM call failed for ${action}:`, err);
@@ -92,6 +159,7 @@ export function getVmState() {
     available: _vm.available,
     consecutiveFailures: _vm.consecutiveFailures,
     cooldownRemainingMs: _vm.available ? 0 : Math.max(0, _vm.cooldownMs - (Date.now() - _vm.lastCheck)),
+    bootStatus: _bootStatus,
   };
 }
 
