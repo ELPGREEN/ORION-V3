@@ -258,48 +258,18 @@ export async function speakWithGeminiTTS(
       return fail;
     }
 
-    // ── Play sequentially with pre-buffered next element ──
+    // ── Play sequentially — simple and reliable ──
     let anyPlayed = false;
     let lastAudio: HTMLAudioElement | null = null;
 
     for (let i = 0; i < validBlobs.length; i++) {
       if (localController.signal.aborted) break;
-
-      // Revoke the pre-created URL since playAudioBlob creates its own
       URL.revokeObjectURL(blobUrls[i]);
 
-      // Pass next blob URL for preloading (gap-free transition)
-      const nextUrl = i + 1 < validBlobs.length ? blobUrls[i + 1] : undefined;
-      const result = await playAudioBlob(validBlobs[i], localController.signal, nextUrl);
-
+      const result = await playAudioBlob(validBlobs[i], localController.signal);
       if (result.audio) {
         anyPlayed = true;
         lastAudio = result.audio;
-      }
-
-      // If we have a pre-loaded next audio and it's ready, play it immediately
-      if (result.nextAudio && i + 1 < validBlobs.length) {
-        // The nextAudio was pre-created with the blob URL — start it now
-        try {
-          await result.nextAudio.play();
-          // Wait for it to finish
-          await new Promise<void>((resolve) => {
-            result.nextAudio!.onended = () => resolve();
-            result.nextAudio!.onerror = () => resolve();
-            const onAbort = () => {
-              result.nextAudio!.pause();
-              resolve();
-            };
-            localController.signal.addEventListener("abort", onAbort, { once: true });
-          });
-          anyPlayed = true;
-          lastAudio = result.nextAudio;
-          // Clean up the URL
-          URL.revokeObjectURL(blobUrls[i + 1]);
-          i++; // Skip next iteration since we already played it
-        } catch {
-          // Pre-play failed, will be played normally in next loop iteration
-        }
       }
     }
 
