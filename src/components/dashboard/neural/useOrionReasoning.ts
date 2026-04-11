@@ -431,36 +431,20 @@ export function useOrionReasoning(
     const controller = new AbortController();
     if (abortControllerRef) abortControllerRef.current = controller;
 
-    // ═══ WARMUP: Preemptively warm TTS auth — only ONCE per session ═══
-    if (!ttsWarmedRef.current) {
-      ttsWarmedRef.current = true;
-      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-tts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-        body: JSON.stringify({ text: ".", voice: "Charon", lang: "pt-BR" }),
-      }).catch(() => {});
-    }
+    // TTS warmup removed — was adding latency to first question
 
     try {
-      // ═══ FAST PRE-PROCESSING: Reformulation + Intent + SOM in parallel (~5ms total) ═══
-      const comprehension = analyzeComprehension(question);
+      // ═══ FAST PRE-PROCESSING: Only intent classification (~2ms) ═══
       let processedInput = question;
-      if (comprehension.score < 0.85 || comprehension.isColloquial) {
-        processedInput = quickLocalReformulate(question);
-      }
 
-      // Run Tesla Coil + SOM + Intent in parallel (all <5ms each)
-      const voltage = amplifyIntent(processedInput, {
-        hasWorkingMemory: true,
-        recentHistory: chatHistoryRef.current.slice(-3).map(m => m.text),
-      });
-      window.dispatchEvent(new CustomEvent("tesla-coil-voltage", { detail: voltage }));
-
-      const intentType = classifyIntent(voltage.normalizedInput);
+      const intentType = classifyIntent(question);
       const somResult = somClassify(question);
       const _isSpecialCmd = somResult.isSpecialCmd || intentType === "auto_construct" || intentType === "self_evolve";
 
-      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType} | SOM=${somResult.handler}(${(somResult.confidence * 100).toFixed(0)}%) | Tesla: conf=${(voltage.confidence * 100).toFixed(0)}% exec=${voltage.shouldExecute} intent=${voltage.intent}`);
+      // Lightweight voltage stub — no Tesla Coil overhead
+      const voltage = { normalizedInput: question, confidence: 0.9, shouldExecute: true, isConfirmation: false, suggestedQuestion: "", intent: intentType };
+
+      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType}`);
       window.dispatchEvent(new CustomEvent("som-routing", { detail: somResult }));
 
       // If confidence too low, ask clarification
