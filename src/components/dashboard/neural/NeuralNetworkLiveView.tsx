@@ -140,51 +140,12 @@ function computeGlobePositions() {
   return positions;
 }
 
-// ─── Procedural dendrite generation ───
-function generateDendrites(pos: THREE.Vector3, nodeSize: number, count: number, seed: number): THREE.BufferGeometry {
-  const vertices: number[] = [];
-  for (let d = 0; d < count; d++) {
-    const angle1 = (seed * 137.5 + d * 360 / count) * Math.PI / 180;
-    const angle2 = (seed * 73.3 + d * 47) * Math.PI / 180;
-    const dir = new THREE.Vector3(
-      Math.sin(angle1) * Math.cos(angle2),
-      Math.sin(angle2),
-      Math.cos(angle1) * Math.cos(angle2)
-    ).normalize();
-    
-    // Main dendrite branch — 3 segments
-    const baseLen = nodeSize * 3.5;
-    let current = pos.clone();
-    for (let seg = 0; seg < 3; seg++) {
-      const next = current.clone().add(
-        dir.clone()
-          .applyAxisAngle(new THREE.Vector3(0, 1, 0), (seg * 0.4 + seed * 0.1) * (d % 2 === 0 ? 1 : -1))
-          .multiplyScalar(baseLen * (1 - seg * 0.3))
-      );
-      vertices.push(current.x, current.y, current.z, next.x, next.y, next.z);
-      
-      // Sub-branch at segment joints
-      if (seg === 1) {
-        const branch = next.clone().add(
-          dir.clone()
-            .applyAxisAngle(new THREE.Vector3(1, 0, 0), 0.8 * (d % 2 === 0 ? 1 : -1))
-            .multiplyScalar(baseLen * 0.4)
-        );
-        vertices.push(next.x, next.y, next.z, branch.x, branch.y, branch.z);
-      }
-      current = next;
-    }
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-  return geo;
-}
+// Dendrites removed — clean modern HD style
 
-// ─── Organic Neuron Bodies with Dendrites ───
+// ─── Clean Neuron Bodies — HD modern style without dendrites ───
 function NeuronBodies({ paused, showLabels }: { paused: boolean; showLabels: boolean }) {
   const positions = useMemo(computeGlobePositions, []);
   const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const dendriteRefs = useRef<(THREE.LineSegments | null)[]>([]);
 
   // Canvas label textures
   const labelTextures = useMemo(() => {
@@ -229,33 +190,15 @@ function NeuronBodies({ paused, showLabels }: { paused: boolean; showLabels: boo
     return () => { labelTextures.forEach((t) => t?.dispose()); };
   }, [labelTextures]);
 
-  // Perturbed geometries for organic look — one per node size
+  // Smooth sphere geometries — clean HD look
   const geoCache = useMemo(() => {
-    const cache = new Map<number, THREE.IcosahedronGeometry>();
+    const cache = new Map<number, THREE.SphereGeometry>();
     const sizes = new Set(NEURAL_NODES.map(n => n.size));
     sizes.forEach(s => {
-      const geo = new THREE.IcosahedronGeometry(s, 3);
-      const posAttr = geo.attributes.position;
-      for (let i = 0; i < posAttr.count; i++) {
-        const x = posAttr.getX(i);
-        const y = posAttr.getY(i);
-        const z = posAttr.getZ(i);
-        const noise = 1 + (Math.sin(x * 15 + y * 7) * Math.cos(z * 11 + x * 3)) * 0.15;
-        posAttr.setXYZ(i, x * noise, y * noise, z * noise);
-      }
-      posAttr.needsUpdate = true;
-      geo.computeVertexNormals();
-      cache.set(s, geo);
+      cache.set(s, new THREE.SphereGeometry(s, 32, 32));
     });
     return cache;
   }, []);
-
-  // Dendrite geometries
-  const dendriteGeos = useMemo(() => {
-    return NEURAL_NODES.map((node, i) =>
-      generateDendrites(positions[i], node.size, 4 + (i % 3), i)
-    );
-  }, [positions]);
 
   useFrame(({ clock }) => {
     if (paused) return;
@@ -263,15 +206,10 @@ function NeuronBodies({ paused, showLabels }: { paused: boolean; showLabels: boo
     NEURAL_NODES.forEach((_, i) => {
       const mesh = meshRefs.current[i];
       if (mesh) {
-        const pulse = 1 + Math.sin(t * 1.8 + i * 0.7) * 0.08;
+        const pulse = 1 + Math.sin(t * 1.8 + i * 0.7) * 0.06;
         mesh.scale.setScalar(pulse);
         const mat = mesh.material as THREE.MeshPhysicalMaterial;
-        mat.emissiveIntensity = 0.4 + Math.sin(t * 2.5 + i * 0.5) * 0.3;
-      }
-      const dendrite = dendriteRefs.current[i];
-      if (dendrite) {
-        const mat = dendrite.material as THREE.LineBasicMaterial;
-        mat.opacity = 0.15 + Math.sin(t * 1.2 + i * 0.3) * 0.08;
+        mat.emissiveIntensity = 0.5 + Math.sin(t * 2.5 + i * 0.5) * 0.3;
       }
     });
   });
@@ -285,46 +223,44 @@ function NeuronBodies({ paused, showLabels }: { paused: boolean; showLabels: boo
         const geo = geoCache.get(node.size);
         return (
           <group key={node.id} position={[pos.x, pos.y, pos.z]}>
-            {/* Organic cell body — translucent bio-luminescent */}
+            {/* Clean sphere body — glossy bioluminescent */}
             <mesh ref={el => { meshRefs.current[i] = el; }} geometry={geo}>
               <meshPhysicalMaterial
                 color={col}
                 emissive={col}
-                emissiveIntensity={0.4}
+                emissiveIntensity={0.5}
                 transparent
-                opacity={0.7}
-                roughness={0.6}
-                metalness={0.0}
-                transmission={0.3}
-                thickness={0.8}
-                ior={1.4}
-                clearcoat={0.3}
-                clearcoatRoughness={0.4}
+                opacity={0.75}
+                roughness={0.3}
+                metalness={0.1}
+                transmission={0.25}
+                thickness={1.0}
+                ior={1.5}
+                clearcoat={0.6}
+                clearcoatRoughness={0.2}
               />
             </mesh>
-            {/* Nucleus glow */}
+            {/* Nucleus glow — brighter core */}
             <mesh>
-              <sphereGeometry args={[node.size * 0.4, 8, 8]} />
+              <sphereGeometry args={[node.size * 0.35, 16, 16]} />
               <meshBasicMaterial
                 color={col}
                 transparent
-                opacity={0.9}
+                opacity={0.95}
                 blending={THREE.AdditiveBlending}
               />
             </mesh>
-            {/* Dendrites — thin organic branches */}
-            <lineSegments
-              ref={el => { dendriteRefs.current[i] = el; }}
-              geometry={dendriteGeos[i]}
-            >
-              <lineBasicMaterial
+            {/* Outer glow halo */}
+            <mesh>
+              <sphereGeometry args={[node.size * 1.4, 16, 16]} />
+              <meshBasicMaterial
                 color={col}
                 transparent
-                opacity={0.18}
+                opacity={0.04}
                 blending={THREE.AdditiveBlending}
                 depthWrite={false}
               />
-            </lineSegments>
+            </mesh>
             {/* Label */}
             {showLabels && tex && (
               <sprite position={[0, node.size + 0.9, 0]} scale={[3.6, 1.0, 1]}>
