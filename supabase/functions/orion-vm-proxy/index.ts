@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { recordVmActivity } from "../_shared/orion-vm-activity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,7 +9,7 @@ const corsHeaders = {
 
 /**
  * ORION VM Proxy — Routes requests to GCP VM with auto-start and HF Space fallback.
- * 
+ *
  * POST /orion-vm-proxy
  * Body: { action: "health" | "tts" | "stt" | "detect" | "classify" | "ocr" | "embeddings" | "proxy/gemini", ...params }
  */
@@ -21,7 +22,6 @@ serve(async (req) => {
     let VM_URL = Deno.env.get("ORION_VM_URL");
     const HF_SPACE_URL = "https://ericsonv12-orion-gpu.hf.space";
 
-    // Ensure port 8080 is included if missing
     if (VM_URL && !VM_URL.includes(":8080") && !VM_URL.includes(":443")) {
       VM_URL = VM_URL.replace(/\/+$/, "") + ":8080";
     }
@@ -31,43 +31,37 @@ serve(async (req) => {
     if (!VM_URL) {
       return new Response(
         JSON.stringify({ error: "ORION_VM_URL not configured", fallback: "hf-space" }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const contentType = req.headers.get("content-type") || "";
-    let action = "";
-    let body: any;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
-      action = formData.get("action") as string || "detect";
-      
+      const action = (formData.get("action") as string) || "detect";
       const endpoint = mapActionToEndpoint(action);
       const vmResp = await fetchWithAutoStart(
         `${VM_URL.replace(/\/+$/, "")}${endpoint}`,
         { method: "POST", body: formData },
         `${HF_SPACE_URL}/api/predict/${action}`,
       );
-      
-      return new Response(vmResp.body, {
-        status: vmResp.status,
-        headers: { ...corsHeaders, "Content-Type": vmResp.headers.get("Content-Type") || "application/json" },
-      });
+
+      recordVmActivity(`orion-vm-proxy:${action}`).catch(() => {});
+      return toProxyResponse(vmResp);
     }
 
-    body = await req.json();
-    action = body.action || body.endpoint || "health";
+    const body = await req.json();
+    const action = body.action || body.endpoint || "health";
     delete body.action;
     delete body.endpoint;
 
     const endpoint = mapActionToEndpoint(action);
-
-    // Remove trailing slash from VM_URL to avoid double-slash (e.g. http://x:8080//health)
     const baseUrl = VM_URL.replace(/\/+$/, "");
-    let vmUrl = `${baseUrl}${endpoint}`;
+    const vmUrl = `${baseUrl}${endpoint}`;
     const GET_ACTIONS = ["health", "cache/stats"];
     const isGet = GET_ACTIONS.includes(action);
+
     let fetchOpts: RequestInit = {
       method: isGet ? "GET" : "POST",
     };
@@ -87,24 +81,16 @@ serve(async (req) => {
 
     console.log(`[orion-vm-proxy] Fetching: ${vmUrl}`);
     const startTime = Date.now();
-
     const vmResp = await fetchWithAutoStart(vmUrl, fetchOpts, null);
-
     console.log(`[orion-vm-proxy] Response in ${Date.now() - startTime}ms, status: ${vmResp.status}`);
 
-    // Record activity for auto-stop timer
-    recordActivity().catch(() => {});
-
-    const respBody = await vmResp.text();
-    return new Response(respBody, {
-      status: vmResp.status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    recordVmActivity(`orion-vm-proxy:${action}`).catch(() => {});
+    return toProxyResponse(vmResp);
   } catch (err) {
     console.error("[orion-vm-proxy] Error:", err);
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error", source: "proxy" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
@@ -124,10 +110,6 @@ function mapActionToEndpoint(action: string): string {
   return map[action] || `/${action}`;
 }
 
-/**
- * Try to reach the VM. If connection refused (VM is stopped), 
- * trigger auto-start and return a "starting" response.
- */
 async function fetchWithAutoStart(
   primaryUrl: string,
   opts: RequestInit,
@@ -143,17 +125,17 @@ async function fetchWithAutoStart(
     throw new Error(`VM returned ${resp.status}: ${errBody.substring(0, 200)}`);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    const isOffline = errMsg.includes("connection refused") || 
-                      errMsg.includes("Connection refused") ||
-                      errMsg.includes("failed to connect") ||
-                      errMsg.includes("ECONNREFUSED") ||
-                      errMsg.includes("aborted") ||
-                      errMsg.includes("timed out");
+    const isOffline = errMsg.includes("connection refused") ||
+      errMsg.includes("Connection refused") ||
+      errMsg.includes("failed to connect") ||
+      errMsg.includes("ECONNREFUSED") ||
+      errMsg.includes("aborted") ||
+      errMsg.includes("timed out");
 
     if (isOffline) {
       console.log("[orion-vm-proxy] VM appears offline, triggering auto-start...");
       await triggerVmStart();
-      
+
       return new Response(
         JSON.stringify({
           status: "vm_starting",
@@ -168,13 +150,11 @@ async function fetchWithAutoStart(
       console.warn(`[orion-vm-proxy] VM failed, trying HF fallback: ${err}`);
       return fetch(fallbackUrl, { method: "POST", headers: { "Content-Type": "application/json" } });
     }
+
     throw err;
   }
 }
 
-/**
- * Call the orion-vm-control function to start the VM
- */
 async function triggerVmStart(): Promise<void> {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -194,28 +174,12 @@ async function triggerVmStart(): Promise<void> {
   }
 }
 
-/**
- * Record activity timestamp for auto-stop timer
- */
-async function recordActivity(): Promise<void> {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!supabaseUrl || !serviceKey) return;
-
-  await fetch(`${supabaseUrl}/rest/v1/api_cache`, {
-    method: "POST",
+function toProxyResponse(resp: Response): Response {
+  return new Response(resp.body, {
+    status: resp.status,
     headers: {
-      Authorization: `Bearer ${serviceKey}`,
-      apikey: serviceKey,
-      "Content-Type": "application/json",
-      Prefer: "resolution=merge-duplicates",
+      ...corsHeaders,
+      "Content-Type": resp.headers.get("Content-Type") || "application/json",
     },
-    body: JSON.stringify({
-      query_hash: "orion-vm-last-activity",
-      query_text: "last-activity",
-      source: "orion-vm-control",
-      response_data: { timestamp: Date.now() },
-      expires_at: new Date(Date.now() + 86400_000).toISOString(),
-    }),
   });
 }
