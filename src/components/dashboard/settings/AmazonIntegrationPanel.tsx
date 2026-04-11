@@ -152,7 +152,7 @@ export default function AmazonIntegrationPanel() {
               <li><strong>Appstore SDK:</strong> DRM, compras in-app e sign-in nativo para Fire OS</li>
             </ul>
             <p className="text-[10px] text-muted-foreground/60 mt-2">
-              Security Profile ID: amzn1.application.fa8aa661dc36486081dbdb066dbc5bc7
+              Security Profile ID: amzn1.application-oa2-client.b0c43badecf1451aabc4300e84415b21
             </p>
           </div>
         </CardContent>
