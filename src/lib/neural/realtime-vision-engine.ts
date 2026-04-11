@@ -211,7 +211,7 @@ function shouldRunOCR(video: HTMLVideoElement): boolean {
     // Reuse a single OffscreenCanvas for edge density check
     if (!_ocrCheckCanvas) {
       _ocrCheckCanvas = new OffscreenCanvas(64, 48);
-      _ocrCheckCtx = _ocrCheckCanvas.getContext("2d", { alpha: false }) as OffscreenCanvasRenderingContext2D;
+      _ocrCheckCtx = _ocrCheckCanvas.getContext("2d", { alpha: false, willReadFrequently: true }) as OffscreenCanvasRenderingContext2D;
     }
     const size = 64;
     _ocrCheckCtx!.drawImage(video, 0, 0, size, size);
@@ -305,9 +305,9 @@ export async function detectRealTime(
   }
 
   // Regional descriptions (every 10th frame)
-  const regionalDescriptions: RegionalDescription[] = frameCount % 10 === 0
+  const regionalDescriptions: RegionalDescription[] = frameCount % 30 === 0
     ? prepareRegionalDescriptions(video, allObjects, video.videoWidth || 640, video.videoHeight || 480)
-    : [];
+    : (_cachedResult?.regionalDescriptions ?? []);
 
   // Document layout parsing from OCR
   let documentLayout: DocumentLayout | null = null;
@@ -366,6 +366,10 @@ export async function detectRealTime(
   if (typeof window !== "undefined") {
     (window as any).__orion_last_rt_vision_result__ = result;
   }
+
+  // Cache result and update timestamp
+  _cachedResult = result;
+  _lastDetectTime = performance.now();
 
   markVisionEnd();
   return result;
