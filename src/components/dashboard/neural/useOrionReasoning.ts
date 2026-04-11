@@ -96,16 +96,7 @@ export function useOrionReasoning(
     })();
   }, []);
 
-  // Auto-save session state
-  useEffect(() => {
-    if (chatHistory.length > 0) {
-      const cleanHistory = chatHistory.filter(m => !m.text.startsWith("⏳") && m.role !== "system");
-      saveSessionState({
-        chatHistory: cleanHistory.slice(-20),
-        totalInteractions: cleanHistory.filter(m => m.role === "user").length,
-      });
-    }
-  }, [chatHistory]);
+  // Session state auto-save removed — messages are persisted via Supabase (useChatIAPersistence)
 
   // Periodic memory sync to Supabase (every 5 min)
   useEffect(() => {
