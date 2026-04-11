@@ -559,6 +559,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   return (
     <div className="space-y-3 relative">
+      {/* ═══ VM Boot Loading Indicator ═══ */}
+      <VmBootLoader />
       {/* ═══ Voice Identity Gate ═══ */}
       <VoiceIdentityGate
         identityStatus={identityStatus}
