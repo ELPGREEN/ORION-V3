@@ -310,21 +310,8 @@ export function useNeuralVoice(
     const text = cleanTextForSpeech(rawText);
     if (!text) return Promise.resolve();
 
-    const splitIntoSentences = (t: string): string[] => {
-      const sentences = t.match(/[^.?…]+[.?…]+\s*|[^.?…]+$/g) || [t];
-      const chunks: string[] = [];
-      let current = "";
-      for (const s of sentences) {
-        if (current.length + s.length > 180 && current.length > 0) {
-          chunks.push(current.trim());
-          current = s;
-        } else { current += s; }
-      }
-      if (current.trim()) chunks.push(current.trim());
-      return chunks;
-    };
-
-    const chunks = splitIntoSentences(text);
+    // Send entire text as one utterance — no chunking, no word cuts
+    const chunks = [text];
 
     return new Promise<void>((resolve) => {
       const safetyTimeout = setTimeout(() => {
