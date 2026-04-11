@@ -9,7 +9,7 @@ const corsHeaders = {
 // GCP VM details
 const PROJECT_ID = "orion-d3734";
 const ZONE = "us-central1-f";
-const INSTANCE_NAME = "instance-20260409-234130";
+const INSTANCE_NAME = "orion-backend";
 
 /**
  * ORION VM Control — Start/Stop/Status the GCP VM
