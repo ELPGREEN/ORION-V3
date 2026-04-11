@@ -563,10 +563,12 @@ function NodeLabels({ paused, visible }: { paused: boolean; visible: boolean }) 
   const positions = useMemo(computeGlobePositions, []);
   const { camera } = useThree();
   const [visibleNodes, setVisibleNodes] = useState<number[]>([]);
+  const frameCount = useRef(0);
 
   useFrame(() => {
     if (!visible) return;
-    // Calculate distances and show closest 15
+    frameCount.current++;
+    if (frameCount.current % 30 !== 0) return; // Update every ~0.5s
     const dists = positions.map((p, i) => ({ i, d: camera.position.distanceTo(p) }));
     dists.sort((a, b) => a.d - b.d);
     const closest = dists.slice(0, 15).map(x => x.i);
