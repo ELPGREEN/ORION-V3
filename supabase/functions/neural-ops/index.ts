@@ -1245,11 +1245,12 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const isComplexQuery = intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis" || questionStr0.length > 120;
   const wordCount = questionStr0.split(/\s+/).length;
   const isVoiceInput = inputSource === "voice";
+  const isDirectVoicePath = isVoiceInput && !hasImage;
   const isConversationalQuery = !hasImage && !isComplexQuery && wordCount < 20 && isVoiceInput;
   
   // Use conversational prompt for short voice queries, compact for simple text, full for vision/complex
   let basePrompt: string;
-  if (isConversationalQuery) {
+  if (isDirectVoicePath || isConversationalQuery) {
     basePrompt = ORION_SYSTEM_PROMPT_CONVERSATIONAL;
   } else if (hasImage || isComplexQuery) {
     basePrompt = ORION_SYSTEM_PROMPT_FULL;
@@ -1270,7 +1271,7 @@ async function buildOrionMessages(body: Record<string, unknown>) {
 
   // ═══ VOICE INPUT OPTIMIZATION ═══
   if (isVoiceInput) {
-    systemParts.push(`[ENTRADA POR VOZ] O usuário está falando por voz. Responda de forma natural e concisa, como numa conversa presencial. Evite listas, formatação markdown, blocos de código e emojis na resposta — ela será lida em voz alta. Prefira frases fluidas e naturais.`);
+    systemParts.push(`[ENTRADA POR VOZ] O usuário está falando por voz. Responda de forma natural, rápida e lógica, como a Gemini direta. Evite listas, formatação markdown, blocos de código e emojis na resposta, a menos que o usuário peça. Priorize frases fluidas e curtas para perguntas simples.`);
   }
   
   const questionStr = typeof question === "string" ? question : "";
@@ -1287,24 +1288,30 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const youtubeIds = urlsInQuery.map(u => extractYouTubeVideoId(u)).filter((id): id is string => !!id);
   const nonYoutubeUrls = urlsInQuery.filter(u => !extractYouTubeVideoId(u));
 
-  // Fire all async lookups in parallel
-  const [identityKnowledge, ragContext, webSearchContext, ...urlContexts] = await Promise.all([
-    isIdentityQuery ? fetchIdentityKnowledge() : Promise.resolve(""),
-    (!isSimpleQuery && questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve(""),
-    needsWebSearch ? fetchWebSearchContext(questionStr) : Promise.resolve(""),
-    ...nonYoutubeUrls.map(u => fetchURLContext(u)),
-    ...youtubeIds.map(id => fetchYouTubeContext(id)),
-  ]);
+  let identityKnowledge = "";
+  let ragContext = "";
+  let webSearchContext = "";
+  let urlContexts: string[] = [];
 
-  if (isArchitectureQuery) {
+  if (!isDirectVoicePath) {
+    [identityKnowledge, ragContext, webSearchContext, ...urlContexts] = await Promise.all([
+      isIdentityQuery ? fetchIdentityKnowledge() : Promise.resolve(""),
+      (!isSimpleQuery && questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve(""),
+      needsWebSearch ? fetchWebSearchContext(questionStr) : Promise.resolve(""),
+      ...nonYoutubeUrls.map(u => fetchURLContext(u)),
+      ...youtubeIds.map(id => fetchYouTubeContext(id)),
+    ]);
+  }
+
+  if (!isDirectVoicePath && isArchitectureQuery) {
     systemParts.push(ORION_ARCHITECTURE_KNOWLEDGE);
   }
-  if (identityKnowledge) {
+  if (!isDirectVoicePath && identityKnowledge) {
     systemParts.push(identityKnowledge);
   }
 
   // ═══ OPERA AI: Inject web search, URL scrape, YouTube context ═══
-  if (webSearchContext) systemParts.push(webSearchContext);
+  if (!isDirectVoicePath && webSearchContext) systemParts.push(webSearchContext);
   for (const uc of urlContexts) {
     if (uc) systemParts.push(uc);
   }
