@@ -1,6 +1,7 @@
 /**
  * Orion Playlist Bar — Horizontal music player at top of Neural Panel
- * Searches Spotify (preview) + YouTube Music (embed fallback), voice commands
+ * Uses Spotify Web Playback SDK for Premium users (full tracks),
+ * falls back to 30s preview + YouTube embed for non-Premium
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,11 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Music, Search, Play, Pause, SkipBack, SkipForward,
-  Volume2, VolumeX, Loader2, ListMusic, X, Youtube,
+  Volume2, VolumeX, Loader2, ListMusic, X, Youtube, Zap,
 } from "lucide-react";
 import { toast } from "sonner";
-import { searchSpotify, getSpotifyFriendlyError } from "@/lib/spotify/spotify-service";
+import { searchSpotify, getSpotifyFriendlyError, isSpotifyConnected } from "@/lib/spotify/spotify-service";
 import { searchYTMusicPublic, type YTMusicTrack } from "@/lib/youtube-music/youtube-music-service";
+import { useSpotifyPlayback } from "@/hooks/useSpotifyPlayback";
 
 interface SpotifyTrack {
   id: string;
@@ -36,6 +38,7 @@ interface UnifiedTrack {
   preview_url?: string | null;
   videoId?: string;
   external_url?: string;
+  spotifyUri?: string;
 }
 
 function spotifyToUnified(t: SpotifyTrack): UnifiedTrack {
@@ -43,7 +46,7 @@ function spotifyToUnified(t: SpotifyTrack): UnifiedTrack {
     id: `sp_${t.id}`, name: t.name, artist: t.artists.map(a => a.name).join(", "),
     thumbnail: t.album.images?.[t.album.images.length > 1 ? 1 : 0]?.url || "",
     duration_ms: t.duration_ms, source: "spotify", preview_url: t.preview_url,
-    external_url: t.external_urls?.spotify,
+    external_url: t.external_urls?.spotify, spotifyUri: t.uri,
   };
 }
 
@@ -60,13 +63,39 @@ export function OrionPlaylistBar() {
   const [tracks, setTracks] = useState<UnifiedTrack[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<UnifiedTrack | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayingLocal, setIsPlayingLocal] = useState(false);
   const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [ytEmbedVisible, setYtEmbedVisible] = useState(false);
+  const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
+  const [useSDK, setUseSDK] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<ReturnType<typeof setInterval>>();
+
+  // Spotify Web Playback SDK
+  const sdk = useSpotifyPlayback(useSDK ? spotifyToken : null);
+
+  // Check if Spotify is connected (has token via edge function)
+  useEffect(() => {
+    isSpotifyConnected().then(connected => {
+      if (connected) {
+        // Token is managed server-side; we pass a placeholder
+        // The actual playback uses the edge function token
+        setSpotifyToken("sdk-managed");
+        setUseSDK(true);
+      }
+    }).catch(() => {});
+  }, []);
+
+  // Sync SDK state to local state
+  const isPlaying = useSDK && sdk.isReady && sdk.currentTrack
+    ? sdk.isPlaying
+    : isPlayingLocal;
+
+  const sdkProgress = sdk.currentTrack && sdk.currentTrack.durationMs > 0
+    ? (sdk.positionMs / sdk.currentTrack.durationMs) * 100
+    : 0;
 
   // Search both Spotify + YouTube
   const handleSearch = useCallback(async (searchQuery?: string) => {
@@ -76,7 +105,6 @@ export function OrionPlaylistBar() {
     try {
       const results: UnifiedTrack[] = [];
 
-      // Spotify search
       try {
         const data = await searchSpotify(q, "track", 10);
         const items = data?.tracks?.items || [];
@@ -85,7 +113,6 @@ export function OrionPlaylistBar() {
         console.warn("[OrionPlaylist] Spotify search failed:", e.message);
       }
 
-      // YouTube public search (no login needed)
       try {
         const ytTracks = await searchYTMusicPublic(q);
         results.push(...ytTracks.map(ytToUnified));
@@ -96,40 +123,38 @@ export function OrionPlaylistBar() {
       setTracks(results);
       setExpanded(true);
       if (results.length === 0) toast.info("Nenhuma faixa encontrada");
-    } catch (e: any) {
+    } catch {
       toast.error("Erro na busca");
     } finally {
       setLoading(false);
     }
   }, [query]);
 
-  // Play a track
-  const playTrack = useCallback((track: UnifiedTrack) => {
-    // Stop current
+  // Play a track — SDK for Spotify Premium, preview/YT fallback
+  const playTrack = useCallback(async (track: UnifiedTrack) => {
+    // Stop current audio fallback
     if (audioRef.current) {
       audioRef.current.pause();
       clearInterval(progressInterval.current);
     }
     setYtEmbedVisible(false);
 
-    if (track.source === "spotify" && track.preview_url) {
-      // Spotify preview (30s)
+    // Try Spotify SDK for full playback (Premium)
+    if (track.source === "spotify" && track.spotifyUri && useSDK && sdk.isReady && sdk.isPremium) {
       setCurrentTrack(track);
-      setIsPlaying(true);
-      setProgress(0);
-      const audio = audioRef.current;
-      if (audio) {
-        audio.src = track.preview_url;
-        audio.muted = muted;
-        audio.play().catch(() => { toast.error("Erro ao reproduzir"); setIsPlaying(false); });
-        progressInterval.current = setInterval(() => {
-          if (audio.duration) setProgress((audio.currentTime / audio.duration) * 100);
-        }, 200);
+      const success = await sdk.playTrack(track.spotifyUri);
+      if (success) {
+        setIsPlayingLocal(true);
+        setProgress(0);
+      } else {
+        // Fallback to preview
+        playPreview(track);
       }
+    } else if (track.source === "spotify" && track.preview_url) {
+      playPreview(track);
     } else if (track.source === "youtube" && track.videoId) {
-      // YouTube embed in-app
       setCurrentTrack(track);
-      setIsPlaying(true);
+      setIsPlayingLocal(true);
       setProgress(0);
       setYtEmbedVisible(true);
     } else if (track.external_url) {
@@ -144,29 +169,50 @@ export function OrionPlaylistBar() {
     window.dispatchEvent(new CustomEvent("orion-music-playing", {
       detail: { track: track.name, artist: track.artist }
     }));
+  }, [muted, useSDK, sdk.isReady, sdk.isPremium, sdk.playTrack]);
+
+  const playPreview = useCallback((track: UnifiedTrack) => {
+    setCurrentTrack(track);
+    setIsPlayingLocal(true);
+    setProgress(0);
+    const audio = audioRef.current;
+    if (audio && track.preview_url) {
+      audio.src = track.preview_url;
+      audio.muted = muted;
+      audio.play().catch(() => { toast.error("Erro ao reproduzir"); setIsPlayingLocal(false); });
+      progressInterval.current = setInterval(() => {
+        if (audio.duration) setProgress((audio.currentTime / audio.duration) * 100);
+      }, 200);
+    }
   }, [muted]);
 
-  const togglePlayPause = useCallback(() => {
+  const togglePlayPause = useCallback(async () => {
     if (!currentTrack) return;
+
+    // If using SDK for this track
+    if (currentTrack.source === "spotify" && currentTrack.spotifyUri && useSDK && sdk.isReady && sdk.currentTrack) {
+      await sdk.togglePlay();
+      return;
+    }
+
     if (currentTrack.source === "spotify") {
       const audio = audioRef.current;
       if (!audio) return;
-      if (isPlaying) { audio.pause(); setIsPlaying(false); }
-      else { audio.play().catch(() => {}); setIsPlaying(true); }
+      if (isPlayingLocal) { audio.pause(); setIsPlayingLocal(false); }
+      else { audio.play().catch(() => {}); setIsPlayingLocal(true); }
     } else {
-      // YouTube — toggle embed visibility
-      setIsPlaying(!isPlaying);
+      setIsPlayingLocal(!isPlayingLocal);
     }
-  }, [isPlaying, currentTrack]);
+  }, [isPlayingLocal, currentTrack, useSDK, sdk]);
 
-  const playNext = useCallback(() => {
+  const playNext = useCallback(async () => {
     if (!currentTrack || tracks.length === 0) return;
     const idx = tracks.findIndex(t => t.id === currentTrack.id);
     const next = tracks[(idx + 1) % tracks.length];
     if (next) playTrack(next);
   }, [currentTrack, tracks, playTrack]);
 
-  const playPrev = useCallback(() => {
+  const playPrev = useCallback(async () => {
     if (!currentTrack || tracks.length === 0) return;
     const idx = tracks.findIndex(t => t.id === currentTrack.id);
     const prev = tracks[(idx - 1 + tracks.length) % tracks.length];
@@ -177,13 +223,16 @@ export function OrionPlaylistBar() {
     const newMuted = !muted;
     setMuted(newMuted);
     if (audioRef.current) audioRef.current.muted = newMuted;
-  }, [muted]);
+    if (useSDK && sdk.isReady) {
+      sdk.changeVolume(newMuted ? 0 : 0.7);
+    }
+  }, [muted, useSDK, sdk]);
 
   // Audio ended → play next
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const onEnded = () => { setIsPlaying(false); setProgress(0); clearInterval(progressInterval.current); playNext(); };
+    const onEnded = () => { setIsPlayingLocal(false); setProgress(0); clearInterval(progressInterval.current); playNext(); };
     audio.addEventListener("ended", onEnded);
     return () => audio.removeEventListener("ended", onEnded);
   }, [playNext]);
@@ -210,7 +259,7 @@ export function OrionPlaylistBar() {
                 } catch {}
                 setTracks(results);
                 setExpanded(true);
-                const playable = results.find(t => t.preview_url || t.videoId);
+                const playable = results.find(t => t.preview_url || t.videoId || t.spotifyUri);
                 if (playable) setTimeout(() => playTrack(playable), 300);
               } finally { setLoading(false); }
             })();
@@ -242,11 +291,38 @@ export function OrionPlaylistBar() {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
+  // Determine display track info (SDK or local)
+  const displayTrack = (useSDK && sdk.currentTrack) ? {
+    name: sdk.currentTrack.name,
+    artist: sdk.currentTrack.artists.join(", "),
+    thumbnail: sdk.currentTrack.albumArt,
+    source: "spotify" as const,
+  } : currentTrack ? {
+    name: currentTrack.name,
+    artist: currentTrack.artist,
+    thumbnail: currentTrack.thumbnail,
+    source: currentTrack.source,
+  } : null;
+
+  const displayProgress = (useSDK && sdk.currentTrack) ? sdkProgress : progress;
+
   return (
     <div className="relative z-10">
       <audio ref={audioRef} preload="none" />
 
-      {/* YouTube embed (hidden but playing) */}
+      {/* Activation prompt for mobile autoplay */}
+      {sdk.needsActivation && (
+        <div className="mb-1 px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center gap-2">
+          <Zap className="h-3 w-3 text-amber-400" />
+          <span className="text-[9px] text-amber-300">Toque para ativar o player</span>
+          <Button variant="ghost" size="sm" className="h-5 px-2 text-[9px] text-amber-400"
+            onClick={() => sdk.activateElement()}>
+            Ativar
+          </Button>
+        </div>
+      )}
+
+      {/* YouTube embed */}
       {ytEmbedVisible && currentTrack?.videoId && (
         <div className="fixed bottom-20 right-6 w-[320px] h-[180px] z-[9998] rounded-lg overflow-hidden border border-[#D4AF37]/20"
           style={{ boxShadow: "0 0 30px rgba(212,175,55,0.1)" }}>
@@ -259,7 +335,7 @@ export function OrionPlaylistBar() {
           />
           <Button variant="ghost" size="icon"
             className="absolute top-1 right-1 h-6 w-6 bg-black/60 hover:bg-black/80 z-10"
-            onClick={() => { setYtEmbedVisible(false); setIsPlaying(false); }}>
+            onClick={() => { setYtEmbedVisible(false); setIsPlayingLocal(false); }}>
             <X className="h-3 w-3" />
           </Button>
         </div>
@@ -284,35 +360,41 @@ export function OrionPlaylistBar() {
               style={{ color: "#D4AF37", textShadow: "0 0 10px rgba(212,175,55,0.4)" }}>
               PLAYLIST ORION
             </span>
+            {useSDK && sdk.isReady && (
+              <Badge variant="outline" className="text-[7px] px-1 py-0 border-green-500/30 text-green-400">SDK</Badge>
+            )}
           </div>
 
-          {currentTrack && (
+          {displayTrack && (
             <div className="flex items-center gap-2 min-w-0 shrink">
-              {currentTrack.thumbnail && (
-                <img src={currentTrack.thumbnail} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
+              {displayTrack.thumbnail && (
+                <img src={displayTrack.thumbnail} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
               )}
               <div className="min-w-0 hidden md:block">
-                <p className="text-[10px] font-medium truncate text-foreground/80">{currentTrack.name}</p>
-                <p className="text-[8px] text-muted-foreground truncate">{currentTrack.artist}</p>
+                <p className="text-[10px] font-medium truncate text-foreground/80">{displayTrack.name}</p>
+                <p className="text-[8px] text-muted-foreground truncate">{displayTrack.artist}</p>
               </div>
-              {currentTrack.source === "youtube" && (
+              {displayTrack.source === "youtube" && (
                 <Youtube className="h-3 w-3 text-red-500 shrink-0" />
               )}
             </div>
           )}
 
           <div className="flex items-center gap-0.5 shrink-0">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={playPrev} disabled={!currentTrack}>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={playPrev}
+              disabled={!currentTrack || sdk.disallows?.skipping_prev}>
               <SkipBack className="h-3 w-3" />
             </Button>
             <Button
               variant="ghost" size="icon" className="h-8 w-8 rounded-full"
               style={{ backgroundColor: isPlaying ? "rgba(212,175,55,0.15)" : "transparent" }}
-              onClick={currentTrack ? togglePlayPause : undefined} disabled={!currentTrack}
+              onClick={currentTrack ? togglePlayPause : undefined}
+              disabled={!currentTrack || (isPlaying ? sdk.disallows?.pausing : sdk.disallows?.resuming)}
             >
               {isPlaying ? <Pause className="h-3.5 w-3.5" style={{ color: "#D4AF37" }} /> : <Play className="h-3.5 w-3.5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={playNext} disabled={!currentTrack}>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={playNext}
+              disabled={!currentTrack || sdk.disallows?.skipping_next}>
               <SkipForward className="h-3 w-3" />
             </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleMute}>
@@ -320,10 +402,10 @@ export function OrionPlaylistBar() {
             </Button>
           </div>
 
-          {currentTrack && currentTrack.source === "spotify" && (
+          {(currentTrack || sdk.currentTrack) && (
             <div className="flex-1 max-w-[120px] hidden lg:block">
               <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #D4AF37, #3B82F6)" }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${displayProgress}%`, background: "linear-gradient(90deg, #D4AF37, #3B82F6)" }} />
               </div>
             </div>
           )}
