@@ -15,6 +15,7 @@ import {
   calibrate,
   applyCalibration,
   type CalibrationMatrix,
+  tensorVQCForward,
 } from "./vqc";
 
 export type QHRLDomain =
@@ -80,7 +81,11 @@ function vonNeumannEntropy(probabilities: number[]): number {
 
 function calibratedMeasure(input: number[]): { prob: number; entropy: number } {
   const params = getCachedParams();
-  const rawProb = vqcForward(input, params);
+  const config = DEFAULT_VQC_CONFIG;
+  // Use tensor VQC for nQubits ≤ 12 (real entanglement)
+  const rawProb = config.nQubits <= 12
+    ? tensorVQCForward(input, params, config)
+    : vqcForward(input, params, config);
   const cal = getCalibration();
   const prob = applyCalibration(rawProb, cal);
   const entropy = vonNeumannEntropy([prob, 1 - prob]);

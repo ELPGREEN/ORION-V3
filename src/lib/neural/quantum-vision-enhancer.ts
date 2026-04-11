@@ -13,7 +13,7 @@
  */
 
 import { vqcForward, type VQCConfig } from "./vqc";
-import { qubitZero, qubitFromProbability, measureProbability, fidelity, type QubitState } from "./qubit-core";
+import { qubitZero, qubitFromProbability, measureProbability, fidelity, normalize, type QubitState } from "./qubit-core";
 import { rotationY, rotationZ, hadamard } from "./quantum-gates";
 import type { UnifiedDetection } from "./realtime-vision-engine";
 
@@ -91,13 +91,13 @@ function updateTemporalMemory(name: string, confidence: number): TemporalEntry {
   const now = Date.now();
 
   if (existing && (now - existing.lastSeen) < TEMPORAL_DECAY_MS) {
-    // Blend quantum states: existing and new observation
+    // Blend quantum states with proper normalization
     const newState = qubitFromProbability(confidence);
     const old = existing.qubitState;
-    const blended: QubitState = [
+    const blended: QubitState = normalize([
       [old[0][0] * 0.7 + newState[0][0] * 0.3, old[0][1] * 0.7 + newState[0][1] * 0.3],
       [old[1][0] * 0.7 + newState[1][0] * 0.3, old[1][1] * 0.7 + newState[1][1] * 0.3],
-    ];
+    ]);
     existing.qubitState = blended;
     existing.lastSeen = now;
     existing.seenCount++;

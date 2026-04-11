@@ -1,19 +1,21 @@
 /**
- * ─── Quantum Embedding Kernel ───
- * Applies quantum kernel methods to classical embeddings for
- * enhanced similarity scoring in the RAG pipeline.
+ * ─── Quantum Embedding Kernel (Tensor Mode) ───
+ * Applies quantum kernel methods to classical embeddings using
+ * the full 2^n tensor state vector for real entanglement.
  * 
- * Instead of purely classical cosine similarity, this maps embedding
- * vectors through a quantum feature space using parameterized circuits,
- * capturing non-linear correlations invisible to classical metrics.
- * 
- * Architecture: Amplitude Encoding → Quantum Kernel → Fidelity Measure
+ * Architecture: Amplitude Encoding → Tensor ZZ Feature Map → State Fidelity
  * Refs: Havlíček et al. (2019), Schuld & Killoran (2019)
  */
 
-import { qubitZero, measureProbability, fidelity, type QubitState } from "./qubit-core";
-import { rotationX, rotationY, rotationZ, hadamard } from "./quantum-gates";
-import { applyNoise } from "./quantum-decoherence";
+import {
+  type StateVector,
+  tensorFromProbabilities,
+  stateFidelity,
+  qubitProbability,
+} from "./tensor-state-vector";
+
+import { tensorZZFeatureMap } from "./tensor-vqc";
+import { applyNoiseTensor, type NoiseModelType } from "./quantum-decoherence";
 
 // ─── Types ───
 
@@ -32,10 +34,10 @@ export interface QuantumKernelResult {
 
 export interface QuantumKernelConfig {
   nQubits: number;
-  nReps: number;           // repetitions of the feature map
-  quantumWeight: number;   // 0-1, weight of quantum vs classical
+  nReps: number;
+  quantumWeight: number;
   noiseStrength: number;
-  entangle: boolean;       // apply entangling gates between qubits
+  entangle: boolean;
 }
 
 export const DEFAULT_KERNEL_CONFIG: QuantumKernelConfig = {
@@ -46,55 +48,28 @@ export const DEFAULT_KERNEL_CONFIG: QuantumKernelConfig = {
   entangle: true,
 };
 
-// ─── Quantum Feature Map for Embeddings ───
+// ─── Tensor Feature Encoding ───
 
 /**
- * Encode a classical vector into quantum states using amplitude encoding.
- * Maps each dimension to a qubit rotation angle.
+ * Encode a classical vector into a tensor state vector using
+ * the ZZ feature map with real CNOT entangling gates.
  */
-function encodeToQuantum(
+function encodeToTensor(
   vector: number[],
   config: QuantumKernelConfig
-): QubitState[] {
-  const qubits: QubitState[] = Array.from(
-    { length: config.nQubits },
-    () => qubitZero()
-  );
+): StateVector {
+  // Project to nQubits dimensions
+  const projected = projectVector(vector, config.nQubits);
 
-  for (let rep = 0; rep < config.nReps; rep++) {
-    // Hadamard layer — create superposition
-    for (let q = 0; q < config.nQubits; q++) {
-      qubits[q] = hadamard(qubits[q]);
-    }
+  // Use tensor ZZ feature map (real entanglement via CNOT)
+  let sv = tensorZZFeatureMap(projected, { nQubits: config.nQubits });
 
-    // Rotation encoding — map features to angles
-    for (let q = 0; q < config.nQubits; q++) {
-      const idx = (rep * config.nQubits + q) % vector.length;
-      const angle = vector[idx] * Math.PI;
-      qubits[q] = rotationZ(angle, qubits[q]);
-      qubits[q] = rotationY(angle * 0.5, qubits[q]);
-    }
-
-    // Entangling layer (ZZ-like)
-    if (config.entangle) {
-      for (let q = 0; q < config.nQubits - 1; q++) {
-        const phase = measureProbability(qubits[q]) *
-                      measureProbability(qubits[q + 1]) * Math.PI;
-        qubits[q] = rotationZ(phase, qubits[q]);
-        qubits[q + 1] = rotationZ(phase, qubits[q + 1]);
-      }
-    }
-
-    // Apply realistic noise
-    if (config.noiseStrength > 0) {
-      for (let q = 0; q < config.nQubits; q++) {
-        const noised = applyNoise([qubits[q]], "depolarizing", config.noiseStrength);
-        qubits[q] = noised[0];
-      }
-    }
+  // Apply realistic noise on tensor state
+  if (config.noiseStrength > 0) {
+    sv = applyNoiseTensor(sv, config.nQubits, "depolarizing", config.noiseStrength);
   }
 
-  return qubits;
+  return sv;
 }
 
 // ─── Classical helpers ───
@@ -112,8 +87,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 /**
- * Reduce high-dimensional embedding to nQubits dimensions via PCA-like projection.
- * Uses random but deterministic projection for consistency.
+ * Reduce high-dimensional embedding to targetDim via chunked averaging.
  */
 function projectVector(vec: number[], targetDim: number): number[] {
   if (vec.length <= targetDim) {
@@ -121,8 +95,6 @@ function projectVector(vec: number[], targetDim: number): number[] {
     while (padded.length < targetDim) padded.push(0);
     return padded;
   }
-
-  // Deterministic chunked averaging (simple but effective)
   const chunkSize = Math.ceil(vec.length / targetDim);
   const projected: number[] = [];
   for (let i = 0; i < targetDim; i++) {
@@ -132,8 +104,6 @@ function projectVector(vec: number[], targetDim: number): number[] {
     for (let j = start; j < end; j++) sum += vec[j];
     projected.push(sum / (end - start));
   }
-
-  // Normalize to [-1, 1]
   const maxAbs = Math.max(...projected.map(Math.abs), 1e-8);
   return projected.map(v => v / maxAbs);
 }
@@ -142,7 +112,7 @@ function projectVector(vec: number[], targetDim: number): number[] {
 
 /**
  * Compute quantum kernel similarity between two embedding vectors.
- * Combines quantum fidelity with classical cosine for hybrid scoring.
+ * Uses tensor state fidelity F = |⟨ψ_A|ψ_B⟩|² for quantum similarity.
  */
 export function quantumKernelSimilarity(
   embeddingA: number[],
@@ -154,20 +124,12 @@ export function quantumKernelSimilarity(
   // Classical baseline
   const classicalSim = cosineSimilarity(embeddingA, embeddingB);
 
-  // Project to quantum-compatible dimensions
-  const projA = projectVector(embeddingA, config.nQubits * config.nReps);
-  const projB = projectVector(embeddingB, config.nQubits * config.nReps);
+  // Tensor encoding with real entanglement
+  const svA = encodeToTensor(embeddingA, config);
+  const svB = encodeToTensor(embeddingB, config);
 
-  // Quantum encoding
-  const qubitsA = encodeToQuantum(projA, config);
-  const qubitsB = encodeToQuantum(projB, config);
-
-  // Quantum kernel: average fidelity across qubits
-  let totalFidelity = 0;
-  for (let q = 0; q < config.nQubits; q++) {
-    totalFidelity += fidelity(qubitsA[q], qubitsB[q]);
-  }
-  const quantumSim = totalFidelity / config.nQubits;
+  // Quantum kernel: state fidelity on full 2^n vector
+  const quantumSim = stateFidelity(svA, svB);
 
   // Hybrid score
   const hybridScore =
@@ -189,7 +151,6 @@ export function quantumKernelSimilarity(
 
 /**
  * Batch kernel scoring — rank multiple candidates against a query embedding.
- * Returns sorted by hybrid score (best first).
  */
 export function quantumKernelRank(
   queryEmbedding: number[],

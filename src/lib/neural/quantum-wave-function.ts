@@ -4,9 +4,8 @@
  * 
  * ψ(x,t) = Σ cₙφₙ(x)·e^(-iEₙt/ħ)
  * 
- * Abstração sobre registros multi-qubit para representar subsistemas
- * cognitivos (visão, texto, consciência) como estados quânticos com
- * superposição, colapso (Born rule), decoerência e entropia de von Neumann.
+ * Now fully synchronized with tensor state vector 2^n for correct
+ * entropy, fidelity, entanglement, and decoherence.
  */
 
 import {
@@ -36,6 +35,8 @@ import {
 import {
   applyDecoherence,
   depolarize,
+  depolarizeTensor,
+  applyDecoherenceTensor,
   type DecoherenceModel,
   DEFAULT_DECOHERENCE,
 } from "./quantum-decoherence";
@@ -43,9 +44,18 @@ import {
 import { hadamard, rotationY } from "./quantum-gates";
 
 import {
+  type StateVector,
+  tensorFromProbabilities,
   densityMatrix as tensorDensityMatrix,
   vonNeumannEntropy as tensorVonNeumannEntropy,
   stateFidelity as tensorStateFidelity,
+  applySingleGate,
+  RY2,
+  H2,
+  measureQubit,
+  measureAll as tensorMeasureAll,
+  qubitProbability as tensorQubitProbability,
+  normalizeSV,
 } from "./tensor-state-vector";
 
 // ═══ Types ═══
@@ -98,22 +108,25 @@ export interface WaveFunctionMetrics {
 /**
  * Create a wave function from labeled probability dimensions.
  * Each dimension becomes a qubit with P(|1⟩) = probability.
- * 
- * Example: createWaveFunction("cognition", { episodic: 0.8, causal: 0.3, tom: 0.5 })
+ * Builds tensor state 2^n for correct entropy/fidelity/entanglement.
  */
 export function createWaveFunction(
   label: string,
   dimensions: Record<string, number>
 ): WaveFunction {
   const entries = Object.entries(dimensions);
-  const n = Math.max(1, Math.min(entries.length, 20));
+  const n = Math.max(1, Math.min(entries.length, 12)); // Max 12 for tensor
   const reg = createRegister(n);
 
-  // Initialize each qubit with its probability amplitude
+  const probs: number[] = [];
   for (let i = 0; i < n; i++) {
     const p = Math.max(0, Math.min(1, entries[i][1]));
     reg.qubits[i] = qubitFromProbability(p);
+    probs.push(p);
   }
+
+  // Build synchronized tensor state |ψ⟩ = ⊗ᵢ (√(1-pᵢ)|0⟩ + √pᵢ|1⟩)
+  reg.tensorState = tensorFromProbabilities(probs);
 
   return {
     label,
@@ -133,11 +146,14 @@ export function createWaveFunctionFromQubits(
   qubits: QubitState[],
   labels?: string[]
 ): WaveFunction {
-  const n = Math.max(1, Math.min(qubits.length, 20));
+  const n = Math.max(1, Math.min(qubits.length, 12));
   const reg = createRegister(n);
+  const probs: number[] = [];
   for (let i = 0; i < n; i++) {
     reg.qubits[i] = normalize(qubits[i]);
+    probs.push(measureProbability(reg.qubits[i]));
   }
+  reg.tensorState = tensorFromProbabilities(probs);
   return {
     label,
     register: reg,
@@ -152,28 +168,38 @@ export function createWaveFunctionFromQubits(
 
 /**
  * Put specific qubits into equal superposition (Hadamard).
- * If no indices given, superposes all.
+ * Applies H gate on both per-qubit and tensor state.
  */
 export function superpose(wf: WaveFunction, indices?: number[]): WaveFunction {
   const reg = { ...wf.register, qubits: [...wf.register.qubits] };
   const targets = indices ?? reg.qubits.map((_, i) => i);
+
+  // Update tensor state
+  let ts = reg.tensorState;
   for (const i of targets) {
     if (i >= 0 && i < reg.n) {
       reg.qubits[i] = hadamard(reg.qubits[i]);
+      if (ts) {
+        ts = applySingleGate(H2, i, reg.n, ts);
+      }
     }
   }
+  reg.tensorState = ts;
+
   return { ...wf, register: reg, evolvedAt: Date.now() };
 }
 
 /**
  * Blend two wave functions by mixing their qubit amplitudes.
- * Useful for combining vision + cognition subsystems.
+ * NOTE: This is a classical approximation — not a unitary operation.
+ * Result is normalized to maintain |α|² + |β|² = 1.
  */
 export function blend(a: WaveFunction, b: WaveFunction, weightB: number = 0.5): WaveFunction {
   const n = Math.min(a.register.n, b.register.n);
   const wA = 1 - weightB;
   const reg = createRegister(n);
 
+  const probs: number[] = [];
   for (let i = 0; i < n; i++) {
     const qa = a.register.qubits[i];
     const qb = b.register.qubits[i];
@@ -181,7 +207,11 @@ export function blend(a: WaveFunction, b: WaveFunction, weightB: number = 0.5): 
       cAdd(cScale(wA, qa[0]), cScale(weightB, qb[0])),
       cAdd(cScale(wA, qa[1]), cScale(weightB, qb[1])),
     ]);
+    probs.push(measureProbability(reg.qubits[i]));
   }
+
+  // Rebuild tensor state from blended probabilities
+  reg.tensorState = tensorFromProbabilities(probs);
 
   return {
     label: `${a.label}⊗${b.label}`,
@@ -197,13 +227,7 @@ export function blend(a: WaveFunction, b: WaveFunction, weightB: number = 0.5): 
 
 /**
  * Evolve the wave function under a simplified Hamiltonian.
- * 
- * Each qubit evolves via rotation: |ψ⟩ → Ry(E·dt/ħ)|ψ⟩
- * where E is the "energy" of that dimension.
- * 
- * @param wf - Wave function to evolve
- * @param hamiltonian - Energy per dimension (maps label → energy in [0,1])
- * @param dt - Time step (arbitrary units, typically 0.01-0.1)
+ * Applies RY(E·dt) on both per-qubit and tensor state.
  */
 export function evolve(
   wf: WaveFunction,
@@ -211,17 +235,21 @@ export function evolve(
   dt: number = 0.05
 ): WaveFunction {
   const reg = { ...wf.register, qubits: [...wf.register.qubits] };
+  let ts = reg.tensorState;
 
   for (let i = 0; i < reg.n; i++) {
     const label = wf.basisLabels[i];
     const energy = hamiltonian[label] ?? 0;
     if (Math.abs(energy) > 1e-10) {
-      // Ry(θ) rotation where θ = E·dt
       const angle = energy * dt;
       reg.qubits[i] = rotationY(angle, reg.qubits[i]);
+      if (ts) {
+        ts = applySingleGate(RY2(angle), i, reg.n, ts);
+      }
     }
   }
 
+  reg.tensorState = ts;
   return {
     ...wf,
     register: reg,
@@ -234,12 +262,41 @@ export function evolve(
 
 /**
  * Measure (collapse) the entire wave function.
- * Each qubit collapses to |0⟩ or |1⟩ with probability |cₙ|².
+ * Uses tensor state for correct joint probability distribution.
  */
 export function collapse(wf: WaveFunction): CollapseResult {
-  const priorProbabilities = wf.register.qubits.map(q => measureProbability(q));
-  const { outcomes, bitString, register } = measureRegister(wf.register);
+  const n = wf.register.n;
 
+  // Get prior probabilities from tensor state
+  const priorProbabilities = wf.register.tensorState
+    ? Array.from({ length: n }, (_, i) => tensorQubitProbability(i, n, wf.register.tensorState!))
+    : wf.register.qubits.map(q => measureProbability(q));
+
+  // Measure using tensor state if available
+  if (wf.register.tensorState) {
+    const { outcomes, bitString, postState } = tensorMeasureAll(n, wf.register.tensorState);
+    const reg = createRegister(n);
+    reg.tensorState = postState;
+    // Sync per-qubit states
+    for (let i = 0; i < n; i++) {
+      reg.qubits[i] = qubitFromProbability(outcomes[i]);
+    }
+
+    const collapsedLabels = outcomes.map((o, i) =>
+      o === 1 ? wf.basisLabels[i] : `¬${wf.basisLabels[i]}`
+    );
+
+    return {
+      outcomes,
+      bitString,
+      collapsedLabels,
+      postState: { ...wf, register: reg, evolvedAt: Date.now() },
+      priorProbabilities,
+    };
+  }
+
+  // Legacy fallback
+  const { outcomes, bitString, register } = measureRegister(wf.register);
   const collapsedLabels = outcomes.map((o, i) =>
     o === 1 ? wf.basisLabels[i] : `¬${wf.basisLabels[i]}`
   );
@@ -255,21 +312,36 @@ export function collapse(wf: WaveFunction): CollapseResult {
 
 /**
  * Selective measurement: collapse only specific qubits.
+ * Uses tensor partial measurement when available.
  */
 export function collapsePartial(wf: WaveFunction, indices: number[]): CollapseResult {
-  const priorProbabilities = wf.register.qubits.map(q => measureProbability(q));
+  const n = wf.register.n;
+  const priorProbabilities = wf.register.tensorState
+    ? Array.from({ length: n }, (_, i) => tensorQubitProbability(i, n, wf.register.tensorState!))
+    : wf.register.qubits.map(q => measureProbability(q));
+
   const reg = { ...wf.register, qubits: [...wf.register.qubits] };
   const outcomes: number[] = new Array(reg.n).fill(-1);
+  let ts = reg.tensorState;
 
   for (const i of indices) {
     if (i >= 0 && i < reg.n) {
-      const { outcome, postState } = measureCollapse(reg.qubits[i]);
-      outcomes[i] = outcome;
-      reg.qubits[i] = postState;
+      if (ts) {
+        // Tensor partial measurement
+        const { outcome, postState } = measureQubit(i, reg.n, ts);
+        outcomes[i] = outcome;
+        ts = postState;
+        reg.qubits[i] = qubitFromProbability(outcome);
+      } else {
+        // Legacy
+        const { outcome, postState } = measureCollapse(reg.qubits[i]);
+        outcomes[i] = outcome;
+        reg.qubits[i] = postState;
+      }
     }
   }
 
-  // Unmeasured qubits keep outcome -1
+  reg.tensorState = ts;
   const collapsedLabels = outcomes.map((o, i) =>
     o === -1 ? `~${wf.basisLabels[i]}` : o === 1 ? wf.basisLabels[i] : `¬${wf.basisLabels[i]}`
   );
@@ -287,18 +359,14 @@ export function collapsePartial(wf: WaveFunction, indices: number[]): CollapseRe
 
 /**
  * Calculate von Neumann entropy of the wave function.
- * 
- * Tensor mode: computes true S(ρ) = -Tr(ρ log ρ) via density matrix.
- * Legacy mode: S = -Σ pᵢ log₂(pᵢ) per qubit (sum, not product).
+ * Tensor mode: S(ρ) = -Tr(ρ log₂ ρ) via density matrix eigenvalues.
+ * Legacy: S = -Σ pᵢ log₂(pᵢ) per qubit.
  */
 export function entropy(wf: WaveFunction): number {
-  // Tensor mode: use density matrix for correct entropy
   if (wf.register.tensorState) {
     const rho = tensorDensityMatrix(wf.register.tensorState);
     return tensorVonNeumannEntropy(rho);
   }
-
-  // Legacy: sum of per-qubit binary entropies
   let s = 0;
   for (const q of wf.register.qubits) {
     const p1 = measureProbability(q);
@@ -309,31 +377,28 @@ export function entropy(wf: WaveFunction): number {
   return s;
 }
 
-/**
- * Maximum entropy for n qubits (each maximally mixed = 0.5).
- */
+/** Maximum entropy for n qubits. */
 export function maxEntropy(n: number): number {
-  return n; // Each qubit contributes max 1 bit of entropy
+  return n;
 }
 
-/**
- * Normalized entropy: 0 = fully certain, 1 = maximally uncertain.
- */
+/** Normalized entropy: 0 = certain, 1 = maximally uncertain. */
 export function normalizedEntropy(wf: WaveFunction): number {
   const s = entropy(wf);
   const m = maxEntropy(wf.register.n);
   return m > 0 ? s / m : 0;
 }
 
-// ═══ Metrics: Full Analysis ═══
+// ═══ Metrics ═══
 
-/**
- * Compute comprehensive metrics for the wave function.
- */
 export function getMetrics(wf: WaveFunction): WaveFunctionMetrics {
-  const probabilities = wf.register.qubits.map(q => measureProbability(q));
+  const n = wf.register.n;
+  const probabilities = wf.register.tensorState
+    ? Array.from({ length: n }, (_, i) => tensorQubitProbability(i, n, wf.register.tensorState!))
+    : wf.register.qubits.map(q => measureProbability(q));
+
   const s = entropy(wf);
-  const m = maxEntropy(wf.register.n);
+  const m = maxEntropy(n);
   const mean = probabilities.reduce((a, b) => a + b, 0) / probabilities.length;
   const variance = probabilities.reduce((a, p) => a + (p - mean) ** 2, 0) / probabilities.length;
 
@@ -347,18 +412,15 @@ export function getMetrics(wf: WaveFunction): WaveFunctionMetrics {
   };
 }
 
-// ═══ Fidelity: State Comparison ═══
+// ═══ Fidelity ═══
 
 /**
- * Compute fidelity between two wave functions.
- * Uses tensor state vector when available (correct), else product of per-qubit fidelities.
+ * Compute fidelity: F = |⟨ψ₁|ψ₂⟩|² via tensor state.
  */
 export function waveFidelity(a: WaveFunction, b: WaveFunction): number {
-  // Use tensor state if both registers have it
   if (a.register.tensorState && b.register.tensorState) {
     return tensorStateFidelity(a.register.tensorState, b.register.tensorState);
   }
-  // Legacy: product of per-qubit fidelities
   const n = Math.min(a.register.n, b.register.n);
   let f = 1;
   for (let i = 0; i < n; i++) {
@@ -367,40 +429,60 @@ export function waveFidelity(a: WaveFunction, b: WaveFunction): number {
   return f;
 }
 
-// ═══ Decoherence: Environmental Noise ═══
+// ═══ Decoherence ═══
 
 /**
  * Apply decoherence to the wave function.
- * Models environmental noise degrading quantum coherence.
- * 
- * @param wf - Wave function
- * @param noise - Noise strength 0-1 (0=no noise, 1=fully decohered)
+ * Uses tensor Kraus channels when tensor state is available.
  */
 export function decohere(wf: WaveFunction, noise: number = 0.05): WaveFunction {
   const reg = { ...wf.register, qubits: [...wf.register.qubits] };
-  for (let i = 0; i < reg.n; i++) {
-    reg.qubits[i] = depolarize(reg.qubits[i], noise);
+
+  if (reg.tensorState) {
+    // Tensor depolarizing channel on each qubit
+    let ts = reg.tensorState;
+    for (let i = 0; i < reg.n; i++) {
+      ts = depolarizeTensor(ts, i, reg.n, noise);
+    }
+    reg.tensorState = ts;
+    // Sync per-qubit from tensor
+    for (let i = 0; i < reg.n; i++) {
+      const p = tensorQubitProbability(i, reg.n, ts);
+      reg.qubits[i] = qubitFromProbability(p);
+    }
+  } else {
+    for (let i = 0; i < reg.n; i++) {
+      reg.qubits[i] = depolarize(reg.qubits[i], noise);
+    }
   }
+
   return { ...wf, register: reg, evolvedAt: Date.now() };
 }
 
 /**
- * Apply full decoherence model (T1+T2) to each qubit.
+ * Apply full decoherence model (T1+T2) — tensor Kraus or legacy.
  */
 export function decoherePhysical(wf: WaveFunction, model?: DecoherenceModel): WaveFunction {
   const reg = { ...wf.register, qubits: [...wf.register.qubits] };
-  for (let i = 0; i < reg.n; i++) {
-    reg.qubits[i] = applyDecoherence(reg.qubits[i], model ?? DEFAULT_DECOHERENCE);
+  const m = model ?? DEFAULT_DECOHERENCE;
+
+  if (reg.tensorState) {
+    reg.tensorState = applyDecoherenceTensor(reg.tensorState, reg.n, m);
+    for (let i = 0; i < reg.n; i++) {
+      const p = tensorQubitProbability(i, reg.n, reg.tensorState);
+      reg.qubits[i] = qubitFromProbability(p);
+    }
+  } else {
+    for (let i = 0; i < reg.n; i++) {
+      reg.qubits[i] = applyDecoherence(reg.qubits[i], m);
+    }
   }
+
   return { ...wf, register: reg, evolvedAt: Date.now() };
 }
 
-// ═══ Utility: Quick Constructors ═══
+// ═══ Utility ═══
 
-/**
- * Create a "confidence wave function" from a list of (label, confidence) pairs.
- * Shortcut for the anti-hallucination and vision pipelines.
- */
 export function confidenceWaveFunction(
   label: string,
   signals: Array<{ name: string; confidence: number }>
@@ -412,22 +494,18 @@ export function confidenceWaveFunction(
   return createWaveFunction(label, dims);
 }
 
-/**
- * Quick entropy check: is this wave function "uncertain"?
- * Returns true if normalized entropy > threshold.
- */
 export function isUncertain(wf: WaveFunction, threshold: number = 0.6): boolean {
   return normalizedEntropy(wf) > threshold;
 }
 
-/**
- * Get dominant dimension: the qubit most likely to measure |1⟩.
- */
 export function getDominantDimension(wf: WaveFunction): { label: string; probability: number } {
+  const n = wf.register.n;
   let maxP = -1;
   let maxIdx = 0;
-  for (let i = 0; i < wf.register.n; i++) {
-    const p = measureProbability(wf.register.qubits[i]);
+  for (let i = 0; i < n; i++) {
+    const p = wf.register.tensorState
+      ? tensorQubitProbability(i, n, wf.register.tensorState)
+      : measureProbability(wf.register.qubits[i]);
     if (p > maxP) { maxP = p; maxIdx = i; }
   }
   return { label: wf.basisLabels[maxIdx], probability: maxP };

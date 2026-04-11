@@ -5,6 +5,7 @@
  * T1 (relaxation): |1⟩ → |0⟩ decay (amplitude damping)
  * T2 (dephasing): loss of phase coherence (phase randomization)
  * 
+ * Supports both per-qubit (legacy) and tensor 2^n Kraus channels.
  * Calibration: readout error mitigation via confusion matrix inversion.
  */
 
@@ -16,7 +17,21 @@ import {
   measureCollapse,
   measureProbability,
   cAbs2,
+  C_ZERO,
+  type Complex,
+  cMul,
+  cAdd,
+  cScale,
+  cConj,
 } from "./qubit-core";
+
+import {
+  type StateVector,
+  type DensityMatrix,
+  applySingleGate,
+  I2,
+  normalizeSV,
+} from "./tensor-state-vector";
 
 // ─── Decoherence Parameters ───
 
@@ -54,9 +69,7 @@ export function amplitudeDamping(q: QubitState, t: number, t1: number): QubitSta
 export function phaseDamping(q: QubitState, t: number, t2: number): QubitState {
   if (t2 <= 0) return q;
   const lambda = Math.exp(-t / t2);
-  // Reduce off-diagonal coherence by mixing phase randomly
   if (Math.random() > lambda) {
-    // Phase kicked randomly
     const randomPhase = Math.random() * 2 * Math.PI;
     const c = Math.cos(randomPhase);
     const s = Math.sin(randomPhase);
@@ -88,7 +101,6 @@ export function coherenceLifetime(model: DecoherenceModel): number {
 
 /**
  * Depolarizing noise: with probability p, replace state with maximally mixed.
- * Models general environmental noise.
  */
 export function depolarize(q: QubitState, p: number): QubitState {
   if (Math.random() < p) {
@@ -117,7 +129,7 @@ export function bitFlip(q: QubitState, p: number): QubitState {
   return q;
 }
 
-// ─── Noise Application (batch) ───
+// ─── Noise Application (batch, per-qubit legacy) ───
 
 export type NoiseModelType = "none" | "depolarizing" | "amplitude_damping" | "phase_flip";
 
@@ -141,6 +153,172 @@ export function applyNoise(
   });
 }
 
+// ═══ Tensor Kraus Channels (2^n state vector) ═══
+
+/**
+ * Depolarizing channel on qubit `target` in an n-qubit tensor state.
+ * ρ' = (1-p)ρ + (p/3)(XρX + YρY + ZρZ)
+ * 
+ * Implemented via stochastic Kraus: with probability p, apply random Pauli.
+ * For state vectors, this is exact in the Monte Carlo sense.
+ */
+export function depolarizeTensor(
+  sv: StateVector,
+  target: number,
+  n: number,
+  p: number
+): StateVector {
+  if (p <= 0 || Math.random() > p) return sv;
+  
+  // Pick random Pauli: X (0), Y (1), Z (2)
+  const pauliChoice = Math.floor(Math.random() * 3);
+  
+  const X2: Complex[][] = [[C_ZERO, [1, 0]], [[1, 0], C_ZERO]];
+  const Y2: Complex[][] = [[C_ZERO, [0, -1]], [[0, 1], C_ZERO]];
+  const Z2: Complex[][] = [[[1, 0], C_ZERO], [C_ZERO, [-1, 0]]];
+  
+  const gates = [X2, Y2, Z2];
+  return applySingleGate(gates[pauliChoice], target, n, sv);
+}
+
+/**
+ * Amplitude damping (T1 decay) on qubit `target` in tensor state.
+ * Kraus operators:
+ *   E₀ = |0⟩⟨0| + √(1-γ)|1⟩⟨1|
+ *   E₁ = √γ |0⟩⟨1|
+ * 
+ * For state vectors, stochastic: with probability γ·P(target=1), decay happens.
+ */
+export function amplitudeDampingTensor(
+  sv: StateVector,
+  target: number,
+  n: number,
+  gamma: number
+): StateVector {
+  if (gamma <= 0) return sv;
+  
+  const dim = 1 << n;
+  const tBit = n - 1 - target;
+  const mask = 1 << tBit;
+  
+  // Compute P(target=1)
+  let p1 = 0;
+  for (let i = 0; i < dim; i++) {
+    if (i & mask) p1 += cAbs2(sv[i]);
+  }
+  
+  // Stochastic: decay happens with probability gamma * p1
+  if (Math.random() < gamma * p1 && p1 > 1e-15) {
+    // Apply E₁ = √γ |0⟩⟨1| on target: move |1⟩ amplitudes to |0⟩
+    const result: StateVector = new Array(dim);
+    for (let i = 0; i < dim; i++) result[i] = C_ZERO;
+    
+    for (let i = 0; i < dim; i++) {
+      if (i & mask) {
+        // This basis state has target=1 → map to target=0
+        const j = i & ~mask;
+        result[j] = cAdd(result[j], cScale(Math.sqrt(gamma), sv[i]));
+      }
+    }
+    return normalizeSV(result);
+  }
+  
+  // Apply E₀ = |0⟩⟨0| + √(1-γ)|1⟩⟨1|: dampen |1⟩ amplitudes
+  const result: StateVector = [...sv];
+  const sqrtSurv = Math.sqrt(1 - gamma);
+  for (let i = 0; i < dim; i++) {
+    if (i & mask) {
+      result[i] = cScale(sqrtSurv, sv[i]);
+    }
+  }
+  return normalizeSV(result);
+}
+
+/**
+ * Phase damping (T2 dephasing) on qubit `target` in tensor state.
+ * With probability (1-λ), apply random phase to |1⟩ amplitudes.
+ * λ = e^(-t/T2)
+ */
+export function phaseDampingTensor(
+  sv: StateVector,
+  target: number,
+  n: number,
+  lambda: number
+): StateVector {
+  if (lambda >= 1 || Math.random() < lambda) return sv;
+  
+  const dim = 1 << n;
+  const tBit = n - 1 - target;
+  const mask = 1 << tBit;
+  const phase = Math.random() * 2 * Math.PI;
+  const c = Math.cos(phase);
+  const s = Math.sin(phase);
+  
+  const result: StateVector = [...sv];
+  for (let i = 0; i < dim; i++) {
+    if (i & mask) {
+      const re = sv[i][0];
+      const im = sv[i][1];
+      result[i] = [re * c - im * s, re * s + im * c];
+    }
+  }
+  return result;
+}
+
+/**
+ * Apply noise model to full tensor state vector.
+ * Applies channel to each qubit independently (local noise model).
+ */
+export function applyNoiseTensor(
+  sv: StateVector,
+  n: number,
+  model: NoiseModelType,
+  strength: number
+): StateVector {
+  if (model === "none" || strength <= 0) return sv;
+  
+  let state = sv;
+  for (let q = 0; q < n; q++) {
+    switch (model) {
+      case "depolarizing":
+        state = depolarizeTensor(state, q, n, strength);
+        break;
+      case "amplitude_damping": {
+        const gamma = 1 - Math.exp(-1 / Math.max(1 / strength, 1e-10));
+        state = amplitudeDampingTensor(state, q, n, gamma);
+        break;
+      }
+      case "phase_flip":
+        // Phase flip = Z with probability p
+        if (Math.random() < strength) {
+          const Z2: Complex[][] = [[[1, 0], C_ZERO], [C_ZERO, [-1, 0]]];
+          state = applySingleGate(Z2, q, n, state);
+        }
+        break;
+    }
+  }
+  return state;
+}
+
+/**
+ * Apply full decoherence model (T1+T2) to tensor state.
+ */
+export function applyDecoherenceTensor(
+  sv: StateVector,
+  n: number,
+  model: DecoherenceModel = DEFAULT_DECOHERENCE
+): StateVector {
+  let state = sv;
+  const gamma = 1 - Math.exp(-model.tGate / model.t1);
+  const lambda = Math.exp(-model.tGate / model.t2);
+  
+  for (let q = 0; q < n; q++) {
+    state = amplitudeDampingTensor(state, q, n, gamma);
+    state = phaseDampingTensor(state, q, n, lambda);
+  }
+  return state;
+}
+
 // ─── Calibration (Readout Error Mitigation) ───
 
 export interface CalibrationMatrix {
@@ -152,7 +330,6 @@ export interface CalibrationMatrix {
 
 /**
  * Characterize readout errors by preparing known states and measuring.
- * Creates a confusion matrix for error correction.
  */
 export function calibrate(shots: number = 1000, noiseStrength: number = 0.01): CalibrationMatrix {
   let correct0 = 0;

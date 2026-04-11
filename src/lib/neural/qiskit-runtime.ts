@@ -16,9 +16,16 @@ import { qubitZero, measureProbability } from "./qubit-core";
 import { rotationX, rotationY, rotationZ } from "./quantum-gates";
 import { applyNoise, applyDecoherence } from "./quantum-decoherence";
 import type { NoiseModelType, DecoherenceModel } from "./quantum-decoherence";
-import { vqcForward } from "./vqc";
+import { vqcForward, tensorVQCForward } from "./vqc";
 import type { VQCConfig } from "./vqc";
 import { DEFAULT_VQC_CONFIG } from "./vqc";
+
+/** Use tensor VQC when nQubits ≤ 12 for real entanglement */
+function vqcForwardAuto(input: number[], params: number[][][], config: VQCConfig): number {
+  return config.nQubits <= 12
+    ? tensorVQCForward(input, params, config)
+    : vqcForward(input, params, config);
+}
 
 // ═══════════════════════════════════════════
 // ─── Types ───
@@ -386,7 +393,7 @@ export function executeJob(job: RuntimeJob): RuntimeJob {
   let expectationSum = 0;
 
   for (let s = 0; s < shots; s++) {
-    const result = vqcForward(circuit.input, circuit.params, noiseConfig);
+    const result = vqcForwardAuto(circuit.input, circuit.params, noiseConfig);
 
     // Apply readout error
     const measuredResult = qpu.isSimulator
@@ -462,7 +469,7 @@ function applyZNE(circuit: RuntimeCircuit, qpu: QPUProfile, shots: number): numb
     let sum = 0;
     const zneShots = Math.max(100, Math.floor(shots / 3));
     for (let s = 0; s < zneShots; s++) {
-      sum += vqcForward(circuit.input, circuit.params, config);
+      sum += vqcForwardAuto(circuit.input, circuit.params, config);
     }
     results.push(sum / zneShots);
   }
