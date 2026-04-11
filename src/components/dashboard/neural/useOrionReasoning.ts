@@ -1667,7 +1667,7 @@ export function useOrionReasoning(
         saveToNeuralLearning(question, result.description, "vision_chat", 0.7, {
           latency_ms: latencyMs, intent_type: intentType, had_image: needsImage,
           prompt_version: "v2.1", objects_detected: result.identifiedObjects?.length || 0,
-          cognition_enriched: !!cognitionContextStr, was_refined: wasRefined,
+          cognition_enriched: false, was_refined: wasRefined,
         }).catch(() => {});
         if (result.identifiedObjects?.length > 0) {
           setDetectedObjects(result.identifiedObjects);
