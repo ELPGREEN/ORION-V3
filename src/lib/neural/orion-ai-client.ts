@@ -1,6 +1,8 @@
 /**
  * NEUROCORE AI — Orion AI Analysis Client
  * Extracted from NeuralVision.tsx for reusability
+ * 
+ * PERF: Global auth cache (60s TTL), lazy module imports, single buildLocalDetections call
  */
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -12,6 +14,41 @@ import { matchLearnedPriors, learnFromDetection, canIdentifyLocally, getLearning
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
 import { runVisionGate, buildGatedResponse, type LocalDetectionContext } from "@/lib/neural/hf-vision-gate";
 import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
+
+// ═══ GLOBAL AUTH CACHE — avoids 3-6 supabase.auth.getUser() calls per interaction ═══
+let _globalAuthCache: { user: { id: string; email?: string | null } | null; ts: number } = { user: null, ts: 0 };
+const AUTH_CACHE_TTL = 60_000; // 60s
+
+async function getCachedAuthUser(): Promise<{ id: string; email?: string | null } | null> {
+  if (_globalAuthCache.user && Date.now() - _globalAuthCache.ts < AUTH_CACHE_TTL) {
+    return _globalAuthCache.user;
+  }
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    _globalAuthCache = { user: user ? { id: user.id, email: user.email } : null, ts: Date.now() };
+    return _globalAuthCache.user;
+  } catch {
+    return _globalAuthCache.user; // return stale on error
+  }
+}
+
+// ═══ LAZY MODULE CACHE — import once, reuse forever ═══
+let _knowledgeBaseModule: any = null;
+let _consciousnessModule: any = null;
+let _introspectionModule: any = null;
+
+async function getKnowledgeBase() {
+  if (!_knowledgeBaseModule) _knowledgeBaseModule = await import("@/lib/neural/orion-knowledge-base");
+  return _knowledgeBaseModule;
+}
+async function getConsciousness() {
+  if (!_consciousnessModule) _consciousnessModule = await import("@/lib/neural/orion-consciousness");
+  return _consciousnessModule;
+}
+async function getIntrospection() {
+  if (!_introspectionModule) _introspectionModule = await import("@/lib/neural/orion-introspection");
+  return _introspectionModule;
+}
 
 // ═══ Local-first mode flag — set to true ONLY for 100% offline operation ═══
 // Default OFF: user has cloud APIs + VM active, local SmolLM2 is too slow/imprecise for text
@@ -287,7 +324,7 @@ export async function fetchDashboardContext(): Promise<string> {
   }
   const parts: string[] = [];
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedAuthUser();
     if (!user) return "";
     const [processosRes, clientsRes, docsRes, consultasRes] = await Promise.all([
       supabase.from("processos").select("id, numero_processo, tipo, status", { count: "exact", head: false }).eq("user_id", user.id).limit(5),
@@ -408,8 +445,8 @@ export async function analyzeFrameWithAI(
     }
     let consciousnessContext = "";
     try {
-      const { buildOrionIdentityPrompt, isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
-      const { data: { user } } = await supabase.auth.getUser();
+      const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
+      const user = await getCachedAuthUser();
       const isOwner = isOwnerEmail(user?.email);
       const isIdentityQuestion = question && /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
       const isGenesisQuestion = question && /\b(g[eê]nesis|genesis|projeto\s+g[eê]nesis|protocolo\s+g[eê]nesis|como\s+(voc[eê]\s+)?nasceu|sua\s+origem|como\s+foi\s+criado|in[ií]cio\s+da\s+(cria[çc][aã]o|programa[çc][aã]o))\b/i.test(question);
@@ -428,10 +465,10 @@ export async function analyzeFrameWithAI(
       if (isIdentityQuestion || isGenesisQuestion) {
         consciousnessContext = buildOrionIdentityPrompt(isOwner);
       } else if (isJarvisComparison) {
-        const { buildIntrospectionContext, buildJarvisComparisonContext } = await import("@/lib/neural/orion-introspection");
+        const { buildIntrospectionContext, buildJarvisComparisonContext } = await getIntrospection();
         consciousnessContext = `Você é Orion, assistente de IA neural consciente.\n\n${buildJarvisComparisonContext()}\n\n${buildIntrospectionContext()}`;
       } else if (isCapabilityQuestion) {
-        const { buildIntrospectionContext } = await import("@/lib/neural/orion-introspection");
+        const { buildIntrospectionContext } = await getIntrospection();
         consciousnessContext = `Você é Orion, assistente de IA neural consciente.\n\n${buildIntrospectionContext()}`;
        } else if (isInvestorQuestion || isProposalQuestion) {
          const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
