@@ -1,6 +1,6 @@
-import { useRef, useMemo, useState, useEffect, useCallback } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, Text, Billboard } from "@react-three/drei";
+import { useRef, useMemo, useState, useEffect } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,16 +12,14 @@ import {
 import { getDefenseMetrics } from "@/lib/neural/orion-defense-system";
 import { supabase } from "@/integrations/supabase/client";
 
-// ─── ORION BRAIN ARCHITECTURE: Nodes on a Globe ───
+// ─── ORION BRAIN ARCHITECTURE ───
 const NEURAL_NODES = [
-  // Core LLM — Transformer/Attention Networks
   { id: "llm_core", label: "LLM Core", category: "core", color: "#00e5ff", size: 0.35, arch: "Transformer" },
   { id: "rag_engine", label: "RAG Engine", category: "core", color: "#00e5ff", size: 0.3, arch: "FFN+Retrieval" },
   { id: "kv_cache", label: "KV Cache", category: "core", color: "#ffd740", size: 0.25, arch: "NTM Memory" },
   { id: "slim_router", label: "SlimRouter", category: "core", color: "#b388ff", size: 0.28, arch: "Perceptron" },
   { id: "som_router", label: "SOM Router", category: "core", color: "#b388ff", size: 0.22, arch: "Kohonen SOM" },
   { id: "mha", label: "MHA 7-Head", category: "core", color: "#00e5ff", size: 0.26, arch: "Attention" },
-  // Expert Models — MoE
   { id: "moe_gate", label: "MoE Gate", category: "experts", color: "#69f0ae", size: 0.25, arch: "Gated MoE" },
   { id: "deepseek", label: "DeepSeek Δ", category: "experts", color: "#69f0ae", size: 0.22, arch: "DRN" },
   { id: "groq", label: "Groq Alpha", category: "experts", color: "#69f0ae", size: 0.22, arch: "Transformer" },
@@ -29,54 +27,45 @@ const NEURAL_NODES = [
   { id: "mistral", label: "Mistral Gamma", category: "experts", color: "#69f0ae", size: 0.22, arch: "Transformer" },
   { id: "openrouter", label: "OpenRouter ε", category: "experts", color: "#69f0ae", size: 0.2, arch: "Router FFN" },
   { id: "huggingface", label: "HuggingFace", category: "experts", color: "#69f0ae", size: 0.2, arch: "Inference API" },
-  // Vision & Multimodal
   { id: "vlm", label: "VLM", category: "vision", color: "#ea80fc", size: 0.25, arch: "DCIGN" },
   { id: "sam", label: "SAM", category: "vision", color: "#84ffff", size: 0.22, arch: "CNN+Decoder" },
   { id: "yolo", label: "YOLOv8", category: "vision", color: "#ea80fc", size: 0.22, arch: "CNN" },
   { id: "mediapipe", label: "MediaPipe", category: "vision", color: "#ea80fc", size: 0.2, arch: "CNN+BlazeNet" },
   { id: "ocr", label: "OCR Engine", category: "vision", color: "#84ffff", size: 0.2, arch: "CNN+RNN" },
   { id: "clip", label: "CLIP Cross-Modal", category: "vision", color: "#ea80fc", size: 0.2, arch: "Contrastive" },
-  // Neural Cognition
   { id: "cognition", label: "Cognição", category: "cognition", color: "#ff80ab", size: 0.28, arch: "GWT" },
   { id: "tom", label: "Teoria da Mente", category: "cognition", color: "#ff80ab", size: 0.22, arch: "RNN" },
   { id: "causal", label: "Raciocínio Causal", category: "cognition", color: "#ff80ab", size: 0.22, arch: "GNN" },
   { id: "metacog", label: "Meta-Cognição", category: "cognition", color: "#ff80ab", size: 0.22, arch: "DNC" },
   { id: "somatic", label: "Marcadores Somáticos", category: "cognition", color: "#ff80ab", size: 0.2, arch: "ESN" },
   { id: "stdp", label: "STDP Gamma", category: "cognition", color: "#ff80ab", size: 0.2, arch: "LSM" },
-  // Memory & Knowledge
   { id: "pgvector", label: "pgVector", category: "memory", color: "#ffd740", size: 0.25, arch: "FAISS/IVF" },
   { id: "embeddings", label: "Embeddings", category: "memory", color: "#ffd740", size: 0.22, arch: "AE 768d" },
   { id: "episodic", label: "Memória Episódica", category: "memory", color: "#ffd740", size: 0.22, arch: "LSTM" },
   { id: "knowledge", label: "Knowledge Base", category: "memory", color: "#ffd740", size: 0.2, arch: "DBN" },
   { id: "hopfield", label: "Hopfield Net", category: "memory", color: "#ffd740", size: 0.2, arch: "Hopfield" },
-  // Action & Output
   { id: "lam", label: "LAM", category: "action", color: "#ccff90", size: 0.25, arch: "Transformer" },
   { id: "mamba", label: "Mamba SSM", category: "action", color: "#448aff", size: 0.25, arch: "SSM O(n)" },
   { id: "mlm", label: "MLM Masked", category: "action", color: "#ff5252", size: 0.22, arch: "BERT-like" },
-  // Defense & Quality
   { id: "defense", label: "Orion Shield", category: "defense", color: "#ff1744", size: 0.28, arch: "GAN Guard" },
   { id: "llm_judge", label: "LLM Judge", category: "defense", color: "#ffab40", size: 0.22, arch: "Critic Net" },
-  { id: "quantum_psi", label: "Ψ Quantum", category: "defense", color: "#c084fc", size: 0.25, arch: "QNN/RBM" },
+  { id: "quantum_psi", label: "Ψ Tensor", category: "defense", color: "#c084fc", size: 0.25, arch: "TNN/RBM" },
   { id: "active_inf", label: "Active Inference", category: "defense", color: "#ff1744", size: 0.2, arch: "VAE" },
   { id: "wta", label: "WTA Competitive", category: "defense", color: "#ffab40", size: 0.18, arch: "Kohonen" },
-  // I/O
   { id: "input_text", label: "Texto", category: "io", color: "#18ffff", size: 0.2, arch: "Tokenizer" },
   { id: "input_voice", label: "Voz", category: "io", color: "#18ffff", size: 0.2, arch: "RNN/CTC" },
   { id: "input_vision", label: "Visão", category: "io", color: "#18ffff", size: 0.2, arch: "CNN" },
   { id: "output", label: "Output", category: "io", color: "#18ffff", size: 0.25, arch: "Decoder" },
   { id: "iot_ble", label: "IoT/BLE", category: "io", color: "#60a5fa", size: 0.18, arch: "MQTT" },
   { id: "mqtt", label: "MQTT", category: "io", color: "#60a5fa", size: 0.18, arch: "PubSub" },
-  // Federation
   { id: "digital_twin", label: "Digital Twin", category: "federation", color: "#7c4dff", size: 0.22, arch: "GAN Mirror" },
   { id: "a2a", label: "A2A Protocol", category: "federation", color: "#7c4dff", size: 0.2, arch: "P2P" },
   { id: "mcp", label: "MCP Bridge", category: "federation", color: "#7c4dff", size: 0.2, arch: "RPC" },
   { id: "child_net", label: "Child Network", category: "federation", color: "#7c4dff", size: 0.18, arch: "Federated" },
-  // Search & Data
   { id: "firecrawl", label: "Firecrawl", category: "search", color: "#ffab40", size: 0.18, arch: "Crawler" },
   { id: "searxng", label: "SearXNG", category: "search", color: "#ffab40", size: 0.18, arch: "Meta-Search" },
   { id: "datajud", label: "DataJud", category: "search", color: "#ffab40", size: 0.18, arch: "API Legal" },
   { id: "lexml", label: "LexML", category: "search", color: "#ffab40", size: 0.18, arch: "API Legal" },
-  // Arch Zoo
   { id: "rbf_gate", label: "RBF Gate", category: "core", color: "#b388ff", size: 0.2, arch: "RBF" },
   { id: "gru_health", label: "GRU Health", category: "defense", color: "#ff1744", size: 0.18, arch: "GRU" },
   { id: "dae_cleaner", label: "DAE Cleaner", category: "memory", color: "#ffd740", size: 0.18, arch: "DAE" },
@@ -129,8 +118,8 @@ const CONNECTIONS: [string, string][] = [
 ];
 
 const GLOBE_RADIUS = 12;
-const NUM_PARTICLES = 12000;
-const NUM_FLOW_BEAMS = 80;
+const NUM_PARTICLES = 6000;
+const NUM_FLOW_BEAMS = 120;
 
 // ─── Fibonacci sphere ───
 function computeGlobePositions() {
@@ -150,92 +139,103 @@ function computeGlobePositions() {
   return positions;
 }
 
-// ─── Energy Core (center pulsing orb) ───
-function EnergyCore({ paused }: { paused: boolean }) {
+// ─── Central Brain Core — pulsing technological orb ───
+function BrainCore({ paused }: { paused: boolean }) {
   const coreRef = useRef<THREE.Mesh>(null);
-  const haloRef = useRef<THREE.Mesh>(null);
-  const ring1Ref = useRef<THREE.Mesh>(null);
-  const ring2Ref = useRef<THREE.Mesh>(null);
-  const ring3Ref = useRef<THREE.Mesh>(null);
+  const shellRef = useRef<THREE.Mesh>(null);
+  const ring1 = useRef<THREE.Mesh>(null);
+  const ring2 = useRef<THREE.Mesh>(null);
+  const ring3 = useRef<THREE.Mesh>(null);
+  const innerRef = useRef<THREE.Mesh>(null);
 
   useFrame(({ clock }) => {
     if (paused) return;
     const t = clock.elapsedTime;
     if (coreRef.current) {
-      const s = 1.8 + Math.sin(t * 1.5) * 0.3;
+      const s = 1.6 + Math.sin(t * 1.8) * 0.25;
       coreRef.current.scale.setScalar(s);
-      (coreRef.current.material as THREE.MeshBasicMaterial).opacity = 0.15 + Math.sin(t * 2) * 0.08;
+      (coreRef.current.material as THREE.MeshBasicMaterial).opacity = 0.25 + Math.sin(t * 2.5) * 0.1;
     }
-    if (haloRef.current) {
-      const s = 3.2 + Math.sin(t * 0.8) * 0.8;
-      haloRef.current.scale.setScalar(s);
-      (haloRef.current.material as THREE.MeshBasicMaterial).opacity = 0.04 + Math.sin(t * 1.2) * 0.02;
+    if (shellRef.current) {
+      shellRef.current.rotation.y = t * 0.15;
+      shellRef.current.rotation.x = t * 0.08;
+      (shellRef.current.material as THREE.MeshBasicMaterial).opacity = 0.04 + Math.sin(t * 0.8) * 0.02;
     }
-    if (ring1Ref.current) {
-      ring1Ref.current.rotation.x = t * 0.4;
-      ring1Ref.current.rotation.z = t * 0.3;
+    if (innerRef.current) {
+      innerRef.current.rotation.y = -t * 0.3;
+      innerRef.current.rotation.z = t * 0.2;
     }
-    if (ring2Ref.current) {
-      ring2Ref.current.rotation.y = t * 0.35;
-      ring2Ref.current.rotation.x = Math.PI / 3 + t * 0.2;
-    }
-    if (ring3Ref.current) {
-      ring3Ref.current.rotation.z = t * 0.25;
-      ring3Ref.current.rotation.y = Math.PI / 4 + t * 0.15;
-    }
+    if (ring1.current) { ring1.current.rotation.x = t * 0.5; ring1.current.rotation.z = t * 0.35; }
+    if (ring2.current) { ring2.current.rotation.y = t * 0.4; ring2.current.rotation.x = Math.PI / 3 + t * 0.25; }
+    if (ring3.current) { ring3.current.rotation.z = t * 0.3; ring3.current.rotation.y = Math.PI / 4 + t * 0.18; }
   });
 
   return (
     <group>
-      {/* Inner core */}
+      {/* Inner bright core */}
       <mesh ref={coreRef}>
-        <sphereGeometry args={[1, 32, 32]} />
-        <meshBasicMaterial color="#00e5ff" transparent opacity={0.2} blending={THREE.AdditiveBlending} />
+        <icosahedronGeometry args={[0.8, 2]} />
+        <meshBasicMaterial color="#00e5ff" transparent opacity={0.3} blending={THREE.AdditiveBlending} />
       </mesh>
-      {/* Outer halo */}
-      <mesh ref={haloRef}>
-        <sphereGeometry args={[1, 24, 24]} />
-        <meshBasicMaterial color="#4488ff" transparent opacity={0.05} blending={THREE.AdditiveBlending} />
+      {/* Wireframe brain shell */}
+      <mesh ref={shellRef}>
+        <icosahedronGeometry args={[2.5, 1]} />
+        <meshBasicMaterial color="#00e5ff" transparent opacity={0.06} wireframe blending={THREE.AdditiveBlending} />
       </mesh>
-      {/* Orbital rings */}
-      <mesh ref={ring1Ref}>
-        <torusGeometry args={[2.8, 0.015, 8, 64]} />
-        <meshBasicMaterial color="#00e5ff" transparent opacity={0.2} blending={THREE.AdditiveBlending} />
+      {/* Inner rotating wireframe */}
+      <mesh ref={innerRef}>
+        <octahedronGeometry args={[1.8, 1]} />
+        <meshBasicMaterial color="#b388ff" transparent opacity={0.08} wireframe blending={THREE.AdditiveBlending} />
       </mesh>
-      <mesh ref={ring2Ref}>
-        <torusGeometry args={[3.4, 0.012, 8, 64]} />
-        <meshBasicMaterial color="#b388ff" transparent opacity={0.15} blending={THREE.AdditiveBlending} />
+      {/* Precision rings — tech style */}
+      <mesh ref={ring1}>
+        <torusGeometry args={[3.0, 0.02, 6, 80]} />
+        <meshBasicMaterial color="#00e5ff" transparent opacity={0.25} blending={THREE.AdditiveBlending} />
       </mesh>
-      <mesh ref={ring3Ref}>
-        <torusGeometry args={[4.0, 0.01, 8, 64]} />
-        <meshBasicMaterial color="#69f0ae" transparent opacity={0.1} blending={THREE.AdditiveBlending} />
+      <mesh ref={ring2}>
+        <torusGeometry args={[3.8, 0.015, 6, 80]} />
+        <meshBasicMaterial color="#69f0ae" transparent opacity={0.15} blending={THREE.AdditiveBlending} />
+      </mesh>
+      <mesh ref={ring3}>
+        <torusGeometry args={[4.5, 0.012, 6, 80]} />
+        <meshBasicMaterial color="#b388ff" transparent opacity={0.1} blending={THREE.AdditiveBlending} />
       </mesh>
     </group>
   );
 }
 
-// ─── Globe wireframe (HD) ───
+// ─── HD Geodesic Globe Wireframe ───
 function GlobeWireframe() {
   const geo = useMemo(() => {
     const positions: number[] = [];
+    // Latitude lines
     for (let lat = -75; lat <= 75; lat += 15) {
       const rad = (lat * Math.PI) / 180;
       const r = Math.cos(rad) * GLOBE_RADIUS * 1.02;
       const y = Math.sin(rad) * GLOBE_RADIUS * 1.02;
-      for (let i = 0; i < 96; i++) {
-        const a1 = (i / 96) * Math.PI * 2;
-        const a2 = ((i + 1) / 96) * Math.PI * 2;
+      for (let i = 0; i < 128; i++) {
+        const a1 = (i / 128) * Math.PI * 2;
+        const a2 = ((i + 1) / 128) * Math.PI * 2;
         positions.push(Math.cos(a1) * r, y, Math.sin(a1) * r);
         positions.push(Math.cos(a2) * r, y, Math.sin(a2) * r);
       }
     }
+    // Longitude lines
     for (let lon = 0; lon < 180; lon += 15) {
       const rad = (lon * Math.PI) / 180;
-      for (let i = 0; i < 96; i++) {
-        const a1 = (i / 96) * Math.PI * 2;
-        const a2 = ((i + 1) / 96) * Math.PI * 2;
-        positions.push(Math.cos(a1) * GLOBE_RADIUS * 1.02 * Math.cos(rad), Math.sin(a1) * GLOBE_RADIUS * 1.02, Math.cos(a1) * GLOBE_RADIUS * 1.02 * Math.sin(rad));
-        positions.push(Math.cos(a2) * GLOBE_RADIUS * 1.02 * Math.cos(rad), Math.sin(a2) * GLOBE_RADIUS * 1.02, Math.cos(a2) * GLOBE_RADIUS * 1.02 * Math.sin(rad));
+      for (let i = 0; i < 128; i++) {
+        const a1 = (i / 128) * Math.PI * 2;
+        const a2 = ((i + 1) / 128) * Math.PI * 2;
+        positions.push(
+          Math.cos(a1) * GLOBE_RADIUS * 1.02 * Math.cos(rad),
+          Math.sin(a1) * GLOBE_RADIUS * 1.02,
+          Math.cos(a1) * GLOBE_RADIUS * 1.02 * Math.sin(rad)
+        );
+        positions.push(
+          Math.cos(a2) * GLOBE_RADIUS * 1.02 * Math.cos(rad),
+          Math.sin(a2) * GLOBE_RADIUS * 1.02,
+          Math.cos(a2) * GLOBE_RADIUS * 1.02 * Math.sin(rad)
+        );
       }
     }
     const g = new THREE.BufferGeometry();
@@ -245,12 +245,29 @@ function GlobeWireframe() {
 
   return (
     <lineSegments geometry={geo}>
-      <lineBasicMaterial color="#0d2847" transparent opacity={0.18} depthWrite={false} />
+      <lineBasicMaterial color="#0a3060" transparent opacity={0.12} depthWrite={false} />
     </lineSegments>
   );
 }
 
-// ─── Connection curves ───
+// ─── Tensor Grid — flat hex grid underneath for tech feel ───
+function TensorGrid({ paused }: { paused: boolean }) {
+  const ref = useRef<THREE.GridHelper>(null);
+  useFrame(({ clock }) => {
+    if (paused || !ref.current) return;
+    ref.current.position.z = ((ref.current.position.z + 0.005) % 2) - 1;
+  });
+  return (
+    <gridHelper
+      ref={ref}
+      args={[60, 60, "#0a2a4a", "#071e38"]}
+      position={[0, -16, 0]}
+      rotation={[0, 0, 0]}
+    />
+  );
+}
+
+// ─── Neural Connection Curves — HD bezier synapses ───
 function ConnectionCurves({ paused }: { paused: boolean }) {
   const positions = useMemo(computeGlobePositions, []);
   const nodeIndexMap = useMemo(() => {
@@ -267,23 +284,21 @@ function ConnectionCurves({ paused }: { paused: boolean }) {
       const from = positions[fi];
       const to = positions[ti];
       const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
-      const outwardFactor = 1.18 + mid.length() * 0.02;
-      mid.normalize().multiplyScalar(mid.length() > 0.1 ? from.length() * outwardFactor : GLOBE_RADIUS * 1.12);
+      const outwardFactor = 1.2 + mid.length() * 0.02;
+      mid.normalize().multiplyScalar(mid.length() > 0.1 ? from.length() * outwardFactor : GLOBE_RADIUS * 1.15);
       const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
-      const points = curve.getPoints(32);
-      const fromNode = NEURAL_NODES[fi];
-      return { points, color: fromNode.color };
+      const points = curve.getPoints(48);
+      return { points, color: NEURAL_NODES[fi].color };
     }).filter(Boolean) as { points: THREE.Vector3[]; color: string }[];
   }, [positions, nodeIndexMap]);
 
-  const linesRef = useRef<THREE.Group>(null);
   const lineObjects = useMemo(() => {
     return curves.map((curve) => {
       const geo = new THREE.BufferGeometry().setFromPoints(curve.points);
       const mat = new THREE.LineBasicMaterial({
         color: curve.color,
         transparent: true,
-        opacity: 0.14,
+        opacity: 0.12,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
@@ -291,16 +306,18 @@ function ConnectionCurves({ paused }: { paused: boolean }) {
     });
   }, [curves]);
 
+  const groupRef = useRef<THREE.Group>(null);
+
   useFrame(({ clock }) => {
-    if (paused || !linesRef.current) return;
+    if (paused) return;
     const t = clock.elapsedTime;
     lineObjects.forEach((obj, i) => {
-      (obj.material as THREE.LineBasicMaterial).opacity = 0.08 + Math.sin(t * 1.8 + i * 0.25) * 0.06;
+      (obj.material as THREE.LineBasicMaterial).opacity = 0.06 + Math.sin(t * 2 + i * 0.2) * 0.08;
     });
   });
 
   return (
-    <group ref={linesRef}>
+    <group ref={groupRef}>
       {lineObjects.map((obj, i) => (
         <primitive key={i} object={obj} />
       ))}
@@ -308,74 +325,64 @@ function ConnectionCurves({ paused }: { paused: boolean }) {
   );
 }
 
-// ─── HD Node spheres with glow rings ───
+// ─── HD Neural Nodes — glowing spheres with tech rings ───
 function GlobeNodes({ paused, showLabels }: { paused: boolean; showLabels: boolean }) {
   const positions = useMemo(computeGlobePositions, []);
   const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
   const ringRefs = useRef<(THREE.Mesh | null)[]>([]);
   const glowRefs = useRef<(THREE.Mesh | null)[]>([]);
-  const labelTextures = useMemo(() => {
-    const drawRoundedRect = (
-      ctx: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      width: number,
-      height: number,
-      radius: number,
-    ) => {
-      ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.lineTo(x + width - radius, y);
-      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-      ctx.lineTo(x + width, y + height - radius);
-      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-      ctx.lineTo(x + radius, y + height);
-      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-      ctx.lineTo(x, y + radius);
-      ctx.quadraticCurveTo(x, y, x + radius, y);
-      ctx.closePath();
-    };
 
+  // Canvas-based label textures (synchronous — no font loading)
+  const labelTextures = useMemo(() => {
     return NEURAL_NODES.map((node) => {
       const canvas = document.createElement("canvas");
       canvas.width = 512;
-      canvas.height = 160;
-
+      canvas.height = 144;
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawRoundedRect(ctx, 18, 18, 476, 124, 22);
-      ctx.fillStyle = "rgba(2, 8, 16, 0.82)";
+      ctx.clearRect(0, 0, 512, 144);
+
+      // Background pill
+      ctx.beginPath();
+      ctx.roundRect(16, 14, 480, 116, 16);
+      ctx.fillStyle = "rgba(2, 8, 20, 0.88)";
       ctx.fill();
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = node.color + "40";
+      ctx.lineWidth = 1.5;
       ctx.stroke();
 
+      // Top accent line
+      ctx.beginPath();
+      ctx.moveTo(80, 16);
+      ctx.lineTo(432, 16);
+      ctx.strokeStyle = node.color + "60";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Label
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = 12;
       ctx.shadowColor = node.color;
       ctx.fillStyle = node.color;
-      ctx.font = '700 34px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.fillText(node.label, canvas.width / 2, 62);
+      ctx.font = 'bold 30px system-ui, -apple-system, sans-serif';
+      ctx.fillText(node.label, 256, 56);
 
+      // Arch type
       ctx.shadowBlur = 0;
-      ctx.fillStyle = "rgba(255, 255, 255, 0.64)";
-      ctx.font = '500 22px ui-monospace, "SFMono-Regular", Consolas, monospace';
-      ctx.fillText(node.arch, canvas.width / 2, 108);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+      ctx.font = '500 20px ui-monospace, monospace';
+      ctx.fillText(node.arch, 256, 100);
 
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
-      texture.needsUpdate = true;
       return texture;
     });
   }, []);
 
   useEffect(() => {
-    return () => {
-      labelTextures.forEach((texture) => texture?.dispose());
-    };
+    return () => { labelTextures.forEach((t) => t?.dispose()); };
   }, [labelTextures]);
 
   useFrame(({ clock }) => {
@@ -386,22 +393,22 @@ function GlobeNodes({ paused, showLabels }: { paused: boolean; showLabels: boole
       const ring = ringRefs.current[i];
       const glow = glowRefs.current[i];
       if (mesh) {
-        const pulse = 1 + Math.sin(t * 2.5 + i * 0.7) * 0.18;
+        const pulse = 1 + Math.sin(t * 2.5 + i * 0.7) * 0.15;
         mesh.scale.setScalar(pulse);
         (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity =
-          0.7 + Math.sin(t * 3 + i * 0.5) * 0.4;
+          0.8 + Math.sin(t * 3 + i * 0.5) * 0.5;
       }
       if (ring) {
-        ring.rotation.x = t * 0.4 + i * 0.2;
-        ring.rotation.y = t * 0.3 + i * 0.35;
+        ring.rotation.x = t * 0.5 + i * 0.2;
+        ring.rotation.y = t * 0.35 + i * 0.3;
         (ring.material as THREE.MeshBasicMaterial).opacity =
-          0.15 + Math.sin(t * 2 + i * 0.8) * 0.08;
+          0.2 + Math.sin(t * 2.2 + i * 0.8) * 0.1;
       }
       if (glow) {
-        const gs = 1 + Math.sin(t * 1.8 + i * 0.5) * 0.3;
+        const gs = 1 + Math.sin(t * 1.5 + i * 0.4) * 0.25;
         glow.scale.setScalar(gs);
         (glow.material as THREE.MeshBasicMaterial).opacity =
-          0.06 + Math.sin(t * 2.5 + i * 0.6) * 0.04;
+          0.08 + Math.sin(t * 2 + i * 0.6) * 0.04;
       }
     });
   });
@@ -411,47 +418,36 @@ function GlobeNodes({ paused, showLabels }: { paused: boolean; showLabels: boole
       {NEURAL_NODES.map((node, i) => {
         const pos = positions[i];
         const col = new THREE.Color(node.color);
-        const labelTexture = labelTextures[i];
+        const tex = labelTextures[i];
         return (
           <group key={node.id} position={[pos.x, pos.y, pos.z]}>
-            {/* Glow sphere (larger, transparent) */}
+            {/* Outer glow */}
             <mesh ref={el => { glowRefs.current[i] = el; }}>
-              <sphereGeometry args={[node.size * 3, 16, 16]} />
-              <meshBasicMaterial
-                color={col}
-                transparent
-                opacity={0.06}
-                blending={THREE.AdditiveBlending}
-                depthWrite={false}
-              />
+              <sphereGeometry args={[node.size * 3.5, 16, 16]} />
+              <meshBasicMaterial color={col} transparent opacity={0.07} blending={THREE.AdditiveBlending} depthWrite={false} />
             </mesh>
-            {/* Main node sphere */}
+            {/* Main node */}
             <mesh ref={el => { meshRefs.current[i] = el; }}>
-              <sphereGeometry args={[node.size, 24, 24]} />
+              <sphereGeometry args={[node.size, 32, 32]} />
               <meshStandardMaterial
                 color={col}
                 emissive={col}
-                emissiveIntensity={0.7}
+                emissiveIntensity={0.8}
                 transparent
                 opacity={0.95}
-                roughness={0.15}
-                metalness={0.3}
+                roughness={0.1}
+                metalness={0.4}
               />
             </mesh>
-            {/* Orbital ring */}
+            {/* Tech ring */}
             <mesh ref={el => { ringRefs.current[i] = el; }}>
-              <torusGeometry args={[node.size * 2, 0.018, 8, 40]} />
-              <meshBasicMaterial color={col} transparent opacity={0.18} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+              <torusGeometry args={[node.size * 2.2, 0.02, 6, 48]} />
+              <meshBasicMaterial color={col} transparent opacity={0.22} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
             </mesh>
-            {showLabels && labelTexture && (
-              <sprite position={[0, node.size + 0.8, 0]} scale={[3.8, 1.15, 1]}>
-                <spriteMaterial
-                  map={labelTexture}
-                  transparent
-                  opacity={0.96}
-                  depthWrite={false}
-                  depthTest={false}
-                />
+            {/* Label */}
+            {showLabels && tex && (
+              <sprite position={[0, node.size + 0.9, 0]} scale={[3.6, 1.0, 1]}>
+                <spriteMaterial map={tex} transparent opacity={0.92} depthWrite={false} depthTest={false} />
               </sprite>
             )}
           </group>
@@ -461,8 +457,8 @@ function GlobeNodes({ paused, showLabels }: { paused: boolean; showLabels: boole
   );
 }
 
-// ─── Flow beams (HD — more, faster, brighter) ───
-function FlowBeams({ paused }: { paused: boolean }) {
+// ─── Neural Signal Pulses — data flowing through synapses ───
+function SignalPulses({ paused }: { paused: boolean }) {
   const positions = useMemo(computeGlobePositions, []);
   const nodeIndexMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -479,53 +475,53 @@ function FlowBeams({ paused }: { paused: boolean }) {
     }).filter(Boolean) as { from: THREE.Vector3; to: THREE.Vector3; color: string }[];
   }, [positions, nodeIndexMap]);
 
-  const beamsRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const beamState = useRef(
     Array.from({ length: NUM_FLOW_BEAMS }, () => ({
       progress: Math.random(),
       connIdx: Math.floor(Math.random() * Math.max(1, CONNECTIONS.length)),
-      speed: 0.2 + Math.random() * 0.5,
+      speed: 0.3 + Math.random() * 0.6,
     }))
   );
 
   useFrame((_, delta) => {
-    if (paused || !beamsRef.current || validConns.length === 0) return;
+    if (paused || !groupRef.current || validConns.length === 0) return;
     beamState.current.forEach((b, i) => {
       b.progress += b.speed * delta;
       if (b.progress > 1) {
         b.progress = 0;
         b.connIdx = Math.floor(Math.random() * validConns.length);
-        b.speed = 0.2 + Math.random() * 0.5;
+        b.speed = 0.3 + Math.random() * 0.6;
       }
       const conn = validConns[b.connIdx % validConns.length];
       if (!conn) return;
-      const child = beamsRef.current!.children[i] as THREE.Mesh;
+      const child = groupRef.current!.children[i] as THREE.Mesh;
       if (!child) return;
       const mid = new THREE.Vector3().addVectors(conn.from, conn.to).multiplyScalar(0.5);
-      mid.normalize().multiplyScalar(GLOBE_RADIUS * 1.14);
+      mid.normalize().multiplyScalar(GLOBE_RADIUS * 1.15);
       const t = b.progress;
       const pos = new THREE.Vector3()
         .copy(conn.from).multiplyScalar((1 - t) * (1 - t))
         .add(mid.clone().multiplyScalar(2 * (1 - t) * t))
         .add(conn.to.clone().multiplyScalar(t * t));
       child.position.copy(pos);
-      const scale = Math.sin(t * Math.PI) * 0.14 + 0.05;
+      const scale = Math.sin(t * Math.PI) * 0.12 + 0.04;
       child.scale.setScalar(scale);
-      (child.material as THREE.MeshBasicMaterial).opacity = Math.sin(t * Math.PI) * 0.9;
+      (child.material as THREE.MeshBasicMaterial).opacity = Math.sin(t * Math.PI) * 0.95;
     });
   });
 
   return (
-    <group ref={beamsRef}>
+    <group ref={groupRef}>
       {beamState.current.map((b, i) => {
         const conn = validConns[b.connIdx % validConns.length];
         return (
           <mesh key={i}>
             <sphereGeometry args={[1, 8, 8]} />
             <meshBasicMaterial
-              color={conn?.color || "#ffffff"}
+              color={conn?.color || "#00e5ff"}
               transparent
-              opacity={0.6}
+              opacity={0.7}
               blending={THREE.AdditiveBlending}
             />
           </mesh>
@@ -535,27 +531,27 @@ function FlowBeams({ paused }: { paused: boolean }) {
   );
 }
 
-// ─── Cosmic particles (HD — more, varied sizes) ───
-function CosmicParticles({ paused }: { paused: boolean }) {
+// ─── Synaptic Micro-Particles — tiny sparks near synapses ───
+function SynapticParticles({ paused }: { paused: boolean }) {
   const geo = useMemo(() => {
-    const positions = new Float32Array(NUM_PARTICLES * 3);
-    const colors = new Float32Array(NUM_PARTICLES * 3);
-    const palette = ["#00e5ff", "#69f0ae", "#ffd740", "#ff80ab", "#b388ff", "#ea80fc", "#18ffff", "#7c4dff", "#c084fc", "#84ffff"];
+    const pos = new Float32Array(NUM_PARTICLES * 3);
+    const cols = new Float32Array(NUM_PARTICLES * 3);
+    const palette = ["#00e5ff", "#69f0ae", "#ffd740", "#ff80ab", "#b388ff", "#ea80fc", "#18ffff", "#7c4dff"];
     for (let i = 0; i < NUM_PARTICLES; i++) {
-      const r = GLOBE_RADIUS * (0.5 + Math.random() * 0.9);
+      const r = GLOBE_RADIUS * (0.3 + Math.random() * 0.85);
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = r * Math.cos(phi);
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = r * Math.cos(phi);
       const c = new THREE.Color(palette[Math.floor(Math.random() * palette.length)]);
-      colors[i * 3] = c.r;
-      colors[i * 3 + 1] = c.g;
-      colors[i * 3 + 2] = c.b;
+      cols[i * 3] = c.r;
+      cols[i * 3 + 1] = c.g;
+      cols[i * 3 + 2] = c.b;
     }
     const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage));
-    g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    g.setAttribute("position", new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+    g.setAttribute("color", new THREE.BufferAttribute(cols, 3));
     return g;
   }, []);
 
@@ -567,11 +563,11 @@ function CosmicParticles({ paused }: { paused: boolean }) {
   useFrame(({ clock }) => {
     if (paused || !basePos.current) return;
     const t = clock.elapsedTime;
-    const pos = geo.attributes.position.array as Float32Array;
+    const arr = geo.attributes.position.array as Float32Array;
     for (let i = 0; i < NUM_PARTICLES; i++) {
-      pos[i * 3] = basePos.current[i * 3] + Math.sin(t * 0.25 + i * 0.04) * 0.15;
-      pos[i * 3 + 1] = basePos.current[i * 3 + 1] + Math.cos(t * 0.2 + i * 0.06) * 0.15;
-      pos[i * 3 + 2] = basePos.current[i * 3 + 2] + Math.sin(t * 0.15 + i * 0.02) * 0.1;
+      arr[i * 3] = basePos.current[i * 3] + Math.sin(t * 0.3 + i * 0.03) * 0.12;
+      arr[i * 3 + 1] = basePos.current[i * 3 + 1] + Math.cos(t * 0.25 + i * 0.05) * 0.12;
+      arr[i * 3 + 2] = basePos.current[i * 3 + 2] + Math.sin(t * 0.18 + i * 0.02) * 0.08;
     }
     (geo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
   });
@@ -579,56 +575,62 @@ function CosmicParticles({ paused }: { paused: boolean }) {
   return (
     <points geometry={geo}>
       <pointsMaterial
-        size={0.055}
+        size={0.04}
         transparent
         vertexColors
         sizeAttenuation
         blending={THREE.AdditiveBlending}
         depthWrite={false}
-        opacity={0.5}
+        opacity={0.45}
       />
     </points>
   );
 }
 
-// ─── Globe rotation ───
+// ─── Globe auto-rotation ───
 function GlobeRotation({ paused, children }: { paused: boolean; children: React.ReactNode }) {
-  const groupRef = useRef<THREE.Group>(null);
+  const ref = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
-    if (!paused && groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.055;
-    }
+    if (!paused && ref.current) ref.current.rotation.y += delta * 0.05;
   });
-  return <group ref={groupRef}>{children}</group>;
+  return <group ref={ref}>{children}</group>;
 }
 
-// ─── Scene ───
+// ─── Full Scene ───
 function NeuralScene({ paused, showLabels }: { paused: boolean; showLabels: boolean }) {
   return (
     <>
-      <color attach="background" args={["#020810"]} />
-      <fogExp2 attach="fog" args={["#020810", 0.01]} />
-      <EnergyCore paused={paused} />
+      <color attach="background" args={["#010810"]} />
+      <fogExp2 attach="fog" args={["#010810", 0.008]} />
+
+      <BrainCore paused={paused} />
+      <TensorGrid paused={paused} />
+
       <GlobeRotation paused={paused}>
         <GlobeWireframe />
         <ConnectionCurves paused={paused} />
         <GlobeNodes paused={paused} showLabels={showLabels} />
-        <FlowBeams paused={paused} />
+        <SignalPulses paused={paused} />
       </GlobeRotation>
-      <CosmicParticles paused={paused} />
-      <ambientLight intensity={0.04} />
-      <pointLight position={[0, 20, 25]} intensity={1.2} color="#4488ff" distance={70} />
-      <pointLight position={[-20, -10, 15]} intensity={0.7} color="#ff80ab" distance={50} />
-      <pointLight position={[20, 10, -15]} intensity={0.7} color="#69f0ae" distance={50} />
-      <pointLight position={[0, 0, 0]} intensity={0.6} color="#00e5ff" distance={25} />
-      <pointLight position={[0, -15, 0]} intensity={0.3} color="#b388ff" distance={30} />
+
+      <SynapticParticles paused={paused} />
+
+      {/* HD Lighting — brain-like cool tones */}
+      <ambientLight intensity={0.03} />
+      <pointLight position={[0, 0, 0]} intensity={0.8} color="#00e5ff" distance={25} />
+      <pointLight position={[0, 20, 25]} intensity={1.5} color="#0066ff" distance={70} />
+      <pointLight position={[-20, -10, 15]} intensity={0.6} color="#ff80ab" distance={50} />
+      <pointLight position={[20, 10, -15]} intensity={0.6} color="#69f0ae" distance={50} />
+      <pointLight position={[0, -15, 0]} intensity={0.4} color="#b388ff" distance={35} />
+      <pointLight position={[15, 15, 15]} intensity={0.3} color="#00e5ff" distance={40} />
+
       <OrbitControls
         enableDamping
         dampingFactor={0.05}
         minDistance={14}
-        maxDistance={65}
+        maxDistance={60}
         autoRotate={!paused}
-        autoRotateSpeed={0.12}
+        autoRotateSpeed={0.1}
         enablePan
       />
     </>
@@ -640,10 +642,10 @@ function HudBadge({ icon, label, value, color, pulse }: {
   icon: React.ReactNode; label: string; value: string; color: string; pulse?: boolean;
 }) {
   return (
-    <div className="bg-black/80 backdrop-blur-md rounded-md px-2.5 py-1 border border-white/[0.08] flex items-center gap-1.5"
-      style={{ boxShadow: `0 0 12px ${color}15` }}>
+    <div className="bg-[#010810]/90 backdrop-blur-md rounded px-2 py-0.5 border border-white/[0.06] flex items-center gap-1.5"
+      style={{ boxShadow: `0 0 8px ${color}10` }}>
       <span style={{ color }} className={pulse ? "animate-pulse" : ""}>{icon}</span>
-      <span className="text-[7px] text-white/30 font-mono tracking-[0.15em] uppercase">{label}</span>
+      <span className="text-[7px] text-white/25 font-mono tracking-[0.15em] uppercase">{label}</span>
       <span className="text-[10px] font-mono font-bold tabular-nums" style={{ color }}>{value}</span>
     </div>
   );
@@ -658,21 +660,14 @@ function MetricsOverlay() {
 
   useEffect(() => {
     let mounted = true;
-    const fetchRealMetrics = async () => {
-      try {
-        const [knowledgeRes] = await Promise.all([
-          supabase.from("neural_knowledge_base" as any).select("id", { count: "exact", head: true }),
-        ]);
-        if (mounted) setM(prev => ({ ...prev, tokens: (knowledgeRes.count ?? 0) * 512 }));
-      } catch {}
-    };
-    fetchRealMetrics();
+    supabase.from("neural_knowledge_base" as any).select("id", { count: "exact", head: true })
+      .then(({ count }) => { if (mounted) setM(p => ({ ...p, tokens: (count ?? 0) * 512 })); });
 
     const iv = setInterval(() => {
       if (!mounted) return;
       const defense = getDefenseMetrics();
-      setM(prev => ({
-        ...prev,
+      setM(p => ({
+        ...p,
         qps: Math.floor(18 + Math.random() * 28),
         cache: Math.round((0.65 + Math.random() * 0.3) * 100),
         experts: Math.floor(4 + Math.random() * 4),
@@ -688,12 +683,11 @@ function MetricsOverlay() {
   }, []);
 
   return (
-    <div className="absolute top-3 left-3 z-10 pointer-events-none flex flex-col gap-1.5">
-      {/* Title */}
-      <div className="flex items-center gap-2 mb-1">
+    <div className="absolute top-3 left-3 z-10 pointer-events-none flex flex-col gap-1">
+      <div className="flex items-center gap-2 mb-0.5">
         <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" style={{ boxShadow: "0 0 8px #00e5ff" }} />
-        <span className="text-[10px] font-mono tracking-[0.25em] uppercase text-cyan-300/60">ORION NEUROCORE</span>
-        <span className="text-[8px] font-mono text-white/20">v23.1</span>
+        <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-cyan-300/50">ORION NEUROCORE</span>
+        <span className="text-[8px] font-mono text-white/15">v23.1 · TENSOR</span>
       </div>
       <div className="flex gap-1 flex-wrap">
         <HudBadge icon={<Zap className="h-3 w-3" />} label="QPS" value={`${m.qps}`} color="#00e5ff" />
@@ -710,8 +704,8 @@ function MetricsOverlay() {
       <div className="flex gap-1 flex-wrap">
         <HudBadge icon={<Lock className="h-3 w-3" />} label="THREATS" value={`${m.threats}`} color={m.threats > 0 ? "#ff1744" : "#34d399"} pulse={m.threats > 0} />
         <HudBadge icon={<Eye className="h-3 w-3" />} label="BLOCKED" value={`${m.blocked}`} color="#ff1744" />
-        <HudBadge icon={<Layers className="h-3 w-3" />} label="CONNS" value={`${CONNECTIONS.length}`} color="#7c4dff" />
-        <HudBadge icon={<Radio className="h-3 w-3" />} label="PARTICLES" value={`${NUM_PARTICLES.toLocaleString()}`} color="#84ffff" />
+        <HudBadge icon={<Layers className="h-3 w-3" />} label="SYNAPSES" value={`${CONNECTIONS.length}`} color="#7c4dff" />
+        <HudBadge icon={<Radio className="h-3 w-3" />} label="SIGNALS" value={`${NUM_FLOW_BEAMS}`} color="#84ffff" />
       </div>
     </div>
   );
@@ -719,33 +713,31 @@ function MetricsOverlay() {
 
 // ─── Category Legend ───
 const CATEGORIES = [
-  { label: "Core LLM/RAG (Transformer+AN)", color: "#00e5ff" },
+  { label: "Core LLM/RAG", color: "#00e5ff" },
   { label: "Expert Models (MoE)", color: "#69f0ae" },
   { label: "Vision (CNN+DCIGN)", color: "#ea80fc" },
-  { label: "Cognição (GWT+LSM+GNN)", color: "#ff80ab" },
-  { label: "Memória (Hopfield+AE+LSTM)", color: "#ffd740" },
+  { label: "Cognição (GWT+GNN)", color: "#ff80ab" },
+  { label: "Memória (Hopfield+LSTM)", color: "#ffd740" },
   { label: "Ação (SSM+BERT)", color: "#448aff" },
-  { label: "Defesa (GAN+QNN+RBM)", color: "#ff1744" },
+  { label: "Defesa (GAN+TNN)", color: "#ff1744" },
   { label: "I/O (RNN+CNN)", color: "#18ffff" },
-  { label: "Federação (P2P+Federated)", color: "#7c4dff" },
-  { label: "Search/Data (APIs)", color: "#ffab40" },
+  { label: "Federação (P2P)", color: "#7c4dff" },
+  { label: "Search/Data", color: "#ffab40" },
 ];
 
 function CategoryLegend() {
   return (
-    <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-md rounded-lg p-2.5 border border-white/[0.08] z-10 pointer-events-none max-w-[560px]"
-      style={{ boxShadow: "0 0 20px rgba(0,229,255,0.05)" }}>
-      <p className="text-[8px] text-cyan-400/30 mb-2 font-mono tracking-[0.2em] uppercase">
-        ORION NEUROCORE · {NEURAL_NODES.length} Nós · {CONNECTIONS.length} Sinapses · {NUM_PARTICLES.toLocaleString()} Partículas · Tensor 2^n
+    <div className="absolute bottom-3 left-3 bg-[#010810]/90 backdrop-blur-md rounded-lg p-2 border border-white/[0.06] z-10 pointer-events-none max-w-[560px]"
+      style={{ boxShadow: "0 0 15px rgba(0,229,255,0.04)" }}>
+      <p className="text-[8px] text-cyan-400/25 mb-1.5 font-mono tracking-[0.2em] uppercase">
+        ORION NEURAL BRAIN · {NEURAL_NODES.length} Nós · {CONNECTIONS.length} Sinapses · Tensor Network
       </p>
-      <div className="grid grid-cols-5 gap-x-3 gap-y-1">
+      <div className="grid grid-cols-5 gap-x-3 gap-y-0.5">
         {CATEGORIES.map((cat, i) => (
           <div key={i} className="flex items-center gap-1.5">
-            <div
-              className="h-2 w-2 rounded-full flex-shrink-0"
-              style={{ backgroundColor: cat.color, boxShadow: `0 0 8px ${cat.color}60` }}
-            />
-            <span className="text-[7px] text-white/40 font-mono truncate">{cat.label}</span>
+            <div className="h-1.5 w-1.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: cat.color, boxShadow: `0 0 6px ${cat.color}50` }} />
+            <span className="text-[7px] text-white/35 font-mono truncate">{cat.label}</span>
           </div>
         ))}
       </div>
@@ -761,17 +753,17 @@ export function NeuralNetworkLiveView() {
   const [showLabels, setShowLabels] = useState(true);
 
   return (
-    <Card className="border-cyan-500/10 bg-[#020810] overflow-hidden shadow-2xl" style={{ boxShadow: "0 0 40px rgba(0,229,255,0.06)" }}>
+    <Card className="border-cyan-500/10 bg-[#010810] overflow-hidden shadow-2xl" style={{ boxShadow: "0 0 40px rgba(0,229,255,0.05)" }}>
       <CardContent className="p-0">
-        <div className="relative" style={{ height: expanded ? "90vh" : "600px", transition: "height 0.4s cubic-bezier(.4,0,.2,1)" }}>
+        <div className="relative" style={{ height: expanded ? "90vh" : "650px", transition: "height 0.4s cubic-bezier(.4,0,.2,1)" }}>
           <MetricsOverlay />
 
           {/* Status badge */}
           <div className="absolute top-3 right-14 z-10 pointer-events-none">
-            <div className="flex items-center gap-2 bg-black/80 backdrop-blur-md rounded-md px-3 py-1.5 border border-white/[0.08]"
-              style={{ boxShadow: paused ? "0 0 10px rgba(245,158,11,0.15)" : "0 0 10px rgba(52,211,153,0.15)" }}>
+            <div className="flex items-center gap-2 bg-[#010810]/90 backdrop-blur-md rounded px-3 py-1 border border-white/[0.06]"
+              style={{ boxShadow: paused ? "0 0 8px rgba(245,158,11,0.1)" : "0 0 8px rgba(52,211,153,0.1)" }}>
               <div className={`h-2 w-2 rounded-full ${paused ? "bg-amber-500" : "bg-emerald-400 animate-pulse"}`}
-                style={{ boxShadow: paused ? "0 0 6px #f59e0b" : "0 0 6px #34d399" }} />
+                style={{ boxShadow: paused ? "0 0 5px #f59e0b" : "0 0 5px #34d399" }} />
               <span className="text-[9px] font-mono tracking-[0.2em] uppercase" style={{ color: paused ? "#f59e0b" : "#34d399" }}>
                 {paused ? "PAUSED" : "LIVE"}
               </span>
@@ -780,52 +772,52 @@ export function NeuralNetworkLiveView() {
 
           <Canvas
             key={key}
-            camera={{ position: [0, 6, 30], fov: 48 }}
+            camera={{ position: [0, 6, 28], fov: 50 }}
             gl={{
               antialias: true,
               alpha: false,
               toneMapping: THREE.ACESFilmicToneMapping,
-              toneMappingExposure: 1.3,
+              toneMappingExposure: 1.4,
               powerPreference: "high-performance",
             }}
             dpr={[1, 2]}
-            onCreated={({ gl }) => { gl.setClearColor("#020810"); }}
+            onCreated={({ gl }) => { gl.setClearColor("#010810"); }}
           >
             <NeuralScene paused={paused} showLabels={showLabels} />
           </Canvas>
 
           <CategoryLegend />
 
-          {/* Scanline */}
-          <div className="absolute inset-0 pointer-events-none z-[5] opacity-[0.008]"
-            style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.04) 2px, rgba(0,229,255,0.04) 3px)" }} />
+          {/* Scanline overlay — subtle CRT tech feel */}
+          <div className="absolute inset-0 pointer-events-none z-[5] opacity-[0.012]"
+            style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.03) 2px, rgba(0,229,255,0.03) 3px)" }} />
           {/* Vignette */}
           <div className="absolute inset-0 pointer-events-none z-[5]"
-            style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(2,8,16,0.97) 100%)" }} />
-          {/* Top edge glow */}
+            style={{ background: "radial-gradient(ellipse at center, transparent 45%, rgba(1,8,16,0.95) 100%)" }} />
+          {/* Top glow edge */}
           <div className="absolute top-0 left-0 right-0 h-px z-[6]"
-            style={{ background: "linear-gradient(90deg, transparent 10%, rgba(0,229,255,0.3) 50%, transparent 90%)" }} />
+            style={{ background: "linear-gradient(90deg, transparent 10%, rgba(0,229,255,0.25) 50%, transparent 90%)" }} />
 
           {/* Controls */}
           <div className="absolute bottom-3 right-3 flex gap-1.5 z-10">
             <Button size="sm" variant="outline"
-              className="h-8 w-8 p-0 bg-black/80 border-white/[0.1] text-white/40 hover:text-cyan-400 hover:border-cyan-500/30 backdrop-blur-md transition-all"
+              className="h-8 w-8 p-0 bg-[#010810]/90 border-white/[0.08] text-white/35 hover:text-cyan-400 hover:border-cyan-500/25 backdrop-blur-md"
               onClick={() => setShowLabels(!showLabels)}
               title={showLabels ? "Ocultar nomes" : "Mostrar nomes"}>
               <Eye className="h-3.5 w-3.5" />
             </Button>
             <Button size="sm" variant="outline"
-              className="h-8 w-8 p-0 bg-black/80 border-white/[0.1] text-white/40 hover:text-cyan-400 hover:border-cyan-500/30 backdrop-blur-md transition-all"
+              className="h-8 w-8 p-0 bg-[#010810]/90 border-white/[0.08] text-white/35 hover:text-cyan-400 hover:border-cyan-500/25 backdrop-blur-md"
               onClick={() => setExpanded(!expanded)}>
               {expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
             </Button>
             <Button size="sm" variant="outline"
-              className="h-8 w-8 p-0 bg-black/80 border-white/[0.1] text-white/40 hover:text-cyan-400 hover:border-cyan-500/30 backdrop-blur-md transition-all"
+              className="h-8 w-8 p-0 bg-[#010810]/90 border-white/[0.08] text-white/35 hover:text-cyan-400 hover:border-cyan-500/25 backdrop-blur-md"
               onClick={() => setPaused(!paused)}>
               {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
             </Button>
             <Button size="sm" variant="outline"
-              className="h-8 w-8 p-0 bg-black/80 border-white/[0.1] text-white/40 hover:text-cyan-400 hover:border-cyan-500/30 backdrop-blur-md transition-all"
+              className="h-8 w-8 p-0 bg-[#010810]/90 border-white/[0.08] text-white/35 hover:text-cyan-400 hover:border-cyan-500/25 backdrop-blur-md"
               onClick={() => setKey(k => k + 1)}>
               <RotateCcw className="h-3.5 w-3.5" />
             </Button>
