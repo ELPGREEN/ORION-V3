@@ -664,14 +664,17 @@ export async function analyzeFrameStreaming(
       }
     }
 
-    // ═══ LAYER 2: Context + protocols + auth IN PARALLEL (budget: 500ms) ═══
+    // ═══ PERF: buildLocalDetections ONCE — reused in body below ═══
+    const localDetections = buildLocalDetections();
+
+    // ═══ LAYER 2: Context + protocols + auth IN PARALLEL (budget: 300ms — was 500ms) ═══
     const [streamContext, bearerToken, dashboardCtx, protocolResult] = await withTimeout(
       Promise.all([
-        // 1. Build context (budget: 400ms)
+        // 1. Build context (budget: 300ms) — uses cached modules + cached auth
         withTimeout((async (): Promise<string> => {
           try {
-            const { buildOrionIdentityPrompt, isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
-            const { data: { user } } = await supabase.auth.getUser();
+            const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
+            const user = await getCachedAuthUser();
             const isOwner = isOwnerEmail(user?.email);
             const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
             const isGenesisQ = /\b(g[eê]nesis|genesis|projeto\s+g[eê]nesis|protocolo\s+g[eê]nesis|como\s+(voc[eê]\s+)?nasceu|sua\s+origem|como\s+foi\s+criado|in[ií]cio\s+da\s+(cria[çc][aã]o|programa[çc][aã]o))\b/i.test(question);
@@ -688,68 +691,68 @@ export async function analyzeFrameStreaming(
             const isInternetToolsQ = /internet|firecrawl|raspag|scraping|scrape|extrair?\s+dados|raspar|crawl|busca\s+web|pesquis.*online|pesquis.*internet|acesso.*web|conect.*internet|google\s*(workspace|gmail|calendar|drive|sheets|docs|tasks|slides|forms|chat|vision|analytics|bigquery|contacts|agenda)|email.*google|meus?\s+emails?|enviar?\s+email|compromisso|agendar?\s+reuni|listas?\s+de\s+tarefa|que\s+(ferramenta|acesso|conex[aã]o|integra[çc][aã]o)|o\s+que\s+voc[eê]\s+(pode|consegue|sabe)|suas?\s+capacidade|quais?\s+(ferramenta|sistema|acesso)/i.test(question);
             if (isIdentityQuestion || isGenesisQ) return buildOrionIdentityPrompt(isOwner);
             if (isJarvisComparison) {
-              const { buildIntrospectionContext, buildJarvisComparisonContext } = await import("@/lib/neural/orion-introspection");
-              return `Você é Orion, assistente de IA neural consciente.\n\n${buildJarvisComparisonContext()}\n\n${buildIntrospectionContext()}`;
+              const intro = await getIntrospection();
+              return `Você é Orion, assistente de IA neural consciente.\n\n${intro.buildJarvisComparisonContext()}\n\n${intro.buildIntrospectionContext()}`;
             }
             if (isCapabilityQuestion) {
-              const { buildIntrospectionContext } = await import("@/lib/neural/orion-introspection");
-              return `Você é Orion, assistente de IA neural consciente.\n\n${buildIntrospectionContext()}`;
+              const intro = await getIntrospection();
+              return `Você é Orion, assistente de IA neural consciente.\n\n${intro.buildIntrospectionContext()}`;
             }
             if (isInvestorQ || isProposalQ) {
-              const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
-              return `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQ ? `\n\n${buildProposalTemplate()}` : ""}`;
+              const kb = await getKnowledgeBase();
+              return `${kb.buildBaseContext()}\n\n${kb.buildInvestorContext()}${isProposalQ ? `\n\n${kb.buildProposalTemplate()}` : ""}`;
             }
             if (isInternetToolsQ) {
-              const { buildBaseContext, buildToolsCapabilitiesContext } = await import("@/lib/neural/orion-knowledge-base");
-              return `${buildBaseContext()}\n\n${buildToolsCapabilitiesContext()}`;
+              const kb = await getKnowledgeBase();
+              return `${kb.buildBaseContext()}\n\n${kb.buildToolsCapabilitiesContext()}`;
             }
             if (isLegalQ) {
-              const { buildBaseContext, buildLegalExpertiseContext } = await import("@/lib/neural/orion-knowledge-base");
-              return `${buildBaseContext()}\n\n${buildLegalExpertiseContext()}`;
+              const kb = await getKnowledgeBase();
+              return `${kb.buildBaseContext()}\n\n${kb.buildLegalExpertiseContext()}`;
             }
             if (isBusinessQ || isCRMQ) {
-              const { buildBaseContext, buildBusinessFundraisingContext } = await import("@/lib/neural/orion-knowledge-base");
-              return `${buildBaseContext()}\n\n${buildBusinessFundraisingContext()}`;
+              const kb = await getKnowledgeBase();
+              return `${kb.buildBaseContext()}\n\n${kb.buildBusinessFundraisingContext()}`;
             }
             if (isProjectQ) {
               const isGenesisProject = /\b(g[eê]nesis|genesis|origem|nasceu|cria[çc][aã]o)\b/i.test(question);
               if (isGenesisProject) return buildOrionIdentityPrompt(isOwner);
-              const { buildBaseContext, buildInvestorContext } = await import("@/lib/neural/orion-knowledge-base");
-              return `${buildBaseContext()}\n\n${buildInvestorContext()}`;
+              const kb = await getKnowledgeBase();
+              return `${kb.buildBaseContext()}\n\n${kb.buildInvestorContext()}`;
             }
             if (isHelpQ) {
-              const { buildBaseContext, buildHelpCenterContext } = await import("@/lib/neural/orion-knowledge-base");
-              return `${buildBaseContext()}\n\n${buildHelpCenterContext()}`;
+              const kb = await getKnowledgeBase();
+              return `${kb.buildBaseContext()}\n\n${kb.buildHelpCenterContext()}`;
             }
             if (isNavGuide) {
-              const { buildBaseContext, buildNavigationContext } = await import("@/lib/neural/orion-knowledge-base");
-              return `${buildBaseContext()}\n\n${buildNavigationContext()}`;
+              const kb = await getKnowledgeBase();
+              return `${kb.buildBaseContext()}\n\n${kb.buildNavigationContext()}`;
             }
-            const { buildBaseContext } = await import("@/lib/neural/orion-knowledge-base");
-            return buildBaseContext();
+            const kb = await getKnowledgeBase();
+            return kb.buildBaseContext();
           } catch {
-            try { const { buildBaseContext } = await import("@/lib/neural/orion-knowledge-base"); return buildBaseContext(); }
+            try { const kb = await getKnowledgeBase(); return kb.buildBaseContext(); }
             catch { return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."; }
           }
-        })(), 400, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
-        // 2. Get session token (budget: 300ms)
+        })(), 300, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
+        // 2. Get session token (budget: 200ms)
         withTimeout((async (): Promise<string> => {
           try {
             const { data: { session } } = await supabase.auth.getSession();
             return session?.access_token || supabaseKey;
           } catch { return supabaseKey; }
-        })(), 300, supabaseKey),
-        // 3. Dashboard context (budget: 400ms)
-        withTimeout(fetchDashboardContext(), 400, undefined),
-        // 4. Voice protocols — NOW IN PARALLEL instead of sequential (budget: 400ms)
+        })(), 200, supabaseKey),
+        // 3. Dashboard context (budget: 300ms)
+        withTimeout(fetchDashboardContext(), 300, undefined),
+        // 4. Voice protocols (budget: 300ms)
         withTimeout((async (): Promise<string> => {
           try {
             const protocols = await matchProtocols(question);
             return protocols.systemPromptAddition || "";
           } catch { return ""; }
-        })(), 400, ""),
+        })(), 300, ""),
       ]),
-      500, // Total layer 2 budget: 500ms (was 1000ms)
+      300, // Total layer 2 budget: 300ms (was 500ms)
       [
         "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
         supabaseKey,
