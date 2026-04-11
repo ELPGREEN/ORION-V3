@@ -1497,6 +1497,24 @@ export function useOrionReasoning(
       // ═══ DIRECT TO LLM — no more intermediate layers ═══
       addLog(`⏱️ Pre-LLM: ${Date.now() - now}ms`);
 
+      let streamingText = "";
+      const cleanHistory = chatHistoryRef.current.filter(m =>
+        !m.text.startsWith("⏳") && !m.text.endsWith("⚡") && m.text.length > 0
+      );
+
+      let firstSentenceSpoken = false;
+      let batchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+      let streamEnded = false;
+      const triggerQueueDebounced = () => {
+        if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
+        if (!firstSentenceSpoken || streamEnded) {
+          firstSentenceSpoken = true;
+          void processSpeechQueue();
+          return;
+        }
+        batchDebounceTimer = setTimeout(() => void processSpeechQueue(), 300);
+      };
+
       const questionForLLM = processedInput || question;
       (window as any).__orionInputSource = source;
       const result = await analyzeFrameStreaming(
