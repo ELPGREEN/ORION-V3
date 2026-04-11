@@ -1,8 +1,8 @@
 /**
  * STT Fallback Chain for Orion
  * 
- * Web Speech API (primary, streaming)
- *   ↓ onError/timeout
+ * Google Cloud STT (Tier 0, ~300ms)
+ *   ↓ error/unavailable
  * Groq Whisper (edge function, ~2s, free tier)
  *   ↓ 429/error
  * Transformers.js Whisper (browser, ~5s first load)
@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 // ─── State ───
 
 interface STTFallbackState {
+  googleAvailable: boolean;
+  googleCooldownUntil: number;
   groqAvailable: boolean;
   groqCooldownUntil: number;
   browserWhisperLoading: boolean;
@@ -22,6 +24,8 @@ interface STTFallbackState {
 }
 
 const _state: STTFallbackState = {
+  googleAvailable: true,
+  googleCooldownUntil: 0,
   groqAvailable: true,
   groqCooldownUntil: 0,
   browserWhisperLoading: false,
@@ -32,6 +36,54 @@ export function getSTTFallbackState() {
   return { ..._state };
 }
 
+// ─── Tier 0: Google Cloud Speech-to-Text ───
+
+async function transcribeWithGoogleCloud(audioBlob: Blob): Promise<string | null> {
+  if (!_state.googleAvailable || Date.now() < _state.googleCooldownUntil) {
+    return null;
+  }
+
+  try {
+    const arrayBuf = await audioBlob.arrayBuffer();
+    const base64 = btoa(
+      new Uint8Array(arrayBuf).reduce((data, byte) => data + String.fromCharCode(byte), "")
+    );
+
+    // Detect encoding from blob type
+    const isWav = audioBlob.type.includes("wav");
+    const encoding = isWav ? "LINEAR16" : "WEBM_OPUS";
+    const sampleRate = isWav ? 16000 : 48000;
+
+    const { data, error } = await supabase.functions.invoke("google-cloud-stt", {
+      body: {
+        audio_base64: base64,
+        language: "pt-BR",
+        encoding,
+        sample_rate: sampleRate,
+      },
+    });
+
+    if (error) {
+      console.warn("[STT-Fallback] Google Cloud STT error:", error.message);
+      // Cooldown 30s on error
+      _state.googleAvailable = false;
+      _state.googleCooldownUntil = Date.now() + 30_000;
+      setTimeout(() => { _state.googleAvailable = true; }, 30_000);
+      return null;
+    }
+
+    if (data?.text) {
+      _state.lastProvider = "google-cloud-stt";
+      console.log("[STT-Fallback] ✅ Google Cloud STT:", data.text.slice(0, 80));
+      return data.text;
+    }
+    return null;
+  } catch (err) {
+    console.warn("[STT-Fallback] Google Cloud STT exception:", err);
+    return null;
+  }
+}
+
 // ─── Tier 1: Groq Whisper Edge Function ───
 
 async function transcribeWithGroq(audioBlob: Blob): Promise<string | null> {
@@ -40,7 +92,6 @@ async function transcribeWithGroq(audioBlob: Blob): Promise<string | null> {
   }
 
   try {
-    // Convert blob to base64
     const arrayBuf = await audioBlob.arrayBuffer();
     const base64 = btoa(
       new Uint8Array(arrayBuf).reduce((data, byte) => data + String.fromCharCode(byte), "")
@@ -104,11 +155,8 @@ async function transcribeWithBrowserWhisper(audioBlob: Blob): Promise<string | n
 // ─── Main: Fallback Transcribe ───
 
 /**
- * Transcribes audio using the fallback chain: Groq → Browser Whisper
+ * Transcribes audio using the fallback chain: Google Cloud → Groq → Browser Whisper
  * Call this when Web Speech API fails.
- * 
- * @param audioBlob - WAV/WebM audio blob from AudioWorklet or MediaRecorder
- * @returns Transcribed text, or null if all tiers fail
  */
 export async function fallbackTranscribe(audioBlob: Blob): Promise<{
   text: string | null;
@@ -116,6 +164,16 @@ export async function fallbackTranscribe(audioBlob: Blob): Promise<{
   latencyMs: number;
 }> {
   const start = performance.now();
+
+  // Tier 0: Google Cloud STT (~300ms)
+  const googleResult = await transcribeWithGoogleCloud(audioBlob);
+  if (googleResult) {
+    return {
+      text: googleResult,
+      provider: "google-cloud-stt",
+      latencyMs: performance.now() - start,
+    };
+  }
 
   // Tier 1: Groq Whisper
   const groqResult = await transcribeWithGroq(audioBlob);

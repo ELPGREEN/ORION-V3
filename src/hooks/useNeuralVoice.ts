@@ -83,11 +83,13 @@ async function primeMicrophone(): Promise<void> {
   if (!navigator.mediaDevices?.getUserMedia) return;
   try {
     const perm = await navigator.permissions?.query?.({ name: "microphone" as any });
-    if (perm?.state !== "granted") return;
+    // Skip priming entirely if permission already granted — saves ~80ms
+    if (perm?.state === "granted") return;
+    if (perm?.state !== "prompt") return; // denied = skip too
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     });
-    await new Promise(r => setTimeout(r, isMobile() ? 80 : 30));
+    await new Promise(r => setTimeout(r, 30)); // reduced from 80ms
     stream.getTracks().forEach(t => t.stop());
   } catch (err) {
     console.warn("[Voice] Mic priming failed:", err);
