@@ -74,16 +74,7 @@ export function useOrionReasoning(
   }, []);
 
   // Session restoration
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
-    const session = getSessionState();
-    if (session?.chatHistory && session.chatHistory.length > 0) {
-      return [
-        { role: "system" as const, text: `📝 Sessão anterior restaurada (${session.chatHistory.length} mensagens)`, time: new Date().toLocaleTimeString("pt-BR") },
-        ...session.chatHistory.slice(-15),
-      ];
-    }
-    return [];
-  });
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const chatHistoryRef = useRef(chatHistory);
   useEffect(() => { chatHistoryRef.current = chatHistory; }, [chatHistory]);
 
