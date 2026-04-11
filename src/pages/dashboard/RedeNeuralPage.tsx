@@ -1134,8 +1134,10 @@ export default function RedeNeuralPage() {
         </TabsContent>
 
         {/* Live Neural Network Visualization */}
-        <TabsContent value="live">
-          <NeuralNetworkLiveView />
+        <TabsContent value="live" className="space-y-4">
+          <NeuralErrorBoundary fallbackTitle="Erro na Rede ao Vivo">
+            <NeuralNetworkLiveView />
+          </NeuralErrorBoundary>
         </TabsContent>
 
         {/* Neural Vision Tab */}

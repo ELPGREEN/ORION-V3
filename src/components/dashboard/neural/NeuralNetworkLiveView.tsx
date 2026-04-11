@@ -314,6 +314,69 @@ function GlobeNodes({ paused, showLabels }: { paused: boolean; showLabels: boole
   const meshRefs = useRef<(THREE.Mesh | null)[]>([]);
   const ringRefs = useRef<(THREE.Mesh | null)[]>([]);
   const glowRefs = useRef<(THREE.Mesh | null)[]>([]);
+  const labelTextures = useMemo(() => {
+    const drawRoundedRect = (
+      ctx: CanvasRenderingContext2D,
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+      radius: number,
+    ) => {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    };
+
+    return NEURAL_NODES.map((node) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 160;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawRoundedRect(ctx, 18, 18, 476, 124, 22);
+      ctx.fillStyle = "rgba(2, 8, 16, 0.82)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = node.color;
+      ctx.fillStyle = node.color;
+      ctx.font = '700 34px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.fillText(node.label, canvas.width / 2, 62);
+
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.64)";
+      ctx.font = '500 22px ui-monospace, "SFMono-Regular", Consolas, monospace';
+      ctx.fillText(node.arch, canvas.width / 2, 108);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.needsUpdate = true;
+      return texture;
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      labelTextures.forEach((texture) => texture?.dispose());
+    };
+  }, [labelTextures]);
 
   useFrame(({ clock }) => {
     if (paused) return;
@@ -348,6 +411,7 @@ function GlobeNodes({ paused, showLabels }: { paused: boolean; showLabels: boole
       {NEURAL_NODES.map((node, i) => {
         const pos = positions[i];
         const col = new THREE.Color(node.color);
+        const labelTexture = labelTextures[i];
         return (
           <group key={node.id} position={[pos.x, pos.y, pos.z]}>
             {/* Glow sphere (larger, transparent) */}
@@ -379,32 +443,16 @@ function GlobeNodes({ paused, showLabels }: { paused: boolean; showLabels: boole
               <torusGeometry args={[node.size * 2, 0.018, 8, 40]} />
               <meshBasicMaterial color={col} transparent opacity={0.18} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
             </mesh>
-            {showLabels && (
-              <Billboard follow lockX={false} lockY={false} lockZ={false}>
-                <Text
-                  position={[0, node.size + 0.5, 0]}
-                  fontSize={0.28}
-                  color={node.color}
-                  anchorX="center"
-                  anchorY="bottom"
-                  outlineWidth={0.025}
-                  outlineColor="#000000"
-                >
-                  {node.label}
-                </Text>
-                <Text
-                  position={[0, node.size + 0.15, 0]}
-                  fontSize={0.17}
-                  color="#ffffff"
-                  anchorX="center"
-                  anchorY="bottom"
-                  outlineWidth={0.012}
-                  outlineColor="#000000"
-                  fillOpacity={0.5}
-                >
-                  {node.arch}
-                </Text>
-              </Billboard>
+            {showLabels && labelTexture && (
+              <sprite position={[0, node.size + 0.8, 0]} scale={[3.8, 1.15, 1]}>
+                <spriteMaterial
+                  map={labelTexture}
+                  transparent
+                  opacity={0.96}
+                  depthWrite={false}
+                  depthTest={false}
+                />
+              </sprite>
             )}
           </group>
         );
