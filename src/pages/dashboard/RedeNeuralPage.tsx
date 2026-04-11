@@ -1352,6 +1352,9 @@ export default function RedeNeuralPage() {
       <Suspense fallback={null}>
         <FloatingMusicPlayer />
       </Suspense>
+
+      {/* Video Overlay — Orion Projector */}
+      <VideoOverlay />
     </div>
   );
 }
