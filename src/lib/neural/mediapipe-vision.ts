@@ -28,6 +28,14 @@ let visionWasm: any = null;
 let initPromise: Promise<void> | null = null;
 let initDone = false;
 
+// Monotonic timestamp tracker per-detector to avoid MediaPipe "timestamp not strictly increasing" errors
+const lastTs: Record<string, number> = { obj: 0, face: 0, lmk: 0, hand: 0, pose: 0 };
+function nextTs(key: string): number {
+  const now = Math.round(performance.now());
+  lastTs[key] = now > lastTs[key] ? now : lastTs[key] + 1;
+  return lastTs[key];
+}
+
 // ─── CDN paths for MediaPipe models (auto-cached by browser) ───
 const WASM_CDN = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/wasm";
 const OBJECT_MODEL = "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float32/latest/efficientdet_lite0.tflite";
