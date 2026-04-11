@@ -13,6 +13,7 @@ import { initVoicePicker } from "@/lib/voice/voicePicker";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 // ═══ FIX: Integrate with Mic Arbiter to prevent SpeechRecognition conflicts ═══
 import { claimMic, isMicOwner, registerMicRec, getMicMode, releaseMic } from "@/lib/voice/micArbiter";
+import { wakeOrionVm } from "@/lib/orion-vm-wake";
 
 /** Speak text using Gemini TTS — NO robotic fallback (silent fail is better than robotic voice) */
 async function orionSpeak(text: string): Promise<void> {
