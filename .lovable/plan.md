@@ -1,98 +1,77 @@
 
 
-# Análise: Amazon Appstore SDK — O que falta implementar
+# Plano: Atualizar Spotify Web Playback SDK + Plugin Nativo Capacitor
 
-## O que já existe no código (`appstore-sdk.ts`)
+## Análise — O que falta comparando com a documentação oficial
 
-| Funcionalidade | Implementado? | Notas |
+### `useSpotifyPlayback.ts` — Gaps encontrados
+
+| Feature SDK | Status | Impacto |
 |---|---|---|
-| DRM `checkLicense()` | Sim | Mas usa nome errado — SDK real usa `LicensingService.verifyLicense()` |
-| DRM `verifyLicenseReceipt()` | Sim | OK |
-| IAP `getProductData()` | Sim | OK |
-| IAP `purchase()` | Sim | OK |
-| IAP `getPurchaseUpdates()` | Sim | Falta paginação (`hasMore`) |
-| IAP `notifyFulfillment()` | Sim | Falta enum `FULFILLED`/`UNAVAILABLE` |
-| SSI `signIn/signOut/getStatus` | Sim | OK |
-| Web fallback para desenvolvimento | Sim | OK |
+| `enableMediaSession: true` | Ausente no construtor | Sem controles de mídia no lockscreen/notificação |
+| `activateElement()` | Não implementado | Autoplay falha em browsers móveis — crítico |
+| `autoplay_failed` event | Não escutado | Usuário não sabe que precisa clicar para ativar |
+| `playback_error` event | Não escutado | Erros de playback silenciosos |
+| `getCurrentState()` | Não exposto | Não consegue sincronizar estado real |
+| `setName()` | Não exposto | Menor prioridade |
+| `getVolume()` | Não usado | Menor prioridade |
+| `pause()` / `resume()` separados | Só `togglePlay` | Comandos de voz precisam ações explícitas |
+| `disallows` (restrictions) | Não rastreado | Botões ficam ativos quando ação é proibida (ads) |
+| `repeat_mode` / `shuffle` | Não rastreados | Sem controle de repetição/shuffle |
+| `context` (playlist/album URI) | Não rastreado | Sem info de contexto |
+| `track_window.next_tracks` / `previous_tracks` | Não expostos | Sem preview da fila |
 
-## O que FALTA (comparando com a documentação oficial)
+### `OrionPlaylistBar` — Problema arquitetural
 
-### 1. `getUserData()` — Método obrigatório ausente
-A documentação exige chamar `getUserData()` no `onResume()` para obter `userId`, `marketplace` e `countryCode`. O bridge atual não tem esse método. Sem ele, não é possível:
-- Verificar se o usuário mudou de conta
-- Obter o marketplace/countryCode para precificação regional
-- Desabilitar compras quando `FAILED` ou `NOT_SUPPORTED`
+O `OrionPlaylistBar` **não usa** o `useSpotifyPlayback` hook. Ele toca apenas previews de 30s via `<audio>` tag e YouTube embeds. O SDK de playback real (que toca faixas completas com Premium) está no `SpotifyPlayer.tsx` mas não integrado à barra principal.
 
-### 2. `enablePendingPurchases()` — Não implementado
-Recurso para Amazon Kids (compras pendentes aprovação dos pais). O SDK exige chamá-lo no `onCreate()`. O status `PENDING` já existe no tipo mas não é tratado no hook.
+### Plugin Nativo Capacitor — Situação
 
-### 3. `registerListener()` — Padrão assíncrono incorreto
-O SDK real usa um padrão de broadcast receiver assíncrono: você chama `PurchasingService.purchase()` e recebe a resposta via `PurchasingListener.onPurchaseResponse()`. O bridge atual simula chamadas síncronas (Promise), o que está OK para web, mas o plugin nativo precisa mapear callbacks para Promises corretamente.
-
-### 4. Paginação de `getPurchaseUpdates`
-A resposta real é **paginada** (`hasMore()` flag). Se `hasMore` é `true`, o app deve chamar `getPurchaseUpdates()` novamente. O código atual não trata isso.
-
-### 5. `FulfillmentResult` enum
-`notifyFulfillment()` aceita `FULFILLED` ou `UNAVAILABLE`. O código atual usa `boolean` — deve usar o enum correto.
-
-### 6. DRM: status `ERROR_VERIFICATION` e `ERROR_INVALID_LICENSING_KEYS`
-O tipo `LicenseStatus` atual tem `LICENSED | NOT_LICENSED | EXPIRED | UNKNOWN | ERROR`. Faltam:
-- `ERROR_VERIFICATION`
-- `ERROR_INVALID_LICENSING_KEYS`
-
-### 7. `getAppstoreSDKMode()` — Sandbox/Production detection
-Útil para testar com Amazon App Tester. Não implementado.
-
-### 8. Capacitor Native Plugin (Java/Kotlin)
-Não existe o plugin nativo Android (`AmazonAppstoreSDK`) que faz a ponte entre o Capacitor e o SDK Java real. O bridge TypeScript está correto mas sem o plugin Android, nada funciona em produção.
-
-### 9. AndroidManifest.xml entries
-Faltam as entradas obrigatórias:
-- `ResponseReceiver` para IAP
-- `ResponseReceiver` para DRM
-- `<queries>` para Amazon App Tester e Appstore
-
-### 10. `AppstoreAuthenticationKey.pem`
-A chave pública do app precisa estar em `app/src/main/assets/`. Não há referência nem instrução no projeto.
+Não existe `capacitor.config.ts` no projeto. O Spotify Web Playback SDK roda diretamente em WebViews (Capacitor usa WebView), mas EME (Encrypted Media Extensions) pode não funcionar em todos os dispositivos Android. Um plugin nativo que usa o Spotify Android SDK seria o fallback correto.
 
 ## Plano de Implementação
 
-### Passo 1: Atualizar `appstore-sdk.ts` (bridge TypeScript)
-- Adicionar `getUserData()` com tipos `UserData` (userId, marketplace, countryCode)
-- Adicionar `enablePendingPurchases()`
-- Adicionar `getAppstoreSDKMode()` (retorna `SANDBOX` | `PRODUCTION` | `UNKNOWN`)
-- Expandir `LicenseStatus` com `ERROR_VERIFICATION` e `ERROR_INVALID_LICENSING_KEYS`
-- Substituir `boolean` por `FulfillmentResult` enum (`FULFILLED` | `UNAVAILABLE`) em `notifyFulfillment()`
-- Adicionar lógica de paginação em `getPurchaseUpdates()` (loop `hasMore`)
-- Adicionar web fallback para os novos métodos
+### 1. Atualizar `useSpotifyPlayback.ts` — Compliance total com SDK
 
-### Passo 2: Atualizar `useAppstoreSDK.ts` (hook React)
-- Adicionar `userData` ao state (userId, marketplace, countryCode)
-- Chamar `getUserData()` na inicialização
-- Tratar status `PENDING` no fluxo de compra
-- Expor `enablePendingPurchases` e `sdkMode`
+- Adicionar `enableMediaSession: true` ao construtor (controles lockscreen)
+- Implementar `activateElement()` e expô-lo
+- Escutar `autoplay_failed` → setar flag `needsActivation`
+- Escutar `playback_error` → setar erro no state
+- Expor `pause()` e `resume()` separados (além de `togglePlay`)
+- Rastrear `disallows`, `repeat_mode`, `shuffle`, `context`
+- Expor `getCurrentState()` para sync manual
+- Expor `next_tracks` / `previous_tracks` do `track_window`
+- Tipar tudo com interfaces oficiais (`WebPlaybackState`, `WebPlaybackTrack`, etc.)
 
-### Passo 3: Criar Capacitor Native Plugin (Java)
-- Criar `android/src/.../AmazonAppstoreSDKPlugin.java` com `@CapacitorPlugin`
-- Implementar cada `@PluginMethod`: `checkLicense`, `getUserData`, `getProductData`, `purchase`, `getPurchaseUpdates`, `notifyFulfillment`, `enablePendingPurchases`, `getAppstoreSDKMode`, `signIn`, `signOut`, `getSignInStatus`
-- Registrar `PurchasingListener` e `LicensingListener`
-- Mapear callbacks assíncronos para `PluginCall.resolve()`
+### 2. Integrar SDK real no `OrionPlaylistBar`
 
-### Passo 4: Documentar setup Android
-- AndroidManifest.xml entries (ResponseReceiver para IAP e DRM, queries)
-- build.gradle dependency (`com.amazon.device:amazon-appstore-sdk:3.+`)
-- AppstoreAuthenticationKey.pem placement
-- ProGuard rules para DRM
+- Quando usuário tem Spotify conectado (Premium), usar `useSpotifyPlayback` para tocar faixas completas via `playTrack(uri)`
+- Manter preview de 30s + YouTube embed como fallback para quem não tem Premium
+- Adicionar botão `activateElement` quando `needsActivation` for true
+- Mostrar `next_tracks` na fila de reprodução
+
+### 3. Criar plugin nativo Capacitor para Spotify
+
+- Criar `src/lib/spotify/capacitor-spotify-plugin.ts` — bridge TypeScript
+- Criar `android/.../SpotifyPlaybackPlugin.java` — plugin nativo usando Spotify Android SDK
+- Métodos: `connect`, `play`, `pause`, `resume`, `seek`, `nextTrack`, `previousTrack`, `setVolume`, `getPlayerState`
+- Auto-detect: se Capacitor nativo disponível → usar SDK nativo; senão → Web Playback SDK
+- Documentar setup: Spotify Android SDK dependency, `AndroidManifest.xml`, app fingerprint
+
+### 4. Documentação de setup
+
+- Criar `docs/spotify-playback-setup.md`
+- Spotify Dashboard: redirect URIs, scopes necessários (`streaming`, `user-read-playback-state`, `user-modify-playback-state`)
+- Android: Spotify App Remote SDK dependency, fingerprint SHA-256
+- Capacitor config necessário
 
 ## Arquivos a Modificar/Criar
 
 | Arquivo | Ação |
 |---|---|
-| `src/lib/amazon/appstore-sdk.ts` | Adicionar getUserData, enablePendingPurchases, paginação, FulfillmentResult, SDKMode, novos status DRM |
-| `src/hooks/useAppstoreSDK.ts` | Adicionar userData, sdkMode, pending purchases |
-| `android/app/src/main/java/.../AmazonAppstoreSDKPlugin.java` | Criar — plugin nativo Capacitor |
-| `docs/amazon-appstore-setup.md` | Criar — guia de setup completo |
-
-## Nota técnica
-O plugin nativo Java não pode ser testado no Lovable (ambiente web). O bridge TS com web fallbacks permite desenvolvimento e testes. O plugin Java será usado quando você fizer `npx cap sync` no seu ambiente local com Android Studio.
+| `src/hooks/useSpotifyPlayback.ts` | Compliance total: MediaSession, activateElement, autoplay_failed, playback_error, disallows, repeat/shuffle, typed interfaces |
+| `src/components/orion/OrionPlaylistBar.tsx` | Integrar useSpotifyPlayback para faixas completas com Premium, fallback preview |
+| `src/lib/spotify/capacitor-spotify-plugin.ts` | Criar — bridge TS para plugin nativo Capacitor |
+| `android/.../SpotifyPlaybackPlugin.java` | Criar — plugin nativo Android com Spotify App Remote SDK |
+| `docs/spotify-playback-setup.md` | Criar — guia completo de setup |
 
