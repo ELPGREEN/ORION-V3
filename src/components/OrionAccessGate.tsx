@@ -48,17 +48,10 @@ const MESSAGES: Record<GateMode, { intro: string; question: string; benefits: st
 };
 
 async function speakText(text: string) {
-  // Use Orion's own formant voice (100% offline)
-  const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
   try {
-    const result = await speakWithOrionVoice(text);
+    const { speakWithGeminiTTS } = await import("@/lib/tts/geminiTTS");
+    const result = await speakWithGeminiTTS(text, "Charon");
     if (result.played) return;
-  } catch {}
-
-  const { speakWithPiper } = await import("@/lib/tts/piperTTS");
-  try {
-    const played = await speakWithPiper(text);
-    if (played) return;
   } catch {}
 }
 
