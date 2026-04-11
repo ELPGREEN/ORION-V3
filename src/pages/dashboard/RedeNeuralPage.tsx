@@ -47,6 +47,7 @@ import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { NeuralErrorBoundary } from "@/components/dashboard/neural/NeuralErrorBoundary";
 import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
 import { VideoOverlay } from "@/components/orion/VideoOverlay";
+import { OrionIoTPanel } from "@/components/orion/OrionIoTPanel";
 import { lazyRetry } from "@/lib/lazyRetry";
 
 // Lazy-load all heavy neural panels for code-splitting

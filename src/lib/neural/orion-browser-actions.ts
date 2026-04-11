@@ -59,6 +59,29 @@ function extractCleanQuery(query: string, patternsToRemove: RegExp): string {
 }
 
 const ACTION_PATTERNS: ActionPattern[] = [
+  // ─── Music playback commands (voice) ───
+  {
+    regex: /\b(?:pausa|para|pause|stop)\b/i,
+    builder: (_m, _q) => ({
+      type: "spotify" as const,
+      url: "", description: "⏸ Pausando música", query: "pause",
+    }),
+  },
+  {
+    regex: /\b(?:pr[oó]xima|pula|skip|next)\b/i,
+    builder: (_m, _q) => ({
+      type: "spotify" as const,
+      url: "", description: "⏭ Próxima faixa", query: "next",
+    }),
+  },
+  {
+    regex: /\b(?:volta|anterior|prev(?:ious)?)\b/i,
+    builder: (_m, _q) => ({
+      type: "spotify" as const,
+      url: "", description: "⏮ Faixa anterior", query: "prev",
+    }),
+  },
+
   // ─── YouTube / Videos ───
   {
     regex: /\b(?:(?:abre?|abrir?|open)\s+(?:o\s+)?youtube|(?:tocar?|play|reproduz(?:ir)?|assistir?|ver?)\s+(?:um?\s+)?(?:v[ií]deo|video)|(?:buscar?|pesquisar?|procurar?)\s+(?:no\s+)?youtube|(?:v[ií]deo|video)\s+(?:de|do|da|sobre))\b/i,
