@@ -727,7 +727,7 @@ export function GlobalOrionListener() {
       {!orionOpen && (
         <div
           className="fixed bottom-20 right-4 z-50 lg:bottom-6 lg:right-6 group cursor-pointer"
-          onClick={() => { setOrionOpen(true); setInitialCommand(""); stopWakeWordListener(); }}
+          onClick={() => { setOrionOpen(true); setInitialCommand(""); stopWakeWordListener(); wakeOrionVm(); }}
           title="Clique para abrir o Orion"
         >
           {/* Plasma orb container — larger and more visible */}
