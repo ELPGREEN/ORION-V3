@@ -46,6 +46,7 @@ function ensureVoiceBootstrapOnce() {
 
 export function cleanTextForSpeech(text: string): string {
   return text
+    // Strip code blocks and markdown
     .replace(/```[\s\S]*?```/g, " código omitido ")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1")
@@ -56,17 +57,19 @@ export function cleanTextForSpeech(text: string): string {
     .replace(/<[^>]*>/g, "")
     .replace(/\/\/[^\n]*/g, "")
     .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^[\s]*[-•*+]\s+/gm, "")
-    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/^[\s]*[-•*+]\s+/gm, " ")
+    .replace(/^\s*\d+\.\s+/gm, " ")
     .replace(/\|/g, " ")
     .replace(/[─═╔╗╚╝║╠╣╬┌┐└┘├┤┬┴┼]/g, "")
     .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/g, "")
-    .replace(/[;:]+/g, ", ")
-    .replace(/[–—]+/g, ", ")
-    .replace(/!+/g, ". ")
-    .replace(/\.{3,}/g, "...")
-    .replace(/([!?.])\1+/g, "$1")
+    // KEY: Remove pause-inducing punctuation — just use spaces
+    .replace(/[;:!]+/g, " ")
+    .replace(/[–—]+/g, " ")
+    .replace(/,+/g, " ")
+    .replace(/\.{2,}/g, ".")
     .replace(/\n+/g, ". ")
+    // Keep only single periods and question marks as natural breaks
+    .replace(/\.(\s*\.)+/g, ".")
     .replace(/\s+/g, " ")
     .replace(/^\.\s*/, "")
     .trim();

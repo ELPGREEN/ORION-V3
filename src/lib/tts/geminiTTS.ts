@@ -37,14 +37,20 @@ function isGeminiTTSCoolingDown(): boolean {
  * chunk to avoid any pauses. Longer texts are split at sentence boundaries
  * into ~1200-char chunks.
  */
+/**
+ * Send the ENTIRE text as a single chunk to Gemini TTS.
+ * Gemini handles up to 5000 chars natively — splitting causes
+ * gaps and cut-off words. Only split if truly enormous.
+ */
 function splitIntoSentences(text: string): string[] {
-  if (text.length <= 2000) return [text.trim()];
+  if (text.length <= 4500) return [text.trim()];
 
-  const sentences = text.match(/[^.?…]+[.?…]+\s*|[^.?…]+$/g) || [text];
+  // Only for very long texts: split at sentence boundaries into large ~3000-char chunks
+  const sentences = text.match(/[^.?]+[.?]+\s*|[^.?]+$/g) || [text];
   const chunks: string[] = [];
   let current = "";
   for (const s of sentences) {
-    if (current.length + s.length > 1200 && current.length > 0) {
+    if (current.length + s.length > 3000 && current.length > 0) {
       chunks.push(current.trim());
       current = s;
     } else {
