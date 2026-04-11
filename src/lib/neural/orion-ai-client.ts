@@ -714,7 +714,7 @@ export async function analyzeFrameStreaming(
       body: JSON.stringify({
         imageBase64, context: enrichedContext, question,
         userMemory: getUserMemory(),
-        dashboardContext: dashboardCtx,
+        dashboardContext: undefined,
         chatHistory: chatHistory?.slice(-4),
         identificationMode, intentType,
         stream: true,
