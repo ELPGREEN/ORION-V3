@@ -129,9 +129,9 @@ export function getOptimalSilenceDuration(turnState: TurnState): number {
     case "wait":
       return 0; // Immediate action
     case "finished":
-      return 450; // Allow brief pauses mid-thought (was 250, too aggressive)
+      return 250; // Faster response for clear commands/questions
     case "unfinished":
-      return 1800; // Give user time to continue long thoughts (was 1200)
+      return 900; // Still allows continuation, but avoids long dead air
   }
 }
 

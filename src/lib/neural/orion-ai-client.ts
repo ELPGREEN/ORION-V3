@@ -655,6 +655,9 @@ export async function analyzeFrameStreaming(
 
     // ═══ PERF: buildLocalDetections ONCE — reused in body below ═══
     const localDetections = buildLocalDetections();
+    const isDirectVoiceMode = (window as any).__orionInputSource === "voice" &&
+      intentType !== "visual" &&
+      !String(intentType || "").startsWith("visual_");
 
     // ═══ LAYER 2: Context + auth IN PARALLEL (budget: 150ms — was 300ms) ═══
     // Stripped: Knowledge base context-building, voice protocols, dashboard context
@@ -702,12 +705,12 @@ export async function analyzeFrameStreaming(
       signal,
       body: JSON.stringify({
         imageBase64, context: enrichedContext, question,
-        userMemory: getUserMemory(),
+        userMemory: isDirectVoiceMode ? getUserMemory().slice(-2) : getUserMemory(),
         dashboardContext: undefined,
-        chatHistory: chatHistory?.slice(-4),
+        chatHistory: isDirectVoiceMode ? chatHistory?.slice(-2) : chatHistory?.slice(-4),
         identificationMode, intentType,
         stream: true,
-        localDetections,
+        localDetections: isDirectVoiceMode ? undefined : localDetections,
         maxTokens: (window as any).__cognitiveMaxTokens || undefined,
         reasoningInstructions: (window as any).__cognitiveReasoningInstructions || undefined,
         inputSource: (window as any).__orionInputSource || "text",

@@ -400,7 +400,16 @@ export function useOrionReasoning(
     const now = Date.now();
     if (now - lastAskTimeRef.current < 500) return;
     lastAskTimeRef.current = now;
+
     if (isProcessingRef.current) {
+      if (source === "voice") {
+        bargedInRef.current = true;
+        intentQueueRef.current = [{ question, source }];
+        addLog(`⚡ Interrompendo processamento atual para novo comando de voz`);
+        try { abortControllerRef?.current?.abort(); } catch {}
+        return;
+      }
+
       if (intentQueueRef.current.length < 3) {
         intentQueueRef.current.push({ question, source });
         addChat("system", `📋 Pergunta enfileirada (${intentQueueRef.current.length}/3). Processarei em seguida.`);
@@ -411,7 +420,7 @@ export function useOrionReasoning(
       return;
     }
     askAIInternalRef.current?.(question, source);
-  }, [addChat, addLog]);
+  }, [addChat, addLog, abortControllerRef]);
 
   const askAIInternal = useCallback(async (question: string, source: OrionInputSource = "text") => {
     const now = Date.now();
