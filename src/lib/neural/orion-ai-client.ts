@@ -502,19 +502,8 @@ export async function analyzeFrameWithAI(
       }
     } catch { /* fallback without consciousness */ }
 
-    // ═══ Vision-RAG Context Injection: cross-reference scene with knowledge base ═══
-    let visionRAGContext = "";
-    try {
-      const rtVision = (window as any).__orion_last_rt_vision_result__;
-      if (rtVision && rtVision.allObjects?.length > 0) {
-        const { injectVisionContext, formatVisionRAGForPrompt } = await import("@/lib/neural/vision-rag-injector");
-        const visionCtx = await injectVisionContext(rtVision, 3);
-        visionRAGContext = formatVisionRAGForPrompt(visionCtx);
-      }
-    } catch { /* non-blocking */ }
-
-    const enrichedContext = [consciousnessContext, visionRAGContext, context]
-      .filter(Boolean).join("\n\n");
+    // Vision-RAG removed — added 200ms+ latency for marginal benefit
+    const enrichedContext = [consciousnessContext, context].filter(Boolean).join("\n\n");
 
     // ═══ PERF FIX: buildLocalDetections only ONCE (was called 2x — streaming path duplicates this) ═══
     const localDetections = buildLocalDetections();
