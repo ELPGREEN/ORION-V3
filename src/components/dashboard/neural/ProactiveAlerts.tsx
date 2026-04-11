@@ -5,7 +5,7 @@ import { AlertTriangle, Bell, CheckCircle2, Clock, TrendingUp, Shield, Brain, X,
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { speakWithPiper } from "@/lib/tts/piperTTS";
+import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { toast } from "sonner";
 
 // ═══════════════════════════════════════════════════════════
@@ -35,11 +35,9 @@ export function ProactiveAlerts() {
   const [loading, setLoading] = useState(true);
   const speak = async (text: string) => {
     try {
-      const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
-      const r = await speakWithOrionVoice(text);
+      const r = await speakWithGeminiTTS(text, "Charon");
       if (r.played) return;
     } catch {}
-    try { await speakWithPiper(text); } catch {}
   };
 
   useEffect(() => {

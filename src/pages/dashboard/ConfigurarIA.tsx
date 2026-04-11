@@ -152,15 +152,10 @@ export default function ConfigurarIA() {
     onResult: handleVoiceCommand,
   });
 
-  // Gemini TTS primary → Formant fallback (no robotic voice)
+  // Gemini TTS only
   const speak = async (text: string) => {
     try {
       const r = await speakWithGeminiTTS(text, "Charon");
-      if (r.played) return;
-    } catch {}
-    try {
-      const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
-      const r = await speakWithOrionVoice(text);
       if (r.played) return;
     } catch {}
   };

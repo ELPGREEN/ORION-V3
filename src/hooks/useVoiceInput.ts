@@ -287,29 +287,8 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       }
     } catch {}
 
-    // ── FALLBACK 1: Formant voice (100% offline) ──
-    try {
-      const { speakWithOrionVoice } = await import("@/lib/tts/orionVoiceEngine");
-      const result = await speakWithOrionVoice(text);
-      if (result.played) {
-        if (result.audio) audioRef.current = result.audio;
-        finalize();
-        return;
-      }
-    } catch {}
-
-    // ── FALLBACK 2: Piper WASM ──
-    try {
-      const { speakWithPiper } = await import("@/lib/tts/piperTTS");
-      const played = await speakWithPiper(text);
-      if (played) {
-        finalize();
-        return;
-      }
-    } catch {}
-
-    // No robotic SpeechSynthesis — prefer silence
-    console.warn("[VoiceInput] No high-quality TTS available, skipping");
+    // ── FALLBACK: Web Speech ──
+    console.warn("[VoiceInput] Gemini TTS unavailable, skipping speech");
     finalize();
   }, [destroyRecognition]);
 
