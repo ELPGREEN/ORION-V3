@@ -88,7 +88,7 @@ async function fetchGeminiAudio(
     if (sentenceController.signal.aborted || signal.aborted) return null;
 
     if (response.status === 429) {
-      disableGeminiTTS(15_000, "Rate limited by edge function");
+      disableGeminiTTS(5_000, "Rate limited by edge function");
       return null;
     }
 
@@ -101,7 +101,7 @@ async function fetchGeminiAudio(
         if (data?.rate_limited) {
           const retryAfterMs = typeof data?.retry_after_ms === "number" && Number.isFinite(data.retry_after_ms)
             ? data.retry_after_ms
-            : 15_000;
+            : 5_000;
           disableGeminiTTS(retryAfterMs, data?.error || "Rate limited");
         } else {
           console.warn("[Gemini TTS] Server fallback (no cooldown):", data?.error);

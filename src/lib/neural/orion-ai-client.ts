@@ -778,7 +778,7 @@ export async function analyzeFrameStreaming(
         chatHistory: chatHistory?.slice(-4),
         identificationMode, intentType,
         stream: true,
-        localDetections: buildLocalDetections(),
+        localDetections,
         maxTokens: (window as any).__cognitiveMaxTokens || undefined,
         reasoningInstructions: (window as any).__cognitiveReasoningInstructions || undefined,
         inputSource: (window as any).__orionInputSource || "text",
