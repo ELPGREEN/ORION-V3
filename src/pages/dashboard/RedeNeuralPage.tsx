@@ -607,6 +607,9 @@ export default function RedeNeuralPage() {
         </Suspense>
       </div>
 
+      {/* ═══ Playlist Orion — Horizontal Player Bar ═══ */}
+      <OrionPlaylistBar />
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="relative z-10">
         <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#3B82F6]/15"
           style={{ backgroundColor: "rgba(10,10,15,0.7)", boxShadow: "0 0 20px #3B82F60.05), inset 0 1px 0 #3B82F60.1)" }}>
