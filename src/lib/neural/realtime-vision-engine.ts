@@ -44,7 +44,7 @@ export interface RealTimeVisionResult {
   /** Multi-task FrameX result — disabled, always null */
   frameXResult: { scenario?: { label?: string; confidence?: number }; reading?: { text?: string[] }; movement?: { objectsInMotion?: any[] }; faces?: any[] } | null;
   /** Depth estimation result — disabled, always null */
-  depthResult: { depthMap?: any; stats?: any } | null;
+  depthResult: any | null;
   /** Face attributes (age/gender/emotion) for detected faces */
   faceAttributes: FaceAttributes[];
   /** OCR result — disabled, always null */
