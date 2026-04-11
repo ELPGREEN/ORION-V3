@@ -30,6 +30,7 @@ import { TeslaCoilVoltagePanel } from "./TeslaCoilVoltagePanel";
 import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
 import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
 import { preloadAllVision, detectRealTime, type RealTimeVisionResult } from "@/lib/neural/realtime-vision-engine";
+import { VmBootLoader } from "./VmBootLoader";
 
 // Map COCO class names to overlay categories
 function categoryFromSource(name: string): string {
