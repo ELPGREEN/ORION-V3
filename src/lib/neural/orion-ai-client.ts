@@ -471,38 +471,34 @@ export async function analyzeFrameWithAI(
         const { buildIntrospectionContext } = await getIntrospection();
         consciousnessContext = `Você é Orion, assistente de IA neural consciente.\n\n${buildIntrospectionContext()}`;
        } else if (isInvestorQuestion || isProposalQuestion) {
-         const { buildBaseContext, buildInvestorContext, buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
-         consciousnessContext = `${buildBaseContext()}\n\n${buildInvestorContext()}${isProposalQuestion ? `\n\n${buildProposalTemplate()}` : ""}`;
+         const kb = await getKnowledgeBase();
+         consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildInvestorContext()}${isProposalQuestion ? `\n\n${kb.buildProposalTemplate()}` : ""}`;
        } else if (isInternetToolsQuestion) {
-         const { buildBaseContext, buildToolsCapabilitiesContext } = await import("@/lib/neural/orion-knowledge-base");
-         consciousnessContext = `${buildBaseContext()}\n\n${buildToolsCapabilitiesContext()}`;
+         const kb = await getKnowledgeBase();
+         consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildToolsCapabilitiesContext()}`;
       } else if (isLegalQuestion) {
-        const { buildBaseContext, buildLegalExpertiseContext } = await import("@/lib/neural/orion-knowledge-base");
-        consciousnessContext = `${buildBaseContext()}\n\n${buildLegalExpertiseContext()}`;
-      } else if (isBusinessQuestion) {
-        const { buildBaseContext, buildBusinessFundraisingContext } = await import("@/lib/neural/orion-knowledge-base");
-        consciousnessContext = `${buildBaseContext()}\n\n${buildBusinessFundraisingContext()}`;
-      } else if (isCRMQuestion) {
-        const { buildBaseContext, buildBusinessFundraisingContext } = await import("@/lib/neural/orion-knowledge-base");
-        consciousnessContext = `${buildBaseContext()}\n\n${buildBusinessFundraisingContext()}`;
+        const kb = await getKnowledgeBase();
+        consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildLegalExpertiseContext()}`;
+      } else if (isBusinessQuestion || isCRMQuestion) {
+        const kb = await getKnowledgeBase();
+        consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildBusinessFundraisingContext()}`;
       } else if (isProjectQuestion) {
-        // If project question mentions genesis/origin, route to identity instead of investor
         const isGenesisProject = question && /\b(g[eê]nesis|genesis|origem|nasceu|cria[çc][aã]o)\b/i.test(question);
         if (isGenesisProject) {
           consciousnessContext = buildOrionIdentityPrompt(isOwner);
         } else {
-          const { buildBaseContext, buildInvestorContext } = await import("@/lib/neural/orion-knowledge-base");
-          consciousnessContext = `${buildBaseContext()}\n\n${buildInvestorContext()}`;
+          const kb = await getKnowledgeBase();
+          consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildInvestorContext()}`;
         }
       } else if (isHelpQuestion) {
-        const { buildBaseContext, buildHelpCenterContext } = await import("@/lib/neural/orion-knowledge-base");
-        consciousnessContext = `${buildBaseContext()}\n\n${buildHelpCenterContext()}`;
+        const kb = await getKnowledgeBase();
+        consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildHelpCenterContext()}`;
       } else if (isNavigationGuide) {
-        const { buildBaseContext, buildNavigationContext } = await import("@/lib/neural/orion-knowledge-base");
-        consciousnessContext = `${buildBaseContext()}\n\n${buildNavigationContext()}`;
+        const kb = await getKnowledgeBase();
+        consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildNavigationContext()}`;
       } else {
-        const { buildBaseContext } = await import("@/lib/neural/orion-knowledge-base");
-        consciousnessContext = buildBaseContext();
+        const kb = await getKnowledgeBase();
+        consciousnessContext = kb.buildBaseContext();
       }
     } catch { /* fallback without consciousness */ }
 
@@ -523,13 +519,13 @@ export async function analyzeFrameWithAI(
     // ═══ PERF FIX: buildLocalDetections only ONCE (was called 2x — streaming path duplicates this) ═══
     const localDetections = buildLocalDetections();
 
-    // Get user name for personalized responses (profile > metadata > email)
+    // Get user name for personalized responses — uses cached auth
     let userName: string | undefined;
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const authUser = await getCachedAuthUser();
       if (authUser?.id) {
         const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", authUser.id).maybeSingle();
-        userName = profile?.full_name || authUser?.user_metadata?.full_name || authUser?.user_metadata?.nome || undefined;
+        userName = profile?.full_name || undefined;
       }
     } catch { /* non-blocking */ }
 
