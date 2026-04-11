@@ -140,45 +140,7 @@ function computeGlobePositions() {
   return positions;
 }
 
-// ─── Procedural dendrite generation ───
-function generateDendrites(pos: THREE.Vector3, nodeSize: number, count: number, seed: number): THREE.BufferGeometry {
-  const vertices: number[] = [];
-  for (let d = 0; d < count; d++) {
-    const angle1 = (seed * 137.5 + d * 360 / count) * Math.PI / 180;
-    const angle2 = (seed * 73.3 + d * 47) * Math.PI / 180;
-    const dir = new THREE.Vector3(
-      Math.sin(angle1) * Math.cos(angle2),
-      Math.sin(angle2),
-      Math.cos(angle1) * Math.cos(angle2)
-    ).normalize();
-    
-    // Main dendrite branch — 3 segments
-    const baseLen = nodeSize * 3.5;
-    let current = pos.clone();
-    for (let seg = 0; seg < 3; seg++) {
-      const next = current.clone().add(
-        dir.clone()
-          .applyAxisAngle(new THREE.Vector3(0, 1, 0), (seg * 0.4 + seed * 0.1) * (d % 2 === 0 ? 1 : -1))
-          .multiplyScalar(baseLen * (1 - seg * 0.3))
-      );
-      vertices.push(current.x, current.y, current.z, next.x, next.y, next.z);
-      
-      // Sub-branch at segment joints
-      if (seg === 1) {
-        const branch = next.clone().add(
-          dir.clone()
-            .applyAxisAngle(new THREE.Vector3(1, 0, 0), 0.8 * (d % 2 === 0 ? 1 : -1))
-            .multiplyScalar(baseLen * 0.4)
-        );
-        vertices.push(next.x, next.y, next.z, branch.x, branch.y, branch.z);
-      }
-      current = next;
-    }
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-  return geo;
-}
+// Dendrites removed — clean modern HD style
 
 // ─── Organic Neuron Bodies with Dendrites ───
 function NeuronBodies({ paused, showLabels }: { paused: boolean; showLabels: boolean }) {
