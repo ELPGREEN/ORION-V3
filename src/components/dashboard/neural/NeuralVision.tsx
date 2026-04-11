@@ -47,6 +47,14 @@ function categoryFromSource(name: string): string {
   return "outro";
 }
 
+const _ORION_SESSION_KEY = "orion-session-ready";
+function _hasSessionReady(): boolean {
+  try { return sessionStorage.getItem(_ORION_SESSION_KEY) === "1"; } catch { return false; }
+}
+function _markSessionReady(): void {
+  try { sessionStorage.setItem(_ORION_SESSION_KEY, "1"); } catch {}
+}
+
 // ═══ Main Component ═══
 export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { skipWakeWord?: boolean; initialCommand?: string }) {
   const location = useLocation();
@@ -138,7 +146,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const lastRtVisionRef = useRef<RealTimeVisionResult | null>(null);
   const directVoiceStartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const hasGreetedRef = useRef(false);
+  const hasGreetedRef = useRef(_hasSessionReady());
 
   // ═══ Vision models preload deferred to camera activation ═══
   // preloadAllVision() is called inside startCamera() instead of mount
@@ -197,7 +205,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       streamRef.current = null;
       setActive(false); VS.active = false; VS.regions = [];
       cancelAnimationFrame(animRef.current); prevRef.current = null;
-      hasGreetedRef.current = false;
     }, 800);
   }, [speak, stopListen]);
 
@@ -233,6 +240,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (isJustWakeWord) {
       if (!hasGreetedRef.current) {
         hasGreetedRef.current = true;
+        _markSessionReady();
         speakFast("Ativando sistema.").catch(() => {});
       }
       return;
@@ -299,6 +307,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     if (!hasGreetedRef.current) {
       hasGreetedRef.current = true;
+      _markSessionReady();
       // Wait for TTS to finish BEFORE starting STT — otherwise mic gets killed mid-TTS
       speakFast("Ativando sistema.").then(() => {
         if (!listening) {
@@ -386,6 +395,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const timer = setTimeout(async () => {
       if (!skipWakeWord && !hasGreetedRef.current) {
         hasGreetedRef.current = true;
+        _markSessionReady();
         try { await speakFast("Ativando sistema."); } catch {}
       }
       // Camera does NOT auto-start — only via "ativar visão" voice command

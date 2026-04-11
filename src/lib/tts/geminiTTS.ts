@@ -40,7 +40,7 @@ function isGeminiTTSCoolingDown(): boolean {
 function splitIntoSentences(text: string): string[] {
   if (text.length <= 2000) return [text.trim()];
 
-  const sentences = text.match(/[^.!?…]+[.!?…]+\s*|[^.!?…]+$/g) || [text];
+  const sentences = text.match(/[^.?…]+[.?…]+\s*|[^.?…]+$/g) || [text];
   const chunks: string[] = [];
   let current = "";
   for (const s of sentences) {
@@ -178,13 +178,6 @@ function playAudioBlob(
       cleanup();
       resolve({ audio: null, nextAudio });
     };
-
-    // Unlock AudioContext if suspended (autoplay policy)
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      if (ctx.state === "suspended") ctx.resume().catch(() => {});
-      ctx.close().catch(() => {});
-    } catch {}
 
     audio.play().catch((err) => {
       console.warn("[Gemini TTS] audio.play() blocked:", err?.message);

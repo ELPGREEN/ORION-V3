@@ -8,6 +8,7 @@
 
 let cachedVoice: SpeechSynthesisVoice | null = null;
 let pickerResolved = false;
+let pickerInitStarted = false;
 
 // Preferred masculine voice names (PT-BR) — ordered by quality
 const PREFERRED_MALE = [
@@ -107,7 +108,8 @@ export function getOrionVoice(): SpeechSynthesisVoice | null {
  * Initialize the voice picker. Call once on app startup.
  */
 export function initVoicePicker(): void {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  if (typeof window === "undefined" || !window.speechSynthesis || pickerInitStarted) return;
+  pickerInitStarted = true;
 
   const immediate = pickBestVoice();
   if (immediate) {
