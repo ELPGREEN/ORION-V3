@@ -27,6 +27,8 @@ import {
   Shield,
   Headphones,
   Cpu,
+  Music,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1277,21 +1279,55 @@ export default function RedeNeuralPage() {
           </Suspense>
         </TabsContent>
 
-        {/* Audiobook Listener Tab */}
-        <TabsContent value="audiobook" className="space-y-4">
-          <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
-            <OrionAudiobookListener />
-          </Suspense>
-           <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
-             <SpotifyPlayer />
-           </Suspense>
-           <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
-             <AmazonMusicPlayer />
-           </Suspense>
-           <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
-             <YouTubeMusicPlayer />
-           </Suspense>
-         </TabsContent>
+        {/* Audiobook & Media Tab — Reorganized */}
+        <TabsContent value="audiobook" className="space-y-6">
+          {/* Section 1: Learning */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Brain className="h-4 w-4 text-cyan-400" />
+              <h3 className="text-sm font-mono font-semibold text-foreground/80 tracking-wide uppercase">Aprendizado Auditivo</h3>
+            </div>
+            <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+              <OrionAudiobookListener />
+            </Suspense>
+          </div>
+
+          {/* Section 2: Music & Media — Sub-tabs */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Headphones className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-mono font-semibold text-foreground/80 tracking-wide uppercase">Música & Mídia</h3>
+            </div>
+            <Tabs defaultValue="spotify" className="w-full">
+              <TabsList className="grid grid-cols-3 h-8 mb-3">
+                <TabsTrigger value="spotify" className="text-[10px] gap-1 font-mono">
+                  <Music className="h-3 w-3 text-[#1DB954]" /> Spotify
+                </TabsTrigger>
+                <TabsTrigger value="amazon" className="text-[10px] gap-1 font-mono">
+                  <BookOpen className="h-3 w-3 text-[#FF9900]" /> Amazon
+                </TabsTrigger>
+                <TabsTrigger value="youtube" className="text-[10px] gap-1 font-mono">
+                  <Play className="h-3 w-3 text-red-500" /> YouTube
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="spotify">
+                <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+                  <SpotifyPlayer />
+                </Suspense>
+              </TabsContent>
+              <TabsContent value="amazon">
+                <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+                  <AmazonMusicPlayer />
+                </Suspense>
+              </TabsContent>
+              <TabsContent value="youtube">
+                <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+                  <YouTubeMusicPlayer />
+                </Suspense>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </TabsContent>
 
         {/* API Status Dashboard Tab */}
         <TabsContent value="api-status" className="space-y-4">

@@ -4,13 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import {
   Volume2, VolumeX, BookOpen, Brain, Pause, Play,
   Mic, MicOff, Upload, Headphones, Sparkles, Radio,
-  Eye, EyeOff, Disc3, FileAudio, X, Waves,
+  Eye, EyeOff, Disc3, FileAudio, X, Waves, Zap, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { addNeuralKnowledge } from "@/lib/neural-training";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TranscriptSegment {
   id: string;
@@ -27,11 +31,16 @@ interface LearningInsight {
 }
 
 export function OrionAudiobookListener() {
+  const { user } = useAuth();
   // Core states
   const [isActive, setIsActive] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showTranscript, setShowTranscript] = useState(true);
+  const [sttMode, setSttMode] = useState<"browser" | "groq">("groq");
+  const [groqProcessing, setGroqProcessing] = useState(false);
+  const [groqProgress, setGroqProgress] = useState(0);
+  const [absorbing, setAbsorbing] = useState(false);
 
   // Audio states
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -40,6 +49,7 @@ export function OrionAudiobookListener() {
   const [volume, setVolume] = useState(60);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [dragOver, setDragOver] = useState(false);
 
   // Learning states
   const [transcripts, setTranscripts] = useState<TranscriptSegment[]>([]);
@@ -57,6 +67,7 @@ export function OrionAudiobookListener() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | MediaStreamAudioSourceNode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   // Cleanup
   useEffect(() => {
@@ -92,7 +103,6 @@ export function OrionAudiobookListener() {
       const H = canvasRef.current.height;
       ctx.clearRect(0, 0, W, H);
 
-      // Gradient background
       const grd = ctx.createLinearGradient(0, 0, W, 0);
       grd.addColorStop(0, "rgba(59,130,246, 0.05)");
       grd.addColorStop(0.5, "rgba(139, 92, 246, 0.05)");
@@ -105,21 +115,15 @@ export function OrionAudiobookListener() {
       for (let i = 0; i < bufferLength; i++) {
         const v = dataArray[i] / 255;
         const barHeight = v * H * 0.8;
-
-        const hue = (i / bufferLength) * 180 + 180; // cyan to purple
+        const hue = (i / bufferLength) * 180 + 180;
         ctx.fillStyle = `hsla(${hue}, 80%, 60%, ${0.3 + v * 0.7})`;
-
         const y = H - barHeight;
         ctx.fillRect(x, y, barWidth - 1, barHeight);
-
-        // Mirror reflection
         ctx.fillStyle = `hsla(${hue}, 80%, 60%, ${0.05 + v * 0.15})`;
         ctx.fillRect(x, 0, barWidth - 1, barHeight * 0.3);
-
         x += barWidth;
       }
 
-      // Center glow when active
       if (isActive) {
         const avg = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
         const glowSize = 20 + (avg / 255) * 40;
@@ -133,7 +137,60 @@ export function OrionAudiobookListener() {
     draw();
   }, [isActive]);
 
-  // ═══ Start Speech Recognition (Live Mic or internal) ═══
+  // ═══ Groq Whisper STT ═══
+  const transcribeWithGroq = useCallback(async (file: File) => {
+    setGroqProcessing(true);
+    setGroqProgress(10);
+    try {
+      // Convert to base64
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binary);
+
+      setGroqProgress(40);
+
+      const { data, error } = await supabase.functions.invoke("groq-whisper-stt", {
+        body: { audio: base64, language: "pt", model: "whisper-large-v3-turbo" },
+      });
+
+      setGroqProgress(80);
+
+      if (error) throw new Error(error.message);
+      if (!data?.success) throw new Error(data?.error || "STT failed");
+
+      const text = data.text || "";
+      if (text.trim().length > 3) {
+        const segments = text.split(/[.!?]+/).filter((s: string) => s.trim().length > 3);
+        segments.forEach((segText: string, idx: number) => {
+          const segment: TranscriptSegment = {
+            id: `groq-${Date.now()}-${idx}`,
+            text: segText.trim(),
+            timestamp: Date.now(),
+            processed: false,
+          };
+          setTranscripts(prev => [...prev.slice(-50), segment]);
+          processSegmentForLearning(segText.trim());
+        });
+        toast.success(`🎯 Groq Whisper: ${segments.length} segmentos transcritos (${data.metadata?.audio_duration?.toFixed(1) || "?"}s)`);
+      } else {
+        toast.info("Nenhum texto detectado no áudio");
+      }
+      setGroqProgress(100);
+    } catch (err: any) {
+      toast.error(`Groq STT: ${err.message}`);
+    } finally {
+      setTimeout(() => {
+        setGroqProcessing(false);
+        setGroqProgress(0);
+      }, 500);
+    }
+  }, []);
+
+  // ═══ Start Speech Recognition (Browser) ═══
   const startSpeechRecognition = useCallback(() => {
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (!SR) {
@@ -192,7 +249,6 @@ export function OrionAudiobookListener() {
     const words = text.split(/\s+/).filter(w => w.length > 3);
     setWordsLearned(prev => prev + words.length);
 
-    // Detect patterns
     const patterns = [
       { regex: /portanto|então|assim|consequentemente/i, type: "pattern" as const, label: "Conector lógico" },
       { regex: /no entanto|porém|contudo|todavia/i, type: "pattern" as const, label: "Contraposição" },
@@ -218,10 +274,8 @@ export function OrionAudiobookListener() {
     setTimeout(() => setIsProcessing(false), 300);
   }, []);
 
-  // ═══ Handle File Upload ═══
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // ═══ Handle File Upload (click or drag-drop) ═══
+  const handleFileUpload = useCallback((file: File) => {
     if (!file.type.startsWith("audio/")) {
       toast.error("Selecione um arquivo de áudio");
       return;
@@ -234,12 +288,54 @@ export function OrionAudiobookListener() {
     setTranscripts([]);
     setInsights([]);
     toast.success(`📚 Audiobook carregado: ${file.name}`);
-  }, [audioUrl]);
+
+    // If Groq mode, auto-transcribe
+    if (sttMode === "groq") {
+      transcribeWithGroq(file);
+    }
+  }, [audioUrl, sttMode, transcribeWithGroq]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileUpload(file);
+  }, [handleFileUpload]);
+
+  // ═══ Absorb to Neural Network ═══
+  const absorbToNeural = useCallback(async () => {
+    if (!user?.id || transcripts.length === 0) {
+      toast.error("Nenhuma transcrição para absorver");
+      return;
+    }
+    setAbsorbing(true);
+    try {
+      const fullText = transcripts.map(t => t.text).join(". ");
+      const title = audioFile?.name || `Transcrição ${new Date().toLocaleDateString("pt-BR")}`;
+      const result = await addNeuralKnowledge(user.id, {
+        title: `Audiobook: ${title}`,
+        content: fullText,
+        source_type: "audiobook_transcript",
+        source_reference: audioFile?.name,
+        tags: ["audiobook", "stt", sttMode, ...insights.map(i => i.type).filter((v, i, a) => a.indexOf(v) === i)],
+      });
+
+      if (result.success) {
+        toast.success("🧠 Conteúdo absorvido pela Rede Neural!", {
+          description: `${transcripts.length} segmentos, ${wordsLearned} palavras, ${patternsDetected} padrões`,
+        });
+        setTranscripts(prev => prev.map(t => ({ ...t, processed: true })));
+      } else {
+        throw new Error(result.error || "Falha na absorção");
+      }
+    } catch (err: any) {
+      toast.error(`Erro: ${err.message}`);
+    } finally {
+      setAbsorbing(false);
+    }
+  }, [user, transcripts, audioFile, sttMode, insights, wordsLearned, patternsDetected]);
 
   // ═══ Toggle Main Activation ═══
   const toggleActive = useCallback(() => {
     if (isActive) {
-      // Deactivate
       setIsActive(false);
       setIsListening(false);
       setIsPlaying(false);
@@ -249,12 +345,10 @@ export function OrionAudiobookListener() {
       cancelAnimationFrame(animFrameRef.current);
       toast.info("🔇 Orion parou de ouvir");
     } else {
-      // Activate
       setIsActive(true);
       toast.success("👂 Orion começou a ouvir!");
 
       if (listeningMode === "mic") {
-        // Live microphone listening
         navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
           if (!audioContextRef.current || audioContextRef.current.state === "closed") {
             audioContextRef.current = new AudioContext();
@@ -262,17 +356,18 @@ export function OrionAudiobookListener() {
           const source = audioContextRef.current.createMediaStreamSource(stream);
           sourceRef.current = source;
           startVisualizer(source);
-          startSpeechRecognition();
+          if (sttMode === "browser") {
+            startSpeechRecognition();
+          }
         }).catch(() => toast.error("Permissão de microfone negada"));
       } else if (audioUrl) {
-        // File-based listening
         playAudioFile();
       } else {
         toast.info("Carregue um audiobook primeiro");
         setIsActive(false);
       }
     }
-  }, [isActive, listeningMode, audioUrl, startVisualizer, startSpeechRecognition]);
+  }, [isActive, listeningMode, audioUrl, startVisualizer, startSpeechRecognition, sttMode]);
 
   // ═══ Play Audio File ═══
   const playAudioFile = useCallback(() => {
@@ -295,7 +390,9 @@ export function OrionAudiobookListener() {
 
     audioRef.current.play();
     setIsPlaying(true);
-    startSpeechRecognition();
+    if (sttMode === "browser") {
+      startSpeechRecognition();
+    }
 
     audioRef.current.ontimeupdate = () => {
       setCurrentTime(audioRef.current?.currentTime || 0);
@@ -307,9 +404,8 @@ export function OrionAudiobookListener() {
       setIsPlaying(false);
       toast.info("📖 Audiobook finalizado");
     };
-  }, [audioUrl, volume, startVisualizer, startSpeechRecognition]);
+  }, [audioUrl, volume, startVisualizer, startSpeechRecognition, sttMode]);
 
-  // ═══ Toggle Play/Pause ═══
   const togglePlayPause = useCallback(() => {
     if (!audioRef.current) return;
     if (isPlaying) {
@@ -321,7 +417,6 @@ export function OrionAudiobookListener() {
     }
   }, [isPlaying]);
 
-  // Volume change
   const handleVolumeChange = useCallback((v: number[]) => {
     const newVol = v[0];
     setVolume(newVol);
@@ -379,6 +474,14 @@ export function OrionAudiobookListener() {
                 )}>
                   {isActive ? "🎧 OUVINDO" : "INATIVO"}
                 </Badge>
+                <Badge variant="outline" className={cn(
+                  "text-[7px] font-mono h-4",
+                  sttMode === "groq"
+                    ? "border-emerald-500/40 text-emerald-400"
+                    : "border-amber-500/30 text-amber-400"
+                )}>
+                  {sttMode === "groq" ? "⚡ GROQ WHISPER" : "🌐 BROWSER STT"}
+                </Badge>
                 {isProcessing && (
                   <Badge variant="outline" className="text-[7px] font-mono h-4 border-purple-500/40 text-purple-400 animate-pulse">
                     <Brain className="h-2 w-2 mr-0.5" /> PROCESSANDO
@@ -388,25 +491,52 @@ export function OrionAudiobookListener() {
             </div>
           </div>
 
-          {/* Main Toggle */}
-          <Button
-            size="sm"
-            variant={isActive ? "destructive" : "default"}
-            className={cn(
-              "h-8 text-[9px] font-mono gap-1.5 transition-all",
-              isActive
-                ? "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30"
-                : "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/30"
+          <div className="flex items-center gap-1">
+            {/* Absorb Button */}
+            {transcripts.length > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-[9px] font-mono gap-1 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10"
+                onClick={absorbToNeural}
+                disabled={absorbing}
+              >
+                {absorbing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+                Absorver
+              </Button>
             )}
-            onClick={toggleActive}
-          >
-            {isActive ? (
-              <><VolumeX className="h-3 w-3" /> Desativar</>
-            ) : (
-              <><Headphones className="h-3 w-3" /> Ativar</>
-            )}
-          </Button>
+
+            {/* Main Toggle */}
+            <Button
+              size="sm"
+              variant={isActive ? "destructive" : "default"}
+              className={cn(
+                "h-8 text-[9px] font-mono gap-1.5 transition-all",
+                isActive
+                  ? "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30"
+                  : "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/30"
+              )}
+              onClick={toggleActive}
+            >
+              {isActive ? (
+                <><VolumeX className="h-3 w-3" /> Desativar</>
+              ) : (
+                <><Headphones className="h-3 w-3" /> Ativar</>
+              )}
+            </Button>
+          </div>
         </div>
+
+        {/* Groq Processing Progress */}
+        {groqProcessing && (
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-[9px] font-mono text-emerald-400">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Transcrevendo via Groq Whisper...
+            </div>
+            <Progress value={groqProgress} className="h-1.5" />
+          </div>
+        )}
 
         {/* Audio Visualizer Canvas */}
         <div className={cn(
@@ -434,8 +564,8 @@ export function OrionAudiobookListener() {
           )}
         </div>
 
-        {/* Mode Selector + File Upload */}
-        <div className="flex items-center gap-2">
+        {/* Mode Selector + STT Engine + File Upload */}
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="flex gap-1">
             <Button
               size="sm" variant={listeningMode === "file" ? "default" : "ghost"}
@@ -455,31 +585,93 @@ export function OrionAudiobookListener() {
             </Button>
           </div>
 
-          {listeningMode === "file" && (
-            <div className="flex-1 flex items-center gap-1">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="audio/*"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
+          {/* STT Engine Toggle */}
+          <div className="flex gap-1 ml-auto">
+            <Button
+              size="sm" variant={sttMode === "groq" ? "default" : "ghost"}
+              className="h-6 text-[8px] font-mono gap-1"
+              onClick={() => setSttMode("groq")}
+              disabled={isActive}
+            >
+              ⚡ Groq
+            </Button>
+            <Button
+              size="sm" variant={sttMode === "browser" ? "default" : "ghost"}
+              className="h-6 text-[8px] font-mono gap-1"
+              onClick={() => setSttMode("browser")}
+              disabled={isActive}
+            >
+              🌐 Browser
+            </Button>
+          </div>
+        </div>
+
+        {/* Drag-and-Drop + Upload Area */}
+        {listeningMode === "file" && !audioFile && (
+          <div
+            ref={dropZoneRef}
+            className={cn(
+              "border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all",
+              dragOver
+                ? "border-cyan-400 bg-cyan-500/5"
+                : "border-white/[0.08] hover:border-cyan-500/30"
+            )}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              const file = e.dataTransfer.files[0];
+              if (file) handleFileUpload(file);
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={handleInputChange}
+            />
+            <Upload className="h-6 w-6 text-white/15 mx-auto mb-1.5" />
+            <p className="text-[9px] font-mono text-white/25">
+              Arraste um arquivo de áudio ou clique para selecionar
+            </p>
+            <p className="text-[7px] font-mono text-white/10 mt-1">
+              MP3, WAV, OGG, WEBM — {sttMode === "groq" ? "transcrição automática via Groq Whisper" : "transcrição via browser"}
+            </p>
+          </div>
+        )}
+
+        {/* File Info */}
+        {listeningMode === "file" && audioFile && (
+          <div className="flex items-center gap-2">
+            <FileAudio className="h-3 w-3 text-cyan-400 shrink-0" />
+            <span className="text-[8px] font-mono text-white/40 truncate flex-1">{audioFile.name}</span>
+            <Button
+              size="sm" variant="ghost"
+              className="h-5 w-5 p-0"
+              onClick={() => {
+                if (audioUrl) URL.revokeObjectURL(audioUrl);
+                setAudioFile(null);
+                setAudioUrl(null);
+                audioRef.current = null;
+                sourceRef.current = null;
+              }}
+            >
+              <X className="h-2.5 w-2.5 text-white/20" />
+            </Button>
+            {sttMode === "groq" && !groqProcessing && (
               <Button
                 size="sm" variant="ghost"
                 className="h-6 text-[8px] font-mono gap-1 text-emerald-400 hover:bg-emerald-500/10"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isActive}
+                onClick={() => transcribeWithGroq(audioFile)}
               >
-                <Upload className="h-2.5 w-2.5" /> Upload
+                ⚡ Re-transcrever
               </Button>
-              {audioFile && (
-                <span className="text-[7px] font-mono text-white/30 truncate max-w-[120px]">
-                  {audioFile.name}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Audio Player Controls (file mode) */}
         {listeningMode === "file" && audioUrl && (
@@ -561,11 +753,12 @@ export function OrionAudiobookListener() {
                   className={cn(
                     "px-2 py-1 rounded border text-[9px] font-mono transition-all",
                     seg.processed
-                      ? "bg-white/[0.01] border-white/[0.04] text-white/30"
+                      ? "bg-emerald-500/[0.04] border-emerald-500/10 text-white/40"
                       : "bg-cyan-500/[0.04] border-cyan-500/10 text-white/50"
                   )}
                 >
                   <span className="text-[7px] text-white/15 mr-2">
+                    {seg.processed ? "✓ " : ""}
                     {new Date(seg.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                   </span>
                   {seg.text}
@@ -595,7 +788,7 @@ export function OrionAudiobookListener() {
         )}
 
         {/* Empty State */}
-        {!isActive && transcripts.length === 0 && (
+        {!isActive && transcripts.length === 0 && !audioFile && (
           <div className="flex flex-col items-center justify-center py-6 text-white/10">
             <Headphones className="h-8 w-8 mb-2" />
             <p className="text-[9px] font-mono text-center">
