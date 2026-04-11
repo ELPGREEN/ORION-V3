@@ -1347,6 +1347,11 @@ export default function RedeNeuralPage() {
             <QuantumRuntimeDashboard />
           </Suspense>
         </TabsContent>
+
+        {/* IoT Devices Tab */}
+        <TabsContent value="iot-devices" className="space-y-4">
+          <OrionIoTPanel />
+        </TabsContent>
       </Tabs>
 
       {/* Floating Music Player — triggered by Orion voice/text commands */}
