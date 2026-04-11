@@ -1479,114 +1479,22 @@ export function useOrionReasoning(
         }
       };
 
-      // Debounced queue trigger: first sentence starts immediately (0ms),
-      // subsequent sentences wait 300ms for batching
-      let firstSentenceSpoken = false;
-      const triggerQueueDebounced = () => {
-        if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
-        // First sentence or stream ended → process immediately
-        if (!firstSentenceSpoken || streamEnded) {
-          firstSentenceSpoken = true;
-          void processSpeechQueue();
-          return;
-        }
-        batchDebounceTimer = setTimeout(() => {
-          void processSpeechQueue();
-        }, 300);
-      };
+      // ═══ SKIP all heavy layers — go DIRECT to Gemini ═══
+      // Removed: Cognitive Router, NLP Semantics, Cognition Engine, Deep Query Estimator
+      // Gemini handles everything — these layers added 500ms+ latency for marginal benefit
+      const cognitiveRouteResult: CognitiveRouting | null = null;
+      const isConversationalMode = true; // Always fast path
 
-      let streamingText = "";
-      const cleanHistory = chatHistoryRef.current.filter(m =>
-        !m.text.startsWith("⏳") && !m.text.endsWith("⚡") && m.text.length > 0
-      );
-
-      // ═══ LAYER 1.5: Cognitive Routing — SLM + Reasoning Mode ═══
-      let cognitiveRouteResult: CognitiveRouting | null = null;
-      try {
-        const slmDecision = routeToTier(question);
-        cognitiveRouteResult = cognitiveRoute(question, slmDecision.tier, intentType);
-        addLog(`🧭 CogRoute: tier=${cognitiveRouteResult.tier}, mode=${cognitiveRouteResult.mode}, ${cognitiveRouteResult.timestamp.toFixed(1)}ms`);
-        window.dispatchEvent(new CustomEvent("cognitive-routing", { detail: cognitiveRouteResult }));
-      } catch (e) {
-        addLog(`⚠️ CogRoute fallback: ${e}`);
-      }
-
-      // Pass cognitive routing maxTokens to the AI client layer
-      if (cognitiveRouteResult) {
-        (window as any).__cognitiveMaxTokens = cognitiveRouteResult.maxTokens;
-        (window as any).__cognitiveMode = cognitiveRouteResult.mode;
-        (window as any).__cognitiveReasoningInstructions = cognitiveRouteResult.reasoningInstructions;
-      }
-
-      // ═══ USER NAME INJECTION — cached to avoid blocking DB calls ═══
+      // User name — only if already cached (no DB call)
       if (!(window as any).__orionUserName) {
-        try {
-          const authUser = await getCachedUser();
-          if (authUser?.id) {
-            const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", authUser.id).maybeSingle();
-            (window as any).__orionUserName = profile?.full_name || undefined;
-          }
-        } catch { /* non-blocking */ }
-      }
-
-      // ═══ CONVERSATIONAL FAST-PATH: Skip heavy layers for casual queries ═══
-      const isConversationalMode = cognitiveRouteResult?.mode === "conversational";
-
-      // ═══ LAYER 1.7: Deep Query Estimator — SKIP for conversational ═══
-      if (!isConversationalMode) {
-        const timeEstimate = estimateResponseTime(
-          question,
-          cognitiveRouteResult?.mode || "fast",
-          intentType,
-        );
-        if (timeEstimate.isDeep && timeEstimate.message) {
-          addLog(`⏱️ DeepEstimate: ${timeEstimate.complexity}, ~${timeEstimate.estimatedMs}ms`);
-          setChatHistory(prev => {
-            const last = prev[prev.length - 1];
-            if (last?.role === "ai" && last.text.startsWith("⏳")) {
-              return [...prev.slice(0, -1), { ...last, text: timeEstimate.message }];
-            }
-            return prev;
+        getCachedUser().then(u => {
+          if (u?.id) supabase.from("profiles").select("full_name").eq("user_id", u.id).maybeSingle().then(({ data }) => {
+            if (data?.full_name) (window as any).__orionUserName = data.full_name;
           });
-          setThought(timeEstimate.message);
-          speak(timeEstimate.spokenMessage).catch(() => {});
-        }
+        }).catch(() => {});
       }
 
-      // ═══ LAYER 2: NLP Semantics + Cognition Context — SKIP for conversational ═══
-      let cognitionContextStr = "";
-      if (!isConversationalMode) {
-        try {
-          const semantics = analyzeSemantics(processedQuestion, chatHistoryRef.current.slice(-3).map(m => m.text).join(" "));
-          addLog(`🧬 NLP: domain=${semantics.domain}, discourse=${semantics.discourseType}, sentiment=${semantics.sentiment.primary}, entities=${semantics.entities.length}, complexity=${semantics.complexity} [${semantics.analysisTimeMs.toFixed(1)}ms]`);
-          window.dispatchEvent(new CustomEvent("nlp-semantics", { detail: semantics }));
-
-          if (semantics.resolvedText !== processedQuestion) {
-            processedQuestion = semantics.resolvedText;
-          }
-
-          // Full cognition only for deep mode
-          if (cognitiveRouteResult?.mode === "deep") {
-            const cognition = await buildCognitionContext(processedQuestion, chatHistoryRef.current, intentType);
-            cognitionContextStr = cognition.contextString;
-            addLog(`🧠 Cognition: Φ=${cognition.consciousnessLevel.toFixed(2)}, episodic=${cognition.episodicHits}, CL=${cognition.cognitiveLoad.toFixed(2)}, SV=${cognition.somaticValence.toFixed(1)} [${cognition.buildTimeMs.toFixed(1)}ms]`);
-            window.dispatchEvent(new CustomEvent("cognition-context", { detail: cognition }));
-          } else {
-            addLog(`⚡ Deep cognition SKIPPED (fast mode) — semantics OK [${Date.now() - now}ms]`);
-          }
-        } catch (cognErr) {
-          addLog(`⚠️ Cognition/NLP: ${cognErr}`);
-        }
-      } else {
-        addLog(`⚡ NLP+Cognition SKIPPED (conversational mode) [${Date.now() - now}ms]`);
-      }
-
-      // Inject cognition context into cognitive routing window vars
-      if (cognitionContextStr) {
-        (window as any).__cognitionContext = cognitionContextStr;
-      }
-
-      // ═══ LAYER 3: LLM call (budget: ~2s to first token) ═══
+      // ═══ DIRECT TO LLM — no more intermediate layers ═══
       addLog(`⏱️ Pre-LLM: ${Date.now() - now}ms`);
 
       const questionForLLM = processedInput || question;
