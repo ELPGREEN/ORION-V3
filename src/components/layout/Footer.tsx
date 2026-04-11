@@ -70,11 +70,11 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
               </div>
               <div className="leading-none">
                 <span className="font-serif text-foreground tracking-[0.15em] text-xs font-bold">ORION</span>
-                <p className="text-[8px] text-primary/60 tracking-[0.15em] mt-0.5">IA EMPRESARIAL • BY ELP</p>
+                <p className="text-[8px] text-primary/60 tracking-[0.15em] mt-0.5">INTELLIGENCE PLATFORM • BY ELP</p>
               </div>
             </div>
             <p className="text-[10px] text-muted-foreground/70 leading-relaxed max-w-[220px]">
-              Plataforma de IA empresarial para automação, gestão e processos.
+              Orion Intelligence Platform — Enterprise AI for automation, management and processes.
             </p>
           </div>
 
@@ -145,7 +145,7 @@ export function Footer({ hideCta = false }: { hideCta?: boolean }) {
           <span>© {currentYear} ELP® Green Technology • CNPJ 42.501.190/0001-70 • ELP® PROPERTY</span>
         </div>
         <p className="text-[8px] text-muted-foreground/20 tracking-[0.15em] uppercase">
-          Powered by Orion Neural Engine
+          Orion Intelligence Platform — Powered by ELP® Green Technology
         </p>
       </div>
     </footer>

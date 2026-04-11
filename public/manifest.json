@@ -1,7 +1,7 @@
 {
-  "name": "ORION IA | Plataforma Empresarial",
-  "short_name": "ORION",
-  "description": "ORION — Plataforma de Inteligência Artificial Empresarial by ELP Green Technology",
+  "name": "Orion Intelligence Platform",
+  "short_name": "Orion",
+  "description": "Orion Intelligence Platform — Enterprise AI by ELP® Green Technology. Neural automation, LegalTech, smart CRM and AI tools.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0f",
