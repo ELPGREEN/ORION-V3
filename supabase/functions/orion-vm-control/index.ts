@@ -96,12 +96,13 @@ serve(async (req) => {
       }
 
       const inactiveMinutes = (Date.now() - lastActivity) / 60_000;
-      console.log(`[orion-vm-control] Inactivity check: ${inactiveMinutes.toFixed(1)} minutes`);
+      console.log(`[orion-vm-control] Inactivity check: ${inactiveMinutes.toFixed(1)} minutes (threshold: 120)`);
 
-      if (inactiveMinutes > 15) {
+      // Only auto-stop after 2 HOURS of total inactivity (was 15 min — too aggressive)
+      if (inactiveMinutes > 120) {
         const status = await getVmStatus(baseUrl, accessToken);
         if (status === "RUNNING") {
-          console.log("[orion-vm-control] Auto-stopping VM due to inactivity");
+          console.log("[orion-vm-control] Auto-stopping VM due to 2h+ inactivity");
           await fetch(`${baseUrl}/stop`, {
             method: "POST",
             headers: { Authorization: `Bearer ${accessToken}` },
