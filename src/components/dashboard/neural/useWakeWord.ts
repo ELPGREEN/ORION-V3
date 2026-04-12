@@ -4,6 +4,7 @@ import { vsLog } from "./useVisionProcessing";
 
 // ═══ Unified Mic Arbiter — shared with useNeuralVoice ═══
 import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
+import { ensurePersistentMic, isMicPermissionGranted } from "@/lib/voice/persistentMic";
 
 const ORION_WAKE_REGEX = /([óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\b/i;
 
