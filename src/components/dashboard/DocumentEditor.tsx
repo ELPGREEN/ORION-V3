@@ -69,7 +69,7 @@ export function DocumentEditor({
   // ─── Actions ───
   const actions = useEditorActions({
     editedContent, setEditedContent, formData, selectedType, forceLetterhead,
-    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, undefined,
+    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, logNeural: () => {},
     clearAllSuggestionMarks: suggestions.clearAllSuggestionMarks,
     bubbleSelectionRef, bubbleNodeContextRef, initialSavedDocId,
   });
