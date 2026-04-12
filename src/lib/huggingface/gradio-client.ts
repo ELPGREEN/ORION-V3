@@ -9,6 +9,15 @@
 
 // [REMOVED] import type { PDFSegment, PDFAnalysisResult, HFSpaceHealthStatus } from "@/lib/neural/hf-space-client";
 
+// Stub types for removed neural modules
+interface HFSpaceHealthStatus { status: string; latency?: number }
+interface PDFSegment { text: string; page?: number }
+interface PDFAnalysisResult { segments: PDFSegment[]; markdown: string; html: string }
+function pdfToMarkdown(_d: any): string { return ""; }
+function pdfToHtml(_d: any): string { return ""; }
+function analyzePDF(_d: any): PDFAnalysisResult { return { segments: [], markdown: "", html: "" }; }
+
+
 const KNOWN_SPACES = {
   "pdf-vision": "Ericsonv12/adv",
 } as const;

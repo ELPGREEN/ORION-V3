@@ -13,4 +13,3 @@ export { PhilosophySection } from './PhilosophySection';
 export { TestimonialsCarousel } from './TestimonialsCarousel';
 export { SystemArchitectureSection } from './SystemArchitectureSection';
 export { TechStackSection } from './TechStackSection';
-// WhyOrionSection and OrionVideoShowcase removed

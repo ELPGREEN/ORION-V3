@@ -7,7 +7,6 @@ import { GlassCard } from "@/components/ui/TechElements";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { getAllPermissionStates, requestPermission, requestAllPermissions, type PermissionState } from "@/lib/device-permissions";
 import { useToast } from "@/hooks/use-toast";
-// [REMOVED] import { bluetoothManager, type BLEDeviceInfo } from "@/lib/neural/bluetooth-manager";
 import { isSpotifyConnected, startSpotifyLogin, disconnectSpotify } from "@/lib/spotify/spotify-service";
 import { isYTMusicConnected, startYTMusicLogin, disconnectYTMusic, getYTMusicUser } from "@/lib/youtube-music/youtube-music-service";
 import { useAmazonIntegration } from "@/hooks/useAmazonIntegration";
@@ -19,9 +18,7 @@ export default function InstallApp() {
   const { toast } = useToast();
 
   // Bluetooth state
-  const [bleDevices, setBleDevices] = useState<BLEDeviceInfo[]>([]);
   const [bleScanning, setBleScanning] = useState(false);
-  const [bleSupported] = useState(bluetoothManager.isSupported);
 
   // Spotify state
   const [spotifyConnected, setSpotifyConnected] = useState(false);
@@ -57,12 +54,8 @@ export default function InstallApp() {
   useEffect(() => {
     const handler = (event: { type: string; data: any }) => {
       if (event.type === "device_connected" || event.type === "device_disconnected") {
-        setBleDevices(bluetoothManager.getDevices());
       }
     };
-    bluetoothManager.on(handler);
-    setBleDevices(bluetoothManager.getDevices());
-    return () => bluetoothManager.off(handler);
   }, []);
 
   const handleInstall = async () => {
@@ -88,10 +81,7 @@ export default function InstallApp() {
 
   const handleBleScan = async () => {
     setBleScanning(true);
-    const device = await bluetoothManager.scan();
     if (device) {
-      const connected = await bluetoothManager.connect(device.id);
-      setBleDevices(bluetoothManager.getDevices());
       if (connected) {
         toast({ title: "Dispositivo conectado!", description: device.name });
       }
@@ -100,8 +90,6 @@ export default function InstallApp() {
   };
 
   const handleBleDisconnect = async (deviceId: string) => {
-    await bluetoothManager.disconnect(deviceId);
-    setBleDevices(bluetoothManager.getDevices());
     toast({ title: "Dispositivo desconectado" });
   };
 
@@ -299,7 +287,6 @@ export default function InstallApp() {
                       className="h-6 text-[10px] px-2"
                       onClick={() => d.connected
                         ? handleBleDisconnect(d.id)
-                        : bluetoothManager.connect(d.id).then(() => setBleDevices(bluetoothManager.getDevices()))
                       }
                     >
                       {d.connected ? "Desconectar" : "Conectar"}

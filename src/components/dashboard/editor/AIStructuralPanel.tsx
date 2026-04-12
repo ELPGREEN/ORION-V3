@@ -4,6 +4,14 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
+
+// Local type stub
+interface StructuralAnalysis {
+  sections: { title: string; wordCount: number; issues: string[] }[];
+  overallScore: number;
+  suggestions: string[];
+}
+
 import {
   AlertCircle, Loader2, ChevronDown, ChevronUp,
   Shield, FileSearch, Sparkles, PlusCircle, RefreshCw, XCircle,

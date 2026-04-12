@@ -3,6 +3,25 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+// Local types (previously from neural modules)
+interface ReviewIssue {
+  id: string;
+  type: "error" | "warning" | "suggestion";
+  title: string;
+  description: string;
+  fix?: string;
+  location?: string;
+  excerpt: string;
+  category?: string;
+  confidence?: number;
+}
+interface NeuralMetrics {
+  coherence: number;
+  completeness: number;
+  legalAccuracy: number;
+}
+
 import {
   AlertTriangle, AlertCircle, Lightbulb, CheckCircle2, Loader2,
   ChevronDown, ChevronUp, Brain, Scale, RefreshCw, Activity, XCircle, Clock,

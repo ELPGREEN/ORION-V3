@@ -228,7 +228,7 @@ export function MobileSidebarOverlay({ open, onClose, role, label }: MobileSideb
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 flex-shrink-0 text-slate-500 hover:text-cyan-400">
-            <IconClose size={16} />
+            <X size={16} />
           </Button>
         </div>
 
@@ -258,7 +258,7 @@ export function MobileSidebarOverlay({ open, onClose, role, label }: MobileSideb
                     {(section.items ?? []).filter(Boolean).map((item) => {
                       if (!item?.id) return null;
                       const active = isActive(item.path);
-                      const Icon = getOrionIcon(item.id);
+                      const Icon = null;
                       return (
                         <button
                           key={item.id}
@@ -309,7 +309,7 @@ export function MobileSidebarOverlay({ open, onClose, role, label }: MobileSideb
             }}
             className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-slate-500 hover:text-red-400 transition-colors"
           >
-            <IconLogout size={16} />
+            <LogOut size={16} />
             Sair
           </button>
         </div>

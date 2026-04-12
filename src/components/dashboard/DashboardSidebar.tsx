@@ -187,7 +187,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
           className="h-7 w-7 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 flex-shrink-0"
           title={collapsed ? "Expandir menu" : "Recolher menu"}
         >
-          {collapsed ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </Button>
       </div>
 
@@ -198,7 +198,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
             className={s.quickAction}
             onClick={() => navigate("/dashboard/gerar-documento?tipo=contrato-servicos")}
           >
-            <IconPlus size={14} />
+            <Plus size={14} />
             NOVO DOCUMENTO
           </Button>
         </div>
@@ -213,7 +213,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
               {!collapsed && (
                 <button onClick={() => toggleSection(sIdx)} className={s.sectionHeader}>
                   <span>{section.label}</span>
-                  <IconChevronDown
+                  <ChevronDown
                     size={12}
                     className={`transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`}
                   />
@@ -230,14 +230,14 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                   className="w-full flex items-center justify-center py-2 text-slate-600 hover:text-cyan-400 transition-colors"
                   title="Área restrita — clique para desbloquear"
                 >
-                  <IconBrain size={16} />
+                  <Brain size={16} />
                 </button>
               )}
               {((collapsed || isOpen) && !(section.restricted && !adminUnlocked)) && (
                 <div className={`${collapsed ? "py-1" : "pb-1"} space-y-0.5`}>
                   {section.items.map((item) => {
                     const active = isActive(item.path);
-                    const Icon = getOrionIcon(item.id);
+                    const Icon = null;
                     return (
                       <Link
                         key={item.id}
@@ -284,7 +284,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
           <>
             <div className="flex items-center gap-3 mb-3">
               <div className={s.userAvatar}>
-                <IconUser size={16} className="text-cyan-400/70" />
+                <User size={16} className="text-cyan-400/70" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className={s.userName}>{userName}</p>
@@ -298,7 +298,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                 className={s.settingsBtn}
                 onClick={() => navigate("/dashboard/configuracoes")}
               >
-                <IconSettings size={12} className="mr-1" />
+                <Settings size={12} className="mr-1" />
                 {t.dashboard.settings}
               </Button>
               <Button
@@ -307,7 +307,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                 className={s.logoutBtn}
                 onClick={handleSignOut}
               >
-                <IconLogout size={12} className="mr-1" />
+                <LogOut size={12} className="mr-1" />
                 {t.common.logout}
               </Button>
             </div>
@@ -321,7 +321,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
               onClick={handleSignOut}
               title={t.common.logout}
             >
-              <IconLogout size={16} />
+              <LogOut size={16} />
             </Button>
           </div>
         )}

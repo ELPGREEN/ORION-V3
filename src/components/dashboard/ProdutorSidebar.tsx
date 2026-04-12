@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logoElp from "@/assets/logo-elp.webp";
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
-// [REMOVED] import { getOrionIcon, IconLogout } from "./icons/OrionIcons";
+// [REMOVED] import { getOrionIcon, LogOut } from "./icons/OrionIcons";
 
 const produtorItems = [
   { id: "home", label: "Meu Painel", path: "/dashboard" },
@@ -51,7 +51,7 @@ export function ProdutorSidebar({ collapsed }: ProdutorSidebarProps) {
       <nav className="flex-1 py-3 px-1 space-y-0.5 overflow-y-auto">
         {produtorItems.map((item) => {
           const active = isActive(item.path);
-          const Icon = getOrionIcon(item.id);
+          const Icon = null;
           return (
             <button
               key={item.id}
@@ -72,7 +72,7 @@ export function ProdutorSidebar({ collapsed }: ProdutorSidebarProps) {
           title={collapsed ? "Sair" : undefined}
           className={`w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-slate-500 hover:text-red-400 transition-colors ${collapsed ? "justify-center" : ""}`}
         >
-          <IconLogout size={16} />
+          <LogOut size={16} />
           {!collapsed && "Sair"}
         </button>
       </div>
