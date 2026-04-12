@@ -53,9 +53,7 @@ const SolucoesIndustria = lazy(lazyRetry(() => import("./pages/solucoes/Industri
 
 // ─── Auth-Required Pages (visible only after login) ───
 const ConsultaIA = lazy(lazyRetry(() => import("./pages/ConsultaIA")));
-const DocumentacaoRedeNeural = lazy(lazyRetry(() => import("./pages/DocumentacaoRedeNeural")));
-const DocumentacaoNeuroCore = lazy(lazyRetry(() => import("./pages/DocumentacaoNeuroCore")));
-const BiometricRegistration = lazy(lazyRetry(() => import("./pages/BiometricRegistration")));
+// Removed: DocumentacaoRedeNeural, DocumentacaoNeuroCore, BiometricRegistration
 // OrionDemo and OrionExtensionPage removed — consolidated into RedeNeuralPage
 const Loja = lazy(lazyRetry(() => import("./pages/Loja")));
 const LojaOrion = lazy(lazyRetry(() => import("./pages/LojaOrion")));
@@ -130,13 +128,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AnalyticsProvider />
-          <OrionVmWakeUp />
           <ScrollToTop />
           <CopyProtection />
-          <OrionShield />
-          {/* GlobalOrionListener lives inside DashboardLayout now */}
-          {/* PublicOrionListener — lightweight orb for public pages */}
-          <PublicOrionListener />
           <MouseTrailEffect />
           <CookieConsent />
           <AffiliateTracker />
@@ -179,11 +172,9 @@ const App = () => (
                   <Route path="/consulta" element={<AuthGuard><ConsultaIA /></AuthGuard>} />
                   <Route path="/demo" element={<Navigate to="/dashboard/rede-neural" replace />} />
                   <Route path="/extension" element={<Navigate to="/dashboard/rede-neural" replace />} />
-                  <Route path="/register/biometric" element={<AuthGuard><BiometricRegistration /></AuthGuard>} />
-
-                  {/* ═══ AUTH REQUIRED — Docs técnicos ═══ */}
-                  <Route path="/docs/rede-neural" element={<AuthGuard><DocumentacaoRedeNeural /></AuthGuard>} />
-                  <Route path="/docs/neurocore" element={<AuthGuard><DocumentacaoNeuroCore /></AuthGuard>} />
+                  <Route path="/register/biometric" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/docs/rede-neural" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/docs/neurocore" element={<Navigate to="/dashboard" replace />} />
 
                   {/* ═══ AUTH REQUIRED — Loja ═══ */}
                   <Route path="/loja/:creatorId" element={<AuthGuard><Loja /></AuthGuard>} />
