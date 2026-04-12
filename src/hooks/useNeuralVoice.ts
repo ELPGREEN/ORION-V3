@@ -163,7 +163,7 @@ export function useNeuralVoice(
   const lastSpokenAtRef = useRef(0);
   const lastProcessedTranscriptRef = useRef("");
   const lastProcessedAtRef = useRef(0);
-  const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
   const consecutiveAbortsRef = useRef(0);
   const voiceActiveRef = useRef(false);
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -305,7 +305,7 @@ export function useNeuralVoice(
     }
 
     // Cancel any ongoing speech
-    try { speechSynthesis.cancel(); } catch {}
+    
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
