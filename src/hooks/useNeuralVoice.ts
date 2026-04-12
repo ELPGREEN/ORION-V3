@@ -1,15 +1,16 @@
 /**
- * NEUROCORE AI — Voice Synthesis Hook (JARVIS-Grade v2)
+ * NEUROCORE AI — Voice Synthesis Hook (JARVIS-Grade v3)
  * 
- * Pipeline: STT (Web Speech) → Command Handler → TTS (Gemini → Web Speech fallback)
+ * Pipeline: STT (Google Cloud STT primary → Web Speech fallback) → Command Handler → TTS (Gemini Iapetus)
  * 
  * Architecture:
+ * - Google Cloud STT as primary (via edge function google-stt)
+ * - Web Speech API as fallback when GCP STT unavailable
  * - Single mic owner via MicArbiter (prevents duplicate recognition)
  * - Mic priming on startListening (auto-start without click when permission exists)
  * - Self-hearing guard (drops transcripts during TTS + echo detection)
  * - Dynamic turn detection (linguistic pattern matching for silence thresholds)
  * - Barge-in support (user can interrupt TTS with stop commands or 3+ words)
- * - STT fallback chain (Groq Whisper → Browser Whisper on network errors)
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { OrbState } from "@/components/dashboard/neural/EnergyOrb";
@@ -21,6 +22,7 @@ import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural/pipeline-latency-tracker";
 import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
 import { ensurePersistentMic, isMobile as isMobilePersistent } from "@/lib/voice/persistentMic";
+import { createGCPSTTSession } from "@/lib/voice/gcpSTT";
 
 // ═══ Constants ═══
 const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
@@ -175,6 +177,8 @@ export function useNeuralVoice(
   const singletonIdRef = useRef(0);
   const audioChunksRef = useRef<Float32Array[]>([]);
   const audioWorkletActiveRef = useRef(false);
+  const gcpSessionRef = useRef<ReturnType<typeof createGCPSTTSession> | null>(null);
+  const useGCPSTTRef = useRef(true); // GCP STT as primary
 
   // ── Sync ──
   const updateAiResponding = useCallback((val: boolean) => {
@@ -187,7 +191,8 @@ export function useNeuralVoice(
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setSupported("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
+      // GCP STT always supported (edge function), Web Speech as fallback
+      setSupported(true);
     }
   }, []);
 
@@ -286,6 +291,12 @@ export function useNeuralVoice(
         speechDebounceRef.current = null;
       }
       onCmdRef.current(pending);
+    }
+
+    // If GCP STT is active, it's already listening (persistent stream)
+    if (gcpSessionRef.current?.isActive()) {
+      setListening(true);
+      return;
     }
 
     scheduleRecognitionRestart(isMobile() ? 600 : 100);
@@ -700,13 +711,84 @@ export function useNeuralVoice(
       // Guard against stale state after async prime
       if (intentionalStopRef.current || onCmdRef.current !== onCmd) return;
 
-      // AudioWorklet removed — was causing conflicts with SpeechRecognition
+      // ═══ TRY GCP STT FIRST ═══
+      if (useGCPSTTRef.current) {
+        try {
+          // Stop any existing GCP session
+          if (gcpSessionRef.current?.isActive()) {
+            gcpSessionRef.current.stop();
+          }
 
+          const session = createGCPSTTSession({
+            languageCode: "pt-BR",
+            sampleRate: 16000,
+            chunkIntervalMs: 2500,
+            onFinal: (text, confidence) => {
+              if (!onCmdRef.current || intentionalStopRef.current) return;
+              if (speakingRef.current || VoiceState.aiResponding) {
+                // During TTS, check for barge-in
+                if (STOP_PATTERNS.test(text)) {
+                  bargeIn();
+                  return;
+                }
+                if (text.split(/\s+/).length >= 3) {
+                  bargeIn();
+                }
+                return;
+              }
+
+              const normalized = normalizeSpeechText(text);
+              if (normalized.length < 3) return;
+
+              const now = Date.now();
+              // Duplicate guard
+              if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
+              // Echo guard
+              if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
+                if (isEchoOf(normalized, lastSpokenTextRef.current)) {
+                  console.log("[Voice] GCP Echo suppressed:", normalized.slice(0, 50));
+                  return;
+                }
+              }
+
+              lastProcessedTranscriptRef.current = normalized;
+              lastProcessedAtRef.current = now;
+              markSTTEnd();
+              console.log(`[Voice] GCP STT: "${text}" (${(confidence * 100).toFixed(0)}%)`);
+              onCmdRef.current(text);
+            },
+            onError: (err) => {
+              console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech");
+              // Fallback to Web Speech API
+              useGCPSTTRef.current = false;
+              gcpSessionRef.current?.stop();
+              gcpSessionRef.current = null;
+              if (onCmdRef.current && !intentionalStopRef.current) {
+                startListeningFresh(onCmdRef.current);
+              }
+            },
+          });
+
+          gcpSessionRef.current = session;
+          const started = await session.start();
+
+          if (started && !intentionalStopRef.current) {
+            setListening(true);
+            markSTTStart();
+            console.log("[Voice] ✅ Google Cloud STT ativo — streaming em tempo real");
+            return; // GCP STT running, no need for Web Speech
+          }
+        } catch (err) {
+          console.warn("[Voice] GCP STT init failed:", err);
+        }
+      }
+
+      // ═══ FALLBACK: Web Speech API ═══
       startListeningFresh(onCmd);
     };
 
     void boot();
-  }, [clearRestartTimer, startListeningFresh]);
+  }, [clearRestartTimer, startListeningFresh, bargeIn]);
 
   // ═══ Public: Stop ═══
   const stop = useCallback(() => {
@@ -721,6 +803,11 @@ export function useNeuralVoice(
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
     }
+    // Stop GCP STT session
+    if (gcpSessionRef.current?.isActive()) {
+      gcpSessionRef.current.stop();
+    }
+    gcpSessionRef.current = null;
     speechBufferRef.current = "";
     try { speechSynthesis.cancel(); } catch {}
     try { recRef.current?.stop(); } catch {}
@@ -734,6 +821,10 @@ export function useNeuralVoice(
     clearRestartTimer();
     voiceActiveRef.current = false;
     intentionalStopRef.current = true;
+    if (gcpSessionRef.current?.isActive()) {
+      gcpSessionRef.current.stop();
+    }
+    gcpSessionRef.current = null;
     try { recRef.current?.abort?.(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
