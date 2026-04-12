@@ -53,7 +53,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   const {
     languageCode = "pt-BR",
     sampleRate = 16000,
-    chunkIntervalMs = 2000,
+    chunkIntervalMs = 4000,
     onInterim,
     onFinal,
     onError,
@@ -67,6 +67,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   let active = false;
   let chunkTimer: ReturnType<typeof setInterval> | null = null;
   let audioBuffer: Float32Array[] = [];
+  let overlapBuffer: Float32Array | null = null; // Keep last 0.5s for context overlap
   let sending = false;
 
   const sendChunk = async () => {
@@ -74,19 +75,30 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     sending = true;
 
     try {
-      // Concatenate all buffered audio
-      const totalLength = audioBuffer.reduce((acc, b) => acc + b.length, 0);
-      if (totalLength < sampleRate * 0.3) {
-        // Less than 300ms of audio — skip
+      // Prepend overlap from previous chunk for context continuity
+      const allBuffers = overlapBuffer ? [overlapBuffer, ...audioBuffer] : [...audioBuffer];
+      const totalLength = allBuffers.reduce((acc, b) => acc + b.length, 0);
+      if (totalLength < sampleRate * 0.5) {
+        // Less than 500ms of audio — skip
         sending = false;
         return;
       }
 
       const merged = new Float32Array(totalLength);
       let offset = 0;
-      for (const buf of audioBuffer) {
+      for (const buf of allBuffers) {
         merged.set(buf, offset);
         offset += buf.length;
+      }
+
+      // Save last 0.5s as overlap for next chunk (context continuity)
+      const overlapSamples = Math.floor((audioContext?.sampleRate || 48000) * 0.5);
+      const currentBufferLength = audioBuffer.reduce((acc, b) => acc + b.length, 0);
+      if (currentBufferLength > overlapSamples) {
+        const flatCurrent = new Float32Array(currentBufferLength);
+        let off = 0;
+        for (const buf of audioBuffer) { flatCurrent.set(buf, off); off += buf.length; }
+        overlapBuffer = flatCurrent.slice(-overlapSamples);
       }
       audioBuffer = [];
 

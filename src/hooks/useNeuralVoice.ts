@@ -179,6 +179,8 @@ export function useNeuralVoice(
   const audioWorkletActiveRef = useRef(false);
   const gcpSessionRef = useRef<ReturnType<typeof createGCPSTTSession> | null>(null);
   const useGCPSTTRef = useRef(true); // GCP STT as primary
+  const sentenceAccumulatorRef = useRef(""); // Accumulate partial sentences
+  const sentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Sync ──
   const updateAiResponding = useCallback((val: boolean) => {
@@ -722,7 +724,7 @@ export function useNeuralVoice(
           const session = createGCPSTTSession({
             languageCode: "pt-BR",
             sampleRate: 16000,
-            chunkIntervalMs: 2500,
+            chunkIntervalMs: 4000,
             onFinal: (text, confidence) => {
               if (!onCmdRef.current || intentionalStopRef.current) return;
               if (speakingRef.current || VoiceState.aiResponding) {
@@ -738,24 +740,54 @@ export function useNeuralVoice(
               }
 
               const normalized = normalizeSpeechText(text);
-              if (normalized.length < 3) return;
+              if (normalized.length < 2) return;
 
-              const now = Date.now();
-              // Duplicate guard
-              if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
-              // Echo guard
-              if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
-                if (isEchoOf(normalized, lastSpokenTextRef.current)) {
-                  console.log("[Voice] GCP Echo suppressed:", normalized.slice(0, 50));
-                  return;
-                }
+              // ═══ SENTENCE ACCUMULATION ═══
+              // Accumulate fragments until a pause (no new text for 1.5s)
+              // This prevents sending half-sentences to the AI
+              if (sentenceTimerRef.current) {
+                clearTimeout(sentenceTimerRef.current);
               }
 
-              lastProcessedTranscriptRef.current = normalized;
-              lastProcessedAtRef.current = now;
-              markSTTEnd();
-              console.log(`[Voice] GCP STT: "${text}" (${(confidence * 100).toFixed(0)}%)`);
-              onCmdRef.current(text);
+              // Append to accumulator (avoid duplicating overlap)
+              const existing = sentenceAccumulatorRef.current;
+              if (existing && normalized.startsWith(existing.slice(-20))) {
+                // Overlap detected, merge
+                sentenceAccumulatorRef.current = existing + " " + normalized.slice(existing.slice(-20).length).trim();
+              } else if (existing) {
+                sentenceAccumulatorRef.current = existing + " " + normalized;
+              } else {
+                sentenceAccumulatorRef.current = normalized;
+              }
+
+              console.log(`[Voice] GCP chunk: "${text}" (${(confidence * 100).toFixed(0)}%) — accumulated: "${sentenceAccumulatorRef.current.slice(0, 80)}..."`);
+
+              // Wait 1.5s of silence before processing the full sentence
+              sentenceTimerRef.current = setTimeout(() => {
+                const fullSentence = sentenceAccumulatorRef.current.trim();
+                sentenceAccumulatorRef.current = "";
+                sentenceTimerRef.current = null;
+
+                if (!fullSentence || fullSentence.length < 3) return;
+                if (!onCmdRef.current || intentionalStopRef.current) return;
+
+                const now = Date.now();
+                // Duplicate guard
+                if (fullSentence === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
+                // Echo guard
+                if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
+                  if (isEchoOf(fullSentence, lastSpokenTextRef.current)) {
+                    console.log("[Voice] GCP Echo suppressed:", fullSentence.slice(0, 50));
+                    return;
+                  }
+                }
+
+                lastProcessedTranscriptRef.current = fullSentence;
+                lastProcessedAtRef.current = now;
+                markSTTEnd();
+                console.log(`[Voice] GCP STT final: "${fullSentence}"`);
+                onCmdRef.current(fullSentence);
+              }, 1500);
             },
             onError: (err) => {
               console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech");
