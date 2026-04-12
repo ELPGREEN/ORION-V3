@@ -169,7 +169,7 @@ export function ComparisonResults({
           )}
 
           {neuralResponse?.results.map((result, i) => (
-            <NeuralSearchResultCard key={`neural-${result.source}-${i}`} result={result} searchQuery={displayQuery} />
+            <SearchResultCard key={`neural-${result.source}-${i}`} result={result} />
           ))}
 
           {neuralCount === 0 && neuralResponse && (

@@ -338,24 +338,10 @@ export default function ChatJuridico() {
                         <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => copyToClipboard(message.content)}>
                           <Copy className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => logNeural({
-                          interaction_type: "chat",
-                          input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
-                          output_text: message.content,
-                          quality_score: 0.9,
-                          user_id: user?.id,
-                          metadata: { thumbs: "up", provider: message.provider, module: "chat_juridico" },
-                        })}>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => console.log("thumbs up", message.provider)}>
                           <ThumbsUp className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => logNeural({
-                          interaction_type: "chat",
-                          input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
-                          output_text: message.content,
-                          quality_score: 0.2,
-                          user_id: user?.id,
-                          metadata: { thumbs: "down", provider: message.provider, module: "chat_juridico" },
-                        })}>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => console.log("thumbs down", message.provider)}>
                           <ThumbsDown className="h-3 w-3" />
                         </Button>
                       </div>

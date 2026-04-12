@@ -449,11 +449,6 @@ export default function ChatHumano() {
           content: m.content,
         }));
 
-        // Integração Agente-Eu v22.3: envia estado consciente para a Secretaria
-// [REMOVED]         const { getAgenteEu } = await import("@/lib/neural/agents/self-model-agent");
-        const agenteEu = getAgenteEu();
-        const selfState = agenteEu.getState();
-
         const { data: secretaryData, error: secError } = await supabase.functions.invoke("secretaria-ia", {
           body: {
             messages: chatHistory,
@@ -461,13 +456,6 @@ export default function ChatHumano() {
             clienteId: user.id,
             mode: convMode || "ai_autonomous",
             lawyerInstructions: convInstructions || null,
-            consciousnessState: {
-              confidence: selfState.confidenceLevel,
-              emotionalValence: selfState.emotionalState.valence,
-              arousal: selfState.emotionalState.arousal,
-              attentionFocus: selfState.attentionFocus,
-              activeModalities: selfState.activeModalities,
-            },
           },
         });
 
