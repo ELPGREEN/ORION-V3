@@ -22,6 +22,7 @@ import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural/pipeline-latency-tracker";
 import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
 import { ensurePersistentMic, isMobile as isMobilePersistent } from "@/lib/voice/persistentMic";
+import { createGCPSTTSession } from "@/lib/voice/gcpSTT";
 
 // ═══ Constants ═══
 const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
