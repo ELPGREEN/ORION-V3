@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import logoElp from "@/assets/logo-elp.webp";
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
 import { LogOut } from "lucide-react";
+import { getMenuIcon } from "./sidebarIconMap";
 
 const afiliadoItems = [
   { id: "home", label: "Meu Painel", path: "/dashboard" },
@@ -48,7 +49,7 @@ export function AfiliadoSidebar({ collapsed }: AfiliadoSidebarProps) {
       <nav className="flex-1 py-3 px-1 space-y-0.5 overflow-y-auto">
         {afiliadoItems.map((item) => {
           const active = isActive(item.path);
-          const Icon = null;
+          const Icon = getMenuIcon(item.id);
           return (
             <button
               key={item.id}

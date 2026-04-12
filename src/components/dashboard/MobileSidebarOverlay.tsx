@@ -7,6 +7,7 @@ import logoElp from "@/assets/logo-elp.webp";
 import { useState } from "react";
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
 import { X, LogOut } from "lucide-react";
+import { getMenuIcon } from "./sidebarIconMap";
 interface MobileSidebarOverlayProps {
   open: boolean;
   onClose: () => void;
@@ -258,7 +259,7 @@ export function MobileSidebarOverlay({ open, onClose, role, label }: MobileSideb
                     {(section.items ?? []).filter(Boolean).map((item) => {
                       if (!item?.id) return null;
                       const active = isActive(item.path);
-                      const Icon = null;
+                      const Icon = getMenuIcon(item.id);
                       return (
                         <button
                           key={item.id}

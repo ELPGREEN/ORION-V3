@@ -18,6 +18,7 @@ import logoElp from "@/assets/logo-elp.webp";
 
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
 import { ChevronRight, ChevronLeft, Plus, ChevronDown, Brain, User, Settings, LogOut } from "lucide-react";
+import { getMenuIcon } from "./sidebarIconMap";
 interface DashboardSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -237,7 +238,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                 <div className={`${collapsed ? "py-1" : "pb-1"} space-y-0.5`}>
                   {section.items.map((item) => {
                     const active = isActive(item.path);
-                    const Icon = null;
+                    const Icon = getMenuIcon(item.id);
                     return (
                       <Link
                         key={item.id}
