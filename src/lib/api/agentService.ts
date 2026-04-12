@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { withCircuitBreaker } from "@/lib/circuit-breaker";
-// [REMOVED] import { onAgentTaskComplete, getSmartRouting, getAgentMetrics } from "@/lib/neural/neural-agent-bridge";
 
 // ─── Inline Multi-Agent Framework (formerly multi-agent-framework.ts) ───
 
@@ -241,7 +240,6 @@ export async function smartAgentRoute(
 
   // v23: Enrich routing with STDP neural weights
   const partners = (() => ({ provider: 'gemini', reason: 'default' }))(intent.primaryAgent);
-  if (primaryMetrics) {
     // Boost confidence if STDP shows strong partner bindings
     const avgPartnerWeight = partners.reduce((s, p) => s + p.weight, 0) / Math.max(partners.length, 1);
     intent.confidence = Math.min(1, intent.confidence + avgPartnerWeight * 0.1);

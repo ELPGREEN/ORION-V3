@@ -46,14 +46,6 @@ export default function PagamentoSucesso() {
         if (data?.status === "paid") {
           setDetails(data);
           // 🧠 Neural: pagamento confirmado = sinal de conversão de alta qualidade
-          logNeural({
-            interaction_type: "pagamento_event",
-            input_text: `Pagamento confirmado: ${data.tipo_servico || "consulta"}`,
-            output_text: `Valor: ${data.currency?.toUpperCase()} ${(data.amount / 100).toFixed(2)} — ${data.customer_email}`,
-            quality_score: 0.95,
-            user_id: user?.id,
-            metadata: { tipo_servico: data.tipo_servico, amount: data.amount, currency: data.currency, module: "pagamento_sucesso" },
-          });
         } else {
           setError("Pagamento ainda não confirmado. Tente novamente em instantes.");
         }

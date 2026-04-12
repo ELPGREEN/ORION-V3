@@ -152,14 +152,6 @@ export default function NotificacoesPage() {
     if (!n.lida) marcarComoLida(n.id);
 
     // 🧠 Neural: registro de leitura de notificação como sinal de engajamento
-    logNeural({
-      interaction_type: "notificacao_read",
-      input_text: `Notificação lida: ${n.titulo} (tipo: ${n.tipo})`,
-      output_text: n.descricao || "",
-      quality_score: 0.55,
-      user_id: user?.id,
-      metadata: { notif_id: n.id, tipo: n.tipo, lida: n.lida, source: "notificacoes_page" },
-    });
 
     // If notification has a specific link (not generic dashboard), navigate there
     if (isUsefulLink(n.link)) {

@@ -120,14 +120,6 @@ export default function ContatosPage() {
         loadContacts();
 
         // 🧠 Neural: importação Google = sinal de integração ativa
-        logNeural({
-          interaction_type: "crm_client_event",
-          input_text: `Importação de contatos Google: ${toInsert.length} contatos`,
-          output_text: toInsert.map((c: any) => `${c.nome} <${c.email}>`).slice(0, 5).join(", "),
-          quality_score: 0.8,
-          user_id: user?.id,
-          metadata: { module: "contatos_google", count: toInsert.length, status_novo: "em_atendimento" },
-        });
       }
     } catch (e: any) {
       toast({ title: "Erro ao importar", description: e.message || "Tente novamente.", variant: "destructive" });

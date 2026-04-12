@@ -12,7 +12,7 @@ interface DocumentElement {
   wordCount?: number;
   count?: number;
 }
-interface StructuralSection {
+interface any {
   title: string;
   present: boolean;
   wordCount?: number;
@@ -22,7 +22,7 @@ interface StructuralAnalysis {
   sections: { title: string; wordCount: number; issues: string[] }[];
   overallScore: number;
   suggestions: string[];
-  presentSections: StructuralSection[];
+  presentSections: any[];
   missingSections: { title: string; name?: string; description: string; suggestedContent: string; suggestion?: string; importance?: string }[];
   score: number;
   summary: string;

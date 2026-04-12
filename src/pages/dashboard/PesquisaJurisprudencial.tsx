@@ -429,20 +429,6 @@ export default function PesquisaJurisprudencial() {
       setSearched(true);
 
       // 🧠 Neural feedback: registra busca como sinal de aprendizado
-      logNeural({
-        interaction_type: "search",
-        input_text: query.trim(),
-        output_text: allResults.slice(0, 3).map(r => `${r.numero}: ${r.ementa}`).join("\n"),
-        metadata: {
-          tribunal: selectedTribunal,
-          resultsCount: allResults.length,
-          neuralCount: results.length,
-          totalTimeMs: totalTime,
-          pipeline: neuralResponse.pipeline,
-          area: neuralResponse.area,
-          module: "pesquisa_jurisprudencial",
-        },
-      });
 
       toast({
         title: "Pesquisa concluída",

@@ -100,18 +100,6 @@ export default function PerfilAdmin() {
     }
 
     // ─── Neural: atualização de honorários = sinal administrativo ───
-    logNeural({
-      interaction_type: "crm_client_event",
-      input_text: `Honorários atualizados (${honorarios.length} itens)`,
-      output_text: honorarios.map(h => `${h.tipo_servico}: R$ ${h.valor}`).join("; "),
-      quality_score: 0.8,
-      user_id: user.id,
-      metadata: {
-        source: "perfil_admin_honorarios",
-        total_items: honorarios.length,
-        status_novo: "config_atualizada",
-      },
-    });
 
     toast({ title: "Honorários salvos!", description: "Valores atualizados no sistema e chat IA." });
     setSaving(false);

@@ -143,7 +143,6 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
         // Anti-hallucination: validate neural results
         try {
           if (result.data.results.length > 0) {
-            console.log(`[AntiHallucination:Neural] ${report.flaggedResults}/${report.totalResults} flagged, confidence=${report.overallConfidence}%, ${report.processingMs}ms`);
           }
         } catch (e) {
           console.warn("[AntiHallucination] Validation error (non-fatal):", e);
@@ -156,7 +155,6 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
         // Anti-hallucination: validate traditional results
         try {
           if (result.data.results.length > 0) {
-            console.log(`[AntiHallucination:Pesquisa] ${report.flaggedResults}/${report.totalResults} flagged, confidence=${report.overallConfidence}%, ${report.processingMs}ms`);
           }
         } catch (e) {
           console.warn("[AntiHallucination] Validation error (non-fatal):", e);

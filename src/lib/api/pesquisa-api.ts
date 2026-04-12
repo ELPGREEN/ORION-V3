@@ -9,6 +9,8 @@ export interface SearchResult {
   date?: string;
   type: 'lei' | 'jurisprudencia' | 'doutrina' | 'entidade' | 'proposicao' | 'estatistica';
   metadata?: Record<string, unknown>;
+  content_type?: string;
+  type?: string;
 }
 
 export interface UnifiedSearchResponse {
@@ -145,6 +147,8 @@ export interface NeuralSearchResult {
   attention_heads?: Record<string, number>;
   quantum_category?: string;
   metadata?: Record<string, unknown>;
+  content_type?: string;
+  type?: string;
 }
 
 export interface NeuralSearchResponse {

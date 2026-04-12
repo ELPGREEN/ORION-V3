@@ -389,7 +389,7 @@ export default function PesquisaUnificada() {
             isNeural: true,
             attention_heads: r.attention_heads,
             quantum_category: r.quantum_category || undefined,
-            type: r.content_type,
+            type: r.type || "jurisprudencia",
             metadata: r.metadata,
           });
         }
@@ -464,18 +464,6 @@ export default function PesquisaUnificada() {
       setResults(merged);
       setSearched(true);
 
-      logNeural({
-        interaction_type: "search",
-        input_text: query.trim(),
-        output_text: merged.slice(0, 3).map(r => r.title).join(" | "),
-        user_id: user?.id,
-        metadata: {
-          totalResults: merged.length,
-          tribunal: selectedTribunal,
-          module: "pesquisa_unificada_v2",
-          totalTimeMs: totalTime,
-        },
-      });
 
       toast({
         title: "Pesquisa concluída",
