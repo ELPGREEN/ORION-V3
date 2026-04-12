@@ -416,9 +416,9 @@ export function useNeuralVoice(
         console.log("[Voice] Trying Gemini TTS...");
         const gemResult = await speakWithGeminiTTS(
           cleanText,
-          "Charon",
+          "Kore",
           cascadeAbort.signal,
-          "Você é ORION, IA Lumen7 AquaMonkey. Fale CONTÍNUO sem pausas. Máximo 0.2s entre frases. Voz grave, calorosa.",
+          "Você é ORION, IA Lumen7 AquaMonkey Fusion. Voz masculina tenor ~200Hz, tom confiante e caloroso. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Ritmo moderado-rápido como podcast brasileiro. NUNCA pare no meio de frase.",
           "pt-BR",
         );
         console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");

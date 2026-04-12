@@ -1499,12 +1499,9 @@ export function useOrionReasoning(
       let firstSentenceSpoken = false;
       const triggerQueueDebounced = () => {
         if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
-        if (!firstSentenceSpoken || streamEnded) {
-          firstSentenceSpoken = true;
-          void processSpeechQueue();
-          return;
-        }
-        batchDebounceTimer = setTimeout(() => void processSpeechQueue(), 300);
+        // Always trigger immediately — no debounce, speak as soon as sentence arrives
+        firstSentenceSpoken = true;
+        void processSpeechQueue();
       };
 
       const questionForLLM = processedInput || question;
@@ -1527,6 +1524,9 @@ export function useOrionReasoning(
         },
         (sentence) => {
           if (bargedInRef.current) return;
+          // Dedup: skip if this sentence was already queued or is a substring of the last one
+          const lastQueued = localQueue[localQueue.length - 1] || "";
+          if (sentence === lastQueued || (lastQueued && lastQueued.includes(sentence))) return;
           spokeOrQueued = true;
           localQueue.push(sentence);
           triggerQueueDebounced();
