@@ -102,7 +102,7 @@ export function AvaliacaoForm({ onSuccess }: AvaliacaoFormProps) {
       if (error) throw error;
 
       // ─── Neural Feedback: registra avaliação no pipeline RLHF ───
-      // logNeural({
+      void(0); // logNeural({
         interaction_type: "avaliacao",
         input_text: `Avaliação de ${nome.trim()} — ${nota} estrelas`,
         output_text: depoimento.trim(),

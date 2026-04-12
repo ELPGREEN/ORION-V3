@@ -69,7 +69,7 @@ export function DocumentEditor({
   // ─── Actions ───
   const actions = useEditorActions({
     editedContent, setEditedContent, formData, selectedType, forceLetterhead,
-    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, (() => {}),
+    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, undefined,
     clearAllSuggestionMarks: suggestions.clearAllSuggestionMarks,
     bubbleSelectionRef, bubbleNodeContextRef, initialSavedDocId,
   });
@@ -146,7 +146,7 @@ export function DocumentEditor({
         pendingSaveRef.current = true;
         return;
       }
-      actions.saveDocument(null).catch(() => {});
+      actions.saveDocument(null).catchundefined;
     }, 5000); // 5s debounce auto-save
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
@@ -157,7 +157,7 @@ export function DocumentEditor({
   useEffect(() => {
     if (!aiReview.reviewLoading && pendingSaveRef.current && actions.savedDocId) {
       pendingSaveRef.current = false;
-      const t = setTimeout(() => actions.saveDocument(null).catch(() => {}), 2000);
+      const t = setTimeout(() => actions.saveDocument(null).catchundefined, 2000);
       return () => clearTimeout(t);
     }
   }, [aiReview.reviewLoading, actions.savedDocId]);
@@ -461,7 +461,7 @@ export function DocumentEditor({
                 onForceLetterheadChange={onLetterheadChange}
                 previewContent={<DocumentPreview content={editedContent} watermark={formData.watermark} includeStamp={false} documentType={selectedType?.id} forceLetterhead={forceLetterhead} customMarginTop={marginTop} customMarginBottom={marginBottom} prepareContent={actions.prepareContentForPdf} />}
                 livePreviewContent={<DocumentPreview content={editedContent} watermark={formData.watermark} includeStamp={false} documentType={selectedType?.id} forceLetterhead={forceLetterhead} customMarginTop={marginTop} customMarginBottom={marginBottom} compact prepareContent={actions.prepareContentForPdf} />}
-                settingsContent={<DocumentSettings watermark={formData.watermark} onWatermarkChange={onWatermarkChange || (() => {})} isJudicial={isJudicialCategory(selectedType?.category)} letterhead={forceLetterhead} onLetterheadChange={onLetterheadChange} marginTop={marginTop} marginBottom={marginBottom} onMarginTopChange={onMarginTopChange} onMarginBottomChange={onMarginBottomChange} />}
+                settingsContent={<DocumentSettings watermark={formData.watermark} onWatermarkChange={onWatermarkChange || undefined} isJudicial={isJudicialCategory(selectedType?.category)} letterhead={forceLetterhead} onLetterheadChange={onLetterheadChange} marginTop={marginTop} marginBottom={marginBottom} onMarginTopChange={onMarginTopChange} onMarginBottomChange={onMarginBottomChange} />}
                 suggestionsContent={<SuggestionsPanel suggestions={suggestions.editorSuggestions} onAccept={suggestions.handleAcceptSuggestion} onReject={suggestions.handleRejectSuggestion} onAcceptAll={suggestions.handleAcceptAllSuggestions} onRejectAll={suggestions.handleRejectAllSuggestions} />}
                 suggestions={suggestions.editorSuggestions}
                 onExternalChatMessage={(msg) => { setExternalChatMessage(msg); if (!chatPanelOpen) setChatPanelOpen(true); }}

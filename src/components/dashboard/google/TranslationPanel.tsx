@@ -80,7 +80,7 @@ export function TranslationPanel() {
       });
 
       // 🧠 Neural: tradução jurídica = dado valioso de cross-linguagem
-      // logNeural({
+      void(0); // logNeural({
         interaction_type: "search",
         input_text: sourceText.substring(0, 500),
         output_text: response.data.translatedText.substring(0, 500),
