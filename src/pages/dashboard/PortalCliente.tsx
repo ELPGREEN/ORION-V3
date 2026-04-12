@@ -95,9 +95,7 @@ export default function PortalCliente() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* 3D Background */}
-      <Suspense fallback={null}>
         {/* Background removed */}
-        {false && <div variant="cyan" intensity="low" className="fixed" />
       </Suspense>
 
       <div className="relative z-10 space-y-6 p-1">
