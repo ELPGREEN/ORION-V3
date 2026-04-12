@@ -1,95 +1,125 @@
 
-Objetivo da auditoria: atacar os 3 sintomas que você descreveu no Orion: visão lenta para responder “o que você está vendo”, microfone que não volta a ativar sozinho, e fala picotada por vírgulas/pontos.
 
-1. Diagnóstico confirmado
-- Visão “em tempo real” hoje não é realmente em tempo real:
-  - `NeuralVision.tsx` só chama a análise remota em `frameCount % 60` e ainda usa cache de 4s em `detectRealTime()`.
-  - `gemini-vision.ts` usa `supabase.functions.invoke("neural-ops")`, ou seja: espera a resposta completa.
-  - `neural-ops` ainda monta contexto pesado para visão (RAG/web/url/etc.). Os logs mostram `RAG found 3 relevant KB entries`, o que é latência desnecessária para “descreva o que você vê”.
-- O microfone realmente pode “morrer” após a fala:
-  - Em `useOrionReasoning.ts`, a fila de fala usa `speak(batch, { skipMicToggle: true })`.
-  - No fim da fila existe o comentário “Resume mic ONCE after all speech is done”, mas a retomada não foi implementada.
-  - Resultado: o TTS termina, o STT não volta, e o wake word também não retorna porque `voiceActiveRef` continua ativo.
-- A fala está fragmentada demais:
-  - `analyzeFrameStreaming()` quebra a resposta por sentença e até por vírgula longa.
-  - Isso gera várias chamadas pequenas de TTS. Os logs do `gemini-tts` mostram áudios de 12 e 13 caracteres, típico de fala picotada.
-  - `geminiTTS.ts` ainda possui fallback oculto para `google-cloud-tts`, o que contradiz sua regra de “Gemini ou silêncio” e pode aumentar atraso.
+# Plano: Corrigir Build + Reimplementar Visão/Voz do Orion com Gemini API Oficial
 
-2. Causas-raiz principais
-- Gargalo 1: visão visual passa por pipeline de nuvem + prompt pesado mesmo quando a pergunta é só descritiva.
-- Gargalo 2: o fluxo de resposta por streaming fala em pedaços pequenos.
-- Bug 1: retorno do microfone após TTS está incompleto no fluxo principal da visão.
-- Risco estrutural: existem múltiplos pontos de entrada de voz (`useNeuralVoice`, `useWakeWord`, `GlobalOrionListener`, `VoiceInputButton/useVoiceInput`) com comportamentos diferentes.
+## Situação Atual
+A remoção em massa dos módulos neurais deixou ~100+ erros de build residuais. Referências a funções, componentes e tipos deletados ainda existem em dezenas de arquivos. O projeto não compila.
 
-3. Plano de correção
-Etapa A — Corrigir primeiro o bug crítico da escuta
-- Em `src/components/dashboard/neural/useOrionReasoning.ts`:
-  - implementar a retomada explícita do STT ao final da fila de fala;
-  - garantir que isso aconteça tanto no fluxo com streaming quanto no fallback;
-  - evitar estado “surdo” quando `skipMicToggle: true` for usado.
-- Em `src/hooks/useNeuralVoice.ts`:
-  - endurecer `resumeSTT()` e proteger contra corrida com wake word;
-  - revisar `voiceActiveRef`/`listening` para que o wake word só reassuma quando realmente deve.
-Resultado esperado: acabou o problema de ele falar e não voltar a ouvir.
+## Fase 1 — Limpar TODOS os erros de build (prioridade máxima)
 
-Etapa B — Criar um fast path real para visão por voz
-- Em `src/lib/neural/orion-ai-client.ts` e `supabase/functions/neural-ops/index.ts`:
-  - adicionar um modo visual rápido para perguntas como:
-    - “o que você está vendo?”
-    - “descreva o que você vê”
-    - “o que tem na minha frente?”
-  - nesse modo, pular RAG, web search, URL scraping, contexto pesado e instruções desnecessárias;
-  - enviar prompt mínimo, imagem atual e contexto visual estritamente necessário.
-- Em `src/components/dashboard/neural/NeuralVision.tsx`:
-  - quando a pergunta visual for explícita, capturar frame fresco imediatamente, sem depender do cache de 4s;
-  - manter a detecção local como resposta instantânea/base e usar Gemini como refinamento detalhado.
-Resultado esperado: resposta visual muito mais rápida e sem “ficar analisando pra sempre”.
+Vou corrigir cada arquivo com referências quebradas. Abordagem por categoria:
 
-Etapa C — Tirar a fala do modo “stop-start”
-- Em `src/lib/neural/orion-ai-client.ts`:
-  - parar de quebrar fala por vírgula longa;
-  - emitir chunks de voz por blocos mais naturais, não microfrases;
-  - manter resposta progressiva, mas com menos chamadas TTS.
-- Em `src/components/dashboard/neural/useOrionReasoning.ts`:
-  - aumentar o batching da fila de fala;
-  - falar um bloco maior por vez, evitando 10 chamadas pequenas.
-- Em `src/lib/tts/geminiTTS.ts`:
-  - remover o fallback de `google-cloud-tts`;
-  - deixar estritamente `Gemini TTS -> silêncio`.
-Resultado esperado: voz mais contínua, menos pausas artificiais entre frases.
+**Grupo A — Remover/substituir referências a símbolos deletados:**
+- `logNeural` → remover chamadas (noop)
+- `isOwnerEmail` → inline: `(e?: string) => ["info@elpgreen.com","info@iasofthub.com","ericson@elpgreen.com","ericsonpiccoli.dev@gmail.com"].includes(e||"")`
+- `VoiceInputButton` → remover JSX
+- `NeuralVision` → remover JSX da ConsultaIA (placeholder "em breve")
+- `FaceAuthEnroll` → remover JSX da Auth
+- `useAIRealtimeReview` → stub local que retorna `{ issues: [], metrics: null }`
+- `useNeuralConfig`, `useAdaptiveContext` → remover imports e usos
+- `initOrionDefense` → remover chamada
+- `bluetoothManager`, `BLEDeviceInfo` → remover da InstallApp (seção BLE vira placeholder)
 
-Etapa D — Consolidar a arquitetura de voz
-- Definir um único comportamento canônico:
-  - NeuralVision usa `useNeuralVoice` + `useWakeWord`;
-  - Dashboard fora da visão usa `GlobalOrionListener`;
-  - chats com `VoiceInputButton` ficam isolados e não devem interferir na visão.
-- Revisar pontos que chamam `speakWithGeminiTTS` direto para alinhar política de silêncio e evitar comportamento inconsistente.
-Resultado esperado: menos conflitos de microfone e menos regressão futura.
+**Grupo B — OrionIcons (`getOrionIcon`, `IconLogout`, etc.):**
+- O arquivo `OrionIcons.tsx` foi recriado mas os sidebars ainda usam nomes antigos
+- Atualizar imports nos 5 sidebars + MobileSidebarOverlay para usar lucide-react diretamente
 
-4. Arquivos que eu vou mexer
-- `src/components/dashboard/neural/useOrionReasoning.ts`
-- `src/hooks/useNeuralVoice.ts`
-- `src/components/dashboard/neural/NeuralVision.tsx`
-- `src/lib/neural/orion-ai-client.ts`
-- `supabase/functions/neural-ops/index.ts`
-- `src/lib/tts/geminiTTS.ts`
+**Grupo C — Módulos de análise/API:**
+- `detectHallucinations`, `detectPipelineRoute`, `HallucinationWarning` → criar stubs em `src/lib/analysis/index.ts`
+- `NeuralSearchResponse`, `neuralSearch` → criar type/stub em `src/lib/api/pesquisa-api.ts`
+- `validateSearchResults`, `dispatchAntiHallucinationReport` → remover chamadas no `useJurisprudencialSearch`
+- `onAgentTaskComplete`, `getSmartRouting`, `getAgentMetrics` → remover do `agentService.ts`
 
-5. Detalhes técnicos da auditoria
-- Evidência de fragmentação TTS: logs recentes do `gemini-tts` mostram requisições com 12 e 13 caracteres.
-- Evidência de latência extra na visão: logs do `neural-ops` mostram busca RAG sendo executada antes de responder.
-- Evidência do bug de escuta: o código comenta que vai retomar o microfone no fim da fila, mas essa chamada não existe.
-- Evidência de pseudo “tempo real”: `detectRealTime()` hoje é remoto, com throttle + cache, então não pode responder como visão instantânea.
+**Grupo D — Firebase analytics:**
+- `getAnalytics`, `logEvent`, `setUserId`, `setUserProperties`, `isSupported` → importar de `firebase/analytics`
 
-6. Validação após implementação
-- Testar fluxo completo na visão neural:
-  - “Orion”
-  - “ativar visão”
-  - “o que você está vendo?”
-  - Orion responde
-  - microfone reativa sozinho
-  - novo comando é aceito sem tocar na tela
-- Testar fala com frases longas contendo vírgulas e pontos.
-- Testar repetição em desktop e mobile.
-- Confirmar que, se Gemini TTS falhar, o sistema fica em silêncio sem fallback robótico.
+**Grupo E — HuggingFace gradio-client:**
+- `HFSpaceHealthStatus`, `PDFAnalysisResult`, `PDFSegment`, `pdfToMarkdown`, `pdfToHtml`, `analyzePDF` → criar tipos/stubs locais
 
-Se você aprovar, eu implemento essa correção em ordem: 1) retorno do microfone, 2) fast path visual, 3) suavização do TTS, 4) consolidação final.
+**Grupo F — Páginas:**
+- `Index.tsx`: remover `WhyOrionSection`, `OrionVideoShowcase`, `SecurityShieldSection`
+- `PesquisaJurisprudencial/Unificada`: ajustar tipos do resultado de busca (adicionar campos `timings`, `pipeline`, etc. ao type)
+- `ArquiteturaIA`: corrigir `.map` no objeto
+- `ChatHumano`: remover `.getState()`
+- `ChatJuridico`: remover `logNeural`
+- `DeviceIntegrationPage`: corrigir JSX malformado
+- `DocumentEditor`: remover `logNeural` e `useAIRealtimeReview`
+
+**Grupo G — Erros de tipo restantes:**
+- `ChatMessageList`: corrigir tipos de mensagens e provider
+- `ComparisonResults`: remover prop `searchQuery`
+- `PesquisaUnificada`: remover import `type` inválido
+
+## Fase 2 — Reimplementar Visão Neural (Gemini API oficial)
+
+Baseado na documentação oficial da Gemini API:
+
+**Edge Function `neural-vision` (nova, limpa):**
+- Endpoint único que recebe base64 da imagem + prompt
+- Chama `generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`
+- Envia imagem como `inlineData` com `mimeType: "image/jpeg"` + `data: base64`
+- System prompt em português, conciso
+- Rotação das 7 chaves Gemini existentes
+- Sem RAG, sem web search, sem contexto pesado — fast path puro
+
+**Componente `NeuralVision.tsx` (novo, limpo):**
+- Câmera via `getUserMedia`
+- Captura frame → canvas → base64 JPEG (qualidade 0.6, max 512px)
+- Botão "Descrever" ou comando de voz → envia para edge function
+- Resposta renderizada em markdown
+- Cache simples de 2s para evitar spam
+
+## Fase 3 — Reimplementar TTS (Gemini TTS)
+
+**Edge Function `gemini-tts` (reescrita):**
+- Endpoint: `generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`
+- Usar `response_modalities: ["AUDIO"]` com `speech_config` para gerar áudio
+- Retornar audio/wav ou audio/mp3 direto
+- Sem fallbacks para Google Cloud TTS ou ElevenLabs
+
+**Frontend:**
+- Hook `useOrionTTS` simples: recebe texto → chama edge function → toca AudioContext
+- Sem fragmentação por vírgula — envia bloco completo
+
+## Fase 4 — Reimplementar STT (Web Speech API + Gemini fallback)
+
+**Frontend:**
+- `useOrionSTT`: usa `webkitSpeechRecognition` / `SpeechRecognition` nativo (gratuito)
+- Fallback: gravar áudio com MediaRecorder → enviar para Gemini com prompt "Transcreva este áudio"
+- Wake word "Orion" detectado via `SpeechRecognition.onresult`
+- Auto-resume após TTS terminar (evento `orion-resume-stt`)
+
+## Detalhes Técnicos
+
+**API Gemini Vision (REST):**
+```text
+POST /v1beta/models/gemini-2.5-flash:generateContent?key=KEY
+Body: {
+  contents: [{
+    parts: [
+      { inlineData: { mimeType: "image/jpeg", data: "<base64>" } },
+      { text: "Descreva detalhadamente o que você vê nesta imagem." }
+    ]
+  }],
+  generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
+}
+```
+
+**Arquivos que serão criados:**
+- `supabase/functions/neural-vision/index.ts` — edge function de visão
+- `supabase/functions/gemini-tts/index.ts` — reescrita do TTS
+- `src/components/dashboard/neural/NeuralVision.tsx` — componente de câmera + visão
+- `src/hooks/useOrionTTS.ts` — hook de fala
+- `src/hooks/useOrionSTT.ts` — hook de escuta
+- `src/hooks/useOrionVoice.ts` — orchestrador (STT + TTS + wake word)
+
+**Arquivos que serão editados (limpeza):**
+- ~30 arquivos listados na Fase 1
+
+## Ordem de Execução
+1. Fase 1 inteira (build limpo)
+2. Fase 2 (visão)
+3. Fase 3 (TTS)
+4. Fase 4 (STT)
+5. Teste end-to-end
+
