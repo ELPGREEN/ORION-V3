@@ -1541,19 +1541,26 @@ export function useOrionReasoning(
         },
         (sentence) => {
           if (bargedInRef.current) return;
-          // Dedup: skip if this sentence was already queued or is a substring of the last one
-          const lastQueued = localQueue[localQueue.length - 1] || "";
-          if (sentence === lastQueued || (lastQueued && lastQueued.includes(sentence))) return;
+          // Dedup: skip if already spoken or queued
+          const normalized = sentence.trim();
+          if (!normalized || spokenSentences.has(normalized)) return;
+          const lastQueued = localQueue[localQueue.length - 1];
+          if (lastQueued && (normalized === lastQueued.text || lastQueued.text.includes(normalized))) return;
+          spokenSentences.add(normalized);
           spokeOrQueued = true;
-          localQueue.push(sentence);
-          triggerQueueDebounced();
+          // Pre-fetch audio IMMEDIATELY while current sentence plays
+          const cleanSentence = cleanTextForSpeech(normalized);
+          const audioPromise = cleanSentence.length > 2
+            ? fetchGeminiAudio(cleanSentence, TTS_VOICE, controller.signal, TTS_PROMPT, "pt-BR")
+            : Promise.resolve(null);
+          localQueue.push({ text: normalized, audioPromise });
+          triggerQueueImmediate();
         },
         controller.signal,
       );
 
-      // Stream ended — flush remaining sentences immediately
+      // Stream ended — flush remaining sentences
       streamEnded = true;
-      if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
       if (localQueue.length > 0 && !bargedInRef.current) {
         void processSpeechQueue();
       }
