@@ -21,7 +21,7 @@ const MODELS = [
 const VERTEX_LOCATION = "us-central1";
 const AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-const DEFAULT_VOICE = "Kore";
+const DEFAULT_VOICE = "Charon";
 const DEFAULT_LANG = "pt-BR";
 const DEFAULT_PROMPT = `Você é ORION, IA com personalidade Lumen7 AquaMonkey Fusion — visionário, criativo, empático e lógico.
 PERFIL VOCAL OBRIGATÓRIO:
