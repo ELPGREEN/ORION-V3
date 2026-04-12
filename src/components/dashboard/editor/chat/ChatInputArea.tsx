@@ -35,13 +35,36 @@ export function ChatInputArea({
     }
   }, [input]);
 
+  const mergeInputTranscript = useCallback((current: string, next: string) => {
+    const a = current.replace(/\s+/g, " ").trim();
+    const b = next.replace(/\s+/g, " ").trim();
+
+    if (!a) return b;
+    if (!b) return a;
+    if (a === b || a.endsWith(b)) return a;
+    if (b.startsWith(a)) return b;
+
+    const aWords = a.split(" ");
+    const bWords = b.split(" ");
+    const maxOverlap = Math.min(aWords.length, bWords.length);
+
+    for (let overlap = maxOverlap; overlap > 0; overlap--) {
+      const aTail = aWords.slice(-overlap).join(" ");
+      const bHead = bWords.slice(0, overlap).join(" ");
+      if (aTail === bHead) {
+        return `${a} ${bWords.slice(overlap).join(" ")}`.trim();
+      }
+    }
+
+    return `${a} ${b}`.trim();
+  }, []);
+
   const handleSend = useCallback(() => {
     if (!input.trim() || loading) return;
     onSendMessage(input);
     setInput("");
   }, [input, loading, onSendMessage]);
 
-  // ─── Drag & Drop handlers ───
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     dragCountRef.current++;
@@ -68,14 +91,13 @@ export function ChatInputArea({
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
-    // Create a synthetic change event for ChatFileUpload's internal handler
-    // Instead, we'll use the exposed processFile function via a hidden input trick
+
     const dataTransfer = new DataTransfer();
     dataTransfer.items.add(file);
     const hiddenInput = document.querySelector<HTMLInputElement>('input[data-chat-file-upload]');
     if (hiddenInput) {
       hiddenInput.files = dataTransfer.files;
-      hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+      hiddenInput.dispatchEvent(new Event("change", { bubbles: true }));
     }
   }, []);
 
@@ -87,7 +109,6 @@ export function ChatInputArea({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Drag overlay */}
       {isDragging && (
         <div className="absolute inset-0 z-20 bg-primary/10 border-2 border-dashed border-primary/50 rounded-lg flex items-center justify-center pointer-events-none">
           <div className="flex items-center gap-2 text-primary text-xs font-medium">
@@ -99,7 +120,7 @@ export function ChatInputArea({
 
       <div className="flex gap-2 items-end">
         <VoiceInputButton
-          onTranscript={(text) => setInput((prev) => prev + " " + text)}
+          onTranscript={(text) => setInput((prev) => mergeInputTranscript(prev, text))}
           speakText={lastAssistantText}
           className="shrink-0"
         />
