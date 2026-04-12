@@ -64,7 +64,7 @@ function splitIntoSentences(text: string): string[] {
 /**
  * Fetch audio for a single chunk from Gemini TTS edge function.
  */
-async function fetchGeminiAudio(
+export async function fetchGeminiAudio(
   text: string,
   voice: string,
   signal: AbortSignal,
@@ -141,7 +141,7 @@ async function fetchGeminiAudio(
  * Accepts an optional `nextBlobUrl` to pre-create the next Audio element for
  * gap-free transitions.
  */
-function playAudioBlob(
+export function playAudioBlob(
   blob: Blob,
   signal: AbortSignal,
   nextBlobUrl?: string,
