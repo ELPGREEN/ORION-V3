@@ -1468,7 +1468,8 @@ export function useOrionReasoning(
             void processSpeechQueue();
           } else {
             queueFinished = true;
-            // Resume mic ONCE after all speech is done
+            // ═══ FIX: Resume mic ONCE after all speech is done ═══
+            window.dispatchEvent(new CustomEvent("orion-resume-stt"));
           }
         }
       };
