@@ -2072,7 +2072,7 @@ const MODEL_DEFINITIONS: ModelStatus[] = [
   },
   {
     acronym: "SAM", name: "Segment Anything Model", icon: Scissors, color: "#ef4444",
-    verify: () => { try { segmentScene([0.1, 0.2, 0.3]); return true; } catch { return false; } },
+    verify: () => { try { segmentScene(); return true; } catch { return false; } },
   },
 ];
 

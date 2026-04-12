@@ -30,8 +30,15 @@
  */
 
 // Stubs for removed vision types
-type RealTimeVisionResult = { allObjects: any[]; faces: any[]; hands: any[]; poses: any[]; timestamp: number; processingMs: number };
-type IdentificationResult = { identified: boolean; name?: string; confidence: number };
+type RealTimeVisionResult = {
+  allObjects: any[]; faces: any[]; hands: any[]; poses: any[];
+  timestamp: number; processingMs: number; inferenceMs?: number;
+  frameXResult?: any; faceAttributes?: any[]; depthResult?: any;
+};
+type IdentificationResult = {
+  identified: boolean; name?: string; confidence: number;
+  id?: string; action?: string; livenessScore?: number; isMaskDetected?: boolean;
+};
 
 // ═══════════════════════════════════════════════
 // 1. PERCEIVE MODULE — Text, Audio, Sensor

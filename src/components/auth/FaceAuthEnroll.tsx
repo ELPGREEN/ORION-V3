@@ -1,7 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Camera, Check, X, ScanFace, Shield, Trash2, Loader2, AlertTriangle, Eye } from "lucide-react";
 import { getBlazeFaceModel } from "@/lib/neural/tf-runtime";
-import { loadFaceApiModels, detectSingleFaceFull, drawFaceOverlay, descriptorToArray, type FaceApiDetection } from "@/lib/neural/face-api-runtime";
+// face-api-runtime removed — inline stubs
+type FaceApiDetection = { score: number; descriptor?: Float32Array; expressions?: Record<string, number>; landmarks?: { x: number; y: number }[] };
+const loadFaceApiModels = async (): Promise<boolean> => false;
+const detectSingleFaceFull = async (_c: HTMLCanvasElement): Promise<FaceApiDetection | null> => null;
+const drawFaceOverlay = (_ctx: CanvasRenderingContext2D, _det: FaceApiDetection, _opts: any) => {};
+const descriptorToArray = (d: Float32Array): number[] => Array.from(d);
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

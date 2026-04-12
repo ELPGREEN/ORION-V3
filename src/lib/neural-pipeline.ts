@@ -27,15 +27,15 @@ import { fuseStreams, type MultimodalFusionConfig, DEFAULT_FUSION_CONFIG } from 
 import { crossAttention, type CrossAttentionConfig, DEFAULT_CROSS_ATTENTION_CONFIG } from "./neural/cross-attention";
 import { perceiveInput, recognizeIntent, decomposeTask, planActions, executeAction, type ExecutionResult as LAMResult } from "./neural/large-action-model";
 // segment-anything removed — stubs
-type SegmentationResult = { masks: any[]; scores: number[]; labels: string[] };
-const segmentScene = async () => ({ masks: [], scores: [], labels: [] } as SegmentationResult);
-const segmentDocument = async () => ({ masks: [], scores: [], labels: [] } as SegmentationResult);
+type SegmentationResult = { masks: any[]; scores: number[]; labels: string[]; totalSegments?: number; coveragePercent?: number };
+const segmentScene = (): SegmentationResult => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0 });
+const segmentDocument = (): SegmentationResult => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0 });
 import { mambaBlock, biMambaBlock, analyzeLegalSequence, type LegalSequenceAnalysis, DEFAULT_MAMBA_CONFIG } from "./neural/mamba";
 // vlm-offline-engine removed — stubs
 type VLMOutput = { text: string; embedding: number[]; localDetections: any[] };
 type VLMLocalDetection = any;
 const runVLMOffline = async (_t: string) => ({ text: "", embedding: [], localDetections: [] } as VLMOutput);
-const getVLMEmbedding = async (_t: string) => [] as number[];
+const getVLMEmbedding = (_imageData?: any, _w?: number, _h?: number, _dets?: any[]) => [] as number[];
 
 // ─── Singleton Instances (v2 configs) ───
 let _kvCache: KVCacheBank | null = null;
@@ -254,7 +254,7 @@ export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
 
       // Synchronous embedding path (fast, no await needed)
       const embedding = getVLMEmbedding(
-        input.imageData,
+        input.imageData || "",
         input.imageWidth || 224,
         input.imageHeight || 224,
         localDetections
@@ -325,10 +325,10 @@ export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
   if (moeResult.selectedExperts.includes("segment_anything") && input.enableVLM) {
     const frameData = input.imageData || tokenization.compactTokens.map(t => t.charCodeAt(0) / 255);
     const { result: samResult, stage: s6sam } = runStage("SAM:Segment", () =>
-      input.documentType ? segmentDocument(frameData) : segmentScene(frameData)
+      input.documentType ? segmentDocument() : segmentScene()
     );
     segmentationResult = samResult;
-    stages.push({ ...s6sam, data: { masks: samResult.totalSegments, coverage: samResult.coveragePercent } });
+    stages.push({ ...s6sam, data: { masks: (samResult as any).totalSegments || 0, coverage: (samResult as any).coveragePercent || 0 } });
     modulesActivated.push("SAM");
   }
 
@@ -487,7 +487,7 @@ export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
 
     // SAM segmentation
     if (segmentationResult) {
-      parts.push(`[SAM: ${segmentationResult.totalSegments} segmentos — cobertura: ${segmentationResult.coveragePercent.toFixed(0)}%]`);
+      parts.push(`[SAM: ${(segmentationResult as any).totalSegments || 0} segmentos — cobertura: ${((segmentationResult as any).coveragePercent || 0).toFixed(0)}%]`);
     }
 
     // Key terms for search enrichment

@@ -1,18 +1,114 @@
 import { OrbState } from "./EnergyOrb";
 import { VoiceState } from "@/hooks/useNeuralVoice";
-import {
-  gaussianBlur3x3,
-  sobelWithDirection,
-  nonMaxSuppression,
-  morphClose3x3,
-  dominantOrientation,
-  classifyScene,
-  type SceneContext,
-} from "@/lib/neural/vision-preprocessing";
-import { otsuThreshold } from "@/lib/neural/vision-otsu";
-import { classifyWithPriors, type YOLOClassification } from "@/lib/neural/vision-yolo-priors";
-import { detectTextRegions, type TextRegion } from "@/lib/neural/vision-text-detection";
-import { kMeansColorSegmentation, assessImageQuality, type KMeansResult, type ImageQuality } from "@/lib/neural/vision-kmeans-quality";
+// ═══ Inline stubs for removed vision modules ═══
+type SceneContext = { label: string; confidence: number; lighting: string };
+type YOLOClassification = { label: string; confidence: number; bbox: number[] };
+type TextRegion = { x: number; y: number; w: number; h: number; confidence: number };
+type KMeansResult = { clusters: { r: number; g: number; b: number; count: number }[]; k: number };
+type ImageQuality = { sharpness: number; exposure: number; overall: number };
+
+function gaussianBlur3x3(data: Float32Array, w: number, h: number): Float32Array {
+  // Simple box blur approximation
+  const out = new Float32Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      let sum = 0;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++)
+          sum += data[(y + dy) * w + (x + dx)];
+      out[y * w + x] = sum / 9;
+    }
+  }
+  return out;
+}
+
+function sobelWithDirection(gray: Float32Array, w: number, h: number) {
+  const magnitude = new Float32Array(w * h);
+  const direction = new Float32Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const gx = -gray[(y-1)*w+(x-1)] + gray[(y-1)*w+(x+1)] - 2*gray[y*w+(x-1)] + 2*gray[y*w+(x+1)] - gray[(y+1)*w+(x-1)] + gray[(y+1)*w+(x+1)];
+      const gy = -gray[(y-1)*w+(x-1)] - 2*gray[(y-1)*w+x] - gray[(y-1)*w+(x+1)] + gray[(y+1)*w+(x-1)] + 2*gray[(y+1)*w+x] + gray[(y+1)*w+(x+1)];
+      magnitude[y * w + x] = Math.sqrt(gx * gx + gy * gy);
+      direction[y * w + x] = Math.atan2(gy, gx);
+    }
+  }
+  return { magnitude, direction };
+}
+
+function nonMaxSuppression(mag: Float32Array, dir: Float32Array, w: number, h: number): Float32Array {
+  const out = new Float32Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const idx = y * w + x;
+      const angle = ((dir[idx] * 180 / Math.PI) + 180) % 180;
+      let n1 = 0, n2 = 0;
+      if (angle < 22.5 || angle >= 157.5) { n1 = mag[idx - 1]; n2 = mag[idx + 1]; }
+      else if (angle < 67.5) { n1 = mag[(y-1)*w+(x+1)]; n2 = mag[(y+1)*w+(x-1)]; }
+      else if (angle < 112.5) { n1 = mag[(y-1)*w+x]; n2 = mag[(y+1)*w+x]; }
+      else { n1 = mag[(y-1)*w+(x-1)]; n2 = mag[(y+1)*w+(x+1)]; }
+      out[idx] = (mag[idx] >= n1 && mag[idx] >= n2) ? mag[idx] : 0;
+    }
+  }
+  return out;
+}
+
+function morphClose3x3(binary: Uint8Array, w: number, h: number): Uint8Array {
+  const out = new Uint8Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      let max = 0;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++)
+          if (binary[(y + dy) * w + (x + dx)]) max = 1;
+      out[y * w + x] = max;
+    }
+  }
+  return out;
+}
+
+function dominantOrientation(_mag: Float32Array, dir: Float32Array, w: number, _h: number, rx: number, ry: number, rw: number, rh: number) {
+  let sumSin = 0, sumCos = 0;
+  for (let y = ry; y < ry + rh; y++)
+    for (let x = rx; x < rx + rw; x++) {
+      const a = dir[y * w + x];
+      sumSin += Math.sin(2 * a);
+      sumCos += Math.cos(2 * a);
+    }
+  const angle = Math.round(((Math.atan2(sumSin, sumCos) / 2) * 180 / Math.PI + 360) % 180);
+  const strength = Math.min(1, Math.sqrt(sumSin * sumSin + sumCos * sumCos) / (rw * rh) * 4);
+  const orientationClass = angle < 30 || angle > 150 ? "horizontal" : angle > 60 && angle < 120 ? "vertical" : "diagonal";
+  return { angle, strength: Math.round(strength * 100) / 100, orientationClass };
+}
+
+function classifyScene(px: Uint8ClampedArray, w: number, h: number, _sobel: Float32Array): SceneContext {
+  let rSum = 0, gSum = 0, bSum = 0, count = 0;
+  for (let i = 0; i < px.length; i += 16) { rSum += px[i]; gSum += px[i+1]; bSum += px[i+2]; count++; }
+  const avg = (rSum + gSum + bSum) / count / 3;
+  return { label: avg > 170 ? "bright" : avg < 60 ? "dark" : "normal", confidence: 0.7, lighting: avg > 170 ? "high" : avg < 60 ? "low" : "medium" };
+}
+
+function otsuThreshold(gray: Float32Array, _w: number, _h: number) {
+  const hist = new Array(256).fill(0);
+  for (let i = 0; i < gray.length; i++) hist[Math.min(255, Math.max(0, Math.round(gray[i])))]++;
+  let total = gray.length, sum = 0;
+  for (let i = 0; i < 256; i++) sum += i * hist[i];
+  let sumB = 0, wB = 0, maxVar = 0, threshold = 128;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t]; if (wB === 0) continue;
+    const wF = total - wB; if (wF === 0) break;
+    sumB += t * hist[t];
+    const mB = sumB / wB, mF = (sum - sumB) / wF;
+    const v = wB * wF * (mB - mF) * (mB - mF);
+    if (v > maxVar) { maxVar = v; threshold = t; }
+  }
+  return { threshold };
+}
+
+function classifyWithPriors(_inputs: any[]): YOLOClassification[] { return []; }
+function detectTextRegions(_gray: Float32Array, _sobel: Float32Array, _w: number, _h: number): TextRegion[] { return []; }
+function kMeansColorSegmentation(_px: Uint8ClampedArray, _w: number, _h: number, _k: number, _iter: number): KMeansResult { return { clusters: [], k: 0 }; }
+function assessImageQuality(_gray: Float32Array, _w: number, _h: number): ImageQuality { return { sharpness: 0, exposure: 0, overall: 0 }; }
 
 // ═══ Types ═══
 export interface Region {
@@ -36,8 +132,8 @@ export const VS = {
   otsuThresholdValue: 0,
   kmeansResult: null as KMeansResult | null,
   imageQuality: null as ImageQuality | null,
-  /** Real-time detections from MediaPipe + YOLO ONNX (actual ML models, not heuristics) */
-  realTimeVision: null as import("@/lib/neural/realtime-vision-engine").RealTimeVisionResult | null,
+  /** Real-time vision result (stub — ML engines removed) */
+  realTimeVision: null as any,
   get active() { return OrbState.active; },
   set active(v: boolean) { OrbState.active = v; },
   get awareness() { return OrbState.awareness; },
