@@ -1,13 +1,22 @@
 /**
  * MediaPipe Vision — STUB (removed for performance)
  * All detection now handled by Gemini on-demand.
- * Exports preserved as no-ops to avoid breaking imports.
  */
 
-export interface MPDetectedObject { label: string; confidence: number; bbox: { x: number; y: number; w: number; h: number } }
-export interface MPFace { bbox: { x: number; y: number; w: number; h: number }; confidence: number }
+export interface MPDetectedObject {
+  label: string;
+  name: string;
+  confidence: number;
+  bbox: { x: number; y: number; w: number; h: number; width: number; height: number };
+  x: number; y: number; width: number; height: number;
+}
+export interface MPFace {
+  bbox: { x: number; y: number; w: number; h: number; width: number; height: number };
+  confidence: number;
+  x: number; y: number; width: number; height: number;
+}
 export interface MPFaceLandmarks { landmarks: any[] }
-export interface MPHand { landmarks: any[]; handedness: string }
+export interface MPHand { landmarks: any[]; worldLandmarks: any[]; handedness: string; confidence: number }
 export interface MPPose { landmarks: any[]; worldLandmarks: any[] }
 export interface MPVisionResult {
   objects: MPDetectedObject[];
