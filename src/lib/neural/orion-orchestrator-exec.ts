@@ -109,9 +109,8 @@ export async function orchestratorSee(
         if (ctx) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-          const [classifications, detections] = await Promise.all([
-            classifyImage(dataUrl, "Xenova/vit-base-patch16-224", 3).catch(() => []),
-            detectObjects(dataUrl, "Xenova/detr-resnet-50", 0.5).catch(() => []),
+          // Transformers.js removed — skip this tier
+          continue;
           ]);
           const latency = Date.now() - start;
           reportAPILatency("transformersjs_vision", latency, true);
