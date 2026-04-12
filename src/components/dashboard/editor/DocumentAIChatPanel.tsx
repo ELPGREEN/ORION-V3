@@ -872,7 +872,7 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
 
   const handleFeedback = useCallback((msg: Message, type: "up" | "down") => {
     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, feedbackGiven: type } : m));
-    // logNeural({ interaction_type: "document_feedback", input_text: msg.content.substring(0, 500), output_text: type, quality_score: type === "up" ? 0.9 : 0.2, metadata: { messageId: msg.id, intent: msg.intent } });
+    //
   }, []);
 
   const handleNewConversation = async () => {

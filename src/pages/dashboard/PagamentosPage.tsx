@@ -163,19 +163,6 @@ export default function PagamentosPage() {
       });
 
       // ─── Neural: reembolso = sinal de problema → score baixo ───
-      logNeural({
-        interaction_type: "crm_client_event",
-        input_text: `Reembolso processado: ${refundDialog.description || "pagamento"}`,
-        output_text: `Valor: R$ ${data.refund.amount?.toFixed(2)} | Cliente: ${refundDialog.customer_email || ""}`,
-        quality_score: 0.3,
-        user_id: user?.id,
-        metadata: {
-          payment_id: refundDialog.id,
-          amount: data.refund.amount,
-          source: "pagamentos_refund",
-          status_novo: "reembolsado",
-        },
-      });
 
       setRefundDialog(null);
       setRefundAmount("");

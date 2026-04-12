@@ -69,14 +69,6 @@ export default function WebhooksPage() {
       queryClient.invalidateQueries({ queryKey: ["webhook-events"] });
       toast({ title: "Evento marcado como processado" });
       // 🧠 Neural: evento processado = sinal de uso jurídico real
-      logNeural({
-        interaction_type: "webhook_event",
-        input_text: `Webhook CourtListener processado — tipo: ${event?.event_type_label || "desconhecido"}`,
-        output_text: JSON.stringify(event?.payload || {}).substring(0, 500),
-        quality_score: 0.82,
-        user_id: user?.id,
-        metadata: { event_id: id, event_type: event?.event_type, source: "courtlistener_webhook" },
-      });
     },
   });
 

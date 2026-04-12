@@ -659,22 +659,6 @@ export default function GerarDocumento() {
 
         // 🧠 Neural feedback: registra geração bem-sucedida como sinal RLHF
         const typeLabel = documentTypes.find(t => t.id === formData.tipo)?.label || formData.tipo;
-        logNeural({
-          interaction_type: "document_generation",
-          input_text: `[${typeLabel}] ${formData.parteAutora || ""} vs ${formData.parteRe || ""}`.trim(),
-          output_text: jobResult,
-          quality_score: 0.75, // Default quality for successful generation — user can refine via DocumentFeedback
-          metadata: {
-            documentType: formData.tipo,
-            typeLabel,
-            category: documentTypes.find(t => t.id === formData.tipo)?.category,
-            fromCache: isFromCache,
-            neuralEnhanced: (jobMetadata as any)?.neuralEnhanced,
-            provider: (jobMetadata as any)?.provider,
-            contentLength: jobResult.length,
-            module: "gerar_documento",
-          },
-        });
       });
     } else if (jobStatus === "failed") {
       setGenerating(false);

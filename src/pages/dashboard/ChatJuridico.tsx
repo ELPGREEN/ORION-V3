@@ -59,7 +59,7 @@ export default function ChatJuridico() {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { config: neuralConfig } = useNeuralConfig();
+  const neuralConfig: any = null;
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [laypersonMode, setLaypersonMode] = useState(false);

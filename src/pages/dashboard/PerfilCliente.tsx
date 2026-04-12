@@ -119,20 +119,6 @@ export default function PerfilCliente() {
       });
 
       // ─── Neural: atualização de perfil = sinal de engajamento ───
-      logNeural({
-        interaction_type: "crm_client_event",
-        input_text: `Perfil atualizado: ${form.nome}`,
-        output_text: `Telefone: ${form.telefone || "N/A"} | CPF: ${form.cpf ? "informado" : "não informado"} | Descrição: ${form.descricao_problema?.substring(0, 200) || "N/A"}`,
-        quality_score: 0.75,
-        user_id: user.id,
-        metadata: {
-          temTelefone: !!form.telefone,
-          temCPF: !!form.cpf,
-          temDescricao: !!form.descricao_problema,
-          source: "perfil_cliente_save",
-          status_novo: "perfil_atualizado",
-        },
-      });
 
       toast({ title: "Perfil salvo!", description: "Suas informações foram atualizadas." });
     } catch (err: any) {

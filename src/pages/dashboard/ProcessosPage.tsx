@@ -674,19 +674,6 @@ export default function ProcessosPage() {
         toast({ title: "Andamento adicionado!" });
 
         // 🧠 Neural: andamento processual = dado jurídico de alta relevância
-        logNeural({
-          interaction_type: "document_generation",
-          input_text: `Andamento processual: ${andamentoForm.tipo} — ${andamentoForm.data_ocorrencia}`,
-          output_text: andamentoForm.descricao.trim(),
-          quality_score: 0.82,
-          user_id: user.id,
-          metadata: {
-            module: "processos_andamento",
-            tipo: andamentoForm.tipo,
-            processo_id: andamentoProcessoId,
-            hasAttachment: !!attachmentPath,
-          },
-        });
       }
 
       setAndamentoDialogOpen(false);

@@ -70,14 +70,14 @@ export default function ConfiguracoesRouter() {
       label: "Biometria",
       icon: ScanFace,
       roles: ["owner", "advogado"],
-      content: <BiometriaConfigPage />,
+      content: <div>Biometria removida temporariamente</div>,
     },
     {
       value: "dispositivos",
       label: "Dispositivos",
       icon: Radio,
       roles: ["owner"],
-      content: <DispositivosConfigPage />,
+      content: <div>Dispositivos removido temporariamente</div>,
     },
     {
       value: "amazon",

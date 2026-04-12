@@ -73,15 +73,6 @@ export default function DashboardHome() {
         pendingConsultas: consultasRes.count || 0,
       };
 
-      logNeural({
-        interaction_type: "document_viewed",
-        input_text: `Dashboard acessado — ${new Date().toISOString()}`,
-        output_text: `docs:${stats.documents} processos:${stats.cases} chats:${stats.chats}`,
-        quality_score: 0.6,
-        user_id: user.id,
-        metadata: { source: "dashboard_home", ...stats },
-      });
-
       return { stats, activities: (notifRes.data || []) as RecentActivity[] };
     },
     enabled: !!user,
