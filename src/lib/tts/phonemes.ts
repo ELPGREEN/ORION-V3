@@ -24,7 +24,7 @@ export interface PhonemeParams {
 
 // ── IAPETUS VOICE DNA (from 77s+11s / 10 samples, recalibrated) ──
 export const VOICE_DNA = {
-  f0: { mean: 126.6, median: 119.3, std: 41.9, p5: 60.0, p95: 213.8 },
+  f0: { mean: 200.2, median: 182.9, std: 41.2, p5: 145.6, p95: 315.7 },
   glottal: {
     openQuotient: 0.546,
     speedQuotient: 2.21,
@@ -33,14 +33,14 @@ export const VOICE_DNA = {
   },
   harmonicProfile: [1.0, 0.49, 0.68, 0.36, 0.22, 0.14, 0.18, 0.15, 0.13, 0.14],
   dynamics: {
-    spectralTilt: 22.0,    // from real measurement: -22.0 dB/decade
-    jitter: 0.0447,        // from real measurement: 4.47% (was 8.82%)
-    shimmer: 0.20,         // estimated proportionally lower
+    spectralTilt: 22.0,
+    jitter: 0.0447,
+    shimmer: 0.20,
   },
   spectral: {
-    centroid: 1866,        // Hz — warm voice, low HF energy
-    bandwidth: 2128,       // Hz
-    rolloff: 3369,         // Hz — most energy below 3.4kHz
+    centroid: 1840,
+    bandwidth: 1828,
+    rolloff: 3369,
   },
   sampleRate: 24000,
 };
