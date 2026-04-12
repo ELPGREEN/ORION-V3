@@ -31,8 +31,18 @@ export function useVoiceIdentityGuard() {
   const [isCheckingVoice, setIsCheckingVoice] = useState(false);
   const guestSessionIdRef = useRef<string | null>(null);
 
+  /** Auto-detect creator by email — skip voice check for owner accounts */
+  const isCreatorAccount = user?.email ? isOwnerEmail(user.email) : false;
+
   /** Check if voice matches owner enrollment */
   const verifyVoiceIdentity = useCallback(async (audioBlob: Blob): Promise<IdentityStatus> => {
+    // Owner emails are always recognized as creator — no voice check needed
+    if (isCreatorAccount) {
+      console.log("[VoiceGuard] 👑 Creator account detected by email — auto-verified");
+      setIdentityStatus("creator");
+      return "creator";
+    }
+
     if (!user?.id) {
       console.warn("[VoiceGuard] No user ID, skipping verification");
       return "unknown";
