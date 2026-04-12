@@ -346,7 +346,10 @@ export function GlobalOrionListener() {
     startInFlightRef.current = true;
 
     const bootRecognition = async () => {
-      if (restartAttemptsRef.current > 0 || isMobile) {
+      // Only prime mic on first boot or desktop restarts — avoids OS activation sound on mobile
+      if (!isMobile && restartAttemptsRef.current > 0) {
+        await primeMicrophone();
+      } else if (isMobile && !micPrimedRef.current) {
         await primeMicrophone();
       }
 
