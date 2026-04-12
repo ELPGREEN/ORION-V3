@@ -40,28 +40,14 @@ export function useWakeWord(
   const backgroundTranscriptsRef = useRef<BackgroundTranscript[]>([]);
   const speakerCounterRef = useRef(0);
 
-  // Auto-start wake word if mic permission already granted (no manual toggle needed on mobile)
+  // Cleanup on unmount only
   useEffect(() => {
-    let cancelled = false;
-    const autoStart = async () => {
-      const granted = await isMicPermissionGranted();
-      if (granted && !cancelled && speechOkRef.current && !listeningRef.current && wakeWordEnabledRef.current) {
-        await ensurePersistentMic();
-        if (!cancelled && !wakeRecRef.current && !startInFlightRef.current) {
-          startWakeWordListener();
-        }
-      }
-    };
-    // Small delay to let component fully mount
-    const timer = setTimeout(autoStart, 500);
     return () => {
-      cancelled = true;
-      clearTimeout(timer);
       try { wakeRecRef.current?.abort?.(); } catch {}
       try { wakeRecRef.current?.stop?.(); } catch {}
       wakeRecRef.current = null;
     };
-  }, [startWakeWordListener]);
+  }, []);
 
   useEffect(() => {
     listeningRef.current = listening;
