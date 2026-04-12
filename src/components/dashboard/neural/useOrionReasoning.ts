@@ -1439,39 +1439,20 @@ export function useOrionReasoning(
 
       const needsImage = intentType !== "textual";
 
-      const localQueue: string[] = [];
-      if (speechQueueRef) speechQueueRef.current = localQueue;
-      let isSpeakingQueue = false;
+      const { StreamingTTSQueue } = await import("@/lib/tts/streamingTTSQueue");
+      const streamingTTS = new StreamingTTSQueue({
+        onStartSpeaking: () => {
+          OrbState.voiceState = "speaking";
+          // Stop mic during TTS
+          try { recRef.current?.stop?.(); } catch {}
+        },
+        onStopSpeaking: () => {
+          OrbState.voiceState = "listening";
+        },
+      });
+
       let spokeOrQueued = false;
-      let queueFinished = false;
-      let batchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
       let streamEnded = false;
-
-      const processSpeechQueue = async () => {
-        if (bargedInRef.current) return;
-        if (isSpeakingQueue || localQueue.length === 0) return;
-        isSpeakingQueue = true;
-
-        // Mic already stopped by previous speak() or AI flow — no toggle here
-
-        try {
-          while (localQueue.length > 0 && !bargedInRef.current) {
-            // Batch all queued sentences into one speak() call to avoid pauses
-            const batch = localQueue.splice(0, localQueue.length).join(" ");
-            if (!batch.trim()) continue;
-            // skipMicToggle: mic is managed here, not inside speak()
-            await speak(batch, { skipMicToggle: true });
-          }
-        } finally {
-          isSpeakingQueue = false;
-          if (localQueue.length > 0 && !bargedInRef.current) {
-            void processSpeechQueue();
-          } else {
-            queueFinished = true;
-            // Resume mic ONCE after all speech is done
-          }
-        }
-      };
 
       // ═══ SKIP all heavy layers — go DIRECT to Gemini ═══
       // Removed: Cognitive Router, NLP Semantics, Cognition Engine, Deep Query Estimator
