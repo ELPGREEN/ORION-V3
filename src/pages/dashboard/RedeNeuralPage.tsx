@@ -52,7 +52,7 @@ function VozTab() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-2">
-            <Button onClick={() => stt.listening ? stt.stop() : stt.start()} variant={stt.listening ? "destructive" : "default"} className="flex-1" disabled={!stt.supported}>
+            <Button onClick={() => stt.listening ? stt.stopListening() : stt.startListening()} variant={stt.listening ? "destructive" : "default"} className="flex-1" disabled={!stt.supported}>
               {stt.listening ? <><MicOff className="h-4 w-4 mr-2" />Parar</> : <><Mic className="h-4 w-4 mr-2" />Iniciar Escuta</>}
             </Button>
             {transcript && <Button variant="outline" size="sm" onClick={() => setTranscript("")}>Limpar</Button>}
