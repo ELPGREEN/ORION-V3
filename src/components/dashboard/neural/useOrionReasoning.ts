@@ -1546,17 +1546,26 @@ export function useOrionReasoning(
           if (bargedInRef.current) return;
           // Dedup: skip if already spoken or queued
           const normalized = sentence.trim();
-          if (!normalized || spokenSentences.has(normalized)) return;
+          if (!normalized || normalized.length < 3) return;
+          if (spokenSentences.has(normalized)) return;
+          // Check substring overlap with last queued item
           const lastQueued = localQueue[localQueue.length - 1];
-          if (lastQueued && (normalized === lastQueued.text || lastQueued.text.includes(normalized))) return;
+          if (lastQueued) {
+            if (normalized === lastQueued.text) return;
+            if (lastQueued.text.includes(normalized)) return;
+            if (normalized.includes(lastQueued.text)) {
+              // New sentence is superset of last — skip (likely same sentence with more words)
+              return;
+            }
+          }
           spokenSentences.add(normalized);
           spokeOrQueued = true;
           // Pre-fetch audio IMMEDIATELY while current sentence plays
           const cleanSentence = cleanTextForSpeech(normalized);
-          const audioPromise = cleanSentence.length > 2
-            ? fetchGeminiAudio(cleanSentence, TTS_VOICE, controller.signal, TTS_PROMPT, "pt-BR")
-            : Promise.resolve(null);
-          localQueue.push({ text: normalized, audioPromise });
+          if (cleanSentence.length < 3) return;
+          console.log(`[StreamTTS] 📝 Queuing: "${cleanSentence.slice(0, 60)}..."`);
+          const audioPromise = fetchGeminiAudio(cleanSentence, TTS_VOICE, controller.signal, TTS_PROMPT, "pt-BR");
+          localQueue.push({ text: cleanSentence, audioPromise });
           triggerQueueImmediate();
         },
         controller.signal,
