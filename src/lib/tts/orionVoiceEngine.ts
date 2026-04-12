@@ -17,6 +17,8 @@ export interface OrionVoiceResult {
 /**
  * Synthesize speech using Gemini TTS with Web Speech fallback
  */
+const ORION_STYLE_PROMPT = `Você é ORION, IA Lumen7 AquaMonkey. Fale de forma CONTÍNUA e FLUIDA sem pausas longas. Máximo 0.2s entre frases. Ritmo natural de conversa. Voz grave, confiante, calorosa.`;
+
 export async function speakWithOrionVoice(
   text: string,
   signal?: AbortSignal,
@@ -30,7 +32,7 @@ export async function speakWithOrionVoice(
   // ── 1. GEMINI TTS (primary) ──
   if (isGeminiTTSAvailable()) {
     try {
-      const result = await speakWithGeminiTTS(cleanText, "Charon", signal);
+      const result = await speakWithGeminiTTS(cleanText, "Charon", signal, ORION_STYLE_PROMPT, "pt-BR");
       if (result.played) {
         return { played: true, audio: result.audio, engine: "gemini-tts" };
       }

@@ -418,7 +418,7 @@ export function useNeuralVoice(
           cleanText,
           "Charon",
           cascadeAbort.signal,
-          undefined,
+          "Você é ORION, IA Lumen7 AquaMonkey. Fale CONTÍNUO sem pausas. Máximo 0.2s entre frases. Voz grave, calorosa.",
           "pt-BR",
         );
         console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");

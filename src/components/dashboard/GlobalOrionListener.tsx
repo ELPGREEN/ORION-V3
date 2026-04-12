@@ -15,13 +15,14 @@ import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { claimMic, isMicOwner, registerMicRec, getMicMode, releaseMic } from "@/lib/voice/micArbiter";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
 
+const ORION_FLUENCY_PROMPT = `Você é ORION, IA Lumen7 AquaMonkey. Fale CONTÍNUO sem pausas longas. Máximo 0.2s entre frases. Voz grave, calorosa, ritmo natural.`;
+
 /** Speak text using Gemini TTS — NO robotic fallback (silent fail is better than robotic voice) */
 async function orionSpeak(text: string): Promise<void> {
   try {
-    const result = await speakWithGeminiTTS(text, "Algieba");
+    const result = await speakWithGeminiTTS(text, "Charon", undefined, ORION_FLUENCY_PROMPT, "pt-BR");
     if (result.played) return;
   } catch {}
-  // No SpeechSynthesis fallback — robotic voice is worse than silence
   console.log("[GlobalOrion] Gemini TTS unavailable — skipping speech (no robotic fallback)");
 }
 // ═══════════════════════════════════════════════════════════
