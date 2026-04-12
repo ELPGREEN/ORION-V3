@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 
 const corsHeaders = {
@@ -9,7 +8,7 @@ const corsHeaders = {
 const SPOTIFY_API = "https://api.spotify.com/v1";
 const SPOTIFY_ACCOUNTS = "https://accounts.spotify.com";
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
