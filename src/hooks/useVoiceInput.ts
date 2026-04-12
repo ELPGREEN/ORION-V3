@@ -127,25 +127,25 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       setIsListening(true);
     };
     
+    let lastSentResultIndex = -1;
+    
     recognition.onresult = (event: any) => {
       if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
-      let finalTranscript = "";
-      let interimTranscript = "";
       
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      // Only process new results (avoid duplicates in continuous mode)
+      for (let i = Math.max(event.resultIndex, lastSentResultIndex + 1); i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
-          finalTranscript += result[0].transcript;
+          const text = result[0].transcript.trim();
+          lastSentResultIndex = i;
+          if (text) {
+            setTranscript(text);
+            onResultRef.current?.(text);
+          }
         } else {
-          interimTranscript += result[0].transcript;
+          // Show interim for visual feedback only
+          setTranscript(result[0].transcript);
         }
-      }
-      
-      const combined = finalTranscript || interimTranscript;
-      setTranscript(combined);
-      
-      if (finalTranscript && onResultRef.current) {
-        onResultRef.current(finalTranscript);
       }
     };
 
