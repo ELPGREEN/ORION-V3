@@ -1,7 +1,7 @@
 /**
- * NEUROCORE AI — Voice Synthesis Hook (JARVIS-Grade v3)
+ * Orion Voice Hook — STT + TTS Pipeline
  * 
- * Pipeline: STT (Google Cloud STT primary → Web Speech fallback) → Command Handler → TTS (Gemini Iapetus)
+ * Pipeline: STT (Google Cloud STT primary → Web Speech fallback) → Command Handler → TTS (Gemini Enceladus)
  * 
  * Architecture:
  * - Google Cloud STT as primary (via edge function google-stt)
@@ -11,6 +11,7 @@
  * - Self-hearing guard (drops transcripts during TTS + echo detection)
  * - Dynamic turn detection (linguistic pattern matching for silence thresholds)
  * - Barge-in support (user can interrupt TTS with stop commands or 3+ words)
+ * - Mic watchdog: auto-restarts GCP STT if it dies silently
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { OrbState } from "@/components/dashboard/neural/EnergyOrb";
@@ -212,6 +213,7 @@ export function useNeuralVoice(
   const useGCPSTTRef = useRef(true); // GCP STT as primary
   const sentenceAccumulatorRef = useRef(""); // Accumulate partial sentences
   const sentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const micWatchdogRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Sync ──
   const updateAiResponding = useCallback((val: boolean) => {
@@ -335,6 +337,8 @@ export function useNeuralVoice(
     scheduleRecognitionRestart(isMobile() ? 600 : 100);
   }, [scheduleRecognitionRestart]);
 
+  // (Mic watchdog moved after bargeIn declaration)
+
   // ═══ Streaming TTS Queue Done → Resume Mic ═══
   useEffect(() => {
     const onQueueDone = () => {
@@ -366,6 +370,52 @@ export function useNeuralVoice(
     OrbState.voiceState = "listening";
     if (bargeInCallbackRef.current) bargeInCallbackRef.current();
   }, [updateAiResponding]);
+
+  // ═══ Mic Watchdog — auto-restart GCP STT if it dies silently ═══
+  useEffect(() => {
+    micWatchdogRef.current = setInterval(() => {
+      if (!voiceActiveRef.current || intentionalStopRef.current || speakingRef.current || VoiceState.aiResponding) return;
+      if (!onCmdRef.current || !useGCPSTTRef.current) return;
+
+      if (gcpSessionRef.current && !gcpSessionRef.current.isActive()) {
+        console.warn("[Voice] Watchdog: GCP STT died — restarting");
+        gcpSessionRef.current = null;
+        const session = createGCPSTTSession({
+          languageCode: "pt-BR",
+          sampleRate: 16000,
+          chunkIntervalMs: 1400,
+          onFinal: (text, confidence) => {
+            if (!onCmdRef.current || intentionalStopRef.current) return;
+            if (speakingRef.current || VoiceState.aiResponding) {
+              if (STOP_PATTERNS.test(text)) { bargeIn(); return; }
+              if (text.split(/\s+/).length >= 3) { bargeIn(); }
+              return;
+            }
+            const normalized = normalizeSpeechText(text);
+            if (normalized.length < 2) return;
+            const wordCount = normalized.split(/\s+/).filter(Boolean).length;
+            if (confidence > 0 && confidence < 0.35 && wordCount <= 4) return;
+            const now = Date.now();
+            if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
+            if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
+              if (isEchoOf(normalized, lastSpokenTextRef.current)) return;
+            }
+            lastProcessedTranscriptRef.current = normalized;
+            lastProcessedAtRef.current = now;
+            markSTTEnd();
+            onCmdRef.current?.(text.trim());
+          },
+          onError: (err) => console.warn("[Voice] Watchdog GCP STT error:", err),
+        });
+        gcpSessionRef.current = session;
+        session.start().then((ok) => { if (ok) { setListening(true); console.log("[Voice] ✅ Watchdog restarted GCP STT"); } });
+      }
+    }, 5000);
+
+    return () => {
+      if (micWatchdogRef.current) { clearInterval(micWatchdogRef.current); micWatchdogRef.current = null; }
+    };
+  }, [bargeIn]);
 
   // ═══ Web Speech TTS (Fallback) ═══
   const browserSpeak = useCallback((rawText: string) => {
@@ -481,7 +531,7 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
-    // PRIMARY: Gemini TTS — Enceladus (modern JARVIS-like voice)
+    // PRIMARY: Gemini TTS — Enceladus voice
     if (!cascadeAbort.signal.aborted) {
       try {
         console.log("[Voice] Trying Gemini TTS (Enceladus)...");
@@ -489,7 +539,7 @@ export function useNeuralVoice(
           cleanText,
           "Enceladus",
           cascadeAbort.signal,
-          "Você é ORION, assistente IA de elite estilo JARVIS. Voz MASCULINA jovem-adulta clara e confiante. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Tom sofisticado e preciso. NUNCA pare no meio de frase.",
+          "Você é ORION, assistente IA pessoal. Voz MASCULINA jovem-adulta clara e confiante. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Tom natural e direto, com personalidade. NUNCA pare no meio de frase.",
           "pt-BR",
         );
         console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");
@@ -537,7 +587,7 @@ export function useNeuralVoice(
     await speak(text);
   }, [speak]);
 
-  /** startThinking: JARVIS "PROCESSING" indicator */
+  /** startThinking: processing indicator */
   const startThinking = useCallback(() => {
     OrbState.voiceState = "thinking";
   }, []);

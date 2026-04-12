@@ -1108,7 +1108,7 @@ export function useOrionReasoning(
       }
 
       // ═══ MEDIA / SPOTIFY: intercept music/search/playlist commands BEFORE AI ═══
-      const mediaPatterns = /\b(tocar?|play|reproduz|busca[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|procura[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|pesquisa[r]?\s+(?:m[uú]sica|musica|artista)|ouvir?\s+(?:m[uú]sica|musica)|escutar?\s+(?:m[uú]sica|musica)|coloca\s+(?:m[uú]sica|musica|uma?\s+m[uú]sica)|minhas?\s+playlists?|criar?\s+playlist|status\s+(?:d[ea]\s+)?(?:m[uú]sica|mídia|media)|parar?\s+(?:a\s+)?m[uú]sica|pausar?\s+(?:a\s+)?m[uú]sica)\b/i;
+      const mediaPatterns = /\b((?:tocar?|play|reproduz(?:ir)?|coloca(?:r)?)\s+(?:uma?\s+)?(?:m[uú]sica|musica|playlist|faixa|som)|busca[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|procura[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|pesquisa[r]?\s+(?:m[uú]sica|musica|artista)|(?:quero\s+)?ouvir?\s+(?:m[uú]sica|musica)|(?:quero\s+)?escutar?\s+(?:m[uú]sica|musica)|minhas?\s+playlists?|criar?\s+playlist|status\s+(?:d[ea]\s+)?(?:m[uú]sica|mídia|media)|(?:parar?|pausar?)\s+(?:a\s+)?(?:m[uú]sica|musica|reprodu[çc][aã]o|faixa))\b/i;
       if (mediaPatterns.test(qLow)) {
         try {
           const { matchAndExecuteTool: mediaToolMatch } = await import("@/lib/neural/orion-tool-executor");

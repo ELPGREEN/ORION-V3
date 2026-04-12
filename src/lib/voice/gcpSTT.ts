@@ -24,7 +24,7 @@ interface GCPSTTSession {
 const PROCESSOR_BUFFER_SIZE = 4096;
 const PRE_ROLL_FRAMES = 4;
 const FLUSH_POLL_MS = 200;
-const SPEECH_RMS_THRESHOLD = 0.0065;
+const SPEECH_RMS_THRESHOLD = 0.008;
 
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {
@@ -87,8 +87,8 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   let lastSpeechAt = 0;
   let utteranceStartedAt = 0;
 
-  const silenceDurationMs = Math.max(950, Math.round(chunkIntervalMs * 0.7));
-  const maxUtteranceMs = Math.max(7000, chunkIntervalMs * 5);
+  const silenceDurationMs = Math.max(1200, Math.round(chunkIntervalMs * 0.85));
+  const maxUtteranceMs = Math.max(12000, chunkIntervalMs * 8);
 
   const pushPreRollFrame = (frame: Float32Array) => {
     preRollBuffers.push(frame);
@@ -114,7 +114,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     try {
       const totalLength = buffers.reduce((acc, b) => acc + b.length, 0);
       const sourceSR = audioContext?.sampleRate || 48000;
-      const minSamples = Math.floor(sourceSR * 0.45);
+      const minSamples = Math.floor(sourceSR * 0.6);
 
       if (totalLength < minSamples) {
         return;
