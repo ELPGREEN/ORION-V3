@@ -8,7 +8,8 @@ import {
   ChevronDown, ChevronUp, Brain, Scale, RefreshCw, Activity, XCircle, Clock,
   Zap,
 } from "lucide-react";
-// [REMOVED] import type { ReviewIssue, NeuralMetrics } from "@/hooks/useAIRealtimeReview";
+interface ReviewIssue { id: string; type: "error" | "warning" | "suggestion"; title: string; description: string; fix?: string; location?: string; }
+interface NeuralMetrics { overallScore: number; coherence: number; accuracy: number; completeness: number; }
 
 // ─── Review Issues Panel ───
 

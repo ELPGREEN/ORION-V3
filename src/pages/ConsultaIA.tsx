@@ -6,9 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-// [REMOVED] import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
+const OWNER_EMAILS = ["fancullomartins@gmail.com", "admin@elpgreen.com"];
+function isOwnerEmail(email?: string | null): boolean {
+  if (!email) return false;
+  return OWNER_EMAILS.includes(email.toLowerCase());
+}
 import { useQuery } from "@tanstack/react-query";
-// [REMOVED] import { NeuralVision } from "@/components/dashboard/neural/NeuralVision";
 import { AlienCoreBackground } from "@/components/ui/AlienCoreBackground";
 import { motion } from "framer-motion";
 import logoElp from "@/assets/logo-elp.webp";
@@ -195,7 +198,7 @@ export default function ConsultaIA() {
 
     return (
       <div className="flex-1 overflow-y-auto p-4">
-        <NeuralVision />
+        <div className="text-center text-muted-foreground p-8">Orion IA será reimplementado em breve.</div>
       </div>
     );
   };

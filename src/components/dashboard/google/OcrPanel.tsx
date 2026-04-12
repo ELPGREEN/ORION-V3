@@ -160,15 +160,6 @@ export function OcrPanel() {
         });
 
         toast({ title: "Layout analisado!", description: `${segments.length} segmentos • ${wordCount} palavras.` });
-
-        logNeural({
-          interaction_type: "document_viewed",
-          input_text: `Layout Analysis: ${file.name}`,
-          output_text: totalText.substring(0, 1000),
-          quality_score: 0.85,
-          user_id: user?.id,
-          metadata: { module: "ocr_panel_layout", segmentCount: segments.length, wordCount, fileName: file.name },
-        });
       } else {
         // Standard OCR (Vision API)
         const response = await supabase.functions.invoke("ocr-document", {
@@ -180,15 +171,6 @@ export function OcrPanel() {
 
         setResult(response.data);
         toast({ title: "OCR concluído!", description: `${response.data.wordCount} palavras extraídas.` });
-
-        logNeural({
-          interaction_type: "document_viewed",
-          input_text: `OCR de documento: ${file.name}`,
-          output_text: (response.data.fullText || "").substring(0, 1000),
-          quality_score: response.data.confidence ? Math.min(response.data.confidence + 0.1, 1) : 0.75,
-          user_id: user?.id,
-          metadata: { module: "ocr_panel", wordCount: response.data.wordCount, language: response.data.language, fileName: file.name },
-        });
       }
     } catch (error: any) {
       toast({ title: "Erro no processamento", description: error.message || "Não foi possível processar o documento.", variant: "destructive" });

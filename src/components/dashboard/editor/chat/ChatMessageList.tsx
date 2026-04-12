@@ -11,7 +11,10 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import ReactMarkdown from "react-markdown";
 import { SourcesLoadingIndicator } from "@/components/dashboard/SourcesLoadingIndicator";
 import { checkResponseQuality, type ResponseQualityResult as QualityResult } from "@/lib/analysis";
-import { detectHallucinations, detectPipelineRoute, type HallucinationWarning } from "@/lib/analysis";
+// Hallucination detection removed
+type HallucinationWarning = { entity: string; severity: "high" | "medium" | "low"; reason: string };
+function detectHallucinations(_text: string): HallucinationWarning[] { return []; }
+function detectPipelineRoute(_text: string): string | null { return null; }
 import { textSimilarity, softCosineSimilarity } from "@/lib/analysis";
 
 // ─── Types (shared) ───

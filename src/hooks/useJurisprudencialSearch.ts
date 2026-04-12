@@ -3,10 +3,10 @@ import {
   pesquisaUnificada,
   type SourceId,
   type UnifiedSearchResponse,
-  neuralSearch,
-  type NeuralSearchResponse,
 } from "@/lib/api";
-// [REMOVED] import { validateSearchResults, dispatchAntiHallucinationReport } from "@/lib/analysis/anti-hallucination-engine";
+
+type NeuralSearchResponse = { results: any[]; pipeline?: string[]; totalResults: number; };
+function neuralSearch(..._args: any[]): Promise<NeuralSearchResponse> { return Promise.resolve({ results: [], pipeline: [], totalResults: 0 }); }
 
 export type SearchMode = "traditional" | "neural" | "comparative";
 
@@ -127,53 +127,15 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
         setTraditionalResponse(tradResult.data);
         setNeuralResponse(neuralResult.data);
         setSearchTimings({ traditional: tradResult.time, neural: neuralResult.time });
-
-        // Anti-hallucination: validate both result sets
-        try {
-          if (tradResult.data.results.length > 0) {
-            const tradReport = validateSearchResults(tradResult.data.results);
-            dispatchAntiHallucinationReport(tradReport);
-            console.log(`[AntiHallucination:Pesquisa] ${tradReport.flaggedResults}/${tradReport.totalResults} flagged, confidence=${tradReport.overallConfidence}%, ${tradReport.processingMs}ms`);
-          }
-          if (neuralResult.data.results.length > 0) {
-            const neuralReport = validateSearchResults(neuralResult.data.results);
-            dispatchAntiHallucinationReport(neuralReport);
-            console.log(`[AntiHallucination:Neural] ${neuralReport.flaggedResults}/${neuralReport.totalResults} flagged, confidence=${neuralReport.overallConfidence}%, ${neuralReport.processingMs}ms`);
-          }
-        } catch (e) {
-          console.warn("[AntiHallucination] Validation error (non-fatal):", e);
-        }
-      } else if (searchMode === "neural") {
+} else if (searchMode === "neural") {
         const result = await runNeuralSearch(q, activeTribunal, advancedFilters);
         setNeuralResponse(result.data);
         setSearchTimings({ neural: result.time });
-
-        // Anti-hallucination: validate neural results
-        try {
-          if (result.data.results.length > 0) {
-            const report = validateSearchResults(result.data.results);
-            dispatchAntiHallucinationReport(report);
-            console.log(`[AntiHallucination:Neural] ${report.flaggedResults}/${report.totalResults} flagged, confidence=${report.overallConfidence}%, ${report.processingMs}ms`);
-          }
-        } catch (e) {
-          console.warn("[AntiHallucination] Validation error (non-fatal):", e);
-        }
-      } else {
+} else {
         const result = await runTraditionalSearch(q, activeTribunal);
         setTraditionalResponse(result.data);
         setSearchTimings({ traditional: result.time });
-
-        // Anti-hallucination: validate traditional results
-        try {
-          if (result.data.results.length > 0) {
-            const report = validateSearchResults(result.data.results);
-            dispatchAntiHallucinationReport(report);
-            console.log(`[AntiHallucination:Pesquisa] ${report.flaggedResults}/${report.totalResults} flagged, confidence=${report.overallConfidence}%, ${report.processingMs}ms`);
-          }
-        } catch (e) {
-          console.warn("[AntiHallucination] Validation error (non-fatal):", e);
-        }
-      }
+}
     } finally {
       setSearching(false);
     }

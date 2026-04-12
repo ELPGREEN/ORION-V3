@@ -9,6 +9,10 @@
 
 // [REMOVED] import type { PDFSegment, PDFAnalysisResult, HFSpaceHealthStatus } from "@/lib/neural/hf-space-client";
 
+interface HFSpaceHealthStatus { status: "ok" | "error"; latency_ms: number; }
+interface PDFSegment { text: string; type: string; confidence: number; }
+interface PDFAnalysisResult { segments: PDFSegment[]; fullText: string; wordCount: number; }
+
 const KNOWN_SPACES = {
   "pdf-vision": "Ericsonv12/adv",
 } as const;
@@ -117,11 +121,7 @@ export async function analyzePDFViaSpace(
     console.warn("[Gradio] Space call failed, falling back to direct HTTP:", error);
     
     // Fallback to direct HTTP (legacy hf-space-client behavior)
-// [REMOVED]     const { analyzePDF, pdfToMarkdown, pdfToHtml } = await import("@/lib/neural/hf-space-client");
-    
-    if (mode === "markdown") return pdfToMarkdown(file as File);
-    if (mode === "html") return pdfToHtml(file as File);
-    return analyzePDF(file as File);
+    throw error; // No fallback available
   }
 }
 
@@ -150,5 +150,4 @@ export function clearConnectionCache(): void {
   connectionCache.clear();
 }
 
-// Re-export types for compatibility
 export type { PDFSegment, PDFAnalysisResult, HFSpaceHealthStatus };

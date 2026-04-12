@@ -1,7 +1,11 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-// [REMOVED] import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
+const OWNER_EMAILS = ["fancullomartins@gmail.com", "admin@elpgreen.com"];
+function isOwnerEmail(email?: string | null): boolean {
+  if (!email) return false;
+  return OWNER_EMAILS.includes(email.toLowerCase());
+}
 
 const PREMIUM_PLANS = ["professional", "business", "enterprise"];
 const FREE_TRIAL_TOKENS = 1000;

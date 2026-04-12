@@ -1,6 +1,6 @@
 import { Clock, Zap, Database, Sparkles, Brain } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { NeuralSearchResponse } from "@/lib/api";
+type NeuralSearchResponse = { results: any[]; pipeline?: string[]; totalResults: number; };
 
 interface Props {
   neuralResponse: NeuralSearchResponse;
