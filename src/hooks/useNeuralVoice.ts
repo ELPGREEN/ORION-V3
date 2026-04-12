@@ -292,6 +292,12 @@ export function useNeuralVoice(
       onCmdRef.current(pending);
     }
 
+    // If GCP STT is active, it's already listening (persistent stream)
+    if (gcpSessionRef.current?.isActive()) {
+      setListening(true);
+      return;
+    }
+
     scheduleRecognitionRestart(isMobile() ? 600 : 100);
   }, [scheduleRecognitionRestart]);
 
@@ -796,6 +802,11 @@ export function useNeuralVoice(
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
     }
+    // Stop GCP STT session
+    if (gcpSessionRef.current?.isActive()) {
+      gcpSessionRef.current.stop();
+    }
+    gcpSessionRef.current = null;
     speechBufferRef.current = "";
     try { speechSynthesis.cancel(); } catch {}
     try { recRef.current?.stop(); } catch {}
@@ -809,6 +820,10 @@ export function useNeuralVoice(
     clearRestartTimer();
     voiceActiveRef.current = false;
     intentionalStopRef.current = true;
+    if (gcpSessionRef.current?.isActive()) {
+      gcpSessionRef.current.stop();
+    }
+    gcpSessionRef.current = null;
     try { recRef.current?.abort?.(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
