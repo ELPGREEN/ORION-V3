@@ -36,7 +36,7 @@ function timeAgo(date: Date): string {
   return `${Math.floor(minutes / 60)}h atrás`;
 }
 
-interface StructuralAnalysis { score: number; sections: Array<{ name: string; present: boolean; content?: string }>; suggestions: string[]; lastAnalyzedAt?: Date; }
+interface StructuralAnalysis { score: number; sections: Array<{ name: string; present: boolean; content?: string }>; suggestions: string[]; lastAnalyzedAt?: Date; presentSections: any[]; missingSections: any[]; summary?: string; elements?: any[]; }
 
 // ─── Structural Analysis Panel ───
 

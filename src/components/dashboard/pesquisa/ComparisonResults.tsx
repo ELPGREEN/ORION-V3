@@ -2,7 +2,7 @@ import { Search, Brain, Zap, Clock, AlertTriangle, BookOpen } from "lucide-react
 import { Badge } from "@/components/ui/badge";
 import { SearchResultCard } from "./SearchResultCard";
 import { SOURCE_LABELS, type SourceId, type UnifiedSearchResponse } from "@/lib/api";
-type NeuralSearchResponse = { results: any[]; pipeline?: string[]; totalResults: number; };
+type NeuralSearchResponse = { results: any[]; pipeline?: string[]; totalResults: number; indexed?: number; };
 
 interface Props {
   traditionalResponse: UnifiedSearchResponse | null;
@@ -169,7 +169,7 @@ export function ComparisonResults({
           )}
 
           {neuralResponse?.results.map((result, i) => (
-            <SearchResultCard key={`neural-${i}`} result={result} query={displayQuery} />
+            <SearchResultCard key={`neural-${i}`} result={result} searchQuery={displayQuery} />
           ))}
 
           {neuralCount === 0 && neuralResponse && (

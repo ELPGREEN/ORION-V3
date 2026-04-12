@@ -9,7 +9,7 @@ import {
   Zap,
 } from "lucide-react";
 interface ReviewIssue { id: string; type: "error" | "warning" | "suggestion"; title: string; description: string; fix?: string; location?: string; excerpt?: string; replacementText?: string; autoApplicable?: boolean; category?: string; confidence?: number; message?: string; headSource?: string; }
-interface NeuralMetrics { overallScore: number; coherence: number; accuracy: number; completeness: number; grammarScore?: number; legalScore?: number; structureScore?: number; consistencyScore?: number; styleScore?: number; mambaCoherence?: number; longRangeDeps?: number; documentComplexity?: string; judgeGrade?: string; judgeScore?: number; citationCount?: number; biasWarningCount?: number; }
+interface NeuralMetrics { overallScore: number; coherence: number; accuracy: number; completeness: number; grammarScore?: number; legalScore?: number; structureScore?: number; consistencyScore?: number; styleScore?: number; mambaCoherence?: number; longRangeDeps?: number; documentComplexity?: string; judgeGrade?: string; judgeScore?: number; citationCount?: number; biasWarningCount?: number; lgpdCompliant?: boolean; }
 
 // ─── Review Issues Panel ───
 
