@@ -1,7 +1,7 @@
 /**
  * ─── Gemini Vision — Clean Vision Utility ───
  * Single source of truth for vision: Canvas → Base64 JPEG → Gemini Flash
- * via the orion-intelligence / neural-ops edge function.
+ * via the neural-ops edge function.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -24,11 +24,11 @@ export function captureVideoFrame(video: HTMLVideoElement, maxWidth = 640, quali
 
 export interface GeminiVisionResult {
   description: string | null;
-  objects?: Array<{ name: string; confidence: number; category?: string }>;
+  objects?: Array<{ name: string; confidence: number; category?: string; position?: string }>;
   error?: string;
 }
 
-/** Analyze a frame with Gemini via edge function */
+/** Analyze a frame with Gemini via neural-ops edge function */
 export async function analyzeFrame(
   imageBase64: string,
   question?: string,
@@ -38,7 +38,7 @@ export async function analyzeFrame(
     const { data, error } = await supabase.functions.invoke("neural-ops", {
       body: {
         imageBase64,
-        question: question || "Descreva o que você vê na imagem.",
+        question: question || "Descreva detalhadamente o que você vê na imagem. Identifique todos os objetos, pessoas e elementos visíveis.",
         context: context || "",
         identificationMode: "universal",
         intentType: "visual",
