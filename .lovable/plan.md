@@ -1,86 +1,48 @@
 
-# Plano: Remover visão neural legada e reimplementar visão computacional limpa
 
-## Problema atual
-O sistema de visão tem ~40+ arquivos no `src/lib/neural/` que são stubs vazios, código morto, ou módulos pesados que nunca funcionaram corretamente (MediaPipe WASM, YOLO ONNX local, face-api.js, etc.). O `NeuralVision.tsx` (1176 linhas) chama `detectRealTime()` que retorna arrays vazios. Hooks como `useMultimodalVision` e `useTribunalVision` não são importados por nenhum componente ativo. O `groq-vision-hybrid` chama uma edge function que foi deletada.
+# Corrigir todos os erros de build restantes da limpeza de visão
 
-## Abordagem: Visão via Gemini on-demand (já funciona)
+## Resumo
+Há ~50 erros TypeScript em 8 arquivos. Todos são referências quebradas a módulos deletados (face-api, MediaPipe, vision-preprocessing, etc.) ou tipos incompatíveis após a substituição por stubs.
 
-A visão **já funciona** via `analyzeFrameWithAI()` → edge function `orion-intelligence` → Gemini Flash com imagem base64. O problema é o lixo em volta. Vamos:
+## Correções por arquivo
 
-1. Manter o que funciona (Gemini on-demand)
-2. Remover tudo que é stub/morto/pesado
+### 1. `FaceAuthEnroll.tsx` (linha 4)
+- Remover import de `face-api-runtime` (deletado)
+- Substituir `detectSingleFaceFull`/`drawFaceOverlay`/`descriptorToArray` por stubs simples que usam apenas BlazeFace (já importado na linha 3) + canvas fallback
+- Corrigir tipos nas linhas 227-228 (arithmetic com `unknown`)
 
-## Etapas
+### 2. `FaceScannerOverlay.tsx` (linhas 8-9)
+- Remover imports de `useFaceDetection` e `face-api-runtime`
+- Definir tipos `DetectedFace` e `FaceApiDetection` inline (interfaces simples)
+- Corrigir operações aritméticas nas linhas 94, 269, 287 (cast para `number`)
 
-### Etapa 1 — Deletar arquivos de visão mortos (~30 arquivos)
-Arquivos em `src/lib/neural/` que são stubs, nunca chamados, ou dependem de libs removidas:
+### 3. `useVisionProcessing.ts` (linhas 11-15, 40)
+- Remover imports de `vision-preprocessing`, `vision-otsu`, `vision-yolo-priors`, `vision-text-detection`, `vision-kmeans-quality`, `realtime-vision-engine`
+- Criar stubs inline para todas as funções/tipos usados (gaussianBlur, sobelWithDirection, otsuThreshold, etc.)
+- Remover tipo `RealTimeVisionResult` do VS store (já não existe)
 
-**Vision pipeline (stubs/mortos):**
-- `mediapipe-vision.ts` (stub)
-- `realtime-vision-engine.ts` (stub)
-- `vision-tribunal.ts`, `vision-semantic-cortex.ts` (se existe)
-- `vision-preprocessing.ts`, `vision-otsu.ts`, `vision-kmeans-quality.ts`
-- `vision-text-detection.ts`, `vision-yolo-priors.ts`, `vision-local-learning.ts`
-- `vision-layout-parser.ts`, `vision-regional-description.ts`
-- `vision-temporal-buffer.ts`, `vision-rag-injector.ts`
-- `vision-agent-presets.ts`, `agentic-vision-agent.ts`
-- `yolo-onnx-detector.ts`, `yolo-framex-engine.ts`, `yolo-framex-types.ts`
-- `yolofx-proxy.ts`, `yolofx-worker.ts`
-- `segment-anything.ts`, `depth-estimation-engine.ts`
-- `scene-reconstruction-3d.ts`, `ocr-engine.ts`, `gaze-detection.ts`
-- `face-attributes-engine.ts`, `face-api-runtime.ts`, `face-auth-learning.ts`
-- `face-detection-fallback.ts`, `humanex-face-pipeline.ts`
-- `facial-recognition.ts`, `body-language.ts`
-- `frame-tensor-preprocessing.ts`, `smolvlm-engine.ts`
-- `vlm-offline-engine.ts`, `trocr-handwritten.ts`
-- `tfm-vision-augment.ts`, `tfm-vision-ops.ts`, `tfm-vision-models.ts`
+### 4. `NeuralVision.tsx` (linhas 537-546, 838)
+- Remover referências a `frameXResult` e `faceAttributes` do resultado de `detectRealTime` (propriedades que não existem no stub)
+- Corrigir comparação `status === "native"` (o stub só retorna `"none"`)
 
-**Hooks mortos:**
-- `src/hooks/useMultimodalVision.ts`
-- `src/hooks/useTribunalVision.ts`
-- `src/hooks/useFaceDetection.ts`
+### 5. `NeuralConsciousnessLoop.tsx` (linha 2075)
+- `segmentScene` stub é async e aceita 0 args, mas é chamado com 1 arg — corrigir para aceitar args opcionais
 
-**Client morto:**
-- `src/lib/groq-vision-hybrid.ts`
+### 6. `neural-pipeline.ts` (linhas 258, 266, 328, 330-331, 490)
+- `segmentScene`/`segmentDocument` são `async` mas usados em `runStage` sincronamente — remover `async` ou ajustar chamadas
+- Remover referências a `totalSegments`/`coveragePercent` (não existem no tipo stub)
 
-**Componentes mortos:**
-- `src/components/neural/PointCloud3DViewer.tsx`
+### 7. `neural-mirroring.ts` (linhas 217-231, 380-381)
+- Corrigir tipo `BodyLanguageResult`: adicionar `emotionalHint`, `signal`, `confidence` ao tipo stub (linha 16)
+- Corrigir tipo `FacialEmotion`: é `{ emotion: string; confidence: number }` mas usado como string literal — unificar
 
-### Etapa 2 — Simplificar useVisionProcessing.ts
-Remover imports de módulos deletados. Manter apenas processamento básico de canvas (regiões por cor/edge, motion detection) que alimenta o VS global. Sem ML local.
-
-### Etapa 3 — Simplificar NeuralVision.tsx
-- Remover `detectRealTime()` call (linha 529) — já retorna vazio
-- Remover `preloadAllVision()` — já é no-op
-- Remover `mlDetections` state e `categoryFromSource()`
-- Manter: câmera, canvas, processFrame heurístico, voice, Orion reasoning
-
-### Etapa 4 — Simplificar orion-ai-client.ts
-- Remover `buildLocalDetections()` — toda a seção de multiTask/rtv que lê dados vazios
-- Simplificar: enviar canvas como imagem para Gemini, ponto. Sem "local detections"
-- Remover import de `vision-local-learning`
-
-### Etapa 5 — Limpar neural/index.ts
-Remover todas as `export *` dos arquivos deletados (~30 linhas).
-
-### Etapa 6 — Corrigir imports quebrados
-- `orion-orchestrator-exec.ts` — remover imports de mediapipe/yolo/face-api
-- `orion-api-orchestrator.ts` — remover imports de mediapipe/yolo/face-api
-- `LaboratorioIA.tsx` — remover import de `groq-vision-hybrid`
-- `FaceAuthEnroll.tsx` / `FaceAuthLogin.tsx` — simplificar (remover face-api.js)
-- `FaceScannerOverlay.tsx` — remover import de face-api types
-- `NeuralConsciousnessLoop.tsx` — remover import de segment-anything
-- `neural-pipeline.ts` — remover imports mortos
-
-### Etapa 7 — Reimplementar visão limpa
-Criar um único arquivo `src/lib/vision/gemini-vision.ts`:
-- `captureFrame(canvas): string` — canvas → base64 JPEG
-- `analyzeFrame(base64, question?)` — chama edge function `orion-intelligence` com imagem
-- Streaming support via `analyzeFrameStreaming` (já existe no orion-ai-client, apenas limpar)
+### 8. `perceive-reason-act.ts` (linhas 349-350, 437, 977-993)
+- Adicionar `id`, `action`, `livenessScore`, `isMaskDetected` ao tipo stub `IdentificationResult`
+- Adicionar `frameXResult`, `faceAttributes`, `depthResult`, `inferenceMs` ao tipo stub `RealTimeVisionResult`
 
 ## Resultado
-- **~40 arquivos deletados** (vision stubs, YOLO, MediaPipe, face-api, VLM, etc.)
-- **Zero erros de build** — todos os imports corrigidos
-- **Visão funcional** via Gemini on-demand (câmera → canvas → base64 → Gemini Flash)
-- **~2000+ linhas removidas** de código morto
+- Zero erros de build
+- Todos os stubs tipados corretamente
+- Nenhuma funcionalidade quebrada (tudo já retornava dados vazios)
+
