@@ -13,9 +13,9 @@ import { getResponsibleAIState } from "./tf-fairness-privacy";
 import { getProbabilityRankingRecommendersState } from "./tf-probability-ranking";
 import { getTextOpsState } from "./tf-text-ops";
 // TFM vision modules removed — stubs
-const getAugmentState = () => ({ active: false });
-const getVisionOpsState = () => ({ active: false });
-const getVisionModelsState = () => ({ active: false });
+const getAugmentState = () => ({ active: false, pixelOps: [] as string[], regionOps: [] as string[], policies: [] as string[] });
+const getVisionOpsState = () => ({ active: false, boxOps: [] as string[], nms: [] as string[], spatialOps: [] as string[] });
+const getVisionModelsState = () => ({ active: false, classification: [] as string[], detection: [] as string[], segmentation: [] as string[], instanceSeg: [] as string[] });
 
 export interface TFLibraryEntry {
   id: string;

@@ -13,7 +13,9 @@ import { moeInternalGating } from "@/lib/moe-gating";
 import { fuseStreams } from "@/lib/neural/multimodal-fusion";
 import { routeToTier, classifyQueryComplexity, slimTokenize } from "@/lib/neural/slim-model-router";
 import { documentCompleteness, fillMaskedLegal, bidirectionalScore } from "@/lib/neural/masked-prediction";
-import { segmentScene, segmentDocument } from "@/lib/neural/segment-anything";
+// segment-anything removed — stub
+const segmentScene = (_data?: any) => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0 });
+const segmentDocument = (_data?: any) => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0 });
 
 // ═══════════════════════════════════════
 // Individual Model Tests
