@@ -1461,8 +1461,8 @@ export function useOrionReasoning(
         if (isSpeakingQueue || localQueue.length === 0) return;
         isSpeakingQueue = true;
 
-        // Stop mic during TTS
-        try { (window as any).__orionMicRec?.stop?.(); } catch {}
+        // Stop mic during TTS — __orionMicRec is a React ref, access .current
+        try { (window as any).__orionMicRec?.current?.stop?.(); } catch {}
 
         try {
           while (localQueue.length > 0 && !bargedInRef.current) {
@@ -1471,13 +1471,15 @@ export function useOrionReasoning(
 
             // Wait for pre-fetched audio
             const blob = await item.audioPromise;
-            if (bargedInRef.current) break;
+            if (bargedInRef.current || controller.signal.aborted) break;
 
             if (blob) {
+              console.log(`[StreamTTS] ▶ Playing: "${item.text.slice(0, 50)}..." (${(blob.size / 1024).toFixed(1)}KB)`);
               const result = await playAudioBlob(blob, controller.signal);
               if (result.audio) spokeOrQueued = true;
             } else {
               // Fallback: use speak() for this sentence
+              console.log(`[StreamTTS] ▶ Fallback speak: "${item.text.slice(0, 50)}..."`);
               await speak(item.text, { skipMicToggle: true });
               spokeOrQueued = true;
             }
@@ -1488,6 +1490,7 @@ export function useOrionReasoning(
             void processSpeechQueue();
           } else if (!bargedInRef.current) {
             queueFinished = true;
+            console.log("[StreamTTS] ✅ Queue done, resuming mic");
             // Resume mic after all speech done
             window.dispatchEvent(new CustomEvent("orion-tts-queue-done"));
           }
