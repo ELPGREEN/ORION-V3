@@ -10,7 +10,10 @@ import {
   addMemoryFacts,
 } from "@/lib/neural/orion-memory";
 import { VS } from "@/components/dashboard/neural/useVisionProcessing";
-import { matchLearnedPriors, learnFromDetection, canIdentifyLocally, getLearningStats } from "@/lib/neural/vision-local-learning";
+// vision-local-learning removed — all identification via Gemini on-demand
+const canIdentifyLocally = (_shapes: any[]) => ({ allLocal: false, localMatches: [] as any[] });
+const getLearningStats = () => ({ totalPriors: 0, maturePriors: 0, totalObservations: 0, apiBypassRate: 0 });
+const learnFromDetection = (_obj: any, _desc: any) => {};
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
 // hf-vision-gate REMOVED — was downloading ~50MB of WASM models in browser
 import { matchProtocols } from "@/lib/neural/orion-voice-protocols";

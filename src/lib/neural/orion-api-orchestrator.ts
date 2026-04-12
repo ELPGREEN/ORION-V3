@@ -6,10 +6,11 @@
  * Provides real-time health status, fallback ordering, and capability queries.
  */
 
-import { isMediaPipeReady } from "./mediapipe-vision";
-import { isYOLOReady } from "./yolo-onnx-detector";
+// Vision stubs — local ML removed, Gemini handles vision on-demand
+const isMediaPipeReady = () => false;
+const isYOLOReady = () => false;
 import { getTFMetrics } from "./tf-runtime";
-import { getFaceApiMetrics } from "./face-api-runtime";
+const getFaceApiMetrics = () => ({ modelsLoaded: false, loadTimeMs: 0, hasMatcher: false });
 import { getHealthSnapshot, type SystemHealthSnapshot } from "./system-health";
 
 // ─── Types ───

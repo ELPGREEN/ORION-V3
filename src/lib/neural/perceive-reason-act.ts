@@ -29,8 +29,9 @@
  * Ref: Three Pillars: Autonomy, Asynchronicity, Agency
  */
 
-import type { RealTimeVisionResult } from "./realtime-vision-engine";
-import type { IdentificationResult } from "./humanex-face-pipeline";
+// Stubs for removed vision types
+type RealTimeVisionResult = { allObjects: any[]; faces: any[]; hands: any[]; poses: any[]; timestamp: number; processingMs: number };
+type IdentificationResult = { identified: boolean; name?: string; confidence: number };
 
 // ═══════════════════════════════════════════════
 // 1. PERCEIVE MODULE — Text, Audio, Sensor

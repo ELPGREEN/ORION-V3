@@ -1,5 +1,14 @@
 import { useRef, useCallback, useState, useEffect } from "react";
-import { analyzeBodyLanguage, extractPostureFrame, type PostureFrame, type BodyLanguageResult } from "@/lib/neural/body-language";
+// Body language stubs — module removed
+export interface PostureFrame { timestamp: number; headTilt: number; shoulderSlope: number; handNearFace: boolean; handHeight: number; }
+export interface BodyLanguageSignal { type: string; confidence: number; description: string; }
+export interface BodyLanguageResult { signals: BodyLanguageSignal[]; overallConfidence: number; dominantSignal: string; }
+function extractPostureFrame(_poses?: any, handNearFace = false, handHeight = 0.5): PostureFrame {
+  return { timestamp: Date.now(), headTilt: 0, shoulderSlope: 0, handNearFace, handHeight };
+}
+function analyzeBodyLanguage(_history: PostureFrame[], _current: PostureFrame): BodyLanguageResult {
+  return { signals: [], overallConfidence: 0, dominantSignal: "neutral" };
+}
 
 // ═══ MediaPipe 21-Point Hand Landmark Topology ═══
 // Ref: https://ai.google.dev/edge/mediapipe/solutions/vision/gesture_recognizer

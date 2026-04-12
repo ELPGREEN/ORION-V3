@@ -12,7 +12,7 @@
  */
 
 import type { InteroceptiveState } from "./interoception-engine";
-import type { BodyLanguageSignal } from "./body-language";
+type BodyLanguageSignal = { type: string; confidence: number; description: string };
 
 // ─── Types ───
 

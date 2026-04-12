@@ -14,12 +14,11 @@ import {
   type FaceResult,
 } from "./orion-orchestrator-exec";
 import { formatOrchestratorForAI } from "./orion-api-orchestrator";
-import {
-  runAgenticVisionCycle,
-  getAgentState,
-  formatAgentContextForPrompt,
-  type AgenticVisionCycleResult,
-} from "./agentic-vision-agent";
+// Agentic vision agent removed — stubs
+type AgenticVisionCycleResult = { observations: any[]; actions: any[]; learned: any[] };
+const runAgenticVisionCycle = (_rt: any): AgenticVisionCycleResult => ({ observations: [], actions: [], learned: [] });
+const getAgentState = () => ({ isActive: false, cycleCount: 0 });
+const formatAgentContextForPrompt = () => "";
 
 // ─── Types ───
 
@@ -27,8 +26,8 @@ export interface MultimodalInput {
   text?: string;
   image?: HTMLVideoElement;       // live video frame for vision
   videoFrame?: HTMLVideoElement;  // for face recognition (can be same element)
-  /** Optional: inject real-time vision result from detectRealTime() for agent processing */
-  realTimeVision?: import("./realtime-vision-engine").RealTimeVisionResult;
+  /** Optional: inject real-time vision result for agent processing */
+  realTimeVision?: any;
 }
 
 export interface MultimodalContext {

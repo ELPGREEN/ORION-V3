@@ -665,21 +665,7 @@ export async function phi3VisionAnalyze(
         }
       } catch {}
 
-      // Fallback 2: Try local SmolVLM
-      try {
-        const { askAboutImage } = await import("./smolvlm-engine");
-        const imageUrl = URL.createObjectURL(imageFile);
-        const vlmResult = await askAboutImage(imageUrl, question);
-        URL.revokeObjectURL(imageUrl);
-        if (vlmResult.answer && vlmResult.answer.length > 10) {
-          return {
-            answer: vlmResult.answer,
-            model: "SmolVLM-256M-local",
-            source: "smolvlm-browser",
-            inferenceMs: Math.round(performance.now() - start),
-          };
-        }
-      } catch {}
+      // SmolVLM removed — skip to OCR fallback
 
       // Fallback 3: OCR only
       try {

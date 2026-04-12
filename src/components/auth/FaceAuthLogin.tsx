@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { detectSingleFaceFull, loadFaceApiModels } from "@/lib/neural/face-api-runtime";
-import { logFaceAuthLearning } from "@/lib/neural/face-auth-learning";
+const logFaceAuthLearning = (_data: any) => { /* stub */ };
+const loadFaceApiModels = async () => false;
+const detectSingleFaceFull = async (_input: any): Promise<{ box: { x: number; y: number; width: number; height: number }; score: number } | null> => null;
 
 interface FaceAuthLoginProps {
   onSuccess: () => void;

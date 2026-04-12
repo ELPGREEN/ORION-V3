@@ -12,9 +12,10 @@ import { getGNNState } from "./tf-gnn-nsl";
 import { getResponsibleAIState } from "./tf-fairness-privacy";
 import { getProbabilityRankingRecommendersState } from "./tf-probability-ranking";
 import { getTextOpsState } from "./tf-text-ops";
-import { getAugmentState } from "./tfm-vision-augment";
-import { getVisionOpsState } from "./tfm-vision-ops";
-import { getVisionModelsState } from "./tfm-vision-models";
+// TFM vision modules removed — stubs
+const getAugmentState = () => ({ active: false });
+const getVisionOpsState = () => ({ active: false });
+const getVisionModelsState = () => ({ active: false });
 
 export interface TFLibraryEntry {
   id: string;

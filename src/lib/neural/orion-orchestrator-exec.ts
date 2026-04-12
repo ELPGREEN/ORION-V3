@@ -5,15 +5,19 @@
  */
 
 import { getAPIsForCapability, reportAPILatency, type OrionCapability } from "./orion-api-orchestrator";
-import { detectAllMP, type MPVisionResult } from "./mediapipe-vision";
-import { detectWithYOLO, type YOLODetection } from "./yolo-onnx-detector";
-import { detectSingleFaceFull, loadFaceApiModels, type FaceApiDetection } from "./face-api-runtime";
 import { getBlazeFaceModel } from "./tf-runtime";
 import { classifyImage, detectObjects, captionImage } from "@/lib/huggingface/transformers-vision";
 import { transcribeAudio, recordMicrophoneAudio } from "@/lib/huggingface/transformers-audio";
-import { askAboutImage, isSmolVLMReady, type VLMResult } from "./smolvlm-engine";
-import { recognizeHandwritingFromVideo, isTrOCRReady, type HandwrittenOCRResult } from "./trocr-handwritten";
-import { estimateGaze, type GazeResult } from "./gaze-detection";
+
+// Stubs for removed local ML modules
+type MPVisionResult = { objects: any[]; faces: any[]; hands: any[]; poses: any[]; timestamp: number };
+type YOLODetection = { name: string; namePt: string; confidence: number; x: number; y: number; width: number; height: number };
+type FaceApiDetection = { box: { x: number; y: number; width: number; height: number }; score: number; landmarks: { x: number; y: number }[]; descriptor: Float32Array | null; expressions: Record<string, number> | null };
+type GazeResult = { direction: string; confidence: number } | null;
+const detectAllMP = async (_v?: any): Promise<MPVisionResult> => ({ objects: [], faces: [], hands: [], poses: [], timestamp: Date.now() });
+const detectWithYOLO = async (_v?: any): Promise<YOLODetection[]> => [];
+const detectSingleFaceFull = async (_input: any): Promise<FaceApiDetection | null> => null;
+const loadFaceApiModels = async () => false;
 
 // ─── Types ───
 

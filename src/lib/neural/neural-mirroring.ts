@@ -12,8 +12,9 @@
  */
 
 import type { UserMentalModel, ReactionPrediction } from "./theory-of-mind";
-import type { BodyLanguageSignal, BodyLanguageResult } from "./body-language";
-import type { FacialEmotion } from "./facial-recognition";
+type BodyLanguageSignal = { type: string; confidence: number; description: string };
+type BodyLanguageResult = { signals: BodyLanguageSignal[]; overallConfidence: number; dominantSignal: string };
+type FacialEmotion = { emotion: string; confidence: number };
 import type { InteroceptiveState } from "./interoception-engine";
 
 // ─── Types ───
