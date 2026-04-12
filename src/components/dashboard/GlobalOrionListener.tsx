@@ -158,9 +158,8 @@ export function GlobalOrionListener() {
     }
   }, []);
 
-  // On mobile, use much longer delays to prevent rapid mic on/off loop
-  // which causes OS-level activation sounds on every restart
-  const MAX_RESTART_ATTEMPTS = isMobile ? 5 : 10;
+  // On mobile, fewer restart attempts since continuous mode handles most cases
+  const MAX_RESTART_ATTEMPTS = isMobile ? 3 : 10;
 
   const getRestartDelay = useCallback((reason?: string) => {
     if (typeof document !== "undefined" && document.hidden) return 10000;
