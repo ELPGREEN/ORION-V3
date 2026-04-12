@@ -6,8 +6,7 @@
 
 import { getAPIsForCapability, reportAPILatency, type OrionCapability } from "./orion-api-orchestrator";
 import { getBlazeFaceModel } from "./tf-runtime";
-import { classifyImage, detectObjects, captionImage } from "@/lib/huggingface/transformers-vision";
-import { transcribeAudio, recordMicrophoneAudio } from "@/lib/huggingface/transformers-audio";
+// Transformers.js vision/audio removed — Gemini handles all vision
 
 // Stubs for removed local ML modules
 type MPVisionResult = { objects: any[]; faces: any[]; hands: any[]; poses: any[]; timestamp: number };

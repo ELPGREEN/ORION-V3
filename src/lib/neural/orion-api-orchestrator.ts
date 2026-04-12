@@ -128,23 +128,7 @@ const API_REGISTRY: OrionAPI[] = [
     features: ["TTS gratuito ilimitado", "PT-BR natural", "Zero custo"],
     checkHealth: alwaysCloud,
   },
-  {
-    id: "jarvis_tts", name: "JARVIS TTS (Piper)", brandName: "Orion Voz JARVIS",
-    capability: "speech", tier: "secondary", runtime: "cloud",
-    library: "jgkawell/jarvis", version: "medium",
-    health: "online", lastLatencyMs: 0, errorCount: 0,
-    features: ["Voz JARVIS (British English)", "Piper ONNX", "22050Hz WAV", "Home Assistant compatível", "DSP pós-processamento"],
-    checkHealth: alwaysCloud,
-  },
-  {
-    id: "piper_tts", name: "Piper TTS (WASM)", brandName: "Orion Voz Offline",
-    capability: "speech", tier: "tertiary", runtime: "local_wasm",
-    library: "@mintplex-labs/piper-tts-web", version: "^1.0.x",
-    health: "unknown", lastLatencyMs: 0, errorCount: 0,
-    features: ["Síntese offline pt-BR", "Modelo ONNX faber-medium", "~50MB"],
-    checkHealth: () => "online",
-  },
-  // Web Speech TTS removed — Gemini TTS only, silence on failure
+  // JARVIS, Piper, Web Speech TTS removed — Gemini TTS only, silence on failure
 
   // ═══ 🧠 RACIOCINAR ═══
   {
