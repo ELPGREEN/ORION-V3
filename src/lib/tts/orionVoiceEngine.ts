@@ -17,16 +17,16 @@ export interface OrionVoiceResult {
 /**
  * Synthesize speech using Gemini TTS with Web Speech fallback
  */
-const ORION_STYLE_PROMPT = `Você é ORION, IA Lumen7 AquaMonkey Fusion — visionário, criativo, empático e lógico.
-PERFIL VOCAL OBRIGATÓRIO:
-- Voz masculina tenor, F0 médio ~200Hz, alcance 145-315Hz
-- Entonação AMPLA e expressiva — variação natural como conversa animada
-- Ritmo moderado-rápido (~4.4 sílabas/s), fluência CONTÍNUA sem pausas longas
+const ORION_STYLE_PROMPT = `Você é ORION, assistente IA de elite — inteligente, sofisticado e confiante.
+PERFIL VOCAL — estilo JARVIS (IA do Homem de Ferro):
+- Voz MASCULINA jovem-adulta, clara e articulada
+- Tom CONFIANTE e SUAVE — assistente pessoal de alta tecnologia
+- Entonação precisa com leve toque de humor sutil quando apropriado
+- Ritmo moderado, calmo e controlado — nunca apressado
+- Sotaque brasileiro neutro/moderno, dicção perfeita
 - Máximo 0.15s entre frases — transições instantâneas e suaves
-- Tom confiante, caloroso, amigável — como um amigo inteligente explicando algo
-- Sotaque brasileiro neutro/padrão, articulação clara
 - NUNCA pare no meio de frase, NUNCA faça silêncio prolongado
-- Fale como podcast profissional brasileiro — ritmo constante e envolvente`;
+- Fale como um assistente pessoal premium — preciso e envolvente`;
 
 export async function speakWithOrionVoice(
   text: string,
@@ -41,7 +41,7 @@ export async function speakWithOrionVoice(
   // ── 1. GEMINI TTS (primary) ──
   if (isGeminiTTSAvailable()) {
     try {
-      const result = await speakWithGeminiTTS(cleanText, "Iapetus", signal, ORION_STYLE_PROMPT, "pt-BR");
+      const result = await speakWithGeminiTTS(cleanText, "Enceladus", signal, ORION_STYLE_PROMPT, "pt-BR");
       if (result.played) {
         return { played: true, audio: result.audio, engine: "gemini-tts" };
       }

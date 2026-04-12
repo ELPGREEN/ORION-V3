@@ -446,15 +446,15 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
-    // PRIMARY: Gemini TTS — Iapetus (deep masculine voice)
+    // PRIMARY: Gemini TTS — Enceladus (modern JARVIS-like voice)
     if (!cascadeAbort.signal.aborted) {
       try {
-        console.log("[Voice] Trying Gemini TTS (Iapetus)...");
+        console.log("[Voice] Trying Gemini TTS (Enceladus)...");
         const gemResult = await speakWithGeminiTTS(
           cleanText,
-          "Iapetus",
+          "Enceladus",
           cascadeAbort.signal,
-          "Você é ORION, IA Lumen7 AquaMonkey Fusion. Voz MASCULINA tenor grave ~200Hz, tom confiante e caloroso. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Ritmo moderado-rápido como podcast brasileiro. NUNCA pare no meio de frase.",
+          "Você é ORION, assistente IA de elite estilo JARVIS. Voz MASCULINA jovem-adulta clara e confiante. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Tom sofisticado e preciso. NUNCA pare no meio de frase.",
           "pt-BR",
         );
         console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");

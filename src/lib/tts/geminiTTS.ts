@@ -204,7 +204,7 @@ export function playAudioBlob(
  */
 export async function speakWithGeminiTTS(
   text: string,
-  voice: string = "Iapetus",
+  voice: string = "Enceladus",
   signal?: AbortSignal,
   stylePrompt?: string,
   lang?: string,
@@ -298,9 +298,9 @@ export function isGeminiTTSAvailable(): boolean {
 
 /** Available Gemini TTS voices */
 export const GEMINI_VOICES = [
-  { id: "Iapetus", label: "Iapetus (Padrão Orion — Grave/Natural)" },
-  { id: "Charon", label: "Charon (Sério/JARVIS)" },
-  { id: "Orus", label: "Orus (Calmo/Grave)" },
+  { id: "Enceladus", label: "Enceladus (Padrão Orion — JARVIS/Moderno)" },
+  { id: "Charon", label: "Charon (Sério/Grave)" },
+  { id: "Iapetus", label: "Iapetus (Grave/Clássico)" },
   { id: "Algieba", label: "Algieba (Neutro)" },
   { id: "Kore", label: "Kore (Firme)" },
   { id: "Zephyr", label: "Zephyr (Brilhante)" },
