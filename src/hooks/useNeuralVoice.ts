@@ -1,15 +1,16 @@
 /**
- * NEUROCORE AI — Voice Synthesis Hook (JARVIS-Grade v2)
+ * NEUROCORE AI — Voice Synthesis Hook (JARVIS-Grade v3)
  * 
- * Pipeline: STT (Web Speech) → Command Handler → TTS (Gemini → Web Speech fallback)
+ * Pipeline: STT (Google Cloud STT primary → Web Speech fallback) → Command Handler → TTS (Gemini Iapetus)
  * 
  * Architecture:
+ * - Google Cloud STT as primary (via edge function google-stt)
+ * - Web Speech API as fallback when GCP STT unavailable
  * - Single mic owner via MicArbiter (prevents duplicate recognition)
  * - Mic priming on startListening (auto-start without click when permission exists)
  * - Self-hearing guard (drops transcripts during TTS + echo detection)
  * - Dynamic turn detection (linguistic pattern matching for silence thresholds)
  * - Barge-in support (user can interrupt TTS with stop commands or 3+ words)
- * - STT fallback chain (Groq Whisper → Browser Whisper on network errors)
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { OrbState } from "@/components/dashboard/neural/EnergyOrb";
