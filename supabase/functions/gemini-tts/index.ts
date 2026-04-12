@@ -1,12 +1,15 @@
 /**
- * Gemini TTS — text-to-speech using Gemini 2.5 Flash TTS
+ * Gemini TTS — Cloud Text-to-Speech API with Gemini 2.5 Flash TTS (GA)
  * 
- * NOTE: gemini-live-2.5-flash-native-audio (GA, free) is for Live API (WebSocket)
- * only — it does NOT support generateContent. For HTTP TTS we use the dedicated
- * TTS model via generateContent with responseModalities=["AUDIO"].
+ * Uses the official Cloud TTS synthesizeSpeech endpoint which:
+ * - Returns audio directly (no JSON parsing needed)
+ * - Supports prompt/style instructions natively
+ * - Uses GCP credits via service account
  * 
- * PRIMARY: Vertex AI endpoint (uses GCP credits via service account JWT)
- * FALLBACK: AI Studio API keys (free tier)
+ * CASCADE:
+ * 1. Cloud TTS API (synthesizeSpeech) — primary, uses GCP credits
+ * 2. Vertex AI generateContent — fallback
+ * 3. AI Studio free keys — last resort
  */
 
 const corsHeaders = {
@@ -15,9 +18,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MODELS = [
-  "gemini-2.5-flash-preview-tts",
-];
+const CLOUD_TTS_MODEL = "gemini-2.5-flash-tts";
+const VERTEX_MODELS = ["gemini-2.5-flash-tts", "gemini-2.5-flash-preview-tts"];
 const VERTEX_LOCATION = "us-central1";
 const AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -47,7 +49,6 @@ const failedKeyCache: Record<string, number> = {};
 const KEY_AUTH_COOLDOWN_MS = 5 * 60 * 1000;
 const KEY_RATE_LIMIT_COOLDOWN_MS = 60 * 1000;
 
-// Vertex AI token cache
 let cachedAccessToken: string | null = null;
 let tokenExpiresAt = 0;
 
@@ -79,7 +80,7 @@ function isKeyCoolingDown(key: string, now = Date.now()): boolean {
   return true;
 }
 
-// ─── JWT for Vertex AI ───────────────────────────────────
+// ─── JWT for GCP Auth ────────────────────────────────────
 
 function base64url(data: Uint8Array): string {
   return btoa(String.fromCharCode(...data))
@@ -116,7 +117,7 @@ async function createJWT(sa: { client_email: string; private_key: string }): Pro
   return `${unsigned}.${base64url(sig)}`;
 }
 
-async function getVertexToken(sa: { client_email: string; private_key: string }): Promise<string | null> {
+async function getAccessToken(sa: { client_email: string; private_key: string }): Promise<string | null> {
   try {
     if (cachedAccessToken && Date.now() < tokenExpiresAt - 60_000) return cachedAccessToken;
 
@@ -128,26 +129,27 @@ async function getVertexToken(sa: { client_email: string; private_key: string })
     });
 
     if (!resp.ok) {
-      console.error("[Vertex Auth] Token exchange failed:", resp.status, await resp.text());
+      console.error("[GCP Auth] Token exchange failed:", resp.status, await resp.text());
       return null;
     }
 
     const data = await resp.json();
     cachedAccessToken = data.access_token;
     tokenExpiresAt = Date.now() + (data.expires_in || 3600) * 1000;
-    console.log("[Vertex Auth] ✅ Token obtained, expires in", data.expires_in, "s");
+    console.log("[GCP Auth] ✅ Token obtained, expires in", data.expires_in, "s");
     return cachedAccessToken;
   } catch (err: any) {
-    console.error("[Vertex Auth] Error:", err?.message);
+    console.error("[GCP Auth] Error:", err?.message);
     return null;
   }
 }
 
 function getServiceAccount(): { client_email: string; private_key: string; project_id: string } | null {
   try {
-    const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_KEY");
+    // Try GCP_SA_KEY first (dedicated), then FIREBASE_SERVICE_ACCOUNT_KEY
+    const raw = Deno.env.get("GCP_SA_KEY") || Deno.env.get("FIREBASE_SERVICE_ACCOUNT_KEY");
     if (!raw) {
-      console.warn("[SA] FIREBASE_SERVICE_ACCOUNT_KEY not set");
+      console.warn("[SA] No service account key found");
       return null;
     }
     const sa = JSON.parse(raw);
@@ -184,7 +186,110 @@ function pcmToWav(pcmBase64: string, sampleRate = 24000, channels = 1, bitsPerSa
   return wav;
 }
 
-// ─── Request body builders ───────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// PATH 1: Cloud Text-to-Speech API (synthesizeSpeech) — PRIMARY
+// Uses official TTS endpoint, returns audio directly
+// ═══════════════════════════════════════════════════════════
+
+async function requestCloudTTS(
+  token: string,
+  text: string,
+  voice: string,
+  lang: string,
+  stylePrompt: string,
+  multispeaker?: MultiSpeakerVoice[],
+): Promise<Response | null> {
+  const url = "https://texttospeech.googleapis.com/v1beta1/text:synthesize";
+
+  // Build the request per official Gemini-TTS docs
+  const isMulti = multispeaker && multispeaker.length > 0;
+
+  const voiceParams: Record<string, unknown> = {
+    languageCode: lang,
+    name: voice,
+    modelName: CLOUD_TTS_MODEL,
+  };
+
+  // Multi-speaker config
+  if (isMulti) {
+    voiceParams.multiSpeakerVoiceConfig = {
+      speakerVoiceConfigs: multispeaker!
+        .filter((s) => typeof s?.speaker === "string" && s.speaker.trim().length > 0)
+        .map((s) => ({
+          speakerAlias: s.speaker,
+          speakerId: s.voice || DEFAULT_VOICE,
+        })),
+    };
+    // Remove single-speaker name for multi-speaker
+    delete voiceParams.name;
+  }
+
+  const requestBody: Record<string, unknown> = {
+    input: {
+      text: text.slice(0, 4000),
+      ...(stylePrompt.trim() ? { prompt: stylePrompt.trim().slice(0, 4000) } : {}),
+    },
+    voice: voiceParams,
+    audioConfig: {
+      audioEncoding: "MP3",
+      sampleRateHertz: 24000,
+    },
+  };
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data?.audioContent) {
+          const audioBytes = Uint8Array.from(atob(data.audioContent), (c) => c.charCodeAt(0));
+          console.log(`[Cloud TTS] ✅ ${CLOUD_TTS_MODEL} ${(audioBytes.length / 1024).toFixed(1)}KB MP3`);
+          return new Response(audioBytes.buffer, {
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "audio/mpeg",
+              "Content-Length": String(audioBytes.length),
+              "X-TTS-Engine": "cloud-tts",
+              "X-TTS-Model": CLOUD_TTS_MODEL,
+            },
+          });
+        }
+        console.warn("[Cloud TTS] No audioContent in response");
+        return null;
+      }
+
+      const errText = await resp.text();
+      console.warn(`[Cloud TTS] Attempt ${attempt} (${resp.status}): ${errText.slice(0, 200)}`);
+
+      if (resp.status === 429 || resp.status === 403 || resp.status === 401) {
+        if (resp.status !== 429) cachedAccessToken = null;
+        return null;
+      }
+
+      if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) {
+        await sleep(RETRY_DELAY_MS * attempt);
+        continue;
+      }
+      return null;
+    } catch (err: any) {
+      console.warn(`[Cloud TTS] Attempt ${attempt} error:`, err?.message);
+      if (attempt < MAX_RETRIES) await sleep(RETRY_DELAY_MS * attempt);
+    }
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PATH 2: Vertex AI generateContent — secondary fallback
+// ═══════════════════════════════════════════════════════════
 
 function buildSingleSpeakerRequest(
   cleanText: string, selectedVoice: string, selectedLang: string,
@@ -195,7 +300,6 @@ function buildSingleSpeakerRequest(
   };
   if (opts.includeLanguage && selectedLang.trim()) speechConfig.languageCode = selectedLang;
 
-  // TTS models do NOT support systemInstruction — embed style prompt in the text itself
   const textContent = opts.includePrompt && stylePrompt.trim()
     ? `[Instruções de estilo vocal: ${stylePrompt.trim().slice(0, 400)}]\n\n${cleanText}`
     : cleanText;
@@ -227,18 +331,14 @@ function buildMultiSpeakerRequest(
   };
 }
 
-// ─── Vertex AI request (PRIMARY) ─────────────────────────
-
 async function requestVertexAI(
   sa: { client_email: string; private_key: string; project_id: string },
+  token: string,
   variants: RequestVariant[],
 ): Promise<{ response: Response | null; lastError: string; usedModel: string }> {
-  const token = await getVertexToken(sa);
-  if (!token) return { response: null, lastError: "Failed to get Vertex AI access token", usedModel: "" };
-
   let lastError = "";
 
-  for (const model of MODELS) {
+  for (const model of VERTEX_MODELS) {
     const url = `https://${VERTEX_LOCATION}-aiplatform.googleapis.com/v1/projects/${sa.project_id}/locations/${VERTEX_LOCATION}/publishers/google/models/${model}:generateContent`;
 
     for (const variant of variants) {
@@ -260,7 +360,7 @@ async function requestVertexAI(
 
         if (resp.status === 429 || resp.status === 403 || resp.status === 401) {
           if (resp.status !== 429) cachedAccessToken = null;
-          break; // try next model
+          break;
         }
 
         if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) {
@@ -274,7 +374,9 @@ async function requestVertexAI(
   return { response: null, lastError, usedModel: "" };
 }
 
-// ─── AI Studio fallback (free tier) ──────────────────────
+// ═══════════════════════════════════════════════════════════
+// PATH 3: AI Studio free keys — last resort
+// ═══════════════════════════════════════════════════════════
 
 function getAllGeminiKeys(): string[] {
   const now = Date.now();
@@ -293,7 +395,7 @@ async function requestAIStudio(
   let lastError = "";
   let hadRateLimit = false;
 
-  for (const model of MODELS) {
+  for (const model of VERTEX_MODELS) {
     for (const apiKey of keys) {
       const url = `${AI_STUDIO_BASE}/${model}:generateContent?key=${apiKey}`;
       let skipKey = false;
@@ -315,7 +417,7 @@ async function requestAIStudio(
 
           if (resp.status === 429) { hadRateLimit = true; markKeyCooldown(apiKey, KEY_RATE_LIMIT_COOLDOWN_MS); skipKey = true; break; }
           if (resp.status === 403) { markKeyCooldown(apiKey, KEY_AUTH_COOLDOWN_MS); skipKey = true; break; }
-          if (resp.status === 404) { break; } // model not available, try next
+          if (resp.status === 404) { break; }
           if (TRANSIENT_STATUS_CODES.has(resp.status) && attempt < MAX_RETRIES) { await sleep(RETRY_DELAY_MS * attempt); continue; }
           break;
         }
@@ -326,7 +428,7 @@ async function requestAIStudio(
   return { response: null, lastError, rateLimited: hadRateLimit, usedModel: "" };
 }
 
-// ─── Audio response parser ───────────────────────────────
+// ─── Audio response parser (for Vertex/AI Studio) ────────
 
 function parseAudioResponse(data: any): Response | null {
   const audioPart = data?.candidates?.[0]?.content?.parts?.find(
@@ -352,7 +454,9 @@ function parseAudioResponse(data: any): Response | null {
   });
 }
 
-// ─── Main handler ────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// Main handler
+// ═══════════════════════════════════════════════════════════
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -372,51 +476,55 @@ Deno.serve(async (req) => {
     const selectedLang = lang || DEFAULT_LANG;
     const stylePrompt = prompt || DEFAULT_PROMPT;
 
-    // Build variants — Vertex AI now also gets systemInstruction for fluency
-    const vertexVariants: RequestVariant[] = multispeaker && multispeaker.length > 0
-      ? [
-          { label: "multi/lang", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, true) },
-          { label: "multi/plain", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, false) },
-        ]
-      : [
-          { label: "full", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: true }) },
-          { label: "lang", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: true }) },
-          { label: "plain", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: false }) },
-        ];
-
-    // AI Studio supports systemInstruction
-    const studioVariants: RequestVariant[] = multispeaker && multispeaker.length > 0
-      ? vertexVariants
-      : [
-          { label: "full", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: true }) },
-          { label: "no-lang", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: false }) },
-          { label: "plain", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: false }) },
-        ];
-
-    // ── 1) Vertex AI (GCP credits) ──
+    // ── 1) Cloud TTS API (official, uses GCP credits directly) ──
     const sa = getServiceAccount();
     if (sa) {
-      console.log(`[TTS] ${cleanText.length} chars → Vertex AI (project: ${sa.project_id})`);
-      const vertex = await requestVertexAI(sa, vertexVariants);
-      if (vertex.response) {
-        const data = await vertex.response.json();
-        const audioResp = parseAudioResponse(data);
-        if (audioResp) {
-          audioResp.headers.set("X-TTS-Model", vertex.usedModel);
-          return audioResp;
+      const token = await getAccessToken(sa);
+      if (token) {
+        console.log(`[TTS] ${cleanText.length} chars → Cloud TTS API (${CLOUD_TTS_MODEL}, voice: ${selectedVoice})`);
+        const cloudResp = await requestCloudTTS(token, cleanText, selectedVoice, selectedLang, stylePrompt, multispeaker);
+        if (cloudResp) return cloudResp;
+
+        // ── 2) Vertex AI generateContent (fallback, same GCP credits) ──
+        console.log("[TTS] Cloud TTS failed, trying Vertex AI generateContent...");
+        const vertexVariants: RequestVariant[] = multispeaker && multispeaker.length > 0
+          ? [
+              { label: "multi/lang", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, true) },
+              { label: "multi/plain", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, false) },
+            ]
+          : [
+              { label: "full", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: true }) },
+              { label: "lang", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: true }) },
+              { label: "plain", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: false }) },
+            ];
+
+        const vertex = await requestVertexAI(sa, token, vertexVariants);
+        if (vertex.response) {
+          const data = await vertex.response.json();
+          const audioResp = parseAudioResponse(data);
+          if (audioResp) {
+            audioResp.headers.set("X-TTS-Engine", "vertex-ai");
+            audioResp.headers.set("X-TTS-Model", vertex.usedModel);
+            return audioResp;
+          }
         }
-        console.error("[Vertex TTS] No audio:", JSON.stringify(data).slice(0, 400));
-      } else {
-        console.warn("[Vertex TTS] Failed:", vertex.lastError.slice(0, 150));
       }
-    } else {
-      console.warn("[TTS] No service account, skipping Vertex AI");
     }
 
-    // ── 2) AI Studio fallback (free keys) ──
+    // ── 3) AI Studio free keys (last resort) ──
     const keys = getAllGeminiKeys();
     if (keys.length > 0) {
       console.log(`[TTS] Fallback AI Studio (${keys.length} keys)`);
+      const studioVariants: RequestVariant[] = multispeaker && multispeaker.length > 0
+        ? [
+            { label: "multi/lang", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, true) },
+          ]
+        : [
+            { label: "full", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: true }) },
+            { label: "no-lang", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: false }) },
+            { label: "plain", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: false }) },
+          ];
+
       const { response, lastError, rateLimited, usedModel } = await requestAIStudio(keys, studioVariants);
 
       if (rateLimited && !response) {
@@ -426,6 +534,7 @@ Deno.serve(async (req) => {
         const data = await response.json();
         const audioResp = parseAudioResponse(data);
         if (audioResp) {
+          audioResp.headers.set("X-TTS-Engine", "ai-studio");
           audioResp.headers.set("X-TTS-Model", usedModel);
           return audioResp;
         }
