@@ -1,6 +1,6 @@
 /**
  * Google Cloud Speech-to-Text v1 Edge Function
- * Uses v1 API with latest_long model + enhanced mode
+ * Optimized for short voice-assistant utterances with low brand bias
  * Billing goes to GCP project credits
  */
 
@@ -97,16 +97,16 @@ async function recognize(body: STTRequest, token: string) {
       encoding: body.encoding || "LINEAR16",
       sampleRateHertz: body.sampleRate || 16000,
       languageCode: body.languageCode || "pt-BR",
-      model: "latest_long",
+      model: "latest_short",
+      maxAlternatives: 1,
       enableAutomaticPunctuation: true,
-      useEnhanced: true,
-      alternativeLanguageCodes: body.alternativeLanguageCodes || ["en-US"],
+      ...(body.alternativeLanguageCodes?.length
+        ? { alternativeLanguageCodes: body.alternativeLanguageCodes }
+        : {}),
       speechContexts: [
         {
-          phrases: [
-            "Orion", "Oríon", "Ericson", "ELP", "IASoftHub",
-          ],
-          boost: 8,
+          phrases: ["Orion", "Oríon"],
+          boost: 5,
         },
       ],
     },
