@@ -1457,7 +1457,7 @@ export function useOrionReasoning(
       const spokenSentences = new Set<string>();
 
       const TTS_VOICE = "Enceladus";
-      const TTS_PROMPT = "Você é ORION, assistente IA de elite estilo JARVIS. Voz MASCULINA jovem-adulta clara e confiante. Fale CONTÍNUO sem pausas. Máximo 0.15s entre frases. Tom sofisticado e preciso como assistente pessoal premium.";
+      const TTS_PROMPT = "Você é Orion, assistente pessoal AquaMonkey. Voz masculina jovem-adulta, clara e confiante. Fale com ritmo natural de conversa, sem repetir palavras. Tom descontraído e inteligente.";
 
       const processSpeechQueue = async () => {
         if (bargedInRef.current) return;

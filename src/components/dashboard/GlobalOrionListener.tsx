@@ -15,8 +15,8 @@ import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { claimMic, isMicOwner, registerMicRec, getMicMode, releaseMic, killMicRec } from "@/lib/voice/micArbiter";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
 
-const ORION_FLUENCY_PROMPT = `Você é ORION, IA Lumen7 AquaMonkey Fusion — visionário, criativo, empático.
-REGRAS DE FLUÊNCIA: Fale CONTÍNUO sem pausas. Máximo 0.15s entre frases. Voz masculina tenor ~200Hz, calorosa. Ritmo moderado-rápido como podcast brasileiro. Transições INSTANTÂNEAS.`;
+const ORION_FLUENCY_PROMPT = `Você é Orion, assistente pessoal AquaMonkey. Voz masculina jovem-adulta, clara e confiante.
+REGRAS DE FLUÊNCIA: Fale com ritmo natural de conversa, sem repetir palavras. Voz calorosa ~200Hz. Ritmo moderado como podcast brasileiro. Transições suaves.`;
 
 /** Speak text using Gemini TTS — NO robotic fallback (silent fail is better than robotic voice) */
 async function orionSpeak(text: string): Promise<void> {
