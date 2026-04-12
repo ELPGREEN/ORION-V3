@@ -284,8 +284,6 @@ export function useNeuralVoice(
 
   // ═══ Barge-In ═══
   const bargeIn = useCallback(() => {
-    try { speechSynthesis.cancel(); } catch {}
-    if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.currentTime = 0; activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
@@ -616,14 +614,13 @@ export function useNeuralVoice(
     clearRestartTimer();
     onCmdRef.current = null;
     speakingRef.current = false;
-    if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
+    
     if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
     }
     speechBufferRef.current = "";
-    try { speechSynthesis.cancel(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
     releaseMic(singletonIdRef.current);
