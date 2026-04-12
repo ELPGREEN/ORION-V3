@@ -530,7 +530,7 @@ export function useNeuralVoice(
       if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
 
       // Dynamic turn detection on accumulated buffer
-      const turnState = detectTurnState(speechBufferRef.current, "pt-BR");
+      const turnState = detectTurnState([speechBufferRef.current], "pt-BR");
       const silenceMs = getOptimalSilenceDuration(turnState);
 
       speechDebounceRef.current = setTimeout(() => {

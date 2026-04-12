@@ -832,7 +832,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 height={150}
                 videoWidth={videoRef.current?.videoWidth || 640}
                 videoHeight={videoRef.current?.videoHeight || 480}
-                tier={lastRtVisionRef.current?.status.mediapipe ? "native" : "fallback"}
+                tier={lastRtVisionRef.current?.status === "native" ? "native" : "fallback"}
                 faceApiDetection={null}
               />
               {gesturesEnabled && currentGesture.gesture !== "none" && (
