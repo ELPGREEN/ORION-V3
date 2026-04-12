@@ -38,8 +38,8 @@ const preloadAllVision = async () => {};
 const _rtCache = { lastCall: 0, lastResult: null as RealTimeVisionResult | null };
 async function detectRealTime(video?: HTMLVideoElement): Promise<RealTimeVisionResult> {
   const now = Date.now();
-  // Throttle: at most once every 4 seconds
-  if (now - _rtCache.lastCall < 4000 && _rtCache.lastResult) {
+  // Throttle: at most once every 2 seconds (was 4s — too slow for "real time")
+  if (now - _rtCache.lastCall < 2000 && _rtCache.lastResult) {
     return _rtCache.lastResult;
   }
   if (!video || video.readyState < 2) {
