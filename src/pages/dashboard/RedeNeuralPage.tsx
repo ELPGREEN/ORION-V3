@@ -81,7 +81,7 @@ const FaceAuthEnroll = lazy(lazyRetry(() => import("@/components/auth/FaceAuthEn
 const OrionShieldPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/OrionShieldPanel").then(m => ({ default: m.OrionShieldPanel }))));
 const ArquiteturaIA = lazy(lazyRetry(() => import("@/pages/dashboard/ArquiteturaIA")));
 const AttentionVisualizationLazy = lazy(() => import("@/components/dashboard/neural/AttentionVisualization").then((m) => ({ default: m.AttentionVisualization })));
-
+const OrionAudiobookListener = lazy(lazyRetry(() => import("@/components/orion/OrionAudiobookListener").then(m => ({ default: m.OrionAudiobookListener }))));
 const SpotifyPlayer = lazy(lazyRetry(() => import("@/components/spotify/SpotifyPlayer").then(m => ({ default: m.SpotifyPlayer }))));
 const AmazonMusicPlayer = lazy(lazyRetry(() => import("@/components/amazon/AmazonMusicPlayer").then(m => ({ default: m.AmazonMusicPlayer }))));
 const YouTubeMusicPlayer = lazy(lazyRetry(() => import("@/components/youtube-music/YouTubeMusicPlayer").then(m => ({ default: m.YouTubeMusicPlayer }))));
@@ -1302,6 +1302,15 @@ export default function RedeNeuralPage() {
         {/* Audiobook & Media Tab — Reorganized */}
         <TabsContent value="audiobook" className="space-y-6">
           {/* Section 1: Learning */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Brain className="h-4 w-4 text-cyan-400" />
+              <h3 className="text-sm font-mono font-semibold text-foreground/80 tracking-wide uppercase">Aprendizado Auditivo</h3>
+            </div>
+            <Suspense fallback={<Card className="border-border bg-card p-6"><div className="flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div></Card>}>
+              <OrionAudiobookListener />
+            </Suspense>
+          </div>
 
           {/* Section 2: Music & Media — Sub-tabs */}
           <div>

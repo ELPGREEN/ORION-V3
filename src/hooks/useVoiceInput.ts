@@ -130,6 +130,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
         try { recognitionRef.current.abort(); } catch {}
         recognitionRef.current = null;
       }
+      window.speechSynthesis?.cancel();
     };
   }, [clearPhraseTimer]);
 
@@ -397,13 +398,13 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
       }
     } catch {}
 
-    // Gemini failed → silence (no robotic fallback)
-    console.warn("[VoiceInput] Gemini TTS unavailable — staying silent");
+    // ── FALLBACK: Web Speech ──
+    console.warn("[VoiceInput] Gemini TTS unavailable, skipping speech");
     finalize();
   }, [destroyRecognition]);
 
   const stopSpeaking = useCallback(() => {
-    
+    window.speechSynthesis?.cancel();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;

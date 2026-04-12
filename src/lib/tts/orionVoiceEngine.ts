@@ -43,8 +43,20 @@ export async function speakWithOrionVoice(
 
   if (signal?.aborted) return fail;
 
-  // Gemini failed → silence (no robotic fallback)
-  console.warn("[Orion Voice] Gemini TTS unavailable — staying silent");
+  // ── 2. WEB SPEECH (browser fallback) ──
+  try {
+    const u = new SpeechSynthesisUtterance(cleanText);
+    u.lang = "pt-BR";
+    u.rate = 1.3;
+    u.pitch = 0.92;
+    await new Promise<void>((resolve) => {
+      u.onend = () => resolve();
+      u.onerror = () => resolve();
+      speechSynthesis.speak(u);
+    });
+    return { played: true, audio: null, engine: "web-speech" };
+  } catch {}
+
   return fail;
 }
 

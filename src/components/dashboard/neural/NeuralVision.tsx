@@ -285,7 +285,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       return;
     }
     if (q.includes("parar") || q.includes("desligar")) { stopCamera(); return; }
-    if (q.includes("calar") || q.includes("silêncio")) { return; }
+    if (q.includes("calar") || q.includes("silêncio")) { try { speechSynthesis?.cancel(); } catch {} return; }
     if (supernetConnected) sendSuperNetQuery(cmd);
     else askAI(cmd, "voice");
   }, [active, startCamera, stopCamera, speakFast, askAI, supernetConnected, sendSuperNetQuery]);
