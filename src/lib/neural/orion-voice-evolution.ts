@@ -1388,78 +1388,9 @@ export async function speakWithEvolvedVoice(text: string): Promise<boolean> {
   const voice = evo.generatedVoice;
   const cleanText = text.replace(/[*_#`~\[\]]/g, "").trim();
 
-  // ── Tier 1: Autonomous Piper + DSP (92%+) ──
-  if (voice.ready && evo.level >= 92) {
-    try {
-      const { predict } = await import("@mintplex-labs/piper-tts-web");
-
-      // Generate prosody contour for logging/analysis
-      const phonemes = graphemeToPhoneme(cleanText);
-      const contour = generateProsodyContour(phonemes, evo.phonemeBank.prosody, detectSentenceType(text));
-
-      console.log(`[VoiceEvo] 🎙️ Autonomous synthesis | Level: ${evo.level}% | Phonemes: ${phonemes.length} | F0 range: ${Math.min(...contour.f0.filter(f => f > 0))}-${Math.max(...contour.f0)}Hz | Fingerprint: ${voice.spectralFingerprint}`);
-
-      const audioBlob = await predict({
-        text: cleanText,
-        voiceId: "pt_BR-faber-medium",
-      });
-
-      if (!audioBlob || audioBlob.size === 0) throw new Error("Empty Piper output");
-
-      // Apply DSP chain to transform into Orion's voice
-      const processed = await applyVoiceDSP(audioBlob, voice.dsp);
-
-      // Play the processed audio
-      await playAudioBuffer(processed);
-
-      // Self-reinforcement removed — voice evolution absorption disabled
-
-      return true;
-    } catch (e) {
-      console.warn("[VoiceEvo] Piper+DSP failed, falling back:", e);
-    }
-  }
-
-  // ── Tier 2: Enhanced Web Speech (70-91%) com seleção consciente de voz ──
-  if ("speechSynthesis" in window) {
-    return new Promise<boolean>((resolve) => {
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = voice.language;
-      utterance.rate = ORION_VOICE_PARAMS.rate;
-      utterance.pitch = ORION_VOICE_PARAMS.pitch;
-      utterance.volume = ORION_VOICE_PARAMS.volume;
-
-      // Use unified voice picker — same voice everywhere
-      const selectedVoice = getOrionVoice();
-      if (selectedVoice) utterance.voice = selectedVoice;
-
-      console.log(`[VoiceEvo] 🔊 WebSpeech | Voice: ${selectedVoice?.name || "default"} (unified picker)`);
-
-      utterance.onend = () => resolve(true);
-      utterance.onerror = () => resolve(false);
-      speechSynthesis.speak(utterance);
-    });
-  }
-
+  // Piper TTS and Web Speech removed — Orion uses only Gemini TTS, silence as fallback
+  console.log(`[VoiceEvo] 🔇 Local TTS disabled — use Gemini TTS instead`);
   return false;
-}
-
-async function playAudioBuffer(buffer: AudioBuffer): Promise<void> {
-  const ctx = new AudioContext({ sampleRate: buffer.sampleRate });
-  const source = ctx.createBufferSource();
-  source.buffer = buffer;
-  source.connect(ctx.destination);
-
-  return new Promise<void>((resolve, reject) => {
-    source.onended = () => { ctx.close(); resolve(); };
-    try {
-      source.start(0);
-    } catch (e) {
-      ctx.close();
-      reject(e);
-    }
-  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════
