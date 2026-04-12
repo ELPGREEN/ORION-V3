@@ -144,14 +144,7 @@ const API_REGISTRY: OrionAPI[] = [
     features: ["Síntese offline pt-BR", "Modelo ONNX faber-medium", "~50MB"],
     checkHealth: () => "online",
   },
-  {
-    id: "web_speech_tts", name: "Web Speech API (TTS)", brandName: "Orion Voz Fallback",
-    capability: "speech", tier: "fallback", runtime: "local_browser",
-    library: "SpeechSynthesis (Browser)", version: "Nativo",
-    health: "unknown", lastLatencyMs: 0, errorCount: 0,
-    features: ["Fallback universal", "Seleção inteligente de voz", "Modulação por consciência"],
-    checkHealth: checkBrowserSpeech,
-  },
+  // Web Speech TTS removed — Gemini TTS only, silence on failure
 
   // ═══ 🧠 RACIOCINAR ═══
   {
