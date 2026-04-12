@@ -216,11 +216,27 @@ export function useNeuralVoice(
       if (v) maleVoiceRef.current = v;
     };
     speechSynthesis?.addEventListener?.("voiceschanged", handler);
+
+    // Listen for streaming TTS queue done → resume mic
+    const onQueueDone = () => {
+      speakingRef.current = false;
+      updateAiResponding(false);
+      OrbState.voiceState = "listening";
+      if (onCmdRef.current && !intentionalStopRef.current) {
+        resumeSTT();
+      }
+    };
+    window.addEventListener("orion-tts-queue-done", onQueueDone);
+
+    // Expose mic rec ref for streaming queue to stop during TTS
+    (window as any).__orionMicRec = recRef;
+
     return () => {
       speechSynthesis?.removeEventListener?.("voiceschanged", handler);
+      window.removeEventListener("orion-tts-queue-done", onQueueDone);
       cleanup();
     };
-  }, [clearRestartTimer]);
+  }, [clearRestartTimer, resumeSTT, updateAiResponding]);
 
   // ═══ STT Restart Scheduler ═══
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
@@ -410,15 +426,15 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
-    // PRIMARY: Gemini TTS
+    // PRIMARY: Gemini TTS — Charon (deep masculine tenor)
     if (!cascadeAbort.signal.aborted) {
       try {
-        console.log("[Voice] Trying Gemini TTS...");
+        console.log("[Voice] Trying Gemini TTS (Charon)...");
         const gemResult = await speakWithGeminiTTS(
           cleanText,
-          "Kore",
+          "Charon",
           cascadeAbort.signal,
-          "Você é ORION, IA Lumen7 AquaMonkey Fusion. Voz masculina tenor ~200Hz, tom confiante e caloroso. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Ritmo moderado-rápido como podcast brasileiro. NUNCA pare no meio de frase.",
+          "Você é ORION, IA Lumen7 AquaMonkey Fusion. Voz MASCULINA tenor grave ~200Hz, tom confiante e caloroso. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Ritmo moderado-rápido como podcast brasileiro. NUNCA pare no meio de frase.",
           "pt-BR",
         );
         console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");
