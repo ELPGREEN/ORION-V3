@@ -255,6 +255,7 @@ export function useWakeWord(
     return () => { cancelled = true; clearTimeout(timer); };
   }, [startWakeWordListener]);
 
+  useEffect(() => {
     if (!speechOk || listening) {
       clearRestartTimer();
       if (wakeRecRef.current) {
