@@ -62,16 +62,13 @@ export function cleanTextForSpeech(text: string): string {
     .replace(/\|/g, " ")
     .replace(/[─═╔╗╚╝║╠╣╬┌┐└┘├┤┬┴┼]/g, "")
     .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/g, "")
-    // KEY: Remove pause-inducing punctuation — just use spaces
-    .replace(/[;:!]+/g, " ")
+    // KEY: Remove ALL pause-inducing punctuation — continuous flow
+    .replace(/[;:!?]+/g, " ")
     .replace(/[–—]+/g, " ")
     .replace(/,+/g, " ")
-    .replace(/\.{2,}/g, ".")
-    .replace(/\n+/g, ". ")
-    // Keep only single periods and question marks as natural breaks
-    .replace(/\.(\s*\.)+/g, ".")
+    .replace(/\.+/g, " ")
+    .replace(/\n+/g, " ")
     .replace(/\s+/g, " ")
-    .replace(/^\.\s*/, "")
     .trim();
 }
 
