@@ -191,7 +191,8 @@ export function useNeuralVoice(
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setSupported("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
+      // GCP STT always supported (edge function), Web Speech as fallback
+      setSupported(true);
     }
   }, []);
 
