@@ -684,37 +684,46 @@ export function handlePauseReading(): string {
   if (!state.active) return "📖 Nenhuma leitura ativa.";
   state.paused = true;
   saveReadAloudState(state);
-  window.speechSynthesis?.cancel();
   return `⏸️ Leitura pausada em segmento ${state.currentSegment + 1}/${state.segments.length}.\nDiga "**continuar leitura**" para retomar.`;
 }
 
-function speakSegment(text: string) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "pt-BR";
-  utterance.rate = getReadAloudState().speed;
-  utterance.pitch = 0.9; // Slightly deeper for Orion's masculine voice preference
-  
-  // Auto-advance to next segment on end
-  utterance.onend = () => {
-    const current = getReadAloudState();
-    if (current.active && !current.paused) {
-      current.currentSegment++;
-      if (current.currentSegment < current.segments.length) {
-        saveReadAloudState(current);
-        const nextSeg = current.segments[current.currentSegment];
-        speakSegment(nextSeg);
-      // absorbContent removed — voice evolution disabled
-        addMinutesUsed(1);
-      } else {
-        current.active = false;
-        saveReadAloudState(current);
+async function speakSegment(text: string) {
+  try {
+    const { speakWithGeminiTTS } = await import("@/lib/tts/geminiTTS");
+    const result = await speakWithGeminiTTS(text, "Charon");
+    if (result.played) {
+      // Auto-advance to next segment after Gemini finishes
+      const current = getReadAloudState();
+      if (current.active && !current.paused) {
+        current.currentSegment++;
+        if (current.currentSegment < current.segments.length) {
+          saveReadAloudState(current);
+          const nextSeg = current.segments[current.currentSegment];
+          speakSegment(nextSeg);
+          addMinutesUsed(1);
+        } else {
+          current.active = false;
+          saveReadAloudState(current);
+        }
       }
+      return;
     }
-  };
-
-  window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.warn("[ReadAloud] Gemini TTS failed:", e);
+  }
+  // Gemini failed → silence, but still advance segments
+  const current = getReadAloudState();
+  if (current.active && !current.paused) {
+    current.currentSegment++;
+    if (current.currentSegment < current.segments.length) {
+      saveReadAloudState(current);
+      speakSegment(current.segments[current.currentSegment]);
+      addMinutesUsed(1);
+    } else {
+      current.active = false;
+      saveReadAloudState(current);
+    }
+  }
 }
 
 // ─── Amazon Music Playback Handler ───

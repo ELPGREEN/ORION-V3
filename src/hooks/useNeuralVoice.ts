@@ -14,7 +14,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { OrbState } from "@/components/dashboard/neural/EnergyOrb";
 import { toast } from "sonner";
-import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
+import { getOrionVoice, initVoicePicker } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 // adaptiveVoiceStyle, sttFallbackChain, audioWorkletManager REMOVED — performance bottlenecks
@@ -163,7 +163,7 @@ export function useNeuralVoice(
   const lastSpokenAtRef = useRef(0);
   const lastProcessedTranscriptRef = useRef("");
   const lastProcessedAtRef = useRef(0);
-  const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
   const consecutiveAbortsRef = useRef(0);
   const voiceActiveRef = useRef(false);
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -284,8 +284,6 @@ export function useNeuralVoice(
 
   // ═══ Barge-In ═══
   const bargeIn = useCallback(() => {
-    try { speechSynthesis.cancel(); } catch {}
-    if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.currentTime = 0; activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
@@ -298,72 +296,7 @@ export function useNeuralVoice(
     if (bargeInCallbackRef.current) bargeInCallbackRef.current();
   }, [updateAiResponding]);
 
-  // ═══ Web Speech TTS (Fallback) ═══
-  const browserSpeak = useCallback((rawText: string) => {
-    const text = cleanTextForSpeech(rawText);
-    if (!text) return Promise.resolve();
-
-    // Send entire text as one utterance — no chunking, no word cuts
-    const chunks = [text];
-
-    return new Promise<void>((resolve) => {
-      const safetyTimeout = setTimeout(() => {
-        try { speechSynthesis.cancel(); } catch {}
-        if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-        resolve();
-      }, 60000);
-
-      const keepAlive = setInterval(() => {
-        if (speechSynthesis.speaking && !speechSynthesis.paused) {
-          speechSynthesis.pause();
-          speechSynthesis.resume();
-        }
-      }, 10000);
-      keepAliveRef.current = keepAlive;
-
-      const finish = () => {
-        clearTimeout(safetyTimeout);
-        if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-        resolve();
-      };
-
-      try {
-        speechSynthesis.cancel();
-
-        const speakChunk = (idx: number) => {
-          if (idx >= chunks.length) { finish(); return; }
-          const pauseMs = idx > 0 ? 5 : 0;
-          setTimeout(() => {
-            const isQuestion = /\?/.test(chunks[idx]);
-            const isLast = idx === chunks.length - 1;
-            let rate: number = ORION_VOICE_PARAMS.rate + (Math.sin(idx * 2.1) * 0.02);
-            let pitch: number = ORION_VOICE_PARAMS.pitch;
-            if (isQuestion) pitch += 0.04;
-            if (isLast && chunks.length > 2) rate -= 0.03;
-            rate = Math.max(0.9, Math.min(1.35, rate));
-            pitch = Math.max(0.75, Math.min(1.1, pitch));
-
-            const u = new SpeechSynthesisUtterance(chunks[idx]);
-            u.lang = "pt-BR";
-            u.rate = rate;
-            u.pitch = pitch;
-            u.volume = ORION_VOICE_PARAMS.volume;
-            if (maleVoiceRef.current) u.voice = maleVoiceRef.current;
-            u.onend = () => speakChunk(idx + 1);
-            u.onerror = (ev) => {
-              if ((ev as any)?.error === "canceled" || (ev as any)?.error === "interrupted") { finish(); return; }
-              speakChunk(idx + 1);
-            };
-            speechSynthesis.speak(u);
-          }, pauseMs);
-        };
-
-        speakChunk(0);
-      } catch { finish(); }
-    });
-  }, []);
-
-  // ═══ PRIMARY TTS — Gemini TTS → Web Speech fallback ═══
+  // ═══ PRIMARY TTS — Gemini TTS only, silence on failure ═══
   const speak = useCallback(async (text: string, options?: { skipMicToggle?: boolean }) => {
     console.log("[Voice] speak() called:", text.slice(0, 80), "ttsOn:", ttsRef.current);
     if (!ttsRef.current || typeof window === "undefined") {
@@ -372,7 +305,7 @@ export function useNeuralVoice(
     }
 
     // Cancel any ongoing speech
-    try { speechSynthesis.cancel(); } catch {}
+    
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
@@ -433,20 +366,9 @@ export function useNeuralVoice(
       }
     }
 
-    // FALLBACK: Web Speech API
-    if (!played && !cascadeAbort.signal.aborted) {
-      console.warn("[Voice] Gemini TTS unavailable — trying Web Speech fallback");
-      try {
-        await browserSpeak(cleanText);
-        played = true;
-        console.log("[Voice] Web Speech fallback PLAYED");
-      } catch (err) {
-        console.warn("[Voice] Web Speech fallback failed:", err);
-      }
-    }
-
+    // Gemini failed → silence (no robotic fallback)
     if (!played) {
-      console.error("[Voice] ALL TTS backends failed — no audio output");
+      console.warn("[Voice] Gemini TTS unavailable — staying silent (no robotic fallback)");
     }
 
     // Exit speaking state
@@ -459,7 +381,7 @@ export function useNeuralVoice(
     OrbState.voiceState = "listening";
 
     if (!options?.skipMicToggle) resumeSTT();
-  }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
+  }, [clearRestartTimer, resumeSTT, updateAiResponding]);
 
   /** speakFast: identical to speak (unified pipeline) */
   const speakFast = useCallback(async (text: string) => {
@@ -692,14 +614,13 @@ export function useNeuralVoice(
     clearRestartTimer();
     onCmdRef.current = null;
     speakingRef.current = false;
-    if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
+    
     if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
     }
     speechBufferRef.current = "";
-    try { speechSynthesis.cancel(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
     releaseMic(singletonIdRef.current);
