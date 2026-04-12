@@ -12,7 +12,7 @@ import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { extractVoiceFeaturesFromBlob, compareFeaturesStatic, type VoiceFeatures } from "@/lib/voice/voiceFeatureEngine";
+import { extractVoiceFeaturesFromBlob, compareFeaturesStatic, CREATOR_VOICE_FINGERPRINT, type VoiceFeatures } from "@/lib/voice/voiceFeatureEngine";
 import { isOwnerEmail, isCreatorByName } from "@/lib/neural/orion-consciousness";
 
 export type IdentityStatus = "unknown" | "verifying" | "owner" | "creator" | "guest" | "no_enrollment";
@@ -51,7 +51,35 @@ export function useVoiceIdentityGuard() {
     setIsCheckingVoice(true);
 
     try {
-      // Load owner's enrollment
+      // Extract voice features first — we'll need them for both checks
+      let features: VoiceFeatures;
+      try {
+        features = await extractVoiceFeaturesFromBlob(audioBlob);
+        console.log("[VoiceGuard] Features extracted:", {
+          mfcc_len: features.mfcc_mean.length,
+          pitch: features.pitch_mean.toFixed(1),
+          energy: features.energy_mean.toFixed(6),
+          zcr: features.zero_crossing_rate.toFixed(4),
+        });
+      } catch (featureErr) {
+        console.error("[VoiceGuard] ❌ Feature extraction failed:", featureErr);
+        setIdentityStatus("owner");
+        setIsCheckingVoice(false);
+        return "owner";
+      }
+
+      // ── Check against CREATOR hardcoded fingerprint first ──
+      const creatorSimilarity = compareFeaturesStatic(features, CREATOR_VOICE_FINGERPRINT);
+      console.log("[VoiceGuard] 🎙️ Creator voice similarity:", creatorSimilarity.toFixed(4), "(threshold: 0.60)");
+      
+      if (creatorSimilarity >= 0.60) {
+        console.log("[VoiceGuard] 👑 Voice matches CREATOR (Ericson Piccoli)! Score:", creatorSimilarity.toFixed(4));
+        setIdentityStatus("creator");
+        setIsCheckingVoice(false);
+        return "creator";
+      }
+
+      // ── Check against owner's enrollment ──
       const { data: enrollment, error: enrollError } = await supabase
         .from("voice_auth_enrollments")
         .select("voice_features")
@@ -73,31 +101,13 @@ export function useVoiceIdentityGuard() {
         return "no_enrollment";
       }
 
-      console.log("[VoiceGuard] ✅ Enrollment found, extracting features from audio...");
-      
-      let features: VoiceFeatures;
-      try {
-        features = await extractVoiceFeaturesFromBlob(audioBlob);
-        console.log("[VoiceGuard] Features extracted:", {
-          mfcc_len: features.mfcc_mean.length,
-          pitch: features.pitch_mean.toFixed(1),
-          energy: features.energy_mean.toFixed(6),
-          zcr: features.zero_crossing_rate.toFixed(4),
-        });
-      } catch (featureErr) {
-        console.error("[VoiceGuard] ❌ Feature extraction failed:", featureErr);
-        // If we can't extract features, assume owner to not block usage
-        setIdentityStatus("owner");
-        setIsCheckingVoice(false);
-        return "owner";
-      }
+      console.log("[VoiceGuard] ✅ Enrollment found, comparing...");
 
       const enrolledFeatures = enrollment.voice_features as unknown as VoiceFeatures;
       const similarity = compareFeaturesStatic(features, enrolledFeatures);
       
       console.log("[VoiceGuard] 📊 Similarity score:", similarity.toFixed(4), "(threshold: 0.65)");
 
-      // Match threshold — 0.65 is more realistic for short recordings with noise
       const threshold = 0.65;
       const isOwner = isOwnerEmail(user?.email);
       
