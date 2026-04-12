@@ -4,7 +4,7 @@ import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSignatureRealtime } from "@/hooks/useSignatureRealtime";
-import { syncVoiceEvolutionFromSupabase, boostEvolution } from "@/lib/neural/orion-voice-evolution";
+import { syncVoiceEvolutionFromSupabase } from "@/lib/neural/orion-voice-evolution";
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteNavbar } from "./ClienteNavbar";
 import { DashboardSidebar } from "./DashboardSidebar";
@@ -40,8 +40,6 @@ export default function DashboardLayout() {
     if (!authLoading && !user) navigate("/auth");
     if (!authLoading && user) {
       syncVoiceEvolutionFromSupabase().catch(() => {});
-      // Auto-boost voice evolution if below autonomous level
-      try { boostEvolution(); } catch {}
     }
   }, [user, authLoading, navigate]);
 
