@@ -76,7 +76,7 @@ function OrionOSHeader() {
 
 /* ─── User Info Card ──────────────────────────────── */
 function UserInfoCard() {
-  const { profile } = useAuth();
+  const { user } = useAuth();
 
   return (
     <div className="rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm p-4 flex items-center gap-3">
@@ -84,8 +84,8 @@ function UserInfoCard() {
         <User className="h-5 w-5 text-muted-foreground" />
       </div>
       <div>
-        <p className="text-sm font-mono text-foreground">{profile?.full_name || "info"}</p>
-        <p className="text-[10px] font-mono text-muted-foreground">{profile?.email || "info@elpgreen.com"}</p>
+        <p className="text-sm font-mono text-foreground">{user?.user_metadata?.full_name || "info"}</p>
+        <p className="text-[10px] font-mono text-muted-foreground">{user?.email || "info@elpgreen.com"}</p>
         <p className="text-[9px] font-mono text-cyan-400/60">ORION v22.3 • CLEARANCE L5</p>
       </div>
     </div>
