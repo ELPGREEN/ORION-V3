@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Volume2, VolumeX, Minimize2, Maximize2 } from "lucide-react";
+import { X, Volume2, VolumeX, Minimize2, Maximize2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { isMobileDevice, openYouTube, openSpotify } from "@/lib/utils/deep-link";
 
 interface MusicCommand {
   action: string;
@@ -21,6 +22,11 @@ export function FloatingMusicPlayer() {
     const handler = (e: CustomEvent<MusicCommand>) => {
       const { action, query: q } = e.detail;
       if (action === "search_and_play" && q) {
+        // On mobile, open native app directly instead of embedded player
+        if (isMobileDevice()) {
+          openYouTube(q.trim(), true); // true = YouTube Music
+          return;
+        }
         setQuery(q.trim());
         setVisible(true);
         setMinimized(false);
@@ -67,6 +73,15 @@ export function FloatingMusicPlayer() {
             </span>
           </div>
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => openSpotify(query)}
+              title="Abrir no Spotify"
+            >
+              <ExternalLink className="h-3 w-3 text-green-500" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
