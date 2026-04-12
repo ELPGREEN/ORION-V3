@@ -1,7 +1,6 @@
 /**
  * ─── Neural Algorithms Module ───
- * Barrel export for all neural modules (v24.0 — Full Unified Architecture).
- * All 100+ modules exported — zero orphans.
+ * Barrel export for all neural modules (v25.0 — Vision cleanup: Gemini-only).
  */
 
 // ═══ Core Activations & Runtime ═══
@@ -96,50 +95,6 @@ export {
   type AgentBroadcast as NeuralAgentBroadcast,
 } from "./neural-agent-bridge";
 
-// ═══ Vision Pipeline ═══
-export * from "./mediapipe-vision";
-export * from "./realtime-vision-engine";
-export * from "./vision-preprocessing";
-export * from "./vision-otsu";
-export * from "./vision-kmeans-quality";
-export * from "./vision-text-detection";
-export * from "./vision-local-learning";
-export * from "./vision-yolo-priors";
-export {
-  type FaceDetection as TribunalFaceDetection,
-} from "./vision-tribunal";
-export {
-  type BoundingBox as SAMBoundingBox,
-  type SegmentationResult as SAMSegmentationResult,
-} from "./segment-anything";
-export * from "./body-language";
-export * from "./yolo-onnx-detector";
-export * from "./yolo-framex-types";
-export * from "./yolo-framex-engine";
-export * from "./yolofx-proxy";
-export {
-  type FaceDetectionResult,
-  type FacialEmotionResult,
-  type FacialDiarization,
-  type FaceIdentityMatch,
-  type FacialAnalysisConfig,
-  type FacialEmotion,
-  type GazeDirection,
-  type LGPDAuditEntry,
-  DEFAULT_FACIAL_CONFIG,
-  generateFaceEmbedding,
-  detectFaces as detectFacesFromFeatures,
-  analyzeFacialEmotion,
-  identifyFace as identifyFaceFromEmbedding,
-  diarizeFaceAudio,
-  crossAttentionFaceAudio,
-  createLGPDAuditEntry,
-} from "./facial-recognition";
-export * from "./face-api-runtime";
-export * from "./face-auth-learning";
-export * from "./face-detection-fallback";
-export * from "./humanex-face-pipeline";
-
 // ═══ LiteRT (Google AI Edge) ═══
 export * from "./litert-compiled-model";
 export {
@@ -155,8 +110,7 @@ export {
   type KVCacheEntry as LiteRTKVCacheEntry,
 } from "./litert-lm";
 
-// ═══ VLM & Audio ═══
-export * from "./vlm-offline-engine";
+// ═══ Audio ═══
 export * from "./audio-stream-bridge";
 export * from "./hf-space-client";
 
@@ -196,14 +150,6 @@ export {
 } from "./tf-responsible-ai-evaluation";
 export * from "./tf-responsible-ai-training";
 
-// ═══ TF Model Garden Vision ═══
-export * from "./tfm-vision-augment";
-export * from "./tfm-vision-ops";
-export {
-  type SegmentationResult as TFMSegmentationResult,
-  focalLoss as tfmFocalLoss,
-} from "./tfm-vision-models";
-
 // ═══ TFX Pipeline ═══
 export * from "./tfx-pipeline-components";
 
@@ -233,10 +179,7 @@ export * from "./query-time-estimator";
 export * from "./neural-cognition-engine";
 export * from "./drafter-critic-loop";
 export * from "./nlp-semantic-analyzer";
-export * from "./depth-estimation-engine";
-export * from "./face-attributes-engine";
-export * from "./ocr-engine";
-export * from "./scene-reconstruction-3d";
+
 // ═══ Local LLM Engine (100% Browser) ═══
 export {
   generateLocalResponse,
@@ -245,7 +188,6 @@ export {
   getLocalEngineStats,
   clearLocalModels,
 } from "../ai/local-llm-engine";
-// setLocalFirstMode & isLocalFirstMode are exported from orion-ai-client via line 258
 
 // ═══ Quantum ═══
 export * from "./qubit-core";
@@ -396,8 +338,6 @@ export {
   createTextPercept,
   createAudioPercept,
 } from "./perceive-reason-act";
-export * from "./agentic-vision-agent";
-export * from "./vision-agent-presets";
 
 // ═══ Multi-Tenant AaaS (AWS Agentic AI Architecture) ═══
 export {
