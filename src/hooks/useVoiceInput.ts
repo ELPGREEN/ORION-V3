@@ -193,44 +193,26 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
     recognition.onresult = (event: any) => {
       if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
 
-      const finalParts: string[] = [];
-      let interimText = "";
+      // Only process the LATEST result (the one that just changed)
+      // In continuous mode, event.results accumulates ALL results.
+      // event.resultIndex points to the first changed result.
+      // We only care about the very last result in the list.
+      const lastIdx = event.results.length - 1;
+      const lastResult = event.results[lastIdx];
+      if (!lastResult) return;
 
-      for (let i = 0; i < event.results.length; i++) {
-        const result = event.results[i];
-        const text = normalizeTranscript(result?.[0]?.transcript || "");
-        if (!text) continue;
-        if (result.isFinal) {
-          finalParts.push(text);
-        } else {
-          interimText = text;
-        }
-      }
+      const text = normalizeTranscript(lastResult[0]?.transcript || "");
+      if (!text) return;
 
-      const fullFinalTranscript = normalizeTranscript(finalParts.join(" "));
-      const previousFinalTranscript = lastFinalTranscriptRef.current;
-      let delta = "";
-
-      if (fullFinalTranscript && fullFinalTranscript !== previousFinalTranscript) {
-        delta = previousFinalTranscript && fullFinalTranscript.startsWith(previousFinalTranscript)
-          ? normalizeTranscript(fullFinalTranscript.slice(previousFinalTranscript.length))
-          : fullFinalTranscript;
-        lastFinalTranscriptRef.current = fullFinalTranscript;
-      }
-
-      if (delta) {
-        appendPhraseChunk(delta);
-      }
-
-      const preview = normalizeTranscript(`${phraseBufferRef.current} ${interimText}`) || fullFinalTranscript || interimText;
-      if (preview) setTranscript(preview);
-
-      if (delta) {
-        if (continuous) {
-          schedulePhraseFlush();
-        } else {
-          flushPhraseBuffer();
-        }
+      if (lastResult.isFinal) {
+        // Final result — flush immediately, no buffering
+        clearPhraseTimer();
+        phraseBufferRef.current = "";
+        setTranscript(text);
+        onResultRef.current?.(text);
+      } else {
+        // Interim — show preview only, don't send
+        setTranscript(text);
       }
     };
 
