@@ -233,7 +233,27 @@ export function NeuralVision() {
             </Button>
           </>
         )}
+
+        {/* Mic button */}
+        {voice.sttSupported && (
+          <Button
+            variant={voice.listening ? "default" : "outline"}
+            onClick={voice.toggleListening}
+            className={`gap-2 ${voice.listening ? "bg-destructive hover:bg-destructive/90" : ""}`}
+          >
+            {voice.listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            {voice.listening ? "Parar Mic" : "Comando de Voz"}
+          </Button>
+        )}
       </div>
+
+      {/* Voice transcript indicator */}
+      {voice.listening && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+          <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+          <span>{voice.interimTranscript || "Ouvindo..."}</span>
+        </div>
+      )}
 
       {/* Custom prompt */}
       {capturedImage && (
@@ -266,10 +286,10 @@ export function NeuralVision() {
                   size="icon"
                   variant="ghost"
                   className="h-7 w-7"
-                  onClick={() => tts.speaking ? tts.stop() : tts.speak(response.text)}
-                  disabled={tts.loading}
+                  onClick={() => voice.speaking ? voice.stopSpeaking() : voice.speak(response.text)}
+                  disabled={voice.ttsLoading}
                 >
-                  {tts.loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : tts.speaking ? <VolumeX className="h-3.5 w-3.5 text-primary" /> : <Volume2 className="h-3.5 w-3.5" />}
+                  {voice.ttsLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : voice.speaking ? <VolumeX className="h-3.5 w-3.5 text-primary" /> : <Volume2 className="h-3.5 w-3.5" />}
                 </Button>
               </div>
             </div>
