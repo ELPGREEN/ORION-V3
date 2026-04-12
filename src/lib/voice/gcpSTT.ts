@@ -1,7 +1,10 @@
 /**
- * Google Cloud STT Client — Real-time streaming via chunked audio
+ * Google Cloud STT Client — Chunked audio capture
  * Captures mic audio → converts to LINEAR16 → sends to google-stt edge function
  * Returns transcription results with confidence scores
+ * 
+ * IMPORTANT: No overlap buffer — each chunk is independent to avoid
+ * duplicate/garbled transcriptions from repeated audio segments.
  */
 import { supabase } from "@/integrations/supabase/client";
 
@@ -49,6 +52,15 @@ function downsample(buffer: Float32Array, sourceSampleRate: number, targetSample
   return result;
 }
 
+/** Calculate RMS amplitude — more reliable than peak for speech detection */
+function calculateRMS(buffer: Float32Array): number {
+  let sum = 0;
+  for (let i = 0; i < buffer.length; i++) {
+    sum += buffer[i] * buffer[i];
+  }
+  return Math.sqrt(sum / buffer.length);
+}
+
 export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession {
   const {
     languageCode = "pt-BR",
@@ -67,57 +79,48 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   let active = false;
   let chunkTimer: ReturnType<typeof setInterval> | null = null;
   let audioBuffer: Float32Array[] = [];
-  let overlapBuffer: Float32Array | null = null; // Keep last 0.5s for context overlap
   let sending = false;
+  let consecutiveEmptyChunks = 0;
 
   const sendChunk = async () => {
     if (!active || sending || audioBuffer.length === 0) return;
     sending = true;
 
     try {
-      // Prepend overlap from previous chunk for context continuity
-      const allBuffers = overlapBuffer ? [overlapBuffer, ...audioBuffer] : [...audioBuffer];
-      const totalLength = allBuffers.reduce((acc, b) => acc + b.length, 0);
-      if (totalLength < sampleRate * 0.5) {
-        // Less than 500ms of audio — skip
+      // Merge all buffered audio — NO overlap from previous chunks
+      const buffers = [...audioBuffer];
+      audioBuffer = []; // Clear immediately to avoid data loss
+
+      const totalLength = buffers.reduce((acc, b) => acc + b.length, 0);
+      
+      // Minimum 400ms of audio to be worth sending
+      const minSamples = (audioContext?.sampleRate || 48000) * 0.4;
+      if (totalLength < minSamples) {
         sending = false;
         return;
       }
 
       const merged = new Float32Array(totalLength);
       let offset = 0;
-      for (const buf of allBuffers) {
+      for (const buf of buffers) {
         merged.set(buf, offset);
         offset += buf.length;
       }
-
-      // Save last 0.5s as overlap for next chunk (context continuity)
-      const overlapSamples = Math.floor((audioContext?.sampleRate || 48000) * 0.5);
-      const currentBufferLength = audioBuffer.reduce((acc, b) => acc + b.length, 0);
-      if (currentBufferLength > overlapSamples) {
-        const flatCurrent = new Float32Array(currentBufferLength);
-        let off = 0;
-        for (const buf of audioBuffer) { flatCurrent.set(buf, off); off += buf.length; }
-        overlapBuffer = flatCurrent.slice(-overlapSamples);
-      }
-      audioBuffer = [];
 
       // Downsample to target rate
       const sourceSR = audioContext?.sampleRate || 48000;
       const downsampled = downsample(merged, sourceSR, sampleRate);
 
-      // Check if there's actual audio (not just silence)
-      let maxAmplitude = 0;
-      for (let i = 0; i < downsampled.length; i++) {
-        const abs = Math.abs(downsampled[i]);
-        if (abs > maxAmplitude) maxAmplitude = abs;
-      }
-      if (maxAmplitude < 0.01) {
-        // Silence — skip
+      // Use RMS for speech detection — more reliable than peak amplitude
+      const rms = calculateRMS(downsampled);
+      if (rms < 0.008) {
+        // Silence — skip but track consecutive empty chunks
+        consecutiveEmptyChunks++;
         sending = false;
         return;
       }
-
+      
+      consecutiveEmptyChunks = 0;
       const base64 = float32ToLinear16Base64(downsampled);
 
       if (onInterim) onInterim("...");
@@ -181,6 +184,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
       processor.connect(audioContext.destination);
 
       active = true;
+      consecutiveEmptyChunks = 0;
 
       // Send chunks periodically
       chunkTimer = setInterval(sendChunk, chunkIntervalMs);
