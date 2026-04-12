@@ -1457,7 +1457,7 @@ export function useOrionReasoning(
       const spokenSentences = new Set<string>();
 
       const TTS_VOICE = "Enceladus";
-      const TTS_PROMPT = "Você é ORION, assistente IA de elite estilo JARVIS. Voz MASCULINA jovem-adulta clara e confiante. Fale CONTÍNUO sem pausas. Máximo 0.15s entre frases. Tom sofisticado e preciso como assistente pessoal premium.";
+      const TTS_PROMPT = "Você é Orion, assistente pessoal AquaMonkey. Voz masculina jovem-adulta, clara e confiante. Fale com ritmo natural de conversa, sem repetir palavras. Tom descontraído e inteligente.";
 
       const processSpeechQueue = async () => {
         if (bargedInRef.current) return;
@@ -1554,13 +1554,20 @@ export function useOrionReasoning(
           const normalized = sentence.trim();
           if (!normalized || normalized.length < 3) return;
           if (spokenSentences.has(normalized)) return;
+          // Anti-stutter: check if first 4 words match any already-queued sentence
+          const firstWords = normalized.split(/\s+/).slice(0, 4).join(" ").toLowerCase();
+          for (const prev of spokenSentences) {
+            const prevWords = prev.split(/\s+/).slice(0, 4).join(" ").toLowerCase();
+            if (firstWords === prevWords) return; // Same start = likely duplicate/stutter
+          }
           // Check substring overlap with last queued item
           const lastQueued = localQueue[localQueue.length - 1];
           if (lastQueued) {
             if (normalized === lastQueued.text) return;
             if (lastQueued.text.includes(normalized)) return;
             if (normalized.includes(lastQueued.text)) {
-              // New sentence is superset of last — skip (likely same sentence with more words)
+              // New sentence is superset of last — replace it instead of duplicating
+              localQueue[localQueue.length - 1] = { ...lastQueued, text: normalized, audioPromise: lastQueued.audioPromise };
               return;
             }
           }
