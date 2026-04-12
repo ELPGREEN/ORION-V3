@@ -1453,8 +1453,8 @@ export function useOrionReasoning(
       let streamEnded = false;
       const spokenSentences = new Set<string>();
 
-      const TTS_VOICE = "Iapetus";
-      const TTS_PROMPT = "Você é ORION, IA Lumen7 AquaMonkey Fusion. Voz MASCULINA tenor grave ~200Hz. Fale CONTÍNUO sem pausas. Máximo 0.15s entre frases. Tom confiante e caloroso como podcast brasileiro.";
+      const TTS_VOICE = "Enceladus";
+      const TTS_PROMPT = "Você é ORION, assistente IA de elite estilo JARVIS. Voz MASCULINA jovem-adulta clara e confiante. Fale CONTÍNUO sem pausas. Máximo 0.15s entre frases. Tom sofisticado e preciso como assistente pessoal premium.";
 
       const processSpeechQueue = async () => {
         if (bargedInRef.current) return;
