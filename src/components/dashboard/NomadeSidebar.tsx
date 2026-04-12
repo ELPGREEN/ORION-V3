@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logoElp from "@/assets/logo-elp.webp";
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
-import { getOrionIcon, IconLogout } from "./icons/OrionIcons";
+// [REMOVED] import { getOrionIcon, IconLogout } from "./icons/OrionIcons";
 
 const nomadeItems = [
   { id: "home", label: "Meu Painel", path: "/dashboard" },

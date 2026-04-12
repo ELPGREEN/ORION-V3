@@ -3,7 +3,7 @@
  */
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { OrionAnalytics, setAnalyticsUser, setAnalyticsUserProperties } from "@/lib/firebase-analytics-events";
+// [REMOVED] import { OrionAnalytics, setAnalyticsUser, setAnalyticsUserProperties } from "@/lib/firebase-analytics-events";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useAnalyticsTracker() {

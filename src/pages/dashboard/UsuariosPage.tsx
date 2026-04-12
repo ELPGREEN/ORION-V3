@@ -24,7 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 
 interface UserProfile {
   user_id: string;
@@ -88,7 +88,6 @@ export default function UsuariosPage() {
   const { user } = useAuth();
   const { isAdvogado } = useUserRole();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -147,14 +146,6 @@ export default function UsuariosPage() {
       if (error) throw error;
       toast({ title: "Usuário excluído", description: `${deleteConfirm.nome || deleteConfirm.email} foi removido.` });
       // 🧠 Neural: exclusão de usuário = evento administrativo crítico
-      logNeural({
-        interaction_type: "neural_admin",
-        input_text: `Usuário excluído: ${deleteConfirm.email}`,
-        output_text: `Nome: ${deleteConfirm.nome || "N/A"} | Role: ${deleteConfirm.role}`,
-        quality_score: 0.7,
-        user_id: user?.id,
-        metadata: { action: "delete_user", target_email: deleteConfirm.email, module: "usuarios" },
-      });
       setUsers((prev) => prev.filter((u) => u.user_id !== deleteConfirm.user_id));
       setDeleteConfirm(null);
       setSelectedUser(null);
@@ -189,14 +180,6 @@ export default function UsuariosPage() {
       if (error) throw error;
       toast({ title: "Usuário atualizado" });
       // 🧠 Neural: edição de usuário = sinal administrativo
-      logNeural({
-        interaction_type: "neural_admin",
-        input_text: `Usuário atualizado: ${editUser.email}`,
-        output_text: `Nome: ${editForm.nome} | Caso: ${editForm.tipo_caso || "N/A"}`,
-        quality_score: 0.75,
-        user_id: user?.id,
-        metadata: { action: "update_user", target_email: editUser.email, module: "usuarios" },
-      });
       setUsers((prev) =>
         prev.map((u) =>
           u.user_id === editUser.user_id

@@ -6,13 +6,7 @@ import { useAdminAccess } from "@/hooks/useAdminAccess";
 import logoElp from "@/assets/logo-elp.webp";
 import { useState } from "react";
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
-import {
-  getOrionIcon,
-  IconClose,
-  IconLogout,
-  IconChevronDown,
-} from "./icons/OrionIcons";
-
+// OrionIcons removed
 interface MobileSidebarOverlayProps {
   open: boolean;
   onClose: () => void;

@@ -3,7 +3,7 @@
  * Centralizes all external API integrations
  */
 export * from './pesquisa-api';
-export * from './neural-search-api';
+// neural-search-api removed
 export * from './datajud-api';
 export * from './legislacao-api';
 export * from './oab-acessorh-api';

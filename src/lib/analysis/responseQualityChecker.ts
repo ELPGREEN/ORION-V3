@@ -3,7 +3,7 @@
  * Inspired by LegalNexus RAG pipeline — validates AI responses locally
  */
 
-import { detectHallucinations } from "./hallucinationDetector";
+// [REMOVED] import { detectHallucinations } from "./hallucinationDetector";
 
 export interface QualityResult {
   score: number; // 0-100

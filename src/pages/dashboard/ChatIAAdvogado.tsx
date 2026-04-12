@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 import {
   Send, Loader2, Copy, Sparkles, User, Search, FileText, Scale, BookOpen,
   Gavel, Lightbulb, Trash2, Brain, ExternalLink, ArrowRight, Share2,
 } from "lucide-react";
-import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
+// [REMOVED] import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
 import { ChatFileUpload } from "@/components/dashboard/ChatFileUpload";
 import { SourcesLoadingIndicator } from "@/components/dashboard/SourcesLoadingIndicator";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,6 @@ const ferramentasRapidas = [
 export default function ChatIAAdvogado() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);

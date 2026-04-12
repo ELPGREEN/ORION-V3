@@ -40,7 +40,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { PublicacaoEditor } from "@/components/publicacoes/PublicacaoEditor";
 import { AssistentesEditoriais } from "@/components/publicacoes/AssistentesEditoriais";
 import { MarkdownPreview } from "@/components/publicacoes/MarkdownPreview";
@@ -82,7 +82,6 @@ const emptyPublicacao = {
 
 export default function PublicacoesAdmin() {
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const [publicacoes, setPublicacoes] = useState<Publicacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

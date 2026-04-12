@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useNavigate } from "react-router-dom";
 import { Bell, FileText, Calendar, CreditCard, PenTool, CheckCircle, Loader2, Trash2, Filter, X, ChevronRight, MessageSquare, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,6 @@ export default function NotificacoesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<string | null>(null);

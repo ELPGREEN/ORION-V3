@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 
 interface AvaliacaoFormProps {
   onSuccess?: () => void;
@@ -15,7 +15,6 @@ interface AvaliacaoFormProps {
 
 export function AvaliacaoForm({ onSuccess }: AvaliacaoFormProps) {
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const [nota, setNota] = useState(0);
   const [hoverNota, setHoverNota] = useState(0);
   const [nome, setNome] = useState(user?.user_metadata?.nome || "");

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Send, Scale, AlertTriangle, Calendar, Brain, ExternalLink, Sparkles, Loader2, Lock, ThumbsUp, ThumbsDown } from "lucide-react";
-import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
+// [REMOVED] import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,8 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChatIA } from "@/contexts/ChatIAContext";
-import { useNeuralConfig } from "@/hooks/useNeuralConfig";
-import { useAdaptiveContext } from "@/hooks/useAdaptiveContext";
+// [REMOVED] import { useNeuralConfig } from "@/hooks/useNeuralConfig";
+// [REMOVED] import { useAdaptiveContext } from "@/hooks/useAdaptiveContext";
 import type { ChatIAMessage } from "@/hooks/useChatIAPersistence";
 
 const MAX_FREE_QUERIES = 5;

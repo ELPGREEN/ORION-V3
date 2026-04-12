@@ -6,7 +6,7 @@ import {
   neuralSearch,
   type NeuralSearchResponse,
 } from "@/lib/api";
-import { validateSearchResults, dispatchAntiHallucinationReport } from "@/lib/analysis/anti-hallucination-engine";
+// [REMOVED] import { validateSearchResults, dispatchAntiHallucinationReport } from "@/lib/analysis/anti-hallucination-engine";
 
 export type SearchMode = "traditional" | "neural" | "comparative";
 

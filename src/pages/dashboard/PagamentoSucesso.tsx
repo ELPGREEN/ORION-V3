@@ -3,7 +3,7 @@ import { CheckCircle, Loader2, Download, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useAuth } from "@/contexts/AuthContext";
 interface PaymentDetails {
   status: string;
@@ -23,7 +23,6 @@ const tipoLabels: Record<string, string> = {
 export default function PagamentoSucesso() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { logNeural } = useNeuralFeedback();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<PaymentDetails | null>(null);

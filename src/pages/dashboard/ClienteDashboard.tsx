@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 import { useNavigate } from "react-router-dom";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import {
   MessageSquare,
   FolderOpen,
@@ -157,7 +157,6 @@ export default function ClienteDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const { unreadCount: unreadMessages } = useUnreadMessages();
   const userName = user?.user_metadata?.nome || user?.email?.split("@")[0] || "Cliente";
   const [hasReview, setHasReview] = useState<boolean | null>(null);
@@ -188,14 +187,6 @@ export default function ClienteDashboard() {
       if (!user) return;
       
       // 🧠 Neural: registra acesso do cliente ao dashboard
-      logNeural({
-        interaction_type: "crm_client_event",
-        input_text: "Cliente acessou dashboard",
-        quality_score: 0.6,
-        user_id: user.id,
-        metadata: { source: "cliente_dashboard_view" },
-      });
-      
       // Buscar perfil do cliente
       const { data: profile } = await supabase
         .from("client_profiles")
@@ -468,15 +459,6 @@ export default function ClienteDashboard() {
 
   const handleDownloadDoc = async (doc: ClientDocument) => {
     // 🧠 Neural: download pelo cliente = sinal forte de engajamento e utilidade
-    logNeural({
-      interaction_type: "document_viewed",
-      input_text: `Download por cliente: ${doc.file_name}`,
-      output_text: doc.categoria || "sem categoria",
-      quality_score: 0.85,
-      user_id: user?.id,
-      metadata: { doc_id: doc.id, categoria: doc.categoria, source: "cliente_dashboard_download" },
-    });
-
     const { data } = await supabase.storage
       .from("documents")
       .createSignedUrl(doc.storage_path, 60);

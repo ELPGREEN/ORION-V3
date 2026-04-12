@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FileText,
@@ -98,8 +98,6 @@ export default function MeusDocumentos() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { isCliente, isAdvogado, loading: roleLoading } = useUserRole();
-  const { logNeural } = useNeuralFeedback();
-  
   const [documents, setDocuments] = useState<Document[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [loading, setLoading] = useState(true);

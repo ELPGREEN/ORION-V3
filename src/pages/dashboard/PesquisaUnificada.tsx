@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
@@ -268,7 +268,6 @@ export default function PesquisaUnificada() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isAdvogado } = useUserRole();
-  const { logNeural } = useNeuralFeedback();
   const { toast } = useToast();
   const navigate = useNavigate();
 

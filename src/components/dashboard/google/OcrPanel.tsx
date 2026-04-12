@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useAuth } from "@/contexts/AuthContext";
 import { Upload, FileText, Loader2, Copy, Download, Eye, Layers, ToggleLeft, ToggleRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { PDFSegmentationViewer, type LayoutSegment } from "@/components/dashboar
 
 export function OcrPanel() {
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
     fullText: string;

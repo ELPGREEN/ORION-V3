@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ShoppingCart, Star, Package, Shield, Zap } from "lucide-react";
-import { OrionStoreAssistant } from "@/components/store/OrionStoreAssistant";
+// [REMOVED] import { OrionStoreAssistant } from "@/components/store/OrionStoreAssistant";
 
 const PLACEHOLDER = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800";
 

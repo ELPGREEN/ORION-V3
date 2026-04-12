@@ -17,8 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useChatIA } from "@/contexts/ChatIAContext";
 import type { ChatIAMessage } from "@/hooks/useChatIAPersistence";
 import ProviderDiagnosticPanel from "@/components/dashboard/ProviderDiagnosticPanel";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
-import { useNeuralConfig } from "@/hooks/useNeuralConfig";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { useMessageNLP } from "@/hooks/useMessageNLP";
 
 const sugestoesIniciais = [
@@ -59,7 +59,6 @@ export default function ChatJuridico() {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { logNeural } = useNeuralFeedback();
   const { config: neuralConfig } = useNeuralConfig();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -142,19 +141,6 @@ export default function ChatJuridico() {
       });
 
       // 🧠 Neural feedback: registra cada troca como sinal de aprendizado
-      logNeural({
-        interaction_type: "chat",
-        input_text: messageText,
-        output_text: assistantMessage.content,
-        user_id: user?.id,
-        metadata: {
-          provider: assistantMessage.provider || "unknown",
-          neuralEnhanced: assistantMessage.neuralEnhanced,
-          sourcesCount: assistantMessage.sources?.length || 0,
-          module: "chat_juridico",
-        },
-      });
-
       // 🤖 NLP browser-side: sentiment do user + NER da resposta
       analyzeMessage(userMessage.id, messageText);
       analyzeMessage(assistantMessage.id, assistantMessage.content);

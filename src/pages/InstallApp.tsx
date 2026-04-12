@@ -7,7 +7,7 @@ import { GlassCard } from "@/components/ui/TechElements";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { getAllPermissionStates, requestPermission, requestAllPermissions, type PermissionState } from "@/lib/device-permissions";
 import { useToast } from "@/hooks/use-toast";
-import { bluetoothManager, type BLEDeviceInfo } from "@/lib/neural/bluetooth-manager";
+// [REMOVED] import { bluetoothManager, type BLEDeviceInfo } from "@/lib/neural/bluetooth-manager";
 import { isSpotifyConnected, startSpotifyLogin, disconnectSpotify } from "@/lib/spotify/spotify-service";
 import { isYTMusicConnected, startYTMusicLogin, disconnectYTMusic, getYTMusicUser } from "@/lib/youtube-music/youtube-music-service";
 import { useAmazonIntegration } from "@/hooks/useAmazonIntegration";

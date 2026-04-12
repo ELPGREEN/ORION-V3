@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { JurisdictionSelector, type Jurisdiction } from "@/components/dashboard/JurisdictionSelector";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { lazyRetry } from "@/lib/lazyRetry";
 
 // Lazy-load heavy sub-components for code-splitting
@@ -281,8 +281,6 @@ export const initialFormData: FormData = {
 export default function GerarDocumento() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
-
   // Queue hook for async generation
   const {
     enqueue,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 import { BookUser, Search, Mail, Send, Building, Eye, MessageCircle, Trash2, Download, Loader2, Plus, CloudDownload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,8 +77,6 @@ export default function ContatosPage() {
   const [importingGoogle, setImportingGoogle] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
-
   const importFromGoogle = async () => {
     if (!user) return;
     setImportingGoogle(true);

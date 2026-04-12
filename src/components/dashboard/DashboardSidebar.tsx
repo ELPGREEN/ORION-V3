@@ -17,18 +17,7 @@ import { Input } from "@/components/ui/input";
 import logoElp from "@/assets/logo-elp.webp";
 
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
-import {
-  getOrionIcon,
-  IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
-  IconPlus,
-  IconUser,
-  IconSettings,
-  IconLogout,
-  IconBrain,
-} from "./icons/OrionIcons";
-
+// OrionIcons removed
 interface DashboardSidebarProps {
   collapsed: boolean;
   onToggle: () => void;

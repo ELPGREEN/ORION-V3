@@ -10,7 +10,7 @@ import {
   Type, AlignLeft, BookOpen, Scale, Pen, CalendarDays, List, Hash, FileText,
   CheckCircle2, Clock,
 } from "lucide-react";
-import type { StructuralAnalysis, DocumentElement } from "@/hooks/useAIRealtimeReview";
+// [REMOVED] import type { StructuralAnalysis, DocumentElement } from "@/hooks/useAIRealtimeReview";
 
 // ─── Element type config ───
 

@@ -1,7 +1,7 @@
 import { Search, Brain, Zap, Clock, AlertTriangle, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SearchResultCard } from "./SearchResultCard";
-import { NeuralSearchResultCard } from "./NeuralSearchResultCard";
+// [REMOVED] import { NeuralSearchResultCard } from "./NeuralSearchResultCard";
 import { SOURCE_LABELS, type SourceId, type UnifiedSearchResponse, type NeuralSearchResponse } from "@/lib/api";
 
 interface Props {

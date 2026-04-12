@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { Settings, Save, Upload, DollarSign, Shield, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,6 @@ export default function PerfilAdmin() {
   const { user } = useAuth();
   const { isAdvogado, isCliente } = useUserRole();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const [saving, setSaving] = useState(false);
   const [honorarios, setHonorarios] = useState<HonorarioItem[]>(defaultHonorarios);
   const [perfil, setPerfil] = useState({

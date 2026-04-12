@@ -42,7 +42,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 
 // Componentes modulares
 import { NeuralErrorBoundary } from "@/components/dashboard/neural/NeuralErrorBoundary";
@@ -75,10 +75,10 @@ const JarvisHUD = lazy(lazyRetry(() => import("@/components/dashboard/neural/Jar
 const ProactiveAlerts = lazy(lazyRetry(() => import("@/components/dashboard/neural/ProactiveAlerts").then(m => ({ default: m.ProactiveAlerts }))));
 const NeuralNetworkLiveView = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralNetworkLiveView").then(m => ({ default: m.NeuralNetworkLiveView }))));
 const NeuralConsciousnessLoop = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralConsciousnessLoop").then(m => ({ default: m.NeuralConsciousnessLoop }))));
-const NeuralVision = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralVision").then(m => ({ default: m.NeuralVision }))));
+// [REMOVED] const NeuralVision = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralVision").then(m => ({ default: m.NeuralVision }))));
 const WebAPIDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neural/WebAPIDashboard").then(m => ({ default: m.WebAPIDashboard }))));
-const FaceAuthEnroll = lazy(lazyRetry(() => import("@/components/auth/FaceAuthEnroll").then(m => ({ default: m.FaceAuthEnroll }))));
-const OrionShieldPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/OrionShieldPanel").then(m => ({ default: m.OrionShieldPanel }))));
+// [REMOVED] const FaceAuthEnroll = lazy(lazyRetry(() => import("@/components/auth/FaceAuthEnroll").then(m => ({ default: m.FaceAuthEnroll }))));
+// [REMOVED] const OrionShieldPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/OrionShieldPanel").then(m => ({ default: m.OrionShieldPanel }))));
 const ArquiteturaIA = lazy(lazyRetry(() => import("@/pages/dashboard/ArquiteturaIA")));
 const AttentionVisualizationLazy = lazy(() => import("@/components/dashboard/neural/AttentionVisualization").then((m) => ({ default: m.AttentionVisualization })));
 
@@ -291,7 +291,6 @@ interface AIProvider {
 export default function RedeNeuralPage() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const initialLoadDone = useRef(false);
@@ -435,15 +434,6 @@ export default function RedeNeuralPage() {
       if (error) throw error;
 
       // 🧠 Neural: conhecimento adicionado manualmente = sinal de alta qualidade
-      logNeural({
-        interaction_type: "document_viewed",
-        input_text: newKnowledge.title,
-        output_text: newKnowledge.content,
-        quality_score: 0.85,
-        user_id: user?.id,
-        metadata: { source_type: newKnowledge.source_type, module: "rede_neural_knowledge", action: "add_knowledge" },
-      });
-
       toast({ title: "Conhecimento adicionado!", description: "O embedding será gerado automaticamente." });
       setNewKnowledge({ title: "", content: "", source_type: "jurisprudencia", source_reference: "", tags: "" });
       localStorage.removeItem(KNOWLEDGE_STORAGE_KEY);
