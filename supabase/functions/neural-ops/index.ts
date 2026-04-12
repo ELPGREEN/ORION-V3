@@ -104,7 +104,8 @@ async function getVertexToken(sa: { client_email: string; private_key: string })
 
 function getVertexServiceAccount(): { client_email: string; private_key: string; project_id: string } | null {
   try {
-    const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_KEY");
+    // GCP_SA_KEY takes priority (dedicated GCP service account)
+    const raw = Deno.env.get("GCP_SA_KEY") || Deno.env.get("FIREBASE_SERVICE_ACCOUNT_KEY");
     if (!raw) return null;
     const sa = JSON.parse(raw);
     if (sa.client_email && sa.private_key && sa.project_id) return sa;
@@ -137,8 +138,9 @@ async function callVertexAI(messages: any[], stream: boolean): Promise<Response 
         for (const c of m.content) {
           if (c.type === "text") parts.push({ text: c.text });
           else if (c.type === "image_url") {
-            let base64 = c.image_url.url.replace(/^data:image\/\w+;base64,/, "");
-            // Ensure proper base64 padding for Vertex AI
+            let base64 = c.image_url.url.replace(/^data:image\/[^;]+;base64,/, "");
+            // Convert URL-safe base64 to standard and ensure padding
+            base64 = base64.replace(/-/g, "+").replace(/_/g, "/");
             while (base64.length % 4 !== 0) base64 += "=";
             parts.push({ inlineData: { mimeType: "image/jpeg", data: base64 } });
           }
@@ -600,8 +602,8 @@ async function handleFullCycle(req: Request) {
 
 // Model tiers: Flash for vision (fast + cheap progressive learning), Flash for text
 // Gemini Flash handles vision well and enables high-frequency identification for learning
-const GEMINI_VISION_MODEL = "gemini-2.0-flash";
-const GEMINI_TEXT_MODEL = "gemini-2.0-flash";
+const GEMINI_VISION_MODEL = "gemini-2.5-flash";
+const GEMINI_TEXT_MODEL = "gemini-2.5-flash";
 const GEMINI_MODELS = [GEMINI_VISION_MODEL, GEMINI_TEXT_MODEL];
 // ═══ CONVERSATIONAL PROMPT (~250 tokens) — for short voice/casual queries ═══
 const ORION_SYSTEM_PROMPT_CONVERSATIONAL = `Você é Orion — assistente de IA inteligente criado por Ericson R. Piccoli (ELP Green Technology).
