@@ -155,7 +155,6 @@ export function ChatJuridico() {
     await saveMessage(convId, { role: "user", content: messageText });
     
     // Auto-adapt communication context based on user message
-    // adaptFromMessage(messageText).catch(() => {});
 
     if (isCliente) {
       setConsultaCount((prev) => prev + 1);
