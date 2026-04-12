@@ -1,7 +1,7 @@
 /**
- * NEUROCORE AI — Voice Synthesis Hook (JARVIS-Grade v3)
+ * Orion Voice Hook — STT + TTS Pipeline
  * 
- * Pipeline: STT (Google Cloud STT primary → Web Speech fallback) → Command Handler → TTS (Gemini Iapetus)
+ * Pipeline: STT (Google Cloud STT primary → Web Speech fallback) → Command Handler → TTS (Gemini Enceladus)
  * 
  * Architecture:
  * - Google Cloud STT as primary (via edge function google-stt)
@@ -11,6 +11,7 @@
  * - Self-hearing guard (drops transcripts during TTS + echo detection)
  * - Dynamic turn detection (linguistic pattern matching for silence thresholds)
  * - Barge-in support (user can interrupt TTS with stop commands or 3+ words)
+ * - Mic watchdog: auto-restarts GCP STT if it dies silently
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { OrbState } from "@/components/dashboard/neural/EnergyOrb";
@@ -481,7 +482,7 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
-    // PRIMARY: Gemini TTS — Enceladus (modern JARVIS-like voice)
+    // PRIMARY: Gemini TTS — Enceladus voice
     if (!cascadeAbort.signal.aborted) {
       try {
         console.log("[Voice] Trying Gemini TTS (Enceladus)...");
@@ -489,7 +490,7 @@ export function useNeuralVoice(
           cleanText,
           "Enceladus",
           cascadeAbort.signal,
-          "Você é ORION, assistente IA de elite estilo JARVIS. Voz MASCULINA jovem-adulta clara e confiante. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Tom sofisticado e preciso. NUNCA pare no meio de frase.",
+          "Você é ORION, assistente IA pessoal. Voz MASCULINA jovem-adulta clara e confiante. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Tom natural e direto, com personalidade. NUNCA pare no meio de frase.",
           "pt-BR",
         );
         console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");
@@ -537,7 +538,7 @@ export function useNeuralVoice(
     await speak(text);
   }, [speak]);
 
-  /** startThinking: JARVIS "PROCESSING" indicator */
+  /** startThinking: processing indicator */
   const startThinking = useCallback(() => {
     OrbState.voiceState = "thinking";
   }, []);
