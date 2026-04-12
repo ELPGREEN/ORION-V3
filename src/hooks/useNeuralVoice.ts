@@ -216,10 +216,8 @@ export function useNeuralVoice(
       if (v) maleVoiceRef.current = v;
     };
     speechSynthesis?.addEventListener?.("voiceschanged", handler);
-
     return () => {
       speechSynthesis?.removeEventListener?.("voiceschanged", handler);
-      delete (window as any).__orionMicRec;
       cleanup();
     };
   }, [clearRestartTimer]);
@@ -283,27 +281,6 @@ export function useNeuralVoice(
 
     scheduleRecognitionRestart(isMobile() ? 600 : 100);
   }, [scheduleRecognitionRestart]);
-
-  // ═══ Streaming TTS Complete — restart mic ═══
-  useEffect(() => {
-    const onTTSComplete = () => {
-      console.log("[Voice] Streaming TTS complete — restarting mic");
-      speakingRef.current = false;
-      updateAiResponding(false);
-      resumeSTT();
-    };
-    window.addEventListener("orion-tts-complete", onTTSComplete);
-    // Expose rec ref so streaming TTS can stop mic
-    (window as any).__orionMicRec = recRef.current;
-    return () => {
-      window.removeEventListener("orion-tts-complete", onTTSComplete);
-    };
-  }, [resumeSTT, updateAiResponding]);
-
-  // ═══ Keep __orionMicRec in sync ═══
-  useEffect(() => {
-    (window as any).__orionMicRec = recRef.current;
-  });
 
   // ═══ Barge-In ═══
   const bargeIn = useCallback(() => {
@@ -439,9 +416,9 @@ export function useNeuralVoice(
         console.log("[Voice] Trying Gemini TTS...");
         const gemResult = await speakWithGeminiTTS(
           cleanText,
-          "Charon",
+          "Kore",
           cascadeAbort.signal,
-          "Você é ORION, IA Lumen7 AquaMonkey. Fale CONTÍNUO sem pausas. Máximo 0.2s entre frases. Voz grave, calorosa.",
+          "Você é ORION, IA Lumen7 AquaMonkey Fusion. Voz masculina tenor ~200Hz, tom confiante e caloroso. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Ritmo moderado-rápido como podcast brasileiro. NUNCA pare no meio de frase.",
           "pt-BR",
         );
         console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");

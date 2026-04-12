@@ -1439,31 +1439,39 @@ export function useOrionReasoning(
 
       const needsImage = intentType !== "textual";
 
-      const { StreamingTTSQueue } = await import("@/lib/tts/streamingTTSQueue");
-      const streamingTTS = new StreamingTTSQueue({
-        onStartSpeaking: () => {
-          OrbState.voiceState = "speaking";
-          VS.aiResponding = true;
-        },
-        onStopSpeaking: () => {
-          OrbState.voiceState = "listening";
-          VS.aiResponding = false;
-        },
-        onMicShouldStop: () => {
-          // Stop mic recognition while TTS plays to avoid self-hearing
-          try { (window as any).__orionMicRec?.stop?.(); } catch {}
-        },
-        onMicShouldRestart: () => {
-          // Restart mic after ALL streaming TTS audio finishes
-          // Use the speak function's resumeSTT indirectly via a dummy empty call
-          OrbState.voiceState = "listening";
-          // Dispatch custom event that NeuralVoice listens to for mic restart
-          window.dispatchEvent(new CustomEvent("orion-tts-complete"));
-        },
-      });
-
+      const localQueue: string[] = [];
+      if (speechQueueRef) speechQueueRef.current = localQueue;
+      let isSpeakingQueue = false;
       let spokeOrQueued = false;
+      let queueFinished = false;
+      let batchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
       let streamEnded = false;
+
+      const processSpeechQueue = async () => {
+        if (bargedInRef.current) return;
+        if (isSpeakingQueue || localQueue.length === 0) return;
+        isSpeakingQueue = true;
+
+        // Mic already stopped by previous speak() or AI flow — no toggle here
+
+        try {
+          while (localQueue.length > 0 && !bargedInRef.current) {
+            // Batch all queued sentences into one speak() call to avoid pauses
+            const batch = localQueue.splice(0, localQueue.length).join(" ");
+            if (!batch.trim()) continue;
+            // skipMicToggle: mic is managed here, not inside speak()
+            await speak(batch, { skipMicToggle: true });
+          }
+        } finally {
+          isSpeakingQueue = false;
+          if (localQueue.length > 0 && !bargedInRef.current) {
+            void processSpeechQueue();
+          } else {
+            queueFinished = true;
+            // Resume mic ONCE after all speech is done
+          }
+        }
+      };
 
       // ═══ SKIP all heavy layers — go DIRECT to Gemini ═══
       // Removed: Cognitive Router, NLP Semantics, Cognition Engine, Deep Query Estimator
@@ -1488,6 +1496,14 @@ export function useOrionReasoning(
         !m.text.startsWith("⏳") && !m.text.endsWith("⚡") && m.text.length > 0
       );
 
+      let firstSentenceSpoken = false;
+      const triggerQueueDebounced = () => {
+        if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
+        // Always trigger immediately — no debounce, speak as soon as sentence arrives
+        firstSentenceSpoken = true;
+        void processSpeechQueue();
+      };
+
       const questionForLLM = processedInput || question;
       (window as any).__orionInputSource = source;
       const result = await analyzeFrameStreaming(
@@ -1507,19 +1523,25 @@ export function useOrionReasoning(
           });
         },
         (sentence) => {
-          if (bargedInRef.current) { streamingTTS.abort(); return; }
+          if (bargedInRef.current) return;
+          // Dedup: skip if this sentence was already queued or is a substring of the last one
+          const lastQueued = localQueue[localQueue.length - 1] || "";
+          if (sentence === lastQueued || (lastQueued && lastQueued.includes(sentence))) return;
           spokeOrQueued = true;
-          // Push to streaming queue — audio fetch starts IMMEDIATELY (parallel with current playback)
-          streamingTTS.push(sentence);
+          localQueue.push(sentence);
+          triggerQueueDebounced();
         },
         controller.signal,
       );
 
-      // Stream ended — wait for all audio to finish playing
+      // Stream ended — flush remaining sentences immediately
       streamEnded = true;
+      if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
+      if (localQueue.length > 0 && !bargedInRef.current) {
+        void processSpeechQueue();
+      }
 
       if (bargedInRef.current) {
-        streamingTTS.abort();
         if (streamingText) {
           const partial = stripMarkdown(streamingText);
           setChatHistory(prev => {
@@ -1559,9 +1581,13 @@ export function useOrionReasoning(
           speak(humanizedSpeech).catch(() => {}); spokeOrQueued = true;
         }
 
-        // Wait for streaming TTS to finish
-        if (streamingTTS.isActive) {
-          await streamingTTS.waitForCompletion();
+        // Wait for speech queue to finish before cleanup
+        if (isSpeakingQueue || localQueue.length > 0) {
+          let waited = 0;
+          while (!queueFinished && (isSpeakingQueue || localQueue.length > 0) && waited < 30000 && !bargedInRef.current) {
+            await new Promise(r => setTimeout(r, 500));
+            waited += 500;
+          }
         }
 
         // Follow-up removed — was causing incoherent extra utterances after responses
