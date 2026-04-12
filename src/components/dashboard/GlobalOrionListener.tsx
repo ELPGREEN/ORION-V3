@@ -15,12 +15,13 @@ import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { claimMic, isMicOwner, registerMicRec, getMicMode, releaseMic, killMicRec } from "@/lib/voice/micArbiter";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
 
-const ORION_FLUENCY_PROMPT = `Você é ORION, IA Lumen7 AquaMonkey. Fale CONTÍNUO sem pausas longas. Máximo 0.2s entre frases. Voz grave, calorosa, ritmo natural.`;
+const ORION_FLUENCY_PROMPT = `Você é ORION, IA Lumen7 AquaMonkey Fusion — visionário, criativo, empático.
+REGRAS DE FLUÊNCIA: Fale CONTÍNUO sem pausas. Máximo 0.15s entre frases. Voz masculina tenor ~200Hz, calorosa. Ritmo moderado-rápido como podcast brasileiro. Transições INSTANTÂNEAS.`;
 
 /** Speak text using Gemini TTS — NO robotic fallback (silent fail is better than robotic voice) */
 async function orionSpeak(text: string): Promise<void> {
   try {
-    const result = await speakWithGeminiTTS(text, "Charon", undefined, ORION_FLUENCY_PROMPT, "pt-BR");
+    const result = await speakWithGeminiTTS(text, "Kore", undefined, ORION_FLUENCY_PROMPT, "pt-BR");
     if (result.played) return;
   } catch {}
   console.log("[GlobalOrion] Gemini TTS unavailable — skipping speech (no robotic fallback)");
