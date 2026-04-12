@@ -1477,17 +1477,6 @@ export function useOrionReasoning(
         !m.text.startsWith("⏳") && !m.text.endsWith("⚡") && m.text.length > 0
       );
 
-      let firstSentenceSpoken = false;
-      const triggerQueueDebounced = () => {
-        if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
-        if (!firstSentenceSpoken || streamEnded) {
-          firstSentenceSpoken = true;
-          void processSpeechQueue();
-          return;
-        }
-        batchDebounceTimer = setTimeout(() => void processSpeechQueue(), 300);
-      };
-
       const questionForLLM = processedInput || question;
       (window as any).__orionInputSource = source;
       const result = await analyzeFrameStreaming(
@@ -1507,22 +1496,19 @@ export function useOrionReasoning(
           });
         },
         (sentence) => {
-          if (bargedInRef.current) return;
+          if (bargedInRef.current) { streamingTTS.abort(); return; }
           spokeOrQueued = true;
-          localQueue.push(sentence);
-          triggerQueueDebounced();
+          // Push to streaming queue — audio fetch starts IMMEDIATELY (parallel with current playback)
+          streamingTTS.push(sentence);
         },
         controller.signal,
       );
 
-      // Stream ended — flush remaining sentences immediately
+      // Stream ended — wait for all audio to finish playing
       streamEnded = true;
-      if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
-      if (localQueue.length > 0 && !bargedInRef.current) {
-        void processSpeechQueue();
-      }
 
       if (bargedInRef.current) {
+        streamingTTS.abort();
         if (streamingText) {
           const partial = stripMarkdown(streamingText);
           setChatHistory(prev => {
@@ -1562,13 +1548,9 @@ export function useOrionReasoning(
           speak(humanizedSpeech).catch(() => {}); spokeOrQueued = true;
         }
 
-        // Wait for speech queue to finish before cleanup
-        if (isSpeakingQueue || localQueue.length > 0) {
-          let waited = 0;
-          while (!queueFinished && (isSpeakingQueue || localQueue.length > 0) && waited < 30000 && !bargedInRef.current) {
-            await new Promise(r => setTimeout(r, 500));
-            waited += 500;
-          }
+        // Wait for streaming TTS to finish
+        if (streamingTTS.isActive) {
+          await streamingTTS.waitForCompletion();
         }
 
         // Follow-up removed — was causing incoherent extra utterances after responses
