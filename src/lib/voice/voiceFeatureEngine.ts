@@ -324,6 +324,24 @@ export function compareFeaturesStatic(a: VoiceFeatures, b: VoiceFeatures): numbe
   return weights > 0 ? score / weights : 0;
 }
 
+/**
+ * Creator (Ericson Piccoli) voice fingerprint — extracted from reference video
+ * VID_20260412_125806.mp4 via librosa spectral analysis.
+ * Used for voice-based creator identification when no enrollment exists.
+ */
+export const CREATOR_VOICE_FINGERPRINT: VoiceFeatures = {
+  mfcc_mean: [-177.64, 135.25, -46.12, -14.03, 6.55, -11.65, -12.51, -12.31, 2.47, -10.41, -4.74, -2.89, -11.19],
+  pitch_mean: 200.2,
+  pitch_std: 41.2,
+  energy_mean: 0.1055,
+  spectral_centroid: 1840,
+  zero_crossing_rate: 0.08,
+  speaking_rate: 4.4,
+  formant_ratios: [1.0, 0.72, 0.55],
+  spectral_rolloff: 3369,
+  spectral_flux: 0.015,
+};
+
 export function parseVoiceFeatures(json: unknown): VoiceFeatures {
   const obj = json as Record<string, unknown>;
   return {
