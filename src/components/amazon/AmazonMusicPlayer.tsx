@@ -21,7 +21,7 @@ import {
   type AmazonMusicTrack,
   type KindleBook,
 } from "@/lib/amazon/amazon-media-service";
-import { absorbContent } from "@/lib/neural/orion-voice-evolution";
+// Voice absorption removed — no longer needed
 
 type AmazonTab = "music" | "audiobooks" | "kindle" | "alexa" | "shopping";
 
@@ -110,7 +110,7 @@ export function AmazonMusicPlayer() {
         setAbsorbProgress(prev => Math.min(prev + 20, 90));
       }, 200);
 
-      absorbContent(title, contentType, durationMinutes, sampleText);
+      // absorbContent removed — voice evolution disabled
       
       clearInterval(progressInterval);
       setAbsorbProgress(100);

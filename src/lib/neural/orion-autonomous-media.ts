@@ -8,7 +8,7 @@
  */
 
 import { searchSpotify, getMoodRecommendations, play, pause, getPlaybackState, getUserProfile, getPlaylists, createPlaylist, addToPlaylist, type OrionMood, getSpotifyFriendlyError } from "@/lib/spotify/spotify-service";
-import { absorbContent } from "./orion-voice-evolution";
+// Voice absorption removed
 import { searchAmazonAudiobooks, searchAmazonMusic, getKindleBookContent, type AmazonAudiobook } from "@/lib/amazon/amazon-media-service";
 
 // ─── Preference Model ───
@@ -199,7 +199,7 @@ export async function handlePlayMusic(query?: string): Promise<string> {
         try { await play({ uris: [track.uri] }); } catch {}
 
         // Feed voice evolution engine
-        absorbContent(`${track.name} - ${track.artists?.[0]?.name}`, "music", 3.5, track.name);
+      // absorbContent removed — voice evolution disabled
         
         return `🎵 Tocando: **${track.name}** de *${track.artists?.[0]?.name}*\n⏱️ Restam ${remaining} min do meu tempo autônomo hoje.`;
       }
@@ -283,7 +283,7 @@ export async function handlePlayAudiobook(query: string): Promise<string> {
       session.startedAt = Date.now();
       session.currentMedia = { type: "audiobook", title: show.name, query };
       saveSession(session);
-      absorbContent(show.name, "audiobook", 15, `${show.name} ${show.description || ""}`);
+      // absorbContent removed — voice evolution disabled
       return `📖 Encontrei: **${show.name}**\n` +
         `${show.publisher ? `📎 Por: *${show.publisher}*\n` : ""}` +
         `${show.description ? `📝 ${show.description.slice(0, 120)}...\n` : ""}` +
@@ -298,7 +298,7 @@ export async function handlePlayAudiobook(query: string): Promise<string> {
       session.currentMedia = { type: "audiobook", title: `${track.name} - ${track.artists?.[0]?.name}`, query };
       saveSession(session);
       try { await play({ uris: [track.uri] }); } catch {}
-      absorbContent(`${track.name}`, "audiobook", 5, `${track.name} ${track.artists?.[0]?.name}`);
+      // absorbContent removed — voice evolution disabled
       return `📖 Achei uma faixa relacionada:\n🎵 **${track.name}** de *${track.artists?.[0]?.name}*\n⏱️ Restam ${remaining} min.\n🧬 Absorvendo para evolução vocal...`;
     }
 
@@ -311,7 +311,7 @@ export async function handlePlayAudiobook(query: string): Promise<string> {
       session.startedAt = Date.now();
       session.currentMedia = { type: "audiobook", title: book.title, query };
       saveSession(session);
-      absorbContent(book.title, "amazon_audiobook", 10, `${book.title} ${book.author} ${book.description || ""}`);
+      // absorbContent removed — voice evolution disabled
       return `📖 **Amazon Audible:** ${book.title}\n` +
         `✍️ ${book.author}${book.narrator ? ` | Narração: ${book.narrator}` : ""}\n` +
         `${book.duration ? `⏱️ Duração: ${book.duration}\n` : ""}` +
@@ -591,7 +591,7 @@ export async function handleOrionReadAloud(query?: string): Promise<string> {
     const seg = state.segments[state.currentSegment];
     // Speak and absorb
     speakSegment(seg);
-    absorbContent(state.bookTitle, "amazon_audiobook", 1, seg);
+      // absorbContent removed — voice evolution disabled
     return `📖 **Retomando leitura:** ${state.bookTitle}\n` +
       `📄 Segmento ${state.currentSegment + 1}/${state.segments.length}\n` +
       `⏱️ Restam ${remaining} min.`;
@@ -641,7 +641,7 @@ export async function handleOrionReadAloud(query?: string): Promise<string> {
 
   // Start reading first segment
   speakSegment(segments[0]);
-  absorbContent(bookTitle, "amazon_audiobook", 2, segments[0]);
+      // absorbContent removed — voice evolution disabled
 
   const session = getSession();
   session.active = true;
@@ -674,7 +674,7 @@ export function handleNextSegment(): string {
   saveReadAloudState(state);
   const seg = state.segments[state.currentSegment];
   speakSegment(seg);
-  absorbContent(state.bookTitle, "amazon_audiobook", 1, seg);
+      // absorbContent removed — voice evolution disabled
 
   return `📖 Segmento ${state.currentSegment + 1}/${state.segments.length}\n${seg.slice(0, 150)}...`;
 }
@@ -705,7 +705,7 @@ function speakSegment(text: string) {
         saveReadAloudState(current);
         const nextSeg = current.segments[current.currentSegment];
         speakSegment(nextSeg);
-        absorbContent(current.bookTitle, "amazon_audiobook", 1, nextSeg);
+      // absorbContent removed — voice evolution disabled
         addMinutesUsed(1);
       } else {
         current.active = false;
@@ -733,7 +733,7 @@ export async function handlePlayAmazonMusic(query: string): Promise<string> {
     session.startedAt = Date.now();
     session.currentMedia = { type: "music", title: `${track.title} - ${track.artist}`, query };
     saveSession(session);
-    absorbContent(`${track.title} - ${track.artist}`, "amazon_music", 3.5, track.title);
+      // absorbContent removed — voice evolution disabled
     return `🎵 **Amazon Music:** ${track.title}\n🎤 ${track.artist}${track.album ? ` | ${track.album}` : ""}\n${result.message ? `📌 ${result.message}\n` : ""}⏱️ Restam ${remaining} min.`;
   }
 
