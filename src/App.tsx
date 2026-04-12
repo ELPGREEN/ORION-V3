@@ -56,8 +56,7 @@ const ConsultaIA = lazy(lazyRetry(() => import("./pages/ConsultaIA")));
 const DocumentacaoRedeNeural = lazy(lazyRetry(() => import("./pages/DocumentacaoRedeNeural")));
 const DocumentacaoNeuroCore = lazy(lazyRetry(() => import("./pages/DocumentacaoNeuroCore")));
 const BiometricRegistration = lazy(lazyRetry(() => import("./pages/BiometricRegistration")));
-const OrionDemo = lazy(lazyRetry(() => import("./pages/OrionDemo")));
-const OrionExtensionPage = lazy(lazyRetry(() => import("./pages/OrionExtensionPage")));
+// OrionDemo and OrionExtensionPage removed — consolidated into RedeNeuralPage
 const Loja = lazy(lazyRetry(() => import("./pages/Loja")));
 const LojaOrion = lazy(lazyRetry(() => import("./pages/LojaOrion")));
 const LojaSucesso = lazy(lazyRetry(() => import("./pages/LojaSucesso")));
@@ -109,7 +108,7 @@ const MeusAcessos = lazy(lazyRetry(() => import("./pages/dashboard/MeusAcessos")
 const ExplorarLojas = lazy(lazyRetry(() => import("./pages/dashboard/ExplorarLojas")));
 const ConfigurarIA = lazy(lazyRetry(() => import("./pages/dashboard/ConfigurarIA")));
 const PlanoUsuario = lazy(lazyRetry(() => import("./pages/dashboard/PlanoUsuario")));
-const OrionOrchestratorPage = lazy(lazyRetry(() => import("./pages/dashboard/OrionOrchestratorPage")));
+// OrionOrchestratorPage removed — merged into RedeNeuralPage
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
