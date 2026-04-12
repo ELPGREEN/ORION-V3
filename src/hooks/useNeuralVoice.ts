@@ -17,10 +17,7 @@ import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
-import { loadVoicePrefs, detectStyleCommand, saveVoicePrefs, getCachedVoicePrefs } from "@/lib/voice/adaptiveVoiceStyle";
-import { feedUserSpeech, feedAIResponse } from "@/lib/neural/voice-evolution-feedback";
-import { fallbackTranscribe, chunksToWavBlob } from "@/lib/voice/sttFallbackChain";
-import { getAudioWorkletManager } from "@/lib/voice/audioWorkletManager";
+// adaptiveVoiceStyle, sttFallbackChain, audioWorkletManager REMOVED — performance bottlenecks
 import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural/pipeline-latency-tracker";
 import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
 
@@ -39,7 +36,6 @@ function ensureVoiceBootstrapOnce() {
   if (_voiceBootstrapDone) return;
   _voiceBootstrapDone = true;
   initVoicePicker();
-  loadVoicePrefs().catch(() => {});
 }
 
 // ═══ Text Utilities ═══
@@ -412,9 +408,6 @@ export function useNeuralVoice(
     }, safetyMs);
 
     const cleanText = cleanTextForSpeech(text);
-    feedAIResponse(text);
-
-    const voicePrefs = getCachedVoicePrefs();
     let played = false;
 
     // PRIMARY: Gemini TTS
@@ -564,16 +557,6 @@ export function useNeuralVoice(
         lastProcessedTranscriptRef.current = normalized;
         lastProcessedAtRef.current = now;
 
-        feedUserSpeech(fullText);
-
-        // Adaptive voice style learning
-        const styleResult = detectStyleCommand(fullText, getCachedVoicePrefs());
-        if (styleResult.matched) {
-          saveVoicePrefs(styleResult.updatedPrefs);
-          console.log("[Voice Style] Learned:", styleResult.feedback);
-          return;
-        }
-
         markSTTEnd();
         onCmdRef.current(fullText);
       }, silenceMs);
@@ -621,19 +604,7 @@ export function useNeuralVoice(
       }
 
       if (e.error === "network") {
-        console.warn("[Voice] Network error — STT fallback chain");
-        const chunks = audioChunksRef.current;
-        if (chunks.length > 0) {
-          const wavBlob = chunksToWavBlob(chunks, 16000);
-          audioChunksRef.current = [];
-          fallbackTranscribe(wavBlob).then(({ text, provider, latencyMs }) => {
-            if (text && text.trim().length > 2 && onCmdRef.current) {
-              console.log(`[Voice] STT fallback via ${provider} (${latencyMs.toFixed(0)}ms): ${text.slice(0, 60)}`);
-              feedUserSpeech(text);
-              onCmdRef.current(text);
-            }
-          }).catch(err => console.warn("[Voice] STT fallback failed:", err));
-        }
+        console.warn("[Voice] Network error — will retry recognition");
         scheduleRecognitionRestart(500);
         return;
       }
@@ -688,21 +659,7 @@ export function useNeuralVoice(
       // Guard against stale state after async prime
       if (intentionalStopRef.current || onCmdRef.current !== onCmd) return;
 
-      // Start AudioWorklet for STT fallback audio buffering
-      if (!audioWorkletActiveRef.current) {
-        audioWorkletActiveRef.current = true;
-        try {
-          const worklet = getAudioWorkletManager({ sampleRate: 16000, chunkSize: 4096 });
-          worklet.initialize().then(ok => {
-            if (!ok) return;
-            worklet.onAudioChunk(chunk => {
-              audioChunksRef.current.push(chunk);
-              if (audioChunksRef.current.length > 20) audioChunksRef.current.shift();
-            });
-            worklet.start();
-          }).catch(() => {});
-        } catch {}
-      }
+      // AudioWorklet removed — was causing conflicts with SpeechRecognition
 
       startListeningFresh(onCmd);
     };
