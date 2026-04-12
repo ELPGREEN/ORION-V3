@@ -5,15 +5,24 @@ import { Slider } from "@/components/ui/slider";
 import { Brain, Cpu, Zap, Eye, Shield, MessageCircle, ArrowRight, Layers, Target, Scissors, Workflow, Box, ScanLine, Network, Hand } from "lucide-react";
 // [REMOVED] import { computeThetas, applyRoPE, computeAttentionPattern } from "@/lib/rope";
 import { motion, AnimatePresence } from "framer-motion";
-
-const computeThetas = (..._a: any[]) => [];
-const applyRoPE = (..._a: any[]) => [];
-const computeAttentionPattern = (..._a: any[]) => [];
-const HAND_CONNECTIONS: any[] = [];
-const LANDMARK_NAMES: string[] = [];
-const GESTURE_ACTIONS: Record<string, any> = {};
-
 // [REMOVED] import { LANDMARK_NAMES, HAND_CONNECTIONS, GESTURE_ACTIONS, type GestureType } from "@/components/dashboard/neural/useGestureDetection";
+
+// Stubs for removed rope module
+function computeAttentionPattern(seqLen: number, heads: number): number[][] {
+  return Array.from({ length: seqLen }, (_, i) =>
+    Array.from({ length: seqLen }, (_, j) => Math.exp(-Math.abs(i - j) / 3) / seqLen)
+  );
+}
+function computeThetas(dim: number): number[] {
+  return Array.from({ length: dim / 2 }, (_, i) => 1 / Math.pow(10000, (2 * i) / dim));
+}
+function applyRoPE(vec: number[], pos: number, thetas: number[]): number[] {
+  return vec.map((v, i) => {
+    const theta = thetas[Math.floor(i / 2)] * pos;
+    return i % 2 === 0 ? v * Math.cos(theta) : v * Math.sin(theta);
+  });
+}
+
 
 // ═══ Tokenization Demo ═══
 function TokenizationDemo() {

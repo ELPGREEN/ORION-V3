@@ -11,12 +11,13 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import ReactMarkdown from "react-markdown";
 import { SourcesLoadingIndicator } from "@/components/dashboard/SourcesLoadingIndicator";
 import { checkResponseQuality, type ResponseQualityResult as QualityResult } from "@/lib/analysis";
-// @ts-ignore - provider type mismatch after cleanup
-// Hallucination detection removed
-type HallucinationWarning = { entity: string; severity: "high" | "medium" | "low"; reason: string };
-function detectHallucinations(_text: any): HallucinationWarning[] { return []; }
-function detectPipelineRoute(_text: string): string | null { return null; }
 import { textSimilarity, softCosineSimilarity } from "@/lib/analysis";
+
+// Stub for removed detectPipelineRoute
+function detectPipelineRoute(_msg: any): { icon: string; label: string; fallbackUsed?: boolean } | null {
+  return null;
+}
+type HallucinationWarning = { entity: string; severity: string; reason: string };
 
 // ─── Types (shared) ───
 interface SourceItem {
@@ -339,7 +340,7 @@ export const ChatMessageList = forwardRef<HTMLDivElement, ChatMessageListProps>(
       const map = new Map<string, HallucinationWarning[]>();
       for (const msg of messages) {
         if (msg.role === "assistant" && msg.content) {
-          const warnings = detectHallucinations(msg.content);
+          const warnings = (((_t: string) => []) as any)(msg.content);
           if (warnings.length > 0) map.set(msg.id, warnings);
         }
       }
@@ -350,7 +351,7 @@ export const ChatMessageList = forwardRef<HTMLDivElement, ChatMessageListProps>(
       const map = new Map<string, ReturnType<typeof detectPipelineRoute>>();
       for (const msg of messages) {
         if (msg.role === "assistant") {
-          map.set(msg.id, detectPipelineRoute(msg));
+          map.set(msg.id, detectPipelineRoute(msg.content));
         }
       }
       return map;

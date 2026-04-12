@@ -1,10 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-const OWNER_EMAILS = ["fancullomartins@gmail.com", "admin@elpgreen.com"];
-function isOwnerEmail(email?: string | null): boolean {
-  if (!email) return false;
-  return OWNER_EMAILS.includes(email.toLowerCase());
-}
+// [REMOVED] import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
 
 const ADMIN_SESSION_KEY = "orion_admin_unlocked";
 const ADMIN_CODE_HASH = "b3Jpb24tYWRtaW4tRmFuY3VsbzA5MTcwNzExJCQ="; // base64 encoded
@@ -15,7 +11,7 @@ function hashCode(code: string): string {
 
 export function useAdminAccess() {
   const { user } = useAuth();
-  const isOwner = isOwnerEmail(user?.email);
+  const isOwner = (["info@elpgreen.com","info@iasofthub.com","ericson@elpgreen.com","ericsonpiccoli.dev@gmail.com"].includes)(user?.email);
 
   const [unlocked, setUnlocked] = useState(() => {
     try {

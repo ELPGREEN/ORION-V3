@@ -1,21 +1,20 @@
-import { Package } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { SEO } from "@/components/SEO";
+import { Package, Construction } from "lucide-react";
 
 export default function MarketplaceModules() {
   return (
-    <div className="space-y-6 p-4">
-      <div className="flex items-center gap-3">
-        <Package className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold text-foreground">Módulos do Marketplace</h1>
+    <div className="space-y-6">
+      <SEO title="Marketplace — ORION" description="Marketplace de módulos" />
+      <div>
+        <h1 className="text-2xl font-serif text-foreground flex items-center gap-2">
+          <Package className="h-6 w-6 text-primary" />
+          Marketplace de Módulos
+        </h1>
       </div>
-      <Card className="bg-card/80 border-border/30">
-        <CardContent className="p-8 text-center">
-          <Package className="h-12 w-12 text-primary/40 mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            Marketplace de módulos será reimplementado em breve.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3 border border-dashed border-border rounded-lg">
+        <Construction className="h-12 w-12" />
+        <p className="text-sm font-medium">Em breve</p>
+      </div>
     </div>
   );
 }

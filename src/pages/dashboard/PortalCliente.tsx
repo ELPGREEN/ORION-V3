@@ -94,7 +94,10 @@ export default function PortalCliente() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      {/* Background removed */}
+      {/* 3D Background */}
+      <Suspense fallback={null}>
+        
+      </Suspense>
 
       <div className="relative z-10 space-y-6 p-1">
         {/* Hero Header */}

@@ -18,7 +18,7 @@ import { useChatIA } from "@/contexts/ChatIAContext";
 import type { ChatIAMessage } from "@/hooks/useChatIAPersistence";
 import ProviderDiagnosticPanel from "@/components/dashboard/ProviderDiagnosticPanel";
 // [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
-// [REMOVED] import { useNeuralConfig } from "@/hooks/useNeuralConfig";
+  const neuralConfig = { enabled: false } as any;
 import { useMessageNLP } from "@/hooks/useMessageNLP";
 
 const sugestoesIniciais = [
@@ -59,7 +59,7 @@ export default function ChatJuridico() {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const neuralConfig: any = null;
+  const neuralConfig = { enabled: false } as any;
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [laypersonMode, setLaypersonMode] = useState(false);
@@ -338,24 +338,10 @@ export default function ChatJuridico() {
                         <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => copyToClipboard(message.content)}>
                           <Copy className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => (() => {})({
-                          interaction_type: "chat",
-                          input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
-                          output_text: message.content,
-                          quality_score: 0.9,
-                          user_id: user?.id,
-                          metadata: { thumbs: "up", provider: message.provider, module: "chat_juridico" },
-                        })}>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => console.log("thumbs up", message.provider)}>
                           <ThumbsUp className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => (() => {})({
-                          interaction_type: "chat",
-                          input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
-                          output_text: message.content,
-                          quality_score: 0.2,
-                          user_id: user?.id,
-                          metadata: { thumbs: "down", provider: message.provider, module: "chat_juridico" },
-                        })}>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => console.log("thumbs down", message.provider)}>
                           <ThumbsDown className="h-3 w-3" />
                         </Button>
                       </div>

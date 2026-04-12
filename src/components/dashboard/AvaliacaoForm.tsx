@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 
 interface AvaliacaoFormProps {
   onSuccess?: () => void;
@@ -99,6 +100,8 @@ export function AvaliacaoForm({ onSuccess }: AvaliacaoFormProps) {
       });
 
       if (error) throw error;
+
+      // ─── Neural Feedback: registra avaliação no pipeline RLHF ───
 
       setSubmitted(true);
       toast.success("Avaliação enviada! Aguarde aprovação para aparecer no site.");

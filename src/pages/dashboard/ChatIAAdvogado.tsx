@@ -168,6 +168,7 @@ export default function ChatIAAdvogado() {
           sources: finalMsg.sources,
           neuralEnhanced: finalMsg.neuralEnhanced,
         });
+
       } else {
         // ── NON-STREAMING FALLBACK ──
         const data = await response.json();
@@ -193,6 +194,7 @@ export default function ChatIAAdvogado() {
           sources: finalMsg.sources,
           neuralEnhanced: finalMsg.neuralEnhanced,
         });
+
       }
     } catch (err: any) {
       // Remove the empty placeholder on error
@@ -468,7 +470,7 @@ export default function ChatIAAdvogado() {
         <div className="border-t border-border p-4 bg-background">
           <div className="max-w-4xl mx-auto">
             <div className="flex gap-2 items-end">
-              {/* VoiceInputButton removed */}
+              
               <ChatFileUpload
                 onTextExtracted={(text, fileName) => {
                   const ocrPrompt = `[OCR de "${fileName}"]\n\nTexto extraído:\n\n${text}\n\nAnalise o conteúdo deste documento e forneça um resumo dos pontos jurídicos relevantes.`;

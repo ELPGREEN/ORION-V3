@@ -160,6 +160,7 @@ export function OcrPanel() {
         });
 
         toast({ title: "Layout analisado!", description: `${segments.length} segmentos • ${wordCount} palavras.` });
+
       } else {
         // Standard OCR (Vision API)
         const response = await supabase.functions.invoke("ocr-document", {
@@ -171,6 +172,7 @@ export function OcrPanel() {
 
         setResult(response.data);
         toast({ title: "OCR concluído!", description: `${response.data.wordCount} palavras extraídas.` });
+
       }
     } catch (error: any) {
       toast({ title: "Erro no processamento", description: error.message || "Não foi possível processar o documento.", variant: "destructive" });

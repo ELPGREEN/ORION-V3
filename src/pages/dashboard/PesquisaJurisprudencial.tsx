@@ -10,7 +10,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { } from "@/lib/api";
+import { neuralSearch, submitSearchFeedback, type NeuralSearchResult, type NeuralSearchResponse } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { AREA_COLORS } from "@/lib/area-colors";
 
@@ -289,11 +289,6 @@ function ResultFeedback({
 // ═══════════════════════════════════════
 // Main Component
 // ═══════════════════════════════════════
-type NeuralSearchResult = any;
-type NeuralSearchResponse = any;
-const neuralSearch = async (..._a: any[]): Promise<any> => ({ results: [], totalResults: 0, timings: {}, pipeline: [], refinedQuery: '', area: '', queryType: '' });
-const submitSearchFeedback = async (..._a: any[]) => {};
-
 export default function PesquisaJurisprudencial() {
   const { isAdvogado } = useUserRole();
   const { toast } = useToast();

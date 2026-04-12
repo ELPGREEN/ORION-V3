@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { withCircuitBreaker } from "@/lib/circuit-breaker";
-// [REMOVED] import { onAgentTaskComplete, getSmartRouting, getAgentMetrics } from "@/lib/neural/neural-agent-bridge";
 
 // ─── Inline Multi-Agent Framework (formerly multi-agent-framework.ts) ───
 
@@ -140,7 +139,6 @@ async function invokeAgent(
     response.agentUsed = endpoint;
 
     // Neural Bridge: STDP learning + agent evaluation
-    // onAgentTaskComplete removed
 
     return response;
   } catch (err: any) {
@@ -149,7 +147,6 @@ async function invokeAgent(
     console.warn(`[Agent] ${endpoint}/${action} failed after retries:`, err?.message);
 
     // Neural Bridge: record failure
-    // onAgentTaskComplete removed
 
     return { success: false, action, error: err?.message || "Agent unavailable", latencyMs, agentUsed: endpoint };
   }
@@ -242,9 +239,7 @@ export async function smartAgentRoute(
   }
 
   // v23: Enrich routing with STDP neural weights
-  const partners: Array<{weight: number}> = [];
-  const primaryMetrics: any = null;
-  if (primaryMetrics) {
+  const partners = (() => ({ provider: 'gemini', reason: 'default' }))(intent.primaryAgent);
     // Boost confidence if STDP shows strong partner bindings
     const avgPartnerWeight = partners.reduce((s, p) => s + p.weight, 0) / Math.max(partners.length, 1);
     intent.confidence = Math.min(1, intent.confidence + avgPartnerWeight * 0.1);

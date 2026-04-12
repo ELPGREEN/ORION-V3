@@ -9,6 +9,8 @@ export interface SearchResult {
   date?: string;
   type: 'lei' | 'jurisprudencia' | 'doutrina' | 'entidade' | 'proposicao' | 'estatistica';
   metadata?: Record<string, unknown>;
+  content_type?: string;
+  type?: string;
 }
 
 export interface UnifiedSearchResponse {
@@ -128,3 +130,50 @@ export async function pesquisaUnificada(
 
   return data as UnifiedSearchResponse;
 }
+
+
+// Stub types for neural search (to be reimplemented)
+export interface NeuralSearchResult {
+  id?: string;
+  title: string;
+  content: string;
+  source: string;
+  source_label?: string;
+  url?: string;
+  published_date?: string;
+  combined_score?: number;
+  similarity?: number;
+  multi_head_score?: number;
+  attention_heads?: Record<string, number>;
+  quantum_category?: string;
+  metadata?: Record<string, unknown>;
+  content_type?: string;
+  type?: string;
+}
+
+export interface NeuralSearchResponse {
+  results: NeuralSearchResult[];
+  totalResults: number;
+  timings?: Record<string, number>;
+  pipeline?: string[];
+  refinedQuery?: string;
+  area?: string;
+  queryType?: string;
+  indexed?: number;
+  errors?: { source: string; error: string }[];
+  cacheHit?: boolean;
+  embeddingCacheHit?: boolean;
+  expandedQueries?: string[];
+  version?: string;
+}
+
+export async function neuralSearch(
+  _query: string,
+  _options?: Record<string, unknown>,
+): Promise<NeuralSearchResponse> {
+  return { results: [], totalResults: 0 };
+}
+
+export async function submitSearchFeedback(
+  _data: Record<string, unknown>,
+): Promise<void> {}

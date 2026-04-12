@@ -1,5 +1,5 @@
 import { SEO } from "@/components/SEO";
-// [REMOVED] import null from "@/components/dashboard/neural/null";
+import { Construction } from "lucide-react";
 
 export default function DeviceIntegrationPage() {
   return (
@@ -14,7 +14,10 @@ export default function DeviceIntegrationPage() {
           Gerencie conexões Bluetooth e dispositivos IoT via MQTT
         </p>
       </div>
-      <div className="p-8 text-center text-muted-foreground">Integração de dispositivos será reimplementada.</div>
+      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
+        <Construction className="h-10 w-10" />
+        <p className="text-sm">Módulo em reimplementação</p>
+      </div>
     </div>
   );
 }

@@ -119,6 +119,7 @@ export function ChatInputArea({
       )}
 
       <div className="flex gap-2 items-end">
+        
         <ChatFileUpload
           compact
           onTextExtracted={onFileExtracted}

@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { z } from "zod";
 import logoElp from "@/assets/logo-elp.webp";
+// [REMOVED] import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
 
 // ═══════════════════════════════════════
 // Types & Constants
@@ -397,7 +398,7 @@ export default function Auth() {
             </p>
           </div>
 
-          <div className="p-6 text-center text-muted-foreground text-sm">Verificação facial será reimplementada em breve.</div>
+          
 
           <Button
             variant="ghost"

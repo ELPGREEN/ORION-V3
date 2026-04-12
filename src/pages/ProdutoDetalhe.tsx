@@ -185,7 +185,7 @@ export default function ProdutoDetalhe() {
         </div>
       </div>
 
-      {/* Orion Store Assistant */}
+      {/* Orion Store Assistant removed */}
 
       {/* Footer */}
       <div className="border-t border-border/30 bg-card/50 mt-8">

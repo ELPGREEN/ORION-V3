@@ -769,7 +769,6 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
 
       if (convId) saveMessage(convId, { role: "assistant", content: text, intent: intent?.action, sources: neuralCtx.sources, neuralEnhanced: neuralCtx.used });
 
-      // logNeural removed
       } // close else block for non-edge agents
     } catch (err) {
       setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "❌ Erro ao processar. Verifique sua conexão e tente novamente.", timestamp: new Date() }]);
@@ -872,8 +871,7 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
 
   const handleFeedback = useCallback((msg: Message, type: "up" | "down") => {
     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, feedbackGiven: type } : m));
-    //
-  }, []);
+  }, [logNeural]);
 
   const handleNewConversation = async () => {
     await createConversation("Nova conversa");

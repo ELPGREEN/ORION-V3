@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeStorageFileName } from "@/lib/utils";
 import { RichTextEditor, type AIBubbleAction, getRulerIndentRef, getRulerFirstLineIndentRef, getRulerRightIndentRef } from "@/components/dashboard/RichTextEditor";
@@ -68,7 +69,7 @@ export function DocumentEditor({
   // ─── Actions ───
   const actions = useEditorActions({
     editedContent, setEditedContent, formData, selectedType, forceLetterhead,
-    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, logNeural: () => {},
+    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast: () => {},
     clearAllSuggestionMarks: suggestions.clearAllSuggestionMarks,
     bubbleSelectionRef, bubbleNodeContextRef, initialSavedDocId,
   });
@@ -109,7 +110,10 @@ export function DocumentEditor({
   });
 
   // ─── AI Real-time Review ───
-  const aiReview: any = { issues: [], loading: false, reviewLoading: false, neuralMetrics: undefined, refresh: async () => {}, runReview: async (_c?: any) => {}, triggerInitialReview: async (_c: any) => {}, scheduleReview: (_c: any) => {}, removeIssue: (_id: string) => {}, structural: null, structuralLoading: false, runStructuralAnalysis: async (_c: any) => {}, removeMissingSection: (_n: string) => {} };
+  const aiReview = (({ enabled: _e, documentType: _d }: any) => ({ issues: [] as any[], reviewLoading: false, neuralMetrics: null, runReview: (_c: string) => {}, triggerInitialReview: (_c: string) => {}, scheduleReview: (_c: string) => {}, removeIssue: (_id: string) => {}, structural: null as any, structuralLoading: false, runStructuralAnalysis: (_c: string) => {}, removeMissingSection: (_s: string) => {} }))({
+    enabled: aiEnabled,
+    documentType: selectedType?.label || formData.tipo,
+  });
 
   // Auto-run review + structural analysis on document open (first meaningful content)
   const initialReviewDoneRef = useRef(false);
@@ -457,7 +461,7 @@ export function DocumentEditor({
                 onForceLetterheadChange={onLetterheadChange}
                 previewContent={<DocumentPreview content={editedContent} watermark={formData.watermark} includeStamp={false} documentType={selectedType?.id} forceLetterhead={forceLetterhead} customMarginTop={marginTop} customMarginBottom={marginBottom} prepareContent={actions.prepareContentForPdf} />}
                 livePreviewContent={<DocumentPreview content={editedContent} watermark={formData.watermark} includeStamp={false} documentType={selectedType?.id} forceLetterhead={forceLetterhead} customMarginTop={marginTop} customMarginBottom={marginBottom} compact prepareContent={actions.prepareContentForPdf} />}
-                settingsContent={<DocumentSettings watermark={formData.watermark} onWatermarkChange={onWatermarkChange || (() => {})} isJudicial={isJudicialCategory(selectedType?.category)} letterhead={forceLetterhead} onLetterheadChange={onLetterheadChange} marginTop={marginTop} marginBottom={marginBottom} onMarginTopChange={onMarginTopChange} onMarginBottomChange={onMarginBottomChange} />}
+                settingsContent={<DocumentSettings watermark={formData.watermark} onWatermarkChange={onWatermarkChange || undefined} isJudicial={isJudicialCategory(selectedType?.category)} letterhead={forceLetterhead} onLetterheadChange={onLetterheadChange} marginTop={marginTop} marginBottom={marginBottom} onMarginTopChange={onMarginTopChange} onMarginBottomChange={onMarginBottomChange} />}
                 suggestionsContent={<SuggestionsPanel suggestions={suggestions.editorSuggestions} onAccept={suggestions.handleAcceptSuggestion} onReject={suggestions.handleRejectSuggestion} onAcceptAll={suggestions.handleAcceptAllSuggestions} onRejectAll={suggestions.handleRejectAllSuggestions} />}
                 suggestions={suggestions.editorSuggestions}
                 onExternalChatMessage={(msg) => { setExternalChatMessage(msg); if (!chatPanelOpen) setChatPanelOpen(true); }}

@@ -1,6 +1,13 @@
 /**
- * useAnalyticsTracker — Stub (analytics removed during cleanup)
+ * useAnalyticsTracker — Auto-track page views and user identity
  */
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+
 export function useAnalyticsTracker() {
-  // Analytics tracking removed — will be reimplemented
+  const location = useLocation();
+
+  useEffect(() => {
+    // Page view tracking placeholder
+  }, [location.pathname]);
 }

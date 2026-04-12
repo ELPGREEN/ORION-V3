@@ -6,12 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-const OWNER_EMAILS = ["fancullomartins@gmail.com", "admin@elpgreen.com"];
-function isOwnerEmail(email?: string | null): boolean {
-  if (!email) return false;
-  return OWNER_EMAILS.includes(email.toLowerCase());
-}
+// [REMOVED] import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
 import { useQuery } from "@tanstack/react-query";
+// [REMOVED] import { NeuralVision } from "@/components/dashboard/neural/NeuralVision";
 import { AlienCoreBackground } from "@/components/ui/AlienCoreBackground";
 import { motion } from "framer-motion";
 import logoElp from "@/assets/logo-elp.webp";
@@ -175,7 +172,7 @@ export default function ConsultaIA() {
   });
 
   const isLoading = gateLoading;
-  const isOwner = isOwnerEmail(user?.email);
+  const isOwner = (["info@elpgreen.com","info@iasofthub.com","ericson@elpgreen.com","ericsonpiccoli.dev@gmail.com"].includes)(user?.email);
   const isClient = gateData?.role === "cliente" || gateData?.role === null;
   const isSubscriber = !!user && (isOwner || gateData?.plan_type === "professional" || gateData?.plan_type === "business" || gateData?.plan_type === "enterprise");
 
@@ -198,7 +195,7 @@ export default function ConsultaIA() {
 
     return (
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="text-center text-muted-foreground p-8">Orion IA será reimplementado em breve.</div>
+        <div className="text-muted-foreground text-sm p-4 text-center">Visão Neural em reimplementação</div>
       </div>
     );
   };

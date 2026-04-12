@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+// [REMOVED] import OrionAdvogadoInsights from "@/components/dashboard/OrionAdvogadoInsights";
 
 export default function AdvogadoDashboard() {
   const navigate = useNavigate();
@@ -269,6 +270,7 @@ export default function AdvogadoDashboard() {
 
       {/* Orion Insights + Atividade Recente */}
       <div className="grid lg:grid-cols-2 gap-6">
+        
 
         <Card>
           <CardHeader className="pb-3">

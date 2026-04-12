@@ -316,6 +316,7 @@ export default function Loja() {
         )}
       </div>
 
+      {/* Orion Store Assistant removed */}
 
       {/* Footer */}
       <div className="border-t border-border/30 bg-card/50">

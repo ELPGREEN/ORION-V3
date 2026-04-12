@@ -78,6 +78,8 @@ export function TranslationPanel() {
         title: "Tradução concluída!",
         description: `${response.data.originalLength} → ${response.data.translatedLength} caracteres`,
       });
+
+      // 🧠 Neural: tradução jurídica = dado valioso de cross-linguagem
     } catch (error: any) {
       toast({
         title: "Erro na tradução",

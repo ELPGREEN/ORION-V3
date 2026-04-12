@@ -4,6 +4,31 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
+
+// Local type stub
+interface DocumentElement {
+  type: string;
+  text: string;
+  wordCount?: number;
+  count?: number;
+}
+interface any {
+  title: string;
+  present: boolean;
+  wordCount?: number;
+  elements?: DocumentElement[];
+}
+interface StructuralAnalysis {
+  sections: { title: string; wordCount: number; issues: string[] }[];
+  overallScore: number;
+  suggestions: string[];
+  presentSections: any[];
+  missingSections: { title: string; name?: string; description: string; suggestedContent: string; suggestion?: string; importance?: string }[];
+  score: number;
+  summary: string;
+  elements?: DocumentElement[];
+}
+
 import {
   AlertCircle, Loader2, ChevronDown, ChevronUp,
   Shield, FileSearch, Sparkles, PlusCircle, RefreshCw, XCircle,
@@ -35,8 +60,6 @@ function timeAgo(date: Date): string {
   if (minutes < 60) return `${minutes}min atrás`;
   return `${Math.floor(minutes / 60)}h atrás`;
 }
-
-interface StructuralAnalysis { score: number; sections: Array<{ name: string; present: boolean; content?: string }>; suggestions: string[]; lastAnalyzedAt?: Date; presentSections: any[]; missingSections: any[]; summary?: string; elements?: any[]; }
 
 // ─── Structural Analysis Panel ───
 

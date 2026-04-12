@@ -73,6 +73,7 @@ export default function DashboardHome() {
         pendingConsultas: consultasRes.count || 0,
       };
 
+
       return { stats, activities: (notifRes.data || []) as RecentActivity[] };
     },
     enabled: !!user,

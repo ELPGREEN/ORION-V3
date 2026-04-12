@@ -24,10 +24,10 @@ import {
   type ResultType,
   type SearchResult as UnifiedResult,
   type UnifiedSearchResponse,
-  
-  
-  type 
-  type 
+  neuralSearch,
+  submitSearchFeedback,
+  type NeuralSearchResult,
+  type NeuralSearchResponse,
 } from "@/lib/api";
 import { AREA_COLORS } from "@/lib/area-colors";
 import { cn } from "@/lib/utils";
@@ -264,11 +264,6 @@ const STORAGE_KEY = "pesquisa-unificada-v2-state";
 // ═══════════════════════════════════════
 // Main Component
 // ═══════════════════════════════════════
-type NeuralSearchResult = any;
-type NeuralSearchResponse = any;
-const neuralSearch = async (..._a: any[]): Promise<any> => ({ results: [], totalResults: 0, timings: {}, pipeline: [], refinedQuery: '', area: '', queryType: '' });
-const submitSearchFeedback = async (..._a: any[]) => {};
-
 export default function PesquisaUnificada() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -394,7 +389,7 @@ export default function PesquisaUnificada() {
             isNeural: true,
             attention_heads: r.attention_heads,
             quantum_category: r.quantum_category || undefined,
-            type: r.content_type,
+            type: r.type || "jurisprudencia",
             metadata: r.metadata,
           });
         }
@@ -468,6 +463,7 @@ export default function PesquisaUnificada() {
 
       setResults(merged);
       setSearched(true);
+
 
       toast({
         title: "Pesquisa concluída",

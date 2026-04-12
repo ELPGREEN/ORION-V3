@@ -121,7 +121,7 @@ interface UseEditorActionsParams {
 export function useEditorActions(params: UseEditorActionsParams) {
   const {
     editedContent, setEditedContent, formData, selectedType, forceLetterhead,
-    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, 
+    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast,
     clearAllSuggestionMarks, bubbleSelectionRef, bubbleNodeContextRef, initialSavedDocId,
   } = params;
 
@@ -391,7 +391,7 @@ export function useEditorActions(params: UseEditorActionsParams) {
     } finally {
       setImproving(false); setImprovingMode(null); setImprovingProgress(null);
     }
-  }, [editedContent, formData, selectedType, saveSnapshot, setEditedContent, toast,  reapplyRulerMargins, editorRef, clearAllSuggestionMarks, user]);
+  }, [editedContent, formData, selectedType, saveSnapshot, setEditedContent, toast, reapplyRulerMargins, editorRef, clearAllSuggestionMarks, user]);
 
   const handleRefinement = useCallback(async (responses: Record<string, string>) => {
     saveSnapshot(); setIsRefining(true);
@@ -543,7 +543,7 @@ export function useEditorActions(params: UseEditorActionsParams) {
       return docId;
     } catch (err) { console.error("Error saving:", err); toast({ title: "Erro ao salvar", variant: "destructive" }); return null; }
     finally { setSaving(false); }
-  }, [user, editedContent, formData, selectedType, savedDocId, forceLetterhead, marginTop, marginBottom, getDocumentTitle, toast,  prepareContentForPdf]);
+  }, [user, editedContent, formData, selectedType, savedDocId, forceLetterhead, marginTop, marginBottom, getDocumentTitle, toast, prepareContentForPdf]);
 
   const persistBeforeExport = useCallback(async (): Promise<string | null> => {
     // Mandatory save lock before any file export (PDF/DOCX)
