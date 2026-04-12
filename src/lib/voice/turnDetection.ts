@@ -16,7 +16,7 @@ export function detectTurnState(buffer: string[], _lang?: string): TurnState {
 
   const normalized = raw
     .toLowerCase()
-    .replace(/[^ -\p{L}\p{N}\s]/gu, " ")
+    .replace(/[^\p{L}\p{N}\s ]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
 
