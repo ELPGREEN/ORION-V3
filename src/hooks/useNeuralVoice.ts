@@ -487,8 +487,6 @@ export function useNeuralVoice(
     rec.onresult = (e: any) => {
       consecutiveAbortsRef.current = 0;
 
-      // ═══ FIX: Collect ALL results from resultIndex, not just the last one ═══
-      // Chrome fires onresult with multiple results — reading only the last one loses words.
       let hasFinal = false;
       let fullInterimText = "";
 
@@ -507,29 +505,49 @@ export function useNeuralVoice(
           if (result.isFinal && transcript.split(/\s+/).length >= 3) {
             bargeIn();
           }
-          continue; // Drop — it's Orion hearing itself
+          continue;
         }
 
         if (result.isFinal) {
           hasFinal = true;
-          // Accumulate this final transcript
-          speechBufferRef.current = speechBufferRef.current
-            ? `${speechBufferRef.current} ${transcript}`
-            : transcript;
+          // ═══ DEDUP: merge overlapping chunks instead of blind concat ═══
+          const existing = speechBufferRef.current.trim();
+          if (!existing) {
+            speechBufferRef.current = transcript;
+          } else if (existing === transcript || existing.endsWith(transcript)) {
+            // exact duplicate or already contained — skip
+          } else if (transcript.startsWith(existing)) {
+            // new transcript is a superset — replace
+            speechBufferRef.current = transcript;
+          } else {
+            // Check word-level overlap
+            const aWords = existing.split(/\s+/);
+            const bWords = transcript.split(/\s+/);
+            const maxOverlap = Math.min(aWords.length, bWords.length);
+            let merged = false;
+            for (let ov = maxOverlap; ov > 0; ov--) {
+              const aTail = aWords.slice(-ov).join(" ").toLowerCase();
+              const bHead = bWords.slice(0, ov).join(" ").toLowerCase();
+              if (aTail === bHead) {
+                speechBufferRef.current = `${existing} ${bWords.slice(ov).join(" ")}`.trim();
+                merged = true;
+                break;
+              }
+            }
+            if (!merged) {
+              speechBufferRef.current = `${existing} ${transcript}`;
+            }
+          }
         } else {
-          fullInterimText = transcript; // Keep latest interim for context
+          fullInterimText = transcript;
         }
       }
 
-      // If we're in self-hearing mode, stop here
       if (speakingRef.current || VoiceState.aiResponding) return;
-
-      // If no final results yet, just wait
       if (!hasFinal) return;
 
       if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
 
-      // Dynamic turn detection on accumulated buffer
       const turnState = detectTurnState([speechBufferRef.current], "pt-BR");
       const silenceMs = getOptimalSilenceDuration(turnState);
 
