@@ -29,6 +29,7 @@ export function NeuralVision() {
   const [response, setResponse] = useState<VisionResponse | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const tts = useOrionTTS();
 
   // Start camera
   const startCamera = useCallback(async () => {
