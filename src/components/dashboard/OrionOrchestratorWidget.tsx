@@ -77,7 +77,7 @@ export default function OrionOrchestratorWidget() {
             variant="outline"
             size="sm"
             className="w-full gap-2 border-[hsl(30,85%,52%,0.3)] hover:border-[hsl(30,85%,52%,0.6)]"
-            onClick={() => navigate("/dashboard/orion-orchestrator")}
+            onClick={() => navigate("/dashboard/rede-neural")}
           >
             <Brain className="h-3.5 w-3.5" />
             Ver Painel Completo
