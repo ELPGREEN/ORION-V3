@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useRef, ReactNode } fro
 import { User, Session } from '@supabase/supabase-js';
 
 import { supabase } from '@/integrations/supabase';
-import { initializeNeuralProfile } from '@/lib/neural-init';
+// Neural init removed
 import { clearRoleCache } from '@/hooks/useUserRole';
 import { OrionAnalytics } from '@/lib/firebase-analytics-events';
 
@@ -124,10 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (error) return { error: error as Error | null };
     
-    // Silently initialize neural profile for new user
-    if (data?.user?.id) {
-      initializeNeuralProfile(data.user.id, (metadata?.account_type as "advogado" | "cliente") || "cliente");
-    }
+    return { error: null };
     
     OrionAnalytics.signUp('email');
     return { error: null };
