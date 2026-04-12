@@ -213,6 +213,7 @@ export function useNeuralVoice(
   const useGCPSTTRef = useRef(true); // GCP STT as primary
   const sentenceAccumulatorRef = useRef(""); // Accumulate partial sentences
   const sentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const micWatchdogRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Sync ──
   const updateAiResponding = useCallback((val: boolean) => {
