@@ -188,7 +188,7 @@ function buildSingleSpeakerRequest(
 
   const body: Record<string, unknown> = {
     contents: [{ role: "user", parts: [{ text: cleanText }] }],
-    generationConfig: { responseModalities: ["AUDIO"], speechConfig },
+    generationConfig: { responseModalities: ["AUDIO"], maxOutputTokens: 8192, speechConfig },
   };
   if (opts.includePrompt && stylePrompt.trim()) {
     body.systemInstruction = { parts: [{ text: stylePrompt.trim().slice(0, 500) }] };
@@ -213,7 +213,7 @@ function buildMultiSpeakerRequest(
   if (includeLanguage && selectedLang.trim()) speechConfig.languageCode = selectedLang;
   return {
     contents: [{ role: "user", parts: [{ text: cleanText }] }],
-    generationConfig: { responseModalities: ["AUDIO"], speechConfig },
+    generationConfig: { responseModalities: ["AUDIO"], maxOutputTokens: 8192, speechConfig },
   };
 }
 
