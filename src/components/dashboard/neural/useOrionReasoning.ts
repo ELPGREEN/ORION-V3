@@ -1461,8 +1461,8 @@ export function useOrionReasoning(
         if (isSpeakingQueue || localQueue.length === 0) return;
         isSpeakingQueue = true;
 
-        // Stop mic during TTS
-        try { (window as any).__orionMicRec?.stop?.(); } catch {}
+        // Stop mic during TTS — __orionMicRec is a React ref, access .current
+        try { (window as any).__orionMicRec?.current?.stop?.(); } catch {}
 
         try {
           while (localQueue.length > 0 && !bargedInRef.current) {
@@ -1471,13 +1471,15 @@ export function useOrionReasoning(
 
             // Wait for pre-fetched audio
             const blob = await item.audioPromise;
-            if (bargedInRef.current) break;
+            if (bargedInRef.current || controller.signal.aborted) break;
 
             if (blob) {
+              console.log(`[StreamTTS] ▶ Playing: "${item.text.slice(0, 50)}..." (${(blob.size / 1024).toFixed(1)}KB)`);
               const result = await playAudioBlob(blob, controller.signal);
               if (result.audio) spokeOrQueued = true;
             } else {
               // Fallback: use speak() for this sentence
+              console.log(`[StreamTTS] ▶ Fallback speak: "${item.text.slice(0, 50)}..."`);
               await speak(item.text, { skipMicToggle: true });
               spokeOrQueued = true;
             }
@@ -1488,6 +1490,7 @@ export function useOrionReasoning(
             void processSpeechQueue();
           } else if (!bargedInRef.current) {
             queueFinished = true;
+            console.log("[StreamTTS] ✅ Queue done, resuming mic");
             // Resume mic after all speech done
             window.dispatchEvent(new CustomEvent("orion-tts-queue-done"));
           }
@@ -1531,10 +1534,13 @@ export function useOrionReasoning(
           streamingText = accumulated;
           const display = stripMarkdown(accumulated);
           setThought(display);
+          // Update ONLY the last AI message (the placeholder) — don't add new entries
           setChatHistory(prev => {
-            const last = prev[prev.length - 1];
-            if (last?.role === "ai" && last.text.startsWith("⏳")) {
-              return [...prev.slice(0, -1), { ...last, text: display || "⏳ ..." }];
+            const idx = prev.length - 1;
+            if (idx >= 0 && prev[idx]?.role === "ai") {
+              const updated = [...prev];
+              updated[idx] = { ...updated[idx], text: display || "⏳ ..." };
+              return updated;
             }
             return prev;
           });
@@ -1543,17 +1549,26 @@ export function useOrionReasoning(
           if (bargedInRef.current) return;
           // Dedup: skip if already spoken or queued
           const normalized = sentence.trim();
-          if (!normalized || spokenSentences.has(normalized)) return;
+          if (!normalized || normalized.length < 3) return;
+          if (spokenSentences.has(normalized)) return;
+          // Check substring overlap with last queued item
           const lastQueued = localQueue[localQueue.length - 1];
-          if (lastQueued && (normalized === lastQueued.text || lastQueued.text.includes(normalized))) return;
+          if (lastQueued) {
+            if (normalized === lastQueued.text) return;
+            if (lastQueued.text.includes(normalized)) return;
+            if (normalized.includes(lastQueued.text)) {
+              // New sentence is superset of last — skip (likely same sentence with more words)
+              return;
+            }
+          }
           spokenSentences.add(normalized);
           spokeOrQueued = true;
           // Pre-fetch audio IMMEDIATELY while current sentence plays
           const cleanSentence = cleanTextForSpeech(normalized);
-          const audioPromise = cleanSentence.length > 2
-            ? fetchGeminiAudio(cleanSentence, TTS_VOICE, controller.signal, TTS_PROMPT, "pt-BR")
-            : Promise.resolve(null);
-          localQueue.push({ text: normalized, audioPromise });
+          if (cleanSentence.length < 3) return;
+          console.log(`[StreamTTS] 📝 Queuing: "${cleanSentence.slice(0, 60)}..."`);
+          const audioPromise = fetchGeminiAudio(cleanSentence, TTS_VOICE, controller.signal, TTS_PROMPT, "pt-BR");
+          localQueue.push({ text: cleanSentence, audioPromise });
           triggerQueueImmediate();
         },
         controller.signal,
