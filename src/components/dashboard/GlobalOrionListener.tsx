@@ -132,15 +132,20 @@ export function GlobalOrionListener() {
     return customWakeRegex.test(normalizeWakeWord(transcript));
   }, [customWakeRegex]);
 
+  // Track whether mic has been primed this session to avoid repeated OS sounds
+  const micPrimedRef = useRef(false);
+
   const primeMicrophone = useCallback(async () => {
+    // On mobile, only prime ONCE per session to avoid repeated OS activation sounds
+    if (isMobile && micPrimedRef.current) return;
     if (!navigator.mediaDevices?.getUserMedia) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
-      // Reduced priming delay — just enough for hardware init
       await new Promise((resolve) => setTimeout(resolve, isMobile ? 80 : 30));
       stream.getTracks().forEach((track) => track.stop());
+      micPrimedRef.current = true;
     } catch (error) {
       console.warn("[GlobalOrion] Microphone priming failed:", error);
     }
