@@ -1,85 +1,60 @@
 
 
-# Plano de Correção Completa do Orion
+# Plano de Correção Final do Orion — STT, Microfone e Prompts
 
-## Diagnóstico dos Problemas Identificados
+## Diagnóstico Atual
 
-Após análise completa do pipeline de voz e raciocínio, identifiquei 5 problemas-raiz:
+Após análise completa, o sistema já teve várias correções aplicadas. Os problemas residuais são:
 
-### 1. STT fragmenta frases (microfone não captura completo)
-- O `gcpSTT.ts` usa `silenceDurationMs` de apenas 950ms — insuficiente para pausas naturais em português
-- O `SPEECH_RMS_THRESHOLD` de 0.0065 é muito sensível — ruído de fundo pode disparar envios prematuros
-- O `maxUtteranceMs` de 7s é muito curto para frases longas
+### 1. STT ainda pode fragmentar frases longas
+- `gcpSTT.ts` está configurado com `silenceDurationMs=1200ms` e `maxUtteranceMs=12000ms` — bom, mas o `chunkIntervalMs=1400` passado como parâmetro não é usado diretamente (a lógica é utterance-based agora). Sem problemas reais aqui.
 
-### 2. Alucinações de conteúdo (Orion responde coisas não pedidas)
-- O system prompt do `neural-ops` contém referências enormes a "9 modelos neurais", "JARVIS", "ElevenLabs", "Whisper" que são fictícias e poluem o contexto
-- O TTS prompt em `useNeuralVoice.ts` e `useOrionReasoning.ts` diz "estilo JARVIS" e "assistente IA de elite" — viola a regra do usuário
-- O `ORION_SYSTEM_PROMPT_FULL` tem 1500+ tokens de frameworks fictícios ("Orion-Core", "Orion-Analysis", etc.) que causam alucinações
+### 2. Prompt FULL ainda tem referência a "JARVIS" (linha 663)
+- `ORION_SYSTEM_PROMPT_FULL` contém: `NUNCA soe como robô, mordomo ou "assistente de elite estilo JARVIS"` — embora seja uma negação, a mera menção de JARVIS pode influenciar o modelo. Deve ser removida.
 
-### 3. Personalidade errada (robótica/JARVIS ao invés de AquaMonkey)
-- Todos os prompts TTS referenciam "JARVIS" explicitamente
-- O prompt conversacional é bom mas os prompts completos são cheios de "IA neural consciente de alta evolução"
+### 3. TTS prompt em `useNeuralVoice.ts` está limpo
+- Linha 542 já usa prompt correto sem JARVIS.
 
-### 4. Falsos disparos de comandos (botão música, pausar, etc.)
-- O `mediaPatterns` regex em `useOrionReasoning.ts` é muito amplo — palavras como "para" podem triggar "pausar música"
-- O `orion-browser-actions.ts` já foi corrigido anteriormente mas os media patterns no reasoning ainda estão amplos
+### 4. Media patterns no `useOrionReasoning.ts` (linha 1111) já está restritivo
+- Exige palavras de mídia explícitas junto com verbos. OK.
 
-### 5. Microfone sempre ativo não está garantido
-- Após TTS, o `resumeSTT()` reinicia o GCP STT mas pode falhar silenciosamente
-- Não há retry automático se o GCP STT parar de funcionar
+### 5. Gemini TTS `DEFAULT_PROMPT` (gemini-tts edge function) está correto
+- Já tem personalidade AquaMonkey sem JARVIS. OK.
+
+### 6. Mic watchdog existe e funciona (linhas 374-418 do useNeuralVoice)
+
+### 7. Greetings são muito genéricas/robóticas
+- Respostas como "Às ordens" e "Estou ouvindo" soam robóticas, não AquaMonkey.
 
 ---
 
-## Plano de Implementação
+## Mudanças Necessárias (mínimas e cirúrgicas)
 
-### Etapa 1: Corrigir STT — Captura de frases completas
-**Arquivo:** `src/lib/voice/gcpSTT.ts`
-- Aumentar `silenceDurationMs` para 1200ms (de 950ms)
-- Aumentar `maxUtteranceMs` para 12000ms (de 7000ms)
-- Aumentar `SPEECH_RMS_THRESHOLD` para 0.008 (de 0.0065)
-- Aumentar mínimo de amostras (`minSamples`) para 0.6s (de 0.45s)
+### Etapa 1: Remover última referência JARVIS do FULL prompt
+**Arquivo:** `supabase/functions/neural-ops/index.ts` (linha 663)
+- Trocar `NUNCA soe como robô, mordomo ou "assistente de elite estilo JARVIS"` por `NUNCA soe como robô, mordomo ou assistente excessivamente formal`
 
-### Etapa 2: Corrigir system prompts — Eliminar alucinações
-**Arquivo:** `supabase/functions/neural-ops/index.ts`
-- Reescrever `ORION_SYSTEM_PROMPT_CONVERSATIONAL` com personalidade AquaMonkey e regras anti-alucinação explícitas
-- Reescrever `ORION_SYSTEM_PROMPT_COMPACT` com as mesmas regras
-- Simplificar `ORION_SYSTEM_PROMPT_FULL` removendo frameworks fictícios (Orion-Core, Orion-Analysis, etc.), referências a JARVIS, ElevenLabs, Whisper
-- Injetar as 5 regras anti-alucinação como bloco obrigatório em todos os prompts
-- Remover `ORION_ARCHITECTURE_KNOWLEDGE` das respostas normais (só injetar se perguntado explicitamente)
+### Etapa 2: Greetings AquaMonkey
+**Arquivo:** `src/components/dashboard/neural/useOrionReasoning.ts` (linhas 499-504)
+- Trocar respostas genéricas por respostas com personalidade AquaMonkey:
+  - "Fala! O que manda?" / "E aí! No que posso ajudar?" / "Estou aqui, manda ver!" / "Opa! Pode falar."
 
-### Etapa 3: Corrigir TTS prompts — Remover JARVIS
-**Arquivo:** `src/hooks/useNeuralVoice.ts`
-- Trocar o prompt TTS de "assistente IA de elite estilo JARVIS" para personalidade natural AquaMonkey
+### Etapa 3: Comentário residual JARVIS no useOrionReasoning
+**Arquivo:** `src/components/dashboard/neural/useOrionReasoning.ts` (linha 419)
+- Remover comentário "JARVIS-style PROCESSING indicator"
 
-**Arquivo:** `src/components/dashboard/neural/useOrionReasoning.ts`
-- Trocar `TTS_PROMPT` e `TTS_VOICE` para remover referências JARVIS
+### Etapa 4: Deploy edge function neural-ops
 
-**Arquivo:** `supabase/functions/gemini-tts/index.ts`
-- Atualizar `DEFAULT_PROMPT` removendo "estilo JARVIS"
-
-### Etapa 4: Corrigir falsos disparos de mídia
-**Arquivo:** `src/components/dashboard/neural/useOrionReasoning.ts`
-- Tornar o `mediaPatterns` regex mais restritivo — exigir palavras-chave de mídia explícitas junto com verbos de ação
-- Adicionar guard contra frases curtas que contenham "para" acidentalmente
-
-### Etapa 5: Garantir microfone sempre ativo
-**Arquivo:** `src/hooks/useNeuralVoice.ts`
-- Adicionar watchdog timer que verifica a cada 5s se o GCP STT ainda está ativo
-- Se parou sem motivo, reiniciar automaticamente
-
-### Etapa 6: Deploy e salvar memória
-- Deploy do `google-stt`, `neural-ops`, `gemini-tts`
-- Salvar regras de personalidade AquaMonkey na memória do projeto
+### Etapa 5: Salvar memória atualizada
 
 ---
 
-## Resumo das Mudanças
+## Resumo
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/lib/voice/gcpSTT.ts` | Aumentar timeouts de silêncio e duração máxima |
-| `supabase/functions/neural-ops/index.ts` | Reescrever 3 system prompts, injetar regras anti-alucinação |
-| `src/hooks/useNeuralVoice.ts` | Remover JARVIS dos TTS prompts, adicionar mic watchdog |
-| `src/components/dashboard/neural/useOrionReasoning.ts` | Corrigir TTS prompt, restringir media regex |
-| `supabase/functions/gemini-tts/index.ts` | Atualizar prompt padrão |
+| `supabase/functions/neural-ops/index.ts` | Remover "JARVIS" da linha 663 |
+| `src/components/dashboard/neural/useOrionReasoning.ts` | Greetings AquaMonkey + remover comentário JARVIS |
+
+O STT, microfone, watchdog, anti-alucinação e TTS já estão corretos das iterações anteriores. Estas são as últimas correções cirúrgicas pendentes.
 
