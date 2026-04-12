@@ -416,10 +416,10 @@ export function useNeuralVoice(
         console.log("[Voice] Trying Gemini TTS...");
         const gemResult = await speakWithGeminiTTS(
           cleanText,
-          voicePrefs.voice_name || "Charon",
+          "Charon",
           cascadeAbort.signal,
-          voicePrefs.style_prompt,
-          voicePrefs.language,
+          undefined,
+          "pt-BR",
         );
         console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");
         if (gemResult.played) {
