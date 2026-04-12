@@ -589,34 +589,49 @@ export async function analyzeFrameStreaming(
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-    // ═══ SPEED: Capture image — reduced to 320x240, no CLAHE (saves ~150ms) ═══
+    // ═══ SPEED: Capture image — reduced to 480x360 for better face recognition ═══
     let imageBase64: string | undefined;
     if (includeImage && canvas) {
-      const tempCanvas = document.createElement("canvas");
-      const sw = Math.min(canvas.width || 320, 320);
-      const sh = Math.min(canvas.height || 240, 240);
-      tempCanvas.width = sw;
-      tempCanvas.height = sh;
-      const tCtx = tempCanvas.getContext("2d");
-      if (!tCtx) return { description: null, learnedFacts: [], identifiedObjects: [] };
-      tCtx.drawImage(canvas, 0, 0, sw, sh);
+      const cw = canvas.width || 0;
+      const ch = canvas.height || 0;
+      console.log(`[OrionAI] Canvas dimensions: ${cw}x${ch}, readyState check`);
+      
+      if (cw > 0 && ch > 0) {
+        const tempCanvas = document.createElement("canvas");
+        const sw = Math.min(cw, 480);
+        const sh = Math.min(ch, 360);
+        tempCanvas.width = sw;
+        tempCanvas.height = sh;
+        const tCtx = tempCanvas.getContext("2d");
+        if (tCtx) {
+          tCtx.drawImage(canvas, 0, 0, sw, sh);
 
-      // Quick blank check (8x8 sample only)
-      const sample = tCtx.getImageData(sw >> 2, sh >> 2, 8, 8).data;
-      let sum = 0; let sumSq = 0;
-      for (let i = 0; i < sample.length; i += 4) {
-        const lum = sample[i] * 0.299 + sample[i+1] * 0.587 + sample[i+2] * 0.114;
-        sum += lum; sumSq += lum * lum;
-      }
-      const n = sample.length / 4;
-      const variance = (sumSq / n) - ((sum / n) * (sum / n));
+          // Quick blank check — sample center region
+          const cx = Math.floor(sw / 2) - 4;
+          const cy = Math.floor(sh / 2) - 4;
+          const sample = tCtx.getImageData(Math.max(0, cx), Math.max(0, cy), 8, 8).data;
+          let sum = 0; let sumSq = 0;
+          for (let i = 0; i < sample.length; i += 4) {
+            const lum = sample[i] * 0.299 + sample[i+1] * 0.587 + sample[i+2] * 0.114;
+            sum += lum; sumSq += lum * lum;
+          }
+          const n = sample.length / 4;
+          const mean = sum / n;
+          const variance = (sumSq / n) - (mean * mean);
 
-      if (variance < 5) {
-        console.warn("[OrionAI] Blank frame, sending without image");
-        imageBase64 = undefined;
+          if (variance < 2 && mean < 3) {
+            console.warn(`[OrionAI] Blank frame detected (var=${variance.toFixed(1)}, mean=${mean.toFixed(1)}), sending without image`);
+            imageBase64 = undefined;
+          } else {
+            imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.65).split(",")[1];
+            console.log(`[OrionAI] ✅ Frame captured: ${sw}x${sh}, base64 length: ${imageBase64?.length || 0}, var=${variance.toFixed(1)}, mean=${mean.toFixed(1)}`);
+          }
+        }
       } else {
-        imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.65).split(",")[1];
+        console.warn("[OrionAI] Canvas has 0 dimensions, skipping image capture");
       }
+    } else {
+      console.log(`[OrionAI] Image not included: includeImage=${includeImage}, canvas=${!!canvas}`);
     }
 
     // ═══ PERF: buildLocalDetections ONCE — reused in body below ═══
