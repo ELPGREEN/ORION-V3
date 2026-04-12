@@ -337,69 +337,7 @@ export function useNeuralVoice(
     scheduleRecognitionRestart(isMobile() ? 600 : 100);
   }, [scheduleRecognitionRestart]);
 
-  // ═══ Mic Watchdog — auto-restart GCP STT if it dies silently ═══
-  useEffect(() => {
-    micWatchdogRef.current = setInterval(() => {
-      // Only run if we're supposed to be listening and not speaking
-      if (!voiceActiveRef.current || intentionalStopRef.current || speakingRef.current || VoiceState.aiResponding) return;
-      if (!onCmdRef.current) return;
-      if (!useGCPSTTRef.current) return;
-
-      // Check if GCP STT session died
-      if (gcpSessionRef.current && !gcpSessionRef.current.isActive()) {
-        console.warn("[Voice] Watchdog: GCP STT died — restarting");
-        gcpSessionRef.current = null;
-        // Restart by calling startListening logic
-        const onCmd = onCmdRef.current;
-        if (onCmd) {
-          const session = createGCPSTTSession({
-            languageCode: "pt-BR",
-            sampleRate: 16000,
-            chunkIntervalMs: 1400,
-            onFinal: (text, confidence) => {
-              if (!onCmdRef.current || intentionalStopRef.current) return;
-              if (speakingRef.current || VoiceState.aiResponding) {
-                if (STOP_PATTERNS.test(text)) { bargeIn(); return; }
-                if (text.split(/\s+/).length >= 3) { bargeIn(); }
-                return;
-              }
-              const normalized = normalizeSpeechText(text);
-              if (normalized.length < 2) return;
-              const wordCount = normalized.split(/\s+/).filter(Boolean).length;
-              if (confidence > 0 && confidence < 0.35 && wordCount <= 4) return;
-              const now = Date.now();
-              if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
-              if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
-                if (isEchoOf(normalized, lastSpokenTextRef.current)) return;
-              }
-              lastProcessedTranscriptRef.current = normalized;
-              lastProcessedAtRef.current = now;
-              markSTTEnd();
-              console.log(`[Voice] GCP STT watchdog utterance: "${text}" (${(confidence * 100).toFixed(0)}%)`);
-              onCmdRef.current?.(text.trim());
-            },
-            onError: (err) => {
-              console.warn("[Voice] GCP STT watchdog error:", err);
-            },
-          });
-          gcpSessionRef.current = session;
-          session.start().then((started) => {
-            if (started) {
-              setListening(true);
-              console.log("[Voice] ✅ Watchdog restarted GCP STT");
-            }
-          });
-        }
-      }
-    }, 5000);
-
-    return () => {
-      if (micWatchdogRef.current) {
-        clearInterval(micWatchdogRef.current);
-        micWatchdogRef.current = null;
-      }
-    };
-  }, [bargeIn]);
+  // (Mic watchdog moved after bargeIn declaration)
 
   // ═══ Streaming TTS Queue Done → Resume Mic ═══
   useEffect(() => {
