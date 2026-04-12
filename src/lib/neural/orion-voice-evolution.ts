@@ -1391,7 +1391,8 @@ export async function speakWithEvolvedVoice(text: string): Promise<boolean> {
   // ── Tier 1: Autonomous Piper + DSP (92%+) ──
   if (voice.ready && evo.level >= 92) {
     try {
-      const { predict } = await import("@mintplex-labs/piper-tts-web");
+      const piperModule = await import("@mintplex-labs/piper-tts-web") as any;
+      const predict = piperModule?.predict ?? piperModule?.default?.predict;
 
       // Generate prosody contour for logging/analysis
       const phonemes = graphemeToPhoneme(cleanText);
