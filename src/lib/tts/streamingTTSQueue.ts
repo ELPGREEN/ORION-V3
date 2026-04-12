@@ -3,6 +3,7 @@
  * 
  * Pre-fetches audio for upcoming sentences while current one plays.
  * No gaps between sentences — audio N+1 is ready before audio N finishes.
+ * Integrates with mic arbiter to stop/restart microphone properly.
  */
 
 import { cleanTextForSpeech } from "@/hooks/useNeuralVoice";
@@ -14,6 +15,15 @@ interface QueueItem {
   blobPromise: Promise<Blob | null>;
 }
 
+interface StreamingTTSOptions {
+  onStartSpeaking?: () => void;
+  onStopSpeaking?: () => void;
+  /** Called once before first audio plays — stop mic here */
+  onMicShouldStop?: () => void;
+  /** Called after ALL audio finishes — restart mic here */
+  onMicShouldRestart?: () => void;
+}
+
 export class StreamingTTSQueue {
   private queue: QueueItem[] = [];
   private playing = false;
@@ -21,10 +31,17 @@ export class StreamingTTSQueue {
   private currentAudio: HTMLAudioElement | null = null;
   private onStartSpeaking?: () => void;
   private onStopSpeaking?: () => void;
+  private onMicShouldStop?: () => void;
+  private onMicShouldRestart?: () => void;
+  private micStopped = false;
+  /** Pre-decoded AudioBuffers for gapless playback */
+  private audioContext: AudioContext | null = null;
 
-  constructor(opts?: { onStartSpeaking?: () => void; onStopSpeaking?: () => void }) {
+  constructor(opts?: StreamingTTSOptions) {
     this.onStartSpeaking = opts?.onStartSpeaking;
     this.onStopSpeaking = opts?.onStopSpeaking;
+    this.onMicShouldStop = opts?.onMicShouldStop;
+    this.onMicShouldRestart = opts?.onMicShouldRestart;
   }
 
   /** Add a sentence — audio fetch starts IMMEDIATELY (parallel with current playback) */
@@ -40,6 +57,11 @@ export class StreamingTTSQueue {
     // Start playing if not already
     if (!this.playing) {
       this.playing = true;
+      // Stop mic BEFORE first audio plays
+      if (!this.micStopped) {
+        this.micStopped = true;
+        this.onMicShouldStop?.();
+      }
       this.onStartSpeaking?.();
       void this.processQueue();
     }
@@ -55,6 +77,11 @@ export class StreamingTTSQueue {
     }
     this.playing = false;
     this.onStopSpeaking?.();
+    // Restart mic on abort too
+    if (this.micStopped) {
+      this.micStopped = false;
+      this.onMicShouldRestart?.();
+    }
   }
 
   /** Check if queue is actively playing or has pending items */
@@ -66,7 +93,7 @@ export class StreamingTTSQueue {
   async waitForCompletion(): Promise<void> {
     while (this.playing || this.queue.length > 0) {
       if (this.aborted) return;
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 100));
     }
   }
 
@@ -118,6 +145,12 @@ export class StreamingTTSQueue {
 
     this.playing = false;
     this.onStopSpeaking?.();
+    
+    // Restart mic after all audio finishes
+    if (this.micStopped) {
+      this.micStopped = false;
+      this.onMicShouldRestart?.();
+    }
   }
 
   private playBlob(blob: Blob): Promise<void> {
@@ -127,6 +160,8 @@ export class StreamingTTSQueue {
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       this.currentAudio = audio;
+      // Minimize latency
+      audio.preload = "auto";
 
       const cleanup = () => {
         URL.revokeObjectURL(url);
