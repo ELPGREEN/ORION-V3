@@ -104,9 +104,11 @@ async function recognizeV2(body: STTRequest, token: string, projectId: string) {
   const languageCode = body.languageCode || "pt-BR";
   const sampleRate = body.sampleRate || 16000;
   const encoding = body.encoding || "LINEAR16";
-  const model = body.model || "chirp_2"; // chirp_2 is best for multilingual (pt-BR), fallback: "long"
+  const model = body.model || "chirp_2";
+  // chirp_2 requires us-central1, other models can use global
+  const location = model.startsWith("chirp") ? "us-central1" : "global";
 
-  const url = `https://speech.googleapis.com/v2/projects/${projectId}/locations/global/recognizers/_:recognize`;
+  const url = `https://speech.googleapis.com/v2/projects/${projectId}/locations/${location}/recognizers/_:recognize`;
 
   const reqBody = {
     config: {
@@ -174,9 +176,9 @@ async function recognizeV2(body: STTRequest, token: string, projectId: string) {
       return formatV2Response(await retryRes.json());
     }
 
-    // If v2 fails (API not enabled), fallback to v1
-    if (res.status === 403 || res.status === 404) {
-      console.warn(`[google-stt] v2 API unavailable (${res.status}), falling back to v1`);
+    // If v2 fails, fallback to v1
+    if (res.status === 400 || res.status === 403 || res.status === 404) {
+      console.warn(`[google-stt] v2 API error (${res.status}), falling back to v1`);
       return await recognizeV1Fallback(body, token);
     }
 
