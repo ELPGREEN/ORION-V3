@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useChatIAPersistence } from "@/hooks/useChatIAPersistence";
 import { safeApplyAIResult, classifyApplyMode } from "@/lib/document";
 import { smartAgentRoute } from "@/lib/api";

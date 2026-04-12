@@ -40,7 +40,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { PublicacaoEditor } from "@/components/publicacoes/PublicacaoEditor";
 import { AssistentesEditoriais } from "@/components/publicacoes/AssistentesEditoriais";
 import { MarkdownPreview } from "@/components/publicacoes/MarkdownPreview";

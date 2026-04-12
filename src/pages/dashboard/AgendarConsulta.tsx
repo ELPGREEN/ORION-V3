@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 import { Calendar, Clock, CreditCard, Loader2, FileText, X } from "lucide-react";
 import type { PaymentMethod } from "@/components/dashboard/consultas/StepPagamento";

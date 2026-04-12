@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useAuth } from "@/contexts/AuthContext";
 import { Languages, Loader2, ArrowRightLeft, Copy, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Brain, Cpu, Zap, Eye, Shield, MessageCircle, ArrowRight, Layers, Target, Scissors, Workflow, Box, ScanLine, Network, Hand } from "lucide-react";
-import { computeThetas, applyRoPE, computeAttentionPattern } from "@/lib/rope";
+// [REMOVED] import { computeThetas, applyRoPE, computeAttentionPattern } from "@/lib/rope";
 import { motion, AnimatePresence } from "framer-motion";
-import { LANDMARK_NAMES, HAND_CONNECTIONS, GESTURE_ACTIONS, type GestureType } from "@/components/dashboard/neural/useGestureDetection";
+// [REMOVED] import { LANDMARK_NAMES, HAND_CONNECTIONS, GESTURE_ACTIONS, type GestureType } from "@/components/dashboard/neural/useGestureDetection";
 
 // ═══ Tokenization Demo ═══
 function TokenizationDemo() {

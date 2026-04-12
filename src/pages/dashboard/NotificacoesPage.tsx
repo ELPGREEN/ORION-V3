@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useNavigate } from "react-router-dom";
 import { Bell, FileText, Calendar, CreditCard, PenTool, CheckCircle, Loader2, Trash2, Filter, X, ChevronRight, MessageSquare, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -16,7 +16,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const OrionBackground3D = lazy(() =>
-  import("@/components/ui/OrionBackground3D").then(m => ({ default: m.OrionBackground3D }))
+// [REMOVED]   import("@/components/ui/OrionBackground3D").then(m => ({ default: m.OrionBackground3D }))
 );
 
 interface ProcessoResumo {

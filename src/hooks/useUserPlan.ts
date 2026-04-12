@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
+// [REMOVED] import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
 
 const PREMIUM_PLANS = ["professional", "business", "enterprise"];
 const FREE_TRIAL_TOKENS = 1000;

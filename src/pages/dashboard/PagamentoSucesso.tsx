@@ -3,7 +3,7 @@ import { CheckCircle, Loader2, Download, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useAuth } from "@/contexts/AuthContext";
 interface PaymentDetails {
   status: string;

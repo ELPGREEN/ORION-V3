@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { Send, User, Scale, MessageSquare, Plus, Trash2, Search, X, Bot, BellRing, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -463,7 +463,7 @@ export default function ChatHumano() {
         }));
 
         // Integração Agente-Eu v22.3: envia estado consciente para a Secretaria
-        const { getAgenteEu } = await import("@/lib/neural/agents/self-model-agent");
+// [REMOVED]         const { getAgenteEu } = await import("@/lib/neural/agents/self-model-agent");
         const agenteEu = getAgenteEu();
         const selfState = agenteEu.getState();
 

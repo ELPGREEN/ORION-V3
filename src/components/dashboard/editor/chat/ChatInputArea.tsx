@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
+// [REMOVED] import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
 import { ChatFileUpload } from "@/components/dashboard/ChatFileUpload";
 
 interface ChatInputAreaProps {

@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { withCircuitBreaker } from "@/lib/circuit-breaker";
-import { onAgentTaskComplete, getSmartRouting, getAgentMetrics } from "@/lib/neural/neural-agent-bridge";
+// [REMOVED] import { onAgentTaskComplete, getSmartRouting, getAgentMetrics } from "@/lib/neural/neural-agent-bridge";
 
 // ─── Inline Multi-Agent Framework (formerly multi-agent-framework.ts) ───
 

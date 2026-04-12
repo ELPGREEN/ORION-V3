@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useNavigate } from "react-router-dom";
 import {
   Settings,

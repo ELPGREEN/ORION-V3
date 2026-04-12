@@ -17,8 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useChatIA } from "@/contexts/ChatIAContext";
 import type { ChatIAMessage } from "@/hooks/useChatIAPersistence";
 import ProviderDiagnosticPanel from "@/components/dashboard/ProviderDiagnosticPanel";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
-import { useNeuralConfig } from "@/hooks/useNeuralConfig";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { useMessageNLP } from "@/hooks/useMessageNLP";
 
 const sugestoesIniciais = [

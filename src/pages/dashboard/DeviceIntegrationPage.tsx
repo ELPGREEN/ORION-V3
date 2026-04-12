@@ -1,5 +1,5 @@
 import { SEO } from "@/components/SEO";
-import DeviceIntegrationPanel from "@/components/dashboard/neural/DeviceIntegrationPanel";
+// [REMOVED] import DeviceIntegrationPanel from "@/components/dashboard/neural/DeviceIntegrationPanel";
 
 export default function DeviceIntegrationPage() {
   return (

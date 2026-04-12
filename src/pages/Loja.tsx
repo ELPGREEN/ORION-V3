@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { OrionStoreAssistant } from "@/components/store/OrionStoreAssistant";
+// [REMOVED] import { OrionStoreAssistant } from "@/components/store/OrionStoreAssistant";
 
 const PLACEHOLDER_IMAGES = [
   "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",

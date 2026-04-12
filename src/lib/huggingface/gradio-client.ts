@@ -7,7 +7,7 @@
  * - Qualquer Space público ou privado
  */
 
-import type { PDFSegment, PDFAnalysisResult, HFSpaceHealthStatus } from "@/lib/neural/hf-space-client";
+// [REMOVED] import type { PDFSegment, PDFAnalysisResult, HFSpaceHealthStatus } from "@/lib/neural/hf-space-client";
 
 const KNOWN_SPACES = {
   "pdf-vision": "Ericsonv12/adv",
@@ -117,7 +117,7 @@ export async function analyzePDFViaSpace(
     console.warn("[Gradio] Space call failed, falling back to direct HTTP:", error);
     
     // Fallback to direct HTTP (legacy hf-space-client behavior)
-    const { analyzePDF, pdfToMarkdown, pdfToHtml } = await import("@/lib/neural/hf-space-client");
+// [REMOVED]     const { analyzePDF, pdfToMarkdown, pdfToHtml } = await import("@/lib/neural/hf-space-client");
     
     if (mode === "markdown") return pdfToMarkdown(file as File);
     if (mode === "html") return pdfToHtml(file as File);

@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { z } from "zod";
 import logoElp from "@/assets/logo-elp.webp";
-import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
+// [REMOVED] import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
 
 // ═══════════════════════════════════════
 // Types & Constants

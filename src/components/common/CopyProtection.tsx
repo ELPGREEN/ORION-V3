@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { initOrionDefense, getDefenseMetrics } from "@/lib/neural/orion-defense-system";
+// [REMOVED] import { initOrionDefense, getDefenseMetrics } from "@/lib/neural/orion-defense-system";
 
 export function CopyProtection() {
   const location = useLocation();

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
+// [REMOVED] import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
 
 const ADMIN_SESSION_KEY = "orion_admin_unlocked";
 const ADMIN_CODE_HASH = "b3Jpb24tYWRtaW4tRmFuY3VsbzA5MTcwNzExJCQ="; // base64 encoded

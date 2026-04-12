@@ -36,7 +36,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { CreateInvoiceDialog } from "@/components/dashboard/payments/CreateInvoiceDialog";
 import { PaymentsDashboard } from "@/components/dashboard/payments/PaymentsDashboard";
 import { InvoicesList } from "@/components/dashboard/payments/InvoicesList";

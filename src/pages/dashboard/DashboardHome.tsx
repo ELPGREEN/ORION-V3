@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import AnalyticsDashboard from "@/components/dashboard/AnalyticsDashboard";
 import SecretarySummariesWidget from "@/components/dashboard/SecretarySummariesWidget";
 import OrionStatusWidget from "@/components/dashboard/OrionStatusWidget";

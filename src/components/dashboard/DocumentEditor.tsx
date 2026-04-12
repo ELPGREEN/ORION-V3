@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeStorageFileName } from "@/lib/utils";
 import { RichTextEditor, type AIBubbleAction, getRulerIndentRef, getRulerFirstLineIndentRef, getRulerRightIndentRef } from "@/components/dashboard/RichTextEditor";
@@ -28,7 +28,7 @@ import { RewriteVariationsPanel } from "@/components/dashboard/editor/RewriteVar
 import { AIReviewPanel } from "@/components/dashboard/editor/AIReviewPanel";
 import { AIStructuralPanel } from "@/components/dashboard/editor/AIStructuralPanel";
 import { useAIAutocomplete } from "@/hooks/useAIAutocomplete";
-import { useAIRealtimeReview } from "@/hooks/useAIRealtimeReview";
+// [REMOVED] import { useAIRealtimeReview } from "@/hooks/useAIRealtimeReview";
 import { LegalPipelinePanel } from "@/components/dashboard/editor/LegalPipelinePanel";
 import { PipelineIntakeDialog } from "@/components/dashboard/editor/PipelineIntakeDialog";
 import { createInitialPipelineState, runLegalPipeline, type PipelineExecutionContext } from "@/lib/legal-pipeline";

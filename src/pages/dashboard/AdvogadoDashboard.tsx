@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import OrionAdvogadoInsights from "@/components/dashboard/OrionAdvogadoInsights";
+// [REMOVED] import OrionAdvogadoInsights from "@/components/dashboard/OrionAdvogadoInsights";
 
 export default function AdvogadoDashboard() {
   const navigate = useNavigate();
