@@ -138,8 +138,9 @@ async function callVertexAI(messages: any[], stream: boolean): Promise<Response 
         for (const c of m.content) {
           if (c.type === "text") parts.push({ text: c.text });
           else if (c.type === "image_url") {
-            let base64 = c.image_url.url.replace(/^data:image\/\w+;base64,/, "");
-            // Ensure proper base64 padding for Vertex AI
+            let base64 = c.image_url.url.replace(/^data:image\/[^;]+;base64,/, "");
+            // Convert URL-safe base64 to standard and ensure padding
+            base64 = base64.replace(/-/g, "+").replace(/_/g, "/");
             while (base64.length % 4 !== 0) base64 += "=";
             parts.push({ inlineData: { mimeType: "image/jpeg", data: base64 } });
           }
