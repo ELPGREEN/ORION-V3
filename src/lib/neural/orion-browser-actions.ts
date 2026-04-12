@@ -1,20 +1,20 @@
 /**
  * ─── Orion Browser Actions ───
  * Enables Orion to open real browser tabs for actionable commands.
- * Inspired by JARVIS-style assistants that actually DO things.
- * 
- * When the user says "play walk video rainy night in Tokyo",
- * Orion opens YouTube with that search. Same for flights, maps, etc.
+ * On mobile, opens native apps (Spotify, YouTube, Amazon Music) via deep links.
+ * On desktop, opens web URLs in new tabs.
  */
 
+import { isMobileDevice, openSpotify, openYouTube, openYouTubeVideo, openAmazonMusic } from "@/lib/utils/deep-link";
+
 export interface BrowserAction {
-  type: "youtube" | "google" | "google_flights" | "google_maps" | "spotify" | "wikipedia" | "generic_url";
+  type: "youtube" | "google" | "google_flights" | "google_maps" | "spotify" | "wikipedia" | "generic_url" | "amazon_music";
   url: string;
   description: string;
   query: string;
 }
 
-// ─── URL Builders ───
+// ─── URL Builders (web fallback) ───
 
 function youtubeSearchUrl(query: string): string {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
@@ -222,8 +222,14 @@ export function detectBrowserAction(query: string): BrowserAction | null {
  * Also dispatches an event for the floating player if it's a video/music action.
  */
 export function executeBrowserAction(action: BrowserAction): string {
-  // YouTube video → dispatch to VideoOverlay
+  const mobile = isMobileDevice();
+
+  // YouTube video → on mobile open native app, on desktop dispatch to VideoOverlay
   if (action.type === "youtube") {
+    if (mobile) {
+      openYouTube(action.query);
+      return action.description;
+    }
     window.dispatchEvent(new CustomEvent("orion-video-command", {
       detail: {
         action: action.url.includes("youtube.com/watch") ? "play_video" : "search_video",
@@ -235,9 +241,15 @@ export function executeBrowserAction(action: BrowserAction): string {
     return action.description;
   }
 
-  // Spotify/music actions → dispatch to OrionPlaylistBar
+  // Spotify/music actions → on mobile open native app, on desktop dispatch to floating player
   if (action.type === "spotify") {
     const q = action.query;
+
+    if (mobile) {
+      openSpotify(q);
+      return action.description;
+    }
+
     let musicAction = "search_and_play";
     if (q === "pause") musicAction = "pause";
     else if (q === "next") musicAction = "next";
@@ -246,6 +258,12 @@ export function executeBrowserAction(action: BrowserAction): string {
     window.dispatchEvent(new CustomEvent("orion-music-command", {
       detail: { action: musicAction, query: q, fullCommand: q }
     }));
+    return action.description;
+  }
+
+  // Amazon Music → deep link on mobile
+  if (action.type === "amazon_music") {
+    openAmazonMusic(action.query);
     return action.description;
   }
 

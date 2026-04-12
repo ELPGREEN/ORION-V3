@@ -127,10 +127,14 @@ export function getAmazonMusicUrl(query?: string): string {
 }
 
 export async function playAmazonMusic(trackId: string): Promise<{ success: boolean; message: string; url: string }> {
+  // Use smart deep linking — opens native app on mobile, web on desktop
+  const { openAmazonMusic: openNative, isMobileDevice } = await import("@/lib/utils/deep-link");
+  openNative(trackId);
+  
   const url = `https://music.amazon.com.br/search/${encodeURIComponent(trackId)}`;
   return {
     success: true,
-    message: `Abrindo "${trackId}" no Amazon Music...`,
+    message: isMobileDevice() ? `Abrindo "${trackId}" no app Amazon Music...` : `Abrindo "${trackId}" no Amazon Music...`,
     url,
   };
 }
