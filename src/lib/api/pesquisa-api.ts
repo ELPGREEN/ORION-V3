@@ -10,7 +10,6 @@ export interface SearchResult {
   type: 'lei' | 'jurisprudencia' | 'doutrina' | 'entidade' | 'proposicao' | 'estatistica';
   metadata?: Record<string, unknown>;
   content_type?: string;
-  type?: string;
 }
 
 export interface UnifiedSearchResponse {
