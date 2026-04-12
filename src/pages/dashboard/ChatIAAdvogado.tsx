@@ -469,10 +469,6 @@ export default function ChatIAAdvogado() {
           <div className="max-w-4xl mx-auto">
             <div className="flex gap-2 items-end">
               {/* VoiceInputButton removed */}
-        {false && <div
-                onTranscript={(text) => setInput(prev => prev ? prev + " " + text : text)}
-                speakText={messages.filter(m => m.role === "assistant").at(-1)?.content}
-              />
               <ChatFileUpload
                 onTextExtracted={(text, fileName) => {
                   const ocrPrompt = `[OCR de "${fileName}"]\n\nTexto extraído:\n\n${text}\n\nAnalise o conteúdo deste documento e forneça um resumo dos pontos jurídicos relevantes.`;
