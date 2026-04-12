@@ -229,72 +229,16 @@ export default function InstallApp() {
 
           {/* ── BLUETOOTH DEVICES ── */}
           <GlassCard className="p-6 space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Bluetooth className="h-5 w-5 text-primary" />
-                <h3 className="font-serif text-foreground">Dispositivos Bluetooth</h3>
-              </div>
-              {bleSupported && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-[10px] gap-1"
-                  onClick={handleBleScan}
-                  disabled={bleScanning}
-                >
-                  {bleScanning ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3 w-3" />
-                  )}
-                  {bleScanning ? "Buscando..." : "Buscar Dispositivos"}
-                </Button>
-              )}
+            <div className="flex items-center gap-2 mb-2">
+              <Bluetooth className="h-5 w-5 text-primary" />
+              <h3 className="font-serif text-foreground">Dispositivos Bluetooth</h3>
             </div>
-
-            {!bleSupported ? (
-              <div className="flex items-center gap-2 p-3 rounded bg-red-500/5 border border-red-500/10">
-                <XCircle className="h-4 w-4 text-red-400 shrink-0" />
-                <p className="text-xs text-muted-foreground">
-                  Bluetooth não disponível. Use <strong className="text-foreground">Chrome/Edge</strong> em HTTPS ou instale o app nativo via Capacitor.
-                </p>
-              </div>
-            ) : bleDevices.length === 0 ? (
-              <div className="text-center py-6 space-y-2">
-                <Bluetooth className="h-8 w-8 text-muted-foreground/30 mx-auto" />
-                <p className="text-xs text-muted-foreground">
-                  Nenhum dispositivo conectado. Clique em "Buscar Dispositivos" para escanear.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {bleDevices.map(d => (
-                  <div key={d.id} className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-2 w-2 rounded-full ${d.connected ? "bg-green-400" : "bg-muted-foreground/30"}`} />
-                      <div>
-                        <div className="text-sm font-medium text-foreground">{d.name}</div>
-                        <div className="text-[10px] text-muted-foreground">
-                          {d.connected ? "Conectado" : "Desconectado"}
-                          {d.batteryLevel != null && ` • 🔋 ${d.batteryLevel}%`}
-                          {d.services.length > 0 && ` • ${d.services.length} serviço(s)`}
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant={d.connected ? "destructive" : "outline"}
-                      className="h-6 text-[10px] px-2"
-                      onClick={() => d.connected
-                        ? handleBleDisconnect(d.id)
-                      }
-                    >
-                      {d.connected ? "Desconectar" : "Conectar"}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="text-center py-6 space-y-2">
+              <Bluetooth className="h-8 w-8 text-muted-foreground/30 mx-auto" />
+              <p className="text-xs text-muted-foreground">
+                Módulo Bluetooth em reimplementação.
+              </p>
+            </div>
           </GlassCard>
 
           {/* ── INTEGRATIONS: Spotify & Amazon ── */}
