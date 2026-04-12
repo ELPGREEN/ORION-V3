@@ -111,7 +111,11 @@ async function spotifyApi(token: string, endpoint: string, method = "GET", body?
   if (body && method !== "GET") opts.body = JSON.stringify(body);
   const res = await fetch(`https://api.spotify.com/v1${endpoint}`, opts);
   if (res.status === 204) return {};
-  return res.json();
+  const text = await res.text();
+  try { return JSON.parse(text); } catch {
+    console.error(`Spotify API non-JSON (${res.status}):`, text.substring(0, 200));
+    return { error: `Spotify returned status ${res.status}` };
+  }
 }
 
 // ── SCOPES ──
