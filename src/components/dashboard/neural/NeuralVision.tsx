@@ -581,7 +581,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       }
 
       // Throttle ML detection to every 20 frames (was 12) — saves GPU cycles
-      if (frameCount % 20 === 0 && !rtInferenceRunningRef.current) {
+      // Throttle Gemini vision detection to every 60 frames (~2s at 30fps)
+      if (frameCount % 60 === 0 && !rtInferenceRunningRef.current) {
         rtInferenceRunningRef.current = true;
         detectRealTime(video).then(rtResult => {
           VS.realTimeVision = rtResult;
