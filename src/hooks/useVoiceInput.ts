@@ -36,6 +36,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
   const phraseBufferRef = useRef("");
   const phraseTimerRef = useRef<number | null>(null);
   const lastFinalTranscriptRef = useRef("");
+  const lastEmissionRef = useRef<{ text: string; at: number }>({ text: "", at: 0 });
 
   // Store callbacks in refs to avoid recreating startListening
   const onResultRef = useRef(onResult);
@@ -87,12 +88,21 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
   const flushPhraseBuffer = useCallback(() => {
     clearPhraseTimer();
     const text = normalizeTranscript(phraseBufferRef.current);
-    if (!text) return;
     phraseBufferRef.current = "";
     lastFinalTranscriptRef.current = "";
+    if (!text) return;
+
+    const now = Date.now();
+    const isRapidDuplicate =
+      lastEmissionRef.current.text === text &&
+      now - lastEmissionRef.current.at < Math.max(1600, phrasePauseMs + 500);
+
     if (mountedRef.current) setTranscript(text);
+    if (isRapidDuplicate) return;
+
+    lastEmissionRef.current = { text, at: now };
     onResultRef.current?.(text);
-  }, [clearPhraseTimer, normalizeTranscript]);
+  }, [clearPhraseTimer, normalizeTranscript, phrasePauseMs]);
 
   const schedulePhraseFlush = useCallback(() => {
     clearPhraseTimer();
@@ -101,6 +111,14 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
       flushPhraseBuffer();
     }, Math.max(300, phrasePauseMs));
   }, [clearPhraseTimer, flushPhraseBuffer, phrasePauseMs]);
+
+  const buildTranscriptPreview = useCallback((interimText: string) => {
+    const committed = normalizeTranscript(phraseBufferRef.current);
+    const interim = normalizeTranscript(interimText);
+    if (!committed) return interim;
+    if (!interim) return committed;
+    return mergeTranscriptChunks(committed, interim);
+  }, [mergeTranscriptChunks, normalizeTranscript]);
 
   // Track mount status for async callbacks
   useEffect(() => {
@@ -140,7 +158,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
       stream.getTracks().forEach(track => track.stop());
       if (mountedRef.current) setMicPermission("granted");
       return true;
-    } catch (err: any) {
+    } catch (_err: any) {
       if (mountedRef.current) setMicPermission("denied");
       return false;
     }
@@ -193,26 +211,38 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
     recognition.onresult = (event: any) => {
       if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
 
-      // Only process the LATEST result (the one that just changed)
-      // In continuous mode, event.results accumulates ALL results.
-      // event.resultIndex points to the first changed result.
-      // We only care about the very last result in the list.
-      const lastIdx = event.results.length - 1;
-      const lastResult = event.results[lastIdx];
-      if (!lastResult) return;
+      let interimText = "";
+      let hasNewFinalChunk = false;
 
-      const text = normalizeTranscript(lastResult[0]?.transcript || "");
-      if (!text) return;
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const text = normalizeTranscript(result?.[0]?.transcript || "");
+        if (!text) continue;
 
-      if (lastResult.isFinal) {
-        // Final result — flush immediately, no buffering
-        clearPhraseTimer();
-        phraseBufferRef.current = "";
-        setTranscript(text);
-        onResultRef.current?.(text);
+        if (result.isFinal) {
+          const mergedFinal = mergeTranscriptChunks(lastFinalTranscriptRef.current, text);
+          if (mergedFinal !== lastFinalTranscriptRef.current) {
+            lastFinalTranscriptRef.current = mergedFinal;
+            appendPhraseChunk(text);
+            hasNewFinalChunk = true;
+          }
+          continue;
+        }
+
+        interimText = mergeTranscriptChunks(interimText, text);
+      }
+
+      const preview = buildTranscriptPreview(interimText);
+      if (preview && mountedRef.current) {
+        setTranscript(preview);
+      }
+
+      if (!hasNewFinalChunk) return;
+
+      if (continuous) {
+        schedulePhraseFlush();
       } else {
-        // Interim — show preview only, don't send
-        setTranscript(text);
+        flushPhraseBuffer();
       }
     };
 
@@ -274,7 +304,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
       releaseMic(micOwnerIdRef.current);
       return false;
     }
-  }, [appendPhraseChunk, clearPhraseTimer, continuous, destroyRecognition, flushPhraseBuffer, lang, micPermission, normalizeTranscript, phrasePauseMs, requestMicPermission, schedulePhraseFlush]);
+  }, [appendPhraseChunk, buildTranscriptPreview, clearPhraseTimer, continuous, destroyRecognition, flushPhraseBuffer, lang, micPermission, mergeTranscriptChunks, normalizeTranscript, requestMicPermission, schedulePhraseFlush]);
 
   const stopListening = useCallback(() => {
     destroyRecognition();
