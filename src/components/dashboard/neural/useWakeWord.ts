@@ -238,7 +238,23 @@ export function useWakeWord(
     wakeWordEnabledRef.current = true;
   }, []);
 
+  // ═══ AUTO-START: If mic permission already granted, start wake word automatically ═══
+  // No manual toggle needed — once permission is given, mic stays active
   useEffect(() => {
+    let cancelled = false;
+    const autoStart = async () => {
+      const granted = await isMicPermissionGranted();
+      if (granted && !cancelled && speechOkRef.current && !listeningRef.current && wakeWordEnabledRef.current) {
+        await ensurePersistentMic();
+        if (!cancelled && !wakeRecRef.current && !startInFlightRef.current) {
+          startWakeWordListener();
+        }
+      }
+    };
+    const timer = setTimeout(autoStart, 500);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [startWakeWordListener]);
+
     if (!speechOk || listening) {
       clearRestartTimer();
       if (wakeRecRef.current) {
