@@ -132,15 +132,20 @@ export function GlobalOrionListener() {
     return customWakeRegex.test(normalizeWakeWord(transcript));
   }, [customWakeRegex]);
 
+  // Track whether mic has been primed this session to avoid repeated OS sounds
+  const micPrimedRef = useRef(false);
+
   const primeMicrophone = useCallback(async () => {
+    // On mobile, only prime ONCE per session to avoid repeated OS activation sounds
+    if (isMobile && micPrimedRef.current) return;
     if (!navigator.mediaDevices?.getUserMedia) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
-      // Reduced priming delay — just enough for hardware init
       await new Promise((resolve) => setTimeout(resolve, isMobile ? 80 : 30));
       stream.getTracks().forEach((track) => track.stop());
+      micPrimedRef.current = true;
     } catch (error) {
       console.warn("[GlobalOrion] Microphone priming failed:", error);
     }
@@ -153,18 +158,19 @@ export function GlobalOrionListener() {
     }
   }, []);
 
-  // On mobile, use much longer delays to prevent rapid mic on/off loop
-  // which causes OS-level activation sounds on every restart
-  const MAX_RESTART_ATTEMPTS = isMobile ? 5 : 10;
+  // On mobile, fewer restart attempts since continuous mode handles most cases
+  const MAX_RESTART_ATTEMPTS = isMobile ? 3 : 10;
 
   const getRestartDelay = useCallback((reason?: string) => {
     if (typeof document !== "undefined" && document.hidden) return 10000;
     const attempts = restartAttemptsRef.current;
     if (isMobile) {
-      const backoff = Math.min(1500 * Math.pow(1.5, attempts), 15000);
-      if (reason === "no-speech" || reason === "end") return Math.max(backoff, 1500);
-      if (reason === "aborted") return Math.max(backoff, 2000);
-      return Math.max(backoff, 1500);
+      // Much longer delays on mobile to prevent OS mic activation sounds
+      const backoff = Math.min(3000 * Math.pow(1.5, attempts), 30000);
+      if (reason === "normal-end") return 3000; // Was 80ms on desktop — mobile needs longer
+      if (reason === "no-speech" || reason === "end") return Math.max(backoff, 3000);
+      if (reason === "aborted") return Math.max(backoff, 4000);
+      return Math.max(backoff, 3000);
     }
     const backoff = Math.min(300 * Math.pow(1.5, attempts), 5000);
     if (reason === "aborted") return Math.max(backoff, 1000);
@@ -340,7 +346,10 @@ export function GlobalOrionListener() {
     startInFlightRef.current = true;
 
     const bootRecognition = async () => {
-      if (restartAttemptsRef.current > 0 || isMobile) {
+      // Only prime mic on first boot or desktop restarts — avoids OS activation sound on mobile
+      if (!isMobile && restartAttemptsRef.current > 0) {
+        await primeMicrophone();
+      } else if (isMobile && !micPrimedRef.current) {
         await primeMicrophone();
       }
 
@@ -353,10 +362,9 @@ export function GlobalOrionListener() {
       try {
       const rec = new SR();
       rec.lang = "pt-BR";
-      // ═══ FIX: Use non-continuous mode to prevent Chrome iframe "aborted" loops ═══
-      // continuous=true gets killed after ~1s in iframes/preview contexts
-      // Instead we use short sessions and restart on onend for the same effect
-      rec.continuous = false;
+      // ═══ FIX: On mobile use continuous mode to avoid constant mic on/off OS sounds ═══
+      // On desktop/iframe, non-continuous avoids Chrome "aborted" loops
+      rec.continuous = isMobile;
       rec.interimResults = true;
       rec.maxAlternatives = 3;
 
