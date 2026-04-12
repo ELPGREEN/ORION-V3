@@ -249,19 +249,6 @@ export default function PublicacoesAdmin() {
             ? (editingId ? "Publicação atualizada e publicada!" : "Publicação criada e publicada!")
             : (editingId ? "Publicação atualizada!" : "Publicação criada!"),
       );
-      logNeural({
-        interaction_type: "document_generation",
-        input_text: `Publicação ${editingId ? "atualizada" : "criada"}: ${formData.titulo}`,
-        output_text: `${formData.resumo}\n\n${formData.conteudo.substring(0, 2000)}`,
-        quality_score: 0.82,
-        user_id: user.id,
-        metadata: {
-          categoria: formData.categoria,
-          autor: formData.autor,
-          editingId,
-          source: "publicacoes_admin_save",
-        },
-      });
       setDialogOpen(false);
       setEditingId(null);
       setFormData(emptyPublicacao);

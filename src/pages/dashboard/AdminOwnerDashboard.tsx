@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +15,6 @@ import { BigQueryPanel } from "@/components/admin/BigQueryPanel";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-// [REMOVED] lazy import removed
 
 interface GlobalStats {
   totalUsers: number;
@@ -118,9 +116,6 @@ export default function AdminOwnerDashboard() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <Suspense fallback={null}>
-        <OrionBackground3D variant="mixed" intensity="low" className="fixed" />
-      </Suspense>
 
       <div className="relative z-10 space-y-6 p-1">
         {/* Hero Header */}

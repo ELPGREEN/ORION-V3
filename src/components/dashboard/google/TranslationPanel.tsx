@@ -78,21 +78,6 @@ export function TranslationPanel() {
         title: "Tradução concluída!",
         description: `${response.data.originalLength} → ${response.data.translatedLength} caracteres`,
       });
-
-      // 🧠 Neural: tradução jurídica = dado valioso de cross-linguagem
-      logNeural({
-        interaction_type: "search",
-        input_text: sourceText.substring(0, 500),
-        output_text: response.data.translatedText.substring(0, 500),
-        quality_score: 0.78,
-        user_id: user?.id,
-        metadata: {
-          module: "translation_panel",
-          sourceLanguage: response.data.detectedSourceLanguage || sourceLanguage,
-          targetLanguage,
-          charCount: response.data.translatedLength,
-        },
-      });
     } catch (error: any) {
       toast({
         title: "Erro na tradução",

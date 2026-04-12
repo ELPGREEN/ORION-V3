@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 
 interface AvaliacaoFormProps {
   onSuccess?: () => void;
@@ -100,16 +99,6 @@ export function AvaliacaoForm({ onSuccess }: AvaliacaoFormProps) {
       });
 
       if (error) throw error;
-
-      // ─── Neural Feedback: registra avaliação no pipeline RLHF ───
-      logNeural({
-        interaction_type: "avaliacao",
-        input_text: `Avaliação de ${nome.trim()} — ${nota} estrelas`,
-        output_text: depoimento.trim(),
-        quality_score: nota / 5,
-        user_id: user.id,
-        metadata: { nota, nome: nome.trim(), aprovado: false, source: "avaliacao_form" },
-      });
 
       setSubmitted(true);
       toast.success("Avaliação enviada! Aguarde aprovação para aparecer no site.");

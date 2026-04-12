@@ -2,7 +2,7 @@
  * Firebase Analytics — Event tracking for Orion
  * Wraps Firebase Analytics with typed events and auto-tracking.
  */
-// [REMOVED] import { getAnalytics, logEvent, setUserId, setUserProperties, isSupported } from "firebase/analytics";
+import { getAnalytics, logEvent, setUserId, setUserProperties, isSupported } from "firebase/analytics";
 import { firebaseApp } from "@/lib/firebase";
 
 let analyticsInstance: ReturnType<typeof getAnalytics> | null = null;

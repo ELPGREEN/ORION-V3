@@ -4,7 +4,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeStorageFileName } from "@/lib/utils";
 import { RichTextEditor, type AIBubbleAction, getRulerIndentRef, getRulerFirstLineIndentRef, getRulerRightIndentRef } from "@/components/dashboard/RichTextEditor";
@@ -69,7 +68,7 @@ export function DocumentEditor({
   // ─── Actions ───
   const actions = useEditorActions({
     editedContent, setEditedContent, formData, selectedType, forceLetterhead,
-    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, logNeural,
+    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, logNeural: () => {},
     clearAllSuggestionMarks: suggestions.clearAllSuggestionMarks,
     bubbleSelectionRef, bubbleNodeContextRef, initialSavedDocId,
   });
@@ -110,10 +109,7 @@ export function DocumentEditor({
   });
 
   // ─── AI Real-time Review ───
-  const aiReview = useAIRealtimeReview({
-    enabled: aiEnabled,
-    documentType: selectedType?.label || formData.tipo,
-  });
+  const aiReview: any = { issues: [], loading: false, reviewLoading: false, neuralMetrics: undefined, refresh: async () => {}, runReview: async (_c?: any) => {}, triggerInitialReview: async (_c: any) => {}, scheduleReview: (_c: any) => {}, removeIssue: (_id: string) => {}, structural: null, structuralLoading: false, runStructuralAnalysis: async (_c: any) => {}, removeMissingSection: (_n: string) => {} };
 
   // Auto-run review + structural analysis on document open (first meaningful content)
   const initialReviewDoneRef = useRef(false);

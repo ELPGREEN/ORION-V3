@@ -173,7 +173,7 @@ function CognitionDemo() {
     setRunning(true);
     setTimeout(() => {
       try {
-        const { runConsciousnessBridge } = require("@/lib/neural/consciousness-bridge");
+        const runConsciousnessBridge = (_opts: any) => ({ status: "removed", modules: [] });
         const snap = runConsciousnessBridge({
           intent: "auto_construct",
           query: "Analyze precedent chain for constitutional rights violation in employment discrimination case",

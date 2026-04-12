@@ -5,6 +5,14 @@ import { Slider } from "@/components/ui/slider";
 import { Brain, Cpu, Zap, Eye, Shield, MessageCircle, ArrowRight, Layers, Target, Scissors, Workflow, Box, ScanLine, Network, Hand } from "lucide-react";
 // [REMOVED] import { computeThetas, applyRoPE, computeAttentionPattern } from "@/lib/rope";
 import { motion, AnimatePresence } from "framer-motion";
+
+const computeThetas = (..._a: any[]) => [];
+const applyRoPE = (..._a: any[]) => [];
+const computeAttentionPattern = (..._a: any[]) => [];
+const HAND_CONNECTIONS: any[] = [];
+const LANDMARK_NAMES: string[] = [];
+const GESTURE_ACTIONS: Record<string, any> = {};
+
 // [REMOVED] import { LANDMARK_NAMES, HAND_CONNECTIONS, GESTURE_ACTIONS, type GestureType } from "@/components/dashboard/neural/useGestureDetection";
 
 // ═══ Tokenization Demo ═══

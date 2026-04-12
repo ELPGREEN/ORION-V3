@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-// [REMOVED] import { initOrionDefense, getDefenseMetrics } from "@/lib/neural/orion-defense-system";
 
 export function CopyProtection() {
   const location = useLocation();
@@ -8,9 +7,6 @@ export function CopyProtection() {
 
   useEffect(() => {
     if (isDashboard) return;
-
-    // Ensure defense system is active
-    initOrionDefense();
 
     // Disable right-click context menu
     const handleContextMenu = (e: MouseEvent) => {

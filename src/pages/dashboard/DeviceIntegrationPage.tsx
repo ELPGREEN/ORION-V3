@@ -1,5 +1,5 @@
 import { SEO } from "@/components/SEO";
-// [REMOVED] import DeviceIntegrationPanel from "@/components/dashboard/neural/DeviceIntegrationPanel";
+// [REMOVED] import null from "@/components/dashboard/neural/null";
 
 export default function DeviceIntegrationPage() {
   return (
@@ -14,7 +14,7 @@ export default function DeviceIntegrationPage() {
           Gerencie conexões Bluetooth e dispositivos IoT via MQTT
         </p>
       </div>
-      <DeviceIntegrationPanel />
+      <div className="p-8 text-center text-muted-foreground">Integração de dispositivos será reimplementada.</div>
     </div>
   );
 }

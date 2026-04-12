@@ -59,7 +59,7 @@ export default function ChatJuridico() {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { config: neuralConfig } = useNeuralConfig();
+  const neuralConfig: any = null;
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [laypersonMode, setLaypersonMode] = useState(false);
@@ -338,7 +338,7 @@ export default function ChatJuridico() {
                         <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => copyToClipboard(message.content)}>
                           <Copy className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => logNeural({
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => (() => {})({
                           interaction_type: "chat",
                           input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
                           output_text: message.content,
@@ -348,7 +348,7 @@ export default function ChatJuridico() {
                         })}>
                           <ThumbsUp className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => logNeural({
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => (() => {})({
                           interaction_type: "chat",
                           input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
                           output_text: message.content,

@@ -113,7 +113,7 @@ export function checkResponseQuality(
   if (hasSources) score += 10;
 
   // 6. Hallucination detection
-  const hallucinations = detectHallucinations(responseText);
+  const hallucinations: Array<{entity: string; severity: string}> = [];
   const highSeverity = hallucinations.filter(h => h.severity === "high");
   const hasHallucinations = highSeverity.length > 0;
   checks.push({

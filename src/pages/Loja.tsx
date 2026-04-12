@@ -316,13 +316,6 @@ export default function Loja() {
         )}
       </div>
 
-      {/* Orion Store Assistant */}
-      {filteredProducts.length > 0 && (
-        <OrionStoreAssistant
-          productTitle={`Loja de ${storeName}`}
-          productDescription={`Loja com ${filteredProducts.length} produtos digitais disponíveis`}
-        />
-      )}
 
       {/* Footer */}
       <div className="border-t border-border/30 bg-card/50">
