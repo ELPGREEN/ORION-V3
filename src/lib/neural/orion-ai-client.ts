@@ -400,14 +400,20 @@ export async function analyzeFrameWithAI(
 
     let imageBase64: string | undefined;
     if (includeImage && canvas) {
-      const tempCanvas = document.createElement("canvas");
-      // ═══ SPEED: Reduced to 320x240, no CLAHE, JPEG 0.65 ═══
-      tempCanvas.width = Math.min(canvas.width || 320, 320);
-      tempCanvas.height = Math.min(canvas.height || 240, 240);
-      const tCtx = tempCanvas.getContext("2d");
-      if (!tCtx) return { description: null, learnedFacts: [], identifiedObjects: [] };
-      tCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-      imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.65).split(",")[1];
+      const cw = canvas.width || 0;
+      const ch = canvas.height || 0;
+      if (cw > 0 && ch > 0) {
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = Math.min(cw, 480);
+        tempCanvas.height = Math.min(ch, 360);
+        const tCtx = tempCanvas.getContext("2d");
+        if (!tCtx) return { description: null, learnedFacts: [], identifiedObjects: [] };
+        tCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+        imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.65).split(",")[1];
+        console.log(`[OrionAI] Non-stream frame: ${tempCanvas.width}x${tempCanvas.height}, len=${imageBase64?.length || 0}`);
+      } else {
+        console.warn("[OrionAI] Non-stream: canvas 0 dimensions");
+      }
     }
     let consciousnessContext = "";
     try {
