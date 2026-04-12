@@ -104,88 +104,11 @@ async function recognizeV2(body: STTRequest, token: string, projectId: string) {
   const languageCode = body.languageCode || "pt-BR";
   const sampleRate = body.sampleRate || 16000;
   const encoding = body.encoding || "LINEAR16";
-  const model = body.model || "chirp_2";
-  // chirp_2 requires us-central1, other models can use global
-  const location = model.startsWith("chirp") ? "us-central1" : "global";
+  const model = body.model || "latest_long"; // Use v1 model directly — chirp_2 not available in this project
 
-  const url = `https://speech.googleapis.com/v2/projects/${projectId}/locations/${location}/recognizers/_:recognize`;
-
-  const reqBody = {
-    config: {
-      autoDecodingConfig: encoding === "AUTO" ? {} : undefined,
-      explicitDecodingConfig: encoding !== "AUTO" ? {
-        encoding,
-        sampleRateHertz: sampleRate,
-        audioChannelCount: 1,
-      } : undefined,
-      model,
-      languageCodes: [languageCode, ...(body.alternativeLanguageCodes || ["en-US"])],
-      features: {
-        enableAutomaticPunctuation: true,
-        enableWordTimeOffsets: false,
-        enableWordConfidence: true,
-      },
-      adaptation: {
-        phraseSets: [
-          {
-            inlinePhraseSet: {
-              phrases: [
-                { value: "Orion", boost: 15 },
-                { value: "Iapetus", boost: 15 },
-                { value: "ELP", boost: 10 },
-                { value: "IASoftHub", boost: 10 },
-                { value: "robótica", boost: 5 },
-                { value: "AGV", boost: 5 },
-                { value: "pneu", boost: 5 },
-                { value: "esteira", boost: 5 },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    content: body.audio,
-  };
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(reqBody),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    
-    // Token expired → retry
-    if (res.status === 401) {
-      cachedToken = null;
-      tokenExpiry = 0;
-      const newToken = await getCachedToken();
-      const retryRes = await fetch(url, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${newToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify(reqBody),
-      });
-      if (!retryRes.ok) {
-        const retryErr = await retryRes.text();
-        throw new Error(`STT v2 retry failed [${retryRes.status}]: ${retryErr}`);
-      }
-      return formatV2Response(await retryRes.json());
-    }
-
-    // If v2 fails, fallback to v1
-    if (res.status === 400 || res.status === 403 || res.status === 404) {
-      console.warn(`[google-stt] v2 API error (${res.status}), falling back to v1`);
-      return await recognizeV1Fallback(body, token);
-    }
-
-    throw new Error(`STT v2 failed [${res.status}]: ${errText}`);
-  }
-
-  return formatV2Response(await res.json());
+  // Go straight to v1 API — v2 chirp_2 is not enabled in orion-d3734 project
+  // This eliminates the double-request overhead (v2 400 → v1 fallback)
+  return await recognizeV1Fallback(body, token);
 }
 
 // ─── v2 Batch Recognize (GCS audio) ────────────────────────
