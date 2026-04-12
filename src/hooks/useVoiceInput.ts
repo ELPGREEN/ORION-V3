@@ -12,6 +12,7 @@ import { claimMic, isMicOwner, registerMicRec, releaseMic } from "@/lib/voice/mi
 interface UseVoiceInputOptions {
   lang?: string;
   continuous?: boolean;
+  phrasePauseMs?: number;
   onResult?: (transcript: string) => void;
   onEnd?: () => void;
 }
@@ -19,7 +20,7 @@ interface UseVoiceInputOptions {
 // Initialize unified voice picker on load
 initVoicePicker();
 
-export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, onEnd }: UseVoiceInputOptions = {}) {
+export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseMs = 950, onResult, onEnd }: UseVoiceInputOptions = {}) {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSupported, setIsSupported] = useState(false);
@@ -32,6 +33,9 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
   const isSpeakingRef = useRef(false);
   const mountedRef = useRef(true);
   const micOwnerIdRef = useRef(0);
+  const phraseBufferRef = useRef("");
+  const phraseTimerRef = useRef<number | null>(null);
+  const lastFinalTranscriptRef = useRef("");
 
   // Store callbacks in refs to avoid recreating startListening
   const onResultRef = useRef(onResult);
@@ -42,19 +46,75 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
   // Keep speaking ref in sync
   useEffect(() => { isSpeakingRef.current = isSpeaking; }, [isSpeaking]);
 
+  const normalizeTranscript = useCallback((text: string) => text.replace(/\s+/g, " ").trim(), []);
+
+  const clearPhraseTimer = useCallback(() => {
+    if (phraseTimerRef.current !== null) {
+      window.clearTimeout(phraseTimerRef.current);
+      phraseTimerRef.current = null;
+    }
+  }, []);
+
+  const mergeTranscriptChunks = useCallback((current: string, next: string) => {
+    const a = normalizeTranscript(current);
+    const b = normalizeTranscript(next);
+    if (!a) return b;
+    if (!b) return a;
+    if (a === b || a.endsWith(b)) return a;
+    if (b.startsWith(a)) return b;
+
+    const aWords = a.split(" ");
+    const bWords = b.split(" ");
+    const maxOverlap = Math.min(aWords.length, bWords.length);
+
+    for (let overlap = maxOverlap; overlap > 0; overlap--) {
+      const aTail = aWords.slice(-overlap).join(" ");
+      const bHead = bWords.slice(0, overlap).join(" ");
+      if (aTail === bHead) {
+        return normalizeTranscript(`${a} ${bWords.slice(overlap).join(" ")}`);
+      }
+    }
+
+    return normalizeTranscript(`${a} ${b}`);
+  }, [normalizeTranscript]);
+
+  const appendPhraseChunk = useCallback((chunk: string) => {
+    const normalizedChunk = normalizeTranscript(chunk);
+    if (!normalizedChunk) return;
+    phraseBufferRef.current = mergeTranscriptChunks(phraseBufferRef.current, normalizedChunk);
+  }, [mergeTranscriptChunks, normalizeTranscript]);
+
+  const flushPhraseBuffer = useCallback(() => {
+    clearPhraseTimer();
+    const text = normalizeTranscript(phraseBufferRef.current);
+    if (!text) return;
+    phraseBufferRef.current = "";
+    lastFinalTranscriptRef.current = "";
+    if (mountedRef.current) setTranscript(text);
+    onResultRef.current?.(text);
+  }, [clearPhraseTimer, normalizeTranscript]);
+
+  const schedulePhraseFlush = useCallback(() => {
+    clearPhraseTimer();
+    phraseTimerRef.current = window.setTimeout(() => {
+      phraseTimerRef.current = null;
+      flushPhraseBuffer();
+    }, Math.max(300, phrasePauseMs));
+  }, [clearPhraseTimer, flushPhraseBuffer, phrasePauseMs]);
+
   // Track mount status for async callbacks
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      // Cleanup on unmount
+      clearPhraseTimer();
       if (recognitionRef.current) {
         try { recognitionRef.current.abort(); } catch {}
         recognitionRef.current = null;
       }
       window.speechSynthesis?.cancel();
     };
-  }, []);
+  }, [clearPhraseTimer]);
 
   // Check SpeechRecognition support and current mic permission
   useEffect(() => {
@@ -87,25 +147,24 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
   }, []);
 
   const destroyRecognition = useCallback(() => {
+    clearPhraseTimer();
+    flushPhraseBuffer();
     if (recognitionRef.current) {
       intentionalStopRef.current = true;
       try { recognitionRef.current.abort(); } catch {}
       recognitionRef.current = null;
     }
     releaseMic(micOwnerIdRef.current);
-  }, []);
+  }, [clearPhraseTimer, flushPhraseBuffer]);
 
   const startListening = useCallback(async (): Promise<boolean> => {
-    // Don't start if currently speaking (mutual silencing) — use ref to avoid stale closure
     if (isSpeakingRef.current) return false;
 
-    // Destroy any existing instance first
     destroyRecognition();
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return false;
 
-    // Check/request mic permission
     let currentPermission = micPermission;
     if (currentPermission !== "granted") {
       const granted = await requestMicPermission();
@@ -113,6 +172,9 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       currentPermission = "granted";
     }
 
+    phraseBufferRef.current = "";
+    lastFinalTranscriptRef.current = "";
+    clearPhraseTimer();
     micOwnerIdRef.current = claimMic("command");
 
     const recognition = new SpeechRecognition();
@@ -124,72 +186,95 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
     recognition.onstart = () => {
       if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
       intentionalStopRef.current = false;
+      lastFinalTranscriptRef.current = "";
       setIsListening(true);
     };
-    
-    let lastSentResultIndex = -1;
-    
+
     recognition.onresult = (event: any) => {
       if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
-      
-      // Only process new results (avoid duplicates in continuous mode)
-      for (let i = Math.max(event.resultIndex, lastSentResultIndex + 1); i < event.results.length; i++) {
+
+      const finalParts: string[] = [];
+      let interimText = "";
+
+      for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
+        const text = normalizeTranscript(result?.[0]?.transcript || "");
+        if (!text) continue;
         if (result.isFinal) {
-          const text = result[0].transcript.trim();
-          lastSentResultIndex = i;
-          if (text) {
-            setTranscript(text);
-            onResultRef.current?.(text);
-          }
+          finalParts.push(text);
         } else {
-          // Show interim for visual feedback only
-          setTranscript(result[0].transcript);
+          interimText = text;
+        }
+      }
+
+      const fullFinalTranscript = normalizeTranscript(finalParts.join(" "));
+      const previousFinalTranscript = lastFinalTranscriptRef.current;
+      let delta = "";
+
+      if (fullFinalTranscript && fullFinalTranscript !== previousFinalTranscript) {
+        delta = previousFinalTranscript && fullFinalTranscript.startsWith(previousFinalTranscript)
+          ? normalizeTranscript(fullFinalTranscript.slice(previousFinalTranscript.length))
+          : fullFinalTranscript;
+        lastFinalTranscriptRef.current = fullFinalTranscript;
+      }
+
+      if (delta) {
+        appendPhraseChunk(delta);
+      }
+
+      const preview = normalizeTranscript(`${phraseBufferRef.current} ${interimText}`) || fullFinalTranscript || interimText;
+      if (preview) setTranscript(preview);
+
+      if (delta) {
+        if (continuous) {
+          schedulePhraseFlush();
+        } else {
+          flushPhraseBuffer();
         }
       }
     };
 
     recognition.onerror = (event: any) => {
       if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
-      
-      // "aborted" is expected when we stop intentionally — ignore it
+
       if (event.error === "aborted") {
         return;
       }
-      
+
       if (event.error === "not-allowed") {
         setMicPermission("denied");
       }
-      
-      // "no-speech" is not fatal — the user just didn't say anything
+
       if (event.error === "no-speech") {
         console.log("[VoiceInput] No speech detected, ending session");
       }
 
+      flushPhraseBuffer();
       releaseMic(micOwnerIdRef.current);
       setIsListening(false);
     };
 
     recognition.onend = () => {
       if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
-      
-      // Auto-restart if not intentionally stopped (browser killed it after silence/timeout)
+
+      flushPhraseBuffer();
+
       if (!intentionalStopRef.current && continuous) {
         console.log("[VoiceInput] Auto-restarting continuous recognition");
         try {
           setTimeout(() => {
             if (mountedRef.current && !intentionalStopRef.current && recognitionRef.current) {
+              lastFinalTranscriptRef.current = "";
               try { recognitionRef.current.start(); } catch {}
             }
           }, 300);
-          return; // Don't release mic or set isListening=false
+          return;
         } catch {}
       }
 
       releaseMic(micOwnerIdRef.current);
       setIsListening(false);
-      
-      // Only fire onEnd if stop was NOT intentional
+
       if (!intentionalStopRef.current) {
         onEndRef.current?.();
       }
@@ -207,7 +292,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
       releaseMic(micOwnerIdRef.current);
       return false;
     }
-  }, [lang, continuous, micPermission, requestMicPermission, destroyRecognition]);
+  }, [appendPhraseChunk, clearPhraseTimer, continuous, destroyRecognition, flushPhraseBuffer, lang, micPermission, normalizeTranscript, phrasePauseMs, requestMicPermission, schedulePhraseFlush]);
 
   const stopListening = useCallback(() => {
     destroyRecognition();
