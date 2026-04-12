@@ -39,7 +39,6 @@ interface WebhookEvent {
 export default function WebhooksPage() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const queryClient = useQueryClient();
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
 

@@ -63,7 +63,6 @@ export default function ChatHumano() {
   const { user } = useAuth();
   const { isAdvogado, isCliente } = useUserRole();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const { isLawyerOnline } = useLawyerPresence();
   const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -422,18 +421,6 @@ export default function ChatHumano() {
       .eq("id", activeConversation);
 
     // Neural Feedback
-    logNeural({
-      interaction_type: "chat_humano",
-      input_text: content,
-      output_text: content,
-      user_id: user.id,
-      metadata: {
-        conversation_id: activeConversation,
-        sender_role: isAdvogado ? "advogado" : "cliente",
-        source: "chat_humano",
-      },
-    });
-
     // Trigger email notification
     if (insertedMessage) {
       supabase.functions.invoke("notifications", {

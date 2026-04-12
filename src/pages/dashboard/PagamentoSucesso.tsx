@@ -23,7 +23,6 @@ const tipoLabels: Record<string, string> = {
 export default function PagamentoSucesso() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { logNeural } = useNeuralFeedback();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<PaymentDetails | null>(null);

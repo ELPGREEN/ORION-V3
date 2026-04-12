@@ -82,7 +82,6 @@ const emptyPublicacao = {
 
 export default function PublicacoesAdmin() {
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const [publicacoes, setPublicacoes] = useState<Publicacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

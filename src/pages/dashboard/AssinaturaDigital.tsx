@@ -38,7 +38,6 @@ export default function AssinaturaDigital() {
   const { isAdvogado } = useUserRole();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const [envelopes, setEnvelopes] = useState<SignatureEnvelope[]>([]);
   const [loading, setLoading] = useState(true);
   const [resending, setResending] = useState<string | null>(null);
@@ -79,14 +78,6 @@ export default function AssinaturaDigital() {
       if (error) throw error;
       toast({ title: "Notificação reenviada com sucesso!" });
       // 🧠 Neural: reenvio = acompanhamento ativo de assinatura
-      logNeural({
-        interaction_type: "assinatura_event",
-        input_text: `Reenvio de notificação de assinatura: envelope ${envelopeId}`,
-        output_text: "Notificação reenviada via Clicksign",
-        quality_score: 0.7,
-        user_id: user?.id,
-        metadata: { module: "assinatura_digital", action: "resend", envelope_id: envelopeId },
-      });
     } catch (e: any) {
       toast({ title: "Erro ao reenviar", description: e.message, variant: "destructive" });
     }
@@ -137,14 +128,6 @@ export default function AssinaturaDigital() {
     fetchEnvelopes();
 
     // 🧠 Neural: envelope enviado = sinal de alta qualidade
-    logNeural({
-      interaction_type: "assinatura_event",
-      input_text: `Envelope de assinatura enviado: ${selectedDoc?.title || "Novo documento"}`,
-      output_text: "Envelope criado e enviado para assinatura digital via Clicksign",
-      quality_score: 0.88,
-      user_id: user?.id,
-      metadata: { module: "assinatura_digital", document_id: selectedDoc?.id },
-    });
   };
 
   return (

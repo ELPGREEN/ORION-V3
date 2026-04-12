@@ -51,7 +51,6 @@ const getStatusColor = (status: string) => {
 export function ClienteListItem({ cliente, onOpenFolder, onDelete }: ClienteListItemProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const [startingChat, setStartingChat] = useState(false);
 
   const startChat = async () => {
@@ -65,12 +64,6 @@ export function ClienteListItem({ cliente, onOpenFolder, onDelete }: ClienteList
         .maybeSingle();
 
       if (existing) {
-        logNeural({
-          interaction_type: "crm_client_event",
-          input_text: `Chat aberto: ${cliente.nome}`,
-          output_text: `conversa: ${existing.id}`,
-          metadata: { status_novo: "em_atendimento", tipo_caso: cliente.tipo_caso, module: "clientes_chat" },
-        });
         navigate(`/dashboard/chat-ao-vivo?conversa=${existing.id}`);
       } else {
         const { data: newConv, error } = await supabase
@@ -79,12 +72,6 @@ export function ClienteListItem({ cliente, onOpenFolder, onDelete }: ClienteList
           .select()
           .single();
         if (error) throw error;
-        logNeural({
-          interaction_type: "crm_client_event",
-          input_text: `Nova conversa: ${cliente.nome}`,
-          output_text: `conversa: ${newConv.id}`,
-          metadata: { status_novo: "em_atendimento", tipo_caso: cliente.tipo_caso, module: "clientes_nova_conversa" },
-        });
         navigate(`/dashboard/chat-ao-vivo?conversa=${newConv.id}`);
       }
     } catch {

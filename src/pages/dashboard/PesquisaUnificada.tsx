@@ -268,7 +268,6 @@ export default function PesquisaUnificada() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isAdvogado } = useUserRole();
-  const { logNeural } = useNeuralFeedback();
   const { toast } = useToast();
   const navigate = useNavigate();
 

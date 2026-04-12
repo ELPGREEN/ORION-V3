@@ -12,7 +12,6 @@ import { PDFSegmentationViewer, type LayoutSegment } from "@/components/dashboar
 
 export function OcrPanel() {
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
     fullText: string;

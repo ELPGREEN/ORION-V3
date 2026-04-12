@@ -73,8 +73,6 @@ export default function PagamentosPage() {
   const { user } = useAuth();
   const { isAdvogado } = useUserRole();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
-  
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [balance, setBalance] = useState<Balance | null>(null);

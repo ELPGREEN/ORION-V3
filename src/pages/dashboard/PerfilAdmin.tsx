@@ -33,7 +33,6 @@ export default function PerfilAdmin() {
   const { user } = useAuth();
   const { isAdvogado, isCliente } = useUserRole();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const [saving, setSaving] = useState(false);
   const [honorarios, setHonorarios] = useState<HonorarioItem[]>(defaultHonorarios);
   const [perfil, setPerfil] = useState({

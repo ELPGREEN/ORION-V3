@@ -90,7 +90,6 @@ export default function ConfiguracoesEscritorio() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const [config, setConfig] = useState<EscritorioConfig>(defaultConfig);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

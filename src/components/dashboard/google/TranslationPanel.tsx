@@ -28,7 +28,6 @@ const LANGUAGES = [
 
 export function TranslationPanel() {
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [sourceLanguage, setSourceLanguage] = useState("");

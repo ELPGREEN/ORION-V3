@@ -302,7 +302,6 @@ export function DocumentAIChatPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const {
     conversations, activeConversationId, loadingConversations,
     createConversation, saveMessage, deleteConversation,

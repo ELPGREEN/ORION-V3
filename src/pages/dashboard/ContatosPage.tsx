@@ -77,8 +77,6 @@ export default function ContatosPage() {
   const [importingGoogle, setImportingGoogle] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
-
   const importFromGoogle = async () => {
     if (!user) return;
     setImportingGoogle(true);

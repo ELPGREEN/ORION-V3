@@ -22,7 +22,6 @@ interface ClientProfile {
 export default function PerfilCliente() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ClientProfile | null>(null);

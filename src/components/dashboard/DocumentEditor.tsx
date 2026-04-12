@@ -58,7 +58,6 @@ export function DocumentEditor({
 }: DocumentEditorProps) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const editorRef = useRef<any>(null);
   const rulerSettersRef = useRef<{ setLeft: (v: number) => void; setFirstLine: (v: number) => void; setRight: (v: number) => void } | null>(null);
   const bubbleSelectionRef = useRef<{ from: number; to: number } | null>(null);

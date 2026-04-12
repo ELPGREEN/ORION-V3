@@ -291,7 +291,6 @@ interface AIProvider {
 export default function RedeNeuralPage() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const initialLoadDone = useRef(false);
@@ -435,15 +434,6 @@ export default function RedeNeuralPage() {
       if (error) throw error;
 
       // 🧠 Neural: conhecimento adicionado manualmente = sinal de alta qualidade
-      logNeural({
-        interaction_type: "document_viewed",
-        input_text: newKnowledge.title,
-        output_text: newKnowledge.content,
-        quality_score: 0.85,
-        user_id: user?.id,
-        metadata: { source_type: newKnowledge.source_type, module: "rede_neural_knowledge", action: "add_knowledge" },
-      });
-
       toast({ title: "Conhecimento adicionado!", description: "O embedding será gerado automaticamente." });
       setNewKnowledge({ title: "", content: "", source_type: "jurisprudencia", source_reference: "", tags: "" });
       localStorage.removeItem(KNOWLEDGE_STORAGE_KEY);

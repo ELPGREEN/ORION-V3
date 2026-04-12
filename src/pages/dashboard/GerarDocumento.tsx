@@ -281,8 +281,6 @@ export const initialFormData: FormData = {
 export default function GerarDocumento() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
-
   // Queue hook for async generation
   const {
     enqueue,

@@ -30,7 +30,6 @@ const ferramentasRapidas = [
 export default function ChatIAAdvogado() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);

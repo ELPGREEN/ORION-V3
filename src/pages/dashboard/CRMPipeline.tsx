@@ -42,7 +42,6 @@ export default function CRMPipeline() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { logNeural } = useNeuralFeedback();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedClient, setSelectedClient] = useState<ClientProfile | null>(null);
@@ -72,19 +71,6 @@ export default function CRMPipeline() {
         .eq("id", id);
 
       if (error) throw error;
-
-      logNeural({
-        interaction_type: "crm_client_event",
-        input_text: `Status atualizado: cliente ${clientData?.nome || id} → ${status}`,
-        output_text: `tipo_caso: ${clientData?.tipo_caso || "não informado"} | email: ${clientData?.email || ""}`,
-        metadata: {
-          client_id: id,
-          status_novo: status,
-          tipo_caso: clientData?.tipo_caso,
-          source: "crm_status_update",
-        },
-        user_id: user?.id,
-      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-profiles"] });

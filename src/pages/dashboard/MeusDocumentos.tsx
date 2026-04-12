@@ -98,8 +98,6 @@ export default function MeusDocumentos() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { isCliente, isAdvogado, loading: roleLoading } = useUserRole();
-  const { logNeural } = useNeuralFeedback();
-  
   const [documents, setDocuments] = useState<Document[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [loading, setLoading] = useState(true);

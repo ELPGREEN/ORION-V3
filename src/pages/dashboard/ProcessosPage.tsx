@@ -161,7 +161,6 @@ export default function ProcessosPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { isCliente } = useUserRole();
-  const { logNeural } = useNeuralFeedback();
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [clientes, setClientes] = useState<ClientProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -549,20 +548,6 @@ export default function ProcessosPage() {
         fetchProcessos();
 
         // 🧠 Neural: novo processo = evento de alta relevância jurídica
-        logNeural({
-          interaction_type: "crm_client_event",
-          input_text: `Novo processo: ${payload.numero_processo} — ${payload.tipo} — ${payload.cliente_nome}`,
-          output_text: `Status: ${payload.status} | Vara: ${payload.vara || "N/A"} | Valor: ${payload.valor_causa || 0}`,
-          quality_score: 0.88,
-          user_id: user.id,
-          metadata: {
-            module: "processos",
-            tipo: payload.tipo,
-            status_novo: payload.status,
-            valor_causa: payload.valor_causa,
-            client_profile_id: payload.client_profile_id,
-          },
-        });
       }
     }
 

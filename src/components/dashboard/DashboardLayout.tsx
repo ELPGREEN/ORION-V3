@@ -93,7 +93,7 @@ export default function DashboardLayout() {
   if (!user) return null;
 
   // Orion voice listener — only active inside the dashboard (not on public pages)
-  const orionListener = <GlobalOrionListener />;
+  const orionListener = null;
 
   const PageFallback = (
     <div className="flex items-center justify-center h-64">

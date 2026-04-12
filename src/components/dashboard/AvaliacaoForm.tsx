@@ -15,7 +15,6 @@ interface AvaliacaoFormProps {
 
 export function AvaliacaoForm({ onSuccess }: AvaliacaoFormProps) {
   const { user } = useAuth();
-  const { logNeural } = useNeuralFeedback();
   const [nota, setNota] = useState(0);
   const [hoverNota, setHoverNota] = useState(0);
   const [nome, setNome] = useState(user?.user_metadata?.nome || "");

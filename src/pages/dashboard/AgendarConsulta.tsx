@@ -30,7 +30,6 @@ export default function AgendarConsulta() {
   const { user } = useAuth();
   const { isAdvogado } = useUserRole();
   const { toast } = useToast();
-  const { logNeural } = useNeuralFeedback();
   const [honorarios, setHonorarios] = useState<HonorarioOption[]>([]);
   const [loadingHonorarios, setLoadingHonorarios] = useState(true);
   const [selectedTipo, setSelectedTipo] = useState<string | null>(null);
@@ -142,22 +141,6 @@ export default function AgendarConsulta() {
       if (error) throw error;
       if (data?.url) {
         // 🧠 Neural: registra agendamento de consulta como sinal de alta qualidade
-        logNeural({
-          interaction_type: "crm_client_event",
-          input_text: `Consulta agendada: ${tipoSelecionado.tipo_servico}`,
-          output_text: `Data: ${dataHora || "a definir"} | Valor: R$ ${tipoSelecionado.valor}`,
-          quality_score: 0.9,
-          user_id: user?.id,
-          metadata: {
-            tipo_servico: tipoSelecionado.tipo_servico,
-            valor: tipoSelecionado.valor,
-            data_hora: dataHora,
-            payment_method: method,
-            currency,
-            module: "agendar_consulta",
-            status_novo: "aguardando_pagamento",
-          },
-        });
         window.location.href = data.url;
       } else {
         throw new Error("URL de checkout não retornada");

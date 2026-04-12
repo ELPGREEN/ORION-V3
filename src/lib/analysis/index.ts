@@ -2,7 +2,7 @@
  * Analysis & Detection engines barrel export
  * All document analysis, quality checking, and content detection tools
  */
-export * from './hallucinationDetector';
+// hallucinationDetector removed
 export * from './ambiguityDetector';
 export * from './aggressiveTermsDetector';
 export * from './consistencyChecker';

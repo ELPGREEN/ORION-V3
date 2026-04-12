@@ -293,8 +293,6 @@ export default function PesquisaJurisprudencial() {
   const { isAdvogado } = useUserRole();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { logNeural } = useNeuralFeedback();
-
   const saved = (() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
