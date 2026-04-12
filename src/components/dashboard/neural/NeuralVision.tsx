@@ -264,7 +264,6 @@ export function NeuralVision() {
                 </Button>
               </div>
             </div>
-            </div>
             <div className="prose prose-sm prose-invert max-w-none text-foreground">
               <ReactMarkdown>{response.text}</ReactMarkdown>
             </div>
