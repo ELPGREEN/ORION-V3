@@ -204,7 +204,7 @@ export function playAudioBlob(
  */
 export async function speakWithGeminiTTS(
   text: string,
-  voice: string = "Charon",
+  voice: string = "Iapetus",
   signal?: AbortSignal,
   stylePrompt?: string,
   lang?: string,
@@ -298,7 +298,8 @@ export function isGeminiTTSAvailable(): boolean {
 
 /** Available Gemini TTS voices */
 export const GEMINI_VOICES = [
-  { id: "Charon", label: "Charon (Padrão Orion — Sério/JARVIS)" },
+  { id: "Iapetus", label: "Iapetus (Padrão Orion — Grave/Natural)" },
+  { id: "Charon", label: "Charon (Sério/JARVIS)" },
   { id: "Orus", label: "Orus (Calmo/Grave)" },
   { id: "Algieba", label: "Algieba (Neutro)" },
   { id: "Kore", label: "Kore (Firme)" },

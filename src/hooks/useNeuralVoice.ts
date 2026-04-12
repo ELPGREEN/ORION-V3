@@ -433,13 +433,13 @@ export function useNeuralVoice(
     const cleanText = cleanTextForSpeech(text);
     let played = false;
 
-    // PRIMARY: Gemini TTS — Charon (deep masculine tenor)
+    // PRIMARY: Gemini TTS — Iapetus (deep masculine voice)
     if (!cascadeAbort.signal.aborted) {
       try {
-        console.log("[Voice] Trying Gemini TTS (Charon)...");
+        console.log("[Voice] Trying Gemini TTS (Iapetus)...");
         const gemResult = await speakWithGeminiTTS(
           cleanText,
-          "Charon",
+          "Iapetus",
           cascadeAbort.signal,
           "Você é ORION, IA Lumen7 AquaMonkey Fusion. Voz MASCULINA tenor grave ~200Hz, tom confiante e caloroso. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Ritmo moderado-rápido como podcast brasileiro. NUNCA pare no meio de frase.",
           "pt-BR",

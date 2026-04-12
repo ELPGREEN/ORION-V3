@@ -41,7 +41,7 @@ export async function speakWithOrionVoice(
   // ── 1. GEMINI TTS (primary) ──
   if (isGeminiTTSAvailable()) {
     try {
-      const result = await speakWithGeminiTTS(cleanText, "Charon", signal, ORION_STYLE_PROMPT, "pt-BR");
+      const result = await speakWithGeminiTTS(cleanText, "Iapetus", signal, ORION_STYLE_PROMPT, "pt-BR");
       if (result.played) {
         return { played: true, audio: result.audio, engine: "gemini-tts" };
       }
