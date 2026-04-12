@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logoElp from "@/assets/logo-elp.webp";
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
-// [REMOVED] import { getOrionIcon, LogOut } from "./icons/OrionIcons";
+import { LogOut } from "lucide-react";
 
 const afiliadoItems = [
   { id: "home", label: "Meu Painel", path: "/dashboard" },

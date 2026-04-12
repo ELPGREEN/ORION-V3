@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import logoElp from "@/assets/logo-elp.webp";
 
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
-// OrionIcons removed
+import { ChevronRight, ChevronLeft, Plus, ChevronDown, Brain, User, Settings, LogOut } from "lucide-react";
 interface DashboardSidebarProps {
   collapsed: boolean;
   onToggle: () => void;

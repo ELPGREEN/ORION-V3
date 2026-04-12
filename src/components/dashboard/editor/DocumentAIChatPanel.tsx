@@ -871,7 +871,7 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
 
   const handleFeedback = useCallback((msg: Message, type: "up" | "down") => {
     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, feedbackGiven: type } : m));
-  }, [logNeural]);
+  }, []);
 
   const handleNewConversation = async () => {
     await createConversation("Nova conversa");
