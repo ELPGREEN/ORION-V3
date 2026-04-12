@@ -100,7 +100,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
   const stopSpeakingHQ = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-    window.speechSynthesis?.cancel();
+    
     setIsSpeakingHQ(false);
   }, []);
 

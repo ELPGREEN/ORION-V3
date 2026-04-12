@@ -74,7 +74,6 @@ export function OrionAccessGate({ mode, onClose, inline = false }: OrionAccessGa
     return () => {
       clearTimeout(timer);
       clearTimeout(questionTimer);
-      window.speechSynthesis?.cancel();
     };
   }, [messages.intro, messages.question]);
 
@@ -92,7 +91,6 @@ export function OrionAccessGate({ mode, onClose, inline = false }: OrionAccessGa
   }, [step, mode, navigate]);
 
   const handleAccept = useCallback(() => {
-    window.speechSynthesis?.cancel();
     if (mode === "not_logged" || mode === "blocked") {
       navigate("/cadastro");
     } else {
@@ -102,7 +100,7 @@ export function OrionAccessGate({ mode, onClose, inline = false }: OrionAccessGa
   }, [mode, navigate, onClose]);
 
   const handleDecline = useCallback(() => {
-    window.speechSynthesis?.cancel();
+    
     setStep("declined");
     const declineMsg = mode === "not_logged" || mode === "blocked"
       ? "Desculpe, mas estou disponível apenas para usuários cadastrados. Vou te redirecionar para o cadastro em instantes."
