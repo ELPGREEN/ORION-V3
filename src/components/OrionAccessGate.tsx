@@ -74,7 +74,6 @@ export function OrionAccessGate({ mode, onClose, inline = false }: OrionAccessGa
     return () => {
       clearTimeout(timer);
       clearTimeout(questionTimer);
-      window.speechSynthesis?.cancel();
     };
   }, [messages.intro, messages.question]);
 
