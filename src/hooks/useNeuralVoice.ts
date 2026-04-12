@@ -177,6 +177,8 @@ export function useNeuralVoice(
   const singletonIdRef = useRef(0);
   const audioChunksRef = useRef<Float32Array[]>([]);
   const audioWorkletActiveRef = useRef(false);
+  const gcpSessionRef = useRef<ReturnType<typeof createGCPSTTSession> | null>(null);
+  const useGCPSTTRef = useRef(true); // GCP STT as primary
 
   // ── Sync ──
   const updateAiResponding = useCallback((val: boolean) => {
