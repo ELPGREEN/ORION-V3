@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const computeThetas = (..._a: any[]) => [];
 const applyRoPE = (..._a: any[]) => [];
-const computeAttentionPattern = (..._a: any[]) => ({ pattern: [], heads: [] });
+const computeAttentionPattern = (..._a: any[]) => [];
 const HAND_CONNECTIONS: any[] = [];
 const LANDMARK_NAMES: string[] = [];
 const GESTURE_ACTIONS: Record<string, any> = {};

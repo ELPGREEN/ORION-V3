@@ -452,7 +452,7 @@ export default function ChatHumano() {
         // Integração Agente-Eu v22.3: envia estado consciente para a Secretaria
 // [REMOVED]         const { getAgenteEu } = await import("@/lib/neural/agents/self-model-agent");
         const agenteEu = (() => ({ name: 'Orion', id: 'orion' }))();
-        const selfState = agenteEu.getState();
+        const selfState = agenteEu;
 
         const { data: secretaryData, error: secError } = await supabase.functions.invoke("secretaria-ia", {
           body: {

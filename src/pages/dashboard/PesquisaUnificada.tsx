@@ -266,7 +266,7 @@ const STORAGE_KEY = "pesquisa-unificada-v2-state";
 // ═══════════════════════════════════════
 type NeuralSearchResult = any;
 type NeuralSearchResponse = any;
-const neuralSearch = async (..._a: any[]) => ({ results: [], totalResults: 0 });
+const neuralSearch = async (..._a: any[]): Promise<any> => ({ results: [], totalResults: 0, timings: {}, pipeline: [], refinedQuery: '', area: '', queryType: '' });
 const submitSearchFeedback = async (..._a: any[]) => {};
 
 export default function PesquisaUnificada() {

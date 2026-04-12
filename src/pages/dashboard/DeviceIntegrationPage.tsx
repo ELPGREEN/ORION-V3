@@ -14,7 +14,7 @@ export default function DeviceIntegrationPage() {
           Gerencie conexões Bluetooth e dispositivos IoT via MQTT
         </p>
       </div>
-      <null />
+      <div className="p-8 text-center text-muted-foreground">Integração de dispositivos será reimplementada.</div>
     </div>
   );
 }
