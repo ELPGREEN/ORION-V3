@@ -30,10 +30,64 @@ import { FaceScannerOverlay } from "./FaceScannerOverlay";
 import { TeslaCoilVoltagePanel } from "./TeslaCoilVoltagePanel";
 import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
 import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
-// Vision stubs — all detection now via Gemini on-demand
+// Vision via Gemini on-demand
+import { captureVideoFrame, analyzeFrame } from "@/lib/vision/gemini-vision";
 const preloadAllVision = async () => {};
-const detectRealTime = async (_v?: any) => ({ mpObjects: [], yoloObjects: [], allObjects: [], faces: [], faceLandmarks: [], hands: [], poses: [], detections: [], timestamp: Date.now(), processingMs: 0, status: "none" as const });
-type RealTimeVisionResult = Awaited<ReturnType<typeof detectRealTime>>;
+
+// Real-time detection via Gemini Flash — throttled, lightweight
+const _rtCache = { lastCall: 0, lastResult: null as RealTimeVisionResult | null };
+async function detectRealTime(video?: HTMLVideoElement): Promise<RealTimeVisionResult> {
+  const now = Date.now();
+  // Throttle: at most once every 4 seconds
+  if (now - _rtCache.lastCall < 4000 && _rtCache.lastResult) {
+    return _rtCache.lastResult;
+  }
+  if (!video || video.readyState < 2) {
+    return { allObjects: [], faces: [], hands: [], poses: [], detections: [], timestamp: now, processingMs: 0, status: "none" as const };
+  }
+  _rtCache.lastCall = now;
+  try {
+    const base64 = captureVideoFrame(video, 480, 0.5);
+    const result = await analyzeFrame(base64, "Liste TODOS os objetos, pessoas, rostos e elementos visíveis. Para cada item retorne: nome em português, confiança (0-1), e posição aproximada (x,y,largura,altura em 0-1). Responda em JSON: {objects:[{name,namePt,confidence,x,y,width,height,source}], faces:[{x,y,width,height,confidence}]}");
+    
+    let parsed: any = {};
+    if (result.description) {
+      // Try to parse JSON from response
+      const jsonMatch = result.description.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try { parsed = JSON.parse(jsonMatch[0]); } catch { /* not JSON, use as description */ }
+      }
+    }
+    
+    const objects = (parsed.objects || result.objects || []).map((o: any) => ({
+      name: o.name || o.label || "object",
+      namePt: o.namePt || o.name || o.label || "objeto",
+      confidence: o.confidence || 0.7,
+      x: o.x || 0, y: o.y || 0,
+      width: o.width || 0.1, height: o.height || 0.1,
+      source: "gemini",
+    }));
+    
+    const faces = (parsed.faces || []).map((f: any) => ({
+      x: f.x || 0, y: f.y || 0,
+      width: f.width || 0.1, height: f.height || 0.1,
+      confidence: f.confidence || 0.8,
+    }));
+    
+    const rtResult: RealTimeVisionResult = {
+      allObjects: objects, faces, hands: [], poses: [],
+      detections: objects, timestamp: now,
+      processingMs: Date.now() - now,
+      status: objects.length > 0 ? "active" as any : "none" as any,
+    };
+    _rtCache.lastResult = rtResult;
+    return rtResult;
+  } catch (e) {
+    console.warn("[detectRealTime] Gemini vision failed:", e);
+    return { allObjects: [], faces: [], hands: [], poses: [], detections: [], timestamp: now, processingMs: 0, status: "none" as const };
+  }
+}
+type RealTimeVisionResult = { allObjects: any[]; faces: any[]; hands: any[]; poses: any[]; detections: any[]; timestamp: number; processingMs: number; status: string };
 import { VmBootLoader } from "./VmBootLoader";
 
 // Map COCO class names to overlay categories
@@ -527,7 +581,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       }
 
       // Throttle ML detection to every 20 frames (was 12) — saves GPU cycles
-      if (frameCount % 20 === 0 && !rtInferenceRunningRef.current) {
+      // Throttle Gemini vision detection to every 60 frames (~2s at 30fps)
+      if (frameCount % 60 === 0 && !rtInferenceRunningRef.current) {
         rtInferenceRunningRef.current = true;
         detectRealTime(video).then(rtResult => {
           VS.realTimeVision = rtResult;
