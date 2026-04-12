@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import logoElp from "@/assets/logo-elp.webp";
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
 import { LogOut } from "lucide-react";
+import { getMenuIcon } from "./sidebarIconMap";
 
 const produtorItems = [
   { id: "home", label: "Meu Painel", path: "/dashboard" },
@@ -51,7 +52,7 @@ export function ProdutorSidebar({ collapsed }: ProdutorSidebarProps) {
       <nav className="flex-1 py-3 px-1 space-y-0.5 overflow-y-auto">
         {produtorItems.map((item) => {
           const active = isActive(item.path);
-          const Icon = null;
+          const Icon = getMenuIcon(item.id);
           return (
             <button
               key={item.id}
