@@ -217,26 +217,14 @@ export function useNeuralVoice(
     };
     speechSynthesis?.addEventListener?.("voiceschanged", handler);
 
-    // Listen for streaming TTS queue done → resume mic
-    const onQueueDone = () => {
-      speakingRef.current = false;
-      updateAiResponding(false);
-      OrbState.voiceState = "listening";
-      if (onCmdRef.current && !intentionalStopRef.current) {
-        resumeSTT();
-      }
-    };
-    window.addEventListener("orion-tts-queue-done", onQueueDone);
-
     // Expose mic rec ref for streaming queue to stop during TTS
     (window as any).__orionMicRec = recRef;
 
     return () => {
       speechSynthesis?.removeEventListener?.("voiceschanged", handler);
-      window.removeEventListener("orion-tts-queue-done", onQueueDone);
       cleanup();
     };
-  }, [clearRestartTimer, resumeSTT, updateAiResponding]);
+  }, [clearRestartTimer]);
 
   // ═══ STT Restart Scheduler ═══
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
