@@ -104,10 +104,9 @@ async function recognize(body: STTRequest, token: string) {
       speechContexts: [
         {
           phrases: [
-            "Orion", "Ericson", "ELP", "IASoftHub",
-            "robótica", "AGV", "pneu", "esteira",
+            "Orion", "Oríon", "Ericson", "ELP", "IASoftHub",
           ],
-          boost: 10,
+          boost: 8,
         },
       ],
     },

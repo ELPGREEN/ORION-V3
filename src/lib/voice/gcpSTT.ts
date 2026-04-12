@@ -53,7 +53,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   const {
     languageCode = "pt-BR",
     sampleRate = 16000,
-    chunkIntervalMs = 4000,
+    chunkIntervalMs = 1400,
     onInterim,
     onFinal,
     onError,

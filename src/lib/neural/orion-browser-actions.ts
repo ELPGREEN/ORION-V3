@@ -58,24 +58,28 @@ function extractCleanQuery(query: string, patternsToRemove: RegExp): string {
     .trim();
 }
 
+const DIRECT_MUSIC_PAUSE_REGEX = /^(?:pausa(?:r)?|pause|stop|pare(?:\s+(?:a|essa)\s+)?(?:m[uú]sica|reprodu(?:ç|c)[aã]o)?|parar(?:\s+(?:a|essa)\s+)?(?:m[uú]sica|reprodu(?:ç|c)[aã]o)?|pausar(?:\s+(?:a|essa)\s+)?(?:m[uú]sica|reprodu(?:ç|c)[aã]o)?)$/i;
+const DIRECT_MUSIC_NEXT_REGEX = /^(?:pr[oó]xima(?:\s+(?:m[uú]sica|faixa))?|pula(?:\s+(?:a\s+)?(?:m[uú]sica|faixa))?|skip|next)$/i;
+const DIRECT_MUSIC_PREV_REGEX = /^(?:volta(?:\s+(?:a\s+)?(?:m[uú]sica|faixa))?|anterior(?:\s+(?:m[uú]sica|faixa))?|prev(?:ious)?)$/i;
+
 const ACTION_PATTERNS: ActionPattern[] = [
   // ─── Music playback commands (voice) ───
   {
-    regex: /\b(?:pausa|para|pause|stop)\b/i,
+    regex: DIRECT_MUSIC_PAUSE_REGEX,
     builder: (_m, _q) => ({
       type: "spotify" as const,
       url: "", description: "⏸ Pausando música", query: "pause",
     }),
   },
   {
-    regex: /\b(?:pr[oó]xima|pula|skip|next)\b/i,
+    regex: DIRECT_MUSIC_NEXT_REGEX,
     builder: (_m, _q) => ({
       type: "spotify" as const,
       url: "", description: "⏭ Próxima faixa", query: "next",
     }),
   },
   {
-    regex: /\b(?:volta|anterior|prev(?:ious)?)\b/i,
+    regex: DIRECT_MUSIC_PREV_REGEX,
     builder: (_m, _q) => ({
       type: "spotify" as const,
       url: "", description: "⏮ Faixa anterior", query: "prev",
@@ -206,7 +210,7 @@ const ACTION_PATTERNS: ActionPattern[] = [
  */
 export function detectBrowserAction(query: string): BrowserAction | null {
   const trimmed = query.trim();
-  if (trimmed.length < 5) return null;
+  if (trimmed.length < 4) return null;
 
   for (const pattern of ACTION_PATTERNS) {
     const match = trimmed.match(pattern.regex);
