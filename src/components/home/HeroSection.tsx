@@ -54,7 +54,8 @@ export function HeroSection({ t }: HeroSectionProps) {
         alt=""
         loading="eager"
         decoding="async"
-        fetchPriority="high"
+        /* @ts-ignore -- fetchpriority is valid HTML but React 18 warns */
+        fetchpriority="high"
         className="absolute inset-0 w-full h-full object-cover z-[0] opacity-40"
         width={1920}
         height={1080}
