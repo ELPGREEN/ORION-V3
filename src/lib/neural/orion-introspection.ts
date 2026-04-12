@@ -837,7 +837,7 @@ export const SOURCE_CODE_MAP: ModuleMapEntry[] = [
     file: "src/lib/neural/voice-clone-engine.ts",
     description: "Motor de síntese vocal — Google TTS + Kokoro + Piper TTS (100% gratuito)",
     exports: ["VoiceCloneEngine", "synthesizeSpeech"],
-    dependencies: [],
+    dependencies: ["@mintplex-labs/piper-tts-web"],
     linesEstimate: 400,
     category: "voice",
   },

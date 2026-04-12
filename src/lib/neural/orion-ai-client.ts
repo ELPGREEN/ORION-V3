@@ -752,15 +752,19 @@ export async function analyzeFrameStreaming(
               accumulated += delta;
               onToken(accumulated);
 
-              // ═══ SENTENCE DETECTION: Larger chunks for smoother TTS ═══
-              // Only split on . ! ? followed by space — NO comma splitting
-              // This prevents the choppy "stop-start" speech pattern
+              // Enhanced sentence detection: handle multiple sentence-ending patterns
+              // including semicolons, colons with long clauses, and natural pauses
               const unspoken = accumulated.slice(spokenUpTo);
-              const sentenceMatch = unspoken.match(/^(.*?[.!?…])\s/s);
+              // Match sentences ending with . ! ? … or ; followed by space/newline
+              const sentenceMatch = unspoken.match(/^(.*?[.!?…;])\s/s);
+              // Also detect shorter clauses (>80 chars) at comma boundaries for faster speech start
+              const longClauseMatch = !sentenceMatch && unspoken.length > 80
+                ? unspoken.match(/^(.{40,}?,)\s/)
+                : null;
+              const matchResult = sentenceMatch || longClauseMatch;
 
-              // Only emit if we have a substantial sentence (>30 chars) to avoid micro-fragments
-              if (sentenceMatch && sentenceMatch[1].trim().length > 30) {
-                let sentence = sentenceMatch[1].trim()
+              if (matchResult) {
+                let sentence = matchResult[1].trim()
                   // Clean markdown artifacts for speech
                   .replace(/\*{1,3}/g, "")
                   .replace(/_{1,3}/g, "")
@@ -776,7 +780,7 @@ export async function analyzeFrameStreaming(
                 if (sentence && !sentence.startsWith("```") && !sentence.startsWith("{") && sentence.length > 2) {
                   onSentence(sentence);
                 }
-                spokenUpTo += sentenceMatch[0].length;
+                spokenUpTo += matchResult[0].length;
               }
             }
           } catch (parseErr) {
@@ -908,20 +912,10 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
   const verbCompare = /\b(compar[aeo]r?|diferença\s+entre|versus|vs\b|melhor\s+entre)\b/i;
   const verbReflect = /\b(reflita|pens[ae]\s+sobre|consider[ae]|raciocin[ae]|reason|think\s+about|ponderar)\b/i;
 
-  // ═══ VISUAL VERBS — these ALWAYS mean the user wants vision analysis ═══
-  const verbVisual = /(?:^|\s)(descrev[aeo]r?|descreva|descreve|l[eê](?:\s|$)|leia|ler\b|mostr[ae]|mostrar?|analisa|analis[ae]\s+(a\s+)?(imagem|cena|cenário|foto)|observ[ae]|examin[ae]|inspecion[ae]|detalh[ae]|read|look\s+at|show\s+me|describe|what\s+is\s+this)/i;
-  // ═══ VISUAL TARGETS — objects/concepts that imply the user wants to see something ═══
-  const visualTargets = /\b(cen[aá]rio|cena|ambiente|acess[oó]rio|objeto|roupa|vestimenta|pessoa|gente|animal|planta|m[oó]vel|tela|escrit[oó]rio|sala|mesa|parede|quadro|decora[çc][aã]o|texto|letreiro|placa|etiqueta|c[oó]digo|qr\s*code|barcode|documento|papel|livro|tela|monitor|comida|bebida|garrafa|copo|caneca|produto|embalagem|marca|logo|cor(es)?|formato|tamanho|material)\b/i;
-
   // ═══ Strong visual anchors — these ALWAYS mean visual ═══
   const strongVisualAnchors = /\b(segurando|usando|vestindo|mostr[ae]|aparência|rosto|cor\b|enxerg|olh[aeo]|vê|vejo|vendo|câmera|imagem|foto|holding|wearing|showing|face|camera|image|photo)\b/i;
   const bodyRef = /\b(mão|mãos|dedo|braço|cabeça|rosto|olho|boca|cabelo|roupa|camisa|camiseta|óculos|chapéu|caneca|copo|garrafa|hand|finger|arm|head|eye|mouth|hair|shirt|glasses|hat|cup|bottle)\b/i;
   const deicticPatterns = /\b(isso|isto|esse|essa|aquilo|aqui|ali|lá|aí|aquel[ea]s?|this|that|these|those|here|there|esto|eso|aquello)\b/i;
-
-  // ═══ VISUAL VERB + TARGET = always visual (e.g. "descreve o cenário", "leia o texto", "identifica os acessórios") ═══
-  if (verbVisual.test(q)) return "visual";
-  if (verbIdentify.test(q)) return "visual";
-  if (verbAnalyze.test(q) && visualTargets.test(q)) return "visual";
 
   // Direct visual questions — short-circuit to visual
   if (strongVisualAnchors.test(q) && (deicticPatterns.test(q) || bodyRef.test(q) || /o que (é|estou|tô|tenho)\b/.test(q))) {
@@ -930,16 +924,14 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
   if (/o que.*(segurando|usando|vestindo|mostrando)/i.test(q)) return "visual";
   if (/como\s+(eu\s+)?(estou|tô)\b/i.test(q) && q.length < 40) return "visual";
 
-  // Deictic + visual target = visual (e.g. "o que é isso", "identifica aquilo")
-  if (deicticPatterns.test(q) && (visualTargets.test(q) || bodyRef.test(q))) return "visual";
-
-  if (verbAnswer.test(q) && !strongVisualAnchors.test(q) && !visualTargets.test(q)) return "textual";
-  if (verbCheck.test(q) && !deicticPatterns.test(q) && !visualTargets.test(q)) return "textual";
+  if (verbIdentify.test(q)) return "visual";
+  if (verbAnswer.test(q) && !strongVisualAnchors.test(q)) return "textual";
+  if (verbCheck.test(q) && !deicticPatterns.test(q)) return "textual";
   if (verbSearch.test(q)) return "textual";
   if (verbCompare.test(q)) return "textual";
   if (verbReflect.test(q)) return "textual";
   if (verbAnalyze.test(q)) {
-    return deicticPatterns.test(q) || strongVisualAnchors.test(q) || visualTargets.test(q) ? "visual" : "mixed";
+    return deicticPatterns.test(q) || strongVisualAnchors.test(q) ? "visual" : "mixed";
   }
 
   // ═══ Contextual scoring system ═══

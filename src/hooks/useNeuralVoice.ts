@@ -282,17 +282,6 @@ export function useNeuralVoice(
     scheduleRecognitionRestart(isMobile() ? 600 : 100);
   }, [scheduleRecognitionRestart]);
 
-  // ═══ Listen for external resume-stt events (from speech queue completion) ═══
-  useEffect(() => {
-    const handler = () => {
-      console.log("[Voice] orion-resume-stt event received — resuming mic");
-      // Small delay to let TTS audio fully stop
-      setTimeout(() => resumeSTT(), 200);
-    };
-    window.addEventListener("orion-resume-stt", handler);
-    return () => window.removeEventListener("orion-resume-stt", handler);
-  }, [resumeSTT]);
-
   // ═══ Barge-In ═══
   const bargeIn = useCallback(() => {
     if (activeAudioRef.current) {

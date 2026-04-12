@@ -1282,11 +1282,8 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const isIdentityQuery = IDENTITY_REGEX.test(questionStr) || IDENTITY_REGEX.test(contextStr);
   const isSimpleQuery = questionStr.length < 30 && !isComplexQuery && intentType !== "legal_search" && intentType !== "document_generation" && intentType !== "analysis";
 
-  // ═══ VISUAL FAST PATH: Skip ALL heavy context for descriptive vision questions ═══
-  const isVisualDescriptiveQuery = hasImage && /o\s+que\s+(voc[eê]\s+)?(est[aá]\s+)?(vendo|v[eê]|enxerga)|descrev[ae]|me\s+descrev|o\s+que\s+tem|na\s+minha\s+frente|l[eê]|leia|ler\b|identific|reconhe[cç]|mostr[ae]|analisa\s+(a\s+)?(imagem|cena|cen[aá]rio)|observ[ae]|examin|inspecion|detalh[ae]|acess[oó]rio|objeto|roupa|vestimenta|cen[aá]rio|cena\b|ambiente|pessoa|animal|planta|comida|bebida|texto|letreiro|placa|etiqueta|marca|logo|what\s+(do\s+)?you\s+see|describe|read|identify/i.test(questionStr);
-
   // ═══ OPERA AI: Detect web search, URL, YouTube intents ═══
-  const needsWebSearch = !isVisualDescriptiveQuery && (detectWebSearchIntent(questionStr) || intentType === "web_search");
+  const needsWebSearch = detectWebSearchIntent(questionStr) || intentType === "web_search";
   const urlsInQuery = detectURLsInQuery(questionStr);
   const youtubeIds = urlsInQuery.map(u => extractYouTubeVideoId(u)).filter((id): id is string => !!id);
   const nonYoutubeUrls = urlsInQuery.filter(u => !extractYouTubeVideoId(u));
@@ -1296,8 +1293,7 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   let webSearchContext = "";
   let urlContexts: string[] = [];
 
-  // Skip RAG, web search, identity for visual descriptive queries AND direct voice path
-  if (!isDirectVoicePath && !isVisualDescriptiveQuery) {
+  if (!isDirectVoicePath) {
     [identityKnowledge, ragContext, webSearchContext, ...urlContexts] = await Promise.all([
       isIdentityQuery ? fetchIdentityKnowledge() : Promise.resolve(""),
       (!isSimpleQuery && questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve(""),
@@ -1305,8 +1301,6 @@ async function buildOrionMessages(body: Record<string, unknown>) {
       ...nonYoutubeUrls.map(u => fetchURLContext(u)),
       ...youtubeIds.map(id => fetchYouTubeContext(id)),
     ]);
-  } else if (isVisualDescriptiveQuery) {
-    console.log("[neural-ops] ⚡ Visual fast path — skipping RAG/web/identity");
   }
 
   if (!isDirectVoicePath && isArchitectureQuery) {
