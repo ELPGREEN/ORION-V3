@@ -1443,8 +1443,8 @@ export function useOrionReasoning(
       const streamingTTS = new StreamingTTSQueue({
         onStartSpeaking: () => {
           OrbState.voiceState = "speaking";
-          // Stop mic during TTS
-          try { recRef.current?.stop?.(); } catch {}
+          // Stop mic during TTS via mic arbiter
+          try { const { killMicRec } = require("@/lib/voice/micArbiter"); killMicRec(); } catch {}
         },
         onStopSpeaking: () => {
           OrbState.voiceState = "listening";
