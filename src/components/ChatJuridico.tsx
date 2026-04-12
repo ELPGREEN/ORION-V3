@@ -9,8 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChatIA } from "@/contexts/ChatIAContext";
-// [REMOVED] import { useNeuralConfig } from "@/hooks/useNeuralConfig";
-// [REMOVED] import { useAdaptiveContext } from "@/hooks/useAdaptiveContext";
+  const neuralConfig = { enabled: false };
+  const adaptiveCtx = {};
 import type { ChatIAMessage } from "@/hooks/useChatIAPersistence";
 
 const MAX_FREE_QUERIES = 5;
@@ -19,8 +19,8 @@ export function ChatJuridico() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isCliente } = useUserRole();
-  const { config: neuralConfig } = useNeuralConfig();
-  const { adaptFromMessage, submitFeedback } = useAdaptiveContext();
+  const neuralConfig = { enabled: false };
+  const adaptiveCtx = {};
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -405,15 +405,7 @@ export function ChatJuridico() {
       {/* Input */}
       <div className="px-4 md:px-6 py-4 border-t border-border bg-card/30">
         <div className="flex items-end gap-2">
-          <VoiceInputButton
-            onTranscript={(text) => setInput(text)}
-            onAutoSend={(text) => {
-              isVoiceMessageRef.current = true;
-              handleSend(text);
-            }}
-            speakText={lastAssistantContent}
-            isProcessing={isTyping}
-          />
+          
           <div className="flex-1 relative">
             <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
               placeholder={isLimitReached ? "Limite de consultas gratuitas atingido. Agende uma consulta para continuar." : "Digite sua consulta jurídica aqui..."} rows={1}

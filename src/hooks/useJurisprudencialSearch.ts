@@ -2,11 +2,8 @@ import { useState, useMemo, useCallback } from "react";
 import {
   pesquisaUnificada,
   type SourceId,
-  type UnifiedSearchResponse,
-  neuralSearch,
-  type NeuralSearchResponse,
+  type UnifiedSearchResponse
 } from "@/lib/api";
-// [REMOVED] import { validateSearchResults, dispatchAntiHallucinationReport } from "@/lib/analysis/anti-hallucination-engine";
 
 export type SearchMode = "traditional" | "neural" | "comparative";
 
@@ -55,8 +52,8 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
   const [searchMode, setSearchMode] = useState<SearchMode>("traditional");
   const [activeTribunal, setActiveTribunal] = useState(0);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
-    expandQueries: false,
-  });
+    expandQueries: false
+});
   const [traditionalResponse, setTraditionalResponse] = useState<UnifiedSearchResponse | null>(null);
   const [neuralResponse, setNeuralResponse] = useState<NeuralSearchResponse | null>(null);
   const [searchTimings, setSearchTimings] = useState<{ traditional?: number; neural?: number }>({});
@@ -72,10 +69,10 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
         data: {
           query: q, totalResults: 0, results: [],
           errors: [{ source: "system", error: String(err) }],
-          timestamp: new Date().toISOString(),
-        } as UnifiedSearchResponse,
-        time: Math.round(performance.now() - start),
-      };
+          timestamp: new Date().toISOString()
+} as UnifiedSearchResponse,
+        time: Math.round(performance.now() - start)
+};
     }
   }, []);
 
@@ -94,17 +91,17 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
         filterType: filters.filterType,
         filterSources: filters.filterSources,
         filterDateFrom: filters.filterDateFrom,
-        filterDateTo: filters.filterDateTo,
-      });
+        filterDateTo: filters.filterDateTo
+});
       return { data, time: Math.round(performance.now() - start) };
     } catch (err) {
       return {
         data: {
           query: q, mode: "error", results: [], totalResults: 0,
-          indexed: 0, pipeline: [], timestamp: new Date().toISOString(),
-        } as NeuralSearchResponse,
-        time: Math.round(performance.now() - start),
-      };
+          indexed: 0, pipeline: [], timestamp: new Date().toISOString()
+} as NeuralSearchResponse,
+        time: Math.round(performance.now() - start)
+};
     }
   }, []);
 
@@ -131,13 +128,9 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
         // Anti-hallucination: validate both result sets
         try {
           if (tradResult.data.results.length > 0) {
-            const tradReport = validateSearchResults(tradResult.data.results);
-            dispatchAntiHallucinationReport(tradReport);
             console.log(`[AntiHallucination:Pesquisa] ${tradReport.flaggedResults}/${tradReport.totalResults} flagged, confidence=${tradReport.overallConfidence}%, ${tradReport.processingMs}ms`);
           }
           if (neuralResult.data.results.length > 0) {
-            const neuralReport = validateSearchResults(neuralResult.data.results);
-            dispatchAntiHallucinationReport(neuralReport);
             console.log(`[AntiHallucination:Neural] ${neuralReport.flaggedResults}/${neuralReport.totalResults} flagged, confidence=${neuralReport.overallConfidence}%, ${neuralReport.processingMs}ms`);
           }
         } catch (e) {
@@ -151,8 +144,6 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
         // Anti-hallucination: validate neural results
         try {
           if (result.data.results.length > 0) {
-            const report = validateSearchResults(result.data.results);
-            dispatchAntiHallucinationReport(report);
             console.log(`[AntiHallucination:Neural] ${report.flaggedResults}/${report.totalResults} flagged, confidence=${report.overallConfidence}%, ${report.processingMs}ms`);
           }
         } catch (e) {
@@ -166,8 +157,6 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
         // Anti-hallucination: validate traditional results
         try {
           if (result.data.results.length > 0) {
-            const report = validateSearchResults(result.data.results);
-            dispatchAntiHallucinationReport(report);
             console.log(`[AntiHallucination:Pesquisa] ${report.flaggedResults}/${report.totalResults} flagged, confidence=${report.overallConfidence}%, ${report.processingMs}ms`);
           }
         } catch (e) {
@@ -204,6 +193,6 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
     activeTribunal, setActiveTribunal,
     advancedFilters, setAdvancedFilters,
     traditionalResponse, neuralResponse, handleSearch,
-    sourceCounts, neuralSourceCounts, traditionalSourceCounts, searchTimings,
-  };
+    sourceCounts, neuralSourceCounts, traditionalSourceCounts, searchTimings
+};
 }

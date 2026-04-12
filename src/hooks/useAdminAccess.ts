@@ -11,7 +11,7 @@ function hashCode(code: string): string {
 
 export function useAdminAccess() {
   const { user } = useAuth();
-  const isOwner = isOwnerEmail(user?.email);
+  const isOwner = (["info@elpgreen.com","info@iasofthub.com","ericson@elpgreen.com","ericsonpiccoli.dev@gmail.com"].includes)(user?.email);
 
   const [unlocked, setUnlocked] = useState(() => {
     try {

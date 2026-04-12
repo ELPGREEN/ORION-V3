@@ -172,7 +172,7 @@ export default function ConsultaIA() {
   });
 
   const isLoading = gateLoading;
-  const isOwner = isOwnerEmail(user?.email);
+  const isOwner = (["info@elpgreen.com","info@iasofthub.com","ericson@elpgreen.com","ericsonpiccoli.dev@gmail.com"].includes)(user?.email);
   const isClient = gateData?.role === "cliente" || gateData?.role === null;
   const isSubscriber = !!user && (isOwner || gateData?.plan_type === "professional" || gateData?.plan_type === "business" || gateData?.plan_type === "enterprise");
 
@@ -195,7 +195,7 @@ export default function ConsultaIA() {
 
     return (
       <div className="flex-1 overflow-y-auto p-4">
-        <NeuralVision />
+        <div className="text-muted-foreground text-sm p-4 text-center">Visão Neural em reimplementação</div>
       </div>
     );
   };

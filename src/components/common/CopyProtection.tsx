@@ -10,7 +10,7 @@ export function CopyProtection() {
     if (isDashboard) return;
 
     // Ensure defense system is active
-    initOrionDefense();
+    // initOrionDefense();
 
     // Disable right-click context menu
     const handleContextMenu = (e: MouseEvent) => {

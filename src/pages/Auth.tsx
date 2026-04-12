@@ -398,7 +398,7 @@ export default function Auth() {
             </p>
           </div>
 
-          <FaceAuthEnroll onComplete={handleFaceEnrollComplete} />
+          
 
           <Button
             variant="ghost"

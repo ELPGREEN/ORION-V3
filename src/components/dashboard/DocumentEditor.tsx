@@ -69,7 +69,7 @@ export function DocumentEditor({
   // ─── Actions ───
   const actions = useEditorActions({
     editedContent, setEditedContent, formData, selectedType, forceLetterhead,
-    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, logNeural,
+    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, (() => {}),
     clearAllSuggestionMarks: suggestions.clearAllSuggestionMarks,
     bubbleSelectionRef, bubbleNodeContextRef, initialSavedDocId,
   });
@@ -110,7 +110,7 @@ export function DocumentEditor({
   });
 
   // ─── AI Real-time Review ───
-  const aiReview = useAIRealtimeReview({
+  const aiReview = (({ enabled: _e, documentType: _d }: any) => ({ issues: [] as any[], reviewLoading: false, neuralMetrics: null, runReview: (_c: string) => {}, triggerInitialReview: (_c: string) => {}, scheduleReview: (_c: string) => {}, removeIssue: (_id: string) => {} }))({
     enabled: aiEnabled,
     documentType: selectedType?.label || formData.tipo,
   });

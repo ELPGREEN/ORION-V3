@@ -161,7 +161,7 @@ export function OcrPanel() {
 
         toast({ title: "Layout analisado!", description: `${segments.length} segmentos • ${wordCount} palavras.` });
 
-        logNeural({
+        // logNeural({
           interaction_type: "document_viewed",
           input_text: `Layout Analysis: ${file.name}`,
           output_text: totalText.substring(0, 1000),
@@ -181,7 +181,7 @@ export function OcrPanel() {
         setResult(response.data);
         toast({ title: "OCR concluído!", description: `${response.data.wordCount} palavras extraídas.` });
 
-        logNeural({
+        // logNeural({
           interaction_type: "document_viewed",
           input_text: `OCR de documento: ${file.name}`,
           output_text: (response.data.fullText || "").substring(0, 1000),

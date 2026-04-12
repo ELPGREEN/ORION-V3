@@ -119,11 +119,7 @@ export function ChatInputArea({
       )}
 
       <div className="flex gap-2 items-end">
-        <VoiceInputButton
-          onTranscript={(text) => setInput((prev) => mergeInputTranscript(prev, text))}
-          speakText={lastAssistantText}
-          className="shrink-0"
-        />
+        
         <ChatFileUpload
           compact
           onTextExtracted={onFileExtracted}
