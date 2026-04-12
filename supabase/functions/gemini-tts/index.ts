@@ -195,14 +195,15 @@ function buildSingleSpeakerRequest(
   };
   if (opts.includeLanguage && selectedLang.trim()) speechConfig.languageCode = selectedLang;
 
-  const body: Record<string, unknown> = {
-    contents: [{ role: "user", parts: [{ text: cleanText }] }],
+  // TTS models do NOT support systemInstruction — embed style prompt in the text itself
+  const textContent = opts.includePrompt && stylePrompt.trim()
+    ? `[Instruções de estilo vocal: ${stylePrompt.trim().slice(0, 400)}]\n\n${cleanText}`
+    : cleanText;
+
+  return {
+    contents: [{ role: "user", parts: [{ text: textContent }] }],
     generationConfig: { responseModalities: ["AUDIO"], maxOutputTokens: 8192, speechConfig },
   };
-  if (opts.includePrompt && stylePrompt.trim()) {
-    body.systemInstruction = { parts: [{ text: stylePrompt.trim().slice(0, 500) }] };
-  }
-  return body;
 }
 
 function buildMultiSpeakerRequest(
