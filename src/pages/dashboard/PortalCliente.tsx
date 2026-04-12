@@ -15,9 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const OrionBackground3D = lazy(() =>
-// [REMOVED]   import("@/components/ui/OrionBackground3D").then(m => ({ default: m.OrionBackground3D }))
-);
+// OrionBackground3D removed
 
 interface ProcessoResumo {
   id: string;
