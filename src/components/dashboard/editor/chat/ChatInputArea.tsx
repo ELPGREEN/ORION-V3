@@ -38,6 +38,7 @@ export function ChatInputArea({
   const mergeInputTranscript = useCallback((current: string, next: string) => {
     const a = current.replace(/\s+/g, " ").trim();
     const b = next.replace(/\s+/g, " ").trim();
+
     if (!a) return b;
     if (!b) return a;
     if (a === b || a.endsWith(b)) return a;
@@ -64,7 +65,6 @@ export function ChatInputArea({
     setInput("");
   }, [input, loading, onSendMessage]);
 
-  // ─── Drag & Drop handlers ───
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     dragCountRef.current++;
@@ -72,7 +72,52 @@ export function ChatInputArea({
       setIsDragging(true);
     }
   }, []);
-...
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCountRef.current--;
+    if (dragCountRef.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCountRef.current = 0;
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    const hiddenInput = document.querySelector<HTMLInputElement>('input[data-chat-file-upload]');
+    if (hiddenInput) {
+      hiddenInput.files = dataTransfer.files;
+      hiddenInput.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }, []);
+
+  return (
+    <div
+      className="p-2 sm:p-3 border-t border-border bg-muted/30 relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="absolute inset-0 z-20 bg-primary/10 border-2 border-dashed border-primary/50 rounded-lg flex items-center justify-center pointer-events-none">
+          <div className="flex items-center gap-2 text-primary text-xs font-medium">
+            <FileUp className="h-5 w-5" />
+            Solte o arquivo aqui
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2 items-end">
         <VoiceInputButton
           onTranscript={(text) => setInput((prev) => mergeInputTranscript(prev, text))}
