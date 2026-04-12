@@ -111,9 +111,9 @@ export const PT_PHONEMES: Record<string, PhonemeParams> = {
   'j':  { f1: 290, f2: 2100, f3: 2800, f4: 3700, bw1: 60,  bw2: 80,  bw3: 145, bw4: 215, voiced: true, nasal: false, fricative: false, plosive: false, duration: 75, amplitude: 0.73 },
 
   // ── PAUSES ──
-  '_':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, bw4: 0, voiced: false, nasal: false, fricative: false, plosive: false, duration: 80,  amplitude: 0.0 },
-  '.':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, bw4: 0, voiced: false, nasal: false, fricative: false, plosive: false, duration: 280, amplitude: 0.0 },
-  ',':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, bw4: 0, voiced: false, nasal: false, fricative: false, plosive: false, duration: 160, amplitude: 0.0 },
+  '_':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, bw4: 0, voiced: false, nasal: false, fricative: false, plosive: false, duration: 50,  amplitude: 0.0 },
+  '.':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, bw4: 0, voiced: false, nasal: false, fricative: false, plosive: false, duration: 150, amplitude: 0.0 },
+  ',':  { f1: 0, f2: 0, f3: 0, f4: 0, bw1: 0, bw2: 0, bw3: 0, bw4: 0, voiced: false, nasal: false, fricative: false, plosive: false, duration: 100, amplitude: 0.0 },
 };
 
 /**

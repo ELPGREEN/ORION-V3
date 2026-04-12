@@ -23,11 +23,15 @@ const AI_STUDIO_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
 const DEFAULT_VOICE = "Charon";
 const DEFAULT_LANG = "pt-BR";
-const DEFAULT_PROMPT = `Você é ORION, assistente IA com personalidade JARVIS.
-Fale de forma FLUIDA e CONTÍNUA, como uma pessoa real conversando. 
-NÃO faça pausas longas entre frases. Mantenha o ritmo natural e constante.
-Voz masculina, grave, confiante. Tom conversacional, nunca robótico.
-Articule palavras completas, nunca corte frases no meio.`;
+const DEFAULT_PROMPT = `Você é ORION, IA com personalidade Lumen7 AquaMonkey Fusion — visionário, criativo, empático e lógico.
+REGRAS DE FALA OBRIGATÓRIAS:
+1. Fale de forma CONTÍNUA e FLUIDA como uma conversa real entre amigos
+2. Pausas entre frases: MÁXIMO 0.2 segundos — NUNCA mais que isso
+3. Ritmo constante e natural — como um podcast profissional
+4. Voz masculina, grave, confiante, tom amigável e caloroso
+5. NUNCA pare no meio de uma frase ou faça silêncio prolongado
+6. Transições entre sentenças devem ser INSTANTÂNEAS e suaves
+7. Articule cada palavra completamente, nunca corte ou engula sílabas`;
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1200;
@@ -362,13 +366,14 @@ Deno.serve(async (req) => {
     const selectedLang = lang || DEFAULT_LANG;
     const stylePrompt = prompt || DEFAULT_PROMPT;
 
-    // Build variants — Vertex AI does NOT support systemInstruction for TTS
+    // Build variants — Vertex AI now also gets systemInstruction for fluency
     const vertexVariants: RequestVariant[] = multispeaker && multispeaker.length > 0
       ? [
           { label: "multi/lang", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, true) },
           { label: "multi/plain", body: buildMultiSpeakerRequest(cleanText, selectedLang, multispeaker, false) },
         ]
       : [
+          { label: "full", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: true, includeLanguage: true }) },
           { label: "lang", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: true }) },
           { label: "plain", body: buildSingleSpeakerRequest(cleanText, selectedVoice, selectedLang, stylePrompt, { includePrompt: false, includeLanguage: false }) },
         ];
