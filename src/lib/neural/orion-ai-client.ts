@@ -752,19 +752,15 @@ export async function analyzeFrameStreaming(
               accumulated += delta;
               onToken(accumulated);
 
-              // Enhanced sentence detection: handle multiple sentence-ending patterns
-              // including semicolons, colons with long clauses, and natural pauses
+              // ═══ SENTENCE DETECTION: Larger chunks for smoother TTS ═══
+              // Only split on . ! ? followed by space — NO comma splitting
+              // This prevents the choppy "stop-start" speech pattern
               const unspoken = accumulated.slice(spokenUpTo);
-              // Match sentences ending with . ! ? … or ; followed by space/newline
-              const sentenceMatch = unspoken.match(/^(.*?[.!?…;])\s/s);
-              // Also detect shorter clauses (>80 chars) at comma boundaries for faster speech start
-              const longClauseMatch = !sentenceMatch && unspoken.length > 80
-                ? unspoken.match(/^(.{40,}?,)\s/)
-                : null;
-              const matchResult = sentenceMatch || longClauseMatch;
+              const sentenceMatch = unspoken.match(/^(.*?[.!?…])\s/s);
 
-              if (matchResult) {
-                let sentence = matchResult[1].trim()
+              // Only emit if we have a substantial sentence (>30 chars) to avoid micro-fragments
+              if (sentenceMatch && sentenceMatch[1].trim().length > 30) {
+                let sentence = sentenceMatch[1].trim()
                   // Clean markdown artifacts for speech
                   .replace(/\*{1,3}/g, "")
                   .replace(/_{1,3}/g, "")
@@ -780,7 +776,7 @@ export async function analyzeFrameStreaming(
                 if (sentence && !sentence.startsWith("```") && !sentence.startsWith("{") && sentence.length > 2) {
                   onSentence(sentence);
                 }
-                spokenUpTo += matchResult[0].length;
+                spokenUpTo += sentenceMatch[0].length;
               }
             }
           } catch (parseErr) {
