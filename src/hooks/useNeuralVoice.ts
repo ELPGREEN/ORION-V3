@@ -433,20 +433,9 @@ export function useNeuralVoice(
       }
     }
 
-    // FALLBACK: Web Speech API
-    if (!played && !cascadeAbort.signal.aborted) {
-      console.warn("[Voice] Gemini TTS unavailable — trying Web Speech fallback");
-      try {
-        await browserSpeak(cleanText);
-        played = true;
-        console.log("[Voice] Web Speech fallback PLAYED");
-      } catch (err) {
-        console.warn("[Voice] Web Speech fallback failed:", err);
-      }
-    }
-
+    // Gemini failed → silence (no robotic fallback)
     if (!played) {
-      console.error("[Voice] ALL TTS backends failed — no audio output");
+      console.warn("[Voice] Gemini TTS unavailable — staying silent (no robotic fallback)");
     }
 
     // Exit speaking state
@@ -459,7 +448,7 @@ export function useNeuralVoice(
     OrbState.voiceState = "listening";
 
     if (!options?.skipMicToggle) resumeSTT();
-  }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
+  }, [clearRestartTimer, resumeSTT, updateAiResponding]);
 
   /** speakFast: identical to speak (unified pipeline) */
   const speakFast = useCallback(async (text: string) => {
