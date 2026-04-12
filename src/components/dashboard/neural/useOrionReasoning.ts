@@ -1443,9 +1443,22 @@ export function useOrionReasoning(
       const streamingTTS = new StreamingTTSQueue({
         onStartSpeaking: () => {
           OrbState.voiceState = "speaking";
+          VS.aiResponding = true;
         },
         onStopSpeaking: () => {
           OrbState.voiceState = "listening";
+          VS.aiResponding = false;
+        },
+        onMicShouldStop: () => {
+          // Stop mic recognition while TTS plays to avoid self-hearing
+          try { (window as any).__orionMicRec?.stop?.(); } catch {}
+        },
+        onMicShouldRestart: () => {
+          // Restart mic after ALL streaming TTS audio finishes
+          // Use the speak function's resumeSTT indirectly via a dummy empty call
+          OrbState.voiceState = "listening";
+          // Dispatch custom event that NeuralVoice listens to for mic restart
+          window.dispatchEvent(new CustomEvent("orion-tts-complete"));
         },
       });
 

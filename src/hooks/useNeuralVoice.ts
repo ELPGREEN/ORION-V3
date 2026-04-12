@@ -216,8 +216,10 @@ export function useNeuralVoice(
       if (v) maleVoiceRef.current = v;
     };
     speechSynthesis?.addEventListener?.("voiceschanged", handler);
+
     return () => {
       speechSynthesis?.removeEventListener?.("voiceschanged", handler);
+      delete (window as any).__orionMicRec;
       cleanup();
     };
   }, [clearRestartTimer]);
@@ -281,6 +283,27 @@ export function useNeuralVoice(
 
     scheduleRecognitionRestart(isMobile() ? 600 : 100);
   }, [scheduleRecognitionRestart]);
+
+  // ═══ Streaming TTS Complete — restart mic ═══
+  useEffect(() => {
+    const onTTSComplete = () => {
+      console.log("[Voice] Streaming TTS complete — restarting mic");
+      speakingRef.current = false;
+      updateAiResponding(false);
+      resumeSTT();
+    };
+    window.addEventListener("orion-tts-complete", onTTSComplete);
+    // Expose rec ref so streaming TTS can stop mic
+    (window as any).__orionMicRec = recRef.current;
+    return () => {
+      window.removeEventListener("orion-tts-complete", onTTSComplete);
+    };
+  }, [resumeSTT, updateAiResponding]);
+
+  // ═══ Keep __orionMicRec in sync ═══
+  useEffect(() => {
+    (window as any).__orionMicRec = recRef.current;
+  });
 
   // ═══ Barge-In ═══
   const bargeIn = useCallback(() => {
