@@ -146,7 +146,7 @@ export function DocumentEditor({
         pendingSaveRef.current = true;
         return;
       }
-      actions.saveDocument(null).catchundefined;
+      actions.saveDocument(null).catch(() => {});
     }, 5000); // 5s debounce auto-save
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
@@ -157,7 +157,7 @@ export function DocumentEditor({
   useEffect(() => {
     if (!aiReview.reviewLoading && pendingSaveRef.current && actions.savedDocId) {
       pendingSaveRef.current = false;
-      const t = setTimeout(() => actions.saveDocument(null).catchundefined, 2000);
+      const t = setTimeout(() => actions.saveDocument(null).catch(() => {}), 2000);
       return () => clearTimeout(t);
     }
   }, [aiReview.reviewLoading, actions.savedDocId]);
