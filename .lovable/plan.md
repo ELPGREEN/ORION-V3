@@ -1,62 +1,86 @@
 
+# Plano: Remover visão neural legada e reimplementar visão computacional limpa
 
-# Fix Orion Speed + Unblock All CSP Resources
+## Problema atual
+O sistema de visão tem ~40+ arquivos no `src/lib/neural/` que são stubs vazios, código morto, ou módulos pesados que nunca funcionaram corretamente (MediaPipe WASM, YOLO ONNX local, face-api.js, etc.). O `NeuralVision.tsx` (1176 linhas) chama `detectRealTime()` que retorna arrays vazios. Hooks como `useMultimodalVision` e `useTribunalVision` não são importados por nenhum componente ativo. O `groq-vision-hybrid` chama uma edge function que foi deletada.
 
-## Problem Summary
-Three issues making Orion slow and blocked:
+## Abordagem: Visão via Gemini on-demand (já funciona)
 
-1. **CSP blocking resources**: Despite having `huggingface.co` in connect-src, ONNX model downloads are blocked. The Spotify SDK script (`sdk.scdn.co`) is also blocked from `script-src`. YouTube iframes still show violations in some contexts.
+A visão **já funciona** via `analyzeFrameWithAI()` → edge function `orion-intelligence` → Gemini Flash com imagem base64. O problema é o lixo em volta. Vamos:
 
-2. **MediaPipe timestamp errors**: The monotonic fix was applied but errors persist because all 5 detectors share the same video element and `Promise.all` calls `nextTs()` before the promises actually execute, so timestamps can still collide.
+1. Manter o que funciona (Gemini on-demand)
+2. Remover tudo que é stub/morto/pesado
 
-3. **Vision pipeline too heavy**: `detectRealTime()` runs 6+ ML models in parallel every frame (MediaPipe 5 detectors + YOLO + FrameX + depth + OCR + handwritten OCR). This saturates the GPU/CPU and causes multi-second delays.
+## Etapas
 
-## Plan
+### Etapa 1 — Deletar arquivos de visão mortos (~30 arquivos)
+Arquivos em `src/lib/neural/` que são stubs, nunca chamados, ou dependem de libs removidas:
 
-### Step 1 — Fix CSP in `index.html`
-Update the CSP meta tag:
-- **`connect-src`**: Add `https://cdn-lfs.huggingface.co` (HuggingFace LFS CDN where ONNX files actually redirect to)
-- **`script-src`**: Add `https://sdk.scdn.co` for Spotify player SDK
-- **`frame-src`**: Already fixed — verify it persists
+**Vision pipeline (stubs/mortos):**
+- `mediapipe-vision.ts` (stub)
+- `realtime-vision-engine.ts` (stub)
+- `vision-tribunal.ts`, `vision-semantic-cortex.ts` (se existe)
+- `vision-preprocessing.ts`, `vision-otsu.ts`, `vision-kmeans-quality.ts`
+- `vision-text-detection.ts`, `vision-yolo-priors.ts`, `vision-local-learning.ts`
+- `vision-layout-parser.ts`, `vision-regional-description.ts`
+- `vision-temporal-buffer.ts`, `vision-rag-injector.ts`
+- `vision-agent-presets.ts`, `agentic-vision-agent.ts`
+- `yolo-onnx-detector.ts`, `yolo-framex-engine.ts`, `yolo-framex-types.ts`
+- `yolofx-proxy.ts`, `yolofx-worker.ts`
+- `segment-anything.ts`, `depth-estimation-engine.ts`
+- `scene-reconstruction-3d.ts`, `ocr-engine.ts`, `gaze-detection.ts`
+- `face-attributes-engine.ts`, `face-api-runtime.ts`, `face-auth-learning.ts`
+- `face-detection-fallback.ts`, `humanex-face-pipeline.ts`
+- `facial-recognition.ts`, `body-language.ts`
+- `frame-tensor-preprocessing.ts`, `smolvlm-engine.ts`
+- `vlm-offline-engine.ts`, `trocr-handwritten.ts`
+- `tfm-vision-augment.ts`, `tfm-vision-ops.ts`, `tfm-vision-models.ts`
 
-### Step 2 — Fix MediaPipe timestamps properly
-In `mediapipe-vision.ts`, change `detectAllMP` to call `nextTs()` **sequentially inside each detector call** rather than evaluating all timestamps upfront in `Promise.all`. The timestamps need to be called at execution time, not at promise creation time. Run detectors sequentially (they share the same WebGL context anyway — parallel execution on the same GPU context doesn't help and causes the timestamp race).
+**Hooks mortos:**
+- `src/hooks/useMultimodalVision.ts`
+- `src/hooks/useTribunalVision.ts`
+- `src/hooks/useFaceDetection.ts`
 
-### Step 3 — Throttle vision pipeline for 3s target
-In `realtime-vision-engine.ts`:
-- Add a **frame skip** mechanism: only run full detection every 300ms (3 FPS) instead of every frame
-- Run **only MediaPipe** (lightweight) on every call; defer YOLO, depth, OCR to every Nth frame
-- Skip depth estimation, FrameX, handwritten OCR, and regional descriptions more aggressively (every 30th frame instead of 5th/10th/15th)
-- Add an early-return cache: if called within 300ms of last detection, return cached result
+**Client morto:**
+- `src/lib/groq-vision-hybrid.ts`
 
-### Step 4 — Ensure `willReadFrequently` canvas flag
-In `realtime-vision-engine.ts` and `mediapipe-vision.ts`, add `{ willReadFrequently: true }` to any `getContext('2d')` calls used for `getImageData` (already flagged in console warnings).
+**Componentes mortos:**
+- `src/components/neural/PointCloud3DViewer.tsx`
 
-## Technical Details
+### Etapa 2 — Simplificar useVisionProcessing.ts
+Remover imports de módulos deletados. Manter apenas processamento básico de canvas (regiões por cor/edge, motion detection) que alimenta o VS global. Sem ML local.
 
-**CSP line 33 update** — single line change adding `https://cdn-lfs.huggingface.co` to connect-src and `https://sdk.scdn.co` to script-src.
+### Etapa 3 — Simplificar NeuralVision.tsx
+- Remover `detectRealTime()` call (linha 529) — já retorna vazio
+- Remover `preloadAllVision()` — já é no-op
+- Remover `mlDetections` state e `categoryFromSource()`
+- Manter: câmera, canvas, processFrame heurístico, voice, Orion reasoning
 
-**MediaPipe sequential** — Change from:
-```typescript
-const [objects, faces, ...] = await Promise.all([
-  detectObjects(video, nextTs("obj")),
-  detectFacesMP(video, nextTs("face")),
-  ...
-]);
-```
-To sequential execution:
-```typescript
-const objects = await detectObjects(video, nextTs("obj"));
-const faces = await detectFacesMP(video, nextTs("face"));
-// etc.
-```
-This avoids GPU context contention and timestamp races.
+### Etapa 4 — Simplificar orion-ai-client.ts
+- Remover `buildLocalDetections()` — toda a seção de multiTask/rtv que lê dados vazios
+- Simplificar: enviar canvas como imagem para Gemini, ponto. Sem "local detections"
+- Remover import de `vision-local-learning`
 
-**Frame throttle** — Add at the top of `detectRealTime`:
-```typescript
-const MIN_INTERVAL = 300; // ms — max ~3 FPS for vision
-if (now - lastDetectTime < MIN_INTERVAL && cachedResult) return cachedResult;
-```
+### Etapa 5 — Limpar neural/index.ts
+Remover todas as `export *` dos arquivos deletados (~30 linhas).
 
-**Files changed**: `index.html`, `src/lib/neural/mediapipe-vision.ts`, `src/lib/neural/realtime-vision-engine.ts`
+### Etapa 6 — Corrigir imports quebrados
+- `orion-orchestrator-exec.ts` — remover imports de mediapipe/yolo/face-api
+- `orion-api-orchestrator.ts` — remover imports de mediapipe/yolo/face-api
+- `LaboratorioIA.tsx` — remover import de `groq-vision-hybrid`
+- `FaceAuthEnroll.tsx` / `FaceAuthLogin.tsx` — simplificar (remover face-api.js)
+- `FaceScannerOverlay.tsx` — remover import de face-api types
+- `NeuralConsciousnessLoop.tsx` — remover import de segment-anything
+- `neural-pipeline.ts` — remover imports mortos
 
+### Etapa 7 — Reimplementar visão limpa
+Criar um único arquivo `src/lib/vision/gemini-vision.ts`:
+- `captureFrame(canvas): string` — canvas → base64 JPEG
+- `analyzeFrame(base64, question?)` — chama edge function `orion-intelligence` com imagem
+- Streaming support via `analyzeFrameStreaming` (já existe no orion-ai-client, apenas limpar)
+
+## Resultado
+- **~40 arquivos deletados** (vision stubs, YOLO, MediaPipe, face-api, VLM, etc.)
+- **Zero erros de build** — todos os imports corrigidos
+- **Visão funcional** via Gemini on-demand (câmera → canvas → base64 → Gemini Flash)
+- **~2000+ linhas removidas** de código morto
