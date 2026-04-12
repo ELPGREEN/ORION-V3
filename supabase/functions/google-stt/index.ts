@@ -1,23 +1,19 @@
+/**
+ * Google Cloud Speech-to-Text v1 Edge Function
+ * Uses v1 API with latest_long model + enhanced mode
+ * Billing goes to GCP project credits
+ */
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-/**
- * Google Cloud Speech-to-Text v2 Edge Function
- * Uses the latest v2 API (same as GCP Console tutorial)
- * Supports both inline recognize and batch recognize
- * Billing goes to your GCP project credits
- */
-
 interface STTRequest {
-  audio: string; // base64 LINEAR16 or WEBM_OPUS etc
+  audio: string; // base64 LINEAR16
   sampleRate?: number;
   languageCode?: string;
-  model?: string;
   encoding?: string;
-  mode?: "recognize" | "batch"; // default: recognize
-  gcsUri?: string; // for batch mode: gs://bucket/file.wav
   alternativeLanguageCodes?: string[];
 }
 
@@ -81,12 +77,6 @@ async function getAccessToken(): Promise<string> {
   return (await tokenRes.json()).access_token;
 }
 
-function getProjectId(): string {
-  const saKeyRaw = Deno.env.get("GCP_SA_KEY") || Deno.env.get("FIREBASE_SERVICE_ACCOUNT_KEY");
-  if (!saKeyRaw) return "unknown";
-  try { return JSON.parse(saKeyRaw).project_id || "unknown"; } catch { return "unknown"; }
-}
-
 let cachedToken: string | null = null;
 let tokenExpiry = 0;
 
@@ -98,88 +88,9 @@ async function getCachedToken(): Promise<string> {
   return cachedToken;
 }
 
-// ─── v2 Recognize (inline audio) ───────────────────────────
+// ─── v1 Recognize ──────────────────────────────────────────
 
-async function recognizeV2(body: STTRequest, token: string, projectId: string) {
-  const languageCode = body.languageCode || "pt-BR";
-  const sampleRate = body.sampleRate || 16000;
-  const encoding = body.encoding || "LINEAR16";
-  const model = body.model || "latest_long"; // Use v1 model directly — chirp_2 not available in this project
-
-  // Go straight to v1 API — v2 chirp_2 is not enabled in orion-d3734 project
-  // This eliminates the double-request overhead (v2 400 → v1 fallback)
-  return await recognizeV1Fallback(body, token);
-}
-
-// ─── v2 Batch Recognize (GCS audio) ────────────────────────
-
-async function batchRecognizeV2(body: STTRequest, token: string, projectId: string) {
-  if (!body.gcsUri) throw new Error("gcsUri required for batch mode");
-
-  const languageCode = body.languageCode || "pt-BR";
-  const model = body.model || "long";
-
-  const url = `https://speech.googleapis.com/v2/projects/${projectId}/locations/global/recognizers/_:batchRecognize`;
-
-  const reqBody = {
-    config: {
-      autoDecodingConfig: {},
-      model,
-      languageCodes: [languageCode, ...(body.alternativeLanguageCodes || ["en-US"])],
-      features: {
-        enableAutomaticPunctuation: true,
-        enableWordTimeOffsets: true,
-        enableWordConfidence: true,
-      },
-    },
-    files: [{ uri: body.gcsUri }],
-    recognitionOutputConfig: {
-      inlineResponseConfig: {},
-    },
-  };
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(reqBody),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Batch STT failed [${res.status}]: ${errText}`);
-  }
-
-  const data = await res.json();
-
-  // Batch returns a long-running operation
-  if (data.name) {
-    // Poll for completion (max 60s in edge function)
-    const opUrl = `https://speech.googleapis.com/v2/${data.name}`;
-    let attempts = 0;
-    while (attempts < 12) {
-      await new Promise(r => setTimeout(r, 5000));
-      const pollRes = await fetch(opUrl, {
-        headers: { "Authorization": `Bearer ${token}` },
-      });
-      if (!pollRes.ok) break;
-      const pollData = await pollRes.json();
-      if (pollData.done) {
-        return formatBatchResponse(pollData);
-      }
-      attempts++;
-    }
-    return { text: "", confidence: 0, status: "processing", operationName: data.name };
-  }
-
-  return formatBatchResponse(data);
-}
-
-// ─── v1 Fallback ───────────────────────────────────────────
-
-async function recognizeV1Fallback(body: STTRequest, token: string) {
+async function recognize(body: STTRequest, token: string) {
   const url = "https://speech.googleapis.com/v1/speech:recognize";
   const reqBody = {
     config: {
@@ -190,6 +101,15 @@ async function recognizeV1Fallback(body: STTRequest, token: string) {
       enableAutomaticPunctuation: true,
       useEnhanced: true,
       alternativeLanguageCodes: body.alternativeLanguageCodes || ["en-US"],
+      speechContexts: [
+        {
+          phrases: [
+            "Orion", "Ericson", "ELP", "IASoftHub",
+            "robótica", "AGV", "pneu", "esteira",
+          ],
+          boost: 10,
+        },
+      ],
     },
     audio: { content: body.audio },
   };
@@ -202,74 +122,33 @@ async function recognizeV1Fallback(body: STTRequest, token: string) {
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`STT v1 fallback failed [${res.status}]: ${errText}`);
-  }
 
-  const data = await res.json();
-  return formatV1Response(data);
-}
-
-// ─── Response Formatters ───────────────────────────────────
-
-function formatV2Response(data: any) {
-  const results = data.results || [];
-  const texts: string[] = [];
-  let confidence = 0;
-  let count = 0;
-
-  for (const r of results) {
-    const alt = r.alternatives?.[0];
-    if (alt?.transcript) {
-      texts.push(alt.transcript);
-      if (alt.confidence) { confidence += alt.confidence; count++; }
-    }
-  }
-
-  return {
-    text: texts.join(" ").trim(),
-    confidence: count > 0 ? confidence / count : 0,
-    apiVersion: "v2",
-    results: results.map((r: any) => ({
-      transcript: r.alternatives?.[0]?.transcript || "",
-      confidence: r.alternatives?.[0]?.confidence || 0,
-      words: r.alternatives?.[0]?.words || [],
-      isFinal: true,
-    })),
-    languageCode: results[0]?.languageCode || "pt-BR",
-  };
-}
-
-function formatBatchResponse(data: any) {
-  // Batch results are nested in response.results
-  const response = data.response || data.result || data;
-  const inlineResults = response?.results || {};
-  const allTexts: string[] = [];
-  let totalConfidence = 0;
-  let totalCount = 0;
-
-  for (const fileKey of Object.keys(inlineResults)) {
-    const fileResult = inlineResults[fileKey];
-    const transcript = fileResult?.transcript;
-    if (transcript?.results) {
-      for (const r of transcript.results) {
-        const alt = r.alternatives?.[0];
-        if (alt?.transcript) {
-          allTexts.push(alt.transcript);
-          if (alt.confidence) { totalConfidence += alt.confidence; totalCount++; }
-        }
+    // Token expired → retry once
+    if (res.status === 401) {
+      cachedToken = null;
+      tokenExpiry = 0;
+      const newToken = await getCachedToken();
+      const retryRes = await fetch(url, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${newToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify(reqBody),
+      });
+      if (!retryRes.ok) {
+        const retryErr = await retryRes.text();
+        throw new Error(`STT retry failed [${retryRes.status}]: ${retryErr}`);
       }
+      return formatResponse(await retryRes.json());
     }
+
+    throw new Error(`STT failed [${res.status}]: ${errText}`);
   }
 
-  return {
-    text: allTexts.join(" ").trim(),
-    confidence: totalCount > 0 ? totalConfidence / totalCount : 0,
-    apiVersion: "v2-batch",
-    status: "completed",
-  };
+  return formatResponse(await res.json());
 }
 
-function formatV1Response(data: any) {
+// ─── Response Formatter ────────────────────────────────────
+
+function formatResponse(data: any) {
   const results = data.results || [];
   const texts: string[] = [];
   let confidence = 0;
@@ -286,7 +165,7 @@ function formatV1Response(data: any) {
   return {
     text: texts.join(" ").trim(),
     confidence: count > 0 ? confidence / count : 0,
-    apiVersion: "v1-fallback",
+    apiVersion: "v1",
     results: results.map((r: any) => ({
       transcript: r.alternatives?.[0]?.transcript || "",
       confidence: r.alternatives?.[0]?.confidence || 0,
@@ -305,33 +184,19 @@ Deno.serve(async (req) => {
 
   try {
     const body: STTRequest = await req.json();
-    const mode = body.mode || "recognize";
 
-    if (mode === "recognize" && (!body.audio || typeof body.audio !== "string")) {
+    if (!body.audio || typeof body.audio !== "string") {
       return new Response(
         JSON.stringify({ error: "Missing 'audio' field (base64)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (mode === "batch" && !body.gcsUri) {
-      return new Response(
-        JSON.stringify({ error: "Missing 'gcsUri' for batch mode (e.g. gs://bucket/file.wav)" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const token = await getCachedToken();
-    const projectId = getProjectId();
 
-    console.log(`[google-stt] Mode: ${mode}, Project: ${projectId}, Lang: ${body.languageCode || "pt-BR"}`);
+    console.log(`[google-stt] v1 recognize, Lang: ${body.languageCode || "pt-BR"}`);
 
-    let result;
-    if (mode === "batch") {
-      result = await batchRecognizeV2(body, token, projectId);
-    } else {
-      result = await recognizeV2(body, token, projectId);
-    }
+    const result = await recognize(body, token);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
