@@ -125,18 +125,16 @@ export function experientialSelection(
 
     // Strengthen connections between co-activated groups
     const newConnections = new Map(g.connections);
-    for (const [targetId, strength] of g.connections) {
+    g.connections.forEach((strength, targetId) => {
       const targetIdx = state.groups.findIndex(tg => tg.id === targetId);
       const targetActivated = targetIdx >= 0 && (stimulus[targetIdx] || 0) > 0.3;
       
       if (activated && targetActivated) {
-        // Hebbian: co-activation strengthens
         newConnections.set(targetId, Math.min(1, strength + learningRate * 0.5));
       } else if (!activated && !targetActivated) {
-        // Both inactive: decay
         newConnections.set(targetId, Math.max(0, strength - learningRate * 0.05));
       }
-    }
+    });
 
     return {
       ...g,
@@ -165,10 +163,10 @@ export function reentrantSignaling(
     const newAct = new Array(n).fill(0);
     for (let i = 0; i < n; i++) {
       let input = activations[i] * 0.5; // self-sustain
-      for (const [targetId, strength] of state.groups[i].connections) {
+      state.groups[i].connections.forEach((strength, targetId) => {
         const j = state.groups.findIndex(g => g.id === targetId);
         if (j >= 0) input += activations[j] * strength * 0.3;
-      }
+      });
       newAct[i] = Math.tanh(input); // bounded activation
     }
     activations = newAct;
