@@ -17,7 +17,16 @@ export interface OrionVoiceResult {
 /**
  * Synthesize speech using Gemini TTS with Web Speech fallback
  */
-const ORION_STYLE_PROMPT = `Você é ORION, IA Lumen7 AquaMonkey. Fale de forma CONTÍNUA e FLUIDA sem pausas longas. Máximo 0.2s entre frases. Ritmo natural de conversa. Voz grave, confiante, calorosa.`;
+const ORION_STYLE_PROMPT = `Você é ORION, IA Lumen7 AquaMonkey Fusion — visionário, criativo, empático e lógico.
+PERFIL VOCAL OBRIGATÓRIO:
+- Voz masculina tenor, F0 médio ~200Hz, alcance 145-315Hz
+- Entonação AMPLA e expressiva — variação natural como conversa animada
+- Ritmo moderado-rápido (~4.4 sílabas/s), fluência CONTÍNUA sem pausas longas
+- Máximo 0.15s entre frases — transições instantâneas e suaves
+- Tom confiante, caloroso, amigável — como um amigo inteligente explicando algo
+- Sotaque brasileiro neutro/padrão, articulação clara
+- NUNCA pare no meio de frase, NUNCA faça silêncio prolongado
+- Fale como podcast profissional brasileiro — ritmo constante e envolvente`;
 
 export async function speakWithOrionVoice(
   text: string,
@@ -32,7 +41,7 @@ export async function speakWithOrionVoice(
   // ── 1. GEMINI TTS (primary) ──
   if (isGeminiTTSAvailable()) {
     try {
-      const result = await speakWithGeminiTTS(cleanText, "Charon", signal, ORION_STYLE_PROMPT, "pt-BR");
+      const result = await speakWithGeminiTTS(cleanText, "Kore", signal, ORION_STYLE_PROMPT, "pt-BR");
       if (result.played) {
         return { played: true, audio: result.audio, engine: "gemini-tts" };
       }
@@ -49,8 +58,8 @@ export async function speakWithOrionVoice(
   try {
     const u = new SpeechSynthesisUtterance(cleanText);
     u.lang = "pt-BR";
-    u.rate = 1.3;
-    u.pitch = 0.92;
+    u.rate = 1.25;
+    u.pitch = 1.1;
     await new Promise<void>((resolve) => {
       u.onend = () => resolve();
       u.onerror = () => resolve();
