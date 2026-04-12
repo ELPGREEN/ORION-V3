@@ -1412,11 +1412,7 @@ export async function speakWithEvolvedVoice(text: string): Promise<boolean> {
       // Play the processed audio
       await playAudioBuffer(processed);
 
-      // Self-reinforcement via feedback loop module
-      try {
-        const { feedSelfSynthesis } = await import("./voice-evolution-feedback");
-        feedSelfSynthesis(cleanText);
-      } catch {}
+      // Self-reinforcement removed — voice evolution absorption disabled
 
       return true;
     } catch (e) {
