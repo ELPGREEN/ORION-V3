@@ -1469,15 +1469,6 @@ export function useOrionReasoning(
           } else {
             queueFinished = true;
             // ═══ FIX: Resume mic ONCE after all speech is done ═══
-            // Without this, the mic stays dead after TTS finishes
-            try {
-              const { resumeSTT: doResume } = await import("@/hooks/useNeuralVoice");
-              // speak() with skipMicToggle doesn't call resumeSTT, so we do it here
-              // The speak function already exported resumeSTT isn't accessible, but
-              // we can trigger it via the voiceActiveRef pattern — schedule restart
-              // by calling speak with empty to trigger the mic toggle
-            } catch {}
-            // Direct approach: dispatch event for NeuralVoice to resume
             window.dispatchEvent(new CustomEvent("orion-resume-stt"));
           }
         }
