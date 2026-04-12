@@ -14,7 +14,7 @@
 import type { UserMentalModel, ReactionPrediction } from "./theory-of-mind";
 type BodyLanguageSignal = { type: string; confidence: number; description: string };
 type BodyLanguageResult = { signals: BodyLanguageSignal[]; overallConfidence: number; dominantSignal: string };
-type FacialEmotion = { emotion: string; confidence: number };
+type FacialEmotion = string;
 import type { InteroceptiveState } from "./interoception-engine";
 
 // ─── Types ───
@@ -213,13 +213,13 @@ export function simulateEmpathicReaction(
 
   // Process body language cues
   if (visualCues.bodySignals) {
-    for (const bs of visualCues.bodySignals) {
-      const hint = bs.emotionalHint === "ambiguous" ? "neutral" as const : bs.emotionalHint;
+    for (const bs of visualCues.bodySignals as any[]) {
+      const hint = (bs.emotionalHint === "ambiguous" ? "neutral" : bs.emotionalHint) as "positive" | "negative" | "neutral";
       cues.push({
         source: "body",
-        signal: bs.signal,
+        signal: bs.signal || bs.type || "unknown",
         emotionalHint: hint,
-        weight: bs.confidence,
+        weight: bs.confidence || 0.5,
       });
     }
   }

@@ -534,16 +534,12 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           (window as any).__orion_last_rt_vision_ts__ = Date.now();
           lastRtVisionRef.current = rtResult;
 
-          if (rtResult.frameXResult) {
-            (VS as any).multiTaskResult = rtResult.frameXResult;
-            (VS as any).sceneClassification = rtResult.frameXResult.scenario;
-            (VS as any).readingResult = rtResult.frameXResult.reading;
-            (VS as any).movementAnalysis = rtResult.frameXResult.movement;
-            (VS as any).frameXFaces = rtResult.frameXResult.faces;
+          if ((rtResult as any).frameXResult) {
+            (VS as any).multiTaskResult = (rtResult as any).frameXResult;
           }
 
-          (VS as any).detectedFaces = rtResult.faces;
-          (VS as any).faceAttributes = rtResult.faceAttributes;
+          (VS as any).detectedFaces = rtResult.faces || [];
+          (VS as any).faceAttributes = (rtResult as any).faceAttributes || [];
 
           if (rtResult.allObjects.length > 0) {
             const mlObjects = rtResult.allObjects.map(o => ({
@@ -835,7 +831,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 height={150}
                 videoWidth={videoRef.current?.videoWidth || 640}
                 videoHeight={videoRef.current?.videoHeight || 480}
-                tier={lastRtVisionRef.current?.status === "native" ? "native" : "fallback"}
+                tier={(lastRtVisionRef.current as any)?.status === "native" ? "native" : "fallback"}
                 faceApiDetection={null}
               />
               {gesturesEnabled && currentGesture.gesture !== "none" && (

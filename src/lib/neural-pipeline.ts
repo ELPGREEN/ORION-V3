@@ -325,10 +325,10 @@ export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
   if (moeResult.selectedExperts.includes("segment_anything") && input.enableVLM) {
     const frameData = input.imageData || tokenization.compactTokens.map(t => t.charCodeAt(0) / 255);
     const { result: samResult, stage: s6sam } = runStage("SAM:Segment", () =>
-      input.documentType ? segmentDocument(frameData) : segmentScene(frameData)
+      input.documentType ? segmentDocument() : segmentScene()
     );
     segmentationResult = samResult;
-    stages.push({ ...s6sam, data: { masks: samResult.totalSegments, coverage: samResult.coveragePercent } });
+    stages.push({ ...s6sam, data: { masks: (samResult as any).totalSegments || 0, coverage: (samResult as any).coveragePercent || 0 } });
     modulesActivated.push("SAM");
   }
 
@@ -487,7 +487,7 @@ export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
 
     // SAM segmentation
     if (segmentationResult) {
-      parts.push(`[SAM: ${segmentationResult.totalSegments} segmentos — cobertura: ${segmentationResult.coveragePercent.toFixed(0)}%]`);
+      parts.push(`[SAM: ${(segmentationResult as any).totalSegments || 0} segmentos — cobertura: ${((segmentationResult as any).coveragePercent || 0).toFixed(0)}%]`);
     }
 
     // Key terms for search enrichment
