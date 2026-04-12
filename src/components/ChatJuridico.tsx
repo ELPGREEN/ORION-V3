@@ -149,8 +149,7 @@ export function ChatJuridico() {
 
     await saveMessage(convId, { role: "user", content: messageText });
     
-    // Auto-adapt communication context based on user message
-    adaptFromMessage(messageText).catch(() => {});
+    // adaptFromMessage removed
 
     if (isCliente) {
       setConsultaCount((prev) => prev + 1);
@@ -164,14 +163,7 @@ export function ChatJuridico() {
         body: {
           messages: conversationHistory,
           isVoice: voiceFlag,
-          personaConfig: neuralConfig ? {
-            speech_style: neuralConfig.speech_style,
-            formality_level: neuralConfig.formality_level,
-            humor_mode: neuralConfig.humor_mode,
-            nickname: neuralConfig.nickname,
-            mirroring_enabled: neuralConfig.mirroring_enabled,
-            personality_prompt: neuralConfig.personality_prompt,
-          } : undefined,
+          personaConfig: undefined,
         },
       });
 
