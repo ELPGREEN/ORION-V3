@@ -56,8 +56,7 @@ const ConsultaIA = lazy(lazyRetry(() => import("./pages/ConsultaIA")));
 const DocumentacaoRedeNeural = lazy(lazyRetry(() => import("./pages/DocumentacaoRedeNeural")));
 const DocumentacaoNeuroCore = lazy(lazyRetry(() => import("./pages/DocumentacaoNeuroCore")));
 const BiometricRegistration = lazy(lazyRetry(() => import("./pages/BiometricRegistration")));
-const OrionDemo = lazy(lazyRetry(() => import("./pages/OrionDemo")));
-const OrionExtensionPage = lazy(lazyRetry(() => import("./pages/OrionExtensionPage")));
+// OrionDemo and OrionExtensionPage removed — consolidated into RedeNeuralPage
 const Loja = lazy(lazyRetry(() => import("./pages/Loja")));
 const LojaOrion = lazy(lazyRetry(() => import("./pages/LojaOrion")));
 const LojaSucesso = lazy(lazyRetry(() => import("./pages/LojaSucesso")));
@@ -109,7 +108,7 @@ const MeusAcessos = lazy(lazyRetry(() => import("./pages/dashboard/MeusAcessos")
 const ExplorarLojas = lazy(lazyRetry(() => import("./pages/dashboard/ExplorarLojas")));
 const ConfigurarIA = lazy(lazyRetry(() => import("./pages/dashboard/ConfigurarIA")));
 const PlanoUsuario = lazy(lazyRetry(() => import("./pages/dashboard/PlanoUsuario")));
-const OrionOrchestratorPage = lazy(lazyRetry(() => import("./pages/dashboard/OrionOrchestratorPage")));
+// OrionOrchestratorPage removed — merged into RedeNeuralPage
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -178,8 +177,8 @@ const App = () => (
                   <Route path="/solucoes/afiliados" element={<SolucoesAfiliados />} />
                   <Route path="/solucoes/industria" element={<SolucoesIndustria />} />
                   <Route path="/consulta" element={<AuthGuard><ConsultaIA /></AuthGuard>} />
-                  <Route path="/demo" element={<AuthGuard><OrionDemo /></AuthGuard>} />
-                  <Route path="/extension" element={<AuthGuard><OrionExtensionPage /></AuthGuard>} />
+                  <Route path="/demo" element={<Navigate to="/dashboard/rede-neural" replace />} />
+                  <Route path="/extension" element={<Navigate to="/dashboard/rede-neural" replace />} />
                   <Route path="/register/biometric" element={<AuthGuard><BiometricRegistration /></AuthGuard>} />
 
                   {/* ═══ AUTH REQUIRED — Docs técnicos ═══ */}
@@ -244,7 +243,7 @@ const App = () => (
                     <Route path="assinatura-digital" element={<RoleGuard allowedRoles={["advogado"]}><AssinaturaDigital /></RoleGuard>} />
                     <Route path="tarefas" element={<RoleGuard allowedRoles={["advogado"]}><TarefasPage /></RoleGuard>} />
                     <Route path="crm" element={<RoleGuard allowedRoles={["advogado", "produtor", "nomade", "afiliado"]}><CRMClientes /></RoleGuard>} />
-                    <Route path="rede-neural" element={<RoleGuard allowedRoles={["advogado"]}><RedeNeuralPage /></RoleGuard>} />
+                    <Route path="rede-neural" element={<RedeNeuralPage />} />
                     <Route path="publicacoes-admin" element={<RoleGuard allowedRoles={["advogado"]}><PublicacoesAdmin /></RoleGuard>} />
                     <Route path="usuarios" element={<RoleGuard allowedRoles={["advogado"]}><UsuariosPage /></RoleGuard>} />
                     <Route path="reformulacao" element={<RoleGuard allowedRoles={["advogado"]}><ReformulacaoJuridica /></RoleGuard>} />
@@ -253,8 +252,7 @@ const App = () => (
                     <Route path="laboratorio-ia" element={<RoleGuard allowedRoles={["advogado"]}><LaboratorioIA /></RoleGuard>} />
                     <Route path="controle-robotico" element={<RoleGuard allowedRoles={["advogado"]}><ControleRobotico /></RoleGuard>} />
                     <Route path="dispositivos-iot" element={<RoleGuard allowedRoles={["advogado"]}><DeviceIntegrationPage /></RoleGuard>} />
-                    <Route path="extension" element={<RoleGuard allowedRoles={["advogado"]}><OrionExtensionPage /></RoleGuard>} />
-
+                    <Route path="extension" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     {/* Dashboard redirects — consolidation */}
                     <Route path="chat" element={<Navigate to="/dashboard/gerar-documento" replace />} />
                     <Route path="chat-ia" element={<Navigate to="/dashboard/gerar-documento" replace />} />
@@ -275,7 +273,7 @@ const App = () => (
                     <Route path="arquitetura-ia" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="dispositivos" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="plano" element={<PlanoUsuario />} />
-                    <Route path="orion-orchestrator" element={<RoleGuard allowedRoles={["advogado"]}><OrionOrchestratorPage /></RoleGuard>} />
+                    <Route path="orion-orchestrator" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="orion" element={<Navigate to="/consulta" replace />} />
                   </Route>
 

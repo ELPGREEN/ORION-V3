@@ -51,6 +51,9 @@ import { VideoOverlay } from "@/components/orion/VideoOverlay";
 import { OrionIoTPanel } from "@/components/orion/OrionIoTPanel";
 import { lazyRetry } from "@/lib/lazyRetry";
 
+// Lazy-load Orchestrator tabs (merged from OrionOrchestratorPage)
+const OrionOrchestratorTabs = lazy(lazyRetry(() => import("@/components/dashboard/neural/OrionOrchestratorTabs")));
+
 // Lazy-load all heavy neural panels for code-splitting
 const DataJudIngestionPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/DataJudIngestionPanel").then(m => ({ default: m.DataJudIngestionPanel }))));
 const DataSourcesPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/DataSourcesPanel").then(m => ({ default: m.DataSourcesPanel }))));
@@ -733,6 +736,11 @@ export default function RedeNeuralPage() {
             <span className="hidden sm:inline">IoT Hub</span>
             <span className="sm:hidden">IoT</span>
           </TabsTrigger>
+          <TabsTrigger value="orchestrator" className="text-xs shrink-0 gap-1 px-2.5 py-1.5">
+            <BarChart3 className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Orquestrador</span>
+            <span className="sm:hidden">KPIs</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -1357,6 +1365,13 @@ export default function RedeNeuralPage() {
         {/* IoT Devices Tab */}
         <TabsContent value="iot-devices" className="space-y-4">
           <OrionIoTPanel />
+        </TabsContent>
+
+        {/* Orchestrator Tab (merged from OrionOrchestratorPage) */}
+        <TabsContent value="orchestrator" className="space-y-4">
+          <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+            <OrionOrchestratorTabs />
+          </Suspense>
         </TabsContent>
       </Tabs>
 
