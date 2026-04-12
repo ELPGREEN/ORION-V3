@@ -12,7 +12,7 @@ import {
 import { VS } from "@/components/dashboard/neural/useVisionProcessing";
 import { matchLearnedPriors, learnFromDetection, canIdentifyLocally, getLearningStats } from "@/lib/neural/vision-local-learning";
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
-import { runVisionGate, buildGatedResponse, type LocalDetectionContext } from "@/lib/neural/hf-vision-gate";
+// hf-vision-gate REMOVED — was downloading ~50MB of WASM models in browser
 import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
 
 // ═══ GLOBAL AUTH CACHE — avoids 3-6 supabase.auth.getUser() calls per interaction ═══
