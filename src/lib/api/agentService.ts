@@ -238,12 +238,8 @@ export async function smartAgentRoute(
     intent.confidence = 1.0;
   }
 
-  // v23: Enrich routing with STDP neural weights
-  const partners = (() => ({ provider: 'gemini', reason: 'default' }))(intent.primaryAgent);
-    // Boost confidence if STDP shows strong partner bindings
-    const avgPartnerWeight = partners.reduce((s, p) => s + p.weight, 0) / Math.max(partners.length, 1);
-    intent.confidence = Math.min(1, intent.confidence + avgPartnerWeight * 0.1);
-  }
+  // v23: Default routing
+  const partners = { provider: 'gemini', reason: 'default' };
   
   const plan = createExecutionPlan(query, intent);
   plan.status = "executing";
