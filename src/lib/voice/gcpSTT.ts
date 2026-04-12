@@ -53,7 +53,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   const {
     languageCode = "pt-BR",
     sampleRate = 16000,
-    chunkIntervalMs = 2000,
+    chunkIntervalMs = 4000,
     onInterim,
     onFinal,
     onError,
@@ -67,6 +67,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   let active = false;
   let chunkTimer: ReturnType<typeof setInterval> | null = null;
   let audioBuffer: Float32Array[] = [];
+  let overlapBuffer: Float32Array | null = null; // Keep last 0.5s for context overlap
   let sending = false;
 
   const sendChunk = async () => {

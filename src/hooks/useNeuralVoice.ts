@@ -722,7 +722,7 @@ export function useNeuralVoice(
           const session = createGCPSTTSession({
             languageCode: "pt-BR",
             sampleRate: 16000,
-            chunkIntervalMs: 2500,
+            chunkIntervalMs: 4000,
             onFinal: (text, confidence) => {
               if (!onCmdRef.current || intentionalStopRef.current) return;
               if (speakingRef.current || VoiceState.aiResponding) {
