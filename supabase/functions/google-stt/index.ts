@@ -176,9 +176,9 @@ async function recognizeV2(body: STTRequest, token: string, projectId: string) {
       return formatV2Response(await retryRes.json());
     }
 
-    // If v2 fails (API not enabled), fallback to v1
-    if (res.status === 403 || res.status === 404) {
-      console.warn(`[google-stt] v2 API unavailable (${res.status}), falling back to v1`);
+    // If v2 fails, fallback to v1
+    if (res.status === 400 || res.status === 403 || res.status === 404) {
+      console.warn(`[google-stt] v2 API error (${res.status}), falling back to v1`);
       return await recognizeV1Fallback(body, token);
     }
 
