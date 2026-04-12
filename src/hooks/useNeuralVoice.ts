@@ -20,6 +20,7 @@ import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 // adaptiveVoiceStyle, sttFallbackChain, audioWorkletManager REMOVED — performance bottlenecks
 import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural/pipeline-latency-tracker";
 import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
+import { ensurePersistentMic, isMobile as isMobilePersistent } from "@/lib/voice/persistentMic";
 
 // ═══ Constants ═══
 const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
@@ -84,18 +85,22 @@ function isMobile(): boolean {
   return typeof navigator !== "undefined" && MOBILE_REGEX.test(navigator.userAgent);
 }
 
-/** Prime microphone hardware (necessary for reliable auto-start without user gesture) */
+/** Prime microphone hardware — on mobile uses persistent stream (never releases) */
 async function primeMicrophone(): Promise<void> {
   if (!navigator.mediaDevices?.getUserMedia) return;
   try {
+    // Use persistent mic on mobile — keeps hardware warm
+    const ready = await ensurePersistentMic();
+    if (ready) return;
+
+    // Desktop: check permission, prime if needed
     const perm = await navigator.permissions?.query?.({ name: "microphone" as any });
-    // Skip priming entirely if permission already granted — saves ~80ms
     if (perm?.state === "granted") return;
-    if (perm?.state !== "prompt") return; // denied = skip too
+    if (perm?.state !== "prompt") return;
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     });
-    await new Promise(r => setTimeout(r, 30)); // reduced from 80ms
+    await new Promise(r => setTimeout(r, 30));
     stream.getTracks().forEach(t => t.stop());
   } catch (err) {
     console.warn("[Voice] Mic priming failed:", err);

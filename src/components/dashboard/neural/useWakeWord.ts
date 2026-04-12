@@ -4,6 +4,7 @@ import { vsLog } from "./useVisionProcessing";
 
 // ═══ Unified Mic Arbiter — shared with useNeuralVoice ═══
 import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
+import { ensurePersistentMic, isMicPermissionGranted } from "@/lib/voice/persistentMic";
 
 const ORION_WAKE_REGEX = /([óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\b/i;
 
@@ -39,8 +40,7 @@ export function useWakeWord(
   const backgroundTranscriptsRef = useRef<BackgroundTranscript[]>([]);
   const speakerCounterRef = useRef(0);
 
-  // NO claimMic on mount — prevents race condition with useNeuralVoice
-  // Mic is claimed only inside startWakeWordListener()
+  // Cleanup on unmount only
   useEffect(() => {
     return () => {
       try { wakeRecRef.current?.abort?.(); } catch {}
@@ -237,6 +237,23 @@ export function useWakeWord(
   const enableWakeWord = useCallback(() => {
     wakeWordEnabledRef.current = true;
   }, []);
+
+  // ═══ AUTO-START: If mic permission already granted, start wake word automatically ═══
+  // No manual toggle needed — once permission is given, mic stays active
+  useEffect(() => {
+    let cancelled = false;
+    const autoStart = async () => {
+      const granted = await isMicPermissionGranted();
+      if (granted && !cancelled && speechOkRef.current && !listeningRef.current && wakeWordEnabledRef.current) {
+        await ensurePersistentMic();
+        if (!cancelled && !wakeRecRef.current && !startInFlightRef.current) {
+          startWakeWordListener();
+        }
+      }
+    };
+    const timer = setTimeout(autoStart, 500);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [startWakeWordListener]);
 
   useEffect(() => {
     if (!speechOk || listening) {
