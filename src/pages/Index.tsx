@@ -5,11 +5,14 @@ import { Footer } from '@/components/layout/Footer';
 import { SEO } from '@/components/SEO';
 import {
   HeroSection,
+  WhyOrionSection,
   ComparisonSection,
   CtaSection,
+  OrionVideoShowcase,
   SystemArchitectureSection,
   SmartOtrSection,
   TechStackSection,
+  SecurityShieldSection,
 } from '@/components/home';
 import { WhoIsItForSection } from '@/components/home/WhoIsItForSection';
 import { WelcomeSplash } from '@/components/home/WelcomeSplash';
@@ -81,10 +84,13 @@ export default function Index() {
         </div>
       </section>
 
+      <OrionVideoShowcase />
       <WhoIsItForSection />
       <SystemArchitectureSection />
       <SmartOtrSection />
       <TechStackSection />
+      <SecurityShieldSection />
+      <WhyOrionSection />
       <ComparisonSection />
       <CtaSection />
 

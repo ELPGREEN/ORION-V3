@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
@@ -268,6 +268,7 @@ export default function PesquisaUnificada() {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isAdvogado } = useUserRole();
+  const { logNeural } = useNeuralFeedback();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -389,7 +390,7 @@ export default function PesquisaUnificada() {
             isNeural: true,
             attention_heads: r.attention_heads,
             quantum_category: r.quantum_category || undefined,
-            type: r.type || "jurisprudencia",
+            type: r.content_type,
             metadata: r.metadata,
           });
         }
@@ -464,6 +465,18 @@ export default function PesquisaUnificada() {
       setResults(merged);
       setSearched(true);
 
+      logNeural({
+        interaction_type: "search",
+        input_text: query.trim(),
+        output_text: merged.slice(0, 3).map(r => r.title).join(" | "),
+        user_id: user?.id,
+        metadata: {
+          totalResults: merged.length,
+          tribunal: selectedTribunal,
+          module: "pesquisa_unificada_v2",
+          totalTimeMs: totalTime,
+        },
+      });
 
       toast({
         title: "Pesquisa concluída",

@@ -7,7 +7,7 @@
 
 export interface CorrectionIssue {
   id: string;
-  excerpt?: string;
+  excerpt: string;
   replacementText: string;
   autoApplicable: boolean;
 }

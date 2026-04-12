@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ interface WebhookEvent {
 export default function WebhooksPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { logNeural } = useNeuralFeedback();
   const queryClient = useQueryClient();
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
 
@@ -69,6 +70,14 @@ export default function WebhooksPage() {
       queryClient.invalidateQueries({ queryKey: ["webhook-events"] });
       toast({ title: "Evento marcado como processado" });
       // 🧠 Neural: evento processado = sinal de uso jurídico real
+      logNeural({
+        interaction_type: "webhook_event",
+        input_text: `Webhook CourtListener processado — tipo: ${event?.event_type_label || "desconhecido"}`,
+        output_text: JSON.stringify(event?.payload || {}).substring(0, 500),
+        quality_score: 0.82,
+        user_id: user?.id,
+        metadata: { event_id: id, event_type: event?.event_type, source: "courtlistener_webhook" },
+      });
     },
   });
 

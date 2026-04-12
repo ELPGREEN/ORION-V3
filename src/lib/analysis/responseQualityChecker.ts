@@ -3,7 +3,7 @@
  * Inspired by LegalNexus RAG pipeline — validates AI responses locally
  */
 
-// [REMOVED] import { detectHallucinations } from "./hallucinationDetector";
+import { detectHallucinations } from "./hallucinationDetector";
 
 export interface QualityResult {
   score: number; // 0-100
@@ -112,6 +112,21 @@ export function checkResponseQuality(
   });
   if (hasSources) score += 10;
 
+  // 6. Hallucination detection
+  const hallucinations = detectHallucinations(responseText);
+  const highSeverity = hallucinations.filter(h => h.severity === "high");
+  const hasHallucinations = highSeverity.length > 0;
+  checks.push({
+    name: "Verificação de alucinação",
+    passed: !hasHallucinations,
+    detail: hasHallucinations
+      ? `${highSeverity.length} referência(s) suspeita(s): ${highSeverity.map(h => h.entity).join(", ")}`
+      : hallucinations.length > 0
+        ? `${hallucinations.length} referência(s) com baixa certeza`
+        : "Nenhuma alucinação detectada",
+  });
+  if (hasHallucinations) score -= 20;
+  else if (hallucinations.length === 0 && hasCitations) score += 5;
 
   // Clamp score
   score = Math.max(10, Math.min(100, score));

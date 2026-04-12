@@ -16,7 +16,9 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// [REMOVED] lazy import removed
+const OrionBackground3D = lazy(() =>
+  import("@/components/ui/OrionBackground3D").then(m => ({ default: m.OrionBackground3D }))
+);
 
 interface GlobalStats {
   totalUsers: number;
@@ -119,7 +121,7 @@ export default function AdminOwnerDashboard() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <Suspense fallback={null}>
-        
+        <OrionBackground3D variant="mixed" intensity="low" className="fixed" />
       </Suspense>
 
       <div className="relative z-10 space-y-6 p-1">

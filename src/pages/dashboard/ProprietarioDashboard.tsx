@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { lazy, Suspense } from "react";
 import { ThemedHeader, ThemedStatCard, ThemedSection, StatusLED } from "@/components/dashboard/DashboardTheme";
 
+const OrionComandoTotal = lazy(() => import("@/components/dashboard/OrionComandoTotal"));
+const OrionOrchestratorWidget = lazy(() => import("@/components/dashboard/OrionOrchestratorWidget"));
 
 export default function ProprietarioDashboard() {
   const navigate = useNavigate();
@@ -145,10 +147,12 @@ export default function ProprietarioDashboard() {
 
       {/* Orion Comando Total */}
       <Suspense fallback={<Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />}>
+        <OrionComandoTotal />
       </Suspense>
 
       {/* Orion Orquestrador Widget */}
       <Suspense fallback={<Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />}>
+        <OrionOrchestratorWidget />
       </Suspense>
 
       {/* Tool Sections */}

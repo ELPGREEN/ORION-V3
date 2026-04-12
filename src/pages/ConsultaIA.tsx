@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-// [REMOVED] import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
+import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
 import { useQuery } from "@tanstack/react-query";
 import { NeuralVision } from "@/components/dashboard/neural/NeuralVision";
 import { AlienCoreBackground } from "@/components/ui/AlienCoreBackground";
@@ -172,7 +172,7 @@ export default function ConsultaIA() {
   });
 
   const isLoading = gateLoading;
-  const isOwner = (["info@elpgreen.com","info@iasofthub.com","ericson@elpgreen.com","ericsonpiccoli.dev@gmail.com"].includes)(user?.email);
+  const isOwner = isOwnerEmail(user?.email);
   const isClient = gateData?.role === "cliente" || gateData?.role === null;
   const isSubscriber = !!user && (isOwner || gateData?.plan_type === "professional" || gateData?.plan_type === "business" || gateData?.plan_type === "enterprise");
 
@@ -194,7 +194,7 @@ export default function ConsultaIA() {
     if (!isSubscriber) return <SubscriptionGate />;
 
     return (
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div className="flex-1 overflow-y-auto p-4">
         <NeuralVision />
       </div>
     );

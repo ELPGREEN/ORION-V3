@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import { z } from "zod";
 import logoElp from "@/assets/logo-elp.webp";
-// [REMOVED] import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
+import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
 
 // ═══════════════════════════════════════
 // Types & Constants
@@ -398,7 +398,7 @@ export default function Auth() {
             </p>
           </div>
 
-          
+          <FaceAuthEnroll onComplete={handleFaceEnrollComplete} />
 
           <Button
             variant="ghost"

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 import { BookUser, Search, Mail, Send, Building, Eye, MessageCircle, Trash2, Download, Loader2, Plus, CloudDownload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,8 @@ export default function ContatosPage() {
   const [importingGoogle, setImportingGoogle] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { logNeural } = useNeuralFeedback();
+
   const importFromGoogle = async () => {
     if (!user) return;
     setImportingGoogle(true);
@@ -120,6 +122,14 @@ export default function ContatosPage() {
         loadContacts();
 
         // 🧠 Neural: importação Google = sinal de integração ativa
+        logNeural({
+          interaction_type: "crm_client_event",
+          input_text: `Importação de contatos Google: ${toInsert.length} contatos`,
+          output_text: toInsert.map((c: any) => `${c.nome} <${c.email}>`).slice(0, 5).join(", "),
+          quality_score: 0.8,
+          user_id: user?.id,
+          metadata: { module: "contatos_google", count: toInsert.length, status_novo: "em_atendimento" },
+        });
       }
     } catch (e: any) {
       toast({ title: "Erro ao importar", description: e.message || "Tente novamente.", variant: "destructive" });

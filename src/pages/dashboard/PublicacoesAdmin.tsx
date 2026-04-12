@@ -40,7 +40,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { PublicacaoEditor } from "@/components/publicacoes/PublicacaoEditor";
 import { AssistentesEditoriais } from "@/components/publicacoes/AssistentesEditoriais";
 import { MarkdownPreview } from "@/components/publicacoes/MarkdownPreview";
@@ -82,6 +82,7 @@ const emptyPublicacao = {
 
 export default function PublicacoesAdmin() {
   const { user } = useAuth();
+  const { logNeural } = useNeuralFeedback();
   const [publicacoes, setPublicacoes] = useState<Publicacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -249,6 +250,19 @@ export default function PublicacoesAdmin() {
             ? (editingId ? "Publicação atualizada e publicada!" : "Publicação criada e publicada!")
             : (editingId ? "Publicação atualizada!" : "Publicação criada!"),
       );
+      logNeural({
+        interaction_type: "document_generation",
+        input_text: `Publicação ${editingId ? "atualizada" : "criada"}: ${formData.titulo}`,
+        output_text: `${formData.resumo}\n\n${formData.conteudo.substring(0, 2000)}`,
+        quality_score: 0.82,
+        user_id: user.id,
+        metadata: {
+          categoria: formData.categoria,
+          autor: formData.autor,
+          editingId,
+          source: "publicacoes_admin_save",
+        },
+      });
       setDialogOpen(false);
       setEditingId(null);
       setFormData(emptyPublicacao);

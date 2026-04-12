@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useChatIAPersistence } from "@/hooks/useChatIAPersistence";
 import { safeApplyAIResult, classifyApplyMode } from "@/lib/document";
 import { smartAgentRoute } from "@/lib/api";
@@ -302,6 +302,7 @@ export function DocumentAIChatPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuth();
+  const { logNeural } = useNeuralFeedback();
   const {
     conversations, activeConversationId, loadingConversations,
     createConversation, saveMessage, deleteConversation,
@@ -769,6 +770,10 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
 
       if (convId) saveMessage(convId, { role: "assistant", content: text, intent: intent?.action, sources: neuralCtx.sources, neuralEnhanced: neuralCtx.used });
 
+      logNeural({
+        interaction_type: "chat", input_text: userMessage, output_text: text.substring(0, 2000),
+        metadata: { intent: intent?.action, isEdit: true, documentType, neuralUsed: neuralCtx.used, docWordCount: docAnalysis.wordCount, category: intent?.category || "general", sourcesCount: neuralCtx.sources.length },
+      });
       } // close else block for non-edge agents
     } catch (err) {
       setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "❌ Erro ao processar. Verifique sua conexão e tente novamente.", timestamp: new Date() }]);
@@ -776,7 +781,7 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
       setLoading(false);
       setActiveSources([]);
     }
-  }, [loading, pendingAction, pendingFiles, messages, documentContent, documentType, documentId, selectedText, selectedAgent, activeConversationId, docAnalysis, buildSystemPrompt, createConversation, saveMessage, onSave, onRedaction, onImprove]);
+  }, [loading, pendingAction, pendingFiles, messages, documentContent, documentType, documentId, selectedText, selectedAgent, activeConversationId, docAnalysis, buildSystemPrompt, createConversation, saveMessage, onSave, onRedaction, onImprove, logNeural]);
 
   const addSystemMessage = (content: string) => {
     setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content, timestamp: new Date() }]);
@@ -871,7 +876,8 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
 
   const handleFeedback = useCallback((msg: Message, type: "up" | "down") => {
     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, feedbackGiven: type } : m));
-  }, []);
+    logNeural({ interaction_type: "document_feedback", input_text: msg.content.substring(0, 500), output_text: type, quality_score: type === "up" ? 0.9 : 0.2, metadata: { messageId: msg.id, intent: msg.intent } });
+  }, [logNeural]);
 
   const handleNewConversation = async () => {
     await createConversation("Nova conversa");

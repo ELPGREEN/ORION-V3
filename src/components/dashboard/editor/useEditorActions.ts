@@ -111,7 +111,7 @@ interface UseEditorActionsParams {
   editorRef: React.MutableRefObject<any>;
   rulerSettersRef: React.MutableRefObject<{ setLeft: (v: number) => void; setFirstLine: (v: number) => void; setRight: (v: number) => void } | null>;
   toast: (opts: any) => void;
-  logNeural?: (opts: any) => void;
+  logNeural: (opts: any) => void;
   clearAllSuggestionMarks: (editor: any) => void;
   bubbleSelectionRef: React.MutableRefObject<{ from: number; to: number } | null>;
   bubbleNodeContextRef: React.MutableRefObject<{ nodeName: string; headingLevel?: number } | null>;
@@ -121,7 +121,7 @@ interface UseEditorActionsParams {
 export function useEditorActions(params: UseEditorActionsParams) {
   const {
     editedContent, setEditedContent, formData, selectedType, forceLetterhead,
-    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast,
+    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, logNeural,
     clearAllSuggestionMarks, bubbleSelectionRef, bubbleNodeContextRef, initialSavedDocId,
   } = params;
 
@@ -378,6 +378,7 @@ export function useEditorActions(params: UseEditorActionsParams) {
           const validationScore = data?.validation?.score ? Math.round(data.validation.score * 100) : null;
           const modeLabels: Record<string, string> = { legal: "Leis e citações adicionadas com sucesso", formatting: "Formatação ABNT aplicada", light: "Gramática, ortografia e fluidez corrigidas" };
           toast({ title: modeLabels[mode] || "Documento aprimorado!", description: `Alterações aplicadas • ${citationCount} fontes${validationScore ? ` • Score: ${validationScore}%` : ""} • Retenção: ${Math.round(safeResult.metrics.retentionRatio * 100)}%` });
+          logNeural({ interaction_type: "document_generation", input_text: `Aprimoramento [${mode}]: ${selectedType?.label || formData.tipo}`, output_text: enrichedText.substring(0, 500), quality_score: validationScore ? validationScore / 100 : 0.75, metadata: { action: "improve", mode, citationCount, retention: safeResult.metrics.retentionRatio, module: "document_editor" } });
           if (questions?.length > 0) setSuggestedQuestions(questions);
         }
       } else if (enrichedText && enrichedText.length > plainText.length * 0.5) {
@@ -391,7 +392,7 @@ export function useEditorActions(params: UseEditorActionsParams) {
     } finally {
       setImproving(false); setImprovingMode(null); setImprovingProgress(null);
     }
-  }, [editedContent, formData, selectedType, saveSnapshot, setEditedContent, toast, reapplyRulerMargins, editorRef, clearAllSuggestionMarks, user]);
+  }, [editedContent, formData, selectedType, saveSnapshot, setEditedContent, toast, logNeural, reapplyRulerMargins, editorRef, clearAllSuggestionMarks, user]);
 
   const handleRefinement = useCallback(async (responses: Record<string, string>) => {
     saveSnapshot(); setIsRefining(true);
@@ -539,11 +540,12 @@ export function useEditorActions(params: UseEditorActionsParams) {
       const docId = inserted?.id || null;
       if (docId) { setSavedDocId(docId); await autoShareDocumentWithFolderClient(docId, folderId, user.id); }
       toast({ title: "Documento salvo!" });
+      logNeural({ interaction_type: "document_generation", input_text: `Salvo: ${title}`, output_text: editedContent.substring(0, 300), quality_score: 0.8, metadata: { action: "save", documentType: formData.tipo, hasPdf: !!pdfStoragePath, module: "document_editor" } });
       learnDocumentStyle(user.id, formData.tipo, editedContent).catch(() => {});
       return docId;
     } catch (err) { console.error("Error saving:", err); toast({ title: "Erro ao salvar", variant: "destructive" }); return null; }
     finally { setSaving(false); }
-  }, [user, editedContent, formData, selectedType, savedDocId, forceLetterhead, marginTop, marginBottom, getDocumentTitle, toast, prepareContentForPdf]);
+  }, [user, editedContent, formData, selectedType, savedDocId, forceLetterhead, marginTop, marginBottom, getDocumentTitle, toast, logNeural, prepareContentForPdf]);
 
   const persistBeforeExport = useCallback(async (): Promise<string | null> => {
     // Mandatory save lock before any file export (PDF/DOCX)

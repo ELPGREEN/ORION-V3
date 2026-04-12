@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 import {
   Send, Loader2, Copy, Sparkles, User, Search, FileText, Scale, BookOpen,
   Gavel, Lightbulb, Trash2, Brain, ExternalLink, ArrowRight, Share2,
 } from "lucide-react";
-// [REMOVED] import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
+import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
 import { ChatFileUpload } from "@/components/dashboard/ChatFileUpload";
 import { SourcesLoadingIndicator } from "@/components/dashboard/SourcesLoadingIndicator";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ const ferramentasRapidas = [
 export default function ChatIAAdvogado() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { logNeural } = useNeuralFeedback();
   const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -169,6 +170,20 @@ export default function ChatIAAdvogado() {
           neuralEnhanced: finalMsg.neuralEnhanced,
         });
 
+        logNeural({
+          interaction_type: "chat",
+          input_text: messageText,
+          output_text: finalMsg.content,
+          user_id: user?.id,
+          metadata: {
+            provider: finalMsg.provider || "unknown",
+            neuralEnhanced: finalMsg.neuralEnhanced,
+            sourcesCount: (finalMsg.sources as any[])?.length || 0,
+            intent: finalMsg.intent,
+            module: "chat_ia_advogado",
+            streamed: true,
+          },
+        });
       } else {
         // ── NON-STREAMING FALLBACK ──
         const data = await response.json();
@@ -195,6 +210,19 @@ export default function ChatIAAdvogado() {
           neuralEnhanced: finalMsg.neuralEnhanced,
         });
 
+        logNeural({
+          interaction_type: "chat",
+          input_text: messageText,
+          output_text: finalMsg.content,
+          user_id: user?.id,
+          metadata: {
+            provider: finalMsg.provider || "unknown",
+            neuralEnhanced: finalMsg.neuralEnhanced,
+            sourcesCount: (finalMsg.sources as any[])?.length || 0,
+            intent: finalMsg.intent,
+            module: "chat_ia_advogado",
+          },
+        });
       }
     } catch (err: any) {
       // Remove the empty placeholder on error
@@ -470,7 +498,10 @@ export default function ChatIAAdvogado() {
         <div className="border-t border-border p-4 bg-background">
           <div className="max-w-4xl mx-auto">
             <div className="flex gap-2 items-end">
-              
+              <VoiceInputButton
+                onTranscript={(text) => setInput(prev => prev ? prev + " " + text : text)}
+                speakText={messages.filter(m => m.role === "assistant").at(-1)?.content}
+              />
               <ChatFileUpload
                 onTextExtracted={(text, fileName) => {
                   const ocrPrompt = `[OCR de "${fileName}"]\n\nTexto extraído:\n\n${text}\n\nAnalise o conteúdo deste documento e forneça um resumo dos pontos jurídicos relevantes.`;

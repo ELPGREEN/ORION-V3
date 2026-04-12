@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useNavigate } from "react-router-dom";
 import {
   Settings,
@@ -90,6 +90,7 @@ export default function ConfiguracoesEscritorio() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { logNeural } = useNeuralFeedback();
   const [config, setConfig] = useState<EscritorioConfig>(defaultConfig);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -189,6 +190,19 @@ export default function ConfiguracoesEscritorio() {
       });
 
       // 🧠 Neural: configuração salva = sinal administrativo de personalização
+      logNeural({
+        interaction_type: "configuracao_save",
+        input_text: `Configurações do escritório salvas: ${config.nome_escritorio} (${config.oab})`,
+        output_text: `email: ${config.email_contato} | website: ${config.website}`,
+        quality_score: 0.7,
+        user_id: user?.id,
+        metadata: {
+          nome_escritorio: config.nome_escritorio,
+          oab: config.oab,
+          has_logo: !!config.logo_url,
+          source: "configuracoes_escritorio",
+        },
+      });
     }
     setSaving(false);
   };

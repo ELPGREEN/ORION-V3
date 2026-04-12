@@ -4,38 +4,13 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
-
-// Local type stub
-interface DocumentElement {
-  type: string;
-  text: string;
-  wordCount?: number;
-  count?: number;
-}
-interface StructuralSection {
-  title: string;
-  present: boolean;
-  wordCount?: number;
-  elements?: DocumentElement[];
-}
-interface StructuralAnalysis {
-  sections: { title: string; wordCount: number; issues: string[] }[];
-  overallScore: number;
-  suggestions: string[];
-  presentSections: any[];
-  missingSections: { title: string; name?: string; description: string; suggestedContent: string; suggestion?: string; importance?: string }[];
-  score: number;
-  summary: string;
-  elements?: DocumentElement[];
-}
-
 import {
   AlertCircle, Loader2, ChevronDown, ChevronUp,
   Shield, FileSearch, Sparkles, PlusCircle, RefreshCw, XCircle,
   Type, AlignLeft, BookOpen, Scale, Pen, CalendarDays, List, Hash, FileText,
   CheckCircle2, Clock,
 } from "lucide-react";
-// [REMOVED] import type { StructuralAnalysis, DocumentElement } from "@/hooks/useAIRealtimeReview";
+import type { StructuralAnalysis, DocumentElement } from "@/hooks/useAIRealtimeReview";
 
 // ─── Element type config ───
 

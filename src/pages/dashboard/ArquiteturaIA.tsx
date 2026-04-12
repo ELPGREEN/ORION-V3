@@ -3,26 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Brain, Cpu, Zap, Eye, Shield, MessageCircle, ArrowRight, Layers, Target, Scissors, Workflow, Box, ScanLine, Network, Hand } from "lucide-react";
-// [REMOVED] import { computeThetas, applyRoPE, computeAttentionPattern } from "@/lib/rope";
+import { computeThetas, applyRoPE, computeAttentionPattern } from "@/lib/rope";
 import { motion, AnimatePresence } from "framer-motion";
-// [REMOVED] import { LANDMARK_NAMES, HAND_CONNECTIONS, GESTURE_ACTIONS, type GestureType } from "@/components/dashboard/neural/useGestureDetection";
-
-// Stubs for removed rope module
-function computeAttentionPattern(seqLen: number, heads: number): number[][] {
-  return Array.from({ length: seqLen }, (_, i) =>
-    Array.from({ length: seqLen }, (_, j) => Math.exp(-Math.abs(i - j) / 3) / seqLen)
-  );
-}
-function computeThetas(dim: number): number[] {
-  return Array.from({ length: dim / 2 }, (_, i) => 1 / Math.pow(10000, (2 * i) / dim));
-}
-function applyRoPE(vec: number[], pos: number, thetas: number[]): number[] {
-  return vec.map((v, i) => {
-    const theta = thetas[Math.floor(i / 2)] * pos;
-    return i % 2 === 0 ? v * Math.cos(theta) : v * Math.sin(theta);
-  });
-}
-
+import { LANDMARK_NAMES, HAND_CONNECTIONS, GESTURE_ACTIONS, type GestureType } from "@/components/dashboard/neural/useGestureDetection";
 
 // ═══ Tokenization Demo ═══
 function TokenizationDemo() {
@@ -616,26 +599,6 @@ function SpecializedModelsDiagram() {
 
 // ═══ Hand Landmark Interactive Visualization ═══
 
-const HAND_CONNECTIONS: [number, number][] = [
-  [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],
-  [0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17],
-];
-
-const LANDMARK_NAMES = [
-  "WRIST","THUMB_CMC","THUMB_MCP","THUMB_IP","THUMB_TIP",
-  "INDEX_MCP","INDEX_PIP","INDEX_DIP","INDEX_TIP",
-  "MIDDLE_MCP","MIDDLE_PIP","MIDDLE_DIP","MIDDLE_TIP",
-  "RING_MCP","RING_PIP","RING_DIP","RING_TIP",
-  "PINKY_MCP","PINKY_PIP","PINKY_DIP","PINKY_TIP",
-];
-
-const GESTURE_ACTIONS = [
-  { gesture: "open_palm", emoji: "✋", label: "Palma Aberta", action: "Parar / Cancelar" },
-  { gesture: "thumbs_up", emoji: "👍", label: "Positivo", action: "Confirmar / Aprovar" },
-  { gesture: "peace", emoji: "✌️", label: "Paz", action: "Modo Criativo" },
-  { gesture: "fist", emoji: "✊", label: "Punho", action: "Modo Foco" },
-  { gesture: "pointing", emoji: "👆", label: "Apontar", action: "Selecionar / Navegar" },
-];
 // Default hand pose (normalized 0-1 coordinates matching MediaPipe topology)
 const DEFAULT_HAND_POSE: { x: number; y: number }[] = [
   { x: 0.50, y: 0.95 }, // 0: WRIST

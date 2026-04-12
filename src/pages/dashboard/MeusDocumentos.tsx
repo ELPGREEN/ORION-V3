@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   FileText,
@@ -98,6 +98,8 @@ export default function MeusDocumentos() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { isCliente, isAdvogado, loading: roleLoading } = useUserRole();
+  const { logNeural } = useNeuralFeedback();
+  
   const [documents, setDocuments] = useState<Document[]>([]);
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -262,6 +264,19 @@ export default function MeusDocumentos() {
       toast({ title: "Documento excluído" });
       // ─── Neural: registra exclusão como sinal negativo de qualidade ───
       if (docToDelete) {
+        logNeural({
+          interaction_type: "document_deleted",
+          input_text: `Documento excluído: ${docToDelete.title} (${docToDelete.document_type})`,
+          output_text: docToDelete.content?.substring(0, 500) || "",
+          quality_score: 0.2, // Sinal negativo — documento foi descartado
+          user_id: user?.id,
+          metadata: {
+            document_id: id,
+            document_type: docToDelete.document_type,
+            status: docToDelete.document_type || "unknown",
+            source: "meus_documentos_delete",
+          },
+        });
       }
     }
     setDeleting(null);
@@ -332,6 +347,14 @@ export default function MeusDocumentos() {
           window.open(signedUrlData.signedUrl, "_blank");
           toast({ title: "Download iniciado!" });
           // ─── Neural: download = sinal positivo de uso do documento ───
+          logNeural({
+            interaction_type: "document_viewed",
+            input_text: `Download: ${doc.title} (${doc.document_type})`,
+            output_text: doc.content?.substring(0, 300) || "",
+            quality_score: 0.75,
+            user_id: user?.id,
+            metadata: { document_id: doc.id, document_type: doc.document_type, source: "meus_documentos_download" },
+          });
           return;
         }
       } catch (e) {
@@ -348,6 +371,14 @@ export default function MeusDocumentos() {
     });
     toast({ title: "PDF baixado!" });
     // ─── Neural: PDF gerado = sinal positivo ───
+    logNeural({
+      interaction_type: "document_viewed",
+      input_text: `PDF gerado: ${doc.title} (${doc.document_type})`,
+      output_text: doc.content?.substring(0, 300) || "",
+      quality_score: 0.8,
+      user_id: user?.id,
+      metadata: { document_id: doc.id, document_type: doc.document_type, source: "meus_documentos_pdf" },
+    });
   };
 
   // Filter documents

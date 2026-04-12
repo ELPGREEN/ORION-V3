@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 
 interface ClientProfile {
   id: string;
@@ -22,6 +22,7 @@ interface ClientProfile {
 export default function PerfilCliente() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { logNeural } = useNeuralFeedback();
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ClientProfile | null>(null);
@@ -119,6 +120,20 @@ export default function PerfilCliente() {
       });
 
       // ─── Neural: atualização de perfil = sinal de engajamento ───
+      logNeural({
+        interaction_type: "crm_client_event",
+        input_text: `Perfil atualizado: ${form.nome}`,
+        output_text: `Telefone: ${form.telefone || "N/A"} | CPF: ${form.cpf ? "informado" : "não informado"} | Descrição: ${form.descricao_problema?.substring(0, 200) || "N/A"}`,
+        quality_score: 0.75,
+        user_id: user.id,
+        metadata: {
+          temTelefone: !!form.telefone,
+          temCPF: !!form.cpf,
+          temDescricao: !!form.descricao_problema,
+          source: "perfil_cliente_save",
+          status_novo: "perfil_atualizado",
+        },
+      });
 
       toast({ title: "Perfil salvo!", description: "Suas informações foram atualizadas." });
     } catch (err: any) {

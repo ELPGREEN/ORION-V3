@@ -4,7 +4,7 @@ import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSignatureRealtime } from "@/hooks/useSignatureRealtime";
-// Voice evolution removed
+import { syncVoiceEvolutionFromSupabase } from "@/lib/neural/orion-voice-evolution";
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteNavbar } from "./ClienteNavbar";
 import { DashboardSidebar } from "./DashboardSidebar";
@@ -13,7 +13,7 @@ import { GenerationBanner } from "./GenerationBanner";
 import { MobileSidebarOverlay } from "./MobileSidebarOverlay";
 import { DashboardBackground } from "./DashboardBackground";
 import { MouseTrailEffect } from "./MouseTrailEffect";
-// GlobalOrionListener removed
+import { GlobalOrionListener } from "./GlobalOrionListener";
 
 import { ProdutorSidebar } from "./ProdutorSidebar";
 import { AfiliadoSidebar } from "./AfiliadoSidebar";
@@ -38,6 +38,9 @@ export default function DashboardLayout() {
   // Redirect to auth if not logged in
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
+    if (!authLoading && user) {
+      syncVoiceEvolutionFromSupabase().catch(() => {});
+    }
   }, [user, authLoading, navigate]);
 
   // First-access onboarding: redirect to ConfigurarIA only once per user
@@ -93,7 +96,7 @@ export default function DashboardLayout() {
   if (!user) return null;
 
   // Orion voice listener — only active inside the dashboard (not on public pages)
-  const orionListener = null;
+  const orionListener = <GlobalOrionListener />;
 
   const PageFallback = (
     <div className="flex items-center justify-center h-64">

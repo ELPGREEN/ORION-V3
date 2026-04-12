@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { Send, User, Scale, MessageSquare, Plus, Trash2, Search, X, Bot, BellRing, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,7 @@ export default function ChatHumano() {
   const { user } = useAuth();
   const { isAdvogado, isCliente } = useUserRole();
   const { toast } = useToast();
+  const { logNeural } = useNeuralFeedback();
   const { isLawyerOnline } = useLawyerPresence();
   const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -421,6 +422,18 @@ export default function ChatHumano() {
       .eq("id", activeConversation);
 
     // Neural Feedback
+    logNeural({
+      interaction_type: "chat_humano",
+      input_text: content,
+      output_text: content,
+      user_id: user.id,
+      metadata: {
+        conversation_id: activeConversation,
+        sender_role: isAdvogado ? "advogado" : "cliente",
+        source: "chat_humano",
+      },
+    });
+
     // Trigger email notification
     if (insertedMessage) {
       supabase.functions.invoke("notifications", {
@@ -449,6 +462,11 @@ export default function ChatHumano() {
           content: m.content,
         }));
 
+        // Integração Agente-Eu v22.3: envia estado consciente para a Secretaria
+        const { getAgenteEu } = await import("@/lib/neural/agents/self-model-agent");
+        const agenteEu = getAgenteEu();
+        const selfState = agenteEu.getState();
+
         const { data: secretaryData, error: secError } = await supabase.functions.invoke("secretaria-ia", {
           body: {
             messages: chatHistory,
@@ -456,6 +474,13 @@ export default function ChatHumano() {
             clienteId: user.id,
             mode: convMode || "ai_autonomous",
             lawyerInstructions: convInstructions || null,
+            consciousnessState: {
+              confidence: selfState.confidenceLevel,
+              emotionalValence: selfState.emotionalState.valence,
+              arousal: selfState.emotionalState.arousal,
+              attentionFocus: selfState.attentionFocus,
+              activeModalities: selfState.activeModalities,
+            },
           },
         });
 

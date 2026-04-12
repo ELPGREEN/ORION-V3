@@ -13,9 +13,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import AnalyticsDashboard from "@/components/dashboard/AnalyticsDashboard";
 import SecretarySummariesWidget from "@/components/dashboard/SecretarySummariesWidget";
+import OrionStatusWidget from "@/components/dashboard/OrionStatusWidget";
 import AIDailySummaryWidget from "@/components/dashboard/AIDailySummaryWidget";
 
 interface DashboardStats {
@@ -40,6 +41,7 @@ export default function DashboardHome() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { logNeural } = useNeuralFeedback();
   const { unlocked: adminUnlocked } = useAdminAccess();
   const [showAnalytics, setShowAnalytics] = useState(false);
   const userName = user?.user_metadata?.nome || user?.email?.split("@")[0] || "Admin";
@@ -73,6 +75,14 @@ export default function DashboardHome() {
         pendingConsultas: consultasRes.count || 0,
       };
 
+      logNeural({
+        interaction_type: "document_viewed",
+        input_text: `Dashboard acessado — ${new Date().toISOString()}`,
+        output_text: `docs:${stats.documents} processos:${stats.cases} chats:${stats.chats}`,
+        quality_score: 0.6,
+        user_id: user.id,
+        metadata: { source: "dashboard_home", ...stats },
+      });
 
       return { stats, activities: (notifRes.data || []) as RecentActivity[] };
     },
@@ -131,6 +141,14 @@ export default function DashboardHome() {
   ];
 
   const handleQuickAction = (title: string, path: string) => {
+    logNeural({
+      interaction_type: "document_generation",
+      input_text: `Ação rápida clicada: ${title}`,
+      output_text: path,
+      quality_score: 0.75,
+      user_id: user?.id,
+      metadata: { source: "dashboard_quick_action", action_title: title, path },
+    });
     navigate(path);
   };
 
@@ -246,6 +264,7 @@ export default function DashboardHome() {
 
       {/* ── Orion + AI Summary Row ── */}
       <div className="grid lg:grid-cols-2 gap-4">
+        <OrionStatusWidget />
         <AIDailySummaryWidget />
       </div>
 

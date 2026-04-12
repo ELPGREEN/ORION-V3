@@ -9,6 +9,8 @@ const PerfilCliente = lazy(() => import("./PerfilCliente"));
 const ConfiguracoesEscritorio = lazy(() => import("./ConfiguracoesEscritorio"));
 const PlanoUsuario = lazy(() => import("./PlanoUsuario"));
 const WebhooksPage = lazy(() => import("./WebhooksPage"));
+const BiometriaConfigPage = lazy(() => import("@/components/dashboard/settings/BiometriaConfigPanel"));
+const DispositivosConfigPage = lazy(() => import("@/components/dashboard/settings/DispositivosConfigPanel"));
 const AmazonConfigPage = lazy(() => import("@/components/dashboard/settings/AmazonIntegrationPanel"));
 const MicrophoneHardwarePage = lazy(() => import("@/components/dashboard/settings/MicrophoneHardwarePanel"));
 const MeusProdutos = lazy(() => import("./MeusProdutos"));
@@ -68,14 +70,14 @@ export default function ConfiguracoesRouter() {
       label: "Biometria",
       icon: ScanFace,
       roles: ["owner", "advogado"],
-      content: <div className="text-muted-foreground text-sm p-8 text-center">Em reimplementação</div>,
+      content: <BiometriaConfigPage />,
     },
     {
       value: "dispositivos",
       label: "Dispositivos",
       icon: Radio,
       roles: ["owner"],
-      content: <div className="text-muted-foreground text-sm p-8 text-center">Em reimplementação</div>,
+      content: <DispositivosConfigPage />,
     },
     {
       value: "amazon",

@@ -6,8 +6,13 @@ import { useAdminAccess } from "@/hooks/useAdminAccess";
 import logoElp from "@/assets/logo-elp.webp";
 import { useState } from "react";
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
-import { X, LogOut } from "lucide-react";
-import { getMenuIcon } from "./sidebarIconMap";
+import {
+  getOrionIcon,
+  IconClose,
+  IconLogout,
+  IconChevronDown,
+} from "./icons/OrionIcons";
+
 interface MobileSidebarOverlayProps {
   open: boolean;
   onClose: () => void;
@@ -229,7 +234,7 @@ export function MobileSidebarOverlay({ open, onClose, role, label }: MobileSideb
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 flex-shrink-0 text-slate-500 hover:text-cyan-400">
-            <X size={16} />
+            <IconClose size={16} />
           </Button>
         </div>
 
@@ -259,7 +264,7 @@ export function MobileSidebarOverlay({ open, onClose, role, label }: MobileSideb
                     {(section.items ?? []).filter(Boolean).map((item) => {
                       if (!item?.id) return null;
                       const active = isActive(item.path);
-                      const Icon = getMenuIcon(item.id);
+                      const Icon = getOrionIcon(item.id);
                       return (
                         <button
                           key={item.id}
@@ -310,7 +315,7 @@ export function MobileSidebarOverlay({ open, onClose, role, label }: MobileSideb
             }}
             className="w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-slate-500 hover:text-red-400 transition-colors"
           >
-            <LogOut size={16} />
+            <IconLogout size={16} />
             Sair
           </button>
         </div>

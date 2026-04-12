@@ -1,5 +1,5 @@
 import { useState } from "react";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useAuth } from "@/contexts/AuthContext";
 import { Languages, Loader2, ArrowRightLeft, Copy, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ const LANGUAGES = [
 
 export function TranslationPanel() {
   const { user } = useAuth();
+  const { logNeural } = useNeuralFeedback();
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [sourceLanguage, setSourceLanguage] = useState("");
@@ -80,6 +81,19 @@ export function TranslationPanel() {
       });
 
       // 🧠 Neural: tradução jurídica = dado valioso de cross-linguagem
+      logNeural({
+        interaction_type: "search",
+        input_text: sourceText.substring(0, 500),
+        output_text: response.data.translatedText.substring(0, 500),
+        quality_score: 0.78,
+        user_id: user?.id,
+        metadata: {
+          module: "translation_panel",
+          sourceLanguage: response.data.detectedSourceLanguage || sourceLanguage,
+          targetLanguage,
+          charCount: response.data.translatedLength,
+        },
+      });
     } catch (error: any) {
       toast({
         title: "Erro na tradução",

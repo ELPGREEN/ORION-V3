@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 import {
   ListTodo,
@@ -73,6 +73,7 @@ const statusConfig: Record<string, { label: string; icon: typeof Clock }> = {
 export default function TarefasContent() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { logNeural } = useNeuralFeedback();
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState<string>("todos");
@@ -171,6 +172,19 @@ export default function TarefasContent() {
         toast({ title: "Tarefa criada!" });
         setDialogOpen(false);
         fetchTarefas();
+        logNeural({
+          interaction_type: "tarefa_event",
+          input_text: `Nova tarefa criada: ${payload.titulo}`,
+          output_text: `Prioridade: ${payload.prioridade} | Status: ${payload.status}`,
+          quality_score: payload.prioridade === "alta" ? 0.85 : 0.7,
+          user_id: user.id,
+          metadata: {
+            prioridade: payload.prioridade,
+            status: payload.status,
+            processo_ref: payload.processo_ref,
+            module: "tarefas",
+          },
+        });
       }
     }
 
@@ -200,6 +214,14 @@ export default function TarefasContent() {
         prev.map((t) => (t.id === tarefa.id ? { ...t, status: newStatus } : t))
       );
       if (newStatus === "concluido") {
+        logNeural({
+          interaction_type: "tarefa_event",
+          input_text: `Tarefa concluída: ${tarefa.titulo}`,
+          output_text: `Prioridade: ${tarefa.prioridade}`,
+          quality_score: 0.9,
+          user_id: user?.id,
+          metadata: { module: "tarefas", status_novo: "concluido", prioridade: tarefa.prioridade },
+        });
       }
     }
   };

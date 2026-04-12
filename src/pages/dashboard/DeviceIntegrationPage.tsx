@@ -1,5 +1,5 @@
 import { SEO } from "@/components/SEO";
-import { Construction } from "lucide-react";
+import DeviceIntegrationPanel from "@/components/dashboard/neural/DeviceIntegrationPanel";
 
 export default function DeviceIntegrationPage() {
   return (
@@ -14,10 +14,7 @@ export default function DeviceIntegrationPage() {
           Gerencie conexões Bluetooth e dispositivos IoT via MQTT
         </p>
       </div>
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-3">
-        <Construction className="h-10 w-10" />
-        <p className="text-sm">Módulo em reimplementação</p>
-      </div>
+      <DeviceIntegrationPanel />
     </div>
   );
 }

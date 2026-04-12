@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useNavigate } from "react-router-dom";
 import { Bell, FileText, Calendar, CreditCard, PenTool, CheckCircle, Loader2, Trash2, Filter, X, ChevronRight, MessageSquare, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ export default function NotificacoesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { logNeural } = useNeuralFeedback();
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<string | null>(null);
@@ -152,6 +153,14 @@ export default function NotificacoesPage() {
     if (!n.lida) marcarComoLida(n.id);
 
     // 🧠 Neural: registro de leitura de notificação como sinal de engajamento
+    logNeural({
+      interaction_type: "notificacao_read",
+      input_text: `Notificação lida: ${n.titulo} (tipo: ${n.tipo})`,
+      output_text: n.descricao || "",
+      quality_score: 0.55,
+      user_id: user?.id,
+      metadata: { notif_id: n.id, tipo: n.tipo, lida: n.lida, source: "notificacoes_page" },
+    });
 
     // If notification has a specific link (not generic dashboard), navigate there
     if (isUsefulLink(n.link)) {

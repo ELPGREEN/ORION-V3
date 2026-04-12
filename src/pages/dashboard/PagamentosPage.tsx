@@ -36,7 +36,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { CreateInvoiceDialog } from "@/components/dashboard/payments/CreateInvoiceDialog";
 import { PaymentsDashboard } from "@/components/dashboard/payments/PaymentsDashboard";
 import { InvoicesList } from "@/components/dashboard/payments/InvoicesList";
@@ -73,6 +73,8 @@ export default function PagamentosPage() {
   const { user } = useAuth();
   const { isAdvogado } = useUserRole();
   const { toast } = useToast();
+  const { logNeural } = useNeuralFeedback();
+  
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [balance, setBalance] = useState<Balance | null>(null);
@@ -163,6 +165,19 @@ export default function PagamentosPage() {
       });
 
       // ─── Neural: reembolso = sinal de problema → score baixo ───
+      logNeural({
+        interaction_type: "crm_client_event",
+        input_text: `Reembolso processado: ${refundDialog.description || "pagamento"}`,
+        output_text: `Valor: R$ ${data.refund.amount?.toFixed(2)} | Cliente: ${refundDialog.customer_email || ""}`,
+        quality_score: 0.3,
+        user_id: user?.id,
+        metadata: {
+          payment_id: refundDialog.id,
+          amount: data.refund.amount,
+          source: "pagamentos_refund",
+          status_novo: "reembolsado",
+        },
+      });
 
       setRefundDialog(null);
       setRefundAmount("");

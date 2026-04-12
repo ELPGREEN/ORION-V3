@@ -2,8 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logoElp from "@/assets/logo-elp.webp";
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
-import { LogOut } from "lucide-react";
-import { getMenuIcon } from "./sidebarIconMap";
+import { getOrionIcon, IconLogout } from "./icons/OrionIcons";
 
 const afiliadoItems = [
   { id: "home", label: "Meu Painel", path: "/dashboard" },
@@ -49,7 +48,7 @@ export function AfiliadoSidebar({ collapsed }: AfiliadoSidebarProps) {
       <nav className="flex-1 py-3 px-1 space-y-0.5 overflow-y-auto">
         {afiliadoItems.map((item) => {
           const active = isActive(item.path);
-          const Icon = getMenuIcon(item.id);
+          const Icon = getOrionIcon(item.id);
           return (
             <button
               key={item.id}
@@ -70,7 +69,7 @@ export function AfiliadoSidebar({ collapsed }: AfiliadoSidebarProps) {
           title={collapsed ? "Sair" : undefined}
           className={`w-full flex items-center gap-3 px-3 py-2.5 text-[11px] text-slate-500 hover:text-red-400 transition-colors ${collapsed ? "justify-center" : ""}`}
         >
-          <LogOut size={16} />
+          <IconLogout size={16} />
           {!collapsed && "Sair"}
         </button>
       </div>

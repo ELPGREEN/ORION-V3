@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, BookOpen, ExternalLink, Loader2, Scale, Brain, Sparkles, X, Copy, Filter, ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, BarChart3, FileText } from "lucide-react";
 import { JurisdictionSelector, isSourceInJurisdiction, type Jurisdiction } from "@/components/dashboard/JurisdictionSelector";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -293,6 +293,8 @@ export default function PesquisaJurisprudencial() {
   const { isAdvogado } = useUserRole();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { logNeural } = useNeuralFeedback();
+
   const saved = (() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -429,6 +431,20 @@ export default function PesquisaJurisprudencial() {
       setSearched(true);
 
       // 🧠 Neural feedback: registra busca como sinal de aprendizado
+      logNeural({
+        interaction_type: "search",
+        input_text: query.trim(),
+        output_text: allResults.slice(0, 3).map(r => `${r.numero}: ${r.ementa}`).join("\n"),
+        metadata: {
+          tribunal: selectedTribunal,
+          resultsCount: allResults.length,
+          neuralCount: results.length,
+          totalTimeMs: totalTime,
+          pipeline: neuralResponse.pipeline,
+          area: neuralResponse.area,
+          module: "pesquisa_jurisprudencial",
+        },
+      });
 
       toast({
         title: "Pesquisa concluída",

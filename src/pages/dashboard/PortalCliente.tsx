@@ -15,7 +15,9 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// OrionBackground3D removed
+const OrionBackground3D = lazy(() =>
+  import("@/components/ui/OrionBackground3D").then(m => ({ default: m.OrionBackground3D }))
+);
 
 interface ProcessoResumo {
   id: string;
@@ -94,6 +96,10 @@ export default function PortalCliente() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
+      {/* 3D Background */}
+      <Suspense fallback={null}>
+        <OrionBackground3D variant="cyan" intensity="low" className="fixed" />
+      </Suspense>
 
       <div className="relative z-10 space-y-6 p-1">
         {/* Hero Header */}

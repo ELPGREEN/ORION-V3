@@ -17,8 +17,18 @@ import { Input } from "@/components/ui/input";
 import logoElp from "@/assets/logo-elp.webp";
 
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
-import { ChevronRight, ChevronLeft, Plus, ChevronDown, Brain, User, Settings, LogOut } from "lucide-react";
-import { getMenuIcon } from "./sidebarIconMap";
+import {
+  getOrionIcon,
+  IconChevronDown,
+  IconChevronLeft,
+  IconChevronRight,
+  IconPlus,
+  IconUser,
+  IconSettings,
+  IconLogout,
+  IconBrain,
+} from "./icons/OrionIcons";
+
 interface DashboardSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -188,7 +198,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
           className="h-7 w-7 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 flex-shrink-0"
           title={collapsed ? "Expandir menu" : "Recolher menu"}
         >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {collapsed ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
         </Button>
       </div>
 
@@ -199,7 +209,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
             className={s.quickAction}
             onClick={() => navigate("/dashboard/gerar-documento?tipo=contrato-servicos")}
           >
-            <Plus size={14} />
+            <IconPlus size={14} />
             NOVO DOCUMENTO
           </Button>
         </div>
@@ -214,7 +224,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
               {!collapsed && (
                 <button onClick={() => toggleSection(sIdx)} className={s.sectionHeader}>
                   <span>{section.label}</span>
-                  <ChevronDown
+                  <IconChevronDown
                     size={12}
                     className={`transition-transform duration-200 ${isOpen ? "" : "-rotate-90"}`}
                   />
@@ -231,14 +241,14 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                   className="w-full flex items-center justify-center py-2 text-slate-600 hover:text-cyan-400 transition-colors"
                   title="Área restrita — clique para desbloquear"
                 >
-                  <Brain size={16} />
+                  <IconBrain size={16} />
                 </button>
               )}
               {((collapsed || isOpen) && !(section.restricted && !adminUnlocked)) && (
                 <div className={`${collapsed ? "py-1" : "pb-1"} space-y-0.5`}>
                   {section.items.map((item) => {
                     const active = isActive(item.path);
-                    const Icon = getMenuIcon(item.id);
+                    const Icon = getOrionIcon(item.id);
                     return (
                       <Link
                         key={item.id}
@@ -285,7 +295,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
           <>
             <div className="flex items-center gap-3 mb-3">
               <div className={s.userAvatar}>
-                <User size={16} className="text-cyan-400/70" />
+                <IconUser size={16} className="text-cyan-400/70" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className={s.userName}>{userName}</p>
@@ -299,7 +309,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                 className={s.settingsBtn}
                 onClick={() => navigate("/dashboard/configuracoes")}
               >
-                <Settings size={12} className="mr-1" />
+                <IconSettings size={12} className="mr-1" />
                 {t.dashboard.settings}
               </Button>
               <Button
@@ -308,7 +318,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
                 className={s.logoutBtn}
                 onClick={handleSignOut}
               >
-                <LogOut size={12} className="mr-1" />
+                <IconLogout size={12} className="mr-1" />
                 {t.common.logout}
               </Button>
             </div>
@@ -322,7 +332,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
               onClick={handleSignOut}
               title={t.common.logout}
             >
-              <LogOut size={16} />
+              <IconLogout size={16} />
             </Button>
           </div>
         )}

@@ -9,5 +9,3 @@ project_id = "dlwafedtlvbvuoaopvsl"
     verify_jwt = false
   [functions.orion-produtor-ai]
     verify_jwt = false
-  [functions.neural-vision]
-    verify_jwt = false

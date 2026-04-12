@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-// [REMOVED] import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
+import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
 
 const PREMIUM_PLANS = ["professional", "business", "enterprise"];
 const FREE_TRIAL_TOKENS = 1000;
@@ -23,7 +23,7 @@ export function useUserPlan() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const isOwner = (["info@elpgreen.com","info@iasofthub.com","ericson@elpgreen.com","ericsonpiccoli.dev@gmail.com"].includes)(user?.email);
+  const isOwner = isOwnerEmail(user?.email);
 
   // Premium = owner OR has a confirmed Stripe subscription with a premium plan
   const hasConfirmedSubscription = !!plan?.stripe_subscription_id && PREMIUM_PLANS.includes(plan?.plan_type ?? "");

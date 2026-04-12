@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-// [REMOVED] import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
+import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
 import { ChatFileUpload } from "@/components/dashboard/ChatFileUpload";
 
 interface ChatInputAreaProps {
@@ -119,7 +119,11 @@ export function ChatInputArea({
       )}
 
       <div className="flex gap-2 items-end">
-        
+        <VoiceInputButton
+          onTranscript={(text) => setInput((prev) => mergeInputTranscript(prev, text))}
+          speakText={lastAssistantText}
+          className="shrink-0"
+        />
         <ChatFileUpload
           compact
           onTextExtracted={onFileExtracted}

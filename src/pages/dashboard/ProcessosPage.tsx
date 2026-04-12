@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { useRefreshOnFocus } from "@/hooks/useRefreshOnFocus";
 import {
   FileText,
@@ -161,6 +161,7 @@ export default function ProcessosPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { isCliente } = useUserRole();
+  const { logNeural } = useNeuralFeedback();
   const [processos, setProcessos] = useState<Processo[]>([]);
   const [clientes, setClientes] = useState<ClientProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -548,6 +549,20 @@ export default function ProcessosPage() {
         fetchProcessos();
 
         // 🧠 Neural: novo processo = evento de alta relevância jurídica
+        logNeural({
+          interaction_type: "crm_client_event",
+          input_text: `Novo processo: ${payload.numero_processo} — ${payload.tipo} — ${payload.cliente_nome}`,
+          output_text: `Status: ${payload.status} | Vara: ${payload.vara || "N/A"} | Valor: ${payload.valor_causa || 0}`,
+          quality_score: 0.88,
+          user_id: user.id,
+          metadata: {
+            module: "processos",
+            tipo: payload.tipo,
+            status_novo: payload.status,
+            valor_causa: payload.valor_causa,
+            client_profile_id: payload.client_profile_id,
+          },
+        });
       }
     }
 
@@ -674,6 +689,19 @@ export default function ProcessosPage() {
         toast({ title: "Andamento adicionado!" });
 
         // 🧠 Neural: andamento processual = dado jurídico de alta relevância
+        logNeural({
+          interaction_type: "document_generation",
+          input_text: `Andamento processual: ${andamentoForm.tipo} — ${andamentoForm.data_ocorrencia}`,
+          output_text: andamentoForm.descricao.trim(),
+          quality_score: 0.82,
+          user_id: user.id,
+          metadata: {
+            module: "processos_andamento",
+            tipo: andamentoForm.tipo,
+            processo_id: andamentoProcessoId,
+            hasAttachment: !!attachmentPath,
+          },
+        });
       }
 
       setAndamentoDialogOpen(false);

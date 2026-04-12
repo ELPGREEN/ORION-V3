@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { OrionProductInsights } from "@/components/dashboard/OrionProductInsights";
 
 export default function ProdutorDashboard() {
   const { user } = useAuth();
@@ -222,7 +223,12 @@ export default function ProdutorDashboard() {
         </Card>
       )}
 
-      {/* Orion Insights — removed, to be reimplemented */}
+      {/* Orion Insights */}
+      {products && products.length > 0 && (
+        <OrionProductInsights
+          context={`Produtos ativos: ${activeProducts}, Vendas: ${orders?.length || 0}, Receita: R$${(totalRevenue / 100).toFixed(2)}, Afiliados: ${totalAffiliates}, Clientes ativos: ${customerAccessCount || 0}`}
+        />
+      )}
       {/* Empty state */}
       {(!products || products.length === 0) && (
         <Card className="bg-card/60 border-dashed border-primary/30">

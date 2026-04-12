@@ -13,3 +13,6 @@ export { PhilosophySection } from './PhilosophySection';
 export { TestimonialsCarousel } from './TestimonialsCarousel';
 export { SystemArchitectureSection } from './SystemArchitectureSection';
 export { TechStackSection } from './TechStackSection';
+export { WhyOrionSection } from './WhyOrionSection';
+export { SecurityShieldSection } from './SecurityShieldSection';
+export { OrionVideoShowcase } from './OrionVideoShowcase';

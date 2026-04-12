@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-// [REMOVED] import { OrionStoreAssistant } from "@/components/store/OrionStoreAssistant";
+import { OrionStoreAssistant } from "@/components/store/OrionStoreAssistant";
 
 const PLACEHOLDER_IMAGES = [
   "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
@@ -316,7 +316,13 @@ export default function Loja() {
         )}
       </div>
 
-      {/* Orion Store Assistant removed */}
+      {/* Orion Store Assistant */}
+      {filteredProducts.length > 0 && (
+        <OrionStoreAssistant
+          productTitle={`Loja de ${storeName}`}
+          productDescription={`Loja com ${filteredProducts.length} produtos digitais disponíveis`}
+        />
+      )}
 
       {/* Footer */}
       <div className="border-t border-border/30 bg-card/50">

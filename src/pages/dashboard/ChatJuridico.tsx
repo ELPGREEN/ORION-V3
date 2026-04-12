@@ -17,8 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useChatIA } from "@/contexts/ChatIAContext";
 import type { ChatIAMessage } from "@/hooks/useChatIAPersistence";
 import ProviderDiagnosticPanel from "@/components/dashboard/ProviderDiagnosticPanel";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
-  const neuralConfig = { enabled: false } as any;
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { useMessageNLP } from "@/hooks/useMessageNLP";
 
 const sugestoesIniciais = [
@@ -59,7 +59,8 @@ export default function ChatJuridico() {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const neuralConfig = { enabled: false } as any;
+  const { logNeural } = useNeuralFeedback();
+  const { config: neuralConfig } = useNeuralConfig();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [laypersonMode, setLaypersonMode] = useState(false);
@@ -141,6 +142,19 @@ export default function ChatJuridico() {
       });
 
       // 🧠 Neural feedback: registra cada troca como sinal de aprendizado
+      logNeural({
+        interaction_type: "chat",
+        input_text: messageText,
+        output_text: assistantMessage.content,
+        user_id: user?.id,
+        metadata: {
+          provider: assistantMessage.provider || "unknown",
+          neuralEnhanced: assistantMessage.neuralEnhanced,
+          sourcesCount: assistantMessage.sources?.length || 0,
+          module: "chat_juridico",
+        },
+      });
+
       // 🤖 NLP browser-side: sentiment do user + NER da resposta
       analyzeMessage(userMessage.id, messageText);
       analyzeMessage(assistantMessage.id, assistantMessage.content);
@@ -338,10 +352,24 @@ export default function ChatJuridico() {
                         <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => copyToClipboard(message.content)}>
                           <Copy className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => console.log("thumbs up", message.provider)}>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => logNeural({
+                          interaction_type: "chat",
+                          input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
+                          output_text: message.content,
+                          quality_score: 0.9,
+                          user_id: user?.id,
+                          metadata: { thumbs: "up", provider: message.provider, module: "chat_juridico" },
+                        })}>
                           <ThumbsUp className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => console.log("thumbs down", message.provider)}>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => logNeural({
+                          interaction_type: "chat",
+                          input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
+                          output_text: message.content,
+                          quality_score: 0.2,
+                          user_id: user?.id,
+                          metadata: { thumbs: "down", provider: message.provider, module: "chat_juridico" },
+                        })}>
                           <ThumbsDown className="h-3 w-3" />
                         </Button>
                       </div>

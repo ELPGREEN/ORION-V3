@@ -1,7 +1,7 @@
 import { Search, Brain, Zap, Clock, AlertTriangle, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SearchResultCard } from "./SearchResultCard";
-// [REMOVED] import { NeuralSearchResultCard } from "./NeuralSearchResultCard";
+import { NeuralSearchResultCard } from "./NeuralSearchResultCard";
 import { SOURCE_LABELS, type SourceId, type UnifiedSearchResponse, type NeuralSearchResponse } from "@/lib/api";
 
 interface Props {
@@ -169,7 +169,7 @@ export function ComparisonResults({
           )}
 
           {neuralResponse?.results.map((result, i) => (
-            <SearchResultCard key={`neural-${result.source}-${i}`} result={{ ...result, sourceLabel: result.source_label || result.source, description: result.content || "", type: "jurisprudencia" as const }} />
+            <NeuralSearchResultCard key={`neural-${result.source}-${i}`} result={result} searchQuery={displayQuery} />
           ))}
 
           {neuralCount === 0 && neuralResponse && (

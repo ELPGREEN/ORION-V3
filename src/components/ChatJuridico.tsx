@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Send, Scale, AlertTriangle, Calendar, Brain, ExternalLink, Sparkles, Loader2, Lock, ThumbsUp, ThumbsDown } from "lucide-react";
-// [REMOVED] import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
+import { VoiceInputButton } from "@/components/dashboard/VoiceInputButton";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,8 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChatIA } from "@/contexts/ChatIAContext";
-  const neuralConfig = { enabled: false };
-  const adaptiveCtx = {};
+import { useNeuralConfig } from "@/hooks/useNeuralConfig";
+import { useAdaptiveContext } from "@/hooks/useAdaptiveContext";
 import type { ChatIAMessage } from "@/hooks/useChatIAPersistence";
 
 const MAX_FREE_QUERIES = 5;
@@ -19,8 +19,8 @@ export function ChatJuridico() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isCliente } = useUserRole();
-  const neuralConfig = { enabled: false };
-  const adaptiveCtx = {};
+  const { config: neuralConfig } = useNeuralConfig();
+  const { adaptFromMessage, submitFeedback } = useAdaptiveContext();
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -155,6 +155,7 @@ export function ChatJuridico() {
     await saveMessage(convId, { role: "user", content: messageText });
     
     // Auto-adapt communication context based on user message
+    adaptFromMessage(messageText).catch(() => {});
 
     if (isCliente) {
       setConsultaCount((prev) => prev + 1);
@@ -169,12 +170,12 @@ export function ChatJuridico() {
           messages: conversationHistory,
           isVoice: voiceFlag,
           personaConfig: neuralConfig ? {
-            speech_style: "normal",
-            formality_level: "formal",
-            humor_mode: "none",
-            nickname: "",
-            mirroring_enabled: false,
-            personality_prompt: "",
+            speech_style: neuralConfig.speech_style,
+            formality_level: neuralConfig.formality_level,
+            humor_mode: neuralConfig.humor_mode,
+            nickname: neuralConfig.nickname,
+            mirroring_enabled: neuralConfig.mirroring_enabled,
+            personality_prompt: neuralConfig.personality_prompt,
           } : undefined,
         },
       });
@@ -404,7 +405,15 @@ export function ChatJuridico() {
       {/* Input */}
       <div className="px-4 md:px-6 py-4 border-t border-border bg-card/30">
         <div className="flex items-end gap-2">
-          
+          <VoiceInputButton
+            onTranscript={(text) => setInput(text)}
+            onAutoSend={(text) => {
+              isVoiceMessageRef.current = true;
+              handleSend(text);
+            }}
+            speakText={lastAssistantContent}
+            isProcessing={isTyping}
+          />
           <div className="flex-1 relative">
             <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
               placeholder={isLimitReached ? "Limite de consultas gratuitas atingido. Agende uma consulta para continuar." : "Digite sua consulta jurídica aqui..."} rows={1}

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ShoppingCart, Star, Package, Shield, Zap } from "lucide-react";
-// [REMOVED] import { OrionStoreAssistant } from "@/components/store/OrionStoreAssistant";
+import { OrionStoreAssistant } from "@/components/store/OrionStoreAssistant";
 
 const PLACEHOLDER = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800";
 
@@ -185,7 +185,12 @@ export default function ProdutoDetalhe() {
         </div>
       </div>
 
-      {/* Orion Store Assistant removed */}
+      {/* Orion Store Assistant */}
+      <OrionStoreAssistant
+        productTitle={product.title}
+        productDescription={product.description || undefined}
+        productPrice={product.price_cents}
+      />
 
       {/* Footer */}
       <div className="border-t border-border/30 bg-card/50 mt-8">

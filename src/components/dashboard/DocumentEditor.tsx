@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-// [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
+import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeStorageFileName } from "@/lib/utils";
 import { RichTextEditor, type AIBubbleAction, getRulerIndentRef, getRulerFirstLineIndentRef, getRulerRightIndentRef } from "@/components/dashboard/RichTextEditor";
@@ -28,7 +28,7 @@ import { RewriteVariationsPanel } from "@/components/dashboard/editor/RewriteVar
 import { AIReviewPanel } from "@/components/dashboard/editor/AIReviewPanel";
 import { AIStructuralPanel } from "@/components/dashboard/editor/AIStructuralPanel";
 import { useAIAutocomplete } from "@/hooks/useAIAutocomplete";
-// [REMOVED] import { useAIRealtimeReview } from "@/hooks/useAIRealtimeReview";
+import { useAIRealtimeReview } from "@/hooks/useAIRealtimeReview";
 import { LegalPipelinePanel } from "@/components/dashboard/editor/LegalPipelinePanel";
 import { PipelineIntakeDialog } from "@/components/dashboard/editor/PipelineIntakeDialog";
 import { createInitialPipelineState, runLegalPipeline, type PipelineExecutionContext } from "@/lib/legal-pipeline";
@@ -58,6 +58,7 @@ export function DocumentEditor({
 }: DocumentEditorProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { logNeural } = useNeuralFeedback();
   const editorRef = useRef<any>(null);
   const rulerSettersRef = useRef<{ setLeft: (v: number) => void; setFirstLine: (v: number) => void; setRight: (v: number) => void } | null>(null);
   const bubbleSelectionRef = useRef<{ from: number; to: number } | null>(null);
@@ -69,7 +70,7 @@ export function DocumentEditor({
   // ─── Actions ───
   const actions = useEditorActions({
     editedContent, setEditedContent, formData, selectedType, forceLetterhead,
-    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast: () => {},
+    marginTop, marginBottom, user, editorRef, rulerSettersRef, toast, logNeural,
     clearAllSuggestionMarks: suggestions.clearAllSuggestionMarks,
     bubbleSelectionRef, bubbleNodeContextRef, initialSavedDocId,
   });
@@ -110,7 +111,7 @@ export function DocumentEditor({
   });
 
   // ─── AI Real-time Review ───
-  const aiReview = (({ enabled: _e, documentType: _d }: any) => ({ issues: [] as any[], reviewLoading: false, neuralMetrics: null, runReview: (_c: string) => {}, triggerInitialReview: (_c: string) => {}, scheduleReview: (_c: string) => {}, removeIssue: (_id: string) => {}, structural: null as any, structuralLoading: false, runStructuralAnalysis: (_c: string) => {}, removeMissingSection: (_s: string) => {} }))({
+  const aiReview = useAIRealtimeReview({
     enabled: aiEnabled,
     documentType: selectedType?.label || formData.tipo,
   });
@@ -461,7 +462,7 @@ export function DocumentEditor({
                 onForceLetterheadChange={onLetterheadChange}
                 previewContent={<DocumentPreview content={editedContent} watermark={formData.watermark} includeStamp={false} documentType={selectedType?.id} forceLetterhead={forceLetterhead} customMarginTop={marginTop} customMarginBottom={marginBottom} prepareContent={actions.prepareContentForPdf} />}
                 livePreviewContent={<DocumentPreview content={editedContent} watermark={formData.watermark} includeStamp={false} documentType={selectedType?.id} forceLetterhead={forceLetterhead} customMarginTop={marginTop} customMarginBottom={marginBottom} compact prepareContent={actions.prepareContentForPdf} />}
-                settingsContent={<DocumentSettings watermark={formData.watermark} onWatermarkChange={onWatermarkChange || undefined} isJudicial={isJudicialCategory(selectedType?.category)} letterhead={forceLetterhead} onLetterheadChange={onLetterheadChange} marginTop={marginTop} marginBottom={marginBottom} onMarginTopChange={onMarginTopChange} onMarginBottomChange={onMarginBottomChange} />}
+                settingsContent={<DocumentSettings watermark={formData.watermark} onWatermarkChange={onWatermarkChange || (() => {})} isJudicial={isJudicialCategory(selectedType?.category)} letterhead={forceLetterhead} onLetterheadChange={onLetterheadChange} marginTop={marginTop} marginBottom={marginBottom} onMarginTopChange={onMarginTopChange} onMarginBottomChange={onMarginBottomChange} />}
                 suggestionsContent={<SuggestionsPanel suggestions={suggestions.editorSuggestions} onAccept={suggestions.handleAcceptSuggestion} onReject={suggestions.handleRejectSuggestion} onAcceptAll={suggestions.handleAcceptAllSuggestions} onRejectAll={suggestions.handleRejectAllSuggestions} />}
                 suggestions={suggestions.editorSuggestions}
                 onExternalChatMessage={(msg) => { setExternalChatMessage(msg); if (!chatPanelOpen) setChatPanelOpen(true); }}
