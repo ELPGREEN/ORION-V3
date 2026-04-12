@@ -286,6 +286,20 @@ export function useNeuralVoice(
     scheduleRecognitionRestart(isMobile() ? 600 : 100);
   }, [scheduleRecognitionRestart]);
 
+  // ═══ Streaming TTS Queue Done → Resume Mic ═══
+  useEffect(() => {
+    const onQueueDone = () => {
+      speakingRef.current = false;
+      updateAiResponding(false);
+      OrbState.voiceState = "listening";
+      if (onCmdRef.current && !intentionalStopRef.current) {
+        resumeSTT();
+      }
+    };
+    window.addEventListener("orion-tts-queue-done", onQueueDone);
+    return () => window.removeEventListener("orion-tts-queue-done", onQueueDone);
+  }, [resumeSTT, updateAiResponding]);
+
   // ═══ Barge-In ═══
   const bargeIn = useCallback(() => {
     try { speechSynthesis.cancel(); } catch {}
