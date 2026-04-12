@@ -617,7 +617,15 @@ export function GlobalOrionListener() {
     }
 
     wakeWordEnabledRef.current = true;
-    const timer = setTimeout(() => startWakeWordListener(), isMobile ? 2000 : 400);
+    // Longer delay to ensure NeuralVision fully unmounts and releases mic
+    const timer = setTimeout(() => {
+      // Force mic to idle before restarting — NeuralVision may have left it in "command"
+      const currentMode = getMicMode();
+      if (currentMode === "command") {
+        killMicRec();
+      }
+      startWakeWordListener();
+    }, isMobile ? 2000 : 800);
     return () => {
       clearTimeout(timer);
       stopWakeWordListener();
