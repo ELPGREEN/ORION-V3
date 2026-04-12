@@ -217,25 +217,12 @@ export function useNeuralVoice(
     };
     speechSynthesis?.addEventListener?.("voiceschanged", handler);
 
-    // Listen for streaming TTS completion to restart mic
-    const onTTSComplete = () => {
-      console.log("[Voice] Streaming TTS complete — restarting mic");
-      speakingRef.current = false;
-      updateAiResponding(false);
-      resumeSTT();
-    };
-    window.addEventListener("orion-tts-complete", onTTSComplete);
-
-    // Expose mic rec ref for streaming TTS to stop
-    (window as any).__orionMicRec = recRef.current;
-
     return () => {
       speechSynthesis?.removeEventListener?.("voiceschanged", handler);
-      window.removeEventListener("orion-tts-complete", onTTSComplete);
       delete (window as any).__orionMicRec;
       cleanup();
     };
-  }, [clearRestartTimer, resumeSTT, updateAiResponding]);
+  }, [clearRestartTimer]);
 
   // ═══ STT Restart Scheduler ═══
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
