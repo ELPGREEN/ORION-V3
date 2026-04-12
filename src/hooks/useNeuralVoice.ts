@@ -298,72 +298,7 @@ export function useNeuralVoice(
     if (bargeInCallbackRef.current) bargeInCallbackRef.current();
   }, [updateAiResponding]);
 
-  // ═══ Web Speech TTS (Fallback) ═══
-  const browserSpeak = useCallback((rawText: string) => {
-    const text = cleanTextForSpeech(rawText);
-    if (!text) return Promise.resolve();
-
-    // Send entire text as one utterance — no chunking, no word cuts
-    const chunks = [text];
-
-    return new Promise<void>((resolve) => {
-      const safetyTimeout = setTimeout(() => {
-        try { speechSynthesis.cancel(); } catch {}
-        if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-        resolve();
-      }, 60000);
-
-      const keepAlive = setInterval(() => {
-        if (speechSynthesis.speaking && !speechSynthesis.paused) {
-          speechSynthesis.pause();
-          speechSynthesis.resume();
-        }
-      }, 10000);
-      keepAliveRef.current = keepAlive;
-
-      const finish = () => {
-        clearTimeout(safetyTimeout);
-        if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
-        resolve();
-      };
-
-      try {
-        speechSynthesis.cancel();
-
-        const speakChunk = (idx: number) => {
-          if (idx >= chunks.length) { finish(); return; }
-          const pauseMs = idx > 0 ? 5 : 0;
-          setTimeout(() => {
-            const isQuestion = /\?/.test(chunks[idx]);
-            const isLast = idx === chunks.length - 1;
-            let rate: number = ORION_VOICE_PARAMS.rate + (Math.sin(idx * 2.1) * 0.02);
-            let pitch: number = ORION_VOICE_PARAMS.pitch;
-            if (isQuestion) pitch += 0.04;
-            if (isLast && chunks.length > 2) rate -= 0.03;
-            rate = Math.max(0.9, Math.min(1.35, rate));
-            pitch = Math.max(0.75, Math.min(1.1, pitch));
-
-            const u = new SpeechSynthesisUtterance(chunks[idx]);
-            u.lang = "pt-BR";
-            u.rate = rate;
-            u.pitch = pitch;
-            u.volume = ORION_VOICE_PARAMS.volume;
-            if (maleVoiceRef.current) u.voice = maleVoiceRef.current;
-            u.onend = () => speakChunk(idx + 1);
-            u.onerror = (ev) => {
-              if ((ev as any)?.error === "canceled" || (ev as any)?.error === "interrupted") { finish(); return; }
-              speakChunk(idx + 1);
-            };
-            speechSynthesis.speak(u);
-          }, pauseMs);
-        };
-
-        speakChunk(0);
-      } catch { finish(); }
-    });
-  }, []);
-
-  // ═══ PRIMARY TTS — Gemini TTS → Web Speech fallback ═══
+  // ═══ PRIMARY TTS — Gemini TTS only, silence on failure ═══
   const speak = useCallback(async (text: string, options?: { skipMicToggle?: boolean }) => {
     console.log("[Voice] speak() called:", text.slice(0, 80), "ttsOn:", ttsRef.current);
     if (!ttsRef.current || typeof window === "undefined") {
