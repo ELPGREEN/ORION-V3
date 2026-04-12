@@ -1,0 +1,175 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const AMAZON_CLIENT_ID = Deno.env.get("AMAZON_CLIENT_ID") || "";
+const AMAZON_CLIENT_SECRET = Deno.env.get("AMAZON_CLIENT_SECRET") || "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function err(msg: string, status = 400) {
+  return json({ error: msg }, status);
+}
+
+async function getUserId(req: Request): Promise<string | null> {
+  const auth = req.headers.get("authorization")?.replace("Bearer ", "");
+  if (!auth) return null;
+  const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const { data } = await sb.auth.getUser(auth);
+  return data?.user?.id || null;
+}
+
+function getSupabase() {
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+}
+
+async function getTokens(userId: string) {
+  const sb = getSupabase();
+  const { data } = await sb
+    .from("user_integration_tokens")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("provider", "amazon")
+    .maybeSingle();
+  return data;
+}
+
+async function saveTokens(userId: string, tokens: Record<string, unknown>) {
+  const sb = getSupabase();
+  const row = {
+    user_id: userId,
+    provider: "amazon",
+    access_token: tokens.access_token as string,
+    refresh_token: tokens.refresh_token as string || undefined,
+    expires_at: tokens.expires_in
+      ? new Date(Date.now() + (tokens.expires_in as number) * 1000).toISOString()
+      : undefined,
+    scopes: ["profile"],
+    updated_at: new Date().toISOString(),
+  };
+
+  const existing = await getTokens(userId);
+  if (existing) {
+    if (!row.refresh_token) row.refresh_token = existing.refresh_token;
+    await sb.from("user_integration_tokens").update(row).eq("id", existing.id);
+  } else {
+    await sb.from("user_integration_tokens").insert(row);
+  }
+}
+
+const SCOPES = ["profile"];
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  try {
+    const url = new URL(req.url);
+    const action = url.searchParams.get("action") || "";
+    const userId = await getUserId(req);
+
+    if (!userId) return err("Not authenticated", 401);
+
+    let body: Record<string, unknown> = {};
+    if (req.method === "POST") {
+      try { body = await req.json(); } catch { body = {}; }
+    }
+
+    if (action === "config") {
+      return json({ client_id: AMAZON_CLIENT_ID, scopes: SCOPES });
+    }
+
+    if (action === "status") {
+      const tokens = await getTokens(userId);
+      if (!tokens?.access_token) {
+        return json({ connected: false, profile: null, scopes: [], expires_at: null, updated_at: null });
+      }
+      // Try to get profile
+      let profile = null;
+      try {
+        const res = await fetch("https://api.amazon.com/user/profile", {
+          headers: { Authorization: `Bearer ${tokens.access_token}` },
+        });
+        if (res.ok) profile = await res.json();
+      } catch { /* ignore */ }
+      return json({
+        connected: true,
+        profile,
+        scopes: tokens.scopes || [],
+        expires_at: tokens.expires_at,
+        updated_at: tokens.updated_at,
+      });
+    }
+
+    if (action === "exchange") {
+      const code = body.code as string;
+      const redirectUri = body.redirect_uri as string;
+      if (!code) return err("Missing code");
+
+      const res = await fetch("https://api.amazon.com/auth/o2/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: redirectUri,
+          client_id: AMAZON_CLIENT_ID,
+          client_secret: AMAZON_CLIENT_SECRET,
+        }),
+      });
+
+      if (!res.ok) {
+        const e = await res.text();
+        return err(`Amazon token exchange failed: ${e}`, 400);
+      }
+
+      const tokens = await res.json();
+      await saveTokens(userId, tokens);
+      return json({ success: true });
+    }
+
+    if (action === "disconnect") {
+      const sb = getSupabase();
+      await sb.from("user_integration_tokens").delete().eq("user_id", userId).eq("provider", "amazon");
+      return json({ success: true });
+    }
+
+    if (action === "api") {
+      const tokens = await getTokens(userId);
+      if (!tokens?.access_token) return err("Amazon not connected", 401);
+
+      const endpoint = body.endpoint as string;
+      const method = (body.method as string) || "GET";
+      const payload = body.payload;
+
+      const opts: RequestInit = {
+        method,
+        headers: { Authorization: `Bearer ${tokens.access_token}`, "Content-Type": "application/json" },
+      };
+      if (payload && method !== "GET") opts.body = JSON.stringify(payload);
+
+      const res = await fetch(endpoint, opts);
+      if (!res.ok) {
+        if (res.status === 401) return err("Token expired", 401);
+        return err(`Amazon API error: ${res.status}`, res.status);
+      }
+      const data = await res.json();
+      return json(data);
+    }
+
+    return err(`Unknown action: ${action}`, 400);
+  } catch (e) {
+    console.error("amazon-auth error:", e);
+    return err(e.message || "Internal error", 500);
+  }
+});
