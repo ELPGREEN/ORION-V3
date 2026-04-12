@@ -179,6 +179,8 @@ export function useNeuralVoice(
   const audioWorkletActiveRef = useRef(false);
   const gcpSessionRef = useRef<ReturnType<typeof createGCPSTTSession> | null>(null);
   const useGCPSTTRef = useRef(true); // GCP STT as primary
+  const sentenceAccumulatorRef = useRef(""); // Accumulate partial sentences
+  const sentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Sync ──
   const updateAiResponding = useCallback((val: boolean) => {
