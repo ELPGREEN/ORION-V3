@@ -1534,10 +1534,13 @@ export function useOrionReasoning(
           streamingText = accumulated;
           const display = stripMarkdown(accumulated);
           setThought(display);
+          // Update ONLY the last AI message (the placeholder) — don't add new entries
           setChatHistory(prev => {
-            const last = prev[prev.length - 1];
-            if (last?.role === "ai" && last.text.startsWith("⏳")) {
-              return [...prev.slice(0, -1), { ...last, text: display || "⏳ ..." }];
+            const idx = prev.length - 1;
+            if (idx >= 0 && prev[idx]?.role === "ai") {
+              const updated = [...prev];
+              updated[idx] = { ...updated[idx], text: display || "⏳ ..." };
+              return updated;
             }
             return prev;
           });
