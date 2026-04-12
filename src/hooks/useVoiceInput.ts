@@ -172,6 +172,20 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, onResult, on
 
     recognition.onend = () => {
       if (!mountedRef.current || !isMicOwner(micOwnerIdRef.current)) return;
+      
+      // Auto-restart if not intentionally stopped (browser killed it after silence/timeout)
+      if (!intentionalStopRef.current && continuous) {
+        console.log("[VoiceInput] Auto-restarting continuous recognition");
+        try {
+          setTimeout(() => {
+            if (mountedRef.current && !intentionalStopRef.current && recognitionRef.current) {
+              try { recognitionRef.current.start(); } catch {}
+            }
+          }, 300);
+          return; // Don't release mic or set isListening=false
+        } catch {}
+      }
+
       releaseMic(micOwnerIdRef.current);
       setIsListening(false);
       

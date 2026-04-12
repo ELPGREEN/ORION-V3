@@ -60,6 +60,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
 
   const { isListening, isSupported, toggleListening, startListening, stopListening } = useVoiceInput({
     lang: voiceLang,
+    continuous: true,
     onResult: (text) => {
       onTranscript(text);
       if (conversationModeRef.current && onAutoSend) {
