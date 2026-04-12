@@ -1612,8 +1612,15 @@ export function useOrionReasoning(
         ));
 
         setChatHistory(prev => {
-          const withoutPlaceholder = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
-          return [...withoutPlaceholder, { role: "ai" as const, text: humanizedText, time: new Date().toLocaleTimeString("pt-BR"), confidence: aiConfidence }];
+          // Replace the LAST AI message (the streaming placeholder) with final humanized text
+          const updated = [...prev];
+          const lastAiIdx = updated.length - 1;
+          if (lastAiIdx >= 0 && updated[lastAiIdx]?.role === "ai") {
+            updated[lastAiIdx] = { ...updated[lastAiIdx], text: humanizedText, time: new Date().toLocaleTimeString("pt-BR"), confidence: aiConfidence };
+            return updated;
+          }
+          // Fallback: just append
+          return [...prev, { role: "ai" as const, text: humanizedText, time: new Date().toLocaleTimeString("pt-BR"), confidence: aiConfidence }];
         });
         addLog(`🧠 IA: ${humanizedText.slice(0, 100)}...`);
         if (!spokeOrQueued && !bargedInRef.current) {
