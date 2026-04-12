@@ -6,8 +6,7 @@
 
 import { getAPIsForCapability, reportAPILatency, type OrionCapability } from "./orion-api-orchestrator";
 import { getBlazeFaceModel } from "./tf-runtime";
-import { classifyImage, detectObjects, captionImage } from "@/lib/huggingface/transformers-vision";
-import { transcribeAudio, recordMicrophoneAudio } from "@/lib/huggingface/transformers-audio";
+// Transformers.js vision/audio removed — Gemini handles all vision
 
 // Stubs for removed local ML modules
 type MPVisionResult = { objects: any[]; faces: any[]; hands: any[]; poses: any[]; timestamp: number };
@@ -101,35 +100,7 @@ export async function orchestratorSee(
         };
       }
 
-      // ─── Transformers.js Vision (100% free, browser-side) ───
-      if (api.id === "transformersjs_vision") {
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-          const [classifications, detections] = await Promise.all([
-            classifyImage(dataUrl, "Xenova/vit-base-patch16-224", 3).catch(() => []),
-            detectObjects(dataUrl, "Xenova/detr-resnet-50", 0.5).catch(() => []),
-          ]);
-          const latency = Date.now() - start;
-          reportAPILatency("transformersjs_vision", latency, true);
-          const objects = [
-            ...detections.map(d => ({ label: d.label, confidence: d.score, bbox: [d.box.xmin, d.box.ymin, d.box.xmax - d.box.xmin, d.box.ymax - d.box.ymin] })),
-            ...classifications.map(c => ({ label: c.label, confidence: c.score })),
-          ];
-          if (objects.length > 0) {
-            return {
-              description: `TJS: ${objects.map(o => `${o.label}(${(o.confidence * 100).toFixed(0)}%)`).join(", ")}`,
-              objects,
-              source: "transformers-js",
-              latencyMs: latency,
-            };
-          }
-        }
-      }
+      // Transformers.js Vision removed — Gemini handles all vision
     } catch (e) {
       const latency = Date.now() - start;
       reportAPILatency(api.id, latency, false);
@@ -138,40 +109,7 @@ export async function orchestratorSee(
     }
   }
 
-  // ─── Ultimate fallback: Transformers.js vision (free, browser) ───
-  try {
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-      const start = Date.now();
-
-      const [classifications, detections] = await Promise.all([
-        classifyImage(dataUrl, "Xenova/vit-base-patch16-224", 3).catch(() => []),
-        detectObjects(dataUrl, "Xenova/detr-resnet-50", 0.5).catch(() => []),
-      ]);
-
-      const latency = Date.now() - start;
-      const objects = [
-        ...detections.map(d => ({ label: d.label, confidence: d.score, bbox: [d.box.xmin, d.box.ymin, d.box.xmax - d.box.xmin, d.box.ymax - d.box.ymin] })),
-        ...classifications.map(c => ({ label: c.label, confidence: c.score })),
-      ];
-
-      if (objects.length > 0) {
-        return {
-          description: `TJS: ${objects.map(o => `${o.label}(${(o.confidence * 100).toFixed(0)}%)`).join(", ")}`,
-          objects,
-          source: "transformers-js",
-          latencyMs: latency,
-        };
-      }
-    }
-  } catch (e) {
-    console.warn("⚠️ [Orchestrator] Transformers.js vision fallback failed:", e);
-  }
+  // Transformers.js vision fallback removed — Gemini only
 
   // Graceful degradation
   return {
@@ -233,18 +171,7 @@ export async function orchestratorListen(): Promise<ListenResult> {
     }
   }
 
-  // ─── Ultimate fallback: Whisper in browser (free, offline) ───
-  try {
-    const start = Date.now();
-    const audioData = await recordMicrophoneAudio(5000);
-    const result = await transcribeAudio(audioData, "Xenova/whisper-tiny", "pt");
-    const latency = Date.now() - start;
-    if (result.text.trim()) {
-      return { transcript: result.text.trim(), source: "whisper-browser", latencyMs: latency };
-    }
-  } catch (e) {
-    console.warn("⚠️ [Orchestrator] Whisper browser fallback failed:", e);
-  }
+  // Whisper browser fallback removed — Web Speech API handles STT
 
   return { transcript: "", source: "none", latencyMs: 0 };
 }
