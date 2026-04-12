@@ -141,8 +141,8 @@ Deno.serve(async (req) => {
     }
 
     // ── Public actions (no auth needed) ──
-    if (action === "search") {
-      // Use client credentials for public search
+    if (action === "search" || action === "available_genres") {
+      // Use client credentials for public endpoints
       const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
         method: "POST",
         headers: {
@@ -151,26 +151,24 @@ Deno.serve(async (req) => {
         },
         body: "grant_type=client_credentials",
       });
-      const tokenData = await tokenRes.json();
-      const q = body.query as string || "";
-      const types = body.types as string || "track,artist";
-      const limit = body.limit as number || 10;
-      const result = await spotifyApi(tokenData.access_token, `/search?q=${encodeURIComponent(q)}&type=${types}&limit=${limit}`);
-      return json(result);
-    }
+      const tokenText = await tokenRes.text();
+      let tokenData: Record<string, unknown>;
+      try { tokenData = JSON.parse(tokenText); } catch {
+        console.error("Spotify token response not JSON:", tokenText.substring(0, 200));
+        return err(`Spotify auth failed (status ${tokenRes.status}). Check SPOTIFY_CLIENT_ID/SECRET.`, 502);
+      }
+      if (!tokenData.access_token) return err(`Spotify auth error: ${tokenData.error || "no token"}`, 502);
 
-    if (action === "available_genres") {
-      const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${btoa(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`)}`,
-        },
-        body: "grant_type=client_credentials",
-      });
-      const tokenData = await tokenRes.json();
-      const result = await spotifyApi(tokenData.access_token, "/recommendations/available-genre-seeds");
-      return json(result);
+      if (action === "search") {
+        const q = body.query as string || "";
+        const types = body.types as string || "track,artist";
+        const limit = body.limit as number || 10;
+        const result = await spotifyApi(tokenData.access_token as string, `/search?q=${encodeURIComponent(q)}&type=${types}&limit=${limit}`);
+        return json(result);
+      } else {
+        const result = await spotifyApi(tokenData.access_token as string, "/recommendations/available-genre-seeds");
+        return json(result);
+      }
     }
 
     // ── Auth required from here ──
