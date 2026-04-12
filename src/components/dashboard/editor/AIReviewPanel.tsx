@@ -8,8 +8,8 @@ import {
   ChevronDown, ChevronUp, Brain, Scale, RefreshCw, Activity, XCircle, Clock,
   Zap,
 } from "lucide-react";
-interface ReviewIssue { id: string; type: "error" | "warning" | "suggestion"; title: string; description: string; fix?: string; location?: string; }
-interface NeuralMetrics { overallScore: number; coherence: number; accuracy: number; completeness: number; }
+interface ReviewIssue { id: string; type: "error" | "warning" | "suggestion"; title: string; description: string; fix?: string; location?: string; excerpt?: string; replacementText?: string; autoApplicable?: boolean; category?: string; confidence?: number; message?: string; headSource?: string; }
+interface NeuralMetrics { overallScore: number; coherence: number; accuracy: number; completeness: number; grammarScore?: number; legalScore?: number; structureScore?: number; consistencyScore?: number; styleScore?: number; mambaCoherence?: number; longRangeDeps?: number; documentComplexity?: string; judgeGrade?: string; judgeScore?: number; citationCount?: number; biasWarningCount?: number; }
 
 // ─── Review Issues Panel ───
 
