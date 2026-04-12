@@ -12,7 +12,7 @@ import { OrionAccessGate } from "@/components/OrionAccessGate";
 import { initVoicePicker } from "@/lib/voice/voicePicker";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 // ═══ FIX: Integrate with Mic Arbiter to prevent SpeechRecognition conflicts ═══
-import { claimMic, isMicOwner, registerMicRec, getMicMode, releaseMic } from "@/lib/voice/micArbiter";
+import { claimMic, isMicOwner, registerMicRec, getMicMode, releaseMic, killMicRec } from "@/lib/voice/micArbiter";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
 
 const ORION_FLUENCY_PROMPT = `Você é ORION, IA Lumen7 AquaMonkey. Fale CONTÍNUO sem pausas longas. Máximo 0.2s entre frases. Voz grave, calorosa, ritmo natural.`;
@@ -800,13 +800,13 @@ export function GlobalOrionListener() {
       {/* ═══ Expanded Orion overlay ═══ */}
       {orionOpen && (
         !user ? (
-          <OrionAccessGate mode="not_logged" onClose={() => { releaseMic(micOwnerIdRef.current); setOrionOpen(false); }} />
+          <OrionAccessGate mode="not_logged" onClose={() => { killMicRec(); setOrionOpen(false); }} />
         ) : !isPremium && !planLoading ? (
-          <OrionAccessGate mode="not_premium" onClose={() => { releaseMic(micOwnerIdRef.current); setOrionOpen(false); }} />
+          <OrionAccessGate mode="not_premium" onClose={() => { killMicRec(); setOrionOpen(false); }} />
         ) : (
           <OrionFloatingOverlay
-            onMinimize={() => { releaseMic(micOwnerIdRef.current); setOrionOpen(false); }}
-            onClose={() => { releaseMic(micOwnerIdRef.current); setOrionOpen(false); }}
+            onMinimize={() => { killMicRec(); setOrionOpen(false); }}
+            onClose={() => { killMicRec(); setOrionOpen(false); }}
             initialCommand={initialCommand}
           />
         )
