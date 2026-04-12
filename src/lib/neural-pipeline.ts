@@ -35,7 +35,7 @@ import { mambaBlock, biMambaBlock, analyzeLegalSequence, type LegalSequenceAnaly
 type VLMOutput = { text: string; embedding: number[]; localDetections: any[] };
 type VLMLocalDetection = any;
 const runVLMOffline = async (_t: string) => ({ text: "", embedding: [], localDetections: [] } as VLMOutput);
-const getVLMEmbedding = (_imageData?: string, _w?: number, _h?: number, _dets?: any[]) => [] as number[];
+const getVLMEmbedding = (_imageData?: any, _w?: number, _h?: number, _dets?: any[]) => [] as number[];
 
 // ─── Singleton Instances (v2 configs) ───
 let _kvCache: KVCacheBank | null = null;
