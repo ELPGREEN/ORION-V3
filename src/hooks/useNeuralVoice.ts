@@ -86,22 +86,30 @@ function mergeTranscriptSegments(existing: string, incoming: string): string {
   const next = incoming.trim();
   if (!current) return next;
   if (!next) return current;
-  if (current === next || current.endsWith(next)) return current;
-  if (next.startsWith(current)) return next;
 
+  // Exact duplicate or already contained
+  const currentNorm = current.toLowerCase();
+  const nextNorm = next.toLowerCase();
+  if (currentNorm === nextNorm) return current;
+  if (currentNorm.endsWith(nextNorm)) return current;
+  if (nextNorm.startsWith(currentNorm)) return next;
+
+  // Word-level overlap detection — only merge if overlap is significant
   const currentWords = current.split(/\s+/);
   const nextWords = next.split(/\s+/);
-  const maxOverlap = Math.min(currentWords.length, nextWords.length);
+  const maxOverlap = Math.min(currentWords.length, nextWords.length, 5); // Max 5-word overlap check
 
-  for (let overlap = maxOverlap; overlap > 0; overlap--) {
+  for (let overlap = maxOverlap; overlap >= 2; overlap--) {
     const currentTail = currentWords.slice(-overlap).join(" ").toLowerCase();
     const nextHead = nextWords.slice(0, overlap).join(" ").toLowerCase();
     if (currentTail === nextHead) {
-      return `${current} ${nextWords.slice(overlap).join(" ")}`.trim();
+      const merged = `${current} ${nextWords.slice(overlap).join(" ")}`.trim();
+      return merged;
     }
   }
 
-  return `${current} ${next}`.trim();
+  // No overlap found — just append with space
+  return `${current} ${next}`;
 }
 
 // ═══ Helpers ═══
@@ -771,25 +779,30 @@ export function useNeuralVoice(
               const normalized = normalizeSpeechText(text);
               if (normalized.length < 2) return;
               const wordCount = normalized.split(/\s+/).filter(Boolean).length;
-              if (confidence > 0 && confidence < 0.45 && wordCount <= 3) {
+              
+              // Discard low-confidence short fragments (noise/hallucinations)
+              if (confidence > 0 && confidence < 0.40 && wordCount <= 3) {
                 console.log(`[Voice] GCP STT descartado por baixa confiança: "${text}" (${(confidence * 100).toFixed(0)}%)`);
                 return;
               }
 
               // ═══ SENTENCE ACCUMULATION ═══
-              // Accumulate fragments until a pause (no new text for 1.5s)
-              // This prevents sending half-sentences to the AI
+              // Each GCP chunk is independent (no overlap), so accumulate
+              // until user stops speaking (silence timer fires)
               if (sentenceTimerRef.current) {
                 clearTimeout(sentenceTimerRef.current);
               }
 
-              sentenceAccumulatorRef.current = mergeTranscriptSegments(sentenceAccumulatorRef.current, normalized);
+              // Use original text (not normalized) for accumulation to preserve casing
+              sentenceAccumulatorRef.current = mergeTranscriptSegments(sentenceAccumulatorRef.current, text.trim());
               const turnState = detectTurnState([sentenceAccumulatorRef.current], "pt-BR");
-              const silenceMs = Math.max(gcpChunkIntervalMs + 350, getOptimalSilenceDuration(turnState));
+              const optimalSilence = getOptimalSilenceDuration(turnState);
+              // Wait at least chunkInterval + buffer so we don't fire mid-chunk
+              const silenceMs = Math.max(gcpChunkIntervalMs + 500, optimalSilence);
 
-              console.log(`[Voice] GCP chunk: "${text}" (${(confidence * 100).toFixed(0)}%) — accumulated: "${sentenceAccumulatorRef.current.slice(0, 80)}..." — wait=${silenceMs}ms`);
+              console.log(`[Voice] GCP chunk: "${text}" (${(confidence * 100).toFixed(0)}%) — accumulated: "${sentenceAccumulatorRef.current.slice(0, 100)}" — wait=${silenceMs}ms [${turnState}]`);
 
-              // Wait 1.5s of silence before processing the full sentence
+              // Wait for silence before processing the full sentence
               sentenceTimerRef.current = setTimeout(() => {
                 const fullSentence = sentenceAccumulatorRef.current.trim();
                 sentenceAccumulatorRef.current = "";
