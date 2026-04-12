@@ -12,7 +12,7 @@ interface DocumentElement {
   wordCount?: number;
   count?: number;
 }
-interface any {
+interface StructuralSection {
   title: string;
   present: boolean;
   wordCount?: number;

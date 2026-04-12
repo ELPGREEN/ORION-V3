@@ -111,7 +111,7 @@ interface UseEditorActionsParams {
   editorRef: React.MutableRefObject<any>;
   rulerSettersRef: React.MutableRefObject<{ setLeft: (v: number) => void; setFirstLine: (v: number) => void; setRight: (v: number) => void } | null>;
   toast: (opts: any) => void;
-  logNeural: (opts: any) => void;
+  logNeural?: (opts: any) => void;
   clearAllSuggestionMarks: (editor: any) => void;
   bubbleSelectionRef: React.MutableRefObject<{ from: number; to: number } | null>;
   bubbleNodeContextRef: React.MutableRefObject<{ nodeName: string; headingLevel?: number } | null>;

@@ -64,14 +64,18 @@ export default function ConfiguracoesRouter() {
       content: <WebhooksPage />,
     },
     {
+      value: "biometria",
       label: "Biometria",
       icon: ScanFace,
       roles: ["owner", "advogado"],
+      content: <div className="text-muted-foreground text-sm p-8 text-center">Em reimplementação</div>,
     },
     {
+      value: "dispositivos",
       label: "Dispositivos",
       icon: Radio,
       roles: ["owner"],
+      content: <div className="text-muted-foreground text-sm p-8 text-center">Em reimplementação</div>,
     },
     {
       value: "amazon",

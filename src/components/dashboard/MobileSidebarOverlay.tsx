@@ -6,7 +6,7 @@ import { useAdminAccess } from "@/hooks/useAdminAccess";
 import logoElp from "@/assets/logo-elp.webp";
 import { useState } from "react";
 import { JarvisHUDOverlay, jarvisSidebar as s } from "./JarvisSidebarStyles";
-// OrionIcons removed
+import { X, LogOut } from "lucide-react";
 interface MobileSidebarOverlayProps {
   open: boolean;
   onClose: () => void;

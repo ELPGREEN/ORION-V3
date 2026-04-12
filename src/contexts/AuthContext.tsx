@@ -123,10 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     if (error) return { error: error as Error | null };
-    
-    return { error: null };
-    
-    OrionAnalytics.signUp('email');
+
     return { error: null };
   };
 
@@ -136,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     });
     
-    if (!error) OrionAnalytics.login('email');
+    if (!error) OrionAnalytics.trackFeatureUsed('login_email');
     return { error: error as Error | null };
   };
 

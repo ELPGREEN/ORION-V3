@@ -81,11 +81,7 @@ export default function InstallApp() {
 
   const handleBleScan = async () => {
     setBleScanning(true);
-    if (device) {
-      if (connected) {
-        toast({ title: "Dispositivo conectado!", description: device.name });
-      }
-    }
+    toast({ title: "Bluetooth", description: "Funcionalidade em reimplementação." });
     setBleScanning(false);
   };
 
