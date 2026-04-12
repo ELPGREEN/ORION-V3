@@ -6,10 +6,26 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Progress } from "@/components/ui/progress";
 
 // Local type stub
+interface DocumentElement {
+  type: string;
+  text: string;
+  wordCount?: number;
+}
+interface StructuralSection {
+  title: string;
+  present: boolean;
+  wordCount?: number;
+  elements?: DocumentElement[];
+}
 interface StructuralAnalysis {
   sections: { title: string; wordCount: number; issues: string[] }[];
   overallScore: number;
   suggestions: string[];
+  presentSections: StructuralSection[];
+  missingSections: { title: string; description: string; suggestedContent: string }[];
+  score: number;
+  summary: string;
+  elements?: DocumentElement[];
 }
 
 import {

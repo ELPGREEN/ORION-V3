@@ -15,11 +15,29 @@ interface ReviewIssue {
   excerpt: string;
   category?: string;
   confidence?: number;
+  message?: string;
+  headSource?: string;
+  replacementText?: string;
+  autoApplicable?: boolean;
 }
 interface NeuralMetrics {
   coherence: number;
   completeness: number;
   legalAccuracy: number;
+  overallScore?: number;
+  grammarScore?: number;
+  legalScore?: number;
+  structureScore?: number;
+  consistencyScore?: number;
+  styleScore?: number;
+  mambaCoherence?: number;
+  longRangeDeps?: number;
+  documentComplexity?: string;
+  judgeGrade?: string;
+  judgeScore?: number;
+  citationCount?: number;
+  biasWarningCount?: number;
+  lgpdCompliant?: boolean;
 }
 
 import {

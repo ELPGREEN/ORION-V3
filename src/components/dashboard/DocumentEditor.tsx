@@ -110,7 +110,7 @@ export function DocumentEditor({
   });
 
   // ─── AI Real-time Review ───
-  const aiReview = (({ enabled: _e, documentType: _d }: any) => ({ issues: [] as any[], reviewLoading: false, neuralMetrics: null, runReview: (_c: string) => {}, triggerInitialReview: (_c: string) => {}, scheduleReview: (_c: string) => {}, removeIssue: (_id: string) => {} }))({
+  const aiReview = (({ enabled: _e, documentType: _d }: any) => ({ issues: [] as any[], reviewLoading: false, neuralMetrics: null, runReview: (_c: string) => {}, triggerInitialReview: (_c: string) => {}, scheduleReview: (_c: string) => {}, removeIssue: (_id: string) => {}, structural: null as any, structuralLoading: false, runStructuralAnalysis: (_c: string) => {}, removeMissingSection: (_s: string) => {} }))({
     enabled: aiEnabled,
     documentType: selectedType?.label || formData.tipo,
   });
