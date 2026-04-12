@@ -10,7 +10,7 @@
 // [REMOVED] import type { PDFSegment, PDFAnalysisResult, HFSpaceHealthStatus } from "@/lib/neural/hf-space-client";
 
 // Stub types for removed neural modules
-interface HFSpaceHealthStatus { status: string; latency?: number }
+interface HFSpaceHealthStatus { status: string; latency?: number; latency_ms?: number }
 interface PDFSegment { text: string; page?: number }
 interface PDFAnalysisResult { segments: PDFSegment[]; markdown: string; html: string }
 function pdfToMarkdown(_d: any): string { return ""; }

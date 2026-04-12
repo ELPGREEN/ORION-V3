@@ -18,7 +18,7 @@ import { useChatIA } from "@/contexts/ChatIAContext";
 import type { ChatIAMessage } from "@/hooks/useChatIAPersistence";
 import ProviderDiagnosticPanel from "@/components/dashboard/ProviderDiagnosticPanel";
 // [REMOVED] import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
-// [REMOVED] import { useNeuralConfig } from "@/hooks/useNeuralConfig";
+  const neuralConfig = { enabled: false } as any;
 import { useMessageNLP } from "@/hooks/useMessageNLP";
 
 const sugestoesIniciais = [
@@ -59,7 +59,7 @@ export default function ChatJuridico() {
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { config: neuralConfig } = useNeuralConfig();
+  const neuralConfig = { enabled: false } as any;
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [laypersonMode, setLaypersonMode] = useState(false);

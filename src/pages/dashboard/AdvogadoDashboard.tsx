@@ -270,7 +270,7 @@ export default function AdvogadoDashboard() {
 
       {/* Orion Insights + Atividade Recente */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <OrionAdvogadoInsights />
+        
 
         <Card>
           <CardHeader className="pb-3">

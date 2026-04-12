@@ -119,7 +119,7 @@ export default function AdminOwnerDashboard() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <Suspense fallback={null}>
-        <OrionBackground3D variant="mixed" intensity="low" className="fixed" />
+        
       </Suspense>
 
       <div className="relative z-10 space-y-6 p-1">

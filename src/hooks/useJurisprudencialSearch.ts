@@ -4,6 +4,7 @@ import {
   type SourceId,
   type UnifiedSearchResponse
 } from "@/lib/api";
+import { neuralSearch, type NeuralSearchResponse } from "@/lib/api/pesquisa-api";
 
 export type SearchMode = "traditional" | "neural" | "comparative";
 
@@ -128,10 +129,8 @@ export function useJurisprudencialSearch(): JurisprudencialSearchState {
         // Anti-hallucination: validate both result sets
         try {
           if (tradResult.data.results.length > 0) {
-            console.log(`[AntiHallucination:Pesquisa] ${tradReport.flaggedResults}/${tradReport.totalResults} flagged, confidence=${tradReport.overallConfidence}%, ${tradReport.processingMs}ms`);
           }
           if (neuralResult.data.results.length > 0) {
-            console.log(`[AntiHallucination:Neural] ${neuralReport.flaggedResults}/${neuralReport.totalResults} flagged, confidence=${neuralReport.overallConfidence}%, ${neuralReport.processingMs}ms`);
           }
         } catch (e) {
           console.warn("[AntiHallucination] Validation error (non-fatal):", e);

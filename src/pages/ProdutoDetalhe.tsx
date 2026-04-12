@@ -186,11 +186,7 @@ export default function ProdutoDetalhe() {
       </div>
 
       {/* Orion Store Assistant */}
-      <OrionStoreAssistant
-        productTitle={product.title}
-        productDescription={product.description || undefined}
-        productPrice={product.price_cents}
-      />
+      
 
       {/* Footer */}
       <div className="border-t border-border/30 bg-card/50 mt-8">

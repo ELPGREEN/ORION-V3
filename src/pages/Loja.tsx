@@ -318,10 +318,7 @@ export default function Loja() {
 
       {/* Orion Store Assistant */}
       {filteredProducts.length > 0 && (
-        <OrionStoreAssistant
-          productTitle={`Loja de ${storeName}`}
-          productDescription={`Loja com ${filteredProducts.length} produtos digitais disponíveis`}
-        />
+        
       )}
 
       {/* Footer */}

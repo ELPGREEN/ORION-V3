@@ -157,6 +157,10 @@ export interface NeuralSearchResponse {
   queryType?: string;
   indexed?: number;
   errors?: { source: string; error: string }[];
+  cacheHit?: boolean;
+  embeddingCacheHit?: boolean;
+  expandedQueries?: string[];
+  version?: string;
 }
 
 export async function neuralSearch(

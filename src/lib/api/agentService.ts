@@ -140,7 +140,6 @@ async function invokeAgent(
     response.agentUsed = endpoint;
 
     // Neural Bridge: STDP learning + agent evaluation
-    // onAgentTaskComplete(agentRole, response.success !== false, latencyMs);
 
     return response;
   } catch (err: any) {
@@ -149,7 +148,6 @@ async function invokeAgent(
     console.warn(`[Agent] ${endpoint}/${action} failed after retries:`, err?.message);
 
     // Neural Bridge: record failure
-    // onAgentTaskComplete(agentRole, false, latencyMs);
 
     return { success: false, action, error: err?.message || "Agent unavailable", latencyMs, agentUsed: endpoint };
   }
@@ -243,7 +241,6 @@ export async function smartAgentRoute(
 
   // v23: Enrich routing with STDP neural weights
   const partners = (() => ({ provider: 'gemini', reason: 'default' }))(intent.primaryAgent);
-  const primaryMetrics = getAgentMetrics(intent.primaryAgent);
   if (primaryMetrics) {
     // Boost confidence if STDP shows strong partner bindings
     const avgPartnerWeight = partners.reduce((s, p) => s + p.weight, 0) / Math.max(partners.length, 1);

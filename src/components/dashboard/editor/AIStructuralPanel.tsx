@@ -10,6 +10,7 @@ interface DocumentElement {
   type: string;
   text: string;
   wordCount?: number;
+  count?: number;
 }
 interface StructuralSection {
   title: string;
@@ -22,7 +23,7 @@ interface StructuralAnalysis {
   overallScore: number;
   suggestions: string[];
   presentSections: StructuralSection[];
-  missingSections: { title: string; description: string; suggestedContent: string }[];
+  missingSections: { title: string; name?: string; description: string; suggestedContent: string; suggestion?: string; importance?: string }[];
   score: number;
   summary: string;
   elements?: DocumentElement[];
