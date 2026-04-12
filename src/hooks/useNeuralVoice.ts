@@ -81,6 +81,29 @@ export function normalizeSpeechText(text: string): string {
     .trim();
 }
 
+function mergeTranscriptSegments(existing: string, incoming: string): string {
+  const current = existing.trim();
+  const next = incoming.trim();
+  if (!current) return next;
+  if (!next) return current;
+  if (current === next || current.endsWith(next)) return current;
+  if (next.startsWith(current)) return next;
+
+  const currentWords = current.split(/\s+/);
+  const nextWords = next.split(/\s+/);
+  const maxOverlap = Math.min(currentWords.length, nextWords.length);
+
+  for (let overlap = maxOverlap; overlap > 0; overlap--) {
+    const currentTail = currentWords.slice(-overlap).join(" ").toLowerCase();
+    const nextHead = nextWords.slice(0, overlap).join(" ").toLowerCase();
+    if (currentTail === nextHead) {
+      return `${current} ${nextWords.slice(overlap).join(" ")}`.trim();
+    }
+  }
+
+  return `${current} ${next}`.trim();
+}
+
 // ═══ Helpers ═══
 
 function isMobile(): boolean {
@@ -327,6 +350,8 @@ export function useNeuralVoice(
       activeAudioRef.current = null;
     }
     speechQueueRef.current = [];
+    if (sentenceTimerRef.current) { clearTimeout(sentenceTimerRef.current); sentenceTimerRef.current = null; }
+    sentenceAccumulatorRef.current = "";
     if (abortControllerRef.current) { abortControllerRef.current.abort(); abortControllerRef.current = null; }
     speakingRef.current = false;
     updateAiResponding(false);
@@ -422,7 +447,9 @@ export function useNeuralVoice(
     lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
     lastSpokenAtRef.current = Date.now();
     speechBufferRef.current = "";
+    sentenceAccumulatorRef.current = "";
     if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
+    if (sentenceTimerRef.current) { clearTimeout(sentenceTimerRef.current); sentenceTimerRef.current = null; }
     clearRestartTimer();
 
     // ALWAYS stop mic during TTS
@@ -716,6 +743,8 @@ export function useNeuralVoice(
       // ═══ TRY GCP STT FIRST ═══
       if (useGCPSTTRef.current) {
         try {
+          const gcpChunkIntervalMs = 1400;
+
           // Stop any existing GCP session
           if (gcpSessionRef.current?.isActive()) {
             gcpSessionRef.current.stop();
@@ -724,7 +753,7 @@ export function useNeuralVoice(
           const session = createGCPSTTSession({
             languageCode: "pt-BR",
             sampleRate: 16000,
-            chunkIntervalMs: 4000,
+            chunkIntervalMs: gcpChunkIntervalMs,
             onFinal: (text, confidence) => {
               if (!onCmdRef.current || intentionalStopRef.current) return;
               if (speakingRef.current || VoiceState.aiResponding) {
@@ -741,6 +770,11 @@ export function useNeuralVoice(
 
               const normalized = normalizeSpeechText(text);
               if (normalized.length < 2) return;
+              const wordCount = normalized.split(/\s+/).filter(Boolean).length;
+              if (confidence > 0 && confidence < 0.45 && wordCount <= 3) {
+                console.log(`[Voice] GCP STT descartado por baixa confiança: "${text}" (${(confidence * 100).toFixed(0)}%)`);
+                return;
+              }
 
               // ═══ SENTENCE ACCUMULATION ═══
               // Accumulate fragments until a pause (no new text for 1.5s)
@@ -749,18 +783,11 @@ export function useNeuralVoice(
                 clearTimeout(sentenceTimerRef.current);
               }
 
-              // Append to accumulator (avoid duplicating overlap)
-              const existing = sentenceAccumulatorRef.current;
-              if (existing && normalized.startsWith(existing.slice(-20))) {
-                // Overlap detected, merge
-                sentenceAccumulatorRef.current = existing + " " + normalized.slice(existing.slice(-20).length).trim();
-              } else if (existing) {
-                sentenceAccumulatorRef.current = existing + " " + normalized;
-              } else {
-                sentenceAccumulatorRef.current = normalized;
-              }
+              sentenceAccumulatorRef.current = mergeTranscriptSegments(sentenceAccumulatorRef.current, normalized);
+              const turnState = detectTurnState([sentenceAccumulatorRef.current], "pt-BR");
+              const silenceMs = Math.max(gcpChunkIntervalMs + 350, getOptimalSilenceDuration(turnState));
 
-              console.log(`[Voice] GCP chunk: "${text}" (${(confidence * 100).toFixed(0)}%) — accumulated: "${sentenceAccumulatorRef.current.slice(0, 80)}..."`);
+              console.log(`[Voice] GCP chunk: "${text}" (${(confidence * 100).toFixed(0)}%) — accumulated: "${sentenceAccumulatorRef.current.slice(0, 80)}..." — wait=${silenceMs}ms`);
 
               // Wait 1.5s of silence before processing the full sentence
               sentenceTimerRef.current = setTimeout(() => {
@@ -787,7 +814,7 @@ export function useNeuralVoice(
                 markSTTEnd();
                 console.log(`[Voice] GCP STT final: "${fullSentence}"`);
                 onCmdRef.current(fullSentence);
-              }, 1500);
+              }, silenceMs);
             },
             onError: (err) => {
               console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech");
@@ -831,6 +858,7 @@ export function useNeuralVoice(
     speakingRef.current = false;
     if (keepAliveRef.current) { clearInterval(keepAliveRef.current); keepAliveRef.current = null; }
     if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
+    if (sentenceTimerRef.current) { clearTimeout(sentenceTimerRef.current); sentenceTimerRef.current = null; }
     if (activeAudioRef.current) {
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
@@ -841,6 +869,7 @@ export function useNeuralVoice(
     }
     gcpSessionRef.current = null;
     speechBufferRef.current = "";
+    sentenceAccumulatorRef.current = "";
     try { speechSynthesis.cancel(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
@@ -857,6 +886,8 @@ export function useNeuralVoice(
       gcpSessionRef.current.stop();
     }
     gcpSessionRef.current = null;
+    if (sentenceTimerRef.current) { clearTimeout(sentenceTimerRef.current); sentenceTimerRef.current = null; }
+    sentenceAccumulatorRef.current = "";
     try { recRef.current?.abort?.(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
