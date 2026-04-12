@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Camera, CameraOff, Eye, Loader2, Send, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
+import { Camera, CameraOff, Eye, Loader2, Send, RotateCcw, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
+import { useOrionTTS } from "@/hooks/useOrionTTS";
 
 const MAX_IMAGE_SIZE = 512;
 const JPEG_QUALITY = 0.6;
@@ -249,7 +250,19 @@ export function NeuralVision() {
                 <Eye className="h-3.5 w-3.5 text-primary" />
                 <span>Visão Neural — {response.model}</span>
               </div>
-              <span className="text-[10px] text-muted-foreground">{response.tokensUsed} tokens</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">{response.tokensUsed} tokens</span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => tts.speaking ? tts.stop() : tts.speak(response.text)}
+                  disabled={tts.loading}
+                >
+                  {tts.loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : tts.speaking ? <VolumeX className="h-3.5 w-3.5 text-primary" /> : <Volume2 className="h-3.5 w-3.5" />}
+                </Button>
+              </div>
+            </div>
             </div>
             <div className="prose prose-sm prose-invert max-w-none text-foreground">
               <ReactMarkdown>{response.text}</ReactMarkdown>
