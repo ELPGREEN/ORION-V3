@@ -416,7 +416,7 @@ export function useOrionReasoning(
     addChat("ai", "⏳ ...");
     addLog(`💬 Pergunta [${source}]: ${question}`);
 
-    // Set OrbState to "thinking" — JARVIS-style PROCESSING indicator
+    // Set OrbState to "thinking" while processing
     OrbState.voiceState = "thinking";
 
     const controller = new AbortController();
@@ -497,10 +497,10 @@ export function useOrionReasoning(
       const greetingPatterns = /^(senhor|senhora|oi|olá|ola|ei|hey|eai|e\s*aí|fala|bom\s*dia|boa\s*tarde|boa\s*noite|tudo\s*bem|beleza|opa)[\s!?.]*$/i;
       if (greetingPatterns.test(qLow)) {
         const greetings = [
-          "Estou ouvindo. O que precisa?",
-          "Às ordens. Como posso ajudar?",
-          "Estou aqui. Diga.",
-          "Pode falar, estou atento.",
+          "Fala! O que manda?",
+          "E aí! No que posso ajudar?",
+          "Estou aqui, manda ver!",
+          "Opa! Pode falar.",
         ];
         const greeting = greetings[Math.floor(Math.random() * greetings.length)];
         setChatHistory(prev => {
