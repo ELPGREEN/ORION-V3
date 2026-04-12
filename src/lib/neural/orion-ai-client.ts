@@ -909,7 +909,7 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
   const verbReflect = /\b(reflita|pens[ae]\s+sobre|consider[ae]|raciocin[ae]|reason|think\s+about|ponderar)\b/i;
 
   // ═══ VISUAL VERBS — these ALWAYS mean the user wants vision analysis ═══
-  const verbVisual = /\b(descrev[aeo]r?|descreva|descreve|l[eê]|leia|ler|mostr[ae]|mostrar?|analisa|analis[ae]\s+(a\s+)?(imagem|cena|cenário|foto)|observ[ae]|examin[ae]|inspecion[ae]|detalh[ae]|read|look\s+at|show\s+me|describe|what\s+is\s+this)\b/i;
+  const verbVisual = /(?:^|\s)(descrev[aeo]r?|descreva|descreve|lê|l[eê]r?|leia|mostr[ae]|mostrar?|analisa|analis[ae]\s+(a\s+)?(imagem|cena|cenário|foto)|observ[ae]|examin[ae]|inspecion[ae]|detalh[ae]|read|look\s+at|show\s+me|describe|what\s+is\s+this)\b/i;
   // ═══ VISUAL TARGETS — objects/concepts that imply the user wants to see something ═══
   const visualTargets = /\b(cen[aá]rio|cena|ambiente|acess[oó]rio|objeto|roupa|vestimenta|pessoa|gente|animal|planta|m[oó]vel|tela|escrit[oó]rio|sala|mesa|parede|quadro|decora[çc][aã]o|texto|letreiro|placa|etiqueta|c[oó]digo|qr\s*code|barcode|documento|papel|livro|tela|monitor|comida|bebida|garrafa|copo|caneca|produto|embalagem|marca|logo|cor(es)?|formato|tamanho|material)\b/i;
 
