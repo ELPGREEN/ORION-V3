@@ -110,7 +110,7 @@ export default function ProprietarioDashboard() {
         { title: "Publicações", icon: FileText, path: "/dashboard/publicacoes-admin" },
         { title: "Analytics", icon: BarChart3, path: "/dashboard/admin" },
         { title: "Orion IA", icon: Brain, path: "/consulta" },
-        { title: "Orquestrador", icon: BarChart3, path: "/dashboard/orion-orchestrator" },
+        { title: "Orquestrador", icon: BarChart3, path: "/dashboard/rede-neural" },
       ],
     },
   ];

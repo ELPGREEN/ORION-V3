@@ -108,7 +108,7 @@ export function DashboardSidebar({ collapsed, onToggle }: DashboardSidebarProps)
         { id: "usuarios", label: "Usuários", path: "/dashboard/usuarios" },
         { id: "publicacoes-admin", label: "Publicações", path: "/dashboard/publicacoes-admin" },
         { id: "recursos-eu", label: "Recursos EU", path: "/dashboard/recursos-eu" },
-        { id: "extension", label: "Extensão Chrome", path: "/dashboard/extension" },
+        { id: "extension", label: "Extensão Chrome", path: "/dashboard/rede-neural" },
       ],
     },
   ];
