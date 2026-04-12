@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 // [REMOVED] import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
 import { useQuery } from "@tanstack/react-query";
-// [REMOVED] import { NeuralVision } from "@/components/dashboard/neural/NeuralVision";
+import { NeuralVision } from "@/components/dashboard/neural/NeuralVision";
 import { AlienCoreBackground } from "@/components/ui/AlienCoreBackground";
 import { motion } from "framer-motion";
 import logoElp from "@/assets/logo-elp.webp";
@@ -194,8 +194,8 @@ export default function ConsultaIA() {
     if (!isSubscriber) return <SubscriptionGate />;
 
     return (
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="text-muted-foreground text-sm p-4 text-center">Visão Neural em reimplementação</div>
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <NeuralVision />
       </div>
     );
   };
