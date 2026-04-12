@@ -112,7 +112,8 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
 
     doSpeak(speakText, () => {
       if (conversationModeRef.current) {
-        setTimeout(() => startListening(), 400);
+        // Minimal delay — start listening immediately after speech ends
+        setTimeout(() => startListening(), 150);
       }
     });
   }, [speakText, conversationMode, isProcessing, doSpeak, startListening]);
