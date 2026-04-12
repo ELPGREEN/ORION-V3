@@ -6,9 +6,7 @@
  * Provides real-time health status, fallback ordering, and capability queries.
  */
 
-// Vision stubs — local ML removed, Gemini handles vision on-demand
-const isMediaPipeReady = () => false;
-const isYOLOReady = () => false;
+// Vision: Gemini handles all vision on-demand (local ML removed)
 import { getTFMetrics } from "./tf-runtime";
 const getFaceApiMetrics = () => ({ modelsLoaded: false, loadTimeMs: 0, hasMatcher: false });
 import { getHealthSnapshot, type SystemHealthSnapshot } from "./system-health";
@@ -54,15 +52,8 @@ export interface OrchestratorSnapshot {
   systemHealth: SystemHealthSnapshot;
 }
 
+
 // ─── Health Check Helpers ───
-
-function checkMediaPipe(): APIHealth {
-  return isMediaPipeReady() ? "online" : "loading";
-}
-
-function checkYOLO(): APIHealth {
-  return isYOLOReady() ? "online" : "loading";
-}
 
 function checkBlazeFace(): APIHealth {
   const metrics = getTFMetrics();
@@ -74,9 +65,6 @@ function checkFaceApi(): APIHealth {
   return metrics.modelsLoaded ? "online" : "loading";
 }
 
-function checkBrowserSpeech(): APIHealth {
-  return typeof window !== "undefined" && "speechSynthesis" in window ? "online" : "offline";
-}
 
 function checkBrowserSTT(): APIHealth {
   return typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
@@ -95,37 +83,13 @@ function alwaysCloud(): APIHealth {
 // ─── API Registry ───
 
 const API_REGISTRY: OrionAPI[] = [
-  // ═══ 👁️ VISÃO ═══
+  // ═══ 👁️ VISÃO — Gemini only ═══
   {
-    id: "mediapipe_vision", name: "MediaPipe Vision", brandName: "Orion Vision Core",
-    capability: "vision", tier: "primary", runtime: "local_wasm",
-    library: "@mediapipe/tasks-vision", version: "^0.10.x",
-    health: "unknown", lastLatencyMs: 0, errorCount: 0,
-    features: ["Detecção de objetos", "BlazeFace", "HandLandmarker", "EfficientDet"],
-    checkHealth: checkMediaPipe,
-  },
-  {
-    id: "yolo_onnx", name: "YOLOv8n (ONNX)", brandName: "Orion Vision Deep",
-    capability: "vision", tier: "primary", runtime: "local_wasm",
-    library: "onnxruntime-web", version: "^1.18.x",
-    health: "unknown", lastLatencyMs: 0, errorCount: 0,
-    features: ["80 classes COCO", "Detecção em tempo real", "IoU merge"],
-    checkHealth: checkYOLO,
-  },
-  {
-    id: "gemini_vision", name: "Gemini Vision", brandName: "Motor Beta (Multimodal)",
-    capability: "vision", tier: "secondary", runtime: "cloud",
+    id: "gemini_vision", name: "Gemini Vision", brandName: "Orion Vision Core",
+    capability: "vision", tier: "primary", runtime: "cloud",
     library: "Lovable AI Gateway / Gemini API", version: "2.5-flash",
     health: "online", lastLatencyMs: 0, errorCount: 0,
-    features: ["Análise multimodal", "Descrição de cenas", "OCR avançado"],
-    checkHealth: alwaysCloud,
-  },
-  {
-    id: "llava_vision", name: "LLaVA (via Groq)", brandName: "Orion Vision Engine",
-    capability: "vision", tier: "tertiary", runtime: "cloud",
-    library: "Groq API", version: "llava-v1.5",
-    health: "online", lastLatencyMs: 0, errorCount: 0,
-    features: ["Descrição visual avançada", "VQA", "Raciocínio visual"],
+    features: ["Análise multimodal", "Descrição de cenas", "OCR avançado", "Detecção de objetos"],
     checkHealth: alwaysCloud,
   },
 
