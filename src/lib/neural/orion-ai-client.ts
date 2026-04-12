@@ -12,7 +12,7 @@ import {
 import { VS } from "@/components/dashboard/neural/useVisionProcessing";
 import { matchLearnedPriors, learnFromDetection, canIdentifyLocally, getLearningStats } from "@/lib/neural/vision-local-learning";
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
-import { runVisionGate, buildGatedResponse, type LocalDetectionContext } from "@/lib/neural/hf-vision-gate";
+// hf-vision-gate REMOVED — was downloading ~50MB of WASM models in browser
 import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
 
 // ═══ GLOBAL AUTH CACHE — avoids 3-6 supabase.auth.getUser() calls per interaction ═══
@@ -380,44 +380,7 @@ export async function analyzeFrameWithAI(
       }
     }
 
-    // ═══ HF VISION GATE: Free classification before Gemini ═══
-    if (includeImage && canvas) {
-      try {
-        const localDetectionsRaw = buildLocalDetections();
-        const localCtx: LocalDetectionContext = {
-          objectCount: (localDetectionsRaw as any)?.realTimeObjects?.length || 0,
-          faceCount: (localDetectionsRaw as any)?.realTimeFaces?.length || (localDetectionsRaw as any)?.faceCount || 0,
-          hasOCR: !!(localDetectionsRaw as any)?.readingResult?.text?.length,
-          hasScene: !!(localDetectionsRaw as any)?.sceneClassification,
-          topObjects: ((localDetectionsRaw as any)?.realTimeObjects || []).slice(0, 5).map((o: any) => o.name || o.namePt),
-          confidence: Math.max(...((localDetectionsRaw as any)?.realTimeObjects || []).map((o: any) => o.confidence || 0), 0),
-        };
-
-        const gate = await runVisionGate(canvas, localCtx, intentType);
-
-        if (gate.gated && gate.geminiAction === "skip") {
-          // HF + local detections are sufficient — skip Gemini entirely!
-          const description = buildGatedResponse(gate, localCtx, question || "");
-          console.log(`[OrionAI] 🛡️ HF GATE: Skipped Gemini call (saved ~3000 tokens) | ${gate.inferenceMs}ms`);
-          return {
-            description: `${description}\n\n[Resposta local — HF + sensores ML, sem custo de API]`,
-            learnedFacts: [],
-            identifiedObjects: gate.classifications.map(c => ({
-              name: c.label, category: "objeto", confidence: Math.round(c.score * 100), count: 1,
-            })),
-          };
-        }
-
-        // Gate says reduce: adjust image size based on recommendation
-        if (gate.geminiAction === "text_only") {
-          // Don't send image — just text context with local detections
-          includeImage = false;
-          console.log(`[OrionAI] 🛡️ HF GATE: Text-only mode (saved ~2000 image tokens)`);
-        }
-      } catch (e) {
-        console.warn("[OrionAI] HF Vision Gate failed, proceeding to Gemini:", e);
-      }
-    }
+    // HF Vision Gate REMOVED — was downloading ~50MB WASM models, replaced by direct Gemini
 
     // ═══ LOCAL-FIRST: non-streaming path ═══
     if (_localFirstMode && intentType !== "visual" && question) {
