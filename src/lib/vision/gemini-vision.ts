@@ -11,15 +11,21 @@ export function captureFrame(canvas: HTMLCanvasElement, quality = 0.7): string {
   return canvas.toDataURL("image/jpeg", quality).split(",")[1];
 }
 
-/** Capture from video element → base64 JPEG */
+/** Capture from video element → base64 JPEG. Returns empty string if video not ready. */
 export function captureVideoFrame(video: HTMLVideoElement, maxWidth = 640, quality = 0.7): string {
+  if (!video || video.readyState < 2 || video.videoWidth === 0) return "";
   const canvas = document.createElement("canvas");
-  const scale = Math.min(1, maxWidth / (video.videoWidth || 640));
-  canvas.width = Math.round((video.videoWidth || 640) * scale);
-  canvas.height = Math.round((video.videoHeight || 480) * scale);
+  const scale = Math.min(1, maxWidth / video.videoWidth);
+  canvas.width = Math.round(video.videoWidth * scale);
+  canvas.height = Math.round(video.videoHeight * scale);
   const ctx = canvas.getContext("2d");
-  if (ctx) ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", quality).split(",")[1];
+  if (!ctx) return "";
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL("image/jpeg", quality);
+  const base64 = dataUrl.split(",")[1];
+  // Validate: must be substantial (>500 chars = ~375 bytes = real image)
+  if (!base64 || base64.length < 500) return "";
+  return base64;
 }
 
 export interface GeminiVisionResult {
