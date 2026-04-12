@@ -1453,7 +1453,7 @@ export function useOrionReasoning(
       let streamEnded = false;
       const spokenSentences = new Set<string>();
 
-      const TTS_VOICE = "Charon";
+      const TTS_VOICE = "Iapetus";
       const TTS_PROMPT = "Você é ORION, IA Lumen7 AquaMonkey Fusion. Voz MASCULINA tenor grave ~200Hz. Fale CONTÍNUO sem pausas. Máximo 0.15s entre frases. Tom confiante e caloroso como podcast brasileiro.";
 
       const processSpeechQueue = async () => {

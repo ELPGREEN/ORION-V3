@@ -390,7 +390,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
     // ── PRIMARY: Gemini TTS (human voice) ──
     try {
       const { speakWithGeminiTTS } = await import("@/lib/tts/geminiTTS");
-      const result = await speakWithGeminiTTS(text, "Charon");
+      const result = await speakWithGeminiTTS(text, "Iapetus");
       if (result.played) {
         if (result.audio) audioRef.current = result.audio;
         finalize();
