@@ -6,7 +6,7 @@ import { lazyRetry } from "@/lib/lazyRetry";
 
 // Lazy-load heavy sub-components for code-splitting
 const DocumentFeedback = lazy(lazyRetry(() => import("@/components/dashboard/DocumentFeedback").then(m => ({ default: m.DocumentFeedback }))));
-const NeuralContextPanel = lazy(lazyRetry(() => import("@/components/dashboard/NeuralContextPanel")));
+// NeuralContextPanel removed
 import {
   Sparkles,
   ChevronLeft,
@@ -1062,7 +1062,7 @@ export default function GerarDocumento() {
               <span className="hidden sm:inline">Novo Doc.</span>
             </Button>
           </div>
-          {jobMetadata && <NeuralContextPanel metadata={jobMetadata} />}
+          {/* NeuralContextPanel removed */}
           {/* 📊 Análise de Risco Automática */}
           {editedContent && editedContent.length > 100 && (() => {
             const risk = calculateRisk(editedContent, selectedType?.category === "penal" || selectedType?.category === "civil" || selectedType?.category === "trabalhista" ? "Judicial" : undefined);
