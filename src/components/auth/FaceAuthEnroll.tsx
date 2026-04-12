@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { logFaceAuthLearning } from "@/lib/neural/face-auth-learning";
+const logFaceAuthLearning = (_data: any) => { /* stub — face-auth-learning removed */ };
 
 interface FaceAuthEnrollProps {
   onComplete?: () => void;

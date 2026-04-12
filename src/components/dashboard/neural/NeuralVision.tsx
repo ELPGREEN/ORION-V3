@@ -30,7 +30,10 @@ import { FaceScannerOverlay } from "./FaceScannerOverlay";
 import { TeslaCoilVoltagePanel } from "./TeslaCoilVoltagePanel";
 import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
 import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
-import { preloadAllVision, detectRealTime, type RealTimeVisionResult } from "@/lib/neural/realtime-vision-engine";
+// Vision stubs — all detection now via Gemini on-demand
+const preloadAllVision = async () => {};
+const detectRealTime = async (_v?: any) => ({ mpObjects: [], yoloObjects: [], allObjects: [], faces: [], faceLandmarks: [], hands: [], poses: [], detections: [], timestamp: Date.now(), processingMs: 0, status: "none" as const });
+type RealTimeVisionResult = Awaited<ReturnType<typeof detectRealTime>>;
 import { VmBootLoader } from "./VmBootLoader";
 
 // Map COCO class names to overlay categories

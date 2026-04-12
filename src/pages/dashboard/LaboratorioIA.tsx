@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Brain, Eye, Mic, FileText, Sparkles, Upload, Play, Trash2, CheckCircle2, AlertCircle, Zap, Volume2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { hybridVisionAnalyze, fileToBase64, type VisionMode } from "@/lib/groq-vision-hybrid";
+// groq-vision-hybrid removed — stubs for backward compat
+type VisionMode = "identify" | "describe" | "analyze" | "teach";
+const fileToBase64 = (file: File): Promise<string> => new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve((r.result as string).split(",")[1]); r.onerror = reject; r.readAsDataURL(file); });
+const hybridVisionAnalyze = async (_b64: string, _opts?: any) => ({ detections: [], mode: "identify", provider_used: "none", providers_available: [], protocols_available: 0, auto_learned: 0, evolution_status: "disabled", duration_ms: 0, timestamp: new Date().toISOString() });
 
 // HuggingFace integrations
 import {

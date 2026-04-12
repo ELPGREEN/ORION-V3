@@ -26,9 +26,16 @@ import { localJudgeScore, extractCitations, detectBias, type JudgeVerdict } from
 import { fuseStreams, type MultimodalFusionConfig, DEFAULT_FUSION_CONFIG } from "./neural/multimodal-fusion";
 import { crossAttention, type CrossAttentionConfig, DEFAULT_CROSS_ATTENTION_CONFIG } from "./neural/cross-attention";
 import { perceiveInput, recognizeIntent, decomposeTask, planActions, executeAction, type ExecutionResult as LAMResult } from "./neural/large-action-model";
-import { segmentScene, segmentDocument, type SegmentationResult } from "./neural/segment-anything";
+// segment-anything removed — stubs
+type SegmentationResult = { masks: any[]; scores: number[]; labels: string[] };
+const segmentScene = async () => ({ masks: [], scores: [], labels: [] } as SegmentationResult);
+const segmentDocument = async () => ({ masks: [], scores: [], labels: [] } as SegmentationResult);
 import { mambaBlock, biMambaBlock, analyzeLegalSequence, type LegalSequenceAnalysis, DEFAULT_MAMBA_CONFIG } from "./neural/mamba";
-import { runVLMOffline, getVLMEmbedding, type VLMOutput, type VLMLocalDetection } from "./neural/vlm-offline-engine";
+// vlm-offline-engine removed — stubs
+type VLMOutput = { text: string; embedding: number[]; localDetections: any[] };
+type VLMLocalDetection = any;
+const runVLMOffline = async (_t: string) => ({ text: "", embedding: [], localDetections: [] } as VLMOutput);
+const getVLMEmbedding = async (_t: string) => [] as number[];
 
 // ─── Singleton Instances (v2 configs) ───
 let _kvCache: KVCacheBank | null = null;

@@ -30,7 +30,7 @@ import { moeInternalGating } from "@/lib/moe-gating";
 import { fuseStreams } from "@/lib/neural/multimodal-fusion";
 import { routeToTier } from "@/lib/neural/slim-model-router";
 import { documentCompleteness } from "@/lib/neural/masked-prediction";
-import { segmentScene } from "@/lib/neural/segment-anything";
+const segmentScene = async () => ({ masks: [], scores: [], labels: [] });
 import {
   createGlobalWorkspace,
   createSelfModel,
