@@ -166,10 +166,12 @@ export function GlobalOrionListener() {
     if (typeof document !== "undefined" && document.hidden) return 10000;
     const attempts = restartAttemptsRef.current;
     if (isMobile) {
-      const backoff = Math.min(1500 * Math.pow(1.5, attempts), 15000);
-      if (reason === "no-speech" || reason === "end") return Math.max(backoff, 1500);
-      if (reason === "aborted") return Math.max(backoff, 2000);
-      return Math.max(backoff, 1500);
+      // Much longer delays on mobile to prevent OS mic activation sounds
+      const backoff = Math.min(3000 * Math.pow(1.5, attempts), 30000);
+      if (reason === "normal-end") return 3000; // Was 80ms on desktop — mobile needs longer
+      if (reason === "no-speech" || reason === "end") return Math.max(backoff, 3000);
+      if (reason === "aborted") return Math.max(backoff, 4000);
+      return Math.max(backoff, 3000);
     }
     const backoff = Math.min(300 * Math.pow(1.5, attempts), 5000);
     if (reason === "aborted") return Math.max(backoff, 1000);
