@@ -670,21 +670,24 @@ export function useOrionReasoning(
           const user = await getCachedUser();
           let voiceResponse: string;
           if (user) {
+            // ═══ FIX: Query voice_auth_enrollments (NOT face_auth_enrollments) ═══
             const { data: enrollment } = await supabase
-              .from("face_auth_enrollments")
+              .from("voice_auth_enrollments")
               .select("is_active, enrollment_quality, verification_count")
               .eq("user_id", user.id)
               .eq("is_active", true)
               .maybeSingle();
 
-            // Check if this is the owner (Ericson Piccoli)
-            const memories = getMemoryFacts();
-            const isOwner = memories.some(m => /ericson\s*piccoli/i.test(m) && /(criador|pai|proprietário|owner|desenvolvedor)/i.test(m));
+            // ═══ FIX: Use isOwnerEmail for reliable owner detection ═══
+            const { isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
+            const isOwner = isOwnerEmail(user.email);
 
             if (enrollment) {
               voiceResponse = isOwner
                 ? `Sim, Ericson! Tenho seu Voice ID cadastrado com qualidade ${Math.round(enrollment.enrollment_quality * 100)}%. Já verificamos ${enrollment.verification_count} vezes. Sua identidade como proprietário do sistema está registrada e ativa.`
                 : `Sim, tenho seu Voice ID cadastrado com qualidade ${Math.round(enrollment.enrollment_quality * 100)}%. Já verificamos ${enrollment.verification_count} vezes. Sua identidade vocal está registrada e ativa.`;
+            } else if (isOwner) {
+              voiceResponse = "Ericson, reconheço você pelo seu email de proprietário, mas ainda não tenho seu Voice ID cadastrado. Configure nas opções de segurança para ativar o reconhecimento biométrico vocal.";
             } else {
               voiceResponse = "Ainda não tenho seu Voice ID cadastrado. Para que eu possa reconhecer sua voz de forma confiável, você pode configurar nas opções de segurança do painel.";
             }
