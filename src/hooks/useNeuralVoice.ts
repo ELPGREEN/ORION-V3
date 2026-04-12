@@ -704,13 +704,84 @@ export function useNeuralVoice(
       // Guard against stale state after async prime
       if (intentionalStopRef.current || onCmdRef.current !== onCmd) return;
 
-      // AudioWorklet removed — was causing conflicts with SpeechRecognition
+      // ═══ TRY GCP STT FIRST ═══
+      if (useGCPSTTRef.current) {
+        try {
+          // Stop any existing GCP session
+          if (gcpSessionRef.current?.isActive()) {
+            gcpSessionRef.current.stop();
+          }
 
+          const session = createGCPSTTSession({
+            languageCode: "pt-BR",
+            sampleRate: 16000,
+            chunkIntervalMs: 2500,
+            onFinal: (text, confidence) => {
+              if (!onCmdRef.current || intentionalStopRef.current) return;
+              if (speakingRef.current || VoiceState.aiResponding) {
+                // During TTS, check for barge-in
+                if (STOP_PATTERNS.test(text)) {
+                  bargeIn();
+                  return;
+                }
+                if (text.split(/\s+/).length >= 3) {
+                  bargeIn();
+                }
+                return;
+              }
+
+              const normalized = normalizeSpeechText(text);
+              if (normalized.length < 3) return;
+
+              const now = Date.now();
+              // Duplicate guard
+              if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
+              // Echo guard
+              if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
+                if (isEchoOf(normalized, lastSpokenTextRef.current)) {
+                  console.log("[Voice] GCP Echo suppressed:", normalized.slice(0, 50));
+                  return;
+                }
+              }
+
+              lastProcessedTranscriptRef.current = normalized;
+              lastProcessedAtRef.current = now;
+              markSTTEnd();
+              console.log(`[Voice] GCP STT: "${text}" (${(confidence * 100).toFixed(0)}%)`);
+              onCmdRef.current(text);
+            },
+            onError: (err) => {
+              console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech");
+              // Fallback to Web Speech API
+              useGCPSTTRef.current = false;
+              gcpSessionRef.current?.stop();
+              gcpSessionRef.current = null;
+              if (onCmdRef.current && !intentionalStopRef.current) {
+                startListeningFresh(onCmdRef.current);
+              }
+            },
+          });
+
+          gcpSessionRef.current = session;
+          const started = await session.start();
+
+          if (started && !intentionalStopRef.current) {
+            setListening(true);
+            markSTTStart();
+            console.log("[Voice] ✅ Google Cloud STT ativo — streaming em tempo real");
+            return; // GCP STT running, no need for Web Speech
+          }
+        } catch (err) {
+          console.warn("[Voice] GCP STT init failed:", err);
+        }
+      }
+
+      // ═══ FALLBACK: Web Speech API ═══
       startListeningFresh(onCmd);
     };
 
     void boot();
-  }, [clearRestartTimer, startListeningFresh]);
+  }, [clearRestartTimer, startListeningFresh, bargeIn]);
 
   // ═══ Public: Stop ═══
   const stop = useCallback(() => {
