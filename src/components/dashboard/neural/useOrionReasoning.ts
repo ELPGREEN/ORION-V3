@@ -1439,45 +1439,64 @@ export function useOrionReasoning(
 
       const needsImage = intentType !== "textual";
 
-      const localQueue: string[] = [];
-      if (speechQueueRef) speechQueueRef.current = localQueue;
+      // ═══ PIPELINED STREAMING TTS ═══
+      // Each sentence gets its audio pre-fetched immediately.
+      // While sentence N plays, sentence N+1's audio is already fetching.
+      const { fetchGeminiAudio, playAudioBlob } = await import("@/lib/tts/geminiTTS");
+      const { cleanTextForSpeech } = await import("@/hooks/useNeuralVoice");
+
+      const localQueue: Array<{ text: string; audioPromise: Promise<Blob | null> }> = [];
+      if (speechQueueRef) speechQueueRef.current = [];
       let isSpeakingQueue = false;
       let spokeOrQueued = false;
       let queueFinished = false;
-      let batchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
       let streamEnded = false;
+      const spokenSentences = new Set<string>();
+
+      const TTS_VOICE = "Charon";
+      const TTS_PROMPT = "Você é ORION, IA Lumen7 AquaMonkey Fusion. Voz MASCULINA tenor grave ~200Hz. Fale CONTÍNUO sem pausas. Máximo 0.15s entre frases. Tom confiante e caloroso como podcast brasileiro.";
 
       const processSpeechQueue = async () => {
         if (bargedInRef.current) return;
         if (isSpeakingQueue || localQueue.length === 0) return;
         isSpeakingQueue = true;
 
-        // Mic already stopped by previous speak() or AI flow — no toggle here
+        // Stop mic during TTS
+        try { (window as any).__orionMicRec?.stop?.(); } catch {}
 
         try {
           while (localQueue.length > 0 && !bargedInRef.current) {
-            // Batch all queued sentences into one speak() call to avoid pauses
-            const batch = localQueue.splice(0, localQueue.length).join(" ");
-            if (!batch.trim()) continue;
-            // skipMicToggle: mic is managed here, not inside speak()
-            await speak(batch, { skipMicToggle: true });
+            const item = localQueue.shift()!;
+            if (!item.text.trim()) continue;
+
+            // Wait for pre-fetched audio
+            const blob = await item.audioPromise;
+            if (bargedInRef.current) break;
+
+            if (blob) {
+              const result = await playAudioBlob(blob, controller.signal);
+              if (result.audio) spokeOrQueued = true;
+            } else {
+              // Fallback: use speak() for this sentence
+              await speak(item.text, { skipMicToggle: true });
+              spokeOrQueued = true;
+            }
           }
         } finally {
           isSpeakingQueue = false;
           if (localQueue.length > 0 && !bargedInRef.current) {
             void processSpeechQueue();
-          } else {
+          } else if (!bargedInRef.current) {
             queueFinished = true;
-            // Resume mic ONCE after all speech is done
+            // Resume mic after all speech done
+            window.dispatchEvent(new CustomEvent("orion-tts-queue-done"));
           }
         }
       };
 
       // ═══ SKIP all heavy layers — go DIRECT to Gemini ═══
-      // Removed: Cognitive Router, NLP Semantics, Cognition Engine, Deep Query Estimator
-      // Gemini handles everything — these layers added 500ms+ latency for marginal benefit
       const cognitiveRouteResult: CognitiveRouting | null = null;
-      const isConversationalMode = true; // Always fast path
+      const isConversationalMode = true;
 
       // User name — only if already cached (no DB call)
       if (!(window as any).__orionUserName) {
@@ -1497,9 +1516,7 @@ export function useOrionReasoning(
       );
 
       let firstSentenceSpoken = false;
-      const triggerQueueDebounced = () => {
-        if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
-        // Always trigger immediately — no debounce, speak as soon as sentence arrives
+      const triggerQueueImmediate = () => {
         firstSentenceSpoken = true;
         void processSpeechQueue();
       };
@@ -1524,19 +1541,26 @@ export function useOrionReasoning(
         },
         (sentence) => {
           if (bargedInRef.current) return;
-          // Dedup: skip if this sentence was already queued or is a substring of the last one
-          const lastQueued = localQueue[localQueue.length - 1] || "";
-          if (sentence === lastQueued || (lastQueued && lastQueued.includes(sentence))) return;
+          // Dedup: skip if already spoken or queued
+          const normalized = sentence.trim();
+          if (!normalized || spokenSentences.has(normalized)) return;
+          const lastQueued = localQueue[localQueue.length - 1];
+          if (lastQueued && (normalized === lastQueued.text || lastQueued.text.includes(normalized))) return;
+          spokenSentences.add(normalized);
           spokeOrQueued = true;
-          localQueue.push(sentence);
-          triggerQueueDebounced();
+          // Pre-fetch audio IMMEDIATELY while current sentence plays
+          const cleanSentence = cleanTextForSpeech(normalized);
+          const audioPromise = cleanSentence.length > 2
+            ? fetchGeminiAudio(cleanSentence, TTS_VOICE, controller.signal, TTS_PROMPT, "pt-BR")
+            : Promise.resolve(null);
+          localQueue.push({ text: normalized, audioPromise });
+          triggerQueueImmediate();
         },
         controller.signal,
       );
 
-      // Stream ended — flush remaining sentences immediately
+      // Stream ended — flush remaining sentences
       streamEnded = true;
-      if (batchDebounceTimer) clearTimeout(batchDebounceTimer);
       if (localQueue.length > 0 && !bargedInRef.current) {
         void processSpeechQueue();
       }
