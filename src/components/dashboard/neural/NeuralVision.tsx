@@ -1,12 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Camera, CameraOff, Eye, Loader2, Send, RotateCcw, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Camera, CameraOff, Eye, Loader2, Send, RotateCcw, Maximize2, Minimize2, Volume2, VolumeX, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
-import { useOrionTTS } from "@/hooks/useOrionTTS";
+import { useOrionVoice } from "@/hooks/useOrionVoice";
 
 const MAX_IMAGE_SIZE = 512;
 const JPEG_QUALITY = 0.6;
@@ -29,7 +29,16 @@ export function NeuralVision() {
   const [response, setResponse] = useState<VisionResponse | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const tts = useOrionTTS();
+  const voice = useOrionVoice({
+    onCommand: (cmd) => {
+      // If camera is active, use voice command as prompt
+      if (capturedImage) {
+        setPrompt(cmd);
+        // Auto-analyze after voice command
+        setTimeout(() => handleAnalyze(), 200);
+      }
+    },
+  });
 
   // Start camera
   const startCamera = useCallback(async () => {
