@@ -779,55 +779,34 @@ export function useNeuralVoice(
               const normalized = normalizeSpeechText(text);
               if (normalized.length < 2) return;
               const wordCount = normalized.split(/\s+/).filter(Boolean).length;
-              
-              // Discard low-confidence short fragments (noise/hallucinations)
-              if (confidence > 0 && confidence < 0.40 && wordCount <= 3) {
+
+              // Discard obvious low-confidence noise/hallucinations
+              if (confidence > 0 && confidence < 0.35 && wordCount <= 4) {
                 console.log(`[Voice] GCP STT descartado por baixa confiança: "${text}" (${(confidence * 100).toFixed(0)}%)`);
                 return;
               }
 
-              // ═══ SENTENCE ACCUMULATION ═══
-              // Each GCP chunk is independent (no overlap), so accumulate
-              // until user stops speaking (silence timer fires)
               if (sentenceTimerRef.current) {
                 clearTimeout(sentenceTimerRef.current);
+                sentenceTimerRef.current = null;
+              }
+              sentenceAccumulatorRef.current = "";
+
+              const now = Date.now();
+              if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
+
+              if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
+                if (isEchoOf(normalized, lastSpokenTextRef.current)) {
+                  console.log("[Voice] GCP Echo suppressed:", normalized.slice(0, 50));
+                  return;
+                }
               }
 
-              // Use original text (not normalized) for accumulation to preserve casing
-              sentenceAccumulatorRef.current = mergeTranscriptSegments(sentenceAccumulatorRef.current, text.trim());
-              const turnState = detectTurnState([sentenceAccumulatorRef.current], "pt-BR");
-              const optimalSilence = getOptimalSilenceDuration(turnState);
-              // Wait at least chunkInterval + buffer so we don't fire mid-chunk
-              const silenceMs = Math.max(gcpChunkIntervalMs + 500, optimalSilence);
-
-              console.log(`[Voice] GCP chunk: "${text}" (${(confidence * 100).toFixed(0)}%) — accumulated: "${sentenceAccumulatorRef.current.slice(0, 100)}" — wait=${silenceMs}ms [${turnState}]`);
-
-              // Wait for silence before processing the full sentence
-              sentenceTimerRef.current = setTimeout(() => {
-                const fullSentence = sentenceAccumulatorRef.current.trim();
-                sentenceAccumulatorRef.current = "";
-                sentenceTimerRef.current = null;
-
-                if (!fullSentence || fullSentence.length < 3) return;
-                if (!onCmdRef.current || intentionalStopRef.current) return;
-
-                const now = Date.now();
-                // Duplicate guard
-                if (fullSentence === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
-                // Echo guard
-                if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
-                  if (isEchoOf(fullSentence, lastSpokenTextRef.current)) {
-                    console.log("[Voice] GCP Echo suppressed:", fullSentence.slice(0, 50));
-                    return;
-                  }
-                }
-
-                lastProcessedTranscriptRef.current = fullSentence;
-                lastProcessedAtRef.current = now;
-                markSTTEnd();
-                console.log(`[Voice] GCP STT final: "${fullSentence}"`);
-                onCmdRef.current(fullSentence);
-              }, silenceMs);
+              lastProcessedTranscriptRef.current = normalized;
+              lastProcessedAtRef.current = now;
+              markSTTEnd();
+              console.log(`[Voice] GCP STT utterance: "${text}" (${(confidence * 100).toFixed(0)}%)`);
+              onCmdRef.current(text.trim());
             },
             onError: (err) => {
               console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech");

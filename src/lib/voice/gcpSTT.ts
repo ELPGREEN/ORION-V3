@@ -1,10 +1,7 @@
 /**
- * Google Cloud STT Client — Chunked audio capture
- * Captures mic audio → converts to LINEAR16 → sends to google-stt edge function
- * Returns transcription results with confidence scores
- * 
- * IMPORTANT: No overlap buffer — each chunk is independent to avoid
- * duplicate/garbled transcriptions from repeated audio segments.
+ * Google Cloud STT Client — utterance-based capture
+ * Buffers speech locally and sends the FULL utterance after silence,
+ * avoiding cut-off phrases and hallucinated chunk merges.
  */
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,12 +21,17 @@ interface GCPSTTSession {
   isActive: () => boolean;
 }
 
+const PROCESSOR_BUFFER_SIZE = 4096;
+const PRE_ROLL_FRAMES = 4;
+const FLUSH_POLL_MS = 200;
+const SPEECH_RMS_THRESHOLD = 0.0065;
+
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {
   const int16 = new Int16Array(float32.length);
   for (let i = 0; i < float32.length; i++) {
     const s = Math.max(-1, Math.min(1, float32[i]));
-    int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
   }
   const bytes = new Uint8Array(int16.buffer);
   let binary = "";
@@ -52,7 +54,7 @@ function downsample(buffer: Float32Array, sourceSampleRate: number, targetSample
   return result;
 }
 
-/** Calculate RMS amplitude — more reliable than peak for speech detection */
+/** RMS amplitude — more reliable than peak for speech detection */
 function calculateRMS(buffer: Float32Array): number {
   let sum = 0;
   for (let i = 0; i < buffer.length; i++) {
@@ -77,26 +79,44 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   let processor: ScriptProcessorNode | null = null;
   let source: MediaStreamAudioSourceNode | null = null;
   let active = false;
-  let chunkTimer: ReturnType<typeof setInterval> | null = null;
-  let audioBuffer: Float32Array[] = [];
   let sending = false;
-  let consecutiveEmptyChunks = 0;
+  let flushTimer: ReturnType<typeof setInterval> | null = null;
+  let preRollBuffers: Float32Array[] = [];
+  let utteranceBuffers: Float32Array[] = [];
+  let utteranceActive = false;
+  let lastSpeechAt = 0;
+  let utteranceStartedAt = 0;
 
-  const sendChunk = async () => {
-    if (!active || sending || audioBuffer.length === 0) return;
+  const silenceDurationMs = Math.max(950, Math.round(chunkIntervalMs * 0.7));
+  const maxUtteranceMs = Math.max(7000, chunkIntervalMs * 5);
+
+  const pushPreRollFrame = (frame: Float32Array) => {
+    preRollBuffers.push(frame);
+    if (preRollBuffers.length > PRE_ROLL_FRAMES) {
+      preRollBuffers.shift();
+    }
+  };
+
+  const resetUtterance = () => {
+    utteranceBuffers = [];
+    utteranceActive = false;
+    lastSpeechAt = 0;
+    utteranceStartedAt = 0;
+  };
+
+  const flushUtterance = async (force = false) => {
+    if (sending || utteranceBuffers.length === 0) return;
     sending = true;
 
-    try {
-      // Merge all buffered audio — NO overlap from previous chunks
-      const buffers = [...audioBuffer];
-      audioBuffer = []; // Clear immediately to avoid data loss
+    const buffers = utteranceBuffers;
+    resetUtterance();
 
+    try {
       const totalLength = buffers.reduce((acc, b) => acc + b.length, 0);
-      
-      // Minimum 400ms of audio to be worth sending
-      const minSamples = (audioContext?.sampleRate || 48000) * 0.4;
+      const sourceSR = audioContext?.sampleRate || 48000;
+      const minSamples = Math.floor(sourceSR * 0.45);
+
       if (totalLength < minSamples) {
-        sending = false;
         return;
       }
 
@@ -107,23 +127,15 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         offset += buf.length;
       }
 
-      // Downsample to target rate
-      const sourceSR = audioContext?.sampleRate || 48000;
       const downsampled = downsample(merged, sourceSR, sampleRate);
-
-      // Use RMS for speech detection — more reliable than peak amplitude
       const rms = calculateRMS(downsampled);
-      if (rms < 0.008) {
-        // Silence — skip but track consecutive empty chunks
-        consecutiveEmptyChunks++;
-        sending = false;
+
+      if (!force && rms < SPEECH_RMS_THRESHOLD) {
         return;
       }
-      
-      consecutiveEmptyChunks = 0;
-      const base64 = float32ToLinear16Base64(downsampled);
 
-      if (onInterim) onInterim("...");
+      const base64 = float32ToLinear16Base64(downsampled);
+      onInterim?.("...");
 
       const { data, error } = await supabase.functions.invoke("google-stt", {
         body: { audio: base64, sampleRate, languageCode },
@@ -132,28 +144,26 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
       if (error) {
         console.warn("[GCP-STT] Edge function error:", error.message);
         onError?.(error.message);
-        sending = false;
         return;
       }
 
       if (data?.text) {
         const confidence = data.confidence || 0;
-        console.log(`[GCP-STT] "${data.text}" (conf: ${(confidence * 100).toFixed(1)}%)`);
+        console.log(`[GCP-STT] utterance="${data.text}" (conf: ${(confidence * 100).toFixed(1)}%)`);
         onFinal?.(data.text, confidence);
       }
     } catch (err: any) {
       console.warn("[GCP-STT] Send error:", err.message);
       onError?.(err.message);
+    } finally {
+      sending = false;
     }
-
-    sending = false;
   };
 
   const start = async (): Promise<boolean> => {
     if (active) return true;
 
     try {
-      // Use persistent mic stream if available
       const persistentMic = (window as any).__orion_persistent_mic__;
       const stream = persistentMic?.stream?.active
         ? persistentMic.stream
@@ -169,32 +179,58 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
       mediaStream = stream;
       audioContext = new AudioContext({ sampleRate: 48000 });
       source = audioContext.createMediaStreamSource(stream);
-
-      // ScriptProcessorNode for capturing raw PCM
-      const bufferSize = 4096;
-      processor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+      processor = audioContext.createScriptProcessor(PROCESSOR_BUFFER_SIZE, 1, 1);
 
       processor.onaudioprocess = (e) => {
         if (!active) return;
-        const channelData = e.inputBuffer.getChannelData(0);
-        audioBuffer.push(new Float32Array(channelData));
+
+        const frame = new Float32Array(e.inputBuffer.getChannelData(0));
+        const rms = calculateRMS(frame);
+        const now = Date.now();
+        const isSpeech = rms >= SPEECH_RMS_THRESHOLD;
+
+        if (isSpeech) {
+          if (!utteranceActive) {
+            utteranceActive = true;
+            utteranceStartedAt = now;
+            utteranceBuffers = [...preRollBuffers, frame];
+            onInterim?.("...");
+          } else {
+            utteranceBuffers.push(frame);
+          }
+          lastSpeechAt = now;
+        } else if (utteranceActive) {
+          // Keep trailing silence so the last phonemes are not clipped.
+          utteranceBuffers.push(frame);
+        }
+
+        pushPreRollFrame(frame);
       };
 
       source.connect(processor);
       processor.connect(audioContext.destination);
 
       active = true;
-      consecutiveEmptyChunks = 0;
+      resetUtterance();
+      preRollBuffers = [];
 
-      // Send chunks periodically
-      chunkTimer = setInterval(sendChunk, chunkIntervalMs);
+      flushTimer = setInterval(() => {
+        if (!active || sending || !utteranceActive || utteranceBuffers.length === 0) return;
 
-      // Handle abort signal
+        const now = Date.now();
+        const silenceElapsed = lastSpeechAt > 0 ? now - lastSpeechAt : 0;
+        const utteranceElapsed = utteranceStartedAt > 0 ? now - utteranceStartedAt : 0;
+
+        if (silenceElapsed >= silenceDurationMs || utteranceElapsed >= maxUtteranceMs) {
+          void flushUtterance(utteranceElapsed >= maxUtteranceMs);
+        }
+      }, FLUSH_POLL_MS);
+
       if (signal) {
         signal.addEventListener("abort", stop, { once: true });
       }
 
-      console.log("[GCP-STT] Session started — streaming to Google Cloud");
+      console.log("[GCP-STT] Session started — utterance mode enabled");
       return true;
     } catch (err: any) {
       console.error("[GCP-STT] Failed to start:", err.message);
@@ -206,14 +242,13 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   const stop = () => {
     active = false;
 
-    if (chunkTimer) {
-      clearInterval(chunkTimer);
-      chunkTimer = null;
+    if (flushTimer) {
+      clearInterval(flushTimer);
+      flushTimer = null;
     }
 
-    // Send remaining audio
-    if (audioBuffer.length > 0) {
-      sendChunk();
+    if (utteranceBuffers.length > 0) {
+      void flushUtterance(true);
     }
 
     if (processor) {
@@ -229,13 +264,14 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
       audioContext = null;
     }
 
-    // Don't stop persistent mic stream
     const persistentMic = (window as any).__orion_persistent_mic__;
     if (mediaStream && mediaStream !== persistentMic?.stream) {
       mediaStream.getTracks().forEach((t) => t.stop());
     }
+
     mediaStream = null;
-    audioBuffer = [];
+    preRollBuffers = [];
+    resetUtterance();
 
     console.log("[GCP-STT] Session stopped");
   };
@@ -269,7 +305,11 @@ export async function transcribeOnce(
     });
 
     session.start().then((ok) => {
-      if (!ok) { resolve(null); return; }
+      if (!ok) {
+        resolve(null);
+        return;
+      }
+
       setTimeout(() => {
         if (session.isActive()) {
           session.stop();
