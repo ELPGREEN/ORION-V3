@@ -27,9 +27,9 @@ import { fuseStreams, type MultimodalFusionConfig, DEFAULT_FUSION_CONFIG } from 
 import { crossAttention, type CrossAttentionConfig, DEFAULT_CROSS_ATTENTION_CONFIG } from "./neural/cross-attention";
 import { perceiveInput, recognizeIntent, decomposeTask, planActions, executeAction, type ExecutionResult as LAMResult } from "./neural/large-action-model";
 // segment-anything removed — stubs
-type SegmentationResult = { masks: any[]; scores: number[]; labels: string[] };
-const segmentScene = async () => ({ masks: [], scores: [], labels: [] } as SegmentationResult);
-const segmentDocument = async () => ({ masks: [], scores: [], labels: [] } as SegmentationResult);
+type SegmentationResult = { masks: any[]; scores: number[]; labels: string[]; totalSegments?: number; coveragePercent?: number };
+const segmentScene = (): SegmentationResult => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0 });
+const segmentDocument = (): SegmentationResult => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0 });
 import { mambaBlock, biMambaBlock, analyzeLegalSequence, type LegalSequenceAnalysis, DEFAULT_MAMBA_CONFIG } from "./neural/mamba";
 // vlm-offline-engine removed — stubs
 type VLMOutput = { text: string; embedding: number[]; localDetections: any[] };
@@ -254,7 +254,7 @@ export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
 
       // Synchronous embedding path (fast, no await needed)
       const embedding = getVLMEmbedding(
-        input.imageData,
+        input.imageData || "",
         input.imageWidth || 224,
         input.imageHeight || 224,
         localDetections

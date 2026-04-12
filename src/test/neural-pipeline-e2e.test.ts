@@ -14,8 +14,8 @@ import { fuseStreams } from "@/lib/neural/multimodal-fusion";
 import { routeToTier, classifyQueryComplexity, slimTokenize } from "@/lib/neural/slim-model-router";
 import { documentCompleteness, fillMaskedLegal, bidirectionalScore } from "@/lib/neural/masked-prediction";
 // segment-anything removed — stub
-const segmentScene = (_data?: any) => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0 });
-const segmentDocument = (_data?: any) => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0 });
+const segmentScene = (_data?: any) => ({ masks: [{ label: "bg", confidence: 0.9, bbox: [0,0,1,1] }], scores: [0.9], labels: ["bg"], totalSegments: 1, coveragePercent: 100, imageEmbedding: [] as number[] });
+const segmentDocument = (_data?: any) => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0, imageEmbedding: [] as number[] });
 
 // ═══════════════════════════════════════
 // Individual Model Tests
