@@ -8,6 +8,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { logAgentAction } from "./orion-network-registry";
 import { classifyIntent } from "./orion-ai-client";
+import { smartClassifySync } from "./smart-intent-classifier";
 import { addCausalNode, addCausalLink } from "./causal-reasoning";
 import { recordLearningOutcome } from "./meta-learning";
 import { updateFromInteraction } from "./theory-of-mind";
@@ -97,33 +98,17 @@ export function updateProtocol(intent: string, score: number): void {
 // ─── Phase 1: Plan ───
 
 export function planPhase(query: string, context?: { memories?: string[]; visionActive?: boolean }): AgenticPlan {
-  const qLow = query.toLowerCase();
-
-  // Intent classification (lightweight local)
-  let intent = "general";
-  if (/o\s+que\s+(voc[eê]|vc|tu)\s+(v[eê]|enxerga|est[aá]\s+vendo)/i.test(qLow)) intent = "vision_describe";
-  else if (/quem\s+(é|e|sou)|reconhec/i.test(qLow)) intent = "identity";
-  else if (/o\s+que\s+(estou|tou)\s+(segurando|usando|vestindo)/i.test(qLow)) intent = "vision_object";
-  else if (/procur|busc|encontr/i.test(qLow)) intent = "search";
-  else if (/naveg|abr[ae]|v[aá]\s+para/i.test(qLow)) intent = "navigation";
-  else if (/constru|cri[ae]|implement/i.test(qLow)) intent = "auto_construct";
-  else if (/evolu[ae]|aprend|melhore|upgrade/i.test(qLow)) intent = "self_evolve";
-  else if (/tocar?|play|m[uú]sica|spotify/i.test(qLow)) intent = "media";
-  else if (/luz|sensor|temperatura|bluetooth|iot/i.test(qLow)) intent = "iot";
-  // ── New intent categories ──
-  else if (/\b(lei|artigo|c[oó]digo\s+civil|jurisprud[eê]ncia|peti[çc][aã]o|recurso|senten[çc]a|mandado|habeas|direito)\b/i.test(qLow)) intent = "legal";
-  else if (/\b(fatura|pagamento|cobran[çc]a|financeiro|receita|despesa|honor[aá]rio|boleto)\b/i.test(qLow)) intent = "financial";
-  else if (/\b(agenda|agendar|compromisso|reuni[aã]o|consulta|marcar|desmarcar|hor[aá]rio)\b/i.test(qLow)) intent = "calendar";
-  else if (/\b(pipeline|lead|oportunidade|neg[oó]cio|proposta|deal)\b/i.test(qLow)) intent = "crm";
-  else if (/\b(que\s+hora|que\s+dia|data\s+de\s+hoje|hora\s+atual)\b/i.test(qLow)) intent = "time_date";
-  else if (/\b(calcul|quanto\s+[eé]|some|multipliqu|divid|raiz|porcentagem)\b/i.test(qLow)) intent = "calculation";
-  else if (/\b(traduz|tradu[çc][aã]o|em\s+ingl[eê]s|em\s+espanhol|em\s+italiano)\b/i.test(qLow)) intent = "translation";
-  else if (/\b(piada|engra[çc]ado|brincadeira|me\s+fa[çc]a\s+rir)\b/i.test(qLow)) intent = "humor";
-  else if (/\b(sentido\s+da\s+vida|consci[eê]ncia|exist[eê]ncia|filosofia|reflex[aã]o)\b/i.test(qLow)) intent = "philosophy";
-  else if (/\b(seguran[çc]a|amea[çc]a|ataque|invas[aã]o|defesa|shield)\b/i.test(qLow)) intent = "security";
-  else if (/\b(relat[oó]rio|m[eé]tricas|estat[ií]sticas|resumo\s+d[oa])\b/i.test(qLow)) intent = "reporting";
-  else if (/\b(expliqu|o\s+que\s+[eé]|como\s+funciona|me\s+ensin|tutorial|defin|significa)\b/i.test(qLow)) intent = "explanation";
-  else if (/\b(analis|sentimento|resum|sumariz|avali)\b/i.test(qLow)) intent = "analysis";
+  // Use unified smart classifier (regex fast-path)
+  const smartResult = smartClassifySync(query);
+  let intent = smartResult?.intent || "general";
+  
+  // If smart classifier didn't match, fall back to legacy regex for backward compat
+  if (intent === "general") {
+    const qLow = query.toLowerCase();
+    if (/o\s+que\s+(voc[eê]|vc|tu)\s+(v[eê]|enxerga|est[aá]\s+vendo)/i.test(qLow)) intent = "vision_describe";
+    else if (/quem\s+(é|e|sou)|reconhec/i.test(qLow)) intent = "identity";
+    else if (/o\s+que\s+(estou|tou)\s+(segurando|usando|vestindo)/i.test(qLow)) intent = "vision_object";
+  }
 
   const requiresImage = ["vision_describe", "vision_object", "identity"].includes(intent);
 
