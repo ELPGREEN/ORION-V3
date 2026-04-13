@@ -27,8 +27,8 @@ import { createGCPSTTSession } from "@/lib/voice/gcpSTT";
 
 // ═══ Constants ═══
 const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
-const ECHO_WINDOW_MS = 12000;
-const ECHO_JACCARD_THRESHOLD = 0.45;
+const ECHO_WINDOW_MS = 18000;
+const ECHO_JACCARD_THRESHOLD = 0.35;
 const MAX_CONSECUTIVE_ABORTS = 3;
 const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
 
@@ -502,7 +502,7 @@ export function useNeuralVoice(
     markTTSStart();
     updateAiResponding(true);
     OrbState.voiceState = "speaking";
-    lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
+    lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 800);
     lastSpokenAtRef.current = Date.now();
     speechBufferRef.current = "";
     sentenceAccumulatorRef.current = "";

@@ -300,6 +300,11 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const original = cmd.trim();
     const q = original.toLowerCase();
 
+    // ═══ AUTO VOICE IDENTITY CHECK on first voice interaction ═══
+    if (!voiceCheckDoneRef.current && identityStatus === "unknown") {
+      handleVoiceIdentityCheck();
+    }
+
     // Pure wake word without command — just greet
     const isJustWakeWord = /^[óòôõo]r[iíìeéè][oóòôõ][nmn]\s*(ativar?|ligar?|acordar?|oi|olá|e\s*aí)?[.!?]?\s*$/i.test(q.trim()) ||
       /^oreo[nm]\s*(ativar?|ligar?|acordar?|oi|olá|e\s*aí)?[.!?]?\s*$/i.test(q.trim());
@@ -362,7 +367,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const finalCommand = cleanedCommand || original;
     routeOrionCommand(finalCommand);
     toast.info(`🎤 "${finalCommand}"`);
-  }, [deactivateGracefully, speak, speakFast, voiceClone, startListening, stopListen, routeOrionCommand]);
+  }, [deactivateGracefully, speak, speakFast, voiceClone, startListening, stopListen, routeOrionCommand, identityStatus, handleVoiceIdentityCheck]);
 
   // ═══ Wake word activation — camera does NOT auto-start, only voice ═══
   const activateByWakeWord = useCallback(async () => {
