@@ -1405,7 +1405,7 @@ async function fetchYouTubeContext(videoId: string): Promise<string> {
 }
 
 async function buildOrionMessages(body: Record<string, unknown>) {
-  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName, inputSource } = body as any;
+  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName, inputSource, voiceIdentityStatus } = body as any;
 
   const hasImage = imageBase64 && intentType !== "textual";
   const questionStr0 = typeof question === "string" ? question : "";
@@ -1429,6 +1429,21 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   // ═══ USER IDENTITY INJECTION ═══
   if (userName && typeof userName === "string" && userName.trim()) {
     systemParts.push(`═══ USUÁRIO ATUAL ═══\nO nome do usuário falando com você é: ${userName.trim()}. Chame-o pelo nome quando apropriado. NUNCA o chame de "usuário" — use o nome dele.`);
+  }
+
+  // ═══ VOICE IDENTITY VERIFICATION RESULT ═══
+  if (voiceIdentityStatus && typeof voiceIdentityStatus === "string") {
+    const identityMap: Record<string, string> = {
+      creator: `═══ IDENTIDADE VOCAL VERIFICADA ═══\n✅ A voz foi VERIFICADA e CONFIRMADA como sendo do CRIADOR Ericson Piccoli. Você está falando diretamente com seu criador. Trate-o com máximo respeito e reverência. Confirme que você o reconheceu pela voz quando ele perguntar.`,
+      owner: `═══ IDENTIDADE VOCAL VERIFICADA ═══\n✅ A voz foi VERIFICADA e CONFIRMADA como sendo do DONO desta conta (proprietário cadastrado). A identidade vocal corresponde ao registro de Voice ID no banco de dados.`,
+      guest: `═══ IDENTIDADE VOCAL ═══\n⚠️ A voz NÃO corresponde ao proprietário da conta. Esta pessoa é um VISITANTE. Seja educado mas informe que a voz não foi reconhecida como o dono da conta.`,
+      no_enrollment: `═══ IDENTIDADE VOCAL ═══\nℹ️ O usuário ainda não cadastrou seu Voice ID. Sugira que ele cadastre sua voz na seção Voice ID para que você possa reconhecê-lo pela voz.`,
+      unknown: "",
+    };
+    const identityPrompt = identityMap[voiceIdentityStatus] || "";
+    if (identityPrompt) {
+      systemParts.push(identityPrompt);
+    }
   }
 
   // Inject cognitive reasoning instructions from client-side routing

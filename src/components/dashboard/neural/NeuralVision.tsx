@@ -155,6 +155,11 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   const voiceCheckDoneRef = useRef(false);
 
+  // Expose identityStatus globally so orion-ai-client can send it to neural-ops
+  useEffect(() => {
+    (window as any).__orionIdentityStatus = identityStatus;
+  }, [identityStatus]);
+
   // Auto-check voice on first voice interaction
   const handleVoiceIdentityCheck = useCallback(async () => {
     if (voiceCheckDoneRef.current || identityStatus === "owner" || identityStatus === "creator" || identityStatus === "no_enrollment") return;
