@@ -8,7 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   Camera, CameraOff, Eye, Mic, MicOff, Volume2, VolumeX,
   Cpu, Activity, Zap, Brain, MessageCircle, User, Hand,
+  Search, PlayCircle, Globe,
 } from "lucide-react";
+import { OrionResearchBrowser } from "@/components/orion/OrionResearchBrowser";
+import { OrionEmbeddedVideo } from "@/components/orion/OrionEmbeddedVideo";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1199,10 +1202,92 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
       {/* ═══ Standalone Chat Panel — visible when camera is OFF ═══ */}
       {!active && (
-        <div className="relative rounded-lg overflow-hidden p-3" style={{
-          backgroundColor: "rgba(10,10,15,0.7)",
-          border: "1px solid rgba(212,175,55,0.12)",
-        }}>
+        <OrionStandalonePanel
+          chatHistory={chatHistory}
+          isProcessing={isProcessing}
+          askInput={askInput}
+          setAskInput={setAskInput}
+          askAI={askAI}
+        />
+      )}
+    </div>
+  );
+}
+
+// ═══ Standalone Panel with Tabs: Chat / Pesquisa / Vídeo ═══
+function OrionStandalonePanel({
+  chatHistory,
+  isProcessing,
+  askInput,
+  setAskInput,
+  askAI,
+}: {
+  chatHistory: Array<{ role: string; text: string; time: string; confidence?: number }>;
+  isProcessing: boolean;
+  askInput: string;
+  setAskInput: (v: string) => void;
+  askAI: (q: string, source?: any) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<"chat" | "pesquisa" | "video">("chat");
+
+  // Listen for video commands to auto-switch to video tab
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.action === "play_video" || detail?.action === "search_video") {
+        // Re-dispatch as embedded event
+        window.dispatchEvent(new CustomEvent("orion-embedded-video", { detail }));
+        setActiveTab("video");
+      }
+    };
+    window.addEventListener("orion-video-command", handler);
+    return () => window.removeEventListener("orion-video-command", handler);
+  }, []);
+
+  // Listen for search commands to auto-switch to pesquisa tab
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.query) {
+        setActiveTab("pesquisa");
+      }
+    };
+    window.addEventListener("orion-research-navigate", handler);
+    return () => window.removeEventListener("orion-research-navigate", handler);
+  }, []);
+
+  const tabs = [
+    { id: "chat" as const, label: "Chat", icon: MessageCircle },
+    { id: "pesquisa" as const, label: "Pesquisa", icon: Globe },
+    { id: "video" as const, label: "Vídeo", icon: PlayCircle },
+  ];
+
+  return (
+    <div className="relative rounded-lg overflow-hidden" style={{
+      backgroundColor: "rgba(10,10,15,0.7)",
+      border: "1px solid rgba(212,175,55,0.12)",
+    }}>
+      {/* Tab bar */}
+      <div className="flex border-b border-white/[0.06]">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[9px] font-mono uppercase tracking-wider transition-colors ${
+              activeTab === tab.id
+                ? "text-cyan-400 border-b-2 border-cyan-400/50 bg-cyan-400/[0.03]"
+                : "text-white/25 hover:text-white/40 hover:bg-white/[0.02]"
+            }`}
+          >
+            <tab.icon className="h-3 w-3" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Chat tab */}
+      {activeTab === "chat" && (
+        <div className="p-3">
           <div className="flex items-center gap-2 mb-2">
             <MessageCircle className="h-3.5 w-3.5 text-cyan-400" />
             <span className="text-[10px] font-mono text-cyan-400/80 tracking-wider uppercase">Chat com Orion</span>
@@ -1219,23 +1304,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                       {q}
                     </button>
                   ))}
-                </div>
-                {/* Research quick actions — same as extension */}
-                <div className="border-t border-white/5 pt-2">
-                  <p className="text-[8px] font-mono text-white/15 mb-1.5 uppercase tracking-wider">Pesquisa Profissional</p>
-                  <div className="flex flex-wrap gap-1.5 justify-center">
-                    {[
-                      { label: "🔍 Pesquisar na Web", cmd: "pesquisar na web " },
-                      { label: "🔬 Comparar Fontes", cmd: "comparar fontes sobre " },
-                      { label: "💡 Sugestões de Busca", cmd: "sugestões de busca para " },
-                      { label: "📊 Analisar Dados", cmd: "analise os dados sobre " },
-                    ].map(a => (
-                      <button key={a.label} onClick={() => setAskInput(a.cmd)}
-                        className="text-[8px] font-mono text-amber-400/40 border border-amber-500/15 rounded px-2 py-1 hover:bg-amber-400/5 hover:text-amber-400/70 transition-colors">
-                        {a.label}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               </div>
             )}
@@ -1287,6 +1355,20 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           </form>
         </div>
       )}
+
+      {/* Pesquisa tab */}
+      {activeTab === "pesquisa" && (
+        <div className="h-[350px]">
+          <OrionResearchBrowser onSearchQuery={(q) => askAI(`pesquisar na web ${q}`)} />
+        </div>
+      )}
+
+      {/* Vídeo tab */}
+      {activeTab === "video" && (
+        <div className="p-2">
+          <OrionEmbeddedVideo onClose={() => setActiveTab("chat")} />
+        </div>
+      )}
     </div>
-  );
-}
+  )}
+
