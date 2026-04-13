@@ -117,7 +117,7 @@ async function fetchWithAutoStart(
 ): Promise<Response> {
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15_000);
+    const timer = setTimeout(() => controller.abort(), 3_000);
     const resp = await fetch(primaryUrl, { ...opts, signal: controller.signal });
     clearTimeout(timer);
     if (resp.ok) return resp;
