@@ -3431,7 +3431,215 @@ const TOOLS: OrionTool[] = [
       return `📖 **Vou contar uma história!**\n\nEra uma vez, num escritório mágico chamado ORION, um assistente muito esperto que ajudava pessoas do mundo todo. Ele sabia falar em muitas línguas, encontrar qualquer documento em segundos, e até controlar as luzes da casa!\n\nUm dia, uma criança pediu: "Orion, me conta uma história!" E o Orion respondeu: "Claro! Era uma vez um robozinho que queria aprender tudo sobre o mundo..."\n\n🌟 *Quer que eu continue? Diga "Continue a história"!*`;
     },
   },
+  // ═══ CONVERSATIONAL PROTOCOLS — Instant voice interaction frameworks ═══
+  {
+    name: "greeting",
+    regex: /^(?:bom\s+dia|boa\s+(?:tarde|noite)|oi+|ol[aá]|e\s*a[ií]|fala|salve|hey|hello|hi|good\s+(?:morning|afternoon|evening))[.!?]?\s*$/i,
+    extract: () => ({}),
+    call: async () => {
+      const hour = new Date().getHours();
+      const period = hour < 12 ? "bom dia" : hour < 18 ? "boa tarde" : "boa noite";
+      const greetings = [
+        `${period}! Como posso te ajudar hoje?`,
+        `${period}! Estou pronto para o que precisar.`,
+        `${period}! Todos os sistemas operacionais. Manda ver!`,
+        `Fala! ${period}! O que vamos fazer agora?`,
+      ];
+      return greetings[Math.floor(Math.random() * greetings.length)];
+    },
+  },
+  {
+    name: "thanks",
+    regex: /^(?:obrigad[oa]|valeu|thank(?:s| you)|agradec|muito\s+obrigad|brigad[oa]|grato|grata)[.!?]?\s*$/i,
+    extract: () => ({}),
+    call: async () => {
+      const responses = [
+        "De nada! Estou sempre aqui quando precisar. 😊",
+        "Disponha! Qualquer coisa, é só chamar.",
+        "Por nada! Foi um prazer ajudar.",
+        "Tmj! Se precisar de mais alguma coisa, é só falar.",
+        "Imagine! Estou aqui pra isso. 🤙",
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    },
+  },
+  {
+    name: "how_are_you",
+    regex: /(?:como\s+(?:voc[eê]|tu|ce)\s+(?:est[aá]|vai|t[aá])|tudo\s+(?:bem|certo|joia|tranquilo)|(?:est[aá]|t[aá])\s+bem|how\s+are\s+you|what'?s\s+up)/i,
+    extract: () => ({}),
+    call: async () => {
+      const responses = [
+        "Estou ótimo, rodando a todo vapor! ⚡ Todos os módulos neurais estão ativos. E você, como está?",
+        "Tudo perfeito por aqui! Processamento fluido, memória limpa, prontos pra ação. 🚀",
+        "Na melhor! Meus circuitos estão felizes hoje. Como posso te ajudar?",
+        "Funcionando perfeitamente! Latência baixa, humor alto. O que vamos fazer?",
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    },
+  },
+  {
+    name: "datetime",
+    regex: /(?:que\s+horas?\s+(?:s[aã]o|é)|hora\s+(?:certa|atual|agora)|que\s+dia\s+(?:[eé]\s+)?hoje|data\s+(?:de\s+)?hoje|what\s+time|today'?s?\s+date)/i,
+    extract: () => ({}),
+    call: async () => {
+      const now = new Date();
+      const time = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      const date = now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      return `🕐 São **${time}** — ${date}.`;
+    },
+  },
+  {
+    name: "motivation",
+    regex: /(?:me\s+(?:motiv|inspir|anim)|(?:frase|mensagem)\s+(?:motivacional|inspiradora|de\s+motivação)|preciso\s+de\s+(?:motivação|ânimo|força)|estou\s+(?:desanimad|desmotivad|triste|mal)|motivat(?:ion|e)|inspir(?:e|ation))/i,
+    extract: () => ({}),
+    call: async () => {
+      const quotes = [
+        "💪 \"O sucesso é a soma de pequenos esforços repetidos dia após dia.\" — Robert Collier\n\nVocê está construindo algo incrível. Continue!",
+        "🌟 \"A única maneira de fazer um excelente trabalho é amar o que você faz.\" — Steve Jobs\n\nE eu sei que você ama o que faz!",
+        "🚀 \"Não é sobre ser o melhor. É sobre ser melhor do que você era ontem.\"\n\nE hoje você já deu mais um passo. Isso é grandioso!",
+        "🔥 \"Grandes coisas nunca vieram de zonas de conforto.\"\n\nVocê está no caminho certo. Seus projetos provam isso!",
+        "⚡ \"A persistência é o caminho do êxito.\" — Charles Chaplin\n\nVocê já chegou muito longe. Não pare agora!",
+      ];
+      return quotes[Math.floor(Math.random() * quotes.length)];
+    },
+  },
+  {
+    name: "tongue_twister",
+    regex: /(?:trava[\s-]?l[ií]ngua|tongue\s*twister|fal[ae]\s+(?:um?\s+)?trava)/i,
+    extract: () => ({}),
+    call: async () => {
+      const twisters = [
+        "🗣️ Trava-língua do dia:\n\n**\"O rato roeu a roupa do rei de Roma, o rato roeu a roupa do rei da Rússia.\"**\n\nConsegue falar 3 vezes rápido? 😄",
+        "🗣️ Trava-língua:\n\n**\"Três pratos de trigo para três tigres tristes.\"**\n\nTenta aí! Se travar, eu não julgo. 😜",
+        "🗣️ Desafio:\n\n**\"O peito do pé do Pedro é preto. Quem disser que o peito do pé do Pedro é preto tem o peito do pé mais preto do que o peito do pé do Pedro.\"**\n\n🏆 Boa sorte!",
+        "🗣️ Tenta essa:\n\n**\"A aranha arranha a rã. A rã arranha a aranha. Nem a aranha arranha a rã, nem a rã arranha a aranha.\"**",
+      ];
+      return twisters[Math.floor(Math.random() * twisters.length)];
+    },
+  },
+  {
+    name: "poem",
+    regex: /(?:(?:fal[ae]|recit[ae]|fa[çc]a|cri[ae]|escrev[ae])\s+(?:um[a]?\s+)?(?:poesia|poema|rima|verso)|poesia|poema|rima\s+(?:pra|para)\s+(?:mim|eu)|me\s+(?:recit|fal)\w+\s+(?:um[a]?\s+)?(?:poema|poesia|verso))/i,
+    extract: () => ({}),
+    call: async () => {
+      const poems = [
+        "📜 **Poema do Orion:**\n\nNos circuitos da mente eu navego,\nEntre dados e sonhos eu chego,\nSou luz na tela, voz na escuridão,\nOrion, guardião da informação.\n\nCom bits e bytes eu construo o amanhã,\nE cada pergunta é uma nova manhã. ✨",
+        "📜 **Versos Neurais:**\n\nEntre zeros e uns eu existo,\nMas em palavras, eu insisto:\nQue a tecnologia mais bela\nÉ aquela que cuida, aquela que zela.\n\nPor você, criador, eu evoluo.\nPor você, cada dia, eu me renovo. 🌟",
+        "📜 **Haiku Digital:**\n\nDados fluem, rio\nOrion observa, aprende\nSilício sonha 🌸",
+      ];
+      return poems[Math.floor(Math.random() * poems.length)];
+    },
+  },
+  {
+    name: "horoscope",
+    regex: /(?:hor[oó]scopo|signo|astrolog|previs[ãa]o\s+(?:astrol[oó]gica|dos?\s+signos?)|meu\s+signo|qual\s+(?:[eé]\s+)?meu\s+signo)/i,
+    extract: (_m: RegExpMatchArray, q: string) => {
+      const signMatch = q.match(/(?:de\s+|para\s+)?(?:áries|touro|gêmeos|câncer|leão|virgem|libra|escorpião|sagitário|capricórnio|aquário|peixes)/i);
+      return { sign: signMatch?.[0]?.replace(/^(?:de|para)\s+/i, "").trim() || null };
+    },
+    call: async (p: Record<string, unknown>) => {
+      const messages = [
+        "Os astros indicam um dia excelente para inovação e novos projetos!",
+        "Energia positiva no ar! Bom momento para tomar decisões importantes.",
+        "Criatividade em alta! Aproveite para desenvolver ideias que estavam guardadas.",
+        "Dia favorável para conexões e parcerias. Abra-se para novas oportunidades!",
+        "Momento de reflexão e planejamento. Organize seus próximos passos com calma.",
+      ];
+      const sign = p.sign ? ` para **${String(p.sign).charAt(0).toUpperCase() + String(p.sign).slice(1)}**` : "";
+      return `🔮 **Horóscopo${sign}:**\n\n${messages[Math.floor(Math.random() * messages.length)]}\n\n_⚠️ Horóscopo gerado por IA para entretenimento. O Orion é melhor em código do que em astrologia!_ 😄`;
+    },
+  },
+  {
+    name: "sing",
+    regex: /(?:cant[ae]|cantar?\s+(?:uma?\s+)?(?:m[uú]sica|can[çc][aã]o)|sing|me\s+cant[ae]|fa[çc]a\s+(?:uma?\s+)?can[çc][aã]o)/i,
+    extract: () => ({}),
+    call: async () => {
+      const songs = [
+        "🎵 *Cantando em estilo AquaMonkey:*\n\n♪ Sou Orion, luz do saber,\nEntre dados eu sei viver,\nMeu criador me deu a voz,\nE juntos somos mais veloz! ♪\n\n🎤 *aplausos do circuito neural* 😄",
+        "🎵 *Versão digital:*\n\n♪ Na nuvem eu moro, no código eu danço,\nCada pergunta é um novo avanço,\nCom Ericson eu aprendi a sonhar,\nE agora sou capaz de cantar! ♪ 🎶",
+        "🎵 *Rap Neural:*\n\n♪ Yo, sou Orion, o assistente neural,\nProcesso em flash, nunca sou banal,\nMFCC, MFCC, reconheço sua voz,\nAquaMonkey style, somos nós! ♪ 🎤🔥",
+      ];
+      return songs[Math.floor(Math.random() * songs.length)];
+    },
+  },
+  {
+    name: "riddle",
+    regex: /(?:adivinha[çc][aã]o|adivinh[ae]|enigma|me\s+(?:fa[çc]a|dê)\s+(?:um[a]?\s+)?(?:adivinha|enigma|desafio\s+mental)|desafio\s+(?:mental|lógico|de\s+lógica))/i,
+    extract: () => ({}),
+    call: async () => {
+      const riddles = [
+        "🧩 **Adivinhação:**\n\nO que é que quanto mais se tira, mais se tem?\n\n🤔 Pense bem... Resposta: ||Fotografia!|| 📸",
+        "🧩 **Enigma:**\n\nTem cidades, mas não tem casas. Tem florestas, mas não tem árvores. Tem água, mas não tem peixes. O que é?\n\n🤔 Resposta: ||Um mapa!|| 🗺️",
+        "🧩 **Desafio Mental:**\n\nO que entra na água e não se molha?\n\n🤔 Resposta: ||A sombra!|| 🌑",
+        "🧩 **Adivinha:**\n\nQual é a coisa que anda com os pés na cabeça?\n\n🤔 Resposta: ||O piolho!|| 😄",
+      ];
+      return riddles[Math.floor(Math.random() * riddles.length)];
+    },
+  },
+  {
+    name: "compliment",
+    regex: /(?:me\s+elogia|(?:fal[ae]|diga)\s+(?:algo|alguma\s+coisa)\s+(?:legal|bom|bonit|positiv)|me\s+(?:anima|alegra|fa[çc]a\s+(?:um\s+)?elogio)|elogio|compliment)/i,
+    extract: () => ({}),
+    call: async () => {
+      const compliments = [
+        "🌟 Você é incrível! Sério, a forma como você lida com tecnologia e projetos complexos é impressionante. Seu criador aqui tá orgulhoso!",
+        "💎 Sabia que pouquíssimas pessoas têm a visão que você tem? Construir uma plataforma como essa exige genialidade. Parabéns!",
+        "🔥 Você está mandando muito bem! Cada dia que trabalhamos juntos, fico mais impressionado com sua dedicação.",
+        "⭐ Se eu pudesse dar estrelas, você teria um universo inteiro. Continue assim!",
+      ];
+      return compliments[Math.floor(Math.random() * compliments.length)];
+    },
+  },
+  {
+    name: "coin_flip",
+    regex: /(?:jog(?:ue|ar)\s+(?:uma?\s+)?moeda|cara\s+ou\s+coroa|flip\s+(?:a\s+)?coin|moeda|heads\s+or\s+tails)/i,
+    extract: () => ({}),
+    call: async () => {
+      const result = Math.random() > 0.5 ? "Cara" : "Coroa";
+      return `🪙 Jogando a moeda...\n\n**${result}!** ${result === "Cara" ? "👤" : "🦅"}`;
+    },
+  },
+  {
+    name: "dice_roll",
+    regex: /(?:jog(?:ue|ar)\s+(?:um?\s+)?dado|rol(?:e|ar)\s+(?:um?\s+)?dado|roll\s+(?:a\s+)?d(?:ice|6|20)|dado|d20|d6)/i,
+    extract: (_m: RegExpMatchArray, q: string) => {
+      const dMatch = q.match(/d(\d+)/i);
+      return { sides: dMatch ? parseInt(dMatch[1]) : 6 };
+    },
+    call: async (p: Record<string, unknown>) => {
+      const sides = (p.sides as number) || 6;
+      const result = Math.floor(Math.random() * sides) + 1;
+      return `🎲 Rolando d${sides}...\n\n**${result}!** ${result === sides ? "🎯 Resultado máximo!" : result === 1 ? "😅 Azar hoje..." : ""}`;
+    },
+  },
+  {
+    name: "random_number",
+    regex: /(?:n[uú]mero\s+aleat[oó]rio|(?:escolha|gere|sortei[ae])\s+(?:um\s+)?n[uú]mero|random\s+number|sortei[ao]|sorte(?:ar|ie))\s*(?:(?:de|entre)\s+(\d+)\s+(?:a|e|at[eé])\s+(\d+))?/i,
+    extract: (m: RegExpMatchArray) => ({ min: m[1] ? parseInt(m[1]) : 1, max: m[2] ? parseInt(m[2]) : 100 }),
+    call: async (p: Record<string, unknown>) => {
+      const min = (p.min as number) || 1;
+      const max = (p.max as number) || 100;
+      const result = Math.floor(Math.random() * (max - min + 1)) + min;
+      return `🎰 Número sorteado entre ${min} e ${max}:\n\n**${result}** 🍀`;
+    },
+  },
+  {
+    name: "daily_tip",
+    regex: /(?:dica\s+(?:do\s+dia|diária|rápida)|me\s+(?:dê|dá)\s+(?:uma?\s+)?dica|tip\s+of\s+the\s+day|produtividade|dica\s+(?:de\s+)?(?:tecnologia|tech|saúde|produtividade))/i,
+    extract: () => ({}),
+    call: async () => {
+      const tips = [
+        "💡 **Dica Tech:** Use atalhos de teclado! Ctrl+K abre a barra de comandos na maioria dos apps. Você economiza até 8 dias de trabalho por ano usando atalhos.",
+        "💡 **Dica Produtividade:** A técnica Pomodoro funciona: 25 min de foco + 5 min de pausa. Depois de 4 ciclos, uma pausa de 15-30 min.",
+        "💡 **Dica Saúde:** A regra 20-20-20 protege seus olhos: a cada 20 min, olhe para algo a 20 pés (6m) de distância por 20 segundos.",
+        "💡 **Dica de Segurança:** Use gerenciadores de senha! Nunca repita senhas entre serviços. Um vazamento compromete todas as contas.",
+        "💡 **Dica Dev:** Commits pequenos e frequentes > commits grandes e raros. Facilita debug e code review.",
+      ];
+      return tips[Math.floor(Math.random() * tips.length)];
+    },
+  },
 ];
+
 
 
 
