@@ -610,6 +610,14 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           (VS as any).detectedFaces = rtResult.faces || [];
           (VS as any).faceAttributes = (rtResult as any).faceAttributes || [];
 
+          // ═══ AUTO FACE IDENTITY — expose face count globally for Orion ═══
+          const faceCount = (rtResult.faces || []).length;
+          (window as any).__orionDetectedFaces = faceCount;
+          if (faceCount > 0 && identityStatus === "unknown" && !voiceCheckDoneRef.current) {
+            // Face detected — trigger voice identity check automatically
+            handleVoiceIdentityCheck();
+          }
+
           if (rtResult.allObjects.length > 0) {
             const mlObjects = rtResult.allObjects.map(o => ({
               name: o.namePt,
