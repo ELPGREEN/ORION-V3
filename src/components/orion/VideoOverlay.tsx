@@ -31,8 +31,11 @@ export function VideoOverlay() {
   useEffect(() => {
     const handler = (e: CustomEvent<VideoCommand>) => {
       const { action, url, query, title: t } = e.detail;
+      console.log("[VideoOverlay] Received command:", action, "url:", url, "query:", query);
       if (action === "play_video" && url) {
-        setVideoUrl(convertToEmbed(url));
+        const embedUrl = convertToEmbed(url);
+        console.log("[VideoOverlay] Playing embed:", embedUrl);
+        setVideoUrl(embedUrl);
         setTitle(t || query || "Orion Video");
         setVisible(true);
         // Auto-minimize after 1.5s to not obstruct
