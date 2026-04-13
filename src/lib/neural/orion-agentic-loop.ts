@@ -112,6 +112,29 @@ export function planPhase(query: string, context?: { memories?: string[]; vision
   const smartResult = smartClassifySync(query);
   let intent = smartResult?.intent || "general";
   
+  // Check if user is giving negative feedback about the last classification
+  if (isNegativeFeedback(query) && _lastClassification && Date.now() - _lastClassification.ts < 120_000) {
+    const correctionTarget = extractCorrectionTarget(query);
+    if (correctionTarget) {
+      // Re-classify the correction target to find the correct intent
+      const correctedResult = smartClassifySync(correctionTarget);
+      if (correctedResult) {
+        recordCorrection(_lastClassification.text, _lastClassification.intent, correctedResult.intent);
+        intent = correctedResult.intent;
+        console.log(`[AgenticLoop] Feedback correction: "${_lastClassification.text}" → ${correctedResult.intent}`);
+      }
+    }
+    // Return a feedback-aware plan
+    return {
+      intent: intent === "general" ? "feedback_correction" : intent,
+      steps: ["Registrar correção do usuário", "Re-classificar intenção", "Executar ação corrigida"],
+      risks: [],
+      confidence: 0.9,
+      requiresImage: false,
+      timestamp: Date.now(),
+    };
+  }
+
   // If smart classifier didn't match, fall back to legacy regex for backward compat
   if (intent === "general") {
     const qLow = query.toLowerCase();
@@ -119,6 +142,9 @@ export function planPhase(query: string, context?: { memories?: string[]; vision
     else if (/quem\s+(é|e|sou)|reconhec/i.test(qLow)) intent = "identity";
     else if (/o\s+que\s+(estou|tou)\s+(segurando|usando|vestindo)/i.test(qLow)) intent = "vision_object";
   }
+  
+  // Store last classification for feedback loop
+  setLastClassification(query, intent);
 
   const requiresImage = ["vision_describe", "vision_object", "identity"].includes(intent);
 
