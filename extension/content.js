@@ -393,6 +393,14 @@
       return;
     }
 
+    // ─── Panel navigation commands ───
+    if (/\b(?:ir|voltar?|vai?|navegar?|abrir?)\s+(?:para?\s+)?(?:o\s+)?painel(?:\s+(?:de\s+)?controle)?\b/i.test(lower) || 
+        /\bpainel\s+(?:de\s+)?controle\b/i.test(lower)) {
+      chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "dashboard" });
+      showNotification("🚀 Abrindo painel de controle...", "success");
+      return;
+    }
+
     if (lower.includes("abrir dashboard")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "dashboard" }); return; }
     if (lower.includes("abrir documento")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "documentos" }); return; }
     if (lower.includes("abrir processo")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "processos" }); return; }
@@ -401,6 +409,7 @@
     if (lower.includes("abrir stf")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "stf" }); return; }
     if (lower.includes("abrir stj")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "stj" }); return; }
 
+    // ─── Research commands — auto-detect and use page context ───
     requireAuth(() => {
       if (lower.includes("resum")) extractAndAnalyze("summarize");
       else if (lower.includes("traduz")) extractAndAnalyze("translate");
