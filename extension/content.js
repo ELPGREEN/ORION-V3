@@ -536,16 +536,29 @@
     }
   }
 
-  // ═══ AI Query (via Agent Hub) ═══
+  // ═══ AI Query (via Agent Hub) — Research Assistant Mode ═══
   function sendAIQuery(query, taskTypeOverride) {
     showThinkingInChat();
+    
+    // Auto-extract page context for research enrichment
+    let pageSnippet = undefined;
+    try {
+      const sel = window.getSelection()?.toString()?.trim();
+      if (sel && sel.length > 10) {
+        pageSnippet = sel.substring(0, 3000);
+      } else {
+        const mainContent = document.querySelector("main, article, [role=main], .content, #content");
+        if (mainContent) pageSnippet = mainContent.textContent?.substring(0, 2000)?.trim();
+      }
+    } catch (e) {}
+
     const ctx = {
       url: location.href,
       title: document.title,
       projectContext,
       task_type: taskTypeOverride || undefined,
       pdfContext: pdfContext ? { filename: pdfContext.filename, textPreview: pdfContext.text.substring(0, 200) } : undefined,
-      pageContent: undefined,
+      pageContent: pageSnippet,
     };
 
     chrome.runtime.sendMessage(
