@@ -1,11 +1,8 @@
 /**
- * Orion Extension v5.1 — Content Script
- * Wake word, page extraction, floating panel with real AI via neural-ops,
- * TTS, structured data extraction, VISION on-demand with 15min auto-timeout,
- * Web Search (Firecrawl), URL Scraping, External link navigation,
- * Anti-hallucination validation display.
- * NEW v5.1: YouTube detection + PiP, PDF upload/drag-drop, auto-minimize on navigation.
- * Auth verification: unregistered users get compliments + signup nudge.
+ * Orion Extension v5.2 — Content Script
+ * Floating widget with persistent chat, YouTube PiP, PDF/image upload,
+ * page analysis, academic tools, auto-minimize on navigation.
+ * Voice/STT/TTS: UNTOUCHED from v5.1.
  * Domain: iasofthub.com
  */
 (function () {
@@ -13,11 +10,15 @@
   if (window.__orionContentInjected) return;
   window.__orionContentInjected = true;
 
+  // ─── Voice State (DO NOT MODIFY) ───
   let recognition = null;
   let isListening = false;
+
+  // ─── UI State ───
   let panel = null;
   let miniOrb = null;
   let panelVisible = false;
+  let chatMessages = []; // In-memory chat history for this tab
 
   // ─── Vision State ───
   let visionActive = false;
@@ -37,8 +38,12 @@
   let pipWindow = null;
   let lastUrl = location.href;
 
-  // ─── PDF Context State ───
-  let pdfContext = null; // { filename, text, pageCount }
+  // ─── PDF/Image Context ───
+  let pdfContext = null;
+  let imageContext = null;
+
+  // ─── Project Context (persisted via chrome.storage) ───
+  let projectContext = { topic: "", notes: [], sources: [] };
 
   const FIRST_VISIT_PHRASES = ["Gostei do seu estilo! Nos vemos depois. 😎"];
   const RETURN_COMPLIMENTS = [
@@ -55,6 +60,20 @@
     "Notei que você tem um padrão eficiente de navegação. Impressionante!",
     "Você parece alguém que aproveita bem o tempo online. Respeito!",
   ];
+
+  // ─── Load persisted state ───
+  chrome.storage.local.get(["orionChatHistory", "orionProjectContext"], (result) => {
+    if (result.orionChatHistory) chatMessages = result.orionChatHistory.slice(-50);
+    if (result.orionProjectContext) projectContext = result.orionProjectContext;
+  });
+
+  function persistChat() {
+    chrome.storage.local.set({ orionChatHistory: chatMessages.slice(-50) });
+  }
+
+  function persistProjectContext() {
+    chrome.storage.local.set({ orionProjectContext: projectContext });
+  }
 
   // ─── Auth Verification ───
   function checkUserAuth(callback) {
@@ -84,7 +103,7 @@
         else { phrase = RETURN_OBSERVATIONS[observationIndex++ % RETURN_OBSERVATIONS.length]; }
       }
       showNotification(phrase, "info");
-      showResponsePanel(`🔒 ${phrase}\n\nPara usar o Orion, cadastre-se! Acesse iasofthub.com/cadastro`);
+      addChatMessage("system", `🔒 ${phrase}\n\nPara usar o Orion, cadastre-se! Acesse iasofthub.com/cadastro`);
       speakText(phrase + " Para usar o Orion, você precisa se cadastrar!");
     });
   }
@@ -92,7 +111,7 @@
   function handleNonPremiumUser() {
     const msg = "👑 Orion é exclusivo para assinantes Premium! Faça upgrade em iasofthub.com/dashboard/plano";
     showNotification(msg, "info");
-    showResponsePanel(msg);
+    addChatMessage("system", msg);
     speakText("Orion é exclusivo para assinantes Premium. Faça upgrade no seu painel.");
   }
 
@@ -123,61 +142,39 @@
     return /^https?:\/\/(www\.)?youtube\.com\/watch/i.test(url);
   }
 
-  /**
-   * When user navigates to a YouTube video page:
-   * 1. Auto-minimize Orion panel to the orb
-   * 2. Show brief notification
-   * 3. Try to open PiP for the video element on the page
-   */
   function handleYouTubeDetected(videoId) {
     if (currentYouTubeVideoId === videoId) return;
     currentYouTubeVideoId = videoId;
 
-    // Auto-minimize panel
     if (panelVisible) {
-      hidePanel();
-      showNotification("🎬 YouTube detectado — minimizando para o canto...", "info");
+      minimizePanel();
+      addChatMessage("system", "🎬 YouTube detectado — minimizando para o canto...");
     }
 
-    // Attempt PiP on the YouTube video element after a delay (page needs to load)
     setTimeout(() => tryYouTubePiP(), 2500);
   }
 
-  /**
-   * Try to enter Picture-in-Picture on the main YouTube <video> element.
-   * Works on youtube.com pages where the video element is accessible.
-   */
   function tryYouTubePiP() {
     const video = document.querySelector("video.html5-main-video, video.video-stream, video");
-    if (!video) {
-      console.log("[Orion] No video element found for PiP");
-      return;
-    }
+    if (!video) return;
 
-    // Only request PiP if user has interacted (required by browsers)
     if (document.pictureInPictureEnabled && !document.pictureInPictureElement) {
       video.requestPictureInPicture()
         .then((pipWin) => {
           pipWindow = pipWin;
           showNotification("🎬 Vídeo em Picture-in-Picture — Orion ativa ao lado!", "success");
-          pipWin.addEventListener("resize", () => {});
           video.addEventListener("leavepictureinpicture", () => {
             pipWindow = null;
             showNotification("🎬 PiP encerrado", "info");
           }, { once: true });
         })
         .catch((err) => {
-          // PiP may require user gesture — that's OK, show a button instead
-          console.log("[Orion] PiP request failed (may need user gesture):", err.message);
+          console.log("[Orion] PiP needs user gesture:", err.message);
           showPiPButton(video);
         });
     }
   }
 
-  /**
-   * Show a floating PiP button near the orb if automatic PiP fails
-   * (browsers require user gesture for PiP)
-   */
   function showPiPButton(videoElement) {
     if (document.getElementById("orion-pip-btn")) return;
     const btn = document.createElement("button");
@@ -195,7 +192,6 @@
         })
         .catch(() => showNotification("PiP indisponível para este vídeo", "error"));
     });
-    // Auto-remove after 15s
     setTimeout(() => { if (btn.parentNode) btn.remove(); }, 15000);
   }
 
@@ -208,13 +204,11 @@
     if (newUrl === lastUrl) return;
     lastUrl = newUrl;
 
-    // Auto-minimize on navigation
     if (panelVisible) {
-      hidePanel();
-      showNotification("📌 Minimizando para modo flutuante...", "info");
+      minimizePanel();
+      addChatMessage("system", "📌 Minimizando para modo flutuante...");
     }
 
-    // Check if navigated to YouTube
     const videoId = extractYouTubeVideoId(newUrl);
     if (videoId) {
       handleYouTubeDetected(videoId);
@@ -222,28 +216,24 @@
       currentYouTubeVideoId = null;
     }
 
-    // Update page context
     setTimeout(() => {
       chrome.runtime.sendMessage({ type: "PAGE_CONTEXT_UPDATE", url: location.href, title: document.title, domain: location.hostname });
     }, 500);
   }
 
-  // Monitor URL changes (SPA + MPA)
   const _pushState = history.pushState;
   const _replaceState = history.replaceState;
   history.pushState = function () { _pushState.apply(this, arguments); handleUrlChange(); };
   history.replaceState = function () { _replaceState.apply(this, arguments); handleUrlChange(); };
   window.addEventListener("popstate", handleUrlChange);
-  // Also check periodically for YouTube SPA navigation
   setInterval(handleUrlChange, 2000);
 
-  // Initial check for YouTube
   if (isYouTubePage(location.href)) {
     const vid = extractYouTubeVideoId(location.href);
     if (vid) setTimeout(() => handleYouTubeDetected(vid), 1500);
   }
 
-  // ─── Wake Word Listener ───
+  // ─── Wake Word Listener (DO NOT MODIFY) ───
   function startListening() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR || isListening) return;
@@ -280,7 +270,6 @@
   function handleVoiceCommand(cmd) {
     const lower = cmd.toLowerCase();
 
-    // Vision commands
     if (lower.includes("ativar visão") || lower.includes("ativar visao") || lower.includes("ativa visão") || lower.includes("ativa visao")) {
       requireAuth(() => activateVision()); return;
     }
@@ -291,20 +280,17 @@
       requireAuth(() => captureAndAnalyzeVision(cmd)); return;
     }
 
-    // ═══ Web search commands ═══
     if (lower.includes("pesquis") || lower.includes("busca") || lower.includes("procur")) {
       const searchQuery = lower.replace(/^(pesquis[ae]|busc[ae]|procur[ae])\s*/i, "").trim() || cmd;
       requireAuth(() => doWebSearch(searchQuery));
       return;
     }
 
-    // ═══ Scrape commands ═══
     if (lower.includes("extrair página") || lower.includes("raspar") || lower.includes("scrape")) {
       requireAuth(() => doScrapeCurrentPage());
       return;
     }
 
-    // ═══ External link commands ═══
     if (lower.includes("abrir dashboard")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "dashboard" }); return; }
     if (lower.includes("abrir documento")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "documentos" }); return; }
     if (lower.includes("abrir processo")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "processos" }); return; }
@@ -313,7 +299,6 @@
     if (lower.includes("abrir stf")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "stf" }); return; }
     if (lower.includes("abrir stj")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "stj" }); return; }
 
-    // Standard commands
     requireAuth(() => {
       if (lower.includes("resum")) extractAndAnalyze("summarize");
       else if (lower.includes("traduz")) extractAndAnalyze("translate");
@@ -363,18 +348,18 @@
 
   function captureAndAnalyzeVision(userQuery) {
     if (!visionActive) { showNotification("Visão não está ativa. Diga 'Orion, ativar visão' primeiro.", "error"); return; }
-    showThinking();
-    showNotification("📸 Capturando tela...", "info");
+    addChatMessage("user", userQuery || "O que você vê?");
+    showThinkingInChat();
     chrome.runtime.sendMessage(
       { type: "ORION_VISION_CAPTURE", query: userQuery || "Descreva o que você vê nesta tela." },
       (response) => {
-        hideThinking();
+        removeThinkingFromChat();
         if (response?.result?.response) {
           lastVisionResponseTime = Date.now();
-          showResponsePanel("👁 " + response.result.response);
+          addChatMessage("assistant", "👁 " + response.result.response);
           speakText(response.result.response);
         } else if (response?.error) {
-          showNotification("Erro na visão: " + response.error, "error");
+          addChatMessage("system", "Erro na visão: " + response.error);
         }
       }
     );
@@ -412,7 +397,7 @@
 
   function extractAndAnalyze(mode) {
     const data = extractPageContent();
-    showNotification("Analisando página...", "info");
+    addChatMessage("user", `[${mode === "summarize" ? "Resumir" : mode === "translate" ? "Traduzir" : "Analisar"}] ${data.title}`);
     chrome.runtime.sendMessage({ type: "PAGE_CONTEXT_UPDATE", ...data });
     const prompts = {
       summarize: `Resuma de forma concisa e estruturada o conteúdo desta página "${data.title}": ${data.content.substring(0, 4000)}`,
@@ -422,89 +407,76 @@
     sendAIQuery(prompts[mode] || prompts.analyze);
   }
 
-  // ═══ AI Query (neural-ops via background) ═══
+  // ═══ AI Query ═══
   function sendAIQuery(query) {
-    showThinking();
+    showThinkingInChat();
     chrome.runtime.sendMessage(
-      { type: "ORION_AI_QUERY", query, context: { url: location.href, title: document.title } },
+      { type: "ORION_AI_QUERY", query, context: { url: location.href, title: document.title, projectContext } },
       (response) => {
-        hideThinking();
+        removeThinkingFromChat();
         if (response?.result?.fallback) {
           chrome.runtime.sendMessage({ type: "OPEN_ORION_WITH_CONTEXT", context: { query, url: location.href, title: document.title } });
         } else if (response?.result?.response) {
-          showResponsePanel(response.result.response);
+          addChatMessage("assistant", response.result.response);
         } else if (response?.error) {
-          showNotification("Erro: " + response.error, "error");
+          addChatMessage("system", "Erro: " + response.error);
         }
       }
     );
   }
 
-  // ═══ Web Search via Firecrawl ═══
+  // ═══ Web Search ═══
   function doWebSearch(query) {
-    showThinking();
-    showNotification("🔍 Pesquisando: " + query.substring(0, 50) + "...", "info");
+    addChatMessage("user", "🔍 Pesquisar: " + query);
+    showThinkingInChat();
     chrome.runtime.sendMessage(
       { type: "ORION_WEB_SEARCH_REQUEST", query },
       (response) => {
-        hideThinking();
+        removeThinkingFromChat();
         if (response?.result?.results && response.result.results.length > 0) {
           const results = response.result.results;
-          let html = `🔍 <strong>Resultados para "${escapeHtml(query)}"</strong>\n\n`;
+          let text = `🔍 Resultados para "${query}":\n\n`;
           results.forEach((r, i) => {
-            html += `${i + 1}. <strong>${escapeHtml(r.title || "Sem título")}</strong>\n`;
-            html += `   ${escapeHtml((r.description || "").substring(0, 150))}\n`;
-            html += `   🔗 <a href="${r.url}" target="_blank" style="color:#0097a7;text-decoration:underline;font-size:11px;">${r.url}</a>\n\n`;
+            text += `${i + 1}. ${r.title || "Sem título"}\n   ${(r.description || "").substring(0, 120)}\n   ${r.url}\n\n`;
           });
-          showResponsePanelRaw(html);
+          addChatMessage("assistant", text);
         } else if (response?.error) {
-          showNotification("Erro na pesquisa: " + response.error, "error");
+          addChatMessage("system", "Erro na pesquisa: " + response.error);
         } else {
-          showResponsePanel("🔍 Nenhum resultado encontrado para: " + query);
+          addChatMessage("assistant", "🔍 Nenhum resultado encontrado para: " + query);
         }
       }
     );
   }
 
-  // ═══ Scrape Current Page ═══
+  // ═══ Scrape ═══
   function doScrapeCurrentPage() {
-    showThinking();
-    showNotification("🕸 Extraindo conteúdo da página...", "info");
+    addChatMessage("user", "🕸 Extrair conteúdo desta página");
+    showThinkingInChat();
     chrome.runtime.sendMessage(
       { type: "ORION_SCRAPE_REQUEST", url: location.href },
       (response) => {
-        hideThinking();
+        removeThinkingFromChat();
         if (response?.result?.markdown) {
-          const md = response.result.markdown;
-          const linkCount = response.result.links?.length || 0;
-          const meta = response.result.metadata || {};
-          let text = `🕸 <strong>Conteúdo Extraído</strong>\n`;
-          text += `Título: ${escapeHtml(meta.title || document.title)}\n`;
-          text += `Links encontrados: ${linkCount}\n\n`;
-          text += escapeHtml(md.substring(0, 8000));
-          showResponsePanelRaw(text);
+          addChatMessage("assistant", `🕸 Conteúdo Extraído\nTítulo: ${response.result.metadata?.title || document.title}\nLinks: ${response.result.links?.length || 0}\n\n${response.result.markdown.substring(0, 4000)}`);
         } else if (response?.error) {
-          showNotification("Erro no scraping: " + response.error, "error");
-        } else {
-          showResponsePanel("🕸 Não foi possível extrair o conteúdo desta página.");
+          addChatMessage("system", "Erro no scraping: " + response.error);
         }
       }
     );
   }
 
-  // ═══ Scrape a specific URL ═══
   function doScrapeUrl(url) {
-    showThinking();
-    showNotification("🕸 Extraindo: " + url.substring(0, 50) + "...", "info");
+    addChatMessage("user", "🕸 Extrair: " + url.substring(0, 60));
+    showThinkingInChat();
     chrome.runtime.sendMessage(
       { type: "ORION_SCRAPE_REQUEST", url },
       (response) => {
-        hideThinking();
+        removeThinkingFromChat();
         if (response?.result?.markdown) {
-          const md = response.result.markdown;
-          showResponsePanelRaw(`🕸 <strong>Conteúdo de ${escapeHtml(url)}</strong>\n\n${escapeHtml(md.substring(0, 8000))}`);
+          addChatMessage("assistant", `🕸 ${url}\n\n${response.result.markdown.substring(0, 4000)}`);
         } else if (response?.error) {
-          showNotification("Erro: " + response.error, "error");
+          addChatMessage("system", "Erro: " + response.error);
         }
       }
     );
@@ -514,93 +486,82 @@
   // ═══ PDF Upload & Processing ═══
   // ═══════════════════════════════════════════════════════════
 
-  /**
-   * Read a PDF file from File API, extract text via basic parsing,
-   * and send to Orion AI for analysis.
-   */
   function handlePDFFile(file) {
     if (!file || !file.name.toLowerCase().endsWith(".pdf")) {
-      showNotification("Apenas arquivos PDF são suportados", "error");
+      showNotification("Apenas arquivos PDF são suportados no modo PDF", "error");
       return;
     }
-
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      showNotification("PDF muito grande (máx 10MB). Envie partes menores.", "error");
+      showNotification("PDF muito grande (máx 10MB)", "error");
       return;
     }
 
-    showThinking();
-    showNotification(`📄 Processando ${file.name}...`, "info");
+    addChatMessage("system", `📄 Processando ${file.name}...`);
+    showThinkingInChat();
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const arrayBuffer = e.target.result;
-      // Extract text from PDF using basic text extraction
-      const text = extractTextFromPDFBuffer(new Uint8Array(arrayBuffer));
+      const text = extractTextFromPDFBuffer(new Uint8Array(e.target.result));
       const truncated = text.length > 12000;
-      const processedText = text.substring(0, 12000);
-
       pdfContext = {
         filename: file.name,
-        text: processedText,
+        text: text.substring(0, 12000),
         fullLength: text.length,
         truncated,
       };
 
-      hideThinking();
-
-      // Show PDF offer panel
-      let msg = `📄 <strong>PDF carregado: ${escapeHtml(file.name)}</strong>\n`;
-      msg += `Tamanho: ${(file.size / 1024).toFixed(1)} KB\n`;
-      msg += `Texto extraído: ~${processedText.split(/\s+/).length} palavras\n`;
-      if (truncated) msg += `⚠️ PDF longo — processando as primeiras seções para manter velocidade.\n`;
-      msg += `\n<div class="orion-pdf-actions">`;
-      msg += `<button class="orion-pdf-action-btn" data-pdf-action="summarize">📝 Resumir PDF</button>`;
-      msg += `<button class="orion-pdf-action-btn" data-pdf-action="extract">📊 Extrair Dados</button>`;
-      msg += `<button class="orion-pdf-action-btn" data-pdf-action="ask">💬 Perguntar sobre o PDF</button>`;
-      msg += `</div>`;
-
-      showResponsePanelRaw(msg);
-
-      // Bind PDF action buttons
-      setTimeout(() => {
-        document.querySelectorAll(".orion-pdf-action-btn").forEach((btn) => {
-          btn.addEventListener("click", () => handlePDFAction(btn.dataset.pdfAction));
-        });
-      }, 100);
+      removeThinkingFromChat();
+      addChatMessage("assistant", `📄 PDF carregado: ${file.name}\nTamanho: ${(file.size / 1024).toFixed(1)} KB\nTexto: ~${pdfContext.text.split(/\s+/).length} palavras${truncated ? "\n⚠️ PDF longo — usando primeiras seções." : ""}\n\nO que deseja fazer?\n• Resumir PDF\n• Extrair dados/tabelas\n• Gerar outline acadêmico\n• Perguntar sobre o conteúdo`);
+      updatePanelPDFBadge();
     };
-
     reader.onerror = () => {
-      hideThinking();
-      showNotification("Erro ao ler o PDF", "error");
+      removeThinkingFromChat();
+      addChatMessage("system", "Erro ao ler o PDF");
     };
-
     reader.readAsArrayBuffer(file);
   }
 
-  /**
-   * Basic PDF text extraction from raw bytes.
-   * Looks for text streams between BT/ET operators.
-   * For complex PDFs, we send to the AI with raw content.
-   */
+  function handleImageFile(file) {
+    if (!file || !file.type.startsWith("image/")) {
+      showNotification("Arquivo de imagem inválido", "error");
+      return;
+    }
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showNotification("Imagem muito grande (máx 5MB)", "error");
+      return;
+    }
+
+    addChatMessage("system", `🖼 Processando imagem ${file.name}...`);
+    showThinkingInChat();
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result.split(",")[1];
+      imageContext = { filename: file.name, base64, type: file.type };
+      removeThinkingFromChat();
+      addChatMessage("assistant", `🖼 Imagem carregada: ${file.name}\nTipo: ${file.type}\n\nPosso analisar esta imagem. Pergunte algo como:\n• "O que há nesta imagem?"\n• "Extraia o texto desta imagem"\n• "Descreva esta imagem"`);
+    };
+    reader.onerror = () => {
+      removeThinkingFromChat();
+      addChatMessage("system", "Erro ao ler a imagem");
+    };
+    reader.readAsDataURL(file);
+  }
+
   function extractTextFromPDFBuffer(uint8Array) {
     try {
-      // Convert to string for basic parsing
       const decoder = new TextDecoder("latin1");
       const raw = decoder.decode(uint8Array);
-
-      // Extract text between parentheses in text objects (basic approach)
       const textParts = [];
 
-      // Method 1: Extract text from Tj and TJ operators
       const tjMatches = raw.matchAll(/\(([^)]{1,500})\)\s*Tj/g);
       for (const m of tjMatches) {
         const cleaned = m[1].replace(/\\[nrt]/g, " ").replace(/\\\\/g, "\\").trim();
         if (cleaned.length > 1) textParts.push(cleaned);
       }
 
-      // Method 2: Extract from TJ arrays
       const tjArrayMatches = raw.matchAll(/\[((?:\([^)]*\)[^]]*?)+)\]\s*TJ/gi);
       for (const m of tjArrayMatches) {
         const innerMatches = m[1].matchAll(/\(([^)]{1,500})\)/g);
@@ -612,7 +573,6 @@
         if (parts.length > 0) textParts.push(parts.join(""));
       }
 
-      // Method 3: Look for stream content with readable text
       if (textParts.length < 5) {
         const streamMatches = raw.matchAll(/stream\r?\n([\s\S]{10,5000}?)\r?\nendstream/g);
         for (const m of streamMatches) {
@@ -630,42 +590,7 @@
     }
   }
 
-  function handlePDFAction(action) {
-    if (!pdfContext) {
-      showNotification("Nenhum PDF carregado", "error");
-      return;
-    }
-
-    const { filename, text, truncated } = pdfContext;
-    let prompt;
-
-    switch (action) {
-      case "summarize":
-        prompt = `Resuma de forma estruturada o seguinte documento PDF "${filename}":\n\n${text.substring(0, 6000)}`;
-        break;
-      case "extract":
-        prompt = `Extraia os dados principais, tabelas, valores e informações relevantes deste PDF "${filename}":\n\n${text.substring(0, 6000)}`;
-        break;
-      case "ask":
-        // Switch panel input to PDF context mode
-        const input = document.getElementById("orion-query-input");
-        if (input) {
-          input.placeholder = `💬 Pergunte sobre "${filename}"...`;
-          input.dataset.pdfMode = "true";
-          input.focus();
-        }
-        showNotification(`💬 Modo PDF ativo — pergunte sobre "${filename}"`, "info");
-        return;
-      default:
-        prompt = `Analise o documento "${filename}":\n\n${text.substring(0, 6000)}`;
-    }
-
-    if (truncated) prompt += "\n\n[Nota: PDF truncado por tamanho. Estes são os primeiros 12.000 caracteres.]";
-
-    requireAuth(() => sendAIQuery(prompt));
-  }
-
-  // ═══ TTS ═══
+  // ═══ TTS (DO NOT MODIFY) ═══
   function speakText(text) {
     if (!text) return;
     window.speechSynthesis.cancel();
@@ -683,7 +608,61 @@
     showNotification("Lendo em voz alta...", "info");
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // ═══ Chat Message System (persistent between tabs) ═══
+  // ═══════════════════════════════════════════════════════════
+
+  function addChatMessage(role, text) {
+    const msg = { role, text, time: Date.now() };
+    chatMessages.push(msg);
+    if (chatMessages.length > 60) chatMessages = chatMessages.slice(-50);
+    persistChat();
+    renderChatInPanel();
+  }
+
+  function showThinkingInChat() {
+    const container = document.getElementById("orion-chat-messages");
+    if (!container) return;
+    let thinking = container.querySelector(".orion-chat-thinking");
+    if (!thinking) {
+      thinking = document.createElement("div");
+      thinking.className = "orion-chat-msg system orion-chat-thinking";
+      thinking.innerHTML = `<span class="orion-dot-pulse"></span> Processando...`;
+      container.appendChild(thinking);
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  function removeThinkingFromChat() {
+    const el = document.querySelector(".orion-chat-thinking");
+    if (el) el.remove();
+  }
+
+  function renderChatInPanel() {
+    const container = document.getElementById("orion-chat-messages");
+    if (!container) return;
+
+    // Remove thinking before render
+    const thinking = container.querySelector(".orion-chat-thinking");
+
+    container.innerHTML = "";
+    chatMessages.forEach((msg) => {
+      const div = document.createElement("div");
+      div.className = `orion-chat-msg ${msg.role}`;
+      div.textContent = msg.text;
+      container.appendChild(div);
+    });
+
+    // Re-add thinking if it was present
+    if (thinking) container.appendChild(thinking);
+
+    container.scrollTop = container.scrollHeight;
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // ═══ Mini Orb (floating button) ═══
+  // ═══════════════════════════════════════════════════════════
+
   function createMiniOrb() {
     if (miniOrb) return;
     miniOrb = document.createElement("div");
@@ -716,146 +695,193 @@
     setTimeout(() => miniOrb.classList.remove("orion-pulse"), 2000);
   }
 
-  // ═══ Floating Panel ═══
-  function togglePanel() { if (panelVisible) hidePanel(); else showPanel(); }
+  // ═══════════════════════════════════════════════════════════
+  // ═══ Floating Panel with Chat History ═══
+  // ═══════════════════════════════════════════════════════════
+
+  function togglePanel() { if (panelVisible) minimizePanel(); else showPanel(); }
+
+  function minimizePanel() {
+    if (panel) { panel.remove(); panel = null; }
+    panelVisible = false;
+  }
 
   function showPanel() {
     if (panel) panel.remove();
     panel = document.createElement("div");
     panel.id = "orion-panel";
+
+    const contextLabel = pdfContext ? `📄 ${escapeHtml(pdfContext.filename)}` : (imageContext ? `🖼 ${escapeHtml(imageContext.filename)}` : "");
+
     panel.innerHTML = `
       <div class="orion-panel-header">
-        <span class="orion-panel-title">ORION v5.1</span>
-        <div style="display:flex;align-items:center;gap:8px;">
+        <span class="orion-panel-title">ORION v5.2</span>
+        <div style="display:flex;align-items:center;gap:6px;">
           <span id="orion-vision-badge" class="orion-vision-badge ${visionActive ? 'active' : ''}">${visionActive ? '👁 ON' : '👁 OFF'}</span>
-          ${pdfContext ? `<span class="orion-pdf-badge">📄 PDF</span>` : ''}
+          ${pdfContext ? '<span class="orion-pdf-badge" id="orion-pdf-badge-el">📄 PDF</span>' : ''}
           <button class="orion-panel-close" id="orion-close-panel">×</button>
         </div>
       </div>
-      <div class="orion-panel-body">
-        <div class="orion-input-row">
-          <input type="text" id="orion-query-input" placeholder="${pdfContext ? '💬 Pergunte sobre ' + escapeHtml(pdfContext.filename) + '...' : 'Pergunte ao Orion...'}" autocomplete="off" ${pdfContext ? 'data-pdf-mode="true"' : ''}/>
-          <button id="orion-send-btn">Enviar</button>
-        </div>
-        <div class="orion-quick-actions">
-          <button data-action="summarize" title="Resumir página">📝 Resumir</button>
-          <button data-action="analyze" title="Analisar página">🔎 Analisar</button>
-          <button data-action="read" title="Ler em voz alta">🔊 Ler</button>
-          <button data-action="extract" title="Extrair dados">📊 Extrair</button>
-          <button data-action="web-search" title="Pesquisa Web">🔍 Pesquisar</button>
-          <button data-action="scrape" title="Scraping desta página">🕸 Scrape</button>
-          <button data-action="vision-toggle" id="orion-vision-toggle">${visionActive ? '👁 Desativar' : '👁 Visão'}</button>
-          ${visionActive ? '<button data-action="vision-look" title="O que Orion vê">👁 O que vê?</button>' : ''}
-          ${currentYouTubeVideoId ? '<button data-action="pip" title="Picture-in-Picture">🎬 PiP</button>' : ''}
-        </div>
 
-        <!-- PDF Drop Zone -->
-        <div id="orion-pdf-dropzone" class="orion-pdf-dropzone">
-          <span class="orion-pdf-dropzone-text">📄 Arraste um PDF aqui ou clique para enviar</span>
-          <input type="file" id="orion-pdf-file-input" accept=".pdf" style="display:none" />
-        </div>
+      <!-- Chat Messages -->
+      <div class="orion-chat-container" id="orion-chat-messages"></div>
 
-        <div class="orion-external-links">
-          <div class="orion-links-label">Links Externos</div>
-          <div class="orion-links-row">
-            <a data-extlink="dashboard" title="Dashboard">🧠</a>
-            <a data-extlink="documentos" title="Documentos">📄</a>
-            <a data-extlink="pesquisa" title="Pesquisa">⚖️</a>
-            <a data-extlink="chat" title="Chat IA">💬</a>
-            <a data-extlink="stf" title="STF">🏛</a>
-            <a data-extlink="stj" title="STJ">⚖️</a>
-            <a data-extlink="lexml" title="LexML">📚</a>
-            <a data-extlink="planalto" title="Planalto">🇧🇷</a>
-          </div>
-        </div>
-        <div class="orion-response" id="orion-response"></div>
+      <!-- Quick Actions Bar -->
+      <div class="orion-quick-bar">
+        <button data-action="analyze-page" title="Analisar página atual">🔎 Analisar Página</button>
+        <button data-action="summarize" title="Resumir página">📝 Resumir</button>
+        <button data-action="web-search" title="Pesquisa Web">🔍 Pesquisar</button>
+        <button data-action="scrape" title="Scraping">🕸 Scrape</button>
+        <button data-action="vision-toggle" id="orion-vision-toggle">${visionActive ? '👁 Desativar' : '👁 Visão'}</button>
+        ${visionActive ? '<button data-action="vision-look">👁 O que vê?</button>' : ''}
+        ${currentYouTubeVideoId ? '<button data-action="pip">🎬 PiP</button>' : ''}
+        <button data-action="academic-outline" title="Gerar outline acadêmico">📚 Outline</button>
+        <button data-action="extract-data" title="Extrair dados estruturados">📊 Extrair</button>
+        <button data-action="read" title="Ler em voz alta">🔊 Ler</button>
+      </div>
+
+      <!-- File Upload Zone -->
+      <div id="orion-upload-zone" class="orion-upload-zone">
+        <span class="orion-upload-text">📄 Arraste PDF ou imagem aqui</span>
+        <input type="file" id="orion-file-input" accept=".pdf,image/*" style="display:none" />
+      </div>
+
+      <!-- Input Bar -->
+      <div class="orion-input-bar">
+        <input type="text" id="orion-query-input" placeholder="${pdfContext ? '💬 Pergunte sobre ' + escapeHtml(pdfContext.filename) + '...' : 'Pergunte ao Orion...'}" autocomplete="off" />
+        <button id="orion-send-btn">➤</button>
+      </div>
+
+      <!-- External Links -->
+      <div class="orion-ext-links">
+        <a data-extlink="dashboard" title="Dashboard">🧠</a>
+        <a data-extlink="documentos" title="Docs">📄</a>
+        <a data-extlink="pesquisa" title="Pesquisa">⚖️</a>
+        <a data-extlink="chat" title="Chat IA">💬</a>
+        <a data-extlink="stf" title="STF">🏛</a>
+        <a data-extlink="stj" title="STJ">⚖️</a>
+        <a data-extlink="lexml" title="LexML">📚</a>
+        <a data-extlink="planalto" title="Planalto">🇧🇷</a>
       </div>
     `;
     document.body.appendChild(panel);
     panelVisible = true;
 
-    panel.querySelector("#orion-close-panel").addEventListener("click", hidePanel);
+    // Render persisted chat
+    renderChatInPanel();
+
+    // ─── Event Bindings ───
+    panel.querySelector("#orion-close-panel").addEventListener("click", minimizePanel);
+
     const input = panel.querySelector("#orion-query-input");
     const sendBtn = panel.querySelector("#orion-send-btn");
 
-    sendBtn.addEventListener("click", () => {
+    function handleSend() {
       const q = input.value.trim();
       if (!q) return;
-      // If in PDF mode, prepend context
-      if (input.dataset.pdfMode === "true" && pdfContext) {
+      addChatMessage("user", q);
+
+      if (pdfContext) {
         const pdfQuery = `Sobre o PDF "${pdfContext.filename}": ${q}\n\nContexto do PDF:\n${pdfContext.text.substring(0, 4000)}`;
         requireAuth(() => sendAIQuery(pdfQuery));
+      } else if (imageContext) {
+        // Send image + query to vision
+        requireAuth(() => {
+          showThinkingInChat();
+          chrome.runtime.sendMessage(
+            { type: "ORION_VISION_CAPTURE", query: q, imageBase64: imageContext.base64 },
+            (response) => {
+              removeThinkingFromChat();
+              if (response?.result?.response) addChatMessage("assistant", response.result.response);
+              else if (response?.error) addChatMessage("system", "Erro: " + response.error);
+            }
+          );
+        });
       } else {
         requireAuth(() => sendAIQuery(q));
       }
       input.value = "";
-    });
-    input.addEventListener("keydown", (e) => { if (e.key === "Enter") { sendBtn.click(); e.preventDefault(); } });
+    }
 
-    // ─── PDF Drop Zone ───
-    const dropzone = panel.querySelector("#orion-pdf-dropzone");
-    const fileInput = panel.querySelector("#orion-pdf-file-input");
+    sendBtn.addEventListener("click", handleSend);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") { handleSend(); e.preventDefault(); } });
 
-    dropzone.addEventListener("click", () => fileInput.click());
+    // ─── File Upload ───
+    const uploadZone = panel.querySelector("#orion-upload-zone");
+    const fileInput = panel.querySelector("#orion-file-input");
+
+    uploadZone.addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", (e) => {
-      if (e.target.files[0]) {
-        requireAuth(() => handlePDFFile(e.target.files[0]));
+      const file = e.target.files[0];
+      if (file) {
+        requireAuth(() => {
+          if (file.name.toLowerCase().endsWith(".pdf")) handlePDFFile(file);
+          else if (file.type.startsWith("image/")) handleImageFile(file);
+          else showNotification("Formato não suportado. Use PDF ou imagem.", "error");
+        });
       }
     });
 
-    dropzone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropzone.classList.add("drag-over");
-    });
-    dropzone.addEventListener("dragleave", (e) => {
-      e.preventDefault();
-      dropzone.classList.remove("drag-over");
-    });
-    dropzone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dropzone.classList.remove("drag-over");
+    uploadZone.addEventListener("dragover", (e) => { e.preventDefault(); e.stopPropagation(); uploadZone.classList.add("drag-over"); });
+    uploadZone.addEventListener("dragleave", (e) => { e.preventDefault(); uploadZone.classList.remove("drag-over"); });
+    uploadZone.addEventListener("drop", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      uploadZone.classList.remove("drag-over");
       const file = e.dataTransfer.files[0];
       if (file) {
-        requireAuth(() => handlePDFFile(file));
+        requireAuth(() => {
+          if (file.name.toLowerCase().endsWith(".pdf")) handlePDFFile(file);
+          else if (file.type.startsWith("image/")) handleImageFile(file);
+          else showNotification("Formato não suportado", "error");
+        });
       }
     });
 
-    // Quick actions
-    panel.querySelectorAll(".orion-quick-actions button").forEach((btn) => {
+    // ─── Quick Actions ───
+    panel.querySelectorAll(".orion-quick-bar button").forEach((btn) => {
       btn.addEventListener("click", () => {
         const action = btn.dataset.action;
         if (action === "vision-toggle") {
           if (visionActive) deactivateVision("manual"); else requireAuth(() => activateVision());
-          hidePanel(); setTimeout(() => showPanel(), 100);
+          minimizePanel(); setTimeout(() => showPanel(), 100);
         } else if (action === "vision-look") {
           requireAuth(() => captureAndAnalyzeVision("Descreva detalhadamente o que você vê nesta tela."));
+        } else if (action === "analyze-page") {
+          requireAuth(() => {
+            const data = extractPageContent();
+            addChatMessage("user", `🔎 Analisar: ${data.title}`);
+            chrome.runtime.sendMessage({ type: "PAGE_CONTEXT_UPDATE", ...data });
+            sendAIQuery(`Analise esta página "${data.title}" (${data.url}). Conteúdo completo:\n\nTítulos: ${data.headings.map(h => h.text).join(", ")}\n\n${data.content.substring(0, 5000)}`);
+          });
         } else if (action === "web-search") {
           const q = input.value.trim();
           if (q) { requireAuth(() => doWebSearch(q)); input.value = ""; }
-          else { showNotification("Digite algo para pesquisar", "info"); }
+          else showNotification("Digite algo para pesquisar", "info");
         } else if (action === "scrape") {
           requireAuth(() => doScrapeCurrentPage());
         } else if (action === "pip") {
           tryYouTubePiP();
-        } else {
+        } else if (action === "academic-outline") {
           requireAuth(() => {
-            if (action === "summarize") extractAndAnalyze("summarize");
-            else if (action === "analyze") extractAndAnalyze("analyze");
-            else if (action === "read") readPageAloud();
-            else if (action === "extract") {
-              const pageData = extractPageContent();
-              showResponsePanel(
-                `Dados Extraídos\n\nTítulo: ${pageData.title}\nURL: ${pageData.url}\nPalavras: ${pageData.wordCount}\nTítulos: ${pageData.headings.length}\nLinks: ${pageData.links.length}\nImagens: ${pageData.images.length}\n\nTítulos:\n${pageData.headings.map(h => `${"  ".repeat(h.level - 1)}${h.text}`).join("\n")}`
-              );
-            }
+            const data = extractPageContent();
+            const ctx = pdfContext ? `\n\nPDF Context:\n${pdfContext.text.substring(0, 4000)}` : "";
+            addChatMessage("user", "📚 Gerar outline acadêmico");
+            sendAIQuery(`Gere um outline estruturado para um trabalho acadêmico/profissional baseado no conteúdo desta página "${data.title}":\n\n${data.content.substring(0, 3000)}${ctx}\n\nInclua: 1) Introdução com problema/hipótese, 2) Revisão da literatura (tópicos-chave), 3) Metodologia sugerida, 4) Resultados esperados, 5) Discussão, 6) Conclusão. Formate como outline com bullets.`);
           });
+        } else if (action === "extract-data") {
+          requireAuth(() => {
+            const pageData = extractPageContent();
+            addChatMessage("assistant", `📊 Dados Extraídos\n\nTítulo: ${pageData.title}\nURL: ${pageData.url}\nPalavras: ${pageData.wordCount}\nTítulos: ${pageData.headings.length}\nLinks: ${pageData.links.length}\nImagens: ${pageData.images.length}\n\nTítulos:\n${pageData.headings.map(h => "  ".repeat(h.level - 1) + h.text).join("\n")}`);
+          });
+        } else if (action === "summarize") {
+          requireAuth(() => extractAndAnalyze("summarize"));
+        } else if (action === "read") {
+          requireAuth(() => readPageAloud());
         }
       });
     });
 
-    // External links in panel
+    // External links
     panel.querySelectorAll("[data-extlink]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.preventDefault();
@@ -866,31 +892,16 @@
     setTimeout(() => input.focus(), 100);
   }
 
-  function hidePanel() { if (panel) { panel.remove(); panel = null; } panelVisible = false; }
-
-  function showResponsePanel(text) {
-    if (!panel) showPanel();
-    const el = document.getElementById("orion-response");
-    if (el) { el.innerHTML = `<div class="orion-response-text">${escapeHtml(text)}</div>`; el.scrollTop = el.scrollHeight; }
+  function updatePanelPDFBadge() {
+    const badge = document.getElementById("orion-pdf-badge-el");
+    if (!badge && pdfContext && panelVisible) {
+      // Re-render panel to show badge
+      minimizePanel();
+      showPanel();
+    }
   }
 
-  function showResponsePanelRaw(html) {
-    if (!panel) showPanel();
-    const el = document.getElementById("orion-response");
-    if (el) { el.innerHTML = `<div class="orion-response-text">${html}</div>`; el.scrollTop = el.scrollHeight; }
-  }
-
-  function showThinking() {
-    if (!panel) showPanel();
-    const el = document.getElementById("orion-response");
-    if (el) el.innerHTML = `<div class="orion-thinking"><span class="orion-dot-pulse"></span> Processando...</div>`;
-  }
-
-  function hideThinking() {
-    const el = document.getElementById("orion-response");
-    if (el && el.querySelector(".orion-thinking")) el.innerHTML = "";
-  }
-
+  // ═══ Notifications ═══
   function showNotification(text, type = "info") {
     const n = document.createElement("div");
     n.className = `orion-notification orion-notif-${type}`;
@@ -901,7 +912,7 @@
   }
 
   function escapeHtml(str) {
-    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+    return (str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
   // ─── Message Listener ───
@@ -917,14 +928,21 @@
         requireAuth(() => {
           const data = extractPageContent();
           chrome.runtime.sendMessage({ type: "PAGE_CONTEXT_UPDATE", ...data });
+          addChatMessage("user", `🔎 Analisar: ${data.title}`);
           sendAIQuery(`Analise detalhadamente esta página: ${data.title}. Conteúdo: ${data.content.substring(0, 5000)}`);
         }); break;
       case "ORION_SUMMARIZE_PAGE":
         requireAuth(() => extractAndAnalyze("summarize")); break;
       case "ORION_ANALYZE_TEXT":
-        requireAuth(() => sendAIQuery(`Analise o seguinte texto selecionado: "${message.text}"`)); break;
+        requireAuth(() => {
+          addChatMessage("user", `Analisar: "${message.text.substring(0, 100)}..."`);
+          sendAIQuery(`Analise o seguinte texto selecionado: "${message.text}"`);
+        }); break;
       case "ORION_ANALYZE_IMAGE":
-        requireAuth(() => { showNotification("Analisando imagem...", "info"); sendAIQuery(`Descreva e analise esta imagem: ${message.imageUrl}`); }); break;
+        requireAuth(() => {
+          addChatMessage("user", "Analisar imagem");
+          sendAIQuery(`Descreva e analise esta imagem: ${message.imageUrl}`);
+        }); break;
       case "ORION_READ_ALOUD":
         requireAuth(() => readPageAloud(message.text)); break;
       case "ORION_TRANSLATE":
@@ -932,7 +950,7 @@
       case "ORION_EXTRACT_STRUCTURED":
         requireAuth(() => {
           const pageData = extractPageContent();
-          showResponsePanel(`Dados Extraídos\n\nTítulo: ${pageData.title}\nURL: ${pageData.url}\nPalavras: ${pageData.wordCount}\nTítulos: ${pageData.headings.length}\nLinks: ${pageData.links.length}\nImagens: ${pageData.images.length}`);
+          addChatMessage("assistant", `📊 Dados: ${pageData.title}\nPalavras: ${pageData.wordCount} | Títulos: ${pageData.headings.length} | Links: ${pageData.links.length}`);
         }); break;
       case "ORION_ACTIVATE_VISION":
         requireAuth(() => activateVision()); break;
@@ -951,25 +969,28 @@
           if (input) { input.placeholder = "🔍 Pesquisar na Web..."; input.focus(); }
         }, 200);
         break;
+      case "ORION_NOTIFICATION":
+        showNotification(message.text, message.notifType || "info"); break;
     }
     sendResponse({ ok: true });
     return true;
   });
 
-  // ─── Global drag-and-drop for PDFs (even outside panel) ───
+  // ─── Global drag-and-drop for PDFs and images ───
   document.addEventListener("dragover", (e) => {
-    if (e.dataTransfer.types.includes("Files")) {
-      e.preventDefault();
-    }
+    if (e.dataTransfer.types.includes("Files")) e.preventDefault();
   });
   document.addEventListener("drop", (e) => {
     const file = e.dataTransfer?.files?.[0];
-    if (file && file.name.toLowerCase().endsWith(".pdf")) {
+    if (file && (file.name.toLowerCase().endsWith(".pdf") || file.type.startsWith("image/"))) {
       e.preventDefault();
       e.stopPropagation();
       createMiniOrb();
       if (!panelVisible) showPanel();
-      requireAuth(() => handlePDFFile(file));
+      requireAuth(() => {
+        if (file.name.toLowerCase().endsWith(".pdf")) handlePDFFile(file);
+        else handleImageFile(file);
+      });
     }
   });
 

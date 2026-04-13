@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Orion — Assistente Neural",
-  "version": "5.1.0",
-  "description": "Assistente IA neural com visão, fala, raciocínio, pesquisa web, scraping, clipboard, downloads, side panel, tradução, notas, bookmarks, anti-alucinação, YouTube PiP, PDF upload e auto-minimize. Wake word 'Orion' ativo em qualquer aba.",
+  "version": "5.2.0",
+  "description": "Assistente IA neural com visão, fala, raciocínio, pesquisa web, scraping, clipboard, downloads, side panel, tradução, notas, bookmarks, anti-alucinação, YouTube PiP, PDF/image upload e auto-minimize. Wake word 'Orion' ativo em qualquer aba.",
   "permissions": [
     "activeTab",
     "storage",
