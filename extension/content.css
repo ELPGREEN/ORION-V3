@@ -1,4 +1,4 @@
-/* Orion Extension v3.0 — Content Styles */
+/* Orion Extension v5.1 — Content Styles */
 
 #orion-mini-orb {
   position: fixed;
@@ -41,7 +41,7 @@
   bottom: 80px;
   right: 20px;
   width: 380px;
-  max-height: 500px;
+  max-height: 520px;
   background: #0d0d24;
   border: 1px solid rgba(0, 229, 255, 0.25);
   border-radius: 16px;
@@ -112,6 +112,18 @@
   color: #00ff88;
   border-color: rgba(0,255,136,0.3);
   animation: vision-badge-glow 2s infinite;
+}
+
+/* PDF badge in panel header */
+.orion-pdf-badge {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: rgba(255,165,0,0.12);
+  color: #FFA500;
+  border: 1px solid rgba(255,165,0,0.3);
 }
 
 @keyframes vision-badge-glow {
@@ -208,6 +220,140 @@
 
 .orion-quick-actions button[data-action="vision-look"]:hover {
   background: rgba(0, 255, 136, 0.18);
+}
+
+.orion-quick-actions button[data-action="pip"] {
+  background: rgba(255, 69, 0, 0.08);
+  border-color: rgba(255, 69, 0, 0.25);
+  color: #FF6B35;
+}
+
+.orion-quick-actions button[data-action="pip"]:hover {
+  background: rgba(255, 69, 0, 0.18);
+}
+
+/* ─── PDF Drop Zone ─── */
+.orion-pdf-dropzone {
+  border: 2px dashed rgba(255, 165, 0, 0.25);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(255, 165, 0, 0.03);
+}
+
+.orion-pdf-dropzone:hover,
+.orion-pdf-dropzone.drag-over {
+  border-color: rgba(255, 165, 0, 0.5);
+  background: rgba(255, 165, 0, 0.08);
+  box-shadow: 0 0 15px rgba(255, 165, 0, 0.1);
+}
+
+.orion-pdf-dropzone-text {
+  font-size: 11px;
+  color: #888;
+  font-weight: 500;
+}
+
+.orion-pdf-dropzone.drag-over .orion-pdf-dropzone-text {
+  color: #FFA500;
+}
+
+/* ─── PDF Action Buttons ─── */
+.orion-pdf-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.orion-pdf-action-btn {
+  background: rgba(255, 165, 0, 0.08) !important;
+  border: 1px solid rgba(255, 165, 0, 0.25) !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  color: #FFA500 !important;
+  transition: all 0.2s !important;
+  font-family: inherit !important;
+}
+
+.orion-pdf-action-btn:hover {
+  background: rgba(255, 165, 0, 0.18) !important;
+  border-color: rgba(255, 165, 0, 0.4) !important;
+}
+
+/* ─── PiP Button (fallback) ─── */
+#orion-pip-btn {
+  position: fixed;
+  bottom: 80px;
+  right: 80px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #FF6B35, #D4AF37);
+  color: white;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 2147483645;
+  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
+  animation: orion-pip-pulse 2s infinite;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+#orion-pip-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 25px rgba(255, 107, 53, 0.6);
+}
+
+@keyframes orion-pip-pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4); }
+  50% { box-shadow: 0 4px 30px rgba(255, 107, 53, 0.6); }
+}
+
+/* ─── External Links ─── */
+.orion-external-links {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 8px;
+}
+
+.orion-links-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #4a4f5c;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.orion-links-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.orion-links-row a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.orion-links-row a:hover {
+  background: rgba(0, 180, 212, 0.12);
+  border-color: rgba(0, 180, 212, 0.25);
+  transform: translateY(-1px);
 }
 
 .orion-response {
