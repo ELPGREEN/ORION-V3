@@ -438,6 +438,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return true;
 
+    // ═══ Video Control (from content script) ═══
+    case "ORION_VIDEO_CONTROL":
+      if (message.tabId) {
+        chrome.tabs.sendMessage(message.tabId, { type: "ORION_VIDEO_CONTROL_CMD", action: message.action });
+      } else {
+        // Broadcast to active tab
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, { type: "ORION_VIDEO_CONTROL_CMD", action: message.action });
+        });
+      }
+      sendResponse({ ok: true });
+      break;
+
     default:
       sendResponse({ error: "Unknown message type" });
   }

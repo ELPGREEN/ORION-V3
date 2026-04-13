@@ -1001,6 +1001,7 @@
           <span id="orion-agent-badge" class="orion-agent-badge" style="display:none;font-size:10px;padding:2px 6px;border-radius:8px;background:#1a2a3a;color:#00E5FF;">🤖 Orion</span>
           <span id="orion-vision-badge" class="orion-vision-badge ${visionActive ? 'active' : ''}">${visionActive ? '👁 ON' : '👁 OFF'}</span>
           ${pdfContext ? '<span class="orion-pdf-badge" id="orion-pdf-badge-el">📄 PDF</span>' : ''}
+          ${detectPageType() === 'academic' ? '<span class="orion-paper-badge">📚 Paper</span>' : ''}
           <button class="orion-panel-close" id="orion-close-panel">×</button>
         </div>
       </div>
