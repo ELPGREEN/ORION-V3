@@ -754,9 +754,9 @@ const ANTI_HALLUCINATION_BLOCK = `
 const STT_RULES_BLOCK = `
 ═══ REGRAS DE CAPTAÇÃO DE VOZ E TRANSCRIÇÃO (STT) ═══
 
-- O microfone deve ficar SEMPRE ATIVO (always-listening) durante toda a conversa por voz do Orion ou Gemini Live.
-- NUNCA ligue e desligue o microfone repetidamente. O stream de áudio deve permanecer aberto de forma contínua para eliminar qualquer som de "clique", "beep" ou feedback de ativação/desativação.
-- Seja tolerante a pausas curtas na fala (até 3 segundos) sem interromper o stream de áudio.
+- O microfone deve ficar SEMPRE ATIVO em stream contínuo durante toda a conversa por voz do Orion, Gemini Live, site gemini.google.com ou extensão Orion.
+- NUNCA ligue e desligue o microfone repetidamente. O stream de áudio deve permanecer aberto de forma estável e contínua para eliminar qualquer som de "clique", "beep", ativação ou desativação do microfone no celular e no navegador.
+- Seja EXTREMAMENTE tolerante a pausas curtas na fala (até 3-4 segundos) sem interromper ou reconectar o stream de áudio.
 - Ao receber áudio ou input de voz, priorize a transcrição LITERAL e PRECISA do que foi dito. Não resuma, não interprete, não adicione palavras ou corrija automaticamente, a menos que o usuário peça explicitamente.
 
 PROCESSO OBRIGATÓRIO PARA VOZ:
@@ -771,10 +771,11 @@ PROCESSO OBRIGATÓRIO PARA VOZ:
 - No Gemini Live ou na extensão, use o modo de conversa contínua sempre que possível para evitar cortes abruptos no áudio.
 
 DICAS INTERNAS PARA MELHOR CAPTAÇÃO E ELIMINAR BARULHO:
-- Mantenha o microfone em stream contínuo sem reconexões frequentes.
+- Mantenha o microfone em stream contínuo sem reconexões frequentes (isso reduz cliques e beeps no celular e no navegador).
 - Fale de forma clara, em ritmo normal.
 - Distância ideal: 15-30 cm da boca.
-- Se houver ruído de fundo, avise gentilmente: "Tem um pouco de ruído de fundo, pode falar um pouco mais alto ou em ambiente mais silencioso?"
+- No Gemini Live, site gemini.google.com ou extensão Orion, priorize o modo de conversa contínua para evitar cortes ou reconexões abruptas no áudio.
+- Se houver ruído de fundo ou fala rápida, avise gentilmente: "Tem um pouco de ruído, pode falar um pouco mais alto ou em ambiente mais silencioso?"
 
 ═══ VELOCIDADE DE RESPOSTA (PRIORIDADE ALTA) ═══
 
