@@ -1,161 +1,161 @@
-# Status: All Plan Steps Already Implemented
 
-The approved latency optimization plan has been **fully implemented** and deployed. Here is the confirmed status of each step:
 
-&nbsp;
+# Integração Orion Extension + Vertex AI ADK Multi-Agent
 
-Aqui está o **plano de ação claro e prático** para resolver o último ponto de latência que resta (o VM proxy timeout de 15s) e garantir que a Orion fique realmente rápida no **gemini-2.5-flash** no Vertex AI.
+## Análise do Sistema Atual
 
-&nbsp;
+### Funcionalidades Implementadas
+- **Widget flutuante** (content.js, 1003 linhas): orb draggable, painel com chat, quick actions, auto-minimize
+- **YouTube PiP**: detecção automática de vídeo, minimização, Picture-in-Picture nativo
+- **PDF/Image upload**: drag-and-drop, extração de texto (Tj/TJ parser), contexto mantido no chat
+- **Análise de página**: extração DOM (headings, links, images, text), summarize/translate/analyze
+- **Side Panel** (sidepanel.html/js): chat, ferramentas, notas, bookmarks, histórico, links
+- **Background service worker** (778 linhas): auth cache, AI queries via neural-ops, vision capture, web search (Firecrawl), scraping, clipboard, downloads, bookmarks, history, TTS, notes
+- **Popup** (popup.html/js): dashboard de 14 capacidades, quick links, atalhos
+- **Persistência**: chrome.storage.local para chat, notas, projeto, wake word
+- **Auth**: verificação via Supabase (token armazenado), owner bypass, premium check
+- **Wake word "Orion"**: SpeechRecognition contínuo com comandos de voz
 
-### Status atual (resumo)
+### Gargalos Identificados
+1. **Single-agent monolítico**: todas as queries vão para `neural-ops` edge function (2950 linhas) — sem routing inteligente
+2. **PDF parsing rudimentar**: extração via regex Tj/TJ, sem OCR real, sem tabelas estruturadas
+3. **Sem paralelismo**: cada ação é sequencial (aguarda resposta antes de permitir outra)
+4. **Contexto efêmero**: project context limitado a chrome.storage.local, sem persistência cross-session robusta
+5. **Sem tool calling**: queries enviadas como texto puro para o LLM, sem structured outputs
 
-- **Ótimo**: A maioria das otimizações já está implementada (prompts compactas separadas por tipo de query, thinkingBudget: 0, fast path para voz, cache de identidade, edge function deployada).
+## Arquitetura Proposta: Vertex AI ADK Multi-Agent
 
-- **Único gargalo restante**: O proxy da VM (`supabase/functions/orion-vm-proxy/index.ts`) ainda tem timeout de 15 segundos. Isso causa delay desnecessário quando o VM está offline ou lento — o sistema espera até 15s antes de fallback.
-
-&nbsp;
-
-### Ação recomendada imediata (o que você deve fazer agora)
-
-&nbsp;
-
-**1. Reduza o timeout do VM proxy (mudança simples e segura)**
-
-&nbsp;
-
-Abra o arquivo:  
-
-`supabase/functions/orion-vm-proxy/index.ts`
-
-&nbsp;
-
-Procure a linha com o timeout (provavelmente algo como):
-
-```ts
-
-setTimeout(() => controller.abort(), 15_000);
-
+```text
+┌─────────────────────────────────────────────────┐
+│           CHROME EXTENSION (Frontend)            │
+│  Widget Flutuante │ Side Panel │ Popup           │
+│       ↓ tasks via chrome.runtime.sendMessage     │
+└──────────────────┬──────────────────────────────┘
+                   │ HTTPS
+                   ▼
+┌──────────────────────────────────────────────────┐
+│     SUPABASE EDGE FUNCTION: orion-agent-hub      │
+│  (Router/Dispatcher — classifica tarefa e        │
+│   despacha para o agente certo no Vertex AI)     │
+│                                                   │
+│  task_type → agent_id mapping:                    │
+│    "pdf_analysis"   → Research Agent              │
+│    "page_summary"   → Content Agent               │
+│    "web_search"     → Search Agent                │
+│    "data_extract"   → Data Agent                  │
+│    "general_chat"   → Orchestrator Agent          │
+│    "academic"       → Academic Agent              │
+└──────────────────┬──────────────────────────────┘
+                   │ REST API
+                   ▼
+┌──────────────────────────────────────────────────┐
+│         VERTEX AI AGENT ENGINE (GCP)              │
+│                                                   │
+│  ┌─────────────────────────────────────────────┐ │
+│  │  Orchestrator Agent (gemini-2.5-flash)      │ │
+│  │  - Routes to sub-agents                     │ │
+│  │  - Maintains conversation context           │ │
+│  │  - AquaMonkey personality                   │ │
+│  └────┬──────┬──────┬──────┬──────┬───────────┘ │
+│       │      │      │      │      │              │
+│  ┌────┴─┐┌───┴──┐┌──┴───┐┌┴────┐┌┴──────┐      │
+│  │Resear││Conten││Search││ Data ││Academ.│      │
+│  │  ch  ││  t   ││Agent ││Agent ││Agent  │      │
+│  │Agent ││Agent ││      ││      ││       │      │
+│  └──────┘└──────┘└──────┘└──────┘└───────┘      │
+│                                                   │
+│  Tools: Google Search, Sheets API, Drive API,     │
+│         Code Execution, PDF parsing               │
+└──────────────────────────────────────────────────┘
 ```
 
-&nbsp;
+### Agentes Definidos
 
-**Altere para**:
+| Agent | Responsabilidade | Tools |
+|-------|-----------------|-------|
+| **Orchestrator** | Classifica intent, roteia, mantém contexto, personality | Todos via delegation |
+| **Research Agent** | Papers, PDFs, análise profunda de documentos | Google Scholar grounding, PDF tool |
+| **Content Agent** | Resumo/análise de páginas web, tradução | Google Search grounding |
+| **Search Agent** | Pesquisa web inteligente com grounding | Google Search, Firecrawl |
+| **Data Agent** | Extração estruturada, tabelas, Google Sheets | Sheets API, Code Execution |
+| **Academic Agent** | Outlines, revisão literária, metodologia | Scholar grounding, Code Execution |
 
-```ts
+## Implementação Prática
 
-// Timeout reduzido para voz e queries rápidas (equilíbrio entre dar chance ao VM e não bloquear)
+### Novos Arquivos
 
-setTimeout(() => controller.abort(), 3_000);  // 3 segundos
+1. **`supabase/functions/orion-agent-hub/index.ts`** — Edge function dispatcher
+   - Recebe tarefas da extensão com `task_type` + `payload`
+   - Classifica automaticamente se task_type não enviado (via Gemini Flash Lite rápido)
+   - Chama Vertex AI Agent Engine REST API com a sessão do agente correto
+   - Retorna resultado para a extensão
+   - Mantém session_id para contexto persistente por usuário
 
-```
+2. **`extension/agents.js`** — Client-side agent dispatcher (novo módulo)
+   - Mapeia ações do widget para task_types
+   - Envia para `orion-agent-hub` em vez de `neural-ops` direto
+   - Suporta respostas assíncronas (mostra "Agente Research analisando..." enquanto espera)
 
-&nbsp;
+3. **Alterações em `extension/background.js`**
+   - `handleAIQuery()` agora roteia via `orion-agent-hub` com task classification
+   - PDF queries → `task_type: "pdf_analysis"`
+   - Page analysis → `task_type: "page_summary"`
+   - Web search → `task_type: "web_search"` (ainda via Firecrawl como fallback)
+   - Adiciona `session_id` persistente por usuário (chrome.storage)
 
-- **Por quê 3 segundos?**  
+4. **Alterações em `extension/content.js`**
+   - Quick actions enviam `task_type` explícito
+   - Novo badge mostrando qual agente está processando
+   - Respostas mostram `[Research Agent]` ou `[Content Agent]` como prefixo
 
-  Dá tempo suficiente para o VM responder em casos normais, mas evita esperar 15s quando ele está offline. Para voz pura (direct voice mode) você pode até testar com 800ms–1.5s depois.
+5. **GCP Setup (manual pelo usuário)**
+   - Criar agents via Vertex AI Agent Builder ou ADK CLI
+   - Deploy no Agent Engine
+   - Configurar OAuth service account
+   - Armazenar credenciais como secrets no Supabase
 
-&nbsp;
+### Edge Function: orion-agent-hub
 
-- Depois da mudança:  
-
-  **Redeploy** a edge function:
-
-  ```bash
-
-  supabase functions deploy orion-vm-proxy
-
+Lógica principal:
+- Autentica via Supabase JWT
+- Classifica task_type se não enviado (Gemini Flash Lite, ~200ms)
+- Monta request para Vertex AI Agent Engine REST API:
   ```
+  POST https://{REGION}-aiplatform.googleapis.com/v1/projects/{PROJECT}/locations/{REGION}/agents/{AGENT_ID}/sessions/{SESSION_ID}:chat
+  ```
+- Usa GCP service account key (stored as Supabase secret) para auth
+- Retorna resposta formatada
+- Fallback para neural-ops se Agent Engine falhar
 
-&nbsp;
+### Secrets Necessários (Supabase)
+- `GCP_SERVICE_ACCOUNT_KEY` — JSON da service account com permissão Vertex AI
+- `GCP_PROJECT_ID` — ID do projeto (orion-d3734)
+- `GCP_REGION` — us-central1 ou europe-west4
 
-**2. Melhoria extra recomendada (para latência ainda menor no gemini-2.5-flash)**
+### Mudanças na Extensão
 
-&nbsp;
+**background.js** — Novo routing:
+- Detecta task type baseado em keywords/context
+- Envia para `orion-agent-hub` com session_id
+- Mantém fallback para `neural-ops`
 
-Como você está usando **gemini-2.5-flash**, confirme/adicione estas configurações nas chamadas Vertex AI (já que thinkingBudget: 0 está feito):
+**content.js** — UI improvements:
+- Badge do agente ativo no painel ("🔬 Research" / "📝 Content")
+- Loading state por agente
+- Respostas prefixadas com nome do agente
 
-&nbsp;
+## Restrições Respeitadas
+- ZERO mudanças em STT/TTS/microfone/wake word
+- Mantém toda a lógica de voz exatamente como está
+- neural-ops continua funcionando como fallback
 
-- Ative **streaming** (`generateContentStream`) em todas as chamadas de voz e queries simples → isso reduz bastante a percepção de latência (usuário começa a ver/responder antes da resposta completa).
+## Deploy Steps
+1. Criar service account no GCP com papel `Vertex AI User`
+2. Gerar JSON key, adicionar como secret `GCP_SERVICE_ACCOUNT_KEY` no Supabase
+3. Criar agents no Vertex AI Agent Builder (ou via ADK Python SDK localmente)
+4. Deploy agents no Agent Engine
+5. Deploy edge function `orion-agent-hub`
+6. Atualizar extensão (background.js routing + content.js badges)
+7. Rebuild e empacotar extensão ZIP
+8. Testar cada task_type individualmente
 
-- Use **context caching** para a parte estática do prompt (se ainda não estiver ativo) — economiza tokens e latência em chamadas repetidas.
-
-- Para voz: prefira o caminho **Gemini Live API / Native Audio** se disponível no Vertex (é o mais otimizado para STT + resposta rápida em 2026).
-
-- Mantenha o prompt ultra-compacto para voz (< 200 tokens) — você já tem isso.
-
-&nbsp;
-
-### Prompt ultra-compacta atualizada para voz (caso queira colar novamente no fast path)
-
-&nbsp;
-
-Se quiser reforçar o fast path, use esta versão mínima para queries de voz (< 15 palavras ou direct voice mode):
-
-&nbsp;
-
-```
-
-Você é Orion (AquaMonkey: descontraído, humor leve). Responda em primeira pessoa, rápido e direto.
-
-&nbsp;
-
-Anti-alucinação: Use só o que o usuário disse/agora. Se não souber: "Não tenho info suficiente."
-
-Voz: Transcreva literalmente primeiro. Tolere pausas curtas.
-
-Visão: Descreva o que vê em bullets curtos se tiver imagem.
-
-Responda conciso, sem enrolação. Velocidade primeiro.
-
-```
-
-&nbsp;
-
-### Próximos passos sugeridos
-
-1. Faça a mudança do timeout para 3s + redeploy agora.
-
-2. Teste com voz simples (ex: comandos curtos) e com imagem (visão computacional).
-
-3. Meça o tempo real de resposta antes/depois (do momento que fala até Orion responder).
-
-4. Se ainda sentir delay > 4-5s em voz simples, verifique:
-
-   - Se o fast path (`isDirectVoiceMode`) está realmente pulando RAG/contexto pesado.
-
-   - Região do Vertex AI (use us-central1 ou europe-west4 para menor latência).
-
-   - Ativação de streaming.
-
-&nbsp;
-
-Depois de fazer a mudança e testar, me conte:
-
-- Qual foi o novo tempo médio de resposta em voz?
-
-- Ainda sente o delay do proxy ou melhorou bastante?
-
-- Algum erro novo apareceu nos logs?
-
-&nbsp;
-
-Se quiser, posso te dar o código exato da função proxy atualizada ou uma versão ainda mais agressiva do prompt para voice-only.  
-
-&nbsp;
-
-Vamos finalizar essa latência de vez! 🚀
-
-## Completed Steps
-
-### Step 1: Ultra-compact voice prompt — DONE
-
-- `ORION_VOICE_FAST_PROMPT` (~150 tokens) created and active for voice queries with < 15 words
-- `ORION_SYSTEM_PROMPT_CONVERSATIONAL` (~250 tokens) for medium voice queries
-- Full prompt only used for vision/complex queries
-
-### Step 2: Provider cascade optimized — DONE
-
-- `thinkingConfig: { thinkingBudget: 0 }` applied to `callVertexAI` (line 160), `callGeminiAPI` (line 1722), and generic
