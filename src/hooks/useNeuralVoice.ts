@@ -513,7 +513,10 @@ export function useNeuralVoice(
     if (sentenceTimerRef.current) { clearTimeout(sentenceTimerRef.current); sentenceTimerRef.current = null; }
     clearRestartTimer();
 
-    // ALWAYS stop mic during TTS
+    // Pause mic during TTS — GCP STT stays connected (no teardown/click sounds)
+    if (gcpSessionRef.current?.isActive()) {
+      gcpSessionRef.current.pause();
+    }
     try { recRef.current?.stop(); } catch {}
 
     const cascadeAbort = new AbortController();
