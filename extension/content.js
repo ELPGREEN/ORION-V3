@@ -1157,6 +1157,18 @@
             const pageData = extractPageContent();
             addChatMessage("assistant", `📊 Dados Extraídos\n\nTítulo: ${pageData.title}\nURL: ${pageData.url}\nPalavras: ${pageData.wordCount}\nTítulos: ${pageData.headings.length}\nLinks: ${pageData.links.length}\nImagens: ${pageData.images.length}\n\nTítulos:\n${pageData.headings.map(h => "  ".repeat(h.level - 1) + h.text).join("\n")}`);
           });
+        } else if (action === "compare-sources") {
+          requireAuth(() => {
+            const data = extractPageContent();
+            addChatMessage("user", "🔬 Comparar fontes desta página");
+            sendAIQuery(`Analise as fontes e referências desta página "${data.title}" (${data.url}). Compare credibilidade, identifique vieses, e sugira fontes complementares. Conteúdo: ${data.content.substring(0, 4000)}`, "academic");
+          });
+        } else if (action === "search-suggestions") {
+          requireAuth(() => {
+            const data = extractPageContent();
+            addChatMessage("user", "💡 Sugestões de busca");
+            sendAIQuery(`Com base no conteúdo desta página "${data.title}", sugira 5-8 termos de busca avançados e queries acadêmicas para aprofundar a pesquisa. Inclua operadores booleanos quando útil. Contexto: ${data.content.substring(0, 2000)}`, "academic");
+          });
         } else if (action === "summarize") {
           requireAuth(() => extractAndAnalyze("summarize"));
         } else if (action === "read") {
