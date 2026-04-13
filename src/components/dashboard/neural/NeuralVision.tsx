@@ -1090,13 +1090,25 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
               <div className="px-3 py-2 space-y-1.5">
                 <div className="space-y-1 max-h-[120px] overflow-y-auto">
                   {chatHistory.length === 0 && (
-                    <div className="text-center py-2 space-y-1">
+                    <div className="text-center py-2 space-y-1.5">
                       <p className="text-[8px] font-mono text-white/15">Pergunte algo</p>
                       <div className="flex flex-wrap gap-1 justify-center">
                         {["O que vê?", "Como estou?", "Agenda"].map(q => (
                           <button key={q} onClick={() => askAI(q)}
                             className="text-[7px] font-mono text-cyan-400/30 border border-cyan-500/10 rounded px-1 py-0.5 hover:bg-cyan-400/5 hover:text-cyan-400/60 transition-colors">
                             {q}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {[
+                          { label: "🔍 Pesquisar", cmd: "pesquisar na web " },
+                          { label: "🔬 Fontes", cmd: "comparar fontes sobre " },
+                          { label: "💡 Sugestões", cmd: "sugestões de busca para " },
+                        ].map(a => (
+                          <button key={a.label} onClick={() => setAskInput(a.cmd)}
+                            className="text-[6px] font-mono text-amber-400/25 border border-amber-500/10 rounded px-1 py-0.5 hover:bg-amber-400/5 hover:text-amber-400/50 transition-colors">
+                            {a.label}
                           </button>
                         ))}
                       </div>
