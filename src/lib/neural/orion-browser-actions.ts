@@ -95,11 +95,12 @@ const ACTION_PATTERNS: ActionPattern[] = [
     regex: /\b(?:(?:abre?|abrir?|open)\s+(?:o\s+)?youtube|(?:tocar?|play|reproduz(?:ir)?|assistir?|ver?)\s+(?:um?\s+)?(?:v[ií]deo|video)|(?:buscar?|pesquisar?|procurar?)\s+(?:no\s+)?youtube|(?:v[ií]deo|video)\s+(?:de|do|da|sobre))\b/i,
     builder: (_m, q) => {
       const clean = extractCleanQuery(q, /\b(?:abre?|abrir?|open|tocar?|play|reproduz(?:ir)?|assistir?|ver?|buscar?|pesquisar?|procurar?)\s+(?:o\s+)?(?:um?\s+)?(?:no\s+)?(?:youtube|v[ií]deo|video)\b/gi);
+      const searchQuery = clean || q;
       return {
         type: "youtube",
-        url: youtubeSearchUrl(clean || q),
-        description: `🎬 Abrindo YouTube: "${clean || q}"`,
-        query: clean || q,
+        url: youtubeEmbedSearchUrl(searchQuery),
+        description: `🎬 Reproduzindo: "${searchQuery}"`,
+        query: searchQuery,
       };
     },
   },
