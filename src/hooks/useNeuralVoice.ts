@@ -331,8 +331,11 @@ export function useNeuralVoice(
       onCmdRef.current(pending);
     }
 
-    // If GCP STT is active, it's already listening (persistent stream)
+    // If GCP STT is active (paused or running), just resume — no teardown
     if (gcpSessionRef.current?.isActive()) {
+      if (gcpSessionRef.current.isPaused()) {
+        gcpSessionRef.current.resume();
+      }
       setListening(true);
       return;
     }
