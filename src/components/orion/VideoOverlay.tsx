@@ -1,9 +1,10 @@
 /**
- * Orion Video Overlay — Holographic 3D Projector
- * Opens YouTube/videos as if Orion is projecting with a futuristic projector
+ * Orion Video Overlay — Holographic 3D Projector + Auto-minimize
+ * Opens YouTube/videos as if Orion is projecting with a futuristic projector.
+ * Auto-minimizes when video starts playing. Supports PiP via browser API.
  */
-import { useState, useEffect, useCallback } from "react";
-import { X, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { X, Maximize2, Minimize2, Volume2, VolumeX, PictureInPicture2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -20,6 +21,7 @@ export function VideoOverlay() {
   const [title, setTitle] = useState("");
   const [minimized, setMinimized] = useState(false);
   const [muted, setMuted] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     const handler = (e: CustomEvent<VideoCommand>) => {
@@ -28,21 +30,62 @@ export function VideoOverlay() {
         setVideoUrl(convertToEmbed(url));
         setTitle(t || query || "Orion Video");
         setVisible(true);
-        setMinimized(false);
+        // Auto-minimize after 1.5s to not obstruct
+        setTimeout(() => setMinimized(true), 1500);
       } else if (action === "search_video" && query) {
         setVideoUrl(`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1`);
         setTitle(t || query);
         setVisible(true);
-        setMinimized(false);
+        setTimeout(() => setMinimized(true), 1500);
       } else if (action === "close") {
         setVisible(false);
+      } else if (action === "maximize") {
+        setMinimized(false);
+      } else if (action === "minimize") {
+        setMinimized(true);
       }
     };
     window.addEventListener("orion-video-command", handler as EventListener);
     return () => window.removeEventListener("orion-video-command", handler as EventListener);
   }, []);
 
-  const close = useCallback(() => { setVisible(false); setVideoUrl(""); setTitle(""); }, []);
+  // Auto-minimize on route change
+  useEffect(() => {
+    if (!visible) return;
+    const handleRouteChange = () => {
+      if (visible && !minimized) {
+        setMinimized(true);
+      }
+    };
+    window.addEventListener("popstate", handleRouteChange);
+    return () => window.removeEventListener("popstate", handleRouteChange);
+  }, [visible, minimized]);
+
+  const close = useCallback(() => { setVisible(false); setVideoUrl(""); setTitle(""); setMinimized(false); }, []);
+
+  const tryPiP = useCallback(async () => {
+    // Try Document Picture-in-Picture API (Chrome 116+)
+    if ("documentPictureInPicture" in window) {
+      try {
+        const pipWin = await (window as any).documentPictureInPicture.requestWindow({
+          width: 480,
+          height: 320,
+        });
+        const iframe = document.createElement("iframe");
+        iframe.src = `${videoUrl}${videoUrl.includes("?") ? "&" : "?"}autoplay=1`;
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.style.border = "none";
+        iframe.allow = "autoplay; encrypted-media; picture-in-picture";
+        pipWin.document.body.style.margin = "0";
+        pipWin.document.body.style.background = "#000";
+        pipWin.document.body.appendChild(iframe);
+        setMinimized(true);
+      } catch (err) {
+        console.log("[Orion] PiP fallback — Document PiP not available:", err);
+      }
+    }
+  }, [videoUrl]);
 
   if (!visible || !videoUrl) return null;
 
@@ -54,18 +97,15 @@ export function VideoOverlay() {
         exit={{ opacity: 0, scale: 0.7, y: 80, rotateX: 15 }}
         transition={{ type: "spring", damping: 20, stiffness: 250 }}
         className={`fixed z-[9999] overflow-hidden ${
-          minimized ? "bottom-4 right-4 w-80 h-16" : "bottom-6 right-6 w-[480px] h-[320px] md:w-[560px] md:h-[360px]"
+          minimized ? "bottom-4 right-4 w-72 h-14" : "bottom-6 right-6 w-[480px] h-[320px] md:w-[560px] md:h-[360px]"
         }`}
         style={{
-          borderRadius: "16px",
+          borderRadius: minimized ? "12px" : "16px",
           border: "1px solid rgba(212,175,55,0.3)",
           background: "linear-gradient(145deg, rgba(8,8,20,0.98), rgba(12,8,25,0.98))",
-          boxShadow: `
-            0 0 60px rgba(212,175,55,0.15),
-            0 0 120px rgba(59,130,246,0.08),
-            0 25px 80px rgba(0,0,0,0.7),
-            inset 0 1px 0 rgba(212,175,55,0.25)
-          `,
+          boxShadow: minimized
+            ? "0 4px 20px rgba(0,0,0,0.5), 0 0 15px rgba(212,175,55,0.1)"
+            : `0 0 60px rgba(212,175,55,0.15), 0 0 120px rgba(59,130,246,0.08), 0 25px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(212,175,55,0.25)`,
           perspective: "1200px",
           transition: "width 0.3s, height 0.3s",
         }}
@@ -77,12 +117,14 @@ export function VideoOverlay() {
             animation: "shimmer 3s ease-in-out infinite",
           }} />
 
-        {/* ═══ Light cone effect ═══ */}
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[200%] h-20 pointer-events-none opacity-20"
-          style={{
-            background: "conic-gradient(from 180deg at 50% 100%, transparent 40%, rgba(212,175,55,0.3) 48%, rgba(59,130,246,0.2) 50%, rgba(212,175,55,0.3) 52%, transparent 60%)",
-            filter: "blur(8px)",
-          }} />
+        {/* ═══ Light cone effect (only when expanded) ═══ */}
+        {!minimized && (
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[200%] h-20 pointer-events-none opacity-20"
+            style={{
+              background: "conic-gradient(from 180deg at 50% 100%, transparent 40%, rgba(212,175,55,0.3) 48%, rgba(59,130,246,0.2) 50%, rgba(212,175,55,0.3) 52%, transparent 60%)",
+              filter: "blur(8px)",
+            }} />
+        )}
 
         {/* ═══ Header ═══ */}
         <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#D4AF37]/5 to-[#3B82F6]/5 border-b border-white/[0.06]">
@@ -93,11 +135,16 @@ export function VideoOverlay() {
             </div>
             <span className="text-[10px] font-mono font-bold truncate"
               style={{ color: "#D4AF37", textShadow: "0 0 12px rgba(212,175,55,0.5)" }}>
-              ORION PROJECTOR
+              {minimized ? "ORION" : "ORION PROJECTOR"}
             </span>
-            <span className="text-[9px] text-muted-foreground truncate">{title}</span>
+            <span className="text-[9px] text-muted-foreground truncate max-w-[120px]">{title}</span>
           </div>
           <div className="flex items-center gap-0.5">
+            {!minimized && (
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={tryPiP} title="Picture-in-Picture">
+                <PictureInPicture2 className="h-3 w-3" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMuted(!muted)}>
               {muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
             </Button>
@@ -136,6 +183,7 @@ export function VideoOverlay() {
               }} />
 
             <iframe
+              ref={iframeRef}
               src={`${videoUrl}${videoUrl.includes("?") ? "&" : "?"}${muted ? "mute=1&" : ""}autoplay=1`}
               className="absolute inset-0 w-full h-full"
               allow="autoplay; encrypted-media; picture-in-picture"
@@ -146,7 +194,8 @@ export function VideoOverlay() {
         )}
 
         {minimized && (
-          <div className="flex items-center gap-2 px-3 py-2">
+          <div className="flex items-center gap-2 px-3 py-1 cursor-pointer" onClick={() => setMinimized(false)}>
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-[10px] truncate text-muted-foreground">{title}</span>
           </div>
         )}
