@@ -23,7 +23,7 @@ import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural/pipeline-latency-tracker";
 import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
 import { ensurePersistentMic, isMobile as isMobilePersistent } from "@/lib/voice/persistentMic";
-import { createGCPSTTSession } from "@/lib/voice/gcpSTT";
+import { createGCPSTTSession, type GCPSTTSession } from "@/lib/voice/gcpSTT";
 
 // ═══ Constants ═══
 const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
@@ -212,7 +212,7 @@ export function useNeuralVoice(
   const singletonIdRef = useRef(0);
   const audioChunksRef = useRef<Float32Array[]>([]);
   const audioWorkletActiveRef = useRef(false);
-  const gcpSessionRef = useRef<ReturnType<typeof createGCPSTTSession> | null>(null);
+  const gcpSessionRef = useRef<GCPSTTSession | null>(null);
   const useGCPSTTRef = useRef(true); // GCP STT as primary
   const sentenceAccumulatorRef = useRef(""); // Accumulate partial sentences
   const sentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -331,8 +331,11 @@ export function useNeuralVoice(
       onCmdRef.current(pending);
     }
 
-    // If GCP STT is active, it's already listening (persistent stream)
+    // If GCP STT is active (paused or running), just resume — no teardown
     if (gcpSessionRef.current?.isActive()) {
+      if (gcpSessionRef.current.isPaused()) {
+        gcpSessionRef.current.resume();
+      }
       setListening(true);
       return;
     }
@@ -381,7 +384,7 @@ export function useNeuralVoice(
       if (!onCmdRef.current || !useGCPSTTRef.current) return;
 
       if (gcpSessionRef.current && !gcpSessionRef.current.isActive()) {
-        console.warn("[Voice] Watchdog: GCP STT died — restarting");
+        console.warn("[Voice] Watchdog: GCP STT died — restarting (full session)");
         gcpSessionRef.current = null;
         const session = createGCPSTTSession({
           languageCode: "pt-BR",
@@ -513,7 +516,10 @@ export function useNeuralVoice(
     if (sentenceTimerRef.current) { clearTimeout(sentenceTimerRef.current); sentenceTimerRef.current = null; }
     clearRestartTimer();
 
-    // ALWAYS stop mic during TTS
+    // Pause mic during TTS — GCP STT stays connected (no teardown/click sounds)
+    if (gcpSessionRef.current?.isActive()) {
+      gcpSessionRef.current.pause();
+    }
     try { recRef.current?.stop(); } catch {}
 
     const cascadeAbort = new AbortController();
@@ -813,9 +819,15 @@ export function useNeuralVoice(
         try {
           const gcpChunkIntervalMs = 1400;
 
-          // Stop any existing GCP session
+          // Reuse existing GCP session if active (just resume if paused)
           if (gcpSessionRef.current?.isActive()) {
-            gcpSessionRef.current.stop();
+            if (gcpSessionRef.current.isPaused()) {
+              gcpSessionRef.current.resume();
+            }
+            setListening(true);
+            markSTTStart();
+            console.log("[Voice] ✅ GCP STT reused — no mic teardown");
+            return;
           }
 
           const session = createGCPSTTSession({
