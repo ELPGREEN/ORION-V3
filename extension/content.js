@@ -407,17 +407,48 @@
     sendAIQuery(prompts[mode] || prompts.analyze);
   }
 
-  // ═══ AI Query ═══
-  function sendAIQuery(query) {
+  // ═══ Agent Labels ═══
+  const AGENT_BADGES = {
+    pdf_analysis: "🔬 Research",
+    page_summary: "📝 Content",
+    web_search: "🔍 Search",
+    data_extract: "📊 Data",
+    academic: "📚 Academic",
+    general_chat: "🤖 Orion",
+  };
+
+  function updateAgentBadge(taskType) {
+    const badge = document.getElementById("orion-agent-badge");
+    if (badge) {
+      badge.textContent = AGENT_BADGES[taskType] || AGENT_BADGES.general_chat;
+      badge.style.display = "inline-block";
+    }
+  }
+
+  // ═══ AI Query (via Agent Hub) ═══
+  function sendAIQuery(query, taskTypeOverride) {
     showThinkingInChat();
+    const ctx = {
+      url: location.href,
+      title: document.title,
+      projectContext,
+      task_type: taskTypeOverride || undefined,
+      pdfContext: pdfContext ? { filename: pdfContext.filename, textPreview: pdfContext.text.substring(0, 200) } : undefined,
+      pageContent: undefined,
+    };
+
     chrome.runtime.sendMessage(
-      { type: "ORION_AI_QUERY", query, context: { url: location.href, title: document.title, projectContext } },
+      { type: "ORION_AI_QUERY", query, context: ctx },
       (response) => {
         removeThinkingFromChat();
         if (response?.result?.fallback) {
           chrome.runtime.sendMessage({ type: "OPEN_ORION_WITH_CONTEXT", context: { query, url: location.href, title: document.title } });
         } else if (response?.result?.response) {
-          addChatMessage("assistant", response.result.response);
+          const agent = response.result.agent || "Orion";
+          const taskType = response.result.task_type || "general_chat";
+          const prefix = agent !== "Orion" ? `[${agent}] ` : "";
+          addChatMessage("assistant", prefix + response.result.response);
+          updateAgentBadge(taskType);
         } else if (response?.error) {
           addChatMessage("system", "Erro: " + response.error);
         }

@@ -444,8 +444,79 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
-// ═══ AI Query via neural-ops Edge Function ═══
+// ═══ AI Query via Agent Hub (with neural-ops fallback) ═══
+
+// Agent session state
+let agentSessionId = null;
+let agentSessionHistory = [];
+
+// Initialize session from storage
+chrome.storage.local.get(["orionAgentSessionId", "orionAgentSessionHistory"], (result) => {
+  agentSessionId = result.orionAgentSessionId || null;
+  agentSessionHistory = result.orionAgentSessionHistory || [];
+});
+
+function detectTaskType(query, context) {
+  const q = (query || "").toLowerCase();
+  if (context?.pdfContext) return "pdf_analysis";
+  if (context?.task_type) return context.task_type;
+  if (q.includes("outline") || q.includes("acadêmic") || q.includes("tcc") || q.includes("metodologia")) return "academic";
+  if (q.includes("extrair dados") || q.includes("tabela") || q.includes("planilha")) return "data_extract";
+  if (q.includes("pesquis") || q.includes("busca") || q.includes("search")) return "web_search";
+  if (context?.pageContent || q.includes("resum") || q.includes("traduz") || (q.includes("analis") && q.includes("página"))) return "page_summary";
+  return "general_chat";
+}
+
 async function handleAIQuery(query, context) {
+  const taskType = detectTaskType(query, context);
+
+  // Try agent-hub first
+  try {
+    const token = await getStoredAccessToken();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/orion-agent-hub`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        query,
+        task_type: taskType,
+        context: context || orionState.pageContext,
+        session_id: agentSessionId,
+        session_history: agentSessionHistory.slice(-10),
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const responseText = data.response || "";
+      const agent = data.agent || "Orion";
+
+      // Update session
+      agentSessionId = data.session_id || agentSessionId;
+      agentSessionHistory = data.session_history || agentSessionHistory;
+      chrome.storage.local.set({
+        orionAgentSessionId: agentSessionId,
+        orionAgentSessionHistory: agentSessionHistory.slice(-20),
+      });
+
+      orionState.conversationHistory.push(
+        { role: "user", content: query },
+        { role: "assistant", content: responseText }
+      );
+
+      return { response: responseText, success: true, agent, task_type: data.task_type };
+    }
+
+    // Agent hub failed, fall through to neural-ops
+    console.warn("[Orion] Agent hub returned", res.status, "— falling back to neural-ops");
+  } catch (err) {
+    console.warn("[Orion] Agent hub error:", err.message, "— falling back to neural-ops");
+  }
+
+  // Fallback: neural-ops
   try {
     const token = await getStoredAccessToken();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/neural-ops`, {
@@ -466,7 +537,7 @@ async function handleAIQuery(query, context) {
       { role: "user", content: query },
       { role: "assistant", content: responseText }
     );
-    return { response: responseText, success: true };
+    return { response: responseText, success: true, agent: "Orion", task_type: "general_chat" };
   } catch (err) {
     return { fallback: true, message: "Conexão indisponível. Abrindo app..." };
   }
