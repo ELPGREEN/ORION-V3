@@ -1429,9 +1429,13 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const isDirectVoicePath = isVoiceInput && !hasImage;
   const isConversationalQuery = !hasImage && !isComplexQuery && wordCount < 20 && isVoiceInput;
   
-  // Use conversational prompt for short voice queries, compact for simple text, full for vision/complex
+  // Use ultra-fast voice prompt for short voice queries (minimum tokens)
+  // Conversational for medium voice, compact for text, full for vision/complex
   let basePrompt: string;
-  if (isDirectVoicePath || isConversationalQuery) {
+  if (isDirectVoicePath && wordCount < 15) {
+    // ULTRA-FAST: ~150 tokens, no self-knowledge, no anti-hallucination block
+    basePrompt = ORION_VOICE_FAST_PROMPT;
+  } else if (isDirectVoicePath || isConversationalQuery) {
     basePrompt = ORION_SYSTEM_PROMPT_CONVERSATIONAL;
   } else if (hasImage || isComplexQuery) {
     basePrompt = ORION_SYSTEM_PROMPT_FULL;
