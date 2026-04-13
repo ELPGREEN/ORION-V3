@@ -212,7 +212,7 @@ export function useNeuralVoice(
   const singletonIdRef = useRef(0);
   const audioChunksRef = useRef<Float32Array[]>([]);
   const audioWorkletActiveRef = useRef(false);
-  const gcpSessionRef = useRef<ReturnType<typeof createGCPSTTSession> | null>(null);
+  const gcpSessionRef = useRef<GCPSTTSession | null>(null);
   const useGCPSTTRef = useRef(true); // GCP STT as primary
   const sentenceAccumulatorRef = useRef(""); // Accumulate partial sentences
   const sentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
