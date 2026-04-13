@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase';
 
+const BASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -9,7 +11,67 @@ export default function AuthCallback() {
   useEffect(() => {
     const handle = async () => {
       try {
-        // Supabase may put tokens in hash OR query params depending on flow
+        const provider = searchParams.get('provider');
+
+        // ─── Amazon OAuth Callback ───
+        if (provider === 'amazon') {
+          const code = searchParams.get('code');
+          const errorParam = searchParams.get('error');
+
+          if (errorParam) {
+            navigate('/auth', {
+              replace: true,
+              state: { error: 'Login com Amazon cancelado ou falhou.' },
+            });
+            return;
+          }
+
+          if (!code) {
+            navigate('/auth', { replace: true, state: { error: 'Código Amazon não recebido.' } });
+            return;
+          }
+
+          const redirectUri = `${window.location.origin}/auth/callback?provider=amazon`;
+
+          const res = await fetch(`${BASE_URL}/functions/v1/amazon-auth?action=login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, redirect_uri: redirectUri }),
+          });
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            navigate('/auth', {
+              replace: true,
+              state: { error: err.error || 'Falha no login com Amazon.' },
+            });
+            return;
+          }
+
+          const data = await res.json();
+
+          if (data.token_hash) {
+            // Verify OTP to establish Supabase session
+            const { error: otpError } = await supabase.auth.verifyOtp({
+              type: 'magiclink',
+              token_hash: data.token_hash,
+            });
+
+            if (otpError) {
+              console.error('Amazon OTP verification error:', otpError);
+              navigate('/auth', {
+                replace: true,
+                state: { error: 'Falha ao estabelecer sessão. Tente novamente.' },
+              });
+              return;
+            }
+          }
+
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+
+        // ─── Standard Supabase OAuth Callback ───
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         
         const type = hashParams.get('type') || searchParams.get('type');
@@ -66,7 +128,6 @@ export default function AuthCallback() {
         }
 
         // Signup confirmation — Supabase may auto-set session via PKCE
-        // Wait briefly for onAuthStateChange to fire
         const { data, error } = await supabase.auth.getSession();
         if (error || !data.session) {
           // Try exchanging code if present (PKCE flow)
