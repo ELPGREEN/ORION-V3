@@ -5,24 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const GEMINI_KEYS = [
-  "GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3",
-  "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7",
-].map(k => Deno.env.get(k)).filter(Boolean) as string[];
-
-let keyIndex = 0;
-function getNextKey(): string {
-  const key = GEMINI_KEYS[keyIndex % GEMINI_KEYS.length];
-  keyIndex++;
-  return key;
-}
-
 const SYSTEM_PROMPT = `Você é um classificador de intenções ultra-rápido do assistente Orion.
 Classifique a frase do usuário em UMA categoria e extraia parâmetros relevantes.
 Responda APENAS chamando a tool classify.`;
 
 const TOOL_DEF = {
-  type: "function",
+  type: "function" as const,
   function: {
     name: "classify",
     description: "Classifica a intenção do usuário",
@@ -75,56 +63,70 @@ serve(async (req) => {
       });
     }
 
-    if (GEMINI_KEYS.length === 0) {
-      return new Response(JSON.stringify({ error: "No Gemini keys configured" }), {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY not configured");
+      return new Response(JSON.stringify({ intent: "general", confidence: 0.3, params: {}, error: "no_key" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const key = getNextKey();
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-
-    const body = {
-      contents: [
-        { role: "user", parts: [{ text: `${SYSTEM_PROMPT}\n\nFrase do usuário: "${text}"` }] }
-      ],
-      tools: [{ functionDeclarations: [TOOL_DEF.function] }],
-      toolConfig: { functionCallingConfig: { mode: "ANY", allowedFunctionNames: ["classify"] } },
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 150,
-      }
-    };
-
-    const resp = await fetch(url, {
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: text },
+        ],
+        tools: [TOOL_DEF],
+        tool_choice: { type: "function", function: { name: "classify" } },
+        temperature: 0.1,
+        max_tokens: 150,
+      }),
     });
 
     if (!resp.ok) {
       const errText = await resp.text();
-      console.error("Gemini error:", resp.status, errText);
-      return new Response(JSON.stringify({ intent: "general", confidence: 0.3, params: {}, error: "gemini_error" }), {
+      console.error("AI Gateway error:", resp.status, errText);
+      if (resp.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limited, try again later" }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (resp.status === 402) {
+        return new Response(JSON.stringify({ error: "Credits exhausted" }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ intent: "general", confidence: 0.3, params: {} }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await resp.json();
-    const candidate = data.candidates?.[0];
-    const fnCall = candidate?.content?.parts?.find((p: any) => p.functionCall)?.functionCall;
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
 
-    if (fnCall?.name === "classify" && fnCall.args) {
-      return new Response(JSON.stringify({
-        intent: fnCall.args.intent || "general",
-        confidence: fnCall.args.confidence ?? 0.8,
-        params: fnCall.args.params || {},
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (toolCall?.function?.name === "classify") {
+      try {
+        const args = JSON.parse(toolCall.function.arguments);
+        return new Response(JSON.stringify({
+          intent: args.intent || "general",
+          confidence: args.confidence ?? 0.8,
+          params: args.params || {},
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (parseErr) {
+        console.error("Failed to parse tool args:", parseErr);
+      }
     }
 
-    // Fallback if no tool call
+    // Fallback
     return new Response(JSON.stringify({ intent: "general", confidence: 0.3, params: {} }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
