@@ -20,6 +20,10 @@ function youtubeSearchUrl(query: string): string {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
 }
 
+function youtubeEmbedSearchUrl(query: string): string {
+  return `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1`;
+}
+
 function googleSearchUrl(query: string): string {
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 }
@@ -91,11 +95,12 @@ const ACTION_PATTERNS: ActionPattern[] = [
     regex: /\b(?:(?:abre?|abrir?|open)\s+(?:o\s+)?youtube|(?:tocar?|play|reproduz(?:ir)?|assistir?|ver?)\s+(?:um?\s+)?(?:v[ií]deo|video)|(?:buscar?|pesquisar?|procurar?)\s+(?:no\s+)?youtube|(?:v[ií]deo|video)\s+(?:de|do|da|sobre))\b/i,
     builder: (_m, q) => {
       const clean = extractCleanQuery(q, /\b(?:abre?|abrir?|open|tocar?|play|reproduz(?:ir)?|assistir?|ver?|buscar?|pesquisar?|procurar?)\s+(?:o\s+)?(?:um?\s+)?(?:no\s+)?(?:youtube|v[ií]deo|video)\b/gi);
+      const searchQuery = clean || q;
       return {
         type: "youtube",
-        url: youtubeSearchUrl(clean || q),
-        description: `🎬 Abrindo YouTube: "${clean || q}"`,
-        query: clean || q,
+        url: youtubeEmbedSearchUrl(searchQuery),
+        description: `🎬 Reproduzindo: "${searchQuery}"`,
+        query: searchQuery,
       };
     },
   },
@@ -234,9 +239,10 @@ export function executeBrowserAction(action: BrowserAction): string {
       openYouTube(action.query);
       return action.description;
     }
+    // Always dispatch as play_video — VideoOverlay handles embed URLs
     window.dispatchEvent(new CustomEvent("orion-video-command", {
       detail: {
-        action: action.url.includes("youtube.com/watch") ? "play_video" : "search_video",
+        action: "play_video",
         url: action.url,
         query: action.query,
         title: action.query,
