@@ -819,9 +819,15 @@ export function useNeuralVoice(
         try {
           const gcpChunkIntervalMs = 1400;
 
-          // Stop any existing GCP session
+          // Reuse existing GCP session if active (just resume if paused)
           if (gcpSessionRef.current?.isActive()) {
-            gcpSessionRef.current.stop();
+            if (gcpSessionRef.current.isPaused()) {
+              gcpSessionRef.current.resume();
+            }
+            setListening(true);
+            markSTTStart();
+            console.log("[Voice] ✅ GCP STT reused — no mic teardown");
+            return;
           }
 
           const session = createGCPSTTSession({
