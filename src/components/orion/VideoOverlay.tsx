@@ -4,6 +4,7 @@
  * Auto-minimizes when video starts playing. Supports PiP via browser API.
  */
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { X, Maximize2, Minimize2, Volume2, VolumeX, PictureInPicture2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,12 +17,16 @@ interface VideoCommand {
 }
 
 export function VideoOverlay() {
+  const location = useLocation();
   const [visible, setVisible] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [title, setTitle] = useState("");
   const [minimized, setMinimized] = useState(false);
   const [muted, setMuted] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Don't render overlay on neural dashboard — uses embedded player instead
+  const isOnNeuralDashboard = /\/dashboard\/rede-neural/i.test(location.pathname);
 
   useEffect(() => {
     const handler = (e: CustomEvent<VideoCommand>) => {
@@ -87,7 +92,7 @@ export function VideoOverlay() {
     }
   }, [videoUrl]);
 
-  if (!visible || !videoUrl) return null;
+  if (!visible || !videoUrl || isOnNeuralDashboard) return null;
 
   return (
     <AnimatePresence>
