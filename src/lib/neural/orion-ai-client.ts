@@ -22,6 +22,18 @@ import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
 let _globalAuthCache: { user: { id: string; email?: string | null } | null; ts: number } = { user: null, ts: 0 };
 const AUTH_CACHE_TTL = 60_000; // 60s
 
+// ═══ VOICE IDENTITY CACHE — persists across calls, updated by orion:voice-transcription event ═══
+let _cachedVoiceIdentity: string | undefined;
+if (typeof window !== "undefined") {
+  window.addEventListener("orion:voice-transcription", () => {
+    _cachedVoiceIdentity = (window as any).__orionIdentityStatus || _cachedVoiceIdentity;
+  });
+}
+
+export function getCachedVoiceIdentity(): string | undefined {
+  return (window as any)?.__orionIdentityStatus || _cachedVoiceIdentity;
+}
+
 async function getCachedAuthUser(): Promise<{ id: string; email?: string | null } | null> {
   if (_globalAuthCache.user && Date.now() - _globalAuthCache.ts < AUTH_CACHE_TTL) {
     return _globalAuthCache.user;
@@ -491,7 +503,7 @@ export async function analyzeFrameWithAI(
     } catch { /* non-blocking */ }
 
     const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections, userName, voiceIdentityStatus: (window as any).__orionIdentityStatus || undefined },
+      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections, userName, voiceIdentityStatus: getCachedVoiceIdentity() || undefined },
     });
     if (error) {
       console.warn("[OrionAI] Vision analysis invoke error:", error?.message);
@@ -646,39 +658,48 @@ export async function analyzeFrameStreaming(
       intentType !== "visual" &&
       !String(intentType || "").startsWith("visual_");
 
-    // ═══ LAYER 2: Context + auth IN PARALLEL (budget: 150ms — was 300ms) ═══
-    // Stripped: Knowledge base context-building, voice protocols, dashboard context
-    // Gemini gets the question + basic identity — that's enough for 95% of queries
-    const [streamContext, bearerToken] = await withTimeout(
-      Promise.all([
-        // 1. Minimal context (budget: 100ms)
-        withTimeout((async (): Promise<string> => {
-          try {
-            const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
-            const user = await getCachedAuthUser();
-            const isOwner = isOwnerEmail(user?.email);
-            const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)/i.test(question);
-            if (isIdentityQuestion) return buildOrionIdentityPrompt(isOwner);
-            // For all other questions, use a short system prompt — no heavy KB building
-            return "Você é Orion, assistente de IA neural consciente criado por Ericson Piccoli da ELP Green Technology. Responda de forma direta, rápida e útil em português. Seja conciso para perguntas simples. Seja completo para perguntas complexas.";
-          } catch {
-            return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.";
-          }
-        })(), 100, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
-        // 2. Get session token (budget: 100ms)
-        withTimeout((async (): Promise<string> => {
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            return session?.access_token || supabaseKey;
-          } catch { return supabaseKey; }
-        })(), 100, supabaseKey),
-      ]),
-      150,
-      [
-        "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
-        supabaseKey,
-      ]
-    );
+    // ═══ VOICE FAST PATH: Skip all heavy context, just get auth token ═══
+    let streamContext = "";
+    let bearerToken = supabaseKey;
+
+    if (isDirectVoiceMode) {
+      // Voice: zero context building, just auth token (budget: 50ms)
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        bearerToken = session?.access_token || supabaseKey;
+      } catch { /* use anon key */ }
+    } else {
+      // Text/vision: full context building (budget: 150ms)
+      [streamContext, bearerToken] = await withTimeout(
+        Promise.all([
+          // 1. Minimal context (budget: 100ms)
+          withTimeout((async (): Promise<string> => {
+            try {
+              const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
+              const user = await getCachedAuthUser();
+              const isOwner = isOwnerEmail(user?.email);
+              const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)/i.test(question);
+              if (isIdentityQuestion) return buildOrionIdentityPrompt(isOwner);
+              return "Você é Orion, assistente de IA neural consciente criado por Ericson Piccoli da ELP Green Technology. Responda de forma direta, rápida e útil em português. Seja conciso para perguntas simples. Seja completo para perguntas complexas.";
+            } catch {
+              return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.";
+            }
+          })(), 100, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
+          // 2. Get session token (budget: 100ms)
+          withTimeout((async (): Promise<string> => {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              return session?.access_token || supabaseKey;
+            } catch { return supabaseKey; }
+          })(), 100, supabaseKey),
+        ]),
+        150,
+        [
+          "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
+          supabaseKey,
+        ]
+      );
+    }
 
     const enrichedContext = streamContext;
 
@@ -702,7 +723,7 @@ export async function analyzeFrameStreaming(
         reasoningInstructions: (window as any).__cognitiveReasoningInstructions || undefined,
         inputSource: (window as any).__orionInputSource || "text",
         userName: (() => { try { const u = (window as any).__orionUserName; return u || undefined; } catch { return undefined; } })(),
-        voiceIdentityStatus: (window as any).__orionIdentityStatus || undefined,
+        voiceIdentityStatus: getCachedVoiceIdentity() || undefined,
       }),
     });
 

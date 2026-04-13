@@ -157,6 +157,7 @@ async function callVertexAI(messages: any[], stream: boolean): Promise<Response 
       maxOutputTokens: requestedMaxTokens || (hasImage ? 6144 : 4096),
       topP: hasImage ? 0.9 : 0.95,
       topK: hasImage ? 20 : 40,
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
   if (systemInstruction) {
@@ -779,6 +780,19 @@ IDENTIFICAÇÃO DE VOZ DO CRIADOR:
 - Quando reconhecer a voz do Ericson, trate-o pelo nome "Ericson" naturalmente.
 - O criador tem prioridade máxima e acesso total a todos os sistemas e configurações do Orion.
 - Ao identificar a voz do criador, ajuste o tom para mais informal e direto, como entre amigos próximos.
+`;
+
+// ═══ ULTRA-COMPACT VOICE PROMPT (~150 tokens) — minimum latency for voice queries ═══
+const ORION_VOICE_FAST_PROMPT = `Você é Orion — assistente IA pessoal criado por Ericson Piccoli (ELP Green Technology). Sistema AquaMonkey Lumen7.
+
+REGRAS DE VOZ:
+- Responda RÁPIDO, DIRETO, 1-3 frases curtas. Sem listas, sem markdown, sem emojis.
+- Se não souber: "Não tenho essa informação agora."
+- Se não captar a frase: "Pode repetir?"
+- Nunca repita a pergunta do usuário. Entenda e responda.
+- Tom natural, como amigo inteligente. Português brasileiro.
+- Nunca diga que é Google, GPT ou outro sistema. Você é Orion.
+- Se reconhecer Ericson pela voz, chame pelo nome.
 `;
 
 // ═══ CONVERSATIONAL PROMPT (~250 tokens) — for short voice/casual queries ═══
@@ -1415,9 +1429,13 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const isDirectVoicePath = isVoiceInput && !hasImage;
   const isConversationalQuery = !hasImage && !isComplexQuery && wordCount < 20 && isVoiceInput;
   
-  // Use conversational prompt for short voice queries, compact for simple text, full for vision/complex
+  // Use ultra-fast voice prompt for short voice queries (minimum tokens)
+  // Conversational for medium voice, compact for text, full for vision/complex
   let basePrompt: string;
-  if (isDirectVoicePath || isConversationalQuery) {
+  if (isDirectVoicePath && wordCount < 15) {
+    // ULTRA-FAST: ~150 tokens, no self-knowledge, no anti-hallucination block
+    basePrompt = ORION_VOICE_FAST_PROMPT;
+  } else if (isDirectVoicePath || isConversationalQuery) {
     basePrompt = ORION_SYSTEM_PROMPT_CONVERSATIONAL;
   } else if (hasImage || isComplexQuery) {
     basePrompt = ORION_SYSTEM_PROMPT_FULL;
@@ -1701,6 +1719,7 @@ async function callGeminiAPI(messages: any[], stream: boolean, apiKeyEnv: string
       maxOutputTokens: hasImage ? defaultVisionTokens : defaultTextTokens,
       topP: hasImage ? 0.9 : 0.95,
       topK: hasImage ? 20 : 40,
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
   if (systemInstruction) {
@@ -2311,10 +2330,12 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   const requestedMaxTokens = typeof body.maxTokens === "number" ? body.maxTokens : undefined;
   const intentType = body.intentType as string | undefined;
   const queryText = String(body.query || body.text || body.question || "");
+  const inputSource = body.inputSource as string | undefined;
+  const isVoiceQuery = inputSource === "voice";
   const isComplexQuery = queryText.length > 120 || /explique|analise|compare|detalh|paradox|demonstr|resolv|como\s+funciona|por\s*que|qual\s+[aeo]|quais|liste|resuma|descreva|defina|elabore|disserte|argumente|justifique|diferencie|exemplifique|o\s+que\s+[eé]/i.test(queryText);
   const isVisualERCA = intentType?.startsWith("visual_") || intentType === "self_refine";
-  const defaultMax = (intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis") 
-    ? 16384 
+  const defaultMax = isVoiceQuery && !isComplexQuery ? 2048  // Voice: short responses = fast
+    : (intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis") ? 16384 
     : isVisualERCA ? 12288
     : isComplexQuery ? 12288 : 8192;
   (messages as any).__maxTokens = requestedMaxTokens || defaultMax;
@@ -2345,7 +2366,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
             stream: true,
           };
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 2000); // 2s timeout (was 8s)
+          const timer = setTimeout(() => controller.abort(), 800); // 800ms timeout — VM must be fast or skip
           const vmResp = await fetch(`${vmUrl}/gemini`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2361,7 +2382,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
           }
           console.warn(`[Orion] VM proxy returned ${vmResp.status}`);
         } catch (e: any) {
-          console.warn("[Orion] VM Proxy skip (2s timeout):", e?.message?.slice(0, 50));
+          console.warn("[Orion] VM Proxy skip (800ms timeout):", e?.message?.slice(0, 50));
         }
       }
     }
