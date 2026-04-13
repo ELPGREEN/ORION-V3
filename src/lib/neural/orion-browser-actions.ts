@@ -239,9 +239,10 @@ export function executeBrowserAction(action: BrowserAction): string {
       openYouTube(action.query);
       return action.description;
     }
+    // Always dispatch as play_video — VideoOverlay handles embed URLs
     window.dispatchEvent(new CustomEvent("orion-video-command", {
       detail: {
-        action: action.url.includes("youtube.com/watch") ? "play_video" : "search_video",
+        action: "play_video",
         url: action.url,
         query: action.query,
         title: action.query,
