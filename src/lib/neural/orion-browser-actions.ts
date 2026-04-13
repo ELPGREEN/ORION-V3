@@ -241,6 +241,7 @@ export function executeBrowserAction(action: BrowserAction): string {
       openYouTube(action.query);
       return action.description;
     }
+    console.log("[browser-actions] Dispatching orion-video-command:", action.url, action.query);
     window.dispatchEvent(new CustomEvent("orion-video-command", {
       detail: {
         action: "play_video",
