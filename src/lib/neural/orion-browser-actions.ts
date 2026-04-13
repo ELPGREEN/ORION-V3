@@ -3,9 +3,11 @@
  * Enables Orion to open real browser tabs for actionable commands.
  * On mobile, opens native apps (Spotify, YouTube, Amazon Music) via deep links.
  * On desktop, opens web URLs in new tabs.
+ * Music commands use the fallback resolver: Spotify → Amazon Music → YouTube Music → YouTube
  */
 
 import { isMobileDevice, openSpotify, openYouTube, openYouTubeVideo, openAmazonMusic } from "@/lib/utils/deep-link";
+import { playMusicWithFallback, type MusicPlatform } from "./music-fallback-resolver";
 
 export interface BrowserAction {
   type: "youtube" | "google" | "google_flights" | "google_maps" | "spotify" | "wikipedia" | "generic_url" | "amazon_music";
@@ -239,7 +241,6 @@ export function executeBrowserAction(action: BrowserAction): string {
       openYouTube(action.query);
       return action.description;
     }
-    // Always dispatch as play_video — VideoOverlay handles embed URLs
     window.dispatchEvent(new CustomEvent("orion-video-command", {
       detail: {
         action: "play_video",
@@ -251,29 +252,30 @@ export function executeBrowserAction(action: BrowserAction): string {
     return action.description;
   }
 
-  // Spotify/music actions → on mobile open native app, on desktop dispatch to floating player
-  if (action.type === "spotify") {
+  // Music actions (spotify, amazon_music, generic music) → use fallback resolver
+  if (action.type === "spotify" || action.type === "amazon_music") {
     const q = action.query;
 
-    if (mobile) {
-      openSpotify(q);
+    // Playback control commands (pause/next/prev) — dispatch directly
+    if (q === "pause" || q === "next" || q === "prev") {
+      window.dispatchEvent(new CustomEvent("orion-music-command", {
+        detail: { action: q === "pause" ? "pause" : q, query: q, fullCommand: q }
+      }));
       return action.description;
     }
 
-    let musicAction = "search_and_play";
-    if (q === "pause") musicAction = "pause";
-    else if (q === "next") musicAction = "next";
-    else if (q === "prev") musicAction = "prev";
+    // Use async fallback resolver — fire and forget with event dispatch
+    const preferred: MusicPlatform | undefined = action.type === "amazon_music" ? "amazon_music" : "spotify";
+    playMusicWithFallback(q, preferred).then(result => {
+      console.log(`[music-fallback] Resolved: ${result.platform} (fallback=${result.fallback})`);
+      // Dispatch result for Orion to announce
+      if (result.fallback) {
+        window.dispatchEvent(new CustomEvent("orion-speak", {
+          detail: { text: result.description }
+        }));
+      }
+    }).catch(err => console.error("[music-fallback] Error:", err));
 
-    window.dispatchEvent(new CustomEvent("orion-music-command", {
-      detail: { action: musicAction, query: q, fullCommand: q }
-    }));
-    return action.description;
-  }
-
-  // Amazon Music → deep link on mobile
-  if (action.type === "amazon_music") {
-    openAmazonMusic(action.query);
     return action.description;
   }
 
