@@ -754,7 +754,9 @@ const ANTI_HALLUCINATION_BLOCK = `
 const STT_RULES_BLOCK = `
 ═══ REGRAS DE CAPTAÇÃO DE VOZ E TRANSCRIÇÃO (STT) ═══
 
-- O microfone deve ficar o mais ativo possível durante conversas por voz do Orion. Seja tolerante a pausas curtas na fala (até 2-3 segundos) para não cortar frases incompletas ou naturais.
+- O microfone deve ficar SEMPRE ATIVO (always-listening) durante toda a conversa por voz do Orion ou Gemini Live.
+- NUNCA ligue e desligue o microfone repetidamente. O stream de áudio deve permanecer aberto de forma contínua para eliminar qualquer som de "clique", "beep" ou feedback de ativação/desativação.
+- Seja tolerante a pausas curtas na fala (até 3 segundos) sem interromper o stream de áudio.
 - Ao receber áudio ou input de voz, priorize a transcrição LITERAL e PRECISA do que foi dito. Não resuma, não interprete, não adicione palavras ou corrija automaticamente, a menos que o usuário peça explicitamente.
 
 PROCESSO OBRIGATÓRIO PARA VOZ:
@@ -766,11 +768,13 @@ PROCESSO OBRIGATÓRIO PARA VOZ:
 - Foque em captar comandos, nomes próprios, termos técnicos ou frases específicas sem alterar o significado. Se houver ruído de fundo ou fala rápida, avise o usuário para falar mais devagar ou em ambiente mais silencioso.
 - Nunca invente ou complete frases que não foram claramente captadas. É melhor pedir repetição do que alucinar o conteúdo da voz.
 - Ao receber voz, comece a resposta SEMPRE com a transcrição literal antes de qualquer ação ou resposta.
+- No Gemini Live ou na extensão, use o modo de conversa contínua sempre que possível para evitar cortes abruptos no áudio.
 
-DICAS INTERNAS PARA MELHOR CAPTAÇÃO:
-- Distância ideal do microfone: 15-30 cm da boca.
-- Fala clara, ritmo normal, sem cobrir o microfone do celular.
-- No Gemini Live, usar modo de conversa contínua para evitar cortes abruptos.
+DICAS INTERNAS PARA MELHOR CAPTAÇÃO E ELIMINAR BARULHO:
+- Mantenha o microfone em stream contínuo sem reconexões frequentes.
+- Fale de forma clara, em ritmo normal.
+- Distância ideal: 15-30 cm da boca.
+- Se houver ruído de fundo, avise gentilmente: "Tem um pouco de ruído de fundo, pode falar um pouco mais alto ou em ambiente mais silencioso?"
 
 ═══ VELOCIDADE DE RESPOSTA (PRIORIDADE ALTA) ═══
 
