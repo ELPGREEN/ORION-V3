@@ -1,17 +1,18 @@
 /**
  * ═══ Smart Intent Classifier ═══
- * Unified intent classification: regex fast-path + LLM semantic fallback.
+ * Unified intent classification: learned corrections → regex fast-path → LLM semantic fallback.
  * Replaces scattered regex classifiers across the codebase.
- * Target: < 1ms for regex hits, ~300ms for LLM fallback.
+ * Target: < 1ms for regex/feedback hits, ~300ms for LLM fallback.
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { getLearnedCorrection } from "./intent-feedback";
 
 export interface ClassifiedIntent {
   intent: string;
   confidence: number;
   params: Record<string, string>;
-  source: "regex" | "llm" | "cache";
+  source: "regex" | "llm" | "cache" | "feedback";
   classifyMs: number;
 }
 
@@ -208,7 +209,22 @@ export async function smartClassify(text: string): Promise<ClassifiedIntent> {
     return cached;
   }
   
-  // 2. Regex fast-path
+  // 2. Learned feedback (user corrections)
+  const feedback = getLearnedCorrection(text);
+  if (feedback) {
+    const result: ClassifiedIntent = {
+      intent: feedback.correctIntent,
+      confidence: 0.95 + Math.min(feedback.count * 0.01, 0.04), // max 0.99
+      params: {},
+      source: "feedback",
+      classifyMs: Math.round(performance.now() - t0),
+    };
+    console.log(`[SmartClassifier] Feedback hit: "${text}" → ${feedback.correctIntent} (learned ${feedback.count}x)`);
+    setCache(text, result);
+    return result;
+  }
+  
+  // 3. Regex fast-path
   const regexResult = regexClassify(text);
   if (regexResult && regexResult.confidence >= CONFIDENCE_THRESHOLD) {
     regexResult.classifyMs = Math.round(performance.now() - t0);
@@ -216,7 +232,7 @@ export async function smartClassify(text: string): Promise<ClassifiedIntent> {
     return regexResult;
   }
   
-  // 3. LLM semantic fallback
+  // 4. LLM semantic fallback
   const llmResult = await llmClassify(text);
   llmResult.classifyMs = Math.round(performance.now() - t0);
   if (llmResult.intent !== "general") {
