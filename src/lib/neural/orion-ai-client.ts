@@ -22,6 +22,18 @@ import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
 let _globalAuthCache: { user: { id: string; email?: string | null } | null; ts: number } = { user: null, ts: 0 };
 const AUTH_CACHE_TTL = 60_000; // 60s
 
+// ═══ VOICE IDENTITY CACHE — persists across calls, updated by orion:voice-transcription event ═══
+let _cachedVoiceIdentity: string | undefined;
+if (typeof window !== "undefined") {
+  window.addEventListener("orion:voice-transcription", () => {
+    _cachedVoiceIdentity = (window as any).__orionIdentityStatus || _cachedVoiceIdentity;
+  });
+}
+
+export function getCachedVoiceIdentity(): string | undefined {
+  return (window as any)?.__orionIdentityStatus || _cachedVoiceIdentity;
+}
+
 async function getCachedAuthUser(): Promise<{ id: string; email?: string | null } | null> {
   if (_globalAuthCache.user && Date.now() - _globalAuthCache.ts < AUTH_CACHE_TTL) {
     return _globalAuthCache.user;
