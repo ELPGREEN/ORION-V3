@@ -2,6 +2,9 @@
  * Google Cloud STT Client — utterance-based capture
  * Buffers speech locally and sends the FULL utterance after silence,
  * avoiding cut-off phrases and hallucinated chunk merges.
+ * 
+ * v2: Supports pause/resume to keep mic stream open continuously
+ * without AudioContext teardown (eliminates mic cycling sounds).
  */
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,16 +18,21 @@ interface GCPSTTOptions {
   signal?: AbortSignal;
 }
 
-interface GCPSTTSession {
+export interface GCPSTTSession {
   start: () => Promise<boolean>;
   stop: () => void;
+  pause: () => void;
+  resume: () => void;
   isActive: () => boolean;
+  isPaused: () => boolean;
 }
 
 const PROCESSOR_BUFFER_SIZE = 4096;
 const PRE_ROLL_FRAMES = 4;
 const FLUSH_POLL_MS = 200;
 const SPEECH_RMS_THRESHOLD = 0.008;
+// Silence tolerance: 3 seconds before flushing utterance (user requested)
+const DEFAULT_SILENCE_MS = 3000;
 
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {
@@ -79,6 +87,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   let processor: ScriptProcessorNode | null = null;
   let source: MediaStreamAudioSourceNode | null = null;
   let active = false;
+  let paused = false;
   let sending = false;
   let flushTimer: ReturnType<typeof setInterval> | null = null;
   let preRollBuffers: Float32Array[] = [];
@@ -87,7 +96,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   let lastSpeechAt = 0;
   let utteranceStartedAt = 0;
 
-  const silenceDurationMs = Math.max(1200, Math.round(chunkIntervalMs * 0.85));
+  const silenceDurationMs = DEFAULT_SILENCE_MS;
   const maxUtteranceMs = Math.max(12000, chunkIntervalMs * 8);
 
   const pushPreRollFrame = (frame: Float32Array) => {
@@ -182,7 +191,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
       processor = audioContext.createScriptProcessor(PROCESSOR_BUFFER_SIZE, 1, 1);
 
       processor.onaudioprocess = (e) => {
-        if (!active) return;
+        if (!active || paused) return;
 
         const frame = new Float32Array(e.inputBuffer.getChannelData(0));
         const rms = calculateRMS(frame);
@@ -211,11 +220,12 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
       processor.connect(audioContext.destination);
 
       active = true;
+      paused = false;
       resetUtterance();
       preRollBuffers = [];
 
       flushTimer = setInterval(() => {
-        if (!active || sending || !utteranceActive || utteranceBuffers.length === 0) return;
+        if (!active || paused || sending || !utteranceActive || utteranceBuffers.length === 0) return;
 
         const now = Date.now();
         const silenceElapsed = lastSpeechAt > 0 ? now - lastSpeechAt : 0;
@@ -230,7 +240,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         signal.addEventListener("abort", stop, { once: true });
       }
 
-      console.log("[GCP-STT] Session started — utterance mode enabled");
+      console.log("[GCP-STT] Session started — always-listening mode, silence tolerance: 3s");
       return true;
     } catch (err: any) {
       console.error("[GCP-STT] Failed to start:", err.message);
@@ -239,8 +249,35 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     }
   };
 
+  /**
+   * Pause processing without tearing down AudioContext or mic stream.
+   * The mic stays open — no click/beep sounds.
+   */
+  const pause = () => {
+    if (!active || paused) return;
+    paused = true;
+    // Flush any pending utterance before pausing
+    if (utteranceBuffers.length > 0) {
+      void flushUtterance(true);
+    }
+    resetUtterance();
+    console.log("[GCP-STT] Paused (mic stream stays open)");
+  };
+
+  /**
+   * Resume processing after pause. No AudioContext recreation needed.
+   */
+  const resume = () => {
+    if (!active || !paused) return;
+    paused = false;
+    resetUtterance();
+    preRollBuffers = [];
+    console.log("[GCP-STT] Resumed — listening again");
+  };
+
   const stop = () => {
     active = false;
+    paused = false;
 
     if (flushTimer) {
       clearInterval(flushTimer);
@@ -273,13 +310,16 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     preRollBuffers = [];
     resetUtterance();
 
-    console.log("[GCP-STT] Session stopped");
+    console.log("[GCP-STT] Session stopped (full teardown)");
   };
 
   return {
     start,
     stop,
+    pause,
+    resume,
     isActive: () => active,
+    isPaused: () => paused,
   };
 }
 
