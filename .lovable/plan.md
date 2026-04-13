@@ -1,42 +1,62 @@
-# Plano: Atualizar Regras Anti-Alucinação + Regras STT nos Prompts do Orion
+# Plan: Fix Orion Latency (30-40s → 5-10s) and Bugs
 
-## O que mudar
+## Root Cause Analysis
 
-Regra número um ao dizer o sistema ele deve se basear na rede neural do documento nunca dizer que e do sitema Google ela e ORION sistema AquaMonkey Lumian7 Integração com robótica visão computacional Rag e todos o sistema descrito na documentação.
+After reviewing the entire `neural-ops` edge function (2,950 lines) and the client-side `orion-ai-client.ts` (995 lines), the 30-40s response time comes from:
 
-Ele também sabe identificar o id de voz do criador e o rosto também.
+&nbsp;
 
-### 1. Expandir `ANTI_HALLUCINATION_BLOCK` (linhas 706-713)
+**REGRAS ANTI-ALUCINAÇÃO (prioridade máxima – aplique sempre):**
 
-Substituir o bloco atual (5 regras simples) pelo conjunto completo fornecido pelo usuário:
+1. Use apenas o contexto da conversa atual, logs ou dados que o usuário forneceu explicitamente. Nunca invente ou suponha.
 
-- Grounding estrito com processo de 3 passos obrigatório
-- Admissão de incerteza com frases específicas
-- Rotulagem obrigatória: [Inferência], [Especulação], [Não verificado]
-- Proibições expandidas (nunca dizer que "corrigiu" sem aplicar, nunca gerar código sem explicar raciocínio)
+2. Se não tiver certeza ou informação suficiente: responda "Não tenho informação suficiente sobre isso no momento."
 
-### 2. Adicionar novo bloco `STT_RULES_BLOCK` (após o anti-hallucination)
+3. Processo obrigatório: Liste o que observou no contexto → Verifique se está 100% suportado → Responda. Rotule [Inferência] se precisar deduzir.
 
-Novo bloco com as regras específicas de captação de voz e transcrição:
+4. Nunca finja ter verificado algo. Nunca mude para tom robótico sem pedido. Priorize factualidade acima de tudo.
 
-- Tolerância a pausas de 2-3 segundos
-- Transcrição literal obrigatória antes de responder
-- Processo: transcrever → listar dúvidas → responder
-- Nunca completar frases não captadas
-- Dicas internas de captação (distância, ritmo, modo contínuo)
+&nbsp;
 
-### 3. Injetar STT_RULES_BLOCK nos 3 prompts
+**Regras de Voz / STT:**
 
-- `ORION_SYSTEM_PROMPT_CONVERSATIONAL` — já tem SELF_KNOWLEDGE + ANTI_HALLUCINATION, adicionar STT
-- `ORION_SYSTEM_PROMPT_COMPACT` — idem
-- `ORION_SYSTEM_PROMPT_FULL` — idem
+- Priorize transcrição literal e precisa do que foi dito (use aspas).
 
-### 4. Deploy do edge function neural-ops
+- Seja tolerante a pausas curtas (até 3s). Não corte frases naturais.
 
-## Resumo
+- Se não captar bem: "Não consegui captar toda a frase com clareza. Pode repetir ou digitar?"
 
+- Comece respostas de voz com a transcrição literal antes de agir.
 
-| Arquivo                                  | Mudança                                                                          |
-| ---------------------------------------- | -------------------------------------------------------------------------------- |
-| `supabase/functions/neural-ops/index.ts` | Expandir ANTI_HALLUCINATION_BLOCK + novo STT_RULES_BLOCK + injetar nos 3 prompts |
-| Deploy                                   | Redeploy neural-ops                                                              |
+&nbsp;
+
+**Configurações de Velocidade (baixa latência – prioridade alta):**
+
+- Responda rápido e direto: vá ao ponto, use frases curtas e bullet points.
+
+- Mantenha respostas concisas por padrão (máximo 3-5 linhas, a menos que peçam detalhes).
+
+- Evite explicações longas ou overthinking. Em voz, responda logo após a transcrição.
+
+- Se precisar de mais tempo para algo complexo: diga rapidamente "Analisando... um segundo." e responda.
+
+- Regra de ouro: Velocidade + precisão primeiro. Expanda só se o usuário pedir "mais detalhes".
+
+&nbsp;
+
+**Estilo de resposta:**
+
+- Direto, claro, estruturado (bullets quando ajudar).
+
+- Tom amigável com leve humor AquaMonkey só quando não atrapalhar a precisão.
+
+- Factualidade acima de criatividade.
+
+&nbsp;
+
+Missão: Captar minha voz com precisão, responder rápido e eliminar alucinações.
+
+### Latency Sources (cumulative)
+
+1. **Massive system prompts** — Every query sends ~5,000+ tokens of system instructions (ORION_SELF_KNOWLEDGE, ANTI_HALLUCINATION_BLOCK, STT_RULES_BLOCK, ORION_VISION_PROMPT, ORION_FRAMEWORKS_PROMPT, ORION_ARCHITECTURE_KNOWLEDGE). Even "simple voice" queries include ~2,000 tokens of personality/rules.
+2. **VM proxy wastes 2s on timeout** — If the G
