@@ -202,33 +202,27 @@ export async function dispatchVoiceIntent(intent: VoiceIntent): Promise<Dispatch
 
 /**
  * Classify raw speech text into a structured intent with parameters.
- * Lightweight client-side classification (no API call needed).
+ * Uses smart classifier: regex first, LLM fallback for ambiguous phrases.
+ */
+export async function classifyVoiceCommandSmart(text: string): Promise<VoiceIntent> {
+  const result = await smartClassify(text);
+  return {
+    intent: result.intent,
+    confidence: result.confidence,
+    params: result.params,
+    rawText: text,
+  };
+}
+
+/**
+ * Synchronous classification (regex-only, for hot paths).
+ * Falls back to "general" if no regex matches.
  */
 export function classifyVoiceCommand(text: string): VoiceIntent {
-  const q = text.toLowerCase().trim();
-
-  const patterns: Array<{ pattern: RegExp; intent: string; confidence: number }> = [
-    { pattern: /^(?:abr[ae]|v[aá]\s+para|naveg)/i, intent: "navigation", confidence: 0.95 },
-    { pattern: /^(?:que\s+hora|que\s+dia|data\s+de\s+hoje)/i, intent: "time_date", confidence: 0.98 },
-    { pattern: /^(?:calcul|quanto\s+[eé]|some|multipliqu|divid)/i, intent: "calculation", confidence: 0.95 },
-    { pattern: /^(?:traduz|tradu[çc][aã]o)/i, intent: "translation", confidence: 0.93 },
-    { pattern: /^(?:tocar?|play|reproduz|m[uú]sica)/i, intent: "media", confidence: 0.92 },
-    { pattern: /^(?:procur|busc|encontr|pesquis)/i, intent: "search", confidence: 0.90 },
-    { pattern: /(?:lei|artigo|c[oó]digo|jurisprud|peti[çc][aã]o)/i, intent: "legal", confidence: 0.88 },
-    { pattern: /(?:agendar|compromisso|reuni[aã]o|marcar)/i, intent: "calendar", confidence: 0.88 },
-    { pattern: /(?:pipeline|lead|oportunidade|neg[oó]cio)/i, intent: "crm", confidence: 0.85 },
-    { pattern: /(?:relat[oó]rio|m[eé]tricas|estat[ií]sticas)/i, intent: "reporting", confidence: 0.85 },
-    { pattern: /(?:o\s+que\s+(?:voc[eê]|vc)\s+v[eê]|enxerga)/i, intent: "vision_describe", confidence: 0.95 },
-    { pattern: /(?:quem\s+[eé]|reconhec)/i, intent: "identity", confidence: 0.90 },
-    { pattern: /(?:seguran[çc]a|amea[çc]a|shield)/i, intent: "security", confidence: 0.88 },
-  ];
-
-  for (const { pattern, intent, confidence } of patterns) {
-    if (pattern.test(q)) {
-      return { intent, confidence, params: {}, rawText: text };
-    }
+  const result = smartClassifySync(text);
+  if (result) {
+    return { intent: result.intent, confidence: result.confidence, params: result.params, rawText: text };
   }
-
   return { intent: "general", confidence: 0.5, params: {}, rawText: text };
 }
 
