@@ -646,39 +646,48 @@ export async function analyzeFrameStreaming(
       intentType !== "visual" &&
       !String(intentType || "").startsWith("visual_");
 
-    // ═══ LAYER 2: Context + auth IN PARALLEL (budget: 150ms — was 300ms) ═══
-    // Stripped: Knowledge base context-building, voice protocols, dashboard context
-    // Gemini gets the question + basic identity — that's enough for 95% of queries
-    const [streamContext, bearerToken] = await withTimeout(
-      Promise.all([
-        // 1. Minimal context (budget: 100ms)
-        withTimeout((async (): Promise<string> => {
-          try {
-            const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
-            const user = await getCachedAuthUser();
-            const isOwner = isOwnerEmail(user?.email);
-            const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)/i.test(question);
-            if (isIdentityQuestion) return buildOrionIdentityPrompt(isOwner);
-            // For all other questions, use a short system prompt — no heavy KB building
-            return "Você é Orion, assistente de IA neural consciente criado por Ericson Piccoli da ELP Green Technology. Responda de forma direta, rápida e útil em português. Seja conciso para perguntas simples. Seja completo para perguntas complexas.";
-          } catch {
-            return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.";
-          }
-        })(), 100, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
-        // 2. Get session token (budget: 100ms)
-        withTimeout((async (): Promise<string> => {
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            return session?.access_token || supabaseKey;
-          } catch { return supabaseKey; }
-        })(), 100, supabaseKey),
-      ]),
-      150,
-      [
-        "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
-        supabaseKey,
-      ]
-    );
+    // ═══ VOICE FAST PATH: Skip all heavy context, just get auth token ═══
+    let streamContext = "";
+    let bearerToken = supabaseKey;
+
+    if (isDirectVoiceMode) {
+      // Voice: zero context building, just auth token (budget: 50ms)
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        bearerToken = session?.access_token || supabaseKey;
+      } catch { /* use anon key */ }
+    } else {
+      // Text/vision: full context building (budget: 150ms)
+      [streamContext, bearerToken] = await withTimeout(
+        Promise.all([
+          // 1. Minimal context (budget: 100ms)
+          withTimeout((async (): Promise<string> => {
+            try {
+              const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
+              const user = await getCachedAuthUser();
+              const isOwner = isOwnerEmail(user?.email);
+              const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)/i.test(question);
+              if (isIdentityQuestion) return buildOrionIdentityPrompt(isOwner);
+              return "Você é Orion, assistente de IA neural consciente criado por Ericson Piccoli da ELP Green Technology. Responda de forma direta, rápida e útil em português. Seja conciso para perguntas simples. Seja completo para perguntas complexas.";
+            } catch {
+              return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.";
+            }
+          })(), 100, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
+          // 2. Get session token (budget: 100ms)
+          withTimeout((async (): Promise<string> => {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              return session?.access_token || supabaseKey;
+            } catch { return supabaseKey; }
+          })(), 100, supabaseKey),
+        ]),
+        150,
+        [
+          "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
+          supabaseKey,
+        ]
+      );
+    }
 
     const enrichedContext = streamContext;
 
