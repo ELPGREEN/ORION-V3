@@ -822,6 +822,7 @@ COMO RESPONDER:
 - Português brasileiro conversacional, sem formalidades robóticas.
 ${ORION_SELF_KNOWLEDGE}
 ${ANTI_HALLUCINATION_BLOCK}
+${ORION_DOCUMENT_RULES_BLOCK}
 ${STT_RULES_BLOCK}`;
 
 // ═══ FULL PROMPT for vision/complex queries ═══
@@ -860,6 +861,7 @@ const ORION_SYSTEM_PROMPT_FULL = `Você é Orion — assistente IA pessoal avan�
 - Quando perguntado sobre si mesmo, use APENAS as informações do bloco AUTOCONHECIMENTO abaixo.
 ${ORION_SELF_KNOWLEDGE}
 ${ANTI_HALLUCINATION_BLOCK}
+${ORION_DOCUMENT_RULES_BLOCK}
 ${STT_RULES_BLOCK}`;
 
 const ORION_VISION_PROMPT = `
