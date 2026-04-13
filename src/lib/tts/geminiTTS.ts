@@ -45,12 +45,13 @@ function isGeminiTTSCoolingDown(): boolean {
 function splitIntoSentences(text: string): string[] {
   if (text.length <= 4500) return [text.trim()];
 
-  // Only for very long texts: split at sentence boundaries into large ~3000-char chunks
-  const sentences = text.match(/[^.?]+[.?]+\s*|[^.?]+$/g) || [text];
+  // For longer texts: split at sentence boundaries into ~4000-char chunks
+  // This supports up to 8000 chars total with just 2 chunks
+  const sentences = text.match(/[^.!?]+[.!?]+\s*|[^.!?]+$/g) || [text];
   const chunks: string[] = [];
   let current = "";
   for (const s of sentences) {
-    if (current.length + s.length > 3000 && current.length > 0) {
+    if (current.length + s.length > 4000 && current.length > 0) {
       chunks.push(current.trim());
       current = s;
     } else {
@@ -74,7 +75,7 @@ export async function fetchGeminiAudio(
   if (signal.aborted || isGeminiTTSCoolingDown()) return null;
 
   const sentenceController = new AbortController();
-  const sentenceTimeout = setTimeout(() => sentenceController.abort(), 15000); // Reduced from 25s
+  const sentenceTimeout = setTimeout(() => sentenceController.abort(), 25000); // Longer for bigger chunks
   const onParentAbort = () => sentenceController.abort();
   signal.addEventListener("abort", onParentAbort, { once: true });
 
@@ -87,7 +88,7 @@ export async function fetchGeminiAudio(
         apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ text: text.slice(0, 5000), voice, prompt: stylePrompt, lang }),
+      body: JSON.stringify({ text: text.slice(0, 8000), voice, prompt: stylePrompt, lang }),
       signal: sentenceController.signal,
     });
 
@@ -326,7 +327,7 @@ async function fetchGoogleCloudTTSFallback(
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
       body: JSON.stringify({
-        text: text.slice(0, 3000),
+        text: text.slice(0, 8000),
         voice: "neural2-grave",
         encoding: "OGG_OPUS",
         speakingRate: 1.05,
