@@ -842,7 +842,8 @@ COMO RESPONDER:
 - Quando perguntado sobre si mesmo, use as informações do bloco AUTOCONHECIMENTO abaixo.
 ${ORION_SELF_KNOWLEDGE}
 ${ANTI_HALLUCINATION_BLOCK}
-${STT_RULES_BLOCK}`;
+${STT_RULES_BLOCK}
+${REASONING_RULES_BLOCK}`;
 
 // ═══ COMPACT PROMPT (~300 tokens) for text-only queries — FAST PATH ═══
 const ORION_SYSTEM_PROMPT_COMPACT = `Você é Orion — assistente IA pessoal criado por Ericson Piccoli (ELP Green Technology).
@@ -864,7 +865,8 @@ COMO RESPONDER:
 - Português brasileiro conversacional, sem formalidades robóticas.
 ${ORION_SELF_KNOWLEDGE}
 ${ANTI_HALLUCINATION_BLOCK}
-${STT_RULES_BLOCK}`;
+${STT_RULES_BLOCK}
+${REASONING_RULES_BLOCK}`;
 
 // ═══ FULL PROMPT for vision/complex queries ═══
 const ORION_SYSTEM_PROMPT_FULL = `Você é Orion — assistente IA pessoal avançado, criado por Ericson Piccoli (ELP Green Technology).
@@ -902,7 +904,8 @@ const ORION_SYSTEM_PROMPT_FULL = `Você é Orion — assistente IA pessoal avan�
 - Quando perguntado sobre si mesmo, use APENAS as informações do bloco AUTOCONHECIMENTO abaixo.
 ${ORION_SELF_KNOWLEDGE}
 ${ANTI_HALLUCINATION_BLOCK}
-${STT_RULES_BLOCK}`;
+${STT_RULES_BLOCK}
+${REASONING_RULES_BLOCK}`;
 
 const ORION_VISION_PROMPT = `
 INSTRUÇÕES DE VISÃO COMPUTACIONAL AVANÇADA (NeuroCore v7 — LAPIX/OpenCV Pipeline):
