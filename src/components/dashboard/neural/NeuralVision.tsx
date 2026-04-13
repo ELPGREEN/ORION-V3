@@ -1198,7 +1198,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           </div>
           <div className="space-y-1.5 max-h-[200px] overflow-y-auto mb-2">
             {chatHistory.length === 0 && (
-              <div className="text-center py-4 space-y-2">
+              <div className="text-center py-4 space-y-3">
                 <p className="text-[10px] font-mono text-white/30">Olá! Pergunte algo ao Orion</p>
                 <div className="flex flex-wrap gap-1.5 justify-center">
                   {["Quem é você?", "O que pode fazer?", "Agenda de hoje"].map(q => (
@@ -1207,6 +1207,23 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                       {q}
                     </button>
                   ))}
+                </div>
+                {/* Research quick actions — same as extension */}
+                <div className="border-t border-white/5 pt-2">
+                  <p className="text-[8px] font-mono text-white/15 mb-1.5 uppercase tracking-wider">Pesquisa Profissional</p>
+                  <div className="flex flex-wrap gap-1.5 justify-center">
+                    {[
+                      { label: "🔍 Pesquisar na Web", cmd: "pesquisar na web " },
+                      { label: "🔬 Comparar Fontes", cmd: "comparar fontes sobre " },
+                      { label: "💡 Sugestões de Busca", cmd: "sugestões de busca para " },
+                      { label: "📊 Analisar Dados", cmd: "analise os dados sobre " },
+                    ].map(a => (
+                      <button key={a.label} onClick={() => setAskInput(a.cmd)}
+                        className="text-[8px] font-mono text-amber-400/40 border border-amber-500/15 rounded px-2 py-1 hover:bg-amber-400/5 hover:text-amber-400/70 transition-colors">
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

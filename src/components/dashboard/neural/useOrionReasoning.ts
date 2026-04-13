@@ -901,6 +901,39 @@ export function useOrionReasoning(
         return;
       }
 
+      // ═══ WEB RESEARCH: "pesquisar na web", "comparar fontes", "sugestões de busca" ═══
+      const isWebSearch = /\b(pesquis|busc|procur)\w*\s+(na\s+)?(web|internet|google|online)\s+(.+)/i.test(qLow) ||
+        /\b(pesquis|busc)\w*\s+sobre\s+(.+)/i.test(qLow);
+      const isCompareSources = /\b(compar\w*\s+(fonte|source)|fontes?\s+sobre|verificar?\s+fonte)/i.test(qLow);
+      const isSearchSuggestions = /\b(sugest[oõ]es?\s+de\s+busca|termos?\s+de\s+pesquisa|como\s+pesquisar|refin\w*\s+busca)/i.test(qLow);
+
+      if (isWebSearch || isCompareSources || isSearchSuggestions) {
+        try {
+          const searchQuery = qLow
+            .replace(/\b(pesquis|busc|procur)\w*\s+(na\s+)?(web|internet|google|online)\s+/i, "")
+            .replace(/\b(pesquis|busc)\w*\s+sobre\s+/i, "")
+            .replace(/\b(compar\w*\s+(fonte|source)|fontes?\s+sobre|verificar?\s+fonte)\s*/i, "")
+            .replace(/\b(sugest[oõ]es?\s+de\s+busca|termos?\s+de\s+pesquisa|como\s+pesquisar|refin\w*\s+busca)\s*(para|sobre|de)?\s*/i, "")
+            .trim() || question;
+
+          let researchPrompt: string;
+          if (isCompareSources) {
+            researchPrompt = `Atue como pesquisador profissional. Analise o tema "${searchQuery}". Compare diferentes fontes confiáveis, identifique vieses potenciais, indique consensos e divergências entre especialistas. Cite fontes reais quando possível. Responda em português de forma clara e estruturada.`;
+          } else if (isSearchSuggestions) {
+            researchPrompt = `Atue como especialista em pesquisa. Para o tema "${searchQuery}", sugira 6-8 termos de busca avançados e queries acadêmicas para aprofundar a pesquisa. Inclua operadores booleanos quando útil. Sugira bases de dados específicas (Scholar, PubMed, Scielo, etc.) quando relevante. Responda em português.`;
+          } else {
+            researchPrompt = `Atue como assistente de pesquisa profissional. Pesquise de forma abrangente sobre: "${searchQuery}". Forneça informações factuais, dados relevantes, e contexto. Cite fontes quando possível. Estruture a resposta com tópicos claros. Responda em português de forma completa.`;
+          }
+
+          // Route to LLM with research prompt
+          processedQuestion = researchPrompt;
+          addLog(`🔬 Pesquisa profissional: ${isCompareSources ? "comparar fontes" : isSearchSuggestions ? "sugestões" : "web"}`);
+          // Fall through to LLM pipeline
+        } catch (researchErr) {
+          console.warn("[Orion] Research command error:", researchErr);
+        }
+      }
+
       // ═══ SEARCH: "procure documento X", "encontre cliente Y" ═══
       const searchMatch = qLow.match(/\b(procur[ae]|busc[ae]|encontr[ae]|ach[ae]|localiz[ae])\s+(o\s+|a\s+|um\s+|uma\s+)?(documento|contrato|petição|peticao|cliente|contato|processo)\s+(.+)/i);
       if (_isSpecialCmd && (searchMatch)) {
