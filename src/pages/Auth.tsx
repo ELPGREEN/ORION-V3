@@ -574,14 +574,22 @@ export default function Auth() {
                     variant="outline"
                     className="h-11 border-[#1e2533] text-white hover:bg-[#161b22] text-xs gap-2 bg-transparent"
                     disabled={loading || googleLoading}
-                    onClick={() => {
-                      supabase.auth.signInWithOAuth({
-                        provider: 'azure' as any,
-                        options: {
-                          redirectTo: `${window.location.origin}/auth/callback`,
-                          queryParams: { provider: 'amazon' }
-                        }
-                      });
+                    onClick={async () => {
+                      try {
+                        const BASE_URL = import.meta.env.VITE_SUPABASE_URL;
+                        const configRes = await fetch(`${BASE_URL}/functions/v1/amazon-auth?action=config`);
+                        if (!configRes.ok) throw new Error("Config failed");
+                        const config = await configRes.json();
+                        const redirectUri = `${window.location.origin}/auth/callback?provider=amazon`;
+                        const authUrl = new URL("https://www.amazon.com/ap/oa");
+                        authUrl.searchParams.set("client_id", config.client_id);
+                        authUrl.searchParams.set("scope", "profile");
+                        authUrl.searchParams.set("response_type", "code");
+                        authUrl.searchParams.set("redirect_uri", redirectUri);
+                        window.location.href = authUrl.toString();
+                      } catch {
+                        toast({ title: "Erro", description: "Falha ao iniciar login Amazon", variant: "destructive" });
+                      }
                     }}
                   >
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
