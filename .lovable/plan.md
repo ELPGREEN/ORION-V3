@@ -1,47 +1,93 @@
+# Plano: Compreensão Inteligente de Linguagem Natural para o Orion
 
+## O Problema Atual
 
-# Plano: Integrar Pesquisa e Vídeo do Orion Dentro do Painel
+depois que eu termino de falar ele demora mais de4 segundo para falar ele deve falar em 1.5 segundo menos tempo 
 
-## Situação Atual
-- O `VideoOverlay` é um componente **flutuante** que aparece sobre o conteúdo (fixed, z-9999)
-- A pesquisa do Orion no painel usa `useOrionReasoning` com regex para detectar comandos de pesquisa
-- Os botões de pesquisa (🔍 Pesquisar, 🔬 Fontes, 💡 Sugestões) apenas preenchem o input do chat
-- Vídeos do YouTube abrem no overlay flutuante via `orion-video-command` event
-- A aba "Pesquisa" (`/dashboard/pesquisa-unificada`) já existe mas é separada do Orion
+O Orion hoje classifica comandos de voz usando **regex estático** — ele procura palavras-chave exatas como "abrir", "procurar", "calcular". Se você falar de um jeito diferente ("me mostra aquele negócio lá do youtube"), ele não entende porque nenhum regex bate.
 
-## O Que Vai Mudar
+Existem **3 classificadores separados** fazendo a mesma coisa de formas diferentes:
 
-### 1. Criar aba "Pesquisa" integrada no painel do Orion (NeuralVision)
-- Adicionar uma nova tab/seção no painel Orion que funciona como **navegador integrado**
-- Essa aba terá um iframe que simula navegação web (Google, resultados, artigos)
-- O Orion controla o que aparece nesse iframe com base nos comandos de pesquisa
-- Botões de pesquisa rápida ficam integrados nessa aba
+- `voice-intent-dispatcher.ts` → regex para comandos de voz
+- `orion-agentic-loop.ts` → regex para o loop agêntico  
+- `orion-ai-client.ts` → regex para classificação visual/textual
 
-### 2. Vídeo embutido no painel (não flutuante)
-- Quando o Orion receber comando de vídeo, em vez de abrir o `VideoOverlay` flutuante, **embutir o vídeo dentro do próprio painel** numa seção dedicada
-- O vídeo aparece na área principal do painel com controles (play, mute, fechar)
-- O chat do Orion continua ativo abaixo/ao lado do vídeo
-- Manter o `VideoOverlay` flutuante apenas para quando o usuário NÃO estiver no painel
+Nenhum deles "pensa" — todos são pattern matching simples.
 
-### 3. Pesquisa integrada como navegador interno
-- Criar componente `OrionResearchBrowser` — um mini-navegador dentro do painel
-- Usa iframe para exibir resultados do Google, artigos, papers
-- O Orion analisa o conteúdo da página pesquisada e mostra resumos/insights no chat ao lado
-- Controles: barra de URL, voltar, avançar, refresh
+## A Solução
 
-## Arquivos a Modificar
+Adicionar uma **camada de compreensão semântica** usando o Gemini (grátis) quando os regex falham. O fluxo ficaria:
 
-1. **`src/components/orion/OrionResearchBrowser.tsx`** (NOVO) — Componente de navegador integrado com iframe, barra de pesquisa, e controles de navegação
-2. **`src/components/orion/OrionEmbeddedVideo.tsx`** (NOVO) — Player de vídeo embutido no painel (não flutuante), com controles mute/fechar/minimize
-3. **`src/components/dashboard/neural/NeuralVision.tsx`** — Adicionar tabs para alternar entre "Chat", "Pesquisa" e "Vídeo"; integrar os novos componentes
-4. **`src/components/dashboard/neural/useOrionReasoning.ts`** — Ao detectar comando de pesquisa web, enviar resultado para o browser integrado; ao detectar comando de vídeo no painel, embutir em vez de overlay flutuante
-5. **`src/components/orion/VideoOverlay.tsx`** — Condicionar: só abre overlay flutuante se o usuário NÃO estiver na página do painel neural
+```text
+Fala do usuário
+    │
+    ▼
+[1] Regex rápido (< 1ms) ── match? ──▶ Executa direto
+    │ não
+    ▼
+[2] Gemini Flash Lite via Edge Function (~300ms)
+    "Classifique esta intenção em uma das categorias: 
+     navigation, search, media, legal, calendar, etc."
+    │
+    ▼
+[3] Retorna intent estruturado + parâmetros extraídos
+    │
+    ▼
+[4] Executa normalmente pelo dispatcher
+```
+
+## O Que Será Feito
+
+### 1. Nova Edge Function: `classify-intent`
+
+- Recebe o texto do usuário
+- Usa Gemini Flash Lite (grátis, rápido) com tool calling para retornar JSON estruturado
+- Prompt curto e direto: lista as categorias possíveis, pede para classificar e extrair parâmetros
+- Resposta em ~200-400ms
+
+### 2. Classificador Inteligente Unificado (`smart-intent-classifier.ts`)
+
+- Tenta regex primeiro (instantâneo)
+- Se confiança < 0.7, chama a edge function
+- Cache local de classificações recentes (mesma frase = mesmo resultado)
+- Substitui os 3 classificadores espalhados
+
+### 3. Prompt de Classificação (o que você pediu)
+
+O prompt será algo como:
+
+```
+Você é um classificador de intenções do assistente Orion.
+Dado o texto do usuário, retorne a categoria e os parâmetros.
+
+Categorias: navigation, search, media, youtube, spotify, legal, 
+calendar, calculation, translation, time_date, crm, reporting, 
+vision_describe, identity, explanation, humor, general
+
+Exemplos:
+- "me mostra uns vídeos legais" → media, {query: "vídeos legais", platform: "youtube"}
+- "quanto tá o dólar hoje" → search, {query: "cotação dólar"}  
+- "vai lá pros documentos" → navigation, {target: "documentos"}
+- "toca um pagode aí" → media, {query: "pagode", platform: "spotify"}
+```
+
+### 4. Atualizar o Agentic Loop e Voice Dispatcher
+
+- Trocar a classificação por regex pela chamada ao classificador unificado
+- Manter regex como fast-path (não remover, apenas adicionar fallback)
 
 ## Detalhes Técnicos
 
-- O iframe do navegador de pesquisa usará Google Search via URL (`https://www.google.com/search?igu=1&q=...`) com `sandbox` attributes para segurança
-- O vídeo embutido usa YouTube embed com `enablejsapi=1` e controle via `postMessage`
-- A decisão flutuante vs embutido depende da rota atual: se `/dashboard/rede-neural` → embutido; senão → flutuante
-- Os botões de pesquisa rápida serão movidos para a aba de pesquisa integrada
-- STT/TTS/wake word: **intocados**
+- **Modelo**: Gemini Flash Lite (grátis, ~200ms)
+- **Método**: Tool calling para output estruturado (não JSON livre)
+- **Cache**: Map local com TTL de 5min para frases similares
+- **Fallback**: Se Gemini falhar, usa classificação regex existente
+- **Custo**: Zero (APIs Gemini gratuitas com rotação de 7 chaves)
 
+## Resultado Esperado
+
+Antes: "abre aquele negócio de música" → `general` (não entende)
+Depois: "abre aquele negócio de música" → `media` com `{query: "música", platform: "spotify"}`
+
+Antes: "dá uma olhada no que tem de novo" → `general`  
+Depois: "dá uma olhada no que tem de novo" → `search` com `{query: "novidades"}`
