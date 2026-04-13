@@ -384,7 +384,7 @@ export function useNeuralVoice(
       if (!onCmdRef.current || !useGCPSTTRef.current) return;
 
       if (gcpSessionRef.current && !gcpSessionRef.current.isActive()) {
-        console.warn("[Voice] Watchdog: GCP STT died — restarting");
+        console.warn("[Voice] Watchdog: GCP STT died — restarting (full session)");
         gcpSessionRef.current = null;
         const session = createGCPSTTSession({
           languageCode: "pt-BR",
