@@ -432,3 +432,126 @@
   border: 1px solid rgba(244, 67, 54, 0.3);
   backdrop-filter: blur(10px);
 }
+
+/* ─── Video Overlay ─── */
+#orion-video-overlay {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 480px;
+  height: 320px;
+  border-radius: 16px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: linear-gradient(145deg, rgba(8, 8, 20, 0.98), rgba(12, 8, 25, 0.98));
+  box-shadow: 0 0 60px rgba(212, 175, 55, 0.15), 0 0 120px rgba(59, 130, 246, 0.08), 0 25px 80px rgba(0, 0, 0, 0.7);
+  z-index: 2147483645;
+  overflow: hidden;
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+#orion-video-overlay.minimized {
+  width: 280px;
+  height: 48px;
+  bottom: 80px;
+  cursor: pointer;
+}
+
+.orion-vo-shimmer-top, .orion-vo-shimmer-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #D4AF37, #3B82F6, #D4AF37, transparent);
+  animation: orion-vo-shimmer 3s ease-in-out infinite;
+}
+.orion-vo-shimmer-top { top: 0; }
+.orion-vo-shimmer-bottom { bottom: 0; animation-direction: reverse; }
+
+@keyframes orion-vo-shimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.orion-vo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: linear-gradient(90deg, rgba(212, 175, 55, 0.05), rgba(59, 130, 246, 0.05));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.orion-vo-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.orion-vo-icon {
+  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.orion-vo-label {
+  font-size: 10px;
+  font-family: monospace;
+  font-weight: bold;
+  color: #D4AF37;
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+}
+
+.orion-vo-name {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+.orion-vo-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.orion-vo-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.orion-vo-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.orion-vo-body {
+  position: relative;
+  width: 100%;
+  height: calc(100% - 40px);
+}
+
+.orion-vo-body iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
