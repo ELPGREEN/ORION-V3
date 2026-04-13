@@ -27,8 +27,8 @@ import { createGCPSTTSession } from "@/lib/voice/gcpSTT";
 
 // ═══ Constants ═══
 const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
-const ECHO_WINDOW_MS = 12000;
-const ECHO_JACCARD_THRESHOLD = 0.45;
+const ECHO_WINDOW_MS = 18000;
+const ECHO_JACCARD_THRESHOLD = 0.35;
 const MAX_CONSECUTIVE_ABORTS = 3;
 const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
 
@@ -141,17 +141,20 @@ async function primeMicrophone(): Promise<void> {
   }
 }
 
-/** Jaccard word-overlap echo detection */
+/** Jaccard word-overlap echo detection — aggressive to prevent self-hearing */
 function isEchoOf(input: string, spoken: string): boolean {
   if (!spoken || input.length < 5) return false;
-  // Substring match (either direction, first 40 chars)
-  if (spoken.includes(input.slice(0, 40)) || input.includes(spoken.slice(0, 40))) return true;
+  // Substring match (either direction, check more chars)
+  if (spoken.includes(input.slice(0, 60)) || input.includes(spoken.slice(0, 60))) return true;
+  // Shorter substring check too
+  if (input.length >= 10 && spoken.includes(input.slice(0, 25))) return true;
   // Jaccard overlap
   const wordsA = new Set(input.split(/\s+/).filter(w => w.length > 2));
   const wordsB = new Set(spoken.split(/\s+/).filter(w => w.length > 2));
   if (wordsA.size < 2 || wordsB.size < 2) return false;
   let overlap = 0;
   wordsA.forEach(w => { if (wordsB.has(w)) overlap++; });
+  // Use min of both sets for stricter matching
   return overlap / Math.min(wordsA.size, wordsB.size) > ECHO_JACCARD_THRESHOLD;
 }
 
@@ -502,7 +505,7 @@ export function useNeuralVoice(
     markTTSStart();
     updateAiResponding(true);
     OrbState.voiceState = "speaking";
-    lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 320);
+    lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 800);
     lastSpokenAtRef.current = Date.now();
     speechBufferRef.current = "";
     sentenceAccumulatorRef.current = "";
@@ -574,10 +577,14 @@ export function useNeuralVoice(
     clearTimeout(safetyTimer);
     abortControllerRef.current = null;
     activeAudioRef.current = null;
-    speakingRef.current = false;
     markTTSEnd();
     updateAiResponding(false);
     OrbState.voiceState = "listening";
+
+    // ═══ POST-TTS ECHO COOLDOWN — keep speakingRef true for 1.5s after TTS ends ═══
+    // This prevents the mic from picking up the tail-end echo of TTS audio
+    await new Promise(r => setTimeout(r, 1500));
+    speakingRef.current = false;
 
     if (!options?.skipMicToggle) resumeSTT();
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
