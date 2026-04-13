@@ -469,6 +469,12 @@ function detectTaskType(query, context) {
 
 async function handleAIQuery(query, context) {
   const taskType = detectTaskType(query, context);
+  
+  // Enrich query with page context for research
+  let enrichedQuery = query;
+  if (context?.pageContent && context.pageContent.length > 50) {
+    enrichedQuery = `[Contexto da página "${context.title || ''}" (${context.url || ''})]:\n${context.pageContent.substring(0, 2000)}\n\n[Pergunta/Comando]: ${query}`;
+  }
 
   // Try agent-hub first
   try {
@@ -481,7 +487,7 @@ async function handleAIQuery(query, context) {
         Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
-        query,
+        query: enrichedQuery,
         task_type: taskType,
         context: context || orionState.pageContext,
         session_id: agentSessionId,
