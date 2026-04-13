@@ -1405,7 +1405,7 @@ async function fetchYouTubeContext(videoId: string): Promise<string> {
 }
 
 async function buildOrionMessages(body: Record<string, unknown>) {
-  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName, inputSource } = body as any;
+  const { imageBase64, context, question, userMemory, dashboardContext, chatHistory, intentType, reasoningInstructions, userName, inputSource, voiceIdentityStatus } = body as any;
 
   const hasImage = imageBase64 && intentType !== "textual";
   const questionStr0 = typeof question === "string" ? question : "";
