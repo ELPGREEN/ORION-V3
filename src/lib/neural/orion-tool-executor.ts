@@ -7,6 +7,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { CONVERSATION_FRAMEWORKS } from "./orion-conversation-frameworks";
 import type { AppRole } from "@/hooks/useUserRole";
 import { detectNavigationIntent } from "./orion-nav-map";
 import { getSocietySnapshot, getNeuralAgentContext, getRecentBroadcasts } from "./neural-agent-bridge";
@@ -3641,6 +3642,7 @@ const TOOLS: OrionTool[] = [
       return tips[Math.floor(Math.random() * tips.length)];
     },
   },
+  ...CONVERSATION_FRAMEWORKS,
 ];
 
 
