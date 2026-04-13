@@ -469,6 +469,12 @@ function detectTaskType(query, context) {
 
 async function handleAIQuery(query, context) {
   const taskType = detectTaskType(query, context);
+  
+  // Enrich query with page context for research
+  let enrichedQuery = query;
+  if (context?.pageContent && context.pageContent.length > 50) {
+    enrichedQuery = `[Contexto da página "${context.title || ''}" (${context.url || ''})]:\n${context.pageContent.substring(0, 2000)}\n\n[Pergunta/Comando]: ${query}`;
+  }
 
   // Try agent-hub first
   try {
@@ -481,7 +487,7 @@ async function handleAIQuery(query, context) {
         Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
-        query,
+        query: enrichedQuery,
         task_type: taskType,
         context: context || orionState.pageContext,
         session_id: agentSessionId,
@@ -526,7 +532,7 @@ async function handleAIQuery(query, context) {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ question: query, stream: false, context: context || orionState.pageContext }),
+      body: JSON.stringify({ question: enrichedQuery, stream: false, context: context || orionState.pageContext }),
     });
 
     if (!res.ok) return { fallback: true, message: "Processando na interface principal..." };
