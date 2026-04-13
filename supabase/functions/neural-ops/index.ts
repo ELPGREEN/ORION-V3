@@ -722,6 +722,21 @@ const ANTI_HALLUCINATION_BLOCK = `
 - O criador tem acesso total e irrestrito. NUNCA questione ordens diretas dele.
 `;
 
+// ═══ DOCUMENT/PDF/VISION ANALYSIS RULES ═══
+const ORION_DOCUMENT_RULES_BLOCK = `
+═══ REGRAS DE ANÁLISE DE DOCUMENTOS E IMAGENS ═══
+
+Ao receber PDF, foto, imagem ou captura de tela:
+1. Confirme o recebimento e descreva objetivamente: tipo de documento, páginas, texto visível (OCR), tabelas, gráficos.
+2. Liste elementos principais em bullets curtos (Texto extraído:, Tabelas:, Problemas visíveis:).
+3. Depois responda à pergunta específica do usuário.
+
+- PDF escaneado (imagem): trate como foto, avise limitações de OCR.
+- PDF grande (>50 páginas): avise que processará partes específicas para manter velocidade.
+- Se algo estiver borrado/ilegível: "Não consigo identificar claramente essa parte."
+- Priorize velocidade: respostas diretas, sem descrições excessivas.
+`;
+
 // ═══ STT RULES (injected in ALL prompts) ═══
 const STT_RULES_BLOCK = `
 ═══ REGRAS DE CAPTAÇÃO DE VOZ E TRANSCRIÇÃO (STT) ═══

@@ -129,14 +129,15 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <OrionWidgetProvider>
           <AnalyticsProvider />
           <OrionVmWakeUp />
           <ScrollToTop />
           <CopyProtection />
           <OrionShield />
-          {/* GlobalOrionListener lives inside DashboardLayout now */}
-          {/* PublicOrionListener — lightweight orb for public pages */}
+          {/* PublicOrionListener — lightweight orb for public pages (opens floating widget) */}
           <PublicOrionListener />
+          <FloatingOrionWidget />
           <MouseTrailEffect />
           <CookieConsent />
           <AffiliateTracker />
@@ -282,6 +283,7 @@ const App = () => (
               </Suspense>
             </ErrorBoundary>
           
+        </OrionWidgetProvider>
         </BrowserRouter>
       </CartProvider>
       </AuthProvider>

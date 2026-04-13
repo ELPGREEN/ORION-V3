@@ -1,42 +1,39 @@
 /**
  * PublicOrionListener — Visual-only Orion orb for public pages.
- * NO SpeechRecognition — Orion voice only works inside the dashboard overlay.
- * Clicking the orb navigates to /consulta or /auth.
+ * Opens the floating Orion widget instead of navigating.
  */
 import { useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { PlasmaCore } from "@/components/home/PlasmaCore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserPlan } from "@/hooks/useUserPlan";
+import { useOrionWidget } from "@/contexts/OrionWidgetContext";
 import { toast } from "sonner";
 
 export function PublicOrionListener() {
-  const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const { hasOrionAccess, loading: planLoading } = useUserPlan();
+  const { isOpen, openOrion } = useOrionWidget();
 
   // Don't show on auth pages, dashboard, or dedicated Orion screens
   const isDashboard = location.pathname.startsWith("/dashboard");
   const isAuthPage = ["/auth", "/cadastro", "/esqueci-senha"].includes(location.pathname);
   const isDedicatedOrionPage = location.pathname === "/consulta";
-  const shouldHide = isDashboard || isAuthPage || isDedicatedOrionPage;
+  const shouldHide = isDashboard || isAuthPage || isDedicatedOrionPage || isOpen;
 
   const handleOrbClick = useCallback(() => {
     if (!user) {
       toast("🔒 Faça login para usar o Orion por voz");
-      setTimeout(() => navigate("/auth"), 1200);
       return;
     }
     if (!planLoading && !hasOrionAccess) {
       toast("⚡ Faça upgrade para acessar o Orion.");
-      setTimeout(() => navigate("/contato"), 1500);
       return;
     }
-    // Navigate to Orion consultation page
-    navigate("/consulta", { state: { autoActivate: true } });
-  }, [user, hasOrionAccess, planLoading, navigate]);
+    openOrion();
+  }, [user, hasOrionAccess, planLoading, openOrion]);
 
   if (shouldHide) return null;
 
