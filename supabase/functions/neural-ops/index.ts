@@ -157,6 +157,7 @@ async function callVertexAI(messages: any[], stream: boolean): Promise<Response 
       maxOutputTokens: requestedMaxTokens || (hasImage ? 6144 : 4096),
       topP: hasImage ? 0.9 : 0.95,
       topK: hasImage ? 20 : 40,
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
   if (systemInstruction) {
@@ -1701,6 +1702,7 @@ async function callGeminiAPI(messages: any[], stream: boolean, apiKeyEnv: string
       maxOutputTokens: hasImage ? defaultVisionTokens : defaultTextTokens,
       topP: hasImage ? 0.9 : 0.95,
       topK: hasImage ? 20 : 40,
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
   if (systemInstruction) {
@@ -2345,7 +2347,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
             stream: true,
           };
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 2000); // 2s timeout (was 8s)
+          const timer = setTimeout(() => controller.abort(), 800); // 800ms timeout — VM must be fast or skip
           const vmResp = await fetch(`${vmUrl}/gemini`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2361,7 +2363,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
           }
           console.warn(`[Orion] VM proxy returned ${vmResp.status}`);
         } catch (e: any) {
-          console.warn("[Orion] VM Proxy skip (2s timeout):", e?.message?.slice(0, 50));
+          console.warn("[Orion] VM Proxy skip (800ms timeout):", e?.message?.slice(0, 50));
         }
       }
     }
