@@ -703,6 +703,9 @@ export function useNeuralVoice(
         lastProcessedTranscriptRef.current = normalized;
         lastProcessedAtRef.current = now;
 
+        // ═══ VOICE IDENTITY TRIGGER — notify NeuralVision on first transcription ═══
+        try { window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: fullText } })); } catch {}
+
         markSTTEnd();
         onCmdRef.current(fullText);
       }, silenceMs);
@@ -861,6 +864,10 @@ export function useNeuralVoice(
 
               lastProcessedTranscriptRef.current = normalized;
               lastProcessedAtRef.current = now;
+
+              // ═══ VOICE IDENTITY TRIGGER — notify NeuralVision on first GCP transcription ═══
+              try { window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: text.trim() } })); } catch {}
+
               markSTTEnd();
               console.log(`[Voice] GCP STT utterance: "${text}" (${(confidence * 100).toFixed(0)}%)`);
               onCmdRef.current(text.trim());
