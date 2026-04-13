@@ -399,6 +399,11 @@
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript.toLowerCase().trim();
         if (transcript.includes("orion") || transcript.includes("órion")) {
+          // Auto-pause video overlay when wake word detected
+          if (videoOverlay && !videoOverlayPaused) {
+            pauseVideo();
+            addChatMessage("system", "⏸ Vídeo pausado — ouvindo comando...");
+          }
           chrome.runtime.sendMessage({ type: "ORION_WAKE_WORD", transcript });
           createMiniOrb();
           pulseOrb();
@@ -452,12 +457,29 @@
       return;
     }
 
-    // ─── Panel navigation commands ───
+    // ─── Panel navigation commands (improved) ───
     if (/\b(?:ir|voltar?|vai?|navegar?|abrir?)\s+(?:para?\s+)?(?:o\s+)?painel(?:\s+(?:de\s+)?controle)?\b/i.test(lower) || 
-        /\bpainel\s+(?:de\s+)?controle\b/i.test(lower)) {
+        /\bpainel\s+(?:de\s+)?controle\b/i.test(lower) ||
+        /\babrir?\s+dashboard\b/i.test(lower)) {
+      addChatMessage("assistant", "🚀 Indo para o painel de controle...");
       chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "dashboard" });
       showNotification("🚀 Abrindo painel de controle...", "success");
       return;
+    }
+
+    // Side panel commands
+    if (/\babrir?\s+(?:side\s*)?panel\s+lateral\b/i.test(lower) || /\babrir?\s+side\s*panel\b/i.test(lower)) {
+      addChatMessage("assistant", "📌 Abrindo painel lateral...");
+      chrome.runtime.sendMessage({ type: "OPEN_SIDE_PANEL" });
+      return;
+    }
+
+    // Resume video command
+    if (videoOverlay && videoOverlayPaused && (/\bcontinu/i.test(lower) || /\bresume\b/i.test(lower) || /\bplay\b/i.test(lower) || /\btocar?\b/i.test(lower))) {
+      resumeVideo();
+      addChatMessage("system", "▶ Vídeo retomado!");
+      return;
+    }
     }
 
     if (lower.includes("abrir dashboard")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "dashboard" }); return; }
@@ -595,12 +617,26 @@
     }
   }
 
+  // ═══ Page Type Detection (Academic/Paper) ═══
+  function detectPageType() {
+    const domain = location.hostname.toLowerCase();
+    const academicDomains = ['scholar.google', 'arxiv.org', 'pubmed', 'scielo', 'jstor', 'researchgate', 'academia.edu', 'springer', 'nature.com', 'ieee.org', 'sciencedirect'];
+    const isAcademic = academicDomains.some(d => domain.includes(d));
+    const hasArticle = !!document.querySelector("article, [itemtype*='ScholarlyArticle'], [itemtype*='Article']");
+    const hasDOI = !!(document.querySelector("meta[name='citation_doi'], meta[name='dc.identifier'], a[href*='doi.org']"));
+    const hasCitations = document.querySelectorAll("[class*='citation'], [class*='reference'], [id*='reference'], [id*='bibliography']").length > 0;
+    if (isAcademic || hasDOI || (hasArticle && hasCitations)) return "academic";
+    if (document.querySelectorAll("article, [role='article']").length > 0) return "article";
+    return "general";
+  }
+
   // ═══ AI Query (via Agent Hub) — Research Assistant Mode ═══
   function sendAIQuery(query, taskTypeOverride) {
     showThinkingInChat();
     
-    // Auto-extract page context for research enrichment
+    // Enhanced auto-context for professional research
     let pageSnippet = undefined;
+    let metaContext = "";
     try {
       const sel = window.getSelection()?.toString()?.trim();
       if (sel && sel.length > 10) {
@@ -609,7 +645,36 @@
         const mainContent = document.querySelector("main, article, [role=main], .content, #content");
         if (mainContent) pageSnippet = mainContent.textContent?.substring(0, 2000)?.trim();
       }
+
+      // Extract meta tags for research context
+      const metas = [];
+      document.querySelectorAll("meta[name], meta[property]").forEach(m => {
+        const name = m.getAttribute("name") || m.getAttribute("property");
+        const content = m.getAttribute("content");
+        if (content && ["description", "keywords", "author", "citation_title", "citation_author", "citation_doi", "og:description", "og:title", "dc.subject", "dc.creator"].includes(name)) {
+          metas.push(`${name}: ${content.substring(0, 200)}`);
+        }
+      });
+      if (metas.length) metaContext += "\nMeta: " + metas.join(" | ");
+
+      // Extract JSON-LD structured data
+      const jsonLd = document.querySelector('script[type="application/ld+json"]');
+      if (jsonLd) {
+        try {
+          const ld = JSON.parse(jsonLd.textContent);
+          const ldSummary = ld["@type"] ? `Type: ${ld["@type"]}` : "";
+          const ldName = ld.name || ld.headline || "";
+          if (ldSummary || ldName) metaContext += `\nStructured: ${ldSummary} ${ldName}`.substring(0, 300);
+        } catch (e) {}
+      }
+
+      // Extract page headings for structure
+      const headings = Array.from(document.querySelectorAll("h1,h2,h3")).slice(0, 10).map(h => h.textContent.trim()).filter(Boolean);
+      if (headings.length) metaContext += "\nHeadings: " + headings.join(" > ").substring(0, 400);
+
     } catch (e) {}
+
+    const pageType = detectPageType();
 
     const ctx = {
       url: location.href,
@@ -618,6 +683,8 @@
       task_type: taskTypeOverride || undefined,
       pdfContext: pdfContext ? { filename: pdfContext.filename, textPreview: pdfContext.text.substring(0, 200) } : undefined,
       pageContent: pageSnippet,
+      metaContext: metaContext || undefined,
+      pageType,
     };
 
     chrome.runtime.sendMessage(
@@ -947,6 +1014,8 @@
         <button data-action="summarize" title="Resumir página">📝 Resumir</button>
         <button data-action="web-search" title="Pesquisa Web">🔍 Pesquisar</button>
         <button data-action="scrape" title="Scraping">🕸 Scrape</button>
+        <button data-action="compare-sources" title="Comparar fontes">🔬 Comparar</button>
+        <button data-action="search-suggestions" title="Sugestões de busca">💡 Sugestões</button>
         <button data-action="vision-toggle" id="orion-vision-toggle">${visionActive ? '👁 Desativar' : '👁 Visão'}</button>
         ${visionActive ? '<button data-action="vision-look">👁 O que vê?</button>' : ''}
         ${currentYouTubeVideoId ? '<button data-action="pip">🎬 PiP</button>' : ''}
