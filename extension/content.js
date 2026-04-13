@@ -196,8 +196,102 @@
   }
 
   // ═══════════════════════════════════════════════════════════
-  // ═══ Navigation Detection & Auto-Minimize ═══
+  // ═══ Floating Video Overlay (like site VideoOverlay) ═══
   // ═══════════════════════════════════════════════════════════
+
+  let videoOverlay = null;
+  let videoOverlayMinimized = false;
+  let videoOverlayMuted = false;
+
+  function showVideoOverlay(embedUrl, title) {
+    removeVideoOverlay();
+    videoOverlayMinimized = false;
+    videoOverlayMuted = false;
+
+    videoOverlay = document.createElement("div");
+    videoOverlay.id = "orion-video-overlay";
+    videoOverlay.innerHTML = `
+      <div class="orion-vo-shimmer-top"></div>
+      <div class="orion-vo-header">
+        <div class="orion-vo-title">
+          <span class="orion-vo-icon">🎬</span>
+          <span class="orion-vo-label">ORION PROJECTOR</span>
+          <span class="orion-vo-name">${escapeHtml(title || "Vídeo")}</span>
+        </div>
+        <div class="orion-vo-controls">
+          <button class="orion-vo-btn" data-action="mute" title="Mudo">🔊</button>
+          <button class="orion-vo-btn" data-action="minimize" title="Minimizar">➖</button>
+          <button class="orion-vo-btn" data-action="close" title="Fechar">✕</button>
+        </div>
+      </div>
+      <div class="orion-vo-body">
+        <iframe src="${embedUrl}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+      </div>
+      <div class="orion-vo-shimmer-bottom"></div>
+    `;
+    document.body.appendChild(videoOverlay);
+
+    // Controls
+    videoOverlay.querySelector('[data-action="close"]').addEventListener("click", removeVideoOverlay);
+    videoOverlay.querySelector('[data-action="minimize"]').addEventListener("click", toggleVideoMinimize);
+    videoOverlay.querySelector('[data-action="mute"]').addEventListener("click", toggleVideoMute);
+
+    // Auto-minimize after 2s
+    setTimeout(() => {
+      if (videoOverlay && !videoOverlayMinimized) toggleVideoMinimize();
+    }, 2000);
+  }
+
+  function toggleVideoMinimize() {
+    if (!videoOverlay) return;
+    videoOverlayMinimized = !videoOverlayMinimized;
+    videoOverlay.classList.toggle("minimized", videoOverlayMinimized);
+    const body = videoOverlay.querySelector(".orion-vo-body");
+    const label = videoOverlay.querySelector(".orion-vo-label");
+    const minBtn = videoOverlay.querySelector('[data-action="minimize"]');
+    if (videoOverlayMinimized) {
+      body.style.display = "none";
+      label.textContent = "ORION";
+      minBtn.textContent = "🔲";
+    } else {
+      body.style.display = "block";
+      label.textContent = "ORION PROJECTOR";
+      minBtn.textContent = "➖";
+    }
+  }
+
+  function toggleVideoMute() {
+    if (!videoOverlay) return;
+    videoOverlayMuted = !videoOverlayMuted;
+    const iframe = videoOverlay.querySelector("iframe");
+    const muteBtn = videoOverlay.querySelector('[data-action="mute"]');
+    if (iframe) {
+      const src = iframe.src;
+      const sep = src.includes("?") ? "&" : "?";
+      iframe.src = videoOverlayMuted
+        ? src.replace(/([?&])mute=0/, "$1mute=1").replace(/([?&])muted=0/, "$1muted=1") || src + sep + "mute=1"
+        : src.replace(/([?&])mute=1/, "$1mute=0").replace(/([?&])muted=1/, "$1muted=0");
+    }
+    muteBtn.textContent = videoOverlayMuted ? "🔇" : "🔊";
+  }
+
+  function removeVideoOverlay() {
+    if (videoOverlay) { videoOverlay.remove(); videoOverlay = null; }
+  }
+
+  function playVideoFromQuery(query) {
+    // Check if it's a direct YouTube URL
+    const videoId = extractYouTubeVideoId(query);
+    if (videoId) {
+      showVideoOverlay(`https://www.youtube.com/embed/${videoId}?autoplay=1`, query);
+    } else {
+      // Search and play first result via embed
+      showVideoOverlay(`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1`, query);
+    }
+    showNotification("🎬 Reproduzindo vídeo — Orion continua ativo!", "success");
+  }
+
+
 
   function handleUrlChange() {
     const newUrl = location.href;
