@@ -532,7 +532,7 @@ async function handleAIQuery(query, context) {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ question: query, stream: false, context: context || orionState.pageContext }),
+      body: JSON.stringify({ question: enrichedQuery, stream: false, context: context || orionState.pageContext }),
     });
 
     if (!res.ok) return { fallback: true, message: "Processando na interface principal..." };
