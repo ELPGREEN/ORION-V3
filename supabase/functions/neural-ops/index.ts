@@ -2330,10 +2330,12 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   const requestedMaxTokens = typeof body.maxTokens === "number" ? body.maxTokens : undefined;
   const intentType = body.intentType as string | undefined;
   const queryText = String(body.query || body.text || body.question || "");
+  const inputSource = body.inputSource as string | undefined;
+  const isVoiceQuery = inputSource === "voice";
   const isComplexQuery = queryText.length > 120 || /explique|analise|compare|detalh|paradox|demonstr|resolv|como\s+funciona|por\s*que|qual\s+[aeo]|quais|liste|resuma|descreva|defina|elabore|disserte|argumente|justifique|diferencie|exemplifique|o\s+que\s+[eé]/i.test(queryText);
   const isVisualERCA = intentType?.startsWith("visual_") || intentType === "self_refine";
-  const defaultMax = (intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis") 
-    ? 16384 
+  const defaultMax = isVoiceQuery && !isComplexQuery ? 2048  // Voice: short responses = fast
+    : (intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis") ? 16384 
     : isVisualERCA ? 12288
     : isComplexQuery ? 12288 : 8192;
   (messages as any).__maxTokens = requestedMaxTokens || defaultMax;
