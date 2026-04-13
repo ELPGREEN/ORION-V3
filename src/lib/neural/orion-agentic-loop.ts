@@ -15,6 +15,16 @@ import { updateFromInteraction } from "./theory-of-mind";
 import { getAgenteEu } from "./agents/self-model-agent";
 import { createThoughtEntry, addThoughtStep, finalizeThoughtEntry } from "./orion-journal";
 import { feedUserSpeech, feedAIResponse } from "./voice-evolution-feedback";
+import { isNegativeFeedback, recordCorrection, extractCorrectionTarget } from "./intent-feedback";
+import { smartClassify } from "./smart-intent-classifier";
+
+// ─── Last classification memory (for feedback corrections) ───
+let _lastClassification: { text: string; intent: string; ts: number } | null = null;
+
+export function getLastClassification() { return _lastClassification; }
+export function setLastClassification(text: string, intent: string) {
+  _lastClassification = { text, intent, ts: Date.now() };
+}
 
 // ─── Types ───
 
