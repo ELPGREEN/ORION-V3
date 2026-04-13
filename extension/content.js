@@ -202,16 +202,50 @@
   let videoOverlay = null;
   let videoOverlayMinimized = false;
   let videoOverlayMuted = false;
+  let videoOverlayPaused = false;
+
+  // ─── YouTube iframe postMessage control (enablejsapi=1) ───
+  function postVideoCommand(func, args) {
+    if (!videoOverlay) return;
+    const iframe = videoOverlay.querySelector("iframe");
+    if (!iframe || !iframe.contentWindow) return;
+    iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func, args: args || "" }), "*");
+  }
+
+  function pauseVideo() {
+    postVideoCommand("pauseVideo");
+    videoOverlayPaused = true;
+    // Show brief paused indicator
+    if (videoOverlay) {
+      const ind = document.createElement("div");
+      ind.className = "orion-vo-paused-indicator";
+      ind.textContent = "⏸";
+      videoOverlay.querySelector(".orion-vo-body")?.appendChild(ind);
+      setTimeout(() => ind.remove(), 1200);
+    }
+  }
+
+  function resumeVideo() {
+    postVideoCommand("playVideo");
+    videoOverlayPaused = false;
+  }
 
   function showVideoOverlay(embedUrl, title) {
     removeVideoOverlay();
     videoOverlayMinimized = false;
     videoOverlayMuted = false;
+    videoOverlayPaused = false;
+
+    // Ensure enablejsapi=1 for postMessage control
+    const sep = embedUrl.includes("?") ? "&" : "?";
+    const finalUrl = embedUrl + sep + "enablejsapi=1&origin=" + encodeURIComponent(location.origin);
 
     videoOverlay = document.createElement("div");
     videoOverlay.id = "orion-video-overlay";
     videoOverlay.innerHTML = `
       <div class="orion-vo-shimmer-top"></div>
+      <div class="orion-vo-shimmer-left"></div>
+      <div class="orion-vo-shimmer-right"></div>
       <div class="orion-vo-header">
         <div class="orion-vo-title">
           <span class="orion-vo-icon">🎬</span>
@@ -220,14 +254,16 @@
         </div>
         <div class="orion-vo-controls">
           <button class="orion-vo-btn" data-action="mute" title="Mudo">🔊</button>
+          <button class="orion-vo-btn" data-action="playpause" title="Play/Pause">⏸</button>
           <button class="orion-vo-btn" data-action="minimize" title="Minimizar">➖</button>
           <button class="orion-vo-btn" data-action="close" title="Fechar">✕</button>
         </div>
       </div>
       <div class="orion-vo-body">
-        <iframe src="${embedUrl}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+        <iframe src="${finalUrl}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
       </div>
       <div class="orion-vo-shimmer-bottom"></div>
+      <div class="orion-vo-resize"></div>
     `;
     document.body.appendChild(videoOverlay);
 
@@ -235,26 +271,41 @@
     videoOverlay.querySelector('[data-action="close"]').addEventListener("click", removeVideoOverlay);
     videoOverlay.querySelector('[data-action="minimize"]').addEventListener("click", toggleVideoMinimize);
     videoOverlay.querySelector('[data-action="mute"]').addEventListener("click", toggleVideoMute);
+    videoOverlay.querySelector('[data-action="playpause"]').addEventListener("click", toggleVideoPlayPause);
 
-    // Auto-minimize after 2s
-    setTimeout(() => {
-      if (videoOverlay && !videoOverlayMinimized) toggleVideoMinimize();
-    }, 2000);
+    // Click minimized overlay to expand
+    videoOverlay.addEventListener("click", (e) => {
+      if (videoOverlayMinimized && !e.target.closest(".orion-vo-btn")) toggleVideoMinimize();
+    });
+
+    // Drag-to-resize (top-left corner)
+    const resizeHandle = videoOverlay.querySelector(".orion-vo-resize");
+    resizeHandle.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      const startX = e.clientX, startY = e.clientY;
+      const startW = videoOverlay.offsetWidth, startH = videoOverlay.offsetHeight;
+      const onMove = (ev) => {
+        const newW = Math.max(300, startW - (ev.clientX - startX));
+        const newH = Math.max(200, startH - (ev.clientY - startY));
+        videoOverlay.style.width = newW + "px";
+        videoOverlay.style.height = newH + "px";
+      };
+      const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
   }
 
   function toggleVideoMinimize() {
     if (!videoOverlay) return;
     videoOverlayMinimized = !videoOverlayMinimized;
     videoOverlay.classList.toggle("minimized", videoOverlayMinimized);
-    const body = videoOverlay.querySelector(".orion-vo-body");
     const label = videoOverlay.querySelector(".orion-vo-label");
     const minBtn = videoOverlay.querySelector('[data-action="minimize"]');
     if (videoOverlayMinimized) {
-      body.style.display = "none";
-      label.textContent = "ORION";
+      label.textContent = "ORION ▶";
       minBtn.textContent = "🔲";
     } else {
-      body.style.display = "block";
       label.textContent = "ORION PROJECTOR";
       minBtn.textContent = "➖";
     }
@@ -263,29 +314,37 @@
   function toggleVideoMute() {
     if (!videoOverlay) return;
     videoOverlayMuted = !videoOverlayMuted;
-    const iframe = videoOverlay.querySelector("iframe");
     const muteBtn = videoOverlay.querySelector('[data-action="mute"]');
-    if (iframe) {
-      const src = iframe.src;
-      const sep = src.includes("?") ? "&" : "?";
-      iframe.src = videoOverlayMuted
-        ? src.replace(/([?&])mute=0/, "$1mute=1").replace(/([?&])muted=0/, "$1muted=1") || src + sep + "mute=1"
-        : src.replace(/([?&])mute=1/, "$1mute=0").replace(/([?&])muted=1/, "$1muted=0");
+    if (videoOverlayMuted) {
+      postVideoCommand("mute");
+      muteBtn.textContent = "🔇";
+      muteBtn.classList.add("active");
+    } else {
+      postVideoCommand("unMute");
+      muteBtn.textContent = "🔊";
+      muteBtn.classList.remove("active");
     }
-    muteBtn.textContent = videoOverlayMuted ? "🔇" : "🔊";
+  }
+
+  function toggleVideoPlayPause() {
+    if (!videoOverlay) return;
+    if (videoOverlayPaused) { resumeVideo(); }
+    else { pauseVideo(); }
+    const ppBtn = videoOverlay.querySelector('[data-action="playpause"]');
+    if (ppBtn) ppBtn.textContent = videoOverlayPaused ? "⏸" : "▶";
   }
 
   function removeVideoOverlay() {
     if (videoOverlay) { videoOverlay.remove(); videoOverlay = null; }
+    videoOverlayPaused = false;
+    videoOverlayMuted = false;
   }
 
   function playVideoFromQuery(query) {
-    // Check if it's a direct YouTube URL
     const videoId = extractYouTubeVideoId(query);
     if (videoId) {
       showVideoOverlay(`https://www.youtube.com/embed/${videoId}?autoplay=1`, query);
     } else {
-      // Search and play first result via embed
       showVideoOverlay(`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1`, query);
     }
     showNotification("🎬 Reproduzindo vídeo — Orion continua ativo!", "success");
