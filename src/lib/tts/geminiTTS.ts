@@ -327,7 +327,7 @@ async function fetchGoogleCloudTTSFallback(
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
       body: JSON.stringify({
-        text: text.slice(0, 3000),
+        text: text.slice(0, 8000),
         voice: "neural2-grave",
         encoding: "OGG_OPUS",
         speakingRate: 1.05,
