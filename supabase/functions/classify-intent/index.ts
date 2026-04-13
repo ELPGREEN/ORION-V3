@@ -82,7 +82,7 @@ serve(async (req) => {
     }
 
     const key = getNextKey();
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${key}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
 
     const body = {
       contents: [
