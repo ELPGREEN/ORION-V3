@@ -92,9 +92,9 @@ const ACTION_PATTERNS: ActionPattern[] = [
 
   // ─── YouTube / Videos ───
   {
-    regex: /\b(?:(?:abre?|abrir?|open)\s+(?:o\s+)?youtube|(?:tocar?|play|reproduz(?:ir)?|assistir?|ver?)\s+(?:um?\s+)?(?:v[ií]deo|video)|(?:buscar?|pesquisar?|procurar?)\s+(?:no\s+)?youtube|(?:v[ií]deo|video)\s+(?:de|do|da|sobre))\b/i,
+    regex: /\b(?:(?:abre?|abrir?|open)\s+(?:[\w\s]{0,20}\s+)?(?:no\s+|do\s+|d[oa]\s+)?youtube|(?:tocar?|play|reproduz(?:ir)?|assistir?|ver?|pesquisar?|buscar?|procurar?)\s+(?:[\w\s]{0,20}\s+)?(?:no\s+|do\s+|d[oa]\s+)?youtube|(?:tocar?|play|reproduz(?:ir)?|assistir?|ver?|pesquisar?|buscar?|procurar?)\s+(?:um?\s+)?(?:v[ií]deo|video)(?:\s|$)|(?:v[ií]deo|video)\s+(?:de|do|da|sobre)|youtube\s+(?:de|do|da|sobre|music))\b/i,
     builder: (_m, q) => {
-      const clean = extractCleanQuery(q, /\b(?:abre?|abrir?|open|tocar?|play|reproduz(?:ir)?|assistir?|ver?|buscar?|pesquisar?|procurar?)\s+(?:o\s+)?(?:um?\s+)?(?:no\s+)?(?:youtube|v[ií]deo|video)\b/gi);
+      const clean = extractCleanQuery(q, /\b(?:abre?|abrir?|open|tocar?|play|reproduz(?:ir)?|assistir?|ver?|buscar?|pesquisar?|procurar?)\s*(?:[\w\s]{0,10}\s+)?(?:no\s+|do\s+|d[oa]\s+)?(?:youtube|um?\s+)?(?:v[ií]deo|video)?\b/gi);
       const searchQuery = clean || q;
       return {
         type: "youtube",
