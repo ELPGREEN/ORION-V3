@@ -12,6 +12,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { smartClassify, smartClassifySync, type ClassifiedIntent } from "./smart-intent-classifier";
 
 // ─── Types ───
 
