@@ -491,7 +491,7 @@ export async function analyzeFrameWithAI(
     } catch { /* non-blocking */ }
 
     const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections, userName },
+      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections, userName, voiceIdentityStatus: (window as any).__orionIdentityStatus || undefined },
     });
     if (error) {
       console.warn("[OrionAI] Vision analysis invoke error:", error?.message);
@@ -702,6 +702,7 @@ export async function analyzeFrameStreaming(
         reasoningInstructions: (window as any).__cognitiveReasoningInstructions || undefined,
         inputSource: (window as any).__orionInputSource || "text",
         userName: (() => { try { const u = (window as any).__orionUserName; return u || undefined; } catch { return undefined; } })(),
+        voiceIdentityStatus: (window as any).__orionIdentityStatus || undefined,
       }),
     });
 
