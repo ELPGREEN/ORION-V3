@@ -138,6 +138,7 @@ const App = () => (
           {/* GlobalOrionListener lives inside DashboardLayout now */}
           {/* PublicOrionListener — lightweight orb for public pages */}
           <PublicOrionListener />
+          <VideoOverlay />
           <MouseTrailEffect />
           <CookieConsent />
           <AffiliateTracker />
