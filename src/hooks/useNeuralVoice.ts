@@ -141,17 +141,20 @@ async function primeMicrophone(): Promise<void> {
   }
 }
 
-/** Jaccard word-overlap echo detection */
+/** Jaccard word-overlap echo detection — aggressive to prevent self-hearing */
 function isEchoOf(input: string, spoken: string): boolean {
   if (!spoken || input.length < 5) return false;
-  // Substring match (either direction, first 40 chars)
-  if (spoken.includes(input.slice(0, 40)) || input.includes(spoken.slice(0, 40))) return true;
+  // Substring match (either direction, check more chars)
+  if (spoken.includes(input.slice(0, 60)) || input.includes(spoken.slice(0, 60))) return true;
+  // Shorter substring check too
+  if (input.length >= 10 && spoken.includes(input.slice(0, 25))) return true;
   // Jaccard overlap
   const wordsA = new Set(input.split(/\s+/).filter(w => w.length > 2));
   const wordsB = new Set(spoken.split(/\s+/).filter(w => w.length > 2));
   if (wordsA.size < 2 || wordsB.size < 2) return false;
   let overlap = 0;
   wordsA.forEach(w => { if (wordsB.has(w)) overlap++; });
+  // Use min of both sets for stricter matching
   return overlap / Math.min(wordsA.size, wordsB.size) > ECHO_JACCARD_THRESHOLD;
 }
 
