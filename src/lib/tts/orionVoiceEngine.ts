@@ -36,7 +36,7 @@ export async function speakWithOrionVoice(
   if (!text?.trim()) return fail;
   if (signal?.aborted) return fail;
 
-  const cleanText = text.trim().slice(0, 3000);
+  const cleanText = text.trim().slice(0, 8000);
 
   // ── 1. GEMINI TTS (primary) ──
   if (isGeminiTTSAvailable()) {
