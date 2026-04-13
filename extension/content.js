@@ -385,6 +385,14 @@
       return;
     }
 
+    // YouTube / Video commands
+    const ytVideoMatch = cmd.match(/(?:(?:abre?|abrir?|tocar?|play|reproduz(?:ir)?|assistir?|ver?)\s+(?:o?\s*)?(?:v[ií]deo|video|youtube)\s*(?:de\s+|do\s+|da\s+|sobre\s+)?(.+)|(?:v[ií]deo|video)\s+(?:de|do|da|sobre)\s+(.+))/i);
+    if (ytVideoMatch) {
+      const q = (ytVideoMatch[1] || ytVideoMatch[2] || cmd).trim();
+      playVideoFromQuery(q);
+      return;
+    }
+
     if (lower.includes("abrir dashboard")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "dashboard" }); return; }
     if (lower.includes("abrir documento")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "documentos" }); return; }
     if (lower.includes("abrir processo")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "processos" }); return; }
