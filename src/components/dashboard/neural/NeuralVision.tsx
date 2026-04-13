@@ -192,6 +192,17 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }
   }, [identityStatus, verifyVoiceIdentity, setIdentityStatus]);
 
+  // ═══ AUTO VOICE IDENTITY on first STT transcription ═══
+  useEffect(() => {
+    const handler = () => {
+      if (!voiceCheckDoneRef.current && identityStatus === "unknown") {
+        handleVoiceIdentityCheck();
+      }
+    };
+    window.addEventListener("orion:voice-transcription", handler);
+    return () => window.removeEventListener("orion:voice-transcription", handler);
+  }, [identityStatus, handleVoiceIdentityCheck]);
+
   // Track guest messages in chat
   useEffect(() => {
     if (!guestSession || chatHistory.length === 0) return;
