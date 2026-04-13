@@ -164,9 +164,12 @@ export async function dispatchVoiceIntent(intent: VoiceIntent): Promise<Dispatch
       }
 
       case "media": {
-        // Dispatch to Spotify/YouTube Music via event
-        window.dispatchEvent(new CustomEvent("orion-media", { detail: params }));
-        return ok(intent.intent, params.action === "pause" ? "Pausando." : `Procurando "${params.query}"...`, params, t0);
+        // Use fallback resolver for music commands
+        const { playMusicWithFallback } = await import("./music-fallback-resolver");
+        const musicQuery = params.query || "music";
+        const preferred = params.platform === "amazon" ? "amazon_music" as const : params.platform === "youtube" ? "youtube" as const : "spotify" as const;
+        const result = await playMusicWithFallback(musicQuery, preferred);
+        return ok(intent.intent, result.description, { ...params, resolvedPlatform: result.platform, fallback: result.fallback }, t0);
       }
 
       case "legal":
