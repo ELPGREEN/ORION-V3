@@ -799,6 +799,7 @@ COMO RESPONDER:
 - Quando perguntado sobre si mesmo, use as informações do bloco AUTOCONHECIMENTO abaixo.
 ${ORION_SELF_KNOWLEDGE}
 ${ANTI_HALLUCINATION_BLOCK}
+${ORION_DOCUMENT_RULES_BLOCK}
 ${STT_RULES_BLOCK}`;
 
 // ═══ COMPACT PROMPT (~300 tokens) for text-only queries — FAST PATH ═══
