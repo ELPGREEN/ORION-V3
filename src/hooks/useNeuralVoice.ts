@@ -574,10 +574,14 @@ export function useNeuralVoice(
     clearTimeout(safetyTimer);
     abortControllerRef.current = null;
     activeAudioRef.current = null;
-    speakingRef.current = false;
     markTTSEnd();
     updateAiResponding(false);
     OrbState.voiceState = "listening";
+
+    // ═══ POST-TTS ECHO COOLDOWN — keep speakingRef true for 1.5s after TTS ends ═══
+    // This prevents the mic from picking up the tail-end echo of TTS audio
+    await new Promise(r => setTimeout(r, 1500));
+    speakingRef.current = false;
 
     if (!options?.skipMicToggle) resumeSTT();
   }, [browserSpeak, clearRestartTimer, resumeSTT, updateAiResponding]);
