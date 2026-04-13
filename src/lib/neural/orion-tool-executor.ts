@@ -281,8 +281,11 @@ const TOOLS: OrionTool[] = [
       s.push("• `Toque Taylor Swift` | `Pare a música`");
       s.push("• `Toque som de chuva` — sons ambientes");
       s.push("• `Minhas playlists` | `Crie playlist Rock`");
-      s.push("• `Conte uma piada` | `Fato curioso`");
-      s.push("• `Conte uma história` — para crianças\n");
+      s.push("• `Conte uma piada` | `Fato curioso` | `Trava-língua`");
+      s.push("• `Conte uma história` | `Adivinhação` | `Cante algo`");
+      s.push("• `Me recite um poema` | `Horóscopo de Áries`");
+      s.push("• `Jogue uma moeda` | `Role um dado` | `Número aleatório`");
+      s.push("• `Me motive` | `Me elogie` | `Dica do dia`\n");
 
       // 13. Informações
       s.push("🌤️ **13. Informações em Tempo Real:**");
