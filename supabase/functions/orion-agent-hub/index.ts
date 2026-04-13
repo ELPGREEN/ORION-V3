@@ -3,8 +3,10 @@
  * Routes tasks to specialized Vertex AI agents via Agent Engine.
  * Falls back to neural-ops if Agent Engine is unavailable.
  */
-import { corsHeaders } from "@supabase/supabase-js/cors";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 // ─── Agent Config ───
 const AGENT_TYPES: Record<string, { label: string; systemHint: string }> = {
