@@ -1103,6 +1103,11 @@
           if (input) { input.placeholder = "🔍 Pesquisar na Web..."; input.focus(); }
         }, 200);
         break;
+      case "ORION_PLAY_VIDEO":
+        if (message.url || message.query) {
+          playVideoFromQuery(message.url || message.query);
+        }
+        break;
       case "ORION_NOTIFICATION":
         showNotification(message.text, message.notifType || "info"); break;
     }
