@@ -1,87 +1,161 @@
+# Status: All Plan Steps Already Implemented
 
+The approved latency optimization plan has been **fully implemented** and deployed. Here is the confirmed status of each step:
 
-# Plan: Implement Orion Floating Widget + PDF/Vision Rules
+&nbsp;
 
-## What's Already Done
-- Anti-hallucination rules ✅
-- Voice/STT rules ✅  
-- Speed/latency rules ✅
-- AquaMonkey personality ✅
-- Vision emotional rules ✅
+Aqui está o **plano de ação claro e prático** para resolver o último ponto de latência que resta (o VM proxy timeout de 15s) e garantir que a Orion fique realmente rápida no **gemini-2.5-flash** no Vertex AI.
 
-## What's New (2 Features)
+&nbsp;
 
-### 1. PDF/Document Analysis Rules in System Prompt
-**File: `supabase/functions/neural-ops/index.ts`**
+### Status atual (resumo)
 
-Add a new `ORION_DOCUMENT_RULES_BLOCK` (~100 tokens) with the PDF/photo analysis protocol:
-- Confirm receipt and describe content objectively (type, pages, visible text, tables)
-- List main elements in short bullets
-- Then answer the user's specific question
-- For scanned PDFs: treat as image, warn about OCR limitations
-- For large PDFs (>50 pages): warn about partial processing
-- Inject this block into `ORION_SYSTEM_PROMPT_FULL` and `ORION_SYSTEM_PROMPT_COMPACT` (not the ultra-fast voice prompt, since PDFs aren't voice queries)
+- **Ótimo**: A maioria das otimizações já está implementada (prompts compactas separadas por tipo de query, thinkingBudget: 0, fast path para voz, cache de identidade, edge function deployada).
 
-### 2. Floating Orion Widget with Auto-Minimize + YouTube PiP
-**New component + modifications to existing routing**
+- **Único gargalo restante**: O proxy da VM (`supabase/functions/orion-vm-proxy/index.ts`) ainda tem timeout de 15 segundos. Isso causa delay desnecessário quando o VM está offline ou lento — o sistema espera até 15s antes de fallback.
 
-This is the main feature. Currently Orion lives at `/consulta` as a full-page experience. The user wants Orion to:
-- Stay active as a floating widget when navigating away
-- Auto-minimize to bottom-right corner during navigation
-- Support Picture-in-Picture for YouTube videos
-- Never close unless explicitly requested
+&nbsp;
 
-**Implementation:**
+### Ação recomendada imediata (o que você deve fazer agora)
 
-a) **New `FloatingOrionWidget.tsx` component** (~200 lines)
-- Wraps `NeuralVision` in a draggable/resizable floating container
-- Two states: **expanded** (full chat) and **minimized** (small orb in bottom-right)
-- Auto-minimize triggers: route change detected via `useLocation()`
-- Expand on click when minimized
-- Maintains conversation context across navigation (state persists in React context)
+&nbsp;
 
-b) **New `OrionWidgetContext.tsx`** — React context to manage widget state globally
-- `isOpen`, `isMinimized`, `openOrion()`, `minimizeOrion()`, `closeOrion()`
-- Persists across page navigation since it lives at the App level
+**1. Reduza o timeout do VM proxy (mudança simples e segura)**
 
-c) **YouTube PiP detection** in `FloatingOrionWidget.tsx`
-- Detect YouTube embeds or video elements on page
-- When detected: call `videoElement.requestPictureInPicture()` and auto-minimize Orion
-- Show brief confirmation: "Minimizando para o canto..."
+&nbsp;
 
-d) **Update `App.tsx`** — wrap routes with `OrionWidgetProvider`, render `FloatingOrionWidget` at app level (outside route switches)
+Abra o arquivo:  
 
-e) **Update `PublicOrionListener.tsx`** — instead of navigating to `/consulta`, open the floating widget via context
+`supabase/functions/orion-vm-proxy/index.ts`
 
-f) **Update `ConsultaIA.tsx`** — when accessed directly, expand the floating widget instead of rendering inline `NeuralVision`
+&nbsp;
 
-### Technical Details
+Procure a linha com o timeout (provavelmente algo como):
 
-```text
-App.tsx
-├── OrionWidgetProvider (context)
-│   ├── Routes (all pages)
-│   └── FloatingOrionWidget (fixed position, z-50+)
-│       ├── Minimized: small orb (bottom-right)
-│       └── Expanded: NeuralVision in floating card
+```ts
+
+setTimeout(() => controller.abort(), 15_000);
+
 ```
 
-**Auto-minimize logic:**
-- Listen to `useLocation()` changes
-- If widget is expanded and route changes → minimize with toast "Minimizando para o canto..."
-- Click minimized orb → expand back
+&nbsp;
 
-**PiP logic:**
-- On route change, check for `<video>` elements or YouTube iframes
-- If found: `video.requestPictureInPicture()` (browser API)
-- Orion minimizes alongside
+**Altere para**:
 
-### Files to Create/Edit
-1. **Create** `src/contexts/OrionWidgetContext.tsx` — widget state context
-2. **Create** `src/components/FloatingOrionWidget.tsx` — floating container with minimize/expand
-3. **Edit** `src/App.tsx` — add provider + render widget
-4. **Edit** `src/components/PublicOrionListener.tsx` — use context instead of navigate
-5. **Edit** `src/pages/ConsultaIA.tsx` — delegate to floating widget
-6. **Edit** `supabase/functions/neural-ops/index.ts` — add PDF/document rules block
-7. **Redeploy** `neural-ops` edge function
+```ts
 
+// Timeout reduzido para voz e queries rápidas (equilíbrio entre dar chance ao VM e não bloquear)
+
+setTimeout(() => controller.abort(), 3_000);  // 3 segundos
+
+```
+
+&nbsp;
+
+- **Por quê 3 segundos?**  
+
+  Dá tempo suficiente para o VM responder em casos normais, mas evita esperar 15s quando ele está offline. Para voz pura (direct voice mode) você pode até testar com 800ms–1.5s depois.
+
+&nbsp;
+
+- Depois da mudança:  
+
+  **Redeploy** a edge function:
+
+  ```bash
+
+  supabase functions deploy orion-vm-proxy
+
+  ```
+
+&nbsp;
+
+**2. Melhoria extra recomendada (para latência ainda menor no gemini-2.5-flash)**
+
+&nbsp;
+
+Como você está usando **gemini-2.5-flash**, confirme/adicione estas configurações nas chamadas Vertex AI (já que thinkingBudget: 0 está feito):
+
+&nbsp;
+
+- Ative **streaming** (`generateContentStream`) em todas as chamadas de voz e queries simples → isso reduz bastante a percepção de latência (usuário começa a ver/responder antes da resposta completa).
+
+- Use **context caching** para a parte estática do prompt (se ainda não estiver ativo) — economiza tokens e latência em chamadas repetidas.
+
+- Para voz: prefira o caminho **Gemini Live API / Native Audio** se disponível no Vertex (é o mais otimizado para STT + resposta rápida em 2026).
+
+- Mantenha o prompt ultra-compacto para voz (< 200 tokens) — você já tem isso.
+
+&nbsp;
+
+### Prompt ultra-compacta atualizada para voz (caso queira colar novamente no fast path)
+
+&nbsp;
+
+Se quiser reforçar o fast path, use esta versão mínima para queries de voz (< 15 palavras ou direct voice mode):
+
+&nbsp;
+
+```
+
+Você é Orion (AquaMonkey: descontraído, humor leve). Responda em primeira pessoa, rápido e direto.
+
+&nbsp;
+
+Anti-alucinação: Use só o que o usuário disse/agora. Se não souber: "Não tenho info suficiente."
+
+Voz: Transcreva literalmente primeiro. Tolere pausas curtas.
+
+Visão: Descreva o que vê em bullets curtos se tiver imagem.
+
+Responda conciso, sem enrolação. Velocidade primeiro.
+
+```
+
+&nbsp;
+
+### Próximos passos sugeridos
+
+1. Faça a mudança do timeout para 3s + redeploy agora.
+
+2. Teste com voz simples (ex: comandos curtos) e com imagem (visão computacional).
+
+3. Meça o tempo real de resposta antes/depois (do momento que fala até Orion responder).
+
+4. Se ainda sentir delay > 4-5s em voz simples, verifique:
+
+   - Se o fast path (`isDirectVoiceMode`) está realmente pulando RAG/contexto pesado.
+
+   - Região do Vertex AI (use us-central1 ou europe-west4 para menor latência).
+
+   - Ativação de streaming.
+
+&nbsp;
+
+Depois de fazer a mudança e testar, me conte:
+
+- Qual foi o novo tempo médio de resposta em voz?
+
+- Ainda sente o delay do proxy ou melhorou bastante?
+
+- Algum erro novo apareceu nos logs?
+
+&nbsp;
+
+Se quiser, posso te dar o código exato da função proxy atualizada ou uma versão ainda mais agressiva do prompt para voice-only.  
+
+&nbsp;
+
+Vamos finalizar essa latência de vez! 🚀
+
+## Completed Steps
+
+### Step 1: Ultra-compact voice prompt — DONE
+
+- `ORION_VOICE_FAST_PROMPT` (~150 tokens) created and active for voice queries with < 15 words
+- `ORION_SYSTEM_PROMPT_CONVERSATIONAL` (~250 tokens) for medium voice queries
+- Full prompt only used for vision/complex queries
+
+### Step 2: Provider cascade optimized — DONE
+
+- `thinkingConfig: { thinkingBudget: 0 }` applied to `callVertexAI` (line 160), `callGeminiAPI` (line 1722), and generic

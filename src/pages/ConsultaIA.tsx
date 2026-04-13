@@ -12,7 +12,6 @@ import { NeuralVision } from "@/components/dashboard/neural/NeuralVision";
 import { AlienCoreBackground } from "@/components/ui/AlienCoreBackground";
 import { motion } from "framer-motion";
 import logoElp from "@/assets/logo-elp.webp";
-import { useOrionWidget } from "@/contexts/OrionWidgetContext";
 
 function NotClientGate() {
   const navigate = useNavigate();
@@ -153,7 +152,7 @@ function LoginGate() {
 
 export default function ConsultaIA() {
   const { user } = useAuth();
-  const { openOrion } = useOrionWidget();
+
   // Check user role
   // Parallel gate: fetch role + plan in a single query call
   const { data: gateData, isLoading: gateLoading } = useQuery({

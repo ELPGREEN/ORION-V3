@@ -12,8 +12,6 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { OrionShield } from "@/components/common/OrionShield";
 // GlobalOrionListener moved to DashboardLayout — no mic prompts on public pages
 import { PublicOrionListener } from "@/components/PublicOrionListener";
-import { OrionWidgetProvider } from "@/contexts/OrionWidgetContext";
-import { FloatingOrionWidget } from "@/components/FloatingOrionWidget";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import { PageLoader } from "@/components/common/PageLoader";
 import { AuthGuard } from "@/components/common/AuthGuard";
@@ -131,15 +129,14 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <OrionWidgetProvider>
           <AnalyticsProvider />
           <OrionVmWakeUp />
           <ScrollToTop />
           <CopyProtection />
           <OrionShield />
-          {/* PublicOrionListener — lightweight orb for public pages (opens floating widget) */}
+          {/* GlobalOrionListener lives inside DashboardLayout now */}
+          {/* PublicOrionListener — lightweight orb for public pages */}
           <PublicOrionListener />
-          <FloatingOrionWidget />
           <MouseTrailEffect />
           <CookieConsent />
           <AffiliateTracker />
@@ -285,7 +282,6 @@ const App = () => (
               </Suspense>
             </ErrorBoundary>
           
-        </OrionWidgetProvider>
         </BrowserRouter>
       </CartProvider>
       </AuthProvider>
