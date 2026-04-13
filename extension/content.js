@@ -1271,6 +1271,12 @@
           playVideoFromQuery(message.url || message.query);
         }
         break;
+      case "ORION_VIDEO_CONTROL_CMD":
+        if (message.action === "pause") pauseVideo();
+        else if (message.action === "resume") resumeVideo();
+        else if (message.action === "mute") toggleVideoMute();
+        else if (message.action === "close") removeVideoOverlay();
+        break;
       case "ORION_NOTIFICATION":
         showNotification(message.text, message.notifType || "info"); break;
     }
