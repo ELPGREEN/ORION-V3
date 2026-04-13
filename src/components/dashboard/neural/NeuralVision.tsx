@@ -8,7 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   Camera, CameraOff, Eye, Mic, MicOff, Volume2, VolumeX,
   Cpu, Activity, Zap, Brain, MessageCircle, User, Hand,
+  Search, PlayCircle, Globe,
 } from "lucide-react";
+import { OrionResearchBrowser } from "@/components/orion/OrionResearchBrowser";
+import { OrionEmbeddedVideo } from "@/components/orion/OrionEmbeddedVideo";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
