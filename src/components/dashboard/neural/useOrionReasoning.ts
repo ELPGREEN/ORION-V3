@@ -1141,6 +1141,48 @@ export function useOrionReasoning(
         addLog(`⚠️ Browser action error: ${browserErr?.message || browserErr}`);
       }
 
+      // ═══ VOLUME CONTROL: intercept volume voice commands BEFORE media/AI ═══
+      const volumeMatch = qLow.match(/\b(aumentar?|subir?|levantar?)\s*(o\s+)?volume\b/i)
+        || qLow.match(/\bvolume\s+(mais\s+)?alto\b/i)
+        || qLow.match(/\bvolume\s+(?:no\s+)?m[aá]ximo\b/i);
+      const volumeDownMatch = qLow.match(/\b(diminuir?|abaixar?|baixar?|reduzir?)\s*(o\s+)?volume\b/i)
+        || qLow.match(/\bvolume\s+(mais\s+)?baixo\b/i)
+        || qLow.match(/\bvolume\s+(?:no\s+)?m[ií]nimo\b/i);
+      const volumeSetMatch = qLow.match(/\bvolume\s+(?:em\s+|para\s+|a\s+)?(\d{1,3})\s*%?\b/i)
+        || qLow.match(/\b(\d{1,3})\s*%?\s+(?:de\s+)?volume\b/i);
+      const muteMatch = /\b(silenciar?|mutar?|mudo|mute)\b/i.test(qLow) && !/alarme/i.test(qLow);
+      const unmuteMatch = /\b(desmutar?|ativar?\s+som|unmute|tirar?\s+(?:o\s+)?mudo)\b/i.test(qLow);
+
+      if (volumeMatch || volumeDownMatch || volumeSetMatch || muteMatch || unmuteMatch) {
+        let action = "up";
+        let value: number | undefined;
+        let feedback = "";
+        if (volumeSetMatch) {
+          value = parseInt(volumeSetMatch[1]);
+          action = "set";
+          feedback = `Volume ajustado para ${value}%.`;
+        } else if (volumeDownMatch) {
+          action = "down";
+          feedback = "Volume diminuído.";
+        } else if (muteMatch) {
+          action = "mute";
+          feedback = "Som silenciado.";
+        } else if (unmuteMatch) {
+          action = "unmute";
+          feedback = "Som ativado.";
+        } else {
+          action = "up";
+          feedback = "Volume aumentado.";
+        }
+        window.dispatchEvent(new CustomEvent("orion-volume-command", { detail: { action, value } }));
+        addChat("ai", feedback);
+        setThought(feedback);
+        addLog(`🔊 Volume: ${action}${value !== undefined ? ` → ${value}%` : ""}`);
+        speak(feedback).catch(() => {});
+        cleanupProcessing();
+        return;
+      }
+
       // ═══ MEDIA / SPOTIFY: intercept music/search/playlist commands BEFORE AI ═══
       const mediaPatterns = /\b((?:tocar?|play|reproduz(?:ir)?|coloca(?:r)?)\s+(?:uma?\s+)?(?:m[uú]sica|musica|playlist|faixa|som)|busca[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|procura[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|pesquisa[r]?\s+(?:m[uú]sica|musica|artista)|(?:quero\s+)?ouvir?\s+(?:m[uú]sica|musica)|(?:quero\s+)?escutar?\s+(?:m[uú]sica|musica)|minhas?\s+playlists?|criar?\s+playlist|status\s+(?:d[ea]\s+)?(?:m[uú]sica|mídia|media)|(?:parar?|pausar?)\s+(?:a\s+)?(?:m[uú]sica|musica|reprodu[çc][aã]o|faixa))\b/i;
       if (mediaPatterns.test(qLow)) {
