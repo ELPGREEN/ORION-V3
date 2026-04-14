@@ -63,9 +63,10 @@ export function useVoiceIdentityGuard() {
         });
       } catch (featureErr) {
         console.error("[VoiceGuard] ❌ Feature extraction failed:", featureErr);
-        setIdentityStatus("owner");
+        // FAIL-CLOSED: do NOT default to owner — block sensitive commands
+        setIdentityStatus("unknown");
         setIsCheckingVoice(false);
-        return "owner";
+        return "unknown";
       }
 
       // ── Check against CREATOR hardcoded fingerprint first ──
@@ -125,10 +126,10 @@ export function useVoiceIdentityGuard() {
       return "guest";
     } catch (e) {
       console.error("[VoiceGuard] ❌ Unexpected error:", e);
-      // On error, don't block the user — assume owner
-      setIdentityStatus("owner");
+      // FAIL-CLOSED: do NOT default to owner — block sensitive commands
+      setIdentityStatus("unknown");
       setIsCheckingVoice(false);
-      return "owner";
+      return "unknown";
     }
   }, [user?.id, user?.email]);
 

@@ -141,7 +141,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef } = useNeuralVoice();
   const bgTranscriptsGetterRef = useRef<() => import("./useWakeWord").BackgroundTranscript[]>(() => []);
-  const { thought, log, aiDescription, askAI, askInput, setAskInput, chatHistory, isProcessing, detectedObjects } = useOrionReasoning(active, speak, canvasRef, identificationMode, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, () => bgTranscriptsGetterRef.current());
+  const { thought, log, aiDescription, askAI, askInput, setAskInput, chatHistory, isProcessing, detectedObjects } = useOrionReasoning(active, speak, canvasRef, identificationMode, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, () => bgTranscriptsGetterRef.current(), identityStatus);
   const voiceClone = useOrionVoiceClone();
 
   // ═══ Voice Identity Guard ═══
@@ -179,9 +179,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         const blob = new Blob(chunks, { type: recorder.mimeType });
         console.log("[NeuralVision] 🎤 Voice capture complete, blob size:", blob.size, "chunks:", chunks.length);
         voiceCheckDoneRef.current = true;
-        if (blob.size < 1000) {
+      if (blob.size < 1000) {
           console.warn("[NeuralVision] ⚠️ Audio blob too small, skipping verification");
-          setIdentityStatus("owner");
+          setIdentityStatus("unknown");
           return;
         }
         await verifyVoiceIdentity(blob);
@@ -191,7 +191,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     } catch (err) {
       console.warn("[NeuralVision] ⚠️ Mic access failed, skipping voice check:", err);
       voiceCheckDoneRef.current = true;
-      setIdentityStatus("owner");
+      setIdentityStatus("unknown");
     }
   }, [identityStatus, verifyVoiceIdentity, setIdentityStatus]);
 
