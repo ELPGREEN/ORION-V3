@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { X, Maximize2, Minimize2, Volume2, VolumeX, PictureInPicture2 } from "lucide-react";
+import { X, Maximize2, Minimize2, Volume2, VolumeX, PictureInPicture2, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -23,6 +23,7 @@ export function VideoOverlay() {
   const [title, setTitle] = useState("");
   const [minimized, setMinimized] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [barMode, setBarMode] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Don't render overlay on neural dashboard — uses embedded player instead
@@ -129,6 +130,42 @@ export function VideoOverlay() {
 
   return (
     <AnimatePresence>
+    {barMode ? (
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
+        className="fixed z-[9999] bottom-4 left-1/2 -translate-x-1/2 w-[360px] h-14 rounded-xl overflow-hidden border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl"
+      >
+        <div className="flex items-center justify-between h-full px-3">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+            <span className="text-[10px]">🎬</span>
+            <span className="text-xs font-medium truncate text-foreground/80">{title}</span>
+          </div>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setMuted(!muted)}>
+              {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setBarMode(false); setMinimized(false); }} title="Mostrar vídeo">
+              <Maximize2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={close}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+        {/* Hidden iframe keeps audio playing */}
+        <iframe
+          ref={iframeRef}
+          src={`${videoUrl}${videoUrl.includes("?") ? "&" : "?"}${muted ? "mute=1&" : ""}autoplay=1`}
+          className="absolute -top-[9999px] w-1 h-1 opacity-0 pointer-events-none"
+          allow="autoplay; encrypted-media"
+          title="Orion Audio"
+        />
+      </motion.div>
+    ) : (
+      /* ═══ NORMAL VIDEO OVERLAY ═══ */
       <motion.div
         initial={{ opacity: 0, scale: 0.7, y: 80, rotateX: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
@@ -148,14 +185,14 @@ export function VideoOverlay() {
           transition: "width 0.3s, height 0.3s",
         }}
       >
-        {/* ═══ Holographic shimmer top ═══ */}
+        {/* Holographic shimmer top */}
         <div className="absolute top-0 left-0 right-0 h-[2px]"
           style={{
             background: "linear-gradient(90deg, transparent, #D4AF37, #3B82F6, #D4AF37, transparent)",
             animation: "shimmer 3s ease-in-out infinite",
           }} />
 
-        {/* ═══ Light cone effect (only when expanded) ═══ */}
+        {/* Light cone effect (only when expanded) */}
         {!minimized && (
           <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[200%] h-20 pointer-events-none opacity-20"
             style={{
@@ -164,7 +201,7 @@ export function VideoOverlay() {
             }} />
         )}
 
-        {/* ═══ Header ═══ */}
+        {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#D4AF37]/5 to-[#3B82F6]/5 border-b border-white/[0.06]">
           <div className="flex items-center gap-2 min-w-0">
             <div className="h-5 w-5 rounded-full bg-[#D4AF37]/20 flex items-center justify-center"
@@ -179,9 +216,14 @@ export function VideoOverlay() {
           </div>
           <div className="flex items-center gap-0.5">
             {!minimized && (
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={tryPiP} title="Picture-in-Picture">
-                <PictureInPicture2 className="h-3 w-3" />
-              </Button>
+              <>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={tryPiP} title="Picture-in-Picture">
+                  <PictureInPicture2 className="h-3 w-3" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setBarMode(true)} title="Só áudio (barra de música)">
+                  <Music className="h-3 w-3" />
+                </Button>
+              </>
             )}
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMuted(!muted)}>
               {muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
@@ -195,16 +237,13 @@ export function VideoOverlay() {
           </div>
         </div>
 
-        {/* ═══ Video ═══ */}
+        {/* Video */}
         {!minimized && (
           <div className="relative w-full" style={{ height: "calc(100% - 40px)" }}>
-            {/* Holographic scan lines */}
             <div className="absolute inset-0 pointer-events-none z-10 opacity-[0.03]"
               style={{
                 backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,175,55,0.1) 2px, rgba(212,175,55,0.1) 4px)",
               }} />
-
-            {/* Animated corner brackets */}
             <div className="absolute top-1 left-1 w-5 h-5 border-l-2 border-t-2 z-10 pointer-events-none"
               style={{ borderColor: "rgba(212,175,55,0.5)", animation: "pulse 2s ease-in-out infinite" }} />
             <div className="absolute top-1 right-1 w-5 h-5 border-r-2 border-t-2 z-10 pointer-events-none"
@@ -213,13 +252,10 @@ export function VideoOverlay() {
               style={{ borderColor: "rgba(59,130,246,0.5)", animation: "pulse 2s ease-in-out infinite 1s" }} />
             <div className="absolute bottom-1 right-1 w-5 h-5 border-r-2 border-b-2 z-10 pointer-events-none"
               style={{ borderColor: "rgba(59,130,246,0.5)", animation: "pulse 2s ease-in-out infinite 1.5s" }} />
-
-            {/* Holographic edge glow */}
             <div className="absolute inset-0 pointer-events-none z-10 rounded-b-lg"
               style={{
                 boxShadow: "inset 0 0 30px rgba(212,175,55,0.05), inset 0 0 60px rgba(59,130,246,0.03)",
               }} />
-
             <iframe
               ref={iframeRef}
               src={`${videoUrl}${videoUrl.includes("?") ? "&" : "?"}${muted ? "mute=1&" : ""}autoplay=1`}
@@ -245,7 +281,6 @@ export function VideoOverlay() {
             animation: "shimmer 3s ease-in-out infinite reverse",
           }} />
 
-        {/* CSS animations */}
         <style>{`
           @keyframes shimmer {
             0%, 100% { opacity: 0.5; }
@@ -253,6 +288,7 @@ export function VideoOverlay() {
           }
         `}</style>
       </motion.div>
+    )}
     </AnimatePresence>
   );
 }
