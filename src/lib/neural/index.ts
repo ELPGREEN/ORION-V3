@@ -403,8 +403,8 @@ export {
   recordSubsystemFailure, resetSubsystemFailures, getSubsystemFailureStatus,
   recordTFFailure, recordVisionFailure, recordSTTFailure, recordTTSFailure,
   recordIoTFailure, recordONNXFailure, recordCoreFailure, recordPerfFailure,
-  recordDesignFailure, recordSecurityFailure, checkJulesResolution,
-  type SubsystemKey,
+  recordDesignFailure, recordSecurityFailure, recordIndustrialFailure,
+  checkJulesResolution, type SubsystemKey,
 } from "./jules-auto-triggers";
 export { startJulesPolling, stopJulesPolling, isJulesPollingActive } from "./jules-session-poller";
 
@@ -420,6 +420,22 @@ export {
   recordModuleFailure, shouldQuarantine, clearQuarantine,
   checkAndRegisterResolutions, getImmuneStats,
 } from "./jules-immune-system";
+
+// ═══ Jules-Órion Fusion — Industrial Robotics ═══
+export {
+  triggerIndustrialAutoProgram, runIndustrialEvolutionCycle,
+  triggerWeldingAutoProgram, triggerAssemblyAutoProgram,
+  triggerPaintingAutoProgram, triggerInspectionAutoProgram,
+  triggerPalletizationAutoProgram, triggerAdaptiveMfgAutoProgram,
+  triggerProtocolBridge, generateProtocolBridgePrompt,
+  registerIoTDevice, removeIoTDevice, getRegisteredDevices, getDevicesByDomain,
+  type IndustrialDomain, type IndustrialProtocol, type RobotVendor,
+  type IoTDevice, type IndustrialTask, type FusionResult,
+} from "./jules-orion-fusion";
+export {
+  scanIndustrialHealth, computeIndustrialMetrics, dispatchIndustrialIssues,
+  type IndustrialSubsystemKey, type IndustrialHealthMetrics,
+} from "./jules-industrial-scanner";
 
 // ═══ Serverless Agent Runtime (AWS Serverless Agentic AI Architecture 2026) ═══
 export {

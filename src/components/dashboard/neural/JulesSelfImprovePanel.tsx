@@ -1,7 +1,7 @@
 /**
- * Jules Self-Improvement Dashboard Panel v3
- * With tabs (Subsystems, Bugs, Performance, Design, Security),
- * health gauges, scan button, activity viewer, DB sessions.
+ * Jules Self-Improvement Dashboard Panel v4
+ * With tabs (Subsystems, Bugs, Performance, Design, Security, Industrial),
+ * health gauges, scan button, activity viewer, DB sessions, industrial robotics.
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -15,7 +15,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import {
   Bot, GitPullRequest, AlertTriangle, CheckCircle2, RefreshCw, Send,
   Cpu, Eye, Mic, Volume2, Wifi, Activity, Clock, Loader2,
-  Shield, Zap, Palette, Bug, Scan,
+  Shield, Zap, Palette, Bug, Scan, Factory, Wrench,
 } from "lucide-react";
 import {
   julesClient, orionSelfImprove, checkJulesRateLimit,
@@ -25,6 +25,11 @@ import { getSubsystemFailureStatus, resetSubsystemFailures } from "@/lib/neural/
 import { startJulesPolling, stopJulesPolling } from "@/lib/neural/jules-session-poller";
 import { runFullScan, getHealthScore, startAutoScan, stopAutoScan, type ScanResult } from "@/lib/neural/jules-evolution-engine";
 import { getImmuneStats } from "@/lib/neural/jules-immune-system";
+import {
+  getRegisteredDevices, triggerIndustrialAutoProgram,
+  type IndustrialDomain, type IoTDevice,
+} from "@/lib/neural/jules-orion-fusion";
+import { computeIndustrialMetrics, scanIndustrialHealth } from "@/lib/neural/jules-industrial-scanner";
 import { toast } from "sonner";
 
 const SUBSYSTEM_ICONS: Record<string, { icon: typeof Cpu; label: string; group: string }> = {
@@ -59,6 +64,23 @@ const SUBSYSTEM_ICONS: Record<string, { icon: typeof Cpu; label: string; group: 
   sec_xss: { icon: Shield, label: "XSS", group: "Security" },
   sec_injection: { icon: Shield, label: "Injection", group: "Security" },
   sec_auth_flow: { icon: Shield, label: "Auth Flow", group: "Security" },
+  industrial_welding: { icon: Factory, label: "Soldagem", group: "Industrial" },
+  industrial_assembly: { icon: Wrench, label: "Montagem", group: "Industrial" },
+  industrial_painting: { icon: Palette, label: "Pintura", group: "Industrial" },
+  industrial_inspection: { icon: Eye, label: "Inspeção", group: "Industrial" },
+  industrial_palletization: { icon: Factory, label: "Paletização", group: "Industrial" },
+  industrial_adaptive_mfg: { icon: Cpu, label: "Manufatura Adaptativa", group: "Industrial" },
+  industrial_protocol_bridge: { icon: Wifi, label: "Protocol Bridge", group: "Industrial" },
+  industrial_safety: { icon: Shield, label: "Segurança Industrial", group: "Industrial" },
+};
+
+const DOMAIN_LABELS: Record<IndustrialDomain, string> = {
+  welding: "Soldagem",
+  assembly: "Montagem",
+  painting: "Pintura",
+  inspection: "Inspeção",
+  palletization: "Paletização",
+  adaptive_manufacturing: "Manufatura Adaptativa",
 };
 
 // ─── Sub-components ───
@@ -140,6 +162,107 @@ function ScanDomainTab({ results, domain }: { results: ScanResult | undefined; d
   );
 }
 
+function IndustrialTab() {
+  const [triggering, setTriggering] = useState<string | null>(null);
+  const devices = getRegisteredDevices();
+  const metrics = computeIndustrialMetrics();
+  const industrialScan = scanIndustrialHealth();
+
+  const handleTrigger = async (domain: IndustrialDomain) => {
+    setTriggering(domain);
+    try {
+      const result = await triggerIndustrialAutoProgram({
+        domain,
+        description: `Auto-program ${domain} subsystem`,
+        devices: devices.filter((d) => d.status === "online"),
+        priority: "high",
+      });
+      if (result.success) {
+        toast.success(`Jules Industrial: ${DOMAIN_LABELS[domain]}`, { description: `Sessão criada: ${result.sessionId.slice(0, 8)}...` });
+      } else {
+        toast.error("Erro", { description: result.error });
+      }
+    } catch { toast.error("Falha ao disparar Jules Industrial"); }
+    setTriggering(null);
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Device Status */}
+      <div className="text-xs text-muted-foreground flex items-center gap-1">
+        <Factory className="h-3.5 w-3.5" />
+        {devices.length} dispositivos IoT registrados • {devices.filter((d) => d.status === "online").length} online
+      </div>
+
+      {/* Industrial Health Issues */}
+      {industrialScan.issues.length > 0 && (
+        <div className="space-y-1">
+          {industrialScan.issues.map((issue, i) => (
+            <div key={i} className="flex items-center gap-2 rounded-md bg-red-500/10 px-2 py-1.5 text-xs">
+              <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+              <span>{issue.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Domain Metrics */}
+      {metrics.length > 0 ? (
+        <div className="space-y-1.5">
+          {metrics.map((m) => (
+            <div key={m.domain} className="flex items-center justify-between rounded-md bg-muted/30 px-2 py-1.5 text-xs">
+              <div className="flex items-center gap-1.5">
+                <Factory className="h-3.5 w-3.5" />
+                <span className="font-medium">{DOMAIN_LABELS[m.domain]}</span>
+                <Badge variant="outline" className="text-[9px] px-1 py-0">
+                  {m.devicesOnline}/{m.devicesTotal} online
+                </Badge>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[10px] font-mono ${m.safetyScore >= 80 ? "text-green-400" : m.safetyScore >= 50 ? "text-yellow-400" : "text-red-400"}`}>
+                  {m.safetyScore}%
+                </span>
+                <Button
+                  variant="ghost" size="icon" className="h-5 w-5"
+                  disabled={triggering === m.domain}
+                  onClick={() => handleTrigger(m.domain)}
+                  title={`Disparar Jules para ${DOMAIN_LABELS[m.domain]}`}
+                >
+                  {triggering === m.domain ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-4 text-xs text-muted-foreground">
+          <Factory className="h-5 w-5 mx-auto mb-1 opacity-50" />
+          Nenhum dispositivo industrial registrado.
+          <br />Use <code className="text-[10px] bg-muted/50 px-1 rounded">registerIoTDevice()</code> para conectar.
+        </div>
+      )}
+
+      {/* Quick Trigger All Domains */}
+      {devices.length > 0 && (
+        <div className="grid grid-cols-3 gap-1">
+          {(Object.keys(DOMAIN_LABELS) as IndustrialDomain[]).map((domain) => (
+            <Button
+              key={domain}
+              variant="outline"
+              size="sm"
+              className="text-[10px] h-7"
+              disabled={!!triggering}
+              onClick={() => handleTrigger(domain)}
+            >
+              {DOMAIN_LABELS[domain]}
+            </Button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Panel ───
 
 export function JulesSelfImprovePanel() {
@@ -216,7 +339,6 @@ export function JulesSelfImprovePanel() {
   };
 
   const failureEntries = Object.entries(failures).filter(([, v]) => v.count > 0);
-
   const getScanDomain = (d: string) => scanResults.find((r) => r.domain === d);
 
   return (
@@ -259,12 +381,13 @@ export function JulesSelfImprovePanel() {
 
         {/* Tabs */}
         <Tabs defaultValue="subsystems" className="w-full">
-          <TabsList className="w-full grid grid-cols-5 h-8">
+          <TabsList className="w-full grid grid-cols-6 h-8">
             <TabsTrigger value="subsystems" className="text-[10px] px-1">Subsistemas</TabsTrigger>
             <TabsTrigger value="bugs" className="text-[10px] px-1">Bugs</TabsTrigger>
             <TabsTrigger value="perf" className="text-[10px] px-1">Perf</TabsTrigger>
             <TabsTrigger value="design" className="text-[10px] px-1">Design</TabsTrigger>
             <TabsTrigger value="security" className="text-[10px] px-1">Security</TabsTrigger>
+            <TabsTrigger value="industrial" className="text-[10px] px-1">🏭 Indústria</TabsTrigger>
           </TabsList>
 
           <TabsContent value="subsystems" className="mt-2">
@@ -307,6 +430,7 @@ export function JulesSelfImprovePanel() {
           <TabsContent value="perf" className="mt-2"><ScanDomainTab results={getScanDomain("performance")} domain="Performance" /></TabsContent>
           <TabsContent value="design" className="mt-2"><ScanDomainTab results={getScanDomain("design")} domain="Design" /></TabsContent>
           <TabsContent value="security" className="mt-2"><ScanDomainTab results={getScanDomain("security")} domain="Security" /></TabsContent>
+          <TabsContent value="industrial" className="mt-2"><IndustrialTab /></TabsContent>
         </Tabs>
 
         {/* DB Sessions */}
