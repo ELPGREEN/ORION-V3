@@ -76,6 +76,7 @@ async function callFirecrawl(query: string): Promise<any> {
 interface OrionTool {
   name: string;
   roles?: AppRole[];
+  creatorOnly?: boolean;
   regex: RegExp;
   extract: (match: RegExpMatchArray, question: string) => Record<string, unknown>;
   call: (params: Record<string, unknown>) => Promise<string>;
