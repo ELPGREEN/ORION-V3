@@ -29,10 +29,16 @@ function isMobileBrowser() {
 
 /** Extract command portion after the wake word */
 function extractCommandFromTranscript(transcript: string): string {
-  return transcript
+  const command = transcript
     .replace(ORION_WAKE_REGEX, "")
     .replace(/^\s*[,;:\-–—]+\s*/, "")
     .trim();
+
+  if (/^(ativar?|ativad[oa]?|ativando|ligar?|ligad[oa]?|ligando|acordar?|acordad[oa]?|oi|ol[aá]|e\s*a[ií])\s*[.!?]*$/i.test(command)) {
+    return "";
+  }
+
+  return command;
 }
 
 export function useWakeWord(
