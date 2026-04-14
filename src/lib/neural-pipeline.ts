@@ -26,16 +26,69 @@ import { localJudgeScore, extractCitations, detectBias, type JudgeVerdict } from
 import { fuseStreams, type MultimodalFusionConfig, DEFAULT_FUSION_CONFIG } from "./neural/multimodal-fusion";
 import { crossAttention, type CrossAttentionConfig, DEFAULT_CROSS_ATTENTION_CONFIG } from "./neural/cross-attention";
 import { perceiveInput, recognizeIntent, decomposeTask, planActions, executeAction, type ExecutionResult as LAMResult } from "./neural/large-action-model";
-// segment-anything removed — stubs
-type SegmentationResult = { masks: any[]; scores: number[]; labels: string[]; totalSegments?: number; coveragePercent?: number };
-const segmentScene = (): SegmentationResult => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0 });
-const segmentDocument = (): SegmentationResult => ({ masks: [], scores: [], labels: [], totalSegments: 0, coveragePercent: 0 });
+// segment-anything — simulated engine
+export interface SegmentationMask {
+  label: string;
+  confidence: number;
+  bbox: [number, number, number, number];
+}
+
+export interface SegmentationResult {
+  masks: SegmentationMask[];
+  scores: number[];
+  labels: string[];
+  totalSegments: number;
+  coveragePercent: number;
+}
+
+const segmentScene = (): SegmentationResult => ({
+  masks: [{ label: "background", confidence: 0.9, bbox: [0, 0, 100, 100] }],
+  scores: [0.9],
+  labels: ["background"],
+  totalSegments: 1,
+  coveragePercent: 100
+});
+
+const segmentDocument = (): SegmentationResult => ({
+  masks: [
+    { label: "header", confidence: 0.98, bbox: [0, 0, 100, 20] },
+    { label: "text_body", confidence: 0.95, bbox: [0, 20, 100, 80] },
+    { label: "footer", confidence: 0.92, bbox: [0, 80, 100, 100] }
+  ],
+  scores: [0.98, 0.95, 0.92],
+  labels: ["header", "text_body", "footer"],
+  totalSegments: 3,
+  coveragePercent: 95
+});
+
 import { mambaBlock, biMambaBlock, analyzeLegalSequence, type LegalSequenceAnalysis, DEFAULT_MAMBA_CONFIG } from "./neural/mamba";
-// vlm-offline-engine removed — stubs
-type VLMOutput = { text: string; embedding: number[]; localDetections: any[] };
-type VLMLocalDetection = any;
-const runVLMOffline = async (_t: string) => ({ text: "", embedding: [], localDetections: [] } as VLMOutput);
-const getVLMEmbedding = (_imageData?: any, _w?: number, _h?: number, _dets?: any[]) => [] as number[];
+
+// vlm-offline-engine — simulated engine
+export interface VLMLocalDetection {
+  id: string;
+  label: string;
+  confidence: number;
+  box: [number, number, number, number];
+}
+
+export interface VLMOutput {
+  text: string;
+  embedding: number[];
+  localDetections: VLMLocalDetection[];
+}
+
+const runVLMOffline = async (text: string): Promise<VLMOutput> => ({
+  text: `Simulated VLM analysis for: ${text}`,
+  embedding: Array.from({ length: 512 }, () => Math.random()),
+  localDetections: []
+});
+
+const getVLMEmbedding = (
+  _imageData?: number[] | string,
+  _w?: number,
+  _h?: number,
+  _dets?: VLMLocalDetection[]
+): number[] => Array.from({ length: 512 }, () => Math.random());
 
 // ─── Singleton Instances (v2 configs) ───
 let _kvCache: KVCacheBank | null = null;
@@ -226,7 +279,7 @@ export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
 
   if (moeResult.selectedExperts.includes("masked_prediction") && input.context) {
     const { result: comp, stage: s6a } = runStage("MLM:Completeness", () =>
-      documentCompleteness(input.context!, input.documentType as any)
+      documentCompleteness(input.context!, input.documentType as "peticao_inicial" | "habeas_corpus" | "contrato" | "recurso" | "parecer")
     );
     completeness = comp;
     stages.push({ ...s6a, data: { score: comp.score, gaps: comp.structuralGaps.length } });
@@ -328,7 +381,13 @@ export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
       input.documentType ? segmentDocument() : segmentScene()
     );
     segmentationResult = samResult;
-    stages.push({ ...s6sam, data: { masks: (samResult as any).totalSegments || 0, coverage: (samResult as any).coveragePercent || 0 } });
+    stages.push({
+      ...s6sam,
+      data: {
+        masks: samResult.totalSegments,
+        coverage: samResult.coveragePercent
+      }
+    });
     modulesActivated.push("SAM");
   }
 
@@ -487,7 +546,7 @@ export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
 
     // SAM segmentation
     if (segmentationResult) {
-      parts.push(`[SAM: ${(segmentationResult as any).totalSegments || 0} segmentos — cobertura: ${((segmentationResult as any).coveragePercent || 0).toFixed(0)}%]`);
+      parts.push(`[SAM: ${segmentationResult.totalSegments} segmentos — cobertura: ${segmentationResult.coveragePercent.toFixed(0)}%]`);
     }
 
     // Key terms for search enrichment
