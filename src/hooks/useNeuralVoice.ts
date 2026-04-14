@@ -308,7 +308,8 @@ export function useNeuralVoice(
       return;
     }
 
-    const restartDelay = delay ?? (isMobile() ? 200 : 50);
+    // Longer delays to prevent mic cycling — each start() triggers OS mic sound
+    const restartDelay = delay ?? (isMobile() ? 3000 : 400);
     setListening(true);
 
     restartTimerRef.current = setTimeout(() => {
@@ -402,54 +403,31 @@ export function useNeuralVoice(
     if (bargeInCallbackRef.current) bargeInCallbackRef.current();
   }, [updateAiResponding]);
 
-  // ═══ Mic Watchdog — auto-restart GCP STT if it dies silently ═══
+  // ═══ Mic Watchdog — auto-resume GCP STT if paused ═══
   useEffect(() => {
     micWatchdogRef.current = setInterval(() => {
       if (!voiceActiveRef.current || intentionalStopRef.current || speakingRef.current || VoiceState.aiResponding) return;
       if (!onCmdRef.current || !useGCPSTTRef.current) return;
 
-      if (gcpSessionRef.current && !gcpSessionRef.current.isActive()) {
-        console.warn("[Voice] Watchdog: GCP STT died — restarting (full session)");
-        gcpSessionRef.current = null;
-        const session = createGCPSTTSession({
-          languageCode: "pt-BR",
-          sampleRate: 16000,
-          chunkIntervalMs: 1400,
-          onFinal: (text, confidence) => {
-            if (!onCmdRef.current || intentionalStopRef.current) return;
-            if (speakingRef.current || VoiceState.aiResponding) {
-              if (STOP_PATTERNS.test(text)) { bargeIn(); return; }
-              if (text.split(/\s+/).length >= 3) { bargeIn(); }
-              return;
-            }
-            const normalized = normalizeSpeechText(text);
-            if (normalized.length < 2) return;
-            const wordCount = normalized.split(/\s+/).filter(Boolean).length;
-            if (confidence > 0 && confidence < 0.35 && wordCount <= 4) {
-              speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
-              return;
-            }
-            const now = Date.now();
-            if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
-            if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
-              if (isEchoOf(normalized, lastSpokenTextRef.current)) return;
-            }
-            lastProcessedTranscriptRef.current = normalized;
-            lastProcessedAtRef.current = now;
-            markSTTEnd();
-            onCmdRef.current?.(text.trim());
-          },
-          onError: (err) => console.warn("[Voice] Watchdog GCP STT error:", err),
-        });
-        gcpSessionRef.current = session;
-        session.start().then((ok) => { if (ok) { setListening(true); console.log("[Voice] ✅ Watchdog restarted GCP STT"); } });
+      // If GCP session exists but is paused, just resume — no new session needed
+      if (gcpSessionRef.current?.isActive() && gcpSessionRef.current.isPaused()) {
+        console.log("[Voice] Watchdog: GCP STT paused — resuming (no teardown)");
+        gcpSessionRef.current.resume();
+        setListening(true);
+        return;
       }
-    }, 5000);
+
+      // If session is truly dead, mark it null so next startListening creates fresh
+      if (gcpSessionRef.current && !gcpSessionRef.current.isActive()) {
+        console.warn("[Voice] Watchdog: GCP STT died — clearing ref for next startListening");
+        gcpSessionRef.current = null;
+      }
+    }, 10000); // Check every 10s — no aggressive polling
 
     return () => {
       if (micWatchdogRef.current) { clearInterval(micWatchdogRef.current); micWatchdogRef.current = null; }
     };
-  }, [bargeIn]);
+  }, []);
 
   // ═══ Web Speech TTS (Fallback) ═══
   const browserSpeak = useCallback((rawText: string) => {
@@ -752,8 +730,8 @@ export function useNeuralVoice(
       // Keep listening state true during restart to avoid UI flicker
       if (onCmdRef.current) {
         recRef.current = null;
-        // Longer delay to prevent rapid mic cycling
-        scheduleRecognitionRestart(300);
+      // Long delay to prevent rapid mic cycling — each start() = OS mic sound
+        scheduleRecognitionRestart(isMobile() ? 5000 : 800);
         return;
       }
       recRef.current = null;
@@ -778,7 +756,7 @@ export function useNeuralVoice(
           }, 5000);
           return;
         }
-        scheduleRecognitionRestart(250 * Math.pow(2, consecutiveAbortsRef.current - 1));
+        scheduleRecognitionRestart(isMobile() ? 5000 : 1000 * Math.pow(2, consecutiveAbortsRef.current - 1));
         return;
       }
 
@@ -789,21 +767,18 @@ export function useNeuralVoice(
       }
 
       if (e.error === "no-speech") {
-        // no-speech is normal — just restart without any teardown noise
-        // Use longer delay to avoid rapid cycling
-        scheduleRecognitionRestart(500);
+        // no-speech is normal — restart with long delay to avoid cycling
+        scheduleRecognitionRestart(isMobile() ? 5000 : 1000);
         return;
       }
 
       if (e.error === "network") {
         console.warn("[Voice] Network error — will retry recognition");
-        speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
-        scheduleRecognitionRestart(500);
+        scheduleRecognitionRestart(isMobile() ? 5000 : 1500);
         return;
       }
 
-      speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
-      scheduleRecognitionRestart(200);
+      scheduleRecognitionRestart(isMobile() ? 5000 : 1500);
     };
 
     return rec;

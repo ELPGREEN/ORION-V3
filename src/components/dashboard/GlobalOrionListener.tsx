@@ -168,22 +168,24 @@ export function GlobalOrionListener() {
   const MAX_RESTART_ATTEMPTS = isMobile ? 3 : 10;
 
   const getRestartDelay = useCallback((reason?: string) => {
-    if (typeof document !== "undefined" && document.hidden) return 10000;
+    if (typeof document !== "undefined" && document.hidden) return 15000;
     const attempts = restartAttemptsRef.current;
     if (isMobile) {
-      // Much longer delays on mobile to prevent OS mic activation sounds
-      const backoff = Math.min(3000 * Math.pow(1.5, attempts), 30000);
-      if (reason === "normal-end") return 3000; // Was 80ms on desktop — mobile needs longer
-      if (reason === "no-speech" || reason === "end") return Math.max(backoff, 3000);
-      if (reason === "aborted") return Math.max(backoff, 4000);
-      return Math.max(backoff, 3000);
+      // VERY long delays on mobile — each start() triggers OS mic sound
+      // Continuous mode handles most cases; restarts should be rare
+      const backoff = Math.min(8000 * Math.pow(1.5, attempts), 60000);
+      if (reason === "normal-end") return 8000;
+      if (reason === "no-speech" || reason === "end") return Math.max(backoff, 8000);
+      if (reason === "aborted") return Math.max(backoff, 10000);
+      return Math.max(backoff, 8000);
     }
-    const backoff = Math.min(300 * Math.pow(1.5, attempts), 5000);
-    if (reason === "aborted") return Math.max(backoff, 1000);
-    if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 1500);
-    if (reason === "no-speech" || reason === "end") return Math.max(backoff, 100);
-    if (reason === "normal-end") return 80;
-    return Math.max(backoff, 500);
+    // Desktop: longer delays too — prevent rapid cycling
+    const backoff = Math.min(800 * Math.pow(1.5, attempts), 8000);
+    if (reason === "aborted") return Math.max(backoff, 2000);
+    if (reason === "audio-capture" || reason === "network") return Math.max(backoff, 3000);
+    if (reason === "no-speech" || reason === "end") return Math.max(backoff, 500);
+    if (reason === "normal-end") return 400;
+    return Math.max(backoff, 1000);
   }, [isMobile]);
 
   /** ═══ Conversational Command Capture ═══
@@ -365,9 +367,9 @@ export function GlobalOrionListener() {
       try {
       const rec = new SR();
       rec.lang = "pt-BR";
-      // ═══ FIX: On mobile use continuous mode to avoid constant mic on/off OS sounds ═══
-      // On desktop/iframe, non-continuous avoids Chrome "aborted" loops
-      rec.continuous = isMobile;
+      // ALWAYS use continuous mode to avoid mic on/off cycling sounds
+      // Each start() call triggers OS mic activation sound — minimize them
+      rec.continuous = true;
       rec.interimResults = true;
       rec.maxAlternatives = 3;
 
