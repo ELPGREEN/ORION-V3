@@ -1,11 +1,12 @@
 /**
- * Orion Video Overlay — Holographic 3D Projector + Auto-minimize
+ * Orion Video Overlay — Holographic 3D Projector + Auto-minimize + Drag
  * Opens YouTube/videos as if Orion is projecting with a futuristic projector.
  * Auto-minimizes when video starts playing. Supports PiP via browser API.
+ * X button minimizes (does not destroy). Draggable with mouse.
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { X, Maximize2, Minimize2, Volume2, VolumeX, PictureInPicture2, Music } from "lucide-react";
+import { X, Maximize2, Minimize2, Volume2, VolumeX, PictureInPicture2, Music, Fullscreen, Shrink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -24,65 +25,134 @@ export function VideoOverlay() {
   const [minimized, setMinimized] = useState(false);
   const [muted, setMuted] = useState(false);
   const [barMode, setBarMode] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Don't render overlay on neural dashboard — uses embedded player instead
+  // ─── Drag state ───
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const dragStartRef = useRef<{ mouseX: number; mouseY: number; elX: number; elY: number } | null>(null);
+
   const isOnNeuralDashboard = /\/dashboard\/rede-neural/i.test(location.pathname);
 
+  // ─── Drag handlers ───
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button, iframe, input")) return;
+    e.preventDefault();
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    dragStartRef.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      elX: rect.left,
+      elY: rect.top,
+    };
+
+    const onMove = (ev: MouseEvent) => {
+      if (!dragStartRef.current) return;
+      const dx = ev.clientX - dragStartRef.current.mouseX;
+      const dy = ev.clientY - dragStartRef.current.mouseY;
+      setDragPos({
+        x: dragStartRef.current.elX + dx,
+        y: dragStartRef.current.elY + dy,
+      });
+    };
+
+    const onUp = () => {
+      dragStartRef.current = null;
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }, []);
+
+  // ─── Fullscreen ───
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      el.requestFullscreen().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
+  // ─── Event handler ───
   useEffect(() => {
     const handler = (e: CustomEvent<VideoCommand>) => {
       const { action, url, query, title: t } = e.detail;
       console.log("[VideoOverlay] Received command:", action, "url:", url, "query:", query);
       if (action === "play_video" && url) {
         const embedUrl = convertToEmbed(url);
-        console.log("[VideoOverlay] Playing embed:", embedUrl);
         setVideoUrl(embedUrl);
         setTitle(t || query || "Orion Video");
         setVisible(true);
-        setMinimized(false); // Keep maximized so user can interact and hear audio
+        setMinimized(false);
+        setBarMode(false);
       } else if (action === "search_video" && query) {
         setVideoUrl(`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1&enablejsapi=1`);
         setTitle(t || query);
         setVisible(true);
-        setMinimized(false); // Keep maximized for audio playback
+        setMinimized(false);
+        setBarMode(false);
       } else if (action === "pause" || action === "stop") {
-        // Send pause command to iframe via postMessage
         const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
         if (iframe?.contentWindow) {
-          iframe.contentWindow.postMessage({ event: "command", func: "pauseVideo" }, "*");
+          iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "https://www.youtube.com");
         }
       } else if (action === "play" || action === "resume") {
-        // Send play command to iframe via postMessage
         const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
         if (iframe?.contentWindow) {
-          iframe.contentWindow.postMessage({ event: "command", func: "playVideo" }, "*");
+          iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "https://www.youtube.com");
         }
       } else if (action === "next" || action === "skip") {
-        // Send next command to iframe via postMessage (works if playlist)
         const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
         if (iframe?.contentWindow) {
-          iframe.contentWindow.postMessage({ event: "command", func: "nextVideo" }, "*");
+          iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "nextVideo", args: [] }), "https://www.youtube.com");
         }
       } else if (action === "previous" || action === "prev") {
-        // Send previous command to iframe via postMessage (works if playlist)
         const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
         if (iframe?.contentWindow) {
-          iframe.contentWindow.postMessage({ event: "command", func: "previousVideo" }, "*");
-        }
-      } else if (action === "setVolume" || action === "volume") {
-        // Send volume command to iframe via postMessage
-        const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
-        if (iframe?.contentWindow) {
-          const vol = parseInt(String(action).match(/\d+/)?.[0] || "50");
-          iframe.contentWindow.postMessage({ event: "command", func: "setVolume", arg: vol }, "*");
+          iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "previousVideo", args: [] }), "https://www.youtube.com");
         }
       } else if (action === "close") {
         setVisible(false);
-      } else if (action === "maximize") {
+        setVideoUrl("");
+      } else if (action === "maximize" || action === "fullscreen" || action === "aumentar_tela") {
         setMinimized(false);
+        setBarMode(false);
+        // Enter browser fullscreen
+        setTimeout(() => {
+          if (containerRef.current && !document.fullscreenElement) {
+            containerRef.current.requestFullscreen().catch(() => {});
+          }
+        }, 100);
+      } else if (action === "diminuir_tela") {
+        // Exit fullscreen if active, otherwise just restore normal size
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+        setMinimized(false);
+        setBarMode(false);
       } else if (action === "minimize") {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
         setMinimized(true);
+        setBarMode(false);
       } else if (action === "minimize_to_bar") {
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
         setBarMode(true);
         setMinimized(false);
       }
@@ -103,10 +173,23 @@ export function VideoOverlay() {
     return () => window.removeEventListener("popstate", handleRouteChange);
   }, [visible, minimized]);
 
-  const close = useCallback(() => { setVisible(false); setVideoUrl(""); setTitle(""); setMinimized(false); }, []);
+  // X button = minimize, not close
+  const handleXButton = useCallback(() => {
+    setMinimized(true);
+  }, []);
+
+  // Real close (hold shift + click X, or from minimized bar)
+  const realClose = useCallback(() => {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    setVisible(false);
+    setVideoUrl("");
+    setTitle("");
+    setMinimized(false);
+    setBarMode(false);
+    setDragPos(null);
+  }, []);
 
   const tryPiP = useCallback(async () => {
-    // Try Document Picture-in-Picture API (Chrome 116+)
     if ("documentPictureInPicture" in window) {
       try {
         const pipWin = await (window as any).documentPictureInPicture.requestWindow({
@@ -124,12 +207,17 @@ export function VideoOverlay() {
         pipWin.document.body.appendChild(iframe);
         setMinimized(true);
       } catch (err) {
-        console.log("[Orion] PiP fallback — Document PiP not available:", err);
+        console.log("[Orion] PiP fallback:", err);
       }
     }
   }, [videoUrl]);
 
   if (!visible || !videoUrl || isOnNeuralDashboard) return null;
+
+  // Position style for dragging
+  const posStyle: React.CSSProperties = dragPos
+    ? { left: dragPos.x, top: dragPos.y, right: "auto", bottom: "auto" }
+    : {};
 
   return (
     <AnimatePresence>
@@ -153,7 +241,7 @@ export function VideoOverlay() {
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setBarMode(false); setMinimized(false); }} title="Mostrar vídeo">
               <Maximize2 className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={close}>
+            <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={realClose}>
               <X className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -170,33 +258,42 @@ export function VideoOverlay() {
     ) : (
       /* ═══ NORMAL VIDEO OVERLAY ═══ */
       <motion.div
+        ref={containerRef}
         initial={{ opacity: 0, scale: 0.7, y: 80, rotateX: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
         exit={{ opacity: 0, scale: 0.7, y: 80, rotateX: 15 }}
         transition={{ type: "spring", damping: 20, stiffness: 250 }}
+        onMouseDown={onDragStart}
         className={`fixed z-[9999] overflow-hidden ${
-          minimized ? "bottom-4 right-4 w-72 h-14" : "bottom-6 right-6 w-[480px] h-[320px] md:w-[560px] md:h-[360px]"
+          isFullscreen
+            ? "inset-0 w-full h-full"
+            : minimized
+              ? "bottom-4 right-4 w-72 h-14"
+              : "bottom-6 right-6 w-[480px] h-[320px] md:w-[560px] md:h-[360px]"
         }`}
         style={{
-          borderRadius: minimized ? "12px" : "16px",
-          border: "1px solid rgba(212,175,55,0.3)",
+          ...posStyle,
+          borderRadius: isFullscreen ? 0 : minimized ? "12px" : "16px",
+          border: isFullscreen ? "none" : "1px solid rgba(212,175,55,0.3)",
           background: "linear-gradient(145deg, rgba(8,8,20,0.98), rgba(12,8,25,0.98))",
-          boxShadow: minimized
+          boxShadow: isFullscreen ? "none" : minimized
             ? "0 4px 20px rgba(0,0,0,0.5), 0 0 15px rgba(212,175,55,0.1)"
             : `0 0 60px rgba(212,175,55,0.15), 0 0 120px rgba(59,130,246,0.08), 0 25px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(212,175,55,0.25)`,
-          perspective: "1200px",
+          cursor: isFullscreen ? "default" : "grab",
           transition: "width 0.3s, height 0.3s",
         }}
       >
         {/* Holographic shimmer top */}
-        <div className="absolute top-0 left-0 right-0 h-[2px]"
-          style={{
-            background: "linear-gradient(90deg, transparent, #D4AF37, #3B82F6, #D4AF37, transparent)",
-            animation: "shimmer 3s ease-in-out infinite",
-          }} />
+        {!isFullscreen && (
+          <div className="absolute top-0 left-0 right-0 h-[2px]"
+            style={{
+              background: "linear-gradient(90deg, transparent, #D4AF37, #3B82F6, #D4AF37, transparent)",
+              animation: "shimmer 3s ease-in-out infinite",
+            }} />
+        )}
 
-        {/* Light cone effect (only when expanded) */}
-        {!minimized && (
+        {/* Light cone effect (only when expanded, not fullscreen) */}
+        {!minimized && !isFullscreen && (
           <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[200%] h-20 pointer-events-none opacity-20"
             style={{
               background: "conic-gradient(from 180deg at 50% 100%, transparent 40%, rgba(212,175,55,0.3) 48%, rgba(59,130,246,0.2) 50%, rgba(212,175,55,0.3) 52%, transparent 60%)",
@@ -205,7 +302,8 @@ export function VideoOverlay() {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#D4AF37]/5 to-[#3B82F6]/5 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-[#D4AF37]/5 to-[#3B82F6]/5 border-b border-white/[0.06]"
+          style={{ cursor: "grab" }}>
           <div className="flex items-center gap-2 min-w-0">
             <div className="h-5 w-5 rounded-full bg-[#D4AF37]/20 flex items-center justify-center"
               style={{ boxShadow: "0 0 10px rgba(212,175,55,0.3)" }}>
@@ -219,9 +317,14 @@ export function VideoOverlay() {
           </div>
           <div className="flex items-center gap-0.5">
             {!minimized && (
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={tryPiP} title="Picture-in-Picture">
-                <PictureInPicture2 className="h-3 w-3" />
-              </Button>
+              <>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={tryPiP} title="Picture-in-Picture">
+                  <PictureInPicture2 className="h-3 w-3" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={toggleFullscreen} title={isFullscreen ? "Sair tela cheia" : "Tela cheia"}>
+                  {isFullscreen ? <Shrink className="h-3 w-3" /> : <Fullscreen className="h-3 w-3" />}
+                </Button>
+              </>
             )}
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setBarMode(true)} title="Só áudio (barra de música)">
               <Music className="h-3 w-3" />
@@ -232,7 +335,8 @@ export function VideoOverlay() {
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMinimized(!minimized)}>
               {minimized ? <Maximize2 className="h-3 w-3" /> : <Minimize2 className="h-3 w-3" />}
             </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={close}>
+            {/* X = minimize (not destroy) */}
+            <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={handleXButton} title="Minimizar vídeo">
               <X className="h-3 w-3" />
             </Button>
           </div>
@@ -240,9 +344,16 @@ export function VideoOverlay() {
 
         {/* Video */}
         {!minimized && (
-          <div className="relative w-full" style={{ height: "calc(100% - 40px)" }}>
+          <div className="relative w-full" style={{ height: isFullscreen ? "calc(100% - 40px)" : "calc(100% - 40px)" }}>
             {/* Floating action buttons over video */}
             <div className="absolute top-2 right-2 z-20 flex gap-1">
+              <button
+                onClick={toggleFullscreen}
+                className="h-8 w-8 rounded-full flex items-center justify-center bg-black/70 hover:bg-black/90 border border-white/20 text-white transition-all hover:scale-110"
+                title={isFullscreen ? "Sair tela cheia" : "Tela cheia"}
+              >
+                {isFullscreen ? <Shrink className="h-4 w-4" /> : <Fullscreen className="h-4 w-4" />}
+              </button>
               <button
                 onClick={() => setBarMode(true)}
                 className="h-8 w-8 rounded-full flex items-center justify-center bg-black/70 hover:bg-black/90 border border-white/20 text-white transition-all hover:scale-110"
@@ -258,23 +369,25 @@ export function VideoOverlay() {
                 <Minimize2 className="h-4 w-4" />
               </button>
               <button
-                onClick={close}
+                onClick={handleXButton}
                 className="h-8 w-8 rounded-full flex items-center justify-center bg-black/70 hover:bg-red-600/90 border border-white/20 text-white transition-all hover:scale-110"
-                title="Fechar"
+                title="Minimizar"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="absolute inset-0 pointer-events-none z-10 opacity-[0.03]"
-              style={{
-                backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,175,55,0.1) 2px, rgba(212,175,55,0.1) 4px)",
-              }} />
+            {!isFullscreen && (
+              <div className="absolute inset-0 pointer-events-none z-10 opacity-[0.03]"
+                style={{
+                  backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,175,55,0.1) 2px, rgba(212,175,55,0.1) 4px)",
+                }} />
+            )}
             <iframe
               ref={iframeRef}
               src={`${videoUrl}${videoUrl.includes("?") ? "&" : "?"}${muted ? "mute=1&" : ""}autoplay=1`}
               className="absolute inset-0 w-full h-full"
-              allow="autoplay; encrypted-media; picture-in-picture"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
               allowFullScreen
               title="Orion Video Projector"
             />
@@ -284,16 +397,21 @@ export function VideoOverlay() {
         {minimized && (
           <div className="flex items-center gap-2 px-3 py-1 cursor-pointer" onClick={() => setMinimized(false)}>
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-[10px] truncate text-muted-foreground">{title}</span>
+            <span className="text-[10px] truncate text-muted-foreground flex-1">{title}</span>
+            <Button variant="ghost" size="icon" className="h-5 w-5 hover:text-destructive shrink-0" onClick={(e) => { e.stopPropagation(); realClose(); }} title="Fechar vídeo">
+              <X className="h-3 w-3" />
+            </Button>
           </div>
         )}
 
         {/* Bottom glow */}
-        <div className="absolute bottom-0 left-0 right-0 h-[2px]"
-          style={{
-            background: "linear-gradient(90deg, transparent, #3B82F6, #D4AF37, #3B82F6, transparent)",
-            animation: "shimmer 3s ease-in-out infinite reverse",
-          }} />
+        {!isFullscreen && (
+          <div className="absolute bottom-0 left-0 right-0 h-[2px]"
+            style={{
+              background: "linear-gradient(90deg, transparent, #3B82F6, #D4AF37, #3B82F6, transparent)",
+              animation: "shimmer 3s ease-in-out infinite reverse",
+            }} />
+        )}
 
         <style>{`
           @keyframes shimmer {
