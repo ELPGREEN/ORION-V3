@@ -389,6 +389,13 @@ export * from "./agentic-patterns-engine";
 // ═══ Agentic Protocols, Platforms & Tools (AWS Frameworks 2026) ═══
 export * from "./agentic-protocols-tools";
 
+// ═══ RAG Evaluation & Feedback ═══
+export { evaluateRAGResponse, type RAGEvalResult, type RAGMetricScore, type RetrievalQuality } from "./rag-evaluator";
+export { submitRAGFeedback, getOptimizedWeights, classifyQueryType, type SearchWeights, type WeightProfile } from "./rag-feedback-loop";
+
+// ═══ Jules Self-Improvement ═══
+export { julesClient, orionSelfImprove, pollJulesSession } from "./jules-client";
+
 // ═══ Serverless Agent Runtime (AWS Serverless Agentic AI Architecture 2026) ═══
 export {
   type EventType as ServerlessEventType,
