@@ -184,12 +184,12 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         }
         const blob = new Blob(chunks, { type: recorder.mimeType });
         console.log("[NeuralVision] 🎤 Voice capture complete, blob size:", blob.size, "chunks:", chunks.length);
-        voiceCheckDoneRef.current = true;
-      if (blob.size < 1000) {
-          console.warn("[NeuralVision] ⚠️ Audio blob too small, skipping verification");
-          setIdentityStatus("unknown");
+        if (blob.size < 1000) {
+          console.warn("[NeuralVision] ⚠️ Audio blob too small, will retry on next interaction");
+          // Do NOT mark as done — allow retry on next voice interaction
           return;
         }
+        voiceCheckDoneRef.current = true;
         await verifyVoiceIdentity(blob);
       };
       recorder.start(500); // collect data every 500ms for reliable chunks
