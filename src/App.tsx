@@ -46,6 +46,12 @@ const Servicos = lazy(lazyRetry(() => import("./pages/Servicos")));
 const Plataforma = lazy(lazyRetry(() => import("./pages/Plataforma")));
 const Contato = lazy(lazyRetry(() => import("./pages/Contato")));
 const InvestorTools = lazy(lazyRetry(() => import("./pages/InvestorTools")));
+const Escritorio = lazy(lazyRetry(() => import("./pages/Escritorio")));
+const Clientes = lazy(lazyRetry(() => import("./pages/Clientes")));
+const ProBono = lazy(lazyRetry(() => import("./pages/ProBono")));
+const TireRecyclingPlant = lazy(lazyRetry(() => import("./pages/plants/TireRecyclingPlant")));
+const PyrolysisPlant = lazy(lazyRetry(() => import("./pages/plants/PyrolysisPlant")));
+const OTRPlant = lazy(lazyRetry(() => import("./pages/plants/OTRPlant")));
 // ─── Soluções por perfil (páginas dedicadas) ───
 const SolucoesAdvogados = lazy(lazyRetry(() => import("./pages/solucoes/Advogados")));
 const SolucoesProdutores = lazy(lazyRetry(() => import("./pages/solucoes/Produtores")));
@@ -110,6 +116,23 @@ const ExplorarLojas = lazy(lazyRetry(() => import("./pages/dashboard/ExplorarLoj
 const ConfigurarIA = lazy(lazyRetry(() => import("./pages/dashboard/ConfigurarIA")));
 const PlanoUsuario = lazy(lazyRetry(() => import("./pages/dashboard/PlanoUsuario")));
 const ExtensaoPage = lazy(lazyRetry(() => import("./pages/dashboard/ExtensaoPage")));
+const ChatJuridico = lazy(lazyRetry(() => import("./pages/dashboard/ChatJuridico")));
+const ChatIAAdvogado = lazy(lazyRetry(() => import("./pages/dashboard/ChatIAAdvogado")));
+const ChatIARouter = lazy(lazyRetry(() => import("./pages/dashboard/ChatIARouter")));
+const CRMPipeline = lazy(lazyRetry(() => import("./pages/dashboard/CRMPipeline")));
+const ContatosPage = lazy(lazyRetry(() => import("./pages/dashboard/ContatosPage")));
+const PrazosCalculadora = lazy(lazyRetry(() => import("./pages/dashboard/PrazosCalculadora")));
+const PesquisaJurisprudencial = lazy(lazyRetry(() => import("./pages/dashboard/PesquisaJurisprudencial")));
+const ProprietarioDashboard = lazy(lazyRetry(() => import("./pages/dashboard/ProprietarioDashboard")));
+const ProdutorDashboard = lazy(lazyRetry(() => import("./pages/dashboard/ProdutorDashboard")));
+const NomadeDigitalDashboard = lazy(lazyRetry(() => import("./pages/dashboard/NomadeDigitalDashboard")));
+const WebhooksPage = lazy(lazyRetry(() => import("./pages/dashboard/WebhooksPage")));
+const PerfilAdmin = lazy(lazyRetry(() => import("./pages/dashboard/PerfilAdmin")));
+const ArquiteturaIA = lazy(lazyRetry(() => import("./pages/dashboard/ArquiteturaIA")));
+const ClienteDashboard = lazy(lazyRetry(() => import("./pages/dashboard/ClienteDashboard")));
+const AdvogadoDashboard = lazy(lazyRetry(() => import("./pages/dashboard/AdvogadoDashboard")));
+const AfiliadoDashboard = lazy(lazyRetry(() => import("./pages/dashboard/AfiliadoDashboard")));
+const DashboardHome = lazy(lazyRetry(() => import("./pages/dashboard/DashboardHome")));
 // OrionOrchestratorPage removed — merged into RedeNeuralPage
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -174,6 +197,12 @@ const App = () => (
                   <Route path="/servicos" element={<Servicos />} />
                   <Route path="/contato" element={<Contato />} />
                   <Route path="/investidor" element={<InvestorTools />} />
+                  <Route path="/escritorio" element={<Escritorio />} />
+                  <Route path="/clientes" element={<Clientes />} />
+                  <Route path="/pro-bono" element={<ProBono />} />
+                  <Route path="/planta/tire-recycling" element={<TireRecyclingPlant />} />
+                  <Route path="/planta/pyrolysis" element={<PyrolysisPlant />} />
+                  <Route path="/planta/otr" element={<OTRPlant />} />
                   {/* ═══ PUBLIC — Soluções por perfil ═══ */}
                   <Route path="/solucoes/advogados" element={<SolucoesAdvogados />} />
                   <Route path="/solucoes/produtores" element={<SolucoesProdutores />} />
@@ -262,25 +291,40 @@ const App = () => (
                     {/* Dashboard redirects — consolidation */}
                     <Route path="chat" element={<Navigate to="/dashboard/gerar-documento" replace />} />
                     <Route path="chat-ia" element={<Navigate to="/dashboard/gerar-documento" replace />} />
+                    <Route path="chat-juridico" element={<ChatJuridico />} />
+                    <Route path="chat-ia-advogado" element={<ChatIAAdvogado />} />
+                    <Route path="chat-ia-router" element={<ChatIARouter />} />
                     <Route path="manual-assistente" element={<Navigate to="/consulta" replace />} />
                     <Route path="assistente-ia" element={<Navigate to="/consulta" replace />} />
                     <Route path="pesquisa" element={<Navigate to="/dashboard/pesquisa-unificada" replace />} />
+                    <Route path="pesquisa-jurisprudencial" element={<PesquisaJurisprudencial />} />
                     <Route path="clientes" element={<Navigate to="/dashboard/crm" replace />} />
+                    <Route path="crm-pipeline" element={<CRMPipeline />} />
                     <Route path="contatos" element={<Navigate to="/dashboard/crm" replace />} />
+                    <Route path="contatos-page" element={<ContatosPage />} />
                     <Route path="assinatura" element={<Navigate to="/dashboard/assinatura-digital" replace />} />
                     <Route path="escritorio" element={<Navigate to="/dashboard/configuracoes" replace />} />
                     <Route path="avaliacoes-admin" element={<Navigate to="/dashboard/publicacoes-admin" replace />} />
                     <Route path="metricas-ia" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="webhooks" element={<Navigate to="/dashboard/configuracoes" replace />} />
+                    <Route path="webhooks-page" element={<WebhooksPage />} />
                     <Route path="biblioteca-univates" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="prazos" element={<Navigate to="/dashboard/tarefas" replace />} />
+                    <Route path="prazos-calculadora" element={<PrazosCalculadora />} />
                     <Route path="central-ajuda" element={<Navigate to="/dashboard/instrucoes" replace />} />
                     <Route path="configurar-ia" element={<ConfigurarIA />} />
                     <Route path="arquitetura-ia" element={<Navigate to="/dashboard/rede-neural" replace />} />
+                    <Route path="arquitetura-ia-page" element={<ArquiteturaIA />} />
                     <Route path="dispositivos" element={<Navigate to="/dashboard/rede-neural" replace />} />
+                    <Route path="dispositivos-iot-page" element={<DeviceIntegrationPage />} />
                     <Route path="plano" element={<PlanoUsuario />} />
+                    <Route path="perfil-admin" element={<PerfilAdmin />} />
                     <Route path="orion-orchestrator" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="orion" element={<Navigate to="/consulta" replace />} />
+                    <Route path="proprietario" element={<ProprietarioDashboard />} />
+                    <Route path="produtor" element={<ProdutorDashboard />} />
+                    <Route path="nomade" element={<NomadeDigitalDashboard />} />
+                    <Route path="home" element={<DashboardHome />} />
                   </Route>
 
                   <Route path="*" element={<NotFound />} />
