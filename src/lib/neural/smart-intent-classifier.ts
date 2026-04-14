@@ -116,10 +116,10 @@ const REGEX_RULES: RegexRule[] = [
     return { query: m?.[1]?.trim() || t.replace(/.*(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o)\s*/i, "").trim(), action: "play" };
   }},
 
-  // Search — generic (excludes media context already caught above)
-  { pattern: /\b(procur|busc|encontr|pesquis)\w*\s+/i, intent: "search", confidence: 0.85, extractParams: (t) => {
-    const m = t.match(/(?:procur|busc|encontr|pesquis)\w*\s+(.+)/i);
-    return { query: m?.[1]?.trim() || t };
+  // Search — generic → web_search (user wants internet search, not internal)
+  { pattern: /\b(procur|busc|encontr|pesquis)\w*\s+/i, intent: "web_search", confidence: 0.85, extractParams: (t) => {
+    const cleaned = t.replace(/\b(?:pesquis|busc|procur|encontr)\w*\s+(?:na\s+internet\s+|na\s+web\s+|online\s+)?/i, "").trim();
+    return { query: cleaned || t };
   }},
   
   // Legal

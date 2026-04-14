@@ -947,8 +947,9 @@ export function useNeuralVoice(
               try { window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: text.trim() } })); } catch {}
 
               markSTTEnd();
-              console.log(`[Voice] GCP STT utterance: "${text}" (${(confidence * 100).toFixed(0)}%)`);
-              onCmdRef.current(text.trim());
+              const dedupedText = deduplicateRepeatedPhrases(text.trim());
+              console.log(`[Voice] GCP STT utterance: "${dedupedText}" (${(confidence * 100).toFixed(0)}%)${dedupedText !== text.trim() ? ` [deduped from "${text.trim()}"]` : ""}`);
+              onCmdRef.current(dedupedText);
             },
             onError: (err) => {
               console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech silently");

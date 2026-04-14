@@ -379,11 +379,14 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }
 
     // Now safe to strip wake word prefix and greeting verbs
-    const cleanedCommand = original
+    let cleanedCommand = original
       .replace(/^\s*[óòôõo]r[iíìeéè][oóòôõ][nmn][\s,;:-]*/i, "")
-      .replace(/^\s*oreo[nm][\s,;:-]*/i, "")
-      .replace(/^(ativar?|ligar?|acordar?|oi|olá|e\s*aí)\s*/i, "")
-      .trim();
+      .replace(/^\s*oreo[nm][\s,;:-]*/i, "");
+    // Only strip "ativar/ligar" if NOT followed by media keywords
+    if (!/\b(ativar?|ligar?)\s+(?:m[uú]sica|v[ií]deo|som|can[çc])/i.test(cleanedCommand)) {
+      cleanedCommand = cleanedCommand.replace(/^(ativar?|ligar?|acordar?|oi|olá|e\s*aí)\s*/i, "");
+    }
+    cleanedCommand = cleanedCommand.trim();
 
     // Voice clone flow
     if (isVoiceCloneCommand(q)) {
