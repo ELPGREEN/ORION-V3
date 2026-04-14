@@ -395,25 +395,29 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     try { wakeRecRef.current?.stop?.(); } catch {}
     wakeRecRef.current = null;
 
+    const isMobileBrowser = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+    const warmStartDelay = isMobileBrowser ? 120 : 200;
+    const fastResumeDelay = isMobileBrowser ? 80 : 120;
+
     if (!hasGreetedRef.current) {
       hasGreetedRef.current = true;
       _markSessionReady();
       // Wait for TTS to finish BEFORE starting STT — otherwise mic gets killed mid-TTS
       speakFast("Ativando sistema.").then(() => {
         if (!listening) {
-          setTimeout(() => startListening(handleVoice), 200);
+          setTimeout(() => startListening(handleVoice), warmStartDelay);
         }
       }).catch(() => {
         // TTS failed, start listening anyway
         if (!listening) {
-          setTimeout(() => startListening(handleVoice), 200);
+          setTimeout(() => startListening(handleVoice), warmStartDelay);
         }
       });
     } else {
       toast.info("⚡ Relâmpago Vivo — Orion pronto", { duration: 1500 });
       // Camera does NOT start automatically — user must say "ativar visão"
       if (!listening) {
-        setTimeout(() => startListening(handleVoice), 120);
+        setTimeout(() => startListening(handleVoice), fastResumeDelay);
       }
     }
   }, [listening, startListening, handleVoice, speakFast]);
@@ -431,12 +435,17 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     stopWakeWordListener();
     stopListen();
 
-    const isMobile = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+    const isMobileBrowser = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+    const delay = skipWakeWord
+      ? (isMobileBrowser ? 80 : 120)
+      : (isMobileBrowser ? 160 : 180);
+
     directVoiceStartTimerRef.current = setTimeout(() => {
       directVoiceStartTimerRef.current = null;
+      console.log("[NeuralVision] Starting direct voice capture", { isMobileBrowser, skipWakeWord, delay });
       startListening(handleVoice);
-    }, isMobile ? 420 : 180);
-  }, [handleVoice, startListening, stopListen, stopWakeWordListener]);
+    }, delay);
+  }, [handleVoice, skipWakeWord, startListening, stopListen, stopWakeWordListener]);
 
   const handleActivateVoiceButton = useCallback(() => {
     if (skipWakeWord) {

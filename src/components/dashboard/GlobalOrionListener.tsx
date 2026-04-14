@@ -301,14 +301,24 @@ export function GlobalOrionListener() {
     setWakeWordActive(false);
 
     const cleanCmd = command.trim();
+    const isMobileBrowser = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
 
     if (cleanCmd.length > 2) {
       // Already have a command from wake word phase — open directly
       openOrionOverlay(cleanCmd);
-    } else {
-      // Wake word only (e.g. "Orion") — start 4s command capture
-      startCommandCapture();
+      return;
     }
+
+    if (isMobileBrowser) {
+      // Mobile Web Speech handoff is unstable when wake-word recognition is
+      // followed by a second short-lived recognition instance.
+      console.log("[GlobalOrion] Mobile wake detected — opening overlay directly");
+      openOrionOverlay("");
+      return;
+    }
+
+    // Desktop keeps the short follow-up capture window.
+    startCommandCapture();
   }, [clearRestartTimer, openOrionOverlay, startCommandCapture]);
 
   const stopWakeWordListener = useCallback(() => {
