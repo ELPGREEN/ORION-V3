@@ -7,7 +7,8 @@
 
 import { recordSubsystemFailure, type SubsystemKey } from "./jules-auto-triggers";
 import type { ScanResult, ScanIssue } from "./jules-evolution-engine";
-import { getRegisteredDevices, type IoTDevice, type IndustrialDomain } from "./jules-orion-fusion";
+import { getRegisteredDevices, removeIoTDevice, type IoTDevice, type IndustrialDomain } from "./jules-orion-fusion";
+import { recordModuleFailure, shouldQuarantine } from "./jules-immune-system";
 
 // ─── Industrial Subsystem Keys ───
 
@@ -57,6 +58,25 @@ export function scanIndustrialHealth(): ScanResult {
       context: errorDevices.map((d) => `${d.name} (${d.type}/${d.protocol})`).join(", "),
     });
     score -= errorDevices.length * 15;
+
+    // ─── Automated Sensor Isolation (Immune System Hook) ───
+    errorDevices.forEach(device => {
+      const subsystemKey = `sensor:${device.id}`;
+      const quarantine = recordModuleFailure(subsystemKey);
+
+      if (shouldQuarantine(subsystemKey)) {
+        console.warn(`[Industrial-Scanner] Isolating faulty sensor: ${device.name} (id: ${device.id})`);
+        // Force removal from active registry to stop control-loop interference
+        removeIoTDevice(device.id);
+
+        issues.push({
+          subsystem: "industrial_safety",
+          severity: "critical",
+          message: `Faulty sensor ${device.name} isolated and removed from registry`,
+          context: `Device ID: ${device.id}, Total Failures: ${quarantine.consecutiveFailures}`,
+        });
+      }
+    });
   }
 
   if (offlineDevices.length > 0) {
