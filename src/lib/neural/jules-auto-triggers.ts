@@ -22,13 +22,21 @@ interface SubsystemFail {
   lastSessionId?: string;
 }
 
-type SubsystemKey =
+export type SubsystemKey =
   | "tf_continuous_learning" | "tf_predictive" | "tf_mlops" | "tf_inference" | "tf_model_monitoring"
   | "onnx_yolo"
   | "vision_gemini" | "vision_mediapipe"
   | "stt_gcp" | "stt_webspeech"
   | "tts_gemini" | "tts_webspeech"
-  | "iot_mqtt" | "iot_bluetooth" | "iot_smart_home" | "iot_ros2";
+  | "iot_mqtt" | "iot_bluetooth" | "iot_smart_home" | "iot_ros2"
+  // Core/Bugs
+  | "core_routing" | "core_state" | "core_auth" | "core_api"
+  // Performance
+  | "perf_bundle" | "perf_render" | "perf_memory" | "perf_network"
+  // Design
+  | "design_responsive" | "design_accessibility" | "design_animation"
+  // Security
+  | "sec_rls" | "sec_xss" | "sec_injection" | "sec_auth_flow";
 
 // ─── Local Store ───
 
@@ -178,6 +186,25 @@ const SUBSYSTEM_MAP: Record<string, { file: string; desc: string }> = {
   iot_bluetooth: { file: "src/lib/neural/bluetooth-manager.ts", desc: "Bluetooth BLE manager is failing" },
   iot_smart_home: { file: "src/lib/neural/smart-home-controller.ts", desc: "Smart home controller is failing" },
   iot_ros2: { file: "src/lib/neural/ros2-protocol-bridge.ts", desc: "ROS2 protocol bridge is failing" },
+  // Core/Bugs
+  core_routing: { file: "src/App.tsx", desc: "React Router navigation or routing is failing" },
+  core_state: { file: "src/lib/neural/orion-consciousness.ts", desc: "Global state management has errors" },
+  core_auth: { file: "src/hooks/useAuth.ts", desc: "Authentication flow is failing" },
+  core_api: { file: "src/integrations/supabase/client.ts", desc: "API calls or Supabase queries are failing" },
+  // Performance
+  perf_bundle: { file: "vite.config.ts", desc: "Bundle size or build performance is degraded" },
+  perf_render: { file: "src/App.tsx", desc: "React render performance is degraded (long tasks, excessive re-renders)" },
+  perf_memory: { file: "src/lib/neural/system-health.ts", desc: "Memory usage is excessive or leaking" },
+  perf_network: { file: "src/lib/neural/orion-api-orchestrator.ts", desc: "Network requests are slow or failing" },
+  // Design
+  design_responsive: { file: "src/index.css", desc: "Responsive layout issues (overflow, broken on mobile)" },
+  design_accessibility: { file: "src/index.css", desc: "Accessibility issues (missing alt, ARIA, contrast)" },
+  design_animation: { file: "src/index.css", desc: "Animation performance or visual glitches" },
+  // Security
+  sec_rls: { file: "supabase/migrations/", desc: "Row Level Security policies are missing or misconfigured" },
+  sec_xss: { file: "src/App.tsx", desc: "XSS vulnerability detected (inline handlers, exposed secrets)" },
+  sec_injection: { file: "supabase/functions/", desc: "SQL injection or input validation vulnerability" },
+  sec_auth_flow: { file: "src/hooks/useAuth.ts", desc: "Authentication security issue (token exposure, improper validation)" },
 };
 
 function buildJulesTask(
@@ -217,3 +244,15 @@ export const recordIoTFailure = (protocol: "mqtt" | "bluetooth" | "smart_home" |
 
 export const recordONNXFailure = (error: string) =>
   recordSubsystemFailure("onnx_yolo", error);
+
+export const recordCoreFailure = (module: "routing" | "state" | "auth" | "api", error: string) =>
+  recordSubsystemFailure(`core_${module}` as SubsystemKey, error);
+
+export const recordPerfFailure = (area: "bundle" | "render" | "memory" | "network", error: string) =>
+  recordSubsystemFailure(`perf_${area}` as SubsystemKey, error);
+
+export const recordDesignFailure = (area: "responsive" | "accessibility" | "animation", error: string) =>
+  recordSubsystemFailure(`design_${area}` as SubsystemKey, error);
+
+export const recordSecurityFailure = (area: "rls" | "xss" | "injection" | "auth_flow", error: string) =>
+  recordSubsystemFailure(`sec_${area}` as SubsystemKey, error);
