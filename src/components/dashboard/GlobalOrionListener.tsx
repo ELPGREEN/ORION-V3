@@ -185,10 +185,10 @@ export function GlobalOrionListener() {
     };
   }, [orionOpen]);
 
-  // Auto-minimize on navigation
+  // Auto-minimize on navigation to neural page only (avoid closing during normal use)
   useEffect(() => {
-    if (orionOpen) {
-      console.log("[GlobalOrion] Auto-minimizing due to navigation");
+    if (orionOpen && isOnNeuralPage) {
+      console.log("[GlobalOrion] Auto-minimizing — navigated to neural page");
       killMicRec();
       setOrionOpen(false);
     }
