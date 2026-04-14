@@ -212,6 +212,41 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         return ok(intent.intent, result.description, { ...params, resolvedPlatform: result.platform, fallback: result.fallback }, t0);
       }
 
+      case "video_fullscreen": {
+        window.dispatchEvent(new CustomEvent("orion-video-command", {
+          detail: { action: "aumentar_tela" }
+        }));
+        return ok(intent.intent, "Colocando vídeo em tela cheia.", null, t0);
+      }
+
+      case "video_reduce": {
+        window.dispatchEvent(new CustomEvent("orion-video-command", {
+          detail: { action: "diminuir_tela" }
+        }));
+        return ok(intent.intent, "Reduzindo a tela do vídeo.", null, t0);
+      }
+
+      case "video_minimize": {
+        window.dispatchEvent(new CustomEvent("orion-video-command", {
+          detail: { action: "minimize" }
+        }));
+        return ok(intent.intent, "Minimizando o vídeo.", null, t0);
+      }
+
+      case "vision_off": {
+        window.dispatchEvent(new CustomEvent("orion-vision-toggle", {
+          detail: { active: false }
+        }));
+        return ok(intent.intent, "Visão desativada.", null, t0);
+      }
+
+      case "vision_on": {
+        window.dispatchEvent(new CustomEvent("orion-vision-toggle", {
+          detail: { active: true }
+        }));
+        return ok(intent.intent, "Visão ativada.", null, t0);
+      }
+
       case "legal":
       case "financial":
       case "crm":
