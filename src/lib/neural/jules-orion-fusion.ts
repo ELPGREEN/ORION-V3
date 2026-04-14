@@ -322,6 +322,7 @@ export async function triggerIndustrialAutoProgram(
       branch,
       autoPR: true,
       subsystem: task.domain,
+      _internalAutoTrigger: true,
     });
 
     if (result.success) {
@@ -475,6 +476,7 @@ export async function triggerProtocolBridge(
     branch: `bridge/${from}-${to}-${Date.now()}`,
     autoPR: true,
     subsystem: `bridge_${from}_${to}`,
+    _internalAutoTrigger: true,
   });
 
   return {
