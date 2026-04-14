@@ -3,6 +3,7 @@ import { Menu, Search, Bell } from "lucide-react";
 import logoElp from "@/assets/logo-elp.webp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
 
 interface DashboardHeaderProps {
   onMobileMenuOpen: () => void;
@@ -79,6 +80,11 @@ export function DashboardHeader({ onMobileMenuOpen, unreadCount, clearUnread }: 
             )}
           </Button>
         </div>
+      </div>
+
+      {/* Playlist Orion — below header nav */}
+      <div className="border-t border-border/10">
+        <OrionPlaylistBar />
       </div>
     </header>
   );
