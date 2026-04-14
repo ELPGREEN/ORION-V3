@@ -1,11 +1,119 @@
 project_id = "dlwafedtlvbvuoaopvsl"
 
 [functions]
+  [functions.admin-api]
+    verify_jwt = false
+  [functions.ai-autocomplete]
+    verify_jwt = false
+  [functions.ai-orchestrator]
+    verify_jwt = false
+  [functions.amazon-auth]
+    verify_jwt = false
+  [functions.analyze-reference-doc]
+    verify_jwt = false
+  [functions.aprimorar-documento]
+    verify_jwt = false
   [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.chat-juridico]
+    verify_jwt = false
+  [functions.citation-verifier]
+    verify_jwt = false
+  [functions.classify-intent]
+    verify_jwt = false
+  [functions.create-client-profile]
+    verify_jwt = false
+  [functions.editorial-orchestrator]
+    verify_jwt = false
+  [functions.firebase-admin]
+    verify_jwt = false
+  [functions.firecrawl-search]
+    verify_jwt = false
+  [functions.gemini-live-token]
     verify_jwt = false
   [functions.gemini-tts]
     verify_jwt = false
+  [functions.generate-embeddings]
+    verify_jwt = false
+  [functions.generate-pdf]
+    verify_jwt = false
+  [functions.gerar-documento]
+    verify_jwt = false
+  [functions.get-api-keys]
+    verify_jwt = false
+  [functions.google-stt]
+    verify_jwt = false
+  [functions.hf-inference]
+    verify_jwt = false
+  [functions.ingest-legal]
+    verify_jwt = false
+  [functions.jules-proxy]
+    verify_jwt = false
+  [functions.kb-ingest]
+    verify_jwt = false
+  [functions.legislacao-federal]
+    verify_jwt = false
+  [functions.neural-bridge]
+    verify_jwt = false
+  [functions.neural-child-bridge]
+    verify_jwt = false
+  [functions.neural-inference]
+    verify_jwt = false
+  [functions.neural-knowledge-harvester]
+    verify_jwt = false
+  [functions.neural-ops]
+    verify_jwt = false
+  [functions.neural-pipeline-orchestrator]
+    verify_jwt = false
+  [functions.neural-search]
+    verify_jwt = false
+  [functions.notifications]
+    verify_jwt = false
+  [functions.ocr-document]
+    verify_jwt = false
   [functions.orion-advogado-ai]
     verify_jwt = false
+  [functions.orion-agent-factory]
+    verify_jwt = false
+  [functions.orion-agent-hub]
+    verify_jwt = false
+  [functions.orion-intelligence]
+    verify_jwt = false
   [functions.orion-produtor-ai]
+    verify_jwt = false
+  [functions.orion-realtime-intel]
+    verify_jwt = false
+  [functions.orion-vm-control]
+    verify_jwt = false
+  [functions.orion-vm-proxy]
+    verify_jwt = false
+  [functions.pdf-layout-analysis]
+    verify_jwt = false
+  [functions.pesquisa-unificada]
+    verify_jwt = false
+  [functions.process-sale]
+    verify_jwt = false
+  [functions.queue-worker]
+    verify_jwt = false
+  [functions.secretaria-ia]
+    verify_jwt = false
+  [functions.smart-agent-route]
+    verify_jwt = false
+  [functions.smart-ingest]
+    verify_jwt = false
+  [functions.spotify-api]
+    verify_jwt = false
+  [functions.stripe-api]
+    verify_jwt = false
+  [functions.stripe-webhook]
+    verify_jwt = false
+  [functions.translate-text]
+    verify_jwt = false
+  [functions.utils-api]
+    verify_jwt = false
+  [functions.verify-recaptcha]
+    verify_jwt = false
+  [functions.webhook-gateway]
+    verify_jwt = false
+  [functions.youtube-music-api]
     verify_jwt = false
