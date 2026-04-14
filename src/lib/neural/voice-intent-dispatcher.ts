@@ -43,8 +43,14 @@ const PARAM_EXTRACTORS: Record<string, (text: string) => Record<string, string>>
     return { query: match?.[1]?.trim() || text };
   },
   media: (text) => {
-    const match = text.match(/(?:tocar?|play|reproduz\w*)\s+(.+)/i);
-    return { query: match?.[1]?.trim() || "", action: /\b(par[ae]|stop|paus)\b/i.test(text) ? "pause" : "play" };
+    const match = text.match(/(?:tocar?|play|reproduz\w*|abr[aei]?r?|busc\w*|procur\w*|pesquis\w*|ouvir?|escutar?|assistir?|colocar?|encontr\w*)\s+(.+)/i);
+    let query = match?.[1]?.trim() || text;
+    query = query
+      .replace(/^(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)\s+/i, "")
+      .replace(/^(?:d[oae]\s+|d[oa]\s+banda\s+|d[oa]\s+cantor\w*\s+|d[oa]\s+artista\s+|d[oa]\s+grupo\s+)/i, "")
+      .replace(/^(?:qualquer\s+(?:uma?\s+)?(?:d[oae]\s+)?)/i, "")
+      .trim();
+    return { query: query || text, action: /\b(par[ae]|stop|paus)\b/i.test(text) ? "pause" : "play" };
   },
   legal: (text) => {
     return { query: text, type: "legal_research" };
