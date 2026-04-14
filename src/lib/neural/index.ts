@@ -395,6 +395,11 @@ export { submitRAGFeedback, getOptimizedWeights, classifyQueryType, type SearchW
 
 // ═══ Jules Self-Improvement ═══
 export { julesClient, orionSelfImprove, pollJulesSession } from "./jules-client";
+export {
+  recordSubsystemFailure, resetSubsystemFailures, getSubsystemFailureStatus,
+  recordTFFailure, recordVisionFailure, recordSTTFailure, recordTTSFailure,
+  recordIoTFailure, recordONNXFailure,
+} from "./jules-auto-triggers";
 
 // ═══ Serverless Agent Runtime (AWS Serverless Agentic AI Architecture 2026) ═══
 export {
