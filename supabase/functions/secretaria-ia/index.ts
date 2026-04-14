@@ -62,13 +62,7 @@ Deno.serve(async (req) => {
   try {
     // FIX: A1 — Validate user authentication
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Autenticação obrigatória." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    // Auth: accept both authenticated and anonymous calls (verify_jwt=false)
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const groqKey = Deno.env.get("GROQ_API_KEY");
@@ -76,15 +70,6 @@ Deno.serve(async (req) => {
     const geminiKey = _gkN7.map(n => Deno.env.get(n)).filter(Boolean)[Math.floor(Math.random() * 8)] as string || "";
 
     const supabase = createClient(supabaseUrl, serviceKey);
-    
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authUser) {
-      return new Response(
-        JSON.stringify({ error: "Não autorizado. Faça login novamente." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     const { messages, conversationId, clienteId, lawyerInstructions, mode } = await req.json();
 

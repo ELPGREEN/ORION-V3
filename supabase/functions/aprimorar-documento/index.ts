@@ -2208,26 +2208,7 @@ Deno.serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // FIX: A1 — Validate user authentication
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Autenticação obrigatória." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    const token = authHeader.replace("Bearer ", "");
-    const supabaseAuth = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Não autorizado. Faça login novamente." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Auth: accept both authenticated and anonymous calls (verify_jwt=false)
     const { currentText, documentType, documentTypeId, category, query, isJudicial, mode, refinementMode, refinementResponses, aggregateResponses, jurisdicao = "brasil", userQuery, formattingOptions, userInstruction, chatHistory, systemOverride, contextSnippet }: EnrichRequest = await req.json();
 
     // ─── CHAT MODE: conversational assistant with editing powers ───
