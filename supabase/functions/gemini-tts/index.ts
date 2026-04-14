@@ -443,7 +443,7 @@ function parseAudioResponse(data: any): Response | null {
   if (mimeType.includes("L16") || mimeType.includes("pcm") || mimeType.includes("raw")) {
     const wav = pcmToWav(audioBase64, 24000);
     console.log(`[TTS] WAV ${(wav.length / 1024).toFixed(1)}KB`);
-    return new Response(wav.buffer, {
+    return new Response(new Uint8Array(wav.buffer).buffer as ArrayBuffer, {
       headers: { ...corsHeaders, "Content-Type": "audio/wav", "Content-Length": String(wav.length) },
     });
   }

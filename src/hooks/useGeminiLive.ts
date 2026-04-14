@@ -88,11 +88,18 @@ export function useGeminiLive(options: UseGeminiLiveOptions = {}) {
   }, [options]);
 
   const stopMic = useCallback(() => {
+    // Disconnect audio processing nodes but NEVER stop the persistent mic stream tracks.
+    // Stopping tracks causes the browser to release mic hardware → cycling beeps/clicks.
     processorRef.current?.disconnect();
     processorRef.current = null;
     audioCtxRef.current?.close();
     audioCtxRef.current = null;
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+
+    // Only stop tracks if this is NOT the persistent mic stream
+    const persistentStream = (window as any).__orion_persistent_mic__?.stream;
+    if (streamRef.current && streamRef.current !== persistentStream) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+    }
     streamRef.current = null;
     setIsListening(false);
   }, []);

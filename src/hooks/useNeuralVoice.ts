@@ -131,11 +131,24 @@ async function primeMicrophone(): Promise<void> {
     const perm = await navigator.permissions?.query?.({ name: "microphone" as any });
     if (perm?.state === "granted") return;
     if (perm?.state !== "prompt") return;
+    // Just prime via getUserMedia but do NOT stop the tracks — let persistent mic handle lifecycle.
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     });
     await new Promise(r => setTimeout(r, 30));
-    stream.getTracks().forEach(t => t.stop());
+    // Store as persistent if none exists yet
+    const ps = (window as any).__orion_persistent_mic__;
+    if (ps && !ps.stream?.active) {
+      ps.stream = stream;
+      ps.granted = true;
+    } else if (!ps) {
+      // No persistent mic state yet — stop to avoid orphan
+      stream.getTracks().forEach(t => t.stop());
+    }
+    // If persistent state already has active stream, stop this duplicate
+    else if (ps.stream?.active && stream !== ps.stream) {
+      stream.getTracks().forEach(t => t.stop());
+    }
   } catch (err) {
     console.warn("[Voice] Mic priming failed:", err);
   }
