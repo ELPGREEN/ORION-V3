@@ -400,7 +400,10 @@ export function useNeuralVoice(
             const normalized = normalizeSpeechText(text);
             if (normalized.length < 2) return;
             const wordCount = normalized.split(/\s+/).filter(Boolean).length;
-            if (confidence > 0 && confidence < 0.35 && wordCount <= 4) return;
+            if (confidence > 0 && confidence < 0.35 && wordCount <= 4) {
+              speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
+              return;
+            }
             const now = Date.now();
             if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
             if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
@@ -760,10 +763,12 @@ export function useNeuralVoice(
 
       if (e.error === "network") {
         console.warn("[Voice] Network error — will retry recognition");
+        speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
         scheduleRecognitionRestart(500);
         return;
       }
 
+      speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
       scheduleRecognitionRestart(200);
     };
 
@@ -855,6 +860,7 @@ export function useNeuralVoice(
               // Discard obvious low-confidence noise/hallucinations
               if (confidence > 0 && confidence < 0.35 && wordCount <= 4) {
                 console.log(`[Voice] GCP STT descartado por baixa confiança: "${text}" (${(confidence * 100).toFixed(0)}%)`);
+                speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
                 return;
               }
 
@@ -886,6 +892,7 @@ export function useNeuralVoice(
             },
             onError: (err) => {
               console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech");
+              speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
               // Fallback to Web Speech API
               useGCPSTTRef.current = false;
               gcpSessionRef.current?.stop();

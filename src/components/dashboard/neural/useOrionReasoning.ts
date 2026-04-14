@@ -1509,11 +1509,20 @@ export function useOrionReasoning(
 
       const questionForLLM = processedInput || question;
       (window as any).__orionInputSource = source;
+
+      const waitTimer = setTimeout(() => {
+        if (isProcessingRef.current && !streamingText && !bargedInRef.current) {
+          speak("Analisando... um segundo.", { skipMicToggle: true }).catch(() => {});
+          setThought("Analisando... um segundo.");
+        }
+      }, 3500);
+
       const result = await analyzeFrameStreaming(
         needsImage ? canvasRef.current : null, questionForLLM, cleanHistory, needsImage,
         identificationMode, intentType,
         (accumulated) => {
           if (bargedInRef.current) return;
+          clearTimeout(waitTimer);
           streamingText = accumulated;
           const display = stripMarkdown(accumulated);
           setThought(display);
@@ -1563,6 +1572,8 @@ export function useOrionReasoning(
         },
         controller.signal,
       );
+
+      clearTimeout(waitTimer);
 
       // Stream ended — flush remaining sentences
       streamEnded = true;

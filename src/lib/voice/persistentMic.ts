@@ -65,14 +65,14 @@ export async function ensurePersistentMic(): Promise<boolean> {
 
     s.granted = true;
 
-    // On mobile, keep a persistent stream
-    if (isMobile() && navigator.mediaDevices?.getUserMedia) {
+    // Keep a persistent stream on all devices to avoid activate/deactivate cycling sounds
+    if (navigator.mediaDevices?.getUserMedia) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         });
         s.stream = stream;
-        console.log("[PersistentMic] Stream ativo no mobile — mic nunca será liberado");
+        console.log("[PersistentMic] Stream ativo — mic nunca será liberado para evitar cliques/beeps");
       } catch (err) {
         console.warn("[PersistentMic] Falha ao manter stream:", err);
       }
