@@ -1,6 +1,6 @@
 /**
- * Jules Self-Improvement Dashboard Panel
- * Shows subsystem failure status, Jules sessions, and manual trigger.
+ * Jules Self-Improvement Dashboard Panel v2
+ * With activity viewer, DB sessions, resolution badges, rate limit display.
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -9,13 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   Bot, GitPullRequest, AlertTriangle, CheckCircle2, RefreshCw, Send,
-  Cpu, Eye, Mic, Volume2, Wifi, Activity,
+  Cpu, Eye, Mic, Volume2, Wifi, Activity, Clock, XCircle, Loader2,
 } from "lucide-react";
-import { julesClient, orionSelfImprove, type JulesSession } from "@/lib/neural/jules-client";
+import {
+  julesClient, orionSelfImprove, checkJulesRateLimit,
+  getJulesDBSessions, type JulesDBSession, type JulesActivity,
+} from "@/lib/neural/jules-client";
 import { getSubsystemFailureStatus, resetSubsystemFailures } from "@/lib/neural/jules-auto-triggers";
-import { useToast } from "@/hooks/use-toast";
+import { startJulesPolling, stopJulesPolling } from "@/lib/neural/jules-session-poller";
+import { toast } from "sonner";
 
 const SUBSYSTEM_ICONS: Record<string, { icon: typeof Cpu; label: string; group: string }> = {
   tf_continuous_learning: { icon: Cpu, label: "TF Continuous Learning", group: "TensorFlow" },
@@ -36,28 +41,91 @@ const SUBSYSTEM_ICONS: Record<string, { icon: typeof Cpu; label: string; group: 
   iot_ros2: { icon: Wifi, label: "ROS2", group: "IoT" },
 };
 
+function StatusBadge({ status, resolved }: { status: string; resolved: boolean | null }) {
+  if (status === "completed" && resolved === true) {
+    return <Badge className="text-[10px] px-1.5 py-0 bg-green-600/20 text-green-400 border-green-500/30">Resolvido</Badge>;
+  }
+  if (status === "completed" && resolved === false) {
+    return <Badge className="text-[10px] px-1.5 py-0 bg-red-600/20 text-red-400 border-red-500/30">Não resolvido</Badge>;
+  }
+  if (status === "completed") {
+    return <Badge className="text-[10px] px-1.5 py-0 bg-blue-600/20 text-blue-400 border-blue-500/30">PR criado</Badge>;
+  }
+  if (status === "running") {
+    return <Badge className="text-[10px] px-1.5 py-0 bg-yellow-600/20 text-yellow-400 border-yellow-500/30">Em andamento</Badge>;
+  }
+  if (status === "failed") {
+    return <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Falhou</Badge>;
+  }
+  return <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Pendente</Badge>;
+}
+
+function ActivityTimeline({ sessionId }: { sessionId: string }) {
+  const [activities, setActivities] = useState<JulesActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    julesClient.listActivities(sessionId, 20).then((res) => {
+      if (res.success && res.data?.activities) setActivities(res.data.activities);
+      setLoading(false);
+    });
+  }, [sessionId]);
+
+  if (loading) return <div className="flex items-center gap-1 text-xs text-muted-foreground py-1"><Loader2 className="h-3 w-3 animate-spin" />Carregando...</div>;
+  if (activities.length === 0) return <div className="text-xs text-muted-foreground py-1">Sem atividades ainda</div>;
+
+  return (
+    <div className="space-y-1 pl-2 border-l border-border/50">
+      {activities.map((a, i) => (
+        <div key={i} className="text-[11px] text-muted-foreground">
+          <span className="font-medium text-foreground/80">{a.role || "system"}: </span>
+          {a.content?.slice(0, 120) || a.name}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function JulesSelfImprovePanel() {
-  const [sessions, setSessions] = useState<JulesSession[]>([]);
+  const [dbSessions, setDbSessions] = useState<JulesDBSession[]>([]);
   const [failures, setFailures] = useState<ReturnType<typeof getSubsystemFailureStatus>>({});
   const [loading, setLoading] = useState(false);
   const [manualTask, setManualTask] = useState("");
   const [sending, setSending] = useState(false);
-  const { toast } = useToast();
+  const [rateLimit, setRateLimit] = useState({ current: 0, max: 3 });
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setFailures(getSubsystemFailureStatus());
     try {
-      const result = await julesClient.listSessions(10);
-      if (result.success && result.data?.sessions) {
-        setSessions(result.data.sessions);
-      }
+      const [sessions, rl] = await Promise.all([
+        getJulesDBSessions(15),
+        checkJulesRateLimit(),
+      ]);
+      setDbSessions(sessions);
+      setRateLimit({ current: rl.current, max: 3 });
     } catch {}
     setLoading(false);
   }, []);
 
   useEffect(() => {
     refresh();
+    startJulesPolling();
+
+    const handlePR = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      toast.success("Jules criou um PR!", {
+        description: detail?.prTitle || detail?.prUrl,
+        action: detail?.prUrl ? { label: "Abrir", onClick: () => window.open(detail.prUrl, "_blank") } : undefined,
+      });
+      refresh();
+    };
+
+    window.addEventListener("jules:pr-ready", handlePR);
+    return () => {
+      stopJulesPolling();
+      window.removeEventListener("jules:pr-ready", handlePR);
+    };
   }, [refresh]);
 
   const handleManualTrigger = async () => {
@@ -65,11 +133,11 @@ export function JulesSelfImprovePanel() {
     setSending(true);
     const result = await orionSelfImprove({ task: manualTask, autoPR: true });
     if (result.success) {
-      toast({ title: "Jules ativado", description: `Sessão: ${result.sessionId}` });
+      toast.success("Jules ativado", { description: `Sessão criada` });
       setManualTask("");
       refresh();
     } else {
-      toast({ title: "Erro", description: result.error, variant: "destructive" });
+      toast.error("Erro", { description: result.error });
     }
     setSending(false);
   };
@@ -88,6 +156,9 @@ export function JulesSelfImprovePanel() {
         <CardTitle className="flex items-center gap-2 text-lg">
           <Bot className="h-5 w-5 text-primary" />
           Jules Self-Improvement
+          <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0">
+            {rateLimit.current}/{rateLimit.max}/h
+          </Badge>
           <Button variant="ghost" size="icon" onClick={refresh} disabled={loading} className="ml-auto h-7 w-7">
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
@@ -122,15 +193,7 @@ export function JulesSelfImprovePanel() {
                             <GitPullRequest className="h-2.5 w-2.5 mr-0.5" /> PR
                           </Badge>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5"
-                          onClick={() => {
-                            resetSubsystemFailures(key as any);
-                            setFailures(getSubsystemFailureStatus());
-                          }}
-                        >
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { resetSubsystemFailures(key as any); setFailures(getSubsystemFailureStatus()); }}>
                           <CheckCircle2 className="h-3 w-3 text-green-500" />
                         </Button>
                       </div>
@@ -149,34 +212,45 @@ export function JulesSelfImprovePanel() {
           </div>
         )}
 
-        {/* Recent Jules Sessions */}
-        {sessions.length > 0 && (
+        {/* DB Sessions with Activity Viewer */}
+        {dbSessions.length > 0 && (
           <div className="space-y-1.5">
             <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
               <GitPullRequest className="h-3.5 w-3.5" />
-              Sessões Recentes
+              Sessões Jules ({dbSessions.length})
             </h4>
-            <ScrollArea className="max-h-32">
-              {sessions.slice(0, 5).map((s) => {
-                const pr = s.outputs?.find((o) => o.pullRequest);
-                return (
-                  <div key={s.id} className="flex items-center justify-between rounded-md bg-muted/30 px-2 py-1 text-xs mb-1">
-                    <span className="truncate max-w-[200px]">{s.title || s.prompt?.slice(0, 40)}</span>
-                    {pr?.pullRequest ? (
-                      <a
-                        href={pr.pullRequest.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center gap-0.5"
-                      >
-                        <GitPullRequest className="h-3 w-3" /> PR
-                      </a>
-                    ) : (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">pendente</Badge>
-                    )}
-                  </div>
-                );
-              })}
+            <ScrollArea className="max-h-64">
+              <Accordion type="single" collapsible className="space-y-1">
+                {dbSessions.map((s) => (
+                  <AccordionItem key={s.session_id} value={s.session_id} className="border-none">
+                    <AccordionTrigger className="py-1.5 px-2 rounded-md bg-muted/30 hover:bg-muted/50 text-xs hover:no-underline">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <StatusBadge status={s.status} resolved={s.resolved} />
+                        <span className="truncate max-w-[180px]">{s.title || s.prompt?.slice(0, 40)}</span>
+                        {s.pr_url && (
+                          <a href={s.pr_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-0.5 ml-auto mr-2" onClick={(e) => e.stopPropagation()}>
+                            <GitPullRequest className="h-3 w-3" /> PR
+                          </a>
+                        )}
+                        {s.follow_up_count > 0 && (
+                          <Badge variant="outline" className="text-[10px] px-1 py-0">{s.follow_up_count} follow-up</Badge>
+                        )}
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 px-2">
+                      <div className="space-y-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(s.created_at).toLocaleString("pt-BR")}
+                          {s.subsystem && <Badge variant="outline" className="text-[10px] px-1 py-0 ml-1">{s.subsystem}</Badge>}
+                        </div>
+                        {s.error_snapshot && <div className="bg-muted/50 rounded p-1.5 text-[11px] font-mono break-all">{s.error_snapshot.slice(0, 200)}</div>}
+                        <ActivityTimeline sessionId={s.session_id} />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </ScrollArea>
           </div>
         )}
@@ -193,11 +267,11 @@ export function JulesSelfImprovePanel() {
           <Button
             size="sm"
             onClick={handleManualTrigger}
-            disabled={sending || !manualTask.trim()}
+            disabled={sending || !manualTask.trim() || rateLimit.current >= rateLimit.max}
             className="w-full text-xs"
           >
             {sending ? <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> : <Send className="h-3 w-3 mr-1" />}
-            Enviar para Jules
+            {rateLimit.current >= rateLimit.max ? "Rate limit atingido" : "Enviar para Jules"}
           </Button>
         </div>
       </CardContent>

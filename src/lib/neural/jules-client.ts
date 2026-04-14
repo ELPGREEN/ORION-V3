@@ -1,8 +1,7 @@
 /**
  * Jules API Client for Orion Self-Improvement
  * ─────────────────────────────────────────────
- * Enables Orion to autonomously create coding sessions via Jules
- * to fix bugs, optimize performance, and integrate new features.
+ * With DB persistence, rate limiting, and follow-up support.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -35,10 +34,44 @@ export interface JulesActivity {
   role?: string;
 }
 
+export interface JulesDBSession {
+  id: string;
+  session_id: string;
+  subsystem: string | null;
+  prompt: string;
+  title: string | null;
+  branch: string | null;
+  status: string;
+  pr_url: string | null;
+  pr_title: string | null;
+  resolved: boolean | null;
+  follow_up_count: number;
+  error_snapshot: string | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  resolved_at: string | null;
+}
+
 interface JulesResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+// ─── Rate Limiting ───
+
+const MAX_SESSIONS_PER_HOUR = 3;
+
+export async function checkJulesRateLimit(): Promise<{ allowed: boolean; current: number }> {
+  const oneHourAgo = new Date(Date.now() - 3600_000).toISOString();
+  const { count, error } = await supabase
+    .from("jules_sessions")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", oneHourAgo);
+
+  const current = error ? 0 : (count ?? 0);
+  return { allowed: current < MAX_SESSIONS_PER_HOUR, current };
 }
 
 // ─── Client ───
@@ -52,10 +85,9 @@ async function julesCall<T>(action: string, params: Record<string, unknown> = {}
 }
 
 export const julesClient = {
-  /** List all GitHub repos connected to Jules */
-  listSources: () => julesCall<{ sources: JulesSource[] }>("list_sources"),
+  listSources: (pageToken?: string) =>
+    julesCall<{ sources: JulesSource[]; nextPageToken?: string }>("list_sources", { page_token: pageToken }),
 
-  /** Create a new coding session */
   createSession: (opts: {
     prompt: string;
     source: string;
@@ -72,43 +104,116 @@ export const julesClient = {
     require_approval: opts.requireApproval ?? false,
   }),
 
-  /** Get session status (poll for completion/PR) */
   getSession: (sessionId: string) => julesCall<JulesSession>("get_session", { session_id: sessionId }),
 
-  /** List recent sessions */
-  listSessions: (pageSize = 10) => julesCall<{ sessions: JulesSession[] }>("list_sessions", { page_size: pageSize }),
+  listSessions: (pageSize = 10, pageToken?: string) =>
+    julesCall<{ sessions: JulesSession[]; nextPageToken?: string }>("list_sessions", { page_size: pageSize, page_token: pageToken }),
 
-  /** Approve a session's plan */
   approvePlan: (sessionId: string) => julesCall("approve_plan", { session_id: sessionId }),
 
-  /** Send follow-up message to session */
   sendMessage: (sessionId: string, prompt: string) => julesCall("send_message", { session_id: sessionId, prompt }),
 
-  /** List activities in a session */
   listActivities: (sessionId: string, pageSize = 30) =>
     julesCall<{ activities: JulesActivity[] }>("list_activities", { session_id: sessionId, page_size: pageSize }),
 };
 
-// ─── Orion Self-Improvement Interface ───
+// ─── DB Persistence ───
 
-/** Default source — ORION-V3 repo */
-const DEFAULT_SOURCE = "sources/github/ELPGREEN/ORION-V3";
-
-async function getDefaultSource(): Promise<string> {
-  return DEFAULT_SOURCE;
+async function persistSession(opts: {
+  sessionId: string;
+  prompt: string;
+  title?: string;
+  branch?: string;
+  subsystem?: string;
+  errorSnapshot?: string;
+}): Promise<void> {
+  await supabase.from("jules_sessions").insert({
+    session_id: opts.sessionId,
+    prompt: opts.prompt,
+    title: opts.title || null,
+    branch: opts.branch || "main",
+    subsystem: opts.subsystem || null,
+    error_snapshot: opts.errorSnapshot || null,
+    status: "pending",
+  });
 }
 
-/**
- * High-level: Orion asks Jules to fix/improve something in the codebase.
- * Returns the session ID for polling.
- */
+export async function updateJulesSessionStatus(
+  sessionId: string,
+  updates: {
+    status?: string;
+    pr_url?: string;
+    pr_title?: string;
+    completed_at?: string;
+    resolved?: boolean;
+    resolved_at?: string;
+    follow_up_count?: number;
+  },
+): Promise<void> {
+  await supabase
+    .from("jules_sessions")
+    .update(updates)
+    .eq("session_id", sessionId);
+}
+
+export async function getJulesDBSessions(limit = 20): Promise<JulesDBSession[]> {
+  const { data } = await supabase
+    .from("jules_sessions")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data as JulesDBSession[] | null) ?? [];
+}
+
+export async function getPendingJulesSessions(): Promise<JulesDBSession[]> {
+  const { data } = await supabase
+    .from("jules_sessions")
+    .select("*")
+    .in("status", ["pending", "running"])
+    .order("created_at", { ascending: false });
+  return (data as JulesDBSession[] | null) ?? [];
+}
+
+// ─── Follow-up ───
+
+export async function julesFollowUp(
+  sessionId: string,
+  message: string,
+): Promise<{ success: boolean; error?: string }> {
+  const result = await julesClient.sendMessage(sessionId, message);
+  if (result.success) {
+    // Increment follow_up_count
+    const { data } = await supabase
+      .from("jules_sessions")
+      .select("follow_up_count")
+      .eq("session_id", sessionId)
+      .single();
+    const current = (data as { follow_up_count: number } | null)?.follow_up_count ?? 0;
+    await updateJulesSessionStatus(sessionId, { follow_up_count: current + 1 });
+  }
+  return { success: result.success, error: result.error };
+}
+
+// ─── Orion Self-Improvement Interface ───
+
+const DEFAULT_SOURCE = "sources/github/ELPGREEN/ORION-V3";
+
 export async function orionSelfImprove(opts: {
   task: string;
   context?: string;
   branch?: string;
   autoPR?: boolean;
-}): Promise<{ sessionId: string; success: boolean; error?: string }> {
-  const source = await getDefaultSource();
+  subsystem?: string;
+}): Promise<{ sessionId: string; success: boolean; error?: string; rateLimited?: boolean }> {
+  // Rate limit check
+  const { allowed, current } = await checkJulesRateLimit();
+  if (!allowed) {
+    console.warn(`[Orion→Jules] Rate limited: ${current}/${MAX_SESSIONS_PER_HOUR} sessions/hour`);
+    return { sessionId: "", success: false, error: `Rate limited (${current}/${MAX_SESSIONS_PER_HOUR}/h)`, rateLimited: true };
+  }
+
+  const branchPrefix = opts.subsystem ? `fix/jules-${opts.subsystem}-${Date.now()}` : undefined;
+  const branch = opts.branch || branchPrefix || "main";
 
   const prompt = opts.context
     ? `${opts.task}\n\nContext:\n${opts.context}`
@@ -116,8 +221,8 @@ export async function orionSelfImprove(opts: {
 
   const result = await julesClient.createSession({
     prompt,
-    source,
-    branch: opts.branch || "main",
+    source: DEFAULT_SOURCE,
+    branch,
     title: `Orion: ${opts.task.slice(0, 60)}`,
     autoPR: opts.autoPR ?? true,
     requireApproval: false,
@@ -125,6 +230,15 @@ export async function orionSelfImprove(opts: {
 
   if (result.success && result.data) {
     console.log(`[Orion→Jules] Session created: ${result.data.id}`);
+    // Persist to DB
+    await persistSession({
+      sessionId: result.data.id,
+      prompt,
+      title: `Orion: ${opts.task.slice(0, 60)}`,
+      branch,
+      subsystem: opts.subsystem,
+      errorSnapshot: opts.context?.slice(0, 500),
+    });
     return { sessionId: result.data.id, success: true };
   }
 
@@ -133,7 +247,6 @@ export async function orionSelfImprove(opts: {
 
 /**
  * Poll a Jules session until it produces a PR or completes.
- * Returns the PR URL if available.
  */
 export async function pollJulesSession(
   sessionId: string,
@@ -144,13 +257,25 @@ export async function pollJulesSession(
     const result = await julesClient.getSession(sessionId);
     if (!result.success) return { completed: false, error: result.error };
 
+    // Update status to running
+    if (i === 0) {
+      await updateJulesSessionStatus(sessionId, { status: "running" });
+    }
+
     const session = result.data;
     const pr = session?.outputs?.find((o) => o.pullRequest);
     if (pr?.pullRequest) {
+      await updateJulesSessionStatus(sessionId, {
+        status: "completed",
+        pr_url: pr.pullRequest.url,
+        pr_title: pr.pullRequest.title,
+        completed_at: new Date().toISOString(),
+      });
       return { prUrl: pr.pullRequest.url, completed: true };
     }
 
     await new Promise((r) => setTimeout(r, intervalMs));
   }
+  await updateJulesSessionStatus(sessionId, { status: "failed" });
   return { completed: false, error: "Timeout waiting for Jules to complete" };
 }
