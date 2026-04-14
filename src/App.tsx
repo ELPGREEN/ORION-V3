@@ -109,6 +109,7 @@ const MeusAcessos = lazy(lazyRetry(() => import("./pages/dashboard/MeusAcessos")
 const ExplorarLojas = lazy(lazyRetry(() => import("./pages/dashboard/ExplorarLojas")));
 const ConfigurarIA = lazy(lazyRetry(() => import("./pages/dashboard/ConfigurarIA")));
 const PlanoUsuario = lazy(lazyRetry(() => import("./pages/dashboard/PlanoUsuario")));
+const ExtensaoPage = lazy(lazyRetry(() => import("./pages/dashboard/ExtensaoPage")));
 // OrionOrchestratorPage removed — merged into RedeNeuralPage
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -205,7 +206,7 @@ const App = () => (
                   <Route path="/pro-bono" element={<Navigate to="/contato" replace />} />
                   <Route path="/clientes" element={<Navigate to="/servicos" replace />} />
                   <Route path="/demo" element={<Navigate to="/dashboard/rede-neural" replace />} />
-                  <Route path="/extension" element={<Navigate to="/dashboard/rede-neural" replace />} />
+                  <Route path="/extension" element={<Navigate to="/dashboard/extensao" replace />} />
 
                   {/* ═══ Dashboard Routes ═══ */}
                   <Route path="/dashboard" element={<AuthGuard><DashboardLayout /></AuthGuard>}>
@@ -256,7 +257,8 @@ const App = () => (
                     <Route path="laboratorio-ia" element={<RoleGuard allowedRoles={["advogado"]}><LaboratorioIA /></RoleGuard>} />
                     <Route path="controle-robotico" element={<RoleGuard allowedRoles={["advogado"]}><ControleRobotico /></RoleGuard>} />
                     <Route path="dispositivos-iot" element={<RoleGuard allowedRoles={["advogado"]}><DeviceIntegrationPage /></RoleGuard>} />
-                    <Route path="extension" element={<Navigate to="/dashboard/rede-neural" replace />} />
+                    <Route path="extension" element={<Navigate to="/dashboard/extensao" replace />} />
+                    <Route path="extensao" element={<ExtensaoPage />} />
                     {/* Dashboard redirects — consolidation */}
                     <Route path="chat" element={<Navigate to="/dashboard/gerar-documento" replace />} />
                     <Route path="chat-ia" element={<Navigate to="/dashboard/gerar-documento" replace />} />

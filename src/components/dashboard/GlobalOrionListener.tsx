@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { toast } from "sonner";
-import { X, Minimize2, Mic, Camera } from "lucide-react";
+import { X, Minimize2, Mic, Camera, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -27,6 +27,9 @@ const PERMISSIONS_DISMISSED_KEY = "orion_permissions_dismissed";
 
 const NeuralVision = lazy(() =>
   import("./neural/NeuralVision").then((m) => ({ default: m.NeuralVision }))
+);
+const OrionPlaylistBar = lazy(() =>
+  import("@/components/orion/OrionPlaylistBar").then((m) => ({ default: m.OrionPlaylistBar }))
 );
 
 export function GlobalOrionListener() {
@@ -403,6 +406,9 @@ function OrionFloatingOverlay({
       </div>
 
       <div className="h-[calc(100%-40px)] overflow-y-auto">
+        <Suspense fallback={null}>
+          <OrionPlaylistBar />
+        </Suspense>
         <Suspense
           fallback={
             <div className="flex items-center justify-center h-full">
