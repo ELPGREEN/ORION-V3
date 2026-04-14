@@ -256,7 +256,8 @@ const App = () => (
                     <Route path="laboratorio-ia" element={<RoleGuard allowedRoles={["advogado"]}><LaboratorioIA /></RoleGuard>} />
                     <Route path="controle-robotico" element={<RoleGuard allowedRoles={["advogado"]}><ControleRobotico /></RoleGuard>} />
                     <Route path="dispositivos-iot" element={<RoleGuard allowedRoles={["advogado"]}><DeviceIntegrationPage /></RoleGuard>} />
-                    <Route path="extension" element={<Navigate to="/dashboard/rede-neural" replace />} />
+                    <Route path="extension" element={<Navigate to="/dashboard/extensao" replace />} />
+                    <Route path="extensao" element={<ExtensaoPage />} />
                     {/* Dashboard redirects — consolidation */}
                     <Route path="chat" element={<Navigate to="/dashboard/gerar-documento" replace />} />
                     <Route path="chat-ia" element={<Navigate to="/dashboard/gerar-documento" replace />} />
