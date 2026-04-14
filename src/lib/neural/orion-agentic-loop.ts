@@ -401,6 +401,37 @@ export function addKnownSpeaker(name: string): void {
   } catch {}
 }
 
+// ─── RAG Evaluation + Feedback Loop ───
+
+async function runRAGEvaluation(query: string, response: string, intent: string): Promise<void> {
+  try {
+    // Only evaluate non-trivial responses
+    if (response.length < 30 || query.length < 5) return;
+
+    const evalResult = evaluateRAGResponse({
+      response,
+      question: query,
+      context: "", // Context was already consumed by LLM
+      referenceAnswer: undefined,
+    });
+
+    // Only submit feedback if quality is meaningful (enough data to learn from)
+    if (evalResult.overallScore > 0) {
+      const queryType = classifyQueryType(query);
+      const currentWeights = getOptimizedWeights(queryType);
+      const newWeights = submitRAGFeedback(query, evalResult, currentWeights);
+
+      console.log(
+        `[RAG-Eval] ${intent} | Score: ${evalResult.overallScore}/100 (${evalResult.grade}) | ` +
+        `Groundedness: ${evalResult.groundedness.score}/5 | Relevance: ${evalResult.relevance.score}/5 | ` +
+        `Weights: sem=${newWeights.semantic.toFixed(2)} kw=${newWeights.keyword.toFixed(2)} auth=${newWeights.authority.toFixed(2)} rec=${newWeights.recency.toFixed(2)}`
+      );
+    }
+  } catch (e) {
+    console.warn("[RAG-Eval] Evaluation failed:", e);
+  }
+}
+
 // ─── Jules Self-Improvement Trigger ───
 
 const JULES_FAIL_KEY = "orion_jules_fail_counts";
