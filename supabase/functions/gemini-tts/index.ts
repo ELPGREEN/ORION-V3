@@ -382,7 +382,7 @@ async function requestVertexAI(
 function getAllGeminiKeys(): string[] {
   const now = Date.now();
   const names = ["GEMINI_API_KEY_GCP", "GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7"];
-  const keys = names.map((n) => Deno.env.get(n)).filter((k): k is string => Boolean(k) && !isKeyCoolingDown(k, now));
+  const keys = names.map((n) => Deno.env.get(n)).filter((k): k is string => Boolean(k)).filter((k) => !isKeyCoolingDown(k, now));
   for (let i = keys.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [keys[i], keys[j]] = [keys[j], keys[i]];
@@ -443,7 +443,7 @@ function parseAudioResponse(data: any): Response | null {
   if (mimeType.includes("L16") || mimeType.includes("pcm") || mimeType.includes("raw")) {
     const wav = pcmToWav(audioBase64, 24000);
     console.log(`[TTS] WAV ${(wav.length / 1024).toFixed(1)}KB`);
-    return new Response(wav.buffer, {
+    return new Response(new Uint8Array(wav.buffer).buffer as ArrayBuffer, {
       headers: { ...corsHeaders, "Content-Type": "audio/wav", "Content-Length": String(wav.length) },
     });
   }
