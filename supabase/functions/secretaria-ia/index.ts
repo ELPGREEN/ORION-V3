@@ -71,6 +71,16 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    // Extract user ID from auth header if available (optional auth)
+    let authUser: { id: string } | null = null;
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      try {
+        const { data } = await supabase.auth.getUser(token);
+        if (data?.user) authUser = { id: data.user.id };
+      } catch { /* anonymous access */ }
+    }
+
     const { messages, conversationId, clienteId, lawyerInstructions, mode } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
