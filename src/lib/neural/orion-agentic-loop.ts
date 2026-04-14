@@ -496,20 +496,37 @@ async function triggerJulesSelfImprove(plan: AgenticPlan, verification: AgenticV
   // Only trigger Jules after 3+ consecutive failures for the same intent
   if (counts[key] < 3) return;
 
-  console.log(`[Orion→Jules] Intent "${key}" failed ${counts[key]}x — requesting self-improvement`);
+  // Classify domain for themed branches
+  const domain = classifyDomain(plan.intent, verification.issues);
+  const branchPrefix = domain === "bug" ? "fix/" : domain === "perf" ? "perf/" : domain === "security" ? "security/" : "design/";
 
-  const task = `Fix recurring issue with intent "${plan.intent}". ` +
+  console.log(`[Orion→Jules] Intent "${key}" failed ${counts[key]}x (${domain}) — requesting self-improvement`);
+
+  const task = `Fix recurring ${domain} issue with intent "${plan.intent}". ` +
     `Verification issues: ${verification.issues.join(", ")}. ` +
     `Steps attempted: ${plan.steps.join(", ")}. ` +
-    `Improve the handler for this intent to achieve higher quality scores.`;
+    `Domain: ${domain}. Improve the handler for this intent to achieve higher quality scores.`;
 
-  const result = await orionSelfImprove({ task, autoPR: true });
+  const result = await orionSelfImprove({
+    task,
+    autoPR: true,
+    subsystem: domain === "bug" ? "core_state" : domain === "perf" ? "perf_render" : domain === "security" ? "sec_auth_flow" : "design_responsive",
+    branch: `${branchPrefix}jules-${key.slice(0, 20)}-${Date.now()}`,
+  });
 
   if (result.success) {
     console.log(`[Orion→Jules] Session ${result.sessionId} created for self-improvement`);
-    counts[key] = 0; // Reset counter
+    counts[key] = 0;
     localStorage.setItem(JULES_FAIL_KEY, JSON.stringify(counts));
   }
+}
+
+function classifyDomain(intent: string, issues: string[]): "bug" | "perf" | "design" | "security" {
+  const combined = `${intent} ${issues.join(" ")}`.toLowerCase();
+  if (combined.includes("security") || combined.includes("rls") || combined.includes("auth") || combined.includes("xss")) return "security";
+  if (combined.includes("slow") || combined.includes("performance") || combined.includes("memory") || combined.includes("latency")) return "perf";
+  if (combined.includes("layout") || combined.includes("responsive") || combined.includes("ui") || combined.includes("design") || combined.includes("a11y")) return "design";
+  return "bug";
 }
 
 // Initialize protocols on module load
