@@ -81,6 +81,10 @@ const PARAM_EXTRACTORS: Record<string, (text: string) => Record<string, string>>
   reporting: (text) => {
     return { query: text, type: "metrics" };
   },
+  web_search: (text) => {
+    const cleaned = text.replace(/\b(?:pesquis|busc|procur)\w*\s+(?:na\s+internet\s+|na\s+web\s+|online\s+)?/i, "").trim();
+    return { query: cleaned || text };
+  },
 };
 
 // ─── Intent Dispatcher ───
