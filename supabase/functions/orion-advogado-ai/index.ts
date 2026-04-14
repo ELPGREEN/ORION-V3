@@ -110,7 +110,7 @@ serve(async (req) => {
 
 Gere: 1) Resumo do caso 2) Status atual 3) Próximos passos recomendados 4) Riscos identificados`;
 
-        result = await callGemini(prompt, SYSTEM);
+        result = await callAI(prompt, SYSTEM);
         break;
       }
 
@@ -137,7 +137,7 @@ Gere: 1) Resumo do caso 2) Status atual 3) Próximos passos recomendados 4) Risc
 
 Gere: 1) Prazos urgentes (próximos 7 dias) 2) Audiências próximas 3) Consultas pendentes 4) Sugestões de priorização 5) Alertas importantes`;
 
-        result = await callGemini(prompt, SYSTEM);
+        result = await callAI(prompt, SYSTEM);
         break;
       }
 
@@ -159,7 +159,7 @@ ${(messages || []).map((m: any) => `[${m.sender_role}]: ${m.content}`).join("\n"
 
 Gere uma resposta profissional, empática e útil. Mantenha tom formal mas acessível.`;
 
-        result = await callGemini(prompt, SYSTEM);
+        result = await callAI(prompt, SYSTEM);
         break;
       }
 
@@ -177,7 +177,7 @@ Gere uma resposta profissional, empática e útil. Mantenha tom formal mas acess
 
 Gere: 1) Análise da situação 2) Estratégias possíveis 3) Riscos de cada estratégia 4) Recomendação principal 5) Próximos passos`;
 
-        result = await callGemini(prompt, SYSTEM);
+        result = await callAI(prompt, SYSTEM);
         break;
       }
 
@@ -197,7 +197,7 @@ ${(messages || []).map((m: any) => `[${m.sender_role}] ${m.content}`).join("\n")
 
 Gere um resumo estruturado com: pontos discutidos, decisões tomadas, pendências e próximos passos.`;
 
-        result = await callGemini(prompt, SYSTEM);
+        result = await callAI(prompt, SYSTEM);
         break;
       }
 
