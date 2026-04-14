@@ -82,19 +82,28 @@ export function normalizeSpeechText(text: string): string {
     .trim();
 }
 
-/** Remove repeated word sequences — e.g. "ativar ativar" → "ativar", "abrir música do ACDC abrir música do ACDC" → "abrir música do ACDC" */
+/** Remove repeated word sequences AND concatenated duplicates
+ * - "ativar ativar" → "ativar"
+ * - "ativarativar" → "ativar" (no-space concatenation from STT)
+ * - "abrir música do ACDC abrir música do ACDC" → "abrir música do ACDC"
+ * - "famosafamosa" → "famosa"
+ */
 function deduplicateRepeatedPhrases(text: string): string {
-  const trimmed = text.trim();
+  let trimmed = text.trim();
   if (!trimmed) return trimmed;
+
+  // Phase 1: Detect concatenated word duplicates (no space between)
+  // e.g. "ativarativar" → "ativar", "famosafamosa" → "famosa"
+  trimmed = trimmed.replace(/\b(\w{3,})\1\b/gi, "$1");
+
+  // Phase 2: Word-level phrase deduplication
   const words = trimmed.split(/\s+/);
   const len = words.length;
-  // Try halves first (full sentence repeated)
   for (let size = Math.floor(len / 2); size >= 1; size--) {
     if (len >= size * 2) {
       const first = words.slice(0, size).join(" ").toLowerCase();
       const second = words.slice(size, size * 2).join(" ").toLowerCase();
       if (first === second) {
-        // Return deduplicated: first half + remainder after second half
         return [...words.slice(0, size), ...words.slice(size * 2)].join(" ").trim();
       }
     }
