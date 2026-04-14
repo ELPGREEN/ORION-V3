@@ -8,8 +8,8 @@ const corsHeaders = {
 
 // ═══════════════════════════════════════════════════════════════
 // NEURAL INFERENCE ENGINE v4 — Multi-Provider
-// Chain: Claude Sonnet 4 → Gemini Flash → Mistral → Groq → HuggingFace
-// Claude = primary, Gemini = fallback
+// Chain: Gemini Flash → Claude Sonnet 4 → Mistral → Groq → HuggingFace
+// Gemini = primary, Claude = fallback (Claude sem créditos)
 // ═══════════════════════════════════════════════════════════════
 
 interface InferenceRequest {
@@ -290,8 +290,8 @@ Deno.serve(async (req) => {
     // 3. Call provider chain: Claude → Gemini → Mistral → Groq → HuggingFace
     const startTime = Date.now();
     let response = "";
-    let providerUsed = "anthropic";
-    let modelUsed = "claude-sonnet-4";
+    let providerUsed = "gemini";
+    let modelUsed = "gemini-2.5-flash";
 
     // Streaming (Gemini only — Claude doesn't stream here)
     if (stream) {
@@ -339,18 +339,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Non-streaming: Claude → Gemini → Mistral → Groq → HuggingFace
+    // Non-streaming: Gemini → Claude → Mistral → Groq → HuggingFace
     try {
-      response = await callClaude(systemPrompt, query);
-    } catch (e0) {
-      console.warn("[Inference] Claude failed:", e0);
+      const result = await callGemini(systemPrompt, query, false);
+      if (typeof result === "string") response = result;
       providerUsed = "gemini";
       modelUsed = "gemini-2.5-flash";
+    } catch (e0) {
+      console.warn("[Inference] Gemini failed:", e0);
+      providerUsed = "anthropic";
+      modelUsed = "claude-sonnet-4";
       try {
-        const result = await callGemini(systemPrompt, query, false);
-        if (typeof result === "string") response = result;
+        response = await callClaude(systemPrompt, query);
       } catch (e1) {
-        console.warn("[Inference] Gemini failed:", e1);
+        console.warn("[Inference] Claude failed:", e1);
         providerUsed = "mistral";
         modelUsed = "mistral-small-latest";
         try {

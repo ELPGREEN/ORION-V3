@@ -57,10 +57,10 @@ async function callGemini(prompt: string, systemPrompt: string): Promise<string>
 
 async function callAI(prompt: string, systemPrompt: string): Promise<string> {
   try {
-    return await callClaude(prompt, systemPrompt);
-  } catch (e) {
-    console.warn("[orion-produtor-ai] Claude failed, trying Gemini:", e);
     return await callGemini(prompt, systemPrompt);
+  } catch (e) {
+    console.warn("[orion-produtor-ai] Gemini failed, trying Claude:", e);
+    return await callClaude(prompt, systemPrompt);
   }
 }
 
