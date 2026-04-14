@@ -171,7 +171,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   };
 
   const start = async (): Promise<boolean> => {
-    if (active) return true;
+    if (active && audioContext?.state === "running") return true;
 
     try {
       const persistentMic = (window as any).__orion_persistent_mic__;
@@ -188,6 +188,20 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
 
       mediaStream = stream;
       audioContext = new AudioContext({ sampleRate: 48000 });
+      if (audioContext.state === "suspended") {
+        try {
+          await audioContext.resume();
+        } catch (err) {
+          console.warn("[GCP-STT] AudioContext resume blocked:", err);
+        }
+      }
+      if (audioContext.state !== "running") {
+        console.warn("[GCP-STT] AudioContext not running — falling back", audioContext.state);
+        onError?.("audio-context-not-running");
+        try { await audioContext.close(); } catch {}
+        audioContext = null;
+        return false;
+      }
       source = audioContext.createMediaStreamSource(stream);
       processor = audioContext.createScriptProcessor(PROCESSOR_BUFFER_SIZE, 1, 1);
 
@@ -273,6 +287,12 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     paused = false;
     resetUtterance();
     preRollBuffers = [];
+    if (audioContext?.state === "suspended") {
+      void audioContext.resume().catch((err) => {
+        console.warn("[GCP-STT] Resume blocked:", err);
+        onError?.("audio-context-resume-blocked");
+      });
+    }
     console.log("[GCP-STT] Resumed — listening again");
   };
 
@@ -336,7 +356,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     destroy,
     pause,
     resume,
-    isActive: () => active,
+    isActive: () => active && !!audioContext && audioContext.state === "running",
     isPaused: () => paused,
   };
 }

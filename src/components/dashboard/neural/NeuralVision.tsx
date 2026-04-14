@@ -324,15 +324,16 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       handleVoiceIdentityCheck();
     }
 
-    // Pure wake word without command — just greet
+    // Pure wake word without command — do NOT speak here.
+    // Speaking right after wake word can steal the mic handoff on mobile.
     const isJustWakeWord = /^[óòôõo]r[iíìeéè][oóòôõ][nmn]\s*(ativar?|ligar?|acordar?|oi|olá|e\s*aí)?[.!?]?\s*$/i.test(q.trim()) ||
       /^oreo[nm]\s*(ativar?|ligar?|acordar?|oi|olá|e\s*aí)?[.!?]?\s*$/i.test(q.trim());
     if (isJustWakeWord) {
       if (!hasGreetedRef.current) {
         hasGreetedRef.current = true;
         _markSessionReady();
-        speakFast("Ativando sistema.").catch(() => {});
       }
+      toast.info("⚡ Pode falar", { duration: 1000 });
       return;
     }
 
@@ -388,39 +389,35 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     toast.info(`🎤 "${finalCommand}"`);
   }, [deactivateGracefully, speak, speakFast, voiceClone, startListening, stopListen, routeOrionCommand, identityStatus, handleVoiceIdentityCheck]);
 
-  // ═══ Wake word activation — camera does NOT auto-start, only voice ═══
-  const activateByWakeWord = useCallback(async () => {
+  // ═══ Wake word activation — handoff DIRECTLY to main STT (no TTS in between) ═══
+  const activateByWakeWord = useCallback(() => {
     wakeWordEnabledRef.current = false;
     try { wakeRecRef.current?.abort?.(); } catch {}
     try { wakeRecRef.current?.stop?.(); } catch {}
     wakeRecRef.current = null;
 
+    if (directVoiceStartTimerRef.current) {
+      clearTimeout(directVoiceStartTimerRef.current);
+      directVoiceStartTimerRef.current = null;
+    }
+
+    stopListen();
+
     const isMobileBrowser = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
-    const warmStartDelay = isMobileBrowser ? 120 : 200;
-    const fastResumeDelay = isMobileBrowser ? 80 : 120;
+    const handoffDelay = isMobileBrowser ? 220 : 180;
 
     if (!hasGreetedRef.current) {
       hasGreetedRef.current = true;
       _markSessionReady();
-      // Wait for TTS to finish BEFORE starting STT — otherwise mic gets killed mid-TTS
-      speakFast("Ativando sistema.").then(() => {
-        if (!listening) {
-          setTimeout(() => startListening(handleVoice), warmStartDelay);
-        }
-      }).catch(() => {
-        // TTS failed, start listening anyway
-        if (!listening) {
-          setTimeout(() => startListening(handleVoice), warmStartDelay);
-        }
-      });
-    } else {
-      toast.info("⚡ Relâmpago Vivo — Orion pronto", { duration: 1500 });
-      // Camera does NOT start automatically — user must say "ativar visão"
-      if (!listening) {
-        setTimeout(() => startListening(handleVoice), fastResumeDelay);
-      }
     }
-  }, [listening, startListening, handleVoice, speakFast]);
+
+    toast.info("⚡ Pode falar", { duration: 1000 });
+
+    directVoiceStartTimerRef.current = setTimeout(() => {
+      directVoiceStartTimerRef.current = null;
+      startListening(handleVoice);
+    }, handoffDelay);
+  }, [handleVoice, startListening, stopListen]);
 
   const { wakeWordActive, wakeWordEnabledRef, wakeRecRef, startWakeWordListener, stopWakeWordListener, enableWakeWord, getBackgroundTranscripts } = useWakeWord(listening, skipWakeWord ? false : speechOk, activateByWakeWord);
 
