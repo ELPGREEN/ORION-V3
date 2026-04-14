@@ -1,81 +1,76 @@
 
 
-# Jules Auto-Construção e Evolução Completa do Orion
+# Comandos de Voz para Auto-Correção Orion + Proteção por Voice ID
 
-## Resumo
-Expandir o sistema Jules de auto-correção para cobrir **4 novos domínios** além dos subsistemas existentes: **Bugs/Core**, **Performance**, **Design/UX** e **Security**. Criar um orquestrador autônomo que analisa o estado do sistema e dispara sessões Jules proativamente.
+## Diagnóstico Atual
 
-## Detalhes Técnicos
+### Comandos que ativam Jules (auto-correção)
+Os seguintes comandos de voz/texto já são reconhecidos pelo Orion:
 
-### 1. Expandir `jules-auto-triggers.ts` com novos subsistemas
+| Comando (PT-BR) | Intent | O que faz |
+|---|---|---|
+| "melhore-se", "evolua", "auto-evolução" | `self_evolve` | Dispara ciclo de auto-melhoria |
+| "auto-programe", "se reprograme" | `self_evolve` | Mesmo |
+| "otimize suas respostas", "recalibre" | `self_evolve` | Mesmo |
+| "melhorar código", "sugerir melhorias" | `self_suggest_improvements` | Análise de código |
+| "evolução neural", "auto evolução" | `neural_evolution` | Lista propostas de evolução |
+| "mapa da arquitetura" | `self_architecture_map` | Grafo de dependências |
 
-Adicionar 12 novos subsystem keys cobrindo:
-- **Core/Bugs**: `core_routing`, `core_state`, `core_auth`, `core_api`
-- **Performance**: `perf_bundle`, `perf_render`, `perf_memory`, `perf_network`
-- **Design**: `design_responsive`, `design_accessibility`, `design_animation`
-- **Security**: `sec_rls`, `sec_xss`, `sec_injection`, `sec_auth_flow`
+### Triggers automáticos (sem comando de voz)
+- Quando qualquer subsistema falha **3x na mesma hora**, `recordSubsystemFailure` dispara `orionSelfImprove()` automaticamente
+- No agentic loop (fase 7), se a verificação falha 3x para o mesmo intent, `triggerJulesSelfImprove` cria sessão Jules
 
-Incluir mapeamento de arquivos e descrições para cada um no `SUBSYSTEM_MAP`.
+### PROBLEMA CRÍTICO DE SEGURANÇA
 
-### 2. Criar `jules-evolution-engine.ts` — Orquestrador Autônomo
+**Nenhum** destes caminhos verifica se quem está comandando é o criador (voice ID):
 
-Motor principal de auto-evolução com 4 scanners:
+1. `orionSelfImprove()` — sem verificação de identidade
+2. `triggerJulesSelfImprove()` — sem verificação
+3. `recordSubsystemFailure()` — sem verificação
+4. `runEvolutionScan()` — sem verificação
+5. Intent `self_evolve` — cai no agentic loop sem checar `identityStatus`
+6. Tool `neural_evolution` — só verifica `R_ADV` (role), não voice ID
 
-```text
-┌─────────────────────────────────────────────┐
-│           Jules Evolution Engine            │
-├──────────┬──────────┬──────────┬────────────┤
-│  BugScan │ PerfScan │DesignScan│ SecScan    │
-│  (errors,│ (bundle, │(a11y,    │ (RLS,      │
-│   state) │  memory) │ contrast)│  headers)  │
-└────┬─────┴────┬─────┴────┬─────┴─────┬──────┘
-     └──────────┴──────────┴───────────┘
-               ▼
-      Jules API → PR → Auto-Merge Check
-```
+**Qualquer usuário autenticado pode disparar Jules e criar PRs no GitHub.**
 
-- `scanForBugs()`: coleta erros do console (window.onerror), unhandled rejections, React error boundaries
-- `scanPerformance()`: monitora bundle size warnings, render times >16ms, memory growth
-- `scanDesign()`: verifica contrast ratios, missing alt texts, broken layouts via ResizeObserver
-- `scanSecurity()`: valida headers, detecta exposed secrets, verifica RLS coverage
+---
 
-Cada scanner acumula métricas e, ao atingir threshold, dispara `orionSelfImprove()` com contexto detalhado.
+## Plano de Correção
 
-### 3. Criar `jules-immune-system.ts` — Sistema Imunológico Adaptativo
+### 1. Criar guard centralizado `isCreatorVerified()`
 
-- **Anticorpos**: registry de patterns de erro já corrigidos (hash → fix applied)
-- **Memória imunológica**: erros que já tiveram PR aprovado não disparam novas sessões por 7 dias
-- **Isolamento**: quando um módulo falha 5x, marca como "quarentena" e sugere fallback
-- Persiste no Supabase via tabela `jules_sessions` (campo `error_snapshot` como fingerprint)
+Novo utilitário em `jules-client.ts` que verifica:
+- Email é do criador (`isOwnerEmail`) **OU**
+- Voice identity status é `"creator"` (verificado pelo `useVoiceIdentityGuard`)
 
-### 4. Expandir `JulesSelfImprovePanel.tsx`
+### 2. Proteger `orionSelfImprove()` 
 
-- Adicionar tabs: **Subsistemas | Bugs | Performance | Design | Security**
-- Dashboard com gauges de saúde por categoria
-- Botão "Scan Agora" que executa os 4 scanners manualmente
-- Timeline visual mostrando evolução do sistema (PRs criados → resolvidos)
+Adicionar parâmetro `callerIdentity` obrigatório. Se não for creator, rejeitar com erro claro.
 
-### 5. Integrar ao Agentic Loop
+### 3. Proteger `triggerJulesSelfImprove()` no agentic loop
 
-Na `runAgenticCycle` (fase 7), expandir `triggerJulesSelfImprove` para também:
-- Classificar falhas por domínio (bug/perf/design/security)
-- Enviar contexto enriquecido incluindo stack traces e métricas de pipeline
-- Usar branches temáticas: `fix/`, `perf/`, `design/`, `security/`
+Receber `identityStatus` do contexto. Só executa se `=== "creator"`.
 
-### 6. Auto-Scan Periódico
+### 4. Proteger intent `self_evolve` no voice-intent-dispatcher
 
-- Registrar `setInterval` no mount do dashboard (a cada 5min)
-- Cada scan leve (<50ms), só dispara Jules se encontrar issues reais
-- Respects rate limit existente (3 sessões/hora)
+Antes de passthrough, verificar identity. Se não for creator, retornar "Apenas o criador pode solicitar auto-evolução."
 
-### Arquivos a criar/editar
+### 5. Proteger `runEvolutionScan()` e `runFullScan()`
 
-| Arquivo | Ação |
-|---------|------|
-| `src/lib/neural/jules-evolution-engine.ts` | Criar — orquestrador com 4 scanners |
-| `src/lib/neural/jules-immune-system.ts` | Criar — memória imunológica + quarentena |
-| `src/lib/neural/jules-auto-triggers.ts` | Expandir subsystems (core/perf/design/sec) |
-| `src/components/dashboard/neural/JulesSelfImprovePanel.tsx` | Tabs + scan manual + health gauges |
-| `src/lib/neural/orion-agentic-loop.ts` | Enriquecer fase 7 com classificação de domínio |
-| `src/lib/neural/index.ts` | Novos exports |
+Exigir creator identity antes de disparar scans que geram sessões Jules.
+
+### 6. Manter triggers automáticos (subsystem failures) sem restrição de voz
+
+Os triggers automáticos por falhas de subsistema são internos (o sistema auto-detecta bugs). Esses devem continuar funcionando sem voice ID — mas com rate limit já existente (3/hora).
+
+### Arquivos a editar
+
+| Arquivo | Mudança |
+|---|---|
+| `src/lib/neural/jules-client.ts` | Guard `isCreatorVerified()`, param `callerIdentity` em `orionSelfImprove` |
+| `src/lib/neural/orion-agentic-loop.ts` | Checar identity antes de `triggerJulesSelfImprove` |
+| `src/lib/neural/jules-evolution-engine.ts` | Guard em `runFullScan()` e `dispatchToJules()` |
+| `src/lib/neural/voice-intent-dispatcher.ts` | Bloquear `self_evolve` para não-criadores |
+| `src/lib/neural/orion-tool-executor.ts` | Guard nos tools `neural_evolution`, `self_suggest_improvements` |
+| `src/components/dashboard/neural/JulesSelfImprovePanel.tsx` | Esconder botão "Scan Manual" se não for creator |
 
