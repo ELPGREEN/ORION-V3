@@ -206,7 +206,7 @@ const App = () => (
                   <Route path="/pro-bono" element={<Navigate to="/contato" replace />} />
                   <Route path="/clientes" element={<Navigate to="/servicos" replace />} />
                   <Route path="/demo" element={<Navigate to="/dashboard/rede-neural" replace />} />
-                  <Route path="/extension" element={<Navigate to="/dashboard/rede-neural" replace />} />
+                  <Route path="/extension" element={<Navigate to="/dashboard/extensao" replace />} />
 
                   {/* ═══ Dashboard Routes ═══ */}
                   <Route path="/dashboard" element={<AuthGuard><DashboardLayout /></AuthGuard>}>
