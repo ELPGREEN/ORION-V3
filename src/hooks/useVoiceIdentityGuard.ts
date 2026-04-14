@@ -8,7 +8,7 @@
  * Uses the same spectral analysis engine as useVoiceAuth for consistency.
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -33,6 +33,14 @@ export function useVoiceIdentityGuard() {
 
   /** Auto-detect creator by email — skip voice check for owner accounts */
   const isCreatorAccount = user?.email ? isOwnerEmail(user.email) : false;
+
+  /** Auto-authorize owner accounts on mount — no voice check needed */
+  useEffect(() => {
+    if (isCreatorAccount && identityStatus === "unknown") {
+      console.log("[VoiceGuard] 👑 Owner email detected — auto-setting identity to 'creator'");
+      setIdentityStatus("creator");
+    }
+  }, [isCreatorAccount, identityStatus]);
 
   /** Check if voice matches owner enrollment */
   const verifyVoiceIdentity = useCallback(async (audioBlob: Blob): Promise<IdentityStatus> => {
