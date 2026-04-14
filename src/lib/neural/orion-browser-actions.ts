@@ -23,7 +23,7 @@ function youtubeSearchUrl(query: string): string {
 }
 
 function youtubeEmbedSearchUrl(query: string): string {
-  return `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1`;
+  return `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1&enablejsapi=1`;
 }
 
 function googleSearchUrl(query: string): string {

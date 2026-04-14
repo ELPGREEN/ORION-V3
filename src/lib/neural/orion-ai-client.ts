@@ -922,7 +922,7 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
   if (autoConstructPatterns.test(q)) return "auto_construct";
 
   // ═══ Self-evolution intent ═══
-  const selfEvolvePatterns = /\b(melhore-se|melhore\s+se|evolua|evolu[ií]r?|auto[-\s]?program[ae]|se\s+reprogram[ae]|otimize\s+(suas?\s+respostas?|se)|aprenda\s+(isso|com\s+isso|agora)|atualize?\s+(seus?\s+pesos?|se)|auto[-\s]?evol[uú]|upgrade|self[-\s]?improve|auto[-\s]?aprend|recalibre|se\s+calibre|se\s+atualize|melhore\s+suas?\s+respostas?)\b/i;
+  const selfEvolvePatterns = /\b(melhore-se|melhore\s+se|evolua|evolu[ií]r?|auto[-\s]?evolu[ií]r?|auto[-\s]?program[ae]|se\s+reprogram[ae]|otimize\s+(suas?\s+respostas?|se)|aprenda\s+(isso|com\s+isso|agora)|atualize?\s+(seus?\s+pesos?|se)|auto[-\s]?evol[uú]|upgrade|self[-\s]?improve|auto[-\s]?aprend|recalibre|se\s+calibre|se\s+atualize|melhore\s+suas?\s+respostas?|novo\s+protocolo|novos?\s+protocolos?)\b/i;
   if (selfEvolvePatterns.test(q)) return "self_evolve";
 
   // ═══ Verb-based primary classification ═══

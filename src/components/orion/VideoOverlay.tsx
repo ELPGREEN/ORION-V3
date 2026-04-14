@@ -40,7 +40,7 @@ export function VideoOverlay() {
         setVisible(true);
         setMinimized(false); // Keep maximized so user can interact and hear audio
       } else if (action === "search_video" && query) {
-        setVideoUrl(`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1`);
+        setVideoUrl(`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1&enablejsapi=1`);
         setTitle(t || query);
         setVisible(true);
         setMinimized(false); // Keep maximized for audio playback
@@ -240,7 +240,7 @@ export function VideoOverlay() {
 
 function convertToEmbed(url: string): string {
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/);
-  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
-  if (url.includes("/embed")) return url;
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?enablejsapi=1`;
+  if (url.includes("/embed")) return url.includes("?") ? url : `${url}?enablejsapi=1`;
   return url;
 }
