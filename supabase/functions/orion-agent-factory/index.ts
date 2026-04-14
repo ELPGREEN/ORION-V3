@@ -175,7 +175,8 @@ async function handleAutoCreate(body: Record<string, unknown>) {
   const { task_description, difficulty_context, failed_attempts } = body;
 
   const _gkN3 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
-  const GEMINI_KEY = _gkN3.map(n => Deno.env.get(n)).filter(Boolean)[Math.floor(Math.random() * 8)] as string || "";
+  const _filtered3 = _gkN3.map(n => Deno.env.get(n)).filter(Boolean) as string[];
+  const GEMINI_KEY = _filtered3.length > 0 ? _filtered3[(globalThis.__rrAF = ((globalThis.__rrAF ?? -1) + 1) % _filtered3.length)] : "";
   if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not configured");
 
   // Ask AI to decide what agent to create
