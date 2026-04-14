@@ -170,11 +170,8 @@ export function GlobalOrionListener() {
     };
 
     const handleMediaCommand = () => {
-      if (orionOpen) {
-        console.log("[GlobalOrion] Auto-minimizing due to media command");
-        killMicRec();
-        setOrionOpen(false);
-      }
+      // Music/video commands should NOT close the overlay — user wants to keep chatting
+      // Only auto-minimize for embedded video that takes focus
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -188,10 +185,10 @@ export function GlobalOrionListener() {
     };
   }, [orionOpen]);
 
-  // Auto-minimize on navigation
+  // Auto-minimize on navigation to neural page only (avoid closing during normal use)
   useEffect(() => {
-    if (orionOpen) {
-      console.log("[GlobalOrion] Auto-minimizing due to navigation");
+    if (orionOpen && isOnNeuralPage) {
+      console.log("[GlobalOrion] Auto-minimizing — navigated to neural page");
       killMicRec();
       setOrionOpen(false);
     }
