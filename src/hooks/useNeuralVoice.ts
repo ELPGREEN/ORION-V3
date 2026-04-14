@@ -419,11 +419,11 @@ export function useNeuralVoice(
 
       // Only recreate if session is truly dead (not active at all)
       if (gcpSessionRef.current && !gcpSessionRef.current.isActive()) {
-        console.warn("[Voice] Watchdog: GCP STT died — restarting");
+        console.warn("[Voice] Watchdog: GCP STT died — will use startListeningFresh as fallback");
         gcpSessionRef.current = null;
-        // Reuse startListening logic instead of duplicating session creation
+        // Use Web Speech fallback since we can't call startListening here (circular)
         if (onCmdRef.current && !intentionalStopRef.current) {
-          startListening(onCmdRef.current);
+          startListeningFresh(onCmdRef.current);
         }
       }
     }, 8000); // Check every 8s instead of 5s to reduce overhead
