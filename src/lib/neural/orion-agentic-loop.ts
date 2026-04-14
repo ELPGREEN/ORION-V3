@@ -20,6 +20,7 @@ import { isNegativeFeedback, recordCorrection, extractCorrectionTarget } from ".
 import { smartClassify } from "./smart-intent-classifier";
 import { evaluateRAGResponse } from "./rag-evaluator";
 import { submitRAGFeedback, getOptimizedWeights, classifyQueryType } from "./rag-feedback-loop";
+import { getPipelineLatency, type PipelineLatency } from "./pipeline-latency-tracker";
 
 // ─── Last classification memory (for feedback corrections) ───
 let _lastClassification: { text: string; intent: string; ts: number } | null = null;
@@ -185,7 +186,8 @@ const HALLUCINATION_KEYWORDS = [
 export function verifyPhase(
   query: string,
   response: string,
-  plan: AgenticPlan
+  plan: AgenticPlan,
+  latency?: PipelineLatency
 ): AgenticVerification {
   const issues: string[] = [];
   let score = 0.7;
@@ -224,6 +226,31 @@ export function verifyPhase(
     score -= 0.1;
   }
 
+  // Pipeline latency quality checks (STT/TTS/Vision)
+  if (latency) {
+    if (latency.sttMs > 3000) {
+      issues.push(`STT lento: ${latency.sttMs}ms (>3s)`);
+      score -= 0.05;
+    }
+    if (latency.ttsMs > 2000) {
+      issues.push(`TTS lento: ${latency.ttsMs}ms (>2s)`);
+      score -= 0.05;
+    }
+    if (latency.visionMs > 4000) {
+      issues.push(`Vision lento: ${latency.visionMs}ms (>4s)`);
+      score -= 0.05;
+    }
+    if (latency.totalMs > 5000) {
+      issues.push(`Pipeline total lento: ${latency.totalMs}ms (>5s)`);
+      score -= 0.1;
+    }
+    // Vision intent without vision latency = camera possibly not working
+    if (plan.requiresImage && latency.visionMs <= 0) {
+      issues.push("Intent visual sem dados de visão — câmera inativa?");
+      score -= 0.1;
+    }
+  }
+
   score = Math.max(0, Math.min(1, score));
   const passed = score >= 0.4 && issues.length <= 2;
 
@@ -239,7 +266,9 @@ export async function documentPhase(
   query: string,
   response: string,
   plan: AgenticPlan,
-  verification: AgenticVerification
+  verification: AgenticVerification,
+  latency?: PipelineLatency,
+  iotDevices?: string[]
 ): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -261,7 +290,16 @@ export async function documentPhase(
         verification_coherence: verification.coherenceWithIntent,
         response_length: verification.responseLength,
         latency_ms: Date.now() - plan.timestamp,
-        protocol_version: "1.0",
+        protocol_version: "2.0",
+        // Pipeline latency breakdown
+        pipeline_stt_ms: latency?.sttMs ?? -1,
+        pipeline_llm_ms: latency?.llmMs ?? -1,
+        pipeline_tts_ms: latency?.ttsMs ?? -1,
+        pipeline_vision_ms: latency?.visionMs ?? -1,
+        pipeline_total_ms: latency?.totalMs ?? -1,
+        // IoT context
+        iot_devices_active: iotDevices?.length ?? 0,
+        iot_devices: iotDevices?.slice(0, 10),
       },
     } as any);
   } catch (e) {
@@ -326,7 +364,7 @@ async function syncProtocolsToSupabase(): Promise<void> {
 export async function runAgenticCycle(
   query: string,
   executeAction: (plan: AgenticPlan) => Promise<string>,
-  context?: { memories?: string[]; visionActive?: boolean }
+  context?: { memories?: string[]; visionActive?: boolean; iotDevices?: string[] }
 ): Promise<{ response: string; plan: AgenticPlan; verification: AgenticVerification }> {
   // Load protocols on first run
   if (Object.keys(_protocols).length === 0) loadProtocols();
@@ -352,17 +390,18 @@ export async function runAgenticCycle(
     startTime: actStart, confidence: 0.8,
   });
 
-  // Phase 3: Verify
+  // Phase 3: Verify — now includes pipeline latency metrics
   const verifyStart = Date.now();
-  const verification = verifyPhase(query, response, plan);
+  const latency = getPipelineLatency();
+  const verification = verifyPhase(query, response, plan, latency);
   addThoughtStep(thought, {
     module: "verifier", operation: "verify",
-    input: response.slice(0, 100), output: `score=${verification.score.toFixed(2)}, issues=${verification.issues.length}`,
+    input: response.slice(0, 100), output: `score=${verification.score.toFixed(2)}, issues=${verification.issues.length}, totalMs=${latency.totalMs}`,
     startTime: verifyStart, confidence: verification.score,
   });
 
-  // Phase 4: Document (async, non-blocking)
-  documentPhase(query, response, plan, verification).catch(() => {});
+  // Phase 4: Document (async, non-blocking) — includes latency + IoT context
+  documentPhase(query, response, plan, verification, latency, context?.iotDevices).catch(() => {});
 
   // Phase 5: Learn
   learnPhase(query, response, plan, verification);
@@ -377,6 +416,13 @@ export async function runAgenticCycle(
   finalizeThoughtEntry(thought, verification.passed ? "Ciclo concluído com sucesso" : "Ciclo com issues", verification.passed);
   feedUserSpeech(query);
   feedAIResponse(response);
+
+  // Log pipeline latency for performance monitoring
+  if (latency.totalMs > 0) {
+    console.log(
+      `[Pipeline] STT: ${latency.sttMs}ms | LLM: ${latency.llmMs}ms | TTS: ${latency.ttsMs}ms | Vision: ${latency.visionMs}ms | Total: ${latency.totalMs}ms`
+    );
+  }
 
   return { response, plan, verification };
 }
