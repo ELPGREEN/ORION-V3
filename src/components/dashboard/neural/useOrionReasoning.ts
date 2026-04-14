@@ -1142,7 +1142,7 @@ export function useOrionReasoning(
       }
 
       // ═══ VOLUME CONTROL: intercept volume voice commands BEFORE media/AI ═══
-      const volumeMatch = qLow.match(/\b(aumentar?|subir?|levantar?)\s*(o\s+)?volume\b/i)
+      const volumeMatch = qLow.match(/\b(aumentar?|subir?|levantar?|ajustar?|regular?)\s*(o\s+)?volume\b/i)
         || qLow.match(/\bvolume\s+(mais\s+)?alto\b/i)
         || qLow.match(/\bvolume\s+(?:no\s+)?m[aá]ximo\b/i);
       const volumeDownMatch = qLow.match(/\b(diminuir?|abaixar?|baixar?|reduzir?)\s*(o\s+)?volume\b/i)
@@ -1152,6 +1152,40 @@ export function useOrionReasoning(
         || qLow.match(/\b(\d{1,3})\s*%?\s+(?:de\s+)?volume\b/i);
       const muteMatch = /\b(silenciar?|mutar?|mudo|mute)\b/i.test(qLow) && !/alarme/i.test(qLow);
       const unmuteMatch = /\b(desmutar?|ativar?\s+som|unmute|tirar?\s+(?:o\s+)?mudo)\b/i.test(qLow);
+
+      // ═══ VIDEO/MEDIA CONTROL: intercept next/prev/pause video commands ═══
+      const nextMediaMatch = /\b(pr[óo]ximo|seguinte|pr[óo]xima\s+faixa|pr[óo]xima\s+m[úu]sica|pr[óo]xima\s+v[íi]deo|next|avançar|avanti)\b/i.test(qLow);
+      const prevMediaMatch = /\b(anterior|voltar|volta|previous|pr[óo]xima?\s+faixa|pr[óo]xima?\s+m[úu]sica|prev|retroceder)\b/i.test(qLow);
+      const pauseVideoMatch = /\b(pausar?\s+(?:o\s+)?v[íi]deo|pausar?\s+(?:a\s+)?reprodu[çc][ãa]o|stop\s+video|stop\s+the\s+video)\b/i.test(qLow);
+      const playVideoMatch = /\b(continuar?|retomar?|continuar?\s+(?:o\s+)?v[íi]deo|continuar?\s+(?:a\s+)?reprodu[çc][ãa]o|resume|play\s+video)\b/i.test(qLow);
+
+      if (nextMediaMatch || prevMediaMatch || pauseVideoMatch || playVideoMatch) {
+        let mediaAction = "";
+        let feedback = "";
+        if (nextMediaMatch) {
+          mediaAction = "next";
+          feedback = "Avançando para próxima faixa.";
+          window.dispatchEvent(new CustomEvent("orion-music-command", { detail: { action: "next", query: "" } }));
+        } else if (prevMediaMatch) {
+          mediaAction = "prev";
+          feedback = "Voltando para faixa anterior.";
+          window.dispatchEvent(new CustomEvent("orion-music-command", { detail: { action: "previous", query: "" } }));
+        } else if (pauseVideoMatch) {
+          mediaAction = "pause";
+          feedback = "Vídeo pausado.";
+          window.dispatchEvent(new CustomEvent("orion-video-command", { detail: { action: "pause" } }));
+        } else if (playVideoMatch) {
+          mediaAction = "play";
+          feedback = "Reprodução continuada.";
+          window.dispatchEvent(new CustomEvent("orion-video-command", { detail: { action: "play" } }));
+        }
+        addChat("ai", feedback);
+        setThought(feedback);
+        addLog(`🎬 Media: ${mediaAction || "control"}`);
+        speak(feedback).catch(() => {});
+        cleanupProcessing();
+        return;
+      }
 
       if (volumeMatch || volumeDownMatch || volumeSetMatch || muteMatch || unmuteMatch) {
         let action = "up";

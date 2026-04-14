@@ -44,6 +44,18 @@ export function VideoOverlay() {
         setTitle(t || query);
         setVisible(true);
         setMinimized(false); // Keep maximized for audio playback
+      } else if (action === "pause" || action === "stop") {
+        // Send pause command to iframe via postMessage
+        const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
+        if (iframe?.contentWindow) {
+          iframe.contentWindow.postMessage({ event: "command", func: "pauseVideo" }, "*");
+        }
+      } else if (action === "play" || action === "resume") {
+        // Send play command to iframe via postMessage
+        const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
+        if (iframe?.contentWindow) {
+          iframe.contentWindow.postMessage({ event: "command", func: "playVideo" }, "*");
+        }
       } else if (action === "close") {
         setVisible(false);
       } else if (action === "maximize") {
