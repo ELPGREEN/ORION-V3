@@ -1152,26 +1152,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // FIX: A1 — Validate user authentication
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Autenticação obrigatória." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    const token = authHeader.replace("Bearer ", "");
+    // Auth: accept both authenticated and anonymous calls (verify_jwt=false)
     const supabaseAuthClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
-    const { data: { user }, error: authError } = await supabaseAuthClient.auth.getUser(token);
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Não autorizado. Faça login novamente." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     const { query: rawQuery, sources, filters } = await req.json();
 

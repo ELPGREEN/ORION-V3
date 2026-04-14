@@ -62,13 +62,7 @@ Deno.serve(async (req) => {
   try {
     // FIX: A1 — Validate user authentication
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Autenticação obrigatória." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    // Auth: accept both authenticated and anonymous calls (verify_jwt=false)
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const groqKey = Deno.env.get("GROQ_API_KEY");
@@ -76,14 +70,15 @@ Deno.serve(async (req) => {
     const geminiKey = _gkN7.map(n => Deno.env.get(n)).filter(Boolean)[Math.floor(Math.random() * 8)] as string || "";
 
     const supabase = createClient(supabaseUrl, serviceKey);
-    
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !authUser) {
-      return new Response(
-        JSON.stringify({ error: "Não autorizado. Faça login novamente." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+
+    // Extract user ID from auth header if available (optional auth)
+    let authUser: { id: string } | null = null;
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      try {
+        const { data } = await supabase.auth.getUser(token);
+        if (data?.user) authUser = { id: data.user.id };
+      } catch { /* anonymous access */ }
     }
 
     const { messages, conversationId, clienteId, lawyerInstructions, mode } = await req.json();
@@ -100,7 +95,7 @@ Deno.serve(async (req) => {
     const { data: agentConfig } = await supabase
       .from("neural_agent_config")
       .select("persona, custom_instructions, wake_word, vision_enabled, vision_rules, custom_commands, response_length, active_modules")
-      .eq("user_id", authUser.id)
+      .eq("user_id", authUser?.id || "anonymous")
       .maybeSingle();
 
     if (agentConfig) {
@@ -143,7 +138,7 @@ Deno.serve(async (req) => {
       const { data: commCtx } = await supabase
         .from("user_communication_context")
         .select("*")
-        .eq("user_id", authUser.id)
+        .eq("user_id", authUser?.id || "anonymous")
         .maybeSingle();
 
       // Fetch matching adaptive prompt
@@ -187,7 +182,7 @@ Deno.serve(async (req) => {
           const { data: envCtx } = await supabase
             .from("environmental_context")
             .select("objeto_detectado, categoria, emocao_detectada, confianca")
-            .eq("user_id", authUser.id)
+            .eq("user_id", authUser?.id || "anonymous")
             .eq("ativo", true)
             .gte("created_at", fiveMinAgo)
             .order("created_at", { ascending: false })

@@ -2914,39 +2914,8 @@ Deno.serve(async (req) => {
     const ALLOWED_MODELOS = new Set(["flash", "pro", "combined", "triple", "cache"]);
     const modelo = ALLOWED_MODELOS.has(body.modelo) ? body.modelo : "flash";
 
-    // FIX: A1 — Validate auth via getUser() instead of manual JWT decode
+    // Auth: accept both authenticated and anonymous calls (verify_jwt=false)
     let requestUserId: string | null = userId || null;
-    
-    if (!requestUserId) {
-      const authHeader = req.headers.get("authorization");
-      if (authHeader) {
-        try {
-          const token = authHeader.replace("Bearer ", "");
-          const supabaseAuth = createClient(
-            Deno.env.get("SUPABASE_URL") ?? "",
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-          );
-          const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
-          if (error || !user) {
-            return new Response(
-              JSON.stringify({ error: "Não autorizado. Faça login novamente." }),
-              { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
-          requestUserId = user.id;
-        } catch {
-          return new Response(
-            JSON.stringify({ error: "Token de autenticação inválido." }),
-            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      } else {
-        return new Response(
-          JSON.stringify({ error: "Autenticação obrigatória." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
 
     if (!prompt) {
       return new Response(
