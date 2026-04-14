@@ -463,7 +463,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     const isMobileBrowser = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
     const delay = skipWakeWord
-      ? (isMobileBrowser ? 80 : 120)
+      ? 0
       : (isMobileBrowser ? 160 : 180);
 
     directVoiceStartTimerRef.current = setTimeout(() => {
@@ -517,12 +517,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     autoBootedRef.current = true;
     wakeOrionVm();
-    const timer = setTimeout(() => {
-      // Camera does NOT auto-start — only via "ativar visão" voice command.
-      startDirectVoiceCapture();
-    }, 400);
-
-    return () => clearTimeout(timer);
+    // Start voice capture immediately — AudioContext already warmed by orb click gesture
+    startDirectVoiceCapture();
   }, [initialCommand, location.state, skipWakeWord, speechOk, startDirectVoiceCapture]);
 
   // (routeOrionCommand moved above handleVoice to avoid forward reference)

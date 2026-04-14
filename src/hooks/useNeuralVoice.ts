@@ -98,12 +98,12 @@ function deduplicateRepeatedPhrases(text: string): string {
   const lower = trimmed.toLowerCase();
   if (lower.length >= 8) {
     const half = Math.floor(lower.length / 2);
-    // Check exact half split
-    for (let offset = -2; offset <= 2; offset++) {
+    // Check exact half split with wider tolerance for STT whitespace variations
+    for (let offset = -4; offset <= 4; offset++) {
       const pos = half + offset;
-      if (pos < 3 || pos >= lower.length - 3) continue;
-      const left = lower.slice(0, pos).trim();
-      const right = lower.slice(pos).trim();
+      if (pos < 2 || pos >= lower.length - 2) continue;
+      const left = lower.slice(0, pos).replace(/\s+/g, ' ').trim();
+      const right = lower.slice(pos).replace(/\s+/g, ' ').trim();
       if (left === right) {
         trimmed = trimmed.slice(0, pos).trim();
         break;

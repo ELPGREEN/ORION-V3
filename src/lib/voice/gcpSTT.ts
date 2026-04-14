@@ -187,7 +187,14 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
           });
 
       mediaStream = stream;
-      audioContext = new AudioContext({ sampleRate: 48000 });
+      // Reuse gesture-warmed AudioContext if available (prevents "suspended" on mobile)
+      const sharedCtx = (window as any).__orion_shared_audio_ctx__;
+      if (sharedCtx && sharedCtx.state !== 'closed') {
+        audioContext = sharedCtx;
+      } else {
+        audioContext = new AudioContext({ sampleRate: 48000 });
+        (window as any).__orion_shared_audio_ctx__ = audioContext;
+      }
       if (audioContext.state === "suspended") {
         try {
           await audioContext.resume();
