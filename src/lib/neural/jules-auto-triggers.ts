@@ -22,13 +22,21 @@ interface SubsystemFail {
   lastSessionId?: string;
 }
 
-type SubsystemKey =
+export type SubsystemKey =
   | "tf_continuous_learning" | "tf_predictive" | "tf_mlops" | "tf_inference" | "tf_model_monitoring"
   | "onnx_yolo"
   | "vision_gemini" | "vision_mediapipe"
   | "stt_gcp" | "stt_webspeech"
   | "tts_gemini" | "tts_webspeech"
-  | "iot_mqtt" | "iot_bluetooth" | "iot_smart_home" | "iot_ros2";
+  | "iot_mqtt" | "iot_bluetooth" | "iot_smart_home" | "iot_ros2"
+  // Core/Bugs
+  | "core_routing" | "core_state" | "core_auth" | "core_api"
+  // Performance
+  | "perf_bundle" | "perf_render" | "perf_memory" | "perf_network"
+  // Design
+  | "design_responsive" | "design_accessibility" | "design_animation"
+  // Security
+  | "sec_rls" | "sec_xss" | "sec_injection" | "sec_auth_flow";
 
 // ─── Local Store ───
 
