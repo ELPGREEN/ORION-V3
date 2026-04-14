@@ -54,6 +54,13 @@ interface RegexRule {
 }
 
 const REGEX_RULES: RegexRule[] = [
+  // ═══ Video/Screen control (BEFORE everything else) ═══
+  { pattern: /\b(aumentar?\s+(?:a\s+)?tela|tela\s+cheia|fullscreen|maximizar?\s+(?:o\s+)?v[ií]deo)\b/i, intent: "video_fullscreen", confidence: 0.97 },
+  { pattern: /\b(diminuir?\s+(?:a\s+)?tela|sair?\s+(?:da\s+)?tela\s+cheia|reduzir?\s+(?:a\s+)?tela)\b/i, intent: "video_reduce", confidence: 0.97 },
+  { pattern: /\b(minimizar?\s+(?:o\s+)?v[ií]deo|minimizar?\s+(?:a\s+)?tela)\b/i, intent: "video_minimize", confidence: 0.97 },
+  { pattern: /\b(desativar?\s+(?:a\s+)?vis[aã]o|desligar?\s+(?:a\s+)?vis[aã]o|vis[aã]o\s+off|parar?\s+(?:a\s+)?vis[aã]o)\b/i, intent: "vision_off", confidence: 0.97 },
+  { pattern: /\b(ativar?\s+(?:a\s+)?vis[aã]o|ligar?\s+(?:a\s+)?vis[aã]o|vis[aã]o\s+on|iniciar?\s+(?:a\s+)?vis[aã]o)\b/i, intent: "vision_on", confidence: 0.97 },
+
   // Time/date (very specific, high confidence)
   { pattern: /\b(que\s+hora|que\s+dia|data\s+de\s+hoje|hora\s+atual|what\s+time)\b/i, intent: "time_date", confidence: 0.98 },
   
