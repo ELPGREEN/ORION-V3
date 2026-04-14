@@ -294,6 +294,27 @@ export function OrionPlaylistBar() {
     return () => window.removeEventListener("orion-music-command", handler as EventListener);
   }, [playTrack, isPlaying, togglePlayPause, playNext, playPrev, currentTrack]);
 
+  // Listen for Orion voice volume commands
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const { action, value } = e.detail || {};
+      let newVol = volume;
+      switch (action) {
+        case "up": newVol = Math.min(100, volume + 15); break;
+        case "down": newVol = Math.max(0, volume - 15); break;
+        case "set": newVol = Math.max(0, Math.min(100, value ?? 50)); break;
+        case "mute": setMuted(true); if (audioRef.current) audioRef.current.muted = true; if (useSDK && sdk.isReady) sdk.changeVolume(0); return;
+        case "unmute": setMuted(false); if (audioRef.current) audioRef.current.muted = false; if (useSDK && sdk.isReady) sdk.changeVolume(volume / 100); return;
+      }
+      setVolume(newVol);
+      setMuted(newVol === 0);
+      if (audioRef.current) { audioRef.current.volume = newVol / 100; audioRef.current.muted = newVol === 0; }
+      if (useSDK && sdk.isReady) sdk.changeVolume(newVol / 100);
+    };
+    window.addEventListener("orion-volume-command", handler as EventListener);
+    return () => window.removeEventListener("orion-volume-command", handler as EventListener);
+  }, [volume, useSDK, sdk]);
+
   const formatMs = (ms: number) => {
     if (!ms) return "";
     const m = Math.floor(ms / 60000);
@@ -408,8 +429,16 @@ export function OrionPlaylistBar() {
               <SkipForward className="h-3 w-3" />
             </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleMute}>
-              {muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+              {muted || volume === 0 ? <VolumeX className="h-3 w-3" /> : volume < 50 ? <Volume1 className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
             </Button>
+            <div className="w-16 hidden sm:block">
+              <Slider
+                value={[muted ? 0 : volume]}
+                min={0} max={100} step={1}
+                onValueChange={handleVolumeChange}
+                className="h-5"
+              />
+            </div>
           </div>
 
           {(currentTrack || sdk.currentTrack) && (
