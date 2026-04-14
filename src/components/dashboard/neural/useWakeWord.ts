@@ -241,7 +241,13 @@ export function useWakeWord(
           return;
         }
 
-        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 6);
+        const maxAttempts = isMobileBrowser() ? 3 : 6;
+        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, maxAttempts);
+        if (restartAttemptsRef.current >= maxAttempts) {
+          console.log("[WakeWord] Max error restart attempts reached, staying idle");
+          emitWakeStatus(false);
+          return;
+        }
         clearRestartTimer();
         restartTimerRef.current = setTimeout(() => {
           if (!isMicOwner(wakeSingletonIdRef.current)) { emitWakeStatus(false); return; }
@@ -250,7 +256,7 @@ export function useWakeWord(
           } else {
             emitWakeStatus(false);
           }
-        }, getRestartDelay(e.error) + restartAttemptsRef.current * 80);
+        }, getRestartDelay(e.error));
       };
 
       wakeRecRef.current = rec;
