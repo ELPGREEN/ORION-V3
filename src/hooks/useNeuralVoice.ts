@@ -403,35 +403,31 @@ export function useNeuralVoice(
     if (bargeInCallbackRef.current) bargeInCallbackRef.current();
   }, [updateAiResponding]);
 
-  // ═══ Mic Watchdog — auto-resume GCP STT if it dies silently ═══
+  // ═══ Mic Watchdog — auto-resume GCP STT if paused ═══
   useEffect(() => {
     micWatchdogRef.current = setInterval(() => {
       if (!voiceActiveRef.current || intentionalStopRef.current || speakingRef.current || VoiceState.aiResponding) return;
       if (!onCmdRef.current || !useGCPSTTRef.current) return;
 
-      // If GCP session exists but is paused, just resume — no new session
+      // If GCP session exists but is paused, just resume — no new session needed
       if (gcpSessionRef.current?.isActive() && gcpSessionRef.current.isPaused()) {
-        console.log("[Voice] Watchdog: GCP STT paused — resuming (no new session)");
+        console.log("[Voice] Watchdog: GCP STT paused — resuming (no teardown)");
         gcpSessionRef.current.resume();
         setListening(true);
         return;
       }
 
-      // Only recreate if session is truly dead (not active at all)
+      // If session is truly dead, mark it null so next startListening creates fresh
       if (gcpSessionRef.current && !gcpSessionRef.current.isActive()) {
-        console.warn("[Voice] Watchdog: GCP STT died — will use startListeningFresh as fallback");
+        console.warn("[Voice] Watchdog: GCP STT died — clearing ref for next startListening");
         gcpSessionRef.current = null;
-        // Use Web Speech fallback since we can't call startListening here (circular)
-        if (onCmdRef.current && !intentionalStopRef.current) {
-          startListeningFresh(onCmdRef.current);
-        }
       }
-    }, 8000); // Check every 8s instead of 5s to reduce overhead
+    }, 10000); // Check every 10s — no aggressive polling
 
     return () => {
       if (micWatchdogRef.current) { clearInterval(micWatchdogRef.current); micWatchdogRef.current = null; }
     };
-  }, [bargeIn, startListeningFresh]);
+  }, []);
 
   // ═══ Web Speech TTS (Fallback) ═══
   const browserSpeak = useCallback((rawText: string) => {
