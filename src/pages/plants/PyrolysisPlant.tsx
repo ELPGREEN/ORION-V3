@@ -14,16 +14,14 @@ import { PlantQuoteForm } from '@/components/forms/PlantQuoteForm';
 import { ProtectedVideoPlayer } from '@/components/media/ProtectedVideoPlayer';
 import { ROICalculator } from '@/components/plants/ROICalculator';
 
-// Import images and video
-import pyrolysisPlantImg from '@/assets/machines/pyrolysis-plant.jpg';
-import pyrolysisReactorImg from '@/assets/plants/pyrolysis-reactor.jpg';
-import pyrolysisPipesImg from '@/assets/gallery/pyrolysis-pipes.jpg';
+// Plant images - using placeholders until real photos are added
+const pyrolysisPlantImg = '/placeholder.svg';
+const pyrolysisReactorImg = '/placeholder.svg';
+const pyrolysisPipesImg = '/placeholder.svg';
 const pyrolysisVideo = '/videos/pyrolysis-process.mp4';
-
-// Import real pyrolysis plant images from PDF
-import pyrolysisReactorRealImg from '@/assets/plants/pyrolysis-reactor-real.jpg';
-import pyrolysisPlantRealImg from '@/assets/plants/pyrolysis-plant-real.jpg';
-import pyrolysisMotorRealImg from '@/assets/plants/pyrolysis-motor-real.jpg';
+const pyrolysisReactorRealImg = '/placeholder.svg';
+const pyrolysisPlantRealImg = '/placeholder.svg';
+const pyrolysisMotorRealImg = '/placeholder.svg';
 
 export default function PyrolysisPlant() {
   const { t } = useTranslation();

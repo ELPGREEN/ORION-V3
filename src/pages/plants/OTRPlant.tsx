@@ -15,10 +15,10 @@ import { ImageLightbox } from '@/components/ui/image-lightbox';
 import { useLightbox } from '@/hooks/useLightbox';
 import { getOtrMachines, getOtrApplications, getEquipmentSpecs, getOutputProducts, getKeySpecs, otrTirePartnershipImg } from '@/data/otrPlantData';
 
-// Import additional images used directly in JSX
-import otrProcessingAreaImg from '@/assets/otr/otr-processing-area.jpg';
-import shreddingLineImg from '@/assets/otr/shredding-line-interior.jpg';
-import topsFactoryImg from '@/assets/otr/tops-factory-overview.jpg';
+// Plant images - using placeholders until real photos are added
+const otrProcessingAreaImg = '/placeholder.svg';
+const shreddingLineImg = '/placeholder.svg';
+const topsFactoryImg = '/placeholder.svg';
 
 export default function OTRPlant() {
   const { t } = useTranslation();
