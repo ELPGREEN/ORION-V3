@@ -463,7 +463,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     const isMobileBrowser = typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
     const delay = skipWakeWord
-      ? (isMobileBrowser ? 80 : 120)
+      ? 0
       : (isMobileBrowser ? 160 : 180);
 
     directVoiceStartTimerRef.current = setTimeout(() => {
