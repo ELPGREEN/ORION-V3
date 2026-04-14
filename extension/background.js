@@ -299,14 +299,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case "OPEN_EXTERNAL_LINK":
       const linkKey = message.linkKey;
-      const url = EXTERNAL_LINKS[linkKey] || message.url;
-      if (url) {
-        chrome.tabs.create({ url });
-        sendResponse({ ok: true, url });
+      const targetUrl = EXTERNAL_LINKS[linkKey] || message.url;
+      if (targetUrl) {
+        // Find if there's already a tab with this URL
+        chrome.tabs.query({}, (tabs) => {
+          const existingTab = tabs.find(t => t.url && t.url.includes(targetUrl.split('?')[0]));
+          if (existingTab && existingTab.id) {
+            chrome.tabs.update(existingTab.id, { active: true });
+            chrome.windows.update(existingTab.windowId, { focused: true });
+            sendResponse({ ok: true, url: targetUrl, switched: true });
+          } else {
+            chrome.tabs.create({ url: targetUrl });
+            sendResponse({ ok: true, url: targetUrl, switched: false });
+          }
+        });
       } else {
         sendResponse({ error: `Link '${linkKey}' não encontrado` });
       }
-      break;
+      return true;
 
     case "OPEN_ORION_WITH_CONTEXT":
       const ctx = encodeURIComponent(JSON.stringify(message.context || {}));
@@ -483,10 +493,21 @@ function detectTaskType(query, context) {
 async function handleAIQuery(query, context) {
   const taskType = detectTaskType(query, context);
   
-  // Enrich query with page context for research
+  // Enrich query with page context for research and personality rules
   let enrichedQuery = query;
+  const personalityRules = `
+[REGRAS ORION]:
+- Personalidade AquaMonkey: inteligente, descontraído, humor leve.
+- Responda em primeira pessoa e rápido.
+- REGRAS ANTI-ALUCINAÇÃO: Use apenas o contexto fornecido. Se não souber: "Não tenho informação suficiente sobre isso no momento."
+- Resposta direta: 3-5 linhas no máximo. Sem repetir a pergunta.
+- Se for pesquisa: Extraia informações em bullets claros e acionáveis.
+`;
+
   if (context?.pageContent && context.pageContent.length > 50) {
-    enrichedQuery = `[Contexto da página "${context.title || ''}" (${context.url || ''})]:\n${context.pageContent.substring(0, 2000)}\n\n[Pergunta/Comando]: ${query}`;
+    enrichedQuery = `${personalityRules}\n[Contexto da página "${context.title || ''}" (${context.url || ''})]:\n${context.pageContent.substring(0, 2500)}\n\n[Pergunta/Comando]: ${query}`;
+  } else {
+    enrichedQuery = `${personalityRules}\n[Pergunta/Comando]: ${query}`;
   }
 
   // Try agent-hub first

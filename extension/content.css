@@ -26,6 +26,17 @@
   transform: scale(1.1);
 }
 
+#orion-mini-orb.proactive {
+  border-color: #FFA500;
+  box-shadow: 0 0 25px rgba(255, 165, 0, 0.5);
+  animation: orion-proactive-glow 2s infinite;
+}
+
+@keyframes orion-proactive-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(255, 165, 0, 0.4); }
+  50% { box-shadow: 0 0 35px rgba(255, 165, 0, 0.8); }
+}
+
 #orion-mini-orb.orion-pulse {
   animation: orion-pulse-anim 1.5s ease-out;
 }
@@ -473,8 +484,8 @@
   width: 480px;
   height: 320px;
   border-radius: 16px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  background: linear-gradient(145deg, rgba(8, 8, 20, 0.98), rgba(12, 8, 25, 0.98));
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  background: linear-gradient(145deg, rgba(5, 5, 15, 0.95), rgba(10, 10, 30, 0.95));
   box-shadow:
     0 0 60px rgba(212, 175, 55, 0.15),
     0 0 120px rgba(59, 130, 246, 0.08),
@@ -575,10 +586,13 @@
 
 .orion-vo-label {
   font-size: 10px;
-  font-family: monospace;
-  font-weight: bold;
-  color: #D4AF37;
-  text-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 800;
+  background: linear-gradient(90deg, #00E5FF, #7C4DFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
+  letter-spacing: 1px;
 }
 
 .orion-vo-name {
