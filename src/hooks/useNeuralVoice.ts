@@ -929,7 +929,7 @@ export function useNeuralVoice(
               speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
               // Fallback to Web Speech API
               useGCPSTTRef.current = false;
-              gcpSessionRef.current?.stop();
+              gcpSessionRef.current?.destroy();
               gcpSessionRef.current = null;
               if (onCmdRef.current && !intentionalStopRef.current) {
                 startListeningFresh(onCmdRef.current);
