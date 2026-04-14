@@ -109,7 +109,6 @@ export async function orionSelfImprove(opts: {
   autoPR?: boolean;
 }): Promise<{ sessionId: string; success: boolean; error?: string }> {
   const source = await getDefaultSource();
-  if (!source) return { sessionId: "", success: false, error: "No Jules source available" };
 
   const prompt = opts.context
     ? `${opts.task}\n\nContext:\n${opts.context}`
