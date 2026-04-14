@@ -431,7 +431,7 @@ export function useNeuralVoice(
     return () => {
       if (micWatchdogRef.current) { clearInterval(micWatchdogRef.current); micWatchdogRef.current = null; }
     };
-  }, [bargeIn, startListening]);
+  }, [bargeIn, startListeningFresh]);
 
   // ═══ Web Speech TTS (Fallback) ═══
   const browserSpeak = useCallback((rawText: string) => {
