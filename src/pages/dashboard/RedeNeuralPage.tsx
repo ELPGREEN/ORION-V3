@@ -80,6 +80,7 @@ const WebAPIDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neur
 const FaceAuthEnroll = lazy(lazyRetry(() => import("@/components/auth/FaceAuthEnroll").then(m => ({ default: m.FaceAuthEnroll }))));
 const OrionShieldPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/OrionShieldPanel").then(m => ({ default: m.OrionShieldPanel }))));
 const ArquiteturaIA = lazy(lazyRetry(() => import("@/pages/dashboard/ArquiteturaIA")));
+const JulesSelfImprovePanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/JulesSelfImprovePanel").then(m => ({ default: m.JulesSelfImprovePanel }))));
 const AttentionVisualizationLazy = lazy(() => import("@/components/dashboard/neural/AttentionVisualization").then((m) => ({ default: m.AttentionVisualization })));
 const OrionAudiobookListener = lazy(lazyRetry(() => import("@/components/orion/OrionAudiobookListener").then(m => ({ default: m.OrionAudiobookListener }))));
 const SpotifyPlayer = lazy(lazyRetry(() => import("@/components/spotify/SpotifyPlayer").then(m => ({ default: m.SpotifyPlayer }))));
@@ -772,6 +773,11 @@ export default function RedeNeuralPage() {
           {/* Neural Metrics Dashboard */}
           <NeuralErrorBoundary fallbackTitle="Erro no Metrics Dashboard">
             <NeuralMetricsDashboard />
+          </NeuralErrorBoundary>
+
+          {/* Jules Self-Improvement Panel */}
+          <NeuralErrorBoundary fallbackTitle="Erro no Jules Panel">
+            <JulesSelfImprovePanel />
           </NeuralErrorBoundary>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
