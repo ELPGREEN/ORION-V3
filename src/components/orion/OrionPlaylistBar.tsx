@@ -72,6 +72,7 @@ export function OrionPlaylistBar() {
   const [ytEmbedVisible, setYtEmbedVisible] = useState(false);
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [useSDK, setUseSDK] = useState(false);
+  const [barVisible, setBarVisible] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<ReturnType<typeof setInterval>>();
 
@@ -337,6 +338,23 @@ export function OrionPlaylistBar() {
 
   const displayProgress = (useSDK && sdk.currentTrack) ? sdkProgress : progress;
 
+  // If bar is hidden, show a small reopen button
+  if (!barVisible) {
+    return (
+      <div className="relative z-10 flex justify-center py-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-3 text-[9px] gap-1 text-muted-foreground hover:text-[#D4AF37]"
+          onClick={() => setBarVisible(true)}
+        >
+          <Music className="h-3 w-3" />
+          Abrir Playlist
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="relative z-10">
       <audio ref={audioRef} preload="none" />
@@ -463,9 +481,12 @@ export function OrionPlaylistBar() {
 
           {tracks.length > 0 && (
             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setExpanded(!expanded)}>
-              {expanded ? <X className="h-3 w-3" /> : <Music className="h-3 w-3" />}
+              {expanded ? <X className="h-3 w-3" /> : <ListMusic className="h-3 w-3" />}
             </Button>
           )}
+          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 hover:text-destructive" onClick={() => { setBarVisible(false); setExpanded(false); }} title="Fechar playlist">
+            <X className="h-3 w-3" />
+          </Button>
         </div>
 
         {expanded && tracks.length > 0 && (
