@@ -99,7 +99,7 @@ export async function recordSubsystemFailure(
     console.log(`[Jules-Trigger] ${subsystem} failed ${entry.count}x — requesting self-improvement`);
     const latency = getPipelineLatency();
     const task = buildJulesTask(subsystem, error, latency, context);
-    const result = await orionSelfImprove({ task, autoPR: true, subsystem });
+    const result = await orionSelfImprove({ task, autoPR: true, subsystem, _internalAutoTrigger: true });
 
     if (result.success) {
       entry.julesTriggered = true;
