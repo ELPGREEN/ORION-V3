@@ -30,7 +30,9 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "list_sources": {
-        const resp = await fetch(`${JULES_API}/sources`, { headers });
+        let url = `${JULES_API}/sources`;
+        if (params.page_token) url += `?pageToken=${params.page_token}`;
+        const resp = await fetch(url, { headers });
         result = await resp.json();
         break;
       }
@@ -63,7 +65,9 @@ Deno.serve(async (req) => {
       }
 
       case "list_sessions": {
-        const resp = await fetch(`${JULES_API}/sessions?pageSize=${params.page_size || 10}`, { headers });
+        let url = `${JULES_API}/sessions?pageSize=${params.page_size || 10}`;
+        if (params.page_token) url += `&pageToken=${params.page_token}`;
+        const resp = await fetch(url, { headers });
         result = await resp.json();
         break;
       }

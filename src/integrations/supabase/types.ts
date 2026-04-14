@@ -3367,6 +3367,63 @@ export type Database = {
         }
         Relationships: []
       }
+      jules_sessions: {
+        Row: {
+          branch: string | null
+          completed_at: string | null
+          created_at: string | null
+          error_snapshot: string | null
+          follow_up_count: number | null
+          id: string
+          pr_title: string | null
+          pr_url: string | null
+          prompt: string
+          resolved: boolean | null
+          resolved_at: string | null
+          session_id: string
+          status: string | null
+          subsystem: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          error_snapshot?: string | null
+          follow_up_count?: number | null
+          id?: string
+          pr_title?: string | null
+          pr_url?: string | null
+          prompt: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          session_id: string
+          status?: string | null
+          subsystem?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          error_snapshot?: string | null
+          follow_up_count?: number | null
+          id?: string
+          pr_title?: string | null
+          pr_url?: string | null
+          prompt?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          session_id?: string
+          status?: string | null
+          subsystem?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       lawyer_presence: {
         Row: {
           id: string
