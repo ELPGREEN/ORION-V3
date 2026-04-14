@@ -36,7 +36,11 @@ export type SubsystemKey =
   // Design
   | "design_responsive" | "design_accessibility" | "design_animation"
   // Security
-  | "sec_rls" | "sec_xss" | "sec_injection" | "sec_auth_flow";
+  | "sec_rls" | "sec_xss" | "sec_injection" | "sec_auth_flow"
+  // Industrial Robotics
+  | "industrial_welding" | "industrial_assembly" | "industrial_painting"
+  | "industrial_inspection" | "industrial_palletization" | "industrial_adaptive_mfg"
+  | "industrial_protocol_bridge" | "industrial_safety";
 
 // ─── Local Store ───
 
@@ -205,6 +209,15 @@ const SUBSYSTEM_MAP: Record<string, { file: string; desc: string }> = {
   sec_xss: { file: "src/App.tsx", desc: "XSS vulnerability detected (inline handlers, exposed secrets)" },
   sec_injection: { file: "supabase/functions/", desc: "SQL injection or input validation vulnerability" },
   sec_auth_flow: { file: "src/hooks/useAuth.ts", desc: "Authentication security issue (token exposure, improper validation)" },
+  // Industrial Robotics
+  industrial_welding: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Welding seam tracking or torch control is failing" },
+  industrial_assembly: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Assembly/manipulation operations are failing" },
+  industrial_painting: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Painting trajectory or spray control is failing" },
+  industrial_inspection: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Visual inspection or defect detection is failing" },
+  industrial_palletization: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Palletization or AMR fleet coordination is failing" },
+  industrial_adaptive_mfg: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Adaptive manufacturing line reconfiguration is failing" },
+  industrial_protocol_bridge: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Industrial protocol bridge (OPC UA/ROS2/etc) is failing" },
+  industrial_safety: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Industrial safety system violation detected" },
 };
 
 function buildJulesTask(
@@ -256,3 +269,8 @@ export const recordDesignFailure = (area: "responsive" | "accessibility" | "anim
 
 export const recordSecurityFailure = (area: "rls" | "xss" | "injection" | "auth_flow", error: string) =>
   recordSubsystemFailure(`sec_${area}` as SubsystemKey, error);
+
+export const recordIndustrialFailure = (
+  area: "welding" | "assembly" | "painting" | "inspection" | "palletization" | "adaptive_mfg" | "protocol_bridge" | "safety",
+  error: string,
+) => recordSubsystemFailure(`industrial_${area}` as SubsystemKey, error);
