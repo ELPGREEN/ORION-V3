@@ -237,7 +237,7 @@ export function feedReasoningMetrics(metrics: {
     memoryMB: estimateMemoryUsage(),
   });
 
-  // 7. Check degradation
+  // 7. Check degradation + trigger Jules on persistent issues
   const degradations = _baselineSet
     ? checkDegradation("orion-reasoning", {
         accuracy: metrics.score,
@@ -245,6 +245,12 @@ export function feedReasoningMetrics(metrics: {
         errorRate: metrics.score < 0.3 ? 1 : 0,
       })
     : [];
+
+  // Jules auto-trigger for TF degradations
+  if (degradations.length > 0) {
+    const degradDesc = degradations.map(d => `${d.metric}: ${d.currentValue?.toFixed(2)} (baseline: ${d.baselineValue?.toFixed(2)})`).join(", ");
+    recordTFFailure("model_monitoring", `Degradation detected: ${degradDesc}`).catch(() => {});
+  }
 
   // 8. Update pipeline health
   if (_telemetryCycles % 10 === 0) {
