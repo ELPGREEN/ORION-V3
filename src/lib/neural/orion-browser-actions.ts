@@ -64,9 +64,10 @@ function extractCleanQuery(query: string, patternsToRemove: RegExp): string {
     .trim();
 }
 
-const DIRECT_MUSIC_PAUSE_REGEX = /^(?:pausa(?:r)?|pause|stop|pare(?:\s+(?:a|essa)\s+)?(?:m[uú]sica|reprodu(?:ç|c)[aã]o)?|parar(?:\s+(?:a|essa)\s+)?(?:m[uú]sica|reprodu(?:ç|c)[aã]o)?|pausar(?:\s+(?:a|essa)\s+)?(?:m[uú]sica|reprodu(?:ç|c)[aã]o)?)$/i;
-const DIRECT_MUSIC_NEXT_REGEX = /^(?:pr[oó]xima(?:\s+(?:m[uú]sica|faixa))?|pula(?:\s+(?:a\s+)?(?:m[uú]sica|faixa))?|skip|next)$/i;
-const DIRECT_MUSIC_PREV_REGEX = /^(?:volta(?:\s+(?:a\s+)?(?:m[uú]sica|faixa))?|anterior(?:\s+(?:m[uú]sica|faixa))?|prev(?:ious)?)$/i;
+const DIRECT_MUSIC_PAUSE_REGEX = /^(?:pausa(?:r)?|pause|stop|pare|parar|pausar)(?:\s+(?:o|a|esse|essa))?(?:\s+(?:m[uú]sica|reprodu(?:ç|c)[aã]o|v[ií]deo|video|youtube))?$/i;
+const DIRECT_MUSIC_NEXT_REGEX = /^(?:pr[oó]xim[oa]|pula|skip|next)(?:\s+(?:a\s+)?(?:m[uú]sica|faixa|v[ií]deo|video|youtube))?$/i;
+const DIRECT_MUSIC_PREV_REGEX = /^(?:volta(?:r)?|anterior|prev(?:ious)?)(?:\s+(?:a\s+)?(?:m[uú]sica|faixa|v[ií]deo|video|youtube))?$/i;
+const DIRECT_MEDIA_PLAY_REGEX = /^(?:play|resume|retoma(?:r)?|continua(?:r)?|dar\s+play)(?:\s+(?:a|o))?(?:\s+(?:m[uú]sica|faixa|reprodu(?:ç|c)[aã]o|v[ií]deo|video|youtube))?$/i;
 
 const ACTION_PATTERNS: ActionPattern[] = [
   // ─── Music playback commands (voice) ───
@@ -89,6 +90,13 @@ const ACTION_PATTERNS: ActionPattern[] = [
     builder: (_m, _q) => ({
       type: "spotify" as const,
       url: "", description: "⏮ Faixa anterior", query: "prev",
+    }),
+  },
+  {
+    regex: DIRECT_MEDIA_PLAY_REGEX,
+    builder: (_m, _q) => ({
+      type: "spotify" as const,
+      url: "", description: "▶️ Retomando reprodução", query: "play",
     }),
   },
 
@@ -258,9 +266,12 @@ export function executeBrowserAction(action: BrowserAction): string {
     const q = action.query;
 
     // Playback control commands (pause/next/prev) — dispatch directly
-    if (q === "pause" || q === "next" || q === "prev") {
+    if (q === "pause" || q === "play" || q === "next" || q === "prev") {
       window.dispatchEvent(new CustomEvent("orion-music-command", {
-        detail: { action: q === "pause" ? "pause" : q, query: q, fullCommand: q }
+        detail: { action: q, query: q, fullCommand: q }
+      }));
+      window.dispatchEvent(new CustomEvent("orion-video-command", {
+        detail: { action: q }
       }));
       return action.description;
     }
