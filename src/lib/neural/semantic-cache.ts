@@ -72,13 +72,20 @@ function getTermWeight(term: string): number {
   return 1.0;
 }
 
-export function tfidfWeightedJaccard(a: string, b: string): number {
-  const tokensA = a.toLowerCase().split(/\s+/).filter(t => !STOP_WORDS.has(t));
-  const tokensB = b.toLowerCase().split(/\s+/).filter(t => !STOP_WORDS.has(t));
-  
-  const setA = new Set(tokensA);
-  const setB = new Set(tokensB);
-  
+/**
+ * Extract tokens from text, filtering stop words and converting to lowercase.
+ * Optimized for reuse in similarity loops.
+ */
+export function getWeightedTokens(text: string): Set<string> {
+  const tokens = text.toLowerCase().split(/\s+/).filter(t => !STOP_WORDS.has(t));
+  return new Set(tokens);
+}
+
+/**
+ * Calculates TF-IDF weighted Jaccard similarity between two pre-computed token sets.
+ * Prevents redundant tokenization and filtering in O(N) loops.
+ */
+export function tfidfWeightedJaccardFromSets(setA: Set<string>, setB: Set<string>): number {
   let intersectionWeight = 0;
   let unionWeight = 0;
   
@@ -96,6 +103,12 @@ export function tfidfWeightedJaccard(a: string, b: string): number {
   }
   
   return unionWeight === 0 ? 0 : intersectionWeight / unionWeight;
+}
+
+export function tfidfWeightedJaccard(a: string, b: string): number {
+  const setA = getWeightedTokens(a);
+  const setB = getWeightedTokens(b);
+  return tfidfWeightedJaccardFromSets(setA, setB);
 }
 
 export function jaccardSimilarity(a: string, b: string): number {
