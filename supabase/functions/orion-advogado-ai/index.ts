@@ -22,6 +22,20 @@ function getGeminiKey(): string {
   return GEMINI_KEYS[_rrIdx++];
 }
 
+async function callClaude(prompt: string, systemPrompt: string): Promise<string> {
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("ANTROPIC_API_KEY");
+  if (!apiKey) throw new Error("No ANTHROPIC_API_KEY");
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2048, system: systemPrompt, messages: [{ role: "user", content: prompt }], temperature: 0.7 }),
+    signal: AbortSignal.timeout(25000),
+  });
+  if (!res.ok) throw new Error(`Claude error: ${res.status}`);
+  const data = await res.json();
+  return data.content?.[0]?.text || "Sem resposta.";
+}
+
 async function callGemini(prompt: string, systemPrompt: string): Promise<string> {
   const key = getGeminiKey();
   const res = await fetch(
@@ -39,6 +53,15 @@ async function callGemini(prompt: string, systemPrompt: string): Promise<string>
   if (!res.ok) throw new Error(`Gemini error: ${res.status}`);
   const data = await res.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta.";
+}
+
+async function callAI(prompt: string, systemPrompt: string): Promise<string> {
+  try {
+    return await callGemini(prompt, systemPrompt);
+  } catch (e) {
+    console.warn("[orion-advogado-ai] Gemini failed, trying Claude:", e);
+    return await callClaude(prompt, systemPrompt);
+  }
 }
 
 serve(async (req) => {
@@ -87,7 +110,7 @@ serve(async (req) => {
 
 Gere: 1) Resumo do caso 2) Status atual 3) Próximos passos recomendados 4) Riscos identificados`;
 
-        result = await callGemini(prompt, SYSTEM);
+        result = await callAI(prompt, SYSTEM);
         break;
       }
 
@@ -114,7 +137,7 @@ Gere: 1) Resumo do caso 2) Status atual 3) Próximos passos recomendados 4) Risc
 
 Gere: 1) Prazos urgentes (próximos 7 dias) 2) Audiências próximas 3) Consultas pendentes 4) Sugestões de priorização 5) Alertas importantes`;
 
-        result = await callGemini(prompt, SYSTEM);
+        result = await callAI(prompt, SYSTEM);
         break;
       }
 
@@ -136,7 +159,7 @@ ${(messages || []).map((m: any) => `[${m.sender_role}]: ${m.content}`).join("\n"
 
 Gere uma resposta profissional, empática e útil. Mantenha tom formal mas acessível.`;
 
-        result = await callGemini(prompt, SYSTEM);
+        result = await callAI(prompt, SYSTEM);
         break;
       }
 
@@ -154,7 +177,7 @@ Gere uma resposta profissional, empática e útil. Mantenha tom formal mas acess
 
 Gere: 1) Análise da situação 2) Estratégias possíveis 3) Riscos de cada estratégia 4) Recomendação principal 5) Próximos passos`;
 
-        result = await callGemini(prompt, SYSTEM);
+        result = await callAI(prompt, SYSTEM);
         break;
       }
 
@@ -174,7 +197,7 @@ ${(messages || []).map((m: any) => `[${m.sender_role}] ${m.content}`).join("\n")
 
 Gere um resumo estruturado com: pontos discutidos, decisões tomadas, pendências e próximos passos.`;
 
-        result = await callGemini(prompt, SYSTEM);
+        result = await callAI(prompt, SYSTEM);
         break;
       }
 

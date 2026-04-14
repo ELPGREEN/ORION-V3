@@ -22,6 +22,20 @@ function getGeminiKey(): string {
   return GEMINI_KEYS[_rrIdx++];
 }
 
+async function callClaude(prompt: string, systemPrompt: string): Promise<string> {
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY") || Deno.env.get("ANTROPIC_API_KEY");
+  if (!apiKey) throw new Error("No ANTHROPIC_API_KEY");
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2048, system: systemPrompt, messages: [{ role: "user", content: prompt }], temperature: 0.7 }),
+    signal: AbortSignal.timeout(25000),
+  });
+  if (!res.ok) throw new Error(`Claude error: ${res.status}`);
+  const data = await res.json();
+  return data.content?.[0]?.text || "Sem resposta.";
+}
+
 async function callGemini(prompt: string, systemPrompt: string): Promise<string> {
   const key = getGeminiKey();
   const res = await fetch(
@@ -39,6 +53,15 @@ async function callGemini(prompt: string, systemPrompt: string): Promise<string>
   if (!res.ok) throw new Error(`Gemini error: ${res.status}`);
   const data = await res.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta.";
+}
+
+async function callAI(prompt: string, systemPrompt: string): Promise<string> {
+  try {
+    return await callGemini(prompt, systemPrompt);
+  } catch (e) {
+    console.warn("[orion-produtor-ai] Gemini failed, trying Claude:", e);
+    return await callClaude(prompt, systemPrompt);
+  }
 }
 
 serve(async (req) => {
@@ -66,98 +89,98 @@ serve(async (req) => {
 
     switch (action) {
       case "generate_description": {
-        result = await callGemini(
+        result = await callAI(
           `Produto: "${product_title}"\nCategoria: ${product_category || "geral"}\nTipo: ${product_type || "digital_download"}\n\nGere uma descrição persuasiva de vendas para este produto digital em português do Brasil. Máximo 3 parágrafos.`,
           "Você é um copywriter expert em produtos digitais. Escreva descrições que convertem, destacando benefícios e valor. Sempre em PT-BR."
         );
         break;
       }
       case "suggest_price": {
-        result = await callGemini(
+        result = await callAI(
           `Produto: "${product_title}"\nDescrição: ${product_description || "N/A"}\nCategoria: ${product_category || "geral"}\nTipo: ${product_type || "digital_download"}\n\nSugira 3 faixas de preço (econômico, padrão, premium) para este produto digital no mercado brasileiro. Justifique cada faixa brevemente.`,
           "Você é um consultor de pricing para produtos digitais no Brasil. Analise o mercado e sugira preços realistas em Reais (R$). Seja direto."
         );
         break;
       }
       case "generate_modules": {
-        result = await callGemini(
+        result = await callAI(
           `Curso: "${product_title}"\nDescrição: ${product_description || "N/A"}\nCategoria: ${product_category || "geral"}\n\nCrie uma estrutura completa de módulos/aulas para este curso online. Inclua 4-6 módulos com 3-5 aulas cada. Formato:\n\nMódulo 1: [Título]\n- Aula 1.1: [Título]\n- Aula 1.2: [Título]\n...`,
           "Você é um designer instrucional expert. Crie estruturas de cursos online logicamente organizadas e progressivas. PT-BR."
         );
         break;
       }
       case "analyze_performance": {
-        result = await callGemini(
+        result = await callAI(
           `Dados do produtor:\n${context || "Sem dados disponíveis"}\n\nAnalise a performance deste produtor digital e dê 3-5 sugestões práticas de melhoria. Seja específico e actionable.`,
           "Você é um consultor de negócios digitais. Analise dados de vendas/conversão e dê insights práticos em PT-BR. Seja conciso."
         );
         break;
       }
       case "generate_copy": {
-        result = await callGemini(
+        result = await callAI(
           `Produto: "${product_title}"\nDescrição: ${product_description || "N/A"}\nPreço: ${context || "N/A"}\n\nGere 3 textos de promoção para redes sociais (Instagram, Twitter, WhatsApp). Cada um com no máximo 280 caracteres. Inclua emoji e call-to-action.`,
           "Você é um social media manager expert. Crie copies virais e persuasivas para produtos digitais. PT-BR."
         );
         break;
       }
       case "product_faq": {
-        result = await callGemini(
+        result = await callAI(
           `Produto: "${product_title}"\nDescrição: ${product_description || "N/A"}\nPergunta do cliente: ${context || "O que este produto oferece?"}\n\nResponda a pergunta do cliente de forma clara e útil.`,
           "Você é um assistente de suporte ao cliente para produtos digitais. Responda de forma amigável e objetiva em PT-BR."
         );
         break;
       }
       case "affiliate_strategy": {
-        result = await callGemini(
+        result = await callAI(
           `Dados do afiliado:\n${context || "Sem dados"}\n\nCrie uma estratégia completa de divulgação para este afiliado. Inclua: canais recomendados, tipo de conteúdo, frequência de postagens, e dicas de conversão. Seja prático e actionable.`,
           "Você é um consultor de marketing de afiliados expert. Crie estratégias práticas e detalhadas para maximizar vendas. PT-BR."
         );
         break;
       }
       case "best_products": {
-        result = await callGemini(
+        result = await callAI(
           `Produtos disponíveis no marketplace:\n${context || "Sem dados"}\n\nRecomende os 3-5 melhores produtos para um afiliado promover, considerando potencial de conversão, comissão e demanda de mercado. Justifique cada escolha.`,
           "Você é um analista de marketplace de produtos digitais. Recomende produtos com maior potencial de vendas para afiliados. PT-BR."
         );
         break;
       }
       case "social_calendar": {
-        result = await callGemini(
+        result = await callAI(
           `Produto: "${product_title}"\nDescrição: ${product_description || "N/A"}\nDados adicionais: ${context || "N/A"}\n\nCrie um calendário de postagens para 7 dias com:\n- Dia e horário sugerido\n- Plataforma (Instagram, Twitter, TikTok, WhatsApp)\n- Tipo de conteúdo (story, post, reels, thread)\n- Texto pronto para usar (com emoji e CTA)\n\nFormato claro e organizado.`,
           "Você é um social media manager expert em produtos digitais. Crie calendários editoriais práticos e eficazes. PT-BR."
         );
         break;
       }
       case "recommend_products": {
-        result = await callGemini(
+        result = await callAI(
           `Dados do cliente:\n${context || "Sem dados"}\n\nCom base no histórico de compras e categorias disponíveis, recomende 3-5 produtos digitais que este cliente deveria explorar. Justifique cada sugestão com base no perfil. Seja prático e direto.`,
           "Você é um consultor de produtos digitais. Recomende produtos relevantes baseado no perfil e histórico do cliente. Seja persuasivo mas honesto. PT-BR."
         );
         break;
       }
       case "system_health": {
-        result = await callGemini(
+        result = await callAI(
           `Sistema ORION — Status Report\nTimestamp: ${new Date().toISOString()}\nSubsistemas: LLM Gemini (7 keys), TTS Piper+Gemini, RAG Hybrid Search v3, ROSBridge WS, MQTT HiveMQ, Neural Knowledge Base\nContexto: ${context || "N/A"}\n\nGere um relatório de saúde do sistema com status de cada subsistema, recomendações de otimização e alertas potenciais.`,
           "Você é um engenheiro de sistemas sênior. Analise o status dos subsistemas e gere relatório técnico conciso com métricas e recomendações. PT-BR."
         );
         break;
       }
       case "global_analytics": {
-        result = await callGemini(
+        result = await callAI(
           `Dados da plataforma ORION:\n${context || "Sem dados"}\n\nAnalise as métricas globais da plataforma (clientes, processos, vendas, produtos, afiliados) e forneça:\n1. Resumo executivo\n2. Top 3 métricas de crescimento\n3. Top 3 áreas de atenção\n4. Recomendações estratégicas`,
           "Você é um analista de dados executivo. Forneça insights acionáveis e métricas claras. Foco em crescimento e otimização. PT-BR."
         );
         break;
       }
       case "automation_command": {
-        result = await callGemini(
+        result = await callAI(
           `Comando de automação solicitado:\n${context || "Sem comando"}\n\nInterprete este comando de automação para sistemas robóticos/IoT. Retorne:\n1. Dispositivos alvo\n2. Ações a executar\n3. Parâmetros de segurança\n4. Confirmação necessária (sim/não)\n5. Estimativa de tempo`,
           "Você é um engenheiro de automação industrial. Interprete comandos de forma segura, sempre priorizando safety-first. Valide parâmetros antes de confirmar execução. PT-BR."
         );
         break;
       }
       case "security_audit": {
-        result = await callGemini(
+        result = await callAI(
           `Auditoria de segurança — ORION Platform\nTimestamp: ${new Date().toISOString()}\nContexto: ${context || "Auditoria geral"}\n\nRealize uma análise de segurança cobrindo:\n1. Autenticação e controle de acesso (RLS, JWT)\n2. Rate limiting e proteção contra abuso\n3. Exposição de dados sensíveis\n4. Integridade de edge functions\n5. Recomendações de hardening`,
           "Você é um especialista em segurança cibernética. Analise a postura de segurança e forneça recomendações práticas com prioridade. PT-BR."
         );
