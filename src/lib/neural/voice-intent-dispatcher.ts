@@ -89,8 +89,15 @@ const PARAM_EXTRACTORS: Record<string, (text: string) => Record<string, string>>
  * Dispatch a classified voice intent to the appropriate API endpoint.
  * Returns a structured result with the response text and any data.
  */
-export async function dispatchVoiceIntent(intent: VoiceIntent): Promise<DispatchResult> {
+export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: string): Promise<DispatchResult> {
   const t0 = performance.now();
+
+  // ── Creator-only intents guard ──
+  const CREATOR_ONLY_INTENTS = ["self_evolve", "auto_construct"];
+  if (CREATOR_ONLY_INTENTS.includes(intent.intent) && identityStatus !== "creator") {
+    console.warn(`[VoiceDispatch] ❌ Blocked "${intent.intent}" — voice ID is "${identityStatus}", not "creator"`);
+    return ok(intent.intent, "⛔ Apenas o criador pode solicitar auto-evolução do sistema.", null, t0);
+  }
 
   try {
     const extractor = PARAM_EXTRACTORS[intent.intent];

@@ -76,6 +76,7 @@ async function callFirecrawl(query: string): Promise<any> {
 interface OrionTool {
   name: string;
   roles?: AppRole[];
+  creatorOnly?: boolean;
   regex: RegExp;
   extract: (match: RegExpMatchArray, question: string) => Record<string, unknown>;
   call: (params: Record<string, unknown>) => Promise<string>;
@@ -934,10 +935,11 @@ const TOOLS: OrionTool[] = [
     },
   },
 
-  // ═══ Neural — Evolution ═══
+  // ═══ Neural — Evolution (CREATOR-ONLY) ═══
   {
     name: "neural_evolution",
     roles: R_ADV,
+    creatorOnly: true,
     regex: /evolu[çc][aã]o\s+neural|propostas?\s+(?:de\s+)?evolu[çc][aã]o|auto[\s-]?evolu[çc][aã]o/i,
     extract: () => ({}),
     call: async () => {
@@ -2409,6 +2411,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "self_suggest_improvements",
+    creatorOnly: true,
     regex: /(?:sugir[ae]?\s+melhorias?|melhorar?\s+(?:o\s+)?código|improve\s+code|otimizar?\s+código|code\s+improvements?)/i,
     extract: (_match: RegExpMatchArray, q: string) => {
       const pathMatch = q.match(/(?:para|for|em|in)\s+(src\/\S+)/i);
@@ -3650,7 +3653,8 @@ const TOOLS: OrionTool[] = [
 
 export async function matchAndExecuteTool(
   question: string,
-  userRole?: AppRole
+  userRole?: AppRole,
+  identityStatus?: string
 ): Promise<{ handled: boolean; response: string; toolName?: string }> {
   const normalized = question.trim();
   if (normalized.length < 3) return { handled: false, response: "" };
@@ -3671,6 +3675,16 @@ export async function matchAndExecuteTool(
 
     const match = normalized.match(tool.regex);
     if (match) {
+      // Creator-only guard: block non-creator access
+      if (tool.creatorOnly && identityStatus !== "creator") {
+        console.warn(`[ToolExec] ❌ Blocked "${tool.name}" — identity "${identityStatus}" is not creator`);
+        return {
+          handled: true,
+          response: "⛔ Apenas o criador pode executar este comando.",
+          toolName: tool.name,
+        };
+      }
+
       try {
         const params = tool.extract(match, normalized);
         const response = await tool.call(params);

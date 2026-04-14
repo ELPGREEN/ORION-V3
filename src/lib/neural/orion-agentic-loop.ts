@@ -512,6 +512,7 @@ async function triggerJulesSelfImprove(plan: AgenticPlan, verification: AgenticV
     autoPR: true,
     subsystem: domain === "bug" ? "core_state" : domain === "perf" ? "perf_render" : domain === "security" ? "sec_auth_flow" : "design_responsive",
     branch: `${branchPrefix}jules-${key.slice(0, 20)}-${Date.now()}`,
+    _internalAutoTrigger: true, // Auto-triggered by failure detection — no voice ID needed
   });
 
   if (result.success) {
