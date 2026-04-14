@@ -79,12 +79,18 @@ export function useWakeWord(
   }, []);
 
   const getRestartDelay = useCallback((reason?: string) => {
-    if (typeof document !== "undefined" && document.hidden) return 15000;
-    // Long delays to prevent mic cycling sounds — continuous mode handles most cases
-    const base = isMobileBrowser() ? 8000 : 1000;
-    if (reason === "audio-capture" || reason === "network") return base + 3000;
-    if (reason === "aborted" || reason === "end" || reason === "no-speech") return base;
-    return base + 1000;
+    if (typeof document !== "undefined" && document.hidden) return 30000;
+    // Minimal restarts — continuous mode handles most cases.
+    // When it does end, wait long enough to avoid mic cycling sounds (beeps/clicks).
+    if (isMobileBrowser()) {
+      // Mobile: very long delays to prevent OS mic activation sounds
+      if (reason === "no-speech") return 500; // no-speech is silent, safe to restart quickly
+      return 12000; // all other reasons: wait 12s to avoid rapid cycling
+    }
+    // Desktop: shorter but still conservative
+    if (reason === "no-speech") return 300;
+    if (reason === "audio-capture" || reason === "network") return 5000;
+    return 2000;
   }, []);
 
   const getBackgroundTranscripts = useCallback((): BackgroundTranscript[] => {
