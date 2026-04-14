@@ -1,102 +1,81 @@
 
 
-# Implementação Completa — Jules Self-Improvement (Itens Faltantes)
+# Jules Auto-Construção e Evolução Completa do Orion
 
 ## Resumo
-Implementar os 6 itens faltantes do checklist Jules: persistência no Supabase, auto-polling de PRs com notificação, rate limiting, activity viewer, follow-up loop pós-falha, e métricas pós-merge.
+Expandir o sistema Jules de auto-correção para cobrir **4 novos domínios** além dos subsistemas existentes: **Bugs/Core**, **Performance**, **Design/UX** e **Security**. Criar um orquestrador autônomo que analisa o estado do sistema e dispara sessões Jules proativamente.
 
----
+## Detalhes Técnicos
 
-## 1. Tabela `jules_sessions` no Supabase
+### 1. Expandir `jules-auto-triggers.ts` com novos subsistemas
 
-Migration SQL para criar a tabela de persistência:
+Adicionar 12 novos subsystem keys cobrindo:
+- **Core/Bugs**: `core_routing`, `core_state`, `core_auth`, `core_api`
+- **Performance**: `perf_bundle`, `perf_render`, `perf_memory`, `perf_network`
+- **Design**: `design_responsive`, `design_accessibility`, `design_animation`
+- **Security**: `sec_rls`, `sec_xss`, `sec_injection`, `sec_auth_flow`
 
-```sql
-CREATE TABLE public.jules_sessions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id TEXT NOT NULL UNIQUE,
-  subsystem TEXT,
-  prompt TEXT NOT NULL,
-  title TEXT,
-  branch TEXT DEFAULT 'main',
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending','running','completed','failed','merged')),
-  pr_url TEXT,
-  pr_title TEXT,
-  resolved BOOLEAN DEFAULT NULL,
-  follow_up_count INTEGER DEFAULT 0,
-  error_snapshot TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  completed_at TIMESTAMPTZ,
-  resolved_at TIMESTAMPTZ
-);
+Incluir mapeamento de arquivos e descrições para cada um no `SUBSYSTEM_MAP`.
 
-ALTER TABLE public.jules_sessions ENABLE ROW LEVEL SECURITY;
+### 2. Criar `jules-evolution-engine.ts` — Orquestrador Autônomo
 
-CREATE POLICY "Admin full access jules_sessions"
-  ON public.jules_sessions FOR ALL TO authenticated
-  USING (public.is_admin(auth.uid()));
+Motor principal de auto-evolução com 4 scanners:
 
-CREATE POLICY "Authenticated read jules_sessions"
-  ON public.jules_sessions FOR SELECT TO authenticated
-  USING (true);
+```text
+┌─────────────────────────────────────────────┐
+│           Jules Evolution Engine            │
+├──────────┬──────────┬──────────┬────────────┤
+│  BugScan │ PerfScan │DesignScan│ SecScan    │
+│  (errors,│ (bundle, │(a11y,    │ (RLS,      │
+│   state) │  memory) │ contrast)│  headers)  │
+└────┬─────┴────┬─────┴────┬─────┴─────┬──────┘
+     └──────────┴──────────┴───────────┘
+               ▼
+      Jules API → PR → Auto-Merge Check
 ```
 
----
+- `scanForBugs()`: coleta erros do console (window.onerror), unhandled rejections, React error boundaries
+- `scanPerformance()`: monitora bundle size warnings, render times >16ms, memory growth
+- `scanDesign()`: verifica contrast ratios, missing alt texts, broken layouts via ResizeObserver
+- `scanSecurity()`: valida headers, detecta exposed secrets, verifica RLS coverage
 
-## 2. Atualizar `jules-client.ts`
+Cada scanner acumula métricas e, ao atingir threshold, dispara `orionSelfImprove()` com contexto detalhado.
 
-- Após `createSession` com sucesso, inserir registro na tabela `jules_sessions`
-- Adicionar **rate limiting**: máximo 3 sessões/hora (query count WHERE created_at > now()-1h)
-- Adicionar **follow-up loop**: função `julesFollowUp(sessionId, message)` que usa `sendMessage` e incrementa `follow_up_count`
-- Na `pollJulesSession`, ao detectar PR, atualizar a row no DB com `status='completed'`, `pr_url`, `completed_at`
+### 3. Criar `jules-immune-system.ts` — Sistema Imunológico Adaptativo
 
----
+- **Anticorpos**: registry de patterns de erro já corrigidos (hash → fix applied)
+- **Memória imunológica**: erros que já tiveram PR aprovado não disparam novas sessões por 7 dias
+- **Isolamento**: quando um módulo falha 5x, marca como "quarentena" e sugere fallback
+- Persiste no Supabase via tabela `jules_sessions` (campo `error_snapshot` como fingerprint)
 
-## 3. Criar `jules-session-poller.ts`
+### 4. Expandir `JulesSelfImprovePanel.tsx`
 
-Novo módulo com:
-- `startJulesPolling()` — busca sessões com `status='pending'` ou `'running'` no DB, faz poll via `getSession`, atualiza status
-- Usa `setInterval` (30s) com guard contra execuções concorrentes
-- Quando PR detectado: atualiza DB + dispara toast via evento custom `jules:pr-ready`
-- Auto-inicia no mount do dashboard
+- Adicionar tabs: **Subsistemas | Bugs | Performance | Design | Security**
+- Dashboard com gauges de saúde por categoria
+- Botão "Scan Agora" que executa os 4 scanners manualmente
+- Timeline visual mostrando evolução do sistema (PRs criados → resolvidos)
 
----
+### 5. Integrar ao Agentic Loop
 
-## 4. Atualizar `jules-auto-triggers.ts`
+Na `runAgenticCycle` (fase 7), expandir `triggerJulesSelfImprove` para também:
+- Classificar falhas por domínio (bug/perf/design/security)
+- Enviar contexto enriquecido incluindo stack traces e métricas de pipeline
+- Usar branches temáticas: `fix/`, `perf/`, `design/`, `security/`
 
-- Após trigger bem-sucedido, salvar sessão no Supabase (não só localStorage)
-- Adicionar **cooldown**: 10min entre triggers do mesmo subsistema (check `updated_at` no DB)
-- **Métricas pós-merge**: função `checkJulesResolution()` que verifica se subsistema parou de falhar nas 2h após PR, atualiza `resolved=true/false`
-- **Follow-up automático**: se subsistema continuar falhando após PR e `follow_up_count < 2`, enviar `sendMessage` com novo erro
+### 6. Auto-Scan Periódico
 
----
+- Registrar `setInterval` no mount do dashboard (a cada 5min)
+- Cada scan leve (<50ms), só dispara Jules se encontrar issues reais
+- Respects rate limit existente (3 sessões/hora)
 
-## 5. Expandir `JulesSelfImprovePanel.tsx`
-
-- **Activity Viewer**: accordion por sessão, ao expandir chama `listActivities` e mostra timeline (plan → coding → PR)
-- **Sessões do DB**: buscar de `jules_sessions` ao invés de só da API Jules (mostra histórico completo)
-- **Indicador de resolução**: badge verde "Resolvido" / vermelho "Não resolvido" / cinza "Aguardando"
-- **Rate limit visual**: mostrar "X/3 sessões na última hora"
-- **Notificação toast**: listener para evento `jules:pr-ready`
-
----
-
-## 6. Atualizar `jules-proxy` (edge function)
-
-- Adicionar suporte a `nextPageToken` nos endpoints `list_sessions` e `list_sources`
-
----
-
-## Arquivos a criar/editar
+### Arquivos a criar/editar
 
 | Arquivo | Ação |
 |---------|------|
-| Migration SQL | Criar tabela `jules_sessions` |
-| `src/lib/neural/jules-client.ts` | Rate limit, persistência DB, follow-up |
-| `src/lib/neural/jules-session-poller.ts` | Novo — background polling |
-| `src/lib/neural/jules-auto-triggers.ts` | Cooldown, pós-merge, follow-up auto |
-| `src/components/dashboard/neural/JulesSelfImprovePanel.tsx` | Activity viewer, DB sessions, badges |
-| `supabase/functions/jules-proxy/index.ts` | Pagination support |
+| `src/lib/neural/jules-evolution-engine.ts` | Criar — orquestrador com 4 scanners |
+| `src/lib/neural/jules-immune-system.ts` | Criar — memória imunológica + quarentena |
+| `src/lib/neural/jules-auto-triggers.ts` | Expandir subsystems (core/perf/design/sec) |
+| `src/components/dashboard/neural/JulesSelfImprovePanel.tsx` | Tabs + scan manual + health gauges |
+| `src/lib/neural/orion-agentic-loop.ts` | Enriquecer fase 7 com classificação de domínio |
 | `src/lib/neural/index.ts` | Novos exports |
 
