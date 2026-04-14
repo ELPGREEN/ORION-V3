@@ -338,6 +338,23 @@ export function OrionPlaylistBar() {
 
   const displayProgress = (useSDK && sdk.currentTrack) ? sdkProgress : progress;
 
+  // If bar is hidden, show a small reopen button
+  if (!barVisible) {
+    return (
+      <div className="relative z-10 flex justify-center py-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-3 text-[9px] gap-1 text-muted-foreground hover:text-[#D4AF37]"
+          onClick={() => setBarVisible(true)}
+        >
+          <Music className="h-3 w-3" />
+          Abrir Playlist
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="relative z-10">
       <audio ref={audioRef} preload="none" />
