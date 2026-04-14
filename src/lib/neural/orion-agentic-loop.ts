@@ -19,7 +19,7 @@ import { feedUserSpeech, feedAIResponse } from "./voice-evolution-feedback";
 import { isNegativeFeedback, recordCorrection, extractCorrectionTarget } from "./intent-feedback";
 import { smartClassify } from "./smart-intent-classifier";
 import { evaluateRAGResponse } from "./rag-evaluator";
-import { submitRAGFeedback, getWeightsForQueryType } from "./rag-feedback-loop";
+import { submitRAGFeedback, getOptimizedWeights, classifyQueryType } from "./rag-feedback-loop";
 
 // ─── Last classification memory (for feedback corrections) ───
 let _lastClassification: { text: string; intent: string; ts: number } | null = null;
