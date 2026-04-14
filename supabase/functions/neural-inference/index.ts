@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// NEURAL INFERENCE ENGINE v3 — Multi-Provider FREE
-// Chain: Gemini Flash → Mistral (1B/mês) → Groq Llama → HuggingFace
-// ALL 100% gratuito, zero custo
+// NEURAL INFERENCE ENGINE v4 — Multi-Provider
+// Chain: Claude Sonnet 4 → Gemini Flash → Mistral → Groq → HuggingFace
+// Claude = primary, Gemini = fallback
 // ═══════════════════════════════════════════════════════════════
 
 interface InferenceRequest {
@@ -287,13 +287,13 @@ Deno.serve(async (req) => {
       "Cite fontes quando possível. Seja proativo em identificar nuances e implicações." +
       (contextBlock ? `\n\nContexto relevante:${contextBlock}` : "");
 
-    // 3. Call provider chain: Gemini → Mistral → Groq → HuggingFace
+    // 3. Call provider chain: Claude → Gemini → Mistral → Groq → HuggingFace
     const startTime = Date.now();
     let response = "";
-    let providerUsed = "gemini";
-    let modelUsed = "gemini-2.5-flash";
+    let providerUsed = "anthropic";
+    let modelUsed = "claude-sonnet-4";
 
-    // Streaming (Gemini only)
+    // Streaming (Gemini only — Claude doesn't stream here)
     if (stream) {
       try {
         const streamResp = await callGemini(systemPrompt, query, true);
@@ -339,18 +339,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Non-streaming: Gemini → Claude → Mistral → Groq → HuggingFace
+    // Non-streaming: Claude → Gemini → Mistral → Groq → HuggingFace
     try {
-      const result = await callGemini(systemPrompt, query, false);
-      if (typeof result === "string") response = result;
-    } catch (e1) {
-      console.warn("[Inference] Gemini failed:", e1);
-      providerUsed = "anthropic";
-      modelUsed = "claude-sonnet-4";
+      response = await callClaude(systemPrompt, query);
+    } catch (e0) {
+      console.warn("[Inference] Claude failed:", e0);
+      providerUsed = "gemini";
+      modelUsed = "gemini-2.5-flash";
       try {
-        response = await callClaude(systemPrompt, query);
-      } catch (e1b) {
-        console.warn("[Inference] Claude failed:", e1b);
+        const result = await callGemini(systemPrompt, query, false);
+        if (typeof result === "string") response = result;
+      } catch (e1) {
+        console.warn("[Inference] Gemini failed:", e1);
         providerUsed = "mistral";
         modelUsed = "mistral-small-latest";
         try {
