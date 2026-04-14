@@ -712,9 +712,12 @@ export function useNeuralVoice(
       const silenceMs = getOptimalSilenceDuration(turnState);
 
       speechDebounceRef.current = setTimeout(() => {
-        const fullText = speechBufferRef.current.trim();
+        const rawText = speechBufferRef.current.trim();
         speechBufferRef.current = "";
-        if (!fullText || !onCmdRef.current) return;
+        if (!rawText || !onCmdRef.current) return;
+
+        // ═══ DEDUP repeated phrases before processing ═══
+        const fullText = deduplicateRepeatedPhrases(rawText);
 
         const normalized = normalizeSpeechText(fullText);
         const now = Date.now();
