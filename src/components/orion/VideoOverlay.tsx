@@ -128,8 +128,7 @@ export function VideoOverlay() {
 
   if (!visible || !videoUrl || isOnNeuralDashboard) return null;
 
-  return (
-    {/* ═══ MUSIC BAR MODE (audio-only, video hidden) ═══ */}
+    <AnimatePresence>
     {barMode ? (
       <motion.div
         initial={{ opacity: 0, y: 40 }}
