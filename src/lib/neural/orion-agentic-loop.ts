@@ -365,6 +365,9 @@ export async function runAgenticCycle(
   // Phase 5: Learn
   learnPhase(query, response, plan, verification);
 
+  // Phase 6: Self-Improve via Jules (if verification fails repeatedly)
+  triggerJulesSelfImprove(plan, verification).catch(() => {});
+
   // [v3] Finalize journal + voice evolution feedback
   finalizeThoughtEntry(thought, verification.passed ? "Ciclo concluído com sucesso" : "Ciclo com issues", verification.passed);
   feedUserSpeech(query);
