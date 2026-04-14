@@ -248,7 +248,7 @@ export function feedReasoningMetrics(metrics: {
 
   // Jules auto-trigger for TF degradations
   if (degradations.length > 0) {
-    const degradDesc = degradations.map(d => `${d.metric}: ${d.currentValue?.toFixed(2)} (baseline: ${d.baselineValue?.toFixed(2)})`).join(", ");
+    const degradDesc = degradations.map(d => `${d.metric}: ${d.current.toFixed(2)} (baseline: ${d.baseline.toFixed(2)}, -${d.degradationPercent.toFixed(0)}%)`).join(", ");
     recordTFFailure("model_monitoring", `Degradation detected: ${degradDesc}`).catch(() => {});
   }
 
