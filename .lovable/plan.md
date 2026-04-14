@@ -1,81 +1,79 @@
-<final-text>## Resumo
 
-Os comandos falham hoje por 4 causas principais:
+Objetivo
 
-1. A proteção de criador foi implementada em `voice-intent-dispatcher.ts`, mas o fluxo real de voz passa por `NeuralVision -> useOrionReasoning`, então esse guard quase não protege o caminho usado de verdade.
-2. `matchAndExecuteTool()` é chamado sem `identityStatus`; então todo tool `creatorOnly` pode ficar bloqueado até para o criador.
-3. `"melhorar código"` e `"mapa da arquitetura"` não entram no bloco de tools porque dependem de `_isSpecialCmd`, e esses comandos não foram bem cadastrados nesse roteamento.
-4. `"melhore-se"/"evolua"` hoje ativam o pipeline local `neural-evolution`, não o `orionSelfImprove()` com sessão Jules/PR no GitHub.
+- Vou tratar seu pedido como: deixar um único arquivo dono real do microfone/STT.
+- Não vou juntar a interface inteira num arquivo gigante; vou remover os reconhecedores paralelos e centralizar tudo no `src/hooks/useNeuralVoice.ts`, que hoje já é o STT principal mais completo.
 
-Também há um problema de segurança: em erro de microfone/blob pequeno/falha de extração, o sistema ainda cai para `"owner"` em alguns pontos. Isso contradiz sua regra de nunca executar se não for o voice ID do criador.
+Diagnóstico atual
 
-## Plano de implementação
+- Hoje existem vários caminhos independentes de voz:
+  - `src/components/dashboard/GlobalOrionListener.tsx` — wake word próprio + captura curta
+  - `src/components/dashboard/neural/useWakeWord.ts` — wake word próprio
+  - `src/hooks/useNeuralVoice.ts` — STT principal
+  - `src/hooks/useVoiceInput.ts` — SpeechRecognition separado
+  - `src/components/dashboard/neural/RobotVoiceCommands.tsx` — SpeechRecognition separado
+  - `src/lib/neural/orion-orchestrator-exec.ts` — STT one-shot, aparenta estar órfão
+- O conflito mobile vem principalmente da disputa entre `GlobalOrionListener`, `useWakeWord` e o STT principal.
 
-### 1. Unificar o fluxo dos comandos sensíveis
-Criar um único caminho real para comandos de auto-correção/evolução dentro de `useOrionReasoning`, sem depender de caminhos paralelos.
+Plano
 
-Mapeamento final:
-- `melhore-se`, `evolua`, `auto-programe`, `se reprograme`, `recalibre` -> `orionSelfImprove()` / Jules / PR
-- `evolução neural` -> listar propostas de evolução
-- `melhorar código`, `sugerir melhorias` -> `self_suggest_improvements`
-- `mapa da arquitetura` -> `self_architecture_map`
+1. Definir um único dono do mic/STT: `useNeuralVoice.ts`.
+   - Preservo o pipeline principal que já funciona.
+   - Levo para ele o controle de wake word/handoff, sem criar um segundo reconhecimento.
 
-### 2. Passar a identidade real até a execução
-Levar `identityStatus` do `NeuralVision` para `useOrionReasoning` e então para:
-- `matchAndExecuteTool(processedQuestion, userRole, identityStatus)`
-- `orionSelfImprove({ callerIdentity: { email, identityStatus } })`
+2. Criar uma instância compartilhada do engine.
+   - Adicionar um contexto/provider fino só para compartilhar a mesma instância entre `GlobalOrionListener` e `NeuralVision`.
+   - O provider não terá STT próprio; ele só expõe o engine único.
 
-Assim, creator-only deixa de depender de valor `undefined`.
+3. Unificar o fluxo em uma FSM só.
+```text
+wake-listening -> wake-detected -> command-active -> speaking -> resume
+```
+   - Mesmo owner, mesmo stream, sem `stop/start` entre wake word e comando.
+   - Pausas curtas continuam no mesmo fluxo, sem reconectar mic.
 
-### 3. Aplicar bloqueio fail-closed
-Trocar os fallbacks inseguros de `"owner"` por bloqueio seguro (`unknown`/`guest`/mensagem de verificação falhou`) em:
-- `src/hooks/useVoiceIdentityGuard.ts`
+4. Limpar `GlobalOrionListener.tsx`.
+   - Remover toda lógica própria de `SpeechRecognition`.
+   - Deixar só orb, permissões, overlay e chamadas para o engine compartilhado.
+
+5. Remover `useWakeWord.ts`.
+   - Migrar regex/estado útil para o engine único.
+   - Eliminar restart loops duplicados.
+
+6. Simplificar `NeuralVision.tsx`.
+   - Tirar auto-starts e handoffs paralelos.
+   - Consumir só o engine único para iniciar conversa, retomar escuta e tratar `initialCommand`.
+
+7. Migrar os outros pontos independentes.
+   - `useVoiceInput.ts` vira wrapper fino do engine único, sem `SpeechRecognition` próprio.
+   - `RobotVoiceCommands.tsx` passa a usar o mesmo engine com callback específico.
+   - `orion-orchestrator-exec.ts` perde o STT one-shot se continuar sem uso.
+
+8. Manter apenas a infraestrutura compartilhada.
+   - `src/lib/voice/micArbiter.ts` e `src/lib/voice/persistentMic.ts` ficam.
+   - Eles continuam como base, mas só um engine vai mandar neles.
+
+Validação
+
+- Testar no mobile:
+  - sem “tic-tic”
+  - sem segundo `SpeechRecognition.start()` após wake word
+  - wake word -> comando -> resposta -> volta à escuta
+  - pausa natural de 2–4s sem cortar
+- Validar também dashboard, overlay e `/consulta` usando o mesmo dono do microfone.
+
+Arquivos principais afetados
+
+- `src/hooks/useNeuralVoice.ts`
+- `src/components/dashboard/GlobalOrionListener.tsx`
 - `src/components/dashboard/neural/NeuralVision.tsx`
-- gates sensíveis em `useOrionReasoning.ts`
+- `src/components/dashboard/neural/useWakeWord.ts` (remover)
+- `src/hooks/useVoiceInput.ts`
+- `src/components/dashboard/neural/RobotVoiceCommands.tsx`
+- `src/lib/neural/orion-orchestrator-exec.ts` (se confirmado órfão)
 
-Se a voz não for confirmada como `"creator"`, o Orion não executa:
-- PR automático
-- análise de código
-- auto-construção
-- comandos de arquitetura sensíveis
+Resultado esperado
 
-### 4. Remover inconsistências entre intent e ação
-Separar claramente:
-- auto-correção com GitHub/Jules
-- evolução neural interna (propostas, embeddings, auto-learn)
-
-Hoje `self_evolve` cai no serviço errado para o caso “corrigir o próprio código”. Vou corrigir isso para que o comando faça exatamente o que você espera.
-
-### 5. QA end-to-end
-Validar 5 cenários:
-- `creator` -> comando executa
-- `owner` -> bloqueado
-- `guest` -> bloqueado
-- `unknown` -> bloqueado
-- erro de microfone/verificação -> bloqueado
-
-E testar especificamente:
-- `melhore-se`
-- `evolua`
-- `melhorar código`
-- `sugerir melhorias`
-- `evolução neural`
-- `mapa da arquitetura`
-
-## Arquivos a ajustar
-
-- `src/components/dashboard/neural/NeuralVision.tsx`
-- `src/components/dashboard/neural/useOrionReasoning.ts`
-- `src/hooks/useVoiceIdentityGuard.ts`
-- `src/lib/neural/orion-tool-executor.ts`
-- `src/lib/neural/jules-client.ts`
-- `src/lib/neural/voice-intent-dispatcher.ts`
-
-## Detalhes técnicos
-
-- O bug principal é estrutural, não só de regex.
-- O fluxo real de voz hoje ignora a proteção mais forte.
-- O executor de tools não recebe `identityStatus`.
-- O gate `_isSpecialCmd` impede comandos válidos de chegarem ao executor.
-- O gate atual verifica mais a existência de cadastro biométrico do que a confirmação real de `"creator"`.
-- O intercept atual de `self_evolve` chama `neural-evolution`, quando o esperado para “corrigir seu próprio código” é `orionSelfImprove()` com Jules.</final-text>
+- Um único dono real do STT/microfone.
+- Fim da disputa entre wake word e STT principal.
+- Menos barulho, menos reconexão, comportamento previsível no mobile.
