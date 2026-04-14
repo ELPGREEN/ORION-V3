@@ -170,11 +170,8 @@ export function GlobalOrionListener() {
     };
 
     const handleMediaCommand = () => {
-      if (orionOpen) {
-        console.log("[GlobalOrion] Auto-minimizing due to media command");
-        killMicRec();
-        setOrionOpen(false);
-      }
+      // Music/video commands should NOT close the overlay — user wants to keep chatting
+      // Only auto-minimize for embedded video that takes focus
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
