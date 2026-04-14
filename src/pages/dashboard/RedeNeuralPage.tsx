@@ -775,8 +775,8 @@ export default function RedeNeuralPage() {
             <NeuralMetricsDashboard />
           </NeuralErrorBoundary>
 
-          {/* Jules Self-Improvement Panel */}
-          <NeuralErrorBoundary fallbackTitle="Erro no Jules Panel">
+          {/* Orion Auto-Evolution Panel */}
+          <NeuralErrorBoundary fallbackTitle="Erro no Orion Panel">
             <JulesSelfImprovePanel />
           </NeuralErrorBoundary>
 
