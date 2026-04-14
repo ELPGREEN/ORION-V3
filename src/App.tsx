@@ -109,6 +109,7 @@ const MeusAcessos = lazy(lazyRetry(() => import("./pages/dashboard/MeusAcessos")
 const ExplorarLojas = lazy(lazyRetry(() => import("./pages/dashboard/ExplorarLojas")));
 const ConfigurarIA = lazy(lazyRetry(() => import("./pages/dashboard/ConfigurarIA")));
 const PlanoUsuario = lazy(lazyRetry(() => import("./pages/dashboard/PlanoUsuario")));
+const ExtensaoPage = lazy(lazyRetry(() => import("./pages/dashboard/ExtensaoPage")));
 // OrionOrchestratorPage removed — merged into RedeNeuralPage
 const queryClient = new QueryClient({
   defaultOptions: {
