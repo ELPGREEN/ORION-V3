@@ -7,242 +7,537 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      width: 380px;
-      min-height: 580px;
+      width: 400px;
+      min-height: 520px;
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #08091a;
-      color: #e8eaf0;
+      background: #0d0d24;
+      color: #e0e0e0;
       overflow-x: hidden;
     }
 
-    .header {
-      position: relative;
-      padding: 24px 20px 20px;
-      background: linear-gradient(160deg, #0c1230 0%, #0e0a24 100%);
-      border-bottom: 1px solid rgba(0, 180, 212, 0.12);
-      overflow: hidden;
+    /* ═══ Panel Header — matches content.js Orion panel ═══ */
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #0d1b3e, #1a0a3e);
+      border-bottom: 1px solid rgba(0, 229, 255, 0.15);
     }
-    .header::before {
-      content: '';
-      position: absolute;
-      top: -40px; right: -40px;
-      width: 120px; height: 120px;
-      background: radial-gradient(circle, rgba(0,180,212,0.08) 0%, transparent 70%);
-      border-radius: 50%;
+    .panel-title {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00E5FF, #7C4DFF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1.5px;
     }
-    .header-row { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
-    .logo-img { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; }
-    .header-text h1 { font-size: 20px; font-weight: 700; color: #e8eaf0; letter-spacing: 1.5px; }
-    .header-text .tagline { font-size: 11px; color: #6b7280; margin-top: 2px; }
-    .status-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; position: relative; z-index: 1; }
-    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .status-pill.active { background: rgba(0,180,212,0.1); color: #00B4D4; border: 1px solid rgba(0,180,212,0.2); }
-    .status-pill.inactive { background: rgba(255,255,255,0.04); color: #555; border: 1px solid rgba(255,255,255,0.06); }
-    .vision-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 16px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; transition: all 0.3s; }
-    .vision-pill.on { background: rgba(0,255,136,0.12); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); animation: vision-glow 2s infinite; }
-    .vision-pill.off { background: rgba(255,255,255,0.04); color: #555; border: 1px solid rgba(255,255,255,0.06); }
-    @keyframes vision-glow { 0%,100% { box-shadow: 0 0 4px rgba(0,255,136,0.2); } 50% { box-shadow: 0 0 12px rgba(0,255,136,0.4); } }
-    .dot { width: 7px; height: 7px; border-radius: 50%; }
-    .dot.on { background: #00B4D4; box-shadow: 0 0 6px rgba(0,180,212,0.5); animation: pulse-dot 2s infinite; }
-    .dot.off { background: #3a3a4a; }
+    .panel-version {
+      font-size: 10px;
+      color: #4a5568;
+      margin-left: 8px;
+      letter-spacing: 0.5px;
+    }
+    .panel-header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ═══ Status Badges ═══ */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .status-badge.active { background: rgba(0,229,255,0.1); color: #00E5FF; border: 1px solid rgba(0,229,255,0.2); }
+    .status-badge.inactive { background: rgba(255,255,255,0.04); color: #555; border: 1px solid rgba(255,255,255,0.06); }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+    .status-dot.on { background: #00E5FF; box-shadow: 0 0 6px rgba(0,229,255,0.5); animation: pulse-dot 2s infinite; }
+    .status-dot.off { background: #3a3a4a; }
     @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
 
-    .section { padding: 12px 20px; }
-    .section-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: #4a4f5c; margin-bottom: 8px; font-weight: 600; }
+    .vision-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .vision-badge.on { background: rgba(0,255,136,0.12); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); }
+    .vision-badge.off { background: rgba(255,255,255,0.04); color: #555; border: 1px solid rgba(255,255,255,0.06); }
 
-    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); }
-    .toggle-row label { font-size: 12px; color: #9ca3af; }
-    .toggle { position: relative; width: 38px; height: 20px; background: #2a2b3d; border-radius: 10px; cursor: pointer; transition: background 0.3s; }
-    .toggle.on { background: #00889e; }
-    .toggle .thumb { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #e8eaf0; border-radius: 50%; transition: transform 0.3s; }
-    .toggle.on .thumb { transform: translateX(18px); }
+    /* ═══ Auth Section ═══ */
+    .auth-section {
+      padding: 16px;
+      display: none;
+    }
+    .auth-section.visible { display: block; }
+    .auth-box {
+      background: rgba(0,229,255,0.04);
+      border: 1px solid rgba(0,229,255,0.15);
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .auth-box .orb-icon {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0a0a2e, #1a1a4e);
+      border: 2px solid #00E5FF;
+      box-shadow: 0 0 20px rgba(0,229,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 24px;
+    }
+    .auth-box h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e0e0e0;
+      margin-bottom: 6px;
+    }
+    .auth-box p {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .auth-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 12px;
+      outline: none;
+      margin-bottom: 8px;
+      transition: border-color 0.2s;
+    }
+    .auth-input:focus { border-color: rgba(0,229,255,0.4); }
+    .auth-input::placeholder { color: #4a5568; }
 
-    .cap-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 2px; border: 1px solid rgba(255,255,255,0.03); }
-    .cap-left { display: flex; align-items: center; gap: 10px; }
-    .cap-icon { width: 24px; height: 24px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; background: rgba(0,180,212,0.06); }
-    .cap-icon.vision-active { background: rgba(0,255,136,0.1); }
-    .cap-name { font-size: 11px; color: #c9cdd5; }
-    .cap-status { font-size: 8px; padding: 2px 6px; border-radius: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      letter-spacing: 0.3px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #00E5FF, #7C4DFF);
+      color: #0d0d24;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.04);
+      color: #9ca3af;
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-top: 6px;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #e0e0e0; }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 12px 0;
+      font-size: 10px;
+      color: #4a5568;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+    }
+    .auth-error {
+      font-size: 10px;
+      color: #ef4444;
+      margin-top: 6px;
+      display: none;
+    }
+    .auth-error.visible { display: block; }
+
+    /* ═══ User Info (logged in) ═══ */
+    .user-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: rgba(0,229,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .user-bar.visible { display: flex; }
+    .user-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00E5FF, #7C4DFF);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0d0d24;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #e0e0e0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .user-plan {
+      font-size: 9px;
+      color: #00E5FF;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn-logout {
+      background: none;
+      border: none;
+      color: #4a5568;
+      font-size: 10px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+
+    /* ═══ Main Content (logged in) ═══ */
+    .main-content {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+    }
+    .main-content.visible { display: flex; }
+
+    /* ═══ Chat Area ═══ */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      max-height: 220px;
+      min-height: 100px;
+    }
+    .chat-area::-webkit-scrollbar { width: 4px; }
+    .chat-area::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.2); border-radius: 4px; }
+    .chat-empty {
+      text-align: center;
+      padding: 30px 0;
+      color: #3a3f4c;
+      font-size: 11px;
+    }
+    .chat-empty .chat-empty-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      opacity: 0.4;
+    }
+    .chat-msg {
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      max-width: 85%;
+      word-break: break-word;
+    }
+    .chat-msg.user {
+      background: rgba(0,229,255,0.1);
+      border: 1px solid rgba(0,229,255,0.15);
+      margin-left: auto;
+      color: #c0e8ff;
+    }
+    .chat-msg.assistant {
+      background: rgba(124,77,255,0.06);
+      border: 1px solid rgba(124,77,255,0.12);
+      color: #d0d0e0;
+    }
+    .chat-msg.system {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.04);
+      color: #6b7280;
+      font-size: 10px;
+      max-width: 100%;
+      text-align: center;
+    }
+
+    /* ═══ Chat Input ═══ */
+    .chat-input-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-top: 1px solid rgba(0,229,255,0.1);
+      background: rgba(0,0,0,0.2);
+    }
+    .chat-input {
+      flex: 1;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 12px;
+      outline: none;
+    }
+    .chat-input:focus { border-color: rgba(0,229,255,0.3); }
+    .chat-input::placeholder { color: #4a5568; }
+    .btn-send {
+      background: linear-gradient(135deg, #00E5FF, #7C4DFF);
+      border: none;
+      color: #0d0d24;
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+    }
+    .btn-send:hover { opacity: 0.85; }
+    .btn-mic {
+      background: none;
+      border: 1px solid rgba(0,229,255,0.2);
+      color: #00E5FF;
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-mic:hover { background: rgba(0,229,255,0.1); }
+    .btn-mic.active { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #ef4444; animation: mic-pulse 1.5s infinite; }
+    @keyframes mic-pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+
+    /* ═══ Quick Actions ═══ */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      padding: 8px 12px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .quick-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 8px 4px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer;
+      transition: all 0.2s;
+      color: inherit;
+      text-decoration: none;
+    }
+    .quick-btn:hover {
+      background: rgba(0,229,255,0.08);
+      border-color: rgba(0,229,255,0.15);
+    }
+    .quick-btn-icon { font-size: 16px; }
+    .quick-btn-label { font-size: 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; line-height: 1.2; }
+
+    /* ═══ Page Info ═══ */
+    .page-info {
+      padding: 6px 16px;
+      font-size: 10px;
+      color: #3a3f4c;
+      border-top: 1px solid rgba(255,255,255,0.03);
+    }
+    .page-url {
+      color: #00E5FF;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 360px;
+      display: block;
+      opacity: 0.6;
+    }
+
+    /* ═══ Footer ═══ */
+    .footer {
+      padding: 6px 16px;
+      text-align: center;
+      font-size: 8px;
+      color: #2a2b3d;
+      border-top: 1px solid rgba(255,255,255,0.03);
+    }
+    .footer kbd {
+      background: rgba(255,255,255,0.06);
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 8px;
+      color: #4a5568;
+    }
+
+    /* ═══ Capabilities ═══ */
+    .caps-section { padding: 8px 12px; }
+    .caps-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #3a3f4c;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .cap-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 6px;
+      margin-bottom: 2px;
+      border: 1px solid rgba(255,255,255,0.02);
+    }
+    .cap-left { display: flex; align-items: center; gap: 8px; }
+    .cap-icon { font-size: 11px; }
+    .cap-name { font-size: 10px; color: #9ca3af; }
+    .cap-status {
+      font-size: 8px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
     .cap-status.online { background: rgba(34,197,94,0.1); color: #22c55e; }
-    .cap-status.loading { background: rgba(234,179,8,0.1); color: #eab308; }
     .cap-status.offline { background: rgba(239,68,68,0.1); color: #ef4444; }
-    .cap-status.unknown { background: rgba(100,116,139,0.08); color: #64748b; }
-
-    .actions { padding: 8px 20px; display: flex; flex-direction: column; gap: 5px; }
-    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 14px; border-radius: 8px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px; }
-    .btn-primary { background: linear-gradient(135deg, #0097a7, #00838f); color: white; box-shadow: 0 2px 8px rgba(0,151,167,0.2); }
-    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,151,167,0.3); }
-    .btn-vision { background: linear-gradient(135deg, #00884a, #006633); color: white; }
-    .btn-vision:hover { opacity: 0.9; }
-    .btn-vision.active { background: linear-gradient(135deg, #006633, #004422); box-shadow: 0 0 12px rgba(0,255,136,0.2); }
-    .btn-secondary { background: rgba(255,255,255,0.04); color: #9ca3af; border: 1px solid rgba(255,255,255,0.06); }
-    .btn-secondary:hover { background: rgba(255,255,255,0.08); color: #e8eaf0; }
-    .btn-search { background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white; }
-    .btn-search:hover { opacity: 0.9; }
-    .btn-panel { background: linear-gradient(135deg, #0e7490, #155e75); color: white; }
-    .btn-panel:hover { opacity: 0.9; }
-    .btn-row { display: flex; gap: 4px; }
-    .btn-row .btn { flex: 1; font-size: 10px; padding: 8px 6px; }
-
-    .page-info { padding: 6px 20px; font-size: 10px; color: #4a4f5c; }
-    .page-info .url { color: #0097a7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; display: block; }
-
-    .quick-links { padding: 6px 20px; }
-    .quick-links-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
-    .quick-link { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 6px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s; text-decoration: none; color: inherit; }
-    .quick-link:hover { background: rgba(0,180,212,0.08); border-color: rgba(0,180,212,0.15); }
-    .quick-link-icon { font-size: 14px; }
-    .quick-link-label { font-size: 7px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; line-height: 1.2; }
-
-    .shortcuts { padding: 8px 20px; font-size: 9px; color: #3a3f4c; border-top: 1px solid rgba(255,255,255,0.03); }
-    .shortcuts kbd { background: rgba(255,255,255,0.06); padding: 2px 5px; border-radius: 3px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 8px; color: #6b7280; }
-    .footer { padding: 8px 20px; text-align: center; font-size: 9px; color: #2a2b3d; border-top: 1px solid rgba(255,255,255,0.03); }
-    .footer a { color: #4a5568; text-decoration: none; }
-
-    .vision-info { padding: 6px 20px; display: none; }
-    .vision-info.active { display: block; }
-    .vision-info-box { padding: 6px 10px; border-radius: 6px; background: rgba(0,255,136,0.04); border: 1px solid rgba(0,255,136,0.15); font-size: 9px; color: #00ff88; line-height: 1.4; }
+    .cap-status.unknown { background: rgba(100,116,139,0.06); color: #64748b; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="header-row">
-      <img src="icon128.png" alt="Orion" class="logo-img" />
-      <div class="header-text">
-        <h1>ORION</h1>
-        <div class="tagline">Assistente Neural — v5.0</div>
-      </div>
+
+  <!-- ═══ Header — Orion Panel Style ═══ -->
+  <div class="panel-header">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="panel-title">ORION</span>
+      <span class="panel-version">v5.4</span>
     </div>
-    <div class="status-row">
-      <div id="statusBadge" class="status-pill inactive">
-        <span class="dot off" id="statusDot"></span>
-        <span id="statusText">Inativo</span>
+    <div class="panel-header-right">
+      <div id="statusBadge" class="status-badge inactive">
+        <span class="status-dot off" id="statusDot"></span>
+        <span id="statusText">—</span>
       </div>
-      <div id="visionPill" class="vision-pill off">
+      <div id="visionBadge" class="vision-badge off">
         <span>👁</span>
-        <span id="visionPillText">Visão OFF</span>
+        <span id="visionText">OFF</span>
       </div>
     </div>
   </div>
 
-  <div class="toggle-row">
-    <label>Wake Word ativo</label>
-    <div id="wakeToggle" class="toggle on"><div class="thumb"></div></div>
+  <!-- ═══ User Bar (logged in) ═══ -->
+  <div class="user-bar" id="userBar">
+    <div class="user-avatar" id="userAvatar">?</div>
+    <div class="user-info">
+      <div class="user-name" id="userName">—</div>
+      <div class="user-plan" id="userPlan">—</div>
+    </div>
+    <button class="btn-logout" id="btnLogout">Sair</button>
   </div>
 
-  <div class="section">
-    <div class="section-label">Capacidades (14 online)</div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon" id="cap-vision-icon">👁</div><span class="cap-name">Visão</span></div>
-      <span class="cap-status offline" id="cap-vision">Offline</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">🔍</div><span class="cap-name">Pesquisa Web</span></div>
-      <span class="cap-status online" id="cap-search">Online</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">🕸</div><span class="cap-name">Scraping</span></div>
-      <span class="cap-status online" id="cap-scraping">Online</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">🎤</div><span class="cap-name">Audição</span></div>
-      <span class="cap-status unknown" id="cap-hearing">—</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">🗣</div><span class="cap-name">Fala</span></div>
-      <span class="cap-status unknown" id="cap-speech">—</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">🧠</div><span class="cap-name">Raciocínio</span></div>
-      <span class="cap-status online" id="cap-reasoning">Online</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">🛡</div><span class="cap-name">Anti-Alucinação</span></div>
-      <span class="cap-status online" id="cap-antihallucination">Online</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">📋</div><span class="cap-name">Clipboard</span></div>
-      <span class="cap-status online" id="cap-clipboard">Online</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">📥</div><span class="cap-name">Downloads</span></div>
-      <span class="cap-status online" id="cap-downloads">Online</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">🔖</div><span class="cap-name">Bookmarks</span></div>
-      <span class="cap-status online" id="cap-bookmarks">Online</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">🕐</div><span class="cap-name">Histórico</span></div>
-      <span class="cap-status online" id="cap-history">Online</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">🔊</div><span class="cap-name">TTS Chrome</span></div>
-      <span class="cap-status online" id="cap-tts">Online</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">📝</div><span class="cap-name">Notas</span></div>
-      <span class="cap-status online" id="cap-notes">Online</span>
-    </div>
-    <div class="cap-item">
-      <div class="cap-left"><div class="cap-icon">📖</div><span class="cap-name">Reading List</span></div>
-      <span class="cap-status online" id="cap-readinglist">Online</span>
+  <!-- ═══ Auth Section (not logged in) ═══ -->
+  <div class="auth-section visible" id="authSection">
+    <div class="auth-box">
+      <div class="orb-icon">👁</div>
+      <h3>Conecte-se ao Orion</h3>
+      <p>Faça login para acessar todos os comandos de voz, visão, pesquisa e muito mais.</p>
+      <input type="email" class="auth-input" id="authEmail" placeholder="Seu email" autocomplete="email" />
+      <input type="password" class="auth-input" id="authPassword" placeholder="Senha" autocomplete="current-password" />
+      <div class="auth-error" id="authError"></div>
+      <button class="btn btn-primary" id="btnLogin">⚡ Entrar</button>
+      <div class="auth-divider">ou</div>
+      <button class="btn btn-secondary" id="btnSignup">Criar conta em iasofthub.com</button>
     </div>
   </div>
 
-  <div id="visionInfo" class="vision-info">
-    <div class="vision-info-box">
-      👁 Visão ativa — captura sob demanda<br>
-      Diga: <strong>"Orion, o que você vê?"</strong>
+  <!-- ═══ Main Content (logged in) ═══ -->
+  <div class="main-content" id="mainContent">
+
+    <!-- Chat Area -->
+    <div class="chat-area" id="chatArea">
+      <div class="chat-empty">
+        <div class="chat-empty-icon">👁</div>
+        Diga algo ao Orion ou use os atalhos abaixo
+      </div>
+    </div>
+
+    <!-- Chat Input -->
+    <div class="chat-input-row">
+      <button class="btn-mic" id="btnMic" title="Comando de voz">🎤</button>
+      <input type="text" class="chat-input" id="chatInput" placeholder="Fale com o Orion..." />
+      <button class="btn-send" id="btnSend" title="Enviar">➤</button>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="quick-btn" id="btnSearch"><span class="quick-btn-icon">🔍</span><span class="quick-btn-label">Pesquisar</span></button>
+      <button class="quick-btn" id="btnVision"><span class="quick-btn-icon">👁</span><span class="quick-btn-label">Visão</span></button>
+      <button class="quick-btn" id="btnSummarize"><span class="quick-btn-icon">📝</span><span class="quick-btn-label">Resumir</span></button>
+      <button class="quick-btn" id="btnScrape"><span class="quick-btn-icon">🕸</span><span class="quick-btn-label">Scrape</span></button>
+      <button class="quick-btn" id="btnScreenshot"><span class="quick-btn-icon">📸</span><span class="quick-btn-label">Captura</span></button>
+      <button class="quick-btn" id="btnReadAloud"><span class="quick-btn-icon">🗣</span><span class="quick-btn-label">Ler</span></button>
+      <button class="quick-btn" id="btnBookmark"><span class="quick-btn-icon">🔖</span><span class="quick-btn-label">Salvar</span></button>
+      <button class="quick-btn" id="btnSidePanel"><span class="quick-btn-icon">📌</span><span class="quick-btn-label">Painel</span></button>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="quick-actions" style="border-top: 1px solid rgba(255,255,255,0.03);">
+      <a class="quick-btn" data-link="dashboard"><span class="quick-btn-icon">📊</span><span class="quick-btn-label">Dashboard</span></a>
+      <a class="quick-btn" data-link="consulta"><span class="quick-btn-icon">⚖️</span><span class="quick-btn-label">Consulta</span></a>
+      <a class="quick-btn" data-link="neural"><span class="quick-btn-icon">🧠</span><span class="quick-btn-label">Neural</span></a>
+      <a class="quick-btn" data-link="crm"><span class="quick-btn-icon">📇</span><span class="quick-btn-label">CRM</span></a>
+    </div>
+
+    <!-- Capabilities -->
+    <div class="caps-section" id="capsSection">
+      <div class="caps-label">Capacidades</div>
+      <div class="cap-item"><div class="cap-left"><span class="cap-icon">👁</span><span class="cap-name">Visão Neural</span></div><span class="cap-status unknown" id="capVision">—</span></div>
+      <div class="cap-item"><div class="cap-left"><span class="cap-icon">🎤</span><span class="cap-name">Audição STT</span></div><span class="cap-status unknown" id="capHearing">—</span></div>
+      <div class="cap-item"><div class="cap-left"><span class="cap-icon">🗣</span><span class="cap-name">Fala TTS</span></div><span class="cap-status unknown" id="capSpeech">—</span></div>
+      <div class="cap-item"><div class="cap-left"><span class="cap-icon">🧠</span><span class="cap-name">Raciocínio</span></div><span class="cap-status online" id="capReasoning">Online</span></div>
+      <div class="cap-item"><div class="cap-left"><span class="cap-icon">🔍</span><span class="cap-name">Pesquisa Web</span></div><span class="cap-status online" id="capSearch">Online</span></div>
+      <div class="cap-item"><div class="cap-left"><span class="cap-icon">🛡</span><span class="cap-name">Anti-Alucinação</span></div><span class="cap-status online" id="capAntiHallucination">Online</span></div>
     </div>
   </div>
 
-  <div id="pageInfo" class="page-info" style="display:none;">
-    <span>Página ativa:</span>
-    <span class="url" id="pageUrl"></span>
+  <!-- Page Info -->
+  <div class="page-info" id="pageInfo" style="display:none;">
+    <span class="page-url" id="pageUrl"></span>
   </div>
 
-  <div class="actions">
-    <button class="btn btn-primary" id="btnOpen">🚀 Abrir Consulta Orion</button>
-    <button class="btn btn-panel" id="btnSidePanel">📐 Abrir Painel Lateral</button>
-    <button class="btn btn-search" id="btnSearch">🔍 Pesquisa Web Inteligente</button>
-    <button class="btn btn-vision" id="btnVision">👁 Ativar Visão (15 min)</button>
-    <div class="btn-row">
-      <button class="btn btn-secondary" id="btnScrape">🕸 Scrape</button>
-      <button class="btn btn-secondary" id="btnSummarize">📝 Resumir</button>
-      <button class="btn btn-secondary" id="btnScreenshot">📸 Captura</button>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" id="btnReadAloud">🔊 Ler</button>
-      <button class="btn btn-secondary" id="btnExtract">📊 Extrair</button>
-      <button class="btn btn-secondary" id="btnBookmark">🔖 Bookmark</button>
-    </div>
-  </div>
-
-  <div class="quick-links">
-    <div class="section-label">Links Rápidos</div>
-    <div class="quick-links-grid">
-      <a class="quick-link" data-link="dashboard" title="Dashboard Neural"><span class="quick-link-icon">🧠</span><span class="quick-link-label">Dashboard</span></a>
-      <a class="quick-link" data-link="documentos" title="Documentos"><span class="quick-link-icon">📄</span><span class="quick-link-label">Docs</span></a>
-      <a class="quick-link" data-link="pesquisa" title="Pesquisa Jurídica"><span class="quick-link-icon">⚖️</span><span class="quick-link-label">Pesquisa</span></a>
-      <a class="quick-link" data-link="chat" title="Chat IA"><span class="quick-link-icon">💬</span><span class="quick-link-label">Chat IA</span></a>
-      <a class="quick-link" data-link="clientes" title="Clientes"><span class="quick-link-icon">👥</span><span class="quick-link-label">Clientes</span></a>
-      <a class="quick-link" data-link="processos" title="Processos"><span class="quick-link-icon">📋</span><span class="quick-link-label">Processos</span></a>
-      <a class="quick-link" data-link="agenda" title="Agenda"><span class="quick-link-icon">📅</span><span class="quick-link-label">Agenda</span></a>
-      <a class="quick-link" data-link="aml" title="AML/KYC"><span class="quick-link-icon">🛡</span><span class="quick-link-label">AML</span></a>
-      <a class="quick-link" data-link="stf" title="STF Jurisprudência"><span class="quick-link-icon">🏛</span><span class="quick-link-label">STF</span></a>
-      <a class="quick-link" data-link="stj" title="STJ Consulta"><span class="quick-link-icon">⚖️</span><span class="quick-link-label">STJ</span></a>
-      <a class="quick-link" data-link="lexml" title="LexML"><span class="quick-link-icon">📚</span><span class="quick-link-label">LexML</span></a>
-      <a class="quick-link" data-link="planalto" title="Legislação Federal"><span class="quick-link-icon">🇧🇷</span><span class="quick-link-label">Planalto</span></a>
-    </div>
-  </div>
-
-  <div class="shortcuts">
-    <kbd>Ctrl+Shift+O</kbd> Abrir &nbsp;&middot;&nbsp; <kbd>Ctrl+Shift+L</kbd> Escuta &nbsp;&middot;&nbsp; <kbd>Ctrl+Shift+P</kbd> Painel &nbsp;&middot;&nbsp; <kbd>Ctrl+Shift+S</kbd> Captura
-  </div>
-
+  <!-- Footer -->
   <div class="footer">
-    Orion v5.0 &mdash; <a href="https://www.iasofthub.com" target="_blank">IASoft Hub</a> &middot; ELP Green Technology
+    <kbd>Ctrl+Shift+O</kbd> Orion &nbsp; <kbd>Ctrl+Shift+L</kbd> Mic &nbsp; <kbd>Ctrl+Shift+P</kbd> Panel
   </div>
 
   <script src="popup.js"></script>
