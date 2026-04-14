@@ -82,6 +82,9 @@ export function VideoOverlay() {
         setMinimized(false);
       } else if (action === "minimize") {
         setMinimized(true);
+      } else if (action === "minimize_to_bar") {
+        setBarMode(true);
+        setMinimized(false);
       }
     };
     window.addEventListener("orion-video-command", handler as EventListener);
