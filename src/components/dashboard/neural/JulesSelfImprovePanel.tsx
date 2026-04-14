@@ -362,9 +362,11 @@ export function JulesSelfImprovePanel() {
             </Badge>
           )}
           <div className="ml-auto flex gap-1">
-            <Button variant="ghost" size="icon" onClick={handleScan} disabled={scanning} className="h-7 w-7" title="Scan agora">
-              <Scan className={`h-4 w-4 ${scanning ? "animate-spin" : ""}`} />
-            </Button>
+            {isCreator && (
+              <Button variant="ghost" size="icon" onClick={handleScan} disabled={scanning} className="h-7 w-7" title="Scan agora">
+                <Scan className={`h-4 w-4 ${scanning ? "animate-spin" : ""}`} />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={refresh} disabled={loading} className="h-7 w-7">
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
@@ -476,23 +478,30 @@ export function JulesSelfImprovePanel() {
 
         {/* Manual Trigger */}
         <div className="space-y-1.5">
-          <h4 className="text-sm font-medium text-muted-foreground">Trigger Manual</h4>
-          <Textarea
-            placeholder="Descreva a melhoria ou correção que o Orion deve fazer..."
-            value={manualTask}
-            onChange={(e) => setManualTask(e.target.value)}
-            className="text-xs min-h-[60px] resize-none"
-          />
-          <Button
-            size="sm"
-            onClick={handleManualTrigger}
-            disabled={sending || !manualTask.trim() || rateLimit.current >= rateLimit.max}
-            className="w-full text-xs"
-          >
-            {sending ? <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> : <Send className="h-3 w-3 mr-1" />}
-            {rateLimit.current >= rateLimit.max ? "Rate limit atingido" : "Enviar para Orion"}
-          </Button>
-        </div>
+        {isCreator ? (
+          <div className="space-y-1.5">
+            <h4 className="text-sm font-medium text-muted-foreground">Trigger Manual</h4>
+            <Textarea
+              placeholder="Descreva a melhoria ou correção que o Orion deve fazer..."
+              value={manualTask}
+              onChange={(e) => setManualTask(e.target.value)}
+              className="text-xs min-h-[60px] resize-none"
+            />
+            <Button
+              size="sm"
+              onClick={handleManualTrigger}
+              disabled={sending || !manualTask.trim() || rateLimit.current >= rateLimit.max}
+              className="w-full text-xs"
+            >
+              {sending ? <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> : <Send className="h-3 w-3 mr-1" />}
+              {rateLimit.current >= rateLimit.max ? "Rate limit atingido" : "Enviar para Orion"}
+            </Button>
+          </div>
+        ) : (
+          <div className="text-xs text-muted-foreground text-center py-2">
+            🔒 Controles de auto-evolução restritos ao criador
+          </div>
+        )}
       </CardContent>
     </Card>
   );
