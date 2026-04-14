@@ -481,9 +481,12 @@ export function OrionPlaylistBar() {
 
           {tracks.length > 0 && (
             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setExpanded(!expanded)}>
-              {expanded ? <X className="h-3 w-3" /> : <Music className="h-3 w-3" />}
+              {expanded ? <X className="h-3 w-3" /> : <ListMusic className="h-3 w-3" />}
             </Button>
           )}
+          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 hover:text-destructive" onClick={() => { setBarVisible(false); setExpanded(false); }} title="Fechar playlist">
+            <X className="h-3 w-3" />
+          </Button>
         </div>
 
         {expanded && tracks.length > 0 && (
