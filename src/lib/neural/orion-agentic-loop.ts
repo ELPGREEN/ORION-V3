@@ -411,8 +411,7 @@ async function runRAGEvaluation(query: string, response: string, intent: string)
     const evalResult = evaluateRAGResponse({
       response,
       question: query,
-      context: "", // Context was already consumed by LLM
-      referenceAnswer: undefined,
+      context: "",
     });
 
     // Only submit feedback if quality is meaningful (enough data to learn from)
