@@ -6,6 +6,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { orionSelfImprove } from "./jules-client";
 import { logAgentAction } from "./orion-network-registry";
 import { classifyIntent } from "./orion-ai-client";
 import { smartClassifySync } from "./smart-intent-classifier";
