@@ -324,15 +324,16 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       handleVoiceIdentityCheck();
     }
 
-    // Pure wake word without command — just greet
+    // Pure wake word without command — do NOT speak here.
+    // Speaking right after wake word can steal the mic handoff on mobile.
     const isJustWakeWord = /^[óòôõo]r[iíìeéè][oóòôõ][nmn]\s*(ativar?|ligar?|acordar?|oi|olá|e\s*aí)?[.!?]?\s*$/i.test(q.trim()) ||
       /^oreo[nm]\s*(ativar?|ligar?|acordar?|oi|olá|e\s*aí)?[.!?]?\s*$/i.test(q.trim());
     if (isJustWakeWord) {
       if (!hasGreetedRef.current) {
         hasGreetedRef.current = true;
         _markSessionReady();
-        speakFast("Ativando sistema.").catch(() => {});
       }
+      toast.info("⚡ Pode falar", { duration: 1000 });
       return;
     }
 
