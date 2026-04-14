@@ -234,15 +234,15 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
       }
 
       case "vision_off": {
-        window.dispatchEvent(new CustomEvent("orion-vision-toggle", {
-          detail: { active: false }
+        window.dispatchEvent(new CustomEvent("orion-vision-command", {
+          detail: { action: "deactivate_vision" }
         }));
         return ok(intent.intent, "Visão desativada.", null, t0);
       }
 
       case "vision_on": {
-        window.dispatchEvent(new CustomEvent("orion-vision-toggle", {
-          detail: { active: true }
+        window.dispatchEvent(new CustomEvent("orion-vision-command", {
+          detail: { action: "activate_vision" }
         }));
         return ok(intent.intent, "Visão ativada.", null, t0);
       }
