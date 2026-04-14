@@ -649,9 +649,33 @@ export function GlobalOrionListener() {
       }
     };
 
+    const handleMediaCommand = () => {
+      if (orionOpen) {
+        console.log("[GlobalOrion] Auto-minimizing due to media command");
+        killMicRec();
+        setOrionOpen(false);
+      }
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("orion-music-command", handleMediaCommand);
+    window.addEventListener("orion-embedded-video", handleMediaCommand);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("orion-music-command", handleMediaCommand);
+      window.removeEventListener("orion-embedded-video", handleMediaCommand);
+    };
   }, [clearRestartTimer, isOnNeuralPage, orionOpen, permissionsGranted, startWakeWordListener]);
+
+  // Auto-minimize on navigation
+  useEffect(() => {
+    if (orionOpen) {
+      console.log("[GlobalOrion] Auto-minimizing due to navigation");
+      killMicRec();
+      setOrionOpen(false);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     return () => {

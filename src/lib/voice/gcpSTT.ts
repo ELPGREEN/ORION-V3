@@ -31,8 +31,8 @@ const PROCESSOR_BUFFER_SIZE = 4096;
 const PRE_ROLL_FRAMES = 4;
 const FLUSH_POLL_MS = 200;
 const SPEECH_RMS_THRESHOLD = 0.008;
-// Silence tolerance: 4 seconds before flushing utterance (user requested)
-const DEFAULT_SILENCE_MS = 4000;
+// Silence tolerance: 3 seconds before flushing utterance (user requested)
+const DEFAULT_SILENCE_MS = 3000;
 
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {
@@ -240,7 +240,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         signal.addEventListener("abort", stop, { once: true });
       }
 
-      console.log("[GCP-STT] Session started — always-listening mode, silence tolerance: 4s");
+      console.log("[GCP-STT] Session started — always-listening mode, silence tolerance: 3s");
       return true;
     } catch (err: any) {
       console.error("[GCP-STT] Failed to start:", err.message);
