@@ -11,6 +11,7 @@ import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 import { OrionAccessGate } from "@/components/OrionAccessGate";
 import { initVoicePicker } from "@/lib/voice/voicePicker";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
+import { ensurePersistentMic, getPersistentMicStream, requestPersistentMic } from "@/lib/voice/persistentMic";
 // ═══ FIX: Integrate with Mic Arbiter to prevent SpeechRecognition conflicts ═══
 import { claimMic, isMicOwner, registerMicRec, getMicMode, releaseMic, killMicRec } from "@/lib/voice/micArbiter";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
@@ -138,20 +139,23 @@ export function GlobalOrionListener() {
   const micPrimedRef = useRef(false);
 
   const primeMicrophone = useCallback(async () => {
-    // On mobile, only prime ONCE per session to avoid repeated OS activation sounds
-    if (isMobile && micPrimedRef.current) return;
-    if (!navigator.mediaDevices?.getUserMedia) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      });
-      await new Promise((resolve) => setTimeout(resolve, isMobile ? 80 : 30));
-      stream.getTracks().forEach((track) => track.stop());
+    const persistentStream = getPersistentMicStream();
+    if (persistentStream?.active) {
       micPrimedRef.current = true;
+      return;
+    }
+
+    if (micPrimedRef.current) return;
+
+    try {
+      const ready = await ensurePersistentMic();
+      if (ready || getPersistentMicStream()?.active) {
+        micPrimedRef.current = true;
+      }
     } catch (error) {
       console.warn("[GlobalOrion] Microphone priming failed:", error);
     }
-  }, [isMobile]);
+  }, []);
 
   const clearRestartTimer = useCallback(() => {
     if (restartTimerRef.current) {
@@ -347,12 +351,9 @@ export function GlobalOrionListener() {
     clearRestartTimer();
     startInFlightRef.current = true;
 
-    const bootRecognition = async () => {
-      // Only prime mic on first boot or desktop restarts — avoids OS activation sound on mobile
-      if (!isMobile && restartAttemptsRef.current > 0) {
-        await primeMicrophone();
-      } else if (isMobile && !micPrimedRef.current) {
-        await primeMicrophone();
+    const bootRecognition = () => {
+      if (!micPrimedRef.current || !getPersistentMicStream()?.active) {
+        void primeMicrophone();
       }
 
       const hiddenNow = typeof document !== "undefined" && document.hidden;
@@ -555,7 +556,7 @@ export function GlobalOrionListener() {
       }
     };
 
-    void bootRecognition();
+    bootRecognition();
   }, [clearRestartTimer, getRestartDelay, isMobile, isOnNeuralPage, matchesWakeWord, orionOpen, permissionsGranted, primeMicrophone, activateWithCommand, wakeWordRegexes]);
 
   const handleGrantPermissions = useCallback(async () => {
@@ -563,9 +564,10 @@ export function GlobalOrionListener() {
     let camGranted = false;
 
     try {
-      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      micStream.getTracks().forEach(t => t.stop());
-      micGranted = true;
+      micGranted = await requestPersistentMic();
+      if (micGranted) {
+        micPrimedRef.current = true;
+      }
     } catch {
       toast.error("Microfone negado — Orion não poderá ouvir comandos de voz");
     }
