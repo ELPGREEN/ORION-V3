@@ -327,7 +327,7 @@ async function syncProtocolsToSupabase(): Promise<void> {
 export async function runAgenticCycle(
   query: string,
   executeAction: (plan: AgenticPlan) => Promise<string>,
-  context?: { memories?: string[]; visionActive?: boolean }
+  context?: { memories?: string[]; visionActive?: boolean; iotDevices?: string[] }
 ): Promise<{ response: string; plan: AgenticPlan; verification: AgenticVerification }> {
   // Load protocols on first run
   if (Object.keys(_protocols).length === 0) loadProtocols();
@@ -353,17 +353,18 @@ export async function runAgenticCycle(
     startTime: actStart, confidence: 0.8,
   });
 
-  // Phase 3: Verify
+  // Phase 3: Verify — now includes pipeline latency metrics
   const verifyStart = Date.now();
-  const verification = verifyPhase(query, response, plan);
+  const latency = getPipelineLatency();
+  const verification = verifyPhase(query, response, plan, latency);
   addThoughtStep(thought, {
     module: "verifier", operation: "verify",
-    input: response.slice(0, 100), output: `score=${verification.score.toFixed(2)}, issues=${verification.issues.length}`,
+    input: response.slice(0, 100), output: `score=${verification.score.toFixed(2)}, issues=${verification.issues.length}, totalMs=${latency.totalMs}`,
     startTime: verifyStart, confidence: verification.score,
   });
 
-  // Phase 4: Document (async, non-blocking)
-  documentPhase(query, response, plan, verification).catch(() => {});
+  // Phase 4: Document (async, non-blocking) — includes latency + IoT context
+  documentPhase(query, response, plan, verification, latency, context?.iotDevices).catch(() => {});
 
   // Phase 5: Learn
   learnPhase(query, response, plan, verification);
@@ -378,6 +379,13 @@ export async function runAgenticCycle(
   finalizeThoughtEntry(thought, verification.passed ? "Ciclo concluído com sucesso" : "Ciclo com issues", verification.passed);
   feedUserSpeech(query);
   feedAIResponse(response);
+
+  // Log pipeline latency for performance monitoring
+  if (latency.totalMs > 0) {
+    console.log(
+      `[Pipeline] STT: ${latency.sttMs}ms | LLM: ${latency.llmMs}ms | TTS: ${latency.ttsMs}ms | Vision: ${latency.visionMs}ms | Total: ${latency.totalMs}ms`
+    );
+  }
 
   return { response, plan, verification };
 }
