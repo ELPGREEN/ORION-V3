@@ -110,8 +110,14 @@ const REGEX_RULES: RegexRule[] = [
     return { target: m?.[1]?.trim() || "" };
   }},
   
-  // Search
-  { pattern: /\b(procur|busc|encontr|pesquis)\w*\s+/i, intent: "search", confidence: 0.88, extractParams: (t) => {
+  // ═══ "buscar música/vídeo" → media (NOT search) ═══
+  { pattern: /\b(?:busc|procur|pesquis|encontr)\w*\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)\b/i, intent: "media", confidence: 0.95, extractParams: (t) => {
+    const m = t.match(/(?:busc|procur|pesquis|encontr)\w*\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)\s+(?:d[oae]\s+)?(.+)/i);
+    return { query: m?.[1]?.trim() || t.replace(/.*(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o)\s*/i, "").trim(), action: "play" };
+  }},
+
+  // Search — generic (excludes media context already caught above)
+  { pattern: /\b(procur|busc|encontr|pesquis)\w*\s+/i, intent: "search", confidence: 0.85, extractParams: (t) => {
     const m = t.match(/(?:procur|busc|encontr|pesquis)\w*\s+(.+)/i);
     return { query: m?.[1]?.trim() || t };
   }},
