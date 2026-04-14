@@ -10,8 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Music, Search, Play, Pause, SkipBack, SkipForward,
-  Volume2, VolumeX, Loader2, ListMusic, X, Youtube, Zap,
+  Volume2, Volume1, VolumeX, Loader2, ListMusic, X, Youtube, Zap,
 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { searchSpotify, getSpotifyFriendlyError, isSpotifyConnected } from "@/lib/spotify/spotify-service";
 import { searchYTMusicPublic, type YTMusicTrack } from "@/lib/youtube-music/youtube-music-service";
@@ -65,6 +66,7 @@ export function OrionPlaylistBar() {
   const [currentTrack, setCurrentTrack] = useState<UnifiedTrack | null>(null);
   const [isPlayingLocal, setIsPlayingLocal] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(70);
   const [progress, setProgress] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [ytEmbedVisible, setYtEmbedVisible] = useState(false);
