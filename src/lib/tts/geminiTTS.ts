@@ -318,7 +318,7 @@ async function fetchGoogleCloudTTSFallback(
 ): Promise<Blob | null> {
   if (signal.aborted) return null;
   try {
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-cloud-tts`;
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-tts`;
     const response = await fetch(url, {
       method: "POST",
       headers: {

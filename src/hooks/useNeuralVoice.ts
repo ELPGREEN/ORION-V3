@@ -82,6 +82,26 @@ export function normalizeSpeechText(text: string): string {
     .trim();
 }
 
+/** Remove repeated word sequences — e.g. "ativar ativar" → "ativar", "abrir música do ACDC abrir música do ACDC" → "abrir música do ACDC" */
+function deduplicateRepeatedPhrases(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  const words = trimmed.split(/\s+/);
+  const len = words.length;
+  // Try halves first (full sentence repeated)
+  for (let size = Math.floor(len / 2); size >= 1; size--) {
+    if (len >= size * 2) {
+      const first = words.slice(0, size).join(" ").toLowerCase();
+      const second = words.slice(size, size * 2).join(" ").toLowerCase();
+      if (first === second) {
+        // Return deduplicated: first half + remainder after second half
+        return [...words.slice(0, size), ...words.slice(size * 2)].join(" ").trim();
+      }
+    }
+  }
+  return trimmed;
+}
+
 function mergeTranscriptSegments(existing: string, incoming: string): string {
   const current = existing.trim();
   const next = incoming.trim();
@@ -692,9 +712,12 @@ export function useNeuralVoice(
       const silenceMs = getOptimalSilenceDuration(turnState);
 
       speechDebounceRef.current = setTimeout(() => {
-        const fullText = speechBufferRef.current.trim();
+        const rawText = speechBufferRef.current.trim();
         speechBufferRef.current = "";
-        if (!fullText || !onCmdRef.current) return;
+        if (!rawText || !onCmdRef.current) return;
+
+        // ═══ DEDUP repeated phrases before processing ═══
+        const fullText = deduplicateRepeatedPhrases(rawText);
 
         const normalized = normalizeSpeechText(fullText);
         const now = Date.now();
