@@ -1158,6 +1158,9 @@ export function useOrionReasoning(
       const prevMediaMatch = /\b(anterior|voltar|volta|previous|pr[óo]xima?\s+faixa|pr[óo]xima?\s+m[úu]sica|prev|retroceder)\b/i.test(qLow);
       const pauseVideoMatch = /\b(pausar?\s+(?:o\s+)?v[íi]deo|pausar?\s+(?:a\s+)?reprodu[çc][ãa]o|stop\s+video|stop\s+the\s+video)\b/i.test(qLow);
       const playVideoMatch = /\b(continuar?|retomar?|continuar?\s+(?:o\s+)?v[íi]deo|continuar?\s+(?:a\s+)?reprodu[çc][ãa]o|resume|play\s+video)\b/i.test(qLow);
+      const videoVolumeMatch = /\b(aumentar?|diminuir?|subir?|baixar?)\s*(?:o\s+)?volume\s+(?:do\s+)?v[íi]deo\b/i.test(qLow)
+        || /\b(v[íi]deo\s+(?:volume\s+)?(mais|menos|alto|baixo))\b/i.test(qLow);
+      const videoVolumeSetMatch = qLow.match(/\bv[íi]deo\s+volume\s+(?:em\s+|para\s+|a\s+)?(\d{1,3})\s*%?/i);
 
       if (nextMediaMatch || prevMediaMatch || pauseVideoMatch || playVideoMatch) {
         let mediaAction = "";
@@ -1178,6 +1181,14 @@ export function useOrionReasoning(
           mediaAction = "play";
           feedback = "Reprodução continuada.";
           window.dispatchEvent(new CustomEvent("orion-video-command", { detail: { action: "play" } }));
+        } else if (videoVolumeSetMatch) {
+          const volValue = parseInt(videoVolumeSetMatch[1]);
+          feedback = `Volume do vídeo ajustado para ${volValue}%.`;
+          window.dispatchEvent(new CustomEvent("orion-video-command", { detail: { action: "setVolume", value: volValue } }));
+        } else if (videoVolumeMatch) {
+          const isUp = /aumentar|subir|levantar/i.test(qLow);
+          feedback = isUp ? "Volume do vídeo aumentado." : "Volume do vídeo diminuído.";
+          window.dispatchEvent(new CustomEvent("orion-video-command", { detail: { action: isUp ? "up" : "down" } }));
         }
         addChat("ai", feedback);
         setThought(feedback);

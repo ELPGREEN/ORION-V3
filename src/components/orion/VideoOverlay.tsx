@@ -56,6 +56,25 @@ export function VideoOverlay() {
         if (iframe?.contentWindow) {
           iframe.contentWindow.postMessage({ event: "command", func: "playVideo" }, "*");
         }
+      } else if (action === "next" || action === "skip") {
+        // Send next command to iframe via postMessage (works if playlist)
+        const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
+        if (iframe?.contentWindow) {
+          iframe.contentWindow.postMessage({ event: "command", func: "nextVideo" }, "*");
+        }
+      } else if (action === "previous" || action === "prev") {
+        // Send previous command to iframe via postMessage (works if playlist)
+        const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
+        if (iframe?.contentWindow) {
+          iframe.contentWindow.postMessage({ event: "command", func: "previousVideo" }, "*");
+        }
+      } else if (action === "setVolume" || action === "volume") {
+        // Send volume command to iframe via postMessage
+        const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
+        if (iframe?.contentWindow) {
+          const vol = parseInt(String(action).match(/\d+/)?.[0] || "50";
+          iframe.contentWindow.postMessage({ event: "command", func: "setVolume", arg: vol }, "*");
+        }
       } else if (action === "close") {
         setVisible(false);
       } else if (action === "maximize") {
