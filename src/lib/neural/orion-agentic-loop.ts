@@ -367,7 +367,10 @@ export async function runAgenticCycle(
   // Phase 5: Learn
   learnPhase(query, response, plan, verification);
 
-  // Phase 6: Self-Improve via Jules (if verification fails repeatedly)
+  // Phase 6: RAG Evaluation + Feedback Loop (async, non-blocking)
+  runRAGEvaluation(query, response, plan.intent).catch(() => {});
+
+  // Phase 7: Self-Improve via Jules (if verification fails repeatedly)
   triggerJulesSelfImprove(plan, verification).catch(() => {});
 
   // [v3] Finalize journal + voice evolution feedback
