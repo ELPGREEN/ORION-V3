@@ -934,10 +934,11 @@ const TOOLS: OrionTool[] = [
     },
   },
 
-  // ═══ Neural — Evolution ═══
+  // ═══ Neural — Evolution (CREATOR-ONLY) ═══
   {
     name: "neural_evolution",
     roles: R_ADV,
+    creatorOnly: true,
     regex: /evolu[çc][aã]o\s+neural|propostas?\s+(?:de\s+)?evolu[çc][aã]o|auto[\s-]?evolu[çc][aã]o/i,
     extract: () => ({}),
     call: async () => {
@@ -2409,6 +2410,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "self_suggest_improvements",
+    creatorOnly: true,
     regex: /(?:sugir[ae]?\s+melhorias?|melhorar?\s+(?:o\s+)?código|improve\s+code|otimizar?\s+código|code\s+improvements?)/i,
     extract: (_match: RegExpMatchArray, q: string) => {
       const pathMatch = q.match(/(?:para|for|em|in)\s+(src\/\S+)/i);
