@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     const { data: agentConfig } = await supabase
       .from("neural_agent_config")
       .select("persona, custom_instructions, wake_word, vision_enabled, vision_rules, custom_commands, response_length, active_modules")
-      .eq("user_id", authUser.id)
+      .eq("user_id", authUser?.id || "anonymous")
       .maybeSingle();
 
     if (agentConfig) {
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       const { data: commCtx } = await supabase
         .from("user_communication_context")
         .select("*")
-        .eq("user_id", authUser.id)
+        .eq("user_id", authUser?.id || "anonymous")
         .maybeSingle();
 
       // Fetch matching adaptive prompt
@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
           const { data: envCtx } = await supabase
             .from("environmental_context")
             .select("objeto_detectado, categoria, emocao_detectada, confianca")
-            .eq("user_id", authUser.id)
+            .eq("user_id", authUser?.id || "anonymous")
             .eq("ativo", true)
             .gte("created_at", fiveMinAgo)
             .order("created_at", { ascending: false })
