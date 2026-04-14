@@ -91,17 +91,11 @@ export const julesClient = {
 
 // ─── Orion Self-Improvement Interface ───
 
-/** Cached source name */
-let _cachedSource: string | null = null;
+/** Default source — ORION-V3 repo */
+const DEFAULT_SOURCE = "sources/github/ELPGREEN/ORION-V3";
 
-async function getDefaultSource(): Promise<string | null> {
-  if (_cachedSource) return _cachedSource;
-  const result = await julesClient.listSources();
-  if (result.success && result.data?.sources?.length) {
-    _cachedSource = result.data.sources[0].name;
-    return _cachedSource;
-  }
-  return null;
+async function getDefaultSource(): Promise<string> {
+  return DEFAULT_SOURCE;
 }
 
 /**
