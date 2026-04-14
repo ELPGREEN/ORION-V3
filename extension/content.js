@@ -1,5 +1,5 @@
 /**
- * Orion Extension v5.2 — Content Script
+ * Orion Extension v5.4 — Content Script
  * Floating widget with persistent chat, YouTube PiP, PDF/image upload,
  * page analysis, academic tools, auto-minimize on navigation.
  * Voice/STT/TTS: UNTOUCHED from v5.1.
@@ -145,6 +145,13 @@
   function handleYouTubeDetected(videoId) {
     if (currentYouTubeVideoId === videoId) return;
     currentYouTubeVideoId = videoId;
+
+    if (miniOrb) {
+      miniOrb.style.bottom = "20px";
+      miniOrb.style.right = "20px";
+      miniOrb.style.left = "auto";
+      miniOrb.style.top = "auto";
+    }
 
     if (panelVisible) {
       minimizePanel();
@@ -359,7 +366,15 @@
 
     if (panelVisible) {
       minimizePanel();
-      addChatMessage("system", "📌 Minimizando para modo flutuante...");
+      addChatMessage("system", "📌 Mudança de aba detectada — minimizando...");
+    }
+
+    // Always auto-minimize to bottom right on navigation
+    if (miniOrb) {
+      miniOrb.style.bottom = "20px";
+      miniOrb.style.right = "20px";
+      miniOrb.style.left = "auto";
+      miniOrb.style.top = "auto";
     }
 
     const videoId = extractYouTubeVideoId(newUrl);
@@ -371,7 +386,8 @@
 
     setTimeout(() => {
       chrome.runtime.sendMessage({ type: "PAGE_CONTEXT_UPDATE", url: location.href, title: document.title, domain: location.hostname });
-    }, 500);
+      checkProactiveResearch();
+    }, 1000);
   }
 
   const _pushState = history.pushState;
@@ -464,6 +480,7 @@
       addChatMessage("assistant", "🚀 Indo para o painel de controle...");
       chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "dashboard" });
       showNotification("🚀 Abrindo painel de controle...", "success");
+      if (videoOverlay && !videoOverlayPaused) pauseVideo();
       return;
     }
 
@@ -474,12 +491,38 @@
       return;
     }
 
-    // Resume video command
-    if (videoOverlay && videoOverlayPaused && (/\bcontinu/i.test(lower) || /\bresume\b/i.test(lower) || /\bplay\b/i.test(lower) || /\btocar?\b/i.test(lower))) {
-      resumeVideo();
-      addChatMessage("system", "▶ Vídeo retomado!");
-      return;
-    }
+    // Video control commands
+    if (videoOverlay) {
+      if (lower.includes("fecha") || lower.includes("fechar") || lower.includes("para") || lower.includes("parar video") || lower.includes("encerrar video")) {
+        removeVideoOverlay();
+        addChatMessage("system", "✕ Vídeo encerrado.");
+        return;
+      }
+      if (lower.includes("mudo") || lower.includes("silencia") || lower.includes("tira o som")) {
+        if (!videoOverlayMuted) toggleVideoMute();
+        addChatMessage("system", "🔇 Vídeo em mudo.");
+        return;
+      }
+      if (lower.includes("com som") || lower.includes("ativa som") || lower.includes("desmuta")) {
+        if (videoOverlayMuted) toggleVideoMute();
+        addChatMessage("system", "🔊 Som ativado.");
+        return;
+      }
+      if (lower.includes("minimiza") || lower.includes("esconde video")) {
+        if (!videoOverlayMinimized) toggleVideoMinimize();
+        addChatMessage("system", "➖ Vídeo minimizado.");
+        return;
+      }
+      if (lower.includes("maximiza") || lower.includes("mostra video") || lower.includes("aumenta video")) {
+        if (videoOverlayMinimized) toggleVideoMinimize();
+        addChatMessage("system", "🔲 Vídeo maximizado.");
+        return;
+      }
+      if (videoOverlayPaused && (/\bcontinu/i.test(lower) || /\bresume\b/i.test(lower) || /\bplay\b/i.test(lower) || /\btocar?\b/i.test(lower))) {
+        resumeVideo();
+        addChatMessage("system", "▶ Vídeo retomado!");
+        return;
+      }
     }
 
     if (lower.includes("abrir dashboard")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "dashboard" }); return; }
@@ -625,9 +668,45 @@
     const hasArticle = !!document.querySelector("article, [itemtype*='ScholarlyArticle'], [itemtype*='Article']");
     const hasDOI = !!(document.querySelector("meta[name='citation_doi'], meta[name='dc.identifier'], a[href*='doi.org']"));
     const hasCitations = document.querySelectorAll("[class*='citation'], [class*='reference'], [id*='reference'], [id*='bibliography']").length > 0;
+
+    // Also check for common PDF viewer URLs or indicators
+    const isPDF = location.pathname.toLowerCase().endsWith(".pdf") || document.querySelector("embed[type='application/pdf'], iframe[src*='.pdf']");
+
     if (isAcademic || hasDOI || (hasArticle && hasCitations)) return "academic";
+    if (isPDF) return "pdf";
     if (document.querySelectorAll("article, [role='article']").length > 0) return "article";
     return "general";
+  }
+
+  let lastProactiveUrl = null;
+  function checkProactiveResearch() {
+    if (location.href === lastProactiveUrl) return;
+    const type = detectPageType();
+    if (type === "academic" || type === "article" || type === "pdf") {
+      lastProactiveUrl = location.href;
+      setTimeout(() => {
+        showProactiveOffer(type);
+      }, 2000);
+    }
+  }
+
+  function showProactiveOffer(type) {
+    const label = type === "academic" ? "Trabalho Acadêmico" : (type === "pdf" ? "Documento PDF" : "Artigo");
+    const phrase = `Detectei um ${label}. Posso ajudar com um resumo, outline ou análise crítica. Quer uma mãozinha? 🧠`;
+
+    showNotification(`Orion: ${label} detectado!`, "success");
+
+    // Pulse the orb and change color to gold/orange to indicate proactivity
+    pulseOrb();
+    if (miniOrb) miniOrb.classList.add("proactive");
+
+    // Add to chat history
+    addChatMessage("assistant", `[JARVIS MODE] ${phrase}`);
+
+    // If panel is closed, speak it (Orion's voice)
+    if (!panelVisible) {
+      speakText(`Olá! Detectei um ${label}. Quer ajuda para analisar?`);
+    }
   }
 
   // ═══ AI Query (via Agent Hub) — Research Assistant Mode ═══
@@ -996,7 +1075,7 @@
 
     panel.innerHTML = `
       <div class="orion-panel-header">
-        <span class="orion-panel-title">ORION v5.3</span>
+        <span class="orion-panel-title">ORION v5.4</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <span id="orion-agent-badge" class="orion-agent-badge" style="display:none;font-size:10px;padding:2px 6px;border-radius:8px;background:#1a2a3a;color:#00E5FF;">🤖 Orion</span>
           <span id="orion-vision-badge" class="orion-vision-badge ${visionActive ? 'active' : ''}">${visionActive ? '👁 ON' : '👁 OFF'}</span>
@@ -1308,4 +1387,5 @@
   });
 
   createMiniOrb();
+  checkProactiveResearch();
 })();
