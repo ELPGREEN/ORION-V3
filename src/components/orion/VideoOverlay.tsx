@@ -216,15 +216,13 @@ export function VideoOverlay() {
           </div>
           <div className="flex items-center gap-0.5">
             {!minimized && (
-              <>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={tryPiP} title="Picture-in-Picture">
-                  <PictureInPicture2 className="h-3 w-3" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setBarMode(true)} title="Só áudio (barra de música)">
-                  <Music className="h-3 w-3" />
-                </Button>
-              </>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={tryPiP} title="Picture-in-Picture">
+                <PictureInPicture2 className="h-3 w-3" />
+              </Button>
             )}
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setBarMode(true)} title="Só áudio (barra de música)">
+              <Music className="h-3 w-3" />
+            </Button>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setMuted(!muted)}>
               {muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
             </Button>
