@@ -4,7 +4,7 @@
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Volume2, VolumeX, Maximize2, Play } from "lucide-react";
+import { X, Volume2, VolumeX, Maximize2, Play, Music } from "lucide-react";
 
 interface VideoCommand {
   action: string;
@@ -109,6 +109,21 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
         <div className="flex items-center gap-0.5">
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={toggleMute}>
             {muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+            // Minimize to music bar — dispatch to VideoOverlay bar mode
+            window.dispatchEvent(new CustomEvent("orion-video-command", {
+              detail: { action: "play_video", url: videoUrl, title }
+            }));
+            // Then switch VideoOverlay to bar mode
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent("orion-video-command", {
+                detail: { action: "minimize_to_bar" }
+              }));
+            }, 100);
+            handleClose();
+          }} title="Minimizar para barra de áudio">
+            <Music className="h-3 w-3" />
           </Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => window.open(videoUrl, "_blank")}>
             <Maximize2 className="h-3 w-3" />
