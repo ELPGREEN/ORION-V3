@@ -1386,8 +1386,11 @@ function OrionStandalonePanel({
 
       {/* Pesquisa tab */}
       {activeTab === "pesquisa" && (
-        <div className="h-[350px]">
+        <div className="h-[350px] flex flex-col">
           <OrionResearchBrowser onSearchQuery={(q) => askAI(`pesquisar na web ${q}`)} />
+          <div className="border-t border-white/[0.06]">
+            <OrionPlaylistBar />
+          </div>
         </div>
       )}
 
