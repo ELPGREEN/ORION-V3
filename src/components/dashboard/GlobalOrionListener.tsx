@@ -14,6 +14,7 @@ import { ensurePersistentMic, getPersistentMicStream, requestPersistentMic } fro
 import { killMicRec } from "@/lib/voice/micArbiter";
 import { useWakeWord } from "./neural/useWakeWord";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
+import { wakeOrionVm } from "@/lib/orion-vm-wake";
 
 // ═══════════════════════════════════════════════════════════
 // GlobalOrionListener — UI shell only (orb, permissions, overlay)
