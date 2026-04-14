@@ -18,6 +18,8 @@ import { createThoughtEntry, addThoughtStep, finalizeThoughtEntry } from "./orio
 import { feedUserSpeech, feedAIResponse } from "./voice-evolution-feedback";
 import { isNegativeFeedback, recordCorrection, extractCorrectionTarget } from "./intent-feedback";
 import { smartClassify } from "./smart-intent-classifier";
+import { evaluateRAGResponse } from "./rag-evaluator";
+import { submitRAGFeedback, getOptimizedWeights, classifyQueryType } from "./rag-feedback-loop";
 
 // ─── Last classification memory (for feedback corrections) ───
 let _lastClassification: { text: string; intent: string; ts: number } | null = null;
@@ -365,7 +367,10 @@ export async function runAgenticCycle(
   // Phase 5: Learn
   learnPhase(query, response, plan, verification);
 
-  // Phase 6: Self-Improve via Jules (if verification fails repeatedly)
+  // Phase 6: RAG Evaluation + Feedback Loop (async, non-blocking)
+  runRAGEvaluation(query, response, plan.intent).catch(() => {});
+
+  // Phase 7: Self-Improve via Jules (if verification fails repeatedly)
   triggerJulesSelfImprove(plan, verification).catch(() => {});
 
   // [v3] Finalize journal + voice evolution feedback
@@ -394,6 +399,36 @@ export function addKnownSpeaker(name: string): void {
     };
     localStorage.setItem(KNOWN_SPEAKERS_KEY, JSON.stringify(speakers));
   } catch {}
+}
+
+// ─── RAG Evaluation + Feedback Loop ───
+
+async function runRAGEvaluation(query: string, response: string, intent: string): Promise<void> {
+  try {
+    // Only evaluate non-trivial responses
+    if (response.length < 30 || query.length < 5) return;
+
+    const evalResult = evaluateRAGResponse({
+      response,
+      question: query,
+      context: "",
+    });
+
+    // Only submit feedback if quality is meaningful (enough data to learn from)
+    if (evalResult.overallScore > 0) {
+      const queryType = classifyQueryType(query);
+      const currentWeights = getOptimizedWeights(queryType);
+      const newWeights = submitRAGFeedback(query, evalResult, currentWeights);
+
+      console.log(
+        `[RAG-Eval] ${intent} | Score: ${evalResult.overallScore}/100 (${evalResult.grade}) | ` +
+        `Groundedness: ${evalResult.groundedness.score}/5 | Relevance: ${evalResult.relevance.score}/5 | ` +
+        `Weights: sem=${newWeights.semantic.toFixed(2)} kw=${newWeights.keyword.toFixed(2)} auth=${newWeights.authority.toFixed(2)} rec=${newWeights.recency.toFixed(2)}`
+      );
+    }
+  } catch (e) {
+    console.warn("[RAG-Eval] Evaluation failed:", e);
+  }
 }
 
 // ─── Jules Self-Improvement Trigger ───
