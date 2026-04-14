@@ -5,6 +5,24 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { isOwnerEmail } from "./orion-consciousness";
+import type { IdentityStatus } from "@/hooks/useVoiceIdentityGuard";
+
+// ─── Creator Identity Guard ───
+
+/**
+ * Verifies if the caller is the creator (Ericson).
+ * Accepts email OR voice identity status — either is sufficient.
+ * Used to protect all Jules/self-improvement entry points.
+ */
+export function isCreatorVerified(opts: {
+  email?: string | null;
+  identityStatus?: IdentityStatus;
+}): boolean {
+  if (opts.email && isOwnerEmail(opts.email)) return true;
+  if (opts.identityStatus === "creator") return true;
+  return false;
+}
 
 // ─── Types ───
 
@@ -204,7 +222,18 @@ export async function orionSelfImprove(opts: {
   branch?: string;
   autoPR?: boolean;
   subsystem?: string;
+  /** Caller identity — required for manual triggers. Omit only for internal auto-triggers. */
+  callerIdentity?: { email?: string | null; identityStatus?: IdentityStatus };
+  /** Set to true for internal auto-triggers (subsystem failures) that bypass identity check */
+  _internalAutoTrigger?: boolean;
 }): Promise<{ sessionId: string; success: boolean; error?: string; rateLimited?: boolean }> {
+  // Identity guard: block non-creator manual triggers
+  if (!opts._internalAutoTrigger) {
+    if (!opts.callerIdentity || !isCreatorVerified(opts.callerIdentity)) {
+      console.warn("[Orion→Jules] ❌ Blocked: caller is not the creator");
+      return { sessionId: "", success: false, error: "Apenas o criador pode acionar auto-evolução" };
+    }
+  }
   // Rate limit check
   const { allowed, current } = await checkJulesRateLimit();
   if (!allowed) {
