@@ -460,28 +460,26 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const autoActivatedRef = useRef(false);
   const autoBootedRef = useRef(false);
 
-  // Auto-start wake word ONLY for manual entry into /consulta.
+  // Auto-start direct voice capture for /consulta page too (no wake word needed).
+  // Rule: mic always active, always listening — no "say Orion to activate" gate.
   useEffect(() => {
-    if (skipWakeWord) return;
+    if (skipWakeWord) return; // overlay handles its own auto-boot
     if (typeof document !== "undefined" && document.hidden) return;
+    if (autoBootedRef.current) return;
 
     const state = location.state as any;
     const hasAutoActivation = Boolean(initialCommand || state?.autoActivate || state?.autoCommand);
+    if (hasAutoActivation) return; // handled by initialCommand flow
 
-    // Auto-activation and overlay handoff are handled elsewhere.
-    if (hasAutoActivation || autoBootedRef.current) return;
-
-    if (!active && !listening && speechOk) {
-      enableWakeWord();
+    if (!active && speechOk) {
+      autoBootedRef.current = true;
+      wakeOrionVm();
       const timer = setTimeout(() => {
-        if (autoBootedRef.current) return;
-        startWakeWordListener();
-      }, 200);
+        startDirectVoiceCapture();
+      }, 400);
       return () => clearTimeout(timer);
     }
-
-    return () => { try { wakeRecRef.current?.stop(); } catch {} };
-  }, [skipWakeWord, active, listening, speechOk, enableWakeWord, startWakeWordListener, wakeRecRef, initialCommand, location.state]);
+  }, [skipWakeWord, active, speechOk, initialCommand, location.state, startDirectVoiceCapture]);
 
   // Auto-connect mic ONLY for overlay handoff (skipWakeWord) without route auto-activation.
   useEffect(() => {
@@ -686,14 +684,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         style={{ backgroundColor: "rgba(10,10,15,0.7)", border: "1px solid rgba(212,175,55,0.15)", boxShadow: "0 0 15px rgba(212,175,55,0.05)" }}>
         <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent)" }} />
         <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.2), transparent)" }} />
-        {!active && !skipWakeWord && wakeWordActive && (
-          <Badge variant="outline" className="text-[10px] h-6 font-mono border-amber-500/30 text-amber-400 animate-pulse gap-1.5 px-3">
-            <Mic className="h-3.5 w-3.5" /> 👂 Diga <strong>"Orion"</strong> para ativar
-          </Badge>
-        )}
-        {!active && ((!skipWakeWord && !wakeWordActive && speechOk) || (skipWakeWord && speechOk)) && (
+        {!active && speechOk && (
           <Badge variant="outline" className="text-[10px] h-6 font-mono border-blue-500/30 text-blue-400 gap-1.5 px-3">
-            <Mic className="h-3.5 w-3.5" /> {skipWakeWord ? "Escuta contínua" : "Escuta automática"}
+            <Mic className="h-3.5 w-3.5" /> Escuta contínua
           </Badge>
         )}
         {!active && !speechOk && (
