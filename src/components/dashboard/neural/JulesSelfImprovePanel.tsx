@@ -1,5 +1,5 @@
 /**
- * Jules Self-Improvement Dashboard Panel v4
+ * Orion Auto-Evolution Dashboard Panel v4
  * With tabs (Subsystems, Bugs, Performance, Design, Security, Industrial),
  * health gauges, scan button, activity viewer, DB sessions, industrial robotics.
  */
@@ -178,23 +178,21 @@ function IndustrialTab() {
         priority: "high",
       });
       if (result.success) {
-        toast.success(`Jules Industrial: ${DOMAIN_LABELS[domain]}`, { description: `Sessão criada: ${result.sessionId.slice(0, 8)}...` });
+        toast.success(`Orion Industrial: ${DOMAIN_LABELS[domain]}`, { description: `Sessão criada: ${result.sessionId.slice(0, 8)}...` });
       } else {
         toast.error("Erro", { description: result.error });
       }
-    } catch { toast.error("Falha ao disparar Jules Industrial"); }
+    } catch { toast.error("Falha ao disparar Orion Industrial"); }
     setTriggering(null);
   };
 
   return (
     <div className="space-y-3">
-      {/* Device Status */}
       <div className="text-xs text-muted-foreground flex items-center gap-1">
         <Factory className="h-3.5 w-3.5" />
         {devices.length} dispositivos IoT registrados • {devices.filter((d) => d.status === "online").length} online
       </div>
 
-      {/* Industrial Health Issues */}
       {industrialScan.issues.length > 0 && (
         <div className="space-y-1">
           {industrialScan.issues.map((issue, i) => (
@@ -206,7 +204,6 @@ function IndustrialTab() {
         </div>
       )}
 
-      {/* Domain Metrics */}
       {metrics.length > 0 ? (
         <div className="space-y-1.5">
           {metrics.map((m) => (
@@ -226,7 +223,7 @@ function IndustrialTab() {
                   variant="ghost" size="icon" className="h-5 w-5"
                   disabled={triggering === m.domain}
                   onClick={() => handleTrigger(m.domain)}
-                  title={`Disparar Jules para ${DOMAIN_LABELS[m.domain]}`}
+                  title={`Disparar Orion para ${DOMAIN_LABELS[m.domain]}`}
                 >
                   {triggering === m.domain ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
                 </Button>
@@ -242,7 +239,6 @@ function IndustrialTab() {
         </div>
       )}
 
-      {/* Quick Trigger All Domains */}
       {devices.length > 0 && (
         <div className="grid grid-cols-3 gap-1">
           {(Object.keys(DOMAIN_LABELS) as IndustrialDomain[]).map((domain) => (
@@ -309,7 +305,7 @@ export function JulesSelfImprovePanel() {
 
     const handlePR = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      toast.success("Jules criou um PR!", {
+      toast.success("Orion criou um PR!", {
         description: detail?.prTitle || detail?.prUrl,
         action: detail?.prUrl ? { label: "Abrir", onClick: () => window.open(detail.prUrl, "_blank") } : undefined,
       });
@@ -329,7 +325,7 @@ export function JulesSelfImprovePanel() {
     setSending(true);
     const result = await orionSelfImprove({ task: manualTask, autoPR: true });
     if (result.success) {
-      toast.success("Jules ativado", { description: "Sessão criada" });
+      toast.success("Orion ativado", { description: "Sessão de auto-evolução criada" });
       setManualTask("");
       refresh();
     } else {
@@ -346,7 +342,7 @@ export function JulesSelfImprovePanel() {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Bot className="h-5 w-5 text-primary" />
-          Jules Auto-Evolução
+          Orion Auto-Evolução
           <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0">
             {rateLimit.current}/{rateLimit.max}/h
           </Badge>
@@ -438,7 +434,7 @@ export function JulesSelfImprovePanel() {
           <div className="space-y-1.5">
             <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
               <GitPullRequest className="h-3.5 w-3.5" />
-              Sessões Jules ({dbSessions.length})
+              Sessões Orion ({dbSessions.length})
             </h4>
             <ScrollArea className="max-h-48">
               <Accordion type="single" collapsible className="space-y-1">
@@ -477,7 +473,7 @@ export function JulesSelfImprovePanel() {
         <div className="space-y-1.5">
           <h4 className="text-sm font-medium text-muted-foreground">Trigger Manual</h4>
           <Textarea
-            placeholder="Descreva a melhoria ou correção que o Jules deve fazer..."
+            placeholder="Descreva a melhoria ou correção que o Orion deve fazer..."
             value={manualTask}
             onChange={(e) => setManualTask(e.target.value)}
             className="text-xs min-h-[60px] resize-none"
@@ -489,7 +485,7 @@ export function JulesSelfImprovePanel() {
             className="w-full text-xs"
           >
             {sending ? <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> : <Send className="h-3 w-3 mr-1" />}
-            {rateLimit.current >= rateLimit.max ? "Rate limit atingido" : "Enviar para Jules"}
+            {rateLimit.current >= rateLimit.max ? "Rate limit atingido" : "Enviar para Orion"}
           </Button>
         </div>
       </CardContent>
