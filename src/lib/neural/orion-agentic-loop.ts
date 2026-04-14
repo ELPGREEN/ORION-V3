@@ -186,7 +186,8 @@ const HALLUCINATION_KEYWORDS = [
 export function verifyPhase(
   query: string,
   response: string,
-  plan: AgenticPlan
+  plan: AgenticPlan,
+  latency?: PipelineLatency
 ): AgenticVerification {
   const issues: string[] = [];
   let score = 0.7;
@@ -225,6 +226,31 @@ export function verifyPhase(
     score -= 0.1;
   }
 
+  // Pipeline latency quality checks (STT/TTS/Vision)
+  if (latency) {
+    if (latency.sttMs > 3000) {
+      issues.push(`STT lento: ${latency.sttMs}ms (>3s)`);
+      score -= 0.05;
+    }
+    if (latency.ttsMs > 2000) {
+      issues.push(`TTS lento: ${latency.ttsMs}ms (>2s)`);
+      score -= 0.05;
+    }
+    if (latency.visionMs > 4000) {
+      issues.push(`Vision lento: ${latency.visionMs}ms (>4s)`);
+      score -= 0.05;
+    }
+    if (latency.totalMs > 5000) {
+      issues.push(`Pipeline total lento: ${latency.totalMs}ms (>5s)`);
+      score -= 0.1;
+    }
+    // Vision intent without vision latency = camera possibly not working
+    if (plan.requiresImage && latency.visionMs <= 0) {
+      issues.push("Intent visual sem dados de visão — câmera inativa?");
+      score -= 0.1;
+    }
+  }
+
   score = Math.max(0, Math.min(1, score));
   const passed = score >= 0.4 && issues.length <= 2;
 
@@ -240,7 +266,9 @@ export async function documentPhase(
   query: string,
   response: string,
   plan: AgenticPlan,
-  verification: AgenticVerification
+  verification: AgenticVerification,
+  latency?: PipelineLatency,
+  iotDevices?: string[]
 ): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -262,7 +290,16 @@ export async function documentPhase(
         verification_coherence: verification.coherenceWithIntent,
         response_length: verification.responseLength,
         latency_ms: Date.now() - plan.timestamp,
-        protocol_version: "1.0",
+        protocol_version: "2.0",
+        // Pipeline latency breakdown
+        pipeline_stt_ms: latency?.sttMs ?? -1,
+        pipeline_llm_ms: latency?.llmMs ?? -1,
+        pipeline_tts_ms: latency?.ttsMs ?? -1,
+        pipeline_vision_ms: latency?.visionMs ?? -1,
+        pipeline_total_ms: latency?.totalMs ?? -1,
+        // IoT context
+        iot_devices_active: iotDevices?.length ?? 0,
+        iot_devices: iotDevices?.slice(0, 10),
       },
     } as any);
   } catch (e) {
