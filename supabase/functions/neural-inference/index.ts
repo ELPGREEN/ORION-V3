@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// NEURAL INFERENCE ENGINE v3 — Multi-Provider FREE
-// Chain: Gemini Flash → Mistral (1B/mês) → Groq Llama → HuggingFace
-// ALL 100% gratuito, zero custo
+// NEURAL INFERENCE ENGINE v4 — Multi-Provider
+// Chain: Claude Sonnet 4 → Gemini Flash → Mistral → Groq → HuggingFace
+// Claude = primary, Gemini = fallback
 // ═══════════════════════════════════════════════════════════════
 
 interface InferenceRequest {
