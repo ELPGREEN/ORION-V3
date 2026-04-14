@@ -1,76 +1,81 @@
+<final-text>## Resumo
 
+Os comandos falham hoje por 4 causas principais:
 
-# Comandos de Voz para Auto-Correção Orion + Proteção por Voice ID
+1. A proteção de criador foi implementada em `voice-intent-dispatcher.ts`, mas o fluxo real de voz passa por `NeuralVision -> useOrionReasoning`, então esse guard quase não protege o caminho usado de verdade.
+2. `matchAndExecuteTool()` é chamado sem `identityStatus`; então todo tool `creatorOnly` pode ficar bloqueado até para o criador.
+3. `"melhorar código"` e `"mapa da arquitetura"` não entram no bloco de tools porque dependem de `_isSpecialCmd`, e esses comandos não foram bem cadastrados nesse roteamento.
+4. `"melhore-se"/"evolua"` hoje ativam o pipeline local `neural-evolution`, não o `orionSelfImprove()` com sessão Jules/PR no GitHub.
 
-## Diagnóstico Atual
+Também há um problema de segurança: em erro de microfone/blob pequeno/falha de extração, o sistema ainda cai para `"owner"` em alguns pontos. Isso contradiz sua regra de nunca executar se não for o voice ID do criador.
 
-### Comandos que ativam Jules (auto-correção)
-Os seguintes comandos de voz/texto já são reconhecidos pelo Orion:
+## Plano de implementação
 
-| Comando (PT-BR) | Intent | O que faz |
-|---|---|---|
-| "melhore-se", "evolua", "auto-evolução" | `self_evolve` | Dispara ciclo de auto-melhoria |
-| "auto-programe", "se reprograme" | `self_evolve` | Mesmo |
-| "otimize suas respostas", "recalibre" | `self_evolve` | Mesmo |
-| "melhorar código", "sugerir melhorias" | `self_suggest_improvements` | Análise de código |
-| "evolução neural", "auto evolução" | `neural_evolution` | Lista propostas de evolução |
-| "mapa da arquitetura" | `self_architecture_map` | Grafo de dependências |
+### 1. Unificar o fluxo dos comandos sensíveis
+Criar um único caminho real para comandos de auto-correção/evolução dentro de `useOrionReasoning`, sem depender de caminhos paralelos.
 
-### Triggers automáticos (sem comando de voz)
-- Quando qualquer subsistema falha **3x na mesma hora**, `recordSubsystemFailure` dispara `orionSelfImprove()` automaticamente
-- No agentic loop (fase 7), se a verificação falha 3x para o mesmo intent, `triggerJulesSelfImprove` cria sessão Jules
+Mapeamento final:
+- `melhore-se`, `evolua`, `auto-programe`, `se reprograme`, `recalibre` -> `orionSelfImprove()` / Jules / PR
+- `evolução neural` -> listar propostas de evolução
+- `melhorar código`, `sugerir melhorias` -> `self_suggest_improvements`
+- `mapa da arquitetura` -> `self_architecture_map`
 
-### PROBLEMA CRÍTICO DE SEGURANÇA
+### 2. Passar a identidade real até a execução
+Levar `identityStatus` do `NeuralVision` para `useOrionReasoning` e então para:
+- `matchAndExecuteTool(processedQuestion, userRole, identityStatus)`
+- `orionSelfImprove({ callerIdentity: { email, identityStatus } })`
 
-**Nenhum** destes caminhos verifica se quem está comandando é o criador (voice ID):
+Assim, creator-only deixa de depender de valor `undefined`.
 
-1. `orionSelfImprove()` — sem verificação de identidade
-2. `triggerJulesSelfImprove()` — sem verificação
-3. `recordSubsystemFailure()` — sem verificação
-4. `runEvolutionScan()` — sem verificação
-5. Intent `self_evolve` — cai no agentic loop sem checar `identityStatus`
-6. Tool `neural_evolution` — só verifica `R_ADV` (role), não voice ID
+### 3. Aplicar bloqueio fail-closed
+Trocar os fallbacks inseguros de `"owner"` por bloqueio seguro (`unknown`/`guest`/mensagem de verificação falhou`) em:
+- `src/hooks/useVoiceIdentityGuard.ts`
+- `src/components/dashboard/neural/NeuralVision.tsx`
+- gates sensíveis em `useOrionReasoning.ts`
 
-**Qualquer usuário autenticado pode disparar Jules e criar PRs no GitHub.**
+Se a voz não for confirmada como `"creator"`, o Orion não executa:
+- PR automático
+- análise de código
+- auto-construção
+- comandos de arquitetura sensíveis
 
----
+### 4. Remover inconsistências entre intent e ação
+Separar claramente:
+- auto-correção com GitHub/Jules
+- evolução neural interna (propostas, embeddings, auto-learn)
 
-## Plano de Correção
+Hoje `self_evolve` cai no serviço errado para o caso “corrigir o próprio código”. Vou corrigir isso para que o comando faça exatamente o que você espera.
 
-### 1. Criar guard centralizado `isCreatorVerified()`
+### 5. QA end-to-end
+Validar 5 cenários:
+- `creator` -> comando executa
+- `owner` -> bloqueado
+- `guest` -> bloqueado
+- `unknown` -> bloqueado
+- erro de microfone/verificação -> bloqueado
 
-Novo utilitário em `jules-client.ts` que verifica:
-- Email é do criador (`isOwnerEmail`) **OU**
-- Voice identity status é `"creator"` (verificado pelo `useVoiceIdentityGuard`)
+E testar especificamente:
+- `melhore-se`
+- `evolua`
+- `melhorar código`
+- `sugerir melhorias`
+- `evolução neural`
+- `mapa da arquitetura`
 
-### 2. Proteger `orionSelfImprove()` 
+## Arquivos a ajustar
 
-Adicionar parâmetro `callerIdentity` obrigatório. Se não for creator, rejeitar com erro claro.
+- `src/components/dashboard/neural/NeuralVision.tsx`
+- `src/components/dashboard/neural/useOrionReasoning.ts`
+- `src/hooks/useVoiceIdentityGuard.ts`
+- `src/lib/neural/orion-tool-executor.ts`
+- `src/lib/neural/jules-client.ts`
+- `src/lib/neural/voice-intent-dispatcher.ts`
 
-### 3. Proteger `triggerJulesSelfImprove()` no agentic loop
+## Detalhes técnicos
 
-Receber `identityStatus` do contexto. Só executa se `=== "creator"`.
-
-### 4. Proteger intent `self_evolve` no voice-intent-dispatcher
-
-Antes de passthrough, verificar identity. Se não for creator, retornar "Apenas o criador pode solicitar auto-evolução."
-
-### 5. Proteger `runEvolutionScan()` e `runFullScan()`
-
-Exigir creator identity antes de disparar scans que geram sessões Jules.
-
-### 6. Manter triggers automáticos (subsystem failures) sem restrição de voz
-
-Os triggers automáticos por falhas de subsistema são internos (o sistema auto-detecta bugs). Esses devem continuar funcionando sem voice ID — mas com rate limit já existente (3/hora).
-
-### Arquivos a editar
-
-| Arquivo | Mudança |
-|---|---|
-| `src/lib/neural/jules-client.ts` | Guard `isCreatorVerified()`, param `callerIdentity` em `orionSelfImprove` |
-| `src/lib/neural/orion-agentic-loop.ts` | Checar identity antes de `triggerJulesSelfImprove` |
-| `src/lib/neural/jules-evolution-engine.ts` | Guard em `runFullScan()` e `dispatchToJules()` |
-| `src/lib/neural/voice-intent-dispatcher.ts` | Bloquear `self_evolve` para não-criadores |
-| `src/lib/neural/orion-tool-executor.ts` | Guard nos tools `neural_evolution`, `self_suggest_improvements` |
-| `src/components/dashboard/neural/JulesSelfImprovePanel.tsx` | Esconder botão "Scan Manual" se não for creator |
-
+- O bug principal é estrutural, não só de regex.
+- O fluxo real de voz hoje ignora a proteção mais forte.
+- O executor de tools não recebe `identityStatus`.
+- O gate `_isSpecialCmd` impede comandos válidos de chegarem ao executor.
+- O gate atual verifica mais a existência de cadastro biométrico do que a confirmação real de `"creator"`.
+- O intercept atual de `self_evolve` chama `neural-evolution`, quando o esperado para “corrigir seu próprio código” é `orionSelfImprove()` com Jules.</final-text>
