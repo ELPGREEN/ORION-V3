@@ -184,3 +184,33 @@ export function getImmuneStats(): {
     totalFailures: Object.values(store.quarantine).reduce((s, v) => s + v.consecutiveFailures, 0),
   };
 }
+
+// ─── Industrial Antibodies ───
+
+const INDUSTRIAL_ANTIBODIES = [
+  "iot_ros2:stale_telemetry",
+  "iot_mqtt:broker_connection_lost",
+  "industrial_welding:adaptive_tracking_drift",
+  "industrial_safety:emergency_stop_triggered",
+  "vision_mediapipe:camera_low_light_occlusion",
+];
+
+export function seedIndustrialAntibodies(): void {
+  const store = loadStore();
+  const now = Date.now();
+  INDUSTRIAL_ANTIBODIES.forEach(hash => {
+    if (!store.antibodies[hash]) {
+      store.antibodies[hash] = {
+        fixedAt: now,
+        sessionId: "system-seed",
+        expiresAt: now + (30 * 24 * 60 * 60 * 1000), // 30 days for system seeds
+      };
+    }
+  });
+  saveStore(store);
+}
+
+// Auto-seed
+if (typeof window !== "undefined") {
+  setTimeout(seedIndustrialAntibodies, 5000);
+}

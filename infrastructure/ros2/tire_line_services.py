@@ -136,7 +136,7 @@ class TireLineNode(Node):
 
     def cb_get_line_status(self, request, response):
         """Return comprehensive line status as JSON."""
-        uptime = time.time() - self.line_start_time
+        uptime = max(time.time() - self.line_start_time, 0.1) # Minimum 100ms
         oee = self._calculate_oee()
         status = {
             "conveyor_running": self.conveyor_running,
@@ -147,9 +147,9 @@ class TireLineNode(Node):
             "defect_count": self.defect_count,
             "defect_rate_pct": round((self.defect_count / max(self.tire_count, 1)) * 100, 2),
             "oee_pct": round(oee * 100, 2),
-            "uptime_seconds": round(uptime, 0),
-            "uptime_hours": round(uptime / 3600, 2),
-            "throughput_per_hour": round(self.tire_count / max(uptime / 3600, 0.01), 1),
+            "uptime_seconds": round(uptime, 1),
+            "uptime_hours": round(uptime / 3600, 4),
+            "throughput_per_hour": round(self.tire_count / max(uptime / 3600, 0.0001), 1),
             "last_inspection": self.last_inspection_result,
         }
         response.success = True
@@ -199,13 +199,13 @@ class TireLineNode(Node):
 
     def publish_production_stats(self):
         """Publish production statistics every 5s."""
-        uptime = time.time() - self.line_start_time
+        uptime = max(time.time() - self.line_start_time, 0.1)
         stats = {
             "tire_count": self.tire_count,
             "good_count": self.good_count,
             "defect_count": self.defect_count,
             "oee_pct": round(self._calculate_oee() * 100, 2),
-            "throughput_per_hour": round(self.tire_count / max(uptime / 3600, 0.01), 1),
+            "throughput_per_hour": round(self.tire_count / max(uptime / 3600, 0.0001), 1),
             "conveyor_running": self.conveyor_running,
             "timestamp": time.time(),
         }
@@ -223,12 +223,23 @@ class TireLineNode(Node):
 
     def _calculate_oee(self):
         """Calculate Overall Equipment Effectiveness."""
-        if self.tire_count == 0:
+        if self.tire_count <= 0:
             return 0.0
-        availability = 1.0 if self.conveyor_running else 0.5
-        performance = min(self.tire_count / max((time.time() - self.line_start_time) / 3600 * 120, 1), 1.0)
+
+        # Availability: Ratio of actual operating time to planned time
+        # Here we simplify: if conveyor is running, it's 1.0
+        availability = 1.0 if self.conveyor_running else 0.0
+
+        # Performance: Actual output vs design capacity (120 tires/hour)
+        uptime_hours = (time.time() - self.line_start_time) / 3600
+        design_capacity = max(uptime_hours * 120, 0.0001)
+        performance = min(self.tire_count / design_capacity, 1.0)
+
+        # Quality: Good parts vs total parts
         quality = self.good_count / max(self.tire_count, 1)
-        return availability * performance * quality
+
+        # OEE = A * P * Q
+        return max(0.0, min(availability * performance * quality, 1.0))
 
 
 def main():

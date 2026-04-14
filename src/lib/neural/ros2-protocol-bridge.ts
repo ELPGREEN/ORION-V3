@@ -200,6 +200,7 @@ export class ROS2ProtocolBridge {
   private pollingActive = false;
   private pollingIntervalId: number | null = null;
   private maxLogSize = 500;
+  private maxRobots = 50;
   private twinRegistry: DigitalTwinRegistry = createNeuralTwinRegistry();
 
   get connectedRobots(): RobotState[] { return [...this.robots.values()]; }
@@ -225,6 +226,14 @@ export class ROS2ProtocolBridge {
   // ─── Robot Registration ───
 
   registerRobot(id: string, name: string): RobotState {
+    if (this.robots.has(id)) return this.robots.get(id)!;
+
+    // Prevent memory exhaustion/unauthorized robot flood
+    if (this.robots.size >= this.maxRobots) {
+      console.warn(`[ROS2] Max robots (${this.maxRobots}) reached. Rejecting registration for ${id}`);
+      throw new Error(`Maximum robot capacity reached (${this.maxRobots})`);
+    }
+
     const state: RobotState = {
       id, name, connected: false, lastHeartbeat: 0, latencyMs: 0,
       operationalMode: "idle", emergencyStopped: false,
@@ -323,43 +332,61 @@ export class ROS2ProtocolBridge {
 
     const data = payload as Record<string, unknown>;
 
-    switch (dataType) {
-      case "odom":
-        robot.odometry = data as unknown as Odometry;
-        break;
-      case "battery":
-        robot.battery = data as unknown as BatteryState;
-        break;
-      case "imu":
-        robot.imu = data as unknown as Imu;
-        break;
-      case "scan":
-        robot.laserScan = data as unknown as LaserScan;
-        break;
-      case "joint_states":
-        robot.jointStates = data as unknown as JointState;
-        break;
-      case "status":
-        robot.diagnostics = data as unknown as DiagnosticStatus;
-        break;
-      case "emergency_stop":
-        if ((data as any)?.data === true) {
-          robot.emergencyStopped = true;
-          robot.operationalMode = "emergency_stop";
-        }
-        break;
+    try {
+      switch (dataType) {
+        case "odom":
+          robot.odometry = data as unknown as Odometry;
+          break;
+        case "battery":
+          const batt = data as unknown as BatteryState;
+          // Boundary validation
+          if (typeof batt.percentage === "number") {
+            batt.percentage = Math.max(0, Math.min(100, batt.percentage));
+          }
+          robot.battery = batt;
+          break;
+        case "imu":
+          robot.imu = data as unknown as Imu;
+          break;
+        case "scan":
+          const scan = data as unknown as LaserScan;
+          // Sanitize ranges (no negative distances)
+          if (Array.isArray(scan.ranges)) {
+            scan.ranges = scan.ranges.map(r => Math.max(0, r));
+          }
+          robot.laserScan = scan;
+          break;
+        case "joint_states":
+          robot.jointStates = data as unknown as JointState;
+          break;
+        case "status":
+          robot.diagnostics = data as unknown as DiagnosticStatus;
+          break;
+        case "emergency_stop":
+          if ((data as any)?.data === true) {
+            robot.emergencyStopped = true;
+            robot.operationalMode = "emergency_stop";
+          }
+          break;
+      }
+    } catch (err) {
+      console.error(`[ROS2] Error processing inbound ${dataType} for ${robotId}:`, err);
     }
 
     this.addLog(topic, "received", dataType, payload);
 
     // Update Digital Twin metrics from telemetry
+    const latency = Math.max(0, robot.latencyMs || 0);
     this.twinRegistry.updateMetrics(`robot-${robotId}`, {
       accuracy: robot.connected ? 0.95 : 0.3,
-      latencyMs: robot.latencyMs,
+      latencyMs: latency,
       throughput: robot.connected ? 60 : 0,
     });
 
-    this.emitState(robot);
+    // Final safety: Emit state only if robot hasn't been removed (atomicity check)
+    if (this.robots.has(robotId)) {
+      this.emitState({ ...robot }); // Clone to prevent mutation issues in listeners
+    }
   }
 
   // ─── Telemetry Polling ───
@@ -412,6 +439,13 @@ export class ROS2ProtocolBridge {
   }
 
   clearLog(): void { this.commandLog = []; }
+
+  /** @internal For testing only */
+  reset(): void {
+    this.robots.clear();
+    this.commandLog = [];
+    this.stateListeners = [];
+  }
 }
 
 // ─── Singleton ───
