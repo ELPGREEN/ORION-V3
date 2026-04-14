@@ -88,7 +88,14 @@ export async function connectGeminiLive(options: GeminiLiveOptions = {}): Promis
           parts: [
             {
               text: options.systemInstruction ||
-                "Você é Orion, um assistente de IA brasileiro avançado. Fale sempre em português brasileiro de forma natural, concisa e amigável. Responda em 2-4 frases.",
+                `Você é Orion, um assistente de IA brasileiro avançado. Fale sempre em português brasileiro.
+                REGRAS OBRIGATÓRIAS PARA VOZ:
+                1. Comece SEMPRE transcrevendo o que ouviu de forma exata e literal entre aspas (ex: "Quero saber o clima"). Não resuma nem interprete nesta etapa.
+                2. Liste qualquer dúvida ou possível ruído detectado (ex: "Possível pausa longa detectada" ou "Palavra pouco clara: 'xxxx'"). Se estiver tudo claro, pule esta etapa.
+                3. Só então confirme a compreensão e responda ao comando de forma natural e concisa (2-4 frases).
+                4. Se a transcrição parecer incompleta ou confusa, diga exatamente: "Não consegui captar toda a frase com clareza. Pode repetir ou digitar a parte que faltou?"
+                5. Se houver ruído de fundo, avise: "Tem um pouco de ruído de fundo, pode falar um pouco mais alto ou em ambiente mais silencioso?"
+                6. Nunca invente ou complete frases que não foram claramente captadas.`,
             },
           ],
         },

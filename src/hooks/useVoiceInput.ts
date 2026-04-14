@@ -20,7 +20,7 @@ interface UseVoiceInputOptions {
 // Initialize unified voice picker on load
 initVoicePicker();
 
-export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseMs = 950, onResult, onEnd }: UseVoiceInputOptions = {}) {
+export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseMs = 3000, onResult, onEnd }: UseVoiceInputOptions = {}) {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSupported, setIsSupported] = useState(false);
@@ -206,6 +206,7 @@ export function useVoiceInput({ lang = "pt-BR", continuous = false, phrasePauseM
       intentionalStopRef.current = false;
       lastFinalTranscriptRef.current = "";
       setIsListening(true);
+      console.log("[VoiceInput] Continuous stream active - mic won't release to avoid clicks");
     };
 
     recognition.onresult = (event: any) => {
