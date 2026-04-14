@@ -6,7 +6,7 @@
  * v2: 310+ entries from generated knowledge base.
  */
 
-import { tfidfWeightedJaccard } from "./semantic-cache";
+import { tfidfWeightedJaccard, tfidfWeightedJaccardFromSets, getWeightedTokens } from "./semantic-cache";
 import type { CacheEntry } from "./instant-response-cache-types";
 import { GENERATED_TECH_ENTRIES } from "./generated-knowledge-base";
 
@@ -37,6 +37,41 @@ const ALL_ENTRIES: CacheEntry[] = [
   ...GENERAL_ENTRIES,
 ];
 
+// ═══ Pre-calculated Optimized Indices ═══
+
+interface OptimizedEntry {
+  entry: CacheEntry;
+  normalizedPatterns: string[];
+  tokenSets: Set<string>[];
+}
+
+const OPTIMIZED_ENTRIES: OptimizedEntry[] = [];
+const EXACT_MATCH_MAP = new Map<string, CacheEntry>();
+
+/**
+ * Normalizes text once and stores it in high-speed lookup indices.
+ * v2.1: Pre-tokenizes all patterns for instant similarity calculation.
+ */
+function initializeIndices() {
+  for (const entry of ALL_ENTRIES) {
+    const normalizedPatterns: string[] = [];
+    const tokenSets: Set<string>[] = [];
+
+    for (const p of entry.patterns) {
+      const normP = normalize(p);
+      normalizedPatterns.push(normP);
+      tokenSets.push(getWeightedTokens(normP));
+
+      // Store in O(1) map for instant exact hits
+      if (!EXACT_MATCH_MAP.has(normP)) {
+        EXACT_MATCH_MAP.set(normP, entry);
+      }
+    }
+
+    OPTIMIZED_ENTRIES.push({ entry, normalizedPatterns, tokenSets });
+  }
+}
+
 // ═══ Fuzzy matching engine ═══
 
 function normalize(text: string): string {
@@ -47,23 +82,33 @@ function normalize(text: string): string {
     .trim();
 }
 
-function quickMatch(query: string, patterns: string[]): number {
-  const normQ = normalize(query);
-  for (const p of patterns) {
-    const normP = normalize(p);
-    // Exact match
-    if (normQ === normP) return 1.0;
-    // Contains match — only if query is short enough to be a direct match
-    if (normQ.length < normP.length * 1.8 && (normQ.includes(normP) || normP.includes(normQ))) return 0.92;
+/**
+ * Optimized match engine using pre-calculated token sets.
+ * Eliminates O(N) redundant string processing.
+ */
+function quickMatchOptimized(
+  normQ: string,
+  queryTokens: Set<string>,
+  opt: OptimizedEntry
+): number {
+  // 1. Direct contains check
+  for (const normP of opt.normalizedPatterns) {
+    if (normQ.length < normP.length * 1.8 && (normQ.includes(normP) || normP.includes(normQ))) {
+      return 0.92;
+    }
   }
-  // Fuzzy Jaccard
+
+  // 2. Fuzzy similarity from pre-computed sets
   let best = 0;
-  for (const p of patterns) {
-    const sim = tfidfWeightedJaccard(query, p);
+  for (const setP of opt.tokenSets) {
+    const sim = tfidfWeightedJaccardFromSets(queryTokens, setP);
     if (sim > best) best = sim;
   }
   return best;
 }
+
+// Initialize on module load
+initializeIndices();
 
 /**
  * Patterns that should NEVER match the instant cache — always go to LLM.
@@ -91,23 +136,39 @@ export function getInstantResponse(question: string): InstantResponse | null {
     return null;
   }
 
-  const THRESHOLD = 0.88; // raised from 0.75 to prevent false positives
+  const THRESHOLD = 0.88;
   const t0 = performance.now();
+  const normQ = normalize(question);
+
+  // 1. FAST PATH: O(1) exact match lookup
+  const exactHit = EXACT_MATCH_MAP.get(normQ);
+  if (exactHit) {
+    const elapsed = performance.now() - t0;
+    console.log(`[InstantCache] lookup (EXACT): ${elapsed.toFixed(3)}ms, match="${normQ}"`);
+    return {
+      answer: exactHit.answer,
+      category: exactHit.category,
+      confidence: 1.0,
+    };
+  }
+
+  // 2. SLOW PATH: Optimized O(N) fuzzy matching
   let bestMatch: CacheEntry | null = null;
   let bestScore = 0;
+  const queryTokens = getWeightedTokens(normQ);
 
-  for (const entry of ALL_ENTRIES) {
-    const score = quickMatch(question, entry.patterns);
+  for (const opt of OPTIMIZED_ENTRIES) {
+    const score = quickMatchOptimized(normQ, queryTokens, opt);
     if (score > bestScore) {
       bestScore = score;
-      bestMatch = entry;
+      bestMatch = opt.entry;
     }
-    // Early exit on perfect match
+    // Early exit on high confidence
     if (score >= 0.95) break;
   }
 
   const elapsed = performance.now() - t0;
-  console.log(`[InstantCache] lookup: ${elapsed.toFixed(1)}ms, best=${bestScore.toFixed(2)}${bestMatch ? `, match="${bestMatch.patterns[0]}"` : ""}`);
+  console.log(`[InstantCache] lookup (FUZZY): ${elapsed.toFixed(1)}ms, best=${bestScore.toFixed(2)}${bestMatch ? `, match="${bestMatch.patterns[0]}"` : ""}`);
 
   if (bestMatch && bestScore >= THRESHOLD) {
     return {
