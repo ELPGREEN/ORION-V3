@@ -3,8 +3,14 @@ import { toast } from "sonner";
 import { vsLog } from "./useVisionProcessing";
 
 // ═══ Unified Mic Arbiter — shared with useNeuralVoice ═══
-import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
+import { claimMic, isMicOwner, registerMicRec, releaseMic } from "@/lib/voice/micArbiter";
 import { ensurePersistentMic, isMicPermissionGranted } from "@/lib/voice/persistentMic";
+
+// ═══════════════════════════════════════════════════════════
+// useWakeWord — THE ONLY SpeechRecognition for wake word detection
+// GlobalOrionListener listens for the "orion:wake-word-detected" event
+// emitted here. No other file creates SR instances for wake word.
+// ═══════════════════════════════════════════════════════════
 
 const ORION_WAKE_REGEX = /([óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\b/i;
 
@@ -19,6 +25,14 @@ const MAX_BACKGROUND_TRANSCRIPTS = 10;
 
 function isMobileBrowser() {
   return typeof navigator !== "undefined" && /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+}
+
+/** Extract command portion after the wake word */
+function extractCommandFromTranscript(transcript: string): string {
+  return transcript
+    .replace(ORION_WAKE_REGEX, "")
+    .replace(/^\s*[,;:\-–—]+\s*/, "")
+    .trim();
 }
 
 export function useWakeWord(
@@ -99,14 +113,21 @@ export function useWakeWord(
     }
   }, []);
 
+  /** Emit wake word status to GlobalOrionListener */
+  const emitWakeStatus = useCallback((active: boolean) => {
+    setWakeWordActive(active);
+    try {
+      window.dispatchEvent(new CustomEvent(active ? "orion:wake-word-active" : "orion:wake-word-inactive"));
+    } catch {}
+  }, []);
+
   const startWakeWordListener = useCallback(() => {
     const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     const hidden = typeof document !== "undefined" && document.hidden;
     if (!speechOkRef.current || !SR || listeningRef.current || hidden) return;
     if (!wakeWordEnabledRef.current || wakeRecRef.current || startInFlightRef.current) return;
 
-    // ═══ FIX: Claim mic ONLY after guards pass ═══
-    // Prevents wake word from stealing command mode during restart gaps.
+    // Claim mic ONLY after guards pass
     wakeSingletonIdRef.current = claimMic("wake");
 
     clearRestartTimer();
@@ -122,7 +143,7 @@ export function useWakeWord(
       rec.onstart = () => {
         startInFlightRef.current = false;
         restartAttemptsRef.current = 0;
-        setWakeWordActive(true);
+        emitWakeStatus(true);
       };
 
       rec.onresult = (e: any) => {
@@ -141,13 +162,22 @@ export function useWakeWord(
 
               wakeWordCooldownRef.current = true;
               const wakeLabel = /painel/i.test(transcript) ? "Painel" : "Orion";
+              const command = extractCommandFromTranscript(transcript);
               vsLog(`🎯 Wake word '${wakeLabel}' detectado! (conf=${(confidence * 100).toFixed(0)}%, interim=${!e.results[i].isFinal})`);
               toast.success(`🎯 ${wakeLabel} ativado!`, { duration: 2000 });
               clearRestartTimer();
               try { rec.abort?.(); } catch {}
               try { rec.stop(); } catch {}
               wakeRecRef.current = null;
-              setWakeWordActive(false);
+              emitWakeStatus(false);
+
+              // ═══ EMIT EVENT — GlobalOrionListener picks this up ═══
+              try {
+                window.dispatchEvent(new CustomEvent("orion:wake-word-detected", {
+                  detail: { command, wakeLabel, confidence },
+                }));
+              } catch {}
+
               onActivate();
               setTimeout(() => { wakeWordCooldownRef.current = false; }, 1200);
               return;
@@ -163,21 +193,21 @@ export function useWakeWord(
       rec.onend = () => {
         wakeRecRef.current = null;
         startInFlightRef.current = false;
-        if (!isMicOwner(wakeSingletonIdRef.current)) { setWakeWordActive(false); return; }
+        if (!isMicOwner(wakeSingletonIdRef.current)) { emitWakeStatus(false); return; }
         const shouldRestart = wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeWordCooldownRef.current && !(typeof document !== "undefined" && document.hidden);
         if (!shouldRestart) {
-          setWakeWordActive(false);
+          emitWakeStatus(false);
           return;
         }
 
         restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 6);
         clearRestartTimer();
         restartTimerRef.current = setTimeout(() => {
-          if (!isMicOwner(wakeSingletonIdRef.current)) { setWakeWordActive(false); return; }
+          if (!isMicOwner(wakeSingletonIdRef.current)) { emitWakeStatus(false); return; }
           if (wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeRecRef.current && !startInFlightRef.current && !(typeof document !== "undefined" && document.hidden)) {
             startWakeWordListener();
           } else {
-            setWakeWordActive(false);
+            emitWakeStatus(false);
           }
         }, getRestartDelay("end") + restartAttemptsRef.current * 80);
       };
@@ -186,27 +216,27 @@ export function useWakeWord(
         console.warn("[WakeWord] onerror:", e.error);
         wakeRecRef.current = null;
         startInFlightRef.current = false;
-        if (!isMicOwner(wakeSingletonIdRef.current)) { setWakeWordActive(false); return; }
+        if (!isMicOwner(wakeSingletonIdRef.current)) { emitWakeStatus(false); return; }
 
         if (e.error === "not-allowed" || e.error === "service-not-allowed") {
-          setWakeWordActive(false);
+          emitWakeStatus(false);
           return;
         }
 
         const shouldRestart = wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeWordCooldownRef.current && !(typeof document !== "undefined" && document.hidden);
         if (!shouldRestart) {
-          setWakeWordActive(false);
+          emitWakeStatus(false);
           return;
         }
 
         restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 6);
         clearRestartTimer();
         restartTimerRef.current = setTimeout(() => {
-          if (!isMicOwner(wakeSingletonIdRef.current)) { setWakeWordActive(false); return; }
+          if (!isMicOwner(wakeSingletonIdRef.current)) { emitWakeStatus(false); return; }
           if (wakeWordEnabledRef.current && speechOkRef.current && !listeningRef.current && !wakeRecRef.current && !startInFlightRef.current && !(typeof document !== "undefined" && document.hidden)) {
             startWakeWordListener();
           } else {
-            setWakeWordActive(false);
+            emitWakeStatus(false);
           }
         }, getRestartDelay(e.error) + restartAttemptsRef.current * 80);
       };
@@ -214,14 +244,14 @@ export function useWakeWord(
       wakeRecRef.current = rec;
       registerMicRec(rec, "wake");
       rec.start();
-      setWakeWordActive(true);
-      vsLog("👂 Wake word listener ativo — diga 'Orion' (estável no mobile)");
+      emitWakeStatus(true);
+      vsLog("👂 Wake word listener ativo — diga 'Orion' (instância única)");
     } catch (err) {
       startInFlightRef.current = false;
-      setWakeWordActive(false);
+      emitWakeStatus(false);
       console.warn("Wake word listener failed:", err);
     }
-  }, [addBackgroundTranscript, clearRestartTimer, getRestartDelay, onActivate]);
+  }, [addBackgroundTranscript, clearRestartTimer, emitWakeStatus, getRestartDelay, onActivate]);
 
   const stopWakeWordListener = useCallback(() => {
     wakeWordEnabledRef.current = false;
@@ -232,15 +262,14 @@ export function useWakeWord(
     try { wakeRecRef.current?.stop?.(); } catch {}
     wakeRecRef.current = null;
     releaseMic(wakeSingletonIdRef.current);
-    setWakeWordActive(false);
-  }, [clearRestartTimer]);
+    emitWakeStatus(false);
+  }, [clearRestartTimer, emitWakeStatus]);
 
   const enableWakeWord = useCallback(() => {
     wakeWordEnabledRef.current = true;
   }, []);
 
   // ═══ AUTO-START: If mic permission already granted, start wake word automatically ═══
-  // No manual toggle needed — once permission is given, mic stays active
   useEffect(() => {
     let cancelled = false;
     const autoStart = async () => {
@@ -264,9 +293,9 @@ export function useWakeWord(
         wakeRecRef.current = null;
       }
       startInFlightRef.current = false;
-      if (listening) setWakeWordActive(false);
+      if (listening) emitWakeStatus(false);
     }
-  }, [clearRestartTimer, listening, speechOk]);
+  }, [clearRestartTimer, emitWakeStatus, listening, speechOk]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -275,7 +304,7 @@ export function useWakeWord(
         try { wakeRecRef.current?.stop?.(); } catch {}
         wakeRecRef.current = null;
         startInFlightRef.current = false;
-        setWakeWordActive(false);
+        emitWakeStatus(false);
         return;
       }
 
@@ -286,7 +315,7 @@ export function useWakeWord(
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [clearRestartTimer, startWakeWordListener]);
+  }, [clearRestartTimer, emitWakeStatus, startWakeWordListener]);
 
   useEffect(() => () => {
     clearRestartTimer();
