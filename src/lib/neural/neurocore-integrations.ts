@@ -86,7 +86,7 @@ export async function initMQTT(): Promise<boolean> {
   }
 
   try {
-    const mqtt = await import("mqtt");
+    const mqtt = await import("mqtt" as string);
     mqttClient = mqtt.connect(config.mqttBroker, {
       clientId: `orion_${Date.now()}`,
       clean: true,
@@ -157,8 +157,8 @@ export async function detectLIBRASGesture(frame: ImageData | HTMLVideoElement): 
   try {
     // Usa MediaPipe para detecção de mãos
     const { Hands, HAND_CONNECTIONS } = await import("@mediapipe/hands");
-    const { drawConnectors, drawLandmarks } = await import("@mediapipe/drawing_utils");
-    const { Camera } = await import("@mediapipe/camera_utils");
+    const { drawConnectors, drawLandmarks } = await import("@mediapipe/drawing_utils" as string) as any;
+    const { Camera } = await import("@mediapipe/camera_utils" as string) as any;
 
     const hands = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
@@ -178,8 +178,8 @@ export async function detectLIBRASGesture(frame: ImageData | HTMLVideoElement): 
         const landmarks = results.multiHandLandmarks[0];
         
         // Detectar gestos básicos de LIBRAS
-        const thumbUp = landmarks[4].y < landmarks[3].y < landmarks[2].y;
-        const thumbDown = landmarks[4].y > landmarks[3].y > landmarks[2].y;
+        const thumbUp = landmarks[4].y < landmarks[3].y && landmarks[3].y < landmarks[2].y;
+        const thumbDown = landmarks[4].y > landmarks[3].y && landmarks[3].y > landmarks[2].y;
         const fist = landmarks[8].y > landmarks[5].y && landmarks[12].y > landmarks[9].y;
         const open = landmarks[8].y < landmarks[5].y && landmarks[12].y < landmarks[9].y;
 
@@ -378,5 +378,5 @@ export async function initNeurocore(): Promise<void> {
 }
 
 export function isNeurocoreActive(tool: keyof NeurocoreConfig): boolean {
-  return config[tool];
+  return Boolean(config[tool]);
 }

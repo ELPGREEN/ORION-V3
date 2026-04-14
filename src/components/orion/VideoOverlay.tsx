@@ -72,7 +72,7 @@ export function VideoOverlay() {
         // Send volume command to iframe via postMessage
         const iframe = document.querySelector('iframe[src*="youtube.com"]') as HTMLIFrameElement;
         if (iframe?.contentWindow) {
-          const vol = parseInt(String(action).match(/\d+/)?.[0] || "50";
+          const vol = parseInt(String(action).match(/\d+/)?.[0] || "50");
           iframe.contentWindow.postMessage({ event: "command", func: "setVolume", arg: vol }, "*");
         }
       } else if (action === "close") {
