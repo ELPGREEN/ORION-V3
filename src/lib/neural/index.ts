@@ -394,12 +394,17 @@ export { evaluateRAGResponse, type RAGEvalResult, type RAGMetricScore, type Retr
 export { submitRAGFeedback, getOptimizedWeights, classifyQueryType, type SearchWeights, type WeightProfile } from "./rag-feedback-loop";
 
 // ═══ Jules Self-Improvement ═══
-export { julesClient, orionSelfImprove, pollJulesSession } from "./jules-client";
+export {
+  julesClient, orionSelfImprove, pollJulesSession,
+  checkJulesRateLimit, julesFollowUp, getJulesDBSessions, getPendingJulesSessions,
+  updateJulesSessionStatus, type JulesDBSession,
+} from "./jules-client";
 export {
   recordSubsystemFailure, resetSubsystemFailures, getSubsystemFailureStatus,
   recordTFFailure, recordVisionFailure, recordSTTFailure, recordTTSFailure,
-  recordIoTFailure, recordONNXFailure,
+  recordIoTFailure, recordONNXFailure, checkJulesResolution,
 } from "./jules-auto-triggers";
+export { startJulesPolling, stopJulesPolling, isJulesPollingActive } from "./jules-session-poller";
 
 // ═══ Serverless Agent Runtime (AWS Serverless Agentic AI Architecture 2026) ═══
 export {
