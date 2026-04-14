@@ -20,6 +20,7 @@ import { isNegativeFeedback, recordCorrection, extractCorrectionTarget } from ".
 import { smartClassify } from "./smart-intent-classifier";
 import { evaluateRAGResponse } from "./rag-evaluator";
 import { submitRAGFeedback, getOptimizedWeights, classifyQueryType } from "./rag-feedback-loop";
+import { getPipelineLatency, type PipelineLatency } from "./pipeline-latency-tracker";
 
 // ─── Last classification memory (for feedback corrections) ───
 let _lastClassification: { text: string; intent: string; ts: number } | null = null;
