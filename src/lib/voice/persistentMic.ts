@@ -7,6 +7,12 @@
 
 const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
 
+const PERSISTENT_AUDIO_CONSTRAINTS: MediaTrackConstraints = {
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true,
+};
+
 interface PersistentMicState {
   stream: MediaStream | null;
   granted: boolean;
@@ -23,8 +29,26 @@ function getState(): PersistentMicState {
   return w[GLOBAL_KEY];
 }
 
+async function openPersistentStream(state: PersistentMicState): Promise<boolean> {
+  if (!navigator.mediaDevices?.getUserMedia) return false;
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: PERSISTENT_AUDIO_CONSTRAINTS,
+  });
+
+  state.stream = stream;
+  state.granted = true;
+  console.log("[PersistentMic] Stream ativo — mic persistente mantido aberto");
+  return true;
+}
+
 export function isMobile(): boolean {
   return typeof navigator !== "undefined" && MOBILE_REGEX.test(navigator.userAgent);
+}
+
+export function getPersistentMicStream(): MediaStream | null {
+  const stream = getState().stream;
+  return stream && stream.active ? stream : null;
 }
 
 /** Check if mic permission is already granted (no prompt) */
@@ -68,11 +92,7 @@ export async function ensurePersistentMic(): Promise<boolean> {
     // Keep a persistent stream on all devices to avoid activate/deactivate cycling sounds
     if (navigator.mediaDevices?.getUserMedia) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-        });
-        s.stream = stream;
-        console.log("[PersistentMic] Stream ativo — mic nunca será liberado para evitar cliques/beeps");
+        await openPersistentStream(s);
       } catch (err) {
         console.warn("[PersistentMic] Falha ao manter stream:", err);
       }
@@ -81,6 +101,29 @@ export async function ensurePersistentMic(): Promise<boolean> {
     s.checking = false;
     return true;
   } catch {
+    s.checking = false;
+    return false;
+  }
+}
+
+/** Request mic access from a direct user gesture and keep the stream open */
+export async function requestPersistentMic(): Promise<boolean> {
+  const s = getState();
+
+  if (s.stream && s.stream.active) {
+    s.granted = true;
+    return true;
+  }
+
+  if (s.checking) return s.granted;
+  s.checking = true;
+
+  try {
+    const ready = await openPersistentStream(s);
+    s.checking = false;
+    return ready;
+  } catch (err) {
+    console.warn("[PersistentMic] Falha ao solicitar stream persistente:", err);
     s.checking = false;
     return false;
   }

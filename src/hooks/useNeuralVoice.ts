@@ -925,14 +925,17 @@ export function useNeuralVoice(
               onCmdRef.current(text.trim());
             },
             onError: (err) => {
-              console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech");
-              speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
+              console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech silently");
               // Fallback to Web Speech API
               useGCPSTTRef.current = false;
               gcpSessionRef.current?.destroy();
               gcpSessionRef.current = null;
               if (onCmdRef.current && !intentionalStopRef.current) {
-                startListeningFresh(onCmdRef.current);
+                setTimeout(() => {
+                  if (onCmdRef.current && !intentionalStopRef.current) {
+                    startListeningFresh(onCmdRef.current);
+                  }
+                }, 80);
               }
             },
           });

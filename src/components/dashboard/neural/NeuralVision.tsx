@@ -21,6 +21,7 @@ import { PlasmaCanvas } from "./EnergyOrb";
 import { VoiceStateIndicator } from "./VoiceStateIndicator";
 import { useNeuralVoice } from "@/hooks/useNeuralVoice";
 import { useOrionVoiceClone, isVoiceCloneCommand } from "@/hooks/useOrionVoiceClone";
+import { getPersistentMicStream } from "@/lib/voice/persistentMic";
 
 // Extracted modules
 import { VS, processFrame, type Region, type MotionData } from "./useVisionProcessing";
@@ -169,14 +170,17 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (voiceCheckDoneRef.current || identityStatus === "owner" || identityStatus === "creator" || identityStatus === "no_enrollment") return;
     console.log("[NeuralVision] 🎤 Starting voice identity check...");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 } });
+      const persistentStream = getPersistentMicStream();
+      const stream = persistentStream ?? await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 } });
       const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm" });
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunks.push(e.data);
       };
       recorder.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
+        if (!persistentStream || stream !== persistentStream) {
+          stream.getTracks().forEach(t => t.stop());
+        }
         const blob = new Blob(chunks, { type: recorder.mimeType });
         console.log("[NeuralVision] 🎤 Voice capture complete, blob size:", blob.size, "chunks:", chunks.length);
         voiceCheckDoneRef.current = true;
@@ -414,7 +418,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }
   }, [listening, startListening, handleVoice, speakFast]);
 
-  const { wakeWordActive, wakeWordEnabledRef, wakeRecRef, startWakeWordListener, stopWakeWordListener, enableWakeWord, getBackgroundTranscripts } = useWakeWord(listening, speechOk, activateByWakeWord);
+  const { wakeWordActive, wakeWordEnabledRef, wakeRecRef, startWakeWordListener, stopWakeWordListener, enableWakeWord, getBackgroundTranscripts } = useWakeWord(listening, skipWakeWord ? false : speechOk, activateByWakeWord);
 
   useEffect(() => { bgTranscriptsGetterRef.current = getBackgroundTranscripts; }, [getBackgroundTranscripts]);
 
@@ -677,14 +681,14 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         style={{ backgroundColor: "rgba(10,10,15,0.7)", border: "1px solid rgba(212,175,55,0.15)", boxShadow: "0 0 15px rgba(212,175,55,0.05)" }}>
         <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent)" }} />
         <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.2), transparent)" }} />
-        {!active && wakeWordActive && (
+        {!active && !skipWakeWord && wakeWordActive && (
           <Badge variant="outline" className="text-[10px] h-6 font-mono border-amber-500/30 text-amber-400 animate-pulse gap-1.5 px-3">
             <Mic className="h-3.5 w-3.5" /> 👂 Diga <strong>"Orion"</strong> para ativar
           </Badge>
         )}
-        {!active && !wakeWordActive && speechOk && (
+        {!active && ((!skipWakeWord && !wakeWordActive && speechOk) || (skipWakeWord && speechOk)) && (
           <Badge variant="outline" className="text-[10px] h-6 font-mono border-blue-500/30 text-blue-400 gap-1.5 px-3">
-            <Mic className="h-3.5 w-3.5" /> Escuta automática
+            <Mic className="h-3.5 w-3.5" /> {skipWakeWord ? "Escuta contínua" : "Escuta automática"}
           </Badge>
         )}
         {!active && !speechOk && (
