@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { toast } from "sonner";
-import { X, Minimize2, Mic, Camera } from "lucide-react";
+import { X, Minimize2, Mic, Camera, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";

@@ -294,7 +294,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   }, [speak, stopListen]);
 
   // ═══ Centralized command router — single source of truth for all commands ═══
-  const routeOrionCommand = useCallback((cmd: string) => {
+  // Uses voice-intent-dispatcher for real execution (media, navigation, etc.)
+  const routeOrionCommand = useCallback(async (cmd: string) => {
     const q = cmd.toLowerCase().trim();
     const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
     const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
@@ -308,11 +309,35 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       else { speakFast("Visão já está desativada.").catch(() => {}); }
       return;
     }
-    if (q.includes("parar") || q.includes("desligar")) { stopCamera(); return; }
     if (q.includes("calar") || q.includes("silêncio")) { try { speechSynthesis?.cancel(); } catch {} return; }
+
+    // ═══ Try voice-intent-dispatcher FIRST for actionable commands ═══
+    try {
+      const { classifyVoiceCommandSmart, dispatchVoiceIntent } = await import("@/lib/neural/voice-intent-dispatcher");
+      const intent = await classifyVoiceCommandSmart(cmd);
+      console.log("[routeOrion] Intent:", intent.intent, "confidence:", intent.confidence);
+
+      // Only dispatch if it's a concrete intent with decent confidence
+      if (intent.intent !== "unknown" && intent.confidence > 0.4) {
+        const result = await dispatchVoiceIntent(intent, identityStatus);
+        console.log("[routeOrion] Dispatch result:", result);
+
+        // If dispatcher handled it (not passthrough), announce result
+        if (result.success && !(result.data as any)?.passthrough) {
+          if (result.response) {
+            speakFast(result.response).catch(() => {});
+          }
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("[routeOrion] Dispatcher error, falling back to AI:", err);
+    }
+
+    // Fallback to AI for complex/unknown commands
     if (supernetConnected) sendSuperNetQuery(cmd);
     else askAI(cmd, "voice");
-  }, [active, startCamera, stopCamera, speakFast, askAI, supernetConnected, sendSuperNetQuery]);
+  }, [active, startCamera, stopCamera, speakFast, askAI, supernetConnected, sendSuperNetQuery, identityStatus]);
 
 
   const handleVoice = useCallback((cmd: string) => {
