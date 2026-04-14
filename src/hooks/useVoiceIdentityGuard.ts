@@ -89,21 +89,54 @@ export function useVoiceIdentityGuard() {
         return "creator";
       }
 
-      // ── Check against owner's enrollment ──
+      // ── Check against current user's enrollment ──
       const { data: enrollment, error: enrollError } = await supabase
         .from("voice_auth_enrollments")
-        .select("voice_features")
+        .select("voice_features, user_id")
         .eq("user_id", user.id)
         .eq("is_active", true)
         .maybeSingle();
 
-      if (enrollError) {
-        console.error("[VoiceGuard] ❌ DB error loading enrollment:", enrollError.message);
-        setIdentityStatus("no_enrollment");
-        setIsCheckingVoice(false);
-        return "no_enrollment";
+      if (!enrollError && enrollment?.voice_features) {
+        console.log("[VoiceGuard] ✅ Enrollment found for current user, comparing...");
+        const enrolledFeatures = enrollment.voice_features as unknown as VoiceFeatures;
+        const similarity = compareFeaturesStatic(features, enrolledFeatures);
+        console.log("[VoiceGuard] 📊 Similarity score:", similarity.toFixed(4), "(threshold: 0.55)");
+
+        if (similarity >= 0.55) {
+          const isOwner = isOwnerEmail(user?.email);
+          const status: IdentityStatus = isOwner ? "creator" : "owner";
+          console.log("[VoiceGuard] ✅ Voice MATCHED! Status:", status);
+          setIdentityStatus(status);
+          setIsCheckingVoice(false);
+          return status;
+        }
       }
 
+      // ── Fallback: Check against ALL owner enrollments (for alt accounts with same voice) ──
+      const { data: ownerEnrollments } = await supabase
+        .from("voice_auth_enrollments")
+        .select("voice_features, user_id")
+        .eq("is_active", true)
+        .neq("user_id", user.id)
+        .limit(10);
+
+      if (ownerEnrollments && ownerEnrollments.length > 0) {
+        for (const ownerEnroll of ownerEnrollments) {
+          if (!ownerEnroll.voice_features) continue;
+          const ownerFeatures = ownerEnroll.voice_features as unknown as VoiceFeatures;
+          const ownerSimilarity = compareFeaturesStatic(features, ownerFeatures);
+          console.log("[VoiceGuard] 🔍 Cross-account voice check, similarity:", ownerSimilarity.toFixed(4));
+          if (ownerSimilarity >= 0.55) {
+            console.log("[VoiceGuard] 👑 Voice matches an owner enrollment! Granting creator access.");
+            setIdentityStatus("creator");
+            setIsCheckingVoice(false);
+            return "creator";
+          }
+        }
+      }
+
+      // No enrollment matched
       if (!enrollment?.voice_features) {
         console.warn("[VoiceGuard] ⚠️ No voice enrollment found for user:", user.id);
         setIdentityStatus("no_enrollment");
@@ -111,25 +144,7 @@ export function useVoiceIdentityGuard() {
         return "no_enrollment";
       }
 
-      console.log("[VoiceGuard] ✅ Enrollment found, comparing...");
-
-      const enrolledFeatures = enrollment.voice_features as unknown as VoiceFeatures;
-      const similarity = compareFeaturesStatic(features, enrolledFeatures);
-      
-      console.log("[VoiceGuard] 📊 Similarity score:", similarity.toFixed(4), "(threshold: 0.65)");
-
-      const threshold = 0.65;
-      const isOwner = isOwnerEmail(user?.email);
-      
-      if (similarity >= threshold) {
-        const status: IdentityStatus = isOwner ? "creator" : "owner";
-        console.log("[VoiceGuard] ✅ Voice MATCHED! Status:", status);
-        setIdentityStatus(status);
-        setIsCheckingVoice(false);
-        return status;
-      }
-
-      console.log("[VoiceGuard] ⚠️ Voice did NOT match (score:", similarity.toFixed(4), "< threshold:", threshold, ")");
+      console.log("[VoiceGuard] ⚠️ Voice did NOT match any enrollment");
       setIdentityStatus("guest");
       setIsCheckingVoice(false);
       return "guest";
