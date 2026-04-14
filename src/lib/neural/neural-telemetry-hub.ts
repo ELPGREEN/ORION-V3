@@ -87,6 +87,7 @@ import { createNeuralDataSpace, type FederatedDataSpace } from "./federated-data
 import { NeuralMessageBus, NeuralContextBroker } from "./interoperability-middleware";
 import { runTFMA, type TFMAResult } from "./tf-responsible-ai-evaluation";
 import { createFederatedSimulation, executeFederatedRound, type FederatedState } from "./tf-responsible-ai-training";
+import { recordTFFailure } from "./jules-auto-triggers";
 
 // Singleton instances for v3 modules
 let _docVersionManager: DocumentVersionManager | null = null;
