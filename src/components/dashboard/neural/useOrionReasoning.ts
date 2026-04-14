@@ -40,6 +40,7 @@ export function useOrionReasoning(
   speechQueueRef?: React.MutableRefObject<string[]>,
   bargeInCallbackRef?: React.MutableRefObject<(() => void) | null>,
   getBackgroundTranscripts?: () => BackgroundTranscript[],
+  identityStatus?: string,
 ) {
   const navigate = useNavigate();
   const lastAIRef = useRef(0);
@@ -1182,24 +1183,21 @@ export function useOrionReasoning(
       }
 
       // ═══ Auto-construct: Orion como engenheiro de sistemas ═══
-      // SEGURANÇA: Apenas o proprietário (advogado/admin) pode executar auto-construção
+      // SEGURANÇA: Creator-only via voice ID ou email
       if (_isSpecialCmd && (intentType === "auto_construct")) {
-        // Verify owner identity before proceeding
+        const { isCreatorVerified: isCreatorForConstruct } = await import("@/lib/neural/jules-client");
         const constructUser = await getCachedUser();
-        if (constructUser) {
-          const { data: constructRole } = await supabase.from("user_roles").select("role").eq("user_id", constructUser.id).maybeSingle();
-          const isOwnerOrAdmin = constructRole?.role === "advogado" || constructRole?.role === "admin";
-          if (!isOwnerOrAdmin) {
-            const denied = "Auto-construção é restrita ao proprietário do sistema. Apenas o criador do Orion e administradores podem executar comandos de construção autônoma.";
-            setChatHistory(prev => {
-              const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
-              return [...clean, { role: "ai" as const, text: denied, time: new Date().toLocaleTimeString("pt-BR") }];
-            });
-            setThought(denied);
-            speak(denied).catch(() => {});
-            cleanupProcessing();
-            return;
-          }
+        const isCreator = isCreatorForConstruct({ email: constructUser?.email, identityStatus: identityStatus as any });
+        if (!isCreator) {
+          const denied = "⛔ Auto-construção é restrita ao criador do sistema. Sua identidade de voz não foi verificada como criador.";
+          setChatHistory(prev => {
+            const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+            return [...clean, { role: "ai" as const, text: denied, time: new Date().toLocaleTimeString("pt-BR") }];
+          });
+          setThought(denied);
+          speak(denied).catch(() => {});
+          cleanupProcessing();
+          return;
         }
 
         setThought("🏗️ SupAgent: Analisando sua solicitação de construção...");
@@ -1319,119 +1317,68 @@ export function useOrionReasoning(
 
       // ═══ Self-evolution: intercept before vision call ═══
       if (_isSpecialCmd && (intentType === "self_evolve")) {
-        setThought("🧬 Iniciando ciclo de auto-evolução...");
+        // CREATOR-ONLY GUARD: verify voice identity or email before self-evolution
+        const { isCreatorVerified } = await import("@/lib/neural/jules-client");
+        const evoUser = await getCachedUser();
+        const isCreator = isCreatorVerified({ email: evoUser?.email, identityStatus: identityStatus as any });
+        if (!isCreator) {
+          const denied = "⛔ Apenas o criador pode solicitar auto-evolução do sistema. Sua identidade de voz não foi verificada como criador.";
+          addChat("ai", denied);
+          setThought(denied);
+          speak(denied).catch(() => {});
+          cleanupProcessing();
+          return;
+        }
+
+        setThought("🧬 Iniciando ciclo de auto-evolução com PR via GitHub...");
         setChatHistory(prev => {
           const withoutPlaceholder = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
-          return [...withoutPlaceholder, { role: "ai" as const, text: "🧬 Iniciando ciclo de auto-evolução...", time: new Date().toLocaleTimeString("pt-BR") }];
+          return [...withoutPlaceholder, { role: "ai" as const, text: "🧬 Iniciando auto-correção via GitHub PR...", time: new Date().toLocaleTimeString("pt-BR") }];
         });
-        speak("Iniciando ciclo de auto-evolução. Aguarde alguns segundos.").catch(() => {});
+        speak("Identidade verificada. Iniciando auto-correção do sistema com PR no GitHub.").catch(() => {});
 
         try {
-          // ═══ PHASE 1: Neural Evolution (analyze → approve → apply) ═══
-          const { data: analyzeData } = await supabase.functions.invoke("neural-evolution", {
-            body: { action: "analyze_and_propose" },
+          // ═══ PHASE 1: Orion Self-Improve via Jules (GitHub PR) ═══
+          const { orionSelfImprove } = await import("@/lib/neural/jules-client");
+          const julesResult = await orionSelfImprove({
+            task: question,
+            context: `Comando do criador: "${question}". Analise o código do projeto Orion e crie um PR com melhorias.`,
+            autoPR: true,
+            callerIdentity: { email: evoUser?.email, identityStatus: identityStatus as any },
           });
-          const propostas = analyzeData?.proposals_count ?? analyzeData?.count ?? analyzeData?.proposals?.length ?? 0;
-          addLog(`🧬 Propostas geradas: ${propostas}`);
 
-          const { data: approveData } = await supabase.functions.invoke("neural-evolution", {
-            body: { action: "auto_approve_pending" },
-          });
-          const aprovadas = approveData?.approved ?? approveData?.approved_count ?? 0;
-          const patchesGerados = approveData?.patchesGenerated ?? 0;
-          addLog(`✅ Propostas aprovadas: ${aprovadas} | Patches gerados: ${patchesGerados}`);
-
-          const { data: applyData } = await supabase.functions.invoke("neural-evolution", {
-            body: { action: "auto_apply_approved" },
-          });
-          const aplicadas = applyData?.applied ?? applyData?.applied_count ?? 0;
-          addLog(`🚀 Melhorias aplicadas: ${aplicadas}`);
-
-          // ═══ PHASE 2: Embedding batch loop (até zerar fila) ═══
-          setThought("🧠 Vetorizando base neural...");
-          let embeddingsProcessed = 0;
-          let embeddingsRemaining = 1;
-          let embeddingIterations = 0;
-          while (embeddingsRemaining > 0 && embeddingIterations < 5) {
-            try {
-              const { data: embData } = await supabase.functions.invoke("generate-embeddings", {
-                body: { target: "both", batchSize: 100 },
+          if (!julesResult.success) {
+            if (julesResult.rateLimited) {
+              const rateLimitMsg = `⚠️ Rate limit atingido. ${julesResult.error}. Tente novamente em alguns minutos.`;
+              addChat("ai", rateLimitMsg);
+              speak(rateLimitMsg).catch(() => {});
+            } else {
+              addLog(`⚠️ Jules session failed: ${julesResult.error}`);
+              // Fallback: run neural-evolution pipeline
+              setThought("🧬 Jules indisponível, executando evolução neural local...");
+              const { data: analyzeData } = await supabase.functions.invoke("neural-evolution", {
+                body: { action: "analyze_and_propose" },
               });
-              embeddingsProcessed += (embData?.neural?.processed ?? 0) + (embData?.legal?.processed ?? 0);
-              embeddingsRemaining = (embData?.remaining?.neural ?? 0) + (embData?.remaining?.legal ?? 0);
-              embeddingIterations++;
-              addLog(`🧠 Embeddings batch ${embeddingIterations}: +${(embData?.neural?.processed ?? 0) + (embData?.legal?.processed ?? 0)}, restam ${embeddingsRemaining}`);
-            } catch (embErr) {
-              addLog(`⚠️ Embedding batch error: ${embErr}`);
-              break;
+              const propostas = analyzeData?.proposals_count ?? 0;
+              const { data: approveData } = await supabase.functions.invoke("neural-evolution", {
+                body: { action: "auto_approve_pending" },
+              });
+              const aprovadas = approveData?.approved ?? 0;
+              const fallbackMsg = `Evolução neural local executada: ${propostas} propostas, ${aprovadas} aprovadas. PR via GitHub não disponível no momento: ${julesResult.error}`;
+              addChat("ai", `🧬 ${fallbackMsg}`);
+              speak(fallbackMsg).catch(() => {});
             }
+          } else {
+            addLog(`🚀 Jules session created: ${julesResult.sessionId}`);
+            const successMsg = `Auto-correção iniciada com sucesso! Sessão criada no GitHub. ID: ${julesResult.sessionId.slice(0, 12)}... Um PR será gerado automaticamente com as melhorias solicitadas.`;
+            setThought(successMsg);
+            addChat("ai", `🧬 ${successMsg}`);
+            speak(successMsg).catch(() => {});
+
+            saveToNeuralLearning(question, successMsg, "self_evolution_jules", 0.95, {
+              sessionId: julesResult.sessionId, method: "jules_pr",
+            }).catch(() => {});
           }
-
-          // ═══ PHASE 3: Pipeline completo + Queue worker ═══
-          setThought("⚙️ Executando pipeline completo...");
-          const [pipelineRes, queueRes] = await Promise.allSettled([
-            supabase.functions.invoke("neural-pipeline-orchestrator", { body: { action: "full_cycle" } }),
-            supabase.functions.invoke("queue-worker", { body: {} }),
-          ]);
-          const pipelineOk = pipelineRes.status === "fulfilled";
-          const queueOk = queueRes.status === "fulfilled";
-          addLog(`⚙️ Pipeline: ${pipelineOk ? "✅" : "❌"} | Queue: ${queueOk ? "✅" : "❌"}`);
-
-          // ═══ PHASE 4: Auto-learn (specialize + DPO + knowledge gaps) ═══
-          setThought("📚 Auto-aprendizagem e especialização...");
-          const [specRes, dpoRes, gapsRes] = await Promise.allSettled([
-            supabase.functions.invoke("neural-auto-learn", { body: { action: "auto_specialize" } }),
-            supabase.functions.invoke("neural-auto-learn", { body: { action: "trigger_dpo" } }),
-            supabase.functions.invoke("neural-auto-learn", { body: { action: "auto_fill_knowledge_gaps" } }),
-          ]);
-          addLog(`📚 Specialize: ${specRes.status === "fulfilled" ? "✅" : "❌"} | DPO: ${dpoRes.status === "fulfilled" ? "✅" : "❌"} | Gaps: ${gapsRes.status === "fulfilled" ? "✅" : "❌"}`);
-
-          // ═══ PHASE 5: Atualizar protocolos (RLVR + DPO + Hebbian + CrossValidation) ═══
-          setThought("🔄 Atualizando protocolos de conhecimento...");
-          const { data: trainData } = await supabase.functions.invoke("neural-training", {
-            body: {
-              action: "neural_learn",
-              data: {
-                enable_rlvr: true, enable_dpo: true, enable_hebbian: true,
-                enable_cross_validation: true, enable_distillation: false,
-              },
-            },
-          });
-          addLog(`🔄 Protocolos atualizados: ${trainData?.success ? "✅" : "⚠️"}`);
-
-          // SupAgent status
-          const { data: supagentData } = await supabase.functions.invoke("agente-construcao", {
-            body: { action: "supagent_status", params: {} },
-          });
-          const supagentStats = supagentData?.stats || {};
-
-          // ═══ SUMMARY ═══
-          const patchPart = patchesGerados > 0
-            ? ` Gerei ${patchesGerados} patch${patchesGerados > 1 ? "es" : ""} de código validados.`
-            : "";
-          const supagentPart = supagentStats.total_patches > 0
-            ? ` SupAgent: ${supagentStats.applied || 0} ativas, ${supagentStats.pending || 0} pendentes.`
-            : "";
-          const embPart = embeddingsProcessed > 0
-            ? ` Vetorizei ${embeddingsProcessed} itens (${embeddingsRemaining} restantes).`
-            : " Base neural totalmente vetorizada.";
-
-          const summary = `Evolução completa executada. ${propostas} propostas → ${aprovadas} aprovadas → ${aplicadas} aplicadas.${patchPart}${embPart} Pipeline, fila de jobs, DPO, especialização e protocolos atualizados.${supagentPart}`;
-
-          setThought(summary);
-          setChatHistory(prev => {
-            const withoutEvo = prev.filter(m => !(m.role === "ai" && m.text.startsWith("🧬")));
-            return [...withoutEvo, { role: "ai" as const, text: `🧬 ${summary}`, time: new Date().toLocaleTimeString("pt-BR") }];
-          });
-          speak(summary).catch(() => {});
-
-          saveToNeuralLearning(question, summary, "self_evolution", 0.95, {
-            proposals: propostas, approved: aprovadas, applied: aplicadas, patchesGenerated: patchesGerados,
-            embeddingsProcessed, embeddingsRemaining, pipelineOk, queueOk,
-            autoLearn: { specialize: specRes.status, dpo: dpoRes.status, gaps: gapsRes.status },
-            protocolsUpdated: trainData?.success ?? false,
-            supagent: supagentStats,
-          }).catch(() => {});
         } catch (evoErr: any) {
           const errMsg = "Não consegui completar o ciclo de evolução agora. Tentarei novamente no próximo ciclo automático.";
           addChat("ai", errMsg);
@@ -1445,7 +1392,7 @@ export function useOrionReasoning(
       // ═══ TOOL EXECUTION (skip on fast-path — LLM handles general questions) ═══
       if (_isSpecialCmd) try {
         const { matchAndExecuteTool } = await import("@/lib/neural/orion-tool-executor");
-        const toolResult = await matchAndExecuteTool(processedQuestion);
+        const toolResult = await matchAndExecuteTool(processedQuestion, undefined, identityStatus);
         if (toolResult.handled) {
           // Extract __NAV__ directive if present
           const navMatch = toolResult.response.match(/__NAV__(\S+)/);
