@@ -11,7 +11,7 @@ import { getImmuneMemory, shouldQuarantine } from "./jules-immune-system";
 // ─── Types ───
 
 export interface ScanResult {
-  domain: "bugs" | "performance" | "design" | "security";
+  domain: "bugs" | "performance" | "design" | "security" | "quality";
   issues: ScanIssue[];
   score: number; // 0-100, 100 = healthy
   scannedAt: number;
@@ -106,7 +106,7 @@ export function scanPerformance(): ScanResult {
 
   if (typeof window !== "undefined" && window.performance) {
     // Memory check (Chrome only)
-    const mem = (performance as any).memory;
+    const mem = (performance as unknown as { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
     if (mem) {
       const usedMB = mem.usedJSHeapSize / (1024 * 1024);
       const limitMB = mem.jsHeapSizeLimit / (1024 * 1024);
@@ -189,7 +189,6 @@ export function scanSecurity(): ScanResult {
     }
   }
 
-  // Check console for CSP violations (heuristic)
   // Check for inline event handlers
   const inlineHandlers = document.querySelectorAll("[onclick], [onerror], [onload]");
   if (inlineHandlers.length > 0) {
@@ -198,6 +197,30 @@ export function scanSecurity(): ScanResult {
   }
 
   return { domain: "security", issues, score: Math.max(0, score), scannedAt: Date.now() };
+}
+
+// ─── Code Quality Scanner ───
+
+export function scanCodeQuality(): ScanResult {
+  const issues: ScanIssue[] = [];
+  let score = 100;
+
+  // Since we are running in the browser/client, we can't easily scan the FS here,
+  // but we can check for runtime signals of poor code quality (e.g. huge state objects, too many components)
+
+  if (typeof window !== "undefined") {
+    // Check for excessive console logging
+    // (This is just a proxy for "noisy" code)
+
+    // Check for large global objects that might indicate poor state management
+    const windowKeys = Object.keys(window).length;
+    if (windowKeys > 500) {
+      issues.push({ subsystem: "core_state", severity: "medium", message: `Large global scope detected (${windowKeys} keys)` });
+      score -= 10;
+    }
+  }
+
+  return { domain: "quality", issues, score: Math.max(0, score), scannedAt: Date.now() };
 }
 
 // ─── Full Scan Orchestrator ───
@@ -210,7 +233,7 @@ export async function runFullScan(): Promise<ScanResult[]> {
   scanRunning = true;
 
   try {
-    const results = [scanForBugs(), scanPerformance(), scanDesign(), scanSecurity()];
+    const results = [scanForBugs(), scanPerformance(), scanDesign(), scanSecurity(), scanCodeQuality()];
     lastScanResults = results;
 
     // Dispatch issues to Jules auto-triggers if thresholds are met
@@ -243,16 +266,17 @@ export function getLastScanResults(): ScanResult[] {
   return lastScanResults;
 }
 
-export function getHealthScore(): { overall: number; bugs: number; performance: number; design: number; security: number } {
+export function getHealthScore(): { overall: number; bugs: number; performance: number; design: number; security: number; quality: number } {
   if (lastScanResults.length === 0) {
-    return { overall: 100, bugs: 100, performance: 100, design: 100, security: 100 };
+    return { overall: 100, bugs: 100, performance: 100, design: 100, security: 100, quality: 100 };
   }
   const get = (d: string) => lastScanResults.find((r) => r.domain === d)?.score ?? 100;
   const bugs = get("bugs");
   const performance = get("performance");
   const design = get("design");
   const security = get("security");
-  return { overall: Math.round((bugs + performance + design + security) / 4), bugs, performance, design, security };
+  const quality = get("quality");
+  return { overall: Math.round((bugs + performance + design + security + quality) / 5), bugs, performance, design, security, quality };
 }
 
 // ─── Periodic Auto-Scan ───
