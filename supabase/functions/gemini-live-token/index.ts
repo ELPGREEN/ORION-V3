@@ -17,9 +17,11 @@ const corsHeaders = {
 const MODEL = "gemini-live-2.5-flash-native-audio";
 const API_VERSION = "v1alpha";
 
-// Rotate through available keys
+// Round-robin through available keys (sequential, not random)
+let rrIndex = 0;
 function getApiKey(): string {
   const keys = [
+    Deno.env.get("GEMINI_API_KEY_GCP"),
     Deno.env.get("GEMINI_API_KEY"),
     Deno.env.get("GEMINI_API_KEY_2"),
     Deno.env.get("GEMINI_API_KEY_3"),
@@ -27,11 +29,13 @@ function getApiKey(): string {
     Deno.env.get("GEMINI_API_KEY_5"),
     Deno.env.get("GEMINI_API_KEY_6"),
     Deno.env.get("GEMINI_API_KEY_7"),
-    Deno.env.get("GEMINI_API_KEY_GCP"),
   ].filter(Boolean) as string[];
 
   if (keys.length === 0) throw new Error("No Gemini API keys configured");
-  return keys[Math.floor(Math.random() * keys.length)];
+  rrIndex = rrIndex % keys.length;
+  const key = keys[rrIndex];
+  rrIndex++;
+  return key;
 }
 
 Deno.serve(async (req) => {

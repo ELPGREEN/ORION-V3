@@ -52,11 +52,15 @@ const SYSTEM_KEY_NAMES: Record<string, string[]> = {
   openrouter: ["OPENROUTER_API_KEY"],
 };
 
+// Round-robin counters per provider (survives within isolate lifetime)
+const rrCounters: Record<string, number> = {};
+
 function getSystemKey(provider: string): string | null {
   const names = SYSTEM_KEY_NAMES[provider] || [];
   const keys = names.map((n) => Deno.env.get(n)).filter(Boolean) as string[];
   if (keys.length === 0) return null;
-  return keys[Math.floor(Math.random() * keys.length)];
+  rrCounters[provider] = ((rrCounters[provider] ?? -1) + 1) % keys.length;
+  return keys[rrCounters[provider]];
 }
 
 Deno.serve(async (req: Request) => {
