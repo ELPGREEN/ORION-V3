@@ -34,6 +34,14 @@ export function useVoiceIdentityGuard() {
   /** Auto-detect creator by email — skip voice check for owner accounts */
   const isCreatorAccount = user?.email ? isOwnerEmail(user.email) : false;
 
+  /** Auto-authorize owner accounts on mount — no voice check needed */
+  useEffect(() => {
+    if (isCreatorAccount && identityStatus === "unknown") {
+      console.log("[VoiceGuard] 👑 Owner email detected — auto-setting identity to 'creator'");
+      setIdentityStatus("creator");
+    }
+  }, [isCreatorAccount, identityStatus]);
+
   /** Check if voice matches owner enrollment */
   const verifyVoiceIdentity = useCallback(async (audioBlob: Blob): Promise<IdentityStatus> => {
     // Owner emails are always recognized as creator — no voice check needed
