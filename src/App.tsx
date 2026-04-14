@@ -178,9 +178,9 @@ const App = () => (
                   <Route path="/solucoes/produtores" element={<SolucoesProdutores />} />
                   <Route path="/solucoes/afiliados" element={<SolucoesAfiliados />} />
                   <Route path="/solucoes/industria" element={<SolucoesIndustria />} />
+
+                  {/* Auth Protected Public Pages */}
                   <Route path="/consulta" element={<AuthGuard><ConsultaIA /></AuthGuard>} />
-                  <Route path="/demo" element={<Navigate to="/dashboard/rede-neural" replace />} />
-                  <Route path="/extension" element={<Navigate to="/dashboard/rede-neural" replace />} />
                   <Route path="/register/biometric" element={<AuthGuard><BiometricRegistration /></AuthGuard>} />
 
                   {/* ═══ AUTH REQUIRED — Docs técnicos ═══ */}
@@ -204,9 +204,11 @@ const App = () => (
                   <Route path="/escritorio" element={<Navigate to="/solucoes/advogados" replace />} />
                   <Route path="/pro-bono" element={<Navigate to="/contato" replace />} />
                   <Route path="/clientes" element={<Navigate to="/servicos" replace />} />
+                  <Route path="/demo" element={<Navigate to="/dashboard/rede-neural" replace />} />
+                  <Route path="/extension" element={<Navigate to="/dashboard/rede-neural" replace />} />
 
-                  {/* ═══ Dashboard Routes (DashboardLayout already guards auth) ═══ */}
-                  <Route path="/dashboard" element={<DashboardLayout />}>
+                  {/* ═══ Dashboard Routes ═══ */}
+                  <Route path="/dashboard" element={<AuthGuard><DashboardLayout /></AuthGuard>}>
                     <Route index element={<DashboardRouter />} />
 
                     {/* Shared routes */}

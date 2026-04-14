@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
-import { Loader2 } from "lucide-react";
+import { PageLoader } from "@/components/common/PageLoader";
 import { type ReactNode } from "react";
 
 interface RoleGuardProps {
@@ -19,11 +19,7 @@ export function RoleGuard({ allowedRoles, children, fallbackPath = "/dashboard" 
   const { isOwner } = useAdminAccess();
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 text-primary animate-spin" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   // Admin/Owner bypass — full access to all routes

@@ -35,13 +35,12 @@ export default function DashboardLayout() {
   const location = useLocation();
   const onboardingCheckedRef = useRef(false);
 
-  // Redirect to auth if not logged in
+  // Initialization for authenticated users
   useEffect(() => {
-    if (!authLoading && !user) navigate("/auth");
     if (!authLoading && user) {
       syncVoiceEvolutionFromSupabase().catch(() => {});
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading]);
 
   // First-access onboarding: redirect to ConfigurarIA only once per user
   useEffect(() => {
