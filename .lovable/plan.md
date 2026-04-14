@@ -1,91 +1,47 @@
 
 
-# Auditoria Completa: Transcrição Duplicada + Comandos Não Executados
+# Diagnóstico: O que Orion REALMENTE faz vs. o que PARECE fazer
 
-## Problemas Encontrados
+## Status Atual
 
-### 1. GCP STT NÃO aplica deduplicação
-A função `deduplicateRepeatedPhrases` só é chamada no path do Web Speech API (linha 748 de `useNeuralVoice.ts`). O GCP STT `onFinal` callback (linha 951) envia `text.trim()` diretamente para `onCmdRef.current` sem nenhuma deduplicação. Como o GCP STT é o path primário, a maioria das transcrições duplicadas passa direto.
+### FUNCIONA DE VERDADE:
+1. **Música — buscar e tocar**: O comando "tocar música X" dispara `orion-music-command` → `OrionPlaylistBar` busca no Spotify/YouTube e toca (preview 30s Spotify ou embed YouTube). **Funciona.**
+2. **Pausar/Retomar música**: Comandos "pausar música" / "parar reprodução" enviam `action: "pause"` ao player. **Funciona.**
+3. **Próxima/Anterior faixa**: `next`/`prev` são tratados no `OrionPlaylistBar`. **Funciona.**
+4. **Abrir vídeo**: `orion-browser-actions.ts` detecta URLs do YouTube e dispara `orion-video-command` → embed no painel. **Funciona.**
+5. **Pesquisa web**: Padrões "pesquisar na web sobre X" são interceptados e roteados ao LLM com prompt de pesquisa. **Funciona** (mas é LLM, não busca real na web).
+6. **Mute/Unmute do player**: Botão visual funciona. **Funciona.**
 
-### 2. `handleVoice` remove "ativar" de comandos
-Linha 385: `.replace(/^(ativar?|ligar?|acordar?|oi|olá|e\s*aí)\s*/i, "")` transforma "ativar música do ACDC" em "música do ACDC". Isso pode afetar a classificação de intent.
+### NÃO FUNCIONA (apenas registrado, sem execução real):
+1. **Controle de volume por voz** ("aumentar volume", "diminuir volume"): Registrado em `orion-command-registry.ts` como `cfg_volume_up` com modelo `SLM`, mas o `executeAction` no LAM é **simulado** (`simulated: true`). Não há código que realmente altere o `volume` do `<audio>` ou do SDK Spotify.
+2. **Volume slider visual**: O `OrionPlaylistBar` tem apenas mute/unmute (toggle). Não tem slider de volume. O `OrionAudiobookListener` tem slider, mas é componente separado.
+3. **Comandos "silenciar"/"mudo"** por voz: Registrados como `cfg_mute`/`cfg_unmute` mas **não conectados** a nenhum dispatch real.
 
-### 3. Comandos caem em "passthrough" → IA genérica
-Muitos intents classificados corretamente (ex: `general`, `explanation`, `humor`) caem no `default` do dispatcher que retorna `passthrough: true`. Depois, `routeOrionCommand` manda para `askAI`, que é conversacional e não executa ações. A IA genérica responde "não tenho acesso a reprodutores" ao invés de executar.
-
-### 4. Regex "buscar música" fica DEPOIS do "search" genérico
-Na lista `REGEX_RULES`, o regex de "buscar música" (linha 114) fica DEPOIS do search genérico (linha 120). Mas a iteração `for` no `regexClassify` executa na ordem do array — se "procurar música do ACDC" casa com o search genérico na linha 120 ANTES de chegar ao regex de mídia na 114... ESPERA — na verdade o regex de buscar-música (114) vem ANTES do search (120). Porém, o problema real é que "pesquisar ACDC" (sem "música") cai em `search` (busca interna) quando deveria ir para `web_search` ou `media`.
-
----
+### PARCIALMENTE FUNCIONA:
+1. **Pesquisa**: Rota para LLM com prompt de pesquisa — não faz scraping web real, usa conhecimento do modelo.
 
 ## Plano de Correção
 
-### Arquivo 1: `src/hooks/useNeuralVoice.ts`
-- **GCP STT onFinal** (linhas ~946-951): Aplicar `deduplicateRepeatedPhrases()` no texto ANTES de enviar para `onCmdRef.current`
-- Adicionar guard de duplicata no próprio GCP callback (o `lastProcessedTranscriptRef` já existe mas a dedup de frases concatenadas não é aplicada)
+### 1. Adicionar slider de volume ao OrionPlaylistBar
+- Substituir o botão mute/unmute por um grupo: botão mute + slider de volume (0-100)
+- Controlar `audioRef.current.volume` e `sdk.changeVolume()`
 
-### Arquivo 2: `src/components/dashboard/neural/NeuralVision.tsx`
-- **handleVoice** (linha 385): NÃO remover "ativar" se a frase contém palavras de mídia (música, vídeo, etc.)
-- Manter a remoção apenas para greetings ("ativar" sozinho, "ativar Orion")
+### 2. Conectar comandos de voz de volume ao player real
+- No `useOrionReasoning.ts`, interceptar padrões de volume ("aumentar volume", "diminuir volume", "volume no máximo", "silenciar") ANTES do LLM
+- Disparar novo evento `orion-volume-command` com action: `up`/`down`/`set`/`mute`/`unmute`
+- No `OrionPlaylistBar`, escutar esse evento e ajustar o volume real
 
-### Arquivo 3: `src/lib/neural/smart-intent-classifier.ts`
-- Adicionar regex para "pesquisar/buscar [algo]" genérico → `web_search` (não `search` interno) quando NÃO for mídia
-- O search genérico (linha 120) deve mapear para `web_search` ao invés de `search` interno, pois o usuário quer pesquisar na internet, não no sistema
+### 3. Garantir que comandos de voz passam pela verificação de identidade
+- Os comandos de mídia já funcionam sem verificação de identidade (são comandos utilitários, não admin)
+- Verificar que o STT está capturando e o pipeline está processando os comandos
 
-### Arquivo 4: `src/lib/neural/voice-intent-dispatcher.ts`
-- No `media` extractor (linha 45-48): melhorar regex para capturar mais padrões ("buscar", "encontrar", "pesquisar" + query)
-- Garantir que media query extraction funcione para todos os verbos
+### Arquivos a modificar:
+- `src/components/orion/OrionPlaylistBar.tsx` — adicionar slider de volume + listener de volume por voz
+- `src/components/dashboard/neural/useOrionReasoning.ts` — interceptar comandos de volume e disparar eventos
+- `src/components/orion/FloatingMusicPlayer.tsx` — adicionar controle de volume (consistência)
 
----
-
-## Detalhes Técnicos
-
-### Fix 1: Dedup no GCP STT
-```typescript
-// useNeuralVoice.ts, onFinal callback (~line 951)
-const dedupedText = deduplicateRepeatedPhrases(text.trim());
-onCmdRef.current(dedupedText);
-```
-
-### Fix 2: Proteger "ativar" em contexto de mídia
-```typescript
-// NeuralVision.tsx, handleVoice (~line 382-386)
-let cleanedCommand = original
-  .replace(/^\s*[óòôõo]r[iíìeéè][oóòôõ][nmn][\s,;:-]*/i, "")
-  .replace(/^\s*oreo[nm][\s,;:-]*/i, "");
-// Only strip "ativar/ligar" if NOT followed by media words
-if (!/\b(ativar?|ligar?)\s+(?:m[uú]sica|v[ií]deo|som|can[çc])/i.test(cleanedCommand)) {
-  cleanedCommand = cleanedCommand.replace(/^(ativar?|ligar?|acordar?|oi|olá|e\s*aí)\s*/i, "");
-}
-cleanedCommand = cleanedCommand.trim();
-```
-
-### Fix 3: search → web_search
-```typescript
-// smart-intent-classifier.ts, line 120
-// Change "search" intent to "web_search" for generic searches
-{ pattern: /\b(procur|busc|encontr|pesquis)\w*\s+/i, intent: "web_search", confidence: 0.85, ... }
-```
-
-### Fix 4: Media extractor abrangente
-```typescript
-// voice-intent-dispatcher.ts, media extractor (line 45-48)
-media: (text) => {
-  const match = text.match(/(?:tocar?|play|reproduz\w*|abr[aei]?r?|busc\w*|procur\w*|pesquis\w*|ouvir?|escutar?|assistir?|colocar?|encontr\w*)\s+(.+)/i);
-  let query = match?.[1]?.trim() || text;
-  // Strip media type words and prepositions
-  query = query
-    .replace(/^(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)\s+/i, "")
-    .replace(/^(?:d[oae]\s+|d[oa]\s+banda\s+|d[oa]\s+cantor\w*\s+|d[oa]\s+artista\s+|d[oa]\s+grupo\s+)/i, "")
-    .replace(/^(?:qualquer\s+(?:uma?\s+)?(?:d[oae]\s+)?)/i, "")
-    .trim();
-  return { query: query || text, action: /\b(par[ae]|stop|paus)\b/i.test(text) ? "pause" : "play" };
-},
-```
-
-### Resumo dos arquivos modificados
-1. `src/hooks/useNeuralVoice.ts` — dedup no GCP STT onFinal
-2. `src/components/dashboard/neural/NeuralVision.tsx` — proteger "ativar" em contexto de mídia
-3. `src/lib/neural/smart-intent-classifier.ts` — search genérico → web_search
-4. `src/lib/neural/voice-intent-dispatcher.ts` — media extractor mais abrangente
+### Resultado esperado:
+- Volume controlável visualmente (slider) e por voz ("Orion, aumentar volume", "volume 50%")
+- Todos os comandos de mídia (play, pause, next, prev, volume) funcionam de verdade
+- Feedback visual e por voz quando comando é executado
 
