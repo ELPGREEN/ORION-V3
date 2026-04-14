@@ -241,21 +241,34 @@ export function VideoOverlay() {
         {/* Video */}
         {!minimized && (
           <div className="relative w-full" style={{ height: "calc(100% - 40px)" }}>
+            {/* Floating action buttons over video */}
+            <div className="absolute top-2 right-2 z-20 flex gap-1">
+              <button
+                onClick={() => setBarMode(true)}
+                className="h-8 w-8 rounded-full flex items-center justify-center bg-black/70 hover:bg-black/90 border border-white/20 text-white transition-all hover:scale-110"
+                title="Só áudio (minimizar para barra)"
+              >
+                <Music className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setMinimized(true)}
+                className="h-8 w-8 rounded-full flex items-center justify-center bg-black/70 hover:bg-black/90 border border-white/20 text-white transition-all hover:scale-110"
+                title="Minimizar"
+              >
+                <Minimize2 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={close}
+                className="h-8 w-8 rounded-full flex items-center justify-center bg-black/70 hover:bg-red-600/90 border border-white/20 text-white transition-all hover:scale-110"
+                title="Fechar"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
             <div className="absolute inset-0 pointer-events-none z-10 opacity-[0.03]"
               style={{
                 backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,175,55,0.1) 2px, rgba(212,175,55,0.1) 4px)",
-              }} />
-            <div className="absolute top-1 left-1 w-5 h-5 border-l-2 border-t-2 z-10 pointer-events-none"
-              style={{ borderColor: "rgba(212,175,55,0.5)", animation: "pulse 2s ease-in-out infinite" }} />
-            <div className="absolute top-1 right-1 w-5 h-5 border-r-2 border-t-2 z-10 pointer-events-none"
-              style={{ borderColor: "rgba(212,175,55,0.5)", animation: "pulse 2s ease-in-out infinite 0.5s" }} />
-            <div className="absolute bottom-1 left-1 w-5 h-5 border-l-2 border-b-2 z-10 pointer-events-none"
-              style={{ borderColor: "rgba(59,130,246,0.5)", animation: "pulse 2s ease-in-out infinite 1s" }} />
-            <div className="absolute bottom-1 right-1 w-5 h-5 border-r-2 border-b-2 z-10 pointer-events-none"
-              style={{ borderColor: "rgba(59,130,246,0.5)", animation: "pulse 2s ease-in-out infinite 1.5s" }} />
-            <div className="absolute inset-0 pointer-events-none z-10 rounded-b-lg"
-              style={{
-                boxShadow: "inset 0 0 30px rgba(212,175,55,0.05), inset 0 0 60px rgba(59,130,246,0.03)",
               }} />
             <iframe
               ref={iframeRef}
