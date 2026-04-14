@@ -14,6 +14,7 @@ import { MobileSidebarOverlay } from "./MobileSidebarOverlay";
 import { DashboardBackground } from "./DashboardBackground";
 import { MouseTrailEffect } from "./MouseTrailEffect";
 import { GlobalOrionListener } from "./GlobalOrionListener";
+import { FloatingMusicPlayer } from "@/components/orion/FloatingMusicPlayer";
 
 import { ProdutorSidebar } from "./ProdutorSidebar";
 import { AfiliadoSidebar } from "./AfiliadoSidebar";
