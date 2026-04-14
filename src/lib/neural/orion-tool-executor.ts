@@ -3653,7 +3653,8 @@ const TOOLS: OrionTool[] = [
 
 export async function matchAndExecuteTool(
   question: string,
-  userRole?: AppRole
+  userRole?: AppRole,
+  identityStatus?: string
 ): Promise<{ handled: boolean; response: string; toolName?: string }> {
   const normalized = question.trim();
   if (normalized.length < 3) return { handled: false, response: "" };
@@ -3674,6 +3675,16 @@ export async function matchAndExecuteTool(
 
     const match = normalized.match(tool.regex);
     if (match) {
+      // Creator-only guard: block non-creator access
+      if (tool.creatorOnly && identityStatus !== "creator") {
+        console.warn(`[ToolExec] ❌ Blocked "${tool.name}" — identity "${identityStatus}" is not creator`);
+        return {
+          handled: true,
+          response: "⛔ Apenas o criador pode executar este comando.",
+          toolName: tool.name,
+        };
+      }
+
       try {
         const params = tool.extract(match, normalized);
         const response = await tool.call(params);

@@ -6,6 +6,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { isCreatorVerified } from "@/lib/neural/jules-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -320,10 +322,13 @@ export function JulesSelfImprovePanel() {
     };
   }, [refresh]);
 
+  const { user } = useAuth();
+  const isCreator = isCreatorVerified({ email: user?.email });
+
   const handleManualTrigger = async () => {
-    if (!manualTask.trim()) return;
+    if (!manualTask.trim() || !isCreator) return;
     setSending(true);
-    const result = await orionSelfImprove({ task: manualTask, autoPR: true });
+    const result = await orionSelfImprove({ task: manualTask, autoPR: true, callerIdentity: { email: user?.email } });
     if (result.success) {
       toast.success("Orion ativado", { description: "Sessão de auto-evolução criada" });
       setManualTask("");
