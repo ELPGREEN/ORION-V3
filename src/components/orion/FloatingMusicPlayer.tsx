@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Volume2, VolumeX, Minimize2, Maximize2, ExternalLink } from "lucide-react";
+import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
 import { isMobileDevice, openYouTube, openSpotify } from "@/lib/utils/deep-link";
 
@@ -14,6 +15,7 @@ export function FloatingMusicPlayer() {
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(70);
   const [minimized, setMinimized] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -22,9 +24,8 @@ export function FloatingMusicPlayer() {
     const handler = (e: CustomEvent<MusicCommand>) => {
       const { action, query: q } = e.detail;
       if (action === "search_and_play" && q) {
-        // On mobile, open native app directly instead of embedded player
         if (isMobileDevice()) {
-          openYouTube(q.trim(), true); // true = YouTube Music
+          openYouTube(q.trim(), true);
           return;
         }
         setQuery(q.trim());
@@ -38,14 +39,38 @@ export function FloatingMusicPlayer() {
     return () => window.removeEventListener("orion-music-command", handler as EventListener);
   }, []);
 
+  // Listen for volume commands
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const { action, value } = e.detail || {};
+      let newVol = volume;
+      switch (action) {
+        case "up": newVol = Math.min(100, volume + 15); break;
+        case "down": newVol = Math.max(0, volume - 15); break;
+        case "set": newVol = Math.max(0, Math.min(100, value ?? 50)); break;
+        case "mute": setMuted(true); return;
+        case "unmute": setMuted(false); return;
+      }
+      setVolume(newVol);
+      setMuted(newVol === 0);
+    };
+    window.addEventListener("orion-volume-command", handler as EventListener);
+    return () => window.removeEventListener("orion-volume-command", handler as EventListener);
+  }, [volume]);
+
   const close = useCallback(() => {
     setVisible(false);
     setQuery("");
   }, []);
 
-  // Build YouTube search embed URL
+  const handleVolumeChange = useCallback((val: number[]) => {
+    const v = val[0];
+    setVolume(v);
+    setMuted(v === 0);
+  }, []);
+
   const embedUrl = query
-    ? `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1${muted ? "&mute=1" : ""}`
+    ? `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1${muted || volume === 0 ? "&mute=1" : ""}`
     : "";
 
   if (!visible || !query) return null;
@@ -86,10 +111,13 @@ export function FloatingMusicPlayer() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={() => setMuted(!muted)}
+              onClick={() => { setMuted(!muted); }}
             >
-              {muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+              {muted || volume === 0 ? <VolumeX className="h-3 w-3" /> : volume < 50 ? <Volume1 className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
             </Button>
+            <div className="w-14">
+              <Slider value={[muted ? 0 : volume]} min={0} max={100} step={1} onValueChange={handleVolumeChange} className="h-5" />
+            </div>
             <Button
               variant="ghost"
               size="icon"
