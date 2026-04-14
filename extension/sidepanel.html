@@ -3,187 +3,352 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Orion — Painel Lateral</title>
+  <title>Orion — Painel Neural</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-deep: #06071a;
+      --bg-panel: #0a0b22;
+      --bg-card: rgba(255,255,255,0.025);
+      --bg-card-hover: rgba(0,180,212,0.06);
+      --border: rgba(255,255,255,0.06);
+      --border-accent: rgba(0,180,212,0.2);
+      --cyan: #00B4D4;
+      --purple: #7C4DFF;
+      --green: #00ff88;
+      --red: #ef4444;
+      --text: #e8eaf0;
+      --text-dim: #6b7280;
+      --text-muted: #3a3f52;
+      --gradient: linear-gradient(135deg, #00B8D4, #7C4DFF);
+      --glow-cyan: 0 0 20px rgba(0,180,212,0.15);
+    }
+    
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #08091a;
-      color: #e8eaf0;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
       height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
+    /* ═══ Scrollbar ═══ */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,180,212,0.2); border-radius: 4px; }
+
+    /* ═══ Header ═══ */
     .sp-header {
-      padding: 16px;
-      background: linear-gradient(160deg, #0c1230, #0e0a24);
-      border-bottom: 1px solid rgba(0, 180, 212, 0.15);
+      padding: 14px 16px;
+      background: linear-gradient(170deg, #0c1030, #0a0820);
+      border-bottom: 1px solid var(--border-accent);
+      position: relative;
+      overflow: hidden;
+    }
+    .sp-header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: var(--gradient);
+      opacity: 0.6;
     }
     .sp-header-row { display: flex; align-items: center; gap: 10px; }
-    .sp-logo { width: 32px; height: 32px; border-radius: 8px; }
-    .sp-header h1 { font-size: 16px; font-weight: 700; letter-spacing: 1px; }
-    .sp-header .sp-version { font-size: 10px; color: #555; margin-top: 2px; }
-    .sp-status { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-    .sp-badge { font-size: 9px; padding: 3px 8px; border-radius: 10px; font-weight: 600; }
-    .sp-badge.on { background: rgba(0,180,212,0.1); color: #00B4D4; border: 1px solid rgba(0,180,212,0.2); }
-    .sp-badge.off { background: rgba(255,255,255,0.04); color: #555; border: 1px solid rgba(255,255,255,0.06); }
-    .sp-badge.vision { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.2); }
+    .sp-logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      box-shadow: 0 0 16px rgba(0,180,212,0.3);
+      border: 1px solid rgba(0,180,212,0.2);
+    }
+    .sp-title { font-size: 15px; font-weight: 800; letter-spacing: 2px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sp-subtitle { font-size: 9px; color: var(--text-dim); letter-spacing: 0.5px; margin-top: 1px; }
+    .sp-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .sp-badge { font-size: 8px; padding: 2px 8px; border-radius: 10px; font-weight: 600; letter-spacing: 0.3px; }
+    .sp-badge.on { background: rgba(0,180,212,0.1); color: var(--cyan); border: 1px solid rgba(0,180,212,0.2); }
+    .sp-badge.off { background: rgba(255,255,255,0.03); color: var(--text-muted); border: 1px solid var(--border); }
+    .sp-badge.vision { background: rgba(0,255,136,0.08); color: var(--green); border: 1px solid rgba(0,255,136,0.15); }
+    .sp-badge.mic { background: rgba(124,77,255,0.1); color: var(--purple); border: 1px solid rgba(124,77,255,0.2); cursor: pointer; }
+    .sp-badge.mic.active { background: rgba(239,68,68,0.12); color: var(--red); border-color: rgba(239,68,68,0.3); animation: pulse-mic 1.5s infinite; }
+    @keyframes pulse-mic { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-    /* Tabs */
-    .sp-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.2); }
-    .sp-tab { flex: 1; padding: 10px 8px; text-align: center; font-size: 11px; font-weight: 600; cursor: pointer; color: #6b7280; border-bottom: 2px solid transparent; transition: all 0.2s; }
-    .sp-tab.active { color: #00B4D4; border-bottom-color: #00B4D4; background: rgba(0,180,212,0.05); }
-    .sp-tab:hover { color: #9ca3af; }
+    /* ═══ Main Content ═══ */
+    .sp-body { flex: 1; overflow-y: auto; padding: 8px 10px 80px; }
 
-    /* Tab Content */
-    .sp-content { flex: 1; overflow-y: auto; }
-    .sp-tab-panel { display: none; padding: 12px; }
-    .sp-tab-panel.active { display: block; }
+    /* ═══ Accordion Sections ═══ */
+    .sp-accordion { margin-bottom: 6px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--bg-card); }
+    .sp-accordion-header {
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      cursor: pointer; user-select: none; transition: background 0.2s;
+      font-size: 12px; font-weight: 600; color: var(--text-dim);
+    }
+    .sp-accordion-header:hover { background: var(--bg-card-hover); color: var(--text); }
+    .sp-accordion-header .icon { font-size: 16px; }
+    .sp-accordion-header .arrow { margin-left: auto; font-size: 10px; transition: transform 0.2s; color: var(--text-muted); }
+    .sp-accordion.open .sp-accordion-header .arrow { transform: rotate(90deg); }
+    .sp-accordion.open .sp-accordion-header { color: var(--cyan); }
+    .sp-accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .sp-accordion.open .sp-accordion-body { max-height: 2000px; }
+    .sp-accordion-content { padding: 6px 12px 12px; }
 
-    /* Chat Tab */
-    .sp-messages { min-height: 200px; max-height: calc(100vh - 340px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
-    .sp-msg { padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.5; max-width: 90%; word-break: break-word; }
-    .sp-msg.user { background: rgba(0,180,212,0.12); color: #e8eaf0; align-self: flex-end; border-bottom-right-radius: 4px; }
-    .sp-msg.assistant { background: rgba(255,255,255,0.05); color: #ccc; align-self: flex-start; border-bottom-left-radius: 4px; }
-    .sp-msg.system { background: rgba(124,77,255,0.1); color: #b794f4; align-self: center; font-size: 11px; text-align: center; }
-    .sp-input-area { display: flex; gap: 8px; padding: 12px; border-top: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.2); }
-    .sp-input-area input { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 14px; color: #e8eaf0; font-size: 13px; outline: none; }
-    .sp-input-area input:focus { border-color: #00B4D4; }
-    .sp-input-area input::placeholder { color: #555; }
-    .sp-send-btn { background: linear-gradient(135deg, #00B8D4, #7C4DFF); border: none; border-radius: 10px; padding: 10px 16px; color: white; font-weight: 600; font-size: 12px; cursor: pointer; transition: opacity 0.2s; }
-    .sp-send-btn:hover { opacity: 0.85; }
+    /* ═══ Chat ═══ */
+    .sp-messages { min-height: 120px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px 0; }
+    .sp-msg { padding: 8px 12px; border-radius: 10px; font-size: 12px; line-height: 1.5; max-width: 88%; word-break: break-word; }
+    .sp-msg.user { background: rgba(0,180,212,0.1); color: var(--text); align-self: flex-end; border-bottom-right-radius: 3px; }
+    .sp-msg.assistant { background: var(--bg-card); color: #bbb; align-self: flex-start; border-bottom-left-radius: 3px; border: 1px solid var(--border); }
+    .sp-msg.system { background: rgba(124,77,255,0.08); color: #b794f4; align-self: center; font-size: 10px; text-align: center; border-radius: 6px; }
+    .sp-chat-input-area { display: flex; gap: 6px; margin-top: 8px; }
+    .sp-chat-input {
+      flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 12px; outline: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .sp-chat-input:focus { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
+    .sp-chat-input::placeholder { color: var(--text-muted); }
+    .sp-btn-send {
+      background: var(--gradient); border: none; border-radius: 8px;
+      padding: 8px 14px; color: white; font-weight: 600; font-size: 11px;
+      cursor: pointer; transition: opacity 0.2s; white-space: nowrap;
+    }
+    .sp-btn-send:hover { opacity: 0.85; }
 
-    /* Tools Tab */
-    .sp-tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .sp-tool-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); cursor: pointer; transition: all 0.2s; color: #c9cdd5; }
-    .sp-tool-btn:hover { background: rgba(0,180,212,0.08); border-color: rgba(0,180,212,0.2); transform: translateY(-1px); }
-    .sp-tool-btn .icon { font-size: 20px; }
-    .sp-tool-btn .label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* ═══ Tools Grid ═══ */
+    .sp-tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+    .sp-tool-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 10px 4px; border-radius: 8px; background: transparent;
+      border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; color: var(--text-dim);
+    }
+    .sp-tool-btn:hover { background: var(--bg-card-hover); border-color: var(--border-accent); color: var(--text); transform: translateY(-1px); }
+    .sp-tool-btn .icon { font-size: 18px; }
+    .sp-tool-btn .label { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; text-align: center; }
 
-    /* Notes Tab */
-    .sp-note-item { padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); margin-bottom: 6px; }
-    .sp-note-text { font-size: 12px; color: #ccc; line-height: 1.4; }
-    .sp-note-meta { font-size: 9px; color: #555; margin-top: 4px; display: flex; justify-content: space-between; }
-    .sp-note-delete { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 10px; opacity: 0.6; }
+    /* ═══ Search ═══ */
+    .sp-search-box {
+      width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 10px; color: var(--text); font-size: 11px;
+      outline: none; margin-bottom: 6px; font-family: 'Inter', sans-serif;
+    }
+    .sp-search-box:focus { border-color: var(--cyan); }
+    .sp-search-box::placeholder { color: var(--text-muted); }
+    .sp-result-item { padding: 7px 10px; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 3px; cursor: pointer; transition: background 0.15s; }
+    .sp-result-item:hover { background: var(--bg-card-hover); }
+    .sp-result-title { font-size: 11px; color: #ccc; font-weight: 500; }
+    .sp-result-url { font-size: 8px; color: var(--cyan); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.7; }
+
+    /* ═══ Notes ═══ */
+    .sp-note-item { padding: 8px 10px; border-radius: 6px; background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 4px; }
+    .sp-note-text { font-size: 11px; color: #bbb; line-height: 1.4; }
+    .sp-note-meta { font-size: 8px; color: var(--text-muted); margin-top: 4px; display: flex; justify-content: space-between; align-items: center; }
+    .sp-note-delete { background: none; border: none; color: var(--red); cursor: pointer; font-size: 9px; opacity: 0.5; }
     .sp-note-delete:hover { opacity: 1; }
-    .sp-empty { text-align: center; color: #555; padding: 40px 20px; font-size: 12px; }
 
-    /* Links Tab */
-    .sp-links-section { margin-bottom: 16px; }
-    .sp-links-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: #4a4f5c; margin-bottom: 8px; font-weight: 600; }
-    .sp-links-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-    .sp-link-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: all 0.2s; color: inherit; text-decoration: none; }
-    .sp-link-btn:hover { background: rgba(0,180,212,0.08); border-color: rgba(0,180,212,0.15); }
-    .sp-link-icon { font-size: 18px; }
-    .sp-link-label { font-size: 9px; color: #6b7280; text-align: center; line-height: 1.2; }
+    /* ═══ Links Grid ═══ */
+    .sp-links-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+    .sp-link-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 8px 2px; border-radius: 6px; background: transparent;
+      border: 1px solid var(--border); cursor: pointer; transition: all 0.15s;
+      color: inherit; text-decoration: none;
+    }
+    .sp-link-btn:hover { background: var(--bg-card-hover); border-color: var(--border-accent); }
+    .sp-link-icon { font-size: 16px; }
+    .sp-link-label { font-size: 7px; color: var(--text-dim); text-align: center; line-height: 1.1; font-weight: 500; }
+    .sp-sub-label { font-size: 8px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
 
-    /* Capabilities */
-    .sp-caps { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
-    .sp-cap-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(255,255,255,0.02); border-radius: 6px; }
-    .sp-cap-name { font-size: 11px; color: #9ca3af; display: flex; align-items: center; gap: 6px; }
-    .sp-cap-status { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-    .sp-cap-status.online { background: rgba(34,197,94,0.1); color: #22c55e; }
-    .sp-cap-status.offline { background: rgba(239,68,68,0.1); color: #ef4444; }
-    .sp-cap-status.unknown { background: rgba(100,116,139,0.08); color: #64748b; }
+    /* ═══ Capabilities ═══ */
+    .sp-cap-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: var(--bg-card); border-radius: 4px; margin-bottom: 2px; }
+    .sp-cap-name { font-size: 10px; color: #9ca3af; display: flex; align-items: center; gap: 5px; }
+    .sp-cap-dot { width: 5px; height: 5px; border-radius: 50%; }
+    .sp-cap-dot.online { background: var(--green); box-shadow: 0 0 4px var(--green); }
+    .sp-cap-dot.offline { background: var(--red); }
+    .sp-cap-status { font-size: 8px; font-weight: 600; }
+    .sp-cap-status.online { color: var(--green); }
+    .sp-cap-status.offline { color: var(--red); }
 
-    .sp-section-title { font-size: 11px; font-weight: 600; color: #6b7280; margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* ═══ Empty State ═══ */
+    .sp-empty { text-align: center; color: var(--text-muted); padding: 24px 16px; font-size: 11px; line-height: 1.6; }
 
-    /* Search input in tools */
-    .sp-search-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 8px 12px; color: #e8eaf0; font-size: 12px; outline: none; margin-bottom: 8px; }
-    .sp-search-input:focus { border-color: #00B4D4; }
-    .sp-search-input::placeholder { color: #444; }
-    .sp-result-item { padding: 8px 10px; border-radius: 6px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); margin-bottom: 4px; cursor: pointer; }
-    .sp-result-item:hover { background: rgba(0,180,212,0.06); }
-    .sp-result-title { font-size: 12px; color: #ccc; }
-    .sp-result-url { font-size: 9px; color: #0097a7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* ═══ Login ═══ */
+    .sp-login { padding: 20px 16px; text-align: center; }
+    .sp-login h3 { font-size: 14px; margin-bottom: 12px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sp-login input {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 12px;
+      outline: none; margin-bottom: 8px; font-family: 'Inter', sans-serif;
+    }
+    .sp-login input:focus { border-color: var(--cyan); }
+    .sp-login input::placeholder { color: var(--text-muted); }
+    .sp-login-btn {
+      width: 100%; background: var(--gradient); border: none; border-radius: 8px;
+      padding: 10px; color: white; font-weight: 700; font-size: 12px; cursor: pointer;
+      margin-top: 4px; transition: opacity 0.2s;
+    }
+    .sp-login-btn:hover { opacity: 0.85; }
+    .sp-login-msg { font-size: 10px; color: var(--red); margin-top: 6px; min-height: 14px; }
+    .sp-logout-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; color: var(--text-dim); font-size: 9px; cursor: pointer; margin-top: 6px; }
+    .sp-logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    /* ═══ Floating Input (always visible) ═══ */
+    .sp-float-input {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: 8px 10px;
+      background: linear-gradient(to top, var(--bg-deep), rgba(6,7,26,0.95));
+      border-top: 1px solid var(--border-accent);
+      display: flex; gap: 6px; align-items: center;
+      backdrop-filter: blur(10px);
+    }
+    .sp-float-input input {
+      flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 12px;
+      outline: none; font-family: 'Inter', sans-serif;
+    }
+    .sp-float-input input:focus { border-color: var(--cyan); box-shadow: var(--glow-cyan); }
+    .sp-float-input input::placeholder { color: var(--text-muted); }
+    .sp-mic-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(124,77,255,0.1); border: 1px solid rgba(124,77,255,0.2);
+      color: var(--purple); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .sp-mic-btn.active { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: var(--red); animation: pulse-mic 1.5s infinite; }
+    .sp-float-send {
+      background: var(--gradient); border: none; border-radius: 8px;
+      padding: 9px 14px; color: white; font-weight: 600; font-size: 11px;
+      cursor: pointer; white-space: nowrap;
+    }
+    .sp-float-send:hover { opacity: 0.85; }
   </style>
 </head>
 <body>
+  <!-- Header -->
   <div class="sp-header">
     <div class="sp-header-row">
       <img src="icon128.png" alt="Orion" class="sp-logo" />
       <div>
-        <h1>ORION</h1>
-        <div class="sp-version">Assistente Neural v5.0 — Side Panel</div>
+        <div class="sp-title">ORION</div>
+        <div class="sp-subtitle">Assistente Neural v5.4 — Painel</div>
       </div>
     </div>
-    <div class="sp-status">
+    <div class="sp-badges">
       <span class="sp-badge on" id="sp-status-badge">● Ativo</span>
       <span class="sp-badge off" id="sp-vision-badge">👁 Visão OFF</span>
+      <span class="sp-badge mic" id="sp-mic-badge">🎤 Voz OFF</span>
     </div>
   </div>
 
-  <div class="sp-tabs">
-    <div class="sp-tab active" data-tab="chat">💬 Chat</div>
-    <div class="sp-tab" data-tab="tools">🔧 Ferramentas</div>
-    <div class="sp-tab" data-tab="notes">📝 Notas</div>
-    <div class="sp-tab" data-tab="links">🔗 Links</div>
+  <!-- Login (hidden when authenticated) -->
+  <div class="sp-login" id="sp-login-panel" style="display:none;">
+    <h3>🔐 Entrar no Orion</h3>
+    <input type="email" id="sp-login-email" placeholder="Email" />
+    <input type="password" id="sp-login-pass" placeholder="Senha" />
+    <button class="sp-login-btn" id="sp-login-btn">Entrar</button>
+    <div class="sp-login-msg" id="sp-login-msg"></div>
   </div>
 
-  <div class="sp-content">
-    <!-- Chat Tab -->
-    <div class="sp-tab-panel active" id="tab-chat">
-      <div class="sp-messages" id="sp-messages">
-        <div class="sp-msg system">Orion v5.0 — Pergunte qualquer coisa</div>
-      </div>
+  <!-- Accordion Body -->
+  <div class="sp-body" id="sp-body">
+
+    <!-- Chat -->
+    <div class="sp-accordion open" id="acc-chat">
+      <div class="sp-accordion-header"><span class="icon">💬</span> Chat IA <span class="arrow">▸</span></div>
+      <div class="sp-accordion-body"><div class="sp-accordion-content">
+        <div class="sp-messages" id="sp-messages">
+          <div class="sp-msg system">Orion v5.4 — Pergunte qualquer coisa, peça música, vídeo ou pesquisa.</div>
+        </div>
+      </div></div>
     </div>
 
-    <!-- Tools Tab -->
-    <div class="sp-tab-panel" id="tab-tools">
-      <div class="sp-tools-grid">
-        <button class="sp-tool-btn" data-tool="summarize"><span class="icon">📝</span><span class="label">Resumir</span></button>
-        <button class="sp-tool-btn" data-tool="analyze"><span class="icon">🔎</span><span class="label">Analisar</span></button>
-        <button class="sp-tool-btn" data-tool="vision"><span class="icon">👁</span><span class="label">Visão</span></button>
-        <button class="sp-tool-btn" data-tool="screenshot"><span class="icon">📸</span><span class="label">Captura</span></button>
-        <button class="sp-tool-btn" data-tool="read"><span class="icon">🔊</span><span class="label">Ler</span></button>
-        <button class="sp-tool-btn" data-tool="extract"><span class="icon">📊</span><span class="label">Extrair</span></button>
-        <button class="sp-tool-btn" data-tool="scrape"><span class="icon">🕸</span><span class="label">Scrape</span></button>
-        <button class="sp-tool-btn" data-tool="translate"><span class="icon">🌐</span><span class="label">Traduzir</span></button>
-      </div>
-
-      <div class="sp-section-title">🔍 Pesquisa Web</div>
-      <input type="text" class="sp-search-input" id="sp-web-search" placeholder="Pesquisar na web..." />
-      <div id="sp-search-results"></div>
-
-      <div class="sp-section-title">🔖 Bookmarks</div>
-      <input type="text" class="sp-search-input" id="sp-bookmark-search" placeholder="Buscar nos favoritos..." />
-      <div id="sp-bookmark-results"></div>
-
-      <div class="sp-section-title">🕐 Histórico</div>
-      <input type="text" class="sp-search-input" id="sp-history-search" placeholder="Buscar no histórico..." />
-      <div id="sp-history-results"></div>
-
-      <div class="sp-section-title">Capacidades</div>
-      <div class="sp-caps" id="sp-caps"></div>
+    <!-- Tools -->
+    <div class="sp-accordion" id="acc-tools">
+      <div class="sp-accordion-header"><span class="icon">🔧</span> Ferramentas <span class="arrow">▸</span></div>
+      <div class="sp-accordion-body"><div class="sp-accordion-content">
+        <div class="sp-tools-grid">
+          <button class="sp-tool-btn" data-tool="summarize"><span class="icon">📝</span><span class="label">Resumir</span></button>
+          <button class="sp-tool-btn" data-tool="analyze"><span class="icon">🔎</span><span class="label">Analisar</span></button>
+          <button class="sp-tool-btn" data-tool="vision"><span class="icon">👁</span><span class="label">Visão</span></button>
+          <button class="sp-tool-btn" data-tool="screenshot"><span class="icon">📸</span><span class="label">Captura</span></button>
+          <button class="sp-tool-btn" data-tool="read"><span class="icon">🔊</span><span class="label">Ler</span></button>
+          <button class="sp-tool-btn" data-tool="extract"><span class="icon">📊</span><span class="label">Extrair</span></button>
+          <button class="sp-tool-btn" data-tool="scrape"><span class="icon">🕸</span><span class="label">Scrape</span></button>
+          <button class="sp-tool-btn" data-tool="translate"><span class="icon">🌐</span><span class="label">Traduzir</span></button>
+        </div>
+      </div></div>
     </div>
 
-    <!-- Notes Tab -->
-    <div class="sp-tab-panel" id="tab-notes">
-      <div id="sp-notes-list"><div class="sp-empty">Nenhuma nota salva.<br>Selecione texto → botão direito → "Orion: Salvar como nota"</div></div>
+    <!-- Media -->
+    <div class="sp-accordion" id="acc-media">
+      <div class="sp-accordion-header"><span class="icon">🎵</span> Mídia <span class="arrow">▸</span></div>
+      <div class="sp-accordion-body"><div class="sp-accordion-content">
+        <div class="sp-tools-grid">
+          <button class="sp-tool-btn" data-action="music"><span class="icon">🎶</span><span class="label">Música</span></button>
+          <button class="sp-tool-btn" data-action="video"><span class="icon">🎬</span><span class="label">Vídeo</span></button>
+          <button class="sp-tool-btn" data-action="youtube"><span class="icon">▶️</span><span class="label">YouTube</span></button>
+          <button class="sp-tool-btn" data-action="spotify"><span class="icon">🟢</span><span class="label">Spotify</span></button>
+        </div>
+        <input type="text" class="sp-search-box" id="sp-media-search" placeholder="Buscar música ou vídeo..." />
+        <div id="sp-media-results"></div>
+      </div></div>
     </div>
 
-    <!-- Links Tab -->
-    <div class="sp-tab-panel" id="tab-links">
-      <div class="sp-links-section">
-        <div class="sp-links-label">IASoft Hub</div>
+    <!-- Web Search -->
+    <div class="sp-accordion" id="acc-search">
+      <div class="sp-accordion-header"><span class="icon">🔍</span> Pesquisa Web <span class="arrow">▸</span></div>
+      <div class="sp-accordion-body"><div class="sp-accordion-content">
+        <input type="text" class="sp-search-box" id="sp-web-search" placeholder="Pesquisar na internet..." />
+        <div id="sp-search-results"></div>
+      </div></div>
+    </div>
+
+    <!-- Bookmarks -->
+    <div class="sp-accordion" id="acc-bookmarks">
+      <div class="sp-accordion-header"><span class="icon">🔖</span> Favoritos <span class="arrow">▸</span></div>
+      <div class="sp-accordion-body"><div class="sp-accordion-content">
+        <input type="text" class="sp-search-box" id="sp-bookmark-search" placeholder="Buscar nos favoritos..." />
+        <div id="sp-bookmark-results"></div>
+      </div></div>
+    </div>
+
+    <!-- History -->
+    <div class="sp-accordion" id="acc-history">
+      <div class="sp-accordion-header"><span class="icon">🕐</span> Histórico <span class="arrow">▸</span></div>
+      <div class="sp-accordion-body"><div class="sp-accordion-content">
+        <input type="text" class="sp-search-box" id="sp-history-search" placeholder="Buscar no histórico..." />
+        <div id="sp-history-results"></div>
+      </div></div>
+    </div>
+
+    <!-- Notes -->
+    <div class="sp-accordion" id="acc-notes">
+      <div class="sp-accordion-header"><span class="icon">📝</span> Notas <span class="arrow">▸</span></div>
+      <div class="sp-accordion-body"><div class="sp-accordion-content">
+        <div id="sp-notes-list"><div class="sp-empty">Nenhuma nota salva.</div></div>
+      </div></div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="sp-accordion" id="acc-nav">
+      <div class="sp-accordion-header"><span class="icon">🔗</span> Navegação <span class="arrow">▸</span></div>
+      <div class="sp-accordion-body"><div class="sp-accordion-content">
+        <div class="sp-sub-label">IASoft Hub</div>
         <div class="sp-links-grid">
           <a class="sp-link-btn" data-link="dashboard"><span class="sp-link-icon">🧠</span><span class="sp-link-label">Dashboard</span></a>
           <a class="sp-link-btn" data-link="chat"><span class="sp-link-icon">💬</span><span class="sp-link-label">Chat IA</span></a>
-          <a class="sp-link-btn" data-link="documentos"><span class="sp-link-icon">📄</span><span class="sp-link-label">Documentos</span></a>
+          <a class="sp-link-btn" data-link="documentos"><span class="sp-link-icon">📄</span><span class="sp-link-label">Docs</span></a>
           <a class="sp-link-btn" data-link="processos"><span class="sp-link-icon">📋</span><span class="sp-link-label">Processos</span></a>
           <a class="sp-link-btn" data-link="pesquisa"><span class="sp-link-icon">⚖️</span><span class="sp-link-label">Pesquisa</span></a>
           <a class="sp-link-btn" data-link="clientes"><span class="sp-link-icon">👥</span><span class="sp-link-label">Clientes</span></a>
           <a class="sp-link-btn" data-link="agenda"><span class="sp-link-icon">📅</span><span class="sp-link-label">Agenda</span></a>
-          <a class="sp-link-btn" data-link="financeiro"><span class="sp-link-icon">💰</span><span class="sp-link-label">Financeiro</span></a>
-          <a class="sp-link-btn" data-link="aml"><span class="sp-link-icon">🛡</span><span class="sp-link-label">AML/KYC</span></a>
+          <a class="sp-link-btn" data-link="financeiro"><span class="sp-link-icon">💰</span><span class="sp-link-label">Finanças</span></a>
+          <a class="sp-link-btn" data-link="aml"><span class="sp-link-icon">🛡</span><span class="sp-link-label">AML</span></a>
           <a class="sp-link-btn" data-link="loja"><span class="sp-link-icon">🛒</span><span class="sp-link-label">Loja</span></a>
           <a class="sp-link-btn" data-link="extension"><span class="sp-link-icon">🧩</span><span class="sp-link-label">Extensão</span></a>
           <a class="sp-link-btn" data-link="plano"><span class="sp-link-icon">👑</span><span class="sp-link-label">Plano</span></a>
         </div>
-      </div>
-      <div class="sp-links-section">
-        <div class="sp-links-label">Jurídico</div>
+        <div class="sp-sub-label" style="margin-top:10px;">Jurídico</div>
         <div class="sp-links-grid">
           <a class="sp-link-btn" data-link="stf"><span class="sp-link-icon">🏛</span><span class="sp-link-label">STF</span></a>
           <a class="sp-link-btn" data-link="stj"><span class="sp-link-icon">⚖️</span><span class="sp-link-label">STJ</span></a>
@@ -191,26 +356,38 @@
           <a class="sp-link-btn" data-link="lexml"><span class="sp-link-icon">📚</span><span class="sp-link-label">LexML</span></a>
           <a class="sp-link-btn" data-link="planalto"><span class="sp-link-icon">🇧🇷</span><span class="sp-link-label">Planalto</span></a>
           <a class="sp-link-btn" data-link="datajud"><span class="sp-link-icon">📊</span><span class="sp-link-label">DataJud</span></a>
-          <a class="sp-link-btn" data-link="tjsp"><span class="sp-link-icon">⚖️</span><span class="sp-link-label">TJSP</span></a>
-          <a class="sp-link-btn" data-link="courtlistener"><span class="sp-link-icon">🔍</span><span class="sp-link-label">CourtListener</span></a>
-          <a class="sp-link-btn" data-link="google_scholar"><span class="sp-link-icon">📖</span><span class="sp-link-label">Scholar</span></a>
         </div>
-      </div>
-      <div class="sp-links-section">
-        <div class="sp-links-label">Dev & IA</div>
+        <div class="sp-sub-label" style="margin-top:10px;">Dev & IA</div>
         <div class="sp-links-grid">
-          <a class="sp-link-btn" data-link="huggingface"><span class="sp-link-icon">🤗</span><span class="sp-link-label">HuggingFace</span></a>
+          <a class="sp-link-btn" data-link="huggingface"><span class="sp-link-icon">🤗</span><span class="sp-link-label">HF</span></a>
           <a class="sp-link-btn" data-link="github"><span class="sp-link-icon">🐙</span><span class="sp-link-label">GitHub</span></a>
-          <a class="sp-link-btn" data-link="camara"><span class="sp-link-icon">🏛</span><span class="sp-link-label">Câmara</span></a>
-          <a class="sp-link-btn" data-link="senado"><span class="sp-link-icon">🏛</span><span class="sp-link-label">Senado</span></a>
         </div>
-      </div>
+      </div></div>
+    </div>
+
+    <!-- Capabilities -->
+    <div class="sp-accordion" id="acc-caps">
+      <div class="sp-accordion-header"><span class="icon">⚡</span> Capacidades <span class="arrow">▸</span></div>
+      <div class="sp-accordion-body"><div class="sp-accordion-content">
+        <div id="sp-caps"></div>
+      </div></div>
+    </div>
+
+    <!-- Account -->
+    <div class="sp-accordion" id="acc-account">
+      <div class="sp-accordion-header"><span class="icon">👤</span> Conta <span class="arrow">▸</span></div>
+      <div class="sp-accordion-body"><div class="sp-accordion-content">
+        <div id="sp-account-info" style="font-size:11px;color:#9ca3af;">Não autenticado</div>
+        <button class="sp-logout-btn" id="sp-logout-btn" style="display:none;">Sair</button>
+      </div></div>
     </div>
   </div>
 
-  <div class="sp-input-area">
-    <input type="text" id="sp-chat-input" placeholder="Pergunte ao Orion..." autocomplete="off" />
-    <button class="sp-send-btn" id="sp-send-btn">Enviar</button>
+  <!-- Floating Input -->
+  <div class="sp-float-input">
+    <button class="sp-mic-btn" id="sp-mic-btn" title="Comando de voz">🎤</button>
+    <input type="text" id="sp-chat-input" placeholder="Orion, buscar música do ACDC..." autocomplete="off" />
+    <button class="sp-float-send" id="sp-send-btn">▸</button>
   </div>
 
   <script src="sidepanel.js"></script>
