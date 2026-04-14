@@ -460,50 +460,46 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const autoActivatedRef = useRef(false);
   const autoBootedRef = useRef(false);
 
-  // Auto-start wake word on mount (ONLY if not auto-booting)
+  // Auto-start wake word ONLY for manual entry into /consulta.
   useEffect(() => {
     if (skipWakeWord) return;
     if (typeof document !== "undefined" && document.hidden) return;
-    // Don't start wake word if auto-boot will handle activation
+
     const state = location.state as any;
-    if (initialCommand || state?.autoActivate || state?.autoCommand) return;
-    // Don't start wake word if auto-boot already ran (it uses startDirectVoiceCapture instead)
-    if (autoBootedRef.current) return;
+    const hasAutoActivation = Boolean(initialCommand || state?.autoActivate || state?.autoCommand);
+
+    // Auto-activation and overlay handoff are handled elsewhere.
+    if (hasAutoActivation || autoBootedRef.current) return;
+
     if (!active && !listening && speechOk) {
       enableWakeWord();
       const timer = setTimeout(() => {
-        // Double-check auto-boot hasn't started in the meantime
         if (autoBootedRef.current) return;
         startWakeWordListener();
       }, 200);
-      return () => {
-        clearTimeout(timer);
-      };
+      return () => clearTimeout(timer);
     }
+
     return () => { try { wakeRecRef.current?.stop(); } catch {} };
   }, [skipWakeWord, active, listening, speechOk, enableWakeWord, startWakeWordListener, wakeRecRef, initialCommand, location.state]);
 
-  // Auto-connect mic (NOT camera) when entering Orion after permissions were granted
+  // Auto-connect mic ONLY for overlay handoff (skipWakeWord) without route auto-activation.
   useEffect(() => {
-    if (autoBootedRef.current || !speechOk) return;
+    if (autoBootedRef.current || !speechOk || !skipWakeWord) return;
+
     const state = location.state as any;
-    if (!skipWakeWord && (initialCommand || state?.autoActivate || state?.autoCommand)) return;
+    const hasAutoActivation = Boolean(initialCommand || state?.autoActivate || state?.autoCommand);
+    if (hasAutoActivation) return;
 
     autoBootedRef.current = true;
     wakeOrionVm();
-    const timer = setTimeout(async () => {
-      if (!skipWakeWord && !hasGreetedRef.current) {
-        hasGreetedRef.current = true;
-        _markSessionReady();
-        try { await speakFast("Ativando sistema."); } catch {}
-      }
-      // Camera does NOT auto-start — only via "ativar visão" voice command
-      // Start listening AFTER TTS finishes to avoid mic race
+    const timer = setTimeout(() => {
+      // Camera does NOT auto-start — only via "ativar visão" voice command.
       startDirectVoiceCapture();
-    }, skipWakeWord ? 400 : 200);
+    }, 400);
 
     return () => clearTimeout(timer);
-  }, [initialCommand, location.state, skipWakeWord, speakFast, speechOk, startDirectVoiceCapture]);
+  }, [initialCommand, location.state, skipWakeWord, speechOk, startDirectVoiceCapture]);
 
   // (routeOrionCommand moved above handleVoice to avoid forward reference)
 
