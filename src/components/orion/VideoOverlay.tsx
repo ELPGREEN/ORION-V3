@@ -128,6 +128,7 @@ export function VideoOverlay() {
 
   if (!visible || !videoUrl || isOnNeuralDashboard) return null;
 
+  return (
     <AnimatePresence>
     {barMode ? (
       <motion.div
