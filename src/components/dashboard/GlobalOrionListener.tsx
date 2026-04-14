@@ -34,7 +34,6 @@ export function GlobalOrionListener() {
   const { user } = useAuth();
   const { isPremium, loading: planLoading } = useUserPlan();
   const { config } = useNeuralConfig();
-  const [wakeWordActive, setWakeWordActive] = useState(false);
   const [orionOpen, setOrionOpen] = useState(false);
   const [initialCommand, setInitialCommand] = useState<string>("");
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
@@ -73,6 +72,21 @@ export function GlobalOrionListener() {
     wakeOrionVm();
   }, []);
 
+  // ═══ Wake word activation callback ═══
+  const handleWakeActivate = useCallback(() => {
+    // The event-based open is already handled inside useWakeWord via the custom event
+    // But we also handle it directly here as the primary path
+  }, []);
+
+  // ═══ useWakeWord — THE ONLY wake word listener, runs here at top level ═══
+  // When overlay is open or on neural page, we pass speechOk=false to disable it
+  const speechOkForWake = permissionsGranted && !isOnNeuralPage && !orionOpen;
+  const { wakeWordActive, stopWakeWordListener } = useWakeWord(
+    false, // listening — GlobalOrionListener never does STT listening itself
+    speechOkForWake,
+    handleWakeActivate,
+  );
+
   // ═══ Listen for wake word events from useWakeWord ═══
   useEffect(() => {
     if (isOnNeuralPage || orionOpen || !permissionsGranted) return;
@@ -87,18 +101,6 @@ export function GlobalOrionListener() {
     window.addEventListener("orion:wake-word-detected", handleWakeWord);
     return () => window.removeEventListener("orion:wake-word-detected", handleWakeWord);
   }, [isOnNeuralPage, orionOpen, permissionsGranted, openOrionOverlay]);
-
-  // ═══ Track wake word active state from useWakeWord ═══
-  useEffect(() => {
-    const handleActive = () => setWakeWordActive(true);
-    const handleInactive = () => setWakeWordActive(false);
-    window.addEventListener("orion:wake-word-active", handleActive);
-    window.addEventListener("orion:wake-word-inactive", handleInactive);
-    return () => {
-      window.removeEventListener("orion:wake-word-active", handleActive);
-      window.removeEventListener("orion:wake-word-inactive", handleInactive);
-    };
-  }, []);
 
   // ═══ Permission handling ═══
   const handleGrantPermissions = useCallback(async () => {
