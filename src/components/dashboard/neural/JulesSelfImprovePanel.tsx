@@ -264,6 +264,8 @@ function IndustrialTab() {
 // ─── Main Panel ───
 
 export function JulesSelfImprovePanel() {
+  const { user } = useAuth();
+  const isCreator = isCreatorVerified({ email: user?.email });
   const [dbSessions, setDbSessions] = useState<JulesDBSession[]>([]);
   const [failures, setFailures] = useState<ReturnType<typeof getSubsystemFailureStatus>>({});
   const [loading, setLoading] = useState(false);
@@ -322,8 +324,6 @@ export function JulesSelfImprovePanel() {
     };
   }, [refresh]);
 
-  const { user } = useAuth();
-  const isCreator = isCreatorVerified({ email: user?.email });
 
   const handleManualTrigger = async () => {
     if (!manualTask.trim() || !isCreator) return;
