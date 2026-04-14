@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { OrionResearchBrowser } from "@/components/orion/OrionResearchBrowser";
 import { OrionEmbeddedVideo } from "@/components/orion/OrionEmbeddedVideo";
+import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
