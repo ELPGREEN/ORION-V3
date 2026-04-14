@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { X, Maximize2, Minimize2, Volume2, VolumeX, PictureInPicture2 } from "lucide-react";
+import { X, Maximize2, Minimize2, Volume2, VolumeX, PictureInPicture2, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -23,6 +23,7 @@ export function VideoOverlay() {
   const [title, setTitle] = useState("");
   const [minimized, setMinimized] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [barMode, setBarMode] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Don't render overlay on neural dashboard — uses embedded player instead
