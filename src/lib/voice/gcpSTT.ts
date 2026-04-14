@@ -21,6 +21,7 @@ interface GCPSTTOptions {
 export interface GCPSTTSession {
   start: () => Promise<boolean>;
   stop: () => void;
+  destroy: () => void;
   pause: () => void;
   resume: () => void;
   isActive: () => boolean;
@@ -275,7 +276,22 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     console.log("[GCP-STT] Resumed — listening again");
   };
 
+  /**
+   * Soft stop — pauses processing but keeps mic stream alive.
+   * Use this for normal stop/start cycles to avoid mic cycling sounds.
+   */
   const stop = () => {
+    if (!active) return;
+    // Just pause — don't tear down
+    pause();
+    console.log("[GCP-STT] Soft stop (mic stays open, use destroy() for full teardown)");
+  };
+
+  /**
+   * Full teardown — closes AudioContext and releases non-persistent streams.
+   * Only call on unmount or when truly done with voice.
+   */
+  const destroy = () => {
     active = false;
     paused = false;
 
@@ -301,6 +317,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
       audioContext = null;
     }
 
+    // NEVER stop persistent mic tracks
     const persistentMic = (window as any).__orion_persistent_mic__;
     if (mediaStream && mediaStream !== persistentMic?.stream) {
       mediaStream.getTracks().forEach((t) => t.stop());
@@ -310,12 +327,13 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     preRollBuffers = [];
     resetUtterance();
 
-    console.log("[GCP-STT] Session stopped (full teardown)");
+    console.log("[GCP-STT] Session destroyed (full teardown)");
   };
 
   return {
     start,
     stop,
+    destroy,
     pause,
     resume,
     isActive: () => active,

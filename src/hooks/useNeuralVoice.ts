@@ -119,35 +119,47 @@ function isMobile(): boolean {
   return typeof navigator !== "undefined" && MOBILE_REGEX.test(navigator.userAgent);
 }
 
-/** Prime microphone hardware — on mobile uses persistent stream (never releases) */
+/** Prime microphone hardware — always stores as persistent, NEVER stops tracks */
 async function primeMicrophone(): Promise<void> {
   if (!navigator.mediaDevices?.getUserMedia) return;
   try {
-    // Use persistent mic on mobile — keeps hardware warm
+    // Check if persistent mic already active — no work needed
+    const ps = (window as any).__orion_persistent_mic__;
+    if (ps?.stream?.active) {
+      ps.granted = true;
+      return;
+    }
+
+    // Use persistent mic utility first
     const ready = await ensurePersistentMic();
     if (ready) return;
 
-    // Desktop: check permission, prime if needed
+    // Check permission — only prime if already granted or prompt
     const perm = await navigator.permissions?.query?.({ name: "microphone" as any });
-    if (perm?.state === "granted") return;
-    if (perm?.state !== "prompt") return;
-    // Just prime via getUserMedia but do NOT stop the tracks — let persistent mic handle lifecycle.
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    });
-    await new Promise(r => setTimeout(r, 30));
-    // Store as persistent if none exists yet
-    const ps = (window as any).__orion_persistent_mic__;
-    if (ps && !ps.stream?.active) {
-      ps.stream = stream;
-      ps.granted = true;
-    } else if (!ps) {
-      // No persistent mic state yet — stop to avoid orphan
-      stream.getTracks().forEach(t => t.stop());
+    if (perm?.state === "denied") return;
+    if (perm?.state === "granted") {
+      // Permission granted but no persistent stream — create one and KEEP it
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+      // ALWAYS store as persistent — NEVER stop tracks
+      const state = (window as any).__orion_persistent_mic__ || { stream: null, granted: false, checking: false };
+      (window as any).__orion_persistent_mic__ = state;
+      state.stream = stream;
+      state.granted = true;
+      console.log("[Voice] Persistent mic primed — tracks will never be stopped");
+      return;
     }
-    // If persistent state already has active stream, stop this duplicate
-    else if (ps.stream?.active && stream !== ps.stream) {
-      stream.getTracks().forEach(t => t.stop());
+    // If prompt, request and store
+    if (perm?.state === "prompt") {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+      const state = (window as any).__orion_persistent_mic__ || { stream: null, granted: false, checking: false };
+      (window as any).__orion_persistent_mic__ = state;
+      state.stream = stream;
+      state.granted = true;
+      console.log("[Voice] Persistent mic created from prompt — tracks will never be stopped");
     }
   } catch (err) {
     console.warn("[Voice] Mic priming failed:", err);
@@ -734,10 +746,17 @@ export function useNeuralVoice(
     };
 
     rec.onend = () => {
+      // Don't null recRef immediately — avoid creating new instances rapidly
+      if (intentionalStopRef.current) { recRef.current = null; setListening(false); return; }
+      if (speakingRef.current) { recRef.current = null; setListening(false); return; }
+      // Keep listening state true during restart to avoid UI flicker
+      if (onCmdRef.current) {
+        recRef.current = null;
+        // Longer delay to prevent rapid mic cycling
+        scheduleRecognitionRestart(300);
+        return;
+      }
       recRef.current = null;
-      if (intentionalStopRef.current) { setListening(false); return; }
-      if (speakingRef.current) { setListening(false); return; } // resumeSTT handles restart
-      if (onCmdRef.current) { scheduleRecognitionRestart(80); return; }
       setListening(false);
     };
 
@@ -770,7 +789,9 @@ export function useNeuralVoice(
       }
 
       if (e.error === "no-speech") {
-        scheduleRecognitionRestart(80);
+        // no-speech is normal — just restart without any teardown noise
+        // Use longer delay to avoid rapid cycling
+        scheduleRecognitionRestart(500);
         return;
       }
 
@@ -908,7 +929,7 @@ export function useNeuralVoice(
               speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
               // Fallback to Web Speech API
               useGCPSTTRef.current = false;
-              gcpSessionRef.current?.stop();
+              gcpSessionRef.current?.destroy();
               gcpSessionRef.current = null;
               if (onCmdRef.current && !intentionalStopRef.current) {
                 startListeningFresh(onCmdRef.current);
@@ -951,11 +972,11 @@ export function useNeuralVoice(
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
     }
-    // Stop GCP STT session
+    // Soft-stop GCP STT (keeps mic stream alive, no cycling)
     if (gcpSessionRef.current?.isActive()) {
       gcpSessionRef.current.stop();
     }
-    gcpSessionRef.current = null;
+    // Don't null gcpSessionRef — can be resumed later
     speechBufferRef.current = "";
     sentenceAccumulatorRef.current = "";
     try { speechSynthesis.cancel(); } catch {}
@@ -965,13 +986,14 @@ export function useNeuralVoice(
     setListening(false);
   }, [clearRestartTimer]);
 
-  // ── Cleanup on unmount ──
+  // ── Cleanup on unmount — FULL teardown only here ──
   useEffect(() => () => {
     clearRestartTimer();
     voiceActiveRef.current = false;
     intentionalStopRef.current = true;
-    if (gcpSessionRef.current?.isActive()) {
-      gcpSessionRef.current.stop();
+    // Full destroy on unmount — this is the only place we do full teardown
+    if (gcpSessionRef.current) {
+      try { gcpSessionRef.current.destroy(); } catch {}
     }
     gcpSessionRef.current = null;
     if (sentenceTimerRef.current) { clearTimeout(sentenceTimerRef.current); sentenceTimerRef.current = null; }
