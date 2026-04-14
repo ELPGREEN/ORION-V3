@@ -477,7 +477,6 @@ export function JulesSelfImprovePanel() {
         )}
 
         {/* Manual Trigger */}
-        <div className="space-y-1.5">
         {isCreator ? (
           <div className="space-y-1.5">
             <h4 className="text-sm font-medium text-muted-foreground">Trigger Manual</h4>
