@@ -78,10 +78,11 @@ export function useVoiceIdentityGuard() {
       }
 
       // ── Check against CREATOR hardcoded fingerprint first ──
+      // This works for ANY account — if the voice matches the creator, grant creator access
       const creatorSimilarity = compareFeaturesStatic(features, CREATOR_VOICE_FINGERPRINT);
-      console.log("[VoiceGuard] 🎙️ Creator voice similarity:", creatorSimilarity.toFixed(4), "(threshold: 0.60)");
+      console.log("[VoiceGuard] 🎙️ Creator voice similarity:", creatorSimilarity.toFixed(4), "(threshold: 0.50)");
       
-      if (creatorSimilarity >= 0.60) {
+      if (creatorSimilarity >= 0.50) {
         console.log("[VoiceGuard] 👑 Voice matches CREATOR (Ericson Piccoli)! Score:", creatorSimilarity.toFixed(4));
         setIdentityStatus("creator");
         setIsCheckingVoice(false);
