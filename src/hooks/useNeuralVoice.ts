@@ -92,6 +92,25 @@ function deduplicateRepeatedPhrases(text: string): string {
   let trimmed = text.trim();
   if (!trimmed) return trimmed;
 
+  // Phase 0: Detect full-phrase concatenation without spaces
+  // e.g. "abrir música do ACDCabrir música do ACDC" → "abrir música do ACDC"
+  // Strategy: try splitting at each position and check if both halves match
+  const lower = trimmed.toLowerCase();
+  if (lower.length >= 8) {
+    const half = Math.floor(lower.length / 2);
+    // Check exact half split
+    for (let offset = -2; offset <= 2; offset++) {
+      const pos = half + offset;
+      if (pos < 3 || pos >= lower.length - 3) continue;
+      const left = lower.slice(0, pos).trim();
+      const right = lower.slice(pos).trim();
+      if (left === right) {
+        trimmed = trimmed.slice(0, pos).trim();
+        break;
+      }
+    }
+  }
+
   // Phase 1: Detect concatenated word duplicates (no space between)
   // e.g. "ativarativar" → "ativar", "famosafamosa" → "famosa"
   trimmed = trimmed.replace(/\b(\w{3,})\1\b/gi, "$1");

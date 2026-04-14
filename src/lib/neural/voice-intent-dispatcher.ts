@@ -81,6 +81,10 @@ const PARAM_EXTRACTORS: Record<string, (text: string) => Record<string, string>>
   reporting: (text) => {
     return { query: text, type: "metrics" };
   },
+  web_search: (text) => {
+    const cleaned = text.replace(/\b(?:pesquis|busc|procur)\w*\s+(?:na\s+internet\s+|na\s+web\s+|online\s+)?/i, "").trim();
+    return { query: cleaned || text };
+  },
 };
 
 // ─── Intent Dispatcher ───
@@ -170,12 +174,32 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         return ok(intent.intent, summary, { results }, t0);
       }
 
+      case "web_search": {
+        const { data, error } = await supabase.functions.invoke("pesquisa-unificada", {
+          body: { query: params.query, sources: ["web"], max_results: 3 },
+        });
+        if (error) return fail(intent.intent, `Erro na pesquisa web: ${error.message}`, t0);
+        const results = data?.results?.slice(0, 3) || [];
+        const summary = results.length > 0
+          ? results.map((r: any, i: number) => `${i + 1}. ${r.title || r.description || ""}`).join(". ")
+          : `Não encontrei resultados para "${params.query}".`;
+        return ok(intent.intent, summary, { results }, t0);
+      }
+
       case "media":
       case "youtube":
       case "spotify": {
-        // Use fallback resolver for music commands
+        // Use fallback resolver for music commands — NEVER passthrough, always play immediately
         const { playMusicWithFallback } = await import("./music-fallback-resolver");
-        const musicQuery = params.query || intent.rawText.replace(/(?:abr[aei]?r?|tocar?|play|reproduz\w*|ouvir?|escutar?|assistir?|colocar?)\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o)?\s*(?:d[oae]\s+)?/i, "").trim() || "music";
+        // Clean query: strip action verbs, "música/vídeo de/do", articles — extract just the artist/song
+        let musicQuery = params.query || intent.rawText;
+        musicQuery = musicQuery
+          .replace(/^(?:abr[aei]?r?|tocar?|play|reproduz\w*|ouvir?|escutar?|assistir?|colocar?|busc\w*|procur\w*|pesquis\w*|encontr\w*)\s+/i, "")
+          .replace(/^(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)\s+/i, "")
+          .replace(/^(?:d[oae]\s+|d[oa]\s+banda\s+|d[oa]\s+cantor\s+|d[oa]\s+cantora\s+|d[oa]\s+artista\s+|d[oa]\s+grupo\s+)/i, "")
+          .replace(/^(?:qualquer\s+(?:uma?\s+)?(?:d[oae]\s+)?)/i, "")
+          .trim() || "music";
+        console.log(`[VoiceDispatch] Media query cleaned: "${musicQuery}" (raw: "${intent.rawText}")`);
         const platformHint = params.platform || (intent.intent === "youtube" ? "youtube" : intent.intent === "spotify" ? "spotify" : undefined);
         const preferred = platformHint === "amazon" ? "amazon_music" as const : platformHint === "youtube" ? "youtube" as const : platformHint === "spotify" ? "spotify" as const : undefined;
         const result = await playMusicWithFallback(musicQuery, preferred);

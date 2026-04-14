@@ -38,13 +38,12 @@ export function VideoOverlay() {
         setVideoUrl(embedUrl);
         setTitle(t || query || "Orion Video");
         setVisible(true);
-        // Auto-minimize after 1.5s to not obstruct
-        setTimeout(() => setMinimized(true), 1500);
+        setMinimized(false); // Keep maximized so user can interact and hear audio
       } else if (action === "search_video" && query) {
         setVideoUrl(`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1`);
         setTitle(t || query);
         setVisible(true);
-        setTimeout(() => setMinimized(true), 1500);
+        setMinimized(false); // Keep maximized for audio playback
       } else if (action === "close") {
         setVisible(false);
       } else if (action === "maximize") {
