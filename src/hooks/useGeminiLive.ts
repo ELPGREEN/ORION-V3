@@ -11,6 +11,7 @@ import {
   GeminiLiveSession,
   GeminiAudioPlayer,
 } from "@/lib/voice/geminiLive";
+import { ensurePersistentMic } from "@/lib/voice/persistentMic";
 
 interface UseGeminiLiveOptions {
   voice?: string;
@@ -44,9 +45,15 @@ export function useGeminiLive(options: UseGeminiLiveOptions = {}) {
     if (!sessionRef.current?.connected) return;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true },
-      });
+      await ensurePersistentMic();
+      const persistentMic = (window as any).__orion_persistent_mic__;
+
+      const stream = (persistentMic?.stream?.active)
+        ? persistentMic.stream
+        : await navigator.mediaDevices.getUserMedia({
+            audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true },
+          });
+
       streamRef.current = stream;
 
       const ctx = new AudioContext({ sampleRate: 16000 });

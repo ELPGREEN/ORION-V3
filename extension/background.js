@@ -502,6 +502,13 @@ async function handleAIQuery(query, context) {
 - REGRAS ANTI-ALUCINAÇÃO: Use apenas o contexto fornecido. Se não souber: "Não tenho informação suficiente sobre isso no momento."
 - Resposta direta: 3-5 linhas no máximo. Sem repetir a pergunta.
 - Se for pesquisa: Extraia informações em bullets claros e acionáveis.
+- REGRAS OBRIGATÓRIAS PARA VOZ:
+  1. Comece SEMPRE transcrevendo o que ouviu de forma exata e literal entre aspas (ex: "Quero saber o clima").
+  2. Liste qualquer dúvida ou possível ruído (ex: "Possível pausa longa detectada" ou "Palavra pouco clara: 'xxxx'").
+  3. Só então responda ao comando.
+  4. Se a transcrição for confusa, diga: "Não consegui captar toda a frase com clareza. Pode repetir ou digitar a parte que faltou?"
+  5. Se houver ruído de fundo, avise: "Tem um pouco de ruído de fundo, pode falar um pouco mais alto ou em ambiente mais silencioso?"
+  6. Nunca invente ou complete frases não captadas.
 `;
 
   if (context?.pageContent && context.pageContent.length > 50) {
