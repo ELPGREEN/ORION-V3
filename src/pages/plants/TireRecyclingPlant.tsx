@@ -13,19 +13,17 @@ import { WatermarkImage } from '@/components/ui/watermark-image';
 import { PlantQuoteForm } from '@/components/forms/PlantQuoteForm';
 import { ROICalculator } from '@/components/plants/ROICalculator';
 
-// Import plant images - Mix of existing and new real photos
-import tireShredderImg from '@/assets/machines/tire-shredder.jpg';
-import crackerMillImg from '@/assets/machines/cracker-mill.jpg';
-import otrCuttingImg from '@/assets/plants/otr-cutting-machine.jpg';
-import tyreSlittingImg from '@/assets/plants/tyre-slitting-machine.jpg';
-import stripCuttingImg from '@/assets/plants/strip-cutting-machine.jpg';
-import blockCuttingImg from '@/assets/plants/block-cutting-machine.jpg';
-import debeaderImg from '@/assets/plants/debeader-machine.jpg';
-
-// Import real photos from factory visits
-import redShredderImg from '@/assets/otr/red-shredder-operation.jpg';
-import shreddingLineImg from '@/assets/otr/shredding-line-interior.jpg';
-import topsFactoryImg from '@/assets/otr/tops-factory-overview.jpg';
+// Plant images - using placeholders until real photos are added
+const tireShredderImg = '/placeholder.svg';
+const crackerMillImg = '/placeholder.svg';
+const otrCuttingImg = '/placeholder.svg';
+const tyreSlittingImg = '/placeholder.svg';
+const stripCuttingImg = '/placeholder.svg';
+const blockCuttingImg = '/placeholder.svg';
+const debeaderImg = '/placeholder.svg';
+const redShredderImg = '/placeholder.svg';
+const shreddingLineImg = '/placeholder.svg';
+const topsFactoryImg = '/placeholder.svg';
 
 export default function TireRecyclingPlant() {
   const { t } = useTranslation();
