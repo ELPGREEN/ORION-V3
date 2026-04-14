@@ -16,8 +16,10 @@ const GEMINI_KEYS = [
   Deno.env.get("GEMINI_API_KEY_7"),
 ].filter(Boolean) as string[];
 
+let _rrIdx = 0;
 function getGeminiKey(): string {
-  return GEMINI_KEYS[Math.floor(Math.random() * GEMINI_KEYS.length)];
+  _rrIdx = _rrIdx % GEMINI_KEYS.length;
+  return GEMINI_KEYS[_rrIdx++];
 }
 
 async function callGemini(prompt: string, systemPrompt: string): Promise<string> {
