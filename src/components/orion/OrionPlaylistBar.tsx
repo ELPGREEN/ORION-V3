@@ -226,8 +226,16 @@ export function OrionPlaylistBar() {
     setMuted(newMuted);
     if (audioRef.current) audioRef.current.muted = newMuted;
     if (useSDK && sdk.isReady) {
-      sdk.changeVolume(newMuted ? 0 : 0.7);
+      sdk.changeVolume(newMuted ? 0 : volume / 100);
     }
+  }, [muted, volume, useSDK, sdk]);
+
+  const handleVolumeChange = useCallback((val: number[]) => {
+    const v = val[0];
+    setVolume(v);
+    if (v === 0) { setMuted(true); } else if (muted) { setMuted(false); }
+    if (audioRef.current) { audioRef.current.volume = v / 100; audioRef.current.muted = v === 0; }
+    if (useSDK && sdk.isReady) { sdk.changeVolume(v / 100); }
   }, [muted, useSDK, sdk]);
 
   // Audio ended → play next
