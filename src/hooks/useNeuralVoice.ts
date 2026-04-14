@@ -972,11 +972,11 @@ export function useNeuralVoice(
       try { activeAudioRef.current.pause(); activeAudioRef.current.src = ""; } catch {}
       activeAudioRef.current = null;
     }
-    // Stop GCP STT session
+    // Soft-stop GCP STT (keeps mic stream alive, no cycling)
     if (gcpSessionRef.current?.isActive()) {
       gcpSessionRef.current.stop();
     }
-    gcpSessionRef.current = null;
+    // Don't null gcpSessionRef — can be resumed later
     speechBufferRef.current = "";
     sentenceAccumulatorRef.current = "";
     try { speechSynthesis.cancel(); } catch {}
@@ -986,13 +986,14 @@ export function useNeuralVoice(
     setListening(false);
   }, [clearRestartTimer]);
 
-  // ── Cleanup on unmount ──
+  // ── Cleanup on unmount — FULL teardown only here ──
   useEffect(() => () => {
     clearRestartTimer();
     voiceActiveRef.current = false;
     intentionalStopRef.current = true;
-    if (gcpSessionRef.current?.isActive()) {
-      gcpSessionRef.current.stop();
+    // Full destroy on unmount — this is the only place we do full teardown
+    if (gcpSessionRef.current) {
+      try { gcpSessionRef.current.destroy(); } catch {}
     }
     gcpSessionRef.current = null;
     if (sentenceTimerRef.current) { clearTimeout(sentenceTimerRef.current); sentenceTimerRef.current = null; }
