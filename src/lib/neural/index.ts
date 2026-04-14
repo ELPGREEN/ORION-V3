@@ -402,9 +402,24 @@ export {
 export {
   recordSubsystemFailure, resetSubsystemFailures, getSubsystemFailureStatus,
   recordTFFailure, recordVisionFailure, recordSTTFailure, recordTTSFailure,
-  recordIoTFailure, recordONNXFailure, checkJulesResolution,
+  recordIoTFailure, recordONNXFailure, recordCoreFailure, recordPerfFailure,
+  recordDesignFailure, recordSecurityFailure, checkJulesResolution,
+  type SubsystemKey,
 } from "./jules-auto-triggers";
 export { startJulesPolling, stopJulesPolling, isJulesPollingActive } from "./jules-session-poller";
+
+// ═══ Jules Evolution Engine & Immune System ═══
+export {
+  scanForBugs, scanPerformance, scanDesign, scanSecurity,
+  runFullScan, getLastScanResults, getHealthScore,
+  startAutoScan, stopAutoScan,
+  type ScanResult, type ScanIssue,
+} from "./jules-evolution-engine";
+export {
+  getImmuneMemory, registerAntibody, hasAntibody,
+  recordModuleFailure, shouldQuarantine, clearQuarantine,
+  checkAndRegisterResolutions, getImmuneStats,
+} from "./jules-immune-system";
 
 // ═══ Serverless Agent Runtime (AWS Serverless Agentic AI Architecture 2026) ═══
 export {
