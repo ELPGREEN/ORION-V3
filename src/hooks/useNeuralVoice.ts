@@ -308,7 +308,8 @@ export function useNeuralVoice(
       return;
     }
 
-    const restartDelay = delay ?? (isMobile() ? 200 : 50);
+    // Longer delays to prevent mic cycling — each start() triggers OS mic sound
+    const restartDelay = delay ?? (isMobile() ? 3000 : 400);
     setListening(true);
 
     restartTimerRef.current = setTimeout(() => {
@@ -752,8 +753,8 @@ export function useNeuralVoice(
       // Keep listening state true during restart to avoid UI flicker
       if (onCmdRef.current) {
         recRef.current = null;
-        // Longer delay to prevent rapid mic cycling
-        scheduleRecognitionRestart(300);
+      // Long delay to prevent rapid mic cycling — each start() = OS mic sound
+        scheduleRecognitionRestart(isMobile() ? 5000 : 800);
         return;
       }
       recRef.current = null;
@@ -789,9 +790,8 @@ export function useNeuralVoice(
       }
 
       if (e.error === "no-speech") {
-        // no-speech is normal — just restart without any teardown noise
-        // Use longer delay to avoid rapid cycling
-        scheduleRecognitionRestart(500);
+        // no-speech is normal — restart with long delay to avoid cycling
+        scheduleRecognitionRestart(isMobile() ? 5000 : 1000);
         return;
       }
 
@@ -802,8 +802,7 @@ export function useNeuralVoice(
         return;
       }
 
-      speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
-      scheduleRecognitionRestart(200);
+      scheduleRecognitionRestart(isMobile() ? 5000 : 1500);
     };
 
     return rec;

@@ -65,11 +65,12 @@ export function useWakeWord(
   }, []);
 
   const getRestartDelay = useCallback((reason?: string) => {
-    if (typeof document !== "undefined" && document.hidden) return 2400;
-    const base = isMobileBrowser() ? 600 : 200;
-    if (reason === "audio-capture" || reason === "network") return base + 500;
+    if (typeof document !== "undefined" && document.hidden) return 15000;
+    // Long delays to prevent mic cycling sounds — continuous mode handles most cases
+    const base = isMobileBrowser() ? 8000 : 1000;
+    if (reason === "audio-capture" || reason === "network") return base + 3000;
     if (reason === "aborted" || reason === "end" || reason === "no-speech") return base;
-    return base + 200;
+    return base + 1000;
   }, []);
 
   const getBackgroundTranscripts = useCallback((): BackgroundTranscript[] => {
