@@ -170,11 +170,14 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         return ok(intent.intent, summary, { results }, t0);
       }
 
-      case "media": {
+      case "media":
+      case "youtube":
+      case "spotify": {
         // Use fallback resolver for music commands
         const { playMusicWithFallback } = await import("./music-fallback-resolver");
-        const musicQuery = params.query || "music";
-        const preferred = params.platform === "amazon" ? "amazon_music" as const : params.platform === "youtube" ? "youtube" as const : "spotify" as const;
+        const musicQuery = params.query || intent.rawText.replace(/(?:abr[aei]?r?|tocar?|play|reproduz\w*|ouvir?|escutar?|assistir?|colocar?)\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o)?\s*(?:d[oae]\s+)?/i, "").trim() || "music";
+        const platformHint = params.platform || (intent.intent === "youtube" ? "youtube" : intent.intent === "spotify" ? "spotify" : undefined);
+        const preferred = platformHint === "amazon" ? "amazon_music" as const : platformHint === "youtube" ? "youtube" as const : platformHint === "spotify" ? "spotify" as const : undefined;
         const result = await playMusicWithFallback(musicQuery, preferred);
         return ok(intent.intent, result.description, { ...params, resolvedPlatform: result.platform, fallback: result.fallback }, t0);
       }

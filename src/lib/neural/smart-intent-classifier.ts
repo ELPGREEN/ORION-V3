@@ -69,32 +69,45 @@ const REGEX_RULES: RegexRule[] = [
     return { targetLang: lang?.[1] || "inglês", text: t.replace(/traduz\w*\s*/i, "") };
   }},
   
-  // Navigation
-  { pattern: /\b(abr[ae]|v[aá]\s+para|naveg\w*\s+(para|pra)|ir\s+para|go\s+to)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
-    const m = t.match(/(?:abr[ae]|v[aá]\s+para|naveg\w*\s+(?:para|pra)|ir\s+para)\s+(.+)/i);
-    return { target: m?.[1]?.trim() || "" };
-  }},
-  
-  // Vision/Identity
+  // Vision/Identity — BEFORE navigation so "abrir câmera" doesn't go to nav
   { pattern: /\b(o\s+que\s+(?:voc[eê]|vc|tu)\s+(?:v[eê]|enxerga)|o\s+que\s+(?:estou|tou)\s+(?:segurando|usando|vestindo))\b/i, intent: "vision_describe", confidence: 0.96 },
   { pattern: /\b(quem\s+[eé]\s+(?:essa?|aquele?|ele|ela)|reconhe[cç])\b/i, intent: "identity", confidence: 0.92 },
+
+  // ═══ MEDIA rules BEFORE navigation — "abrir música" must NOT be caught by nav ═══
   
-  // Media — YouTube
-  { pattern: /\b(?:(?:abr[ae]?|abrir?|tocar?|play|reproduz\w*|assistir?|ver|pesquisar?|buscar?|procurar?)\s+[\w\s]{0,20}(?:no\s+|do\s+|d[oa]\s+)?youtube|youtube\b)/i, intent: "youtube", confidence: 0.93, extractParams: (t) => {
-    const m = t.match(/(?:tocar?|play|reproduz\w*|assistir?|ver|pesquisar?|buscar?|procurar?|abr[ae]?)\s+(.+?)(?:\s+(?:no|do|da)\s+youtube)?$/i);
+  // Media — YouTube (explicit platform mention)
+  { pattern: /\b(?:(?:abr[aei]?r?|tocar?|play|reproduz\w*|assistir?|ver|pesquisar?|buscar?|procurar?)\s+[\w\s]{0,20}(?:no\s+|do\s+|d[oa]\s+)?youtube|youtube\b)/i, intent: "media", confidence: 0.95, extractParams: (t) => {
+    const m = t.match(/(?:tocar?|play|reproduz\w*|assistir?|ver|pesquisar?|buscar?|procurar?|abr[aei]?r?)\s+(.+?)(?:\s+(?:no|do|da)\s+youtube)?$/i);
     return { query: m?.[1]?.replace(/(?:no|do|da)\s+youtube/i, "").trim() || "", platform: "youtube" };
   }},
   
-  // Media — Spotify
-  { pattern: /\b(?:(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+[\w\s]{0,20}(?:no\s+|do\s+|d[oa]\s+)?spotify|spotify\b)/i, intent: "spotify", confidence: 0.93, extractParams: (t) => {
+  // Media — Spotify (explicit platform mention)
+  { pattern: /\b(?:(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+[\w\s]{0,20}(?:no\s+|do\s+|d[oa]\s+)?spotify|spotify\b)/i, intent: "media", confidence: 0.95, extractParams: (t) => {
     const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+?)(?:\s+(?:no|do|da)\s+spotify)?$/i);
     return { query: m?.[1]?.replace(/(?:no|do|da)\s+spotify/i, "").trim() || "", platform: "spotify" };
   }},
   
-  // Media — generic (music/video without platform)
-  { pattern: /\b(tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica|v[ií]deo)/i, intent: "media", confidence: 0.85, extractParams: (t) => {
-    const m = t.match(/(?:tocar?|play|reproduz\w*)\s+(.+)/i);
+  // Media — "abrir música/vídeo" patterns (MUST be before navigation)
+  { pattern: /\b(?:abr[aei]?r?|tocar?|play|reproduz\w*|ouvir?|escutar?|assistir?|colocar?)\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)/i, intent: "media", confidence: 0.96, extractParams: (t) => {
+    const m = t.match(/(?:abr[aei]?r?\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o)\s+(?:d[oae]\s+)?|tocar?\s+|play\s+|reproduz\w*\s+|ouvir?\s+|escutar?\s+|assistir?\s+|colocar?\s+)(.+)/i);
+    return { query: m?.[1]?.trim() || t, action: "play" };
+  }},
+  
+  // Media — generic (music/video keywords without platform)
+  { pattern: /\b(tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica\s+d[oae]\s+|v[ií]deo\s+d[oae]\s+|ouvir?\s+|escutar?\s+)/i, intent: "media", confidence: 0.88, extractParams: (t) => {
+    const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+)/i);
     return { query: m?.[1]?.trim() || t, action: /\b(par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
+  }},
+  
+  // Navigation — AFTER media so "abrir música" is already caught
+  { pattern: /\b(v[aá]\s+para|naveg\w*\s+(para|pra)|ir\s+para|go\s+to)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
+    const m = t.match(/(?:v[aá]\s+para|naveg\w*\s+(?:para|pra)|ir\s+para)\s+(.+)/i);
+    return { target: m?.[1]?.trim() || "" };
+  }},
+  // Navigation — "abrir" only for non-media targets (page names)
+  { pattern: /\b(abr[aei]?r?)\s+(?:o\s+|a\s+|os\s+|as\s+)?(?:painel|dashboard|consulta|documentos?|processos?|clientes?|rede\s+neural|configura[çc][oõ]|loja|crm|analytics|extensão?)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
+    const m = t.match(/abr[aei]?r?\s+(?:o\s+|a\s+|os\s+|as\s+)?(.+)/i);
+    return { target: m?.[1]?.trim() || "" };
   }},
   
   // Search
