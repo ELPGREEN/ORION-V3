@@ -73,34 +73,36 @@ export function OrionPlaylistBar() {
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [useSDK, setUseSDK] = useState(false);
   const [barVisible, setBarVisible] = useState(true);
+  const [playbackMode, setPlaybackMode] = useState<"spotify-sdk" | "audio-preview" | "youtube" | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const ytIframeRef = useRef<HTMLIFrameElement>(null);
   const progressInterval = useRef<ReturnType<typeof setInterval>>();
 
-  // Spotify Web Playback SDK
   const sdk = useSpotifyPlayback(useSDK ? spotifyToken : null);
 
-  // Check if Spotify is connected (has token via edge function)
   useEffect(() => {
     isSpotifyConnected().then(connected => {
       if (connected) {
-        // Token is managed server-side; we pass a placeholder
-        // The actual playback uses the edge function token
         setSpotifyToken("sdk-managed");
         setUseSDK(true);
       }
     }).catch(() => {});
   }, []);
 
-  // Sync SDK state to local state
-  const isPlaying = useSDK && sdk.isReady && sdk.currentTrack
-    ? sdk.isPlaying
-    : isPlayingLocal;
-
+  const isSpotifySdkPlayback = playbackMode === "spotify-sdk";
+  const isPlaying = isSpotifySdkPlayback ? sdk.isPlaying : isPlayingLocal;
   const sdkProgress = sdk.currentTrack && sdk.currentTrack.durationMs > 0
     ? (sdk.positionMs / sdk.currentTrack.durationMs) * 100
     : 0;
 
-  // Search both Spotify + YouTube
+  const sendYouTubeCommand = useCallback((command: "playVideo" | "pauseVideo") => {
+    ytIframeRef.current?.contentWindow?.postMessage(JSON.stringify({
+      event: "command",
+      func: command,
+      args: [],
+    }), "https://www.youtube.com");
+  }, []);
+
   const handleSearch = useCallback(async (searchQuery?: string) => {
     const q = searchQuery || query;
     if (!q.trim()) return;
@@ -133,30 +135,53 @@ export function OrionPlaylistBar() {
     }
   }, [query]);
 
-  // Play a track — SDK for Spotify Premium, preview/YT fallback
+  const playPreview = useCallback((track: UnifiedTrack) => {
+    setCurrentTrack(track);
+    setPlaybackMode("audio-preview");
+    setIsPlayingLocal(true);
+    setProgress(0);
+    setYtEmbedVisible(false);
+
+    const audio = audioRef.current;
+    if (audio && track.preview_url) {
+      clearInterval(progressInterval.current);
+      audio.src = track.preview_url;
+      audio.volume = volume / 100;
+      audio.muted = muted;
+      audio.play().catch(() => {
+        toast.error("Erro ao reproduzir");
+        setIsPlayingLocal(false);
+      });
+      progressInterval.current = setInterval(() => {
+        if (audio.duration) setProgress((audio.currentTime / audio.duration) * 100);
+      }, 200);
+    }
+  }, [muted, volume]);
+
   const playTrack = useCallback(async (track: UnifiedTrack) => {
-    // Stop current audio fallback
     if (audioRef.current) {
       audioRef.current.pause();
       clearInterval(progressInterval.current);
     }
+    if (ytEmbedVisible) sendYouTubeCommand("pauseVideo");
     setYtEmbedVisible(false);
+    setPlaybackMode(null);
 
-    // Try Spotify SDK for full playback (Premium)
     if (track.source === "spotify" && track.spotifyUri && useSDK && sdk.isReady && sdk.isPremium) {
       setCurrentTrack(track);
       const success = await sdk.playTrack(track.spotifyUri);
       if (success) {
+        setPlaybackMode("spotify-sdk");
         setIsPlayingLocal(true);
         setProgress(0);
       } else {
-        // Fallback to preview
         playPreview(track);
       }
     } else if (track.source === "spotify" && track.preview_url) {
       playPreview(track);
     } else if (track.source === "youtube" && track.videoId) {
       setCurrentTrack(track);
+      setPlaybackMode("youtube");
       setIsPlayingLocal(true);
       setProgress(0);
       setYtEmbedVisible(true);
@@ -172,41 +197,43 @@ export function OrionPlaylistBar() {
     window.dispatchEvent(new CustomEvent("orion-music-playing", {
       detail: { track: track.name, artist: track.artist }
     }));
-  }, [muted, useSDK, sdk.isReady, sdk.isPremium, sdk.playTrack]);
-
-  const playPreview = useCallback((track: UnifiedTrack) => {
-    setCurrentTrack(track);
-    setIsPlayingLocal(true);
-    setProgress(0);
-    const audio = audioRef.current;
-    if (audio && track.preview_url) {
-      audio.src = track.preview_url;
-      audio.muted = muted;
-      audio.play().catch(() => { toast.error("Erro ao reproduzir"); setIsPlayingLocal(false); });
-      progressInterval.current = setInterval(() => {
-        if (audio.duration) setProgress((audio.currentTime / audio.duration) * 100);
-      }, 200);
-    }
-  }, [muted]);
+  }, [ytEmbedVisible, sendYouTubeCommand, useSDK, sdk.isReady, sdk.isPremium, sdk.playTrack, playPreview]);
 
   const togglePlayPause = useCallback(async () => {
-    if (!currentTrack) return;
+    if (!currentTrack || !playbackMode) return;
 
-    // If using SDK for this track
-    if (currentTrack.source === "spotify" && currentTrack.spotifyUri && useSDK && sdk.isReady && sdk.currentTrack) {
+    if (playbackMode === "spotify-sdk") {
       await sdk.togglePlay();
       return;
     }
 
-    if (currentTrack.source === "spotify") {
+    if (playbackMode === "audio-preview") {
       const audio = audioRef.current;
       if (!audio) return;
-      if (isPlayingLocal) { audio.pause(); setIsPlayingLocal(false); }
-      else { audio.play().catch(() => {}); setIsPlayingLocal(true); }
-    } else {
-      setIsPlayingLocal(!isPlayingLocal);
+      if (isPlayingLocal) {
+        audio.pause();
+        setIsPlayingLocal(false);
+      } else {
+        audio.play().catch(() => {});
+        setIsPlayingLocal(true);
+      }
+      return;
     }
-  }, [isPlayingLocal, currentTrack, useSDK, sdk]);
+
+    if (!ytEmbedVisible) {
+      setYtEmbedVisible(true);
+      setIsPlayingLocal(true);
+      return;
+    }
+
+    if (isPlayingLocal) {
+      sendYouTubeCommand("pauseVideo");
+      setIsPlayingLocal(false);
+    } else {
+      sendYouTubeCommand("playVideo");
+      setIsPlayingLocal(true);
+    }
+  }, [currentTrack, playbackMode, sdk.togglePlay, isPlayingLocal, ytEmbedVisible, sendYouTubeCommand]);
 
   const playNext = useCallback(async () => {
     if (!currentTrack || tracks.length === 0) return;
@@ -229,26 +256,38 @@ export function OrionPlaylistBar() {
     if (useSDK && sdk.isReady) {
       sdk.changeVolume(newMuted ? 0 : volume / 100);
     }
-  }, [muted, volume, useSDK, sdk]);
+  }, [muted, volume, useSDK, sdk.isReady, sdk.changeVolume]);
 
   const handleVolumeChange = useCallback((val: number[]) => {
     const v = val[0];
     setVolume(v);
-    if (v === 0) { setMuted(true); } else if (muted) { setMuted(false); }
-    if (audioRef.current) { audioRef.current.volume = v / 100; audioRef.current.muted = v === 0; }
-    if (useSDK && sdk.isReady) { sdk.changeVolume(v / 100); }
-  }, [muted, useSDK, sdk]);
+    if (v === 0) {
+      setMuted(true);
+    } else if (muted) {
+      setMuted(false);
+    }
+    if (audioRef.current) {
+      audioRef.current.volume = v / 100;
+      audioRef.current.muted = v === 0;
+    }
+    if (useSDK && sdk.isReady) {
+      sdk.changeVolume(v / 100);
+    }
+  }, [muted, useSDK, sdk.isReady, sdk.changeVolume]);
 
-  // Audio ended → play next
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const onEnded = () => { setIsPlayingLocal(false); setProgress(0); clearInterval(progressInterval.current); playNext(); };
+    const onEnded = () => {
+      setIsPlayingLocal(false);
+      setProgress(0);
+      clearInterval(progressInterval.current);
+      playNext();
+    };
     audio.addEventListener("ended", onEnded);
     return () => audio.removeEventListener("ended", onEnded);
   }, [playNext]);
 
-  // Listen for Orion voice commands
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       const { action, query: q } = e.detail || {};
@@ -272,7 +311,9 @@ export function OrionPlaylistBar() {
                 setExpanded(true);
                 const playable = results.find(t => t.preview_url || t.videoId || t.spotifyUri);
                 if (playable) setTimeout(() => playTrack(playable), 300);
-              } finally { setLoading(false); }
+              } finally {
+                setLoading(false);
+              }
             })();
           }
           break;
@@ -295,26 +336,42 @@ export function OrionPlaylistBar() {
     return () => window.removeEventListener("orion-music-command", handler as EventListener);
   }, [playTrack, isPlaying, togglePlayPause, playNext, playPrev, currentTrack]);
 
-  // Listen for Orion voice volume commands
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       const { action, value } = e.detail || {};
       let newVol = volume;
       switch (action) {
-        case "up": newVol = Math.min(100, volume + 15); break;
-        case "down": newVol = Math.max(0, volume - 15); break;
-        case "set": newVol = Math.max(0, Math.min(100, value ?? 50)); break;
-        case "mute": setMuted(true); if (audioRef.current) audioRef.current.muted = true; if (useSDK && sdk.isReady) sdk.changeVolume(0); return;
-        case "unmute": setMuted(false); if (audioRef.current) audioRef.current.muted = false; if (useSDK && sdk.isReady) sdk.changeVolume(volume / 100); return;
+        case "up":
+          newVol = Math.min(100, volume + 15);
+          break;
+        case "down":
+          newVol = Math.max(0, volume - 15);
+          break;
+        case "set":
+          newVol = Math.max(0, Math.min(100, value ?? 50));
+          break;
+        case "mute":
+          setMuted(true);
+          if (audioRef.current) audioRef.current.muted = true;
+          if (useSDK && sdk.isReady) sdk.changeVolume(0);
+          return;
+        case "unmute":
+          setMuted(false);
+          if (audioRef.current) audioRef.current.muted = false;
+          if (useSDK && sdk.isReady) sdk.changeVolume(volume / 100);
+          return;
       }
       setVolume(newVol);
       setMuted(newVol === 0);
-      if (audioRef.current) { audioRef.current.volume = newVol / 100; audioRef.current.muted = newVol === 0; }
+      if (audioRef.current) {
+        audioRef.current.volume = newVol / 100;
+        audioRef.current.muted = newVol === 0;
+      }
       if (useSDK && sdk.isReady) sdk.changeVolume(newVol / 100);
     };
     window.addEventListener("orion-volume-command", handler as EventListener);
     return () => window.removeEventListener("orion-volume-command", handler as EventListener);
-  }, [volume, useSDK, sdk]);
+  }, [volume, useSDK, sdk.isReady, sdk.changeVolume]);
 
   const formatMs = (ms: number) => {
     if (!ms) return "";
@@ -323,8 +380,7 @@ export function OrionPlaylistBar() {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  // Determine display track info (SDK or local)
-  const displayTrack = (useSDK && sdk.currentTrack) ? {
+  const displayTrack = isSpotifySdkPlayback && sdk.currentTrack ? {
     name: sdk.currentTrack.name,
     artist: sdk.currentTrack.artists.join(", "),
     thumbnail: sdk.currentTrack.albumArt,
@@ -336,9 +392,8 @@ export function OrionPlaylistBar() {
     source: currentTrack.source,
   } : null;
 
-  const displayProgress = (useSDK && sdk.currentTrack) ? sdkProgress : progress;
+  const displayProgress = isSpotifySdkPlayback ? sdkProgress : progress;
 
-  // If bar is hidden, show a small reopen button
   if (!barVisible) {
     return (
       <div className="relative z-10 flex justify-center py-1">
@@ -359,7 +414,6 @@ export function OrionPlaylistBar() {
     <div className="relative z-10">
       <audio ref={audioRef} preload="none" />
 
-      {/* Activation prompt for mobile autoplay */}
       {sdk.needsActivation && (
         <div className="mb-1 px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center gap-2">
           <Zap className="h-3 w-3 text-amber-400" />
@@ -371,12 +425,12 @@ export function OrionPlaylistBar() {
         </div>
       )}
 
-      {/* YouTube embed */}
       {ytEmbedVisible && currentTrack?.videoId && (
         <div className="fixed bottom-20 right-6 w-[320px] h-[180px] z-[9998] rounded-lg overflow-hidden border border-[#D4AF37]/20"
           style={{ boxShadow: "0 0 30px rgba(212,175,55,0.1)" }}>
           <iframe
-            src={`https://www.youtube.com/embed/${currentTrack.videoId}?autoplay=1&${muted ? "mute=1&" : ""}rel=0`}
+            ref={ytIframeRef}
+            src={`https://www.youtube.com/embed/${currentTrack.videoId}?enablejsapi=1&autoplay=1&${muted ? "mute=1&" : ""}rel=0`}
             className="w-full h-full"
             allow="autoplay; encrypted-media"
             allowFullScreen
@@ -384,7 +438,11 @@ export function OrionPlaylistBar() {
           />
           <Button variant="ghost" size="icon"
             className="absolute top-1 right-1 h-6 w-6 bg-black/60 hover:bg-black/80 z-10"
-            onClick={() => { setYtEmbedVisible(false); setIsPlayingLocal(false); }}>
+            onClick={() => {
+              sendYouTubeCommand("pauseVideo");
+              setYtEmbedVisible(false);
+              setIsPlayingLocal(false);
+            }}>
             <X className="h-3 w-3" />
           </Button>
         </div>
@@ -430,20 +488,32 @@ export function OrionPlaylistBar() {
           )}
 
           <div className="flex items-center gap-0.5 shrink-0">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={playPrev}
-              disabled={!currentTrack || sdk.disallows?.skipping_prev}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={playPrev}
+              disabled={!currentTrack || (isSpotifySdkPlayback && sdk.disallows?.skipping_prev)}
+            >
               <SkipBack className="h-3 w-3" />
             </Button>
             <Button
-              variant="ghost" size="icon" className="h-8 w-8 rounded-full"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full"
               style={{ backgroundColor: isPlaying ? "rgba(212,175,55,0.15)" : "transparent" }}
               onClick={currentTrack ? togglePlayPause : undefined}
-              disabled={!currentTrack || (isPlaying ? sdk.disallows?.pausing : sdk.disallows?.resuming)}
+              disabled={!currentTrack || !playbackMode || (isSpotifySdkPlayback && (isPlaying ? sdk.disallows?.pausing : sdk.disallows?.resuming))}
             >
               {isPlaying ? <Pause className="h-3.5 w-3.5" style={{ color: "#D4AF37" }} /> : <Play className="h-3.5 w-3.5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={playNext}
-              disabled={!currentTrack || sdk.disallows?.skipping_next}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={playNext}
+              disabled={!currentTrack || (isSpotifySdkPlayback && sdk.disallows?.skipping_next)}
+            >
               <SkipForward className="h-3 w-3" />
             </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={toggleMute}>
@@ -452,14 +522,16 @@ export function OrionPlaylistBar() {
             <div className="w-16 hidden sm:block">
               <Slider
                 value={[muted ? 0 : volume]}
-                min={0} max={100} step={1}
+                min={0}
+                max={100}
+                step={1}
                 onValueChange={handleVolumeChange}
                 className="h-5"
               />
             </div>
           </div>
 
-          {(currentTrack || sdk.currentTrack) && (
+          {(currentTrack || (isSpotifySdkPlayback && sdk.currentTrack)) && (
             <div className="flex-1 max-w-[120px] hidden lg:block">
               <div className="h-1 rounded-full bg-white/10 overflow-hidden">
                 <div className="h-full rounded-full transition-all" style={{ width: `${displayProgress}%`, background: "linear-gradient(90deg, #D4AF37, #3B82F6)" }} />
@@ -469,7 +541,8 @@ export function OrionPlaylistBar() {
 
           <div className="flex items-center gap-1 flex-1 min-w-0 max-w-xs ml-auto">
             <Input
-              value={query} onChange={e => setQuery(e.target.value)}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleSearch()}
               placeholder="Buscar música..."
               className="h-7 text-[10px] bg-white/5 border-white/10 focus:border-[#D4AF37]/30 placeholder:text-white/20"
@@ -495,7 +568,8 @@ export function OrionPlaylistBar() {
               <div className="divide-y divide-white/[0.03]">
                 {tracks.map((track) => (
                   <button
-                    key={track.id} onClick={() => playTrack(track)}
+                    key={track.id}
+                    onClick={() => playTrack(track)}
                     className={`w-full flex items-center gap-2 px-3 py-1.5 hover:bg-white/5 transition-colors text-left ${
                       currentTrack?.id === track.id ? "bg-[#D4AF37]/5" : ""
                     }`}
