@@ -396,5 +396,40 @@ export function addKnownSpeaker(name: string): void {
   } catch {}
 }
 
+// ─── Jules Self-Improvement Trigger ───
+
+const JULES_FAIL_KEY = "orion_jules_fail_counts";
+
+function getJulesFailCounts(): Record<string, number> {
+  try { return JSON.parse(localStorage.getItem(JULES_FAIL_KEY) || "{}"); } catch { return {}; }
+}
+
+async function triggerJulesSelfImprove(plan: AgenticPlan, verification: AgenticVerification): Promise<void> {
+  if (verification.passed) return;
+
+  const counts = getJulesFailCounts();
+  const key = plan.intent;
+  counts[key] = (counts[key] || 0) + 1;
+  localStorage.setItem(JULES_FAIL_KEY, JSON.stringify(counts));
+
+  // Only trigger Jules after 3+ consecutive failures for the same intent
+  if (counts[key] < 3) return;
+
+  console.log(`[Orion→Jules] Intent "${key}" failed ${counts[key]}x — requesting self-improvement`);
+
+  const task = `Fix recurring issue with intent "${plan.intent}". ` +
+    `Verification issues: ${verification.issues.join(", ")}. ` +
+    `Steps attempted: ${plan.steps.join(", ")}. ` +
+    `Improve the handler for this intent to achieve higher quality scores.`;
+
+  const result = await orionSelfImprove({ task, autoPR: true });
+
+  if (result.success) {
+    console.log(`[Orion→Jules] Session ${result.sessionId} created for self-improvement`);
+    counts[key] = 0; // Reset counter
+    localStorage.setItem(JULES_FAIL_KEY, JSON.stringify(counts));
+  }
+}
+
 // Initialize protocols on module load
 loadProtocols();
