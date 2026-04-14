@@ -206,7 +206,13 @@ export function useWakeWord(
           return;
         }
 
-        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, 6);
+        const maxAttempts = isMobileBrowser() ? 3 : 6;
+        restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, maxAttempts);
+        if (restartAttemptsRef.current >= maxAttempts) {
+          console.log("[WakeWord] Max restart attempts reached, staying idle to prevent mic cycling");
+          emitWakeStatus(false);
+          return;
+        }
         clearRestartTimer();
         restartTimerRef.current = setTimeout(() => {
           if (!isMicOwner(wakeSingletonIdRef.current)) { emitWakeStatus(false); return; }
@@ -215,7 +221,7 @@ export function useWakeWord(
           } else {
             emitWakeStatus(false);
           }
-        }, getRestartDelay("end") + restartAttemptsRef.current * 80);
+        }, getRestartDelay("end"));
       };
 
       rec.onerror = (e: any) => {
