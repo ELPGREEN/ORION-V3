@@ -72,6 +72,7 @@ export function OrionPlaylistBar() {
   const [ytEmbedVisible, setYtEmbedVisible] = useState(false);
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [useSDK, setUseSDK] = useState(false);
+  const [barVisible, setBarVisible] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<ReturnType<typeof setInterval>>();
 
