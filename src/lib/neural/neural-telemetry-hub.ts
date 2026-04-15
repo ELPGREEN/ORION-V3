@@ -247,9 +247,10 @@ export function feedReasoningMetrics(metrics: {
     : [];
 
   // Jules auto-trigger for TF degradations
-  if (degradations.length > 0) {
-    const degradDesc = degradations.map(d => `${d.metric}: ${d.current.toFixed(2)} (baseline: ${d.baseline.toFixed(2)}, -${d.degradationPercent.toFixed(0)}%)`).join(", ");
-    recordTFFailure("model_monitoring", `Degradation detected: ${degradDesc}`).catch(() => {});
+  const significantDegradations = degradations.filter(d => d.severity === "moderate" || d.severity === "severe");
+  if (significantDegradations.length > 0) {
+    const degradDesc = significantDegradations.map(d => `${d.metric}: ${d.current.toFixed(2)} (baseline: ${d.baseline.toFixed(2)}, -${d.degradationPercent.toFixed(0)}%)`).join(", ");
+    recordTFFailure("model_monitoring", `Significant degradation detected: ${degradDesc}`).catch(() => {});
   }
 
   // 8. Update pipeline health
