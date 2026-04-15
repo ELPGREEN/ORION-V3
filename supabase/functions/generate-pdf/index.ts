@@ -33,7 +33,7 @@ async function fetchWithRetry(
       clearTimeout(timer);
       if (attempt < maxRetries) {
         const backoff = (attempt + 1) * 10000;
-        console.log(`Fetch error (${err.message}) — retrying in ${backoff}ms (attempt ${attempt + 1}/${maxRetries})`);
+        console.log(`Fetch error (${(err as Error).message}) — retrying in ${backoff}ms (attempt ${attempt + 1}/${maxRetries})`);
         await new Promise((r) => setTimeout(r, backoff));
         continue;
       }
@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("generate-pdf error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Internal error" }),
+      JSON.stringify({ error: (error as Error).message || "Internal error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
