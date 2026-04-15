@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ChevronDown } from "lucide-react";
-import { IconAutomation, IconShield, IconGlobe, IconNeuralAI } from "@/components/icons/SumerianTronIcons";
+import { IconAutomation, IconShield, IconGlobe, IconNeuralAI, IconEye, IconBot } from "@/components/icons/SumerianTronIcons";
 import { Button } from "@/components/ui/button";
 import { HeroThreeBackground } from "./HeroThreeBackground";
 import { PlasmaCore } from "./PlasmaCore";
@@ -12,6 +12,41 @@ import bgHdHero from "@/assets/bg-hd-hero.jpg";
 
 interface HeroSectionProps {
   t: any;
+}
+
+// Animated counter for hero stats
+function AnimatedStat({ end, suffix = "", prefix = "", label }: { end: number; suffix?: string; prefix?: string; label: string }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !started.current) {
+        started.current = true;
+        const startTime = performance.now();
+        const duration = 1800;
+        const step = (now: number) => {
+          const progress = Math.min((now - startTime) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          setCount(Math.floor(eased * end));
+          if (progress < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      }
+    }, { threshold: 0.3 });
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [end]);
+
+  return (
+    <div ref={ref} className="text-center px-2">
+      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">
+        {prefix}{count}{suffix}
+      </div>
+      <div className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 mt-1">{label}</div>
+    </div>
+  );
 }
 
 export function HeroSection({ t }: HeroSectionProps) {
@@ -47,14 +82,14 @@ export function HeroSection({ t }: HeroSectionProps) {
   const heroTranslateY = scrollY * 0.08;
 
   return (
-    <section className="relative min-h-[75vh] min-h-[75svh] flex items-center justify-center overflow-visible">
+    <section className="relative min-h-[85vh] min-h-[85svh] flex items-center justify-center overflow-visible">
       {/* HD photorealistic background */}
       <img
         src={bgHdHero}
         alt=""
         loading="eager"
         decoding="async"
-        /* @ts-ignore -- fetchpriority is valid HTML but React 18 warns */
+        /* @ts-ignore */
         fetchpriority="high"
         className="absolute inset-0 w-full h-full object-cover z-[0] opacity-40"
         width={1920}
@@ -75,7 +110,7 @@ export function HeroSection({ t }: HeroSectionProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-background z-[2]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.4)_70%,hsl(var(--background))_100%)] z-[2]" />
 
-      {/* Holographic HUD element — right side */}
+      {/* Holographic HUD elements */}
       <img
         src={hudElement}
         alt=""
@@ -87,8 +122,6 @@ export function HeroSection({ t }: HeroSectionProps) {
           filter: 'hue-rotate(-10deg)',
         }}
       />
-
-      {/* HUD element — left side */}
       <img
         src={hudElement}
         alt=""
@@ -108,7 +141,7 @@ export function HeroSection({ t }: HeroSectionProps) {
         }}
       >
         <div className="max-w-5xl mx-auto text-center">
-          {/* Plasma orb — compact */}
+          {/* Plasma orb */}
           <div
             className="mb-0"
             style={{
@@ -139,7 +172,6 @@ export function HeroSection({ t }: HeroSectionProps) {
                 filter: 'drop-shadow(0 0 80px hsl(30 85% 52% / 0.4)) drop-shadow(0 0 120px hsl(30 85% 52% / 0.2))',
               }}
             />
-            {/* Gold reflection below — shorter */}
             <img
               src={orionTitle}
               alt=""
@@ -174,7 +206,7 @@ export function HeroSection({ t }: HeroSectionProps) {
               textShadow: '0 0 20px hsl(30 85% 52% / 0.4)',
             }}
           >
-            ENTERPRISE AI PLATFORM
+            A IA QUE EVOLUI SOZINHA
           </p>
 
           <div
@@ -186,10 +218,12 @@ export function HeroSection({ t }: HeroSectionProps) {
             }}
           >
             {[
-              { Icon: IconAutomation, label: "Neural Automation" },
+              { Icon: IconNeuralAI, label: "Motor Neural" },
+              { Icon: IconEye, label: "Visão Computacional" },
+              { Icon: IconBot, label: "Voz Inteligente" },
               { Icon: IconShield, label: "Cyber Shield" },
-              { Icon: IconGlobe, label: "Multi-Language" },
-              { Icon: IconNeuralAI, label: "Advanced AI" },
+              { Icon: IconGlobe, label: "5 Idiomas" },
+              { Icon: IconAutomation, label: "Auto-Evolução" },
             ].map((item) => (
               <div key={item.label} className="hud-frame flex items-center gap-1.5 px-3 py-1.5 border border-primary/20 bg-primary/5 text-[10px] text-muted-foreground backdrop-blur-sm">
                 <item.Icon className="h-3.5 w-3.5 text-primary" />
@@ -206,9 +240,9 @@ export function HeroSection({ t }: HeroSectionProps) {
               transition: 'opacity 0.8s ease 0.8s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.8s',
             }}
           >
-            Plataforma de IA empresarial para automação de processos, 
-            gestão de documentos, equipes e clientes — com inteligência 
-            neural de próxima geração.
+            Plataforma de IA empresarial com <span className="text-primary font-medium">17+ módulos integrados</span>,
+            visão computacional, voz inteligente e auto-evolução — tudo em um ecossistema
+            que substitui <span className="text-primary font-medium">8+ ferramentas</span>.
           </p>
 
           <div
@@ -232,11 +266,26 @@ export function HeroSection({ t }: HeroSectionProps) {
             </Button>
           </div>
 
+          {/* Animated Stats Bar */}
+          <div
+            className="mt-10 sm:mt-14 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-0 max-w-3xl mx-auto"
+            style={{
+              opacity: loaded ? 1 : 0,
+              transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 30px, 0)',
+              transition: 'opacity 1s ease 1.4s, transform 1s cubic-bezier(0.22, 1, 0.36, 1) 1.4s',
+            }}
+          >
+            <AnimatedStat end={17} suffix="+" label="Módulos IA" />
+            <AnimatedStat end={200} suffix="+" label="Padrões Visuais" />
+            <AnimatedStat end={100} suffix="+" label="Tipos de Docs" />
+            <AnimatedStat end={5} suffix="" label="Idiomas Nativos" />
+          </div>
+
           <p
             className="mt-5 text-[9px] text-muted-foreground/50 tracking-[0.2em] uppercase"
             style={{
               opacity: loaded ? 1 : 0,
-              transition: 'opacity 1s ease 1.4s',
+              transition: 'opacity 1s ease 1.6s',
             }}
           >
             Powered by ELP® Green Technology
