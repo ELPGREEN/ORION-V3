@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
 import { isMobileDevice, openYouTube, openSpotify } from "@/lib/utils/deep-link";
+import { useLocation } from "react-router-dom";
 
 interface MusicCommand {
   action: string;
@@ -12,6 +13,8 @@ interface MusicCommand {
 }
 
 export function FloatingMusicPlayer() {
+  const location = useLocation();
+  const isOnNeuralPage = location.pathname === "/dashboard/rede-neural";
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [muted, setMuted] = useState(false);
@@ -19,9 +22,10 @@ export function FloatingMusicPlayer() {
   const [minimized, setMinimized] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Listen for music commands from Orion
+  // Listen for music commands from Orion (skip on neural page — OrionPlaylistBar handles it there)
   useEffect(() => {
     const handler = (e: CustomEvent<MusicCommand>) => {
+      if (isOnNeuralPage) return;
       const { action, query: q } = e.detail;
       if (action === "search_and_play" && q) {
         if (isMobileDevice()) {
@@ -37,7 +41,7 @@ export function FloatingMusicPlayer() {
     };
     window.addEventListener("orion-music-command", handler as EventListener);
     return () => window.removeEventListener("orion-music-command", handler as EventListener);
-  }, []);
+  }, [isOnNeuralPage]);
 
   // Listen for volume commands
   useEffect(() => {
@@ -73,7 +77,7 @@ export function FloatingMusicPlayer() {
     ? `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1${muted || volume === 0 ? "&mute=1" : ""}`
     : "";
 
-  if (!visible || !query) return null;
+  if (!visible || !query || isOnNeuralPage) return null;
 
   return (
     <AnimatePresence>
