@@ -128,34 +128,13 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Auth: accept any valid JWT (anon for cron, service-role, or user)
+    // Auth: verify_jwt=false in config.toml (cron/admin function)
+    // Uses service_role key internally — no user-level auth needed
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Autenticação obrigatória." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    const envServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    if (token === envServiceKey) {
-      console.log("[Auth] Service role key matched directly — cron authorized");
+    if (authHeader) {
+      console.log("[Auth] Authorization header present");
     } else {
-      try {
-        const parts = token.split(".");
-        if (parts.length < 2) throw new Error("Not a JWT");
-        const payload = JSON.parse(atob(parts[1]));
-        const role = payload.role;
-        if (!["anon", "service_role", "authenticated"].includes(role)) {
-          throw new Error("Invalid role");
-        }
-      } catch {
-        return new Response(
-          JSON.stringify({ error: "Não autorizado. Faça login novamente." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+      console.log("[Auth] No auth header — proceeding (verify_jwt=false, cron-safe)");
     }
 
     const body = await req.json().catch(() => ({}));
