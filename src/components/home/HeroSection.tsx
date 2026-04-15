@@ -255,7 +255,7 @@ export function HeroSection({ t }: HeroSectionProps) {
 
           {/* Animated Stats Bar */}
           <div
-            className="mt-10 sm:mt-14 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-0 max-w-3xl mx-auto"
+            className="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-0 max-w-3xl mx-auto"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 30px, 0)',
