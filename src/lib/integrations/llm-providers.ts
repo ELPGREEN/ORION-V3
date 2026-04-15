@@ -259,6 +259,86 @@ export function createLLMClient(
 /**
  * Get provider display name
  */
+/**
+ * Get API key from environment variables
+ * Supports multiple providers
+ */
+export function getApiKey(provider: LLMProvider): string | null {
+  const envKeys: Record<LLMProvider, string> = {
+    openai: import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.OPENAI_API_KEY,
+    anthropic: import.meta.env.VITE_ANTHROPIC_API_KEY || import.meta.env.ANTHROPIC_API_KEY,
+    google: import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.GOOGLE_API_KEY,
+    deepseek: import.meta.env.VITE_DEEPSEEK_API_KEY || import.meta.env.DEEPSEEK_API_KEY,
+    groq: import.meta.env.VITE_GROQ_API_KEY || import.meta.env.GROQ_API_KEY,
+    cohere: import.meta.env.VITE_COHERE_API_KEY || import.meta.env.COHERE_API_KEY,
+    mistral: import.meta.env.VITE_MISTRAL_API_KEY || import.meta.env.MISTRAL_API_KEY,
+    fireworks: import.meta.env.VITE_FIREWORKS_API_KEY || import.meta.env.FIREWORKS_API_KEY,
+    together: import.meta.env.VITE_TOGETHER_API_KEY || import.meta.env.TOGETHER_API_KEY,
+    ollama: import.meta.env.VITE_OLLAMA_API_KEY,
+    lmstudio: import.meta.env.VITE_LMSTUDIO_API_KEY,
+    "llama-cpp": import.meta.env.VITE_LLAMA_CPP_API_KEY,
+    huggingface: import.meta.env.VITE_HUGGINGFACE_API_KEY || import.meta.env.HUGGINGFACE_API_KEY,
+    openrouter: import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.OPENROUTER_API_KEY,
+    azure: import.meta.env.VITE_AZURE_API_KEY || import.meta.env.AZURE_API_KEY,
+    vertex: import.meta.env.VITE_VERTEX_API_KEY || import.meta.env.VERTEX_API_KEY,
+  };
+  
+  return envKeys[provider] || null;
+}
+
+/**
+ * Check which providers have API keys configured
+ */
+export function getAvailableProviders(): LLMProvider[] {
+  const providers = Object.keys(FREE_MODELS) as LLMProvider[];
+  return providers.filter(p => getApiKey(p) !== null);
+}
+
+/**
+ * Check if DeepSeek is available (has API key)
+ */
+export function isDeepSeekAvailable(): boolean {
+  return getApiKey("deepseek") !== null;
+}
+
+/**
+ * Quick chat with DeepSeek (simplified)
+ */
+export async function chatWithDeepSeek(
+  messages: Array<{ role: string; content: string }>,
+  model: string = "deepseek-chat"
+): Promise<LLMResponse> {
+  const apiKey = getApiKey("deepseek");
+  
+  if (!apiKey) {
+    throw new Error("DeepSeek API key not configured. Add VITE_DEEPSEEK_API_KEY to your .env file.");
+  }
+  
+  const client = createLLMClient("deepseek", model, apiKey);
+  return client.chat(messages);
+}
+
+/**
+ * Quick chat with any provider (simplified)
+ */
+export async function chatWithProvider(
+  provider: LLMProvider,
+  messages: Array<{ role: string; content: string }>,
+  model?: string
+): Promise<LLMResponse> {
+  const apiKey = getApiKey(provider);
+  
+  if (!apiKey) {
+    throw new Error(`${provider} API key not configured. Add VITE_${provider.toUpperCase()}_API_KEY to your .env file.`);
+  }
+  
+  const client = createLLMClient(provider, model, apiKey);
+  return client.chat(messages);
+}
+
+/**
+ * Get provider display name
+ */
 export function getProviderName(provider: LLMProvider): string {
   const names: Record<LLMProvider, string> = {
     openai: "OpenAI (GPT)",
