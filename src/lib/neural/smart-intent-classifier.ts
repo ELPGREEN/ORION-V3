@@ -63,6 +63,10 @@ const REGEX_RULES: RegexRule[] = [
 
   // ═══ Orion Auto-Evolution Commands (like OpenCode) ═══
   { pattern: /\b(auto\s+evoluir|evoluir|auto\s+programar|auto\s+melhorar|self\s+evolve|auto\s+dev)\b/i, intent: "orion_evolution", confidence: 0.98, extractParams: () => ({ command: "auto-evoluir", action: "evolve" }) },
+  { pattern: /^\/(init|initialize)\b/i, intent: "orion_evolution", confidence: 0.99, extractParams: () => ({ command: "init", action: "initialize" }) },
+  { pattern: /^\/(undo|revert)\b/i, intent: "orion_evolution", confidence: 0.99, extractParams: () => ({ command: "undo", action: "revert" }) },
+  { pattern: /^\/(redo)\b/i, intent: "orion_evolution", confidence: 0.99, extractParams: () => ({ command: "redo", action: "repeat" }) },
+  { pattern: /^\/(share|compartilhar)\b/i, intent: "orion_evolution", confidence: 0.99, extractParams: () => ({ command: "share", action: "share" }) },
   { pattern: /\b(novo\s+comando|criar\s+comando|adicionar\s+comando)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: (t) => {
     const m = t.match(/(?:comando|criar|adicionar)\s+(.+)/i);
     return { command: "novo-comando", args: m?.[1]?.trim() };

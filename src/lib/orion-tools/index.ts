@@ -272,16 +272,28 @@ export async function executeTool(
   console.log(`[OrionTools] Executing: ${toolName}`, params);
   
   switch (toolName) {
-    // Use neural-ops for AI tasks
+    // Use neural-ops for AI tasks and code operations
     case "analyze_code":
     case "security_scan":
-    case "vision_analyze": {
+    case "vision_analyze":
+    case "file_read":
+    case "file_write":
+    case "file_edit":
+    case "file_search":
+    case "glob":
+    case "shell":
+    case "bash":
+    case "git_status":
+    case "git_commit":
+    case "test":
+    case "lint":
+    case "build": {
       const { data, error } = await supabase.functions.invoke("neural-ops", {
         body: {
-          action: "code_analysis",
-          mode: toolName === "security_scan" ? "security_scan" : "analyze_file",
-          question: params.question || params.pattern || "Analyze this code",
-          ...params,
+          action: "code_operation",
+          tool: toolName,
+          params,
+          question: params.question || params.pattern || `Execute ${toolName}`,
         },
       });
       if (error) throw error;

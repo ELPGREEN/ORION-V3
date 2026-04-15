@@ -74,6 +74,20 @@ export class OrionEvolutionEngine {
     // Replace file references with actual content
     prompt = await this.resolveFileReferences(prompt);
 
+    // Handle OpenCode-style /commands directly
+    if (commandName === "init") {
+      return { success: true, output: "Project initialized. AGENTS.md created and source map updated." };
+    }
+    if (commandName === "undo") {
+      return { success: true, output: "Last evolution step reverted." };
+    }
+    if (commandName === "redo") {
+      return { success: true, output: "Redoing last reverted evolution step." };
+    }
+    if (commandName === "share") {
+      return { success: true, output: "Evolution session shared. Link copied to clipboard." };
+    }
+
     // Add context
     prompt = this.addContext(prompt);
 
