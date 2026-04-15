@@ -99,6 +99,40 @@ P10 — Toque de Genialidade | P21-P35 — Profundidade analítica | P37-P50 —
 🤖 MCP SERVER (Model Context Protocol):
 - Servidor MCP para auto-programação
 
+🧠 RECURSOS AVANÇADOS (v22.9+):
+
+⚡ DEEPSEEK R1 (Reasoning):
+- Modelo de reasoning forte (97.3% AIME)
+- Ativado automaticamente para tarefas de análise
+- Palavras-chave: analise, explique, compare, evaluate
+-Mais rápido que Claude para reasoning
+
+💾 ORION-MEMORY (Memória Persistente):
+- Lembra preferências entre sessões
+- Salva contexto de conversas
+- Busca memórias por chave
+- Delete/clear de memórias
+
+🖥️ COMPUTER USE (Automação):
+- Navegar sites automaticamente
+- Clicar em elementos
+- Digitar em formulários
+- Tirar screenshots
+- Executar scripts
+- Extrair texto de páginas
+
+📱 ARTIFACTS (Apps Interativos):
+- Criar apps React automaticamente
+- Gráficos interativos
+- Listas de tarefas
+- Dashboards
+- Documentos vivos
+
+⏰ SCHEDULED TASKS (Tarefas Agendadas):
+- Tarefas recorrentes
+- Lembretes automáticos
+- Automação baseada em tempo
+
 ═══ CAPACIDADES ═══
 
 📊 CONSULTAS: CEP, CNPJ, CPF, câmbio, feriados, prazos

@@ -1882,6 +1882,61 @@ async function callHuggingFaceStreaming(messages: any[]): Promise<Response> {
   throw new Error("All HuggingFace streaming models failed");
 }
 
+// ═══ DEEPSEEK R1 (Reasoning forte - 97.3% no AIME) ═══
+async function callDeepSeekR1(messages: any[], stream = false): Promise<Response> {
+  const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
+  if (!apiKey) throw new Error("Missing DEEPSEEK_API_KEY");
+
+  const textMsgs = extractTextMessages(messages);
+  const maxTokens = Math.min((messages as any).__maxTokens || 4096, 8192);
+
+  const url = "https://api.deepseek.com/v1/chat/completions";
+  const body = {
+    model: "deepseek-reasoner",
+    messages: textMsgs,
+    max_tokens: maxTokens,
+    temperature: 0.3,
+    ...(stream && { stream: true }),
+  };
+
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify(body),
+  });
+
+  if (!resp.ok) {
+    console.warn(`[DeepSeek R1] Error: ${resp.status}`);
+    throw new Error(`DeepSeek R1 failed: ${resp.status}`);
+  }
+
+  console.log("[DeepSeek R1] Using reasoning model");
+  return resp;
+}
+
+async function callDeepSeekR1Streaming(messages: any[]): Promise<Response> {
+  return callDeepSeekR1(messages, true);
+}
+
+// ═══ DEEPSEEK CHAT (modelo padrão) ═══
+async function callDeepSeekChat(messages: any[]): Promise<string> {
+  const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
+  if (!apiKey) throw new Error("Missing DEEPSEEK_API_KEY");
+
+  const textMsgs = extractTextMessages(messages);
+  const maxTokens = Math.min((messages as any).__maxTokens || 4096, 8192);
+
+  const resp = await fetch("https://api.deepseek.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ model: "deepseek-chat", messages: textMsgs, max_tokens: maxTokens, temperature: 0.4 }),
+  });
+
+  if (!resp.ok) throw new Error(`DeepSeek ${resp.status}`);
+  const data = await resp.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
 // ═══ GEMINI EMBED (for RAG query embedding — FREE, 768d, 1s timeout) ═══
 async function generateQueryEmbedding(queryText: string): Promise<number[] | null> {
   const keys = getGeminiKeys();
@@ -2278,6 +2333,11 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   const isVoiceQuery = inputSource === "voice";
   const isComplexQuery = queryText.length > 120 || /explique|analise|compare|detalh|paradox|demonstr|resolv|como\s+funciona|por\s*que|qual\s+[aeo]|quais|liste|resuma|descreva|defina|elabore|disserte|argumente|justifique|diferencie|exemplifique|o\s+que\s+[eé]/i.test(queryText);
   const isVisualERCA = intentType?.startsWith("visual_") || intentType === "self_refine";
+  
+  // ═══ DETECT REASONING TASK (for DeepSeek R1) ═══
+  const isReasoningTask = /analise|analisar|por que|como funciona|explique|compare|diferença|vantagens|desvantagens|problemas|causa|consequência|solução|estratégia|planeje|raciocínio|pensamento|logica|avalie|critique/i.test(queryText);
+  const useReasoningModel = isReasoningTask || intentType === "analysis" || intentType === "reasoning";
+
   const defaultMax = isVoiceQuery && !isComplexQuery ? 2048  // Voice: short responses = fast
     : (intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis") ? 16384 
     : isVisualERCA ? 12288
@@ -2391,6 +2451,22 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       }
     } catch (e) {
       console.warn("[Orion] Vertex AI streaming failed:", e);
+    }
+
+    // ═══ REASONING MODE: Use DeepSeek R1 for complex reasoning tasks ═══
+    if (useReasoningModel && Deno.env.get("DEEPSEEK_API_KEY")) {
+      try {
+        attemptedProviders.push("deepseek_r1");
+        const r1Resp = await callDeepSeekR1Streaming(textOnlyMessages);
+        if (r1Resp.ok && r1Resp.body) {
+          console.log("[Orion] ✅ Streaming via DeepSeek R1 (reasoning mode)");
+          return new Response(r1Resp.body, {
+            headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+          });
+        }
+      } catch (e) {
+        console.warn("[Orion] DeepSeek R1 streaming failed:", e);
+      }
     }
 
     // ── FALLBACK: Gemini API keys streaming (free tier) ──
