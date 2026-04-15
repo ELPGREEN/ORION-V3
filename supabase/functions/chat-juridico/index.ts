@@ -654,8 +654,8 @@ async function searchNeuralContext(
       if (filters?.tribunal) {
         rpcParams.filter_source = `datajud_${filters.tribunal.toLowerCase()}`;
       }
-      const { data, error } = await supabase.rpc("hybrid_search_legal_v3", rpcParams);
-      if (!error && data?.length) legalResults = data;
+      const { data, error } = await supabase.rpc("hybrid_search_legal_v3", rpcParams as any);
+      if (!error && (data as any)?.length) legalResults = data as any;
     }
     
     // Fallback text search on legal_embeddings
@@ -691,9 +691,9 @@ async function searchNeuralContext(
         match_count: 8,
         semantic_weight: 0.65,
         keyword_weight: 0.35,
-      });
-      if (!error && data?.length) {
-        knowledgeResults = data.map((r: any) => ({
+      } as any);
+      if (!error && (data as any)?.length) {
+        knowledgeResults = (data as any).map((r: any) => ({
           ...r,
           source: `neural_${r.source_type}`,
           source_label: `Base Neural (${r.source_type})`,
@@ -1245,8 +1245,8 @@ Use Bluebook para citações americanas, formato BR para citações nacionais.`,
       intentContext += `\nÁREA JURÍDICA: ${params.area.toUpperCase()}`;
     }
 
-    if (params.partes) {
-      intentContext += `\nPARTES: Autor: ${params.partes.autor || "(a definir)"} | Réu: ${params.partes.reu || "(a definir)"}`;
+    if (params.partes && typeof params.partes === "object") {
+      intentContext += `\nPARTES: Autor: ${(params.partes as any).autor || "(a definir)"} | Réu: ${(params.partes as any).reu || "(a definir)"}`;
     }
 
     console.log(`🌐 Jurisdiction: ${jurisdiction}`);
@@ -1451,7 +1451,7 @@ A mensagem do usuário veio por COMANDO DE VOZ. Ajuste sua resposta:
 
     // ====== 4.9. ADAPTIVE COMMUNICATION CONTEXT (from Supabase) ======
     try {
-      const { data: commCtx } = await supabase
+      const { data: commCtx } = await supabaseAdmin
         .from("user_communication_context")
         .select("*")
         .eq("user_id", userId)
@@ -1459,7 +1459,7 @@ A mensagem do usuário veio por COMANDO DE VOZ. Ajuste sua resposta:
 
       if (commCtx) {
         // Fetch matching adaptive prompt
-        const { data: adaptivePrompt } = await supabase
+        const { data: adaptivePrompt } = await supabaseAdmin
           .from("adaptive_system_prompts")
           .select("instrucao_sistema, exemplos_resposta")
           .eq("perfil_fala", (commCtx as any).perfil_fala || "Amigável/Coloquial")
@@ -1485,7 +1485,7 @@ ${(adaptivePrompt as any).instrucao_sistema}`;
         // Environmental context injection
         if ((commCtx as any).reatividade_visual) {
           const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-          const { data: envCtx } = await supabase
+          const { data: envCtx } = await supabaseAdmin
             .from("environmental_context")
             .select("objeto_detectado, categoria, emocao_detectada, confianca")
             .eq("user_id", userId)
