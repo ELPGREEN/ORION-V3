@@ -4,13 +4,20 @@
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Volume2, VolumeX, Maximize2, Play, Music } from "lucide-react";
+import { X, Volume2, VolumeX, Maximize2, Minimize2, Play, Music } from "lucide-react";
+import {
+  buildYouTubeSearchEmbed,
+  clampPercent,
+  normalizeYouTubeEmbedUrl,
+  postYouTubeIframeCommand,
+} from "@/lib/youtube-player";
 
 interface VideoCommand {
   action: string;
   url?: string;
   query?: string;
   title?: string;
+  value?: number;
 }
 
 interface OrionEmbeddedVideoProps {
@@ -21,47 +28,158 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
   const [videoUrl, setVideoUrl] = useState("");
   const [title, setTitle] = useState("");
   const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(100);
   const [visible, setVisible] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const sendPlayerCommand = useCallback((func: string, args: unknown[] = []) => {
+    return postYouTubeIframeCommand(iframeRef.current, func, args);
+  }, []);
+
+  const syncPlayerState = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      if (muted || volume === 0) {
+        sendPlayerCommand("mute");
+        return;
+      }
+      sendPlayerCommand("unMute");
+      sendPlayerCommand("setVolume", [volume]);
+    });
+  }, [muted, sendPlayerCommand, volume]);
+
+  const applyVolume = useCallback((nextVolume: number, forceMuted?: boolean) => {
+    const safeVolume = clampPercent(nextVolume, volume);
+    const shouldMute = forceMuted ?? safeVolume === 0;
+
+    setVolume(safeVolume);
+    setMuted(shouldMute);
+
+    window.setTimeout(() => {
+      if (shouldMute) {
+        sendPlayerCommand("mute");
+      } else {
+        sendPlayerCommand("unMute");
+        sendPlayerCommand("setVolume", [safeVolume]);
+      }
+    }, 120);
+  }, [sendPlayerCommand, volume]);
+
+  const toggleMute = useCallback(() => {
+    if (muted || volume === 0) {
+      applyVolume(volume === 0 ? 50 : volume, false);
+      return;
+    }
+    applyVolume(volume, true);
+  }, [applyVolume, muted, volume]);
+
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement === el) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      el.requestFullscreen().catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
-    const handler = (e: CustomEvent<VideoCommand>) => {
-      const { action, url, query, title: t } = e.detail;
-      if (action === "play_video" && url) {
-        setVideoUrl(convertToEmbed(url));
-        setTitle(t || query || "Orion Video");
-        setVisible(true);
-      } else if (action === "search_video" && query) {
-        setVideoUrl(`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1`);
-        setTitle(t || query);
-        setVisible(true);
-      } else if (action === "close") {
-        handleClose();
-      }
-    };
-    window.addEventListener("orion-embedded-video", handler as EventListener);
-    return () => window.removeEventListener("orion-embedded-video", handler as EventListener);
+    const onFs = () => setIsFullscreen(document.fullscreenElement === containerRef.current);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
   const handleClose = useCallback(() => {
+    if (document.fullscreenElement === containerRef.current) {
+      document.exitFullscreen().catch(() => {});
+    }
     setVisible(false);
     setVideoUrl("");
     setTitle("");
     onClose?.();
   }, [onClose]);
 
-  const toggleMute = useCallback(() => {
-    setMuted(prev => {
-      const newMuted = !prev;
-      if (iframeRef.current) {
-        const cmd = newMuted ? "mute" : "unMute";
-        iframeRef.current.contentWindow?.postMessage(
-          JSON.stringify({ event: "command", func: cmd, args: "" }), "*"
-        );
+  const moveToAudioBar = useCallback(() => {
+    if (!videoUrl) return;
+    window.dispatchEvent(new CustomEvent("orion-video-command", {
+      detail: { action: "play_video", url: videoUrl, title }
+    }));
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("orion-video-command", {
+        detail: { action: "minimize_to_bar" }
+      }));
+    }, 100);
+    handleClose();
+  }, [handleClose, title, videoUrl]);
+
+  useEffect(() => {
+    if (!visible || !videoUrl) return;
+    const timer = window.setTimeout(syncPlayerState, 350);
+    return () => window.clearTimeout(timer);
+  }, [syncPlayerState, videoUrl, visible]);
+
+  useEffect(() => {
+    const embeddedHandler = (e: CustomEvent<VideoCommand>) => {
+      const { action, url, query, title: nextTitle } = e.detail;
+      if (action === "play_video" && url) {
+        setVideoUrl(normalizeYouTubeEmbedUrl(url));
+        setTitle(nextTitle || query || "Orion Video");
+        setVisible(true);
+      } else if (action === "search_video" && query) {
+        setVideoUrl(buildYouTubeSearchEmbed(query));
+        setTitle(nextTitle || query);
+        setVisible(true);
+      } else if (action === "close") {
+        handleClose();
       }
-      return newMuted;
-    });
-  }, []);
+    };
+
+    const controlHandler = (e: CustomEvent<VideoCommand>) => {
+      const { action, value } = e.detail;
+      if (!visible || !videoUrl) return;
+
+      if (action === "pause" || action === "stop") {
+        sendPlayerCommand("pauseVideo");
+      } else if (action === "play" || action === "resume") {
+        sendPlayerCommand("playVideo");
+      } else if (action === "next" || action === "skip") {
+        sendPlayerCommand("nextVideo");
+      } else if (action === "previous" || action === "prev") {
+        sendPlayerCommand("previousVideo");
+      } else if (action === "setVolume") {
+        applyVolume(typeof value === "number" ? value : volume, false);
+      } else if (action === "up" || action === "volume_up") {
+        applyVolume(volume + 10, false);
+      } else if (action === "down" || action === "volume_down") {
+        applyVolume(volume - 10);
+      } else if (action === "mute") {
+        applyVolume(volume === 0 ? 50 : volume, true);
+      } else if (action === "unmute") {
+        applyVolume(volume === 0 ? 50 : volume, false);
+      } else if (action === "maximize" || action === "fullscreen" || action === "aumentar_tela") {
+        const el = containerRef.current;
+        if (el && document.fullscreenElement !== el) {
+          el.requestFullscreen().catch(() => {});
+        }
+      } else if (action === "diminuir_tela") {
+        if (document.fullscreenElement === containerRef.current) {
+          document.exitFullscreen().catch(() => {});
+        }
+      } else if (action === "minimize") {
+        moveToAudioBar();
+      } else if (action === "close") {
+        handleClose();
+      }
+    };
+
+    window.addEventListener("orion-embedded-video", embeddedHandler as EventListener);
+    window.addEventListener("orion-video-command", controlHandler as EventListener);
+    return () => {
+      window.removeEventListener("orion-embedded-video", embeddedHandler as EventListener);
+      window.removeEventListener("orion-video-command", controlHandler as EventListener);
+    };
+  }, [applyVolume, handleClose, moveToAudioBar, sendPlayerCommand, videoUrl, visible, volume]);
 
   if (!visible || !videoUrl) {
     return (
@@ -82,11 +200,15 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
   }
 
   return (
-    <div className="flex flex-col rounded-lg overflow-hidden" style={{
-      backgroundColor: "rgba(8,8,20,0.95)",
-      border: "1px solid rgba(212,175,55,0.2)",
-      boxShadow: "0 0 30px rgba(212,175,55,0.05), inset 0 1px 0 rgba(212,175,55,0.15)",
-    }}>
+    <div
+      ref={containerRef}
+      className="flex flex-col rounded-lg overflow-hidden"
+      style={{
+        backgroundColor: "rgba(8,8,20,0.95)",
+        border: "1px solid rgba(212,175,55,0.2)",
+        boxShadow: "0 0 30px rgba(212,175,55,0.05), inset 0 1px 0 rgba(212,175,55,0.15)",
+      }}
+    >
       {/* Top shimmer */}
       <div className="h-[2px]" style={{
         background: "linear-gradient(90deg, transparent, #D4AF37, #3B82F6, #D4AF37, transparent)",
@@ -110,23 +232,11 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={toggleMute}>
             {muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-            // Minimize to music bar — dispatch to VideoOverlay bar mode
-            window.dispatchEvent(new CustomEvent("orion-video-command", {
-              detail: { action: "play_video", url: videoUrl, title }
-            }));
-            // Then switch VideoOverlay to bar mode
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent("orion-video-command", {
-                detail: { action: "minimize_to_bar" }
-              }));
-            }, 100);
-            handleClose();
-          }} title="Minimizar para barra de áudio">
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={moveToAudioBar} title="Minimizar para barra de áudio">
             <Music className="h-3 w-3" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => window.open(videoUrl, "_blank")}>
-            <Maximize2 className="h-3 w-3" />
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={toggleFullscreen} title={isFullscreen ? "Sair tela cheia" : "Tela cheia"}>
+            {isFullscreen ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
           </Button>
           <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={handleClose}>
             <X className="h-3 w-3" />
@@ -144,9 +254,10 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
 
         <iframe
           ref={iframeRef}
-          src={`${videoUrl}${videoUrl.includes("?") ? "&" : "?"}${muted ? "mute=1&" : ""}autoplay=1&enablejsapi=1`}
+          src={videoUrl}
+          onLoad={syncPlayerState}
           className="absolute inset-0 w-full h-full"
-          allow="autoplay; encrypted-media; picture-in-picture"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           allowFullScreen
           title="Orion Embedded Video"
         />
@@ -170,11 +281,4 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
       `}</style>
     </div>
   );
-}
-
-function convertToEmbed(url: string): string {
-  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/);
-  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
-  if (url.includes("/embed")) return url;
-  return url;
 }
