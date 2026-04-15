@@ -13,12 +13,17 @@ interface MusicCommand {
 }
 
 export function FloatingMusicPlayer() {
+  const location = useLocation();
+  const isOnNeuralPage = location.pathname === "/dashboard/rede-neural";
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(70);
   const [minimized, setMinimized] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Don't render on neural page — OrionPlaylistBar handles music there
+  if (isOnNeuralPage) return null;
 
   // Listen for music commands from Orion
   useEffect(() => {
