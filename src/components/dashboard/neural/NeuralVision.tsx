@@ -41,6 +41,7 @@ import { captureVideoFrame, analyzeFrame } from "@/lib/vision/gemini-vision";
 import { VisionControlPanel, DEFAULT_VISION_SETTINGS, type VisionSettings } from "./VisionControlPanel";
 // Vision Stats Panel
 import { VisionStatsPanel, DEFAULT_DETECTION_STATS, type DetectionStats } from "./VisionStatsPanel";
+import { HudCollapsibleSection } from "./HudCollapsibleSection";
 const preloadAllVision = async () => {};
 
 // Real-time detection via Gemini Flash — throttled, lightweight
