@@ -61,6 +61,33 @@ const REGEX_RULES: RegexRule[] = [
   { pattern: /\b(desativar?\s+(?:a\s+)?vis[aã]o|desligar?\s+(?:a\s+)?vis[aã]o|vis[aã]o\s+off|parar?\s+(?:a\s+)?vis[aã]o)\b/i, intent: "vision_off", confidence: 0.97 },
   { pattern: /\b(ativar?\s+(?:a\s+)?vis[aã]o|ligar?\s+(?:a\s+)?vis[aã]o|vis[aã]o\s+on|iniciar?\s+(?:a\s+)?vis[aã]o)\b/i, intent: "vision_on", confidence: 0.97 },
 
+  // ═══ Orion Auto-Evolution Commands (like OpenCode) ═══
+  { pattern: /\b(auto\s+evoluir|evoluir|auto\s+programar|auto\s+melhorar|self\s+evolve|auto\s+dev)\b/i, intent: "orion_evolution", confidence: 0.98, extractParams: () => ({ command: "auto-evoluir", action: "evolve" }) },
+  { pattern: /\b(novo\s+comando|criar\s+comando|adicionar\s+comando)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: (t) => {
+    const m = t.match(/(?:comando|criar|adicionar)\s+(.+)/i);
+    return { command: "novo-comando", args: m?.[1]?.trim() };
+  }},
+  { pattern: /\b(otimizar|otimiza|melhorar\s+performance|mejor\s+performance)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: () => ({ command: "otimizar", action: "optimize" }) },
+  { pattern: /\b(corrigir\s+bug|corrige\s+bug|fix\s+bug|resolver\s+bug)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: (t) => {
+    const m = t.match(/(?:bug|problema)\s+(.+)/i);
+    return { command: "corrigir-bug", args: m?.[1]?.trim() };
+  }},
+  { pattern: /\b(adicionar\s+feature|nova\s+feature|novo\s+recurso|adicionar\s+função)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: (t) => {
+    const m = t.match(/(?:feature|recurso|função)\s+(.+)/i);
+    return { command: "adicionar-feature", args: m?.[1]?.trim() };
+  }},
+  { pattern: /\b(revisar\s+código|revê\s+código|review\s+code|analisar\s+código)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: () => ({ command: "revisar-codigo", action: "review" }) },
+  { pattern: /\b(criar\s+teste|testes\s+automáticos|generate\s+tests|testes\s+unitários)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: () => ({ command: "criar-teste", action: "test" }) },
+  { pattern: /\b(atualizar\s+docs|documentar|docs\s+update|atualizar\s+documentação)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: (t) => {
+    const m = t.match(/(?:docs|documentação)\s+(.+)/i);
+    return { command: "atualizar-docs", args: m?.[1]?.trim() };
+  }},
+  { pattern: /\b(integrar|conectar\s+ferramenta|adicionar\s+ferramenta)\b/i, intent: "orion_evolution", confidence: 0.96, extractParams: (t) => {
+    const m = t.match(/(?:ferramenta|integração)\s+(.+)/i);
+    return { command: "integrar-ferramenta", args: m?.[1]?.trim() };
+  }},
+  { pattern: /\b(melhorar\s+interface|melhorar\s+UI|melhorar\s+visual|otimizar\s+visual)\b/i, intent: "orion_evolution", confidence: 0.96, extractParams: () => ({ command: "melhorar-ui", action: "ui" }) },
+
   // Time/date (very specific, high confidence)
   { pattern: /\b(que\s+hora|que\s+dia|data\s+de\s+hoje|hora\s+atual|what\s+time)\b/i, intent: "time_date", confidence: 0.98 },
   

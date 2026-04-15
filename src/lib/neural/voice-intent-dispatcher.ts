@@ -104,7 +104,7 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
 
   // ── Creator-only intents guard ──
   // Creator voice is auto-recognized by fingerprint/email and unlocks ALL commands
-  const CREATOR_ONLY_INTENTS = ["self_evolve", "auto_construct"];
+  const CREATOR_ONLY_INTENTS = ["self_evolve", "auto_construct", "orion_evolution"];
   if (CREATOR_ONLY_INTENTS.includes(intent.intent) && identityStatus !== "creator" && identityStatus !== "owner") {
     console.warn(`[VoiceDispatch] ❌ Blocked "${intent.intent}" — voice ID is "${identityStatus}", not "creator"`);
     return ok(intent.intent, "⛔ Apenas o criador pode solicitar auto-evolução do sistema.", null, t0);
@@ -281,6 +281,23 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
       case "auto_construct":
       case "vision_describe":
       case "vision_object":
+      case "orion_evolution": {
+        // Import and execute Orion evolution engine
+        const { getOrionEvolution } = await import("@/lib/orion-evolution/engine");
+        const engine = getOrionEvolution();
+        
+        const command = params.command || "auto-evoluir";
+        const args = params.args;
+        
+        const result = await engine.executeCommand(command, args);
+        
+        if (result.success) {
+          return ok(intent.intent, `✅ Evolução executada: ${result.output}`, { ...params, files: result.filesCreated || result.filesModified }, t0);
+        } else {
+          return ok(intent.intent, `❌ Erro: ${result.error || result.output}`, { ...params, error: true }, t0);
+        }
+      }
+
       case "iot":
       case "calendar":
       default:
