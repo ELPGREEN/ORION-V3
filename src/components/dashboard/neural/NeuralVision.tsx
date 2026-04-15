@@ -41,6 +41,7 @@ import { captureVideoFrame, analyzeFrame } from "@/lib/vision/gemini-vision";
 import { VisionControlPanel, DEFAULT_VISION_SETTINGS, type VisionSettings } from "./VisionControlPanel";
 // Vision Stats Panel
 import { VisionStatsPanel, DEFAULT_DETECTION_STATS, type DetectionStats } from "./VisionStatsPanel";
+import { HudCollapsibleSection } from "./HudCollapsibleSection";
 const preloadAllVision = async () => {};
 
 // Real-time detection via Gemini Flash — throttled, lightweight
@@ -786,15 +787,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         <div className="absolute top-3 left-3 bottom-3 w-[220px] xl:w-[250px] hidden lg:flex flex-col gap-2 z-10 overflow-y-auto"
           style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(212,175,55,0.15) transparent" }}>
 
-          {/* Consciousness circular gauge */}
-          <div className="relative overflow-hidden rounded-sm" style={{ backgroundColor: "rgba(0,0,0,0.6)", border: "1px solid rgba(212,175,55,0.2)" }}>
-            <div className="absolute top-0 left-0 w-full h-px" style={{ background: "linear-gradient(90deg, rgba(212,175,55,0.6), rgba(212,175,55,0.3), transparent)" }} />
-            <div className="px-3 py-2 flex items-center gap-1.5 border-b" style={{ borderColor: "rgba(212,175,55,0.1)" }}>
-              <Brain className="h-3 w-3 shrink-0" style={{ color: "#D4AF37", filter: "drop-shadow(0 0 4px rgba(212,175,55,0.5))" }} />
-              <span className="text-[10px] font-mono tracking-wider uppercase" style={{ color: "rgba(212,175,55,0.7)" }}>Consciência</span>
-            </div>
+          {/* ── Consciência ── */}
+          <HudCollapsibleSection icon={Brain} title="Consciência" iconColor="#D4AF37" accentColor="rgba(212,175,55,0.6)" defaultOpen>
             <div className="px-3 py-3 flex items-center gap-3">
-              {/* Circular gauge */}
               <div className="relative w-16 h-16 shrink-0">
                 <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
                   <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(0,229,255,0.08)" strokeWidth="3" />
@@ -832,33 +827,31 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 ))}
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-cyan-400/30 via-transparent to-transparent" />
-          </div>
+          </HudCollapsibleSection>
 
-          {/* Vision Stats Panel */}
-          <VisionStatsPanel stats={detectionStats} />
+          {/* ── Stats ── */}
+          <HudCollapsibleSection icon={Activity} title="Stats" iconColor="#22c55e" accentColor="rgba(34,197,94,0.4)" badge={`${fps.toFixed(0)} fps`} badgeColor="#22c55e">
+            <VisionStatsPanel stats={detectionStats} className="border-0 bg-transparent" />
+          </HudCollapsibleSection>
 
-          {/* Vision Control Panel */}
-          <VisionControlPanel 
-            settings={visionSettings} 
-            onSettingsChange={setVisionSettings}
-            isActive={active}
-            detectionStats={{
-              fps,
-              objectsDetected: mlDetections.length,
-              facesDetected: mlDetections.filter(d => d.category === "face").length,
-              handsDetected: mlDetections.filter(d => d.category === "hand").length,
-              lastDetectionTime: mlDetections.length > 0 ? Date.now() : 0,
-            }}
-          />
+          {/* ── Controle Visão ── */}
+          <HudCollapsibleSection icon={Eye} title="Controle" iconColor="#00e5ff" accentColor="rgba(0,229,255,0.4)">
+            <VisionControlPanel
+              settings={visionSettings}
+              onSettingsChange={setVisionSettings}
+              isActive={active}
+              detectionStats={{
+                fps,
+                objectsDetected: mlDetections.length,
+                facesDetected: mlDetections.filter(d => d.category === "face").length,
+                handsDetected: mlDetections.filter(d => d.category === "hand").length,
+                lastDetectionTime: mlDetections.length > 0 ? Date.now() : 0,
+              }}
+            />
+          </HudCollapsibleSection>
 
-          {/* Legacy Vision Panel */}
-          <div className="relative bg-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-sm overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-pink-400/40 via-transparent to-transparent" />
-            <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
-              <Eye className="h-3 w-3 text-pink-400 shrink-0" />
-              <span className="text-[10px] font-mono text-pink-400/80 tracking-wider uppercase">Visão ({regions.length})</span>
-            </div>
+          {/* ── Visão Legacy ── */}
+          <HudCollapsibleSection icon={Eye} title="Visão" iconColor="#ec4899" accentColor="rgba(236,72,153,0.4)" badge={regions.length} badgeColor="#ec4899">
             <div className="px-3 py-2 space-y-1">
               {regions.length > 0 ? regions.slice(0, 5).map((r, i) => (
                 <div key={i} className="flex items-center gap-1.5">
@@ -872,12 +865,11 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 </p>
               )}
             </div>
-          </div>
+          </HudCollapsibleSection>
 
-          {/* Mode Selector */}
-          <div className="relative bg-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-sm overflow-hidden">
-            <div className="px-3 py-1.5 flex items-center gap-2">
-              <Eye className="h-3 w-3 text-cyan-400 shrink-0" />
+          {/* ── Modo ── */}
+          <HudCollapsibleSection icon={Globe} title="Modo" iconColor="#7c4dff" accentColor="rgba(124,77,255,0.4)">
+            <div className="px-3 py-1.5">
               <Select value={identificationMode} onValueChange={setIdentificationMode}>
                 <SelectTrigger className="h-6 text-[9px] font-mono bg-transparent border-cyan-500/15 text-cyan-300/70 focus:ring-0 focus:ring-offset-0">
                   <SelectValue />
@@ -893,27 +885,24 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </HudCollapsibleSection>
 
-          {/* Identified Objects */}
-          <IdentifiedObjectsPanel objects={detectedObjects} />
+          {/* ── Objetos Identificados ── */}
+          <HudCollapsibleSection icon={Search} title="Objetos" iconColor="#ffd740" accentColor="rgba(255,215,64,0.4)" badge={detectedObjects.length} badgeColor="#ffd740">
+            <IdentifiedObjectsPanel objects={detectedObjects} />
+          </HudCollapsibleSection>
 
-          {/* Voice hint */}
+          {/* ── Voice hint ── */}
           {listening && (
-            <div className="relative bg-black/60 backdrop-blur-sm border border-red-500/20 rounded-sm overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-red-400/40 via-transparent to-transparent" />
+            <HudCollapsibleSection icon={Mic} title="Ouvindo" iconColor="#ef4444" accentColor="rgba(239,68,68,0.4)" defaultOpen>
               <div className="px-3 py-2">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Mic className="h-3 w-3 text-red-400 animate-pulse" />
-                  <span className="text-[9px] font-mono text-red-300/70">Ouvindo...</span>
-                </div>
                 <div className="flex flex-wrap gap-1">
                   {["o que vê", "como estou", "parar"].map(c => (
                     <span key={c} className="text-[6px] font-mono text-white/10 border border-white/[0.04] rounded px-1 py-0.5">"{c}"</span>
                   ))}
                 </div>
               </div>
-            </div>
+            </HudCollapsibleSection>
           )}
         </div>
 

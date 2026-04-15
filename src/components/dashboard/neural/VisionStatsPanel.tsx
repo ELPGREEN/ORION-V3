@@ -65,21 +65,7 @@ export function VisionStatsPanel({ stats, className }: VisionStatsPanelProps) {
   ];
 
   return (
-    <div className={cn("relative bg-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-sm overflow-hidden", className)}>
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-emerald-400/40 via-transparent to-transparent" />
-      
-      {/* Header */}
-      <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
-        <Gauge className="h-3 w-3 shrink-0" style={{ color: fpsColor }} />
-        <span className="text-[10px] font-mono tracking-wider uppercase" style={{ color: "rgba(212,175,55,0.7)" }}>Stats</span>
-        <span className="ml-auto flex items-center gap-1">
-          {stats.isConnected 
-            ? <Wifi className="h-2.5 w-2.5 text-emerald-400" /> 
-            : <WifiOff className="h-2.5 w-2.5 text-red-400/50" />
-          }
-        </span>
-      </div>
-
+    <div className={cn("overflow-hidden", className)}>
       <div className="px-3 py-2 space-y-2">
         {/* FPS display */}
         <div className="flex items-center gap-2">

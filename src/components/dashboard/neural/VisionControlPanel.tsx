@@ -1,14 +1,8 @@
 /**
- * ═══ Vision Control Panel (Compact HUD Sidebar) ═══
- * Compact toggle controls for computer vision modules
- * Matches JARVIS HUD sidebar style (~220px wide)
+ * ═══ Vision Control Panel (Inner content for HudCollapsibleSection) ═══
  */
-
 import { useState, useCallback } from "react";
-import { 
-  Eye, EyeOff, ScanFace, Hand, Type, Boxes, 
-  Activity, Zap, ChevronDown, ChevronUp
-} from "lucide-react";
+import { EyeOff, ScanFace, Hand, Type, Boxes, Activity, Zap } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 
@@ -46,7 +40,7 @@ const MODULES = [
   { key: "motionDetection" as const, label: "Movimento", icon: Activity, color: "#ff6e40" },
 ];
 
-export function VisionControlPanel({ settings, onSettingsChange, isActive, detectionStats }: VisionControlPanelProps) {
+export function VisionControlPanel({ settings, onSettingsChange, isActive }: VisionControlPanelProps) {
   const [expanded, setExpanded] = useState(false);
 
   const toggleSetting = useCallback((key: keyof VisionSettings) => {
@@ -57,30 +51,15 @@ export function VisionControlPanel({ settings, onSettingsChange, isActive, detec
 
   if (!isActive) {
     return (
-      <div className="relative bg-black/60 backdrop-blur-sm border border-white/[0.06] rounded-sm overflow-hidden">
-        <div className="px-3 py-2 flex items-center gap-1.5">
-          <EyeOff className="h-3 w-3 text-white/20" />
-          <span className="text-[9px] font-mono text-white/20">Visão inativa</span>
-        </div>
+      <div className="px-3 py-2 flex items-center gap-1.5">
+        <EyeOff className="h-3 w-3 text-white/20" />
+        <span className="text-[9px] font-mono text-white/20">Visão inativa</span>
       </div>
     );
   }
 
   return (
-    <div className="relative bg-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-sm overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-yellow-400/40 via-transparent to-transparent" />
-      
-      {/* Header */}
-      <div 
-        className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10 cursor-pointer hover:bg-white/[0.02]"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <Eye className="h-3 w-3 shrink-0" style={{ color: "#D4AF37", filter: "drop-shadow(0 0 4px rgba(212,175,55,0.5))" }} />
-        <span className="text-[10px] font-mono tracking-wider uppercase" style={{ color: "rgba(212,175,55,0.7)" }}>Controle</span>
-        <span className="ml-auto text-[7px] font-mono text-emerald-400">● ON</span>
-        {expanded ? <ChevronUp className="h-3 w-3 text-white/20" /> : <ChevronDown className="h-3 w-3 text-white/20" />}
-      </div>
-
+    <div>
       {/* Module Toggles */}
       <div className="px-3 py-2 space-y-1.5">
         {MODULES.map(m => {
@@ -89,9 +68,9 @@ export function VisionControlPanel({ settings, onSettingsChange, isActive, detec
             <div key={m.key} className="flex items-center gap-1.5">
               <m.icon className="h-3 w-3 shrink-0" style={{ color: on ? m.color : "rgba(255,255,255,0.15)" }} />
               <span className={`text-[9px] font-mono flex-1 ${on ? "text-white/50" : "text-white/15"}`}>{m.label}</span>
-              <Switch 
-                checked={on} 
-                onCheckedChange={() => toggleSetting(m.key)} 
+              <Switch
+                checked={on}
+                onCheckedChange={() => toggleSetting(m.key)}
                 className="scale-[0.55] origin-right"
               />
             </div>
@@ -99,10 +78,16 @@ export function VisionControlPanel({ settings, onSettingsChange, isActive, detec
         })}
       </div>
 
-      {/* Advanced settings (collapsed) */}
+      {/* Expand advanced */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full text-[7px] font-mono text-white/20 hover:text-white/40 py-1 transition-colors"
+      >
+        {expanded ? "▲ Menos" : "▼ Avançado"}
+      </button>
+
       {expanded && (
         <div className="px-3 pb-2 space-y-2 border-t border-cyan-500/10 pt-2">
-          {/* Confidence */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-[8px] font-mono text-white/25 flex items-center gap-1">
@@ -110,29 +95,27 @@ export function VisionControlPanel({ settings, onSettingsChange, isActive, detec
               </span>
               <span className="text-[8px] font-mono font-bold" style={{ color: "#ffd740" }}>{settings.confidenceThreshold}%</span>
             </div>
-            <Slider 
-              value={[settings.confidenceThreshold]} 
+            <Slider
+              value={[settings.confidenceThreshold]}
               onValueChange={(v) => onSettingsChange({ ...settings, confidenceThreshold: v[0] })}
               min={10} max={95} step={5}
               className="h-3 [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5 [&_[role=slider]]:bg-yellow-400 [&_[role=slider]]:border-yellow-400"
             />
           </div>
 
-          {/* Frequency */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-[8px] font-mono text-white/25">Frequência</span>
               <span className="text-[8px] font-mono font-bold" style={{ color: "#69f0ae" }}>1/{settings.detectionFrequency}</span>
             </div>
-            <Slider 
-              value={[settings.detectionFrequency]} 
+            <Slider
+              value={[settings.detectionFrequency]}
               onValueChange={(v) => onSettingsChange({ ...settings, detectionFrequency: v[0] })}
               min={1} max={30} step={1}
               className="h-3 [&_[role=slider]]:h-2.5 [&_[role=slider]]:w-2.5 [&_[role=slider]]:bg-emerald-400 [&_[role=slider]]:border-emerald-400"
             />
           </div>
 
-          {/* Visualization toggles */}
           <div className="flex flex-wrap gap-1 pt-1">
             {([
               { key: "showBoundingBoxes" as const, label: "BBox" },
