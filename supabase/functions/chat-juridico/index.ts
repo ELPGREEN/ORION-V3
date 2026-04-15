@@ -294,7 +294,7 @@ interface NeuralSearchResult {
 }
 
 // ====== FREE-ONLY MULTI-LLM PROVIDER (Gemini 7-key rotation) ======
-type LLMProvider = "gemini";
+type LLMProvider = "gemini" | "groq" | "openai" | "anthropic" | "deepseek";
 
 interface LLMConfig {
   provider: LLMProvider;

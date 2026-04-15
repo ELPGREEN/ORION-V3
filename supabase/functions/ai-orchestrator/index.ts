@@ -578,7 +578,7 @@ Deno.serve(async (req) => {
 
     // Estimate tokens if not returned by API
     if (!tokenUsage) {
-      const inputText = conversation.map(m => m.content).join(" ") + finalSystemPrompt;
+      const inputText = conversation.map((m: any) => m.content).join(" ") + finalSystemPrompt;
       const estimatedInput = estimateTokens(inputText);
       const estimatedOutput = estimateTokens(output);
       tokenUsage = {
@@ -597,7 +597,7 @@ Deno.serve(async (req) => {
       total_duration_ms: Date.now() - (performance.now() | 0),
       success: true,
       user_id: user.id,
-    }).then(() => {}).catch(e => console.warn("⚠️ ai_metrics log failed:", e.message));
+    }).then(() => {}).catch((e: any) => console.warn("⚠️ ai_metrics log failed:", e.message));
 
     console.log(`✅ FREE Gemini — prompt: ${tokenUsage.prompt_tokens}, completion: ${tokenUsage.completion_tokens}, total: ${tokenUsage.total_tokens} (${usedProvider.id} / ${usedProvider.model})`);
 

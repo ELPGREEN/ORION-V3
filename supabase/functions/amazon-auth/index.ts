@@ -275,8 +275,8 @@ Deno.serve(async (req) => {
     }
 
     return err(`Unknown action: ${action}`, 400);
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("amazon-auth error:", e);
-    return err(e.message || "Internal error", 500);
+    return err((e as Error).message || "Internal error", 500);
   }
 });
