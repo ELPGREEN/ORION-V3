@@ -66,7 +66,7 @@ const showcaseImages = [
 // ═══ ORION IA Utilities — Featured (top row) + standard ═══
 const featuredUtilities = [
   {
-    icon: Mic,
+    icon: GlyphVoice,
     title: "Relâmpago Vivo",
     desc: "Audição + Raciocínio Relâmpago integrados. O áudio entra, é entendido em milissegundos e a resposta sai instantaneamente.",
     color: "text-orange-400",
@@ -74,7 +74,7 @@ const featuredUtilities = [
     tag: "VOICE ENGINE",
   },
   {
-    icon: BrainCircuit,
+    icon: GlyphBrain,
     title: "DeepSeek R1",
     desc: "Motor de raciocínio profundo com 97.3% no AIME. Análise lógica, comparações e decisões complexas.",
     color: "text-cyan-400",
@@ -82,7 +82,7 @@ const featuredUtilities = [
     tag: "REASONING",
   },
   {
-    icon: Camera,
+    icon: GlyphVision,
     title: "Visão Computacional",
     desc: "Análise visual em tempo real: detecção de objetos, OCR, reconhecimento facial e leitura de documentos.",
     color: "text-emerald-400",
@@ -92,19 +92,19 @@ const featuredUtilities = [
 ];
 
 const standardUtilities = [
-  { icon: Wand2, title: "Orion Artifacts", desc: "Apps React interativos, gráficos e dashboards gerados automaticamente.", color: "text-pink-400" },
-  { icon: Cpu, title: "Computer Use", desc: "Web scraping, extração de dados e navegação automática.", color: "text-purple-400" },
-  { icon: Sparkles, title: "Orion Memory", desc: "Memória persistente: lembra preferências e histórico entre sessões.", color: "text-violet-400" },
-  { icon: Brain, title: "Raciocínio Multi-camada", desc: "Motor proprietário para análises complexas e tomada de decisão autônoma.", color: "text-purple-400" },
-  { icon: FileText, title: "Geração de Documentos", desc: "Contratos, LOIs, NDAs, propostas — 15+ templates bilíngues.", color: "text-emerald-400" },
-  { icon: Search, title: "Pesquisa Semântica", desc: "Busca avançada em legislação, jurisprudência e bases de dados.", color: "text-amber-400" },
-  { icon: BarChart3, title: "Análise de Dados", desc: "KPIs em tempo real, relatórios automatizados e insights preditivos.", color: "text-blue-400" },
-  { icon: Globe, title: "Multi-idioma (5 línguas)", desc: "PT, EN, IT, ES, ZH com tradução contextual inteligente.", color: "text-rose-400" },
-  { icon: ShieldCheck, title: "Compliance", desc: "GDPR/LGPD, screening AML, validação CPF/CNPJ automática.", color: "text-green-400" },
-  { icon: Bot, title: "Assistente 24/7", desc: "Sempre disponível para dúvidas, documentos e automações.", color: "text-yellow-400" },
-  { icon: Workflow, title: "Automação", desc: "Pipelines inteligentes com notificações e aprovações.", color: "text-indigo-400" },
-  { icon: Database, title: "Armazenamento Seguro", desc: "Criptografia, controle granular e backups automáticos.", color: "text-teal-400" },
-  { icon: Users, title: "Gestão de Equipes", desc: "Controle de acessos, chat interno e monitoramento.", color: "text-pink-400" },
+  { icon: GlyphArtifact, title: "Orion Artifacts", desc: "Apps React interativos, gráficos e dashboards gerados automaticamente.", color: "text-pink-400" },
+  { icon: GlyphComputer, title: "Computer Use", desc: "Web scraping, extração de dados e navegação automática.", color: "text-purple-400" },
+  { icon: GlyphMemory, title: "Orion Memory", desc: "Memória persistente: lembra preferências e histórico entre sessões.", color: "text-violet-400" },
+  { icon: GlyphReasoning, title: "Raciocínio Multi-camada", desc: "Motor proprietário para análises complexas e tomada de decisão autônoma.", color: "text-purple-400" },
+  { icon: GlyphDocument, title: "Geração de Documentos", desc: "Contratos, LOIs, NDAs, propostas — 15+ templates bilíngues.", color: "text-emerald-400" },
+  { icon: GlyphSearch, title: "Pesquisa Semântica", desc: "Busca avançada em legislação, jurisprudência e bases de dados.", color: "text-amber-400" },
+  { icon: GlyphAnalytics, title: "Análise de Dados", desc: "KPIs em tempo real, relatórios automatizados e insights preditivos.", color: "text-blue-400" },
+  { icon: GlyphGlobe, title: "Multi-idioma (5 línguas)", desc: "PT, EN, IT, ES, ZH com tradução contextual inteligente.", color: "text-rose-400" },
+  { icon: GlyphShield, title: "Compliance", desc: "GDPR/LGPD, screening AML, validação CPF/CNPJ automática.", color: "text-green-400" },
+  { icon: GlyphAssistant, title: "Assistente 24/7", desc: "Sempre disponível para dúvidas, documentos e automações.", color: "text-yellow-400" },
+  { icon: GlyphWorkflow, title: "Automação", desc: "Pipelines inteligentes com notificações e aprovações.", color: "text-indigo-400" },
+  { icon: GlyphStorage, title: "Armazenamento Seguro", desc: "Criptografia, controle granular e backups automáticos.", color: "text-teal-400" },
+  { icon: GlyphTeam, title: "Gestão de Equipes", desc: "Controle de acessos, chat interno e monitoramento.", color: "text-pink-400" },
 ];
 
 // ═══ Tech Comparison Data ═══
