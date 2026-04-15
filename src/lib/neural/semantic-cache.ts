@@ -12,6 +12,8 @@
 export interface CacheEntry {
   queryHash: string;
   queryText: string;
+  queryTokens?: Set<string>; // Pre-calculated tokens for fuzzy matching
+  queryTotalWeight?: number; // Pre-calculated total TF-IDF weight
   source: string;
   responseData: unknown;
   resultCount: number;
@@ -64,12 +66,26 @@ const STOP_WORDS = new Set([
   "é", "são", "foi", "ser", "ter", "como", "mais", "não", "sim",
 ]);
 
+/**
+ * TF-IDF weight for a term.
+ * Assumes term is already normalized (lowercase).
+ */
 function getTermWeight(term: string): number {
-  const lower = term.toLowerCase();
-  if (STOP_WORDS.has(lower)) return 0;
-  if (RARE_LEGAL_TERMS.has(lower)) return 3.0; // High IDF for rare legal terms
-  if (lower.length > 8) return 1.5; // Longer terms tend to be more specific
+  if (STOP_WORDS.has(term)) return 0;
+  if (RARE_LEGAL_TERMS.has(term)) return 3.0; // High IDF for rare legal terms
+  if (term.length > 8) return 1.5; // Longer terms tend to be more specific
   return 1.0;
+}
+
+/**
+ * Calculates total weight of a token set.
+ */
+export function calculateSetWeight(tokens: Set<string>): number {
+  let total = 0;
+  for (const t of tokens) {
+    total += getTermWeight(t);
+  }
+  return total;
 }
 
 /**
@@ -83,32 +99,47 @@ export function getWeightedTokens(text: string): Set<string> {
 
 /**
  * Calculates TF-IDF weighted Jaccard similarity between two pre-computed token sets.
- * Prevents redundant tokenization and filtering in O(N) loops.
+ * Uses pre-calculated total weights to avoid expensive union creation.
+ * Formula: intersectionWeight / (weightA + weightB - intersectionWeight)
  */
-export function tfidfWeightedJaccardFromSets(setA: Set<string>, setB: Set<string>): number {
+export function tfidfWeightedJaccardFromSets(
+  setA: Set<string>,
+  weightA: number,
+  setB: Set<string>,
+  weightB: number
+): number {
+  if (weightA === 0 || weightB === 0) return 0;
+
   let intersectionWeight = 0;
-  let unionWeight = 0;
-  
-  const allTerms = new Set([...setA, ...setB]);
-  
-  for (const term of allTerms) {
-    const w = getTermWeight(term);
-    const inA = setA.has(term);
-    const inB = setB.has(term);
-    
-    if (inA && inB) {
-      intersectionWeight += w;
+
+  // Always iterate over the smaller set to find intersection
+  if (setA.size <= setB.size) {
+    for (const term of setA) {
+      if (setB.has(term)) {
+        intersectionWeight += getTermWeight(term);
+      }
     }
-    unionWeight += w;
+  } else {
+    for (const term of setB) {
+      if (setA.has(term)) {
+        intersectionWeight += getTermWeight(term);
+      }
+    }
   }
-  
+
+  const unionWeight = weightA + weightB - intersectionWeight;
   return unionWeight === 0 ? 0 : intersectionWeight / unionWeight;
 }
 
 export function tfidfWeightedJaccard(a: string, b: string): number {
   const setA = getWeightedTokens(a);
   const setB = getWeightedTokens(b);
-  return tfidfWeightedJaccardFromSets(setA, setB);
+  return tfidfWeightedJaccardFromSets(
+    setA,
+    calculateSetWeight(setA),
+    setB,
+    calculateSetWeight(setB)
+  );
 }
 
 export function jaccardSimilarity(a: string, b: string): number {
@@ -132,9 +163,15 @@ export class SemanticCache {
   set(query: string, source: string, data: unknown, resultCount: number): void {
     const hash = generateQueryHash(query, source);
     const now = Date.now();
+    const queryText = normalizeQuery(query);
+    const queryTokens = getWeightedTokens(queryText);
+    const queryTotalWeight = calculateSetWeight(queryTokens);
+
     this.entries.set(hash, {
       queryHash: hash,
-      queryText: normalizeQuery(query),
+      queryText,
+      queryTokens,
+      queryTotalWeight,
       source,
       responseData: data,
       resultCount,
@@ -157,11 +194,23 @@ export class SemanticCache {
 
     // 2. TF-IDF weighted fuzzy match
     const normalized = normalizeQuery(query);
+    const queryTokens = getWeightedTokens(normalized);
+    const queryWeight = calculateSetWeight(queryTokens);
+
     for (const entry of this.entries.values()) {
       if (entry.source !== source || entry.expiresAt <= now) continue;
       
-      // Use TF-IDF weighted Jaccard for better legal term matching
-      const similarity = tfidfWeightedJaccard(normalized, entry.queryText);
+      // Use pre-calculated tokens/weights if available
+      const entryTokens = entry.queryTokens || getWeightedTokens(entry.queryText);
+      const entryWeight = entry.queryTotalWeight || calculateSetWeight(entryTokens);
+
+      const similarity = tfidfWeightedJaccardFromSets(
+        queryTokens,
+        queryWeight,
+        entryTokens,
+        entryWeight
+      );
+
       if (similarity >= this.similarityThreshold) {
         entry.hitCount++;
         return { hit: true, data: entry.responseData, source: "fuzzy" };
