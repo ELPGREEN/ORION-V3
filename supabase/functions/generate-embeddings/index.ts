@@ -128,42 +128,49 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Auth: accept any valid JWT, apikey header, or service-role key
+    // Auth: accept any valid JWT or apikey header
     const authHeader = req.headers.get("authorization");
     const apikeyHeader = req.headers.get("apikey");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     const envServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const publishableKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
 
-    // Allow if apikey header matches anon key (supabase.functions.invoke sends this)
-    const hasValidApikey = apikeyHeader && (apikeyHeader === anonKey || apikeyHeader === envServiceKey);
+    console.log(`[Auth] authHeader=${authHeader ? "present" : "missing"}, apikey=${apikeyHeader ? "present" : "missing"}`);
 
-    if (!authHeader && !hasValidApikey) {
+    let authorized = false;
+
+    // Check apikey header
+    if (apikeyHeader && (apikeyHeader === publishableKey || apikeyHeader === envServiceKey)) {
+      authorized = true;
+      console.log("[Auth] apikey header matched");
+    }
+
+    // Check Authorization header
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      if (token === envServiceKey || token === publishableKey) {
+        authorized = true;
+        console.log("[Auth] Key matched directly");
+      } else {
+        try {
+          const parts = token.split(".");
+          if (parts.length >= 2) {
+            const payload = JSON.parse(atob(parts[1]));
+            if (["anon", "service_role", "authenticated"].includes(payload.role)) {
+              authorized = true;
+              console.log(`[Auth] JWT role: ${payload.role}`);
+            }
+          }
+        } catch {
+          // not a valid JWT
+        }
+      }
+    }
+
+    if (!authorized) {
       return new Response(
         JSON.stringify({ error: "Autenticação obrigatória." }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-    }
-
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      if (token === envServiceKey || token === anonKey) {
-        console.log("[Auth] Key matched directly — authorized");
-      } else {
-        try {
-          const parts = token.split(".");
-          if (parts.length < 2) throw new Error("Not a JWT");
-          const payload = JSON.parse(atob(parts[1]));
-          const role = payload.role;
-          if (!["anon", "service_role", "authenticated"].includes(role)) {
-            throw new Error("Invalid role");
-          }
-        } catch {
-          return new Response(
-            JSON.stringify({ error: "Não autorizado. Faça login novamente." }),
-            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      }
     }
 
     const body = await req.json().catch(() => ({}));
