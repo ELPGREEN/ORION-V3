@@ -6,7 +6,7 @@
  * v2: 310+ entries from generated knowledge base.
  */
 
-import { tfidfWeightedJaccard, tfidfWeightedJaccardFromSets, getWeightedTokens } from "./semantic-cache";
+import { tfidfWeightedJaccard, tfidfWeightedJaccardFromSets, getWeightedTokens, calculateSetWeight } from "./semantic-cache";
 import type { CacheEntry } from "./instant-response-cache-types";
 import { GENERATED_TECH_ENTRIES } from "./generated-knowledge-base";
 
@@ -43,6 +43,7 @@ interface OptimizedEntry {
   entry: CacheEntry;
   normalizedPatterns: string[];
   tokenSets: Set<string>[];
+  tokenTotalWeights: number[];
 }
 
 const OPTIMIZED_ENTRIES: OptimizedEntry[] = [];
@@ -56,11 +57,14 @@ function initializeIndices() {
   for (const entry of ALL_ENTRIES) {
     const normalizedPatterns: string[] = [];
     const tokenSets: Set<string>[] = [];
+    const tokenTotalWeights: number[] = [];
 
     for (const p of entry.patterns) {
       const normP = normalize(p);
       normalizedPatterns.push(normP);
-      tokenSets.push(getWeightedTokens(normP));
+      const tokens = getWeightedTokens(normP);
+      tokenSets.push(tokens);
+      tokenTotalWeights.push(calculateSetWeight(tokens));
 
       // Store in O(1) map for instant exact hits
       if (!EXACT_MATCH_MAP.has(normP)) {
@@ -68,7 +72,7 @@ function initializeIndices() {
       }
     }
 
-    OPTIMIZED_ENTRIES.push({ entry, normalizedPatterns, tokenSets });
+    OPTIMIZED_ENTRIES.push({ entry, normalizedPatterns, tokenSets, tokenTotalWeights });
   }
 }
 
@@ -89,6 +93,7 @@ function normalize(text: string): string {
 function quickMatchOptimized(
   normQ: string,
   queryTokens: Set<string>,
+  queryWeight: number,
   opt: OptimizedEntry
 ): number {
   // 1. Direct contains check
@@ -100,8 +105,10 @@ function quickMatchOptimized(
 
   // 2. Fuzzy similarity from pre-computed sets
   let best = 0;
-  for (const setP of opt.tokenSets) {
-    const sim = tfidfWeightedJaccardFromSets(queryTokens, setP);
+  for (let i = 0; i < opt.tokenSets.length; i++) {
+    const setP = opt.tokenSets[i];
+    const weightP = opt.tokenTotalWeights[i];
+    const sim = tfidfWeightedJaccardFromSets(queryTokens, queryWeight, setP, weightP);
     if (sim > best) best = sim;
   }
   return best;
@@ -156,9 +163,10 @@ export function getInstantResponse(question: string): InstantResponse | null {
   let bestMatch: CacheEntry | null = null;
   let bestScore = 0;
   const queryTokens = getWeightedTokens(normQ);
+  const queryWeight = calculateSetWeight(queryTokens);
 
   for (const opt of OPTIMIZED_ENTRIES) {
-    const score = quickMatchOptimized(normQ, queryTokens, opt);
+    const score = quickMatchOptimized(normQ, queryTokens, queryWeight, opt);
     if (score > bestScore) {
       bestScore = score;
       bestMatch = opt.entry;
