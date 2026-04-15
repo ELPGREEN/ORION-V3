@@ -103,10 +103,16 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
   const t0 = performance.now();
 
   // ── Creator-only intents guard ──
+  // Creator voice is auto-recognized by fingerprint/email and unlocks ALL commands
   const CREATOR_ONLY_INTENTS = ["self_evolve", "auto_construct"];
-  if (CREATOR_ONLY_INTENTS.includes(intent.intent) && identityStatus !== "creator") {
+  if (CREATOR_ONLY_INTENTS.includes(intent.intent) && identityStatus !== "creator" && identityStatus !== "owner") {
     console.warn(`[VoiceDispatch] ❌ Blocked "${intent.intent}" — voice ID is "${identityStatus}", not "creator"`);
     return ok(intent.intent, "⛔ Apenas o criador pode solicitar auto-evolução do sistema.", null, t0);
+  }
+
+  // Log creator access for transparency
+  if (identityStatus === "creator") {
+    console.log(`[VoiceDispatch] 👑 Creator access — all commands unlocked for "${intent.intent}"`);
   }
 
   try {

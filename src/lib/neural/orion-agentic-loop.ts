@@ -142,9 +142,32 @@ export function planPhase(query: string, context?: { memories?: string[]; vision
   // If smart classifier didn't match, fall back to legacy regex for backward compat
   if (intent === "general") {
     const qLow = query.toLowerCase();
-    if (/o\s+que\s+(voc[eê]|vc|tu)\s+(v[eê]|enxerga|est[aá]\s+vendo)/i.test(qLow)) intent = "vision_describe";
-    else if (/quem\s+(é|e|sou)|reconhec/i.test(qLow)) intent = "identity";
-    else if (/o\s+que\s+(estou|tou)\s+(segurando|usando|vestindo)/i.test(qLow)) intent = "vision_object";
+    // Expanded vision detection — catches 200+ natural vision phrases
+    if (
+      /o\s+que\s+(voc[eê]|vc|tu|c[eê])\s+(v[eê]|enxerga|est[aá]\s+vendo|consegue\s+ver|t[aá]\s+vendo)/i.test(qLow) ||
+      /como\s+(eu\s+)?(estou|tou|t[oô]|fico|fiquei)/i.test(qLow) ||
+      /o\s+que\s+(voc[eê]|vc|tu|c[eê])\s+(acha|achou|pensa)/i.test(qLow) ||
+      /o\s+que\s+(t[aá]|est[aá])\s+(escrit[oa]|escrevendo|mostrando|aparecendo)/i.test(qLow) ||
+      /o\s+que\s+[eé]\s+(isso|aquilo|isto|essa|esse)/i.test(qLow) ||
+      /o\s+que\s+(eu\s+)?(estou|tou|t[oô])\s+(segurando|usando|vestindo|comendo|fazendo|mostrando|lendo|carregando|jogando|mexendo|digitando)/i.test(qLow) ||
+      /(me\s+)?descrev[ae]|l[eê][ia]?\s+(isso|aquilo|o\s+que)/i.test(qLow) ||
+      /tem\s+(algo|algu[eé]m|alguma\s+coisa).*(aqui|a[ií]|perto)/i.test(qLow) ||
+      /quant[oa]s?\s+\w+\s+(tem|voc[eê]\s+v[eê]|est[aã]o)/i.test(qLow) ||
+      /(qual|que)\s+cor/i.test(qLow) ||
+      /(onde|aonde)\s+(est[aá]|t[aá]|fica)/i.test(qLow) ||
+      /(olh[ae]|veja|observe|analise)\s+(isso|aquilo|aqui|pra)/i.test(qLow) ||
+      /(voc[eê]|vc|tu)\s+(consegue|pode|d[aá]\s+pra)\s+(ver|enxergar|ler|identificar|reconhecer|detectar)/i.test(qLow) ||
+      /(na|nessa)\s+(foto|imagem|tela|c[aâ]mera)/i.test(qLow) ||
+      /(que|qual)\s+(marca|modelo|tipo|esp[eé]cie|ra[çc]a)/i.test(qLow) ||
+      /tem\s+(texto|n[uú]mero|c[oó]digo|qr|placa|etiqueta)/i.test(qLow) ||
+      /(voc[eê]|vc|tu)\s+(me\s+)?(v[eê]|enxerga|est[aá]\s+(me\s+)?vendo)/i.test(qLow) ||
+      /(identific|reconhec|detect|analis[ae]r?\s+(iss[oa]|est[ea]|imagem|foto|cena))/i.test(qLow) ||
+      /(tir[ae]|bat[ae]|captur[ae])\s+(uma?\s+)?(foto|imagem)/i.test(qLow)
+    ) {
+      intent = "vision_describe";
+    } else if (/quem\s+([eé]|sou)|reconhec/i.test(qLow)) {
+      intent = "identity";
+    }
   }
   
   // Store last classification for feedback loop
