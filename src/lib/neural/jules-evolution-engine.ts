@@ -6,12 +6,12 @@
  */
 
 import { recordSubsystemFailure, type SubsystemKey } from "./jules-auto-triggers";
-import { getImmuneMemory, shouldQuarantine } from "./jules-immune-system";
+import { getImmuneMemory, shouldQuarantine, checkAndRegisterResolutions } from "./jules-immune-system";
 
 // ─── Types ───
 
 export interface ScanResult {
-  domain: "bugs" | "performance" | "design" | "security" | "quality";
+  domain: "bugs" | "performance" | "design" | "security" | "quality" | "industrial";
   issues: ScanIssue[];
   score: number; // 0-100, 100 = healthy
   scannedAt: number;
@@ -233,7 +233,17 @@ export async function runFullScan(): Promise<ScanResult[]> {
   scanRunning = true;
 
   try {
-    const results = [scanForBugs(), scanPerformance(), scanDesign(), scanSecurity(), scanCodeQuality()];
+    // 1. Check for resolved sessions and register antibodies
+    await checkAndRegisterResolutions();
+
+    // 2. Run all scanners
+    const results = [
+      scanForBugs(),
+      scanPerformance(),
+      scanDesign(),
+      scanSecurity(),
+      scanCodeQuality(),
+    ];
     lastScanResults = results;
 
     // Dispatch issues to Jules auto-triggers if thresholds are met
@@ -313,13 +323,17 @@ function groupBySource(errors: ErrorCapture[]): Record<string, ErrorCapture[]> {
 }
 
 function classifyErrorSource(source: string): string {
-  if (source.includes("router") || source.includes("route")) return "core_routing";
-  if (source.includes("auth")) return "core_auth";
-  if (source.includes("supabase") || source.includes("api")) return "core_api";
-  if (source.includes("tf-") || source.includes("tensorflow")) return "tf_inference";
-  if (source.includes("vision") || source.includes("mediapipe")) return "vision_mediapipe";
-  if (source.includes("tts")) return "tts_gemini";
-  if (source.includes("stt")) return "stt_gcp";
+  const s = source.toLowerCase();
+  if (s.includes("router") || s.includes("route")) return "core_routing";
+  if (s.includes("auth")) return "core_auth";
+  if (s.includes("supabase") || s.includes("api")) return "core_api";
+  if (s.includes("tf-") || s.includes("tensorflow") || s.includes("keras")) return "tf_inference";
+  if (s.includes("vision") || s.includes("mediapipe") || s.includes("vlm") || s.includes("gemini-v")) return "vision_gemini";
+  if (s.includes("tts") || s.includes("speech-synthesis")) return "tts_gemini";
+  if (s.includes("stt") || s.includes("speech-recognition") || s.includes("whisper")) return "stt_gcp";
+  if (s.includes("mqtt") || s.includes("iot") || s.includes("broker")) return "iot_mqtt";
+  if (s.includes("ros2") || s.includes("robot") || s.includes("telemetry")) return "iot_ros2";
+  if (s.includes("bluetooth") || s.includes("ble")) return "iot_bluetooth";
   return "core_state";
 }
 

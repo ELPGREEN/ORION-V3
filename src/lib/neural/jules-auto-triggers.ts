@@ -8,6 +8,7 @@
 import { orionSelfImprove, julesFollowUp, getJulesDBSessions, updateJulesSessionStatus } from "./jules-client";
 import { getPipelineLatency } from "./pipeline-latency-tracker";
 import { supabase } from "@/integrations/supabase/client";
+import { shouldQuarantine } from "./jules-immune-system";
 
 // ─── Types ───
 
@@ -29,6 +30,7 @@ export type SubsystemKey =
   | "stt_gcp" | "stt_webspeech"
   | "tts_gemini" | "tts_webspeech"
   | "iot_mqtt" | "iot_bluetooth" | "iot_smart_home" | "iot_ros2"
+  | "industrial_sensor"
   // Core/Bugs
   | "core_routing" | "core_state" | "core_auth" | "core_api"
   // Performance
@@ -71,6 +73,11 @@ export async function recordSubsystemFailure(
   error: string,
   context?: string,
 ): Promise<{ julesTriggered: boolean; sessionId?: string; followUp?: boolean }> {
+  if (shouldQuarantine(subsystem)) {
+    console.log(`[Jules-Trigger] ${subsystem} quarantined, skipping failure recording`);
+    return { julesTriggered: false };
+  }
+
   const store = getFailStore();
   const entry = store[subsystem] || { count: 0, lastError: "", lastTs: 0, julesTriggered: false };
 
@@ -218,6 +225,7 @@ const SUBSYSTEM_MAP: Record<string, { file: string; desc: string }> = {
   industrial_adaptive_mfg: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Adaptive manufacturing line reconfiguration is failing" },
   industrial_protocol_bridge: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Industrial protocol bridge (OPC UA/ROS2/etc) is failing" },
   industrial_safety: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Industrial safety system violation detected" },
+  industrial_sensor: { file: "src/lib/neural/jules-industrial-scanner.ts", desc: "Faulty industrial sensor isolated" },
 };
 
 function buildJulesTask(
