@@ -218,6 +218,20 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         return ok(intent.intent, result.description, { ...params, resolvedPlatform: result.platform, fallback: result.fallback }, t0);
       }
 
+      case "media_control": {
+        const action = params.action || "play";
+        window.dispatchEvent(new CustomEvent("orion-music-command", {
+          detail: { action }
+        }));
+        const actionLabels: Record<string, string> = {
+          next: "próxima faixa",
+          prev: "faixa anterior",
+          pause: "pausando",
+          play: "tocando"
+        };
+        return ok(intent.intent, actionLabels[action] || "executando", null, t0);
+      }
+
       case "video_fullscreen": {
         window.dispatchEvent(new CustomEvent("orion-video-command", {
           detail: { action: "aumentar_tela" }

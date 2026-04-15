@@ -141,9 +141,9 @@ export async function playMusicWithFallback(
       if (mobile) {
         openYouTube(`${query} music`);
       } else {
-        const embedUrl = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query + " music")}&autoplay=1`;
-        window.dispatchEvent(new CustomEvent("orion-video-command", {
-          detail: { action: "play_video", url: embedUrl, query, title: query }
+        // Use orion-music-command for YouTube (OrionPlaylistBar handles it)
+        window.dispatchEvent(new CustomEvent("orion-music-command", {
+          detail: { action: "search_and_play", query: `${query} music` }
         }));
       }
       return {

@@ -155,8 +155,14 @@ const REGEX_RULES: RegexRule[] = [
   // Media — generic (music/video keywords without platform)
   { pattern: /\b(tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica\s+d[oae]\s+|v[ií]deo\s+d[oae]\s+|ouvir?\s+|escutar?\s+)/i, intent: "media", confidence: 0.88, extractParams: (t) => {
     const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+)/i);
-    return { query: m?.[1]?.trim() || t, action: /\b(par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
-  }},
+return { query: m?.[1]?.trim() || t, action: /\b(par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
+  },
+
+  // Media controls — next, previous, pause, resume
+  { pattern: /\b(pr[óò]xima?|pr[óò]ximo|avançar|seguinte|próxima\s+(m[uú]sica|faixa))\b/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "next" }) },
+  { pattern: /\b(anterior|voltar|retornar|voltar\s+(uma|à)\s+(m[uú]sica|faixa)|m[uú]sica\s+anterior)\b/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "prev" }) },
+  { pattern: /\b(pausar|parar|stop|pausa)\b/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "pause" }) },
+  { pattern: /\b(continuar|retomar|resume|play|reproduzir)\b/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "play" }) },
   
   // Navigation — AFTER media so "abrir música" is already caught
   { pattern: /\b(v[aá]\s+para|naveg\w*\s+(para|pra)|ir\s+para|go\s+to)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
