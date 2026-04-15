@@ -2319,7 +2319,7 @@ ${responsesText}`;
     }
 
     // ─── PLANNING MODE: AI analyzes and creates action plan BEFORE editing ───
-    if (mode === "planning") {
+    if ((mode as string) === "planning") {
       console.log("🧠 Planning mode: Chain-of-Thought analysis before action...");
       const providers = getProviders();
       if (providers.length === 0) throw new Error("No AI providers configured");
@@ -2480,7 +2480,7 @@ Retorne APENAS o JSON, sem texto extra. Seja tecnicamente preciso como um correg
 
       const gapQuestions = analysisResult.lacunas.filter(q => q && q.trim().length > 5);
 
-      console.log(`🔍 Deep scan: posicionamento=${analysisResult.posicionamento || analysisResult.positionamento}, lacunas=${gapQuestions.length}, alerta=${analysisResult.alerta_contra_cliente}`);
+      console.log(`🔍 Deep scan: posicionamento=${analysisResult.positionamento}, lacunas=${gapQuestions.length}, alerta=${analysisResult.alerta_contra_cliente}`);
 
       return new Response(JSON.stringify({
         gapQuestions,
@@ -2942,7 +2942,7 @@ ${ANTI_HALLUCINATION_FULL}` },
     const serviceKeyFb = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
     // Registrar aprimoramento no neural_learning_data para RLHF
-    EdgeRuntime.waitUntil(
+    (globalThis as any).EdgeRuntime?.waitUntil?.(
       (async () => {
         try {
           const supa = createClient(supabaseUrlFb, serviceKeyFb);
@@ -2975,7 +2975,7 @@ ${ANTI_HALLUCINATION_FULL}` },
     );
 
     // Triggar pipeline orchestrator para fechar o ciclo
-    EdgeRuntime.waitUntil(
+    (globalThis as any).EdgeRuntime?.waitUntil?.(
       new Promise(r => setTimeout(r, 8000)).then(() =>
         fetch(`${supabaseUrlFb}/functions/v1/neural-pipeline-orchestrator`, {
           method: "POST",
