@@ -278,8 +278,9 @@ export async function executeTool(
     case "vision_analyze": {
       const { data, error } = await supabase.functions.invoke("neural-ops", {
         body: {
-          question: params.question || "Analyze this code",
-          intentType: toolName === "security_scan" ? "security" : "code_analysis",
+          action: "code_analysis",
+          mode: toolName === "security_scan" ? "security_scan" : "analyze_file",
+          question: params.question || params.pattern || "Analyze this code",
           ...params,
         },
       });

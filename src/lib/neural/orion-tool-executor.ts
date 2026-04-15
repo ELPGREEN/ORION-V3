@@ -2363,8 +2363,8 @@ const TOOLS: OrionTool[] = [
       // If a specific path is given, try the Edge Function
       if (params.path) {
         try {
-          const { data, error } = await supabase.functions.invoke("orion-code-analysis", {
-            body: { mode: "analyze_file", path: params.path },
+          const { data, error } = await supabase.functions.invoke("neural-ops", {
+            body: { action: "code_analysis", mode: "analyze_file", path: params.path },
           });
           if (!error && data?.analysis) {
             return `🔍 **Auto-Análise: ${params.path}**\n\n${data.analysis}`;
@@ -2393,8 +2393,8 @@ const TOOLS: OrionTool[] = [
     extract: () => ({}),
     call: async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("orion-code-analysis", {
-          body: { mode: "find_gaps" },
+        const { data, error } = await supabase.functions.invoke("neural-ops", {
+          body: { action: "code_analysis", mode: "find_gaps" },
         });
         if (!error && data?.analysis) {
           return `🔍 **Análise de Lacunas do Código-Fonte**\n\n` +
@@ -2419,8 +2419,8 @@ const TOOLS: OrionTool[] = [
     },
     call: async (params: any) => {
       try {
-        const { data, error } = await supabase.functions.invoke("orion-code-analysis", {
-          body: { mode: "suggest_improvements", path: params.path },
+        const { data, error } = await supabase.functions.invoke("neural-ops", {
+          body: { action: "code_analysis", mode: "suggest_improvements", path: params.path },
         });
         if (!error && data?.analysis) {
           return `💡 **Sugestões de Melhoria — ${params.path}**\n\n` +
@@ -2442,8 +2442,8 @@ const TOOLS: OrionTool[] = [
     extract: () => ({}),
     call: async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("orion-code-analysis", {
-          body: { mode: "architecture_map" },
+        const { data, error } = await supabase.functions.invoke("neural-ops", {
+          body: { action: "code_analysis", mode: "architecture_map" },
         });
         if (!error && data) {
           const depLines = Object.entries(data.dependencyGraph || {})

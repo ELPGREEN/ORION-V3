@@ -2825,6 +2825,54 @@ Gere reflexão cognitiva PROFUNDA em JSON.`;
 }
 
 // ═══ OPERA AI: IMAGE GENERATION via Gemini ═══
+// ═══════════════════════════════════════════════
+// CODE ANALYSIS & EVOLUTION (integrated from orion-code-analysis)
+// ═══════════════════════════════════════════════
+
+async function handleCodeAnalysis(body: Record<string, unknown>) {
+  const { mode, path, question } = body as any;
+  const sb = getSupabase();
+
+  const systemPrompt = `Você é o Agente de Análise de Código do Orion.
+Sua tarefa é analisar o código-fonte do projeto e fornecer insights sobre:
+- Bugs e vulnerabilidades
+- Lacunas de funcionalidade
+- Oportunidades de refatoração
+- Mapeamento arquitetural
+
+Projeto: ORION V3 (React + TypeScript + Vite)
+Foco atual: ${path || "Geral"}
+Modo: ${mode}`;
+
+  const userPrompt = question || `Execute análise no modo ${mode} para ${path || "todo o projeto"}.`;
+
+  // Enhanced logic for specific modes
+  let contextInfo = "";
+  if (mode === "architecture_map") {
+    contextInfo = "\nForneça um grafo de dependências e explicação da hierarquia de pastas.";
+  } else if (mode === "find_gaps") {
+    contextInfo = "\nIdentifique funcionalidades planejadas mas não implementadas ou incompletas.";
+  } else if (mode === "suggest_improvements") {
+    contextInfo = "\nSugira refatorações específicas para melhorar legibilidade e performance.";
+  }
+
+  // Simulating retrieval of code map or specific file if path is provided
+  // In a real scenario, this would use GitHub API or a pre-indexed code map
+
+  const { data, error } = await supabase.functions.invoke("ai-orchestrator", {
+    body: {
+      messages: [
+        { role: "system", content: systemPrompt + contextInfo },
+        { role: "user", content: userPrompt }
+      ],
+      max_tokens: 4000,
+    }
+  });
+
+  if (error) throw error;
+  return data;
+}
+
 async function handleImageGeneration(body: Record<string, unknown>) {
   const prompt = String(body.prompt || body.question || "");
   if (!prompt) return { error: "prompt is required" };
@@ -2917,6 +2965,12 @@ Deno.serve(async (req) => {
       // ═══ OPERA AI: Image Generation via Gemini ═══
       if (action === "generate_image") {
         const result = await handleImageGeneration(body);
+        return json(result);
+      }
+
+      // ═══ CODE ANALYSIS & EVOLUTION ═══
+      if (action === "code_analysis" || action === "auto_evolution") {
+        const result = await handleCodeAnalysis(body);
         return json(result);
       }
 

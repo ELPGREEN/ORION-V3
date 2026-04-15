@@ -132,9 +132,21 @@ Retorne um resumo do que foi feito.
     
     if (!matches) return prompt;
 
-    // In a real implementation, this would read the actual files
-    // For now, we'll keep the references and handle them in the AI
-    return prompt;
+    let resolvedPrompt = prompt;
+    for (const match of matches) {
+      const filePath = match.slice(1); // remove @
+      try {
+        // We attempt to get file info from our source map if it matches
+        const { SOURCE_CODE_MAP } = await import("../neural/orion-introspection");
+        const entry = SOURCE_CODE_MAP.find(m => m.file.includes(filePath));
+        if (entry) {
+          resolvedPrompt = resolvedPrompt.replace(match, `${match} (${entry.description}. Exports: ${entry.exports.join(", ")})`);
+        }
+      } catch (e) {
+        console.warn(`[Evolution] Could not resolve context for ${filePath}`, e);
+      }
+    }
+    return resolvedPrompt;
   }
 
   private addContext(prompt: string): string {

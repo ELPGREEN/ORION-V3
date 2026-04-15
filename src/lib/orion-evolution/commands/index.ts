@@ -29,7 +29,7 @@ export const DEFAULT_ORION_COMMANDS: OrionCommand[] = [
     name: "auto-evoluir",
     description: "Analisa o código atual e faz melhorias autônomas",
     template: `
-Analise o código do projeto Orion em @src/App.tsx e sugira melhorias.
+Analise o código do projeto Orion em @src/App.tsx e @src/lib/neural/orion-ai-client.ts e sugira melhorias.
 Identifique:
 1. Funções que podem ser refatoradas
 2. Bugs óbvios que podem ser corrigidos
