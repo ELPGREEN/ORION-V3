@@ -128,33 +128,41 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Auth: accept any valid JWT (anon for cron, service-role, or user)
+    // Auth: accept any valid JWT, apikey header, or service-role key
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
+    const apikeyHeader = req.headers.get("apikey");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+    const envServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+    // Allow if apikey header matches anon key (supabase.functions.invoke sends this)
+    const hasValidApikey = apikeyHeader && (apikeyHeader === anonKey || apikeyHeader === envServiceKey);
+
+    if (!authHeader && !hasValidApikey) {
       return new Response(
         JSON.stringify({ error: "Autenticação obrigatória." }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const envServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    if (token === envServiceKey) {
-      console.log("[Auth] Service role key matched directly — cron authorized");
-    } else {
-      try {
-        const parts = token.split(".");
-        if (parts.length < 2) throw new Error("Not a JWT");
-        const payload = JSON.parse(atob(parts[1]));
-        const role = payload.role;
-        if (!["anon", "service_role", "authenticated"].includes(role)) {
-          throw new Error("Invalid role");
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      if (token === envServiceKey || token === anonKey) {
+        console.log("[Auth] Key matched directly — authorized");
+      } else {
+        try {
+          const parts = token.split(".");
+          if (parts.length < 2) throw new Error("Not a JWT");
+          const payload = JSON.parse(atob(parts[1]));
+          const role = payload.role;
+          if (!["anon", "service_role", "authenticated"].includes(role)) {
+            throw new Error("Invalid role");
+          }
+        } catch {
+          return new Response(
+            JSON.stringify({ error: "Não autorizado. Faça login novamente." }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
-      } catch {
-        return new Response(
-          JSON.stringify({ error: "Não autorizado. Faça login novamente." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
       }
     }
 
