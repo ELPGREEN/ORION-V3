@@ -56,13 +56,13 @@ const orionUtilities = [
     color: "text-pink-400",
   },
   {
-    icon: Cpu2,
+    icon: Cpu,
     title: "🖥️ Computer Use",
     desc: "Automação de navegador: web scraping, extração de dados, navegação automática. Execute ações sem intervenção manual.",
     color: "text-purple-400",
   },
   {
-    icon: SparklesIcon,
+    icon: Sparkles,
     title: "💾 Orion Memory",
     desc: "Memória persistente entre sessões. Lembra preferências, contexto e histórico para respostas personalizadas.",
     color: "text-violet-400",
