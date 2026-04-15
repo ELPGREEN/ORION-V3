@@ -175,7 +175,7 @@ export function HeroSection({ t }: HeroSectionProps) {
           </div>
 
           <div
-            className="w-16 sm:w-24 h-0.5 bg-primary mx-auto mb-2 sm:mb-3 plasma-glow"
+            className="w-12 sm:w-20 h-0.5 bg-primary mx-auto mb-1.5 sm:mb-2 plasma-glow"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'scaleX(1)' : 'scaleX(0)',
