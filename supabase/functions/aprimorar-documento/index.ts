@@ -2975,7 +2975,7 @@ ${ANTI_HALLUCINATION_FULL}` },
     );
 
     // Triggar pipeline orchestrator para fechar o ciclo
-    EdgeRuntime.waitUntil(
+    (globalThis as any).EdgeRuntime?.waitUntil?.(
       new Promise(r => setTimeout(r, 8000)).then(() =>
         fetch(`${supabaseUrlFb}/functions/v1/neural-pipeline-orchestrator`, {
           method: "POST",
