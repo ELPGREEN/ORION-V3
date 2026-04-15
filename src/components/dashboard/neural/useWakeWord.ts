@@ -212,7 +212,8 @@ export function useWakeWord(
           return;
         }
 
-        const maxAttempts = isMobileBrowser() ? 3 : 6;
+        // Keep wake word active longer — prevent cycling
+        const maxAttempts = isMobileBrowser() ? 10 : 15;
         restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, maxAttempts);
         if (restartAttemptsRef.current >= maxAttempts) {
           console.log("[WakeWord] Max restart attempts reached, staying idle to prevent mic cycling");
@@ -247,7 +248,8 @@ export function useWakeWord(
           return;
         }
 
-        const maxAttempts = isMobileBrowser() ? 3 : 6;
+        // Keep wake word active longer — prevent cycling
+        const maxAttempts = isMobileBrowser() ? 10 : 15;
         restartAttemptsRef.current = Math.min(restartAttemptsRef.current + 1, maxAttempts);
         if (restartAttemptsRef.current >= maxAttempts) {
           console.log("[WakeWord] Max error restart attempts reached, staying idle");

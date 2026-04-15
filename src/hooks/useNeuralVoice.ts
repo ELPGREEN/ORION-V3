@@ -29,7 +29,10 @@ import { createGCPSTTSession, type GCPSTTSession } from "@/lib/voice/gcpSTT";
 const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
 const ECHO_WINDOW_MS = 18000;
 const ECHO_JACCARD_THRESHOLD = 0.35;
-const MAX_CONSECUTIVE_ABORTS = 3;
+const MAX_CONSECUTIVE_ABORTS = 5;
+const MAX_CONSECUTIVE_NO_SPEECH = 8;
+const NO_SPEECH_TIMEOUT_MS = 4000; // 4 seconds tolerance for pauses
+const RESTART_DELAY_MS = isMobile() ? 5000 : 2000; // Longer delays to prevent cycling
 const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
 
 // ═══ Shared State ═══
@@ -818,18 +821,21 @@ export function useNeuralVoice(
       }
 
       if (e.error === "no-speech") {
-        // no-speech is normal — restart with long delay to avoid cycling
-        scheduleRecognitionRestart(isMobile() ? 5000 : 1000);
-        return;
+        // no-speech is normal — with 4s tolerance, just wait longer
+        // DON'T restart immediately — wait for user to speak
+        console.log("[Voice] No speech detected — waiting (4s tolerance)");
+        setListening(true);
+        return; // Keep listening open, don't restart
       }
 
       if (e.error === "network") {
-        console.warn("[Voice] Network error — will retry recognition");
-        scheduleRecognitionRestart(isMobile() ? 5000 : 1500);
+        console.warn("[Voice] Network error — retry with long delay");
+        scheduleRecognitionRestart(isMobile() ? 8000 : 3000);
         return;
       }
 
-      scheduleRecognitionRestart(isMobile() ? 5000 : 1500);
+      // Other errors — long delay before retry
+      scheduleRecognitionRestart(isMobile() ? 8000 : 3000);
     };
 
     return rec;
