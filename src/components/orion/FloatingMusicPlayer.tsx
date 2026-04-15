@@ -22,9 +22,10 @@ export function FloatingMusicPlayer() {
   const [minimized, setMinimized] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Listen for music commands from Orion
+  // Listen for music commands from Orion (skip on neural page — OrionPlaylistBar handles it there)
   useEffect(() => {
     const handler = (e: CustomEvent<MusicCommand>) => {
+      if (isOnNeuralPage) return;
       const { action, query: q } = e.detail;
       if (action === "search_and_play" && q) {
         if (isMobileDevice()) {
@@ -40,7 +41,7 @@ export function FloatingMusicPlayer() {
     };
     window.addEventListener("orion-music-command", handler as EventListener);
     return () => window.removeEventListener("orion-music-command", handler as EventListener);
-  }, []);
+  }, [isOnNeuralPage]);
 
   // Listen for volume commands
   useEffect(() => {
