@@ -88,6 +88,19 @@ const REGEX_RULES: RegexRule[] = [
   }},
   { pattern: /\b(melhorar\s+interface|melhorar\s+UI|melhorar\s+visual|otimizar\s+visual)\b/i, intent: "orion_evolution", confidence: 0.96, extractParams: () => ({ command: "melhorar-ui", action: "ui" }) },
 
+  // ═══ LLM Provider Selection (like OpenCode /models) ═══
+  { pattern: /\b(trocar|troca|alternar|mudar)\s+(?:o\s+)?(?:modelo|IA|LLM|AI|provedor)\b/i, intent: "llm_provider", confidence: 0.96, extractParams: (t) => {
+    const providers = ["openai", "anthropic", "deepseek", "groq", "google", "ollama", "lmstudio", "huggingface"];
+    const found = providers.find(p => t.toLowerCase().includes(p));
+    return { provider: found || "openai" };
+  }},
+  { pattern: /\b(usar|utilizar)\s+(openai|anthropic|deepseek|groq|google|ollama|huggingface|openrouter)\b/i, intent: "llm_provider", confidence: 0.98, extractParams: (t) => {
+    const match = t.match(/(openai|anthropic|deepseek|groq|google|ollama|huggingface|openrouter)/i);
+    return { provider: match?.[1]?.toLowerCase() || "openai" };
+  }},
+  { pattern: /\b(qual\s+(?:é\s+)?(?:o\s+)?modelo|qual\s+IA|qual\s+LLM|que\s+modelo\s+estou)\b/i, intent: "llm_status", confidence: 0.95 },
+  { pattern: /\b(listar\s+modelos|mostrar\s+modelos|quais\s+modelos)\b/i, intent: "llm_list", confidence: 0.95 },
+
   // Time/date (very specific, high confidence)
   { pattern: /\b(que\s+hora|que\s+dia|data\s+de\s+hoje|hora\s+atual|what\s+time)\b/i, intent: "time_date", confidence: 0.98 },
   

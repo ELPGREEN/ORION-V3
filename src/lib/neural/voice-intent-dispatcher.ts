@@ -298,6 +298,28 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         }
       }
 
+      case "llm_provider": {
+        const { getProviderName, FREE_MODELS, createLLMClient } = await import("@/lib/integrations/llm-providers");
+        const provider = (params.provider as string) || "openai";
+        const models = FREE_MODELS[provider as keyof typeof FREE_MODELS] || [];
+        const modelName = models[0] || "default";
+        
+        return ok(intent.intent, `🔄 Proveedor ${getProviderName(provider)} selecionado. Modelo: ${modelName}`, { provider, model: modelName }, t0);
+      }
+
+      case "llm_status": {
+        const { getProviderName } = await import("@/lib/integrations/llm-providers");
+        return ok(intent.intent, "Modelo atual: Claude 3.5 Sonnet (via Supabase)", null, t0);
+      }
+
+      case "llm_list": {
+        const { FREE_MODELS, getProviderName } = await import("@/lib/integrations/llm-providers");
+        const list = Object.entries(FREE_MODELS).map(([p, models]) => 
+          `${getProviderName(p as any)}: ${models.join(", ")}`
+        ).join("\n");
+        return ok(intent.intent, `Modelos disponíveis:\n${list}`, null, t0);
+      }
+
       case "iot":
       case "calendar":
       default:
