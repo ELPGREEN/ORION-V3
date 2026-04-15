@@ -82,7 +82,7 @@ export function HeroSection({ t }: HeroSectionProps) {
   const heroTranslateY = scrollY * 0.08;
 
   return (
-    <section className="relative min-h-[85vh] min-h-[85svh] flex items-center justify-center overflow-visible">
+    <section className="relative min-h-[70vh] min-h-[70svh] flex items-center justify-center overflow-visible">
       {/* HD photorealistic background */}
       <img
         src={bgHdHero}
