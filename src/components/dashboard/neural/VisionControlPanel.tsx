@@ -57,29 +57,16 @@ export function VisionControlPanel({ settings, onSettingsChange, isActive, detec
 
   if (!isActive) {
     return (
-      <div className="relative bg-black/60 backdrop-blur-sm border border-white/[0.06] rounded-sm overflow-hidden">
-        <div className="px-3 py-2 flex items-center gap-1.5">
-          <EyeOff className="h-3 w-3 text-white/20" />
-          <span className="text-[9px] font-mono text-white/20">Visão inativa</span>
-        </div>
+      <div className="px-3 py-2 flex items-center gap-1.5">
+        <EyeOff className="h-3 w-3 text-white/20" />
+        <span className="text-[9px] font-mono text-white/20">Visão inativa</span>
       </div>
     );
   }
 
   return (
-    <div className="relative bg-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-sm overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-yellow-400/40 via-transparent to-transparent" />
-      
-      {/* Header */}
-      <div 
-        className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10 cursor-pointer hover:bg-white/[0.02]"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <Eye className="h-3 w-3 shrink-0" style={{ color: "#D4AF37", filter: "drop-shadow(0 0 4px rgba(212,175,55,0.5))" }} />
-        <span className="text-[10px] font-mono tracking-wider uppercase" style={{ color: "rgba(212,175,55,0.7)" }}>Controle</span>
-        <span className="ml-auto text-[7px] font-mono text-emerald-400">● ON</span>
-        {expanded ? <ChevronUp className="h-3 w-3 text-white/20" /> : <ChevronDown className="h-3 w-3 text-white/20" />}
-      </div>
+    <div className="overflow-hidden">
+      {/* Module Toggles */}
 
       {/* Module Toggles */}
       <div className="px-3 py-2 space-y-1.5">
@@ -152,7 +139,6 @@ export function VisionControlPanel({ settings, onSettingsChange, isActive, detec
               );
             })}
           </div>
-        </div>
       )}
     </div>
   );
