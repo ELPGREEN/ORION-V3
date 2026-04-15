@@ -16,12 +16,14 @@ import {
   ArrowRight, UserPlus, Eye, FolderOpen, Download,
   Smartphone, Clock, Zap, Fingerprint, FileCheck,
   Activity, Layers, Network, ChevronLeft, ChevronRight as ChevronRightIcon,
-  Mic, Brain, Camera, Globe, BarChart3, FileText,
-  Bot, Cpu, Search, Languages, Sparkles, ShieldCheck,
-  Workflow, Database, Bell, Users, Palette, Code2,
-  BrainCircuit, Wand2, Check, X, Minus, Rocket,
-  AudioLines, ScanFace, Cog
+  Check, X, Minus
 } from "lucide-react";
+import {
+  GlyphVoice, GlyphBrain, GlyphVision, GlyphArtifact, GlyphComputer,
+  GlyphMemory, GlyphReasoning, GlyphDocument, GlyphSearch, GlyphAnalytics,
+  GlyphGlobe, GlyphShield, GlyphAssistant, GlyphWorkflow, GlyphStorage,
+  GlyphTeam, GlyphAudio, GlyphProcessing, GlyphLaunch
+} from "@/components/ui/OrionGlyphs";
 import heroBg from "@/assets/bg-carbon-hero.jpg";
 
 // ═══ Animated Counter Hook ═══
