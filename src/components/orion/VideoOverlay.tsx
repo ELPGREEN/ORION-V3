@@ -308,7 +308,7 @@ export function VideoOverlay() {
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setBarMode(false); setMinimized(false); }} title="Mostrar vídeo">
                 <Maximize2 className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={realClose}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-yellow-400" onClick={handleXButton} title="Minimizar vídeo">
                 <X className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -467,7 +467,7 @@ export function VideoOverlay() {
             <div className="flex items-center gap-2 px-3 py-1 cursor-pointer" onClick={() => setMinimized(false)}>
               <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
               <span className="text-[10px] truncate text-muted-foreground flex-1">{title}</span>
-              <Button variant="ghost" size="icon" className="h-5 w-5 hover:text-destructive shrink-0" onClick={(e) => { e.stopPropagation(); realClose(); }} title="Fechar vídeo">
+              <Button variant="ghost" size="icon" className="h-5 w-5 hover:text-yellow-400 shrink-0" onClick={(e) => { e.stopPropagation(); handleXButton(); }} title="Minimizar vídeo">
                 <X className="h-3 w-3" />
               </Button>
             </div>
