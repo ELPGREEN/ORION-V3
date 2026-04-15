@@ -76,9 +76,61 @@ const REGEX_RULES: RegexRule[] = [
     return { targetLang: lang?.[1] || "inglês", text: t.replace(/traduz\w*\s*/i, "") };
   }},
   
-  // Vision/Identity — BEFORE navigation so "abrir câmera" doesn't go to nav
-  { pattern: /\b(o\s+que\s+(?:voc[eê]|vc|tu)\s+(?:v[eê]|enxerga)|o\s+que\s+(?:estou|tou)\s+(?:segurando|usando|vestindo))\b/i, intent: "vision_describe", confidence: 0.96 },
-  { pattern: /\b(quem\s+[eé]\s+(?:essa?|aquele?|ele|ela)|reconhe[cç])\b/i, intent: "identity", confidence: 0.92 },
+  // ═══ Vision/Identity — Massive coverage for 200+ vision commands ═══
+  // "O que você vê/enxerga/está vendo"
+  { pattern: /\b(?:o\s+que\s+(?:voc[eê]|vc|tu|c[eê])\s+(?:v[eê]|enxerga|est[aá]\s+vendo|consegue\s+ver|t[aá]\s+vendo))\b/i, intent: "vision_describe", confidence: 0.97 },
+  // "Como eu estou/tou" — appearance check
+  { pattern: /\b(?:como\s+(?:eu\s+)?(?:estou|tou|t[oô]|fico|fiquei))\b/i, intent: "vision_describe", confidence: 0.96 },
+  // "O que você acha" (of what you see)
+  { pattern: /\b(?:o\s+que\s+(?:voc[eê]|vc|tu|c[eê])\s+(?:acha|achou|pensa|pensou|achas))\b/i, intent: "vision_describe", confidence: 0.94 },
+  // "O que tá/está escrito/escrevendo" — reading text
+  { pattern: /\b(?:o\s+que\s+(?:t[aá]|est[aá])\s+(?:escrit[oa]|escrevendo|mostrando|aparecendo|exibindo))\b/i, intent: "vision_describe", confidence: 0.97 },
+  // "O que é isso/aquilo/isto" — pointing at things
+  { pattern: /\b(?:o\s+que\s+[eé]\s+(?:isso|aquilo|isto|essa|esse|aquele|aquela))\b/i, intent: "vision_describe", confidence: 0.96 },
+  // "O que estou/tou segurando/usando/vestindo/comendo/bebendo/fazendo"
+  { pattern: /\b(?:o\s+que\s+(?:eu\s+)?(?:estou|tou|t[oô])\s+(?:segurando|usando|vestindo|comendo|bebendo|fazendo|mostrando|lendo|escrevendo|olhando|assistindo|jogando|cozinhando|carregando|montando|mexendo|digitando|pintando|desenhando|costurando|construindo))\b/i, intent: "vision_describe", confidence: 0.97 },
+  // "Me descreve/descreva" — describe scene
+  { pattern: /\b(?:(?:me\s+)?descrev[ae]|descri[çc][aã]o\s+d[oae]|descrever)\b/i, intent: "vision_describe", confidence: 0.95 },
+  // "Leia/lê isso/aquilo/o que está na tela/placa/papel"
+  { pattern: /\b(?:l[eê][ia]?\s+(?:isso|aquilo|isto|o\s+que|pra\s+mim)|ler?\s+(?:isso|aquilo|isto|o\s+que))\b/i, intent: "vision_describe", confidence: 0.96 },
+  // "Tem algo/alguém/alguma coisa" — presence detection
+  { pattern: /\b(?:tem\s+(?:algo|algu[eé]m|alguma\s+coisa|alg[uo]\s+|gente|pessoa|animal)\s+(?:aqui|a[ií]|l[aá]|perto|na\s+frente))\b/i, intent: "vision_describe", confidence: 0.94 },
+  // "Quantos/quantas" — counting objects
+  { pattern: /\b(?:quant[oa]s?\s+(?:pessoa|objeto|coisa|dedo|gato|cachorro|carro|gente|item|livro|garrafa|copo|cadeira|mesa|flor|fruta|\w+)\s*(?:tem|t[eê]m|voc[eê]\s+v[eê]|est[aã]o|eu\s+tenho)?)\b/i, intent: "vision_describe", confidence: 0.95 },
+  // "Qual/que cor" — color identification
+  { pattern: /\b(?:(?:qual|que)\s+(?:cor|cores)\s+(?:[eé]\s+)?(?:iss[oa]|est[ea]|aquel[ea]|d[oae]\s+\w+)?)\b/i, intent: "vision_describe", confidence: 0.95 },
+  // "Onde está/tá" — spatial location
+  { pattern: /\b(?:(?:onde|aonde)\s+(?:est[aá]|t[aá]|fica)\s+(?:o|a|meu|minha|iss[oa]|aquel[ea]))\b/i, intent: "vision_describe", confidence: 0.94 },
+  // "Olha/veja/observe/analise" — look at something
+  { pattern: /\b(?:olh[ae]|veja|observe|analise|repare|percebe|nota|nota[sr]?)\s+(?:isso|aquilo|isto|aqui|l[aá]|pra|para)\b/i, intent: "vision_describe", confidence: 0.95 },
+  // "Está chovendo/escuro/claro/dia/noite" — environment
+  { pattern: /\b(?:(?:est[aá]|t[aá])\s+(?:chovendo|nevando|escuro|claro|bonito|feio|frio|quente|ensolarado|nublado|dia|noite|amanhecendo|anoitecendo))\b/i, intent: "vision_describe", confidence: 0.93 },
+  // "Que lugar/ambiente/cômodo é esse"
+  { pattern: /\b(?:(?:que|qual)\s+(?:lugar|ambiente|c[oô]modo|local|sala|espa[çc]o)\s+[eé]\s+(?:esse|este|aquele))\b/i, intent: "vision_describe", confidence: 0.95 },
+  // "Você consegue ver/enxergar/ler"
+  { pattern: /\b(?:(?:voc[eê]|vc|tu)\s+(?:consegue|pode|d[aá]\s+pra)\s+(?:ver|enxergar|ler|identificar|reconhecer|detectar|notar|perceber))\b/i, intent: "vision_describe", confidence: 0.96 },
+  // "Mostra/diz/fala o que tem/vê"
+  { pattern: /\b(?:(?:mostr[ae]|diz|fal[ae]|cont[ae]|inform[ae])\s+(?:o\s+que|pra\s+mim\s+o\s+que)\s+(?:tem|v[eê]|enxerga|aparece|est[aá]))\b/i, intent: "vision_describe", confidence: 0.95 },
+  // "Que horas marca" (reading a clock in vision)
+  { pattern: /\b(?:que\s+horas?\s+(?:marca|mostra|t[aá])\s+(?:no|na|nesse|nessa|a[ií]))\b/i, intent: "vision_describe", confidence: 0.94 },
+  // "Tá limpo/sujo/organizado/bagunçado"
+  { pattern: /\b(?:(?:t[aá]|est[aá])\s+(?:limp[oa]|suj[oa]|organizad[oa]|bagun[çc]ad[oa]|arrum[ao]d[oa]|bonit[oa]|fei[oa]))\b/i, intent: "vision_describe", confidence: 0.93 },
+  // "Identifica/reconhece/detecta" — generic detection
+  { pattern: /\b(?:identific|reconhec|detect|analis[ae]r?\s+(?:iss[oa]|est[ea]|imagem|foto|v[ií]deo|cena|ambiente))\b/i, intent: "vision_describe", confidence: 0.95 },
+  // "Foto/imagem/câmera" context questions
+  { pattern: /\b(?:(?:na|nessa|nesta)\s+(?:foto|imagem|tela|c[aâ]mera|webcam)|(?:voc[eê]|vc)\s+(?:v[eê]|est[aá]\s+vendo)\s+(?:a\s+)?(?:minha|alguma))\b/i, intent: "vision_describe", confidence: 0.95 },
+  // "Isso/aquilo é perigoso/seguro/comestível/venenoso"
+  { pattern: /\b(?:(?:iss[oa]|aquel[ea]|est[ea])\s+[eé]\s+(?:perigoso|seguro|comest[ií]vel|venenoso|t[oó]xico|bonit[oa]|car[oa]|barat[oa]|original|falso|verdadeir[oa]))\b/i, intent: "vision_describe", confidence: 0.94 },
+  // "Que marca/modelo/tipo é" — product identification
+  { pattern: /\b(?:(?:que|qual)\s+(?:marca|modelo|tipo|esp[eé]cie|ra[çc]a)\s+(?:[eé]\s+)?(?:iss[oa]|ess[ea]|aquel[ea]|d[oe]))\b/i, intent: "vision_describe", confidence: 0.95 },
+  // "Tem texto/número/QR/código" — OCR detection
+  { pattern: /\b(?:(?:tem|existe|aparece|mostra)\s+(?:algum\s+)?(?:texto|n[uú]mero|c[oó]digo|qr\s*code|barcode|placa|etiqueta|r[oó]tulo))\b/i, intent: "vision_describe", confidence: 0.96 },
+  // "Tira/bate/capture uma foto" — photo capture
+  { pattern: /\b(?:(?:tir[ae]|bat[ae]|captur[ae]|registr[ae])\s+(?:uma?\s+)?(?:foto|imagem|screenshot|print|captura))\b/i, intent: "vision_describe", confidence: 0.95 },
+  // "Me vê/vejo/enxerga" — self-referencing vision
+  { pattern: /\b(?:(?:voc[eê]|vc|tu)\s+(?:me\s+)?(?:v[eê]|enxerga|est[aá]\s+(?:me\s+)?vendo))\b/i, intent: "vision_describe", confidence: 0.96 },
+  // "Quem sou eu / quem é essa pessoa"
+  { pattern: /\b(?:quem\s+(?:sou\s+eu|[eé]\s+(?:essa?|aquele?|ele|ela|est[ea])|somos|s[aã]o\s+(?:eles|elas))|reconhe[cç])\b/i, intent: "identity", confidence: 0.92 },
 
   // ═══ MEDIA rules BEFORE navigation — "abrir música" must NOT be caught by nav ═══
   
