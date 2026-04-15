@@ -48,8 +48,8 @@ const preloadAllVision = async () => {};
 const _rtCache = { lastCall: 0, lastResult: null as RealTimeVisionResult | null };
 async function detectRealTime(video?: HTMLVideoElement): Promise<RealTimeVisionResult> {
   const now = Date.now();
-  // Throttle: at most once every 4 seconds
-  if (now - _rtCache.lastCall < 4000 && _rtCache.lastResult) {
+  // Throttle: at most once every 6 seconds
+  if (now - _rtCache.lastCall < 6000 && _rtCache.lastResult) {
     return _rtCache.lastResult;
   }
   if (!video || video.readyState < 2) {
@@ -57,12 +57,15 @@ async function detectRealTime(video?: HTMLVideoElement): Promise<RealTimeVisionR
   }
   _rtCache.lastCall = now;
   try {
-    const base64 = captureVideoFrame(video, 480, 0.5);
+    const base64 = captureVideoFrame(video, 320, 0.6);
     if (!base64) {
       console.warn("[detectRealTime] Frame capture failed — video not ready");
       return { allObjects: [], faces: [], hands: [], poses: [], detections: [], timestamp: now, processingMs: 0, status: "none" as const };
     }
-    const result = await analyzeFrame(base64, "Liste TODOS os objetos, pessoas, rostos e elementos visíveis. Para cada item retorne: nome em português, confiança (0-1), e posição aproximada (x,y,largura,altura em 0-1). Responda em JSON: {objects:[{name,namePt,confidence,x,y,width,height,source}], faces:[{x,y,width,height,confidence}]}");
+    const result = await analyzeFrame(base64, "Liste TODOS os objetos, pessoas, rostos e elementos visíveis. Para cada item retorne: nome em português, confiança (0-1), e posição aproximada (x,y,largura,altura em 0-1). Responda em JSON: {objects:[{name,namePt,confidence,x,y,width,height,source}], faces:[{x,y,width,height,confidence}]}").catch(() => null);
+    if (!result) {
+      return { allObjects: [], faces: [], hands: [], poses: [], detections: [], timestamp: now, processingMs: 0, status: "none" as const };
+    }
     
     let parsed: any = {};
     if (result.description) {
@@ -642,8 +645,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       if (now - lastFpsT.current >= 1000) { setFps(fpsC.current); fpsC.current = 0; lastFpsT.current = now; }
       VS.frames++;
 
-      // Throttle processFrame to every 10 frames (was 6) — saves ~40% CPU
-      if (frameCount % 10 === 0) {
+      // Throttle processFrame to every 15 frames (was 10) — saves more CPU
+      if (frameCount % 15 === 0) {
         const result = processFrame(ctx, w, h, prevRef.current);
         VS.regions = result.regions; VS.motion = result.motion;
         VS.shapeDescriptors = result.shapeDescriptors || [];
@@ -658,49 +661,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         else prevRef.current.set(result.pixels);
       }
 
-      // Throttle ML detection to every 20 frames (was 12) — saves GPU cycles
-      // Throttle Gemini vision detection to every 60 frames (~2s at 30fps)
-      if (frameCount % 60 === 0 && !rtInferenceRunningRef.current) {
-        rtInferenceRunningRef.current = true;
-        detectRealTime(video).then(rtResult => {
-          VS.realTimeVision = rtResult;
-          (window as any).__orion_last_rt_vision_ts__ = Date.now();
-          lastRtVisionRef.current = rtResult;
-
-          if ((rtResult as any).frameXResult) {
-            (VS as any).multiTaskResult = (rtResult as any).frameXResult;
-          }
-
-          (VS as any).detectedFaces = rtResult.faces || [];
-          (VS as any).faceAttributes = (rtResult as any).faceAttributes || [];
-
-          // ═══ AUTO FACE IDENTITY — expose face count globally for Orion ═══
-          const faceCount = (rtResult.faces || []).length;
-          (window as any).__orionDetectedFaces = faceCount;
-          if (faceCount > 0 && identityStatus === "unknown" && !voiceCheckDoneRef.current) {
-            // Face detected — trigger voice identity check automatically
-            handleVoiceIdentityCheck();
-          }
-
-          if (rtResult.allObjects.length > 0) {
-            const mlObjects = rtResult.allObjects.map(o => ({
-              name: o.namePt,
-              category: categoryFromSource(o.name),
-              confidence: o.confidence,
-              count: 1,
-              bbox: { x: o.x, y: o.y, w: o.width, h: o.height },
-              source: o.source,
-            }));
-            setMlDetections(mlObjects);
-          } else {
-            setMlDetections([]);
-          }
-        }).catch(() => {}).finally(() => {
-          rtInferenceRunningRef.current = false;
-        });
-      }
-      // Throttle SuperNet frames to every 15 frames
-      if (frameCount % 15 === 0) sendSuperNetFrame();
+// Throttle ML detection to every 30 frames (was 20) — saves GPU cycles
+      // Throttle SuperNet frames to every 25 frames (was 15)
+      if (frameCount % 30 === 0) sendSuperNetFrame();
       animRef.current = requestAnimationFrame(loop);
     };
     animRef.current = requestAnimationFrame(loop);
