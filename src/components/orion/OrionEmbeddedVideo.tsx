@@ -1,16 +1,17 @@
 /**
- * OrionEmbeddedVideo — Player de vídeo embutido no painel Orion
- * Controles: mute, fechar, fullscreen. Estilo holográfico.
+ * OrionEmbeddedVideo — Draggable, minimizable YouTube player for Orion.
+ * Minimized = small floating bar (audio continues). Reopen = full player.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Volume2, VolumeX, Maximize2, Minimize2, Play, Music } from "lucide-react";
+import { X, Volume2, VolumeX, Maximize2, Minimize2, Play, Music, GripHorizontal, ChevronUp } from "lucide-react";
 import {
   buildYouTubeSearchEmbed,
   clampPercent,
   normalizeYouTubeEmbedUrl,
   postYouTubeIframeCommand,
 } from "@/lib/youtube-player";
+import { useDraggable } from "@/hooks/useDraggable";
 
 interface VideoCommand {
   action: string;
@@ -30,9 +31,11 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(100);
   const [visible, setVisible] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { pos, isDragging, onMouseDown, onTouchStart } = useDraggable({ x: 0, y: 0 });
 
   const sendPlayerCommand = useCallback((func: string, args: unknown[] = []) => {
     return postYouTubeIframeCommand(iframeRef.current, func, args);
@@ -52,10 +55,8 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
   const applyVolume = useCallback((nextVolume: number, forceMuted?: boolean) => {
     const safeVolume = clampPercent(nextVolume, volume);
     const shouldMute = forceMuted ?? safeVolume === 0;
-
     setVolume(safeVolume);
     setMuted(shouldMute);
-
     window.setTimeout(() => {
       if (shouldMute) {
         sendPlayerCommand("mute");
@@ -97,8 +98,20 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
     setVisible(false);
     setVideoUrl("");
     setTitle("");
+    setMinimized(false);
     onClose?.();
   }, [onClose]);
+
+  const handleMinimize = useCallback(() => {
+    if (isFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+    setMinimized(true);
+  }, [isFullscreen]);
+
+  const handleRestore = useCallback(() => {
+    setMinimized(false);
+  }, []);
 
   const moveToAudioBar = useCallback(() => {
     if (!videoUrl) return;
@@ -126,10 +139,12 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
         setVideoUrl(normalizeYouTubeEmbedUrl(url));
         setTitle(nextTitle || query || "Orion Video");
         setVisible(true);
+        setMinimized(false);
       } else if (action === "search_video" && query) {
         setVideoUrl(buildYouTubeSearchEmbed(query));
         setTitle(nextTitle || query);
         setVisible(true);
+        setMinimized(false);
       } else if (action === "close") {
         handleClose();
       }
@@ -158,6 +173,7 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
       } else if (action === "unmute") {
         applyVolume(volume === 0 ? 50 : volume, false);
       } else if (action === "maximize" || action === "fullscreen" || action === "aumentar_tela") {
+        setMinimized(false);
         const el = containerRef.current;
         if (el && document.fullscreenElement !== el) {
           el.requestFullscreen().catch(() => {});
@@ -167,7 +183,7 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
           document.exitFullscreen().catch(() => {});
         }
       } else if (action === "minimize") {
-        moveToAudioBar();
+        handleMinimize();
       } else if (action === "close") {
         handleClose();
       }
@@ -179,8 +195,9 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
       window.removeEventListener("orion-embedded-video", embeddedHandler as EventListener);
       window.removeEventListener("orion-video-command", controlHandler as EventListener);
     };
-  }, [applyVolume, handleClose, moveToAudioBar, sendPlayerCommand, videoUrl, visible, volume]);
+  }, [applyVolume, handleClose, handleMinimize, moveToAudioBar, sendPlayerCommand, videoUrl, visible, volume]);
 
+  // Empty state
   if (!visible || !videoUrl) {
     return (
       <div className="flex flex-col items-center justify-center h-full py-8 space-y-3" style={{
@@ -199,6 +216,58 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
     );
   }
 
+  // Minimized floating bar — iframe hidden but still in DOM (audio continues)
+  if (minimized) {
+    return (
+      <>
+        {/* Hidden iframe keeps audio playing */}
+        <div className="fixed" style={{ width: 1, height: 1, opacity: 0, pointerEvents: "none", overflow: "hidden", position: "fixed", bottom: 0, left: 0, zIndex: -1 }}>
+          <iframe
+            ref={iframeRef}
+            src={videoUrl}
+            allow="autoplay; encrypted-media"
+            title="Orion Video (minimized)"
+          />
+        </div>
+
+        {/* Floating mini bar */}
+        <div
+          className="fixed z-[9999] flex items-center gap-2 px-3 py-2 rounded-full shadow-2xl cursor-move select-none"
+          style={{
+            bottom: 24,
+            right: 24,
+            transform: pos.x || pos.y ? `translate(${pos.x}px, ${pos.y}px)` : undefined,
+            background: "linear-gradient(135deg, rgba(15,15,30,0.95), rgba(30,20,50,0.95))",
+            border: "1px solid rgba(212,175,55,0.4)",
+            boxShadow: "0 0 20px rgba(212,175,55,0.15), 0 8px 32px rgba(0,0,0,0.5)",
+            backdropFilter: "blur(12px)",
+          }}
+          onMouseDown={onMouseDown}
+          onTouchStart={onTouchStart}
+          data-drag-handle
+        >
+          <GripHorizontal className="h-3.5 w-3.5 text-white/30" />
+          <div className="h-6 w-6 rounded-full bg-red-500/20 flex items-center justify-center animate-pulse"
+            style={{ boxShadow: "0 0 8px rgba(239,68,68,0.4)" }}>
+            <span className="text-[9px]">🎬</span>
+          </div>
+          <span className="text-[10px] font-mono text-white/70 max-w-[120px] truncate">{title}</span>
+
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-white/60 hover:text-white" onClick={toggleMute}>
+            {muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-white/60 hover:text-amber-400" onClick={handleRestore} title="Abrir player">
+            <ChevronUp className="h-3 w-3" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-white/60 hover:text-destructive" onClick={handleClose} title="Fechar">
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      </>
+    );
+  }
+
+  // Full player — draggable
   return (
     <div
       ref={containerRef}
@@ -207,7 +276,10 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
         backgroundColor: "rgba(8,8,20,0.95)",
         border: "1px solid rgba(212,175,55,0.2)",
         boxShadow: "0 0 30px rgba(212,175,55,0.05), inset 0 1px 0 rgba(212,175,55,0.15)",
+        transform: pos.x || pos.y ? `translate(${pos.x}px, ${pos.y}px)` : undefined,
       }}
+      onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
     >
       {/* Top shimmer */}
       <div className="h-[2px]" style={{
@@ -215,10 +287,14 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
         animation: "orion-shimmer 3s ease-in-out infinite",
       }} />
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/[0.06]"
-        style={{ background: "linear-gradient(135deg, rgba(212,175,55,0.05), rgba(59,130,246,0.03))" }}>
+      {/* Header — drag handle */}
+      <div
+        className="flex items-center justify-between px-3 py-1.5 border-b border-white/[0.06] cursor-grab active:cursor-grabbing"
+        style={{ background: "linear-gradient(135deg, rgba(212,175,55,0.05), rgba(59,130,246,0.03))" }}
+        data-drag-handle
+      >
         <div className="flex items-center gap-2 min-w-0">
+          <GripHorizontal className="h-3.5 w-3.5 text-white/25 shrink-0" />
           <div className="h-5 w-5 rounded-full bg-red-500/20 flex items-center justify-center"
             style={{ boxShadow: "0 0 8px rgba(239,68,68,0.3)" }}>
             <span className="text-[10px]">🎬</span>
@@ -232,7 +308,10 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={toggleMute}>
             {muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={moveToAudioBar} title="Minimizar para barra de áudio">
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleMinimize} title="Minimizar (áudio continua)">
+            <Minimize2 className="h-3 w-3" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={moveToAudioBar} title="Enviar para playlist">
             <Music className="h-3 w-3" />
           </Button>
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={toggleFullscreen} title={isFullscreen ? "Sair tela cheia" : "Tela cheia"}>
@@ -262,7 +341,6 @@ export function OrionEmbeddedVideo({ onClose }: OrionEmbeddedVideoProps) {
           title="Orion Embedded Video"
         />
 
-        {/* Holographic edge glow */}
         <div className="absolute inset-0 pointer-events-none z-10"
           style={{ boxShadow: "inset 0 0 20px rgba(212,175,55,0.03), inset 0 0 40px rgba(59,130,246,0.02)" }} />
       </div>
