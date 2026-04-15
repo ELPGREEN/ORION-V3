@@ -7,7 +7,11 @@
 
 import { getCommand, getAllCommands, type OrionCommand, type OrionCommandResult } from "./commands";
 import { analyzeCodeWithAI, improveCodeWithAI, generateNewCode } from "./code-analyzer";
-import { executeBashCommand } from "./shell-executor";
+// Shell executor is optional - runs only in Node.js environments
+const executeBashCommand = async (cmd: string): Promise<{ stdout: string; stderr: string; exitCode: number }> => {
+  console.warn("[Evolution] Shell execution not available in browser environment");
+  return { stdout: "", stderr: "Shell not available in browser", exitCode: 1 };
+};
 
 interface EvolutionContext {
   projectPath: string;

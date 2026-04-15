@@ -234,4 +234,4 @@ export async function initPlugins(): Promise<void> {
   console.log(`[Plugins] Loaded ${pluginManager.getAllPlugins().length} plugins`);
 }
 
-export type { OrionPlugin, PluginHooks, PluginContext, PluginTool, PluginCommand };
+// Types are already exported at definition

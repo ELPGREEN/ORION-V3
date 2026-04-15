@@ -309,11 +309,12 @@ export async function executeTool(
       return data;
     }
     
-    // Database operations
+    // Database operations (read-only via Supabase client)
     case "db_query": {
-      const { data, error } = await supabase.rpc("exec_sql", {
-        query: params.query,
-      });
+      const { data, error } = await supabase
+        .from(params.table as string || "ai_metrics")
+        .select(params.select as string || "*")
+        .limit(params.limit as number || 100);
       if (error) throw error;
       return data;
     }
