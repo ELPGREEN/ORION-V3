@@ -185,7 +185,7 @@ export function HeroSection({ t }: HeroSectionProps) {
           />
 
           <p
-            className="text-primary uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs md:text-sm mb-3 sm:mb-4"
+            className="text-primary uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs md:text-sm mb-2 sm:mb-3"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 30px, 0)',
