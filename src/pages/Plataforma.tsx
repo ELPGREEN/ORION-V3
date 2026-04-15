@@ -19,7 +19,7 @@ import {
   Mic, Brain, Camera, Globe, BarChart3, FileText,
   Bot, Cpu, Search, Languages, Sparkles, ShieldCheck,
   Workflow, Database, Bell, Users, Palette, Code2,
-  Cpu2, SparklesIcon, BrainCircuit, Wand2
+  BrainCircuit, Wand2
 } from "lucide-react";
 import heroBg from "@/assets/bg-carbon-hero.jpg";
 
