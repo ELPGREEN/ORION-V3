@@ -589,7 +589,7 @@ Deno.serve(async (req) => {
     }
 
     // Log token usage to ai_metrics (fire-and-forget)
-    supabaseAdmin.from("ai_metrics").insert({
+    Promise.resolve(supabaseAdmin.from("ai_metrics").insert({
       provider: usedProvider.id,
       query: (prompt || conversation[conversation.length - 1]?.content || "").substring(0, 500),
       tokens_estimated: tokenUsage.total_tokens,
@@ -597,7 +597,7 @@ Deno.serve(async (req) => {
       total_duration_ms: Date.now() - (performance.now() | 0),
       success: true,
       user_id: user.id,
-    }).then(() => {}).catch((e: any) => console.warn("⚠️ ai_metrics log failed:", e.message));
+    })).then(() => {}).catch((e: any) => console.warn("⚠️ ai_metrics log failed:", e.message));
 
     console.log(`✅ FREE Gemini — prompt: ${tokenUsage.prompt_tokens}, completion: ${tokenUsage.completion_tokens}, total: ${tokenUsage.total_tokens} (${usedProvider.id} / ${usedProvider.model})`);
 
