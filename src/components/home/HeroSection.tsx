@@ -197,7 +197,7 @@ export function HeroSection({ t }: HeroSectionProps) {
           </p>
 
           <div
-            className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4 sm:mb-6"
+            className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-3 sm:mb-4"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 20px, 0)',
