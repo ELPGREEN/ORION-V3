@@ -61,7 +61,7 @@ export function scanIndustrialHealth(): ScanResult {
 
     // ─── Automated Sensor Isolation (Immune System Hook) ───
     errorDevices.forEach(device => {
-      const subsystemKey = `sensor:${device.id}`;
+      const subsystemKey = "industrial_sensor";
       const quarantine = recordModuleFailure(subsystemKey);
 
       if (shouldQuarantine(subsystemKey)) {
@@ -125,7 +125,7 @@ export function scanIndustrialHealth(): ScanResult {
   }
 
   return {
-    domain: "performance" as any,
+    domain: "industrial",
     issues,
     score: Math.max(0, score),
     scannedAt: Date.now(),

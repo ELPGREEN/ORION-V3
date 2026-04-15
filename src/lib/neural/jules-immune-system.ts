@@ -138,7 +138,7 @@ export function resetModuleFailures(subsystem: string): void {
 export async function checkAndRegisterResolutions(): Promise<number> {
   let registered = 0;
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("jules_sessions")
       .select("session_id, subsystem, error_snapshot")
       .eq("status", "completed")
@@ -146,20 +146,61 @@ export async function checkAndRegisterResolutions(): Promise<number> {
       .order("resolved_at", { ascending: false })
       .limit(20);
 
-    if (!data) return 0;
+    if (error) throw error;
+    if (!data || data.length === 0) return 0;
 
     const store = loadStore();
+    let changed = false;
+
     for (const session of data as Array<{ session_id: string; subsystem: string | null; error_snapshot: string | null }>) {
       if (!session.error_snapshot) continue;
       const hash = `${session.subsystem || "unknown"}:${session.error_snapshot.slice(0, 50)}`;
+
       if (!store.antibodies[hash]) {
-        registerAntibody(hash, session.session_id);
+        store.antibodies[hash] = {
+          fixedAt: Date.now(),
+          sessionId: session.session_id,
+          expiresAt: Date.now() + ANTIBODY_TTL_MS,
+        };
         registered++;
+        changed = true;
+        console.log(`[Immune] Antibody registered via resolution check: ${hash}`);
       }
+
       // Clear quarantine for resolved subsystems
       if (session.subsystem) {
-        resetModuleFailures(session.subsystem);
-        clearQuarantine(session.subsystem);
+        if (store.quarantine[session.subsystem]) {
+          delete store.quarantine[session.subsystem];
+          changed = true;
+          console.log(`[Immune] ${session.subsystem} quarantine cleared via resolution check`);
+        }
+        // Also reset failure count in auto-triggers store
+        // We'll import it here to avoid circular dependencies if possible,
+        // but since this is already in the immune system which is imported by auto-triggers,
+        // we should be careful. Actually, auto-triggers imports immune-system.
+        // So immune-system should NOT import auto-triggers.
+        // We can clear the localStorage directly.
+      }
+    }
+
+    if (changed) {
+      saveStore(store);
+      // Clear the failure store for the resolved subsystems to prevent immediate re-quarantine
+      try {
+        const FAIL_STORE_KEY = "orion_jules_subsystem_fails";
+        const failStore = JSON.parse(localStorage.getItem(FAIL_STORE_KEY) || "{}");
+        let failStoreChanged = false;
+        for (const session of data as any[]) {
+          if (session.subsystem && failStore[session.subsystem]) {
+            delete failStore[session.subsystem];
+            failStoreChanged = true;
+          }
+        }
+        if (failStoreChanged) {
+          localStorage.setItem(FAIL_STORE_KEY, JSON.stringify(failStore));
+        }
+      } catch (e) {
+        console.warn("[Immune] Failed to clear failure store:", e);
       }
     }
   } catch (e) {
