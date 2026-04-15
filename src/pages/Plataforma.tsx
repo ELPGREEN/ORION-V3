@@ -18,7 +18,8 @@ import {
   Activity, Layers, Network, ChevronLeft, ChevronRight as ChevronRightIcon,
   Mic, Brain, Camera, Globe, BarChart3, FileText,
   Bot, Cpu, Search, Languages, Sparkles, ShieldCheck,
-  Workflow, Database, Bell, Users, Palette, Code2
+  Workflow, Database, Bell, Users, Palette, Code2,
+  Cpu2, SparklesIcon, BrainCircuit, Wand2
 } from "lucide-react";
 import heroBg from "@/assets/bg-carbon-hero.jpg";
 
@@ -41,6 +42,30 @@ const orionUtilities = [
     title: "⚡ Relâmpago Vivo",
     desc: "Audição + Raciocínio Relâmpago integrados. O áudio entra, é entendido em milissegundos e a resposta sai instantaneamente — Lightning Live Engine.",
     color: "text-orange-400",
+  },
+  {
+    icon: BrainCircuit,
+    title: "⚡ DeepSeek R1 (Reasoning)",
+    desc: "Motor de raciocínio profundo com 97.3% no AIME. Análise lógica, comparações, estratégias e decisões complexas.",
+    color: "text-cyan-400",
+  },
+  {
+    icon: Wand2,
+    title: "🎨 Orion Artifacts",
+    desc: "Crie apps React interativos, gráficos, listas de tarefas e dashboards automaticamente. Code generation em segundos.",
+    color: "text-pink-400",
+  },
+  {
+    icon: Cpu2,
+    title: "🖥️ Computer Use",
+    desc: "Automação de navegador: web scraping, extração de dados, navegação automática. Execute ações sem intervenção manual.",
+    color: "text-purple-400",
+  },
+  {
+    icon: SparklesIcon,
+    title: "💾 Orion Memory",
+    desc: "Memória persistente entre sessões. Lembra preferências, contexto e histórico para respostas personalizadas.",
+    color: "text-violet-400",
   },
   {
     icon: Camera,
