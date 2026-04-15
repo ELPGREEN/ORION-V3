@@ -311,8 +311,9 @@ export async function executeTool(
     
     // Database operations (read-only via Supabase client)
     case "db_query": {
+      const tableName = (params.table as string) || "ai_metrics";
       const { data, error } = await supabase
-        .from(params.table as string || "ai_metrics")
+        .from(tableName as any)
         .select(params.select as string || "*")
         .limit(params.limit as number || 100);
       if (error) throw error;

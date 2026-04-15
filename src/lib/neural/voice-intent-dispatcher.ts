@@ -304,7 +304,7 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         const models = FREE_MODELS[provider as keyof typeof FREE_MODELS] || [];
         const modelName = models[0] || "default";
         
-        return ok(intent.intent, `🔄 Proveedor ${getProviderName(provider as LLMProvider)} selecionado. Modelo: ${modelName}`, { provider, model: modelName }, t0);
+        return ok(intent.intent, `🔄 Proveedor ${getProviderName(provider as any)} selecionado. Modelo: ${modelName}`, { provider, model: modelName }, t0);
       }
 
       case "llm_status": {
