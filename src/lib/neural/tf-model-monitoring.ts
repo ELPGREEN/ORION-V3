@@ -85,6 +85,8 @@ const _degradations: PerformanceDegradation[] = [];
 const _experiments: Map<string, Experiment> = new Map();
 let _lastDataQuality: DataQualityReport | null = null;
 const MAX_SNAPSHOTS_PER_MODEL = 500;
+const MAX_DEGRADATIONS = 1000;
+const MAX_EXPERIMENTS = 100;
 
 /** Get monitoring state */
 export function getMonitoringState(): MonitoringState {
@@ -153,6 +155,10 @@ export function checkDegradation(
       };
       degradations.push(entry);
       _degradations.push(entry);
+
+      if (_degradations.length > MAX_DEGRADATIONS) {
+        _degradations.shift();
+      }
     }
   }
 
@@ -226,6 +232,12 @@ export function assessDataQuality(
 
 /** Create a new A/B experiment */
 export function createExperiment(name: string, variantNames: string[], weights?: number[]): Experiment {
+  // Cap experiments map
+  if (_experiments.size >= MAX_EXPERIMENTS) {
+    const oldestId = _experiments.keys().next().value;
+    if (oldestId) _experiments.delete(oldestId);
+  }
+
   const id = `exp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const defaultWeight = 1 / variantNames.length;
 
@@ -286,30 +298,42 @@ export function evaluateExperiment(experimentId: string): Experiment | null {
   const exp = _experiments.get(experimentId);
   if (!exp) return null;
 
-  const validVariants = exp.variants.filter(v => v.sampleCount >= 30);
-  if (validVariants.length < 2) return exp;
+  // Need a control variant (var_0) and at least one challenger with enough samples
+  const control = exp.variants.find(v => v.id === "var_0");
+  if (!control || control.sampleCount < 30) return exp;
 
-  // Find best variant
-  let best = validVariants[0];
-  for (const v of validVariants) {
+  const validChallengers = exp.variants.filter(v => v.id !== "var_0" && v.sampleCount >= 30);
+  if (validChallengers.length === 0) return exp;
+
+  // Find best challenger
+  let bestChallenger = validChallengers[0];
+  for (const v of validChallengers) {
     const vRate = v.conversions / v.sampleCount;
-    const bestRate = best.conversions / best.sampleCount;
-    if (vRate > bestRate) best = v;
+    const bestRate = bestChallenger.conversions / bestChallenger.sampleCount;
+    if (vRate > bestRate) bestChallenger = v;
   }
 
-  // Z-test for statistical significance
-  const control = validVariants.find(v => v.id !== best.id)!;
-  const p1 = best.conversions / best.sampleCount;
-  const p2 = control.conversions / control.sampleCount;
-  const pPooled = (best.conversions + control.conversions) / (best.sampleCount + control.sampleCount);
-  const se = Math.sqrt(pPooled * (1 - pPooled) * (1 / best.sampleCount + 1 / control.sampleCount)) || 0.001;
-  const zScore = Math.abs(p1 - p2) / se;
+  const p1 = bestChallenger.conversions / bestChallenger.sampleCount;
+  const p0 = control.conversions / control.sampleCount;
 
-  // Z > 1.96 = 95% confidence
-  exp.confidenceLevel = Math.min(0.99, zScore > 2.576 ? 0.99 : zScore > 1.96 ? 0.95 : zScore > 1.645 ? 0.90 : zScore / 1.96 * 0.85);
+  if (p1 <= p0) {
+    exp.winnerVariant = control.id;
+    exp.confidenceLevel = 0;
+    return exp;
+  }
+
+  // Z-test for statistical significance (one-tailed: is challenger significantly better than control?)
+  const pPooled = (bestChallenger.conversions + control.conversions) / (bestChallenger.sampleCount + control.sampleCount);
+  const se = Math.sqrt(pPooled * (1 - pPooled) * (1 / bestChallenger.sampleCount + 1 / control.sampleCount)) || 0.001;
+  const zScore = (p1 - p0) / se;
+
+  // Z > 1.645 = 90%, Z > 1.96 = 95%, Z > 2.576 = 99%
+  exp.confidenceLevel = Math.min(0.99, zScore > 2.576 ? 0.99 : zScore > 1.96 ? 0.95 : zScore > 1.645 ? 0.90 : Math.max(0, zScore / 1.96 * 0.85));
 
   if (exp.confidenceLevel >= 0.95) {
-    exp.winnerVariant = best.id;
+    exp.winnerVariant = bestChallenger.id;
+  } else {
+    exp.winnerVariant = control.id;
   }
 
   return exp;
