@@ -2942,7 +2942,7 @@ ${ANTI_HALLUCINATION_FULL}` },
     const serviceKeyFb = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
     // Registrar aprimoramento no neural_learning_data para RLHF
-    EdgeRuntime.waitUntil(
+    (globalThis as any).EdgeRuntime?.waitUntil?.(
       (async () => {
         try {
           const supa = createClient(supabaseUrlFb, serviceKeyFb);
