@@ -167,22 +167,9 @@ export function HeroSection({ t }: HeroSectionProps) {
             <img
               src={orionTitle}
               alt="ORION"
-              className="h-16 sm:h-20 md:h-28 lg:h-32 xl:h-40 mx-auto drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
+              className="h-12 sm:h-16 md:h-20 lg:h-24 xl:h-28 mx-auto drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
               style={{
                 filter: 'drop-shadow(0 0 80px hsl(30 85% 52% / 0.4)) drop-shadow(0 0 120px hsl(30 85% 52% / 0.2))',
-              }}
-            />
-            <img
-              src={orionTitle}
-              alt=""
-              aria-hidden="true"
-              className="h-8 sm:h-10 md:h-14 lg:h-16 mx-auto pointer-events-none select-none"
-              style={{
-                transform: 'scaleY(-1) translateY(4px)',
-                opacity: 0.12,
-                filter: 'blur(4px) drop-shadow(0 0 40px hsl(30 85% 52% / 0.3))',
-                maskImage: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)',
-                WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)',
               }}
             />
           </div>
