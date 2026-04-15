@@ -58,7 +58,7 @@ export default function Index() {
       <HeroSection t={t} />
 
       {/* App purpose section — required for Google OAuth verification */}
-      <section id="about" className="relative py-10 sm:py-14 bg-muted/5 border-y border-border/10">
+      <section id="about" className="relative py-8 sm:py-10 bg-muted/5 border-y border-border/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-10 max-w-4xl text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
             Orion Intelligence Platform
