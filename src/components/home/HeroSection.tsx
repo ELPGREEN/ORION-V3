@@ -82,7 +82,7 @@ export function HeroSection({ t }: HeroSectionProps) {
   const heroTranslateY = scrollY * 0.08;
 
   return (
-    <section className="relative min-h-[85vh] min-h-[85svh] flex items-center justify-center overflow-visible">
+    <section className="relative min-h-[70vh] min-h-[70svh] flex items-center justify-center overflow-visible">
       {/* HD photorealistic background */}
       <img
         src={bgHdHero}
@@ -134,7 +134,7 @@ export function HeroSection({ t }: HeroSectionProps) {
       />
 
       <div
-        className="container relative z-[15] py-4 sm:py-6 px-4 sm:px-6 pt-24 sm:pt-28 md:pt-32"
+        className="container relative z-[15] py-2 sm:py-4 px-4 sm:px-6 pt-20 sm:pt-24 md:pt-28"
         style={{
           opacity: heroOpacity,
           transform: `translate3d(0, ${heroTranslateY}px, 0)`,
@@ -151,7 +151,7 @@ export function HeroSection({ t }: HeroSectionProps) {
             }}
           >
             <div className="flex items-center justify-center">
-              <PlasmaCore className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 lg:w-36 lg:h-36" />
+              <PlasmaCore className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28" />
             </div>
           </div>
 
@@ -167,28 +167,15 @@ export function HeroSection({ t }: HeroSectionProps) {
             <img
               src={orionTitle}
               alt="ORION"
-              className="h-16 sm:h-20 md:h-28 lg:h-32 xl:h-40 mx-auto drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
+              className="h-12 sm:h-16 md:h-20 lg:h-24 xl:h-28 mx-auto drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
               style={{
                 filter: 'drop-shadow(0 0 80px hsl(30 85% 52% / 0.4)) drop-shadow(0 0 120px hsl(30 85% 52% / 0.2))',
-              }}
-            />
-            <img
-              src={orionTitle}
-              alt=""
-              aria-hidden="true"
-              className="h-8 sm:h-10 md:h-14 lg:h-16 mx-auto pointer-events-none select-none"
-              style={{
-                transform: 'scaleY(-1) translateY(4px)',
-                opacity: 0.12,
-                filter: 'blur(4px) drop-shadow(0 0 40px hsl(30 85% 52% / 0.3))',
-                maskImage: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)',
-                WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)',
               }}
             />
           </div>
 
           <div
-            className="w-16 sm:w-24 h-0.5 bg-primary mx-auto mb-2 sm:mb-3 plasma-glow"
+            className="w-12 sm:w-20 h-0.5 bg-primary mx-auto mb-1.5 sm:mb-2 plasma-glow"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'scaleX(1)' : 'scaleX(0)',
@@ -198,7 +185,7 @@ export function HeroSection({ t }: HeroSectionProps) {
           />
 
           <p
-            className="text-primary uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs md:text-sm mb-3 sm:mb-4"
+            className="text-primary uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs md:text-sm mb-2 sm:mb-3"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 30px, 0)',
@@ -210,7 +197,7 @@ export function HeroSection({ t }: HeroSectionProps) {
           </p>
 
           <div
-            className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4 sm:mb-6"
+            className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-3 sm:mb-4"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 20px, 0)',
@@ -233,7 +220,7 @@ export function HeroSection({ t }: HeroSectionProps) {
           </div>
 
           <p
-            className="text-sm sm:text-base md:text-lg text-muted-foreground mb-5 sm:mb-7 max-w-2xl mx-auto leading-relaxed font-light text-center px-2"
+            className="text-sm sm:text-base md:text-lg text-muted-foreground mb-4 sm:mb-5 max-w-2xl mx-auto leading-relaxed font-light text-center px-2"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 30px, 0)',
@@ -268,7 +255,7 @@ export function HeroSection({ t }: HeroSectionProps) {
 
           {/* Animated Stats Bar */}
           <div
-            className="mt-10 sm:mt-14 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-0 max-w-3xl mx-auto"
+            className="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-0 max-w-3xl mx-auto"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 30px, 0)',
