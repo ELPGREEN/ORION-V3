@@ -287,9 +287,13 @@ Stack tecnológico:
 
 3.11 ADMINISTRAÇÃO
 ─────────────────
-  • admin-list-users — Listagem de usuários (admin)
-  • admin-manage-user — Gestão de usuários (admin)
-  • admin-list-payments — Listagem de pagamentos (admin)
+  • admin-api — API consolidada de administração:
+    - assign_role: Atribuição de roles (cliente, advogado, produtor, afiliado, nomade)
+    - list_users: Listagem detalhada de usuários com roles e perfis
+    - delete_user: Exclusão segura de usuários e dados relacionados
+    - update_user: Atualização de perfil, email e senha
+    - get_user_details: Agregação de documentos, notificações e perfil
+    - notify_advogados: Envio de notificações sistêmicas para advogados
   • create-client-profile — Criação de perfil de cliente
   • utils-api — Utilitários de API
 
