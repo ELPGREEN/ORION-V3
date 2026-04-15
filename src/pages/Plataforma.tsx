@@ -483,10 +483,10 @@ export default function Plataforma() {
             <div className="max-w-4xl mx-auto">
               <div className="flex flex-col md:flex-row items-stretch gap-0">
                 {[
-                  { icon: AudioLines, label: "Entrada", items: ["Voz (GCP STT)", "Texto / Chat", "Câmera / Imagem"], color: "text-orange-400", borderColor: "border-orange-500/30" },
-                  { icon: Cog, label: "Processamento", items: ["Intent Classifier", "Neural Ops Engine", "RAG + Embeddings"], color: "text-cyan-400", borderColor: "border-cyan-500/30" },
-                  { icon: BrainCircuit, label: "Raciocínio", items: ["Gemini 2.5 Flash", "DeepSeek R1", "Multi-Agent"], color: "text-purple-400", borderColor: "border-purple-500/30" },
-                  { icon: Rocket, label: "Saída", items: ["Voz (Enceladus TTS)", "Texto + Artifacts", "Ações / Browser"], color: "text-emerald-400", borderColor: "border-emerald-500/30" },
+                  { icon: GlyphAudio, label: "Entrada", items: ["Voz (GCP STT)", "Texto / Chat", "Câmera / Imagem"], color: "text-orange-400", borderColor: "border-orange-500/30" },
+                  { icon: GlyphProcessing, label: "Processamento", items: ["Intent Classifier", "Neural Ops Engine", "RAG + Embeddings"], color: "text-cyan-400", borderColor: "border-cyan-500/30" },
+                  { icon: GlyphBrain, label: "Raciocínio", items: ["Gemini 2.5 Flash", "DeepSeek R1", "Multi-Agent"], color: "text-purple-400", borderColor: "border-purple-500/30" },
+                  { icon: GlyphLaunch, label: "Saída", items: ["Voz (Enceladus TTS)", "Texto + Artifacts", "Ações / Browser"], color: "text-emerald-400", borderColor: "border-emerald-500/30" },
                 ].map((stage, idx) => (
                   <motion.div
                     key={stage.label}
