@@ -166,6 +166,7 @@ export function OrionPlaylistBar() {
     }
     if (ytEmbedVisible) sendYouTubeCommand("pauseVideo");
     setYtEmbedVisible(false);
+    setYtEmbedMinimized(false);
     setPlaybackMode(null);
 
     if (track.source === "spotify" && track.spotifyUri && useSDK && sdk.isReady && sdk.isPremium) {
@@ -186,6 +187,7 @@ export function OrionPlaylistBar() {
       setIsPlayingLocal(true);
       setProgress(0);
       setYtEmbedVisible(true);
+      setYtEmbedMinimized(false);
     } else if (track.external_url) {
       window.open(track.external_url, "_blank");
       toast.info("Preview indisponível — abrindo externamente");
@@ -223,6 +225,14 @@ export function OrionPlaylistBar() {
 
     if (!ytEmbedVisible) {
       setYtEmbedVisible(true);
+      setYtEmbedMinimized(false);
+      setIsPlayingLocal(true);
+      return;
+    }
+
+    if (ytEmbedMinimized) {
+      setYtEmbedMinimized(false);
+      window.setTimeout(() => sendYouTubeCommand("playVideo"), 120);
       setIsPlayingLocal(true);
       return;
     }
@@ -427,23 +437,35 @@ export function OrionPlaylistBar() {
       )}
 
       {ytEmbedVisible && currentTrack?.videoId && (
-        <div className="fixed bottom-20 right-6 w-[320px] h-[180px] z-[9998] rounded-lg overflow-hidden border border-[#D4AF37]/20"
+        <div className={`fixed z-[9998] rounded-lg overflow-hidden border border-[#D4AF37]/20 ${
+          ytEmbedMinimized ? "bottom-20 right-6 w-[220px] h-[44px]" : "bottom-20 right-6 w-[320px] h-[180px]"
+        }`}
           style={{ boxShadow: "0 0 30px rgba(212,175,55,0.1)" }}>
-          <iframe
-            ref={ytIframeRef}
-            src={`https://www.youtube.com/embed/${currentTrack.videoId}?enablejsapi=1&autoplay=1&${muted ? "mute=1&" : ""}rel=0`}
-            className="w-full h-full"
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-            title="Orion Music Player"
-          />
+          {!ytEmbedMinimized ? (
+            <iframe
+              ref={ytIframeRef}
+              src={`https://www.youtube.com/embed/${currentTrack.videoId}?enablejsapi=1&autoplay=1&${muted ? "mute=1&" : ""}rel=0`}
+              className="w-full h-full"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              title="Orion Music Player"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center gap-2 px-3 bg-black/80 cursor-pointer" onClick={() => setYtEmbedMinimized(false)}>
+              <Youtube className="h-4 w-4 text-red-500 shrink-0" />
+              <span className="text-[10px] text-white/80 truncate flex-1">{currentTrack.name}</span>
+            </div>
+          )}
           <Button variant="ghost" size="icon"
             className="absolute top-1 right-1 h-6 w-6 bg-black/60 hover:bg-black/80 z-10"
             onClick={() => {
-              sendYouTubeCommand("pauseVideo");
-              setYtEmbedVisible(false);
+              if (!ytEmbedMinimized) {
+                sendYouTubeCommand("pauseVideo");
+              }
+              setYtEmbedMinimized(true);
               setIsPlayingLocal(false);
-            }}>
+            }}
+            title="Minimizar vídeo">
             <X className="h-3 w-3" />
           </Button>
         </div>
