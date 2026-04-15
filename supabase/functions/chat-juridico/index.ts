@@ -325,7 +325,7 @@ function getAvailableLLMs(): LLMConfig[] {
 }
 
 // Dynamic provider routing from ai_providers table
-async function getAvailableLLMsDynamic(supabaseAdmin: ReturnType<typeof createClient>): Promise<LLMConfig[]> {
+async function getAvailableLLMsDynamic(supabaseAdmin: any): Promise<LLMConfig[]> {
   try {
     const { data: providers } = await supabaseAdmin
       .from("ai_providers")
@@ -529,7 +529,7 @@ async function callLLMStream(
 async function callWithFallback(
   messages: { role: string; content: string }[],
   systemPrompt: string,
-  supabaseAdmin?: ReturnType<typeof createClient>
+  supabaseAdmin?: any
 ): Promise<{ content: string; provider: string }> {
   const llms = supabaseAdmin ? await getAvailableLLMsDynamic(supabaseAdmin) : getAvailableLLMs();
   if (llms.length === 0) throw new Error("No LLM providers configured");
@@ -623,7 +623,7 @@ async function classifyIntent(query: string): Promise<IntentResult> {
 // ====== BUSCA NEURAL RAG (legal_embeddings + neural_knowledge_base) ======
 async function searchNeuralContext(
   query: string,
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   filters?: { tribunal?: string; tipo?: string }
 ): Promise<{ context: string; sources: NeuralSearchResult[] }> {
   try {
