@@ -22,9 +22,6 @@ export function FloatingMusicPlayer() {
   const [minimized, setMinimized] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Don't render on neural page — OrionPlaylistBar handles music there
-  if (isOnNeuralPage) return null;
-
   // Listen for music commands from Orion
   useEffect(() => {
     const handler = (e: CustomEvent<MusicCommand>) => {
