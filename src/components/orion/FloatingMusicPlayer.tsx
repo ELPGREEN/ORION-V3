@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
 import { isMobileDevice, openYouTube, openSpotify } from "@/lib/utils/deep-link";
+import { useLocation } from "react-router-dom";
 
 interface MusicCommand {
   action: string;

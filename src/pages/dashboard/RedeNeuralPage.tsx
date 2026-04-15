@@ -1380,11 +1380,6 @@ export default function RedeNeuralPage() {
           </Suspense>
         </TabsContent>
       </Tabs>
-
-      {/* Floating Music Player — triggered by Orion voice/text commands */}
-      <Suspense fallback={null}>
-        <FloatingMusicPlayer />
-      </Suspense>
     </div>
   );
 }
