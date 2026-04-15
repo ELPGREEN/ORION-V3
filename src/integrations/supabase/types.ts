@@ -5259,6 +5259,36 @@ export type Database = {
           },
         ]
       }
+      orion_memory: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: number
+          memory_key: string
+          memory_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: number
+          memory_key: string
+          memory_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: number
+          memory_key?: string
+          memory_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       orion_module_installations: {
         Row: {
           config: Json | null
