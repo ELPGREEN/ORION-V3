@@ -37,6 +37,10 @@ import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
 import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
 // Vision via Gemini on-demand
 import { captureVideoFrame, analyzeFrame } from "@/lib/vision/gemini-vision";
+// Vision Control Panel
+import { VisionControlPanel, DEFAULT_VISION_SETTINGS, type VisionSettings } from "./VisionControlPanel";
+// Vision Stats Panel
+import { VisionStatsPanel, DEFAULT_DETECTION_STATS, type DetectionStats } from "./VisionStatsPanel";
 const preloadAllVision = async () => {};
 
 // Real-time detection via Gemini Flash — throttled, lightweight
@@ -137,9 +141,24 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const [fps, setFps] = useState(0);
   const [identificationMode, setIdentificationMode] = useState("universal");
   const [mlDetections, setMlDetections] = useState<Array<{ name: string; category: string; confidence: number; count: number; bbox?: { x: number; y: number; w: number; h: number }; source?: string }>>([]);
+  const [visionSettings, setVisionSettings] = useState<VisionSettings>(DEFAULT_VISION_SETTINGS);
   const rtInferenceRunningRef = useRef(false);
   const fpsC = useRef(0);
   const lastFpsT = useRef(Date.now());
+
+  // Build detection stats from current state
+  const detectionStats: DetectionStats = {
+    fps,
+    totalFrames: Math.floor(fpsC.current),
+    objectsDetected: mlDetections.length,
+    facesDetected: mlDetections.filter(d => d.category === "face").length,
+    handsDetected: mlDetections.filter(d => d.category === "hand").length,
+    textRegionsFound: regions.filter(r => r.category === "text").length,
+    lastDetectionTime: mlDetections.length > 0 ? Date.now() : 0,
+    processingMs: 0,
+    isActive: active,
+    isConnected: true,
+  };
 
   const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef } = useNeuralVoice();
   const bgTranscriptsGetterRef = useRef<() => import("./useWakeWord").BackgroundTranscript[]>(() => []);
@@ -816,7 +835,24 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
             <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-cyan-400/30 via-transparent to-transparent" />
           </div>
 
-          {/* Vision */}
+          {/* Vision Stats Panel */}
+          <VisionStatsPanel stats={detectionStats} />
+
+          {/* Vision Control Panel */}
+          <VisionControlPanel 
+            settings={visionSettings} 
+            onSettingsChange={setVisionSettings}
+            isActive={active}
+            detectionStats={{
+              fps,
+              objectsDetected: mlDetections.length,
+              facesDetected: mlDetections.filter(d => d.category === "face").length,
+              handsDetected: mlDetections.filter(d => d.category === "hand").length,
+              lastDetectionTime: mlDetections.length > 0 ? Date.now() : 0,
+            }}
+          />
+
+          {/* Legacy Vision Panel */}
           <div className="relative bg-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-sm overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-pink-400/40 via-transparent to-transparent" />
             <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
@@ -836,6 +872,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 </p>
               )}
             </div>
+          </div>
           </div>
 
           {/* Mode Selector */}
