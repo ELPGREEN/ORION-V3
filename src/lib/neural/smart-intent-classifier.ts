@@ -195,8 +195,8 @@ const REGEX_RULES: RegexRule[] = [
   // Media — generic (music/video keywords without platform)
   { pattern: /\b(tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica\s+d[oae]\s+|v[ií]deo\s+d[oae]\s+|ouvir?\s+|escutar?\s+)/i, intent: "media", confidence: 0.88, extractParams: (t) => {
     const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+)/i);
-return { query: m?.[1]?.trim() || t, action: /\b(par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
-  },
+    return { query: m?.[1]?.trim() || t, action: /\b(par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
+  }},
 
   // Media controls — next, previous, pause, resume
   { pattern: /\b(pr[óò]xima?|pr[óò]ximo|avançar|seguinte|próxima\s+(m[uú]sica|faixa))\b/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "next" }) },
