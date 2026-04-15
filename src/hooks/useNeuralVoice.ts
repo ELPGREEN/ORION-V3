@@ -26,6 +26,7 @@ import { ensurePersistentMic, isMobile as isMobilePersistent } from "@/lib/voice
 import { createGCPSTTSession, type GCPSTTSession } from "@/lib/voice/gcpSTT";
 
 // ═══ Constants ═══
+const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
 const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
 const ECHO_WINDOW_MS = 18000;
 const ECHO_JACCARD_THRESHOLD = 0.35;
@@ -33,7 +34,6 @@ const MAX_CONSECUTIVE_ABORTS = 5;
 const MAX_CONSECUTIVE_NO_SPEECH = 8;
 const NO_SPEECH_TIMEOUT_MS = 4000; // 4 seconds tolerance for pauses
 const RESTART_DELAY_MS = isMobile() ? 5000 : 2000; // Longer delays to prevent cycling
-const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
 
 // ═══ Shared State ═══
 export const VoiceState = { aiResponding: false };
