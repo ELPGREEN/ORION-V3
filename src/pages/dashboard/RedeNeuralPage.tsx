@@ -86,7 +86,7 @@ const OrionAudiobookListener = lazy(lazyRetry(() => import("@/components/orion/O
 const SpotifyPlayer = lazy(lazyRetry(() => import("@/components/spotify/SpotifyPlayer").then(m => ({ default: m.SpotifyPlayer }))));
 const AmazonMusicPlayer = lazy(lazyRetry(() => import("@/components/amazon/AmazonMusicPlayer").then(m => ({ default: m.AmazonMusicPlayer }))));
 const YouTubeMusicPlayer = lazy(lazyRetry(() => import("@/components/youtube-music/YouTubeMusicPlayer").then(m => ({ default: m.YouTubeMusicPlayer }))));
-const FloatingMusicPlayer = lazy(lazyRetry(() => import("@/components/orion/FloatingMusicPlayer").then(m => ({ default: m.FloatingMusicPlayer }))));
+
 const OrionAPIStatusDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neural/OrionAPIStatusDashboard").then(m => ({ default: m.OrionAPIStatusDashboard }))));
 const QuantumRuntimeDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neural/QuantumRuntimeDashboard").then(m => ({ default: m.QuantumRuntimeDashboard }))));
 const ScreenRecorder = lazy(lazyRetry(() => import("@/components/dashboard/neural/ScreenRecorder").then(m => ({ default: m.ScreenRecorder }))));
