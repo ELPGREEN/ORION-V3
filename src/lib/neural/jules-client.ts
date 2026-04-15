@@ -20,7 +20,7 @@ export function isCreatorVerified(opts: {
   identityStatus?: IdentityStatus;
 }): boolean {
   if (opts.email && isOwnerEmail(opts.email)) return true;
-  if (opts.identityStatus === "creator") return true;
+  if (opts.identityStatus === "creator" || opts.identityStatus === "owner") return true;
   return false;
 }
 
