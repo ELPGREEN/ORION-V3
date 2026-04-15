@@ -128,49 +128,13 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Auth: accept any valid JWT or apikey header
+    // Auth: verify_jwt=false in config.toml (cron/admin function)
+    // Uses service_role key internally — no user-level auth needed
     const authHeader = req.headers.get("authorization");
-    const apikeyHeader = req.headers.get("apikey");
-    const envServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    const publishableKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
-
-    console.log(`[Auth] authHeader=${authHeader ? "present" : "missing"}, apikey=${apikeyHeader ? "present" : "missing"}`);
-
-    let authorized = false;
-
-    // Check apikey header
-    if (apikeyHeader && (apikeyHeader === publishableKey || apikeyHeader === envServiceKey)) {
-      authorized = true;
-      console.log("[Auth] apikey header matched");
-    }
-
-    // Check Authorization header
     if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      if (token === envServiceKey || token === publishableKey) {
-        authorized = true;
-        console.log("[Auth] Key matched directly");
-      } else {
-        try {
-          const parts = token.split(".");
-          if (parts.length >= 2) {
-            const payload = JSON.parse(atob(parts[1]));
-            if (["anon", "service_role", "authenticated"].includes(payload.role)) {
-              authorized = true;
-              console.log(`[Auth] JWT role: ${payload.role}`);
-            }
-          }
-        } catch {
-          // not a valid JWT
-        }
-      }
-    }
-
-    if (!authorized) {
-      return new Response(
-        JSON.stringify({ error: "Autenticação obrigatória." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.log("[Auth] Authorization header present");
+    } else {
+      console.log("[Auth] No auth header — proceeding (verify_jwt=false, cron-safe)");
     }
 
     const body = await req.json().catch(() => ({}));
