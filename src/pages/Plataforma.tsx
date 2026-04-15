@@ -53,7 +53,7 @@ function useCountUp(end: number, duration = 2000, startOnView = true) {
 
 const featureIcons = [Activity, Network, Layers, Fingerprint];
 const featureKeys = ["tracking", "communication", "documents", "security"] as const;
-const benefitIcons = [Clock, Smartphone, Zap, Lock, FolderOpen, Languages];
+const benefitIcons = [Clock, Smartphone, Zap, Lock, FolderOpen, GlyphGlobe];
 const showcaseKeys = ["platform", "ai", "docs", "register", "dashboard"] as const;
 const showcaseImages = [
   "/og-images/og-plataforma.jpg",
