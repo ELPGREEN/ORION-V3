@@ -1397,7 +1397,7 @@ async function buildOrionMessages(body: Record<string, unknown>) {
 
   if (!isDirectVoicePath) {
     [identityKnowledge, ragContext, webSearchContext, ...urlContexts] = await Promise.all([
-      isIdentityQuery ? fetchIdentityKnowledge(questionStr) : Promise.resolve(""),
+      isIdentityQuery ? fetchIdentityKnowledge() : Promise.resolve(""),
       (!isSimpleQuery && questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve(""),
       needsWebSearch ? fetchWebSearchContext(questionStr) : Promise.resolve(""),
       ...nonYoutubeUrls.map(u => fetchURLContext(u)),
@@ -1971,46 +1971,7 @@ async function generateQueryEmbedding(queryText: string): Promise<number[] | nul
 
 // ═══ RAG: Fetch relevant knowledge from neural_knowledge_base ═══
 
-// ═══ IDENTITY KNOWLEDGE: Fast fetch for "who are you" type queries ═══
-async function fetchIdentityKnowledge(question: string): Promise<string> {
-  try {
-    const sb = getSupabase();
-    // Direct query for identity - no embedding needed for exact match
-    const { data } = await sb
-      .from("neural_knowledge_base")
-      .select("title, content")
-      .eq("source_type", "identidade_orion")
-      .limit(1);
-    
-    if (data && data.length > 0) {
-      console.log("[Identity] Found identity knowledge");
-      return `═══ SUA IDENTIDADE ═══\n${data[0].content.slice(0, 800)}`;
-    }
-    
-    // Fallback: try general identity query via embedding
-    const embedding = await generateQueryEmbedding(question);
-    if (embedding) {
-      const { data: embData } = await sb.rpc("match_neural_knowledge", {
-        query_embedding: `[${embedding.join(",")}]`,
-        match_threshold: 0.5,
-        match_count: 2,
-      });
-      if (embData && embData.length > 0) {
-        const identityData = embData.filter((r: any) => 
-          r.source_type?.includes("identidade") || r.title?.toLowerCase().includes("identidade")
-        );
-        if (identityData.length > 0) {
-          return `═══ SUA IDENTIDADE ═══\n${identityData.map((r: any) => r.content).join("\n---\n").slice(0, 800)}`;
-        }
-      }
-    }
-    
-    return "";
-  } catch (e) {
-    console.warn("[Identity] KB fetch failed:", e);
-    return "";
-  }
-}
+// (duplicate fetchIdentityKnowledge removed — using the one at line ~1156)
 
 async function fetchRAGContext(question: string): Promise<string> {
   try {

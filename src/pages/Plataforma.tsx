@@ -19,7 +19,7 @@ import {
   Mic, Brain, Camera, Globe, BarChart3, FileText,
   Bot, Cpu, Search, Languages, Sparkles, ShieldCheck,
   Workflow, Database, Bell, Users, Palette, Code2,
-  Cpu2, SparklesIcon, BrainCircuit, Wand2
+  BrainCircuit, Wand2
 } from "lucide-react";
 import heroBg from "@/assets/bg-carbon-hero.jpg";
 
@@ -56,13 +56,13 @@ const orionUtilities = [
     color: "text-pink-400",
   },
   {
-    icon: Cpu2,
+    icon: Cpu,
     title: "🖥️ Computer Use",
     desc: "Automação de navegador: web scraping, extração de dados, navegação automática. Execute ações sem intervenção manual.",
     color: "text-purple-400",
   },
   {
-    icon: SparklesIcon,
+    icon: Sparkles,
     title: "💾 Orion Memory",
     desc: "Memória persistente entre sessões. Lembra preferências, contexto e histórico para respostas personalizadas.",
     color: "text-violet-400",
