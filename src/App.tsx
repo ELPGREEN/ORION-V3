@@ -159,8 +159,7 @@ const App = () => (
           <ScrollToTop />
           <CopyProtection />
           <OrionShield />
-          {/* GlobalOrionListener lives inside DashboardLayout now */}
-          {/* PublicOrionListener — lightweight orb for public pages */}
+          {/* Global video overlay stays mounted once at app level */}
           <PublicOrionListener />
           <VideoOverlay />
           <MouseTrailEffect />
