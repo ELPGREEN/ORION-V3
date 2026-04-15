@@ -171,5 +171,5 @@ export function createArtifact(type: keyof typeof ARTIFACT_TEMPLATES, title: str
   if (type === "json" && typeof content === "object") {
     return ARTIFACT_TEMPLATES.json(title, content);
   }
-  return ARTIFACT_TEMPLATES[type](title, content as string);
+  return (ARTIFACT_TEMPLATES as any)[type](title, content as string);
 }

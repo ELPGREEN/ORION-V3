@@ -81,7 +81,7 @@ async function createServiceAccountJWT(sa: ServiceAccount, scope: string, impers
 
   const key = await crypto.subtle.importKey(
     "pkcs8",
-    keyData,
+    keyData.buffer as ArrayBuffer,
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
     false,
     ["sign"]
@@ -346,7 +346,7 @@ async function getUserGoogleToken(supabaseClient: any, userId: string): Promise<
 
     return refreshed.access_token;
   } catch (err) {
-    console.error("[firebase-admin] Token refresh failed:", err.message);
+    console.error("[firebase-admin] Token refresh failed:", (err as Error).message);
     return null;
   }
 }
@@ -812,8 +812,8 @@ Deno.serve(async (req) => {
             data: { status: "ok", project_id: sa.project_id, token_obtained: !!token },
           }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         } catch (healthErr) {
-          console.error("[firebase-admin] health check error:", healthErr?.message || healthErr);
-          return new Response(JSON.stringify({ success: false, error: healthErr?.message }), {
+          console.error("[firebase-admin] health check error:", (healthErr as Error)?.message || healthErr);
+          return new Response(JSON.stringify({ success: false, error: (healthErr as Error)?.message }), {
             status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
@@ -1185,7 +1185,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("[firebase-admin]", err);
     return new Response(
-      JSON.stringify({ error: err.message || "Internal error" }),
+      JSON.stringify({ error: (err as Error).message || "Internal error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

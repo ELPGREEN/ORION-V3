@@ -1217,7 +1217,7 @@ async function searchTxtKnowledgeBase(
 // NEURAL NETWORK INTEGRATION
 // ═══════════════════════════════════════════════════════════════
 
-async function extractKeywords(query: string): string[] {
+async function extractKeywords(query: string): Promise<string[]> {
   // Extract meaningful legal keywords from the query
   const stopwords = new Set(["de", "do", "da", "dos", "das", "em", "no", "na", "nos", "nas", "por", "para", "com", "sem", "uma", "um", "que", "se", "ou", "os", "as", "ao", "à", "e", "a", "o", "é", "foi", "ser", "ter", "mais", "muito", "como"]);
   const words = query.toLowerCase()
@@ -1251,11 +1251,11 @@ async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<
         .gt("expires_at", new Date().toISOString())
         .maybeSingle();
 
-      if (cached?.embedding) {
+      if ((cached as any)?.embedding) {
         console.log("  ✅ Embedding cache HIT for document generation");
-        const emb = typeof cached.embedding === "string"
-          ? JSON.parse(cached.embedding)
-          : cached.embedding;
+        const emb = typeof (cached as any).embedding === "string"
+          ? JSON.parse((cached as any).embedding)
+          : (cached as any).embedding;
         if (Array.isArray(emb) && emb.length > 0) return emb;
       }
     } catch (cacheErr) {
@@ -1303,7 +1303,7 @@ async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<
             const queryHash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(truncated))
               .then(buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join(""));
             
-            await supabaseClient.from("query_embedding_cache").upsert({
+            await (supabaseClient.from("query_embedding_cache") as any).upsert({
               query_hash: queryHash,
               query_text: truncated.slice(0, 500),
               embedding: `[${finalEmb.join(",")}]`,

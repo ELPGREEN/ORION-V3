@@ -103,7 +103,7 @@ async function generateEmbedding(
         return { embedding, provider: provider.name };
       }
     } catch (e) {
-      console.warn(`Provider ${provider.name} failed:`, e.message);
+      console.warn(`Provider ${provider.name} failed:`, (e as Error).message);
       continue;
     }
   }
@@ -113,7 +113,7 @@ async function generateEmbedding(
     const embedding = await generateEmbeddingHF(text);
     return { embedding, provider: "huggingface-fallback" };
   } catch (hfErr) {
-    console.error("❌ HuggingFace fallback also failed:", hfErr.message);
+    console.error("❌ HuggingFace fallback also failed:", (hfErr as Error).message);
   }
   throw new Error("All embedding providers failed (Gemini + HuggingFace)");
 }
@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
               }
             }
           } catch (e) {
-            console.error(`❌ Batch failed:`, e.message);
+            console.error(`❌ Batch failed:`, (e as Error).message);
             // Fallback: one-by-one
             for (const b of batch) {
               try {
@@ -263,7 +263,7 @@ Deno.serve(async (req) => {
               }
             }
           } catch (e) {
-            console.error(`❌ Legal batch failed:`, e.message);
+            console.error(`❌ Legal batch failed:`, (e as Error).message);
             // Fallback: one-by-one with HF support
             for (const b of batch) {
               const text = `${b.title}\n\n${b.content}`.trim();
