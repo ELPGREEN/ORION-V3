@@ -220,7 +220,7 @@ export function HeroSection({ t }: HeroSectionProps) {
           </div>
 
           <p
-            className="text-sm sm:text-base md:text-lg text-muted-foreground mb-5 sm:mb-7 max-w-2xl mx-auto leading-relaxed font-light text-center px-2"
+            className="text-sm sm:text-base md:text-lg text-muted-foreground mb-4 sm:mb-5 max-w-2xl mx-auto leading-relaxed font-light text-center px-2"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 30px, 0)',
