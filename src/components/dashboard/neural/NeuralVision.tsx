@@ -873,7 +873,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
               )}
             </div>
           </div>
-          </div>
 
           {/* Mode Selector */}
           <div className="relative bg-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-sm overflow-hidden">
