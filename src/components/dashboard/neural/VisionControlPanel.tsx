@@ -139,6 +139,8 @@ export function VisionControlPanel({ settings, onSettingsChange, isActive, detec
               );
             })}
           </div>
+          </div>
+        </div>
       )}
     </div>
   );
