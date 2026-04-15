@@ -134,7 +134,7 @@ export function HeroSection({ t }: HeroSectionProps) {
       />
 
       <div
-        className="container relative z-[15] py-4 sm:py-6 px-4 sm:px-6 pt-24 sm:pt-28 md:pt-32"
+        className="container relative z-[15] py-2 sm:py-4 px-4 sm:px-6 pt-20 sm:pt-24 md:pt-28"
         style={{
           opacity: heroOpacity,
           transform: `translate3d(0, ${heroTranslateY}px, 0)`,
