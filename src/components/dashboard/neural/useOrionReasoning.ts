@@ -225,9 +225,11 @@ export function useOrionReasoning(
         vsLog(`🔄 Ciclo de consciência: ${meaningfulErrors.length} erros para análise`);
 
         // Send to SupAgent for frontend analysis
-        const { data: analysisData } = await supabase.functions.invoke("agente-construcao", {
+        const { data: analysisData } = await supabase.functions.invoke("ai-orchestrator", {
           body: {
             action: "supagent_frontend_instruction",
+            useCase: "documents",
+            source: "consciousness-cycle",
             params: {
               console_errors: meaningfulErrors.slice(0, 20),
               current_route: window.location.pathname,
@@ -544,8 +546,8 @@ export function useOrionReasoning(
 
             if (!isOwner) {
               const [voiceRes, faceRes] = await Promise.all([
-                supabase.from("voice_auth_enrollments" as any).select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
-                supabase.from("face_auth_enrollments").select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+                supabase.from("voice_auth_enrollments").select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+                supabase.from("face_auth_enrollments" as any).select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
               ]);
 
               if (!voiceRes.data && !faceRes.data) {
@@ -1305,8 +1307,8 @@ export function useOrionReasoning(
           else if (/config|par[aâ]metro|peso|weight/i.test(qLower)) targetType = "config";
 
           // Step 1: Plan
-          const { data: planData } = await supabase.functions.invoke("agente-construcao", {
-            body: { action: "supagent_plan", params: { intent: question, target_type: targetType } },
+          const { data: planData } = await supabase.functions.invoke("ai-orchestrator", {
+            body: { action: "supagent_plan", useCase: "documents", source: "auto-construct", params: { intent: question, target_type: targetType } },
           });
           const plan = planData?.plan;
           const riskLevel = plan?.risk_level || "unknown";
@@ -1314,9 +1316,11 @@ export function useOrionReasoning(
           addLog(`📋 Plano: ${stepsCount} etapas, risco: ${riskLevel}`);
 
           // Step 2: Construct
-          const { data: constructData } = await supabase.functions.invoke("agente-construcao", {
+          const { data: constructData } = await supabase.functions.invoke("ai-orchestrator", {
             body: {
               action: "supagent_construct",
+              useCase: "documents",
+              source: "auto-construct",
               params: {
                 intent: question,
                 target_type: targetType,
@@ -1337,9 +1341,11 @@ export function useOrionReasoning(
           let frontendInstructions: any = null;
           if (targetType === "component" || targetType === "auto") {
             try {
-              const { data: feData } = await supabase.functions.invoke("agente-construcao", {
+              const { data: feData } = await supabase.functions.invoke("ai-orchestrator", {
                 body: {
                   action: "supagent_frontend_instruction",
+                  useCase: "documents",
+                  source: "auto-construct",
                   params: {
                     intent: question,
                     current_route: window.location.pathname,
@@ -1386,12 +1392,14 @@ export function useOrionReasoning(
 
           // Learn from the error
           try {
-            await supabase.functions.invoke("agente-construcao", {
+            await supabase.functions.invoke("ai-orchestrator", {
               body: {
                 action: "supagent_learn_error",
+                useCase: "documents",
+                source: "auto-construct",
                 params: {
                   error_message: constructErr?.message || String(constructErr),
-                  function_name: "agente-construcao",
+                  function_name: "ai-orchestrator",
                   intent: question,
                 },
               },

@@ -49,9 +49,37 @@ export interface OrionMemoryEntry {
   timestamp: string;
 }
 
+// ─── VM Routing Logic ───
+
+/** Determine if a task should go to the GCP VM (vision/heavy) or stay local/edge */
+export function shouldRouteToVM(action: string, payload: Record<string, unknown> = {}): boolean {
+  const vmActions = ["vision_analyze", "tts_generate", "stt_transcribe", "face_detect", "face_identify", "ocr_process"];
+  if (vmActions.includes(action)) return true;
+  // Text/search/legal tasks bypass VM — use edge functions directly
+  const edgeActions = ["chat", "search", "legal_search", "translate", "summarize", "route", "status", "health"];
+  if (edgeActions.includes(action)) return false;
+  // Check payload hints
+  if (payload.image || payload.audio || payload.video) return true;
+  return false;
+}
+
 // ─── VM Call Helper ───
 
 async function callOrionCore<T>(action: string, payload: Record<string, unknown> = {}): Promise<T | null> {
+  // Skip VM for non-vision tasks — use neural-inference edge function directly
+  if (!shouldRouteToVM(action, payload)) {
+    try {
+      const { data, error } = await supabase.functions.invoke("neural-inference", {
+        body: { action, ...payload, source: "orion-core-bypass" },
+      });
+      if (error) { console.warn(`[OrionCore] Edge fallback error for ${action}:`, error); return null; }
+      return data as T;
+    } catch (err) {
+      console.warn(`[OrionCore] Edge fallback failed for ${action}:`, err);
+      return null;
+    }
+  }
+
   try {
     const { data, error } = await supabase.functions.invoke("orion-vm-proxy", {
       body: { action, ...payload },

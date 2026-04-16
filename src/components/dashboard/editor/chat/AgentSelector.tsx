@@ -104,7 +104,7 @@ REGRAS:
 4. Inclua marcadores [PREENCHER] para dados que precisam ser completados pelo usuário.
 5. Mantenha linguagem formal jurídica e formatação ABNT.
 FORMATO DE SAÍDA: Documento HTML estruturado com seções claramente delimitadas.`,
-    edgeFunction: "agente-construcao",
+    edgeFunction: "ai-orchestrator",
   },
   investigador: {
     label: "Investigador",

@@ -245,15 +245,26 @@ export function WelcomeSplash({ onDismiss }: WelcomeSplashProps) {
                 Continue as Guest
               </motion.button>
 
-              {/* Footer */}
-              <motion.p
+              {/* Legal links */}
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.6 }}
-                className="text-[10px] text-muted-foreground/30 font-mono tracking-[0.3em] uppercase mt-4"
+                className="flex flex-col items-center gap-1 mt-4"
               >
-                ORION · SHIELD PROTECTION · v4.0
-              </motion.p>
+                <p className="text-[10px] text-muted-foreground/30 font-mono tracking-[0.3em] uppercase">
+                  ORION · SHIELD PROTECTION · v4.0
+                </p>
+                <div className="flex items-center gap-3">
+                  <a href="/privacy" className="text-[9px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors font-mono uppercase tracking-wider">
+                    Privacy Policy
+                  </a>
+                  <span className="text-[9px] text-muted-foreground/20">·</span>
+                  <a href="/terms" className="text-[9px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors font-mono uppercase tracking-wider">
+                    Terms of Service
+                  </a>
+                </div>
+              </motion.div>
             </div>
           </motion.div>
         )}
