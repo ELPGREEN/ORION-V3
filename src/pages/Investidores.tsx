@@ -419,28 +419,24 @@ export default function Investidores() {
             </ScrollReveal>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
-            <ScrollReveal direction="up">
-              <div className="border border-border/20 overflow-hidden">
-                <video controls poster={pitchHeroImg} className="w-full aspect-video object-cover" preload="metadata">
-                  <source src={videoHeroAsset.url} type="video/mp4" />
-                </video>
-                <div className="p-4">
-                  <p className="text-sm font-semibold text-foreground">Orion Platform — Visão Geral</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">Plataforma universal para automação industrial multi-setor.</p>
+            {[
+              { src: videoPlatformAsset.url, poster: pitchHeroImg, title: "Orion Platform — Automação Multi-Setor", desc: "Plataforma universal de IA para robótica, visão e IoT industrial." },
+              { src: videoOtrAsset.url, poster: pitchOtrImg, title: "Smart OTR — Reciclagem Robótica", desc: "Tecnologia patenteada para reciclagem de pneus OTR gigantes." },
+              { src: videoHeroAsset.url, poster: pitchAutoImg, title: "Visão Geral — ORION Enterprise", desc: "Da automotiva à farmacêutica — um cérebro, infinitas aplicações." },
+              { src: videoInnovationAsset.url, poster: pitchGlobalImg, title: "Inovação & Expansão Global", desc: "Roadmap de expansão multi-setor para Europa, MENA e LATAM." },
+            ].map((v, i) => (
+              <ScrollReveal key={v.title} direction="up" delay={i * 0.08}>
+                <div className="border border-border/20 overflow-hidden">
+                  <video controls poster={v.poster} className="w-full aspect-video object-cover" preload="metadata">
+                    <source src={v.src} type="video/mp4" />
+                  </video>
+                  <div className="p-4">
+                    <p className="text-sm font-semibold text-foreground">{v.title}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">{v.desc}</p>
+                  </div>
                 </div>
-              </div>
-            </ScrollReveal>
-            <ScrollReveal direction="up" delay={0.1}>
-              <div className="border border-border/20 overflow-hidden">
-                <video controls poster={pitchOtrImg} className="w-full aspect-video object-cover" preload="metadata">
-                  <source src={videoInnovationAsset.url} type="video/mp4" />
-                </video>
-                <div className="p-4">
-                  <p className="text-sm font-semibold text-foreground">Smart OTR — Caso de Uso Flagship</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">Reciclagem robótica de pneus gigantes — tecnologia patenteada.</p>
-                </div>
-              </div>
-            </ScrollReveal>
+              </ScrollReveal>
+            ))}
           </div>
         </div>
       </section>
