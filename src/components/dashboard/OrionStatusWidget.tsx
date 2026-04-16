@@ -73,7 +73,7 @@ export default function OrionStatusWidget() {
             variant="ghost"
             size="sm"
             className="text-[10px] text-primary hover:text-primary/80 h-7 px-2"
-            onClick={() => navigate("/dashboard/orion")}
+            onClick={() => navigate("/dashboard/orion-core")}
           >
             Abrir <ChevronRight className="h-3 w-3 ml-0.5" />
           </Button>
