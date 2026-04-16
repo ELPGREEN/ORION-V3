@@ -72,6 +72,7 @@ function endSpan(trace: AgentTrace, spanId: string, status: string, metadata?: R
 }
 
 // ─── Agent Types ───
+// NOTE: "agente-construcao" was removed from Edge Functions — redirected to "ai-orchestrator"
 export type AgentEndpoint = "agente-leitura" | "agente-construcao" | "agente-pesquisa";
 
 export type LeituraAction = "analyze_code" | "read_file" | "parse_logs" | "read_document" | "query_database" | "analyze_schema";
@@ -119,11 +120,17 @@ async function invokeAgent(
   }
 
   try {
+    // Redirect agente-construcao → ai-orchestrator (edge function was removed)
+    const resolvedEndpoint = endpoint === "agente-construcao" ? "ai-orchestrator" : endpoint;
+    const resolvedBody = endpoint === "agente-construcao"
+      ? { action, params, useCase: "documents", source: "agente-construcao-redirect" }
+      : { action, params };
+
     const data = await withCircuitBreaker(
-      endpoint,
+      resolvedEndpoint,
       async () => {
-        const { data, error } = await supabase.functions.invoke(endpoint, {
-          body: { action, params },
+        const { data, error } = await supabase.functions.invoke(resolvedEndpoint, {
+          body: resolvedBody,
         });
         if (error) throw error;
         return data;

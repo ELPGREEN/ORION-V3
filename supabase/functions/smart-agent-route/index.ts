@@ -18,9 +18,10 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Route to the appropriate agent edge function
+    // agente-construcao removed — redirect to ai-orchestrator
     const agentMap: Record<string, string> = {
       leitura: "agente-leitura",
-      construcao: "agente-construcao",
+      construcao: "ai-orchestrator",
       pesquisa: "agente-pesquisa",
     };
 
