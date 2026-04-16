@@ -174,6 +174,43 @@ export default function SolucoesIndustria() {
 
       <TechLine />
 
+      {/* ── Visual Showcase ── */}
+      <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--border))" }}>
+        <div className="container px-4 sm:px-6 relative z-[1]">
+          <div className="text-center mb-10">
+            <ScrollReveal direction="fade">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">O ORION EM AÇÃO</p>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={0.1}>
+              <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-3">
+                Tecnologia que <span className="text-primary">transforma</span> a indústria
+              </h2>
+            </ScrollReveal>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            {[
+              { img: industryWeldingImg, title: "Soldagem Robótica", desc: "Braços robóticos com controle adaptativo e rastreamento de junta em tempo real." },
+              { img: industryControlImg, title: "Sala de Controle SCADA", desc: "Monitoramento centralizado com Digital Twin, dashboards em tempo real e IA preditiva." },
+              { img: industryVisionImg, title: "Inspeção por Visão Computacional", desc: "Detecção de defeitos com lasers e câmeras industriais, 99.2% de acurácia." },
+              { img: industryAmrImg, title: "AMR & Logística Autônoma", desc: "Robôs móveis autônomos para warehouses, picking e sorting inteligente." },
+            ].map((item, i) => (
+              <ScrollReveal key={item.title} direction="up" delay={i * 0.08}>
+                <div className="border border-border/20 overflow-hidden group">
+                  <div className="aspect-video overflow-hidden">
+                    <img src={item.img} alt={item.title} loading="lazy" width={1280} height={720}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  </div>
+                  <div className="p-4">
+                    <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">{item.desc}</p>
+                  </div>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Módulos Industriais ── */}
       <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
         <GatewayBackground opacity={0.15} />
