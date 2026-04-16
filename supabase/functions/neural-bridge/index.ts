@@ -26,11 +26,11 @@ const BRIDGE_VERSION = "2.0.0";
 
 // ─── Routing weights: provider → use_case scores ───
 const DEFAULT_ROUTING: Record<string, Record<string, number>> = {
-  groq: { chat: 0.9, search: 0.7, code_gen: 0.8, translation: 0.7, documents: 0.6, analysis: 0.5 },
-  mistral: { chat: 0.7, search: 0.6, code_gen: 0.6, translation: 0.9, documents: 0.8, analysis: 0.7 },
-  anthropic: { chat: 0.8, search: 0.8, code_gen: 0.9, translation: 0.6, documents: 0.9, analysis: 0.95 },
-  openai: { chat: 0.75, search: 0.75, code_gen: 0.85, translation: 0.8, documents: 0.85, analysis: 0.85 },
-  gemini: { chat: 0.7, search: 0.8, code_gen: 0.7, translation: 0.75, documents: 0.7, analysis: 0.8 },
+  gemini: { chat: 0.95, search: 0.9, code_gen: 0.8, translation: 0.8, documents: 0.8, analysis: 0.85 },
+  mistral: { chat: 0.85, search: 0.75, code_gen: 0.8, translation: 0.95, documents: 0.9, analysis: 0.85 },
+  groq: { chat: 0.8, search: 0.7, code_gen: 0.75, translation: 0.7, documents: 0.6, analysis: 0.5 },
+  anthropic: { chat: 0.7, search: 0.7, code_gen: 0.9, translation: 0.6, documents: 0.85, analysis: 0.9 },
+  openai: { chat: 0.65, search: 0.65, code_gen: 0.8, translation: 0.7, documents: 0.8, analysis: 0.8 },
 };
 
 function getSupabase() {

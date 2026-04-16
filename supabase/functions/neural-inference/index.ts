@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// NEURAL INFERENCE ENGINE v4 — Multi-Provider
-// Chain: Gemini Flash → Claude Sonnet 4 → Mistral → Groq → HuggingFace
-// Gemini = primary, Claude = fallback (Claude sem créditos)
+// NEURAL INFERENCE ENGINE v5 — Multi-Provider (Free-First)
+// Chain: Gemini Flash → Mistral → Groq → HuggingFace → Claude
+// Mistral = 1B tokens/mês FREE, Claude = last resort (paid)
 // ═══════════════════════════════════════════════════════════════
 
 interface InferenceRequest {
@@ -143,37 +143,42 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<str
   return text;
 }
 
-// ── Provider 3: Mistral (FREE — 1B tokens/mês, 2 RPM) ──
+// ── Provider 2: Mistral (FREE — 1B tokens/mês, 1 req/s) ──
 async function callMistral(systemPrompt: string, userPrompt: string): Promise<string> {
   const apiKey = Deno.env.get("MISTRAL_API_KEY");
   if (!apiKey) throw new Error("No MISTRAL_API_KEY");
 
-  const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "mistral-small-latest",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      max_tokens: 8192,
-      temperature: 0.7,
-    }),
-    signal: AbortSignal.timeout(30000),
-  });
+  // Try models in order: Medium 3 (best) → Small 3.1 (fast) → Codestral (code)
+  const models = ["mistral-medium-latest", "mistral-small-latest"];
+  for (const model of models) {
+    try {
+      const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          max_tokens: 8192,
+          temperature: 0.7,
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
 
-  if (!resp.ok) {
-    const errText = await resp.text();
-    throw new Error(`Mistral ${resp.status}: ${errText.slice(0, 200)}`);
+      if (resp.status === 429) continue; // Try next model
+      if (!resp.ok) continue;
+
+      const data = await resp.json();
+      const text = data.choices?.[0]?.message?.content || "";
+      if (text) return text;
+    } catch { continue; }
   }
-  const data = await resp.json();
-  const text = data.choices?.[0]?.message?.content || "";
-  if (!text) throw new Error("Mistral empty response");
-  return text;
+  throw new Error("All Mistral models failed");
 }
 
 // ── Provider 3: Groq Llama (FREE — 30 RPM, 1.000 RPD) ──
@@ -287,13 +292,13 @@ Deno.serve(async (req) => {
       "Cite fontes quando possível. Seja proativo em identificar nuances e implicações." +
       (contextBlock ? `\n\nContexto relevante:${contextBlock}` : "");
 
-    // 3. Call provider chain: Claude → Gemini → Mistral → Groq → HuggingFace
+    // 3. Call provider chain: Gemini → Mistral → Groq → HuggingFace → Claude
     const startTime = Date.now();
     let response = "";
     let providerUsed = "gemini";
     let modelUsed = "gemini-2.5-flash";
 
-    // Streaming (Gemini only — Claude doesn't stream here)
+    // Streaming (Gemini only)
     if (stream) {
       try {
         const streamResp = await callGemini(systemPrompt, query, true);
@@ -339,7 +344,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Non-streaming: Gemini → Claude → Mistral → Groq → HuggingFace
+    // Non-streaming: Gemini → Mistral (1B free) → Groq → HuggingFace → Claude (paid last)
     try {
       const result = await callGemini(systemPrompt, query, false);
       if (typeof result === "string") response = result;
@@ -347,28 +352,28 @@ Deno.serve(async (req) => {
       modelUsed = "gemini-2.5-flash";
     } catch (e0) {
       console.warn("[Inference] Gemini failed:", e0);
-      providerUsed = "anthropic";
-      modelUsed = "claude-sonnet-4";
+      providerUsed = "mistral";
+      modelUsed = "mistral-medium-latest";
       try {
-        response = await callClaude(systemPrompt, query);
+        response = await callMistral(systemPrompt, query);
       } catch (e1) {
-        console.warn("[Inference] Claude failed:", e1);
-        providerUsed = "mistral";
-        modelUsed = "mistral-small-latest";
+        console.warn("[Inference] Mistral failed:", e1);
+        providerUsed = "groq";
+        modelUsed = "llama-3.3-70b";
         try {
-          response = await callMistral(systemPrompt, query);
+          response = await callGroq(systemPrompt, query);
         } catch (e2) {
-          console.warn("[Inference] Mistral failed:", e2);
-          providerUsed = "groq";
-          modelUsed = "llama-3.3-70b";
+          console.warn("[Inference] Groq failed:", e2);
+          providerUsed = "huggingface";
+          modelUsed = "gemma-3n-E4B";
           try {
-            response = await callGroq(systemPrompt, query);
+            response = await callHuggingFace(systemPrompt, query);
           } catch (e3) {
-            console.warn("[Inference] Groq failed:", e3);
-            providerUsed = "huggingface";
-            modelUsed = "gemma-3n-E4B";
+            console.warn("[Inference] HuggingFace failed:", e3);
+            providerUsed = "anthropic";
+            modelUsed = "claude-sonnet-4";
             try {
-              response = await callHuggingFace(systemPrompt, query);
+              response = await callClaude(systemPrompt, query);
             } catch {
               response = "Desculpe, estou com dificuldades técnicas. Tente novamente em instantes.";
               providerUsed = "none";
