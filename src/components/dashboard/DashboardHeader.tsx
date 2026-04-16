@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Search, Bell } from "lucide-react";
+import { useState } from "react";
+import { Menu, Search, Bell, MessageSquarePlus } from "lucide-react";
 import logoElp from "@/assets/logo-elp.webp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
+import { GoogleFeedbackModal } from "@/components/common/GoogleFeedbackModal";
 
 interface DashboardHeaderProps {
   onMobileMenuOpen: () => void;
@@ -13,6 +15,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ onMobileMenuOpen, unreadCount, clearUnread }: DashboardHeaderProps) {
   const navigate = useNavigate();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-30 glass-panel border-b border-border/10 relative overflow-hidden rounded-none">
@@ -65,6 +68,17 @@ export function DashboardHeader({ onMobileMenuOpen, unreadCount, clearUnread }: 
             ORION
             <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400/80 animate-pulse shadow-[0_0_8px_hsl(142_60%_45%/0.5)]" />
           </span>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-foreground h-9 w-9 hover:bg-card/60"
+            onClick={() => setFeedbackOpen(true)}
+            title="Enviar feedback para o Google"
+          >
+            <MessageSquarePlus className="h-4 w-4" />
+          </Button>
+
           <Button
             variant="ghost"
             size="icon"
@@ -86,6 +100,8 @@ export function DashboardHeader({ onMobileMenuOpen, unreadCount, clearUnread }: 
       <div className="border-t border-border/10">
         <OrionPlaylistBar />
       </div>
+
+      <GoogleFeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </header>
   );
 }
