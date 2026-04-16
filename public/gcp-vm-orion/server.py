@@ -269,6 +269,7 @@ async def tts_endpoint(text: str = Form(...), speed: float = Form(1.0)):
 @app.post("/stt")
 async def stt_endpoint(audio: UploadFile = File(...), language: str = Form("pt")):
     """STT using faster-whisper tiny"""
+    t0 = time.perf_counter()
     try:
         model = get_whisper()
         audio_bytes = await audio.read()
@@ -289,6 +290,7 @@ async def stt_endpoint(audio: UploadFile = File(...), language: str = Form("pt")
             "language": info.language,
             "model": "whisper-tiny-int8",
             "source": "gcp-vm",
+            "processing_ms": round((time.perf_counter() - t0) * 1000, 2)
         }
     except Exception as e:
         raise HTTPException(500, f"STT error: {str(e)}")
@@ -305,6 +307,7 @@ def _parse_image(data: bytes) -> Image.Image:
 @app.post("/vision/detect")
 async def vision_detect(image: UploadFile = File(...), threshold: float = Form(0.5)):
     """Object detection using DETR (CPU) — expect ~5-10s"""
+    t0 = time.perf_counter()
     try:
         import torch
         proc, model = get_detr()
@@ -330,6 +333,7 @@ async def vision_detect(image: UploadFile = File(...), threshold: float = Form(0
             "count": len(detections),
             "model": "detr-resnet-50",
             "source": "gcp-vm",
+            "processing_ms": round((time.perf_counter() - t0) * 1000, 2)
         }
     except Exception as e:
         raise HTTPException(500, f"Detection error: {str(e)}")
@@ -368,6 +372,7 @@ async def vision_classify(image: UploadFile = File(...)):
 @app.post("/ocr")
 async def ocr_endpoint(image: UploadFile = File(...)):
     """OCR using EasyOCR"""
+    t0 = time.perf_counter()
     try:
         reader = get_ocr()
         img = _parse_image(await image.read())
@@ -383,6 +388,7 @@ async def ocr_endpoint(image: UploadFile = File(...)):
             "details": details,
             "total_blocks": len(results),
             "source": "gcp-vm",
+            "processing_ms": round((time.perf_counter() - t0) * 1000, 2)
         }
     except Exception as e:
         raise HTTPException(500, f"OCR error: {str(e)}")
@@ -395,6 +401,7 @@ async def ocr_endpoint(image: UploadFile = File(...)):
 @app.post("/embeddings")
 async def embeddings_endpoint(texts: str = Form(...)):
     """Compute embeddings using all-MiniLM-L6-v2"""
+    t0 = time.perf_counter()
     try:
         text_list = texts.split("\n")
         embedder = get_embedder()
@@ -405,6 +412,7 @@ async def embeddings_endpoint(texts: str = Form(...)):
             "dimensions": vectors.shape[1],
             "count": len(text_list),
             "source": "gcp-vm",
+            "processing_ms": round((time.perf_counter() - t0) * 1000, 2)
         }
     except Exception as e:
         raise HTTPException(500, f"Embedding error: {str(e)}")

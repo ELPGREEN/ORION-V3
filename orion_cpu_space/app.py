@@ -43,6 +43,7 @@ def get_ocr():
 # ============================================================
 
 def ocr_extract(image) -> str:
+    t0 = time.perf_counter()
     if image is None:
         return json.dumps({"error": "No image provided"})
     reader = get_ocr()
@@ -63,6 +64,7 @@ def ocr_extract(image) -> str:
         "full_text": " ".join(e["text"] for e in extractions),
         "details": extractions,
         "total_blocks": len(extractions),
+        "processing_ms": round((time.perf_counter() - t0) * 1000, 2)
     }, ensure_ascii=False)
 
 
@@ -71,6 +73,7 @@ def ocr_extract(image) -> str:
 # ============================================================
 
 def compute_embeddings(texts: str) -> str:
+    t0 = time.perf_counter()
     if not texts or not texts.strip():
         return json.dumps({"error": "No texts provided"})
     text_list = [t.strip() for t in texts.strip().split("\n") if t.strip()]
@@ -82,6 +85,7 @@ def compute_embeddings(texts: str) -> str:
         "embeddings": embeddings.tolist(),
         "dimensions": embeddings.shape[1],
         "count": len(text_list),
+        "processing_ms": round((time.perf_counter() - t0) * 1000, 2)
     })
 
 
@@ -90,6 +94,7 @@ def compute_embeddings(texts: str) -> str:
 # ============================================================
 
 def pdf_to_markdown(pdf_file) -> str:
+    t0 = time.perf_counter()
     if pdf_file is None:
         return "Error: No file provided"
     import fitz
@@ -113,10 +118,15 @@ def pdf_to_markdown(pdf_file) -> str:
                         else:
                             sections.append(text.strip())
     doc.close()
-    return "\n\n".join(sections)
+    result = "\n\n".join(sections)
+    # We can't easily return processing_ms in the raw string for Markdown,
+    # but we'll log it for monitoring.
+    print(f"[PDF] Markdown conversion in {round((time.perf_counter() - t0) * 1000, 2)}ms")
+    return result
 
 
 def pdf_to_html(pdf_file) -> str:
+    t0 = time.perf_counter()
     if pdf_file is None:
         return "<p>Error: No file provided</p>"
     import fitz
@@ -130,6 +140,7 @@ def pdf_to_html(pdf_file) -> str:
         html_parts.append("</section>")
     doc.close()
     html_parts.append("</div>")
+    print(f"[PDF] HTML conversion in {round((time.perf_counter() - t0) * 1000, 2)}ms")
     return "\n".join(html_parts)
 
 

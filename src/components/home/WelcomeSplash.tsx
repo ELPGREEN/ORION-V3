@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { HeroThreeBackground } from "./HeroThreeBackground";
 import orionVideo from "@/assets/orion-tron-video.mp4";
@@ -246,14 +246,20 @@ export function WelcomeSplash({ onDismiss }: WelcomeSplashProps) {
               </motion.button>
 
               {/* Footer */}
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.6 }}
-                className="text-[10px] text-muted-foreground/30 font-mono tracking-[0.3em] uppercase mt-4"
+                className="mt-4 flex flex-col items-center gap-2"
               >
-                ORION · SHIELD PROTECTION · v4.0
-              </motion.p>
+                <p className="text-[10px] text-muted-foreground/30 font-mono tracking-[0.3em] uppercase">
+                  ORION · SHIELD PROTECTION · v4.0
+                </p>
+                <div className="flex items-center gap-4 text-[9px] font-mono uppercase tracking-widest text-muted-foreground/40">
+                  <Link to="/privacidade" className="hover:text-primary transition-colors underline underline-offset-4">Privacy Policy</Link>
+                  <Link to="/termos" className="hover:text-primary transition-colors underline underline-offset-4">Terms of Service</Link>
+                </div>
+              </motion.div>
             </div>
           </motion.div>
         )}

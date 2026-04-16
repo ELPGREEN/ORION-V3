@@ -1633,6 +1633,7 @@ async function callGeminiAPI(messages: any[], stream: boolean, apiKeyEnv: string
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(geminiBody),
+    signal: AbortSignal.timeout(10000), // v30: strict 10s timeout for Gemini
   });
 }
 
@@ -2287,6 +2288,37 @@ function stripImageFromMessages(msgs: any[], hadImage: boolean): any[] {
 }
 
 async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) {
+  const queryText = String(body.query || body.text || body.question || "");
+  const intentType = body.intentType as string | undefined;
+
+  // ─── 0. SEMANTIC CACHE LOOKUP (Fast Short-circuit) ───
+  // v30: Try to find a cached response before doing anything heavy
+  if (!stream && queryText.length > 5) {
+    try {
+      const sb = getSupabase();
+      const normalized = queryText.toLowerCase().trim().replace(/\s+/g, " ");
+      const { data: cached } = await sb.from("api_cache")
+        .select("response_data, id, hit_count")
+        .eq("source", "neural-ops")
+        .eq("query_text", normalized)
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
+
+      if (cached?.response_data) {
+        console.log(`[Orion] ⚡ Semantic cache hit for: "${queryText.slice(0, 30)}..."`);
+        // Update hit count asynchronously
+        sb.from("api_cache").update({
+          hit_count: (cached.hit_count || 0) + 1,
+          last_hit_at: new Date().toISOString()
+        }).eq("id", cached.id).then(() => {});
+
+        return cached.response_data;
+      }
+    } catch (e) {
+      console.warn("[Orion] Cache lookup failed:", e);
+    }
+  }
+
   const messages = await buildOrionMessages(body);
   const requestedMaxTokens = typeof body.maxTokens === "number" ? body.maxTokens : undefined;
   const intentType = body.intentType as string | undefined;
@@ -2619,6 +2651,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   // REGRA: Vertex AI primeiro (GCP credits) → Gemini API keys → fallbacks
 
   // ── PRIMARY: Vertex AI (GCP credits) ──
+  let finalResult: any = null;
   try {
     const vertexResp = await callVertexAI(messages, false);
     if (vertexResp && vertexResp.ok) {
@@ -2626,7 +2659,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
       if (text) {
         console.log("[Orion] ✅ Non-stream via Vertex AI — GCP credits");
-        return parseOrionResponse(text);
+        finalResult = parseOrionResponse(text);
       }
     }
   } catch (e) {
@@ -2634,23 +2667,26 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   }
 
   // ── FALLBACK: Gemini API keys (free tier) ──
-  for (const keyEnv of geminiKeys) {
-    if (!Deno.env.get(keyEnv) || isProviderCoolingDown(`gemini_${keyEnv}`)) continue;
-    try {
-      const geminiResp = await callGeminiAPI(messages, false, keyEnv);
-      if (!geminiResp.ok) {
-        if (geminiResp.status === 429) markProviderFailed(`gemini_${keyEnv}`, 429);
-        console.warn(`[Orion] Gemini ${keyEnv} returned ${geminiResp.status}`);
-        continue;
+  if (!finalResult) {
+    for (const keyEnv of geminiKeys) {
+      if (!Deno.env.get(keyEnv) || isProviderCoolingDown(`gemini_${keyEnv}`)) continue;
+      try {
+        const geminiResp = await callGeminiAPI(messages, false, keyEnv);
+        if (!geminiResp.ok) {
+          if (geminiResp.status === 429) markProviderFailed(`gemini_${keyEnv}`, 429);
+          console.warn(`[Orion] Gemini ${keyEnv} returned ${geminiResp.status}`);
+          continue;
+        }
+        const data = await geminiResp.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        if (text) {
+          console.log(`[Orion] ✅ Non-stream via Gemini (${keyEnv}) — PRIMARY orchestrator`);
+          finalResult = parseOrionResponse(text);
+          break;
+        }
+      } catch (e) {
+        console.warn(`[Orion] Gemini non-stream failed (${keyEnv}):`, e);
       }
-      const data = await geminiResp.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      if (text) {
-        console.log(`[Orion] ✅ Non-stream via Gemini (${keyEnv}) — PRIMARY orchestrator`);
-        return parseOrionResponse(text);
-      }
-    } catch (e) {
-      console.warn(`[Orion] Gemini non-stream failed (${keyEnv}):`, e);
     }
   }
 
@@ -2669,55 +2705,84 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   const textOnlyMsgs = stripImageFromMessages(messages, hasImage);
 
   // ── FALLBACK 1: HuggingFace (grátis) ──
-  try {
-    const text = await callHuggingFaceFallback(textOnlyMsgs);
-    if (text) {
-      console.log("[Orion] Non-stream via HuggingFace (fallback 1)");
-      return parseOrionResponse(text);
-    }
-  } catch {}
+  if (!finalResult) {
+    try {
+      const text = await callHuggingFaceFallback(textOnlyMsgs);
+      if (text) {
+        console.log("[Orion] Non-stream via HuggingFace (fallback 1)");
+        finalResult = parseOrionResponse(text);
+      }
+    } catch {}
+  }
 
   // ── FALLBACK 2: Groq ──
-  try {
-    const text = await callGroqFallback(textOnlyMsgs);
-    if (text) {
-      console.log("[Orion] Non-stream via Groq (fallback 2)");
-      return parseOrionResponse(text);
-    }
-  } catch {}
+  if (!finalResult) {
+    try {
+      const text = await callGroqFallback(textOnlyMsgs);
+      if (text) {
+        console.log("[Orion] Non-stream via Groq (fallback 2)");
+        finalResult = parseOrionResponse(text);
+      }
+    } catch {}
+  }
 
   // ── FALLBACK 3: DeepSeek ──
-  if (Deno.env.get("DEEPSEEK_API_KEY")) {
+  if (!finalResult && Deno.env.get("DEEPSEEK_API_KEY")) {
     try {
       const text = await callDeepSeekFallback(textOnlyMsgs);
       if (text) {
         console.log("[Orion] Non-stream via DeepSeek (fallback 3)");
-        return parseOrionResponse(text);
+        finalResult = parseOrionResponse(text);
       }
     } catch {}
   }
 
   // ── FALLBACK 4: Mistral ──
-  try {
-    const text = await callMistralFallback(textOnlyMsgs);
-    if (text) {
-      console.log("[Orion] Non-stream via Mistral (fallback 4)");
-      return parseOrionResponse(text);
-    }
-  } catch {}
-
-  // ── FALLBACK 5: OpenRouter ──
-  if (Deno.env.get("OPENROUTER_API_KEY")) {
+  if (!finalResult) {
     try {
-      const text = await callOpenRouterFallback(textOnlyMsgs);
+      const text = await callMistralFallback(textOnlyMsgs);
       if (text) {
-        console.log("[Orion] Non-stream via OpenRouter (fallback 5)");
-        return parseOrionResponse(text);
+        console.log("[Orion] Non-stream via Mistral (fallback 4)");
+        finalResult = parseOrionResponse(text);
       }
     } catch {}
   }
 
-  return { description: "Desculpe, estou com dificuldades técnicas. Reformule sua pergunta.", learnedFacts: [], identifiedObjects: [] };
+  // ── FALLBACK 5: OpenRouter ──
+  if (!finalResult && Deno.env.get("OPENROUTER_API_KEY")) {
+    try {
+      const text = await callOpenRouterFallback(textOnlyMsgs);
+      if (text) {
+        console.log("[Orion] Non-stream via OpenRouter (fallback 5)");
+        finalResult = parseOrionResponse(text);
+      }
+    } catch {}
+  }
+
+  if (!finalResult) {
+    finalResult = { description: "Desculpe, estou com dificuldades técnicas. Reformule sua pergunta.", learnedFacts: [], identifiedObjects: [] };
+  }
+
+  // ─── 4. SEMANTIC CACHE STORE ───
+  if (!stream && queryText.length > 5 && finalResult && !finalResult.description?.startsWith("Desculpe")) {
+    try {
+      const sb = getSupabase();
+      const normalized = queryText.toLowerCase().trim().replace(/\s+/g, " ");
+      const expiresAt = new Date(Date.now() + 6 * 3600 * 1000).toISOString(); // 6 hours
+
+      sb.from("api_cache").upsert({
+        query_text: normalized,
+        source: "neural-ops",
+        response_data: finalResult,
+        expires_at: expiresAt,
+        query_hash: normalized.slice(0, 32), // use part of query as hash for constraint
+      }, { onConflict: "query_hash,source" }).then(() => {});
+    } catch (e) {
+      console.warn("[Orion] Cache store failed:", e);
+    }
+  }
+
+  return finalResult;
 }
 
 // ═══════════════════════════════════════════════

@@ -82,10 +82,15 @@ serve(async (req) => {
     console.log(`[orion-vm-proxy] Fetching: ${vmUrl}`);
     const startTime = Date.now();
     const vmResp = await fetchWithAutoStart(vmUrl, fetchOpts, null);
-    console.log(`[orion-vm-proxy] Response in ${Date.now() - startTime}ms, status: ${vmResp.status}`);
+    const durationMs = Date.now() - startTime;
+    console.log(`[orion-vm-proxy] Response in ${durationMs}ms, status: ${vmResp.status}`);
 
     recordVmActivity(`orion-vm-proxy:${action}`).catch(() => {});
-    return toProxyResponse(vmResp);
+
+    // Return response with performance header
+    const proxyResp = toProxyResponse(vmResp);
+    proxyResp.headers.set("X-Orion-Proxy-Ms", durationMs.toString());
+    return proxyResp;
   } catch (err) {
     console.error("[orion-vm-proxy] Error:", err);
     return new Response(
@@ -117,7 +122,7 @@ async function fetchWithAutoStart(
 ): Promise<Response> {
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3_000);
+    const timer = setTimeout(() => controller.abort(), 8_000); // v30: Increased to 8s for DETR vision
     const resp = await fetch(primaryUrl, { ...opts, signal: controller.signal });
     clearTimeout(timer);
     if (resp.ok) return resp;

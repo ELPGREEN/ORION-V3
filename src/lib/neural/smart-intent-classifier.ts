@@ -337,6 +337,22 @@ const CONFIDENCE_THRESHOLD = 0.7;
  * 2. Try regex (instant)
  * 3. If no match or low confidence, call LLM (async)
  */
+/**
+ * Synchronous regex-only classification (for hot paths that can't await).
+ * Returns null if no regex matches — caller decides fallback.
+ */
+export function smartClassifySync(text: string): ClassifiedIntent | null {
+  const cached = getCached(text);
+  if (cached) return cached;
+
+  const result = regexClassify(text);
+  if (result && result.confidence >= CONFIDENCE_THRESHOLD) {
+    setCache(text, result);
+    return result;
+  }
+  return null;
+}
+
 export async function smartClassify(text: string): Promise<ClassifiedIntent> {
   const t0 = performance.now();
   
@@ -379,21 +395,6 @@ export async function smartClassify(text: string): Promise<ClassifiedIntent> {
   return llmResult;
 }
 
-/**
- * Synchronous regex-only classification (for hot paths that can't await).
- * Returns null if no regex matches — caller decides fallback.
- */
-export function smartClassifySync(text: string): ClassifiedIntent | null {
-  const cached = getCached(text);
-  if (cached) return cached;
-  
-  const result = regexClassify(text);
-  if (result && result.confidence >= CONFIDENCE_THRESHOLD) {
-    setCache(text, result);
-    return result;
-  }
-  return null;
-}
 
 /**
  * Check if LLM classification is currently in flight.

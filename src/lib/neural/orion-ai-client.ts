@@ -502,7 +502,10 @@ export async function analyzeFrameWithAI(
       }
     } catch { /* non-blocking */ }
 
-    const { data, error } = await supabase.functions.invoke("neural-ops", {
+    const useVMProxy = (window as any).__shouldRouteToVM ?? (intentType === "visual" || intentType === "mixed");
+    const targetEndpoint = useVMProxy ? "orion-vm-proxy" : "neural-ops";
+
+    const { data, error } = await supabase.functions.invoke(targetEndpoint as any, {
       body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections, userName, voiceIdentityStatus: getCachedVoiceIdentity() || undefined },
     });
     if (error) {
@@ -703,7 +706,10 @@ export async function analyzeFrameStreaming(
 
     const enrichedContext = streamContext;
 
-    const res = await fetch(`${supabaseUrl}/functions/v1/neural-ops`, {
+    const useVMProxy = (window as any).__shouldRouteToVM ?? (intentType === "visual" || intentType === "mixed");
+    const targetEndpoint = useVMProxy ? "orion-vm-proxy" : "neural-ops";
+
+    const res = await fetch(`${supabaseUrl}/functions/v1/${targetEndpoint}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

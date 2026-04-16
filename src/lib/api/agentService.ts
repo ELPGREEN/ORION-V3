@@ -122,8 +122,15 @@ async function invokeAgent(
     const data = await withCircuitBreaker(
       endpoint,
       async () => {
-        const { data, error } = await supabase.functions.invoke(endpoint, {
-          body: { action, params },
+        // Fallback for agente-construcao which is missing
+        const targetEndpoint = endpoint === "agente-construcao" ? "ai-orchestrator" : endpoint;
+        const body: Record<string, any> = { action, params };
+        if (endpoint === "agente-construcao") {
+          body.useCase = "documents";
+        }
+
+        const { data, error } = await supabase.functions.invoke(targetEndpoint as any, {
+          body,
         });
         if (error) throw error;
         return data;

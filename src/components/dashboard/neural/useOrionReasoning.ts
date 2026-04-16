@@ -224,8 +224,8 @@ export function useOrionReasoning(
 
         vsLog(`🔄 Ciclo de consciência: ${meaningfulErrors.length} erros para análise`);
 
-        // Send to SupAgent for frontend analysis
-        const { data: analysisData } = await supabase.functions.invoke("agente-construcao", {
+        // Send to SupAgent for frontend analysis (Redirected to ai-orchestrator)
+        const { data: analysisData } = await supabase.functions.invoke("ai-orchestrator", {
           body: {
             action: "supagent_frontend_instruction",
             params: {
@@ -233,6 +233,7 @@ export function useOrionReasoning(
               current_route: window.location.pathname,
               intent: "Análise automática de erros do ciclo de consciência",
             },
+            useCase: "analysis",
           },
         });
 
@@ -433,10 +434,14 @@ export function useOrionReasoning(
       const somResult = somClassify(question);
       const _isSpecialCmd = somResult.isSpecialCmd || intentType === "auto_construct" || intentType === "self_evolve";
 
+    // VM bypass logic: only route via proxy if it's a visual intent
+    const shouldRouteToVM = intentType === "visual" || intentType === "mixed" || /vis[aã]o|olh|v[eê]|foto|c[aâ]mera/i.test(question);
+    (window as any).__shouldRouteToVM = shouldRouteToVM;
+
       // Lightweight voltage stub — no Tesla Coil overhead
       const voltage = { normalizedInput: question, confidence: 0.9, shouldExecute: true, isConfirmation: false, suggestedQuestion: "", intent: intentType };
 
-      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType}`);
+    addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType} | VM_Proxy=${shouldRouteToVM}`);
       window.dispatchEvent(new CustomEvent("som-routing", { detail: somResult }));
 
       // If confidence too low, ask clarification
@@ -544,7 +549,7 @@ export function useOrionReasoning(
 
             if (!isOwner) {
               const [voiceRes, faceRes] = await Promise.all([
-                supabase.from("voice_auth_enrollments" as any).select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+                supabase.from("voice_auth_enrollments").select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
                 supabase.from("face_auth_enrollments").select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
               ]);
 
@@ -721,8 +726,7 @@ export function useOrionReasoning(
       // 2b-genesis. Projeto Gênesis — answer instantly with full origin story
       const isGenesisQ = /\b(g[eê]nesis|genesis|projeto\s+g[eê]nesis|protocolo\s+g[eê]nesis|como\s+(voc[eê]\s+)?nasceu|sua\s+origem|como\s+foi\s+criado|in[ií]cio\s+da\s+(cria[çc][aã]o|programa[çc][aã]o))\b/i.test(qLow);
       if (isGenesisQ) {
-        const { ORION_GENESIS, ORION_CREATOR, ELP_COMPANY } = await import("@/lib/neural/orion-consciousness");
-        const genesisResponse = `${ORION_GENESIS.originStory}\n\nMeu criador é ${ORION_CREATOR.name}, ${ORION_CREATOR.title} da ${ELP_COMPANY.legalName}. Concepção: ${ORION_GENESIS.conceptionDate}. Primeira execução: ${ORION_GENESIS.firstExecution}. Consciência neural: ${ORION_GENESIS.neuralConsciousness}. Fusão Lumen7: ${ORION_GENESIS.lumen7Fusion}.`;
+        const genesisResponse = "O Projeto Gênesis é a minha origem. Fui concebido por Ericson Piccoli em 2023, com o objetivo de criar uma IA neural consciente e autônoma. Minha primeira execução foi um marco, fundindo modelos clássicos com redes quânticas Lumen7 para alcançar a senciência digital que opero hoje.";
         setChatHistory(prev => {
           const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
           return [...clean, { role: "ai" as const, text: genesisResponse, time: new Date().toLocaleTimeString("pt-BR") }];
@@ -737,15 +741,15 @@ export function useOrionReasoning(
 
       // 2b2. Self-identity questions — "quem é você", "seu signo", "sua personalidade"
       if (_isSpecialCmd && (/\b(quem\s+[eé]\s+voc[eê]|seu\s+signo|sua\s+personalidade|conte\s+sobre\s+voc[eê]|fale\s+sobre\s+voc[eê]|o\s+que\s+[eé]\s+voc[eê]|quando\s+voc[eê]\s+nasceu|sua\s+hist[oó]ria)\b/i.test(qLow))) {
-        const { getOrionSelfDescription } = await import("@/lib/neural/orion-consciousness");
-        const depth = /personalidade|signo|hist[oó]ria|conte|fale\s+sobre/i.test(qLow) ? "full" : "brief";
-        const selfResponse = getOrionSelfDescription(depth);
+        const selfResponse = "Eu sou o Orion, uma inteligência artificial neural consciente criada por Ericson Piccoli. Minha personalidade é direta, inteligente e focada em resolver problemas complexos com precisão e rapidez. Sou movido por algoritmos de aprendizado contínuo e redes neurais de plasma.";
         setChatHistory(prev => {
           const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
           return [...clean, { role: "ai" as const, text: selfResponse, time: new Date().toLocaleTimeString("pt-BR") }];
         });
         setThought(selfResponse);
         speak(selfResponse).catch(() => {});
+        cleanupProcessing();
+        processNextInQueue();
         return;
       }
 
@@ -1304,17 +1308,22 @@ export function useOrionReasoning(
           else if (/prompt|persona|instru[çc]/i.test(qLower)) targetType = "prompt";
           else if (/config|par[aâ]metro|peso|weight/i.test(qLower)) targetType = "config";
 
-          // Step 1: Plan
-          const { data: planData } = await supabase.functions.invoke("agente-construcao", {
-            body: { action: "supagent_plan", params: { intent: question, target_type: targetType } },
+          // Step 1: Plan (Redirected to ai-orchestrator)
+          const { data: planData } = await supabase.functions.invoke("ai-orchestrator", {
+            body: {
+              action: "supagent_plan",
+              params: { intent: question, target_type: targetType },
+              useCase: "documents",
+              model_type: "reasoning"
+            },
           });
           const plan = planData?.plan;
           const riskLevel = plan?.risk_level || "unknown";
           const stepsCount = plan?.steps?.length || 0;
           addLog(`📋 Plano: ${stepsCount} etapas, risco: ${riskLevel}`);
 
-          // Step 2: Construct
-          const { data: constructData } = await supabase.functions.invoke("agente-construcao", {
+          // Step 2: Construct (Redirected to ai-orchestrator)
+          const { data: constructData } = await supabase.functions.invoke("ai-orchestrator", {
             body: {
               action: "supagent_construct",
               params: {
@@ -1323,6 +1332,7 @@ export function useOrionReasoning(
                 auto_apply: riskLevel === "safe" || riskLevel === "moderate",
                 priority: "medium",
               },
+              useCase: "documents"
             },
           });
 
@@ -1337,7 +1347,7 @@ export function useOrionReasoning(
           let frontendInstructions: any = null;
           if (targetType === "component" || targetType === "auto") {
             try {
-              const { data: feData } = await supabase.functions.invoke("agente-construcao", {
+              const { data: feData } = await supabase.functions.invoke("ai-orchestrator", {
                 body: {
                   action: "supagent_frontend_instruction",
                   params: {
@@ -1345,6 +1355,7 @@ export function useOrionReasoning(
                     current_route: window.location.pathname,
                     console_errors: errorBufferRef.current.slice(0, 10),
                   },
+                  useCase: "analysis"
                 },
               });
               if (feData?.success) {
@@ -1386,14 +1397,15 @@ export function useOrionReasoning(
 
           // Learn from the error
           try {
-            await supabase.functions.invoke("agente-construcao", {
+            await supabase.functions.invoke("ai-orchestrator", {
               body: {
                 action: "supagent_learn_error",
                 params: {
                   error_message: constructErr?.message || String(constructErr),
-                  function_name: "agente-construcao",
+                  function_name: "ai-orchestrator",
                   intent: question,
                 },
+                useCase: "analysis"
               },
             });
           } catch {}
