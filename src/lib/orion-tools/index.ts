@@ -326,7 +326,19 @@ export async function executeTool(
 }
 
 // ═══ Get Tools for Agent ═══
-export function getToolsForAgent(agentId: string): ToolName[] {
+import {
+  isToolAllowed,
+  type DistributableTool,
+  type PlanTier,
+} from "./tool-distribution";
+import type { AppRole } from "@/hooks/useUserRole";
+
+export function getToolsForAgent(
+  agentId: string,
+  role?: AppRole | null,
+  plan: PlanTier = "free",
+  isOwner = false,
+): ToolName[] {
   const agentTools: Record<string, ToolName[]> = {
     general: ["file_read", "file_search", "web_search", "shell", "vision_analyze"],
     plan: ["file_read", "file_search", "web_search", "analyze_code"],
@@ -340,6 +352,19 @@ export function getToolsForAgent(agentId: string): ToolName[] {
     robotics: ["shell", "supabase_function"],
     evolution: ["file_read", "file_write", "file_edit", "shell", "git_commit", "git_push", "build", "test", "lint", "typecheck", "deploy_edge"],
   };
-  
-  return agentTools[agentId] || agentTools.general;
+
+  const base = agentTools[agentId] || agentTools.general;
+
+  // Owner bypass: full access without filtering.
+  if (isOwner) return base;
+
+  // If no role context provided, return base (legacy behavior).
+  if (role === undefined) return base;
+
+  return base.filter((tool) =>
+    isToolAllowed(tool as DistributableTool, role ?? null, plan, isOwner),
+  );
 }
+
+export { isToolAllowed, getAllowedTools } from "./tool-distribution";
+export type { DistributableTool, PlanTier } from "./tool-distribution";
