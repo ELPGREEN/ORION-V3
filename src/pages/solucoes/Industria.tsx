@@ -97,7 +97,7 @@ const industrialModules = [
 
 /* ─── Setores atendidos ─── */
 const sectors = [
-  { icon: Truck, name: "Mineração & OTR", desc: "Reciclagem robótica de pneus OTR gigantes (57''–63'') com tecnologia patenteada Smart OTR." },
+  { icon: Truck, name: "Mineração & OTR", desc: "Reciclagem robótica inteligente de pneus OTR gigantes (57''–63'') — Smart Robotic Line da ELP Green Technology com Orion IA integrada. Até 10 t/h por planta, 17-18 fábricas até 2030." },
   { icon: Factory, name: "Automotivo", desc: "Soldagem, pintura, montagem e inspeção em linhas de produção automotiva." },
   { icon: CircuitBoard, name: "Eletrônicos", desc: "Pick-and-place SMD, inspeção AOI e montagem de PCBs com precisão micrométrica." },
   { icon: Activity, name: "Farmacêutico", desc: "Ambientes cleanroom, rastreabilidade lot-level, compliance GMP e serialização." },
