@@ -129,6 +129,7 @@ const NomadeDigitalDashboard = lazy(lazyRetry(() => import("./pages/dashboard/No
 const WebhooksPage = lazy(lazyRetry(() => import("./pages/dashboard/WebhooksPage")));
 const PerfilAdmin = lazy(lazyRetry(() => import("./pages/dashboard/PerfilAdmin")));
 const ArquiteturaIA = lazy(lazyRetry(() => import("./pages/dashboard/ArquiteturaIA")));
+const OrionCoreDiagnostics = lazy(lazyRetry(() => import("./pages/dashboard/OrionCoreDiagnostics")));
 const ClienteDashboard = lazy(lazyRetry(() => import("./pages/dashboard/ClienteDashboard")));
 const AdvogadoDashboard = lazy(lazyRetry(() => import("./pages/dashboard/AdvogadoDashboard")));
 const AfiliadoDashboard = lazy(lazyRetry(() => import("./pages/dashboard/AfiliadoDashboard")));
@@ -320,6 +321,7 @@ const App = () => (
                     <Route path="perfil-admin" element={<PerfilAdmin />} />
                     <Route path="orion-orchestrator" element={<Navigate to="/dashboard/rede-neural" replace />} />
                     <Route path="orion" element={<Navigate to="/consulta" replace />} />
+                    <Route path="orion-core" element={<OrionCoreDiagnostics />} />
                     <Route path="proprietario" element={<ProprietarioDashboard />} />
                     <Route path="produtor" element={<ProdutorDashboard />} />
                     <Route path="nomade" element={<NomadeDigitalDashboard />} />
