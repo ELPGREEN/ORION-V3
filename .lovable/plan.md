@@ -1,47 +1,63 @@
 
+Plano para montar o frontend de distribuição de ferramentas + prompt para Jules validar o backend.
 
-# Diagnóstico: O que Orion REALMENTE faz vs. o que PARECE fazer
+## Frontend (Lovable executa)
 
-## Status Atual
+### 1. `src/lib/orion-tools/tool-distribution.ts` (novo)
+Mapa central: `Role × Plan → ToolName[]` + flags `unlimited` para owner. Define enums `ToolCategory` (chat, voice, vision, browser, editor, legal, robotics, jules, stripe) e helper `isToolAllowed(role, plan, isOwner, tool)`.
 
-### FUNCIONA DE VERDADE:
-1. **Música — buscar e tocar**: O comando "tocar música X" dispara `orion-music-command` → `OrionPlaylistBar` busca no Spotify/YouTube e toca (preview 30s Spotify ou embed YouTube). **Funciona.**
-2. **Pausar/Retomar música**: Comandos "pausar música" / "parar reprodução" enviam `action: "pause"` ao player. **Funciona.**
-3. **Próxima/Anterior faixa**: `next`/`prev` são tratados no `OrionPlaylistBar`. **Funciona.**
-4. **Abrir vídeo**: `orion-browser-actions.ts` detecta URLs do YouTube e dispara `orion-video-command` → embed no painel. **Funciona.**
-5. **Pesquisa web**: Padrões "pesquisar na web sobre X" são interceptados e roteados ao LLM com prompt de pesquisa. **Funciona** (mas é LLM, não busca real na web).
-6. **Mute/Unmute do player**: Botão visual funciona. **Funciona.**
+### 2. `src/lib/orion-tools/index.ts` (estender)
+- `getToolsForAgent(agentId, role?, plan?, isOwner?)` filtra por distribuição.
+- `getAllowedTools(role, plan, isOwner)` retorna lista completa.
 
-### NÃO FUNCIONA (apenas registrado, sem execução real):
-1. **Controle de volume por voz** ("aumentar volume", "diminuir volume"): Registrado em `orion-command-registry.ts` como `cfg_volume_up` com modelo `SLM`, mas o `executeAction` no LAM é **simulado** (`simulated: true`). Não há código que realmente altere o `volume` do `<audio>` ou do SDK Spotify.
-2. **Volume slider visual**: O `OrionPlaylistBar` tem apenas mute/unmute (toggle). Não tem slider de volume. O `OrionAudiobookListener` tem slider, mas é componente separado.
-3. **Comandos "silenciar"/"mudo"** por voz: Registrados como `cfg_mute`/`cfg_unmute` mas **não conectados** a nenhum dispatch real.
+### 3. `src/hooks/useUserTools.ts` (novo)
+Combina `useUserRole` + `useAdminAccess` + `useUserPlan` → retorna `{ tools, hasTool(name), category, plan, role, isOwner, requiresUpgrade(name) }`.
 
-### PARCIALMENTE FUNCIONA:
-1. **Pesquisa**: Rota para LLM com prompt de pesquisa — não faz scraping web real, usa conhecimento do modelo.
+### 4. `src/components/common/ToolGuard.tsx` (novo)
+```tsx
+<ToolGuard tool="robotics" fallback={<UpgradeCTA />}>...</ToolGuard>
+```
+Variantes: `mode="hide" | "blur" | "upgrade"`.
 
-## Plano de Correção
+### 5. `src/components/common/UpgradeCTA.tsx` (novo)
+Card consistente: "Disponível no plano Premium" + botão para `/pricing` ou "Não disponível para seu papel".
 
-### 1. Adicionar slider de volume ao OrionPlaylistBar
-- Substituir o botão mute/unmute por um grupo: botão mute + slider de volume (0-100)
-- Controlar `audioRef.current.volume` e `sdk.changeVolume()`
+### 6. `src/components/dashboard/ActiveToolsBadge.tsx` (novo)
+Badge no dashboard mostrando categorias ativas (Chat, Voz, Vision, etc) com ícones e contagem.
 
-### 2. Conectar comandos de voz de volume ao player real
-- No `useOrionReasoning.ts`, interceptar padrões de volume ("aumentar volume", "diminuir volume", "volume no máximo", "silenciar") ANTES do LLM
-- Disparar novo evento `orion-volume-command` com action: `up`/`down`/`set`/`mute`/`unmute`
-- No `OrionPlaylistBar`, escutar esse evento e ajustar o volume real
+### 7. `src/components/dashboard/neural/useOrionReasoning.ts` (modificar)
+Antes de executar intent → `hasTool(requiredTool)`. Se bloqueado, retorna mensagem amigável ("Esse recurso requer plano Premium" / "Não disponível para Afiliado").
 
-### 3. Garantir que comandos de voz passam pela verificação de identidade
-- Os comandos de mídia já funcionam sem verificação de identidade (são comandos utilitários, não admin)
-- Verificar que o STT está capturando e o pipeline está processando os comandos
+### 8. Aplicar `<ToolGuard>` nos painéis-chave
+- Robotics panels → `tool="robotics"` (só owner)
+- Editor de Vendas → `tool="sales_editor"` (produtor + owner)
+- Agentes jurídicos → `tool="legal_agents"` (advogado + owner)
+- Jules/Evolution → `tool="jules"` (só owner)
 
-### Arquivos a modificar:
-- `src/components/orion/OrionPlaylistBar.tsx` — adicionar slider de volume + listener de volume por voz
-- `src/components/dashboard/neural/useOrionReasoning.ts` — interceptar comandos de volume e disparar eventos
-- `src/components/orion/FloatingMusicPlayer.tsx` — adicionar controle de volume (consistência)
+## Backend (Jules executa via prompt)
 
-### Resultado esperado:
-- Volume controlável visualmente (slider) e por voz ("Orion, aumentar volume", "volume 50%")
-- Todos os comandos de mídia (play, pause, next, prev, volume) funcionam de verdade
-- Feedback visual e por voz quando comando é executado
+Migration `user_tool_overrides` (admin libera tools por usuário) com RLS:
+- `id`, `user_id`, `tool_name`, `granted_by`, `expires_at`, `created_at`
+- RLS: usuário lê os próprios; admin/owner lê e escreve todos.
 
+---
+
+## Arquivos
+- `src/lib/orion-tools/tool-distribution.ts` (novo)
+- `src/lib/orion-tools/index.ts` (estender)
+- `src/hooks/useUserTools.ts` (novo)
+- `src/components/common/ToolGuard.tsx` (novo)
+- `src/components/common/UpgradeCTA.tsx` (novo)
+- `src/components/dashboard/ActiveToolsBadge.tsx` (novo)
+- `src/components/dashboard/neural/useOrionReasoning.ts` (modificar — bloqueio por tool)
+- Aplicar `<ToolGuard>` em painéis sensíveis (robotics, editor vendas, jurídico, jules)
+
+## Resultado
+- Distribuição centralizada e tipada
+- Owner sempre tem acesso (bypass preservado)
+- UI mostra ferramentas ativas + CTA de upgrade quando bloqueado
+- Orion responde "não disponível" quando intent exige tool bloqueado
+- Pronto para receber overrides do backend (Jules cria a tabela)
+
+## Prompt para Jules (entregue após implementação do frontend)
+Texto completo a ser enviado para Jules verificar/criar o backend correspondente — incluirá: migration `user_tool_overrides` com RLS, endpoint admin para conceder/revogar tools, integração com `useUserTools` via query Supabase, validação que owner sempre passa, testes E2E por role.
