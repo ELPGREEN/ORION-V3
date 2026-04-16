@@ -27,6 +27,7 @@ class GoogleAssistantIntegrator:
         self.token_path = token_path
         self.creds = None
         self.assistant = None
+        self.fallback_count = 0
         self._authenticate()
 
     def _authenticate(self):
@@ -67,10 +68,18 @@ class GoogleAssistantIntegrator:
         flow = InstalledAppFlow.from_client_secrets_file(self.credentials_path, self.SCOPES)
         self.creds = flow.run_local_server(port=0)
 
+    def get_status(self):
+        """Retorna o status atual da integração Google Assistant."""
+        return {
+            "available": self.assistant is not None,
+            "fallback_count": self.fallback_count
+        }
+
     def ask_google(self, text_query: str) -> dict:
         """
         Envia uma consulta de texto para o Google Assistant e extrai a estrutura completa.
         """
+        self.fallback_count += 1
         logger.info(f"Consultando Google Assistant: {text_query}")
 
         # Configuração da requisição

@@ -15,6 +15,8 @@ class IoTManager:
         self.client = mqtt.Client()
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
+        self.last_message = None
+        self.devices_count = 0 # Placeholder for actual device discovery
 
     def connect(self):
         try:
@@ -29,7 +31,17 @@ class IoTManager:
         self.client.subscribe(f"{self.base_topic}/#")
 
     def _on_message(self, client, userdata, msg):
+        self.last_message = f"{msg.topic}: {msg.payload.decode()}"
         logger.info(f"Mensagem recebida no tópico {msg.topic}: {msg.payload.decode()}")
+
+    def get_status(self):
+        """Retorna o status atual da integração MQTT."""
+        return {
+            "connected": self.client.is_connected(),
+            "broker": self.broker,
+            "devices_count": self.devices_count,
+            "last_message": self.last_message
+        }
 
     def send_command(self, device, action, params=None):
         """Envia um comando para um dispositivo IoT."""

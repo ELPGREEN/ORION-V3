@@ -17,6 +17,7 @@ class ROS2Manager:
     """
     def __init__(self):
         self.node = None
+        self.last_heartbeat = None
         if ROS2_AVAILABLE:
             try:
                 rclpy.init()
@@ -27,6 +28,15 @@ class ROS2Manager:
                 self.node = None
         else:
             logger.warning("ROS2 (rclpy) não disponível neste ambiente.")
+
+    def get_status(self):
+        """Retorna o status atual da integração ROS2."""
+        return {
+            "connected": self.node is not None,
+            "nodes": [self.node.get_name()] if self.node else [],
+            "robot_status": "OK" if self.node else "OFFLINE",
+            "last_heartbeat": self.last_heartbeat
+        }
 
     def call_trigger_service(self, service_name):
         """Chama um serviço do tipo Trigger."""
