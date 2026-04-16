@@ -209,6 +209,7 @@ const App = () => (
                   <Route path="/solucoes/produtores" element={<SolucoesProdutores />} />
                   <Route path="/solucoes/afiliados" element={<SolucoesAfiliados />} />
                   <Route path="/solucoes/industria" element={<SolucoesIndustria />} />
+                  <Route path="/investidores" element={<Investidores />} />
 
                   {/* Auth Protected Public Pages */}
                   <Route path="/consulta" element={<AuthGuard><ConsultaIA /></AuthGuard>} />
