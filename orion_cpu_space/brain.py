@@ -135,7 +135,7 @@ class OrionAssistant:
         return None
 
     def _execute_direct_action(self, query: str, intent: str) -> dict:
-        """Executa comandos para IoT, ROS2 e BLE."""
+        """Executa comandos para IoT, ROS2, BLE e Vision."""
         if intent == "iot_control":
             if "ligue" in query or "acenda" in query:
                 self.iot.turn_on_light()
@@ -153,8 +153,23 @@ class OrionAssistant:
                 return {"response": "PARADA DE EMERGÊNCIA ACIONADA VIA ROS2!"}
 
         elif intent == "ble_scan":
-            # Nota: Scan é assíncrono, aqui é apenas um placeholder de resposta
             return {"response": "Iniciando busca por dispositivos Bluetooth próximos..."}
+
+        elif intent == "vision_detect":
+            return {
+                "response": "Módulo de visão ativo. Envie uma imagem para /vision/detect para detecção de objetos, ou use a câmera do app.",
+                "action": "vision_ready",
+                "endpoint": "/vision/detect",
+                "intent": "vision_detect",
+            }
+
+        elif intent == "vision_classify":
+            return {
+                "response": "Módulo de classificação ativo. Envie uma imagem para /vision/classify para classificação zero-shot.",
+                "action": "vision_ready",
+                "endpoint": "/vision/classify",
+                "intent": "vision_classify",
+            }
 
         return None
 
