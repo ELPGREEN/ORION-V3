@@ -57,6 +57,7 @@ const SolucoesAdvogados = lazy(lazyRetry(() => import("./pages/solucoes/Advogado
 const SolucoesProdutores = lazy(lazyRetry(() => import("./pages/solucoes/Produtores")));
 const SolucoesAfiliados = lazy(lazyRetry(() => import("./pages/solucoes/Afiliados")));
 const SolucoesIndustria = lazy(lazyRetry(() => import("./pages/solucoes/Industria")));
+const Investidores = lazy(lazyRetry(() => import("./pages/Investidores")));
 
 // ─── Auth-Required Pages (visible only after login) ───
 const ConsultaIA = lazy(lazyRetry(() => import("./pages/ConsultaIA")));
