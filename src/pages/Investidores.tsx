@@ -14,6 +14,7 @@ import {
   Car, Pill, Package, Warehouse, Pickaxe, Hammer, Droplets,
   Flame, CircuitBoard, Truck, Wind, Heart,
 } from "lucide-react";
+import { VideoPlayer } from "@/components/ui/VideoPlayer";
 
 import pitchHeroImg from "@/assets/pitch-deck-hero.jpg";
 import pitchOtrImg from "@/assets/pitch-otr-recycling.jpg";
@@ -426,15 +427,7 @@ export default function Investidores() {
               { src: videoInnovationAsset.url, poster: pitchGlobalImg, title: "Inovação & Expansão Global", desc: "Roadmap de expansão multi-setor para Europa, MENA e LATAM." },
             ].map((v, i) => (
               <ScrollReveal key={v.title} direction="up" delay={i * 0.08}>
-                <div className="border border-border/20 overflow-hidden">
-                  <video controls poster={v.poster} className="w-full aspect-video object-cover" preload="metadata">
-                    <source src={v.src} type="video/mp4" />
-                  </video>
-                  <div className="p-4">
-                    <p className="text-sm font-semibold text-foreground">{v.title}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">{v.desc}</p>
-                  </div>
-                </div>
+                <VideoPlayer src={v.src} poster={v.poster} title={v.title} desc={v.desc} />
               </ScrollReveal>
             ))}
           </div>
