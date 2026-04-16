@@ -32,7 +32,7 @@ const ECHO_WINDOW_MS = 18000;
 const ECHO_JACCARD_THRESHOLD = 0.35;
 const MAX_CONSECUTIVE_ABORTS = 5;
 const MAX_CONSECUTIVE_NO_SPEECH = 8;
-const NO_SPEECH_TIMEOUT_MS = 3000; // 3 seconds — reduced for snappier interactions
+const NO_SPEECH_TIMEOUT_MS = 2500; // 2.5s — Jules PR optimization
 const RESTART_DELAY_MS = isMobile() ? 4000 : 1500; // Reduced delays for faster reconnect
 
 // ═══ Shared State ═══
