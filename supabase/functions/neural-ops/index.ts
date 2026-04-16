@@ -1168,6 +1168,7 @@ async function fetchIdentityKnowledge(): Promise<string> {
           "Authorization": `Bearer ${serviceKey}`,
           "Content-Type": "application/json",
         },
+        signal: AbortSignal.timeout(2000),
       }
     );
     
@@ -1211,7 +1212,7 @@ async function fetchWebSearchContext(query: string): Promise<string> {
     if (!firecrawlKey) return "";
     
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
+    const timer = setTimeout(() => controller.abort(), 2000);
     
     const resp = await fetch("https://api.firecrawl.dev/v1/search", {
       method: "POST",
@@ -1247,7 +1248,7 @@ async function fetchURLContext(url: string): Promise<string> {
     if (!firecrawlKey) return "";
     
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
+    const timer = setTimeout(() => controller.abort(), 2000);
     
     const resp = await fetch("https://api.firecrawl.dev/v1/scrape", {
       method: "POST",
@@ -1277,7 +1278,7 @@ async function fetchYouTubeContext(videoId: string): Promise<string> {
     if (!ytKey) return "";
     
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
+    const timer = setTimeout(() => controller.abort(), 2000);
     
     // Get video snippet (title, description, channel)
     const snippetResp = await fetch(
@@ -2771,6 +2772,7 @@ Gere reflexão cognitiva PROFUNDA em JSON.`;
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt + "\n\n" + userPrompt }], role: "user" }], generationConfig: { temperature: 0.4, maxOutputTokens: 2048, responseMimeType: "application/json" } }),
+        signal: AbortSignal.timeout(10000),
       });
       if (!resp.ok) throw new Error(`Gemini ${resp.status}`);
       const data = await resp.json();
@@ -2783,6 +2785,7 @@ Gere reflexão cognitiva PROFUNDA em JSON.`;
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
         body: JSON.stringify({ model: "mistral-small-latest", messages: msgs, max_tokens: 2048, temperature: 0.4, response_format: { type: "json_object" } }),
+        signal: AbortSignal.timeout(10000),
       });
       if (!resp.ok) throw new Error(`Mistral ${resp.status}`);
       const data = await resp.json();
@@ -2795,6 +2798,7 @@ Gere reflexão cognitiva PROFUNDA em JSON.`;
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
         body: JSON.stringify({ messages: msgs, max_tokens: 2048, temperature: 0.4 }),
+        signal: AbortSignal.timeout(10000),
       });
       if (!resp.ok) throw new Error(`HF ${resp.status}`);
       const data = await resp.json();

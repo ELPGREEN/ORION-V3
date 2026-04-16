@@ -1602,7 +1602,7 @@ export function useOrionReasoning(
           speak("Analisando... um segundo.", { skipMicToggle: true }).catch(() => {});
           setThought("Analisando... um segundo.");
         }
-      }, 3500);
+      }, 2000);
 
       const result = await analyzeFrameStreaming(
         needsImage ? canvasRef.current : null, questionForLLM, cleanHistory, needsImage,

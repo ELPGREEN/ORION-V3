@@ -66,15 +66,18 @@ const STOP_WORDS = new Set([
   "é", "são", "foi", "ser", "ter", "como", "mais", "não", "sim",
 ]);
 
+const TERM_WEIGHTS = new Map<string, number>();
+for (const w of STOP_WORDS) TERM_WEIGHTS.set(w, 0);
+for (const w of RARE_LEGAL_TERMS) TERM_WEIGHTS.set(w, 3.0);
+
 /**
  * TF-IDF weight for a term.
  * Assumes term is already normalized (lowercase).
  */
 function getTermWeight(term: string): number {
-  if (STOP_WORDS.has(term)) return 0;
-  if (RARE_LEGAL_TERMS.has(term)) return 3.0; // High IDF for rare legal terms
-  if (term.length > 8) return 1.5; // Longer terms tend to be more specific
-  return 1.0;
+  const w = TERM_WEIGHTS.get(term);
+  if (w !== undefined) return w;
+  return term.length > 8 ? 1.5 : 1.0;
 }
 
 /**

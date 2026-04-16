@@ -421,7 +421,7 @@ export async function analyzeFrameWithAI(
         const tCtx = tempCanvas.getContext("2d");
         if (!tCtx) return { description: null, learnedFacts: [], identifiedObjects: [] };
         tCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-        imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.65).split(",")[1];
+        imageBase64 = tempCanvas.toDataURL("image/webp", 0.6).split(",")[1];
         console.log(`[OrionAI] Non-stream frame: ${tempCanvas.width}x${tempCanvas.height}, len=${imageBase64?.length || 0}`);
       } else {
         console.warn("[OrionAI] Non-stream: canvas 0 dimensions");
@@ -583,7 +583,7 @@ export async function analyzeFrameStreaming(
 
           // Emit sentences for TTS
           if (localResult.text) {
-            const sentences = localResult.text.match(/[^.!?]+[.!?]+/g) || [localResult.text];
+            const sentences = localResult.text.match(/[^.!?…;:|]+[.!?…;:|]*/g) || [localResult.text];
             for (const s of sentences) {
               const cleaned = s.trim().replace(/\*{1,3}/g, "").replace(/#{1,6}\s*/g, "");
               if (cleaned.length > 2) onSentence(cleaned);
@@ -641,7 +641,7 @@ export async function analyzeFrameStreaming(
             console.warn(`[OrionAI] Blank frame detected (var=${variance.toFixed(1)}, mean=${mean.toFixed(1)}), sending without image`);
             imageBase64 = undefined;
           } else {
-            imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.65).split(",")[1];
+            imageBase64 = tempCanvas.toDataURL("image/webp", 0.6).split(",")[1];
             console.log(`[OrionAI] ✅ Frame captured: ${sw}x${sh}, base64 length: ${imageBase64?.length || 0}, var=${variance.toFixed(1)}, mean=${mean.toFixed(1)}`);
           }
         }
@@ -777,11 +777,11 @@ export async function analyzeFrameStreaming(
               // Enhanced sentence detection: handle multiple sentence-ending patterns
               // including semicolons, colons with long clauses, and natural pauses
               const unspoken = accumulated.slice(spokenUpTo);
-              // Match sentences ending with . ! ? … or ; followed by space/newline
-              const sentenceMatch = unspoken.match(/^(.*?[.!?…;])\s/s);
-              // Also detect shorter clauses (>80 chars) at comma boundaries for faster speech start
-              const longClauseMatch = !sentenceMatch && unspoken.length > 80
-                ? unspoken.match(/^(.{40,}?,)\s/)
+              // Match sentences ending with . ! ? … or ; : | followed by space/newline
+              const sentenceMatch = unspoken.match(/^(.*?[.!?…;:|])\s/s);
+              // Also detect shorter clauses (>60 chars) at comma boundaries for faster speech start
+              const longClauseMatch = !sentenceMatch && unspoken.length > 60
+                ? unspoken.match(/^(.{30,}?,)\s/)
                 : null;
               const matchResult = sentenceMatch || longClauseMatch;
 

@@ -48,8 +48,8 @@ const preloadAllVision = async () => {};
 const _rtCache = { lastCall: 0, lastResult: null as RealTimeVisionResult | null };
 async function detectRealTime(video?: HTMLVideoElement): Promise<RealTimeVisionResult> {
   const now = Date.now();
-  // Throttle: at most once every 6 seconds
-  if (now - _rtCache.lastCall < 6000 && _rtCache.lastResult) {
+  // Throttle: at most once every 3 seconds for faster perception
+  if (now - _rtCache.lastCall < 3000 && _rtCache.lastResult) {
     return _rtCache.lastResult;
   }
   if (!video || video.readyState < 2) {
@@ -645,8 +645,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       if (now - lastFpsT.current >= 1000) { setFps(fpsC.current); fpsC.current = 0; lastFpsT.current = now; }
       VS.frames++;
 
-      // Throttle processFrame to every 15 frames (was 10) — saves more CPU
-      if (frameCount % 15 === 0) {
+      // Throttle processFrame for balance between CPU and fluidity
+      if (frameCount % 12 === 0) {
         const result = processFrame(ctx, w, h, prevRef.current);
         VS.regions = result.regions; VS.motion = result.motion;
         VS.shapeDescriptors = result.shapeDescriptors || [];
@@ -661,9 +661,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         else prevRef.current.set(result.pixels);
       }
 
-// Throttle ML detection to every 30 frames (was 20) — saves GPU cycles
-      // Throttle SuperNet frames to every 25 frames (was 15)
-      if (frameCount % 30 === 0) sendSuperNetFrame();
+      // Throttle SuperNet frames for real-time remote analysis
+      if (frameCount % 20 === 0) sendSuperNetFrame();
       animRef.current = requestAnimationFrame(loop);
     };
     animRef.current = requestAnimationFrame(loop);

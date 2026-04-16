@@ -47,7 +47,7 @@ function splitIntoSentences(text: string): string[] {
 
   // For longer texts: split at sentence boundaries into ~4000-char chunks
   // This supports up to 8000 chars total with just 2 chunks
-  const sentences = text.match(/[^.!?]+[.!?]+\s*|[^.!?]+$/g) || [text];
+  const sentences = text.match(/[^.!?…;:|]+[.!?…;:|]*\s*|[^.!?…;:|]+$/g) || [text];
   const chunks: string[] = [];
   let current = "";
   for (const s of sentences) {

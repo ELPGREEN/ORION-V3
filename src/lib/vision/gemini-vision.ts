@@ -6,9 +6,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-/** Capture a canvas frame as base64 JPEG (no data: prefix) */
-export function captureFrame(canvas: HTMLCanvasElement, quality = 0.7): string {
-  return canvas.toDataURL("image/jpeg", quality).split(",")[1];
+/** Capture a canvas frame as base64 WebP (no data: prefix) */
+export function captureFrame(canvas: HTMLCanvasElement, quality = 0.6): string {
+  return canvas.toDataURL("image/webp", quality).split(",")[1];
 }
 
 /** Capture from video element → base64 WebP. Returns empty string if video not ready. */
