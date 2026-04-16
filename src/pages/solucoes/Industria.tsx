@@ -10,97 +10,157 @@ import {
   Factory, ArrowRight, CheckCircle2, TrendingUp,
   Bot, Eye, Cpu, Radio, Cog, Wrench,
   Shield, Zap, MessageSquare, Globe, BarChart3,
-  Users, DollarSign, Target, Award, Layers,
+  Users, Layers, Truck, ScanLine, Paintbrush,
+  PackageCheck, Workflow, BrainCircuit, Gauge,
+  CircuitBoard, Radar, Activity, Settings,
 } from "lucide-react";
 
-const features = [
-  { icon: Bot, title: "Smart Robotic OTR Line", desc: "Primeira linha robótica do mundo para reciclagem de pneus OTR gigantes (57''–63'') com precisão milimétrica e IA embarcada.", highlight: "Patente própria" },
-  { icon: Eye, title: "Visão Computacional", desc: "Inspeção automatizada com YOLOv8, detecção de defeitos em tempo real e controle de qualidade com 99.2% de acurácia." },
-  { icon: Cpu, title: "ROS2 & Navegação Autônoma", desc: "Middleware ROS2 Humble/Jazzy para robótica autônoma, SLAM, planejamento de trajetória e controle de manipuladores." },
-  { icon: Radio, title: "SCADA & IoT Industrial", desc: "OPC-UA, Modbus TCP/RTU, PROFINET e EtherCAT integrados. Telemetria em tempo real via MQTT/WSS." },
-  { icon: Cog, title: "Plantas Modulares", desc: "Linhas de produção escaláveis e adaptáveis, com deploy rápido e configuração via Node-RED + Digital Twin." },
-  { icon: Wrench, title: "Manutenção Preditiva", desc: "IA analisa vibrações, temperatura e padrões de desgaste para prever falhas com até 72h de antecedência." },
-  { icon: Shield, title: "Orion Shield", desc: "Segurança industrial com VDA 5050, parada de emergência global, monitoramento 24/7 e conformidade ISO 23482." },
-  { icon: Zap, title: "Eficiência Energética", desc: "Otimização de consumo via IA com redução média de 23% nos custos energéticos e relatórios ESG automáticos." },
-  { icon: Layers, title: "Integração Completa", desc: "CAN bus, EtherCAT, Wi-Fi, 5G, Bluetooth, WebRTC. Conecta do sensor ao cloud com latência <50ms." },
+/* ─── Módulos Industriais (cobertura completa) ─── */
+const industrialModules = [
+  {
+    icon: Bot,
+    title: "Robótica Autônoma",
+    desc: "AGVs, AMRs e manipuladores com ROS2 Humble/Jazzy, SLAM, Nav2 e planejamento de trajetória em tempo real.",
+    tags: ["ROS2", "Nav2", "SLAM"],
+  },
+  {
+    icon: Eye,
+    title: "Visão Computacional",
+    desc: "Inspeção automatizada com YOLOv8, detecção de defeitos, leitura de códigos e classificação com 99.2% de acurácia.",
+    tags: ["YOLOv8", "OCR", "Classificação"],
+  },
+  {
+    icon: ScanLine,
+    title: "Inspeção de Qualidade",
+    desc: "Controle dimensional, detecção de trincas e análise de superfície com câmeras industriais e sensores 3D.",
+    tags: ["3D Vision", "Metrologia", "SPC"],
+  },
+  {
+    icon: Wrench,
+    title: "Soldagem Robótica",
+    desc: "Soldagem MIG/MAG/TIG automatizada com controle adaptativo de parâmetros e rastreamento de junta em tempo real.",
+    tags: ["MIG/MAG", "Seam Tracking", "Adaptativo"],
+  },
+  {
+    icon: Paintbrush,
+    title: "Pintura Industrial",
+    desc: "Cabines robóticas com otimização de trajetória, controle de espessura e redução de 30% no desperdício de tinta.",
+    tags: ["Trajetória 3D", "CFD", "Controle"],
+  },
+  {
+    icon: PackageCheck,
+    title: "Paletização & Embalagem",
+    desc: "Empilhamento inteligente, pick-and-place com grippers adaptativos e integração com linhas de embalagem.",
+    tags: ["Pick & Place", "Gripper", "Pattern"],
+  },
+  {
+    icon: Cog,
+    title: "Montagem Automatizada",
+    desc: "Linhas de montagem flexíveis com robôs colaborativos (cobots), controle de torque e verificação de encaixe.",
+    tags: ["Cobots", "Torque", "Poka-yoke"],
+  },
+  {
+    icon: Radio,
+    title: "SCADA & IoT Industrial",
+    desc: "OPC-UA, Modbus TCP/RTU, PROFINET e EtherCAT integrados. Telemetria em tempo real via MQTT/WSS.",
+    tags: ["OPC-UA", "MQTT", "EtherCAT"],
+  },
+  {
+    icon: BrainCircuit,
+    title: "Manutenção Preditiva",
+    desc: "IA analisa vibrações, temperatura e padrões de desgaste para prever falhas com até 72h de antecedência.",
+    tags: ["Vibração", "ML", "Previsão"],
+  },
+  {
+    icon: Workflow,
+    title: "Digital Twin & MES",
+    desc: "Gêmeo digital em tempo real com Node-RED, Foxglove e AAS. Integração MES/ERP para rastreabilidade total.",
+    tags: ["Digital Twin", "MES", "AAS"],
+  },
+  {
+    icon: Shield,
+    title: "Segurança Industrial",
+    desc: "VDA 5050, parada de emergência global, zonas de segurança dinâmicas e conformidade ISO 23482/10218.",
+    tags: ["VDA 5050", "E-Stop", "ISO"],
+  },
+  {
+    icon: Zap,
+    title: "Eficiência Energética",
+    desc: "Otimização de consumo via IA com redução média de 23% nos custos energéticos e relatórios ESG automáticos.",
+    tags: ["ESG", "Otimização", "Relatórios"],
+  },
 ];
 
-const marketMetrics = [
-  { value: "$78B", label: "Mercado Global de Robótica Industrial", sub: "2026 — CAGR 12.3%", icon: Globe },
-  { value: "$42B", label: "Mercado de Automação Industrial", sub: "2026 — CAGR 9.8%", icon: BarChart3 },
-  { value: "2.7M", label: "Robôs Industriais Instalados", sub: "IFR World Robotics 2025", icon: Bot },
-  { value: "$156B", label: "Indústria de Reciclagem Global", sub: "Segmento OTR: crescimento 15%/ano", icon: TrendingUp },
+/* ─── Setores atendidos ─── */
+const sectors = [
+  { icon: Truck, name: "Mineração & OTR", desc: "Reciclagem robótica de pneus OTR gigantes (57''–63'') com tecnologia patenteada Smart OTR." },
+  { icon: Factory, name: "Automotivo", desc: "Soldagem, pintura, montagem e inspeção em linhas de produção automotiva." },
+  { icon: CircuitBoard, name: "Eletrônicos", desc: "Pick-and-place SMD, inspeção AOI e montagem de PCBs com precisão micrométrica." },
+  { icon: Activity, name: "Farmacêutico", desc: "Ambientes cleanroom, rastreabilidade lot-level, compliance GMP e serialização." },
+  { icon: PackageCheck, name: "Logística", desc: "AGVs de armazém, sorting automatizado, paletização e integração WMS." },
+  { icon: Settings, name: "Metalurgia", desc: "Fundição assistida, tratamento térmico monitorado e controle de qualidade metalográfico." },
 ];
 
-const competitiveEdge = [
-  { metric: "99.2%", label: "Acurácia de inspeção", desc: "vs 85-92% da concorrência" },
+/* ─── KPIs ─── */
+const kpis = [
+  { metric: "99.2%", label: "Acurácia de inspeção", desc: "Visão computacional de alta precisão" },
   { metric: "<50ms", label: "Latência de controle", desc: "Tempo real via EtherCAT + ROS2" },
   { metric: "72h", label: "Previsão de falhas", desc: "Manutenção preditiva com IA" },
   { metric: "23%", label: "Redução energética", desc: "Otimização inteligente de consumo" },
-  { metric: "3x", label: "Mais rápido que manual", desc: "Ciclo de inspeção OTR" },
+  { metric: "6+", label: "Protocolos industriais", desc: "OPC-UA, Modbus, PROFINET, CAN, MQTT, EtherCAT" },
   { metric: "ROI 14mo", label: "Retorno do investimento", desc: "Payback médio de projetos" },
 ];
 
+/* ─── Tech Stack ─── */
 const techStack = [
-  { category: "Cérebro", items: ["ROS2 Humble/Jazzy", "Orion Neural Engine", "TensorFlow + YOLOv8"] },
-  { category: "Conexão Interna", items: ["CAN bus", "EtherCAT", "PROFINET", "Modbus TCP/RTU"] },
-  { category: "Conexão Externa", items: ["Wi-Fi 6", "5G", "Bluetooth BLE", "MQTT/WSS"] },
-  { category: "Protocolos", items: ["OPC-UA (IEC 62541)", "VDA 5050 v2.0", "Nav2", "TF2"] },
+  { category: "Inteligência", items: ["ROS2 Humble/Jazzy", "Orion Neural Engine", "TensorFlow", "YOLOv8", "MediaPipe"] },
+  { category: "Fieldbus", items: ["CAN bus", "EtherCAT", "PROFINET", "Modbus TCP/RTU", "IO-Link"] },
+  { category: "Conectividade", items: ["Wi-Fi 6", "5G", "Bluetooth BLE", "MQTT/WSS", "WebRTC"] },
+  { category: "Protocolos", items: ["OPC-UA (IEC 62541)", "VDA 5050 v2.0", "Nav2", "TF2", "DDS"] },
   { category: "Monitoramento", items: ["Grafana", "Node-RED", "Foxglove Studio", "Digital Twin AAS"] },
-  { category: "Segurança", items: ["ISO 23482", "Emergency Stop Global", "GDPR/LGPD", "TLS 1.3"] },
-];
-
-const differentials = [
-  "Patente própria Smart OTR",
-  "Integração ROS2 nativa",
-  "Visão computacional 99.2%",
-  "SCADA e IoT em tempo real",
-  "Manutenção preditiva 72h",
-  "Plantas modulares escaláveis",
-  "VDA 5050 + ISO 23482",
-  "Orion Shield — segurança 24/7",
+  { category: "Segurança", items: ["ISO 23482", "ISO 10218", "E-Stop Global", "GDPR/LGPD", "TLS 1.3"] },
 ];
 
 export default function SolucoesIndustria() {
   return (
     <MainLayout>
       <SEO
-        title="ORION Enterprise — Robótica Industrial & Smart OTR | Investidores"
-        description="Automação robótica industrial com ROS2, Smart OTR patenteada, visão computacional e Indústria 4.0. Mercado de $78B com CAGR 12.3%. Soluções enterprise ORION."
+        title="Soluções para Indústria — Robótica, Automação & Indústria 4.0 | ORION"
+        description="Automação robótica completa: visão computacional, soldagem, pintura, inspeção, paletização, manutenção preditiva, SCADA/IoT e Smart OTR. Tecnologia ROS2 + IA."
       />
 
-      {/* Hero — Investor-focused */}
+      {/* ── Hero ── */}
       <section className="min-h-[50vh] flex items-center relative overflow-hidden" style={{ background: "hsl(var(--background))" }}>
         <HeroThreeBackground />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/30 to-background/80" style={{ zIndex: 1 }} />
-        <div className="container py-14 sm:py-20 px-4 sm:px-6 relative" style={{ zIndex: 5 }}>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/30 to-background/80 z-[1]" />
+        <div className="container py-14 sm:py-20 px-4 sm:px-6 relative z-[5]">
           <div className="max-w-3xl">
             <div className="flex items-center gap-3 mb-5">
               <div className="h-px w-8 bg-primary" />
-              <p className="text-primary uppercase tracking-[0.35em] text-[11px] font-medium">AUTOMAÇÃO INDUSTRIAL • ENTERPRISE</p>
+              <p className="text-primary uppercase tracking-[0.35em] text-[11px] font-medium">AUTOMAÇÃO INDUSTRIAL • INDÚSTRIA 4.0</p>
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-foreground leading-tight mb-6">
-              Orion <span className="text-primary">Enterprise</span>
+              Soluções <span className="text-primary">Industriais</span> Completas
             </h1>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl mb-4">
-              Plataforma de robótica industrial com tecnologia <strong className="text-foreground">Smart OTR patenteada</strong>, 
-              sistema de controle ROS2 e IA embarcada. Mercado global de <strong className="text-primary">$78 bilhões</strong> em crescimento acelerado.
+              Da <strong className="text-foreground">robótica autônoma</strong> à <strong className="text-foreground">manutenção preditiva</strong>,
+              o ORION cobre toda a cadeia de automação industrial com IA embarcada, ROS2 e protocolos industriais nativos.
             </p>
             <p className="text-xs text-muted-foreground/70 mb-8">
-              ELP Green Technology • Alessandria, Itália • Fundada 2020 • CNPJ 42.601.190/0001-70
+              Soldagem • Montagem • Pintura • Inspeção • Paletização • SCADA • IoT • OTR
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild className="btn-gold shimmer">
-                <a href="https://wa.me/393501021359" target="_blank" rel="noopener noreferrer">
+                <Link to="/contato?plano=enterprise">
                   <MessageSquare className="mr-2 h-4 w-4" />
-                  Falar com Investimentos
+                  Solicitar Proposta
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
+                </Link>
               </Button>
               <Button asChild className="btn-outline-gold">
                 <Link to="/investidores">
                   <TrendingUp className="mr-2 h-4 w-4" />
-                  Pitch Deck
+                  Para Investidores
                 </Link>
               </Button>
             </div>
@@ -110,34 +170,42 @@ export default function SolucoesIndustria() {
 
       <TechLine />
 
-      {/* Market Opportunity */}
+      {/* ── Módulos Industriais ── */}
       <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
-        <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
-          <div className="text-center mb-10">
+        <GatewayBackground opacity={0.15} />
+        <div className="container px-4 sm:px-6 relative z-[1]">
+          <div className="text-center mb-12">
             <ScrollReveal direction="fade">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">OPORTUNIDADE DE MERCADO</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">MÓDULOS DE AUTOMAÇÃO</p>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={0.1}>
-              <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-3">
-                Um mercado de <span className="text-primary">$78 bilhões</span>
+              <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-4">
+                Cobertura <span className="text-primary">industrial</span> completa
               </h2>
               <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-                A robótica industrial cresce 12.3% ao ano. A reciclagem de pneus OTR é um segmento ainda inexplorado 
-                com margem alta e barreira técnica elevada — exatamente onde o ORION opera.
+                12 módulos especializados que cobrem desde a robótica de chão de fábrica até o monitoramento em nuvem.
               </p>
             </ScrollReveal>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {marketMetrics.map((m, i) => {
-              const Icon = m.icon;
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {industrialModules.map((mod, i) => {
+              const Icon = mod.icon;
               return (
-                <ScrollReveal key={m.label} direction="up" delay={i * 0.08}>
-                  <div className="p-6 border border-border/20 bg-card/30 hover:border-primary/30 transition-all text-center group">
-                    <Icon className="h-5 w-5 text-primary mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                    <p className="text-3xl font-bold text-primary mb-1">{m.value}</p>
-                    <p className="text-xs font-medium text-foreground mb-1">{m.label}</p>
-                    <p className="text-[10px] text-muted-foreground">{m.sub}</p>
+                <ScrollReveal key={mod.title} direction="up" delay={i * 0.04}>
+                  <div className="group p-6 border border-border/20 bg-card/30 hover:border-primary/30 hover:bg-primary/[0.02] transition-all duration-500 h-full">
+                    <div className="h-10 w-10 border border-primary/20 flex items-center justify-center mb-4 group-hover:border-primary/50 transition-colors">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-foreground mb-2">{mod.title}</h3>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mb-3">{mod.desc}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {mod.tags.map((tag) => (
+                        <span key={tag} className="text-[9px] px-2 py-0.5 bg-primary/5 border border-primary/10 text-foreground/70 font-mono">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </ScrollReveal>
               );
@@ -148,22 +216,58 @@ export default function SolucoesIndustria() {
 
       <TechLine />
 
-      {/* Competitive KPIs */}
+      {/* ── Setores Atendidos ── */}
       <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--border))" }}>
-        <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
+        <div className="container px-4 sm:px-6 relative z-[1]">
           <div className="text-center mb-10">
             <ScrollReveal direction="fade">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">VANTAGEM COMPETITIVA</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">SETORES</p>
             </ScrollReveal>
             <ScrollReveal direction="up" delay={0.1}>
               <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-3">
-                Números que <span className="text-primary">comprovam</span>
+                Onde o ORION <span className="text-primary">atua</span>
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+                Soluções modulares adaptáveis a múltiplos setores industriais, do mineração ao farmacêutico.
+              </p>
+            </ScrollReveal>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sectors.map((sector, i) => {
+              const Icon = sector.icon;
+              return (
+                <ScrollReveal key={sector.name} direction="up" delay={i * 0.06}>
+                  <div className="p-6 border border-border/20 bg-card/30 hover:border-primary/30 transition-all group">
+                    <Icon className="h-6 w-6 text-primary mb-3 group-hover:scale-110 transition-transform" />
+                    <h3 className="text-sm font-semibold text-foreground mb-2">{sector.name}</h3>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{sector.desc}</p>
+                  </div>
+                </ScrollReveal>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <TechLine />
+
+      {/* ── KPIs ── */}
+      <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
+        <div className="container px-4 sm:px-6 relative z-[1]">
+          <div className="text-center mb-10">
+            <ScrollReveal direction="fade">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">PERFORMANCE</p>
+            </ScrollReveal>
+            <ScrollReveal direction="up" delay={0.1}>
+              <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-3">
+                Resultados <span className="text-primary">comprovados</span>
               </h2>
             </ScrollReveal>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {competitiveEdge.map((kpi, i) => (
+            {kpis.map((kpi, i) => (
               <ScrollReveal key={kpi.label} direction="up" delay={i * 0.06}>
                 <div className="p-6 border border-border/20 bg-card/30 hover:border-primary/40 transition-all group">
                   <p className="text-4xl font-bold text-primary mb-2 group-hover:scale-105 transition-transform origin-left">{kpi.metric}</p>
@@ -178,50 +282,9 @@ export default function SolucoesIndustria() {
 
       <TechLine />
 
-      {/* Technology Features */}
-      <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
-        <GatewayBackground opacity={0.15} />
-        <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
-          <div className="text-center mb-12">
-            <ScrollReveal direction="fade">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">TECNOLOGIA PROPRIETÁRIA</p>
-            </ScrollReveal>
-            <ScrollReveal direction="up" delay={0.1}>
-              <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-4">
-                Stack <span className="text-primary">completa</span> de automação
-              </h2>
-            </ScrollReveal>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {features.map((feat, i) => {
-              const Icon = feat.icon;
-              return (
-                <ScrollReveal key={feat.title} direction="up" delay={i * 0.05}>
-                  <div className="group p-6 border border-border/20 bg-card/30 hover:border-primary/30 hover:bg-primary/[0.02] transition-all duration-500 h-full relative">
-                    {"highlight" in feat && feat.highlight && (
-                      <span className="absolute top-3 right-3 text-[9px] uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 border border-primary/20">
-                        {feat.highlight}
-                      </span>
-                    )}
-                    <div className="h-10 w-10 border border-primary/20 flex items-center justify-center mb-4 group-hover:border-primary/50 transition-colors">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-foreground mb-2">{feat.title}</h3>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">{feat.desc}</p>
-                  </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <TechLine />
-
-      {/* Tech Stack Architecture */}
+      {/* ── Tech Stack ── */}
       <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--border))" }}>
-        <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
+        <div className="container px-4 sm:px-6 relative z-[1]">
           <div className="text-center mb-10">
             <ScrollReveal direction="fade">
               <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-3">ARQUITETURA DO SISTEMA</p>
@@ -231,8 +294,7 @@ export default function SolucoesIndustria() {
                 Do <span className="text-primary">sensor</span> ao <span className="text-primary">cloud</span>
               </h2>
               <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-                Arquitetura completa baseada em ROS2 — o padrão da indústria usado por Tesla, Boston Dynamics, 
-                e 90% dos projetos de robótica autônoma no mundo.
+                Stack completa baseada em ROS2, o padrão da indústria usado pela Tesla, Boston Dynamics e líderes globais de robótica.
               </p>
             </ScrollReveal>
           </div>
@@ -258,57 +320,63 @@ export default function SolucoesIndustria() {
 
       <TechLine />
 
-      {/* Differentials */}
+      {/* ── Smart OTR Highlight ── */}
       <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
-        <div className="container px-4 sm:px-6 relative" style={{ zIndex: 1 }}>
+        <div className="container px-4 sm:px-6 relative z-[1]">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <ScrollReveal direction="up">
               <div>
                 <div className="flex items-center gap-3 mb-5">
                   <div className="h-px w-8 bg-primary" />
-                  <p className="text-primary uppercase tracking-[0.35em] text-[11px] font-medium">DIFERENCIAIS</p>
+                  <p className="text-primary uppercase tracking-[0.35em] text-[11px] font-medium">TECNOLOGIA PATENTEADA</p>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-6">
-                  Por que investir no <span className="text-primary">ORION?</span>
+                  Smart Robotic <span className="text-primary">OTR Line</span>
                 </h2>
                 <p className="text-muted-foreground leading-relaxed mb-4 text-sm">
-                  Tecnologia patenteada no segmento mais rentável da reciclagem industrial, 
-                  com barreira técnica alta e primeira solução do mercado para pneus OTR gigantes.
+                  A primeira linha robótica do mundo projetada exclusivamente para reciclagem de pneus OTR gigantes da mineração (57''–63''),
+                  com tecnologia proprietária e patenteada.
                 </p>
                 <ul className="space-y-2 mb-8 text-xs text-muted-foreground">
                   <li className="flex items-start gap-2">
-                    <Target className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
                     <span><strong className="text-foreground">First-mover advantage</strong> — Única solução robótica completa para OTR 57''-63''</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <Award className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                    <span><strong className="text-foreground">IP forte</strong> — Patente própria + stack proprietária de IA</span>
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                    <span><strong className="text-foreground">Capacidade:</strong> 4 pneus/hora com 99.8% de recuperação de material</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <DollarSign className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                    <span><strong className="text-foreground">Modelo SaaS + Hardware</strong> — Receita recorrente de software + venda de linhas</span>
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                    <span><strong className="text-foreground">Outputs:</strong> Granulado de borracha (65%), aço (25%), fibra têxtil (10%)</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <Users className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                    <span><strong className="text-foreground">Escalável</strong> — Plantas modulares replicáveis em qualquer geografia</span>
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                    <span><strong className="text-foreground">Plantas modulares</strong> — Replicáveis em qualquer geografia</span>
                   </li>
                 </ul>
-                <Button asChild className="btn-gold">
-                  <a href="https://wa.me/393501021359" target="_blank" rel="noopener noreferrer">
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Falar com Investimentos
+                <Button asChild className="btn-outline-gold">
+                  <Link to="/investidores">
+                    Saiba Mais sobre a Smart OTR
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </a>
+                  </Link>
                 </Button>
               </div>
             </ScrollReveal>
 
             <ScrollReveal direction="up" delay={0.1}>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {differentials.map((item) => (
-                  <div key={item} className="flex items-center gap-3 p-4 bg-card/30 border border-border/20 hover:border-primary/30 transition-all">
-                    <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="text-xs text-foreground">{item}</span>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { val: "4/hr", lab: "Pneus processados" },
+                  { val: "63''", lab: "Diâmetro máximo" },
+                  { val: "99.8%", lab: "Taxa de recuperação" },
+                  { val: "100%", lab: "Automação" },
+                  { val: "3 outputs", lab: "Borracha, aço, fibra" },
+                  { val: "ROI 14mo", lab: "Retorno do investimento" },
+                ].map((item) => (
+                  <div key={item.lab} className="p-4 bg-card/30 border border-border/20 hover:border-primary/30 transition-all text-center">
+                    <p className="text-2xl font-bold text-primary mb-1">{item.val}</p>
+                    <p className="text-[10px] text-muted-foreground">{item.lab}</p>
                   </div>
                 ))}
               </div>
@@ -317,28 +385,30 @@ export default function SolucoesIndustria() {
         </div>
       </section>
 
-      {/* CTA */}
+      <TechLine />
+
+      {/* ── CTA ── */}
       <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: "hsl(var(--background))", borderTop: "1px solid hsl(var(--border))" }}>
         <HeroThreeBackground />
         <div className="absolute inset-0 bg-background/60 z-[1]" />
-        <div className="container relative px-4 sm:px-6" style={{ zIndex: 2 }}>
+        <div className="container relative px-4 sm:px-6 z-[2]">
           <div className="max-w-2xl mx-auto text-center">
             <Factory className="h-10 w-10 text-primary mx-auto mb-6" />
             <h2 className="text-3xl md:text-4xl font-serif text-foreground mb-4">
-              Invista na <span className="text-primary">revolução industrial</span>
+              Transforme sua <span className="text-primary">operação industrial</span>
             </h2>
             <p className="text-muted-foreground mb-3 text-sm">
-              Robótica autônoma + IA + reciclagem sustentável = mercado de bilhões com impacto ambiental positivo.
+              Robótica autônoma, visão computacional, manutenção preditiva e IoT industrial — tudo integrado numa plataforma única.
             </p>
             <p className="text-xs text-muted-foreground/60 mb-8">
-              Rodada aberta • Equity + Revenue Share • Due diligence disponível
+              Consultoria gratuita • Projetos customizados • Suporte 24/7
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild className="btn-gold px-10 shimmer">
                 <Link to="/contato?plano=enterprise">SOLICITAR PROPOSTA</Link>
               </Button>
               <Button asChild className="btn-outline-gold px-10">
-                <Link to="/investidores">PITCH DECK COMPLETO</Link>
+                <Link to="/investidores">PARA INVESTIDORES</Link>
               </Button>
             </div>
           </div>
