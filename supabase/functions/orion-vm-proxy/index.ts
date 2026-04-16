@@ -106,6 +106,15 @@ function mapActionToEndpoint(action: string): string {
     embeddings: "/embeddings",
     "proxy/gemini": "/proxy/gemini",
     "cache/stats": "/cache/stats",
+    // Orion Core V3 (brain.py) endpoints
+    "brain/command": "/brain/command",
+    "brain/status": "/brain/status",
+    "brain/memory": "/brain/memory",
+    "brain/intents": "/brain/intents",
+    "integrations/status": "/integrations/status",
+    "integrations/iot": "/integrations/iot",
+    "integrations/ble": "/integrations/ble",
+    "integrations/ros2": "/integrations/ros2",
   };
   return map[action] || `/${action}`;
 }
