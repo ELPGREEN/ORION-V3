@@ -10,14 +10,27 @@ class BLEManager:
     """
     def __init__(self):
         self.devices = []
+        self.is_scanning = False
+
+    def get_status(self):
+        """Retorna o status atual da integração BLE."""
+        return {
+            "scanning": self.is_scanning,
+            "paired_devices": len(self.devices),
+            "supported": True # Assumindo suporte se a lib carregou
+        }
 
     async def scan(self, duration=5.0):
         """Escaneia dispositivos BLE próximos."""
         logger.info("Iniciando scan BLE...")
-        self.devices = await BleakScanner.discover(timeout=duration)
-        for d in self.devices:
-            logger.info(f"Dispositivo encontrado: {d.name} ({d.address})")
-        return self.devices
+        self.is_scanning = True
+        try:
+            self.devices = await BleakScanner.discover(timeout=duration)
+            for d in self.devices:
+                logger.info(f"Dispositivo encontrado: {d.name} ({d.address})")
+            return self.devices
+        finally:
+            self.is_scanning = False
 
     async def connect_and_read(self, address, char_uuid):
         """Conecta a um dispositivo e lê uma característica."""

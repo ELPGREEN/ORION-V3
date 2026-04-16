@@ -6,6 +6,12 @@
 
 # Core
 gradio==5.33.0
+fastapi
+uvicorn
+python-multipart
+
+# Testing
+pytest
 
 # PDF Processing
 pymupdf==1.25.3

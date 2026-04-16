@@ -1,6 +1,7 @@
 import logging
 import json
 import re
+import time
 import webbrowser
 from integrations.google_assistant import GoogleAssistantIntegrator
 from integrations.iot_manager import IoTManager
@@ -18,6 +19,8 @@ class OrionAssistant:
 
     def __init__(self):
         logger.info("Inicializando Órion Core...")
+        self.start_time = time.time()
+        self.version = "3.0.0"
         self.memory = OrionMemory()
 
         # Inicializa integradores
@@ -42,6 +45,23 @@ class OrionAssistant:
             "ros2_robot": r"(status do robô|parada de emergência|linha de produção|robô|robot)",
             "legal_tech": r"(processo|petição|jurídico|cláusula|contrato|advogado)",
             "google_force": r"(pergunte ao google|use o google|busca no google)"
+        }
+
+    def get_status(self) -> dict:
+        """Retorna o status atual do sistema."""
+        active_integrations = []
+        if self.google: active_integrations.append("google_assistant")
+        if self.iot: active_integrations.append("mqtt")
+        if self.ble: active_integrations.append("ble")
+        if self.ros2: active_integrations.append("ros2")
+
+        return {
+            "online": True,
+            "version": self.version,
+            "uptime_seconds": int(time.time() - self.start_time),
+            "active_integrations": active_integrations,
+            "intent_patterns": self.intent_patterns,
+            "memory_entries": len(self.memory.history)
         }
 
     def process_with_google_enhancement(self, query: str) -> dict:
@@ -150,7 +170,12 @@ class OrionAssistant:
 
         return {
             "response": text,
-            "google_structure": google_res, # Guardamos para estudo futuro
+            "google_structure": {
+                "text_response": google_res.get("text_response"),
+                "suggestions": google_res.get("suggestions", []),
+                "action_data": google_res.get("action_data"),
+                "supplemental_info": google_res.get("supplemental_info", {})
+            },
             "source": "Google Assistant + Orion Rules"
         }
 

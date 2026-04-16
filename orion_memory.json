@@ -1,0 +1,24 @@
+{
+  "history": [
+    {
+      "timestamp": 1776307253.2664063,
+      "user": "tocar coldplay",
+      "assistant": "Certo! Abrindo 'coldplay' no YouTube agora.",
+      "intent": "media_priority"
+    },
+    {
+      "timestamp": 1776307253.266698,
+      "user": "ver clipe do luan santana",
+      "assistant": "Certo! Abrindo 'do luan santana' no YouTube agora.",
+      "intent": "media_priority"
+    },
+    {
+      "timestamp": 1776307334.1446767,
+      "user": "tocar coldplay",
+      "assistant": "Certo! Abrindo 'coldplay' no YouTube agora.",
+      "intent": "media_priority"
+    }
+  ],
+  "context": {},
+  "last_updated": 1776307334.1446836
+}
