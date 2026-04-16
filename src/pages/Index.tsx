@@ -65,21 +65,38 @@ export default function Index() {
           </h2>
           <p className="text-xs text-primary/70 tracking-[0.3em] uppercase mb-6">by ELP® Green Technology</p>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-4">
-            <strong>Orion Intelligence Platform</strong> is an enterprise artificial intelligence platform with{' '}
-            <strong className="text-primary">17+ integrated modules</strong> that helps businesses
-            automate workflows, manage documents, organize clients, and optimize processes.
-            It features <strong>Orion IA</strong> — an advanced AI assistant with natural language understanding,
-            computer vision, voice interaction, document generation, and real-time analytics — all protected by bank-grade security (<em>Orion Shield</em>).
+            <strong>Orion Intelligence Platform</strong> is a comprehensive enterprise artificial intelligence solution by ELP® Green Technology.
+            Our platform integrates <strong>17+ specialized neural modules</strong> to help legal professionals, businesses, and developers
+            automate complex workflows, manage high-volume documentation, and gain real-time insights through computer vision and predictive analytics.
           </p>
-          <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-            The platform is designed for professionals, law firms, businesses, and enterprises that need intelligent automation,
-            CRM capabilities, legal document drafting, financial analysis, and AI-powered decision support — accessible from any device.
-          </p>
-          <div className="bg-background/50 border border-border/20 rounded-md p-4 max-w-2xl mx-auto">
-            <p className="text-xs text-muted-foreground/80 leading-relaxed">
-              <strong className="text-foreground/70">Google Sign-In disclosure:</strong> Orion Intelligence Platform uses your Google account
-              solely for secure authentication. We only access your name and email address to create your account.
-              No email content, contacts, Drive files, or other sensitive data is accessed, collected, or stored.
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left my-8">
+            <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+              <h3 className="font-semibold text-primary mb-2">How it works</h3>
+              <p className="text-sm text-muted-foreground">
+                Users can connect their tools to automate document generation, perform legal research, and manage client relationships via a unified dashboard or voice commands.
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+              <h3 className="font-semibold text-primary mb-2">Core Features</h3>
+              <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                <li>AI-Powered Legal CRM & Document Drafting</li>
+                <li>Real-time Computer Vision & IoT Integration</li>
+                <li>Secure Cloud Synchronization & Audit Logging</li>
+              </ul>
+            </div>
+          </div>
+          <div className="bg-background/50 border border-border/20 rounded-md p-6 max-w-2xl mx-auto text-left">
+            <h3 className="text-sm font-semibold mb-3">Google Data Transparency & Usage</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+              To provide a seamless experience, Orion requests access to your Google account data for the following specific purposes:
+            </p>
+            <ul className="text-xs text-muted-foreground space-y-2 mb-4">
+              <li>• <strong className="text-foreground/70">Authentication:</strong> We use your email and profile picture to create and secure your Orion account.</li>
+              <li>• <strong className="text-foreground/70">Integration (Optional):</strong> If you explicitly choose to enable Google Workspace integrations, Orion will request incremental permissions to read/write documents or sync calendars directly to your dashboard. This data is never shared with third parties or used for model training.</li>
+            </ul>
+            <p className="text-xs text-muted-foreground/80 italic border-t border-border/10 pt-3">
+              We adhere strictly to Google's Limited Use Policy. No sensitive data is accessed without your direct action and explicit consent.
+              For more details, please review our <Link to="/privacidade" className="text-primary underline">Privacy Policy</Link>.
             </p>
           </div>
         </div>

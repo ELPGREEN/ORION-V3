@@ -156,14 +156,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('pending_google_account_type', accountType);
     }
 
-    const googleScopes = (SCOPES_BY_ROLE[accountType] || SCOPES_BY_ROLE.cliente).join(' ');
+    // POLICY: Minimum Scopes - Only request basic profile info during initial login.
+    // Additional sensitive scopes are requested incrementally when needed via useGoogleScopes hook.
+    const googleScopes = 'email profile';
 
     const oauthOptions = {
       redirectTo: `${window.location.origin}/dashboard`,
       scopes: googleScopes,
       queryParams: {
         access_type: 'offline',
-        prompt: 'consent',
+        prompt: 'select_account',
       },
     };
 
