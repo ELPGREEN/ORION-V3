@@ -41,11 +41,11 @@ export function detectTurnState(buffer: string[], _lang?: string): TurnState {
 export function getOptimalSilenceDuration(state: TurnState): number {
   switch (state) {
     case "finished":
-      return 900;
+      return 700;      // Was 900 → faster response after clear end
     case "unfinished":
-      return 2500;
+      return 2000;     // Was 2500 → still patient but snappier
     case "wait":
     default:
-      return 1800;
+      return 1400;     // Was 1800 → moderate wait
   }
 }

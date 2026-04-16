@@ -32,8 +32,8 @@ const ECHO_WINDOW_MS = 18000;
 const ECHO_JACCARD_THRESHOLD = 0.35;
 const MAX_CONSECUTIVE_ABORTS = 5;
 const MAX_CONSECUTIVE_NO_SPEECH = 8;
-const NO_SPEECH_TIMEOUT_MS = 4000; // 4 seconds tolerance for pauses
-const RESTART_DELAY_MS = isMobile() ? 5000 : 2000; // Longer delays to prevent cycling
+const NO_SPEECH_TIMEOUT_MS = 3000; // 3 seconds — reduced for snappier interactions
+const RESTART_DELAY_MS = isMobile() ? 4000 : 1500; // Reduced delays for faster reconnect
 
 // ═══ Shared State ═══
 export const VoiceState = { aiResponding: false };
