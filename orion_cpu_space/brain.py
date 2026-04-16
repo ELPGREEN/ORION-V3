@@ -38,8 +38,8 @@ class OrionAssistant:
 
         # Padrões de intenção (Regex simples para o MVP do novo cérebro)
         self.intent_patterns = {
-            "media_video": r"(assistir|ver|abrir|mostrar|clipe|vídeo|video|youtube)",
-            "media_music": r"(tocar|música|musica|ouvindo|som)",
+            "media_video": r"(assistir|ver|abrir|mostrar|clipe|vídeo|video|youtube|filme|filmes|movie|movies|séries?|series?|novela|documentário|documentario|trailer|trailers|notícias|noticias|news|podcast|podcasts|meditação|meditacao|meditation|asmr|tutorial|tutoriais|react|review|unboxing|gameplay|playthrough|livestream|live|stream|transmissão|ao vivo|ted\s?talk|palestra|aula|curso|webinar|animação|animacao|anime|cartoon|desenho|curta|curta-metragem|show|espetáculo|concerto|ópera|opera|musical|standup|stand-up|comédia|comedia|drama|terror|horror|ação|acao|ficção|ficcao|romance|suspense|thriller)",
+            "media_music": r"(tocar|música|musica|ouvindo|som|playlist|álbum|album|canção|cancao|song|beat|remix|lofi|lo-fi|chill|relaxar|relaxamento|dormir|sleep|foco|focus|estudar|study|treino|workout|gym)",
             "vision_detect": r"(detectar|identificar|objetos?|o que tem|câmera|camera|analisar imagem)",
             "vision_classify": r"(classificar|categorizar|que tipo|reconhecer|qual é isso)",
             "iot_control": r"(ligue|desligue|apague|acenda|luz|lâmpada|dispositivo)",
