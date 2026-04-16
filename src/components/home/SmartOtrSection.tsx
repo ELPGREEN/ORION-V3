@@ -4,7 +4,7 @@ import { IconBot, IconCpu, IconZap, IconSettings } from "@/components/icons/Sume
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
-import videoOtrAsset from "@/assets/video-smart-otr-v3.mp4.asset.json";
+import videoOtrAsset from "@/assets/video-smart-otr-v4.mp4.asset.json";
 
 const features = [
   { icon: IconBot, title: "Smart Robotic Line", desc: "Linha robótica inteligente que processa pneus OTR gigantes de 57'' a 63'' — até 10 toneladas/hora por planta, com corte hidráulico, trituração e separação automatizada." },
