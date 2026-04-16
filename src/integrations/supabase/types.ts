@@ -7528,6 +7528,7 @@ export type Database = {
           title: string
         }[]
       }
+      system_maintenance_v1: { Args: never; Returns: Json }
       verify_report_by_hash: {
         Args: { target_hash: string }
         Returns: {
