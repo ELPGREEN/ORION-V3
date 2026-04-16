@@ -292,13 +292,13 @@ Deno.serve(async (req) => {
       "Cite fontes quando possível. Seja proativo em identificar nuances e implicações." +
       (contextBlock ? `\n\nContexto relevante:${contextBlock}` : "");
 
-    // 3. Call provider chain: Claude → Gemini → Mistral → Groq → HuggingFace
+    // 3. Call provider chain: Gemini → Mistral → Groq → HuggingFace → Claude
     const startTime = Date.now();
     let response = "";
     let providerUsed = "gemini";
     let modelUsed = "gemini-2.5-flash";
 
-    // Streaming (Gemini only — Claude doesn't stream here)
+    // Streaming (Gemini only)
     if (stream) {
       try {
         const streamResp = await callGemini(systemPrompt, query, true);
@@ -344,7 +344,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Non-streaming: Gemini → Claude → Mistral → Groq → HuggingFace
+    // Non-streaming: Gemini → Mistral (1B free) → Groq → HuggingFace → Claude (paid last)
     try {
       const result = await callGemini(systemPrompt, query, false);
       if (typeof result === "string") response = result;
@@ -352,28 +352,28 @@ Deno.serve(async (req) => {
       modelUsed = "gemini-2.5-flash";
     } catch (e0) {
       console.warn("[Inference] Gemini failed:", e0);
-      providerUsed = "anthropic";
-      modelUsed = "claude-sonnet-4";
+      providerUsed = "mistral";
+      modelUsed = "mistral-medium-latest";
       try {
-        response = await callClaude(systemPrompt, query);
+        response = await callMistral(systemPrompt, query);
       } catch (e1) {
-        console.warn("[Inference] Claude failed:", e1);
-        providerUsed = "mistral";
-        modelUsed = "mistral-small-latest";
+        console.warn("[Inference] Mistral failed:", e1);
+        providerUsed = "groq";
+        modelUsed = "llama-3.3-70b";
         try {
-          response = await callMistral(systemPrompt, query);
+          response = await callGroq(systemPrompt, query);
         } catch (e2) {
-          console.warn("[Inference] Mistral failed:", e2);
-          providerUsed = "groq";
-          modelUsed = "llama-3.3-70b";
+          console.warn("[Inference] Groq failed:", e2);
+          providerUsed = "huggingface";
+          modelUsed = "gemma-3n-E4B";
           try {
-            response = await callGroq(systemPrompt, query);
+            response = await callHuggingFace(systemPrompt, query);
           } catch (e3) {
-            console.warn("[Inference] Groq failed:", e3);
-            providerUsed = "huggingface";
-            modelUsed = "gemma-3n-E4B";
+            console.warn("[Inference] HuggingFace failed:", e3);
+            providerUsed = "anthropic";
+            modelUsed = "claude-sonnet-4";
             try {
-              response = await callHuggingFace(systemPrompt, query);
+              response = await callClaude(systemPrompt, query);
             } catch {
               response = "Desculpe, estou com dificuldades técnicas. Tente novamente em instantes.";
               providerUsed = "none";
