@@ -25,6 +25,8 @@ import pitchFoodImg from "@/assets/pitch-food.jpg";
 import pitchLogisticsImg from "@/assets/pitch-logistics.jpg";
 import videoHeroAsset from "@/assets/video-hero.mp4.asset.json";
 import videoInnovationAsset from "@/assets/video-innovation.mp4.asset.json";
+import videoPlatformAsset from "@/assets/video-orion-platform.mp4.asset.json";
+import videoOtrAsset from "@/assets/video-smart-otr.mp4.asset.json";
 
 /* ═══════════════════════════════════════════════════
    DATA
