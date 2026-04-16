@@ -7444,6 +7444,7 @@ export type Database = {
           title: string
         }[]
       }
+      safe_log_cleanup: { Args: { days_to_keep: number }; Returns: number }
       search_legal_embeddings: {
         Args: {
           filter_source?: string
@@ -7529,6 +7530,7 @@ export type Database = {
         }[]
       }
       system_maintenance_v1: { Args: never; Returns: Json }
+      system_maintenance_v2: { Args: never; Returns: Json }
       verify_report_by_hash: {
         Args: { target_hash: string }
         Returns: {
