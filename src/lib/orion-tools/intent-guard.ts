@@ -1,0 +1,77 @@
+/**
+ * ═══ Intent → Tool Mapping ═══
+ * Maps Orion intent IDs to the tool they require.
+ * Used by useOrionReasoning to block intents the user cannot access.
+ */
+
+import type { DistributableTool } from "@/lib/orion-tools/tool-distribution";
+
+export const INTENT_TOOL_MAP: Record<string, DistributableTool> = {
+  // Robotics
+  robot_command: "robotics",
+  robot_move: "robotics",
+  robot_status: "robotics",
+  ros_command: "robotics",
+  // Jules / self-improvement
+  jules_pr: "jules",
+  jules_fix: "jules",
+  self_improvement: "jules",
+  computer_use: "computer_use",
+  // Sales editor
+  open_sales_editor: "sales_editor",
+  edit_product_page: "sales_editor",
+  // Legal
+  legal_search: "legal_rag",
+  petition_draft: "legal_agents",
+  legal_advice: "legal_agents",
+  // Voice (premium)
+  tts_speak: "orion_voice",
+  // Browser
+  open_browser: "browser_use",
+  web_browse: "browser_use",
+};
+
+export interface IntentBlockMessage {
+  blocked: boolean;
+  message?: string;
+}
+
+import { checkToolAccess, type PlanTier } from "@/lib/orion-tools/tool-distribution";
+import type { AppRole } from "@/hooks/useUserRole";
+
+const PLAN_LABEL: Record<PlanTier, string> = {
+  free: "Gratuito",
+  premium: "Premium",
+  pro: "Pro",
+  enterprise: "Enterprise",
+};
+
+export function checkIntentAccess(
+  intentId: string,
+  role: AppRole | null,
+  plan: PlanTier,
+  isOwner: boolean,
+): IntentBlockMessage {
+  const tool = INTENT_TOOL_MAP[intentId];
+  if (!tool) return { blocked: false };
+
+  const result = checkToolAccess(tool, role, plan, isOwner);
+  if (result.allowed) return { blocked: false };
+
+  if (result.reason === "owner_only") {
+    return {
+      blocked: true,
+      message: "Esse recurso é restrito à administração e não está disponível para o seu perfil.",
+    };
+  }
+  if (result.reason === "plan_required") {
+    return {
+      blocked: true,
+      message: `Esse recurso está disponível no plano ${PLAN_LABEL[result.requiredPlan ?? "premium"]}. Faça upgrade para liberar.`,
+    };
+  }
+  return {
+    blocked: true,
+    message: "Esse recurso não está disponível para o seu papel atual.",
+  };
+}
