@@ -1,63 +1,41 @@
 
-Plano para montar o frontend de distribuição de ferramentas + prompt para Jules validar o backend.
+User approved the minimal vision-bug fix. Two surgical changes:
 
-## Frontend (Lovable executa)
+1. **`src/lib/orion-tools/intent-guard.ts`** — add vision intents to `INTENT_TOOL_MAP` so they map to allowed tools (vision/ocr) instead of falling through to wrong handlers. Also add `auto_evolution` / `code_analysis` / `code_refactor` mapped to `jules` (owner-only).
 
-### 1. `src/lib/orion-tools/tool-distribution.ts` (novo)
-Mapa central: `Role × Plan → ToolName[]` + flags `unlimited` para owner. Define enums `ToolCategory` (chat, voice, vision, browser, editor, legal, robotics, jules, stripe) e helper `isToolAllowed(role, plan, isOwner, tool)`.
+2. **`src/components/dashboard/neural/useOrionReasoning.ts`** — need to inspect first to add a hard guard: any intent containing `auto_evolution`, `code_analysis`, `improve_code`, `refactor` requires `isOwner === true`; otherwise route back to normal chat. This stops the "refatorar funções / bugs / código redundante" leak when user asks vision questions.
 
-### 2. `src/lib/orion-tools/index.ts` (estender)
-- `getToolsForAgent(agentId, role?, plan?, isOwner?)` filtra por distribuição.
-- `getAllowedTools(role, plan, isOwner)` retorna lista completa.
+## Changes
 
-### 3. `src/hooks/useUserTools.ts` (novo)
-Combina `useUserRole` + `useAdminAccess` + `useUserPlan` → retorna `{ tools, hasTool(name), category, plan, role, isOwner, requiresUpgrade(name) }`.
+### `intent-guard.ts` — additions
+```ts
+// Vision (allowed for most roles via vision_analyze tool)
+vision_describe: "vision_analyze",
+what_seeing: "vision_analyze",
+describe_scene: "vision_analyze",
+identify_object: "vision_analyze",
+count_objects: "vision_analyze",
+read_text: "vision_analyze",
+ocr_document: "vision_analyze",
+identify_face: "vision_analyze",
 
-### 4. `src/components/common/ToolGuard.tsx` (novo)
-```tsx
-<ToolGuard tool="robotics" fallback={<UpgradeCTA />}>...</ToolGuard>
+// Auto-evolution / code analysis (owner-only via jules tool)
+auto_evolution: "jules",
+code_analysis: "jules",
+code_refactor: "jules",
+improve_code: "jules",
+analyze_code: "jules",
 ```
-Variantes: `mode="hide" | "blur" | "upgrade"`.
 
-### 5. `src/components/common/UpgradeCTA.tsx` (novo)
-Card consistente: "Disponível no plano Premium" + botão para `/pricing` ou "Não disponível para seu papel".
+### `useOrionReasoning.ts` — guard
+Before dispatching any intent whose id matches `/auto_evolution|code_analysis|code_refactor|improve_code|analyze_code/`, check `isOwner`. If not owner → fallback to normal chat reply, never call `improveCodeWithAI` / `analyzeCodeWithAI`.
 
-### 6. `src/components/dashboard/ActiveToolsBadge.tsx` (novo)
-Badge no dashboard mostrando categorias ativas (Chat, Voz, Vision, etc) com ícones e contagem.
+I need to read the current `useOrionReasoning.ts` to apply the guard surgically without breaking existing flow.
 
-### 7. `src/components/dashboard/neural/useOrionReasoning.ts` (modificar)
-Antes de executar intent → `hasTool(requiredTool)`. Se bloqueado, retorna mensagem amigável ("Esse recurso requer plano Premium" / "Não disponível para Afiliado").
+## Files
+- `src/lib/orion-tools/intent-guard.ts` (extend map)
+- `src/components/dashboard/neural/useOrionReasoning.ts` (add owner-gate before code-analysis branch)
 
-### 8. Aplicar `<ToolGuard>` nos painéis-chave
-- Robotics panels → `tool="robotics"` (só owner)
-- Editor de Vendas → `tool="sales_editor"` (produtor + owner)
-- Agentes jurídicos → `tool="legal_agents"` (advogado + owner)
-- Jules/Evolution → `tool="jules"` (só owner)
-
-## Backend (Jules executa via prompt)
-
-Migration `user_tool_overrides` (admin libera tools por usuário) com RLS:
-- `id`, `user_id`, `tool_name`, `granted_by`, `expires_at`, `created_at`
-- RLS: usuário lê os próprios; admin/owner lê e escreve todos.
-
----
-
-## Arquivos
-- `src/lib/orion-tools/tool-distribution.ts` (novo)
-- `src/lib/orion-tools/index.ts` (estender)
-- `src/hooks/useUserTools.ts` (novo)
-- `src/components/common/ToolGuard.tsx` (novo)
-- `src/components/common/UpgradeCTA.tsx` (novo)
-- `src/components/dashboard/ActiveToolsBadge.tsx` (novo)
-- `src/components/dashboard/neural/useOrionReasoning.ts` (modificar — bloqueio por tool)
-- Aplicar `<ToolGuard>` em painéis sensíveis (robotics, editor vendas, jurídico, jules)
-
-## Resultado
-- Distribuição centralizada e tipada
-- Owner sempre tem acesso (bypass preservado)
-- UI mostra ferramentas ativas + CTA de upgrade quando bloqueado
-- Orion responde "não disponível" quando intent exige tool bloqueado
-- Pronto para receber overrides do backend (Jules cria a tabela)
-
-## Prompt para Jules (entregue após implementação do frontend)
-Texto completo a ser enviado para Jules verificar/criar o backend correspondente — incluirá: migration `user_tool_overrides` com RLS, endpoint admin para conceder/revogar tools, integração com `useUserTools` via query Supabase, validação que owner sempre passa, testes E2E por role.
+## Result
+- "O que você está vendo?" → routes to vision tool, no more refactor monologue.
+- Code-analysis prompt only fires when owner explicitly requests it.
