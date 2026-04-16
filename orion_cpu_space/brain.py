@@ -40,6 +40,8 @@ class OrionAssistant:
         self.intent_patterns = {
             "media_video": r"(assistir|ver|abrir|mostrar|clipe|vídeo|video|youtube)",
             "media_music": r"(tocar|música|musica|ouvindo|som)",
+            "vision_detect": r"(detectar|identificar|objetos?|o que tem|câmera|camera|analisar imagem)",
+            "vision_classify": r"(classificar|categorizar|que tipo|reconhecer|qual é isso)",
             "iot_control": r"(ligue|desligue|apague|acenda|luz|lâmpada|dispositivo)",
             "ble_scan": r"(bluetooth|ble|parear|conectar dispositivo)",
             "ros2_robot": r"(status do robô|parada de emergência|linha de produção|robô|robot)",
