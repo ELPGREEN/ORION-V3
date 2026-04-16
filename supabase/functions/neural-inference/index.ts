@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// NEURAL INFERENCE ENGINE v4 — Multi-Provider
-// Chain: Gemini Flash → Claude Sonnet 4 → Mistral → Groq → HuggingFace
-// Gemini = primary, Claude = fallback (Claude sem créditos)
+// NEURAL INFERENCE ENGINE v5 — Multi-Provider (Free-First)
+// Chain: Gemini Flash → Mistral → Groq → HuggingFace → Claude
+// Mistral = 1B tokens/mês FREE, Claude = last resort (paid)
 // ═══════════════════════════════════════════════════════════════
 
 interface InferenceRequest {
@@ -143,37 +143,42 @@ async function callClaude(systemPrompt: string, userPrompt: string): Promise<str
   return text;
 }
 
-// ── Provider 3: Mistral (FREE — 1B tokens/mês, 2 RPM) ──
+// ── Provider 2: Mistral (FREE — 1B tokens/mês, 1 req/s) ──
 async function callMistral(systemPrompt: string, userPrompt: string): Promise<string> {
   const apiKey = Deno.env.get("MISTRAL_API_KEY");
   if (!apiKey) throw new Error("No MISTRAL_API_KEY");
 
-  const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "mistral-small-latest",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      max_tokens: 8192,
-      temperature: 0.7,
-    }),
-    signal: AbortSignal.timeout(30000),
-  });
+  // Try models in order: Medium 3 (best) → Small 3.1 (fast) → Codestral (code)
+  const models = ["mistral-medium-latest", "mistral-small-latest"];
+  for (const model of models) {
+    try {
+      const resp = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          max_tokens: 8192,
+          temperature: 0.7,
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
 
-  if (!resp.ok) {
-    const errText = await resp.text();
-    throw new Error(`Mistral ${resp.status}: ${errText.slice(0, 200)}`);
+      if (resp.status === 429) continue; // Try next model
+      if (!resp.ok) continue;
+
+      const data = await resp.json();
+      const text = data.choices?.[0]?.message?.content || "";
+      if (text) return text;
+    } catch { continue; }
   }
-  const data = await resp.json();
-  const text = data.choices?.[0]?.message?.content || "";
-  if (!text) throw new Error("Mistral empty response");
-  return text;
+  throw new Error("All Mistral models failed");
 }
 
 // ── Provider 3: Groq Llama (FREE — 30 RPM, 1.000 RPD) ──
