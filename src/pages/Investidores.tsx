@@ -75,7 +75,7 @@ const useCases = [
   { sector: "Farmacêutica", challenge: "Contaminação cruzada em clean rooms", solution: "Orion Shield + sensores IoT + robótica de manipulação", result: "Zero incidentes em 12 meses, compliance FDA automático", icon: Pill },
   { sector: "Alimentos", challenge: "Paradas não planejadas em linhas de embalagem", solution: "Manutenção preditiva Orion + Digital Twin", result: "85% redução em downtime, ROI em 8 meses", icon: Package },
   { sector: "Logística", challenge: "Picking manual lento e propenso a erros", solution: "AMRs com Orion Nav + visão para pick-and-place", result: "3x throughput, 99.8% precisão de pedidos", icon: Warehouse },
-  { sector: "Reciclagem OTR", challenge: "Impossível reciclar pneus gigantes mecanicamente", solution: "Smart OTR Robotic Line (patente própria)", result: "Primeira solução do mundo, margem 65%+", icon: Leaf },
+  { sector: "Reciclagem OTR", challenge: "Pneus OTR gigantes (57''-63'') impossíveis de reciclar mecanicamente", solution: "Smart Robotic Line (ELP Green Technology) — corte hidráulico, trituração e separação com Orion IA", result: "10 t/h por planta, 99.8% recuperação, 17-18 fábricas globais até 2030", icon: Leaf },
   { sector: "Mineração", challenge: "Equipamentos quebrando sem aviso em ambientes hostis", solution: "Orion Predictive + sensores de vibração/temp", result: "72h de previsão, 40% redução em custos de manutenção", icon: Pickaxe },
 ];
 
@@ -97,9 +97,9 @@ const businessModel = [
 
 const roadmap = [
   { year: "2024", phase: "Fase 1 — Validação", items: ["Protótipo Smart OTR funcional", "Patente depositada", "MVP Orion Platform", "Primeiro cliente piloto (reciclagem)"], status: "done" },
-  { year: "2025", phase: "Fase 2 — Multi-Setor", items: ["Planta piloto Alessandria", "Expansão para automotiva e alimentos", "5 contratos assinados", "Rodada Seed €3M"], status: "current" },
-  { year: "2026", phase: "Fase 3 — Escala EU", items: ["15+ plantas com Orion Platform", "Entrada em farmacêutica e logística", "€8M ARR", "Equipe 50+ pessoas"], status: "next" },
-  { year: "2027-28", phase: "Fase 4 — Global", items: ["Expansão MENA, LATAM e Ásia", "50+ plantas operacionais", "€40M ARR", "Series A €15M+"], status: "next" },
+  { year: "2025", phase: "Fase 2 — Demonstração", items: ["Inauguração da 1ª linha robótica inteligente (Austrália)", "Demonstração programada para Abril/Maio", "Parceria TOPS Recycling Group", "Rodada Seed €3M"], status: "current" },
+  { year: "2026", phase: "Fase 3 — Escala Regional", items: ["3-4 plantas na América do Sul (Brasil) e Europa", "15+ plantas com Orion Platform", "€8M ARR", "Equipe 50+ pessoas"], status: "next" },
+  { year: "2027-30", phase: "Fase 4 — Global", items: ["8-10 fábricas na África e Oriente Médio", "17-18 unidades globais até 2030", "1M ton/ano capacidade", "€45M ARR — Net Zero 2040"], status: "next" },
 ];
 
 const financialProjections = [
