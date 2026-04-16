@@ -6,6 +6,10 @@ import { TechLine } from "@/components/ui/TechElements";
 import { HeroThreeBackground } from "@/components/home/HeroThreeBackground";
 import { GatewayBackground } from "@/components/ui/GatewayBackground";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import industryWeldingImg from "@/assets/industry-welding-robotics.jpg";
+import industryControlImg from "@/assets/industry-control-room.jpg";
+import industryAmrImg from "@/assets/industry-amr-logistics.jpg";
+import industryVisionImg from "@/assets/industry-vision-inspection.jpg";
 import {
   Factory, ArrowRight, CheckCircle2, TrendingUp,
   Bot, Eye, Cpu, Radio, Cog, Wrench,
