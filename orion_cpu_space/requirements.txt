@@ -23,6 +23,10 @@ Pillow>=10.4.0
 # Embeddings (CPU — small model)
 sentence-transformers>=3.3.0
 
+# Vision (CPU — lightweight models)
+transformers>=4.40.0
+torch>=2.1.0
+
 # Utilities
 numpy>=1.26.0
 huggingface_hub>=0.26.0

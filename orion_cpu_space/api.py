@@ -12,6 +12,7 @@ import numpy as np
 import io
 
 from brain import OrionAssistant
+from vision.router import vision_router
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
@@ -30,6 +31,9 @@ app.add_middleware(
 
 # Inicializa o Assistente (Singleton)
 orion = OrionAssistant()
+
+# ─── Vision Router (detect, classify, status) ───
+app.include_router(vision_router)
 
 # ─── Legacy Logic (from app.py) ───
 
