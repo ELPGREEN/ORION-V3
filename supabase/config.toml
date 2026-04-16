@@ -123,3 +123,11 @@ project_id = "dlwafedtlvbvuoaopvsl"
     verify_jwt = false
   [functions.youtube-music-api]
     verify_jwt = false
+  [functions.minimax-chat]
+    verify_jwt = false
+  [functions.minimax-tts]
+    verify_jwt = false
+  [functions.minimax-video]
+    verify_jwt = false
+  [functions.minimax-music]
+    verify_jwt = false
