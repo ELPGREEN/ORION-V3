@@ -27,7 +27,7 @@ import pitchLogisticsImg from "@/assets/pitch-logistics.jpg";
 import videoHeroAsset from "@/assets/video-enterprise-overview.mp4.asset.json";
 import videoInnovationAsset from "@/assets/video-global-expansion.mp4.asset.json";
 import videoPlatformAsset from "@/assets/video-orion-platform-v2.mp4.asset.json";
-import videoOtrAsset from "@/assets/video-smart-otr-v3.mp4.asset.json";
+import videoOtrAsset from "@/assets/video-smart-otr-v4.mp4.asset.json";
 
 /* ═══════════════════════════════════════════════════
    DATA
