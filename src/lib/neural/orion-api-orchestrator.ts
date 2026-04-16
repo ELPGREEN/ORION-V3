@@ -223,11 +223,11 @@ const API_REGISTRY: OrionAPI[] = [
     checkHealth: alwaysCloud,
   },
   {
-    id: "mistral", name: "Mistral AI", brandName: "Motor Gamma (Europeu)",
-    capability: "reasoning", tier: "tertiary", runtime: "cloud",
-    library: "Mistral API", version: "mistral-large",
+    id: "mistral", name: "Mistral AI", brandName: "Motor Gamma (1B tok/mês)",
+    capability: "reasoning", tier: "secondary", runtime: "cloud",
+    library: "Mistral API", version: "medium/small-3.1",
     health: "online", lastLatencyMs: 0, errorCount: 0,
-    features: ["Embeddings", "GDPR-compliant", "Busca semântica"],
+    features: ["1B tokens/mês grátis", "OpenAI-compatible", "GDPR-compliant", "Codestral", "Embeddings"],
     checkHealth: alwaysCloud,
   },
   {
