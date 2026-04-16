@@ -24,10 +24,10 @@ import pitchAutoImg from "@/assets/pitch-automotive.jpg";
 import pitchPharmaImg from "@/assets/pitch-pharma.jpg";
 import pitchFoodImg from "@/assets/pitch-food.jpg";
 import pitchLogisticsImg from "@/assets/pitch-logistics.jpg";
-import videoHeroAsset from "@/assets/video-hero.mp4.asset.json";
-import videoInnovationAsset from "@/assets/video-innovation.mp4.asset.json";
-import videoPlatformAsset from "@/assets/video-orion-platform.mp4.asset.json";
-import videoOtrAsset from "@/assets/video-smart-otr.mp4.asset.json";
+import videoHeroAsset from "@/assets/video-enterprise-overview.mp4.asset.json";
+import videoInnovationAsset from "@/assets/video-global-expansion.mp4.asset.json";
+import videoPlatformAsset from "@/assets/video-orion-platform-v2.mp4.asset.json";
+import videoOtrAsset from "@/assets/video-smart-otr-v2.mp4.asset.json";
 
 /* ═══════════════════════════════════════════════════
    DATA
