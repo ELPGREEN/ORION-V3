@@ -66,13 +66,19 @@ const STOP_WORDS = new Set([
   "é", "são", "foi", "ser", "ter", "como", "mais", "não", "sim",
 ]);
 
+// ─── PERF: Pre-calculated term weights for O(1) lookup ───
+const TERM_WEIGHTS = new Map<string, number>();
+for (const sw of STOP_WORDS) TERM_WEIGHTS.set(sw, 0);
+for (const rlt of RARE_LEGAL_TERMS) TERM_WEIGHTS.set(rlt, 3.0);
+
 /**
  * TF-IDF weight for a term.
  * Assumes term is already normalized (lowercase).
+ * Optimized with O(1) lookup map.
  */
 function getTermWeight(term: string): number {
-  if (STOP_WORDS.has(term)) return 0;
-  if (RARE_LEGAL_TERMS.has(term)) return 3.0; // High IDF for rare legal terms
+  const cached = TERM_WEIGHTS.get(term);
+  if (cached !== undefined) return cached;
   if (term.length > 8) return 1.5; // Longer terms tend to be more specific
   return 1.0;
 }
@@ -93,7 +99,7 @@ export function calculateSetWeight(tokens: Set<string>): number {
  * Optimized for reuse in similarity loops.
  */
 export function getWeightedTokens(text: string): Set<string> {
-  const tokens = text.toLowerCase().split(/\s+/).filter(t => !STOP_WORDS.has(t));
+  const tokens = text.toLowerCase().split(/\s+/).filter(t => t && !STOP_WORDS.has(t));
   return new Set(tokens);
 }
 
@@ -142,12 +148,29 @@ export function tfidfWeightedJaccard(a: string, b: string): number {
   );
 }
 
+/**
+ * Optimized Jaccard similarity.
+ * Avoids expensive Set spreads and redundant allocations.
+ */
 export function jaccardSimilarity(a: string, b: string): number {
-  const setA = new Set(a.toLowerCase().split(/\s+/));
-  const setB = new Set(b.toLowerCase().split(/\s+/));
-  const intersection = new Set([...setA].filter(x => setB.has(x)));
-  const union = new Set([...setA, ...setB]);
-  return union.size === 0 ? 0 : intersection.size / union.size;
+  const setA = new Set(a.toLowerCase().split(/\s+/).filter(Boolean));
+  const setB = new Set(b.toLowerCase().split(/\s+/).filter(Boolean));
+
+  if (setA.size === 0 || setB.size === 0) return 0;
+
+  let intersectionSize = 0;
+  if (setA.size <= setB.size) {
+    for (const item of setA) {
+      if (setB.has(item)) intersectionSize++;
+    }
+  } else {
+    for (const item of setB) {
+      if (setA.has(item)) intersectionSize++;
+    }
+  }
+
+  const unionSize = setA.size + setB.size - intersectionSize;
+  return unionSize === 0 ? 0 : intersectionSize / unionSize;
 }
 
 export class SemanticCache {
