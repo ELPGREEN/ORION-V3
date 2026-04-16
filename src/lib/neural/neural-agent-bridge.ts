@@ -43,6 +43,7 @@ let _broadcasts: AgentBroadcast[] = [];
 const ENDPOINT_TO_ROLE: Record<string, AgentRole> = {
   "agente-leitura": "leitura",
   "agente-construcao": "construcao",
+  "ai-orchestrator": "construcao",
   "agente-pesquisa": "pesquisa",
   leitura: "leitura",
   construcao: "construcao",

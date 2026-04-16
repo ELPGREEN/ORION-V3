@@ -546,8 +546,8 @@ export function useOrionReasoning(
 
             if (!isOwner) {
               const [voiceRes, faceRes] = await Promise.all([
-                supabase.from("voice_auth_enrollments" as any).select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
-                supabase.from("face_auth_enrollments").select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+                supabase.from("voice_auth_enrollments").select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
+                supabase.from("face_auth_enrollments" as any).select("is_active").eq("user_id", authGateUser.id).eq("is_active", true).maybeSingle(),
               ]);
 
               if (!voiceRes.data && !faceRes.data) {
