@@ -29,6 +29,23 @@ export const INTENT_TOOL_MAP: Record<string, DistributableTool> = {
   // Browser
   open_browser: "browser_use",
   web_browse: "browser_use",
+  // Vision (allowed broadly via vision_analyze tool)
+  vision_describe: "vision_analyze",
+  what_seeing: "vision_analyze",
+  describe_scene: "vision_analyze",
+  identify_object: "vision_analyze",
+  count_objects: "vision_analyze",
+  read_text: "vision_analyze",
+  ocr_document: "vision_analyze",
+  identify_face: "vision_analyze",
+  // Auto-evolution / code analysis (owner-only via jules tool)
+  auto_evolution: "jules",
+  auto_construct: "jules",
+  self_evolve: "jules",
+  code_analysis: "jules",
+  code_refactor: "jules",
+  improve_code: "jules",
+  analyze_code: "jules",
 };
 
 export interface IntentBlockMessage {
