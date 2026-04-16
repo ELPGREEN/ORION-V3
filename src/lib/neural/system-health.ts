@@ -152,6 +152,32 @@ export function getHealthSnapshot(): SystemHealthSnapshot {
   currentMode = determineMode(score);
 
   const alerts: string[] = [];
+
+  // ─── Scheduled Maintenance Alerts ───
+  const MAINTENANCE_WINDOWS: Array<{ provider: string; start: string; end: string; message: string }> = [
+    {
+      provider: "Mistral",
+      start: "2025-04-16T14:00:00Z", // 7:00 AM PDT
+      end: "2025-04-16T16:00:00Z",   // 9:00 AM PDT
+      message: "🔧 Mistral: manutenção programada (console dev). Alguns recursos temporariamente indisponíveis.",
+    },
+  ];
+
+  const now = Date.now();
+  for (const mw of MAINTENANCE_WINDOWS) {
+    const start = new Date(mw.start).getTime();
+    const end = new Date(mw.end).getTime();
+    if (now >= start && now <= end) {
+      alerts.push(mw.message);
+    } else if (now < start && start - now < 3_600_000) {
+      // Alert 1h before
+      alerts.push(`⏰ ${mw.provider}: manutenção em breve (${new Date(start).toLocaleTimeString()})`);
+    }
+  }
+
+  // ─── Rate Limit Advisories ───
+  alerts.push("ℹ️ Mistral: rate limits temporariamente reduzidos para GLM4.7/GPT-OSS no free tier");
+
   for (const m of modules) {
     if (m.status === "error") alerts.push(`⛔ ${m.name}: em erro (${m.errorCount} falhas)`);
     if (m.status === "disabled") alerts.push(`🔇 ${m.name}: desativado`);
