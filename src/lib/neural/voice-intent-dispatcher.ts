@@ -91,6 +91,13 @@ const PARAM_EXTRACTORS: Record<string, (text: string) => Record<string, string>>
     const cleaned = text.replace(/\b(?:pesquis|busc|procur)\w*\s+(?:na\s+internet\s+|na\s+web\s+|online\s+)?/i, "").trim();
     return { query: cleaned || text };
   },
+  external_assistant: (text) => {
+    const q = text.toLowerCase();
+    let service = "google";
+    if (q.includes("alexa") || q.includes("amazon") || q.includes("echo")) service = "alexa";
+    else if (q.includes("siri") || q.includes("apple")) service = "siri";
+    return { service, query: text };
+  },
 };
 
 // ─── Intent Dispatcher ───
@@ -318,6 +325,29 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
           `${getProviderName(p as any)}: ${models.join(", ")}`
         ).join("\n");
         return ok(intent.intent, `Modelos disponíveis:\n${list}`, null, t0);
+      }
+
+      case "external_assistant": {
+        const service = params.service || "google";
+        const serviceMap: Record<string, string> = {
+          google: "Google Assistant",
+          alexa: "Amazon Alexa",
+          siri: "Apple Siri"
+        };
+        const serviceName = serviceMap[service] || service;
+        const msg = `Integrando com ${serviceName}...`;
+        console.log(`[VoiceDispatch] External assistant requested: ${serviceName}`);
+
+        // Handle specific IoT integration for Alexa if query is home-related
+        if (service === "alexa" && /\b(luz|lampada|casa|porta|temperatura|ar\s+condicionado)\b/i.test(intent.rawText)) {
+          const { iotBridge } = await import("./iot-device-bridge");
+          const ok_alexa = await iotBridge.connectAlexa();
+          if (ok_alexa.success) {
+            return ok(intent.intent, `Usando Alexa para esta ação: ${ok_alexa.message}`, { service, iot: true }, t0);
+          }
+        }
+
+        return ok(intent.intent, msg, { service }, t0);
       }
 
       case "iot":

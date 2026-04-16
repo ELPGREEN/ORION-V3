@@ -61,7 +61,7 @@ export async function getMusicPlatformStatuses(): Promise<PlatformStatus[]> {
 /**
  * Resolve the best available music platform.
  * If preferredPlatform is specified and connected, use it.
- * Otherwise fallback through the priority chain.
+ * Otherwise, YouTube is the default priority for generic requests.
  */
 export async function resolveMusicPlatform(preferredPlatform?: MusicPlatform): Promise<PlatformStatus> {
   const statuses = await getMusicPlatformStatuses();
@@ -72,9 +72,8 @@ export async function resolveMusicPlatform(preferredPlatform?: MusicPlatform): P
     if (preferred?.connected) return preferred;
   }
 
-  // Fallback chain: first connected platform wins
-  const available = statuses.find(s => s.connected);
-  return available || statuses[statuses.length - 1]; // YouTube is always last resort
+  // DEFAULT: YouTube has absolute priority for generic requests (no preferred platform)
+  return statuses.find(s => s.platform === "youtube") || statuses[statuses.length - 1];
 }
 
 /**
@@ -85,16 +84,27 @@ export async function playMusicWithFallback(
   query: string,
   preferredPlatform?: MusicPlatform
 ): Promise<{ platform: MusicPlatform; description: string; fallback: boolean }> {
-  const resolved = await resolveMusicPlatform(preferredPlatform);
-  const fallback = !!preferredPlatform && resolved.platform !== preferredPlatform;
+  const q = query.toLowerCase();
+
+  // YouTube priority for video-related keywords
+  const isVideo = /\b(v[ií]deo|videoclipe|clipe|assistir|ver|abrir\s+v[ií]deo|buscar\s+v[ií]deo)\b/i.test(q);
+
+  let targetPlatform = preferredPlatform;
+  if (isVideo) {
+    console.log(`[music-fallback] Video intent detected, forcing YouTube priority`);
+    targetPlatform = "youtube";
+  }
+
+  const resolved = await resolveMusicPlatform(targetPlatform);
+  const fallback = !!targetPlatform && resolved.platform !== targetPlatform;
   const mobile = isMobileDevice();
 
   if (fallback) {
-    console.log(`[music-fallback] ${preferredPlatform} não conectado, usando ${resolved.platform}`);
+    console.log(`[music-fallback] ${targetPlatform} indisponível, usando ${resolved.platform}`);
   }
 
   const fallbackNote = fallback
-    ? ` (${preferredPlatform === "spotify" ? "Spotify" : preferredPlatform === "amazon_music" ? "Amazon Music" : preferredPlatform} não conectado)`
+    ? ` (${targetPlatform === "spotify" ? "Spotify" : targetPlatform === "amazon_music" ? "Amazon Music" : targetPlatform} não solicitado ou indisponível)`
     : "";
 
   switch (resolved.platform) {

@@ -55,6 +55,7 @@ interface RegexRule {
 
 const REGEX_RULES: RegexRule[] = [
   // ═══ Video/Screen control (BEFORE everything else) ═══
+  { pattern: /\b(v[ií]deo|videoclipe|clipe|assistir|ver\s+clipe|ver\s+v[ií]deo)\b/i, intent: "media", confidence: 0.98, extractParams: (t) => ({ query: t, platform: "youtube" }) },
   { pattern: /\b(aumentar?\s+(?:a\s+)?tela|tela\s+cheia|fullscreen|maximizar?\s+(?:o\s+)?v[ií]deo)\b/i, intent: "video_fullscreen", confidence: 0.97 },
   { pattern: /\b(diminuir?\s+(?:a\s+)?tela|sair?\s+(?:da\s+)?tela\s+cheia|reduzir?\s+(?:a\s+)?tela)\b/i, intent: "video_reduce", confidence: 0.97 },
   { pattern: /\b(minimizar?\s+(?:o\s+)?v[ií]deo|minimizar?\s+(?:a\s+)?tela)\b/i, intent: "video_minimize", confidence: 0.97 },
@@ -91,6 +92,15 @@ const REGEX_RULES: RegexRule[] = [
     return { command: "integrar-ferramenta", args: m?.[1]?.trim() };
   }},
   { pattern: /\b(melhorar\s+interface|melhorar\s+UI|melhorar\s+visual|otimizar\s+visual)\b/i, intent: "orion_evolution", confidence: 0.96, extractParams: () => ({ command: "melhorar-ui", action: "ui" }) },
+
+  // ═══ External Voice Assistants ═══
+  { pattern: /\b(google\s+assistant|assistant|alexa|siri|echo|apple|google|amazon)\b/i, intent: "external_assistant", confidence: 0.98, extractParams: (t) => {
+    const q = t.toLowerCase();
+    let service = "google";
+    if (q.includes("alexa") || q.includes("amazon") || q.includes("echo")) service = "alexa";
+    else if (q.includes("siri") || q.includes("apple")) service = "siri";
+    return { service, query: t };
+  }},
 
   // ═══ LLM Provider Selection (like OpenCode /models) ═══
   { pattern: /\b(trocar|troca|alternar|mudar)\s+(?:o\s+)?(?:modelo|IA|LLM|AI|provedor)\b/i, intent: "llm_provider", confidence: 0.96, extractParams: (t) => {
@@ -197,9 +207,9 @@ const REGEX_RULES: RegexRule[] = [
   }},
   
   // Media — generic (music/video keywords without platform)
-  { pattern: /\b(tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica\s+d[oae]\s+|v[ií]deo\s+d[oae]\s+|ouvir?\s+|escutar?\s+)/i, intent: "media", confidence: 0.88, extractParams: (t) => {
-    const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+)/i);
-    return { query: m?.[1]?.trim() || t, action: /\b(par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
+  { pattern: /\b(tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica\s+d[oae]\s+|v[ií]deo\s+d[oae]\s+|ouvir?\s+|escutar?\s+|colocar?\s+)/i, intent: "media", confidence: 0.88, extractParams: (t) => {
+    const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?|colocar?)\s+(.+)/i);
+    return { query: m?.[1]?.trim() || t, action: /\b(par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play", platform: "youtube" };
   }},
 
   // Media controls — next, previous, pause, resume
