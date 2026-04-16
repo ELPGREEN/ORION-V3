@@ -17,6 +17,12 @@ project_id = "dlwafedtlvbvuoaopvsl"
     verify_jwt = false
   [functions.chat-juridico]
     verify_jwt = false
+  [functions.claude-code-review]
+    verify_jwt = false
+  [functions.claude-legal-gen]
+    verify_jwt = false
+  [functions.claude-legal-review]
+    verify_jwt = false
   [functions.citation-verifier]
     verify_jwt = false
   [functions.classify-intent]
