@@ -63,10 +63,11 @@ async function zilliz(path: string, body: unknown) {
 async function ensureCollection(name: string) {
   const list = await zilliz("/v2/vectordb/collections/list", {});
   if ((list.data ?? []).includes(name)) return;
+  const { dim, metric } = cfgFor(name);
   await zilliz("/v2/vectordb/collections/create", {
     collectionName: name,
-    dimension: EMBED_DIM,
-    metricType: "COSINE",
+    dimension: dim,
+    metricType: metric,
     primaryFieldName: "id",
     idType: "VarChar",
     vectorFieldName: "vector",
