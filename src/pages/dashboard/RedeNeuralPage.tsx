@@ -71,6 +71,7 @@ const ABMetricsDashboard = lazy(lazyRetry(() => import("@/components/dashboard/n
 const NeuralHealthDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralHealthDashboard").then(m => ({ default: m.NeuralHealthDashboard }))));
 const NeuralPDFReport = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralPDFReport").then(m => ({ default: m.NeuralPDFReport }))));
 const NeuralEvolutionPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralEvolutionPanel").then(m => ({ default: m.NeuralEvolutionPanel }))));
+const ARCAgentPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/ARCAgentPanel")));
 const JarvisHUD = lazy(lazyRetry(() => import("@/components/dashboard/neural/JarvisHUD").then(m => ({ default: m.JarvisHUD }))));
 const ProactiveAlerts = lazy(lazyRetry(() => import("@/components/dashboard/neural/ProactiveAlerts").then(m => ({ default: m.ProactiveAlerts }))));
 const NeuralNetworkLiveView = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralNetworkLiveView").then(m => ({ default: m.NeuralNetworkLiveView }))));
