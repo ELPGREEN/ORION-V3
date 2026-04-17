@@ -68,6 +68,14 @@ export async function disconnectSpotify() {
   await callSpotify("disconnect");
 }
 
+export async function getSpotifySdkToken(): Promise<{ access_token: string | null; can_sdk: boolean }> {
+  const data = await callSpotify("sdk_token");
+  return {
+    access_token: data?.access_token ?? null,
+    can_sdk: data?.can_sdk === true,
+  };
+}
+
 // ── OAuth Flow ──
 
 export async function startSpotifyLogin(redirectUri?: string) {

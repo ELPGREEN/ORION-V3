@@ -227,6 +227,10 @@ export function detectBrowserAction(query: string): BrowserAction | null {
   const trimmed = query.trim();
   if (trimmed.length < 4) return null;
 
+  if (/\b(quem\s+[eé]\s+voc[eê]|qual\s+[eé]\s+o\s+seu\s+nome|sua\s+personalidade|me\s+fale\s+sobre\s+voc[eê]|voc[eê]\s+[eé]\s+quem)\b/i.test(trimmed)) {
+    return null;
+  }
+
   for (const pattern of ACTION_PATTERNS) {
     const match = trimmed.match(pattern.regex);
     if (match) {
