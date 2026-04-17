@@ -558,7 +558,7 @@ export {
   type PointCloud,
   type RobotPose,
   type SensorReading,
-  type FusionResult,
+  type FusionResult as RoboticsFusionResult,
 } from "./arc-robotics-perception";
 
 // ═══ ARC-AGI-2 Swarm Coordination (Multi-Agent RL + gRPC + Consensus) ═══
