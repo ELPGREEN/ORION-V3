@@ -11,6 +11,11 @@
  */
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  checkResponseAntiHallucination,
+  generateDisclaimer,
+  verifyAgainstKnowledge,
+} from "../_shared/zilliz-anti-hallucination.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -485,9 +490,45 @@ async function handleBridgeAction(action: string, body: Record<string, unknown>)
     case "get_mother_status":
     case "route_via_mother":
       return handleMotherAction(action, body);
+    case "validate":
+      return handleValidate(body);
     default:
       return null; // not a bridge action
   }
+}
+
+async function handleValidate(body: Record<string, unknown>) {
+  const { responseToValidate, query, checkAgainstKnowledge = false } = body as any;
+  
+  if (!responseToValidate) {
+    return { error: "responseToValidate required" };
+  }
+
+  const check = checkResponseAntiHallucination(
+    responseToValidate,
+    query || "",
+    []
+  );
+
+  let verified;
+  if (checkAgainstKnowledge) {
+    verified = await verifyAgainstKnowledge(responseToValidate, query || "");
+  }
+
+  const disclaimer = generateDisclaimer(check, verified);
+
+  return {
+    ok: true,
+    check,
+    verified,
+    disclaimer,
+    metrics: {
+      hasHallucination: check.hasHallucination,
+      freeEnergy: check.freeEnergy,
+      grade: check.grade,
+      confidence: check.confidence,
+    }
+  };
 }
 
 // ═══════════════════════════════════════════════
