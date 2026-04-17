@@ -930,10 +930,9 @@ export function useNeuralVoice(
               if (normalized.length < 2) return;
               const wordCount = normalized.split(/\s+/).filter(Boolean).length;
 
-              // Discard obvious low-confidence noise/hallucinations
-              if (confidence > 0 && confidence < 0.35 && wordCount <= 4) {
-                console.log(`[Voice] GCP STT descartado por baixa confiança: "${text}" (${(confidence * 100).toFixed(0)}%)`);
-                speak("Não consegui entender tudo. Pode repetir ou digitar?").catch(() => {});
+              // Discard obvious low-confidence noise/hallucinations — silent (NO TTS, prevents echo loop)
+              if (confidence > 0 && confidence < 0.25 && wordCount <= 2) {
+                console.log(`[Voice] GCP STT descartado (silent): "${text}" (${(confidence * 100).toFixed(0)}%)`);
                 return;
               }
 
