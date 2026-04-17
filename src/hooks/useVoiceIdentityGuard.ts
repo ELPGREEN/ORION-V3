@@ -51,12 +51,9 @@ export function useVoiceIdentityGuard() {
       return "creator";
     }
 
-    if (!user?.id) {
-      console.warn("[VoiceGuard] No user ID, skipping verification");
-      return "unknown";
-    }
     console.log("[VoiceGuard] 🎤 Starting voice verification, blob size:", audioBlob.size, "type:", audioBlob.type);
     setIsCheckingVoice(true);
+    setIdentityStatus("verifying");
 
     try {
       // Extract voice features first — we'll need them for both checks
@@ -87,6 +84,13 @@ export function useVoiceIdentityGuard() {
         setIdentityStatus("creator");
         setIsCheckingVoice(false);
         return "creator";
+      }
+
+      if (!user?.id) {
+        console.warn("[VoiceGuard] No authenticated user for enrollment lookup and creator fingerprint did not match yet");
+        setIdentityStatus("unknown");
+        setIsCheckingVoice(false);
+        return "unknown";
       }
 
       // ── Check against current user's enrollment ──

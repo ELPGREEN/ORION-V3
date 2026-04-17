@@ -234,11 +234,11 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           // Do NOT mark as done — allow retry on next voice interaction
           return;
         }
-        voiceCheckDoneRef.current = true;
-        await verifyVoiceIdentity(blob);
+        const status = await verifyVoiceIdentity(blob);
+        voiceCheckDoneRef.current = status !== "unknown";
       };
       recorder.start(500); // collect data every 500ms for reliable chunks
-      setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, 4000); // 4 seconds for better capture
+      setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, 5500); // longer capture for stabler voice fingerprint
     } catch (err) {
       console.warn("[NeuralVision] ⚠️ Mic access failed, skipping voice check:", err);
       voiceCheckDoneRef.current = true;
