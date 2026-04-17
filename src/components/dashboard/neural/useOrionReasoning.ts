@@ -65,6 +65,10 @@ export function useOrionReasoning(
   const ttsWarmedRef = useRef(false);
   const authUserCacheRef = useRef<{ id: string; email?: string | null } | null>(null);
 
+  // Always-fresh ref for `active` (camera state) — closure-stale bug fix
+  const activeRef = useRef(active);
+  useEffect(() => { activeRef.current = active; }, [active]);
+
   /** Centralized cleanup — resets all processing flags. Use in try/finally. */
   const cleanupProcessing = useCallback(() => {
     aiPendingRef.current = false;
@@ -556,14 +560,24 @@ export function useOrionReasoning(
 
       // ═══ AUTO-ACTIVATE VISION: If camera is OFF and question is visual, activate first ═══
       const isVisualQuestion = effectiveIntentType === "visual" || effectiveIntentType === "mixed";
-      if (!active && isVisualQuestion && onActivateVision) {
+      if (!activeRef.current && isVisualQuestion && onActivateVision) {
         addLog("🔄 Ativando câmera para análise visual...");
         setThought("Ativando câmera...");
         onActivateVision();
-        // Give camera time to start, then process the question
-        setTimeout(() => {
-          askAIInternalRef.current?.(question, "voice");
-        }, 2000);
+        // Poll until camera is actually active (max 4s) — fixes stale-closure bug
+        const startedAt = Date.now();
+        const waitForCamera = () => {
+          if (activeRef.current) {
+            addLog("✅ Câmera ativa, processando pergunta visual");
+            askAIInternalRef.current?.(question, "voice");
+          } else if (Date.now() - startedAt < 4000) {
+            setTimeout(waitForCamera, 200);
+          } else {
+            addLog("⚠️ Câmera não respondeu em 4s — processando sem visão");
+            askAIInternalRef.current?.(question, "voice");
+          }
+        };
+        setTimeout(waitForCamera, 400);
         return;
       }
 
