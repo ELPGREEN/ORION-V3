@@ -13,6 +13,7 @@ const COLLECTION_CONFIG: Record<string, { dim: number; metric: "COSINE" | "L2" |
   orion_faces: { dim: 512, metric: "L2" },
   orion_voices: { dim: 256, metric: "COSINE" },
   orion_legal: { dim: 768, metric: "COSINE" },
+  orion_vision_memory: { dim: 256, metric: "COSINE" },
 };
 
 async function zilliz(path: string, body: unknown) {
