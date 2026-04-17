@@ -20,6 +20,8 @@ import { isNegativeFeedback, recordCorrection, extractCorrectionTarget } from ".
 import { smartClassify } from "./smart-intent-classifier";
 import { evaluateRAGResponse } from "./rag-evaluator";
 import { submitRAGFeedback, getOptimizedWeights, classifyQueryType } from "./rag-feedback-loop";
+import { activateRAGConsciousness, solveRAGPuzzle, adaptFromEvaluation, getConsciousnessDiagnostics, type RetrievalContext } from "./rag-consciousness";
+import { getRetrievedChunks } from "./rag-retrieval-tracker";
 import { getPipelineLatency, type PipelineLatency } from "./pipeline-latency-tracker";
 
 // ─── Last classification memory (for feedback corrections) ───
@@ -477,16 +479,68 @@ async function runRAGEvaluation(query: string, response: string, intent: string)
     // Only evaluate non-trivial responses
     if (response.length < 30 || query.length < 5) return;
 
+    // ═══ ARC-AGI-2 RAG Consciousness Integration ═══
+    const queryType = classifyQueryType(query);
+    const currentWeights = getOptimizedWeights(queryType);
+    const retrievedChunks = getRetrievedChunks();
+    
+    // Build retrieval context for consciousness
+    const context: RetrievalContext = {
+      queryType: queryType as "legal" | "vision" | "code" | "general",
+      sessionHistory: [],
+      recentEvals: [],
+      timeOfDay: getTimeOfDay(),
+    };
+    
+    // Activate consciousness if chunks available
+    if (retrievedChunks && retrievedChunks.length > 0) {
+      const consciousnessResult = activateRAGConsciousness(
+        query,
+        retrievedChunks,
+        currentWeights,
+        context
+      );
+      
+      // Evaluate response with context
+      const evalResult = evaluateRAGResponse({
+        response,
+        question: query,
+        context: retrievedChunks.join("\n\n"),
+      });
+      
+      // Try to solve any "puzzles" (retrieval issues)
+      const puzzleSolution = solveRAGPuzzle(query, retrievedChunks, evalResult);
+      
+      // Adapt from evaluation
+      adaptFromEvaluation(evalResult);
+      
+      // Submit feedback with adapted weights
+      const newWeights = submitRAGFeedback(query, evalResult, consciousnessResult.adaptedWeights);
+
+      const diag = getConsciousnessDiagnostics();
+      
+      console.log(
+        `[RAG-Consciousness] ${intent} | State: ${diag.state} | Patterns: ${diag.patternCount} | ` +
+        `Score: ${evalResult.overallScore}/100 (${evalResult.grade}) | ` +
+        `Explanation: ${consciousnessResult.reasoningExplanation}`
+      );
+      
+      // Log puzzle solution if found
+      if (puzzleSolution) {
+        console.log(`[RAG-Puzzle] Solved: ${puzzleSolution.pattern} → ${puzzleSolution.solution}`);
+      }
+      
+      return;
+    }
+
+    // Fallback: standard evaluation without consciousness
     const evalResult = evaluateRAGResponse({
       response,
       question: query,
       context: "",
     });
 
-    // Only submit feedback if quality is meaningful (enough data to learn from)
     if (evalResult.overallScore > 0) {
-      const queryType = classifyQueryType(query);
-      const currentWeights = getOptimizedWeights(queryType);
       const newWeights = submitRAGFeedback(query, evalResult, currentWeights);
 
       console.log(
@@ -498,6 +552,14 @@ async function runRAGEvaluation(query: string, response: string, intent: string)
   } catch (e) {
     console.warn("[RAG-Eval] Evaluation failed:", e);
   }
+}
+
+function getTimeOfDay(): "morning" | "afternoon" | "evening" | "night" {
+  const hour = new Date().getHours();
+  if (hour >= 6 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 18) return "afternoon";
+  if (hour >= 18 && hour < 22) return "evening";
+  return "night";
 }
 
 // ─── Jules Self-Improvement Trigger ───

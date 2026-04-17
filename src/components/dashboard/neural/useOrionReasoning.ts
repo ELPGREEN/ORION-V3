@@ -27,6 +27,11 @@ import { quickLocalReformulate, analyzeComprehension } from "@/lib/neural/orion-
 import { estimateResponseTime, recordLatency } from "@/lib/neural/query-time-estimator";
 import { somClassify, somLearn, type SOMHandler } from "@/lib/neural/som-router";
 import type { BackgroundTranscript } from "./useWakeWord";
+import { queryInternet, activateGateway, getGatewayState } from "@/lib/neural/arc-gateway";
+import { learnFramework, getBestAPICapability } from "@/lib/neural/arc-api-learner";
+import { checkCreditsAuto, formatCreditResponse, getCreditIntelligence } from "@/lib/neural/arc-stripe-intelligence";
+import { detectServiceFromQuery, autoChargeBeforeService, shouldServiceBeFree } from "@/lib/neural/arc-auto-charge";
+import { detectGoogleService, handleGoogleServiceRequest, checkUserQuota, getGoogleServicesStats } from "@/lib/neural/arc-google-monetization";
 
 export interface ChatMessage { role: "user" | "ai" | "system"; text: string; time: string; confidence?: number; }
 
@@ -41,6 +46,8 @@ export function useOrionReasoning(
   bargeInCallbackRef?: React.MutableRefObject<(() => void) | null>,
   getBackgroundTranscripts?: () => BackgroundTranscript[],
   identityStatus?: string,
+  onActivateVision?: () => void,
+  localDetectionsRef?: React.MutableRefObject<Array<{ name: string; category: string; confidence: number; bbox?: { x: number; y: number; w: number; h: number } }>>,
 ) {
   const navigate = useNavigate();
   const lastAIRef = useRef(0);
@@ -460,7 +467,7 @@ export function useOrionReasoning(
 
       // ═══ VISION COMMAND INTERCEPT — handle locally, NEVER send to LLM ═══
       const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow);
-      const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow);
+      const isDeactivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /desligar?\s*(vis[aâ]mera)/i.test(qLow) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow);
       if (isActivateVision || isDeactivateVision) {
         const action = isActivateVision ? "activate_vision" : "deactivate_vision";
         const msg = isActivateVision ? "Visão ativada." : "Visão desativada.";
@@ -474,6 +481,57 @@ export function useOrionReasoning(
         speak(msg).catch(() => {});
         cleanupProcessing();
         processNextInQueue();
+        return;
+      }
+
+      // ═══ ARC-AGI-2 REASONING CHECK — Intercept abstract reasoning tasks ═══
+      const arcPatterns = /puzzle|raciocínio abstrato|symbolic|compositional|contextual|resolver|solve| ARC|regra|múltiplas regras/i;
+      const isArcTask = arcPatterns.test(qLow);
+      
+      if (isArcTask) {
+        // Check owner status for ARC-AGI-2
+        const { data: { user } } = await supabase.auth.getUser();
+        let canUseArc = false;
+        if (user) {
+          const { data: userRole } = await supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle();
+          canUseArc = userRole?.role === "advogado" || userRole?.role === "admin";
+        }
+        
+        if (canUseArc) {
+          addLog("🧩 Detectada tarefa ARC-AGI-2 - invoking arc-reasoner...");
+          try {
+            const response = await supabase.functions.invoke("arc-reasoner", {
+              body: { 
+                description: question,
+                reasoning_type: /symbolic|composição|contextual/i.test(qLow) ? 
+                  (/symbolic/i.test(qLow) ? "symbolic" : /contextual/i.test(qLow) ? "contextual" : "compositional") : "auto"
+              }
+            });
+            if (response.data?.success) {
+              const arcResult = `🧩 Análise ARC-AGI-2:\n${response.data.explanation}\n\nSolução: ${JSON.stringify(response.data.output)}`;
+              setThought(arcResult);
+              addChat("ai", arcResult);
+              speak(arcResult).catch(() => {});
+              cleanupProcessing();
+              processNextInQueue();
+              return;
+            }
+          } catch (arcErr) {
+            addLog(`⚠️ ARC fallback: ${arcErr}`);
+          }
+        }
+      }
+
+      // ═══ AUTO-ACTIVATE VISION: If camera is OFF and question is visual, activate first ═══
+      const isVisualQuestion = intentType === "visual" || intentType === "mixed";
+      if (!active && isVisualQuestion && onActivateVision) {
+        addLog("🔄 Ativando câmera para análise visual...");
+        setThought("Ativando câmera...");
+        onActivateVision();
+        // Give camera time to start, then process the question
+        setTimeout(() => {
+          askAIInternalRef.current?.(question, "voice");
+        }, 2000);
         return;
       }
 
@@ -904,6 +962,57 @@ export function useOrionReasoning(
         return;
       }
 
+      // ═══ ARC-AGI-2 Gateway: Direct Internet Queries (FREE) ═══
+      // Check if query needs direct internet access (fast, no API limits)
+      const needsInternetGateway = 
+        /tempo|clima|bitcoin|cripto|preço|cotação|notícia|news|último|novo|hacker|github|npm|espaço|nasa|piada/i.test(qLow);
+      
+      if (needsInternetGateway) {
+        const gatewayState = getGatewayState();
+        if (gatewayState.status === "dormant") {
+          await activateGateway();
+        }
+        
+        if (getGatewayState().status !== "dormant") {
+          addLog("🌐 Usando ARC-AGI-2 Gateway para consulta direta...");
+          
+          const reasoningType = /notícia|news|github|npm/i.test(qLow) ? "compositional" :
+            /tempo|clima|preço|bitcoin/i.test(qLow) ? "symbolic" : "auto";
+          
+          const result = await queryInternet(question, reasoningType);
+          
+          if (result.success && result.data) {
+            let gatewayResponse = `🌐 Informação obtida via Gateway:\n\n`;
+            
+            // Format response based on source
+            if (Array.isArray(result.data)) {
+              gatewayResponse += result.data.slice(0, 5).map((item: any) => {
+                if (item.url) return `• ${item.name || item.url}`;
+                if (item.stars) return `⭐ ${item.name} (${item.stars} stars)`;
+                return `• ${JSON.stringify(item).slice(0, 100)}`;
+              }).join("\n");
+            } else if (typeof result.data === "object") {
+              const relevantKeys = Object.keys(result.data).slice(0, 5);
+              gatewayResponse += relevantKeys.map(k => `• ${k}: ${JSON.stringify(result.data[k]).slice(0, 80)}`).join("\n");
+            } else {
+              gatewayResponse += String(result.data).slice(0, 500);
+            }
+            
+            gatewayResponse += `\n\n${result.reasoning}`;
+            
+            setChatHistory(prev => {
+              const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+              return [...clean, { role: "ai" as const, text: gatewayResponse, time: new Date().toLocaleTimeString("pt-BR") }];
+            });
+            setThought(gatewayResponse);
+            speak(gatewayResponse).catch(() => {});
+            cleanupProcessing();
+            processNextInQueue();
+            return;
+          }
+        }
+      }
+
       // ═══ WEB RESEARCH: "pesquisar na web", "comparar fontes", "sugestões de busca" ═══
       const isWebSearch = /\b(pesquis|busc|procur)\w*\s+(na\s+)?(web|internet|google|online)\s+(.+)/i.test(qLow) ||
         /\b(pesquis|busc)\w*\s+sobre\s+(.+)/i.test(qLow);
@@ -935,6 +1044,149 @@ export function useOrionReasoning(
         } catch (researchErr) {
           console.warn("[Orion] Research command error:", researchErr);
         }
+      }
+
+      // ═══ ARC-AGI-2 API Learning: "aprenda sobre X" ═══
+      const learnPattern = /\b(aprend[ae]|conhe[ae]|estud[ae]|explor[ae])\s+(sobre|sobre\s+o|sobre\s+a)?\s*(.+)/i;
+      const learnMatch = qLow.match(learnPattern);
+      
+      if (_isSpecialCmd && learnMatch) {
+        const topic = learnMatch[3].trim();
+        if (topic.length > 2) {
+          addLog(`🧠 ARC-AGI-2 learn: ${topic}`);
+          
+          // Check if it's a known framework
+          const bestMatch = getBestAPICapability(topic);
+          
+          if (bestMatch) {
+            const learned = await learnFramework(bestMatch.api);
+            if (learned) {
+              const learnResponse = `🧠 Aprendi sobre ${learned.name}:\n\n` +
+                `• Linguagem: ${learned.language}\n` +
+                `• Categoria: ${learned.category}\n` +
+                `• Features: ${learned.features.slice(0, 5).join(", ")}\n` +
+                `• Casos de uso: ${learned.useCases.slice(0, 3).join(", ")}\n` +
+                `• Documentação: ${learned.documentation}`;
+              
+              setChatHistory(prev => {
+                const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+                return [...clean, { role: "ai" as const, text: learnResponse, time: new Date().toLocaleTimeString("pt-BR") }];
+              });
+              setThought(learnResponse);
+              speak(learnResponse).catch(() => {});
+              cleanupProcessing();
+              processNextInQueue();
+              return;
+            }
+          }
+        }
+      }
+
+      // ═══ ARC-AGI-2 Stripe Credit Intelligence: Check credits/saldo/wallet ═══
+      const authUser = await getCachedUser();
+      let currentRole = "user";
+      if (authUser) {
+        const { data: ur } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id).maybeSingle();
+        currentRole = ur?.role || "user";
+      }
+      
+      const creditCheck = await checkCreditsAuto(question, authUser?.id || "", currentRole);
+      if (creditCheck.shouldHandle && creditCheck.response) {
+        setChatHistory(prev => {
+          const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+          return [...clean, { role: "ai" as const, text: creditCheck.response!, time: new Date().toLocaleTimeString("pt-BR") }];
+        });
+        setThought(creditCheck.response!);
+        speak(creditCheck.response!).catch(() => {});
+        cleanupProcessing();
+        processNextInQueue();
+        return;
+      }
+
+      // ═══ ARC-AGI-2 Auto-Charge: Check if service should be paid ═══
+      const serviceContext = detectServiceFromQuery(question);
+      if (serviceContext && authUser) {
+        const freeCheck = await shouldServiceBeFree(authUser.id, serviceContext);
+        
+        if (!freeCheck.free) {
+          // Service is paid - check if can proceed
+          const chargeResult = await autoChargeBeforeService(
+            authUser.id,
+            authUser.email || "",
+            authUser.email?.split("@")[0] || "Cliente",
+            serviceContext,
+            question
+          );
+          
+          if (chargeResult.needsPayment && chargeResult.paymentUrl) {
+            // Need payment first
+            const paymentMsg = `⚠️ **Serviço Pago**\n\n${chargeResult.message}\n\n💰 Valor: R$ ${chargeResult.price?.toFixed(2)}\n\n🔗 [Clique aqui para pagar](${chargeResult.paymentUrl})`;
+            
+            setChatHistory(prev => {
+              const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+              return [...clean, { role: "ai" as const, text: paymentMsg, time: new Date().toLocaleTimeString("pt-BR") }];
+            });
+            setThought(paymentMsg);
+            speak("Este serviço é pago. Você será redirecionado para completar o pagamento.").catch(() => {});
+            cleanupProcessing();
+            processNextInQueue();
+            return;
+          }
+          
+          if (!chargeResult.shouldProceed) {
+            // Cannot proceed - payment failed
+            const errorMsg = chargeResult.message;
+            setChatHistory(prev => {
+              const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+              return [...clean, { role: "ai" as const, text: errorMsg, time: new Date().toLocaleTimeString("pt-BR") }];
+            });
+            setThought(errorMsg);
+            speak(errorMsg).catch(() => {});
+            cleanupProcessing();
+            processNextInQueue();
+            return;
+          }
+          
+          // Can proceed - service is free or will be charged after
+          addLog(`💰 Auto-charge: ${serviceContext} - ${chargeResult.message}`);
+        } else {
+          addLog(`✅ Free service: ${serviceContext} - ${freeCheck.reason}`);
+        }
+      }
+
+      // ═══ Google API Services (Monetização) ═══
+      const googleService = detectGoogleService(question);
+      if (googleService && authUser) {
+        addLog(`🔷 Google Service detectado: ${googleService}`);
+        
+        // Check quota first
+        const quota = await checkUserQuota(authUser.id, googleService);
+        
+        if (!quota.canUse) {
+          // Need to handle payment or charge
+          const googleResult = await handleGoogleServiceRequest(
+            question,
+            authUser.id,
+            authUser.email || ""
+          );
+          
+          if (googleResult.needsPayment) {
+            const payMsg = `🔷 **Serviço Google Pago**\n\n${googleResult.message}`;
+            
+            setChatHistory(prev => {
+              const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+              return [...clean, { role: "ai" as const, text: payMsg, time: new Date().toLocaleTimeString("pt-BR") }];
+            });
+            setThought(payMsg);
+            speak("Este serviço do Google é pago. Você precisa atualizar seu plano.").catch(() => {});
+            cleanupProcessing();
+            processNextInQueue();
+            return;
+          }
+        }
+        
+        // Proceed with Google service
+        addLog(`🔷 Google Service: ${quota.message}`);
       }
 
       // ═══ SEARCH: "procure documento X", "encontre cliente Y" ═══

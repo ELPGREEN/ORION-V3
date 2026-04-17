@@ -378,6 +378,65 @@ Deno.serve(async (req) => {
     }
 
     // ═══════════════════════════════════════
+    // ACTION: get_customer_balance (ARC-AGI-2 Credit Intelligence)
+    // ═══════════════════════════════════════
+    if (action === "get_customer_balance") {
+      const { customer_id } = body;
+      if (!customer_id) throw new Error("customer_id é obrigatório");
+      
+      const customer = await stripe.customers.retrieve(customer_id);
+      if (typeof customer === "string") throw new Error("Cliente não encontrado");
+      
+      return json({ 
+        balance: (customer.balance || 0) / 100,
+        currency: "brl",
+        customer_id: customer.id,
+        email: customer.email 
+      });
+    }
+
+    // ═══════════════════════════════════════
+    // ACTION: add_customer_credit (Add credits to customer wallet)
+    // ═══════════════════════════════════════
+    if (action === "add_customer_credit") {
+      // Only admin/owner can add credits
+      const { data: roleData } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", user.id).single();
+      if (roleData?.role !== "advogado" && roleData?.role !== "admin") {
+        throw new Error("Apenas administradores podem adicionar créditos");
+      }
+      
+      const { target_customer_id, amount, description } = body;
+      if (!target_customer_id || !amount) throw new Error("target_customer_id e amount são obrigatórios");
+      
+      // Update Stripe customer balance (negative = credit)
+      const customer = await stripe.customers.retrieve(target_customer_id);
+      if (typeof customer === "string") throw new Error("Cliente não encontrado");
+      
+      const currentBalance = customer.balance || 0;
+      const newBalance = currentBalance - (amount * 100); // Subtract to add credit
+      
+      await stripe.customers.update(target_customer_id, {
+        balance: newBalance,
+      });
+      
+      // Log the transaction
+      await supabaseAdmin.from("credit_transactions").insert({
+        user_id: user.id,
+        target_user_id: target_customer_id,
+        amount: amount,
+        type: "credit_added",
+        description: description || "Crédito adicionado por administrador",
+        created_at: new Date().toISOString(),
+      });
+      
+      return json({ 
+        success: true, 
+        message: `Crédito de R$ ${amount.toFixed(2)} adicionado com sucesso`,
+        new_balance: newBalance / 100
+      });
+    }
+
+    // ═══════════════════════════════════════
     // ACTION: report_to_mother (consolidated from report-payment-to-mother)
     // ═══════════════════════════════════════
     if (action === "report_to_mother") {

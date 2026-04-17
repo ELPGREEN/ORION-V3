@@ -17,6 +17,13 @@ export const INTENT_TOOL_MAP: Record<string, DistributableTool> = {
   jules_fix: "jules",
   self_improvement: "jules",
   computer_use: "computer_use",
+  // ARC-AGI-2 Abstract Reasoning
+  arc_reasoning: "arc_abstract_reasoning",
+  abstract_puzzle: "arc_abstract_reasoning",
+  symbolic_reasoning: "arc_abstract_reasoning",
+  compositional_rule: "arc_abstract_reasoning",
+  contextual_rule: "arc_abstract_reasoning",
+  solve_puzzle: "arc_abstract_reasoning",
   // Sales editor
   open_sales_editor: "sales_editor",
   edit_product_page: "sales_editor",

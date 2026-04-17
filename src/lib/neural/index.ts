@@ -393,6 +393,71 @@ export * from "./agentic-protocols-tools";
 export { evaluateRAGResponse, type RAGEvalResult, type RAGMetricScore, type RetrievalQuality } from "./rag-evaluator";
 export { submitRAGFeedback, getOptimizedWeights, classifyQueryType, type SearchWeights, type WeightProfile } from "./rag-feedback-loop";
 
+// ═══ RAG Consciousness (ARC-AGI-2 Integration) ═══
+export {
+  activateRAGConsciousness, solveRAGPuzzle, adaptFromEvaluation,
+  getConsciousnessDiagnostics, resetRAGConsciousness,
+  type RAGConsciousnessState, type RAGPattern, type RAGConsciousness, type RAGPuzzleResult,
+} from "./rag-consciousness";
+export { setRetrievedChunks, getRetrievedChunks, clearRetrievedChunks } from "./rag-retrieval-tracker";
+
+// ═══ ARC-AGI-2 Gateway (Internet & API Learning) ═══
+export {
+  activateGateway, queryInternet, testAPI, scanAllAPIs,
+  learnFromResponse, addCustomAPI, resetGateway,
+  getGatewayState, getGatewayDiagnostics, getDiscoveredAPIs,
+  type GatewayStatus, type APIDiscovery, type GatewayState, type GatewayQueryResult,
+} from "./arc-gateway";
+
+// ═══ ARC-AGI-2 API Learner (Learn from APIs & Frameworks) ═══
+export {
+  learnFramework, learnAPI, discoverRelevantAPIs, getBestAPICapability,
+  getLearnedAPIs, getFrameworkKnowledge, resetAPIKnowledge,
+  getAPILearnerDiagnostics,
+  type LearnedAPI, type FrameworkKnowledge,
+} from "./arc-api-learner";
+
+// ═══ ARC-AGI-2 Stripe Credit Intelligence ═══
+export {
+  getCreditIntelligence, formatCreditResponse, checkCreditsAuto, addCustomerCredit,
+  type StripeCreditInfo, type CreditIntelligence,
+} from "./arc-stripe-intelligence";
+
+// ═══ ARC-AGI-2 Revenue Generator (Gerar dinheiro para o Owner) ═══
+export {
+  generateServiceRevenue, generateAffiliateRevenue, generateAPIUsageRevenue,
+  getRevenueSummary, payoutToOwnerStripe, getRevenueDashboard,
+  shouldChargeForService, recordBillableAction,
+  SERVICE_PRICES,
+  type RevenueType, type RevenueEntry, type RevenueSummary,
+} from "./arc-revenue-generator";
+
+// ═══ ARC-AGI-2 Revenue & Payout System (Stripe Connect) ═══
+export {
+  initStripeConnect, getStripeConnectStatus,
+  SERVICES_CATALOG, chargeForService, requestPayout,
+  autoChargeAndPayout, getRevenueDashboard as getFullRevenueDashboard,
+  checkOwnerPaymentSetup,
+  type ServicePricing, type PayoutStatus,
+} from "./arc-revenue-system";
+
+// ═══ ARC-AGI-2 Auto-Charge System ═══
+export {
+  detectServiceFromQuery, getServicePricing,
+  shouldServiceBeFree, autoChargeBeforeService,
+  recordServiceUsage, deductUserCredits, addTrialCredits,
+  getUserServiceStats,
+  type ServiceContext,
+} from "./arc-auto-charge";
+
+// ═══ ARC-AGI-2 Google API Monetization ═══
+export {
+  GOOGLE_SERVICES, detectGoogleService, getGoogleServicePricing,
+  executeGoogleService, checkUserQuota, getGoogleServicesStats,
+  handleGoogleServiceRequest,
+  type GoogleServiceType, type GoogleServicePricing,
+} from "./arc-google-monetization";
+
 // ═══ Jules Self-Improvement ═══
 export {
   julesClient, orionSelfImprove, pollJulesSession,

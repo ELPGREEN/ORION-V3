@@ -37,12 +37,51 @@ import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
 import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
 // Vision via Gemini on-demand
 import { captureVideoFrame, analyzeFrame } from "@/lib/vision/gemini-vision";
+// Local vision via Transformers.js
+import { classifyImage } from "@/lib/huggingface/transformers-vision";
+// MediaPipe Tasks Vision for fast object detection
+import { FilesetResolver, ObjectDetector } from "@mediapipe/tasks-vision";
 // Vision Control Panel
 import { VisionControlPanel, DEFAULT_VISION_SETTINGS, type VisionSettings } from "./VisionControlPanel";
 // Vision Stats Panel
 import { VisionStatsPanel, DEFAULT_DETECTION_STATS, type DetectionStats } from "./VisionStatsPanel";
 import { HudCollapsibleSection } from "./HudCollapsibleSection";
-const preloadAllVision = async () => {};
+// MediaPipe Object Detector - faster and more accurate than DETR
+let mpObjectDetector: ObjectDetector | null = null;
+let mpVisionReady = false;
+async function preloadVisionModel() {
+  if (mpVisionReady && mpObjectDetector) return;
+  try {
+    console.log("[Vision] Loading MediaPipe ObjectDetector...");
+    const vision = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/wasm"
+    );
+    mpObjectDetector = await ObjectDetector.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0.tflite",
+        delegate: "GPU"
+      },
+      runningMode: "VIDEO",
+      scoreThreshold: 0.55,
+      categoryAllowlist: undefined,
+      maxResults: 20,
+    });
+    mpVisionReady = true;
+    console.log("[Vision] MediaPipe ObjectDetector ready");
+  } catch (e) { 
+    console.warn("[Vision] MediaPipe load failed:", e); 
+    // Fallback to DETR if MediaPipe fails
+    try {
+      const { detectObjects } = await import("@/lib/huggingface/transformers-vision");
+      const dummyCanvas = document.createElement("canvas");
+      dummyCanvas.width = 224; dummyCanvas.height = 224;
+      const ctx = dummyCanvas.getContext("2d");
+      if (ctx) { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, 224, 224); }
+      await detectObjects(dummyCanvas, "Xenova/detr-resnet-50", 0.5);
+      console.log("[Vision] Fallback DETR loaded");
+    } catch {}
+  }
+}
 
 // Real-time detection via Gemini Flash — throttled, lightweight
 const _rtCache = { lastCall: 0, lastResult: null as RealTimeVisionResult | null };
@@ -149,6 +188,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const rtInferenceRunningRef = useRef(false);
   const fpsC = useRef(0);
   const lastFpsT = useRef(Date.now());
+  const lastLocalDetectionRef = useRef(0);
+  const localDetectionRunningRef = useRef(false);
+  const mlDetectionsRef = useRef<Array<{ name: string; category: string; confidence: number; bbox?: { x: number; y: number; w: number; h: number } }>>([]);
 
   // Build detection stats from current state
   const detectionStats: DetectionStats = {
@@ -179,7 +221,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     setIdentityStatus,
   } = useVoiceIdentityGuard();
 
-  const { thought, log, aiDescription, askAI, askInput, setAskInput, chatHistory, isProcessing, detectedObjects } = useOrionReasoning(active, speak, canvasRef, identificationMode, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, () => bgTranscriptsGetterRef.current(), identityStatus);
+  const { thought, log, aiDescription, askAI, askInput, setAskInput, chatHistory, isProcessing, detectedObjects } = useOrionReasoning(active, speak, canvasRef, identificationMode, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, () => bgTranscriptsGetterRef.current(), identityStatus, startCamera, mlDetectionsRef);
   const voiceClone = useOrionVoiceClone();
 
   const voiceCheckDoneRef = useRef(false);
@@ -281,8 +323,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       });
       await video.play().catch(() => {});
       setActive(true); VS.active = true;
-      // Pre-warm MediaPipe + YOLO models as soon as camera starts
-      preloadAllVision().catch(() => console.warn("[Vision] Model preload failed"));
+      // Pre-warm Transformers.js models as soon as camera starts
+      preloadVisionModel().catch(() => console.warn("[Vision] Model preload failed"));
       toast.success("Núcleo de plasma ativado");
       if (shouldAnnounce) speak("Núcleo ativado.").catch(() => {});
     } catch {
@@ -661,7 +703,40 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         else prevRef.current.set(result.pixels);
       }
 
-// Throttle ML detection to every 30 frames (was 20) — saves GPU cycles
+// Throttle ML detection to every 30 frames (1s at 30fps) — MediaPipe ObjectDetector
+      if (frameCount % 30 === 0 && !localDetectionRunningRef.current && video && video.readyState >= 2 && w > 0 && h > 0 && mpObjectDetector && mpVisionReady) {
+        const now = Date.now();
+        if (now - lastLocalDetectionRef.current > 800) {
+          lastLocalDetectionRef.current = now;
+          localDetectionRunningRef.current = true;
+          try {
+            const result = mpObjectDetector.detectForVideo(video, Date.now());
+            if (result && result.detections && result.detections.length > 0) {
+              const mapped = result.detections.map(d => ({
+                name: d.categories?.[0]?.categoryName || "object",
+                category: categoryFromSource(d.categories?.[0]?.categoryName || "object"),
+                confidence: d.categories?.[0]?.score || 0.5,
+                count: 1,
+                bbox: d.boundingBox ? { 
+                  x: d.boundingBox.originX / w, 
+                  y: d.boundingBox.originY / h, 
+                  w: d.boundingBox.width / w, 
+                  h: d.boundingBox.height / h 
+                } : undefined,
+                source: "mediapipe_efficientdet"
+              }));
+              setMlDetections(mapped);
+              mlDetectionsRef.current = mapped;
+              console.log("[LocalVision] MediaPipe:", mapped.map(m => `${m.name}(${(m.confidence*100).toFixed(0)}%)`).join(", "));
+            } else {
+              mlDetectionsRef.current = [];
+            }
+          } catch (err) {
+            console.warn("[LocalVision] MediaPipe detect error:", err);
+          }
+          localDetectionRunningRef.current = false;
+        }
+      }
       // Throttle SuperNet frames to every 25 frames (was 15)
       if (frameCount % 30 === 0) sendSuperNetFrame();
       animRef.current = requestAnimationFrame(loop);

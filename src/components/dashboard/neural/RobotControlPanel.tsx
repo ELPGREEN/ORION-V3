@@ -25,6 +25,11 @@ const IndustrialProtocolsPanel = lazy(() => import("./IndustrialProtocolsPanel")
 const NetworkIoTPanel = lazy(() => import("./NetworkIoTPanel"));
 const SecurityCompliancePanel = lazy(() => import("./SecurityCompliancePanel"));
 const RobotTelemetryPanel = lazy(() => import("./RobotTelemetryPanel"));
+const RobotSensorsPanel = lazy(() => import("./RobotSensorsPanel"));
+const ForceTorquePanel = lazy(() => import("./ForceTorquePanel"));
+const InverseKinematicsPanel = lazy(() => import("./InverseKinematicsPanel"));
+const HandControlPanel = lazy(() => import("./HandControlPanel"));
+const AutomaticRejectionPanel = lazy(() => import("./AutomaticRejectionPanel"));
 const WebRTCCameraViewer = lazy(() => import("./WebRTCCameraViewer"));
 const YOLOv8InspectionPanel = lazy(() => import("./YOLOv8InspectionPanel"));
 const NodeREDPanel = lazy(() => import("./NodeREDPanel"));
@@ -388,8 +393,11 @@ export default function RobotControlPanel() {
           <TabsTrigger value="security" className="gap-1.5">
             <Shield className="h-3.5 w-3.5" /> Segurança
           </TabsTrigger>
-          <TabsTrigger value="telemetry" className="gap-1.5">
-            <BarChart3 className="h-3.5 w-3.5" /> Telemetria
+<TabsTrigger value="telemetry" className="gap-1.5">
+            <Activity className="h-3.5 w-3.5" /> Telemetria
+          </TabsTrigger>
+          <TabsTrigger value="sensors" className="gap-1.5">
+            <ScanSearch className="h-3.5 w-3.5" /> Sensores
           </TabsTrigger>
           <TabsTrigger value="camera" className="gap-1.5">
             <Camera className="h-3.5 w-3.5" /> Câmera
@@ -405,6 +413,18 @@ export default function RobotControlPanel() {
           </TabsTrigger>
           <TabsTrigger value="grafana" className="gap-1.5">
             <BarChart3 className="h-3.5 w-3.5" /> Grafana
+          </TabsTrigger>
+          <TabsTrigger value="force" className="gap-1.5">
+            <Zap className="h-3.5 w-3.5" /> Força
+          </TabsTrigger>
+          <TabsTrigger value="ik" className="gap-1.5">
+            <Crosshair className="h-3.5 w-3.5" /> Cinética
+          </TabsTrigger>
+          <TabsTrigger value="hand" className="gap-1.5">
+            <Bot className="h-3.5 w-3.5" /> Mão
+          </TabsTrigger>
+          <TabsTrigger value="rejection" className="gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5" /> Rejeição
           </TabsTrigger>
         </TabsList>
 
@@ -442,6 +462,9 @@ export default function RobotControlPanel() {
           <TabsContent value="telemetry">
             <RobotTelemetryPanel />
           </TabsContent>
+          <TabsContent value="sensors">
+            <RobotSensorsPanel />
+          </TabsContent>
           <TabsContent value="camera">
             <WebRTCCameraViewer rosbridgeUrl={rosbridgeUrl} />
           </TabsContent>
@@ -456,6 +479,18 @@ export default function RobotControlPanel() {
           </TabsContent>
           <TabsContent value="grafana">
             <GrafanaDashboardPanel />
+          </TabsContent>
+          <TabsContent value="force">
+            <ForceTorquePanel />
+          </TabsContent>
+          <TabsContent value="ik">
+            <InverseKinematicsPanel />
+          </TabsContent>
+          <TabsContent value="hand">
+            <HandControlPanel />
+          </TabsContent>
+          <TabsContent value="rejection">
+            <AutomaticRejectionPanel />
           </TabsContent>
         </Suspense>
       </Tabs>

@@ -11,6 +11,8 @@
  * Budget: <5ms for up to 20 chunks.
  */
 
+import { setRetrievedChunks } from "./rag-retrieval-tracker";
+
 // ─── Types ───
 
 export interface RAGChunk {
@@ -126,6 +128,9 @@ export function compressContext(
     processingMs: Math.round(performance.now() - t0),
   };
 }
+
+// Track chunks for RAG consciousness evaluation
+setRetrievedChunks(chunks.map(c => c.content));
 
 /**
  * Remove chunks with >60% content overlap.

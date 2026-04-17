@@ -47,7 +47,10 @@ export type DistributableTool =
   | "vision_products"
   | "calendar"
   | "translation"
-  | "currency_converter";
+  | "currency_converter"
+  | "arc_abstract_reasoning"
+  | "arc_gateway"
+  | "arc_api_learner";
 
 export const TOOL_CATEGORIES: Record<DistributableTool, ToolCategory> = {
   // chat
@@ -86,6 +89,10 @@ export const TOOL_CATEGORIES: Record<DistributableTool, ToolCategory> = {
   stripe_payouts: "stripe",
   // analytics
   analytics_dashboard: "analytics",
+  // arc-agi-2 reasoning
+  arc_abstract_reasoning: "jules",
+  arc_gateway: "jules",
+  arc_api_learner: "jules",
   // integrations (lump under browser/editor as utility)
   spotify_integration: "editor",
   youtube_integration: "editor",
@@ -229,6 +236,9 @@ export const OWNER_ONLY_TOOLS: DistributableTool[] = [
   "robotics",
   "jules",
   "computer_use",
+  "arc_abstract_reasoning",
+  "arc_gateway",
+  "arc_api_learner",
   "shell",
   "bash",
   "exec",
