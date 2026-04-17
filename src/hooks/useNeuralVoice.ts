@@ -39,6 +39,7 @@ const RESTART_DELAY_MS = isMobile() ? 2000 : 500; // Optimized from 1500ms — 3
 export const VoiceState = { aiResponding: false };
 
 let _voiceBootstrapDone = false;
+let _micPermissionToastShown = false;
 function ensureVoiceBootstrapOnce() {
   if (_voiceBootstrapDone) return;
   _voiceBootstrapDone = true;
