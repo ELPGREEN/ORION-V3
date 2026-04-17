@@ -458,6 +458,13 @@ export {
   type GoogleServiceType, type GoogleServicePricing,
 } from "./arc-google-monetization";
 
+// ═══ ARC-AGI-2 Subscription & Prepaid Credits ═══
+export {
+  SUBSCRIPTION_PLANS, CREDIT_PACKAGES, handleSubscriptionWebhook,
+  type SubscriptionPlan, type SubscriptionStatus,
+  type PlanDetails, type PrepaidCreditPackage,
+} from "./arc-subscription-billing";
+
 // ═══ Jules Self-Improvement ═══
 export {
   julesClient, orionSelfImprove, pollJulesSession,
