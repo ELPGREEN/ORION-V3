@@ -151,7 +151,7 @@ export function getInstantResponse(question: string): InstantResponse | null {
     return null;
   }
 
-  const THRESHOLD = 0.88;
+  const THRESHOLD = 0.93;
   const t0 = performance.now();
   const normQ = normalize(question);
 
