@@ -161,7 +161,7 @@ export default function ForceTorquePanel() {
   const safetyStatus = forcePercent > 80 ? "critical" : forcePercent > 60 ? "warning" : "safe";
 
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-950 border-zinc-800">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -288,7 +288,7 @@ export default function ForceTorquePanel() {
 
         {/* Real-time Force Display */}
         <div className="grid grid-cols-3 gap-3">
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-3 pb-2">
               <div className="flex items-center gap-2">
                 <Zap className="h-3 w-3 text-orange-400" />
@@ -312,7 +312,7 @@ export default function ForceTorquePanel() {
             </CardContent>
           </Card>
 
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-3 pb-2">
               <div className="flex items-center gap-2">
                 <RotateCcw className="h-3 w-3 text-[hsl(var(--tron-neon-soft))]" />
@@ -324,7 +324,7 @@ export default function ForceTorquePanel() {
             </CardContent>
           </Card>
 
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-3 pb-2">
               <div className="flex items-center gap-2">
                 <Target className="h-3 w-3 text-[hsl(var(--tron-neon))]" />

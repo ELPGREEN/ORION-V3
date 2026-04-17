@@ -52,7 +52,7 @@ function APICard({ api }: { api: OrionAPI }) {
       isOnline ? "border-green-500/20 bg-green-500/5" :
       api.health === "loading" ? "border-yellow-500/20 bg-yellow-500/5" :
       api.health === "error" ? "border-red-500/20 bg-red-500/5" :
-      "border-border bg-muted/30"
+      "border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] bg-muted/30"
     }`}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ export function OrionAPIStatusDashboard() {
   return (
     <div className="space-y-4">
       {/* Summary Bar */}
-      <Card className="border-primary/20">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] border-primary/20">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -190,7 +190,7 @@ export function OrionAPIStatusDashboard() {
 
       {/* System Alerts */}
       {snapshot.systemHealth.alerts.length > 0 && (
-        <Card className="border-yellow-500/30">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] border-yellow-500/30">
           <CardHeader className="pb-2 pt-3 px-4">
             <CardTitle className="text-sm text-[hsl(var(--tron-warn))]">⚠️ Alertas do Sistema</CardTitle>
           </CardHeader>

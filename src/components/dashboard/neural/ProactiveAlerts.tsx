@@ -317,7 +317,7 @@ export function ProactiveAlerts() {
   const activeAlerts = alerts.filter(a => !a.dismissed);
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium flex items-center gap-2">

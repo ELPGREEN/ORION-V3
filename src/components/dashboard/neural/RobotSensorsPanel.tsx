@@ -67,7 +67,7 @@ function quaternionToEuler(q: { x: number; y: number; z: number; w: number }): {
 
 function GaugeCard({ icon: Icon, label, value, sub, color }: { icon: any; label: string; value: string; sub: string; color: string }) {
   return (
-    <Card className="bg-zinc-900/50 border-zinc-800">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
       <CardContent className="pt-3 pb-2">
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-zinc-400" />
@@ -244,7 +244,7 @@ export default function RobotSensorsPanel() {
   const jointVelocities = latestJoint?.velocities ?? [];
 
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-950 border-zinc-800">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -301,7 +301,7 @@ export default function RobotSensorsPanel() {
                   <GaugeCard icon={Navigation} label="Yaw" value={`${latestImu.yaw.toFixed(1)}°`} sub="Z" color="text-amber-400" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <Card className="bg-zinc-900/30 border-zinc-800 p-2">
+                  <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/30 border-zinc-800 p-2">
                     <div className="text-[10px] text-zinc-500">Angular Velocity (rad/s)</div>
                     <div className="flex justify-between text-xs font-mono">
                       <span className="text-[hsl(var(--tron-neon))]">X: {latestImu.angularVelocity.x.toFixed(2)}</span>
@@ -309,7 +309,7 @@ export default function RobotSensorsPanel() {
                       <span className="text-amber-400">Z: {latestImu.angularVelocity.z.toFixed(2)}</span>
                     </div>
                   </Card>
-                  <Card className="bg-zinc-900/30 border-zinc-800 p-2">
+                  <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/30 border-zinc-800 p-2">
                     <div className="text-[10px] text-zinc-500">Linear Accel (m/s²)</div>
                     <div className="flex justify-between text-xs font-mono">
                       <span className="text-[hsl(var(--tron-neon))]">X: {latestImu.linearAcceleration.x.toFixed(2)}</span>

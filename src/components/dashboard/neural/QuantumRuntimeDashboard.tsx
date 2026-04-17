@@ -179,7 +179,7 @@ export function QuantumRuntimeDashboard() {
           <span className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>
             {lastRefresh.toLocaleTimeString()}
           </span>
-          <Button size="sm" variant="outline" onClick={loadData} className="h-7 gap-1 text-xs border-border">
+          <Button size="sm" variant="outline" onClick={loadData} className="h-7 gap-1 text-xs border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
             <RefreshCw className="h-3 w-3" /> Refresh
           </Button>
           <Button
@@ -222,7 +222,7 @@ export function QuantumRuntimeDashboard() {
       </div>
 
       {/* QPU Status Grid */}
-      <Card className="border-0" style={cardStyle(ACCENT)}>
+      <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] border-0" style={cardStyle(ACCENT)}>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-mono tracking-wider flex items-center gap-2" style={{ color: `${ACCENT}cc` }}>
             <Cpu className="h-4 w-4" style={{ color: ACCENT }} /> QPU STATUS REGISTRY
@@ -300,7 +300,7 @@ export function QuantumRuntimeDashboard() {
 
       {/* Instance & Metrics */}
       {instance && instanceMetrics && (
-        <Card className="border-0" style={cardStyle(GOLD)}>
+        <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] border-0" style={cardStyle(GOLD)}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-mono tracking-wider flex items-center gap-2" style={{ color: `${GOLD}cc` }}>
               <Server className="h-4 w-4" style={{ color: GOLD }} /> ACTIVE INSTANCE
@@ -340,7 +340,7 @@ export function QuantumRuntimeDashboard() {
       )}
 
       {/* Job History */}
-      <Card className="border-0" style={cardStyle(ACCENT)}>
+      <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] border-0" style={cardStyle(ACCENT)}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-mono tracking-wider flex items-center gap-2" style={{ color: `${ACCENT}cc` }}>
@@ -430,7 +430,7 @@ export function QuantumRuntimeDashboard() {
 
       {/* Error Mitigation Comparison */}
       {completedJobs.length > 0 && (
-        <Card className="border-0" style={cardStyle("#a78bfa")}>
+        <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] border-0" style={cardStyle("#a78bfa")}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-mono tracking-wider flex items-center gap-2" style={{ color: "#a78bfacc" }}>
               <Shield className="h-4 w-4" style={{ color: "#a78bfa" }} /> ERROR MITIGATION ANALYSIS

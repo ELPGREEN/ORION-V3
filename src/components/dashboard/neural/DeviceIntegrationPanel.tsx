@@ -193,7 +193,7 @@ export default function DeviceIntegrationPanel() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 w-full max-w-full overflow-x-hidden">
       {/* ═══ Connection Diagnostics ═══ */}
-      <Card className="border-border/40 bg-card/50 backdrop-blur-sm lg:col-span-2 overflow-hidden">
+      <Card className="border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/40 bg-[hsl(var(--tron-bg-deep))]/50 backdrop-blur-sm lg:col-span-2 overflow-hidden">
         <div className={`h-1 w-full transition-colors duration-500 ${mqttConnected ? "bg-primary" : connecting ? "bg-accent animate-pulse" : "bg-destructive/50"}`} />
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -215,7 +215,7 @@ export default function DeviceIntegrationPanel() {
               { label: "Uptime", value: formatUptime(diagnostics.uptime), icon: Clock },
               { label: "Mensagens", value: String(diagnostics.messageCount), icon: Activity },
             ].map(({ label, value, icon: Icon }) => (
-              <div key={label} className="p-2.5 rounded-lg bg-muted/30 border border-border/30">
+              <div key={label} className="p-2.5 rounded-lg bg-muted/30 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Icon className="h-3 w-3 text-muted-foreground" />
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
@@ -271,7 +271,7 @@ export default function DeviceIntegrationPanel() {
       </Card>
 
       {/* ═══ BLE Panel ═══ */}
-      <Card className="border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden">
+      <Card className="border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/40 bg-[hsl(var(--tron-bg-deep))]/50 backdrop-blur-sm overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base flex-wrap">
             <div className="p-1.5 rounded-md bg-primary/10">
@@ -285,7 +285,7 @@ export default function DeviceIntegrationPanel() {
         </CardHeader>
         <CardContent className="space-y-3">
           {!bleSupported ? (
-            <div className="p-4 rounded-lg bg-muted/30 border border-border/30 text-center space-y-2">
+            <div className="p-4 rounded-lg bg-muted/30 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 text-center space-y-2">
               <Bluetooth className="h-8 w-8 text-muted-foreground/30 mx-auto" />
               <p className="text-xs text-muted-foreground">
                 {bluetoothManager.isNative
@@ -314,7 +314,7 @@ export default function DeviceIntegrationPanel() {
               ) : (
                 <div className="space-y-2">
                   {bleDevices.map(d => (
-                    <div key={d.id} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/20 text-xs">
+                    <div key={d.id} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20 text-xs">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${d.connected ? "bg-primary shadow-sm shadow-primary/50" : "bg-muted-foreground/30"}`} />
                         <span className="font-medium text-foreground">{d.name}</span>
@@ -338,7 +338,7 @@ export default function DeviceIntegrationPanel() {
       </Card>
 
       {/* ═══ IoT Devices Panel ═══ */}
-      <Card className="border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden">
+      <Card className="border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/40 bg-[hsl(var(--tron-bg-deep))]/50 backdrop-blur-sm overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base flex-wrap">
             <div className="p-1.5 rounded-md bg-primary/10">
@@ -367,7 +367,7 @@ export default function DeviceIntegrationPanel() {
                     className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs transition-colors ${
                       isOnline
                         ? "bg-primary/5 border-primary/20"
-                        : "bg-muted/30 border-border/20"
+                        : "bg-muted/30 border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20"
                     }`}
                   >
                     <div className={`p-1 rounded ${isOnline ? "bg-primary/10" : "bg-muted"}`}>
@@ -400,7 +400,7 @@ export default function DeviceIntegrationPanel() {
                   Limpar
                 </Button>
               </div>
-              <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg bg-muted/20 border border-border/20 p-2">
+              <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg bg-muted/20 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20 p-2">
                 {messages.slice(-10).reverse().map((m, i) => (
                   <div key={i} className="text-[10px] font-mono flex items-start gap-1.5 text-muted-foreground">
                     {m.direction === "inbound"
@@ -420,7 +420,7 @@ export default function DeviceIntegrationPanel() {
       </Card>
 
       {/* ═══ Smart Home Discovery ═══ */}
-      <Card className="border-border/40 bg-card/50 backdrop-blur-sm lg:col-span-2 overflow-hidden">
+      <Card className="border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/40 bg-[hsl(var(--tron-bg-deep))]/50 backdrop-blur-sm lg:col-span-2 overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base flex-wrap">
             <div className="p-1.5 rounded-md bg-primary/10">
@@ -471,7 +471,7 @@ export default function DeviceIntegrationPanel() {
                     className={`flex items-center gap-2.5 p-3 rounded-lg border text-xs transition-all ${
                       isOnline
                         ? "bg-primary/5 border-primary/20"
-                        : "bg-muted/20 border-border/20"
+                        : "bg-muted/20 border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20"
                     }`}
                   >
                     <div className={`p-1.5 rounded-md ${isOnline ? "bg-primary/10" : "bg-muted"}`}>

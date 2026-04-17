@@ -228,7 +228,7 @@ function DataParticle({ color, delay, duration }: { color: string; delay: number
 /* ─── Animated connector between layers ─── */
 function LayerConnector({ topColor, bottomColor }: { topColor: string; bottomColor: string }) {
   return (
-    <div className="relative flex justify-center py-1 overflow-hidden" style={{ height: 32 }}>
+    <div className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] relative flex justify-center py-1 overflow-hidden" style={{ height: 32 }}>
       <div
         className="absolute left-1/2 -translate-x-1/2 w-px h-full"
         style={{ background: `linear-gradient(to bottom, ${topColor}, ${bottomColor})`, opacity: 0.3 }}
@@ -256,7 +256,7 @@ function ModuleCard({ mod, index }: { mod: LayerModule; index: number }) {
       transition={{ delay: index * 0.06, duration: 0.4 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative flex flex-col items-center gap-1 p-2 rounded-lg bg-background/30 border border-border/20 hover:border-border/50 transition-all duration-300 cursor-default ${isHovered ? `shadow-lg ${mod.glow}` : ""}`}
+      className={`relative flex flex-col items-center gap-1 p-2 rounded-lg bg-background/30 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20 hover:border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50 transition-all duration-300 cursor-default ${isHovered ? `shadow-lg ${mod.glow}` : ""}`}
     >
       <AnimatePresence>
         {isHovered && (
@@ -416,7 +416,7 @@ export function NeuroCoreArchitectureDiagram() {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-2 pt-2 border-t border-border/20">
+                      <div className="mt-2 pt-2 border-t border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20">
                         <p className="text-[11px] text-muted-foreground leading-relaxed">{layer.details}</p>
                       </div>
                     </motion.div>
@@ -437,7 +437,7 @@ export function NeuroCoreArchitectureDiagram() {
           { label: "Phi", value: ">0.85", color: "text-amber-400" },
           { label: "Cognição Incorporada", value: "4 novas", color: "text-rose-400" },
         ].map((m) => (
-          <div key={m.label} className="text-center p-2 rounded-lg border border-border/20 bg-background/20">
+          <div key={m.label} className="text-center p-2 rounded-lg border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20 bg-background/20">
             <div className={`text-sm font-bold ${m.color}`}>{m.value}</div>
             <div className="text-[9px] text-muted-foreground">{m.label}</div>
           </div>

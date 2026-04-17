@@ -50,7 +50,7 @@ function OPCUATab() {
           <CardHeader className="pb-2"><CardTitle className="text-xs">Nós ({nodes.length})</CardTitle></CardHeader>
           <CardContent className="space-y-1">
             {nodes.map(n => (
-              <div key={n.browseName} className="flex items-center justify-between text-[10px] border-b border-border/30 pb-1">
+              <div key={n.browseName} className="flex items-center justify-between text-[10px] border-b border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 pb-1">
                 <span className="font-mono">{n.displayName}</span>
                 <div className="flex items-center gap-1">
                   <Badge variant="outline" className="text-[8px]">{n.dataType}</Badge>

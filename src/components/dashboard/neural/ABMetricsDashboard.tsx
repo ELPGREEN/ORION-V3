@@ -141,7 +141,7 @@ export function ABMetricsDashboard() {
 
       {/* Top metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="bg-card border-border">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 mb-1">
               <Zap className="h-4 w-4 text-primary" />
@@ -150,7 +150,7 @@ export function ABMetricsDashboard() {
             <p className="text-2xl font-bold text-foreground">{stats.totalFeedback}</p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 mb-1">
               <ThumbsUp className="h-4 w-4 text-green-500" />
@@ -159,7 +159,7 @@ export function ABMetricsDashboard() {
             <p className="text-2xl font-bold text-green-500">{stats.positiveFeedback}</p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 mb-1">
               <ThumbsDown className="h-4 w-4 text-red-500" />
@@ -168,7 +168,7 @@ export function ABMetricsDashboard() {
             <p className="text-2xl font-bold text-red-500">{stats.negativeFeedback}</p>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -182,7 +182,7 @@ export function ABMetricsDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Feedback by Category */}
-        <Card className="bg-card border-border">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Atom className="h-4 w-4 text-violet-500" />
@@ -223,7 +223,7 @@ export function ABMetricsDashboard() {
         </Card>
 
         {/* Recent Feedback */}
-        <Card className="bg-card border-border">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -236,7 +236,7 @@ export function ABMetricsDashboard() {
                 <p className="text-xs text-muted-foreground text-center py-4">Nenhum feedback ainda</p>
               )}
               {stats.recentFeedback.map((fb, i) => (
-                <div key={i} className="flex items-start gap-2 p-2 bg-muted/20 border border-border/50 rounded text-[10px]">
+                <div key={i} className="flex items-start gap-2 p-2 bg-muted/20 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50 rounded text-[10px]">
                   {fb.feedback === "positive" ? (
                     <ThumbsUp className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
                   ) : (
@@ -258,7 +258,7 @@ export function ABMetricsDashboard() {
 
       {/* Quantum Weight Evolution */}
       {stats.weightEvolution.length > 0 && (
-        <Card className="bg-card border-border">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Atom className="h-4 w-4 text-violet-500" />
