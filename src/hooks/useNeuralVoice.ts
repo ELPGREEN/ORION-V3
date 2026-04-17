@@ -294,6 +294,7 @@ export function useNeuralVoice(
   const sentenceAccumulatorRef = useRef(""); // Accumulate partial sentences
   const sentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const micWatchdogRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const suppressPendingFlushUntilRef = useRef(0);
 
   // ── Sync ──
   const updateAiResponding = useCallback((val: boolean) => {
@@ -393,13 +394,18 @@ export function useNeuralVoice(
 
     // Flush any pending speech buffer
     if (speechBufferRef.current.trim() && onCmdRef.current) {
+      const shouldSuppressPendingFlush = Date.now() < suppressPendingFlushUntilRef.current;
       const pending = speechBufferRef.current.trim();
       speechBufferRef.current = "";
       if (speechDebounceRef.current) {
         clearTimeout(speechDebounceRef.current);
         speechDebounceRef.current = null;
       }
-      onCmdRef.current(pending);
+      if (!shouldSuppressPendingFlush) {
+        onCmdRef.current(pending);
+      } else {
+        console.log("[Voice] Suppressed stale pending transcript after TTS:", pending.slice(0, 80));
+      }
     }
 
     // If GCP STT is active (paused or running), just resume — no teardown
@@ -561,6 +567,7 @@ export function useNeuralVoice(
     OrbState.voiceState = "speaking";
     lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 800);
     lastSpokenAtRef.current = Date.now();
+    suppressPendingFlushUntilRef.current = Date.now() + 2500;
     speechBufferRef.current = "";
     sentenceAccumulatorRef.current = "";
     if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
