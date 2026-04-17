@@ -897,7 +897,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 <div key={i} className="flex items-center gap-1.5">
                   <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: `rgb(${r.avgR},${r.avgG},${r.avgB})`, boxShadow: `0 0 4px rgb(${r.avgR},${r.avgG},${r.avgB})` }} />
                   <span className="text-[9px] font-mono text-white/40 flex-1 truncate">{r.label}</span>
-                  <span className="text-[8px] font-mono text-[hsl(var(--tron-neon))]/50">{(r.confidence * 100).toFixed(0)}%</span>
+                  <span className="text-[8px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/50">{(r.confidence * 100).toFixed(0)}%</span>
                 </div>
               )) : (
                 <p className="text-[8px] text-white/15 font-mono text-center py-2">
@@ -1097,7 +1097,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
             <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-emerald-400/60" />
             <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
               <Activity className="h-3 w-3 text-[hsl(var(--tron-neon))] shrink-0" />
-              <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))]/80 tracking-wider uppercase">Raciocínio</span>
+              <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/80 tracking-wider uppercase">Raciocínio</span>
             </div>
             <div className="px-3 py-2">
               <div className="space-y-0.5 max-h-[80px] overflow-y-auto">
@@ -1175,7 +1175,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-cyan-400/30" />
               <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
                 <MessageCircle className="h-3 w-3 text-[hsl(var(--tron-neon))] shrink-0" />
-                <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))]/80 tracking-wider uppercase">IA Chat</span>
+                <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/80 tracking-wider uppercase">IA Chat</span>
                 {isProcessing && (
                   <span className="ml-auto text-[7px] font-mono text-amber-400 animate-pulse">●</span>
                 )}
@@ -1188,7 +1188,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                       <div className="flex flex-wrap gap-1 justify-center">
                         {["O que vê?", "Como estou?", "Agenda"].map(q => (
                           <button key={q} onClick={() => askAI(q)}
-                            className="text-[7px] font-mono text-[hsl(var(--tron-neon))]/30 border border-cyan-500/10 rounded px-1 py-0.5 hover:bg-cyan-400/5 hover:text-[hsl(var(--tron-neon))]/60 transition-colors">
+                            className="text-[7px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/30 border border-cyan-500/10 rounded px-1 py-0.5 hover:bg-cyan-400/5 hover:text-[hsl(var(--tron-neon))]/60 transition-colors">
                             {q}
                           </button>
                         ))}
@@ -1380,7 +1380,7 @@ function OrionStandalonePanel({
         <div className="p-3">
           <div className="flex items-center gap-2 mb-2">
             <MessageCircle className="h-3.5 w-3.5 text-[hsl(var(--tron-neon))]" />
-            <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))]/80 tracking-wider uppercase">Chat com Orion</span>
+            <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/80 tracking-wider uppercase">Chat com Orion</span>
             {isProcessing && <span className="ml-auto text-[8px] font-mono text-amber-400 animate-pulse">processando...</span>}
           </div>
           <div className="space-y-1.5 max-h-[200px] overflow-y-auto mb-2">
@@ -1390,7 +1390,7 @@ function OrionStandalonePanel({
                 <div className="flex flex-wrap gap-1.5 justify-center">
                   {["Quem é você?", "O que pode fazer?", "Agenda de hoje"].map(q => (
                     <button key={q} onClick={() => askAI(q)}
-                      className="text-[9px] font-mono text-[hsl(var(--tron-neon))]/40 border border-cyan-500/15 rounded px-2 py-1 hover:bg-cyan-400/5 hover:text-[hsl(var(--tron-neon))]/70 transition-colors">
+                      className="text-[9px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/40 border border-cyan-500/15 rounded px-2 py-1 hover:bg-cyan-400/5 hover:text-[hsl(var(--tron-neon))]/70 transition-colors">
                       {q}
                     </button>
                   ))}

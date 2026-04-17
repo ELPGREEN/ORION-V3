@@ -215,7 +215,7 @@ export default function HandControlPanel() {
             <Icon className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
             <span className="text-xs font-medium">{group.name}</span>
           </div>
-          <span className="text-xs font-mono text-[hsl(var(--tron-neon))]">{(groupPosition * 100).toFixed(0)}%</span>
+          <span className="text-xs font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">{(groupPosition * 100).toFixed(0)}%</span>
         </div>
         <Slider
           value={[groupPosition * 100]}
@@ -388,7 +388,7 @@ export default function HandControlPanel() {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-2 pb-2">
               <div className="text-[10px] text-zinc-500">Força Total</div>
-              <div className="text-sm font-mono text-[hsl(var(--tron-neon))]">
+              <div className="text-sm font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">
                 {handState.force.toFixed(1)}N
               </div>
             </CardContent>

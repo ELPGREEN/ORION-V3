@@ -104,7 +104,7 @@ export default function RevenueDashboardPanel() {
       <div className="grid grid-cols-4 gap-2 text-sm">
         <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
           <div className="text-[hsl(var(--tron-muted))] text-xs">Total Ganho</div>
-          <div className="text-xl font-mono text-[hsl(var(--tron-neon))]">
+          <div className="text-xl font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">
             R$ {((revenue?.totalEarned || 0) / 100).toFixed(2)}
           </div>
         </div>

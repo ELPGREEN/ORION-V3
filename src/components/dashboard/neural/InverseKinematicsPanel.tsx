@@ -280,7 +280,7 @@ export default function InverseKinematicsPanel() {
               <Card className="bg-zinc-900/50 border-zinc-800">
                 <CardContent className="pt-3 pb-2">
                   <Label className="text-[10px] text-zinc-500">X (m)</Label>
-                  <div className="text-lg font-mono text-[hsl(var(--tron-neon))]">{targetPos.x.toFixed(3)}</div>
+                  <div className="text-lg font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">{targetPos.x.toFixed(3)}</div>
                 </CardContent>
               </Card>
               <Card className="bg-zinc-900/50 border-zinc-800">

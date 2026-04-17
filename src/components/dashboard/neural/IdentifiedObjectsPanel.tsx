@@ -82,7 +82,7 @@ export function IdentifiedObjectsPanel({ objects }: { objects: IdentifiedObject[
       {/* Header */}
       <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
         <Target className="h-3 w-3 text-[hsl(var(--tron-neon))] shrink-0" />
-        <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))]/80 tracking-wider uppercase">Objetos</span>
+        <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/80 tracking-wider uppercase">Objetos</span>
         {totalCount > 0 && (
           <Badge variant="outline" className="ml-auto text-[7px] h-3.5 border-cyan-500/30 text-[hsl(var(--tron-neon))] font-mono">{totalCount}</Badge>
         )}
@@ -152,7 +152,7 @@ export function IdentifiedObjectsPanel({ objects }: { objects: IdentifiedObject[
               <div className="w-8 h-1 bg-white/[0.04] rounded-full overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: `${cfg.color}80` }} />
               </div>
-              <span className="text-[7px] font-mono text-[hsl(var(--tron-neon))]/40 w-5 text-right">{pct}%</span>
+              <span className="text-[7px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/40 w-5 text-right">{pct}%</span>
             </div>
           );
         }) : (

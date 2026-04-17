@@ -98,7 +98,7 @@ export default function ARCGatewayPanel() {
       <div className="grid grid-cols-4 gap-2 text-sm">
         <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
           <div className="text-[hsl(var(--tron-muted))]">APIs Ativas</div>
-          <div className="text-xl font-mono text-[hsl(var(--tron-neon))]">{gatewayState.activeAPIs}</div>
+          <div className="text-xl font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">{gatewayState.activeAPIs}</div>
         </div>
         <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
           <div className="text-[hsl(var(--tron-muted))]">Descobertas</div>
@@ -180,11 +180,11 @@ export default function ARCGatewayPanel() {
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
           <div className="text-[hsl(var(--tron-muted))]">APIs Aprendidas</div>
-          <div className="text-lg font-mono text-[hsl(var(--tron-neon))]">{apiLearnerDiag.learnedAPIs}</div>
+          <div className="text-lg font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">{apiLearnerDiag.learnedAPIs}</div>
         </div>
         <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
           <div className="text-[hsl(var(--tron-muted))]">Frameworks Conhecidos</div>
-          <div className="text-lg font-mono text-[hsl(var(--tron-neon))]">{apiLearnerDiag.frameworkKnowledge}</div>
+          <div className="text-lg font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">{apiLearnerDiag.frameworkKnowledge}</div>
         </div>
       </div>
 

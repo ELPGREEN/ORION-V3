@@ -150,7 +150,7 @@ export default function MonetizationDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-3 rounded">
               <div className="text-[hsl(var(--tron-muted))] text-xs">Receita Total</div>
-              <div className="text-2xl font-mono text-[hsl(var(--tron-neon))]">R$ {totalValue.toFixed(2)}</div>
+              <div className="text-2xl font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">R$ {totalValue.toFixed(2)}</div>
             </div>
             <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-3 rounded">
               <div className="text-[hsl(var(--tron-muted))] text-xs">Serviços</div>

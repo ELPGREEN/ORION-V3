@@ -350,7 +350,7 @@ export default function PLCIntegrationPanel() {
               {mqttTopics.map((topic, idx) => (
                 <div key={idx} className="flex items-center gap-2 p-2 bg-zinc-900/30 rounded">
                   <Signal className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
-                  <span className="text-xs font-mono text-[hsl(var(--tron-neon))]">{topic}</span>
+                  <span className="text-xs font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">{topic}</span>
                 </div>
               ))}
             </div>
