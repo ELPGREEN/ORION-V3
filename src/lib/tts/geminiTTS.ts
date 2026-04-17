@@ -254,30 +254,34 @@ export async function speakWithGeminiTTS(
   try {
     const sentences = splitIntoSentences(text);
 
-    // ── Fetch ALL sentences in parallel ──
-    const blobPromises = sentences.map((s) =>
+    // ⚡ STREAMING: kick off all fetches in parallel, but PLAY as soon as each one is ready
+    // Previously: Promise.all blocked until ALL chunks fetched (slowest = total wait)
+    // Now: first audio plays after ~chunk0 latency (~400-600ms), others overlap
+    const blobPromises: Promise<Blob | null>[] = sentences.map((s) =>
       fetchGeminiAudio(s, voice, localController.signal, stylePrompt, lang)
     );
-    const blobs = await Promise.all(blobPromises);
 
-    if (localController.signal.aborted) {
-      signal?.removeEventListener("abort", onExternalAbort);
-      return fail;
-    }
+    let anyPlayed = false;
+    let lastAudio: HTMLAudioElement | null = null;
+    let firstChunkFailed = false;
 
-    // Filter to valid blobs and pre-create object URLs
-    const validBlobs: Blob[] = [];
-    const blobUrls: string[] = [];
-    for (const blob of blobs) {
-      if (blob) {
-        validBlobs.push(blob);
-        blobUrls.push(URL.createObjectURL(blob));
+    for (let i = 0; i < blobPromises.length; i++) {
+      if (localController.signal.aborted) break;
+      const blob = await blobPromises[i];
+      if (!blob) {
+        if (i === 0) firstChunkFailed = true;
+        continue;
+      }
+      const result = await playAudioBlob(blob, localController.signal);
+      if (result.audio) {
+        anyPlayed = true;
+        lastAudio = result.audio;
       }
     }
 
-    if (validBlobs.length === 0) {
-      // ═══ FALLBACK: Try Google Cloud TTS when Gemini fails ═══
-      console.log("[Gemini TTS] No valid blobs, trying Google Cloud TTS fallback");
+    // Fallback: if first chunk failed AND nothing played, try Google Cloud TTS
+    if (!anyPlayed && firstChunkFailed) {
+      console.log("[Gemini TTS] First chunk failed, trying Google Cloud TTS fallback");
       try {
         const cloudResult = await fetchGoogleCloudTTSFallback(text, localController.signal);
         if (cloudResult) {
@@ -288,28 +292,6 @@ export async function speakWithGeminiTTS(
       } catch (e) {
         console.warn("[Gemini TTS] Google Cloud TTS fallback also failed:", e);
       }
-      signal?.removeEventListener("abort", onExternalAbort);
-      return fail;
-    }
-
-    // ── Play sequentially — simple and reliable ──
-    let anyPlayed = false;
-    let lastAudio: HTMLAudioElement | null = null;
-
-    for (let i = 0; i < validBlobs.length; i++) {
-      if (localController.signal.aborted) break;
-      URL.revokeObjectURL(blobUrls[i]);
-
-      const result = await playAudioBlob(validBlobs[i], localController.signal);
-      if (result.audio) {
-        anyPlayed = true;
-        lastAudio = result.audio;
-      }
-    }
-
-    // Clean up any remaining URLs
-    for (let i = 0; i < blobUrls.length; i++) {
-      try { URL.revokeObjectURL(blobUrls[i]); } catch {}
     }
 
     signal?.removeEventListener("abort", onExternalAbort);
