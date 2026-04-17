@@ -28,12 +28,12 @@ export interface GCPSTTSession {
   isPaused: () => boolean;
 }
 
-const PROCESSOR_BUFFER_SIZE = 4096;
-const PRE_ROLL_FRAMES = 4;
-const FLUSH_POLL_MS = 200;
+const PROCESSOR_BUFFER_SIZE = 2048; // Smaller buffer = faster reaction (~43ms @ 48kHz)
+const PRE_ROLL_FRAMES = 6; // More pre-roll to catch first phoneme cleanly
+const FLUSH_POLL_MS = 60; // Aggressive poll for instant turn detection
 const SPEECH_RMS_THRESHOLD = 0.01;
-// Fast mode: 1 second silence tolerance (optimized from 4000ms)
-const DEFAULT_SILENCE_MS = 1000;
+// ULTRA mode: 500ms silence — JARVIS-like instant response
+const DEFAULT_SILENCE_MS = 500;
 
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {
