@@ -444,13 +444,14 @@ export function useOrionReasoning(
       // ═══ FAST PRE-PROCESSING: Only intent classification (~2ms) ═══
       let processedInput = question;
 
+      const qLow = question.toLowerCase().trim();
       const intentType = classifyIntent(question, recentIntentsRef.current);
       const somResult = somClassify(question);
       const _isSpecialCmd = somResult.isSpecialCmd || intentType === "auto_construct" || intentType === "self_evolve";
-      const authUser = await getCachedUser();
+      const cachedAuthUser = await getCachedUser();
       let isOwner = false;
-      if (authUser?.id) {
-        const { data: userRole } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id).maybeSingle();
+      if (cachedAuthUser?.id) {
+        const { data: userRole } = await supabase.from("user_roles").select("role").eq("user_id", cachedAuthUser.id).maybeSingle();
         isOwner = userRole?.role === "advogado" || userRole?.role === "admin";
       }
 
@@ -495,7 +496,6 @@ export function useOrionReasoning(
       }
 
       let processedQuestion = voltage.normalizedInput;
-      const qLow = (processedInput || question).toLowerCase().trim();
 
       // ═══ VISION COMMAND INTERCEPT — handle locally, NEVER send to LLM ═══
       const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow);
@@ -1146,7 +1146,7 @@ export function useOrionReasoning(
       }
 
       // ═══ ARC-AGI-2 Stripe Credit Intelligence: Check credits/saldo/wallet ═══
-      const authUser = await getCachedUser();
+      const authUser = cachedAuthUser;
       let currentRole = "user";
       if (authUser) {
         const { data: ur } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id).maybeSingle();

@@ -287,7 +287,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (!navigator.mediaDevices?.getUserMedia) { toast.error("Câmera não suportada"); return; }
     try {
       if (streamRef.current) {
-        addConsoleCameraInfo("camera request skipped: stream already active");
+        console.info("[NeuralVision] camera request skipped: stream already active");
         setActive(true); VS.active = true;
         return;
       }
