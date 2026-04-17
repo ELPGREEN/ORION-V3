@@ -208,7 +208,7 @@ export default function PLCIntegrationPanel() {
                 if (preset) {
                   setPlcConnection(prev => ({
                     ...prev,
-                    protocol: preset.protocol,
+                    protocol: preset.protocol as PLCConnection["protocol"],
                     host: preset.host,
                     port: preset.port,
                   }));

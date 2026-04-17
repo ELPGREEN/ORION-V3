@@ -105,7 +105,7 @@ export default function ForceTorquePanel() {
           effort: 0,
         };
         setLatestForce(prev => prev ? { ...prev, ...forceData } : forceData);
-        setForceHistory(prev => [...prev.slice(-60), { ...forceData, force: prev?.force ?? 0, torque: prev?.torque ?? 0 }]);
+        setForceHistory(prev => [...prev.slice(-60), forceData]);
       }, 50)
     );
 

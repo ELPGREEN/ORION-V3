@@ -12,10 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Wifi, WifiOff, Arm, Box, Target, RotateCcw, Play, Pause,
+  Wifi, WifiOff, Bone, Box, Target, RotateCcw, Play, Pause,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Move, Zap,
   ChevronRight, Save, RefreshCw,
 } from "lucide-react";
+const Arm = Bone;
 import { useRosBridge } from "@/hooks/useRosBridge";
 import { toast } from "sonner";
 
@@ -125,11 +126,14 @@ export default function InverseKinematicsPanel() {
   const solveIK = (pos: CartesianPosition): JointAngles => {
     // Simplified analytical IK for 6-DOF arm
     // This is a placeholder - real implementation would use MoveIt! or similar
+    const shoulderPan = Math.atan2(pos.y, pos.x);
+    const shoulderLift = Math.atan2(pos.z, Math.sqrt(pos.x * pos.x + pos.y * pos.y)) - Math.PI / 4;
+    const elbow = -Math.abs(Math.atan2(pos.z - 0.3, 0.4)) + Math.PI / 2;
     const joints: JointAngles = {
-      shoulder_pan: Math.atan2(pos.y, pos.x),
-      shoulder_lift: Math.atan2(pos.z, Math.sqrt(pos.x * pos.x + pos.y * pos.y)) - Math.PI / 4,
-      elbow: -Math.abs(Math.atan2(pos.z - 0.3, 0.4)) + Math.PI / 2,
-      wrist1: -joints.shoulder_lift - joints.elbow,
+      shoulder_pan: shoulderPan,
+      shoulder_lift: shoulderLift,
+      elbow,
+      wrist1: -shoulderLift - elbow,
       wrist2: pos.roll,
       wrist3: pos.pitch,
     };
@@ -164,8 +168,8 @@ export default function InverseKinematicsPanel() {
           joints.wrist2,
           joints.wrist3,
         ],
-        velocities: [0] * 6,
-        accelerations: [0] * 6,
+        velocities: Array(6).fill(0),
+        accelerations: Array(6).fill(0),
         time_from_start: { secs: 2, nsecs: 0 },
       }],
     };
