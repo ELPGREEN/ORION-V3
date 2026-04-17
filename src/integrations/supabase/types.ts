@@ -6783,6 +6783,7 @@ export type Database = {
           business_type: string | null
           charges_enabled: boolean
           created_at: string
+          details_submitted: boolean | null
           display_name: string | null
           id: string
           onboarding_complete: boolean
@@ -6795,6 +6796,7 @@ export type Database = {
           business_type?: string | null
           charges_enabled?: boolean
           created_at?: string
+          details_submitted?: boolean | null
           display_name?: string | null
           id?: string
           onboarding_complete?: boolean
@@ -6807,6 +6809,7 @@ export type Database = {
           business_type?: string | null
           charges_enabled?: boolean
           created_at?: string
+          details_submitted?: boolean | null
           display_name?: string | null
           id?: string
           onboarding_complete?: boolean
