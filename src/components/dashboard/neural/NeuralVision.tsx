@@ -764,6 +764,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         onGuestIdentify={(name) => startGuestSession(name)}
         onVerifyVoice={handleVoiceIdentityCheck}
         onSkipAsOwner={() => setIdentityStatus("owner")}
+        onUnlockWithPin={() => setIdentityStatus("creator")}
       />
       {/* Controls — Tron styled */}
       <div className="relative flex flex-wrap items-center gap-2 rounded-lg p-2.5 overflow-hidden"
