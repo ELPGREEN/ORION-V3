@@ -10,10 +10,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ARC_BASE = "https://three.arcprize.org/api";
+const ARC_BASES: Record<string, string> = {
+  "3": "https://three.arcprize.org/api",
+  "2": "https://two.arcprize.org/api",
+};
 
 interface Body {
   action: "list_games" | "open_scorecard" | "reset" | "act" | "close_scorecard" | "get_scorecard";
+  version?: "2" | "3"; // ARC-AGI version, defaults to "3"
   game_id?: string;
   scorecard_id?: string;
   guid?: string;
@@ -21,8 +25,8 @@ interface Body {
   action_data?: Record<string, unknown>;
 }
 
-async function arcFetch(path: string, apiKey: string, init: RequestInit = {}): Promise<unknown> {
-  const r = await fetch(`${ARC_BASE}${path}`, {
+async function arcFetch(base: string, path: string, apiKey: string, init: RequestInit = {}): Promise<unknown> {
+  const r = await fetch(`${base}${path}`, {
     ...init,
     headers: {
       "X-API-Key": apiKey,
