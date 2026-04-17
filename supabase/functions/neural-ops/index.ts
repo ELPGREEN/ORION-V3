@@ -2342,6 +2342,8 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     if (!hasImage) {
       const vmUrl = Deno.env.get("ORION_VM_URL");
       if (vmUrl) {
+        // 2.5s — VM warm responde <500ms. Cold start cai no Vertex.
+        const VM_TIMEOUT_MS = 2500;
         try {
           attemptedProviders.push("vm_gemini_proxy");
           const vmBody = {
@@ -2355,9 +2357,6 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
             stream: true,
           };
           const controller = new AbortController();
-          // 2.5s — VM tem cache local quando warm, geralmente responde <500ms.
-          // Cold start cai pro Vertex automaticamente.
-          const VM_TIMEOUT_MS = 2500;
           const t0 = Date.now();
           const timer = setTimeout(() => controller.abort(), VM_TIMEOUT_MS);
           const vmResp = await fetch(`${vmUrl}/gemini`, {
