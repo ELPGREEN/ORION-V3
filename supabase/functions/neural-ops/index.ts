@@ -2355,7 +2355,11 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
             stream: true,
           };
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 800); // 800ms timeout — VM must be fast or skip
+          // 2.5s — VM tem cache local quando warm, geralmente responde <500ms.
+          // Cold start cai pro Vertex automaticamente.
+          const VM_TIMEOUT_MS = 2500;
+          const t0 = Date.now();
+          const timer = setTimeout(() => controller.abort(), VM_TIMEOUT_MS);
           const vmResp = await fetch(`${vmUrl}/gemini`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2364,14 +2368,14 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
           });
           clearTimeout(timer);
           if (vmResp.ok && vmResp.body) {
-            console.log("[Orion] ✅ Streaming via VM Gemini Proxy — FASTEST PATH");
+            console.log(`[Orion] ✅ VM Gemini Proxy — FASTEST PATH (${Date.now() - t0}ms)`);
             return new Response(vmResp.body, {
               headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
             });
           }
-          console.warn(`[Orion] VM proxy returned ${vmResp.status}`);
+          console.warn(`[Orion] VM proxy returned ${vmResp.status} in ${Date.now() - t0}ms`);
         } catch (e: any) {
-          console.warn("[Orion] VM Proxy skip (800ms timeout):", e?.message?.slice(0, 50));
+          console.warn(`[Orion] VM Proxy skip (${VM_TIMEOUT_MS}ms timeout):`, e?.message?.slice(0, 60));
         }
       }
     }
