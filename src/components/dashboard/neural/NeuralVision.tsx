@@ -334,6 +334,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       toast.error("Erro na câmera");
     }
   }, [speak]);
+  useEffect(() => { startCameraRef.current = startCamera; }, [startCamera]);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach(t => t.stop());
