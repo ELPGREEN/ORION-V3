@@ -899,6 +899,225 @@ export type Database = {
         }
         Relationships: []
       }
+      arc_actions_log: {
+        Row: {
+          action_payload: Json | null
+          action_type: string
+          created_at: string
+          game_id: string
+          id: string
+          observation: Json | null
+          reasoning: string | null
+          reward: number | null
+          scorecard_id: string
+          step: number
+        }
+        Insert: {
+          action_payload?: Json | null
+          action_type: string
+          created_at?: string
+          game_id: string
+          id?: string
+          observation?: Json | null
+          reasoning?: string | null
+          reward?: number | null
+          scorecard_id: string
+          step: number
+        }
+        Update: {
+          action_payload?: Json | null
+          action_type?: string
+          created_at?: string
+          game_id?: string
+          id?: string
+          observation?: Json | null
+          reasoning?: string | null
+          reward?: number | null
+          scorecard_id?: string
+          step?: number
+        }
+        Relationships: []
+      }
+      arc_evolution_proposals: {
+        Row: {
+          created_at: string
+          id: string
+          jules_pr_url: string | null
+          jules_session_id: string | null
+          proposed_changes: string
+          rationale: string
+          reviewer_notes: string | null
+          source_game_id: string | null
+          source_scorecard_id: string | null
+          status: string
+          target_files: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          jules_pr_url?: string | null
+          jules_session_id?: string | null
+          proposed_changes: string
+          rationale: string
+          reviewer_notes?: string | null
+          source_game_id?: string | null
+          source_scorecard_id?: string | null
+          status?: string
+          target_files?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          jules_pr_url?: string | null
+          jules_session_id?: string | null
+          proposed_changes?: string
+          rationale?: string
+          reviewer_notes?: string | null
+          source_game_id?: string | null
+          source_scorecard_id?: string | null
+          status?: string
+          target_files?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      arc_games: {
+        Row: {
+          best_score: number | null
+          description: string | null
+          discovered_at: string
+          game_id: string
+          id: string
+          last_played_at: string | null
+          metadata: Json | null
+          title: string | null
+          total_attempts: number
+          wins: number
+        }
+        Insert: {
+          best_score?: number | null
+          description?: string | null
+          discovered_at?: string
+          game_id: string
+          id?: string
+          last_played_at?: string | null
+          metadata?: Json | null
+          title?: string | null
+          total_attempts?: number
+          wins?: number
+        }
+        Update: {
+          best_score?: number | null
+          description?: string | null
+          discovered_at?: string
+          game_id?: string
+          id?: string
+          last_played_at?: string | null
+          metadata?: Json | null
+          title?: string | null
+          total_attempts?: number
+          wins?: number
+        }
+        Relationships: []
+      }
+      arc_scorecards: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          game_id: string
+          guid: string | null
+          id: string
+          level_reached: number | null
+          raw_payload: Json | null
+          score: number | null
+          scorecard_id: string
+          status: string
+          strategy_summary: string | null
+          total_actions: number | null
+          won: boolean | null
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          game_id: string
+          guid?: string | null
+          id?: string
+          level_reached?: number | null
+          raw_payload?: Json | null
+          score?: number | null
+          scorecard_id: string
+          status?: string
+          strategy_summary?: string | null
+          total_actions?: number | null
+          won?: boolean | null
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          game_id?: string
+          guid?: string | null
+          id?: string
+          level_reached?: number | null
+          raw_payload?: Json | null
+          score?: number | null
+          scorecard_id?: string
+          status?: string
+          strategy_summary?: string | null
+          total_actions?: number | null
+          won?: boolean | null
+        }
+        Relationships: []
+      }
+      arc_strategies: {
+        Row: {
+          created_at: string
+          derived_from_scorecard: string | null
+          description: string
+          game_id: string
+          id: string
+          pattern: Json | null
+          strategy_name: string
+          success_rate: number | null
+          updated_at: string
+          uses: number | null
+          wins: number | null
+        }
+        Insert: {
+          created_at?: string
+          derived_from_scorecard?: string | null
+          description: string
+          game_id: string
+          id?: string
+          pattern?: Json | null
+          strategy_name: string
+          success_rate?: number | null
+          updated_at?: string
+          uses?: number | null
+          wins?: number | null
+        }
+        Update: {
+          created_at?: string
+          derived_from_scorecard?: string | null
+          description?: string
+          game_id?: string
+          id?: string
+          pattern?: Json | null
+          strategy_name?: string
+          success_rate?: number | null
+          updated_at?: string
+          uses?: number | null
+          wins?: number | null
+        }
+        Relationships: []
+      }
       articles: {
         Row: {
           category: string | null

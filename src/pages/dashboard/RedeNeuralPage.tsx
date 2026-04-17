@@ -71,6 +71,7 @@ const ABMetricsDashboard = lazy(lazyRetry(() => import("@/components/dashboard/n
 const NeuralHealthDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralHealthDashboard").then(m => ({ default: m.NeuralHealthDashboard }))));
 const NeuralPDFReport = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralPDFReport").then(m => ({ default: m.NeuralPDFReport }))));
 const NeuralEvolutionPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralEvolutionPanel").then(m => ({ default: m.NeuralEvolutionPanel }))));
+const ARCAgentPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/ARCAgentPanel")));
 const JarvisHUD = lazy(lazyRetry(() => import("@/components/dashboard/neural/JarvisHUD").then(m => ({ default: m.JarvisHUD }))));
 const ProactiveAlerts = lazy(lazyRetry(() => import("@/components/dashboard/neural/ProactiveAlerts").then(m => ({ default: m.ProactiveAlerts }))));
 const NeuralNetworkLiveView = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralNetworkLiveView").then(m => ({ default: m.NeuralNetworkLiveView }))));
@@ -742,7 +743,18 @@ export default function RedeNeuralPage() {
             <span className="hidden sm:inline">Orquestrador</span>
             <span className="sm:hidden">KPIs</span>
           </TabsTrigger>
+          <TabsTrigger value="arc-agi" className="text-xs shrink-0 gap-1 px-2.5 py-1.5">
+            <Brain className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">ARC-AGI-3</span>
+            <span className="sm:hidden">ARC</span>
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="arc-agi" className="space-y-4">
+          <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando ARC...</div>}>
+            <ARCAgentPanel />
+          </Suspense>
+        </TabsContent>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
