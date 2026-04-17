@@ -284,9 +284,13 @@ export default function RobotVoiceCommands({ robotId }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-<<<<<<< Updated upstream
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {[
+              { label: "Ligar luz IoT", example: "\"ligar luz\"" },
+              { label: "Desligar luz IoT", example: "\"desligar luz\"" },
+              { label: "Ligar tomada", example: "\"ligar tomada\"" },
+              { label: "Desligar tomada", example: "\"desligar tomada\"" },
+              { label: "Listar IoT", example: "\"mostrar dispositivos IoT\"" },
               { label: "Mover para frente", example: "\"mover robô para frente\"" },
               { label: "Mover para trás", example: "\"mover para trás\"" },
               { label: "Girar esquerda/direita", example: "\"girar à esquerda\"" },
@@ -296,26 +300,7 @@ export default function RobotVoiceCommands({ robotId }: Props) {
               { label: "Garra", example: "\"abrir garra\" / \"fechar garra\"" },
               { label: "Status", example: "\"status do robô\"" },
             ].map(c => (
-              <div key={c.label} className="p-2 rounded border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50 text-xs">
-=======
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { label: "Ligar luz IoT", example: "\"ligar luz\"" },
-                { label: "Desligar luz IoT", example: "\"desligar luz\"" },
-                { label: "Ligar tomada", example: "\"ligar tomada\"" },
-                { label: "Desligar tomada", example: "\"desligar tomada\"" },
-                { label: "Listar IoT", example: "\"mostrar dispositivos IoT\"" },
-                { label: "Mover para frente", example: "\"mover robô para frente\"" },
-                { label: "Mover para trás", example: "\"mover para trás\"" },
-                { label: "Girar esquerda/direita", example: "\"girar à esquerda\"" },
-                { label: "Parar", example: "\"parar robô\"" },
-                { label: "Emergência", example: "\"parada de emergência\"" },
-                { label: "Navegar", example: "\"navegar para 3, 5\"" },
-                { label: "Garra", example: "\"abrir garra\" / \"fechar garra\"" },
-                { label: "Status", example: "\"status do robô\"" },
-              ].map(c => (
               <div key={c.label} className="p-2 rounded border border-border/50 text-xs">
->>>>>>> Stashed changes
                 <p className="font-medium">{c.label}</p>
                 <p className="text-muted-foreground font-mono text-[10px]">{c.example}</p>
               </div>
