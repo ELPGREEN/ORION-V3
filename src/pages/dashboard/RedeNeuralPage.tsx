@@ -742,7 +742,18 @@ export default function RedeNeuralPage() {
             <span className="hidden sm:inline">Orquestrador</span>
             <span className="sm:hidden">KPIs</span>
           </TabsTrigger>
+          <TabsTrigger value="arc-agi" className="text-xs shrink-0 gap-1 px-2.5 py-1.5">
+            <Brain className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">ARC-AGI-3</span>
+            <span className="sm:hidden">ARC</span>
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="arc-agi" className="space-y-4">
+          <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando ARC...</div>}>
+            <ARCAgentPanel />
+          </Suspense>
+        </TabsContent>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
