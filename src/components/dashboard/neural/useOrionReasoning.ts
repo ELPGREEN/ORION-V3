@@ -432,7 +432,8 @@ export function useOrionReasoning(
     const controller = new AbortController();
     if (abortControllerRef) abortControllerRef.current = controller;
 
-    // TTS warmup removed — was adding latency to first question
+    // ⚡ TTS warm-up: fire-and-forget while LLM thinks → cuts ~200-400ms cold-start
+    import("@/lib/tts/geminiTTS").then(m => m.warmUpGeminiTTS()).catch(() => {});
 
     try {
       // ═══ FAST PRE-PROCESSING: Only intent classification (~2ms) ═══

@@ -43,15 +43,25 @@ function isGeminiTTSCoolingDown(): boolean {
  * gaps and cut-off words. Only split if truly enormous.
  */
 function splitIntoSentences(text: string): string[] {
-  if (text.length <= 4500) return [text.trim()];
+  const trimmed = text.trim();
+  // ⚡ ULTRA: tiny first chunk = first audio in ~400-600ms instead of 1.5-2s
+  // Strategy: first chunk = up to 1st sentence boundary (max ~180 chars)
+  //           remaining chunks = ~1500 chars each (parallel fetch, gap-free play)
+  if (trimmed.length <= 180) return [trimmed];
 
-  // For longer texts: split at sentence boundaries into ~4000-char chunks
-  // This supports up to 8000 chars total with just 2 chunks
-  const sentences = text.match(/[^.!?]+[.!?]+\s*|[^.!?]+$/g) || [text];
+  const sentences = trimmed.match(/[^.!?]+[.!?]+\s*|[^.!?]+$/g) || [trimmed];
   const chunks: string[] = [];
+
+  // First chunk: just the first sentence (or first ~180 chars if huge)
+  let first = sentences[0] || "";
+  if (first.length > 220) first = first.slice(0, 200).replace(/\S+$/, "").trim() + "...";
+  chunks.push(first.trim());
+
+  // Remaining: pack into ~1500-char chunks
   let current = "";
-  for (const s of sentences) {
-    if (current.length + s.length > 4000 && current.length > 0) {
+  for (let i = 1; i < sentences.length; i++) {
+    const s = sentences[i];
+    if (current.length + s.length > 1500 && current.length > 0) {
       chunks.push(current.trim());
       current = s;
     } else {
@@ -60,6 +70,29 @@ function splitIntoSentences(text: string): string[] {
   }
   if (current.trim()) chunks.push(current.trim());
   return chunks.filter((c) => c.length > 2);
+}
+
+// ⚡ TTS WARM-UP: pre-warm edge function on speech_start to cut cold-start (~200-400ms)
+let _lastWarmUp = 0;
+export async function warmUpGeminiTTS(): Promise<void> {
+  const now = Date.now();
+  if (now - _lastWarmUp < 30_000) return; // throttle to once per 30s
+  _lastWarmUp = now;
+  if (isGeminiTTSCoolingDown()) return;
+  try {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-tts`;
+    // Fire-and-forget HEAD-like call with tiny payload to wake edge function
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ text: ".", voice: "Enceladus", warmup: true }),
+      signal: AbortSignal.timeout(3000),
+    }).catch(() => {}); // swallow — warm-up is best-effort
+  } catch {}
 }
 
 /**
@@ -221,30 +254,34 @@ export async function speakWithGeminiTTS(
   try {
     const sentences = splitIntoSentences(text);
 
-    // ── Fetch ALL sentences in parallel ──
-    const blobPromises = sentences.map((s) =>
+    // ⚡ STREAMING: kick off all fetches in parallel, but PLAY as soon as each one is ready
+    // Previously: Promise.all blocked until ALL chunks fetched (slowest = total wait)
+    // Now: first audio plays after ~chunk0 latency (~400-600ms), others overlap
+    const blobPromises: Promise<Blob | null>[] = sentences.map((s) =>
       fetchGeminiAudio(s, voice, localController.signal, stylePrompt, lang)
     );
-    const blobs = await Promise.all(blobPromises);
 
-    if (localController.signal.aborted) {
-      signal?.removeEventListener("abort", onExternalAbort);
-      return fail;
-    }
+    let anyPlayed = false;
+    let lastAudio: HTMLAudioElement | null = null;
+    let firstChunkFailed = false;
 
-    // Filter to valid blobs and pre-create object URLs
-    const validBlobs: Blob[] = [];
-    const blobUrls: string[] = [];
-    for (const blob of blobs) {
-      if (blob) {
-        validBlobs.push(blob);
-        blobUrls.push(URL.createObjectURL(blob));
+    for (let i = 0; i < blobPromises.length; i++) {
+      if (localController.signal.aborted) break;
+      const blob = await blobPromises[i];
+      if (!blob) {
+        if (i === 0) firstChunkFailed = true;
+        continue;
+      }
+      const result = await playAudioBlob(blob, localController.signal);
+      if (result.audio) {
+        anyPlayed = true;
+        lastAudio = result.audio;
       }
     }
 
-    if (validBlobs.length === 0) {
-      // ═══ FALLBACK: Try Google Cloud TTS when Gemini fails ═══
-      console.log("[Gemini TTS] No valid blobs, trying Google Cloud TTS fallback");
+    // Fallback: if first chunk failed AND nothing played, try Google Cloud TTS
+    if (!anyPlayed && firstChunkFailed) {
+      console.log("[Gemini TTS] First chunk failed, trying Google Cloud TTS fallback");
       try {
         const cloudResult = await fetchGoogleCloudTTSFallback(text, localController.signal);
         if (cloudResult) {
@@ -255,28 +292,6 @@ export async function speakWithGeminiTTS(
       } catch (e) {
         console.warn("[Gemini TTS] Google Cloud TTS fallback also failed:", e);
       }
-      signal?.removeEventListener("abort", onExternalAbort);
-      return fail;
-    }
-
-    // ── Play sequentially — simple and reliable ──
-    let anyPlayed = false;
-    let lastAudio: HTMLAudioElement | null = null;
-
-    for (let i = 0; i < validBlobs.length; i++) {
-      if (localController.signal.aborted) break;
-      URL.revokeObjectURL(blobUrls[i]);
-
-      const result = await playAudioBlob(validBlobs[i], localController.signal);
-      if (result.audio) {
-        anyPlayed = true;
-        lastAudio = result.audio;
-      }
-    }
-
-    // Clean up any remaining URLs
-    for (let i = 0; i < blobUrls.length; i++) {
-      try { URL.revokeObjectURL(blobUrls[i]); } catch {}
     }
 
     signal?.removeEventListener("abort", onExternalAbort);

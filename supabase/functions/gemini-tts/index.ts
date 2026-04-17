@@ -472,6 +472,13 @@ Deno.serve(async (req) => {
     const prompt = typeof body?.prompt === "string" ? body.prompt : DEFAULT_PROMPT;
     const multispeaker = Array.isArray(body?.multispeaker) ? body.multispeaker as MultiSpeakerVoice[] : undefined;
 
+    // ⚡ Warm-up ping: client wants to wake the function but skip synthesis
+    if (body?.warmup === true) {
+      // Pre-fetch access token so the next real request is hot
+      try { const sa = getServiceAccount(); if (sa) await getAccessToken(sa); } catch {}
+      return jsonResponse({ warmed: true });
+    }
+
     if (!text.trim()) return jsonResponse({ error: "Text is required" }, 400);
 
     const cleanText = text.trim().slice(0, 5000);
