@@ -292,7 +292,7 @@ export function useOrionReasoning(
     if (now - lastEnvPushRef.current < 60000) return;
     lastEnvPushRef.current = now;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCachedUser();
       if (!user) return;
       await (supabase.from("environmental_context" as any) as any)
         .update({ ativo: false }).eq("user_id", user.id).eq("ativo", true);
@@ -310,7 +310,7 @@ export function useOrionReasoning(
     qualityScore: number = 0.7, metrics?: Record<string, any>,
   ) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCachedUser();
       if (!user) return;
       await supabase.from("neural_learning_data").insert({
         user_id: user.id, input_text: input.slice(0, 500),

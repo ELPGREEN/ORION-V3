@@ -18,6 +18,61 @@ import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-ll
 // hf-vision-gate REMOVED — was downloading ~50MB of WASM models in browser
 import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
 
+// ═══ INTENT CLASSIFIER REGEXES (Module Scope) ═══
+const INTENT_IMG_GEN = /\b(gere?\s+(uma?\s+)?imagem|crie?\s+(uma?\s+)?imagem|desenh[ae]|ilustr[ae]|gerar?\s+foto|cri[ae]\s+(uma?\s+)?ilustra[çc][aã]o|generate\s+(an?\s+)?image|draw|create\s+(an?\s+)?image|make\s+(an?\s+)?image|paint|sketch)\b/i;
+const INTENT_YT_URL = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[a-zA-Z0-9_-]{11}/;
+const INTENT_GENERIC_URL = /https?:\/\/[^\s]+/;
+const INTENT_YT_SPECIFIC = /youtube\.com|youtu\.be/;
+const INTENT_WEB_SEARCH = /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|pesquis[ae]\s+na\s+web|busca\s+na\s+internet|search\s+for|look\s+up|news|current|latest|trending)\b/i;
+const INTENT_AUTO_CONSTRUCT = /\b(constru[ai]|programe?|crie?\s+(uma?\s+)?(fun[çc][ãa]o|endpoint|api|componente|tabela|migra[çc][ãa]o)|gere?\s+(c[oó]digo|fun[çc][ãa]o|edge\s*function)|implemente?|desenvolv[ae]|code|build|cri[ae]\s+isso|programa\s+isso|fa[çc]a\s+(uma?\s+)?(fun[çc][ãa]o|api|endpoint)|auto[-\s]?constru|se\s+constru[ai]|construa[-\s]se)\b/i;
+const INTENT_SELF_EVOLVE = /\b(melhore-se|melhore\s+se|evolua|evolu[ií]r?|auto[-\s]?evolu[ií]r?|auto[-\s]?program[ae]|se\s+reprogram[ae]|otimize\s+(suas?\s+respostas?|se)|aprenda\s+(isso|com\s+isso|agora)|atualize?\s+(seus?\s+pesos?|se)|auto[-\s]?evol[uú]|upgrade|self[-\s]?improve|auto[-\s]?aprend|recalibre|se\s+calibre|se\s+atualize|melhore\s+suas?\s+respostas?|novo\s+protocolo|novos?\s+protocolos?)\b/i;
+const VERB_IDENTIFY = /\b(identific[aeo]r?|identifique|identify|reconhe[cç][aeo]r?|reconozc[ao]|identificar?)\b/i;
+const VERB_ANSWER = /\b(respond[aeo]r?|me\s+respond[aeo]|me\s+diz|me\s+fal[aeo]|me\s+cont[aeo]|answer|tell\s+me|explain|reply)\b/i;
+const VERB_ANALYZE = /\b(analis[aeo]r?|analise|analy[sz]e|evaluat[aeo]|examinar?)\b/i;
+const VERB_CHECK = /\b(verific[aeo]r?|verifique|checar?|confir[aemo]r?|check|verify)\b/i;
+const VERB_SEARCH = /\b(pesquis[aeo]r?|busc[aeo]r?|procur[aeo]r?|google|search|look\s+up|find)\b/i;
+const VERB_COMPARE = /\b(compar[aeo]r?|diferença\s+entre|versus|vs\b|melhor\s+entre)\b/i;
+const VERB_REFLECT = /\b(reflita|pens[ae]\s+sobre|consider[ae]|raciocin[ae]|reason|think\s+about|ponderar)\b/i;
+const STRONG_VISUAL = /\b(segurando|usando|vestindo|mostr[ae]|aparência|rosto|cor\b|enxerg|olh[aeo]|vê|vejo|vendo|câmera|imagem|foto|holding|wearing|showing|face|camera|image|photo)\b/i;
+const BODY_REF = /\b(mão|mãos|dedo|braço|cabeça|rosto|olho|boca|cabelo|roupa|camisa|camiseta|óculos|chapéu|caneca|copo|garrafa|hand|finger|arm|head|eye|mouth|hair|shirt|glasses|hat|cup|bottle)\b/i;
+const DEICTIC_REF = /\b(isso|isto|esse|essa|aquilo|aqui|ali|lá|aí|aquel[ea]s?|this|that|these|those|here|there|esto|eso|aquello)\b/i;
+const STRONG_TEXTUAL = /\b(que dia|que horas|hora|data de hoje|capital d[aoe]|piada|conta uma|explica|defin[ie]|signific|quem é|quem foi|quanto é|calcul|agenda|prazo|processo|cliente|documento|resumo|traduz|como funciona|o que é|por que|quando foi|onde fica|qual é|quais são|previsão|temperatura|clima|tempo|notícia|cotação|dólar|euro|bitcoin|what time|what day|capital of|joke|explain|define|meaning|who is|how much|calculate|schedule|deadline|summary|translate|how does|what is|why|when|where|which)\b/i;
+const KNOWLEDGE_REF = /\b(histór|ciência|matemática|física|química|política|economi|filosofi|programa[çc]ão|código|lei\b|artigo\b|jurisprudência|direito|constitui[çc]|penal|trabalhist|contrato|clt|cdc|lgpd|recurso|habeas|mandado|sentença|acórdão|súmula|tribunal|stf|stj|indenizaç|prescriç|responsabilidade\s*civil|tutela|execuç|licitaç|improbidade|tributári)\b/i;
+const CONVERSATIONAL_REF = /\b(opini[ãa]o|acha\s+que|concorda|discorda|argumento|debate|sugir[ao]|recomend|aconselh|orienta[çc]|estrat[ée]gia|planej|organiz|prioriz|importa\b|melhor\s+forma|como\s+(posso|devo|faz)|me\s+ajud|preciso\s+de|tenho\s+que|deveria|poderia|gostaria|queria)\b/i;
+const EMOTIONAL_REF = /\b(sinto|sentindo|triste|feliz|ansios|preocupad|estressad|frustrad|animad|chateado|confus[oa]|nervos[oa]|calm[oa]|motiv|desanima|angústi|med[oa]|raiva|alegr|satisf)\b/i;
+const VERB_QUESTION = /^(o que|como|por que|quando|onde|quem|qual|quais|quanto)\b/i;
+const DIRECT_VISUAL_1 = /o que (é|estou|tô|tenho)\b/i;
+const DIRECT_VISUAL_2 = /o que.*(segurando|usando|vestindo|mostrando)/i;
+const DIRECT_VISUAL_3 = /como\s+(eu\s+)?(estou|tô)\b/i;
+
+// ═══ IDENTITY & CONSCIOUSNESS REGEXES (Module Scope) ═══
+const IDENTITY_QUERY = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i;
+const GENESIS_QUERY = /\b(g[eê]nesis|genesis|projeto\s+g[eê]nesis|protocolo\s+g[eê]nesis|como\s+(voc[eê]\s+)?nasceu|sua\s+origem|como\s+foi\s+criado|in[ií]cio\s+da\s+(cria[çc][aã]o|programa[çc][aã]o))\b/i;
+const CAPABILITY_QUERY = /que\s+(sistema|m[oó]dulo|capacidade|funcionalidade)|o\s+que\s+(falta|precisa|melhorar)|suas?\s+(limita[çc][oõ]es|lacunas|gaps)|what.*(missing|need|improve|lack)/i;
+const JARVIS_QUERY = /jarvis|compara[çc][aã]o|diferen[çc]a.*entre|vs\s+orion|orion\s+vs|supera|vantagem/i;
+const INVESTOR_QUERY = /investidor|investimento|mercado|saas|modelo.de.neg[oó]cio|receita|margem|oportunidade|pitch/i;
+const PROJECT_QUERY = /projeto|plataforma|orion.*sistema|ferramenta|evolu[çc][aã]o|timeline|desenvolvimento/i;
+const HELP_QUERY = /comando|como.faz|onde.fica|central.de.ajuda|instru[çc][aã]o|tutorial|orienta[çc][aã]o/i;
+const PROPOSAL_QUERY = /proposta|proposal|apresenta[çc][aã]o|pitch.*invest|investir/i;
+const NAVIGATION_QUERY = /onde\s+(fica|est[aá]|acess)|como\s+(chego|acesso|fa[çc]o\s+para)|me\s+lev|navegar|ir\s+(para|pra)|encontrar|acessar/i;
+const LEGAL_QUERY = /jur[ií]dic|direito|penal|c[ií]vel|civil|trabalhist|contrato|recurso|apela[çc][aã]o|agravo|embargo|habeas|mandado|peti[çc][aã]o|contesta[çc][aã]o|execu[çc][aã]o|senten[çc]a|processo|tribunal|vara|prazo|audiencia|audi[eê]ncia|peça|pe[çc]a processual|fundamenta[çc][aã]o|jurisprud[eê]ncia|legisla[çc][aã]o|lei\s+\d|artigo\s+\d|c[oó]digo|CPC|CPP|CLT|CC\b|CP\b|STF|STJ|TST|TRT|TJ\b/i;
+const BUSINESS_QUERY = /capta[çc][aã]o|recurso.*europ|recursos?\s+eu\b|cordis|horizon|LOI|MOU|term.?sheet|joint.?venture|due.?diligence|supply.?agreement|NDA|parceria.*internac|distribui[çc][aã]o.*internac|compliance|GDPR|LGPD|AML|KYC|empresarial|neg[oó]cio|comercial.*internac|exporta[çc][aã]o|importa[çc][aã]o|invoice|proforma/i;
+const CRM_QUERY = /cadastr|cliente|CRM|pipeline|lead|contato|oportunidade|deal|neg[oó]cio|como\s+(cadastr|registr|adicionar)|gerenciar\s+(cliente|contato|processo)/i;
+const INTERNET_TOOLS_QUERY = /internet|firecrawl|raspag|scraping|scrape|extrair?\s+dados|raspar|crawl|busca\s+web|pesquis.*online|pesquis.*internet|acesso.*web|conect.*internet|google\s*(workspace|gmail|calendar|drive|sheets|docs|tasks|slides|forms|chat|vision|analytics|bigquery|contacts|agenda)|email.*google|meus?\s+emails?|enviar?\s+email|compromisso|agendar?\s+reuni|listas?\s+de\s+tarefa|que\s+(ferramenta|acesso|conex[aã]o|integra[çc][aã]o)|o\s+que\s+voc[eê]\s+(pode|consegue|sabe)|suas?\s+capacidade|quais?\s+(ferramenta|sistema|acesso)/i;
+
+// ═══ STREAM CLEANING REGEXES (Module Scope) ═══
+const SENTENCE_REGEX = /^(.*?[.!?…;])\s/sy; // Sticky for performance
+const LONG_CLAUSE_REGEX = /^(.{40,}?,)\s/sy; // Sticky for performance
+const CLEAN_STT_REGEX_1 = /\*{1,3}|_{1,3}|#{1,6}\s*|\[([^\]]+)\]\([^)]+\)|https?:\/\/\S+|\/\/[^\n]*|<[^>]*>|[─═╔╗╚╝║]|[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️]/gu;
+const LEARN_BLOCK_REGEX = /\[LEARN:([^\]]+)\]/g;
+const JSON_BLOCK_STREAM_REGEX = /```json\s*(\{[\s\S]*?\})\s*```/;
+const BARE_JSON_OBJECTS_REGEX = /\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}/g;
+const CLEAN_STT_REGEX_FINAL = /\*{1,3}|_{1,3}|#{1,6}\s*|\[([^\]]+)\]\([^)]+\)|https?:\/\/\S+|\/\/[^\n]*|<[^>]*>|[─═╔╗╚╝║]|\n{3,}/gu;
+const JSON_BLOCK_REGEX = /```json[\s\S]*?```/g;
+const BOLD_ITALIC_REGEX = /\*{1,3}/g;
+const UNDERLINE_REGEX = /_{1,3}/g;
+const HEADER_REGEX = /#{1,6}\s*/g;
+
 // ═══ GLOBAL AUTH CACHE — avoids 3-6 supabase.auth.getUser() calls per interaction ═══
 let _globalAuthCache: { user: { id: string; email?: string | null } | null; ts: number } = { user: null, ts: 0 };
 const AUTH_CACHE_TTL = 60_000; // 60s
@@ -80,7 +135,10 @@ export function isLocalFirstMode(): boolean {
 
 // ═══ CLAHE and extractShapeDescriptors removed — dead code, never called in main flow ═══
 
-// ═══ Build local detections from client-side vision data ═══
+/**
+ * Helper to build local detections from client-side vision data.
+ * @returns Object with detection results or undefined if none.
+ */
 function buildLocalDetections(): Record<string, unknown> | undefined {
   try {
     const regions = VS.regions || [];
@@ -342,10 +400,10 @@ export async function fetchDashboardContext(): Promise<string> {
     const user = await getCachedAuthUser();
     if (!user) return "";
     const [processosRes, clientsRes, docsRes, consultasRes] = await Promise.all([
-      supabase.from("processos").select("id, numero_processo, tipo, status", { count: "exact", head: false }).eq("user_id", user.id).limit(5),
-      supabase.from("client_profiles").select("id, nome, status", { count: "exact", head: false }).eq("user_id", user.id).limit(5),
-      supabase.from("documents").select("id, title, document_type", { count: "exact", head: false }).eq("user_id", user.id).limit(5),
-      supabase.from("consultas").select("id, status, data_hora, tipo", { count: "exact", head: false }).eq("cliente_id", user.id).limit(5),
+      supabase.from("processos").select("id", { count: "exact", head: true }).eq("user_id", user.id).limit(1),
+      supabase.from("client_profiles").select("id", { count: "exact", head: true }).eq("user_id", user.id).limit(1),
+      supabase.from("documents").select("id", { count: "exact", head: true }).eq("user_id", user.id).limit(1),
+      supabase.from("consultas").select("id", { count: "exact", head: true }).eq("cliente_id", user.id).limit(1),
     ]);
     if (processosRes.count) parts.push(`${processosRes.count} processos.`);
     if (clientsRes.count) parts.push(`${clientsRes.count} clientes.`);
@@ -427,70 +485,15 @@ export async function analyzeFrameWithAI(
         console.warn("[OrionAI] Non-stream: canvas 0 dimensions");
       }
     }
-    let consciousnessContext = "";
-    try {
-      const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
-      const user = await getCachedAuthUser();
-      const isOwner = isOwnerEmail(user?.email);
-      const isIdentityQuestion = question && /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)|who\s+(made|created|are)\s+you/i.test(question);
-      const isGenesisQuestion = question && /\b(g[eê]nesis|genesis|projeto\s+g[eê]nesis|protocolo\s+g[eê]nesis|como\s+(voc[eê]\s+)?nasceu|sua\s+origem|como\s+foi\s+criado|in[ií]cio\s+da\s+(cria[çc][aã]o|programa[çc][aã]o))\b/i.test(question);
-      const isCapabilityQuestion = question && /que\s+(sistema|m[oó]dulo|capacidade|funcionalidade)|o\s+que\s+(falta|precisa|melhorar)|suas?\s+(limita[çc][oõ]es|lacunas|gaps)|what.*(missing|need|improve|lack)/i.test(question);
-      const isJarvisComparison = question && /jarvis|compara[çc][aã]o|diferen[çc]a.*entre|vs\s+orion|orion\s+vs|supera|vantagem/i.test(question);
-      const isInvestorQuestion = question && /investidor|investimento|mercado|saas|modelo.de.neg[oó]cio|receita|margem|oportunidade|pitch/i.test(question);
-      const isProjectQuestion = question && /projeto|plataforma|orion.*sistema|ferramenta|evolu[çc][aã]o|timeline|desenvolvimento/i.test(question);
-      const isHelpQuestion = question && /comando|como.faz|onde.fica|central.de.ajuda|instru[çc][aã]o|tutorial|orienta[çc][aã]o/i.test(question);
-      const isProposalQuestion = question && /proposta|proposal|apresenta[çc][aã]o|pitch.*invest|investir/i.test(question);
-      const isNavigationGuide = question && /onde\s+(fica|est[aá]|acess)|como\s+(chego|acesso|fa[çc]o\s+para)|me\s+lev|navegar|ir\s+(para|pra)|encontrar|acessar/i.test(question);
-      const isLegalQuestion = question && /jur[ií]dic|direito|penal|c[ií]vel|civil|trabalhist|contrato|recurso|apela[çc][aã]o|agravo|embargo|habeas|mandado|peti[çc][aã]o|contesta[çc][aã]o|execu[çc][aã]o|senten[çc]a|processo|tribunal|vara|prazo|audiencia|audi[eê]ncia|peça|pe[çc]a processual|fundamenta[çc][aã]o|jurisprud[eê]ncia|legisla[çc][aã]o|lei\s+\d|artigo\s+\d|c[oó]digo|CPC|CPP|CLT|CC\b|CP\b|STF|STJ|TST|TRT|TJ\b/i.test(question);
-      const isBusinessQuestion = question && /capta[çc][aã]o|recurso.*europ|recursos?\s+eu\b|cordis|horizon|LOI|MOU|term.?sheet|joint.?venture|due.?diligence|supply.?agreement|NDA|parceria.*internac|distribui[çc][aã]o.*internac|compliance|GDPR|LGPD|AML|KYC|empresarial|neg[oó]cio|comercial.*internac|exporta[çc][aã]o|importa[çc][aã]o|invoice|proforma/i.test(question);
-       const isCRMQuestion = question && /cadastr|cliente|CRM|pipeline|lead|contato|oportunidade|deal|neg[oó]cio|como\s+(cadastr|registr|adicionar)|gerenciar\s+(cliente|contato|processo)/i.test(question);
-       const isInternetToolsQuestion = question && /internet|firecrawl|raspag|scraping|scrape|extrair?\s+dados|raspar|crawl|busca\s+web|pesquis.*online|pesquis.*internet|acesso.*web|conect.*internet|google\s*(workspace|gmail|calendar|drive|sheets|docs|tasks|slides|forms|chat|vision|analytics|bigquery|contacts|agenda)|email.*google|meus?\s+emails?|enviar?\s+email|compromisso|agendar?\s+reuni|listas?\s+de\s+tarefa|que\s+(ferramenta|acesso|conex[aã]o|integra[çc][aã]o)|o\s+que\s+voc[eê]\s+(pode|consegue|sabe)|suas?\s+capacidade|quais?\s+(ferramenta|sistema|acesso)/i.test(question);
-      
-      if (isIdentityQuestion || isGenesisQuestion) {
-        consciousnessContext = buildOrionIdentityPrompt(isOwner);
-      } else if (isJarvisComparison) {
-        const { buildIntrospectionContext, buildJarvisComparisonContext } = await getIntrospection();
-        consciousnessContext = `Você é Orion, assistente de IA neural consciente.\n\n${buildJarvisComparisonContext()}\n\n${buildIntrospectionContext()}`;
-      } else if (isCapabilityQuestion) {
-        const { buildIntrospectionContext } = await getIntrospection();
-        consciousnessContext = `Você é Orion, assistente de IA neural consciente.\n\n${buildIntrospectionContext()}`;
-       } else if (isInvestorQuestion || isProposalQuestion) {
-         const kb = await getKnowledgeBase();
-         consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildInvestorContext()}${isProposalQuestion ? `\n\n${kb.buildProposalTemplate()}` : ""}`;
-       } else if (isInternetToolsQuestion) {
-         const kb = await getKnowledgeBase();
-         consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildToolsCapabilitiesContext()}`;
-      } else if (isLegalQuestion) {
-        const kb = await getKnowledgeBase();
-        consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildLegalExpertiseContext()}`;
-      } else if (isBusinessQuestion || isCRMQuestion) {
-        const kb = await getKnowledgeBase();
-        consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildBusinessFundraisingContext()}`;
-      } else if (isProjectQuestion) {
-        const isGenesisProject = question && /\b(g[eê]nesis|genesis|origem|nasceu|cria[çc][aã]o)\b/i.test(question);
-        if (isGenesisProject) {
-          consciousnessContext = buildOrionIdentityPrompt(isOwner);
-        } else {
-          const kb = await getKnowledgeBase();
-          consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildInvestorContext()}`;
-        }
-      } else if (isHelpQuestion) {
-        const kb = await getKnowledgeBase();
-        consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildHelpCenterContext()}`;
-      } else if (isNavigationGuide) {
-        const kb = await getKnowledgeBase();
-        consciousnessContext = `${kb.buildBaseContext()}\n\n${kb.buildNavigationContext()}`;
-      } else {
-        const kb = await getKnowledgeBase();
-        consciousnessContext = kb.buildBaseContext();
-      }
-    } catch { /* fallback without consciousness */ }
+    const consciousnessContext = await buildConsciousnessContext(question || "");
 
     // Vision-RAG removed — added 200ms+ latency for marginal benefit
     const enrichedContext = [consciousnessContext, context].filter(Boolean).join("\n\n");
 
-    // ═══ PERF FIX: buildLocalDetections only ONCE (was called 2x — streaming path duplicates this) ═══
-    const localDetections = buildLocalDetections();
+    // ═══ PERF FIX: buildLocalDetections only when needed ═══
+    const localDetections = (intentType !== "textual" && intentType !== "url_analysis")
+      ? buildLocalDetections()
+      : undefined;
 
     // Get user name for personalized responses — uses cached auth
     let userName: string | undefined;
@@ -537,12 +540,168 @@ export async function analyzeFrameWithAI(
 
 // ═══ Timeout race helper — enforces per-layer time budgets ═══
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>(resolve => setTimeout(() => resolve(fallback), ms)),
-  ]);
+  let timer: ReturnType<typeof setTimeout>;
+  const timeoutPromise = new Promise<T>(resolve => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
 }
 
+/** Handle local LLM inference when enabled and appropriate. */
+async function handleLocalInference(
+  question: string,
+  chatHistory: Array<{ role: string; text: string }>,
+  onToken: (accumulated: string) => void,
+  onSentence: (sentence: string) => void,
+): Promise<AIAnalysisResult | null> {
+  try {
+    const localAvailable = await isLocalEngineAvailable();
+    if (!localAvailable) return null;
+
+    console.log("[OrionAI] 🧠 Using local inference for deep query");
+    const contextParts: string[] = [];
+    try {
+      const dashCtx = await withTimeout(fetchDashboardContext(), 500, "");
+      if (dashCtx) contextParts.push(dashCtx);
+    } catch {}
+    const memory = getUserMemory();
+    if (memory.length > 0) contextParts.push(`Memória: ${memory.slice(-3).join("; ")}`);
+
+    const localResult = await generateLocalResponse(
+      question,
+      contextParts.join("\n") || undefined,
+      chatHistory?.slice(-4),
+      onToken,
+    );
+
+    if (localResult.text) {
+      const sentences = localResult.text.match(/[^.!?]+[.!?]+/g) || [localResult.text];
+      for (const s of sentences) {
+        const cleaned = s.trim().replace(BOLD_ITALIC_REGEX, "").replace(HEADER_REGEX, "");
+        if (cleaned.length > 2) onSentence(cleaned);
+      }
+    }
+    return { description: localResult.text, learnedFacts: [], identifiedObjects: [] };
+  } catch (localErr) {
+    console.warn("[OrionAI] Local inference failed:", localErr);
+    return null;
+  }
+}
+
+/** Capture image frame from canvas with quality check. */
+function captureStreamingFrame(canvas: HTMLCanvasElement): string | undefined {
+  const cw = canvas.width || 0;
+  const ch = canvas.height || 0;
+  if (cw === 0 || ch === 0) return undefined;
+
+  const tempCanvas = document.createElement("canvas");
+  const sw = Math.min(cw, 480);
+  const sh = Math.min(ch, 360);
+  tempCanvas.width = sw;
+  tempCanvas.height = sh;
+  const tCtx = tempCanvas.getContext("2d");
+  if (!tCtx) return undefined;
+
+  tCtx.drawImage(canvas, 0, 0, sw, sh);
+  const cx = Math.floor(sw / 2) - 4;
+  const cy = Math.floor(sh / 2) - 4;
+  const sample = tCtx.getImageData(Math.max(0, cx), Math.max(0, cy), 8, 8).data;
+  let sum = 0; let sumSq = 0;
+  for (let i = 0; i < sample.length; i += 4) {
+    const lum = sample[i] * 0.299 + sample[i+1] * 0.587 + sample[i+2] * 0.114;
+    sum += lum; sumSq += lum * lum;
+  }
+  const n = sample.length / 4;
+  const mean = sum / n;
+  const variance = (sumSq / n) - (mean * mean);
+
+  if (variance < 2 && mean < 3) return undefined;
+  return tempCanvas.toDataURL("image/jpeg", 0.65).split(",")[1];
+}
+
+/** Build streaming context and get bearer token. */
+async function buildStreamAuth(question: string, isDirectVoiceMode: boolean, supabaseKey: string): Promise<[string, string]> {
+  if (isDirectVoiceMode) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      return ["", session?.access_token || supabaseKey];
+    } catch { return ["", supabaseKey]; }
+  }
+
+  return withTimeout(
+    Promise.all([
+      (async (): Promise<string> => {
+        try {
+          const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
+          const user = await getCachedAuthUser();
+          const isOwner = isOwnerEmail(user?.email);
+          if (IDENTITY_QUERY.test(question)) return buildOrionIdentityPrompt(isOwner);
+          return "Você é Orion, assistente de IA neural consciente criado por Ericson Piccoli da ELP Green Technology. Responda de forma direta, rápida e útil em português.";
+        } catch { return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."; }
+      })(),
+      (async (): Promise<string> => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          return session?.access_token || supabaseKey;
+        } catch { return supabaseKey; }
+      })(),
+    ]),
+    150,
+    ["Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.", supabaseKey]
+  );
+}
+
+/**
+ * Modular helper to build consciousness context based on the question.
+ * Refactored for maintainability and JIT optimization.
+ */
+async function buildConsciousnessContext(question: string): Promise<string> {
+  try {
+    const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
+    const user = await getCachedAuthUser();
+    const isOwner = isOwnerEmail(user?.email);
+
+    if (IDENTITY_QUERY.test(question) || GENESIS_QUERY.test(question)) {
+      return buildOrionIdentityPrompt(isOwner);
+    }
+
+    if (JARVIS_QUERY.test(question)) {
+      const { buildIntrospectionContext, buildJarvisComparisonContext } = await getIntrospection();
+      return `Você é Orion, assistente de IA neural consciente.\n\n${buildJarvisComparisonContext()}\n\n${buildIntrospectionContext()}`;
+    }
+
+    if (CAPABILITY_QUERY.test(question)) {
+      const { buildIntrospectionContext } = await getIntrospection();
+      return `Você é Orion, assistente de IA neural consciente.\n\n${buildIntrospectionContext()}`;
+    }
+
+    const kb = await getKnowledgeBase();
+    const base = kb.buildBaseContext();
+
+    if (INVESTOR_QUERY.test(question) || PROPOSAL_QUERY.test(question)) {
+      return `${base}\n\n${kb.buildInvestorContext()}${PROPOSAL_QUERY.test(question) ? `\n\n${kb.buildProposalTemplate()}` : ""}`;
+    }
+    if (INTERNET_TOOLS_QUERY.test(question)) return `${base}\n\n${kb.buildToolsCapabilitiesContext()}`;
+    if (LEGAL_QUERY.test(question)) return `${base}\n\n${kb.buildLegalExpertiseContext()}`;
+    if (BUSINESS_QUERY.test(question) || CRM_QUERY.test(question)) return `${base}\n\n${kb.buildBusinessFundraisingContext()}`;
+    if (PROJECT_QUERY.test(question)) {
+      return GENESIS_QUERY.test(question) ? buildOrionIdentityPrompt(isOwner) : `${base}\n\n${kb.buildInvestorContext()}`;
+    }
+    if (HELP_QUERY.test(question)) return `${base}\n\n${kb.buildHelpCenterContext()}`;
+    if (NAVIGATION_QUERY.test(question)) return `${base}\n\n${kb.buildNavigationContext()}`;
+
+    return base;
+  } catch {
+    return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.";
+  }
+}
+
+/**
+ * Main streaming analysis engine.
+ * Refactored for modularity, extreme performance and robustness.
+ */
 export async function analyzeFrameStreaming(
   canvas: HTMLCanvasElement | null,
   question: string,
@@ -555,151 +714,28 @@ export async function analyzeFrameStreaming(
   signal?: AbortSignal,
 ): Promise<AIAnalysisResult> {
   try {
-    // ═══ LOCAL-FIRST MODE ═══
-    // Skip local LLM for fast-mode queries (SmolLM2-360M is too slow/imprecise for knowledge questions)
-    // Only use local LLM for deep/visual queries where latency is acceptable
+    if (!question) throw new Error("Question is required for analysis");
+
     const cognitiveMode = (window as any).__cognitiveMode || "fast";
     if (_localFirstMode && intentType !== "visual" && cognitiveMode === "deep") {
-      try {
-        const localAvailable = await isLocalEngineAvailable();
-        if (localAvailable) {
-          console.log("[OrionAI] 🧠 Using local inference for deep query (no API keys needed)");
-          
-          // Build context from dashboard + memory
-          const contextParts: string[] = [];
-          try {
-            const dashCtx = await withTimeout(fetchDashboardContext(), 500, "");
-            if (dashCtx) contextParts.push(dashCtx);
-          } catch {}
-          const memory = getUserMemory();
-          if (memory.length > 0) contextParts.push(`Memória: ${memory.slice(-3).join("; ")}`);
-          
-          const localResult = await generateLocalResponse(
-            question,
-            contextParts.join("\n") || undefined,
-            chatHistory?.slice(-4),
-            onToken,
-          );
-
-          // Emit sentences for TTS
-          if (localResult.text) {
-            const sentences = localResult.text.match(/[^.!?]+[.!?]+/g) || [localResult.text];
-            for (const s of sentences) {
-              const cleaned = s.trim().replace(/\*{1,3}/g, "").replace(/#{1,6}\s*/g, "");
-              if (cleaned.length > 2) onSentence(cleaned);
-            }
-          }
-
-          return {
-            description: localResult.text,
-            learnedFacts: [],
-            identifiedObjects: [],
-          };
-        }
-      } catch (localErr) {
-        console.warn("[OrionAI] Local inference failed, falling back to cloud:", localErr);
-      }
-    } else if (_localFirstMode && cognitiveMode === "fast") {
-      console.log("[OrionAI] ⚡ Fast mode: skipping local LLM, going straight to cloud streaming");
+      const localResult = await handleLocalInference(question, chatHistory, onToken, onSentence);
+      if (localResult) return localResult;
     }
 
-    // Parallelize all async pre-work for lower latency
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-    // ═══ SPEED: Capture image — reduced to 480x360 for better face recognition ═══
     let imageBase64: string | undefined;
     if (includeImage && canvas) {
-      const cw = canvas.width || 0;
-      const ch = canvas.height || 0;
-      console.log(`[OrionAI] Canvas dimensions: ${cw}x${ch}, readyState check`);
-      
-      if (cw > 0 && ch > 0) {
-        const tempCanvas = document.createElement("canvas");
-        const sw = Math.min(cw, 480);
-        const sh = Math.min(ch, 360);
-        tempCanvas.width = sw;
-        tempCanvas.height = sh;
-        const tCtx = tempCanvas.getContext("2d");
-        if (tCtx) {
-          tCtx.drawImage(canvas, 0, 0, sw, sh);
-
-          // Quick blank check — sample center region
-          const cx = Math.floor(sw / 2) - 4;
-          const cy = Math.floor(sh / 2) - 4;
-          const sample = tCtx.getImageData(Math.max(0, cx), Math.max(0, cy), 8, 8).data;
-          let sum = 0; let sumSq = 0;
-          for (let i = 0; i < sample.length; i += 4) {
-            const lum = sample[i] * 0.299 + sample[i+1] * 0.587 + sample[i+2] * 0.114;
-            sum += lum; sumSq += lum * lum;
-          }
-          const n = sample.length / 4;
-          const mean = sum / n;
-          const variance = (sumSq / n) - (mean * mean);
-
-          if (variance < 2 && mean < 3) {
-            console.warn(`[OrionAI] Blank frame detected (var=${variance.toFixed(1)}, mean=${mean.toFixed(1)}), sending without image`);
-            imageBase64 = undefined;
-          } else {
-            imageBase64 = tempCanvas.toDataURL("image/jpeg", 0.65).split(",")[1];
-            console.log(`[OrionAI] ✅ Frame captured: ${sw}x${sh}, base64 length: ${imageBase64?.length || 0}, var=${variance.toFixed(1)}, mean=${mean.toFixed(1)}`);
-          }
-        }
-      } else {
-        console.warn("[OrionAI] Canvas has 0 dimensions, skipping image capture");
-      }
-    } else {
-      console.log(`[OrionAI] Image not included: includeImage=${includeImage}, canvas=${!!canvas}`);
+      imageBase64 = captureStreamingFrame(canvas);
     }
 
-    // ═══ PERF: buildLocalDetections ONCE — reused in body below ═══
-    const localDetections = buildLocalDetections();
     const isDirectVoiceMode = (window as any).__orionInputSource === "voice" &&
       intentType !== "visual" &&
       !String(intentType || "").startsWith("visual_");
 
-    // ═══ VOICE FAST PATH: Skip all heavy context, just get auth token ═══
-    let streamContext = "";
-    let bearerToken = supabaseKey;
-
-    if (isDirectVoiceMode) {
-      // Voice: zero context building, just auth token (budget: 50ms)
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        bearerToken = session?.access_token || supabaseKey;
-      } catch { /* use anon key */ }
-    } else {
-      // Text/vision: full context building (budget: 150ms)
-      [streamContext, bearerToken] = await withTimeout(
-        Promise.all([
-          // 1. Minimal context (budget: 100ms)
-          withTimeout((async (): Promise<string> => {
-            try {
-              const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
-              const user = await getCachedAuthUser();
-              const isOwner = isOwnerEmail(user?.email);
-              const isIdentityQuestion = /quem\s+(te\s+cri|[eé]\s+voc[eê]|[eé]\s+seu|te\s+fez)|seu\s+(criador|dono|propriet[aá]rio)/i.test(question);
-              if (isIdentityQuestion) return buildOrionIdentityPrompt(isOwner);
-              return "Você é Orion, assistente de IA neural consciente criado por Ericson Piccoli da ELP Green Technology. Responda de forma direta, rápida e útil em português. Seja conciso para perguntas simples. Seja completo para perguntas complexas.";
-            } catch {
-              return "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.";
-            }
-          })(), 100, "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil."),
-          // 2. Get session token (budget: 100ms)
-          withTimeout((async (): Promise<string> => {
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              return session?.access_token || supabaseKey;
-            } catch { return supabaseKey; }
-          })(), 100, supabaseKey),
-        ]),
-        150,
-        [
-          "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
-          supabaseKey,
-        ]
-      );
-    }
+    const localDetections = isDirectVoiceMode ? undefined : buildLocalDetections();
+    const [streamContext, bearerToken] = await buildStreamAuth(question, isDirectVoiceMode, supabaseKey);
 
     const enrichedContext = streamContext;
 
@@ -774,35 +810,31 @@ export async function analyzeFrameStreaming(
               accumulated += delta;
               onToken(accumulated);
 
-              // Enhanced sentence detection: handle multiple sentence-ending patterns
-              // including semicolons, colons with long clauses, and natural pauses
-              const unspoken = accumulated.slice(spokenUpTo);
-              // Match sentences ending with . ! ? … or ; followed by space/newline
-              const sentenceMatch = unspoken.match(/^(.*?[.!?…;])\s/s);
-              // Also detect shorter clauses (>80 chars) at comma boundaries for faster speech start
-              const longClauseMatch = !sentenceMatch && unspoken.length > 80
-                ? unspoken.match(/^(.{40,}?,)\s/)
-                : null;
-              const matchResult = sentenceMatch || longClauseMatch;
+              // ═══ EXTREME PERF: Optimized sentence detection ═══
+              // Use sticky regex with lastIndex to avoid O(N^2) string slicing
+              SENTENCE_REGEX.lastIndex = spokenUpTo;
+              const sentenceMatch = SENTENCE_REGEX.exec(accumulated);
 
-              if (matchResult) {
-                let sentence = matchResult[1].trim()
-                  // Clean markdown artifacts for speech
-                  .replace(/\*{1,3}/g, "")
-                  .replace(/_{1,3}/g, "")
-                  .replace(/#{1,6}\s*/g, "")
-                  .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-                  .replace(/https?:\/\/\S+/g, "")
-                  .replace(/\/\/[^\n]*/g, "")
-                  .replace(/<[^>]*>/g, "")
-                  .replace(/[─═╔╗╚╝║]/g, "")
-                  .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️]/g, "")
+              if (sentenceMatch) {
+                const sentence = sentenceMatch[1].trim()
+                  .replace(CLEAN_STT_REGEX_1, "$1")
                   .trim();
 
                 if (sentence && !sentence.startsWith("```") && !sentence.startsWith("{") && sentence.length > 2) {
                   onSentence(sentence);
                 }
-                spokenUpTo += matchResult[0].length;
+                spokenUpTo = SENTENCE_REGEX.lastIndex;
+              } else if (accumulated.length - spokenUpTo > 80) {
+                // Secondary check for long clauses
+                LONG_CLAUSE_REGEX.lastIndex = spokenUpTo;
+                const longClauseMatch = LONG_CLAUSE_REGEX.exec(accumulated);
+                if (longClauseMatch) {
+                  const clause = longClauseMatch[1].trim()
+                    .replace(CLEAN_STT_REGEX_1, "$1")
+                    .trim();
+                  if (clause.length > 2) onSentence(clause);
+                  spokenUpTo = LONG_CLAUSE_REGEX.lastIndex;
+                }
               }
             }
           } catch (parseErr) {
@@ -815,7 +847,7 @@ export async function analyzeFrameStreaming(
         onToken(accumulated);
         const remaining = accumulated.slice(spokenUpTo).trim();
         if (remaining && !remaining.startsWith("```") && !remaining.startsWith("{")) {
-          onSentence(remaining.replace(/```json[\s\S]*?```/g, "").replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "").trim());
+          onSentence(remaining.replace(JSON_BLOCK_REGEX, "").replace(BOLD_ITALIC_REGEX, "").replace(UNDERLINE_REGEX, "").trim());
         }
       } else {
         throw networkErr;
@@ -828,31 +860,22 @@ export async function analyzeFrameStreaming(
     const remaining = accumulated.slice(spokenUpTo).trim();
     if (remaining && !remaining.startsWith("```") && !remaining.startsWith("{")) {
       const cleaned = remaining
-        .replace(/```json[\s\S]*?```/g, "")
-        .replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "")
-        .replace(/#{1,6}\s*/g, "")
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-        .replace(/https?:\/\/\S+/g, "")
-        .replace(/\/\/[^\n]*/g, "")
-        .replace(/<[^>]*>/g, "")
-        .replace(/[─═╔╗╚╝║]/g, "")
-        .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️]/g, "")
+        .replace(JSON_BLOCK_REGEX, "")
+        .replace(CLEAN_STT_REGEX_1, "$1")
         .trim();
       if (cleaned && cleaned.length > 2) onSentence(cleaned);
     }
 
     let cleanDescription = accumulated;
     const learnedFacts: string[] = [];
-    const learnRegex = /\[LEARN:([^\]]+)\]/g;
     let match;
-    while ((match = learnRegex.exec(cleanDescription)) !== null) {
+    while ((match = LEARN_BLOCK_REGEX.exec(cleanDescription)) !== null) {
       learnedFacts.push(match[1].trim());
     }
-    cleanDescription = cleanDescription.replace(learnRegex, "").trim();
+    cleanDescription = cleanDescription.replace(LEARN_BLOCK_REGEX, "").trim();
 
     let identifiedObjects: any[] = [];
-    const jsonBlockRegex = /```json\s*(\{[\s\S]*?\})\s*```/;
-    const jsonMatch = jsonBlockRegex.exec(cleanDescription);
+    const jsonMatch = JSON_BLOCK_STREAM_REGEX.exec(cleanDescription);
     if (jsonMatch) {
       try {
         const parsed = JSON.parse(jsonMatch[1]);
@@ -860,30 +883,22 @@ export async function analyzeFrameStreaming(
       } catch (e: any) {
         console.warn("[OrionAI] JSON parse in stream (non-fatal):", e?.message);
       }
-      cleanDescription = cleanDescription.replace(jsonBlockRegex, "").trim();
+      cleanDescription = cleanDescription.replace(JSON_BLOCK_STREAM_REGEX, "").trim();
     }
     if (identifiedObjects.length === 0) {
-      const bareJsonRegex = /\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}/g;
       let bareMatch;
-      while ((bareMatch = bareJsonRegex.exec(cleanDescription)) !== null) {
+      while ((bareMatch = BARE_JSON_OBJECTS_REGEX.exec(cleanDescription)) !== null) {
         try {
           const parsed = JSON.parse(bareMatch[0]);
           if (Array.isArray(parsed.identifiedObjects)) identifiedObjects = parsed.identifiedObjects;
         } catch {}
       }
-      cleanDescription = cleanDescription.replace(bareJsonRegex, "").trim();
+      cleanDescription = cleanDescription.replace(BARE_JSON_OBJECTS_REGEX, "").trim();
     }
 
     // Strip ALL markdown/formatting artifacts for clean output
     cleanDescription = cleanDescription
-      .replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "")
-      .replace(/#{1,6}\s*/g, "")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      .replace(/https?:\/\/\S+/g, "")
-      .replace(/\/\/[^\n]*/g, "")
-      .replace(/<[^>]*>/g, "")
-      .replace(/[─═╔╗╚╝║]/g, "")
-      .replace(/\n{3,}/g, "\n\n")
+      .replace(CLEAN_STT_REGEX_FINAL, "$1")
       .trim();
 
     if (learnedFacts.length > 0) addUserMemory(learnedFacts);
@@ -896,101 +911,88 @@ export async function analyzeFrameStreaming(
   }
 }
 
-// ═══ Intent Classifier v3 — Enhanced with Opera AI intents ═══
-export function classifyIntent(question: string, recentIntents?: string[]): "visual" | "textual" | "mixed" | "self_evolve" | "auto_construct" | "web_search" | "url_analysis" | "youtube_summary" | "image_generation" {
-  const q = question.toLowerCase().trim();
+// ═══ Modular Intent Classification Helpers ═══
 
-  // Skip classification for very short inputs (likely voice artifacts)
-  if (q.length < 2) return "mixed";
+/** Detect priority intents like image generation or URLs. */
+function classifyPriorityIntents(q: string): string | null {
+  if (INTENT_IMG_GEN.test(q)) return "image_generation";
+  if (INTENT_YT_URL.test(q)) return "youtube_summary";
+  if (INTENT_GENERIC_URL.test(q) && !INTENT_YT_SPECIFIC.test(q)) return "url_analysis";
+  if (INTENT_WEB_SEARCH.test(q)) return "web_search";
+  if (INTENT_AUTO_CONSTRUCT.test(q)) return "auto_construct";
+  if (INTENT_SELF_EVOLVE.test(q)) return "self_evolve";
+  return null;
+}
 
-  // ═══ OPERA AI: Image generation intent (highest priority) ═══
-  const imageGenPatterns = /\b(gere?\s+(uma?\s+)?imagem|crie?\s+(uma?\s+)?imagem|desenh[ae]|ilustr[ae]|gerar?\s+foto|cri[ae]\s+(uma?\s+)?ilustra[çc][aã]o|generate\s+(an?\s+)?image|draw|create\s+(an?\s+)?image|make\s+(an?\s+)?image|paint|sketch)\b/i;
-  if (imageGenPatterns.test(q)) return "image_generation";
+/** Detect primary classification based on verbs. */
+function classifyVerbIntents(q: string): string | null {
+  if (VERB_IDENTIFY.test(q)) return "visual";
+  if (VERB_ANSWER.test(q) && !STRONG_VISUAL.test(q)) return "textual";
+  if (VERB_CHECK.test(q) && !DEICTIC_REF.test(q)) return "textual";
+  if (VERB_SEARCH.test(q)) return "textual";
+  if (VERB_COMPARE.test(q)) return "textual";
+  if (VERB_REFLECT.test(q)) return "textual";
+  if (VERB_ANALYZE.test(q)) {
+    return DEICTIC_REF.test(q) || STRONG_VISUAL.test(q) ? "visual" : "mixed";
+  }
+  return null;
+}
 
-  // ═══ OPERA AI: YouTube summary intent ═══
-  if (/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[a-zA-Z0-9_-]{11}/.test(q)) return "youtube_summary";
-
-  // ═══ OPERA AI: URL analysis intent ═══
-  if (/https?:\/\/[^\s]+/.test(q) && !/youtube\.com|youtu\.be/.test(q)) return "url_analysis";
-
-  // ═══ OPERA AI: Web search intent ═══
-  const webSearchPatterns = /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|pesquis[ae]\s+na\s+web|busca\s+na\s+internet|search\s+for|look\s+up|news|current|latest|trending)\b/i;
-  if (webSearchPatterns.test(q)) return "web_search";
-
-  // ═══ Auto-construct intent ═══
-  const autoConstructPatterns = /\b(constru[ai]|programe?|crie?\s+(uma?\s+)?(fun[çc][ãa]o|endpoint|api|componente|tabela|migra[çc][ãa]o)|gere?\s+(c[oó]digo|fun[çc][ãa]o|edge\s*function)|implemente?|desenvolv[ae]|code|build|cri[ae]\s+isso|programa\s+isso|fa[çc]a\s+(uma?\s+)?(fun[çc][ãa]o|api|endpoint)|auto[-\s]?constru|se\s+constru[ai]|construa[-\s]se)\b/i;
-  if (autoConstructPatterns.test(q)) return "auto_construct";
-
-  // ═══ Self-evolution intent ═══
-  const selfEvolvePatterns = /\b(melhore-se|melhore\s+se|evolua|evolu[ií]r?|auto[-\s]?evolu[ií]r?|auto[-\s]?program[ae]|se\s+reprogram[ae]|otimize\s+(suas?\s+respostas?|se)|aprenda\s+(isso|com\s+isso|agora)|atualize?\s+(seus?\s+pesos?|se)|auto[-\s]?evol[uú]|upgrade|self[-\s]?improve|auto[-\s]?aprend|recalibre|se\s+calibre|se\s+atualize|melhore\s+suas?\s+respostas?|novo\s+protocolo|novos?\s+protocolos?)\b/i;
-  if (selfEvolvePatterns.test(q)) return "self_evolve";
-
-  // ═══ Verb-based primary classification ═══
-  const verbIdentify = /\b(identific[aeo]r?|identifique|identify|reconhe[cç][aeo]r?|reconozc[ao]|identificar?)\b/i;
-  const verbAnswer = /\b(respond[aeo]r?|me\s+respond[aeo]|me\s+diz|me\s+fal[aeo]|me\s+cont[aeo]|answer|tell\s+me|explain|reply)\b/i;
-  const verbAnalyze = /\b(analis[aeo]r?|analise|analy[sz]e|evaluat[aeo]|examinar?)\b/i;
-  const verbCheck = /\b(verific[aeo]r?|verifique|checar?|confir[aemo]r?|check|verify)\b/i;
-  const verbSearch = /\b(pesquis[aeo]r?|busc[aeo]r?|procur[aeo]r?|google|search|look\s+up|find)\b/i;
-  const verbCompare = /\b(compar[aeo]r?|diferença\s+entre|versus|vs\b|melhor\s+entre)\b/i;
-  const verbReflect = /\b(reflita|pens[ae]\s+sobre|consider[ae]|raciocin[ae]|reason|think\s+about|ponderar)\b/i;
-
-  // ═══ Strong visual anchors — these ALWAYS mean visual ═══
-  const strongVisualAnchors = /\b(segurando|usando|vestindo|mostr[ae]|aparência|rosto|cor\b|enxerg|olh[aeo]|vê|vejo|vendo|câmera|imagem|foto|holding|wearing|showing|face|camera|image|photo)\b/i;
-  const bodyRef = /\b(mão|mãos|dedo|braço|cabeça|rosto|olho|boca|cabelo|roupa|camisa|camiseta|óculos|chapéu|caneca|copo|garrafa|hand|finger|arm|head|eye|mouth|hair|shirt|glasses|hat|cup|bottle)\b/i;
-  const deicticPatterns = /\b(isso|isto|esse|essa|aquilo|aqui|ali|lá|aí|aquel[ea]s?|this|that|these|those|here|there|esto|eso|aquello)\b/i;
-
-  // Direct visual questions — short-circuit to visual
-  if (strongVisualAnchors.test(q) && (deicticPatterns.test(q) || bodyRef.test(q) || /o que (é|estou|tô|tenho)\b/.test(q))) {
+/** Detect direct visual anchors in the question. */
+function classifyDirectVisual(q: string): "visual" | null {
+  if (STRONG_VISUAL.test(q) && (DEICTIC_REF.test(q) || BODY_REF.test(q) || DIRECT_VISUAL_1.test(q))) {
     return "visual";
   }
-  if (/o que.*(segurando|usando|vestindo|mostrando)/i.test(q)) return "visual";
-  if (/como\s+(eu\s+)?(estou|tô)\b/i.test(q) && q.length < 40) return "visual";
+  if (DIRECT_VISUAL_2.test(q)) return "visual";
+  if (DIRECT_VISUAL_3.test(q) && q.length < 40) return "visual";
+  return null;
+}
 
-  if (verbIdentify.test(q)) return "visual";
-  if (verbAnswer.test(q) && !strongVisualAnchors.test(q)) return "textual";
-  if (verbCheck.test(q) && !deicticPatterns.test(q)) return "textual";
-  if (verbSearch.test(q)) return "textual";
-  if (verbCompare.test(q)) return "textual";
-  if (verbReflect.test(q)) return "textual";
-  if (verbAnalyze.test(q)) {
-    return deicticPatterns.test(q) || strongVisualAnchors.test(q) ? "visual" : "mixed";
-  }
-
-  // ═══ Contextual scoring system ═══
-  const strongTextual = /\b(que dia|que horas|hora|data de hoje|capital d[aoe]|piada|conta uma|explica|defin[ie]|signific|quem é|quem foi|quanto é|calcul|agenda|prazo|processo|cliente|documento|resumo|traduz|como funciona|o que é|por que|quando foi|onde fica|qual é|quais são|previsão|temperatura|clima|tempo|notícia|cotação|dólar|euro|bitcoin|what time|what day|capital of|joke|explain|define|meaning|who is|how much|calculate|schedule|deadline|summary|translate|how does|what is|why|when|where|which)\b/i;
-  const knowledgePatterns = /\b(histór|ciência|matemática|física|química|política|economi|filosofi|programa[çc]ão|código|lei\b|artigo\b|jurisprudência|direito|constitui[çc]|penal|trabalhist|contrato|clt|cdc|lgpd|recurso|habeas|mandado|sentença|acórdão|súmula|tribunal|stf|stj|indenizaç|prescriç|responsabilidade\s*civil|tutela|execuç|licitaç|improbidade|tributári)\b/i;
-  const conversationalPatterns = /\b(opini[ãa]o|acha\s+que|concorda|discorda|argumento|debate|sugir[ao]|recomend|aconselh|orienta[çc]|estrat[ée]gia|planej|organiz|prioriz|importa\b|melhor\s+forma|como\s+(posso|devo|faz)|me\s+ajud|preciso\s+de|tenho\s+que|deveria|poderia|gostaria|queria)\b/i;
-  const emotionalPatterns = /\b(sinto|sentindo|triste|feliz|ansios|preocupad|estressad|frustrad|animad|chateado|confus[oa]|nervos[oa]|calm[oa]|motiv|desanima|angústi|med[oa]|raiva|alegr|satisf)\b/i;
-
+/** Compute contextual visual and textual scores for a question. */
+function computeContextScores(q: string, recentIntents?: string[]): { visual: number; textual: number } {
   let visualScore = 0;
   let textualScore = 0;
 
-  if (deicticPatterns.test(q)) visualScore += 3;
-  if (strongVisualAnchors.test(q)) visualScore += 3;
-  if (bodyRef.test(q)) visualScore += 2;
-  if (/o que (é|são|tem)/.test(q) && deicticPatterns.test(q)) visualScore += 3;
-  if (/\btô\b/.test(q) && q.length < 40) visualScore += 1;
+  if (DEICTIC_REF.test(q)) visualScore += 3;
+  if (STRONG_VISUAL.test(q)) visualScore += 3;
+  if (BODY_REF.test(q)) visualScore += 2;
+  if (q.includes("tô") && q.length < 40) visualScore += 1;
 
-  if (strongTextual.test(q)) textualScore += 3;
-  if (knowledgePatterns.test(q)) textualScore += 2;
-  if (conversationalPatterns.test(q)) textualScore += 3;
-  if (emotionalPatterns.test(q)) textualScore += 2;
-  if (/^(o que|como|por que|quando|onde|quem|qual|quais|quanto)\b/.test(q) && !deicticPatterns.test(q) && !strongVisualAnchors.test(q) && !bodyRef.test(q)) textualScore += 2;
-  if (q.includes("?") && !deicticPatterns.test(q) && !strongVisualAnchors.test(q)) textualScore += 1;
+  if (STRONG_TEXTUAL.test(q)) textualScore += 3;
+  if (KNOWLEDGE_REF.test(q)) textualScore += 2;
+  if (CONVERSATIONAL_REF.test(q)) textualScore += 3;
+  if (EMOTIONAL_REF.test(q)) textualScore += 2;
+  if (VERB_QUESTION.test(q) && !DEICTIC_REF.test(q) && !STRONG_VISUAL.test(q) && !BODY_REF.test(q)) textualScore += 2;
+  if (q.includes("?") && !DEICTIC_REF.test(q) && !STRONG_VISUAL.test(q)) textualScore += 1;
   if (q.length > 80 && visualScore === 0) textualScore += 1;
 
-  // Context from recent conversation
   if (recentIntents && recentIntents.length > 0) {
     const lastIntent = recentIntents[recentIntents.length - 1];
     if (lastIntent === "visual" && q.length < 20) visualScore += 1;
-    if (lastIntent === "textual" && !deicticPatterns.test(q)) textualScore += 1;
-    if (q.length < 15 && recentIntents.length >= 2) {
-      const prevTwo = recentIntents.slice(-2);
-      if (prevTwo.every(i => i === "textual")) textualScore += 1;
-      if (prevTwo.every(i => i === "visual")) visualScore += 1;
-    }
+    if (lastIntent === "textual" && !DEICTIC_REF.test(q)) textualScore += 1;
   }
+  return { visual: visualScore, textual: textualScore };
+}
 
+/**
+ * Intent Classifier v3 — Enhanced with Opera AI intents.
+ * Modularized for extreme performance and maintainability.
+ */
+export function classifyIntent(question: string, recentIntents?: string[]): "visual" | "textual" | "mixed" | "self_evolve" | "auto_construct" | "web_search" | "url_analysis" | "youtube_summary" | "image_generation" {
+  if (!question) return "mixed";
+  const q = question.toLowerCase().trim();
+  if (q.length < 2) return "mixed";
+
+  const priority = classifyPriorityIntents(q);
+  if (priority) return priority as any;
+
+  const verbIntent = classifyVerbIntents(q);
+  if (verbIntent) return verbIntent as any;
+
+  const directVisual = classifyDirectVisual(q);
+  if (directVisual) return directVisual;
+
+  const { visual: visualScore, textual: textualScore } = computeContextScores(q, recentIntents);
   if (q.length < 8 && visualScore === 0 && textualScore === 0) return "mixed";
 
   const diff = visualScore - textualScore;
