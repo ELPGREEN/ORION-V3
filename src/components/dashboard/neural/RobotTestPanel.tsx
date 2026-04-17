@@ -236,7 +236,7 @@ export default function RobotTestPanel() {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Terminal className="h-4 w-4 text-green-400" />
+            <Terminal className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
             Teste e Configuração — Robô Real
           </CardTitle>
           <Badge variant={connected ? "default" : "secondary"} className="text-[10px]">
@@ -304,9 +304,9 @@ export default function RobotTestPanel() {
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {test.status === "success" && <CheckCircle className="h-4 w-4 text-green-500" />}
-                      {test.status === "failed" && <XCircle className="h-4 w-4 text-red-500" />}
-                      {test.status === "running" && <Activity className="h-4 w-4 text-yellow-500 animate-pulse" />}
+                      {test.status === "success" && <CheckCircle className="h-4 w-4 text-[hsl(var(--tron-neon))]" />}
+                      {test.status === "failed" && <XCircle className="h-4 w-4 text-[hsl(var(--tron-danger))]" />}
+                      {test.status === "running" && <Activity className="h-4 w-4 text-[hsl(var(--tron-warn))] animate-pulse" />}
                       {test.status === "pending" && <div className="h-4 w-4 rounded-full bg-zinc-500" />}
                       <span className="text-sm font-medium">{test.test}</span>
                     </div>
@@ -407,7 +407,7 @@ export default function RobotTestPanel() {
                 {messageLog.map((entry, idx) => (
                   <div key={idx} className="text-[10px] font-mono">
                     <span className="text-zinc-600">[{entry.time}]</span>
-                    <span className="text-cyan-400"> {entry.topic}:</span>
+                    <span className="text-[hsl(var(--tron-neon))]"> {entry.topic}:</span>
                     <span className="text-zinc-400"> {JSON.stringify(entry.msg).slice(0, 100)}</span>
                   </div>
                 ))}

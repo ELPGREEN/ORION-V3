@@ -248,7 +248,7 @@ export default function RobotSensorsPanel() {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Box className="h-4 w-4 text-blue-400" />
+            <Box className="h-4 w-4 text-[hsl(var(--tron-info))]" />
             Sensores Robô (IMU / LiDAR / Juntas)
           </CardTitle>
           <Badge variant={connected ? "default" : "secondary"} className="text-[10px]">
@@ -296,24 +296,24 @@ export default function RobotSensorsPanel() {
             {latestImu ? (
               <>
                 <div className="grid grid-cols-3 gap-2">
-                  <GaugeCard icon={RotateCcw} label="Roll" value={`${latestImu.roll.toFixed(1)}°`} sub="X" color="text-cyan-400" />
-                  <GaugeCard icon={RotateCcw} label="Pitch" value={`${latestImu.pitch.toFixed(1)}°`} sub="Y" color="text-purple-400" />
+                  <GaugeCard icon={RotateCcw} label="Roll" value={`${latestImu.roll.toFixed(1)}°`} sub="X" color="text-[hsl(var(--tron-neon))]" />
+                  <GaugeCard icon={RotateCcw} label="Pitch" value={`${latestImu.pitch.toFixed(1)}°`} sub="Y" color="text-[hsl(var(--tron-neon-soft))]" />
                   <GaugeCard icon={Navigation} label="Yaw" value={`${latestImu.yaw.toFixed(1)}°`} sub="Z" color="text-amber-400" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <Card className="bg-zinc-900/30 border-zinc-800 p-2">
                     <div className="text-[10px] text-zinc-500">Angular Velocity (rad/s)</div>
                     <div className="flex justify-between text-xs font-mono">
-                      <span className="text-cyan-400">X: {latestImu.angularVelocity.x.toFixed(2)}</span>
-                      <span className="text-purple-400">Y: {latestImu.angularVelocity.y.toFixed(2)}</span>
+                      <span className="text-[hsl(var(--tron-neon))]">X: {latestImu.angularVelocity.x.toFixed(2)}</span>
+                      <span className="text-[hsl(var(--tron-neon-soft))]">Y: {latestImu.angularVelocity.y.toFixed(2)}</span>
                       <span className="text-amber-400">Z: {latestImu.angularVelocity.z.toFixed(2)}</span>
                     </div>
                   </Card>
                   <Card className="bg-zinc-900/30 border-zinc-800 p-2">
                     <div className="text-[10px] text-zinc-500">Linear Accel (m/s²)</div>
                     <div className="flex justify-between text-xs font-mono">
-                      <span className="text-cyan-400">X: {latestImu.linearAcceleration.x.toFixed(2)}</span>
-                      <span className="text-purple-400">Y: {latestImu.linearAcceleration.y.toFixed(2)}</span>
+                      <span className="text-[hsl(var(--tron-neon))]">X: {latestImu.linearAcceleration.x.toFixed(2)}</span>
+                      <span className="text-[hsl(var(--tron-neon-soft))]">Y: {latestImu.linearAcceleration.y.toFixed(2)}</span>
                       <span className="text-amber-400">Z: {latestImu.linearAcceleration.z.toFixed(2)}</span>
                     </div>
                   </Card>

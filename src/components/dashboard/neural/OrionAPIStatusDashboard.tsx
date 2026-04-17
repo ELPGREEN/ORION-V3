@@ -18,12 +18,12 @@ import {
 } from "@/lib/neural/orion-api-orchestrator";
 
 const CAPABILITY_CONFIG: Record<OrionCapability, { icon: typeof Eye; color: string; label: string }> = {
-  vision: { icon: Eye, color: "text-blue-400", label: "Visão Computacional" },
-  hearing: { icon: Ear, color: "text-green-400", label: "Audição (STT)" },
-  speech: { icon: Mic, color: "text-purple-400", label: "Fala (TTS)" },
+  vision: { icon: Eye, color: "text-[hsl(var(--tron-info))]", label: "Visão Computacional" },
+  hearing: { icon: Ear, color: "text-[hsl(var(--tron-neon))]", label: "Audição (STT)" },
+  speech: { icon: Mic, color: "text-[hsl(var(--tron-neon-soft))]", label: "Fala (TTS)" },
   reasoning: { icon: Brain, color: "text-amber-400", label: "Raciocínio (LLMs)" },
   face_recognition: { icon: ScanFace, color: "text-rose-400", label: "Reconhecimento Facial" },
-  quantum_compute: { icon: Atom, color: "text-cyan-400", label: "Computação Quântica" },
+  quantum_compute: { icon: Atom, color: "text-[hsl(var(--tron-neon))]", label: "Computação Quântica" },
 };
 
 const HEALTH_BADGE: Record<APIHealth, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -163,11 +163,11 @@ export function OrionAPIStatusDashboard() {
                       {onlineCount}/{cap.apis.length}
                     </span>
                     {cap.overallHealth === "online" ? (
-                      <Wifi className="h-3.5 w-3.5 text-green-500" />
+                      <Wifi className="h-3.5 w-3.5 text-[hsl(var(--tron-neon))]" />
                     ) : cap.overallHealth === "loading" ? (
-                      <Loader2 className="h-3.5 w-3.5 text-yellow-500 animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 text-[hsl(var(--tron-warn))] animate-spin" />
                     ) : (
-                      <WifiOff className="h-3.5 w-3.5 text-red-500" />
+                      <WifiOff className="h-3.5 w-3.5 text-[hsl(var(--tron-danger))]" />
                     )}
                   </div>
                 </div>
@@ -192,7 +192,7 @@ export function OrionAPIStatusDashboard() {
       {snapshot.systemHealth.alerts.length > 0 && (
         <Card className="border-yellow-500/30">
           <CardHeader className="pb-2 pt-3 px-4">
-            <CardTitle className="text-sm text-yellow-500">⚠️ Alertas do Sistema</CardTitle>
+            <CardTitle className="text-sm text-[hsl(var(--tron-warn))]">⚠️ Alertas do Sistema</CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-3">
             <div className="space-y-1">

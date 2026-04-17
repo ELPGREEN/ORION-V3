@@ -1211,7 +1211,7 @@ export function NeuralConsciousnessLoop() {
                    "🟢 FUNDAMENTADO"}
                 </Badge>
                 {state.hallucinationContradiction && (
-                  <Badge className="text-[10px] bg-red-600/30 text-red-300">⚠️ CONTRADIÇÃO</Badge>
+                  <Badge className="text-[10px] bg-red-600/30 text-[hsl(var(--tron-danger))]">⚠️ CONTRADIÇÃO</Badge>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -1422,7 +1422,7 @@ export function NeuralConsciousnessLoop() {
               <Badge className="text-[10px] bg-amber-600/30 text-amber-300 animate-pulse">🔄 Troca de Estratégia</Badge>
             )}
             {state.selfCorrectionTriggered && (
-              <Badge className="text-[10px] bg-red-600/30 text-red-300">🔧 Autocorreção Ativada</Badge>
+              <Badge className="text-[10px] bg-red-600/30 text-[hsl(var(--tron-danger))]">🔧 Autocorreção Ativada</Badge>
             )}
             <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
               <span>Sucesso: {(state.estimatedSuccess * 100).toFixed(0)}%</span>
@@ -1487,7 +1487,7 @@ export function NeuralConsciousnessLoop() {
               <MetricBar label="Sentimento" value={(state.hearingAcousticSentiment + 1) / 2} color="#3b82f6" />
             </div>
             {state.hearingShouldRepeat && (
-              <Badge className="text-[10px] bg-red-600/30 text-red-300 animate-pulse">🔁 Solicitar Repetição</Badge>
+              <Badge className="text-[10px] bg-red-600/30 text-[hsl(var(--tron-danger))] animate-pulse">🔁 Solicitar Repetição</Badge>
             )}
           </CardContent>
         </Card>
@@ -1548,7 +1548,7 @@ export function NeuralConsciousnessLoop() {
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex justify-between"><span className="text-[9px] text-muted-foreground">Estado</span>
-              <Badge className={`text-[10px] ${state.qcCollapsed ? "bg-blue-600/20 text-blue-300" : "bg-purple-600/20 text-purple-300 animate-pulse"}`}>
+              <Badge className={`text-[10px] ${state.qcCollapsed ? "bg-blue-600/20 text-[hsl(var(--tron-info))]" : "bg-purple-600/20 text-[hsl(var(--tron-neon-soft))] animate-pulse"}`}>
                 {state.qcCollapsed ? "⚛️ Colapsado" : `🌊 ${state.qcSuperpositionCardinality} hipóteses`}
               </Badge></div>
             <div className="flex justify-between"><span className="text-[9px] text-muted-foreground">P(Born)</span><span className="text-[10px] font-mono">{(state.qcCollapseProbability * 100).toFixed(0)}%</span></div>
@@ -1591,7 +1591,7 @@ export function NeuralConsciousnessLoop() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs">
                 {state.iotAwareness.mqttConnected ? (
-                  <Wifi className="h-4 w-4 text-emerald-400" />
+                  <Wifi className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
                 ) : (
                   <WifiOff className="h-4 w-4 text-rose-400" />
                 )}
@@ -1605,7 +1605,7 @@ export function NeuralConsciousnessLoop() {
             {/* BLE Devices */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs">
-                <Bluetooth className="h-4 w-4 text-blue-400" />
+                <Bluetooth className="h-4 w-4 text-[hsl(var(--tron-info))]" />
                 <span>Dispositivos BLE</span>
               </div>
               <Badge variant="outline" className="text-[10px]">
@@ -1698,7 +1698,7 @@ export function NeuralConsciousnessLoop() {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Activity className="h-4 w-4 text-emerald-400" />
+                <Activity className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
                 Oscilações Gamma
               </CardTitle>
             </CardHeader>
@@ -1731,7 +1731,7 @@ export function NeuralConsciousnessLoop() {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Cpu className="h-4 w-4 text-cyan-400" />
+                <Cpu className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
                 QHRL & Sincronia Temporal
               </CardTitle>
             </CardHeader>
@@ -1751,7 +1751,7 @@ export function NeuralConsciousnessLoop() {
                 </div>
               </div>
               {state.bridgeSnapshot.anomalySeverity && (
-                <div className="flex items-center gap-2 p-2 bg-red-500/10 rounded text-xs text-red-400">
+                <div className="flex items-center gap-2 p-2 bg-red-500/10 rounded text-xs text-[hsl(var(--tron-danger))]">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   Anomalia: {state.bridgeSnapshot.anomalySeverity}
                 </div>
@@ -2018,7 +2018,7 @@ export function NeuralConsciousnessLoop() {
                   <span>{phaseEmoji}</span>
                   <span className="text-foreground">{entry.action}</span>
                   <span className="text-muted-foreground">→ {entry.detail}</span>
-                  {entry.success && <span className="text-green-500">✓</span>}
+                  {entry.success && <span className="text-[hsl(var(--tron-neon))]">✓</span>}
                 </div>
               );
             })}

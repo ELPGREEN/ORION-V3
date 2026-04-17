@@ -767,12 +767,12 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.4), transparent)" }} />
         <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.2), transparent)" }} />
         {!active && speechOk && (
-          <Badge variant="outline" className="text-[10px] h-6 font-mono border-blue-500/30 text-blue-400 gap-1.5 px-3">
+          <Badge variant="outline" className="text-[10px] h-6 font-mono border-blue-500/30 text-[hsl(var(--tron-info))] gap-1.5 px-3">
             <Mic className="h-3.5 w-3.5" /> Escuta contínua
           </Badge>
         )}
         {!active && !speechOk && (
-          <Badge variant="outline" className="text-[9px] h-5 font-mono border-red-500/30 text-red-400 gap-1">
+          <Badge variant="outline" className="text-[9px] h-5 font-mono border-red-500/30 text-[hsl(var(--tron-danger))] gap-1">
             Microfone não suportado neste navegador
           </Badge>
         )}
@@ -782,15 +782,15 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           <>
             <div className="h-5 w-px bg-white/10" />
             {listening && (
-              <Badge variant="outline" className="text-[9px] h-5 font-mono border-blue-500/30 text-blue-400 animate-pulse gap-1">
-                <Mic className="h-3 w-3 text-red-400 animate-pulse" /> Ouvindo...
+              <Badge variant="outline" className="text-[9px] h-5 font-mono border-blue-500/30 text-[hsl(var(--tron-info))] animate-pulse gap-1">
+                <Mic className="h-3 w-3 text-[hsl(var(--tron-danger))] animate-pulse" /> Ouvindo...
               </Badge>
             )}
             <Button size="sm" variant="ghost" className="h-7 text-[11px] gap-1" onClick={() => setTtsOn(!ttsOn)}>
               {ttsOn ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
             </Button>
             <div className="ml-auto flex items-center gap-2">
-              <Badge variant="outline" className="text-[9px] border-emerald-500/30 text-emerald-400 animate-pulse font-mono">● CONSCIENTE</Badge>
+              <Badge variant="outline" className="text-[9px] border-emerald-500/30 text-[hsl(var(--tron-neon))] animate-pulse font-mono">● CONSCIENTE</Badge>
             </div>
           </>
         )}
@@ -844,7 +844,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                   </defs>
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-sm font-mono font-bold text-cyan-400" style={{ textShadow: "0 0 8px rgba(0,229,255,0.5)" }}>
+                  <span className="text-sm font-mono font-bold text-[hsl(var(--tron-neon))]" style={{ textShadow: "0 0 8px rgba(0,229,255,0.5)" }}>
                     {awareness.toFixed(0)}%
                   </span>
                 </div>
@@ -897,7 +897,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                 <div key={i} className="flex items-center gap-1.5">
                   <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: `rgb(${r.avgR},${r.avgG},${r.avgB})`, boxShadow: `0 0 4px rgb(${r.avgR},${r.avgG},${r.avgB})` }} />
                   <span className="text-[9px] font-mono text-white/40 flex-1 truncate">{r.label}</span>
-                  <span className="text-[8px] font-mono text-cyan-400/50">{(r.confidence * 100).toFixed(0)}%</span>
+                  <span className="text-[8px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/50">{(r.confidence * 100).toFixed(0)}%</span>
                 </div>
               )) : (
                 <p className="text-[8px] text-white/15 font-mono text-center py-2">
@@ -911,7 +911,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           <HudCollapsibleSection icon={Globe} title="Modo" iconColor="#7c4dff" accentColor="rgba(124,77,255,0.4)">
             <div className="px-3 py-1.5">
               <Select value={identificationMode} onValueChange={setIdentificationMode}>
-                <SelectTrigger className="h-6 text-[9px] font-mono bg-transparent border-cyan-500/15 text-cyan-300/70 focus:ring-0 focus:ring-offset-0">
+                <SelectTrigger className="h-6 text-[9px] font-mono bg-transparent border-cyan-500/15 text-[hsl(var(--tron-neon))]/70 focus:ring-0 focus:ring-offset-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#070c14] border-cyan-500/20">
@@ -1050,7 +1050,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
               </div>
               {detectedObjects.length > 0 && (
                 <div className="absolute top-1 right-1 pointer-events-none">
-                  <span className="text-[7px] font-mono bg-black/70 text-cyan-400 px-1 rounded">{detectedObjects.length} obj</span>
+                  <span className="text-[7px] font-mono bg-black/70 text-[hsl(var(--tron-neon))] px-1 rounded">{detectedObjects.length} obj</span>
                 </div>
               )}
             </div>
@@ -1096,8 +1096,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           <div className="relative bg-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-sm overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-emerald-400/60" />
             <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
-              <Activity className="h-3 w-3 text-emerald-400 shrink-0" />
-              <span className="text-[10px] font-mono text-emerald-400/80 tracking-wider uppercase">Raciocínio</span>
+              <Activity className="h-3 w-3 text-[hsl(var(--tron-neon))] shrink-0" />
+              <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/80 tracking-wider uppercase">Raciocínio</span>
             </div>
             <div className="px-3 py-2">
               <div className="space-y-0.5 max-h-[80px] overflow-y-auto">
@@ -1148,7 +1148,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
             <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
               <Zap className="h-3 w-3 text-orange-400 shrink-0" />
               <span className="text-[10px] font-mono text-orange-400/80 tracking-wider uppercase">SuperNet</span>
-              <span className={`ml-auto text-[7px] font-mono font-bold ${supernetConnected ? "text-emerald-400" : "text-red-400/60"}`}>
+              <span className={`ml-auto text-[7px] font-mono font-bold ${supernetConnected ? "text-[hsl(var(--tron-neon))]" : "text-[hsl(var(--tron-danger))]/60"}`}>
                 {supernetConnected ? "● ON" : "● OFF"}
               </span>
             </div>
@@ -1174,8 +1174,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
             <div className="relative bg-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-sm overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-cyan-400/30" />
               <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
-                <MessageCircle className="h-3 w-3 text-cyan-400 shrink-0" />
-                <span className="text-[10px] font-mono text-cyan-400/80 tracking-wider uppercase">IA Chat</span>
+                <MessageCircle className="h-3 w-3 text-[hsl(var(--tron-neon))] shrink-0" />
+                <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/80 tracking-wider uppercase">IA Chat</span>
                 {isProcessing && (
                   <span className="ml-auto text-[7px] font-mono text-amber-400 animate-pulse">●</span>
                 )}
@@ -1188,7 +1188,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                       <div className="flex flex-wrap gap-1 justify-center">
                         {["O que vê?", "Como estou?", "Agenda"].map(q => (
                           <button key={q} onClick={() => askAI(q)}
-                            className="text-[7px] font-mono text-cyan-400/30 border border-cyan-500/10 rounded px-1 py-0.5 hover:bg-cyan-400/5 hover:text-cyan-400/60 transition-colors">
+                            className="text-[7px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/30 border border-cyan-500/10 rounded px-1 py-0.5 hover:bg-cyan-400/5 hover:text-[hsl(var(--tron-neon))]/60 transition-colors">
                             {q}
                           </button>
                         ))}
@@ -1215,13 +1215,13 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                       }`}>
                         <div className="flex items-start gap-1">
                           <p className={`text-[8px] font-mono leading-relaxed flex-1 ${
-                            msg.role === "user" ? "text-cyan-300/70" : "text-white/50"
+                            msg.role === "user" ? "text-[hsl(var(--tron-neon))]/70" : "text-white/50"
                           }`}>{msg.text}</p>
                           {msg.role === "ai" && msg.confidence != null && (
                             <span className={`text-[6px] font-mono shrink-0 px-1 rounded ${
-                              msg.confidence >= 0.7 ? "text-emerald-400/70 bg-emerald-400/10"
+                              msg.confidence >= 0.7 ? "text-[hsl(var(--tron-neon))]/70 bg-emerald-400/10"
                               : msg.confidence >= 0.4 ? "text-amber-400/70 bg-amber-400/10"
-                              : "text-red-400/70 bg-red-400/10"
+                              : "text-[hsl(var(--tron-danger))]/70 bg-red-400/10"
                             }`}>{(msg.confidence * 100).toFixed(0)}%</span>
                           )}
                         </div>
@@ -1248,7 +1248,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
                     placeholder="Pergunte..."
                     disabled={isProcessing}
                     className="flex-1 text-[8px] font-mono bg-transparent border border-cyan-500/15 rounded px-2 py-1 text-white/60 placeholder:text-white/15 focus:outline-none focus:border-cyan-400/40 disabled:opacity-30" />
-                  <Button type="submit" size="sm" variant="ghost" className="h-6 w-6 p-0 text-cyan-400/60 hover:text-cyan-400" disabled={isProcessing || !askInput.trim()}>
+                  <Button type="submit" size="sm" variant="ghost" className="h-6 w-6 p-0 text-[hsl(var(--tron-neon))]/60 hover:text-[hsl(var(--tron-neon))]" disabled={isProcessing || !askInput.trim()}>
                     <MessageCircle className="h-3 w-3" />
                   </Button>
                 </form>
@@ -1283,7 +1283,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
               placeholder="Pergunte ao Orion..."
               disabled={isProcessing}
               className="flex-1 text-[10px] font-mono bg-black/70 border border-cyan-500/20 rounded px-3 py-2 text-white/70 placeholder:text-white/20 focus:outline-none focus:border-cyan-400/40 disabled:opacity-30" />
-            <Button type="submit" size="sm" variant="ghost" className="h-8 w-8 p-0 text-cyan-400/60 hover:text-cyan-400" disabled={isProcessing || !askInput.trim()}>
+            <Button type="submit" size="sm" variant="ghost" className="h-8 w-8 p-0 text-[hsl(var(--tron-neon))]/60 hover:text-[hsl(var(--tron-neon))]" disabled={isProcessing || !askInput.trim()}>
               <MessageCircle className="h-4 w-4" />
             </Button>
           </form>
@@ -1365,7 +1365,7 @@ function OrionStandalonePanel({
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[9px] font-mono uppercase tracking-wider transition-colors ${
               activeTab === tab.id
-                ? "text-cyan-400 border-b-2 border-cyan-400/50 bg-cyan-400/[0.03]"
+                ? "text-[hsl(var(--tron-neon))] border-b-2 border-cyan-400/50 bg-cyan-400/[0.03]"
                 : "text-white/25 hover:text-white/40 hover:bg-white/[0.02]"
             }`}
           >
@@ -1379,8 +1379,8 @@ function OrionStandalonePanel({
       {activeTab === "chat" && (
         <div className="p-3">
           <div className="flex items-center gap-2 mb-2">
-            <MessageCircle className="h-3.5 w-3.5 text-cyan-400" />
-            <span className="text-[10px] font-mono text-cyan-400/80 tracking-wider uppercase">Chat com Orion</span>
+            <MessageCircle className="h-3.5 w-3.5 text-[hsl(var(--tron-neon))]" />
+            <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/80 tracking-wider uppercase">Chat com Orion</span>
             {isProcessing && <span className="ml-auto text-[8px] font-mono text-amber-400 animate-pulse">processando...</span>}
           </div>
           <div className="space-y-1.5 max-h-[200px] overflow-y-auto mb-2">
@@ -1390,7 +1390,7 @@ function OrionStandalonePanel({
                 <div className="flex flex-wrap gap-1.5 justify-center">
                   {["Quem é você?", "O que pode fazer?", "Agenda de hoje"].map(q => (
                     <button key={q} onClick={() => askAI(q)}
-                      className="text-[9px] font-mono text-cyan-400/40 border border-cyan-500/15 rounded px-2 py-1 hover:bg-cyan-400/5 hover:text-cyan-400/70 transition-colors">
+                      className="text-[9px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/40 border border-cyan-500/15 rounded px-2 py-1 hover:bg-cyan-400/5 hover:text-[hsl(var(--tron-neon))]/70 transition-colors">
                       {q}
                     </button>
                   ))}
@@ -1406,13 +1406,13 @@ function OrionStandalonePanel({
                 }`}>
                   <div className="flex items-start gap-1.5">
                     <p className={`text-[10px] font-mono leading-relaxed flex-1 ${
-                      msg.role === "user" ? "text-cyan-300/70" : msg.role === "system" ? "text-amber-300/50" : "text-white/60"
+                      msg.role === "user" ? "text-[hsl(var(--tron-neon))]/70" : msg.role === "system" ? "text-amber-300/50" : "text-white/60"
                     }`}>{msg.text}</p>
                     {msg.role === "ai" && msg.confidence != null && (
                       <span className={`text-[7px] font-mono shrink-0 px-1 py-0.5 rounded ${
-                        msg.confidence >= 0.7 ? "text-emerald-400/80 bg-emerald-400/10"
+                        msg.confidence >= 0.7 ? "text-[hsl(var(--tron-neon))]/80 bg-emerald-400/10"
                         : msg.confidence >= 0.4 ? "text-amber-400/80 bg-amber-400/10"
-                        : "text-red-400/80 bg-red-400/10"
+                        : "text-[hsl(var(--tron-danger))]/80 bg-red-400/10"
                       }`}>{(msg.confidence * 100).toFixed(0)}%</span>
                     )}
                   </div>
@@ -1439,7 +1439,7 @@ function OrionStandalonePanel({
               placeholder="Pergunte ao Orion..."
               disabled={isProcessing}
               className="flex-1 text-[11px] font-mono bg-transparent border border-cyan-500/20 rounded-lg px-3 py-2 text-white/70 placeholder:text-white/20 focus:outline-none focus:border-cyan-400/40 disabled:opacity-30" />
-            <Button type="submit" size="sm" variant="ghost" className="h-9 px-3 text-cyan-400/60 hover:text-cyan-400" disabled={isProcessing || !askInput.trim()}>
+            <Button type="submit" size="sm" variant="ghost" className="h-9 px-3 text-[hsl(var(--tron-neon))]/60 hover:text-[hsl(var(--tron-neon))]" disabled={isProcessing || !askInput.trim()}>
               <MessageCircle className="h-4 w-4" />
             </Button>
           </form>

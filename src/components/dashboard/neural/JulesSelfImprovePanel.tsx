@@ -88,16 +88,16 @@ const DOMAIN_LABELS: Record<IndustrialDomain, string> = {
 // ─── Sub-components ───
 
 function StatusBadge({ status, resolved }: { status: string; resolved: boolean | null }) {
-  if (status === "completed" && resolved === true) return <Badge className="text-[10px] px-1.5 py-0 bg-green-600/20 text-green-400 border-green-500/30">Resolvido</Badge>;
-  if (status === "completed" && resolved === false) return <Badge className="text-[10px] px-1.5 py-0 bg-red-600/20 text-red-400 border-red-500/30">Não resolvido</Badge>;
-  if (status === "completed") return <Badge className="text-[10px] px-1.5 py-0 bg-blue-600/20 text-blue-400 border-blue-500/30">PR criado</Badge>;
-  if (status === "running") return <Badge className="text-[10px] px-1.5 py-0 bg-yellow-600/20 text-yellow-400 border-yellow-500/30">Em andamento</Badge>;
+  if (status === "completed" && resolved === true) return <Badge className="text-[10px] px-1.5 py-0 bg-green-600/20 text-[hsl(var(--tron-neon))] border-green-500/30">Resolvido</Badge>;
+  if (status === "completed" && resolved === false) return <Badge className="text-[10px] px-1.5 py-0 bg-red-600/20 text-[hsl(var(--tron-danger))] border-red-500/30">Não resolvido</Badge>;
+  if (status === "completed") return <Badge className="text-[10px] px-1.5 py-0 bg-blue-600/20 text-[hsl(var(--tron-info))] border-blue-500/30">PR criado</Badge>;
+  if (status === "running") return <Badge className="text-[10px] px-1.5 py-0 bg-yellow-600/20 text-[hsl(var(--tron-warn))] border-yellow-500/30">Em andamento</Badge>;
   if (status === "failed") return <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Falhou</Badge>;
   return <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Pendente</Badge>;
 }
 
 function HealthGauge({ label, score, icon: Icon }: { label: string; score: number; icon: typeof Cpu }) {
-  const color = score >= 80 ? "text-green-400" : score >= 50 ? "text-yellow-400" : "text-red-400";
+  const color = score >= 80 ? "text-[hsl(var(--tron-neon))]" : score >= 50 ? "text-[hsl(var(--tron-warn))]" : "text-[hsl(var(--tron-danger))]";
   const bg = score >= 80 ? "bg-green-500/20" : score >= 50 ? "bg-yellow-500/20" : "bg-red-500/20";
   return (
     <div className={`flex items-center gap-2 rounded-lg px-3 py-2 ${bg}`}>
@@ -143,7 +143,7 @@ function ScanDomainTab({ results, domain }: { results: ScanResult | undefined; d
   if (!results) return <div className="text-xs text-muted-foreground text-center py-4">Execute um scan para ver resultados</div>;
   if (results.issues.length === 0) return (
     <div className="text-center py-4">
-      <CheckCircle2 className="h-5 w-5 mx-auto mb-1 text-green-500" />
+      <CheckCircle2 className="h-5 w-5 mx-auto mb-1 text-[hsl(var(--tron-neon))]" />
       <span className="text-xs text-muted-foreground">Nenhum problema detectado em {domain}</span>
     </div>
   );
@@ -199,7 +199,7 @@ function IndustrialTab() {
         <div className="space-y-1">
           {industrialScan.issues.map((issue, i) => (
             <div key={i} className="flex items-center gap-2 rounded-md bg-red-500/10 px-2 py-1.5 text-xs">
-              <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+              <AlertTriangle className="h-3.5 w-3.5 text-[hsl(var(--tron-danger))] shrink-0" />
               <span>{issue.message}</span>
             </div>
           ))}
@@ -218,7 +218,7 @@ function IndustrialTab() {
                 </Badge>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className={`text-[10px] font-mono ${m.safetyScore >= 80 ? "text-green-400" : m.safetyScore >= 50 ? "text-yellow-400" : "text-red-400"}`}>
+                <span className={`text-[10px] font-mono ${m.safetyScore >= 80 ? "text-[hsl(var(--tron-neon))]" : m.safetyScore >= 50 ? "text-[hsl(var(--tron-warn))]" : "text-[hsl(var(--tron-danger))]"}`}>
                   {m.safetyScore}%
                 </span>
                 <Button
@@ -352,12 +352,12 @@ export function JulesSelfImprovePanel() {
             {rateLimit.current}/{rateLimit.max}/h
           </Badge>
           {immune.antibodyCount > 0 && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-green-400 border-green-500/30">
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-[hsl(var(--tron-neon))] border-green-500/30">
               🛡 {immune.antibodyCount} anticorpos
             </Badge>
           )}
           {immune.quarantinedModules.length > 0 && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-red-400 border-red-500/30">
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-[hsl(var(--tron-danger))] border-red-500/30">
               ⚠ {immune.quarantinedModules.length} em quarentena
             </Badge>
           )}
@@ -409,12 +409,12 @@ export function JulesSelfImprovePanel() {
                       <div className="flex items-center gap-1.5">
                         <Badge variant={val.count >= 3 ? "destructive" : "secondary"} className="text-[10px] px-1.5 py-0">{val.count}x</Badge>
                         {val.julesTriggered && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-green-500 border-green-500/30">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-[hsl(var(--tron-neon))] border-green-500/30">
                             <GitPullRequest className="h-2.5 w-2.5 mr-0.5" /> PR
                           </Badge>
                         )}
                         <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { resetSubsystemFailures(key as any); setFailures(getSubsystemFailureStatus()); }}>
-                          <CheckCircle2 className="h-3 w-3 text-green-500" />
+                          <CheckCircle2 className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
                         </Button>
                       </div>
                     </div>
@@ -423,7 +423,7 @@ export function JulesSelfImprovePanel() {
               </div>
             ) : (
               <div className="text-center text-xs text-muted-foreground py-3">
-                <CheckCircle2 className="h-4 w-4 mx-auto mb-1 text-green-500" />
+                <CheckCircle2 className="h-4 w-4 mx-auto mb-1 text-[hsl(var(--tron-neon))]" />
                 Todos os subsistemas operando sem falhas
               </div>
             )}

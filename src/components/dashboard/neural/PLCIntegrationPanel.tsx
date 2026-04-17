@@ -276,7 +276,7 @@ export default function PLCIntegrationPanel() {
             
             <div className="p-3 bg-zinc-900/30 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-4 w-4 text-green-400" />
+                <Shield className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
                 <span className="text-xs font-medium">Segurança</span>
               </div>
               <div className="flex items-center gap-2">
@@ -349,8 +349,8 @@ export default function PLCIntegrationPanel() {
               <Label className="text-xs text-zinc-500">Tópicos Inscritos</Label>
               {mqttTopics.map((topic, idx) => (
                 <div key={idx} className="flex items-center gap-2 p-2 bg-zinc-900/30 rounded">
-                  <Signal className="h-3 w-3 text-green-400" />
-                  <span className="text-xs font-mono text-cyan-400">{topic}</span>
+                  <Signal className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
+                  <span className="text-xs font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">{topic}</span>
                 </div>
               ))}
             </div>
@@ -388,7 +388,7 @@ export default function PLCIntegrationPanel() {
               {mqttMessages.slice(-20).reverse().map((msg, idx) => (
                 <div key={idx} className="p-2 bg-zinc-900/30 rounded text-[10px]">
                   <div className="flex items-center justify-between">
-                    <span className="text-cyan-400 font-mono">{msg.topic}</span>
+                    <span className="text-[hsl(var(--tron-neon))] font-mono">{msg.topic}</span>
                     <span className="text-zinc-600">{new Date(msg.timestamp).toLocaleTimeString()}</span>
                   </div>
                   <div className="text-zinc-400 font-mono mt-1">{msg.payload}</div>

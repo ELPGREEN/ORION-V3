@@ -17,19 +17,19 @@ export interface IdentifiedObject {
 }
 
 const CATEGORY_CONFIG: Record<string, { bg: string; text: string; border: string; icon: typeof Target; color: string }> = {
-  pessoa:      { bg: "bg-cyan-500/15",    text: "text-cyan-400",    border: "border-cyan-500/30", icon: User, color: "#00e5ff" },
-  eletronico:  { bg: "bg-blue-500/15",    text: "text-blue-400",    border: "border-blue-500/30", icon: Monitor, color: "#3b82f6" },
+  pessoa:      { bg: "bg-cyan-500/15",    text: "text-[hsl(var(--tron-neon))]",    border: "border-cyan-500/30", icon: User, color: "#00e5ff" },
+  eletronico:  { bg: "bg-blue-500/15",    text: "text-[hsl(var(--tron-info))]",    border: "border-blue-500/30", icon: Monitor, color: "#3b82f6" },
   movel:       { bg: "bg-amber-500/15",   text: "text-amber-400",   border: "border-amber-500/30", icon: Armchair, color: "#f59e0b" },
-  documento:   { bg: "bg-green-500/15",   text: "text-green-400",   border: "border-green-500/30", icon: FileText, color: "#22c55e" },
-  veiculo:     { bg: "bg-red-500/15",     text: "text-red-400",     border: "border-red-500/30", icon: Car, color: "#ef4444" },
-  animal:      { bg: "bg-purple-500/15",  text: "text-purple-400",  border: "border-purple-500/30", icon: Dog, color: "#a855f7" },
+  documento:   { bg: "bg-green-500/15",   text: "text-[hsl(var(--tron-neon))]",   border: "border-green-500/30", icon: FileText, color: "#22c55e" },
+  veiculo:     { bg: "bg-red-500/15",     text: "text-[hsl(var(--tron-danger))]",     border: "border-red-500/30", icon: Car, color: "#ef4444" },
+  animal:      { bg: "bg-purple-500/15",  text: "text-[hsl(var(--tron-neon-soft))]",  border: "border-purple-500/30", icon: Dog, color: "#a855f7" },
   alimento:    { bg: "bg-orange-500/15",  text: "text-orange-400",  border: "border-orange-500/30", icon: Apple, color: "#f97316" },
   vestuario:   { bg: "bg-pink-500/15",    text: "text-pink-400",    border: "border-pink-500/30", icon: Shirt, color: "#ec4899" },
   ambiente:    { bg: "bg-teal-500/15",    text: "text-teal-400",    border: "border-teal-500/30", icon: TreePine, color: "#14b8a6" },
-  ferramenta:  { bg: "bg-yellow-500/15",  text: "text-yellow-400",  border: "border-yellow-500/30", icon: Wrench, color: "#eab308" },
+  ferramenta:  { bg: "bg-yellow-500/15",  text: "text-[hsl(var(--tron-warn))]",  border: "border-yellow-500/30", icon: Wrench, color: "#eab308" },
   codigo:      { bg: "bg-indigo-500/15",  text: "text-indigo-400",  border: "border-indigo-500/30", icon: Barcode, color: "#6366f1" },
   embalagem:   { bg: "bg-lime-500/15",    text: "text-lime-400",    border: "border-lime-500/30", icon: Package, color: "#84cc16" },
-  esporte:     { bg: "bg-emerald-500/15", text: "text-emerald-400", border: "border-emerald-500/30", icon: Dumbbell, color: "#10b981" },
+  esporte:     { bg: "bg-emerald-500/15", text: "text-[hsl(var(--tron-neon))]", border: "border-emerald-500/30", icon: Dumbbell, color: "#10b981" },
   instrumento: { bg: "bg-violet-500/15",  text: "text-violet-400",  border: "border-violet-500/30", icon: Music, color: "#8b5cf6" },
   arte:        { bg: "bg-rose-500/15",    text: "text-rose-400",    border: "border-rose-500/30", icon: Palette, color: "#f43f5e" },
   outro:       { bg: "bg-white/10",       text: "text-white/60",    border: "border-white/20", icon: HelpCircle, color: "#94a3b8" },
@@ -81,10 +81,10 @@ export function IdentifiedObjectsPanel({ objects }: { objects: IdentifiedObject[
       
       {/* Header */}
       <div className="px-3 py-1.5 flex items-center gap-1.5 border-b border-cyan-500/10">
-        <Target className="h-3 w-3 text-cyan-400 shrink-0" />
-        <span className="text-[10px] font-mono text-cyan-400/80 tracking-wider uppercase">Objetos</span>
+        <Target className="h-3 w-3 text-[hsl(var(--tron-neon))] shrink-0" />
+        <span className="text-[10px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/80 tracking-wider uppercase">Objetos</span>
         {totalCount > 0 && (
-          <Badge variant="outline" className="ml-auto text-[7px] h-3.5 border-cyan-500/30 text-cyan-400 font-mono">{totalCount}</Badge>
+          <Badge variant="outline" className="ml-auto text-[7px] h-3.5 border-cyan-500/30 text-[hsl(var(--tron-neon))] font-mono">{totalCount}</Badge>
         )}
       </div>
 
@@ -94,7 +94,7 @@ export function IdentifiedObjectsPanel({ objects }: { objects: IdentifiedObject[
           <div className="flex flex-wrap gap-0.5 pb-1">
             <button
               onClick={() => setActiveFilter(null)}
-              className={`text-[6px] px-1 py-0.5 rounded font-mono transition-colors ${!activeFilter ? "bg-cyan-500/20 text-cyan-400" : "bg-white/5 text-white/20 hover:text-white/40"}`}
+              className={`text-[6px] px-1 py-0.5 rounded font-mono transition-colors ${!activeFilter ? "bg-cyan-500/20 text-[hsl(var(--tron-neon))]" : "bg-white/5 text-white/20 hover:text-white/40"}`}
             >
               Todos
             </button>
@@ -152,7 +152,7 @@ export function IdentifiedObjectsPanel({ objects }: { objects: IdentifiedObject[
               <div className="w-8 h-1 bg-white/[0.04] rounded-full overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: `${cfg.color}80` }} />
               </div>
-              <span className="text-[7px] font-mono text-cyan-400/40 w-5 text-right">{pct}%</span>
+              <span className="text-[7px] font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]/40 w-5 text-right">{pct}%</span>
             </div>
           );
         }) : (

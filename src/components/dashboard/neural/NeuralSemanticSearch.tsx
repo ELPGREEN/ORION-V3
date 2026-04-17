@@ -183,11 +183,11 @@ export function NeuralSemanticSearch() {
   };
 
   const sourceTypeColors: Record<string, string> = {
-    jurisprudencia: "border-blue-500/30 text-blue-400",
-    legislacao: "border-green-500/30 text-green-400",
-    legislacao_federal: "border-green-500/30 text-green-400",
-    doutrina: "border-purple-500/30 text-purple-400",
-    catalogo_senado: "border-yellow-500/30 text-yellow-400",
+    jurisprudencia: "border-blue-500/30 text-[hsl(var(--tron-info))]",
+    legislacao: "border-green-500/30 text-[hsl(var(--tron-neon))]",
+    legislacao_federal: "border-green-500/30 text-[hsl(var(--tron-neon))]",
+    doutrina: "border-purple-500/30 text-[hsl(var(--tron-neon-soft))]",
+    catalogo_senado: "border-yellow-500/30 text-[hsl(var(--tron-warn))]",
     modelo_documento: "border-orange-500/30 text-orange-400",
   };
 

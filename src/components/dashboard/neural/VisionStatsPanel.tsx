@@ -85,9 +85,9 @@ export function VisionStatsPanel({ stats, className }: VisionStatsPanelProps) {
               }}
             />
           </div>
-          {fpsTrend === "up" && <TrendingUp className="h-3 w-3 text-emerald-400 shrink-0" />}
-          {fpsTrend === "down" && <TrendingDown className="h-3 w-3 text-red-400 shrink-0" />}
-          {fpsTrend === "stable" && <Activity className="h-3 w-3 text-cyan-400/40 shrink-0" />}
+          {fpsTrend === "up" && <TrendingUp className="h-3 w-3 text-[hsl(var(--tron-neon))] shrink-0" />}
+          {fpsTrend === "down" && <TrendingDown className="h-3 w-3 text-[hsl(var(--tron-danger))] shrink-0" />}
+          {fpsTrend === "stable" && <Activity className="h-3 w-3 text-[hsl(var(--tron-neon))]/40 shrink-0" />}
         </div>
 
         {/* Detection counts grid */}

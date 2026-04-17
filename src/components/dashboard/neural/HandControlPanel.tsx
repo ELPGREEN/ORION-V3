@@ -212,10 +212,10 @@ export default function HandControlPanel() {
       <div className="space-y-2 p-3 bg-zinc-900/30 rounded-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon className="h-4 w-4 text-cyan-400" />
+            <Icon className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
             <span className="text-xs font-medium">{group.name}</span>
           </div>
-          <span className="text-xs font-mono text-cyan-400">{(groupPosition * 100).toFixed(0)}%</span>
+          <span className="text-xs font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">{(groupPosition * 100).toFixed(0)}%</span>
         </div>
         <Slider
           value={[groupPosition * 100]}
@@ -237,7 +237,7 @@ export default function HandControlPanel() {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Hand className="h-4 w-4 text-cyan-400" />
+            <Hand className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
             Controle de Mão — 22 DoF
           </CardTitle>
           <Badge variant={connected ? "default" : "secondary"} className="text-[10px]">
@@ -291,7 +291,7 @@ export default function HandControlPanel() {
         {/* Emergency Stop */}
         <div className="flex items-center justify-between p-3 bg-red-950/30 border border-red-900 rounded-lg">
           <div className="flex items-center gap-2">
-            <Hand className={`h-5 w-5 ${emergencyStop ? "text-red-500 animate-pulse" : "text-zinc-400"}`} />
+            <Hand className={`h-5 w-5 ${emergencyStop ? "text-[hsl(var(--tron-danger))] animate-pulse" : "text-zinc-400"}`} />
             <span className="text-sm font-medium">Parada de Emergência</span>
           </div>
           <Button
@@ -372,7 +372,7 @@ export default function HandControlPanel() {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-2 pb-2">
               <div className="text-[10px] text-zinc-500">Temperatura</div>
-              <div className={`text-sm font-mono ${handState.temperature > 50 ? "text-red-500" : "text-green-400"}`}>
+              <div className={`text-sm font-mono ${handState.temperature > 50 ? "text-[hsl(var(--tron-danger))]" : "text-[hsl(var(--tron-neon))]"}`}>
                 {handState.temperature.toFixed(1)}°C
               </div>
             </CardContent>
@@ -388,7 +388,7 @@ export default function HandControlPanel() {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-2 pb-2">
               <div className="text-[10px] text-zinc-500">Força Total</div>
-              <div className="text-sm font-mono text-cyan-400">
+              <div className="text-sm font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">
                 {handState.force.toFixed(1)}N
               </div>
             </CardContent>
@@ -397,7 +397,7 @@ export default function HandControlPanel() {
 
         {/* DoF Counter */}
         <div className="flex items-center justify-between text-xs text-zinc-500 pt-2 border-t border-zinc-800">
-          <span>Graus de Liberdade: <span className="text-cyan-400">22 DoF</span></span>
+          <span>Graus de Liberdade: <span className="text-[hsl(var(--tron-neon))]">22 DoF</span></span>
           <span>Ativos: {jointPositions.filter(p => p > 0.1).length}/17</span>
         </div>
       </CardContent>

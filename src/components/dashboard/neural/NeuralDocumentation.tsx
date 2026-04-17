@@ -53,7 +53,7 @@ export function NeuralDocumentation() {
         <CardContent className="space-y-4">
           {/* Camada de Apresentação */}
           <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <h4 className="font-bold text-blue-600 dark:text-blue-400 text-xs mb-2">CAMADA DE APRESENTAÇÃO</h4>
+            <h4 className="font-bold text-blue-600 dark:text-[hsl(var(--tron-info))] text-xs mb-2">CAMADA DE APRESENTAÇÃO</h4>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {["Chat IA Jurídico", "Pesquisa Unificada", "Geração Documentos", "Universo Neural 3D", "Painel Admin"].map((item, i) => (
                 <div key={i} className="p-2 bg-background rounded border text-center text-xs font-medium">
@@ -69,7 +69,7 @@ export function NeuralDocumentation() {
 
           {/* Camada Neural Core */}
           <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-            <h4 className="font-bold text-emerald-600 dark:text-emerald-400 text-xs mb-2">CAMADA NEURAL CORE v21.2</h4>
+            <h4 className="font-bold text-emerald-600 dark:text-[hsl(var(--tron-neon))] text-xs mb-2">CAMADA NEURAL CORE v21.2</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[
                 "MHA 7-Head Attention",
@@ -98,7 +98,7 @@ export function NeuralDocumentation() {
 
           {/* Camada de Orquestração */}
           <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-            <h4 className="font-bold text-purple-600 dark:text-purple-400 text-xs mb-2">CAMADA DE ORQUESTRAÇÃO</h4>
+            <h4 className="font-bold text-purple-600 dark:text-[hsl(var(--tron-neon-soft))] text-xs mb-2">CAMADA DE ORQUESTRAÇÃO</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {["AI Orchestrator", "RAG Pipeline", "Pipeline Orchestrator", "Provider Selector"].map((item, i) => (
                 <div key={i} className="p-2 bg-background rounded border text-center text-xs font-medium">
@@ -114,7 +114,7 @@ export function NeuralDocumentation() {
 
           {/* Camada de Provedores */}
           <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-            <h4 className="font-bold text-green-600 dark:text-green-400 text-xs mb-2">PROVEDORES DE IA</h4>
+            <h4 className="font-bold text-green-600 dark:text-[hsl(var(--tron-neon))] text-xs mb-2">PROVEDORES DE IA</h4>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {[
                 { name: "ALPHA", model: "Velocidade", priority: "1" },
@@ -228,7 +228,7 @@ export function NeuralDocumentation() {
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>Sucesso</span>
                   <ArrowRight className="h-3 w-3" />
-                  <CheckCircle className="h-3 w-3 text-green-500" />
+                  <CheckCircle className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
                 </div>
               </div>
             ))}
