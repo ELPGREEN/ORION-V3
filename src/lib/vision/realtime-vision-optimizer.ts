@@ -25,7 +25,7 @@ export interface VisionPipelineConfig {
 
 export const DEFAULT_VISION_CONFIG: VisionPipelineConfig = {
   geminiThrottleMs: 1000,
-  mediapipeFrameskip: 5,
+  mediapipeFrameskip: 10,
   localProcessingFrameskip: 3,
   supernetFrameskip: 10,
   targetFps: 30,
