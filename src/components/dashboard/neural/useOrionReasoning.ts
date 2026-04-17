@@ -557,8 +557,11 @@ export function useOrionReasoning(
         }
       }
 
-      // 0. Short greetings — respond instantly, NO auth check needed
+      // 0. Conversational fast-paths — respond instantly, NO auth/tool routing needed
       const greetingPatterns = /^(senhor|senhora|oi|olá|ola|ei|hey|eai|e\s*aí|fala|bom\s*dia|boa\s*tarde|boa\s*noite|tudo\s*bem|beleza|opa)[\s!?.]*$/i;
+      const hearingCheckPatterns = /\b(voc[eê]\s+consegue\s+me\s+ouvir|voc[eê]\s+me\s+ouve|t[aá]\s+me\s+ouvindo|est[aá]\s+me\s+ouvindo|consegue\s+me\s+escutar|me\s+escuta)\b/i;
+      const selfIdentityFastPatterns = /\b(quem\s+[eé]\s+voc[eê]|qual\s+[eé]\s+o\s+seu\s+nome|sua\s+personalidade|seu\s+signo|sua\s+hist[oó]ria|o\s+que\s+[eé]\s+voc[eê]|quando\s+voc[eê]\s+nasceu|conte\s+sobre\s+voc[eê]|fale\s+sobre\s+voc[eê]|fala\s+sobre\s+voc[eê]|me\s+conta(?:\s+um\s+pouco)?\s+sobre\s+voc[eê]|me\s+fala(?:\s+um\s+pouco)?\s+sobre\s+voc[eê])\b/i;
+
       if (greetingPatterns.test(qLow)) {
         const greetings = [
           "Fala! O que manda?",
@@ -575,6 +578,34 @@ export function useOrionReasoning(
         speak(greeting).catch(() => {});
         cleanupProcessing();
         somLearn(question, "greeting");
+        return;
+      }
+
+      if (hearingCheckPatterns.test(qLow)) {
+        const hearingResponse = "Sim, estou te ouvindo. Pode falar.";
+        setChatHistory(prev => {
+          const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+          return [...clean, { role: "ai" as const, text: hearingResponse, time: new Date().toLocaleTimeString("pt-BR") }];
+        });
+        setThought(hearingResponse);
+        speak(hearingResponse).catch(() => {});
+        cleanupProcessing();
+        somLearn(question, "greeting");
+        return;
+      }
+
+      if (selfIdentityFastPatterns.test(qLow)) {
+        const { getOrionSelfDescription } = await import("@/lib/neural/orion-consciousness");
+        const depth = /personalidade|signo|hist[oó]ria|conte|fale|me\s+conta|me\s+fala/i.test(qLow) ? "full" : "brief";
+        const selfResponse = getOrionSelfDescription(depth);
+        setChatHistory(prev => {
+          const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+          return [...clean, { role: "ai" as const, text: selfResponse, time: new Date().toLocaleTimeString("pt-BR") }];
+        });
+        setThought(selfResponse);
+        speak(selfResponse).catch(() => {});
+        cleanupProcessing();
+        somLearn(question, "self_identity");
         return;
       }
 
