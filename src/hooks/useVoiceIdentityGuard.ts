@@ -13,38 +13,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { extractVoiceFeaturesFromBlob, compareFeaturesStatic, CREATOR_VOICE_FINGERPRINT, type VoiceFeatures } from "@/lib/voice/voiceFeatureEngine";
-import { isOwnerEmail, isCreatorByName } from "@/lib/neural/orion-consciousness";
-
-export type IdentityStatus = "unknown" | "verifying" | "owner" | "creator" | "guest" | "no_enrollment";
-
-export interface GuestSession {
-  id?: string;
-  guestName: string;
-  messages: Array<{ role: string; content: string; timestamp: string }>;
-  startedAt: string;
-}
-
-export function useVoiceIdentityGuard() {
-  const { user } = useAuth();
-  const [identityStatus, setIdentityStatus] = useState<IdentityStatus>("unknown");
-  const [guestSession, setGuestSession] = useState<GuestSession | null>(null);
-  const [isCheckingVoice, setIsCheckingVoice] = useState(false);
-  const guestSessionIdRef = useRef<string | null>(null);
-
-  /** Auto-detect creator by email — skip voice check for owner accounts */
-  const isCreatorAccount = user?.email ? isOwnerEmail(user.email) : false;
-
-  /** Auto-authorize owner accounts on mount — no voice check needed */
-  useEffect(() => {
-    if (isCreatorAccount && identityStatus === "unknown") {
-      console.log("[VoiceGuard] 👑 Owner email detected — auto-setting identity to 'creator'");
-      setIdentityStatus("creator");
-    }
-  }, [isCreatorAccount, identityStatus]);
-
+import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
+...
   /** Check if voice matches owner enrollment */
   const verifyVoiceIdentity = useCallback(async (audioBlob: Blob): Promise<IdentityStatus> => {
-    // Owner emails are always recognized as creator — no voice check needed
     if (isCreatorAccount) {
       console.log("[VoiceGuard] 👑 Creator account detected by email — auto-verified");
       setIdentityStatus("creator");
@@ -56,7 +28,6 @@ export function useVoiceIdentityGuard() {
     setIdentityStatus("verifying");
 
     try {
-      // Extract voice features first — we'll need them for both checks
       let features: VoiceFeatures;
       try {
         features = await extractVoiceFeaturesFromBlob(audioBlob);
@@ -68,48 +39,50 @@ export function useVoiceIdentityGuard() {
         });
       } catch (featureErr) {
         console.error("[VoiceGuard] ❌ Feature extraction failed:", featureErr);
-        // FAIL-CLOSED: do NOT default to owner — block sensitive commands
         setIdentityStatus("unknown");
         setIsCheckingVoice(false);
         return "unknown";
       }
 
-      // ── Check against CREATOR hardcoded fingerprint first ──
-      // This works for ANY account — if the voice matches the creator, grant creator access
       const creatorSimilarity = compareFeaturesStatic(features, CREATOR_VOICE_FINGERPRINT);
-      console.log("[VoiceGuard] 🎙️ Creator voice similarity:", creatorSimilarity.toFixed(4), "(threshold: 0.50)");
-      
-      if (creatorSimilarity >= 0.50) {
+      const creatorPitchNear = features.pitch_mean > 0 && Math.abs(features.pitch_mean - CREATOR_VOICE_FINGERPRINT.pitch_mean) <= 45;
+      const creatorTimbreNear = features.spectral_centroid > 0 && Math.abs(features.spectral_centroid - CREATOR_VOICE_FINGERPRINT.spectral_centroid) <= 900;
+      console.log("[VoiceGuard] 🎙️ Creator voice similarity:", creatorSimilarity.toFixed(4), "(threshold: 0.44)", {
+        creatorPitchNear,
+        creatorTimbreNear,
+      });
+
+      if (creatorSimilarity >= 0.44 || (creatorSimilarity >= 0.40 && creatorPitchNear && creatorTimbreNear)) {
         console.log("[VoiceGuard] 👑 Voice matches CREATOR (Ericson Piccoli)! Score:", creatorSimilarity.toFixed(4));
         setIdentityStatus("creator");
         setIsCheckingVoice(false);
         return "creator";
       }
 
-      if (!user?.id) {
-        console.warn("[VoiceGuard] No authenticated user for enrollment lookup and creator fingerprint did not match yet");
-        setIdentityStatus("unknown");
-        setIsCheckingVoice(false);
-        return "unknown";
+      let enrollment: { voice_features: VoiceFeatures | null; user_id: string } | null = null;
+      if (user?.id) {
+        const { data, error: enrollError } = await supabase
+          .from("voice_auth_enrollments")
+          .select("voice_features, user_id")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (!enrollError && data) {
+          enrollment = {
+            user_id: data.user_id,
+            voice_features: (data.voice_features as unknown as VoiceFeatures) || null,
+          };
+        }
       }
 
-      // ── Check against current user's enrollment ──
-      const { data: enrollment, error: enrollError } = await supabase
-        .from("voice_auth_enrollments")
-        .select("voice_features, user_id")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (!enrollError && enrollment?.voice_features) {
+      if (enrollment?.voice_features) {
         console.log("[VoiceGuard] ✅ Enrollment found for current user, comparing...");
-        const enrolledFeatures = enrollment.voice_features as unknown as VoiceFeatures;
-        const similarity = compareFeaturesStatic(features, enrolledFeatures);
-        console.log("[VoiceGuard] 📊 Similarity score:", similarity.toFixed(4), "(threshold: 0.55)");
+        const similarity = compareFeaturesStatic(features, enrollment.voice_features);
+        console.log("[VoiceGuard] 📊 Similarity score:", similarity.toFixed(4), "(threshold: 0.50)");
 
-        if (similarity >= 0.55) {
-          const isOwner = isOwnerEmail(user?.email);
-          const status: IdentityStatus = isOwner ? "creator" : "owner";
+        if (similarity >= 0.50) {
+          const status: IdentityStatus = isOwnerEmail(user?.email) ? "creator" : "owner";
           console.log("[VoiceGuard] ✅ Voice MATCHED! Status:", status);
           setIdentityStatus(status);
           setIsCheckingVoice(false);
@@ -117,35 +90,35 @@ export function useVoiceIdentityGuard() {
         }
       }
 
-      // ── Fallback: Check against ALL owner enrollments (for alt accounts with same voice) ──
       const { data: ownerEnrollments } = await supabase
         .from("voice_auth_enrollments")
         .select("voice_features, user_id")
         .eq("is_active", true)
-        .neq("user_id", user.id)
-        .limit(10);
+        .limit(20);
 
       if (ownerEnrollments && ownerEnrollments.length > 0) {
+        let bestSimilarity = 0;
         for (const ownerEnroll of ownerEnrollments) {
           if (!ownerEnroll.voice_features) continue;
           const ownerFeatures = ownerEnroll.voice_features as unknown as VoiceFeatures;
           const ownerSimilarity = compareFeaturesStatic(features, ownerFeatures);
+          bestSimilarity = Math.max(bestSimilarity, ownerSimilarity);
           console.log("[VoiceGuard] 🔍 Cross-account voice check, similarity:", ownerSimilarity.toFixed(4));
-          if (ownerSimilarity >= 0.55) {
-            console.log("[VoiceGuard] 👑 Voice matches an owner enrollment! Granting creator access.");
+          if (ownerSimilarity >= 0.52) {
+            console.log("[VoiceGuard] 👑 Voice matches an active enrollment! Granting creator access.");
             setIdentityStatus("creator");
             setIsCheckingVoice(false);
             return "creator";
           }
         }
+        console.log("[VoiceGuard] 🧪 Best cross-account similarity:", bestSimilarity.toFixed(4));
       }
 
-      // No enrollment matched
       if (!enrollment?.voice_features) {
-        console.warn("[VoiceGuard] ⚠️ No voice enrollment found for user:", user.id);
-        setIdentityStatus("no_enrollment");
+        console.warn("[VoiceGuard] ⚠️ No voice enrollment found for current user");
+        setIdentityStatus("unknown");
         setIsCheckingVoice(false);
-        return "no_enrollment";
+        return "unknown";
       }
 
       console.log("[VoiceGuard] ⚠️ Voice did NOT match any enrollment");
@@ -154,12 +127,11 @@ export function useVoiceIdentityGuard() {
       return "guest";
     } catch (e) {
       console.error("[VoiceGuard] ❌ Unexpected error:", e);
-      // FAIL-CLOSED: do NOT default to owner — block sensitive commands
       setIdentityStatus("unknown");
       setIsCheckingVoice(false);
       return "unknown";
     }
-  }, [user?.id, user?.email]);
+  }, [isCreatorAccount, user?.id, user?.email]);
 
   /** Register a guest session */
   const startGuestSession = useCallback(async (guestName: string, voiceBlob?: Blob) => {
