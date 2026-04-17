@@ -809,7 +809,11 @@ export function useNeuralVoice(
 
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
         setListening(false);
-        toast.error("Permissão do microfone bloqueada");
+        intentionalStopRef.current = true; // stop further restart attempts
+        if (!_micPermissionToastShown) {
+          _micPermissionToastShown = true;
+          toast.error("Permissão do microfone bloqueada", { id: "mic-blocked" });
+        }
         return;
       }
 
