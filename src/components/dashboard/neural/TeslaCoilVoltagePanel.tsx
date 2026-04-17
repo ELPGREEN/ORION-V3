@@ -122,7 +122,7 @@ export function TeslaCoilVoltagePanel() {
         </div>
 
         {/* Intent */}
-        <div className="mt-1 text-[7px] font-mono text-cyan-400/50 truncate">
+        <div className="mt-1 text-[7px] font-mono text-[hsl(var(--tron-neon))]/50 truncate">
           ⚡ {voltage.intent}{voltage.entities.length > 0 ? ` · ${voltage.entities.length} entidades` : ""}
         </div>
       </div>

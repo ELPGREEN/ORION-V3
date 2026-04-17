@@ -558,7 +558,7 @@ export function DataJudIngestionPanel() {
                             tp.status === "processing" 
                               ? "border-primary bg-primary/10 text-primary animate-pulse" 
                               : tp.status === "done" 
-                                ? "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400" 
+                                ? "border-green-500/30 bg-green-500/10 text-green-600 dark:text-[hsl(var(--tron-neon))]" 
                                 : tp.status === "error" 
                                   ? "border-destructive/30 bg-destructive/10 text-destructive" 
                                   : "border-border bg-muted/50 text-muted-foreground"
@@ -678,7 +678,7 @@ export function DataJudIngestionPanel() {
           {lastCodigosResult && (
             <div className="mt-4 p-3 bg-muted/50 rounded-lg space-y-3">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CheckCircle2 className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
                 <span className="text-sm font-medium">Resultado da Ingestão</span>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -983,7 +983,7 @@ export function DataJudIngestionPanel() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               {lastResult.success ? (
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CheckCircle2 className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
               ) : (
                 <AlertCircle className="h-4 w-4 text-destructive" />
               )}
@@ -1048,7 +1048,7 @@ export function DataJudIngestionPanel() {
               {recentJobs.map((job) => (
                 <div key={job.id} className="flex items-center justify-between p-2 bg-muted/50 rounded text-xs">
                   <div className="flex items-center gap-2">
-                    {job.status === "completed" && <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                    {job.status === "completed" && <CheckCircle2 className="h-3 w-3 text-[hsl(var(--tron-neon))]" />}
                     {job.status === "failed" && <AlertCircle className="h-3 w-3 text-destructive" />}
                     {job.status === "running" && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
                     <span>{new Date(job.startedAt).toLocaleString("pt-BR")}</span>

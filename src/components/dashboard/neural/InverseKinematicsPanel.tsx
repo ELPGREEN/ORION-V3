@@ -212,7 +212,7 @@ export default function InverseKinematicsPanel() {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Arm className="h-4 w-4 text-purple-400" />
+            <Arm className="h-4 w-4 text-[hsl(var(--tron-neon-soft))]" />
             Cinética Inversa — Braço Robótico
           </CardTitle>
           <Badge variant={connected ? "default" : "secondary"} className="text-[10px]">
@@ -280,13 +280,13 @@ export default function InverseKinematicsPanel() {
               <Card className="bg-zinc-900/50 border-zinc-800">
                 <CardContent className="pt-3 pb-2">
                   <Label className="text-[10px] text-zinc-500">X (m)</Label>
-                  <div className="text-lg font-mono text-cyan-400">{targetPos.x.toFixed(3)}</div>
+                  <div className="text-lg font-mono text-[hsl(var(--tron-neon))]">{targetPos.x.toFixed(3)}</div>
                 </CardContent>
               </Card>
               <Card className="bg-zinc-900/50 border-zinc-800">
                 <CardContent className="pt-3 pb-2">
                   <Label className="text-[10px] text-zinc-500">Y (m)</Label>
-                  <div className="text-lg font-mono text-purple-400">{targetPos.y.toFixed(3)}</div>
+                  <div className="text-lg font-mono text-[hsl(var(--tron-neon-soft))]">{targetPos.y.toFixed(3)}</div>
                 </CardContent>
               </Card>
               <Card className="bg-zinc-900/50 border-zinc-800">
@@ -417,7 +417,7 @@ export default function InverseKinematicsPanel() {
             {/* Calculated Joints from IK */}
             {calculatedJoints && (
               <div className="space-y-2 pt-3 border-t border-zinc-800">
-                <Label className="text-xs text-purple-400">Ângulos Calculados (IK)</Label>
+                <Label className="text-xs text-[hsl(var(--tron-neon-soft))]">Ângulos Calculados (IK)</Label>
                 {Object.entries(calculatedJoints).map(([name, value]) => (
                   <div key={name} className="flex items-center gap-2">
                     <div className="w-28 text-[10px] text-zinc-400 capitalize">{name.replace("_", " ")}</div>
@@ -427,7 +427,7 @@ export default function InverseKinematicsPanel() {
                         style={{ width: `${Math.min(100, Math.abs(value) / Math.PI * 100)}%` }}
                       />
                     </div>
-                    <div className="w-16 text-[10px] font-mono text-right text-purple-400">{value.toFixed(3)}</div>
+                    <div className="w-16 text-[10px] font-mono text-right text-[hsl(var(--tron-neon-soft))]">{value.toFixed(3)}</div>
                   </div>
                 ))}
               </div>

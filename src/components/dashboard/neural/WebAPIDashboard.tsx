@@ -111,33 +111,33 @@ export function WebAPIDashboard() {
     <div className="space-y-3">
       {/* Summary bar */}
       <div className="flex flex-wrap items-center gap-2 bg-black/20 rounded-lg p-2 border border-white/[0.04]">
-        <Badge variant="outline" className="text-[9px] font-mono border-cyan-500/30 text-cyan-400">
+        <Badge variant="outline" className="text-[9px] font-mono border-cyan-500/30 text-[hsl(var(--tron-neon))]">
           <Globe className="h-2.5 w-2.5 mr-1" /> {totalAvailable} APIs
         </Badge>
-        <Badge variant="outline" className="text-[9px] font-mono border-emerald-500/30 text-emerald-400">
+        <Badge variant="outline" className="text-[9px] font-mono border-emerald-500/30 text-[hsl(var(--tron-neon))]">
           <Zap className="h-2.5 w-2.5 mr-1" /> {totalActive} Ativas
         </Badge>
-        <Badge variant="outline" className={`text-[9px] font-mono ${totalActive >= totalAvailable ? "border-emerald-500/30 text-emerald-400" : "border-amber-500/30 text-amber-400"}`}>
+        <Badge variant="outline" className={`text-[9px] font-mono ${totalActive >= totalAvailable ? "border-emerald-500/30 text-[hsl(var(--tron-neon))]" : "border-amber-500/30 text-amber-400"}`}>
           <Gauge className="h-2.5 w-2.5 mr-1" /> {totalAvailable > 0 ? ((totalActive / totalAvailable) * 100).toFixed(1) : 0}%
         </Badge>
         {totalAvailable - totalActive > 0 && (
-          <Badge variant="outline" className="text-[9px] font-mono border-red-500/30 text-red-400">
+          <Badge variant="outline" className="text-[9px] font-mono border-red-500/30 text-[hsl(var(--tron-danger))]">
             <EyeOff className="h-2.5 w-2.5 mr-1" /> {totalAvailable - totalActive} Inativas
           </Badge>
         )}
         {env.battery && (
-          <Badge variant="outline" className="text-[9px] font-mono border-green-500/30 text-green-400">
+          <Badge variant="outline" className="text-[9px] font-mono border-green-500/30 text-[hsl(var(--tron-neon))]">
             {env.battery.charging ? <BatteryCharging className="h-2.5 w-2.5 mr-1" /> : <Battery className="h-2.5 w-2.5 mr-1" />}
             {env.battery.level.toFixed(0)}%
           </Badge>
         )}
         {env.network && (
-          <Badge variant="outline" className="text-[9px] font-mono border-blue-500/30 text-blue-400">
+          <Badge variant="outline" className="text-[9px] font-mono border-blue-500/30 text-[hsl(var(--tron-info))]">
             <Wifi className="h-2.5 w-2.5 mr-1" /> {env.network.effectiveType} {env.network.downlink}Mbps
           </Badge>
         )}
         {env.performance.memory && (
-          <Badge variant="outline" className="text-[9px] font-mono border-red-500/30 text-red-400">
+          <Badge variant="outline" className="text-[9px] font-mono border-red-500/30 text-[hsl(var(--tron-danger))]">
             <Cpu className="h-2.5 w-2.5 mr-1" /> {(env.performance.memory.usedJSHeapSize / 1048576).toFixed(0)}MB
           </Badge>
         )}
@@ -147,7 +147,7 @@ export function WebAPIDashboard() {
           </Badge>
         )}
         <div className="ml-auto">
-          <Badge variant="outline" className="text-[9px] font-mono border-purple-500/30 text-purple-400 animate-pulse">
+          <Badge variant="outline" className="text-[9px] font-mono border-purple-500/30 text-[hsl(var(--tron-neon-soft))] animate-pulse">
             <Brain className="h-2.5 w-2.5 mr-1" /> {totalActive >= totalAvailable ? "OMNISCIENTE" : "SINCRONIZANDO"}
           </Badge>
         </div>
@@ -166,7 +166,7 @@ export function WebAPIDashboard() {
               <div key={s.cat} className="bg-black/20 rounded px-1.5 py-1 border border-white/[0.04] text-center cursor-pointer hover:bg-white/[0.03] transition-colors"
                 onClick={() => setFilter(s.cat)}>
                 <span className="text-[7px] font-mono text-white/30 block truncate">{s.cat}</span>
-                <span className={`text-[10px] font-mono font-bold ${s.pct === 100 ? "text-emerald-400" : s.pct >= 50 ? "text-amber-400" : "text-red-400"}`}>
+                <span className={`text-[10px] font-mono font-bold ${s.pct === 100 ? "text-[hsl(var(--tron-neon))]" : s.pct >= 50 ? "text-amber-400" : "text-[hsl(var(--tron-danger))]"}`}>
                   {s.pct}%
                 </span>
                 <span className="text-[7px] font-mono text-white/20 block">{s.active}/{s.total}</span>
@@ -181,16 +181,16 @@ export function WebAPIDashboard() {
         {[
           { id: "geo", icon: <MapPin className="h-3 w-3" />, label: "Geo", color: "text-teal-400" },
           { id: "notify", icon: <Bell className="h-3 w-3" />, label: "Notif", color: "text-amber-400" },
-          { id: "vibrate", icon: <Vibrate className="h-3 w-3" />, label: "Vibrar", color: "text-green-400" },
-          { id: "fullscreen", icon: <Maximize className="h-3 w-3" />, label: "Full", color: "text-blue-400" },
-          { id: "wakelock", icon: <Sun className="h-3 w-3" />, label: "Wake", color: "text-yellow-400" },
-          { id: "crypto", icon: <Shield className="h-3 w-3" />, label: "Crypto", color: "text-purple-400" },
+          { id: "vibrate", icon: <Vibrate className="h-3 w-3" />, label: "Vibrar", color: "text-[hsl(var(--tron-neon))]" },
+          { id: "fullscreen", icon: <Maximize className="h-3 w-3" />, label: "Full", color: "text-[hsl(var(--tron-info))]" },
+          { id: "wakelock", icon: <Sun className="h-3 w-3" />, label: "Wake", color: "text-[hsl(var(--tron-warn))]" },
+          { id: "crypto", icon: <Shield className="h-3 w-3" />, label: "Crypto", color: "text-[hsl(var(--tron-neon-soft))]" },
           { id: "clipboard", icon: <Clipboard className="h-3 w-3" />, label: "Clip", color: "text-pink-400" },
-          { id: "share", icon: <Share2 className="h-3 w-3" />, label: "Share", color: "text-cyan-400" },
+          { id: "share", icon: <Share2 className="h-3 w-3" />, label: "Share", color: "text-[hsl(var(--tron-neon))]" },
           { id: "compress", icon: <Archive className="h-3 w-3" />, label: "Gzip", color: "text-indigo-400" },
           { id: "idb", icon: <Database className="h-3 w-3" />, label: "IDB", color: "text-orange-400" },
-          { id: "broadcast", icon: <Radio className="h-3 w-3" />, label: "BC", color: "text-red-400" },
-          { id: "save", icon: <Download className="h-3 w-3" />, label: "Save", color: "text-emerald-400" },
+          { id: "broadcast", icon: <Radio className="h-3 w-3" />, label: "BC", color: "text-[hsl(var(--tron-danger))]" },
+          { id: "save", icon: <Download className="h-3 w-3" />, label: "Save", color: "text-[hsl(var(--tron-neon))]" },
         ].map(a => (
           <Button key={a.id} size="sm" variant="ghost"
             className={`h-10 flex-col gap-0.5 p-0 ${a.color} hover:bg-white/5`}
@@ -265,7 +265,7 @@ export function WebAPIDashboard() {
         <Card className="border-white/[0.04] bg-[#060a10]">
           <CardContent className="p-2 space-y-1">
             <div className="flex items-center gap-1">
-              <Activity className="h-2.5 w-2.5 text-red-400" />
+              <Activity className="h-2.5 w-2.5 text-[hsl(var(--tron-danger))]" />
               <span className="text-[8px] font-mono text-white/25">Performance</span>
             </div>
             <div className="flex justify-between">
@@ -278,7 +278,7 @@ export function WebAPIDashboard() {
         <Card className="border-white/[0.04] bg-[#060a10]">
           <CardContent className="p-2 space-y-1">
             <div className="flex items-center gap-1">
-              <Monitor className="h-2.5 w-2.5 text-blue-400" />
+              <Monitor className="h-2.5 w-2.5 text-[hsl(var(--tron-info))]" />
               <span className="text-[8px] font-mono text-white/25">Devices</span>
             </div>
             <div className="flex gap-2">
@@ -292,7 +292,7 @@ export function WebAPIDashboard() {
         <Card className="border-white/[0.04] bg-[#060a10]">
           <CardContent className="p-2 space-y-1">
             <div className="flex items-center gap-1">
-              <Smartphone className="h-2.5 w-2.5 text-green-400" />
+              <Smartphone className="h-2.5 w-2.5 text-[hsl(var(--tron-neon))]" />
               <span className="text-[8px] font-mono text-white/25">Screen</span>
             </div>
             <span className="text-[7px] font-mono text-white/15">

@@ -221,9 +221,9 @@ export function AttentionVisualization() {
           <div className="flex items-center gap-2">
             <Badge
               className={`text-[10px] font-mono ${
-                systemHealth.score >= 80 ? "bg-green-500/10 text-green-400 border-green-500/30 shadow-sm shadow-green-500/10" :
-                systemHealth.score >= 60 ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/30" :
-                "bg-red-500/10 text-red-400 border-red-500/30"
+                systemHealth.score >= 80 ? "bg-green-500/10 text-[hsl(var(--tron-neon))] border-green-500/30 shadow-sm shadow-green-500/10" :
+                systemHealth.score >= 60 ? "bg-yellow-500/10 text-[hsl(var(--tron-warn))] border-yellow-500/30" :
+                "bg-red-500/10 text-[hsl(var(--tron-danger))] border-red-500/30"
               }`}
               variant="outline"
             >
@@ -592,9 +592,9 @@ export function AttentionVisualization() {
             {/* Status bar - glassmorphism cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[
-                { icon: <Activity className="h-3.5 w-3.5 text-green-400" />, label: "Módulos Ativos", value: `${activeCount}/${modules.length}`, color: "border-green-500/20" },
+                { icon: <Activity className="h-3.5 w-3.5 text-[hsl(var(--tron-neon))]" />, label: "Módulos Ativos", value: `${activeCount}/${modules.length}`, color: "border-green-500/20" },
                 { icon: <Zap className="h-3.5 w-3.5 text-primary" />, label: "Sinapses Neurais", value: `${connections.length}`, color: "border-primary/20" },
-                { icon: <Database className="h-3.5 w-3.5 text-cyan-400" />, label: "Vetores Semânticos", value: "61.3k", color: "border-cyan-500/20" },
+                { icon: <Database className="h-3.5 w-3.5 text-[hsl(var(--tron-neon))]" />, label: "Vetores Semânticos", value: "61.3k", color: "border-cyan-500/20" },
                 { icon: <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />, label: "Atualizado", value: lastRefresh.toLocaleTimeString("pt-BR"), color: "border-border/30" },
               ].map((item, i) => (
                 <div key={i} className={`p-2.5 bg-card/80 backdrop-blur-md rounded-lg border ${item.color} text-center group hover:border-primary/30 transition-all duration-300`}>

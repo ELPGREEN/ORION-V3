@@ -6,9 +6,9 @@ import type { CognitiveRouting } from "@/lib/neural/cognitive-fast-reasoner";
 
 const TIER_COLORS: Record<string, string> = {
   cached: "bg-muted text-muted-foreground",
-  edge: "bg-green-500/20 text-green-400 border-green-500/30",
-  slim: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  full: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+  edge: "bg-green-500/20 text-[hsl(var(--tron-neon))] border-green-500/30",
+  slim: "bg-blue-500/20 text-[hsl(var(--tron-info))] border-blue-500/30",
+  full: "bg-purple-500/20 text-[hsl(var(--tron-neon-soft))] border-purple-500/30",
   deep: "bg-orange-500/20 text-orange-400 border-orange-500/30",
 };
 
@@ -46,7 +46,7 @@ export function CognitiveRouterBadge() {
           <p className="font-semibold">Roteamento Cognitivo</p>
           <p>Tier: <span className="font-mono">{routing.tier}</span> | Modo: {routing.mode === "fast" ? "Sistema 1 (Rápido)" : "Sistema 2 (Analítico)"}</p>
           <p>Tokens máx: {routing.maxTokens.toLocaleString()} | Budget: {routing.latencyBudgetMs}ms</p>
-          {routing.cachedPattern && <p className="text-green-400">✓ Padrão de raciocínio em cache</p>}
+          {routing.cachedPattern && <p className="text-[hsl(var(--tron-neon))]">✓ Padrão de raciocínio em cache</p>}
           <p className="text-muted-foreground">Classificado em {routing.timestamp.toFixed(1)}ms</p>
         </TooltipContent>
       </Tooltip>

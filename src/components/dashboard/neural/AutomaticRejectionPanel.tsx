@@ -263,7 +263,7 @@ export default function AutomaticRejectionPanel() {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
-            <ConveyorBelt className="h-4 w-4 text-green-400" />
+            <ConveyorBelt className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
             Rejeição Automática — YOLO → Esteira
           </CardTitle>
           <Badge variant={connected ? "default" : "secondary"} className="text-[10px]">
@@ -333,10 +333,10 @@ export default function AutomaticRejectionPanel() {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-3 pb-2">
               <div className="flex items-center gap-2">
-                <Boxes className="h-3 w-3 text-blue-400" />
+                <Boxes className="h-3 w-3 text-[hsl(var(--tron-info))]" />
                 <span className="text-[10px] text-zinc-500">Total</span>
               </div>
-              <div className="text-xl font-mono font-bold text-blue-400">
+              <div className="text-xl font-mono font-bold text-[hsl(var(--tron-info))]">
                 {stats.totalScanned}
               </div>
             </CardContent>
@@ -345,10 +345,10 @@ export default function AutomaticRejectionPanel() {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-3 pb-2">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-3 w-3 text-red-400" />
+                <AlertTriangle className="h-3 w-3 text-[hsl(var(--tron-danger))]" />
                 <span className="text-[10px] text-zinc-500">Defeitos</span>
               </div>
-              <div className="text-xl font-mono font-bold text-red-400">
+              <div className="text-xl font-mono font-bold text-[hsl(var(--tron-danger))]">
                 {stats.defectsFound}
               </div>
             </CardContent>
@@ -357,10 +357,10 @@ export default function AutomaticRejectionPanel() {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-3 pb-2">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-3 w-3 text-green-400" />
+                <CheckCircle className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
                 <span className="text-[10px] text-zinc-500">Aceitos</span>
               </div>
-              <div className="text-xl font-mono font-bold text-green-400">
+              <div className="text-xl font-mono font-bold text-[hsl(var(--tron-neon))]">
                 {stats.totalScanned - stats.defectsFound}
               </div>
             </CardContent>
@@ -369,10 +369,10 @@ export default function AutomaticRejectionPanel() {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-3 pb-2">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-3 w-3 text-cyan-400" />
+                <TrendingUp className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
                 <span className="text-[10px] text-zinc-500">Precisão</span>
               </div>
-              <div className="text-xl font-mono font-bold text-cyan-400">
+              <div className="text-xl font-mono font-bold text-[hsl(var(--tron-neon))]">
                 {accuracy.toFixed(1)}%
               </div>
             </CardContent>
@@ -387,9 +387,9 @@ export default function AutomaticRejectionPanel() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {latestDetection.isDefect ? (
-                  <XCircle className="h-5 w-5 text-red-500" />
+                  <XCircle className="h-5 w-5 text-[hsl(var(--tron-danger))]" />
                 ) : (
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <CheckCircle className="h-5 w-5 text-[hsl(var(--tron-neon))]" />
                 )}
                 <div>
                   <div className="text-sm font-medium">
@@ -484,11 +484,11 @@ export default function AutomaticRejectionPanel() {
               <div key={idx} className="flex items-center justify-between text-[10px] p-1 bg-zinc-900/30 rounded">
                 <div className="flex items-center gap-2">
                   {det.isDefect ? (
-                    <XCircle className="h-3 w-3 text-red-500" />
+                    <XCircle className="h-3 w-3 text-[hsl(var(--tron-danger))]" />
                   ) : (
-                    <CheckCircle className="h-3 w-3 text-green-500" />
+                    <CheckCircle className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
                   )}
-                  <span className={det.isDefect ? "text-red-400" : "text-green-400"}>
+                  <span className={det.isDefect ? "text-[hsl(var(--tron-danger))]" : "text-[hsl(var(--tron-neon))]"}>
                     {det.className}
                   </span>
                 </div>
@@ -502,7 +502,7 @@ export default function AutomaticRejectionPanel() {
 
         {/* Pipeline Status */}
         <div className="flex items-center justify-between text-xs text-zinc-500 pt-2 border-t border-zinc-800">
-          <span>Pipeline: <span className="text-green-400">YOLO → Detecção → Rejeição</span></span>
+          <span>Pipeline: <span className="text-[hsl(var(--tron-neon))]">YOLO → Detecção → Rejeição</span></span>
           <span>Latência: ~50ms</span>
         </div>
       </CardContent>

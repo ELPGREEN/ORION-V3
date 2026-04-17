@@ -710,7 +710,7 @@ function MetricsOverlay() {
     <div className="absolute top-3 left-3 z-10 pointer-events-none flex flex-col gap-1">
       <div className="flex items-center gap-2 mb-0.5">
         <div className="h-2 w-2 rounded-full bg-cyan-400/60 animate-pulse" style={{ boxShadow: "0 0 6px #00e5ff40" }} />
-        <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-cyan-300/40">ORION NEUROCORE</span>
+        <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-[hsl(var(--tron-neon))]/40">ORION NEUROCORE</span>
         <span className="text-[8px] font-mono text-white/15">v24 · NEURAL HD</span>
       </div>
       <div className="flex gap-1 flex-wrap">
@@ -747,7 +747,7 @@ function CategoryLegend() {
   return (
     <div className="absolute bottom-3 left-3 bg-[#020a12]/90 backdrop-blur-md rounded-lg p-2 border border-white/[0.06] z-10 pointer-events-none max-w-[560px]"
       style={{ boxShadow: "0 0 10px rgba(0,50,80,0.08)" }}>
-      <p className="text-[8px] text-cyan-400/20 mb-1.5 font-mono tracking-[0.2em] uppercase">
+      <p className="text-[8px] text-[hsl(var(--tron-neon))]/20 mb-1.5 font-mono tracking-[0.2em] uppercase">
         ORION NEURAL BRAIN · {NODE_COUNT} Nós · {CONNECTIONS.length} Sinapses · HD Realistic
       </p>
       <div className="grid grid-cols-5 gap-x-3 gap-y-0.5">
@@ -819,7 +819,7 @@ export function NeuralNetworkLiveView() {
               className="h-8 w-8 p-0 bg-[#020a12]/90 border-white/[0.08] text-white/30 hover:text-cyan-600 hover:border-cyan-700/25 backdrop-blur-md"
               onClick={() => setShowLabels(!showLabels)}
               title={showLabels ? "Ocultar labels" : "Mostrar labels"}>
-              <Tag className={`h-3.5 w-3.5 ${showLabels ? "text-cyan-500" : ""}`} />
+              <Tag className={`h-3.5 w-3.5 ${showLabels ? "text-[hsl(var(--tron-neon))]" : ""}`} />
             </Button>
             <Button size="sm" variant="outline"
               className="h-8 w-8 p-0 bg-[#020a12]/90 border-white/[0.08] text-white/30 hover:text-cyan-600 hover:border-cyan-700/25 backdrop-blur-md"

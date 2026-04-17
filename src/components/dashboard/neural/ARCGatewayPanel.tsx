@@ -78,17 +78,17 @@ export default function ARCGatewayPanel() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "text-green-400";
-      case "learning": return "text-yellow-400";
-      case "connecting": return "text-blue-400";
-      default: return "text-gray-400";
+      case "active": return "text-[hsl(var(--tron-neon))]";
+      case "learning": return "text-[hsl(var(--tron-warn))]";
+      case "connecting": return "text-[hsl(var(--tron-info))]";
+      default: return "text-[hsl(var(--tron-muted))]";
     }
   };
 
   return (
-    <div className="p-4 bg-gray-900 rounded-lg space-y-4">
+    <div className="p-4 tron-panel space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-cyan-400">🌐 ARC-AGI-2 Gateway</h3>
+        <h3 className="text-lg font-bold text-[hsl(var(--tron-neon))]">🌐 ARC-AGI-2 Gateway</h3>
         <span className={`font-mono ${getStatusColor(gatewayState.status)}`}>
           [{gatewayState.status.toUpperCase()}]
         </span>
@@ -96,21 +96,21 @@ export default function ARCGatewayPanel() {
 
       {/* Status Cards */}
       <div className="grid grid-cols-4 gap-2 text-sm">
-        <div className="bg-gray-800 p-2 rounded">
-          <div className="text-gray-400">APIs Ativas</div>
-          <div className="text-xl font-mono text-green-400">{gatewayState.activeAPIs}</div>
+        <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
+          <div className="text-[hsl(var(--tron-muted))]">APIs Ativas</div>
+          <div className="text-xl font-mono text-[hsl(var(--tron-neon))]">{gatewayState.activeAPIs}</div>
         </div>
-        <div className="bg-gray-800 p-2 rounded">
-          <div className="text-gray-400">Descobertas</div>
-          <div className="text-xl font-mono text-blue-400">{gatewayState.discoveredAPIs}</div>
+        <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
+          <div className="text-[hsl(var(--tron-muted))]">Descobertas</div>
+          <div className="text-xl font-mono text-[hsl(var(--tron-info))]">{gatewayState.discoveredAPIs}</div>
         </div>
-        <div className="bg-gray-800 p-2 rounded">
-          <div className="text-gray-400">Padrões Aprendidos</div>
-          <div className="text-xl font-mono text-yellow-400">{gatewayState.learnedPatterns}</div>
+        <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
+          <div className="text-[hsl(var(--tron-muted))]">Padrões Aprendidos</div>
+          <div className="text-xl font-mono text-[hsl(var(--tron-warn))]">{gatewayState.learnedPatterns}</div>
         </div>
-        <div className="bg-gray-800 p-2 rounded">
-          <div className="text-gray-400">Requisições</div>
-          <div className="text-xl font-mono text-purple-400">{gatewayState.totalRequests}</div>
+        <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
+          <div className="text-[hsl(var(--tron-muted))]">Requisições</div>
+          <div className="text-xl font-mono text-[hsl(var(--tron-neon-soft))]">{gatewayState.totalRequests}</div>
         </div>
       </div>
 
@@ -119,20 +119,20 @@ export default function ARCGatewayPanel() {
         <button
           onClick={handleActivate}
           disabled={gatewayState.status === "active"}
-          className="px-3 py-1 bg-green-700 hover:bg-green-600 rounded text-sm disabled:opacity-50"
+          className="px-3 py-1 bg-[hsl(var(--tron-neon)/0.18)] hover:bg-[hsl(var(--tron-neon)/0.3)] border border-[hsl(var(--tron-neon)/0.5)] text-[hsl(var(--tron-neon))] rounded text-sm disabled:opacity-50"
         >
           Ativar Gateway
         </button>
         <button
           onClick={handleScan}
           disabled={isScanning || gatewayState.status !== "active"}
-          className="px-3 py-1 bg-blue-700 hover:bg-blue-600 rounded text-sm disabled:opacity-50"
+          className="px-3 py-1 bg-[hsl(var(--tron-info)/0.18)] hover:bg-[hsl(var(--tron-info)/0.3)] border border-[hsl(var(--tron-info)/0.5)] text-[hsl(var(--tron-info))] rounded text-sm disabled:opacity-50"
         >
           {isScanning ? "Escaneando..." : "Escanear APIs"}
         </button>
         <button
           onClick={handleReset}
-          className="px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-sm"
+          className="px-3 py-1 bg-[hsl(var(--tron-danger)/0.18)] hover:bg-[hsl(var(--tron-danger)/0.3)] border border-[hsl(var(--tron-danger)/0.5)] text-[hsl(var(--tron-danger))] rounded text-sm"
         >
           Reset
         </button>
@@ -145,30 +145,30 @@ export default function ARCGatewayPanel() {
           value={testQuery}
           onChange={(e) => setTestQuery(e.target.value)}
           placeholder="Testar: 'tempo em sp', 'bitcoin', 'notícia'..."
-          className="flex-1 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm"
+          className="flex-1 px-2 py-1 bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] border border-[hsl(var(--tron-neon)/0.25)] rounded text-sm"
         />
         <button
           onClick={handleTestQuery}
           disabled={!testQuery.trim() || gatewayState.status !== "active"}
-          className="px-3 py-1 bg-purple-700 hover:bg-purple-600 rounded text-sm disabled:opacity-50"
+          className="px-3 py-1 bg-[hsl(var(--tron-neon-soft)/0.18)] hover:bg-[hsl(var(--tron-neon-soft)/0.3)] border border-[hsl(var(--tron-neon-soft)/0.5)] text-[hsl(var(--tron-neon-soft))] rounded text-sm disabled:opacity-50"
         >
           Testar
         </button>
       </div>
       {testResult && (
-        <pre className="bg-gray-950 p-2 rounded text-xs text-green-300 overflow-x-auto max-h-32">
+        <pre className="bg-[hsl(var(--tron-bg-deep))] p-2 rounded text-xs text-[hsl(var(--tron-neon))] overflow-x-auto max-h-32">
           {testResult}
         </pre>
       )}
 
       {/* API List */}
       <div className="space-y-2">
-        <h4 className="text-sm font-bold text-gray-300">APIs Disponíveis</h4>
+        <h4 className="text-sm font-bold text-[hsl(var(--tron-muted))]">APIs Disponíveis</h4>
         <div className="grid grid-cols-2 gap-1 text-xs">
           {discoveredAPIs.slice(0, 8).map((api) => (
-            <div key={api.name} className="flex justify-between bg-gray-800 px-2 py-1 rounded">
-              <span className="text-gray-300">{api.name}</span>
-              <span className={api.status === "working" ? "text-green-400" : api.status === "failed" ? "text-red-400" : "text-gray-500"}>
+            <div key={api.name} className="flex justify-between bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] px-2 py-1 rounded">
+              <span className="text-[hsl(var(--tron-muted))]">{api.name}</span>
+              <span className={api.status === "working" ? "text-[hsl(var(--tron-neon))]" : api.status === "failed" ? "text-[hsl(var(--tron-danger))]" : "text-[hsl(var(--tron-muted))]"}>
                 {api.status}
               </span>
             </div>
@@ -178,24 +178,24 @@ export default function ARCGatewayPanel() {
 
       {/* API Learner Stats */}
       <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="bg-gray-800 p-2 rounded">
-          <div className="text-gray-400">APIs Aprendidas</div>
-          <div className="text-lg font-mono text-cyan-400">{apiLearnerDiag.learnedAPIs}</div>
+        <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
+          <div className="text-[hsl(var(--tron-muted))]">APIs Aprendidas</div>
+          <div className="text-lg font-mono text-[hsl(var(--tron-neon))]">{apiLearnerDiag.learnedAPIs}</div>
         </div>
-        <div className="bg-gray-800 p-2 rounded">
-          <div className="text-gray-400">Frameworks Conhecidos</div>
-          <div className="text-lg font-mono text-cyan-400">{apiLearnerDiag.frameworkKnowledge}</div>
+        <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-2 rounded">
+          <div className="text-[hsl(var(--tron-muted))]">Frameworks Conhecidos</div>
+          <div className="text-lg font-mono text-[hsl(var(--tron-neon))]">{apiLearnerDiag.frameworkKnowledge}</div>
         </div>
       </div>
 
       {/* Learned APIs */}
       {learnedAPIs.length > 0 && (
         <div className="space-y-1">
-          <h4 className="text-xs font-bold text-gray-400">APIs Aprendidas</h4>
+          <h4 className="text-xs font-bold text-[hsl(var(--tron-muted))]">APIs Aprendidas</h4>
           {learnedAPIs.slice(0, 3).map((api) => (
-            <div key={api.name} className="text-xs bg-gray-800 px-2 py-1 rounded flex justify-between">
-              <span className="text-cyan-300">{api.name}</span>
-              <span className="text-gray-500">{api.category} • {api.usageCount}x</span>
+            <div key={api.name} className="text-xs bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] px-2 py-1 rounded flex justify-between">
+              <span className="text-[hsl(var(--tron-neon))]">{api.name}</span>
+              <span className="text-[hsl(var(--tron-muted))]">{api.category} • {api.usageCount}x</span>
             </div>
           ))}
         </div>
@@ -204,11 +204,11 @@ export default function ARCGatewayPanel() {
       {/* Frameworks */}
       {frameworkKnowledge.length > 0 && (
         <div className="space-y-1">
-          <h4 className="text-xs font-bold text-gray-400">Frameworks Conhecidos</h4>
+          <h4 className="text-xs font-bold text-[hsl(var(--tron-muted))]">Frameworks Conhecidos</h4>
           {frameworkKnowledge.slice(0, 3).map((fw) => (
-            <div key={fw.name} className="text-xs bg-gray-800 px-2 py-1 rounded flex justify-between">
-              <span className="text-yellow-300">{fw.name}</span>
-              <span className="text-gray-500">{fw.language}</span>
+            <div key={fw.name} className="text-xs bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] px-2 py-1 rounded flex justify-between">
+              <span className="text-[hsl(var(--tron-warn))]">{fw.name}</span>
+              <span className="text-[hsl(var(--tron-muted))]">{fw.language}</span>
             </div>
           ))}
         </div>

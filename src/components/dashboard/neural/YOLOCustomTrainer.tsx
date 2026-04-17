@@ -133,7 +133,7 @@ export default function YOLOCustomTrainer() {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Brain className="h-4 w-4 text-purple-400" />
+            <Brain className="h-4 w-4 text-[hsl(var(--tron-neon-soft))]" />
             Treinador YOLO Customizado
           </CardTitle>
           <Badge variant={isTraining ? "default" : "secondary"} className="text-[10px]">
@@ -177,10 +177,10 @@ export default function YOLOCustomTrainer() {
                   <Card className="bg-zinc-900/50 border-zinc-800">
                     <CardContent className="pt-3 pb-2">
                       <div className="flex items-center gap-2">
-                        <Image className="h-3 w-3 text-blue-400" />
+                        <Image className="h-3 w-3 text-[hsl(var(--tron-info))]" />
                         <span className="text-[10px] text-zinc-500">Imagens</span>
                       </div>
-                      <div className="text-lg font-mono font-bold text-blue-400">
+                      <div className="text-lg font-mono font-bold text-[hsl(var(--tron-info))]">
                         {dataset.images}
                       </div>
                     </CardContent>
@@ -189,10 +189,10 @@ export default function YOLOCustomTrainer() {
                   <Card className="bg-zinc-900/50 border-zinc-800">
                     <CardContent className="pt-3 pb-2">
                       <div className="flex items-center gap-2">
-                        <FileText className="h-3 w-3 text-green-400" />
+                        <FileText className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
                         <span className="text-[10px] text-zinc-500">Anotações</span>
                       </div>
-                      <div className="text-lg font-mono font-bold text-green-400">
+                      <div className="text-lg font-mono font-bold text-[hsl(var(--tron-neon))]">
                         {dataset.annotations}
                       </div>
                     </CardContent>
@@ -201,10 +201,10 @@ export default function YOLOCustomTrainer() {
                   <Card className="bg-zinc-900/50 border-zinc-800">
                     <CardContent className="pt-3 pb-2">
                       <div className="flex items-center gap-2">
-                        <Box className="h-3 w-3 text-purple-400" />
+                        <Box className="h-3 w-3 text-[hsl(var(--tron-neon-soft))]" />
                         <span className="text-[10px] text-zinc-500">Classes</span>
                       </div>
-                      <div className="text-lg font-mono font-bold text-purple-400">
+                      <div className="text-lg font-mono font-bold text-[hsl(var(--tron-neon-soft))]">
                         {dataset.classes.length}
                       </div>
                     </CardContent>
@@ -351,9 +351,9 @@ export default function YOLOCustomTrainer() {
                   }`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        {job.status === "completed" && <CheckCircle className="h-4 w-4 text-green-500" />}
-                        {job.status === "failed" && <XCircle className="h-4 w-4 text-red-500" />}
-                        {job.status === "training" && <Train className="h-4 w-4 text-purple-500 animate-pulse" />}
+                        {job.status === "completed" && <CheckCircle className="h-4 w-4 text-[hsl(var(--tron-neon))]" />}
+                        {job.status === "failed" && <XCircle className="h-4 w-4 text-[hsl(var(--tron-danger))]" />}
+                        {job.status === "training" && <Train className="h-4 w-4 text-[hsl(var(--tron-neon-soft))] animate-pulse" />}
                         <span className="text-xs font-medium">{job.name}</span>
                       </div>
                       <Badge variant="outline" className="text-[10px]">
@@ -391,7 +391,7 @@ export default function YOLOCustomTrainer() {
             
             <div className="p-3 bg-zinc-900/30 rounded-lg">
               <div className="text-xs text-zinc-500 mb-2">Uso no Orion</div>
-              <code className="text-[10px] text-cyan-400">
+              <code className="text-[10px] text-[hsl(var(--tron-neon))]">
                 import YOLO from '@ultralytics/yolo11n';<br/>
                 const model = new YOLO('meu_modelo.onnx');
               </code>

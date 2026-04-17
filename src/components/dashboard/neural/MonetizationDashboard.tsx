@@ -91,18 +91,18 @@ export default function MonetizationDashboard() {
   };
 
   if (isLoading) {
-    return <div className="p-4 bg-gray-900 rounded-lg text-center text-gray-400">Carregando...</div>;
+    return <div className="p-4 tron-panel text-center text-[hsl(var(--tron-muted))]">Carregando...</div>;
   }
 
   const totalValue = (revenue?.totalEarned || 0) / 100;
   const googleValue = (googleStats?.totalSpent || 0);
 
   return (
-    <div className="p-4 bg-gray-900 rounded-lg space-y-4">
+    <div className="p-4 tron-panel space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-green-400">💰 Monetização Orion</h3>
-        <div className="text-xs text-gray-500">ARC-AGI-2 Powered</div>
+        <h3 className="text-xl font-bold text-[hsl(var(--tron-neon))]">💰 Monetização Orion</h3>
+        <div className="text-xs text-[hsl(var(--tron-muted))]">ARC-AGI-2 Powered</div>
       </div>
 
       {/* Tabs */}
@@ -114,7 +114,7 @@ export default function MonetizationDashboard() {
             className={`px-3 py-1 rounded ${
               activeTab === tab 
                 ? "bg-green-700 text-white" 
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                : "bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] text-[hsl(var(--tron-muted))] hover:bg-[hsl(var(--tron-surface-2))]"
             }`}
           >
             {tab === "overview" && "📊 Visão"}
@@ -131,7 +131,7 @@ export default function MonetizationDashboard() {
           {/* Payment Setup Warning */}
           {paymentSetup && !paymentSetup.canReceivePayout && (
             <div className="bg-yellow-900/50 border border-yellow-600 p-3 rounded">
-              <div className="text-yellow-400 font-bold">⚠️ Configure seu Stripe Connect</div>
+              <div className="text-[hsl(var(--tron-warn))] font-bold">⚠️ Configure seu Stripe Connect</div>
               <ul className="text-xs text-yellow-200 mt-1 space-y-1">
                 {paymentSetup.issues.map((issue: string, i: number) => (
                   <li key={i}>• {issue}</li>
@@ -139,7 +139,7 @@ export default function MonetizationDashboard() {
               </ul>
               <button
                 onClick={handleSetupStripe}
-                className="mt-2 px-3 py-1 bg-yellow-600 hover:bg-yellow-500 rounded text-sm"
+                className="mt-2 px-3 py-1 bg-[hsl(var(--tron-warn)/0.18)] hover:bg-[hsl(var(--tron-warn)/0.3)] border border-[hsl(var(--tron-warn)/0.5)] text-[hsl(var(--tron-warn))] rounded text-sm"
               >
                 Configurar Agora
               </button>
@@ -148,32 +148,32 @@ export default function MonetizationDashboard() {
 
           {/* Total Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <div className="bg-gray-800 p-3 rounded">
-              <div className="text-gray-400 text-xs">Receita Total</div>
-              <div className="text-2xl font-mono text-green-400">R$ {totalValue.toFixed(2)}</div>
+            <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-3 rounded">
+              <div className="text-[hsl(var(--tron-muted))] text-xs">Receita Total</div>
+              <div className="text-2xl font-mono text-[hsl(var(--tron-neon))]">R$ {totalValue.toFixed(2)}</div>
             </div>
-            <div className="bg-gray-800 p-3 rounded">
-              <div className="text-gray-400 text-xs">Serviços</div>
-              <div className="text-2xl font-mono text-blue-400">{revenue?.servicesSold || 0}</div>
+            <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-3 rounded">
+              <div className="text-[hsl(var(--tron-muted))] text-xs">Serviços</div>
+              <div className="text-2xl font-mono text-[hsl(var(--tron-info))]">{revenue?.servicesSold || 0}</div>
             </div>
-            <div className="bg-gray-800 p-3 rounded">
-              <div className="text-gray-400 text-xs">Google API</div>
-              <div className="text-2xl font-mono text-purple-400">R$ {googleValue.toFixed(2)}</div>
+            <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-3 rounded">
+              <div className="text-[hsl(var(--tron-muted))] text-xs">Google API</div>
+              <div className="text-2xl font-mono text-[hsl(var(--tron-neon-soft))]">R$ {googleValue.toFixed(2)}</div>
             </div>
-            <div className="bg-gray-800 p-3 rounded">
-              <div className="text-gray-400 text-xs">Sacado</div>
-              <div className="text-2xl font-mono text-yellow-400">R$ {((revenue?.totalPayout || 0) / 100).toFixed(2)}</div>
+            <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-3 rounded">
+              <div className="text-[hsl(var(--tron-muted))] text-xs">Sacado</div>
+              <div className="text-2xl font-mono text-[hsl(var(--tron-warn))]">R$ {((revenue?.totalPayout || 0) / 100).toFixed(2)}</div>
             </div>
           </div>
 
           {/* Revenue by Type */}
-          <div className="bg-gray-800 p-3 rounded">
-            <div className="text-sm font-bold text-gray-300 mb-2">Receita por Tipo</div>
+          <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-3 rounded">
+            <div className="text-sm font-bold text-[hsl(var(--tron-muted))] mb-2">Receita por Tipo</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
               {Object.entries(revenue?.summary?.byType || {}).map(([type, amount]) => (
-                <div key={type} className="flex justify-between bg-gray-700 px-2 py-1 rounded">
-                  <span className="text-gray-400">{type}</span>
-                  <span className="text-green-400">R$ {((amount as number) / 100).toFixed(2)}</span>
+                <div key={type} className="flex justify-between bg-[hsl(var(--tron-surface-2))] px-2 py-1 rounded">
+                  <span className="text-[hsl(var(--tron-muted))]">{type}</span>
+                  <span className="text-[hsl(var(--tron-neon))]">R$ {((amount as number) / 100).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -184,15 +184,15 @@ export default function MonetizationDashboard() {
       {/* Services Tab */}
       {activeTab === "services" && (
         <div className="space-y-2">
-          <div className="text-sm font-bold text-gray-300">Serviços que posso cobrar</div>
+          <div className="text-sm font-bold text-[hsl(var(--tron-muted))]">Serviços que posso cobrar</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
             {SERVICES_CATALOG.map(service => (
-              <div key={service.id} className="flex justify-between bg-gray-800 px-3 py-2 rounded">
+              <div key={service.id} className="flex justify-between bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] px-3 py-2 rounded">
                 <div>
-                  <div className="text-gray-300 text-sm">{service.name}</div>
-                  <div className="text-gray-500 text-xs">{service.description}</div>
+                  <div className="text-[hsl(var(--tron-muted))] text-sm">{service.name}</div>
+                  <div className="text-[hsl(var(--tron-muted))] text-xs">{service.description}</div>
                 </div>
-                <div className="text-green-400 font-mono">{service.price_display}</div>
+                <div className="text-[hsl(var(--tron-neon))] font-mono">{service.price_display}</div>
               </div>
             ))}
           </div>
@@ -202,21 +202,21 @@ export default function MonetizationDashboard() {
       {/* Google Tab */}
       {activeTab === "google" && (
         <div className="space-y-2">
-          <div className="text-sm font-bold text-gray-300">Google API Services</div>
+          <div className="text-sm font-bold text-[hsl(var(--tron-muted))]">Google API Services</div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto text-xs">
             {GOOGLE_SERVICES.slice(0, 15).map(service => (
-              <div key={service.id} className="flex justify-between bg-gray-800 px-2 py-1 rounded">
-                <span className="text-gray-400 truncate">{service.name}</span>
-                <span className="text-purple-400">{service.price_display}</span>
+              <div key={service.id} className="flex justify-between bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] px-2 py-1 rounded">
+                <span className="text-[hsl(var(--tron-muted))] truncate">{service.name}</span>
+                <span className="text-[hsl(var(--tron-neon-soft))]">{service.price_display}</span>
               </div>
             ))}
           </div>
           
           {googleStats && (
-            <div className="bg-gray-800 p-3 rounded">
-              <div className="text-xs text-gray-400">Uso este mês</div>
-              <div className="text-lg text-purple-400">{googleStats.totalUsed} chamadas</div>
-              <div className="text-xs text-gray-500">R$ {googleStats.totalSpent.toFixed(2)} em custos</div>
+            <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-3 rounded">
+              <div className="text-xs text-[hsl(var(--tron-muted))]">Uso este mês</div>
+              <div className="text-lg text-[hsl(var(--tron-neon-soft))]">{googleStats.totalUsed} chamadas</div>
+              <div className="text-xs text-[hsl(var(--tron-muted))]">R$ {googleStats.totalSpent.toFixed(2)} em custos</div>
             </div>
           )}
         </div>
@@ -226,34 +226,34 @@ export default function MonetizationDashboard() {
       {activeTab === "payouts" && (
         <>
           {paymentSetup?.canReceivePayout ? (
-            <div className="bg-gray-800 p-3 rounded space-y-3">
-              <div className="text-sm font-bold text-gray-300">Solicitar Saque</div>
+            <div className="bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] p-3 rounded space-y-3">
+              <div className="text-sm font-bold text-[hsl(var(--tron-muted))]">Solicitar Saque</div>
               <div className="flex gap-2">
                 <input
                   type="number"
                   value={payoutAmount}
                   onChange={(e) => setPayoutAmount(e.target.value)}
                   placeholder="Valor em R$"
-                  className="flex-1 px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm"
+                  className="flex-1 px-2 py-1 bg-[hsl(var(--tron-surface-2))] border border-[hsl(var(--tron-neon)/0.25)] rounded text-sm"
                 />
                 <button
                   onClick={handlePayout}
                   disabled={!payoutAmount || totalValue <= 0}
-                  className="px-3 py-1 bg-green-700 hover:bg-green-600 rounded text-sm disabled:opacity-50"
+                  className="px-3 py-1 bg-[hsl(var(--tron-neon)/0.18)] hover:bg-[hsl(var(--tron-neon)/0.3)] border border-[hsl(var(--tron-neon)/0.5)] text-[hsl(var(--tron-neon))] rounded text-sm disabled:opacity-50"
                 >
                   Sacar
                 </button>
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-[hsl(var(--tron-muted))]">
                 Máximo disponível: R$ {totalValue.toFixed(2)}
               </div>
             </div>
           ) : (
             <div className="bg-red-900/50 border border-red-600 p-3 rounded text-center">
-              <div className="text-red-400">Configure Stripe Connect para receber saques</div>
+              <div className="text-[hsl(var(--tron-danger))]">Configure Stripe Connect para receber saques</div>
               <button
                 onClick={handleSetupStripe}
-                className="mt-2 px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-sm"
+                className="mt-2 px-3 py-1 bg-[hsl(var(--tron-danger)/0.18)] hover:bg-[hsl(var(--tron-danger)/0.3)] border border-[hsl(var(--tron-danger)/0.5)] text-[hsl(var(--tron-danger))] rounded text-sm"
               >
                 Configurar
               </button>
@@ -263,13 +263,13 @@ export default function MonetizationDashboard() {
           {/* Recent Payouts */}
           {revenue?.recentPayouts?.length > 0 && (
             <div className="space-y-1">
-              <div className="text-xs font-bold text-gray-400">Saques Recentes</div>
+              <div className="text-xs font-bold text-[hsl(var(--tron-muted))]">Saques Recentes</div>
               {revenue.recentPayouts.map((payout: any, i: number) => (
-                <div key={i} className="flex justify-between bg-gray-800 px-2 py-1 rounded text-xs">
-                  <span className="text-gray-400">
+                <div key={i} className="flex justify-between bg-[hsl(var(--tron-surface))] border border-[hsl(var(--tron-neon)/0.12)] px-2 py-1 rounded text-xs">
+                  <span className="text-[hsl(var(--tron-muted))]">
                     {new Date(payout.created_at).toLocaleDateString("pt-BR")}
                   </span>
-                  <span className={payout.status === "paid" ? "text-green-400" : "text-yellow-400"}>
+                  <span className={payout.status === "paid" ? "text-[hsl(var(--tron-neon))]" : "text-[hsl(var(--tron-warn))]"}>
                     R$ {((payout.amount || 0) / 100).toFixed(2)} - {payout.status}
                   </span>
                 </div>

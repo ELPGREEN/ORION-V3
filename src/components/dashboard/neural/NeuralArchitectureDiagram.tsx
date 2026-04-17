@@ -85,13 +85,13 @@ export function NeuralArchitectureDiagram() {
           <CardContent className="relative z-10">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-8 gap-2">
               {[
-                { icon: Database, title: "60+ Tribunais", desc: "STF, STJ, TST, TJs, TRFs", color: "text-blue-400" },
+                { icon: Database, title: "60+ Tribunais", desc: "STF, STJ, TST, TJs, TRFs", color: "text-[hsl(var(--tron-info))]" },
                 { icon: Atom, title: "QHRL + VQC", desc: "Quantum Planner DAG", color: "text-violet-400" },
-                { icon: Brain, title: "Mamba SSM", desc: "O(n) Seq. Longas", color: "text-emerald-400" },
+                { icon: Brain, title: "Mamba SSM", desc: "O(n) Seq. Longas", color: "text-[hsl(var(--tron-neon))]" },
                 { icon: Magnet, title: "Cross-Modal", desc: "CLIP + STDP Gamma", color: "text-pink-400" },
                 { icon: Target, title: "10 Agentes IA", desc: "A2A + Swarms + DAG", color: "text-orange-400" },
                 { icon: Sparkles, title: "Auto-Evolução", desc: "DPO + RLVR + A/B", color: "text-amber-400" },
-                { icon: Bot, title: "5 Motores Neurais", desc: "Alpha·Beta·Gamma·Delta·Epsilon", color: "text-cyan-400" },
+                { icon: Bot, title: "5 Motores Neurais", desc: "Alpha·Beta·Gamma·Delta·Epsilon", color: "text-[hsl(var(--tron-neon))]" },
                 { icon: Shield, title: "RLS + LGPD", desc: "Segurança em camadas", color: "text-rose-400" },
               ].map((item, i) => (
                 <div key={i} className="p-2.5 bg-background/50 backdrop-blur-sm rounded-xl border border-border/30 hover:border-primary/30 transition-all duration-300 hover:scale-[1.02]">
@@ -110,7 +110,7 @@ export function NeuralArchitectureDiagram() {
         <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <GitBranch className="h-4 w-4 text-emerald-400" />
+              <GitBranch className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
               Pipeline Neural v19 — 16 Estágios (Rauber UFES + Deep Learning)
             </CardTitle>
           </CardHeader>
@@ -154,22 +154,22 @@ export function NeuralArchitectureDiagram() {
         <Card className="bg-card border-border/50 overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Network className="h-4 w-4 text-cyan-400" />
+              <Network className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
               <span>Mapa de Integrações Completo</span>
-              <Badge variant="outline" className="text-[8px] border-cyan-500/30 text-cyan-400 ml-auto">v19 LIVE</Badge>
+              <Badge variant="outline" className="text-[8px] border-cyan-500/30 text-[hsl(var(--tron-neon))] ml-auto">v19 LIVE</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {/* Linha 1: Fontes de Entrada */}
             <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
-              <p className="text-[9px] font-bold text-blue-400 uppercase tracking-wider mb-2">⬡ Fontes de Entrada</p>
+              <p className="text-[9px] font-bold text-[hsl(var(--tron-info))] uppercase tracking-wider mb-2">⬡ Fontes de Entrada</p>
               <div className="flex flex-wrap items-center justify-center gap-3">
-                <PulseNode icon={User} label="Usuário" sublabel="Chat / Docs / Pesquisa" color="text-blue-400" />
-                <PulseNode icon={Globe} label="APIs Externas" sublabel="DataJud · LexML · STF" color="text-blue-400" />
-                <PulseNode icon={Upload} label="Smart Ingest" sublabel="PDF · TXT · DOCX" color="text-blue-400" />
-                <PulseNode icon={Calendar} label="Auto-Ingestão" sublabel="Cron 6h · 7 tribunais" color="text-blue-400" />
-                <PulseNode icon={Mail} label="Gmail" sublabel="Google API" color="text-blue-400" />
-                <PulseNode icon={Mic} label="OCR" sublabel="Vision API" color="text-blue-400" />
+                <PulseNode icon={User} label="Usuário" sublabel="Chat / Docs / Pesquisa" color="text-[hsl(var(--tron-info))]" />
+                <PulseNode icon={Globe} label="APIs Externas" sublabel="DataJud · LexML · STF" color="text-[hsl(var(--tron-info))]" />
+                <PulseNode icon={Upload} label="Smart Ingest" sublabel="PDF · TXT · DOCX" color="text-[hsl(var(--tron-info))]" />
+                <PulseNode icon={Calendar} label="Auto-Ingestão" sublabel="Cron 6h · 7 tribunais" color="text-[hsl(var(--tron-info))]" />
+                <PulseNode icon={Mail} label="Gmail" sublabel="Google API" color="text-[hsl(var(--tron-info))]" />
+                <PulseNode icon={Mic} label="OCR" sublabel="Vision API" color="text-[hsl(var(--tron-info))]" />
               </div>
             </div>
 
@@ -177,7 +177,7 @@ export function NeuralArchitectureDiagram() {
 
             {/* Linha 2: Neural Core v19 */}
             <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-              <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider mb-2">⬡ Neural Core — Quantum Deep Learning v19</p>
+              <p className="text-[9px] font-bold text-[hsl(var(--tron-neon))] uppercase tracking-wider mb-2">⬡ Neural Core — Quantum Deep Learning v19</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {[
                   { icon: Atom, name: "QNN 3-Layer", desc: "RX+RY+RZ rotation + CNOT entanglement + Parameter-Shift" },
@@ -195,7 +195,7 @@ export function NeuralArchitectureDiagram() {
                 ].map((item, i) => (
                   <div key={i} className="p-2 bg-background/60 backdrop-blur-sm rounded-lg border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <item.icon className="h-3 w-3 text-emerald-400" />
+                      <item.icon className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
                       <span className="text-[10px] font-bold">{item.name}</span>
                     </div>
                     <p className="text-[8px] text-muted-foreground font-mono">{item.desc}</p>
@@ -236,7 +236,7 @@ export function NeuralArchitectureDiagram() {
             {/* Linha 4: Orquestração + Provedores */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/20">
-                <p className="text-[9px] font-bold text-purple-400 uppercase tracking-wider mb-2">⬡ Orquestração</p>
+                <p className="text-[9px] font-bold text-[hsl(var(--tron-neon-soft))] uppercase tracking-wider mb-2">⬡ Orquestração</p>
                 <div className="space-y-1.5">
                   {[
                     { name: "AI Orchestrator", desc: "Roteamento inteligente multi-provider + context neural" },
@@ -246,7 +246,7 @@ export function NeuralArchitectureDiagram() {
                     { name: "Prompt Versioning", desc: "Versões ativas por scope + A/B split 50/50" },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2 p-1.5 bg-background/40 rounded-lg border border-purple-500/10">
-                      <Cpu className="h-3 w-3 text-purple-400 shrink-0" />
+                      <Cpu className="h-3 w-3 text-[hsl(var(--tron-neon-soft))] shrink-0" />
                       <div>
                         <span className="text-[10px] font-semibold">{item.name}</span>
                         <span className="text-[8px] text-muted-foreground ml-1.5">{item.desc}</span>
@@ -257,13 +257,13 @@ export function NeuralArchitectureDiagram() {
               </div>
 
               <div className="p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/20">
-                <p className="text-[9px] font-bold text-cyan-400 uppercase tracking-wider mb-2">⬡ Provedores de IA</p>
+                <p className="text-[9px] font-bold text-[hsl(var(--tron-neon))] uppercase tracking-wider mb-2">⬡ Provedores de IA</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   {[
-                    { name: "ALPHA", model: "Velocidade", p: "P1", badge: "Primary", color: "text-blue-400" },
+                    { name: "ALPHA", model: "Velocidade", p: "P1", badge: "Primary", color: "text-[hsl(var(--tron-info))]" },
                     { name: "BETA", model: "Multimodal", p: "P2", badge: "Vision", color: "text-orange-400" },
                     { name: "GAMMA", model: "Europeu", p: "P3", badge: "Fallback", color: "text-violet-400" },
-                    { name: "DELTA", model: "Raciocínio", p: "P4", badge: "Deep", color: "text-emerald-400" },
+                    { name: "DELTA", model: "Raciocínio", p: "P4", badge: "Deep", color: "text-[hsl(var(--tron-neon))]" },
                   ].map((p, i) => (
                     <div key={i} className="p-2 bg-background/40 rounded-lg border border-cyan-500/10 text-center hover:border-cyan-500/30 transition-all">
                       <Badge variant="outline" className="text-[7px] mb-0.5 border-cyan-500/20">{p.p} {p.badge}</Badge>
@@ -437,7 +437,7 @@ export function NeuralArchitectureDiagram() {
         <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Award className="h-4 w-4 text-blue-400" />
+              <Award className="h-4 w-4 text-[hsl(var(--tron-info))]" />
               Pipeline de Aprendizado — RLHF + DPO + RLVR (28 tipos de interação)
             </CardTitle>
           </CardHeader>
@@ -537,7 +537,7 @@ export function NeuralArchitectureDiagram() {
         <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Brain className="h-4 w-4 text-purple-400" />
+              <Brain className="h-4 w-4 text-[hsl(var(--tron-neon-soft))]" />
               Neurociência Cognitiva — Modelagem Bio-Inspirada (v14–v19)
             </CardTitle>
           </CardHeader>
@@ -571,7 +571,7 @@ export function NeuralArchitectureDiagram() {
         <Card className="bg-card border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Activity className="h-4 w-4 text-cyan-400" />
+              <Activity className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
               Modelagem Temporal — DBN + TD Learning + Q-Learning (v12–v19)
             </CardTitle>
           </CardHeader>

@@ -198,7 +198,7 @@ export default function ForceTorquePanel() {
         {/* Emergency Stop */}
         <div className="flex items-center justify-between p-3 bg-red-950/30 border border-red-900 rounded-lg">
           <div className="flex items-center gap-2">
-            <AlertTriangle className={`h-5 w-5 ${emergencyStop ? "text-red-500 animate-pulse" : "text-zinc-400"}`} />
+            <AlertTriangle className={`h-5 w-5 ${emergencyStop ? "text-[hsl(var(--tron-danger))] animate-pulse" : "text-zinc-400"}`} />
             <span className="text-sm font-medium">Parada de Emergência</span>
           </div>
           <Button
@@ -295,8 +295,8 @@ export default function ForceTorquePanel() {
                 <span className="text-[10px] text-zinc-500">Força Atual</span>
               </div>
               <div className={`text-lg font-mono font-bold ${
-                safetyStatus === "critical" ? "text-red-500" :
-                safetyStatus === "warning" ? "text-yellow-500" : "text-green-500"
+                safetyStatus === "critical" ? "text-[hsl(var(--tron-danger))]" :
+                safetyStatus === "warning" ? "text-[hsl(var(--tron-warn))]" : "text-[hsl(var(--tron-neon))]"
               }`}>
                 {(latestForce?.force ?? 0).toFixed(1)}N
               </div>
@@ -315,10 +315,10 @@ export default function ForceTorquePanel() {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-3 pb-2">
               <div className="flex items-center gap-2">
-                <RotateCcw className="h-3 w-3 text-purple-400" />
+                <RotateCcw className="h-3 w-3 text-[hsl(var(--tron-neon-soft))]" />
                 <span className="text-[10px] text-zinc-500">Torque</span>
               </div>
-              <div className="text-lg font-mono font-bold text-purple-400">
+              <div className="text-lg font-mono font-bold text-[hsl(var(--tron-neon-soft))]">
                 {(latestForce?.torque ?? 0).toFixed(2)} Nm
               </div>
             </CardContent>
@@ -327,10 +327,10 @@ export default function ForceTorquePanel() {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-3 pb-2">
               <div className="flex items-center gap-2">
-                <Target className="h-3 w-3 text-cyan-400" />
+                <Target className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
                 <span className="text-[10px] text-zinc-500">Esforço</span>
               </div>
-              <div className="text-lg font-mono font-bold text-cyan-400">
+              <div className="text-lg font-mono font-bold text-[hsl(var(--tron-neon))]">
                 {(latestForce?.effort ?? 0).toFixed(0)}%
               </div>
             </CardContent>
@@ -355,8 +355,8 @@ export default function ForceTorquePanel() {
         {/* Status */}
         <div className="flex items-center justify-between text-xs text-zinc-500 pt-2 border-t border-zinc-800">
           <span>Segurança: <span className={
-            safetyStatus === "critical" ? "text-red-500" :
-            safetyStatus === "warning" ? "text-yellow-500" : "text-green-500"
+            safetyStatus === "critical" ? "text-[hsl(var(--tron-danger))]" :
+            safetyStatus === "warning" ? "text-[hsl(var(--tron-warn))]" : "text-[hsl(var(--tron-neon))]"
           }>{safetyStatus === "critical" ? "CRÍTICO" : safetyStatus === "warning" ? "ATENÇÃO" : "SEGuro"}</span></span>
           <span>Força: {forcePercent.toFixed(0)}% do limite</span>
         </div>

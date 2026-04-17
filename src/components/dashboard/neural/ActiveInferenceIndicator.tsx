@@ -28,7 +28,7 @@ export function ActiveInferenceIndicator() {
         Icon: ShieldCheck,
         bg: "bg-emerald-500/10",
         border: "border-emerald-500/30",
-        text: "text-emerald-400",
+        text: "text-[hsl(var(--tron-neon))]",
         label: "Verificado",
         pulse: false,
       }
@@ -37,7 +37,7 @@ export function ActiveInferenceIndicator() {
           Icon: ShieldAlert,
           bg: "bg-red-500/10",
           border: "border-red-500/30",
-          text: "text-red-400",
+          text: "text-[hsl(var(--tron-danger))]",
           label: "Alta Surpresa",
           pulse: true,
         }
@@ -68,7 +68,7 @@ export function ActiveInferenceIndicator() {
         </TooltipTrigger>
         <TooltipContent
           side="bottom"
-          className="max-w-xs bg-gray-900 border-gray-700 text-gray-200"
+          className="max-w-xs bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.25)] text-gray-200"
         >
           <div className="space-y-1.5 text-xs">
             <div className="font-semibold flex items-center gap-1">
@@ -84,7 +84,7 @@ export function ActiveInferenceIndicator() {
               <span>{result.timestamp.toFixed(1)}ms</span>
             </div>
             {result.errors.length > 0 && (
-              <div className="border-t border-gray-700 pt-1 mt-1 space-y-0.5">
+              <div className="border-t border-[hsl(var(--tron-neon)/0.25)] pt-1 mt-1 space-y-0.5">
                 {result.errors.slice(0, 4).map((err, i) => (
                   <div key={i} className="text-[10px] opacity-80">
                     • {err.detail}
@@ -93,7 +93,7 @@ export function ActiveInferenceIndicator() {
               </div>
             )}
             {result.quality && (
-              <div className="flex justify-between border-t border-gray-700 pt-1">
+              <div className="flex justify-between border-t border-[hsl(var(--tron-neon)/0.25)] pt-1">
                 <span>Qualidade:</span>
                 <span>{result.quality.score}/100</span>
               </div>

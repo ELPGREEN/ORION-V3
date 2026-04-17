@@ -298,10 +298,10 @@ export function ProactiveAlerts() {
 
   const getIcon = (type: Alert["type"]) => {
     switch (type) {
-      case "critical": return <AlertTriangle className="h-4 w-4 text-red-400" />;
+      case "critical": return <AlertTriangle className="h-4 w-4 text-[hsl(var(--tron-danger))]" />;
       case "warning": return <AlertTriangle className="h-4 w-4 text-amber-400" />;
-      case "success": return <CheckCircle2 className="h-4 w-4 text-green-400" />;
-      default: return <Bell className="h-4 w-4 text-cyan-400" />;
+      case "success": return <CheckCircle2 className="h-4 w-4 text-[hsl(var(--tron-neon))]" />;
+      default: return <Bell className="h-4 w-4 text-[hsl(var(--tron-neon))]" />;
     }
   };
 
@@ -321,7 +321,7 @@ export function ProactiveAlerts() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Shield className="h-4 w-4 text-cyan-400" />
+            <Shield className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
             R.A.G ELP — Alertas Proativos
             {activeAlerts.length > 0 && (
               <Badge variant="outline" className="text-[9px] ml-1">
@@ -330,7 +330,7 @@ export function ProactiveAlerts() {
             )}
           </CardTitle>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-cyan-400 hover:bg-cyan-400/10" onClick={announceAlerts} title="Anunciar alertas por voz">
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-[hsl(var(--tron-neon))] hover:bg-cyan-400/10" onClick={announceAlerts} title="Anunciar alertas por voz">
               <Volume2 className="h-3.5 w-3.5" />
             </Button>
             <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={generateAlerts}>
@@ -342,12 +342,12 @@ export function ProactiveAlerts() {
       <CardContent className="space-y-2">
         {loading ? (
           <div className="flex items-center justify-center py-4">
-            <Brain className="h-5 w-5 animate-pulse text-cyan-400" />
+            <Brain className="h-5 w-5 animate-pulse text-[hsl(var(--tron-neon))]" />
             <span className="text-xs text-muted-foreground ml-2">Analisando sistemas...</span>
           </div>
         ) : activeAlerts.length === 0 ? (
           <div className="text-center py-3">
-            <CheckCircle2 className="h-5 w-5 text-green-400 mx-auto mb-1" />
+            <CheckCircle2 className="h-5 w-5 text-[hsl(var(--tron-neon))] mx-auto mb-1" />
             <span className="text-xs text-muted-foreground">Todos os alertas foram resolvidos</span>
           </div>
         ) : (
@@ -361,7 +361,7 @@ export function ProactiveAlerts() {
                 </div>
                 <p className="text-[10px] text-muted-foreground">{alert.description}</p>
                 {alert.actionLabel && !alert.canExecute && (
-                  <a href={alert.actionUrl} className="text-[10px] text-cyan-400 hover:underline mt-1 inline-block">
+                  <a href={alert.actionUrl} className="text-[10px] text-[hsl(var(--tron-neon))] hover:underline mt-1 inline-block">
                     {alert.actionLabel} →
                   </a>
                 )}
@@ -387,7 +387,7 @@ export function ProactiveAlerts() {
                       {ignoring ? "Ignorando..." : "Ignorar Todas"}
                     </Button>
                     {alert.actionUrl && (
-                      <a href={alert.actionUrl} className="text-[10px] text-cyan-400 hover:underline">
+                      <a href={alert.actionUrl} className="text-[10px] text-[hsl(var(--tron-neon))] hover:underline">
                         {alert.actionLabel} →
                       </a>
                     )}

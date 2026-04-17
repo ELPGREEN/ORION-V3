@@ -247,8 +247,8 @@ ${localDetections ? `Detecções ML em tempo real: ${JSON.stringify(localDetecti
             {lastResult && lastResult.risco && (
               <div className={`rounded-lg p-3 text-xs border ${
                 lastResult.emergencia ? "border-destructive bg-destructive/10 text-destructive" :
-                lastResult.risco === "alto" || lastResult.risco === "critico" ? "border-yellow-500 bg-yellow-500/10 text-yellow-700 dark:text-yellow-400" :
-                "border-green-500 bg-green-500/10 text-green-700 dark:text-green-400"
+                lastResult.risco === "alto" || lastResult.risco === "critico" ? "border-yellow-500 bg-yellow-500/10 text-yellow-700 dark:text-[hsl(var(--tron-warn))]" :
+                "border-green-500 bg-green-500/10 text-green-700 dark:text-[hsl(var(--tron-neon))]"
               }`}>
                 <div className="flex items-center gap-2 mb-1">
                   <AlertTriangle className="h-3 w-3" />
@@ -262,7 +262,7 @@ ${localDetections ? `Detecções ML em tempo real: ${JSON.stringify(localDetecti
           </TabsContent>
 
           <TabsContent value="logs" className="mt-3">
-            <div className="bg-black/80 rounded-lg p-3 h-48 overflow-y-auto font-mono text-[10px] text-green-400 space-y-0.5">
+            <div className="bg-black/80 rounded-lg p-3 h-48 overflow-y-auto font-mono text-[10px] text-[hsl(var(--tron-neon))] space-y-0.5">
               {logs.length === 0 ? (
                 <div className="text-muted-foreground">Nenhum log ainda. Execute uma inspeção.</div>
               ) : (

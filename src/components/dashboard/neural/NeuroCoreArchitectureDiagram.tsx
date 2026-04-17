@@ -24,12 +24,12 @@ interface ArchLayer {
 const layers: ArchLayer[] = [
   {
     id: 1, title: "Camada 1 — Hardware Sensorial (Exterocepcão)", subtitle: "Sensores externos + captura do mundo",
-    color: "text-cyan-400", borderColor: "border-cyan-500/30", bgGradient: "from-cyan-950/40 to-slate-950",
+    color: "text-[hsl(var(--tron-neon))]", borderColor: "border-cyan-500/30", bgGradient: "from-cyan-950/40 to-slate-950",
     glowColor: "rgba(34,211,238,0.4)",
     modules: [
-      { icon: Camera, name: "Câmeras", tech: "RGB + Depth", color: "text-cyan-400", glow: "shadow-cyan-500/50" },
-      { icon: AudioLines, name: "Microfones", tech: "Array beamforming", color: "text-cyan-300", glow: "shadow-cyan-400/50" },
-      { icon: Thermometer, name: "Sensores Amb.", tech: "Temp/Umid/Luz", color: "text-cyan-500", glow: "shadow-cyan-600/50" },
+      { icon: Camera, name: "Câmeras", tech: "RGB + Depth", color: "text-[hsl(var(--tron-neon))]", glow: "shadow-cyan-500/50" },
+      { icon: AudioLines, name: "Microfones", tech: "Array beamforming", color: "text-[hsl(var(--tron-neon))]", glow: "shadow-cyan-400/50" },
+      { icon: Thermometer, name: "Sensores Amb.", tech: "Temp/Umid/Luz", color: "text-[hsl(var(--tron-neon))]", glow: "shadow-cyan-600/50" },
       { icon: Fingerprint, name: "Biométricos", tech: "Heart/SpO2/EDA", color: "text-cyan-200", glow: "shadow-cyan-300/50" },
     ],
     details: "Camada de exterocepcão: captura estímulos do mundo exterior via câmeras (RGB + profundidade), arrays de microfones com beamforming, sensores ambientais (temperatura, umidade, luminosidade) e sensores biométricos (frequência cardíaca, SpO2, atividade eletrodérmica).",
@@ -61,12 +61,12 @@ const layers: ArchLayer[] = [
   },
   {
     id: 4, title: "Camada 4 — Percepcão Visual", subtitle: "YOLOv11 + MediaPipe + ViT",
-    color: "text-blue-400", borderColor: "border-blue-500/30", bgGradient: "from-blue-950/40 to-slate-950",
+    color: "text-[hsl(var(--tron-info))]", borderColor: "border-blue-500/30", bgGradient: "from-blue-950/40 to-slate-950",
     glowColor: "rgba(96,165,250,0.4)",
     modules: [
-      { icon: Camera, name: "YOLOv11", tech: "Object Detection", color: "text-blue-400", glow: "shadow-blue-500/50" },
-      { icon: Eye, name: "ViT", tech: "Vision Transformer", color: "text-blue-300", glow: "shadow-blue-400/50" },
-      { icon: Layers, name: "DeepLabV3+", tech: "Segm. Semântica", color: "text-blue-500", glow: "shadow-blue-600/50" },
+      { icon: Camera, name: "YOLOv11", tech: "Object Detection", color: "text-[hsl(var(--tron-info))]", glow: "shadow-blue-500/50" },
+      { icon: Eye, name: "ViT", tech: "Vision Transformer", color: "text-[hsl(var(--tron-info))]", glow: "shadow-blue-400/50" },
+      { icon: Layers, name: "DeepLabV3+", tech: "Segm. Semântica", color: "text-[hsl(var(--tron-info))]", glow: "shadow-blue-600/50" },
       { icon: ScanFace, name: "SAM 2", tech: "Segment Anything", color: "text-blue-200", glow: "shadow-blue-300/50" },
     ],
     metrics: [{ label: "mAP@0.5", value: "0.92" }, { label: "FPS", value: "60" }],
@@ -100,12 +100,12 @@ const layers: ArchLayer[] = [
   },
   {
     id: 7, title: "Camada 7 — Fusão Multimodal", subtitle: "Cross-Attention estilo Flamingo",
-    color: "text-purple-400", borderColor: "border-purple-500/30", bgGradient: "from-purple-950/40 to-slate-950",
+    color: "text-[hsl(var(--tron-neon-soft))]", borderColor: "border-purple-500/30", bgGradient: "from-purple-950/40 to-slate-950",
     glowColor: "rgba(192,132,252,0.4)",
     modules: [
-      { icon: LayoutGrid, name: "Gated Fusion", tech: "Multimodal Gate", color: "text-purple-400", glow: "shadow-purple-500/50" },
-      { icon: Layers, name: "Cross-Attention", tech: "Flamingo-style", color: "text-purple-300", glow: "shadow-purple-400/50" },
-      { icon: Binary, name: "SigLIP-2", tech: "Visual Embeddings", color: "text-purple-500", glow: "shadow-purple-600/50" },
+      { icon: LayoutGrid, name: "Gated Fusion", tech: "Multimodal Gate", color: "text-[hsl(var(--tron-neon-soft))]", glow: "shadow-purple-500/50" },
+      { icon: Layers, name: "Cross-Attention", tech: "Flamingo-style", color: "text-[hsl(var(--tron-neon-soft))]", glow: "shadow-purple-400/50" },
+      { icon: Binary, name: "SigLIP-2", tech: "Visual Embeddings", color: "text-[hsl(var(--tron-neon-soft))]", glow: "shadow-purple-600/50" },
       { icon: AudioLines, name: "Audio Fusion", tech: "Whisper + Mamba", color: "text-purple-200", glow: "shadow-purple-300/50" },
     ],
     details: "Fusão multimodal via Cross-Attention (Flamingo): 5 fluxos (Texto, Visão, Áudio, Layout, Gestos) são combinados através de Gated Fusion com SigLIP-2 para embeddings visuais e Video-Mamba para processamento temporal.",
@@ -175,12 +175,12 @@ const layers: ArchLayer[] = [
   },
   {
     id: 13, title: "Camada 13 — Orquestrador de Ação", subtitle: "LAM + Multi-Agent + Task Queue",
-    color: "text-yellow-400", borderColor: "border-yellow-500/30", bgGradient: "from-yellow-950/40 to-slate-950",
+    color: "text-[hsl(var(--tron-warn))]", borderColor: "border-yellow-500/30", bgGradient: "from-yellow-950/40 to-slate-950",
     glowColor: "rgba(250,204,21,0.4)",
     modules: [
-      { icon: Workflow, name: "Multi-Agent", tech: "A2A Society", color: "text-yellow-400", glow: "shadow-yellow-500/50" },
-      { icon: Bot, name: "LAM", tech: "Large Action Model", color: "text-yellow-300", glow: "shadow-yellow-400/50" },
-      { icon: Radar, name: "Task Queue", tech: "SJF + Checkpoint", color: "text-yellow-500", glow: "shadow-yellow-600/50" },
+      { icon: Workflow, name: "Multi-Agent", tech: "A2A Society", color: "text-[hsl(var(--tron-warn))]", glow: "shadow-yellow-500/50" },
+      { icon: Bot, name: "LAM", tech: "Large Action Model", color: "text-[hsl(var(--tron-warn))]", glow: "shadow-yellow-400/50" },
+      { icon: Radar, name: "Task Queue", tech: "SJF + Checkpoint", color: "text-[hsl(var(--tron-warn))]", glow: "shadow-yellow-600/50" },
       { icon: Gauge, name: "Latência", tech: "< 120ms edge", color: "text-yellow-200", glow: "shadow-yellow-300/50" },
     ],
     metrics: [{ label: "Latência", value: "<120ms" }],
@@ -188,12 +188,12 @@ const layers: ArchLayer[] = [
   },
   {
     id: 14, title: "Camada 14 — Interface Adaptativa", subtitle: "Dashboard + Mobile + Voz + Acessibilidade",
-    color: "text-emerald-400", borderColor: "border-emerald-500/30", bgGradient: "from-emerald-950/40 to-slate-950",
+    color: "text-[hsl(var(--tron-neon))]", borderColor: "border-emerald-500/30", bgGradient: "from-emerald-950/40 to-slate-950",
     glowColor: "rgba(52,211,153,0.4)",
     modules: [
-      { icon: Monitor, name: "Dashboard", tech: "React + WebSocket", color: "text-emerald-400", glow: "shadow-emerald-500/50" },
-      { icon: Smartphone, name: "Mobile", tech: "Capacitor + TFLite", color: "text-emerald-300", glow: "shadow-emerald-400/50" },
-      { icon: AudioLines, name: "Voice Assistant", tech: "Wake-word + TTS", color: "text-emerald-500", glow: "shadow-emerald-600/50" },
+      { icon: Monitor, name: "Dashboard", tech: "React + WebSocket", color: "text-[hsl(var(--tron-neon))]", glow: "shadow-emerald-500/50" },
+      { icon: Smartphone, name: "Mobile", tech: "Capacitor + TFLite", color: "text-[hsl(var(--tron-neon))]", glow: "shadow-emerald-400/50" },
+      { icon: AudioLines, name: "Voice Assistant", tech: "Wake-word + TTS", color: "text-[hsl(var(--tron-neon))]", glow: "shadow-emerald-600/50" },
       { icon: Languages, name: "Acessibilidade", tech: "LIBRAS + Alto Contraste", color: "text-emerald-200", glow: "shadow-emerald-300/50" },
     ],
     details: "Interfaces multiplataforma adaptativas: Dashboard web (React), apps mobile (Capacitor + TFLite), assistente de voz com wake-word ('Orion ativar'), e módulo de acessibilidade com LIBRAS em tempo real e alto contraste.",
@@ -316,9 +316,9 @@ export function NeuroCoreArchitectureDiagram() {
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           {[
-            { label: "15 Camadas", cls: "text-cyan-400 border-cyan-500/30" },
+            { label: "15 Camadas", cls: "text-[hsl(var(--tron-neon))] border-cyan-500/30" },
             { label: "Cognição Incorporada", cls: "text-rose-400 border-rose-500/30" },
-            { label: "Interocepcão", cls: "text-purple-400 border-purple-500/30" },
+            { label: "Interocepcão", cls: "text-[hsl(var(--tron-neon-soft))] border-purple-500/30" },
             { label: "Marcadores Somáticos", cls: "text-pink-400 border-pink-500/30" },
             { label: "Espelhamento Neural", cls: "text-violet-400 border-violet-500/30" },
           ].map((b) => (
@@ -431,8 +431,8 @@ export function NeuroCoreArchitectureDiagram() {
       {/* Footer Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2">
         {[
-          { label: "Camadas", value: "15", color: "text-cyan-400" },
-          { label: "Módulos", value: "60+", color: "text-blue-400" },
+          { label: "Camadas", value: "15", color: "text-[hsl(var(--tron-neon))]" },
+          { label: "Módulos", value: "60+", color: "text-[hsl(var(--tron-info))]" },
           { label: "Latência Edge", value: "<30ms", color: "text-teal-400" },
           { label: "Phi", value: ">0.85", color: "text-amber-400" },
           { label: "Cognição Incorporada", value: "4 novas", color: "text-rose-400" },
