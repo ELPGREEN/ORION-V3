@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { enrichPromptWithFiles } from "./project-file-reader";
 
 export interface CodeAnalysis {
   summary: string;
@@ -32,10 +33,11 @@ export interface CodeImprovement {
  * Analyze code with AI
  */
 export async function analyzeCodeWithAI(prompt: string): Promise<CodeAnalysis> {
+  const enriched = await enrichPromptWithFiles(prompt);
   const { data, error } = await supabase.functions.invoke("neural-ops", {
     body: {
-      question: prompt,
-      context: "Você é um especialista em análise de código. Analise e forneça feedback detalhado.",
+      question: enriched,
+      context: "Você é um especialista em análise de código. O conteúdo dos arquivos referenciados já está incluso no prompt — NUNCA peça ao usuário para fornecer o conteúdo de um arquivo. Analise diretamente.",
       intentType: "code_analysis",
     },
   });
@@ -53,10 +55,13 @@ export async function analyzeCodeWithAI(prompt: string): Promise<CodeAnalysis> {
  * Improve code with AI
  */
 export async function improveCodeWithAI(prompt: string): Promise<CodeImprovement> {
+  const enriched = await enrichPromptWithFiles(prompt);
   const { data, error } = await supabase.functions.invoke("neural-ops", {
     body: {
-      question: prompt,
-      context: `Você é o moteur de auto-evolução do Sistema Orion.
+      question: enriched,
+      context: `Você é o motor de auto-evolução do Sistema Orion.
+O conteúdo dos arquivos mencionados já foi carregado e está incluso no prompt.
+NUNCA peça ao usuário para colar ou fornecer o conteúdo de qualquer arquivo — você já tem acesso.
 Seu papel é analisar, melhorar e evoluir o código automaticamente.
 
 Quando solicitado para "auto evoluir" ou "otimizar":
