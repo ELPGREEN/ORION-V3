@@ -15,7 +15,7 @@ interface State {
 
 function SuspenseFallback() {
   return (
-    <Card className="border-border/30 bg-card/50">
+    <Card className="border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 bg-[hsl(var(--tron-bg-deep))]/50">
       <CardContent className="flex items-center justify-center py-6">
         <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
         <span className="text-xs text-muted-foreground">Carregando módulo…</span>
@@ -41,7 +41,7 @@ export class NeuralErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <Card className="bg-destructive/5 border-destructive/20">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-destructive/5 border-destructive/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-4 w-4" />

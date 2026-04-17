@@ -262,7 +262,7 @@ export default function RobotDigitalTwinPanel({ robotId }: Props) {
           <ScrollArea className="h-48">
             <div className="space-y-2">
               {[...configurationHistory].reverse().map((snap: ConfigSnapshot, i: number) => (
-                <div key={i} className="flex items-center justify-between border-b border-border/30 pb-2 last:border-0">
+                <div key={i} className="flex items-center justify-between border-b border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 pb-2 last:border-0">
                   <div className="text-xs space-y-0.5">
                     <div className="flex items-center gap-2">
                       <Clock className="h-3 w-3 text-muted-foreground" />

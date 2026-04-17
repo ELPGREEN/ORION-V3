@@ -210,7 +210,7 @@ export default function RobotVoiceCommands({ robotId }: Props) {
           </Button>
 
           {transcript && (
-            <div className="p-3 rounded-md bg-muted/50 border border-border">
+            <div className="p-3 rounded-md bg-muted/50 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
               <span className="text-xs text-muted-foreground">Transcrevendo:</span>
               <p className="text-sm font-mono mt-1">{transcript}</p>
             </div>
@@ -238,7 +238,7 @@ export default function RobotVoiceCommands({ robotId }: Props) {
               { label: "Garra", example: "\"abrir garra\" / \"fechar garra\"" },
               { label: "Status", example: "\"status do robô\"" },
             ].map(c => (
-              <div key={c.label} className="p-2 rounded border border-border/50 text-xs">
+              <div key={c.label} className="p-2 rounded border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50 text-xs">
                 <p className="font-medium">{c.label}</p>
                 <p className="text-muted-foreground font-mono text-[10px]">{c.example}</p>
               </div>
@@ -260,7 +260,7 @@ export default function RobotVoiceCommands({ robotId }: Props) {
           <ScrollArea className="h-48">
             <div className="space-y-1">
               {[...voiceLog].reverse().map((entry, i) => (
-                <div key={i} className="flex items-start gap-2 text-[10px] py-1 border-b border-border/30 last:border-0">
+                <div key={i} className="flex items-start gap-2 text-[10px] py-1 border-b border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 last:border-0">
                   {entry.success ? (
                     <CheckCircle className="h-3 w-3 text-green-500 shrink-0 mt-0.5" />
                   ) : (

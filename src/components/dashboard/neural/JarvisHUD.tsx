@@ -69,7 +69,7 @@ function CircularGauge({ value, label, size = 56, color = "#3B82F6" }: { value: 
   const circ = 2 * Math.PI * r;
   const offset = circ - (value / 100) * circ;
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <div className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] flex flex-col items-center gap-0.5">
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="2" opacity="0.1" />
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="2.5"

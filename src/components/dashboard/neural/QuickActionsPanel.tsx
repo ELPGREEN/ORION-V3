@@ -52,7 +52,7 @@ export function QuickActionsPanel() {
   ];
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
       <CardHeader>
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />

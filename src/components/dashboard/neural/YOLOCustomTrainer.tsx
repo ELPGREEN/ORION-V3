@@ -129,7 +129,7 @@ export default function YOLOCustomTrainer() {
   };
 
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-950 border-zinc-800">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -174,7 +174,7 @@ export default function YOLOCustomTrainer() {
             {dataset && (
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-3">
-                  <Card className="bg-zinc-900/50 border-zinc-800">
+                  <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
                     <CardContent className="pt-3 pb-2">
                       <div className="flex items-center gap-2">
                         <Image className="h-3 w-3 text-[hsl(var(--tron-info))]" />
@@ -186,7 +186,7 @@ export default function YOLOCustomTrainer() {
                     </CardContent>
                   </Card>
                   
-                  <Card className="bg-zinc-900/50 border-zinc-800">
+                  <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
                     <CardContent className="pt-3 pb-2">
                       <div className="flex items-center gap-2">
                         <FileText className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
@@ -198,7 +198,7 @@ export default function YOLOCustomTrainer() {
                     </CardContent>
                   </Card>
                   
-                  <Card className="bg-zinc-900/50 border-zinc-800">
+                  <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
                     <CardContent className="pt-3 pb-2">
                       <div className="flex items-center gap-2">
                         <Box className="h-3 w-3 text-[hsl(var(--tron-neon-soft))]" />

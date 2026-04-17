@@ -195,7 +195,7 @@ export function AttentionVisualization() {
   const getModuleColor = (id: string) => modules.find(m => m.id === id)?.color || "#D4AF37";
 
   return (
-    <Card className="border-primary/20 overflow-hidden relative" style={{ background: "transparent" }}>
+    <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] border-primary/20 overflow-hidden relative" style={{ background: "transparent" }}>
       {/* Alien Core v0.2 shader background */}
       <AlienCoreBackground colorR={1.2} colorG={0.7} colorB={0.25} />
       {/* Ambient glow layers */}
@@ -595,9 +595,9 @@ export function AttentionVisualization() {
                 { icon: <Activity className="h-3.5 w-3.5 text-[hsl(var(--tron-neon))]" />, label: "Módulos Ativos", value: `${activeCount}/${modules.length}`, color: "border-green-500/20" },
                 { icon: <Zap className="h-3.5 w-3.5 text-primary" />, label: "Sinapses Neurais", value: `${connections.length}`, color: "border-primary/20" },
                 { icon: <Database className="h-3.5 w-3.5 text-[hsl(var(--tron-neon))]" />, label: "Vetores Semânticos", value: "61.3k", color: "border-cyan-500/20" },
-                { icon: <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />, label: "Atualizado", value: lastRefresh.toLocaleTimeString("pt-BR"), color: "border-border/30" },
+                { icon: <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />, label: "Atualizado", value: lastRefresh.toLocaleTimeString("pt-BR"), color: "border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30" },
               ].map((item, i) => (
-                <div key={i} className={`p-2.5 bg-card/80 backdrop-blur-md rounded-lg border ${item.color} text-center group hover:border-primary/30 transition-all duration-300`}>
+                <div key={i} className={`p-2.5 bg-[hsl(var(--tron-bg-deep))]/80 backdrop-blur-md rounded-lg border ${item.color} text-center group hover:border-primary/30 transition-all duration-300`}>
                   <div className="flex items-center justify-center mb-1">
                     {item.icon}
                   </div>
@@ -615,7 +615,7 @@ export function AttentionVisualization() {
 
             {/* Module details on hover - glassmorphism panel */}
             {hoveredModule && (
-              <div className="bg-card/90 backdrop-blur-xl border border-primary/20 p-4 rounded-xl space-y-2 text-xs shadow-lg shadow-primary/5 animate-scale-in">
+              <div className="bg-[hsl(var(--tron-bg-deep))]/90 backdrop-blur-xl border border-primary/20 p-4 rounded-xl space-y-2 text-xs shadow-lg shadow-primary/5 animate-scale-in">
                 <div className="font-medium text-foreground flex items-center gap-2">
                   <div className="p-1 rounded-md" style={{ backgroundColor: `${getModuleColor(hoveredModule)}15`, border: `1px solid ${getModuleColor(hoveredModule)}30` }}>
                     {modules.find(m => m.id === hoveredModule)?.icon}

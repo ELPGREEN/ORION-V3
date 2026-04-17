@@ -171,7 +171,7 @@ export function LegislacaoFederalPanel() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Scale className="h-5 w-5 text-primary" />
@@ -185,7 +185,7 @@ export function LegislacaoFederalPanel() {
       </Card>
 
       <Tabs value={subTab} onValueChange={setSubTab}>
-        <TabsList className="grid w-full grid-cols-4 bg-card border border-border">
+        <TabsList className="grid w-full grid-cols-4 bg-[hsl(var(--tron-bg-deep))] border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <TabsTrigger value="catalogo" className="text-xs">
             <BookOpen className="h-3 w-3 mr-1" />
             Catálogo de Leis
@@ -206,7 +206,7 @@ export function LegislacaoFederalPanel() {
 
         {/* ═══ CATÁLOGO ═══ */}
         <TabsContent value="catalogo" className="space-y-4">
-          <Card className="bg-card border-border">
+          <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium">
@@ -253,7 +253,7 @@ export function LegislacaoFederalPanel() {
                   {catalogo.map((lei, i) => (
                     <div
                       key={i}
-                      className="flex items-start gap-2 p-3 bg-background border border-border rounded-md hover:border-primary/50 transition-colors"
+                      className="flex items-start gap-2 p-3 bg-background border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] rounded-md hover:border-primary/50 transition-colors"
                     >
                       <FileText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                       <div className="min-w-0">
@@ -278,7 +278,7 @@ export function LegislacaoFederalPanel() {
 
         {/* ═══ INGESTÃO EM MASSA ═══ */}
         <TabsContent value="ingestao" className="space-y-4">
-          <Card className="bg-card border-border">
+          <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
             <CardHeader>
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Download className="h-4 w-4 text-primary" />
@@ -301,7 +301,7 @@ export function LegislacaoFederalPanel() {
                       className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors text-xs ${
                         selectedAreas.includes(area.value)
                           ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/50"
+                          : "border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] hover:border-primary/50"
                       }`}
                     >
                       <Checkbox
@@ -341,7 +341,7 @@ export function LegislacaoFederalPanel() {
               )}
 
               {ingestResult && (
-                <Card className="bg-muted/50 border-border">
+                <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-muted/50 border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2 mb-3">
                       <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -380,7 +380,7 @@ export function LegislacaoFederalPanel() {
 
         {/* ═══ BUSCA UNIFICADA ═══ */}
         <TabsContent value="busca" className="space-y-4">
-          <Card className="bg-card border-border">
+          <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
             <CardHeader>
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Landmark className="h-4 w-4 text-primary" />
@@ -398,7 +398,7 @@ export function LegislacaoFederalPanel() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="bg-background border-border"
+                  className="bg-background border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]"
                 />
                 <Button onClick={handleSearch} disabled={searching} className="btn-gold shrink-0">
                   {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -421,7 +421,7 @@ export function LegislacaoFederalPanel() {
                     {searchResults.map((result, i) => (
                       <div
                         key={i}
-                        className="p-3 bg-background border border-border rounded-md hover:border-primary/50 transition-colors"
+                        className="p-3 bg-background border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] rounded-md hover:border-primary/50 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
@@ -462,7 +462,7 @@ export function LegislacaoFederalPanel() {
 
         {/* ═══ LexML ═══ */}
         <TabsContent value="lexml" className="space-y-4">
-          <Card className="bg-card border-border">
+          <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
             <CardHeader>
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
@@ -480,7 +480,7 @@ export function LegislacaoFederalPanel() {
                   value={lexmlQuery}
                   onChange={(e) => setLexmlQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleLexMLSearch()}
-                  className="bg-background border-border"
+                  className="bg-background border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]"
                 />
                 <Button onClick={handleLexMLSearch} disabled={lexmlSearching} className="btn-gold shrink-0">
                   {lexmlSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -492,7 +492,7 @@ export function LegislacaoFederalPanel() {
                   {lexmlResults.map((result: any, i: number) => (
                     <div
                       key={i}
-                      className="p-3 bg-background border border-border rounded-md"
+                      className="p-3 bg-background border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] rounded-md"
                     >
                       <p className="text-xs font-bold text-foreground line-clamp-2">
                         {result.title || result.titulo || "Sem título"}

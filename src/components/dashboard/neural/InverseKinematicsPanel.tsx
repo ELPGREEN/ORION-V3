@@ -208,7 +208,7 @@ export default function InverseKinematicsPanel() {
   };
 
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-950 border-zinc-800">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -277,19 +277,19 @@ export default function InverseKinematicsPanel() {
           <TabsContent value="cartesian" className="space-y-4 mt-3">
             {/* Target Position Display */}
             <div className="grid grid-cols-3 gap-3">
-              <Card className="bg-zinc-900/50 border-zinc-800">
+              <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
                 <CardContent className="pt-3 pb-2">
                   <Label className="text-[10px] text-zinc-500">X (m)</Label>
                   <div className="text-lg font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">{targetPos.x.toFixed(3)}</div>
                 </CardContent>
               </Card>
-              <Card className="bg-zinc-900/50 border-zinc-800">
+              <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
                 <CardContent className="pt-3 pb-2">
                   <Label className="text-[10px] text-zinc-500">Y (m)</Label>
                   <div className="text-lg font-mono text-[hsl(var(--tron-neon-soft))]">{targetPos.y.toFixed(3)}</div>
                 </CardContent>
               </Card>
-              <Card className="bg-zinc-900/50 border-zinc-800">
+              <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
                 <CardContent className="pt-3 pb-2">
                   <Label className="text-[10px] text-zinc-500">Z (m)</Label>
                   <div className="text-lg font-mono text-amber-400">{targetPos.z.toFixed(3)}</div>

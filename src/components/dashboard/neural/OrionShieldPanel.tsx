@@ -139,7 +139,7 @@ export function OrionShieldPanel() {
   return (
     <div className="space-y-4">
       {/* Shield Status Hero */}
-      <Card className={`bg-card border-border relative overflow-hidden ${pulse ? "ring-1 ring-primary/50" : ""} transition-all duration-500`}>
+      <Card className={`bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] relative overflow-hidden ${pulse ? "ring-1 ring-primary/50" : ""} transition-all duration-500`}>
         <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-primary/40" />
         <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-primary/40" />
         <CardContent className="pt-6 pb-5">
@@ -198,7 +198,7 @@ export function OrionShieldPanel() {
           { label: "Ataques (1h)", value: metrics.attacks, icon: Bug, color: "text-destructive" },
           { label: "Críticos (1h)", value: metrics.critical, icon: Ban, color: "text-red-600" },
         ].map((item) => (
-          <Card key={item.label} className="bg-card border-border">
+          <Card key={item.label} className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
             <CardContent className="pt-3 pb-2.5 px-3">
               <div className="flex items-center gap-1.5 mb-1">
                 <item.icon className={`h-3 w-3 ${item.color}`} />
@@ -213,7 +213,7 @@ export function OrionShieldPanel() {
       {/* Behavioral Biometrics + Threat Intel */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Behavioral Biometrics */}
-        <Card className="bg-card border-border">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Brain className="h-4 w-4 text-primary" />
@@ -228,7 +228,7 @@ export function OrionShieldPanel() {
               <ScoreGauge label="Scroll" value={bp.scrollScore} />
               <ScoreGauge label="Humano" value={bp.humanProbability} size="lg" />
             </div>
-            <div className="flex items-center justify-center gap-2 pt-2 border-t border-border">
+            <div className="flex items-center justify-center gap-2 pt-2 border-t border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
               <div className={`h-2.5 w-2.5 rounded-full ${bp.humanProbability > 50 ? "bg-green-500" : bp.humanProbability > 25 ? "bg-yellow-500" : "bg-destructive animate-pulse"}`} />
               <span className="text-xs text-muted-foreground">
                 {bp.humanProbability > 50 ? "Comportamento humano confirmado" : bp.humanProbability > 25 ? "Comportamento suspeito — monitorando" : "Provável bot detectado"}
@@ -238,7 +238,7 @@ export function OrionShieldPanel() {
         </Card>
 
         {/* Threat Intelligence */}
-        <Card className="bg-card border-border">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Globe className="h-4 w-4 text-primary" />
@@ -250,19 +250,19 @@ export function OrionShieldPanel() {
             {intel.checked ? (
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="flex items-center gap-2 p-2 border border-border/30 bg-muted/10">
+                  <div className="flex items-center gap-2 p-2 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 bg-muted/10">
                     <span className="text-muted-foreground">IP:</span>
                     <span className="font-mono text-foreground">{intel.ip || "N/A"}</span>
                   </div>
-                  <div className="flex items-center gap-2 p-2 border border-border/30 bg-muted/10">
+                  <div className="flex items-center gap-2 p-2 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 bg-muted/10">
                     <span className="text-muted-foreground">País:</span>
                     <span className="text-foreground">{intel.country || "N/A"}</span>
                   </div>
-                  <div className="flex items-center gap-2 p-2 border border-border/30 bg-muted/10">
+                  <div className="flex items-center gap-2 p-2 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 bg-muted/10">
                     <span className="text-muted-foreground">ISP:</span>
                     <span className="text-foreground truncate">{intel.isp || "N/A"}</span>
                   </div>
-                  <div className="flex items-center gap-2 p-2 border border-border/30 bg-muted/10">
+                  <div className="flex items-center gap-2 p-2 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 bg-muted/10">
                     <span className="text-muted-foreground">Risco:</span>
                     <span className={`font-bold ${intel.abuseScore > 30 ? "text-destructive" : "text-green-500"}`}>{intel.abuseScore}%</span>
                   </div>
@@ -298,7 +298,7 @@ export function OrionShieldPanel() {
       {/* Actions + Threat Log */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Quick Actions */}
-        <Card className="bg-card border-border">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary" />
@@ -317,7 +317,7 @@ export function OrionShieldPanel() {
             </Button>
 
             {/* Defense Layers v2 */}
-            <div className="pt-3 border-t border-border mt-3">
+            <div className="pt-3 border-t border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] mt-3">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">14 Camadas de Defesa</p>
               {[
                 { name: "Behavioral Biometrics", active: true },
@@ -345,7 +345,7 @@ export function OrionShieldPanel() {
         </Card>
 
         {/* Privacy Leaks */}
-        <Card className="bg-card border-border md:col-span-2">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] md:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <MonitorSpeaker className="h-4 w-4 text-primary" />
@@ -357,7 +357,7 @@ export function OrionShieldPanel() {
             {metrics.privacyLeaks.checked ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* WebRTC */}
-                <div className="p-3 border border-border/30 bg-muted/10 space-y-2">
+                <div className="p-3 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 bg-muted/10 space-y-2">
                   <div className="flex items-center gap-2">
                     <div className={`h-2.5 w-2.5 rounded-full ${metrics.privacyLeaks.webrtcLeak.detected ? "bg-destructive animate-pulse" : "bg-green-500"}`} />
                     <span className="text-xs font-medium text-foreground">WebRTC Leak</span>
@@ -380,7 +380,7 @@ export function OrionShieldPanel() {
                 </div>
 
                 {/* DNS */}
-                <div className="p-3 border border-border/30 bg-muted/10 space-y-2">
+                <div className="p-3 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 bg-muted/10 space-y-2">
                   <div className="flex items-center gap-2">
                     <div className={`h-2.5 w-2.5 rounded-full ${metrics.privacyLeaks.dnsLeak.detected ? "bg-destructive animate-pulse" : "bg-green-500"}`} />
                     <span className="text-xs font-medium text-foreground">DNS Leak</span>
@@ -409,7 +409,7 @@ export function OrionShieldPanel() {
           </CardContent>
         </Card>
         {/* Threat Log */}
-        <Card className="bg-card border-border lg:col-span-2">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] lg:col-span-2">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium flex items-center gap-2">

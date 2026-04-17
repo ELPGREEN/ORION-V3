@@ -32,7 +32,7 @@ function PulseNode({ icon: Icon, label, sublabel, color = "text-primary", active
 }) {
   return (
     <div className="flex flex-col items-center gap-1 group">
-      <div className={`relative p-2.5 rounded-xl bg-background border border-border/50 transition-all duration-300 group-hover:scale-110 group-hover:border-primary/50`}>
+      <div className={`relative p-2.5 rounded-xl bg-background border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50 transition-all duration-300 group-hover:scale-110 group-hover:border-primary/50`}>
         {active && (
           <div className="absolute inset-0 rounded-xl bg-primary/10 animate-[pulse_3s_ease-in-out_infinite] opacity-50" />
         )}
@@ -64,7 +64,7 @@ export function NeuralArchitectureDiagram() {
     <div className="space-y-4">
       {/* === HERO: Visão Geral v21.2 === */}
       <GlowCard glow="primary">
-        <Card className="bg-gradient-to-br from-card via-card to-primary/5 border-primary/20 overflow-hidden relative">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-gradient-to-br from-card via-card to-primary/5 border-primary/20 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
           <CardHeader className="relative z-10">
@@ -94,7 +94,7 @@ export function NeuralArchitectureDiagram() {
                 { icon: Bot, title: "5 Motores Neurais", desc: "Alpha·Beta·Gamma·Delta·Epsilon", color: "text-[hsl(var(--tron-neon))]" },
                 { icon: Shield, title: "RLS + LGPD", desc: "Segurança em camadas", color: "text-rose-400" },
               ].map((item, i) => (
-                <div key={i} className="p-2.5 bg-background/50 backdrop-blur-sm rounded-xl border border-border/30 hover:border-primary/30 transition-all duration-300 hover:scale-[1.02]">
+                <div key={i} className="p-2.5 bg-background/50 backdrop-blur-sm rounded-xl border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 hover:border-primary/30 transition-all duration-300 hover:scale-[1.02]">
                   <item.icon className={`h-5 w-5 ${item.color} mb-1.5`} />
                   <h4 className="text-[11px] font-bold">{item.title}</h4>
                   <p className="text-[9px] text-muted-foreground">{item.desc}</p>
@@ -107,7 +107,7 @@ export function NeuralArchitectureDiagram() {
 
       {/* === PIPELINE v19 COMPLETO === */}
       <GlowCard glow="emerald">
-        <Card className="bg-card border-border/50">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <GitBranch className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
@@ -151,7 +151,7 @@ export function NeuralArchitectureDiagram() {
 
       {/* === MAPA CENTRAL: Fluxo Completo === */}
       <GlowCard glow="cyan">
-        <Card className="bg-card border-border/50 overflow-hidden">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50 overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Network className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
@@ -337,7 +337,7 @@ export function NeuralArchitectureDiagram() {
 
       {/* === SCORING FORMULA v19 === */}
       <GlowCard glow="purple">
-        <Card className="bg-card border-border/50">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Zap className="h-4 w-4 text-violet-400" />
@@ -371,7 +371,7 @@ export function NeuralArchitectureDiagram() {
 
       {/* === HOPFIELD + COMPETITIVE === */}
       <GlowCard glow="indigo">
-        <Card className="bg-card border-border/50">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Magnet className="h-4 w-4 text-indigo-400" />
@@ -434,7 +434,7 @@ export function NeuralArchitectureDiagram() {
 
       {/* === PIPELINE RLHF + DPO + RLVR === */}
       <GlowCard glow="blue">
-        <Card className="bg-card border-border/50">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Award className="h-4 w-4 text-[hsl(var(--tron-info))]" />
@@ -492,7 +492,7 @@ export function NeuralArchitectureDiagram() {
 
       {/* === EDGE FUNCTIONS === */}
       <GlowCard glow="amber">
-        <Card className="bg-card border-border/50">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Server className="h-4 w-4 text-amber-400" />
@@ -515,7 +515,7 @@ export function NeuralArchitectureDiagram() {
                 { name: "generate-embeddings", desc: "Orion Embedding Engine 768d", tags: ["Neural", "768-dim", "Batch"] },
                 { name: "pesquisa-unificada", desc: "GNN + Cross-Attention + SHAP + PII filter", tags: ["GNN", "Cross-Attn", "SHAP", "PII"] },
               ].map((fn, i) => (
-                <div key={i} className="p-2 bg-background/40 rounded-lg border border-border/30 hover:border-amber-500/20 transition-all">
+                <div key={i} className="p-2 bg-background/40 rounded-lg border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 hover:border-amber-500/20 transition-all">
                   <code className="text-[10px] font-mono text-primary">{fn.name}</code>
                   <p className="text-[8px] text-muted-foreground mt-0.5">{fn.desc}</p>
                   <div className="flex flex-wrap gap-0.5 mt-1">
@@ -534,7 +534,7 @@ export function NeuralArchitectureDiagram() {
 
       {/* === NEUROCIÊNCIA COGNITIVA === */}
       <GlowCard glow="purple">
-        <Card className="bg-card border-border/50">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Brain className="h-4 w-4 text-[hsl(var(--tron-neon-soft))]" />
@@ -568,7 +568,7 @@ export function NeuralArchitectureDiagram() {
 
       {/* === MODELAGEM TEMPORAL === */}
       <GlowCard glow="cyan">
-        <Card className="bg-card border-border/50">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Activity className="h-4 w-4 text-[hsl(var(--tron-neon))]" />
@@ -602,7 +602,7 @@ export function NeuralArchitectureDiagram() {
 
       {/* === SEGURANÇA === */}
       <GlowCard glow="rose">
-        <Card className="bg-card border-border/50">
+        <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Shield className="h-4 w-4 text-rose-400" />
@@ -633,7 +633,7 @@ export function NeuralArchitectureDiagram() {
       </GlowCard>
 
       {/* === REFERÊNCIAS ACADÊMICAS === */}
-      <Card className="bg-gradient-to-r from-card to-primary/5 border-primary/20">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-gradient-to-r from-card to-primary/5 border-primary/20">
         <CardContent className="py-4 space-y-3">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10">
@@ -661,12 +661,12 @@ export function NeuralArchitectureDiagram() {
               "Dehaene, Edelman, Tall — Neurociência cognitiva: foco, memória, grupos neuronais",
               "Morais (2020) / Aguilar (2021) — Pruning sináptico + modulação emocional",
             ].map((ref, i) => (
-              <div key={i} className="text-[9px] text-muted-foreground p-1.5 bg-background/30 rounded border border-border/20">
+              <div key={i} className="text-[9px] text-muted-foreground p-1.5 bg-background/30 rounded border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20">
                 • {ref}
               </div>
             ))}
           </div>
-          <div className="pt-2 border-t border-border/20">
+          <div className="pt-2 border-t border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20">
             <p className="text-[10px] text-muted-foreground">
               Criado por <strong className="text-foreground">Ericson Piccoli</strong> —{" "}
               <a href="https://linkedin.com/in/elpgreen" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">

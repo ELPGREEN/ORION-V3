@@ -7,7 +7,7 @@ export function NeuralGuideNonTech() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Hero */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">
             <Badge className="bg-primary/20 text-primary border-0">Guia</Badge>
@@ -28,7 +28,7 @@ export function NeuralGuideNonTech() {
       </Card>
 
       {/* ═══ ARQUITETURA DO SISTEMA ═══ */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Network className="h-5 w-5 text-primary" />
@@ -239,7 +239,7 @@ export function NeuralGuideNonTech() {
       </Card>
 
       {/* Timeline */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
@@ -278,7 +278,7 @@ export function NeuralGuideNonTech() {
       </Card>
 
       {/* Modelos de linguagem e NLP */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-primary" />
@@ -324,7 +324,7 @@ export function NeuralGuideNonTech() {
       </Card>
 
       {/* Arquitetura do Transformer */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Layers className="h-5 w-5 text-primary" />
@@ -386,7 +386,7 @@ export function NeuralGuideNonTech() {
       </Card>
 
       {/* De Transformers para GPT */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
@@ -425,7 +425,7 @@ export function NeuralGuideNonTech() {
       </Card>
 
       {/* RLHF */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Award className="h-5 w-5 text-primary" />
@@ -519,7 +519,7 @@ export function NeuralGuideNonTech() {
       </Card>
 
       {/* Conclusões */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
@@ -563,7 +563,7 @@ export function NeuralGuideNonTech() {
       </Card>
 
       {/* Assistentes IA */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" />
@@ -632,7 +632,7 @@ export function NeuralGuideNonTech() {
       </Card>
 
       {/* Arquitetura Técnica do Sistema */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
@@ -701,7 +701,7 @@ export function NeuralGuideNonTech() {
                   { name: "A/B Testing Engine", desc: "Experimentos com split de tráfego automático" },
                   { name: "DPO Optimization", desc: "Direct Preference Optimization por feedback" },
                 ].map((item, i) => (
-                  <div key={i} className="p-1.5 bg-muted/10 border border-border/40 rounded">
+                  <div key={i} className="p-1.5 bg-muted/10 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/40 rounded">
                     <p className="text-[10px] font-medium text-foreground">{item.name}</p>
                     <p className="text-[8px] text-muted-foreground">{item.desc}</p>
                   </div>
@@ -733,7 +733,7 @@ export function NeuralGuideNonTech() {
                   { name: "auto-evolution-cron", desc: "Cron de auto-evolução (4h)" },
                   { name: "auto-ingestion-cron", desc: "Cron de pré-ingestão (6h)" },
                 ].map((item, i) => (
-                  <div key={i} className="p-1.5 bg-muted/10 border border-border/40 rounded">
+                  <div key={i} className="p-1.5 bg-muted/10 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/40 rounded">
                     <p className="text-[10px] font-medium text-foreground font-mono">{item.name}</p>
                     <p className="text-[8px] text-muted-foreground">{item.desc}</p>
                   </div>
@@ -769,7 +769,7 @@ export function NeuralGuideNonTech() {
                 ].map((item, i) => {
                   const [name, desc] = item.split(" — ");
                   return (
-                    <div key={i} className="p-1.5 bg-muted/10 border border-border/40 rounded">
+                    <div key={i} className="p-1.5 bg-muted/10 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/40 rounded">
                       <p className="text-[10px] font-medium text-foreground font-mono">{name}</p>
                       <p className="text-[8px] text-muted-foreground">{desc}</p>
                     </div>
@@ -798,7 +798,7 @@ export function NeuralGuideNonTech() {
                   { name: "templateEngine.ts", desc: "Motor de templates jurídicos" },
                   { name: "tribunais-config.ts", desc: "Config 70+ tribunais brasileiros" },
                 ].map((item, i) => (
-                  <div key={i} className="p-1.5 bg-muted/10 border border-border/40 rounded">
+                  <div key={i} className="p-1.5 bg-muted/10 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/40 rounded">
                     <p className="text-[10px] font-medium text-foreground font-mono">{item.name}</p>
                     <p className="text-[8px] text-muted-foreground">{item.desc}</p>
                   </div>
@@ -826,7 +826,7 @@ export function NeuralGuideNonTech() {
           </div>
 
           {/* Flow resumido */}
-          <div className="p-3 bg-muted/20 rounded-lg border border-border/50">
+          <div className="p-3 bg-muted/20 rounded-lg border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Fluxo Neural Completo</p>
             <p className="text-[10px] text-muted-foreground font-mono leading-relaxed">
               Input → NLP Análise → Classificação de Complexidade → RAG Pipeline (pgvector) →

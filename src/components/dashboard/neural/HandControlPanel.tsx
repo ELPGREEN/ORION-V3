@@ -233,7 +233,7 @@ export default function HandControlPanel() {
   };
 
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-950 border-zinc-800">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -369,7 +369,7 @@ export default function HandControlPanel() {
 
         {/* Hand Status */}
         <div className="grid grid-cols-3 gap-3 pt-2">
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-2 pb-2">
               <div className="text-[10px] text-zinc-500">Temperatura</div>
               <div className={`text-sm font-mono ${handState.temperature > 50 ? "text-[hsl(var(--tron-danger))]" : "text-[hsl(var(--tron-neon))]"}`}>
@@ -377,7 +377,7 @@ export default function HandControlPanel() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-2 pb-2">
               <div className="text-[10px] text-zinc-500">Corrente</div>
               <div className="text-sm font-mono text-amber-400">
@@ -385,7 +385,7 @@ export default function HandControlPanel() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-900/50 border-zinc-800">
             <CardContent className="pt-2 pb-2">
               <div className="text-[10px] text-zinc-500">Força Total</div>
               <div className="text-sm font-mono text-[hsl(var(--tron-neon))] [text-shadow:0_0_8px_hsl(var(--tron-neon)/0.4)]">

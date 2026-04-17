@@ -31,7 +31,7 @@ export function HopfieldVisualization() {
   const hasCompetitive = topResult?.competitive_category !== undefined;
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Network className="h-5 w-5 text-emerald-500" />
@@ -47,7 +47,7 @@ export function HopfieldVisualization() {
             type="text"
             value={testQuery}
             onChange={e => setTestQuery(e.target.value)}
-            className="flex-1 text-sm px-3 py-2 bg-background border border-border rounded"
+            className="flex-1 text-sm px-3 py-2 bg-background border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] rounded"
             placeholder="Query para testar memória associativa..."
           />
           <Button onClick={runHopfieldTest} size="sm" disabled={loading || !testQuery.trim()}>
@@ -66,7 +66,7 @@ export function HopfieldVisualization() {
                   className={`text-[8px] px-1.5 py-0.5 rounded border ${
                     stage.includes("v19") || stage.includes("hopfield") || stage.includes("competitive")
                       ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500 font-medium"
-                      : "border-border text-muted-foreground"
+                      : "border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] text-muted-foreground"
                   }`}
                 >
                   {stage}
@@ -82,7 +82,7 @@ export function HopfieldVisualization() {
                 </p>
                 <div className="grid grid-cols-3 gap-2">
                   {result.results?.slice(0, 6).map((r: any, i: number) => (
-                    <div key={i} className="text-[9px] p-1.5 border border-border rounded">
+                    <div key={i} className="text-[9px] p-1.5 border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] rounded">
                       <p className="font-medium text-foreground line-clamp-1">{r.title}</p>
                       <p className="text-emerald-500">
                         Categoria: {r.competitive_category || "—"}

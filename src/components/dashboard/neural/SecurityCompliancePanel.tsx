@@ -81,7 +81,7 @@ function ZeroTrustTab() {
           <CardHeader className="pb-2"><CardTitle className="text-xs">Políticas ({policies.length})</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {policies.map(p => (
-              <div key={p.policyId} className="border-b border-border/30 pb-2 text-[10px]">
+              <div key={p.policyId} className="border-b border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 pb-2 text-[10px]">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{p.name}</span>
                   <Badge variant={(decisionColor[p.decision] ?? "secondary") as any} className="text-[8px]">{p.decision}</Badge>
@@ -100,7 +100,7 @@ function ZeroTrustTab() {
             <ScrollArea className="h-48">
               <div className="space-y-1">
                 {log.slice(-20).reverse().map(l => (
-                  <div key={l.requestId} className="flex items-center justify-between text-[9px] border-b border-border/20 pb-1">
+                  <div key={l.requestId} className="flex items-center justify-between text-[9px] border-b border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20 pb-1">
                     <div>
                       <span className="font-mono">{l.resource}</span>
                       <span className="text-muted-foreground ml-1">({l.action})</span>
@@ -133,7 +133,7 @@ function MTLSTab() {
           <CardHeader className="pb-2"><CardTitle className="text-xs">Certificate Authorities</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {cas.map(ca => (
-              <div key={ca.name} className="text-[10px] border-b border-border/30 pb-2">
+              <div key={ca.name} className="text-[10px] border-b border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 pb-2">
                 <div className="font-medium flex items-center gap-1">
                   <Fingerprint className="h-3 w-3" /> {ca.name}
                 </div>
@@ -200,7 +200,7 @@ function GDPRAIActTab() {
         <CardHeader className="pb-2"><CardTitle className="text-xs">Sistemas de IA Registrados</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           {aiSystems.map(sys => (
-            <div key={sys.systemId} className="space-y-2 border-b border-border/30 pb-3">
+            <div key={sys.systemId} className="space-y-2 border-b border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 pb-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">{sys.systemName}</span>
                 <div className="flex gap-1">
@@ -238,7 +238,7 @@ function GDPRAIActTab() {
           <CardHeader className="pb-2"><CardTitle className="text-xs">Registros de Processamento (Art. 30)</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {records.map(r => (
-              <div key={r.id} className="text-[10px] border-b border-border/30 pb-2">
+              <div key={r.id} className="text-[10px] border-b border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 pb-2">
                 <div className="font-medium">{r.purpose}</div>
                 <div className="text-muted-foreground">
                   Base: {r.lawfulBasis} • Retenção: {r.retentionPeriod}
@@ -293,7 +293,7 @@ function GDPRAIActTab() {
           <ScrollArea className="h-32">
             <div className="space-y-1">
               {auditLog.slice(-15).reverse().map(l => (
-                <div key={l.id} className="flex items-center gap-2 text-[9px] border-b border-border/20 pb-1">
+                <div key={l.id} className="flex items-center gap-2 text-[9px] border-b border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/20 pb-1">
                   <Badge variant={l.severity === "critical" ? "destructive" : l.severity === "warning" ? "secondary" : "outline"} className="text-[8px] shrink-0">
                     {l.category}
                   </Badge>

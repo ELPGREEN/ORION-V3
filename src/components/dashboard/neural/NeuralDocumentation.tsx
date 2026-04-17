@@ -6,7 +6,7 @@ export function NeuralDocumentation() {
   return (
     <div className="space-y-6">
       {/* Visão Geral */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
@@ -43,7 +43,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Arquitetura em Camadas */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Layers className="h-5 w-5 text-primary" />
@@ -204,7 +204,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Sistema de Fallback */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
@@ -240,7 +240,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Redes Clássicas — Hopfield & Competitiva */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Magnet className="h-5 w-5 text-primary" />
@@ -305,7 +305,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Edge Functions */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Server className="h-5 w-5 text-primary" />
@@ -381,7 +381,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Pipeline RAG v21.2 */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <GitBranch className="h-5 w-5 text-primary" />
@@ -425,7 +425,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Modelagem Temporal */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <GitBranch className="h-5 w-5 text-primary" />
@@ -464,7 +464,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Neurociência Cognitiva */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
@@ -496,7 +496,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* RLHF + DPO + RLVR */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Award className="h-5 w-5 text-primary" />
@@ -527,7 +527,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Assistentes IA — Advogado + Cliente */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" />
@@ -614,7 +614,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* v21.2: Framework Multi-Agentes */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Workflow className="h-5 w-5 text-primary" />
@@ -658,7 +658,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* v21.2: Cross-Modal + Mamba + STDP */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Target className="h-5 w-5 text-primary" />
@@ -708,7 +708,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* v21.2: QHRL */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
@@ -743,7 +743,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Neural Pipeline v2 — 9 Modelos */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Workflow className="h-5 w-5 text-primary" />
@@ -785,7 +785,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Taxonomia de Redes Neurais Implementadas */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-primary" />
@@ -843,7 +843,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Sistema de Loja + Afiliados + Stripe */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Server className="h-5 w-5 text-primary" />
@@ -873,7 +873,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* IoT + Child Networks */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Layers className="h-5 w-5 text-primary" />
@@ -923,7 +923,7 @@ export function NeuralDocumentation() {
       </Card>
 
       {/* Visualização Neural 3D */}
-      <Card className="bg-card border-border">
+      <Card className="bg-[hsl(var(--tron-bg-deep))] border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />

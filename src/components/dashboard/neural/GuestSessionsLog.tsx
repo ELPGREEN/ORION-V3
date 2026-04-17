@@ -43,7 +43,7 @@ export function GuestSessionsLog() {
   };
 
   return (
-    <Card className="border-primary/20">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] border-primary/20">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Users className="h-4 w-4 text-primary" />
@@ -71,7 +71,7 @@ export function GuestSessionsLog() {
               {sessions.map((s) => (
                 <div
                   key={s.id}
-                  className="border border-border/50 rounded-lg overflow-hidden"
+                  className="border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50 rounded-lg overflow-hidden"
                 >
                   <button
                     onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}
@@ -109,7 +109,7 @@ export function GuestSessionsLog() {
                   </button>
 
                   {expandedId === s.id && s.messages?.length > 0 && (
-                    <div className="border-t border-border/30 p-3 space-y-2 bg-muted/10">
+                    <div className="border-t border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 p-3 space-y-2 bg-muted/10">
                       <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
                         Conversa registrada
                       </p>
@@ -133,7 +133,7 @@ export function GuestSessionsLog() {
                   )}
 
                   {expandedId === s.id && (!s.messages || s.messages.length === 0) && (
-                    <div className="border-t border-border/30 p-3 text-center">
+                    <div className="border-t border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/30 p-3 text-center">
                       <p className="text-[10px] text-muted-foreground">Nenhuma mensagem registrada nesta sessão.</p>
                     </div>
                   )}

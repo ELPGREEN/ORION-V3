@@ -232,7 +232,7 @@ export default function RobotTestPanel() {
   };
 
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-[hsl(var(--tron-bg-deep))] text-[hsl(var(--tron-neon))] bg-zinc-950 border-zinc-800">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
