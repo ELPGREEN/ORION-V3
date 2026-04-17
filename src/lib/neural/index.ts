@@ -585,3 +585,9 @@ export {
   resetServerlessPipeline,
   formatServerlessContextForLLM,
 } from "./serverless-agent-runtime";
+
+// ═══ ARC-AGI-2 Advanced Modules (2025-2026 Roadmap) ═══
+export { ArcDecisionCore } from './arc-decision-core';
+export { ArcRoboticsPerception } from './arc-robotics-perception';
+export { ArcSwarmCoordination } from './arc-swarm-coordination';
+export { ArcFinancialTrading } from './arc-financial-trading';
