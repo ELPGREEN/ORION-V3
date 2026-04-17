@@ -126,6 +126,7 @@ const SCOPES = [
   "user-read-recently-played",
   "user-read-playback-state",
   "user-modify-playback-state",
+  "streaming",
   "playlist-read-private",
   "playlist-modify-public",
   "playlist-modify-private",
@@ -212,7 +213,22 @@ Deno.serve(async (req) => {
 
     if (action === "status") {
       const tokens = await getTokens(userId);
-      return json({ connected: !!tokens?.access_token, expires_at: tokens?.expires_at });
+      const scopes = Array.isArray(tokens?.scopes) ? tokens.scopes : [];
+      return json({ connected: !!tokens?.access_token, expires_at: tokens?.expires_at, can_sdk: scopes.includes("streaming") });
+    }
+
+    if (action === "sdk_token") {
+      const tokenRow = await getTokens(userId);
+      const scopes = Array.isArray(tokenRow?.scopes) ? tokenRow.scopes : [];
+      const canSdk = scopes.includes("streaming");
+      if (!canSdk) {
+        return json({ access_token: null, can_sdk: false, reason: "missing_streaming_scope" });
+      }
+
+      const accessToken = await getValidToken(userId);
+      if (!accessToken) return err("Spotify not connected or token expired", 401);
+
+      return json({ access_token: accessToken, can_sdk: true, expires_at: tokenRow?.expires_at });
     }
 
     if (action === "disconnect") {
