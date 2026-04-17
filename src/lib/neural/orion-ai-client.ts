@@ -906,7 +906,8 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
   // Conversational identity/hearing guard — NEVER route these to code/evolution/media
   const hearingCheckPatterns = /\b(voc[eê]\s+consegue\s+me\s+ouvir|voc[eê]\s+me\s+ouve|t[aá]\s+me\s+ouvindo|est[aá]\s+me\s+ouvindo|consegue\s+me\s+escutar|me\s+escuta)\b/i;
   const selfIdentityPatterns = /\b(quem\s+[eé]\s+voc[eê]|qual\s+[eé]\s+o\s+seu\s+nome|sua\s+personalidade|seu\s+signo|sua\s+hist[oó]ria|o\s+que\s+[eé]\s+voc[eê]|quando\s+voc[eê]\s+nasceu|conte\s+sobre\s+voc[eê]|fale\s+sobre\s+voc[eê]|fala\s+sobre\s+voc[eê]|me\s+conta(?:\s+um\s+pouco)?\s+sobre\s+voc[eê]|me\s+fala(?:\s+um\s+pouco)?\s+sobre\s+voc[eê])\b/i;
-  if (hearingCheckPatterns.test(q) || selfIdentityPatterns.test(q)) return "textual";
+  const conversationalComplaintPatterns = /\b(ent[aã]o|cara|mano|tu|voc[eê]|c[eê])\b.*\b(n[aã]o\s+me\s+responde|n[aã]o\s+responde|me\s+ignora|n[aã]o\s+entende|n[aã]o\s+capta|n[aã]o\s+peg[ao]|s[oó]\s+peg[ao]\s+duas?|tr[eê]s\s+palavras|frase\s+inteira|t[aá]\s+me\s+tirando|arquivo\s+srfx|srfx)\b/i;
+  if (hearingCheckPatterns.test(q) || selfIdentityPatterns.test(q) || conversationalComplaintPatterns.test(q)) return "textual";
 
   // Visual command guard — never let camera/scene questions fall into code/evolution buckets
   const explicitVisualPatterns = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+vendo|v[eê]|v[êe] na c[aâ]mera)|o\s+que\s+tem\s+(na\s+frente|a[ií]|aqui)|descrev[ae]\s+(a\s+)?(imagem|cena|ambiente|o\s+que\s+v[eê])|me\s+mostre\s+o\s+que\s+v[eê]|analise\s+(a\s+)?(imagem|cena|c[aâ]mera)|leia\s+(o\s+)?texto\s+(da\s+)?(imagem|c[aâ]mera)|identifique\s+(o\s+)?(objeto|rosto|texto)|quantos?\s+[^.?!]*\s+(tem|h[aá])\b)/i;
@@ -927,12 +928,14 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
   if (webSearchPatterns.test(q)) return "web_search";
 
   // ═══ Auto-construct intent ═══
-  const autoConstructPatterns = /\b(constru[ai]|programe?|crie?\s+(uma?\s+)?(fun[çc][ãa]o|endpoint|api|componente|tabela|migra[çc][ãa]o)|gere?\s+(c[oó]digo|fun[çc][ãa]o|edge\s*function)|implemente?|desenvolv[ae]|code|build|cri[ae]\s+isso|programa\s+isso|fa[çc]a\s+(uma?\s+)?(fun[çc][ãa]o|api|endpoint)|auto[-\s]?constru|se\s+constru[ai]|construa[-\s]se)\b/i;
-  if (autoConstructPatterns.test(q)) return "auto_construct";
+  const autoConstructVerbPatterns = /\b(crie?|gere?|implemente?|desenvolv[ae]|programe?|codifique|escreva|refatore?|monte|construa)\b/i;
+  const autoConstructArtifactPatterns = /\b(c[oó]digo|fun[çc][ãa]o|endpoint|api|componente|tabela|migra[çc][ãa]o|script|arquivo|classe|hook|rota|p[aá]gina|feature|bot[aã]o|integra[çc][ãa]o|edge\s*function)\b/i;
+  if (autoConstructVerbPatterns.test(q) && autoConstructArtifactPatterns.test(q)) return "auto_construct";
 
   // ═══ Self-evolution intent ═══
-  const selfEvolvePatterns = /\b(melhore-se|melhore\s+se|evolua|evolu[ií]r?|auto[-\s]?evolu[ií]r?|auto[-\s]?program[ae]|se\s+reprogram[ae]|otimize\s+(suas?\s+respostas?|se)|aprenda\s+(isso|com\s+isso|agora)|atualize?\s+(seus?\s+pesos?|se)|auto[-\s]?evol[uú]|upgrade|self[-\s]?improve|auto[-\s]?aprend|recalibre|se\s+calibre|se\s+atualize|melhore\s+suas?\s+respostas?|novo\s+protocolo|novos?\s+protocolos?)\b/i;
-  if (selfEvolvePatterns.test(q)) return "self_evolve";
+  const selfEvolveVerbPatterns = /\b(melhore-se|melhore\s+se|evolua|evolu[ií]r?|auto[-\s]?evolu[ií]r?|auto[-\s]?program[ae]|se\s+reprogram[ae]|recalibre|se\s+calibre|se\s+atualize|upgrade)\b/i;
+  const selfEvolveTargetPatterns = /\b(seu\s+c[oó]digo|seus\s+protocolos?|suas?\s+respostas?|você\s+mesmo|voc[eê]\s+mesmo|a\s+si\s+mesmo|se)\b/i;
+  if (selfEvolveVerbPatterns.test(q) && selfEvolveTargetPatterns.test(q)) return "self_evolve";
 
   // ═══ Verb-based primary classification ═══
   const verbIdentify = /\b(identific[aeo]r?|identifique|identify|reconhe[cç][aeo]r?|reconozc[ao]|identificar?)\b/i;

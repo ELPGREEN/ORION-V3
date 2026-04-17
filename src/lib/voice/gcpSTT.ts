@@ -32,8 +32,8 @@ const PROCESSOR_BUFFER_SIZE = 2048; // Smaller buffer = faster reaction (~43ms @
 const PRE_ROLL_FRAMES = 6; // More pre-roll to catch first phoneme cleanly
 const FLUSH_POLL_MS = 60; // Aggressive poll for instant turn detection
 const SPEECH_RMS_THRESHOLD = 0.01;
-// ULTRA mode: 500ms silence — JARVIS-like instant response
-const DEFAULT_SILENCE_MS = 500;
+// Balanced mode: tolerate natural pauses so STT captures the full sentence
+const DEFAULT_SILENCE_MS = 1200;
 
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {
@@ -268,7 +268,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         signal.addEventListener("abort", stop, { once: true });
       }
 
-      console.log("[GCP-STT] ⚡ ULTRA mode — silence: 500ms, poll: 60ms, early-flush: ON");
+      console.log("[GCP-STT] ⚡ Balanced mode — silence: 1200ms, poll: 60ms, early-flush: ON");
       return true;
     } catch (err: any) {
       const msg = err?.message || String(err);
