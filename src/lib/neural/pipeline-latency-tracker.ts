@@ -1,5 +1,5 @@
 /**
- * Pipeline Latency Tracker v31
+ * Pipeline Latency Tracker v32
  * Tracks end-to-end STT → LLM → TTS latency for consciousness monitoring.
  */
 
@@ -28,12 +28,18 @@ let _pipelineStart = 0;
 export function markSTTStart(): void {
   _sttStart = performance.now();
   _pipelineStart = _sttStart;
+  (window as any).__orion_stt_start = _sttStart;
 }
 
 export function markSTTEnd(): void {
+  const now = performance.now();
   if (_sttStart > 0) {
-    _latency.sttMs = performance.now() - _sttStart;
+    _latency.sttMs = now - _sttStart;
     _sttStart = 0;
+  }
+  const winStart = (window as any).__orion_stt_start;
+  if (winStart) {
+    console.log('[Latency] STT:', Math.round(now - winStart), 'ms');
   }
 }
 
@@ -50,16 +56,22 @@ export function markLLMEnd(): void {
 
 export function markTTSStart(): void {
   _ttsStart = performance.now();
+  (window as any).__orion_tts_start = _ttsStart;
 }
 
 export function markTTSEnd(): void {
+  const now = performance.now();
   if (_ttsStart > 0) {
-    _latency.ttsMs = performance.now() - _ttsStart;
+    _latency.ttsMs = now - _ttsStart;
     _ttsStart = 0;
   }
   if (_pipelineStart > 0) {
-    _latency.totalMs = performance.now() - _pipelineStart;
+    _latency.totalMs = now - _pipelineStart;
     _pipelineStart = 0;
+  }
+  const winStart = (window as any).__orion_tts_start;
+  if (winStart) {
+    console.log('[Latency] TTS:', Math.round(now - winStart), 'ms');
   }
 }
 

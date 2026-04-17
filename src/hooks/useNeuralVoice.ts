@@ -32,8 +32,8 @@ const ECHO_WINDOW_MS = 18000;
 const ECHO_JACCARD_THRESHOLD = 0.35;
 const MAX_CONSECUTIVE_ABORTS = 5;
 const MAX_CONSECUTIVE_NO_SPEECH = 8;
-const NO_SPEECH_TIMEOUT_MS = 2500; // 2.5s — Jules PR optimization
-const RESTART_DELAY_MS = isMobile() ? 4000 : 1500; // Reduced delays for faster reconnect
+const NO_SPEECH_TIMEOUT_MS = 1500; // 2.5s — Jules PR optimization
+const RESTART_DELAY_MS = isMobile() ? 1000 : 500; // Reduced delays for faster reconnect
 
 // ═══ Shared State ═══
 export const VoiceState = { aiResponding: false };
@@ -919,6 +919,7 @@ export function useNeuralVoice(
                 return;
               }
 
+              markSTTEnd();
               const normalized = normalizeSpeechText(text);
               if (normalized.length < 2) return;
               const wordCount = normalized.split(/\s+/).filter(Boolean).length;

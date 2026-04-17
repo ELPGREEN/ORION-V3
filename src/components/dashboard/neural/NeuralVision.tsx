@@ -88,7 +88,7 @@ const _rtCache = { lastCall: 0, lastResult: null as RealTimeVisionResult | null 
 async function detectRealTime(video?: HTMLVideoElement): Promise<RealTimeVisionResult> {
   const now = Date.now();
   // Throttle: at most once every 6 seconds
-  if (now - _rtCache.lastCall < 6000 && _rtCache.lastResult) {
+  if (now - _rtCache.lastCall < 1000 && _rtCache.lastResult) {
     return _rtCache.lastResult;
   }
   if (!video || video.readyState < 2) {
@@ -706,7 +706,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       }
 
 // Throttle ML detection to every 30 frames (1s at 30fps) — MediaPipe ObjectDetector
-      if (frameCount % 30 === 0 && !localDetectionRunningRef.current && video && video.readyState >= 2 && w > 0 && h > 0 && mpObjectDetector && mpVisionReady) {
+      if (frameCount % 10 === 0 && !localDetectionRunningRef.current && video && video.readyState >= 2 && w > 0 && h > 0 && mpObjectDetector && mpVisionReady) {
         const now = Date.now();
         if (now - lastLocalDetectionRef.current > 800) {
           lastLocalDetectionRef.current = now;
@@ -740,7 +740,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         }
       }
       // Throttle SuperNet frames to every 25 frames (was 15)
-      if (frameCount % 30 === 0) sendSuperNetFrame();
+      if (frameCount % 15 === 0) sendSuperNetFrame();
       animRef.current = requestAnimationFrame(loop);
     };
     animRef.current = requestAnimationFrame(loop);
