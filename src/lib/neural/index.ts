@@ -543,6 +543,52 @@ export {
   type IndustrialSubsystemKey, type IndustrialHealthMetrics,
 } from "./jules-industrial-scanner";
 
+// ═══ ARC-AGI-2 Decision Core (LLM + Planner + MCTS) ═══
+export {
+  ArcDecisionCore,
+  type DecisionContext,
+  type DecisionResult,
+  type MCTSNode,
+} from "./arc-decision-core";
+
+// ═══ ARC-AGI-2 Robotics Perception (YOLO + SLAM + Sensor Fusion) ═══
+export {
+  ArcRoboticsPerception,
+  type DetectedObject,
+  type PointCloud,
+  type RobotPose,
+  type SensorReading,
+  type FusionResult,
+} from "./arc-robotics-perception";
+
+// ═══ ARC-AGI-2 Swarm Coordination (Multi-Agent RL + gRPC + Consensus) ═══
+export {
+  ArcSwarmCoordination,
+  type Agent,
+  type SwarmTask,
+  type ConsensusMessage,
+  type FormationConfig,
+} from "./arc-swarm-coordination";
+
+// ═══ ARC-AGI-2 Financial Trading (PPO + Sentiment + Risk Engine) ═══
+export {
+  ArcFinancialTrading,
+  type MarketTick,
+  type Position,
+  type Order,
+  type NewsEvent,
+  type TradingSignal,
+  type RiskMetrics,
+} from "./arc-financial-trading";
+
+// ═══ ARC-AGI-2 System Integrator (Unified Control) ═══
+export {
+  ArcSystemIntegrator,
+  arcSystemIntegrator,
+  type IntegratedAgent,
+  type SystemIntegrationStatus,
+} from "./arc-system-integrator";
+
 // ═══ Serverless Agent Runtime (AWS Serverless Agentic AI Architecture 2026) ═══
 export {
   type EventType as ServerlessEventType,

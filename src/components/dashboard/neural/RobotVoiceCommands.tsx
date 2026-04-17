@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Mic, MicOff, Volume2, Bot, CheckCircle, XCircle } from "lucide-react";
 import { ros2Bridge } from "@/lib/neural/ros2-protocol-bridge";
+import { iotBridge, type IoTDevice } from "@/lib/neural/iot-device-bridge";
 import { toast } from "sonner";
 
 interface VoiceLog {
@@ -25,46 +26,102 @@ const ROBOT_COMMANDS: Array<{
   execute: (robotId: string, match: RegExpMatchArray | null) => Promise<boolean>;
 }> = [
   {
+    patterns: [/ligar.*luz|acender.*luz|turn on.*light/i],
+    action: "iot_light_on",
+    label: "Ligar luz IoT",
+    execute: async () => {
+      const devices = iotBridge.deviceList.filter(d => d.type === "light");
+      if (devices.length === 0) { toast.info("Nenhuma luz IoT encontrada"); return false; }
+      const success = await iotBridge.publish(devices[0].topic + "/set", { state: "ON" });
+      return success;
+    },
+  },
+  {
+    patterns: [/desligar.*luz|apagar.*luz|turn off.*light/i],
+    action: "iot_light_off",
+    label: "Desligar luz IoT",
+    execute: async () => {
+      const devices = iotBridge.deviceList.filter(d => d.type === "light");
+      if (devices.length === 0) { toast.info("Nenhuma luz IoT encontrada"); return false; }
+      const success = await iotBridge.publish(devices[0].topic + "/set", { state: "OFF" });
+      return success;
+    },
+  },
+  {
+    patterns: [/ligar.*(tomada|plug)|turn on.*plug/i],
+    action: "iot_plug_on",
+    label: "Ligar tomada IoT",
+    execute: async () => {
+      const devices = iotBridge.deviceList.filter(d => d.type === "plug");
+      if (devices.length === 0) { toast.info("Nenhuma tomada IoT encontrada"); return false; }
+      const success = await iotBridge.publish(devices[0].topic + "/set", { state: "ON" });
+      return success;
+    },
+  },
+  {
+    patterns: [/desligar.*(tomada|plug)|turn off.*plug/i],
+    action: "iot_plug_off",
+    label: "Desligar tomada IoT",
+    execute: async () => {
+      const devices = iotBridge.deviceList.filter(d => d.type === "plug");
+      if (devices.length === 0) { toast.info("Nenhuma tomada IoT encontrada"); return false; }
+      const success = await iotBridge.publish(devices[0].topic + "/set", { state: "OFF" });
+      return success;
+    },
+  },
+  {
+    patterns: [/dispositivos.*iot|list.*iot|mostrar.*dispositivos/i],
+    action: "iot_list",
+    label: "Listar dispositivos IoT",
+    execute: async () => {
+      const devices = iotBridge.deviceList;
+      if (devices.length === 0) { toast.info("Nenhum dispositivo IoT"); return false; }
+      const list = devices.map(d => `${d.name} (${d.type})`).join(", ");
+      toast.info(`Dispositivos IoT: ${list}`);
+      return true;
+    },
+  },
+  {
     patterns: [/mover.*frente|para frente|forward/i, /andar|caminhar/i],
     action: "cmd_vel_forward",
     label: "Mover para frente",
-    execute: (rid) => ros2Bridge.sendCmdVel(rid, { x: 0.3, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }),
+    execute: async (rid, match) => ros2Bridge.sendCmdVel(rid, { x: 0.3, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }),
   },
   {
     patterns: [/mover.*tr[áa]s|para tr[áa]s|backward|r[ée]/i],
     action: "cmd_vel_backward",
     label: "Mover para trás",
-    execute: (rid) => ros2Bridge.sendCmdVel(rid, { x: -0.3, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }),
+    execute: async (rid, match) => ros2Bridge.sendCmdVel(rid, { x: -0.3, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }),
   },
   {
     patterns: [/girar.*esquerda|virar.*esquerda|turn left/i],
     action: "cmd_vel_left",
     label: "Girar à esquerda",
-    execute: (rid) => ros2Bridge.sendCmdVel(rid, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0.5 }),
+    execute: async (rid, match) => ros2Bridge.sendCmdVel(rid, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0.5 }),
   },
   {
     patterns: [/girar.*direita|virar.*direita|turn right/i],
     action: "cmd_vel_right",
     label: "Girar à direita",
-    execute: (rid) => ros2Bridge.sendCmdVel(rid, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -0.5 }),
+    execute: async (rid, match) => ros2Bridge.sendCmdVel(rid, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -0.5 }),
   },
   {
     patterns: [/parar|stop|pare/i],
     action: "cmd_vel_stop",
     label: "Parar robô",
-    execute: (rid) => ros2Bridge.sendCmdVel(rid, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }),
+    execute: async (rid, match) => ros2Bridge.sendCmdVel(rid, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }),
   },
   {
     patterns: [/emerg[eê]ncia|e-?stop|parada de emerg[eê]ncia/i],
     action: "emergency_stop",
     label: "Parada de emergência",
-    execute: (rid) => ros2Bridge.emergencyStop(rid, true),
+    execute: async (rid, match) => ros2Bridge.emergencyStop(rid, true),
   },
   {
     patterns: [/desativar emerg[eê]ncia|liberar e-?stop/i],
     action: "emergency_release",
     label: "Liberar emergência",
-    execute: (rid) => ros2Bridge.emergencyStop(rid, false),
+    execute: async (rid, match) => ros2Bridge.emergencyStop(rid, false),
   },
   {
     patterns: [/navegar.*?(-?\d+[\.,]?\d*)\s*[,\s]+\s*(-?\d+[\.,]?\d*)/i],
@@ -227,6 +284,7 @@ export default function RobotVoiceCommands({ robotId }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent>
+<<<<<<< Updated upstream
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {[
               { label: "Mover para frente", example: "\"mover robô para frente\"" },
@@ -239,6 +297,25 @@ export default function RobotVoiceCommands({ robotId }: Props) {
               { label: "Status", example: "\"status do robô\"" },
             ].map(c => (
               <div key={c.label} className="p-2 rounded border border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]/50 text-xs">
+=======
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { label: "Ligar luz IoT", example: "\"ligar luz\"" },
+                { label: "Desligar luz IoT", example: "\"desligar luz\"" },
+                { label: "Ligar tomada", example: "\"ligar tomada\"" },
+                { label: "Desligar tomada", example: "\"desligar tomada\"" },
+                { label: "Listar IoT", example: "\"mostrar dispositivos IoT\"" },
+                { label: "Mover para frente", example: "\"mover robô para frente\"" },
+                { label: "Mover para trás", example: "\"mover para trás\"" },
+                { label: "Girar esquerda/direita", example: "\"girar à esquerda\"" },
+                { label: "Parar", example: "\"parar robô\"" },
+                { label: "Emergência", example: "\"parada de emergência\"" },
+                { label: "Navegar", example: "\"navegar para 3, 5\"" },
+                { label: "Garra", example: "\"abrir garra\" / \"fechar garra\"" },
+                { label: "Status", example: "\"status do robô\"" },
+              ].map(c => (
+              <div key={c.label} className="p-2 rounded border border-border/50 text-xs">
+>>>>>>> Stashed changes
                 <p className="font-medium">{c.label}</p>
                 <p className="text-muted-foreground font-mono text-[10px]">{c.example}</p>
               </div>
