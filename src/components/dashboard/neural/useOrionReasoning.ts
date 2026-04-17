@@ -470,7 +470,7 @@ export function useOrionReasoning(
 
       // ═══ VISION COMMAND INTERCEPT — handle locally, NEVER send to LLM ═══
       const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow);
-      const isDeactivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /desligar?\s*(vis[aâ]mera)/i.test(qLow) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow);
+      const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /desligar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /parar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow);
       if (isActivateVision || isDeactivateVision) {
         const action = isActivateVision ? "activate_vision" : "deactivate_vision";
         const msg = isActivateVision ? "Visão ativada." : "Visão desativada.";

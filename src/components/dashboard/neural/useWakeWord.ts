@@ -232,12 +232,15 @@ export function useWakeWord(
       };
 
       rec.onerror = (e: any) => {
-        console.warn("[WakeWord] onerror:", e.error);
+        const errorCode = e?.error;
+        if (errorCode !== "no-speech" && errorCode !== "aborted") {
+          console.warn("[WakeWord] onerror:", errorCode);
+        }
         wakeRecRef.current = null;
         startInFlightRef.current = false;
         if (!isMicOwner(wakeSingletonIdRef.current)) { emitWakeStatus(false); return; }
 
-        if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        if (errorCode === "not-allowed" || errorCode === "service-not-allowed") {
           emitWakeStatus(false);
           return;
         }
@@ -264,7 +267,7 @@ export function useWakeWord(
           } else {
             emitWakeStatus(false);
           }
-        }, getRestartDelay(e.error));
+        }, getRestartDelay(errorCode));
       };
 
       wakeRecRef.current = rec;
