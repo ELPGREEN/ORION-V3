@@ -541,7 +541,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   // Auto-start direct voice capture for /consulta page too (no wake word needed).
   // Rule: mic always active, always listening — no "say Orion to activate" gate.
   useEffect(() => {
-    if (skipWakeWord) return; // overlay handles its own auto-boot
+    if (typeof document !== "undefined" && document.hidden) return;
+    if (!speechOk) return;
+    if (autoBootedRef.current) return;
     if (typeof document !== "undefined" && document.hidden) return;
     if (autoBootedRef.current) return;
 
@@ -561,7 +563,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // Auto-connect mic ONLY for overlay handoff (skipWakeWord) without route auto-activation.
   useEffect(() => {
-    if (autoBootedRef.current || !speechOk || !skipWakeWord) return;
+    if (autoBootedRef.current || !speechOk) return;
 
     const state = location.state as any;
     const hasAutoActivation = Boolean(initialCommand || state?.autoActivate || state?.autoCommand);
