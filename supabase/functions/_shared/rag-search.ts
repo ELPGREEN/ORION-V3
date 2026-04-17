@@ -44,7 +44,7 @@ async function zillizSearch(query: string, topK: number): Promise<RagHit[]> {
     clearTimeout(timer);
     if (!r.ok) return [];
     const j = await r.json();
-    const results = j.results?.[0] ?? j.results ?? [];
+    const results = Array.isArray(j.results) ? j.results : [];
     return (Array.isArray(results) ? results : []).map((x: any) => {
       const text = String(x.text ?? "");
       const [titleLine, ...rest] = text.split("\n\n");
