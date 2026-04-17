@@ -595,10 +595,30 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   // (routeOrionCommand moved above handleVoice to avoid forward reference)
 
   // ═══ Listen for vision commands from text chat (useOrionReasoning) ═══
+  // Hard gate: only react to ACTIVATE if last user transcript explicitly mentions vision keywords.
+  // This blocks intent-classifier false positives (e.g. user says "sistema" → wrongly classified as vision_on).
+  const lastTranscriptRef = useRef("");
   useEffect(() => {
+    const captureTranscript = (e: Event) => {
+      const text = (e as CustomEvent).detail?.text || "";
+      if (typeof text === "string") lastTranscriptRef.current = text.toLowerCase();
+    };
+    window.addEventListener("orion:voice-transcription", captureTranscript);
+    return () => window.removeEventListener("orion:voice-transcription", captureTranscript);
+  }, []);
+
+  useEffect(() => {
+    const VISION_KEYWORD_RE = /\b(vis[aã]o|c[aâ]mera|webcam|olhos?|enxerg|ver|veja|olha|olhe|mostr|filma|grava)/i;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.action === "activate_vision" && !active) {
+        // Require explicit vision keyword OR explicit user-initiated flag
+        const userInitiated = detail?.userInitiated === true;
+        const keywordPresent = VISION_KEYWORD_RE.test(lastTranscriptRef.current);
+        if (!userInitiated && !keywordPresent) {
+          console.log("[NeuralVision] 🚫 Blocked auto-activation — no vision keyword in transcript:", lastTranscriptRef.current.slice(0, 60));
+          return;
+        }
         startCamera({ announce: false }).catch(() => {});
       } else if (detail?.action === "deactivate_vision" && active) {
         stopCamera();
