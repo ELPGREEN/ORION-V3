@@ -159,7 +159,7 @@ export default function ConsultaIA() {
     queryKey: ["consulta-gate", user?.id],
     queryFn: async () => {
       const [roleRes, planRes] = await Promise.all([
-        supabase.from("user_roles").select("role").eq("user_id", user!.id).maybeSingle(),
+        supabase.rpc("get_user_role", { _user_id: user!.id }),
         supabase.from("user_plans").select("plan_type").eq("user_id", user!.id).maybeSingle(),
       ]);
       return {

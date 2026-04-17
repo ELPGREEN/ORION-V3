@@ -32,7 +32,7 @@ export function LawyerSelectionCard({ clientProfileId, onLinked }: LawyerSelecti
 
   const loadAdvogados = async () => {
     const { data } = await supabase
-      .from("available_advogados" as any)
+      .from("available_advogados" as any) // FIXME(jules-audit): tabela inexistente no inventário
       .select("*");
     setAdvogados((data as any[]) || []);
     setLoading(false);

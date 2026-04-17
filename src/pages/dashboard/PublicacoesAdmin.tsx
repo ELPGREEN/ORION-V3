@@ -144,13 +144,13 @@ export default function PublicacoesAdmin() {
       const fileName = `publicacoes/${user.id}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("avatars")
+        .from("profile-photos")
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from("avatars")
+        .from("profile-photos")
         .getPublicUrl(fileName);
 
       setFormData({ ...formData, imagem_capa: urlData.publicUrl });
@@ -171,9 +171,9 @@ export default function PublicacoesAdmin() {
       for (const file of Array.from(files)) {
         const ext = file.name.split(".").pop();
         const fileName = `publicacoes/${user.id}/carousel-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from("avatars").upload(fileName, file);
+        const { error: uploadError } = await supabase.storage.from("profile-photos").upload(fileName, file);
         if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(fileName);
+        const { data: urlData } = supabase.storage.from("profile-photos").getPublicUrl(fileName);
         newImages.push(urlData.publicUrl);
       }
       setFormData({ ...formData, carousel_images: [...formData.carousel_images, ...newImages] });

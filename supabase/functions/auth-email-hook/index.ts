@@ -244,7 +244,7 @@ async function handleWebhook(req: Request): Promise<Response> {
   const messageId = crypto.randomUUID()
 
   // Log pending BEFORE enqueue so we have a record even if enqueue crashes
-  await supabase.from('email_send_log').insert({
+  await supabase.from('email_send_log') // FIXME(jules-audit): tabela inexistente.insert({
     message_id: messageId,
     template_name: emailType,
     recipient_email: payload.data.email,
@@ -270,7 +270,7 @@ async function handleWebhook(req: Request): Promise<Response> {
 
   if (enqueueError) {
     console.error('Failed to enqueue auth email', { error: enqueueError, run_id, emailType })
-    await supabase.from('email_send_log').insert({
+    await supabase.from('email_send_log') // FIXME(jules-audit): tabela inexistente.insert({
       message_id: messageId,
       template_name: emailType,
       recipient_email: payload.data.email,
