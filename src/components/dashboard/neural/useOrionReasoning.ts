@@ -662,7 +662,11 @@ export function useOrionReasoning(
       if (needsAuth || needsBiometric) {
         try {
           const authGateUser = await getCachedUser();
+          const creatorByVoiceOnly = OWNER_ONLY_INTENT_REGEX.test(somResult.handler || "") && (identityStatus === "creator" || identityStatus === "owner");
           if (!authGateUser) {
+            if (creatorByVoiceOnly) {
+              addLog(`👑 Creator voice verified without active login — bypassing auth gate for ${somResult.handler}`);
+            } else {
             const authMsg = "Você precisa estar logado para usar esse recurso. Faça login para continuar.";
             setChatHistory(prev => {
               const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
@@ -673,10 +677,11 @@ export function useOrionReasoning(
             cleanupProcessing();
             processNextInQueue();
             return;
+            }
           }
 
           // Only check biometric for sensitive intents — run both queries in parallel
-          if (needsBiometric) {
+          if (needsBiometric && authGateUser) {
             const { isOwnerEmail: checkOwner } = await import("@/lib/neural/orion-consciousness");
             const isOwner = checkOwner(authGateUser.email);
 
