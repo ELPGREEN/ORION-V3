@@ -2924,12 +2924,22 @@ async function indexResults(supabase: any, items: IndexItem[], queryOrigin: stri
   if (newItems.length === 0) return 0;
   const INSERT_BATCH = 50;
   let totalInserted = 0;
+  const allInserted: any[] = [];
   for (let i = 0; i < newItems.length; i += INSERT_BATCH) {
     const batch = newItems.slice(i, i + INSERT_BATCH);
-    const { error } = await supabase.from("legal_embeddings").insert(batch);
+    const { data: ins, error } = await supabase.from("legal_embeddings").insert(batch).select("id, title, content, source");
     if (error) console.error("Index insert error:", error);
-    else totalInserted += batch.length;
+    else { totalInserted += batch.length; if (ins) allInserted.push(...ins); }
   }
+  // Mirror to Zilliz orion_legal (fire-and-forget)
+  try {
+    const { insertLegalText } = await import("../_shared/zilliz-collections.ts");
+    insertLegalText(allInserted.map((row: any) => ({
+      id: row.id,
+      text: `${row.title}\n\n${row.content}`.substring(0, 4000),
+      metadata: { source: row.source },
+    })));
+  } catch (e) { console.warn("[zilliz mirror legal]", (e as Error).message); }
   return totalInserted;
 }
 
