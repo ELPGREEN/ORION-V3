@@ -317,7 +317,7 @@ export async function getUserServiceStats(userId: string): Promise<{
   trialRemaining: number;
 }> {
   try {
-    const [profile, trial] = await Promise.all([
+    const [profileRes, trialRes] = await Promise.all([
       supabase.from("client_profiles").select("credits_balance").eq("user_id", userId).maybeSingle(),
       supabase.from("user_trials").select("remaining_free_services").eq("user_id", userId).maybeSingle(),
     ]);
@@ -328,6 +328,8 @@ export async function getUserServiceStats(userId: string): Promise<{
       .eq("user_id", userId);
     
     const totalSpent = (services || []).reduce((sum, s) => sum + (s.amount_cents || 0), 0);
+    const profile = profileRes.data as { credits_balance?: number } | null;
+    const trial = trialRes.data as { remaining_free_services?: number } | null;
     
     return {
       totalServices: (services || []).length,

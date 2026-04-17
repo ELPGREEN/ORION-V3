@@ -221,7 +221,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     setIdentityStatus,
   } = useVoiceIdentityGuard();
 
-  const { thought, log, aiDescription, askAI, askInput, setAskInput, chatHistory, isProcessing, detectedObjects } = useOrionReasoning(active, speak, canvasRef, identificationMode, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, () => bgTranscriptsGetterRef.current(), identityStatus, startCamera, mlDetectionsRef);
+  const startCameraRef = useRef<((options?: { announce?: boolean }) => Promise<void>) | null>(null);
+  const { thought, log, aiDescription, askAI, askInput, setAskInput, chatHistory, isProcessing, detectedObjects } = useOrionReasoning(active, speak, canvasRef, identificationMode, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, () => bgTranscriptsGetterRef.current(), identityStatus, ((opts) => startCameraRef.current?.(opts)) as any, mlDetectionsRef);
   const voiceClone = useOrionVoiceClone();
 
   const voiceCheckDoneRef = useRef(false);

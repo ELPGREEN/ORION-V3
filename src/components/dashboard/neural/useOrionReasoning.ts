@@ -1063,7 +1063,7 @@ export function useOrionReasoning(
             if (learned) {
               const learnResponse = `🧠 Aprendi sobre ${learned.name}:\n\n` +
                 `• Linguagem: ${learned.language}\n` +
-                `• Categoria: ${learned.category}\n` +
+                `• Categoria: ${learned.category ?? "geral"}\n` +
                 `• Features: ${learned.features.slice(0, 5).join(", ")}\n` +
                 `• Casos de uso: ${learned.useCases.slice(0, 3).join(", ")}\n` +
                 `• Documentação: ${learned.documentation}`;

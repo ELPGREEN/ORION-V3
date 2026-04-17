@@ -10,7 +10,7 @@
 
 import { useState, useEffect } from "react";
 import {
-  getFullRevenueDashboard,
+  getRevenueDashboard as getFullRevenueDashboard,
   checkOwnerPaymentSetup,
   requestPayout,
   initStripeConnect,
@@ -21,8 +21,8 @@ import {
   getGoogleServicesStats,
   detectGoogleService,
 } from "@/lib/neural/arc-google-monetization";
-import { getConsciousnessDiagnostics } from "./rag-consciousness";
-import { getGatewayDiagnostics } from "./arc-gateway";
+import { getConsciousnessDiagnostics } from "@/lib/neural/rag-consciousness";
+import { getGatewayDiagnostics } from "@/lib/neural/arc-gateway";
 
 export default function MonetizationDashboard() {
   const [revenue, setRevenue] = useState<any>(null);

@@ -164,12 +164,12 @@ async function fetchPromotionalCredits(userId: string): Promise<StripeCreditInfo
     // Check for referral credits
     const { data: referrals } = await supabase
       .from("affiliate_commissions")
-      .select("amount, status")
-      .eq("referrer_user_id", userId)
+      .select("amount_cents, status")
+      .eq("affiliate_user_id", userId)
       .eq("status", "pending");
     
     if (referrals) {
-      const pendingAmount = referrals.reduce((sum, r) => sum + (r.amount || 0), 0);
+      const pendingAmount = referrals.reduce((sum, r) => sum + ((r as { amount_cents?: number }).amount_cents || 0), 0);
       if (pendingAmount > 0) {
         credits.push({
           type: "promotional",
@@ -379,15 +379,15 @@ export async function addCustomerCredit(
   }
   
   try {
-    // Update local wallet
-    const { error } = await supabase.rpc("add_user_credits", {
-      p_user_id: targetUserId,
-      p_amount: amount,
-      p_reason: reason,
-      p_added_by: addedByUserId,
+    // Update local wallet directly via credit_transactions + client_profiles
+    const { error: txErr } = await supabase.from("credit_transactions").insert({
+      user_id: addedByUserId,
+      target_user_id: targetUserId,
+      amount: Math.round(amount * 100),
+      type: "manual_grant",
+      description: reason,
     });
-    
-    if (error) throw error;
+    if (txErr) throw txErr;
     
     return { 
       success: true, 
