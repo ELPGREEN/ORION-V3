@@ -1,8 +1,9 @@
 /**
  * ═══ Vision Control Panel (Inner content for HudCollapsibleSection) ═══
+ * Optimized for real-time vision performance
  */
-import { useState, useCallback } from "react";
-import { EyeOff, ScanFace, Hand, Type, Boxes, Activity, Zap } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { EyeOff, ScanFace, Hand, Type, Boxes, Activity, Zap, Gauge, Timer } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 
@@ -17,6 +18,8 @@ export interface VisionSettings {
   showBoundingBoxes: boolean;
   showLabels: boolean;
   showConfidence: boolean;
+  realTimeMode: boolean;
+  targetFps: number;
 }
 
 interface VisionControlPanelProps {
@@ -29,8 +32,13 @@ interface VisionControlPanelProps {
     facesDetected: number;
     handsDetected: number;
     lastDetectionTime: number;
+    geminiLatencyMs?: number;
+    mediapipeLatencyMs?: number;
   };
 }
+
+const GEMINI_THROTTLE = parseInt(import.meta.env.VITE_VISION_GEMINI_THROTTLE || '1000', 10);
+const MEDIAPIPE_FRAMESKIP = parseInt(import.meta.env.VITE_VISION_MEDIAPIPE_FRAMESKIP || '10', 10);
 
 const MODULES = [
   { key: "faceDetection" as const, label: "Rostos", icon: ScanFace, color: "#00e5ff" },
@@ -137,6 +145,9 @@ export function VisionControlPanel({ settings, onSettingsChange, isActive }: Vis
           </div>
         </div>
       )}
+      
+      {/* Real-time Performance Indicator */}
+      <VisionPerformanceIndicator stats={detectionStats} settings={settings} />
     </div>
   );
 }
@@ -152,4 +163,41 @@ export const DEFAULT_VISION_SETTINGS: VisionSettings = {
   showBoundingBoxes: true,
   showLabels: true,
   showConfidence: true,
+  realTimeMode: true,
+  targetFps: 30,
 };
+
+export function VisionPerformanceIndicator({ stats, settings }: { stats?: VisionControlPanelProps['detectionStats']; settings: VisionSettings }) {
+  const fpsGrade = stats && stats.fps >= 25 ? 'A+' : stats && stats.fps >= 20 ? 'A' : stats && stats.fps >= 15 ? 'B' : 'C';
+  const fpsColor = fpsGrade === 'A+' ? '#22c55e' : fpsGrade === 'A' ? '#69f0ae' : fpsGrade === 'B' ? '#ffd740' : '#f97316';
+
+  return (
+    <div className="px-3 py-2 border-t border-cyan-500/10 mt-2 space-y-1">
+      <div className="flex items-center justify-between text-[8px] font-mono">
+        <span className="flex items-center gap-1">
+          <Gauge className="h-2.5 w-2.5" style={{ color: fpsColor }} />
+          <span className="text-white/30">FPS:</span>
+          <span style={{ color: fpsColor, fontWeight: 'bold' }}>{stats?.fps || 0}</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="text-white/30">Grade:</span>
+          <span style={{ color: fpsColor, fontWeight: 'bold' }}>{fpsGrade}</span>
+        </span>
+      </div>
+      <div className="flex items-center justify-between text-[8px] font-mono">
+        <span className="flex items-center gap-1">
+          <Timer className="h-2.5 w-2.5 text-purple-400" />
+          <span className="text-white/30">Gemini:</span>
+          <span className="text-purple-400">{(stats?.geminiLatencyMs || 0) > 0 ? `${stats?.geminiLatencyMs}ms` : `${GEMINI_THROTTLE}ms`}</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="text-white/30">MP:</span>
+          <span className="text-cyan-400">1/{MEDIAPIPE_FRAMESKIP}f</span>
+        </span>
+      </div>
+      <div className="text-[7px] font-mono text-white/20 text-center">
+        Real-time: {settings.realTimeMode ? 'ON' : 'OFF'} | Target: {settings.targetFps} FPS
+      </div>
+    </div>
+  );
+}

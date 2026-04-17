@@ -83,12 +83,16 @@ async function preloadVisionModel() {
   }
 }
 
-// Real-time detection via Gemini Flash — throttled, lightweight
+// Real-time detection via Gemini Flash — optimized for real-time (1s default)
+const VISION_GEMINI_THROTTLE_MS = parseInt(import.meta.env.VITE_VISION_GEMINI_THROTTLE || '1000', 10);
+const VISION_MEDIAPIPE_FRAMESKIP = parseInt(import.meta.env.VITE_VISION_MEDIAPIPE_FRAMESKIP || '10', 10);
+const VISION_SUPERNET_FRAMESKIP = parseInt(import.meta.env.VITE_VISION_SUPERNET_FRAMESKIP || '15', 10);
+
 const _rtCache = { lastCall: 0, lastResult: null as RealTimeVisionResult | null };
 async function detectRealTime(video?: HTMLVideoElement): Promise<RealTimeVisionResult> {
   const now = Date.now();
-  // Throttle: at most once every 6 seconds
-  if (now - _rtCache.lastCall < 6000 && _rtCache.lastResult) {
+  // Throttle: at most once every 1 second (optimized from 6s)
+  if (now - _rtCache.lastCall < VISION_GEMINI_THROTTLE_MS && _rtCache.lastResult) {
     return _rtCache.lastResult;
   }
   if (!video || video.readyState < 2) {
@@ -705,10 +709,10 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         else prevRef.current.set(result.pixels);
       }
 
-// Throttle ML detection to every 30 frames (1s at 30fps) — MediaPipe ObjectDetector
-      if (frameCount % 30 === 0 && !localDetectionRunningRef.current && video && video.readyState >= 2 && w > 0 && h > 0 && mpObjectDetector && mpVisionReady) {
+// Throttle ML detection — optimized via VISION_MEDIAPIPE_FRAMESKIP env (default: every 10 frames)
+      if (frameCount % VISION_MEDIAPIPE_FRAMESKIP === 0 && !localDetectionRunningRef.current && video && video.readyState >= 2 && w > 0 && h > 0 && mpObjectDetector && mpVisionReady) {
         const now = Date.now();
-        if (now - lastLocalDetectionRef.current > 800) {
+        if (now - lastLocalDetectionRef.current > 300) {
           lastLocalDetectionRef.current = now;
           localDetectionRunningRef.current = true;
           try {
@@ -739,8 +743,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           localDetectionRunningRef.current = false;
         }
       }
-      // Throttle SuperNet frames to every 25 frames (was 15)
-      if (frameCount % 30 === 0) sendSuperNetFrame();
+      // Throttle SuperNet frames — optimized via VISION_SUPERNET_FRAMESKIP env (default: every 15 frames)
+      if (frameCount % VISION_SUPERNET_FRAMESKIP === 0) sendSuperNetFrame();
       animRef.current = requestAnimationFrame(loop);
     };
     animRef.current = requestAnimationFrame(loop);
