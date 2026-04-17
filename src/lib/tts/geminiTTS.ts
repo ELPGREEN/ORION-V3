@@ -4,7 +4,10 @@
  * Uses edge function with key rotation. Falls back on 429/error.
  * 
  * v2: Gap-free playback via pre-buffering + larger chunks
+ * v3: ⚡ TTS cache (memory + IndexedDB) for short phrases — ~5ms vs ~800ms
  */
+
+import { buildTTSKey, getCachedTTS, isCacheable, setCachedTTS } from "./ttsCache";
 
 let geminiTTSDisabled = false;
 let geminiTTSRetryAfter = 0;
@@ -107,6 +110,17 @@ export async function fetchGeminiAudio(
 ): Promise<Blob | null> {
   if (signal.aborted || isGeminiTTSCoolingDown()) return null;
 
+  // ⚡ Cache lookup for short phrases (skip network entirely)
+  let cacheKey: string | null = null;
+  if (isCacheable(text)) {
+    cacheKey = await buildTTSKey(text, voice, lang, stylePrompt);
+    const cached = await getCachedTTS(cacheKey);
+    if (cached) {
+      console.log(`[Gemini TTS] ⚡ cache hit (${cached.size}B) — "${text.slice(0, 40)}"`);
+      return cached;
+    }
+  }
+
   const sentenceController = new AbortController();
   const sentenceTimeout = setTimeout(() => sentenceController.abort(), 25000); // Longer for bigger chunks
   const onParentAbort = () => sentenceController.abort();
@@ -156,7 +170,12 @@ export async function fetchGeminiAudio(
     }
 
     const blob = await response.blob();
-    return blob.size >= 100 ? blob : null;
+    if (blob.size < 100) return null;
+    // ⚡ Persist short phrases for next time
+    if (cacheKey) {
+      void setCachedTTS(cacheKey, blob);
+    }
+    return blob;
   } catch (err: any) {
     if (err?.name === "AbortError") {
       console.warn("[Gemini TTS] Sentence fetch timed out or aborted");
