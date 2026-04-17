@@ -39,6 +39,7 @@ const RESTART_DELAY_MS = isMobile() ? 2000 : 500; // Optimized from 1500ms — 3
 export const VoiceState = { aiResponding: false };
 
 let _voiceBootstrapDone = false;
+let _micPermissionToastShown = false;
 function ensureVoiceBootstrapOnce() {
   if (_voiceBootstrapDone) return;
   _voiceBootstrapDone = true;
@@ -809,7 +810,11 @@ export function useNeuralVoice(
 
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
         setListening(false);
-        toast.error("Permissão do microfone bloqueada");
+        intentionalStopRef.current = true; // stop further restart attempts
+        if (!_micPermissionToastShown) {
+          _micPermissionToastShown = true;
+          toast.error("Permissão do microfone bloqueada", { id: "mic-blocked" });
+        }
         return;
       }
 
