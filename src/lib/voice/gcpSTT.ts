@@ -271,8 +271,14 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
       console.log("[GCP-STT] ⚡ ULTRA mode — silence: 500ms, poll: 60ms, early-flush: ON");
       return true;
     } catch (err: any) {
-      console.error("[GCP-STT] Failed to start:", err.message);
-      onError?.(err.message);
+      const msg = err?.message || String(err);
+      // Device-not-found / permission errors are environmental, not bugs — log as warn
+      if (/device not found|not-?allowed|permission/i.test(msg)) {
+        console.warn("[GCP-STT] Mic unavailable:", msg);
+      } else {
+        console.error("[GCP-STT] Failed to start:", msg);
+      }
+      onError?.(msg);
       return false;
     }
   };
