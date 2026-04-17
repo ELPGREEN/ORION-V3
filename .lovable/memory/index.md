@@ -29,6 +29,7 @@ GCP VM (t2a-standard-1) as primary backend for Orion processing (proxy/cache/TTS
 - [Orion voice context](mem://preference/orion-voice-context) — Orion only speaks (TTS) in direct conversations with him, mute elsewhere
 - [Orion concise responses](mem://preference/orion-concise-responses) — Orion responds short (2-4 sentences), only elaborates when explicitly asked
 - [Vision token optimization](mem://features/vision-token-optimization) — HF Vision Gate pre-filter, Gemini Flash Lite, ≤3s response target
+- [Vision cache Zilliz](mem://features/vision-cache-zilliz) — 3-layer pipeline (client diff + Zilliz memory + Gemini), `analyzeFrameSmart()`, 80%+ cost cut
 - [Editor de Páginas de Vendas](mem://reference/editor-paginas-vendas) — Wix-style visual editor with 12 block types, drag-and-drop, auto-save, responsive preview
 - [MFCC voice analysis](mem://features/mfcc-voice-analysis) — MFCC extraction from Iapetus reference, corrections for formant synth
 - [IPA Tokenizer](mem://features/ipa-tokenizer) — Complete IPA/X-SAMPA tokenization with diphone F2 loci, affricates t͡ʃ/d͡ʒ, uvular χ
