@@ -48,7 +48,7 @@ const MODULES = [
   { key: "motionDetection" as const, label: "Movimento", icon: Activity, color: "#ff6e40" },
 ];
 
-export function VisionControlPanel({ settings, onSettingsChange, isActive }: VisionControlPanelProps) {
+export function VisionControlPanel({ settings, onSettingsChange, isActive, detectionStats }: VisionControlPanelProps) {
   const [expanded, setExpanded] = useState(false);
 
   const toggleSetting = useCallback((key: keyof VisionSettings) => {

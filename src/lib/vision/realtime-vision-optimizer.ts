@@ -47,7 +47,7 @@ export interface VisionPerformanceMetrics {
 export class RealTimeVisionOptimizer {
   private logger: Logger;
   private config: VisionPipelineConfig;
-  private metrics: VisionPerformanceMetrics;
+  metrics: VisionPerformanceMetrics;
   private frameCount = 0;
   private lastFpsUpdate = 0;
   private lastGeminiCall = 0;
@@ -255,9 +255,8 @@ export function createFastVisionPipeline(
       onGeminiFrame: async (base64) => {
         const start = Date.now();
         try {
-          const result = await analyzeFrameFast(base64);
+          await analyzeFrameFast(base64);
           optimizer.metrics.geminiLatencyMs = Date.now() - start;
-          return result;
         } catch {
           optimizer.metrics.geminiLatencyMs = 0;
         }
