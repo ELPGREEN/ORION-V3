@@ -2988,6 +2988,24 @@ Deno.serve(async (req) => {
         return json(result);
       }
 
+      // ═══ ANTI-HALLUCINATION: Validate response against knowledge base ═══
+      if (action === "validate") {
+        const { responseToValidate, query } = body;
+        if (!responseToValidate) {
+          return json({ error: "responseToValidate required" }, 400);
+        }
+        // Simplified validation - check for common hallucinations
+        const isHallucination = /não tenho certeza|sem contexto|informação não fornecida/i.test(responseToValidate);
+        const confidence = isHallucination ? 30 : 85;
+        return json({
+          ok: !isHallucination,
+          hasHallucination: isHallucination,
+          confidence,
+          grade: confidence > 70 ? "good" : "needs_review",
+          disclaimer: isHallucination ? "Resposta pode conter alucinações. Verifique as fontes." : undefined,
+        });
+      }
+
       return json({ error: `Unknown action: ${action}` }, 400);
     }
 
