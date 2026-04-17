@@ -124,7 +124,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     try {
       const totalLength = buffers.reduce((acc, b) => acc + b.length, 0);
       const sourceSR = audioContext?.sampleRate || 48000;
-      const minSamples = Math.floor(sourceSR * 0.6);
+      const minSamples = Math.floor(sourceSR * 0.3); // 300ms (was 600ms) — accept short commands like "para"
 
       if (totalLength < minSamples) {
         return;
