@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       collectionName: collection,
       data: [vector],
       limit: topK,
-      outputFields: ["text", "*"],
+      outputFields: ["text"],
       ...(filter ? { filter } : {}),
     });
     return new Response(JSON.stringify({ ok: true, results: result.data ?? [] }), {
