@@ -234,7 +234,6 @@ export const ROLE_TOOLS: Record<AppRole, DistributableTool[]> = {
 /** Tools reserved exclusively for the owner. */
 export const OWNER_ONLY_TOOLS: DistributableTool[] = [
   "robotics",
-  "jules",
   "computer_use",
   "arc_abstract_reasoning",
   "arc_gateway",
@@ -254,6 +253,15 @@ export const OWNER_ONLY_TOOLS: DistributableTool[] = [
   "file_write",
   "file_edit",
   "file_delete",
+];
+
+/**
+ * Tools reserved for owner OR admin role (read-only / safe self-improvement).
+ * Auto-evolution / jules code-analysis goes here so admins can trigger it
+ * without exposing destructive infra ops.
+ */
+export const ADMIN_OR_OWNER_TOOLS: DistributableTool[] = [
+  "jules",
 ];
 
 export interface AllowResult {
