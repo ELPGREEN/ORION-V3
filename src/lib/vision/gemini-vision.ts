@@ -11,7 +11,7 @@ export function captureFrame(canvas: HTMLCanvasElement, quality = 0.7): string {
   return canvas.toDataURL("image/jpeg", quality).split(",")[1];
 }
 
-/** Capture from video element → base64 WebP. Returns empty string if video not ready. */
+/** Capture from video element → base64 JPEG. Returns empty string if video not ready. */
 export function captureVideoFrame(video: HTMLVideoElement, maxWidth = 320, quality = 0.6): string {
   if (!video || video.readyState < 2 || video.videoWidth === 0) return "";
   const canvas = document.createElement("canvas");
@@ -21,7 +21,7 @@ export function captureVideoFrame(video: HTMLVideoElement, maxWidth = 320, quali
   const ctx = canvas.getContext("2d");
   if (!ctx) return "";
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL("image/webp", quality); // WebP: ~30% smaller than JPEG
+  const dataUrl = canvas.toDataURL("image/jpeg", quality);
   const base64 = dataUrl.split(",")[1];
   if (!base64 || base64.length < 300) return "";
   return base64;
