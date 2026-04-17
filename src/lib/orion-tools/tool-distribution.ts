@@ -234,7 +234,6 @@ export const ROLE_TOOLS: Record<AppRole, DistributableTool[]> = {
 /** Tools reserved exclusively for the owner. */
 export const OWNER_ONLY_TOOLS: DistributableTool[] = [
   "robotics",
-  "jules",
   "computer_use",
   "arc_abstract_reasoning",
   "arc_gateway",
@@ -256,6 +255,15 @@ export const OWNER_ONLY_TOOLS: DistributableTool[] = [
   "file_delete",
 ];
 
+/**
+ * Tools reserved for owner OR admin role (read-only / safe self-improvement).
+ * Auto-evolution / jules code-analysis goes here so admins can trigger it
+ * without exposing destructive infra ops.
+ */
+export const ADMIN_OR_OWNER_TOOLS: DistributableTool[] = [
+  "jules",
+];
+
 export interface AllowResult {
   allowed: boolean;
   reason?: "owner_only" | "role_blocked" | "plan_required";
@@ -268,12 +276,18 @@ export function checkToolAccess(
   role: AppRole | null,
   plan: PlanTier,
   isOwner: boolean,
+  isAdmin: boolean = false,
 ): AllowResult {
   // Owner bypass — always allowed
   if (isOwner) return { allowed: true };
 
-  // Owner-only tool
-  if (OWNER_ONLY_TOOLS.includes(tool)) {
+  // Admin bypass for safe self-improvement tools (e.g. jules / auto-evolution)
+  if (isAdmin && ADMIN_OR_OWNER_TOOLS.includes(tool)) {
+    return { allowed: true };
+  }
+
+  // Owner-only / admin-or-owner tool not unlocked above → deny
+  if (OWNER_ONLY_TOOLS.includes(tool) || ADMIN_OR_OWNER_TOOLS.includes(tool)) {
     return { allowed: false, reason: "owner_only" };
   }
 
@@ -298,8 +312,9 @@ export function isToolAllowed(
   role: AppRole | null,
   plan: PlanTier,
   isOwner: boolean,
+  isAdmin: boolean = false,
 ): boolean {
-  return checkToolAccess(tool, role, plan, isOwner).allowed;
+  return checkToolAccess(tool, role, plan, isOwner, isAdmin).allowed;
 }
 
 /** Returns full list of tools the user can access right now. */

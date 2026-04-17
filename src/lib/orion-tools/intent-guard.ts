@@ -75,11 +75,12 @@ export function checkIntentAccess(
   role: AppRole | null,
   plan: PlanTier,
   isOwner: boolean,
+  isAdmin: boolean = false,
 ): IntentBlockMessage {
   const tool = INTENT_TOOL_MAP[intentId];
   if (!tool) return { blocked: false };
 
-  const result = checkToolAccess(tool, role, plan, isOwner);
+  const result = checkToolAccess(tool, role, plan, isOwner, isAdmin);
   if (result.allowed) return { blocked: false };
 
   if (result.reason === "owner_only") {
