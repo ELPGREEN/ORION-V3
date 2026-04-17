@@ -268,7 +268,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         signal.addEventListener("abort", stop, { once: true });
       }
 
-      console.log("[GCP-STT] Session started — always-listening mode, silence tolerance: 3s");
+      console.log("[GCP-STT] ⚡ ULTRA mode — silence: 500ms, poll: 60ms, early-flush: ON");
       return true;
     } catch (err: any) {
       console.error("[GCP-STT] Failed to start:", err.message);
