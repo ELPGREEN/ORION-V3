@@ -997,8 +997,19 @@ async function indexToLegalEmbeddings(supabase: any, results: LegislacaoResult[]
     content_type: r.tipo, url: r.url, published_date: r.date || null, metadata: r.metadata, query_origin: query,
   }));
   if (newItems.length === 0) return 0;
-  const { error } = await supabase.from("legal_embeddings").insert(newItems);
+  const { data: inserted, error } = await supabase.from("legal_embeddings").insert(newItems).select("id, title, content, source");
   if (error) { console.warn("embeddings insert:", error); return 0; }
+
+  // Mirror to Zilliz orion_legal (fire-and-forget)
+  try {
+    const { insertLegalText } = await import("../_shared/zilliz-collections.ts");
+    insertLegalText((inserted || []).map((row: any) => ({
+      id: row.id,
+      text: `${row.title}\n\n${row.content}`.substring(0, 4000),
+      metadata: { source: row.source },
+    })));
+  } catch (e) { console.warn("[zilliz mirror legal]", (e as Error).message); }
+
   return newItems.length;
 }
 
