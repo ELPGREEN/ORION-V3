@@ -276,16 +276,18 @@ export function checkToolAccess(
   role: AppRole | null,
   plan: PlanTier,
   isOwner: boolean,
+  isAdmin: boolean = false,
 ): AllowResult {
   // Owner bypass — always allowed
   if (isOwner) return { allowed: true };
 
-  // Owner-only tool — only owners can use these (admin doesn't override here
-  // because OWNER_ONLY_TOOLS includes destructive ops like file_delete/db_delete).
-  // For auto-evolution specifically, the intent is mapped to "jules" in
-  // intent-guard.ts which is NOT in OWNER_ONLY_TOOLS, so admins/premium can use it
-  // once we relax that mapping.
-  if (OWNER_ONLY_TOOLS.includes(tool)) {
+  // Admin bypass for safe self-improvement tools (e.g. jules / auto-evolution)
+  if (isAdmin && ADMIN_OR_OWNER_TOOLS.includes(tool)) {
+    return { allowed: true };
+  }
+
+  // Owner-only / admin-or-owner tool not unlocked above → deny
+  if (OWNER_ONLY_TOOLS.includes(tool) || ADMIN_OR_OWNER_TOOLS.includes(tool)) {
     return { allowed: false, reason: "owner_only" };
   }
 
@@ -310,8 +312,9 @@ export function isToolAllowed(
   role: AppRole | null,
   plan: PlanTier,
   isOwner: boolean,
+  isAdmin: boolean = false,
 ): boolean {
-  return checkToolAccess(tool, role, plan, isOwner).allowed;
+  return checkToolAccess(tool, role, plan, isOwner, isAdmin).allowed;
 }
 
 /** Returns full list of tools the user can access right now. */
