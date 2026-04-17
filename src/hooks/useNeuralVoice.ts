@@ -32,8 +32,9 @@ const ECHO_WINDOW_MS = 18000;
 const ECHO_JACCARD_THRESHOLD = 0.35;
 const MAX_CONSECUTIVE_ABORTS = 5;
 const MAX_CONSECUTIVE_NO_SPEECH = 8;
-const NO_SPEECH_TIMEOUT_MS = 1500; // Optimized from 2500ms — faster response
+const NO_SPEECH_TIMEOUT_MS = 3000; // Tolerate natural pauses before considering speech ended
 const RESTART_DELAY_MS = isMobile() ? 2000 : 500; // Optimized from 1500ms — 3x faster reconnect
+const GCP_FINAL_MERGE_MS = 700; // Brief merge window to combine split STT segments into one command
 
 // ═══ Shared State ═══
 export const VoiceState = { aiResponding: false };
