@@ -56,34 +56,35 @@ Deno.serve(async (req) => {
     const supa = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const body = (await req.json()) as Body;
+    const ARC_BASE = ARC_BASES[body.version ?? "3"] ?? ARC_BASES["3"];
 
     switch (body.action) {
       case "list_games": {
-        const games = await arcFetch("/games", ARC_KEY) as Array<{ game_id: string; title?: string; description?: string }>;
-        // Upsert into arc_games
+        const games = await arcFetch(ARC_BASE, "/games", ARC_KEY) as Array<{ game_id: string; title?: string; description?: string }>;
         if (Array.isArray(games)) {
           for (const g of games) {
             await supa.from("arc_games").upsert(
-              { game_id: g.game_id, title: g.title ?? null, description: g.description ?? null, metadata: g as unknown as Record<string, unknown> },
+              { game_id: g.game_id, title: g.title ?? null, description: g.description ?? null, metadata: { ...g, arc_version: body.version ?? "3" } as unknown as Record<string, unknown> },
               { onConflict: "game_id" }
             );
           }
         }
-        return new Response(JSON.stringify({ games }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ games, version: body.version ?? "3" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       case "open_scorecard": {
-        const card = await arcFetch("/scorecard/open", ARC_KEY, { method: "POST", body: JSON.stringify({}) }) as { card_id?: string; scorecard_id?: string };
+        const card = await arcFetch(ARC_BASE, "/scorecard/open", ARC_KEY, { method: "POST", body: JSON.stringify({}) }) as { card_id?: string; scorecard_id?: string };
         const sid = card.card_id || card.scorecard_id || "";
         await supa.from("arc_scorecards").insert({
-          scorecard_id: sid, game_id: body.game_id || "n/a", status: "open", raw_payload: card as unknown as Record<string, unknown>,
+          scorecard_id: sid, game_id: body.game_id || "n/a", status: "open",
+          raw_payload: { ...card, arc_version: body.version ?? "3" } as unknown as Record<string, unknown>,
         });
         return new Response(JSON.stringify(card), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       case "reset": {
         if (!body.game_id || !body.scorecard_id) throw new Error("game_id and scorecard_id required");
-        const out = await arcFetch(`/cmd/RESET`, ARC_KEY, {
+        const out = await arcFetch(ARC_BASE, `/cmd/RESET`, ARC_KEY, {
           method: "POST",
           body: JSON.stringify({ game_id: body.game_id, card_id: body.scorecard_id }),
         });
@@ -92,11 +93,10 @@ Deno.serve(async (req) => {
 
       case "act": {
         if (!body.game_id || !body.action_type) throw new Error("game_id and action_type required");
-        const out = await arcFetch(`/cmd/${body.action_type}`, ARC_KEY, {
+        const out = await arcFetch(ARC_BASE, `/cmd/${body.action_type}`, ARC_KEY, {
           method: "POST",
           body: JSON.stringify({ game_id: body.game_id, card_id: body.scorecard_id, guid: body.guid, ...(body.action_data || {}) }),
         }) as Record<string, unknown>;
-        // Log step
         if (body.scorecard_id) {
           await supa.from("arc_actions_log").insert({
             scorecard_id: body.scorecard_id,
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
 
       case "close_scorecard": {
         if (!body.scorecard_id) throw new Error("scorecard_id required");
-        const out = await arcFetch(`/scorecard/close`, ARC_KEY, {
+        const out = await arcFetch(ARC_BASE, `/scorecard/close`, ARC_KEY, {
           method: "POST",
           body: JSON.stringify({ card_id: body.scorecard_id }),
         }) as Record<string, unknown>;
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
 
       case "get_scorecard": {
         if (!body.scorecard_id) throw new Error("scorecard_id required");
-        const out = await arcFetch(`/scorecard/${body.scorecard_id}`, ARC_KEY);
+        const out = await arcFetch(ARC_BASE, `/scorecard/${body.scorecard_id}`, ARC_KEY);
         return new Response(JSON.stringify(out), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
