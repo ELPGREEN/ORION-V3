@@ -843,14 +843,22 @@ export function useNeuralVoice(
 
   // ═══ Start Fresh Recognition Instance ═══
   const startListeningFresh = useCallback((onCmd: (c: string) => void) => {
-    if (!isMicOwner(singletonIdRef.current)) { setListening(false); return; }
+    if (!isMicOwner(singletonIdRef.current)) { 
+      console.log("[Voice] ❌ Not mic owner");
+      setListening(false); 
+      return; 
+    }
     intentionalStopRef.current = false;
     try { recRef.current?.abort?.(); } catch {}
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
 
     const rec = createRecognition(onCmd);
-    if (!rec) { setListening(false); return; }
+    if (!rec) { 
+      console.log("[Voice] ❌ Web Speech not supported in this browser");
+      setListening(false); 
+      return; 
+    }
 
     recRef.current = rec;
     registerMicRec(rec, "command");
@@ -871,6 +879,7 @@ export function useNeuralVoice(
 
   // ═══ Public: Start Listening (with mic priming) ═══
   const startListening = useCallback((onCmd: (c: string) => void) => {
+    console.log("[Voice] 📞 startListening called", { useGCPSTT: useGCPSTTRef.current });
     const boot = async () => {
       singletonIdRef.current = claimMic("command");
       intentionalStopRef.current = false;
@@ -988,6 +997,7 @@ export function useNeuralVoice(
       }
 
       // ═══ FALLBACK: Web Speech API ═══
+      console.log("[Voice] 🔄 Falling back to Web Speech API...");
       startListeningFresh(onCmd);
     };
 

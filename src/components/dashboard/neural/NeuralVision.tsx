@@ -350,6 +350,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   // Uses voice-intent-dispatcher for real execution (media, navigation, etc.)
   const routeOrionCommand = useCallback(async (cmd: string) => {
     const q = cmd.toLowerCase().trim();
+    console.log("[NeuralVision] 🔀 routeOrionCommand:", cmd, { supernetConnected, identityStatus });
     const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
     const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
     if (isActivateVision) {
@@ -396,6 +397,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const handleVoice = useCallback((cmd: string) => {
     const original = cmd.trim();
     const q = original.toLowerCase();
+    console.log("[NeuralVision] 🎤 handleVoice called:", cmd);
 
     // ═══ AUTO VOICE IDENTITY CHECK on first voice interaction ═══
     if (!voiceCheckDoneRef.current && identityStatus === "unknown") {
@@ -518,9 +520,11 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       ? 0
       : (isMobileBrowser ? 160 : 180);
 
+    console.log("[NeuralVision] 📞 startDirectVoiceCapture", { isMobileBrowser, skipWakeWord, delay });
+
     directVoiceStartTimerRef.current = setTimeout(() => {
       directVoiceStartTimerRef.current = null;
-      console.log("[NeuralVision] Starting direct voice capture", { isMobileBrowser, skipWakeWord, delay });
+      console.log("[NeuralVision] 📞 Calling startListening(handleVoice)");
       startListening(handleVoice);
     }, delay);
   }, [handleVoice, skipWakeWord, startListening, stopListen, stopWakeWordListener]);
@@ -541,12 +545,31 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   // Auto-start direct voice capture on page load (no wake word needed).
   // Rule: mic always active, always listening — no "say Orion to activate" gate.
   useEffect(() => {
-    if (typeof document !== "undefined" && document.hidden) return;
-    if (!speechOk) return;
-    if (autoBootedRef.current) return;
+    console.log("[NeuralVision] 🔄 Auto-start effect running", { speechOk, active: !!active });
+    if (typeof document !== "undefined" && document.hidden) {
+      console.log("[NeuralVision] ⏸️ Skipping - document hidden");
+      return;
+    }
+    if (!speechOk) {
+      console.log("[NeuralVision] ⏸️ Skipping - speech not supported");
+      return;
+    }
+    if (autoBootedRef.current) {
+      console.log("[NeuralVision] ⏸️ Skipping - already booted");
+      return;
+    }
+    console.log("[NeuralVision] 🚀 Starting voice capture...");
     autoBootedRef.current = true;
     wakeOrionVm();
     startDirectVoiceCapture();
+
+    // Greet user to confirm TTS works
+    if (!hasGreetedRef.current) {
+      hasGreetedRef.current = true;
+      setTimeout(() => {
+        speak("Orion online. Pode falar.").catch(() => {});
+      }, 600);
+    }
   }, []);
 
   // (routeOrionCommand moved above handleVoice to avoid forward reference)
