@@ -1991,15 +1991,27 @@ async function fetchRAGContext(question: string): Promise<string> {
     const embedding = await generateQueryEmbedding(question);
     
     if (embedding) {
-      // Semantic search with embeddings
-      const { data } = await sb.rpc("match_neural_knowledge", {
-        query_embedding: `[${embedding.join(",")}]`,
-        match_threshold: 0.35,
-        match_count: 3,
+      // Zilliz-first semantic search with Postgres fallback
+      const { ragSearch } = await import("../_shared/rag-search.ts");
+      const hits = await ragSearch({
+        query: question,
+        embedding,
+        matchCount: 3,
+        threshold: 0.35,
+        pgFallback: () => sb.rpc("match_neural_knowledge", {
+          query_embedding: `[${embedding.join(",")}]`,
+          match_threshold: 0.35,
+          match_count: 3,
+        }),
+        pgMap: (r: any) => ({
+          id: r.id, title: r.title || "", content: r.content || "",
+          source_type: r.source_type, similarity: r.similarity || 0,
+          origin: "postgres" as const,
+        }),
       });
-      if (data && data.length > 0) {
-        console.log(`[RAG] Found ${data.length} relevant KB entries via semantic search`);
-        return data.map((r: any) => `[${r.source_type || "kb"}] ${r.title || ""}: ${(r.content || "").slice(0, 400)}`).join("\n---\n");
+      if (hits.length > 0) {
+        console.log(`[RAG] Found ${hits.length} entries via ${hits[0].origin}`);
+        return hits.map((r) => `[${r.source_type || "kb"}] ${r.title}: ${r.content.slice(0, 400)}`).join("\n---\n");
       }
     }
     

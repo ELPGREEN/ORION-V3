@@ -50,13 +50,25 @@ async function searchKnowledge(
           const embedding = embData?.embedding?.values;
           if (embedding && embedding.length > 0) {
             const padded = embedding.length >= 768 ? embedding.slice(0, 768) : [...embedding, ...new Array(768 - embedding.length).fill(0)];
-            const { data } = await supabase.rpc("match_neural_knowledge", {
-              query_embedding: `[${padded.join(",")}]`,
-              match_threshold: 0.35,
-              match_count: limit,
+            const { ragSearch } = await import("../_shared/rag-search.ts");
+            const hits = await ragSearch({
+              query,
+              embedding: padded,
+              matchCount: limit,
+              threshold: 0.35,
+              pgFallback: () => supabase.rpc("match_neural_knowledge", {
+                query_embedding: `[${padded.join(",")}]`,
+                match_threshold: 0.35,
+                match_count: limit,
+              }),
+              pgMap: (d: any) => ({
+                id: d.id, title: d.title || "", content: (d.content || "").slice(0, 1000),
+                source_type: d.source_type, similarity: d.similarity || 0.7,
+                origin: "postgres" as const,
+              }),
             });
-            if (data && data.length > 0) {
-              return data.map((d: any) => ({ title: d.title || "", content: (d.content || "").slice(0, 1000), similarity: d.similarity || 0.7 }));
+            if (hits.length > 0) {
+              return hits.map((d) => ({ title: d.title, content: d.content.slice(0, 1000), similarity: d.similarity }));
             }
           }
         }
