@@ -930,8 +930,12 @@ export function useNeuralVoice(
               if (normalized.length < 2) return;
               const wordCount = normalized.split(/\s+/).filter(Boolean).length;
 
-              // Discard obvious low-confidence noise/hallucinations — silent (NO TTS, prevents echo loop)
-              if (confidence > 0 && confidence < 0.25 && wordCount <= 2) {
+              // Whitelist of short visual/action words — NEVER discard even at low confidence
+              const SHORT_ACTION_WHITELIST = /^(olha|olhe|olho|ve|veja|le|leia|para|pare|stop|sim|nao|não|ok|certo|aqui|isso|isto|esse|essa|agora|chega|fala|hey|ei|oi)$/i;
+              const hasShortAction = normalized.split(/\s+/).some(w => SHORT_ACTION_WHITELIST.test(w));
+
+              // Discard low-confidence noise — but PRESERVE short visual/action commands (fixes "olha aí" being silenced)
+              if (confidence > 0 && confidence < 0.25 && wordCount <= 2 && !hasShortAction) {
                 console.log(`[Voice] GCP STT descartado (silent): "${text}" (${(confidence * 100).toFixed(0)}%)`);
                 return;
               }
