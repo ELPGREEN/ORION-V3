@@ -3299,15 +3299,27 @@ Deno.serve(async (req) => {
       const { embedding: qEmb, cached: qCached } = await generateQueryEmbeddingCached(supabase, query);
       embeddingCacheHit = qCached;
       timings.embedding_ms = Date.now() - nkStart;
-      pipelineStages.push("search_neural_knowledge_rpc");
+      pipelineStages.push("zilliz_first_search");
       const rpcStart = Date.now();
-      const { data: nkData, error: nkError } = await supabase.rpc("search_neural_knowledge", {
-        query_embedding: `[${qEmb.join(",")}]`, query_text: query, match_count: matchCount || 8,
-        semantic_weight: 0.55, keyword_weight: 0.25, filter_type: filterType || null,
+      const { ragSearch } = await import("../_shared/rag-search.ts");
+      const ragHits = await ragSearch({
+        query,
+        embedding: qEmb,
+        matchCount: matchCount || 8,
+        filterType: filterType || null,
+        pgFallback: () => supabase.rpc("search_neural_knowledge", {
+          query_embedding: `[${qEmb.join(",")}]`, query_text: query, match_count: matchCount || 8,
+          semantic_weight: 0.55, keyword_weight: 0.25, filter_type: filterType || null,
+        }),
+        pgMap: (r: any) => ({
+          id: r.id, title: r.title || "", content: r.content || "",
+          source_type: r.source_type, similarity: r.combined_score ?? r.semantic_score ?? 0,
+          origin: "postgres" as const,
+        }),
       });
       timings.neural_knowledge_search_ms = Date.now() - rpcStart;
-      if (nkError) throw nkError;
-      return new Response(JSON.stringify({ query, mode: "neural_knowledge", neuralResults: nkData || [], totalResults: (nkData || []).length, embeddingCacheHit, pipeline: pipelineStages, timings, version: "v18-attention-pe-dropout-layernorm-qkv", timestamp: new Date().toISOString() }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const ragOrigin = ragHits[0]?.origin || "none";
+      return new Response(JSON.stringify({ query, mode: "neural_knowledge", neuralResults: ragHits, totalResults: ragHits.length, embeddingCacheHit, ragOrigin, pipeline: pipelineStages, timings, version: "v19-zilliz-first", timestamp: new Date().toISOString() }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ── MODE: index ──
