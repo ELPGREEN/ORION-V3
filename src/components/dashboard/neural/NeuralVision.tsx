@@ -36,8 +36,9 @@ import { FaceScannerOverlay } from "./FaceScannerOverlay";
 import { TeslaCoilVoltagePanel } from "./TeslaCoilVoltagePanel";
 import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
 import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
-// Vision via Gemini on-demand
-import { captureVideoFrame, analyzeFrame } from "@/lib/vision/gemini-vision";
+// Vision via Gemini on-demand + Zilliz visual memory cache
+import { captureVideoFrame } from "@/lib/vision/gemini-vision";
+import { analyzeFrameSmart, resetVisionCache } from "@/lib/vision/vision-cache";
 // Local vision via Transformers.js
 import { classifyImage } from "@/lib/huggingface/transformers-vision";
 // MediaPipe Tasks Vision for fast object detection
