@@ -97,16 +97,23 @@ async function recognize(body: STTRequest, token: string) {
       encoding: body.encoding || "LINEAR16",
       sampleRateHertz: body.sampleRate || 16000,
       languageCode: body.languageCode || "pt-BR",
-      model: "latest_short",
+      model: "latest_long",
+      useEnhanced: true,
       maxAlternatives: 1,
       enableAutomaticPunctuation: true,
+      profanityFilter: false,
       ...(body.alternativeLanguageCodes?.length
         ? { alternativeLanguageCodes: body.alternativeLanguageCodes }
         : {}),
       speechContexts: [
         {
-          phrases: ["Orion", "Oríon"],
-          boost: 5,
+          phrases: [
+            "Orion", "Oríon", "Orião",
+            "ativar", "desativar", "abrir", "fechar", "mostrar", "buscar",
+            "câmera", "visão", "olhar", "ver", "ouvir", "falar",
+            "sistema", "configuração", "dashboard", "menu",
+          ],
+          boost: 15,
         },
       ],
     },
