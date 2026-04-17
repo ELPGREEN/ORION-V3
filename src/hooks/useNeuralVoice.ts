@@ -142,16 +142,26 @@ function mergeTranscriptSegments(existing: string, incoming: string): string {
   if (!next) return current;
 
   // Exact duplicate or already contained
-  const currentNorm = current.toLowerCase();
-  const nextNorm = next.toLowerCase();
+  const currentNorm = current.toLowerCase().replace(/[.,!?;:]/g, "");
+  const nextNorm = next.toLowerCase().replace(/[.,!?;:]/g, "");
   if (currentNorm === nextNorm) return current;
   if (currentNorm.endsWith(nextNorm)) return current;
   if (nextNorm.startsWith(currentNorm)) return next;
 
-  // Word-level overlap detection — only merge if overlap is significant
+  // Word-level overlap detection — covers single-word repeats too
   const currentWords = current.split(/\s+/);
   const nextWords = next.split(/\s+/);
-  const maxOverlap = Math.min(currentWords.length, nextWords.length, 5); // Max 5-word overlap check
+  const maxOverlap = Math.min(currentWords.length, nextWords.length, 5);
+
+  // Single-word echo guard: if last word of current equals first word of next, drop it
+  if (currentWords.length > 0 && nextWords.length > 0) {
+    const lastCurrent = currentWords[currentWords.length - 1].toLowerCase().replace(/[.,!?;:]/g, "");
+    const firstNext = nextWords[0].toLowerCase().replace(/[.,!?;:]/g, "");
+    if (lastCurrent === firstNext && lastCurrent.length >= 3) {
+      const remainder = nextWords.slice(1).join(" ").trim();
+      return remainder ? `${current} ${remainder}` : current;
+    }
+  }
 
   for (let overlap = maxOverlap; overlap >= 2; overlap--) {
     const currentTail = currentWords.slice(-overlap).join(" ").toLowerCase();
