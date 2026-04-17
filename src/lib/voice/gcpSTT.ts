@@ -233,6 +233,12 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         } else if (utteranceActive) {
           // Keep trailing silence so the last phonemes are not clipped.
           utteranceBuffers.push(frame);
+
+          // ⚡ Early-flush: don't wait for poll interval — fire as soon as silence threshold met
+          const silenceElapsed = now - lastSpeechAt;
+          if (silenceElapsed >= silenceDurationMs && !sending) {
+            void flushUtterance(false);
+          }
         }
 
         pushPreRollFrame(frame);
