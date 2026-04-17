@@ -39,7 +39,7 @@ export interface SileroVADEvents {
 const DEFAULT_CONFIG: SileroVADConfig = {
   speechThreshold: 0.5,
   exitThreshold: 0.15,
-  minSilenceDurationMs: 800,
+  minSilenceDurationMs: 400, // Optimized from 800ms
   speechPadMs: 80,
   minSpeechDurationMs: 250,
 };
