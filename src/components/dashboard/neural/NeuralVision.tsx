@@ -538,42 +538,16 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const autoActivatedRef = useRef(false);
   const autoBootedRef = useRef(false);
 
-  // Auto-start direct voice capture for /consulta page too (no wake word needed).
+  // Auto-start direct voice capture on page load (no wake word needed).
   // Rule: mic always active, always listening — no "say Orion to activate" gate.
   useEffect(() => {
     if (typeof document !== "undefined" && document.hidden) return;
     if (!speechOk) return;
     if (autoBootedRef.current) return;
-    if (typeof document !== "undefined" && document.hidden) return;
-    if (autoBootedRef.current) return;
-
-    const state = location.state as any;
-    const hasAutoActivation = Boolean(initialCommand || state?.autoActivate || state?.autoCommand);
-    if (hasAutoActivation) return; // handled by initialCommand flow
-
-    if (!active && speechOk) {
-      autoBootedRef.current = true;
-      wakeOrionVm();
-      const timer = setTimeout(() => {
-        startDirectVoiceCapture();
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [skipWakeWord, active, speechOk, initialCommand, location.state, startDirectVoiceCapture]);
-
-  // Auto-connect mic ONLY for overlay handoff (skipWakeWord) without route auto-activation.
-  useEffect(() => {
-    if (autoBootedRef.current || !speechOk) return;
-
-    const state = location.state as any;
-    const hasAutoActivation = Boolean(initialCommand || state?.autoActivate || state?.autoCommand);
-    if (hasAutoActivation) return;
-
     autoBootedRef.current = true;
     wakeOrionVm();
-    // Start voice capture immediately — AudioContext already warmed by orb click gesture
     startDirectVoiceCapture();
-  }, [initialCommand, location.state, skipWakeWord, speechOk, startDirectVoiceCapture]);
+  }, []);
 
   // (routeOrionCommand moved above handleVoice to avoid forward reference)
 
