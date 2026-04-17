@@ -32,8 +32,9 @@ const ECHO_WINDOW_MS = 18000;
 const ECHO_JACCARD_THRESHOLD = 0.35;
 const MAX_CONSECUTIVE_ABORTS = 5;
 const MAX_CONSECUTIVE_NO_SPEECH = 8;
-const NO_SPEECH_TIMEOUT_MS = 1500; // Optimized from 2500ms — faster response
+const NO_SPEECH_TIMEOUT_MS = 3000; // Tolerate natural pauses before considering speech ended
 const RESTART_DELAY_MS = isMobile() ? 2000 : 500; // Optimized from 1500ms — 3x faster reconnect
+const GCP_FINAL_MERGE_MS = 700; // Brief merge window to combine split STT segments into one command
 
 // ═══ Shared State ═══
 export const VoiceState = { aiResponding: false };
@@ -922,7 +923,6 @@ export function useNeuralVoice(
             onFinal: (text, confidence) => {
               if (!onCmdRef.current || intentionalStopRef.current) return;
               if (speakingRef.current || VoiceState.aiResponding) {
-                // During TTS, check for barge-in
                 if (STOP_PATTERNS.test(text)) {
                   bargeIn();
                   return;
@@ -933,46 +933,51 @@ export function useNeuralVoice(
                 return;
               }
 
-              const normalized = normalizeSpeechText(text);
+              const cleanedText = deduplicateRepeatedPhrases(text.trim());
+              const normalized = normalizeSpeechText(cleanedText);
               if (normalized.length < 2) return;
               const wordCount = normalized.split(/\s+/).filter(Boolean).length;
 
-              // Whitelist of short visual/action words — NEVER discard even at low confidence
               const SHORT_ACTION_WHITELIST = /^(olha|olhe|olho|ve|veja|le|leia|para|pare|stop|sim|nao|não|ok|certo|aqui|isso|isto|esse|essa|agora|chega|fala|hey|ei|oi)$/i;
               const hasShortAction = normalized.split(/\s+/).some(w => SHORT_ACTION_WHITELIST.test(w));
 
-              // Discard low-confidence noise — but PRESERVE short visual/action commands (fixes "olha aí" being silenced)
-              if (confidence > 0 && confidence < 0.25 && wordCount <= 2 && !hasShortAction) {
-                console.log(`[Voice] GCP STT descartado (silent): "${text}" (${(confidence * 100).toFixed(0)}%)`);
+              if (confidence > 0 && confidence < 0.18 && wordCount <= 2 && !hasShortAction) {
+                console.log(`[Voice] GCP STT descartado (silent): "${cleanedText}" (${(confidence * 100).toFixed(0)}%)`);
                 return;
               }
+
+              sentenceAccumulatorRef.current = mergeTranscriptSegments(sentenceAccumulatorRef.current, cleanedText);
 
               if (sentenceTimerRef.current) {
                 clearTimeout(sentenceTimerRef.current);
                 sentenceTimerRef.current = null;
               }
-              sentenceAccumulatorRef.current = "";
 
-              const now = Date.now();
-              if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
+              sentenceTimerRef.current = setTimeout(() => {
+                const mergedText = deduplicateRepeatedPhrases(sentenceAccumulatorRef.current.trim());
+                sentenceAccumulatorRef.current = "";
+                if (!mergedText || !onCmdRef.current || intentionalStopRef.current) return;
 
-              if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
-                if (isEchoOf(normalized, lastSpokenTextRef.current)) {
-                  console.log("[Voice] GCP Echo suppressed:", normalized.slice(0, 50));
-                  return;
+                const mergedNormalized = normalizeSpeechText(mergedText);
+                const now = Date.now();
+                if (mergedNormalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
+
+                if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
+                  if (isEchoOf(mergedNormalized, lastSpokenTextRef.current)) {
+                    console.log("[Voice] GCP Echo suppressed:", mergedNormalized.slice(0, 50));
+                    return;
+                  }
                 }
-              }
 
-              lastProcessedTranscriptRef.current = normalized;
-              lastProcessedAtRef.current = now;
+                lastProcessedTranscriptRef.current = mergedNormalized;
+                lastProcessedAtRef.current = now;
 
-              // ═══ VOICE IDENTITY TRIGGER — notify NeuralVision on first GCP transcription ═══
-              try { window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: text.trim() } })); } catch {}
+                try { window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: mergedText } })); } catch {}
 
-              markSTTEnd();
-              const dedupedText = deduplicateRepeatedPhrases(text.trim());
-              console.log(`[Voice] GCP STT utterance: "${dedupedText}" (${(confidence * 100).toFixed(0)}%)${dedupedText !== text.trim() ? ` [deduped from "${text.trim()}"]` : ""}`);
-              onCmdRef.current(dedupedText);
+                markSTTEnd();
+                console.log(`[Voice] GCP STT utterance merged: "${mergedText}" (${(confidence * 100).toFixed(0)}%)`);
+                onCmdRef.current(mergedText);
+              }, GCP_FINAL_MERGE_MS);
             },
             onError: (err) => {
               console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech silently");

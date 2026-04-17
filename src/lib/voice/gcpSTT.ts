@@ -29,11 +29,11 @@ export interface GCPSTTSession {
 }
 
 const PROCESSOR_BUFFER_SIZE = 2048; // Smaller buffer = faster reaction (~43ms @ 48kHz)
-const PRE_ROLL_FRAMES = 6; // More pre-roll to catch first phoneme cleanly
+const PRE_ROLL_FRAMES = 8; // Extra pre-roll to preserve the start of softer words
 const FLUSH_POLL_MS = 60; // Aggressive poll for instant turn detection
-const SPEECH_RMS_THRESHOLD = 0.01;
-// Balanced mode: tolerate natural pauses so STT captures the full sentence
-const DEFAULT_SILENCE_MS = 1200;
+const SPEECH_RMS_THRESHOLD = 0.0075; // More tolerant for softer speech and imperfect mics
+// Long-form mode: tolerate up to 3s pause so Orion captures the whole phrase
+const DEFAULT_SILENCE_MS = 3000;
 
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {
@@ -98,7 +98,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   let utteranceStartedAt = 0;
 
   const silenceDurationMs = DEFAULT_SILENCE_MS;
-  const maxUtteranceMs = Math.max(12000, chunkIntervalMs * 8);
+  const maxUtteranceMs = Math.max(18000, chunkIntervalMs * 10);
 
   const pushPreRollFrame = (frame: Float32Array) => {
     preRollBuffers.push(frame);
@@ -268,7 +268,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         signal.addEventListener("abort", stop, { once: true });
       }
 
-      console.log("[GCP-STT] ⚡ Balanced mode — silence: 1200ms, poll: 60ms, early-flush: ON");
+      console.log("[GCP-STT] ⚡ Long-form capture — silence: 3000ms, poll: 60ms, early-flush: ON");
       return true;
     } catch (err: any) {
       const msg = err?.message || String(err);
