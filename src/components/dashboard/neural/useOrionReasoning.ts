@@ -73,6 +73,9 @@ export function useOrionReasoning(
     VS.aiResponding = false;
   }, []);
 
+  const OWNER_ONLY_INTENT_REGEX = /auto_evolution|auto_construct|self_evolve|code_analysis|code_refactor|improve_code|analyze_code|refactor/i;
+  const VISUAL_COMMAND_REGEX = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+vendo|v[eê]|v[êe])|descrev[ae]\s+(a\s+)?(imagem|cena|ambiente)|analise\s+(a\s+)?(imagem|cena|c[aâ]mera)|identifique\s+(o\s+)?(objeto|rosto|texto)|leia\s+(o\s+)?texto|quantos?\s+.+\s+(tem|h[aá]))\b/i;
+
   /** Cached getUser — avoids 6+ DB calls per interaction */
   const getCachedUser = useCallback(async () => {
     if (authUserCacheRef.current) return authUserCacheRef.current;
@@ -441,14 +444,41 @@ export function useOrionReasoning(
       // ═══ FAST PRE-PROCESSING: Only intent classification (~2ms) ═══
       let processedInput = question;
 
-      const intentType = classifyIntent(question);
+      const qLow = question.toLowerCase().trim();
+      const intentType = classifyIntent(question, recentIntentsRef.current);
       const somResult = somClassify(question);
       const _isSpecialCmd = somResult.isSpecialCmd || intentType === "auto_construct" || intentType === "self_evolve";
+      const cachedAuthUser = await getCachedUser();
+      let isOwner = false;
+      if (cachedAuthUser?.id) {
+        const { data: userRole } = await supabase.from("user_roles").select("role").eq("user_id", cachedAuthUser.id).maybeSingle();
+        isOwner = userRole?.role === "advogado" || userRole?.role === "admin";
+      }
+
+      // Hard guard: visual questions must stay in visual pipeline and never leak to creator/code branches
+      if (VISUAL_COMMAND_REGEX.test(qLow) && intentType !== "visual") {
+        addLog(`🛡️ Visual guard: forcing visual intent (was ${intentType})`);
+      }
+      const effectiveIntentType = VISUAL_COMMAND_REGEX.test(qLow) ? "visual" : intentType;
+
+      // Hard guard: owner-only intents must never execute for non-owner users
+      if ((OWNER_ONLY_INTENT_REGEX.test(intentType) || OWNER_ONLY_INTENT_REGEX.test(somResult.handler) || (/\b(refator|refactor|analis[ae].*c[oó]digo|melhor[ae].*c[oó]digo)\b/i.test(qLow) && effectiveIntentType !== "visual")) && !isOwner) {
+        const fallbackReply = "Posso te ajudar normalmente por chat, visão e comandos permitidos, mas esse tipo de análise ou evolução de código é restrito à administração.";
+        setChatHistory(prev => {
+          const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+          return [...clean, { role: "ai" as const, text: fallbackReply, time: new Date().toLocaleTimeString("pt-BR") }];
+        });
+        setThought(fallbackReply);
+        speak(fallbackReply).catch(() => {});
+        cleanupProcessing();
+        processNextInQueue();
+        return;
+      }
 
       // Lightweight voltage stub — no Tesla Coil overhead
-      const voltage = { normalizedInput: question, confidence: 0.9, shouldExecute: true, isConfirmation: false, suggestedQuestion: "", intent: intentType };
+      const voltage = { normalizedInput: question, confidence: 0.9, shouldExecute: true, isConfirmation: false, suggestedQuestion: "", intent: effectiveIntentType };
 
-      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${intentType}`);
+      addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${effectiveIntentType}`);
       window.dispatchEvent(new CustomEvent("som-routing", { detail: somResult }));
 
       // If confidence too low, ask clarification
@@ -466,7 +496,6 @@ export function useOrionReasoning(
       }
 
       let processedQuestion = voltage.normalizedInput;
-      const qLow = (processedInput || question).toLowerCase().trim();
 
       // ═══ VISION COMMAND INTERCEPT — handle locally, NEVER send to LLM ═══
       const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera|neural)/i.test(qLow) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(qLow);
@@ -526,7 +555,7 @@ export function useOrionReasoning(
       }
 
       // ═══ AUTO-ACTIVATE VISION: If camera is OFF and question is visual, activate first ═══
-      const isVisualQuestion = intentType === "visual" || intentType === "mixed";
+      const isVisualQuestion = effectiveIntentType === "visual" || effectiveIntentType === "mixed";
       if (!active && isVisualQuestion && onActivateVision) {
         addLog("🔄 Ativando câmera para análise visual...");
         setThought("Ativando câmera...");
@@ -967,7 +996,7 @@ export function useOrionReasoning(
             cleanupProcessing();
             somLearn(question, somResult.handler);
             saveToNeuralLearning(question, execResult.response, "command_registry", 0.95, { action: cmdMatch.action }).catch(() => {});
-            recordLatency(intentType, "fast", Date.now() - now);
+            recordLatency(effectiveIntentType, "fast", Date.now() - now);
             processNextInQueue();
             return;
           }
@@ -1117,7 +1146,7 @@ export function useOrionReasoning(
       }
 
       // ═══ ARC-AGI-2 Stripe Credit Intelligence: Check credits/saldo/wallet ═══
-      const authUser = await getCachedUser();
+      const authUser = cachedAuthUser;
       let currentRole = "user";
       if (authUser) {
         const { data: ur } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id).maybeSingle();

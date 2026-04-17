@@ -286,6 +286,11 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const shouldAnnounce = options?.announce ?? true;
     if (!navigator.mediaDevices?.getUserMedia) { toast.error("Câmera não suportada"); return; }
     try {
+      if (streamRef.current) {
+        console.info("[NeuralVision] camera request skipped: stream already active");
+        setActive(true); VS.active = true;
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
       const video = videoRef.current;
       if (!video) {
@@ -303,6 +308,10 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           (startCamera as any).__retried = false;
           toast.error("Vídeo não pronto. Tente novamente.");
         }
+        return;
+      }
+      if (streamRef.current && streamRef.current !== stream) {
+        stream.getTracks().forEach(t => t.stop());
         return;
       }
       streamRef.current = stream;
