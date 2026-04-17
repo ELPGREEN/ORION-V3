@@ -272,10 +272,11 @@ export function checkToolAccess(
   // Owner bypass — always allowed
   if (isOwner) return { allowed: true };
 
-  // Admin bypass — admins can access owner-only tools (auto-evolution, jules, etc.)
-  if (role === "admin") return { allowed: true };
-
-  // Owner-only tool
+  // Owner-only tool — only owners can use these (admin doesn't override here
+  // because OWNER_ONLY_TOOLS includes destructive ops like file_delete/db_delete).
+  // For auto-evolution specifically, the intent is mapped to "jules" in
+  // intent-guard.ts which is NOT in OWNER_ONLY_TOOLS, so admins/premium can use it
+  // once we relax that mapping.
   if (OWNER_ONLY_TOOLS.includes(tool)) {
     return { allowed: false, reason: "owner_only" };
   }
