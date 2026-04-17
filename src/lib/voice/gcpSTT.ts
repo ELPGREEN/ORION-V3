@@ -31,9 +31,9 @@ export interface GCPSTTSession {
 const PROCESSOR_BUFFER_SIZE = 2048; // Smaller buffer = faster reaction (~43ms @ 48kHz)
 const PRE_ROLL_FRAMES = 8; // Extra pre-roll to preserve the start of softer words
 const FLUSH_POLL_MS = 60; // Aggressive poll for instant turn detection
-const SPEECH_RMS_THRESHOLD = 0.0075; // More tolerant for softer speech and imperfect mics
-// Long-form mode: tolerate up to 3s pause so Orion captures the whole phrase
-const DEFAULT_SILENCE_MS = 3000;
+const SPEECH_RMS_THRESHOLD = 0.006; // Even more tolerant — captures soft speech and partial words
+// Long-form mode: tolerate up to 3.5s pause so Orion captures the whole phrase
+const DEFAULT_SILENCE_MS = 3500;
 
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {
