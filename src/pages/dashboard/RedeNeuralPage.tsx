@@ -78,7 +78,6 @@ const NeuralNetworkLiveView = lazy(lazyRetry(() => import("@/components/dashboar
 const NeuralConsciousnessLoop = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralConsciousnessLoop").then(m => ({ default: m.NeuralConsciousnessLoop }))));
 const NeuralVision = lazy(lazyRetry(() => import("@/components/dashboard/neural/NeuralVision").then(m => ({ default: m.NeuralVision }))));
 const WebAPIDashboard = lazy(lazyRetry(() => import("@/components/dashboard/neural/WebAPIDashboard").then(m => ({ default: m.WebAPIDashboard }))));
-const FaceAuthEnroll = lazy(lazyRetry(() => import("@/components/auth/FaceAuthEnroll").then(m => ({ default: m.FaceAuthEnroll }))));
 const OrionShieldPanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/OrionShieldPanel").then(m => ({ default: m.OrionShieldPanel }))));
 const ArquiteturaIA = lazy(lazyRetry(() => import("@/pages/dashboard/ArquiteturaIA")));
 const JulesSelfImprovePanel = lazy(lazyRetry(() => import("@/components/dashboard/neural/JulesSelfImprovePanel").then(m => ({ default: m.JulesSelfImprovePanel }))));
