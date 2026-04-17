@@ -398,13 +398,25 @@ async function handleFeedback(body: Record<string, unknown>) {
       const { data: advogado } = await sb.from("user_roles").select("user_id").eq("role", "advogado").limit(1).maybeSingle();
       if (advogado?.user_id) {
         const kbTitle = `[${interaction_type}] ${String(input_text).substring(0, 80)}`;
-        const { error: kbError } = await sb.from("neural_knowledge_base").upsert({
+        const kbContent = String(output_text || input_text).substring(0, 5000);
+        const { data: kbRow, error: kbError } = await sb.from("neural_knowledge_base").upsert({
           user_id: advogado.user_id, title: kbTitle,
-          content: String(output_text || input_text).substring(0, 5000),
+          content: kbContent,
           source_type: interaction_type, source_reference: `auto:neural_ops:${interaction_type}`,
           tags: [interaction_type, "auto-indexed", "neural-ops"], is_processed: false,
-        }, { onConflict: "source_reference,user_id", ignoreDuplicates: true });
-        if (!kbError) promoted = true;
+        }, { onConflict: "source_reference,user_id", ignoreDuplicates: true }).select("id").maybeSingle();
+        if (!kbError) {
+          promoted = true;
+          // Phase 1 dual-write: mirror to Zilliz (fire-and-forget)
+          if (kbRow?.id) {
+            const { mirrorToZilliz } = await import("../_shared/zilliz-mirror.ts");
+            mirrorToZilliz([{
+              id: kbRow.id,
+              text: `${kbTitle}\n\n${kbContent}`,
+              metadata: { source_type: interaction_type, user_id: advogado.user_id, origin: "neural-ops" },
+            }]);
+          }
+        }
       }
     }
   }
