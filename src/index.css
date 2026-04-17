@@ -2058,3 +2058,120 @@ span[data-suggestion-id] {
   0%, 100% { transform: translateY(0) translateX(-50%); }
   50% { transform: translateY(8px) translateX(-50%); }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   TRON / SUMERIAN PANEL THEME — neural dashboard panels
+   Neon green (#00ff88) on deep black (#0a0a0a)
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --tron-bg:        150 100% 3%;        /* near-black with green tint base */
+  --tron-bg-deep:   0 0% 4%;            /* #0a0a0a */
+  --tron-surface:   0 0% 10%;           /* #1a1a1a card */
+  --tron-surface-2: 0 0% 16%;           /* #2a2a2a inner */
+  --tron-surface-3: 0 0% 23%;           /* #3a3a3a hover */
+  --tron-neon:      152 100% 50%;       /* #00ff88 */
+  --tron-neon-dim:  152 100% 40%;       /* #00cc6a */
+  --tron-neon-soft: 152 100% 75%;
+  --tron-text:      152 30% 88%;
+  --tron-muted:     152 8% 55%;
+  --tron-border:    152 100% 50% / 0.25;
+  --tron-warn:      45 100% 55%;
+  --tron-danger:    0 90% 60%;
+  --tron-info:      190 100% 55%;
+}
+
+@layer components {
+  /* Outer panel container — replaces bg-gray-900 rounded-lg */
+  .tron-panel {
+    background: hsl(var(--tron-bg-deep));
+    border: 1px solid hsl(var(--tron-neon) / 0.25);
+    border-radius: 0.5rem;
+    box-shadow:
+      0 0 0 1px hsl(var(--tron-neon) / 0.05),
+      0 0 24px hsl(var(--tron-neon) / 0.06),
+      inset 0 1px 0 hsl(var(--tron-neon) / 0.08);
+    color: hsl(var(--tron-text));
+    font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+  }
+
+  /* Inner card — replaces bg-gray-800 */
+  .tron-card {
+    background: hsl(var(--tron-surface));
+    border: 1px solid hsl(var(--tron-neon) / 0.12);
+    border-radius: 0.375rem;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  }
+  .tron-card:hover {
+    border-color: hsl(var(--tron-neon) / 0.4);
+    box-shadow: 0 0 14px hsl(var(--tron-neon) / 0.18);
+  }
+
+  /* Sub-card / row — replaces bg-gray-700 */
+  .tron-row {
+    background: hsl(var(--tron-surface-2));
+    border: 1px solid hsl(var(--tron-neon) / 0.08);
+    border-radius: 0.25rem;
+  }
+
+  /* Numeric / data — JetBrains Mono, neon green */
+  .tron-value {
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    color: hsl(var(--tron-neon));
+    text-shadow: 0 0 8px hsl(var(--tron-neon) / 0.4);
+    letter-spacing: 0.02em;
+  }
+  .tron-value-dim {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    color: hsl(var(--tron-neon-dim));
+  }
+
+  /* Headings */
+  .tron-title {
+    color: hsl(var(--tron-neon));
+    text-shadow: 0 0 10px hsl(var(--tron-neon) / 0.35);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .tron-label  { color: hsl(var(--tron-muted)); font-size: 0.75rem; letter-spacing: 0.04em; }
+
+  /* Buttons */
+  .tron-btn {
+    background: hsl(var(--tron-neon) / 0.12);
+    border: 1px solid hsl(var(--tron-neon) / 0.5);
+    color: hsl(var(--tron-neon));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.8125rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.25rem;
+    transition: all 160ms ease;
+  }
+  .tron-btn:hover:not(:disabled) {
+    background: hsl(var(--tron-neon) / 0.22);
+    box-shadow: 0 0 12px hsl(var(--tron-neon) / 0.35);
+  }
+  .tron-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .tron-btn-danger { color: hsl(var(--tron-danger)); border-color: hsl(var(--tron-danger) / 0.5); background: hsl(var(--tron-danger) / 0.1); }
+  .tron-btn-warn   { color: hsl(var(--tron-warn));   border-color: hsl(var(--tron-warn) / 0.5);   background: hsl(var(--tron-warn) / 0.1); }
+  .tron-btn-info   { color: hsl(var(--tron-info));   border-color: hsl(var(--tron-info) / 0.5);   background: hsl(var(--tron-info) / 0.1); }
+
+  /* Input */
+  .tron-input {
+    background: hsl(var(--tron-bg-deep));
+    border: 1px solid hsl(var(--tron-neon) / 0.3);
+    color: hsl(var(--tron-text));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    border-radius: 0.25rem;
+    padding: 0.375rem 0.5rem;
+  }
+  .tron-input:focus {
+    outline: none;
+    border-color: hsl(var(--tron-neon));
+    box-shadow: 0 0 8px hsl(var(--tron-neon) / 0.4);
+  }
+
+  /* Status colored text helpers (semantic) */
+  .tron-ok    { color: hsl(var(--tron-neon)); }
+  .tron-warn-text { color: hsl(var(--tron-warn)); }
+  .tron-danger-text { color: hsl(var(--tron-danger)); }
+  .tron-info-text { color: hsl(var(--tron-info)); }
+}
