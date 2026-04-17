@@ -355,8 +355,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     setActive(false); VS.active = false; VS.regions = [];
     cancelAnimationFrame(animRef.current); prevRef.current = null;
     resetVisionCache();
-    speak("Desativado.").catch(() => {});
-  }, [speak]);
+  }, []);
 
   const deactivateGracefully = useCallback(() => {
     const farewells = [
@@ -453,9 +452,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     // ═══ CHECK VISION/CAMERA COMMANDS BEFORE stripping "ativar" ═══
     // Must happen before cleanedCommand — "ativar visão" needs the verb intact
-    const isVisionCmd = /\b(ativar?|ligar?|abrir?)\s*(vis[aã]o|c[aâ]mera|neural)/i.test(q) ||
-      /\b(desativar?|desligar?|fechar?|parar?)\s*(vis[aã]o|c[aâ]mera|neural)/i.test(q) ||
-      /\b(vis[aã]o|c[aâ]mera)\s*(ativar?|ligar?|desativar?|desligar?)/i.test(q);
+    const isVisionCmd = /\b(ativar?|ligar?|abrir?|inicia[r]?|começar?|come[çc]a)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)/i.test(q) ||
+      /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)/i.test(q) ||
+      /\b(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\s*(ativar?|ligar?|abrir?|desativar?|desligar?|fechar?|parar?)/i.test(q);
     if (isVisionCmd) {
       routeOrionCommand(original);
       toast.info(`🎤 "${original}"`);
@@ -592,13 +591,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     wakeOrionVm();
     startDirectVoiceCapture();
 
-    // Greet user to confirm TTS works
-    if (!hasGreetedRef.current) {
-      hasGreetedRef.current = true;
-      setTimeout(() => {
-        speak("Orion online. Pode falar.").catch(() => {});
-      }, 600);
-    }
   }, []);
 
   // (routeOrionCommand moved above handleVoice to avoid forward reference)
