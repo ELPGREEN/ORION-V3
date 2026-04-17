@@ -137,13 +137,21 @@ export function getInstantResponse(question: string): InstantResponse | null {
     return null;
   }
 
-  // BYPASS: Long questions (>80 chars) are complex enough to always need LLM
-  if (question.length > 80) {
+  // BYPASS: Long questions (>60 chars) are complex enough to always need LLM
+  if (question.length > 60) {
     console.log(`[InstantCache] BYPASS — long query (${question.length} chars), routing to LLM`);
     return null;
   }
 
-  const THRESHOLD = 0.88;
+  // BYPASS: Conversational/dialogue patterns (user is talking TO Orion, not asking a factual question)
+  // These need full conversational context — never serve from cache
+  const CONVERSATIONAL_BYPASS = /\b(tu (ta|tá|esta|está)|voc[eê] (ta|tá|esta|está)|tu me|voc[eê] me|me (tira|esta|está) (pra|para)|me ignora|n[aã]o me|por que (voc[eê]|tu)|ent[aã]o (quando|por|tu|voc[eê])|tipo assim|sabe (de )?uma coisa|olha s[oó]|cara,|mano,|escuta (a[ií]|aqui)|presta aten[çc][aã]o|deixa eu|to (falando|tentando|querendo)|estou (falando|tentando|querendo))\b/i;
+  if (CONVERSATIONAL_BYPASS.test(question)) {
+    console.log(`[InstantCache] BYPASS — conversational pattern, routing to LLM`);
+    return null;
+  }
+
+  const THRESHOLD = 0.93;
   const t0 = performance.now();
   const normQ = normalize(question);
 
