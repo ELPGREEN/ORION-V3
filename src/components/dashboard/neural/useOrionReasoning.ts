@@ -434,6 +434,8 @@ export function useOrionReasoning(
 
     // ⚡ TTS warm-up: fire-and-forget while LLM thinks → cuts ~200-400ms cold-start
     import("@/lib/tts/geminiTTS").then(m => m.warmUpGeminiTTS()).catch(() => {});
+    // ⚡ TTS cache prewarm: pre-cache common short phrases (runs once per session)
+    import("@/lib/tts/ttsPrewarm").then(m => m.prewarmCommonTTS()).catch(() => {});
 
     try {
       // ═══ FAST PRE-PROCESSING: Only intent classification (~2ms) ═══
