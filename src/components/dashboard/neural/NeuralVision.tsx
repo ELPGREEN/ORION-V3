@@ -213,7 +213,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // Auto-check voice on first voice interaction
   const handleVoiceIdentityCheck = useCallback(async () => {
-    if (voiceCheckDoneRef.current || identityStatus === "owner" || identityStatus === "creator" || identityStatus === "no_enrollment") return;
+    if (voiceCheckDoneRef.current || identityStatus === "owner" || identityStatus === "creator") return;
     console.log("[NeuralVision] 🎤 Starting voice identity check...");
     try {
       const persistentStream = getPersistentMicStream();
@@ -229,19 +229,18 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         }
         const blob = new Blob(chunks, { type: recorder.mimeType });
         console.log("[NeuralVision] 🎤 Voice capture complete, blob size:", blob.size, "chunks:", chunks.length);
-        if (blob.size < 1000) {
+        if (blob.size < 1400) {
           console.warn("[NeuralVision] ⚠️ Audio blob too small, will retry on next interaction");
-          // Do NOT mark as done — allow retry on next voice interaction
           return;
         }
         const status = await verifyVoiceIdentity(blob);
-        voiceCheckDoneRef.current = status !== "unknown";
+        voiceCheckDoneRef.current = status === "owner" || status === "creator" || status === "guest";
       };
-      recorder.start(500); // collect data every 500ms for reliable chunks
-      setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, 5500); // longer capture for stabler voice fingerprint
+      recorder.start(500);
+      setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, 7000);
     } catch (err) {
       console.warn("[NeuralVision] ⚠️ Mic access failed, skipping voice check:", err);
-      voiceCheckDoneRef.current = true;
+      voiceCheckDoneRef.current = false;
       setIdentityStatus("unknown");
     }
   }, [identityStatus, verifyVoiceIdentity, setIdentityStatus]);

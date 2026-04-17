@@ -259,66 +259,79 @@ export async function extractVoiceFeaturesFromBlob(audioBlob: Blob): Promise<Voi
   };
 }
 
+function boundedSimilarity(a: number, b: number, tolerance: number): number {
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) return 0;
+  return Math.max(0, 1 - Math.abs(a - b) / Math.max(tolerance, Math.max(a, b)));
+}
+
 export function compareFeaturesStatic(a: VoiceFeatures, b: VoiceFeatures): number {
-  let score = 0, weights = 0;
+  let score = 0;
+  let weights = 0;
 
   // MFCC — cosine similarity (highest weight)
   if (a.mfcc_mean.length === b.mfcc_mean.length && a.mfcc_mean.length > 0) {
     let dot = 0, nA = 0, nB = 0;
-    for (let i = 0; i < a.mfcc_mean.length; i++) { dot += a.mfcc_mean[i] * b.mfcc_mean[i]; nA += a.mfcc_mean[i] ** 2; nB += b.mfcc_mean[i] ** 2; }
+    for (let i = 0; i < a.mfcc_mean.length; i++) {
+      dot += a.mfcc_mean[i] * b.mfcc_mean[i];
+      nA += a.mfcc_mean[i] ** 2;
+      nB += b.mfcc_mean[i] ** 2;
+    }
     const cosine = (Math.sqrt(nA) > 0 && Math.sqrt(nB) > 0) ? dot / (Math.sqrt(nA) * Math.sqrt(nB)) : 0;
-    score += Math.max(0, (cosine + 1) / 2) * 5;
-    weights += 5;
+    score += Math.max(0, (cosine + 1) / 2) * 6;
+    weights += 6;
   }
 
-  // Pitch
+  // Pitch — allow wider tolerance because browser/device mics drift a lot
   if (a.pitch_mean > 0 && b.pitch_mean > 0) {
-    score += Math.max(0, 1 - Math.abs(a.pitch_mean - b.pitch_mean) / Math.max(a.pitch_mean, b.pitch_mean)) * 3;
-    weights += 3;
-    if (a.pitch_std > 0 && b.pitch_std > 0) {
-      score += Math.max(0, 1 - Math.abs(a.pitch_std - b.pitch_std) / Math.max(a.pitch_std, b.pitch_std));
-      weights += 1;
-    }
+    score += boundedSimilarity(a.pitch_mean, b.pitch_mean, 85) * 2.5;
+    weights += 2.5;
+  }
+  if (a.pitch_std > 0 && b.pitch_std > 0) {
+    score += boundedSimilarity(a.pitch_std, b.pitch_std, 45) * 1;
+    weights += 1;
   }
 
-  // Formant ratios
-  const aF = a.formant_ratios || [], bF = b.formant_ratios || [];
+  // Formant ratios — stable vocal tract signature
+  const aF = a.formant_ratios || [];
+  const bF = b.formant_ratios || [];
   if (aF.length >= 2 && bF.length >= 2 && aF[0] > 0 && bF[0] > 0) {
-    let fSim = 0, fC = 0;
+    let fSim = 0;
+    let fC = 0;
     for (let i = 0; i < Math.min(aF.length, bF.length); i++) {
-      if (aF[i] > 0 && bF[i] > 0) { fSim += 1 - Math.abs(aF[i] - bF[i]) / Math.max(aF[i], bF[i]); fC++; }
+      if (aF[i] > 0 && bF[i] > 0) {
+        fSim += boundedSimilarity(aF[i], bF[i], 0.45);
+        fC++;
+      }
     }
-    if (fC > 0) { score += (fSim / fC) * 4; weights += 4; }
+    if (fC > 0) {
+      score += (fSim / fC) * 4;
+      weights += 4;
+    }
   }
 
-  // Spectral rolloff
   if ((a.spectral_rolloff || 0) > 0 && (b.spectral_rolloff || 0) > 0) {
-    score += Math.max(0, 1 - Math.abs(a.spectral_rolloff - b.spectral_rolloff) / Math.max(a.spectral_rolloff, b.spectral_rolloff)) * 2;
-    weights += 2;
+    score += boundedSimilarity(a.spectral_rolloff, b.spectral_rolloff, 2200) * 1.5;
+    weights += 1.5;
   }
 
-  // Spectral centroid
   if (a.spectral_centroid > 0 && b.spectral_centroid > 0) {
-    score += Math.max(0, 1 - Math.abs(a.spectral_centroid - b.spectral_centroid) / Math.max(a.spectral_centroid, b.spectral_centroid)) * 2;
-    weights += 2;
+    score += boundedSimilarity(a.spectral_centroid, b.spectral_centroid, 1400) * 1.5;
+    weights += 1.5;
   }
 
-  // Spectral flux
   if ((a.spectral_flux || 0) > 0 && (b.spectral_flux || 0) > 0) {
-    score += Math.max(0, 1 - Math.abs(a.spectral_flux - b.spectral_flux) / Math.max(a.spectral_flux, b.spectral_flux));
+    score += boundedSimilarity(a.spectral_flux, b.spectral_flux, 0.03) * 1;
     weights += 1;
   }
 
-  // ZCR
   if (a.zero_crossing_rate > 0 && b.zero_crossing_rate > 0) {
-    score += Math.max(0, 1 - Math.abs(a.zero_crossing_rate - b.zero_crossing_rate) / Math.max(a.zero_crossing_rate, b.zero_crossing_rate));
+    score += boundedSimilarity(a.zero_crossing_rate, b.zero_crossing_rate, 0.08) * 1;
     weights += 1;
   }
 
-  // Speaking rate
   if (a.speaking_rate > 0 && b.speaking_rate > 0) {
-    score += Math.max(0, 1 - Math.abs(a.speaking_rate - b.speaking_rate) / Math.max(a.speaking_rate, b.speaking_rate));
-    weights += 1;
+    score += boundedSimilarity(a.speaking_rate, b.speaking_rate, 2.6) * 0.75;
+    weights += 0.75;
   }
 
   return weights > 0 ? score / weights : 0;
