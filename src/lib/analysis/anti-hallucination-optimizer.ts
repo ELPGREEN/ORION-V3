@@ -133,7 +133,7 @@ export function getResponseGrade(
   hallucinationCount: number,
   hasGrounding: boolean
 ): 'A+' | 'A' | 'B' | 'C' | 'D' | 'F' {
-  if (freeEnergy > BLOCK_THRESHOLD || hallucinationCount > 5) return 'F';
+  if (freeEnergy > 70 || hallucinationCount > 5) return 'F';
   if (freeEnergy > 60 || hallucinationCount > 3) return 'D';
   if (freeEnergy > 50 || hallucinationCount > 2) return 'C';
   if (freeEnergy > 35 || hallucinationCount > 1) return 'B';
