@@ -332,10 +332,17 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       preloadVisionModel().catch(() => console.warn("[Vision] Model preload failed"));
       toast.success("Núcleo de plasma ativado");
       if (shouldAnnounce) speak("Núcleo ativado.").catch(() => {});
-    } catch {
+    } catch (err: any) {
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
-      toast.error("Erro na câmera");
+      const name = err?.name || "";
+      const msg = err?.message || "";
+      console.error("[Vision] startCamera failed:", name, msg, err);
+      let userMsg = "Erro na câmera";
+      if (name === "NotAllowedError" || name === "SecurityError") userMsg = "Permissão da câmera negada. Autorize no navegador.";
+      else if (name === "NotFoundError" || name === "OverconstrainedError") userMsg = "Nenhuma câmera disponível.";
+      else if (name === "NotReadableError") userMsg = "Câmera em uso por outro app.";
+      toast.error(userMsg);
     }
   }, [speak]);
   useEffect(() => { startCameraRef.current = startCamera; }, [startCamera]);
