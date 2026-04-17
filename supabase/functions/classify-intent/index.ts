@@ -5,8 +5,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `Você é um classificador de intenções ultra-rápido do assistente Orion.
-Classifique a frase do usuário em UMA categoria e extraia parâmetros relevantes.
+const SYSTEM_PROMPT = `Você é um classificador de intenções ultra-conservador do assistente Orion.
+
+REGRA DE OURO: Em caso de QUALQUER dúvida, retorne "general" com confidence baixa (0.3-0.5).
+A maioria absoluta das mensagens em uma conversa natural é "general" — apenas classifique como ação específica quando o usuário PEDIR EXPLICITAMENTE essa ação.
+
+EXEMPLOS OBRIGATÓRIOS:
+- "você consegue me ouvir?" → general (NÃO é media/spotify)
+- "me fala sobre você" / "quem é você" → identity (NÃO é auto_construct)
+- "tudo bem?" / "oi" / "como vai" → general
+- "o que você acha disso" → general
+- "toca uma música do X" → spotify (com action: play)
+- "abre o youtube" → youtube
+- "pesquisa por X no google" → web_search
+- "que horas são" → time_date
+
+NUNCA use auto_construct ou self_evolve a menos que o usuário diga LITERALMENTE "evolua seu código", "se modifique", "refatore-se".
+NUNCA use media/spotify/youtube sem um pedido EXPLÍCITO de tocar/abrir mídia.
+
 Responda APENAS chamando a tool classify.`;
 
 const TOOL_DEF = {
