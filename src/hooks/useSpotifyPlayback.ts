@@ -130,7 +130,7 @@ export function useSpotifyPlayback(accessToken: string | null) {
 
   // Initialize player
   useEffect(() => {
-    if (!accessToken) {
+    if (!accessToken || accessToken === "sdk-managed") {
       setState(prev => ({ ...prev, isReady: false, deviceId: null }));
       return;
     }
@@ -148,6 +148,12 @@ export function useSpotifyPlayback(accessToken: string | null) {
           volume: initialState.volume,
           enableMediaSession: true, // lockscreen/notification controls
         });
+
+        const teardownPlayer = () => {
+          try { player.disconnect(); } catch {}
+          if (playerRef.current === player) playerRef.current = null;
+          if (positionInterval.current) clearInterval(positionInterval.current);
+        };
 
         player.addListener("ready", ({ device_id }: { device_id: string }) => {
           if (cancelled) return;
@@ -195,11 +201,13 @@ export function useSpotifyPlayback(accessToken: string | null) {
 
         player.addListener("initialization_error", ({ message }: { message: string }) => {
           console.error("[Orion SDK] Init error:", message);
+          teardownPlayer();
           setState(prev => ({ ...prev, error: message, isReady: false }));
         });
 
         player.addListener("authentication_error", ({ message }: { message: string }) => {
           console.error("[Orion SDK] Auth error:", message);
+          teardownPlayer();
           if (message.includes("403") || message.toLowerCase().includes("premium")) {
             setState(prev => ({ ...prev, isPremium: false, error: "Spotify Premium necessário para playback", isReady: false }));
           } else {
@@ -209,11 +217,13 @@ export function useSpotifyPlayback(accessToken: string | null) {
 
         player.addListener("account_error", ({ message }: { message: string }) => {
           console.error("[Orion SDK] Account error:", message);
+          teardownPlayer();
           setState(prev => ({ ...prev, isPremium: false, error: "Conta Premium necessária", isReady: false }));
         });
 
         const success = await player.connect();
         if (!success && !cancelled) {
+          teardownPlayer();
           setState(prev => ({ ...prev, error: "Falha ao conectar com Spotify SDK" }));
         }
 

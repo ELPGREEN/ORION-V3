@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { searchSpotify, getSpotifyFriendlyError, isSpotifyConnected } from "@/lib/spotify/spotify-service";
+import { searchSpotify, getSpotifyFriendlyError, getSpotifySdkToken } from "@/lib/spotify/spotify-service";
 import { searchYTMusicPublic, type YTMusicTrack } from "@/lib/youtube-music/youtube-music-service";
 import { useSpotifyPlayback } from "@/hooks/useSpotifyPlayback";
 
@@ -82,13 +82,37 @@ export function OrionPlaylistBar() {
   const sdk = useSpotifyPlayback(useSDK ? spotifyToken : null);
 
   useEffect(() => {
-    isSpotifyConnected().then(connected => {
-      if (connected) {
-        setSpotifyToken("sdk-managed");
-        setUseSDK(true);
-      }
-    }).catch(() => {});
+    let cancelled = false;
+
+    getSpotifySdkToken()
+      .then((data) => {
+        if (cancelled) return;
+        if (data.access_token && data.can_sdk) {
+          setSpotifyToken(data.access_token);
+          setUseSDK(true);
+          return;
+        }
+        setSpotifyToken(null);
+        setUseSDK(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSpotifyToken(null);
+        setUseSDK(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  useEffect(() => {
+    if (!useSDK || !sdk.error) return;
+    if (/auth|premium|conta|conectar/i.test(sdk.error)) {
+      setUseSDK(false);
+      setSpotifyToken(null);
+    }
+  }, [sdk.error, useSDK]);
 
   const isSpotifySdkPlayback = playbackMode === "spotify-sdk";
   const isPlaying = isSpotifySdkPlayback ? sdk.isPlaying : isPlayingLocal;
