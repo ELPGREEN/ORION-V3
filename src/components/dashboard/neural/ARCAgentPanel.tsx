@@ -16,6 +16,7 @@ export default function ARCAgentPanel() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [log, setLog] = useState<string>("");
+  const [version, setVersion] = useState<"2" | "3">("3");
 
   const refresh = async () => {
     const [g, s, p] = await Promise.all([
@@ -45,8 +46,14 @@ export default function ARCAgentPanel() {
   return (
     <div className="p-4 tron-panel space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-[hsl(var(--tron-neon))]">🎮 ARC-AGI-3 — Auto-Evolução</h3>
-        <Button size="sm" variant="ghost" onClick={refresh}><RefreshCw className="w-3 h-3" /></Button>
+        <h3 className="text-lg font-bold text-[hsl(var(--tron-neon))]">🎮 ARC-AGI v{version} — Auto-Evolução</h3>
+        <div className="flex items-center gap-2">
+          <div className="flex border border-[hsl(var(--tron-neon)/0.3)] rounded overflow-hidden text-xs">
+            <button onClick={() => setVersion("2")} className={`px-2 py-1 ${version === "2" ? "bg-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]" : "text-[hsl(var(--tron-muted))]"}`}>v2</button>
+            <button onClick={() => setVersion("3")} className={`px-2 py-1 ${version === "3" ? "bg-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))]" : "text-[hsl(var(--tron-muted))]"}`}>v3</button>
+          </div>
+          <Button size="sm" variant="ghost" onClick={refresh}><RefreshCw className="w-3 h-3" /></Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-sm">
@@ -65,13 +72,13 @@ export default function ARCAgentPanel() {
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <Button size="sm" disabled={!!busy} onClick={() => call("arc-agent", { action: "list_games" }, "list")}>
+        <Button size="sm" disabled={!!busy} onClick={() => call("arc-agent", { action: "list_games", version }, "list")}>
           {busy === "list" ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />} Descobrir jogos
         </Button>
-        <Button size="sm" disabled={!!busy} onClick={() => call("arc-self-study", { max_games: 1 }, "study")}>
+        <Button size="sm" disabled={!!busy} onClick={() => call("arc-self-study", { max_games: 1, version }, "study")}>
           {busy === "study" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />} Estudar 1 jogo
         </Button>
-        <Button size="sm" disabled={!!busy} onClick={() => call("arc-self-study", { max_games: 3 }, "study3")}>
+        <Button size="sm" disabled={!!busy} onClick={() => call("arc-self-study", { max_games: 3, version }, "study3")}>
           {busy === "study3" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />} Maratona (3)
         </Button>
         <Button size="sm" disabled={!!busy} onClick={() => call("arc-code-evolver", { mode: "propose" }, "propose")}>

@@ -3,6 +3,7 @@
  * code improvements; opens PRs via Jules API when approved.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { searchLegal } from "../_shared/zilliz-collections.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,15 +59,25 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ message: "No recent failures to learn from" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      const systemPrompt = `You are Orion's self-improvement engine. Given recent ARC-AGI-3 failures, propose ONE concrete code improvement to Orion's neural agent system. Output JSON ONLY:
+      // Pull semantic lessons from Zilliz to enrich the proposal
+      let zillizContext = "";
+      try {
+        const hits = await searchLegal("ARC-AGI failure patterns exploration exploitation world-model goal inference", 6);
+        if (hits.length) {
+          zillizContext = "\n\nSEMANTIC LESSONS (Zilliz):\n" +
+            hits.map((h, i) => `${i + 1}. ${(h.text ?? h.content ?? "").toString().slice(0, 250)}`).join("\n");
+        }
+      } catch { /* optional */ }
+
+      const systemPrompt = `You are Orion's self-improvement engine. ARC-AGI (versions 2 & 3) measures FLUID INTELLIGENCE — rapid skill acquisition on novel tasks (ref: ARC Prize, Decrypt 2024). Given recent failures + retrieved lessons, propose ONE concrete code improvement to Orion's neural agent. Target generalizable improvements (better world-modeling, exploration heuristics, goal inference) — NOT memorization. Output JSON ONLY:
 {
   "title": "short title",
-  "rationale": "why this helps",
+  "rationale": "why this helps fluid intelligence",
   "target_files": ["src/lib/neural/..."],
   "proposed_changes": "detailed natural-language description of the change"
 }`;
 
-      const userPrompt = `Recent ARC failures:\n${JSON.stringify(failures, null, 2)}\n\nWhat one improvement to Orion's reasoning/exploration code would help most?`;
+      const userPrompt = `Recent ARC failures (versions 2 & 3):\n${JSON.stringify(failures, null, 2)}${zillizContext}\n\nWhat one improvement to Orion's reasoning/exploration code would most boost fluid intelligence?`;
 
       const raw = await ai(systemPrompt, userPrompt, LOVABLE_KEY);
       const match = raw.match(/\{[\s\S]*\}/);
