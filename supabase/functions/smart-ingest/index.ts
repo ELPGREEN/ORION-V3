@@ -373,9 +373,19 @@ Deno.serve(async (req) => {
           query_origin: `smart_ingest:${origFileName}`,
         }));
 
-        await supabaseAdmin.from("neural_knowledge_base").insert(kbInserts);
+        const { data: kbRows } = await supabaseAdmin.from("neural_knowledge_base").insert(kbInserts).select("id");
         await supabaseAdmin.from("legal_embeddings").insert(leInserts);
         indexed += batch.length;
+
+        // Phase 1 dual-write: mirror to Zilliz (fire-and-forget)
+        if (kbRows?.length) {
+          const { mirrorToZilliz } = await import("../_shared/zilliz-mirror.ts");
+          mirrorToZilliz(kbRows.map((r: any, idx: number) => ({
+            id: r.id,
+            text: `${kbInserts[idx].title}\n\n${kbInserts[idx].content}`,
+            metadata: { source_type: kbInserts[idx].source_type, origin: "smart-ingest" },
+          })));
+        }
 
         if (i + BATCH < continuationChunks.length) {
           await new Promise(r => setTimeout(r, 200));
