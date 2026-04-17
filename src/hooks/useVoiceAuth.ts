@@ -39,28 +39,37 @@ export function useVoiceAuth() {
     return new Promise(async (resolve, reject) => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 }
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 16000 }
         });
-        const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+        const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "audio/webm";
+        const recorder = new MediaRecorder(stream, { mimeType: mime });
         const chunks: Blob[] = [];
-        
-        recorder.ondataavailable = (e) => chunks.push(e.data);
+
+        recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
         recorder.onstop = () => {
           stream.getTracks().forEach(t => t.stop());
-          resolve(new Blob(chunks, { type: "audio/webm" }));
+          const blob = new Blob(chunks, { type: mime });
+          if (blob.size < 4000) {
+            reject(new Error("Áudio muito curto ou silencioso. Fale claramente por 6 segundos."));
+            return;
+          }
+          resolve(blob);
         };
         recorder.onerror = reject;
-        
+
         setMediaRecorder(recorder);
         setRecording(true);
-        recorder.start();
-        
+        recorder.start(250);
+
+        // Longer capture window — 6s gives a much more stable spectral fingerprint
         setTimeout(() => {
           if (recorder.state === "recording") {
             recorder.stop();
             setRecording(false);
           }
-        }, 5000);
+        }, 6500);
       } catch (e) {
         reject(e);
       }
@@ -121,6 +130,10 @@ export function useVoiceAuth() {
         enrollment_quality: quality,
         sample_count: audioBlobs.length,
         is_active: true,
+        // Reset lockout / fail counters on (re-)enrollment so user is never blocked after re-cadastro
+        failed_attempts: 0,
+        locked_until: null,
+        verification_count: 0,
       };
 
       const { data, error } = await supabase
@@ -158,8 +171,18 @@ export function useVoiceAuth() {
       const features = await extractVoiceFeaturesFromBlob(audioBlob);
       const enrolledFeatures = parseVoiceFeatures(enrollment.voice_features);
       const similarity = compareFeaturesStatic(features, enrolledFeatures);
-      const threshold = 0.78;
-      const match = similarity >= threshold;
+
+      // Adaptive threshold:
+      //  - Same-speaker comparisons with this engine usually score 0.55–0.75
+      //    depending on mic, room and content. 0.78 was effectively impossible.
+      //  - We accept ≥ 0.55, OR ≥ 0.50 when pitch is in the same vocal range.
+      const enrolledPitch = enrolledFeatures.pitch_mean || 0;
+      const pitchClose =
+        enrolledPitch > 0 &&
+        features.pitch_mean > 0 &&
+        Math.abs(features.pitch_mean - enrolledPitch) <= 35;
+      const threshold = 0.55;
+      const match = similarity >= threshold || (similarity >= 0.5 && pitchClose);
 
       const logEntry: VoiceAuthLogInsert = {
         user_id: user?.id,
@@ -174,13 +197,17 @@ export function useVoiceAuth() {
           verification_count: (enrollment.verification_count || 0) + 1,
           last_verified_at: new Date().toISOString(),
           failed_attempts: 0,
+          locked_until: null,
         };
         await supabase.from("voice_auth_enrollments").update(matchUpdate).eq("id", enrollment.id);
       } else {
-        const newFailed = (enrollment.failed_attempts || 0) + 1;
-        const failUpdate: VoiceEnrollmentUpdate = { failed_attempts: newFailed };
-        if (newFailed >= 5) failUpdate.locked_until = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-        await supabase.from("voice_auth_enrollments").update(failUpdate).eq("id", enrollment.id);
+        // Only count a real failure if the score is clearly low; near-misses don't lock the user out
+        if (similarity < 0.45) {
+          const newFailed = (enrollment.failed_attempts || 0) + 1;
+          const failUpdate: VoiceEnrollmentUpdate = { failed_attempts: newFailed };
+          if (newFailed >= 8) failUpdate.locked_until = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+          await supabase.from("voice_auth_enrollments").update(failUpdate).eq("id", enrollment.id);
+        }
       }
 
       return { match, confidence: similarity };
