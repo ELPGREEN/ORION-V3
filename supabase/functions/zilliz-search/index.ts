@@ -20,9 +20,9 @@ const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
 
 const EMBED_DIM = 768;
 const DEFAULT_COLLECTION = "orion_memory";
-const ZILLIZ_SEARCH_URL = `${SUPABASE_URL}/functions/v1/zilliz-search`;
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const ZILLIZ_SEARCH_URL = `${SUPABASE_URL}/functions/v1/zilliz-search`;
 
 // Per-collection schema config
 const COLLECTION_CONFIG: Record<string, { dim: number; metric: "COSINE" | "L2" | "IP" }> = {
