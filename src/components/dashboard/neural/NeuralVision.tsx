@@ -36,8 +36,9 @@ import { FaceScannerOverlay } from "./FaceScannerOverlay";
 import { TeslaCoilVoltagePanel } from "./TeslaCoilVoltagePanel";
 import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
 import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
-// Vision via Gemini on-demand
-import { captureVideoFrame, analyzeFrame } from "@/lib/vision/gemini-vision";
+// Vision via Gemini on-demand + Zilliz visual memory cache
+import { captureVideoFrame } from "@/lib/vision/gemini-vision";
+import { analyzeFrameSmart, resetVisionCache } from "@/lib/vision/vision-cache";
 // Local vision via Transformers.js
 import { classifyImage } from "@/lib/huggingface/transformers-vision";
 // MediaPipe Tasks Vision for fast object detection
@@ -79,9 +80,9 @@ async function detectRealTime(video?: HTMLVideoElement): Promise<RealTimeVisionR
       console.warn("[detectRealTime] Frame capture failed — video not ready");
       return { allObjects: [], faces: [], hands: [], poses: [], detections: [], timestamp: now, processingMs: 0, status: "none" as const };
     }
-    const result = await analyzeFrame(base64, "Liste TODOS os objetos, pessoas, rostos e elementos visíveis. Para cada item retorne: nome em português, confiança (0-1), e posição aproximada (x,y,largura,altura em 0-1). Responda em JSON: {objects:[{name,namePt,confidence,x,y,width,height,source}], faces:[{x,y,width,height,confidence}]}").catch(() => null);
-    if (!result) {
-      return { allObjects: [], faces: [], hands: [], poses: [], detections: [], timestamp: now, processingMs: 0, status: "none" as const };
+    const result = await analyzeFrameSmart(base64, "Liste TODOS os objetos, pessoas, rostos e elementos visíveis. Para cada item retorne: nome em português, confiança (0-1), e posição aproximada (x,y,largura,altura em 0-1). Responda em JSON: {objects:[{name,namePt,confidence,x,y,width,height,source}], faces:[{x,y,width,height,confidence}]}").catch(() => null);
+    if (!result || result.source === "skipped") {
+      return _rtCache.lastResult ?? { allObjects: [], faces: [], hands: [], poses: [], detections: [], timestamp: now, processingMs: 0, status: "none" as const };
     }
     
     let parsed: any = {};
@@ -353,6 +354,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     streamRef.current = null;
     setActive(false); VS.active = false; VS.regions = [];
     cancelAnimationFrame(animRef.current); prevRef.current = null;
+    resetVisionCache();
     speak("Desativado.").catch(() => {});
   }, [speak]);
 
@@ -378,8 +380,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const routeOrionCommand = useCallback(async (cmd: string) => {
     const q = cmd.toLowerCase().trim();
     console.log("[NeuralVision] 🔀 routeOrionCommand:", cmd, { supernetConnected, identityStatus });
-    const isActivateVision = /ativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /ligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
-    const isDeactivateVision = /desativar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /desligar?\s*(vis[aã]o|c[aâ]mera)/i.test(q) || /parar?\s*(vis[aã]o|c[aâ]mera)/i.test(q);
+    const isActivateVision = /\b(ativar?|ligar?|abrir?|liga|abre|inicia[r]?|começar?|come[çc]a)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
+    const isDeactivateVision = /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     if (isActivateVision) {
       if (!active) { speakFast("Visão ativada.").catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
       else { speakFast("Visão já está ativa.").catch(() => {}); }
