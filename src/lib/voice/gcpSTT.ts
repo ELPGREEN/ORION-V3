@@ -28,12 +28,12 @@ export interface GCPSTTSession {
   isPaused: () => boolean;
 }
 
-const PROCESSOR_BUFFER_SIZE = 4096;
-const PRE_ROLL_FRAMES = 4;
-const FLUSH_POLL_MS = 200;
+const PROCESSOR_BUFFER_SIZE = 2048; // Smaller buffer = faster reaction (~43ms @ 48kHz)
+const PRE_ROLL_FRAMES = 6; // More pre-roll to catch first phoneme cleanly
+const FLUSH_POLL_MS = 60; // Aggressive poll for instant turn detection
 const SPEECH_RMS_THRESHOLD = 0.01;
-// Fast mode: 1 second silence tolerance (optimized from 4000ms)
-const DEFAULT_SILENCE_MS = 1000;
+// ULTRA mode: 500ms silence — JARVIS-like instant response
+const DEFAULT_SILENCE_MS = 500;
 
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {
@@ -124,7 +124,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     try {
       const totalLength = buffers.reduce((acc, b) => acc + b.length, 0);
       const sourceSR = audioContext?.sampleRate || 48000;
-      const minSamples = Math.floor(sourceSR * 0.6);
+      const minSamples = Math.floor(sourceSR * 0.3); // 300ms (was 600ms) — accept short commands like "para"
 
       if (totalLength < minSamples) {
         return;
@@ -233,6 +233,12 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         } else if (utteranceActive) {
           // Keep trailing silence so the last phonemes are not clipped.
           utteranceBuffers.push(frame);
+
+          // ⚡ Early-flush: don't wait for poll interval — fire as soon as silence threshold met
+          const silenceElapsed = now - lastSpeechAt;
+          if (silenceElapsed >= silenceDurationMs && !sending) {
+            void flushUtterance(false);
+          }
         }
 
         pushPreRollFrame(frame);
@@ -262,7 +268,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         signal.addEventListener("abort", stop, { once: true });
       }
 
-      console.log("[GCP-STT] Session started — always-listening mode, silence tolerance: 3s");
+      console.log("[GCP-STT] ⚡ ULTRA mode — silence: 500ms, poll: 60ms, early-flush: ON");
       return true;
     } catch (err: any) {
       console.error("[GCP-STT] Failed to start:", err.message);
