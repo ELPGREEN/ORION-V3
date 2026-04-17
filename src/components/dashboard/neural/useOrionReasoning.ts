@@ -1893,7 +1893,6 @@ export function useOrionReasoning(
 
       const waitTimer = setTimeout(() => {
         if (isProcessingRef.current && !streamingText && !bargedInRef.current) {
-          speak("Analisando... um segundo.", { skipMicToggle: true }).catch(() => {});
           setThought("Analisando... um segundo.");
         }
       }, 3500);

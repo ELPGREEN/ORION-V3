@@ -49,38 +49,11 @@ import { HudCollapsibleSection } from "./HudCollapsibleSection";
 // MediaPipe Object Detector - faster and more accurate than DETR
 let mpObjectDetector: ObjectDetector | null = null;
 let mpVisionReady = false;
+// DISABLED: model URLs are broken (404) and causing errors
+// Use Gemini Vision API instead for all visual analysis
 async function preloadVisionModel() {
-  if (mpVisionReady && mpObjectDetector) return;
-  try {
-    console.log("[Vision] Loading MediaPipe ObjectDetector...");
-    const vision = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/wasm"
-    );
-    mpObjectDetector = await ObjectDetector.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath: "https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0.tflite",
-        delegate: "GPU"
-      },
-      runningMode: "VIDEO",
-      scoreThreshold: 0.55,
-      categoryAllowlist: undefined,
-      maxResults: 20,
-    });
-    mpVisionReady = true;
-    console.log("[Vision] MediaPipe ObjectDetector ready");
-  } catch (e) { 
-    console.warn("[Vision] MediaPipe load failed:", e); 
-    // Fallback to DETR if MediaPipe fails
-    try {
-      const { detectObjects } = await import("@/lib/huggingface/transformers-vision");
-      const dummyCanvas = document.createElement("canvas");
-      dummyCanvas.width = 224; dummyCanvas.height = 224;
-      const ctx = dummyCanvas.getContext("2d");
-      if (ctx) { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, 224, 224); }
-      await detectObjects(dummyCanvas, "Xenova/detr-resnet-50", 0.5);
-      console.log("[Vision] Fallback DETR loaded");
-    } catch {}
-  }
+  console.warn("[Vision] Local model preload DISABLED - using Gemini Vision API");
+  // Do nothing - models will not be loaded
 }
 
 // Real-time detection via Gemini Flash — optimized for real-time (1s default)
@@ -328,10 +301,11 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       });
       await video.play().catch(() => {});
       setActive(true); VS.active = true;
-      // Pre-warm Transformers.js models as soon as camera starts
-      preloadVisionModel().catch(() => console.warn("[Vision] Model preload failed"));
-      toast.success("Núcleo de plasma ativado");
-      if (shouldAnnounce) speak("Núcleo ativado.").catch(() => {});
+      // DO NOT preload models here - they are broken and cause 404 errors
+      // Models will be loaded on-demand only when actually needed
+      toast.success("Visão ativada");
+      // Don't announce "Núcleo ativado" - old buggy behavior
+      // if (shouldAnnounce) speak("Visão ativada.").catch(() => {});
     } catch (err: any) {
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
