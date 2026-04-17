@@ -354,6 +354,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     streamRef.current = null;
     setActive(false); VS.active = false; VS.regions = [];
     cancelAnimationFrame(animRef.current); prevRef.current = null;
+    resetVisionCache();
     speak("Desativado.").catch(() => {});
   }, [speak]);
 
