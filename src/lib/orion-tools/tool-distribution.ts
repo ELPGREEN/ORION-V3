@@ -272,6 +272,9 @@ export function checkToolAccess(
   // Owner bypass — always allowed
   if (isOwner) return { allowed: true };
 
+  // Admin bypass — admins can access owner-only tools (auto-evolution, jules, etc.)
+  if (role === "admin") return { allowed: true };
+
   // Owner-only tool
   if (OWNER_ONLY_TOOLS.includes(tool)) {
     return { allowed: false, reason: "owner_only" };
