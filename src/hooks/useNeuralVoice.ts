@@ -260,7 +260,7 @@ export function useNeuralVoice(
 ): UseNeuralVoiceReturn {
   // ── State ──
   const [listening, setListening] = useState(false);
-  const [supported, setSupported] = useState(false);
+  const [supported, setSupported] = useState(true); // GCP STT always available via edge function
   const [ttsOn, setTtsOn] = useState(true);
   const ttsRef = useRef(true);
 
@@ -302,13 +302,6 @@ export function useNeuralVoice(
 
   useEffect(() => { ttsRef.current = ttsOn; }, [ttsOn]);
   useEffect(() => { listeningRef.current = listening; }, [listening]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      // GCP STT always supported (edge function), Web Speech as fallback
-      setSupported(true);
-    }
-  }, []);
 
   // ── Timer Management ──
   const clearRestartTimer = useCallback(() => {

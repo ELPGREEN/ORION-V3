@@ -129,5 +129,9 @@ project_id = "dlwafedtlvbvuoaopvsl"
     verify_jwt = false
   [functions.minimax-video]
     verify_jwt = false
-  [functions.minimax-music]
+[functions.minimax-music]
+  verify_jwt = false
+  [functions.zilliz-search]
+    verify_jwt = false
+  [functions.zilliz-vectors]
     verify_jwt = false

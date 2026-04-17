@@ -618,6 +618,9 @@ const TRUSTED_URL_PATTERNS = [
   "resend.com",                // Resend email
   "translate.google.com",      // Google TTS
   "courtlistener.com",         // CourtListener
+  "zilliz.com",               // Zilliz Cloud (vector database)
+  "zillizcloud.com",          // Zilliz Cloud alternative
+  "milvus.io",                // Milvus (open source)
   // ─── Bluetooth / IoT / Smart Home / Wireless ───
   "hivemq",                    // HiveMQ MQTT broker
   "mqtt",                      // Any MQTT endpoint
