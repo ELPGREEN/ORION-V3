@@ -28,10 +28,11 @@ export interface ActiveInferenceResult {
   timestamp: number;
 }
 
-// ═══ Constants ═══
+// ═══ Constants - OPTIMIZED FOR LESS HALLUCINATIONS ═══
 
-const FREE_ENERGY_THRESHOLD_LOW = 35;
-const FREE_ENERGY_THRESHOLD_HIGH = 60;
+const FREE_ENERGY_THRESHOLD_LOW = 25;  // OPTIMIZED: was 35 - more sensitive
+const FREE_ENERGY_THRESHOLD_HIGH = 50; // OPTIMIZED: was 60 - correct more often
+const BLOCK_THRESHOLD = 75;           // NEW: block responses above this
 
 const HALLUCINATION_PHRASES = [
   "como modelo de linguagem",
@@ -61,6 +62,23 @@ const FABRICATION_PATTERNS = [
   /Art(?:igo)?\.?\s*\d{4,}/i, // Artigos com 4+ dígitos (improvável)
   /Súmula\s+(?:Vinculante\s+)?\d{3,}/i, // Súmulas com 3+ dígitos
   /(?:RE|REsp)\s+\d{10,}/i, // Processos com números excessivamente longos
+  /(?:20[3-9]\d|21\d{2})\/\d{2}\/\d{2}/i, // Datas futuras impossíveis (2030+)
+  /\d{5}[-.\s]?\d{4}/i, // Telefones fabricados
+];
+
+// NEW: Uncertainty phrases that penalize responses
+const UNCERTAINTY_PHRASES = [
+  "não tenho certeza",
+  "pode ser que",
+  "talvez",
+  "provavelmente",
+  "creio que",
+  "acredito que",
+  "na minha opinião",
+  "não posso confirmar",
+  "não tenho informações",
+  "falha ao",
+  "não encontrei",
 ];
 
 // ═══ Core Functions ═══
@@ -210,6 +228,16 @@ export function computeFreeEnergy(
     });
   }
 
+  // 7. Uncertainty phrases penalty (OPTIMIZED)
+  const uncertaintyMatches = UNCERTAINTY_PHRASES.filter(p => response.toLowerCase().includes(p));
+  if (uncertaintyMatches.length > 2) {
+    errors.push({
+      source: "uncertainty_excessive",
+      delta: 0.1,
+      detail: `Excesso de expressões de incerteza (${uncertaintyMatches.length}): ${uncertaintyMatches.slice(0, 3).join(", ")}`,
+    });
+  }
+
   // ═══ Compute total Free Energy ═══
   const totalDelta = errors.reduce((sum, e) => sum + e.delta, 0);
   const freeEnergy = Math.min(100, Math.round(totalDelta * 100));
@@ -243,9 +271,19 @@ export function computeFreeEnergy(
 
 /**
  * Quick check: should the system attempt correction?
+ * OPTIMIZED: Also correct low severity to prevent hallucinations
  */
 export function shouldCorrect(result: ActiveInferenceResult): boolean {
-  return result.severity === "high";
+  return result.severity === "high" || result.severity === "low";
+}
+
+/**
+ * Should block the response entirely?
+ * NEW: Responses with high FE or hallucinations should be blocked
+ */
+export function shouldBlockResponse(result: ActiveInferenceResult): boolean {
+  return result.freeEnergy > BLOCK_THRESHOLD || 
+         result.hallucinations.some(h => h.severity === "high");
 }
 
 /**
