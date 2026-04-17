@@ -85,7 +85,7 @@ async function preloadVisionModel() {
 
 // Real-time detection via Gemini Flash — optimized for real-time (1s default)
 const VISION_GEMINI_THROTTLE_MS = parseInt(import.meta.env.VITE_VISION_GEMINI_THROTTLE || '1000', 10);
-const VISION_MEDIAPIPE_FRAMESKIP = parseInt(import.meta.env.VITE_VISION_MEDIAPIPE_FRAMESKIP || '10', 10);
+const VISION_MEDIAPIPE_FRAMESKIP = parseInt(import.meta.env.VITE_VISION_MEDIAPIPE_FRAMESKIP || '15', 10);
 const VISION_SUPERNET_FRAMESKIP = parseInt(import.meta.env.VITE_VISION_SUPERNET_FRAMESKIP || '15', 10);
 
 const _rtCache = { lastCall: 0, lastResult: null as RealTimeVisionResult | null };
@@ -301,6 +301,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   // Face detection now handled by detectRealTime() unified pipeline
   const lastRtVisionRef = useRef<RealTimeVisionResult | null>(null);
   const directVoiceStartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasAnnouncedRef = useRef(false);
 
   const hasGreetedRef = useRef(_hasSessionReady());
 
@@ -308,7 +309,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   // preloadAllVision() is called inside startCamera() instead of mount
   // This prevents excessive WebGL context creation and GPU usage on boot
 
-  // ═══ Camera controls ═══
+    }
   const startCamera = useCallback(async (options?: { announce?: boolean }) => {
     const shouldAnnounce = options?.announce ?? true;
     if (!navigator.mediaDevices?.getUserMedia) { toast.error("Câmera não suportada"); return; }
@@ -331,12 +332,23 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       // Pre-warm Transformers.js models as soon as camera starts
       preloadVisionModel().catch(() => console.warn("[Vision] Model preload failed"));
       toast.success("Núcleo de plasma ativado");
-      if (shouldAnnounce) speak("Núcleo ativado.").catch(() => {});
-    } catch {
+      if (shouldAnnounce && !hasAnnouncedRef.current) {
+        hasAnnouncedRef.current = true;
+        speak("Núcleo ativado.").catch(() => {});
+      }
+    } catch (err: any) {
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
-      toast.error("Erro na câmera");
+      const errName = err?.name || "Error";
+      const errMsg = err?.message || "";
+      console.error(`[Vision] Camera error: ${errName} - ${errMsg}`);
+      const retryAction = { label: "Tentar novamente", onClick: () => startCamera() };
+      if (errName === "NotAllowedError") toast.error("Permissão da câmera negada", { action: retryAction });
+      else if (errName === "NotReadableError") toast.error("Câmera em uso por outro app", { action: retryAction });
+      else if (errName === "NotFoundError") toast.error("Câmera não encontrada", { action: retryAction });
+      else toast.error(`Erro na câmera: ${errName}`, { action: retryAction });
     }
+  }, [speak]);
   }, [speak]);
   useEffect(() => { startCameraRef.current = startCamera; }, [startCamera]);
 
@@ -346,6 +358,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     setActive(false); VS.active = false; VS.regions = [];
     cancelAnimationFrame(animRef.current); prevRef.current = null;
     speak("Desativado.").catch(() => {});
+    hasAnnouncedRef.current = false;
   }, [speak]);
 
   const deactivateGracefully = useCallback(() => {

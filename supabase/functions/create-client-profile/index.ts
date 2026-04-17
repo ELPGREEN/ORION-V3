@@ -264,7 +264,7 @@ serve(async (req) => {
       }
 
       // 1. Insert anonymized registration feed
-      await admin.from("client_registrations_feed") // FIXME(jules-audit): tabela inexistente.insert({
+      await admin.from("client_registrations_feed").insert({
         registration_type: "public",
         tipo_caso: body.profile.tipo_caso || null,
         region,

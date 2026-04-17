@@ -125,7 +125,7 @@ async function reportToMother(): Promise<Record<string, unknown>> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "unknown";
 
   // Get table list via information_schema
-  const { data: tablesData } = await sb.rpc("get_public_tables") // FIXME(jules-audit): RPC inexistente.maybeSingle() as { data: unknown };
+  const { data: tablesData } = await sb.rpc("get_public_tables").maybeSingle() as { data: unknown };
   
   // Fallback: query known tables for counts
   const mainTables = [
@@ -336,7 +336,7 @@ Deno.serve(async (req) => {
         const regData = (body.data || {}) as Record<string, unknown>;
         
         // Get analytics
-        const { data: analytics } = await sb.rpc("get_registration_analytics") // FIXME(jules-audit): RPC inexistente;
+        const { data: analytics } = await sb.rpc("get_registration_analytics");
         
         // Report to mother network
         const motherReport = await callMother("receive_child_report", {

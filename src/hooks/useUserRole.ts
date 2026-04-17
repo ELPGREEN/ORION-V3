@@ -46,40 +46,42 @@ export function useUserRole() {
       if (initialLoad) {
         setLoading(true);
       }
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .order("role", { ascending: true });
 
-      try {
-        // Use the has_role RPC for best practice as requested in the mission
-        const { data: userIsAdmin, error: adminError } = await supabase.rpc('has_role', {
-          _user_id: user.id,
-          _role: 'admin' as any
-        });
+      let resolvedRole: AppRole = "cliente";
+      let userIsAdmin = false;
 
-        const { data: userIsAdvogado, error: advogadoError } = await supabase.rpc('has_role', {
-          _user_id: user.id,
-          _role: 'advogado' as any
-        });
+      if (error) {
+        console.error("Error fetching user roles:", error);
+      } else if (data && data.length > 0) {
+        const hasAdvogado = data.some((r: any) => r.role === "advogado");
+        userIsAdmin = data.some((r: any) => r.role === "admin");
+        const hasProdutor = data.some((r: any) => r.role === "produtor");
+        const hasAfiliado = data.some((r: any) => r.role === "afiliado");
+        const hasNomade = data.some((r: any) => r.role === "nomade");
 
-        // For getting the specific role, we use the get_user_role RPC
-        const { data: resolvedRole, error: roleError } = await supabase.rpc('get_user_role', {
-          _user_id: user.id
-        });
-
-        if (adminError || advogadoError || roleError) {
-          console.error("Error fetching user roles via RPC:", { adminError, advogadoError, roleError });
+        if (hasAdvogado || userIsAdmin) {
+          resolvedRole = "advogado";
+        } else if (hasNomade) {
+          resolvedRole = "nomade";
+        } else if (hasProdutor) {
+          resolvedRole = "produtor";
+        } else if (hasAfiliado) {
+          resolvedRole = "afiliado";
+        } else {
+          resolvedRole = (data[0].role as AppRole) || "cliente";
         }
-
-        const finalRole = (resolvedRole as AppRole) || "cliente";
-        const finalIsAdmin = !!userIsAdmin;
-
-        roleCache.set(user.id, { role: finalRole, isAdmin: finalIsAdmin });
-        setRole(finalRole);
-        setIsAdmin(finalIsAdmin);
-      } catch (error) {
-        console.error("Exception fetching roles:", error);
-      } finally {
-        setLoading(false);
-        setInitialLoad(false);
       }
+
+      roleCache.set(user.id, { role: resolvedRole, isAdmin: userIsAdmin });
+      setRole(resolvedRole);
+      setIsAdmin(userIsAdmin);
+      setLoading(false);
+      setInitialLoad(false);
     };
 
     fetchRole();

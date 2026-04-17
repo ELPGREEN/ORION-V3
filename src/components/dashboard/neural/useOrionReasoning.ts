@@ -216,7 +216,7 @@ export function useOrionReasoning(
         if (!user) return;
 
         // Only owner (advogado/admin) can trigger auto-build
-        const { data: userRole } = await supabase.rpc("get_user_role", { _user_id: user.id });
+        const { data: userRole } = await supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle();
         const isOwner = userRole?.role === "advogado" || userRole?.role === "admin";
         if (!isOwner) return; // Only owner can auto-construct
 
@@ -496,7 +496,7 @@ export function useOrionReasoning(
         const { data: { user } } = await supabase.auth.getUser();
         let canUseArc = false;
         if (user) {
-          const { data: userRole } = await supabase.rpc("get_user_role", { _user_id: user.id });
+          const { data: userRole } = await supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle();
           canUseArc = userRole?.role === "advogado" || userRole?.role === "admin";
         }
         
@@ -645,7 +645,7 @@ export function useOrionReasoning(
           }
 
           // Check if user has advogado role (system owner)
-          const { data: userRole } = await supabase.rpc("get_user_role", { _user_id: authUser.id });
+          const { data: userRole } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id).maybeSingle();
           const isAdvogado = userRole?.role === "advogado" || userRole?.role === "admin";
 
           if (!isAdvogado) {
@@ -1089,7 +1089,7 @@ export function useOrionReasoning(
       const authUser = await getCachedUser();
       let currentRole = "user";
       if (authUser) {
-        const { data: ur } = await supabase.rpc("get_user_role", { _user_id: authUser.id });
+        const { data: ur } = await supabase.from("user_roles").select("role").eq("user_id", authUser.id).maybeSingle();
         currentRole = ur?.role || "user";
       }
       

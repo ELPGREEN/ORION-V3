@@ -216,7 +216,7 @@ export default function ConfiguracoesEscritorio() {
 
     // Use bucket público 'avatars' para logos
     const { error: uploadError } = await supabase.storage
-      .from("profile-photos")
+      .from("avatars")
       .upload(path, file, { upsert: true });
 
     if (uploadError) {
@@ -229,7 +229,7 @@ export default function ConfiguracoesEscritorio() {
     }
 
     const { data: urlData } = supabase.storage
-      .from("profile-photos")
+      .from("avatars")
       .getPublicUrl(path);
 
     setConfig({ ...config, logo_url: urlData.publicUrl });
@@ -244,7 +244,7 @@ export default function ConfiguracoesEscritorio() {
     const path = `${user.id}/timbre.${ext}`;
 
     const { error: uploadError } = await supabase.storage
-      .from("profile-photos")
+      .from("avatars")
       .upload(path, file, { upsert: true });
 
     if (uploadError) {
@@ -252,7 +252,7 @@ export default function ConfiguracoesEscritorio() {
       return;
     }
 
-    const { data: urlData } = supabase.storage.from("profile-photos").getPublicUrl(path);
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
     setConfig({ ...config, timbre_url: urlData.publicUrl });
     toast({ title: "Timbre carregado!", description: "Salve para aplicar nos documentos PDF." });
   };

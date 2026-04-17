@@ -502,7 +502,7 @@ export async function analyzeFrameWithAI(
       }
     } catch { /* non-blocking */ }
 
-    const { data, error } = await supabase.functions.invoke("neural-ops", {
+    const { data, error } = await withTimeout(supabase.functions.invoke("neural-ops", {
       body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections, userName, voiceIdentityStatus: getCachedVoiceIdentity() || undefined },
     });
     if (error) {
@@ -1005,7 +1005,7 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
 // ═══ OPERA AI: Image Generation Client Helper ═══
 export async function generateImageWithOrion(prompt: string): Promise<{ success: boolean; image?: string; mimeType?: string; text?: string; error?: string }> {
   try {
-    const { data, error } = await supabase.functions.invoke("neural-ops", {
+    const { data, error } = await withTimeout(supabase.functions.invoke("neural-ops", {
       body: { action: "generate_image", prompt },
     });
     if (error) return { success: false, error: error.message };

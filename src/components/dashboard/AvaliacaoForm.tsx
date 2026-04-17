@@ -46,13 +46,13 @@ export function AvaliacaoForm({ onSuccess }: AvaliacaoFormProps) {
       const fileName = `${user.id}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("profile-photos")
+        .from("avatars")
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       const { data: publicUrl } = supabase.storage
-        .from("profile-photos")
+        .from("avatars")
         .getPublicUrl(fileName);
 
       setFotoUrl(publicUrl.publicUrl);

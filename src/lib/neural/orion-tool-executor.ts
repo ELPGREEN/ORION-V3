@@ -186,7 +186,7 @@ const TOOLS: OrionTool[] = [
       const { data: { user } } = await supabase.auth.getUser();
       let roleName = "usuário";
       if (user) {
-        const { data: roleData } = await supabase.rpc("get_user_role", { _user_id: user.id });
+        const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle();
         if (roleData?.role === "admin" || roleData?.role === "advogado") roleName = "advogado";
         else if (roleData?.role === "produtor") roleName = "produtor";
         else if (roleData?.role === "afiliado") roleName = "afiliado";
@@ -1422,7 +1422,7 @@ const TOOLS: OrionTool[] = [
         const access = ownerHasFullAccess(user.email);
         return `👑 **Proprietário do Sistema — Acesso Total**\n• Plano: **${access.planType}**\n• Status: ✅ Ativo permanente\n• Funcionalidades: ${access.features.length} módulos desbloqueados\n\n${access.features.map(f => `✓ ${f}`).join("\n")}`;
       }
-      const { data } = await (supabase.from("user_subscriptions") as any).select("plan_type, status, current_period_end").eq("user_id", user.id).eq("status", "active").single();
+      const { data } = await (supabase.from("subscriptions" as any) as any).select("plan_type, status, current_period_end").eq("user_id", user.id).eq("status", "active").single();
       if (!data) return "📋 Nenhuma assinatura ativa. Veja os planos em /precos.";
       const s = data as any;
       return `📋 **Sua Assinatura:**\n• Plano: **${s.plan_type}**\n• Status: ${s.status}\n• Válido até: ${s.current_period_end ? new Date(s.current_period_end).toLocaleDateString("pt-BR") : "N/A"}`;
@@ -1494,7 +1494,7 @@ const TOOLS: OrionTool[] = [
     call: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return "⚠️ Não autenticado.";
-      const { data: role } = await supabase.rpc("get_user_role", { _user_id: user.id });
+      const { data: role } = await supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle();
       const isAdv = role?.role === "advogado" || role?.role === "admin";
       const path = isAdv ? `/advogado/${user.id}` : `/loja/${user.id}`;
       const url = `${window.location.origin}${path}`;
@@ -1509,7 +1509,7 @@ const TOOLS: OrionTool[] = [
     call: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return "⚠️ Não autenticado.";
-      const { data: role } = await supabase.rpc("get_user_role", { _user_id: user.id });
+      const { data: role } = await supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle();
       const isAdv = role?.role === "advogado" || role?.role === "admin";
       const path = isAdv ? `/advogado/${user.id}` : `/loja/${user.id}`;
       const url = `${window.location.origin}${path}`;
@@ -2799,7 +2799,7 @@ const TOOLS: OrionTool[] = [
     call: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return "⚠️ Faça login.";
-      const { data } = await (supabase.from("notificacoes") as any)
+      const { data } = await (supabase.from("notifications" as any) as any)
         .select("title, message, read, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -3110,7 +3110,7 @@ const TOOLS: OrionTool[] = [
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return "⚠️ Faça login.";
       try {
-        await (supabase.from("smart_routines" as any) // FIXME(jules-audit): tabela inexistente as any).insert({
+        await (supabase.from("smart_routines" as any) as any).insert({
           user_id: user.id,
           name: p.description,
           trigger_type: "voice",
