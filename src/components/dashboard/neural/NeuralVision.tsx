@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { OrionResearchBrowser } from "@/components/orion/OrionResearchBrowser";
 import { OrionEmbeddedVideo } from "@/components/orion/OrionEmbeddedVideo";
-import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
+
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1453,19 +1453,12 @@ function OrionStandalonePanel({
               <MessageCircle className="h-4 w-4" />
             </Button>
           </form>
-          {/* Music bar */}
-          <div className="border-t border-white/[0.06] mt-2">
-            <OrionPlaylistBar />
-          </div>
         </div>
       )}
 
       {activeTab === "pesquisa" && (
         <div className="h-[350px] flex flex-col">
           <OrionResearchBrowser onSearchQuery={(q) => askAI(`pesquisar na web ${q}`)} />
-          <div className="border-t border-white/[0.06]">
-            <OrionPlaylistBar />
-          </div>
         </div>
       )}
 
