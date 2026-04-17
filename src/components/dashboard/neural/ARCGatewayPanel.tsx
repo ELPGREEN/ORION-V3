@@ -6,10 +6,20 @@
 import { useState, useEffect } from "react";
 import {
   getGatewayState, getGatewayDiagnostics, activateGateway, scanAllAPIs, resetGateway,
-  getAPILearnerDiagnostics, getLearnedAPIs, getFrameworkKnowledge, resetAPIKnowledge,
   getDiscoveredAPIs, queryInternet,
 } from "@/lib/neural/arc-gateway";
-import { getAPILearnerDiagnostics as getAPILearnerDiag } from "@/lib/neural/arc-api-learner";
+import {
+  getLearnedAPIs, getFrameworkKnowledge,
+  getAPILearnerDiagnostics as getAPILearnerDiag,
+} from "@/lib/neural/arc-api-learner";
+
+// Local no-op stubs for legacy buttons
+const resetAPIKnowledge = () => {
+  try {
+    localStorage.removeItem("orion_arc_learned_apis");
+    localStorage.removeItem("orion_arc_framework_knowledge");
+  } catch { /* empty */ }
+};
 
 export default function ARCGatewayPanel() {
   const [gatewayState, setGatewayState] = useState(getGatewayState());

@@ -12,10 +12,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Wifi, WifiOff, Hand, HandMetal, FingerPrint, Gripper,
+  Wifi, WifiOff, Hand, HandMetal, Fingerprint, Grip,
   RotateCcw, Play, Pause, Save, RefreshCw, Zap,
-  HandPalm, HandGrab, HandPeace, Scissors, Circle,
+  Scissors, Circle,
 } from "lucide-react";
+const FingerPrint = Fingerprint;
+const Gripper = Grip;
+const HandPalm = Hand;
+const HandGrab = HandMetal;
+const HandPeace = Hand;
 import { useRosBridge } from "@/hooks/useRosBridge";
 import { toast } from "sonner";
 

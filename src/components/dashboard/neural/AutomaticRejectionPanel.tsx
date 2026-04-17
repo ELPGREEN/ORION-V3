@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import {
   Wifi, WifiOff, Eye, AlertTriangle, CheckCircle, XCircle,
-  Play, Pause, StopCircle, ConveyorBelt, Package, Boxes,
+  Play, Pause, StopCircle, MoveRight, Package, Boxes,
   Settings, Zap, Activity, Clock, TrendingUp, ShieldAlert,
 } from "lucide-react";
+const ConveyorBelt = MoveRight;
 import { useRosBridge } from "@/hooks/useRosBridge";
 import { toast } from "sonner";
 

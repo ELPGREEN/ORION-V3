@@ -1490,11 +1490,14 @@ export type Database = {
           advogado_id: string | null
           cpf: string | null
           created_at: string
+          credits_balance: number
+          credits_used: number
           descricao_problema: string | null
           email: string
           id: string
           nome: string
           status: string
+          stripe_customer_id: string | null
           telefone: string | null
           tipo_caso: string | null
           updated_at: string
@@ -1504,11 +1507,14 @@ export type Database = {
           advogado_id?: string | null
           cpf?: string | null
           created_at?: string
+          credits_balance?: number
+          credits_used?: number
           descricao_problema?: string | null
           email: string
           id?: string
           nome: string
           status?: string
+          stripe_customer_id?: string | null
           telefone?: string | null
           tipo_caso?: string | null
           updated_at?: string
@@ -1518,11 +1524,14 @@ export type Database = {
           advogado_id?: string | null
           cpf?: string | null
           created_at?: string
+          credits_balance?: number
+          credits_used?: number
           descricao_problema?: string | null
           email?: string
           id?: string
           nome?: string
           status?: string
+          stripe_customer_id?: string | null
           telefone?: string | null
           tipo_caso?: string | null
           updated_at?: string
@@ -1916,6 +1925,36 @@ export type Database = {
           payload?: Json | null
           processed?: boolean | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          target_user_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          target_user_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          target_user_id?: string | null
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -3172,6 +3211,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      google_service_usage: {
+        Row: {
+          created_at: string
+          google_response: Json | null
+          id: string
+          price_cents: number
+          service_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          google_response?: Json | null
+          id?: string
+          price_cents: number
+          service_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          google_response?: Json | null
+          id?: string
+          price_cents?: number
+          service_type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       honorarios_config: {
         Row: {
@@ -5365,6 +5431,42 @@ export type Database = {
           },
         ]
       }
+      orion_payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          failure_reason: string | null
+          id: string
+          paid_at: string | null
+          status: string
+          stripe_transfer_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          paid_at?: string | null
+          status?: string
+          stripe_transfer_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          paid_at?: string | null
+          status?: string
+          stripe_transfer_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       orion_realtime_alerts: {
         Row: {
           alert_type: string
@@ -5481,6 +5583,45 @@ export type Database = {
           period_start?: string | null
           report_type?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      orion_revenues: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          paid_at: string | null
+          source: string | null
+          status: string
+          stripe_payment_id: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          source?: string | null
+          status?: string
+          stripe_payment_id?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          source?: string | null
+          status?: string
+          stripe_payment_id?: string | null
+          type?: string
         }
         Relationships: []
       }
@@ -6224,6 +6365,36 @@ export type Database = {
         }
         Relationships: []
       }
+      promotional_credits: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          initial_amount: number
+          promo_code: string | null
+          remaining_amount: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          initial_amount: number
+          promo_code?: string | null
+          remaining_amount: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          initial_amount?: number
+          promo_code?: string | null
+          remaining_amount?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       publicacoes: {
         Row: {
           autor: string
@@ -6482,6 +6653,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_transactions: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          id: string
+          metadata: Json | null
+          paid_at: string | null
+          service_id: string
+          status: string
+          stripe_payment_id: string | null
+          stripe_session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          service_id: string
+          status?: string
+          stripe_payment_id?: string | null
+          stripe_session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          id?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          service_id?: string
+          status?: string
+          stripe_payment_id?: string | null
+          stripe_session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       shared_documents: {
         Row: {
@@ -7030,6 +7246,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string
+          id: string
+          interval: string
+          plan: string
+          status: string
+          stripe_subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string
+          id?: string
+          interval?: string
+          plan: string
+          status?: string
+          stripe_subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string
+          id?: string
+          interval?: string
+          plan?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_tool_overrides: {
         Row: {
           created_at: string
@@ -7056,6 +7311,30 @@ export type Database = {
           id?: string
           reason?: string | null
           tool_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_trials: {
+        Row: {
+          expires_at: string
+          id: string
+          remaining_free_services: number
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          expires_at?: string
+          id?: string
+          remaining_free_services?: number
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          expires_at?: string
+          id?: string
+          remaining_free_services?: number
+          started_at?: string
           user_id?: string
         }
         Relationships: []

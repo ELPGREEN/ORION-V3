@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Wifi, WifiOff, Radio, Activity, CheckCircle, XCircle, AlertTriangle,
   Play, Pause, RotateCcw, Settings, Terminal, Server, Network,
-  Cpu, HardDrive, Memory, Battery, Thermometer, Gauge,
+  Cpu, HardDrive, MemoryStick as Memory, Battery, Thermometer, Gauge,
   Send, MessageSquare, FileText, Download, Upload, RefreshCw,
 } from "lucide-react";
 import { useRosBridge } from "@/hooks/useRosBridge";
@@ -158,12 +158,12 @@ export default function RobotTestPanel() {
     // Test 5: Subscribe to laser scan
     addTest("LaserScan", "running", "Inscrito em /scan...");
     try {
-      const unsub = subscribe(`${namespace}/scan`, "sensor_msgs/msg/LaserScan", (msg) => {
+      const unsub = subscribe(`${namespace}/scan`, "sensor_msgs/msg/LaserScan", (msg: any) => {
         if (logEnabled) {
           setMessageLog(prev => [...prev.slice(-100), {
             time: new Date().toLocaleTimeString(),
             topic: `${namespace}/scan`,
-            msg: { ranges: msg.ranges?.length, angle_min: msg.angle_min }
+            msg: { ranges: msg?.ranges?.length, angle_min: msg?.angle_min }
           }]);
         }
       }, 200);

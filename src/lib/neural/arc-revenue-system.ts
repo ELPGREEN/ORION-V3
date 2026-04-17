@@ -315,7 +315,7 @@ export async function getRevenueDashboard(): Promise<{
     pending,
     servicesSold,
     recentCharges: revenues?.slice(0, 5) || [],
-    recentPayouts: (payouts || []) as PayoutStatus[],
+    recentPayouts: (payouts || []) as unknown as PayoutStatus[],
   };
 }
 

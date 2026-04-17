@@ -129,8 +129,7 @@ export function compressContext(
   };
 }
 
-// Track chunks for RAG consciousness evaluation
-setRetrievedChunks(chunks.map(c => c.content));
+// (RAG consciousness chunk tracking is performed inside compressContextChunks before return)
 
 /**
  * Remove chunks with >60% content overlap.

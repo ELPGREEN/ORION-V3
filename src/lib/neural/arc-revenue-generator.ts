@@ -43,7 +43,7 @@ export interface RevenueSummary {
 
 // ═══ Revenue Generation Services ═══
 
-const SERVICE_PRICES = {
+export const SERVICE_PRICES = {
   // Serviços de pesquisa
   legal_research: 500,      // R$ 5,00 por pesquisa
   web_research: 300,        // R$ 3,00 por pesquisa
@@ -257,7 +257,7 @@ export async function payoutToOwnerStripe(
     // Update revenue status to paid
     await supabase
       .from("orion_revenues")
-      .update({ status: "paid", paid_at: Date.now() })
+      .update({ status: "paid", paid_at: new Date().toISOString() })
       .eq("source", ownerId)
       .eq("status", "earned");
     
@@ -332,7 +332,7 @@ export async function getRevenueDashboard(): Promise<{
   
   return {
     summary,
-    recentTransactions: (recent || []) as RevenueEntry[],
+    recentTransactions: (recent || []) as unknown as RevenueEntry[],
     earningsChart,
   };
 }

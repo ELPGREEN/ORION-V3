@@ -316,12 +316,13 @@ export async function useCredit(userId: string, amount: number): Promise<{
   remaining: number;
 }> {
   try {
-    const { data: profile } = await supabase
+    const { data: profileRaw } = await supabase
       .from("client_profiles")
-      .select("credits_balance")
+      .select("credits_balance, credits_used")
       .eq("user_id", userId)
       .maybeSingle();
 
+    const profile = profileRaw as { credits_balance?: number; credits_used?: number } | null;
     const current = profile?.credits_balance || 0;
     
     if (current < amount) {

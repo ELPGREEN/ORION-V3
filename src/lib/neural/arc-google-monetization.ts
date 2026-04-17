@@ -12,22 +12,26 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type GoogleServiceType = 
-  | "gmail_send"           // Enviar emails
-  | "gmail_read"           // Ler emails
-  | "calendar_event"        // Criar eventos
-  | "drive_upload"          // Upload arquivos
-  | "docs_create"          // Criar documentos
-  | "sheets_create"        // Criar planilhas
-  | "slides_create"        // Criar apresentações
-  | "vision_analyze"       // Análise de imagens
-  | "nl_analyze"          // NLP Language
-  | "translation_api"      // Tradução
-  | "maps_geocoding"      // Geocodificação
-  | "places_search"       // Buscar lugares
-  | "youtube_search"      // Buscar vídeos
-  | "youtube_analyze"     // Analisar canal
-  | "ads_campaign"        // Criar campanhas ads
-  | "analytics_report"   // Relatórios Analytics
+  | "gmail_send"
+  | "gmail_read"
+  | "calendar_event"
+  | "calendar_list"
+  | "drive_upload"
+  | "docs_create"
+  | "sheets_create"
+  | "slides_create"
+  | "vision_analyze"
+  | "nl_analyze"
+  | "translation_api"
+  | "maps_geocoding"
+  | "places_search"
+  | "directions_route"
+  | "youtube_search"
+  | "youtube_analyze"
+  | "youtube_transcript"
+  | "ads_campaign"
+  | "ads_report"
+  | "analytics_report"
 
 export interface GoogleServicePricing {
   id: string;

@@ -29,9 +29,11 @@ export interface FrameworkKnowledge {
   name: string;
   version: string;
   language: string;
+  category?: string;
   features: string[];
   useCases: string[];
   documentation: string;
+  usageCount?: number;
 }
 
 // ═══ Pre-configured Frameworks to Learn From ═══
@@ -108,7 +110,7 @@ export async function learnFramework(frameworkName: string): Promise<FrameworkKn
     f.name.toLowerCase() === frameworkName.toLowerCase()
   );
   if (existing) {
-    existing.usageCount++;
+    existing.usageCount = (existing.usageCount ?? 0) + 1;
     persist();
     return existing;
   }
@@ -131,9 +133,11 @@ export async function learnFramework(frameworkName: string): Promise<FrameworkKn
     name: fw.name,
     version: "latest",
     language: fw.language,
+    category: fw.category,
     features: extractFeatures(queryResult.data || ""),
     useCases: extractUseCases(fw.category),
     documentation: fw.docUrl,
+    usageCount: 1,
   };
   
   _frameworkKnowledge.push(knowledge);
