@@ -13,6 +13,18 @@ const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
 const EMBED_DIM = 768;
 const DEFAULT_COLLECTION = "orion_memory";
 
+// Per-collection schema config. Faces/voices use raw vectors (no text embed).
+const COLLECTION_CONFIG: Record<string, { dim: number; metric: "COSINE" | "L2" | "IP" }> = {
+  orion_memory: { dim: 768, metric: "COSINE" },
+  orion_legal: { dim: 768, metric: "COSINE" },
+  orion_faces: { dim: 512, metric: "L2" },
+  orion_voices: { dim: 256, metric: "COSINE" },
+};
+
+function cfgFor(name: string) {
+  return COLLECTION_CONFIG[name] ?? { dim: EMBED_DIM, metric: "COSINE" as const };
+}
+
 async function embed(text: string): Promise<number[]> {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${GEMINI_API_KEY}`,
