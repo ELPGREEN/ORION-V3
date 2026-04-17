@@ -287,8 +287,25 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (!navigator.mediaDevices?.getUserMedia) { toast.error("Câmera não suportada"); return; }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+      const video = videoRef.current;
+      if (!video) {
+        // Element not mounted — stop stream, retry once after 100ms, then abort silently
+        stream.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+        const retryAttempted = (startCamera as any).__retried;
+        if (!retryAttempted) {
+          (startCamera as any).__retried = true;
+          setTimeout(() => {
+            (startCamera as any).__retried = false;
+            if (videoRef.current) startCameraRef.current?.(options);
+          }, 120);
+        } else {
+          (startCamera as any).__retried = false;
+          toast.error("Vídeo não pronto. Tente novamente.");
+        }
+        return;
+      }
       streamRef.current = stream;
-      const video = videoRef.current!;
       video.srcObject = stream;
       await new Promise<void>((resolve) => {
         let settled = false;
