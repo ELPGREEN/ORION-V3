@@ -78,7 +78,8 @@ export function useOrionReasoning(
   }, []);
 
   const OWNER_ONLY_INTENT_REGEX = /auto_evolution|auto_construct|self_evolve|code_analysis|code_refactor|improve_code|analyze_code|refactor/i;
-  const VISUAL_COMMAND_REGEX = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+vendo|v[eê]|v[êe])|descrev[ae]\s+(a\s+)?(imagem|cena|ambiente)|analise\s+(a\s+)?(imagem|cena|c[aâ]mera)|identifique\s+(o\s+)?(objeto|rosto|texto)|leia\s+(o\s+)?texto|quantos?\s+.+\s+(tem|h[aá]))\b/i;
+  // Expanded — catches formal AND colloquial visual commands (olha, vê, esse aqui, isso aqui, aqui na minha mão, etc.)
+  const VISUAL_COMMAND_REGEX = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+vendo|v[eê]|v[êe])|descrev[ae]\s+(a\s+)?(imagem|cena|ambiente|isso|aqui|isto)|analise\s+(a\s+)?(imagem|cena|c[aâ]mera|isso|isto|aqui)|identifique\s+(o\s+)?(objeto|rosto|texto|isso|isto|aqui)|leia\s+(o\s+)?(texto|isso|isto|aqui)|quantos?\s+.+\s+(tem|h[aá])|olh[ae]\s*(a[ií]|aqui|agora|isso|isto|pra\s+(c[aá]|mim))?|v[eê]\s+(isso|isto|aqui|agora|a[ií])|que\s+(é\s+)?(isso|isto|aqui)|esse\s+aqui|essa\s+aqui|isso\s+aqui|isto\s+aqui|aqui\s+(na\s+(minha|sua)\s+(m[aã]o|frente)|do\s+lado)|t[aá]\s+vendo|consegue\s+ver|repara\s+(nisso|aqui|isso))\b/i;
 
   /** Cached getUser — avoids 6+ DB calls per interaction */
   const getCachedUser = useCallback(async () => {
