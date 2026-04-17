@@ -1491,11 +1491,13 @@ export type Database = {
           cpf: string | null
           created_at: string
           credits_balance: number
+          credits_used: number
           descricao_problema: string | null
           email: string
           id: string
           nome: string
           status: string
+          stripe_customer_id: string | null
           telefone: string | null
           tipo_caso: string | null
           updated_at: string
@@ -1506,11 +1508,13 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           credits_balance?: number
+          credits_used?: number
           descricao_problema?: string | null
           email: string
           id?: string
           nome: string
           status?: string
+          stripe_customer_id?: string | null
           telefone?: string | null
           tipo_caso?: string | null
           updated_at?: string
@@ -1521,11 +1525,13 @@ export type Database = {
           cpf?: string | null
           created_at?: string
           credits_balance?: number
+          credits_used?: number
           descricao_problema?: string | null
           email?: string
           id?: string
           nome?: string
           status?: string
+          stripe_customer_id?: string | null
           telefone?: string | null
           tipo_caso?: string | null
           updated_at?: string

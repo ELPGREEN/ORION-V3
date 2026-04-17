@@ -1,0 +1,3 @@
+ALTER TABLE public.client_profiles
+  ADD COLUMN IF NOT EXISTS credits_used NUMERIC NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(255);
