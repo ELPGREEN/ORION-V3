@@ -2399,6 +2399,25 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   // REGRA: VM Gemini Proxy (cache + speed) → Vertex AI (GCP credits) → Gemini API keys → fallbacks gratuitos
   if (stream) {
     const attemptedProviders: string[] = [];
+    const lastMsg = messages[messages.length - 1];
+    const lastText = typeof lastMsg?.content === "string" ? lastMsg.content : "";
+    const isShortQuery = lastText.trim().split(/\s+/).length <= 12;
+
+    // ── ULTRA-FAST PATH: queries curtas vão DIRETO pro OpenRouter (skip VM cold start) ──
+    if (isShortQuery && !hasImage && Deno.env.get("OPENROUTER_API_KEY")) {
+      try {
+        attemptedProviders.push("openrouter_fast");
+        const orResp = await callOpenRouterStreaming(messages);
+        if (orResp.ok && orResp.body) {
+          console.log("[Orion] ⚡ ULTRA-FAST: OpenRouter direto (query curta)");
+          return new Response(orResp.body, {
+            headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+          });
+        }
+      } catch (e) {
+        console.warn("[Orion] OpenRouter ultra-fast failed:", e);
+      }
+    }
 
     // ── ZERO: VM Gemini Proxy (text-only, cached, low-latency) ──
     // Timeout reduced to 2s — if VM doesn't respond fast, skip to Vertex AI
