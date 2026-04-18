@@ -12,6 +12,7 @@ import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { OrionShield } from "@/components/common/OrionShield";
 // GlobalOrionListener moved to DashboardLayout — no mic prompts on public pages
 import { PublicOrionListener } from "@/components/PublicOrionListener";
+import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
 import { VideoOverlay } from "@/components/orion/VideoOverlay";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import { PageLoader } from "@/components/common/PageLoader";
@@ -163,6 +164,7 @@ const App = () => (
           <OrionShield />
           {/* Global video overlay stays mounted once at app level */}
           <PublicOrionListener />
+          <OrionPlaylistBar />
           <VideoOverlay />
           <MouseTrailEffect />
           <CookieConsent />

@@ -14,7 +14,6 @@ import { MobileSidebarOverlay } from "./MobileSidebarOverlay";
 import { DashboardBackground } from "./DashboardBackground";
 import { MouseTrailEffect } from "./MouseTrailEffect";
 import { GlobalOrionListener } from "./GlobalOrionListener";
-import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
 
 import { ProdutorSidebar } from "./ProdutorSidebar";
 import { AfiliadoSidebar } from "./AfiliadoSidebar";
@@ -28,7 +27,6 @@ export default function DashboardLayout() {
   const { role, loading: roleLoading, isCliente, isAdvogado, isProdutor, isAfiliado, isNomade } = useUserRole();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [orionOverlayOpen, setOrionOverlayOpen] = useState(false);
   const { unreadCount, clearUnread } = useSignatureRealtime();
   const loading = authLoading || roleLoading;
   const [hasActiveJob, setHasActiveJob] = useState(false);
@@ -83,16 +81,6 @@ export default function DashboardLayout() {
     };
   }, []);
 
-  useEffect(() => {
-    const handleOverlayVisibility = (event: Event) => {
-      const customEvent = event as CustomEvent<{ open?: boolean }>;
-      setOrionOverlayOpen(!!customEvent.detail?.open);
-    };
-
-    window.addEventListener("orion-overlay-visibility", handleOverlayVisibility as EventListener);
-    return () => window.removeEventListener("orion-overlay-visibility", handleOverlayVisibility as EventListener);
-  }, []);
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -108,7 +96,7 @@ export default function DashboardLayout() {
 
   // Orion voice listener — only active inside the dashboard (not on public pages)
   // OrionPlaylistBar mounted globally so música/vídeo work in BOTH consultoria and rede neural panels
-  const orionListener = <><GlobalOrionListener />{!orionOverlayOpen && <OrionPlaylistBar />}</>;
+  const orionListener = <GlobalOrionListener />;
 
   const PageFallback = (
     <div className="flex items-center justify-center h-64">
