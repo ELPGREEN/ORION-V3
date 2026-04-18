@@ -4,6 +4,7 @@
  * falls back to 30s preview + YouTube embed for non-Premium
  */
 import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,7 @@ export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
   const progressInterval = useRef<ReturnType<typeof setInterval>>();
   const primedRef = useRef(false);
+  const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
 
   const sdk = useSpotifyPlayback(useSDK ? spotifyToken : null);
 
@@ -120,6 +122,21 @@ export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {
       setSpotifyToken(null);
     }
   }, [sdk.error, useSDK]);
+
+  useEffect(() => {
+    if (embedded || typeof document === "undefined") {
+      setPortalHost(null);
+      return;
+    }
+
+    const syncHost = () => {
+      setPortalHost(document.getElementById("orion-playlist-slot"));
+    };
+
+    syncHost();
+    const raf = window.requestAnimationFrame(syncHost);
+    return () => window.cancelAnimationFrame(raf);
+  }, [embedded, location.pathname]);
 
   const isSpotifySdkPlayback = playbackMode === "spotify-sdk";
   const isPlaying = isSpotifySdkPlayback ? sdk.isPlaying : isPlayingLocal;
@@ -487,35 +504,41 @@ export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {
   const allowVisibleRoute = location.pathname.startsWith("/dashboard") || location.pathname === "/consulta";
   const keepVisibleForPlayback = !!currentTrack || isPlaying || ytEmbedVisible;
   const isOnDashboard = location.pathname.startsWith("/dashboard");
-  // When floating (not embedded) AND on dashboard: hide fixed bar (the embedded header version handles it)
-  // Keep audio mounted always so playback persists
-  const shouldRenderUi = embedded || ((allowVisibleRoute || keepVisibleForPlayback) && !(isOnDashboard && !embedded));
+  const useHeaderSlot = !embedded && isOnDashboard && !!portalHost;
 
-  if (!shouldRenderUi) {
+  if (!allowVisibleRoute && !keepVisibleForPlayback) {
     return <audio ref={audioRef} preload="none" />;
   }
+
+  const rootContainerClass = embedded || useHeaderSlot
+    ? "w-full"
+    : "fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] w-[min(96vw,960px)]";
+
+  const closedButton = (
+    <div className={embedded || useHeaderSlot ? "flex justify-center w-full" : "fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] flex justify-center"}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 px-3 text-[10px] gap-1 text-muted-foreground hover:text-[#D4AF37] bg-background/80 backdrop-blur border border-border/40 rounded-full shadow-lg"
+        onClick={() => setBarVisible(true)}
+      >
+        <Music className="h-3 w-3" />
+        Abrir Playlist
+      </Button>
+    </div>
+  );
 
   if (!barVisible) {
     return (
       <>
         <audio ref={audioRef} preload="none" />
-        <div className={embedded ? "flex justify-center" : "fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] flex justify-center"}>
-          <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 px-3 text-[10px] gap-1 text-muted-foreground hover:text-[#D4AF37] bg-background/80 backdrop-blur border border-border/40 rounded-full shadow-lg"
-          onClick={() => setBarVisible(true)}
-        >
-          <Music className="h-3 w-3" />
-          Abrir Playlist
-          </Button>
-        </div>
+        {useHeaderSlot && portalHost ? createPortal(closedButton, portalHost) : closedButton}
       </>
     );
   }
 
-  return (
-    <div className={embedded ? "w-full" : "fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] w-[min(96vw,960px)]"}>
+  const playerUi = (
+    <div className={rootContainerClass}>
       <audio ref={audioRef} preload="none" />
 
       {sdk.needsActivation && (
