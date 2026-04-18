@@ -1,18 +1,35 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Orion GCP VM lifecycle:
- * - wakeOrionVm(): wakes the VM (debounced 60s).
- * - startVmKeepalive(): pings VM every 4min to prevent cold-start while Orion is active.
- * - stopVmKeepalive(): stops the heartbeat (call when Orion is fully deactivated).
+ * Orion GCP VM lifecycle — DESLIGADA por padrão.
+ *
+ * Decisão (usuário): Zilliz/RAG é a fonte primária de velocidade.
+ * A VM ficou lenta (cold-start + keepalive desperdiçava recursos),
+ * então cancelamos wake/keepalive. Para reativar manualmente
+ * (ex.: testes de TTS/STT/Vision na VM), defina:
+ *   localStorage.setItem("orion_vm_enabled", "true")
+ *
+ * orion-hub-client e useOrionCore continuam funcionais como fallback,
+ * mas sem warm-up automático = sem latência de boot ao abrir Orion.
  */
+const VM_FLAG = "orion_vm_enabled";
+
+function vmEnabled(): boolean {
+  try {
+    return localStorage.getItem(VM_FLAG) === "true";
+  } catch {
+    return false;
+  }
+}
+
 let lastWakeAt = 0;
 let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
-const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000; // 4 minutes
+const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000;
 
 export async function wakeOrionVm(): Promise<void> {
+  if (!vmEnabled()) return; // ⛔ VM desligada — Zilliz/RAG cuida de tudo
   const now = Date.now();
-  if (now - lastWakeAt < 60_000) return; // debounce 60s
+  if (now - lastWakeAt < 60_000) return;
   lastWakeAt = now;
 
   try {
@@ -30,12 +47,12 @@ export async function wakeOrionVm(): Promise<void> {
 }
 
 export function startVmKeepalive(): void {
-  if (keepaliveTimer) return; // already running
+  if (!vmEnabled()) return; // ⛔ keepalive desativado
+  if (keepaliveTimer) return;
   console.log("[OrionVmWake] 🔥 Keepalive started (4min interval)");
-  // Wake immediately, then every 4min
   wakeOrionVm();
   keepaliveTimer = setInterval(() => {
-    lastWakeAt = 0; // bypass debounce for scheduled pings
+    lastWakeAt = 0;
     wakeOrionVm();
   }, KEEPALIVE_INTERVAL_MS);
 }
