@@ -414,9 +414,6 @@ function OrionFloatingOverlay({
       </div>
 
       <div className="h-[calc(100%-40px)] overflow-y-auto">
-        <Suspense fallback={null}>
-          <OrionPlaylistBar />
-        </Suspense>
         <Suspense
           fallback={
             <div className="flex items-center justify-center h-full">
