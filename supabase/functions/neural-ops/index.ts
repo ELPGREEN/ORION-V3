@@ -2405,8 +2405,8 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     if (!hasImage) {
       const vmUrl = Deno.env.get("ORION_VM_URL");
       if (vmUrl) {
-        // 2.5s — VM warm responde <500ms. Cold start cai no Vertex.
-        const VM_TIMEOUT_MS = 2500;
+        // 800ms — VM warm responde <500ms. Cold start NÃO espera, vai direto pra OpenRouter/Vertex.
+        const VM_TIMEOUT_MS = 800;
         try {
           attemptedProviders.push("vm_gemini_proxy");
           const vmBody = {
