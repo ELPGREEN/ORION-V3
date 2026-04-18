@@ -120,6 +120,20 @@ export function OrionPlaylistBar() {
     ? (sdk.positionMs / sdk.currentTrack.durationMs) * 100
     : 0;
 
+  const getAutoplayCandidate = useCallback((availableTracks: UnifiedTrack[]) => {
+    if (useSDK && sdk.isReady && sdk.isPremium) {
+      return availableTracks.find((track) => track.source === "spotify" && track.spotifyUri)
+        ?? availableTracks.find((track) => !!track.preview_url)
+        ?? availableTracks.find((track) => track.source === "youtube" && !!track.videoId)
+        ?? null;
+    }
+
+    return availableTracks.find((track) => !!track.preview_url)
+      ?? availableTracks.find((track) => track.source === "youtube" && !!track.videoId)
+      ?? availableTracks.find((track) => !!track.external_url)
+      ?? null;
+  }, [useSDK, sdk.isReady, sdk.isPremium]);
+
   const sendYouTubeCommand = useCallback((command: "playVideo" | "pauseVideo") => {
     ytIframeRef.current?.contentWindow?.postMessage(JSON.stringify({
       event: "command",
@@ -330,6 +344,7 @@ export function OrionPlaylistBar() {
         case "search_and_play":
           if (q) {
             setQuery(q);
+            setBarVisible(true);
             (async () => {
               setLoading(true);
               try {
@@ -344,8 +359,12 @@ export function OrionPlaylistBar() {
                 } catch {}
                 setTracks(results);
                 setExpanded(true);
-                const playable = results.find(t => t.preview_url || t.videoId || t.spotifyUri);
-                if (playable) setTimeout(() => playTrack(playable), 300);
+                const playable = getAutoplayCandidate(results);
+                if (playable) {
+                  void playTrack(playable);
+                } else {
+                  toast.info("Nenhuma faixa reproduzível encontrada");
+                }
               } finally {
                 setLoading(false);
               }
@@ -363,13 +382,14 @@ export function OrionPlaylistBar() {
           playNext();
           break;
         case "prev":
+        case "previous":
           playPrev();
           break;
       }
     };
     window.addEventListener("orion-music-command", handler as EventListener);
     return () => window.removeEventListener("orion-music-command", handler as EventListener);
-  }, [playTrack, isPlaying, togglePlayPause, playNext, playPrev, currentTrack]);
+  }, [playTrack, isPlaying, togglePlayPause, playNext, playPrev, currentTrack, getAutoplayCandidate]);
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {

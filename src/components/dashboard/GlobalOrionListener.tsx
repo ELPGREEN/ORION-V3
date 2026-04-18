@@ -194,6 +194,18 @@ export function GlobalOrionListener() {
     }
   }, [location.pathname]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("orion-overlay-visibility", {
+      detail: { open: orionOpen && !isOnNeuralPage }
+    }));
+
+    return () => {
+      window.dispatchEvent(new CustomEvent("orion-overlay-visibility", {
+        detail: { open: false }
+      }));
+    };
+  }, [orionOpen, isOnNeuralPage]);
+
   if (isOnNeuralPage) return null;
 
   return (
@@ -413,18 +425,26 @@ function OrionFloatingOverlay({
         </div>
       </div>
 
-      <div className="h-[calc(100%-40px)] overflow-y-auto">
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center h-full">
-              <div className="relative w-20 h-20">
-                <PlasmaCore className="w-full h-full" />
+      <div className="h-[calc(100%-40px)] flex flex-col">
+        <div className="shrink-0 p-2 border-b border-primary/10 bg-black/30">
+          <Suspense fallback={null}>
+            <OrionPlaylistBar />
+          </Suspense>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full">
+                <div className="relative w-20 h-20">
+                  <PlasmaCore className="w-full h-full" />
+                </div>
               </div>
-            </div>
-          }
-        >
-          <NeuralVision skipWakeWord initialCommand={initialCommand} />
-        </Suspense>
+            }
+          >
+            <NeuralVision skipWakeWord initialCommand={initialCommand} />
+          </Suspense>
+        </div>
       </div>
 
       <style>{`
