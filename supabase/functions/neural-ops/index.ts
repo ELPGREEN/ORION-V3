@@ -1437,6 +1437,17 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const isIdentityQuery = IDENTITY_REGEX.test(questionStr) || IDENTITY_REGEX.test(contextStr);
   const isSimpleQuery = questionStr.length < 30 && !isComplexQuery && intentType !== "legal_search" && intentType !== "document_generation" && intentType !== "analysis";
 
+  // ═══ FAST CONVERSATIONAL PATH — skip RAG/Zilliz/web entirely ═══
+  // Intents puramente conversacionais não precisam de busca vetorial nem web.
+  // Economia: 1-3s por turno (embedding + Zilliz + RAG injection).
+  const CONVERSATIONAL_INTENTS = new Set([
+    "greeting", "self_identity", "owner_identity", "hearing_check",
+    "humor", "philosophy", "small_talk", "acknowledgement", "thanks",
+    "time_date", "weather_chat",
+  ]);
+  const conversationalRegex = /^(oi|ol[aá]|opa|fala|e\s*a[ií]|hey|ei|bom\s*dia|boa\s*tarde|boa\s*noite|tudo\s*bem|beleza|valeu|obrigad[oa]|t[aá]\s*me\s*ouvindo|me\s*ouve|consegue\s*me\s*ouvir|fala\s*sobre\s*(sua|tua|a)?\s*personalidade|quem\s*[eé]\s*voc[eê]|qual\s*[eé]\s*o\s*seu\s*nome)[\s!?.]*$/i;
+  const isConversational = CONVERSATIONAL_INTENTS.has(intentType || "") || conversationalRegex.test(questionStr.trim());
+
   // ═══ OPERA AI: Detect web search, URL, YouTube intents ═══
   const needsWebSearch = detectWebSearchIntent(questionStr) || intentType === "web_search";
   const urlsInQuery = detectURLsInQuery(questionStr);
@@ -1450,9 +1461,9 @@ async function buildOrionMessages(body: Record<string, unknown>) {
 
   if (!isDirectVoicePath) {
     [identityKnowledge, ragContext, webSearchContext, ...urlContexts] = await Promise.all([
-      isIdentityQuery ? fetchIdentityKnowledge() : Promise.resolve(""),
-      (!isSimpleQuery && questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve(""),
-      needsWebSearch ? fetchWebSearchContext(questionStr) : Promise.resolve(""),
+      (isIdentityQuery && !isConversational) ? fetchIdentityKnowledge() : Promise.resolve(""),
+      (!isSimpleQuery && !isConversational && questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve(""),
+      (needsWebSearch && !isConversational) ? fetchWebSearchContext(questionStr) : Promise.resolve(""),
       ...nonYoutubeUrls.map(u => fetchURLContext(u)),
       ...youtubeIds.map(id => fetchYouTubeContext(id)),
     ]);
