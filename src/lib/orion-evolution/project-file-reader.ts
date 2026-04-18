@@ -3,8 +3,13 @@
  * Reads source files from the running Vite dev server so Orion can self-evolve
  * without asking the user to paste code.
  *
- * Important: we intentionally avoid `import.meta.glob("/src/**/*")` here,
- * because that forces Vite to index the entire source tree into the web bundle
+/**
+ * ─── Project File Reader ───
+ * Reads source files from the running Vite dev server so Orion can self-evolve
+ * without asking the user to paste code.
+ *
+ * Important: we intentionally avoid a glob over the entire src tree here,
+ * because that forces Vite to index the whole source into the web bundle
  * and can blow up production builds on constrained environments.
  */
 
