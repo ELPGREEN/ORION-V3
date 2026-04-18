@@ -705,11 +705,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         VS.regions = result.regions; VS.motion = result.motion;
         VS.shapeDescriptors = result.shapeDescriptors || [];
         VS.sceneContext = result.sceneContext || null;
-        VS.yoloClassifications = result.yoloClassifications || [];
-        VS.textRegions = result.textRegions || [];
         VS.otsuThresholdValue = result.otsuThreshold || 0;
-        VS.kmeansResult = result.kmeansResult || null;
-        VS.imageQuality = result.imageQuality || null;
         setRegions(result.regions); setMotion(result.motion);
         if (!prevRef.current || prevRef.current.length !== result.pixels.length) prevRef.current = new Uint8ClampedArray(result.pixels);
         else prevRef.current.set(result.pixels);

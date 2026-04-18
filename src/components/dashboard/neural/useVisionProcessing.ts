@@ -312,45 +312,8 @@ export function processFrame(
   // ═══ Phase 6: Otsu Adaptive Thresholding (OpenCV THRESH_OTSU) ═══
   const otsu = otsuThreshold(gray, w, h);
 
-  // ═══ Phase 7: YOLO-Style Object Classification with Anchor Priors ═══
-  const yoloInputs = shapeDescriptors.map(sd => ({
-    ...sd,
-    avgHue: undefined as number | undefined,
-    avgSat: undefined as number | undefined,
-    avgLum: undefined as number | undefined,
-  }));
-  // Enrich with color from nearest region
-  for (const yi of yoloInputs) {
-    const nearest = regions.find(r =>
-      Math.abs(r.cx / w - yi.centroidX) < 0.15 &&
-      Math.abs(r.cy / h - yi.centroidY) < 0.15
-    );
-    if (nearest) {
-      const maxC = Math.max(nearest.avgR, nearest.avgG, nearest.avgB);
-      const minC = Math.min(nearest.avgR, nearest.avgG, nearest.avgB);
-      const delta = maxC - minC;
-      let hue = 0;
-      if (delta > 0) {
-        if (maxC === nearest.avgR) hue = ((nearest.avgG - nearest.avgB) / delta) % 6;
-        else if (maxC === nearest.avgG) hue = (nearest.avgB - nearest.avgR) / delta + 2;
-        else hue = (nearest.avgR - nearest.avgG) / delta + 4;
-        hue = ((hue * 60) + 360) % 360;
-      }
-      yi.avgHue = hue;
-      yi.avgSat = maxC - minC;
-      yi.avgLum = (nearest.avgR + nearest.avgG + nearest.avgB) / 3;
-    }
-  }
-  const yoloClassifications = classifyWithPriors(yoloInputs);
-
-  // ═══ Phase 8: Text Region Detection (PaddleOCR-inspired) ═══
-  const textRegions = detectTextRegions(gray, sobelMag, w, h);
-
-  // ═══ Phase 9: K-Means Color Segmentation (ENEGEP/USP: Hemamalini 2022) ═══
-  const kmeansResult = kMeansColorSegmentation(px, w, h, 5, 8);
-
-  // ═══ Phase 10: Image Quality Assessment (Laplacian variance + exposure) ═══
-  const imageQuality = assessImageQuality(gray, w, h);
+  // Phases 7-10 (YOLO priors, text regions, k-means, image quality) removed —
+  // their generators were always-empty stubs and no consumer ever read VS.* values.
 
   return {
     regions: regions.slice(0, 12),
@@ -358,11 +321,7 @@ export function processFrame(
     pixels: px,
     shapeDescriptors: shapeDescriptors.slice(0, 8),
     sceneContext,
-    yoloClassifications: yoloClassifications.slice(0, 6),
-    textRegions: textRegions.slice(0, 8),
     otsuThreshold: otsu.threshold,
-    kmeansResult,
-    imageQuality,
   };
 }
 
