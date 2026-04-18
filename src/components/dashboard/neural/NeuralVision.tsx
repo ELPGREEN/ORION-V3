@@ -272,6 +272,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const startCamera = useCallback(async (options?: { announce?: boolean }) => {
     const shouldAnnounce = options?.announce ?? true;
     if (!navigator.mediaDevices?.getUserMedia) { toast.error("Câmera não suportada"); return; }
+    // Wake GCP VM in parallel with camera startup (non-blocking)
+    wakeOrionVm().catch(() => {});
     try {
       if (streamRef.current) {
         console.info("[NeuralVision] camera request skipped: stream already active");
@@ -367,12 +369,12 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const isActivateVision = /\b(ativar?|ligar?|abrir?|liga|abre|inicia[r]?|começar?|come[çc]a)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     const isDeactivateVision = /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     if (isActivateVision) {
-      if (!active) { speakFast("Tudo, Ericson.").catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
+      if (!active) { speakFast("Tudo bem, Ericson.").catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
       else { speakFast("Já está ativa, Ericson.").catch(() => {}); }
       return;
     }
     if (isDeactivateVision) {
-      if (active) { speakFast("Tudo, Ericson.").catch(() => {}); stopCamera(); }
+      if (active) { speakFast("Tudo bem, Ericson.").catch(() => {}); stopCamera(); }
       else { speakFast("Já está desativada, Ericson.").catch(() => {}); }
       return;
     }
