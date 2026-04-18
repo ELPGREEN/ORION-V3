@@ -49,7 +49,6 @@ import { HudCollapsibleSection } from "./HudCollapsibleSection";
 
 // Real-time detection via Gemini Flash — optimized for real-time (1s default)
 const VISION_GEMINI_THROTTLE_MS = parseInt(import.meta.env.VITE_VISION_GEMINI_THROTTLE || '1000', 10);
-const VISION_MEDIAPIPE_FRAMESKIP = parseInt(import.meta.env.VITE_VISION_MEDIAPIPE_FRAMESKIP || '10', 10);
 const VISION_SUPERNET_FRAMESKIP = parseInt(import.meta.env.VITE_VISION_SUPERNET_FRAMESKIP || '15', 10);
 
 const _rtCache = { lastCall: 0, lastResult: null as RealTimeVisionResult | null };
@@ -156,8 +155,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const rtInferenceRunningRef = useRef(false);
   const fpsC = useRef(0);
   const lastFpsT = useRef(Date.now());
-  const lastLocalDetectionRef = useRef(0);
-  const localDetectionRunningRef = useRef(false);
   const mlDetectionsRef = useRef<Array<{ name: string; category: string; confidence: number; bbox?: { x: number; y: number; w: number; h: number } }>>([]);
 
   // Build detection stats from current state
