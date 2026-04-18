@@ -60,7 +60,11 @@ function ytToUnified(t: YTMusicTrack): UnifiedTrack {
   };
 }
 
-export function OrionPlaylistBar() {
+interface OrionPlaylistBarProps {
+  embedded?: boolean;
+}
+
+export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {}) {
   const location = useLocation();
   const [query, setQuery] = useState("");
   const [tracks, setTracks] = useState<UnifiedTrack[]>([]);
@@ -488,7 +492,10 @@ export function OrionPlaylistBar() {
   const displayProgress = isSpotifySdkPlayback ? sdkProgress : progress;
   const allowVisibleRoute = location.pathname.startsWith("/dashboard") || location.pathname === "/consulta";
   const keepVisibleForPlayback = !!currentTrack || isPlaying || ytEmbedVisible;
-  const shouldRenderUi = allowVisibleRoute || keepVisibleForPlayback;
+  const isOnDashboard = location.pathname.startsWith("/dashboard");
+  // When floating (not embedded) AND on dashboard: hide fixed bar (the embedded header version handles it)
+  // Keep audio mounted always so playback persists
+  const shouldRenderUi = embedded || ((allowVisibleRoute || keepVisibleForPlayback) && !(isOnDashboard && !embedded));
 
   if (!shouldRenderUi) {
     return <audio ref={audioRef} preload="none" />;
@@ -498,7 +505,7 @@ export function OrionPlaylistBar() {
     return (
       <>
         <audio ref={audioRef} preload="none" />
-        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] flex justify-center">
+        <div className={embedded ? "flex justify-center" : "fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] flex justify-center"}>
           <Button
           variant="ghost"
           size="sm"
@@ -514,7 +521,7 @@ export function OrionPlaylistBar() {
   }
 
   return (
-    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] w-[min(96vw,960px)]">
+    <div className={embedded ? "w-full" : "fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] w-[min(96vw,960px)]"}>
       <audio ref={audioRef} preload="none" />
 
       {sdk.needsActivation && (

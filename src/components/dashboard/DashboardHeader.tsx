@@ -1,8 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Search, Bell } from "lucide-react";
+import { Menu, Bell } from "lucide-react";
 import logoElp from "@/assets/logo-elp.webp";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
 
 interface DashboardHeaderProps {
   onMobileMenuOpen: () => void;
@@ -41,21 +41,9 @@ export function DashboardHeader({ onMobileMenuOpen, unreadCount, clearUnread }: 
           </Link>
         </div>
 
-        {/* Search */}
-        <div className="hidden md:flex flex-1 max-w-md mx-8">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-            <Input
-              placeholder="Buscar documentos, processos, clientes..."
-              className="pl-9 glass-panel-light border-border/20 h-9 text-xs focus:border-primary/40 transition-all placeholder:text-muted-foreground/40 rounded-lg"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
-                  navigate(`/dashboard/pesquisa-unificada?q=${encodeURIComponent((e.target as HTMLInputElement).value.trim())}`);
-                  (e.target as HTMLInputElement).value = "";
-                }
-              }}
-            />
-          </div>
+        {/* Playlist Bar (substitui a busca) */}
+        <div className="hidden md:flex flex-1 max-w-2xl mx-6 items-center">
+          <OrionPlaylistBar embedded />
         </div>
 
         <div className="flex items-center gap-3">
