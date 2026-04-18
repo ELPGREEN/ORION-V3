@@ -31,7 +31,7 @@ import { useSuperNetWS } from "./useSuperNetWS";
 import { useOrionReasoning } from "./useOrionReasoning";
 import { useWakeWord } from "./useWakeWord";
 import { CameraPiP, BoundingBoxOverlay } from "./VisionOverlayComponents";
-import { wakeOrionVm } from "@/lib/orion-vm-wake";
+import { wakeOrionVm, startVmKeepalive, stopVmKeepalive } from "@/lib/orion-vm-wake";
 import { FaceScannerOverlay } from "./FaceScannerOverlay";
 import { TeslaCoilVoltagePanel } from "./TeslaCoilVoltagePanel";
 import { ActiveInferenceIndicator } from "./ActiveInferenceIndicator";
@@ -272,8 +272,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const startCamera = useCallback(async (options?: { announce?: boolean }) => {
     const shouldAnnounce = options?.announce ?? true;
     if (!navigator.mediaDevices?.getUserMedia) { toast.error("Câmera não suportada"); return; }
-    // Wake GCP VM in parallel with camera startup (non-blocking)
-    wakeOrionVm().catch(() => {});
+    // Wake GCP VM and start keepalive (VM stays warm while Orion is active)
+    startVmKeepalive();
     try {
       if (streamRef.current) {
         console.info("[NeuralVision] camera request skipped: stream already active");
@@ -342,6 +342,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     setActive(false); VS.active = false; VS.regions = [];
     cancelAnimationFrame(animRef.current); prevRef.current = null;
     resetVisionCache();
+    stopVmKeepalive(); // Orion off → let VM idle
   }, []);
 
   const deactivateGracefully = useCallback(() => {
