@@ -367,13 +367,13 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const isActivateVision = /\b(ativar?|ligar?|abrir?|liga|abre|inicia[r]?|começar?|come[çc]a)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     const isDeactivateVision = /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     if (isActivateVision) {
-      if (!active) { speakFast("Visão ativada.").catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
-      else { speakFast("Visão já está ativa.").catch(() => {}); }
+      if (!active) { speakFast("Tudo, Ericson.").catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
+      else { speakFast("Já está ativa, Ericson.").catch(() => {}); }
       return;
     }
     if (isDeactivateVision) {
-      if (active) { speakFast("Desativando visão.").catch(() => {}); stopCamera(); }
-      else { speakFast("Visão já está desativada.").catch(() => {}); }
+      if (active) { speakFast("Tudo, Ericson.").catch(() => {}); stopCamera(); }
+      else { speakFast("Já está desativada, Ericson.").catch(() => {}); }
       return;
     }
     if (q.includes("calar") || q.includes("silêncio")) { try { speechSynthesis?.cancel(); } catch {} return; }

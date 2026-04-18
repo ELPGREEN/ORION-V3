@@ -262,9 +262,9 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
 
       case "vision_on": {
         window.dispatchEvent(new CustomEvent("orion-vision-command", {
-          detail: { action: "activate_vision" }
+          detail: { action: "activate_vision", userInitiated: true }
         }));
-        return ok(intent.intent, "Visão ativada.", null, t0);
+        return ok(intent.intent, "Tudo, Ericson.", null, t0);
       }
 
       case "legal":
