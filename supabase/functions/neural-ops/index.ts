@@ -1445,8 +1445,10 @@ async function buildOrionMessages(body: Record<string, unknown>) {
     "humor", "philosophy", "small_talk", "acknowledgement", "thanks",
     "time_date", "weather_chat",
   ]);
-  const conversationalRegex = /^(oi|ol[aá]|opa|fala|e\s*a[ií]|hey|ei|bom\s*dia|boa\s*tarde|boa\s*noite|tudo\s*bem|beleza|valeu|obrigad[oa]|t[aá]\s*me\s*ouvindo|me\s*ouve|consegue\s*me\s*ouvir|fala\s*sobre\s*(sua|tua|a)?\s*personalidade|quem\s*[eé]\s*voc[eê]|qual\s*[eé]\s*o\s*seu\s*nome)[\s!?.]*$/i;
-  const isConversational = CONVERSATIONAL_INTENTS.has(intentType || "") || conversationalRegex.test(questionStr.trim());
+  const conversationalRegex = /^(oi|ol[aá]|opa|fala|e\s*a[ií]|hey|ei|bom\s*dia|boa\s*tarde|boa\s*noite|tudo\s*bem|beleza|valeu|obrigad[oa]|t[aá]\s*me\s*ouvindo|me\s*ouve|consegue\s*me\s*ouvir|fala\s*sobre\s*(sua|tua|a)?\s*personalidade|quem\s*[eé]\s*voc[eê]|qual\s*[eé]\s*o\s*seu\s*nome|que\s*horas|que\s*dia|sim|n[aã]o|ok|certo|entendi|legal|massa|show|blz|t[aá]\s*bom|para|pare|continua|continue|repete|repita)[\s!?.]*$/i;
+  // Comandos curtos de ação (abrir/tocar/pausar) também pulam RAG/Zilliz
+  const fastCommandRegex = /^(abr[aei]r?|abre|toca|toque|coloca|coloque|p[aã]usa|pula|p[aá]ra|p[aá]re|liga|desliga|ativa|desativa|mostra|exibe)\s+\w+/i;
+  const isConversational = CONVERSATIONAL_INTENTS.has(intentType || "") || conversationalRegex.test(questionStr.trim()) || (questionStr.trim().split(/\s+/).length <= 4 && fastCommandRegex.test(questionStr.trim()));
 
   // ═══ OPERA AI: Detect web search, URL, YouTube intents ═══
   const needsWebSearch = detectWebSearchIntent(questionStr) || intentType === "web_search";
