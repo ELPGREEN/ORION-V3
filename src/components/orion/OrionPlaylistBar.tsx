@@ -496,22 +496,25 @@ export function OrionPlaylistBar() {
 
   if (!barVisible) {
     return (
-      <div className="relative z-10 flex justify-center py-1">
-        <Button
+      <>
+        <audio ref={audioRef} preload="none" />
+        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] flex justify-center">
+          <Button
           variant="ghost"
           size="sm"
-          className="h-6 px-3 text-[9px] gap-1 text-muted-foreground hover:text-[#D4AF37]"
+          className="h-7 px-3 text-[10px] gap-1 text-muted-foreground hover:text-[#D4AF37] bg-background/80 backdrop-blur border border-border/40 rounded-full shadow-lg"
           onClick={() => setBarVisible(true)}
         >
           <Music className="h-3 w-3" />
           Abrir Playlist
-        </Button>
-      </div>
+          </Button>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="relative z-10">
+    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] w-[min(96vw,960px)]">
       <audio ref={audioRef} preload="none" />
 
       {sdk.needsActivation && (
