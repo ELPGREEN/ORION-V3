@@ -59,7 +59,7 @@ export const FREE_MODELS: Record<LLMProvider, string[]> = {
   "lmstudio": ["llama3", "codellama"],
   "llama-cpp": ["llama-3-70b", "codellama-70b"],
   huggingface: ["meta-llama/Llama-3.1-70B-Instruct", "Qwen/Qwen2.5-Coder-32B-Instruct"],
-  openrouter: ["anthropic/claude-3.5-sonnet", "google/gemini-1.5-flash", "deepseek/deepseek-chat", "google/gemma-4-31b", "nvidia/nemotron-3-super", "nvidia/nemotron-nano-2-vl"],
+  openrouter: ["anthropic/claude-3.5-sonnet", "google/gemini-1.5-flash", "deepseek/deepseek-chat"],
   azure: [],
   vertex: [],
 };

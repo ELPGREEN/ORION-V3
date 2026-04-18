@@ -19,13 +19,12 @@ metadata:
 ### Cloud (Free Tier)
 - OpenAI: gpt-4o-mini, gpt-4o
 - Anthropic: claude-3-haiku, claude-3.5-sonnet
-- Google: gemini-1.5-flash, gemini-2.0-flash, gemini-4-31b (free multimodal)
+- Google: gemini-1.5-flash, gemini-2.0-flash
 - DeepSeek: deepseek-chat, deepseek-coder
 - Groq: llama-3.1-70b, mixtral-8x7b
 - Cohere: command-r-plus, command-r
 - Mistral: mistral-large, codestral
 - HuggingFace: Llama-3.1-70B, Qwen2.5-Coder
-- NVIDIA: nemotron-3-super (free reasoning), nemotron-nano-2-vl (free video reasoning)
 
 ### Local (Free)
 - Ollama: llama3, codellama, mistral
