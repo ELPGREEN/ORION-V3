@@ -12,8 +12,6 @@
  * because that forces Vite to index the whole source into the web bundle
  * and can blow up production builds on constrained environments.
  */
- * and can blow up production builds on constrained environments.
- */
 
 const PATH_REGEX = /(?:^|\s|["'`(])((?:src|supabase|public)\/[\w./-]+\.(?:tsx?|jsx?|css|json|md|sql|toml))/gi;
 
