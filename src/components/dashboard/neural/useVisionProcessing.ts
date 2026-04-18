@@ -104,11 +104,6 @@ function otsuThreshold(gray: Float32Array, _w: number, _h: number) {
   return { threshold };
 }
 
-function classifyWithPriors(_inputs: any[]): YOLOClassification[] { return []; }
-function detectTextRegions(_gray: Float32Array, _sobel: Float32Array, _w: number, _h: number): TextRegion[] { return []; }
-function kMeansColorSegmentation(_px: Uint8ClampedArray, _w: number, _h: number, _k: number, _iter: number): KMeansResult { return { clusters: [], k: 0 }; }
-function assessImageQuality(_gray: Float32Array, _w: number, _h: number): ImageQuality { return { sharpness: 0, exposure: 0, overall: 0 }; }
-
 // ═══ Types ═══
 export interface Region {
   label: string; category: string; confidence: number;
@@ -126,12 +121,8 @@ export const VS = {
   motion: { intensity: 0, direction: "●", zones: Array(9).fill(false), vectors: [] } as MotionData,
   shapeDescriptors: [] as ShapeDescriptor[],
   sceneContext: null as SceneContext | null,
-  yoloClassifications: [] as YOLOClassification[],
-  textRegions: [] as TextRegion[],
   otsuThresholdValue: 0,
-  kmeansResult: null as KMeansResult | null,
-  imageQuality: null as ImageQuality | null,
-  /** Real-time vision result (stub — ML engines removed) */
+  /** Real-time vision result (consumed by orion-ai-client). */
   realTimeVision: null as any,
   get active() { return OrbState.active; },
   set active(v: boolean) { OrbState.active = v; },
@@ -157,7 +148,7 @@ export function processFrame(
   ctx: CanvasRenderingContext2D,
   w: number, h: number,
   prevFrame: Uint8ClampedArray | null,
-): { regions: Region[]; motion: MotionData; pixels: Uint8ClampedArray; shapeDescriptors?: ShapeDescriptor[]; sceneContext?: SceneContext; yoloClassifications?: YOLOClassification[]; textRegions?: TextRegion[]; otsuThreshold?: number; kmeansResult?: KMeansResult; imageQuality?: ImageQuality } {
+): { regions: Region[]; motion: MotionData; pixels: Uint8ClampedArray; shapeDescriptors?: ShapeDescriptor[]; sceneContext?: SceneContext; otsuThreshold?: number } {
   const imgData = ctx.getImageData(0, 0, w, h);
   const px = imgData.data;
 
