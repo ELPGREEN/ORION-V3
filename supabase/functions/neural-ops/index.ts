@@ -2502,6 +2502,23 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       console.warn("[Orion] Vertex AI streaming failed:", e);
     }
 
+    // ── PROMOTED #1: OpenRouter streaming (usuário tem muitos tokens — prioridade máxima) ──
+    if (Deno.env.get("OPENROUTER_API_KEY")) {
+      try {
+        attemptedProviders.push("openrouter");
+        const orMessages = stripImageFromMessages(messages, hasImage);
+        const orResp = await callOpenRouterStreaming(orMessages);
+        if (orResp.ok && orResp.body) {
+          console.log("[Orion] ✅ Streaming via OpenRouter (PRIORITY #1 — tokens disponíveis)");
+          return new Response(orResp.body, {
+            headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+          });
+        }
+      } catch (e) {
+        console.warn("[Orion] OpenRouter streaming failed:", e);
+      }
+    }
+
     // ═══ REASONING MODE: Use DeepSeek R1 for complex reasoning tasks ═══
     if (useReasoningModel && Deno.env.get("DEEPSEEK_API_KEY")) {
       try {
@@ -2606,21 +2623,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       }
     }
 
-    // ── FALLBACK 2: OpenRouter streaming (PROMOVIDO — usuário tem muitos tokens) ──
-    if (Deno.env.get("OPENROUTER_API_KEY")) {
-      try {
-        attemptedProviders.push("openrouter");
-        const orResp = await callOpenRouterStreaming(textOnlyMessages);
-        if (orResp.ok && orResp.body) {
-          console.log("[Orion] Streaming via OpenRouter (fallback 2 — promoted)");
-          return new Response(orResp.body, {
-            headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-          });
-        }
-      } catch (e) {
-        console.warn("[Orion] OpenRouter streaming failed:", e);
-      }
-    }
+    // (OpenRouter já tentado como PRIORITY #1 acima)
 
     // ── FALLBACK 3: Groq streaming (fast, ~200ms first token) ──
     if (Deno.env.get("GROQ_API_KEY")) {
