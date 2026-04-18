@@ -39,28 +39,16 @@ import { CognitiveRouterBadge } from "./CognitiveRouterBadge";
 // Vision via Gemini on-demand + Zilliz visual memory cache
 import { captureVideoFrame } from "@/lib/vision/gemini-vision";
 import { analyzeFrameSmart, resetVisionCache } from "@/lib/vision/vision-cache";
-// Local vision via Transformers.js
-import { classifyImage } from "@/lib/huggingface/transformers-vision";
-// MediaPipe Tasks Vision for fast object detection
-import { FilesetResolver, ObjectDetector } from "@mediapipe/tasks-vision";
 // Vision Control Panel
 import { VisionControlPanel, DEFAULT_VISION_SETTINGS, type VisionSettings } from "./VisionControlPanel";
 // Vision Stats Panel
 import { VisionStatsPanel, DEFAULT_DETECTION_STATS, type DetectionStats } from "./VisionStatsPanel";
 import { HudCollapsibleSection } from "./HudCollapsibleSection";
-// MediaPipe Object Detector - faster and more accurate than DETR
-let mpObjectDetector: ObjectDetector | null = null;
-let mpVisionReady = false;
-// DISABLED: model URLs are broken (404) and causing errors
-// Use Gemini Vision API instead for all visual analysis
-async function preloadVisionModel() {
-  console.warn("[Vision] Local model preload DISABLED - using Gemini Vision API");
-  // Do nothing - models will not be loaded
-}
+// Note: Local MediaPipe/Transformers detector was removed — all vision goes through Gemini Vision API
+// (see detectRealTime below). Branch that depended on `mpObjectDetector` was dead code.
 
 // Real-time detection via Gemini Flash — optimized for real-time (1s default)
 const VISION_GEMINI_THROTTLE_MS = parseInt(import.meta.env.VITE_VISION_GEMINI_THROTTLE || '1000', 10);
-const VISION_MEDIAPIPE_FRAMESKIP = parseInt(import.meta.env.VITE_VISION_MEDIAPIPE_FRAMESKIP || '10', 10);
 const VISION_SUPERNET_FRAMESKIP = parseInt(import.meta.env.VITE_VISION_SUPERNET_FRAMESKIP || '15', 10);
 
 const _rtCache = { lastCall: 0, lastResult: null as RealTimeVisionResult | null };
@@ -167,8 +155,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const rtInferenceRunningRef = useRef(false);
   const fpsC = useRef(0);
   const lastFpsT = useRef(Date.now());
-  const lastLocalDetectionRef = useRef(0);
-  const localDetectionRunningRef = useRef(false);
   const mlDetectionsRef = useRef<Array<{ name: string; category: string; confidence: number; bbox?: { x: number; y: number; w: number; h: number } }>>([]);
 
   // Build detection stats from current state
@@ -729,40 +715,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         else prevRef.current.set(result.pixels);
       }
 
-// Throttle ML detection — optimized via VISION_MEDIAPIPE_FRAMESKIP env (default: every 10 frames)
-      if (frameCount % VISION_MEDIAPIPE_FRAMESKIP === 0 && !localDetectionRunningRef.current && video && video.readyState >= 2 && w > 0 && h > 0 && mpObjectDetector && mpVisionReady) {
-        const now = Date.now();
-        if (now - lastLocalDetectionRef.current > 300) {
-          lastLocalDetectionRef.current = now;
-          localDetectionRunningRef.current = true;
-          try {
-            const result = mpObjectDetector.detectForVideo(video, Date.now());
-            if (result && result.detections && result.detections.length > 0) {
-              const mapped = result.detections.map(d => ({
-                name: d.categories?.[0]?.categoryName || "object",
-                category: categoryFromSource(d.categories?.[0]?.categoryName || "object"),
-                confidence: d.categories?.[0]?.score || 0.5,
-                count: 1,
-                bbox: d.boundingBox ? { 
-                  x: d.boundingBox.originX / w, 
-                  y: d.boundingBox.originY / h, 
-                  w: d.boundingBox.width / w, 
-                  h: d.boundingBox.height / h 
-                } : undefined,
-                source: "mediapipe_efficientdet"
-              }));
-              setMlDetections(mapped);
-              mlDetectionsRef.current = mapped;
-              console.log("[LocalVision] MediaPipe:", mapped.map(m => `${m.name}(${(m.confidence*100).toFixed(0)}%)`).join(", "));
-            } else {
-              mlDetectionsRef.current = [];
-            }
-          } catch (err) {
-            console.warn("[LocalVision] MediaPipe detect error:", err);
-          }
-          localDetectionRunningRef.current = false;
-        }
-      }
+      // Local MediaPipe ML detection branch removed — was dead code (detector never loaded).
+      // Real-time vision is handled by detectRealTime() (Gemini) above.
+
       // Throttle SuperNet frames — optimized via VISION_SUPERNET_FRAMESKIP env (default: every 15 frames)
       if (frameCount % VISION_SUPERNET_FRAMESKIP === 0) sendSuperNetFrame();
       animRef.current = requestAnimationFrame(loop);
