@@ -2502,6 +2502,23 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       console.warn("[Orion] Vertex AI streaming failed:", e);
     }
 
+    // ── PROMOTED #1: OpenRouter streaming (usuário tem muitos tokens — prioridade máxima) ──
+    if (Deno.env.get("OPENROUTER_API_KEY")) {
+      try {
+        attemptedProviders.push("openrouter");
+        const orMessages = stripImageFromMessages(messages, hasImage);
+        const orResp = await callOpenRouterStreaming(orMessages);
+        if (orResp.ok && orResp.body) {
+          console.log("[Orion] ✅ Streaming via OpenRouter (PRIORITY #1 — tokens disponíveis)");
+          return new Response(orResp.body, {
+            headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+          });
+        }
+      } catch (e) {
+        console.warn("[Orion] OpenRouter streaming failed:", e);
+      }
+    }
+
     // ═══ REASONING MODE: Use DeepSeek R1 for complex reasoning tasks ═══
     if (useReasoningModel && Deno.env.get("DEEPSEEK_API_KEY")) {
       try {
