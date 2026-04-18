@@ -2,7 +2,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { Menu, Bell } from "lucide-react";
 import logoElp from "@/assets/logo-elp.webp";
 import { Button } from "@/components/ui/button";
-import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
 
 interface DashboardHeaderProps {
   onMobileMenuOpen: () => void;
@@ -41,9 +40,9 @@ export function DashboardHeader({ onMobileMenuOpen, unreadCount, clearUnread }: 
           </Link>
         </div>
 
-        {/* Playlist Bar (substitui a busca) */}
+        {/* Slot do player global no lugar da busca */}
         <div className="hidden md:flex flex-1 max-w-2xl mx-6 items-center">
-          <OrionPlaylistBar embedded />
+          <div id="orion-playlist-slot" className="w-full" />
         </div>
 
         <div className="flex items-center gap-3">
