@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
+import { useLocation } from "react-router-dom";
 import { searchSpotify, getSpotifyFriendlyError, getSpotifySdkToken } from "@/lib/spotify/spotify-service";
 import { searchYTMusicPublic, type YTMusicTrack } from "@/lib/youtube-music/youtube-music-service";
 import { useSpotifyPlayback } from "@/hooks/useSpotifyPlayback";
@@ -60,6 +61,7 @@ function ytToUnified(t: YTMusicTrack): UnifiedTrack {
 }
 
 export function OrionPlaylistBar() {
+  const location = useLocation();
   const [query, setQuery] = useState("");
   const [tracks, setTracks] = useState<UnifiedTrack[]>([]);
   const [loading, setLoading] = useState(false);
@@ -78,6 +80,7 @@ export function OrionPlaylistBar() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
   const progressInterval = useRef<ReturnType<typeof setInterval>>();
+  const primedRef = useRef(false);
 
   const sdk = useSpotifyPlayback(useSDK ? spotifyToken : null);
 
@@ -184,7 +187,11 @@ export function OrionPlaylistBar() {
     const audio = audioRef.current;
     if (audio && track.preview_url) {
       clearInterval(progressInterval.current);
+      audio.pause();
+      audio.currentTime = 0;
       audio.src = track.preview_url;
+      audio.preload = "auto";
+      audio.load();
       audio.volume = volume / 100;
       audio.muted = muted;
       audio.play().catch(() => {
@@ -214,8 +221,15 @@ export function OrionPlaylistBar() {
         setPlaybackMode("spotify-sdk");
         setIsPlayingLocal(true);
         setProgress(0);
-      } else {
+      } else if (track.preview_url) {
         playPreview(track);
+      } else if (track.external_url) {
+        window.open(track.external_url, "_blank", "noopener,noreferrer");
+        toast.info("Spotify bloqueou o preview — abrindo externamente");
+        return;
+      } else {
+        toast.error("Essa faixa não tem preview reproduzível");
+        return;
       }
     } else if (track.source === "spotify" && track.preview_url) {
       playPreview(track);
@@ -392,6 +406,30 @@ export function OrionPlaylistBar() {
   }, [playTrack, isPlaying, togglePlayPause, playNext, playPrev, currentTrack, getAutoplayCandidate]);
 
   useEffect(() => {
+    const primeAudio = () => {
+      const audio = audioRef.current;
+      if (!audio || primedRef.current) return;
+      audio.volume = volume / 100;
+      audio.muted = muted;
+      const playAttempt = audio.play();
+      if (playAttempt && typeof playAttempt.then === "function") {
+        playAttempt
+          .then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            primedRef.current = true;
+          })
+          .catch(() => {});
+      } else {
+        primedRef.current = true;
+      }
+    };
+
+    window.addEventListener("orion-music-prime", primeAudio);
+    return () => window.removeEventListener("orion-music-prime", primeAudio);
+  }, [muted, volume]);
+
+  useEffect(() => {
     const handler = (e: CustomEvent) => {
       const { action, value } = e.detail || {};
       let newVol = volume;
@@ -448,6 +486,13 @@ export function OrionPlaylistBar() {
   } : null;
 
   const displayProgress = isSpotifySdkPlayback ? sdkProgress : progress;
+  const allowVisibleRoute = location.pathname.startsWith("/dashboard") || location.pathname === "/consulta";
+  const keepVisibleForPlayback = !!currentTrack || isPlaying || ytEmbedVisible;
+  const shouldRenderUi = allowVisibleRoute || keepVisibleForPlayback;
+
+  if (!shouldRenderUi) {
+    return <audio ref={audioRef} preload="none" />;
+  }
 
   if (!barVisible) {
     return (
