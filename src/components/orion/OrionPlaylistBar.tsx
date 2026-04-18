@@ -60,7 +60,11 @@ function ytToUnified(t: YTMusicTrack): UnifiedTrack {
   };
 }
 
-export function OrionPlaylistBar() {
+interface OrionPlaylistBarProps {
+  embedded?: boolean;
+}
+
+export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {}) {
   const location = useLocation();
   const [query, setQuery] = useState("");
   const [tracks, setTracks] = useState<UnifiedTrack[]>([]);
@@ -488,7 +492,10 @@ export function OrionPlaylistBar() {
   const displayProgress = isSpotifySdkPlayback ? sdkProgress : progress;
   const allowVisibleRoute = location.pathname.startsWith("/dashboard") || location.pathname === "/consulta";
   const keepVisibleForPlayback = !!currentTrack || isPlaying || ytEmbedVisible;
-  const shouldRenderUi = allowVisibleRoute || keepVisibleForPlayback;
+  const isOnDashboard = location.pathname.startsWith("/dashboard");
+  // When floating (not embedded) AND on dashboard: hide fixed bar (the embedded header version handles it)
+  // Keep audio mounted always so playback persists
+  const shouldRenderUi = embedded || ((allowVisibleRoute || keepVisibleForPlayback) && !(isOnDashboard && !embedded));
 
   if (!shouldRenderUi) {
     return <audio ref={audioRef} preload="none" />;
