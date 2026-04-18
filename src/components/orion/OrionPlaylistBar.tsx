@@ -540,29 +540,28 @@ export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {
           ytEmbedMinimized ? "bottom-20 right-6 w-[220px] h-[44px]" : "bottom-20 right-6 w-[320px] h-[180px]"
         }`}
           style={{ boxShadow: "0 0 30px rgba(212,175,55,0.1)" }}>
-          {!ytEmbedMinimized ? (
-            <iframe
-              ref={ytIframeRef}
-              src={`https://www.youtube.com/embed/${currentTrack.videoId}?enablejsapi=1&autoplay=1&${muted ? "mute=1&" : ""}rel=0`}
-              className="w-full h-full"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              title="Orion Music Player"
-            />
-          ) : (
+          <iframe
+            ref={ytIframeRef}
+            src={`https://www.youtube.com/embed/${currentTrack.videoId}?enablejsapi=1&autoplay=1&${muted ? "mute=1&" : ""}rel=0`}
+            className={ytEmbedMinimized ? "absolute -left-[9999px] top-0 h-px w-px opacity-0 pointer-events-none" : "w-full h-full"}
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+            title="Orion Music Player"
+          />
+
+          {ytEmbedMinimized && (
             <div className="w-full h-full flex items-center gap-2 px-3 bg-black/80 cursor-pointer" onClick={() => setYtEmbedMinimized(false)}>
               <Youtube className="h-4 w-4 text-red-500 shrink-0" />
               <span className="text-[10px] text-white/80 truncate flex-1">{currentTrack.name}</span>
             </div>
           )}
+
           <Button variant="ghost" size="icon"
             className="absolute top-1 right-1 h-6 w-6 bg-black/60 hover:bg-black/80 z-10"
             onClick={() => {
-              if (!ytEmbedMinimized) {
-                sendYouTubeCommand("pauseVideo");
-              }
               setYtEmbedMinimized(true);
-              setIsPlayingLocal(false);
+              setIsPlayingLocal(true);
+              window.setTimeout(() => sendYouTubeCommand("playVideo"), 120);
             }}
             title="Minimizar vídeo">
             <X className="h-3 w-3" />
