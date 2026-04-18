@@ -14,7 +14,7 @@ import { MobileSidebarOverlay } from "./MobileSidebarOverlay";
 import { DashboardBackground } from "./DashboardBackground";
 import { MouseTrailEffect } from "./MouseTrailEffect";
 import { GlobalOrionListener } from "./GlobalOrionListener";
-import { FloatingMusicPlayer } from "@/components/orion/FloatingMusicPlayer";
+import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
 
 import { ProdutorSidebar } from "./ProdutorSidebar";
 import { AfiliadoSidebar } from "./AfiliadoSidebar";
@@ -96,7 +96,8 @@ export default function DashboardLayout() {
   if (!user) return null;
 
   // Orion voice listener — only active inside the dashboard (not on public pages)
-  const orionListener = <><GlobalOrionListener /><FloatingMusicPlayer /></>;
+  // OrionPlaylistBar mounted globally so música/vídeo work in BOTH consultoria and rede neural panels
+  const orionListener = <><GlobalOrionListener /><OrionPlaylistBar /></>;
 
   const PageFallback = (
     <div className="flex items-center justify-center h-64">

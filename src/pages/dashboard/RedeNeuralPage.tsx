@@ -46,8 +46,8 @@ import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 
 // Componentes modulares
 import { NeuralErrorBoundary } from "@/components/dashboard/neural/NeuralErrorBoundary";
-import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
-import { VideoOverlay } from "@/components/orion/VideoOverlay";
+// OrionPlaylistBar e VideoOverlay agora são globais (DashboardLayout + App.tsx)
+// para garantir mesma lógica de música/vídeo nos painéis de Consultoria e Rede Neural
 import { OrionIoTPanel } from "@/components/orion/OrionIoTPanel";
 import { lazyRetry } from "@/lib/lazyRetry";
 
@@ -613,8 +613,7 @@ export default function RedeNeuralPage() {
         </Suspense>
       </div>
 
-      {/* ═══ Playlist Orion — Horizontal Player Bar ═══ */}
-      <OrionPlaylistBar />
+      {/* OrionPlaylistBar agora é global (DashboardLayout) — funciona em Consultoria e Rede Neural */}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="relative z-10">
         <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#3B82F6]/15"
