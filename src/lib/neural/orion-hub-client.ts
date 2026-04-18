@@ -110,6 +110,13 @@ function markVmUp() {
  * Returns null if VM is unavailable (caller should fallback to HF Space).
  */
 async function callVM<T>(action: string, body: Record<string, unknown> = {}, timeout = 15_000): Promise<T | null> {
+  // ⛔ VM desligada por padrão (decisão: Zilliz/RAG primário, mais rápido)
+  // Reativar com: localStorage.setItem("orion_vm_enabled", "true")
+  try {
+    if (typeof localStorage !== "undefined" && localStorage.getItem("orion_vm_enabled") !== "true") {
+      return null;
+    }
+  } catch {}
   if (!isVmAvailable()) return null;
 
   try {
