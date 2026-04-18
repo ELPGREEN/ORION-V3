@@ -1,21 +1,12 @@
 /**
  * ─── Project File Reader ───
- * Reads source files from the running Vite dev server / built bundle so Orion
- * can self-evolve without asking the user to paste code.
+ * Reads source files from the running Vite dev server so Orion can self-evolve
+ * without asking the user to paste code.
  *
- * Strategy:
- *  1. Try Vite raw import (`/src/...?raw`) — works in dev.
- *  2. Fallback to public path fetch.
- *  3. As a last resort, use import.meta.glob to access bundled sources.
+ * Important: we intentionally avoid `import.meta.glob("/src/**/*")` here,
+ * because that forces Vite to index the entire source tree into the web bundle
+ * and can blow up production builds on constrained environments.
  */
-
-// Eagerly map every source file as raw text. Vite inlines this at build time,
-// so it works in both dev and production previews.
-const RAW_SOURCES = import.meta.glob("/src/**/*.{ts,tsx,js,jsx,css,json,md}", {
-  query: "?raw",
-  import: "default",
-  eager: false,
-}) as Record<string, () => Promise<string>>;
 
 const PATH_REGEX = /(?:^|\s|["'`(])((?:src|supabase|public)\/[\w./-]+\.(?:tsx?|jsx?|css|json|md|sql|toml))/gi;
 
@@ -23,43 +14,34 @@ const PATH_REGEX = /(?:^|\s|["'`(])((?:src|supabase|public)\/[\w./-]+\.(?:tsx?|j
 function normalizePath(raw: string): string {
   let p = raw.trim().replace(/^\.?\//, "");
   if (!p.startsWith("/")) p = "/" + p;
-  // Common typo: "app.tsx" → "App.tsx"
   p = p.replace(/\/src\/app\.tsx$/i, "/src/App.tsx");
   return p;
 }
 
-/** Try every known path resolution to load a file as text. */
+function unwrapRawModule(text: string): string {
+  const match = text.match(/export default\s+("|')([\s\S]*)\1/);
+  return match ? JSON.parse(`"${match[2]}"`) : text;
+}
+
+/** Try supported runtime strategies to load a file as text. */
 export async function readProjectFile(path: string): Promise<string | null> {
   const norm = normalizePath(path);
 
-  // 1) Glob lookup (case-insensitive fallback)
-  const direct = RAW_SOURCES[norm];
-  if (direct) {
-    try {
-      return await direct();
-    } catch {
-      /* fall through */
-    }
-  }
-
-  const lower = norm.toLowerCase();
-  const matchKey = Object.keys(RAW_SOURCES).find((k) => k.toLowerCase() === lower);
-  if (matchKey) {
-    try {
-      return await RAW_SOURCES[matchKey]();
-    } catch {
-      /* fall through */
-    }
-  }
-
-  // 2) Vite dev raw fetch
+  // Dev server raw fetch: works during local development and preview.
   try {
     const res = await fetch(`${norm}?raw`, { cache: "no-store" });
     if (res.ok) {
-      const text = await res.text();
-      // Vite returns a JS module wrapping the raw string in dev — strip it.
-      const m = text.match(/export default\s+("|')([\s\S]*)\1/);
-      return m ? JSON.parse(`"${m[2]}"`) : text;
+      return unwrapRawModule(await res.text());
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // Production fallback: if the caller exposes mirrored public files, allow them.
+  try {
+    const res = await fetch(norm, { cache: "no-store" });
+    if (res.ok) {
+      return await res.text();
     }
   } catch {
     /* ignore */
