@@ -505,7 +505,7 @@ export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {
     return (
       <>
         <audio ref={audioRef} preload="none" />
-        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] flex justify-center">
+        <div className={embedded ? "flex justify-center" : "fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] flex justify-center"}>
           <Button
           variant="ghost"
           size="sm"
@@ -521,7 +521,7 @@ export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {
   }
 
   return (
-    <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] w-[min(96vw,960px)]">
+    <div className={embedded ? "w-full" : "fixed bottom-3 left-1/2 -translate-x-1/2 z-[9990] w-[min(96vw,960px)]"}>
       <audio ref={audioRef} preload="none" />
 
       {sdk.needsActivation && (
