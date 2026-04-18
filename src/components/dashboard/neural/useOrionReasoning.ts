@@ -507,7 +507,10 @@ export function useOrionReasoning(
       const isDeactivateVision = /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(qLow);
       if (isActivateVision || isDeactivateVision) {
         const action = isActivateVision ? "activate_vision" : "deactivate_vision";
-        const msg = "Tudo bem, Ericson.";
+        const recognized = identityStatus === "creator" || identityStatus === "owner";
+        const userName = (window as any).__orionUserName;
+        const firstName = recognized && userName ? String(userName).trim().split(/\s+/)[0] : null;
+        const msg = firstName ? `Ok, ${firstName}.` : "Ok.";
         // Dispatch event for NeuralVision to handle camera start/stop (userInitiated bypasses keyword gate)
         window.dispatchEvent(new CustomEvent("orion-vision-command", { detail: { action, userInitiated: true } }));
         setChatHistory(prev => {

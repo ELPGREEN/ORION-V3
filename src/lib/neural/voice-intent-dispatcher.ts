@@ -257,14 +257,16 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         window.dispatchEvent(new CustomEvent("orion-vision-command", {
           detail: { action: "deactivate_vision", userInitiated: true }
         }));
-        return ok(intent.intent, "Tudo bem, Ericson.", null, t0);
+        const { getOkResponse } = await import("./getOkResponse");
+        return ok(intent.intent, getOkResponse(identityStatus), null, t0);
       }
 
       case "vision_on": {
         window.dispatchEvent(new CustomEvent("orion-vision-command", {
           detail: { action: "activate_vision", userInitiated: true }
         }));
-        return ok(intent.intent, "Tudo bem, Ericson.", null, t0);
+        const { getOkResponse } = await import("./getOkResponse");
+        return ok(intent.intent, getOkResponse(identityStatus), null, t0);
       }
 
       case "legal":
