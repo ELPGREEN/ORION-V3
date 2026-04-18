@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
+import { useLocation } from "react-router-dom";
 import { searchSpotify, getSpotifyFriendlyError, getSpotifySdkToken } from "@/lib/spotify/spotify-service";
 import { searchYTMusicPublic, type YTMusicTrack } from "@/lib/youtube-music/youtube-music-service";
 import { useSpotifyPlayback } from "@/hooks/useSpotifyPlayback";
@@ -60,6 +61,7 @@ function ytToUnified(t: YTMusicTrack): UnifiedTrack {
 }
 
 export function OrionPlaylistBar() {
+  const location = useLocation();
   const [query, setQuery] = useState("");
   const [tracks, setTracks] = useState<UnifiedTrack[]>([]);
   const [loading, setLoading] = useState(false);
@@ -484,6 +486,13 @@ export function OrionPlaylistBar() {
   } : null;
 
   const displayProgress = isSpotifySdkPlayback ? sdkProgress : progress;
+  const allowVisibleRoute = location.pathname.startsWith("/dashboard") || location.pathname === "/consulta";
+  const keepVisibleForPlayback = !!currentTrack || isPlaying || ytEmbedVisible;
+  const shouldRenderUi = allowVisibleRoute || keepVisibleForPlayback;
+
+  if (!shouldRenderUi) {
+    return <audio ref={audioRef} preload="none" />;
+  }
 
   if (!barVisible) {
     return (
