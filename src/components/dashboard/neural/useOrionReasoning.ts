@@ -518,7 +518,8 @@ export function useOrionReasoning(
           return [...clean, { role: "ai" as const, text: `👁️ ${msg}`, time: new Date().toLocaleTimeString("pt-BR") }];
         });
         setThought(msg);
-        speak(msg).catch(() => {});
+        // Speak ONLY for text input (voice path already speaks via routeOrionCommand/dispatcher)
+        if (source !== "voice") speak(msg).catch(() => {});
         cleanupProcessing();
         processNextInQueue();
         return;

@@ -365,6 +365,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // ═══ Centralized command router — single source of truth for all commands ═══
   // Uses voice-intent-dispatcher for real execution (media, navigation, etc.)
+  const lastVisionCmdAtRef = useRef(0);
   const routeOrionCommand = useCallback(async (cmd: string) => {
     const q = cmd.toLowerCase().trim();
     console.log("[NeuralVision] 🔀 routeOrionCommand:", cmd, { supernetConnected, identityStatus });
@@ -374,14 +375,21 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const userName = (window as any).__orionUserName;
     const firstName = recognized && userName ? String(userName).trim().split(/\s+/)[0] : null;
     const okMsg = firstName ? `Ok, ${firstName}.` : "Ok.";
-    if (isActivateVision) {
-      if (!active) { speakFast(okMsg).catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
-      else { speakFast(okMsg).catch(() => {}); }
-      return;
-    }
-    if (isDeactivateVision) {
-      if (active) { speakFast(okMsg).catch(() => {}); stopCamera(); }
-      else { speakFast(okMsg).catch(() => {}); }
+    if (isActivateVision || isDeactivateVision) {
+      // Dedup: ignore the same vision command within 4s (STT often fires interim+final twice)
+      const now = Date.now();
+      if (now - lastVisionCmdAtRef.current < 4000) {
+        console.log("[NeuralVision] 🚫 Vision command debounced (duplicate within 4s)");
+        return;
+      }
+      lastVisionCmdAtRef.current = now;
+      if (isActivateVision) {
+        if (!active) { speakFast(okMsg).catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
+        // already active: stay silent (no repetition)
+      } else {
+        if (active) { speakFast(okMsg).catch(() => {}); stopCamera(); }
+        // already off: stay silent
+      }
       return;
     }
     if (q.includes("calar") || q.includes("silêncio")) { try { speechSynthesis?.cancel(); } catch {} return; }
