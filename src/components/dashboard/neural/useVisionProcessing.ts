@@ -1,11 +1,10 @@
 import { OrbState } from "./EnergyOrb";
 import { VoiceState } from "@/hooks/useNeuralVoice";
 // ═══ Inline stubs for removed vision modules ═══
+// NOTE (Fase 3 audit): YOLOClassification, TextRegion, KMeansResult, ImageQuality were
+// removed from the pipeline — their generators were always-empty stubs and no consumer
+// ever read the values back from VS.*. Only SceneContext is still produced.
 type SceneContext = { label: string; confidence: number; lighting: string };
-type YOLOClassification = { label: string; confidence: number; bbox: number[] };
-type TextRegion = { x: number; y: number; w: number; h: number; confidence: number };
-type KMeansResult = { clusters: { r: number; g: number; b: number; count: number }[]; k: number };
-type ImageQuality = { sharpness: number; exposure: number; overall: number };
 
 function gaussianBlur3x3(data: Float32Array, w: number, h: number): Float32Array {
   // Simple box blur approximation
