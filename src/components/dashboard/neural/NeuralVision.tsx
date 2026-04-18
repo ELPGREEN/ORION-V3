@@ -370,14 +370,18 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     console.log("[NeuralVision] 🔀 routeOrionCommand:", cmd, { supernetConnected, identityStatus });
     const isActivateVision = /\b(ativar?|ligar?|abrir?|liga|abre|inicia[r]?|começar?|come[çc]a)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     const isDeactivateVision = /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
+    const recognized = identityStatus === "creator" || identityStatus === "owner";
+    const userName = (window as any).__orionUserName;
+    const firstName = recognized && userName ? String(userName).trim().split(/\s+/)[0] : null;
+    const okMsg = firstName ? `Ok, ${firstName}.` : "Ok.";
     if (isActivateVision) {
-      if (!active) { speakFast("Tudo bem, Ericson.").catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
-      else { speakFast("Já está ativa, Ericson.").catch(() => {}); }
+      if (!active) { speakFast(okMsg).catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
+      else { speakFast(okMsg).catch(() => {}); }
       return;
     }
     if (isDeactivateVision) {
-      if (active) { speakFast("Tudo bem, Ericson.").catch(() => {}); stopCamera(); }
-      else { speakFast("Já está desativada, Ericson.").catch(() => {}); }
+      if (active) { speakFast(okMsg).catch(() => {}); stopCamera(); }
+      else { speakFast(okMsg).catch(() => {}); }
       return;
     }
     if (q.includes("calar") || q.includes("silêncio")) { try { speechSynthesis?.cancel(); } catch {} return; }
