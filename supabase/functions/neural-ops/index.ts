@@ -2606,13 +2606,29 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       }
     }
 
-    // ── FALLBACK 2: Groq streaming (fast, ~200ms first token) ──
+    // ── FALLBACK 2: OpenRouter streaming (PROMOVIDO — usuário tem muitos tokens) ──
+    if (Deno.env.get("OPENROUTER_API_KEY")) {
+      try {
+        attemptedProviders.push("openrouter");
+        const orResp = await callOpenRouterStreaming(textOnlyMessages);
+        if (orResp.ok && orResp.body) {
+          console.log("[Orion] Streaming via OpenRouter (fallback 2 — promoted)");
+          return new Response(orResp.body, {
+            headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+          });
+        }
+      } catch (e) {
+        console.warn("[Orion] OpenRouter streaming failed:", e);
+      }
+    }
+
+    // ── FALLBACK 3: Groq streaming (fast, ~200ms first token) ──
     if (Deno.env.get("GROQ_API_KEY")) {
       try {
         attemptedProviders.push("groq");
         const groqResp = await callGroqStreaming(textOnlyMessages);
         if (groqResp.ok && groqResp.body) {
-          console.log("[Orion] Streaming via Groq (fallback 2)");
+          console.log("[Orion] Streaming via Groq (fallback 3)");
           return new Response(groqResp.body, {
             headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
           });
@@ -2622,13 +2638,13 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       }
     }
 
-    // ── FALLBACK 3: DeepSeek streaming ──
+    // ── FALLBACK 4: DeepSeek streaming ──
     if (Deno.env.get("DEEPSEEK_API_KEY")) {
       try {
         attemptedProviders.push("deepseek");
         const dsResp = await callDeepSeekStreaming(textOnlyMessages);
         if (dsResp.ok && dsResp.body) {
-          console.log("[Orion] Streaming via DeepSeek (fallback 3)");
+          console.log("[Orion] Streaming via DeepSeek (fallback 4)");
           return new Response(dsResp.body, {
             headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
           });
@@ -2638,35 +2654,19 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       }
     }
 
-    // ── FALLBACK 4: Mistral streaming ──
+    // ── FALLBACK 5: Mistral streaming ──
     if (Deno.env.get("MISTRAL_API_KEY")) {
       try {
         attemptedProviders.push("mistral");
         const mistralResp = await callMistralStreaming(textOnlyMessages);
         if (mistralResp.ok && mistralResp.body) {
-          console.log("[Orion] Streaming via Mistral (fallback 4)");
+          console.log("[Orion] Streaming via Mistral (fallback 5)");
           return new Response(mistralResp.body, {
             headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
           });
         }
       } catch (e) {
         console.warn("[Orion] Mistral streaming failed:", e);
-      }
-    }
-
-    // ── FALLBACK 5: OpenRouter streaming ──
-    if (Deno.env.get("OPENROUTER_API_KEY")) {
-      try {
-        attemptedProviders.push("openrouter");
-        const orResp = await callOpenRouterStreaming(textOnlyMessages);
-        if (orResp.ok && orResp.body) {
-          console.log("[Orion] Streaming via OpenRouter (fallback 5)");
-          return new Response(orResp.body, {
-            headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-          });
-        }
-      } catch (e) {
-        console.warn("[Orion] OpenRouter streaming failed:", e);
       }
     }
 
