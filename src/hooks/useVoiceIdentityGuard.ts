@@ -31,19 +31,24 @@ export interface GuestSession {
 
 export function useVoiceIdentityGuard() {
   const { user } = useAuth();
-  const [identityStatus, setIdentityStatus] = useState<IdentityStatus>("unknown");
+  const isCreatorAccount = user?.email ? isOwnerEmail(user.email) : false;
+
+  // Owner emails (Ericson Piccoli accounts) bypass voice verification entirely.
+  // Initialize as "creator" synchronously to avoid any VoiceIdentityGate flicker.
+  const [identityStatus, setIdentityStatus] = useState<IdentityStatus>(
+    isCreatorAccount ? "creator" : "unknown"
+  );
   const [guestSession, setGuestSession] = useState<GuestSession | null>(null);
   const [isCheckingVoice, setIsCheckingVoice] = useState(false);
   const guestSessionIdRef = useRef<string | null>(null);
 
-  const isCreatorAccount = user?.email ? isOwnerEmail(user.email) : false;
-
+  // Re-assert creator status whenever the auth user changes (e.g. after login).
   useEffect(() => {
-    if (isCreatorAccount && identityStatus === "unknown") {
+    if (isCreatorAccount && identityStatus !== "creator") {
       console.log("[VoiceGuard] 👑 Owner email detected — auto-setting identity to 'creator'");
       setIdentityStatus("creator");
     }
-  }, [isCreatorAccount, identityStatus]);
+  }, [isCreatorAccount, identityStatus, user?.email]);
 
   const verifyVoiceIdentity = useCallback(async (audioBlob: Blob): Promise<IdentityStatus> => {
     if (isCreatorAccount) {
