@@ -88,6 +88,13 @@ export function GlobalOrionListener() {
     handleWakeActivate,
   );
 
+  // ═══ Hard-stop wake word the moment the overlay opens — frees mic for NeuralVision ═══
+  useEffect(() => {
+    if (orionOpen) {
+      try { stopWakeWordListener(); } catch {}
+    }
+  }, [orionOpen, stopWakeWordListener]);
+
   // ═══ Listen for wake word events from useWakeWord ═══
   useEffect(() => {
     if (isOnNeuralPage || orionOpen || !permissionsGranted) return;
