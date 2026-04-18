@@ -4,6 +4,7 @@
  * falls back to 30s preview + YouTube embed for non-Premium
  */
 import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,7 @@ export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
   const progressInterval = useRef<ReturnType<typeof setInterval>>();
   const primedRef = useRef(false);
+  const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
 
   const sdk = useSpotifyPlayback(useSDK ? spotifyToken : null);
 
@@ -120,6 +122,21 @@ export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {
       setSpotifyToken(null);
     }
   }, [sdk.error, useSDK]);
+
+  useEffect(() => {
+    if (embedded || typeof document === "undefined") {
+      setPortalHost(null);
+      return;
+    }
+
+    const syncHost = () => {
+      setPortalHost(document.getElementById("orion-playlist-slot"));
+    };
+
+    syncHost();
+    const raf = window.requestAnimationFrame(syncHost);
+    return () => window.cancelAnimationFrame(raf);
+  }, [embedded, location.pathname]);
 
   const isSpotifySdkPlayback = playbackMode === "spotify-sdk";
   const isPlaying = isSpotifySdkPlayback ? sdk.isPlaying : isPlayingLocal;
