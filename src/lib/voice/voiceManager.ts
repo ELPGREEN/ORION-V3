@@ -6,7 +6,7 @@
 import { voiceConfidenceFilter } from './voiceConfidenceFilter';
 import { voiceFeedbackIndicator } from './voiceFeedbackIndicator';
 import { createGCPSTTSession } from './gcpSTT';
-import { speakWithGeminiTTS, isGeminiTTSAvailable } from './geminiTTS';
+import { speakWithGeminiTTS, isGeminiTTSAvailable } from '../tts/geminiTTS';
 import { getVoiceLatencyOptimizer, VoiceLatencyMetrics } from './voice-latency-optimizer';
 import { connectGeminiLive, GeminiLiveSession } from './geminiLive';
 import { Speech, isNativeSpeechAvailable } from './native-speech-plugin';
