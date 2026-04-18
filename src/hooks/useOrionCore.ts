@@ -80,6 +80,14 @@ async function callOrionCore<T>(action: string, payload: Record<string, unknown>
     }
   }
 
+  // ⛔ VM desligada por padrão (decisão: Zilliz/RAG primário, mais rápido)
+  // Reativar com: localStorage.setItem("orion_vm_enabled", "true")
+  try {
+    if (typeof localStorage !== "undefined" && localStorage.getItem("orion_vm_enabled") !== "true") {
+      return null;
+    }
+  } catch {}
+
   try {
     const { data, error } = await supabase.functions.invoke("orion-vm-proxy", {
       body: { action, ...payload },
