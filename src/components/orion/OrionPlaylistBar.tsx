@@ -286,13 +286,7 @@ export function OrionPlaylistBar({ embedded = false }: OrionPlaylistBarProps = {
       return;
     }
 
-    if (ytEmbedMinimized) {
-      setYtEmbedMinimized(false);
-      window.setTimeout(() => sendYouTubeCommand("playVideo"), 120);
-      setIsPlayingLocal(true);
-      return;
-    }
-
+    // Mesmo minimizado, o iframe está montado off-screen — apenas alterna play/pause via postMessage
     if (isPlayingLocal) {
       sendYouTubeCommand("pauseVideo");
       setIsPlayingLocal(false);
