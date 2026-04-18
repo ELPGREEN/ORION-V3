@@ -507,9 +507,9 @@ export function useOrionReasoning(
       const isDeactivateVision = /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(qLow);
       if (isActivateVision || isDeactivateVision) {
         const action = isActivateVision ? "activate_vision" : "deactivate_vision";
-        const msg = isActivateVision ? "Visão ativada." : "Visão desativada.";
-        // Dispatch event for NeuralVision to handle camera start/stop
-        window.dispatchEvent(new CustomEvent("orion-vision-command", { detail: { action } }));
+        const msg = "Tudo, Ericson.";
+        // Dispatch event for NeuralVision to handle camera start/stop (userInitiated bypasses keyword gate)
+        window.dispatchEvent(new CustomEvent("orion-vision-command", { detail: { action, userInitiated: true } }));
         setChatHistory(prev => {
           const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
           return [...clean, { role: "ai" as const, text: `👁️ ${msg}`, time: new Date().toLocaleTimeString("pt-BR") }];
