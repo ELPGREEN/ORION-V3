@@ -2623,21 +2623,7 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
       }
     }
 
-    // ── FALLBACK 2: OpenRouter streaming (PROMOVIDO — usuário tem muitos tokens) ──
-    if (Deno.env.get("OPENROUTER_API_KEY")) {
-      try {
-        attemptedProviders.push("openrouter");
-        const orResp = await callOpenRouterStreaming(textOnlyMessages);
-        if (orResp.ok && orResp.body) {
-          console.log("[Orion] Streaming via OpenRouter (fallback 2 — promoted)");
-          return new Response(orResp.body, {
-            headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-          });
-        }
-      } catch (e) {
-        console.warn("[Orion] OpenRouter streaming failed:", e);
-      }
-    }
+    // (OpenRouter já tentado como PRIORITY #1 acima)
 
     // ── FALLBACK 3: Groq streaming (fast, ~200ms first token) ──
     if (Deno.env.get("GROQ_API_KEY")) {
