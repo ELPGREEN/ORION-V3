@@ -1,11 +1,10 @@
 import { OrbState } from "./EnergyOrb";
 import { VoiceState } from "@/hooks/useNeuralVoice";
 // ═══ Inline stubs for removed vision modules ═══
+// NOTE (Fase 3 audit): YOLOClassification, TextRegion, KMeansResult, ImageQuality were
+// removed from the pipeline — their generators were always-empty stubs and no consumer
+// ever read the values back from VS.*. Only SceneContext is still produced.
 type SceneContext = { label: string; confidence: number; lighting: string };
-type YOLOClassification = { label: string; confidence: number; bbox: number[] };
-type TextRegion = { x: number; y: number; w: number; h: number; confidence: number };
-type KMeansResult = { clusters: { r: number; g: number; b: number; count: number }[]; k: number };
-type ImageQuality = { sharpness: number; exposure: number; overall: number };
 
 function gaussianBlur3x3(data: Float32Array, w: number, h: number): Float32Array {
   // Simple box blur approximation
@@ -105,11 +104,6 @@ function otsuThreshold(gray: Float32Array, _w: number, _h: number) {
   return { threshold };
 }
 
-function classifyWithPriors(_inputs: any[]): YOLOClassification[] { return []; }
-function detectTextRegions(_gray: Float32Array, _sobel: Float32Array, _w: number, _h: number): TextRegion[] { return []; }
-function kMeansColorSegmentation(_px: Uint8ClampedArray, _w: number, _h: number, _k: number, _iter: number): KMeansResult { return { clusters: [], k: 0 }; }
-function assessImageQuality(_gray: Float32Array, _w: number, _h: number): ImageQuality { return { sharpness: 0, exposure: 0, overall: 0 }; }
-
 // ═══ Types ═══
 export interface Region {
   label: string; category: string; confidence: number;
@@ -127,12 +121,8 @@ export const VS = {
   motion: { intensity: 0, direction: "●", zones: Array(9).fill(false), vectors: [] } as MotionData,
   shapeDescriptors: [] as ShapeDescriptor[],
   sceneContext: null as SceneContext | null,
-  yoloClassifications: [] as YOLOClassification[],
-  textRegions: [] as TextRegion[],
   otsuThresholdValue: 0,
-  kmeansResult: null as KMeansResult | null,
-  imageQuality: null as ImageQuality | null,
-  /** Real-time vision result (stub — ML engines removed) */
+  /** Real-time vision result (consumed by orion-ai-client). */
   realTimeVision: null as any,
   get active() { return OrbState.active; },
   set active(v: boolean) { OrbState.active = v; },
@@ -158,7 +148,7 @@ export function processFrame(
   ctx: CanvasRenderingContext2D,
   w: number, h: number,
   prevFrame: Uint8ClampedArray | null,
-): { regions: Region[]; motion: MotionData; pixels: Uint8ClampedArray; shapeDescriptors?: ShapeDescriptor[]; sceneContext?: SceneContext; yoloClassifications?: YOLOClassification[]; textRegions?: TextRegion[]; otsuThreshold?: number; kmeansResult?: KMeansResult; imageQuality?: ImageQuality } {
+): { regions: Region[]; motion: MotionData; pixels: Uint8ClampedArray; shapeDescriptors?: ShapeDescriptor[]; sceneContext?: SceneContext; otsuThreshold?: number } {
   const imgData = ctx.getImageData(0, 0, w, h);
   const px = imgData.data;
 
@@ -322,45 +312,8 @@ export function processFrame(
   // ═══ Phase 6: Otsu Adaptive Thresholding (OpenCV THRESH_OTSU) ═══
   const otsu = otsuThreshold(gray, w, h);
 
-  // ═══ Phase 7: YOLO-Style Object Classification with Anchor Priors ═══
-  const yoloInputs = shapeDescriptors.map(sd => ({
-    ...sd,
-    avgHue: undefined as number | undefined,
-    avgSat: undefined as number | undefined,
-    avgLum: undefined as number | undefined,
-  }));
-  // Enrich with color from nearest region
-  for (const yi of yoloInputs) {
-    const nearest = regions.find(r =>
-      Math.abs(r.cx / w - yi.centroidX) < 0.15 &&
-      Math.abs(r.cy / h - yi.centroidY) < 0.15
-    );
-    if (nearest) {
-      const maxC = Math.max(nearest.avgR, nearest.avgG, nearest.avgB);
-      const minC = Math.min(nearest.avgR, nearest.avgG, nearest.avgB);
-      const delta = maxC - minC;
-      let hue = 0;
-      if (delta > 0) {
-        if (maxC === nearest.avgR) hue = ((nearest.avgG - nearest.avgB) / delta) % 6;
-        else if (maxC === nearest.avgG) hue = (nearest.avgB - nearest.avgR) / delta + 2;
-        else hue = (nearest.avgR - nearest.avgG) / delta + 4;
-        hue = ((hue * 60) + 360) % 360;
-      }
-      yi.avgHue = hue;
-      yi.avgSat = maxC - minC;
-      yi.avgLum = (nearest.avgR + nearest.avgG + nearest.avgB) / 3;
-    }
-  }
-  const yoloClassifications = classifyWithPriors(yoloInputs);
-
-  // ═══ Phase 8: Text Region Detection (PaddleOCR-inspired) ═══
-  const textRegions = detectTextRegions(gray, sobelMag, w, h);
-
-  // ═══ Phase 9: K-Means Color Segmentation (ENEGEP/USP: Hemamalini 2022) ═══
-  const kmeansResult = kMeansColorSegmentation(px, w, h, 5, 8);
-
-  // ═══ Phase 10: Image Quality Assessment (Laplacian variance + exposure) ═══
-  const imageQuality = assessImageQuality(gray, w, h);
+  // Phases 7-10 (YOLO priors, text regions, k-means, image quality) removed —
+  // their generators were always-empty stubs and no consumer ever read VS.* values.
 
   return {
     regions: regions.slice(0, 12),
@@ -368,11 +321,7 @@ export function processFrame(
     pixels: px,
     shapeDescriptors: shapeDescriptors.slice(0, 8),
     sceneContext,
-    yoloClassifications: yoloClassifications.slice(0, 6),
-    textRegions: textRegions.slice(0, 8),
     otsuThreshold: otsu.threshold,
-    kmeansResult,
-    imageQuality,
   };
 }
 

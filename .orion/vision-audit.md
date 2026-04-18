@@ -1,6 +1,25 @@
 # Auditoria do Pipeline de Visão Neural
 
-> Atualizado após Fase 2.
+> Atualizado após Fase 2 + Fase 3 (parcial — A1, A3 aplicados; M4 aguardando dados).
+
+## ✅ Fase 3 — A1 + A3 concluídas
+
+**A1 — `multimodal-pipeline.ts`** reescrito:
+- Removidos stubs `runAgenticVisionCycle`, `getAgentState`, `formatAgentContextForPrompt`
+- Removidos campos mortos `agentCycle`, `agentContext`, `realTimeVision` (input) e `sensorsActive.agent`
+- Pipeline reduzido a uma façade limpa sobre `orchestratorSee` + `orchestratorRecognizeFace`
+- Confirmado: zero consumidores in-tree (kept como façade reutilizável)
+
+**A3 — `useVisionProcessing.processFrame`** enxugado:
+- Removidas Phase 7 (YOLO priors), Phase 8 (text regions), Phase 9 (k-means), Phase 10 (image quality)
+- Removidos types órfãos `YOLOClassification`, `TextRegion`, `KMeansResult`, `ImageQuality`
+- Removidos campos `yoloClassifications`, `textRegions`, `kmeansResult`, `imageQuality` do `VS` global
+- Atualizado consumer em `NeuralVision.tsx` (escritas removidas)
+- **Mantido** `realTimeVision` em `VS` — é consumido por `orion-ai-client.ts:92` no prompt do LLM
+
+**Ganho mensurável:** ~60 linhas a menos no `processFrame`. Por frame economiza loop de enriquecimento HSV (`yoloInputs.map` + `regions.find` por shape) — ordem de 5-15ms em câmera 640×480 com ~8 shapes.
+
+
 
 ## ✅ Fase 2 — concluída (limpeza segura)
 
