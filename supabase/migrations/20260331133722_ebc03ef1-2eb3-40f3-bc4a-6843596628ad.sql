@@ -55,9 +55,6 @@ BEGIN
   RETURN true;
 END; $$;
 
-CREATE OR REPLACE FUNCTION public.trigger_set_updated_at()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $$;
 
 CREATE OR REPLACE FUNCTION public.cleanup_expired_cache()
 RETURNS INTEGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$

@@ -39,17 +39,7 @@ FOR SELECT TO authenticated USING (auth.uid() = user_id);
 -- ==============================================
 -- 3. FIX: trigger_set_updated_at - set search_path
 -- ==============================================
-CREATE OR REPLACE FUNCTION public.trigger_set_updated_at()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$;
+-- 3. FIX: trigger_set_updated_at - set search_path (already handled in initial migration)
 
 -- ==============================================
 -- 4. FIX: foreign table "wrapper" - revoke API access
