@@ -17,6 +17,7 @@ const learnFromDetection = (_obj: any, _desc: any) => {};
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
 // hf-vision-gate REMOVED — was downloading ~50MB of WASM models in browser
 import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
+import { stripMarkdown } from "@/lib/utils/text-utils";
 
 // ═══ INTENT CLASSIFICATION REGEX CONSTANTS — Pre-compiled for performance ═══
 const HEARING_CHECK_PATTERNS = /\b(voc[eê]\s+consegue\s+me\s+ouvir|voc[eê]\s+me\s+ouve|t[aá]\s+me\s+ouvindo|est[aá]\s+me\s+ouvindo|consegue\s+me\s+escutar|me\s+escuta)\b/i;
@@ -50,6 +51,12 @@ const COMO_ESTOU_PATTERNS = /como\s+(eu\s+)?(estou|tô)\b/i;
 const O_QUE_ESTOU_PATTERNS = /o que (é|estou|tô|tenho)\b/i;
 const O_QUE_E_SAO_TEM_PATTERNS = /o que (é|são|tem)/i;
 const START_QUESTION_PATTERNS = /^(o que|como|por que|quando|onde|quem|qual|quais|quanto)\b/i;
+const YOUTUBE_DOMAIN_REGEX = /youtube\.com|youtu\.be/i;
+const TO_REGEX = /\bt[oô]\b/i;
+
+// ═══ STREAMING PROCESSING REGEX — Pre-compiled for performance ═══
+const SENTENCE_END_REGEX = /^(.*?[.!?…;])\s/s;
+const LONG_CLAUSE_REGEX = /^(.{40,}?,)\s/;
 
 // ═══ GLOBAL AUTH CACHE — avoids 3-6 supabase.auth.getUser() calls per interaction ═══
 let _globalAuthCache: { user: { id: string; email?: string | null } | null; ts: number } = { user: null, ts: 0 };
@@ -811,24 +818,15 @@ export async function analyzeFrameStreaming(
               // including semicolons, colons with long clauses, and natural pauses
               const unspoken = accumulated.slice(spokenUpTo);
               // Match sentences ending with . ! ? … or ; followed by space/newline
-              const sentenceMatch = unspoken.match(/^(.*?[.!?…;])\s/s);
+              const sentenceMatch = unspoken.match(SENTENCE_END_REGEX);
               // Also detect shorter clauses (>80 chars) at comma boundaries for faster speech start
               const longClauseMatch = !sentenceMatch && unspoken.length > 80
-                ? unspoken.match(/^(.{40,}?,)\s/)
+                ? unspoken.match(LONG_CLAUSE_REGEX)
                 : null;
               const matchResult = sentenceMatch || longClauseMatch;
 
               if (matchResult) {
-                let sentence = matchResult[1].trim()
-                  // Clean markdown artifacts for speech
-                  .replace(/\*{1,3}/g, "")
-                  .replace(/_{1,3}/g, "")
-                  .replace(/#{1,6}\s*/g, "")
-                  .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-                  .replace(/https?:\/\/\S+/g, "")
-                  .replace(/\/\/[^\n]*/g, "")
-                  .replace(/<[^>]*>/g, "")
-                  .replace(/[─═╔╗╚╝║]/g, "")
+                let sentence = stripMarkdown(matchResult[1].trim())
                   .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️]/g, "")
                   .trim();
 
@@ -848,7 +846,7 @@ export async function analyzeFrameStreaming(
         onToken(accumulated);
         const remaining = accumulated.slice(spokenUpTo).trim();
         if (remaining && !remaining.startsWith("```") && !remaining.startsWith("{")) {
-          onSentence(remaining.replace(/```json[\s\S]*?```/g, "").replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "").trim());
+          onSentence(stripMarkdown(remaining.replace(/```json[\s\S]*?```/g, "")));
         }
       } else {
         throw networkErr;
@@ -860,15 +858,7 @@ export async function analyzeFrameStreaming(
 
     const remaining = accumulated.slice(spokenUpTo).trim();
     if (remaining && !remaining.startsWith("```") && !remaining.startsWith("{")) {
-      const cleaned = remaining
-        .replace(/```json[\s\S]*?```/g, "")
-        .replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "")
-        .replace(/#{1,6}\s*/g, "")
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-        .replace(/https?:\/\/\S+/g, "")
-        .replace(/\/\/[^\n]*/g, "")
-        .replace(/<[^>]*>/g, "")
-        .replace(/[─═╔╗╚╝║]/g, "")
+      const cleaned = stripMarkdown(remaining.replace(/```json[\s\S]*?```/g, ""))
         .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️]/g, "")
         .trim();
       if (cleaned && cleaned.length > 2) onSentence(cleaned);
@@ -908,16 +898,7 @@ export async function analyzeFrameStreaming(
     }
 
     // Strip ALL markdown/formatting artifacts for clean output
-    cleanDescription = cleanDescription
-      .replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "")
-      .replace(/#{1,6}\s*/g, "")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      .replace(/https?:\/\/\S+/g, "")
-      .replace(/\/\/[^\n]*/g, "")
-      .replace(/<[^>]*>/g, "")
-      .replace(/[─═╔╗╚╝║]/g, "")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
+    cleanDescription = stripMarkdown(cleanDescription).replace(/\n{3,}/g, "\n\n");
 
     if (learnedFacts.length > 0) addUserMemory(learnedFacts);
     return { description: cleanDescription || null, learnedFacts, identifiedObjects };

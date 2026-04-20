@@ -28,6 +28,31 @@ import { createGCPSTTSession, type GCPSTTSession } from "@/lib/voice/gcpSTT";
 // ═══ Constants ═══
 const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
 const STOP_PATTERNS = /^(cala?\s*a?\s*boca|para|pare|silêncio|chega|shh+|pera|peraí|espera|stop|shut\s+up|wait)\s*[.!]?$/i;
+
+// ═══ SPEECH CLEANING REGEX — Pre-compiled for performance ═══
+const CODE_BLOCK_REGEX = /```[\s\S]*?```/g;
+const INLINE_CODE_REGEX = /`([^`]+)`/g;
+const MARKDOWN_BOLD_REGEX = /\*{1,3}([^*]+)\*{1,3}/g;
+const MARKDOWN_ITALIC_REGEX = /_{1,3}([^_]+)_{1,3}/g;
+const MARKDOWN_HEADER_REGEX = /^#{1,6}\s+/gm;
+const MARKDOWN_LINK_REGEX = /\[([^\]]+)\]\([^)]+\)/g;
+const URL_CLEAN_REGEX = /https?:\/\/\S+/g;
+const HTML_TAG_CLEAN_REGEX = /<[^>]*>/g;
+const JS_COMMENT_REGEX = /\/\/[^\n]*/g;
+const JS_BLOCK_COMMENT_REGEX = /\/\*[\s\S]*?\*\//g;
+const LIST_ITEM_REGEX = /^[\s]*[-•*+]\s+/gm;
+const NUMBERED_LIST_REGEX = /^\s*\d+\.\s+/gm;
+const BOX_DRAWING_REGEX = /[─═╔╗╚╝║╠╣╬┌┐└┘├┤┬┴┼]/g;
+const ICON_EMOJI_REGEX = /[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/g;
+const PAUSE_PUNCTUATION_REGEX = /[;:!?]+/g;
+const DASH_REGEX = /[–—]+/g;
+const COMMA_REGEX = /,+/g;
+const DOT_REGEX = /\.+/g;
+const NEWLINE_REGEX = /\n+/g;
+const WHITESPACE_REGEX = /\s+/g;
+
+const DIACRITICS_REGEX = /[\u0300-\u036f]/g;
+const NON_ALPHANUM_REGEX = /[^\p{L}\p{N}\s]/gu;
 const ECHO_WINDOW_MS = 18000;
 const ECHO_JACCARD_THRESHOLD = 0.35;
 const MAX_CONSECUTIVE_ABORTS = 5;
@@ -52,28 +77,28 @@ function ensureVoiceBootstrapOnce() {
 export function cleanTextForSpeech(text: string): string {
   return text
     // Strip code blocks and markdown
-    .replace(/```[\s\S]*?```/g, " código omitido ")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/\*{1,3}([^*]+)\*{1,3}/g, "$1")
-    .replace(/_{1,3}([^_]+)_{1,3}/g, "$1")
-    .replace(/^#{1,6}\s+/gm, "")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/https?:\/\/\S+/g, "")
-    .replace(/<[^>]*>/g, "")
-    .replace(/\/\/[^\n]*/g, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^[\s]*[-•*+]\s+/gm, " ")
-    .replace(/^\s*\d+\.\s+/gm, " ")
+    .replace(CODE_BLOCK_REGEX, " código omitido ")
+    .replace(INLINE_CODE_REGEX, "$1")
+    .replace(MARKDOWN_BOLD_REGEX, "$1")
+    .replace(MARKDOWN_ITALIC_REGEX, "$1")
+    .replace(MARKDOWN_HEADER_REGEX, "")
+    .replace(MARKDOWN_LINK_REGEX, "$1")
+    .replace(URL_CLEAN_REGEX, "")
+    .replace(HTML_TAG_CLEAN_REGEX, "")
+    .replace(JS_COMMENT_REGEX, "")
+    .replace(JS_BLOCK_COMMENT_REGEX, "")
+    .replace(LIST_ITEM_REGEX, " ")
+    .replace(NUMBERED_LIST_REGEX, " ")
     .replace(/\|/g, " ")
-    .replace(/[─═╔╗╚╝║╠╣╬┌┐└┘├┤┬┴┼]/g, "")
-    .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/g, "")
+    .replace(BOX_DRAWING_REGEX, "")
+    .replace(ICON_EMOJI_REGEX, "")
     // KEY: Remove ALL pause-inducing punctuation — continuous flow
-    .replace(/[;:!?]+/g, " ")
-    .replace(/[–—]+/g, " ")
-    .replace(/,+/g, " ")
-    .replace(/\.+/g, " ")
-    .replace(/\n+/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(PAUSE_PUNCTUATION_REGEX, " ")
+    .replace(DASH_REGEX, " ")
+    .replace(COMMA_REGEX, " ")
+    .replace(DOT_REGEX, " ")
+    .replace(NEWLINE_REGEX, " ")
+    .replace(WHITESPACE_REGEX, " ")
     .trim();
 }
 
@@ -81,9 +106,9 @@ export function normalizeSpeechText(text: string): string {
   return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
+    .replace(DIACRITICS_REGEX, "")
+    .replace(NON_ALPHANUM_REGEX, " ")
+    .replace(WHITESPACE_REGEX, " ")
     .trim();
 }
 
@@ -240,8 +265,19 @@ function isEchoOf(input: string, spoken: string): boolean {
   const wordsA = new Set(input.split(/\s+/).filter(w => w.length > 2));
   const wordsB = new Set(spoken.split(/\s+/).filter(w => w.length > 2));
   if (wordsA.size < 2 || wordsB.size < 2) return false;
+
   let overlap = 0;
-  wordsA.forEach(w => { if (wordsB.has(w)) overlap++; });
+  // Optimized intersection loop over the smaller set
+  if (wordsA.size <= wordsB.size) {
+    for (const word of wordsA) {
+      if (wordsB.has(word)) overlap++;
+    }
+  } else {
+    for (const word of wordsB) {
+      if (wordsA.has(word)) overlap++;
+    }
+  }
+
   // Use min of both sets for stricter matching
   return overlap / Math.min(wordsA.size, wordsB.size) > ECHO_JACCARD_THRESHOLD;
 }
