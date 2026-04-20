@@ -19,18 +19,28 @@ import {
   CircuitBoard, Radar, Activity, Settings,
 } from "lucide-react";
 
+/* ─── Orlon Core AI (motor de inteligência) ─── */
+const orionCoreModules = [
+  { title: "Quantum LLM Router", desc: "Seleção inteligente de modelos. 20+ providers com scoring quântico simulado." },
+  { title: "Multi-Agent System", desc: "11 agentes especializados: pesquisa, construção, leitura, execução, planejamento, multimodal, segurança, jurídico, código, automação, escrita." },
+  { title: "RAG Consciousness", desc: "Raciocínio jurídico com padrões simbólicos, composicional e contextual." },
+  { title: "Meta-Learning Engine", desc: "Auto-otimização contínua. O sistema aprende com cada interação." },
+  { title: "Vision Pipeline", desc: "Detecção de objetos, OCR e reconhecimento facial em tempo real." },
+  { title: "Voice Engine", desc: "STT + TTS com treinamento de voz personalizado." },
+];
+
 /* ─── Módulos Industriais (cobertura completa) ─── */
 const industrialModules = [
   {
     icon: Bot,
     title: "Robótica Autônoma",
-    desc: "AGVs, AMRs e manipuladores com ROS2 Humble/Jazzy, SLAM, Nav2 e planejamento de trajetória em tempo real.",
+    desc: "AGVs, AMRs e manipuladores com ROS2 Humble/Jazzy, SLAM, Nav2 e planejamento de trajetória.Orion Core Orchestration para coordenamento multinode.",
     tags: ["ROS2", "Nav2", "SLAM"],
   },
   {
     icon: Eye,
     title: "Visão Computacional",
-    desc: "Inspeção automatizada com YOLOv8, detecção de defeitos, leitura de códigos e classificação com 99.2% de acurácia.",
+    desc: "Inspeção automatizada com YOLOv8/v9, detecção de defeitos, OCR industrial e classificação. Integração com Vision Pipeline para análise em tempo real.",
     tags: ["YOLOv8", "OCR", "Classificação"],
   },
   {
@@ -66,13 +76,13 @@ const industrialModules = [
   {
     icon: Radio,
     title: "SCADA & IoT Industrial",
-    desc: "OPC-UA, Modbus TCP/RTU, PROFINET e EtherCAT integrados. Telemetria em tempo real via MQTT/WSS.",
+    desc: "OPC-UA, Modbus TCP/RTU, PROFINET e EtherCAT integrados via ROS2 Bridge. Telemetria em tempo real via MQTT/WSS.",
     tags: ["OPC-UA", "MQTT", "EtherCAT"],
   },
   {
     icon: BrainCircuit,
     title: "Manutenção Preditiva",
-    desc: "IA analisa vibrações, temperatura e padrões de desgaste para prever falhas com até 72h de antecedência.",
+    desc: "IA analisa vibrações, temperatura e padrões de desgaste via Meta-Learning Engine para prever falhas com até 72h de antecedência.",
     tags: ["Vibração", "ML", "Previsão"],
   },
   {
@@ -97,12 +107,12 @@ const industrialModules = [
 
 /* ─── Setores atendidos ─── */
 const sectors = [
-  { icon: Truck, name: "Mineração & OTR", desc: "Reciclagem robótica inteligente de pneus OTR gigantes (57''–63'') — Smart Robotic Line da ELP Green Technology com Orion IA integrada. Até 10 t/h por planta, 17-18 fábricas até 2030." },
-  { icon: Factory, name: "Automotivo", desc: "Soldagem, pintura, montagem e inspeção em linhas de produção automotiva." },
-  { icon: CircuitBoard, name: "Eletrônicos", desc: "Pick-and-place SMD, inspeção AOI e montagem de PCBs com precisão micrométrica." },
-  { icon: Activity, name: "Farmacêutico", desc: "Ambientes cleanroom, rastreabilidade lot-level, compliance GMP e serialização." },
-  { icon: PackageCheck, name: "Logística", desc: "AGVs de armazém, sorting automatizado, paletização e integração WMS." },
-  { icon: Settings, name: "Metalurgia", desc: "Fundição assistida, tratamento térmico monitorado e controle de qualidade metalográfico." },
+  { icon: Truck, name: "Mineração & OTR", desc: "Reciclagem robótica inteligente de pneumáticos OTR gigantes (57''–63'') — Smart Robotic Line da ELP Green Technology com Orion IA. Quantum Router + Multi-Agent para otimização. Até 10 t/h por planta." },
+  { icon: Factory, name: "Automotivo", desc: "Soldagem, pintura, montagem e inspeção com visão computacional. Meta-Learning para melhoria contínua." },
+  { icon: CircuitBoard, name: "Eletrônicos", desc: "Pick-and-place SMD, inspeção AOI e montagem de PCBs. Visão com YOLOv8 para 99.2% de acurácia." },
+  { icon: Activity, name: "Farmacêutico", desc: "Ambientes cleanroom com IA de monitoramento. RAG Consciousness para compliance GMP e serialização." },
+  { icon: PackageCheck, name: "Logística", desc: "AGVs de armazém com ROS2 Bridge. Otimização de rotas com IA e Digital Twin para simulação." },
+  { icon: Settings, name: "Metalurgia", desc: "Fundição assistida, tratamento térmico monitorado e controle de qualidade metalográfico com visão industrial." },
 ];
 
 /* ─── KPIs ─── */
@@ -117,11 +127,12 @@ const kpis = [
 
 /* ─── Tech Stack ─── */
 const techStack = [
-  { category: "Inteligência", items: ["ROS2 Humble/Jazzy", "Orion Neural Engine", "TensorFlow", "YOLOv8", "MediaPipe"] },
-  { category: "Fieldbus", items: ["CAN bus", "EtherCAT", "PROFINET", "Modbus TCP/RTU", "IO-Link"] },
-  { category: "Conectividade", items: ["Wi-Fi 6", "5G", "Bluetooth BLE", "MQTT/WSS", "WebRTC"] },
-  { category: "Protocolos", items: ["OPC-UA (IEC 62541)", "VDA 5050 v2.0", "Nav2", "TF2", "DDS"] },
-  { category: "Monitoramento", items: ["Grafana", "Node-RED", "Foxglove Studio", "Digital Twin AAS"] },
+  { category: "IA & ML", items: ["Quantum LLM Router", "Meta-Learning Engine", "RAG Consciousness", "11 Multi-Agents", "DeepSeek R1"] },
+  { category: "Robótica", items: ["ROS2 Humble/Jazzy", "Nav2", "SLAM", "MoveIt2", "VDA 5050"] },
+  { category: "Visão", items: ["YOLOv8/v9", "MediaPipe", "OCR Industrial", "Detecção de Defeitos", "Classificação"] },
+  { category: "Industrial", items: ["OPC-UA", "Modbus TCP/RTU", "PROFINET", "EtherCAT", "CAN bus"] },
+  { category: "IoT & Rede", items: ["MQTT/WSS", "5G", "Wi-Fi 6", "Bluetooth BLE", "Digital Twin AAS"] },
+  { category: "Cloud", items: ["Grafana", "Node-RED", "Foxglove Studio", "AAS Server", "Supabase Edge Functions"] },
   { category: "Segurança", items: ["ISO 23482", "ISO 10218", "E-Stop Global", "GDPR/LGPD", "TLS 1.3"] },
 ];
 

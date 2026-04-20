@@ -13,26 +13,26 @@ import {
 } from "lucide-react";
 
 const features = [
-  { icon: Store, title: "Loja Própria", desc: "Sua loja digital com link compartilhável, design profissional e domínio personalizado. Comece a vender em minutos." },
+  { icon: Store, title: "Loja Própria", desc: "Sua loja com IA de vendas. Orion recomenda produtos, otimiza preços e sugere upsells automaticamente." },
   { icon: CreditCard, title: "Checkout Stripe", desc: "Pagamentos diretos na sua conta Stripe. Sem intermediários, sem atrasos. Pix, cartão, boleto e internacionais." },
-  { icon: Package, title: "Gestão de Produtos", desc: "Cadastre e-books, cursos, templates, assinaturas e produtos físicos. Entrega automática após pagamento." },
-  { icon: Palette, title: "Editor de Páginas de Venda", desc: "Editor visual drag-and-drop com 12 tipos de blocos. Crie páginas de alta conversão sem saber programar." },
-  { icon: BarChart3, title: "Dashboard de Vendas", desc: "Acompanhe receita, conversão, ticket médio e crescimento em tempo real com gráficos interativos." },
-  { icon: Users, title: "Programa de Afiliados", desc: "Crie seu programa de afiliados integrado. Defina comissões, aprove afiliados e acompanhe vendas por indicação." },
-  { icon: Mail, title: "Campanhas de E-mail", desc: "Envie campanhas de e-mail marketing segmentadas para sua base de clientes e afiliados." },
-  { icon: TrendingUp, title: "Analytics Avançado", desc: "Métricas de funil, origem de tráfego, taxa de conversão por produto e LTV dos clientes." },
+  { icon: Package, title: "Gestão de Produtos", desc: "Cadastre com IA auxiliar. Orion gera descrições, títulos SEO e categorias automaticamente." },
+  { icon: Palette, title: "Editor de Páginas de Venda", desc: "Editor visual com IA. Crie páginas de alta conversão com sugestões de copy e design inteligente." },
+  { icon: BarChart3, title: "Dashboard de Vendas", desc: "Acompanhe receita, conversão, ticket médio e crescimento. Previsões de vendas com Meta-Learning." },
+  { icon: Users, title: "Programa de Afiliados", desc: "Crie programa com IA de rastreamento. Atribuição inteligente entre múltiplos touchpoints." },
+  { icon: Mail, title: "Campanhas de E-mail", desc: "E-mails gerados por IA. Assuntos otimizados, Segmentação automática baseada em поведінки." },
+  { icon: TrendingUp, title: "Analytics Avançado", desc: "Métricas de funil, origem de tráfego, taxa de conversão por produto e LTV predito por IA." },
   { icon: FileText, title: "Nota Fiscal Automática", desc: "Emissão automatizada de notas fiscais para cada venda, integrada com sistemas contábeis." },
 ];
 
 const differentials = [
+  "IA de vendas integrada (recomendações, otimização de preços)",
   "Checkout Stripe direto na sua conta",
   "Plataforma retém apenas 10% das vendas",
-  "Editor visual de páginas de venda",
-  "Programa de afiliados integrado",
-  "Dashboard de vendas em tempo real",
-  "Entrega automática de produtos digitais",
-  "Campanhas de e-mail marketing",
-  "Multi-idioma (PT, EN, ES, IT, ZH)",
+  "Editor visual com IA copilot",
+  "Programa de afiliados com tracking inteligente",
+  "Dashboard com previsões de vendas",
+  "E-mail marketing gerado por IA",
+  "Multi-idioma (50+ idiomas)",
 ];
 
 export default function SolucoesProdutores() {

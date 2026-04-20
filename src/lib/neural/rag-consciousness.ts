@@ -41,7 +41,7 @@ export function detectSymbolicPattern(query: string, retrievedChunks: string[]):
   const lowerQuery = query.toLowerCase();
   
   // Pattern 1: Legal references (Art., Lei, Súmula)
-  if (/\b(art\.|lei\s|súmula|inciso|parágrafo|§)\b/i.test(lowerQuery)) {
+  if (/\b(art\.?|lei\s|súmula|inciso|parágrafo|§)\b/i.test(lowerQuery)) {
     const hasLegalChunks = retrievedChunks.filter(c => 
       /\b(art\.|lei\s|súmula|tribunal|jurisprudência|cpc|cpp)\b/i.test(c)
     ).length;

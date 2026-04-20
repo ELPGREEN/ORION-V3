@@ -13,25 +13,26 @@ import {
 } from "lucide-react";
 
 const features = [
-  { icon: Link2, title: "Links Rastreáveis", desc: "Gere links únicos para cada produto. Analytics completo de cliques, conversões e receita por link." },
-  { icon: Percent, title: "Comissões Automáticas", desc: "Receba comissões automaticamente a cada venda confirmada. Sem burocracia, sem atrasos." },
-  { icon: Store, title: "Vitrine Personalizada", desc: "Monte sua vitrine com link compartilhável. Exiba os produtos que você promove com seu branding." },
-  { icon: TrendingUp, title: "Dashboard de Performance", desc: "Acompanhe cliques, conversões, receita, ranking e métricas de performance em tempo real." },
-  { icon: CreditCard, title: "Cupons Exclusivos", desc: "Crie cupons de desconto personalizados para sua audiência e aumente suas conversões." },
-  { icon: BarChart3, title: "Relatórios Detalhados", desc: "Relatórios de conversão, pagamentos recebidos, histórico de vendas e projeções de receita." },
-  { icon: Users, title: "Marketplace Integrado", desc: "Acesse centenas de produtos para promover no marketplace ORION. Escolha os melhores para seu nicho." },
-  { icon: Gift, title: "Programa de Bonificação", desc: "Ganhe bônus extras ao atingir metas de vendas. Quanto mais vende, maior sua comissão." },
-  { icon: Target, title: "Tracking Avançado", desc: "Cookies de 30 dias, atribuição de último clique e tracking cross-device para não perder nenhuma venda." },
+  { icon: Link2, title: "Links Rastreáveis", desc: "Links com IA de rastreamento. Atribuição Inteligente detecta qual conteúdo convirtió mais." },
+  { icon: Percent, title: "Comissões Automáticas", desc: "Receba comissões automaticamente via Stripe. Sem burocracia, sem atrasos. Taxa 0% para afiliados." },
+  { icon: Store, title: "Vitrine Personalizada", desc: "Vitrine com IA. Orion sugere produtos melhores para seu público baseado em análise de dados." },
+  { icon: TrendingUp, title: "Dashboard de Performance", desc: "Métricas em tempo real. Previsões de receita com Meta-Learning e análise de tendências." },
+  { icon: CreditCard, title: "Cupons Exclusivos", desc: "Cupons com IA de otimização. Sistema sugere valores идеальні para máximo de conversões." },
+  { icon: BarChart3, title: "Relatórios com IA", desc: "Relatórios preditivos. IA analisa padrões e sugere próximas ações para aumentar ganhos." },
+  { icon: Users, title: "Marketplace Inteligente", desc: "Produtos selecionados por IA. Sistema recomenda os melhores produtos para seu nicho e audiência." },
+  { icon: Gift, title: "Programa de Bonificação", desc: "Bônus gerados por IA. Sistema cria metas personalizadas baseadas no seu desempenho histórico." },
+  { icon: Target, title: "Tracking Avançado", desc: "Cookies de 30 dias, atribuição multi-touch e tracking cross-device. Nenhuma venda perdida." },
 ];
 
 const differentials = [
   "0% de taxa da plataforma para afiliados",
-  "Comissões automáticas por venda",
-  "Vitrine personalizada com seu link",
-  "Cupons exclusivos de desconto",
-  "Marketplace com centenas de produtos",
-  "Dashboard em tempo real",
-  "Tracking cross-device avançado",
+  "IA de recomendações de produtos",
+  "Comissões automáticas por venda via Stripe",
+  "Vitrine com Copilot inteligente",
+  "Cupons otimizados por IA",
+  "Dashboard com previsões de receita",
+  "Tracking multi-touch avançado",
+  "Marketplace com IA de curadoria",
   "Sem investimento inicial",
 ];
 

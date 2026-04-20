@@ -13,24 +13,26 @@ import {
 } from "lucide-react";
 
 const features = [
-  { icon: FileText, title: "Geração de Petições com IA", desc: "Crie petições iniciais, recursos, contestações e pareceres em minutos com IA treinada em milhares de modelos jurídicos." },
-  { icon: Search, title: "Pesquisa Jurisprudencial", desc: "Busca inteligente em STF, STJ, TST e tribunais estaduais. Filtre por tema, relator, data e relevância." },
+  { icon: FileText, title: "Geração de Petições com IA", desc: "Crie petições com DeepSeek R1 e RAG Consciousness — análise jurídica profunda, precedentes e fundamentação automática." },
+  { icon: Search, title: "Pesquisa Jurisprudencial", desc: "Busca semântica em STF, STJ, TST e tribunais com Quantum Router para selecionar o melhor modelo de análise." },
   { icon: Clock, title: "Gestão de Processos e Prazos", desc: "Controle de andamentos, alertas automáticos de prazos, timeline visual e integração com tribunais." },
-  { icon: Users, title: "Portal do Cliente", desc: "Área exclusiva para seus clientes acompanharem processos, enviarem documentos e se comunicarem via chat." },
+  { icon: Users, title: "Portal do Cliente", desc: "Área exclusiva com IA jurídica integrada. Clientes conversam com Orion IA para tirar dúvidas sobre seus processos." },
   { icon: BarChart3, title: "Dashboard de Métricas", desc: "Faturamento, produtividade, processos ganhos/perdidos, tempo médio por tarefa — tudo em tempo real." },
   { icon: Shield, title: "Assinatura Digital", desc: "Assine documentos com validade jurídica diretamente na plataforma, com certificado e rastreabilidade." },
-  { icon: PenTool, title: "Editor de Documentos", desc: "Editor rich-text com modelos pré-prontos, variáveis automáticas e exportação em PDF profissional." },
-  { icon: Globe, title: "Site Profissional", desc: "Seu site de advogado com link compartilhável, áreas de atuação, formulário de contato e SEO otimizado." },
-  { icon: BookOpen, title: "Blog Jurídico", desc: "Publique artigos, compartilhe conhecimento e atraia novos clientes com conteúdo indexado pelo Google." },
+  { icon: PenTool, title: "Editor de Documentos", desc: "Editor rich-text com modelos bilíngues, variáveis automáticas e exportação em PDF profissional." },
+  { icon: Globe, title: "Site Profissional", desc: "Seu site com IA de atendimento. Chatbot jurídico 24/7 responde dúvidas e agenda consultas automaticamente." },
+  { icon: BookOpen, title: "Blog Jurídico", desc: "Publique artigos com IA auxiliar. Orion IA sugere títulos, résumos e otimização SEO para maior alcance." },
 ];
 
 const differentials = [
-  "IA Gemini treinada para Direito brasileiro",
+  "DeepSeek R1 + RAG Consciousness para raciocínio jurídico",
+  "Quantum Router seleciona melhor modelo por tipo de consulta",
+  "11 Agentes jurídicos especializados",
   "Pesquisa em STF, STJ, TST e tribunais",
   "Gestão completa de processos e clientes",
   "Assinatura digital com validade jurídica",
-  "Portal do cliente com chat ao vivo",
-  "Site profissional com link compartilhável",
+  "Portal do cliente com IA de atendimento 24/7",
+  "Site profissional com chatbot jurídico",
   "Dashboard de métricas em tempo real",
   "100% compatível com LGPD e OAB",
 ];

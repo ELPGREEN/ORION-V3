@@ -89,6 +89,30 @@ const featuredUtilities = [
     glow: "from-emerald-500/20 to-green-500/5",
     tag: "VISION",
   },
+  {
+    icon: GlyphProcessing,
+    title: "Quantum Router",
+    desc: "Seleção inteligente de modelos de IA usando processamento quântico simulado. Escolhe o melhor provider para cada tipo de consulta.",
+    color: "text-purple-400",
+    glow: "from-purple-500/20 to-indigo-500/5",
+    tag: "QUANTUM",
+  },
+  {
+    icon: GlyphTeam,
+    title: "Multi-Agentes",
+    desc: "11 agentes especializados que colaboram: pesquisa, construção, leitura, execução, planejamento, multimodal, segurança, jurídico, código, automação e escrita.",
+    color: "text-blue-400",
+    glow: "from-blue-500/20 to-cyan-500/5",
+    tag: "AGENTS",
+  },
+  {
+    icon: GlyphLaunch,
+    title: "Auto-Evolução",
+    desc: "Sistema Jules de auto-otimização que analisa falhas, propõe correções e aplica melhorias automaticamente.",
+    color: "text-rose-400",
+    glow: "from-rose-500/20 to-pink-500/5",
+    tag: "AUTO-EVOLUTION",
+  },
 ];
 
 const standardUtilities = [
@@ -97,14 +121,17 @@ const standardUtilities = [
   { icon: GlyphMemory, title: "Orion Memory", desc: "Memória persistente: lembra preferências e histórico entre sessões.", color: "text-violet-400" },
   { icon: GlyphReasoning, title: "Raciocínio Multi-camada", desc: "Motor proprietário para análises complexas e tomada de decisão autônoma.", color: "text-purple-400" },
   { icon: GlyphDocument, title: "Geração de Documentos", desc: "Contratos, LOIs, NDAs, propostas — 15+ templates bilíngues.", color: "text-emerald-400" },
-  { icon: GlyphSearch, title: "Pesquisa Semântica", desc: "Busca avançada em legislação, jurisprudência e bases de dados.", color: "text-amber-400" },
+  { icon: GlyphSearch, title: "Pesquisa Semântica", desc: "Busca avançada em legislação, jurisprudência e bases de dados com RAG Consciousness.", color: "text-amber-400" },
   { icon: GlyphAnalytics, title: "Análise de Dados", desc: "KPIs em tempo real, relatórios automatizados e insights preditivos.", color: "text-blue-400" },
-  { icon: GlyphGlobe, title: "Multi-idioma (5 línguas)", desc: "PT, EN, IT, ES, ZH com tradução contextual inteligente.", color: "text-rose-400" },
+  { icon: GlyphGlobe, title: "Multi-idioma", desc: "Suporte completo a 50+ idiomas com tradução contextual profunda.", color: "text-rose-400" },
   { icon: GlyphShield, title: "Compliance", desc: "GDPR/LGPD, screening AML, validação CPF/CNPJ automática.", color: "text-green-400" },
   { icon: GlyphAssistant, title: "Assistente 24/7", desc: "Sempre disponível para dúvidas, documentos e automações.", color: "text-yellow-400" },
   { icon: GlyphWorkflow, title: "Automação", desc: "Pipelines inteligentes com notificações e aprovações.", color: "text-indigo-400" },
   { icon: GlyphStorage, title: "Armazenamento Seguro", desc: "Criptografia, controle granular e backups automáticos.", color: "text-teal-400" },
   { icon: GlyphTeam, title: "Gestão de Equipes", desc: "Controle de acessos, chat interno e monitoramento.", color: "text-pink-400" },
+  { icon: GlyphAudio, title: "Voice Studio", desc: "Síntese e reconhecimento de voz com training mode para personalização de timbre.", color: "text-cyan-400" },
+  { icon: GlyphProcessing, title: "ROS2/IoT Bridge", desc: "Conector universal para robôs industriais, sensores e dispositivos smart home.", color: "text-orange-400" },
+  { icon: GlyphLaunch, title: "Digital Twin", desc: "Simulação virtual de processos industriais para otimização e treinamento.", color: "text-emerald-400" },
 ];
 
 // ═══ Tech Comparison Data ═══
@@ -115,12 +142,14 @@ const comparisonFeatures = [
   { label: "Memória Persistente", orion: true, chatgpt: true, claude: true },
   { label: "Geração de Documentos", orion: true, chatgpt: false, claude: false },
   { label: "Computer Use / Browser", orion: true, chatgpt: false, claude: true },
-  { label: "Multi-idioma (5 langs)", orion: true, chatgpt: true, claude: true },
+  { label: "Multi-idioma (50+)", orion: true, chatgpt: true, claude: true },
   { label: "Pesquisa Legal / RAG", orion: true, chatgpt: false, claude: false },
-  { label: "IoT / Robótica", orion: true, chatgpt: false, claude: false },
+  { label: "IoT / Robótica ROS2", orion: true, chatgpt: false, claude: false },
+  { label: "Quantum LLM Router", orion: true, chatgpt: false, claude: false },
+  { label: "Multi-Agent (11 agents)", orion: true, chatgpt: false, claude: true },
+  { label: "Meta-Learning", orion: true, chatgpt: false, claude: false },
   { label: "Auto-Evolução (Jules)", orion: true, chatgpt: false, claude: false },
-  { label: "100% Gratuito", orion: true, chatgpt: false, claude: false },
-  { label: "Open Source", orion: true, chatgpt: false, claude: false },
+  { label: "Digital Twin", orion: true, chatgpt: false, claude: false },
 ];
 
 function ComparisonIcon({ value }: { value: boolean | string }) {
@@ -139,9 +168,9 @@ export default function Plataforma() {
   const [isInstalled, setIsInstalled] = useState(false);
 
   // Animated counters
-  const stat1 = useCountUp(16, 1800);
-  const stat2 = useCountUp(200, 2200);
-  const stat3 = useCountUp(5, 1200);
+  const stat1 = useCountUp(20, 1800);
+  const stat2 = useCountUp(250, 2200);
+  const stat3 = useCountUp(50, 1200);
   const stat4 = useCountUp(99, 2000);
 
   useEffect(() => {

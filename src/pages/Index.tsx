@@ -35,7 +35,7 @@ export default function Index() {
     <div className="min-h-screen bg-background overflow-hidden">
       <SEO
         title="Orion Intelligence Platform | Enterprise AI by ELP® Green Technology"
-        description="Orion Intelligence Platform — enterprise AI with 17+ integrated modules for workflow automation, document management, computer vision, and business optimization. Bank-grade security by ELP® Green Technology."
+        description="Orion Intelligence Platform — enterprise AI with 20+ integrated modules for workflow automation, document management, computer vision, quantum routing, and business optimization. Bank-grade security by ELP® Green Technology."
         image="https://www.iasofthub.com/og-images/og-home.jpg"
         canonical="https://www.iasofthub.com"
         jsonLd={{
@@ -43,7 +43,7 @@ export default function Index() {
           "@type": "SoftwareApplication",
           "name": "Orion Intelligence Platform",
           "url": "https://www.iasofthub.com",
-          "description": "Plataforma de inteligência artificial empresarial com 17+ módulos integrados para automação, gestão de documentos, visão computacional e otimização de processos.",
+          "description": "Plataforma de inteligência artificial empresarial com 20+ módulos integrados para automação, gestão de documentos, visão computacional, quantum routing e otimização de processos.",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
           "creator": {
@@ -66,10 +66,17 @@ export default function Index() {
           <p className="text-xs text-primary/70 tracking-[0.3em] uppercase mb-6">by ELP® Green Technology</p>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-4">
             <strong>Orion Intelligence Platform</strong> is an enterprise artificial intelligence platform with{' '}
-            <strong className="text-primary">17+ integrated modules</strong> that helps businesses
+            <strong className="text-primary">20+ integrated modules</strong> that helps businesses
             automate workflows, manage documents, organize clients, and optimize processes.
             It features <strong>Orion IA</strong> — an advanced AI assistant with natural language understanding,
             computer vision, voice interaction, document generation, and real-time analytics — all protected by bank-grade security (<em>Orion Shield</em>).
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+            The platform includes <strong>Quantum LLM Router</strong> for intelligent model selection, 
+            <strong>Multi-Agent System</strong> with 11 specialized agents, 
+            <strong>RAG Consciousness</strong> for legal document reasoning, <strong>Vision Pipeline</strong> with object detection, OCR and facial recognition, 
+            <strong>Voice Engine</strong> with speech synthesis and training, <strong>ROS2/IoT Bridge</strong> for robotics and smart devices, 
+            <strong>Meta-Learning Engine</strong> for continuous self-improvement, and <strong>Digital Twin</strong> for industrial simulation.
           </p>
           <p className="text-sm text-muted-foreground leading-relaxed mb-6">
             The platform is designed for professionals, law firms, businesses, and enterprises that need intelligent automation,
