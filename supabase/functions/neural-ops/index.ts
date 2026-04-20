@@ -2401,6 +2401,8 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   // ═══ STREAMING MODE ═══
   // REGRA: VM Gemini Proxy (cache + speed) → Vertex AI (GCP credits) → Gemini API keys → fallbacks gratuitos
   if (stream) {
+    // ═══ STRIP image_url for text-only fallback providers ═══
+    const textOnlyMessages = stripImageFromMessages(messages, hasImage);
     const attemptedProviders: string[] = [];
     const lastMsg = messages[messages.length - 1];
     const lastText = typeof lastMsg?.content === "string" ? lastMsg.content : "";
@@ -2627,9 +2629,6 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
         console.warn(`[Orion] Gemini streaming failed (${keyEnv}):`, e);
       }
     }
-
-    // ═══ STRIP image_url for text-only fallback providers ═══
-    const textOnlyMessages = stripImageFromMessages(messages, hasImage);
 
     // ── FALLBACK 1: HuggingFace streaming (100% gratuito) ──
     if (Deno.env.get("HF_TOKEN") || Deno.env.get("HUGGINGFACE_API_KEY")) {
