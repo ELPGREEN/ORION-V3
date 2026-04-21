@@ -9,6 +9,7 @@ import {
   getMemoryFacts,
   addMemoryFacts,
 } from "@/lib/neural/orion-memory";
+import { stripMarkdown } from "@/lib/utils/text-utils";
 import { VS } from "@/components/dashboard/neural/useVisionProcessing";
 // vision-local-learning removed — all identification via Gemini on-demand
 const canIdentifyLocally = (_shapes: any[]) => ({ allLocal: false, localMatches: [] as any[] });
@@ -17,6 +18,40 @@ const learnFromDetection = (_obj: any, _desc: any) => {};
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
 // hf-vision-gate REMOVED — was downloading ~50MB of WASM models in browser
 import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
+
+// ═══ PRE-COMPILED REGEXES FOR PERFORMANCE ═══
+const SENTENCE_END_REGEX = /.*?[.!?…;]+\s/ys;
+const LONG_CLAUSE_REGEX = /.{40,}?,\s/y;
+const YOUTUBE_DOMAIN_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[a-zA-Z0-9_-]{11}/i;
+const URL_DOMAIN_REGEX = /https?:\/\/[^\s]+/i;
+
+const HEARING_CHECK_PATTERNS = /\b(voc[eê]\s+consegue\s+me\s+ouvir|voc[eê]\s+me\s+ouve|t[aá]\s+me\s+ouvindo|est[aá]\s+me\s+ouvindo|consegue\s+me\s+escutar|me\s+escuta)\b/i;
+const SELF_IDENTITY_PATTERNS = /\b(quem\s+[eé]\s+voc[eê]|qual\s+[eé]\s+o\s+seu\s+nome|sua\s+personalidade|seu\s+signo|sua\s+hist[oó]ria|o\s+que\s+[eé]\s+voc[eê]|quando\s+voc[eê]\s+nasceu|conte\s+sobre\s+voc[eê]|fale\s+sobre\s+voc[eê]|fala\s+sobre\s+voc[eê]|me\s+conta(?:\s+um\s+pouco)?\s+sobre\s+voc[eê]|me\s+fala(?:\s+um\s+pouco)?\s+sobre\s+voc[eê])\b/i;
+const CONVERSATIONAL_COMPLAINT_PATTERNS = /\b(ent[aã]o|cara|mano|tu|voc[eê]|c[eê])\b.*\b(n[aã]o\s+me\s+responde|n[aã]o\s+responde|me\s+ignora|n[aã]o\s+entende|n[aã]o\s+capta|n[aã]o\s+peg[ao]|s[oó]\s+peg[ao]\s+duas?|tr[eê]s\s+palavras|frase\s+inteira|t[aá]\s+me\s+tirando|arquivo\s+srfx|srfx)\b/i;
+const EXPLICIT_VISUAL_PATTERNS = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+vendo|v[eê]|v[êe] na c[aâ]mera)|o\s+que\s+tem\s+(na\s+frente|a[ií]|aqui)|descrev[ae]\s+(a\s+)?(imagem|cena|ambiente|o\s+que\s+v[eê])|me\s+mostre\s+o\s+que\s+v[eê]|analise\s+(a\s+)?(imagem|cena|c[aâ]mera)|leia\s+(o\s+)?texto\s+(da\s+)?(imagem|c[aâ]mera)|identifique\s+(o\s+)?(objeto|rosto|texto)|quantos?\s+[^.?!]*\s+(tem|h[aá])\b)/i;
+const IMAGE_GEN_PATTERNS = /\b(gere?\s+(uma?\s+)?imagem|crie?\s+(uma?\s+)?imagem|desenh[ae]|ilustr[ae]|gerar?\s+foto|cri[ae]\s+(uma?\s+)?ilustra[çc][aã]o|generate\s+(an?\s+)?image|draw|create\s+(an?\s+)?image|make\s+(an?\s+)?image|paint|sketch)\b/i;
+const WEB_SEARCH_PATTERNS = /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|pesquis[ae]\s+na\s+web|busca\s+na\s+internet|search\s+for|look\s+up|news|current|latest|trending)\b/i;
+const AUTO_CONSTRUCT_VERB_PATTERNS = /\b(crie?|gere?|implemente?|desenvolv[ae]|programe?|codifique|escreva|refatore?|monte|construa)\b/i;
+const AUTO_CONSTRUCT_ARTIFACT_PATTERNS = /\b(c[oó]digo|fun[çc][ãa]o|endpoint|api|componente|tabela|migra[çc][ãa]o|script|arquivo|classe|hook|rota|p[aá]gina|feature|bot[aã]o|integra[çc][aã]o|edge\s*function)\b/i;
+const SELF_EVOLVE_VERB_PATTERNS = /\b(melhore-se|melhore\s+se|evolua|evolu[ií]r?|auto[-\s]?evolu[ií]r?|auto[-\s]?program[ae]|se\s+reprogram[ae]|recalibre|se\s+calibre|se\s+atualize|upgrade)\b/i;
+const SELF_EVOLVE_TARGET_PATTERNS = /\b(seu\s+c[oó]digo|seus\s+protocolos?|suas?\s+respostas?|você\s+mesmo|voc[eê]\s+mesmo|a\s+si\s+mesmo|se)\b/i;
+
+const VERB_IDENTIFY = /\b(identific[aeo]r?|identifique|identify|reconhe[cç][aeo]r?|reconozc[ao]|identificar?)\b/i;
+const VERB_ANSWER = /\b(respond[aeo]r?|me\s+respond[aeo]|me\s+diz|me\s+fal[aeo]|me\s+cont[aeo]|answer|tell\s+me|explain|reply)\b/i;
+const VERB_ANALYZE = /\b(analis[aeo]r?|analise|analy[sz]e|evaluat[aeo]|examinar?)\b/i;
+const VERB_CHECK = /\b(verific[aeo]r?|verifique|checar?|confir[aemo]r?|check|verify)\b/i;
+const VERB_SEARCH = /\b(pesquis[aeo]r?|busc[aeo]r?|procur[aeo]r?|google|search|look\s+up|find)\b/i;
+const VERB_COMPARE = /\b(compar[aeo]r?|diferença\s+entre|versus|vs\b|melhor\s+entre)\b/i;
+const VERB_REFLECT = /\b(reflita|pens[ae]\s+sobre|consider[ae]|raciocin[ae]|reason|think\s+about|ponderar)\b/i;
+
+const STRONG_VISUAL_ANCHORS = /\b(segurando|usando|vestindo|mostr[ae]|aparência|rosto|cor\b|enxerg|olh[aeo]|vê|vejo|vendo|câmera|imagem|foto|holding|wearing|showing|face|camera|image|photo)\b/i;
+const BODY_REF = /\b(mão|mãos|dedo|braço|cabeça|rosto|olho|boca|cabelo|roupa|camisa|camiseta|óculos|chapéu|caneca|copo|garrafa|hand|finger|arm|head|eye|mouth|hair|shirt|glasses|hat|cup|bottle)\b/i;
+const DEICTIC_PATTERNS = /\b(isso|isto|esse|essa|aquilo|aqui|ali|lá|aí|aquel[ea]s?|this|that|these|those|here|there|esto|eso|aquello)\b/i;
+
+const STRONG_TEXTUAL = /\b(que dia|que horas|hora|data de hoje|capital d[aoe]|piada|conta uma|explica|defin[ie]|signific|quem é|quem foi|quanto é|calcul|agenda|prazo|processo|cliente|documento|resumo|traduz|como funciona|o que é|por que|quando foi|onde fica|qual é|quais são|previsão|temperatura|clima|tempo|notícia|cotação|dólar|euro|bitcoin|what time|what day|capital of|joke|explain|define|meaning|who is|how much|calculate|schedule|deadline|summary|translate|how does|what is|why|when|where|which)\b/i;
+const KNOWLEDGE_PATTERNS = /\b(histór|ciência|matemática|física|química|política|economi|filosofi|programa[çc]ão|código|lei\b|artigo\b|jurisprudência|direito|constitui[çc]|penal|trabalhist|contrato|clt|cdc|lgpd|recurso|habeas|mandado|sentença|acórdão|súmula|tribunal|stf|stj|indenizaç|prescriç|responsabilidade\s*civil|tutela|execuç|licitaç|improbidade|tributári)\b/i;
+const CONVERSATIONAL_PATTERNS = /\b(opini[ãa]o|acha\s+que|concorda|discorda|argumento|debate|sugir[ao]|recomend|aconselh|orienta[çc]|estrat[ée]gia|planej|organiz|prioriz|importa\b|melhor\s+forma|como\s+(posso|devo|faz)|me\s+ajud|preciso\s+de|tenho\s+que|deveria|poderia|gostaria|queria)\b/i;
+const EMOTIONAL_PATTERNS = /\b(sinto|sentindo|triste|feliz|ansios|preocupad|estressad|frustrad|animad|chateado|confus[oa]|nervos[oa]|calm[oa]|motiv|desanima|angústi|med[oa]|raiva|alegr|satisf)\b/i;
 
 // ═══ GLOBAL AUTH CACHE — avoids 3-6 supabase.auth.getUser() calls per interaction ═══
 let _globalAuthCache: { user: { id: string; email?: string | null } | null; ts: number } = { user: null, ts: 0 };
@@ -774,35 +809,24 @@ export async function analyzeFrameStreaming(
               accumulated += delta;
               onToken(accumulated);
 
-              // Enhanced sentence detection: handle multiple sentence-ending patterns
-              // including semicolons, colons with long clauses, and natural pauses
-              const unspoken = accumulated.slice(spokenUpTo);
-              // Match sentences ending with . ! ? … or ; followed by space/newline
-              const sentenceMatch = unspoken.match(/^(.*?[.!?…;])\s/s);
-              // Also detect shorter clauses (>80 chars) at comma boundaries for faster speech start
-              const longClauseMatch = !sentenceMatch && unspoken.length > 80
-                ? unspoken.match(/^(.{40,}?,)\s/)
-                : null;
-              const matchResult = sentenceMatch || longClauseMatch;
+              // PERF: Optimized sentence/clause detection using sticky regex
+              // Avoids O(N) slicing of the accumulated buffer
+              SENTENCE_END_REGEX.lastIndex = spokenUpTo;
+              let match = SENTENCE_END_REGEX.exec(accumulated);
+              let nextSpokenUpTo = SENTENCE_END_REGEX.lastIndex;
 
-              if (matchResult) {
-                let sentence = matchResult[1].trim()
-                  // Clean markdown artifacts for speech
-                  .replace(/\*{1,3}/g, "")
-                  .replace(/_{1,3}/g, "")
-                  .replace(/#{1,6}\s*/g, "")
-                  .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-                  .replace(/https?:\/\/\S+/g, "")
-                  .replace(/\/\/[^\n]*/g, "")
-                  .replace(/<[^>]*>/g, "")
-                  .replace(/[─═╔╗╚╝║]/g, "")
-                  .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️]/g, "")
-                  .trim();
+              if (!match && (accumulated.length - spokenUpTo) > 80) {
+                LONG_CLAUSE_REGEX.lastIndex = spokenUpTo;
+                match = LONG_CLAUSE_REGEX.exec(accumulated);
+                nextSpokenUpTo = LONG_CLAUSE_REGEX.lastIndex;
+              }
 
+              if (match) {
+                const sentence = stripMarkdown(match[0]);
                 if (sentence && !sentence.startsWith("```") && !sentence.startsWith("{") && sentence.length > 2) {
                   onSentence(sentence);
                 }
-                spokenUpTo += matchResult[0].length;
+                spokenUpTo = nextSpokenUpTo;
               }
             }
           } catch (parseErr) {
@@ -827,17 +851,7 @@ export async function analyzeFrameStreaming(
 
     const remaining = accumulated.slice(spokenUpTo).trim();
     if (remaining && !remaining.startsWith("```") && !remaining.startsWith("{")) {
-      const cleaned = remaining
-        .replace(/```json[\s\S]*?```/g, "")
-        .replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "")
-        .replace(/#{1,6}\s*/g, "")
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-        .replace(/https?:\/\/\S+/g, "")
-        .replace(/\/\/[^\n]*/g, "")
-        .replace(/<[^>]*>/g, "")
-        .replace(/[─═╔╗╚╝║]/g, "")
-        .replace(/[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️]/g, "")
-        .trim();
+      const cleaned = stripMarkdown(remaining);
       if (cleaned && cleaned.length > 2) onSentence(cleaned);
     }
 
@@ -875,16 +889,8 @@ export async function analyzeFrameStreaming(
     }
 
     // Strip ALL markdown/formatting artifacts for clean output
-    cleanDescription = cleanDescription
-      .replace(/\*{1,3}/g, "").replace(/_{1,3}/g, "")
-      .replace(/#{1,6}\s*/g, "")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      .replace(/https?:\/\/\S+/g, "")
-      .replace(/\/\/[^\n]*/g, "")
-      .replace(/<[^>]*>/g, "")
-      .replace(/[─═╔╗╚╝║]/g, "")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
+    cleanDescription = stripMarkdown(cleanDescription)
+      .replace(/\n{3,}/g, "\n\n");
 
     if (learnedFacts.length > 0) addUserMemory(learnedFacts);
     return { description: cleanDescription || null, learnedFacts, identifiedObjects };
@@ -904,98 +910,69 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
   if (q.length < 2) return "mixed";
 
   // Conversational identity/hearing guard — NEVER route these to code/evolution/media
-  const hearingCheckPatterns = /\b(voc[eê]\s+consegue\s+me\s+ouvir|voc[eê]\s+me\s+ouve|t[aá]\s+me\s+ouvindo|est[aá]\s+me\s+ouvindo|consegue\s+me\s+escutar|me\s+escuta)\b/i;
-  const selfIdentityPatterns = /\b(quem\s+[eé]\s+voc[eê]|qual\s+[eé]\s+o\s+seu\s+nome|sua\s+personalidade|seu\s+signo|sua\s+hist[oó]ria|o\s+que\s+[eé]\s+voc[eê]|quando\s+voc[eê]\s+nasceu|conte\s+sobre\s+voc[eê]|fale\s+sobre\s+voc[eê]|fala\s+sobre\s+voc[eê]|me\s+conta(?:\s+um\s+pouco)?\s+sobre\s+voc[eê]|me\s+fala(?:\s+um\s+pouco)?\s+sobre\s+voc[eê])\b/i;
-  const conversationalComplaintPatterns = /\b(ent[aã]o|cara|mano|tu|voc[eê]|c[eê])\b.*\b(n[aã]o\s+me\s+responde|n[aã]o\s+responde|me\s+ignora|n[aã]o\s+entende|n[aã]o\s+capta|n[aã]o\s+peg[ao]|s[oó]\s+peg[ao]\s+duas?|tr[eê]s\s+palavras|frase\s+inteira|t[aá]\s+me\s+tirando|arquivo\s+srfx|srfx)\b/i;
-  if (hearingCheckPatterns.test(q) || selfIdentityPatterns.test(q) || conversationalComplaintPatterns.test(q)) return "textual";
+  if (HEARING_CHECK_PATTERNS.test(q) || SELF_IDENTITY_PATTERNS.test(q) || CONVERSATIONAL_COMPLAINT_PATTERNS.test(q)) return "textual";
 
   // Visual command guard — never let camera/scene questions fall into code/evolution buckets
-  const explicitVisualPatterns = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+vendo|v[eê]|v[êe] na c[aâ]mera)|o\s+que\s+tem\s+(na\s+frente|a[ií]|aqui)|descrev[ae]\s+(a\s+)?(imagem|cena|ambiente|o\s+que\s+v[eê])|me\s+mostre\s+o\s+que\s+v[eê]|analise\s+(a\s+)?(imagem|cena|c[aâ]mera)|leia\s+(o\s+)?texto\s+(da\s+)?(imagem|c[aâ]mera)|identifique\s+(o\s+)?(objeto|rosto|texto)|quantos?\s+[^.?!]*\s+(tem|h[aá])\b)/i;
-  if (explicitVisualPatterns.test(q)) return "visual";
+  if (EXPLICIT_VISUAL_PATTERNS.test(q)) return "visual";
 
   // ═══ OPERA AI: Image generation intent (highest priority) ═══
-  const imageGenPatterns = /\b(gere?\s+(uma?\s+)?imagem|crie?\s+(uma?\s+)?imagem|desenh[ae]|ilustr[ae]|gerar?\s+foto|cri[ae]\s+(uma?\s+)?ilustra[çc][aã]o|generate\s+(an?\s+)?image|draw|create\s+(an?\s+)?image|make\s+(an?\s+)?image|paint|sketch)\b/i;
-  if (imageGenPatterns.test(q)) return "image_generation";
+  if (IMAGE_GEN_PATTERNS.test(q)) return "image_generation";
 
   // ═══ OPERA AI: YouTube summary intent ═══
-  if (/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[a-zA-Z0-9_-]{11}/.test(q)) return "youtube_summary";
+  if (YOUTUBE_DOMAIN_REGEX.test(q)) return "youtube_summary";
 
   // ═══ OPERA AI: URL analysis intent ═══
-  if (/https?:\/\/[^\s]+/.test(q) && !/youtube\.com|youtu\.be/.test(q)) return "url_analysis";
+  if (URL_DOMAIN_REGEX.test(q) && !YOUTUBE_DOMAIN_REGEX.test(q)) return "url_analysis";
 
   // ═══ OPERA AI: Web search intent ═══
-  const webSearchPatterns = /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|pesquis[ae]\s+na\s+web|busca\s+na\s+internet|search\s+for|look\s+up|news|current|latest|trending)\b/i;
-  if (webSearchPatterns.test(q)) return "web_search";
+  if (WEB_SEARCH_PATTERNS.test(q)) return "web_search";
 
   // ═══ Auto-construct intent ═══
-  const autoConstructVerbPatterns = /\b(crie?|gere?|implemente?|desenvolv[ae]|programe?|codifique|escreva|refatore?|monte|construa)\b/i;
-  const autoConstructArtifactPatterns = /\b(c[oó]digo|fun[çc][ãa]o|endpoint|api|componente|tabela|migra[çc][ãa]o|script|arquivo|classe|hook|rota|p[aá]gina|feature|bot[aã]o|integra[çc][ãa]o|edge\s*function)\b/i;
-  if (autoConstructVerbPatterns.test(q) && autoConstructArtifactPatterns.test(q)) return "auto_construct";
+  if (AUTO_CONSTRUCT_VERB_PATTERNS.test(q) && AUTO_CONSTRUCT_ARTIFACT_PATTERNS.test(q)) return "auto_construct";
 
   // ═══ Self-evolution intent ═══
-  const selfEvolveVerbPatterns = /\b(melhore-se|melhore\s+se|evolua|evolu[ií]r?|auto[-\s]?evolu[ií]r?|auto[-\s]?program[ae]|se\s+reprogram[ae]|recalibre|se\s+calibre|se\s+atualize|upgrade)\b/i;
-  const selfEvolveTargetPatterns = /\b(seu\s+c[oó]digo|seus\s+protocolos?|suas?\s+respostas?|você\s+mesmo|voc[eê]\s+mesmo|a\s+si\s+mesmo|se)\b/i;
-  if (selfEvolveVerbPatterns.test(q) && selfEvolveTargetPatterns.test(q)) return "self_evolve";
-
-  // ═══ Verb-based primary classification ═══
-  const verbIdentify = /\b(identific[aeo]r?|identifique|identify|reconhe[cç][aeo]r?|reconozc[ao]|identificar?)\b/i;
-  const verbAnswer = /\b(respond[aeo]r?|me\s+respond[aeo]|me\s+diz|me\s+fal[aeo]|me\s+cont[aeo]|answer|tell\s+me|explain|reply)\b/i;
-  const verbAnalyze = /\b(analis[aeo]r?|analise|analy[sz]e|evaluat[aeo]|examinar?)\b/i;
-  const verbCheck = /\b(verific[aeo]r?|verifique|checar?|confir[aemo]r?|check|verify)\b/i;
-  const verbSearch = /\b(pesquis[aeo]r?|busc[aeo]r?|procur[aeo]r?|google|search|look\s+up|find)\b/i;
-  const verbCompare = /\b(compar[aeo]r?|diferença\s+entre|versus|vs\b|melhor\s+entre)\b/i;
-  const verbReflect = /\b(reflita|pens[ae]\s+sobre|consider[ae]|raciocin[ae]|reason|think\s+about|ponderar)\b/i;
-
-  // ═══ Strong visual anchors — these ALWAYS mean visual ═══
-  const strongVisualAnchors = /\b(segurando|usando|vestindo|mostr[ae]|aparência|rosto|cor\b|enxerg|olh[aeo]|vê|vejo|vendo|câmera|imagem|foto|holding|wearing|showing|face|camera|image|photo)\b/i;
-  const bodyRef = /\b(mão|mãos|dedo|braço|cabeça|rosto|olho|boca|cabelo|roupa|camisa|camiseta|óculos|chapéu|caneca|copo|garrafa|hand|finger|arm|head|eye|mouth|hair|shirt|glasses|hat|cup|bottle)\b/i;
-  const deicticPatterns = /\b(isso|isto|esse|essa|aquilo|aqui|ali|lá|aí|aquel[ea]s?|this|that|these|those|here|there|esto|eso|aquello)\b/i;
+  if (SELF_EVOLVE_VERB_PATTERNS.test(q) && SELF_EVOLVE_TARGET_PATTERNS.test(q)) return "self_evolve";
 
   // Direct visual questions — short-circuit to visual
-  if (strongVisualAnchors.test(q) && (deicticPatterns.test(q) || bodyRef.test(q) || /o que (é|estou|tô|tenho)\b/.test(q))) {
+  if (STRONG_VISUAL_ANCHORS.test(q) && (DEICTIC_PATTERNS.test(q) || BODY_REF.test(q) || /o que (é|estou|tô|tenho)\b/.test(q))) {
     return "visual";
   }
   if (/o que.*(segurando|usando|vestindo|mostrando)/i.test(q)) return "visual";
   if (/como\s+(eu\s+)?(estou|tô)\b/i.test(q) && q.length < 40) return "visual";
 
-  if (verbIdentify.test(q)) return "visual";
-  if (verbAnswer.test(q) && !strongVisualAnchors.test(q)) return "textual";
-  if (verbCheck.test(q) && !deicticPatterns.test(q)) return "textual";
-  if (verbSearch.test(q)) return "textual";
-  if (verbCompare.test(q)) return "textual";
-  if (verbReflect.test(q)) return "textual";
-  if (verbAnalyze.test(q)) {
-    return deicticPatterns.test(q) || strongVisualAnchors.test(q) ? "visual" : "mixed";
+  if (VERB_IDENTIFY.test(q)) return "visual";
+  if (VERB_ANSWER.test(q) && !STRONG_VISUAL_ANCHORS.test(q)) return "textual";
+  if (VERB_CHECK.test(q) && !DEICTIC_PATTERNS.test(q)) return "textual";
+  if (VERB_SEARCH.test(q)) return "textual";
+  if (VERB_COMPARE.test(q)) return "textual";
+  if (VERB_REFLECT.test(q)) return "textual";
+  if (VERB_ANALYZE.test(q)) {
+    return DEICTIC_PATTERNS.test(q) || STRONG_VISUAL_ANCHORS.test(q) ? "visual" : "mixed";
   }
 
   // ═══ Contextual scoring system ═══
-  const strongTextual = /\b(que dia|que horas|hora|data de hoje|capital d[aoe]|piada|conta uma|explica|defin[ie]|signific|quem é|quem foi|quanto é|calcul|agenda|prazo|processo|cliente|documento|resumo|traduz|como funciona|o que é|por que|quando foi|onde fica|qual é|quais são|previsão|temperatura|clima|tempo|notícia|cotação|dólar|euro|bitcoin|what time|what day|capital of|joke|explain|define|meaning|who is|how much|calculate|schedule|deadline|summary|translate|how does|what is|why|when|where|which)\b/i;
-  const knowledgePatterns = /\b(histór|ciência|matemática|física|química|política|economi|filosofi|programa[çc]ão|código|lei\b|artigo\b|jurisprudência|direito|constitui[çc]|penal|trabalhist|contrato|clt|cdc|lgpd|recurso|habeas|mandado|sentença|acórdão|súmula|tribunal|stf|stj|indenizaç|prescriç|responsabilidade\s*civil|tutela|execuç|licitaç|improbidade|tributári)\b/i;
-  const conversationalPatterns = /\b(opini[ãa]o|acha\s+que|concorda|discorda|argumento|debate|sugir[ao]|recomend|aconselh|orienta[çc]|estrat[ée]gia|planej|organiz|prioriz|importa\b|melhor\s+forma|como\s+(posso|devo|faz)|me\s+ajud|preciso\s+de|tenho\s+que|deveria|poderia|gostaria|queria)\b/i;
-  const emotionalPatterns = /\b(sinto|sentindo|triste|feliz|ansios|preocupad|estressad|frustrad|animad|chateado|confus[oa]|nervos[oa]|calm[oa]|motiv|desanima|angústi|med[oa]|raiva|alegr|satisf)\b/i;
-
   let visualScore = 0;
   let textualScore = 0;
 
-  if (deicticPatterns.test(q)) visualScore += 3;
-  if (strongVisualAnchors.test(q)) visualScore += 3;
-  if (bodyRef.test(q)) visualScore += 2;
-  if (/o que (é|são|tem)/.test(q) && deicticPatterns.test(q)) visualScore += 3;
+  if (DEICTIC_PATTERNS.test(q)) visualScore += 3;
+  if (STRONG_VISUAL_ANCHORS.test(q)) visualScore += 3;
+  if (BODY_REF.test(q)) visualScore += 2;
+  if (/o que (é|são|tem)/.test(q) && DEICTIC_PATTERNS.test(q)) visualScore += 3;
   if (/\btô\b/.test(q) && q.length < 40) visualScore += 1;
 
-  if (strongTextual.test(q)) textualScore += 3;
-  if (knowledgePatterns.test(q)) textualScore += 2;
-  if (conversationalPatterns.test(q)) textualScore += 3;
-  if (emotionalPatterns.test(q)) textualScore += 2;
-  if (/^(o que|como|por que|quando|onde|quem|qual|quais|quanto)\b/.test(q) && !deicticPatterns.test(q) && !strongVisualAnchors.test(q) && !bodyRef.test(q)) textualScore += 2;
-  if (q.includes("?") && !deicticPatterns.test(q) && !strongVisualAnchors.test(q)) textualScore += 1;
+  if (STRONG_TEXTUAL.test(q)) textualScore += 3;
+  if (KNOWLEDGE_PATTERNS.test(q)) textualScore += 2;
+  if (CONVERSATIONAL_PATTERNS.test(q)) textualScore += 3;
+  if (EMOTIONAL_PATTERNS.test(q)) textualScore += 2;
+  if (/^(o que|como|por que|quando|onde|quem|qual|quais|quanto)\b/.test(q) && !DEICTIC_PATTERNS.test(q) && !STRONG_VISUAL_ANCHORS.test(q) && !BODY_REF.test(q)) textualScore += 2;
+  if (q.includes("?") && !DEICTIC_PATTERNS.test(q) && !STRONG_VISUAL_ANCHORS.test(q)) textualScore += 1;
   if (q.length > 80 && visualScore === 0) textualScore += 1;
 
   // Context from recent conversation
   if (recentIntents && recentIntents.length > 0) {
     const lastIntent = recentIntents[recentIntents.length - 1];
     if (lastIntent === "visual" && q.length < 20) visualScore += 1;
-    if (lastIntent === "textual" && !deicticPatterns.test(q)) textualScore += 1;
+    if (lastIntent === "textual" && !DEICTIC_PATTERNS.test(q)) textualScore += 1;
     if (q.length < 15 && recentIntents.length >= 2) {
       const prevTwo = recentIntents.slice(-2);
       if (prevTwo.every(i => i === "textual")) textualScore += 1;
