@@ -12,6 +12,8 @@ import { computeProviderHealth, buildFallbackChain, type ProviderHealth } from "
 import { detectHallucinations } from "./analysis/hallucinationDetector";
 import { validateNeuralResponse, dispatchAntiHallucinationReport } from "./analysis/anti-hallucination-engine";
 import { getProviderWeight } from "./neural/reward-loop";
+import { executeCorrectiveRAG } from "./neural/corrective-rag";
+import { SearchAgent } from "./neural/agents/search-agent";
 
 // Re-export split modules for backwards compatibility
 export { moeGating, DEFAULT_MOE_CONFIG, type MoEConfig } from "./moe-gating";
@@ -111,7 +113,7 @@ function detectArchitectureQuery(prompt: string): boolean {
 export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIResponse> {
   const startTime = Date.now();
 
-  let effectiveOptions = { ...options };
+  const effectiveOptions = { ...options };
   let pipelineOutput: PipelineOutput | undefined;
 
   // ═══ Detect architecture/comparison queries and enrich context ═══
@@ -126,6 +128,45 @@ export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIR
     }
   }
 
+  // ═══ RAG Evolution: Corrective & Agentic Modes ═══
+  if (options.ragMode === "corrective" || options.ragMode === "agentic") {
+    try {
+      if (options.ragMode === "agentic") {
+        console.log("[Orchestrator] Entering Agentic RAG Mode...");
+        const agent = new SearchAgent(3, 0.8);
+        const result = await agent.search(options.prompt, options.documentContext || "");
+
+        return {
+          content: result.content,
+          provider: "agentic-search",
+          fallback: false,
+          neuralEnhanced: true,
+          metadata: {
+            jurisprudenceCount: 0,
+            knowledgeCount: 0,
+            specializationsCount: 0,
+            latencyMs: Date.now() - startTime,
+            pipelineTier: "agentic",
+            pipelineModules: ["AgenticSearch", "SelfRAG"],
+            ragSourcesUsed: result.sources.length,
+          }
+        };
+      } else if (options.ragMode === "corrective") {
+        console.log("[Orchestrator] Entering Corrective RAG Mode...");
+        const crag = await executeCorrectiveRAG({
+          query: options.prompt,
+          context: options.documentContext || "",
+        });
+        effectiveOptions.documentContext = crag.finalContext;
+        if (crag.webSearchUsed) {
+            effectiveOptions.systemPrompt = (effectiveOptions.systemPrompt || "") + "\n[AVISO: Contexto expandido com busca externa corretiva]";
+        }
+      }
+    } catch (e) {
+      console.warn("[Orchestrator] RAG Evolution failed, falling back to standard:", e);
+    }
+  }
+
   // ═══ Run Neural Pipeline (real processing) ═══
   const shouldRunPipeline = options.enableNeuralPipeline !== false; // Default: enabled
   
@@ -133,9 +174,9 @@ export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIR
     try {
       pipelineOutput = executeNeuralPipeline({
         query: options.prompt,
-        context: options.documentContext || options.systemPrompt,
-        documentType: options.documentType,
-        useCase: options.useCase,
+        context: effectiveOptions.documentContext || effectiveOptions.systemPrompt,
+        documentType: effectiveOptions.documentType,
+        useCase: effectiveOptions.useCase,
         forceFullPipeline: options.modelType === "reasoning" || options.modelType === "analysis",
         latencyBudgetMs: options.modelType === "fast" ? 100 : undefined,
       });
