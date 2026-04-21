@@ -315,9 +315,9 @@ CREATE POLICY "lovable_users_update_own"
   WITH CHECK (user_id = auth.uid());
 
 -- === lovable_webhook_requests ===
-DROP POLICY IF EXISTS "Advogados can view lovable_webhook_requests" ON public.lovable_webhook_requests;
-CREATE POLICY "Advogados can view lovable_webhook_requests"
-  ON public.lovable_webhook_requests FOR SELECT TO authenticated
+-- DROP POLICY IF EXISTS "Advogados can view lovable_webhook_requests" ON public.lovable_webhook_requests;
+-- CREATE POLICY "Advogados can view lovable_webhook_requests"
+  -- ON public.lovable_webhook_requests FOR SELECT TO authenticated
   USING (has_role(auth.uid(), 'advogado'::app_role));
 
 -- === neural_knowledge_base ===

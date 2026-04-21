@@ -1,3 +1,15 @@
+CREATE OR REPLACE FUNCTION public.trigger_set_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
 
 -- Create documents table for storing AI-generated legal documents
 CREATE TABLE public.documents (

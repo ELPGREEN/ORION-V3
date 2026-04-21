@@ -36,7 +36,7 @@ DROP POLICY IF EXISTS "Service role can update embeddings" ON public.legal_embed
 
 DROP POLICY IF EXISTS "Service role can access knowledge base" ON public.neural_knowledge_base;
 
-DROP POLICY IF EXISTS "Service role full access webhook requests" ON public.lovable_webhook_requests;
+-- DROP POLICY IF EXISTS "Service role full access webhook requests" ON public.lovable_webhook_requests;
 
 -- Users can insert their own jobs (restrict to authenticated)
 DROP POLICY IF EXISTS "Users can insert their own jobs" ON public.generation_queue;
