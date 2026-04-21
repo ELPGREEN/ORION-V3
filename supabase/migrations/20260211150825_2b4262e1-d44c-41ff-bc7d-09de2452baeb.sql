@@ -12,7 +12,7 @@ FOR SELECT
 USING (has_role(auth.uid(), 'advogado'::app_role));
 
 -- RLS policies for lovable_webhook_requests
-CREATE POLICY "Advogados can view lovable_webhook_requests"
-ON public.lovable_webhook_requests
+-- CREATE POLICY "Advogados can view lovable_webhook_requests"
+-- ON public.lovable_webhook_requests
 FOR SELECT
 USING (has_role(auth.uid(), 'advogado'::app_role));

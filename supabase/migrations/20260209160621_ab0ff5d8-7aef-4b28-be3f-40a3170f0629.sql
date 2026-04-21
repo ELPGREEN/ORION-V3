@@ -63,4 +63,4 @@ DROP POLICY IF EXISTS "Service role can insert metrics" ON public.ai_metrics;
 CREATE POLICY "Service role can insert metrics" ON public.ai_metrics FOR INSERT WITH CHECK ((SELECT auth.role()) = 'service_role');
 
 -- Fix lovable_webhook_requests: enable proper RLS
-CREATE POLICY "Service role full access webhook requests" ON public.lovable_webhook_requests FOR ALL USING ((SELECT auth.role()) = 'service_role') WITH CHECK ((SELECT auth.role()) = 'service_role');
+-- CREATE POLICY "Service role full access webhook requests" ON public.lovable_webhook_requests FOR ALL USING ((SELECT auth.role()) = 'service_role') WITH CHECK ((SELECT auth.role()) = 'service_role');
