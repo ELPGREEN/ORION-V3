@@ -70,12 +70,34 @@ export interface OrionVolumeCommandDetail {
   value?: number;
 }
 
+/** Music platform resolution result, dispatched after a resolver decision */
+export type ResolvedMusicPlatform =
+  | "spotify"
+  | "amazon_music"
+  | "youtube_music"
+  | "youtube";
+
+export interface OrionMusicResolvedDetail {
+  query: string;
+  /** Platform the user/intent originally asked for (undefined = no preference) */
+  requested?: ResolvedMusicPlatform;
+  /** Platform actually used to play */
+  resolved: ResolvedMusicPlatform;
+  /** True when requested ≠ resolved (fell back) */
+  fallback: boolean;
+  /** Human-readable description (e.g. "🎵 Tocando … no YouTube") */
+  description?: string;
+  /** Epoch ms — useful for cache freshness */
+  ts: number;
+}
+
 // ── Event detail map (drives type inference) ─────────────────────
 export interface OrionEventDetailMap {
   [OrionEvents.MusicCommand]: OrionMusicCommandDetail;
   [OrionEvents.MusicPlayerShow]: OrionMusicPlayerShowDetail;
   [OrionEvents.Speaking]: OrionSpeakingDetail;
   [OrionEvents.VolumeCommand]: OrionVolumeCommandDetail;
+  [OrionEvents.MusicResolved]: OrionMusicResolvedDetail;
 }
 
 // Augment global WindowEventMap so addEventListener gets typed `e.detail`
@@ -85,6 +107,7 @@ declare global {
     [OrionEvents.MusicPlayerShow]: CustomEvent<OrionMusicPlayerShowDetail>;
     [OrionEvents.Speaking]: CustomEvent<OrionSpeakingDetail>;
     [OrionEvents.VolumeCommand]: CustomEvent<OrionVolumeCommandDetail>;
+    [OrionEvents.MusicResolved]: CustomEvent<OrionMusicResolvedDetail>;
   }
 }
 
