@@ -204,9 +204,9 @@ export function FloatingMusicPlayer() {
     };
 
     const handler = (e: CustomEvent<OrionMusicCommandDetail>) => {
-      const { action, query: q } = e.detail;
+      const { action, query: q, fullCommand } = e.detail;
       if (action === "search_and_play" && q) {
-        showPlayer(q);
+        showPlayer(q, inferCategoryFromCommand(fullCommand || q));
       } else if (action === "pause") {
         postYouTubeIframeCommand(iframeRef.current, "pauseVideo");
         setPlaying(false);
