@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { OrbState } from "./EnergyOrb";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { callEvolution } from \"@/lib/neural/ai-service\";
 import { analyzeFrameStreaming, analyzeFrameWithAI, classifyIntent } from "@/lib/neural/orion-ai-client";
 import { stripMarkdown } from "@/lib/utils/text-utils";
 import {
@@ -1786,13 +1787,9 @@ export function useOrionReasoning(
               addLog(`⚠️ Jules session failed: ${julesResult.error}`);
               // Fallback: run neural-evolution pipeline
               setThought("🧬 Jules indisponível, executando evolução neural local...");
-              const { data: analyzeData } = await supabase.functions.invoke("neural-evolution", {
-                body: { action: "analyze_and_propose" },
-              });
+              const analyzeData = await callEvolution("analyze_and_propose");
               const propostas = analyzeData?.proposals_count ?? 0;
-              const { data: approveData } = await supabase.functions.invoke("neural-evolution", {
-                body: { action: "auto_approve_pending" },
-              });
+              const approveData = await callEvolution("auto_approve_pending");
               const aprovadas = approveData?.approved ?? 0;
               const fallbackMsg = `Evolução neural local executada: ${propostas} propostas, ${aprovadas} aprovadas. PR via GitHub não disponível no momento: ${julesResult.error}`;
               addChat("ai", `🧬 ${fallbackMsg}`);

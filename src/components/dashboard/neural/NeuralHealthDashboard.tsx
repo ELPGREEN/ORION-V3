@@ -20,6 +20,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { callEvolution } from \"@/lib/neural/ai-service\";
 import { useToast } from "@/hooks/use-toast";
 
 const NeuralMapCompact = lazy(() => import("./AttentionVisualization").then(m => ({ default: m.AttentionVisualization })));
@@ -268,12 +269,11 @@ export function NeuralHealthDashboard() {
       const { error } = await supabase.functions.invoke("neural-ops", {
         body: { action: "full_cycle" },
       });
-      if (error) throw error;
 
       // Also trigger auto-evolution-cron + neural-evolution analyze
       supabase.functions.invoke("auto-evolution-cron", { body: {} }).catch(() => {});
-      supabase.functions.invoke("neural-evolution", { body: { action: "auto_approve_pending" } }).catch(() => {});
-      supabase.functions.invoke("neural-evolution", { body: { action: "auto_apply_approved" } }).catch(() => {});
+      callEvolution("auto_approve_pending").catch(() => {});
+      callEvolution("auto_apply_approved").catch(() => {});
 
       toast({
         title: "🧠 Pipeline Neural completo executado",

@@ -143,9 +143,13 @@ Deno.serve(async (req) => {
 
     const providers = getEmbeddingProviders();
     if (providers.length === 0) {
+      console.error("❌ generate-embeddings: CRITICAL ERROR - No Gemini API keys (GEMINI_API_KEY) found in environment variables.");
       return new Response(
-        JSON.stringify({ error: "No Gemini API keys configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: "Configuração incompleta: GEMINI_API_KEY ausente no Supabase Secrets.",
+          remediation: "Adicione GEMINI_API_KEY no painel do Supabase -> Settings -> API -> Edge Function Secrets."
+        }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

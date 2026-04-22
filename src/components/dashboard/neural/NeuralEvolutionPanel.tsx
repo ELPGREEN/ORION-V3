@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { callEvolution } from "@/lib/neural/ai-service";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Proposal {
@@ -162,10 +163,8 @@ export function NeuralEvolutionPanel() {
 
   async function loadExperiments() {
     try {
-      const { data, error } = await supabase.functions.invoke("neural-evolution", {
-        body: { action: "get_ab_experiments" },
-      });
-      if (!error && data?.experiments) {
+      const data = await callEvolution("get_ab_experiments");
+      if (data?.experiments) {
         setExperiments(data.experiments as ABExperiment[]);
       }
     } catch (e) { console.warn("[NeuralEvolution] Failed to load AB experiments:", e); }
@@ -203,9 +202,7 @@ export function NeuralEvolutionPanel() {
   async function runAnalysis() {
     setAnalyzing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("neural-evolution", {
-        body: { action: "analyze_and_propose" },
-      });
+      const data = await callEvolution("analyze_and_propose");
       if (error) {
         console.error("[NeuralEvolution] analyze_and_propose error:", error);
         const errorMsg = error instanceof Error ? error.message : typeof error === "object" ? JSON.stringify(error) : String(error);
@@ -264,10 +261,7 @@ export function NeuralEvolutionPanel() {
         }
       }
 
-      const { data, error } = await supabase.functions.invoke("neural-evolution", {
-        body: { action: "approve_specialization_proposal", proposalId, userId: user?.id, editedData },
-      });
-      if (error) throw error;
+      const data = await callEvolution("approve_specialization_proposal", { proposalId, userId: user?.id, editedData });
 
       toast({
         title: data?.applied ? "Especialização aplicada ✅" : "Proposta aprovada",
@@ -299,10 +293,7 @@ export function NeuralEvolutionPanel() {
         }
       }
 
-      const { data, error } = await supabase.functions.invoke("neural-evolution", {
-        body: { action: "approve_proposal", proposalId, userId: user?.id, editedProposedValue },
-      });
-      if (error) throw error;
+      const data = await callEvolution("approve_proposal", { proposalId, userId: user?.id, editedProposedValue });
 
       let description = "Proposta aprovada com sucesso.";
       if (data?.promptVersionId) description += " Nova versão de prompt criada.";
@@ -321,10 +312,7 @@ export function NeuralEvolutionPanel() {
   async function handleReject(proposalId: string) {
     setActionLoading(proposalId);
     try {
-      const { error } = await supabase.functions.invoke("neural-evolution", {
-        body: { action: "reject_proposal", proposalId },
-      });
-      if (error) throw error;
+      await callEvolution("reject_proposal", { proposalId });
       toast({ title: "Proposta rejeitada" });
       loadAll();
     } catch (err: any) {
@@ -365,10 +353,7 @@ export function NeuralEvolutionPanel() {
         if (!proposal || proposal.status !== "pending") continue;
         const isSpec = proposal.proposal_type === "new_specialization" || proposal.proposal_type === "update_specialization";
         const action = isSpec ? "approve_specialization_proposal" : "approve_proposal";
-        const { error } = await supabase.functions.invoke("neural-evolution", {
-          body: { action, proposalId: id, userId: user?.id },
-        });
-        if (error) throw error;
+        await callEvolution("unknown", { action, proposalId: id, userId: user?.id });
         successCount++;
       } catch {
         errorCount++;
@@ -388,9 +373,7 @@ export function NeuralEvolutionPanel() {
     let successCount = 0;
     for (const id of selectedProposals) {
       try {
-        const { error } = await supabase.functions.invoke("neural-evolution", {
-          body: { action: "reject_proposal", proposalId: id },
-        });
+        await callEvolution("reject_proposal", { proposalId: id });
         if (!error) successCount++;
       } catch (e) { console.warn("[NeuralEvolution] Failed to reject proposal:", e); }
     }
@@ -441,9 +424,7 @@ export function NeuralEvolutionPanel() {
 
     for (const version of toActivate) {
       try {
-        const { error } = await supabase.functions.invoke("neural-evolution", {
-          body: { action: "apply_prompt_version", versionId: version.id },
-        });
+        await callEvolution("apply_prompt_version", { versionId: version.id });
         if (!error) successCount++;
       } catch (e) { console.warn("[NeuralEvolution] Failed to activate version:", e); }
     }
@@ -460,10 +441,7 @@ export function NeuralEvolutionPanel() {
   async function handleEvaluateAB() {
     setEvaluatingAB(true);
     try {
-      const { data, error } = await supabase.functions.invoke("neural-evolution", {
-        body: { action: "evaluate_ab" },
-      });
-      if (error) throw error;
+      const data = await callEvolution("evaluate_ab");
       const results = data?.results || [];
       const completed = results.filter((r: any) => r.winner);
       toast({
@@ -483,10 +461,7 @@ export function NeuralEvolutionPanel() {
   async function handleActivateVersion(versionId: string) {
     setActionLoading(versionId);
     try {
-      const { error } = await supabase.functions.invoke("neural-evolution", {
-        body: { action: "apply_prompt_version", versionId },
-      });
-      if (error) throw error;
+      await callEvolution("apply_prompt_version", { versionId });
       toast({ title: "Versão ativada ✅" });
       loadAll();
     } catch (err: any) {
