@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
 import { isMobileDevice, openYouTube, openSpotify } from "@/lib/utils/deep-link";
-
-interface MusicCommand {
-  action: string;
-  query: string;
-  fullCommand: string;
-}
+import {
+  OrionEvents,
+  dispatchOrionEvent,
+  type OrionMusicCommandDetail,
+  type OrionMusicPlayerShowDetail,
+  type OrionSpeakingDetail,
+  type OrionVolumeCommandDetail,
+} from "@/lib/events/orion-events";
 
 const STORAGE_KEY = "orion-music-player-prefs";
 
