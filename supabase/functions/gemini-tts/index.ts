@@ -16,6 +16,8 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Expose-Headers":
+    "X-TTS-Engine, X-TTS-Model, X-TTS-Input, X-TTS-Fallback, X-TTS-Escaped-Total, X-TTS-Escaped-Chars, X-TTS-Break-Timings",
 };
 
 const CLOUD_TTS_MODEL = "gemini-2.5-flash-tts";
