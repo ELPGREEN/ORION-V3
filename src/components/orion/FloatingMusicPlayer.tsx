@@ -73,7 +73,7 @@ export function FloatingMusicPlayer() {
     ? `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1${muted || volume === 0 ? "&mute=1" : ""}`
     : "";
 
-  if (!visible || !query || isOnNeuralPage) return null;
+  if (!visible || !query) return null;
 
   return (
     <AnimatePresence>
