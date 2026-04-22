@@ -17,6 +17,8 @@ import {
   OrionEvents,
   type OrionMusicCommandDetail,
   type OrionVolumeCommandDetail,
+  type OrionMusicResolvedDetail,
+  type ResolvedMusicPlatform,
 } from "@/lib/events/orion-events";
 import { toast } from "sonner";
 import { searchSpotify, getSpotifyFriendlyError, getSpotifySdkToken } from "@/lib/spotify/spotify-service";
