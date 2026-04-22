@@ -474,6 +474,16 @@ export function FloatingMusicPlayer() {
                 onLoad={() => {
                   setEmbedLoading(false);
                   setFallbackLoading(false);
+                  setPlaying(true);
+                  // Tell YouTube IFrame API we're listening for state events
+                  try {
+                    iframeRef.current?.contentWindow?.postMessage(
+                      JSON.stringify({ event: "listening", id: 1, channel: "widget" }),
+                      YT_ORIGIN,
+                    );
+                    // Sync current volume on load
+                    postYouTubeIframeCommand(iframeRef.current, "setVolume", [muted ? 0 : volume]);
+                  } catch { /* ignore */ }
                 }}
                 className="absolute inset-0 w-full h-full"
                 allow="autoplay; encrypted-media"
