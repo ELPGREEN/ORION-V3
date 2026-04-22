@@ -75,10 +75,10 @@ export class VoiceConfidenceFilter {
    */
   async personalizeForUser(userId: string): Promise<void> {
     // In a real implementation, this would:
-    # 1. Load user's voice profile from storage
-    # 2. Analyze their speech patterns, accent, speaking rate
-    # 3. Adjust recognition parameters accordingly
-    # For now, we'll simulate this with a simple profile
+    // 1. Load user's voice profile from storage
+    // 2. Analyze their speech patterns, accent, speaking rate
+    // 3. Adjust recognition parameters accordingly
+    // For now, we'll simulate this with a simple profile
     
     this.userVoiceProfile = {
       userId,
