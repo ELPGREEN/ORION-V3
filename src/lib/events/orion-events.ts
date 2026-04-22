@@ -16,6 +16,8 @@ export const OrionEvents = {
   VolumeCommand: "orion-volume-command",
   /** Resolver → widget: a music platform was resolved (always YouTube now) */
   MusicResolved: "orion-music-resolved",
+  /** Voice/UI → floating widget: minimize/maximize/toggle locally */
+  MusicWidgetCommand: "orion-music-widget-command",
 } as const;
 
 export type OrionEventName = (typeof OrionEvents)[keyof typeof OrionEvents];
@@ -57,6 +59,12 @@ export interface OrionVolumeCommandDetail {
   value?: number;
 }
 
+export type OrionMusicWidgetAction = "minimize" | "maximize" | "toggle";
+
+export interface OrionMusicWidgetCommandDetail {
+  action: OrionMusicWidgetAction;
+}
+
 /** YouTube is the only supported platform. */
 export type ResolvedMusicPlatform = "youtube";
 
@@ -78,6 +86,7 @@ export interface OrionEventDetailMap {
   [OrionEvents.Speaking]: OrionSpeakingDetail;
   [OrionEvents.VolumeCommand]: OrionVolumeCommandDetail;
   [OrionEvents.MusicResolved]: OrionMusicResolvedDetail;
+  [OrionEvents.MusicWidgetCommand]: OrionMusicWidgetCommandDetail;
 }
 
 declare global {
@@ -87,6 +96,7 @@ declare global {
     [OrionEvents.Speaking]: CustomEvent<OrionSpeakingDetail>;
     [OrionEvents.VolumeCommand]: CustomEvent<OrionVolumeCommandDetail>;
     [OrionEvents.MusicResolved]: CustomEvent<OrionMusicResolvedDetail>;
+    [OrionEvents.MusicWidgetCommand]: CustomEvent<OrionMusicWidgetCommandDetail>;
   }
 }
 

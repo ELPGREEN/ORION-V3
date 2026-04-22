@@ -316,8 +316,15 @@ export interface UseNeuralVoiceReturn {
 // ═══ Hook ═══
 
 export function useNeuralVoice(
-  setAiResponding?: (val: boolean) => void,
+  setAiRespondingOrPreferLocal?: ((val: boolean) => void) | boolean,
 ): UseNeuralVoiceReturn {
+  const preferLocalWebSpeech = typeof setAiRespondingOrPreferLocal === "boolean"
+    ? setAiRespondingOrPreferLocal
+    : false;
+  const setAiResponding = typeof setAiRespondingOrPreferLocal === "function"
+    ? setAiRespondingOrPreferLocal
+    : undefined;
+
   // ── State ──
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(true); // GCP STT always available via edge function
@@ -363,6 +370,9 @@ export function useNeuralVoice(
 
   useEffect(() => { ttsRef.current = ttsOn; }, [ttsOn]);
   useEffect(() => { listeningRef.current = listening; }, [listening]);
+  useEffect(() => {
+    useGCPSTTRef.current = !preferLocalWebSpeech;
+  }, [preferLocalWebSpeech]);
 
   // ── Timer Management ──
   const clearRestartTimer = useCallback(() => {

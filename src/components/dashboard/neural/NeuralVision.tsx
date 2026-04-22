@@ -24,6 +24,7 @@ import { VoiceStateIndicator } from "./VoiceStateIndicator";
 import { useNeuralVoice } from "@/hooks/useNeuralVoice";
 import { useOrionVoiceClone, isVoiceCloneCommand } from "@/hooks/useOrionVoiceClone";
 import { getPersistentMicStream } from "@/lib/voice/persistentMic";
+import { handleLocalYouTubeVoiceCommand } from "@/lib/voice/youtube-voice-controller";
 
 // Extracted modules
 import { VS, processFrame, type Region, type MotionData } from "./useVisionProcessing";
@@ -185,7 +186,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     isConnected: true,
   };
 
-  const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef } = useNeuralVoice();
+  const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef } = useNeuralVoice(false);
   const bgTranscriptsGetterRef = useRef<() => import("./useWakeWord").BackgroundTranscript[]>(() => []);
 
   // ═══ Voice Identity Guard (must be before useOrionReasoning so identityStatus is available) ═══
@@ -493,8 +494,15 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }
     if (voiceClone.cloneFlowStep !== "idle" && voiceClone.cloneFlowStep !== "complete") return;
 
-    // Route everything through the centralized command router
     const finalCommand = cleanedCommand || original;
+    const localYouTube = handleLocalYouTubeVoiceCommand(finalCommand);
+    if (localYouTube.handled) {
+      if (localYouTube.feedback) speakFast(localYouTube.feedback).catch(() => {});
+      toast.info(`🎤 "${finalCommand}"`);
+      return;
+    }
+
+    // Route everything else through the centralized command router
     routeOrionCommand(finalCommand);
     toast.info(`🎤 "${finalCommand}"`);
   }, [deactivateGracefully, speak, speakFast, voiceClone, startListening, stopListen, routeOrionCommand, identityStatus, handleVoiceIdentityCheck]);
