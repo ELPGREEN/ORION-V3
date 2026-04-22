@@ -122,9 +122,9 @@ export function FloatingMusicPlayer() {
   }, []);
 
   const initial = loadPrefs();
-  // Restore visibility + query from last session so reload / route change keeps the player open
-  const [visible, setVisible] = useState(initial.visible && !!initial.lastQuery);
-  const [query, setQuery] = useState(initial.visible && initial.lastQuery ? initial.lastQuery : "");
+  // Keep the last media context, but only show the widget when Orion explicitly invokes it.
+  const [visible, setVisible] = useState(false);
+  const [query, setQuery] = useState(initial.lastQuery ?? "");
   const [videoId, setVideoId] = useState(initial.lastVideoId ?? "");
   const [muted, setMuted] = useState(initial.muted);
   const [volume, setVolume] = useState(initial.volume);
@@ -415,41 +415,6 @@ export function FloatingMusicPlayer() {
   // Singleton: extra instances render nothing (prevents duplicate players across routes)
   if (!isPrimary) return null;
 
-  // Persistent launcher: when player is closed, show a small button so user can
-  // manually open the playlist menu (re-uses lastQuery, or opens empty for picking).
-  if (!visible && !showFallbackButton) {
-    const lastQuery = loadPrefs().lastQuery;
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="fixed bottom-4 right-4 z-[9999]"
-      >
-        <Button
-          onClick={() => {
-            setVisible(true);
-            setMinimized(false);
-            if (lastQuery) {
-              setQuery(lastQuery);
-              if (results.length === 0) {
-                runSearch(category, lastQuery);
-              } else {
-                setShowResults(true);
-              }
-            } else {
-              setShowResults(true);
-            }
-          }}
-          className="shadow-2xl bg-gradient-to-r from-red-500 to-primary text-primary-foreground gap-2 rounded-full h-11 w-11 p-0"
-          title="Abrir playlist do Orion"
-          aria-label="Abrir playlist do Orion"
-        >
-          <ListMusic className="h-4 w-4" />
-        </Button>
-      </motion.div>
-    );
-  }
-
   // Fallback "Open Player" button when Orion announces playback but player didn't open
   if (showFallbackButton && !visible) {
     return (
@@ -643,9 +608,11 @@ export function FloatingMusicPlayer() {
         )}
 
         {/* Video */}
-        {!minimized && (
-          <div className="relative w-full" style={{ height: showResults ? "180px" : "calc(100% - 78px)" }}>
-            {embedLoading && (
+        <div
+          className={minimized ? "absolute bottom-0 right-0 h-px w-px overflow-hidden opacity-0 pointer-events-none" : "relative w-full"}
+          style={minimized ? undefined : { height: showResults ? "180px" : "calc(100% - 78px)" }}
+          aria-hidden={minimized}
+        >
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm">
                 <div className="flex items-center gap-2 text-xs text-foreground/80">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -674,13 +641,12 @@ export function FloatingMusicPlayer() {
                 allowFullScreen
                 title="YouTube Music Player"
               />
-            ) : !embedLoading ? (
+            ) : !embedLoading && !minimized ? (
               <div className="absolute inset-0 flex items-center justify-center bg-background/70 px-6 text-center text-xs text-muted-foreground">
                 Não consegui carregar um vídeo incorporável agora. Use o botão acima para abrir direto no YouTube.
               </div>
             ) : null}
           </div>
-        )}
       </motion.div>
     </AnimatePresence>
   );
