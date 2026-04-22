@@ -14,6 +14,12 @@ describe("cleanTextForSpeech — sanitização de bordões proibidos", () => {
     ).toBe("");
   });
 
+  it("remove também a variação com 'dri é o máximo'", () => {
+    expect(
+      cleanTextForSpeech("Dri é o máximo e deixa que eu te proteja"),
+    ).toBe("");
+  });
+
   it("preserva o restante útil da fala ao remover só o bordão", () => {
     expect(
       cleanTextForSpeech("Prepare-se para a ação. Debre ao máximo e deixa que eu te proteja. Vou identificar o que estou vendo agora."),
