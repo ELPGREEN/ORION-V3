@@ -85,6 +85,7 @@ export function FloatingMusicPlayer() {
       }
       setQuery(q.trim());
       setVisible(true);
+      setEmbedLoading(true);
       // restore minimized preference but ensure header is visible
       savePrefs({ lastQuery: q.trim() });
       setShowFallbackButton(false);
@@ -166,12 +167,17 @@ export function FloatingMusicPlayer() {
   }, []);
 
   const openFromFallback = useCallback(() => {
+    if (fallbackLoading) return;
     const q = query || loadPrefs().lastQuery || "";
-    if (q) {
-      dispatchOrionEvent(OrionEvents.MusicPlayerShow, { query: q });
+    if (!q) {
+      setShowFallbackButton(false);
+      return;
     }
-    setShowFallbackButton(false);
-  }, [query]);
+    setFallbackLoading(true);
+    dispatchOrionEvent(OrionEvents.MusicPlayerShow, { query: q });
+    // Re-enable after embed has had time to mount (safety net even if iframe.onLoad never fires)
+    window.setTimeout(() => setFallbackLoading(false), 3000);
+  }, [query, fallbackLoading]);
 
   const embedUrl = query
     ? `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1${muted || volume === 0 ? "&mute=1" : ""}`
@@ -188,10 +194,16 @@ export function FloatingMusicPlayer() {
       >
         <Button
           onClick={openFromFallback}
-          className="shadow-2xl bg-gradient-to-r from-red-500 to-primary text-primary-foreground gap-2 rounded-full px-5 py-6"
+          disabled={fallbackLoading}
+          aria-busy={fallbackLoading}
+          className="shadow-2xl bg-gradient-to-r from-red-500 to-primary text-primary-foreground gap-2 rounded-full px-5 py-6 disabled:opacity-70"
         >
-          <Music className="h-4 w-4" />
-          Abrir player
+          {fallbackLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Music className="h-4 w-4" />
+          )}
+          {fallbackLoading ? "Carregando..." : "Abrir player"}
         </Button>
       </motion.div>
     );
@@ -264,9 +276,21 @@ export function FloatingMusicPlayer() {
         {/* Video */}
         {!minimized && (
           <div className="relative w-full" style={{ height: "calc(100% - 40px)" }}>
+            {embedLoading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm">
+                <div className="flex items-center gap-2 text-xs text-foreground/80">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Carregando player...
+                </div>
+              </div>
+            )}
             <iframe
               ref={iframeRef}
               src={embedUrl}
+              onLoad={() => {
+                setEmbedLoading(false);
+                setFallbackLoading(false);
+              }}
               className="absolute inset-0 w-full h-full"
               allow="autoplay; encrypted-media"
               allowFullScreen
