@@ -142,7 +142,7 @@ function categoryFromSource(name: string): string {
 }
 
 const _ORION_SESSION_KEY = "orion-session-ready";
-const VISION_POST_COMMAND_GUARD_MS = 4000;
+const VISION_POST_COMMAND_GUARD_MS = 8000;
 const VISION_TTS_ECHO_RE = /\b(vis[aã]o\s+(ativad[ao]|desativad[ao]|j[aá]\s+est[aá]\s+ativ[ao]|j[aá]\s+est[aá]\s+desativad[ao])|desativando\s+vis[aã]o)\b/i;
 const VISION_FOLLOW_UP_RE = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+)?(vendo|enxergando)|descrev|identific|analis|leia|ler|conte|mostr|mostre|tem\s+(na|no)|quem\s+[ée]|quantos?|qual\s+[ée]|onde\s+est[aá])\b/i;
 
