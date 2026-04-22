@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { toast } from "sonner";
-import { X, Minimize2, Mic, Camera, Music } from "lucide-react";
+import { X, Minimize2, Mic, Camera, Music, Activity, ActivitySquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -349,6 +349,8 @@ export function GlobalOrionListener() {
 
 // ═══ Expanded Orion Overlay ═══
 
+const VOICE_PANEL_PREF_KEY = "orion_voice_panel_enabled";
+
 function OrionFloatingOverlay({
   onMinimize,
   onClose,
@@ -358,6 +360,45 @@ function OrionFloatingOverlay({
   onClose: () => void;
   initialCommand?: string;
 }) {
+  // Voice performance / feedback panel toggle (persisted, default OFF)
+  const [voicePanelOn, setVoicePanelOn] = useState<boolean>(() => {
+    try { return localStorage.getItem(VOICE_PANEL_PREF_KEY) === "true"; } catch { return false; }
+  });
+
+  // Apply panel state when overlay mounts / toggle changes; tear down on unmount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { voiceManager } = await import("@/lib/voice/voiceManager");
+        if (cancelled) return;
+        voiceManager.setVisualFeedbackEnabled(voicePanelOn);
+      } catch (e) {
+        console.warn("[OrionOverlay] voiceManager unavailable:", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      // Always hide the global panel when the overlay unmounts so it never
+      // leaks onto other routes.
+      import("@/lib/voice/voiceManager")
+        .then(({ voiceManager }) => voiceManager.setVisualFeedbackEnabled(false))
+        .catch(() => {});
+    };
+  }, [voicePanelOn]);
+
+  const toggleVoicePanel = useCallback(() => {
+    setVoicePanelOn((prev) => {
+      const next = !prev;
+      try { localStorage.setItem(VOICE_PANEL_PREF_KEY, String(next)); } catch {}
+      toast(next ? "Painel de voz ativado" : "Painel de voz desativado", {
+        description: next ? "Mostra confiança, volume e transcrição em tempo real." : undefined,
+        duration: 1800,
+      });
+      return next;
+    });
+  }, []);
+
   return (
     <div
       className={cn(
@@ -393,6 +434,25 @@ function OrionFloatingOverlay({
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            className={cn(
+              "h-7 w-7 p-0 transition-colors",
+              voicePanelOn
+                ? "text-primary hover:text-primary/80"
+                : "text-foreground/40 hover:text-primary/70"
+            )}
+            onClick={toggleVoicePanel}
+            title={voicePanelOn ? "Ocultar painel de voz" : "Mostrar painel de voz (confiança / volume / transcrição)"}
+            aria-pressed={voicePanelOn}
+          >
+            {voicePanelOn ? (
+              <ActivitySquare className="h-3.5 w-3.5" />
+            ) : (
+              <Activity className="h-3.5 w-3.5" />
+            )}
+          </Button>
           <Button
             size="sm"
             variant="ghost"
