@@ -332,54 +332,6 @@ async function callOpenRouter(messages: any[], systemPrompt: string, temperature
     }
   }
   throw lastError || new Error("OpenRouter failed");
-}`,
-          "HTTP-Referer": supabaseUrl,
-          "X-Title": "Orion Neural Evolution",
-        },
-        body: JSON.stringify({
-          model: "meta-llama/llama-3.3-70b-instruct",
-          messages: [{ role: "system", content: systemPrompt }, ...messages],
-          temperature,
-          max_tokens: maxTokens,
-        }),
-      });
-
-      if (response.status === 401) throw new Error("OpenRouter 401: Invalid API Key");
-      if (response.status === 429) {
-        console.warn(`[OpenRouter] Rate limited (429), retry ${attempt + 1}/${MAX_RETRIES}`);
-        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-        continue;
-      }
-
-      if (!response.ok) throw new Error(`OpenRouter ${response.status}: ${await response.text()}`);
-
-      const data = await response.json();
-      return data.choices?.[0]?.message?.content || "";
-    } catch (err) {
-      lastError = err as Error;
-      if (attempt === MAX_RETRIES - 1) break;
-    }
-  }
-
-  // FALLBACK: If OpenRouter fails, try Gemini directly
-  console.warn(`[SelfHealing] OpenRouter failed (${lastError?.message}), falling back to Gemini...`);
-  // This is a simplified fallback that calls the internal LLM logic if available or throws
-  throw lastError || new Error("OpenRouter failed and no fallback available");
-}`,
-      "HTTP-Referer": supabaseUrl,
-      "X-Title": "Orion Neural Evolution",
-    },
-    body: JSON.stringify({
-      model: "meta-llama/llama-3.3-70b-instruct",
-      messages: [{ role: "system", content: systemPrompt }, ...messages],
-      temperature,
-      max_tokens: maxTokens,
-    }),
-  });
-
-  if (!response.ok) throw new Error(`OpenRouter ${response.status}: ${await response.text()}`);
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
 }
 
 // HANDLER PRINCIPAL
