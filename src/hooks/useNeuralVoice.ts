@@ -318,6 +318,13 @@ export interface UseNeuralVoiceReturn {
 export function useNeuralVoice(
   setAiRespondingOrPreferLocal?: ((val: boolean) => void) | boolean,
 ): UseNeuralVoiceReturn {
+  const preferLocalWebSpeech = typeof setAiRespondingOrPreferLocal === "boolean"
+    ? setAiRespondingOrPreferLocal
+    : false;
+  const setAiResponding = typeof setAiRespondingOrPreferLocal === "function"
+    ? setAiRespondingOrPreferLocal
+    : undefined;
+
   // ── State ──
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(true); // GCP STT always available via edge function
