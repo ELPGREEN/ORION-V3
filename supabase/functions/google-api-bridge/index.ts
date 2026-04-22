@@ -228,18 +228,46 @@ Deno.serve(async (req) => {
     // ═══ YouTube Services ═══
     if (action === "youtube_search") {
       const { query, maxResults } = params;
-      
+      const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
+
+      if (!youtubeApiKey) {
+        return json({ error: "YouTube API key not configured" }, 500);
+      }
+
+      const searchUrl = new URL(`${GOOGLE_API_BASE}/youtube/v3/search`);
+      searchUrl.searchParams.set("part", "snippet");
+      searchUrl.searchParams.set("type", "video");
+      searchUrl.searchParams.set("q", String(query || ""));
+      searchUrl.searchParams.set("maxResults", String(Math.min(Math.max(Number(maxResults) || 1, 1), 10)));
+      searchUrl.searchParams.set("videoEmbeddable", "true");
+      searchUrl.searchParams.set("videoSyndicated", "true");
+      searchUrl.searchParams.set("safeSearch", "none");
+      searchUrl.searchParams.set("key", youtubeApiKey);
+
+      const response = await fetch(searchUrl.toString());
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[GoogleAPI] YouTube search failed:", errorText);
+        return json({ error: "YouTube search failed" }, response.status);
+      }
+
+      const payload = await response.json();
+      const videos = Array.isArray(payload?.items)
+        ? payload.items
+            .map((item: any) => ({
+              videoId: item?.id?.videoId,
+              title: item?.snippet?.title ?? "",
+              channelName: item?.snippet?.channelTitle ?? "",
+              thumbnail: item?.snippet?.thumbnails?.medium?.url ?? item?.snippet?.thumbnails?.default?.url ?? null,
+              publishedAt: item?.snippet?.publishedAt ?? null,
+            }))
+            .filter((item: { videoId?: string }) => typeof item.videoId === "string" && /^[\w-]{11}$/.test(item.videoId))
+        : [];
+
       return json({
         success: true,
-        videos: [
-          {
-            videoId: `vid_${Date.now()}`,
-            title: `${query} - Video 1`,
-            channelName: "Channel 1",
-            viewCount: 1000,
-          },
-        ],
-        totalResults: 1,
+        videos,
+        totalResults: payload?.pageInfo?.totalResults ?? videos.length,
         status: "found",
       });
     }
