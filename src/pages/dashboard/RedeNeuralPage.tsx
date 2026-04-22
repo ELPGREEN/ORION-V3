@@ -47,7 +47,6 @@ import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 // Componentes modulares
 import { NeuralErrorBoundary } from "@/components/dashboard/neural/NeuralErrorBoundary";
 
-import { VideoOverlay } from "@/components/orion/VideoOverlay";
 import { OrionIoTPanel } from "@/components/orion/OrionIoTPanel";
 import { lazyRetry } from "@/lib/lazyRetry";
 
