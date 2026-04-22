@@ -396,8 +396,8 @@ export { submitRAGFeedback, getOptimizedWeights, classifyQueryType, type SearchW
 // ═══ RAG Consciousness (ARC-AGI-2 Integration) ═══
 export {
   activateRAGConsciousness, solveRAGPuzzle, adaptFromEvaluation,
-  getConsciousnessDiagnostics, resetRAGConsciousness,
-  type RAGConsciousnessState, type RAGPattern, type RAGConsciousness, type RAGPuzzleResult,
+  getConsciousnessDiagnostics, resetRAGConsciousness, recordExperientialEvent, getConsciousness,
+  type RAGConsciousnessState, type RAGPattern, type RAGConsciousness, type RAGPuzzleResult, type ExperientialEvent,
 } from "./rag-consciousness";
 export { setRetrievedChunks, getRetrievedChunks, clearRetrievedChunks } from "./rag-retrieval-tracker";
 
