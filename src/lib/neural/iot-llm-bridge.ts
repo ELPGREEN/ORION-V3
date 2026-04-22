@@ -9,7 +9,7 @@ import { iotBridge, type IoTDevice, type IoTMessage } from "./iot-device-bridge"
 
 // ═══ OpenRouter LLM Integration for IoT ═══
 
-interface LLM IoTCommand {
+interface LLMIoTCommand {
   deviceId: string;
   command: string;
   confidence: number;
