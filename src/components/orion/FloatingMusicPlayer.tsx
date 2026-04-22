@@ -545,9 +545,71 @@ export function FloatingMusicPlayer() {
           </div>
         </div>
 
+        {/* Category chips */}
+        {!minimized && (
+          <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/30 bg-muted/30">
+            {([
+              { key: "music", label: "Música", Icon: Music },
+              { key: "video", label: "Vídeos", Icon: Film },
+              { key: "podcast", label: "Podcasts", Icon: Mic },
+            ] as const).map(({ key, label, Icon }) => (
+              <Button
+                key={key}
+                variant={category === key ? "default" : "ghost"}
+                size="sm"
+                className="h-6 px-2 text-[10px] gap-1"
+                onClick={() => runSearch(key)}
+                disabled={!query || embedLoading}
+                aria-pressed={category === key}
+              >
+                <Icon className="h-3 w-3" />
+                {label}
+              </Button>
+            ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 ml-auto text-[10px] gap-1"
+              onClick={() => setShowResults((p) => !p)}
+              disabled={results.length === 0}
+              title="Lista de resultados"
+            >
+              <ListMusic className="h-3 w-3" />
+              {results.length > 0 ? `${results.length}` : "—"}
+            </Button>
+          </div>
+        )}
+
+        {/* Manual playlist (top 5) */}
+        {!minimized && showResults && results.length > 0 && (
+          <div className="max-h-[140px] overflow-y-auto border-b border-border/30 bg-background/60">
+            {results.map((item, idx) => (
+              <button
+                key={item.videoId}
+                onClick={() => playFromList(item)}
+                className={`flex items-center gap-2 w-full px-2 py-1.5 text-left text-[11px] hover:bg-accent/40 transition-colors ${
+                  item.videoId === videoId ? "bg-primary/10" : ""
+                }`}
+              >
+                <span className="w-4 text-muted-foreground">{idx + 1}</span>
+                {item.thumbnail ? (
+                  <img src={item.thumbnail} alt="" className="h-8 w-12 object-cover rounded" loading="lazy" />
+                ) : (
+                  <div className="h-8 w-12 rounded bg-muted" />
+                )}
+                <span className="flex-1 min-w-0">
+                  <span className="block truncate text-foreground/90">{item.title}</span>
+                  <span className="block truncate text-muted-foreground text-[10px]">{item.channelName}</span>
+                </span>
+                {item.videoId === videoId && <Play className="h-3 w-3 text-primary shrink-0" />}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Video */}
         {!minimized && (
-          <div className="relative w-full" style={{ height: "calc(100% - 40px)" }}>
+          <div className="relative w-full" style={{ height: showResults ? "180px" : "calc(100% - 78px)" }}>
             {embedLoading && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm">
                 <div className="flex items-center gap-2 text-xs text-foreground/80">
@@ -564,13 +626,11 @@ export function FloatingMusicPlayer() {
                   setEmbedLoading(false);
                   setFallbackLoading(false);
                   setPlaying(true);
-                  // Tell YouTube IFrame API we're listening for state events
                   try {
                     iframeRef.current?.contentWindow?.postMessage(
                       JSON.stringify({ event: "listening", id: 1, channel: "widget" }),
                       YT_ORIGIN,
                     );
-                    // Sync current volume on load
                     postYouTubeIframeCommand(iframeRef.current, "setVolume", [muted ? 0 : volume]);
                   } catch { /* ignore */ }
                 }}
