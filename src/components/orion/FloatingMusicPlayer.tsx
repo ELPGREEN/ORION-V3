@@ -453,7 +453,9 @@ export function FloatingMusicPlayer() {
         className={`fixed z-[9999] shadow-2xl rounded-xl overflow-hidden border border-border/50 bg-background/95 backdrop-blur-xl ${
           minimized
             ? "bottom-4 right-4 w-72 h-14"
-            : "bottom-4 right-4 w-[380px] h-[280px]"
+            : showResults
+              ? "bottom-4 right-4 w-[380px] h-[460px]"
+              : "bottom-4 right-4 w-[380px] h-[320px]"
         }`}
         style={{ transition: "width 0.3s, height 0.3s" }}
       >
