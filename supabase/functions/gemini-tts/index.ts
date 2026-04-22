@@ -270,9 +270,18 @@ async function requestCloudTTS(
   // ── Input: SSML preferred, with auto-wrap for plain text ──
   const inputContent = text.slice(0, 4000);
   const useSSML = isAlreadySSML(inputContent);
-  const input: Record<string, unknown> = useSSML
-    ? { ssml: inputContent }
-    : { ssml: textToSSML(inputContent) };
+  const ssmlInput = useSSML ? inputContent : textToSSML(inputContent);
+  // Plain text fallback: strip ALL XML tags and unescape basic entities so the
+  // synthesizer always has a safe, valid input even if SSML generation breaks.
+  const plainTextFallback = inputContent
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
 
   // ── Audio config: only Cloud-TTS-supported fields ──
   // speakingRate: 0.25–4.0 (1.0 = normal)
@@ -286,11 +295,16 @@ async function requestCloudTTS(
     volumeGainDb: clamp(audioOpts?.volumeGainDb ?? 0.0, -96.0, 16.0),
   };
 
-  const requestBody: Record<string, unknown> = {
-    input,
+  // Build two payload variants: primary (SSML) and fallback (plain text).
+  const buildBody = (mode: "ssml" | "text"): Record<string, unknown> => ({
+    input: mode === "ssml" ? { ssml: ssmlInput } : { text: plainTextFallback },
     voice: voiceParams,
     audioConfig,
-  };
+  });
+
+  // Heuristic: a 400 response usually means malformed SSML — retry once as plain text.
+  let plainTextRetried = false;
+  let inputMode: "ssml" | "text" = "ssml";
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -300,14 +314,17 @@ async function requestCloudTTS(
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(buildBody(inputMode)),
       });
 
       if (resp.ok) {
         const data = await resp.json();
         if (data?.audioContent) {
           const audioBytes = Uint8Array.from(atob(data.audioContent), (c) => c.charCodeAt(0));
-          console.log(`[Cloud TTS] ✅ ${CLOUD_TTS_MODEL} ${(audioBytes.length / 1024).toFixed(1)}KB MP3 (ssml=${useSSML ? "passthrough" : "auto"})`);
+          const inputLabel = inputMode === "text"
+            ? "plain-text-fallback"
+            : useSSML ? "ssml-passthrough" : "ssml-auto";
+          console.log(`[Cloud TTS] ✅ ${CLOUD_TTS_MODEL} ${(audioBytes.length / 1024).toFixed(1)}KB MP3 (input=${inputLabel})`);
           return new Response(audioBytes.buffer, {
             headers: {
               ...corsHeaders,
@@ -315,7 +332,8 @@ async function requestCloudTTS(
               "Content-Length": String(audioBytes.length),
               "X-TTS-Engine": "cloud-tts",
               "X-TTS-Model": CLOUD_TTS_MODEL,
-              "X-TTS-Input": useSSML ? "ssml-passthrough" : "ssml-auto",
+              "X-TTS-Input": inputLabel,
+              "X-TTS-Fallback": inputMode === "text" ? "plain-text" : "none",
             },
           });
         }
@@ -324,7 +342,15 @@ async function requestCloudTTS(
       }
 
       const errText = await resp.text();
-      console.warn(`[Cloud TTS] Attempt ${attempt} (${resp.status}): ${errText.slice(0, 200)}`);
+      console.warn(`[Cloud TTS] Attempt ${attempt} mode=${inputMode} (${resp.status}): ${errText.slice(0, 200)}`);
+
+      // ── SSML failure → retry as plain text (one shot) ──
+      if (resp.status === 400 && inputMode === "ssml" && !plainTextRetried && plainTextFallback.length > 0) {
+        console.warn("[Cloud TTS] ⚠️ SSML rejected — retrying with plain text fallback");
+        inputMode = "text";
+        plainTextRetried = true;
+        continue; // do not count as a normal retry; immediately re-fire
+      }
 
       if (resp.status === 429 || resp.status === 403 || resp.status === 401) {
         if (resp.status !== 429) cachedAccessToken = null;
