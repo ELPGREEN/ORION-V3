@@ -532,6 +532,13 @@ Deno.serve(async (req) => {
     const prompt = typeof body?.prompt === "string" ? body.prompt : DEFAULT_PROMPT;
     const multispeaker = Array.isArray(body?.multispeaker) ? body.multispeaker as MultiSpeakerVoice[] : undefined;
 
+    // Speech-only audio params (Cloud TTS-supported subset)
+    const audioOpts = {
+      speakingRate: typeof body?.speakingRate === "number" ? body.speakingRate : undefined,
+      pitch: typeof body?.pitch === "number" ? body.pitch : undefined,
+      volumeGainDb: typeof body?.volumeGainDb === "number" ? body.volumeGainDb : undefined,
+    };
+
     // ⚡ Warm-up ping: client wants to wake the function but skip synthesis
     if (body?.warmup === true) {
       // Pre-fetch access token so the next real request is hot
