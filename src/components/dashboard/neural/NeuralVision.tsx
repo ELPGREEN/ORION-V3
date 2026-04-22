@@ -145,6 +145,7 @@ const _ORION_SESSION_KEY = "orion-session-ready";
 const VISION_POST_COMMAND_GUARD_MS = 8000;
 const VISION_TTS_ECHO_RE = /\b(vis[aã]o\s+(ativad[ao]|desativad[ao]|j[aá]\s+est[aá]\s+ativ[ao]|j[aá]\s+est[aá]\s+desativad[ao])|desativando\s+vis[aã]o)\b/i;
 const VISION_FOLLOW_UP_RE = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+)?(vendo|enxergando)|descrev|identific|analis|leia|ler|conte|mostr|mostre|tem\s+(na|no)|quem\s+[ée]|quantos?|qual\s+[ée]|onde\s+est[aá])\b/i;
+const VISION_AUTO_RESPONSE_BLOCK_RE = /\b(vejo|estou vendo|consigo ver|na imagem|na cena|detectei|identifiquei|aparece|parece haver|tem\s+(um|uma|dois|duas|v[aá]rios)|h[aá]\s+(um|uma|dois|duas|v[aá]rios))\b/i;
 
 function _hasSessionReady(): boolean {
   try { return sessionStorage.getItem(_ORION_SESSION_KEY) === "1"; } catch { return false; }
@@ -285,6 +286,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const hasGreetedRef = useRef(_hasSessionReady());
   const lastHandledVoiceRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
   const recentVisionCommandRef = useRef<{ ts: number; text: string }>({ ts: 0, text: "" });
+  const suppressVisionAutoResponseUntilRef = useRef(0);
 
   // ═══ Vision models preload deferred to camera activation ═══
   // preloadAllVision() is called inside startCamera() instead of mount
@@ -392,6 +394,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const isDeactivateVision = /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     if (isActivateVision || isDeactivateVision) {
       recentVisionCommandRef.current = { ts: Date.now(), text: q };
+      suppressVisionAutoResponseUntilRef.current = Date.now() + VISION_POST_COMMAND_GUARD_MS;
       // Funnel through the central event so the lock in NeuralVision's
       // listener owns the camera + TTS (single source of truth).
       window.dispatchEvent(new CustomEvent("orion-vision-command", {
@@ -681,6 +684,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       }
 
       recentVisionCommandRef.current = { ts: Date.now(), text: action };
+      suppressVisionAutoResponseUntilRef.current = Date.now() + VISION_POST_COMMAND_GUARD_MS;
 
       if (detail?.action === "activate_vision" && !active) {
         // Require explicit vision keyword OR explicit user-initiated flag
@@ -713,6 +717,21 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     window.addEventListener("orion-vision-command", handler);
     return () => window.removeEventListener("orion-vision-command", handler);
   }, [active, startCamera, stopCamera, speakFast]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const text = (event as CustomEvent).detail?.text;
+      if (typeof text !== "string") return;
+      if (Date.now() > suppressVisionAutoResponseUntilRef.current) return;
+      if (!VISION_AUTO_RESPONSE_BLOCK_RE.test(text.toLowerCase())) return;
+      console.log("[NeuralVision] 🧏 Suppressed unsolicited vision auto-response:", text.slice(0, 120));
+      try { abortControllerRef.current?.abort(); } catch {}
+      try { speechSynthesis?.cancel(); } catch {}
+    };
+
+    window.addEventListener("orion:assistant-response", handler);
+    return () => window.removeEventListener("orion:assistant-response", handler);
+  }, [abortControllerRef]);
 
 
   useEffect(() => {
