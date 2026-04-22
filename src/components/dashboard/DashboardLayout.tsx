@@ -14,6 +14,7 @@ import { MobileSidebarOverlay } from "./MobileSidebarOverlay";
 import { DashboardBackground } from "./DashboardBackground";
 import { MouseTrailEffect } from "./MouseTrailEffect";
 import { GlobalOrionListener } from "./GlobalOrionListener";
+import { VisionDebugPanel } from "./neural/VisionDebugPanel";
 // FloatingMusicPlayer is mounted globally in App.tsx — no per-route mount needed
 
 import { ProdutorSidebar } from "./ProdutorSidebar";
@@ -96,7 +97,12 @@ export default function DashboardLayout() {
   if (!user) return null;
 
   // Orion voice listener — only active inside the dashboard (not on public pages)
-  const orionListener = <GlobalOrionListener />;
+  const orionListener = (
+    <>
+      <GlobalOrionListener />
+      <VisionDebugPanel />
+    </>
+  );
 
   const PageFallback = (
     <div className="flex items-center justify-center h-64">

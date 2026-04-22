@@ -26,6 +26,7 @@ import { useOrionVoiceClone, isVoiceCloneCommand } from "@/hooks/useOrionVoiceCl
 import { getPersistentMicStream } from "@/lib/voice/persistentMic";
 import { handleLocalYouTubeVoiceCommand } from "@/lib/voice/youtube-voice-controller";
 import { shouldSuppressVisionCommand } from "@/lib/voice/visionCommandLock";
+import { emitVisionDebug } from "@/lib/voice/visionDebugBus";
 
 // Extracted modules
 import { VS, processFrame, type Region, type MotionData } from "./useVisionProcessing";
@@ -386,22 +387,22 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const q = cmd.toLowerCase().trim();
     const withinVisionGuardWindow = Date.now() - recentVisionCommandRef.current.ts < VISION_POST_COMMAND_GUARD_MS;
     console.log("[NeuralVision] 🔀 routeOrionCommand:", cmd, { supernetConnected, identityStatus });
+    emitVisionDebug({ kind: "stt-capture", text: cmd, note: withinVisionGuardWindow ? "dentro da guard window" : undefined });
     if (withinVisionGuardWindow && VISION_TTS_ECHO_RE.test(q)) {
       console.log("[NeuralVision] 🧏 Suppressed vision TTS echo before routing:", cmd);
+      emitVisionDebug({ kind: "guard-echo-block", text: cmd, matchedRegex: "VISION_TTS_ECHO_RE" });
       return;
     }
     const isActivateVision = /\b(ativar?|ligar?|abrir?|liga|abre|inicia[r]?|começar?|come[çc]a)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     const isDeactivateVision = /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     if (isActivateVision || isDeactivateVision) {
+      const action = isActivateVision ? "activate_vision" : "deactivate_vision";
+      emitVisionDebug({ kind: "vision-keyword", text: cmd, action, matchedRegex: isActivateVision ? "ACTIVATE_RE" : "DEACTIVATE_RE" });
       recentVisionCommandRef.current = { ts: Date.now(), text: q };
       suppressVisionAutoResponseUntilRef.current = Date.now() + VISION_POST_COMMAND_GUARD_MS;
-      // Funnel through the central event so the lock in NeuralVision's
-      // listener owns the camera + TTS (single source of truth).
+      emitVisionDebug({ kind: "command-dispatch", action, note: "orion-vision-command (userInitiated)" });
       window.dispatchEvent(new CustomEvent("orion-vision-command", {
-        detail: {
-          action: isActivateVision ? "activate_vision" : "deactivate_vision",
-          userInitiated: true,
-        },
+        detail: { action, userInitiated: true },
       }));
       return;
     }
@@ -419,6 +420,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         (intent.intent === "unknown" || intent.confidence < 0.55)
       ) {
         console.log("[NeuralVision] 🧏 Suppressed low-confidence transcript right after vision activation:", cmd, intent);
+        emitVisionDebug({ kind: "guard-lowconf-block", text: cmd, note: `intent=${intent.intent} conf=${intent.confidence.toFixed(2)}` });
         return;
       }
 
@@ -478,6 +480,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         VISION_TTS_ECHO_RE.test(normalizedCommand)
       ) {
         console.log("[NeuralVision] 🧏 Suppressed immediate vision echo from STT:", normalizedCommand);
+        emitVisionDebug({ kind: "guard-echo-block", text: normalizedCommand, matchedRegex: "VISION_TTS_ECHO_RE", note: "handleVoice / STT echo" });
         return;
       }
     }
@@ -725,6 +728,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       if (Date.now() > suppressVisionAutoResponseUntilRef.current) return;
       if (!VISION_AUTO_RESPONSE_BLOCK_RE.test(text.toLowerCase())) return;
       console.log("[NeuralVision] 🧏 Suppressed unsolicited vision auto-response:", text.slice(0, 120));
+      emitVisionDebug({ kind: "guard-auto-response-block", text, matchedRegex: "VISION_AUTO_RESPONSE_BLOCK_RE" });
       try { abortControllerRef.current?.abort(); } catch {}
       try { speechSynthesis?.cancel(); } catch {}
     };
