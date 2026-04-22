@@ -1,4 +1,4 @@
-import { OrionEvents, dispatchOrionEvent, type OrionVolumeAction } from "@/lib/events/orion-events";
+import { OrionEvents, dispatchOrionEvent, type OrionVolumeAction, type ResolvedMusicPlatform } from "@/lib/events/orion-events";
 
 const NORMALIZE_DIACRITICS_REGEX = /[\u0300-\u036f]/g;
 
@@ -25,6 +25,17 @@ function extractVolumeValue(command: string): number | undefined {
   const parsed = Number.parseInt(percentMatch[1], 10);
   if (!Number.isFinite(parsed)) return undefined;
   return Math.max(0, Math.min(100, parsed));
+}
+
+function dispatchResolved(query: string) {
+  dispatchOrionEvent(OrionEvents.MusicResolved, {
+    query,
+    requested: "youtube" satisfies ResolvedMusicPlatform,
+    resolved: "youtube",
+    fallback: false,
+    description: `🎵 Tocando "${query}" no YouTube`,
+    ts: Date.now(),
+  });
 }
 
 export interface LocalYouTubeVoiceResult {
@@ -88,6 +99,7 @@ export function handleLocalYouTubeVoiceCommand(rawCommand: string): LocalYouTube
     case /\b(youtube\s+)?(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|ouvir|assistir)\b/.test(command): {
       const query = extractSearchQuery(command);
       if (!query) return { handled: false };
+      dispatchResolved(query);
       dispatchOrionEvent(OrionEvents.MusicCommand, {
         action: "search_and_play",
         query,

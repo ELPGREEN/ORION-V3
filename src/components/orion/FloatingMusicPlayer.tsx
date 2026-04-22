@@ -127,6 +127,7 @@ export function FloatingMusicPlayer() {
   const [resolvedPlatform, setResolvedPlatform] = useState<string>("YouTube");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fallbackTimerRef = useRef<number | null>(null);
+  const volumeCommandTimerRef = useRef<number | null>(null);
   const resolveRequestRef = useRef(0);
 
   // Persist all UI prefs that should survive reload + route change
@@ -241,20 +242,28 @@ export function FloatingMusicPlayer() {
   // Listen for volume commands
   useEffect(() => {
     const handler = (e: CustomEvent<OrionVolumeCommandDetail>) => {
-      const { action, value } = e.detail || ({} as OrionVolumeCommandDetail);
-      let newVol = volume;
-      switch (action) {
-        case "up": newVol = Math.min(100, volume + 15); break;
-        case "down": newVol = Math.max(0, volume - 15); break;
-        case "set": newVol = Math.max(0, Math.min(100, value ?? 50)); break;
-        case "mute": setMuted(true); return;
-        case "unmute": setMuted(false); return;
+      if (volumeCommandTimerRef.current) {
+        window.clearTimeout(volumeCommandTimerRef.current);
       }
-      setVolume(newVol);
-      setMuted(newVol === 0);
+      volumeCommandTimerRef.current = window.setTimeout(() => {
+        const { action, value } = e.detail || ({} as OrionVolumeCommandDetail);
+        let newVol = volume;
+        switch (action) {
+          case "up": newVol = Math.min(100, volume + 15); break;
+          case "down": newVol = Math.max(0, volume - 15); break;
+          case "set": newVol = Math.max(0, Math.min(100, value ?? 50)); break;
+          case "mute": setMuted(true); return;
+          case "unmute": setMuted(false); return;
+        }
+        setVolume(newVol);
+        setMuted(newVol === 0);
+      }, 120);
     };
     window.addEventListener(OrionEvents.VolumeCommand, handler as EventListener);
-    return () => window.removeEventListener(OrionEvents.VolumeCommand, handler as EventListener);
+    return () => {
+      if (volumeCommandTimerRef.current) window.clearTimeout(volumeCommandTimerRef.current);
+      window.removeEventListener(OrionEvents.VolumeCommand, handler as EventListener);
+    };
   }, [volume]);
 
   // ── YouTube IFrame state sync (postMessage) ──────────────────

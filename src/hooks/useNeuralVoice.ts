@@ -316,7 +316,7 @@ export interface UseNeuralVoiceReturn {
 // ═══ Hook ═══
 
 export function useNeuralVoice(
-  setAiResponding?: (val: boolean) => void,
+  setAiRespondingOrPreferLocal?: ((val: boolean) => void) | boolean,
 ): UseNeuralVoiceReturn {
   // ── State ──
   const [listening, setListening] = useState(false);
@@ -363,6 +363,9 @@ export function useNeuralVoice(
 
   useEffect(() => { ttsRef.current = ttsOn; }, [ttsOn]);
   useEffect(() => { listeningRef.current = listening; }, [listening]);
+  useEffect(() => {
+    useGCPSTTRef.current = !preferLocalWebSpeech;
+  }, [preferLocalWebSpeech]);
 
   // ── Timer Management ──
   const clearRestartTimer = useCallback(() => {
