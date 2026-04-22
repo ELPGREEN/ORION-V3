@@ -3,7 +3,7 @@ import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink, Music
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
-import { isMobileDevice, openYouTube, openSpotify } from "@/lib/utils/deep-link";
+import { isMobileDevice, openYouTube } from "@/lib/utils/deep-link";
 import {
   OrionEvents,
   dispatchOrionEvent,
@@ -238,10 +238,10 @@ export function FloatingMusicPlayer() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={() => openSpotify(query)}
-              title="Abrir no Spotify"
+              onClick={() => openYouTube(query)}
+              title="Abrir no YouTube"
             >
-              <ExternalLink className="h-3 w-3 text-green-500" />
+              <ExternalLink className="h-3 w-3 text-red-500" />
             </Button>
             <Button
               variant="ghost"

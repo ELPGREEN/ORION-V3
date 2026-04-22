@@ -1,20 +1,7 @@
 /**
- * Shared event names + payload types for Orion <-> Music Player communication.
+ * Shared event names + payload types for Orion <-> YouTube Player communication.
  *
- * Single source of truth so the Orion brain, the floating player, and the
- * playlist bar never drift out of sync on event names or detail shape.
- *
- * Usage:
- *   import { OrionEvents, dispatchOrionEvent } from "@/lib/events/orion-events";
- *
- *   dispatchOrionEvent(OrionEvents.MusicCommand, {
- *     action: "search_and_play",
- *     query: "imagine dragons",
- *   });
- *
- *   window.addEventListener(OrionEvents.MusicCommand, (e) => {
- *     const detail = e.detail; // typed as OrionMusicCommandDetail
- *   });
+ * YouTube is the only supported platform. Spotify/Amazon types were removed.
  */
 
 // ── Event name constants ─────────────────────────────────────────
@@ -27,7 +14,7 @@ export const OrionEvents = {
   Speaking: "orion-speaking",
   /** Orion → players: volume up/down/set/mute/unmute */
   VolumeCommand: "orion-volume-command",
-  /** Resolver → widget: a music platform was resolved (with possible fallback) */
+  /** Resolver → widget: a music platform was resolved (always YouTube now) */
   MusicResolved: "orion-music-resolved",
 } as const;
 
@@ -70,24 +57,17 @@ export interface OrionVolumeCommandDetail {
   value?: number;
 }
 
-/** Music platform resolution result, dispatched after a resolver decision */
-export type ResolvedMusicPlatform =
-  | "spotify"
-  | "amazon_music"
-  | "youtube_music"
-  | "youtube";
+/** YouTube is the only supported platform. */
+export type ResolvedMusicPlatform = "youtube";
 
 export interface OrionMusicResolvedDetail {
   query: string;
-  /** Platform the user/intent originally asked for (undefined = no preference) */
+  /** Always "youtube" now */
   requested?: ResolvedMusicPlatform;
-  /** Platform actually used to play */
   resolved: ResolvedMusicPlatform;
-  /** True when requested ≠ resolved (fell back) */
+  /** Always false — only one platform exists */
   fallback: boolean;
-  /** Human-readable description (e.g. "🎵 Tocando … no YouTube") */
   description?: string;
-  /** Epoch ms — useful for cache freshness */
   ts: number;
 }
 
@@ -100,7 +80,6 @@ export interface OrionEventDetailMap {
   [OrionEvents.MusicResolved]: OrionMusicResolvedDetail;
 }
 
-// Augment global WindowEventMap so addEventListener gets typed `e.detail`
 declare global {
   interface WindowEventMap {
     [OrionEvents.MusicCommand]: CustomEvent<OrionMusicCommandDetail>;
