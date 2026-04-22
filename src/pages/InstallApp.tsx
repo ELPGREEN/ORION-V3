@@ -2,15 +2,13 @@ import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Download, Smartphone, Monitor, Apple, CheckCircle, Shield, Wifi, Lightbulb, Speaker, Tv, Plug, Bluetooth, Music, ShoppingCart, Loader2, XCircle, RefreshCw, Mic } from "lucide-react";
+import { Download, Smartphone, Monitor, Apple, CheckCircle, Shield, Wifi, Lightbulb, Speaker, Tv, Plug, Bluetooth, Loader2, XCircle, RefreshCw, Mic } from "lucide-react";
 import { GlassCard } from "@/components/ui/TechElements";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { getAllPermissionStates, requestPermission, requestAllPermissions, type PermissionState } from "@/lib/device-permissions";
 import { useToast } from "@/hooks/use-toast";
 import { bluetoothManager, type BLEDeviceInfo } from "@/lib/neural/bluetooth-manager";
-import { isSpotifyConnected, startSpotifyLogin, disconnectSpotify } from "@/lib/spotify/spotify-service";
-import { isYTMusicConnected, startYTMusicLogin, disconnectYTMusic, getYTMusicUser } from "@/lib/youtube-music/youtube-music-service";
-import { useAmazonIntegration } from "@/hooks/useAmazonIntegration";
+// Spotify, YouTube Music and Amazon integrations removed — only YouTube IFrame is supported.
 
 export default function InstallApp() {
   const { canInstall, isInstalled, isIOS, triggerInstall } = useInstallPrompt();
@@ -23,34 +21,8 @@ export default function InstallApp() {
   const [bleScanning, setBleScanning] = useState(false);
   const [bleSupported] = useState(bluetoothManager.isSupported);
 
-  // Spotify state
-  const [spotifyConnected, setSpotifyConnected] = useState(false);
-
-  // YouTube Music state
-  const [ytMusicConnected, setYtMusicConnected] = useState(false);
-  const [ytMusicUser, setYtMusicUser] = useState<{ name?: string; email?: string } | null>(null);
-
-  // Amazon state
-  const { status: amazonStatus, loading: amazonLoading, connect: amazonConnect, disconnect: amazonDisconnect, connecting: amazonConnecting } = useAmazonIntegration();
-
   useEffect(() => {
     getAllPermissionStates().then(setPermissions);
-  }, []);
-
-  // Refresh connection status
-  useEffect(() => {
-    const check = async () => {
-      setSpotifyConnected(await isSpotifyConnected());
-      const ytConnected = await isYTMusicConnected();
-      setYtMusicConnected(ytConnected);
-      if (ytConnected) {
-        const u = await getYTMusicUser();
-        setYtMusicUser(u);
-      }
-    };
-    check();
-    window.addEventListener("focus", check);
-    return () => window.removeEventListener("focus", check);
   }, []);
 
   // Listen for BLE events
@@ -310,144 +282,8 @@ export default function InstallApp() {
             )}
           </GlassCard>
 
-          {/* ── INTEGRATIONS: Spotify & Amazon ── */}
-          <GlassCard className="p-6 space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Wifi className="h-5 w-5 text-primary" />
-              <h3 className="font-serif text-foreground">Integrações de Serviços</h3>
-            </div>
-
-            {/* Spotify */}
-            <div className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
-              <div className="flex items-center gap-3">
-                <Music className="h-5 w-5 text-green-400" />
-                <div>
-                  <div className="text-sm font-medium text-foreground">Spotify</div>
-                  <div className="text-[10px] text-muted-foreground">
-                    {spotifyConnected ? "Conta conectada" : "Conecte para busca musical e controle do Spotify (playback exige conta Premium compatível)"}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {spotifyConnected ? (
-                  <>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-green-400">Conectado</span>
-                    <Button size="sm" variant="destructive" className="h-6 text-[10px] px-2"
-                      onClick={async () => { await disconnectSpotify(); setSpotifyConnected(false); toast({ title: "Spotify desconectado" }); }}>
-                      Desconectar
-                    </Button>
-                  </>
-                ) : (
-                  <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1"
-                    onClick={() => startSpotifyLogin()}>
-                    <Music className="h-3 w-3" />
-                    Conectar
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* YouTube Music */}
-            <div className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
-              <div className="flex items-center gap-3">
-                <div className="h-5 w-5 rounded bg-red-600 flex items-center justify-center">
-                  <Music className="h-3 w-3 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-foreground">YouTube Music</div>
-                  <div className="text-[10px] text-muted-foreground">
-                    {ytMusicConnected ? `Conectado${ytMusicUser?.name ? ` — ${ytMusicUser.name}` : ""}` : "Busca, playlists e reprodução via YouTube/YouTube Music após conexão Google"}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {ytMusicConnected ? (
-                  <>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-green-400">Conectado</span>
-                    <Button size="sm" variant="destructive" className="h-6 text-[10px] px-2"
-                      onClick={async () => { await disconnectYTMusic(); setYtMusicConnected(false); setYtMusicUser(null); toast({ title: "YouTube Music desconectado" }); }}>
-                      Desconectar
-                    </Button>
-                  </>
-                ) : (
-                  <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1"
-                    onClick={() => startYTMusicLogin()}>
-                    <Music className="h-3 w-3" />
-                    Conectar
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Amazon Music */}
-            <div className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
-              <div className="flex items-center gap-3">
-                <Music className="h-5 w-5 text-[#FF9900]" />
-                <div>
-                  <div className="text-sm font-medium text-foreground">Amazon Music</div>
-                  <div className="text-[10px] text-muted-foreground">
-                    {amazonStatus.connected ? "Conta Amazon conectada" : "Sugestões e abertura no Amazon Music por link externo"}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-mono uppercase tracking-wider ${amazonStatus.connected ? "text-green-400" : "text-muted-foreground/50"}`}>
-                  {amazonLoading ? "..." : amazonStatus.connected ? "Ativo" : "—"}
-                </span>
-              </div>
-            </div>
-
-            {/* Amazon Alexa */}
-            <div className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
-              <div className="flex items-center gap-3">
-                <Mic className="h-5 w-5 text-[#FF9900]" />
-                <div>
-                  <div className="text-sm font-medium text-foreground">Alexa & Smart Home</div>
-                  <div className="text-[10px] text-muted-foreground">
-                    {amazonStatus.connected ? "Descoberta e controle de dispositivos Alexa compatíveis" : "Conecte para tentar acessar seus dispositivos Alexa compatíveis"}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-mono uppercase tracking-wider ${amazonStatus.connected ? "text-green-400" : "text-muted-foreground/50"}`}>
-                  {amazonLoading ? "..." : amazonStatus.connected ? "Ativo" : "—"}
-                </span>
-              </div>
-            </div>
-
-            {/* Amazon Shopping */}
-            <div className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
-              <div className="flex items-center gap-3">
-                <ShoppingCart className="h-5 w-5 text-[#FF9900]" />
-                <div>
-                  <div className="text-sm font-medium text-foreground">Amazon Shopping</div>
-                  <div className="text-[10px] text-muted-foreground">
-                    {amazonStatus.connected ? `Logado como ${amazonStatus.profile?.name || amazonStatus.profile?.email || "..."}` : "Busque produtos na Amazon"}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {amazonLoading ? (
-                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                ) : amazonStatus.connected ? (
-                  <>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-green-400">Conectado</span>
-                    <Button size="sm" variant="destructive" className="h-6 text-[10px] px-2"
-                      onClick={amazonDisconnect}>
-                      Desconectar
-                    </Button>
-                  </>
-                ) : (
-                  <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1"
-                    onClick={amazonConnect}
-                    disabled={amazonConnecting}>
-                    {amazonConnecting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShoppingCart className="h-3 w-3" />}
-                    Conectar Amazon
-                  </Button>
-                )}
-              </div>
-            </div>
-          </GlassCard>
+          {/* Spotify, YouTube Music, Amazon integration cards removed —
+              only YouTube IFrame is supported now. */}
 
           {/* ── COMPATIBLE DEVICES ── */}
           <GlassCard className="p-6 space-y-4">

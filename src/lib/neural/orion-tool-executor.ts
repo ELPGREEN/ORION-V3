@@ -22,13 +22,9 @@ import {
   ORION_EXCLUSIVE_CAPABILITIES,
   CV_INDUSTRY_COMPARISON,
 } from "./orion-introspection";
-import {
-  handlePlayMusic,
-  handleSearchMusic,
-  handlePauseMusic,
-  handleAutonomousListen,
-  getMediaStatus,
-} from "./orion-autonomous-media";
+// orion-autonomous-media removed — Spotify/Amazon/Audiobook handlers dropped.
+// Music intents are now handled directly by playMusicWithFallback (YouTube only).
+import { playMusicWithFallback } from "./music-fallback-resolver";
 
 // ─── Helpers ───
 
@@ -2467,249 +2463,27 @@ const TOOLS: OrionTool[] = [
     },
   },
 
-  // ═══ AUTONOMOUS MEDIA — Music & Audiobook via voice ═══
-
-
-  {
-    name: "audiobook_play",
-    regex: /(?:tocar?|play|coloca|bota|põe|reproduz(?:ir)?|ouvir?|escutar?)\s+(?:o\s+)?(?:livro|audiobook|audiolivro|book)\s+(.+)/i,
-    extract: (m) => ({ query: m[1].trim() }),
-    call: async (p) => {
-      const { handlePlayAudiobook } = await import("./orion-autonomous-media");
-      return handlePlayAudiobook(p.query as string);
-    },
-  },
+  // ═══ MEDIA — YouTube only (Spotify/Amazon/Audiobook removed) ═══
   {
     name: "music_play",
     regex: /(?:tocar?|play|coloca|bota|põe|reproduz(?:ir)?|ouvir?|escutar?)\s+(?:(?:a\s+)?(?:música|musica|m[uú]sica|song|track|faixa)\s+(?:d[oea]\s+)?)?(.+)/i,
     extract: (m) => ({ query: m[1].trim() }),
-    call: async (p) => handlePlayMusic(p.query as string),
-  },
-  {
-    name: "music_search",
-    regex: /(?:busc[aeo]r?|procur[aeo]r?|pesquis[aeo]r?|search|encontr[aeo]r?|ach[aeo]r?)\s+(?:(?:a\s+|o\s+|uma?\s+)?(?:m[uú]sica|musica|song|track|faixa|artista|artist|banda|band|cantor[a]?|playlist|álbum|album)\s+(?:d[oea]\s+)?)?(.+)/i,
-    extract: (m) => ({ query: m[1].trim() }),
-    call: async (p) => handleSearchMusic(p.query as string),
+    call: async (p) => {
+      const result = await playMusicWithFallback(p.query as string);
+      return result.description;
+    },
   },
   {
     name: "music_pause",
-    regex: /(?:^|\s)(?:par(?:a|e)\s+(?:a\s+)?(?:m[uú]sica|musica|reprodu[çc][ãa]o)|paus(?:a|e|ar)\s+(?:a\s+)?(?:m[uú]sica|musica|reprodu[çc][ãa]o)?|pause\s+(?:the\s+)?music|stop\s+(?:the\s+)?music|para(?:r)?\s+de\s+tocar|silêncio|(?:^mute$))(?:\s|$|[.!?])/i,
-    extract: () => ({}),
-    call: async () => handlePauseMusic(),
-  },
-  {
-    name: "music_autonomous",
-    regex: /(?:ouv(?:ir?|e)\s+(?:algo|música|musica)|escuta(?:r)?\s+(?:algo|sozinho)|(?:tá|está)\s+entediado|quero?\s+(?:ouvir|escutar)|explore?\s+(?:música|musica)|coloca\s+(?:algo|qualquer))/i,
-    extract: () => ({}),
-    call: async () => handleAutonomousListen(),
-  },
-  {
-    name: "music_status",
-    regex: /(?:status\s+(?:de\s+)?(?:mídia|media|música|musica|escuta)|o\s+que\s+(?:tá|está)\s+ouvindo|preferências?\s+(?:de\s+)?(?:música|musica)|gêneros?\s+favorit)/i,
-    extract: () => ({}),
-    call: async () => getMediaStatus(),
-  },
-  {
-    name: "voice_evolution_status",
-    regex: /(?:evolução\s+(?:da\s+)?(?:voz|vocal)|status\s+(?:da\s+)?(?:voz|vocal)|minha\s+voz|como\s+(?:está|tá)\s+(?:a\s+)?(?:sua\s+)?voz|nível\s+(?:da\s+)?voz|progresso\s+vocal)/i,
+    regex: /(?:^|\s)(?:par(?:a|e)\s+(?:a\s+)?(?:m[uú]sica|musica|reprodu[çc][ãa]o)|paus(?:a|e|ar)\s+(?:a\s+)?(?:m[uú]sica|musica|reprodu[çc][ãa]o)?|pause\s+(?:the\s+)?music|stop\s+(?:the\s+)?music|para(?:r)?\s+de\s+tocar)(?:\s|$|[.!?])/i,
     extract: () => ({}),
     call: async () => {
-      const { getVoiceEvolutionStatus } = await import("./orion-voice-evolution");
-      return getVoiceEvolutionStatus();
-    },
-  },
-  {
-    name: "evolve_voice",
-    regex: /(?:evolu[aí]r?\s+(?:sua\s+)?voz|boost\s+(?:da\s+)?(?:voz|vocal)|acelerar?\s+evolu[çc][aã]o\s+vocal|evolu[aí]\s+(?:a\s+)?voz)/i,
-    extract: () => ({}),
-    call: async () => {
-      const { boostEvolution, getVoiceEvolutionStatus } = await import("./orion-voice-evolution");
-      const result = boostEvolution();
-      if (result === null) {
-        return "🚀 O boost de evolução vocal já foi aplicado anteriormente. Use **\"status da voz\"** para ver o nível atual.";
-      }
-      return `🚀 **Evolução Vocal Acelerada!**\n\nNovo nível: **${result}%**\n\n` + await (async () => {
-        const status = getVoiceEvolutionStatus();
-        return status;
-      })();
-    },
-  },
-  {
-    name: "playlist_add",
-    regex: /(?:adiciona|salva|favorit[ae]|add|coloca\s+n[ao]s?\s+playlist|guardar?|adicionar?\s+(?:na|à)\s+playlist)\s*(.+)?/i,
-    extract: (m) => ({ query: m[1]?.trim() || "" }),
-    call: async (p) => {
-      const { handleAddToPlaylist } = await import("./orion-autonomous-media");
-      return handleAddToPlaylist(p.query as string);
-    },
-  },
-  {
-    name: "playlist_create",
-    regex: /(?:cria|criar?|crie|nova)\s+(?:uma?\s+)?playlist\s+(.+)/i,
-    extract: (m) => ({ name: m[1].trim() }),
-    call: async (p) => {
-      const { handleCreatePlaylist } = await import("./orion-autonomous-media");
-      return handleCreatePlaylist(p.name as string);
-    },
-  },
-  {
-    name: "playlist_list",
-    regex: /(?:minhas?\s+playlists?|listar?\s+playlists?|mostrar?\s+playlists?|quais?\s+(?:são\s+)?(?:minhas?\s+)?playlists?)/i,
-    extract: () => ({}),
-    call: async () => {
-      const { handleListPlaylists } = await import("./orion-autonomous-media");
-      return handleListPlaylists();
-    },
-  },
-  {
-    name: "audiobook_autonomous",
-    regex: /(?:ler?|leia|estud(?:ar?|e)|livros?\s+para\s+(?:mim|orion))\b/i,
-    extract: () => ({}),
-    call: async () => {
-      const { selectBookForComprehension, getRemainingMinutes } = await import("./orion-autonomous-media");
-      const remaining = getRemainingMinutes();
-      if (remaining <= 0) return "📚 Limite de 60 min/dia atingido. Amanhã continuo aprendendo!";
-      const book = selectBookForComprehension();
-      return `📖 **Seleção autônoma de leitura:**\n\n**Tema:** ${book.topic}\n**Razão:** ${book.reason}\n**Busca:** ${book.query}\n\n⏱️ Restam ${remaining} min do meu tempo de estudo hoje.`;
+      const { dispatchOrionEvent, OrionEvents } = await import("@/lib/events/orion-events");
+      dispatchOrionEvent(OrionEvents.MusicCommand, { action: "pause" });
+      return "⏸ Pausando música no YouTube";
     },
   },
 
-  // ═══ AMAZON MEDIA & IoT TOOLS ═══
-
-  {
-    name: "amazon_audiobook",
-    regex: /(?:leia?\s+(?:no\s+)?kindle|audiobook\s+amazon|buscar?\s+livro\s+(?:na\s+)?amazon|audible)/i,
-    extract: (_m, q) => ({ query: q.replace(/leia?\s+(?:no\s+)?kindle|audiobook\s+amazon|buscar?\s+livro\s+(?:na\s+)?amazon|audible/gi, "").trim() || "inteligência artificial" }),
-    call: async (p) => {
-      const { handlePlayAudiobook } = await import("./orion-autonomous-media");
-      return handlePlayAudiobook(p.query as string);
-    },
-  },
-  {
-    name: "amazon_music",
-    regex: /(?:tocar?|play)\s+(?:na\s+)?amazon\s+music|m[uú]sica\s+(?:na\s+)?amazon/i,
-    extract: (_m, q) => ({ query: q.replace(/(?:tocar?|play)\s+(?:na\s+)?amazon\s+music|m[uú]sica\s+(?:na\s+)?amazon/gi, "").trim() }),
-    call: async (p) => {
-      const { handlePlayAmazonMusic } = await import("./orion-autonomous-media");
-      return handlePlayAmazonMusic((p.query as string) || "relaxing");
-    },
-  },
-  {
-    name: "amazon_alexa",
-    regex: /alexa\s+(.+)|casa\s+inteligente|smart\s*home/i,
-    extract: (m, q) => ({ command: m[1]?.trim() || q }),
-    call: async (p) => {
-      const { parseSmartHomeCommand, listAlexaDevices, controlDevice, isAmazonConnected } = await import("@/lib/amazon/alexa-smart-home");
-      
-      // Check connection first
-      const connected = await isAmazonConnected();
-      if (!connected) {
-        return "⚠️ **Amazon não conectada.** Vá em Configurações > Amazon e clique em 'Conectar Amazon' para habilitar o controle de dispositivos Alexa.";
-      }
-
-      const cmd = parseSmartHomeCommand(p.command as string);
-      if (cmd) {
-        const devices = await listAlexaDevices();
-        const target = devices.find(d => d.name.toLowerCase().includes(cmd.target.toLowerCase()));
-        if (target) {
-          const result = await controlDevice(target.id, cmd.action, cmd.value);
-          return result.success
-            ? `🏠 **${result.device}**: ${result.message}`
-            : `⚠️ ${result.message}`;
-        }
-        return `🏠 Dispositivo "${cmd.target}" não encontrado. Dispositivos: ${devices.map(d => d.name).join(", ") || "nenhum detectado"}`;
-      }
-      const devices = await listAlexaDevices();
-      if (devices.length === 0) return "🏠 Amazon conectada, mas nenhum dispositivo Alexa detectado. Verifique se você tem dispositivos Alexa vinculados à sua conta Amazon e se os escopos Alexa estão autorizados.";
-      const list = devices.map(d => `• ${d.name} (${d.type}) — ${d.online ? "🟢 Online" : "🔴 Offline"}`).join("\n");
-      return `🏠 **Dispositivos Alexa Smart Home:**\n${list}\n\nDiga "acender luz" ou "desligar [dispositivo]" para controlar.`;
-    },
-  },
-  {
-    name: "iot_bluetooth",
-    regex: /(?:conectar?|scan|escanear?)\s+bluetooth|dispositivos?\s+bluetooth|ble\s+scan/i,
-    extract: () => ({}),
-    call: async () => {
-      return `📡 **Bluetooth Low Energy:**\nNavegue para /dashboard/dispositivos para escanear e conectar dispositivos BLE.\n\n🔗 O painel permite:\n• Escanear dispositivos próximos\n• Conectar/desconectar\n• Monitorar bateria e status`;
-    },
-  },
-  {
-    name: "iot_mqtt",
-    regex: /(?:status|estado)\s+(?:dos?\s+)?dispositivos?\s+(?:iot|mqtt)|mqtt\s+(?:status|conectar)|(?:ligar|desligar)\s+(?:o\s+)?(?:sensor|dispositivo|relay)/i,
-    extract: (_m, q) => ({ query: q }),
-    call: async () => {
-      return `📡 **IoT / MQTT:**\nNavegue para /dashboard/dispositivos para:\n• Conectar ao broker HiveMQ\n• Monitorar dispositivos IoT em tempo real\n• Enviar comandos MQTT\n• Ver telemetria de sensores\n\n💡 Diga "alexa [comando]" para controlar dispositivos Smart Home.`;
-    },
-  },
-  {
-    name: "orion_read_aloud",
-    regex: /(?:orion\s+)?(?:leia?\s+(?:um\s+)?livro|auto[\s-]?leitura|ler?\s+(?:para\s+)?mim|narrar?\s+(?:um\s+)?livro)/i,
-    extract: (_m, q) => ({ query: q.replace(/(?:orion\s+)?(?:leia?\s+(?:um\s+)?livro|auto[\s-]?leitura|ler?\s+(?:para\s+)?mim|narrar?\s+(?:um\s+)?livro)/gi, "").trim() }),
-    call: async (p) => {
-      const { handleOrionReadAloud } = await import("./orion-autonomous-media");
-      return handleOrionReadAloud((p.query as string) || undefined);
-    },
-  },
-  {
-    name: "read_next_segment",
-    regex: /(?:pr[oó]ximo\s+(?:cap[ií]tulo|segmento|parte)|continuar?\s+(?:a\s+)?leitura|next\s+chapter)/i,
-    extract: () => ({}),
-    call: async () => {
-      const { handleNextSegment } = await import("./orion-autonomous-media");
-      return handleNextSegment();
-    },
-  },
-  {
-    name: "read_pause",
-    regex: /(?:pausar?\s+(?:a\s+)?leitura|parar?\s+de\s+ler|stop\s+reading)/i,
-    extract: () => ({}),
-    call: async () => {
-      const { handlePauseReading } = await import("./orion-autonomous-media");
-      return handlePauseReading();
-    },
-  },
-
-  // ─── Appstore SDK Tools ───
-  {
-    name: "appstore_drm_check",
-    regex: /(?:verificar?\s+licen[cç]a|checar?\s+drm|status\s+licen[cç]a|license\s+check)/i,
-    extract: () => ({}),
-    call: async () => {
-      const { checkDRMLicense } = await import("@/lib/amazon/appstore-sdk");
-      const drm = await checkDRMLicense();
-      return `🛡️ **Status DRM:** ${drm.status}\n` +
-        (drm.userId ? `Usuário: ${drm.userId}\n` : "") +
-        (drm.marketplace ? `Marketplace: ${drm.marketplace}\n` : "") +
-        `Verificado em: ${new Date(drm.checkedAt).toLocaleString("pt-BR")}`;
-    },
-  },
-  {
-    name: "appstore_iap_products",
-    regex: /(?:produtos?\s+(?:dispon[ií]veis|amazon)|listar?\s+(?:compras?|planos?)\s+(?:in-?app|appstore))/i,
-    extract: () => ({}),
-    call: async () => {
-      const { getProductData, ORION_SKUS } = await import("@/lib/amazon/appstore-sdk");
-      const products = await getProductData(Object.values(ORION_SKUS));
-      if (!products.length) return "Nenhum produto encontrado no catálogo.";
-      return "🛒 **Produtos disponíveis:**\n" +
-        products.map(p => `• **${p.title}** — ${p.price}\n  ${p.description}`).join("\n");
-    },
-  },
-  {
-    name: "appstore_ssi_login",
-    regex: /(?:sign[- ]?in\s+(?:com\s+)?amazon|login\s+(?:com\s+)?amazon\s+(?:ssi|appstore)|amazon\s+ssi)/i,
-    extract: () => ({}),
-    call: async () => {
-      const { getSSIStatus } = await import("@/lib/amazon/appstore-sdk");
-      const ssi = await getSSIStatus();
-      if (ssi.signedIn) {
-        return `✅ **Amazon SSI:** Conectado\n` +
-          (ssi.displayName ? `Nome: ${ssi.displayName}\n` : "") +
-          (ssi.email ? `Email: ${ssi.email}` : "");
-      }
-      return "⚠️ **Amazon SSI:** Não conectado. Use o painel de Configurações > Amazon para fazer sign-in.";
-    },
-  },
 
   // ═══ TASK CREATION (Voice) ═══
   {
@@ -3354,7 +3128,8 @@ const TOOLS: OrionTool[] = [
         branco: "white noise sleep",
       };
       const query = soundMap[p.sound as string] || `${p.sound} relaxation sounds`;
-      return handlePlayMusic(query);
+      const result = await playMusicWithFallback(query);
+      return result.description;
     },
   },
   {
