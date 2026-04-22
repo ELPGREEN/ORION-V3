@@ -106,6 +106,16 @@ export function OrionPlaylistBar() {
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [useSDK, setUseSDK] = useState(false);
   const [barVisible, setBarVisible] = useState(true);
+  const [resolvedInfo, setResolvedInfo] = useState<OrionMusicResolvedDetail | null>(() => {
+    // Restore last resolved music decision so the widget reflects the latest
+    // platform/query immediately on reopen — without waiting for a new event.
+    try {
+      const raw = localStorage.getItem("orion_last_music_resolved");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as OrionMusicResolvedDetail;
+      return parsed && parsed.query && parsed.resolved ? parsed : null;
+    } catch { return null; }
+  });
   const [playbackMode, setPlaybackMode] = useState<"spotify-sdk" | "audio-preview" | "youtube" | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
