@@ -103,15 +103,28 @@ export async function playMusicWithFallback(
   preferredPlatform?: MusicPlatform
 ): Promise<{ platform: MusicPlatform; description: string; fallback: boolean }> {
   const resolved = await resolveMusicPlatform(preferredPlatform);
-  const fallback = !!preferredPlatform && resolved.platform !== preferredPlatform;
+  const explicit = !!preferredPlatform;
+  const fallback = explicit && resolved.platform !== preferredPlatform;
   const mobile = isMobileDevice();
 
+  // Detailed logs to make priority resolution traceable in DevTools
+  console.log("[music-fallback] resolve", {
+    query,
+    preferredPlatform: preferredPlatform || "(none → default YouTube)",
+    resolved: resolved.platform,
+    fallback,
+  });
+
+  // Auto-fallback notification: when user asked for Spotify/Amazon but it's
+  // not connected, we silently switch to YouTube and tell the user via toast.
   if (fallback) {
-    console.log(`[music-fallback] ${preferredPlatform} não conectado, usando ${resolved.platform}`);
+    const askedLabel = PLATFORM_LABEL[preferredPlatform!];
+    const usedLabel = PLATFORM_LABEL[resolved.platform];
+    void notifyFallback(`${askedLabel} não conectado — tocando no ${usedLabel}`);
   }
 
   const fallbackNote = fallback
-    ? ` (${preferredPlatform === "spotify" ? "Spotify" : preferredPlatform === "amazon_music" ? "Amazon Music" : preferredPlatform} não conectado)`
+    ? ` (${PLATFORM_LABEL[preferredPlatform!]} não conectado)`
     : "";
 
   switch (resolved.platform) {
