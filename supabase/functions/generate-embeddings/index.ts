@@ -40,6 +40,17 @@ async function generateEmbeddingSingle(text: string, apiKey: string): Promise<nu
 }
 
 // Batch embedding via Gemini batchEmbedContents (up to 100 texts per call)
+
+async function validateEmbedding(embedding: number[]): Promise<boolean> {
+  if (!Array.isArray(embedding)) return false;
+  if (embedding.length < 384) return false;
+  // Check for mock (all zeros or all same value)
+  const first = embedding[0];
+  const allSame = embedding.every(v => v === first);
+  if (allSame && first === 0) return false;
+  return true;
+}
+
 async function generateEmbeddingBatch(texts: string[], apiKey: string): Promise<number[][]> {
   const requests = texts.map(t => ({
     model: "models/gemini-embedding-001",
@@ -310,7 +321,7 @@ Deno.serve(async (req) => {
         neural: neuralRemaining || 0,
         legal: legalRemaining || 0,
       },
-      providers_used: ["gemini"],
+      providers_used: providers.map(p => p.name),
     };
 
     console.log(`🏁 Done:`, JSON.stringify(summary));

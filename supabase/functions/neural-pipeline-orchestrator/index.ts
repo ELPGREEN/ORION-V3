@@ -404,13 +404,13 @@ Deno.serve(async (req) => {
       // 3c. neural-evolution: analizar e propor após 30s (para ter dados frescos)
       EdgeRuntime.waitUntil(
         new Promise(resolve => setTimeout(resolve, 30000)).then(() =>
-          fetch(`${supabaseUrl}/functions/v1/neural-evolution`, {
+          fetch(`${supabaseUrl}/functions/v1/ai-orchestrator`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${supabaseKey}`,
             },
-            body: JSON.stringify({ action: "analyze_and_propose" }),
+            body: JSON.stringify({ action: "evolve", subAction: "analyze_and_propose" }),
             signal: AbortSignal.timeout(60000),
           })
         )
@@ -438,13 +438,13 @@ Deno.serve(async (req) => {
       // 3e. AUTO-APPROVE pending proposals (LACUNA FIX: proposals ficavam em pending indefinidamente)
       EdgeRuntime.waitUntil(
         new Promise(resolve => setTimeout(resolve, 45000)).then(() =>
-          fetch(`${supabaseUrl}/functions/v1/neural-evolution`, {
+          fetch(`${supabaseUrl}/functions/v1/ai-orchestrator`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${supabaseKey}`,
             },
-            body: JSON.stringify({ action: "auto_approve_pending" }),
+            body: JSON.stringify({ action: "evolve", subAction: "auto_approve_pending" }),
             signal: AbortSignal.timeout(60000),
           })
         )
@@ -456,13 +456,13 @@ Deno.serve(async (req) => {
       // 3f. AUTO-APPLY approved proposals (LACUNA FIX: approved proposals never applied automatically)
       EdgeRuntime.waitUntil(
         new Promise(resolve => setTimeout(resolve, 60000)).then(() =>
-          fetch(`${supabaseUrl}/functions/v1/neural-evolution`, {
+          fetch(`${supabaseUrl}/functions/v1/ai-orchestrator`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${supabaseKey}`,
             },
-            body: JSON.stringify({ action: "auto_apply_approved" }),
+            body: JSON.stringify({ action: "evolve", subAction: "auto_apply_approved" }),
             signal: AbortSignal.timeout(60000),
           })
         )
@@ -522,10 +522,10 @@ Deno.serve(async (req) => {
     if (action === "full_cycle") {
       // Cleanup stale proposals (>30 days pending → rejected)
       EdgeRuntime.waitUntil(
-        fetch(`${supabaseUrl}/functions/v1/neural-evolution`, {
+        fetch(`${supabaseUrl}/functions/v1/ai-orchestrator`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
-          body: JSON.stringify({ action: "cleanup_stale" }),
+          body: JSON.stringify({ action: "evolve", subAction: "cleanup_stale" }),
           signal: AbortSignal.timeout(30000),
         })
         .then(() => console.log("✅ cleanup_stale triggered"))
@@ -534,10 +534,10 @@ Deno.serve(async (req) => {
 
       // Reset stale A/B experiments (>48h with 0 samples)
       EdgeRuntime.waitUntil(
-        fetch(`${supabaseUrl}/functions/v1/neural-evolution`, {
+        fetch(`${supabaseUrl}/functions/v1/ai-orchestrator`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
-          body: JSON.stringify({ action: "reset_stale_ab" }),
+          body: JSON.stringify({ action: "evolve", subAction: "reset_stale_ab" }),
           signal: AbortSignal.timeout(30000),
         })
         .then(() => console.log("✅ reset_stale_ab triggered"))
@@ -574,7 +574,7 @@ Deno.serve(async (req) => {
         cost_tier: 0,
         success: true,
         response_length: JSON.stringify(results).length,
-        tools_used: ["neural-auto-learn", "generate-embeddings", "neural-evolution", "queue-worker"],
+        tools_used: ["neural-auto-learn", "generate-embeddings", "ai-orchestrator", "queue-worker"],
         data_sources_used: ["neural_learning_data", "documents", "chat_ia_messages"],
       });
     } catch (e) {
