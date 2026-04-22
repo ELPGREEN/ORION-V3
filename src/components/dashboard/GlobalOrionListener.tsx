@@ -29,10 +29,6 @@ const PERMISSIONS_DISMISSED_KEY = "orion_permissions_dismissed";
 const NeuralVision = lazy(() =>
   import("./neural/NeuralVision").then((m) => ({ default: m.NeuralVision }))
 );
-const OrionPlaylistBar = lazy(() =>
-  import("@/components/orion/OrionPlaylistBar").then((m) => ({ default: m.OrionPlaylistBar }))
-);
-
 export function GlobalOrionListener() {
   const location = useLocation();
   const { user } = useAuth();
@@ -475,9 +471,6 @@ function OrionFloatingOverlay({
       </div>
 
       <div className="h-[calc(100%-40px)] overflow-y-auto">
-        <Suspense fallback={null}>
-          <OrionPlaylistBar />
-        </Suspense>
         <Suspense
           fallback={
             <div className="flex items-center justify-center h-full">
