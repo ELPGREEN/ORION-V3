@@ -134,6 +134,9 @@ export function FloatingMusicPlayer() {
   const [embedLoading, setEmbedLoading] = useState(false);
   const [playing, setPlaying] = useState(true);
   const [resolvedPlatform, setResolvedPlatform] = useState<string>("YouTube");
+  const [category, setCategory] = useState<YouTubeCategory>("music");
+  const [results, setResults] = useState<YouTubeSearchItem[]>([]);
+  const [showResults, setShowResults] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fallbackTimerRef = useRef<number | null>(null);
   const volumeCommandTimerRef = useRef<number | null>(null);
@@ -149,7 +152,7 @@ export function FloatingMusicPlayer() {
 
   // Listen for music commands from Orion (single source of truth)
   useEffect(() => {
-    const showPlayer = async (q: string) => {
+    const showPlayer = async (q: string, cat: YouTubeCategory = category) => {
       const trimmed = q.trim();
       if (!trimmed) return;
       if (isMobileDevice()) {
@@ -162,20 +165,25 @@ export function FloatingMusicPlayer() {
       setVisible(true);
       setMinimized(false);
       setEmbedLoading(true);
-      setResolvedPlatform("YouTube");
+      setResolvedPlatform(cat === "music" ? "YouTube · Música" : cat === "podcast" ? "YouTube · Podcast" : "YouTube · Vídeo");
       savePrefs({ lastQuery: trimmed, visible: true, minimized: false });
       setShowFallbackButton(false);
+      setResults([]);
+      setShowResults(false);
       if (fallbackTimerRef.current) {
         window.clearTimeout(fallbackTimerRef.current);
         fallbackTimerRef.current = null;
       }
 
       try {
-        const resolvedVideoId = await resolveYouTubeVideoId(trimmed);
+        const items = await searchYouTube(trimmed, cat, 5);
         if (requestId !== resolveRequestRef.current) return;
-        setVideoId(resolvedVideoId);
+        setResults(items);
+        setShowResults(items.length > 1);
+        const first = items[0];
+        setVideoId(first.videoId);
         setPlaying(true);
-        savePrefs({ lastQuery: trimmed, lastVideoId: resolvedVideoId, visible: true, minimized: false });
+        savePrefs({ lastQuery: trimmed, lastVideoId: first.videoId, visible: true, minimized: false });
       } catch (error) {
         if (requestId !== resolveRequestRef.current) return;
         console.error("[FloatingMusicPlayer] failed to resolve YouTube video:", error);
