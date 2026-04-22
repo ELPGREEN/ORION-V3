@@ -8,6 +8,21 @@ import { isSpotifyConnected } from "@/lib/spotify/spotify-service";
 import { openSpotify, openYouTube, openAmazonMusic, isMobileDevice } from "@/lib/utils/deep-link";
 import { OrionEvents, dispatchOrionEvent } from "@/lib/events/orion-events";
 
+// Lightweight toast notifier — lazy import to keep this module side-effect free for tests
+async function notifyFallback(message: string) {
+  try {
+    const { toast } = await import("sonner");
+    toast.info(message);
+  } catch { /* noop in non-browser env */ }
+}
+
+const PLATFORM_LABEL: Record<MusicPlatform, string> = {
+  spotify: "Spotify",
+  amazon_music: "Amazon Music",
+  youtube_music: "YouTube Music",
+  youtube: "YouTube",
+};
+
 export type MusicPlatform = "spotify" | "amazon_music" | "youtube_music" | "youtube";
 
 interface PlatformStatus {
