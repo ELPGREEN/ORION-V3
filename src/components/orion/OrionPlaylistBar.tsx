@@ -92,7 +92,16 @@ export function OrionPlaylistBar() {
     };
   }, []);
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState<string>(() => {
+    try {
+      const raw = localStorage.getItem("orion_last_music_resolved");
+      if (raw) {
+        const p = JSON.parse(raw) as OrionMusicResolvedDetail;
+        if (p?.query) return p.query;
+      }
+    } catch { /* ignore */ }
+    return "";
+  });
   const [tracks, setTracks] = useState<UnifiedTrack[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<UnifiedTrack | null>(null);
