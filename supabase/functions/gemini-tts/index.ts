@@ -225,10 +225,12 @@ async function requestCloudTTS(
     delete voiceParams.name;
   }
 
+  // ⚠️ NEVER include `prompt` inside `input` — Cloud TTS v1beta1 does not support it
+  // and some pipelines end up reading the prompt aloud. Style is conveyed only via
+  // the voice model selection (Enceladus) and downstream Vertex systemInstruction.
   const requestBody: Record<string, unknown> = {
     input: {
       text: text.slice(0, 4000),
-      ...(stylePrompt.trim() ? { prompt: stylePrompt.trim().slice(0, 4000) } : {}),
     },
     voice: voiceParams,
     audioConfig: {
