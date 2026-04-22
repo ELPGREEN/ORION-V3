@@ -44,9 +44,29 @@ export function shouldSuppressVisionCommand(
   const host = getHost();
   const lastLock = host[VISION_LOCK_KEY];
   if (lastLock && lastLock.action === action && now - lastLock.ts < windowMs) {
+    // Debug bus (lazy, browser-only) — never throw
+    if (typeof window !== "undefined") {
+      try {
+        window.dispatchEvent(new CustomEvent("vision-debug", {
+          detail: {
+            kind: "lock-block",
+            action,
+            note: `bloqueado (${now - lastLock.ts}ms < ${windowMs}ms)`,
+            ts: now,
+          },
+        }));
+      } catch {}
+    }
     return true;
   }
   host[VISION_LOCK_KEY] = { action, ts: now };
+  if (typeof window !== "undefined") {
+    try {
+      window.dispatchEvent(new CustomEvent("vision-debug", {
+        detail: { kind: "lock-pass", action, ts: now },
+      }));
+    } catch {}
+  }
   return false;
 }
 
