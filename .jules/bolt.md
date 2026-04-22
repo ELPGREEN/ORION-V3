@@ -5,3 +5,7 @@
 ## 2026-05-20 - [Optimized Jaccard Similarity Engine]
 **Learning:** The previous `jaccardSimilarity` implementation used expensive array spreads (`[...setA]`) and filter-based intersections, creating multiple intermediate arrays and Sets for every comparison. In a high-frequency lookup path (like a 310+ entry knowledge base), this created significant heap pressure and CPU overhead.
 **Action:** Always implement Jaccard similarity using a simple intersection loop over the smaller Set to count matches. This reduces complexity to $O(\min(A, B))$ and eliminates $O(N)$ allocations, making the inner loop of the semantic cache significantly faster.
+
+## 2026-05-22 - [Pre-tokenization for Batch Operations]
+**Learning:** In batch operations like `addMemoryFacts`, performing string tokenization (lowercase + split + filter) inside a deduplication loop creates $O(M \times N)$ redundant processing.
+**Action:** Always pre-calculate and cache token Sets before entering loops. For growing collections, update the cache as new items are added to maintain $O(N)$ lookup efficiency for subsequent items in the batch.
