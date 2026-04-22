@@ -1,6 +1,6 @@
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
-import { Loader2, Settings, Building2, Crown, Webhook, ScanFace, Radio, ShoppingCart, Mic, Store, KeyRound } from "lucide-react";
+import { Loader2, Settings, Building2, Crown, Webhook, ScanFace, Radio, Mic, Store, KeyRound } from "lucide-react";
 import { lazy, Suspense, useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -11,7 +11,7 @@ const PlanoUsuario = lazy(() => import("./PlanoUsuario"));
 const WebhooksPage = lazy(() => import("./WebhooksPage"));
 const BiometriaConfigPage = lazy(() => import("@/components/dashboard/settings/BiometriaConfigPanel"));
 const DispositivosConfigPage = lazy(() => import("@/components/dashboard/settings/DispositivosConfigPanel"));
-const AmazonConfigPage = lazy(() => import("@/components/dashboard/settings/AmazonIntegrationPanel"));
+// AmazonIntegrationPanel removed — Spotify/Amazon integrations dropped
 const MicrophoneHardwarePage = lazy(() => import("@/components/dashboard/settings/MicrophoneHardwarePanel"));
 const MeusProdutos = lazy(() => import("./MeusProdutos"));
 const EditorPaginaVendas = lazy(() => import("./EditorPaginaVendas"));
@@ -79,13 +79,7 @@ export default function ConfiguracoesRouter() {
       roles: ["owner"],
       content: <DispositivosConfigPage />,
     },
-    {
-      value: "amazon",
-      label: "Amazon",
-      icon: ShoppingCart,
-      roles: ["owner"],
-      content: <AmazonConfigPage />,
-    },
+    // Amazon integration tab removed
     {
       value: "microfone",
       label: "Microfone",

@@ -36,8 +36,7 @@ const AuthCallback = lazy(lazyRetry(() => import("./pages/AuthCallback")));
 const EsqueciSenha = lazy(lazyRetry(() => import("./pages/EsqueciSenha")));
 const CadastroCliente = lazy(lazyRetry(() => import("./pages/CadastroCliente")));
 const InstallApp = lazy(lazyRetry(() => import("./pages/InstallApp")));
-const SpotifyCallback = lazy(lazyRetry(() => import("./pages/SpotifyCallback")));
-const YouTubeMusicCallback = lazy(lazyRetry(() => import("./pages/callback/YouTubeMusicCallback")));
+// Spotify and YouTube Music callbacks removed — only YouTube IFrame embed is used
 const AdvogadoSite = lazy(lazyRetry(() => import("./pages/AdvogadoSite")));
 const Publicacoes = lazy(lazyRetry(() => import("./pages/Publicacoes")));
 const PublicacaoDetalhe = lazy(lazyRetry(() => import("./pages/PublicacaoDetalhe")));
@@ -187,8 +186,7 @@ const App = () => (
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/cadastro" element={<CadastroCliente />} />
                   <Route path="/esqueci-senha" element={<EsqueciSenha />} />
-                  <Route path="/spotify-callback" element={<SpotifyCallback />} />
-                  <Route path="/callback/youtube-music" element={<YouTubeMusicCallback />} />
+                  {/* Spotify and YouTube Music OAuth callback routes removed */}
 
                   {/* ═══ PUBLIC — Legal ═══ */}
                   <Route path="/privacidade" element={<Privacidade />} />

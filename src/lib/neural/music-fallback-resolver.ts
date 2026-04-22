@@ -1,14 +1,14 @@
 /**
- * ─── Music Platform Fallback Resolver ───
- * Determines the best music platform for playback based on user's connected accounts.
- * Priority: Spotify → Amazon Music → YouTube Music → YouTube (always available)
+ * ─── YouTube Music Resolver ───
+ * YouTube IS the only supported platform. Spotify/Amazon were removed.
+ * This module is kept ONLY for backwards compatibility with existing call sites
+ * (orion-browser-actions, etc.) and always resolves to YouTube.
  */
 
-import { isSpotifyConnected } from "@/lib/spotify/spotify-service";
-import { openSpotify, openYouTube, openAmazonMusic, isMobileDevice } from "@/lib/utils/deep-link";
+import { isMobileDevice, openYouTube } from "@/lib/utils/deep-link";
 import { OrionEvents, dispatchOrionEvent } from "@/lib/events/orion-events";
 
-export type MusicPlatform = "spotify" | "amazon_music" | "youtube_music" | "youtube";
+export type MusicPlatform = "youtube";
 
 interface PlatformStatus {
   platform: MusicPlatform;
@@ -16,184 +16,63 @@ interface PlatformStatus {
   label: string;
 }
 
-const PLATFORM_LABEL: Record<MusicPlatform, string> = {
-  spotify: "Spotify",
-  amazon_music: "Amazon Music",
-  youtube_music: "YouTube Music",
-  youtube: "YouTube",
+const YOUTUBE_STATUS: PlatformStatus = {
+  platform: "youtube",
+  connected: true,
+  label: "YouTube",
 };
 
-// Lightweight toast notifier — lazy import to keep this module side-effect free for tests
-async function notifyFallback(message: string) {
-  try {
-    const { toast } = await import("sonner");
-    toast.info(message);
-  } catch { /* noop in non-browser env */ }
-}
-
-// Cache connection status for 60s to avoid repeated checks
-let cachedStatus: { platforms: PlatformStatus[]; ts: number } | null = null;
-const CACHE_TTL = 60_000;
-
-async function checkAmazonConnected(): Promise<boolean> {
-  try {
-    const token = localStorage.getItem("amazon_access_token");
-    return !!token;
-  } catch { return false; }
-}
-
-async function checkYTMusicConnected(): Promise<boolean> {
-  try {
-    const { isYTMusicConnected } = await import("@/lib/youtube-music/youtube-music-service");
-    return await isYTMusicConnected();
-  } catch { return false; }
-}
-
-/**
- * Get all platform statuses, with caching
- */
+/** Always returns YouTube — the only supported platform. */
 export async function getMusicPlatformStatuses(): Promise<PlatformStatus[]> {
-  if (cachedStatus && Date.now() - cachedStatus.ts < CACHE_TTL) {
-    return cachedStatus.platforms;
-  }
+  return [YOUTUBE_STATUS];
+}
 
-  const [spotify, amazon, ytMusic] = await Promise.all([
-    isSpotifyConnected().catch(() => false),
-    checkAmazonConnected(),
-    checkYTMusicConnected(),
-  ]);
-
-  const platforms: PlatformStatus[] = [
-    { platform: "spotify", connected: spotify, label: "Spotify" },
-    { platform: "amazon_music", connected: amazon, label: "Amazon Music" },
-    { platform: "youtube_music", connected: ytMusic, label: "YouTube Music" },
-    { platform: "youtube", connected: true, label: "YouTube" }, // always available
-  ];
-
-  cachedStatus = { platforms, ts: Date.now() };
-  return platforms;
+/** Always YouTube. The optional preferred platform is ignored. */
+export async function resolveMusicPlatform(
+  _preferredPlatform?: MusicPlatform,
+): Promise<PlatformStatus> {
+  return YOUTUBE_STATUS;
 }
 
 /**
- * Resolve the best available music platform.
- * Default behavior: YouTube is ALWAYS the default unless the user
- * explicitly requested Spotify or Amazon Music. This avoids surprising
- * the user by opening Spotify just because it's connected.
- */
-export async function resolveMusicPlatform(preferredPlatform?: MusicPlatform): Promise<PlatformStatus> {
-  const statuses = await getMusicPlatformStatuses();
-
-  // Explicit request: honor only if connected; otherwise still fall back to YouTube.
-  if (preferredPlatform && preferredPlatform !== "youtube") {
-    const preferred = statuses.find(s => s.platform === preferredPlatform);
-    if (preferred?.connected) return preferred;
-  }
-
-  // Default: YouTube (always available, no surprise opens of other apps).
-  const youtube = statuses.find(s => s.platform === "youtube");
-  return youtube || statuses[statuses.length - 1];
-}
-
-/**
- * Execute music playback on the best available platform.
- * Returns a description of what happened.
+ * Play music on YouTube — the only supported platform.
+ * On mobile opens the YouTube app via deep link; on desktop dispatches a
+ * `MusicCommand` event so OrionPlaylistBar (YouTube IFrame controller) handles it.
  */
 export async function playMusicWithFallback(
   query: string,
-  preferredPlatform?: MusicPlatform
-): Promise<{ platform: MusicPlatform; description: string; fallback: boolean }> {
-  const resolved = await resolveMusicPlatform(preferredPlatform);
-  const explicit = !!preferredPlatform;
-  const fallback = explicit && resolved.platform !== preferredPlatform;
-  const mobile = isMobileDevice();
-
-  // Detailed logs to make priority resolution traceable in DevTools
-  console.log("[music-fallback] resolve", {
+  _preferredPlatform?: MusicPlatform,
+): Promise<{ platform: MusicPlatform; description: string; fallback: false }> {
+  const description = `🎵 Tocando "${query}" no YouTube`;
+  const detail = {
     query,
-    preferredPlatform: preferredPlatform || "(none → default YouTube)",
-    resolved: resolved.platform,
-    fallback,
-  });
-
-  // Auto-fallback notification: when user asked for Spotify/Amazon but it's
-  // not connected, we silently switch to YouTube and tell the user via toast.
-  if (fallback) {
-    const askedLabel = PLATFORM_LABEL[preferredPlatform!];
-    const usedLabel = PLATFORM_LABEL[resolved.platform];
-    void notifyFallback(`${askedLabel} não conectado — tocando no ${usedLabel}`);
-  }
-
-  const fallbackNote = fallback
-    ? ` (${PLATFORM_LABEL[preferredPlatform!]} não conectado)`
-    : "";
-
-  // Helper that emits the resolved event + persists last decision so widgets
-  // (OrionPlaylistBar) reflect the latest music without delay and survive reloads.
-  const emitResolved = (description: string) => {
-    const detail = {
-      query,
-      requested: preferredPlatform,
-      resolved: resolved.platform,
-      fallback,
-      description,
-      ts: Date.now(),
-    };
-    try {
-      localStorage.setItem("orion_last_music_resolved", JSON.stringify(detail));
-    } catch { /* quota / private mode */ }
-    dispatchOrionEvent(OrionEvents.MusicResolved, detail);
+    requested: "youtube" as const,
+    resolved: "youtube" as const,
+    fallback: false,
+    description,
+    ts: Date.now(),
   };
-
-  switch (resolved.platform) {
-    case "spotify": {
-      if (mobile) {
-        openSpotify(query);
-      } else {
-        dispatchOrionEvent(OrionEvents.MusicCommand, {
-          action: "search_and_play",
-          query,
-          fullCommand: query,
-        });
-      }
-      const description = `🎵 Tocando "${query}" no Spotify${fallbackNote}`;
-      emitResolved(description);
-      return { platform: "spotify", description, fallback };
-    }
-
-    case "amazon_music": {
-      openAmazonMusic(query);
-      const description = `🎵 Abrindo "${query}" no Amazon Music${fallbackNote}`;
-      emitResolved(description);
-      return { platform: "amazon_music", description, fallback };
-    }
-
-    case "youtube_music": {
-      const url = `https://music.youtube.com/search?q=${encodeURIComponent(query)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-      const description = `🎵 Buscando "${query}" no YouTube Music${fallbackNote}`;
-      emitResolved(description);
-      return { platform: "youtube_music", description, fallback };
-    }
-
-    case "youtube":
-    default: {
-      if (mobile) {
-        openYouTube(`${query} music`);
-      } else {
-        // Use orion-music-command for YouTube (OrionPlaylistBar handles it)
-        dispatchOrionEvent(OrionEvents.MusicCommand, {
-          action: "search_and_play",
-          query: `${query} music`,
-        });
-      }
-      const description = `🎵 Tocando "${query}" no YouTube${fallbackNote}`;
-      emitResolved(description);
-      return { platform: "youtube", description, fallback };
-    }
+  try {
+    localStorage.setItem("orion_last_music_resolved", JSON.stringify(detail));
+  } catch {
+    /* quota / private mode */
   }
+  dispatchOrionEvent(OrionEvents.MusicResolved, detail);
+
+  if (isMobileDevice()) {
+    openYouTube(`${query} music`);
+  } else {
+    dispatchOrionEvent(OrionEvents.MusicCommand, {
+      action: "search_and_play",
+      query: `${query} music`,
+    });
+  }
+
+  console.log("[music-resolver] YouTube only", { query });
+  return { platform: "youtube", description, fallback: false };
 }
 
-/** Invalidate cache (call when user connects/disconnects a platform) */
-export function invalidateMusicCache() {
-  cachedStatus = null;
+/** No-op — kept for backwards compatibility with old callers. */
+export function invalidateMusicCache(): void {
+  /* nothing to invalidate — only one platform exists */
 }

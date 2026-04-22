@@ -213,9 +213,8 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
           .replace(/^(?:qualquer\s+(?:uma?\s+)?(?:d[oae]\s+)?)/i, "")
           .trim() || "music";
         console.log(`[VoiceDispatch] Media query cleaned: "${musicQuery}" (raw: "${intent.rawText}")`);
-        const platformHint = params.platform || (intent.intent === "youtube" ? "youtube" : intent.intent === "spotify" ? "spotify" : undefined);
-        const preferred = platformHint === "amazon" ? "amazon_music" as const : platformHint === "youtube" ? "youtube" as const : platformHint === "spotify" ? "spotify" as const : undefined;
-        const result = await playMusicWithFallback(musicQuery, preferred);
+        // Only YouTube is supported — platform hints are ignored.
+        const result = await playMusicWithFallback(musicQuery);
         return ok(intent.intent, result.description, { ...params, resolvedPlatform: result.platform, fallback: result.fallback }, t0);
       }
 
