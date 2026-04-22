@@ -591,6 +591,35 @@ export function OrionPlaylistBar() {
             {useSDK && sdk.isReady && (
               <Badge variant="outline" className="text-[7px] px-1 py-0 border-green-500/30 text-green-400">SDK</Badge>
             )}
+            {resolvedInfo && (
+              <div
+                className="hidden md:flex items-center gap-1"
+                title={resolvedInfo.description || `Plataforma resolvida: ${PLATFORM_BADGE_LABEL[resolvedInfo.resolved]}`}
+              >
+                {resolvedInfo.fallback && resolvedInfo.requested && (
+                  <>
+                    <Badge
+                      variant="outline"
+                      className="text-[7px] px-1 py-0 border-amber-500/30 text-amber-300/90 line-through"
+                    >
+                      {PLATFORM_BADGE_LABEL[resolvedInfo.requested]}
+                    </Badge>
+                    <span className="text-[8px] text-amber-400/80">→</span>
+                  </>
+                )}
+                <Badge
+                  variant="outline"
+                  className={`text-[7px] px-1 py-0 ${
+                    resolvedInfo.fallback
+                      ? "border-amber-500/40 text-amber-300"
+                      : "border-emerald-500/30 text-emerald-300"
+                  }`}
+                >
+                  {PLATFORM_BADGE_LABEL[resolvedInfo.resolved]}
+                  {resolvedInfo.fallback ? " (fallback)" : ""}
+                </Badge>
+              </div>
+            )}
           </div>
 
           {displayTrack && (
