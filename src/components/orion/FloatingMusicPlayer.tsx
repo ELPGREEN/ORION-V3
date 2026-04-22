@@ -211,12 +211,6 @@ export function FloatingMusicPlayer() {
     return () => window.removeEventListener(OrionEvents.VolumeCommand, handler as EventListener);
   }, [volume]);
 
-  useEffect(() => {
-    if (visible && query && !videoId && !embedLoading) {
-      dispatchOrionEvent(OrionEvents.MusicPlayerShow, { query });
-    }
-  }, [visible, query, videoId, embedLoading]);
-
   const close = useCallback(() => {
     setVisible(false);
     setQuery("");
