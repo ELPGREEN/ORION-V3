@@ -6,14 +6,14 @@
 const JSON_BLOCK_REGEX = /```json[\s\S]*?```/g;
 const IDENTIFIED_OBJECTS_REGEX = /\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}/g;
 const LEARN_REGEX = /\[LEARN:[^\]]+\]/g;
-const BOLD_ITALIC_REGEX = /[\*_]{1,3}/g;
+const BOLD_ITALIC_REGEX = /[*_]{1,3}/g;
 const HEADER_REGEX = /^#{1,6}\s+/gm;
 const LINK_REGEX = /\[([^\]]+)\]\([^)]+\)/g;
 const URL_REGEX = /https?:\/\/\S+/g;
 const COMMENT_REGEX = /\/\/[^\n]*/g;
 const TAG_REGEX = /<[^>]*>/g;
 const BORDER_REGEX = /[─═╔╗╚╝║]/g;
-const EMOJI_CLEAN_REGEX = /[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/g;
+const EMOJI_CLEAN_REGEX = /[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/gu;
 
 /**
  * Strip markdown formatting, JSON blocks, and special characters from AI output.

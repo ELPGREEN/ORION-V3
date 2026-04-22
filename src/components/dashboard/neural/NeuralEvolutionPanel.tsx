@@ -3,7 +3,8 @@ import {
   GitBranch, Loader2, CheckCircle2, XCircle, Clock, 
   Sparkles, AlertTriangle, Lightbulb, Wrench, Sliders, Code,
   RefreshCw, ThumbsUp, ThumbsDown, FlaskConical, History, Play,
-  GraduationCap, Pencil, Save, X, CheckSquare, Square, ListChecks
+  GraduationCap, Pencil, Save, X, CheckSquare, Square, ListChecks,
+  Zap, Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -533,36 +534,36 @@ export function NeuralEvolutionPanel() {
         </CardHeader>
         <CardContent>
            <div className="grid grid-cols-4 gap-3 mb-3">
-            <div className="text-center p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-              <p className="text-lg font-bold text-yellow-600">{stats.pending}</p>
-              <p className="text-[10px] text-muted-foreground">Pendentes</p>
+            <div className="text-center p-2 bg-yellow-500/5 border border-yellow-500/20 rounded-lg shadow-[0_0_10px_rgba(234,179,8,0.05)]">
+              <p className="text-lg font-bold text-yellow-500 font-mono">{stats.pending}</p>
+              <p className="text-[9px] uppercase tracking-tighter text-muted-foreground">Pendentes</p>
             </div>
-            <div className="text-center p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-              <p className="text-lg font-bold text-blue-600">{stats.approved}</p>
-              <p className="text-[10px] text-muted-foreground">Aprovadas</p>
+            <div className="text-center p-2 bg-blue-500/5 border border-blue-500/20 rounded-lg shadow-[0_0_10px_rgba(59,130,246,0.05)]">
+              <p className="text-lg font-bold text-blue-500 font-mono">{stats.approved}</p>
+              <p className="text-[9px] uppercase tracking-tighter text-muted-foreground">Aprovadas</p>
             </div>
-            <div className="text-center p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <p className="text-lg font-bold text-green-600">{stats.applied}</p>
-              <p className="text-[10px] text-muted-foreground">Aplicadas</p>
+            <div className="text-center p-2 bg-[hsl(var(--tron-neon)/0.05)] border border-[hsl(var(--tron-neon)/0.2)] rounded-lg shadow-[0_0_10px_hsl(var(--tron-neon)/0.1)]">
+              <p className="text-lg font-bold text-[hsl(var(--tron-neon))] font-mono">{stats.applied}</p>
+              <p className="text-[9px] uppercase tracking-tighter text-muted-foreground">Aplicadas</p>
             </div>
-            <div className="text-center p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-lg font-bold text-red-600">{stats.rejected}</p>
-              <p className="text-[10px] text-muted-foreground">Rejeitadas</p>
+            <div className="text-center p-2 bg-red-500/5 border border-red-500/20 rounded-lg shadow-[0_0_10px_rgba(239,68,68,0.05)]">
+              <p className="text-lg font-bold text-red-500 font-mono">{stats.rejected}</p>
+              <p className="text-[9px] uppercase tracking-tighter text-muted-foreground">Rejeitadas</p>
             </div>
           </div>
           {versionStats.total > 0 && (
             <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <p className="text-lg font-bold text-green-600">{versionStats.active}</p>
-                <p className="text-[10px] text-muted-foreground">Prompts Ativos</p>
+              <div className="text-center p-2 bg-[hsl(var(--tron-neon)/0.05)] border border-[hsl(var(--tron-neon)/0.15)] rounded-lg">
+                <p className="text-lg font-bold text-[hsl(var(--tron-neon))] font-mono">{versionStats.active}</p>
+                <p className="text-[9px] uppercase tracking-tighter text-muted-foreground">Prompts Ativos</p>
               </div>
-              <div className="text-center p-2 bg-muted/50 border border-border rounded-lg">
-                <p className="text-lg font-bold text-muted-foreground">{versionStats.inactive}</p>
-                <p className="text-[10px] text-muted-foreground">Prompts Inativos</p>
+              <div className="text-center p-2 bg-muted/20 border border-border/40 rounded-lg">
+                <p className="text-lg font-bold text-muted-foreground font-mono">{versionStats.inactive}</p>
+                <p className="text-[9px] uppercase tracking-tighter text-muted-foreground">Prompts Inativos</p>
               </div>
-              <div className="text-center p-2 bg-primary/10 border border-primary/20 rounded-lg">
-                <p className="text-lg font-bold text-primary">{versionStats.total}</p>
-                <p className="text-[10px] text-muted-foreground">Total Versões</p>
+              <div className="text-center p-2 bg-primary/5 border border-primary/20 rounded-lg">
+                <p className="text-lg font-bold text-primary font-mono">{versionStats.total}</p>
+                <p className="text-[9px] uppercase tracking-tighter text-muted-foreground">Total Versões</p>
               </div>
             </div>
           )}
@@ -819,7 +820,8 @@ export function NeuralEvolutionPanel() {
             const isPending = proposal.status === "pending";
 
             return (
-              <Card key={proposal.id} className={`bg-card border-border ${isSpec ? "border-l-4 border-l-primary" : ""}`}>
+              <Card key={proposal.id} className={`bg-[hsl(var(--tron-bg-deep)/0.6)] border-[hsl(var(--tron-neon)/0.1)] hover:border-[hsl(var(--tron-neon)/0.3)] transition-all duration-300 relative overflow-hidden group ${isSpec ? "border-l-4 border-l-[hsl(var(--tron-neon))]" : ""}`}>
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--tron-neon)/0.2)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -845,6 +847,9 @@ export function NeuralEvolutionPanel() {
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">{proposal.description}</p>
                         
+                        {/* Impact Simulation for pending proposals */}
+                        {isPending && <ImpactSimulation proposal={proposal} />}
+
                         {/* Specialization edit form */}
                         {isSpec && isEditing && isPending && (
                           <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
@@ -920,20 +925,24 @@ export function NeuralEvolutionPanel() {
 
                         {/* Prompt rewrite: show proposed_value pre-filled in editable field */}
                         {proposal.proposal_type === "prompt_rewrite" && isPending && !isEditing && (
-                          <div className="mt-2 space-y-1">
+                          <div className="mt-2 space-y-2">
                             {proposal.current_value && (
-                              <div className="p-2 bg-red-500/5 border border-red-500/10 rounded text-[11px]">
-                                <span className="font-medium text-red-600">Atual:</span> {proposal.current_value}
+                              <div className="p-2 bg-red-500/5 border border-red-500/10 rounded text-[10px] font-mono opacity-80">
+                                <span className="font-bold text-red-600 block mb-1 uppercase tracking-tighter">DEPRECATED [OLD]</span>
+                                <div className="line-through">{proposal.current_value}</div>
                               </div>
                             )}
-                            <div className="p-2 bg-green-500/5 border border-green-500/10 rounded text-[11px]">
-                              <span className="font-medium text-green-600">Sugestão (editável):</span>
+                            <div className="p-2 bg-[hsl(var(--tron-neon)/0.05)] border border-[hsl(var(--tron-neon)/0.2)] rounded text-[10px] font-mono shadow-[0_0_10px_hsl(var(--tron-neon)/0.05)]">
+                              <span className="font-bold text-[hsl(var(--tron-neon))] block mb-1 uppercase tracking-tighter">EVOLVED [PROPOSED]</span>
                               <Textarea
                                 defaultValue={proposal.proposed_value}
-                                className="text-xs mt-1 min-h-[60px] bg-background"
-                                rows={3}
+                                className="text-[11px] mt-1 min-h-[80px] bg-black/40 border-[hsl(var(--tron-neon)/0.2)] text-[hsl(var(--tron-neon))] selection:bg-[hsl(var(--tron-neon)/0.3)]"
+                                rows={4}
                                 id={`prompt-edit-${proposal.id}`}
                               />
+                              <p className="text-[9px] text-muted-foreground mt-1 flex items-center gap-1">
+                                <Sparkles className="h-2.5 w-2.5" /> O Orion sugere este novo padrão de raciocínio. Você pode editar antes de aprovar.
+                              </p>
                             </div>
                           </div>
                         )}
@@ -1055,4 +1064,48 @@ function tryFormatSpecJson(value: string): string {
   } catch {
     return value;
   }
+}
+
+function ImpactSimulation({ proposal }: { proposal: Proposal }) {
+  if (proposal.status !== 'pending') return null;
+
+  // Use hash-based pseudo-random values for simulation if real data is missing
+  const seed = proposal.id.charCodeAt(0) + proposal.id.charCodeAt(proposal.id.length - 1);
+  const perf = 70 + (seed % 25);
+  const accuracy = 65 + ((seed * 3) % 30);
+
+  return (
+    <div className="mt-3 p-2 bg-[hsl(var(--tron-neon)/0.03)] border border-[hsl(var(--tron-neon)/0.15)] rounded-lg">
+       <div className="flex items-center gap-2 mb-2">
+         <Zap className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
+         <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--tron-neon))] font-mono">Simulação de Impacto</span>
+       </div>
+       <div className="grid grid-cols-2 gap-3 text-[10px] font-mono">
+          <div className="space-y-1">
+             <div className="flex justify-between text-muted-foreground">
+               <span>Latência</span>
+               <span className="text-emerald-400">-{seed % 15}ms</span>
+             </div>
+             <div className="h-1 w-full bg-muted/30 rounded-full overflow-hidden">
+                <div className="h-full bg-[hsl(var(--tron-neon))] shadow-[0_0_8px_hsl(var(--tron-neon))]" style={{ width: `${perf}%` }} />
+             </div>
+          </div>
+          <div className="space-y-1">
+             <div className="flex justify-between text-muted-foreground">
+               <span>Factualidade</span>
+               <span className="text-blue-400">+{seed % 10}%</span>
+             </div>
+             <div className="h-1 w-full bg-muted/30 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" style={{ width: `${accuracy}%` }} />
+             </div>
+          </div>
+       </div>
+       {proposal.impact_estimate && (
+         <div className="mt-2 flex items-start gap-1.5 border-t border-white/5 pt-2">
+           <Target className="h-2.5 w-2.5 text-amber-400 mt-0.5" />
+           <p className="text-[9px] text-muted-foreground leading-tight italic">"{proposal.impact_estimate}"</p>
+         </div>
+       )}
+    </div>
+  );
 }

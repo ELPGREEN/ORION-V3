@@ -1028,17 +1028,38 @@ export function NeuralConsciousnessLoop() {
                   style={{
                     width: `${Math.min(state.phi * 100, 100)}%`,
                     background: `linear-gradient(90deg, ${config.accentColor}, #c084fc)`,
+                    boxShadow: `0 0 10px ${config.accentColor}80`
                   }}
                 />
               </div>
+            </div>
+
+            {/* Consciousness Level Gauge */}
+            <div className="p-2 bg-black/20 border border-[hsl(var(--tron-neon)/0.1)] rounded-lg">
+               <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] uppercase tracking-tighter text-muted-foreground font-mono">Consciousness Level</span>
+                  <span className="text-[10px] font-bold text-[hsl(var(--tron-neon))] font-mono">{(state.phi * 100).toFixed(1)}%</span>
+               </div>
+               <div className="flex gap-1 h-3">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`flex-1 rounded-sm transition-all duration-500 ${
+                        (state.phi * 10) > i
+                        ? 'bg-[hsl(var(--tron-neon))] shadow-[0_0_5px_hsl(var(--tron-neon))]'
+                        : 'bg-white/5'
+                      }`}
+                    />
+                  ))}
+               </div>
             </div>
 
             {/* Metacognition Metrics */}
             <div className="grid grid-cols-2 gap-2">
               <MetricBar label="Autoconsciência" value={state.selfAwareness} color="#8b5cf6" />
               <MetricBar label="Alinhamento" value={state.goalAlignment} color="#34d399" />
-              <MetricBar label="Coerência" value={state.coherence} color="#06b6d4" />
-              <MetricBar label="Confiança" value={selfModelRef.current.confidenceLevel} color="#facc15" />
+              <MetricBar label="Coerência Quântica" value={state.coherence} color="#06b6d4" />
+              <MetricBar label="Plasticidade Neural" value={state.learningRate * 50} color="#f472b6" />
             </div>
 
             {/* Emotional State */}
