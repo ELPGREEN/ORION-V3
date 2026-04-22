@@ -192,26 +192,64 @@ function pcmToWav(pcmBase64: string, sampleRate = 24000, channels = 1, bitsPerSa
 // Uses official TTS endpoint, returns audio directly
 // ═══════════════════════════════════════════════════════════
 
+// ─── SSML helpers ────────────────────────────────────────
+// Cloud TTS supports a strict subset of SSML. We auto-wrap plain text into
+// SSML with prosody + natural pauses to improve intelligibility.
+
+function escapeSSML(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function isAlreadySSML(s: string): boolean {
+  return /^\s*<speak[\s>]/i.test(s);
+}
+
+/**
+ * Convert plain text → SSML with natural pacing for pt-BR.
+ * - Sentence-ending punctuation gets short <break>
+ * - Comma/semicolon get micro pauses
+ * - Wraps in <prosody rate="medium" pitch="+0st"> for stable cadence
+ * - Escapes XML-unsafe chars
+ */
+function textToSSML(text: string): string {
+  const escaped = escapeSSML(text.trim());
+
+  // Insert breaks AFTER punctuation (don't replace it — TTS still needs it for prosody)
+  const withBreaks = escaped
+    .replace(/([.!?…])(\s+|$)/g, '$1<break time="280ms"/>$2')
+    .replace(/([,;:])(\s+)/g, '$1<break time="120ms"/>$2')
+    // Paragraph breaks
+    .replace(/\n{2,}/g, '<break time="450ms"/>')
+    .replace(/\n/g, '<break time="200ms"/>');
+
+  return `<speak><prosody rate="medium" pitch="+0st" volume="medium">${withBreaks}</prosody></speak>`;
+}
+
 async function requestCloudTTS(
   token: string,
   text: string,
   voice: string,
   lang: string,
-  stylePrompt: string,
+  _stylePrompt: string,
   multispeaker?: MultiSpeakerVoice[],
+  audioOpts?: { speakingRate?: number; pitch?: number; volumeGainDb?: number },
 ): Promise<Response | null> {
   const url = "https://texttospeech.googleapis.com/v1beta1/text:synthesize";
 
-  // Build the request per official Gemini-TTS docs
   const isMulti = multispeaker && multispeaker.length > 0;
 
+  // ── Voice config (only fields supported by Cloud TTS v1beta1) ──
   const voiceParams: Record<string, unknown> = {
     languageCode: lang,
     name: voice,
     modelName: CLOUD_TTS_MODEL,
   };
 
-  // Multi-speaker config
   if (isMulti) {
     voiceParams.multiSpeakerVoiceConfig = {
       speakerVoiceConfigs: multispeaker!
@@ -221,22 +259,32 @@ async function requestCloudTTS(
           speakerId: s.voice || DEFAULT_VOICE,
         })),
     };
-    // Remove single-speaker name for multi-speaker
     delete voiceParams.name;
   }
 
-  // ⚠️ NEVER include `prompt` inside `input` — Cloud TTS v1beta1 does not support it
-  // and some pipelines end up reading the prompt aloud. Style is conveyed only via
-  // the voice model selection (Enceladus) and downstream Vertex systemInstruction.
+  // ── Input: SSML preferred, with auto-wrap for plain text ──
+  const inputContent = text.slice(0, 4000);
+  const useSSML = isAlreadySSML(inputContent);
+  const input: Record<string, unknown> = useSSML
+    ? { ssml: inputContent }
+    : { ssml: textToSSML(inputContent) };
+
+  // ── Audio config: only Cloud-TTS-supported fields ──
+  // speakingRate: 0.25–4.0 (1.0 = normal)
+  // pitch: -20.0 to +20.0 semitones
+  // volumeGainDb: -96.0 to +16.0 dB
+  const audioConfig: Record<string, unknown> = {
+    audioEncoding: "MP3",
+    sampleRateHertz: 24000,
+    speakingRate: clamp(audioOpts?.speakingRate ?? 1.0, 0.25, 4.0),
+    pitch: clamp(audioOpts?.pitch ?? 0.0, -20.0, 20.0),
+    volumeGainDb: clamp(audioOpts?.volumeGainDb ?? 0.0, -96.0, 16.0),
+  };
+
   const requestBody: Record<string, unknown> = {
-    input: {
-      text: text.slice(0, 4000),
-    },
+    input,
     voice: voiceParams,
-    audioConfig: {
-      audioEncoding: "MP3",
-      sampleRateHertz: 24000,
-    },
+    audioConfig,
   };
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
@@ -254,7 +302,7 @@ async function requestCloudTTS(
         const data = await resp.json();
         if (data?.audioContent) {
           const audioBytes = Uint8Array.from(atob(data.audioContent), (c) => c.charCodeAt(0));
-          console.log(`[Cloud TTS] ✅ ${CLOUD_TTS_MODEL} ${(audioBytes.length / 1024).toFixed(1)}KB MP3`);
+          console.log(`[Cloud TTS] ✅ ${CLOUD_TTS_MODEL} ${(audioBytes.length / 1024).toFixed(1)}KB MP3 (ssml=${useSSML ? "passthrough" : "auto"})`);
           return new Response(audioBytes.buffer, {
             headers: {
               ...corsHeaders,
@@ -262,6 +310,7 @@ async function requestCloudTTS(
               "Content-Length": String(audioBytes.length),
               "X-TTS-Engine": "cloud-tts",
               "X-TTS-Model": CLOUD_TTS_MODEL,
+              "X-TTS-Input": useSSML ? "ssml-passthrough" : "ssml-auto",
             },
           });
         }
@@ -288,6 +337,11 @@ async function requestCloudTTS(
     }
   }
   return null;
+}
+
+function clamp(n: number, min: number, max: number): number {
+  if (typeof n !== "number" || !isFinite(n)) return min;
+  return Math.max(min, Math.min(max, n));
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -478,6 +532,13 @@ Deno.serve(async (req) => {
     const prompt = typeof body?.prompt === "string" ? body.prompt : DEFAULT_PROMPT;
     const multispeaker = Array.isArray(body?.multispeaker) ? body.multispeaker as MultiSpeakerVoice[] : undefined;
 
+    // Speech-only audio params (Cloud TTS-supported subset)
+    const audioOpts = {
+      speakingRate: typeof body?.speakingRate === "number" ? body.speakingRate : undefined,
+      pitch: typeof body?.pitch === "number" ? body.pitch : undefined,
+      volumeGainDb: typeof body?.volumeGainDb === "number" ? body.volumeGainDb : undefined,
+    };
+
     // ⚡ Warm-up ping: client wants to wake the function but skip synthesis
     if (body?.warmup === true) {
       // Pre-fetch access token so the next real request is hot
@@ -498,7 +559,7 @@ Deno.serve(async (req) => {
       const token = await getAccessToken(sa);
       if (token) {
         console.log(`[TTS] ${cleanText.length} chars → Cloud TTS API (${CLOUD_TTS_MODEL}, voice: ${selectedVoice})`);
-        const cloudResp = await requestCloudTTS(token, cleanText, selectedVoice, selectedLang, stylePrompt, multispeaker);
+        const cloudResp = await requestCloudTTS(token, cleanText, selectedVoice, selectedLang, stylePrompt, multispeaker, audioOpts);
         if (cloudResp) return cloudResp;
 
         // ── 2) Vertex AI generateContent (fallback, same GCP credits) ──
