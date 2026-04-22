@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
 import { isMobileDevice, openYouTube, openSpotify } from "@/lib/utils/deep-link";
-
-interface MusicCommand {
-  action: string;
-  query: string;
-  fullCommand: string;
-}
+import {
+  OrionEvents,
+  dispatchOrionEvent,
+  type OrionMusicCommandDetail,
+  type OrionMusicPlayerShowDetail,
+  type OrionSpeakingDetail,
+  type OrionVolumeCommandDetail,
+} from "@/lib/events/orion-events";
 
 const STORAGE_KEY = "orion-music-player-prefs";
 
@@ -77,7 +79,7 @@ export function FloatingMusicPlayer() {
       }
     };
 
-    const handler = (e: CustomEvent<MusicCommand>) => {
+    const handler = (e: CustomEvent<OrionMusicCommandDetail>) => {
       const { action, query: q } = e.detail;
       if (action === "search_and_play" && q) {
         showPlayer(q);
@@ -87,13 +89,13 @@ export function FloatingMusicPlayer() {
     };
 
     // Explicit "show" event — triggered by fallback button or external code
-    const showHandler = (e: CustomEvent<{ query?: string }>) => {
+    const showHandler = (e: CustomEvent<OrionMusicPlayerShowDetail>) => {
       const q = e.detail?.query || query || loadPrefs().lastQuery || "";
       if (q) showPlayer(q);
     };
 
     // Speech-driven fallback: when Orion says "tocando", show button if player not visible after 1.2s
-    const speakingHandler = (e: CustomEvent<{ text?: string }>) => {
+    const speakingHandler = (e: CustomEvent<OrionSpeakingDetail>) => {
       const text = (e.detail?.text || "").toLowerCase();
       if (/\btocando\b|\breproduzindo\b|\bcolocando\s+(?:a\s+)?m[uú]sica\b/.test(text)) {
         if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
@@ -106,21 +108,21 @@ export function FloatingMusicPlayer() {
       }
     };
 
-    window.addEventListener("orion-music-command", handler as EventListener);
-    window.addEventListener("orion-music-player-show", showHandler as EventListener);
-    window.addEventListener("orion-speaking", speakingHandler as EventListener);
+    window.addEventListener(OrionEvents.MusicCommand, handler as EventListener);
+    window.addEventListener(OrionEvents.MusicPlayerShow, showHandler as EventListener);
+    window.addEventListener(OrionEvents.Speaking, speakingHandler as EventListener);
     return () => {
-      window.removeEventListener("orion-music-command", handler as EventListener);
-      window.removeEventListener("orion-music-player-show", showHandler as EventListener);
-      window.removeEventListener("orion-speaking", speakingHandler as EventListener);
+      window.removeEventListener(OrionEvents.MusicCommand, handler as EventListener);
+      window.removeEventListener(OrionEvents.MusicPlayerShow, showHandler as EventListener);
+      window.removeEventListener(OrionEvents.Speaking, speakingHandler as EventListener);
       if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
     };
   }, [query]);
 
   // Listen for volume commands
   useEffect(() => {
-    const handler = (e: CustomEvent) => {
-      const { action, value } = e.detail || {};
+    const handler = (e: CustomEvent<OrionVolumeCommandDetail>) => {
+      const { action, value } = e.detail || ({} as OrionVolumeCommandDetail);
       let newVol = volume;
       switch (action) {
         case "up": newVol = Math.min(100, volume + 15); break;
@@ -132,8 +134,8 @@ export function FloatingMusicPlayer() {
       setVolume(newVol);
       setMuted(newVol === 0);
     };
-    window.addEventListener("orion-volume-command", handler as EventListener);
-    return () => window.removeEventListener("orion-volume-command", handler as EventListener);
+    window.addEventListener(OrionEvents.VolumeCommand, handler as EventListener);
+    return () => window.removeEventListener(OrionEvents.VolumeCommand, handler as EventListener);
   }, [volume]);
 
   const close = useCallback(() => {
@@ -151,7 +153,7 @@ export function FloatingMusicPlayer() {
   const openFromFallback = useCallback(() => {
     const q = query || loadPrefs().lastQuery || "";
     if (q) {
-      window.dispatchEvent(new CustomEvent("orion-music-player-show", { detail: { query: q } }));
+      dispatchOrionEvent(OrionEvents.MusicPlayerShow, { query: q });
     }
     setShowFallbackButton(false);
   }, [query]);

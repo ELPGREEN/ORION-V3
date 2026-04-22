@@ -7,6 +7,7 @@
  */
 
 import { speakWithGeminiTTS, isGeminiTTSAvailable } from "./geminiTTS";
+import { OrionEvents, dispatchOrionEvent } from "@/lib/events/orion-events";
 
 export interface OrionVoiceResult {
   played: boolean;
@@ -39,9 +40,7 @@ export async function speakWithOrionVoice(
   const cleanText = text.trim().slice(0, 8000);
 
   // Broadcast Orion speech text so other components (e.g. fallback player button) can react
-  try {
-    window.dispatchEvent(new CustomEvent("orion-speaking", { detail: { text: cleanText } }));
-  } catch {}
+  dispatchOrionEvent(OrionEvents.Speaking, { text: cleanText });
 
   // ── 1. GEMINI TTS (primary) ──
   if (isGeminiTTSAvailable()) {

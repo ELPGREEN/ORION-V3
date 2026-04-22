@@ -9,6 +9,7 @@ import {
   Brain, Moon, Zap, CloudRain, Palette, Headphones, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { OrionEvents, dispatchOrionEvent } from "@/lib/events/orion-events";
 import {
   isYTMusicConnected, getYTMusicUser, startYTMusicLogin, disconnectYTMusic,
   searchYTMusic, getYTMusicPlaylists, getPlaylistTracks, getTrending,
@@ -117,13 +118,11 @@ export function YouTubeMusicPlayer() {
 
   // Play via FloatingMusicPlayer
   const playTrack = (track: YTMusicTrack) => {
-    window.dispatchEvent(new CustomEvent("orion-music-command", {
-      detail: {
-        action: "search_and_play",
-        query: `${track.title} ${track.artist}`,
-        fullCommand: `tocar ${track.title}`,
-      },
-    }));
+    dispatchOrionEvent(OrionEvents.MusicCommand, {
+      action: "search_and_play",
+      query: `${track.title} ${track.artist}`,
+      fullCommand: `tocar ${track.title}`,
+    });
     toast.success(`▶ ${track.title}`, { description: track.artist });
   };
 

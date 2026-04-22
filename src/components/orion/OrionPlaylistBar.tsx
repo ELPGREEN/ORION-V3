@@ -13,6 +13,11 @@ import {
   Volume2, Volume1, VolumeX, Loader2, ListMusic, X, Youtube, Zap,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import {
+  OrionEvents,
+  type OrionMusicCommandDetail,
+  type OrionVolumeCommandDetail,
+} from "@/lib/events/orion-events";
 import { toast } from "sonner";
 import { searchSpotify, getSpotifyFriendlyError, getSpotifySdkToken } from "@/lib/spotify/spotify-service";
 import { searchYTMusicPublic, type YTMusicTrack } from "@/lib/youtube-music/youtube-music-service";
@@ -324,8 +329,8 @@ export function OrionPlaylistBar() {
   }, [playNext]);
 
   useEffect(() => {
-    const handler = (e: CustomEvent) => {
-      const { action, query: q } = e.detail || {};
+    const handler = (e: CustomEvent<OrionMusicCommandDetail>) => {
+      const { action, query: q } = e.detail || ({} as OrionMusicCommandDetail);
       switch (action) {
         case "search_and_play":
           if (q) {
@@ -363,17 +368,18 @@ export function OrionPlaylistBar() {
           playNext();
           break;
         case "prev":
+        case "previous":
           playPrev();
           break;
       }
     };
-    window.addEventListener("orion-music-command", handler as EventListener);
-    return () => window.removeEventListener("orion-music-command", handler as EventListener);
+    window.addEventListener(OrionEvents.MusicCommand, handler as EventListener);
+    return () => window.removeEventListener(OrionEvents.MusicCommand, handler as EventListener);
   }, [playTrack, isPlaying, togglePlayPause, playNext, playPrev, currentTrack]);
 
   useEffect(() => {
-    const handler = (e: CustomEvent) => {
-      const { action, value } = e.detail || {};
+    const handler = (e: CustomEvent<OrionVolumeCommandDetail>) => {
+      const { action, value } = e.detail || ({} as OrionVolumeCommandDetail);
       let newVol = volume;
       switch (action) {
         case "up":
@@ -404,8 +410,8 @@ export function OrionPlaylistBar() {
       }
       if (useSDK && sdk.isReady) sdk.changeVolume(newVol / 100);
     };
-    window.addEventListener("orion-volume-command", handler as EventListener);
-    return () => window.removeEventListener("orion-volume-command", handler as EventListener);
+    window.addEventListener(OrionEvents.VolumeCommand, handler as EventListener);
+    return () => window.removeEventListener(OrionEvents.VolumeCommand, handler as EventListener);
   }, [volume, useSDK, sdk.isReady, sdk.changeVolume]);
 
   const formatMs = (ms: number) => {

@@ -13,6 +13,7 @@ import { initVoicePicker } from "@/lib/voice/voicePicker";
 import { ensurePersistentMic, getPersistentMicStream, requestPersistentMic } from "@/lib/voice/persistentMic";
 import { killMicRec } from "@/lib/voice/micArbiter";
 import { useWakeWord } from "./neural/useWakeWord";
+import { OrionEvents } from "@/lib/events/orion-events";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
 
 // ═══════════════════════════════════════════════════════════
@@ -175,12 +176,12 @@ export function GlobalOrionListener() {
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("orion-music-command", handleMediaCommand);
+    window.addEventListener(OrionEvents.MusicCommand, handleMediaCommand);
     window.addEventListener("orion-embedded-video", handleMediaCommand);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("orion-music-command", handleMediaCommand);
+      window.removeEventListener(OrionEvents.MusicCommand, handleMediaCommand);
       window.removeEventListener("orion-embedded-video", handleMediaCommand);
     };
   }, [orionOpen]);
