@@ -509,14 +509,14 @@ export function useOrionReasoning(
       if (isActivateVision || isDeactivateVision) {
         const action = isActivateVision ? "activate_vision" : "deactivate_vision";
         const msg = isActivateVision ? "Visão ativada." : "Visão desativada.";
-        // Dispatch event for NeuralVision to handle camera start/stop
-        window.dispatchEvent(new CustomEvent("orion-vision-command", { detail: { action } }));
+        // Dispatch event for NeuralVision to handle camera start/stop + TTS (single source of truth)
+        window.dispatchEvent(new CustomEvent("orion-vision-command", { detail: { action, userInitiated: true } }));
         setChatHistory(prev => {
           const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
           return [...clean, { role: "ai" as const, text: `👁️ ${msg}`, time: new Date().toLocaleTimeString("pt-BR") }];
         });
         setThought(msg);
-        speak(msg).catch(() => {});
+        // No speak() here — NeuralVision speaks once when it processes the event
         cleanupProcessing();
         processNextInQueue();
         return;
