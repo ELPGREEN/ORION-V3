@@ -68,12 +68,25 @@ export function getMemoryFacts(): string[] {
   return getLocalMemory().map((m) => m.fact);
 }
 
-function wordOverlap(a: string, b: string): number {
-  const setA = new Set(a.toLowerCase().split(/\s+/).filter(w => w.length > 2));
-  const setB = new Set(b.toLowerCase().split(/\s+/).filter(w => w.length > 2));
-  if (setA.size === 0 || setB.size === 0) return 0;
-  const intersection = [...setA].filter(x => setB.has(x)).length;
-  return intersection / Math.min(setA.size, setB.size);
+function getTokens(text: string): Set<string> {
+  return new Set(text.toLowerCase().split(/\s+/).filter(w => w.length > 2));
+}
+
+function wordOverlap(setA: Set<string>, setB: Set<string>): number {
+  const sizeA = setA.size;
+  const sizeB = setB.size;
+  if (sizeA === 0 || sizeB === 0) return 0;
+
+  let intersection = 0;
+  const isALessOrEqual = sizeA <= sizeB;
+  const smaller = isALessOrEqual ? setA : setB;
+  const larger = isALessOrEqual ? setB : setA;
+
+  for (const x of smaller) {
+    if (larger.has(x)) intersection++;
+  }
+
+  return intersection / Math.min(sizeA, sizeB);
 }
 
 // Visual/appearance keywords for auto-categorization
@@ -126,6 +139,12 @@ export function addMemoryFacts(
   const mem = getLocalMemory();
   const now = Date.now();
   
+  // PERF: Pre-tokenize existing memories once to avoid O(N^2) string processing
+  const memCache = mem.map(m => {
+    const low = m.fact.toLowerCase();
+    return { low, tokens: getTokens(low) };
+  });
+
   for (let f of facts) {
     if (!f || f.length < 3) continue;
     
@@ -138,13 +157,14 @@ export function addMemoryFacts(
     // Sanitize identity claims
     f = sanitizeIdentityClaim(f);
     const fLow = f.toLowerCase();
+    const fTokens = getTokens(fLow);
     
     // Enhanced deduplication: exact, substring, or word overlap
     // Visual observations use lower threshold (55%) to catch "wearing glasses" vs "has glasses" etc.
     const overlapThreshold = isVisualObservation(f) ? 0.55 : 0.7;
-    const existingIdx = mem.findIndex((m) => {
-      const mLow = m.fact.toLowerCase();
-      return mLow === fLow || mLow.includes(fLow) || fLow.includes(mLow) || wordOverlap(mLow, fLow) > overlapThreshold;
+    const existingIdx = mem.findIndex((m, i) => {
+      const cached = memCache[i];
+      return cached.low === fLow || cached.low.includes(fLow) || fLow.includes(cached.low) || wordOverlap(cached.tokens, fTokens) > overlapThreshold;
     });
     
     if (existingIdx !== -1) {
@@ -157,7 +177,9 @@ export function addMemoryFacts(
         mem[existingIdx].category = "correction";
       }
     } else {
-      mem.push({ fact: f, category, confidence, timestamp: now, source });
+      const newEntry = { fact: f, category, confidence, timestamp: now, source };
+      mem.push(newEntry);
+      memCache.push({ low: fLow, tokens: fTokens });
     }
   }
   
