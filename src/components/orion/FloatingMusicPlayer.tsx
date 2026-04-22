@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink, Music, Loader2, Play, Pause, SkipBack, SkipForward, Youtube } from "lucide-react";
+import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink, Music, Loader2, Play, Pause, SkipBack, SkipForward, Youtube, ListMusic, Mic, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -76,22 +76,31 @@ function buildYouTubeEmbedUrl(videoId: string, muted: boolean) {
   return url.toString();
 }
 
-async function resolveYouTubeVideoId(query: string): Promise<string> {
+export type YouTubeCategory = "music" | "video" | "podcast";
+
+export interface YouTubeSearchItem {
+  videoId: string;
+  title: string;
+  channelName: string;
+  thumbnail: string | null;
+  publishedAt: string | null;
+  category?: string;
+}
+
+async function searchYouTube(query: string, category: YouTubeCategory, maxResults = 5): Promise<YouTubeSearchItem[]> {
   const { data, error } = await supabase.functions.invoke("google-api-bridge", {
     body: {
       action: "youtube_search",
-      params: { query, maxResults: 1 },
+      params: { query, maxResults, category },
     },
   });
 
   if (error) throw error;
 
-  const videoId = data?.videos?.[0]?.videoId;
-  if (typeof videoId !== "string" || !/^[\w-]{11}$/.test(videoId)) {
-    throw new Error("Nenhum vídeo do YouTube válido encontrado");
-  }
-
-  return videoId;
+  const list: YouTubeSearchItem[] = Array.isArray(data?.videos) ? data.videos : [];
+  const valid = list.filter((v) => typeof v.videoId === "string" && /^[\w-]{11}$/.test(v.videoId));
+  if (valid.length === 0) throw new Error("Nenhum resultado válido encontrado");
+  return valid;
 }
 
 export function FloatingMusicPlayer() {
