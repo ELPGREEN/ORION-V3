@@ -38,6 +38,11 @@ export async function speakWithOrionVoice(
 
   const cleanText = text.trim().slice(0, 8000);
 
+  // Broadcast Orion speech text so other components (e.g. fallback player button) can react
+  try {
+    window.dispatchEvent(new CustomEvent("orion-speaking", { detail: { text: cleanText } }));
+  } catch {}
+
   // ── 1. GEMINI TTS (primary) ──
   if (isGeminiTTSAvailable()) {
     try {
