@@ -697,9 +697,9 @@ export function FloatingMusicPlayer() {
         style={{ transition: "width 0.3s, height 0.3s" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-red-500/10 to-primary/10 border-b border-border/30">
+        <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-primary/10 to-accent/10 border-b border-border/30">
           <div className="flex items-center gap-2 min-w-0">
-            <Youtube className="h-3.5 w-3.5 text-red-500 shrink-0" />
+            <Youtube className="h-3.5 w-3.5 text-primary shrink-0" />
             <span className="text-xs font-medium truncate text-foreground/80">
               {query}
             </span>
@@ -750,7 +750,7 @@ export function FloatingMusicPlayer() {
               onClick={() => openYouTube(videoId ? `https://www.youtube.com/watch?v=${videoId}` : query)}
               title="Abrir no YouTube"
             >
-              <ExternalLink className="h-3 w-3 text-red-500" />
+              <ExternalLink className="h-3 w-3 text-primary" />
             </Button>
             <Button
               variant="ghost"
@@ -859,27 +859,10 @@ export function FloatingMusicPlayer() {
             </div>
           )}
           {videoId ? (
-            <iframe
-              ref={iframeRef}
-              src={embedUrl}
-              onLoad={() => {
-                setEmbedLoading(false);
-                setFallbackLoading(false);
-                setPlaying(true);
-                try {
-                  iframeRef.current?.contentWindow?.postMessage(
-                    JSON.stringify({ event: "listening", id: 1, channel: "widget" }),
-                    YT_ORIGIN,
-                  );
-                  postYouTubeIframeCommand(iframeRef.current, "setVolume", [muted ? 0 : volume]);
-                } catch {
-                  /* ignore */
-                }
-              }}
+            <div
+              ref={playerHostRef}
               className="absolute inset-0 w-full h-full"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              title="YouTube Music Player"
+              aria-label="YouTube Music Player"
             />
           ) : !embedLoading && !minimized ? (
             <div className="absolute inset-0 flex items-center justify-center bg-background/70 px-6 text-center text-xs text-muted-foreground">
