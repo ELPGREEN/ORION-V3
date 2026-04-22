@@ -127,6 +127,23 @@ export async function playMusicWithFallback(
     ? ` (${PLATFORM_LABEL[preferredPlatform!]} não conectado)`
     : "";
 
+  // Helper that emits the resolved event + persists last decision so widgets
+  // (OrionPlaylistBar) reflect the latest music without delay and survive reloads.
+  const emitResolved = (description: string) => {
+    const detail = {
+      query,
+      requested: preferredPlatform,
+      resolved: resolved.platform,
+      fallback,
+      description,
+      ts: Date.now(),
+    };
+    try {
+      localStorage.setItem("orion_last_music_resolved", JSON.stringify(detail));
+    } catch { /* quota / private mode */ }
+    dispatchOrionEvent(OrionEvents.MusicResolved, detail);
+  };
+
   switch (resolved.platform) {
     case "spotify": {
       if (mobile) {
@@ -138,34 +155,24 @@ export async function playMusicWithFallback(
           fullCommand: query,
         });
       }
-      return {
-        platform: "spotify",
-        description: `🎵 Tocando "${query}" no Spotify${fallbackNote}`,
-        fallback,
-      };
+      const description = `🎵 Tocando "${query}" no Spotify${fallbackNote}`;
+      emitResolved(description);
+      return { platform: "spotify", description, fallback };
     }
 
     case "amazon_music": {
       openAmazonMusic(query);
-      return {
-        platform: "amazon_music",
-        description: `🎵 Abrindo "${query}" no Amazon Music${fallbackNote}`,
-        fallback,
-      };
+      const description = `🎵 Abrindo "${query}" no Amazon Music${fallbackNote}`;
+      emitResolved(description);
+      return { platform: "amazon_music", description, fallback };
     }
 
     case "youtube_music": {
       const url = `https://music.youtube.com/search?q=${encodeURIComponent(query)}`;
-      if (mobile) {
-        window.open(url, "_blank");
-      } else {
-        window.open(url, "_blank", "noopener,noreferrer");
-      }
-      return {
-        platform: "youtube_music",
-        description: `🎵 Buscando "${query}" no YouTube Music${fallbackNote}`,
-        fallback,
-      };
+      window.open(url, "_blank", "noopener,noreferrer");
+      const description = `🎵 Buscando "${query}" no YouTube Music${fallbackNote}`;
+      emitResolved(description);
+      return { platform: "youtube_music", description, fallback };
     }
 
     case "youtube":
@@ -179,11 +186,9 @@ export async function playMusicWithFallback(
           query: `${query} music`,
         });
       }
-      return {
-        platform: "youtube",
-        description: `🎵 Tocando "${query}" no YouTube${fallbackNote}`,
-        fallback,
-      };
+      const description = `🎵 Tocando "${query}" no YouTube${fallbackNote}`;
+      emitResolved(description);
+      return { platform: "youtube", description, fallback };
     }
   }
 }

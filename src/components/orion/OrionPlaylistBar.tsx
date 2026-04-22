@@ -17,6 +17,8 @@ import {
   OrionEvents,
   type OrionMusicCommandDetail,
   type OrionVolumeCommandDetail,
+  type OrionMusicResolvedDetail,
+  type ResolvedMusicPlatform,
 } from "@/lib/events/orion-events";
 import { toast } from "sonner";
 import { searchSpotify, getSpotifyFriendlyError, getSpotifySdkToken } from "@/lib/spotify/spotify-service";
@@ -71,6 +73,14 @@ function ytToUnified(t: YTMusicTrack): UnifiedTrack {
 // render `null` so only ONE bar is alive across Dashboard + RedeNeural.
 const ORION_PLAYLIST_MOUNT_KEY = "__orionPlaylistBarMounted__";
 
+// Short labels for the requested vs resolved platform badges shown in the bar.
+const PLATFORM_BADGE_LABEL: Record<ResolvedMusicPlatform, string> = {
+  spotify: "Spotify",
+  amazon_music: "Amazon",
+  youtube_music: "YT Music",
+  youtube: "YouTube",
+};
+
 export function OrionPlaylistBar() {
   const [isPrimary, setIsPrimary] = useState(false);
 
@@ -90,7 +100,16 @@ export function OrionPlaylistBar() {
     };
   }, []);
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState<string>(() => {
+    try {
+      const raw = localStorage.getItem("orion_last_music_resolved");
+      if (raw) {
+        const p = JSON.parse(raw) as OrionMusicResolvedDetail;
+        if (p?.query) return p.query;
+      }
+    } catch { /* ignore */ }
+    return "";
+  });
   const [tracks, setTracks] = useState<UnifiedTrack[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<UnifiedTrack | null>(null);
@@ -104,6 +123,16 @@ export function OrionPlaylistBar() {
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [useSDK, setUseSDK] = useState(false);
   const [barVisible, setBarVisible] = useState(true);
+  const [resolvedInfo, setResolvedInfo] = useState<OrionMusicResolvedDetail | null>(() => {
+    // Restore last resolved music decision so the widget reflects the latest
+    // platform/query immediately on reopen — without waiting for a new event.
+    try {
+      const raw = localStorage.getItem("orion_last_music_resolved");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as OrionMusicResolvedDetail;
+      return parsed && parsed.query && parsed.resolved ? parsed : null;
+    } catch { return null; }
+  });
   const [playbackMode, setPlaybackMode] = useState<"spotify-sdk" | "audio-preview" | "youtube" | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const ytIframeRef = useRef<HTMLIFrameElement>(null);
@@ -439,6 +468,25 @@ export function OrionPlaylistBar() {
     return () => window.removeEventListener(OrionEvents.VolumeCommand, handler as EventListener);
   }, [volume, useSDK, sdk.isReady, sdk.changeVolume]);
 
+  // ── MusicResolved listener ───────────────────────────────────
+  // Keeps the widget UI in sync with the latest resolver decision so the user
+  // can see the requested platform vs the actually-played one (fallback).
+  useEffect(() => {
+    const handler = (e: CustomEvent<OrionMusicResolvedDetail>) => {
+      const detail = e.detail;
+      if (!detail || !detail.resolved) return;
+      setResolvedInfo(detail);
+      if (detail.query) setQuery(detail.query);
+      try {
+        localStorage.setItem("orion_last_music_resolved", JSON.stringify(detail));
+      } catch { /* quota / private mode */ }
+      // Make sure the bar surfaces when a new resolution arrives.
+      setBarVisible(true);
+    };
+    window.addEventListener(OrionEvents.MusicResolved, handler as EventListener);
+    return () => window.removeEventListener(OrionEvents.MusicResolved, handler as EventListener);
+  }, []);
+
   const formatMs = (ms: number) => {
     if (!ms) return "";
     const m = Math.floor(ms / 60000);
@@ -550,6 +598,35 @@ export function OrionPlaylistBar() {
             </span>
             {useSDK && sdk.isReady && (
               <Badge variant="outline" className="text-[7px] px-1 py-0 border-green-500/30 text-green-400">SDK</Badge>
+            )}
+            {resolvedInfo && (
+              <div
+                className="hidden md:flex items-center gap-1"
+                title={resolvedInfo.description || `Plataforma resolvida: ${PLATFORM_BADGE_LABEL[resolvedInfo.resolved]}`}
+              >
+                {resolvedInfo.fallback && resolvedInfo.requested && (
+                  <>
+                    <Badge
+                      variant="outline"
+                      className="text-[7px] px-1 py-0 border-amber-500/30 text-amber-300/90 line-through"
+                    >
+                      {PLATFORM_BADGE_LABEL[resolvedInfo.requested]}
+                    </Badge>
+                    <span className="text-[8px] text-amber-400/80">→</span>
+                  </>
+                )}
+                <Badge
+                  variant="outline"
+                  className={`text-[7px] px-1 py-0 ${
+                    resolvedInfo.fallback
+                      ? "border-amber-500/40 text-amber-300"
+                      : "border-emerald-500/30 text-emerald-300"
+                  }`}
+                >
+                  {PLATFORM_BADGE_LABEL[resolvedInfo.resolved]}
+                  {resolvedInfo.fallback ? " (fallback)" : ""}
+                </Badge>
+              </div>
             )}
           </div>
 
