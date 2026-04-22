@@ -460,6 +460,9 @@ export function OrionPlaylistBar() {
 
   const displayProgress = isSpotifySdkPlayback ? sdkProgress : progress;
 
+  // Singleton enforcement — render nothing if another instance is already mounted
+  if (!isPrimary) return null;
+
   if (!barVisible) {
     return (
       <div className="relative z-10 flex justify-center py-1">
