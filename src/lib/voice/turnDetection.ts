@@ -41,11 +41,14 @@ export function detectTurnState(buffer: string[], _lang?: string): TurnState {
 export function getOptimalSilenceDuration(state: TurnState): number {
   switch (state) {
     case "finished":
-      return 600;      // Was 900 → 700 → 600ms for near-instant response
+      // Pontuação final ou comando claro → resposta quase instantânea
+      return 350;
     case "unfinished":
-      return 2000;     // Was 2500 → still patient but snappier
+      // Conjunção/preposição pendente → ainda paciente, mas reduzido
+      return 1500;
     case "wait":
     default:
-      return 1400;     // Was 1800 → moderate wait
+      // Frase neutra → espera moderada, mais ágil que antes
+      return 800;
   }
 }
