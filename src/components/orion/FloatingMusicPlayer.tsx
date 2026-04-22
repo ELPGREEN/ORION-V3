@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink, Music, Loader2, Play, Pause, SkipBack, SkipForward, Youtube } from "lucide-react";
+import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink, Music, Loader2, Play, Pause, SkipBack, SkipForward, Youtube, ListMusic, Mic, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -76,22 +76,31 @@ function buildYouTubeEmbedUrl(videoId: string, muted: boolean) {
   return url.toString();
 }
 
-async function resolveYouTubeVideoId(query: string): Promise<string> {
+export type YouTubeCategory = "music" | "video" | "podcast";
+
+export interface YouTubeSearchItem {
+  videoId: string;
+  title: string;
+  channelName: string;
+  thumbnail: string | null;
+  publishedAt: string | null;
+  category?: string;
+}
+
+async function searchYouTube(query: string, category: YouTubeCategory, maxResults = 5): Promise<YouTubeSearchItem[]> {
   const { data, error } = await supabase.functions.invoke("google-api-bridge", {
     body: {
       action: "youtube_search",
-      params: { query, maxResults: 1 },
+      params: { query, maxResults, category },
     },
   });
 
   if (error) throw error;
 
-  const videoId = data?.videos?.[0]?.videoId;
-  if (typeof videoId !== "string" || !/^[\w-]{11}$/.test(videoId)) {
-    throw new Error("Nenhum vídeo do YouTube válido encontrado");
-  }
-
-  return videoId;
+  const list: YouTubeSearchItem[] = Array.isArray(data?.videos) ? data.videos : [];
+  const valid = list.filter((v) => typeof v.videoId === "string" && /^[\w-]{11}$/.test(v.videoId));
+  if (valid.length === 0) throw new Error("Nenhum resultado válido encontrado");
+  return valid;
 }
 
 export function FloatingMusicPlayer() {
@@ -125,6 +134,9 @@ export function FloatingMusicPlayer() {
   const [embedLoading, setEmbedLoading] = useState(false);
   const [playing, setPlaying] = useState(true);
   const [resolvedPlatform, setResolvedPlatform] = useState<string>("YouTube");
+  const [category, setCategory] = useState<YouTubeCategory>("music");
+  const [results, setResults] = useState<YouTubeSearchItem[]>([]);
+  const [showResults, setShowResults] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fallbackTimerRef = useRef<number | null>(null);
   const volumeCommandTimerRef = useRef<number | null>(null);
@@ -140,7 +152,7 @@ export function FloatingMusicPlayer() {
 
   // Listen for music commands from Orion (single source of truth)
   useEffect(() => {
-    const showPlayer = async (q: string) => {
+    const showPlayer = async (q: string, cat: YouTubeCategory = category) => {
       const trimmed = q.trim();
       if (!trimmed) return;
       if (isMobileDevice()) {
@@ -153,20 +165,25 @@ export function FloatingMusicPlayer() {
       setVisible(true);
       setMinimized(false);
       setEmbedLoading(true);
-      setResolvedPlatform("YouTube");
+      setResolvedPlatform(cat === "music" ? "YouTube · Música" : cat === "podcast" ? "YouTube · Podcast" : "YouTube · Vídeo");
       savePrefs({ lastQuery: trimmed, visible: true, minimized: false });
       setShowFallbackButton(false);
+      setResults([]);
+      setShowResults(false);
       if (fallbackTimerRef.current) {
         window.clearTimeout(fallbackTimerRef.current);
         fallbackTimerRef.current = null;
       }
 
       try {
-        const resolvedVideoId = await resolveYouTubeVideoId(trimmed);
+        const items = await searchYouTube(trimmed, cat, 5);
         if (requestId !== resolveRequestRef.current) return;
-        setVideoId(resolvedVideoId);
+        setResults(items);
+        setShowResults(items.length > 1);
+        const first = items[0];
+        setVideoId(first.videoId);
         setPlaying(true);
-        savePrefs({ lastQuery: trimmed, lastVideoId: resolvedVideoId, visible: true, minimized: false });
+        savePrefs({ lastQuery: trimmed, lastVideoId: first.videoId, visible: true, minimized: false });
       } catch (error) {
         if (requestId !== resolveRequestRef.current) return;
         console.error("[FloatingMusicPlayer] failed to resolve YouTube video:", error);
@@ -305,6 +322,41 @@ export function FloatingMusicPlayer() {
     setQuery("");
     setVideoId("");
     setShowFallbackButton(false);
+    setShowResults(false);
+    setResults([]);
+  }, []);
+
+  // Re-run the current query under a different category (used by Música/Vídeos/Podcasts chips)
+  const runSearch = useCallback(async (cat: YouTubeCategory, q?: string) => {
+    const target = (q ?? query).trim();
+    if (!target) return;
+    setCategory(cat);
+    const requestId = ++resolveRequestRef.current;
+    setEmbedLoading(true);
+    setVideoId("");
+    setResolvedPlatform(cat === "music" ? "YouTube · Música" : cat === "podcast" ? "YouTube · Podcast" : "YouTube · Vídeo");
+    try {
+      const items = await searchYouTube(target, cat, 5);
+      if (requestId !== resolveRequestRef.current) return;
+      setResults(items);
+      setShowResults(true);
+      setVideoId(items[0].videoId);
+      setPlaying(true);
+      savePrefs({ lastQuery: target, lastVideoId: items[0].videoId });
+    } catch (err) {
+      if (requestId !== resolveRequestRef.current) return;
+      console.error("[FloatingMusicPlayer] runSearch failed:", err);
+      setShowFallbackButton(true);
+    } finally {
+      if (requestId === resolveRequestRef.current) setEmbedLoading(false);
+    }
+  }, [query]);
+
+  const playFromList = useCallback((item: YouTubeSearchItem) => {
+    setVideoId(item.videoId);
+    setPlaying(true);
+    setShowResults(false);
+    savePrefs({ lastVideoId: item.videoId });
   }, []);
 
   const handleVolumeChange = useCallback((val: number[]) => {
@@ -401,7 +453,9 @@ export function FloatingMusicPlayer() {
         className={`fixed z-[9999] shadow-2xl rounded-xl overflow-hidden border border-border/50 bg-background/95 backdrop-blur-xl ${
           minimized
             ? "bottom-4 right-4 w-72 h-14"
-            : "bottom-4 right-4 w-[380px] h-[280px]"
+            : showResults
+              ? "bottom-4 right-4 w-[380px] h-[460px]"
+              : "bottom-4 right-4 w-[380px] h-[320px]"
         }`}
         style={{ transition: "width 0.3s, height 0.3s" }}
       >
@@ -491,9 +545,71 @@ export function FloatingMusicPlayer() {
           </div>
         </div>
 
+        {/* Category chips */}
+        {!minimized && (
+          <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/30 bg-muted/30">
+            {([
+              { key: "music", label: "Música", Icon: Music },
+              { key: "video", label: "Vídeos", Icon: Film },
+              { key: "podcast", label: "Podcasts", Icon: Mic },
+            ] as const).map(({ key, label, Icon }) => (
+              <Button
+                key={key}
+                variant={category === key ? "default" : "ghost"}
+                size="sm"
+                className="h-6 px-2 text-[10px] gap-1"
+                onClick={() => runSearch(key)}
+                disabled={!query || embedLoading}
+                aria-pressed={category === key}
+              >
+                <Icon className="h-3 w-3" />
+                {label}
+              </Button>
+            ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 ml-auto text-[10px] gap-1"
+              onClick={() => setShowResults((p) => !p)}
+              disabled={results.length === 0}
+              title="Lista de resultados"
+            >
+              <ListMusic className="h-3 w-3" />
+              {results.length > 0 ? `${results.length}` : "—"}
+            </Button>
+          </div>
+        )}
+
+        {/* Manual playlist (top 5) */}
+        {!minimized && showResults && results.length > 0 && (
+          <div className="max-h-[140px] overflow-y-auto border-b border-border/30 bg-background/60">
+            {results.map((item, idx) => (
+              <button
+                key={item.videoId}
+                onClick={() => playFromList(item)}
+                className={`flex items-center gap-2 w-full px-2 py-1.5 text-left text-[11px] hover:bg-accent/40 transition-colors ${
+                  item.videoId === videoId ? "bg-primary/10" : ""
+                }`}
+              >
+                <span className="w-4 text-muted-foreground">{idx + 1}</span>
+                {item.thumbnail ? (
+                  <img src={item.thumbnail} alt="" className="h-8 w-12 object-cover rounded" loading="lazy" />
+                ) : (
+                  <div className="h-8 w-12 rounded bg-muted" />
+                )}
+                <span className="flex-1 min-w-0">
+                  <span className="block truncate text-foreground/90">{item.title}</span>
+                  <span className="block truncate text-muted-foreground text-[10px]">{item.channelName}</span>
+                </span>
+                {item.videoId === videoId && <Play className="h-3 w-3 text-primary shrink-0" />}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Video */}
         {!minimized && (
-          <div className="relative w-full" style={{ height: "calc(100% - 40px)" }}>
+          <div className="relative w-full" style={{ height: showResults ? "180px" : "calc(100% - 78px)" }}>
             {embedLoading && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm">
                 <div className="flex items-center gap-2 text-xs text-foreground/80">
@@ -510,13 +626,11 @@ export function FloatingMusicPlayer() {
                   setEmbedLoading(false);
                   setFallbackLoading(false);
                   setPlaying(true);
-                  // Tell YouTube IFrame API we're listening for state events
                   try {
                     iframeRef.current?.contentWindow?.postMessage(
                       JSON.stringify({ event: "listening", id: 1, channel: "widget" }),
                       YT_ORIGIN,
                     );
-                    // Sync current volume on load
                     postYouTubeIframeCommand(iframeRef.current, "setVolume", [muted ? 0 : volume]);
                   } catch { /* ignore */ }
                 }}
