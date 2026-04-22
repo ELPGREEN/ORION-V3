@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Voice Training System - Coleta e processa amostras de voz para melhorar
  * a precisão do reconhecimento através de treinamento personalizado

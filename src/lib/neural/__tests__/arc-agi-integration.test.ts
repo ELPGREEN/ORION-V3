@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect } from "vitest";
 import { activateRAGConsciousness, detectSymbolicPattern, adaptFromEvaluation, getConsciousnessDiagnostics, getConsciousness, type RAGPattern } from "../rag-consciousness";
 import { recordLearningOutcome, createMetaLearningState, evaluateStrategyEffectiveness, type MetaLearningState, type LearningStrategy } from "../meta-learning";

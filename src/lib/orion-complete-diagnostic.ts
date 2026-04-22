@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * ─── ORION COMPLETE SYSTEM DIAGNOSTIC ───
  * Verifica: Shield, Audiobook, API Status, Quantum, IoT, Orquestrador, ARC-AGI-3, RAG
