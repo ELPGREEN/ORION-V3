@@ -650,6 +650,17 @@ Deno.serve(async (req) => {
       volumeGainDb: typeof body?.volumeGainDb === "number" ? body.volumeGainDb : undefined,
     };
 
+    // Configurable SSML <break> durations per break type (ms, 0–5000)
+    const breakTimings: BreakTimings | undefined =
+      body?.breakTimings && typeof body.breakTimings === "object"
+        ? {
+            sentenceMs: body.breakTimings.sentenceMs,
+            clauseMs: body.breakTimings.clauseMs,
+            paragraphMs: body.breakTimings.paragraphMs,
+            lineBreakMs: body.breakTimings.lineBreakMs,
+          }
+        : undefined;
+
     // ⚡ Warm-up ping: client wants to wake the function but skip synthesis
     if (body?.warmup === true) {
       // Pre-fetch access token so the next real request is hot
