@@ -243,6 +243,7 @@ export function FloatingMusicPlayer() {
   const [results, setResults] = useState<YouTubeSearchItem[]>([]);
   const [showResults, setShowResults] = useState(false);
   const playerHostRef = useRef<HTMLDivElement>(null);
+  const playerHostElementRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YouTubePlayerInstance | null>(null);
   const playerReadyRef = useRef(false);
   const queuedPlayerCommandsRef = useRef<Array<(player: YouTubePlayerInstance) => void>>([]);
