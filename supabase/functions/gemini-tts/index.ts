@@ -196,13 +196,29 @@ function pcmToWav(pcmBase64: string, sampleRate = 24000, channels = 1, bitsPerSa
 // Cloud TTS supports a strict subset of SSML. We auto-wrap plain text into
 // SSML with prosody + natural pauses to improve intelligibility.
 
+export interface EscapeReport {
+  escaped: string;
+  counts: Record<string, number>; // char → occurrences escaped
+  total: number;
+}
+
+function escapeSSMLWithReport(s: string): EscapeReport {
+  const counts: Record<string, number> = {};
+  const bump = (ch: string) => {
+    counts[ch] = (counts[ch] ?? 0) + 1;
+  };
+  const escaped = s
+    .replace(/&/g, () => { bump("&"); return "&amp;"; })
+    .replace(/</g, () => { bump("<"); return "&lt;"; })
+    .replace(/>/g, () => { bump(">"); return "&gt;"; })
+    .replace(/"/g, () => { bump('"'); return "&quot;"; })
+    .replace(/'/g, () => { bump("'"); return "&apos;"; });
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return { escaped, counts, total };
+}
+
 function escapeSSML(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+  return escapeSSMLWithReport(s).escaped;
 }
 
 function isAlreadySSML(s: string): boolean {
