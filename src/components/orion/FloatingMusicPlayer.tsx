@@ -103,6 +103,13 @@ async function searchYouTube(query: string, category: YouTubeCategory, maxResult
   return valid;
 }
 
+function inferCategoryFromCommand(text?: string): YouTubeCategory {
+  const normalized = (text || "").toLowerCase();
+  if (/\b(podcast|podcasts|epis[oó]dio|entrevista)\b/.test(normalized)) return "podcast";
+  if (/\b(v[ií]deo|video|filme|movie|trailer|assistir|ver|document[aá]rio|clipe)\b/.test(normalized)) return "video";
+  return "music";
+}
+
 export function FloatingMusicPlayer() {
   // Singleton guard — only the first instance renders, prevents duplicates across routes
   const [isPrimary, setIsPrimary] = useState(false);
