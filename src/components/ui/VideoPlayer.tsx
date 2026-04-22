@@ -2,22 +2,30 @@ import { useState, useRef, useCallback } from "react";
 import { Play, AlertTriangle, Loader2 } from "lucide-react";
 
 interface VideoPlayerProps {
-  src: string;
+  /** Source URL for an MP4 (ignored if youtubeId is set) */
+  src?: string;
+  /** YouTube video ID — when present, renders the official YouTube IFrame embed instead of <video> */
+  youtubeId?: string;
   poster?: string;
   title?: string;
   desc?: string;
 }
 
-export function VideoPlayer({ src, poster, title, desc }: VideoPlayerProps) {
+export function VideoPlayer({ src, youtubeId, poster, title, desc }: VideoPlayerProps) {
   const [state, setState] = useState<"idle" | "loading" | "playing" | "error">("idle");
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handlePlay = useCallback(() => {
+    // YouTube branch handled by iframe directly
+    if (youtubeId) {
+      setState("playing");
+      return;
+    }
     const video = videoRef.current;
     if (!video) return;
     setState("loading");
     video.load();
-    
+
     const onCanPlay = () => {
       setState("playing");
       video.play().catch(() => setState("error"));
@@ -33,7 +41,7 @@ export function VideoPlayer({ src, poster, title, desc }: VideoPlayerProps) {
     };
     video.addEventListener("canplaythrough", onCanPlay, { once: true });
     video.addEventListener("error", onError, { once: true });
-  }, []);
+  }, [youtubeId]);
 
   return (
     <div className="border border-border/20 overflow-hidden group">
@@ -42,17 +50,30 @@ export function VideoPlayer({ src, poster, title, desc }: VideoPlayerProps) {
           <img src={poster} alt={title || ""} className="absolute inset-0 w-full h-full object-cover" />
         )}
 
-        <video
-          ref={videoRef}
-          controls={state === "playing"}
-          poster={poster}
-          className={`w-full h-full object-cover ${state === "playing" ? "block" : "hidden"}`}
-          preload="none"
-          onEnded={() => setState("idle")}
-          onError={() => { if (state === "playing") setState("error"); }}
-        >
-          <source src={src} type="video/mp4" />
-        </video>
+        {youtubeId ? (
+          state === "playing" && (
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+              title={title || "YouTube video player"}
+              className="absolute inset-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          )
+        ) : (
+          <video
+            ref={videoRef}
+            controls={state === "playing"}
+            poster={poster}
+            className={`w-full h-full object-cover ${state === "playing" ? "block" : "hidden"}`}
+            preload="none"
+            onEnded={() => setState("idle")}
+            onError={() => { if (state === "playing") setState("error"); }}
+          >
+            {src && <source src={src} type="video/mp4" />}
+          </video>
+        )}
 
         {state === "idle" && (
           <button
