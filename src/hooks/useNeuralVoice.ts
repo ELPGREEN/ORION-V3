@@ -52,9 +52,10 @@ const DOT_CLEAN_REGEX = /\.+/g;
 const NEWLINE_CLEAN_REGEX = /\n+/g;
 const WHITESPACE_CLEAN_REGEX = /\s+/g;
 const FORBIDDEN_ORION_CATCHPHRASE_REGEXES = [
+  /prepare-?se\s+para\s+a[cç][aã]o[\s,.!?-]*(?:deb\w{1,8}\s+ao\s+m[aá]ximo\s*(?:e\s+)?)?deixa\s+que\s+eu\s+te\s+proteja/gi,
   /prepare-?se\s+para\s+a[cç][aã]o[^.!?\n]*?(?:proteja|proteger)[^.!?\n]*/gi,
   /prepare-?se\s+para\s+a[cç][aã]o/gi,
-  /debr\w*\s+ao\s+m[aá]ximo/gi,
+  /deb\w{1,8}\s+ao\s+m[aá]ximo(?:\s+e\s+deixa\s+que\s+eu\s+te\s+proteja)?/gi,
   /deixa\s+que\s+eu\s+te\s+proteja/gi,
 ];
 
@@ -115,6 +116,13 @@ function sanitizeOrionSpeechText(text: string): string {
   let sanitized = text;
   for (const pattern of FORBIDDEN_ORION_CATCHPHRASE_REGEXES) {
     sanitized = sanitized.replace(pattern, " ");
+  }
+  const residue = sanitized
+    .replace(/[.,!?;:-]+/g, " ")
+    .replace(WHITESPACE_CLEAN_REGEX, " ")
+    .trim();
+  if (!residue || /^(?:e|a[ií]|ent[aã]o)$/i.test(residue)) {
+    return "";
   }
   sanitized = sanitized.replace(WHITESPACE_CLEAN_REGEX, " ").trim();
   return deduplicateRepeatedPhrases(sanitized);
