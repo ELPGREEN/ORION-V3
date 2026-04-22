@@ -15,6 +15,8 @@ import {
 } from "@/lib/events/orion-events";
 
 const STORAGE_KEY = "orion-music-player-prefs";
+const FLOATING_MOUNT_KEY = "__orionFloatingMusicPlayerMounted__";
+const YT_ORIGIN = "https://www.youtube.com";
 
 interface PlayerPrefs {
   volume: number;
