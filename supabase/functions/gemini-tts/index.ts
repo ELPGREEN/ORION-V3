@@ -294,10 +294,12 @@ async function requestCloudTTS(
   _stylePrompt: string,
   multispeaker?: MultiSpeakerVoice[],
   audioOpts?: { speakingRate?: number; pitch?: number; volumeGainDb?: number },
+  breakTimings?: BreakTimings,
 ): Promise<Response | null> {
   const url = "https://texttospeech.googleapis.com/v1beta1/text:synthesize";
 
   const isMulti = multispeaker && multispeaker.length > 0;
+  const resolvedBreaks = resolveBreakTimings(breakTimings);
 
   // ── Voice config (only fields supported by Cloud TTS v1beta1) ──
   const voiceParams: Record<string, unknown> = {
@@ -321,7 +323,26 @@ async function requestCloudTTS(
   // ── Input: SSML preferred, with auto-wrap for plain text ──
   const inputContent = text.slice(0, 4000);
   const useSSML = isAlreadySSML(inputContent);
-  const ssmlInput = useSSML ? inputContent : textToSSML(inputContent);
+  let ssmlInput: string;
+  let escapeReport: EscapeReport;
+  if (useSSML) {
+    ssmlInput = inputContent;
+    // Passthrough SSML: still scan stripped text for diagnostic visibility
+    escapeReport = escapeSSMLWithReport(inputContent.replace(/<[^>]+>/g, ""));
+  } else {
+    const built = textToSSML(inputContent, resolvedBreaks);
+    ssmlInput = built.ssml;
+    escapeReport = built.escapeReport;
+  }
+  if (escapeReport.total > 0) {
+    console.log(
+      `[Cloud TTS] 🔣 Escaped ${escapeReport.total} XML-unsafe chars:`,
+      escapeReport.counts,
+    );
+  }
+  console.log(
+    `[Cloud TTS] ⏱️ Break timings (ms): sentence=${resolvedBreaks.sentenceMs} clause=${resolvedBreaks.clauseMs} paragraph=${resolvedBreaks.paragraphMs} lineBreak=${resolvedBreaks.lineBreakMs}`,
+  );
   // Plain text fallback: strip ALL XML tags and unescape basic entities so the
   // synthesizer always has a safe, valid input even if SSML generation breaks.
   const plainTextFallback = inputContent
