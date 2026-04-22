@@ -1,17 +1,10 @@
-/**
- * ═══ Smart Intent Classifier ═══
- * Unified intent classification: learned corrections → regex fast-path → LLM semantic fallback.
- * Replaces scattered regex classifiers across the codebase.
- * Target: < 1ms for regex/feedback hits, ~300ms for LLM fallback.
- */
-
 import { supabase } from "@/integrations/supabase/client";
 import { getLearnedCorrection } from "./intent-feedback";
 
 export interface ClassifiedIntent {
   intent: string;
   confidence: number;
-  params: Record<string, string>;
+  params: Record<string, any>;
   source: "regex" | "llm" | "cache" | "feedback";
   classifyMs: number;
 }
@@ -28,147 +21,32 @@ function getCached(text: string): ClassifiedIntent | null {
   const key = normalizeForCache(text);
   const entry = _cache.get(key);
   if (entry && Date.now() - entry.ts < CACHE_TTL) {
-    return { ...entry.result, source: "cache" };
+    return entry.result;
   }
-  if (entry) _cache.delete(key);
   return null;
 }
 
 function setCache(text: string, result: ClassifiedIntent): void {
-  const key = normalizeForCache(text);
-  _cache.set(key, { result, ts: Date.now() });
-  // Evict old entries
-  if (_cache.size > 200) {
-    const oldest = _cache.keys().next().value;
-    if (oldest) _cache.delete(oldest);
-  }
+  _cache.set(normalizeForCache(text), { result, ts: Date.now() });
 }
 
-// ─── Regex Fast-Path ───
+// ─── Regex Fast-Path Rules ───
 
-interface RegexRule {
+interface IntentRule {
   pattern: RegExp;
   intent: string;
   confidence: number;
-  extractParams?: (text: string) => Record<string, string>;
+  extractParams?: (text: string) => any;
 }
 
-const REGEX_RULES: RegexRule[] = [
-  // ═══ Video/Screen control (BEFORE everything else) ═══
-  { pattern: /\b(aumentar?\s+(?:a\s+)?tela|tela\s+cheia|fullscreen|maximizar?\s+(?:o\s+)?v[ií]deo)\b/i, intent: "video_fullscreen", confidence: 0.97 },
-  { pattern: /\b(diminuir?\s+(?:a\s+)?tela|sair?\s+(?:da\s+)?tela\s+cheia|reduzir?\s+(?:a\s+)?tela)\b/i, intent: "video_reduce", confidence: 0.97 },
-  { pattern: /\b(minimizar?\s+(?:o\s+)?v[ií]deo|minimizar?\s+(?:a\s+)?tela)\b/i, intent: "video_minimize", confidence: 0.97 },
-  { pattern: /\b(desativar?\s+(?:a\s+)?vis[aã]o|desligar?\s+(?:a\s+)?vis[aã]o|vis[aã]o\s+off|parar?\s+(?:a\s+)?vis[aã]o)\b/i, intent: "vision_off", confidence: 0.97 },
-  { pattern: /\b(ativar?\s+(?:a\s+)?vis[aã]o|ligar?\s+(?:a\s+)?vis[aã]o|vis[aã]o\s+on|iniciar?\s+(?:a\s+)?vis[aã]o)\b/i, intent: "vision_on", confidence: 0.97 },
+const REGEX_RULES: IntentRule[] = [
+  // Conversational / Greeting (Must be high priority to avoid tool triggers)
+  { pattern: /\b(oi|ol[aá]|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|como\s+vai|e\s+a[ií])\b/i, intent: "general", confidence: 0.98 },
+  { pattern: /\b(consegue\s+me\s+ouvir|est[aá]\s+me\s+ouvindo|me\s+ouve|teste\s+de\s+som|teste\s+mic)\b/i, intent: "general", confidence: 0.98 },
+  { pattern: /\b(quem\s+[eé]\s+voc[eê]|fala\s+(sobre|de)\s+voc[eê]|o\s+que\s+voc[eê]\s+[eé]|sua\s+identidade)\b/i, intent: "identity", confidence: 0.98 },
 
-  // ═══ Orion Auto-Evolution Commands (like OpenCode) ═══
-  { pattern: /\b(auto\s+evoluir|evoluir|auto\s+programar|auto\s+melhorar|self\s+evolve|auto\s+dev)\b/i, intent: "orion_evolution", confidence: 0.98, extractParams: () => ({ command: "auto-evoluir", action: "evolve" }) },
-  { pattern: /\b(novo\s+comando|criar\s+comando|adicionar\s+comando)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: (t) => {
-    const m = t.match(/(?:comando|criar|adicionar)\s+(.+)/i);
-    return { command: "novo-comando", args: m?.[1]?.trim() };
-  }},
-  { pattern: /\b(otimizar|otimiza|melhorar\s+performance|mejor\s+performance)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: () => ({ command: "otimizar", action: "optimize" }) },
-  { pattern: /\b(corrigir\s+bug|corrige\s+bug|fix\s+bug|resolver\s+bug)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: (t) => {
-    const m = t.match(/(?:bug|problema)\s+(.+)/i);
-    return { command: "corrigir-bug", args: m?.[1]?.trim() };
-  }},
-  { pattern: /\b(adicionar\s+feature|nova\s+feature|novo\s+recurso|adicionar\s+função)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: (t) => {
-    const m = t.match(/(?:feature|recurso|função)\s+(.+)/i);
-    return { command: "adicionar-feature", args: m?.[1]?.trim() };
-  }},
-  { pattern: /\b(revisar\s+código|revê\s+código|review\s+code|analisar\s+código)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: () => ({ command: "revisar-codigo", action: "review" }) },
-  { pattern: /\b(criar\s+teste|testes\s+automáticos|generate\s+tests|testes\s+unitários)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: () => ({ command: "criar-teste", action: "test" }) },
-  { pattern: /\b(atualizar\s+docs|documentar|docs\s+update|atualizar\s+documentação)\b/i, intent: "orion_evolution", confidence: 0.97, extractParams: (t) => {
-    const m = t.match(/(?:docs|documentação)\s+(.+)/i);
-    return { command: "atualizar-docs", args: m?.[1]?.trim() };
-  }},
-  { pattern: /\b(integrar|conectar\s+ferramenta|adicionar\s+ferramenta)\b/i, intent: "orion_evolution", confidence: 0.96, extractParams: (t) => {
-    const m = t.match(/(?:ferramenta|integração)\s+(.+)/i);
-    return { command: "integrar-ferramenta", args: m?.[1]?.trim() };
-  }},
-  { pattern: /\b(melhorar\s+interface|melhorar\s+UI|melhorar\s+visual|otimizar\s+visual)\b/i, intent: "orion_evolution", confidence: 0.96, extractParams: () => ({ command: "melhorar-ui", action: "ui" }) },
-
-  // ═══ LLM Provider Selection (like OpenCode /models) ═══
-  { pattern: /\b(trocar|troca|alternar|mudar)\s+(?:o\s+)?(?:modelo|IA|LLM|AI|provedor)\b/i, intent: "llm_provider", confidence: 0.96, extractParams: (t) => {
-    const providers = ["openai", "anthropic", "deepseek", "groq", "google", "ollama", "lmstudio", "huggingface"];
-    const found = providers.find(p => t.toLowerCase().includes(p));
-    return { provider: found || "openai" };
-  }},
-  { pattern: /\b(usar|utilizar)\s+(openai|anthropic|deepseek|groq|google|ollama|huggingface|openrouter)\b/i, intent: "llm_provider", confidence: 0.98, extractParams: (t) => {
-    const match = t.match(/(openai|anthropic|deepseek|groq|google|ollama|huggingface|openrouter)/i);
-    return { provider: match?.[1]?.toLowerCase() || "openai" };
-  }},
-  { pattern: /\b(qual\s+(?:é\s+)?(?:o\s+)?modelo|qual\s+IA|qual\s+LLM|que\s+modelo\s+estou)\b/i, intent: "llm_status", confidence: 0.95 },
-  { pattern: /\b(listar\s+modelos|mostrar\s+modelos|quais\s+modelos)\b/i, intent: "llm_list", confidence: 0.95 },
-
-  // Time/date (very specific, high confidence)
-  { pattern: /\b(que\s+hora|que\s+dia|data\s+de\s+hoje|hora\s+atual|what\s+time)\b/i, intent: "time_date", confidence: 0.98 },
-  
-  // Calculation
-  { pattern: /\b(calcul|quanto\s+[eé]\s+\d|some|multipliqu|divid|raiz\s+quadrada|porcentagem\s+de)\b/i, intent: "calculation", confidence: 0.95, extractParams: (t) => {
-    const m = t.match(/(?:calcul\w*|quanto\s+[eé])\s+(.+)/i);
-    return { expression: m?.[1]?.trim() || t };
-  }},
-  
-  // Translation
-  { pattern: /\b(traduz|tradu[çc][aã]o|translate)\b/i, intent: "translation", confidence: 0.93, extractParams: (t) => {
-    const lang = t.match(/(?:em|para|pro?)\s+(ingl[eê]s|espanhol|italiano|franc[eê]s|alem[aã]o|chin[eê]s|japon[eê]s)/i);
-    return { targetLang: lang?.[1] || "inglês", text: t.replace(/traduz\w*\s*/i, "") };
-  }},
-  
-  // ═══ Vision/Identity — Massive coverage for 200+ vision commands ═══
-  // "O que você vê/enxerga/está vendo"
-  { pattern: /\b(?:o\s+que\s+(?:voc[eê]|vc|tu|c[eê])\s+(?:v[eê]|enxerga|est[aá]\s+vendo|consegue\s+ver|t[aá]\s+vendo))\b/i, intent: "vision_describe", confidence: 0.97 },
-  // "Como eu estou/tou" — appearance check
-  { pattern: /\b(?:como\s+(?:eu\s+)?(?:estou|tou|t[oô]|fico|fiquei))\b/i, intent: "vision_describe", confidence: 0.96 },
-  // "O que você acha" (of what you see)
-  { pattern: /\b(?:o\s+que\s+(?:voc[eê]|vc|tu|c[eê])\s+(?:acha|achou|pensa|pensou|achas))\b/i, intent: "vision_describe", confidence: 0.94 },
-  // "O que tá/está escrito/escrevendo" — reading text
-  { pattern: /\b(?:o\s+que\s+(?:t[aá]|est[aá])\s+(?:escrit[oa]|escrevendo|mostrando|aparecendo|exibindo))\b/i, intent: "vision_describe", confidence: 0.97 },
-  // "O que é isso/aquilo/isto" — pointing at things
-  { pattern: /\b(?:o\s+que\s+[eé]\s+(?:isso|aquilo|isto|essa|esse|aquele|aquela))\b/i, intent: "vision_describe", confidence: 0.96 },
-  // "O que estou/tou segurando/usando/vestindo/comendo/bebendo/fazendo"
-  { pattern: /\b(?:o\s+que\s+(?:eu\s+)?(?:estou|tou|t[oô])\s+(?:segurando|usando|vestindo|comendo|bebendo|fazendo|mostrando|lendo|escrevendo|olhando|assistindo|jogando|cozinhando|carregando|montando|mexendo|digitando|pintando|desenhando|costurando|construindo))\b/i, intent: "vision_describe", confidence: 0.97 },
-  // "Me descreve/descreva" — describe scene
-  { pattern: /\b(?:(?:me\s+)?descrev[ae]|descri[çc][aã]o\s+d[oae]|descrever)\b/i, intent: "vision_describe", confidence: 0.95 },
-  // "Leia/lê isso/aquilo/o que está na tela/placa/papel"
-  { pattern: /\b(?:l[eê][ia]?\s+(?:isso|aquilo|isto|o\s+que|pra\s+mim)|ler?\s+(?:isso|aquilo|isto|o\s+que))\b/i, intent: "vision_describe", confidence: 0.96 },
-  // "Tem algo/alguém/alguma coisa" — presence detection
-  { pattern: /\b(?:tem\s+(?:algo|algu[eé]m|alguma\s+coisa|alg[uo]\s+|gente|pessoa|animal)\s+(?:aqui|a[ií]|l[aá]|perto|na\s+frente))\b/i, intent: "vision_describe", confidence: 0.94 },
-  // "Quantos/quantas" — counting objects
-  { pattern: /\b(?:quant[oa]s?\s+(?:pessoa|objeto|coisa|dedo|gato|cachorro|carro|gente|item|livro|garrafa|copo|cadeira|mesa|flor|fruta|\w+)\s*(?:tem|t[eê]m|voc[eê]\s+v[eê]|est[aã]o|eu\s+tenho)?)\b/i, intent: "vision_describe", confidence: 0.95 },
-  // "Qual/que cor" — color identification
-  { pattern: /\b(?:(?:qual|que)\s+(?:cor|cores)\s+(?:[eé]\s+)?(?:iss[oa]|est[ea]|aquel[ea]|d[oae]\s+\w+)?)\b/i, intent: "vision_describe", confidence: 0.95 },
-  // "Onde está/tá" — spatial location
-  { pattern: /\b(?:(?:onde|aonde)\s+(?:est[aá]|t[aá]|fica)\s+(?:o|a|meu|minha|iss[oa]|aquel[ea]))\b/i, intent: "vision_describe", confidence: 0.94 },
-  // "Olha/veja/observe/analise" — look at something
-  { pattern: /\b(?:olh[ae]|veja|observe|analise|repare|percebe|nota|nota[sr]?)\s+(?:isso|aquilo|isto|aqui|l[aá]|pra|para)\b/i, intent: "vision_describe", confidence: 0.95 },
-  // "Está chovendo/escuro/claro/dia/noite" — environment
-  { pattern: /\b(?:(?:est[aá]|t[aá])\s+(?:chovendo|nevando|escuro|claro|bonito|feio|frio|quente|ensolarado|nublado|dia|noite|amanhecendo|anoitecendo))\b/i, intent: "vision_describe", confidence: 0.93 },
-  // "Que lugar/ambiente/cômodo é esse"
-  { pattern: /\b(?:(?:que|qual)\s+(?:lugar|ambiente|c[oô]modo|local|sala|espa[çc]o)\s+[eé]\s+(?:esse|este|aquele))\b/i, intent: "vision_describe", confidence: 0.95 },
-  // "Você consegue ver/enxergar/ler"
-  { pattern: /\b(?:(?:voc[eê]|vc|tu)\s+(?:consegue|pode|d[aá]\s+pra)\s+(?:ver|enxergar|ler|identificar|reconhecer|detectar|notar|perceber))\b/i, intent: "vision_describe", confidence: 0.96 },
-  // "Mostra/diz/fala o que tem/vê"
-  { pattern: /\b(?:(?:mostr[ae]|diz|fal[ae]|cont[ae]|inform[ae])\s+(?:o\s+que|pra\s+mim\s+o\s+que)\s+(?:tem|v[eê]|enxerga|aparece|est[aá]))\b/i, intent: "vision_describe", confidence: 0.95 },
-  // "Que horas marca" (reading a clock in vision)
-  { pattern: /\b(?:que\s+horas?\s+(?:marca|mostra|t[aá])\s+(?:no|na|nesse|nessa|a[ií]))\b/i, intent: "vision_describe", confidence: 0.94 },
-  // "Tá limpo/sujo/organizado/bagunçado"
-  { pattern: /\b(?:(?:t[aá]|est[aá])\s+(?:limp[oa]|suj[oa]|organizad[oa]|bagun[çc]ad[oa]|arrum[ao]d[oa]|bonit[oa]|fei[oa]))\b/i, intent: "vision_describe", confidence: 0.93 },
-  // "Identifica/reconhece/detecta" — generic detection
-  { pattern: /\b(?:identific|reconhec|detect|analis[ae]r?\s+(?:iss[oa]|est[ea]|imagem|foto|v[ií]deo|cena|ambiente))\b/i, intent: "vision_describe", confidence: 0.95 },
-  // "Foto/imagem/câmera" context questions
-  { pattern: /\b(?:(?:na|nessa|nesta)\s+(?:foto|imagem|tela|c[aâ]mera|webcam)|(?:voc[eê]|vc)\s+(?:v[eê]|est[aá]\s+vendo)\s+(?:a\s+)?(?:minha|alguma))\b/i, intent: "vision_describe", confidence: 0.95 },
-  // "Isso/aquilo é perigoso/seguro/comestível/venenoso"
-  { pattern: /\b(?:(?:iss[oa]|aquel[ea]|est[ea])\s+[eé]\s+(?:perigoso|seguro|comest[ií]vel|venenoso|t[oó]xico|bonit[oa]|car[oa]|barat[oa]|original|falso|verdadeir[oa]))\b/i, intent: "vision_describe", confidence: 0.94 },
-  // "Que marca/modelo/tipo é" — product identification
-  { pattern: /\b(?:(?:que|qual)\s+(?:marca|modelo|tipo|esp[eé]cie|ra[çc]a)\s+(?:[eé]\s+)?(?:iss[oa]|ess[ea]|aquel[ea]|d[oe]))\b/i, intent: "vision_describe", confidence: 0.95 },
-  // "Tem texto/número/QR/código" — OCR detection
-  { pattern: /\b(?:(?:tem|existe|aparece|mostra)\s+(?:algum\s+)?(?:texto|n[uú]mero|c[oó]digo|qr\s*code|barcode|placa|etiqueta|r[oó]tulo))\b/i, intent: "vision_describe", confidence: 0.96 },
-  // "Tira/bate/capture uma foto" — photo capture
-  { pattern: /\b(?:(?:tir[ae]|bat[ae]|captur[ae]|registr[ae])\s+(?:uma?\s+)?(?:foto|imagem|screenshot|print|captura))\b/i, intent: "vision_describe", confidence: 0.95 },
-  // "Me vê/vejo/enxerga" — self-referencing vision
-  { pattern: /\b(?:(?:voc[eê]|vc|tu)\s+(?:me\s+)?(?:v[eê]|enxerga|est[aá]\s+(?:me\s+)?vendo))\b/i, intent: "vision_describe", confidence: 0.96 },
+  // Vision
+  { pattern: /\b(?:(descreva|o\s+que)\s+(?:voc[eê]\s+)?(?:v[eê]|enxerga|est[aá]\s+(?:me\s+)?vendo))\b/i, intent: "vision_describe", confidence: 0.96 },
   // "Quem sou eu / quem é essa pessoa"
   { pattern: /\b(?:quem\s+(?:sou\s+eu|[eé]\s+(?:essa?|aquele?|ele|ela|est[ea])|somos|s[aã]o\s+(?:eles|elas))|reconhe[cç])\b/i, intent: "identity", confidence: 0.92 },
 
@@ -193,7 +71,7 @@ const REGEX_RULES: RegexRule[] = [
   }},
   
   // Media — generic (music/video keywords without platform)
-  { pattern: /\b(tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica\s+d[oae]\s+|v[ií]deo\s+d[oae]\s+|ouvir?\s+|escutar?\s+)/i, intent: "media", confidence: 0.88, extractParams: (t) => {
+  { pattern: /\b(tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica\s+d[oae]\s+|v[ií]deo\s+d[oae]\s+|ouvir?\s+|escutar?\s+)/i, intent: "media", confidence: 0.75, extractParams: (t) => {
     const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+)/i);
     return { query: m?.[1]?.trim() || t, action: /\b(par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
   }},
@@ -228,7 +106,7 @@ const REGEX_RULES: RegexRule[] = [
   }},
   
   // Legal
-  { pattern: /\b(lei\b|artigo\s+\d|c[oó]digo\s+civil|jurisprud[eê]ncia|peti[çc][aã]o|habeas|direito\s+\w)/i, intent: "legal", confidence: 0.88 },
+  { pattern: /\b(lei\b|artigo\s+\d|c[oó]digo\s+civil|jurisprud[eê]ncia|peti[çc][aã]o|habeas|direito\s+\w)/i, intent: "legal", confidence: 0.75 },
   
   // Calendar
   { pattern: /\b(agendar|marcar\s+(?:uma|reuni)|compromisso|desmarcar)\b/i, intent: "calendar", confidence: 0.90 },
@@ -240,7 +118,7 @@ const REGEX_RULES: RegexRule[] = [
   { pattern: /\b(gere?\s+(uma?\s+)?imagem|crie?\s+(uma?\s+)?imagem|desenh[ae]|ilustr[ae])\b/i, intent: "image_generation", confidence: 0.95 },
   
   // Auto-construct
-  { pattern: /\b(constru[ai]|programe?|crie?\s+(uma?\s+)?fun[çc][ãa]o|implemente?|desenvolv[ae])\b/i, intent: "auto_construct", confidence: 0.88 },
+  { pattern: /\b(constru[ai]|programe?|crie?\s+(uma?\s+)?fun[çc][ãa]o|implemente?|desenvolv[ae])\b/i, intent: "auto_construct", confidence: 0.75 },
   
   // Self-evolve
   { pattern: /\b(melhore-se|evolua|auto[-\s]?program|se\s+reprogram|upgrade)\b/i, intent: "self_evolve", confidence: 0.90 },
@@ -255,7 +133,7 @@ const REGEX_RULES: RegexRule[] = [
   { pattern: /\b(expliqu|o\s+que\s+[eé]\s+\w|como\s+funciona|me\s+ensin|defin[ie]|significa)\b/i, intent: "explanation", confidence: 0.85 },
   
   // Security
-  { pattern: /\b(seguran[çc]a|amea[çc]a|shield)\b/i, intent: "security", confidence: 0.88 },
+  { pattern: /\b(seguran[çc]a|amea[çc]a|shield)\b/i, intent: "security", confidence: 0.75 },
   
   // Web search (real-time data)
   { pattern: /\b(hoje|atual|notícia|preço\s+d[eoa]|cotação|2024|2025|2026|clima|previsão)\b/i, intent: "web_search", confidence: 0.82 },
