@@ -251,18 +251,30 @@ Deno.serve(async (req) => {
     }
 
     // ═══ YouTube Services ═══
+    // category: "music" (default) | "video" | "podcast" — drives videoCategoryId/duration/type
     if (action === "youtube_search") {
-      const { query, maxResults } = params;
+      const { query, maxResults, category } = params as { query?: string; maxResults?: number; category?: "music" | "video" | "podcast" };
       const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
+      const cat: "music" | "video" | "podcast" = category === "video" || category === "podcast" ? category : "music";
+      const cap = Math.min(Math.max(Number(maxResults) || 5, 1), 10);
 
-      let videos: Array<{ videoId: string; title: string; channelName: string; thumbnail: string | null; publishedAt: string | null }> = [];
+      let videos: Array<{ videoId: string; title: string; channelName: string; thumbnail: string | null; publishedAt: string | null; category: string }> = [];
 
       if (youtubeApiKey) {
         const searchUrl = new URL(`${GOOGLE_API_BASE}/youtube/v3/search`);
         searchUrl.searchParams.set("part", "snippet");
         searchUrl.searchParams.set("type", "video");
-        searchUrl.searchParams.set("q", String(query || ""));
-        searchUrl.searchParams.set("maxResults", String(Math.min(Math.max(Number(maxResults) || 1, 1), 10)));
+        // Music = category 10. Filme = duração longa. Podcast = busca textual reforçada.
+        if (cat === "music") {
+          searchUrl.searchParams.set("videoCategoryId", "10");
+          searchUrl.searchParams.set("q", String(query || ""));
+        } else if (cat === "video") {
+          searchUrl.searchParams.set("videoDuration", "long");
+          searchUrl.searchParams.set("q", String(query || ""));
+        } else {
+          searchUrl.searchParams.set("q", `${String(query || "")} podcast`);
+        }
+        searchUrl.searchParams.set("maxResults", String(cap));
         searchUrl.searchParams.set("videoEmbeddable", "true");
         searchUrl.searchParams.set("videoSyndicated", "true");
         searchUrl.searchParams.set("safeSearch", "none");
@@ -279,6 +291,7 @@ Deno.serve(async (req) => {
                   channelName: item?.snippet?.channelTitle ?? "",
                   thumbnail: item?.snippet?.thumbnails?.medium?.url ?? item?.snippet?.thumbnails?.default?.url ?? null,
                   publishedAt: item?.snippet?.publishedAt ?? null,
+                  category: cat,
                 }))
                 .filter((item: { videoId?: string }) => typeof item.videoId === "string" && /^[\w-]{11}$/.test(item.videoId))
             : [];
@@ -290,7 +303,8 @@ Deno.serve(async (req) => {
 
       if (videos.length === 0) {
         const htmlSearchUrl = new URL("https://www.youtube.com/results");
-        htmlSearchUrl.searchParams.set("search_query", String(query || ""));
+        const augmented = cat === "music" ? `${query} music` : cat === "podcast" ? `${query} podcast` : `${query}`;
+        htmlSearchUrl.searchParams.set("search_query", String(augmented || ""));
 
         const response = await fetch(htmlSearchUrl.toString(), {
           headers: {
@@ -306,7 +320,9 @@ Deno.serve(async (req) => {
         }
 
         const html = await response.text();
-        videos = extractYouTubeVideosFromHtml(html).slice(0, Math.min(Math.max(Number(maxResults) || 1, 1), 10));
+        videos = extractYouTubeVideosFromHtml(html)
+          .slice(0, cap)
+          .map((v: any) => ({ ...v, category: cat }));
       }
 
       if (videos.length === 0) {
@@ -317,6 +333,7 @@ Deno.serve(async (req) => {
         success: true,
         videos,
         totalResults: videos.length,
+        category: cat,
         status: "found",
       });
     }
