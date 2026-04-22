@@ -330,11 +330,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       });
       await video.play().catch(() => {});
       setActive(true); VS.active = true;
-      // DO NOT preload models here - they are broken and cause 404 errors
-      // Models will be loaded on-demand only when actually needed
-      toast.success("Visão ativada");
-      // Don't announce "Núcleo ativado" - old buggy behavior
-      // if (shouldAnnounce) speak("Visão ativada.").catch(() => {});
+      // Models loaded on-demand. Toast removed — TTS is the only feedback,
+      // controlled centrally by the vision command lock to avoid double-speak.
     } catch (err: any) {
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
@@ -382,14 +379,15 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     console.log("[NeuralVision] 🔀 routeOrionCommand:", cmd, { supernetConnected, identityStatus });
     const isActivateVision = /\b(ativar?|ligar?|abrir?|liga|abre|inicia[r]?|começar?|come[çc]a)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     const isDeactivateVision = /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
-    if (isActivateVision) {
-      if (!active) { speakFast("Visão ativada.").catch(() => {}); startCamera({ announce: false }).catch(() => {}); }
-      else { speakFast("Visão já está ativa.").catch(() => {}); }
-      return;
-    }
-    if (isDeactivateVision) {
-      if (active) { speakFast("Desativando visão.").catch(() => {}); stopCamera(); }
-      else { speakFast("Visão já está desativada.").catch(() => {}); }
+    if (isActivateVision || isDeactivateVision) {
+      // Funnel through the central event so the lock in NeuralVision's
+      // listener owns the camera + TTS (single source of truth).
+      window.dispatchEvent(new CustomEvent("orion-vision-command", {
+        detail: {
+          action: isActivateVision ? "activate_vision" : "deactivate_vision",
+          userInitiated: true,
+        },
+      }));
       return;
     }
     if (q.includes("calar") || q.includes("silêncio")) { try { speechSynthesis?.cancel(); } catch {} return; }
@@ -638,8 +636,25 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   useEffect(() => {
     const VISION_KEYWORD_RE = /\b(vis[aã]o|c[aâ]mera|webcam|olhos?|enxerg|ver|veja|olha|olhe|mostr|filma|grava)/i;
+    // Central debounce lock — prevents double "Visão ativada" / TTS / camera toggles
+    // when multiple paths (regex local, voice-intent-dispatcher, useOrionReasoning)
+    // dispatch the same command within a short window.
+    const VISION_LOCK_KEY = "__orionVisionCommandLock__";
+    const VISION_LOCK_WINDOW_MS = 3000;
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
+      const action = detail?.action as string | undefined;
+      if (action !== "activate_vision" && action !== "deactivate_vision") return;
+
+      const w = window as unknown as Record<string, { action: string; ts: number } | undefined>;
+      const now = Date.now();
+      const lastLock = w[VISION_LOCK_KEY];
+      if (lastLock && lastLock.action === action && now - lastLock.ts < VISION_LOCK_WINDOW_MS) {
+        console.log("[NeuralVision] 🔒 Vision command suppressed by lock:", action);
+        return;
+      }
+      w[VISION_LOCK_KEY] = { action, ts: now };
+
       if (detail?.action === "activate_vision" && !active) {
         // Require explicit vision keyword OR explicit user-initiated flag
         const userInitiated = detail?.userInitiated === true;
@@ -648,7 +663,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           console.log("[NeuralVision] 🚫 Blocked auto-activation — no vision keyword in transcript:", lastTranscriptRef.current.slice(0, 60));
           return;
         }
-        // Speak only if event source didn't already speak (silent flag) AND not coming from routeOrionCommand
+        // Single source of truth for TTS — speak unless caller explicitly asked us not to
         if (!detail?.silent && userInitiated) {
           speakFast("Visão ativada.").catch(() => {});
         }
@@ -658,6 +673,14 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           speakFast("Desativando visão.").catch(() => {});
         }
         stopCamera();
+      } else if (detail?.action === "activate_vision" && active) {
+        if (!detail?.silent && detail?.userInitiated) {
+          speakFast("Visão já está ativa.").catch(() => {});
+        }
+      } else if (detail?.action === "deactivate_vision" && !active) {
+        if (!detail?.silent && detail?.userInitiated) {
+          speakFast("Visão já está desativada.").catch(() => {});
+        }
       }
     };
     window.addEventListener("orion-vision-command", handler);
