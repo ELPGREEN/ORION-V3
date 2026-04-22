@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink, Music, Loader2 } from "lucide-react";
+import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink, Music, Loader2, Play, Pause, SkipBack, SkipForward, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,9 +12,13 @@ import {
   type OrionMusicPlayerShowDetail,
   type OrionSpeakingDetail,
   type OrionVolumeCommandDetail,
+  type OrionMusicResolvedDetail,
 } from "@/lib/events/orion-events";
+import { postYouTubeIframeCommand } from "@/lib/youtube-player";
 
 const STORAGE_KEY = "orion-music-player-prefs";
+const FLOATING_MOUNT_KEY = "__orionFloatingMusicPlayerMounted__";
+const YT_ORIGIN = "https://www.youtube.com";
 
 interface PlayerPrefs {
   volume: number;
@@ -90,6 +94,23 @@ async function resolveYouTubeVideoId(query: string): Promise<string> {
 }
 
 export function FloatingMusicPlayer() {
+  // Singleton guard — only the first instance renders, prevents duplicates across routes
+  const [isPrimary, setIsPrimary] = useState(false);
+  useEffect(() => {
+    const w = window as unknown as Record<string, number>;
+    const current = w[FLOATING_MOUNT_KEY] || 0;
+    if (current === 0) {
+      w[FLOATING_MOUNT_KEY] = 1;
+      setIsPrimary(true);
+    } else {
+      w[FLOATING_MOUNT_KEY] = current + 1;
+    }
+    return () => {
+      const v = (w[FLOATING_MOUNT_KEY] || 1) - 1;
+      w[FLOATING_MOUNT_KEY] = Math.max(0, v);
+    };
+  }, []);
+
   const initial = loadPrefs();
   // Restore visibility + query from last session so reload / route change keeps the player open
   const [visible, setVisible] = useState(initial.visible && !!initial.lastQuery);
@@ -101,6 +122,8 @@ export function FloatingMusicPlayer() {
   const [showFallbackButton, setShowFallbackButton] = useState(false);
   const [fallbackLoading, setFallbackLoading] = useState(false);
   const [embedLoading, setEmbedLoading] = useState(false);
+  const [playing, setPlaying] = useState(true);
+  const [resolvedPlatform, setResolvedPlatform] = useState<string>("YouTube");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fallbackTimerRef = useRef<number | null>(null);
   const resolveRequestRef = useRef(0);
@@ -211,6 +234,40 @@ export function FloatingMusicPlayer() {
     return () => window.removeEventListener(OrionEvents.VolumeCommand, handler as EventListener);
   }, [volume]);
 
+  // ── YouTube IFrame state sync (postMessage) ──────────────────
+  // After iframe loads, we tell YouTube we're listening so it sends back state events.
+  useEffect(() => {
+    if (!videoId) return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== YT_ORIGIN) return;
+      try {
+        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        // YT state codes: -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued
+        if (data?.event === "onStateChange" || data?.event === "infoDelivery") {
+          const state = data?.info?.playerState ?? data?.info;
+          if (state === 1) setPlaying(true);
+          else if (state === 2 || state === 0) setPlaying(false);
+        }
+      } catch { /* ignore non-JSON messages */ }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [videoId]);
+
+  // Listen for resolver hints (shows "requested → resolved" platform in header)
+  useEffect(() => {
+    const handler = (e: CustomEvent<OrionMusicResolvedDetail>) => {
+      const detail = e.detail;
+      if (!detail) return;
+      const label = detail.fallback && detail.requested
+        ? `${detail.requested} → ${detail.resolved}`
+        : detail.resolved.charAt(0).toUpperCase() + detail.resolved.slice(1);
+      setResolvedPlatform(label);
+    };
+    window.addEventListener(OrionEvents.MusicResolved, handler as EventListener);
+    return () => window.removeEventListener(OrionEvents.MusicResolved, handler as EventListener);
+  }, []);
+
   const close = useCallback(() => {
     setVisible(false);
     setQuery("");
@@ -222,7 +279,34 @@ export function FloatingMusicPlayer() {
     const v = val[0];
     setVolume(v);
     setMuted(v === 0);
+    postYouTubeIframeCommand(iframeRef.current, "setVolume", [v]);
+    if (v > 0) postYouTubeIframeCommand(iframeRef.current, "unMute");
   }, []);
+
+  const togglePlay = useCallback(() => {
+    if (!videoId) return;
+    if (playing) {
+      postYouTubeIframeCommand(iframeRef.current, "pauseVideo");
+      setPlaying(false);
+    } else {
+      postYouTubeIframeCommand(iframeRef.current, "playVideo");
+      setPlaying(true);
+    }
+  }, [playing, videoId]);
+
+  const handleNext = useCallback(() => {
+    postYouTubeIframeCommand(iframeRef.current, "nextVideo");
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    postYouTubeIframeCommand(iframeRef.current, "previousVideo");
+  }, []);
+
+  // Sync mute state to iframe
+  useEffect(() => {
+    if (!videoId) return;
+    postYouTubeIframeCommand(iframeRef.current, muted ? "mute" : "unMute");
+  }, [muted, videoId]);
 
   const openFromFallback = useCallback(() => {
     if (fallbackLoading) return;
@@ -240,6 +324,9 @@ export function FloatingMusicPlayer() {
   const embedUrl = videoId
     ? buildYouTubeEmbedUrl(videoId, muted || volume === 0)
     : "";
+
+  // Singleton: extra instances render nothing (prevents duplicate players across routes)
+  if (!isPrimary) return null;
 
   // Fallback "Open Player" button when Orion announces playback but player didn't open
   if (showFallbackButton && !visible) {
@@ -286,12 +373,50 @@ export function FloatingMusicPlayer() {
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-red-500/10 to-primary/10 border-b border-border/30">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm">🎵</span>
+            <Youtube className="h-3.5 w-3.5 text-red-500 shrink-0" />
             <span className="text-xs font-medium truncate text-foreground/80">
               {query}
             </span>
+            <span
+              className="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0"
+              title="Plataforma resolvida"
+            >
+              {resolvedPlatform}
+            </span>
           </div>
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={handlePrev}
+              disabled={!videoId}
+              title="Anterior"
+            >
+              <SkipBack className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full transition-colors"
+              style={{ backgroundColor: playing ? "hsl(var(--primary) / 0.18)" : "transparent" }}
+              onClick={togglePlay}
+              disabled={!videoId}
+              title={playing ? "Pausar" : "Tocar"}
+              aria-pressed={playing}
+            >
+              {playing ? <Pause className="h-3 w-3 text-primary" /> : <Play className="h-3 w-3" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={handleNext}
+              disabled={!videoId}
+              title="Próxima"
+            >
+              <SkipForward className="h-3 w-3" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -349,6 +474,16 @@ export function FloatingMusicPlayer() {
                 onLoad={() => {
                   setEmbedLoading(false);
                   setFallbackLoading(false);
+                  setPlaying(true);
+                  // Tell YouTube IFrame API we're listening for state events
+                  try {
+                    iframeRef.current?.contentWindow?.postMessage(
+                      JSON.stringify({ event: "listening", id: 1, channel: "widget" }),
+                      YT_ORIGIN,
+                    );
+                    // Sync current volume on load
+                    postYouTubeIframeCommand(iframeRef.current, "setVolume", [muted ? 0 : volume]);
+                  } catch { /* ignore */ }
                 }}
                 className="absolute inset-0 w-full h-full"
                 allow="autoplay; encrypted-media"
