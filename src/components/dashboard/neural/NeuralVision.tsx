@@ -142,6 +142,10 @@ function categoryFromSource(name: string): string {
 }
 
 const _ORION_SESSION_KEY = "orion-session-ready";
+const VISION_POST_COMMAND_GUARD_MS = 4000;
+const VISION_TTS_ECHO_RE = /\b(vis[aã]o\s+(ativad[ao]|desativad[ao]|j[aá]\s+est[aá]\s+ativ[ao]|j[aá]\s+est[aá]\s+desativad[ao])|desativando\s+vis[aã]o)\b/i;
+const VISION_FOLLOW_UP_RE = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+)?(vendo|enxergando)|descrev|identific|analis|leia|ler|conte|mostr|mostre|tem\s+(na|no)|quem\s+[ée]|quantos?|qual\s+[ée]|onde\s+est[aá])\b/i;
+
 function _hasSessionReady(): boolean {
   try { return sessionStorage.getItem(_ORION_SESSION_KEY) === "1"; } catch { return false; }
 }
@@ -280,6 +284,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   const hasGreetedRef = useRef(_hasSessionReady());
   const lastHandledVoiceRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
+  const recentVisionCommandRef = useRef<{ ts: number; text: string }>({ ts: 0, text: "" });
 
   // ═══ Vision models preload deferred to camera activation ═══
   // preloadAllVision() is called inside startCamera() instead of mount
@@ -377,10 +382,16 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   // Uses voice-intent-dispatcher for real execution (media, navigation, etc.)
   const routeOrionCommand = useCallback(async (cmd: string) => {
     const q = cmd.toLowerCase().trim();
+    const withinVisionGuardWindow = Date.now() - recentVisionCommandRef.current.ts < VISION_POST_COMMAND_GUARD_MS;
     console.log("[NeuralVision] 🔀 routeOrionCommand:", cmd, { supernetConnected, identityStatus });
+    if (withinVisionGuardWindow && VISION_TTS_ECHO_RE.test(q)) {
+      console.log("[NeuralVision] 🧏 Suppressed vision TTS echo before routing:", cmd);
+      return;
+    }
     const isActivateVision = /\b(ativar?|ligar?|abrir?|liga|abre|inicia[r]?|começar?|come[çc]a)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     const isDeactivateVision = /\b(desativar?|desligar?|fechar?|parar?|pare|fecha|desliga)\s*(a\s+)?(vis[aã]o|c[aâ]mera|webcam|olhos?|neural)\b/i.test(q);
     if (isActivateVision || isDeactivateVision) {
+      recentVisionCommandRef.current = { ts: Date.now(), text: q };
       // Funnel through the central event so the lock in NeuralVision's
       // listener owns the camera + TTS (single source of truth).
       window.dispatchEvent(new CustomEvent("orion-vision-command", {
@@ -398,6 +409,15 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       const { classifyVoiceCommandSmart, dispatchVoiceIntent } = await import("@/lib/neural/voice-intent-dispatcher");
       const intent = await classifyVoiceCommandSmart(cmd);
       console.log("[routeOrion] Intent:", intent.intent, "confidence:", intent.confidence);
+
+      if (
+        withinVisionGuardWindow &&
+        !VISION_FOLLOW_UP_RE.test(q) &&
+        (intent.intent === "unknown" || intent.confidence < 0.55)
+      ) {
+        console.log("[NeuralVision] 🧏 Suppressed low-confidence transcript right after vision activation:", cmd, intent);
+        return;
+      }
 
       // Only dispatch if it's a concrete intent with decent confidence
       if (intent.intent !== "unknown" && intent.confidence > 0.4) {
@@ -417,6 +437,10 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }
 
     // Fallback to AI for complex/unknown commands
+    if (withinVisionGuardWindow && !VISION_FOLLOW_UP_RE.test(q)) {
+      console.log("[NeuralVision] 🧏 Suppressed AI fallback during vision post-activation guard:", cmd);
+      return;
+    }
     if (supernetConnected) sendSuperNetQuery(cmd);
     else askAI(cmd, "voice");
   }, [active, startCamera, stopCamera, speakFast, askAI, supernetConnected, sendSuperNetQuery, identityStatus]);
@@ -445,6 +469,14 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         return;
       }
       lastHandledVoiceRef.current = { text: normalizedCommand, ts: now };
+
+      if (
+        now - recentVisionCommandRef.current.ts < VISION_POST_COMMAND_GUARD_MS &&
+        VISION_TTS_ECHO_RE.test(normalizedCommand)
+      ) {
+        console.log("[NeuralVision] 🧏 Suppressed immediate vision echo from STT:", normalizedCommand);
+        return;
+      }
     }
 
     // ═══ AUTO VOICE IDENTITY CHECK on first voice interaction ═══
@@ -647,6 +679,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         console.log("[NeuralVision] 🔒 Vision command suppressed by lock:", action);
         return;
       }
+
+      recentVisionCommandRef.current = { ts: Date.now(), text: action };
 
       if (detail?.action === "activate_vision" && !active) {
         // Require explicit vision keyword OR explicit user-initiated flag
