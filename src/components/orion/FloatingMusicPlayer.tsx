@@ -167,6 +167,7 @@ export function FloatingMusicPlayer() {
         return;
       }
       const requestId = ++resolveRequestRef.current;
+      setCategory(cat);
       setQuery(trimmed);
       setVideoId("");
       setVisible(true);
@@ -226,7 +227,8 @@ export function FloatingMusicPlayer() {
 
     const showHandler = (e: CustomEvent<OrionMusicPlayerShowDetail>) => {
       const q = e.detail?.query || query || loadPrefs().lastQuery || "";
-      if (q) showPlayer(q);
+      const cat = inferCategoryFromCommand(q);
+      if (q) showPlayer(q, cat);
     };
 
     const widgetHandler = (e: CustomEvent<OrionMusicWidgetCommandDetail>) => {
@@ -234,7 +236,10 @@ export function FloatingMusicPlayer() {
       if (action === "minimize") setMinimized(true);
       else if (action === "maximize") setMinimized(false);
       else if (action === "toggle") setMinimized((prev) => !prev);
-      setVisible(true);
+      setVisible((prev) => {
+        if (!prev && !query) return false;
+        return true;
+      });
     };
 
     const speakingHandler = (e: CustomEvent<OrionSpeakingDetail>) => {
@@ -261,7 +266,7 @@ export function FloatingMusicPlayer() {
       window.removeEventListener(OrionEvents.Speaking, speakingHandler as EventListener);
       if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
     };
-  }, [query]);
+  }, [category, query]);
 
   // Listen for volume commands
   useEffect(() => {

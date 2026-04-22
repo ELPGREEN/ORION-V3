@@ -14,7 +14,7 @@ function normalizeCommand(text: string): string {
 
 function extractSearchQuery(command: string): string {
   return command
-    .replace(/^(?:youtube\s+)?(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|ouvir|assistir|ver)\s+/i, "")
+    .replace(/^(?:youtube\s+)?(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|ouvir|assistir|ver|play)\s+/i, "")
     .replace(/^(?:uma?\s+)?(?:musica|video|som|playlist|podcast|filme)\s+/i, "")
     .trim();
 }

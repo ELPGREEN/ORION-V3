@@ -278,6 +278,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const directVoiceStartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hasGreetedRef = useRef(_hasSessionReady());
+  const lastHandledVoiceRef = useRef<{ text: string; ts: number }>({ text: "", ts: 0 });
 
   // ═══ Vision models preload deferred to camera activation ═══
   // preloadAllVision() is called inside startCamera() instead of mount
@@ -426,6 +427,26 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     const original = cmd.trim();
     const q = original.toLowerCase();
     console.log("[NeuralVision] 🎤 handleVoice called:", cmd);
+
+    const now = Date.now();
+    if (original) {
+      const normalizedCommand = original
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (
+        normalizedCommand &&
+        normalizedCommand === lastHandledVoiceRef.current.text &&
+        now - lastHandledVoiceRef.current.ts < 2500
+      ) {
+        console.log("[NeuralVision] 🔁 Duplicate voice command suppressed:", normalizedCommand);
+        return;
+      }
+      lastHandledVoiceRef.current = { text: normalizedCommand, ts: now };
+    }
 
     // ═══ AUTO VOICE IDENTITY CHECK on first voice interaction ═══
     if (!voiceCheckDoneRef.current && identityStatus === "unknown") {

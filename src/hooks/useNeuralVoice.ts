@@ -461,8 +461,10 @@ export function useNeuralVoice(
     // Re-claim mic (wake word may have claimed it during TTS)
     singletonIdRef.current = claimMic("command");
 
-    // Flush any pending speech buffer
-    if (speechBufferRef.current.trim() && onCmdRef.current) {
+      // Flush any pending browser-STT buffer only when GCP STT is NOT the active path.
+      // When GCP is active, its own merged final callback already delivers the command,
+      // and flushing here can replay the same utterance right after Orion speaks.
+      if (speechBufferRef.current.trim() && onCmdRef.current && !gcpSessionRef.current?.isActive()) {
       const shouldSuppressPendingFlush = Date.now() < suppressPendingFlushUntilRef.current;
       const pending = speechBufferRef.current.trim();
       speechBufferRef.current = "";
@@ -1011,6 +1013,14 @@ export function useNeuralVoice(
 
               if (confidence > 0 && confidence < 0.18 && wordCount <= 2 && !hasShortAction) {
                 console.log(`[Voice] GCP STT descartado (silent): "${cleanedText}" (${(confidence * 100).toFixed(0)}%)`);
+                return;
+              }
+
+              const duplicatedFinal =
+                normalized === lastProcessedTranscriptRef.current &&
+                Date.now() - lastProcessedAtRef.current < 2500;
+              if (duplicatedFinal) {
+                console.log(`[Voice] GCP duplicate final suppressed: "${cleanedText}"`);
                 return;
               }
 
