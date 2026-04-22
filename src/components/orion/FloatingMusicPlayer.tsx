@@ -13,6 +13,7 @@ import {
   type OrionSpeakingDetail,
   type OrionVolumeCommandDetail,
   type OrionMusicResolvedDetail,
+  type OrionMusicWidgetCommandDetail,
 } from "@/lib/events/orion-events";
 import { postYouTubeIframeCommand } from "@/lib/youtube-player";
 
@@ -149,9 +150,10 @@ export function FloatingMusicPlayer() {
       setQuery(trimmed);
       setVideoId("");
       setVisible(true);
+      setMinimized(false);
       setEmbedLoading(true);
-      // restore minimized preference but ensure header is visible
-      savePrefs({ lastQuery: trimmed });
+      setResolvedPlatform("YouTube");
+      savePrefs({ lastQuery: trimmed, visible: true, minimized: false });
       setShowFallbackButton(false);
       if (fallbackTimerRef.current) {
         window.clearTimeout(fallbackTimerRef.current);
@@ -162,7 +164,8 @@ export function FloatingMusicPlayer() {
         const resolvedVideoId = await resolveYouTubeVideoId(trimmed);
         if (requestId !== resolveRequestRef.current) return;
         setVideoId(resolvedVideoId);
-        savePrefs({ lastQuery: trimmed, lastVideoId: resolvedVideoId, visible: true });
+        setPlaying(true);
+        savePrefs({ lastQuery: trimmed, lastVideoId: resolvedVideoId, visible: true, minimized: false });
       } catch (error) {
         if (requestId !== resolveRequestRef.current) return;
         console.error("[FloatingMusicPlayer] failed to resolve YouTube video:", error);
@@ -179,18 +182,36 @@ export function FloatingMusicPlayer() {
       const { action, query: q } = e.detail;
       if (action === "search_and_play" && q) {
         showPlayer(q);
-      } else if (action === "stop" || action === "pause") {
-        setVisible(false);
+      } else if (action === "pause") {
+        postYouTubeIframeCommand(iframeRef.current, "pauseVideo");
+        setPlaying(false);
+      } else if (action === "play" || action === "resume") {
+        setVisible(true);
+        postYouTubeIframeCommand(iframeRef.current, "playVideo");
+        setPlaying(true);
+      } else if (action === "next") {
+        postYouTubeIframeCommand(iframeRef.current, "nextVideo");
+      } else if (action === "prev" || action === "previous") {
+        postYouTubeIframeCommand(iframeRef.current, "previousVideo");
+      } else if (action === "stop") {
+        postYouTubeIframeCommand(iframeRef.current, "pauseVideo");
+        setPlaying(false);
       }
     };
 
-    // Explicit "show" event — triggered by fallback button or external code
     const showHandler = (e: CustomEvent<OrionMusicPlayerShowDetail>) => {
       const q = e.detail?.query || query || loadPrefs().lastQuery || "";
       if (q) showPlayer(q);
     };
 
-    // Speech-driven fallback: when Orion says "tocando", show button if player not visible after 1.2s
+    const widgetHandler = (e: CustomEvent<OrionMusicWidgetCommandDetail>) => {
+      const action = e.detail?.action;
+      if (action === "minimize") setMinimized(true);
+      else if (action === "maximize") setMinimized(false);
+      else if (action === "toggle") setMinimized((prev) => !prev);
+      setVisible(true);
+    };
+
     const speakingHandler = (e: CustomEvent<OrionSpeakingDetail>) => {
       const text = (e.detail?.text || "").toLowerCase();
       if (/\btocando\b|\breproduzindo\b|\bcolocando\s+(?:a\s+)?m[uú]sica\b/.test(text)) {
@@ -206,10 +227,12 @@ export function FloatingMusicPlayer() {
 
     window.addEventListener(OrionEvents.MusicCommand, handler as EventListener);
     window.addEventListener(OrionEvents.MusicPlayerShow, showHandler as EventListener);
+    window.addEventListener(OrionEvents.MusicWidgetCommand, widgetHandler as EventListener);
     window.addEventListener(OrionEvents.Speaking, speakingHandler as EventListener);
     return () => {
       window.removeEventListener(OrionEvents.MusicCommand, handler as EventListener);
       window.removeEventListener(OrionEvents.MusicPlayerShow, showHandler as EventListener);
+      window.removeEventListener(OrionEvents.MusicWidgetCommand, widgetHandler as EventListener);
       window.removeEventListener(OrionEvents.Speaking, speakingHandler as EventListener);
       if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
     };
@@ -306,7 +329,10 @@ export function FloatingMusicPlayer() {
   useEffect(() => {
     if (!videoId) return;
     postYouTubeIframeCommand(iframeRef.current, muted ? "mute" : "unMute");
-  }, [muted, videoId]);
+    if (!muted && volume > 0) {
+      postYouTubeIframeCommand(iframeRef.current, "setVolume", [volume]);
+    }
+  }, [muted, videoId, volume]);
 
   const openFromFallback = useCallback(() => {
     if (fallbackLoading) return;
