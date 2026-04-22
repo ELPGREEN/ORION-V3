@@ -266,30 +266,22 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         return ok(intent.intent, "Visão ativada.", null, t0);
       }
 
-      case "legal":
-      case "financial":
-      case "crm":
-      case "reporting":
-      case "analysis":
-      case "explanation":
-      case "philosophy":
-      case "humor":
-      case "security":
-      case "identity":
       case "self_evolve":
       case "auto_construct":
-      case "vision_describe":
-      case "vision_object":
       case "orion_evolution": {
-        // Import and execute Orion evolution engine
+        // Only TRUE evolution commands trigger the engine.
+        // Other intents (legal, financial, humor, philosophy, identity, crm, analysis,
+        // explanation, vision_describe, vision_object, security) must go through the
+        // normal LLM pipeline — otherwise Orion keeps repeating "Evolução executada:
+        // analise o código de @src/App.tsx e sugira melhorias…".
         const { getOrionEvolution } = await import("@/lib/orion-evolution/engine");
         const engine = getOrionEvolution();
-        
+
         const command = params.command || "auto-evoluir";
         const args = params.args;
-        
+
         const result = await engine.executeCommand(command, args);
-        
+
         if (result.success) {
           return ok(intent.intent, `✅ Evolução executada: ${result.output}`, { ...params, files: result.filesCreated || result.filesModified }, t0);
         } else {
