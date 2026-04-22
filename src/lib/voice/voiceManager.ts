@@ -512,6 +512,37 @@ export class VoiceManager {
   getState(): VoiceManagerState {
     return { ...this.state };
   }
+
+  /**
+   * Enable/disable the floating voice performance/feedback panel at runtime.
+   * When disabled, the global widget is removed from the DOM. When enabled,
+   * it will be re-created on the next state update.
+   */
+  setVisualFeedbackEnabled(enabled: boolean): void {
+    this.options.enableVisualFeedback = enabled;
+    if (enabled) {
+      voiceFeedbackIndicator.init(this.options.feedbackContainerId);
+      // Push current state immediately so the panel reflects reality
+      voiceFeedbackIndicator.updateState({
+        isListening: this.state.isListening,
+        isProcessing: this.state.isProcessing,
+        isSpeaking: this.state.isSpeaking,
+        confidence: this.state.confidence,
+        volumeLevel: this.state.volumeLevel,
+        error: this.state.error,
+        transcript: this.state.transcript,
+      });
+    } else {
+      voiceFeedbackIndicator.destroy();
+    }
+  }
+
+  /**
+   * Whether the visual feedback panel is currently enabled.
+   */
+  isVisualFeedbackEnabled(): boolean {
+    return Boolean(this.options.enableVisualFeedback);
+  }
   
   /**
    * Get latency optimization suggestions
