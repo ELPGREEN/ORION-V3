@@ -14,7 +14,7 @@ import { MobileSidebarOverlay } from "./MobileSidebarOverlay";
 import { DashboardBackground } from "./DashboardBackground";
 import { MouseTrailEffect } from "./MouseTrailEffect";
 import { GlobalOrionListener } from "./GlobalOrionListener";
-import { FloatingMusicPlayer } from "@/components/orion/FloatingMusicPlayer";
+// FloatingMusicPlayer is mounted globally in App.tsx — no per-route mount needed
 
 import { ProdutorSidebar } from "./ProdutorSidebar";
 import { AfiliadoSidebar } from "./AfiliadoSidebar";
