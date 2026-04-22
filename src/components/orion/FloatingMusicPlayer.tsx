@@ -19,8 +19,17 @@ interface PlayerPrefs {
   volume: number;
   muted: boolean;
   minimized: boolean;
+  /** Whether the player was open last session — restored on reload/route change */
+  visible: boolean;
   lastQuery?: string;
 }
+
+const DEFAULT_PREFS: PlayerPrefs = {
+  volume: 70,
+  muted: false,
+  minimized: false,
+  visible: false,
+};
 
 function loadPrefs(): PlayerPrefs {
   try {
@@ -28,14 +37,15 @@ function loadPrefs(): PlayerPrefs {
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
-        volume: typeof parsed.volume === "number" ? parsed.volume : 70,
+        volume: typeof parsed.volume === "number" ? parsed.volume : DEFAULT_PREFS.volume,
         muted: !!parsed.muted,
         minimized: !!parsed.minimized,
-        lastQuery: parsed.lastQuery,
+        visible: !!parsed.visible,
+        lastQuery: typeof parsed.lastQuery === "string" ? parsed.lastQuery : undefined,
       };
     }
   } catch {}
-  return { volume: 70, muted: false, minimized: false };
+  return { ...DEFAULT_PREFS };
 }
 
 function savePrefs(prefs: Partial<PlayerPrefs>) {
@@ -47,8 +57,9 @@ function savePrefs(prefs: Partial<PlayerPrefs>) {
 
 export function FloatingMusicPlayer() {
   const initial = loadPrefs();
-  const [visible, setVisible] = useState(false);
-  const [query, setQuery] = useState("");
+  // Restore visibility + query from last session so reload / route change keeps the player open
+  const [visible, setVisible] = useState(initial.visible && !!initial.lastQuery);
+  const [query, setQuery] = useState(initial.visible && initial.lastQuery ? initial.lastQuery : "");
   const [muted, setMuted] = useState(initial.muted);
   const [volume, setVolume] = useState(initial.volume);
   const [minimized, setMinimized] = useState(initial.minimized);
@@ -56,10 +67,12 @@ export function FloatingMusicPlayer() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fallbackTimerRef = useRef<number | null>(null);
 
-  // Persist preferences
+  // Persist all UI prefs that should survive reload + route change
   useEffect(() => { savePrefs({ volume }); }, [volume]);
   useEffect(() => { savePrefs({ muted }); }, [muted]);
   useEffect(() => { savePrefs({ minimized }); }, [minimized]);
+  useEffect(() => { savePrefs({ visible }); }, [visible]);
+  useEffect(() => { if (query) savePrefs({ lastQuery: query }); }, [query]);
 
   // Listen for music commands from Orion (single source of truth)
   useEffect(() => {
