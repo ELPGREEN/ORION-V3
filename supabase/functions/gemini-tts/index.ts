@@ -397,6 +397,11 @@ async function requestCloudTTS(
             ? "plain-text-fallback"
             : useSSML ? "ssml-passthrough" : "ssml-auto";
           console.log(`[Cloud TTS] ✅ ${CLOUD_TTS_MODEL} ${(audioBytes.length / 1024).toFixed(1)}KB MP3 (input=${inputLabel})`);
+          const escapeCountsHeader = Object.entries(escapeReport.counts)
+            .map(([ch, n]) => `${ch}:${n}`)
+            .join(",");
+          const breakTimingsHeader =
+            `sentence=${resolvedBreaks.sentenceMs},clause=${resolvedBreaks.clauseMs},paragraph=${resolvedBreaks.paragraphMs},lineBreak=${resolvedBreaks.lineBreakMs}`;
           return new Response(audioBytes.buffer, {
             headers: {
               ...corsHeaders,
@@ -406,6 +411,9 @@ async function requestCloudTTS(
               "X-TTS-Model": CLOUD_TTS_MODEL,
               "X-TTS-Input": inputLabel,
               "X-TTS-Fallback": inputMode === "text" ? "plain-text" : "none",
+              "X-TTS-Escaped-Total": String(escapeReport.total),
+              "X-TTS-Escaped-Chars": escapeCountsHeader,
+              "X-TTS-Break-Timings": breakTimingsHeader,
             },
           });
         }
