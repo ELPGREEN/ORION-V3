@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { callEvolution } from "@/lib/neural/ai-service";
 import { useAuth } from "@/contexts/AuthContext";
 import { getConsciousnessDiagnostics, type ExperientialEvent } from "@/lib/neural/rag-consciousness";
 
@@ -49,8 +50,6 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
         .select("*")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
-
-      if (error) throw error;
       setProposals(data || []);
     } catch (err: any) {
       console.error("Erro ao carregar propostas:", err);
@@ -62,10 +61,7 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
   const handleApprove = async (proposalId: string) => {
     setActionLoading(proposalId);
     try {
-      const { data, error } = await supabase.functions.invoke("neural-evolution", {
-        body: { action: "approve_proposal", proposalId, userId: user?.id },
-      });
-      if (error) throw error;
+      const data = await callEvolution("approve_proposal", { proposalId, userId: user?.id });
 
       toast({ title: "Evolução Aplicada ✅", description: "O sistema foi atualizado com sucesso." });
       refreshData();
@@ -79,10 +75,7 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
   const handleReject = async (proposalId: string) => {
     setActionLoading(proposalId);
     try {
-      const { error } = await supabase.functions.invoke("neural-evolution", {
-        body: { action: "reject_proposal", proposalId },
-      });
-      if (error) throw error;
+      await callEvolution("reject_proposal", { proposalId });
       toast({ title: "Proposta Rejeitada" });
       refreshData();
     } catch (err: any) {

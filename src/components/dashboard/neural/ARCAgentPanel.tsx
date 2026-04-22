@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { callARC } from "@/lib/neural/ai-service";
 import { Loader2, Play, Brain, GitPullRequest, RefreshCw, Trophy } from "lucide-react";
 
 interface Game { game_id: string; title: string | null; total_attempts: number; wins: number; best_score: number | null; }
@@ -31,11 +32,11 @@ export default function ARCAgentPanel() {
 
   useEffect(() => { refresh(); const i = setInterval(refresh, 15000); return () => clearInterval(i); }, []);
 
-  const call = async (fn: string, body: Record<string, unknown>, label: string) => {
+  const call = async (action: string, body: Record<string, unknown>, label: string) => {
     setBusy(label); setLog("");
     try {
-      const { data, error } = await supabase.functions.invoke(fn, { body });
-      if (error) throw error;
+      // All ARC actions now routed through ai-orchestrator via callARC helper
+      const data = await callARC(action, body);
       setLog(JSON.stringify(data, null, 2).slice(0, 2000));
       await refresh();
     } catch (e) {
@@ -72,16 +73,16 @@ export default function ARCAgentPanel() {
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <Button size="sm" disabled={!!busy} onClick={() => call("arc-agent", { action: "list_games", version }, "list")}>
+        <Button size="sm" disabled={!!busy} onClick={() => call("list_games", { version }, "list")}>
           {busy === "list" ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />} Descobrir jogos
         </Button>
-        <Button size="sm" disabled={!!busy} onClick={() => call("arc-self-study", { max_games: 1, version }, "study")}>
+        <Button size="sm" disabled={!!busy} onClick={() => call("self_study", { max_games: 1, version }, "study")}>
           {busy === "study" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />} Estudar 1 jogo
         </Button>
-        <Button size="sm" disabled={!!busy} onClick={() => call("arc-self-study", { max_games: 3, version }, "study3")}>
+        <Button size="sm" disabled={!!busy} onClick={() => call("self_study", { max_games: 3, version }, "study3")}>
           {busy === "study3" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />} Maratona (3)
         </Button>
-        <Button size="sm" disabled={!!busy} onClick={() => call("arc-code-evolver", { mode: "propose" }, "propose")}>
+        <Button size="sm" disabled={!!busy} onClick={() => call("code_evolver", { mode: "propose" }, "propose")}>
           {busy === "propose" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Brain className="w-3 h-3" />} Propor melhoria
         </Button>
       </div>
@@ -136,7 +137,7 @@ export default function ARCAgentPanel() {
               <div className="flex gap-2 mt-2">
                 {p.status === "pending" && (
                   <Button size="sm" variant="outline" disabled={!!busy}
-                    onClick={() => call("arc-code-evolver", { mode: "submit_to_jules", proposal_id: p.id }, `jules-${p.id}`)}>
+                    onClick={() => call("code_evolver", { mode: "submit_to_jules", proposal_id: p.id }, `jules-${p.id}`)}>
                     <GitPullRequest className="w-3 h-3 mr-1" /> Enviar ao Jules
                   </Button>
                 )}
