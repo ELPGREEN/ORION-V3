@@ -186,7 +186,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     isConnected: true,
   };
 
-  const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef } = useNeuralVoice(false);
+  const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef } = useNeuralVoice(true);
   const bgTranscriptsGetterRef = useRef<() => import("./useWakeWord").BackgroundTranscript[]>(() => []);
 
   // ═══ Voice Identity Guard (must be before useOrionReasoning so identityStatus is available) ═══
