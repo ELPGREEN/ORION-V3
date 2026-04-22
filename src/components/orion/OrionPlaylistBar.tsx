@@ -478,6 +478,8 @@ export function OrionPlaylistBar() {
     window.addEventListener(OrionEvents.MusicResolved, handler as EventListener);
     return () => window.removeEventListener(OrionEvents.MusicResolved, handler as EventListener);
   }, []);
+
+  const formatMs = (ms: number) => {
     if (!ms) return "";
     const m = Math.floor(ms / 60000);
     const s = Math.floor((ms % 60000) / 1000);
