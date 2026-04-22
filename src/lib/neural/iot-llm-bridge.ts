@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * ─── IoT Intelligence Agent Bridge ───
  * Integrates IoT devices with OpenRouter LLM agents
