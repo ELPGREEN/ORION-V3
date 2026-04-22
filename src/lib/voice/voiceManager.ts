@@ -85,7 +85,7 @@ export class VoiceManager {
       minConfidenceThreshold: options.minConfidenceThreshold ?? 0.7,
       ttsVoice: options.ttsVoice ?? 'Enceladus',
       ttsLanguage: options.ttsLanguage ?? 'pt-BR',
-      enableVisualFeedback: options.enableVisualFeedback ?? true,
+      enableVisualFeedback: options.enableVisualFeedback ?? false,
       feedbackContainerId: options.feedbackContainerId ?? 'orion-voice-feedback',
       enableLatencyOptimization: options.enableLatencyOptimization ?? true,
       voiceLatencyConfig: options.voiceLatencyConfig ?? {},

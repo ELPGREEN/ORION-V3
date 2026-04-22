@@ -368,3 +368,19 @@ export class VoiceFeedbackIndicator {
 
 // Export singleton instance
 export const voiceFeedbackIndicator = new VoiceFeedbackIndicator();
+
+// Auto-cleanup: remove any leftover global voice feedback widget on load.
+// The widget should ONLY be visible when explicitly enabled (e.g. Orion chat page).
+if (typeof window !== 'undefined') {
+  const removeLeftover = () => {
+    const el = document.getElementById('orion-voice-feedback');
+    if (el) el.remove();
+    const styleEl = document.getElementById('orion-voice-feedback-styles');
+    if (styleEl) styleEl.remove();
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', removeLeftover, { once: true });
+  } else {
+    removeLeftover();
+  }
+}
