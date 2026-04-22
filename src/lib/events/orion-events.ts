@@ -27,6 +27,8 @@ export const OrionEvents = {
   Speaking: "orion-speaking",
   /** Orion → players: volume up/down/set/mute/unmute */
   VolumeCommand: "orion-volume-command",
+  /** Resolver → widget: a music platform was resolved (with possible fallback) */
+  MusicResolved: "orion-music-resolved",
 } as const;
 
 export type OrionEventName = (typeof OrionEvents)[keyof typeof OrionEvents];
