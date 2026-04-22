@@ -4,7 +4,7 @@ import { Menu, Search, Bell, MessageSquarePlus } from "lucide-react";
 import logoElp from "@/assets/logo-elp.webp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { OrionPlaylistBar } from "@/components/orion/OrionPlaylistBar";
+
 import { GoogleFeedbackModal } from "@/components/common/GoogleFeedbackModal";
 
 interface DashboardHeaderProps {
@@ -96,10 +96,7 @@ export function DashboardHeader({ onMobileMenuOpen, unreadCount, clearUnread }: 
         </div>
       </div>
 
-      {/* Playlist Orion — below header nav */}
-      <div className="border-t border-border/10">
-        <OrionPlaylistBar />
-      </div>
+      {/* Playlist Orion movido para o widget flutuante do GlobalOrionListener — fonte única */}
 
       <GoogleFeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </header>

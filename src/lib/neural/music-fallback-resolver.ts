@@ -61,21 +61,22 @@ export async function getMusicPlatformStatuses(): Promise<PlatformStatus[]> {
 
 /**
  * Resolve the best available music platform.
- * If preferredPlatform is specified and connected, use it.
- * Otherwise fallback through the priority chain.
+ * Default behavior: YouTube is ALWAYS the default unless the user
+ * explicitly requested Spotify or Amazon Music. This avoids surprising
+ * the user by opening Spotify just because it's connected.
  */
 export async function resolveMusicPlatform(preferredPlatform?: MusicPlatform): Promise<PlatformStatus> {
   const statuses = await getMusicPlatformStatuses();
 
-  // If user explicitly asked for a platform, try it first
-  if (preferredPlatform) {
+  // Explicit request: honor only if connected; otherwise still fall back to YouTube.
+  if (preferredPlatform && preferredPlatform !== "youtube") {
     const preferred = statuses.find(s => s.platform === preferredPlatform);
     if (preferred?.connected) return preferred;
   }
 
-  // Fallback chain: first connected platform wins
-  const available = statuses.find(s => s.connected);
-  return available || statuses[statuses.length - 1]; // YouTube is always last resort
+  // Default: YouTube (always available, no surprise opens of other apps).
+  const youtube = statuses.find(s => s.platform === "youtube");
+  return youtube || statuses[statuses.length - 1];
 }
 
 /**
