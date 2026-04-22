@@ -284,6 +284,16 @@ function isEchoOf(input: string, spoken: string): boolean {
   return overlap / Math.min(wordsA.size, wordsB.size) > ECHO_JACCARD_THRESHOLD;
 }
 
+// ═══ Legacy Exported Functions ═══
+
+export function feedUserSpeech(_text: string): void {
+  // Legacy function - kept for backward compatibility
+}
+
+export function feedAIResponse(_text: string): void {
+  // Legacy function - kept for backward compatibility
+}
+
 // ═══ Interface ═══
 
 export interface UseNeuralVoiceReturn {
