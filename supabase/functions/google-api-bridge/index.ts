@@ -21,6 +21,31 @@ function json(data: unknown, status = 200) {
   });
 }
 
+function extractYouTubeVideosFromHtml(html: string) {
+  const matches = [...html.matchAll(/"videoId":"([\w-]{11})".*?"title":\{"runs":\[\{"text":"([^"]+)/g)];
+  const unique = new Map<string, { videoId: string; title: string; channelName: string; thumbnail: null; publishedAt: null }>();
+
+  for (const match of matches) {
+    const videoId = match[1];
+    const title = match[2]
+      ?.replace(/\\u0026/g, "&")
+      ?.replace(/\\"/g, '"')
+      ?.trim();
+
+    if (videoId && !unique.has(videoId)) {
+      unique.set(videoId, {
+        videoId,
+        title: title || "YouTube video",
+        channelName: "YouTube",
+        thumbnail: null,
+        publishedAt: null,
+      });
+    }
+  }
+
+  return [...unique.values()];
+}
+
 // Google API configurations (would use actual Google Cloud credentials in production)
 const GOOGLE_API_BASE = "https://www.googleapis.com";
 
@@ -228,18 +253,70 @@ Deno.serve(async (req) => {
     // ═══ YouTube Services ═══
     if (action === "youtube_search") {
       const { query, maxResults } = params;
-      
+      const youtubeApiKey = Deno.env.get("YOUTUBE_API_KEY");
+
+      let videos: Array<{ videoId: string; title: string; channelName: string; thumbnail: string | null; publishedAt: string | null }> = [];
+
+      if (youtubeApiKey) {
+        const searchUrl = new URL(`${GOOGLE_API_BASE}/youtube/v3/search`);
+        searchUrl.searchParams.set("part", "snippet");
+        searchUrl.searchParams.set("type", "video");
+        searchUrl.searchParams.set("q", String(query || ""));
+        searchUrl.searchParams.set("maxResults", String(Math.min(Math.max(Number(maxResults) || 1, 1), 10)));
+        searchUrl.searchParams.set("videoEmbeddable", "true");
+        searchUrl.searchParams.set("videoSyndicated", "true");
+        searchUrl.searchParams.set("safeSearch", "none");
+        searchUrl.searchParams.set("key", youtubeApiKey);
+
+        const response = await fetch(searchUrl.toString());
+        if (response.ok) {
+          const payload = await response.json();
+          videos = Array.isArray(payload?.items)
+            ? payload.items
+                .map((item: any) => ({
+                  videoId: item?.id?.videoId,
+                  title: item?.snippet?.title ?? "",
+                  channelName: item?.snippet?.channelTitle ?? "",
+                  thumbnail: item?.snippet?.thumbnails?.medium?.url ?? item?.snippet?.thumbnails?.default?.url ?? null,
+                  publishedAt: item?.snippet?.publishedAt ?? null,
+                }))
+                .filter((item: { videoId?: string }) => typeof item.videoId === "string" && /^[\w-]{11}$/.test(item.videoId))
+            : [];
+        } else {
+          const errorText = await response.text();
+          console.warn("[GoogleAPI] YouTube Data API unavailable, falling back to HTML scraping:", errorText);
+        }
+      }
+
+      if (videos.length === 0) {
+        const htmlSearchUrl = new URL("https://www.youtube.com/results");
+        htmlSearchUrl.searchParams.set("search_query", String(query || ""));
+
+        const response = await fetch(htmlSearchUrl.toString(), {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+            "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("[GoogleAPI] YouTube HTML search failed:", errorText);
+          return json({ error: "YouTube search failed" }, response.status);
+        }
+
+        const html = await response.text();
+        videos = extractYouTubeVideosFromHtml(html).slice(0, Math.min(Math.max(Number(maxResults) || 1, 1), 10));
+      }
+
+      if (videos.length === 0) {
+        return json({ error: "No YouTube videos found" }, 404);
+      }
+
       return json({
         success: true,
-        videos: [
-          {
-            videoId: `vid_${Date.now()}`,
-            title: `${query} - Video 1`,
-            channelName: "Channel 1",
-            viewCount: 1000,
-          },
-        ],
-        totalResults: 1,
+        videos,
+        totalResults: videos.length,
         status: "found",
       });
     }

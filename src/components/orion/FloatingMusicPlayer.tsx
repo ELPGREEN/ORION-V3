@@ -3,6 +3,7 @@ import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink, Music
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import { isMobileDevice, openYouTube } from "@/lib/utils/deep-link";
 import {
   OrionEvents,
@@ -22,6 +23,7 @@ interface PlayerPrefs {
   /** Whether the player was open last session — restored on reload/route change */
   visible: boolean;
   lastQuery?: string;
+  lastVideoId?: string;
 }
 
 const DEFAULT_PREFS: PlayerPrefs = {
@@ -42,6 +44,7 @@ function loadPrefs(): PlayerPrefs {
         minimized: !!parsed.minimized,
         visible: !!parsed.visible,
         lastQuery: typeof parsed.lastQuery === "string" ? parsed.lastQuery : undefined,
+        lastVideoId: typeof parsed.lastVideoId === "string" ? parsed.lastVideoId : undefined,
       };
     }
   } catch {}
@@ -55,11 +58,43 @@ function savePrefs(prefs: Partial<PlayerPrefs>) {
   } catch {}
 }
 
+function buildYouTubeEmbedUrl(videoId: string, muted: boolean) {
+  const url = new URL(`https://www.youtube.com/embed/${videoId}`);
+  url.searchParams.set("autoplay", "1");
+  url.searchParams.set("enablejsapi", "1");
+  if (typeof window !== "undefined" && window.location.origin) {
+    url.searchParams.set("origin", window.location.origin);
+  }
+  if (muted) {
+    url.searchParams.set("mute", "1");
+  }
+  return url.toString();
+}
+
+async function resolveYouTubeVideoId(query: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke("google-api-bridge", {
+    body: {
+      action: "youtube_search",
+      params: { query, maxResults: 1 },
+    },
+  });
+
+  if (error) throw error;
+
+  const videoId = data?.videos?.[0]?.videoId;
+  if (typeof videoId !== "string" || !/^[\w-]{11}$/.test(videoId)) {
+    throw new Error("Nenhum vídeo do YouTube válido encontrado");
+  }
+
+  return videoId;
+}
+
 export function FloatingMusicPlayer() {
   const initial = loadPrefs();
   // Restore visibility + query from last session so reload / route change keeps the player open
   const [visible, setVisible] = useState(initial.visible && !!initial.lastQuery);
   const [query, setQuery] = useState(initial.visible && initial.lastQuery ? initial.lastQuery : "");
+  const [videoId, setVideoId] = useState(initial.lastVideoId ?? "");
   const [muted, setMuted] = useState(initial.muted);
   const [volume, setVolume] = useState(initial.volume);
   const [minimized, setMinimized] = useState(initial.minimized);
@@ -68,6 +103,7 @@ export function FloatingMusicPlayer() {
   const [embedLoading, setEmbedLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fallbackTimerRef = useRef<number | null>(null);
+  const resolveRequestRef = useRef(0);
 
   // Persist all UI prefs that should survive reload + route change
   useEffect(() => { savePrefs({ volume }); }, [volume]);
@@ -75,23 +111,44 @@ export function FloatingMusicPlayer() {
   useEffect(() => { savePrefs({ minimized }); }, [minimized]);
   useEffect(() => { savePrefs({ visible }); }, [visible]);
   useEffect(() => { if (query) savePrefs({ lastQuery: query }); }, [query]);
+  useEffect(() => { if (videoId) savePrefs({ lastVideoId: videoId }); }, [videoId]);
 
   // Listen for music commands from Orion (single source of truth)
   useEffect(() => {
-    const showPlayer = (q: string) => {
+    const showPlayer = async (q: string) => {
+      const trimmed = q.trim();
+      if (!trimmed) return;
       if (isMobileDevice()) {
-        openYouTube(q.trim(), true);
+        openYouTube(trimmed, true);
         return;
       }
-      setQuery(q.trim());
+      const requestId = ++resolveRequestRef.current;
+      setQuery(trimmed);
+      setVideoId("");
       setVisible(true);
       setEmbedLoading(true);
       // restore minimized preference but ensure header is visible
-      savePrefs({ lastQuery: q.trim() });
+      savePrefs({ lastQuery: trimmed });
       setShowFallbackButton(false);
       if (fallbackTimerRef.current) {
         window.clearTimeout(fallbackTimerRef.current);
         fallbackTimerRef.current = null;
+      }
+
+      try {
+        const resolvedVideoId = await resolveYouTubeVideoId(trimmed);
+        if (requestId !== resolveRequestRef.current) return;
+        setVideoId(resolvedVideoId);
+        savePrefs({ lastQuery: trimmed, lastVideoId: resolvedVideoId, visible: true });
+      } catch (error) {
+        if (requestId !== resolveRequestRef.current) return;
+        console.error("[FloatingMusicPlayer] failed to resolve YouTube video:", error);
+        setShowFallbackButton(true);
+      } finally {
+        if (requestId === resolveRequestRef.current) {
+          setEmbedLoading(false);
+          setFallbackLoading(false);
+        }
       }
     };
 
@@ -157,6 +214,7 @@ export function FloatingMusicPlayer() {
   const close = useCallback(() => {
     setVisible(false);
     setQuery("");
+    setVideoId("");
     setShowFallbackButton(false);
   }, []);
 
@@ -179,8 +237,8 @@ export function FloatingMusicPlayer() {
     window.setTimeout(() => setFallbackLoading(false), 3000);
   }, [query, fallbackLoading]);
 
-  const embedUrl = query
-    ? `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1${muted || volume === 0 ? "&mute=1" : ""}`
+  const embedUrl = videoId
+    ? buildYouTubeEmbedUrl(videoId, muted || volume === 0)
     : "";
 
   // Fallback "Open Player" button when Orion announces playback but player didn't open
@@ -238,7 +296,7 @@ export function FloatingMusicPlayer() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={() => openYouTube(query)}
+              onClick={() => openYouTube(videoId ? `https://www.youtube.com/watch?v=${videoId}` : query)}
               title="Abrir no YouTube"
             >
               <ExternalLink className="h-3 w-3 text-red-500" />
@@ -284,18 +342,24 @@ export function FloatingMusicPlayer() {
                 </div>
               </div>
             )}
-            <iframe
-              ref={iframeRef}
-              src={embedUrl}
-              onLoad={() => {
-                setEmbedLoading(false);
-                setFallbackLoading(false);
-              }}
-              className="absolute inset-0 w-full h-full"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              title="YouTube Music Player"
-            />
+            {videoId ? (
+              <iframe
+                ref={iframeRef}
+                src={embedUrl}
+                onLoad={() => {
+                  setEmbedLoading(false);
+                  setFallbackLoading(false);
+                }}
+                className="absolute inset-0 w-full h-full"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                title="YouTube Music Player"
+              />
+            ) : !embedLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/70 px-6 text-center text-xs text-muted-foreground">
+                Não consegui carregar um vídeo incorporável agora. Use o botão acima para abrir direto no YouTube.
+              </div>
+            ) : null}
           </div>
         )}
       </motion.div>
