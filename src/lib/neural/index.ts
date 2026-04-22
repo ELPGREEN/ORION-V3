@@ -241,7 +241,7 @@ export * from "./orion-ai-client";
 export * from "./orion-api-orchestrator";
 export * from "./orion-orchestrator-exec";
 export * from "./orion-agentic-loop";
-export * from "./orion-autonomous-media";
+// orion-autonomous-media removed — replaced by direct YouTube IFrame controller
 export * from "./orion-defense-system";
 export * from "./orion-network-registry";
 export * from "./orion-protocol-registry";

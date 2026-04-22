@@ -1,7 +1,7 @@
 /**
- * ─── Smart Deep Linking ───
- * Detects mobile vs desktop and opens native apps (Spotify, YouTube, Amazon Music)
- * on mobile devices, or web URLs on desktop browsers.
+ * ─── Smart Deep Linking — YouTube Only ───
+ * Spotify and Amazon Music helpers were removed. YouTube is the only
+ * supported media platform.
  */
 
 export function isMobileDevice(): boolean {
