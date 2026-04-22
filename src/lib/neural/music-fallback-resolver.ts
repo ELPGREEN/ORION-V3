@@ -102,9 +102,11 @@ export async function playMusicWithFallback(
       if (mobile) {
         openSpotify(query);
       } else {
-        window.dispatchEvent(new CustomEvent("orion-music-command", {
-          detail: { action: "search_and_play", query, fullCommand: query }
-        }));
+        dispatchOrionEvent(OrionEvents.MusicCommand, {
+          action: "search_and_play",
+          query,
+          fullCommand: query,
+        });
       }
       return {
         platform: "spotify",
@@ -142,9 +144,10 @@ export async function playMusicWithFallback(
         openYouTube(`${query} music`);
       } else {
         // Use orion-music-command for YouTube (OrionPlaylistBar handles it)
-        window.dispatchEvent(new CustomEvent("orion-music-command", {
-          detail: { action: "search_and_play", query: `${query} music` }
-        }));
+        dispatchOrionEvent(OrionEvents.MusicCommand, {
+          action: "search_and_play",
+          query: `${query} music`,
+        });
       }
       return {
         platform: "youtube",

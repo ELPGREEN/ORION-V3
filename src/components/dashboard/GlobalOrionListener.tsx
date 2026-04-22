@@ -175,12 +175,12 @@ export function GlobalOrionListener() {
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("orion-music-command", handleMediaCommand);
+    window.addEventListener(OrionEvents.MusicCommand, handleMediaCommand);
     window.addEventListener("orion-embedded-video", handleMediaCommand);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("orion-music-command", handleMediaCommand);
+      window.removeEventListener(OrionEvents.MusicCommand, handleMediaCommand);
       window.removeEventListener("orion-embedded-video", handleMediaCommand);
     };
   }, [orionOpen]);

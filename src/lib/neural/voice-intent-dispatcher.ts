@@ -220,9 +220,7 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
 
       case "media_control": {
         const action = params.action || "play";
-        window.dispatchEvent(new CustomEvent("orion-music-command", {
-          detail: { action }
-        }));
+        dispatchOrionEvent(OrionEvents.MusicCommand, { action: action as OrionMusicAction });
         const actionLabels: Record<string, string> = {
           next: "próxima faixa",
           prev: "faixa anterior",
