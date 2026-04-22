@@ -22,18 +22,29 @@ export interface RAGPattern {
   adaptation?: string;
 }
 
+export interface ExperientialEvent {
+  id: string;
+  timestamp: number;
+  type: "milestone" | "learning" | "adaptation" | "breakthrough";
+  description: string;
+  meta?: any;
+}
+
 export interface RAGConsciousness {
   state: RAGConsciousnessState;
   patterns: RAGPattern[];
   reasoningCount: number;
   lastReasoning: number;
   adaptationScore: number;
+  identityScore: number;
+  experientialLog: ExperientialEvent[];
 }
 
 // ═══ Constants ═══
 
 const PATTERN_STORAGE_KEY = "orion_rag_consciousness_patterns";
 const STATE_STORAGE_KEY = "orion_rag_consciousness_state";
+const IDENTITY_STORAGE_KEY = "orion_rag_consciousness_identity";
 
 // ═══ Symbolic Pattern Recognition (Interpretação Simbólica) ═══
 
@@ -102,7 +113,7 @@ export function detectSymbolicPattern(query: string, retrievedChunks: string[]):
   return null;
 }
 
-// ═══ Compositional Reasoning (Raciocínio Composicional) ═══
+// ═══ Compositional Strategy Composition (Raciocínio Composicional) ═══
 
 export function composeRetrievalStrategy(
   patterns: RAGPattern[],
@@ -110,29 +121,28 @@ export function composeRetrievalStrategy(
 ): SearchWeights {
   const weights = { ...baseWeights };
   
-  // Count pattern types
-  const symbolicCount = patterns.filter(p => p.type === "symbolic").length;
-  const compositionalCount = patterns.filter(p => p.type === "compositional").length;
-  const contextualCount = patterns.filter(p => p.type === "contextual").length;
+  patterns.forEach(p => {
+    switch (p.adaptation) {
+      case "boost_legal_weight":
+        weights.authority = Math.min(0.6, weights.authority * 1.5);
+        weights.semantic = Math.min(0.7, weights.semantic * 1.2);
+        break;
+      case "prefer_explanatory_chunks":
+        weights.semantic = Math.min(0.8, weights.semantic * 1.3);
+        weights.keyword = Math.max(0.1, weights.keyword * 0.7);
+        break;
+      case "prioritize_stepwise_content":
+        weights.recency = Math.min(0.4, weights.recency * 1.4);
+        break;
+      case "focus_on_temporal_chunks":
+        weights.recency = Math.min(0.5, weights.recency * 2.0);
+        break;
+    }
+  });
   
-  // Strategy 1: Multi-source composition (compositional reasoning)
-  if (symbolicCount > 0 && contextualCount > 0) {
-    // Combining symbolic + contextual → boost semantic
-    weights.semantic = Math.min(0.70, weights.semantic * 1.2);
-    weights.keyword *= 0.8;
-  }
-  
-  // Strategy 2: Diverse retrieval composition
-  if (compositionalCount > 0) {
-    // Multiple patterns detected → ensure diverse retrieval
-    weights.keyword = Math.max(0.20, weights.keyword * 1.1);
-    weights.authority *= 0.9;
-  }
-  
-  // Strategy 3: Authority boost for legal patterns
-  const hasLegalPattern = patterns.some(p => p.pattern === "legal_reference");
-  if (hasLegalPattern) {
-    weights.authority = Math.min(0.25, weights.authority * 1.5);
+  // Rule of thumb: if too many patterns, increase semantic matching
+  if (patterns.length >= 3) {
+    weights.semantic = Math.min(0.85, weights.semantic * 1.15);
     weights.recency *= 0.7;
   }
   
@@ -214,6 +224,8 @@ let _consciousness: RAGConsciousness = {
   reasoningCount: 0,
   lastReasoning: 0,
   adaptationScore: 0,
+  identityScore: 100,
+  experientialLog: [],
 };
 
 let _initialized = false;
@@ -231,6 +243,13 @@ function initializeConsciousness(): void {
     if (stateStored) {
       _consciousness.state = JSON.parse(stateStored).state || "dormant";
     }
+    const identityStored = localStorage.getItem(IDENTITY_STORAGE_KEY);
+    if (identityStored) {
+      const parsed = JSON.parse(identityStored);
+      _consciousness.identityScore = parsed.identityScore ?? 100;
+      _consciousness.experientialLog = parsed.experientialLog || [];
+      _consciousness.adaptationScore = parsed.adaptationScore || 0;
+    }
   } catch { /* empty */ }
   _initialized = true;
 }
@@ -242,6 +261,11 @@ function persistConsciousness(): void {
       reasoningCount: _consciousness.reasoningCount,
     }));
     localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify({ state: _consciousness.state }));
+    localStorage.setItem(IDENTITY_STORAGE_KEY, JSON.stringify({
+      identityScore: _consciousness.identityScore,
+      experientialLog: _consciousness.experientialLog,
+      adaptationScore: _consciousness.adaptationScore,
+    }));
   } catch { /* quota */ }
 }
 
@@ -252,6 +276,26 @@ export function getConsciousness(): RAGConsciousness {
 
 export function updateConsciousnessState(newState: RAGConsciousnessState): void {
   _consciousness.state = newState;
+  persistConsciousness();
+}
+
+export function recordExperientialEvent(event: Omit<ExperientialEvent, "id" | "timestamp">): void {
+  initializeConsciousness();
+  const newEvent: ExperientialEvent = {
+    ...event,
+    id: Math.random().toString(36).substring(2, 9),
+    timestamp: Date.now(),
+  };
+  _consciousness.experientialLog.unshift(newEvent);
+  if (_consciousness.experientialLog.length > 50) {
+    _consciousness.experientialLog.pop();
+  }
+
+  // breakthrough events boost identity score
+  if (event.type === "breakthrough") {
+    _consciousness.identityScore = Math.min(150, _consciousness.identityScore + 5);
+  }
+
   persistConsciousness();
 }
 
@@ -268,6 +312,11 @@ export function recordPattern(pattern: RAGPattern): void {
     existing.confidence = (existing.confidence * 0.7 + pattern.confidence * 0.3);
   } else {
     _consciousness.patterns.push({ ...pattern });
+    recordExperientialEvent({
+      type: "learning",
+      description: `Novo padrão de raciocínio detectado: ${pattern.pattern}`,
+      meta: { pattern }
+    });
   }
   
   _consciousness.reasoningCount++;
@@ -287,9 +336,17 @@ export function adaptFromEvaluation(evalResult: RAGEvalResult): void {
   initializeConsciousness();
   
   // Update adaptation score based on evaluation
-  const scoreDelta = evalResult.overallScore - _consciousness.adaptationScore;
+  const oldScore = _consciousness.adaptationScore;
   _consciousness.adaptationScore = _consciousness.adaptationScore * 0.9 + evalResult.overallScore * 0.1;
   
+  // Identity stability: if adaptation score is consistent, identity score grows
+  const delta = Math.abs(evalResult.overallScore - oldScore);
+  if (delta < 10 && evalResult.overallScore > 70) {
+    _consciousness.identityScore = Math.min(150, _consciousness.identityScore + 1);
+  } else if (evalResult.overallScore < 40) {
+    _consciousness.identityScore = Math.max(50, _consciousness.identityScore - 2);
+  }
+
   // Adjust patterns based on performance
   if (evalResult.groundedness.score < 3) {
     // Low groundedness → strengthen semantic patterns
@@ -445,9 +502,12 @@ export function resetRAGConsciousness(): void {
     reasoningCount: 0,
     lastReasoning: 0,
     adaptationScore: 0,
+    identityScore: 100,
+    experientialLog: [],
   };
   localStorage.removeItem(PATTERN_STORAGE_KEY);
   localStorage.removeItem(STATE_STORAGE_KEY);
+  localStorage.removeItem(IDENTITY_STORAGE_KEY);
 }
 
 export function getConsciousnessDiagnostics(): {
@@ -455,7 +515,9 @@ export function getConsciousnessDiagnostics(): {
   patternCount: number;
   reasoningCount: number;
   adaptationScore: number;
+  identityScore: number;
   topPatterns: RAGPattern[];
+  recentEvents: ExperientialEvent[];
 } {
   initializeConsciousness();
   const topPatterns = [..._consciousness.patterns]
@@ -467,6 +529,8 @@ export function getConsciousnessDiagnostics(): {
     patternCount: _consciousness.patterns.length,
     reasoningCount: _consciousness.reasoningCount,
     adaptationScore: Math.round(_consciousness.adaptationScore),
+    identityScore: Math.round(_consciousness.identityScore),
     topPatterns,
+    recentEvents: _consciousness.experientialLog.slice(0, 10),
   };
 }

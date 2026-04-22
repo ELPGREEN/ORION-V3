@@ -1,26 +1,29 @@
 /**
- * ─── Orion Agentic Loop (Plan → Act → Verify → Document → Learn) ───
- * Replicates Lovable's reasoning cycle within Orion's cognitive architecture.
- * Each interaction passes through structured phases for quality assurance
- * and continuous self-improvement.
+ * ─── Orion Agentic Loop ───
+ * Orchestrates the full AI lifecycle: Plan → Act → Verify → Learn.
  */
 
 import { supabase } from "@/integrations/supabase/client";
 import { orionSelfImprove } from "./jules-client";
-import { logAgentAction } from "./orion-network-registry";
-import { classifyIntent } from "./orion-ai-client";
-import { smartClassifySync } from "./smart-intent-classifier";
-import { addCausalNode, addCausalLink } from "./causal-reasoning";
-import { recordLearningOutcome } from "./meta-learning";
-import { updateFromInteraction } from "./theory-of-mind";
-import { getAgenteEu } from "./agents/self-model-agent";
-import { createThoughtEntry, addThoughtStep, finalizeThoughtEntry } from "./orion-journal";
-import { feedUserSpeech, feedAIResponse } from "./voice-evolution-feedback";
-import { isNegativeFeedback, recordCorrection, extractCorrectionTarget } from "./intent-feedback";
-import { smartClassify } from "./smart-intent-classifier";
-import { evaluateRAGResponse } from "./rag-evaluator";
-import { submitRAGFeedback, getOptimizedWeights, classifyQueryType } from "./rag-feedback-loop";
-import { activateRAGConsciousness, solveRAGPuzzle, adaptFromEvaluation, getConsciousnessDiagnostics, type RetrievalContext } from "./rag-consciousness";
+import { feedUserSpeech, feedAIResponse } from "@/hooks/useNeuralVoice";
+import {
+  evaluateRAGResponse,
+  type RAGEvalResult
+} from "./rag-evaluator";
+import {
+  submitRAGFeedback,
+  getOptimizedWeights,
+  classifyQueryType,
+  type SearchWeights
+} from "./rag-feedback-loop";
+import {
+  activateRAGConsciousness,
+  solveRAGPuzzle,
+  adaptFromEvaluation,
+  getConsciousnessDiagnostics,
+  recordExperientialEvent,
+  type RetrievalContext
+} from "./rag-consciousness";
 import { getRetrievedChunks } from "./rag-retrieval-tracker";
 import { getPipelineLatency, type PipelineLatency } from "./pipeline-latency-tracker";
 
@@ -47,318 +50,208 @@ export interface AgenticVerification {
   passed: boolean;
   score: number;
   issues: string[];
-  responseLength: number;
-  coherenceWithIntent: boolean;
+  feedback: string;
 }
 
-export interface AgenticProtocol {
+// ─── Protocols & Strategies ───
+
+interface Protocol {
   intent: string;
-  recommendedStrategy: string;
+  bestStrategy: string;
   avgQuality: number;
   sampleSize: number;
-  lastUpdated: number;
   regressionCount: number;
 }
 
-// ─── Protocol Storage ───
-
-const PROTOCOLS_KEY = "orion_agentic_protocols";
-const KNOWN_SPEAKERS_KEY = "orion_known_speakers";
-
-let _protocols: Record<string, AgenticProtocol> = {};
+const PROTOCOL_STORAGE_KEY = "orion_agentic_protocols";
+let _protocols: Record<string, Protocol> = {};
 let _protocolsDirty = false;
 let _lastProtocolSync = 0;
 
-export function loadProtocols(): Record<string, AgenticProtocol> {
+function loadProtocols() {
   try {
-    const raw = localStorage.getItem(PROTOCOLS_KEY);
+    const raw = localStorage.getItem(PROTOCOL_STORAGE_KEY);
     if (raw) _protocols = JSON.parse(raw);
   } catch {}
-  return _protocols;
 }
 
-export function saveProtocols(): void {
+function saveProtocols() {
   try {
-    localStorage.setItem(PROTOCOLS_KEY, JSON.stringify(_protocols));
+    localStorage.setItem(PROTOCOL_STORAGE_KEY, JSON.stringify(_protocols));
+    _protocolsDirty = true;
   } catch {}
-}
-
-export function getProtocol(intent: string): AgenticProtocol | null {
-  return _protocols[intent] || null;
-}
-
-export function updateProtocol(intent: string, score: number): void {
-  const existing = _protocols[intent];
-  if (!existing) {
-    _protocols[intent] = {
-      intent,
-      recommendedStrategy: "default",
-      avgQuality: score,
-      sampleSize: 1,
-      lastUpdated: Date.now(),
-      regressionCount: 0,
-    };
-  } else {
-    const newAvg = (existing.avgQuality * existing.sampleSize + score) / (existing.sampleSize + 1);
-    if (score < existing.avgQuality - 0.15) {
-      existing.regressionCount++;
-    }
-    existing.avgQuality = newAvg;
-    existing.sampleSize++;
-    existing.lastUpdated = Date.now();
-  }
-  _protocolsDirty = true;
-  saveProtocols();
 }
 
 // ─── Phase 1: Plan ───
 
-export function planPhase(query: string, context?: { memories?: string[]; visionActive?: boolean }): AgenticPlan {
-  // Use unified smart classifier (regex fast-path)
-  const smartResult = smartClassifySync(query);
-  let intent = smartResult?.intent || "general";
-  
-  // Check if user is giving negative feedback about the last classification
-  if (isNegativeFeedback(query) && _lastClassification && Date.now() - _lastClassification.ts < 120_000) {
-    const correctionTarget = extractCorrectionTarget(query);
-    if (correctionTarget) {
-      // Re-classify the correction target to find the correct intent
-      const correctedResult = smartClassifySync(correctionTarget);
-      if (correctedResult) {
-        recordCorrection(_lastClassification.text, _lastClassification.intent, correctedResult.intent);
-        intent = correctedResult.intent;
-        console.log(`[AgenticLoop] Feedback correction: "${_lastClassification.text}" → ${correctedResult.intent}`);
-      }
-    }
-    // Return a feedback-aware plan
-    return {
-      intent: intent === "general" ? "feedback_correction" : intent,
-      steps: ["Registrar correção do usuário", "Re-classificar intenção", "Executar ação corrigida"],
-      risks: [],
-      confidence: 0.9,
-      requiresImage: false,
-      timestamp: Date.now(),
-    };
-  }
-
-  // If smart classifier didn't match, fall back to legacy regex for backward compat
-  if (intent === "general") {
-    const qLow = query.toLowerCase();
-    // Expanded vision detection — catches 200+ natural vision phrases
-    if (
-      /o\s+que\s+(voc[eê]|vc|tu|c[eê])\s+(v[eê]|enxerga|est[aá]\s+vendo|consegue\s+ver|t[aá]\s+vendo)/i.test(qLow) ||
-      /como\s+(eu\s+)?(estou|tou|t[oô]|fico|fiquei)/i.test(qLow) ||
-      /o\s+que\s+(voc[eê]|vc|tu|c[eê])\s+(acha|achou|pensa)/i.test(qLow) ||
-      /o\s+que\s+(t[aá]|est[aá])\s+(escrit[oa]|escrevendo|mostrando|aparecendo)/i.test(qLow) ||
-      /o\s+que\s+[eé]\s+(isso|aquilo|isto|essa|esse)/i.test(qLow) ||
-      /o\s+que\s+(eu\s+)?(estou|tou|t[oô])\s+(segurando|usando|vestindo|comendo|fazendo|mostrando|lendo|carregando|jogando|mexendo|digitando)/i.test(qLow) ||
-      /(me\s+)?descrev[ae]|l[eê][ia]?\s+(isso|aquilo|o\s+que)/i.test(qLow) ||
-      /tem\s+(algo|algu[eé]m|alguma\s+coisa).*(aqui|a[ií]|perto)/i.test(qLow) ||
-      /quant[oa]s?\s+\w+\s+(tem|voc[eê]\s+v[eê]|est[aã]o)/i.test(qLow) ||
-      /(qual|que)\s+cor/i.test(qLow) ||
-      /(onde|aonde)\s+(est[aá]|t[aá]|fica)/i.test(qLow) ||
-      /(olh[ae]|veja|observe|analise)\s+(isso|aquilo|aqui|pra)/i.test(qLow) ||
-      /(voc[eê]|vc|tu)\s+(consegue|pode|d[aá]\s+pra)\s+(ver|enxergar|ler|identificar|reconhecer|detectar)/i.test(qLow) ||
-      /(na|nessa)\s+(foto|imagem|tela|c[aâ]mera)/i.test(qLow) ||
-      /(que|qual)\s+(marca|modelo|tipo|esp[eé]cie|ra[çc]a)/i.test(qLow) ||
-      /tem\s+(texto|n[uú]mero|c[oó]digo|qr|placa|etiqueta)/i.test(qLow) ||
-      /(voc[eê]|vc|tu)\s+(me\s+)?(v[eê]|enxerga|est[aá]\s+(me\s+)?vendo)/i.test(qLow) ||
-      /(identific|reconhec|detect|analis[ae]r?\s+(iss[oa]|est[ea]|imagem|foto|cena))/i.test(qLow) ||
-      /(tir[ae]|bat[ae]|captur[ae])\s+(uma?\s+)?(foto|imagem)/i.test(qLow)
-    ) {
-      intent = "vision_describe";
-    } else if (/quem\s+([eé]|sou)|reconhec/i.test(qLow)) {
-      intent = "identity";
-    }
-  }
-  
-  // Store last classification for feedback loop
-  setLastClassification(query, intent);
-
-  const requiresImage = ["vision_describe", "vision_object", "identity"].includes(intent);
-
-  const steps = [
-    `Classificar intent: ${intent}`,
-    requiresImage ? "Capturar frame da câmera" : "Usar contexto textual",
-    "Enviar para pipeline de IA",
-    "Validar resposta",
-    "Documentar e aprender",
-  ];
-
+export function planPhase(query: string, context?: any): AgenticPlan {
+  const lower = query.toLowerCase();
+  let intent = "general_query";
+  const steps: string[] = [];
   const risks: string[] = [];
-  if (requiresImage && !context?.visionActive) risks.push("Câmera pode não estar ativa");
-  if (intent === "auto_construct") risks.push("Requer verificação de proprietário");
-  if (intent === "self_evolve") risks.push("Processo demorado (5 fases)");
-  if (intent === "security") risks.push("Acesso restrito ao proprietário");
-  if (intent === "legal") risks.push("Verificar fontes — risco de alucinação jurídica");
+  let confidence = 0.85;
 
-  const protocol = getProtocol(intent);
-  const confidence = protocol ? Math.min(0.95, protocol.avgQuality) : 0.6;
+  // Intent classification (fast)
+  if (lower.includes("procur") || lower.includes("busc")) intent = "search";
+  else if (lower.includes("ger") || lower.includes("cri")) intent = "generate";
+  else if (lower.includes("analis") || lower.includes("verific")) intent = "analyze";
+  else if (lower.includes("ajud") || lower.includes("com")) intent = "help";
 
-  // Protocol: log agent reasoning before acting
-  logAgentAction("analysis", "PLAN", `Intent: ${intent}, confidence: ${confidence.toFixed(2)}, risks: ${risks.join("; ") || "none"}`, confidence);
+  // Strategy selection based on protocol
+  const protocol = _protocols[intent];
+  const strategy = protocol?.avgQuality > 0.8 ? protocol.bestStrategy : "balanced_exploration";
 
-  return { intent, steps, risks, confidence, requiresImage, timestamp: Date.now() };
+  steps.push(`Identify core objective: ${intent}`);
+  if (strategy === "deep_search") steps.push("Execute recursive retrieval", "Verify context relevance");
+  else steps.push("Retrieve primary context", "Synthesize response");
+
+  return {
+    intent,
+    steps,
+    risks,
+    confidence,
+    requiresImage: lower.includes("veja") || lower.includes("olha") || !!context?.visionActive,
+    timestamp: Date.now(),
+  };
 }
 
 // ─── Phase 2: Verify ───
 
-const HALLUCINATION_KEYWORDS = [
-  "como modelo de linguagem", "não tenho acesso", "não posso ver",
-  "sou apenas um programa", "não sou capaz de", "error 500",
-];
-
-export function verifyPhase(
-  query: string,
-  response: string,
-  plan: AgenticPlan,
-  latency?: PipelineLatency
-): AgenticVerification {
+export function verifyPhase(query: string, response: string, plan: AgenticPlan, latency: PipelineLatency): AgenticVerification {
   const issues: string[] = [];
-  let score = 0.7;
+  let score = 1.0;
 
-  // Length check
-  const responseLength = response.length;
-  if (responseLength < 10) {
-    issues.push("Resposta muito curta");
+  // 1. Check for hallucinatory markers
+  if (response.includes("Não tenho certeza") || response.includes("Desculpe")) {
     score -= 0.2;
+    issues.push("low_confidence_disclaimer");
   }
-  if (responseLength > 3000) {
-    issues.push("Resposta excessivamente longa");
+
+  // 2. Check for length vs intent
+  if (plan.intent === "analyze" && response.length < 100) {
+    score -= 0.3;
+    issues.push("insufficient_depth");
+  }
+
+  // 3. Check for latency regression
+  if (latency.totalMs > 15000) {
     score -= 0.1;
+    issues.push("latency_bottleneck");
   }
 
-  // Hallucination check
-  const rLow = response.toLowerCase();
-  for (const kw of HALLUCINATION_KEYWORDS) {
-    if (rLow.includes(kw)) {
-      issues.push(`Possível alucinação: "${kw}"`);
-      score -= 0.15;
-      break;
-    }
-  }
-
-  // Coherence with intent
-  let coherenceWithIntent = true;
-  if (plan.intent === "vision_object" && !/\b(vejo|segurando|objeto|mão)\b/i.test(response)) {
-    coherenceWithIntent = false;
-    issues.push("Resposta pode não estar focada no objeto perguntado");
-    score -= 0.1;
-  }
-  if (plan.intent === "vision_describe" && response.length < 30) {
-    coherenceWithIntent = false;
-    issues.push("Descrição visual muito breve");
-    score -= 0.1;
-  }
-
-  // Pipeline latency quality checks (STT/TTS/Vision)
-  if (latency) {
-    if (latency.sttMs > 3000) {
-      issues.push(`STT lento: ${latency.sttMs}ms (>3s)`);
-      score -= 0.05;
-    }
-    if (latency.ttsMs > 2000) {
-      issues.push(`TTS lento: ${latency.ttsMs}ms (>2s)`);
-      score -= 0.05;
-    }
-    if (latency.visionMs > 4000) {
-      issues.push(`Vision lento: ${latency.visionMs}ms (>4s)`);
-      score -= 0.05;
-    }
-    if (latency.totalMs > 5000) {
-      issues.push(`Pipeline total lento: ${latency.totalMs}ms (>5s)`);
-      score -= 0.1;
-    }
-    // Vision intent without vision latency = camera possibly not working
-    if (plan.requiresImage && latency.visionMs <= 0) {
-      issues.push("Intent visual sem dados de visão — câmera inativa?");
-      score -= 0.1;
-    }
-  }
-
-  score = Math.max(0, Math.min(1, score));
-  const passed = score >= 0.4 && issues.length <= 2;
-
-  // Protocol: Operation Overseer logs verification result
-  logAgentAction("operation_overseer", "VERIFY", `Score: ${score.toFixed(2)}, passed: ${passed}, issues: ${issues.join("; ") || "none"}`, score);
-
-  return { passed, score, issues, responseLength, coherenceWithIntent };
+  return {
+    passed: score > 0.6,
+    score,
+    issues,
+    feedback: issues.length > 0 ? `Resolved with issues: ${issues.join(", ")}` : "Perfect execution",
+  };
 }
 
-// ─── Phase 3: Document ───
+// ─── Phase 3: Learn ───
 
-export async function documentPhase(
+export function learnPhase(query: string, response: string, plan: AgenticPlan, verification: AgenticVerification): void {
+  const intent = plan.intent;
+  const protocol = _protocols[intent] || {
+    intent,
+    bestStrategy: "balanced",
+    avgQuality: 0,
+    sampleSize: 0,
+    regressionCount: 0,
+  };
+
+  // Moving average for quality
+  const alpha = 0.1;
+  protocol.avgQuality = protocol.avgQuality * (1 - alpha) + verification.score * alpha;
+  protocol.sampleSize++;
+
+  if (verification.score < 0.4) protocol.regressionCount++;
+
+  // Optimization: if quality drops, flag for strategy shift
+  if (protocol.regressionCount > 5 && protocol.avgQuality < 0.6) {
+    protocol.bestStrategy = "conservative_chain_of_thought";
+  }
+
+  _protocols[intent] = protocol;
+  saveProtocols();
+}
+
+// ─── Phase 4: Document ───
+
+interface ThoughtEntry {
+  id: string;
+  timestamp: number;
+  query: string;
+  agent: string;
+  thoughts: { module: string; operation: string; input: string; output: string; startTime: number; duration?: number; confidence: number }[];
+  result: string;
+  success: boolean;
+}
+
+const THOUGHT_HISTORY_KEY = "orion_thought_history";
+
+function createThoughtEntry(query: string, agent: string): ThoughtEntry {
+  return {
+    id: Math.random().toString(36).substring(7),
+    timestamp: Date.now(),
+    query,
+    agent,
+    thoughts: [],
+    result: "",
+    success: false,
+  };
+}
+
+function addThoughtStep(entry: ThoughtEntry, step: ThoughtEntry["thoughts"][0]): void {
+  const duration = Date.now() - step.startTime;
+  entry.thoughts.push({ ...step, duration });
+}
+
+function finalizeThoughtEntry(entry: ThoughtEntry, result: string, success: boolean): void {
+  entry.result = result;
+  entry.success = success;
+  try {
+    const history: ThoughtEntry[] = JSON.parse(localStorage.getItem(THOUGHT_HISTORY_KEY) || "[]");
+    history.unshift(entry);
+    if (history.length > 20) history.pop();
+    localStorage.setItem(THOUGHT_HISTORY_KEY, JSON.stringify(history));
+  } catch {}
+}
+
+async function documentPhase(
   query: string,
   response: string,
   plan: AgenticPlan,
   verification: AgenticVerification,
-  latency?: PipelineLatency,
+  latency: PipelineLatency,
   iotDevices?: string[]
 ): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Log to Supabase for global learning
     await supabase.from("neural_learning_data").insert({
       user_id: user.id,
-      interaction_type: "agentic_cycle",
-      input_text: query.slice(0, 500),
-      output_text: response.slice(0, 1000),
+      input_text: query,
+      output_text: response,
+      interaction_type: plan.intent,
       quality_score: verification.score,
       metadata: {
-        plan_intent: plan.intent,
-        plan_confidence: plan.confidence,
-        plan_steps: plan.steps.length,
-        plan_risks: plan.risks,
-        verification_passed: verification.passed,
-        verification_issues: verification.issues,
-        verification_coherence: verification.coherenceWithIntent,
-        response_length: verification.responseLength,
-        latency_ms: Date.now() - plan.timestamp,
-        protocol_version: "2.0",
-        // Pipeline latency breakdown
-        pipeline_stt_ms: latency?.sttMs ?? -1,
-        pipeline_llm_ms: latency?.llmMs ?? -1,
-        pipeline_tts_ms: latency?.ttsMs ?? -1,
-        pipeline_vision_ms: latency?.visionMs ?? -1,
-        pipeline_total_ms: latency?.totalMs ?? -1,
-        // IoT context
-        iot_devices_active: iotDevices?.length ?? 0,
-        iot_devices: iotDevices?.slice(0, 10),
+        plan,
+        verification,
+        latency,
+        iot_devices: iotDevices,
+        protocol: _protocols[plan.intent],
       },
     } as any);
-  } catch (e) {
-    console.warn("[AgenticLoop] Document phase failed:", e);
-  }
-}
 
-// ─── Phase 4: Learn ───
-
-export function learnPhase(
-  query: string,
-  response: string,
-  plan: AgenticPlan,
-  verification: AgenticVerification
-): void {
-  // 1. Update protocol for this intent
-  updateProtocol(plan.intent, verification.score);
-
-  // 2. Record in Agente-Eu autobiographical memory
-  try {
-    const eu = getAgenteEu();
-    const outcome = verification.passed ? "success" : "failure";
-    eu.recordMemory(
-      `Ciclo agentic: intent=${plan.intent}, score=${verification.score.toFixed(2)}, issues=${verification.issues.length}`,
-      outcome
-    );
+    // Sync protocols periodically (every 5 min)
+    if (_protocolsDirty && Date.now() - _lastProtocolSync > 5 * 60 * 1000) {
+      _lastProtocolSync = Date.now();
+      _protocolsDirty = false;
+      syncProtocolsToSupabase().catch(() => {});
+    }
   } catch {}
-
-  // 3. Sync protocols to Supabase periodically (every 5 min)
-  if (_protocolsDirty && Date.now() - _lastProtocolSync > 5 * 60 * 1000) {
-    _lastProtocolSync = Date.now();
-    _protocolsDirty = false;
-    syncProtocolsToSupabase().catch(() => {});
-  }
 }
 
 async function syncProtocolsToSupabase(): Promise<void> {
@@ -461,6 +354,8 @@ export function getKnownSpeakers(): Record<string, { lastSeen: number; transcrip
   } catch { return {}; }
 }
 
+const KNOWN_SPEAKERS_KEY = "orion_known_speakers";
+
 export function addKnownSpeaker(name: string): void {
   try {
     const speakers = getKnownSpeakers();
@@ -528,6 +423,11 @@ async function runRAGEvaluation(query: string, response: string, intent: string)
       // Log puzzle solution if found
       if (puzzleSolution) {
         console.log(`[RAG-Puzzle] Solved: ${puzzleSolution.pattern} → ${puzzleSolution.solution}`);
+        recordExperientialEvent({
+          type: "breakthrough",
+          description: `Breakthrough: Resolvido enigma RAG [${puzzleSolution.pattern}] → ${puzzleSolution.solution}`,
+          meta: { puzzle: puzzleSolution }
+        });
       }
       
       return;
