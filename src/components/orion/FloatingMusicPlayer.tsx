@@ -234,6 +234,40 @@ export function FloatingMusicPlayer() {
     return () => window.removeEventListener(OrionEvents.VolumeCommand, handler as EventListener);
   }, [volume]);
 
+  // ── YouTube IFrame state sync (postMessage) ──────────────────
+  // After iframe loads, we tell YouTube we're listening so it sends back state events.
+  useEffect(() => {
+    if (!videoId) return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== YT_ORIGIN) return;
+      try {
+        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        // YT state codes: -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued
+        if (data?.event === "onStateChange" || data?.event === "infoDelivery") {
+          const state = data?.info?.playerState ?? data?.info;
+          if (state === 1) setPlaying(true);
+          else if (state === 2 || state === 0) setPlaying(false);
+        }
+      } catch { /* ignore non-JSON messages */ }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [videoId]);
+
+  // Listen for resolver hints (shows "requested → resolved" platform in header)
+  useEffect(() => {
+    const handler = (e: CustomEvent<OrionMusicResolvedDetail>) => {
+      const detail = e.detail;
+      if (!detail) return;
+      const label = detail.fallback && detail.requested
+        ? `${detail.requested} → ${detail.resolved}`
+        : detail.resolved.charAt(0).toUpperCase() + detail.resolved.slice(1);
+      setResolvedPlatform(label);
+    };
+    window.addEventListener(OrionEvents.MusicResolved, handler as EventListener);
+    return () => window.removeEventListener(OrionEvents.MusicResolved, handler as EventListener);
+  }, []);
+
   const close = useCallback(() => {
     setVisible(false);
     setQuery("");
@@ -245,7 +279,34 @@ export function FloatingMusicPlayer() {
     const v = val[0];
     setVolume(v);
     setMuted(v === 0);
+    postYouTubeIframeCommand(iframeRef.current, "setVolume", [v]);
+    if (v > 0) postYouTubeIframeCommand(iframeRef.current, "unMute");
   }, []);
+
+  const togglePlay = useCallback(() => {
+    if (!videoId) return;
+    if (playing) {
+      postYouTubeIframeCommand(iframeRef.current, "pauseVideo");
+      setPlaying(false);
+    } else {
+      postYouTubeIframeCommand(iframeRef.current, "playVideo");
+      setPlaying(true);
+    }
+  }, [playing, videoId]);
+
+  const handleNext = useCallback(() => {
+    postYouTubeIframeCommand(iframeRef.current, "nextVideo");
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    postYouTubeIframeCommand(iframeRef.current, "previousVideo");
+  }, []);
+
+  // Sync mute state to iframe
+  useEffect(() => {
+    if (!videoId) return;
+    postYouTubeIframeCommand(iframeRef.current, muted ? "mute" : "unMute");
+  }, [muted, videoId]);
 
   const openFromFallback = useCallback(() => {
     if (fallbackLoading) return;
