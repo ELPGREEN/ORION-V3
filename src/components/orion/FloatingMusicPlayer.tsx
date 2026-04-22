@@ -415,32 +415,6 @@ export function FloatingMusicPlayer() {
   // Singleton: extra instances render nothing (prevents duplicate players across routes)
   if (!isPrimary) return null;
 
-  // Fallback "Open Player" button when Orion announces playback but player didn't open
-  if (showFallbackButton && !visible) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 40 }}
-        className="fixed bottom-4 right-4 z-[9999]"
-      >
-        <Button
-          onClick={openFromFallback}
-          disabled={fallbackLoading}
-          aria-busy={fallbackLoading}
-          className="shadow-2xl bg-gradient-to-r from-red-500 to-primary text-primary-foreground gap-2 rounded-full px-5 py-6 disabled:opacity-70"
-        >
-          {fallbackLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Music className="h-4 w-4" />
-          )}
-          {fallbackLoading ? "Carregando..." : "Abrir player"}
-        </Button>
-      </motion.div>
-    );
-  }
-
   if (!visible || !query) return null;
 
   return (
@@ -613,40 +587,43 @@ export function FloatingMusicPlayer() {
           style={minimized ? undefined : { height: showResults ? "180px" : "calc(100% - 78px)" }}
           aria-hidden={minimized}
         >
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm">
-                <div className="flex items-center gap-2 text-xs text-foreground/80">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Carregando player...
-                </div>
+          {!minimized && embedLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm">
+              <div className="flex items-center gap-2 text-xs text-foreground/80">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Carregando player...
               </div>
-            )}
-            {videoId ? (
-              <iframe
-                ref={iframeRef}
-                src={embedUrl}
-                onLoad={() => {
-                  setEmbedLoading(false);
-                  setFallbackLoading(false);
-                  setPlaying(true);
-                  try {
-                    iframeRef.current?.contentWindow?.postMessage(
-                      JSON.stringify({ event: "listening", id: 1, channel: "widget" }),
-                      YT_ORIGIN,
-                    );
-                    postYouTubeIframeCommand(iframeRef.current, "setVolume", [muted ? 0 : volume]);
-                  } catch { /* ignore */ }
-                }}
-                className="absolute inset-0 w-full h-full"
-                allow="autoplay; encrypted-media"
-                allowFullScreen
-                title="YouTube Music Player"
-              />
-            ) : !embedLoading && !minimized ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/70 px-6 text-center text-xs text-muted-foreground">
-                Não consegui carregar um vídeo incorporável agora. Use o botão acima para abrir direto no YouTube.
-              </div>
-            ) : null}
-          </div>
+            </div>
+          )}
+          {videoId ? (
+            <iframe
+              ref={iframeRef}
+              src={embedUrl}
+              onLoad={() => {
+                setEmbedLoading(false);
+                setFallbackLoading(false);
+                setPlaying(true);
+                try {
+                  iframeRef.current?.contentWindow?.postMessage(
+                    JSON.stringify({ event: "listening", id: 1, channel: "widget" }),
+                    YT_ORIGIN,
+                  );
+                  postYouTubeIframeCommand(iframeRef.current, "setVolume", [muted ? 0 : volume]);
+                } catch {
+                  /* ignore */
+                }
+              }}
+              className="absolute inset-0 w-full h-full"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              title="YouTube Music Player"
+            />
+          ) : !embedLoading && !minimized ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/70 px-6 text-center text-xs text-muted-foreground">
+              Não consegui carregar um vídeo incorporável agora. Use o botão acima para abrir direto no YouTube.
+            </div>
+          ) : null}
+        </div>
       </motion.div>
     </AnimatePresence>
   );
