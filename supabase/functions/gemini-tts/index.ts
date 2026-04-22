@@ -301,14 +301,18 @@ function buildSingleSpeakerRequest(
   };
   if (opts.includeLanguage && selectedLang.trim()) speechConfig.languageCode = selectedLang;
 
-  const textContent = opts.includePrompt && stylePrompt.trim()
-    ? `[Instruções de estilo vocal: ${stylePrompt.trim().slice(0, 400)}]\n\n${cleanText}`
-    : cleanText;
-
-  return {
-    contents: [{ role: "user", parts: [{ text: textContent }] }],
+  // ⚠️ NEVER prefix the style prompt to the text — Gemini TTS would READ IT ALOUD.
+  // The style is conveyed via systemInstruction (separate field), not as spoken content.
+  const body: Record<string, unknown> = {
+    contents: [{ role: "user", parts: [{ text: cleanText }] }],
     generationConfig: { responseModalities: ["AUDIO"], maxOutputTokens: 8192, speechConfig },
   };
+  if (opts.includePrompt && stylePrompt.trim()) {
+    body.systemInstruction = {
+      parts: [{ text: stylePrompt.trim().slice(0, 800) }],
+    };
+  }
+  return body;
 }
 
 function buildMultiSpeakerRequest(
