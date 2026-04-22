@@ -322,6 +322,41 @@ export function FloatingMusicPlayer() {
     setQuery("");
     setVideoId("");
     setShowFallbackButton(false);
+    setShowResults(false);
+    setResults([]);
+  }, []);
+
+  // Re-run the current query under a different category (used by Música/Vídeos/Podcasts chips)
+  const runSearch = useCallback(async (cat: YouTubeCategory, q?: string) => {
+    const target = (q ?? query).trim();
+    if (!target) return;
+    setCategory(cat);
+    const requestId = ++resolveRequestRef.current;
+    setEmbedLoading(true);
+    setVideoId("");
+    setResolvedPlatform(cat === "music" ? "YouTube · Música" : cat === "podcast" ? "YouTube · Podcast" : "YouTube · Vídeo");
+    try {
+      const items = await searchYouTube(target, cat, 5);
+      if (requestId !== resolveRequestRef.current) return;
+      setResults(items);
+      setShowResults(true);
+      setVideoId(items[0].videoId);
+      setPlaying(true);
+      savePrefs({ lastQuery: target, lastVideoId: items[0].videoId });
+    } catch (err) {
+      if (requestId !== resolveRequestRef.current) return;
+      console.error("[FloatingMusicPlayer] runSearch failed:", err);
+      setShowFallbackButton(true);
+    } finally {
+      if (requestId === resolveRequestRef.current) setEmbedLoading(false);
+    }
+  }, [query]);
+
+  const playFromList = useCallback((item: YouTubeSearchItem) => {
+    setVideoId(item.videoId);
+    setPlaying(true);
+    setShowResults(false);
+    savePrefs({ lastVideoId: item.videoId });
   }, []);
 
   const handleVolumeChange = useCallback((val: number[]) => {
