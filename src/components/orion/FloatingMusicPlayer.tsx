@@ -373,9 +373,15 @@ export function FloatingMusicPlayer() {
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-red-500/10 to-primary/10 border-b border-border/30">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm">🎵</span>
+            <Youtube className="h-3.5 w-3.5 text-red-500 shrink-0" />
             <span className="text-xs font-medium truncate text-foreground/80">
               {query}
+            </span>
+            <span
+              className="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0"
+              title="Plataforma resolvida"
+            >
+              {resolvedPlatform}
             </span>
           </div>
           <div className="flex items-center gap-1">
