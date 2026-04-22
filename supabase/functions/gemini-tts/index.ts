@@ -17,7 +17,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   "Access-Control-Expose-Headers":
-    "X-TTS-Engine, X-TTS-Model, X-TTS-Input, X-TTS-Fallback, X-TTS-Escaped-Total, X-TTS-Escaped-Chars",
+    "X-TTS-Engine, X-TTS-Model, X-TTS-Input, X-TTS-Fallback, X-TTS-Escaped-Total, X-TTS-Escaped-Chars, X-TTS-Break-Timings",
 };
 
 const CLOUD_TTS_MODEL = "gemini-2.5-flash-tts";
@@ -206,9 +206,7 @@ export interface EscapeReport {
 
 function escapeSSMLWithReport(s: string): EscapeReport {
   const counts: Record<string, number> = {};
-  const bump = (ch: string) => {
-    counts[ch] = (counts[ch] ?? 0) + 1;
-  };
+  const bump = (ch: string) => { counts[ch] = (counts[ch] ?? 0) + 1; };
   const escaped = s
     .replace(/&/g, () => { bump("&"); return "&amp;"; })
     .replace(/</g, () => { bump("<"); return "&lt;"; })
@@ -227,6 +225,36 @@ function isAlreadySSML(s: string): boolean {
   return /^\s*<speak[\s>]/i.test(s);
 }
 
+// ─── Configurable break timings ──────────────────────────
+export interface BreakTimings {
+  /** After . ! ? … (sentence end). Default 280ms. Range 0–5000ms. */
+  sentenceMs?: number;
+  /** After , ; : (clause). Default 120ms. */
+  clauseMs?: number;
+  /** Blank line / paragraph break. Default 380ms. */
+  paragraphMs?: number;
+  /** Single line break. Default 150ms. */
+  lineBreakMs?: number;
+}
+
+const DEFAULT_BREAK_TIMINGS: Required<BreakTimings> = {
+  sentenceMs: 280,
+  clauseMs: 120,
+  paragraphMs: 380,
+  lineBreakMs: 150,
+};
+
+function resolveBreakTimings(input?: BreakTimings): Required<BreakTimings> {
+  const pick = (v: unknown, fallback: number) =>
+    typeof v === "number" && Number.isFinite(v) ? clamp(Math.round(v), 0, 5000) : fallback;
+  return {
+    sentenceMs: pick(input?.sentenceMs, DEFAULT_BREAK_TIMINGS.sentenceMs),
+    clauseMs: pick(input?.clauseMs, DEFAULT_BREAK_TIMINGS.clauseMs),
+    paragraphMs: pick(input?.paragraphMs, DEFAULT_BREAK_TIMINGS.paragraphMs),
+    lineBreakMs: pick(input?.lineBreakMs, DEFAULT_BREAK_TIMINGS.lineBreakMs),
+  };
+}
+
 /**
  * Convert plain text → SSML with natural pacing for pt-BR.
  * - Sentence-ending punctuation gets short <break>
@@ -234,7 +262,10 @@ function isAlreadySSML(s: string): boolean {
  * - Wraps in <prosody rate="medium" pitch="+0st"> for stable cadence
  * - Escapes XML-unsafe chars
  */
-function textToSSML(text: string): { ssml: string; escapeReport: EscapeReport } {
+function textToSSML(
+  text: string,
+  breaks: Required<BreakTimings> = DEFAULT_BREAK_TIMINGS,
+): { ssml: string; escapeReport: EscapeReport } {
   // Normalize line endings first so \r\n behaves like \n
   const normalized = text.trim().replace(/\r\n?/g, "\n");
   const escapeReport = escapeSSMLWithReport(normalized);
@@ -244,12 +275,12 @@ function textToSSML(text: string): { ssml: string; escapeReport: EscapeReport } 
   // so a single line break stays a short pause instead of a long paragraph gap.
   const withBreaks = escaped
     // Punctuation pacing
-    .replace(/([.!?…])(\s+|$)/g, '$1<break time="280ms"/>$2')
-    .replace(/([,;:])(\s+)/g, '$1<break time="120ms"/>$2')
-    // True paragraph break: one or more blank lines (\n followed by optional spaces and another \n)
-    .replace(/\n[ \t]*\n+/g, '<break time="380ms"/>')
-    // Single line break → short pause (~150ms), like a soft comma, NOT a paragraph
-    .replace(/\n/g, '<break time="150ms"/>');
+    .replace(/([.!?…])(\s+|$)/g, `$1<break time="${breaks.sentenceMs}ms"/>$2`)
+    .replace(/([,;:])(\s+)/g, `$1<break time="${breaks.clauseMs}ms"/>$2`)
+    // True paragraph break: one or more blank lines
+    .replace(/\n[ \t]*\n+/g, `<break time="${breaks.paragraphMs}ms"/>`)
+    // Single line break → short pause, like a soft comma, NOT a paragraph
+    .replace(/\n/g, `<break time="${breaks.lineBreakMs}ms"/>`);
 
   const ssml = `<speak><prosody rate="medium" pitch="+0st" volume="medium">${withBreaks}</prosody></speak>`;
   return { ssml, escapeReport };
@@ -263,10 +294,12 @@ async function requestCloudTTS(
   _stylePrompt: string,
   multispeaker?: MultiSpeakerVoice[],
   audioOpts?: { speakingRate?: number; pitch?: number; volumeGainDb?: number },
+  breakTimings?: BreakTimings,
 ): Promise<Response | null> {
   const url = "https://texttospeech.googleapis.com/v1beta1/text:synthesize";
 
   const isMulti = multispeaker && multispeaker.length > 0;
+  const resolvedBreaks = resolveBreakTimings(breakTimings);
 
   // ── Voice config (only fields supported by Cloud TTS v1beta1) ──
   const voiceParams: Record<string, unknown> = {
@@ -294,10 +327,10 @@ async function requestCloudTTS(
   let escapeReport: EscapeReport;
   if (useSSML) {
     ssmlInput = inputContent;
-    // Passthrough SSML: still scan the raw input for diagnostic visibility
+    // Passthrough SSML: still scan stripped text for diagnostic visibility
     escapeReport = escapeSSMLWithReport(inputContent.replace(/<[^>]+>/g, ""));
   } else {
-    const built = textToSSML(inputContent);
+    const built = textToSSML(inputContent, resolvedBreaks);
     ssmlInput = built.ssml;
     escapeReport = built.escapeReport;
   }
@@ -307,6 +340,9 @@ async function requestCloudTTS(
       escapeReport.counts,
     );
   }
+  console.log(
+    `[Cloud TTS] ⏱️ Break timings (ms): sentence=${resolvedBreaks.sentenceMs} clause=${resolvedBreaks.clauseMs} paragraph=${resolvedBreaks.paragraphMs} lineBreak=${resolvedBreaks.lineBreakMs}`,
+  );
   // Plain text fallback: strip ALL XML tags and unescape basic entities so the
   // synthesizer always has a safe, valid input even if SSML generation breaks.
   const plainTextFallback = inputContent
@@ -361,10 +397,11 @@ async function requestCloudTTS(
             ? "plain-text-fallback"
             : useSSML ? "ssml-passthrough" : "ssml-auto";
           console.log(`[Cloud TTS] ✅ ${CLOUD_TTS_MODEL} ${(audioBytes.length / 1024).toFixed(1)}KB MP3 (input=${inputLabel})`);
-          // Encode escape report compactly: e.g. "&:3,<:1,\":2"
           const escapeCountsHeader = Object.entries(escapeReport.counts)
             .map(([ch, n]) => `${ch}:${n}`)
             .join(",");
+          const breakTimingsHeader =
+            `sentence=${resolvedBreaks.sentenceMs},clause=${resolvedBreaks.clauseMs},paragraph=${resolvedBreaks.paragraphMs},lineBreak=${resolvedBreaks.lineBreakMs}`;
           return new Response(audioBytes.buffer, {
             headers: {
               ...corsHeaders,
@@ -376,6 +413,7 @@ async function requestCloudTTS(
               "X-TTS-Fallback": inputMode === "text" ? "plain-text" : "none",
               "X-TTS-Escaped-Total": String(escapeReport.total),
               "X-TTS-Escaped-Chars": escapeCountsHeader,
+              "X-TTS-Break-Timings": breakTimingsHeader,
             },
           });
         }
@@ -612,6 +650,17 @@ Deno.serve(async (req) => {
       volumeGainDb: typeof body?.volumeGainDb === "number" ? body.volumeGainDb : undefined,
     };
 
+    // Configurable SSML <break> durations per break type (ms, 0–5000)
+    const breakTimings: BreakTimings | undefined =
+      body?.breakTimings && typeof body.breakTimings === "object"
+        ? {
+            sentenceMs: body.breakTimings.sentenceMs,
+            clauseMs: body.breakTimings.clauseMs,
+            paragraphMs: body.breakTimings.paragraphMs,
+            lineBreakMs: body.breakTimings.lineBreakMs,
+          }
+        : undefined;
+
     // ⚡ Warm-up ping: client wants to wake the function but skip synthesis
     if (body?.warmup === true) {
       // Pre-fetch access token so the next real request is hot
@@ -632,7 +681,7 @@ Deno.serve(async (req) => {
       const token = await getAccessToken(sa);
       if (token) {
         console.log(`[TTS] ${cleanText.length} chars → Cloud TTS API (${CLOUD_TTS_MODEL}, voice: ${selectedVoice})`);
-        const cloudResp = await requestCloudTTS(token, cleanText, selectedVoice, selectedLang, stylePrompt, multispeaker, audioOpts);
+        const cloudResp = await requestCloudTTS(token, cleanText, selectedVoice, selectedLang, stylePrompt, multispeaker, audioOpts, breakTimings);
         if (cloudResp) return cloudResp;
 
         // ── 2) Vertex AI generateContent (fallback, same GCP credits) ──
