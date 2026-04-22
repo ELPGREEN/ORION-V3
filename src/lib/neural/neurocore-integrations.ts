@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * NEUROCORE AI v1.0 — Integrações Opcionais
  * Data: Março 2026

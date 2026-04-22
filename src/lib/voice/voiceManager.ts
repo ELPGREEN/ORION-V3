@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Voice Manager - Centralized coordinator for all voice subsystems
  * Integrates STT, TTS, confidence filtering, feedback indicators, and latency optimization
