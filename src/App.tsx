@@ -13,6 +13,7 @@ import { OrionShield } from "@/components/common/OrionShield";
 // GlobalOrionListener moved to DashboardLayout — no mic prompts on public pages
 import { PublicOrionListener } from "@/components/PublicOrionListener";
 import { VideoOverlay } from "@/components/orion/VideoOverlay";
+import { FloatingMusicPlayer } from "@/components/orion/FloatingMusicPlayer";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import { PageLoader } from "@/components/common/PageLoader";
 import { AuthGuard } from "@/components/common/AuthGuard";
@@ -164,6 +165,7 @@ const App = () => (
           {/* Global video overlay stays mounted once at app level */}
           <PublicOrionListener />
           <VideoOverlay />
+          <FloatingMusicPlayer />
           <MouseTrailEffect />
           <CookieConsent />
           <AffiliateTracker />
