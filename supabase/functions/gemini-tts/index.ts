@@ -232,10 +232,11 @@ function isAlreadySSML(s: string): boolean {
  * - Wraps in <prosody rate="medium" pitch="+0st"> for stable cadence
  * - Escapes XML-unsafe chars
  */
-function textToSSML(text: string): string {
+function textToSSML(text: string): { ssml: string; escapeReport: EscapeReport } {
   // Normalize line endings first so \r\n behaves like \n
   const normalized = text.trim().replace(/\r\n?/g, "\n");
-  const escaped = escapeSSML(normalized);
+  const escapeReport = escapeSSMLWithReport(normalized);
+  const escaped = escapeReport.escaped;
 
   // Order matters: handle blank-line paragraph breaks BEFORE single newlines,
   // so a single line break stays a short pause instead of a long paragraph gap.
@@ -248,7 +249,8 @@ function textToSSML(text: string): string {
     // Single line break → short pause (~150ms), like a soft comma, NOT a paragraph
     .replace(/\n/g, '<break time="150ms"/>');
 
-  return `<speak><prosody rate="medium" pitch="+0st" volume="medium">${withBreaks}</prosody></speak>`;
+  const ssml = `<speak><prosody rate="medium" pitch="+0st" volume="medium">${withBreaks}</prosody></speak>`;
+  return { ssml, escapeReport };
 }
 
 async function requestCloudTTS(
