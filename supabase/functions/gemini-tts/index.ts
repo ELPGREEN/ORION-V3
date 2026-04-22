@@ -217,15 +217,20 @@ function isAlreadySSML(s: string): boolean {
  * - Escapes XML-unsafe chars
  */
 function textToSSML(text: string): string {
-  const escaped = escapeSSML(text.trim());
+  // Normalize line endings first so \r\n behaves like \n
+  const normalized = text.trim().replace(/\r\n?/g, "\n");
+  const escaped = escapeSSML(normalized);
 
-  // Insert breaks AFTER punctuation (don't replace it — TTS still needs it for prosody)
+  // Order matters: handle blank-line paragraph breaks BEFORE single newlines,
+  // so a single line break stays a short pause instead of a long paragraph gap.
   const withBreaks = escaped
+    // Punctuation pacing
     .replace(/([.!?…])(\s+|$)/g, '$1<break time="280ms"/>$2')
     .replace(/([,;:])(\s+)/g, '$1<break time="120ms"/>$2')
-    // Paragraph breaks
-    .replace(/\n{2,}/g, '<break time="450ms"/>')
-    .replace(/\n/g, '<break time="200ms"/>');
+    // True paragraph break: one or more blank lines (\n followed by optional spaces and another \n)
+    .replace(/\n[ \t]*\n+/g, '<break time="380ms"/>')
+    // Single line break → short pause (~150ms), like a soft comma, NOT a paragraph
+    .replace(/\n/g, '<break time="150ms"/>');
 
   return `<speak><prosody rate="medium" pitch="+0st" volume="medium">${withBreaks}</prosody></speak>`;
 }
