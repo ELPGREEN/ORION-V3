@@ -288,7 +288,23 @@ async function requestCloudTTS(
   // ── Input: SSML preferred, with auto-wrap for plain text ──
   const inputContent = text.slice(0, 4000);
   const useSSML = isAlreadySSML(inputContent);
-  const ssmlInput = useSSML ? inputContent : textToSSML(inputContent);
+  let ssmlInput: string;
+  let escapeReport: EscapeReport;
+  if (useSSML) {
+    ssmlInput = inputContent;
+    // Passthrough SSML: still scan the raw input for diagnostic visibility
+    escapeReport = escapeSSMLWithReport(inputContent.replace(/<[^>]+>/g, ""));
+  } else {
+    const built = textToSSML(inputContent);
+    ssmlInput = built.ssml;
+    escapeReport = built.escapeReport;
+  }
+  if (escapeReport.total > 0) {
+    console.log(
+      `[Cloud TTS] 🔣 Escaped ${escapeReport.total} XML-unsafe chars:`,
+      escapeReport.counts,
+    );
+  }
   // Plain text fallback: strip ALL XML tags and unescape basic entities so the
   // synthesizer always has a safe, valid input even if SSML generation breaks.
   const plainTextFallback = inputContent
