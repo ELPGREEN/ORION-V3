@@ -627,14 +627,21 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           console.log("[NeuralVision] 🚫 Blocked auto-activation — no vision keyword in transcript:", lastTranscriptRef.current.slice(0, 60));
           return;
         }
+        // Speak only if event source didn't already speak (silent flag) AND not coming from routeOrionCommand
+        if (!detail?.silent && userInitiated) {
+          speakFast("Visão ativada.").catch(() => {});
+        }
         startCamera({ announce: false }).catch(() => {});
       } else if (detail?.action === "deactivate_vision" && active) {
+        if (!detail?.silent && detail?.userInitiated) {
+          speakFast("Desativando visão.").catch(() => {});
+        }
         stopCamera();
       }
     };
     window.addEventListener("orion-vision-command", handler);
     return () => window.removeEventListener("orion-vision-command", handler);
-  }, [active, startCamera, stopCamera]);
+  }, [active, startCamera, stopCamera, speakFast]);
 
 
   useEffect(() => {
