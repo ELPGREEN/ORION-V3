@@ -389,6 +389,38 @@ export function FloatingMusicPlayer() {
               variant="ghost"
               size="icon"
               className="h-6 w-6"
+              onClick={handlePrev}
+              disabled={!videoId}
+              title="Anterior"
+            >
+              <SkipBack className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full transition-colors"
+              style={{ backgroundColor: playing ? "hsl(var(--primary) / 0.18)" : "transparent" }}
+              onClick={togglePlay}
+              disabled={!videoId}
+              title={playing ? "Pausar" : "Tocar"}
+              aria-pressed={playing}
+            >
+              {playing ? <Pause className="h-3 w-3 text-primary" /> : <Play className="h-3 w-3" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={handleNext}
+              disabled={!videoId}
+              title="Próxima"
+            >
+              <SkipForward className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
               onClick={() => openYouTube(videoId ? `https://www.youtube.com/watch?v=${videoId}` : query)}
               title="Abrir no YouTube"
             >
