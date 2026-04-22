@@ -92,6 +92,23 @@ async function resolveYouTubeVideoId(query: string): Promise<string> {
 }
 
 export function FloatingMusicPlayer() {
+  // Singleton guard — only the first instance renders, prevents duplicates across routes
+  const [isPrimary, setIsPrimary] = useState(false);
+  useEffect(() => {
+    const w = window as unknown as Record<string, number>;
+    const current = w[FLOATING_MOUNT_KEY] || 0;
+    if (current === 0) {
+      w[FLOATING_MOUNT_KEY] = 1;
+      setIsPrimary(true);
+    } else {
+      w[FLOATING_MOUNT_KEY] = current + 1;
+    }
+    return () => {
+      const v = (w[FLOATING_MOUNT_KEY] || 1) - 1;
+      w[FLOATING_MOUNT_KEY] = Math.max(0, v);
+    };
+  }, []);
+
   const initial = loadPrefs();
   // Restore visibility + query from last session so reload / route change keeps the player open
   const [visible, setVisible] = useState(initial.visible && !!initial.lastQuery);
@@ -103,6 +120,8 @@ export function FloatingMusicPlayer() {
   const [showFallbackButton, setShowFallbackButton] = useState(false);
   const [fallbackLoading, setFallbackLoading] = useState(false);
   const [embedLoading, setEmbedLoading] = useState(false);
+  const [playing, setPlaying] = useState(true);
+  const [resolvedPlatform, setResolvedPlatform] = useState<string>("YouTube");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fallbackTimerRef = useRef<number | null>(null);
   const resolveRequestRef = useRef(0);
