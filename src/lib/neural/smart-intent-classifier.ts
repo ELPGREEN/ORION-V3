@@ -76,12 +76,11 @@ const REGEX_RULES: IntentRule[] = [
     return { query: m?.[1]?.trim() || t, action: /\b(par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
   }},
 
-  // Media controls — next, previous, pause, resume
-  { pattern: /\b(pr[óò]xima?|pr[óò]ximo|avançar|seguinte|próxima\s+(m[uú]sica|faixa))\b/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "next" }) },
-  { pattern: /\b(anterior|voltar|retornar|voltar\s+(uma|à)\s+(m[uú]sica|faixa)|m[uú]sica\s+anterior)\b/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "prev" }) },
-  { pattern: /\b(pausar|parar|stop|pausa)\b/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "pause" }) },
-  { pattern: /\b(continuar|retomar|resume|play|reproduzir)\b/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "play" }) },
-  
+  // Media controls — only explicit controls, never commands with a target query
+  { pattern: /^\s*(pr[óò]xima?|pr[óò]ximo|avançar|seguinte|próxima\s+(m[uú]sica|faixa))\s*$/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "next" }) },
+  { pattern: /^\s*(anterior|voltar|retornar|voltar\s+(uma|à)\s+(m[uú]sica|faixa)|m[uú]sica\s+anterior)\s*$/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "prev" }) },
+  { pattern: /^\s*(pausar|parar|stop|pausa)\s*$/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "pause" }) },
+  { pattern: /^\s*(continuar|retomar|resume|play|reproduzir)\s*$/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "play" }) },
   // Navigation — AFTER media so "abrir música" is already caught
   { pattern: /\b(v[aá]\s+para|naveg\w*\s+(para|pra)|ir\s+para|go\s+to)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
     const m = t.match(/(?:v[aá]\s+para|naveg\w*\s+(?:para|pra)|ir\s+para)\s+(.+)/i);

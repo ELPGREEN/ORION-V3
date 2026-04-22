@@ -14,8 +14,8 @@ function normalizeCommand(text: string): string {
 
 function extractSearchQuery(command: string): string {
   return command
-    .replace(/^(?:youtube\s+)?(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|ouvir|assistir)\s+/i, "")
-    .replace(/^(?:musica|video|som|playlist)\s+/i, "")
+    .replace(/^(?:youtube\s+)?(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|ouvir|assistir|ver)\s+/i, "")
+    .replace(/^(?:uma?\s+)?(?:musica|video|som|playlist|podcast|filme)\s+/i, "")
     .trim();
 }
 
@@ -47,7 +47,9 @@ export function handleLocalYouTubeVoiceCommand(rawCommand: string): LocalYouTube
   const command = normalizeCommand(rawCommand);
   if (!command) return { handled: false };
 
-  const hasMusicContext = /\b(youtube|musica|video|player|toca|tocar|toque|reproduz|reproduzir|som|playlist)\b/.test(command);
+  const hasMusicContext = /\b(youtube|musica|video|player|toca|tocar|toque|reproduz|reproduzir|som|playlist|podcast|filme|assistir|ver)\b/.test(command);
+  const searchQuery = extractSearchQuery(command);
+  const wantsSpecificMedia = !!searchQuery && searchQuery !== command;
 
   switch (true) {
     case /\b(proxima|proximo|avancar|avanca|seguir faixa|next)\b/.test(command):
@@ -62,7 +64,11 @@ export function handleLocalYouTubeVoiceCommand(rawCommand: string): LocalYouTube
       dispatchOrionEvent(OrionEvents.MusicCommand, { action: "pause", fullCommand: rawCommand });
       return { handled: true, feedback: "Pausando YouTube." };
 
-    case /\b(play|tocar|toque|continuar|continua|continue|retomar|resume)\b/.test(command) && !/\b(buscar|pesquisar|procure|procurar)\b/.test(command):
+    case /\b(continuar|continua|continue|retomar|resume)\b/.test(command) && !wantsSpecificMedia:
+      dispatchOrionEvent(OrionEvents.MusicCommand, { action: "resume", fullCommand: rawCommand });
+      return { handled: true, feedback: "Retomando YouTube." };
+
+    case /\b(play)\b/.test(command) && !wantsSpecificMedia:
       dispatchOrionEvent(OrionEvents.MusicCommand, { action: "resume", fullCommand: rawCommand });
       return { handled: true, feedback: "Retomando YouTube." };
 
@@ -96,7 +102,7 @@ export function handleLocalYouTubeVoiceCommand(rawCommand: string): LocalYouTube
       return { handled: true, feedback: explicitValue !== undefined ? `Volume em ${explicitValue}%.` : "Ajustando volume." };
     }
 
-    case /\b(youtube\s+)?(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|ouvir|assistir)\b/.test(command): {
+    case /\b(youtube\s+)?(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|ouvir|assistir|ver)\b/.test(command): {
       const query = extractSearchQuery(command);
       if (!query) return { handled: false };
       dispatchResolved(query);
