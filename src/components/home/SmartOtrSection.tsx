@@ -4,7 +4,6 @@ import { IconBot, IconCpu, IconZap, IconSettings } from "@/components/icons/Sume
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
-import videoOtrAsset from "@/assets/video-smart-otr-v4.mp4.asset.json";
 
 const features = [
   { icon: IconBot, title: "Smart Robotic Line", desc: "Linha robótica inteligente que processa pneus OTR gigantes de 57'' a 63'' — até 10 toneladas/hora por planta, com corte hidráulico, trituração e separação automatizada." },
@@ -44,9 +43,9 @@ export function SmartOtrSection() {
         <ScrollReveal direction="up" delay={0.2}>
           <div className="max-w-4xl mx-auto mb-12">
             <VideoPlayer
-              src={videoOtrAsset.url}
-              title="Smart OTR — Processamento de Pneus Gigantes"
-              desc="Corte hidráulico, trituração e separação de materiais (borracha, aço, fibra têxtil) com tecnologia robótica automatizada."
+              youtubeId="SxAFs5r-Ok4"
+              title="Built to Last — How We Manufacture Our Recycling Machines"
+              desc="Bastidores da fabricação das máquinas de reciclagem ELP / TOPS — engenharia, robótica e qualidade industrial."
             />
           </div>
         </ScrollReveal>
