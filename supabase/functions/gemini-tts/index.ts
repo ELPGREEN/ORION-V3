@@ -198,17 +198,61 @@ function pcmToWav(pcmBase64: string, sampleRate = 24000, channels = 1, bitsPerSa
 // Cloud TTS supports a strict subset of SSML. We auto-wrap plain text into
 // SSML with prosody + natural pauses to improve intelligibility.
 
+export interface EscapeReport {
+  escaped: string;
+  counts: Record<string, number>; // char → occurrences escaped
+  total: number;
+}
+
+function escapeSSMLWithReport(s: string): EscapeReport {
+  const counts: Record<string, number> = {};
+  const bump = (ch: string) => { counts[ch] = (counts[ch] ?? 0) + 1; };
+  const escaped = s
+    .replace(/&/g, () => { bump("&"); return "&amp;"; })
+    .replace(/</g, () => { bump("<"); return "&lt;"; })
+    .replace(/>/g, () => { bump(">"); return "&gt;"; })
+    .replace(/"/g, () => { bump('"'); return "&quot;"; })
+    .replace(/'/g, () => { bump("'"); return "&apos;"; });
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return { escaped, counts, total };
+}
+
 function escapeSSML(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+  return escapeSSMLWithReport(s).escaped;
 }
 
 function isAlreadySSML(s: string): boolean {
   return /^\s*<speak[\s>]/i.test(s);
+}
+
+// ─── Configurable break timings ──────────────────────────
+export interface BreakTimings {
+  /** After . ! ? … (sentence end). Default 280ms. Range 0–5000ms. */
+  sentenceMs?: number;
+  /** After , ; : (clause). Default 120ms. */
+  clauseMs?: number;
+  /** Blank line / paragraph break. Default 380ms. */
+  paragraphMs?: number;
+  /** Single line break. Default 150ms. */
+  lineBreakMs?: number;
+}
+
+const DEFAULT_BREAK_TIMINGS: Required<BreakTimings> = {
+  sentenceMs: 280,
+  clauseMs: 120,
+  paragraphMs: 380,
+  lineBreakMs: 150,
+};
+
+function resolveBreakTimings(input?: BreakTimings): Required<BreakTimings> {
+  const pick = (v: unknown, fallback: number) =>
+    typeof v === "number" && Number.isFinite(v) ? clamp(Math.round(v), 0, 5000) : fallback;
+  return {
+    sentenceMs: pick(input?.sentenceMs, DEFAULT_BREAK_TIMINGS.sentenceMs),
+    clauseMs: pick(input?.clauseMs, DEFAULT_BREAK_TIMINGS.clauseMs),
+    paragraphMs: pick(input?.paragraphMs, DEFAULT_BREAK_TIMINGS.paragraphMs),
+    lineBreakMs: pick(input?.lineBreakMs, DEFAULT_BREAK_TIMINGS.lineBreakMs),
+  };
 }
 
 /**
@@ -218,23 +262,28 @@ function isAlreadySSML(s: string): boolean {
  * - Wraps in <prosody rate="medium" pitch="+0st"> for stable cadence
  * - Escapes XML-unsafe chars
  */
-function textToSSML(text: string): string {
+function textToSSML(
+  text: string,
+  breaks: Required<BreakTimings> = DEFAULT_BREAK_TIMINGS,
+): { ssml: string; escapeReport: EscapeReport } {
   // Normalize line endings first so \r\n behaves like \n
   const normalized = text.trim().replace(/\r\n?/g, "\n");
-  const escaped = escapeSSML(normalized);
+  const escapeReport = escapeSSMLWithReport(normalized);
+  const escaped = escapeReport.escaped;
 
   // Order matters: handle blank-line paragraph breaks BEFORE single newlines,
   // so a single line break stays a short pause instead of a long paragraph gap.
   const withBreaks = escaped
     // Punctuation pacing
-    .replace(/([.!?…])(\s+|$)/g, '$1<break time="280ms"/>$2')
-    .replace(/([,;:])(\s+)/g, '$1<break time="120ms"/>$2')
-    // True paragraph break: one or more blank lines (\n followed by optional spaces and another \n)
-    .replace(/\n[ \t]*\n+/g, '<break time="380ms"/>')
-    // Single line break → short pause (~150ms), like a soft comma, NOT a paragraph
-    .replace(/\n/g, '<break time="150ms"/>');
+    .replace(/([.!?…])(\s+|$)/g, `$1<break time="${breaks.sentenceMs}ms"/>$2`)
+    .replace(/([,;:])(\s+)/g, `$1<break time="${breaks.clauseMs}ms"/>$2`)
+    // True paragraph break: one or more blank lines
+    .replace(/\n[ \t]*\n+/g, `<break time="${breaks.paragraphMs}ms"/>`)
+    // Single line break → short pause, like a soft comma, NOT a paragraph
+    .replace(/\n/g, `<break time="${breaks.lineBreakMs}ms"/>`);
 
-  return `<speak><prosody rate="medium" pitch="+0st" volume="medium">${withBreaks}</prosody></speak>`;
+  const ssml = `<speak><prosody rate="medium" pitch="+0st" volume="medium">${withBreaks}</prosody></speak>`;
+  return { ssml, escapeReport };
 }
 
 async function requestCloudTTS(
