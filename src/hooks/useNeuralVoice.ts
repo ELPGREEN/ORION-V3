@@ -1118,3 +1118,18 @@ export function useNeuralVoice(
     abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef,
   };
 }
+
+// ─── External Feed Helpers (for Agentic Loop / External Orchestrators) ───
+/** Feeds user speech from external sources into the voice state memory to prevent echo */
+export function feedUserSpeech(text: string) {
+  // Accessing module-level refs or state isn't directly possible from exported pure functions
+  // if they are defined inside the hook. However, we can use a custom event to sync if needed.
+  console.log("[Voice] External user speech fed:", text);
+  window.dispatchEvent(new CustomEvent("orion:feed-user-speech", { detail: { text } }));
+}
+
+/** Feeds AI response from external sources into the voice state memory to prevent echo */
+export function feedAIResponse(text: string) {
+  console.log("[Voice] External AI response fed:", text);
+  window.dispatchEvent(new CustomEvent("orion:feed-ai-response", { detail: { text } }));
+}
