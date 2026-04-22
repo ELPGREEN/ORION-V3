@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink } from "lucide-react";
+import { X, Volume2, Volume1, VolumeX, Minimize2, Maximize2, ExternalLink, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,33 +11,111 @@ interface MusicCommand {
   fullCommand: string;
 }
 
+const STORAGE_KEY = "orion-music-player-prefs";
+
+interface PlayerPrefs {
+  volume: number;
+  muted: boolean;
+  minimized: boolean;
+  lastQuery?: string;
+}
+
+function loadPrefs(): PlayerPrefs {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        volume: typeof parsed.volume === "number" ? parsed.volume : 70,
+        muted: !!parsed.muted,
+        minimized: !!parsed.minimized,
+        lastQuery: parsed.lastQuery,
+      };
+    }
+  } catch {}
+  return { volume: 70, muted: false, minimized: false };
+}
+
+function savePrefs(prefs: Partial<PlayerPrefs>) {
+  try {
+    const current = loadPrefs();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, ...prefs }));
+  } catch {}
+}
+
 export function FloatingMusicPlayer() {
+  const initial = loadPrefs();
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
-  const [muted, setMuted] = useState(false);
-  const [volume, setVolume] = useState(70);
-  const [minimized, setMinimized] = useState(false);
+  const [muted, setMuted] = useState(initial.muted);
+  const [volume, setVolume] = useState(initial.volume);
+  const [minimized, setMinimized] = useState(initial.minimized);
+  const [showFallbackButton, setShowFallbackButton] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const fallbackTimerRef = useRef<number | null>(null);
 
-  // Listen for music commands from Orion (always active, any route)
+  // Persist preferences
+  useEffect(() => { savePrefs({ volume }); }, [volume]);
+  useEffect(() => { savePrefs({ muted }); }, [muted]);
+  useEffect(() => { savePrefs({ minimized }); }, [minimized]);
+
+  // Listen for music commands from Orion (single source of truth)
   useEffect(() => {
+    const showPlayer = (q: string) => {
+      if (isMobileDevice()) {
+        openYouTube(q.trim(), true);
+        return;
+      }
+      setQuery(q.trim());
+      setVisible(true);
+      // restore minimized preference but ensure header is visible
+      savePrefs({ lastQuery: q.trim() });
+      setShowFallbackButton(false);
+      if (fallbackTimerRef.current) {
+        window.clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+    };
+
     const handler = (e: CustomEvent<MusicCommand>) => {
       const { action, query: q } = e.detail;
       if (action === "search_and_play" && q) {
-        if (isMobileDevice()) {
-          openYouTube(q.trim(), true);
-          return;
-        }
-        setQuery(q.trim());
-        setVisible(true);
-        setMinimized(false);
+        showPlayer(q);
       } else if (action === "stop" || action === "pause") {
         setVisible(false);
       }
     };
+
+    // Explicit "show" event — triggered by fallback button or external code
+    const showHandler = (e: CustomEvent<{ query?: string }>) => {
+      const q = e.detail?.query || query || loadPrefs().lastQuery || "";
+      if (q) showPlayer(q);
+    };
+
+    // Speech-driven fallback: when Orion says "tocando", show button if player not visible after 1.2s
+    const speakingHandler = (e: CustomEvent<{ text?: string }>) => {
+      const text = (e.detail?.text || "").toLowerCase();
+      if (/\btocando\b|\breproduzindo\b|\bcolocando\s+(?:a\s+)?m[uú]sica\b/.test(text)) {
+        if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = window.setTimeout(() => {
+          setVisible(prev => {
+            if (!prev) setShowFallbackButton(true);
+            return prev;
+          });
+        }, 1200);
+      }
+    };
+
     window.addEventListener("orion-music-command", handler as EventListener);
-    return () => window.removeEventListener("orion-music-command", handler as EventListener);
-  }, []);
+    window.addEventListener("orion-music-player-show", showHandler as EventListener);
+    window.addEventListener("orion-speaking", speakingHandler as EventListener);
+    return () => {
+      window.removeEventListener("orion-music-command", handler as EventListener);
+      window.removeEventListener("orion-music-player-show", showHandler as EventListener);
+      window.removeEventListener("orion-speaking", speakingHandler as EventListener);
+      if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
+    };
+  }, [query]);
 
   // Listen for volume commands
   useEffect(() => {
@@ -61,6 +139,7 @@ export function FloatingMusicPlayer() {
   const close = useCallback(() => {
     setVisible(false);
     setQuery("");
+    setShowFallbackButton(false);
   }, []);
 
   const handleVolumeChange = useCallback((val: number[]) => {
@@ -69,9 +148,37 @@ export function FloatingMusicPlayer() {
     setMuted(v === 0);
   }, []);
 
+  const openFromFallback = useCallback(() => {
+    const q = query || loadPrefs().lastQuery || "";
+    if (q) {
+      window.dispatchEvent(new CustomEvent("orion-music-player-show", { detail: { query: q } }));
+    }
+    setShowFallbackButton(false);
+  }, [query]);
+
   const embedUrl = query
     ? `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1${muted || volume === 0 ? "&mute=1" : ""}`
     : "";
+
+  // Fallback "Open Player" button when Orion announces playback but player didn't open
+  if (showFallbackButton && !visible) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
+        className="fixed bottom-4 right-4 z-[9999]"
+      >
+        <Button
+          onClick={openFromFallback}
+          className="shadow-2xl bg-gradient-to-r from-red-500 to-primary text-primary-foreground gap-2 rounded-full px-5 py-6"
+        >
+          <Music className="h-4 w-4" />
+          Abrir player
+        </Button>
+      </motion.div>
+    );
+  }
 
   if (!visible || !query) return null;
 
