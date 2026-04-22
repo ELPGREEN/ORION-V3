@@ -64,7 +64,32 @@ function ytToUnified(t: YTMusicTrack): UnifiedTrack {
   };
 }
 
+// ── Singleton guard ─────────────────────────────────────────────
+// Multiple OrionPlaylistBar instances would duplicate playback when an
+// `orion-music-command` event is dispatched (each instance reacts).
+// We mark the window when the first instance mounts; subsequent instances
+// render `null` so only ONE bar is alive across Dashboard + RedeNeural.
+const ORION_PLAYLIST_MOUNT_KEY = "__orionPlaylistBarMounted__";
+
 export function OrionPlaylistBar() {
+  const [isPrimary, setIsPrimary] = useState(false);
+
+  useEffect(() => {
+    const w = window as unknown as Record<string, number>;
+    const current = w[ORION_PLAYLIST_MOUNT_KEY] || 0;
+    if (current === 0) {
+      w[ORION_PLAYLIST_MOUNT_KEY] = 1;
+      setIsPrimary(true);
+    } else {
+      w[ORION_PLAYLIST_MOUNT_KEY] = current + 1;
+      console.warn("[OrionPlaylistBar] Duplicate instance detected — rendering null to enforce singleton");
+    }
+    return () => {
+      const v = (w[ORION_PLAYLIST_MOUNT_KEY] || 1) - 1;
+      w[ORION_PLAYLIST_MOUNT_KEY] = Math.max(0, v);
+    };
+  }, []);
+
   const [query, setQuery] = useState("");
   const [tracks, setTracks] = useState<UnifiedTrack[]>([]);
   const [loading, setLoading] = useState(false);
@@ -434,6 +459,9 @@ export function OrionPlaylistBar() {
   } : null;
 
   const displayProgress = isSpotifySdkPlayback ? sdkProgress : progress;
+
+  // Singleton enforcement — render nothing if another instance is already mounted
+  if (!isPrimary) return null;
 
   if (!barVisible) {
     return (
