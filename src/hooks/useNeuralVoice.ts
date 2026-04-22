@@ -51,6 +51,12 @@ const COMMA_CLEAN_REGEX = /,+/g;
 const DOT_CLEAN_REGEX = /\.+/g;
 const NEWLINE_CLEAN_REGEX = /\n+/g;
 const WHITESPACE_CLEAN_REGEX = /\s+/g;
+const FORBIDDEN_ORION_CATCHPHRASE_REGEXES = [
+  /prepare-?se\s+para\s+a[cç][aã]o[^.!?\n]*?(?:proteja|proteger)[^.!?\n]*/gi,
+  /prepare-?se\s+para\s+a[cç][aã]o/gi,
+  /debr\w*\s+ao\s+m[aá]ximo/gi,
+  /deixa\s+que\s+eu\s+te\s+proteja/gi,
+];
 
 const NORMALIZE_DIACRITICS_REGEX = /[\u0300-\u036f]/g;
 const NORMALIZE_NON_ALPHANUMERIC_REGEX = /[^\p{L}\p{N}\s]/gu;
@@ -77,7 +83,8 @@ function ensureVoiceBootstrapOnce() {
 // ═══ Text Utilities ═══
 
 export function cleanTextForSpeech(text: string): string {
-  return text
+  const sanitized = sanitizeOrionSpeechText(text);
+  return sanitized
     // Strip code blocks and markdown
     .replace(CODE_BLOCK_REGEX, " código omitido ")
     .replace(INLINE_CODE_REGEX, "$1")
@@ -102,6 +109,15 @@ export function cleanTextForSpeech(text: string): string {
     .replace(NEWLINE_CLEAN_REGEX, " ")
     .replace(WHITESPACE_CLEAN_REGEX, " ")
     .trim();
+}
+
+function sanitizeOrionSpeechText(text: string): string {
+  let sanitized = text;
+  for (const pattern of FORBIDDEN_ORION_CATCHPHRASE_REGEXES) {
+    sanitized = sanitized.replace(pattern, " ");
+  }
+  sanitized = sanitized.replace(WHITESPACE_CLEAN_REGEX, " ").trim();
+  return deduplicateRepeatedPhrases(sanitized);
 }
 
 export function normalizeSpeechText(text: string): string {
