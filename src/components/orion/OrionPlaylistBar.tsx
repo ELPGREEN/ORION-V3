@@ -73,6 +73,14 @@ function ytToUnified(t: YTMusicTrack): UnifiedTrack {
 // render `null` so only ONE bar is alive across Dashboard + RedeNeural.
 const ORION_PLAYLIST_MOUNT_KEY = "__orionPlaylistBarMounted__";
 
+// Short labels for the requested vs resolved platform badges shown in the bar.
+const PLATFORM_BADGE_LABEL: Record<ResolvedMusicPlatform, string> = {
+  spotify: "Spotify",
+  amazon_music: "Amazon",
+  youtube_music: "YT Music",
+  youtube: "YouTube",
+};
+
 export function OrionPlaylistBar() {
   const [isPrimary, setIsPrimary] = useState(false);
 
