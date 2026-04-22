@@ -1011,6 +1011,10 @@ export function useNeuralVoice(
                 sentenceTimerRef.current = null;
               }
 
+              // Adaptive merge window — fast for finished sentences, patient for trailing words.
+              const turnState = detectTurnState([sentenceAccumulatorRef.current], "pt-BR");
+              const mergeWindow = getOptimalSilenceDuration(turnState);
+
               sentenceTimerRef.current = setTimeout(() => {
                 const mergedText = deduplicateRepeatedPhrases(sentenceAccumulatorRef.current.trim());
                 sentenceAccumulatorRef.current = "";
@@ -1033,9 +1037,9 @@ export function useNeuralVoice(
                 try { window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: mergedText } })); } catch {}
 
                 markSTTEnd();
-                console.log(`[Voice] GCP STT utterance merged: "${mergedText}" (${(confidence * 100).toFixed(0)}%)`);
+                console.log(`[Voice] GCP STT merged in ${mergeWindow}ms (turn=${turnState}): "${mergedText}" (${(confidence * 100).toFixed(0)}%)`);
                 onCmdRef.current(mergedText);
-              }, GCP_FINAL_MERGE_MS);
+              }, mergeWindow);
             },
             onError: (err) => {
               console.warn("[Voice] GCP STT error:", err, "— falling back to Web Speech silently");
