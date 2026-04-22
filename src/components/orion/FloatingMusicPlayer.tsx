@@ -325,6 +325,9 @@ export function FloatingMusicPlayer() {
     ? buildYouTubeEmbedUrl(videoId, muted || volume === 0)
     : "";
 
+  // Singleton: extra instances render nothing (prevents duplicate players across routes)
+  if (!isPrimary) return null;
+
   // Fallback "Open Player" button when Orion announces playback but player didn't open
   if (showFallbackButton && !visible) {
     return (
