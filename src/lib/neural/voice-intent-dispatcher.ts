@@ -13,6 +13,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { smartClassify, smartClassifySync, type ClassifiedIntent } from "./smart-intent-classifier";
+import { OrionEvents, dispatchOrionEvent, type OrionMusicAction } from "@/lib/events/orion-events";
 
 // ─── Types ───
 

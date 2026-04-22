@@ -13,6 +13,11 @@ import {
   Volume2, Volume1, VolumeX, Loader2, ListMusic, X, Youtube, Zap,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import {
+  OrionEvents,
+  type OrionMusicCommandDetail,
+  type OrionVolumeCommandDetail,
+} from "@/lib/events/orion-events";
 import { toast } from "sonner";
 import { searchSpotify, getSpotifyFriendlyError, getSpotifySdkToken } from "@/lib/spotify/spotify-service";
 import { searchYTMusicPublic, type YTMusicTrack } from "@/lib/youtube-music/youtube-music-service";

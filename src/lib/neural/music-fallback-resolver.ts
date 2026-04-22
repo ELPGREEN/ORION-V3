@@ -6,6 +6,7 @@
 
 import { isSpotifyConnected } from "@/lib/spotify/spotify-service";
 import { openSpotify, openYouTube, openAmazonMusic, isMobileDevice } from "@/lib/utils/deep-link";
+import { OrionEvents, dispatchOrionEvent } from "@/lib/events/orion-events";
 
 export type MusicPlatform = "spotify" | "amazon_music" | "youtube_music" | "youtube";
 

@@ -13,6 +13,7 @@ import { initVoicePicker } from "@/lib/voice/voicePicker";
 import { ensurePersistentMic, getPersistentMicStream, requestPersistentMic } from "@/lib/voice/persistentMic";
 import { killMicRec } from "@/lib/voice/micArbiter";
 import { useWakeWord } from "./neural/useWakeWord";
+import { OrionEvents } from "@/lib/events/orion-events";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
 
 // ═══════════════════════════════════════════════════════════

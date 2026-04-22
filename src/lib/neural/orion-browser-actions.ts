@@ -8,6 +8,7 @@
 
 import { isMobileDevice, openSpotify, openYouTube, openYouTubeVideo, openAmazonMusic } from "@/lib/utils/deep-link";
 import { playMusicWithFallback, type MusicPlatform } from "./music-fallback-resolver";
+import { OrionEvents, dispatchOrionEvent, type OrionMusicAction } from "@/lib/events/orion-events";
 
 export interface BrowserAction {
   type: "youtube" | "google" | "google_flights" | "google_maps" | "spotify" | "wikipedia" | "generic_url" | "amazon_music";

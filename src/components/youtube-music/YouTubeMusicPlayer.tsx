@@ -9,6 +9,7 @@ import {
   Brain, Moon, Zap, CloudRain, Palette, Headphones, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { OrionEvents, dispatchOrionEvent } from "@/lib/events/orion-events";
 import {
   isYTMusicConnected, getYTMusicUser, startYTMusicLogin, disconnectYTMusic,
   searchYTMusic, getYTMusicPlaylists, getPlaylistTracks, getTrending,
