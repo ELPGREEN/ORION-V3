@@ -559,7 +559,7 @@ Deno.serve(async (req) => {
       const token = await getAccessToken(sa);
       if (token) {
         console.log(`[TTS] ${cleanText.length} chars → Cloud TTS API (${CLOUD_TTS_MODEL}, voice: ${selectedVoice})`);
-        const cloudResp = await requestCloudTTS(token, cleanText, selectedVoice, selectedLang, stylePrompt, multispeaker);
+        const cloudResp = await requestCloudTTS(token, cleanText, selectedVoice, selectedLang, stylePrompt, multispeaker, audioOpts);
         if (cloudResp) return cloudResp;
 
         // ── 2) Vertex AI generateContent (fallback, same GCP credits) ──
