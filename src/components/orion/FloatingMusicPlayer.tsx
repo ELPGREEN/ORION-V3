@@ -415,6 +415,41 @@ export function FloatingMusicPlayer() {
   // Singleton: extra instances render nothing (prevents duplicate players across routes)
   if (!isPrimary) return null;
 
+  // Persistent launcher: when player is closed, show a small button so user can
+  // manually open the playlist menu (re-uses lastQuery, or opens empty for picking).
+  if (!visible && !showFallbackButton) {
+    const lastQuery = loadPrefs().lastQuery;
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="fixed bottom-4 right-4 z-[9999]"
+      >
+        <Button
+          onClick={() => {
+            setVisible(true);
+            setMinimized(false);
+            if (lastQuery) {
+              setQuery(lastQuery);
+              if (results.length === 0) {
+                runSearch(category, lastQuery);
+              } else {
+                setShowResults(true);
+              }
+            } else {
+              setShowResults(true);
+            }
+          }}
+          className="shadow-2xl bg-gradient-to-r from-red-500 to-primary text-primary-foreground gap-2 rounded-full h-11 w-11 p-0"
+          title="Abrir playlist do Orion"
+          aria-label="Abrir playlist do Orion"
+        >
+          <ListMusic className="h-4 w-4" />
+        </Button>
+      </motion.div>
+    );
+  }
+
   // Fallback "Open Player" button when Orion announces playback but player didn't open
   if (showFallbackButton && !visible) {
     return (
