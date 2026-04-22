@@ -16,6 +16,8 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Expose-Headers":
+    "X-TTS-Engine, X-TTS-Model, X-TTS-Input, X-TTS-Fallback, X-TTS-Escaped-Total, X-TTS-Escaped-Chars",
 };
 
 const CLOUD_TTS_MODEL = "gemini-2.5-flash-tts";
@@ -196,13 +198,29 @@ function pcmToWav(pcmBase64: string, sampleRate = 24000, channels = 1, bitsPerSa
 // Cloud TTS supports a strict subset of SSML. We auto-wrap plain text into
 // SSML with prosody + natural pauses to improve intelligibility.
 
+export interface EscapeReport {
+  escaped: string;
+  counts: Record<string, number>; // char → occurrences escaped
+  total: number;
+}
+
+function escapeSSMLWithReport(s: string): EscapeReport {
+  const counts: Record<string, number> = {};
+  const bump = (ch: string) => {
+    counts[ch] = (counts[ch] ?? 0) + 1;
+  };
+  const escaped = s
+    .replace(/&/g, () => { bump("&"); return "&amp;"; })
+    .replace(/</g, () => { bump("<"); return "&lt;"; })
+    .replace(/>/g, () => { bump(">"); return "&gt;"; })
+    .replace(/"/g, () => { bump('"'); return "&quot;"; })
+    .replace(/'/g, () => { bump("'"); return "&apos;"; });
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return { escaped, counts, total };
+}
+
 function escapeSSML(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+  return escapeSSMLWithReport(s).escaped;
 }
 
 function isAlreadySSML(s: string): boolean {
@@ -216,10 +234,11 @@ function isAlreadySSML(s: string): boolean {
  * - Wraps in <prosody rate="medium" pitch="+0st"> for stable cadence
  * - Escapes XML-unsafe chars
  */
-function textToSSML(text: string): string {
+function textToSSML(text: string): { ssml: string; escapeReport: EscapeReport } {
   // Normalize line endings first so \r\n behaves like \n
   const normalized = text.trim().replace(/\r\n?/g, "\n");
-  const escaped = escapeSSML(normalized);
+  const escapeReport = escapeSSMLWithReport(normalized);
+  const escaped = escapeReport.escaped;
 
   // Order matters: handle blank-line paragraph breaks BEFORE single newlines,
   // so a single line break stays a short pause instead of a long paragraph gap.
@@ -232,7 +251,8 @@ function textToSSML(text: string): string {
     // Single line break → short pause (~150ms), like a soft comma, NOT a paragraph
     .replace(/\n/g, '<break time="150ms"/>');
 
-  return `<speak><prosody rate="medium" pitch="+0st" volume="medium">${withBreaks}</prosody></speak>`;
+  const ssml = `<speak><prosody rate="medium" pitch="+0st" volume="medium">${withBreaks}</prosody></speak>`;
+  return { ssml, escapeReport };
 }
 
 async function requestCloudTTS(
@@ -270,7 +290,23 @@ async function requestCloudTTS(
   // ── Input: SSML preferred, with auto-wrap for plain text ──
   const inputContent = text.slice(0, 4000);
   const useSSML = isAlreadySSML(inputContent);
-  const ssmlInput = useSSML ? inputContent : textToSSML(inputContent);
+  let ssmlInput: string;
+  let escapeReport: EscapeReport;
+  if (useSSML) {
+    ssmlInput = inputContent;
+    // Passthrough SSML: still scan the raw input for diagnostic visibility
+    escapeReport = escapeSSMLWithReport(inputContent.replace(/<[^>]+>/g, ""));
+  } else {
+    const built = textToSSML(inputContent);
+    ssmlInput = built.ssml;
+    escapeReport = built.escapeReport;
+  }
+  if (escapeReport.total > 0) {
+    console.log(
+      `[Cloud TTS] 🔣 Escaped ${escapeReport.total} XML-unsafe chars:`,
+      escapeReport.counts,
+    );
+  }
   // Plain text fallback: strip ALL XML tags and unescape basic entities so the
   // synthesizer always has a safe, valid input even if SSML generation breaks.
   const plainTextFallback = inputContent
@@ -325,6 +361,10 @@ async function requestCloudTTS(
             ? "plain-text-fallback"
             : useSSML ? "ssml-passthrough" : "ssml-auto";
           console.log(`[Cloud TTS] ✅ ${CLOUD_TTS_MODEL} ${(audioBytes.length / 1024).toFixed(1)}KB MP3 (input=${inputLabel})`);
+          // Encode escape report compactly: e.g. "&:3,<:1,\":2"
+          const escapeCountsHeader = Object.entries(escapeReport.counts)
+            .map(([ch, n]) => `${ch}:${n}`)
+            .join(",");
           return new Response(audioBytes.buffer, {
             headers: {
               ...corsHeaders,
@@ -334,6 +374,8 @@ async function requestCloudTTS(
               "X-TTS-Model": CLOUD_TTS_MODEL,
               "X-TTS-Input": inputLabel,
               "X-TTS-Fallback": inputMode === "text" ? "plain-text" : "none",
+              "X-TTS-Escaped-Total": String(escapeReport.total),
+              "X-TTS-Escaped-Chars": escapeCountsHeader,
             },
           });
         }
