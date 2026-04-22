@@ -460,7 +460,24 @@ export function OrionPlaylistBar() {
     return () => window.removeEventListener(OrionEvents.VolumeCommand, handler as EventListener);
   }, [volume, useSDK, sdk.isReady, sdk.changeVolume]);
 
-  const formatMs = (ms: number) => {
+  // ── MusicResolved listener ───────────────────────────────────
+  // Keeps the widget UI in sync with the latest resolver decision so the user
+  // can see the requested platform vs the actually-played one (fallback).
+  useEffect(() => {
+    const handler = (e: CustomEvent<OrionMusicResolvedDetail>) => {
+      const detail = e.detail;
+      if (!detail || !detail.resolved) return;
+      setResolvedInfo(detail);
+      if (detail.query) setQuery(detail.query);
+      try {
+        localStorage.setItem("orion_last_music_resolved", JSON.stringify(detail));
+      } catch { /* quota / private mode */ }
+      // Make sure the bar surfaces when a new resolution arrives.
+      setBarVisible(true);
+    };
+    window.addEventListener(OrionEvents.MusicResolved, handler as EventListener);
+    return () => window.removeEventListener(OrionEvents.MusicResolved, handler as EventListener);
+  }, []);
     if (!ms) return "";
     const m = Math.floor(ms / 60000);
     const s = Math.floor((ms % 60000) / 1000);
