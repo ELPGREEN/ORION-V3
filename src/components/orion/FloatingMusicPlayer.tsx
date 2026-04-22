@@ -77,14 +77,17 @@ export function FloatingMusicPlayer() {
   // Listen for music commands from Orion (single source of truth)
   useEffect(() => {
     const showPlayer = (q: string) => {
+      const trimmed = q.trim();
+      if (!trimmed) return;
       if (isMobileDevice()) {
-        openYouTube(q.trim(), true);
+        openYouTube(trimmed, true);
         return;
       }
-      setQuery(q.trim());
+      // Persist immediately so reload / route change can restore exact state
+      savePrefs({ lastQuery: trimmed, visible: true });
+      setQuery(trimmed);
       setVisible(true);
-      // restore minimized preference but ensure header is visible
-      savePrefs({ lastQuery: q.trim() });
+      // Reopening should respect the user's last minimized choice but never start hidden
       setShowFallbackButton(false);
       if (fallbackTimerRef.current) {
         window.clearTimeout(fallbackTimerRef.current);
@@ -98,12 +101,15 @@ export function FloatingMusicPlayer() {
         showPlayer(q);
       } else if (action === "stop" || action === "pause") {
         setVisible(false);
+        savePrefs({ visible: false });
       }
     };
 
-    // Explicit "show" event — triggered by fallback button or external code
+    // Explicit "show" event — triggered by fallback button or external code.
+    // Always falls back to the persisted lastQuery so reopening restores playback.
     const showHandler = (e: CustomEvent<OrionMusicPlayerShowDetail>) => {
-      const q = e.detail?.query || query || loadPrefs().lastQuery || "";
+      const persisted = loadPrefs();
+      const q = e.detail?.query || query || persisted.lastQuery || "";
       if (q) showPlayer(q);
     };
 
@@ -155,6 +161,8 @@ export function FloatingMusicPlayer() {
     setVisible(false);
     setQuery("");
     setShowFallbackButton(false);
+    // Clear persisted visibility + query so it doesn't auto-reopen on next reload
+    savePrefs({ visible: false, lastQuery: undefined });
   }, []);
 
   const handleVolumeChange = useCallback((val: number[]) => {
@@ -166,6 +174,7 @@ export function FloatingMusicPlayer() {
   const openFromFallback = useCallback(() => {
     const q = query || loadPrefs().lastQuery || "";
     if (q) {
+      // Dispatch the show event so the same restore path is used (autoplay/volume/mute persisted)
       dispatchOrionEvent(OrionEvents.MusicPlayerShow, { query: q });
     }
     setShowFallbackButton(false);
