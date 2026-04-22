@@ -2,29 +2,15 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { initFirebaseAnalytics } from "@/lib/firebase";
-import { voiceManager } from "@/lib/voice/voiceManager";
-import { voicePerformanceDashboard } from "@/lib/voice/voicePerformanceDashboard";
 
 // Initialize Firebase Analytics in background
 initFirebaseAnalytics().catch(() => {});
 
-// Initialize voice systems
-const initializeVoiceSystems = async () => {
-  try {
-    // Initialize voice manager with recommended settings
-    await voiceManager.startListening();
-    
-    // Initialize performance dashboard for monitoring
-    voicePerformanceDashboard.init();
-    
-    console.log('[Voice Systems] ✅ Voice manager and performance dashboard initialized');
-  } catch (error) {
-    console.error('[Voice Systems] ❌ Failed to initialize voice systems:', error);
-  }
-};
-
-// Initialize voice systems in background
-initializeVoiceSystems().catch(() => {});
+// NOTE: Voice subsystems (voiceManager / voicePerformanceDashboard) are no
+// longer auto-started here — that caused the floating voice panel to appear
+// on every route. Voice listening + the optional performance panel are now
+// activated only inside the Orion overlay (GlobalOrionListener), where the
+// user can toggle the panel on/off.
 
 // Prevent service worker from registering in iframes or Lovable preview
 const isInIframe = (() => {
