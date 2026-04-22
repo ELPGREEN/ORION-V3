@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { GoogleFeedbackModal } from "@/components/common/GoogleFeedbackModal";
 import { SEO } from '@/components/SEO';
 import {
   HeroSection,
@@ -20,7 +21,7 @@ import { WelcomeSplash } from '@/components/home/WelcomeSplash';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function Index() {
+export default function Index() { const [fOpen, setFOpen] = useState(false);
   const { t } = useTranslation();
   const { user } = useAuth();
 
