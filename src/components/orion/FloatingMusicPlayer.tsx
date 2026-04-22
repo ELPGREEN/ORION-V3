@@ -443,7 +443,161 @@ export function FloatingMusicPlayer() {
     return () => window.removeEventListener(OrionEvents.MusicResolved, handler as EventListener);
   }, []);
 
+  const flushQueuedPlayerCommands = useCallback(() => {
+    if (!playerRef.current || !playerReadyRef.current) return;
+    const queue = queuedPlayerCommandsRef.current.splice(0);
+    queue.forEach((command) => command(playerRef.current!));
+  }, []);
+
+  const enqueuePlayerCommand = useCallback((command: (player: YouTubePlayerInstance) => void) => {
+    if (playerRef.current && playerReadyRef.current) {
+      command(playerRef.current);
+      return true;
+    }
+    queuedPlayerCommandsRef.current.push(command);
+    return false;
+  }, []);
+
+  const syncPlayerVolume = useCallback((nextVolume: number, nextMuted: boolean) => {
+    enqueuePlayerCommand((player) => {
+      if (nextMuted || nextVolume === 0) {
+        player.mute();
+        player.setVolume(0);
+        return;
+      }
+      player.unMute();
+      player.setVolume(nextVolume);
+    });
+  }, [enqueuePlayerCommand]);
+
+  const pausePlayback = useCallback(() => {
+    if (!latestPlayerStateRef.current.videoId) return;
+    enqueuePlayerCommand((player) => player.pauseVideo());
+    setPlaying(false);
+  }, [enqueuePlayerCommand]);
+
+  const resumePlayback = useCallback(() => {
+    if (!latestPlayerStateRef.current.videoId) return;
+    setVisible(true);
+    enqueuePlayerCommand((player) => player.playVideo());
+    setPlaying(true);
+  }, [enqueuePlayerCommand]);
+
+  const stepResult = useCallback((direction: -1 | 1) => {
+    if (results.length === 0) return;
+    const currentIndex = results.findIndex((item) => item.videoId === latestPlayerStateRef.current.videoId);
+    const fallbackIndex = direction > 0 ? 0 : results.length - 1;
+    const nextIndex = currentIndex === -1
+      ? fallbackIndex
+      : (currentIndex + direction + results.length) % results.length;
+    const nextItem = results[nextIndex];
+    if (!nextItem) return;
+    setVideoId(nextItem.videoId);
+    setPlaying(true);
+    setShowResults(false);
+    savePrefs({ lastVideoId: nextItem.videoId });
+  }, [results]);
+
+  const handleNext = useCallback(() => {
+    stepResult(1);
+  }, [stepResult]);
+
+  const handlePrev = useCallback(() => {
+    stepResult(-1);
+  }, [stepResult]);
+
+  controlActionsRef.current = {
+    pause: pausePlayback,
+    resume: resumePlayback,
+    next: handleNext,
+    prev: handlePrev,
+    syncVolume: syncPlayerVolume,
+  };
+
+  useEffect(() => {
+    const host = playerHostRef.current;
+    if (!host) return;
+    playerHostElementRef.current = host;
+  }, [visible, minimized, videoId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const host = playerHostElementRef.current ?? playerHostRef.current;
+    if (!visible || !videoId || !host) return;
+
+    setEmbedLoading(true);
+    loadYouTubeIframeApi()
+      .then(() => {
+        if (cancelled || !window.YT?.Player) return;
+
+        if (!playerRef.current) {
+          playerReadyRef.current = false;
+          queuedPlayerCommandsRef.current = [];
+          playerRef.current = new window.YT.Player(host, {
+            videoId,
+            playerVars: {
+              autoplay: 1,
+              controls: 1,
+              enablejsapi: 1,
+              origin: typeof window !== "undefined" ? window.location.origin : "",
+              playsinline: 1,
+              rel: 0,
+            },
+            events: {
+              onReady: () => {
+                if (cancelled) return;
+                playerReadyRef.current = true;
+                setEmbedLoading(false);
+                setFallbackLoading(false);
+                syncPlayerVolume(latestPlayerStateRef.current.volume, latestPlayerStateRef.current.muted);
+                flushQueuedPlayerCommands();
+                playerRef.current?.playVideo();
+              },
+              onStateChange: (event) => {
+                if (event.data === 1) setPlaying(true);
+                else if (event.data === 2 || event.data === 0) setPlaying(false);
+              },
+              onError: () => {
+                if (cancelled) return;
+                setEmbedLoading(false);
+                setShowFallbackButton(true);
+              },
+            },
+          });
+          return;
+        }
+
+        enqueuePlayerCommand((player) => {
+          player.loadVideoById(videoId);
+          player.playVideo();
+        });
+        syncPlayerVolume(latestPlayerStateRef.current.volume, latestPlayerStateRef.current.muted);
+        setEmbedLoading(false);
+        setFallbackLoading(false);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("[FloatingMusicPlayer] failed to initialize YouTube player:", error);
+        setEmbedLoading(false);
+        setShowFallbackButton(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enqueuePlayerCommand, flushQueuedPlayerCommands, syncPlayerVolume, videoId, visible]);
+
+  useEffect(() => {
+    return () => {
+      queuedPlayerCommandsRef.current = [];
+      playerReadyRef.current = false;
+      playerRef.current?.destroy?.();
+      playerRef.current = null;
+    };
+  }, []);
+
   const close = useCallback(() => {
+    playerRef.current?.stopVideo();
     setVisible(false);
     setQuery("");
     setVideoId("");
@@ -488,38 +642,25 @@ export function FloatingMusicPlayer() {
   const handleVolumeChange = useCallback((val: number[]) => {
     const v = val[0];
     setVolume(v);
-    setMuted(v === 0);
-    postYouTubeIframeCommand(iframeRef.current, "setVolume", [v]);
-    if (v > 0) postYouTubeIframeCommand(iframeRef.current, "unMute");
-  }, []);
+    const shouldMute = v === 0;
+    setMuted(shouldMute);
+    syncPlayerVolume(v, shouldMute);
+  }, [syncPlayerVolume]);
 
   const togglePlay = useCallback(() => {
     if (!videoId) return;
     if (playing) {
-      postYouTubeIframeCommand(iframeRef.current, "pauseVideo");
-      setPlaying(false);
+      pausePlayback();
     } else {
-      postYouTubeIframeCommand(iframeRef.current, "playVideo");
-      setPlaying(true);
+      resumePlayback();
     }
-  }, [playing, videoId]);
-
-  const handleNext = useCallback(() => {
-    postYouTubeIframeCommand(iframeRef.current, "nextVideo");
-  }, []);
-
-  const handlePrev = useCallback(() => {
-    postYouTubeIframeCommand(iframeRef.current, "previousVideo");
-  }, []);
+  }, [pausePlayback, playing, resumePlayback, videoId]);
 
   // Sync mute state to iframe
   useEffect(() => {
     if (!videoId) return;
-    postYouTubeIframeCommand(iframeRef.current, muted ? "mute" : "unMute");
-    if (!muted && volume > 0) {
-      postYouTubeIframeCommand(iframeRef.current, "setVolume", [volume]);
-    }
-  }, [muted, videoId, volume]);
+    syncPlayerVolume(volume, muted);
+  }, [muted, syncPlayerVolume, videoId, volume]);
 
   const openFromFallback = useCallback(() => {
     if (fallbackLoading) return;
@@ -533,10 +674,6 @@ export function FloatingMusicPlayer() {
     // Re-enable after embed has had time to mount (safety net even if iframe.onLoad never fires)
     window.setTimeout(() => setFallbackLoading(false), 3000);
   }, [query, fallbackLoading]);
-
-  const embedUrl = videoId
-    ? buildYouTubeEmbedUrl(videoId, muted || volume === 0)
-    : "";
 
   // Singleton: extra instances render nothing (prevents duplicate players across routes)
   if (!isPrimary) return null;
