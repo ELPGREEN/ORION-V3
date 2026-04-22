@@ -165,6 +165,7 @@ const App = () => (
           {/* Global video overlay stays mounted once at app level */}
           <PublicOrionListener />
           <VideoOverlay />
+          <FloatingMusicPlayer />
           <MouseTrailEffect />
           <CookieConsent />
           <AffiliateTracker />
