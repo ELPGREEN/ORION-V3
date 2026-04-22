@@ -12,7 +12,9 @@ import {
   type OrionMusicPlayerShowDetail,
   type OrionSpeakingDetail,
   type OrionVolumeCommandDetail,
+  type OrionMusicResolvedDetail,
 } from "@/lib/events/orion-events";
+import { postYouTubeIframeCommand } from "@/lib/youtube-player";
 
 const STORAGE_KEY = "orion-music-player-prefs";
 const FLOATING_MOUNT_KEY = "__orionFloatingMusicPlayerMounted__";
