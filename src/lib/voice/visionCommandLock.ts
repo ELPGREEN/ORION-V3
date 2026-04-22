@@ -10,7 +10,7 @@
  */
 
 export const VISION_LOCK_KEY = "__orionVisionCommandLock__" as const;
-export const VISION_LOCK_WINDOW_MS = 3000;
+export const VISION_LOCK_WINDOW_MS = 8000;
 
 export type VisionLockAction = "activate_vision" | "deactivate_vision";
 
