@@ -2033,6 +2033,16 @@ export function useOrionReasoning(
         const { humanizeText, humanizeForSpeech } = await import("@/lib/voice/humanizer");
         const humanizedText = humanizeText(finalResponse);
         const humanizedSpeech = humanizeForSpeech(finalResponse);
+        try {
+          window.dispatchEvent(new CustomEvent("orion:assistant-response", {
+            detail: {
+              text: humanizedSpeech,
+              source: source,
+              intentType,
+              hadImage: needsImage,
+            },
+          }));
+        } catch {}
 
         setAiDescription(humanizedText);
         setThought(humanizedText);
@@ -2102,6 +2112,16 @@ export function useOrionReasoning(
             cleanHistory, needsImage, identificationMode, intentType
           );
           if (fallbackResult?.description) {
+            try {
+              window.dispatchEvent(new CustomEvent("orion:assistant-response", {
+                detail: {
+                  text: fallbackResult.description,
+                  source: source,
+                  intentType,
+                  hadImage: needsImage,
+                },
+              }));
+            } catch {}
             setAiDescription(fallbackResult.description);
             setThought(fallbackResult.description);
             setChatHistory(prev => {
