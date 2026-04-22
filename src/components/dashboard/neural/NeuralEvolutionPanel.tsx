@@ -203,11 +203,6 @@ export function NeuralEvolutionPanel() {
     setAnalyzing(true);
     try {
       const data = await callEvolution("analyze_and_propose");
-      if (error) {
-        console.error("[NeuralEvolution] analyze_and_propose error:", error);
-        const errorMsg = error instanceof Error ? error.message : typeof error === "object" ? JSON.stringify(error) : String(error);
-        throw new Error(errorMsg);
-      }
       if (data?.error) throw new Error(data.error);
       toast({
         title: "Análise concluída",
@@ -374,7 +369,7 @@ export function NeuralEvolutionPanel() {
     for (const id of selectedProposals) {
       try {
         await callEvolution("reject_proposal", { proposalId: id });
-        if (!error) successCount++;
+        successCount++;
       } catch (e) { console.warn("[NeuralEvolution] Failed to reject proposal:", e); }
     }
     toast({ title: `${successCount} proposta(s) rejeitada(s)` });
@@ -425,7 +420,7 @@ export function NeuralEvolutionPanel() {
     for (const version of toActivate) {
       try {
         await callEvolution("apply_prompt_version", { versionId: version.id });
-        if (!error) successCount++;
+        successCount++;
       } catch (e) { console.warn("[NeuralEvolution] Failed to activate version:", e); }
     }
     

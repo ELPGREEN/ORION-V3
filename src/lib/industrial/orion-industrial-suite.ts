@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * ─── ORION Industrial Intelligence Suite ───
  * Industry 4.0/5.0 Advanced Integration

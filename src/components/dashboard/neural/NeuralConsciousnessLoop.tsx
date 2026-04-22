@@ -15,7 +15,8 @@ import {
   Moon, Sun, Rocket, Database, BookOpen, Search, Globe,
   Clock, Cpu, RefreshCw, Wifi, WifiOff, Bluetooth, Radio,
   Heart, Battery, MapPin, Vibrate, Shield, AlertTriangle,
-  Monitor, Layers, User, Network, FileText, Scissors
+  Monitor, Layers, User, Network, FileText, Scissors,
+  Fingerprint, Target
 } from "lucide-react";
 import { sigmoid } from "@/lib/neural/activations";
 import { recordCalibration } from "@/lib/neural/quantum-metacognition";
