@@ -1,27 +1,23 @@
 /**
  * ─── Orion Browser Actions ───
  * Enables Orion to open real browser tabs for actionable commands.
- * On mobile, opens native apps (Spotify, YouTube, Amazon Music) via deep links.
- * On desktop, opens web URLs in new tabs.
- * Music commands use the fallback resolver: Spotify → Amazon Music → YouTube Music → YouTube
+ * YouTube is the only supported media platform.
+ * On mobile, opens native YouTube app via deep links.
+ * On desktop, opens web URLs in new tabs / dispatches to the YouTube IFrame player.
  */
 
-import { isMobileDevice, openSpotify, openYouTube, openYouTubeVideo, openAmazonMusic } from "@/lib/utils/deep-link";
-import { playMusicWithFallback, type MusicPlatform } from "./music-fallback-resolver";
+import { isMobileDevice, openYouTube } from "@/lib/utils/deep-link";
+import { playMusicWithFallback } from "./music-fallback-resolver";
 import { OrionEvents, dispatchOrionEvent, type OrionMusicAction } from "@/lib/events/orion-events";
 
 export interface BrowserAction {
-  type: "youtube" | "google" | "google_flights" | "google_maps" | "spotify" | "wikipedia" | "generic_url" | "amazon_music";
+  type: "youtube" | "google" | "google_flights" | "google_maps" | "wikipedia" | "generic_url" | "music";
   url: string;
   description: string;
   query: string;
 }
 
 // ─── URL Builders (web fallback) ───
-
-function youtubeSearchUrl(query: string): string {
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
-}
 
 function youtubeEmbedSearchUrl(query: string): string {
   return `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}&autoplay=1&enablejsapi=1`;
@@ -46,10 +42,6 @@ function wikipediaUrl(query: string, lang = "pt"): string {
   return `https://${lang}.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`;
 }
 
-function spotifySearchUrl(query: string): string {
-  return `https://open.spotify.com/search/${encodeURIComponent(query)}`;
-}
-
 // ─── Pattern Detection ───
 
 interface ActionPattern {
@@ -71,35 +63,11 @@ const DIRECT_MUSIC_PREV_REGEX = /^(?:volta(?:r)?|anterior|prev(?:ious)?)(?:\s+(?
 const DIRECT_MEDIA_PLAY_REGEX = /^(?:play|resume|retoma(?:r)?|continua(?:r)?|dar\s+play)(?:\s+(?:a|o))?(?:\s+(?:m[uú]sica|faixa|reprodu(?:ç|c)[aã]o|v[ií]deo|video|youtube))?$/i;
 
 const ACTION_PATTERNS: ActionPattern[] = [
-  // ─── Music playback commands (voice) ───
-  {
-    regex: DIRECT_MUSIC_PAUSE_REGEX,
-    builder: (_m, _q) => ({
-      type: "spotify" as const,
-      url: "", description: "⏸ Pausando música", query: "pause",
-    }),
-  },
-  {
-    regex: DIRECT_MUSIC_NEXT_REGEX,
-    builder: (_m, _q) => ({
-      type: "spotify" as const,
-      url: "", description: "⏭ Próxima faixa", query: "next",
-    }),
-  },
-  {
-    regex: DIRECT_MUSIC_PREV_REGEX,
-    builder: (_m, _q) => ({
-      type: "spotify" as const,
-      url: "", description: "⏮ Faixa anterior", query: "prev",
-    }),
-  },
-  {
-    regex: DIRECT_MEDIA_PLAY_REGEX,
-    builder: (_m, _q) => ({
-      type: "spotify" as const,
-      url: "", description: "▶️ Retomando reprodução", query: "play",
-    }),
-  },
+  // ─── Music playback control commands (voice) ───
+  { regex: DIRECT_MUSIC_PAUSE_REGEX, builder: () => ({ type: "music", url: "", description: "⏸ Pausando música", query: "pause" }) },
+  { regex: DIRECT_MUSIC_NEXT_REGEX, builder: () => ({ type: "music", url: "", description: "⏭ Próxima faixa", query: "next" }) },
+  { regex: DIRECT_MUSIC_PREV_REGEX, builder: () => ({ type: "music", url: "", description: "⏮ Faixa anterior", query: "prev" }) },
+  { regex: DIRECT_MEDIA_PLAY_REGEX, builder: () => ({ type: "music", url: "", description: "▶️ Retomando reprodução", query: "play" }) },
 
   // ─── YouTube / Videos ───
   {
@@ -107,12 +75,7 @@ const ACTION_PATTERNS: ActionPattern[] = [
     builder: (_m, q) => {
       const clean = extractCleanQuery(q, /\b(?:abre?|abrir?|open|tocar?|play|reproduz(?:ir)?|assistir?|ver?|buscar?|pesquisar?|procurar?)\s*(?:[\w\s]{0,10}\s+)?(?:no\s+|do\s+|d[oa]\s+)?(?:youtube|um?\s+)?(?:v[ií]deo|video)?\b/gi);
       const searchQuery = clean || q;
-      return {
-        type: "youtube",
-        url: youtubeEmbedSearchUrl(searchQuery),
-        description: `🎬 Reproduzindo: "${searchQuery}"`,
-        query: searchQuery,
-      };
+      return { type: "youtube", url: youtubeEmbedSearchUrl(searchQuery), description: `🎬 Reproduzindo: "${searchQuery}"`, query: searchQuery };
     },
   },
 
@@ -124,26 +87,16 @@ const ACTION_PATTERNS: ActionPattern[] = [
       const toMatch = q.match(/(?:para|pra|to|at[eé])\s+(\w[\w\s]{1,30}?)(?:\s|$|,|\.|!|\?)/i);
       const from = fromMatch?.[1]?.trim();
       const to = toMatch?.[1]?.trim();
-      return {
-        type: "google_flights",
-        url: googleFlightsUrl(from, to),
-        description: `✈️ Abrindo Google Flights${from && to ? `: ${from} → ${to}` : ""}`,
-        query: q,
-      };
+      return { type: "google_flights", url: googleFlightsUrl(from, to), description: `✈️ Abrindo Google Flights${from && to ? `: ${from} → ${to}` : ""}`, query: q };
     },
   },
 
-  // ─── Google Maps / Directions ───
+  // ─── Google Maps ───
   {
     regex: /\b(?:(?:como\s+chegar?|rota\s+(?:para|pra|at[eé])|direções\s+(?:para|pra)|navegar?\s+(?:para|pra|at[eé]))|(?:(?:abrir?|abre?|mostrar?|mostra)\s+(?:o\s+)?(?:google\s+)?maps?)|(?:(?:onde\s+fica|localizar?|mapa\s+d[eoa])\s+))\b/i,
     builder: (_m, q) => {
       const clean = extractCleanQuery(q, /\b(?:como\s+chegar?|rota\s+(?:para|pra)|direções|navegar?|abrir?|abre?|mostrar?|mostra|onde\s+fica|localizar?|mapa)\s*(?:o\s+)?(?:google\s+)?(?:maps?)?\b/gi);
-      return {
-        type: "google_maps",
-        url: googleMapsUrl(clean || q),
-        description: `🗺️ Abrindo Google Maps: "${clean || q}"`,
-        query: clean || q,
-      };
+      return { type: "google_maps", url: googleMapsUrl(clean || q), description: `🗺️ Abrindo Google Maps: "${clean || q}"`, query: clean || q };
     },
   },
 
@@ -152,12 +105,7 @@ const ACTION_PATTERNS: ActionPattern[] = [
     regex: /\b(?:(?:pesquisar?|buscar?|procurar?)\s+(?:na?\s+)?wikip[eé]dia|(?:o\s+que\s+[eé]|quem\s+[eé]|quem\s+foi)\s+)/i,
     builder: (_m, q) => {
       const clean = extractCleanQuery(q, /\b(?:pesquisar?|buscar?|procurar?)\s+(?:na?\s+)?wikip[eé]dia|(?:o\s+que\s+[eé]|quem\s+[eé]|quem\s+foi)\b/gi);
-      return {
-        type: "wikipedia",
-        url: wikipediaUrl(clean || q),
-        description: `📚 Abrindo Wikipedia: "${clean || q}"`,
-        query: clean || q,
-      };
+      return { type: "wikipedia", url: wikipediaUrl(clean || q), description: `📚 Abrindo Wikipedia: "${clean || q}"`, query: clean || q };
     },
   },
 
@@ -166,64 +114,31 @@ const ACTION_PATTERNS: ActionPattern[] = [
     regex: /\b(?:(?:pesquisar?|buscar?|googlar?|procurar?)\s+(?:no\s+)?(?:google))\b/i,
     builder: (_m, q) => {
       const clean = extractCleanQuery(q, /\b(?:pesquisar?|buscar?|googlar?|procurar?)\s+(?:no\s+)?google\b/gi);
-      return {
-        type: "google",
-        url: googleSearchUrl(clean || q),
-        description: `🔍 Abrindo Google: "${clean || q}"`,
-        query: clean || q,
-      };
+      return { type: "google", url: googleSearchUrl(clean || q), description: `🔍 Abrindo Google: "${clean || q}"`, query: clean || q };
     },
   },
 
   // ─── Open URL directly ───
   {
     regex: /\b(?:abrir?|abre?|open|acessar?|ir\s+(?:para|pra))\s+(https?:\/\/\S+)/i,
-    builder: (m, _q) => {
+    builder: (m) => {
       const url = m[1];
-      return {
-        type: "generic_url",
-        url,
-        description: `🌐 Abrindo: ${url}`,
-        query: url,
-      };
+      return { type: "generic_url", url, description: `🌐 Abrindo: ${url}`, query: url };
     },
   },
 
-  // ─── Spotify / Music search ───
-  {
-    regex: /\b(?:(?:abrir?|abre?)\s+(?:o\s+)?spotify|(?:buscar?|pesquisar?|procurar?)\s+(?:no\s+)?spotify)\b/i,
-    builder: (_m, q) => {
-      const clean = extractCleanQuery(q, /\b(?:abrir?|abre?|buscar?|pesquisar?|procurar?)\s+(?:o\s+)?(?:no\s+)?spotify\b/gi);
-      return {
-        type: "spotify",
-        url: spotifySearchUrl(clean || ""),
-        description: `🎵 Buscando: "${clean}"`,
-        query: clean || "",
-      };
-    },
-  },
-
-  // ─── Generic "play music" command ───
+  // ─── Generic "play music" command → routes to YouTube ───
   {
     regex: /\b(?:toca(?:r)?|play|reproduz(?:ir)?|coloca(?:r)?)\s+(?:a\s+)?(?:m[uú]sica|song|track|som)\s+/i,
     builder: (_m, q) => {
       const clean = extractCleanQuery(q, /\b(?:toca(?:r)?|play|reproduz(?:ir)?|coloca(?:r)?)\s+(?:a\s+)?(?:m[uú]sica|song|track|som)\b/gi);
-      return {
-        type: "spotify",
-        url: "",
-        description: `🎵 Tocando: "${clean}"`,
-        query: clean || q,
-      };
+      return { type: "music", url: "", description: `🎵 Tocando: "${clean}"`, query: clean || q };
     },
   },
 ];
 
 // ─── Public API ───
 
-/**
- * Detect if a user query is an actionable browser command.
- * Returns the action to execute, or null if not a browser action.
- */
 export function detectBrowserAction(query: string): BrowserAction | null {
   const trimmed = query.trim();
   if (trimmed.length < 4) return null;
@@ -241,14 +156,10 @@ export function detectBrowserAction(query: string): BrowserAction | null {
   return null;
 }
 
-/**
- * Execute a browser action — opens the URL in a new tab.
- * Also dispatches an event for the floating player if it's a video/music action.
- */
 export function executeBrowserAction(action: BrowserAction): string {
   const mobile = isMobileDevice();
 
-  // YouTube video → on mobile open native app, on desktop dispatch to VideoOverlay
+  // YouTube video search → on mobile open native app, on desktop dispatch to VideoOverlay
   if (action.type === "youtube") {
     if (mobile) {
       openYouTube(action.query);
@@ -256,18 +167,13 @@ export function executeBrowserAction(action: BrowserAction): string {
     }
     console.log("[browser-actions] Dispatching orion-video-command:", action.url, action.query);
     window.dispatchEvent(new CustomEvent("orion-video-command", {
-      detail: {
-        action: "play_video",
-        url: action.url,
-        query: action.query,
-        title: action.query,
-      }
+      detail: { action: "play_video", url: action.url, query: action.query, title: action.query },
     }));
     return action.description;
   }
 
-  // Music actions (spotify, amazon_music, generic music) → use fallback resolver
-  if (action.type === "spotify" || action.type === "amazon_music") {
+  // Music actions → always go through the YouTube IFrame controller
+  if (action.type === "music") {
     const q = action.query;
 
     // Playback control commands (pause/next/prev) — dispatch directly
@@ -277,24 +183,12 @@ export function executeBrowserAction(action: BrowserAction): string {
         query: q,
         fullCommand: q,
       });
-      window.dispatchEvent(new CustomEvent("orion-video-command", {
-        detail: { action: q }
-      }));
+      window.dispatchEvent(new CustomEvent("orion-video-command", { detail: { action: q } }));
       return action.description;
     }
 
-    // Use async fallback resolver — fire and forget with event dispatch
-    const preferred: MusicPlatform | undefined = action.type === "amazon_music" ? "amazon_music" : "spotify";
-    playMusicWithFallback(q, preferred).then(result => {
-      console.log(`[music-fallback] Resolved: ${result.platform} (fallback=${result.fallback})`);
-      // Dispatch result for Orion to announce
-      if (result.fallback) {
-        window.dispatchEvent(new CustomEvent("orion-speak", {
-          detail: { text: result.description }
-        }));
-      }
-    }).catch(err => console.error("[music-fallback] Error:", err));
-
+    // Search & play — fire and forget (dispatches MusicCommand internally)
+    playMusicWithFallback(q).catch((err) => console.error("[music-resolver] Error:", err));
     return action.description;
   }
 

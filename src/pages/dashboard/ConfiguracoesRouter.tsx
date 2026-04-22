@@ -79,13 +79,7 @@ export default function ConfiguracoesRouter() {
       roles: ["owner"],
       content: <DispositivosConfigPage />,
     },
-    {
-      value: "amazon",
-      label: "Amazon",
-      icon: ShoppingCart,
-      roles: ["owner"],
-      content: <AmazonConfigPage />,
-    },
+    // Amazon integration tab removed
     {
       value: "microfone",
       label: "Microfone",
