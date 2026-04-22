@@ -51,10 +51,11 @@ const COMMA_CLEAN_REGEX = /,+/g;
 const DOT_CLEAN_REGEX = /\.+/g;
 const NEWLINE_CLEAN_REGEX = /\n+/g;
 const WHITESPACE_CLEAN_REGEX = /\s+/g;
+const ACTION_PHRASE_REGEX = "prepare-?se\\s+para\\s+(?:a\\s+)?a[cç][aã]o";
 const FORBIDDEN_ORION_CATCHPHRASE_REGEXES = [
-  /prepare-?se\s+para\s+a[cç][aã]o[\s,.!?-]*(?:deb\w{1,8}\s+ao\s+m[aá]ximo\s*(?:e\s+)?)?deixa\s+que\s+eu\s+te\s+proteja/gi,
-  /prepare-?se\s+para\s+a[cç][aã]o[^.!?\n]*?(?:proteja|proteger)[^.!?\n]*/gi,
-  /prepare-?se\s+para\s+a[cç][aã]o/gi,
+  new RegExp(`${ACTION_PHRASE_REGEX}[\\s,.!?-]*(?:deb\\w{1,8}\\s+ao\\s+m[aá]ximo\\s*(?:e\\s+)?)?deixa\\s+que\\s+eu\\s+te\\s+proteja`, "gi"),
+  new RegExp(`${ACTION_PHRASE_REGEX}[^.!?\\n]*?(?:proteja|proteger)[^.!?\\n]*`, "gi"),
+  new RegExp(ACTION_PHRASE_REGEX, "gi"),
   /deb\w{1,8}\s+ao\s+m[aá]ximo(?:\s+e\s+deixa\s+que\s+eu\s+te\s+proteja)?/gi,
   /deixa\s+que\s+eu\s+te\s+proteja/gi,
 ];
