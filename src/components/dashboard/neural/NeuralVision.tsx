@@ -330,11 +330,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       });
       await video.play().catch(() => {});
       setActive(true); VS.active = true;
-      // DO NOT preload models here - they are broken and cause 404 errors
-      // Models will be loaded on-demand only when actually needed
-      toast.success("Visão ativada");
-      // Don't announce "Núcleo ativado" - old buggy behavior
-      // if (shouldAnnounce) speak("Visão ativada.").catch(() => {});
+      // Models loaded on-demand. Toast removed — TTS is the only feedback,
+      // controlled centrally by the vision command lock to avoid double-speak.
     } catch (err: any) {
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
