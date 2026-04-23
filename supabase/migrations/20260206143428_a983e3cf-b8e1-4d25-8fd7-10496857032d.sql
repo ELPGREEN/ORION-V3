@@ -10,6 +10,33 @@ BEGIN
 END;
 $$;
 
+CREATE TABLE IF NOT EXISTS public.lovable_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_type TEXT NOT NULL DEFAULT '',
+  lovable_id TEXT,
+  user_lovable_id TEXT,
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE public.lovable_events ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS public.lovable_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  lovable_id TEXT NOT NULL DEFAULT '',
+  user_id UUID,
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE public.lovable_users ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS public.lovable_webhook_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  method TEXT, path TEXT, signature TEXT,
+  payload JSONB, status INTEGER, response_body JSONB,
+  error TEXT, received_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.lovable_webhook_requests ENABLE ROW LEVEL SECURITY;
 
 -- Create documents table for storing AI-generated legal documents
 CREATE TABLE public.documents (
@@ -52,29 +79,7 @@ ON public.documents FOR DELETE
 USING (auth.uid() = user_id);
 
 -- Trigger for updated_at
-CREATE TRIGGER update_documents_updated_at
+CREATE TRIGGER set_updated_at_documents
 BEFORE UPDATE ON public.documents
 FOR EACH ROW
 EXECUTE FUNCTION public.trigger_set_updated_at();
-
--- Index for faster queries
-CREATE INDEX idx_documents_user_id ON public.documents(user_id);
-CREATE INDEX idx_documents_document_type ON public.documents(document_type);
-CREATE INDEX idx_documents_status ON public.documents(status);
-CREATE INDEX idx_documents_created_at ON public.documents(created_at DESC);
-
--- Storage bucket for PDFs
-INSERT INTO storage.buckets (id, name, public) VALUES ('documents', 'documents', false);
-
--- Storage policies
-CREATE POLICY "Users can upload their own documents"
-ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
-
-CREATE POLICY "Users can view their own documents"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
-
-CREATE POLICY "Users can delete their own documents"
-ON storage.objects FOR DELETE
-USING (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
