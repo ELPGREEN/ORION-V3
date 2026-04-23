@@ -5,7 +5,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { orionSelfImprove } from "./jules-client";
-import { feedUserSpeech, feedAIResponse } from "@/hooks/useNeuralVoice";
+import { feedUserSpeech, feedAIResponse } from "@/lib/neural/voice-evolution-feedback";
 import {
   evaluateRAGResponse,
   type RAGEvalResult
