@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { OrbState } from "./EnergyOrb";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { callEvolution } from \"@/lib/neural/ai-service\";
+import { callEvolution } from "@/lib/neural/ai-service";
 import { analyzeFrameStreaming, analyzeFrameWithAI, classifyIntent } from "@/lib/neural/orion-ai-client";
 import { stripMarkdown } from "@/lib/utils/text-utils";
 import {
