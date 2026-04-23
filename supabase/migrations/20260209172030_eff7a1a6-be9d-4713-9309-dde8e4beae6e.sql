@@ -36,7 +36,17 @@ DROP POLICY IF EXISTS "Service role can update embeddings" ON public.legal_embed
 
 DROP POLICY IF EXISTS "Service role can access knowledge base" ON public.neural_knowledge_base;
 
--- DROP POLICY IF EXISTS "Service role full access webhook requests" ON public.lovable_webhook_requests;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'lovable_webhook_requests') THEN
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'lovable_webhook_requests') THEN
+        EXECUTE 'EXECUTE ''-- DROP POLICY IF EXISTS "Service role full access webhook requests" ON public.lovable_webhook_requests''';
+    END IF;
+END $$;
+    END IF;
+END $$;
 
 -- Users can insert their own jobs (restrict to authenticated)
 DROP POLICY IF EXISTS "Users can insert their own jobs" ON public.generation_queue;
@@ -64,18 +74,28 @@ DROP POLICY IF EXISTS "Participantes podem enviar mensagens" ON public.chat_mess
 CREATE POLICY "Participantes podem enviar mensagens" ON public.chat_messages FOR INSERT TO authenticated WITH CHECK (auth.uid() = sender_id AND EXISTS (SELECT 1 FROM chat_conversations c WHERE c.id = chat_messages.conversation_id AND (c.cliente_id = auth.uid() OR has_role(auth.uid(), 'advogado'::app_role))));
 
 -- lovable_users (restrict to authenticated)
-DROP POLICY IF EXISTS "lovable_users_delete_own" ON public.lovable_users;
-DROP POLICY IF EXISTS "lovable_users_select_own" ON public.lovable_users;
-DROP POLICY IF EXISTS "lovable_users_update_own" ON public.lovable_users;
-DROP POLICY IF EXISTS "lovable_users_insert_for_self" ON public.lovable_users;
-CREATE POLICY "lovable_users_select_own" ON public.lovable_users FOR SELECT TO authenticated USING (user_id = auth.uid());
-CREATE POLICY "lovable_users_insert_for_self" ON public.lovable_users FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
-CREATE POLICY "lovable_users_update_own" ON public.lovable_users FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
-CREATE POLICY "lovable_users_delete_own" ON public.lovable_users FOR DELETE TO authenticated USING (user_id = auth.uid());
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'lovable_users') THEN
+        DROP POLICY IF EXISTS "lovable_users_delete_own" ON public.lovable_users;
+        DROP POLICY IF EXISTS "lovable_users_select_own" ON public.lovable_users;
+        DROP POLICY IF EXISTS "lovable_users_update_own" ON public.lovable_users;
+        DROP POLICY IF EXISTS "lovable_users_insert_for_self" ON public.lovable_users;
+        CREATE POLICY "lovable_users_select_own" ON public.lovable_users FOR SELECT TO authenticated USING (user_id = auth.uid());
+        CREATE POLICY "lovable_users_insert_for_self" ON public.lovable_users FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+        CREATE POLICY "lovable_users_update_own" ON public.lovable_users FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+        CREATE POLICY "lovable_users_delete_own" ON public.lovable_users FOR DELETE TO authenticated USING (user_id = auth.uid());
+    END IF;
+END $$;
 
 -- lovable_events (restrict to authenticated)
-DROP POLICY IF EXISTS "lovable_events_select_by_owner" ON public.lovable_events;
-CREATE POLICY "lovable_events_select_by_owner" ON public.lovable_events FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM lovable_users lu WHERE lu.lovable_id IS NOT NULL AND lu.lovable_id = lovable_events.lovable_id AND lu.user_id = auth.uid()));
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'lovable_events') THEN
+        DROP POLICY IF EXISTS "lovable_events_select_by_owner" ON public.lovable_events;
+        EXECUTE 'CREATE POLICY "lovable_events_select_by_owner" ON public.lovable_events FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM lovable_users lu WHERE lu.lovable_id IS NOT NULL AND lu.lovable_id = lovable_events.lovable_id AND lu.user_id = auth.uid()))';
+    END IF;
+END $$;
 
 -- courtlistener webhook insert (service role bypasses, remove)
 DROP POLICY IF EXISTS "Service role can insert webhook events" ON public.courtlistener_webhook_events;
