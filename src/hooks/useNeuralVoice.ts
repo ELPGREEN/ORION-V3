@@ -283,7 +283,7 @@ async function primeMicrophone(): Promise<void> {
 }
 
 /** Jaccard word-overlap echo detection — aggressive to prevent self-hearing */
-function isEchoOf(input: string, spoken: string): boolean {
+function isEchoOf(input: string, spoken: string, cachedTokens?: Set<string>): boolean {
   if (!spoken || input.length < 5) return false;
   // Substring match (either direction, check more chars)
   if (spoken.includes(input.slice(0, 60)) || input.includes(spoken.slice(0, 60))) return true;
@@ -291,7 +291,7 @@ function isEchoOf(input: string, spoken: string): boolean {
   if (input.length >= 10 && spoken.includes(input.slice(0, 25))) return true;
   // Jaccard overlap
   const wordsA = new Set(input.split(/\s+/).filter(w => w.length > 2));
-  const wordsB = new Set(spoken.split(/\s+/).filter(w => w.length > 2));
+  const wordsB = cachedTokens || new Set(spoken.split(/\s+/).filter(w => w.length > 2));
   if (wordsA.size < 2 || wordsB.size < 2) return false;
 
   let overlap = 0;
@@ -371,6 +371,7 @@ export function useNeuralVoice(
   const speechBufferRef = useRef("");
   const speechDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSpokenTextRef = useRef("");
+  const lastSpokenTokensRef = useRef<Set<string> | null>(null);
   const lastSpokenAtRef = useRef(0);
   const lastProcessedTranscriptRef = useRef("");
   const lastProcessedAtRef = useRef(0);
@@ -662,7 +663,9 @@ export function useNeuralVoice(
     markTTSStart();
     updateAiResponding(true);
     OrbState.voiceState = "speaking";
-    lastSpokenTextRef.current = normalizeSpeechText(text).slice(0, 800);
+    const normText = normalizeSpeechText(text).slice(0, 800);
+    lastSpokenTextRef.current = normText;
+    lastSpokenTokensRef.current = new Set(normText.split(/\s+/).filter(w => w.length > 2));
     lastSpokenAtRef.current = Date.now();
     suppressPendingFlushUntilRef.current = Date.now() + 2500;
     speechBufferRef.current = "";
@@ -858,7 +861,7 @@ export function useNeuralVoice(
 
         // Echo guard
         if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
-          if (isEchoOf(normalized, lastSpokenTextRef.current)) {
+          if (isEchoOf(normalized, lastSpokenTextRef.current, lastSpokenTokensRef.current || undefined)) {
             console.log("[Voice] Echo suppressed:", normalized.slice(0, 50));
             return;
           }
@@ -1071,7 +1074,7 @@ export function useNeuralVoice(
                 if (mergedNormalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
 
                 if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
-                  if (isEchoOf(mergedNormalized, lastSpokenTextRef.current)) {
+                  if (isEchoOf(mergedNormalized, lastSpokenTextRef.current, lastSpokenTokensRef.current || undefined)) {
                     console.log("[Voice] GCP Echo suppressed:", mergedNormalized.slice(0, 50));
                     return;
                   }
