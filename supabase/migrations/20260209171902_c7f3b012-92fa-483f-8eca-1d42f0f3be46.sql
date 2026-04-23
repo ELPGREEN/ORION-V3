@@ -54,12 +54,7 @@ $$;
 -- ==============================================
 -- 4. FIX: foreign table "wrapper" - revoke API access
 -- ==============================================
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'wrapper') THEN
-        EXECUTE 'REVOKE ALL ON public.wrapper FROM anon, authenticated';
-    END IF;
-END $$;
+REVOKE ALL ON public.wrapper FROM anon, authenticated;
 
 -- ==============================================
 -- 5. FIX: RLS "WITH CHECK (true)" - restrict pro_bono INSERT to specific roles
