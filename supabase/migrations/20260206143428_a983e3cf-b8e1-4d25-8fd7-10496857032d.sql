@@ -10,6 +10,7 @@ BEGIN
 END;
 $$;
 
+-- Foundation: Create lovable and auxiliary tables early to prevent dependency errors in subsequent migrations
 CREATE TABLE IF NOT EXISTS public.lovable_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_type TEXT NOT NULL DEFAULT '',
@@ -37,6 +38,16 @@ CREATE TABLE IF NOT EXISTS public.lovable_webhook_requests (
   error TEXT, received_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.lovable_webhook_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS public.signed_urls (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID,
+  file_path TEXT NOT NULL DEFAULT '',
+  url TEXT NOT NULL DEFAULT '',
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.signed_urls ENABLE ROW LEVEL SECURITY;
 
 -- Create documents table for storing AI-generated legal documents
 CREATE TABLE public.documents (
