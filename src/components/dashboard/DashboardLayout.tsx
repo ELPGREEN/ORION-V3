@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSignatureRealtime } from "@/hooks/useSignatureRealtime";
 import { syncVoiceEvolutionFromSupabase } from "@/lib/neural/orion-voice-evolution";
+import { voiceManager } from "@/lib/voice/voiceManager";
+import { voicePerformanceDashboard } from "@/lib/voice/voicePerformanceDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { ClienteNavbar } from "./ClienteNavbar";
 import { DashboardSidebar } from "./DashboardSidebar";
@@ -37,6 +39,26 @@ export default function DashboardLayout() {
   const onboardingCheckedRef = useRef(false);
 
   // Initialization for authenticated users
+  // Initialize voice systems only for the dashboard context
+  useEffect(() => {
+    if (!authLoading && user) {
+      const initVoice = async () => {
+        try {
+          await voiceManager.startListening();
+          voicePerformanceDashboard.init();
+          console.log("[Voice Systems] ✅ Initialized within Dashboard");
+        } catch (err) {
+          console.error("[Voice Systems] ❌ Init failure:", err);
+        }
+      };
+      initVoice();
+      return () => {
+        voicePerformanceDashboard.hide();
+        voiceManager.stopListening();
+      };
+    }
+  }, [user, authLoading]);
+
   useEffect(() => {
     if (!authLoading && user) {
       syncVoiceEvolutionFromSupabase().catch(() => {});

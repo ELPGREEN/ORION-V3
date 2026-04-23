@@ -8,6 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { isOwnerEmail } from "@/lib/neural/orion-consciousness";
 import { useQuery } from "@tanstack/react-query";
+import { voiceManager } from "@/lib/voice/voiceManager";
+import { voicePerformanceDashboard } from "@/lib/voice/voicePerformanceDashboard";
 import { NeuralVision } from "@/components/dashboard/neural/NeuralVision";
 import { AlienCoreBackground } from "@/components/ui/AlienCoreBackground";
 import { motion } from "framer-motion";
@@ -152,6 +154,24 @@ function LoginGate() {
 
 export default function ConsultaIA() {
   const { user } = useAuth();
+  // Initialize voice systems specifically for ConsultaIA page
+  useEffect(() => {
+    const initVoice = async () => {
+      try {
+        await voiceManager.startListening();
+        voicePerformanceDashboard.init();
+        console.log("[Voice Systems] ✅ Initialized on ConsultaIA page");
+      } catch (err) {
+        console.error("[Voice Systems] ❌ Init failure on ConsultaIA:", err);
+      }
+    };
+    initVoice();
+    return () => {
+      voicePerformanceDashboard.hide();
+      voiceManager.stopListening();
+    };
+  }, []);
+
 
   // Check user role
   // Parallel gate: fetch role + plan in a single query call

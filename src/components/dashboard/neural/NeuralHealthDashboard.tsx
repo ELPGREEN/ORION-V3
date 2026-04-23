@@ -20,7 +20,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { callEvolution } from \"@/lib/neural/ai-service\";
+import { callEvolution } from "@/lib/neural/ai-service";
 import { useToast } from "@/hooks/use-toast";
 
 const NeuralMapCompact = lazy(() => import("./AttentionVisualization").then(m => ({ default: m.AttentionVisualization })));
