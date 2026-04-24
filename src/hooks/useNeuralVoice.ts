@@ -381,12 +381,12 @@ export function useNeuralVoice(
   const audioWorkletActiveRef = useRef(false);
 
   // Wraps setListening + a "no speech" detection timer.
-  // The toast only fires if the GCP STT session is NOT healthy after the timeout —
-  // a healthy session that simply hasn't received speech (user is silent) must NOT trigger
-  // a false "check your microphone" warning.
+  // Threshold and suppression are platform-aware (see voiceThresholds.ts).
   const setListeningWithTimer = useCallback((val: boolean) => {
     setListening(val);
     if (val) {
+      const cfg = getVoiceThresholds();
+      if (cfg.suppressNoSpeechToast) return;
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
       noSpeechTimerRef.current = setTimeout(() => {
         if (!listeningRef.current) return;
@@ -395,7 +395,7 @@ export function useNeuralVoice(
         if (gcpHealthy) return;
         setNoSpeechDetected(true);
         toast.info("Não estou te ouvindo... Verifique se o microfone está por perto.");
-      }, 20000);
+      }, cfg.noSpeechToastMs);
     } else {
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
       setNoSpeechDetected(false);
