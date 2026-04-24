@@ -7,6 +7,7 @@ from integrations.google_assistant import GoogleAssistantIntegrator
 from integrations.iot_manager import IoTManager
 from integrations.ble_manager import BLEManager
 from integrations.ros2_manager import ROS2Manager
+from integrations import llm_chat
 from memory import OrionMemory
 
 logger = logging.getLogger(__name__)
