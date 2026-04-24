@@ -462,7 +462,7 @@ export default function ChatHumano() {
           content: m.content,
         }));
 
-        // Integração Agente-Eu v22.3: envia estado consciente para a Secretaria
+        // Integração Agente-Eu v21.2: envia estado consciente para a Secretaria
         const { getAgenteEu } = await import("@/lib/neural/agents/self-model-agent");
         const agenteEu = getAgenteEu();
         const selfState = agenteEu.getState();
