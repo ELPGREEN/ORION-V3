@@ -10,15 +10,15 @@ const COLORS: Record<VoiceState, { dot: string; text: string; border: string; gl
   idle:      { dot: "bg-gray-500/50", text: "rgba(100,100,100,0.4)", border: "rgba(100,100,100,0.2)", glow: "none" },
 };
 
-const LABELS: Record<VoiceState, string> = {
-  speaking: "SPEAKING",
-  listening: "LISTENING",
-  thinking: "PROCESSING",
-  idle: "ONLINE",
-};
-
-export const VoiceStateIndicator = () => {
+export const VoiceStateIndicator = ({ noSpeechDetected }: { noSpeechDetected?: boolean }) => {
   const [vs, setVs] = useState<VoiceState>(OrbState.voiceState);
+
+  const labels: Record<VoiceState, string> = {
+    speaking: "SPEAKING",
+    listening: noSpeechDetected ? "SEM SOM" : "LISTENING",
+    thinking: "PROCESSING",
+    idle: "ONLINE",
+  };
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -44,11 +44,11 @@ export const VoiceStateIndicator = () => {
           <span
             className="text-[10px] font-mono tracking-[0.2em] uppercase"
             style={{
-              color: c.text,
+              color: noSpeechDetected && vs === "listening" ? "rgba(251,191,36,0.9)" : c.text,
               textShadow: vs !== "idle" ? `0 0 10px ${c.border}` : "none",
             }}
           >
-            {LABELS[vs]}
+            {labels[vs]}
           </span>
         </div>
       </div>

@@ -431,7 +431,7 @@ export function PlasmaCanvas({ className = "" }: { className?: string }) {
       const t = (Date.now() - startRef.current) / 1000;
       const now = Date.now();
 
-      const target = OrbState.aiResponding ? 1.0 : 0.0;
+      const target = (OrbState.aiResponding || OrbState.voiceState === "speaking" || OrbState.voiceState === "thinking") ? 1.0 : (OrbState.voiceState === "listening" ? 0.3 : 0.0);
       reactivityRef.current += (target - reactivityRef.current) * 0.08;
 
       if (OrbState.aiResponding && !lastResponding) {

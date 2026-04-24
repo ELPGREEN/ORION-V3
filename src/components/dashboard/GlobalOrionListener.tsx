@@ -122,7 +122,7 @@ export function GlobalOrionListener() {
       toast.error("Câmera negada — Visão Neural ficará limitada");
     }
 
-    if (micGranted) {
+    if (micGranted) { try { const ctx = new AudioContext({ sampleRate: 48000 }); (window as any).__orion_shared_audio_ctx__ = ctx; } catch {}
       localStorage.setItem(PERMISSIONS_KEY, "true");
       setPermissionsGranted(true);
       toast.success(
@@ -367,19 +367,14 @@ function OrionFloatingOverlay({
     let cancelled = false;
     (async () => {
       try {
-        const { voiceManager } = await import("@/lib/voice/voiceManager");
         if (cancelled) return;
-        voiceManager.setVisualFeedbackEnabled(voicePanelOn);
       } catch (e) {
-        console.warn("[OrionOverlay] voiceManager unavailable:", e);
       }
     })();
     return () => {
       cancelled = true;
       // Always hide the global panel when the overlay unmounts so it never
       // leaks onto other routes.
-      import("@/lib/voice/voiceManager")
-        .then(({ voiceManager }) => voiceManager.setVisualFeedbackEnabled(false))
         .catch(() => {});
     };
   }, [voicePanelOn]);

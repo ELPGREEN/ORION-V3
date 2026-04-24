@@ -292,7 +292,6 @@ export * from "./system-health";
 
 // ═══ Telemetry & Voice ═══
 export * from "./neural-telemetry-hub";
-export * from "./voice-evolution-feedback";
 export * from "./provider-health";
 
 // ═══ Perceive → Reason → Act Orchestrator (AWS Agentic AI) ═══

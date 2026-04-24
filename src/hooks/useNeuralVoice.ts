@@ -70,7 +70,7 @@ const MAX_CONSECUTIVE_ABORTS = 5;
 const MAX_CONSECUTIVE_NO_SPEECH = 8;
 const NO_SPEECH_TIMEOUT_MS = 3000; // Tolerate natural pauses before considering speech ended
 const RESTART_DELAY_MS = isMobile() ? 2000 : 500; // Optimized from 1500ms — 3x faster reconnect
-const GCP_FINAL_MERGE_MS = 700; // Brief merge window to combine split STT segments into one command
+const GCP_FINAL_MERGE_MS = 300; // Brief merge window to combine split STT segments into one command
 
 // ═══ Shared State ═══
 export const VoiceState = { aiResponding: false };
@@ -312,18 +312,12 @@ function isEchoOf(input: string, spoken: string, cachedTokens?: Set<string>): bo
 
 // ═══ Legacy Exported Functions ═══
 
-export function feedUserSpeech(_text: string): void {
-  // Legacy function - kept for backward compatibility
-}
-
-export function feedAIResponse(_text: string): void {
-  // Legacy function - kept for backward compatibility
-}
 
 // ═══ Interface ═══
 
 export interface UseNeuralVoiceReturn {
   listening: boolean;
+  noSpeechDetected: boolean;
   supported: boolean;
   ttsOn: boolean;
   setTtsOn: (on: boolean) => void;
@@ -353,12 +347,15 @@ export function useNeuralVoice(
 
   // ── State ──
   const [listening, setListening] = useState(false);
+  const setListeningWithTimer = useCallback((val: boolean) => { setListening(val); if (val) { if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = setTimeout(() => { if (listeningRef.current) { setNoSpeechDetected(true); toast.info("Não estou te ouvindo... Verifique se o microfone está por perto."); } }, 8000); } else { if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current); setNoSpeechDetected(false); } }, [listeningRef]);
+  const [noSpeechDetected, setNoSpeechDetected] = useState(false);
   const [supported, setSupported] = useState(true); // GCP STT always available via edge function
   const [ttsOn, setTtsOn] = useState(true);
   const ttsRef = useRef(true);
 
   // ── Refs ──
   const recRef = useRef<any>(null);
+  const noSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speakingRef = useRef(false);
   const maleVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const onCmdRef = useRef<((c: string) => void) | null>(null);
@@ -444,25 +441,27 @@ export function useNeuralVoice(
   // ═══ STT Restart Scheduler ═══
   const scheduleRecognitionRestart = useCallback((delay?: number) => {
     clearRestartTimer();
-    if (!isMicOwner(singletonIdRef.current)) { setListening(false); return; }
+    if (!isMicOwner(singletonIdRef.current)) { setListeningWithTimer(false); OrbState.voiceState = "idle"; return; }
     if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
-      setListening(false);
+      setListeningWithTimer(false); OrbState.voiceState = "idle";
       return;
     }
 
     // Longer delays to prevent mic cycling — each start() triggers OS mic sound
     const restartDelay = delay ?? (isMobile() ? 3000 : 400);
-    setListening(true);
+    setListeningWithTimer(true);
+            OrbState.voiceState = "listening";
 
     restartTimerRef.current = setTimeout(() => {
       if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
-        setListening(false);
+        setListeningWithTimer(false); OrbState.voiceState = "idle";
         return;
       }
       if (recRef.current) {
         try {
           recRef.current.start();
-          setListening(true);
+          setListeningWithTimer(true);
+            OrbState.voiceState = "listening";
         } catch {
           try { recRef.current.stop(); } catch {}
           recRef.current = null;
@@ -511,7 +510,8 @@ export function useNeuralVoice(
       if (gcpSessionRef.current.isPaused()) {
         gcpSessionRef.current.resume();
       }
-      setListening(true);
+      setListeningWithTimer(true);
+            OrbState.voiceState = "listening";
       return;
     }
 
@@ -562,7 +562,8 @@ export function useNeuralVoice(
       if (gcpSessionRef.current?.isActive() && gcpSessionRef.current.isPaused()) {
         console.log("[Voice] Watchdog: GCP STT paused — resuming (no teardown)");
         gcpSessionRef.current.resume();
-        setListening(true);
+        setListeningWithTimer(true);
+            OrbState.voiceState = "listening";
         return;
       }
 
@@ -770,13 +771,15 @@ export function useNeuralVoice(
 
     const rec = new SR();
     rec.lang = "pt-BR";
-    rec.continuous = true;
+    rec.continuous = false;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
 
-    rec.onstart = () => { setListening(true); markSTTStart(); };
+    rec.onstart = () => { setListeningWithTimer(true); markSTTStart(); };
+            OrbState.voiceState = "listening";
 
     rec.onresult = (e: any) => {
+      if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false);
       consecutiveAbortsRef.current = 0;
 
       let hasFinal = false;
@@ -880,8 +883,8 @@ export function useNeuralVoice(
 
     rec.onend = () => {
       // Don't null recRef immediately — avoid creating new instances rapidly
-      if (intentionalStopRef.current) { recRef.current = null; setListening(false); return; }
-      if (speakingRef.current) { recRef.current = null; setListening(false); return; }
+      if (intentionalStopRef.current) { recRef.current = null; setListeningWithTimer(false); OrbState.voiceState = "idle"; return; }
+      if (speakingRef.current) { recRef.current = null; setListeningWithTimer(false); OrbState.voiceState = "idle"; return; }
       // Keep listening state true during restart to avoid UI flicker
       if (onCmdRef.current) {
         recRef.current = null;
@@ -890,7 +893,7 @@ export function useNeuralVoice(
         return;
       }
       recRef.current = null;
-      setListening(false);
+      setListeningWithTimer(false); OrbState.voiceState = "idle";
     };
 
     rec.onerror = (e: any) => {
@@ -902,7 +905,7 @@ export function useNeuralVoice(
         consecutiveAbortsRef.current++;
         if (consecutiveAbortsRef.current >= MAX_CONSECUTIVE_ABORTS) {
           console.warn(`[Voice] ${MAX_CONSECUTIVE_ABORTS} consecutive aborts — cooldown 5s`);
-          setListening(false);
+          setListeningWithTimer(false); OrbState.voiceState = "idle";
           setTimeout(() => {
             if (!intentionalStopRef.current && onCmdRef.current && isMicOwner(singletonIdRef.current)) {
               consecutiveAbortsRef.current = 0;
@@ -916,7 +919,7 @@ export function useNeuralVoice(
       }
 
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
-        setListening(false);
+        setListeningWithTimer(false); OrbState.voiceState = "idle";
         intentionalStopRef.current = true; // stop further restart attempts
         if (!_micPermissionToastShown) {
           _micPermissionToastShown = true;
@@ -929,7 +932,8 @@ export function useNeuralVoice(
         // no-speech is normal — with 4s tolerance, just wait longer
         // DON'T restart immediately — wait for user to speak
         console.log("[Voice] No speech detected — waiting (4s tolerance)");
-        setListening(true);
+        setListeningWithTimer(true);
+            OrbState.voiceState = "listening";
         return; // Keep listening open, don't restart
       }
 
@@ -950,7 +954,7 @@ export function useNeuralVoice(
   const startListeningFresh = useCallback((onCmd: (c: string) => void) => {
     if (!isMicOwner(singletonIdRef.current)) {
       console.log("[Voice] ❌ Not mic owner");
-      setListening(false);
+      setListeningWithTimer(false); OrbState.voiceState = "idle";
       return;
     }
     intentionalStopRef.current = false;
@@ -961,7 +965,7 @@ export function useNeuralVoice(
     const rec = createRecognition(onCmd);
     if (!rec) {
       console.log("[Voice] ❌ Web Speech not supported in this browser");
-      setListening(false);
+      setListeningWithTimer(false); OrbState.voiceState = "idle";
       return;
     }
 
@@ -970,9 +974,10 @@ export function useNeuralVoice(
 
     try {
       rec.start();
-      setListening(true);
+      setListeningWithTimer(true);
+            OrbState.voiceState = "listening";
     } catch {
-      setListening(false);
+      setListeningWithTimer(false); OrbState.voiceState = "idle";
       recRef.current = null;
       setTimeout(() => {
         if (!intentionalStopRef.current && onCmdRef.current === onCmd && isMicOwner(singletonIdRef.current)) {
@@ -991,7 +996,7 @@ export function useNeuralVoice(
       voiceActiveRef.current = true;
       clearRestartTimer();
       onCmdRef.current = onCmd;
-      setListening(false);
+      setListeningWithTimer(false); OrbState.voiceState = "idle";
 
       // Prime microphone for reliable auto-start
       await primeMicrophone();
@@ -1009,17 +1014,19 @@ export function useNeuralVoice(
             if (gcpSessionRef.current.isPaused()) {
               gcpSessionRef.current.resume();
             }
-            setListening(true);
+            setListeningWithTimer(true);
+            OrbState.voiceState = "listening";
             markSTTStart();
             console.log("[Voice] ✅ GCP STT reused — no mic teardown");
             return;
           }
 
           const session = createGCPSTTSession({
-            languageCode: "pt-BR",
+            languageCode: "pt-BR", onInterim: (text) => { if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false); },
             sampleRate: 16000,
             chunkIntervalMs: gcpChunkIntervalMs,
             onFinal: (text, confidence) => {
+              if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false);
               if (!onCmdRef.current || intentionalStopRef.current) return;
               if (speakingRef.current || VoiceState.aiResponding) {
                 if (STOP_PATTERNS.test(text)) {
@@ -1040,7 +1047,7 @@ export function useNeuralVoice(
               const SHORT_ACTION_WHITELIST = /^(olha|olhe|olho|ve|veja|le|leia|para|pare|stop|sim|nao|não|ok|certo|aqui|isso|isto|esse|essa|agora|chega|fala|hey|ei|oi)$/i;
               const hasShortAction = normalized.split(/\s+/).some(w => SHORT_ACTION_WHITELIST.test(w));
 
-              if (confidence > 0 && confidence < 0.18 && wordCount <= 2 && !hasShortAction) {
+              if (confidence > 0 && confidence < 0.12 && wordCount <= 2 && !hasShortAction) {
                 console.log(`[Voice] GCP STT descartado (silent): "${cleanedText}" (${(confidence * 100).toFixed(0)}%)`);
                 return;
               }
@@ -1064,7 +1071,7 @@ export function useNeuralVoice(
               const turnState = detectTurnState([sentenceAccumulatorRef.current], "pt-BR");
               const mergeWindow = getOptimalSilenceDuration(turnState);
 
-              sentenceTimerRef.current = setTimeout(() => {
+              OrbState.voiceState = "thinking"; sentenceTimerRef.current = setTimeout(() => {
                 const mergedText = deduplicateRepeatedPhrases(sentenceAccumulatorRef.current.trim());
                 sentenceAccumulatorRef.current = "";
                 if (!mergedText || !onCmdRef.current || intentionalStopRef.current) return;
@@ -1110,7 +1117,8 @@ export function useNeuralVoice(
           const started = await session.start();
 
           if (started && !intentionalStopRef.current) {
-            setListening(true);
+            setListeningWithTimer(true);
+            OrbState.voiceState = "listening";
             markSTTStart();
             console.log("[Voice] ✅ Google Cloud STT ativo — streaming em tempo real");
             return; // GCP STT running, no need for Web Speech
@@ -1153,7 +1161,7 @@ export function useNeuralVoice(
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
     releaseMic(singletonIdRef.current);
-    setListening(false);
+    setListeningWithTimer(false); OrbState.voiceState = "idle";
   }, [clearRestartTimer]);
 
   // ── Cleanup on unmount — FULL teardown only here ──
@@ -1176,6 +1184,7 @@ export function useNeuralVoice(
 
   return {
     listening, supported, ttsOn, setTtsOn,
+    noSpeechDetected,
     speak, speakFast, startListening, stop,
     bargeIn, startThinking,
     abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef,

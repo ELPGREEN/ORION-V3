@@ -5,7 +5,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { orionSelfImprove } from "./jules-client";
-import { feedUserSpeech, feedAIResponse } from "@/hooks/useNeuralVoice";
 import {
   evaluateRAGResponse,
   type RAGEvalResult
@@ -332,8 +331,6 @@ export async function runAgenticCycle(
 
   // [v3] Finalize journal + voice evolution feedback
   finalizeThoughtEntry(thought, verification.passed ? "Ciclo concluído com sucesso" : "Ciclo com issues", verification.passed);
-  feedUserSpeech(query);
-  feedAIResponse(response);
 
   // Log pipeline latency for performance monitoring
   if (latency.totalMs > 0) {
