@@ -9,3 +9,7 @@
 ## 2026-05-21 - [Cached Echo Tokenization]
 **Learning:** High-frequency STT processing loops were performing redundant string splitting and Set allocations for echo cancellation checks against the same AI response. This created unnecessary GC pressure and CPU overhead during active conversations.
 **Action:** Pre-calculate and cache token sets for reference strings (like the AI's last spoken response) when they change. Pass the cached Set to similarity functions to ensure the inner loop of the STT pipeline remains O(N) only on the new input, not on the static reference.
+
+## 2026-05-22 - [Supabase Count Optimization]
+**Learning:** Foundational dashboard queries were fetching full row data and multiple columns while only utilizing the `.count` property. In a high-latency mobile environment, this created unnecessary network payload and body parsing overhead (up to 150ms per interaction).
+**Action:** Always use `{ count: "exact", head: true }` in Supabase/PostgREST queries when only record counts are required. This instructs the backend to return metadata in headers, eliminating response body transport and client-side JSON parsing for row data.
