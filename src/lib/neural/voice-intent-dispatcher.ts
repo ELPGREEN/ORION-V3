@@ -13,6 +13,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { smartClassify, smartClassifySync, type ClassifiedIntent } from "./smart-intent-classifier";
+import { getLastIntent, setLastIntent } from "./orion-memory";
 import { OrionEvents, dispatchOrionEvent, type OrionMusicAction } from "@/lib/events/orion-events";
 
 // ─── Types ───
@@ -22,6 +23,7 @@ export interface VoiceIntent {
   confidence: number;
   params: Record<string, string>;
   rawText: string;
+  alternatives?: string[];
 }
 
 export interface DispatchResult {
@@ -101,6 +103,7 @@ const PARAM_EXTRACTORS: Record<string, (text: string) => Record<string, string>>
  * Returns a structured result with the response text and any data.
  */
 export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: string): Promise<DispatchResult> {
+  if (intent.intent !== "general") setLastIntent(intent.intent);
   const t0 = performance.now();
 
   // ── Creator-only intents guard ──
@@ -119,6 +122,10 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
   try {
     const extractor = PARAM_EXTRACTORS[intent.intent];
     const params = extractor ? extractor(intent.rawText) : { query: intent.rawText };
+
+    if (intent.intent === "general" && intent.confidence < 0.7) {
+      return ok(intent.intent, generateFallbackResponse(intent), { fallback: true }, t0);
+    }
 
     switch (intent.intent) {
       case "navigation": {
@@ -339,6 +346,7 @@ export async function classifyVoiceCommandSmart(text: string): Promise<VoiceInte
     confidence: result.confidence,
     params: result.params,
     rawText: text,
+    alternatives: result.alternatives,
   };
 }
 
@@ -349,7 +357,13 @@ export async function classifyVoiceCommandSmart(text: string): Promise<VoiceInte
 export function classifyVoiceCommand(text: string): VoiceIntent {
   const result = smartClassifySync(text);
   if (result) {
-    return { intent: result.intent, confidence: result.confidence, params: result.params, rawText: text };
+    return {
+      intent: result.intent,
+      confidence: result.confidence,
+      params: result.params,
+      rawText: text,
+      alternatives: result.alternatives
+    };
   }
   return { intent: "general", confidence: 0.5, params: {}, rawText: text };
 }
@@ -362,4 +376,64 @@ function ok(intent: string, response: string, data: unknown, t0: number): Dispat
 
 function fail(intent: string, response: string, t0: number): DispatchResult {
   return { success: false, intent, response, dispatchMs: Math.round(performance.now() - t0) };
+}
+
+
+/**
+ * Generates a context-aware fallback response when intent confidence is low.
+ */
+export function generateFallbackResponse(intent: VoiceIntent): string {
+    const lastIntent = getLastIntent();
+
+  const labels: Record<string, string> = {
+    navigation: "navegar para uma página",
+    media: "ouvir música ou ver um vídeo",
+    search: "pesquisar algo na base de conhecimento",
+    web_search: "buscar informações na internet",
+    legal: "fazer uma pesquisa jurídica",
+    calendar: "agendar ou ver compromissos",
+    translation: "traduzir um texto",
+    calculation: "fazer um cálculo",
+    image_generation: "gerar uma imagem",
+    self_evolve: "iniciar meu ciclo de auto-evolução",
+  };
+
+  if (intent.alternatives && intent.alternatives.length > 0) {
+    const suggested = intent.alternatives
+      .map(alt => labels[alt] || alt)
+      .filter((v, i, a) => a.indexOf(v) === i) // unique
+      .slice(0, 2);
+
+    if (suggested.length > 0) {
+      const options = suggested.join(" ou ");
+      return `Não tenho certeza se entendi. Você quer que eu tente ${options}, ou deseja algo diferente?`;
+    }
+  }
+
+  // Very specific hints based on keywords
+  if (/m[uú]sica|tocar|som/i.test(intent.rawText)) {
+    return "Parece que você quer ouvir música. Quer que eu toque algo específico ou prefere uma sugestão?";
+  }
+
+  if (/v[aá]\s+para|ir\s+para|abre/i.test(intent.rawText)) {
+    return "Você quer navegar para alguma página específica? Posso abrir o painel, documentos, processos ou clientes.";
+  }
+
+  if (lastIntent && lastIntent !== "general" && lastIntent !== "identity") {
+    const labels: Record<string, string> = {
+      navigation: "navegação",
+      media: "música",
+      search: "busca",
+      web_search: "pesquisa na web",
+      legal: "assuntos jurídicos",
+      calendar: "agenda",
+      translation: "tradução",
+      calculation: "cálculos",
+      image_generation: "geração de imagem",
+    };
+    const lastLabel = labels[lastIntent] || lastIntent;
+    return `Não entendi bem. Você ainda quer continuar com ${lastLabel} ou deseja que eu faça algo diferente?`;
+  }
+
+  return "Não compreendi totalmente seu comando. Você quer que eu faça algo específico ou podemos apenas conversar?";
 }
