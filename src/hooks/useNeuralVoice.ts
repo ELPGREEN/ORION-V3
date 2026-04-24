@@ -24,6 +24,7 @@ import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural
 import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
 import { ensurePersistentMic, isMobile as isMobilePersistent } from "@/lib/voice/persistentMic";
 import { createGCPSTTSession, type GCPSTTSession } from "@/lib/voice/gcpSTT";
+import { getVoiceThresholds } from "@/lib/voice/voiceThresholds";
 
 // ═══ Constants ═══
 const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
