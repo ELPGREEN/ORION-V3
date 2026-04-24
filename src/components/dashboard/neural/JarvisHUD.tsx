@@ -303,7 +303,7 @@ function UserProfileCard() {
       <div className="min-w-0 flex-1">
         <div className="text-[9px] font-mono font-bold text-[#e0e0e0] truncate">{user?.name || "Operador"}</div>
         <div className="text-[7px] font-mono text-[#c9a84c]/50 truncate">{user?.email || "—"}</div>
-        <div className="text-[7px] font-mono text-[#3B82F6]/30">ORION v21.2 • HUD v8.0 • CLEARANCE L5</div>
+        <div className="text-[7px] font-mono text-[#3B82F6]/30">{ORION_HUD_CLEARANCE_LABEL}</div>
       </div>
     </div>
   );
@@ -472,7 +472,7 @@ export function JarvisHUD({ metrics, className = "" }: JarvisHUDProps) {
               {healthStatus === "online" && <div className="absolute inset-0 h-2 w-2 rounded-full bg-[#3B82F6]/40 animate-ping" />}
             </div>
             <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-[#3B82F6]/60 mr-1">ORION OS</span>
-            <span className="text-[8px] font-mono text-[#c9a84c]/40">v21.2 · HUD v8.0</span>
+            <span className="text-[8px] font-mono text-[#c9a84c]/40">{ORION_HUD_COMPACT_LABEL}</span>
             {realtimeEvent && <span className="text-[8px] font-mono text-[#c9a84c] animate-pulse ml-2">⚡ {realtimeEvent}</span>}
           </div>
           <div className="flex items-center gap-0 divide-x divide-[#3B82F6]/5 hidden md:flex">
