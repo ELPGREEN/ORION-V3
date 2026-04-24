@@ -866,7 +866,7 @@ export function useNeuralVoice(
       if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
 
       const turnState = detectTurnState([speechBufferRef.current], "pt-BR");
-      const silenceMs = getOptimalSilenceDuration(turnState);
+      const silenceMs = Math.round(getOptimalSilenceDuration(turnState) * getVoiceThresholds().turnSilenceMultiplier);
 
       speechDebounceRef.current = setTimeout(() => {
         const rawText = speechBufferRef.current.trim();
