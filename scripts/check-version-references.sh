@@ -18,10 +18,12 @@ EXCLUDE_DIRS=(
   .vite
   .git
   bfg-report
-  public/docs
-  public/data
-  public/models
-  supabase/migrations
+  migrations
+  docs
+  data
+  models
+  public
+  Document-Editor--master
 )
 
 # Monta flags --exclude-dir para o grep
