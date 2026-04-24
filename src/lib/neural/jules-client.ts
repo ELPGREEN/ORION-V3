@@ -268,17 +268,13 @@ export async function orionSelfImprove(opts: {
   }
 
   const branchPrefix = opts.subsystem ? `fix/jules-${opts.subsystem}-${Date.now()}` : undefined;
-  const branch = opts.branch || branchPrefix || "main";
+  let branch = opts.branch || branchPrefix || "main";
 
-  // Validate branch exists on GitHub before creating session
+  // Autonomous: if branch doesn't exist, fall back to 'main' so Jules can clone and create it itself
   const exists = await branchExistsOnGitHub(branch);
   if (!exists) {
-    console.warn(`[Orion→Jules] ❌ Branch '${branch}' não existe no remote — usando 'main'`);
-    return {
-      sessionId: "",
-      success: false,
-      error: `Branch '${branch}' não existe no GitHub. Use 'main' ou faça push da branch primeiro.`,
-    };
+    console.warn(`[Orion→Jules] ⚠️ Branch '${branch}' não existe — fallback autônomo para 'main'`);
+    branch = "main";
   }
 
   const prompt = opts.context
