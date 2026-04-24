@@ -79,13 +79,23 @@ export function DynamicMeta({
   noIndex = false,
 }: DynamicMetaProps) {
   const location = useLocation();
-  // Canonical is derived from the policy in src/lib/seo/canonical.ts.
-  // Honors trailing-slash rules + lowercases + strips query/hash.
-  // If a `_canonical` override is passed, we still normalize it via buildCanonicalUrl
-  // when it's a path; absolute overrides pass through untouched.
-  const canonicalUrl = _canonical && /^https?:\/\//i.test(_canonical)
-    ? _canonical
-    : buildCanonicalUrl(_canonical || location.pathname);
+  // Canonical is derived from the SINGLE policy in src/lib/seo/canonical.ts.
+  // Used for both <link rel="canonical"> and <meta property="og:url"> to
+  // guarantee they never drift apart (Google ignores OG when they conflict).
+  // Even an absolute `_canonical` override is normalized through the policy
+  // (lowercase, no trailing slash on non-root, strips query/hash).
+  const canonicalUrl = (() => {
+    if (!_canonical) return buildCanonicalUrl(location.pathname);
+    if (/^https?:\/\//i.test(_canonical)) {
+      try {
+        const u = new URL(_canonical);
+        return buildCanonicalUrl(u.pathname);
+      } catch {
+        return buildCanonicalUrl(location.pathname);
+      }
+    }
+    return buildCanonicalUrl(_canonical);
+  })();
   const ogImage = image || ogImageLegacy || DEFAULT_OG_IMAGE;
   const fullKeywords = keywords
     ? `${keywords}, ${DEFAULT_KEYWORDS}`
