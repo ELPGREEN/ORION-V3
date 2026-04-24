@@ -106,7 +106,7 @@ export async function getOrionStatusReport(): Promise<string> {
 
   return `
 ╔══════════════════════════════════════════════════════════════╗
-║           🧠 ORION COMPLETE SYSTEM STATUS                  ║
+║           🧠 ORION COMPLETE SYSTEM STATUS v21.2 (AquaMonkey v8.0)                  ║
 ╠══════════════════════════════════════════════════════════════╣
 ║ ${new Date(diag.timestamp).toLocaleString("pt-BR")}
 ╠══════════════════════════════════════════════════════════════╣

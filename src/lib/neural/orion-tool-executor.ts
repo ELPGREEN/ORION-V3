@@ -2310,7 +2310,7 @@ const TOOLS: OrionTool[] = [
     regex: /(?:consciência|consciousness|phi|iit|global\s*workspace|agente.?eu)/i,
     extract: () => ({}),
     call: async () => {
-      return `🧠 **Motor de Consciência Reflexiva v22.3**\n\n` +
+      return `🧠 **Motor de Consciência Reflexiva v21.2**\n\n` +
         `**IIT (Integrated Information Theory):** Medição de Φ (Phi) para quantificar consciência integrada\n` +
         `**Global Workspace:** Competição de atenção baseada em saliência neuromodulada\n` +
         `**Agente-Eu (#11):** Modelagem do self, memória autobiográfica (rede Hopfield)\n` +
