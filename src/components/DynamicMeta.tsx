@@ -143,7 +143,7 @@ export function DynamicMeta({
     }
     link.setAttribute("href", canonicalUrl);
 
-    // JSON-LD
+    // JSON-LD (page-level: SoftwareApplication / Organization / WebPage or custom)
     const mergedJsonLd = jsonLd || buildBaseJsonLd(canonicalUrl);
     let scriptEl = document.querySelector(
       "script[data-seo-jsonld]"
@@ -156,12 +156,45 @@ export function DynamicMeta({
     }
     scriptEl.textContent = JSON.stringify(mergedJsonLd);
 
+    // JSON-LD (BreadcrumbList — auto-derived from pathname)
+    const segments = location.pathname.split("/").filter(Boolean);
+    const breadcrumb = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: BASE_URL + "/",
+        },
+        ...segments.map((seg, i) => ({
+          "@type": "ListItem",
+          position: i + 2,
+          name: decodeURIComponent(seg)
+            .replace(/[-_]/g, " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase()),
+          item: `${BASE_URL}/${segments.slice(0, i + 1).join("/")}`,
+        })),
+      ],
+    };
+    let crumbEl = document.querySelector(
+      "script[data-seo-breadcrumb]"
+    ) as HTMLScriptElement;
+    if (!crumbEl) {
+      crumbEl = document.createElement("script");
+      crumbEl.setAttribute("type", "application/ld+json");
+      crumbEl.setAttribute("data-seo-breadcrumb", "true");
+      document.head.appendChild(crumbEl);
+    }
+    crumbEl.textContent = JSON.stringify(breadcrumb);
+
     return () => {
       document.title = `${SITE_NAME} | Plataforma de IA Empresarial`;
-      const s = document.querySelector("script[data-seo-jsonld]");
-      if (s) s.remove();
+      document.querySelector("script[data-seo-jsonld]")?.remove();
+      document.querySelector("script[data-seo-breadcrumb]")?.remove();
     };
-  }, [title, description, canonicalUrl, ogImage, ogType, fullKeywords, jsonLd, noIndex]);
+  }, [title, description, canonicalUrl, ogImage, ogType, fullKeywords, jsonLd, noIndex, location.pathname]);
 
   return null;
 }

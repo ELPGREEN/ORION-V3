@@ -18,6 +18,7 @@ import {
 import { WhoIsItForSection } from '@/components/home/WhoIsItForSection';
 import { ImpactMetricsSection } from '@/components/home/ImpactMetricsSection';
 import { WelcomeSplash } from '@/components/home/WelcomeSplash';
+import { SectionReveal } from '@/components/common/SectionReveal';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -94,14 +95,14 @@ export default function Index() { const [fOpen, setFOpen] = useState(false);
       </section>
 
       <OrionVideoShowcase />
-      <ImpactMetricsSection />
-      <WhoIsItForSection />
-      <SystemArchitectureSection />
-      <SmartOtrSection />
-      <TechStackSection />
-      <SecurityShieldSection />
-      <WhyOrionSection />
-      <ComparisonSection />
+      <SectionReveal as="section"><ImpactMetricsSection /></SectionReveal>
+      <SectionReveal as="section"><WhoIsItForSection /></SectionReveal>
+      <SectionReveal as="section"><SystemArchitectureSection /></SectionReveal>
+      <SectionReveal as="section"><SmartOtrSection /></SectionReveal>
+      <SectionReveal as="section"><TechStackSection /></SectionReveal>
+      <SectionReveal as="section"><SecurityShieldSection /></SectionReveal>
+      <SectionReveal as="section"><WhyOrionSection /></SectionReveal>
+      <SectionReveal as="section"><ComparisonSection /></SectionReveal>
       <CtaSection />
 
       <section className="py-6 bg-muted/10 border-t border-border/20">
