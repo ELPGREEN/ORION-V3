@@ -4,7 +4,7 @@ import { VoiceIDPanel } from "@/components/dashboard/neural/VoiceIDPanel";
 import { FaceAuthEnroll } from "@/components/auth/FaceAuthEnroll";
 import { OrionVoiceStudio } from "@/components/dashboard/neural/OrionVoiceStudio";
 import { useNeuralConfig, VisionRule, CustomCommand } from "@/hooks/useNeuralConfig";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { useNeuralVoice } from "@/hooks/useNeuralVoice";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -147,10 +147,7 @@ export default function ConfigurarIA() {
     personality_prompt: "",
   });
 
-  const { isListening, isSupported, isSpeaking, toggleListening, stopSpeaking } = useVoiceInput({
-    lang: "pt-BR",
-    onResult: handleVoiceCommand,
-  });
+  const { listening: isListening, supported: isSupported, startListening, stop: stopSpeaking, noSpeechDetected } = useNeuralVoice();
 
   // Gemini TTS only
   const speak = async (text: string) => {
@@ -573,7 +570,7 @@ export default function ConfigurarIA() {
             <Button
               variant={isListening ? "destructive" : "outline"}
               size="lg"
-              onClick={toggleListening}
+              onClick={() => isListening ? stopSpeaking() : startListening(handleVoiceCommand)}
               className={cn("rounded-full h-14 w-14 p-0 relative", isListening && "animate-pulse")}
             >
               {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Mic, MicOff, Volume2, VolumeX, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { useNeuralVoice } from "@/hooks/useNeuralVoice";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageToLocale } from "@/i18n";
@@ -58,7 +58,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
   // Keep ref in sync
   useEffect(() => { conversationModeRef.current = conversationMode; }, [conversationMode]);
 
-  const { isListening, isSupported, toggleListening, startListening, stopListening } = useVoiceInput({
+  const { listening: isListening, supported: isSupported, startListening, stop: stopListening, noSpeechDetected } = useNeuralVoice();
     lang: voiceLang,
     continuous: true,
     phrasePauseMs: 3000,
@@ -114,7 +114,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
     doSpeak(speakText, () => {
       if (conversationModeRef.current) {
         // Minimal delay — start listening immediately after speech ends
-        setTimeout(() => startListening(), 150);
+        setTimeout(() => startListening((text) => onTranscript(text)), 150);
       }
     });
   }, [speakText, conversationMode, isProcessing, doSpeak, startListening]);
@@ -128,7 +128,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
       setVoiceStatus("idle");
     } else {
       setConversationMode(true);
-      startListening();
+      startListening((text) => onTranscript(text));
     }
   }, [conversationMode, startListening, stopListening, stopSpeakingHQ]);
 
@@ -136,14 +136,14 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
 
   const statusLabels: Record<VoiceStatus, string> = {
     idle: "",
-    listening: "Ouvindo...",
+    listening: noSpeechDetected ? "Sem som..." : "Ouvindo...",
     processing: "Processando...",
     speaking: "Falando...",
   };
 
   const statusColors: Record<VoiceStatus, string> = {
     idle: "",
-    listening: "text-green-400",
+    listening: noSpeechDetected ? "text-amber-400" : "text-green-400",
     processing: "text-yellow-400",
     speaking: "text-cyan-400",
   };
@@ -176,7 +176,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
           type="button"
           variant="ghost"
           size="sm"
-          onClick={toggleListening}
+          onClick={() => isListening ? stopListening() : startListening((text) => onTranscript(text))}
           className={cn(
             "h-[44px] w-[44px] p-0 flex items-center justify-center flex-shrink-0 relative transition-all",
             isListening 

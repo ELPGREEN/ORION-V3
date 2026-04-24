@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { useNeuralVoice } from '../../../hooks/useNeuralVoice';
 
 // Mocking external dependencies
-vi.mock('@/lib/voice/stt-streamer', () => ({
-  STTStreamer: vi.fn().mockImplementation(() => ({
+vi.mock('@/lib/voice/gcpSTT', () => ({
+  createGCPSTTSession: vi.fn().mockImplementation(() => ({
     start: vi.fn(),
     stop: vi.fn(),
   })),

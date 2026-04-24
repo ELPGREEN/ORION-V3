@@ -193,7 +193,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     isConnected: true,
   };
 
-  const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef } = useNeuralVoice(true);
+  const { listening, supported: speechOk, ttsOn, setTtsOn, speak, speakFast, startListening, stop: stopListen, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, voiceActiveRef, noSpeechDetected } = useNeuralVoice(false);
   const bgTranscriptsGetterRef = useRef<() => import("./useWakeWord").BackgroundTranscript[]>(() => []);
 
   // ═══ Voice Identity Guard (must be before useOrionReasoning so identityStatus is available) ═══
@@ -1110,7 +1110,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         </div>
 
         {/* ═══ JARVIS-style Voice State Indicator ═══ */}
-        <VoiceStateIndicator />
+        <VoiceStateIndicator noSpeechDetected={noSpeechDetected} />
         <style>{`
           @keyframes plasmaPulseVision {
             0%, 100% { opacity: 0.6; transform: scale(1); }
