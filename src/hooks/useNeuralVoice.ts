@@ -1092,7 +1092,7 @@ export function useNeuralVoice(
 
               // Adaptive merge window — fast for finished sentences, patient for trailing words.
               const turnState = detectTurnState([sentenceAccumulatorRef.current], "pt-BR");
-              const mergeWindow = getOptimalSilenceDuration(turnState);
+              const mergeWindow = Math.round(getOptimalSilenceDuration(turnState) * voiceCfg.turnSilenceMultiplier);
 
               OrbState.voiceState = "thinking"; sentenceTimerRef.current = setTimeout(() => {
                 const mergedText = deduplicateRepeatedPhrases(sentenceAccumulatorRef.current.trim());
