@@ -81,6 +81,32 @@ interface JulesResult<T = unknown> {
 
 const MAX_SESSIONS_PER_HOUR = 3;
 
+// ─── Branch Validation ───
+
+const GITHUB_REPO_OWNER = "ELPGREEN";
+const GITHUB_REPO_NAME = "ORION-V3";
+
+/**
+ * Verifies if a branch exists on the GitHub remote.
+ * Returns true if the branch exists, false otherwise.
+ * Falls back to true on network errors to avoid blocking on transient issues.
+ */
+export async function branchExistsOnGitHub(branch: string): Promise<boolean> {
+  if (!branch || branch === "main") return true; // main always exists
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/branches/${encodeURIComponent(branch)}`;
+    const res = await fetch(url, { headers: { Accept: "application/vnd.github+json" } });
+    if (res.status === 404) return false;
+    if (res.ok) return true;
+    // On rate-limit (403) or other errors, fail-open to avoid blocking
+    console.warn(`[Jules] Branch check returned ${res.status}, assuming branch exists`);
+    return true;
+  } catch (err) {
+    console.warn("[Jules] Branch check failed (network), assuming branch exists:", err);
+    return true;
+  }
+}
+
 export async function checkJulesRateLimit(): Promise<{ allowed: boolean; current: number }> {
   const oneHourAgo = new Date(Date.now() - 3600_000).toISOString();
   const { count, error } = await supabase
@@ -243,6 +269,17 @@ export async function orionSelfImprove(opts: {
 
   const branchPrefix = opts.subsystem ? `fix/jules-${opts.subsystem}-${Date.now()}` : undefined;
   const branch = opts.branch || branchPrefix || "main";
+
+  // Validate branch exists on GitHub before creating session
+  const exists = await branchExistsOnGitHub(branch);
+  if (!exists) {
+    console.warn(`[Orion→Jules] ❌ Branch '${branch}' não existe no remote — usando 'main'`);
+    return {
+      sessionId: "",
+      success: false,
+      error: `Branch '${branch}' não existe no GitHub. Use 'main' ou faça push da branch primeiro.`,
+    };
+  }
 
   const prompt = opts.context
     ? `${opts.task}\n\nContext:\n${opts.context}`
