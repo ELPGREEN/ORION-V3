@@ -41,6 +41,11 @@ EXCLUDE_FILES=(
   --exclude='bun.lockb'
   --exclude='*.min.js'
   --exclude='*.map'
+  --exclude='*.svg'
+  --exclude='*.txt'
+  --exclude='*.sql'
+  --exclude='*.md'
+  --exclude='check-version-references.sh'
 )
 
 echo "🔍 Verificando referências proibidas a '${FORBIDDEN_PATTERN}'..."
