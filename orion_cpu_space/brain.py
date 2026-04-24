@@ -89,18 +89,29 @@ class OrionAssistant:
             self.memory.add_interaction(query, direct_action["response"], intent)
             return direct_action
 
-        # 4. Fallback para Google Assistant se for "google_force" ou intenção desconhecida
-        if intent == "google_force" or intent == "unknown":
+        # 4. Fallback explícito para Google Assistant se "google_force"
+        if intent == "google_force":
             if self.google:
                 google_res = self.google.ask_google(query)
                 processed_res = self._post_process_google_response(google_res)
                 self.memory.add_interaction(query, processed_res["response"], "google_fallback")
                 return processed_res
-            else:
-                return {"response": "Desculpe, meu motor do Google está offline e não sei processar isso localmente ainda."}
 
-        # 5. Resposta padrão para intenções conhecidas mas não implementadas totalmente
-        return {"response": f"Entendi que você quer tratar de '{intent}', mas ainda estou aprendendo a executar essa ação específica."}
+        # 5. Conversa livre via LLM (OpenRouter primário + Gemini fallback)
+        # Atende qualquer pergunta fora do escopo de comandos diretos.
+        history = self.memory.get_recent_history(limit=6)
+        chat_res = llm_chat.chat(query, history=history)
+        self.memory.add_interaction(
+            query,
+            chat_res["response"],
+            f"free_chat:{chat_res['provider']}"
+        )
+        return {
+            "response": chat_res["response"],
+            "source": chat_res["source"],
+            "provider": chat_res["provider"],
+            "intent_detected": intent,
+        }
 
     def _classify_intent(self, query: str) -> str:
         for intent, pattern in self.intent_patterns.items():
