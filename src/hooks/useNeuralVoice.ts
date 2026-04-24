@@ -1029,7 +1029,8 @@ export function useNeuralVoice(
       // ═══ TRY GCP STT FIRST ═══
       if (useGCPSTTRef.current) {
         try {
-          const gcpChunkIntervalMs = 1400;
+          const voiceCfg = getVoiceThresholds();
+          const gcpChunkIntervalMs = voiceCfg.gcpChunkIntervalMs;
 
           // Reuse existing GCP session if active (just resume if paused)
           if (gcpSessionRef.current?.isActive()) {
