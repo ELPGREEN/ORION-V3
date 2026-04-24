@@ -347,7 +347,6 @@ export function useNeuralVoice(
 
   // ── State ──
   const [listening, setListening] = useState(false);
-  const setListeningWithTimer = useCallback((val: boolean) => { setListening(val); if (val) { if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = setTimeout(() => { if (listeningRef.current) { setNoSpeechDetected(true); toast.info("Não estou te ouvindo... Verifique se o microfone está por perto."); } }, 8000); } else { if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current); setNoSpeechDetected(false); } }, [listeningRef]);
   const [noSpeechDetected, setNoSpeechDetected] = useState(false);
   const [supported, setSupported] = useState(true); // GCP STT always available via edge function
   const [ttsOn, setTtsOn] = useState(true);
