@@ -1,7 +1,34 @@
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { spawnSync } from "node:child_process";
 import { VitePWA } from "vite-plugin-pwa";
+
+/**
+ * Regenerates public/sitemap.xml + robots.txt from src/lib/seo/public-routes.ts.
+ * Runs once on dev server start and on every production build start.
+ */
+function sitemapPlugin(): PluginOption {
+  let didRun = false;
+  const run = () => {
+    if (didRun) return;
+    didRun = true;
+    const result = spawnSync(
+      process.execPath,
+      ["scripts/generate-sitemap.mjs"],
+      { stdio: "inherit" },
+    );
+    if (result.status !== 0) {
+      console.warn("⚠️  sitemap generation failed (non-fatal)");
+    }
+  };
+  return {
+    name: "orion-sitemap-generator",
+    apply: () => true,
+    configResolved: run,
+    buildStart: run,
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
@@ -40,6 +67,7 @@ export default defineConfig(() => ({
     holdUntilCrawlEnd: true,
   },
   plugins: [
+    sitemapPlugin(),
     react(),
     VitePWA({
       registerType: "prompt",
