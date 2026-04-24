@@ -203,6 +203,18 @@ function validateRoutes(routes) {
         `• dynamic segment not allowed in sitemap: "${r.path}" — remove or list concrete URLs`,
       );
     }
+    // Canonical policy: trailing slash only on root, lowercase, no query/hash
+    if (r.path !== "/" && r.path.endsWith("/")) {
+      errors.push(
+        `• trailing slash on non-root path: "${r.path}" — canonical policy forbids it`,
+      );
+    }
+    if (r.path !== r.path.toLowerCase()) {
+      errors.push(`• non-lowercase path: "${r.path}" — canonical policy requires lowercase`);
+    }
+    if (r.path.includes("?") || r.path.includes("#")) {
+      errors.push(`• path must not contain "?" or "#": "${r.path}"`);
+    }
     if (seen.has(r.path)) {
       errors.push(`• duplicate route: "${r.path}" appears more than once`);
     } else {
