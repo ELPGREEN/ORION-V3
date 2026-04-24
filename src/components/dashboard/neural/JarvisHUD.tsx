@@ -302,7 +302,7 @@ function UserProfileCard() {
       <div className="min-w-0 flex-1">
         <div className="text-[9px] font-mono font-bold text-[#e0e0e0] truncate">{user?.name || "Operador"}</div>
         <div className="text-[7px] font-mono text-[#c9a84c]/50 truncate">{user?.email || "—"}</div>
-        <div className="text-[7px] font-mono text-[#3B82F6]/30">ORION v22.3 • CLEARANCE L5</div>
+        <div className="text-[7px] font-mono text-[#3B82F6]/30">ORION v21.2 • HUD v8.0 • CLEARANCE L5</div>
       </div>
     </div>
   );
