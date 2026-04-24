@@ -1,14 +1,21 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import {
+  ORION_VERSION,
+  HUD_VERSION,
+  ORION_HUD_CLEARANCE_LABEL,
+  ORION_HUD_COMPACT_LABEL,
+} from "@/lib/neural/version";
 
 /**
- * Lock the JarvisHUD reported version strings to the PR contract:
- *   - Orion core: v21.2
- *   - HUD shell:  v8.0
+ * Lock the JarvisHUD reported version strings to the constants in
+ * `@/lib/neural/version`. Bumping versions there propagates everywhere.
  *
- * If you intentionally bump either version, update both this test
- * AND the matching strings in JarvisHUD.tsx in the same commit.
+ * This test ensures:
+ *   1. JarvisHUD imports the shared constants (no hardcoded version strings)
+ *   2. The current constants match the PR contract (Orion v21.2 / HUD v8.0)
+ *   3. No stale v22.x markers leak back in
  */
 describe("JarvisHUD version contract", () => {
   const source = readFileSync(
@@ -16,20 +23,31 @@ describe("JarvisHUD version contract", () => {
     "utf-8",
   );
 
-  it("reports ORION v21.2 in the user identity block", () => {
-    expect(source).toMatch(/ORION v21\.2/);
+  it("imports version constants from the shared module", () => {
+    expect(source).toMatch(
+      /from\s+["']@\/lib\/neural\/version["']/,
+    );
+    expect(source).toContain("ORION_HUD_CLEARANCE_LABEL");
+    expect(source).toContain("ORION_HUD_COMPACT_LABEL");
   });
 
-  it("reports HUD v8.0 in the user identity block", () => {
-    expect(source).toMatch(/HUD v8\.0/);
+  it("does not hardcode version strings inline", () => {
+    // Strip the import line before scanning the body
+    const body = source.replace(/^import .*$/gm, "");
+    expect(body).not.toMatch(/ORION v\d+\.\d+/);
+    expect(body).not.toMatch(/HUD v\d+\.\d+/);
   });
 
-  it("reports v21.2 · HUD v8.0 in the OS status bar", () => {
-    expect(source).toMatch(/v21\.2\s*·\s*HUD v8\.0/);
+  it("constants match the PR contract: ORION v21.2 + HUD v8.0", () => {
+    expect(ORION_VERSION).toBe("v21.2");
+    expect(HUD_VERSION).toBe("v8.0");
+    expect(ORION_HUD_CLEARANCE_LABEL).toBe(
+      "ORION v21.2 • HUD v8.0 • CLEARANCE L5",
+    );
+    expect(ORION_HUD_COMPACT_LABEL).toBe("v21.2 · HUD v8.0");
   });
 
-  it("does not contain stale version markers (v22.x, v8.x other than 8.0)", () => {
+  it("has no stale v22.x markers anywhere in the file", () => {
     expect(source).not.toMatch(/v22\.\d/);
-    expect(source).not.toMatch(/HUD v(?!8\.0)\d+\.\d+/);
   });
 });
