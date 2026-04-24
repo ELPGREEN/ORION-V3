@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { ORION_HUD_CLEARANCE_LABEL, ORION_HUD_COMPACT_LABEL } from "@/lib/neural/version";
 
 // ═══════════════════════════════════════════════════════════
 // ORION HUD v2 — Full Holographic Neural Interface
