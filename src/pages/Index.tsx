@@ -102,7 +102,6 @@ export default function Index() { const [fOpen, setFOpen] = useState(false);
       <SecurityShieldSection />
       <WhyOrionSection />
       <ComparisonSection />
-      <VueApiExplorer />
       <CtaSection />
 
       <section className="py-6 bg-muted/10 border-t border-border/20">
