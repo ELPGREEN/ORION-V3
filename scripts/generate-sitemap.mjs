@@ -182,12 +182,49 @@ Sitemap: ${baseUrl}/sitemap.xml
 `;
 }
 
+/**
+ * Validates the parsed public routes. Throws (failing the build) when:
+ *   - any route contains a dynamic segment (`:id`, `*`, `(group)`)
+ *   - any path is duplicated
+ *   - any path does not start with "/"
+ */
+function validateRoutes(routes) {
+  const errors = [];
+  const seen = new Map();
+  const dynamicRe = /[:*]|\(.*\)/;
+
+  for (const r of routes) {
+    if (typeof r.path !== "string" || !r.path.startsWith("/")) {
+      errors.push(`• invalid path (must start with "/"): ${JSON.stringify(r.path)}`);
+      continue;
+    }
+    if (dynamicRe.test(r.path)) {
+      errors.push(
+        `• dynamic segment not allowed in sitemap: "${r.path}" — remove or list concrete URLs`,
+      );
+    }
+    if (seen.has(r.path)) {
+      errors.push(`• duplicate route: "${r.path}" appears more than once`);
+    } else {
+      seen.set(r.path, true);
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error("❌ publicRoutes validation failed:\n" + errors.join("\n"));
+    throw new Error(`publicRoutes validation failed (${errors.length} error(s))`);
+  }
+}
+
 async function main() {
   const data = loadRoutes();
   if (data.routes.length === 0) {
     console.error("⚠️  No public routes parsed from", ROUTES_FILE);
     process.exit(1);
   }
+
+  validateRoutes(data.routes);
+
 
   const dynamicDates = {
     latestArticle: await fetchLatestArticleDate(),
