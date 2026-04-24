@@ -1,4 +1,7 @@
-INSERT INTO public.publicacoes (titulo, resumo, conteudo, categoria, autor, publicado, data_publicacao, slug, user_id)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM auth.users WHERE id = '4462f868-4bbb-4c59-b254-2230b0b585e8') THEN
+    INSERT INTO public.publicacoes (titulo, resumo, conteudo, categoria, autor, publicado, data_publicacao, slug, user_id)
 VALUES (
   'Plataforma Jurídica em Breve: Abertura para Advogados e Associados',
   'Estamos preparando a abertura da nossa plataforma de tecnologia jurídica para advogados e associados, com modelo de contrato anual por tempo de uso.',
@@ -43,3 +46,5 @@ Estamos em fase final de testes e ajustes. Em breve, abriremos as inscrições p
   'plataforma-abertura-advogados-associados',
   '4462f868-4bbb-4c59-b254-2230b0b585e8'
 );
+  END IF;
+END $$;

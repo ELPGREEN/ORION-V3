@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS public.adaptive_system_prompts (
+CREATE TABLE IF NOT EXISTS public.environmental_context (
+CREATE TABLE IF NOT EXISTS public.interaction_feedback (
+CREATE TABLE IF NOT EXISTS public.user_communication_context (
