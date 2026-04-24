@@ -112,7 +112,10 @@ export function DynamicMeta({
     setMeta("name", "description", description);
     setMeta("name", "keywords", fullKeywords);
     setMeta("name", "copyright", "© 2023 ELP® Green Technology. All Rights Reserved.");
-    if (noIndex) {
+    // Auto noindex when the current path is NOT in publicRoutes (avoids
+    // indexing auth, dashboard, dynamic-id pages even if SEO is mounted).
+    const autoNoIndex = !isIndexableRoute(location.pathname);
+    if (noIndex || autoNoIndex) {
       setMeta("name", "robots", "noindex, nofollow");
     } else {
       setMeta("name", "robots", "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1");
