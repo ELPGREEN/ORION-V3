@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { buildCanonicalUrl, isIndexableRoute } from "@/lib/seo/canonical";
 
 const SITE_NAME = "ORION IA by ELP® Green Technology";
 const BASE_URL = "https://www.iasofthub.com";
@@ -78,7 +79,13 @@ export function DynamicMeta({
   noIndex = false,
 }: DynamicMetaProps) {
   const location = useLocation();
-  const canonicalUrl = _canonical || `${BASE_URL}${location.pathname}`;
+  // Canonical is derived from the policy in src/lib/seo/canonical.ts.
+  // Honors trailing-slash rules + lowercases + strips query/hash.
+  // If a `_canonical` override is passed, we still normalize it via buildCanonicalUrl
+  // when it's a path; absolute overrides pass through untouched.
+  const canonicalUrl = _canonical && /^https?:\/\//i.test(_canonical)
+    ? _canonical
+    : buildCanonicalUrl(_canonical || location.pathname);
   const ogImage = image || ogImageLegacy || DEFAULT_OG_IMAGE;
   const fullKeywords = keywords
     ? `${keywords}, ${DEFAULT_KEYWORDS}`
