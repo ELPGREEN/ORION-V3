@@ -378,6 +378,23 @@ export function useNeuralVoice(
   const singletonIdRef = useRef(0);
   const audioChunksRef = useRef<Float32Array[]>([]);
   const audioWorkletActiveRef = useRef(false);
+
+  // Wraps setListening + a "no speech" detection timer.
+  const setListeningWithTimer = useCallback((val: boolean) => {
+    setListening(val);
+    if (val) {
+      if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
+      noSpeechTimerRef.current = setTimeout(() => {
+        if (listeningRef.current) {
+          setNoSpeechDetected(true);
+          toast.info("Não estou te ouvindo... Verifique se o microfone está por perto.");
+        }
+      }, 8000);
+    } else {
+      if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
+      setNoSpeechDetected(false);
+    }
+  }, []);
   const gcpSessionRef = useRef<GCPSTTSession | null>(null);
   const useGCPSTTRef = useRef(true); // GCP STT as primary
   const sentenceAccumulatorRef = useRef(""); // Accumulate partial sentences
