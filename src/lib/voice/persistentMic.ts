@@ -38,7 +38,25 @@ async function openPersistentStream(state: PersistentMicState): Promise<boolean>
 
   state.stream = stream;
   state.granted = true;
-  console.log("[PersistentMic] Stream ativo — mic persistente mantido aberto");
+
+  // Pre-warm a shared AudioContext during the same user gesture that granted mic.
+  // On mobile (iOS/Android), AudioContext starts "suspended" until a gesture; warming
+  // it here removes the perceived "audio sleep" delay on first STT capture.
+  try {
+    const w = window as any;
+    let ctx: AudioContext | undefined = w.__orion_shared_audio_ctx__;
+    if (!ctx || ctx.state === "closed") {
+      ctx = new AudioContext({ sampleRate: 48000 });
+      w.__orion_shared_audio_ctx__ = ctx;
+    }
+    if (ctx.state === "suspended") {
+      await ctx.resume().catch(() => {});
+    }
+  } catch (err) {
+    console.warn("[PersistentMic] AudioContext pre-warm failed:", err);
+  }
+
+  console.log("[PersistentMic] Stream ativo + AudioContext pré-aquecido");
   return true;
 }
 
