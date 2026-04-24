@@ -1274,6 +1274,42 @@ export type Database = {
         }
         Relationships: []
       }
+      avencas: {
+        Row: {
+          id: number
+          imported_at: string | null
+          raw: Json | null
+        }
+        Insert: {
+          id?: number
+          imported_at?: string | null
+          raw?: Json | null
+        }
+        Update: {
+          id?: number
+          imported_at?: string | null
+          raw?: Json | null
+        }
+        Relationships: []
+      }
+      "banco de dados senado": {
+        Row: {
+          id: number
+          imported_at: string | null
+          raw: Json | null
+        }
+        Insert: {
+          id?: number
+          imported_at?: string | null
+          raw?: Json | null
+        }
+        Update: {
+          id?: number
+          imported_at?: string | null
+          raw?: Json | null
+        }
+        Relationships: []
+      }
       bloom_shares: {
         Row: {
           bloom_id: string
@@ -2117,6 +2153,24 @@ export type Database = {
         }
         Relationships: []
       }
+      Contrato: {
+        Row: {
+          id: number
+          imported_at: string | null
+          raw: Json | null
+        }
+        Insert: {
+          id?: number
+          imported_at?: string | null
+          raw?: Json | null
+        }
+        Update: {
+          id?: number
+          imported_at?: string | null
+          raw?: Json | null
+        }
+        Relationships: []
+      }
       courtlistener_webhook_events: {
         Row: {
           created_at: string | null
@@ -2842,6 +2896,24 @@ export type Database = {
           subject_pt?: string
           subject_zh?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      "empresa contratadas": {
+        Row: {
+          id: number
+          imported_at: string | null
+          raw: Json | null
+        }
+        Insert: {
+          id?: number
+          imported_at?: string | null
+          raw?: Json | null
+        }
+        Update: {
+          id?: number
+          imported_at?: string | null
+          raw?: Json | null
         }
         Relationships: []
       }
@@ -3871,6 +3943,24 @@ export type Database = {
           source_label?: string | null
           title?: string
           url?: string | null
+        }
+        Relationships: []
+      }
+      licitações: {
+        Row: {
+          id: number
+          imported_at: string | null
+          raw: Json | null
+        }
+        Insert: {
+          id?: number
+          imported_at?: string | null
+          raw?: Json | null
+        }
+        Update: {
+          id?: number
+          imported_at?: string | null
+          raw?: Json | null
         }
         Relationships: []
       }
