@@ -59,17 +59,6 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
   useEffect(() => { conversationModeRef.current = conversationMode; }, [conversationMode]);
 
   const { listening: isListening, supported: isSupported, startListening, stop: stopListening, noSpeechDetected } = useNeuralVoice();
-    lang: voiceLang,
-    continuous: true,
-    phrasePauseMs: 3000,
-    onResult: (text) => {
-      onTranscript(text);
-      if (conversationModeRef.current && onAutoSend) {
-        onAutoSend(text);
-      }
-    },
-  });
-
   // Update visual status
   useEffect(() => {
     if (isSpeakingHQ) {

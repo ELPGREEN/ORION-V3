@@ -148,7 +148,6 @@ export default function ConfigurarIA() {
   });
 
   const { listening: isListening, supported: isSupported, startListening, stop: stopSpeaking, noSpeechDetected } = useNeuralVoice();
-
   // Gemini TTS only
   const speak = async (text: string) => {
     try {
