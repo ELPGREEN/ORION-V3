@@ -11,7 +11,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Tabelas Senado que DEVEM existir e ter "Public read access"
+// Tabelas Senado que DEVEM existir e ter "Public read access" (anon SELECT).
 const REQUIRED_PUBLIC_TABLES = [
   "Contrato",
   "avencas",
@@ -20,7 +20,7 @@ const REQUIRED_PUBLIC_TABLES = [
   "licitações",
 ];
 
-// Tabelas core que DEVEM existir (estruturais — RLS própria)
+// Tabelas core que DEVEM existir (RLS própria, não testamos leitura anon).
 const REQUIRED_CORE_TABLES = [
   "profiles",
   "user_roles",
@@ -35,6 +35,11 @@ interface CheckResult {
   detail?: string;
 }
 
+function isMissingRelation(msg?: string): boolean {
+  if (!msg) return false;
+  return /does not exist|relation .* does not exist|PGRST205/i.test(msg);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -42,46 +47,35 @@ Deno.serve(async (req) => {
 
   const url = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const anon = createClient(url, anonKey, { auth: { persistSession: false } });
 
   const results: CheckResult[] = [];
 
-  // 1. Tabelas existem?
-  const allTables = [...REQUIRED_PUBLIC_TABLES, ...REQUIRED_CORE_TABLES];
-  const { data: existing, error: existErr } = await admin
-    .from("information_schema.tables" as never)
-    .select("table_name")
-    .eq("table_schema", "public")
-    .in("table_name", allTables);
+  // 1. Existência de tabela (via service role — bypassa RLS)
+  for (const t of [...REQUIRED_PUBLIC_TABLES, ...REQUIRED_CORE_TABLES]) {
+    const { error } = await (admin as any)
+      .from(t)
+      .select("*", { head: true, count: "exact" })
+      .limit(1);
 
-  // Fallback via SQL RPC se information_schema bloqueado
-  let presentTables: string[] = [];
-  if (existErr || !existing) {
-    // Sondagem direta — tenta SELECT 1 em cada
-    for (const t of allTables) {
-      const { error } = await admin.from(t as never).select("*", { head: true, count: "exact" }).limit(1);
-      results.push({
-        name: `table_exists:${t}`,
-        ok: !error || !/does not exist/i.test(error.message),
-        detail: error?.message,
-      });
-      if (!error || !/does not exist/i.test(error.message)) presentTables.push(t);
-    }
-  } else {
-    presentTables = (existing as Array<{ table_name: string }>).map((r) => r.table_name);
-    for (const t of allTables) {
-      results.push({
-        name: `table_exists:${t}`,
-        ok: presentTables.includes(t),
-        detail: presentTables.includes(t) ? undefined : "missing in public schema",
-      });
-    }
+    const exists = !error || !isMissingRelation(error.message);
+    results.push({
+      name: `table_exists:${t}`,
+      ok: exists,
+      detail: exists ? undefined : error?.message,
+    });
   }
 
-  // 2. Policies de leitura pública nas tabelas Senado
+  // 2. Public read policy (via anon — deve conseguir SELECT)
   for (const t of REQUIRED_PUBLIC_TABLES) {
-    if (!presentTables.includes(t)) continue;
-    const { data, error } = await admin.from(t as never).select("*", { head: true, count: "exact" }).limit(1);
+    const { error } = await (anon as any)
+      .from(t)
+      .select("*", { head: true, count: "exact" })
+      .limit(1);
+
     results.push({
       name: `public_read:${t}`,
       ok: !error,
