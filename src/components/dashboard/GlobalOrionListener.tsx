@@ -375,7 +375,6 @@ function OrionFloatingOverlay({
       cancelled = true;
       // Always hide the global panel when the overlay unmounts so it never
       // leaks onto other routes.
-        .catch(() => {});
     };
   }, [voicePanelOn]);
 

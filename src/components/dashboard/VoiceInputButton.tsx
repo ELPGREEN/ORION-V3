@@ -59,16 +59,18 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
   useEffect(() => { conversationModeRef.current = conversationMode; }, [conversationMode]);
 
   const { listening: isListening, supported: isSupported, startListening, stop: stopListening, noSpeechDetected } = useNeuralVoice();
-    lang: voiceLang,
-    continuous: true,
-    phrasePauseMs: 3000,
-    onResult: (text) => {
+
+  // Bridge transcript callback (useNeuralVoice dispatches via global event/onResult elsewhere)
+  useEffect(() => {
+    const handler = (e: any) => {
+      const text = e?.detail?.text;
+      if (!text) return;
       onTranscript(text);
-      if (conversationModeRef.current && onAutoSend) {
-        onAutoSend(text);
-      }
-    },
-  });
+      if (conversationModeRef.current && onAutoSend) onAutoSend(text);
+    };
+    window.addEventListener("orion:user-transcript", handler);
+    return () => window.removeEventListener("orion:user-transcript", handler);
+  }, [onTranscript, onAutoSend]);
 
   // Update visual status
   useEffect(() => {
