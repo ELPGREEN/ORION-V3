@@ -1070,7 +1070,7 @@ export function useNeuralVoice(
               const SHORT_ACTION_WHITELIST = /^(olha|olhe|olho|ve|veja|le|leia|para|pare|stop|sim|nao|não|ok|certo|aqui|isso|isto|esse|essa|agora|chega|fala|hey|ei|oi)$/i;
               const hasShortAction = normalized.split(/\s+/).some(w => SHORT_ACTION_WHITELIST.test(w));
 
-              if (confidence > 0 && confidence < 0.12 && wordCount <= 2 && !hasShortAction) {
+              if (confidence > 0 && confidence < voiceCfg.shortUtteranceMinConfidence && wordCount <= 2 && !hasShortAction) {
                 console.log(`[Voice] GCP STT descartado (silent): "${cleanedText}" (${(confidence * 100).toFixed(0)}%)`);
                 return;
               }
