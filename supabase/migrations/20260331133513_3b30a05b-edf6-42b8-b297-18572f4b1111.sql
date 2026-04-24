@@ -15,13 +15,8 @@ CREATE TABLE IF NOT EXISTS public.adaptive_system_prompts (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.adaptive_system_prompts ENABLE ROW LEVEL SECURITY;
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated read adaptive prompts' AND tablename = 'adaptive_system_prompts') THEN
-    CREATE POLICY "Authenticated read adaptive prompts" ON public.adaptive_system_prompts
+CREATE POLICY "Authenticated read adaptive prompts" ON public.adaptive_system_prompts
   FOR SELECT TO authenticated USING (true);
-  END IF;
-END $$;
 
 -- api_cache
 CREATE TABLE IF NOT EXISTS public.api_cache (
@@ -131,14 +126,9 @@ CREATE TABLE IF NOT EXISTS public.interaction_feedback (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.interaction_feedback ENABLE ROW LEVEL SECURITY;
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users manage own feedback' AND tablename = 'interaction_feedback') THEN
-    CREATE POLICY "Users manage own feedback" ON public.interaction_feedback
-      FOR ALL TO authenticated
-      USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-  END IF;
-END $$;
+CREATE POLICY "Users manage own feedback" ON public.interaction_feedback
+  FOR ALL TO authenticated
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- neural_agent_config
 CREATE TABLE IF NOT EXISTS public.neural_agent_config (

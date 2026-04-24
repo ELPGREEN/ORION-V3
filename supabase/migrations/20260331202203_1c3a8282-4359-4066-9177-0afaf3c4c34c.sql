@@ -1,10 +1,7 @@
 
 CREATE TABLE public.deals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  creator_id UUID REFERENCES auth.users(id) ON DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM auth.users WHERE id = '6699c758-cad4-4102-a606-eb68a333bbc6') THEN
-    DELETE CASCADE NOT NULL,
+  creator_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('loi','contract','mou','nda','other')),
   status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('prospect','sent','negotiating','closed','lost')),
   title TEXT,
@@ -42,5 +39,3 @@ INSERT INTO public.deals (creator_id, type, status, title, counterparty, country
 ('6699c758-cad4-4102-a606-eb68a333bbc6', 'contract', 'lost', 'Contrato Consultoria', 'Advisory Corp', 'US', 8000000, 0, now() - interval '80 days', NULL),
 ('6699c758-cad4-4102-a606-eb68a333bbc6', 'loi', 'sent', 'LOI - Compliance GDPR', 'DataProtect EU', 'FR', 9500000, 55, now() - interval '10 days', NULL),
 ('6699c758-cad4-4102-a606-eb68a333bbc6', 'contract', 'negotiating', 'Contrato White-Label', 'BrandTech Inc.', 'US', 30000000, 65, now() - interval '22 days', NULL);
-  END IF;
-END $$;

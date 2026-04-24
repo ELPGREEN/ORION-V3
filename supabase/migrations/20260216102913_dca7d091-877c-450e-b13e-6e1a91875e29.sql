@@ -9,7 +9,9 @@ DECLARE
   v_user_id UUID;
 BEGIN
   SELECT user_id INTO v_user_id FROM public.user_roles WHERE role = 'advogado' LIMIT 1;
-  IF v_user_id IS NOT NULL THEN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Nenhum advogado encontrado';
+  END IF;
 
   -- NBR 14724:2011 - Trabalhos Acadêmicos (Formatação Geral)
   INSERT INTO public.neural_knowledge_base (user_id, title, content, source_type, source_reference, tags, is_processed) VALUES
@@ -238,5 +240,4 @@ REGRA DE OURO: Todo documento jurídico formal deve seguir as margens 3/2cm, Tim
    0.15, 'REPROVADO - Títulos devem ser CAIXA ALTA negrito, numeração conforme NBR 6024, espaçamento 1,5.', true,
    '{"thumbs": "down", "stars": 1, "documentType": "all", "feedbackSource": "abnt_training", "abnt_rules": ["NBR6024", "NBR14724"], "errors": ["titulos_sem_caixa_alta", "numeracao_errada", "espacamento_incorreto"]}'::jsonb);
 
-  END IF;
 END $$;

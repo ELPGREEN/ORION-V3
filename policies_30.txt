@@ -1,5 +1,0 @@
-CREATE POLICY "Authenticated manage prompts" ON public.adaptive_system_prompts
-CREATE POLICY "Authenticated read prompts" ON public.adaptive_system_prompts
-CREATE POLICY "Users manage own comm context" ON public.user_communication_context
-CREATE POLICY "Users manage own env ctx" ON public.environmental_context
-CREATE POLICY "Users manage own feedback" ON public.interaction_feedback
