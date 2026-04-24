@@ -7,6 +7,7 @@ export interface ClassifiedIntent {
   params: Record<string, any>;
   source: "regex" | "llm" | "cache" | "feedback";
   classifyMs: number;
+  alternatives?: string[];
 }
 
 // ─── Local Cache (TTL 5min) ───
@@ -142,19 +143,34 @@ function regexClassify(text: string): ClassifiedIntent | null {
   const q = text.toLowerCase().trim();
   if (q.length < 2) return null;
   
+  const matches: ClassifiedIntent[] = [];
+
   for (const rule of REGEX_RULES) {
     if (rule.pattern.test(q)) {
       const params = rule.extractParams ? rule.extractParams(text) : {};
-      return {
+      matches.push({
         intent: rule.intent,
         confidence: rule.confidence,
         params,
         source: "regex",
         classifyMs: 0,
-      };
+      });
+      // If very high confidence, return immediately
+      if (rule.confidence >= 0.96) return matches[0];
     }
   }
-  return null;
+
+  if (matches.length === 0) return null;
+
+  // Sort by confidence
+  matches.sort((a, b) => b.confidence - a.confidence);
+
+  const primary = matches[0];
+  if (matches.length > 1) {
+    primary.alternatives = matches.slice(1, 4).map(m => m.intent);
+  }
+
+  return primary;
 }
 
 // ─── LLM Semantic Fallback ───

@@ -425,7 +425,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       }
 
       // Only dispatch if it's a concrete intent with decent confidence
-      if (intent.intent !== "unknown" && intent.confidence > 0.4) {
+      if (intent.intent !== "unknown" && intent.confidence > 0.7) {
         const result = await dispatchVoiceIntent(intent, identityStatus);
         console.log("[routeOrion] Dispatch result:", result);
 
@@ -436,6 +436,11 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
           }
           return;
         }
+      } else if (intent.confidence > 0.3 && intent.confidence <= 0.7) {
+        const { generateFallbackResponse } = await import("@/lib/neural/voice-intent-dispatcher");
+        const fallbackMsg = generateFallbackResponse(intent);
+        speakFast(fallbackMsg).catch(() => {});
+        return;
       }
     } catch (err) {
       console.warn("[routeOrion] Dispatcher error, falling back to AI:", err);

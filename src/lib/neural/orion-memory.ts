@@ -31,6 +31,7 @@ export interface SessionState {
   sessionId: string;
   conversationSummary: string | null;
   totalInteractions: number;
+  lastIntent?: string;
 }
 
 // ─── Constants ───
@@ -374,3 +375,13 @@ export function buildMemoryContext(
 
 // Re-export working memory init for app bootstrap
 export { initWorkingMemory } from "./orion-working-memory";
+
+
+// ─── Last Intent Persistence ───
+export function setLastIntent(intent: string): void {
+  saveSessionState({ lastIntent: intent });
+}
+
+export function getLastIntent(): string | undefined {
+  return getSessionState()?.lastIntent;
+}
