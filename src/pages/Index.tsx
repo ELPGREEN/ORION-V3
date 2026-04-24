@@ -18,7 +18,6 @@ import {
 import { WhoIsItForSection } from '@/components/home/WhoIsItForSection';
 import { ImpactMetricsSection } from '@/components/home/ImpactMetricsSection';
 import { WelcomeSplash } from '@/components/home/WelcomeSplash';
-import { VueApiExplorer } from '@/components/home/VueApiExplorer';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 
