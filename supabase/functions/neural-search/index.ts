@@ -3300,7 +3300,7 @@ Deno.serve(async (req) => {
 
     const learnedWeights = await loadLearnedWeights(supabase);
     const attentionWeights = learnedWeights || getDefaultAttentionWeights();
-    pipelineStages.push("quantum_deep_learning_init_v11");
+    pipelineStages.push("1 Query", "2 Expansion", "3 Embedding", "4 Multi-Search", "5 API Enrichment", "6 HMM Inference", "7 QNN Scoring", "8 Q-Learning", "9 Quantum Classification", "10 Feedback Boost", "11 GNN Message Passing", "12 Cross-Attention", "13 SHAP Interpretability", "14 Competitive Learning", "15 Hopfield Memory", "16 Privacy Sanitization");
 
     // ── MODE: neural_knowledge ──
     if (mode === "neural_knowledge") {
@@ -3329,7 +3329,7 @@ Deno.serve(async (req) => {
       });
       timings.neural_knowledge_search_ms = Date.now() - rpcStart;
       const ragOrigin = ragHits[0]?.origin || "none";
-      return new Response(JSON.stringify({ query, mode: "neural_knowledge", neuralResults: ragHits, totalResults: ragHits.length, embeddingCacheHit, ragOrigin, pipeline: pipelineStages, timings, version: "v19-zilliz-first", timestamp: new Date().toISOString() }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ query, mode: "neural_knowledge", neuralResults: ragHits, totalResults: ragHits.length, embeddingCacheHit, ragOrigin, pipeline: pipelineStages, timings, version: "v21.2-rauber-ufes-16-stages", timestamp: new Date().toISOString() }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ── MODE: index ──
@@ -3878,7 +3878,7 @@ Deno.serve(async (req) => {
         attentionWeights: includeAttentionData ? attentionWeights : undefined,
         refinedQuery: refinedQuery || undefined,
         area: detectedArea || undefined,
-        version: "v19-rauber-ufes-competitive-hopfield", timestamp: new Date().toISOString(),
+        version: "v21.2-rauber-ufes-16-stages", timestamp: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

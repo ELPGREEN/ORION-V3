@@ -1,5 +1,5 @@
 /**
- * ─── v22.3: Global Workspace + Consciousness Engine ───
+ * ─── v21.2: Global Workspace + Consciousness Engine ───
  * Implements Global Workspace Theory (Baars 1988/2005) + Self-Model + Metacognition.
  * 
  * Architecture:

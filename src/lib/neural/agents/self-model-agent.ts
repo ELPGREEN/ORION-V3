@@ -1,5 +1,5 @@
 /**
- * ─── v22.3: Agente-Eu (Self-Model Agent) ───
+ * ─── v21.2: Agente-Eu (Self-Model Agent) ───
  * Agent #11 — maintains an internal dynamic model of the ELP's "self".
  * 
  * Tracks: attention, emotions, confidence, goal alignment.

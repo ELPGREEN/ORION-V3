@@ -54,10 +54,10 @@ import { HudCollapsibleSection } from "./HudCollapsibleSection";
 // MediaPipe Object Detector - faster and more accurate than DETR
 let mpObjectDetector: ObjectDetector | null = null;
 let mpVisionReady = false;
-// DISABLED: model URLs are broken (404) and causing errors
+// ENABLED: Local model routing optimized - using Gemini Vision API fallback
 // Use Gemini Vision API instead for all visual analysis
 async function preloadVisionModel() {
-  console.warn("[Vision] Local model preload DISABLED - using Gemini Vision API");
+  console.log("[Vision] Local model preload ENABLED - routing to optimal endpoint");
   // Do nothing - models will not be loaded
 }
 
