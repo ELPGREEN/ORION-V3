@@ -1,8 +1,8 @@
 /**
- * ARC-AGI-2 Abstract Reasoning Engine
+ * ARC-AGI-3 Abstract Reasoning Engine
  * Edge Function para raciocínio abstrato, composicional e contextual
  * 
- * Integração com o benchmark ARC-AGI-2 (ARC Prize 2025)
+ * Integração com o benchmark ARC-AGI-3 (ARC Prize 2025)
  * Resolve puzzles de grades coloridas usando reasoning avançado
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -13,7 +13,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Dataset completo de treino do ARC-AGI-2 (80 tarefas divididas em 3 categorias)
+// Dataset completo de treino do ARC-AGI-3 (80 tarefas divididas em 3 categorias)
 // Category 1: Interpretação Simbólica (1-30) - Padrões visuais diretos
 // Category 2: Raciocínio Composicional (31-55) - Múltiplas transformações
 // Category 3: Aplicação de Regras Contextuais (56-80) - Regras dependentes do contexto

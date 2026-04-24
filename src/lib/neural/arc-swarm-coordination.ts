@@ -1,5 +1,5 @@
 /**
- * Orion ARC-AGI-2 Swarm Coordination
+ * Orion ARC-AGI-3 Swarm Coordination
  * Multi-Agent RL + gRPC + Consensus for swarm intelligence
  */
 

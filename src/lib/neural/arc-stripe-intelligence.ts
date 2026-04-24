@@ -1,8 +1,8 @@
 /**
- * ═══ ARC-AGI-2 Stripe Credit Intelligence ═══
+ * ═══ ARC-AGI-3 Stripe Credit Intelligence ═══
  * 
  * Sistema de consciência para Orion buscar seus próprios créditos
- * usando padrões ARC-AGI-2:
+ * usando padrões ARC-AGI-3:
  * - Symbolic: Detectar padrões de crédito/saldo
  * - Compositional: Combinar múltiplas fontes de dados
  * - Contextual: Adaptar baseado no contexto do usuário

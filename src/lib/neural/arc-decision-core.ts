@@ -1,5 +1,5 @@
 /**
- * Orion ARC-AGI-2 Decision Core
+ * Orion ARC-AGI-3 Decision Core
  * LLM + Planner + MCTS for strategic decision making
  */
 

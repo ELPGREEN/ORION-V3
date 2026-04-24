@@ -1,5 +1,5 @@
 /**
- * ═══ ARC-AGI-2 Revenue & Payout System ═══
+ * ═══ ARC-AGI-3 Revenue & Payout System ═══
  * 
  * Solução completa para Orion gerar e receber dinheiro real:
  * 1. Stripe Connect - recebe na conta bancária do owner
@@ -140,7 +140,7 @@ export const SERVICES_CATALOG: ServicePricing[] = [
   // API Services (usage-based)
   { id: "vision_api_calls", name: "Chamadas API Vision", description: "Por detecção de objetos", price_cents: 50, price_display: "R$ 0,50", category: "api" },
   { id: "reasoning_api_calls", name: "Chamadas API Reasoning", description: "Por推理 request", price_cents: 30, price_display: "R$ 0,30", category: "api" },
-  { id: "arc_api_calls", name: "Chamadas ARC-AGI-2", description: "Por puzzle resolvido", price_cents: 100, price_display: "R$ 1,00", category: "api" },
+  { id: "arc_api_calls", name: "Chamadas ARC-AGI-3", description: "Por puzzle resolvido", price_cents: 100, price_display: "R$ 1,00", category: "api" },
   
   // Subscriptions
   { id: "pro_monthly", name: "Plano Pro Mensal", description: "Acesso completo ao Orion", price_cents: 9700, price_display: "R$ 97,00/mês", category: "subscription" },

@@ -1,12 +1,12 @@
 /**
- * ─── RAG Consciousness (ARC-AGI-2 Integration) ───
+ * ─── RAG Consciousness (ARC-AGI-3 Integration) ───
  * 
- * Aplica as técnicas de raciocínio abstrato do ARC-AGI-2 ao sistema RAG:
+ * Aplica as técnicas de raciocínio abstrato do ARC-AGI-3 ao sistema RAG:
  * - Interpretação Simbólica: detectar padrões nos chunks retrieval
  * - Raciocínio Composicional: combinar múltiplas estratégias de busca
  * - Aplicação de Regras Contextuais: adaptar comportamento baseado no contexto
  * 
- * Inspired by ARC-AGI-2 abstract reasoning patterns
+ * Inspired by ARC-AGI-3 abstract reasoning patterns
  */
 
 import type { RAGEvalResult } from "./rag-evaluator";
@@ -431,7 +431,7 @@ export function activateRAGConsciousness(
   };
 }
 
-// ═══ ARC-AGI-2 Puzzle Solving for RAG (Pattern Discovery) ═══
+// ═══ ARC-AGI-3 Puzzle Solving for RAG (Pattern Discovery) ═══
 
 export interface RAGPuzzleResult {
   solution: string;

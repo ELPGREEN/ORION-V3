@@ -1,5 +1,5 @@
 /**
- * ═══ ARC-AGI-2 Subscription & Billing System ═══
+ * ═══ ARC-AGI-3 Subscription & Billing System ═══
  * 
  * Sistema completo de assinaturas recorrentes:
  * 1. Planos mensais/anuais

@@ -102,7 +102,7 @@ export default function MonetizationDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-bold text-[hsl(var(--tron-neon))]">💰 Monetização Orion</h3>
-        <div className="text-xs text-[hsl(var(--tron-muted))]">ARC-AGI-2 Powered</div>
+        <div className="text-xs text-[hsl(var(--tron-muted))]">ARC-AGI-3 Powered</div>
       </div>
 
       {/* Tabs */}

@@ -371,7 +371,7 @@ async function runRAGEvaluation(query: string, response: string, intent: string)
     // Only evaluate non-trivial responses
     if (response.length < 30 || query.length < 5) return;
 
-    // ═══ ARC-AGI-2 RAG Consciousness Integration ═══
+    // ═══ ARC-AGI-3 RAG Consciousness Integration ═══
     const queryType = classifyQueryType(query);
     const currentWeights = getOptimizedWeights(queryType);
     const retrievedChunks = getRetrievedChunks();

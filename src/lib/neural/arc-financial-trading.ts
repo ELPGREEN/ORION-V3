@@ -1,5 +1,5 @@
 /**
- * Orion ARC-AGI-2 Financial Trading Agent
+ * Orion ARC-AGI-3 Financial Trading Agent
  * RL-based autonomous trading with PPO, sentiment analysis, and risk management
  */
 

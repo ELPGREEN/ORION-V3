@@ -522,12 +522,12 @@ export function useOrionReasoning(
         return;
       }
 
-      // ═══ ARC-AGI-2 REASONING CHECK — Intercept abstract reasoning tasks ═══
+      // ═══ ARC-AGI-3 REASONING CHECK — Intercept abstract reasoning tasks ═══
       const arcPatterns = /puzzle|raciocínio abstrato|symbolic|compositional|contextual|resolver|solve| ARC|regra|múltiplas regras/i;
       const isArcTask = arcPatterns.test(qLow);
 
       if (isArcTask) {
-        // Check owner status for ARC-AGI-2
+        // Check owner status for ARC-AGI-3
         const { data: { user } } = await supabase.auth.getUser();
         let canUseArc = false;
         if (user) {
@@ -536,7 +536,7 @@ export function useOrionReasoning(
         }
 
         if (canUseArc) {
-          addLog("🧩 Detectada tarefa ARC-AGI-2 - invoking arc-reasoner...");
+          addLog("🧩 Detectada tarefa ARC-AGI-3 - invoking arc-reasoner...");
           try {
             const response = await supabase.functions.invoke("arc-reasoner", {
               body: {
@@ -546,7 +546,7 @@ export function useOrionReasoning(
               }
             });
             if (response.data?.success) {
-              const arcResult = `🧩 Análise ARC-AGI-2:\n${response.data.explanation}\n\nSolução: ${JSON.stringify(response.data.output)}`;
+              const arcResult = `🧩 Análise ARC-AGI-3:\n${response.data.explanation}\n\nSolução: ${JSON.stringify(response.data.output)}`;
               setThought(arcResult);
               addChat("ai", arcResult);
               speak(arcResult).catch(() => {});
@@ -1046,7 +1046,7 @@ export function useOrionReasoning(
         return;
       }
 
-      // ═══ ARC-AGI-2 Gateway: Direct Internet Queries (FREE) ═══
+      // ═══ ARC-AGI-3 Gateway: Direct Internet Queries (FREE) ═══
       // Check if query needs direct internet access (fast, no API limits)
       const needsInternetGateway =
         /tempo|clima|bitcoin|cripto|preço|cotação|notícia|news|último|novo|hacker|github|npm|espaço|nasa|piada/i.test(qLow);
@@ -1058,7 +1058,7 @@ export function useOrionReasoning(
         }
 
         if (getGatewayState().status !== "dormant") {
-          addLog("🌐 Usando ARC-AGI-2 Gateway para consulta direta...");
+          addLog("🌐 Usando ARC-AGI-3 Gateway para consulta direta...");
 
           const reasoningType = /notícia|news|github|npm/i.test(qLow) ? "compositional" :
             /tempo|clima|preço|bitcoin/i.test(qLow) ? "symbolic" : "auto";
@@ -1130,14 +1130,14 @@ export function useOrionReasoning(
         }
       }
 
-      // ═══ ARC-AGI-2 API Learning: "aprenda sobre X" ═══
+      // ═══ ARC-AGI-3 API Learning: "aprenda sobre X" ═══
       const learnPattern = /\b(aprend[ae]|conhe[ae]|estud[ae]|explor[ae])\s+(sobre|sobre\s+o|sobre\s+a)?\s*(.+)/i;
       const learnMatch = qLow.match(learnPattern);
 
       if (_isSpecialCmd && learnMatch) {
         const topic = learnMatch[3].trim();
         if (topic.length > 2) {
-          addLog(`🧠 ARC-AGI-2 learn: ${topic}`);
+          addLog(`🧠 ARC-AGI-3 learn: ${topic}`);
 
           // Check if it's a known framework
           const bestMatch = getBestAPICapability(topic);
@@ -1166,7 +1166,7 @@ export function useOrionReasoning(
         }
       }
 
-      // ═══ ARC-AGI-2 Stripe Credit Intelligence: Check credits/saldo/wallet ═══
+      // ═══ ARC-AGI-3 Stripe Credit Intelligence: Check credits/saldo/wallet ═══
       const authUser = cachedAuthUser;
       let currentRole = "user";
       if (authUser) {
@@ -1187,7 +1187,7 @@ export function useOrionReasoning(
         return;
       }
 
-      // ═══ ARC-AGI-2 Auto-Charge: Check if service should be paid ═══
+      // ═══ ARC-AGI-3 Auto-Charge: Check if service should be paid ═══
       const serviceContext = detectServiceFromQuery(question);
       if (serviceContext && authUser) {
         const freeCheck = await shouldServiceBeFree(authUser.id, serviceContext);
