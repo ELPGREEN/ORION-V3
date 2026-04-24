@@ -18,7 +18,6 @@ import {
 import { WhoIsItForSection } from '@/components/home/WhoIsItForSection';
 import { ImpactMetricsSection } from '@/components/home/ImpactMetricsSection';
 import { WelcomeSplash } from '@/components/home/WelcomeSplash';
-import { VueApiExplorer } from '@/components/home/VueApiExplorer';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -103,7 +102,6 @@ export default function Index() { const [fOpen, setFOpen] = useState(false);
       <SecurityShieldSection />
       <WhyOrionSection />
       <ComparisonSection />
-      <VueApiExplorer />
       <CtaSection />
 
       <section className="py-6 bg-muted/10 border-t border-border/20">
