@@ -1,5 +1,5 @@
 /**
- * useAnaAvatar — Hook v22.3
+ * useAnaAvatar — Hook v21.2
  * Avatar visual reativo para a Secretária Ana.
  * Integra projeção facial, lip-sync, e estado emocional.
  * 
