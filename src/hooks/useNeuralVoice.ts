@@ -24,6 +24,7 @@ import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural
 import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
 import { ensurePersistentMic, isMobile as isMobilePersistent } from "@/lib/voice/persistentMic";
 import { createGCPSTTSession, type GCPSTTSession } from "@/lib/voice/gcpSTT";
+import { getVoiceThresholds } from "@/lib/voice/voiceThresholds";
 
 // ═══ Constants ═══
 const MOBILE_REGEX = /android|iphone|ipad|ipod|mobile/i;
@@ -380,12 +381,12 @@ export function useNeuralVoice(
   const audioWorkletActiveRef = useRef(false);
 
   // Wraps setListening + a "no speech" detection timer.
-  // The toast only fires if the GCP STT session is NOT healthy after the timeout —
-  // a healthy session that simply hasn't received speech (user is silent) must NOT trigger
-  // a false "check your microphone" warning.
+  // Threshold and suppression are platform-aware (see voiceThresholds.ts).
   const setListeningWithTimer = useCallback((val: boolean) => {
     setListening(val);
     if (val) {
+      const cfg = getVoiceThresholds();
+      if (cfg.suppressNoSpeechToast) return;
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
       noSpeechTimerRef.current = setTimeout(() => {
         if (!listeningRef.current) return;
@@ -394,7 +395,7 @@ export function useNeuralVoice(
         if (gcpHealthy) return;
         setNoSpeechDetected(true);
         toast.info("Não estou te ouvindo... Verifique se o microfone está por perto.");
-      }, 20000);
+      }, cfg.noSpeechToastMs);
     } else {
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
       setNoSpeechDetected(false);
@@ -865,7 +866,7 @@ export function useNeuralVoice(
       if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
 
       const turnState = detectTurnState([speechBufferRef.current], "pt-BR");
-      const silenceMs = getOptimalSilenceDuration(turnState);
+      const silenceMs = Math.round(getOptimalSilenceDuration(turnState) * getVoiceThresholds().turnSilenceMultiplier);
 
       speechDebounceRef.current = setTimeout(() => {
         const rawText = speechBufferRef.current.trim();
@@ -1028,7 +1029,8 @@ export function useNeuralVoice(
       // ═══ TRY GCP STT FIRST ═══
       if (useGCPSTTRef.current) {
         try {
-          const gcpChunkIntervalMs = 1400;
+          const voiceCfg = getVoiceThresholds();
+          const gcpChunkIntervalMs = voiceCfg.gcpChunkIntervalMs;
 
           // Reuse existing GCP session if active (just resume if paused)
           if (gcpSessionRef.current?.isActive()) {
@@ -1068,7 +1070,7 @@ export function useNeuralVoice(
               const SHORT_ACTION_WHITELIST = /^(olha|olhe|olho|ve|veja|le|leia|para|pare|stop|sim|nao|não|ok|certo|aqui|isso|isto|esse|essa|agora|chega|fala|hey|ei|oi)$/i;
               const hasShortAction = normalized.split(/\s+/).some(w => SHORT_ACTION_WHITELIST.test(w));
 
-              if (confidence > 0 && confidence < 0.12 && wordCount <= 2 && !hasShortAction) {
+              if (confidence > 0 && confidence < voiceCfg.shortUtteranceMinConfidence && wordCount <= 2 && !hasShortAction) {
                 console.log(`[Voice] GCP STT descartado (silent): "${cleanedText}" (${(confidence * 100).toFixed(0)}%)`);
                 return;
               }
@@ -1090,7 +1092,7 @@ export function useNeuralVoice(
 
               // Adaptive merge window — fast for finished sentences, patient for trailing words.
               const turnState = detectTurnState([sentenceAccumulatorRef.current], "pt-BR");
-              const mergeWindow = getOptimalSilenceDuration(turnState);
+              const mergeWindow = Math.round(getOptimalSilenceDuration(turnState) * voiceCfg.turnSilenceMultiplier);
 
               OrbState.voiceState = "thinking"; sentenceTimerRef.current = setTimeout(() => {
                 const mergedText = deduplicateRepeatedPhrases(sentenceAccumulatorRef.current.trim());
