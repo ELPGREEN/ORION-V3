@@ -1,5 +1,5 @@
 /**
- * ═══ ARC-AGI-2 Revenue Generator ═══
+ * ═══ ARC-AGI-3 Revenue Generator ═══
  * 
  * Sistema para Orion gerar seu próprio dinheiro para compras reais:
  * 1. Prestação de serviços (pesquisa, código, análise)

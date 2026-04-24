@@ -1,5 +1,5 @@
 /**
- * ═══ ARC-AGI-2 API Learner: Aprende com APIs e Frameworks Open Source ═══
+ * ═══ ARC-AGI-3 API Learner: Aprende com APIs e Frameworks Open Source ═══
  * 
  * Este módulo permite que o Orion aprenda automaticamente com:
  * 1. Documentações de APIs públicas
@@ -8,7 +8,7 @@
  * 4. Repositórios GitHub
  * 5. Codebases de referência
  * 
- * Usa padrões ARC-AGI-2:
+ * Usa padrões ARC-AGI-3:
  * - Symbolic: Detectar padrões de API
  * - Compositional: Combinar conhecimento de múltiplas fontes
  * - Contextual: Adaptar aprendizado ao contexto
@@ -183,7 +183,7 @@ export async function learnAPI(apiName: string, category: string): Promise<Learn
   return learned;
 }
 
-// ═══ ARC-AGI-2 Pattern Extraction Helpers ═══
+// ═══ ARC-AGI-3 Pattern Extraction Helpers ═══
 
 function extractFeatures(text: string): string[] {
   const features: string[] = [];
@@ -323,7 +323,7 @@ export function getBestAPICapability(task: string): { api: string; capability: s
   
   const lowerTask = task.toLowerCase();
   
-  // Task to API mapping (ARC-AGI-2 symbolic patterns)
+  // Task to API mapping (ARC-AGI-3 symbolic patterns)
   const taskMappings = [
     { task: /image|vision|detectar|reconhecer/i, api: "MediaPipe", capability: "Computer Vision" },
     { task: /llm|chat|gpt|claude|texto/i, api: "OpenAI", capability: "Text Generation" },

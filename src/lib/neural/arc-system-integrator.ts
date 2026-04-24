@@ -1,5 +1,5 @@
 /**
- * Orion ARC-AGI-2 System Integrator
+ * Orion ARC-AGI-3 System Integrator
  * Unifies Decision Core, Robotics, Swarm, and Financial modules
  * with existing IoT Bridge, ROS2, and Smart Home infrastructure
  */
@@ -53,7 +53,7 @@ export class ArcSystemIntegrator {
   }
 
   async initialize(): Promise<void> {
-    this.logger.info('Initializing ARC-AGI-2 System Integration...');
+    this.logger.info('Initializing ARC-AGI-3 System Integration...');
 
     await this.roboticsPerception.initialize();
 
@@ -62,7 +62,7 @@ export class ArcSystemIntegrator {
     this.setupIoTEventListeners();
 
     this.isInitialized = true;
-    this.logger.info('ARC-AGI-2 System fully integrated');
+    this.logger.info('ARC-AGI-3 System fully integrated');
   }
 
   private async syncIoTDevicesToSwarm(): Promise<void> {

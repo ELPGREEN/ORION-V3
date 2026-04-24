@@ -1,5 +1,5 @@
 /**
- * ═══ ARC-AGI-2 Gateway Panel ═══
+ * ═══ ARC-AGI-3 Gateway Panel ═══
  * Painel de diagnóstico e controle do Gateway de Internet e API Learning
  */
 
@@ -88,7 +88,7 @@ export default function ARCGatewayPanel() {
   return (
     <div className="p-4 tron-panel space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-[hsl(var(--tron-neon))]">🌐 ARC-AGI-2 Gateway</h3>
+        <h3 className="text-lg font-bold text-[hsl(var(--tron-neon))]">🌐 ARC-AGI-3 Gateway</h3>
         <span className={`font-mono ${getStatusColor(gatewayState.status)}`}>
           [{gatewayState.status.toUpperCase()}]
         </span>

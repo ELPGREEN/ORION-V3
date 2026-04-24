@@ -1,14 +1,14 @@
 /**
- * ═══ ARC-AGI-2 Gateway: Internet & API Learning Engine ═══
+ * ═══ ARC-AGI-3 Gateway: Internet & API Learning Engine ═══
  * 
  * Este módulo permite que o Orion seja LIVRE na internet:
  * 1. Pesquisa web aberta (sem limitações de API)
  * 2. Aprende com APIs públicas e frameworks open source
  * 3. Executa chamadas diretas a serviços externos
  * 4. Extrai conhecimento de código aberto e documentações
- * 5. Usa padrões ARC-AGI-2 para adaptar seu comportamento
+ * 5. Usa padrões ARC-AGI-3 para adaptar seu comportamento
  * 
- * Inspired by ARC-AGI-2: Symbolic, Compositional, Contextual reasoning
+ * Inspired by ARC-AGI-3: Symbolic, Compositional, Contextual reasoning
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -207,7 +207,7 @@ export async function scanAllAPIs(): Promise<APIDiscovery[]> {
   return results;
 }
 
-// ═══ Internet Query with ARC-AGI-2 Reasoning ═══
+// ═══ Internet Query with ARC-AGI-3 Reasoning ═══
 
 export interface GatewayQueryResult {
   success: boolean;
@@ -386,7 +386,7 @@ function getTimeOfDay(): "morning" | "afternoon" | "evening" | "night" {
   return "night";
 }
 
-// ═══ Learn from API Responses (ARC-AGI-2 Pattern Learning) ═══
+// ═══ Learn from API Responses (ARC-AGI-3 Pattern Learning) ═══
 
 export function learnFromResponse(apiName: string, response: string, success: boolean): void {
   initialize();

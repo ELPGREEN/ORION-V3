@@ -378,7 +378,7 @@ Deno.serve(async (req) => {
     }
 
     // ═══════════════════════════════════════
-    // ACTION: get_customer_balance (ARC-AGI-2 Credit Intelligence)
+    // ACTION: get_customer_balance (ARC-AGI-3 Credit Intelligence)
     // ═══════════════════════════════════════
     if (action === "get_customer_balance") {
       const { customer_id } = body;

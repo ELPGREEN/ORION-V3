@@ -1,5 +1,5 @@
 /**
- * ═══ ARC-AGI-2 Google API Revenue System ═══
+ * ═══ ARC-AGI-3 Google API Revenue System ═══
  * 
  * Sistema para Orion gerar renda usando APIs do Google:
  * 1. Google Workspace (Gmail, Calendar, Drive, Docs)

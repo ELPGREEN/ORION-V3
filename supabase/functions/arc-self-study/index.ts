@@ -1,5 +1,5 @@
 /**
- * arc-self-study — Plays ARC-AGI-2 and ARC-AGI-3 games using Lovable AI Gateway (Gemini).
+ * arc-self-study — Plays ARC-AGI-3 and ARC-AGI-3 games using Lovable AI Gateway (Gemini).
  * Strategies persisted to Zilliz (orion_legal vector store) for scalable RAG recall + Postgres mirror.
  *
  * Key principles (from ARC Prize philosophy, Decrypt 2024):
@@ -19,7 +19,7 @@ const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-2.5-flash";
 const MAX_STEPS_PER_GAME = 40;
 
-// ARC-AGI-2 and ARC-AGI-3 share the same API key & similar endpoints.
+// ARC-AGI-3 and ARC-AGI-3 share the same API key & similar endpoints.
 const ARC_BASES: Record<string, string> = {
   "3": "https://three.arcprize.org/api",
   "2": "https://two.arcprize.org/api",

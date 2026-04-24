@@ -1,5 +1,5 @@
 /**
- * ═══ ARC-AGI-2 Auto-Charge System ═══
+ * ═══ ARC-AGI-3 Auto-Charge System ═══
  * 
  * Sistema para Orion automaticamente cobrar por serviços prestados
  * Integração com conversations para charge automático
@@ -58,7 +58,7 @@ export function detectServiceFromQuery(query: string): ServiceContext | null {
     return "vision_api";
   }
   
-  // Reasoning API (ARC-AGI-2)
+  // Reasoning API (ARC-AGI-3)
   if (/\b(puzzle|raciocínio|abstrato|resolver|ARC|logic|pattern)\b/i.test(lower)) {
     return "reasoning_api";
   }

@@ -1,5 +1,5 @@
 /**
- * Orion ARC-AGI-2 Robotics Perception Layer
+ * Orion ARC-AGI-3 Robotics Perception Layer
  * YOLO + SLAM + Sensor Fusion for autonomous robotics
  */
 
