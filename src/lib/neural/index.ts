@@ -388,6 +388,13 @@ export * from "./agentic-patterns-engine";
 // ═══ Agentic Protocols, Platforms & Tools (AWS Frameworks 2026) ═══
 export * from "./agentic-protocols-tools";
 
+// ═══ Maestro Unified Core ═══
+export { processInteraction, classifyIntent as classifyMaestroIntent } from "./orion-ai-client";
+export { executeCorrectiveRAG, gradeRetrieval, type CRAGResult, type RetrievalGrade } from "./corrective-rag";
+export * from "./orion-maestro-unification";
+export * from "./mamba-orchestrator";
+export * from "./neuro-realignment";
+
 // ═══ RAG Evaluation & Feedback ═══
 export { evaluateRAGResponse, type RAGEvalResult, type RAGMetricScore, type RetrievalQuality } from "./rag-evaluator";
 export { submitRAGFeedback, getOptimizedWeights, classifyQueryType, type SearchWeights, type WeightProfile } from "./rag-feedback-loop";
