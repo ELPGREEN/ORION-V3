@@ -14,6 +14,8 @@ import { executeCorrectiveRAG } from "./corrective-rag";
 import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "./orion-maestro-unification";
 import { quantumRouteQuery, formatQuantumRoutingForAI } from "./quantum-llm-router";
 import { summarizeLongContextMamba } from "./mamba-orchestrator";
+import { getHardwareContext, getSwarmAlerts } from "./orion-hardware-intelligence";
+import { getFinancialContext } from "./orion-financial-intelligence";
 import { buildWorkingMemoryPrompt, initWorkingMemory } from "./orion-working-memory";
 import { stripMarkdown } from "@/lib/utils/text-utils";
 import { VS } from "@/components/dashboard/neural/useVisionProcessing";
@@ -1018,7 +1020,7 @@ export async function generateImageWithOrion(prompt: string): Promise<{ success:
 }
 /**
  * Unified Interaction Processor (The Maestro)
- * High-level orchestrator that leverages all neural subsystems.
+ * Orchestrates Vision, Voice, Text, Cognition, Hardware, and Finance.
  */
 export async function processInteraction(params: {
   question: string;
@@ -1036,8 +1038,14 @@ export async function processInteraction(params: {
 
   const detectedIntent = intent || classifyIntent(question);
 
-  // 1. Quantum LLM Routing & Maestro Monitoring
-  const routing = quantumRouteQuery(question);
+  // 1. Multi-modal Intelligence Gathering
+  const [routing, hwContext, swarmContext, finContext] = await Promise.all([
+    quantumRouteQuery(question),
+    getHardwareContext(),
+    getSwarmAlerts(),
+    getFinancialContext(userId)
+  ]);
+
   const routingHead = formatQuantumRoutingForAI(routing);
 
   // 2. Build Cognition & Adaptive PNL Head
@@ -1063,12 +1071,15 @@ export async function processInteraction(params: {
     routingHead,
     pnlHead,
     cognition.contextString,
+    hwContext,
+    swarmContext,
+    finContext,
     compressedContext,
     wmPrompt,
-    getMemoryFacts().slice(0, 15).join("\n")
+    getMemoryFacts().slice(0, 10).join("\n")
   ].filter(Boolean).join("\n\n");
 
-  // 6. Invoke LLM (Neural Ops)
+  // 6. Invoke LLM
   let responseText = "";
   try {
     const { data, error } = await supabase.functions.invoke("neural-ops", {
@@ -1091,7 +1102,7 @@ export async function processInteraction(params: {
 
   } catch (err) {
     console.error("[Maestro] Interaction error:", err);
-    responseText = "Desculpe, tive um problema ao processar seu raciocínio neural.";
+    responseText = "Desculpe, tive um problema ao processar seu raciocínio neural completo.";
   }
 
   // 7. Maestro Heartbeat: Monitor and Evolution

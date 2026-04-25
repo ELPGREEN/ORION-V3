@@ -394,6 +394,8 @@ export { executeCorrectiveRAG, gradeRetrieval, type CRAGResult, type RetrievalGr
 export * from "./orion-maestro-unification";
 export * from "./mamba-orchestrator";
 export * from "./neuro-realignment";
+export * from "./orion-hardware-intelligence";
+export * from "./orion-financial-intelligence";
 
 // ═══ RAG Evaluation & Feedback ═══
 export { evaluateRAGResponse, type RAGEvalResult, type RAGMetricScore, type RetrievalQuality } from "./rag-evaluator";
