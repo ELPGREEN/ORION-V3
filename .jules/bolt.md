@@ -13,3 +13,7 @@
 ## 2026-05-22 - [Supabase Count Optimization]
 **Learning:** Foundational dashboard queries were fetching full row data and multiple columns while only utilizing the `.count` property. In a high-latency mobile environment, this created unnecessary network payload and body parsing overhead (up to 150ms per interaction).
 **Action:** Always use `{ count: "exact", head: true }` in Supabase/PostgREST queries when only record counts are required. This instructs the backend to return metadata in headers, eliminating response body transport and client-side JSON parsing for row data.
+
+## 2026-04-25 - [Consolidated Regex Cleanup]
+**Learning:** Sequential `.replace()` calls on long strings (AI responses) created unnecessary string allocations and multiple traversals. Consolidating 10 replacements into a single regex pass in `stripMarkdown` improved efficiency in the hot-path streaming loop.
+**Action:** Use combined regexes for multi-pattern string cleanup to minimize allocations and traversals in high-frequency text processing.
