@@ -14,19 +14,26 @@ env:
 jobs:
   verify-secrets:
     runs-on: ubuntu-latest
+    outputs:
+      secrets_available: ${{ steps.check.outputs.secrets_available }}
     steps:
       - name: Check required secrets exist
+        id: check
         run: |
           MISSING=0
           for s in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
             if [ -z "${!s}" ]; then
-              echo "::error::Secret $s is missing. Add it at Settings → Secrets and variables → Actions"
+              echo "::warning::Secret $s is missing. Deployment will be skipped."
               MISSING=$((MISSING+1))
             else
               echo "✓ $s is set (length: ${#s})"
             fi
           done
-          if [ $MISSING -gt 0 ]; then exit 1; fi
+          if [ $MISSING -eq 0 ]; then
+            echo "secrets_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "secrets_available=false" >> $GITHUB_OUTPUT
+          fi
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -34,6 +41,7 @@ jobs:
 
   build-and-deploy:
     needs: verify-secrets
+    if: needs.verify-secrets.outputs.secrets_available == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
