@@ -396,6 +396,8 @@ export * from "./mamba-orchestrator";
 export * from "./neuro-realignment";
 export * from "./orion-hardware-intelligence";
 export * from "./orion-financial-intelligence";
+export * from "./orion-deep-cognition";
+export * from "./orion-actuators";
 
 // ═══ RAG Evaluation & Feedback ═══
 export { evaluateRAGResponse, type RAGEvalResult, type RAGMetricScore, type RetrievalQuality } from "./rag-evaluator";

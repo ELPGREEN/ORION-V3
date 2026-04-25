@@ -8,7 +8,11 @@ vi.mock("@/integrations/supabase/client", () => {
       getUser: vi.fn().mockResolvedValue({ data: { user: { id: "test-user", email: "ericson@elp.green" } } }),
     },
     functions: {
-      invoke: vi.fn().mockResolvedValue({ data: { content: "Test response" }, error: null }),
+      invoke: vi.fn().mockImplementation((fn: string) => {
+        if (fn === "neural-ops") return Promise.resolve({ data: { content: "Test response" }, error: null });
+        if (fn === "firecrawl-search") return Promise.resolve({ data: { results: [] }, error: null });
+        return Promise.resolve({ data: {}, error: null });
+      }),
     },
     from: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
@@ -28,15 +32,15 @@ describe("Maestro Unification Stress Test", () => {
   });
 
   it("should process an interaction through the unified Maestro core", async () => {
+    // Using a query that won't match local tools
     const response = await processInteraction({
-      question: "Qual o prazo para apelação cível?",
+      question: "EXECUTE_NEURAL_STRESS_TEST_ALPHA_99",
       chatHistory: [],
-      context: "O CPC define prazos processuais.",
+      context: "INTERNAL_CONTEXT_DEBUG",
     });
 
     expect(response).toBe("Test response");
 
-    // Find the neural-ops call
     const neuralOpsCall = (supabase.functions.invoke as any).mock.calls.find(
       (call: any) => call[0] === "neural-ops"
     );
@@ -45,12 +49,12 @@ describe("Maestro Unification Stress Test", () => {
     const body = neuralOpsCall[1].body;
 
     expect(body.context).toContain("COGNIÇÃO NEURAL");
-    expect(body.context).toContain("CPC");
+    expect(body.context).toContain("INTERNAL_CONTEXT_DEBUG");
   });
 
   it("should trigger web search via Corrective RAG for web_search intent", async () => {
     await processInteraction({
-      question: "pesquise sobre o clima em Marte",
+      question: "BUSCA_WEB_SENSITIVA_TESTE",
       chatHistory: [],
       intent: "web_search"
     });
@@ -59,6 +63,7 @@ describe("Maestro Unification Stress Test", () => {
       (call: any) => call[0] === "neural-ops"
     );
 
+    expect(neuralOpsCall).toBeDefined();
     expect(neuralOpsCall[1].body.intentType).toBe("web_search");
   });
 });

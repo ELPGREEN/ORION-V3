@@ -1,6 +1,7 @@
 /**
  * ─── Corrective RAG (CRAG) — Maestro Edition ───
  * Implementa a lógica de auto-correção para sistemas de recuperação.
+ * Garante que o contexto original não seja perdido mesmo se a busca web falhar.
  */
 import { supabase } from "@/integrations/supabase/client";
 import { searchEpisodes, buildEpisodicContext } from "./episodic-memory";
@@ -53,13 +54,14 @@ export async function executeCorrectiveRAG(params: {
   if (grade === "incorrect" || grade === "ambiguous" || forceWebSearch) {
     try {
       const { data, error } = await supabase.functions.invoke("firecrawl-search", { body: { query, limit: 3 } });
-      if (!error && data?.results) {
+      if (!error && data?.results && data.results.length > 0) {
         webSearchUsed = true;
         externalData = data.results;
         const webContext = data.results
           .map((r: any) => `[Fonte Web: ${r.url}]\n${r.content || r.markdown || r.description}`)
           .join("\n\n");
-        finalContext = grade === "incorrect" ? webContext : `${context}\n\n${webContext}`;
+        // Maintain original context as backup even if incorrect
+        finalContext = `${context}\n\n--- RESULTADOS ADICIONAIS DA WEB ---\n${webContext}`;
       }
     } catch (e) { console.warn("[CRAG] Erro na busca externa:", e); }
   }
