@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNeuralFeedback } from "@/hooks/useNeuralFeedback";
 import AnalyticsDashboard from "@/components/dashboard/AnalyticsDashboard";
 import SecretarySummariesWidget from "@/components/dashboard/SecretarySummariesWidget";
-import OrionStatusWidget from "@/components/dashboard/OrionStatusWidget";
+import MaestroStatusWidget from "@/components/dashboard/MaestroStatusWidget";
 import AIDailySummaryWidget from "@/components/dashboard/AIDailySummaryWidget";
 
 interface DashboardStats {
@@ -264,7 +264,7 @@ export default function DashboardHome() {
 
       {/* ── Orion + AI Summary Row ── */}
       <div className="grid lg:grid-cols-2 gap-4">
-        <OrionStatusWidget />
+        <MaestroStatusWidget />
         <AIDailySummaryWidget />
       </div>
 

@@ -17,6 +17,7 @@
 import type { AgentRole, NeuromodulationState } from "./multi-agent";
 import type { InteroceptiveState } from "./interoception-engine";
 import { runQuantumMetacognition, recordCalibration } from "./quantum-metacognition";
+import { checkAlignment } from "./goal-alignment";
 
 // ─── Types ───
 
@@ -469,25 +470,8 @@ export function runMetacognition(
 
   // Goal alignment: is the current focus related to the user's goal?
   // Uses character n-gram overlap for better fuzzy matching (word overlap misses related terms)
-  let goalAlignment = 0.5;
-  if (selfModel.currentGoal && selfModel.attentionFocus) {
-    const goal = selfModel.currentGoal.toLowerCase();
-    const focus = selfModel.attentionFocus.toLowerCase();
-    // Extract 3-grams for fuzzy match
-    const getNgrams = (s: string, n: number) => {
-      const grams = new Set<string>();
-      for (let i = 0; i <= s.length - n; i++) grams.add(s.slice(i, i + n));
-      return grams;
-    };
-    const goalGrams = getNgrams(goal, 3);
-    const focusGrams = getNgrams(focus, 3);
-    if (goalGrams.size > 0 && focusGrams.size > 0) {
-      let overlap = 0;
-      for (const g of focusGrams) { if (goalGrams.has(g)) overlap++; }
-      const jaccard = overlap / (goalGrams.size + focusGrams.size - overlap);
-      goalAlignment = Math.min(1, jaccard * 3 + 0.35); // base 0.35 + boosted jaccard
-    }
-  }
+  const alignmentResult = checkAlignment(selfModel.attentionFocus, selfModel.currentGoal);
+  const goalAlignment = alignmentResult.score;
 
   // Coherence: internal consistency (low variance in neuromodulators = high coherence)
   const neuroValues = Object.values(selfModel.neuromodulators);

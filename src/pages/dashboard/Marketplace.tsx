@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ShoppingBag, Link2, ExternalLink } from "lucide-react";
+import MaestroMarketplaceInsights from "@/components/dashboard/MaestroMarketplaceInsights";
 
 export default function Marketplace() {
   const { user } = useAuth();
@@ -76,6 +77,7 @@ export default function Marketplace() {
           </CardContent>
         </Card>
       ) : (
+      {products && products.length > 0 && <MaestroMarketplaceInsights products={products} />}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {products.map((p: any) => {
             const isLinked = linkedProductIds.has(p.id);

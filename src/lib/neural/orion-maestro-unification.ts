@@ -6,6 +6,7 @@ import { getConsciousnessDiagnostics } from "./rag-consciousness";
 import { orionSelfImprove } from "./jules-client";
 import { analyzeSemantics } from "./nlp-semantic-analyzer";
 import { recordSubsystemFailure } from "./jules-auto-triggers";
+import { createProposal } from "./evolution-sandbox";
 
 export async function monitorMaestroPulse() {
   const cognition = getCognitionState();
@@ -18,15 +19,26 @@ export async function monitorMaestroPulse() {
 }
 
 export async function dispatchMaestroEvolution(signal: any) {
-  if (signal.severity !== "high") return false;
-  const result = await orionSelfImprove({
-    task: `Maestro detected ${signal.type}. Fix the underlying logic.`,
-    autoPR: true,
+  // Instead of direct AutoPR, we create a Sandbox Proposal
+  const proposal = createProposal({
+    type: signal.type,
+    description: `Maestro detected ${signal.type}. Suggesting automated fix.`,
+    riskLevel: signal.severity === "high" ? "moderate" : "safe",
     subsystem: "core_state",
-    branch: `maestro/evolve-${Date.now()}`,
-    _internalAutoTrigger: true
+    suggestedChanges: "[Auto-Construction Strategy: Self-Heal Core]"
   });
-  return result.success;
+
+  if (signal.severity === "high") {
+    // For high severity, we still trigger Jules but with autoPR=false to keep it in Sandbox
+    await orionSelfImprove({
+      task: `Maestro detected ${signal.type}. Fix the underlying logic.`,
+      autoPR: false, // Wait for human/sandbox review
+      subsystem: "core_state",
+      branch: `maestro/proposal-${Date.now()}`,
+      _internalAutoTrigger: true
+    });
+  }
+  return true;
 }
 
 export function getAdaptiveNeurolinguisticHead(text: string, wmContext: string): string {

@@ -3,7 +3,7 @@ import { OrbState } from "./EnergyOrb";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { callEvolution } from "@/lib/neural/ai-service";
-import { analyzeFrameStreaming, analyzeFrameWithAI, classifyIntent } from "@/lib/neural/orion-ai-client";
+import { processInteraction, analyzeFrameStreaming, analyzeFrameWithAI, classifyIntent } from "@/lib/neural/orion-ai-client";
 import { stripMarkdown } from "@/lib/utils/text-utils";
 import {
   getMemoryFacts, addMemoryFacts, getSessionState, saveSessionState,
@@ -1943,61 +1943,43 @@ export function useOrionReasoning(
         }
       }, 3500);
 
-      const result = await analyzeFrameStreaming(
-        needsImage ? canvasRef.current : null, questionForLLM, cleanHistory, needsImage,
-        identificationMode, intentType,
-        (accumulated) => {
+      const result = await processInteraction({
+        question: questionForLLM,
+        chatHistory: cleanHistory,
+        intent: intentType,
+        visionData: needsImage ? { canvas: canvasRef.current } : undefined,
+        identityStatus,
+        onToken: (accumulated) => {
           if (bargedInRef.current) return;
           clearTimeout(waitTimer);
           streamingText = accumulated;
           const display = stripMarkdown(accumulated);
           setThought(display);
-          // Update ONLY the last AI message (the placeholder) — don't add new entries
           setChatHistory(prev => {
             const idx = prev.length - 1;
-            if (idx >= 0 && prev[idx]?.role === "ai") {
+            if (idx >= 0 && prev[idx]?.role === 'ai') {
               const updated = [...prev];
-              updated[idx] = { ...updated[idx], text: display || "⏳ ..." };
+              updated[idx] = { ...updated[idx], text: display || '⏳ ...' };
               return updated;
             }
             return prev;
           });
         },
-        (sentence) => {
+        onSentence: (sentence) => {
           if (bargedInRef.current) return;
-          // Dedup: skip if already spoken or queued
           const normalized = sentence.trim();
           if (!normalized || normalized.length < 3) return;
           if (spokenSentences.has(normalized)) return;
-          // Anti-stutter: check if first 4 words match any already-queued sentence
-          const firstWords = normalized.split(/\s+/).slice(0, 4).join(" ").toLowerCase();
-          for (const prev of spokenSentences) {
-            const prevWords = prev.split(/\s+/).slice(0, 4).join(" ").toLowerCase();
-            if (firstWords === prevWords) return; // Same start = likely duplicate/stutter
-          }
-          // Check substring overlap with last queued item
-          const lastQueued = localQueue[localQueue.length - 1];
-          if (lastQueued) {
-            if (normalized === lastQueued.text) return;
-            if (lastQueued.text.includes(normalized)) return;
-            if (normalized.includes(lastQueued.text)) {
-              // New sentence is superset of last — replace it instead of duplicating
-              localQueue[localQueue.length - 1] = { ...lastQueued, text: normalized, audioPromise: lastQueued.audioPromise };
-              return;
-            }
-          }
           spokenSentences.add(normalized);
-          spokeOrQueued = true;
-          // Pre-fetch audio IMMEDIATELY while current sentence plays
           const cleanSentence = cleanTextForSpeech(normalized);
           if (cleanSentence.length < 3) return;
-          console.log(`[StreamTTS] 📝 Queuing: "${cleanSentence.slice(0, 60)}..."`);
-          const audioPromise = fetchGeminiAudio(cleanSentence, TTS_VOICE, controller.signal, TTS_PROMPT, "pt-BR");
+          const audioPromise = fetchGeminiAudio(cleanSentence, TTS_VOICE, controller.signal, TTS_PROMPT, 'pt-BR');
           localQueue.push({ text: cleanSentence, audioPromise });
           triggerQueueImmediate();
-        },
-        controller.signal,
-      );
+        }
+      });
+      // We need to match the return shape of analyzeFrameStreaming
+      const maestroResult = { description: result };
 
       clearTimeout(waitTimer);
 
@@ -2023,10 +2005,10 @@ export function useOrionReasoning(
         return;
       }
 
-      if (result.description) {
+      if (maestroResult.description) {
         // All post-processing layers REMOVED for speed (Active Inference, Drafter-Critic)
         // Gemini's own quality is sufficient — these added 200ms+ for marginal gains
-        let finalResponse = result.description;
+        let finalResponse = maestroResult.description;
         const wasRefined = false;
 
         // ═══ HUMANIZER: Strip AI-isms for natural output ═══
@@ -2088,8 +2070,8 @@ export function useOrionReasoning(
 
         // ═══ LAYER 4: Post-processing — non-blocking, fire-and-forget ═══
         // Cognition learning (feeds episodic, ToM, causal, meta-learning, somatic)
-        postCognitionLearn(question, result.description, latencyMs, intentType, wasRefined).catch(() => {});
-        saveToNeuralLearning(question, result.description, "vision_chat", 0.7, {
+        postCognitionLearn(question, maestroResult.description, latencyMs, intentType, wasRefined).catch(() => {});
+        saveToNeuralLearning(question, maestroResult.description, "vision_chat", 0.7, {
           latency_ms: latencyMs, intent_type: intentType, had_image: needsImage,
           prompt_version: "v2.1", objects_detected: result.identifiedObjects?.length || 0,
           cognition_enriched: false, was_refined: wasRefined,

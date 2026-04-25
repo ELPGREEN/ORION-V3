@@ -9,6 +9,7 @@ import {
   ChevronDown, ChevronUp, Sparkles, BarChart3, Copy,
   ExternalLink, ThumbsUp, ThumbsDown, FileText,
 } from "lucide-react";
+import MaestroSearchGuide from "@/components/dashboard/MaestroSearchGuide";
 import { JurisdictionSelector, filterSourcesByJurisdiction, isSourceInJurisdiction, type Jurisdiction } from "@/components/dashboard/JurisdictionSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

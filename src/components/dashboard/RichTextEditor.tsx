@@ -53,6 +53,7 @@ import {
   Link as LinkIcon,
   Superscript as SuperscriptIcon,
   Subscript as SubscriptIcon,
+import MaestroDocumentAssistant from "./editor/MaestroDocumentAssistant";
   Search,
   ZoomIn,
   ZoomOut,
@@ -1427,6 +1428,10 @@ export function RichTextEditor({
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={onStartPipeline} disabled={pipelineRunning} className="text-xs gap-2.5 py-2.5 cursor-pointer">
                           <Crown className="h-4 w-4 text-primary" />
+                        <DropdownMenuItem className="text-xs gap-2.5 py-2.5 cursor-pointer">
+                          <MaestroDocumentAssistant content={content} onApply={(t) => editor.commands.insertContent(t)} />
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                           <div><div className="font-semibold">Pipeline Completo (9 Agentes)</div><div className="text-[10px] text-muted-foreground mt-0.5">Orquestração completa</div></div>
                         </DropdownMenuItem>
                       </>

@@ -9,6 +9,7 @@ import {
   Store, Search, ShoppingBag, Users, ChevronRight, Loader2, Sparkles, Brain, Filter,
 } from "lucide-react";
 import { toast } from "sonner";
+import MaestroStoreExplorer from "@/components/dashboard/MaestroStoreExplorer";
 
 interface StoreInfo {
   creator_id: string;
@@ -209,6 +210,7 @@ export default function ExplorarLojas() {
       </div>
 
       {/* Orion AI Recommendation */}
+      {stores && stores.length > 0 && <MaestroStoreExplorer stores={stores} />}
       <div className="bg-card border border-primary/20 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

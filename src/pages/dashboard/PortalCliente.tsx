@@ -12,6 +12,7 @@ import {
   Briefcase, Shield, Activity
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import MaestroClientGuide from "@/components/dashboard/MaestroClientGuide";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 

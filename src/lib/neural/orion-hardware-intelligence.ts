@@ -5,6 +5,8 @@
 
 import { iotBridge } from "./iot-device-bridge";
 import { ArcSystemIntegrator } from "./arc-system-integrator";
+import { updatePhysicalState } from "./goal-alignment";
+import { createProposal } from "./evolution-sandbox";
 
 const systemIntegrator = new ArcSystemIntegrator();
 
@@ -16,6 +18,27 @@ export async function getHardwareContext(): Promise<string> {
   if (devices.length === 0) return "";
 
   const onlineDevices = devices.filter(d => d.status === "online");
+  // Update Central Physical State for Maestro
+  const mainRobot = onlineDevices.find(d => d.type === "robot");
+  if (mainRobot) {
+    updatePhysicalState({
+      battery: mainRobot.metadata?.battery || 100,
+      obstacles: mainRobot.metadata?.obstacle_detected || false,
+      mobilityStatus: mainRobot.status === "error" ? "critical" : "ok"
+    });
+  }
+
+  if (mainRobot && mainRobot.status === "error") {
+    createProposal({
+      type: "hardware_fault",
+      description: `Falha detectada no robô ${mainRobot.name}. Analisando causa raiz.`,
+      riskLevel: "moderate",
+      subsystem: "robotics_bridge",
+      suggestedChanges: "[Diagnostics: Check ROS2 topic health and sensor calibration]"
+    });
+  }
+
+
   const robotStatus = onlineDevices.filter(d => d.type === "robot")
     .map(r => `${r.name}: ${r.status} (Batt: ${r.metadata?.battery || "N/A"}%)`)
     .join(", ");

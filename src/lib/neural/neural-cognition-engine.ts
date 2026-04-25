@@ -228,7 +228,8 @@ export async function postCognitionLearn(
   response: string,
   latencyMs: number,
   intentType: string,
-  _wasRefined: boolean = false
+  _wasRefined: boolean = false,
+  ragContext: string = ""
 ): Promise<void> {
   const tasks: Promise<void>[] = [];
 
@@ -277,6 +278,24 @@ export async function postCognitionLearn(
       const { createCausalGraph, addCausalLink } = await import("./causal-reasoning");
       const graph = createCausalGraph();
       addCausalLink(graph, `intent_${intentType}`, latencyMs < 4000 ? "fast_response" : "slow_response", Math.min(1, 4000 / Math.max(latencyMs, 1)));
+    } catch { /* silent */ }
+  })());
+
+
+  // 6. RAG Feedback Loop
+  tasks.push((async () => {
+    try {
+      const { evaluateRAGResponse } = await import("./rag-evaluator");
+      const { submitRAGFeedback } = await import("./rag-feedback-loop");
+
+      const evalResult = await evaluateRAGResponse({
+        query: question,
+        response: response,
+        context: ragContext,
+        // but evaluator can still do partial analysis
+      });
+
+      submitRAGFeedback(question, evalResult);
     } catch { /* silent */ }
   })());
 

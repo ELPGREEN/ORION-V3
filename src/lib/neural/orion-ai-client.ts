@@ -28,6 +28,7 @@ import { getToMStrategy, performMambaFusion, planResponseStrategy, validateActiv
 import { executeMaestroActuation } from "./orion-actuators";
 import { eventBus } from "./serverless-agent-runtime";
 import { stripMarkdown } from "@/lib/utils/text-utils";
+import { setGoal, checkAlignment, updatePhysicalState, getPhysicalState } from "./goal-alignment";
 
 // ─── Constants & Patterns ───
 const HEARING_CHECK_PATTERNS = /\b(ouvin|escut|me\s+ouve|teste\s+mic|t[aá]\s+me\s+ouvin|consegue\s+me\s+ouvir)\b/i;
@@ -76,6 +77,18 @@ export async function processInteraction(params: {
 
   const detectedIntent = intent || classifyIntent(question);
 
+  // 0. Goal & Alignment Management
+  setGoal({ description: question, type: "user" });
+  const alignment = checkAlignment(detectedIntent, question);
+
+  // 0.1 Embodied Safety Monitor (Hard Interrupts)
+  const physical = getPhysicalState();
+  if (physical.mobilityStatus === "critical" || physical.battery < 5) {
+    const safetyMsg = "⚠️ EMERGÊNCIA DE HARDWARE: " + (physical.battery < 5 ? "Bateria crítica!" : "Obstáculo detectado!") + " Entrando em modo de segurança.";
+    if (onToken) onToken(safetyMsg);
+    return safetyMsg;
+  }
+
   // 1. Actuation Fast-Path
   const actuation = await executeMaestroActuation(question, userId, identityStatus);
   if (actuation.executed && actuation.toolResponse) {
@@ -108,30 +121,46 @@ export async function processInteraction(params: {
 
   // 5. Maestro Neural Orchestra (Prompt Building)
   const enrichedContext = [
-    routingHead, strategicPlan, tomHead, pnlHead, cognition.contextString,
+    routingHead, strategicPlan, tomHead, pnlHead, `[GOAL_ALIGNMENT] ${alignment.reasoning}`, cognition.contextString,
     fusionMarker, hwContext, swarmContext, finContext, compressedContext,
     buildWorkingMemoryPrompt(), getMemoryFacts().slice(0, 10).join("\n")
   ].filter(Boolean).join("\n\n");
 
-  // 6. Invoke Inference
+  // 6. Invoke Inference (Supports Streaming)
   let responseText = "";
   try {
-    const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: {
-        question, context: enrichedContext, chatHistory: chatHistory.slice(-5),
-        intentType: detectedIntent, userName: user?.email || "Usuário",
-        userId, provider: routing.selectedProvider.id
-      }
-    });
-
-    if (error) throw error;
-    responseText = data.content || "";
+    if (onToken || onSentence) {
+      const streamResult = await analyzeFrameStreaming(
+        visionData?.canvas || null,
+        question,
+        chatHistory.slice(-5),
+        !!visionData,
+        identityStatus || "universal",
+        detectedIntent,
+        enrichedContext,
+        (token) => {
+          responseText = token;
+          if (onToken) onToken(token);
+        },
+        (sentence) => {
+          if (onSentence) onSentence(sentence);
+        }
+      );
+      responseText = streamResult.description;
+    } else {
+      const { data, error } = await supabase.functions.invoke("neural-ops", {
+        body: {
+          question, context: enrichedContext, chatHistory: chatHistory.slice(-5),
+          intentType: detectedIntent, userName: user?.email || "Usuário",
+          userId, provider: routing.selectedProvider.id
+        }
+      });
+      if (error) throw error;
+      responseText = data.content || "";
+    }
 
     const aiWarning = validateActiveInference(question, responseText);
     if (aiWarning) console.warn(aiWarning);
-
-    if (onToken) onToken(responseText);
-    if (onSentence) onSentence(stripMarkdown(responseText));
 
     // Emit Event: model_inference_result
     await eventBus.emit({
@@ -152,7 +181,7 @@ export async function processInteraction(params: {
   })().catch(console.error);
 
   const latency = Date.now() - t0;
-  postCognitionLearn(question, responseText, latency, detectedIntent).catch(console.error);
+  postCognitionLearn(question, responseText, latency, detectedIntent, false, crag.finalContext).catch(console.error);
   pushToWorkingMemory(question, "user_intent", 0.9);
   pushToWorkingMemory(responseText, "ai_response", 0.7);
 
@@ -172,3 +201,112 @@ export function getUserMemory(): string[] { return getMemoryFacts(); }
 export function addUserMemory(facts: string[]) { addMemoryFacts(facts, "fact", "chat"); }
 
 export { buildWorkingMemoryPrompt, pushToWorkingMemory, getWorkingMemoryContext } from "./orion-working-memory";
+import { supabase } from "@/integrations/supabase/client";
+import { stripMarkdown } from "@/lib/utils/text-utils";
+
+const SENTENCE_END_REGEX = /.*?[.!?…;]+\s/ys;
+
+export async function analyzeFrameStreaming(
+  canvas: HTMLCanvasElement | null,
+  question: string,
+  history: any[],
+  useVision: boolean,
+  identificationMode: string,
+  intentType: string,
+  extraContext?: string,
+  onToken: (token: string) => void,
+  onSentence: (sentence: string) => void,
+  signal?: AbortSignal
+) {
+  let imageData: string | null = null;
+  if (useVision && canvas) {
+    imageData = canvas.toDataURL("image/jpeg", 0.6);
+  }
+
+  const { data, error } = await supabase.functions.invoke("neural-ops", {
+    body: {
+      question,
+      history,
+      useVision,
+      imageData,
+      identificationMode,
+      intentType,
+      context: extraContext,
+      stream: true,
+    },
+  });
+
+  if (error) throw error;
+
+  const reader = data.body?.getReader();
+  if (!reader) throw new Error("No reader available");
+
+  let accumulated = "";
+  let spokenUpTo = 0;
+  const decoder = new TextDecoder();
+
+  try {
+    while (true) {
+      if (signal?.aborted) {
+        reader.cancel();
+        break;
+      }
+
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      accumulated += chunk;
+      onToken(accumulated);
+
+      // Sentence detection loop
+      while (spokenUpTo < accumulated.length) {
+        SENTENCE_END_REGEX.lastIndex = spokenUpTo;
+        const match = SENTENCE_END_REGEX.exec(accumulated + " ");
+        if (match) {
+          const sentence = match[0].trim();
+          if (sentence) onSentence(sentence);
+          spokenUpTo = SENTENCE_END_REGEX.lastIndex;
+        } else {
+          break;
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return { description: accumulated };
+}
+
+export async function analyzeFrameWithAI(
+  canvas: HTMLCanvasElement | null,
+  imageData: string | undefined,
+  question: string,
+  history: any[],
+  useVision: boolean,
+  identificationMode: string,
+  intentType: string,
+  extraContext?: string
+) {
+  let finalImageData = imageData;
+  if (!finalImageData && useVision && canvas) {
+    finalImageData = canvas.toDataURL("image/jpeg", 0.6);
+  }
+
+  const { data, error } = await supabase.functions.invoke("neural-ops", {
+    body: {
+      question,
+      history,
+      useVision,
+      imageData: finalImageData,
+      identificationMode,
+      intentType,
+      context: extraContext,
+      stream: false,
+    },
+  });
+
+  if (error) throw error;
+  return { description: data.content };
+}

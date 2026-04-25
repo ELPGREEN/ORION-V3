@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Select,
+import MaestroEditorialAssistant from "@/components/publicacoes/MaestroEditorialAssistant";
   SelectContent,
   SelectItem,
   SelectTrigger,

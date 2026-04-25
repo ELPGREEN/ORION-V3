@@ -48,6 +48,7 @@ import SortableItem from '@/components/admin/SortableItem';
 
 const benefitSchema = z.object({
   id: z.string(),
+import MaestroSalesAssistant from "./MaestroSalesAssistant";
   icon: z.string().min(1, 'Escolha um ícone'),
   title: z.string().min(1, 'Título obrigatório').max(100, 'Máximo 100 caracteres'),
   description: z.string().max(500, 'Máximo 500 caracteres').optional(),
@@ -576,7 +577,7 @@ export default function SalesPageEditor({ productId }: SalesPageEditorProps) {
             <TabsContent value="headlines" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Headline & Subheadline</CardTitle>
+                  <CardTitle className="text-base flex items-center justify-between"><span>Headline & Subheadline</span><MaestroSalesAssistant onCopyGenerated={(copy) => console.log("Copy:", copy)} /></CardTitle>
                   <CardDescription>O título principal e subtítulo da página</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
