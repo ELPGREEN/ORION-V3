@@ -191,3 +191,48 @@ async def health():
 @app.get("/")
 async def root():
     return {"service": "Orion Voice RVC", "version": "2.0-light", "max_ram": "2GB"}
+
+# ── Lazy-load Kokoro TTS ──
+_kokoro_session = None
+
+def get_kokoro():
+    """Load Kokoro ONNX model lazily (~82M parameters, very light)"""
+    global _kokoro_session
+    if _kokoro_session is None:
+        try:
+            from kokoro_onnx import Kokoro
+            model_path = os.environ.get("KOKORO_MODEL_PATH", "kokoro-v0_19.onnx")
+            voices_path = os.environ.get("KOKORO_VOICES_PATH", "voices.json")
+            if os.path.exists(model_path) and os.path.exists(voices_path):
+                _kokoro_session = Kokoro(model_path, voices_path)
+                print(f"[Kokoro] Model loaded: {model_path}")
+            else:
+                print(f"[Kokoro] Model or voices not found at {model_path}")
+        except Exception as e:
+            print(f"[Kokoro] Error loading model: {e}")
+    return _kokoro_session
+
+@app.post("/kokoro_tts")
+async def kokoro_tts(
+    text: str = Form(...),
+    voice: str = Form("af_heart"),
+    speed: float = Form(1.0),
+):
+    start = time.time()
+    kokoro = get_kokoro()
+    if kokoro is None:
+        return JSONResponse({"error": "Kokoro model not loaded"}, status_code=503)
+
+    try:
+        samples, sample_rate = kokoro.create(text, voice=voice, speed=speed, lang="en-us")
+
+        # Save to buffer
+        with io.BytesIO() as wav_io:
+            save_wav(wav_io, sample_rate, samples)
+            wav_bytes = wav_io.getvalue()
+
+        elapsed = time.time() - start
+        print(f"[Kokoro] Generated {len(text)} chars in {elapsed:.2f}s")
+        return Response(content=wav_bytes, media_type="audio/wav")
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)

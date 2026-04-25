@@ -370,6 +370,10 @@ export function buildMemoryContext(
   const healthCtx = buildHealthContext();
   if (healthCtx) parts.push(healthCtx);
 
+  // Relational context
+  const relationalCtx = buildRelationalContext(memories);
+  if (relationalCtx) parts.push(relationalCtx);
+
   return parts.length > 0 ? parts.join("\n\n") : "";
 }
 
@@ -384,4 +388,56 @@ export function setLastIntent(intent: string): void {
 
 export function getLastIntent(): string | undefined {
   return getSessionState()?.lastIntent;
+}
+
+// ─── Relational Memory (Mem0-inspired) ───
+
+export interface MemoryRelation {
+  from: string;
+  to: string;
+  type: "related_to" | "contradicts" | "refines" | "caused_by";
+  strength: number;
+}
+
+/**
+ * Finds relationships between memory entries based on token overlap
+ * and semantic patterns.
+ */
+export function discoverRelationships(memories: MemoryEntry[]): MemoryRelation[] {
+  const relations: MemoryRelation[] = [];
+  const tokenCache = memories.map(m => getTokens(m.fact));
+
+  for (let i = 0; i < memories.length; i++) {
+    for (let j = i + 1; j < memories.length; j++) {
+      const overlap = wordOverlap(tokenCache[i], tokenCache[j]);
+
+      if (overlap > 0.4) {
+        relations.push({
+          from: memories[i].fact,
+          to: memories[j].fact,
+          type: "related_to",
+          strength: overlap,
+        });
+      }
+    }
+  }
+  return relations;
+}
+
+/**
+ * Enhanced context builder that includes discovered relationships.
+ */
+export function buildRelationalContext(memories: MemoryEntry[]): string {
+  const relations = discoverRelationships(memories);
+  if (relations.length === 0) return "";
+
+  const topRelations = relations
+    .sort((a, b) => b.strength - a.strength)
+    .slice(0, 5);
+
+  const parts = topRelations.map(r =>
+    `• "${r.from}" parece estar relacionado a "${r.to}"`
+  );
+
+  return `[RELAÇÕES DE MEMÓRIA — Conexões Detectadas]\n${parts.join("\n")}`;
 }

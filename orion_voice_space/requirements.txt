@@ -5,3 +5,4 @@ scipy==1.13.1
 numpy==1.26.4
 psutil==6.0.0
 python-multipart==0.0.9
+kokoro-onnx==0.3.0
