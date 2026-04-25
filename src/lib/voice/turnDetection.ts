@@ -42,13 +42,13 @@ export function getOptimalSilenceDuration(state: TurnState): number {
   switch (state) {
     case "finished":
       // Final punctuation / closing phrase — respond near-instantly.
-      return 150;
+      return 100;
     case "unfinished":
       // Trailing conjunctions / articles — wait, but not forever.
       return 800;
     case "wait":
     default:
       // Neutral pause — moderate.
-      return 400;
+      return 250;
   }
 }

@@ -33,7 +33,7 @@ const PRE_ROLL_FRAMES = 8; // Extra pre-roll to preserve the start of softer wor
 const FLUSH_POLL_MS = 60; // Aggressive poll for instant turn detection
 const SPEECH_RMS_THRESHOLD = 0.0025; // Higher sensitivity — captures very quiet speech (PR: mobile fix)
 // Faster turn-end so Orion responds instantly after the user stops talking
-const DEFAULT_SILENCE_MS = 1100;
+const DEFAULT_SILENCE_MS = 800;
 
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {

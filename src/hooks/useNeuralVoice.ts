@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
 import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
+import { speakWithKokoroTTS } from "@/lib/tts/kokoroTTS";
 // adaptiveVoiceStyle, sttFallbackChain, audioWorkletManager REMOVED — performance bottlenecks
 import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural/pipeline-latency-tracker";
 import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
@@ -736,6 +737,14 @@ export function useNeuralVoice(
         if (gemResult.played) {
           played = true;
           if (gemResult.audio) activeAudioRef.current = gemResult.audio;
+        } else if (!cascadeAbort.signal.aborted) {
+          // SECONDARY: Kokoro TTS — Local-first high quality alternative
+          console.log("[Voice] Gemini failed, trying Kokoro TTS (af_heart)...");
+          const kokResult = await speakWithKokoroTTS(cleanText, "af_heart", cascadeAbort.signal);
+          if (kokResult.played) {
+            played = true;
+            if (kokResult.audio) activeAudioRef.current = kokResult.audio;
+          }
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
@@ -1056,7 +1065,7 @@ export function useNeuralVoice(
                   bargeIn();
                   return;
                 }
-                if (text.split(/\s+/).length >= 3) {
+                if (text.split(/\s+/).length >= 2) {
                   bargeIn();
                 }
                 return;
