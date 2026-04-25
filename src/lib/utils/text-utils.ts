@@ -3,36 +3,24 @@
  */
 
 // ═══ Pre-compiled Regexes for Performance ═══
-const JSON_BLOCK_REGEX = /```json[\s\S]*?```/g;
-const IDENTIFIED_OBJECTS_REGEX = /\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}/g;
-const LEARN_REGEX = /\[LEARN:[^\]]+\]/g;
-const BOLD_ITALIC_REGEX = /[\*_]{1,3}/g;
-const HEADER_REGEX = /^#{1,6}\s+/gm;
 const LINK_REGEX = /\[([^\]]+)\]\([^)]+\)/g;
-const URL_REGEX = /https?:\/\/\S+/g;
-const COMMENT_REGEX = /\/\/[^\n]*/g;
-const TAG_REGEX = /<[^>]*>/g;
-const BORDER_REGEX = /[─═╔╗╚╝║]/g;
-const EMOJI_CLEAN_REGEX = /[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/g;
+
+// PERF: Combined cleanup regex to perform multiple replacements in a single pass.
+// Consolidates JSON blocks, identified objects, LEARN facts, bold/italic, headers,
+// URLs, comments, tags, borders, and specific emojis.
+// This reduces string allocations and CPU cycles in the hot-path AI streaming response loop.
+// Note: LINK_REGEX is handled separately because it uses a capture group for replacement.
+const MARKDOWN_CLEANUP_REGEX = /```json[\s\S]*?```|\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}|\[LEARN:[^\]]+\]|[\*_]{1,3}|^#{1,6}\s+|https?:\/\/\S+|\/\/[^\n]*|<[^>]*>|[─═╔╗╚╝║]|[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/gm;
 
 /**
  * Strip markdown formatting, JSON blocks, and special characters from AI output.
  * Used for both display and TTS-ready text.
- * PERF: Uses pre-compiled regexes to avoid re-compilation.
+ * PERF: Uses a combined pre-compiled regex for O(N) single-pass cleanup.
  */
 export function stripMarkdown(text: string): string {
   return text
-    .replace(JSON_BLOCK_REGEX, "")
-    .replace(IDENTIFIED_OBJECTS_REGEX, "")
-    .replace(LEARN_REGEX, "")
-    .replace(BOLD_ITALIC_REGEX, "")
-    .replace(HEADER_REGEX, "")
-    .replace(LINK_REGEX, "$1")
-    .replace(URL_REGEX, "")
-    .replace(COMMENT_REGEX, "")
-    .replace(TAG_REGEX, "")
-    .replace(BORDER_REGEX, "")
-    .replace(EMOJI_CLEAN_REGEX, "")
+    .replace(LINK_REGEX, "$1") // Handle links first to preserve labels before URL_REGEX eats them
+    .replace(MARKDOWN_CLEANUP_REGEX, "")
     .trim();
 }
 
