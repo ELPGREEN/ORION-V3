@@ -408,6 +408,7 @@ export function useNeuralVoice(
   const sentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const micWatchdogRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const suppressPendingFlushUntilRef = useRef(0);
+  const ttsAudioPlayedRef = useRef(false);
 
   // ── Sync ──
   const updateAiResponding = useCallback((val: boolean) => {
@@ -601,7 +602,8 @@ export function useNeuralVoice(
     }
 
     // ESSENCIAL: Delay de segurança após o TTS para evitar eco (mesmo com fone)
-    // v32: 800ms de "surdez" total após o Orion falar.
+    // v32: 800ms de "surdez" total após o Orion falar, apenas se áudio foi emitido.
+    const safetyDelay = ttsAudioPlayedRef.current ? 800 : 50;
     setTimeout(() => {
       if (!onCmdRef.current || intentionalStopRef.current || speakingRef.current) return;
 
@@ -620,7 +622,7 @@ export function useNeuralVoice(
       if (!useGCPSTTRef.current) {
         startListeningFresh(onCmdRef.current);
       }
-    }, 800);
+    }, safetyDelay);
   }, [startListeningFresh]);
 
   // (Mic watchdog moved after bargeIn declaration)
@@ -719,10 +721,10 @@ export function useNeuralVoice(
             pitch = Math.max(0.75, Math.min(1.1, pitch));
 
             const u = new SpeechSynthesisUtterance(chunks[idx]);
+            u.volume = (window as any).ORION_VOICE_VOLUME ?? ORION_VOICE_PARAMS.volume;
             u.lang = "pt-BR";
             u.rate = rate;
             u.pitch = pitch;
-            u.volume = ORION_VOICE_PARAMS.volume;
             if (maleVoiceRef.current) u.voice = maleVoiceRef.current;
             u.onend = () => speakChunk(idx + 1);
             u.onerror = (ev) => {
@@ -740,6 +742,7 @@ export function useNeuralVoice(
 
   // ═══ PRIMARY TTS — Gemini TTS → Web Speech fallback ═══
   const speak = useCallback(async (text: string, options?: { skipMicToggle?: boolean }) => {
+    (window as any).ORION_VOICE_VOLUME = ORION_VOICE_PARAMS.volume;
     console.log("[Voice] speak() called:", text.slice(0, 80), "ttsOn:", ttsRef.current);
     if (!ttsRef.current || typeof window === "undefined") {
       console.warn("[Voice] speak() skipped — ttsOn:", ttsRef.current);
@@ -755,6 +758,7 @@ export function useNeuralVoice(
 
     // Enter speaking state
     speakingRef.current = true;
+    ttsAudioPlayedRef.current = false;
     markTTSStart();
     updateAiResponding(true);
     OrbState.voiceState = "speaking";
@@ -808,14 +812,14 @@ export function useNeuralVoice(
         );
         console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");
         if (gemResult.played) {
-          played = true;
+          played = true; ttsAudioPlayedRef.current = true;
           if (gemResult.audio) activeAudioRef.current = gemResult.audio;
         } else if (!cascadeAbort.signal.aborted) {
           // SECONDARY: Kokoro TTS — Local-first high quality alternative
           console.log("[Voice] Gemini failed, trying Kokoro TTS (af_heart)...");
           const kokResult = await speakWithKokoroTTS(cleanText, "af_heart", cascadeAbort.signal);
           if (kokResult.played) {
-            played = true;
+            played = true; ttsAudioPlayedRef.current = true;
             if (kokResult.audio) activeAudioRef.current = kokResult.audio;
           }
         }
@@ -831,7 +835,7 @@ export function useNeuralVoice(
       console.warn("[Voice] Gemini TTS unavailable — trying Web Speech fallback");
       try {
         await browserSpeak(cleanText);
-        played = true;
+        played = true; ttsAudioPlayedRef.current = true;
         console.log("[Voice] Web Speech fallback PLAYED");
       } catch (err) {
         console.warn("[Voice] Web Speech fallback failed:", err);

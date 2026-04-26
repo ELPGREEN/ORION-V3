@@ -75,6 +75,8 @@ export async function speakWithKokoroTTS(
 
     const url = URL.createObjectURL(blob);
     const audio = new Audio(url);
+    const volume = (window as any).ORION_VOICE_VOLUME ?? 1.0;
+    audio.volume = volume;
 
     return new Promise((resolve) => {
       const cleanup = () => {

@@ -207,6 +207,8 @@ export function playAudioBlob(
 
     const audioUrl = URL.createObjectURL(blob);
     const audio = new Audio(audioUrl);
+    const volume = (window as any).ORION_VOICE_VOLUME ?? 1.0;
+    audio.volume = volume;
 
     // Pre-create next audio element for gap-free playback
     let nextAudio: HTMLAudioElement | null = null;
