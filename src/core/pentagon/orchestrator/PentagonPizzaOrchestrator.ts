@@ -43,18 +43,24 @@ export class PentagonPizzaOrchestrator {
 
   public async runCycle(input: string, context: any = {}): Promise<ActionResult> {
     try {
-      // 1. Perception
+      // 1. Perception Layer
       await this.transition("perceiving");
       const preCheck = await this.meta.validateInput(input);
-      if (!preCheck.valid) throw new Error(`Pre-Input Guard Breach: ${preCheck.feedback}`);
+      if (!preCheck.valid) {
+        return {
+          success: false,
+          output: `Falha de segurança/entrada: ${preCheck.feedback}`,
+          data: { breach: preCheck.guardrailBreach }
+        };
+      }
 
       this.state.perception = await this.perception.process(input, context);
 
-      // 2. Memory
+      // 2. Memory Layer (with CRAG integration)
       await this.transition("remembering");
       this.state.memory = await this.memory.process(this.state.perception, context);
 
-      // 3. Reasoning
+      // 3. Reasoning Layer (with Strict Grounding)
       await this.transition("reasoning");
       this.state.reasoning = await this.reasoning.process(
         { perception: this.state.perception, memory: this.state.memory },
@@ -63,19 +69,41 @@ export class PentagonPizzaOrchestrator {
 
       const midCheck = await this.meta.validateReasoning(this.state.reasoning);
       if (!midCheck.valid) {
-        console.warn("[CORTEX] Mid-Reasoning warning, adjusting...");
-        // Re-run reasoning with adjustments if possible
+        console.warn(`[CORTEX] Logical consistency check failed: ${midCheck.feedback}`);
+        // Se a coerência estiver baixa, tentamos uma rota de fallback ou pedimos esclarecimento
+        if (midCheck.guardrailBreach === "hallucination_detected") {
+          return {
+            success: false,
+            output: "Identifiquei uma possível inconsistência lógica no meu raciocínio. Poderia reformular ou fornecer mais detalhes?",
+            data: { reason: midCheck.feedback }
+          };
+        }
       }
 
-      // 4. Action
+      // 4. Action Layer (The ROI)
       await this.transition("acting");
       this.state.action = await this.action.process(this.state.reasoning, context);
 
-      // 5. Evaluation (Post-Output)
+      // 5. Evaluation Layer (Post-Output Grounding)
       await this.transition("evaluating");
-      this.state.meta = await this.meta.validateOutput(this.state.action);
+      const postCheck = await this.meta.validateOutput(
+        this.state.action,
+        this.state.memory?.mergedContext || "",
+        input
+      );
+      this.state.meta = postCheck;
 
-      if (this.state.meta.score > 80) {
+      if (!postCheck.valid) {
+        console.error(`[CORTEX] Hallucination detected in final output! Blocking response.`);
+        return {
+          success: false,
+          output: "Minha análise final detectou falta de fundamentação no contexto fornecido. Estou trabalhando para melhorar minha precisão.",
+          data: { error: postCheck.feedback }
+        };
+      }
+
+      // Aprendizado se a qualidade for alta
+      if (postCheck.score > 85) {
         await this.memory.learn(this.state);
       }
 
@@ -87,7 +115,7 @@ export class PentagonPizzaOrchestrator {
       await this.transition("idle");
       return {
         success: false,
-        output: "Desculpe, ocorreu uma falha no meu loop cognitivo.",
+        output: "Ocorreu uma falha no meu processamento lógico. Por favor, tente novamente.",
         data: { error: error.message }
       };
     }
