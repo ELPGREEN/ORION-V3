@@ -31,6 +31,7 @@ interface Proposal {
   approved_at: string | null;
   applied_at: string | null;
   created_at: string;
+  is_arc?: boolean;
 }
 
 interface ABExperiment {
@@ -288,7 +289,12 @@ export function NeuralEvolutionPanel() {
         }
       }
 
-      const data = await callEvolution("approve_proposal", { proposalId, userId: user?.id, editedProposedValue });
+      const data = await callEvolution("approve_proposal", {
+        proposalId,
+        userId: user?.id,
+        editedProposedValue,
+        is_arc: proposal?.is_arc
+      });
 
       let description = "Proposta aprovada com sucesso.";
       if (data?.promptVersionId) description += " Nova versão de prompt criada.";
@@ -307,7 +313,10 @@ export function NeuralEvolutionPanel() {
   async function handleReject(proposalId: string) {
     setActionLoading(proposalId);
     try {
-      await callEvolution("reject_proposal", { proposalId });
+      await callEvolution("reject_proposal", {
+        proposalId,
+        is_arc: proposal?.is_arc
+      });
       toast({ title: "Proposta rejeitada" });
       loadAll();
     } catch (err: any) {
@@ -931,11 +940,11 @@ export function NeuralEvolutionPanel() {
                           </details>
                         )}
 
-                        {proposal.impact_estimate && !isEditing && (
+                        { (proposal.impact_estimate || proposal.is_arc) && !isEditing && (
                           <div className="mt-2 flex items-center gap-1">
                             <Sparkles className="h-3 w-3 text-primary" />
                             <span className="text-[10px] text-primary font-medium">
-                              Impacto estimado: {proposal.impact_estimate}
+                              Impacto estimado: {proposal.impact_estimate || "+85% (Simulado)"}
                             </span>
                           </div>
                         )}

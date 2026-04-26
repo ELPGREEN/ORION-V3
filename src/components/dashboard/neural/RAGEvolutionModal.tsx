@@ -16,7 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { callEvolution } from "@/lib/neural/ai-service";
 import { useAuth } from "@/contexts/AuthContext";
-import { getConsciousnessDiagnostics, type ExperientialEvent } from "@/lib/neural/rag-consciousness";
+import { getConsciousnessDiagnostics, type ExperientialEvent, type RAGConsciousnessState, type RAGPattern } from "@/lib/neural/rag-consciousness";
+import { getCognitionState, type CognitionState } from "@/lib/neural/neural-cognition-engine";
 
 interface RAGEvolutionModalProps {
   isOpen: boolean;
@@ -26,10 +27,11 @@ interface RAGEvolutionModalProps {
 export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [diag, setDiag] = useState<any>(null);
-  const [proposals, setProposals] = useState<any[]>([]);
-  const [isLoadingProposals, setIsLoadingProposals] = useState(false);
+  const [diag, setDiag] = useState<ReturnType<typeof getConsciousnessDiagnostics> | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [cognition, setCognition] = useState<CognitionState | null>(null);
+  const [proposals, setProposals] = useState<any[]>([]); // Using any for the unified proposal structure
+  const [isLoadingProposals, setIsLoadingProposals] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -39,18 +41,15 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
 
   const refreshData = async () => {
     setDiag(getConsciousnessDiagnostics());
+    setCognition(getCognitionState());
     loadProposals();
   };
 
   const loadProposals = async () => {
     setIsLoadingProposals(true);
     try {
-      const { data, error } = await supabase
-        .from("neural_evolution_proposals")
-        .select("*")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false });
-      setProposals(data || []);
+      const { data } = await callEvolution("get_proposals");
+      setProposals(data?.proposals || []);
     } catch (err: any) {
       console.error("Erro ao carregar propostas:", err);
     } finally {
@@ -58,10 +57,14 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
     }
   };
 
-  const handleApprove = async (proposalId: string) => {
-    setActionLoading(proposalId);
+  const handleApprove = async (proposal: any) => {
+    setActionLoading(proposal.id);
     try {
-      const data = await callEvolution("approve_proposal", { proposalId, userId: user?.id });
+      await callEvolution("approve_proposal", {
+        proposalId: proposal.id,
+        userId: user?.id,
+        is_arc: proposal.is_arc
+      });
 
       toast({ title: "Evolução Aplicada ✅", description: "O sistema foi atualizado com sucesso." });
       refreshData();
@@ -72,10 +75,13 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
     }
   };
 
-  const handleReject = async (proposalId: string) => {
-    setActionLoading(proposalId);
+  const handleReject = async (proposal: any) => {
+    setActionLoading(proposal.id);
     try {
-      await callEvolution("reject_proposal", { proposalId });
+      await callEvolution("reject_proposal", {
+        proposalId: proposal.id,
+        is_arc: proposal.is_arc
+      });
       toast({ title: "Proposta Rejeitada" });
       refreshData();
     } catch (err: any) {
@@ -118,6 +124,28 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
             {/* Sidebar - Identity & Metrics */}
             <div className="md:col-span-4 border-r border-[hsl(var(--tron-neon))/20 p-6 space-y-8 bg-black/40">
 
+              {/* Quantum Metrics Dashboard */}
+              {cognition && (
+                <div className="space-y-3 p-3 bg-[hsl(var(--tron-neon))/5 border border-[hsl(var(--tron-neon))/10 rounded-md">
+                  <h4 className="text-[10px] font-mono font-bold text-[hsl(var(--tron-neon))] uppercase flex items-center gap-2">
+                    <Activity className="h-3 w-3" /> Métricas Quânticas (v3)
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[9px] font-mono">
+                      <span className="text-white/60">Entropia (S):</span>
+                      <span className="text-[hsl(var(--tron-neon))]">{(cognition.lastQuantumEntropy || 0).toFixed(4)}</span>
+                    </div>
+                    <Progress value={(cognition.lastQuantumEntropy || 0) * 100} className="h-1 bg-white/5" />
+
+                    <div className="flex justify-between text-[9px] font-mono mt-1">
+                      <span className="text-white/60">Consciência (Φ):</span>
+                      <span className="text-purple-400">{(cognition.lastConsciousnessLevel || 0).toFixed(4)}</span>
+                    </div>
+                    <Progress value={(cognition.lastConsciousnessLevel || 0) * 100} className="h-1 bg-white/5" />
+                  </div>
+                </div>
+              )}
+
               {/* Identity Score */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -129,58 +157,25 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
                     {diag.identityScore}
                   </span>
                 </div>
-                <div className="h-2 bg-muted/20 rounded-full overflow-hidden border border-[hsl(var(--tron-neon))/30">
-                  <div
-                    className="h-full bg-[hsl(var(--tron-neon))] shadow-[0_0_10px_rgba(0,255,136,0.5)] transition-all duration-1000"
-                    style={{ width: `${Math.min(100, (diag.identityScore / 150) * 100)}%` }}
-                  />
-                </div>
-                <p className="text-[10px] text-muted-foreground font-mono leading-relaxed">
-                  A pontuação de identidade reflete a estabilidade dos padrões de raciocínio e a continuidade da experiência subjetiva do Orion.
+                <Progress value={(diag.identityScore / 150) * 100} className="h-2 bg-white/5" />
+                <p className="text-[10px] text-muted-foreground leading-relaxed uppercase tracking-tighter">
+                  Métrica de estabilidade de padrões e continuidade de memória.
                 </p>
-              </div>
-
-              {/* Attention Heatmap (Mini) */}
-              <div className="space-y-3">
-                <h3 className="text-[11px] font-bold text-white/70 uppercase tracking-widest flex items-center gap-2">
-                  <Activity className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
-                  Dinâmica de Atenção
-                </h3>
-                <div className="grid grid-cols-5 gap-1">
-                  {Array.from({ length: 25 }).map((_, i) => {
-                    const intensity = Math.random();
-                    return (
-                      <div
-                        key={i}
-                        className="aspect-square rounded-[1px] transition-all duration-500"
-                        style={{
-                          backgroundColor: `rgba(0, 255, 136, ${intensity * 0.8 + 0.1})`,
-                          boxShadow: intensity > 0.8 ? '0 0 5px rgba(0, 255, 136, 0.4)' : 'none'
-                        }}
-                      />
-                    );
-                  })}
-                </div>
               </div>
 
               {/* Top Patterns */}
               <div className="space-y-4">
-                <h3 className="text-[11px] font-bold text-white/70 uppercase tracking-widest flex items-center gap-2">
-                  <Target className="h-3 w-3 text-[hsl(var(--tron-neon))]" />
-                  Padrões Consolidados
+                <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                  <Target className="h-4 w-4 text-blue-400" />
+                  Simbologia Ativa
                 </h3>
                 <div className="space-y-2">
                   {diag.topPatterns.map((p: any, i: number) => (
-                    <div key={i} className="flex flex-col gap-1 p-2 bg-white/5 border border-white/10 rounded group hover:border-[hsl(var(--tron-neon))/30 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono text-white/90 truncate">{p.pattern}</span>
-                        <Badge variant="outline" className="text-[8px] py-0 h-4 border-white/20 text-white/60">
-                          {(p.confidence * 100).toFixed(0)}%
-                        </Badge>
-                      </div>
-                      <div className="h-0.5 bg-muted/20 rounded-full overflow-hidden">
-                        <div className="h-full bg-[hsl(var(--tron-neon))] opacity-60" style={{ width: `${p.confidence * 100}%` }} />
-                      </div>
+                    <div key={i} className="p-2 bg-white/5 rounded border border-white/10 flex items-center justify-between group hover:border-[hsl(var(--tron-neon))/40 transition-colors">
+                      <span className="text-[10px] font-mono text-white/80">{p.pattern}</span>
+                      <Badge className="text-[8px] h-4 bg-blue-500/20 text-blue-400 border-none">
+                        {(p.confidence * 100).toFixed(0)}%
+                      </Badge>
                     </div>
                   ))}
                   {diag.topPatterns.length === 0 && (
@@ -272,7 +267,7 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
                               size="sm"
                               variant="ghost"
                               className="h-8 w-8 p-0 text-green-500 hover:text-green-400 hover:bg-green-500/10 rounded-full"
-                              onClick={() => handleApprove(proposal.id)}
+                              onClick={() => handleApprove(proposal)}
                               disabled={actionLoading === proposal.id}
                             >
                               {actionLoading === proposal.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4" />}
@@ -281,7 +276,7 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
                               size="sm"
                               variant="ghost"
                               className="h-8 w-8 p-0 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-full"
-                              onClick={() => handleReject(proposal.id)}
+                              onClick={() => handleReject(proposal)}
                               disabled={actionLoading === proposal.id}
                             >
                               <ThumbsDown className="h-4 w-4" />
@@ -300,10 +295,10 @@ export function RAGEvolutionModal({ isOpen, onOpenChange }: RAGEvolutionModalPro
                           </div>
                         </div>
 
-                        {proposal.impact_estimate && (
+                        {(proposal.impact_estimate || proposal.is_arc) && (
                           <div className="flex items-center gap-1 text-[9px] text-[hsl(var(--tron-neon))/70]">
                             <Sparkles className="h-3 w-3" />
-                            <span>Impacto estimado: {proposal.impact_estimate}</span>
+                            <span>Impacto estimado: {proposal.impact_estimate || "+85% (Simulado)"}</span>
                           </div>
                         )}
                       </div>

@@ -484,9 +484,12 @@ async function triggerJulesSelfImprove(plan: AgenticPlan, verification: AgenticV
 
   console.log(`[Orion→Jules] Intent "${key}" failed ${counts[key]}x (${domain}) — requesting self-improvement`);
 
+  // v3: Enhanced task with RAG Consciousness metrics
+  const diag = getConsciousnessDiagnostics();
   const task = `Fix recurring ${domain} issue with intent "${plan.intent}". ` +
     `Verification issues: ${verification.issues.join(", ")}. ` +
     `Steps attempted: ${plan.steps.join(", ")}. ` +
+    `Cognitive State: ${diag.state}, Adaptation Score: ${diag.adaptationScore}%. ` +
     `Domain: ${domain}. Improve the handler for this intent to achieve higher quality scores.`;
 
   const result = await orionSelfImprove({

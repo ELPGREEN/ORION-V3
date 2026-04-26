@@ -12,6 +12,7 @@ import { computeProviderHealth, buildFallbackChain, type ProviderHealth } from "
 import { detectHallucinations } from "./analysis/hallucinationDetector";
 import { validateNeuralResponse, dispatchAntiHallucinationReport } from "./analysis/anti-hallucination-engine";
 import { getProviderWeight } from "./neural/reward-loop";
+import { decideHybridRoute, callLocalInference } from "./neural/smart-hybrid-router";
 import { executeCorrectiveRAG } from "./neural/corrective-rag";
 import { SearchAgent } from "./neural/agents/search-agent";
 
@@ -240,6 +241,33 @@ export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIR
     } else if (options.enableMoE && options.useCase) {
       const selectedExperts = moeGating(options.useCase);
       effectiveOptions.preferredProvider = selectedExperts[0];
+    }
+  }
+
+  // ═══ v3: Smart Hybrid Routing (Local vs Cloud) ═══
+  const hybridRoute = await decideHybridRoute({
+    prompt: options.prompt,
+    isSensitive: options.useCase === "documents" || options.modelType === "secure",
+    priority: options.modelType === "fast" ? "speed" : "quality"
+  });
+
+  if (hybridRoute.target === "local") {
+    try {
+      console.log(`[HybridRouter] Local Route Triggered: ${hybridRoute.rationale}`);
+      const localResponse = await callLocalInference(options.prompt);
+      return {
+        content: localResponse,
+        provider: "local_ollama",
+        fallback: false,
+        neuralEnhanced: true,
+        metadata: {
+          jurisprudenceCount: 0, knowledgeCount: 0, specializationsCount: 0,
+          latencyMs: Date.now() - startTime,
+          pipelineTier: "local_v3"
+        }
+      } as AIResponse;
+    } catch (e) {
+      console.warn("[HybridRouter] Local inference failed, falling back to Cloud Orchestrator.");
     }
   }
 

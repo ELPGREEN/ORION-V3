@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { OrbState } from "./EnergyOrb";
+import { RoutingIndicator } from "./RoutingIndicator";
 
 type VoiceState = "idle" | "listening" | "thinking" | "speaking";
 
@@ -31,26 +32,33 @@ export const VoiceStateIndicator = ({ noSpeechDetected }: { noSpeechDetected?: b
 
   return (
     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-      <div className="flex flex-col items-center" style={{ marginTop: "35%" }}>
+      <div className="flex flex-col items-center gap-3" style={{ marginTop: "35%" }}>
         <div className="flex items-center gap-2 rounded px-3 py-1" style={{
           backgroundColor: "rgba(0,0,0,0.6)",
-          border: `1px solid ${c.border}`,
+          border: \`1px solid \${c.border}\`,
           backdropFilter: "blur(4px)",
         }}>
           <div
-            className={`h-2 w-2 rounded-full ${c.dot} ${vs !== "idle" ? "animate-pulse" : ""}`}
-            style={{ boxShadow: vs !== "idle" ? `0 0 8px ${c.glow}` : "none" }}
+            className={\`h-2 w-2 rounded-full \${c.dot} \${vs !== "idle" ? "animate-pulse" : ""}\`}
+            style={{ boxShadow: vs !== "idle" ? \`0 0 8px \${c.glow}\` : "none" }}
           />
           <span
             className="text-[10px] font-mono tracking-[0.2em] uppercase"
             style={{
               color: noSpeechDetected && vs === "listening" ? "rgba(251,191,36,0.9)" : c.text,
-              textShadow: vs !== "idle" ? `0 0 10px ${c.border}` : "none",
+              textShadow: vs !== "idle" ? \`0 0 10px \${c.border}\` : "none",
             }}
           >
             {labels[vs]}
           </span>
         </div>
+
+        {/* v3: Add Routing Info below state when active */}
+        {vs !== "idle" && (
+          <div className="pointer-events-auto">
+             <RoutingIndicator />
+          </div>
+        )}
       </div>
     </div>
   );
