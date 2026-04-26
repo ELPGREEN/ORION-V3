@@ -70,20 +70,23 @@ export function primeSharedMic() {
   };
 
   rec.onend = () => {
-    console.log("[MicArbiter] Shared Mic ended (auto-restarting...)");
     s.isStarted = false;
     s.listeners?.onEnd();
 
-    // Auto-restart to keep it "Sempre Ativado"
+    // Restart imediato (sem gap audível) enquanto não estiver idle.
+    // Mesma lógica em todos os dispositivos — evita o ciclo liga/desliga no mobile.
     if (s.mode !== "idle") {
       if (s.restartTimer) clearTimeout(s.restartTimer);
       s.restartTimer = setTimeout(() => {
-        if (s.mode !== "idle" && !s.isStarted) {
-          try { s.sharedRec?.start(); } catch (err) {
-            console.warn("[MicArbiter] Auto-restart failed:", err);
+        if (s.mode !== "idle" && !s.isStarted && s.sharedRec) {
+          try { s.sharedRec.start(); } catch (err: any) {
+            // InvalidStateError = já está rodando; ignorar
+            if (err?.name !== "InvalidStateError") {
+              console.warn("[MicArbiter] Restart falhou:", err);
+            }
           }
         }
-      }, 1000);
+      }, 50);
     }
   };
 
