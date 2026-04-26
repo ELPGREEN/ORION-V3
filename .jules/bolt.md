@@ -17,3 +17,7 @@
 ## 2026-04-25 - [Consolidated Regex Cleanup]
 **Learning:** Sequential `.replace()` calls on long strings (AI responses) created unnecessary string allocations and multiple traversals. Consolidating 10 replacements into a single regex pass in `stripMarkdown` improved efficiency in the hot-path streaming loop.
 **Action:** Use combined regexes for multi-pattern string cleanup to minimize allocations and traversals in high-frequency text processing.
+
+## 2026-06-12 - [Optimized Set Intersections & O(N^2) Hoisting]
+**Learning:** Common idiomatic patterns like `[...setA].filter(x => setB.has(x)).length` for Jaccard similarity create unnecessary intermediate arrays and redundantly iterate over larger sets. In episodic memory consolidation loops, performing string normalization and Set creation inside the inner loop ((N^2)$) creates significant GC pressure and CPU overhead as the memory store grows.
+**Action:** Always implement Set intersections using a direct `for...of` loop over the smaller Set. For nested similarity loops, pre-calculate and cache tokenized Sets once ((N)$) before entering the (N^2)$ comparison phase to minimize redundant processing.

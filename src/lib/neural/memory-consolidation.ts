@@ -73,6 +73,25 @@ export const DEFAULT_CONSOLIDATION_CONFIG: ConsolidationConfig = {
 
 // ─── Utilities ───
 
+/**
+ * Optimized intersection count for Sets.
+ * PERF: Iterates over the smaller set to minimize O(N) operations and eliminates array spreads.
+ */
+function countIntersection(setA: Set<string>, setB: Set<string>): number {
+  if (setA.size === 0 || setB.size === 0) return 0;
+  let intersection = 0;
+  if (setA.size <= setB.size) {
+    for (const x of setA) {
+      if (setB.has(x)) intersection++;
+    }
+  } else {
+    for (const x of setB) {
+      if (setA.has(x)) intersection++;
+    }
+  }
+  return intersection;
+}
+
 function loadEpisodes(): MemoryEntry[] {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
@@ -102,39 +121,41 @@ function saveEpisodes(episodes: MemoryEntry[]): void {
 
 /**
  * Compute Jaccard similarity between two topic sets.
+ * PERF: Optimized with pre-calculated Sets and loop-based intersection.
  */
-function topicSimilarity(a: string[], b: string[]): number {
-  if (a.length === 0 && b.length === 0) return 1;
-  if (a.length === 0 || b.length === 0) return 0;
+function topicSimilarity(setA: Set<string>, setB: Set<string>): number {
+  if (setA.size === 0 && setB.size === 0) return 1;
+  if (setA.size === 0 || setB.size === 0) return 0;
 
-  const setA = new Set(a.map(t => t.toLowerCase()));
-  const setB = new Set(b.map(t => t.toLowerCase()));
-  const intersection = [...setA].filter(x => setB.has(x)).length;
-  const union = new Set([...setA, ...setB]).size;
+  const intersection = countIntersection(setA, setB);
+  const unionSize = setA.size + setB.size - intersection;
 
-  return union > 0 ? intersection / union : 0;
+  return unionSize > 0 ? intersection / unionSize : 0;
 }
 
 /**
  * Compute text similarity via word overlap (lightweight).
+ * PERF: Optimized with pre-calculated Sets and loop-based intersection.
  */
-function textSimilarity(a: string, b: string): number {
-  const wordsA = new Set(a.toLowerCase().split(/\s+/).filter(w => w.length > 3));
-  const wordsB = new Set(b.toLowerCase().split(/\s+/).filter(w => w.length > 3));
-  if (wordsA.size === 0 && wordsB.size === 0) return 1;
-  if (wordsA.size === 0 || wordsB.size === 0) return 0;
+function textSimilarity(setA: Set<string>, setB: Set<string>): number {
+  if (setA.size === 0 && setB.size === 0) return 1;
+  if (setA.size === 0 || setB.size === 0) return 0;
 
-  const intersection = [...wordsA].filter(w => wordsB.has(w)).length;
-  const union = new Set([...wordsA, ...wordsB]).size;
-  return union > 0 ? intersection / union : 0;
+  const intersection = countIntersection(setA, setB);
+  const unionSize = setA.size + setB.size - intersection;
+
+  return unionSize > 0 ? intersection / unionSize : 0;
 }
 
 /**
  * Combined similarity (topics + summary text).
  */
-function episodeSimilarity(a: MemoryEntry, b: MemoryEntry): number {
-  const topicSim = topicSimilarity(a.keyTopics, b.keyTopics);
-  const textSim = textSimilarity(a.summary, b.summary);
+function episodeSimilarity(
+  aTopics: Set<string>, bTopics: Set<string>,
+  aWords: Set<string>, bWords: Set<string>
+): number {
+  const topicSim = topicSimilarity(aTopics, bTopics);
+  const textSim = textSimilarity(aWords, bWords);
   return topicSim * 0.6 + textSim * 0.4;
 }
 
@@ -196,14 +217,33 @@ export function consolidateMemories(
   }
 
   // Phase 2: Merge similar episodes
+  // PERF: Pre-tokenize all episodes once (O(N)) before entering the O(N^2) comparison loop.
+  // This avoids redundant regex splits and Set allocations in the inner loop.
+  const tokenized = episodes.map(ep => ({
+    topics: new Set(ep.keyTopics.map(t => t.toLowerCase())),
+    words: new Set(ep.summary.toLowerCase().split(/\s+/).filter(w => w.length > 3))
+  }));
+
   const mergedIds = new Set<string>();
   for (let i = 0; i < episodes.length; i++) {
     if (mergedIds.has(episodes[i].id)) continue;
     for (let j = i + 1; j < episodes.length; j++) {
       if (mergedIds.has(episodes[j].id)) continue;
-      const sim = episodeSimilarity(episodes[i], episodes[j]);
+
+      const sim = episodeSimilarity(
+        tokenized[i].topics, tokenized[j].topics,
+        tokenized[i].words, tokenized[j].words
+      );
+
       if (sim >= config.mergeSimilarityThreshold) {
         episodes[i] = mergeEpisodes(episodes[i], episodes[j]);
+        // Update tokenized[i] to reflect merged state if necessary,
+        // but since episodes[i] is updated, we keep it simple here.
+        // Re-tokenizing the merged result for episodes[i] to maintain consistency.
+        tokenized[i] = {
+          topics: new Set(episodes[i].keyTopics.map(t => t.toLowerCase())),
+          words: new Set(episodes[i].summary.toLowerCase().split(/\s+/).filter(w => w.length > 3))
+        };
         mergedIds.add(episodes[j].id);
         merged++;
       }
