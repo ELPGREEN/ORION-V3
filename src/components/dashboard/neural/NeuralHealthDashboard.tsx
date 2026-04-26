@@ -1,29 +1,34 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import {
   Activity,
+  AlertTriangle,
+  BarChart3,
   CheckCircle2,
-  XCircle,
   Clock,
-  RefreshCw,
-  Loader2,
   Cpu,
   Database,
-  Zap,
-  AlertTriangle,
-  HeartPulse,
-  Play,
   GitMerge,
-  BarChart3,
+  HeartPulse,
+  Loader2,
+  Play,
+  RefreshCw,
+  XCircle,
+  Zap,
 } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { callEvolution } from "@/lib/neural/ai-service";
-import { useToast } from "@/hooks/use-toast";
 
-const NeuralMapCompact = lazy(() => import("./AttentionVisualization").then(m => ({ default: m.AttentionVisualization })));
+const NeuralMapCompact = lazy(() =>
+  import("./AttentionVisualization").then((module) => ({
+    default: module.AttentionVisualization,
+  })),
+);
 
 interface CronJobStatus {
   name: string;
