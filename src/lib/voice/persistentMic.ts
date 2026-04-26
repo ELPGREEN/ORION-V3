@@ -40,18 +40,25 @@ async function openPersistentStream(state: PersistentMicState): Promise<boolean>
   state.granted = true;
 
   // Pre-warm a shared AudioContext during the same user gesture that granted mic.
-  // On mobile (iOS/Android), AudioContext starts "suspended" until a gesture; warming
-  // it here removes the perceived "audio sleep" delay on first STT capture.
   try {
     const w = window as any;
     let ctx: AudioContext | undefined = w.__orion_shared_audio_ctx__;
     if (!ctx || ctx.state === "closed") {
-      ctx = new AudioContext({ sampleRate: 48000 });
+      ctx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 48000 });
       w.__orion_shared_audio_ctx__ = ctx;
     }
+
+    // Force context to start by playing a tiny silent buffer
     if (ctx.state === "suspended") {
       await ctx.resume().catch(() => {});
     }
+    const osc = ctx.createOscillator();
+    const silent = ctx.createGain();
+    silent.gain.value = 0;
+    osc.connect(silent);
+    silent.connect(ctx.destination);
+    osc.start(0);
+    osc.stop(0.01);
   } catch (err) {
     console.warn("[PersistentMic] AudioContext pre-warm failed:", err);
   }

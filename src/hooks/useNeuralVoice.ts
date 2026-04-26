@@ -894,7 +894,11 @@ export function useNeuralVoice(
       setListeningWithTimer(false); OrbState.voiceState = "idle";
 
       // Prime microphone for reliable auto-start
-      await primeMicrophone();
+      try {
+        await primeMicrophone();
+      } catch (e) {
+        console.warn("[Voice] primeMicrophone failed, continuing anyway:", e);
+      }
 
       // Guard against stale state after async prime
       if (intentionalStopRef.current || onCmdRef.current !== onCmd) return;

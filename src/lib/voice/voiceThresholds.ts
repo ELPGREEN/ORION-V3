@@ -36,14 +36,14 @@ const STORAGE_KEY = "orion.voice.thresholds.override.v1";
 // ── Per-platform defaults (curated from real user reports) ──
 const DEFAULTS: Record<VoicePlatform, VoiceThresholds> = {
   "chrome-desktop": {
-    noSpeechToastMs: 20000,
+    noSpeechToastMs: 45000,
     gcpChunkIntervalMs: 1400,
     turnSilenceMultiplier: 1,
     shortUtteranceMinConfidence: 0.12,
     suppressNoSpeechToast: false,
   },
   "chrome-android": {
-    noSpeechToastMs: 25000,
+    noSpeechToastMs: 50000,
     gcpChunkIntervalMs: 1600,
     turnSilenceMultiplier: 1.1,
     shortUtteranceMinConfidence: 0.15,
@@ -51,7 +51,7 @@ const DEFAULTS: Record<VoicePlatform, VoiceThresholds> = {
   },
   "safari-desktop": {
     // Safari interim events are sparser → give it more headroom
-    noSpeechToastMs: 30000,
+    noSpeechToastMs: 60000,
     gcpChunkIntervalMs: 1800,
     turnSilenceMultiplier: 1.25,
     shortUtteranceMinConfidence: 0.15,
@@ -59,21 +59,21 @@ const DEFAULTS: Record<VoicePlatform, VoiceThresholds> = {
   },
   "safari-ios": {
     // iOS Safari throttles audio + Web Speech is unreliable → suppress by default
-    noSpeechToastMs: 35000,
+    noSpeechToastMs: 60000,
     gcpChunkIntervalMs: 2000,
     turnSilenceMultiplier: 1.4,
     shortUtteranceMinConfidence: 0.18,
     suppressNoSpeechToast: true,
   },
   firefox: {
-    noSpeechToastMs: 25000,
+    noSpeechToastMs: 50000,
     gcpChunkIntervalMs: 1600,
     turnSilenceMultiplier: 1.1,
     shortUtteranceMinConfidence: 0.15,
     suppressNoSpeechToast: false,
   },
   edge: {
-    noSpeechToastMs: 20000,
+    noSpeechToastMs: 45000,
     gcpChunkIntervalMs: 1400,
     turnSilenceMultiplier: 1,
     shortUtteranceMinConfidence: 0.12,
