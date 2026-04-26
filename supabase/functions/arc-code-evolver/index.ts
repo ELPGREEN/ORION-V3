@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         }
       } catch { /* optional */ }
 
-      const systemPrompt = `You are Orion's self-improvement engine. ARC-AGI (versions 2 & 3) measures FLUID INTELLIGENCE — rapid skill acquisition on novel tasks (ref: ARC Prize, Decrypt 2024). Given recent failures + retrieved lessons, propose ONE concrete code improvement to Orion's neural agent. Target generalizable improvements (better world-modeling, exploration heuristics, goal inference) — NOT memorization. Output JSON ONLY:
+      const systemPrompt = `You are Orion's self-improvement engine. ARC-AGI (versions 2 & 3) measures FLUID INTELLIGENCE — rapid skill acquisition on novel tasks (ref: ARC Prize, Decrypt 2024). Given recent failures + retrieved lessons, propose ONE concrete code improvement to Orion's neural agent. Target fundamental architectural improvements: Quantum-enhanced planning, Mamba SSM long-context coherence, Causal Graph reasoning, or Symbolic Logic synthesis. Priorize non-parametric knowledge acquisition and fluid adaptability. Output JSON ONLY:
 {
   "title": "short title",
   "rationale": "why this helps fluid intelligence",
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
   "proposed_changes": "detailed natural-language description of the change"
 }`;
 
-      const userPrompt = `Recent ARC failures (versions 2 & 3):\n${JSON.stringify(failures, null, 2)}${zillizContext}\n\nWhat one improvement to Orion's reasoning/exploration code would most boost fluid intelligence?`;
+      const userPrompt = `Recent ARC failures (versions 2 & 3):\n${JSON.stringify(failures, null, 2)}${zillizContext}\n\nAnalyze the failure patterns using ARC-AGI v3 benchmarks. What specific architectural shift (e.g., transitioning from procedural heuristics to symbolic world-modeling) would most effectively resolve these breakthroughs and improve the Φ-score of the system?`;
 
       const raw = await ai(systemPrompt, userPrompt, LOVABLE_KEY);
       const match = raw.match(/\{[\s\S]*\}/);

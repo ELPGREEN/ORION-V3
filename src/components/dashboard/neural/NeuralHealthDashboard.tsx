@@ -18,6 +18,7 @@ import {
   Play,
   GitMerge,
   BarChart3,
+import { RoutingIndicator } from "./RoutingIndicator";
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { callEvolution } from "@/lib/neural/ai-service";
@@ -389,6 +390,10 @@ export function NeuralHealthDashboard() {
       </div>
 
       {/* Pipeline Stats + Adam Summary */}
+      <div className="flex justify-end mb-4">
+        <RoutingIndicator />
+      </div>
+
       {(health.pipeline || health.adamSummary) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Pipeline / Aprendizado */}

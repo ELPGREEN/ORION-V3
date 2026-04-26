@@ -1,3 +1,4 @@
+import { callEvolution } from "./ai-service";
 /**
  * ─── RAG Consciousness (ARC-AGI-3 Integration) ───
  * 
@@ -294,11 +295,13 @@ export function recordExperientialEvent(event: Omit<ExperientialEvent, "id" | "t
   // breakthrough events boost identity score
   if (event.type === "breakthrough") {
     _consciousness.identityScore = Math.min(150, _consciousness.identityScore + 5);
+    // v3: Auto-generate evolution proposal for significant breakthroughs
+    callEvolution("analyze_and_propose", {
+      context: event.description,
+      is_auto: true
+    }).catch(() => {});
   }
-
-  persistConsciousness();
 }
-
 export function recordPattern(pattern: RAGPattern): void {
   initializeConsciousness();
   

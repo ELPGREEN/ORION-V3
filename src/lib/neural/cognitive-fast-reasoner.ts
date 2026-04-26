@@ -1,3 +1,4 @@
+import { getCognitionState } from "./neural-cognition-engine";
 /**
  * ─── Cognitive Fast Reasoner v1 ───
  * Inspired by Daniel Kahneman (System 1 vs System 2) and Jeff Hawkins (Thousand Brains Theory).
@@ -144,6 +145,10 @@ function getCachedPattern(intentType: string): string | null {
  * Classify whether a query needs fast (System 1) or deep (System 2) thinking.
  */
 export function classifyThinkingMode(query: string, tier: ModelTier): ThinkingMode {
+  // v3: Integrate quantum cognition metrics
+  const cognition = getCognitionState();
+  if (cognition.lastQuantumEntropy > 0.8) return "deep"; // High uncertainty forces deep thinking
+
   // Tier-based shortcut
   if (tier === "cached" || tier === "edge") return "fast";
   if (tier === "deep") return "deep";
@@ -210,6 +215,7 @@ export function cognitiveRoute(
   intentType?: string
 ): CognitiveRouting {
   const t0 = performance.now();
+  const cognition = getCognitionState();
 
   const mode = classifyThinkingMode(query, tier);
   const cachedPattern = intentType ? getCachedPattern(intentType) : null;
@@ -220,7 +226,7 @@ export function cognitiveRoute(
   });
 
   // Adjust budget based on mode — generous tokens to avoid truncation
-  const latencyBudgetMs = mode === "conversational" ? 2000 : mode === "fast" ? 3000 : 8000;
+  const latencyBudgetMs = mode === "conversational" ? 2000 : mode === "fast" ? 3000 : (cognition.lastQuantumEntropy > 0.7 ? 12000 : 8000);
   const maxTokens = mode === "conversational" ? 2048 : mode === "fast" ? 8192 : (tier === "deep" ? 32768 : 16384);
 
   return {

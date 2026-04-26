@@ -165,6 +165,15 @@ export async function checkAndRegisterResolutions(): Promise<number> {
         registered++;
         changed = true;
         console.log(`[Immune] Antibody registered via resolution check: ${hash}`);
+        // v3: Success Ingestion - Add to Neural Knowledge Base
+        await supabase.from("neural_knowledge_base").insert({
+          title: `Resolvido: ${session.subsystem || "Evolução"}`,
+          content: `Falha técnica resolvida: ${session.error_snapshot}. Mudança aplicada via Jules Session ${session.session_id}.`,
+          source_type: "auto_evolution",
+          category: "technical",
+          tags: ["resolution", session.subsystem || "core"],
+          is_processed: false
+        });
       }
 
       // Clear quarantine for resolved subsystems
