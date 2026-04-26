@@ -138,7 +138,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
 
   const statusLabels: Record<VoiceStatus, string> = {
     idle: "",
-    listening: noSpeechDetected ? "Sem som..." : "Ouvindo...",
+    listening: noSpeechDetected ? "Verifique o Mic" : "Ouvindo...",
     processing: "Processando...",
     speaking: "Falando...",
   };

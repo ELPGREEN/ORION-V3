@@ -31,7 +31,7 @@ export interface GCPSTTSession {
 const PROCESSOR_BUFFER_SIZE = 2048; // Smaller buffer = faster reaction (~43ms @ 48kHz)
 const PRE_ROLL_FRAMES = 8; // Extra pre-roll to preserve the start of softer words
 const FLUSH_POLL_MS = 60; // Aggressive poll for instant turn detection
-const SPEECH_RMS_THRESHOLD = 0.0035; // Slightly less sensitive to avoid background noise loops
+const SPEECH_RMS_THRESHOLD = 0.0015; // Ultra sensitive for user environment // Slightly less sensitive to avoid background noise loops
 // Faster turn-end so Orion responds instantly after the user stops talking
 const DEFAULT_SILENCE_MS = 800;
 

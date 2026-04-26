@@ -297,7 +297,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   // ═══ Camera controls ═══
   const startCamera = useCallback(async (options?: { announce?: boolean }) => {
     if (isTransitioningRef.current) return;
-    isTransitioningRef.current = true;
+    isTransitioningRef.current = true; (window as any).__orion_vision_transitioning = true;
     try {
     const shouldAnnounce = options?.announce ?? true;
     if (!navigator.mediaDevices?.getUserMedia) { toast.error("Câmera não suportada"); return; }
@@ -362,20 +362,20 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       else if (name === "NotReadableError") userMsg = "Câmera em uso por outro app.";
       toast.error(userMsg);
     }
-    } finally { isTransitioningRef.current = false; }
+    } finally { isTransitioningRef.current = false; (window as any).__orion_vision_transitioning = false; }
   }, [speak]);
   useEffect(() => { startCameraRef.current = startCamera; }, [startCamera]);
 
   const stopCamera = useCallback(() => {
     if (isTransitioningRef.current) return;
-    isTransitioningRef.current = true;
+    isTransitioningRef.current = true; (window as any).__orion_vision_transitioning = true;
     try {
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
     setActive(false); VS.active = false; VS.regions = [];
     cancelAnimationFrame(animRef.current); prevRef.current = null;
     resetVisionCache();
-    } finally { isTransitioningRef.current = false; }
+    } finally { isTransitioningRef.current = false; (window as any).__orion_vision_transitioning = false; }
   }, []);
 
   const deactivateGracefully = useCallback(() => {
@@ -633,6 +633,15 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
     directVoiceStartTimerRef.current = setTimeout(() => {
       directVoiceStartTimerRef.current = null;
+
+      // v32: Pre-warm shared AudioContext before starting STT to ensure hardware is ready
+      try {
+        const sharedCtx = (window as any).__orion_shared_audio_ctx__;
+        if (sharedCtx && (sharedCtx.state === "suspended" || sharedCtx.state === "interrupted")) {
+          sharedCtx.resume().catch(() => {});
+        }
+      } catch {}
+
       console.log("[NeuralVision] 📞 Calling startListening(handleVoice)");
       startListening(handleVoice);
     }, delay);

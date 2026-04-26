@@ -16,7 +16,7 @@ export const VoiceStateIndicator = ({ noSpeechDetected }: { noSpeechDetected?: b
 
   const labels: Record<VoiceState, string> = {
     speaking: "SPEAKING",
-    listening: noSpeechDetected ? "SEM SOM" : "LISTENING",
+    listening: noSpeechDetected ? "Verifique o Mic" : "Ouvindo...",
     thinking: "PROCESSING",
     idle: "ONLINE",
   };

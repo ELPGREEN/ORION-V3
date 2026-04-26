@@ -102,7 +102,7 @@ function classifyScene(px: Uint8ClampedArray, w: number, h: number, _sobel: Floa
 function otsuThreshold(gray: Float32Array, _w: number, _h: number) {
   const hist = new Array(256).fill(0);
   for (let i = 0; i < gray.length; i++) hist[Math.min(255, Math.max(0, Math.round(gray[i])))]++;
-  const total = gray.length, sum = 0;
+  const total = gray.length; let sum = 0;
   for (let i = 0; i < 256; i++) sum += i * hist[i];
   let sumB = 0, wB = 0, maxVar = 0, threshold = 128;
   for (let t = 0; t < 256; t++) {

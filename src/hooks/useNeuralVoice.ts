@@ -385,6 +385,12 @@ export function useNeuralVoice(
   // Threshold and suppression are platform-aware (see voiceThresholds.ts).
   const setListeningWithTimer = useCallback((val: boolean) => {
     setListening(val);
+    // v32: Also suppress toast during heavy transitions (like camera startup)
+    if ((window as any).__orion_vision_transitioning) {
+      if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
+      setNoSpeechDetected(false);
+      return;
+    }
     if (val) {
       const cfg = getVoiceThresholds();
       if (cfg.suppressNoSpeechToast) return;
@@ -396,7 +402,7 @@ export function useNeuralVoice(
         if (gcpHealthy) return;
         setNoSpeechDetected(true);
         toast.info("Não estou te ouvindo... Verifique se o microfone está por perto.");
-      }, cfg.noSpeechToastMs);
+      }, (window as any).__orion_vision_transitioning ? Math.max(cfg.noSpeechToastMs, 40000) : cfg.noSpeechToastMs);
     } else {
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
       setNoSpeechDetected(false);
