@@ -18,8 +18,8 @@ import {
   Play,
   GitMerge,
   BarChart3,
-import { RoutingIndicator } from "./RoutingIndicator";
 } from "lucide-react";
+import { RoutingIndicator } from "./RoutingIndicator";
 import { supabase } from "@/integrations/supabase/client";
 import { callEvolution } from "@/lib/neural/ai-service";
 import { useToast } from "@/hooks/use-toast";
@@ -170,7 +170,7 @@ export function NeuralHealthDashboard() {
           schedule: "*/2 * * * *",
           status: lp > 1000 ? "warning" : lp > 5000 ? "error" : "healthy",
           lastRun: null,
-          description: `Vetorização contínua (a cada 2 min) — ${lp} pendentes`,
+          description: "Vetorização contínua (a cada 2 min)",
         },
         {
           name: "neural-auto-learn",
@@ -433,7 +433,7 @@ export function NeuralHealthDashboard() {
                 </div>
 
                 {/* Pipeline Jobs List */}
-                <div className="flex-1 min-h-0 flex flex-col">
+                <div className="flex-1 min-h-0 flex flex-col pt-2">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1">
                     <Zap className="h-3 w-3" /> Pipelines disponíveis
                   </p>
