@@ -1,37 +1,39 @@
-# 🦞 Potencializando o Órion com NemoClaw & OpenRouter
+# 🦞 Potencializando o Órion com NemoClaw, OpenRouter & Aceleração GPU
 
-Para levar a extensão do Órion ao nível máximo de segurança e inteligência, integramos dois pilares fundamentais da NVIDIA e do ecossistema Open Source.
+Este projeto foi atualizado para extrair o máximo de performance do seu hardware, combinando segurança, inteligência e velocidade.
 
-## 1. 🛡️ NVIDIA NemoClaw (Segurança e Isolamento)
+## 1. 🚀 Aceleração por Hardware (GPU)
 
-O **NemoClaw** é a infraestrutura que permite ao Órion rodar agentes de forma autônoma sem comprometer a segurança do seu PC.
+O Órion agora detecta e utiliza sua GPU automaticamente para processamento de IA:
 
-- **Por que instalar?** Ele cria um sandbox (**OpenShell**) que isola a execução do código. Se o Órion precisar rodar um script local para analisar dados, ele o fará dentro deste sandbox protegido por **Landlock** e **seccomp**.
-- **Como instalar?** O script `scripts/setup-orion-env.sh` verificará a presença dele. Caso não tenha, instale com:
-  `curl -fsSL https://www.nvidia.com/nemoclaw.sh | bash`
-- **Integração:** Usamos o blueprint em `nemoclaw-blueprint/orion-extension-blueprint.yaml` para definir as políticas de rede e acesso do Órion.
+- **No Navegador (WebGPU):** A extensão utiliza a API **WebGPU** para rodar modelos de linguagem e visão localmente com ultra-velocidade, sem depender apenas da CPU.
+- **No Servidor Local (CUDA/MPS):** O componente `orion_cpu_space` auto-detecta se você tem uma GPU NVIDIA (**CUDA**) ou Apple Silicon (**MPS**) para acelerar tarefas pesadas de OCR e Embeddings.
+- **Setup Automático:** O script `scripts/setup-orion-env.sh` identifica seu hardware e instala as versões otimizadas do PyTorch e ONNX Runtime.
 
-## 2. 🧠 OpenRouter (Inteligência Superior)
+## 2. 🛡️ NVIDIA NemoClaw (Segurança e Isolamento)
 
-O **OpenRouter** unifica o acesso aos melhores modelos de IA do mundo (DeepSeek R1, Gemini 2.0, Llama 3.3).
+O **NemoClaw** fornece a infraestrutura de sandboxing necessária para que os agentes ajam com segurança.
+- **Isolamento:** Cada ação do agente é verificada pelo **Policy Guard**.
+- **Sandbox:** Execuções locais ocorrem dentro do ambiente protegido **OpenShell**.
 
-- **O que mudou?** Implementamos o **Quantum Inference Router** na extensão (`extension/router.js`). Ele decide em tempo real qual cérebro usar para cada tarefa.
-- **Vantagem:** Você não fica preso a um único modelo. Se o DeepSeek for melhor para código, o Órion mudará automaticamente para ele.
-- **Configuração:** Para usar todo o potencial, adicione sua chave de API ao ambiente:
-  `export OPENROUTER_API_KEY='sua_chave_aqui'`
+## 3. 🧠 OpenRouter (Inteligência Superior)
 
-## 3. 🛠️ OpenCode Skills (Habilidades Dinâmicas)
-
-As habilidades do Órion agora são sincronizadas com o diretório `.opencode/skills/`. Isso significa que:
-- **Auto-Evolução:** O Órion pode se auto-melhorar usando as skills do OpenCode.
-- **Blueprints:** A extensão usa arquivos JSON (`extension/blueprints/`) para definir o comportamento de cada agente (Pesquisador, Analista de Dados, etc).
+Integração profunda com o **OpenRouter** para roteamento dinâmico:
+- **Quantum Router:** Decide em tempo real qual modelo (DeepSeek R1, Gemini 2.0, Llama 3.3) é o melhor para sua tarefa atual.
 
 ## 🚀 Como Ativar Tudo
 
-1. Execute o setup automatizado:
-   `bash scripts/setup-orion-env.sh`
-2. Carregue a extensão no Chrome (`chrome://extensions` -> Developer Mode -> Load unpacked -> selecione a pasta `extension`).
-3. Diga "Orion" ou use os menus de contexto para ver a IA em ação com a proteção do NemoClaw.
+1. **Prepare o Ambiente:**
+   ```bash
+   bash scripts/setup-orion-env.sh
+   ```
+2. **Instale a Extensão:**
+   - Vá em `chrome://extensions`
+   - Ative o "Developer Mode"
+   - Clique em "Load unpacked" e selecione a pasta `extension`.
+3. **Verifique o Status:**
+   - O ícone do Órion mostrará "GPU" se a aceleração estiver ativa.
+   - Use o comando `nemoclaw onboard` para iniciar o sandbox seguro.
 
 ---
-*Orion V5.6 - Powered by NVIDIA NemoClaw & OpenRouter*
+*Orion V5.7 - Powered by WebGPU & NVIDIA NemoClaw*

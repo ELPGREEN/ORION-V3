@@ -1,7 +1,6 @@
 # ================================================
-# ORION Neural Hub — CPU Free Tier
-# Lightweight: fits in 2 vCPU + 16GB RAM
-# NO piper-tts (requires libespeak-ng system dep)
+# ORION Neural Hub — Accelerated Edition
+# Supports CUDA (NVIDIA) and MPS (Apple Silicon)
 # ================================================
 
 # Core
@@ -10,23 +9,19 @@ fastapi
 uvicorn
 python-multipart
 
-# Testing
-pytest
+# AI Frameworks
+torch>=2.1.0
+sentence-transformers>=3.3.0
+transformers>=4.40.0
 
-# PDF Processing
-pymupdf==1.25.3
-
-# OCR (CPU mode)
+# OCR
 easyocr>=1.7.2
 Pillow>=10.4.0
 
-# Embeddings (CPU — small model)
-sentence-transformers>=3.3.0
-
-# Vision (CPU — lightweight models)
-transformers>=4.40.0
-torch>=2.1.0
+# PDF
+pymupdf==1.25.3
 
 # Utilities
 numpy>=1.26.0
 huggingface_hub>=0.26.0
+onnxruntime-gpu>=1.17.0
