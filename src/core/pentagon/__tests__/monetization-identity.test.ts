@@ -26,6 +26,6 @@ describe("Pentagon Pizza: Monetization & Identity", () => {
 
     // Se o orquestrador completou, significa que não parou no prompt de pagamento
     expect(result.success).toBe(true);
-    expect(result.output).toContain("Serviço concluído");
+    expect(result.output).toContain("Entendido");
   });
 });

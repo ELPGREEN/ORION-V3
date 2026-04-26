@@ -34,6 +34,15 @@ function detectNegation(text: string): boolean {
   return /\bn[ãa]o\b|\bnunca\b|\bjamais\b|\bevite\b|\bpare\b|\bcancele\b/.test(lower);
 }
 
+/**
+ * Verifica se a frase é puramente interrogativa sobre o status da IA,
+ * o que deve prevenir disparos de ferramentas de mídia.
+ */
+function isStatusQuery(text: string): boolean {
+  const lower = text.toLowerCase();
+  return /\b(ouvindo|escutando|me\s+ouve|me\s+escuta|funcionando|conectado|on-line|online)\b/i.test(lower);
+}
+
 interface IntentRule {
   pattern: RegExp;
   intent: string;
@@ -43,6 +52,12 @@ interface IntentRule {
 
 const REGEX_RULES: IntentRule[] = [
   { pattern: /\b(oi|ol[aá]|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|como\s+vai)\b/i, intent: "general", confidence: 0.98 },
+  // Restrição: Para tocar música, o comando deve ser explícito e NÃO ser uma pergunta de status
+  {
+    pattern: /^\s*(?:tocar?|play|coloca|bota|põe|reproduz(?:ir)?|ouvir?|escutar?)\s+(?:(?:a\s+)?(?:música|musica|m[uú]sica|song|track|faixa)\s+(?:d[oea]\s+)?)?(.+)/i,
+    intent: "media_music",
+    confidence: 0.95
+  },
   { pattern: /\b(ligue|acenda|apague|desligue|mude\s+a\s+cor)\b.*\b(luz|lâmpada|led)\b/i, intent: "iot_light", confidence: 0.90 },
   { pattern: /\b(abra|v[aá]\s+para|ir\s+para|navegue|mostre)\b.*\b(documentos|clientes|processos|painel|dashboard|rede\s+neural)\b/i, intent: "navigation", confidence: 0.92 },
   { pattern: /\b(melhore-se|evolua|auto[-\s]?program|se\s+reprogram|upgrade)\b/i, intent: "self_evolve", confidence: 0.95 },
@@ -76,6 +91,8 @@ export async function smartClassify(text: string): Promise<ClassifiedIntent> {
   if (cached) return { ...cached, classifyMs: Math.round(performance.now() - t0) };
 
   const isNegated = detectNegation(text);
+  const isStatus = isStatusQuery(text);
+
   const feedback = getLearnedCorrection(text);
   if (feedback) {
     const result: ClassifiedIntent = { intent: feedback.correctIntent, confidence: 0.99, params: {}, source: "feedback", classifyMs: Math.round(performance.now() - t0), isNegation: isNegated };
@@ -88,7 +105,10 @@ export async function smartClassify(text: string): Promise<ClassifiedIntent> {
 
   for (const rule of REGEX_RULES) {
     if (rule.pattern.test(q)) {
-      const confidence = isNegated ? rule.confidence * 0.1 : rule.confidence;
+      let confidence = isNegated ? rule.confidence * 0.1 : rule.confidence;
+      // Penaliza mídias se parecer uma pergunta de status
+      if (rule.intent === "media_music" && isStatus) confidence *= 0.1;
+
       if (!bestMatch || confidence > bestMatch.confidence) {
         bestMatch = { intent: rule.intent, confidence, params: rule.extractParams ? rule.extractParams(text) : {}, source: "regex", classifyMs: Math.round(performance.now() - t0), isNegation: isNegated };
       }
@@ -102,7 +122,7 @@ export async function smartClassify(text: string): Promise<ClassifiedIntent> {
 
   const llmResult = await llmClassify(text);
   llmResult.isNegation = isNegated;
-  if (isNegated) llmResult.confidence *= 0.3;
+  if (isNegated || (llmResult.intent === "media_music" && isStatus)) llmResult.confidence *= 0.3;
   return llmResult;
 }
 
@@ -110,10 +130,12 @@ export function smartClassifySync(text: string): ClassifiedIntent | null {
   const cached = getCached(text);
   if (cached) return cached;
   const isNegated = detectNegation(text);
+  const isStatus = isStatusQuery(text);
   const q = text.toLowerCase().trim();
   for (const rule of REGEX_RULES) {
     if (rule.pattern.test(q)) {
-      const confidence = isNegated ? rule.confidence * 0.1 : rule.confidence;
+      let confidence = isNegated ? rule.confidence * 0.1 : rule.confidence;
+      if (rule.intent === "media_music" && isStatus) confidence *= 0.1;
       if (confidence > 0.7) return { intent: rule.intent, confidence, params: {}, source: "regex", classifyMs: 0, isNegation: isNegated };
     }
   }

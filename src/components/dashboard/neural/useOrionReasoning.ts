@@ -30,6 +30,12 @@ import { somClassify, somLearn, type SOMHandler } from "@/lib/neural/som-router"
 import type { BackgroundTranscript } from "./useWakeWord";
 import { queryInternet, activateGateway, getGatewayState } from "@/lib/neural/arc-gateway";
 import { learnFramework, getBestAPICapability } from "@/lib/neural/arc-api-learner";
+import { PentagonPizzaOrchestrator } from "@/core/pentagon/orchestrator/PentagonPizzaOrchestrator";
+import { PerceptionAdapter } from "@/core/pentagon/layers/perception/PerceptionAdapter";
+import { MemoryAdapter } from "@/core/pentagon/layers/memory/MemoryAdapter";
+import { ReasoningAdapter } from "@/core/pentagon/layers/reasoning/ReasoningAdapter";
+import { ActionAdapter } from "@/core/pentagon/layers/action/ActionAdapter";
+import { MetaAdapter } from "@/core/pentagon/layers/meta/MetaAdapter";
 import { checkCreditsAuto, formatCreditResponse, getCreditIntelligence } from "@/lib/neural/arc-stripe-intelligence";
 import { detectServiceFromQuery, autoChargeBeforeService, shouldServiceBeFree } from "@/lib/neural/arc-auto-charge";
 import { detectGoogleService, handleGoogleServiceRequest, checkUserQuota, getGoogleServicesStats } from "@/lib/neural/arc-google-monetization";
@@ -65,6 +71,17 @@ export function useOrionReasoning(
   const sessionSyncedRef = useRef(false);
   const ttsWarmedRef = useRef(false);
   const authUserCacheRef = useRef<{ id: string; email?: string | null } | null>(null);
+
+  // 🧠 UNIFIED ORION CORTEX (Pentagon Pizza Architecture)
+  const cortexRef = useRef<PentagonPizzaOrchestrator>(
+    new PentagonPizzaOrchestrator(
+      new PerceptionAdapter(),
+      new MemoryAdapter(),
+      new ReasoningAdapter(),
+      new ActionAdapter(),
+      new MetaAdapter()
+    )
+  );
 
   // Always-fresh ref for `active` (camera state) — closure-stale bug fix
   const activeRef = useRef(active);
@@ -430,14 +447,6 @@ export function useOrionReasoning(
     setIsProcessing(true);
     isProcessingRef.current = true;
     VS.aiResponding = true;
-    setThought("🤔 Analisando...");
-    addChat("user", question);
-    addChat("ai", "⏳ ...");
-    addLog(`💬 Pergunta [${source}]: ${question}`);
-
-    // Set OrbState to "thinking" while processing
-    OrbState.voiceState = "thinking";
-
     const controller = new AbortController();
     if (abortControllerRef) abortControllerRef.current = controller;
 
@@ -448,6 +457,29 @@ export function useOrionReasoning(
 
     try {
       // ═══ FAST PRE-PROCESSING: Only intent classification (~2ms) ═══
+      // 🧠 CORTEX UNIFIED COGNITION LOOP
+      const cortexResult = await cortexRef.current.runCycle(question, {
+        userId: cachedAuthUser?.id,
+        userEmail: cachedAuthUser?.email,
+        userName: cachedAuthUser?.email?.split("@")[0] || "Usuário",
+        visionDetections: localDetectionsRef?.current || (window as any).__orion_global_vision__,
+        identityStatus,
+        rawInput: question
+      });
+
+      if (cortexResult.success) {
+        const displayResponse = cortexResult.output;
+        setChatHistory(prev => {
+          const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
+          return [...clean, { role: "ai", text: displayResponse, time: new Date().toLocaleTimeString("pt-BR") }];
+        });
+        setThought(displayResponse);
+        addLog(`🧠 [CORTEX] ${cortexResult.roiImpact || "Ação concluída"}`);
+        speak(displayResponse).catch(() => {});
+        cleanupProcessing();
+        processNextInQueue();
+        return; } if (!cortexResult.success && cortexResult.data?.paymentUrl) { const msg = cortexResult.output; setChatHistory(prev => { const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳"))); return [...clean, { role: "ai", text: msg, time: new Date().toLocaleTimeString("pt-BR") }]; }); setThought(msg); speak(msg).catch(() => {}); addLog("💳 Redirecionando para pagamento..."); setTimeout(() => window.open(cortexResult.data.paymentUrl, "_blank"), 2000); cleanupProcessing(); processNextInQueue(); return;
+      }
       let processedInput = question;
 
       const qLow = question.toLowerCase().trim();

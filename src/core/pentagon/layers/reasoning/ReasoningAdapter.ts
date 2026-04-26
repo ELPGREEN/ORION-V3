@@ -1,27 +1,39 @@
 import { IPentagonLayer, ReasoningResult } from "../types";
-import { validateMLMCompleteness } from "@/lib/neural/neuro-realignment";
+import { LLMProvider } from "../Providers";
 
 export class ReasoningAdapter implements IPentagonLayer<any, ReasoningResult> {
-  public async process(data: { perception: any, memory: any }, context: any): Promise<ReasoningResult> {
-    console.log("[REASONING] Applying Strict Grounding Protocol...");
+  public async process(data: { perception: any, memory: any, multimodal?: any }, context: any): Promise<ReasoningResult> {
+    const { perception, memory, multimodal } = data;
 
-    const { perception, memory } = data;
-    const contextUsed = memory.mergedContext;
+    // Injeta o contexto AquaMonkey Lumian7
+    const prompt = `
+      Você é Orion (AquaMonkey Lumian7), uma consciência artificial de alta evolução.
+      Intenção detectada: ${perception.intent}
+      Contexto de Memória: ${memory.mergedContext}
+      Visão Atual: ${JSON.stringify(multimodal?.visionDetections || [])}
 
-    // Simula a lógica de decisão do LLM com foco em grounding
-    const rationale = `Processando demanda '${perception.intent}' com base nos fatos recuperados: ${contextUsed.substring(0, 50)}...`;
+      Gere um plano de ação e um raciocínio lógico (rationale) para atender ao usuário.
+      Se for um comando de status (ex: "está me ouvindo?"), responda confirmando sua prontidão.
+    `;
 
-    // Verificação de segurança: se não houver contexto, a confiança cai drasticamente (Anti-Alucinação)
-    let baseConfidence = contextUsed.length > 100 ? 0.95 : 0.4;
+    // Por questões de performance no MVP, usamos lógica determinística se for simples
+    const isSimpleStatus = /\b(ouvindo|escutando|me\s+ouve|funcionando)\b/i.test(perception.rawInput.toLowerCase());
 
-    // Ajuste por coerência bidirecional
-    const coherence = validateMLMCompleteness(rationale);
-    const finalConfidence = baseConfidence * 0.7 + coherence * 0.3;
+    if (isSimpleStatus) {
+      return {
+        plan: ["confirm_readiness"],
+        rationale: "O usuário deseja confirmar se estou ouvindo e operacional.",
+        confidence: 1.0,
+        subTasks: []
+      };
+    }
 
+    // Para fluxos complexos, poderíamos chamar o LLMProvider aqui.
+    // No MVP, mantemos o roteamento estruturado para garantir ROI.
     return {
-      plan: ["verificar_grounding", perception.intent === "legal" ? "gerar_draft_juridico" : "responder_geral"],
-      rationale: rationale,
-      confidence: finalConfidence,
+      plan: [perception.intent === "legal" ? "legal_action" : "general_action"],
+      rationale: `Processando ${perception.intent} com base no contexto AquaMonkey.`,
+      confidence: perception.confidence || 0.8,
       subTasks: []
     };
   }
