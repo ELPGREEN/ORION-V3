@@ -217,13 +217,36 @@ function scoreCorrectness(response: string, reference: string): RAGMetricScore {
   // BLEU-like precision (bigram)
   const refBigrams = getBigrams(referenceLower);
   const respBigrams = getBigrams(responseLower);
-  const bigramHits = [...respBigrams].filter(b => refBigrams.has(b)).length;
+
+  let bigramHits = 0;
+  // PERF: Iterate over the smaller set to find intersection
+  if (respBigrams.size <= refBigrams.size) {
+    for (const b of respBigrams) {
+      if (refBigrams.has(b)) bigramHits++;
+    }
+  } else {
+    for (const b of refBigrams) {
+      if (respBigrams.has(b)) bigramHits++;
+    }
+  }
   const precision = bigramHits / Math.max(respBigrams.size, 1);
 
   // Semantic similarity via key concept overlap
   const refConcepts = extractKeyConcepts(reference);
   const respConcepts = extractKeyConcepts(response);
-  const conceptOverlap = [...refConcepts].filter(c => respConcepts.has(c)).length / Math.max(refConcepts.size, 1);
+
+  let conceptHits = 0;
+  // PERF: Iterate over the smaller set
+  if (refConcepts.size <= respConcepts.size) {
+    for (const c of refConcepts) {
+      if (respConcepts.has(c)) conceptHits++;
+    }
+  } else {
+    for (const c of respConcepts) {
+      if (refConcepts.has(c)) conceptHits++;
+    }
+  }
+  const conceptOverlap = conceptHits / Math.max(refConcepts.size, 1);
 
   // Weighted combination
   const combined = recall * 0.35 + precision * 0.25 + conceptOverlap * 0.4;

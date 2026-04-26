@@ -329,12 +329,27 @@ function isInterrupt(content: string): boolean {
   return false;
 }
 
+/**
+ * Optimized word overlap ratio using Sets.
+ * PERF: Uses a loop-based intersection count over the smaller Set to eliminate
+ * O(N) array spreads and redundant filters in the interrupt detection path.
+ */
 function wordOverlapRatio(a: string, b: string): number {
   const setA = new Set(a.split(/\s+/).filter(w => w.length > 2));
   const setB = new Set(b.split(/\s+/).filter(w => w.length > 2));
-  if (setA.size === 0 || setB.size === 0) return 0;
-  const intersection = [...setA].filter(x => setB.has(x)).length;
-  return intersection / Math.min(setA.size, setB.size);
+  const sizeA = setA.size;
+  const sizeB = setB.size;
+  if (sizeA === 0 || sizeB === 0) return 0;
+
+  let intersection = 0;
+  const smaller = sizeA <= sizeB ? setA : setB;
+  const larger = sizeA <= sizeB ? setB : setA;
+
+  for (const x of smaller) {
+    if (larger.has(x)) intersection++;
+  }
+
+  return intersection / Math.min(sizeA, sizeB);
 }
 
 // ─── Persistence ───
