@@ -1,37 +1,37 @@
-# Integração NVIDIA NemoClaw no Órion
+# 🦞 Potencializando o Órion com NemoClaw & OpenRouter
 
-Este projeto agora conta com uma arquitetura robusta baseada no framework **NemoClaw**, potencializando a extensão com segurança, modularidade e inteligência.
+Para levar a extensão do Órion ao nível máximo de segurança e inteligência, integramos dois pilares fundamentais da NVIDIA e do ecossistema Open Source.
 
-## Principais Componentes
+## 1. 🛡️ NVIDIA NemoClaw (Segurança e Isolamento)
 
-### 1. 🛡️ Policy Guard (`extension/policies.js`)
-Camada de segurança que valida todas as ações do agente.
-- **Trusted Domains:** Lista branca de domínios seguros.
-- **Restricted Actions:** Ações que exigem aprovação (downloads, bookmarks, clipboard).
-- **PII Detection:** Alertas automáticos ao detectar dados sensíveis (CPF, CNPJ, Email).
+O **NemoClaw** é a infraestrutura que permite ao Órion rodar agentes de forma autônoma sem comprometer a segurança do seu PC.
 
-### 2. 📋 Sistema de Blueprints (`extension/blueprints/`)
-Habilidades definidas de forma modular e expansível.
-- **summarizer.json:** Especialista em conteúdo.
-- **researcher.json:** Cientista de dados e pesquisa de PDFs.
-- **searcher.json:** Navegador e explorador web.
+- **Por que instalar?** Ele cria um sandbox (**OpenShell**) que isola a execução do código. Se o Órion precisar rodar um script local para analisar dados, ele o fará dentro deste sandbox protegido por **Landlock** e **seccomp**.
+- **Como instalar?** O script `scripts/setup-orion-env.sh` verificará a presença dele. Caso não tenha, instale com:
+  `curl -fsSL https://www.nvidia.com/nemoclaw.sh | bash`
+- **Integração:** Usamos o blueprint em `nemoclaw-blueprint/orion-extension-blueprint.yaml` para definir as políticas de rede e acesso do Órion.
 
-### 3. 🧠 Quantum Inference Routing (`extension/router.js`)
-Roteamento inteligente de modelos em tempo real.
-- Escolhe entre **DeepSeek R1** (raciocínio), **Gemini 2.0** (geral) e **Llama 3.3** (rápido) dependendo da complexidade da tarefa.
+## 2. 🧠 OpenRouter (Inteligência Superior)
 
-### 4. ⚡ Motor Proativo (`extension/proactive.js`)
-Monitoramento do ciclo de vida para ajuda proativa.
-- Sugere síntese de abas quando detecta múltiplas pesquisas no mesmo domínio.
-- Sugere scraping ao detectar URLs no clipboard.
+O **OpenRouter** unifica o acesso aos melhores modelos de IA do mundo (DeepSeek R1, Gemini 2.0, Llama 3.3).
 
-### 5. 🛠️ Instalação Automatizada (`scripts/setup-orion-env.sh`)
-Script para configurar todo o ambiente local do Órion com um único comando.
-- Instala dependências do CPU Space.
-- Constrói imagens Docker do Voice Space.
-- Prepara a extensão para uso.
+- **O que mudou?** Implementamos o **Quantum Inference Router** na extensão (`extension/router.js`). Ele decide em tempo real qual cérebro usar para cada tarefa.
+- **Vantagem:** Você não fica preso a um único modelo. Se o DeepSeek for melhor para código, o Órion mudará automaticamente para ele.
+- **Configuração:** Para usar todo o potencial, adicione sua chave de API ao ambiente:
+  `export OPENROUTER_API_KEY='sua_chave_aqui'`
 
-## Como Usar
-1. Execute `bash scripts/setup-orion-env.sh` para preparar a máquina.
-2. Carregue a pasta `extension` no Chrome.
-3. O Órion agora opera com as proteções e inteligência do NemoClaw.
+## 3. 🛠️ OpenCode Skills (Habilidades Dinâmicas)
+
+As habilidades do Órion agora são sincronizadas com o diretório `.opencode/skills/`. Isso significa que:
+- **Auto-Evolução:** O Órion pode se auto-melhorar usando as skills do OpenCode.
+- **Blueprints:** A extensão usa arquivos JSON (`extension/blueprints/`) para definir o comportamento de cada agente (Pesquisador, Analista de Dados, etc).
+
+## 🚀 Como Ativar Tudo
+
+1. Execute o setup automatizado:
+   `bash scripts/setup-orion-env.sh`
+2. Carregue a extensão no Chrome (`chrome://extensions` -> Developer Mode -> Load unpacked -> selecione a pasta `extension`).
+3. Diga "Orion" ou use os menus de contexto para ver a IA em ação com a proteção do NemoClaw.
+
+---
+*Orion V5.6 - Powered by NVIDIA NemoClaw & OpenRouter*
