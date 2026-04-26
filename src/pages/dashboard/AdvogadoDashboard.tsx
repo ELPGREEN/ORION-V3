@@ -5,15 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Users, FileText, Gavel, MessageSquare, Clock, AlertTriangle,
   ChevronRight, Search, PenTool, Bot, Calendar, Activity,
-  Loader2, ArrowUpRight,
+  Loader2, ArrowUpRight, Scale, ShieldCheck, Sparkles, Brain, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format, differenceInDays, isToday, isTomorrow } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import OrionAdvogadoInsights from "@/components/dashboard/OrionAdvogadoInsights";
+import { ThemedHeader, ThemedStatCard, ThemedSection, StatusLED } from "@/components/dashboard/DashboardTheme";
 
 export default function AdvogadoDashboard() {
   const navigate = useNavigate();
@@ -37,7 +37,6 @@ export default function AdvogadoDashboard() {
         supabase.rpc("get_unread_count", { _user_id: user.id }),
       ]);
 
-      // Get deadlines from processos
       const now = new Date();
       const deadlines = (processos.data || [])
         .filter((p: any) => p.prazo_fatal && new Date(p.prazo_fatal) >= now)
@@ -80,6 +79,14 @@ export default function AdvogadoDashboard() {
     enabled: !!user,
   });
 
+  const statCards = [
+    { label: "Clientes Ativos", value: stats?.clientCount || 0, icon: Users, route: "/dashboard/clientes" },
+    { label: "Processos", value: stats?.processCount || 0, icon: Gavel, route: "/dashboard/processos" },
+    { label: "Documentos", value: stats?.docCount || 0, icon: FileText, route: "/dashboard/documentos" },
+    { label: "Mensagens", value: stats?.unreadMessages || 0, icon: MessageSquare, route: "/dashboard/chat", highlight: (stats?.unreadMessages || 0) > 0 },
+    { label: "Consultas", value: stats?.pendingConsultas || 0, icon: Calendar, route: "/dashboard/consultas" },
+  ];
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -88,85 +95,49 @@ export default function AdvogadoDashboard() {
     );
   }
 
-  const statCards = [
-    { label: "Clientes Ativos", value: stats?.clientCount || 0, icon: Users, route: "/dashboard/clientes" },
-    { label: "Processos", value: stats?.processCount || 0, icon: Gavel, route: "/dashboard/processos" },
-    { label: "Documentos", value: stats?.docCount || 0, icon: FileText, route: "/dashboard/documentos" },
-    { label: "Mensagens", value: stats?.unreadMessages || 0, icon: MessageSquare, route: "/dashboard/chat", highlight: (stats?.unreadMessages || 0) > 0 },
-    { label: "Consultas Pendentes", value: stats?.pendingConsultas || 0, icon: Calendar, route: "/dashboard/consultas" },
-  ];
-
-  const quickActions = [
-    { label: "Gerar Documento", icon: PenTool, route: "/dashboard/gerar-documento" },
-    { label: "Pesquisa Jurídica", icon: Search, route: "/dashboard/pesquisa" },
-    { label: "CRM Clientes", icon: Users, route: "/dashboard/clientes" },
-    { label: "Chat", icon: MessageSquare, route: "/dashboard/chat" },
-    { label: "Orion IA", icon: Bot, route: "/dashboard/orion" },
-  ];
-
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header — Emerald/Teal legal theme */}
-      <div className="relative overflow-hidden border border-[hsl(160,60%,40%,0.2)] bg-gradient-to-br from-[hsl(160,30%,6%)] via-card to-[hsl(160,60%,40%,0.06)] p-6 sm:p-8 rounded-lg">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-20 -right-20 w-72 h-72 blur-[120px] animate-pulse" style={{ background: "hsl(160,60%,40%,0.1)", animationDuration: "5s" }} />
+    <div className="space-y-6 max-w-7xl mx-auto animate-fade-in">
+      {/* Header — Advanced Emerald Theme */}
+      <ThemedHeader
+        role="advogado"
+        greeting={greeting}
+        userName={userName}
+        subtitle="Infraestrutura de Inteligência Jurídica & Automação de Processos"
+        icon={Scale}
+        badgeLabel="ADVOGADO"
+      >
+        <div className="flex items-center gap-3">
+          <StatusLED status="online" label="ORION AI" />
+          <StatusLED status="online" label="WATSON BRIDGE" />
         </div>
-        <div className="relative z-10">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-[hsl(160,60%,50%,0.6)] mb-1.5 font-sans">{greeting}</p>
-          <h1 className="text-2xl sm:text-3xl font-serif text-foreground">
-            <span className="text-gold-shine">{userName}</span> <span className="text-[hsl(160,60%,50%)]">⚖️</span>
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Painel do Advogado — {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
-          </p>
-        </div>
-      </div>
+      </ThemedHeader>
 
-      {/* Stats — emerald accent */}
+      {/* Stats — Premium Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {statCards.map((s) => (
-          <Card
+          <ThemedStatCard
             key={s.label}
-            className={`cursor-pointer transition-all hover:border-[hsl(160,60%,40%,0.4)] hover:scale-[1.02] ${s.highlight ? "border-[hsl(160,60%,40%,0.5)] bg-[hsl(160,60%,40%,0.06)]" : "border-border/50"}`}
+            role="advogado"
+            label={s.label}
+            value={s.value}
+            icon={s.icon}
             onClick={() => navigate(s.route)}
-          >
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-[hsl(160,60%,40%,0.1)] flex items-center justify-center">
-                <s.icon className="h-4 w-4 text-[hsl(160,60%,45%)]" />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-foreground">{s.value}</p>
-                <p className="text-[10px] text-muted-foreground">{s.label}</p>
-              </div>
-            </CardContent>
-          </Card>
+            highlight={s.highlight}
+          />
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-2">
-        {quickActions.map((a) => (
-          <Button key={a.label} variant="outline" size="sm" onClick={() => navigate(a.route)} className="gap-2">
-            <a.icon className="h-4 w-4" />
-            {a.label}
-          </Button>
-        ))}
-      </div>
-
-      {/* Main Grid */}
+      {/* Core Intelligence Section */}
       <div className="grid lg:grid-cols-3 gap-6">
-      {/* Prazos Urgentes — left border color coding */}
-        <Card className="lg:col-span-1 border-l-2 border-l-destructive/60">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2 font-serif">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-              Prazos Urgentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[280px]">
+        {/* Urgent Deadlines — Enterprise Priority */}
+        <ThemedSection role="advogado" title="Prioridade Crítica" icon={AlertTriangle} className="lg:col-span-1">
+          <div className="bg-card/80 border border-border/50 rounded-lg p-4 h-[320px] flex flex-col">
+            <ScrollArea className="flex-1">
               {stats?.deadlines?.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">Nenhum prazo próximo 🎉</p>
+                <div className="flex flex-col items-center justify-center h-48 text-center opacity-40">
+                  <ShieldCheck className="h-10 w-10 mb-2" />
+                  <p className="text-xs">Sistemas em conformidade. Nenhum prazo crítico detectado.</p>
+                </div>
               ) : (
                 <div className="space-y-2">
                   {stats?.deadlines?.map((d: any) => {
@@ -174,17 +145,17 @@ export default function AdvogadoDashboard() {
                     return (
                       <div
                         key={d.id}
-                        className="flex items-center justify-between p-2 rounded-lg border border-border/50 hover:bg-muted/30 cursor-pointer"
+                        className="flex items-center justify-between p-2.5 rounded-md border border-border/40 hover:bg-muted/30 cursor-pointer group transition-colors"
                         onClick={() => navigate("/dashboard/processos")}
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">{d.titulo}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(d.prazo, "dd/MM/yyyy")}
+                          <p className="text-xs font-semibold truncate group-hover:text-primary transition-colors">{d.titulo}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            Target: {format(d.prazo, "dd/MM/yyyy")}
                           </p>
                         </div>
-                        <Badge variant={urgency} className="shrink-0 ml-2">
-                          {d.dias === 0 ? "HOJE" : d.dias === 1 ? "Amanhã" : `${d.dias}d`}
+                        <Badge variant={urgency} className="shrink-0 ml-2 text-[9px] h-5">
+                          {d.dias === 0 ? "CRITICAL" : d.dias === 1 ? "AMANHÃ" : `${d.dias}D`}
                         </Badge>
                       </div>
                     );
@@ -192,114 +163,132 @@ export default function AdvogadoDashboard() {
                 </div>
               )}
             </ScrollArea>
-          </CardContent>
-        </Card>
-
-        {/* Meus Clientes */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              Meus Clientes
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/clientes")} className="gap-1 text-xs">
-              Ver todos <ChevronRight className="h-3 w-3" />
+            <Button variant="ghost" size="sm" className="mt-2 w-full text-[10px] uppercase tracking-widest opacity-60 hover:opacity-100" onClick={() => navigate("/dashboard/processos")}>
+              Ver Infraestrutura Processual
             </Button>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[280px]">
+          </div>
+        </ThemedSection>
+
+        {/* AI Orchestration / Insights */}
+        <div className="lg:col-span-2">
+           <OrionAdvogadoInsights />
+        </div>
+      </div>
+
+      {/* Main Operations Section */}
+      <ThemedSection role="advogado" title="Automação & Ferramentas de Produção" icon={Zap}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+          {[
+            { label: "Gerar Documento", icon: PenTool, route: "/dashboard/gerar-documento" },
+            { label: "Pesquisa Jurisprudencial", icon: Search, route: "/dashboard/pesquisa" },
+            { label: "Reformulação IA", icon: Sparkles, route: "/dashboard/reformulacao" },
+            { label: "Assinatura Digital", icon: ShieldCheck, route: "/dashboard/assinatura-digital" },
+            { label: "Laboratório IA", icon: Brain, route: "/dashboard/laboratorio-ia" },
+            { label: "Orquestrador Neural", icon: Bot, route: "/dashboard/rede-neural" },
+          ].map((a) => (
+            <Button
+              key={a.label}
+              variant="outline"
+              className="flex-col h-auto py-4 gap-2 border-border/40 hover:border-primary/40 hover:bg-primary/5 group"
+              onClick={() => navigate(a.route)}
+            >
+              <div className="p-2 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <a.icon className="h-4 w-4 text-primary" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-tighter text-center">{a.label}</span>
+            </Button>
+          ))}
+        </div>
+      </ThemedSection>
+
+      {/* Grid Secundário */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Gestão de Ativos (Clientes) */}
+        <ThemedSection role="advogado" title="Gestão de Ativos & Clientes" icon={Users}>
+          <div className="bg-card/80 border border-border/50 rounded-lg p-4 h-[300px] flex flex-col">
+            <ScrollArea className="flex-1">
               <div className="space-y-2">
                 {stats?.clients?.slice(0, 8).map((c: any) => (
                   <div
                     key={c.id}
-                    className="flex items-center justify-between p-2 rounded-lg border border-border/50 hover:bg-muted/30 cursor-pointer"
+                    className="flex items-center justify-between p-2 rounded-md border border-border/30 hover:bg-muted/30 cursor-pointer group transition-all"
                     onClick={() => navigate("/dashboard/clientes")}
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <span className="text-xs font-medium text-primary">{c.nome?.charAt(0)?.toUpperCase()}</span>
+                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                        <span className="text-[10px] font-bold text-primary">{c.nome?.charAt(0)?.toUpperCase()}</span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{c.nome}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{c.status}</p>
+                        <p className="text-xs font-medium truncate">{c.nome}</p>
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-widest">{c.status}</p>
                       </div>
                     </div>
-                    <ArrowUpRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <ArrowUpRight className="h-3 w-3 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 ))}
                 {(!stats?.clients || stats.clients.length === 0) && (
-                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum cliente cadastrado</p>
+                  <p className="text-[10px] text-muted-foreground text-center py-12">Nenhum registro no CRM</p>
                 )}
               </div>
             </ScrollArea>
-          </CardContent>
-        </Card>
-
-        {/* Mensagens Recentes */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-primary" />
-              Mensagens Recentes
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/chat")} className="gap-1 text-xs">
-              Abrir Chat <ChevronRight className="h-3 w-3" />
+            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/clientes")} className="mt-2 text-[10px] uppercase tracking-widest opacity-60">
+              Acessar CRM Completo
             </Button>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[280px]">
+          </div>
+        </ThemedSection>
+
+        {/* Mensagens e Comunicação */}
+        <ThemedSection role="advogado" title="Comunicação em Tempo Real" icon={MessageSquare}>
+          <div className="bg-card/80 border border-border/50 rounded-lg p-4 h-[300px] flex flex-col">
+            <ScrollArea className="flex-1">
               <div className="space-y-2">
                 {stats?.conversations?.slice(0, 8).map((conv: any) => (
                   <div
                     key={conv.id}
-                    className="p-2 rounded-lg border border-border/50 hover:bg-muted/30 cursor-pointer"
+                    className="p-2.5 rounded-md border border-border/20 hover:bg-muted/30 cursor-pointer group transition-all"
                     onClick={() => navigate(`/dashboard/chat?conv=${conv.id}`)}
                   >
-                    <p className="text-sm font-medium truncate">{conv.ultima_mensagem || "Nova conversa"}</p>
-                    <p className="text-xs text-muted-foreground">{format(new Date(conv.updated_at), "dd/MM HH:mm")}</p>
+                    <div className="flex justify-between items-start mb-1">
+                       <p className="text-[10px] font-mono text-primary uppercase">MSG_THREAD: {conv.id.slice(0, 8)}</p>
+                       <p className="text-[9px] text-muted-foreground font-mono">{format(new Date(conv.updated_at), "dd/MM HH:mm")}</p>
+                    </div>
+                    <p className="text-xs font-medium truncate opacity-80">{conv.ultima_mensagem || "Nova solicitação de contato"}</p>
                   </div>
                 ))}
                 {(!stats?.conversations || stats.conversations.length === 0) && (
-                  <p className="text-sm text-muted-foreground text-center py-8">Nenhuma conversa</p>
+                  <p className="text-[10px] text-muted-foreground text-center py-12">Nenhum canal de chat ativo</p>
                 )}
               </div>
             </ScrollArea>
-          </CardContent>
-        </Card>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/chat")} className="mt-2 text-[10px] uppercase tracking-widest opacity-60">
+              Abrir Central de Mensagens
+            </Button>
+          </div>
+        </ThemedSection>
       </div>
 
-      {/* Orion Insights + Atividade Recente */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <OrionAdvogadoInsights />
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" />
-              Atividade Recente
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[240px]">
-              <div className="space-y-2">
-                {recentActivity?.map((a: any) => (
-                  <div key={a.id} className="flex items-start gap-2 p-2 rounded-lg border border-border/30">
-                    <div className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{a.titulo}</p>
-                      {a.descricao && <p className="text-xs text-muted-foreground truncate">{a.descricao}</p>}
-                      <p className="text-xs text-muted-foreground/70">{format(new Date(a.created_at), "dd/MM HH:mm")}</p>
-                    </div>
+      {/* Telemetria de Eventos (Atividade) */}
+      <ThemedSection role="advogado" title="Logs de Telemetria de Sistema" icon={Activity}>
+          <div className="bg-card/80 border border-border/50 rounded-lg p-4 h-[240px]">
+          <ScrollArea className="h-full">
+            <div className="space-y-2">
+              {recentActivity?.map((a: any) => (
+                <div key={a.id} className="flex items-start gap-2 p-2 rounded-md border border-border/20 bg-muted/5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0 animate-pulse" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium truncate">{a.titulo}</p>
+                    {a.descricao && <p className="text-[10px] text-muted-foreground truncate leading-relaxed">{a.descricao}</p>}
+                    <p className="text-[8px] text-muted-foreground/50 font-mono mt-1 uppercase">TIMESTAMP: {format(new Date(a.created_at), "dd/MM HH:mm:ss")}</p>
                   </div>
-                ))}
-                {(!recentActivity || recentActivity.length === 0) && (
-                  <p className="text-sm text-muted-foreground text-center py-8">Nenhuma atividade recente</p>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
+                </div>
+              ))}
+              {(!recentActivity || recentActivity.length === 0) && (
+                <p className="text-[10px] text-muted-foreground text-center py-12">Sem logs de atividade recentes</p>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      </ThemedSection>
     </div>
   );
 }
