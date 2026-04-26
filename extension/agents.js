@@ -48,6 +48,13 @@ const BLUEPRINTS = {
     description: "Análise de código e melhorias do sistema.",
     skill: "orion-auto-evolution"
   },
+  legal_advisor: {
+    id: "legal_advisor",
+    label: "⚖️ Legal",
+    color: "#F44336",
+    description: "Consultoria jurídica e análise de jurisprudência.",
+    skill: "orion-researcher"
+  },
   general_chat: {
     id: "general_chat",
     label: "🤖 Orion",
@@ -72,8 +79,16 @@ export function classifyActionToTask(action, context = {}) {
     "pdf-summarize": "pdf_analysis",
     "pdf-extract": "pdf_analysis",
     "pdf-questions": "pdf_analysis",
-    "auto-evolve": "auto_evolution"
+    "auto-evolve": "auto_evolution",
+    "legal-query": "legal_advisor"
   };
+
+  const text = (context.query || context.text || "").toLowerCase();
+
+  // Smart context detection for Legal
+  if (text.match(/\b(processo|lei|artigo|jurisprudência|tribunal|stf|stj|advogado|jurídico)\b/)) {
+    return "legal_advisor";
+  }
 
   if (map[action]) return map[action];
   if (context.pdfContext) return "pdf_analysis";

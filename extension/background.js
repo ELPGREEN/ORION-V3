@@ -1,10 +1,11 @@
 /**
- * Orion Extension v5.9 — Background Service Worker
+ * Orion Extension v6.1 — Background Service Worker
  * Full integration with OpenRouter, OpenCode, NemoClaw, and Local GPU (Ollama).
  *
  * SECURITY: Policy Guard (NemoClaw Style)
  * ARCHITECTURE: Hybrid Intelligence Router (Local vs Cloud)
  * HARDWARE: Multi-Tier GPU Acceleration
+ * ALIGNMENT: Audited Orchestration Flow & Corrected Logic Gaps
  */
 
 import { validateAction } from "./policies.js";
@@ -47,10 +48,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     switch (message.type) {
       case "ORION_QUICK_ACTION":
-        const taskType = classifyActionToTask(message.action, message.data);
+        const taskType = classifyActionToTask(message.action, message.data || {});
         const blueprint = getBlueprint(taskType);
 
-        if (await secureAction(message.action, sender.tab, message.data)) {
+        if (await secureAction(message.action, sender.tab, message.data || {})) {
           // 1. Quantum Complexity Routing (Logical)
           const qRouting = routeQuery(taskType, message.data?.query || message.data?.text);
 
@@ -74,10 +75,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (!result.success) {
               console.warn("[Orion] Local failure, falling back to Cloud.");
               finalMode = "Cloud (Fallback)";
-              result = await callOrionAI(message.action, message.data, qRouting.provider);
+              result = await callOrionAI(message.action, message.data || {}, qRouting.provider, qRouting.complexity);
             }
           } else {
-            result = await callOrionAI(message.action, message.data, qRouting.provider);
+            result = await callOrionAI(message.action, message.data || {}, qRouting.provider, qRouting.complexity);
           }
 
           console.log(`[Orion Dispatch] Agent: ${blueprint.label} | Mode: ${finalMode}`);
@@ -98,6 +99,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case "GET_STATE":
         sendResponse(orionState);
         break;
+      case "ORION_PROACTIVE_RESPONSE":
+        // Handle response from proactive notifications (User clicked synthesis/scrape)
+        console.log(`[Orion Proactive] User accepted: ${message.action}`);
+        if (message.action === "synthesize_domain") {
+           // Logic to synthesize multiple tabs
+           chrome.tabs.sendMessage(sender.tab.id, { type: "ORION_NOTIFICATION", text: "🚀 Iniciando síntese multi-aba...", notifType: "info" });
+        }
+        break;
     }
   })();
   return true;
@@ -117,16 +126,25 @@ async function secureAction(action, tab, data = {}) {
   return true;
 }
 
-async function callOrionAI(action, data, model) {
+async function callOrionAI(action, data, provider, complexity) {
   try {
+    const token = await getAccessToken();
     const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-orchestrator`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "apikey": SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${await getAccessToken()}`
+        "Authorization": `Bearer ${token}`
       },
-      body: JSON.stringify({ action, data, model })
+      body: JSON.stringify({
+        action: "chat",
+        subAction: action,
+        prompt: data.query || data.text,
+        preferredProvider: provider,
+        model_type: complexity === "high" ? "reasoning" : "balanced",
+        includeNeuralContext: true,
+        jurisdiction: "brasil"
+      })
     });
     return await res.json();
   } catch (err) {

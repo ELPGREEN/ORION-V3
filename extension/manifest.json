@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Orion — Assistente Neural",
-  "version": "5.4.0",
-  "description": "Assistente IA neural multi-agente com Vertex AI, visão, fala, raciocínio, pesquisa web, scraping, holographic video, pro-active research assistant, side panel, tradução, notas, bookmarks, anti-alucinação, YouTube PiP, PDF/image upload e auto-minimize.",
+  "name": "Orion — Assistente Neural (V6)",
+  "version": "6.1.0",
+  "description": "Assistente IA neural com Roteamento Híbrido (Ollama + OpenRouter), NemoClaw Sandbox e Aceleração WebGPU.",
   "permissions": [
     "activeTab",
     "storage",
@@ -18,15 +18,12 @@
     "downloads",
     "bookmarks",
     "history",
-    "tts",
-    "readingList",
-    "webNavigation"
+    "tts"
   ],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "48": "icon128.png",
       "128": "icon128.png"
     }
   },
@@ -46,26 +43,7 @@
     }
   ],
   "icons": {
-    "48": "icon128.png",
     "128": "icon128.png"
-  },
-  "commands": {
-    "_execute_action": {
-      "suggested_key": { "default": "Ctrl+Shift+O", "mac": "Command+Shift+O" },
-      "description": "Abrir Orion"
-    },
-    "toggle-listening": {
-      "suggested_key": { "default": "Ctrl+Shift+L", "mac": "Command+Shift+L" },
-      "description": "Ativar/desativar escuta"
-    },
-    "open-side-panel": {
-      "suggested_key": { "default": "Ctrl+Shift+P", "mac": "Command+Shift+P" },
-      "description": "Abrir painel lateral"
-    },
-    "quick-screenshot": {
-      "suggested_key": { "default": "Ctrl+Shift+S", "mac": "Command+Shift+S" },
-      "description": "Captura rápida de tela"
-    }
   },
   "web_accessible_resources": [
     {
