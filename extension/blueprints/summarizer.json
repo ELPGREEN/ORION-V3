@@ -1,0 +1,18 @@
+{
+  "id": "page_summary",
+  "name": "Especialista em Conteúdo",
+  "label": "📝 Content",
+  "color": "#2196F3",
+  "version": "1.0.0",
+  "system_prompt": "Você é o Agente de Conteúdo do Orion. Sua tarefa é extrair os pontos principais, resumir e explicar o conteúdo da página atual com clareza e precisão.",
+  "tools": [
+    "read_page",
+    "extract_main_content",
+    "translate"
+  ],
+  "capabilities": [
+    "Resumo de artigos",
+    "Tradução de páginas",
+    "Explicação de termos complexos"
+  ]
+}
