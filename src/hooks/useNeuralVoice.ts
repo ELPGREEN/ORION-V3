@@ -22,7 +22,7 @@ import { speakWithGeminiTTS } from "@/lib/tts/geminiTTS";
 import { speakWithKokoroTTS } from "@/lib/tts/kokoroTTS";
 // adaptiveVoiceStyle, sttFallbackChain, audioWorkletManager REMOVED — performance bottlenecks
 import { markSTTStart, markSTTEnd, markTTSStart, markTTSEnd } from "@/lib/neural/pipeline-latency-tracker";
-import { claimMic, isMicOwner, registerMicRec, registerMicCleanup, releaseMic } from "@/lib/voice/micArbiter";
+import { claimMic, isMicOwner, releaseMic, primeSharedMic } from "@/lib/voice/micArbiter";
 import { ensurePersistentMic, isMobile as isMobilePersistent } from "@/lib/voice/persistentMic";
 import { createGCPSTTSession, type GCPSTTSession } from "@/lib/voice/gcpSTT";
 import { getVoiceThresholds } from "@/lib/voice/voiceThresholds";
@@ -355,7 +355,7 @@ export function useNeuralVoice(
   const ttsRef = useRef(true);
 
   // ── Refs ──
-  const recRef = useRef<any>(null);
+
   const noSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speakingRef = useRef(false);
   const maleVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
@@ -436,7 +436,7 @@ export function useNeuralVoice(
       intentionalStopRef.current = true;
       try { recRef.current?.abort?.(); } catch {}
       try { recRef.current?.stop?.(); } catch {}
-      recRef.current = null;
+
       releaseMic(singletonIdRef.current);
       clearRestartTimer();
     };
@@ -453,7 +453,7 @@ export function useNeuralVoice(
     speechSynthesis?.addEventListener?.("voiceschanged", handler);
 
     // Expose mic rec ref for streaming queue to stop during TTS
-    (window as any).__orionMicRec = recRef;
+
 
     return () => {
       speechSynthesis?.removeEventListener?.("voiceschanged", handler);
@@ -462,45 +462,7 @@ export function useNeuralVoice(
   }, [clearRestartTimer]);
 
   // ═══ STT Restart Scheduler ═══
-  const scheduleRecognitionRestart = useCallback((delay?: number) => {
-    clearRestartTimer();
-    if (!isMicOwner(singletonIdRef.current)) { setListeningWithTimer(false); OrbState.voiceState = "idle"; return; }
-    if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
-      setListeningWithTimer(false); OrbState.voiceState = "idle";
-      return;
-    }
 
-    // Longer delays to prevent mic cycling — each start() triggers OS mic sound
-    const restartDelay = delay ?? (isMobile() ? 3000 : 400);
-    setListeningWithTimer(true);
-            OrbState.voiceState = "listening";
-
-    restartTimerRef.current = setTimeout(() => {
-      if (intentionalStopRef.current || speakingRef.current || !onCmdRef.current) {
-        setListeningWithTimer(false); OrbState.voiceState = "idle";
-        return;
-      }
-      if (recRef.current) {
-        try {
-          recRef.current.start();
-          setListeningWithTimer(true);
-            OrbState.voiceState = "listening";
-        } catch {
-          try { recRef.current.stop(); } catch {}
-          recRef.current = null;
-          if (onCmdRef.current) {
-            setTimeout(() => {
-              if (!intentionalStopRef.current && onCmdRef.current) {
-                startListeningFresh(onCmdRef.current);
-              }
-            }, 50);
-          }
-        }
-        return;
-      }
-      if (onCmdRef.current) startListeningFresh(onCmdRef.current);
-    }, restartDelay);
-  }, [clearRestartTimer]);
 
   // ═══ Resume STT after TTS ═══
   const resumeSTT = useCallback(() => {
@@ -508,7 +470,7 @@ export function useNeuralVoice(
     if (!onCmdRef.current || intentionalStopRef.current) return;
 
     // Re-claim mic (wake word may have claimed it during TTS)
-    singletonIdRef.current = claimMic("command");
+    singletonIdRef.current = claimMic("command", { soft: true });
 
       // Flush any pending browser-STT buffer only when GCP STT is NOT the active path.
       // When GCP is active, its own merged final callback already delivers the command,
@@ -538,7 +500,7 @@ export function useNeuralVoice(
       return;
     }
 
-    scheduleRecognitionRestart(isMobile() ? 600 : 100);
+    startListeningFresh(onCmdRef.current);
   }, [scheduleRecognitionRestart]);
 
   // (Mic watchdog moved after bargeIn declaration)
@@ -702,7 +664,7 @@ export function useNeuralVoice(
     if (gcpSessionRef.current?.isActive()) {
       gcpSessionRef.current.pause();
     }
-    try { recRef.current?.stop(); } catch {}
+
 
     const cascadeAbort = new AbortController();
     abortControllerRef.current = cascadeAbort;
@@ -795,234 +757,107 @@ export function useNeuralVoice(
     OrbState.voiceState = "thinking";
   }, []);
 
-  // ═══ Speech Recognition Factory ═══
-  const createRecognition = useCallback((onCmd: (c: string) => void) => {
-    const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    if (!SR) return null;
 
-    const rec = new SR();
-    rec.lang = "pt-BR";
-    rec.continuous = false;
-    rec.interimResults = true;
-    rec.maxAlternatives = 1;
 
-    rec.onstart = () => { setListeningWithTimer(true); markSTTStart(); };
-            OrbState.voiceState = "listening";
-
-    rec.onresult = (e: any) => {
-      if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false);
-      consecutiveAbortsRef.current = 0;
-
-      let hasFinal = false;
-      let fullInterimText = "";
-
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const result = e.results[i];
-        const transcript = result?.[0]?.transcript?.trim() || "";
-        if (!transcript) continue;
-
-        // ── SELF-HEARING GUARD ──
-        if (speakingRef.current || VoiceState.aiResponding) {
-          if (STOP_PATTERNS.test(transcript)) {
-            bargeIn();
-            speechBufferRef.current = "";
-            return;
-          }
-          if (result.isFinal && transcript.split(/\s+/).length >= 3) {
-            bargeIn();
-          }
-          continue;
-        }
-
-        if (result.isFinal) {
-          hasFinal = true;
-          // ═══ DEDUP: merge overlapping chunks instead of blind concat ═══
-          const existing = speechBufferRef.current.trim();
-          if (!existing) {
-            speechBufferRef.current = transcript;
-          } else if (existing === transcript || existing.endsWith(transcript)) {
-            // exact duplicate or already contained — skip
-          } else if (transcript.startsWith(existing)) {
-            // new transcript is a superset — replace
-            speechBufferRef.current = transcript;
-          } else {
-            // Check word-level overlap
-            const aWords = existing.split(/\s+/);
-            const bWords = transcript.split(/\s+/);
-            const maxOverlap = Math.min(aWords.length, bWords.length);
-            let merged = false;
-            for (let ov = maxOverlap; ov > 0; ov--) {
-              const aTail = aWords.slice(-ov).join(" ").toLowerCase();
-              const bHead = bWords.slice(0, ov).join(" ").toLowerCase();
-              if (aTail === bHead) {
-                speechBufferRef.current = `${existing} ${bWords.slice(ov).join(" ")}`.trim();
-                merged = true;
-                break;
-              }
-            }
-            if (!merged) {
-              speechBufferRef.current = `${existing} ${transcript}`;
-            }
-          }
-        } else {
-          fullInterimText = transcript;
-        }
-      }
-
-      if (speakingRef.current || VoiceState.aiResponding) return;
-      if (!hasFinal) return;
-
-      if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
-
-      const turnState = detectTurnState([speechBufferRef.current], "pt-BR");
-      const silenceMs = Math.round(getOptimalSilenceDuration(turnState) * getVoiceThresholds().turnSilenceMultiplier);
-
-      speechDebounceRef.current = setTimeout(() => {
-        const rawText = speechBufferRef.current.trim();
-        speechBufferRef.current = "";
-        if (!rawText || !onCmdRef.current) return;
-
-        // ═══ DEDUP repeated phrases before processing ═══
-        const fullText = deduplicateRepeatedPhrases(rawText);
-
-        const normalized = normalizeSpeechText(fullText);
-        const now = Date.now();
-
-        if (normalized.length < 3) return;
-
-        // Duplicate guard
-        if (normalized === lastProcessedTranscriptRef.current && now - lastProcessedAtRef.current < 6000) return;
-
-        // Echo guard
-        if (lastSpokenTextRef.current && now - lastSpokenAtRef.current <= ECHO_WINDOW_MS) {
-          if (isEchoOf(normalized, lastSpokenTextRef.current, lastSpokenTokensRef.current || undefined)) {
-            console.log("[Voice] Echo suppressed:", normalized.slice(0, 50));
-            return;
-          }
-        }
-
-        lastProcessedTranscriptRef.current = normalized;
-        lastProcessedAtRef.current = now;
-
-        // ═══ VOICE IDENTITY TRIGGER — notify NeuralVision on first transcription ═══
-        try { window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: fullText } })); } catch {}
-
-        markSTTEnd();
-        onCmdRef.current(fullText);
-      }, silenceMs);
-    };
-
-    rec.onend = () => {
-      // Don't null recRef immediately — avoid creating new instances rapidly
-      if (intentionalStopRef.current) { recRef.current = null; setListeningWithTimer(false); OrbState.voiceState = "idle"; return; }
-      if (speakingRef.current) { recRef.current = null; setListeningWithTimer(false); OrbState.voiceState = "idle"; return; }
-      // Keep listening state true during restart to avoid UI flicker
-      if (onCmdRef.current) {
-        recRef.current = null;
-      // Long delay to prevent rapid mic cycling — each start() = OS mic sound
-        scheduleRecognitionRestart(isMobile() ? 5000 : 800);
-        return;
-      }
-      recRef.current = null;
-      setListeningWithTimer(false); OrbState.voiceState = "idle";
-    };
-
-    rec.onerror = (e: any) => {
-      console.warn("[Voice] STT error:", e.error);
-      recRef.current = null;
-      if (intentionalStopRef.current) return;
-
-      if (e.error === "aborted") {
-        consecutiveAbortsRef.current++;
-        if (consecutiveAbortsRef.current >= MAX_CONSECUTIVE_ABORTS) {
-          console.warn(`[Voice] ${MAX_CONSECUTIVE_ABORTS} consecutive aborts — cooldown 5s`);
-          setListeningWithTimer(false); OrbState.voiceState = "idle";
-          setTimeout(() => {
-            if (!intentionalStopRef.current && onCmdRef.current && isMicOwner(singletonIdRef.current)) {
-              consecutiveAbortsRef.current = 0;
-              startListeningFresh(onCmdRef.current);
-            }
-          }, 5000);
-          return;
-        }
-        scheduleRecognitionRestart(isMobile() ? 5000 : 1000 * Math.pow(2, consecutiveAbortsRef.current - 1));
-        return;
-      }
-
-      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
-        setListeningWithTimer(false); OrbState.voiceState = "idle";
-        intentionalStopRef.current = true; // stop further restart attempts
-        if (!_micPermissionToastShown) {
-          _micPermissionToastShown = true;
-          toast.error("Permissão do microfone bloqueada", { id: "mic-blocked" });
-        }
-        return;
-      }
-
-      if (e.error === "no-speech") {
-        // no-speech is normal — with 4s tolerance, just wait longer
-        // DON'T restart immediately — wait for user to speak
-        console.log("[Voice] No speech detected — waiting (4s tolerance)");
-        setListeningWithTimer(true);
-            OrbState.voiceState = "listening";
-        return; // Keep listening open, don't restart
-      }
-
-      if (e.error === "network") {
-        console.warn("[Voice] Network error — retry with long delay");
-        scheduleRecognitionRestart(isMobile() ? 8000 : 3000);
-        return;
-      }
-
-      // Other errors — long delay before retry
-      scheduleRecognitionRestart(isMobile() ? 8000 : 3000);
-    };
-
-    return rec;
-  }, [bargeIn, scheduleRecognitionRestart]);
-
-  // ═══ Start Fresh Recognition Instance ═══
   const startListeningFresh = useCallback((onCmd: (c: string) => void) => {
     if (!isMicOwner(singletonIdRef.current)) {
-      console.log("[Voice] ❌ Not mic owner");
       setListeningWithTimer(false); OrbState.voiceState = "idle";
       return;
     }
     intentionalStopRef.current = false;
-    try { recRef.current?.abort?.(); } catch {}
-    try { recRef.current?.stop(); } catch {}
-    recRef.current = null;
 
-    const rec = createRecognition(onCmd);
-    if (!rec) {
-      console.log("[Voice] ❌ Web Speech not supported in this browser");
-      setListeningWithTimer(false); OrbState.voiceState = "idle";
-      return;
-    }
+    // v31: Use Persistent Shared Mic instead of creating/stopping instances
+    singletonIdRef.current = claimMic("command", {
+      onStart: () => {
+        setListeningWithTimer(true);
+        markSTTStart();
+        OrbState.voiceState = "listening";
+        console.log("[Voice] Shared Mic session started for COMMAND");
+      },
+      onResult: (e) => {
+        if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; }
+        setNoSpeechDetected(false);
+        consecutiveAbortsRef.current = 0;
 
-    recRef.current = rec;
-    registerMicRec(rec, "command");
+        let hasFinal = false;
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const result = e.results[i];
+          const transcript = result?.[0]?.transcript?.trim() || "";
+          if (!transcript) continue;
 
-    try {
-      rec.start();
-      setListeningWithTimer(true);
-            OrbState.voiceState = "listening";
-    } catch {
-      setListeningWithTimer(false); OrbState.voiceState = "idle";
-      recRef.current = null;
-      setTimeout(() => {
-        if (!intentionalStopRef.current && onCmdRef.current === onCmd && isMicOwner(singletonIdRef.current)) {
-          startListeningFresh(onCmd);
+          if (speakingRef.current || VoiceState.aiResponding) {
+            if (STOP_PATTERNS.test(transcript)) { bargeIn(); speechBufferRef.current = ""; return; }
+            if (result.isFinal && transcript.split(/\s+/).length >= 3) { bargeIn(); }
+            continue;
+          }
+
+          if (result.isFinal) {
+            hasFinal = true;
+            const existing = speechBufferRef.current.trim();
+            if (!existing) speechBufferRef.current = transcript;
+            else if (existing === transcript || existing.endsWith(transcript)) {}
+            else if (transcript.startsWith(existing)) speechBufferRef.current = transcript;
+            else {
+              const aWords = existing.split(/\s+/);
+              const bWords = transcript.split(/\s+/);
+              const maxOverlap = Math.min(aWords.length, bWords.length);
+              let merged = false;
+              for (let ov = maxOverlap; ov > 0; ov--) {
+                if (aWords.slice(-ov).join(" ").toLowerCase() === bWords.slice(0, ov).join(" ").toLowerCase()) {
+                  speechBufferRef.current = `${existing} ${bWords.slice(ov).join(" ")}`.trim();
+                  merged = true; break;
+                }
+              }
+              if (!merged) speechBufferRef.current = `${existing} ${transcript}`;
+            }
+          }
         }
-      }, 250);
-    }
-  }, [createRecognition]);
+
+        if (speakingRef.current || VoiceState.aiResponding || !hasFinal) return;
+        if (speechDebounceRef.current) clearTimeout(speechDebounceRef.current);
+
+        const turnState = detectTurnState([speechBufferRef.current], "pt-BR");
+        const silenceMs = Math.round(getOptimalSilenceDuration(turnState) * getVoiceThresholds().turnSilenceMultiplier);
+
+        speechDebounceRef.current = setTimeout(() => {
+          const rawText = speechBufferRef.current.trim();
+          speechBufferRef.current = "";
+          if (!rawText || !onCmdRef.current) return;
+          const fullText = deduplicateRepeatedPhrases(rawText);
+          const normalized = normalizeSpeechText(fullText);
+          if (normalized.length < 3) return;
+          if (normalized === lastProcessedTranscriptRef.current && Date.now() - lastProcessedAtRef.current < 6000) return;
+
+          lastProcessedTranscriptRef.current = normalized;
+          lastProcessedAtRef.current = Date.now();
+          window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: fullText } }));
+          markSTTEnd();
+          onCmdRef.current(fullText);
+        }, silenceMs);
+      },
+      onEnd: () => {
+        if (intentionalStopRef.current || speakingRef.current) {
+          setListeningWithTimer(false); OrbState.voiceState = "idle"; return;
+        }
+        if (onCmdRef.current) {
+          setListeningWithTimer(true); OrbState.voiceState = "listening";
+        }
+      },
+      onError: (e) => {
+        console.warn("[Voice] Shared Mic Error:", e.error);
+        if (e.error === "no-speech") {
+          setListeningWithTimer(true); OrbState.voiceState = "listening";
+        }
+      }
+    });
+  }, [bargeIn]);
+
 
   // ═══ Public: Start Listening (with mic priming) ═══
   const startListening = useCallback((onCmd: (c: string) => void) => {
     console.log("[Voice] 📞 startListening called", { useGCPSTT: useGCPSTTRef.current });
     const boot = async () => {
-      singletonIdRef.current = claimMic("command");
+      singletonIdRef.current = claimMic("command", { soft: true });
       intentionalStopRef.current = false;
       voiceActiveRef.current = true;
       clearRestartTimer();
@@ -1190,8 +1025,8 @@ export function useNeuralVoice(
     speechBufferRef.current = "";
     sentenceAccumulatorRef.current = "";
     try { speechSynthesis.cancel(); } catch {}
-    try { recRef.current?.stop(); } catch {}
-    recRef.current = null;
+
+
     releaseMic(singletonIdRef.current);
     setListeningWithTimer(false); OrbState.voiceState = "idle";
   }, [clearRestartTimer]);
@@ -1209,8 +1044,8 @@ export function useNeuralVoice(
     if (sentenceTimerRef.current) { clearTimeout(sentenceTimerRef.current); sentenceTimerRef.current = null; }
     sentenceAccumulatorRef.current = "";
     try { recRef.current?.abort?.(); } catch {}
-    try { recRef.current?.stop(); } catch {}
-    recRef.current = null;
+
+
     releaseMic(singletonIdRef.current);
   }, [clearRestartTimer]);
 

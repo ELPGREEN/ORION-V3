@@ -112,6 +112,7 @@ export function GlobalOrionListener() {
       if (micGranted) micPrimedRef.current = true;
     } catch {
       toast.error("Microfone negado — Orion não poderá ouvir comandos de voz");
+    import("@/lib/voice/micArbiter").then(m => m.primeSharedMic());
     }
 
     try {
@@ -191,6 +192,7 @@ export function GlobalOrionListener() {
     }
   }, [location.pathname]);
 
+            import("@/lib/voice/micArbiter").then(m => m.primeSharedMic());
   if (isOnNeuralPage) return null;
 
   return (
