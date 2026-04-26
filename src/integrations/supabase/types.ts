@@ -3052,6 +3052,54 @@ export type Database = {
         }
         Relationships: []
       }
+      evolution_cycles: {
+        Row: {
+          actual_outcome: Json | null
+          confidence_score: number | null
+          created_at: string | null
+          diagnosis_id: string | null
+          event_id: string | null
+          execution_metadata: Json | null
+          id: string
+          proposal: Json | null
+          proposal_type: string | null
+          risk_score: number | null
+          simulation_results: Json | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_outcome?: Json | null
+          confidence_score?: number | null
+          created_at?: string | null
+          diagnosis_id?: string | null
+          event_id?: string | null
+          execution_metadata?: Json | null
+          id?: string
+          proposal?: Json | null
+          proposal_type?: string | null
+          risk_score?: number | null
+          simulation_results?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_outcome?: Json | null
+          confidence_score?: number | null
+          created_at?: string | null
+          diagnosis_id?: string | null
+          event_id?: string | null
+          execution_metadata?: Json | null
+          id?: string
+          proposal?: Json | null
+          proposal_type?: string | null
+          risk_score?: number | null
+          simulation_results?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       face_auth_enrollments: {
         Row: {
           anti_spoof_config: Json
@@ -7126,6 +7174,33 @@ export type Database = {
           stripe_account_id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      system_configs: {
+        Row: {
+          category: string | null
+          description: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          category?: string | null
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          category?: string | null
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
         }
         Relationships: []
       }
