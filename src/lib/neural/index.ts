@@ -637,3 +637,7 @@ export {
   resetServerlessPipeline,
   formatServerlessContextForLLM,
 } from "./serverless-agent-runtime";
+
+// ═══ Neural Flow Analysis & Preprocessing (Auto-Evolution) ═══
+export * from "./neural-flow-analyzer";
+export * from "./frame-tensor-preprocessing";
