@@ -179,20 +179,50 @@ export function scanSecurity(): ScanResult {
 
   if (typeof window === "undefined") return { domain: "security", issues, score, scannedAt: Date.now() };
 
-  // Check for exposed secrets in localStorage
-  const dangerousKeys = ["api_key", "secret", "token", "password", "private_key"];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i)?.toLowerCase() || "";
-    if (dangerousKeys.some((d) => key.includes(d) && !key.includes("supabase"))) {
-      issues.push({ subsystem: "sec_xss", severity: "high", message: `Potentially sensitive key in localStorage: ${key}` });
-      score -= 15;
+  const SAFE_LOCALSTORAGE_KEY_PATTERNS = [
+    /^sb-[a-z0-9]+-auth-token$/i,
+    /^supabase\./i,
+    /^orion_jules_subsystem_fails$/i,
+    /^pending_google_account_type$/i,
+  ];
+
+  // Check for exposed secrets in localStorage.
+  // Ignore known framework-managed/session keys such as Supabase auth tokens.
+  try {
+    const dangerousKeys = ["api_key", "secret", "token", "password", "private_key"];
+    for (let i = 0; i < localStorage.length; i++) {
+      const rawKey = localStorage.key(i) || "";
+      const key = rawKey.toLowerCase();
+      const isKnownSafeKey = SAFE_LOCALSTORAGE_KEY_PATTERNS.some((pattern) => pattern.test(rawKey));
+      if (isKnownSafeKey) continue;
+      if (dangerousKeys.some((d) => key.includes(d) && !key.includes("supabase"))) {
+        issues.push({
+          subsystem: "sec_auth_flow",
+          severity: "high",
+          message: `Potentially sensitive key in localStorage: ${rawKey}`,
+          context: "Review client-side storage and move sensitive credentials to runtime secrets/server-side flows.",
+        });
+        score -= 15;
+      }
     }
+  } catch (error) {
+    issues.push({
+      subsystem: "sec_auth_flow",
+      severity: "medium",
+      message: "Security scan could not inspect browser storage safely",
+      context: error instanceof Error ? error.message : String(error),
+    });
+    score -= 5;
   }
 
   // Check for inline event handlers
   const inlineHandlers = document.querySelectorAll("[onclick], [onerror], [onload]");
   if (inlineHandlers.length > 0) {
-    issues.push({ subsystem: "sec_xss", severity: "medium", message: `${inlineHandlers.length} inline event handlers (XSS risk)` });
+    issues.push({
+      subsystem: "sec_xss",
+      severity: "medium",
+      message: `${inlineHandlers.length} inline event handlers (XSS risk)`,
+    });
     score -= 10;
   }
 
