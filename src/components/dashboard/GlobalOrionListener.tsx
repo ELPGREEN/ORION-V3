@@ -102,57 +102,9 @@ export function GlobalOrionListener() {
     return () => window.removeEventListener("orion:wake-word-detected", handleWakeWord);
   }, [isOnNeuralPage, orionOpen, permissionsGranted, openOrionOverlay]);
 
-  // ═══ Permission handling ═══
-  const handleGrantPermissions = useCallback(async () => {
-    let micGranted = false;
-    let camGranted = false;
-
-    try {
-      micGranted = await requestPersistentMic();
-      if (micGranted) micPrimedRef.current = true;
-    } catch {
-      toast.error("Microfone negado — Orion não poderá ouvir comandos de voz");
-    import("@/lib/voice/micArbiter").then(m => m.primeSharedMic());
-    }
-
-    try {
-      const camStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      camStream.getTracks().forEach(t => t.stop());
-      camGranted = true;
-    } catch {
-      toast.error("Câmera negada — Visão Neural ficará limitada");
-    }
-
-    if (micGranted) { try { const ctx = new AudioContext({ sampleRate: 48000 }); (window as any).__orion_shared_audio_ctx__ = ctx; } catch {}
-      localStorage.setItem(PERMISSIONS_KEY, "true");
-      setPermissionsGranted(true);
-      toast.success(
-        camGranted
-          ? "⚡ Audição Relâmpago ativada! Microfone e câmera autorizados"
-          : "⚡ Audição Relâmpago ativada — Orion pode ouvir você"
-      );
-      setShowPermissionPrompt(false);
-      return;
-    }
-
-    setShowPermissionPrompt(false);
-  }, []);
-
-  const handleDismissPermissions = useCallback(() => {
-    setShowPermissionPrompt(false);
-    localStorage.setItem(PERMISSIONS_DISMISSED_KEY, "true");
-  }, []);
-
-  // ═══ Show permission prompt proactively on first visit ═══
-  useEffect(() => {
-    if (!permissionsGranted && !showPermissionPrompt) {
-      const dismissed = localStorage.getItem(PERMISSIONS_DISMISSED_KEY) === "true";
-      if (!dismissed) {
-        const timer = setTimeout(() => setShowPermissionPrompt(true), 1500);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [permissionsGranted, showPermissionPrompt]);
+  // ═══ Permission handling — silent, on-demand only ═══
+  // The intrusive prompt was removed. Mic/camera are requested lazily by
+  // the browser the first time the user actually triggers a feature that needs them.
 
   // ═══ Prime mic once permissions granted ═══
   useEffect(() => {
