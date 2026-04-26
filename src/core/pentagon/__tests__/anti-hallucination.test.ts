@@ -34,7 +34,7 @@ describe("Anti-Hallucination & Logical Consistency", () => {
     const result = await orchestrator.runCycle("test input");
 
     expect(result.success).toBe(false);
-    expect(result.output).toContain("falta de fundamentação");
+    expect(result.output).toContain("Erro de ancoragem");
   });
 
   it("should warn if reasoning confidence is low", async () => {

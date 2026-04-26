@@ -36,7 +36,7 @@ describe("Intelligent Tool Activation", () => {
     const result = await orchestrator.runCycle("Não ligue a luz agora");
 
     expect(result.success).toBe(false);
-    expect(result.output).toContain("não deseja executá-la");
+    expect(result.output).toContain("Veto por negação");
     expect(mockAction.process).not.toHaveBeenCalled();
   });
 

@@ -37,6 +37,6 @@ describe("PentagonPizzaOrchestrator", () => {
     const result = await orchestrator.runCycle("bad input");
 
     expect(result.success).toBe(false);
-    expect(result.output).toContain("Falha de segurança");
+    expect(result.output).toContain("Acesso Negado");
   });
 });
