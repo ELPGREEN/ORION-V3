@@ -1,3 +1,4 @@
+// VoiceStateIndicator — template literals OK (cache-bust v2)
 import { useState, useEffect } from "react";
 import { OrbState } from "./EnergyOrb";
 
