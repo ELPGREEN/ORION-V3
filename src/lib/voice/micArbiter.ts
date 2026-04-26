@@ -91,8 +91,11 @@ export function primeSharedMic() {
   };
 
   rec.onerror = (e: any) => {
-    console.warn("[MicArbiter] Shared Mic error:", e.error);
-    if (e.error === "aborted") s.isStarted = false;
+    // no-speech / aborted são normais durante silêncio prolongado — não logar
+    if (e.error !== "no-speech" && e.error !== "aborted") {
+      console.warn("[MicArbiter] Shared Mic error:", e.error);
+    }
+    if (e.error === "aborted" || e.error === "no-speech") s.isStarted = false;
     s.listeners?.onError(e);
   };
 
