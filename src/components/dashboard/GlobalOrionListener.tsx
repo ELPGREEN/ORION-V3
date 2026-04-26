@@ -102,57 +102,9 @@ export function GlobalOrionListener() {
     return () => window.removeEventListener("orion:wake-word-detected", handleWakeWord);
   }, [isOnNeuralPage, orionOpen, permissionsGranted, openOrionOverlay]);
 
-  // ═══ Permission handling ═══
-  const handleGrantPermissions = useCallback(async () => {
-    let micGranted = false;
-    let camGranted = false;
-
-    try {
-      micGranted = await requestPersistentMic();
-      if (micGranted) micPrimedRef.current = true;
-    } catch {
-      toast.error("Microfone negado — Orion não poderá ouvir comandos de voz");
-    import("@/lib/voice/micArbiter").then(m => m.primeSharedMic());
-    }
-
-    try {
-      const camStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      camStream.getTracks().forEach(t => t.stop());
-      camGranted = true;
-    } catch {
-      toast.error("Câmera negada — Visão Neural ficará limitada");
-    }
-
-    if (micGranted) { try { const ctx = new AudioContext({ sampleRate: 48000 }); (window as any).__orion_shared_audio_ctx__ = ctx; } catch {}
-      localStorage.setItem(PERMISSIONS_KEY, "true");
-      setPermissionsGranted(true);
-      toast.success(
-        camGranted
-          ? "⚡ Audição Relâmpago ativada! Microfone e câmera autorizados"
-          : "⚡ Audição Relâmpago ativada — Orion pode ouvir você"
-      );
-      setShowPermissionPrompt(false);
-      return;
-    }
-
-    setShowPermissionPrompt(false);
-  }, []);
-
-  const handleDismissPermissions = useCallback(() => {
-    setShowPermissionPrompt(false);
-    localStorage.setItem(PERMISSIONS_DISMISSED_KEY, "true");
-  }, []);
-
-  // ═══ Show permission prompt proactively on first visit ═══
-  useEffect(() => {
-    if (!permissionsGranted && !showPermissionPrompt) {
-      const dismissed = localStorage.getItem(PERMISSIONS_DISMISSED_KEY) === "true";
-      if (!dismissed) {
-        const timer = setTimeout(() => setShowPermissionPrompt(true), 1500);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [permissionsGranted, showPermissionPrompt]);
+  // ═══ Permission handling — silent, on-demand only ═══
+  // The intrusive prompt was removed. Mic/camera are requested lazily by
+  // the browser the first time the user actually triggers a feature that needs them.
 
   // ═══ Prime mic once permissions granted ═══
   useEffect(() => {
@@ -192,65 +144,12 @@ export function GlobalOrionListener() {
     }
   }, [location.pathname]);
 
-            import("@/lib/voice/micArbiter").then(m => m.primeSharedMic());
   if (isOnNeuralPage) return null;
 
   return (
     <>
-      {/* ═══ Permission Prompt ═══ */}
-      {showPermissionPrompt && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-sm w-[90vw] p-6 space-y-5">
-            <div className="flex flex-col items-center gap-3">
-              <div className="relative w-16 h-16">
-                <PlasmaCore className="w-full h-full" />
-              </div>
-              <h3 className="text-lg font-serif text-foreground tracking-wide">
-                Orion precisa de acesso
-              </h3>
-              <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                Para ouvir seus comandos de voz e usar a visão neural, o Orion precisa de acesso ao
-                <strong className="text-foreground"> microfone</strong> e à
-                <strong className="text-foreground"> câmera</strong>.
-              </p>
-            </div>
+      {/* Permission prompt removed — mic/camera requested lazily on first use */}
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Mic className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">⚡ Audição Relâmpago</p>
-                  <p className="text-xs text-muted-foreground">Reconhecimento de voz sempre ativo</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Camera className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Câmera</p>
-                  <p className="text-xs text-muted-foreground">Visão neural, reconhecimento e análise visual</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={handleDismissPermissions}>
-                Depois
-              </Button>
-              <Button className="flex-1 btn-gold shimmer" onClick={handleGrantPermissions}>
-                Autorizar
-              </Button>
-            </div>
-
-            <p className="text-[10px] text-muted-foreground/60 text-center">
-              Você pode alterar isso nas configurações do navegador a qualquer momento
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* ═══ Floating Plasma Orb — always visible when overlay is closed ═══ */}
       {!orionOpen && (
