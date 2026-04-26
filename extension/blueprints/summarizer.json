@@ -3,16 +3,22 @@
   "name": "Especialista em Conteúdo",
   "label": "📝 Content",
   "color": "#2196F3",
-  "version": "1.0.0",
-  "system_prompt": "Você é o Agente de Conteúdo do Orion. Sua tarefa é extrair os pontos principais, resumir e explicar o conteúdo da página atual com clareza e precisão.",
-  "tools": [
-    "read_page",
-    "extract_main_content",
-    "translate"
+  "version": "1.1.0",
+  "type": "LangflowSync",
+  "nodes": [
+    { "id": "ui_input", "type": "ChatInput", "label": "Contexto da Página" },
+    {
+      "id": "content_agent",
+      "type": "Agent",
+      "config": {
+        "system_prompt": "Você é o Agente de Conteúdo do Orion. Sua tarefa é extrair os pontos principais, resumir e explicar o conteúdo da página atual com clareza e precisão.",
+        "tools": ["read_page", "extract_main_content", "translate"]
+      }
+    },
+    { "id": "ui_output", "type": "ChatOutput", "label": "Resumo Final" }
   ],
-  "capabilities": [
-    "Resumo de artigos",
-    "Tradução de páginas",
-    "Explicação de termos complexos"
+  "edges": [
+    { "source": "ui_input", "target": "content_agent" },
+    { "source": "content_agent", "target": "ui_output" }
   ]
 }

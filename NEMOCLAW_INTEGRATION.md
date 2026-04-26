@@ -1,34 +1,33 @@
-# 🦞 Órion Ultra-Híbrido: NemoClaw, OpenRouter & GPU Local (Ollama)
+# 🦞 Órion V6.2: A Pilha Definitiva de IA (NemoClaw + Langflow + OpenRouter)
 
-O Órion agora opera com uma arquitetura de **Inteligência Híbrida**, decidindo em milissegundos se deve usar a potência da nuvem ou a privacidade da sua GPU local.
+O Órion agora atingiu o nível máximo de sofisticação, unindo a segurança da NVIDIA, a orquestração visual do Langflow e a potência híbrida da Cloud e GPU Local.
 
-## 🧠 Como o Roteador Híbrido Funciona
+## 🧠 Arquitetura de 3 Camadas (Hybrid Flow Routing)
 
-O novo `Hybrid Router` utiliza uma lógica de pontuação para cada tarefa:
+O novo roteador híbrido decide em tempo real o melhor motor para sua solicitação:
 
-1.  **Privacidade Total:** Se dados sensíveis (CPF, CNPJ, etc.) forem detectados, o Órion **força** a execução na sua GPU local (Ollama).
-2.  **Complexidade:** Tarefas de raciocínio pesado (DeepSeek R1, Gemini 2.0) vão para a nuvem.
-3.  **Performance:** Resumos e traduções simples são processados localmente se você tiver uma GPU ativa, economizando tokens e latência.
+1.  **Orquestração Langflow (Complexidade Máxima):** Tarefas que exigem múltiplos passos ou agentes especializados (ex: Pesquisa Jurídica profunda) são enviadas para o **Langflow**.
+2.  **GPU Local Ollama (Privacidade & Velocidade):** Dados sensíveis ou tarefas comuns (resumos) rodam diretamente no seu metal.
+3.  **Cloud OpenRouter (Inteligência Pura):** Raciocínio de ponta via DeepSeek R1 e Gemini 2.0.
 
-## 🛠️ Componentes do Ecossistema
+## 🛠️ Novas Ferramentas
 
-### 1. 🛡️ NVIDIA NemoClaw
-Fornece o sandbox **OpenShell** para que o Órion execute scripts e análises com isolamento total do sistema operacional.
+### 1. 🌊 Langflow Sync
+A extensão agora fala a língua do Langflow. Seus blueprints (`extension/blueprints/`) seguem o esquema de nós e arestas, permitindo que você visualize e edite a inteligência do Órion no dashboard do Langflow.
 
-### 2. 🔥 Ollama (GPU Local)
-O motor que permite ao Órion "pensar" dentro da sua máquina. O setup automatizado configura o Ollama e baixa o modelo `llama3` para você.
+### 2. 🛡️ NemoClaw Sandbox
+Toda execução de código local e ferramentas sensíveis operam dentro do sandbox **OpenShell**, garantindo que a IA nunca tenha acesso não autorizado aos seus arquivos pessoais.
 
-### 3. ☁️ OpenRouter (Cloud)
-Acesso unificado aos melhores modelos do mundo quando o Local não for suficiente ou a tarefa for complexa demais.
+## 🚀 Como Ativar
 
-## 🚀 Guia de Inalação Rápida
-
-1.  **Execute o Setup:**
+1.  **Setup Unificado:**
     ```bash
     bash scripts/setup-orion-env.sh
     ```
-2.  **Instale a Extensão:** No Chrome, carregue a pasta `extension` no modo desenvolvedor.
-3.  **Certifique-se que o Ollama está rodando:** O Órion detectará automaticamente e mostrará a notificação "Respondido via Local GPU".
+2.  **Inicie os Motores:**
+    - Rode o Ollama para GPU local.
+    - Rode `langflow run` para habilitar a orquestração visual.
+3.  **Use a Extensão:** O Órion detectará automaticamente quais motores estão ativos e escolherá o melhor para você.
 
 ---
-*Orion V5.9 - O equilíbrio perfeito entre Nuvem e Metal.*
+*Orion V6.2 - Powered by NVIDIA NemoClaw & Langflow AI.*

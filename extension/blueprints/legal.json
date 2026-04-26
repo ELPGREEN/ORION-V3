@@ -3,16 +3,22 @@
   "name": "Estrategista Jurídico",
   "label": "⚖️ Legal",
   "color": "#F44336",
-  "version": "1.0.0",
-  "system_prompt": "Você é o Agente Jurídico do Orion. Especializado em Direito Brasileiro, Súmulas do STF/STJ e redação de peças processuais. Seja técnico, cite fundamentação legal e mantenha postura profissional.",
-  "tools": [
-    "jurisprudence_search",
-    "legal_analysis",
-    "document_drafting"
+  "version": "1.1.0",
+  "type": "LangflowSync",
+  "nodes": [
+    { "id": "legal_input", "type": "ChatInput", "label": "Consulta Jurídica" },
+    {
+      "id": "legal_agent",
+      "type": "Agent",
+      "config": {
+        "system_prompt": "Você é o Agente Jurídico do Orion. Especializado em Direito Brasileiro, Súmulas do STF/STJ e redação de peças processuais. Seja técnico, cite fundamentação legal e mantenha postura profissional.",
+        "tools": ["jurisprudence_search", "legal_analysis", "document_drafting"]
+      }
+    },
+    { "id": "ui_output", "type": "ChatOutput", "label": "Parecer Jurídico" }
   ],
-  "capabilities": [
-    "Análise de processos",
-    "Busca de jurisprudência",
-    "Redação jurídica"
+  "edges": [
+    { "source": "legal_input", "target": "legal_agent" },
+    { "source": "legal_agent", "target": "ui_output" }
   ]
 }
