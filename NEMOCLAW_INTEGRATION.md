@@ -1,39 +1,34 @@
-# 🦞 Potencializando o Órion com NemoClaw, OpenRouter & Aceleração GPU
+# 🦞 Órion Ultra-Híbrido: NemoClaw, OpenRouter & GPU Local (Ollama)
 
-Este projeto foi atualizado para extrair o máximo de performance do seu hardware, combinando segurança, inteligência e velocidade.
+O Órion agora opera com uma arquitetura de **Inteligência Híbrida**, decidindo em milissegundos se deve usar a potência da nuvem ou a privacidade da sua GPU local.
 
-## 1. 🚀 Aceleração por Hardware (GPU)
+## 🧠 Como o Roteador Híbrido Funciona
 
-O Órion agora detecta e utiliza sua GPU automaticamente para processamento de IA:
+O novo `Hybrid Router` utiliza uma lógica de pontuação para cada tarefa:
 
-- **No Navegador (WebGPU):** A extensão utiliza a API **WebGPU** para rodar modelos de linguagem e visão localmente com ultra-velocidade, sem depender apenas da CPU.
-- **No Servidor Local (CUDA/MPS):** O componente `orion_cpu_space` auto-detecta se você tem uma GPU NVIDIA (**CUDA**) ou Apple Silicon (**MPS**) para acelerar tarefas pesadas de OCR e Embeddings.
-- **Setup Automático:** O script `scripts/setup-orion-env.sh` identifica seu hardware e instala as versões otimizadas do PyTorch e ONNX Runtime.
+1.  **Privacidade Total:** Se dados sensíveis (CPF, CNPJ, etc.) forem detectados, o Órion **força** a execução na sua GPU local (Ollama).
+2.  **Complexidade:** Tarefas de raciocínio pesado (DeepSeek R1, Gemini 2.0) vão para a nuvem.
+3.  **Performance:** Resumos e traduções simples são processados localmente se você tiver uma GPU ativa, economizando tokens e latência.
 
-## 2. 🛡️ NVIDIA NemoClaw (Segurança e Isolamento)
+## 🛠️ Componentes do Ecossistema
 
-O **NemoClaw** fornece a infraestrutura de sandboxing necessária para que os agentes ajam com segurança.
-- **Isolamento:** Cada ação do agente é verificada pelo **Policy Guard**.
-- **Sandbox:** Execuções locais ocorrem dentro do ambiente protegido **OpenShell**.
+### 1. 🛡️ NVIDIA NemoClaw
+Fornece o sandbox **OpenShell** para que o Órion execute scripts e análises com isolamento total do sistema operacional.
 
-## 3. 🧠 OpenRouter (Inteligência Superior)
+### 2. 🔥 Ollama (GPU Local)
+O motor que permite ao Órion "pensar" dentro da sua máquina. O setup automatizado configura o Ollama e baixa o modelo `llama3` para você.
 
-Integração profunda com o **OpenRouter** para roteamento dinâmico:
-- **Quantum Router:** Decide em tempo real qual modelo (DeepSeek R1, Gemini 2.0, Llama 3.3) é o melhor para sua tarefa atual.
+### 3. ☁️ OpenRouter (Cloud)
+Acesso unificado aos melhores modelos do mundo quando o Local não for suficiente ou a tarefa for complexa demais.
 
-## 🚀 Como Ativar Tudo
+## 🚀 Guia de Inalação Rápida
 
-1. **Prepare o Ambiente:**
-   ```bash
-   bash scripts/setup-orion-env.sh
-   ```
-2. **Instale a Extensão:**
-   - Vá em `chrome://extensions`
-   - Ative o "Developer Mode"
-   - Clique em "Load unpacked" e selecione a pasta `extension`.
-3. **Verifique o Status:**
-   - O ícone do Órion mostrará "GPU" se a aceleração estiver ativa.
-   - Use o comando `nemoclaw onboard` para iniciar o sandbox seguro.
+1.  **Execute o Setup:**
+    ```bash
+    bash scripts/setup-orion-env.sh
+    ```
+2.  **Instale a Extensão:** No Chrome, carregue a pasta `extension` no modo desenvolvedor.
+3.  **Certifique-se que o Ollama está rodando:** O Órion detectará automaticamente e mostrará a notificação "Respondido via Local GPU".
 
 ---
-*Orion V5.7 - Powered by WebGPU & NVIDIA NemoClaw*
+*Orion V5.9 - O equilíbrio perfeito entre Nuvem e Metal.*
