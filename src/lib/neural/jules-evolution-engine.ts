@@ -8,6 +8,7 @@
 import { recordSubsystemFailure, type SubsystemKey } from "./jules-auto-triggers";
 import { getImmuneMemory, shouldQuarantine, checkAndRegisterResolutions } from "./jules-immune-system";
 
+import { analyzeNeuralFlowGaps } from "./neural-flow-analyzer";
 // ─── Types ───
 
 export interface ScanResult {
@@ -270,6 +271,7 @@ export async function runFullScan(): Promise<ScanResult[]> {
     const results = [
       scanForBugs(),
       scanPerformance(),
+      await scanArchitectureGaps(),
       scanDesign(),
       scanSecurity(),
       scanCodeQuality(),
@@ -369,4 +371,26 @@ function classifyErrorSource(source: string): string {
 
 function hashIssue(issue: ScanIssue): string {
   return `${issue.subsystem}:${issue.message.slice(0, 50)}`;
+}
+
+/**
+ * Architectural Integrity Scanner
+ * Detects missing flows and system gaps using neural-flow-analyzer.
+ */
+async function scanArchitectureGaps(): Promise<ScanResult> {
+  const gaps = await analyzeNeuralFlowGaps();
+  const issues: ScanIssue[] = gaps.map(gap => ({
+    subsystem: "core_architecture",
+    severity: gap.severity,
+    message: `Missing Flow: ${gap.id} - ${gap.description}`,
+    context: `Expected file: ${gap.expectedFile}`
+  }));
+
+  const score = Math.max(0, 100 - (gaps.length * 5));
+  return {
+    domain: "bugs", // We map architectural gaps to 'bugs' domain for immediate attention
+    issues,
+    score,
+    scannedAt: Date.now()
+  };
 }
