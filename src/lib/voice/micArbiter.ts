@@ -2,8 +2,8 @@
  * Unified Microphone Arbiter — single global owner for all SpeechRecognition.
  * Prevents duplicate instances from HMR, wake word vs STT conflicts, etc.
  *
- * v31: Persistent Shared Recognition — maintains a SINGLE SpeechRecognition
- * instance that never stops, preventing the "beeping/clicking" sound on mobile.
+ * v32: Hardware Decoupled — Separates mic reservation from activation.
+ * Keeps a single instance but gives full control over when it's "hot".
  */
 
 export type MicMode = "idle" | "wake" | "command";
@@ -22,9 +22,10 @@ interface MicArbiterState {
   listeners: MicListeners | null;
   isStarted: boolean;
   restartTimer: any | null;
+  manualStop: boolean; // Prevent auto-restart if explicitly stopped
 }
 
-const MIC_GLOBAL_KEY = "__orion_mic_arbiter_v31__";
+const MIC_GLOBAL_KEY = "__orion_mic_arbiter_v32__";
 
 function getState(): MicArbiterState {
   const w = window as any;
@@ -35,7 +36,8 @@ function getState(): MicArbiterState {
       sharedRec: null,
       listeners: null,
       isStarted: false,
-      restartTimer: null
+      restartTimer: null,
+      manualStop: false
     };
   }
   return w[MIC_GLOBAL_KEY];
@@ -43,7 +45,7 @@ function getState(): MicArbiterState {
 
 /**
  * Prime the shared recognition instance.
- * Call this from a user gesture.
+ * Call this from a user gesture. Does NOT start the mic.
  */
 export function primeSharedMic() {
   const s = getState();
@@ -52,7 +54,7 @@ export function primeSharedMic() {
   const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
   if (!SR) return null;
 
-  console.log("[MicArbiter] Creating persistent Shared Recognition instance");
+  console.log("[MicArbiter] Initializing persistent Shared Recognition (Web Speech API)");
   const rec = new SR();
   rec.continuous = true;
   rec.interimResults = true;
@@ -60,8 +62,9 @@ export function primeSharedMic() {
   rec.maxAlternatives = 3;
 
   rec.onstart = () => {
-    console.log("[MicArbiter] Shared Mic started");
+    console.log("[MicArbiter] Web Speech started");
     s.isStarted = true;
+    s.manualStop = false;
     s.listeners?.onStart();
   };
 
@@ -70,30 +73,30 @@ export function primeSharedMic() {
   };
 
   rec.onend = () => {
+    console.log("[MicArbiter] Web Speech ended");
     s.isStarted = false;
     s.listeners?.onEnd();
 
-    // Restart imediato (sem gap audível) enquanto não estiver idle.
-    // Mesma lógica em todos os dispositivos — evita o ciclo liga/desliga no mobile.
-    if (s.mode !== "idle") {
+    // Auto-restart logic — ONLY if not manually stopped and not idle
+    if (s.mode !== "idle" && !s.manualStop) {
       if (s.restartTimer) clearTimeout(s.restartTimer);
       s.restartTimer = setTimeout(() => {
-        if (s.mode !== "idle" && !s.isStarted && s.sharedRec) {
-          try { s.sharedRec.start(); } catch (err: any) {
-            // InvalidStateError = já está rodando; ignorar
+        if (s.mode !== "idle" && !s.manualStop && !s.isStarted && s.sharedRec) {
+          try {
+            s.sharedRec.start();
+          } catch (err: any) {
             if (err?.name !== "InvalidStateError") {
-              console.warn("[MicArbiter] Restart falhou:", err);
+              console.warn("[MicArbiter] Restart failed:", err);
             }
           }
         }
-      }, 50);
+      }, 150); // Slightly more relaxed restart
     }
   };
 
   rec.onerror = (e: any) => {
-    // no-speech / aborted são normais durante silêncio prolongado — não logar
     if (e.error !== "no-speech" && e.error !== "aborted") {
-      console.warn("[MicArbiter] Shared Mic error:", e.error);
+      console.warn("[MicArbiter] Web Speech error:", e.error);
     }
     if (e.error === "aborted" || e.error === "no-speech") s.isStarted = false;
     s.listeners?.onError(e);
@@ -103,21 +106,56 @@ export function primeSharedMic() {
   return rec;
 }
 
-/** Claim the mic. Returns ownerId. Does NOT stop the hardware. */
+/**
+ * Explicitly start the Web Speech recognition hardware.
+ */
+export function startSharedMic() {
+  const s = getState();
+  const rec = s.sharedRec || primeSharedMic();
+  if (!rec) return false;
+
+  s.manualStop = false;
+  if (!s.isStarted) {
+    try {
+      rec.start();
+      return true;
+    } catch (err: any) {
+      if (err?.name === "InvalidStateError") return true; // Already running
+      console.warn("[MicArbiter] Manual start failed:", err);
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Explicitly stop the Web Speech recognition hardware.
+ * Use this to avoid competition with GCP STT or during TTS.
+ */
+export function stopSharedMic() {
+  const s = getState();
+  s.manualStop = true;
+  if (s.restartTimer) {
+    clearTimeout(s.restartTimer);
+    s.restartTimer = null;
+  }
+  if (s.isStarted && s.sharedRec) {
+    try {
+      s.sharedRec.stop();
+      s.isStarted = false;
+    } catch (err) {
+      console.warn("[MicArbiter] Stop failed:", err);
+    }
+  }
+}
+
+/** Claim the mic resource. Does NOT start the hardware. */
 export function claimMic(mode: MicMode = "idle", listeners?: MicListeners): number {
   const s = getState();
   s.mode = mode;
   s.listeners = listeners || null;
   s.ownerId++;
-
-  // Ensure started
-  if (mode !== "idle" && !s.isStarted) {
-    const rec = s.sharedRec || primeSharedMic();
-    if (rec) {
-      try { rec.start(); } catch {}
-    }
-  }
-
+  console.log(`[MicArbiter] Mic claimed by owner ${s.ownerId} in ${mode} mode`);
   return s.ownerId;
 }
 
@@ -127,8 +165,10 @@ export function releaseMic(ownerId: number, nextMode: MicMode = "idle"): boolean
 
   s.mode = nextMode;
   s.listeners = null;
-
-  // We DON'T stop the sharedRec here to keep it "hot"
+  // If releasing to idle, we should also stop the hardware
+  if (nextMode === "idle") {
+    stopSharedMic();
+  }
   return true;
 }
 
@@ -136,11 +176,16 @@ export function isMicOwner(id: number): boolean {
   return getState().ownerId === id;
 }
 
+export function isMicStarted(): boolean {
+  return getState().isStarted;
+}
+
 /** Force stop everything (e.g., app logout) */
 export function killMicRec() {
   const s = getState();
   s.mode = "idle";
   s.listeners = null;
+  s.manualStop = true;
   if (s.restartTimer) clearTimeout(s.restartTimer);
   try { s.sharedRec?.abort(); } catch {}
   s.sharedRec = null;
