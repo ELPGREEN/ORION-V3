@@ -1,6 +1,6 @@
 /**
  * Orion Agent Dispatcher — Modular Blueprint System
- * Inspired by NVIDIA NemoClaw.
+ * Inspired by NVIDIA NemoClaw and OpenCode Skills.
  *
  * Maps UI actions to specialized agents defined by blueprints.
  */
@@ -10,37 +10,50 @@ const BLUEPRINTS = {
     id: "pdf_analysis",
     label: "🔬 Research",
     color: "#4CAF50",
-    description: "Análise profunda de PDFs e documentos técnicos."
+    description: "Análise profunda de PDFs e documentos técnicos.",
+    skill: "orion-researcher"
   },
   page_summary: {
     id: "page_summary",
     label: "📝 Content",
     color: "#2196F3",
-    description: "Resumo e explicação de conteúdo web."
+    description: "Resumo e explicação de conteúdo web.",
+    skill: "orion-researcher"
   },
   web_search: {
     id: "web_search",
     label: "🔍 Search",
     color: "#FF9800",
-    description: "Busca em tempo real e verificação de fatos."
+    description: "Busca em tempo real e verificação de fatos.",
+    skill: "orion-researcher"
   },
   data_extract: {
     id: "data_extract",
     label: "📊 Data",
     color: "#9C27B0",
-    description: "Extração estruturada de tabelas e dados."
+    description: "Extração estruturada de tabelas e dados.",
+    skill: "orion-vision-system"
   },
   academic: {
     id: "academic",
     label: "📚 Academic",
     color: "#795548",
-    description: "Auxílio em escrita acadêmica e referências."
+    description: "Auxílio em escrita acadêmica e referências.",
+    skill: "orion-researcher"
+  },
+  auto_evolution: {
+    id: "auto_evolution",
+    label: "🚀 Evolve",
+    color: "#FF4081",
+    description: "Análise de código e melhorias do sistema.",
+    skill: "orion-auto-evolution"
   },
   general_chat: {
     id: "general_chat",
     label: "🤖 Orion",
     color: "#00E5FF",
-    description: "Assistente neural para tarefas gerais."
+    description: "Assistente neural para tarefas gerais.",
+    skill: "orion-llm-providers"
   },
 };
 
@@ -59,11 +72,13 @@ export function classifyActionToTask(action, context = {}) {
     "pdf-summarize": "pdf_analysis",
     "pdf-extract": "pdf_analysis",
     "pdf-questions": "pdf_analysis",
+    "auto-evolve": "auto_evolution"
   };
 
   if (map[action]) return map[action];
   if (context.pdfContext) return "pdf_analysis";
   if (context.pageContent) return "page_summary";
+  if (context.isCode) return "auto_evolution";
   return "general_chat";
 }
 

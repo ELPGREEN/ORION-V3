@@ -1,14 +1,19 @@
 /**
  * Orion Quantum Inference Router — Extension Edition
- * Simplified version of the Neurocore Quantum Router.
+ * Optimized for OpenRouter & OpenCode 2026.
  *
- * Decides which LLM provider to use based on task and complexity.
+ * Decides which LLM provider to use based on task, complexity,
+ * and current OpenRouter free tier availability.
  */
 
-const PROVIDERS = {
-  REASONING: "deepseek/deepseek-r1",    // Heavy lifting, logic, code
-  GENERAL: "google/gemini-2.0-flash", // Fast, multi-modal, general
-  FAST: "meta-llama/llama-3.3-70b",   // Low latency, summaries
+export const PROVIDERS = {
+  AUTO: "openrouter/free",
+  REASONING: "deepseek/deepseek-r1",
+  CODE: "qwen/qwen3-coder-480b",
+  GENERAL: "meta-llama/llama-3.3-70b-instruct",
+  FAST: "mistralai/mistral-small-3.1-24b-instruct",
+  VISION: "qwen/qwen2.5-vl-3b-instruct",
+  ACADEMIC: "deepseek/deepseek-r1",
 };
 
 const TASK_ROUTING = {
@@ -16,30 +21,49 @@ const TASK_ROUTING = {
   page_summary: PROVIDERS.FAST,
   web_search: PROVIDERS.GENERAL,
   data_extract: PROVIDERS.REASONING,
-  academic: PROVIDERS.REASONING,
-  general_chat: PROVIDERS.GENERAL,
+  academic: PROVIDERS.ACADEMIC,
+  auto_evolution: PROVIDERS.CODE,
+  general_chat: PROVIDERS.AUTO,
 };
 
 /**
- * Routes a query to the optimal provider.
+ * Routes a query to the optimal OpenRouter provider.
  */
 export function routeQuery(taskType, query = "") {
-  let provider = TASK_ROUTING[taskType] || PROVIDERS.GENERAL;
+  let provider = TASK_ROUTING[taskType] || PROVIDERS.AUTO;
 
-  // Simple heuristic for coding tasks in general chat
-  if (taskType === "general_chat") {
-    const codePatterns = /\b(código|função|api|erro|implemente|script|py|js|ts)\b/i;
-    if (codePatterns.test(query)) {
-      provider = PROVIDERS.REASONING;
-    }
+  const queryLower = (query || "").toLowerCase();
+
+  // ── Smart Contextual Overrides ──
+
+  // Code detection
+  if (queryLower.match(/\b(código|função|api|bug|implemente|script|py|js|ts|rust|go)\b/)) {
+    provider = PROVIDERS.CODE;
   }
 
-  // Measure Complexity (Simplified)
-  const complexity = query.length > 500 ? "high" : "normal";
+  // Complex reasoning detection
+  if (queryLower.match(/\b(por que|explique|prove|calcule|lógica|raciocínio|complexo)\b/) && queryLower.length > 200) {
+    provider = PROVIDERS.REASONING;
+  }
+
+  // Vision hint
+  if (queryLower.match(/\b(imagem|foto|veja|olhe|câmera|visão)\b/)) {
+    provider = PROVIDERS.VISION;
+  }
+
+  // Complexity Estimate
+  const complexity = query.length > 800 ? "high" : (query.length > 200 ? "normal" : "simple");
+
+  // Upgrade if complexity is high
   if (complexity === "high" && provider === PROVIDERS.FAST) {
     provider = PROVIDERS.GENERAL;
   }
 
-  console.log(`[Orion Router] Routed task ${taskType} to ${provider} (Complexity: ${complexity})`);
-  return { provider, complexity };
+  console.log(`[Orion Router] Task: ${taskType} -> Provider: ${provider} (Complexity: ${complexity})`);
+
+  return {
+    provider,
+    complexity,
+    isFree: provider.includes("free") || !provider.includes("/")
+  };
 }

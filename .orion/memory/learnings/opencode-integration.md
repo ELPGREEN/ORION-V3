@@ -1,0 +1,1 @@
+OpenRouter integration in Orion extension should prioritize free tier models and use the ai-orchestrator Edge Function for secure execution. Blueprints in extension/blueprints/ must be kept in sync with .opencode/skills/ to ensure capability parity.
