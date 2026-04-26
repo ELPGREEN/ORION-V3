@@ -47,65 +47,50 @@ export class PentagonPizzaOrchestrator {
       await this.transition("perceiving");
       const preCheck = await this.meta.validateInput(input);
       if (!preCheck.valid) {
-        return {
-          success: false,
-          output: `Falha de segurança/entrada: ${preCheck.feedback}`,
-          data: { breach: preCheck.guardrailBreach }
-        };
+        return { success: false, output: `Falha de segurança/entrada: ${preCheck.feedback}`, data: { breach: preCheck.guardrailBreach } };
       }
-
       this.state.perception = await this.perception.process(input, context);
 
-      // 2. Memory Layer (with CRAG integration)
+      // 2. Memory Layer
       await this.transition("remembering");
       this.state.memory = await this.memory.process(this.state.perception, context);
 
-      // 3. Reasoning Layer (with Strict Grounding)
+      // 3. Reasoning Layer
       await this.transition("reasoning");
-      this.state.reasoning = await this.reasoning.process(
-        { perception: this.state.perception, memory: this.state.memory },
-        context
-      );
+      this.state.reasoning = await this.reasoning.process({ perception: this.state.perception, memory: this.state.memory }, context);
 
       const midCheck = await this.meta.validateReasoning(this.state.reasoning);
       if (!midCheck.valid) {
-        console.warn(`[CORTEX] Logical consistency check failed: ${midCheck.feedback}`);
-        // Se a coerência estiver baixa, tentamos uma rota de fallback ou pedimos esclarecimento
         if (midCheck.guardrailBreach === "hallucination_detected") {
-          return {
-            success: false,
-            output: "Identifiquei uma possível inconsistência lógica no meu raciocínio. Poderia reformular ou fornecer mais detalhes?",
-            data: { reason: midCheck.feedback }
-          };
+          return { success: false, output: "Identifiquei uma inconsistência lógica. Poderia reformular?", data: { reason: midCheck.feedback } };
         }
       }
 
-      // 4. Action Layer (The ROI)
-      await this.transition("acting");
-      this.state.action = await this.action.process(this.state.reasoning, context);
-
-      // 5. Evaluation Layer (Post-Output Grounding)
-      await this.transition("evaluating");
-      const postCheck = await this.meta.validateOutput(
-        this.state.action,
-        this.state.memory?.mergedContext || "",
-        input
-      );
-      this.state.meta = postCheck;
-
-      if (!postCheck.valid) {
-        console.error(`[CORTEX] Hallucination detected in final output! Blocking response.`);
+      // ═══ NOVO: Intelligent Tool Activation Guard ═══
+      const toolCheck = await this.meta.validateToolActivation(this.state.reasoning?.plan || [], this.state.perception);
+      if (!toolCheck.valid) {
+        console.warn(`[CORTEX] Tool activation VETOED: ${toolCheck.feedback}`);
         return {
           success: false,
-          output: "Minha análise final detectou falta de fundamentação no contexto fornecido. Estou trabalhando para melhorar minha precisão.",
-          data: { error: postCheck.feedback }
+          output: `Percebi que você mencionou uma ferramenta, mas o contexto indica que não deseja executá-la agora (${this.state.perception?.intent}).`,
+          data: { vetoReason: toolCheck.feedback }
         };
       }
 
-      // Aprendizado se a qualidade for alta
-      if (postCheck.score > 85) {
-        await this.memory.learn(this.state);
+      // 4. Action Layer
+      await this.transition("acting");
+      this.state.action = await this.action.process(this.state.reasoning, context);
+
+      // 5. Evaluation Layer
+      await this.transition("evaluating");
+      const postCheck = await this.meta.validateOutput(this.state.action, this.state.memory?.mergedContext || "", input);
+      this.state.meta = postCheck;
+
+      if (!postCheck.valid) {
+        return { success: false, output: "Minha análise final detectou falta de fundamentação. Estou ajustando meu foco.", data: { error: postCheck.feedback } };
       }
+
+      if (postCheck.score > 85) await this.memory.learn(this.state);
 
       await this.transition("idle");
       return this.state.action;
@@ -113,11 +98,7 @@ export class PentagonPizzaOrchestrator {
     } catch (error: any) {
       console.error("[CORTEX] Critical Loop Failure:", error);
       await this.transition("idle");
-      return {
-        success: false,
-        output: "Ocorreu uma falha no meu processamento lógico. Por favor, tente novamente.",
-        data: { error: error.message }
-      };
+      return { success: false, output: "Ocorreu uma falha no meu processamento lógico.", data: { error: error.message } };
     }
   }
 

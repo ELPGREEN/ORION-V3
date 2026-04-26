@@ -10,6 +10,8 @@ export interface PerceptionResult {
   sentiment: string;
   rawInput: string;
   contextualMarkers: string[];
+  isNegation?: boolean;
+  confidence?: number;
 }
 
 export interface MemoryResult {

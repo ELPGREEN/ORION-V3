@@ -10,7 +10,8 @@ describe("PentagonPizzaOrchestrator", () => {
     const mockMeta = {
       validateInput: vi.fn().mockResolvedValue({ valid: true }),
       validateReasoning: vi.fn().mockResolvedValue({ valid: true }),
-      validateOutput: vi.fn().mockResolvedValue({ valid: true, score: 90 })
+      validateOutput: vi.fn().mockResolvedValue({ valid: true, score: 90 }),
+      validateToolActivation: vi.fn().mockResolvedValue({ valid: true })
     };
 
     const orchestrator = new PentagonPizzaOrchestrator(
