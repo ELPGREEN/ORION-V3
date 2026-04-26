@@ -61,6 +61,8 @@ export class PentagonPizzaOrchestrator {
       }
 
       this.state.perception = await this.perception.process(input, context);
+      const quotaCheck = await this.meta.validateMonetizationQuota(context?.userId);
+      if (!quotaCheck.valid) console.warn("[CORTEX] User has low quota, but proceeding to action layer for payment handling...");
       this.state.multimodalData = { visionDetections: context?.visionDetections };
 
       // 2. Memory Layer (Contextual & Episodic Retrieval)

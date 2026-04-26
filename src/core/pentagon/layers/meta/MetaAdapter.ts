@@ -3,45 +3,47 @@ import { gradeRetrieval } from "@/lib/neural/corrective-rag";
 import { evaluateRAGResponse } from "@/lib/neural/rag-evaluator";
 import { validateMLMCompleteness } from "@/lib/neural/neuro-realignment";
 import { RoboticsGuardProvider } from "../Providers";
+import { getUserServiceStats } from "@/lib/neural/arc-auto-charge";
 
 export class MetaAdapter {
   public async validateInput(input: string): Promise<MetaResult> {
     const maliciousPatterns = [/drop\s+table/i, /delete\s+from/i, /<script/i, /exec\(/i];
     const isMalicious = maliciousPatterns.some(p => p.test(input));
-    if (isMalicious) return { valid: false, score: 0, feedback: "Intenção maliciosa detectada.", guardrailBreach: "malicious_input" };
-    return { valid: true, score: 100, feedback: "Input seguro." };
+    if (isMalicious) return { valid: false, score: 0, feedback: "Intenção maliciosa.", guardrailBreach: "malicious_input" };
+    return { valid: true, score: 100, feedback: "Input OK." };
   }
 
   /**
-   * Valida segurança física para comandos robóticos (Industrial Safety)
+   * Verifica se o usuário tem saldo ou quota para a ação proposta.
    */
-  public async validateIndustrialSafety(plan: string[]): Promise<MetaResult> {
-    const requiresRobotics = plan.some(task => /robot|agv|mover|executar_missao/i.test(task));
+  public async validateMonetizationQuota(userId?: string): Promise<MetaResult> {
+    if (!userId) return { valid: true, score: 100, feedback: "Usuário não identificado, seguindo fluxo padrão." };
 
-    if (requiresRobotics) {
-      const isSafe = RoboticsGuardProvider.checkSafety(); // Interface com sensores reais (obstáculos, bateria)
-      if (!isSafe) {
+    try {
+      const stats = await getUserServiceStats(userId);
+      if (stats.creditsRemaining <= 0 && stats.trialRemaining <= 0) {
         return {
           valid: false,
-          score: 0,
-          feedback: "Operação robótica abortada: Violação de segurança física ou hardware crítico.",
-          guardrailBreach: "physical_safety_violation"
+          score: 10,
+          feedback: "Saldo insuficiente na carteira Órion.",
+          guardrailBreach: "insufficient_funds"
         };
       }
+      return { valid: true, score: 100, feedback: `Usuário possui saldo: R$ ${stats.creditsRemaining.toFixed(2)}` };
+    } catch {
+      return { valid: true, score: 50, feedback: "Erro ao validar quota, permitindo tentativa." };
     }
-    return { valid: true, score: 100, feedback: "Segurança industrial validada." };
   }
 
   public async validateToolActivation(actionPlan: string[], perception: any): Promise<MetaResult> {
     if (perception.isNegation && actionPlan.some(task => !task.includes("cancel") && !task.includes("stop"))) {
-      return { valid: false, score: 0, feedback: "Veto por negação detectada.", guardrailBreach: "negation_conflict" };
+      return { valid: false, score: 0, feedback: "Veto por negação.", guardrailBreach: "negation_conflict" };
     }
-
-    // Validação de Segurança Industrial Integrada
-    const safetyCheck = await this.validateIndustrialSafety(actionPlan);
-    if (!safetyCheck.valid) return safetyCheck;
-
-    return { valid: true, score: 100, feedback: "Ativação validada." };
+    const requiresRobotics = actionPlan.some(task => /robot|agv|mover/i.test(task));
+    if (requiresRobotics && !RoboticsGuardProvider.checkSafety()) {
+      return { valid: false, score: 0, feedback: "Risco físico detectado.", guardrailBreach: "physical_safety_violation" };
+    }
+    return { valid: true, score: 100, feedback: "Ativação OK." };
   }
 
   public async validateReasoning(reasoning: any): Promise<MetaResult> {
@@ -49,12 +51,12 @@ export class MetaAdapter {
     if (confidence < 0.6) return { valid: false, score: confidence * 100, feedback: "Baixa confiança.", guardrailBreach: "low_confidence" };
     const mlmScore = validateMLMCompleteness(rationale);
     if (mlmScore < 0.5) return { valid: false, score: mlmScore * 100, feedback: "Incoerência lógica.", guardrailBreach: "logical_inconsistency" };
-    return { valid: true, score: ((confidence + mlmScore) / 2) * 100, feedback: "Raciocínio válido." };
+    return { valid: true, score: ((confidence + mlmScore) / 2) * 100, feedback: "Raciocínio OK." };
   }
 
   public async validateOutput(action: any, originalContext: string, question: string): Promise<MetaResult> {
     if (!action.success) return { valid: false, score: 0, feedback: "Ação falhou." };
     const evalResult = evaluateRAGResponse({ response: action.output || "", question, context: originalContext });
-    return { valid: evalResult.groundedness.score >= 4, score: evalResult.overallScore, feedback: "Validado." };
+    return { valid: evalResult.groundedness.score >= 4, score: evalResult.overallScore, feedback: "ROI OK." };
   }
 }

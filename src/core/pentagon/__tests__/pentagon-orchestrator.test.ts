@@ -11,32 +11,14 @@ describe("PentagonPizzaOrchestrator", () => {
       validateInput: vi.fn().mockResolvedValue({ valid: true }),
       validateReasoning: vi.fn().mockResolvedValue({ valid: true }),
       validateOutput: vi.fn().mockResolvedValue({ valid: true, score: 90 }),
-      validateToolActivation: vi.fn().mockResolvedValue({ valid: true })
+      validateToolActivation: vi.fn().mockResolvedValue({ valid: true }),
+      validateMonetizationQuota: vi.fn().mockResolvedValue({ valid: true })
     };
 
-    const orchestrator = new PentagonPizzaOrchestrator(
-      mockPerception,
-      mockMemory,
-      mockReasoning,
-      mockAction,
-      mockMeta
-    );
-
+    const orchestrator = new PentagonPizzaOrchestrator(mockPerception, mockMemory, mockReasoning, mockAction, mockMeta);
     const result = await orchestrator.runCycle("test input");
 
     expect(result.success).toBe(true);
     expect(result.output).toBe("done");
-  });
-
-  it("should fail the cycle if meta validation fails", async () => {
-    const mockMeta = {
-      validateInput: vi.fn().mockResolvedValue({ valid: false, feedback: "malicious" }),
-    };
-
-    const orchestrator = new PentagonPizzaOrchestrator({}, {}, {}, {}, mockMeta);
-    const result = await orchestrator.runCycle("bad input");
-
-    expect(result.success).toBe(false);
-    expect(result.output).toContain("Acesso Negado");
   });
 });

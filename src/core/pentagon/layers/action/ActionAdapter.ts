@@ -1,20 +1,18 @@
 import { IPentagonLayer, ActionResult } from "../types";
 import { autoChargeBeforeService, detectServiceFromQuery } from "@/lib/neural/arc-auto-charge";
+import { ValueCalculator } from "./ValueCalculator";
 
 export class ActionAdapter implements IPentagonLayer<any, ActionResult> {
-  /**
-   * Executa ações reais, integrando com o sistema de cobrança automática (Monetização).
-   */
   public async process(reasoning: any, context: any): Promise<ActionResult> {
-    console.log("[ACTION] Checking value creation and monetization...");
-
     const userId = context?.userId;
     const userEmail = context?.userEmail || "";
     const userName = context?.userName || "Usuário";
     const rawInput = context?.rawInput || "";
 
-    // 1. Detectar se a ação é um serviço pago
     const serviceContext = detectServiceFromQuery(rawInput);
+    const roi = ValueCalculator.calculateROI(serviceContext || "general");
+
+    console.log(`[ACTION] Evaluating ROI for ${serviceContext}: ${roi.valueDescription}`);
 
     if (serviceContext && userId) {
       const chargeCheck = await autoChargeBeforeService(userId, userEmail, userName, serviceContext, rawInput);
@@ -22,23 +20,22 @@ export class ActionAdapter implements IPentagonLayer<any, ActionResult> {
       if (!chargeCheck.shouldProceed) {
         return {
           success: false,
-          output: chargeCheck.message,
+          output: `${chargeCheck.message}\n\n💡 **Valor deste serviço:** ${roi.valueDescription}`,
           data: {
             paymentUrl: chargeCheck.paymentUrl,
             price: chargeCheck.price,
-            needsPayment: chargeCheck.needsPayment
+            roiInfo: roi
           },
-          roiImpact: "Bloqueado por fluxo de monetização"
+          roiImpact: "Bloqueado aguardando monetização"
         };
       }
     }
 
-    // 2. Executar a ação baseada no plano algébrico
     return {
       success: true,
-      output: "Serviço executado com sucesso dentro do fluxo AquaMonkey.",
-      data: { planExecuted: reasoning.plan },
-      roiImpact: "Valor gerado e faturado via Stripe/ARC"
+      output: `Serviço concluído. ${roi.valueDescription}`,
+      data: { planExecuted: reasoning.plan, roiInfo: roi },
+      roiImpact: roi.valueDescription
     };
   }
 }
