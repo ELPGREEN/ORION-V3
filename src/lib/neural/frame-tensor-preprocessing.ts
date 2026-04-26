@@ -4,6 +4,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import { markVisionStart, markVisionEnd } from './pipeline-latency-tracker';
 
 export interface PreprocessingConfig {
   width: number;
@@ -28,32 +29,45 @@ export function preprocessFrame(
   source: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement,
   config: Partial<PreprocessingConfig> = {}
 ): tf.Tensor4D {
+  markVisionStart();
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
-  return tf.tidy(() => {
-    // 1. Convert source to tensor
-    let tensor = tf.browser.fromPixels(source);
-
-    // 2. Resize to model input size
-    tensor = tf.image.resizeBilinear(tensor, [finalConfig.height, finalConfig.width]);
-
-    // 3. Expand dimensions to [1, H, W, C]
-    let tensor4d = tensor.expandDims(0).toFloat();
-
-    // 4. Normalize to [0, 1]
-    if (finalConfig.normalize) {
-      tensor4d = tensor4d.div(255.0);
-
-      // 5. Apply ImageNet normalization (if mean/std provided)
-      if (finalConfig.mean && finalConfig.std) {
-        const mean = tf.tensor1d(finalConfig.mean).reshape([1, 1, 1, 3]);
-        const std = tf.tensor1d(finalConfig.std).reshape([1, 1, 1, 3]);
-        tensor4d = tensor4d.sub(mean).div(std);
-      }
+  try {
+    if (!source) {
+      throw new Error("Source element is null or undefined");
     }
 
-    return tensor4d as tf.Tensor4D;
-  });
+    return tf.tidy(() => {
+      // 1. Convert source to tensor
+      let tensor = tf.browser.fromPixels(source);
+
+      // 2. Resize to model input size
+      tensor = tf.image.resizeBilinear(tensor, [finalConfig.height, finalConfig.width]);
+
+      // 3. Expand dimensions to [1, H, W, C]
+      let tensor4d = tensor.expandDims(0).toFloat();
+
+      // 4. Normalize to [0, 1]
+      if (finalConfig.normalize) {
+        tensor4d = tensor4d.div(255.0);
+
+        // 5. Apply ImageNet normalization (if mean/std provided)
+        if (finalConfig.mean && finalConfig.std) {
+          const mean = tf.tensor1d(finalConfig.mean).reshape([1, 1, 1, 3]);
+          const std = tf.tensor1d(finalConfig.std).reshape([1, 1, 1, 3]);
+          tensor4d = tensor4d.sub(mean).div(std);
+        }
+      }
+
+      return tensor4d as tf.Tensor4D;
+    });
+  } catch (error) {
+    console.error("[Vision] Preprocessing failed:", error);
+    // Return an empty tensor to prevent pipeline crash
+    return tf.zeros([1, finalConfig.height, finalConfig.width, 3]);
+  } finally {
+    markVisionEnd();
+  }
 }
 
 /**
@@ -62,8 +76,21 @@ export function preprocessFrame(
 export function extractGrayscaleTensor(
   source: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement
 ): tf.Tensor2D {
-  return tf.tidy(() => {
-    const tensor = tf.browser.fromPixels(source);
-    return tensor.mean(2).toFloat().div(255.0) as tf.Tensor2D;
-  });
+  markVisionStart();
+  try {
+    if (!source) {
+      throw new Error("Source element is null or undefined");
+    }
+
+    return tf.tidy(() => {
+      const tensor = tf.browser.fromPixels(source);
+      return tensor.mean(2).toFloat().div(255.0) as tf.Tensor2D;
+    });
+  } catch (error) {
+    console.error("[Vision] Grayscale extraction failed:", error);
+    // Return a minimal zero tensor
+    return tf.zeros([1, 1]);
+  } finally {
+    markVisionEnd();
+  }
 }
