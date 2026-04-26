@@ -234,7 +234,8 @@ function buildJulesTask(
   latency: ReturnType<typeof getPipelineLatency>,
   context?: string,
 ): string {
-  const latencyInfo = `Pipeline latency: STT=${latency.sttMs}ms, LLM=${latency.llmMs}ms, TTS=${latency.ttsMs}ms, Vision=${latency.visionMs}ms, Total=${latency.totalMs}ms`;
+  const formatLatency = (value: number) => (value >= 0 ? `${Math.round(value)}ms` : "n/a");
+  const latencyInfo = `Pipeline latency: STT=${formatLatency(latency.sttMs)}, LLM=${formatLatency(latency.llmMs)}, TTS=${formatLatency(latency.ttsMs)}, Vision=${formatLatency(latency.visionMs)}, Total=${formatLatency(latency.totalMs)}`;
   const info = SUBSYSTEM_MAP[subsystem] || { file: "unknown", desc: subsystem };
 
   return (
