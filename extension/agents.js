@@ -1,32 +1,53 @@
 /**
- * Orion Agent Dispatcher — Maps UI actions to specialized agents
- * Used by background.js and content.js to route tasks.
+ * Orion Agent Dispatcher — Modular Blueprint System
+ * Inspired by NVIDIA NemoClaw.
+ *
+ * Maps UI actions to specialized agents defined by blueprints.
  */
 
-const AGENT_HUB_PATH = "/functions/v1/orion-agent-hub";
-
-const AGENT_LABELS = {
-  pdf_analysis: "🔬 Research",
-  page_summary: "📝 Content",
-  web_search: "🔍 Search",
-  data_extract: "📊 Data",
-  academic: "📚 Academic",
-  general_chat: "🤖 Orion",
-};
-
-const AGENT_COLORS = {
-  pdf_analysis: "#4CAF50",
-  page_summary: "#2196F3",
-  web_search: "#FF9800",
-  data_extract: "#9C27B0",
-  academic: "#795548",
-  general_chat: "#00E5FF",
+const BLUEPRINTS = {
+  pdf_analysis: {
+    id: "pdf_analysis",
+    label: "🔬 Research",
+    color: "#4CAF50",
+    description: "Análise profunda de PDFs e documentos técnicos."
+  },
+  page_summary: {
+    id: "page_summary",
+    label: "📝 Content",
+    color: "#2196F3",
+    description: "Resumo e explicação de conteúdo web."
+  },
+  web_search: {
+    id: "web_search",
+    label: "🔍 Search",
+    color: "#FF9800",
+    description: "Busca em tempo real e verificação de fatos."
+  },
+  data_extract: {
+    id: "data_extract",
+    label: "📊 Data",
+    color: "#9C27B0",
+    description: "Extração estruturada de tabelas e dados."
+  },
+  academic: {
+    id: "academic",
+    label: "📚 Academic",
+    color: "#795548",
+    description: "Auxílio em escrita acadêmica e referências."
+  },
+  general_chat: {
+    id: "general_chat",
+    label: "🤖 Orion",
+    color: "#00E5FF",
+    description: "Assistente neural para tarefas gerais."
+  },
 };
 
 /**
  * Classify a user action into a task_type for the agent hub.
  */
-function classifyActionToTask(action, context = {}) {
+export function classifyActionToTask(action, context = {}) {
   const map = {
     "analyze-page": "page_summary",
     summarize: "page_summary",
@@ -47,27 +68,22 @@ function classifyActionToTask(action, context = {}) {
 }
 
 /**
+ * Get blueprint details for a task type.
+ */
+export function getBlueprint(taskType) {
+  return BLUEPRINTS[taskType] || BLUEPRINTS.general_chat;
+}
+
+/**
  * Get the display label for an agent type.
  */
-function getAgentLabel(taskType) {
-  return AGENT_LABELS[taskType] || AGENT_LABELS.general_chat;
+export function getAgentLabel(taskType) {
+  return getBlueprint(taskType).label;
 }
 
 /**
  * Get the badge color for an agent type.
  */
-function getAgentColor(taskType) {
-  return AGENT_COLORS[taskType] || AGENT_COLORS.general_chat;
-}
-
-// Export for use in content.js and background.js (global scope in extension)
-if (typeof globalThis !== "undefined") {
-  globalThis.OrionAgents = {
-    AGENT_HUB_PATH,
-    AGENT_LABELS,
-    AGENT_COLORS,
-    classifyActionToTask,
-    getAgentLabel,
-    getAgentColor,
-  };
+export function getAgentColor(taskType) {
+  return getBlueprint(taskType).color;
 }

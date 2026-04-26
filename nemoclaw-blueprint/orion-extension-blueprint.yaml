@@ -1,0 +1,55 @@
+# NVIDIA NemoClaw Blueprint for Orion Extension
+# Enables Orion agents to run inside a hardened OpenShell sandbox.
+
+name: "Orion Neural Assistant"
+version: "5.5.0"
+description: "Cross-platform neural assistant with Policy Guard and Quantum Routing."
+
+# Protection layers (NemoClaw standard)
+protection:
+  landlock:
+    enabled: true
+    paths:
+      - /usr/bin/node
+      - /usr/bin/python3
+  seccomp:
+    enabled: true
+    profile: "default"
+  netns:
+    enabled: true
+    allow_dns: true
+    allow_hosts:
+      - "iasofthub.com"
+      - "supabase.co"
+      - "google.com"
+
+# Managed channels for agent communication
+channels:
+  messaging:
+    provider: "openshell"
+    topic: "orion-neural-bus"
+
+# State management
+state:
+  provider: "openshell-fs"
+  path: "/var/lib/orion/state"
+
+# Agent Definitions (linked to extension blueprints)
+agents:
+  - id: "summarizer"
+    blueprint: "extension/blueprints/summarizer.json"
+    resource_limits:
+      cpu: "1.0"
+      memory: "512Mi"
+
+  - id: "researcher"
+    blueprint: "extension/blueprints/researcher.json"
+    resource_limits:
+      cpu: "2.0"
+      memory: "1Gi"
+
+  - id: "searcher"
+    blueprint: "extension/blueprints/searcher.json"
+    resource_limits:
+      cpu: "1.0"
+      memory: "512Mi"
