@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { vsLog } from "./useVisionProcessing";
-import { claimMic, isMicOwner, releaseMic, primeSharedMic } from "@/lib/voice/micArbiter";
-import { ensurePersistentMic, isMicPermissionGranted } from "@/lib/voice/persistentMic";
+import { ensurePersistentMic } from "@/lib/voice/persistentMic";
+import { createGCPSTTSession, type GCPSTTSession } from "@/lib/voice/gcpSTT";
 
 const ORION_WAKE_REGEX = /([óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\b/i;
 
@@ -24,26 +24,41 @@ function extractCommandFromTranscript(transcript: string): string {
 
 export function useWakeWord(listening: boolean, speechOk: boolean, onActivate: () => void) {
   const [wakeWordActive, setWakeWordActive] = useState(false);
-  const wakeSingletonIdRef = useRef<number>(0);
   const wakeWordCooldownRef = useRef(false);
+  const wakeSessionRef = useRef<GCPSTTSession | null>(null);
+  const startingRef = useRef(false);
 
-  const startWakeWordListener = useCallback(() => {
-    if (!speechOk || listening) return;
+  const stopWakeWordListener = useCallback(() => {
+    startingRef.current = false;
+    wakeSessionRef.current?.stop();
+    wakeSessionRef.current?.destroy();
+    wakeSessionRef.current = null;
+    setWakeWordActive(false);
+  }, []);
 
-    // Claim mic with listeners — this uses the SHARED instance
-    wakeSingletonIdRef.current = claimMic("wake", {
-      onStart: () => setWakeWordActive(true),
-      onResult: (e: any) => {
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const transcript = (e.results[i][0]?.transcript || "").toLowerCase().trim();
-          const confidence = e.results[i][0]?.confidence || 0;
+  const startWakeWordListener = useCallback(async () => {
+    if (!speechOk || listening || wakeSessionRef.current || startingRef.current) return;
+    startingRef.current = true;
+
+    try {
+      const micReady = await ensurePersistentMic();
+      if (!micReady) {
+        startingRef.current = false;
+        setWakeWordActive(false);
+        return;
+      }
+
+      const session = createGCPSTTSession({
+        languageCode: "pt-BR",
+        onFinal: (text, confidence) => {
+          const transcript = (text || "").toLowerCase().trim();
+          if (!transcript) return;
           if (ORION_WAKE_REGEX.test(transcript) && !wakeWordCooldownRef.current) {
             wakeWordCooldownRef.current = true;
             const command = extractCommandFromTranscript(transcript);
-            vsLog("🎯 Wake word detectado via Shared Mic");
+            vsLog("🎯 Wake word detectado via Persistent STT");
             toast.success("🎯 Ativado!", { duration: 2000 });
 
-            // Dispatch event for GlobalOrionListener
             window.dispatchEvent(new CustomEvent("orion:wake-word-detected", {
               detail: { command, wakeLabel: "Orion", confidence },
             }));
@@ -51,25 +66,40 @@ export function useWakeWord(listening: boolean, speechOk: boolean, onActivate: (
             onActivate();
             setTimeout(() => { wakeWordCooldownRef.current = false; }, 1500);
           }
-        }
-      },
-      onEnd: () => setWakeWordActive(false),
-      onError: () => setWakeWordActive(false),
-    });
-  }, [listening, onActivate, speechOk]);
+        },
+        onError: () => {
+          setWakeWordActive(false);
+        },
+      });
 
-  const stopWakeWordListener = useCallback(() => {
-    releaseMic(wakeSingletonIdRef.current);
-    setWakeWordActive(false);
-  }, []);
+      const ok = await session.start();
+      if (!ok) {
+        session.destroy();
+        wakeSessionRef.current = null;
+        setWakeWordActive(false);
+        startingRef.current = false;
+        return;
+      }
+
+      wakeSessionRef.current = session;
+      setWakeWordActive(true);
+    } catch {
+      setWakeWordActive(false);
+    } finally {
+      startingRef.current = false;
+    }
+  }, [listening, onActivate, speechOk]);
 
   useEffect(() => {
     if (speechOk && !listening) {
-      primeSharedMic();
       startWakeWordListener();
     } else {
       stopWakeWordListener();
     }
+
+    return () => {
+      stopWakeWordListener();
+    };
   }, [listening, speechOk, startWakeWordListener, stopWakeWordListener]);
 
   return {
@@ -81,3 +111,4 @@ export function useWakeWord(listening: boolean, speechOk: boolean, onActivate: (
     clearBackgroundTranscripts: () => {},
   };
 }
+
