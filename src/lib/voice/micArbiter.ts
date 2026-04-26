@@ -2,96 +2,149 @@
  * Unified Microphone Arbiter — single global owner for all SpeechRecognition.
  * Prevents duplicate instances from HMR, wake word vs STT conflicts, etc.
  *
- * Modes: idle | wake | command
- * Only ONE recognition instance can exist at a time.
+ * v31: Persistent Shared Recognition — maintains a SINGLE SpeechRecognition
+ * instance that never stops, preventing the "beeping/clicking" sound on mobile.
  */
 
 export type MicMode = "idle" | "wake" | "command";
 
+interface MicListeners {
+  onResult: (e: any) => void;
+  onEnd: () => void;
+  onError: (e: any) => void;
+  onStart: () => void;
+}
+
 interface MicArbiterState {
   ownerId: number;
   mode: MicMode;
-  rec: any | null;
-  cleanup: (() => void) | null;
+  sharedRec: any | null;
+  listeners: MicListeners | null;
+  isStarted: boolean;
+  restartTimer: any | null;
 }
 
-const MIC_GLOBAL_KEY = "__orion_mic_arbiter__";
+const MIC_GLOBAL_KEY = "__orion_mic_arbiter_v31__";
 
 function getState(): MicArbiterState {
   const w = window as any;
   if (!w[MIC_GLOBAL_KEY]) {
-    w[MIC_GLOBAL_KEY] = { ownerId: 0, mode: "idle" as MicMode, rec: null, cleanup: null };
+    w[MIC_GLOBAL_KEY] = {
+      ownerId: 0,
+      mode: "idle",
+      sharedRec: null,
+      listeners: null,
+      isStarted: false,
+      restartTimer: null
+    };
   }
   return w[MIC_GLOBAL_KEY];
 }
 
-/** Kill any existing recognition and claim ownership. Returns new owner ID. */
-export function claimMic(mode: MicMode = "idle"): number {
+/**
+ * Prime the shared recognition instance.
+ * Call this from a user gesture.
+ */
+export function primeSharedMic() {
   const s = getState();
-  // Run previous cleanup
-  if (s.cleanup) { try { s.cleanup(); } catch {} }
-  s.cleanup = null;
-  // Kill existing recognition
-  try { s.rec?.abort?.(); } catch {}
-  try { s.rec?.stop?.(); } catch {}
-  s.rec = null;
+  if (s.sharedRec) return s.sharedRec;
+
+  const SR = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+  if (!SR) return null;
+
+  console.log("[MicArbiter] Creating persistent Shared Recognition instance");
+  const rec = new SR();
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.lang = "pt-BR";
+  rec.maxAlternatives = 3;
+
+  rec.onstart = () => {
+    console.log("[MicArbiter] Shared Mic started");
+    s.isStarted = true;
+    s.listeners?.onStart();
+  };
+
+  rec.onresult = (e: any) => {
+    s.listeners?.onResult(e);
+  };
+
+  rec.onend = () => {
+    console.log("[MicArbiter] Shared Mic ended (auto-restarting...)");
+    s.isStarted = false;
+    s.listeners?.onEnd();
+
+    // Auto-restart to keep it "Sempre Ativado"
+    if (s.mode !== "idle") {
+      if (s.restartTimer) clearTimeout(s.restartTimer);
+      s.restartTimer = setTimeout(() => {
+        if (s.mode !== "idle" && !s.isStarted) {
+          try { s.sharedRec?.start(); } catch (err) {
+            console.warn("[MicArbiter] Auto-restart failed:", err);
+          }
+        }
+      }, 1000);
+    }
+  };
+
+  rec.onerror = (e: any) => {
+    console.warn("[MicArbiter] Shared Mic error:", e.error);
+    if (e.error === "aborted") s.isStarted = false;
+    s.listeners?.onError(e);
+  };
+
+  s.sharedRec = rec;
+  return rec;
+}
+
+/** Claim the mic. Returns ownerId. Does NOT stop the hardware. */
+export function claimMic(mode: MicMode = "idle", listeners?: MicListeners): number {
+  const s = getState();
   s.mode = mode;
+  s.listeners = listeners || null;
   s.ownerId++;
+
+  // Ensure started
+  if (mode !== "idle" && !s.isStarted) {
+    const rec = s.sharedRec || primeSharedMic();
+    if (rec) {
+      try { rec.start(); } catch {}
+    }
+  }
+
   return s.ownerId;
 }
 
-/** Release mic ONLY if this owner is still current */
 export function releaseMic(ownerId: number, nextMode: MicMode = "idle"): boolean {
   const s = getState();
   if (s.ownerId !== ownerId) return false;
-  if (s.cleanup) { try { s.cleanup(); } catch {} }
-  s.cleanup = null;
-  try { s.rec?.abort?.(); } catch {}
-  try { s.rec?.stop?.(); } catch {}
-  s.rec = null;
+
   s.mode = nextMode;
+  s.listeners = null;
+
+  // We DON'T stop the sharedRec here to keep it "hot"
   return true;
 }
 
-/** Check if given ID is still the active owner */
 export function isMicOwner(id: number): boolean {
   return getState().ownerId === id;
 }
 
-/** Register the current recognition instance */
-export function registerMicRec(rec: any, mode: MicMode) {
+/** Force stop everything (e.g., app logout) */
+export function killMicRec() {
   const s = getState();
-  s.rec = rec;
-  s.mode = mode;
+  s.mode = "idle";
+  s.listeners = null;
+  if (s.restartTimer) clearTimeout(s.restartTimer);
+  try { s.sharedRec?.abort(); } catch {}
+  s.sharedRec = null;
+  s.isStarted = false;
 }
 
-/** Register cleanup function for the ACTIVE owner */
-export function registerMicCleanup(fn: () => void) {
-  getState().cleanup = fn;
-}
-
-/** Get current mic mode */
 export function getMicMode(): MicMode {
   return getState().mode;
 }
 
-/** Set mic mode without changing ownership */
-export function setMicMode(mode: MicMode) {
-  getState().mode = mode;
-}
-
-/** Force-kill any active recognition (e.g., before TTS) */
-export function killMicRec() {
-  const s = getState();
-  if (s.cleanup) { try { s.cleanup(); } catch {} }
-  s.cleanup = null;
-  try { s.rec?.abort?.(); } catch {}
-  try { s.rec?.stop?.(); } catch {}
-  s.rec = null;
-  s.mode = "idle";
-}
-
-/** Get the active recognition instance (for external checks) */
 export function getActiveMicRec(): any | null {
-  return getState().rec;
+  return getState().sharedRec;
 }
