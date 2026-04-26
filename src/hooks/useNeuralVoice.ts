@@ -434,13 +434,9 @@ export function useNeuralVoice(
     const cleanup = () => {
       voiceActiveRef.current = false;
       intentionalStopRef.current = true;
-      try { recRef.current?.abort?.(); } catch {}
-      try { recRef.current?.stop?.(); } catch {}
-
       releaseMic(singletonIdRef.current);
       clearRestartTimer();
     };
-    registerMicCleanup(cleanup);
 
     ensureVoiceBootstrapOnce();
     const voice = getOrionVoice();
@@ -470,7 +466,7 @@ export function useNeuralVoice(
     if (!onCmdRef.current || intentionalStopRef.current) return;
 
     // Re-claim mic (wake word may have claimed it during TTS)
-    singletonIdRef.current = claimMic("command", { soft: true });
+    singletonIdRef.current = claimMic("command");
 
       // Flush any pending browser-STT buffer only when GCP STT is NOT the active path.
       // When GCP is active, its own merged final callback already delivers the command,
@@ -501,7 +497,7 @@ export function useNeuralVoice(
     }
 
     startListeningFresh(onCmdRef.current);
-  }, [scheduleRecognitionRestart]);
+  }, []);
 
   // (Mic watchdog moved after bargeIn declaration)
 
@@ -857,7 +853,7 @@ export function useNeuralVoice(
   const startListening = useCallback((onCmd: (c: string) => void) => {
     console.log("[Voice] 📞 startListening called", { useGCPSTT: useGCPSTTRef.current });
     const boot = async () => {
-      singletonIdRef.current = claimMic("command", { soft: true });
+      singletonIdRef.current = claimMic("command");
       intentionalStopRef.current = false;
       voiceActiveRef.current = true;
       clearRestartTimer();
@@ -1043,8 +1039,6 @@ export function useNeuralVoice(
     gcpSessionRef.current = null;
     if (sentenceTimerRef.current) { clearTimeout(sentenceTimerRef.current); sentenceTimerRef.current = null; }
     sentenceAccumulatorRef.current = "";
-    try { recRef.current?.abort?.(); } catch {}
-
 
     releaseMic(singletonIdRef.current);
   }, [clearRestartTimer]);

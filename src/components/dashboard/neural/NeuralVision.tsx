@@ -572,10 +572,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // ═══ Wake word activation — handoff DIRECTLY to main STT (no TTS in between) ═══
   const activateByWakeWord = useCallback(() => {
-    wakeWordEnabledRef.current = false;
-    try { wakeRecRef.current?.abort?.(); } catch {}
-    try { wakeRecRef.current?.stop?.(); } catch {}
-    wakeRecRef.current = null;
+    // wake word state is now managed by useWakeWord/micArbiter; just stop the listener
 
     if (directVoiceStartTimerRef.current) {
       clearTimeout(directVoiceStartTimerRef.current);
@@ -600,7 +597,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }, handoffDelay);
   }, [handleVoice, startListening, stopListen]);
 
-  const { wakeWordActive, wakeWordEnabledRef, wakeRecRef, startWakeWordListener, stopWakeWordListener, enableWakeWord, getBackgroundTranscripts } = useWakeWord(listening, skipWakeWord ? false : speechOk, activateByWakeWord);
+  const { wakeWordActive, startWakeWordListener, stopWakeWordListener, enableWakeWord, getBackgroundTranscripts } = useWakeWord(listening, skipWakeWord ? false : speechOk, activateByWakeWord);
 
   useEffect(() => { bgTranscriptsGetterRef.current = getBackgroundTranscripts; }, [getBackgroundTranscripts]);
 
@@ -774,7 +771,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (skipWakeWord) return;
 
     // When main listener is active, stop wake word (mutual exclusion)
-    if (listening && wakeRecRef.current) {
+    if (listening && wakeWordActive) {
       stopWakeWordListener();
       return;
     }
@@ -796,7 +793,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     enableWakeWord();
     const timer = setTimeout(() => startWakeWordListener(), 1500);
     return () => clearTimeout(timer);
-  }, [skipWakeWord, active, listening, speechOk, wakeWordActive, enableWakeWord, startWakeWordListener, stopWakeWordListener, wakeRecRef, voiceActiveRef]);
+  }, [skipWakeWord, active, listening, speechOk, wakeWordActive, enableWakeWord, startWakeWordListener, stopWakeWordListener, voiceActiveRef]);
 
   // Awareness sync
   useEffect(() => {
