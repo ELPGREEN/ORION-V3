@@ -213,6 +213,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const voiceClone = useOrionVoiceClone();
 
   const voiceCheckDoneRef = useRef(false);
+  const isTransitioningRef = useRef(false);
 
   // Expose identityStatus globally so orion-ai-client can send it to neural-ops
   useEffect(() => {
@@ -295,6 +296,9 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // ═══ Camera controls ═══
   const startCamera = useCallback(async (options?: { announce?: boolean }) => {
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+    try {
     const shouldAnnounce = options?.announce ?? true;
     if (!navigator.mediaDevices?.getUserMedia) { toast.error("Câmera não suportada"); return; }
     try {
@@ -345,6 +349,11 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
       const name = err?.name || "";
+      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+        toast.error("Acesso à câmera negado. Por favor, libere nas configurações do navegador.");
+        setActive(false); VS.active = false;
+        return;
+      }
       const msg = err?.message || "";
       console.error("[Vision] startCamera failed:", name, msg, err);
       let userMsg = "Erro na câmera";
@@ -353,15 +362,20 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       else if (name === "NotReadableError") userMsg = "Câmera em uso por outro app.";
       toast.error(userMsg);
     }
+    } finally { isTransitioningRef.current = false; }
   }, [speak]);
   useEffect(() => { startCameraRef.current = startCamera; }, [startCamera]);
 
   const stopCamera = useCallback(() => {
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+    try {
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
     setActive(false); VS.active = false; VS.regions = [];
     cancelAnimationFrame(animRef.current); prevRef.current = null;
     resetVisionCache();
+    } finally { isTransitioningRef.current = false; }
   }, []);
 
   const deactivateGracefully = useCallback(() => {
@@ -807,6 +821,10 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     let running = true;
     let frameCount = 0;
     const loop = () => {
+      // v32: Variable frameskip based on system load (Orion speaking)
+      const isSpeaking = VoiceState.aiResponding || speakingRef.current;
+      const dynamicProcessSkip = isSpeaking ? 30 : 15;
+      const dynamicMPSkip = isSpeaking ? 60 : 30;
       if (!running) return;
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -825,7 +843,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       VS.frames++;
 
       // Throttle processFrame to every 15 frames (was 10) — saves more CPU
-      if (frameCount % 15 === 0) {
+      if (frameCount % dynamicProcessSkip === 0) {
         const result = processFrame(ctx, w, h, prevRef.current);
         VS.regions = result.regions; VS.motion = result.motion;
         VS.shapeDescriptors = result.shapeDescriptors || [];
@@ -841,7 +859,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       }
 
 // Throttle ML detection — optimized via VISION_MEDIAPIPE_FRAMESKIP env (default: every 10 frames)
-      if (frameCount % VISION_MEDIAPIPE_FRAMESKIP === 0 && !localDetectionRunningRef.current && video && video.readyState >= 2 && w > 0 && h > 0 && mpObjectDetector && mpVisionReady) {
+      if (frameCount % dynamicMPSkip === 0 && !localDetectionRunningRef.current && video && video.readyState >= 2 && w > 0 && h > 0 && mpObjectDetector && mpVisionReady) {
         const now = Date.now();
         if (now - lastLocalDetectionRef.current > 300) {
           lastLocalDetectionRef.current = now;

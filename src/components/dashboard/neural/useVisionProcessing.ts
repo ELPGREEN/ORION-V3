@@ -7,9 +7,13 @@ type TextRegion = { x: number; y: number; w: number; h: number; confidence: numb
 type KMeansResult = { clusters: { r: number; g: number; b: number; count: number }[]; k: number };
 type ImageQuality = { sharpness: number; exposure: number; overall: number };
 
+let _blurBuffer: Float32Array | null = null;
+let _grayRawBuffer: Float32Array | null = null;
 function gaussianBlur3x3(data: Float32Array, w: number, h: number): Float32Array {
   // Simple box blur approximation
-  const out = new Float32Array(w * h);
+  if (!_blurBuffer || _blurBuffer.length !== w * h) _blurBuffer = new Float32Array(w * h);
+  const out = _blurBuffer;
+  out.fill(0);
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       let sum = 0;
@@ -22,9 +26,13 @@ function gaussianBlur3x3(data: Float32Array, w: number, h: number): Float32Array
   return out;
 }
 
+let _magBuffer: Float32Array | null = null;
+let _dirBuffer: Float32Array | null = null;
 function sobelWithDirection(gray: Float32Array, w: number, h: number) {
-  const magnitude = new Float32Array(w * h);
-  const direction = new Float32Array(w * h);
+  if (!_magBuffer || _magBuffer.length !== w * h) _magBuffer = new Float32Array(w * h);
+  if (!_dirBuffer || _dirBuffer.length !== w * h) _dirBuffer = new Float32Array(w * h);
+  const magnitude = _magBuffer;
+  const direction = _dirBuffer;
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       const gx = -gray[(y-1)*w+(x-1)] + gray[(y-1)*w+(x+1)] - 2*gray[y*w+(x-1)] + 2*gray[y*w+(x+1)] - gray[(y+1)*w+(x-1)] + gray[(y+1)*w+(x+1)];
@@ -36,8 +44,11 @@ function sobelWithDirection(gray: Float32Array, w: number, h: number) {
   return { magnitude, direction };
 }
 
+let _nmsBuffer: Float32Array | null = null;
 function nonMaxSuppression(mag: Float32Array, dir: Float32Array, w: number, h: number): Float32Array {
-  const out = new Float32Array(w * h);
+  if (!_nmsBuffer || _nmsBuffer.length !== w * h) _nmsBuffer = new Float32Array(w * h);
+  const out = _nmsBuffer;
+  out.fill(0);
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       const idx = y * w + x;
@@ -91,7 +102,7 @@ function classifyScene(px: Uint8ClampedArray, w: number, h: number, _sobel: Floa
 function otsuThreshold(gray: Float32Array, _w: number, _h: number) {
   const hist = new Array(256).fill(0);
   for (let i = 0; i < gray.length; i++) hist[Math.min(255, Math.max(0, Math.round(gray[i])))]++;
-  let total = gray.length, sum = 0;
+  const total = gray.length, sum = 0;
   for (let i = 0; i < 256; i++) sum += i * hist[i];
   let sumB = 0, wB = 0, maxVar = 0, threshold = 128;
   for (let t = 0; t < 256; t++) {
@@ -163,7 +174,8 @@ export function processFrame(
   const px = imgData.data;
 
   // ═══ Phase 1: Grayscale → Gaussian Blur → Sobel (LAPIX pipeline) ═══
-  const grayRaw = new Float32Array(w * h);
+  if (!_grayRawBuffer || _grayRawBuffer.length !== w * h) _grayRawBuffer = new Float32Array(w * h);
+  const grayRaw = _grayRawBuffer;
   for (let i = 0; i < w * h; i++) {
     const idx = i * 4;
     grayRaw[i] = 0.299 * px[idx] + 0.587 * px[idx + 1] + 0.114 * px[idx + 2];

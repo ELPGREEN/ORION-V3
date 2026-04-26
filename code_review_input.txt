@@ -1,5 +1,0 @@
-File: src/lib/voice/micArbiter.ts
-Summary: Separated mic reservation (claimMic) from hardware activation (startSharedMic). Added manualStop flag to prevent auto-restart loops.
-
-File: src/hooks/useNeuralVoice.ts
-Summary: Enforced single STT engine. Added 800ms safety delay after TTS to avoid echo feedback. Coordinated hardware stop/start with micArbiter.
