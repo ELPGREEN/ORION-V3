@@ -993,6 +993,12 @@ export async function analyzeFrameStreaming(
       .replace(/\n{3,}/g, "\n\n");
 
     if (learnedFacts.length > 0) addUserMemory(learnedFacts);
+    if (cleanDescription) {
+      pushToWorkingMemory(cleanDescription, "ai_response", 0.82, {
+        source: isVoiceInput ? "voice_stream" : "text_stream",
+        intentType,
+      });
+    }
     return { description: cleanDescription || null, learnedFacts, identifiedObjects };
   } catch (e: any) {
     if (e?.name !== "AbortError") {
