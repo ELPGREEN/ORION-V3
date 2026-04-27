@@ -60,7 +60,7 @@ export async function wrapAsync<T>(
  * Specifically handles Supabase client calls (RPC or Query).
  */
 export async function wrapSupabase<T>(
-  promise: Promise<{ data: T | null; error: any; count?: number | null }>,
+  promise: PromiseLike<{ data: T | null; error: any; count?: number | null }>,
   context: Record<string, any> = {}
 ): Promise<{ data: T | null; count: number | null }> {
   const correlationId = generateCorrelationId();
@@ -89,7 +89,7 @@ export async function wrapSupabase<T>(
  * Specifically handles Supabase Edge Function invocations.
  */
 export async function wrapEdgeFunction<T>(
-  promise: Promise<{ data: T | null; error: any }>,
+  promise: PromiseLike<{ data: T | null; error: any }>,
   functionName: string,
   context: Record<string, any> = {}
 ): Promise<T | null> {

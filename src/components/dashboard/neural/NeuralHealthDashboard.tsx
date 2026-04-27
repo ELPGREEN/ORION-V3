@@ -146,7 +146,8 @@ export function NeuralHealthDashboard() {
         neuralPercent: nt > 0 ? Math.round(((nt - np) / nt) * 100) : 100,
       };
 
-      const recentErrors = (recentFailedJobs.data || []).map((j: any) => ({
+      const recentErrorRows = (recentFailedJobs.data ?? []) as Array<{ error_message: string | null; completed_at: string | null; job_type: string | null }>;
+      const recentErrors = recentErrorRows.map((j) => ({
         message: (j.error_message || "Unknown error").substring(0, 100),
         time: j.completed_at || "",
         source: j.job_type || "document",
