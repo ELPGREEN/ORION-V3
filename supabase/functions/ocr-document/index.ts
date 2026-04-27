@@ -361,7 +361,7 @@ async function tryOpenAI(img: ImageData) {
   throw new Error("Gemini OCR failed");
 }
 
-async function tryAnthropic(_img: ImageData) {
+async function tryAnthropic(img: ImageData) {
   // Anthropic removed — use Gemini instead (routed through tryOpenAI/tryGemini)
   throw new Error("Anthropic disabled — using Gemini FREE");
   const key = Deno.env.get("ANTHROPIC_API_KEY");
