@@ -1,14 +1,82 @@
-import { IPentagonLayer, ReasoningResult } from "../types";
+/**
+ * 🧠 Reasoning Adapter — Lobo frontal real
+ * Substitui o mock por um chamado real à edge function pentagon-reasoner
+ * (Lovable AI Gateway → Gemini 2.5 Flash com tool calling estruturado).
+ */
+import { supabase } from "@/integrations/supabase/client";
+import { IPentagonLayer, ReasoningResult, PerceptionResult, MemoryResult } from "../types";
 
-export class ReasoningAdapter implements IPentagonLayer<any, ReasoningResult> {
-  public async process(data: { perception: any, memory: any }, context: any): Promise<ReasoningResult> {
-    // Aqui chamaria o LLM para decidir o plano de ação
-    // Por enquanto simulamos a lógica
+interface ReasoningInput {
+  perception: PerceptionResult;
+  memory: MemoryResult;
+}
+
+export interface ExtendedReasoningResult extends ReasoningResult {
+  responseHint?: string;
+  model?: string;
+}
+
+export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, ExtendedReasoningResult> {
+  public async process(data: ReasoningInput, context: any = {}): Promise<ExtendedReasoningResult> {
+    const { perception, memory } = data;
+
+    // Extract RAG snippets from merged context (split by markers, fallback to chunks)
+    const ragSnippets = this.extractSnippets(memory?.mergedContext ?? "");
+
+    try {
+      const { data: result, error } = await supabase.functions.invoke("pentagon-reasoner", {
+        body: {
+          query: perception?.rawInput ?? "",
+          intent: perception?.intent,
+          entities: perception?.entities,
+          memoryContext: memory?.mergedContext?.slice(0, 4000),
+          ragSnippets,
+          domain: context?.domain,
+        },
+      });
+
+      if (error || !result?.success) {
+        console.warn("[Reasoning] reasoner unavailable, falling back", error);
+        return this.fallback(perception, memory);
+      }
+
+      return {
+        plan: Array.isArray(result.plan) ? result.plan : ["responder"],
+        rationale: result.rationale ?? "",
+        confidence: typeof result.confidence === "number" ? result.confidence : 0.7,
+        subTasks: Array.isArray(result.subTasks) ? result.subTasks : [],
+        responseHint: result.responseHint ?? "",
+        model: result.model,
+      };
+    } catch (err) {
+      console.error("[Reasoning] critical fail", err);
+      return this.fallback(perception, memory);
+    }
+  }
+
+  private extractSnippets(merged: string): string[] {
+    if (!merged) return [];
+    // Split by common RAG separators or chunk into ~600 char pieces
+    const parts = merged
+      .split(/\n{2,}|\[\d+\]|---+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 80);
+    return parts.slice(0, 6);
+  }
+
+  private fallback(perception: PerceptionResult, memory: MemoryResult): ExtendedReasoningResult {
+    const intent = perception?.intent ?? "geral";
+    const hasContext = (memory?.mergedContext?.length ?? 0) > 100;
     return {
-      plan: ["analisar_demanda", "buscar_jurisprudencia", "gerar_peticao"],
-      rationale: `Usuário deseja ${data.perception.intent} com contexto ${data.memory.mergedContext.substring(0, 20)}...`,
-      confidence: 0.95,
-      subTasks: []
+      plan: hasContext
+        ? ["recuperar_contexto", "sintetizar_resposta", "validar_fontes"]
+        : ["interpretar_pergunta", "responder_com_conhecimento_geral"],
+      rationale: hasContext
+        ? `Fallback local — usando ${memory.mergedContext.length} chars de contexto para intent "${intent}"`
+        : `Fallback local — sem contexto suficiente para intent "${intent}"`,
+      confidence: hasContext ? 0.55 : 0.35,
+      subTasks: [],
+      responseHint: "",
     };
   }
 }
