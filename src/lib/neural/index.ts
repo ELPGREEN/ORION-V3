@@ -225,6 +225,10 @@ export * from "./stdp";
 export * from "./temporal-binding";
 
 // ═══ Orion Core Systems ═══
+// 🍕 Pentagon Pizza — Unified Consciousness (single brain across chat/voice/vision)
+export { getPentagonOrchestrator, PentagonPizzaOrchestrator } from "@/core/pentagon";
+export type { PentagonPizzaState } from "@/core/pentagon";
+
 export { matchAndExecuteTool, getAvailableTools } from "./orion-tool-executor";
 export {
   type NeuralCommand,
