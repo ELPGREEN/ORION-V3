@@ -1120,6 +1120,7 @@ export async function processInteraction(params: {
 }): Promise<string> {
   const { question, context = "", chatHistory, intent, onToken, onSentence } = params;
   const t0 = Date.now();
+  pushToWorkingMemory(question, "user_intent", 0.94, { source: "processInteraction", intent: intent || "auto" });
 
   const user = await getCachedAuthUser();
   const userId = user?.id || "anonymous";
@@ -1208,6 +1209,9 @@ export async function processInteraction(params: {
 
   // 8. Post-Interaction Learning
   const latency = Date.now() - t0;
+  if (responseText?.trim()) {
+    pushToWorkingMemory(responseText, "ai_response", 0.8, { source: "processInteraction", intent: detectedIntent, latency });
+  }
   postCognitionLearn(question, responseText, latency, detectedIntent).catch(console.error);
 
   return responseText;
