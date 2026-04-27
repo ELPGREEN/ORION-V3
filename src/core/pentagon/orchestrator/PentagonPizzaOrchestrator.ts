@@ -21,9 +21,22 @@ export interface PentagonPizzaState {
   meta?: MetaResult;
   history: CognitiveState[];
   multimodalData?: {
-    visionDetections?: any[];
-    telemetry?: any;
+    visionDetections?: unknown[];
+    telemetry?: unknown;
   };
+}
+
+
+interface IPerceptionLayer { process: (i: string, c: Record<string, any>) => Promise<PerceptionResult>; }
+interface IMemoryLayer { process: (p: PerceptionResult, c: Record<string, any>) => Promise<MemoryResult>; learn: (s: PentagonPizzaState) => Promise<void>; }
+interface IReasoningLayer { process: (d: { perception: PerceptionResult; memory: MemoryResult; multimodal: unknown }, c: Record<string, any>) => Promise<ReasoningResult>; }
+interface IActionLayer { process: (r: ReasoningResult, c: Record<string, any>) => Promise<ActionResult>; }
+interface IMetaLayer {
+  validateInput: (i: string) => Promise<MetaResult>;
+  validateMonetizationQuota: (u: string | undefined) => Promise<MetaResult>;
+  validateReasoning: (r: ReasoningResult) => Promise<MetaResult>;
+  validateToolActivation: (p: string[], i: PerceptionResult) => Promise<MetaResult>;
+  validateOutput: (a: ActionResult, c: string, i: string) => Promise<MetaResult>;
 }
 
 export class PentagonPizzaOrchestrator {
@@ -33,11 +46,11 @@ export class PentagonPizzaOrchestrator {
   };
 
   constructor(
-    private perception: any,
-    private memory: any,
-    private reasoning: any,
-    private action: any,
-    private meta: any
+    private perception: IPerceptionLayer,
+    private memory: IMemoryLayer,
+    private reasoning: IReasoningLayer,
+    private action: { process: (r: unknown, c: Record<string, any>) => Promise<ActionResult> },
+    private meta: IMetaLayer
   ) {}
 
   private async transition(newState: CognitiveState) {
@@ -49,21 +62,21 @@ export class PentagonPizzaOrchestrator {
   /**
    * Executa o ciclo cognitivo completo com suporte a fluxos algébricos e industriais.
    */
-  public async runCycle(input: string, context: any = {}): Promise<ActionResult> {
+  public async runCycle(input: string, context: Record<string, any> = {}): Promise<ActionResult> {
     try {
       // 1. Perception Layer (Text + Vision + Identity)
       await this.transition("perceiving");
 
       // Pre-Input Guard (Security & Identity check)
-      const preCheck = await this.meta.validateInput(input);
+      const preCheck: unknown = await this.meta.validateInput(input);
       if (!preCheck.valid) {
         return { success: false, output: `Acesso Negado: ${preCheck.feedback}`, data: { breach: preCheck.guardrailBreach } };
       }
 
       this.state.perception = await this.perception.process(input, context);
-      const quotaCheck = await this.meta.validateMonetizationQuota(context?.userId);
+      const quotaCheck: unknown = await this.meta.validateMonetizationQuota(context?.userId as string);
       if (!quotaCheck.valid) console.warn("[CORTEX] User has low quota, but proceeding to action layer for payment handling...");
-      this.state.multimodalData = { visionDetections: context?.visionDetections };
+      this.state.multimodalData = { visionDetections: (context?.visionDetections as any[]) || [] };
 
       // 2. Memory Layer (Contextual & Episodic Retrieval)
       await this.transition("remembering");
@@ -81,13 +94,13 @@ export class PentagonPizzaOrchestrator {
       );
 
       // Mid-Reasoning Logic Consistency check
-      const midCheck = await this.meta.validateReasoning(this.state.reasoning);
+      const midCheck: unknown = await this.meta.validateReasoning(this.state.reasoning as ReasoningResult);
       if (!midCheck.valid) {
         return { success: false, output: midCheck.feedback, data: { reason: midCheck.guardrailBreach } };
       }
 
       // ═══ NOVO: Veto de Ação e Monetização ═══
-      const activationCheck = await this.meta.validateToolActivation(this.state.reasoning?.plan || [], this.state.perception);
+      const activationCheck: unknown = await this.meta.validateToolActivation(this.state.reasoning?.plan || [], this.state.perception as PerceptionResult);
       if (!activationCheck.valid) {
         return { success: false, output: activationCheck.feedback, data: { veto: activationCheck.guardrailBreach } };
       }
@@ -98,7 +111,7 @@ export class PentagonPizzaOrchestrator {
 
       // 5. Evaluation Layer (Post-Output Grounding & Learning)
       await this.transition("evaluating");
-      const postCheck = await this.meta.validateOutput(this.state.action, this.state.memory?.mergedContext || "", input);
+      const postCheck: unknown = await this.meta.validateOutput(this.state.action as ActionResult, this.state.memory?.mergedContext || "", input);
       this.state.meta = postCheck;
 
       if (!postCheck.valid) {
@@ -113,10 +126,10 @@ export class PentagonPizzaOrchestrator {
       await this.transition("idle");
       return this.state.action;
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[CORTEX] Loop Failure:", error);
       await this.transition("idle");
-      return { success: false, output: "Falha interna no sistema de consciência Órion.", data: { error: error.message } };
+      return { success: false, output: "Falha interna no sistema de consciência Órion.", data: { error: (error as Error).message } };
     }
   }
 
