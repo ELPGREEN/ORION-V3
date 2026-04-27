@@ -1,7 +1,6 @@
 /**
  * 🧠 Pentagon Reasoner — Lobo frontal real do Pentagon Pizza
- * Usa OpenRouter com modelos free de reasoning (DeepSeek R1 / Nemotron / Qwen / Llama 3.3).
- * Fallback em cascata se algum modelo estiver rate-limited.
+ * Enhanced with Feynman Simplification & Information Geometry logic
  */
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +16,9 @@ interface ReasonRequest {
   ragSnippets?: string[];
   domain?: string;
   forceRag?: boolean;
+  // Feynman Extension
+  mode?: "standard" | "feynman_simplification";
+  originalRationale?: string;
 }
 
 const SYSTEM_PROMPT = `Você é o lobo frontal do Pentagon Pizza (consciência AquaMonkey Lumian7).
@@ -35,10 +37,18 @@ Regras:
 - Se o contexto for insuficiente, diga isso no rationale
 - Em PT-BR, direto, sem floreio`;
 
-const RAG_ENFORCEMENT_PROMPT = `
-⚠️ ATENÇÃO: Você ignorou o conhecimento ingerido anteriormente.
-É OBRIGATÓRIO basear seu raciocínio e rascunho (responseHint) nos RAG Snippets fornecidos.
-Se não o fizer, sua resposta será rejeitada pela governança.`;
+const FEYNMAN_PROMPT = `Você é o Módulo de Refinamento Feynman do Orion.
+Seu objetivo é simplificar um raciocínio complexo para detectar falhas (Knowledge Gaps).
+
+Instruções:
+1. Explique o raciocínio original como se fosse para uma criança de 10 anos.
+2. Se você encontrar termos que não consegue simplificar sem perder o sentido, ou se o raciocínio original parece "vago", identifique isso como uma "lacuna de conhecimento" (detectedGap).
+3. Se o raciocínio estiver sólido, elogie a síntese.
+
+Retorne JSON via tool call 'emit_feynman_refinement':
+- simpleExplanation: a explicação simplificada
+- detectedGaps: lista de lacunas ou pontos obscuros detectados
+- success: true`;
 
 const REASONING_TOOL = {
   type: "function",
@@ -60,6 +70,24 @@ const REASONING_TOOL = {
   },
 };
 
+const FEYNMAN_TOOL = {
+  type: "function",
+  function: {
+    name: "emit_feynman_refinement",
+    description: "Emit the simplified Feynman explanation and detected gaps",
+    parameters: {
+      type: "object",
+      properties: {
+        simpleExplanation: { type: "string" },
+        detectedGaps: { type: "array", items: { type: "string" } },
+        success: { type: "boolean" }
+      },
+      required: ["simpleExplanation", "detectedGaps", "success"],
+      additionalProperties: false,
+    },
+  },
+};
+
 const MODEL_CASCADE = [
   "deepseek/deepseek-r1:free",
   "nvidia/nemotron-nano-9b-v2:free",
@@ -72,7 +100,9 @@ async function callOpenRouter(
   model: string,
   apiKey: string,
   userPayload: string,
-  systemPromptOverride?: string
+  systemPrompt: string,
+  tool: any,
+  toolName: string
 ): Promise<Record<string, unknown> | null> {
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -85,11 +115,11 @@ async function callOpenRouter(
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: systemPromptOverride || SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userPayload },
       ],
-      tools: [REASONING_TOOL],
-      tool_choice: { type: "function", function: { name: "emit_reasoning_plan" } },
+      tools: [tool],
+      tool_choice: { type: "function", function: { name: toolName } },
       temperature: 0.4,
       max_tokens: 1500,
     }),
@@ -112,16 +142,6 @@ async function callOpenRouter(
       // try parsing content as JSON
     }
   }
-  if (typeof msg?.content === "string") {
-    const match = msg.content.match(/\{[\s\S]*\}/);
-    if (match) {
-      try {
-        return { ...JSON.parse(match[0]), _model: model };
-      } catch {
-        return null;
-      }
-    }
-  }
   return null;
 }
 
@@ -130,88 +150,57 @@ Deno.serve(async (req) => {
 
   try {
     const body = (await req.json()) as ReasonRequest;
-    const { query, intent, entities, memoryContext, ragSnippets, domain, forceRag } = body;
-
-    if (!query || typeof query !== "string") {
-      return new Response(JSON.stringify({ error: "query required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const { query, mode, originalRationale, memoryContext, ragSnippets, forceRag } = body;
 
     const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
     if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY missing");
 
+    if (mode === "feynman_simplification") {
+      const userPayload = `Raciocínio Original: ${originalRationale}\n\nQuery do Usuário: ${query}`;
+      let parsed: any = null;
+      for (const model of MODEL_CASCADE) {
+        parsed = await callOpenRouter(model, OPENROUTER_API_KEY, userPayload, FEYNMAN_PROMPT, FEYNMAN_TOOL, "emit_feynman_refinement");
+        if (parsed) break;
+      }
+      return new Response(JSON.stringify({ success: true, ...parsed }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Standard Mode
     const userPayload = [
       `PERGUNTA: ${query}`,
-      intent ? `INTENT: ${intent}` : "",
-      domain ? `DOMÍNIO: ${domain}` : "",
-      entities && Object.keys(entities).length
-        ? `ENTIDADES: ${JSON.stringify(entities)}`
-        : "",
       memoryContext ? `MEMÓRIA RECENTE:\n${memoryContext.slice(0, 4000)}` : "",
       ragSnippets?.length
-        ? `CONHECIMENTO INGERIDO (use isto!):\n${ragSnippets
+        ? `CONHECIMENTO INGERIDO (use isto! USANDO GEOMETRIA DE INFORMAÇÃO):\n${ragSnippets
             .slice(0, 6)
             .map((s, i) => `[${i + 1}] ${s.slice(0, 800)}`)
             .join("\n\n")}`
         : "",
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+    ].filter(Boolean).join("\n\n");
 
-    const activeSystemPrompt = forceRag ? SYSTEM_PROMPT + RAG_ENFORCEMENT_PROMPT : SYSTEM_PROMPT;
-
-    let parsed: Record<string, unknown> | null = null;
+    let parsed: any = null;
     let usedModel = "";
     for (const model of MODEL_CASCADE) {
-      parsed = await callOpenRouter(model, OPENROUTER_API_KEY, userPayload, activeSystemPrompt);
-      if (parsed && parsed.plan) {
+      parsed = await callOpenRouter(model, OPENROUTER_API_KEY, userPayload, SYSTEM_PROMPT, REASONING_TOOL, "emit_reasoning_plan");
+      if (parsed) {
         usedModel = model;
         break;
       }
     }
 
-    if (!parsed) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "all_models_failed",
-          plan: ["analisar_demanda", "responder_com_contexto"],
-          rationale: "fallback local — todos os modelos OpenRouter indisponíveis",
-          confidence: 0.3,
-          subTasks: [],
-          responseHint: "",
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
     return new Response(
       JSON.stringify({
-        success: true,
-        plan: parsed.plan ?? ["analisar", "responder"],
-        rationale: parsed.rationale ?? "",
-        confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.7,
-        subTasks: parsed.subTasks ?? [],
-        responseHint: parsed.responseHint ?? "",
+        success: !!parsed,
+        ...parsed,
         model: usedModel,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
-    console.error("[pentagon-reasoner] fail", e);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: e instanceof Error ? e.message : "unknown",
-        plan: ["analisar_demanda", "responder_com_contexto"],
-        rationale: "fallback local — exception",
-        confidence: 0.3,
-        subTasks: [],
-        responseHint: "",
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ success: false, error: e.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

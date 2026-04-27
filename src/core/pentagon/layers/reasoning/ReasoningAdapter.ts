@@ -5,6 +5,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { IPentagonLayer, ReasoningResult, PerceptionResult, MemoryResult } from "../types";
+import { FeynmanReasoner } from "./FeynmanReasoner";
 
 interface ReasoningInput {
   perception: PerceptionResult;
@@ -14,6 +15,7 @@ interface ReasoningInput {
 export interface ExtendedReasoningResult extends ReasoningResult {
   responseHint?: string;
   model?: string;
+  feynmanExplanation?: string;
 }
 
 export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, ExtendedReasoningResult> {
@@ -51,7 +53,7 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
          throw new Error("Generic rationale detected while RAG is available.");
       }
 
-      return {
+      let baseResult: ExtendedReasoningResult = {
         plan: Array.isArray(result.plan) ? result.plan : ["responder"],
         rationale: rationale,
         confidence: typeof result.confidence === "number" ? result.confidence : 0.7,
@@ -59,6 +61,14 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
         responseHint: result.responseHint ?? "",
         model: result.model,
       };
+
+      // 🎓 Integration of Feynman Loop
+      if (baseResult.confidence > 0.6 && !context?.skipFeynman) {
+        console.log("[Reasoning] Entering Feynman Loop for refinement...");
+        baseResult = await FeynmanReasoner.refine(baseResult, perception?.rawInput ?? "");
+      }
+
+      return baseResult;
     } catch (err) {
       console.error("[Reasoning] critical fail", err);
       // If it's our internal validation error, re-throw for Orchestrator retry
