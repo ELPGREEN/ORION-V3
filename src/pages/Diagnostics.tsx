@@ -239,12 +239,19 @@ export default function Diagnostics() {
     // STT and Vision are user-gesture dependent — leave as manual buttons
   }, [testPentagonCycle, testTTS, log]);
 
+  useEffect(() => {
+    document.title = "Diagnóstico Pentagon Pizza | Órion";
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "description");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", "Self-check em tempo real do STT, TTS, Visão Neural e ciclo Pentagon Pizza unificado do Órion.");
+  }, []);
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <Helmet>
-        <title>Diagnóstico Pentagon Pizza | Órion</title>
-        <meta name="description" content="Self-check em tempo real do STT, TTS, Visão Neural e ciclo Pentagon Pizza unificado do Órion." />
-      </Helmet>
 
       <header className="mb-6 max-w-7xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-3">
