@@ -7,6 +7,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { wrapSupabase, wrapEdgeFunction } from "@/lib/errors";
 import { CONVERSATION_FRAMEWORKS } from "./orion-conversation-frameworks";
 import type { AppRole } from "@/hooks/useUserRole";
 import { detectNavigationIntent } from "./orion-nav-map";
@@ -29,11 +30,13 @@ import { playMusicWithFallback } from "./music-fallback-resolver";
 // ─── Helpers ───
 
 async function callUtilsApi(action: string, params: Record<string, unknown>): Promise<any> {
-  const { data, error } = await supabase.functions.invoke("utils-api", {
-    body: { action, params },
-  });
-  if (error) throw error;
-  return data;
+  return await wrapEdgeFunction(
+    supabase.functions.invoke("utils-api", {
+      body: { action, params },
+    }),
+    "utils-api",
+    { action }
+  );
 }
 
 // Server-side Google API — uses service account, no per-user OAuth needed
@@ -52,19 +55,24 @@ async function callGoogleApi(fn: string, body: Record<string, unknown>): Promise
   const params = { ...body };
   delete params.action;
   
-  const { data, error } = await supabase.functions.invoke("firebase-admin", {
-    body: { action, ...params },
-  });
-  if (error) throw error;
+  const data = await wrapEdgeFunction(
+    supabase.functions.invoke("firebase-admin", {
+      body: { action, ...params },
+    }),
+    "firebase-admin",
+    { action }
+  );
   return data?.data ?? data;
 }
 
 async function callFirecrawl(query: string): Promise<any> {
-  const { data, error } = await supabase.functions.invoke("firecrawl-search", {
-    body: { query, options: { limit: 5, lang: "pt-br", country: "br" } },
-  });
-  if (error) throw error;
-  return data;
+  return await wrapEdgeFunction(
+    supabase.functions.invoke("firecrawl-search", {
+      body: { query, options: { limit: 5, lang: "pt-br", country: "br" } },
+    }),
+    "firecrawl-search",
+    { query }
+  );
 }
 
 // ─── Tool Definition ───
@@ -977,8 +985,11 @@ const TOOLS: OrionTool[] = [
     regex: /(?:agente?\s+)?leitor|(?:agente?\s+)?leitura|analis[ae]\s+(?:o\s+)?(?:código|documento|log|banco|schema|tabela)/i,
     extract: (_m, q) => ({ query: q }),
     call: async (p) => {
-      const { data, error } = await supabase.functions.invoke("smart-agent-route", { body: { query: p.query, force_agent: "leitura" } });
-      if (error) throw error;
+      const data = await wrapEdgeFunction(
+        supabase.functions.invoke("smart-agent-route", { body: { query: p.query, force_agent: "leitura" } }),
+        "smart-agent-route",
+        { force_agent: "leitura" }
+      );
       return `📖 **Agente Leitura:**\n${data?.analysis || data?.message || "Processado."}`;
     },
   },
@@ -988,8 +999,11 @@ const TOOLS: OrionTool[] = [
     regex: /(?:agente?\s+)?construtor|(?:agente?\s+)?construção|(?:gerar?|cri[ae]r?|elabor[ae]r?)\s+(?:componente|sql|edge\s*function|peça)/i,
     extract: (_m, q) => ({ query: q }),
     call: async (p) => {
-      const { data, error } = await supabase.functions.invoke("smart-agent-route", { body: { query: p.query, force_agent: "construcao" } });
-      if (error) throw error;
+      const data = await wrapEdgeFunction(
+        supabase.functions.invoke("smart-agent-route", { body: { query: p.query, force_agent: "construcao" } }),
+        "smart-agent-route",
+        { force_agent: "construcao" }
+      );
       let content = data?.analysis || "";
       if (data?.proposal) content += `\n\n📋 Proposta (${data.proposal.type}): ${data.proposal.status}\n\`\`\`\n${(data.proposal.code || "").slice(0, 1500)}\n\`\`\``;
       return `🔧 **Agente Construtor:**\n${content || data?.message || "Processado."}`;
@@ -1001,8 +1015,11 @@ const TOOLS: OrionTool[] = [
     regex: /(?:agente?\s+)?pesquisador|(?:agente?\s+)?pesquisa|pesquis[ae]\s+jurisprud|buscar?\s+(?:súmula|legislaç|jurisprud|artigo|lei|doutrina)/i,
     extract: (_m, q) => ({ query: q }),
     call: async (p) => {
-      const { data, error } = await supabase.functions.invoke("smart-agent-route", { body: { query: p.query, force_agent: "pesquisa" } });
-      if (error) throw error;
+      const data = await wrapEdgeFunction(
+        supabase.functions.invoke("smart-agent-route", { body: { query: p.query, force_agent: "pesquisa" } }),
+        "smart-agent-route",
+        { force_agent: "pesquisa" }
+      );
       let content = data?.analysis || data?.message || "Processado.";
       if (data?.raw_results?.length) content += `\n\n📚 ${data.results_count || data.raw_results.length} resultados encontrados`;
       return `🌐 **Agente Pesquisador:**\n${content}`;

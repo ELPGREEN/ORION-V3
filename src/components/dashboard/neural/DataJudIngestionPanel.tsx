@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useIngestionStatus } from "@/hooks/useIngestionStatus";
 import { supabase } from "@/integrations/supabase/client";
+import { wrapEdgeFunction, wrapSupabase } from "@/lib/errors";
 import { 
   ingestUnified, 
   getVectorStoreStats, 
@@ -250,19 +251,25 @@ export function DataJudIngestionPanel() {
         let hasMore = true;
 
         while (hasMore) {
-          const { data, error } = await supabase.functions.invoke("ingest-legal", {
-            body: { action: "senado_bulk", type, csv: csvText, offset, batchSize },
-          });
+          try {
+            const data = await wrapEdgeFunction(
+              supabase.functions.invoke("ingest-legal", {
+                body: { action: "senado_bulk", type, csv: csvText, offset, batchSize },
+              }),
+              "ingest-legal",
+              { action: "senado_bulk", type }
+            );
 
-          if (error) {
-            results[type] = { error: error.message, inserted: totalInserted };
+            if (!data) break;
+
+            totalInserted += data.inserted || 0;
+            totalSkipped += data.skipped || 0;
+            hasMore = data.has_more;
+            offset = data.next_offset || offset + batchSize;
+          } catch (err: any) {
+            results[type] = { error: err.message, inserted: totalInserted };
             break;
           }
-
-          totalInserted += data.inserted || 0;
-          totalSkipped += data.skipped || 0;
-          hasMore = data.has_more;
-          offset = data.next_offset || offset + batchSize;
         }
 
         results[type] = { inserted: totalInserted, skipped: totalSkipped, success: true };
@@ -297,14 +304,15 @@ export function DataJudIngestionPanel() {
     setSenadoApiResult(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("ingest-legal", {
-        body: { action: "senado_api", endpoints: selectedApiEndpoints },
-      });
+      const data = await wrapEdgeFunction(
+        supabase.functions.invoke("ingest-legal", {
+          body: { action: "senado_api", endpoints: selectedApiEndpoints },
+        }),
+        "ingest-legal",
+        { action: "senado_api" }
+      );
 
-      if (error) {
-        toast({ title: "Erro na ingestão API Senado", description: error.message, variant: "destructive" });
-        setSenadoApiResult({ error: error.message });
-      } else {
+      if (data) {
         setSenadoApiResult(data.results);
         const totalInserted = Object.values(data.results as Record<string, any>).reduce(
           (sum: number, r: any) => sum + (r.inserted || 0), 0
@@ -315,7 +323,9 @@ export function DataJudIngestionPanel() {
         });
         handleLoadStats();
       }
-    } catch (err) {
+    } catch (err: any) {
+      toast({ title: "Erro na ingestão API Senado", description: err.message, variant: "destructive" });
+      setSenadoApiResult({ error: err.message });
       toast({ title: "Erro na ingestão", variant: "destructive" });
     } finally {
       setLoadingSenadoApi(false);
@@ -327,25 +337,26 @@ export function DataJudIngestionPanel() {
     setUnivatesResult(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data, error } = await supabase.functions.invoke("ingest-legal", {
-        body: {
-          temas: [
-            "direito civil brasileiro",
-            "direito penal",
-            "direito trabalhista CLT",
-            "direito constitucional",
-            "direito do consumidor CDC",
-          ],
-          maxBooksPerTema: 10,
-          generateEmbeddings: true,
-          userId: user?.id,
-        },
-      });
+      const data = await wrapEdgeFunction(
+        supabase.functions.invoke("ingest-legal", {
+          body: {
+            temas: [
+              "direito civil brasileiro",
+              "direito penal",
+              "direito trabalhista CLT",
+              "direito constitucional",
+              "direito do consumidor CDC",
+            ],
+            maxBooksPerTema: 10,
+            generateEmbeddings: true,
+            userId: user?.id,
+          },
+        }),
+        "ingest-legal",
+        { action: "univates_ingestion" }
+      );
 
-      if (error) {
-        toast({ title: "Erro na ingestão Univates", description: error.message, variant: "destructive" });
-        setUnivatesResult({ error: error.message });
-      } else {
+      if (data) {
         setUnivatesResult(data);
         toast({
           title: `Univates: ${data.totalInseridos} registros ingeridos`,
@@ -353,7 +364,9 @@ export function DataJudIngestionPanel() {
         });
         handleLoadStats();
       }
-    } catch (err) {
+    } catch (err: any) {
+      toast({ title: "Erro na ingestão Univates", description: err.message, variant: "destructive" });
+      setUnivatesResult({ error: err.message });
       toast({ title: "Erro na ingestão", variant: "destructive" });
     } finally {
       setLoadingUnivates(false);

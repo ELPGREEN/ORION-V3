@@ -10,6 +10,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { wrapEdgeFunction } from "@/lib/errors";
 
 // ─── Types ───
 
@@ -67,16 +68,23 @@ export class OrionAgentFactory {
     difficultyContext: Record<string, unknown>,
     failedAttempts: number = 0
   ): Promise<AgentFactoryResult> {
-    const { data, error } = await supabase.functions.invoke("orion-agent-factory", {
-      body: {
-        action: "auto_create",
-        task_description: taskDescription,
-        difficulty_context: difficultyContext,
-        failed_attempts: failedAttempts,
-      },
-    });
-    if (error) return { success: false, error: error.message };
-    return data;
+    try {
+      const data = await wrapEdgeFunction(
+        supabase.functions.invoke("orion-agent-factory", {
+          body: {
+            action: "auto_create",
+            task_description: taskDescription,
+            difficulty_context: difficultyContext,
+            failed_attempts: failedAttempts,
+          },
+        }),
+        "orion-agent-factory",
+        { action: "auto_create" }
+      );
+      return data || { success: false, error: "No data returned" };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   }
 
   /**
@@ -87,11 +95,18 @@ export class OrionAgentFactory {
     input: string,
     context?: Record<string, unknown>
   ): Promise<AgentFactoryResult> {
-    const { data, error } = await supabase.functions.invoke("orion-agent-factory", {
-      body: { action: "invoke", agent_id: agentId, input, context },
-    });
-    if (error) return { success: false, error: error.message };
-    return data;
+    try {
+      const data = await wrapEdgeFunction(
+        supabase.functions.invoke("orion-agent-factory", {
+          body: { action: "invoke", agent_id: agentId, input, context },
+        }),
+        "orion-agent-factory",
+        { action: "invoke", agentId }
+      );
+      return data || { success: false, error: "No data returned" };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   }
 
   /**

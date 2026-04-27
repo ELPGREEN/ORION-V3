@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { OrbState } from "./EnergyOrb";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { wrapEdgeFunction, wrapSupabase } from "@/lib/errors";
 import { callEvolution } from "@/lib/neural/ai-service";
 import { analyzeFrameStreaming, analyzeFrameWithAI, classifyIntent } from "@/lib/neural/orion-ai-client";
 import { stripMarkdown } from "@/lib/utils/text-utils";
@@ -241,18 +242,22 @@ export function useOrionReasoning(
         vsLog(`🔄 Ciclo de consciência: ${meaningfulErrors.length} erros para análise`);
 
         // Send to SupAgent for frontend analysis
-        const { data: analysisData } = await supabase.functions.invoke("ai-orchestrator", {
-          body: {
-            action: "supagent_frontend_instruction",
-            useCase: "documents",
-            source: "consciousness-cycle",
-            params: {
-              console_errors: meaningfulErrors.slice(0, 20),
-              current_route: window.location.pathname,
-              intent: "Análise automática de erros do ciclo de consciência",
+        const analysisData = await wrapEdgeFunction(
+          supabase.functions.invoke("ai-orchestrator", {
+            body: {
+              action: "supagent_frontend_instruction",
+              useCase: "documents",
+              source: "consciousness-cycle",
+              params: {
+                console_errors: meaningfulErrors.slice(0, 20),
+                current_route: window.location.pathname,
+                intent: "Análise automática de erros do ciclo de consciência",
+              },
             },
-          },
-        });
+          }),
+          "ai-orchestrator",
+          { action: "supagent_frontend_instruction" }
+        );
 
         if (analysisData?.success && analysisData.diagnosis) {
           const severity = analysisData.severity || "medium";
@@ -550,15 +555,18 @@ export function useOrionReasoning(
         if (canUseArc) {
           addLog("🧩 Detectada tarefa ARC-AGI-3 - invoking arc-reasoner...");
           try {
-            const response = await supabase.functions.invoke("arc-reasoner", {
-              body: {
-                description: question,
-                reasoning_type: /symbolic|composição|contextual/i.test(qLow) ?
-                  (/symbolic/i.test(qLow) ? "symbolic" : /contextual/i.test(qLow) ? "contextual" : "compositional") : "auto"
-              }
-            });
-            if (response.data?.success) {
-              const arcResult = `🧩 Análise ARC-AGI-3:\n${response.data.explanation}\n\nSolução: ${JSON.stringify(response.data.output)}`;
+            const data = await wrapEdgeFunction(
+              supabase.functions.invoke("arc-reasoner", {
+                body: {
+                  description: question,
+                  reasoning_type: /symbolic|composição|contextual/i.test(qLow) ?
+                    (/symbolic/i.test(qLow) ? "symbolic" : /contextual/i.test(qLow) ? "contextual" : "compositional") : "auto"
+                }
+              }),
+              "arc-reasoner"
+            );
+            if (data?.success) {
+              const arcResult = `🧩 Análise ARC-AGI-3:\n${data.explanation}\n\nSolução: ${JSON.stringify(data.output)}`;
               setThought(arcResult);
               addChat("ai", arcResult);
               speak(arcResult).catch(() => {});
@@ -1655,28 +1663,36 @@ export function useOrionReasoning(
           else if (/config|par[aâ]metro|peso|weight/i.test(qLower)) targetType = "config";
 
           // Step 1: Plan
-          const { data: planData } = await supabase.functions.invoke("ai-orchestrator", {
-            body: { action: "supagent_plan", useCase: "documents", source: "auto-construct", params: { intent: question, target_type: targetType } },
-          });
+          const planData = await wrapEdgeFunction(
+            supabase.functions.invoke("ai-orchestrator", {
+              body: { action: "supagent_plan", useCase: "documents", source: "auto-construct", params: { intent: question, target_type: targetType } },
+            }),
+            "ai-orchestrator",
+            { action: "supagent_plan" }
+          );
           const plan = planData?.plan;
           const riskLevel = plan?.risk_level || "unknown";
           const stepsCount = plan?.steps?.length || 0;
           addLog(`📋 Plano: ${stepsCount} etapas, risco: ${riskLevel}`);
 
           // Step 2: Construct
-          const { data: constructData } = await supabase.functions.invoke("ai-orchestrator", {
-            body: {
-              action: "supagent_construct",
-              useCase: "documents",
-              source: "auto-construct",
-              params: {
-                intent: question,
-                target_type: targetType,
-                auto_apply: riskLevel === "safe" || riskLevel === "moderate",
-                priority: "medium",
+          const constructData = await wrapEdgeFunction(
+            supabase.functions.invoke("ai-orchestrator", {
+              body: {
+                action: "supagent_construct",
+                useCase: "documents",
+                source: "auto-construct",
+                params: {
+                  intent: question,
+                  target_type: targetType,
+                  auto_apply: riskLevel === "safe" || riskLevel === "moderate",
+                  priority: "medium",
+                },
               },
-            },
-          });
+            }),
+            "ai-orchestrator",
+            { action: "supagent_construct" }
+          );
 
           const autoApplied = constructData?.auto_applied || false;
           const validationScore = constructData?.validation?.score || 0;
