@@ -180,6 +180,7 @@ const App = () => (
                   <Route path="/depoimentos" element={<Depoimentos />} />
                   <Route path="/install" element={<InstallApp />} />
                   <Route path="/advogado/:advogadoId" element={<AdvogadoSite />} />
+                  <Route path="/diagnostics" element={<Diagnostics />} />
 
                   {/* ═══ PUBLIC — Auth ═══ */}
                   <Route path="/auth" element={<Auth />} />
