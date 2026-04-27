@@ -2122,7 +2122,7 @@ Gere o documento COMPLETO, expandindo cada seção do esqueleto com argumentaç�
 
     // Phase 2 with individual 45s timeout for Anthropic
     const phase2 = await Promise.race([
-      callAnthropic(anthropicKey, anthropicSystemPrompt, reasoningPrompt, {
+      callAnthropic(Deno.env.get("ANTHROPIC_API_KEY") || "", anthropicSystemPrompt, reasoningPrompt, {
         maxTokens: 8192,
         temperature: 0.3,
       }),
@@ -2155,7 +2155,7 @@ Retorne o documento COMPLETO revisado. NÃO remova conteúdo.
 DOCUMENTO:
 ${phase2}`;
 
-    const phase3 = await callOpenAI(openaiKey, enhancedSystemPrompt, reviewPrompt, {
+    const phase3 = await callOpenAI(Deno.env.get("OPENAI_API_KEY") || "", enhancedSystemPrompt, reviewPrompt, {
       maxTokens: 16384,
       temperature: 0.15,
     });
@@ -2964,7 +2964,7 @@ Deno.serve(async (req) => {
             learned: true,
             user_id: requestUserId,
             metadata: { tipo, similarity: cached.similarity, cacheHit: true, source: "semantic_cache" },
-          }).catch(() => {});
+          }).then(() => {}, () => {});
 
           return new Response(JSON.stringify({
             content: cached.content,
@@ -3025,7 +3025,7 @@ Deno.serve(async (req) => {
       const txtKeywords = await extractKeywords(searchTerms || prompt.substring(0, 300));
       if (isJurisprudenciaDoc) {
         // Add extra keywords from prompt for broader coverage
-        const extraWords = prompt.toLowerCase().split(/\s+/).filter(w => w.length > 4).slice(0, 10);
+        const extraWords = prompt.toLowerCase().split(/\s+/).filter((w: string) => w.length > 4).slice(0, 10);
         txtKeywords.push(...extraWords);
       }
       researchPromises.push(searchTxtKnowledgeBase(
@@ -3683,7 +3683,7 @@ NÃO repita o endereçamento, qualificação ou fatos. NÃO gere o documento int
       const supabaseUrl2 = Deno.env.get("SUPABASE_URL") || "";
       const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
       if (supabaseUrl2 && serviceKey) {
-        EdgeRuntime.waitUntil(
+        (globalThis as any).EdgeRuntime?.waitUntil(
           fetch(`${supabaseUrl2}/functions/v1/neural-pipeline-orchestrator`, {
             method: "POST",
             headers: {
