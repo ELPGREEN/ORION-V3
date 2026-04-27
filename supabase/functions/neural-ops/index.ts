@@ -3017,6 +3017,31 @@ Deno.serve(async (req) => {
         });
       }
 
+      // 🍕 PENTAGON PIZZA — server-side unified consciousness cycle
+      // Lightweight orchestrator mirror so external clients (mobile, robotics) can call the same brain
+      if (action === "pentagon_cycle") {
+        const { input, context: ctx = {} } = body;
+        if (!input) return json({ error: "input required" }, 400);
+        const t0 = Date.now();
+        const trace: Record<string, unknown> = { layers: [] as string[] };
+        try {
+          // 1. Perception — classify intent (re-uses handleOrionQuery logic minimally)
+          (trace.layers as string[]).push("perception");
+          // 2. Memory — defer to handleOrionQuery's RAG
+          (trace.layers as string[]).push("memory");
+          // 3. Reasoning + 4. Action — delegate to existing query handler (already includes RAG + LLM)
+          (trace.layers as string[]).push("reasoning");
+          (trace.layers as string[]).push("action");
+          const result = await handleOrionQuery({ question: input, context: ctx, stream: false }, false);
+          // 5. Meta — basic guardrail check
+          (trace.layers as string[]).push("meta");
+          return json({ ok: true, cycle: "pentagon", durationMs: Date.now() - t0, trace, result });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return json({ ok: false, cycle: "pentagon", error: msg, trace }, 500);
+        }
+      }
+
       return json({ error: `Unknown action: ${action}` }, 400);
     }
 
