@@ -117,7 +117,6 @@ export function startSharedMic() {
   s.manualStop = false;
   if (!s.isStarted) {
     try {
-  console.log(`[MicArbiter] Releasing mic from owner ${ownerId} to mode ${nextMode}`);
       rec.start();
       return true;
     } catch (err: any) {

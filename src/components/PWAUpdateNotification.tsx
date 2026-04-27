@@ -14,9 +14,10 @@ export function PWAUpdateNotification() {
       console.log("[PWA] Service Worker registrado:", swUrl);
       // Check for updates every 30 minutes
       if (registration) {
-        setInterval(() => {
+        const interval = setInterval(() => {
           registration.update();
         }, 30 * 60 * 1000);
+        return () => clearInterval(interval);
       }
     },
     onRegisterError(error) {

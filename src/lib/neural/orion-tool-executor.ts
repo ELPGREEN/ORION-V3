@@ -2465,9 +2465,8 @@ const TOOLS: OrionTool[] = [
 
   // ═══ MEDIA — YouTube only (Spotify/Amazon/Audiobook removed) ═══
   {
-  // 🛡️ INTELLIGENT MEDIA GUARD: Check global context before triggering
     name: "music_play",
-    regex: /^\s*(?:tocar?|play|coloca|bota|põe|reproduz(?:ir)?|ouvir?|escutar?)\s+(?:(?:a\s+)?(?:música|musica|m[uú]sica|song|track|faixa)\s+(?:d[oea]\s+)?)?(.+)/i,
+    regex: /(?:tocar?|play|coloca|bota|põe|reproduz(?:ir)?|ouvir?|escutar?)\s+(?:(?:a\s+)?(?:música|musica|m[uú]sica|song|track|faixa)\s+(?:d[oea]\s+)?)?(.+)/i,
     extract: (m) => ({ query: m[1].trim() }),
     call: async (p) => {
       const result = await playMusicWithFallback(p.query as string);

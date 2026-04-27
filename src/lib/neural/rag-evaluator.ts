@@ -403,15 +403,15 @@ function extractKeyConcepts(text: string): Set<string> {
 
   // Legal refs
   const legalRefs = lower.match(/art\.\s*\d+|lei\s+[\d.\/]+|súmula\s+\d+|cpc|cpp|cf|clt|cdc/gi) || [];
-  legalRefs.forEach(r => concepts.add(r.trim()));
+  (legalRefs as string[]).forEach(r => concepts.add(r.trim()));
 
   // Named entities (capitalized multi-word)
   const named = text.match(/[A-Z][a-záéíóúãõâêôç]+(?:\s+[A-Z][a-záéíóúãõâêôç]+)+/g) || [];
-  named.forEach(n => concepts.add(n.toLowerCase()));
+  (named as string[]).forEach(n => concepts.add(n.toLowerCase()));
 
   // Numbers and dates
   const numbers = text.match(/\d{2,}/g) || [];
-  numbers.forEach(n => concepts.add(n));
+  numbers.forEach((n: string) => concepts.add(n));
 
   return concepts;
 }

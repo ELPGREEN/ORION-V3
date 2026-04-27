@@ -21,7 +21,3 @@
 ## 2026-06-12 - [Optimized Set Intersections & O(N^2) Hoisting]
 **Learning:** Common idiomatic patterns like `[...setA].filter(x => setB.has(x)).length` for Jaccard similarity create unnecessary intermediate arrays and redundantly iterate over larger sets. In episodic memory consolidation loops, performing string normalization and Set creation inside the inner loop ((N^2)$) creates significant GC pressure and CPU overhead as the memory store grows.
 **Action:** Always implement Set intersections using a direct `for...of` loop over the smaller Set. For nested similarity loops, pre-calculate and cache tokenized Sets once ((N)$) before entering the (N^2)$ comparison phase to minimize redundant processing.
-
-## 2026-06-13 - [State History Capping & Regex Hoisting]
-**Learning:** Indefinite array growth in long-running cognitive loops (like the Orion Cortex) creates a slow memory leak that eventually degrades interaction latency. Additionally, complex regex patterns defined inside React hooks are re-allocated/re-compiled on every re-render, adding millisecond-level overhead to the main thread.
-**Action:** Always cap state history arrays to a reasonable limit (e.g., 50 entries) in long-lived orchestrators. Hoist complex regex constants to the module level to ensure they are compiled once and reused, reducing GC pressure and execution time during high-frequency render cycles.

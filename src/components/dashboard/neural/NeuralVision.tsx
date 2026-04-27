@@ -52,12 +52,6 @@ import { VisionControlPanel, DEFAULT_VISION_SETTINGS, type VisionSettings } from
 import { VisionStatsPanel, DEFAULT_DETECTION_STATS, type DetectionStats } from "./VisionStatsPanel";
 import { HudCollapsibleSection } from "./HudCollapsibleSection";
 // MediaPipe Object Detector - faster and more accurate than DETR
-  // 👁️ SYNC VISION TO GLOBAL STATE
-  useEffect(() => {
-    if (detectedObjects.length > 0) {
-      (window as any).__orion_global_vision__ = detectedObjects;
-    }
-  }, [detectedObjects]);
 let mpObjectDetector: ObjectDetector | null = null;
 let mpVisionReady = false;
 // ENABLED: Local model routing optimized - using Gemini Vision API fallback
@@ -593,13 +587,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     if (!hasGreetedRef.current) {
       hasGreetedRef.current = true;
       _markSessionReady();
-  // 📞 UNIFIED VOICE START: Ensure microphone starts with vision
-  useEffect(() => {
-    if (active && speechOk && !listening) {
-      console.log("[NeuralVision] 🎤 Auto-starting unified voice loop...");
-      startListening(handleVoice);
-    }
-  }, [active, speechOk, listening, startListening, handleVoice]);
     }
 
     toast.info("⚡ Pode falar", { duration: 1000 });

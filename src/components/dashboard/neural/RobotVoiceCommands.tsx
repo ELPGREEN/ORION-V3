@@ -208,7 +208,7 @@ export default function RobotVoiceCommands({ robotId }: Props) {
     recognition.continuous = true;
     recognition.interimResults = true;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       let final = "";
       let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {

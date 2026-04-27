@@ -90,7 +90,7 @@ export function checkResponseQuality(
     const docLaws = documentContext.match(/(?:Lei|Art|Súmula|CF|Código)\s+[\w\d./°º]+/gi) || [];
     const responseLaws = responseText.match(/(?:Lei|Art|Súmula|CF|Código)\s+[\w\d./°º]+/gi) || [];
     const hasContextAlignment = responseLaws.some(rl =>
-      docLaws.some(dl => dl.toLowerCase().includes(rl.toLowerCase().slice(0, 10)))
+      docLaws.some((dl: any) => (dl as string).toLowerCase().includes((rl as any).toLowerCase().slice(0, 10)))
     );
     if (responseLaws.length > 0) {
       checks.push({

@@ -128,7 +128,6 @@ export function ChatJuridico() {
     .filter(m => m.role === "assistant" && m.id !== "welcome")
     .pop()?.content || "";
 
-// 🧠 UNIFIED CORTEX INTEGRATION (via useOrionReasoning pattern)
   const handleSend = async (textOverride?: string) => {
     const messageText = textOverride || input.trim();
     if (!messageText || isTyping || isLimitReached) return;

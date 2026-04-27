@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Brain, Zap, Activity, DollarSign, TrendingUp, Target, Users, ArrowUpRight, Loader2, Clock } from "lucide-react";
+import { Brain, Zap, Activity, DollarSign, TrendingUp, Target, Users, ArrowUpRight, Loader2 } from "lucide-react";
 import { ThemedSection } from "@/components/dashboard/DashboardTheme";
 
 function formatBRL(cents: number) {
@@ -42,21 +42,19 @@ export default function OrionOrchestratorWidget() {
       const clients = clientsRes.data || [];
 
       const total = metrics.length;
-      const totalROIBRL = total * 150; // Estimativa média de R$ 150 por ação de IA
-      const hoursSaved = (total * 45) / 60; // 45min por ação
-
       const errors = metrics.filter(m => !m.success).length;
       const throughput = total > 0 ? (total / 7).toFixed(0) : "0";
       const uptime = total > 0 ? (((total - errors) / total) * 100).toFixed(0) : "100";
 
       const completed = orders.filter(o => o.status === "completed");
       const revenue = completed.reduce((s, o) => s + (o.amount_cents || 0), 0);
-      const margin = revenue > 0 ? "100" : "0";
+      const margin = revenue > 0 ? "100" : "0"; // Simplified without expenses query
 
       const active = clients.filter(c => c.status === "ativo").length;
       const convRate = clients.length > 0 ? ((completed.length / Math.max(clients.length, 1)) * 100).toFixed(0) : "0";
+      const retention = clients.length > 0 ? ((active / clients.length) * 100).toFixed(0) : "0";
 
-      return { throughput, uptime, revenue, margin, convRate, totalROIBRL, hoursSaved };
+      return { throughput, uptime, revenue, margin, convRate, retention };
     },
     staleTime: 60_000,
   });
@@ -70,10 +68,10 @@ export default function OrionOrchestratorWidget() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             <MiniKPI label="Throughput/dia" value={data?.throughput || "0"} icon={Zap} />
             <MiniKPI label="Uptime" value={`${data?.uptime || "100"}%`} icon={Activity} />
-            <MiniKPI label="ROI Acumulado" value={`R$ ${data?.totalROIBRL?.toLocaleString() || "0"}`} icon={TrendingUp} />
-            <MiniKPI label="Tempo Salvo" value={`${data?.hoursSaved?.toFixed(0) || "0"}h`} icon={Clock} />
             <MiniKPI label="Receita 30d" value={formatBRL(data?.revenue || 0)} icon={DollarSign} />
+            <MiniKPI label="Margem" value={`${data?.margin || "0"}%`} icon={TrendingUp} />
             <MiniKPI label="Conversão" value={`${data?.convRate || "0"}%`} icon={Target} />
+            <MiniKPI label="Retenção 30d" value={`${data?.retention || "0"}%`} icon={Users} />
           </div>
           <Button
             variant="outline"
