@@ -340,7 +340,7 @@ Deno.serve(async (req) => {
       // Marcar itens sem embedding que já existem como is_processed=false para reprocessamento
       if (totalNaoProcessados > 0 || totalSemEmbedding > 0) {
         console.log(`🏛️ Senado Sync: ${totalSemEmbedding} sem embedding, ${totalNaoProcessados} não processados — trigando vectorização`);
-        EdgeRuntime.waitUntil(
+        (globalThis as any).EdgeRuntime?.waitUntil(
           fetch(`${supabaseUrl}/functions/v1/generate-embeddings`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
@@ -370,7 +370,7 @@ Deno.serve(async (req) => {
       const triggerResults: Record<string, string> = {};
 
       // 3a. neural-auto-learn (backfill + promote + specializations)
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         fetch(`${supabaseUrl}/functions/v1/neural-auto-learn`, {
           method: "POST",
           headers: {
@@ -386,7 +386,7 @@ Deno.serve(async (req) => {
       triggerResults.neural_auto_learn = "triggered";
 
       // 3b. generate-embeddings para itens novos
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         fetch(`${supabaseUrl}/functions/v1/generate-embeddings`, {
           method: "POST",
           headers: {
@@ -402,7 +402,7 @@ Deno.serve(async (req) => {
       triggerResults.generate_embeddings = "triggered";
 
       // 3c. neural-evolution: analizar e propor após 30s (para ter dados frescos)
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         new Promise(resolve => setTimeout(resolve, 30000)).then(() =>
           fetch(`${supabaseUrl}/functions/v1/ai-orchestrator`, {
             method: "POST",
@@ -420,7 +420,7 @@ Deno.serve(async (req) => {
       triggerResults.neural_evolution = "queued_30s";
 
       // 3d. queue-worker para limpar pendentes
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         fetch(`${supabaseUrl}/functions/v1/queue-worker`, {
           method: "POST",
           headers: {
@@ -436,7 +436,7 @@ Deno.serve(async (req) => {
       triggerResults.queue_worker = "triggered";
 
       // 3e. AUTO-APPROVE pending proposals (LACUNA FIX: proposals ficavam em pending indefinidamente)
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         new Promise(resolve => setTimeout(resolve, 45000)).then(() =>
           fetch(`${supabaseUrl}/functions/v1/ai-orchestrator`, {
             method: "POST",
@@ -454,7 +454,7 @@ Deno.serve(async (req) => {
       triggerResults.auto_approve_pending = "queued_45s";
 
       // 3f. AUTO-APPLY approved proposals (LACUNA FIX: approved proposals never applied automatically)
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         new Promise(resolve => setTimeout(resolve, 60000)).then(() =>
           fetch(`${supabaseUrl}/functions/v1/ai-orchestrator`, {
             method: "POST",
@@ -500,7 +500,7 @@ Deno.serve(async (req) => {
 
       if (staleCount > 0) {
         console.log(`🔍 Watchdog: ${staleCount} itens sem embedding há >1h — re-enfileirando`);
-        EdgeRuntime.waitUntil(
+        (globalThis as any).EdgeRuntime?.waitUntil(
           fetch(`${supabaseUrl}/functions/v1/generate-embeddings`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
@@ -521,7 +521,7 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════════════════════
     if (action === "full_cycle") {
       // Cleanup stale proposals (>30 days pending → rejected)
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         fetch(`${supabaseUrl}/functions/v1/ai-orchestrator`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
@@ -533,7 +533,7 @@ Deno.serve(async (req) => {
       );
 
       // Reset stale A/B experiments (>48h with 0 samples)
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         fetch(`${supabaseUrl}/functions/v1/ai-orchestrator`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
@@ -545,7 +545,7 @@ Deno.serve(async (req) => {
       );
 
       // DPO optimization after full cycle
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         new Promise(resolve => setTimeout(resolve, 75000)).then(() =>
           fetch(`${supabaseUrl}/functions/v1/neural-training`, {
             method: "POST",

@@ -56,7 +56,7 @@ async function mqttHealthCheck(config: MQTTConfig): Promise<any> {
     return {
       healthy: false,
       broker: config.broker,
-      error: err.message,
+      error: (err as any)?.message,
       message: "Falha ao conectar ao broker",
     };
   }
@@ -172,7 +172,7 @@ async function handleRequest(req: Request): Promise<Response> {
     }
   } catch (err) {
     return new Response(JSON.stringify({ 
-      error: err.message || "Internal error" 
+      error: (err as any)?.message || "Internal error" 
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
