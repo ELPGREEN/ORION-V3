@@ -143,6 +143,10 @@ export function detectBrowserAction(query: string): BrowserAction | null {
   const trimmed = query.trim();
   if (trimmed.length < 4) return null;
 
+  if (/\b(?:voce\s+)?consegue\s+me\s+ouvir(?:\s+perfeitamente)?\b|\b(?:voce\s+)?esta\s+me\s+ouvindo\b|\bta\s+me\s+ouvindo\b|\bme\s+ouve\b|\bme\s+escuta\b|\bteste\s+(?:de\s+)?(?:som|mic|microfone)\b/i.test(trimmed)) {
+    return null;
+  }
+
   if (/\b(quem\s+[eé]\s+voc[eê]|qual\s+[eé]\s+o\s+seu\s+nome|sua\s+personalidade|me\s+fale\s+sobre\s+voc[eê]|voc[eê]\s+[eé]\s+quem)\b/i.test(trimmed)) {
     return null;
   }
