@@ -1257,10 +1257,14 @@ function detectWebSearchIntent(query: string): boolean {
 }
 
 const VOICE_FAST_SHORTCUT_REGEX = /^(?:oi|ol[aá]|ola|opa|ei|hey|e\s*aí|e\s*ai|fala|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|valeu|obrigad[oa]|ok(?:ay)?|certo|beleza|sim|n[aã]o|nao|pode\s+repetir|repete|repita|me\s+ouve|me\s+escuta|t[aá]\s+me\s+ouvindo|consegue\s+me\s+ouvir)[\s!?.]*$/i;
+const VOICE_COMPLEXITY_GUARD_REGEX = /\b(quem|qual|quais|como|por\s+que|porque|quando|onde|explica|explique|resuma|resume|analisa|analise|compare|detalha|detalhe|contexto|mem[oó]ria|hist[oó]rico|base|conte[uú]do|documento|contrato|lei|artigo|processo|cliente|jules|pentagon|pentagol|rede\s+neural)\b/i;
 
 function shouldUseVoiceFastShortcut(question: string): boolean {
   const normalized = question.trim();
   if (!normalized) return true;
+  const words = normalized.split(/\s+/).filter(Boolean);
+  if (normalized.length > 24 || words.length > 4) return false;
+  if (/[,:;]/.test(normalized) || VOICE_COMPLEXITY_GUARD_REGEX.test(normalized)) return false;
   return VOICE_FAST_SHORTCUT_REGEX.test(normalized);
 }
 

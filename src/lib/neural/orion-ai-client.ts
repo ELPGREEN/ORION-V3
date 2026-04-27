@@ -15,7 +15,7 @@ import { executeCorrectiveRAG } from "./corrective-rag";
 import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "./orion-maestro-unification";
 import { quantumRouteQuery, formatQuantumRoutingForAI } from "./quantum-llm-router";
 import { summarizeLongContextMamba } from "./mamba-orchestrator";
-import { buildWorkingMemoryPrompt, initWorkingMemory } from "./orion-working-memory";
+import { buildWorkingMemoryPrompt, initWorkingMemory, pushToWorkingMemory } from "./orion-working-memory";
 import { stripMarkdown } from "@/lib/utils/text-utils";
 import { VS } from "@/components/dashboard/neural/useVisionProcessing";
 // vision-local-learning removed — all identification via Gemini on-demand
@@ -36,6 +36,7 @@ const HEARING_CHECK_PATTERNS = /\b(voc[eê]\s+consegue\s+me\s+ouvir|voc[eê]\s+m
 const SELF_IDENTITY_PATTERNS = /\b(quem\s+[eé]\s+voc[eê]|qual\s+[eé]\s+o\s+seu\s+nome|sua\s+personalidade|seu\s+signo|sua\s+hist[oó]ria|o\s+que\s+[eé]\s+voc[eê]|quando\s+voc[eê]\s+nasceu|conte\s+sobre\s+voc[eê]|fale\s+sobre\s+voc[eê]|fala\s+sobre\s+voc[eê]|me\s+conta(?:\s+um\s+pouco)?\s+sobre\s+voc[eê]|me\s+fala(?:\s+um\s+pouco)?\s+sobre\s+voc[eê])\b/i;
 const CONVERSATIONAL_COMPLAINT_PATTERNS = /\b(ent[aã]o|cara|mano|tu|voc[eê]|c[eê])\b.*\b(n[aã]o\s+me\s+responde|n[aã]o\s+responde|me\s+ignora|n[aã]o\s+entende|n[aã]o\s+capta|n[aã]o\s+peg[ao]|s[oó]\s+peg[ao]\s+duas?|tr[eê]s\s+palavras|frase\s+inteira|t[aá]\s+me\s+tirando|arquivo\s+srfx|srfx)\b/i;
 const VOICE_FAST_SHORTCUT_REGEX = /^(?:oi|ol[aá]|ola|opa|ei|hey|e\s*aí|e\s*ai|fala|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|valeu|obrigad[oa]|ok(?:ay)?|certo|beleza|sim|n[aã]o|nao|pode\s+repetir|repete|repita|me\s+ouve|me\s+escuta|t[aá]\s+me\s+ouvindo|consegue\s+me\s+ouvir)[\s!?.]*$/i;
+const VOICE_COMPLEXITY_GUARD_REGEX = /\b(quem|qual|quais|como|por\s+que|porque|quando|onde|explica|explique|resuma|resume|analisa|analise|compare|detalha|detalhe|contexto|mem[oó]ria|hist[oó]rico|base|conte[uú]do|documento|contrato|lei|artigo|processo|cliente|jules|pentagon|pentagol|rede\s+neural)\b/i;
 const EXPLICIT_VISUAL_PATTERNS = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+vendo|v[eê]|v[êe] na c[aâ]mera)|o\s+que\s+tem\s+(na\s+frente|a[ií]|aqui)|descrev[ae]\s+(a\s+)?(imagem|cena|ambiente|o\s+que\s+v[eê])|me\s+mostre\s+o\s+que\s+v[eê]|analise\s+(a\s+)?(imagem|cena|c[aâ]mera)|leia\s+(o\s+)?texto\s+(da\s+)?(imagem|c[aâ]mera)|identifique\s+(o\s+)?(objeto|rosto|texto)|quantos?\s+[^.?!]*\s+(tem|h[aá])\b)/i;
 const IMAGE_GEN_PATTERNS = /\b(gere?\s+(uma?\s+)?imagem|crie?\s+(uma?\s+)?imagem|desenh[ae]|ilustr[ae]|gerar?\s+foto|cri[ae]\s+(uma?\s+)?ilustra[çc][aã]o|generate\s+(an?\s+)?image|draw|create\s+(an?\s+)?image|make\s+(an?\s+)?image|paint|sketch)\b/i;
 const WEB_SEARCH_PATTERNS = /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|pesquis[ae]\s+na\s+web|busca\s+na\s+internet|search\s+for|look\s+up|news|current|latest|trending)\b/i;
@@ -80,7 +81,38 @@ export function getCachedVoiceIdentity(): string | undefined {
 function shouldUseVoiceFastShortcut(question: string): boolean {
   const normalized = question.trim();
   if (!normalized) return true;
+  const words = normalized.split(/\s+/).filter(Boolean);
+  if (normalized.length > 24 || words.length > 4) return false;
+  if (/[,:;]/.test(normalized) || VOICE_COMPLEXITY_GUARD_REGEX.test(normalized)) return false;
   return VOICE_FAST_SHORTCUT_REGEX.test(normalized);
+}
+
+async function buildPentagonPromptContext(question: string, wmContext: string, intent: string): Promise<string> {
+  try {
+    const user = await getCachedAuthUser();
+    const { getPentagonOrchestrator } = await import("@/core/pentagon");
+    const cortex = getPentagonOrchestrator();
+    const result = await withTimeout(
+      cortex.runCycle(question, { userId: user?.id || "anonymous", wmContext, intent }),
+      220,
+      null as any,
+    );
+    const state = cortex.getState();
+    const parts: string[] = [];
+
+    if (state.perception?.intent) parts.push(`Intento percebido: ${state.perception.intent}`);
+    if (state.memory?.mergedContext) parts.push(`Memória integrada: ${state.memory.mergedContext.slice(0, 500)}`);
+    if (state.reasoning?.rationale) parts.push(`Raciocínio: ${state.reasoning.rationale.slice(0, 280)}`);
+    if (Array.isArray(state.reasoning?.plan) && state.reasoning.plan.length > 0) {
+      parts.push(`Plano: ${state.reasoning.plan.slice(0, 4).join(" | ")}`);
+    }
+    if (result?.output) parts.push(`Síntese do córtex: ${String(result.output).slice(0, 280)}`);
+
+    return parts.length > 0 ? `═══ CONTEXTO PENTAGON 🍕 ═══\n${parts.join("\n")}` : "";
+  } catch (error) {
+    console.warn("[Pentagon] Prompt context failed:", error);
+    return "";
+  }
 }
 
 async function getCachedAuthUser(): Promise<{ id: string; email?: string | null } | null> {
@@ -429,6 +461,10 @@ export async function analyzeFrameWithAI(
   intentType: "visual" | "textual" | "mixed" | "web_search" | "url_analysis" | "youtube_summary" | "image_generation" = "mixed"
 ): Promise<AIAnalysisResult> {
   try {
+    if (question?.trim()) {
+      pushToWorkingMemory(question, "user_intent", 0.92, { source: includeImage ? "vision" : "chat", intentType });
+    }
+
     // ═══ PROGRESSIVE LEARNING: Check if we can identify locally first ═══
     if (includeImage && canvas && intentType === "visual") {
       try {
@@ -575,6 +611,9 @@ export async function analyzeFrameWithAI(
       return { description: null, learnedFacts: [], identifiedObjects: [] };
     }
     if (data?.learnedFacts?.length > 0) addUserMemory(data.learnedFacts);
+    if (data?.description) {
+      pushToWorkingMemory(data.description, "ai_response", 0.78, { source: includeImage ? "vision" : "chat", intentType });
+    }
 
     // ═══ PROGRESSIVE LEARNING: Learn from Gemini Flash detections ═══
     if (data?.identifiedObjects?.length > 0) {
@@ -724,6 +763,7 @@ export async function analyzeFrameStreaming(
       intentType !== "visual" &&
       !String(intentType || "").startsWith("visual_");
     const isVoiceFastShortcut = isDirectVoiceMode && shouldUseVoiceFastShortcut(question);
+    pushToWorkingMemory(question, "user_intent", 0.95, { source: isVoiceInput ? "voice" : "text", intentType });
 
     // ═══ VOICE FAST PATH: Skip all heavy context, just get auth token ═══
     let streamContext = "";
@@ -739,7 +779,7 @@ export async function analyzeFrameStreaming(
     } else {
       // Text/vision: restore cognition + working memory + dashboard context for smarter replies
       const workingMemoryPrompt = buildWorkingMemoryPrompt();
-      const [baseContext, nextBearerToken, dashboardContext, cognition] = await withTimeout(
+      const [baseContext, nextBearerToken, dashboardContext, cognition, pentagonContext] = await withTimeout(
         Promise.all([
           // 1. Minimal context (budget: 100ms)
           withTimeout((async (): Promise<string> => {
@@ -769,19 +809,29 @@ export async function analyzeFrameStreaming(
             120,
             { contextString: "" } as Awaited<ReturnType<typeof buildCognitionContext>>,
           ),
+          withTimeout(
+            buildPentagonPromptContext(
+              question,
+              [workingMemoryPrompt, ...(chatHistory?.slice(-4).map((msg) => `${msg.role}: ${msg.text}`) || [])].filter(Boolean).join("\n"),
+              intentType,
+            ),
+            180,
+            "",
+          ),
         ]),
-        220,
+        260,
         [
           "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
           supabaseKey,
           "",
           { contextString: "" } as Awaited<ReturnType<typeof buildCognitionContext>>,
+          "",
         ]
       );
 
       bearerToken = nextBearerToken;
       streamDashboardContext = dashboardContext || undefined;
-      streamContext = [baseContext, cognition?.contextString || "", workingMemoryPrompt]
+      streamContext = [baseContext, cognition?.contextString || "", pentagonContext, workingMemoryPrompt]
         .filter(Boolean)
         .join("\n\n");
     }
@@ -943,6 +993,12 @@ export async function analyzeFrameStreaming(
       .replace(/\n{3,}/g, "\n\n");
 
     if (learnedFacts.length > 0) addUserMemory(learnedFacts);
+    if (cleanDescription) {
+      pushToWorkingMemory(cleanDescription, "ai_response", 0.82, {
+        source: isVoiceInput ? "voice_stream" : "text_stream",
+        intentType,
+      });
+    }
     return { description: cleanDescription || null, learnedFacts, identifiedObjects };
   } catch (e: any) {
     if (e?.name !== "AbortError") {
@@ -1070,6 +1126,7 @@ export async function processInteraction(params: {
 }): Promise<string> {
   const { question, context = "", chatHistory, intent, onToken, onSentence } = params;
   const t0 = Date.now();
+  pushToWorkingMemory(question, "user_intent", 0.94, { source: "processInteraction", intent: intent || "auto" });
 
   const user = await getCachedAuthUser();
   const userId = user?.id || "anonymous";
@@ -1158,6 +1215,9 @@ export async function processInteraction(params: {
 
   // 8. Post-Interaction Learning
   const latency = Date.now() - t0;
+  if (responseText?.trim()) {
+    pushToWorkingMemory(responseText, "ai_response", 0.8, { source: "processInteraction", intent: detectedIntent, latency });
+  }
   postCognitionLearn(question, responseText, latency, detectedIntent).catch(console.error);
 
   return responseText;
