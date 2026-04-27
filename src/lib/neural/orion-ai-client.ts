@@ -1212,14 +1212,33 @@ export async function processInteraction(params: {
   const detectedIntent = intent || classifyIntent(question);
 
   // 🍕 PENTAGON PIZZA — Unified consciousness pre-pass (Perception → Memory → Reasoning → Meta).
-  // Runs the 5-layer cognitive cycle so chat, voice and Neural Vision all share the same brain.
-  // Failures are non-fatal — falls back to legacy pipeline below.
+  // We AWAIT the cycle so the frontal lobe (DeepSeek R1 / Nemotron) actually shapes the final answer.
+  // Soft fail: a 4.5s budget keeps the pipeline alive if OpenRouter cascade is slow.
+  let pentagonHint = "";
+  let pentagonRagBlock = "";
+  let pentagonTrail = "";
   try {
     const { getPentagonOrchestrator } = await import("@/core/pentagon");
     const cortex = getPentagonOrchestrator();
-    cortex.runCycle(question, { userId, wmContext: context, intent: detectedIntent }).catch((e) => {
-      console.warn("[Pentagon] Cycle non-fatal error:", e?.message);
-    });
+    await Promise.race([
+      cortex.runCycle(question, { userId, wmContext: context, intent: detectedIntent }),
+      new Promise((resolve) => setTimeout(resolve, 4500)),
+    ]).catch((e) => console.warn("[Pentagon] Cycle non-fatal:", e?.message));
+
+    const st = cortex.getState();
+    const r: any = st.reasoning || {};
+    const m: any = st.memory || {};
+    if (typeof r.responseHint === "string" && r.responseHint.trim()) {
+      pentagonHint = `═══ RASCUNHO DO LOBO FRONTAL (use como base) ═══\n${r.responseHint.trim()}`;
+    }
+    if (Array.isArray(m.ragSnippets) && m.ragSnippets.length > 0) {
+      const cited = m.ragSnippets.slice(0, 5).map((s: string, i: number) => `[${i + 1}] ${s.slice(0, 600)}`).join("\n\n");
+      pentagonRagBlock = `═══ FONTES INGERIDAS ═══\n${cited}`;
+    }
+    const trail: string[] = [];
+    if (Array.isArray(r.plan) && r.plan.length) trail.push(`Plano: ${r.plan.slice(0, 5).join(" → ")}`);
+    if (r.rationale) trail.push(`Raciocínio: ${String(r.rationale).slice(0, 400)}`);
+    if (trail.length) pentagonTrail = `═══ CADEIA DE PENSAMENTO ═══\n${trail.join("\n")}`;
   } catch (e) {
     console.warn("[Pentagon] Orchestrator unavailable:", e);
   }
