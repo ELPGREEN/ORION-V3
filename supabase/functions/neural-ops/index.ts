@@ -1256,6 +1256,14 @@ function detectWebSearchIntent(query: string): boolean {
   return /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|update|news|current|latest|trending)\b/i.test(query);
 }
 
+const VOICE_FAST_SHORTCUT_REGEX = /^(?:oi|ol[aá]|ola|opa|ei|hey|e\s*aí|e\s*ai|fala|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|valeu|obrigad[oa]|ok(?:ay)?|certo|beleza|sim|n[aã]o|nao|pode\s+repetir|repete|repita|me\s+ouve|me\s+escuta|t[aá]\s+me\s+ouvindo|consegue\s+me\s+ouvir)[\s!?.]*$/i;
+
+function shouldUseVoiceFastShortcut(question: string): boolean {
+  const normalized = question.trim();
+  if (!normalized) return true;
+  return VOICE_FAST_SHORTCUT_REGEX.test(normalized);
+}
+
 function detectURLsInQuery(query: string): string[] {
   const matches = query.match(/https?:\/\/[^\s<>"{}|\\^`\[\]]+/gi);
   return matches ? matches.slice(0, 2) : [];
@@ -1391,16 +1399,17 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   const isComplexQuery = intentType === "document_generation" || intentType === "legal_search" || intentType === "analysis" || questionStr0.length > 120;
   const wordCount = questionStr0.split(/\s+/).length;
   const isVoiceInput = inputSource === "voice";
-  const isDirectVoicePath = isVoiceInput && !hasImage;
-  const isConversationalQuery = !hasImage && !isComplexQuery && wordCount < 20 && isVoiceInput;
+  const isVoiceWithoutImage = isVoiceInput && !hasImage;
+  const isVoiceFastShortcut = isVoiceWithoutImage && shouldUseVoiceFastShortcut(questionStr0);
+  const isConversationalQuery = isVoiceWithoutImage && !isComplexQuery && wordCount < 20;
   
   // Use ultra-fast voice prompt for short voice queries (minimum tokens)
   // Conversational for medium voice, compact for text, full for vision/complex
   let basePrompt: string;
-  if (isDirectVoicePath && wordCount < 15) {
+  if (isVoiceFastShortcut && wordCount < 15) {
     // ULTRA-FAST: ~150 tokens, no self-knowledge, no anti-hallucination block
     basePrompt = ORION_VOICE_FAST_PROMPT;
-  } else if (isDirectVoicePath || isConversationalQuery) {
+  } else if (isVoiceWithoutImage || isConversationalQuery) {
     basePrompt = ORION_SYSTEM_PROMPT_CONVERSATIONAL;
   } else if (hasImage || isComplexQuery) {
     basePrompt = ORION_SYSTEM_PROMPT_FULL;
@@ -1458,25 +1467,27 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   let webSearchContext = "";
   let urlContexts: string[] = [];
 
-  if (!isDirectVoicePath) {
+  const shouldFetchKnowledgeContext = !shouldUseVoiceFastShortcut(questionStr0);
+
+  if (shouldFetchKnowledgeContext) {
     [identityKnowledge, ragContext, webSearchContext, ...urlContexts] = await Promise.all([
       isIdentityQuery ? fetchIdentityKnowledge() : Promise.resolve(""),
-      (!isSimpleQuery && questionStr.length > 5) ? fetchRAGContext(questionStr) : Promise.resolve(""),
+      questionStr.length > 2 ? fetchRAGContext(questionStr) : Promise.resolve(""),
       needsWebSearch ? fetchWebSearchContext(questionStr) : Promise.resolve(""),
       ...nonYoutubeUrls.map(u => fetchURLContext(u)),
       ...youtubeIds.map(id => fetchYouTubeContext(id)),
     ]);
   }
 
-  if (!isDirectVoicePath && isArchitectureQuery) {
+  if (shouldFetchKnowledgeContext && isArchitectureQuery) {
     systemParts.push(ORION_ARCHITECTURE_KNOWLEDGE);
   }
-  if (!isDirectVoicePath && identityKnowledge) {
+  if (shouldFetchKnowledgeContext && identityKnowledge) {
     systemParts.push(identityKnowledge);
   }
 
   // ═══ OPERA AI: Inject web search, URL scrape, YouTube context ═══
-  if (!isDirectVoicePath && webSearchContext) systemParts.push(webSearchContext);
+  if (shouldFetchKnowledgeContext && webSearchContext) systemParts.push(webSearchContext);
   for (const uc of urlContexts) {
     if (uc) systemParts.push(uc);
   }

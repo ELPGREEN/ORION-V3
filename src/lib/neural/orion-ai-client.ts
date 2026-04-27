@@ -35,6 +35,7 @@ const URL_DOMAIN_REGEX = /https?:\/\/[^\s]+/i;
 const HEARING_CHECK_PATTERNS = /\b(voc[eê]\s+consegue\s+me\s+ouvir|voc[eê]\s+me\s+ouve|t[aá]\s+me\s+ouvindo|est[aá]\s+me\s+ouvindo|consegue\s+me\s+escutar|me\s+escuta)\b/i;
 const SELF_IDENTITY_PATTERNS = /\b(quem\s+[eé]\s+voc[eê]|qual\s+[eé]\s+o\s+seu\s+nome|sua\s+personalidade|seu\s+signo|sua\s+hist[oó]ria|o\s+que\s+[eé]\s+voc[eê]|quando\s+voc[eê]\s+nasceu|conte\s+sobre\s+voc[eê]|fale\s+sobre\s+voc[eê]|fala\s+sobre\s+voc[eê]|me\s+conta(?:\s+um\s+pouco)?\s+sobre\s+voc[eê]|me\s+fala(?:\s+um\s+pouco)?\s+sobre\s+voc[eê])\b/i;
 const CONVERSATIONAL_COMPLAINT_PATTERNS = /\b(ent[aã]o|cara|mano|tu|voc[eê]|c[eê])\b.*\b(n[aã]o\s+me\s+responde|n[aã]o\s+responde|me\s+ignora|n[aã]o\s+entende|n[aã]o\s+capta|n[aã]o\s+peg[ao]|s[oó]\s+peg[ao]\s+duas?|tr[eê]s\s+palavras|frase\s+inteira|t[aá]\s+me\s+tirando|arquivo\s+srfx|srfx)\b/i;
+const VOICE_FAST_SHORTCUT_REGEX = /^(?:oi|ol[aá]|ola|opa|ei|hey|e\s*aí|e\s*ai|fala|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|valeu|obrigad[oa]|ok(?:ay)?|certo|beleza|sim|n[aã]o|nao|pode\s+repetir|repete|repita|me\s+ouve|me\s+escuta|t[aá]\s+me\s+ouvindo|consegue\s+me\s+ouvir)[\s!?.]*$/i;
 const EXPLICIT_VISUAL_PATTERNS = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+vendo|v[eê]|v[êe] na c[aâ]mera)|o\s+que\s+tem\s+(na\s+frente|a[ií]|aqui)|descrev[ae]\s+(a\s+)?(imagem|cena|ambiente|o\s+que\s+v[eê])|me\s+mostre\s+o\s+que\s+v[eê]|analise\s+(a\s+)?(imagem|cena|c[aâ]mera)|leia\s+(o\s+)?texto\s+(da\s+)?(imagem|c[aâ]mera)|identifique\s+(o\s+)?(objeto|rosto|texto)|quantos?\s+[^.?!]*\s+(tem|h[aá])\b)/i;
 const IMAGE_GEN_PATTERNS = /\b(gere?\s+(uma?\s+)?imagem|crie?\s+(uma?\s+)?imagem|desenh[ae]|ilustr[ae]|gerar?\s+foto|cri[ae]\s+(uma?\s+)?ilustra[çc][aã]o|generate\s+(an?\s+)?image|draw|create\s+(an?\s+)?image|make\s+(an?\s+)?image|paint|sketch)\b/i;
 const WEB_SEARCH_PATTERNS = /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|pesquis[ae]\s+na\s+web|busca\s+na\s+internet|search\s+for|look\s+up|news|current|latest|trending)\b/i;
@@ -74,6 +75,12 @@ if (typeof window !== "undefined") {
 
 export function getCachedVoiceIdentity(): string | undefined {
   return (window as any)?.__orionIdentityStatus || _cachedVoiceIdentity;
+}
+
+function shouldUseVoiceFastShortcut(question: string): boolean {
+  const normalized = question.trim();
+  if (!normalized) return true;
+  return VOICE_FAST_SHORTCUT_REGEX.test(normalized);
 }
 
 async function getCachedAuthUser(): Promise<{ id: string; email?: string | null } | null> {
@@ -712,15 +719,17 @@ export async function analyzeFrameStreaming(
 
     // ═══ PERF: buildLocalDetections ONCE — reused in body below ═══
     const localDetections = buildLocalDetections();
-    const isDirectVoiceMode = (window as any).__orionInputSource === "voice" &&
+    const isVoiceInput = (window as any).__orionInputSource === "voice";
+    const isDirectVoiceMode = isVoiceInput &&
       intentType !== "visual" &&
       !String(intentType || "").startsWith("visual_");
+    const isVoiceFastShortcut = isDirectVoiceMode && shouldUseVoiceFastShortcut(question);
 
     // ═══ VOICE FAST PATH: Skip all heavy context, just get auth token ═══
     let streamContext = "";
     let bearerToken = supabaseKey;
 
-    if (isDirectVoiceMode) {
+    if (isVoiceFastShortcut) {
       // Voice: zero context building, just auth token (budget: 50ms)
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -771,12 +780,12 @@ export async function analyzeFrameStreaming(
       signal,
       body: JSON.stringify({
         imageBase64, context: enrichedContext, question,
-        userMemory: isDirectVoiceMode ? getUserMemory().slice(-2) : getUserMemory(),
+        userMemory: isVoiceFastShortcut ? getUserMemory().slice(-2) : getUserMemory(),
         dashboardContext: undefined,
-        chatHistory: isDirectVoiceMode ? chatHistory?.slice(-2) : chatHistory?.slice(-4),
+        chatHistory: isVoiceFastShortcut ? chatHistory?.slice(-2) : chatHistory?.slice(-4),
         identificationMode, intentType,
         stream: true,
-        localDetections: isDirectVoiceMode ? undefined : localDetections,
+        localDetections: isVoiceFastShortcut ? undefined : localDetections,
         maxTokens: (window as any).__cognitiveMaxTokens || undefined,
         reasoningInstructions: (window as any).__cognitiveReasoningInstructions || undefined,
         inputSource: (window as any).__orionInputSource || "text",
