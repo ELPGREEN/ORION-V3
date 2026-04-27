@@ -36,3 +36,25 @@ export function calculateIoU(box1: tf.Tensor2D, box2: tf.Tensor2D): tf.Tensor1D 
     return intersectionArea.div(unionArea).squeeze() as tf.Tensor1D;
   });
 }
+
+/**
+ * ⚡ BOLT: Optimized Non-Max Suppression for deduplicating detections.
+ */
+export async function applyNMS(
+  boxes: tf.Tensor2D,
+  scores: tf.Tensor1D,
+  maxOutputSize: number,
+  iouThreshold = 0.5,
+  scoreThreshold = 0.5
+): Promise<number[]> {
+  const selectedIndices = await tf.image.nonMaxSuppressionAsync(
+    boxes,
+    scores,
+    maxOutputSize,
+    iouThreshold,
+    scoreThreshold
+  );
+  const indices = Array.from(await selectedIndices.data());
+  selectedIndices.dispose();
+  return indices;
+}
