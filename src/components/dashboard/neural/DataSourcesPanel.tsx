@@ -108,7 +108,11 @@ export function DataSourcesPanel() {
             wrapSupabase(supabase.from("legal_embeddings").select("content_type").eq("source", source), { source, query: "type_data" }),
           ]);
           const contentTypes: Record<string, number> = {};
-          (typeData.data || []).forEach((r: any) => { contentTypes[r.content_type] = (contentTypes[r.content_type] || 0) + 1; });
+          const typeRows = (typeData.data ?? []) as Array<{ content_type: string | null }>;
+          typeRows.forEach((r) => {
+            const key = r.content_type || "desconhecido";
+            contentTypes[key] = (contentTypes[key] || 0) + 1;
+          });
           return { source, total: total.count || 0, withEmbeddings: withEmb.count || 0, latest: latestRow.data?.[0]?.created_at || null, contentTypes } as SourceStats;
         })),
         // Univates
@@ -119,29 +123,29 @@ export function DataSourcesPanel() {
         ]),
         // CourtListener
         Promise.all([
-          supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }).like("source_type", "courtlistener_%"),
-          supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }).like("source_type", "courtlistener_%").not("embedding", "is", null),
-          supabase.from("neural_knowledge_base").select("created_at").like("source_type", "courtlistener_%").order("created_at", { ascending: false }).limit(1),
+          wrapSupabase(supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }).like("source_type", "courtlistener_%")),
+          wrapSupabase(supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }).like("source_type", "courtlistener_%").not("embedding", "is", null)),
+          wrapSupabase(supabase.from("neural_knowledge_base").select("created_at").like("source_type", "courtlistener_%").order("created_at", { ascending: false }).limit(1)),
         ]),
         // Súmulas STJ
         Promise.all([
-          supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "sumulas_stj"),
-          supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "sumulas_stj").not("embedding", "is", null),
+          wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "sumulas_stj")),
+          wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "sumulas_stj").not("embedding", "is", null)),
         ]),
         // STF Jurisprudência
         Promise.all([
-          supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "stf_jurisprudencia_tematica"),
-          supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "stf_jurisprudencia_tematica").not("embedding", "is", null),
+          wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "stf_jurisprudencia_tematica")),
+          wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "stf_jurisprudencia_tematica").not("embedding", "is", null)),
         ]),
         // Doutrina
         Promise.all([
-          supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "doutrina_processual_penal"),
-          supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "doutrina_processual_penal").not("embedding", "is", null),
+          wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "doutrina_processual_penal")),
+          wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "doutrina_processual_penal").not("embedding", "is", null)),
         ]),
         // Aury Lopes
         Promise.all([
-          supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "aury_lopes_processual"),
-          supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "aury_lopes_processual").not("embedding", "is", null),
+          wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "aury_lopes_processual")),
+          wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", "aury_lopes_processual").not("embedding", "is", null)),
         ]),
       ]);
 
