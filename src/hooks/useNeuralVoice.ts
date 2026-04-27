@@ -386,13 +386,18 @@ export function useNeuralVoice(
   const setListeningWithTimer = useCallback((val: boolean) => {
     setListening(val);
     if (val) {
+      // Clear any stale "no sound" flag the moment we start listening again.
+      setNoSpeechDetected(false);
       const cfg = getVoiceThresholds();
       if (cfg.suppressNoSpeechToast) return;
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
       noSpeechTimerRef.current = setTimeout(() => {
         if (!listeningRef.current) return;
-        // If GCP STT is alive and streaming, silence is just user being quiet — don't alarm.
-        const gcpHealthy = !!gcpSessionRef.current?.isActive?.() && !gcpSessionRef.current?.isPaused?.();
+        // GCP STT is considered healthy if the session exists and is not paused.
+        // (active=true means AudioContext is running and processor is wired —
+        // silence after that is just the user being quiet, never "SEM SOM".)
+        const session = gcpSessionRef.current;
+        const gcpHealthy = !!session && session.isActive() && !session.isPaused();
         if (gcpHealthy) return;
         setNoSpeechDetected(true);
         toast.info("Não estou te ouvindo... Verifique se o microfone está por perto.");
@@ -1012,8 +1017,16 @@ export function useNeuralVoice(
             console.log("[Voice] ✅ Google Cloud STT ativo — streaming em tempo real");
             return; // GCP STT running, no need for Web Speech
           }
+
+          // start() returned false (mic unavailable / AudioContext suspended).
+          // Drop the dead session ref so health checks don't think GCP is healthy.
+          try { session.destroy(); } catch { /* noop */ }
+          gcpSessionRef.current = null;
+          console.warn("[Voice] GCP STT could not start — falling back to Web Speech");
         } catch (err) {
           console.warn("[Voice] GCP STT init failed:", err);
+          try { gcpSessionRef.current?.destroy(); } catch { /* noop */ }
+          gcpSessionRef.current = null;
         }
       }
 
