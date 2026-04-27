@@ -358,7 +358,7 @@ Adapte suas respostas conforme essas orientações, mantendo seu tom profissiona
             status: "pendente",
           },
           { onConflict: "conversation_id" }
-        ).catch((e: any) => {
+        ).then(() => {}, (e: any) => {
           // If upsert fails (no unique on conversation_id), just insert
           supabase.from("secretary_summaries").insert({
             conversation_id: conversationId,

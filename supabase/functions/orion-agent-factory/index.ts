@@ -279,7 +279,7 @@ async function handleInvokeAgent(body: Record<string, unknown>) {
         });
         result = await hfRes.json();
       } catch (e) {
-        result = { error: `HF inference failed: ${e.message}`, fallback: true };
+        result = { error: `HF inference failed: ${(e as any)?.message ?? String(e)}`, fallback: true };
       }
     } else {
       result = { error: "No HF token available", fallback: true };

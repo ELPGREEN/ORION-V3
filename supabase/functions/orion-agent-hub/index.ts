@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("[agent-hub] Error:", err);
     return new Response(
-      JSON.stringify({ error: err.message || "Internal error", fallback: true }),
+      JSON.stringify({ error: (err as any)?.message || "Internal error", fallback: true }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

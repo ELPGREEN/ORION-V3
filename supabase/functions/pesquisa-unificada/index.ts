@@ -1359,7 +1359,7 @@ Deno.serve(async (req) => {
     const serviceKeyEnv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
     // Registrar pesquisa no neural_learning_data para RLHF
-    EdgeRuntime.waitUntil(
+    (globalThis as any).EdgeRuntime?.waitUntil(
       (async () => {
         try {
           const supa = createClient(supabaseUrlEnv, serviceKeyEnv);
@@ -1384,7 +1384,7 @@ Deno.serve(async (req) => {
 
     // Triggar generate-embeddings se novos itens foram indexados
     if (filteredResults.length > 0) {
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         new Promise(r => setTimeout(r, 5000)).then(() =>
           fetch(`${supabaseUrlEnv}/functions/v1/generate-embeddings`, {
             method: "POST",
