@@ -268,7 +268,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         signal.addEventListener("abort", stop, { once: true });
       }
 
-      console.log("[GCP-STT] ⚡ Long-form capture — silence: 3000ms, poll: 60ms, early-flush: ON");
+      console.log(`[GCP-STT] ⚡ Capture ON — silence: ${silenceDurationMs}ms, poll: ${FLUSH_POLL_MS}ms, early-flush: ON`);
       return true;
     } catch (err: any) {
       const msg = err?.message || String(err);
