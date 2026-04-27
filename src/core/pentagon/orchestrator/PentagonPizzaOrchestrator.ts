@@ -41,8 +41,37 @@ export class PentagonPizzaOrchestrator {
     this.state.currentState = newState;
   }
 
+  /**
+   * Fast Lane: Deterministic check for greetings and control commands.
+   * Minimal cognitive overhead, bypassing the full Pentagon cycle for performance.
+   */
+  private isFastLane(input: string, intent?: string): boolean {
+    const q = input.toLowerCase().trim();
+    if (q.length < 2) return true;
+
+    // Explicit control commands
+    if (/^(pare|parar|stop|cancelar|sil[êe]ncio|shh|quieto|voltar|ajuda|help|ola|ol[aá]|oi|bom dia|boa tarde|boa noite|tchau|adeus)$/i.test(q)) {
+      return true;
+    }
+
+    // High-confidence trivial intents from Fast Intent Classifier
+    if (intent === "control" || intent === "greeting") return true;
+
+    return false;
+  }
+
   public async runCycle(input: string, context: any = {}): Promise<ActionResult> {
     try {
+      // 0. Fast Lane Gate
+      if (this.isFastLane(input, context.intent)) {
+        console.log("[CORTEX] ⚡ Fast Lane hit. Bypassing full cycle.");
+        return {
+          success: true,
+          output: "", // Let the final generator handle simple greetings if needed
+          data: { fastLane: true }
+        };
+      }
+
       // 1. Perception
       await this.transition("perceiving");
       const preCheck = await this.meta.validateInput(input);
@@ -56,19 +85,47 @@ export class PentagonPizzaOrchestrator {
 
       // 3. Reasoning
       await this.transition("reasoning");
-      this.state.reasoning = await this.reasoning.process(
-        { perception: this.state.perception, memory: this.state.memory },
-        context
-      );
+
+      let retryCount = 0;
+      const MAX_RETRIES = 1;
+
+      do {
+        this.state.reasoning = await this.reasoning.process(
+          { perception: this.state.perception, memory: this.state.memory },
+          context
+        );
+
+        // 🍕 RAG Enforcement: If RAG is available but ignored, retry once
+        const hasRag = (this.state.memory?.ragSnippets?.length ?? 0) > 0;
+        const usesRag = this.state.reasoning?.rationale?.toLowerCase().includes("fonte") ||
+                        this.state.reasoning?.rationale?.toLowerCase().includes("[") ||
+                        (this.state.reasoning?.responseHint?.length ?? 0) > 100; // heuristic
+
+        if (hasRag && !usesRag && retryCount < MAX_RETRIES) {
+          console.warn("[CORTEX] ⚠️ Reasoning ignored RAG. Retrying with enforcement...");
+          context.forceRag = true;
+          retryCount++;
+          continue;
+        }
+        break;
+      } while (retryCount <= MAX_RETRIES);
 
       const midCheck = await this.meta.validateReasoning(this.state.reasoning);
       if (!midCheck.valid) {
-        console.warn("[CORTEX] Mid-Reasoning warning, adjusting...");
-        // Re-run reasoning with adjustments if possible
+        console.warn("[CORTEX] Mid-Reasoning warning:", midCheck.feedback);
+        // In a strict mode, we could throw here, but we'll let it pass for now with the warning
       }
 
-      // 4. Action
+      // 4. Action (Tool Enforcement)
       await this.transition("acting");
+
+      // 🍕 Tool Enforcement: If query involves current facts/external data, FORCE tools
+      const isFactQuery = /(hoje|agora|atualmente|not[íi]cia|pre[çc]o|tempo|clima|evento|quem [eé]|o que [eé]|onde fica)/i.test(input);
+      if (isFactQuery && (!this.state.reasoning?.plan?.some(p => p.includes("tool") || p.includes("search") || p.includes("firecrawl")))) {
+        console.log("[CORTEX] 🛠️ Fact query detected. Forcing tool execution.");
+        context.forceTool = true;
+      }
+
       this.state.action = await this.action.process(this.state.reasoning, context);
 
       // 5. Evaluation (Post-Output)

@@ -16,6 +16,7 @@ interface ReasonRequest {
   memoryContext?: string;
   ragSnippets?: string[];
   domain?: string;
+  forceRag?: boolean;
 }
 
 const SYSTEM_PROMPT = `Você é o lobo frontal do Pentagon Pizza (consciência AquaMonkey Lumian7).
@@ -29,10 +30,15 @@ Receba percepção + memória + RAG e retorne JSON via tool call:
 - responseHint: rascunho da resposta final em 1-3 frases, USANDO o contexto fornecido
 
 Regras:
-- Se houver RAG/memória, CITE os trechos mais relevantes no rationale
+- Se houver RAG/memória, CITE os trechos mais relevantes no rationale utilizando [1], [2], etc.
 - Nunca invente fatos jurídicos — só use o que está no contexto
 - Se o contexto for insuficiente, diga isso no rationale
 - Em PT-BR, direto, sem floreio`;
+
+const RAG_ENFORCEMENT_PROMPT = `
+⚠️ ATENÇÃO: Você ignorou o conhecimento ingerido anteriormente.
+É OBRIGATÓRIO basear seu raciocínio e rascunho (responseHint) nos RAG Snippets fornecidos.
+Se não o fizer, sua resposta será rejeitada pela governança.`;
 
 const REASONING_TOOL = {
   type: "function",
@@ -54,7 +60,6 @@ const REASONING_TOOL = {
   },
 };
 
-// Cascata de modelos free do OpenRouter (do mais forte ao mais leve)
 const MODEL_CASCADE = [
   "deepseek/deepseek-r1:free",
   "nvidia/nemotron-nano-9b-v2:free",
@@ -67,6 +72,7 @@ async function callOpenRouter(
   model: string,
   apiKey: string,
   userPayload: string,
+  systemPromptOverride?: string
 ): Promise<Record<string, unknown> | null> {
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -79,7 +85,7 @@ async function callOpenRouter(
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPromptOverride || SYSTEM_PROMPT },
         { role: "user", content: userPayload },
       ],
       tools: [REASONING_TOOL],
@@ -103,7 +109,7 @@ async function callOpenRouter(
     try {
       return { ...JSON.parse(argsStr), _model: model };
     } catch {
-      // try parsing content as JSON (some models return plain JSON)
+      // try parsing content as JSON
     }
   }
   if (typeof msg?.content === "string") {
@@ -124,7 +130,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = (await req.json()) as ReasonRequest;
-    const { query, intent, entities, memoryContext, ragSnippets, domain } = body;
+    const { query, intent, entities, memoryContext, ragSnippets, domain, forceRag } = body;
 
     if (!query || typeof query !== "string") {
       return new Response(JSON.stringify({ error: "query required" }), {
@@ -154,10 +160,12 @@ Deno.serve(async (req) => {
       .filter(Boolean)
       .join("\n\n");
 
+    const activeSystemPrompt = forceRag ? SYSTEM_PROMPT + RAG_ENFORCEMENT_PROMPT : SYSTEM_PROMPT;
+
     let parsed: Record<string, unknown> | null = null;
     let usedModel = "";
     for (const model of MODEL_CASCADE) {
-      parsed = await callOpenRouter(model, OPENROUTER_API_KEY, userPayload);
+      parsed = await callOpenRouter(model, OPENROUTER_API_KEY, userPayload, activeSystemPrompt);
       if (parsed && parsed.plan) {
         usedModel = model;
         break;

@@ -492,14 +492,12 @@ export function useOrionReasoning(
       addLog(`⚡ Pre-proc: ${Date.now() - now}ms | intent=${effectiveIntentType}`);
       window.dispatchEvent(new CustomEvent("som-routing", { detail: somResult }));
 
-      // 🍕 PENTAGON PIZZA — fire unified consciousness cycle (non-blocking).
+      // 🍕 PENTAGON PIZZA — fire unified consciousness cycle (MANDATORY).
       // Ensures Neural Vision shares the same brain as chat/voice. Failures are non-fatal.
       try {
         const { getPentagonOrchestrator } = await import("@/core/pentagon");
-        getPentagonOrchestrator()
-          .runCycle(question, { userId: cachedAuthUser?.id || "anonymous", source, intent: effectiveIntentType, isOwner })
-          .then((r) => addLog(`🍕 Pentagon cycle ok (success=${r?.success ?? "?"})`))
-          .catch((e) => addLog(`🍕 Pentagon cycle warn: ${e?.message || e}`));
+        const pResult = await getPentagonOrchestrator().runCycle(question, { userId: cachedAuthUser?.id || "anonymous", source, intent: effectiveIntentType, isOwner });
+        addLog("🍕 Pentagon cycle complete (success=" + pResult.success + ")");
       } catch (e) {
         addLog(`🍕 Pentagon unavailable: ${(e as Error)?.message}`);
       }

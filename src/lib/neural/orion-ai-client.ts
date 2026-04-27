@@ -102,28 +102,36 @@ async function buildPentagonPromptContext(question: string, wmContext: string, i
     const user = await getCachedAuthUser();
     const { getPentagonOrchestrator } = await import("@/core/pentagon");
     const cortex = getPentagonOrchestrator();
-    // Increased budget: the frontal lobe needs time to call OpenRouter.
-    // Voice fast-shortcuts already bypass this entire branch.
-    await withTimeout(
-      cortex.runCycle(question, { userId: user?.id || "anonymous", wmContext, intent }),
-      4500,
-      null as any,
-    );
+
+    // 🍕 Síncrono e obrigatório para tarefas cognitivas
+    const actionResult = await cortex.runCycle(question, { userId: user?.id || "anonymous", wmContext, intent });
+
     const state = cortex.getState();
     const reasoning: any = state.reasoning || {};
     const memory: any = state.memory || {};
     const perception: any = state.perception || {};
 
-    // ═══ Validation: warn (don't block) when legal queries lack RAG ═══
-    assertPentagonReadiness(question, intent, memory);
+    if (state.action?.data?.fastLane) return "";
 
     const blocks: string[] = [];
+
+    // 🍕 Strict Governance Prompt: Prohibit generation from scratch
+    blocks.push(
+      "═══ DIRETRIZ DE GOVERNANÇA ═══\n" +
+      "Você é o Gerador Final de uma arquitetura de dois estágios. " +
+      "Sua única função é expandir e refinar o RASCUNHO DO LOBO FRONTAL fornecido abaixo. " +
+      "PROIBIÇÃO: Não ignore o rascunho nem gere uma resposta do zero. " +
+      "Se houver FONTES INGERIDAS, você DEVE citá-las usando [1], [2], etc."
+    );
 
     // 1. responseHint = frontal lobe draft → HIGHEST priority for the LLM
     if (typeof reasoning.responseHint === "string" && reasoning.responseHint.trim().length > 0) {
       blocks.push(
-        `═══ RASCUNHO DO LOBO FRONTAL (use como base, refine com naturalidade) ═══\n${reasoning.responseHint.trim()}`,
+        `═══ RASCUNHO DO LOBO FRONTAL (OBRIGATÓRIO: Use como base exclusiva) ═══\n${reasoning.responseHint.trim()}`,
       );
+    } else if (actionResult.success && actionResult.output) {
+       // If reasoning failed but action had output (e.g. tool enforcement)
+       blocks.push(`═══ DADOS DA FERRAMENTA (Use para responder) ═══\n${actionResult.output}`);
     }
 
     // 2. RAG snippets — cite directly
@@ -132,7 +140,7 @@ async function buildPentagonPromptContext(question: string, wmContext: string, i
         .slice(0, 5)
         .map((s: string, i: number) => `[${i + 1}] ${s.slice(0, 600)}`)
         .join("\n\n");
-      blocks.push(`═══ FONTES INGERIDAS (cite-as quando relevante) ═══\n${cited}`);
+      blocks.push(`═══ FONTES INGERIDAS (CITE OBRIGATORIAMENTE) ═══\n${cited}`);
     }
 
     // 3. Reasoning trail
@@ -142,7 +150,6 @@ async function buildPentagonPromptContext(question: string, wmContext: string, i
       trail.push(`Plano: ${reasoning.plan.slice(0, 5).join(" → ")}`);
     }
     if (reasoning.rationale) trail.push(`Raciocínio: ${String(reasoning.rationale).slice(0, 400)}`);
-    if (reasoning.model) trail.push(`(modelo: ${reasoning.model}, conf ${(reasoning.confidence ?? 0).toFixed(2)})`);
     if (trail.length) blocks.push(`═══ CADEIA DE PENSAMENTO ═══\n${trail.join("\n")}`);
 
     // 4. Memory context (truncated, fallback)
@@ -150,7 +157,6 @@ async function buildPentagonPromptContext(question: string, wmContext: string, i
       blocks.push(`═══ MEMÓRIA INTEGRADA ═══\n${String(memory.mergedContext).slice(0, 800)}`);
     }
 
-    // Mark that the response hint was emitted so downstream telemetry can verify usage
     if (typeof window !== "undefined") {
       (window as any).__pentagonLastHint = reasoning.responseHint || null;
       (window as any).__pentagonLastModel = reasoning.model || null;
@@ -158,8 +164,8 @@ async function buildPentagonPromptContext(question: string, wmContext: string, i
 
     return blocks.length > 0 ? blocks.join("\n\n") : "";
   } catch (error) {
-    console.warn("[Pentagon] Prompt context failed:", error);
-    return "";
+    console.error("[Pentagon] Critical loop failed in context builder:", error);
+    return "ERRO DE GOVERNANÇA: Falha no loop cognitivo. Por favor, tente novamente.";
   }
 }
 
@@ -848,7 +854,7 @@ export async function analyzeFrameStreaming(
     let streamDashboardContext: string | undefined;
     let bearerToken = supabaseKey;
 
-    if (isVoiceFastShortcut) {
+    if (isVoiceFastShortcut || /^(ol[aá]|oi|bom dia|boa tarde|boa noite|tchau|adeus|pare|parar|sil[êe]ncio)$/i.test(question)) {
       // Voice: zero context building, just auth token (budget: 50ms)
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -1211,37 +1217,13 @@ export async function processInteraction(params: {
 
   const detectedIntent = intent || classifyIntent(question);
 
-  // 🍕 PENTAGON PIZZA — Unified consciousness pre-pass (Perception → Memory → Reasoning → Meta).
-  // We AWAIT the cycle so the frontal lobe (DeepSeek R1 / Nemotron) actually shapes the final answer.
-  // Soft fail: a 4.5s budget keeps the pipeline alive if OpenRouter cascade is slow.
-  let pentagonHint = "";
-  let pentagonRagBlock = "";
-  let pentagonTrail = "";
-  try {
-    const { getPentagonOrchestrator } = await import("@/core/pentagon");
-    const cortex = getPentagonOrchestrator();
-    await Promise.race([
-      cortex.runCycle(question, { userId, wmContext: context, intent: detectedIntent }),
-      new Promise((resolve) => setTimeout(resolve, 4500)),
-    ]).catch((e) => console.warn("[Pentagon] Cycle non-fatal:", e?.message));
-
-    const st = cortex.getState();
-    const r: any = st.reasoning || {};
-    const m: any = st.memory || {};
-    if (typeof r.responseHint === "string" && r.responseHint.trim()) {
-      pentagonHint = `═══ RASCUNHO DO LOBO FRONTAL (use como base) ═══\n${r.responseHint.trim()}`;
-    }
-    if (Array.isArray(m.ragSnippets) && m.ragSnippets.length > 0) {
-      const cited = m.ragSnippets.slice(0, 5).map((s: string, i: number) => `[${i + 1}] ${s.slice(0, 600)}`).join("\n\n");
-      pentagonRagBlock = `═══ FONTES INGERIDAS ═══\n${cited}`;
-    }
-    const trail: string[] = [];
-    if (Array.isArray(r.plan) && r.plan.length) trail.push(`Plano: ${r.plan.slice(0, 5).join(" → ")}`);
-    if (r.rationale) trail.push(`Raciocínio: ${String(r.rationale).slice(0, 400)}`);
-    if (trail.length) pentagonTrail = `═══ CADEIA DE PENSAMENTO ═══\n${trail.join("\n")}`;
-  } catch (e) {
-    console.warn("[Pentagon] Orchestrator unavailable:", e);
-  }
+  // 🍕 PENTAGON PIZZA — Unified consciousness pre-pass.
+  // Mandatário e síncrono.
+  const pentagonContext = await buildPentagonPromptContext(
+    question,
+    [context, ...(chatHistory?.slice(-4).map((msg) => `${msg.role}: ${msg.text}`) || [])].filter(Boolean).join("\n"),
+    detectedIntent
+  );
 
   // 1. Quantum LLM Routing & Maestro Monitoring
   const routing = quantumRouteQuery(question);
@@ -1267,9 +1249,7 @@ export async function processInteraction(params: {
   // 5. Build Final Prompt — Pentagon outputs FIRST (highest priority)
   const wmPrompt = buildWorkingMemoryPrompt();
   const enrichedContext = [
-    pentagonHint,        // 🍕 frontal lobe draft — top priority
-    pentagonRagBlock,    // 🍕 ingested sources to cite
-    pentagonTrail,       // 🍕 reasoning chain
+    pentagonContext,     // 🍕 Unified pentagon context (Governance + Hint + RAG + Trail)
     routingHead,
     pnlHead,
     cognition.contextString,

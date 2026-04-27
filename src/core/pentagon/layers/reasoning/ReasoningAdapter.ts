@@ -32,6 +32,8 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
           memoryContext: memory?.mergedContext?.slice(0, 4000),
           ragSnippets,
           domain: context?.domain,
+          // 🍕 Force RAG instruction if retry was triggered
+          forceRag: context?.forceRag || false,
         },
       });
 
@@ -40,9 +42,18 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
         return this.fallback(perception, memory);
       }
 
+      // 🍕 Validation: Penalize (throw internally for Orchestrator retry) if RAG is available but rationale is too short/generic
+      const hasRag = ragSnippets.length > 0;
+      const rationale = result.rationale || "";
+      const isGeneric = rationale.length < 30 || /responder|pergunta|entendi/i.test(rationale);
+
+      if (hasRag && isGeneric && !context?.forceRag) {
+         throw new Error("Generic rationale detected while RAG is available.");
+      }
+
       return {
         plan: Array.isArray(result.plan) ? result.plan : ["responder"],
-        rationale: result.rationale ?? "",
+        rationale: rationale,
         confidence: typeof result.confidence === "number" ? result.confidence : 0.7,
         subTasks: Array.isArray(result.subTasks) ? result.subTasks : [],
         responseHint: result.responseHint ?? "",
@@ -50,6 +61,10 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
       };
     } catch (err) {
       console.error("[Reasoning] critical fail", err);
+      // If it's our internal validation error, re-throw for Orchestrator retry
+      if (err instanceof Error && err.message.includes("Generic rationale")) {
+        throw err;
+      }
       return this.fallback(perception, memory);
     }
   }

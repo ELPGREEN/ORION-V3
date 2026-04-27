@@ -8,6 +8,8 @@
  * Format: { "normalized_text" → { correctIntent, count, lastUsed } }
  */
 
+import { addMemoryFacts } from "./orion-memory";
+
 const STORAGE_KEY = "orion_intent_feedback";
 const MAX_ENTRIES = 500;
 
@@ -85,6 +87,15 @@ export function recordCorrection(
   }
   
   saveCorrections();
+
+  // 🍕 IMMEDIATE IMPACT: Inject correction into active working memory facts
+  addMemoryFacts(
+    [`[Correction] O usuário corrigiu o intent de "${originalIntent}" para "${correctIntent}" para o input: "${originalText}"`],
+    "fact",
+    "system",
+    1.0 // Maximum priority
+  );
+
   console.log(`[IntentFeedback] Recorded: "${originalText}" → ${correctIntent} (was ${originalIntent})`);
 }
 
