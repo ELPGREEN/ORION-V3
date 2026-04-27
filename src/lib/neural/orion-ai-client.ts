@@ -893,11 +893,11 @@ export async function analyzeFrameStreaming(
               [workingMemoryPrompt, ...(chatHistory?.slice(-4).map((msg) => `${msg.role}: ${msg.text}`) || [])].filter(Boolean).join("\n"),
               intentType,
             ),
-            180,
+            5000,
             "",
           ),
         ]),
-        260,
+        5200,
         [
           "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
           supabaseKey,
