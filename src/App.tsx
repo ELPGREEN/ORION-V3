@@ -113,6 +113,7 @@ const InstrucoesPlataforma = lazy(lazyRetry(() => import("./pages/dashboard/Inst
 const ControleRobotico = lazy(lazyRetry(() => import("./pages/dashboard/ControleRobotico")));
 const DeviceIntegrationPage = lazy(lazyRetry(() => import("./pages/dashboard/DeviceIntegrationPage")));
 const MeusAcessos = lazy(lazyRetry(() => import("./pages/dashboard/MeusAcessos")));
+const Diagnostics = lazy(lazyRetry(() => import("./pages/Diagnostics")));
 const ExplorarLojas = lazy(lazyRetry(() => import("./pages/dashboard/ExplorarLojas")));
 const ConfigurarIA = lazy(lazyRetry(() => import("./pages/dashboard/ConfigurarIA")));
 const PlanoUsuario = lazy(lazyRetry(() => import("./pages/dashboard/PlanoUsuario")));
@@ -179,6 +180,7 @@ const App = () => (
                   <Route path="/depoimentos" element={<Depoimentos />} />
                   <Route path="/install" element={<InstallApp />} />
                   <Route path="/advogado/:advogadoId" element={<AdvogadoSite />} />
+                  <Route path="/diagnostics" element={<Diagnostics />} />
 
                   {/* ═══ PUBLIC — Auth ═══ */}
                   <Route path="/auth" element={<Auth />} />
