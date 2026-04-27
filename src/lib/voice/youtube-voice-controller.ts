@@ -1,6 +1,8 @@
 import { OrionEvents, dispatchOrionEvent, type OrionVolumeAction, type ResolvedMusicPlatform } from "@/lib/events/orion-events";
 
 const NORMALIZE_DIACRITICS_REGEX = /[\u0300-\u036f]/g;
+const CONVERSATIONAL_HEARING_REGEX = /\b(?:voce\s+)?consegue\s+me\s+ouvir(?:\s+perfeitamente)?\b|\b(?:voce\s+)?esta\s+me\s+ouvindo\b|\bta\s+me\s+ouvindo\b|\bme\s+ouve\b|\bme\s+escuta\b|\bteste\s+(?:de\s+)?(?:som|mic|microfone)\b|\bmicrofone\s+(?:ok|funcionando)\b/i;
+const EXPLICIT_MEDIA_COMMAND_REGEX = /^(?:youtube\s+)?(?:(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|play)\b|(?:(?:ouvir|assistir|ver)\s+(?:uma?\s+)?(?:musica|video|som|playlist|podcast|filme)\b))/i;
 
 function normalizeCommand(text: string): string {
   return text
@@ -14,7 +16,8 @@ function normalizeCommand(text: string): string {
 
 function extractSearchQuery(command: string): string {
   return command
-    .replace(/^(?:youtube\s+)?(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|ouvir|assistir|ver|play)\s+/i, "")
+    .replace(/^(?:youtube\s+)?(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|play)\s+/i, "")
+    .replace(/^(?:ouvir|assistir|ver)\s+(?:uma?\s+)?(?:musica|video|som|playlist|podcast|filme)\s+/i, "")
     .replace(/^(?:uma?\s+)?(?:musica|video|som|playlist|podcast|filme)\s+/i, "")
     .trim();
 }
@@ -46,8 +49,9 @@ export interface LocalYouTubeVoiceResult {
 export function handleLocalYouTubeVoiceCommand(rawCommand: string): LocalYouTubeVoiceResult {
   const command = normalizeCommand(rawCommand);
   if (!command) return { handled: false };
+  if (CONVERSATIONAL_HEARING_REGEX.test(command)) return { handled: false };
 
-  const hasMusicContext = /\b(youtube|musica|video|player|toca|tocar|toque|reproduz|reproduzir|som|playlist|podcast|filme|assistir|ver)\b/.test(command);
+  const hasMusicContext = /\b(youtube|musica|video|player|toca|tocar|toque|reproduz|reproduzir|som|playlist|podcast|filme|assistir)\b/.test(command);
   const searchQuery = extractSearchQuery(command);
   const wantsSpecificMedia = !!searchQuery && searchQuery !== command;
 
@@ -102,9 +106,9 @@ export function handleLocalYouTubeVoiceCommand(rawCommand: string): LocalYouTube
       return { handled: true, feedback: explicitValue !== undefined ? `Volume em ${explicitValue}%.` : "Ajustando volume." };
     }
 
-    case /\b(youtube\s+)?(?:pesquisar|procure|procurar|buscar|busca|tocar|toque|abrir|abra|reproduzir|reproduza|colocar|coloque|ouvir|assistir|ver)\b/.test(command): {
+    case EXPLICIT_MEDIA_COMMAND_REGEX.test(command): {
       const query = extractSearchQuery(command);
-      if (!query) return { handled: false };
+      if (!query || query === command) return { handled: false };
       dispatchResolved(query);
       dispatchOrionEvent(OrionEvents.MusicCommand, {
         action: "search_and_play",
