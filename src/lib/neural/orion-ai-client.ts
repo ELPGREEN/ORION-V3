@@ -87,31 +87,109 @@ function shouldUseVoiceFastShortcut(question: string): boolean {
   return VOICE_FAST_SHORTCUT_REGEX.test(normalized);
 }
 
+/**
+ * 🍕 PENTAGON PRIORITY CONTEXT
+ * Awaits the full cognitive cycle and assembles a high-priority prompt block
+ * that the LLM final MUST consume verbatim. Includes:
+ *  - responseHint (frontal lobe draft) → top of prompt
+ *  - ragSnippets (RAG/CRAG citations) → grounded facts
+ *  - rationale, plan, intent → reasoning trail
+ *
+ * Validates RAG/memory readiness for legal queries and warns if missing.
+ */
 async function buildPentagonPromptContext(question: string, wmContext: string, intent: string): Promise<string> {
   try {
     const user = await getCachedAuthUser();
     const { getPentagonOrchestrator } = await import("@/core/pentagon");
     const cortex = getPentagonOrchestrator();
-    const result = await withTimeout(
+    // Increased budget: the frontal lobe needs time to call OpenRouter.
+    // Voice fast-shortcuts already bypass this entire branch.
+    await withTimeout(
       cortex.runCycle(question, { userId: user?.id || "anonymous", wmContext, intent }),
-      220,
+      4500,
       null as any,
     );
     const state = cortex.getState();
-    const parts: string[] = [];
+    const reasoning: any = state.reasoning || {};
+    const memory: any = state.memory || {};
+    const perception: any = state.perception || {};
 
-    if (state.perception?.intent) parts.push(`Intento percebido: ${state.perception.intent}`);
-    if (state.memory?.mergedContext) parts.push(`Memória integrada: ${state.memory.mergedContext.slice(0, 500)}`);
-    if (state.reasoning?.rationale) parts.push(`Raciocínio: ${state.reasoning.rationale.slice(0, 280)}`);
-    if (Array.isArray(state.reasoning?.plan) && state.reasoning.plan.length > 0) {
-      parts.push(`Plano: ${state.reasoning.plan.slice(0, 4).join(" | ")}`);
+    // ═══ Validation: warn (don't block) when legal queries lack RAG ═══
+    assertPentagonReadiness(question, intent, memory);
+
+    const blocks: string[] = [];
+
+    // 1. responseHint = frontal lobe draft → HIGHEST priority for the LLM
+    if (typeof reasoning.responseHint === "string" && reasoning.responseHint.trim().length > 0) {
+      blocks.push(
+        `═══ RASCUNHO DO LOBO FRONTAL (use como base, refine com naturalidade) ═══\n${reasoning.responseHint.trim()}`,
+      );
     }
-    if (result?.output) parts.push(`Síntese do córtex: ${String(result.output).slice(0, 280)}`);
 
-    return parts.length > 0 ? `═══ CONTEXTO PENTAGON 🍕 ═══\n${parts.join("\n")}` : "";
+    // 2. RAG snippets — cite directly
+    if (Array.isArray(memory.ragSnippets) && memory.ragSnippets.length > 0) {
+      const cited = memory.ragSnippets
+        .slice(0, 5)
+        .map((s: string, i: number) => `[${i + 1}] ${s.slice(0, 600)}`)
+        .join("\n\n");
+      blocks.push(`═══ FONTES INGERIDAS (cite-as quando relevante) ═══\n${cited}`);
+    }
+
+    // 3. Reasoning trail
+    const trail: string[] = [];
+    if (perception.intent) trail.push(`Intento: ${perception.intent}`);
+    if (Array.isArray(reasoning.plan) && reasoning.plan.length > 0) {
+      trail.push(`Plano: ${reasoning.plan.slice(0, 5).join(" → ")}`);
+    }
+    if (reasoning.rationale) trail.push(`Raciocínio: ${String(reasoning.rationale).slice(0, 400)}`);
+    if (reasoning.model) trail.push(`(modelo: ${reasoning.model}, conf ${(reasoning.confidence ?? 0).toFixed(2)})`);
+    if (trail.length) blocks.push(`═══ CADEIA DE PENSAMENTO ═══\n${trail.join("\n")}`);
+
+    // 4. Memory context (truncated, fallback)
+    if (memory.mergedContext && (!memory.ragSnippets || memory.ragSnippets.length === 0)) {
+      blocks.push(`═══ MEMÓRIA INTEGRADA ═══\n${String(memory.mergedContext).slice(0, 800)}`);
+    }
+
+    // Mark that the response hint was emitted so downstream telemetry can verify usage
+    if (typeof window !== "undefined") {
+      (window as any).__pentagonLastHint = reasoning.responseHint || null;
+      (window as any).__pentagonLastModel = reasoning.model || null;
+    }
+
+    return blocks.length > 0 ? blocks.join("\n\n") : "";
   } catch (error) {
     console.warn("[Pentagon] Prompt context failed:", error);
     return "";
+  }
+}
+
+/**
+ * Validates that the Pentagon brought enough grounded context for the LLM.
+ * For legal/serious queries, warns when RAG is missing — the LLM will still
+ * answer but with risk of hallucination.
+ */
+function assertPentagonReadiness(question: string, intent: string, memory: any): void {
+  const isLegal =
+    /\b(lei|artigo|jurispru|c[oó]digo|contrato|processo|stf|stj|tst|tribunal|recurso|sentença|acórdão|súmula|cdc|clt|lgpd|constitui|penal|trabalhist|tributári|civil|empresarial)\b/i
+      .test(question);
+  const isComplex = question.length > 60 || intent === "legal" || intent === "knowledge";
+
+  if (!isLegal && !isComplex) return;
+
+  const hasRag = Array.isArray(memory?.ragSnippets) && memory.ragSnippets.length > 0;
+  const hasMemory = typeof memory?.mergedContext === "string" && memory.mergedContext.length > 200;
+
+  if (!hasRag && !hasMemory) {
+    console.warn(
+      `[Pentagon-Guard] ⚠️ Query séria sem RAG/memória — risco de alucinação. q="${question.slice(0, 80)}"`,
+    );
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("orion:pentagon-warning", {
+          detail: { type: "missing_rag", question: question.slice(0, 200), intent },
+        }),
+      );
+    }
   }
 }
 
