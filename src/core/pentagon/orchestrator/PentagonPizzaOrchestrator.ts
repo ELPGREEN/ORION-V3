@@ -56,6 +56,7 @@ export class PentagonPizzaOrchestrator {
   private async transition(newState: CognitiveState) {
     console.log(`[CORTEX] ${newState.toUpperCase()} phase...`);
     this.state.history.push(this.state.currentState);
+    if (this.state.history.length > 50) this.state.history.shift();
     this.state.currentState = newState;
   }
 
