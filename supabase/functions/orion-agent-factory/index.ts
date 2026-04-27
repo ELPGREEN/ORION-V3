@@ -262,7 +262,7 @@ async function handleInvokeAgent(body: Record<string, unknown>) {
 
   if (error || !agent) return { success: false, error: "Agent not found or inactive" };
 
-  let result: Record<string, unknown>;
+  let result: Record<string, unknown> = { fallback: true };
 
   // If agent has HF model, use HF inference
   if (agent.hf_model_id) {

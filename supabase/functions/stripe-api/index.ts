@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
             user_id: user.id, tipo: "compra", titulo: "✅ Compra confirmada",
             descricao: "Seu pagamento foi processado com sucesso!",
             link: "/dashboard",
-          }).catch(() => {});
+          }).then(() => {}, () => {});
 
           // Notify creator
           const creatorId = session.metadata?.creator_id;
@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
               user_id: creatorId, tipo: "venda", titulo: "🎉 Nova venda!",
               descricao: `Você recebeu uma nova venda no valor de R$ ${((session.amount_total || 0) / 100).toFixed(2)}.`,
               link: "/dashboard",
-            }).catch(() => {});
+            }).then(() => {}, () => {});
           }
         } else {
           // Consulta payment
@@ -501,7 +501,7 @@ Deno.serve(async (req) => {
           affiliateLinkId = affLink.id;
           affiliateUserId = affLink.affiliate_user_id;
           // Increment clicks
-          await supabaseAdmin.rpc("increment_affiliate_clicks" as any, { link_hash: affiliate_ref }).catch(() => {});
+          await supabaseAdmin.rpc("increment_affiliate_clicks" as any, { link_hash: affiliate_ref }).then(() => {}, () => {});
         }
       }
 
