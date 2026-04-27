@@ -27,8 +27,10 @@ export function useWakeWord(listening: boolean, speechOk: boolean, onActivate: (
   const wakeWordCooldownRef = useRef(false);
   const wakeSessionRef = useRef<GCPSTTSession | null>(null);
   const startingRef = useRef(false);
+  const startAttemptRef = useRef(0);
 
   const stopWakeWordListener = useCallback(() => {
+    startAttemptRef.current += 1;
     startingRef.current = false;
     wakeSessionRef.current?.stop();
     wakeSessionRef.current?.destroy();
@@ -39,9 +41,11 @@ export function useWakeWord(listening: boolean, speechOk: boolean, onActivate: (
   const startWakeWordListener = useCallback(async () => {
     if (!speechOk || listening || wakeSessionRef.current || startingRef.current) return;
     startingRef.current = true;
+    const attemptId = ++startAttemptRef.current;
 
     try {
       const micReady = await ensurePersistentMic();
+      if (attemptId !== startAttemptRef.current || !startingRef.current) return;
       if (!micReady) {
         startingRef.current = false;
         setWakeWordActive(false);
@@ -73,6 +77,10 @@ export function useWakeWord(listening: boolean, speechOk: boolean, onActivate: (
       });
 
       const ok = await session.start();
+      if (attemptId !== startAttemptRef.current || !startingRef.current) {
+        session.destroy();
+        return;
+      }
       if (!ok) {
         session.destroy();
         wakeSessionRef.current = null;
