@@ -30,11 +30,26 @@ export class MemoryAdapter implements IPentagonLayer<any, MemoryResult> {
 
     finalMergedContext = cragResult.finalContext;
 
+    // Extract individual RAG snippets for direct citation by the frontal lobe
+    const ragSnippets: string[] = [];
+    if (Array.isArray(cragResult.externalData)) {
+      for (const item of cragResult.externalData.slice(0, 6)) {
+        const text = typeof item === "string" ? item : (item?.content ?? item?.text ?? item?.snippet ?? "");
+        if (text && text.length > 60) ragSnippets.push(String(text).slice(0, 800));
+      }
+    }
+    if (ragSnippets.length === 0 && finalMergedContext) {
+      // Fallback: split merged context
+      const parts = finalMergedContext.split(/\n{2,}|\[\d+\]|---+/).map(s => s.trim()).filter(s => s.length > 80);
+      ragSnippets.push(...parts.slice(0, 6));
+    }
+
     return {
       shortTerm: [],
-      longTerm: cragResult.externalData || [], // Dados externos via CRAG
+      longTerm: cragResult.externalData || [],
       episodic: episodes,
-      mergedContext: finalMergedContext
+      mergedContext: finalMergedContext,
+      ragSnippets,
     };
   }
 
