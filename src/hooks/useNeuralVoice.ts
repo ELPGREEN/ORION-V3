@@ -393,12 +393,13 @@ export function useNeuralVoice(
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
       noSpeechTimerRef.current = setTimeout(() => {
         if (!listeningRef.current) return;
-        // GCP STT is considered healthy if the session exists and is not paused.
-        // (active=true means AudioContext is running and processor is wired —
-        // silence after that is just the user being quiet, never "SEM SOM".)
+        // Healthy if EITHER GCP STT session is active OR shared mic (Web Speech
+        // fallback) is started. Silence after that is just the user being quiet,
+        // never "SEM SOM".
         const session = gcpSessionRef.current;
         const gcpHealthy = !!session && session.isActive() && !session.isPaused();
-        if (gcpHealthy) return;
+        const webSpeechHealthy = isMicStarted();
+        if (gcpHealthy || webSpeechHealthy) return;
         setNoSpeechDetected(true);
         toast.info("Não estou te ouvindo... Verifique se o microfone está por perto.");
       }, cfg.noSpeechToastMs);
