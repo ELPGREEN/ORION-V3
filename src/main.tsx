@@ -2,9 +2,13 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { initFirebaseAnalytics } from "@/lib/firebase";
+import { installPentagonAutoCorrection } from "@/lib/neural/pentagon-runtime-correction";
 
 // Initialize Firebase Analytics in background
 initFirebaseAnalytics().catch(() => {});
+
+// Arm Pentagon runtime auto-correction listeners
+installPentagonAutoCorrection();
 
 
 // Prevent service worker from registering in iframes or Lovable preview
