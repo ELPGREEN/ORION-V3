@@ -1833,12 +1833,7 @@ const AI_PROVIDERS: Record<string, AIProvider> = {
     maxTokens: 8192,
     temperature: 0.3,
   },
-  mistral_alt: {
-    name: "Mistral Small (alt)",
-    apiKeyEnvs: ["MISTRAL_API_KEY"],
-    maxTokens: 8192,
-    temperature: 0.3,
-  },
+  mistral: {
     name: "Mistral Small 4 (Mistral)",
     apiKeyEnvs: ["MISTRAL_API_KEY"],
     maxTokens: 8192,
