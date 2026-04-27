@@ -33,7 +33,7 @@ export class MemoryAdapter implements IPentagonLayer<any, MemoryResult> {
     // Extract individual RAG snippets for direct citation by the frontal lobe
     const ragSnippets: string[] = [];
     if (Array.isArray(cragResult.externalData)) {
-      for (const item of cragResult.externalData.slice(0, 6)) {
+      for (const item of cragResult.externalData.slice(0, 6) as any[]) {
         const text = typeof item === "string" ? item : (item?.content ?? item?.text ?? item?.snippet ?? "");
         if (text && text.length > 60) ragSnippets.push(String(text).slice(0, 800));
       }
