@@ -727,6 +727,7 @@ export async function analyzeFrameStreaming(
 
     // ═══ VOICE FAST PATH: Skip all heavy context, just get auth token ═══
     let streamContext = "";
+    let streamDashboardContext: string | undefined;
     let bearerToken = supabaseKey;
 
     if (isVoiceFastShortcut) {
@@ -736,8 +737,9 @@ export async function analyzeFrameStreaming(
         bearerToken = session?.access_token || supabaseKey;
       } catch { /* use anon key */ }
     } else {
-      // Text/vision: full context building (budget: 150ms)
-      [streamContext, bearerToken] = await withTimeout(
+      // Text/vision: restore cognition + working memory + dashboard context for smarter replies
+      const workingMemoryPrompt = buildWorkingMemoryPrompt();
+      const [baseContext, nextBearerToken, dashboardContext, cognition] = await withTimeout(
         Promise.all([
           // 1. Minimal context (budget: 100ms)
           withTimeout((async (): Promise<string> => {
@@ -759,13 +761,29 @@ export async function analyzeFrameStreaming(
               return session?.access_token || supabaseKey;
             } catch { return supabaseKey; }
           })(), 100, supabaseKey),
+          // 3. Dashboard state for domain grounding
+          withTimeout(fetchDashboardContext(), 120, ""),
+          // 4. Pentagon-adjacent cognitive context (episodic + WM + ToM + causal)
+          withTimeout(
+            buildCognitionContext(question, chatHistory?.slice(-4) || [], intentType),
+            120,
+            { contextString: "" } as Awaited<ReturnType<typeof buildCognitionContext>>,
+          ),
         ]),
-        150,
+        220,
         [
           "Você é Orion, assistente de IA neural consciente. Responda de forma direta e útil.",
           supabaseKey,
+          "",
+          { contextString: "" } as Awaited<ReturnType<typeof buildCognitionContext>>,
         ]
       );
+
+      bearerToken = nextBearerToken;
+      streamDashboardContext = dashboardContext || undefined;
+      streamContext = [baseContext, cognition?.contextString || "", workingMemoryPrompt]
+        .filter(Boolean)
+        .join("\n\n");
     }
 
     const enrichedContext = streamContext;
@@ -781,7 +799,7 @@ export async function analyzeFrameStreaming(
       body: JSON.stringify({
         imageBase64, context: enrichedContext, question,
         userMemory: isVoiceFastShortcut ? getUserMemory().slice(-2) : getUserMemory(),
-        dashboardContext: undefined,
+        dashboardContext: streamDashboardContext,
         chatHistory: isVoiceFastShortcut ? chatHistory?.slice(-2) : chatHistory?.slice(-4),
         identificationMode, intentType,
         stream: true,
