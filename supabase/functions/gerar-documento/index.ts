@@ -1234,7 +1234,7 @@ function _getGeminiKeys(): string[] {
   return ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"].map(n => Deno.env.get(n)).filter(Boolean) as string[];
 }
 
-async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<typeof createClient>): Promise<number[]> {
+async function generateQueryEmbedding(text: string, supabaseClient?: any): Promise<number[]> {
   const truncated = text.slice(0, 4000);
 
   // Check embedding cache first
@@ -1328,7 +1328,7 @@ async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<
 }
 
 async function fetchFeedbackContext(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   tipo: string
 ): Promise<{ positive: FeedbackExample[]; negative: FeedbackExample[] }> {
   const positive: FeedbackExample[] = [];
@@ -1394,7 +1394,7 @@ async function fetchFeedbackContext(
 }
 
 async function fetchNeuralContext(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   query: string,
   tipo?: string
 ): Promise<NeuralContext> {
@@ -1833,12 +1833,6 @@ const AI_PROVIDERS: Record<string, AIProvider> = {
     maxTokens: 8192,
     temperature: 0.3,
   },
-  groq: {
-    name: "Llama 3.3 70B (Groq)",
-    apiKeyEnvs: ["GROQ_API_KEY"],
-    maxTokens: 8192,
-    temperature: 0.3,
-  },
   mistral: {
     name: "Mistral Small 4 (Mistral)",
     apiKeyEnvs: ["MISTRAL_API_KEY"],
@@ -2128,7 +2122,7 @@ Gere o documento COMPLETO, expandindo cada seção do esqueleto com argumentaç�
 
     // Phase 2 with individual 45s timeout for Anthropic
     const phase2 = await Promise.race([
-      callAnthropic(anthropicKey, anthropicSystemPrompt, reasoningPrompt, {
+      callAnthropic(Deno.env.get("ANTHROPIC_API_KEY") || "", anthropicSystemPrompt, reasoningPrompt, {
         maxTokens: 8192,
         temperature: 0.3,
       }),
@@ -2161,7 +2155,7 @@ Retorne o documento COMPLETO revisado. NÃO remova conteúdo.
 DOCUMENTO:
 ${phase2}`;
 
-    const phase3 = await callOpenAI(openaiKey, enhancedSystemPrompt, reviewPrompt, {
+    const phase3 = await callOpenAI(Deno.env.get("OPENAI_API_KEY") || "", enhancedSystemPrompt, reviewPrompt, {
       maxTokens: 16384,
       temperature: 0.15,
     });
@@ -2656,7 +2650,7 @@ async function generateEmbeddingForCache(text: string): Promise<number[] | null>
 
 // Save generated document to neural cache with full text + embedding
 async function saveDocumentToNeuralCache(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   content: string,
   prompt: string,
   tipo: string,
@@ -2689,7 +2683,7 @@ async function saveDocumentToNeuralCache(
 
 // Search for a semantically similar cached document (same tipo + similar prompt)
 async function findCachedDocument(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   prompt: string,
   tipo: string,
   similarityThreshold = 0.88
@@ -2796,7 +2790,7 @@ function splitIntoChunks(text: string, minLen = 300, maxLen = 800, maxChunks = 5
 }
 
 async function chunkAndIngestForRAG(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   content: string,
   tipo: string,
   userId: string | null,
@@ -2840,7 +2834,7 @@ async function chunkAndIngestForRAG(
 
 // Log learning data for neural training with auto-scoring
 async function logLearningData(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   inputText: string,
   outputText: string,
   metadata: Record<string, unknown>
@@ -2970,7 +2964,7 @@ Deno.serve(async (req) => {
             learned: true,
             user_id: requestUserId,
             metadata: { tipo, similarity: cached.similarity, cacheHit: true, source: "semantic_cache" },
-          }).catch(() => {});
+          }).then(() => {}, () => {});
 
           return new Response(JSON.stringify({
             content: cached.content,
@@ -3031,7 +3025,7 @@ Deno.serve(async (req) => {
       const txtKeywords = await extractKeywords(searchTerms || prompt.substring(0, 300));
       if (isJurisprudenciaDoc) {
         // Add extra keywords from prompt for broader coverage
-        const extraWords = prompt.toLowerCase().split(/\s+/).filter(w => w.length > 4).slice(0, 10);
+        const extraWords = prompt.toLowerCase().split(/\s+/).filter((w: string) => w.length > 4).slice(0, 10);
         txtKeywords.push(...extraWords);
       }
       researchPromises.push(searchTxtKnowledgeBase(
@@ -3689,7 +3683,7 @@ NÃO repita o endereçamento, qualificação ou fatos. NÃO gere o documento int
       const supabaseUrl2 = Deno.env.get("SUPABASE_URL") || "";
       const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
       if (supabaseUrl2 && serviceKey) {
-        EdgeRuntime.waitUntil(
+        (globalThis as any).EdgeRuntime?.waitUntil(
           fetch(`${supabaseUrl2}/functions/v1/neural-pipeline-orchestrator`, {
             method: "POST",
             headers: {

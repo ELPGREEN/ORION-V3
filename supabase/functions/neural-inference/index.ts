@@ -29,7 +29,8 @@ async function searchKnowledge(
   try {
     const _gkNames = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
   const _gkAll = _gkNames.map(n => Deno.env.get(n)).filter((k): k is string => !!k);
-  const geminiKey = _gkAll.length > 0 ? _gkAll[(globalThis.__rrNI = ((globalThis.__rrNI ?? -1) + 1) % _gkAll.length)] : "";
+  const _g = globalThis as any;
+  const geminiKey = _gkAll.length > 0 ? _gkAll[(_g.__rrNI = ((_g.__rrNI ?? -1) + 1) % _gkAll.length)] : "";
     if (geminiKey) {
       try {
         const embResp = await fetch(
@@ -56,11 +57,11 @@ async function searchKnowledge(
               embedding: padded,
               matchCount: limit,
               threshold: 0.35,
-              pgFallback: () => supabase.rpc("match_neural_knowledge", {
+              pgFallback: () => (supabase as any).rpc("match_neural_knowledge", {
                 query_embedding: `[${padded.join(",")}]`,
                 match_threshold: 0.35,
                 match_count: limit,
-              }),
+              }) as any,
               pgMap: (d: any) => ({
                 id: d.id, title: d.title || "", content: (d.content || "").slice(0, 1000),
                 source_type: d.source_type, similarity: d.similarity || 0.7,
@@ -85,7 +86,7 @@ async function searchKnowledge(
       .eq("is_processed", true)
       .limit(limit);
 
-    return (data || []).map((d) => ({ title: d.title || "", content: (d.content || "").slice(0, 1000), similarity: 0.7 }));
+    return ((data as any) || []).map((d: any) => ({ title: d.title || "", content: (d.content || "").slice(0, 1000), similarity: 0.7 }));
   } catch {
     return [];
   }
@@ -286,7 +287,7 @@ Deno.serve(async (req) => {
     );
 
     // 1. RAG
-    const ragResults = await searchKnowledge(supabase, query);
+    const ragResults = await searchKnowledge(supabase as any, query);
 
     // 2. Build context
     let contextBlock = "";
