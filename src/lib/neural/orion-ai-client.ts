@@ -1264,9 +1264,12 @@ export async function processInteraction(params: {
   // 4. Mamba Long-Context Compression
   const compressedContext = summarizeLongContextMamba(crag.finalContext);
 
-  // 5. Build Final Prompt
+  // 5. Build Final Prompt — Pentagon outputs FIRST (highest priority)
   const wmPrompt = buildWorkingMemoryPrompt();
   const enrichedContext = [
+    pentagonHint,        // 🍕 frontal lobe draft — top priority
+    pentagonRagBlock,    // 🍕 ingested sources to cite
+    pentagonTrail,       // 🍕 reasoning chain
     routingHead,
     pnlHead,
     cognition.contextString,
