@@ -2,6 +2,7 @@
 // Permite popular o vector store com jurisprudência brasileira
 
 import { supabase } from "@/integrations/supabase/client";
+import { wrapEdgeFunction, wrapSupabase } from "@/lib/errors";
 
 export interface UnifiedIngestionOptions {
   // DataJud options
@@ -250,33 +251,36 @@ export async function ingestUnified(
 }
 
 async function singleIngestionCall(options: UnifiedIngestionOptions): Promise<UnifiedIngestionResult> {
-  const { data, error } = await supabase.functions.invoke("ingest-legal", {
-    body: {
-      action: "datajud",
-      tribunais: options.tribunais || ["stj", "tjrs", "tjsp"],
-      diasAtras: options.diasAtras || 15,
-      queryTema: options.queryTema,
-      size: options.size || 30,
-      enableJuit: options.enableJuit ?? true,
-      temasJuit: options.temasJuit || TEMAS_JUIT_DISPONIVEIS.slice(0, 5),
-      sizeJuit: options.sizeJuit || 15,
-      generateEmbeddings: options.generateEmbeddings ?? true,
-      mode: options.mode || "full",
-    },
-  });
-
-  if (error) {
+  try {
+    const data = await wrapEdgeFunction(
+      supabase.functions.invoke("ingest-legal", {
+        body: {
+          action: "datajud",
+          tribunais: options.tribunais || ["stj", "tjrs", "tjsp"],
+          diasAtras: options.diasAtras || 15,
+          queryTema: options.queryTema,
+          size: options.size || 30,
+          enableJuit: options.enableJuit ?? true,
+          temasJuit: options.temasJuit || TEMAS_JUIT_DISPONIVEIS.slice(0, 5),
+          sizeJuit: options.sizeJuit || 15,
+          generateEmbeddings: options.generateEmbeddings ?? true,
+          mode: options.mode || "full",
+        },
+      }),
+      "ingest-legal",
+      { action: "datajud" }
+    );
+    return data as UnifiedIngestionResult;
+  } catch (err: any) {
     return {
       success: false,
       mode: options.mode || "full",
       stats: { totalProcessados: 0, totalInseridos: 0, totalDuplicados: 0, totalErros: 1 },
       results: [],
       timestamp: new Date().toISOString(),
-      error: error.message,
+      error: err.message,
     };
   }
-
-  return data as UnifiedIngestionResult;
 }
 
 // Alias para compatibilidade
@@ -293,43 +297,51 @@ export async function getVectorStoreStats(): Promise<{
   duplicatesAvoided?: number;
 }> {
   // Total de documentos
-  const { count: total } = await supabase
-    .from("legal_embeddings")
-    .select("*", { count: "exact", head: true });
+  const { count: total } = await wrapSupabase(
+    supabase
+      .from("legal_embeddings")
+      .select("*", { count: "exact", head: true })
+  );
 
   // Agrupado por fonte
-  const { data: sourceData } = await supabase
-    .from("legal_embeddings")
-    .select("source");
+  const { data: sourceData } = await wrapSupabase(
+    supabase
+      .from("legal_embeddings")
+      .select("source")
+  );
   
   const bySource: Record<string, number> = {};
-  sourceData?.forEach((item) => {
+  sourceData?.forEach((item: any) => {
     bySource[item.source] = (bySource[item.source] || 0) + 1;
   });
 
   // Agrupado por tipo
-  const { data: typeData } = await supabase
-    .from("legal_embeddings")
-    .select("content_type");
+  const { data: typeData } = await wrapSupabase(
+    supabase
+      .from("legal_embeddings")
+      .select("content_type")
+  );
   
   const byType: Record<string, number> = {};
-  typeData?.forEach((item) => {
+  typeData?.forEach((item: any) => {
     byType[item.content_type] = (byType[item.content_type] || 0) + 1;
   });
 
   // Última atualização
-  const { data: lastDoc } = await supabase
-    .from("legal_embeddings")
-    .select("created_at")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+  const { data: lastDoc } = await wrapSupabase(
+    supabase
+      .from("legal_embeddings")
+      .select("created_at")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single()
+  );
 
   return {
     total: total || 0,
     bySource,
     byType,
-    lastUpdated: lastDoc?.created_at || null,
+    lastUpdated: lastDoc?.[0]?.created_at || (lastDoc as any)?.created_at || null,
   };
 }
 
@@ -393,15 +405,20 @@ export async function ingestCodigosLegais(options: {
   includeJurisprudencia?: boolean;
   jurisprudenciaSize?: number;
 }): Promise<CodigosIngestionResult> {
-  const { data, error } = await supabase.functions.invoke("ingest-legal", {
-    body: {
-      codigos: options.codigos || ["codigo_penal", "codigo_civil", "clt"],
-      includeJurisprudencia: options.includeJurisprudencia ?? true,
-      jurisprudenciaSize: options.jurisprudenciaSize || 3,
-    },
-  });
-
-  if (error) {
+  try {
+    const data = await wrapEdgeFunction(
+      supabase.functions.invoke("ingest-legal", {
+        body: {
+          codigos: options.codigos || ["codigo_penal", "codigo_civil", "clt"],
+          includeJurisprudencia: options.includeJurisprudencia ?? true,
+          jurisprudenciaSize: options.jurisprudenciaSize || 3,
+        },
+      }),
+      "ingest-legal",
+      { action: "ingest_codigos" }
+    );
+    return data as CodigosIngestionResult;
+  } catch (err: any) {
     return {
       success: false,
       totalArtigos: 0,
@@ -412,6 +429,4 @@ export async function ingestCodigosLegais(options: {
       timestamp: new Date().toISOString(),
     };
   }
-
-  return data as CodigosIngestionResult;
 }

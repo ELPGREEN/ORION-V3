@@ -28,6 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { wrapSupabase, wrapEdgeFunction } from "@/lib/errors";
 
 interface SourceStats {
   source: string;
@@ -100,21 +101,21 @@ export function DataSourcesPanel() {
       const [sourceResults, univResults, clResults, sumResults, stfJurisResults, doutrinaResults, auryResults] = await Promise.all([
         // Source stats (dados_gov + stf_bigquery)
         Promise.all(sources.map(async (source) => {
-          const [{ count: total }, { count: withEmb }, { data: latestRow }, { data: typeData }] = await Promise.all([
-            supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", source),
-            supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", source).not("embedding", "is", null),
-            supabase.from("legal_embeddings").select("created_at, content_type").eq("source", source).order("created_at", { ascending: false }).limit(1),
-            supabase.from("legal_embeddings").select("content_type").eq("source", source),
+          const [total, withEmb, latestRow, typeData] = await Promise.all([
+            wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", source), { source, query: "total_count" }),
+            wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).eq("source", source).not("embedding", "is", null), { source, query: "with_embedding_count" }),
+            wrapSupabase(supabase.from("legal_embeddings").select("created_at, content_type").eq("source", source).order("created_at", { ascending: false }).limit(1), { source, query: "latest_row" }),
+            wrapSupabase(supabase.from("legal_embeddings").select("content_type").eq("source", source), { source, query: "type_data" }),
           ]);
           const contentTypes: Record<string, number> = {};
-          (typeData || []).forEach((r) => { contentTypes[r.content_type] = (contentTypes[r.content_type] || 0) + 1; });
-          return { source, total: total || 0, withEmbeddings: withEmb || 0, latest: latestRow?.[0]?.created_at || null, contentTypes } as SourceStats;
+          (typeData.data || []).forEach((r: any) => { contentTypes[r.content_type] = (contentTypes[r.content_type] || 0) + 1; });
+          return { source, total: total.count || 0, withEmbeddings: withEmb.count || 0, latest: latestRow.data?.[0]?.created_at || null, contentTypes } as SourceStats;
         })),
         // Univates
         Promise.all([
-          supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }).like("source_type", "univates_%"),
-          supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }).like("source_type", "univates_%").not("embedding", "is", null),
-          supabase.from("neural_knowledge_base").select("created_at").like("source_type", "univates_%").order("created_at", { ascending: false }).limit(1),
+          wrapSupabase(supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }).like("source_type", "univates_%")),
+          wrapSupabase(supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }).like("source_type", "univates_%").not("embedding", "is", null)),
+          wrapSupabase(supabase.from("neural_knowledge_base").select("created_at").like("source_type", "univates_%").order("created_at", { ascending: false }).limit(1)),
         ]),
         // CourtListener
         Promise.all([
@@ -146,8 +147,8 @@ export function DataSourcesPanel() {
 
       setStats(sourceResults);
 
-      const [{ count: univTotal }, { count: univEmb }, { data: univLatest }] = univResults;
-      setUnivatesStats({ total: univTotal || 0, withEmbeddings: univEmb || 0, latest: univLatest?.[0]?.created_at || null });
+      const [univTotal, univEmb, univLatest] = univResults;
+      setUnivatesStats({ total: univTotal.count || 0, withEmbeddings: univEmb.count || 0, latest: univLatest.data?.[0]?.created_at || null });
 
       const [{ count: clTotal }, { count: clEmb }, { data: clLatest }] = clResults;
       setClStats({ total: clTotal || 0, withEmbeddings: clEmb || 0, latest: clLatest?.[0]?.created_at || null });

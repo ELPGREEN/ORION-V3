@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { wrapSupabase, wrapEdgeFunction } from "@/lib/errors";
 import { callEvolution } from "@/lib/neural/ai-service";
 
 const NeuralMapCompact = lazy(() =>
@@ -108,19 +109,19 @@ export function NeuralHealthDashboard() {
         learningLearned,
         recentFeedback,
       ] = await Promise.all([
-        supabase.from("generation_queue").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("generation_queue").select("id", { count: "exact", head: true }).eq("status", "processing"),
-        supabase.from("generation_queue").select("id", { count: "exact", head: true }).eq("status", "completed"),
-        supabase.from("generation_queue").select("id", { count: "exact", head: true }).eq("status", "failed"),
-        supabase.from("legal_embeddings").select("id", { count: "exact", head: true }),
-        supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).is("embedding", null),
-        supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }),
-        supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }).eq("is_processed", false),
-        supabase.from("generation_queue").select("error_message, completed_at, job_type").eq("status", "failed").order("completed_at", { ascending: false }).limit(5),
-        supabase.from("neural_specializations").select("prompts").eq("name", "Adam Optimizer State v11").eq("is_active", true).maybeSingle(),
-        supabase.from("neural_learning_data").select("id", { count: "exact", head: true }),
-        supabase.from("neural_learning_data").select("id", { count: "exact", head: true }).eq("learned", true),
-        supabase.from("neural_learning_data").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+        wrapSupabase(supabase.from("generation_queue").select("id", { count: "exact", head: true }).eq("status", "pending")),
+        wrapSupabase(supabase.from("generation_queue").select("id", { count: "exact", head: true }).eq("status", "processing")),
+        wrapSupabase(supabase.from("generation_queue").select("id", { count: "exact", head: true }).eq("status", "completed")),
+        wrapSupabase(supabase.from("generation_queue").select("id", { count: "exact", head: true }).eq("status", "failed")),
+        wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true })),
+        wrapSupabase(supabase.from("legal_embeddings").select("id", { count: "exact", head: true }).is("embedding", null)),
+        wrapSupabase(supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true })),
+        wrapSupabase(supabase.from("neural_knowledge_base").select("id", { count: "exact", head: true }).eq("is_processed", false)),
+        wrapSupabase(supabase.from("generation_queue").select("error_message, completed_at, job_type").eq("status", "failed").order("completed_at", { ascending: false }).limit(5)),
+        wrapSupabase(supabase.from("neural_specializations").select("prompts").eq("name", "Adam Optimizer State v11").eq("is_active", true).maybeSingle()),
+        wrapSupabase(supabase.from("neural_learning_data").select("id", { count: "exact", head: true })),
+        wrapSupabase(supabase.from("neural_learning_data").select("id", { count: "exact", head: true }).eq("learned", true)),
+        wrapSupabase(supabase.from("neural_learning_data").select("id", { count: "exact", head: true }).gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())),
       ]);
 
       const lt = legalTotal.count || 0;
@@ -271,9 +272,13 @@ export function NeuralHealthDashboard() {
   const handleRunPipeline = async () => {
     setRunningPipeline(true);
     try {
-      const { error } = await supabase.functions.invoke("neural-ops", {
-        body: { action: "full_cycle" },
-      });
+      await wrapEdgeFunction(
+        supabase.functions.invoke("neural-ops", {
+          body: { action: "full_cycle" },
+        }),
+        "neural-ops",
+        { action: "full_cycle" }
+      );
 
       // Also trigger auto-evolution-cron + neural-evolution analyze
       supabase.functions.invoke("auto-evolution-cron", { body: {} }).catch(() => {});

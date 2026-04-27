@@ -12,6 +12,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { wrapEdgeFunction } from "@/lib/errors";
 import { smartClassify, smartClassifySync, type ClassifiedIntent } from "./smart-intent-classifier";
 import { getLastIntent, setLastIntent } from "./orion-memory";
 import { OrionEvents, dispatchOrionEvent, type OrionMusicAction } from "@/lib/events/orion-events";
@@ -175,35 +176,56 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
       }
 
       case "translation": {
-        const { data, error } = await supabase.functions.invoke("translate-text", {
-          body: { text: params.text, target_lang: params.targetLang },
-        });
-        if (error) return fail(intent.intent, `Erro na tradução: ${error.message}`, t0);
-        return ok(intent.intent, data?.translation || data?.translated || "Tradução não disponível.", data, t0);
+        try {
+          const data = await wrapEdgeFunction(
+            supabase.functions.invoke("translate-text", {
+              body: { text: params.text, target_lang: params.targetLang },
+            }),
+            "translate-text",
+            { targetLang: params.targetLang }
+          );
+          return ok(intent.intent, data?.translation || data?.translated || "Tradução não disponível.", data, t0);
+        } catch (err: any) {
+          return fail(intent.intent, `Erro na tradução: ${err.message}`, t0);
+        }
       }
 
       case "search": {
-        const { data, error } = await supabase.functions.invoke("neural-search", {
-          body: { query: params.query, mode: "fast", max_results: 3 },
-        });
-        if (error) return fail(intent.intent, `Erro na busca: ${error.message}`, t0);
-        const results = data?.results?.slice(0, 3) || [];
-        const summary = results.length > 0
-          ? results.map((r: any, i: number) => `${i + 1}. ${r.title || r.content?.slice(0, 80)}`).join(". ")
-          : "Nenhum resultado encontrado.";
-        return ok(intent.intent, summary, { results }, t0);
+        try {
+          const data = await wrapEdgeFunction(
+            supabase.functions.invoke("neural-search", {
+              body: { query: params.query, mode: "fast", max_results: 3 },
+            }),
+            "neural-search",
+            { mode: "fast" }
+          );
+          const results = data?.results?.slice(0, 3) || [];
+          const summary = results.length > 0
+            ? results.map((r: any, i: number) => `${i + 1}. ${r.title || r.content?.slice(0, 80)}`).join(". ")
+            : "Nenhum resultado encontrado.";
+          return ok(intent.intent, summary, { results }, t0);
+        } catch (err: any) {
+          return fail(intent.intent, `Erro na busca: ${err.message}`, t0);
+        }
       }
 
       case "web_search": {
-        const { data, error } = await supabase.functions.invoke("pesquisa-unificada", {
-          body: { query: params.query, sources: ["web"], max_results: 3 },
-        });
-        if (error) return fail(intent.intent, `Erro na pesquisa web: ${error.message}`, t0);
-        const results = data?.results?.slice(0, 3) || [];
-        const summary = results.length > 0
-          ? results.map((r: any, i: number) => `${i + 1}. ${r.title || r.description || ""}`).join(". ")
-          : `Não encontrei resultados para "${params.query}".`;
-        return ok(intent.intent, summary, { results }, t0);
+        try {
+          const data = await wrapEdgeFunction(
+            supabase.functions.invoke("pesquisa-unificada", {
+              body: { query: params.query, sources: ["web"], max_results: 3 },
+            }),
+            "pesquisa-unificada",
+            { sources: ["web"] }
+          );
+          const results = data?.results?.slice(0, 3) || [];
+          const summary = results.length > 0
+            ? results.map((r: any, i: number) => `${i + 1}. ${r.title || r.description || ""}`).join(". ")
+            : `Não encontrei resultados para "${params.query}".`;
+          return ok(intent.intent, summary, { results }, t0);
+        } catch (err: any) {
+          return fail(intent.intent, `Erro na pesquisa web: ${err.message}`, t0);
+        }
       }
 
       case "media":

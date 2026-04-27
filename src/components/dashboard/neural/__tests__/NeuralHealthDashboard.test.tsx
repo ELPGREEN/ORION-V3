@@ -48,6 +48,11 @@ vi.mock("@/integrations/supabase/client", () => {
   };
 });
 
+vi.mock("@/lib/errors", () => ({
+  wrapSupabase: vi.fn((promise) => promise.then((res: any) => ({ data: res.data, count: res.count }))),
+  wrapEdgeFunction: vi.fn((promise) => promise.then((res: any) => res.data)),
+}));
+
 vi.mock("@/hooks/use-toast", () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));

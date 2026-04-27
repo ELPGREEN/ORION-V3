@@ -5,6 +5,7 @@
  * PERF: Global auth cache (60s TTL), lazy module imports, single buildLocalDetections call
  */
 import { supabase } from "@/integrations/supabase/client";
+import { wrapSupabase, wrapEdgeFunction } from "@/lib/errors";
 import {
   getMemoryFacts,
   addMemoryFacts,
@@ -391,9 +392,9 @@ export async function fetchDashboardContext(): Promise<string> {
      * Expected impact: ~150ms reduction in context preparation latency.
      */
     const [processosRes, clientsRes, docsRes] = await Promise.all([
-      supabase.from("processos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      supabase.from("client_profiles").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      supabase.from("documents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      wrapSupabase(supabase.from("processos").select("id", { count: "exact", head: true }).eq("user_id", user.id)),
+      wrapSupabase(supabase.from("client_profiles").select("id", { count: "exact", head: true }).eq("user_id", user.id)),
+      wrapSupabase(supabase.from("documents").select("id", { count: "exact", head: true }).eq("user_id", user.id)),
     ]);
     if (processosRes.count) parts.push(`${processosRes.count} processos.`);
     if (clientsRes.count) parts.push(`${clientsRes.count} clientes.`);
@@ -550,11 +551,20 @@ export async function analyzeFrameWithAI(
       }
     } catch { /* non-blocking */ }
 
-    const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections, userName, voiceIdentityStatus: getCachedVoiceIdentity() || undefined },
-    });
-    if (error) {
-      console.warn("[OrionAI] Vision analysis invoke error:", error?.message);
+    let data;
+    try {
+      data = await wrapEdgeFunction(
+        supabase.functions.invoke("neural-ops", {
+          body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections, userName, voiceIdentityStatus: getCachedVoiceIdentity() || undefined },
+        }),
+        "neural-ops",
+        { intentType }
+      );
+    } catch (err: any) {
+      console.warn("[OrionAI] Vision analysis invoke error:", err?.message);
+      return { description: null, learnedFacts: [], identifiedObjects: [] };
+    }
+    if (!data) {
       return { description: null, learnedFacts: [], identifiedObjects: [] };
     }
     if (data?.learnedFacts?.length > 0) addUserMemory(data.learnedFacts);
@@ -1007,11 +1017,14 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
 // ═══ OPERA AI: Image Generation Client Helper ═══
 export async function generateImageWithOrion(prompt: string): Promise<{ success: boolean; image?: string; mimeType?: string; text?: string; error?: string }> {
   try {
-    const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: { action: "generate_image", prompt },
-    });
-    if (error) return { success: false, error: error.message };
-    return data;
+    const data = await wrapEdgeFunction(
+      supabase.functions.invoke("neural-ops", {
+        body: { action: "generate_image", prompt },
+      }),
+      "neural-ops",
+      { action: "generate_image" }
+    );
+    return data || { success: false, error: "No data returned" };
   } catch (e: any) {
     return { success: false, error: e?.message || "Unknown error" };
   }
@@ -1071,20 +1084,23 @@ export async function processInteraction(params: {
   // 6. Invoke LLM (Neural Ops)
   let responseText = "";
   try {
-    const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: {
-        question,
-        context: enrichedContext,
-        chatHistory: chatHistory.slice(-5),
-        intentType: detectedIntent,
-        userName: user?.email || "Usuário",
-        userId,
-        provider: routing.selectedProvider.id
-      }
-    });
+    const data = await wrapEdgeFunction(
+      supabase.functions.invoke("neural-ops", {
+        body: {
+          question,
+          context: enrichedContext,
+          chatHistory: chatHistory.slice(-5),
+          intentType: detectedIntent,
+          userName: user?.email || "Usuário",
+          userId,
+          provider: routing.selectedProvider.id
+        }
+      }),
+      "neural-ops",
+      { detectedIntent }
+    );
 
-    if (error) throw error;
-    responseText = data.content || "";
+    responseText = data?.content || "";
 
     if (onToken) onToken(responseText);
     if (onSentence) onSentence(stripMarkdown(responseText));

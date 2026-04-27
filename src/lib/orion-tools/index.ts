@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { wrapSupabase, wrapEdgeFunction } from "@/lib/errors";
 
 export type ToolName = 
   // File operations
@@ -276,47 +277,53 @@ export async function executeTool(
     case "analyze_code":
     case "security_scan":
     case "vision_analyze": {
-      const { data, error } = await supabase.functions.invoke("neural-ops", {
-        body: {
-          question: params.question || "Analyze this code",
-          intentType: toolName === "security_scan" ? "security" : "code_analysis",
-          ...params,
-        },
-      });
-      if (error) throw error;
-      return data;
+      return await wrapEdgeFunction(
+        supabase.functions.invoke("neural-ops", {
+          body: {
+            question: params.question || "Analyze this code",
+            intentType: toolName === "security_scan" ? "security" : "code_analysis",
+            ...params,
+          },
+        }),
+        "neural-ops",
+        { toolName }
+      );
     }
     
     // Use search APIs
     case "web_search": {
-      const { data, error } = await supabase.functions.invoke("neural-ops", {
-        body: {
-          question: params.query,
-          intentType: "web_search",
-        },
-      });
-      if (error) throw error;
-      return data;
+      return await wrapEdgeFunction(
+        supabase.functions.invoke("neural-ops", {
+          body: {
+            question: params.query,
+            intentType: "web_search",
+          },
+        }),
+        "neural-ops",
+        { toolName, query: params.query }
+      );
     }
     
     // Supabase functions
     case "supabase_function": {
-      const { data, error } = await supabase.functions.invoke(
-        params.functionName as string,
-        { body: params.body }
+      const functionName = params.functionName as string;
+      return await wrapEdgeFunction(
+        supabase.functions.invoke(functionName, { body: params.body }),
+        functionName,
+        { toolName }
       );
-      if (error) throw error;
-      return data;
     }
     
     // Database operations (read-only via Supabase client)
     case "db_query": {
       const tableName = (params.table as string) || "ai_metrics";
-      const { data, error } = await supabase
-        .from(tableName as any)
-        .select(params.select as string || "*")
-        .limit(params.limit as number || 100);
-      if (error) throw error;
+      const { data } = await wrapSupabase(
+        supabase
+          .from(tableName as any)
+          .select(params.select as string || "*")
+          .limit(params.limit as number || 100),
+        { toolName, tableName }
+      );
       return data;
     }
     

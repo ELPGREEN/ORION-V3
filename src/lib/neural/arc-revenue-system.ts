@@ -8,6 +8,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { wrapSupabase, wrapEdgeFunction } from "@/lib/errors";
 
 export interface PayoutStatus {
   id: string;
@@ -41,11 +42,13 @@ export async function initStripeConnect(ownerId: string): Promise<{
 }> {
   try {
     // 1. Check if owner already has Stripe Connect account
-    const { data: existing } = await supabase
-      .from("stripe_connect_accounts")
-      .select("*")
-      .eq("user_id", ownerId)
-      .maybeSingle();
+    const { data: existing } = await wrapSupabase(
+      supabase
+        .from("stripe_connect_accounts")
+        .select("*")
+        .eq("user_id", ownerId)
+        .maybeSingle()
+    );
 
     if (existing?.stripe_account_id) {
       // Check if charges are enabled
@@ -67,11 +70,13 @@ export async function initStripeConnect(ownerId: string): Promise<{
     }
 
     // 2. Create Stripe Connect account via Edge Function
-    const { data, error } = await supabase.functions.invoke("stripe-connect", {
-      body: { action: "create_connect_account", user_id: ownerId }
-    });
-
-    if (error) throw error;
+    const data = await wrapEdgeFunction(
+      supabase.functions.invoke("stripe-connect", {
+        body: { action: "create_connect_account", user_id: ownerId }
+      }),
+      "stripe-connect",
+      { action: "create_connect_account" }
+    );
 
     return {
       success: true,
@@ -92,20 +97,26 @@ export async function getStripeConnectStatus(ownerId: string): Promise<{
   balance?: number;
 }> {
   try {
-    const { data: account } = await supabase
-      .from("stripe_connect_accounts")
-      .select("*")
-      .eq("user_id", ownerId)
-      .maybeSingle();
+    const { data: account } = await wrapSupabase(
+      supabase
+        .from("stripe_connect_accounts")
+        .select("*")
+        .eq("user_id", ownerId)
+        .maybeSingle()
+    );
 
     if (!account) {
       return { connected: false, chargesEnabled: false, payoutsEnabled: false };
     }
 
     // Get balance from Stripe
-    const { data: balanceData } = await supabase.functions.invoke("stripe-connect", {
-      body: { action: "get_balance", account_id: account.stripe_account_id }
-    });
+    const balanceData = await wrapEdgeFunction(
+      supabase.functions.invoke("stripe-connect", {
+        body: { action: "get_balance", account_id: account.stripe_account_id }
+      }),
+      "stripe-connect",
+      { action: "get_balance" }
+    );
 
     return {
       connected: true,
@@ -162,20 +173,22 @@ export async function chargeForService(
 
   try {
     // Create Stripe Checkout session
-    const { data, error } = await supabase.functions.invoke("stripe-api", {
-      body: {
-        action: "service_checkout",
-        service_id: serviceId,
-        service_name: service.name,
-        service_description: service.description,
-        amount_cents: service.price_cents,
-        customer_email: customerEmail,
-        customer_name: customerName,
-        metadata,
-      }
-    });
-
-    if (error) throw error;
+    const data = await wrapEdgeFunction(
+      supabase.functions.invoke("stripe-api", {
+        body: {
+          action: "service_checkout",
+          service_id: serviceId,
+          service_name: service.name,
+          service_description: service.description,
+          amount_cents: service.price_cents,
+          customer_email: customerEmail,
+          customer_name: customerName,
+          metadata,
+        }
+      }),
+      "stripe-api",
+      { action: "service_checkout", serviceId }
+    );
 
     return {
       success: true,
@@ -195,12 +208,14 @@ export async function requestPayout(
 ): Promise<{ success: boolean; payoutId?: string; message: string }> {
   try {
     // Get owner's Stripe Connect account
-    const { data: account } = await supabase
-      .from("stripe_connect_accounts")
-      .select("stripe_account_id, payouts_enabled")
-      .eq("user_id", ownerId)
-      .eq("payouts_enabled", true)
-      .maybeSingle();
+    const { data: account } = await wrapSupabase(
+      supabase
+        .from("stripe_connect_accounts")
+        .select("stripe_account_id, payouts_enabled")
+        .eq("user_id", ownerId)
+        .eq("payouts_enabled", true)
+        .maybeSingle()
+    );
 
     if (!account) {
       return { 
@@ -210,25 +225,29 @@ export async function requestPayout(
     }
 
     // Create payout via Edge Function
-    const { data, error } = await supabase.functions.invoke("stripe-connect", {
-      body: {
-        action: "create_payout",
-        account_id: account.stripe_account_id,
-        amount_cents: amountCents,
-      }
-    });
-
-    if (error) throw error;
+    const data = await wrapEdgeFunction(
+      supabase.functions.invoke("stripe-connect", {
+        body: {
+          action: "create_payout",
+          account_id: account.stripe_account_id,
+          amount_cents: amountCents,
+        }
+      }),
+      "stripe-connect",
+      { action: "create_payout" }
+    );
 
     // Record payout request
-    await supabase.from("orion_payouts").insert({
-      user_id: ownerId,
-      amount: amountCents,
-      currency: "brl",
-      status: "processing",
-      stripe_transfer_id: data?.transfer_id,
-      created_at: new Date().toISOString(),
-    });
+    await wrapSupabase(
+      supabase.from("orion_payouts").insert({
+        user_id: ownerId,
+        amount: amountCents,
+        currency: "brl",
+        status: "processing",
+        stripe_transfer_id: data?.transfer_id,
+        created_at: new Date().toISOString(),
+      })
+    );
 
     return {
       success: true,
