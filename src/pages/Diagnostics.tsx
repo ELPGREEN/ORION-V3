@@ -3,7 +3,7 @@
  * Real-time panel for AquaMonkey Lumian7 unified consciousness.
  */
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Helmet } from "react-helmet-async";
+import { useEffect as useDocumentTitle } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
