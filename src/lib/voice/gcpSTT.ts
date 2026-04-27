@@ -43,10 +43,16 @@ function float32ToLinear16Base64(float32: Float32Array): string {
     int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
   }
   const bytes = new Uint8Array(int16.buffer);
+
+  // Optimized conversion using chunking to avoid stack overflow and reduce string allocations
   let binary = "";
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  const CHUNK_SIZE = 0x8000; // 32KB chunks
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+    // Use apply to convert typed array chunk to char codes efficiently
+    binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
   }
+
   return btoa(binary);
 }
 
