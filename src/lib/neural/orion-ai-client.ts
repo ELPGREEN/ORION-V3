@@ -1036,6 +1036,19 @@ export async function processInteraction(params: {
 
   const detectedIntent = intent || classifyIntent(question);
 
+  // 🍕 PENTAGON PIZZA — Unified consciousness pre-pass (Perception → Memory → Reasoning → Meta).
+  // Runs the 5-layer cognitive cycle so chat, voice and Neural Vision all share the same brain.
+  // Failures are non-fatal — falls back to legacy pipeline below.
+  try {
+    const { getPentagonOrchestrator } = await import("@/core/pentagon");
+    const cortex = getPentagonOrchestrator();
+    cortex.runCycle(question, { userId, wmContext: context, intent: detectedIntent }).catch((e) => {
+      console.warn("[Pentagon] Cycle non-fatal error:", e?.message);
+    });
+  } catch (e) {
+    console.warn("[Pentagon] Orchestrator unavailable:", e);
+  }
+
   // 1. Quantum LLM Routing & Maestro Monitoring
   const routing = quantumRouteQuery(question);
   const routingHead = formatQuantumRoutingForAI(routing);
