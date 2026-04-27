@@ -1234,7 +1234,7 @@ function _getGeminiKeys(): string[] {
   return ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"].map(n => Deno.env.get(n)).filter(Boolean) as string[];
 }
 
-async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<typeof createClient>): Promise<number[]> {
+async function generateQueryEmbedding(text: string, supabaseClient?: any): Promise<number[]> {
   const truncated = text.slice(0, 4000);
 
   // Check embedding cache first
@@ -1328,7 +1328,7 @@ async function generateQueryEmbedding(text: string, supabaseClient?: ReturnType<
 }
 
 async function fetchFeedbackContext(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   tipo: string
 ): Promise<{ positive: FeedbackExample[]; negative: FeedbackExample[] }> {
   const positive: FeedbackExample[] = [];
@@ -1394,7 +1394,7 @@ async function fetchFeedbackContext(
 }
 
 async function fetchNeuralContext(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   query: string,
   tipo?: string
 ): Promise<NeuralContext> {
@@ -2656,7 +2656,7 @@ async function generateEmbeddingForCache(text: string): Promise<number[] | null>
 
 // Save generated document to neural cache with full text + embedding
 async function saveDocumentToNeuralCache(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   content: string,
   prompt: string,
   tipo: string,
@@ -2689,7 +2689,7 @@ async function saveDocumentToNeuralCache(
 
 // Search for a semantically similar cached document (same tipo + similar prompt)
 async function findCachedDocument(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   prompt: string,
   tipo: string,
   similarityThreshold = 0.88
@@ -2796,7 +2796,7 @@ function splitIntoChunks(text: string, minLen = 300, maxLen = 800, maxChunks = 5
 }
 
 async function chunkAndIngestForRAG(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   content: string,
   tipo: string,
   userId: string | null,
@@ -2840,7 +2840,7 @@ async function chunkAndIngestForRAG(
 
 // Log learning data for neural training with auto-scoring
 async function logLearningData(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   inputText: string,
   outputText: string,
   metadata: Record<string, unknown>
