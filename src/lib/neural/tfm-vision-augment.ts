@@ -23,6 +23,6 @@ export function randomFlipLeftRight(images: tf.Tensor4D): tf.Tensor4D {
 export function colorJitter(images: tf.Tensor4D, brightness = 0.2): tf.Tensor4D {
   return tf.tidy(() => {
     const factor = tf.randomUniform([], 1 - brightness, 1 + brightness);
-    return images.mul(factor).clipByValue(0, 1);
+    return images.mul(factor).clipByValue(0, 1) as tf.Tensor4D;
   });
 }
