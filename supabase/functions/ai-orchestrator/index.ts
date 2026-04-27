@@ -441,8 +441,8 @@ Deno.serve(async (req) => {
         const ARC_KEY = Deno.env.get("ARC_AGI_API_KEY");
         if (!ARC_KEY) throw new Error("ARC_AGI_API_KEY not configured");
 
-        const ARC_BASES = { "2": "https://two.arcprize.org/api", "3": "https://three.arcprize.org/api" };
-        const base = ARC_BASES[body.version || "3"] || ARC_BASES["3"];
+        const ARC_BASES: Record<string, string> = { "2": "https://two.arcprize.org/api", "3": "https://three.arcprize.org/api" };
+        const base = ARC_BASES[String(body.version || "3")] || ARC_BASES["3"];
 
         if (subAction === "list_games") {
           const r = await fetch(`${base}/games`, { headers: { "X-API-Key": ARC_KEY } });
