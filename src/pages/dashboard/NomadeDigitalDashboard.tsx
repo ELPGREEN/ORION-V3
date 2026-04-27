@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ThemedHeader, ThemedStatCard, ThemedSection, StatusLED } from "@/components/dashboard/DashboardTheme";
 import { format } from "date-fns";
 
@@ -25,7 +26,7 @@ export default function NomadeDigitalDashboard() {
       const { data } = await supabase
         .from("products")
         .select("*")
-        .eq("owner_id", user!.id) // Fixed mapping to owner_id if creator_id doesn't exist
+        .eq("creator_id", user!.id)
         .order("created_at", { ascending: false });
       return data || [];
     },
@@ -54,7 +55,7 @@ export default function NomadeDigitalDashboard() {
       const { data } = await supabase
         .from("affiliate_links")
         .select("*")
-        .eq("affiliate_id", user!.id);
+        .eq("affiliate_user_id", user!.id);
       return data || [];
     },
     enabled: !!user,

@@ -69,7 +69,7 @@ export default function ClienteDashboard() {
           .eq("client_profile_id", profile.id)
           .order("created_at", { ascending: false })
           .limit(5);
-        setMyDocuments((docs as ClientDocument[]) || []);
+        setMyDocuments(((docs as unknown) as ClientDocument[]) || []);
 
         const { data: folders } = await supabase
           .from("document_folders")
