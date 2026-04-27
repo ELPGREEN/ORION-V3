@@ -17,6 +17,8 @@ export interface MemoryResult {
   longTerm: any[];
   episodic: any[];
   mergedContext: string;
+  /** Snippets brutos extraídos do RAG/CRAG para citação direta no LLM final */
+  ragSnippets?: string[];
 }
 
 export interface ReasoningResult {
@@ -24,6 +26,10 @@ export interface ReasoningResult {
   rationale: string;
   confidence: number;
   subTasks: string[];
+  /** Rascunho da resposta gerado pelo lobo frontal (DeepSeek R1 / Nemotron) */
+  responseHint?: string;
+  /** Modelo OpenRouter usado no raciocínio */
+  model?: string;
 }
 
 export interface ActionResult {
