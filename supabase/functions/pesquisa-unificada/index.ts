@@ -874,7 +874,7 @@ async function refineQueryWithAI(rawQuery: string): Promise<{ refinedQuery: stri
     const groqKey = Deno.env.get("GROQ_API_KEY") || "";
     const _gkN6 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
     const _filt6 = _gkN6.map(n => Deno.env.get(n)).filter(Boolean) as string[];
-    const geminiKey = _filt6.length > 0 ? _filt6[(globalThis.__rrPU = ((globalThis.__rrPU ?? -1) + 1) % _filt6.length)] : "";
+    const geminiKey = _filt6.length > 0 ? _filt6[((globalThis as any).__rrPU = (((globalThis as any).__rrPU ?? -1) + 1) % _filt6.length)] : "";
     const openaiKey = Deno.env.get("OPENAI_API_KEY") || Deno.env.get("OPENAI_API_KEY_2") || "";
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY") || "";
     
@@ -1359,7 +1359,7 @@ Deno.serve(async (req) => {
     const serviceKeyEnv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
     // Registrar pesquisa no neural_learning_data para RLHF
-    EdgeRuntime.waitUntil(
+    (globalThis as any).EdgeRuntime?.waitUntil(
       (async () => {
         try {
           const supa = createClient(supabaseUrlEnv, serviceKeyEnv);
@@ -1384,7 +1384,7 @@ Deno.serve(async (req) => {
 
     // Triggar generate-embeddings se novos itens foram indexados
     if (filteredResults.length > 0) {
-      EdgeRuntime.waitUntil(
+      (globalThis as any).EdgeRuntime?.waitUntil(
         new Promise(r => setTimeout(r, 5000)).then(() =>
           fetch(`${supabaseUrlEnv}/functions/v1/generate-embeddings`, {
             method: "POST",

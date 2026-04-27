@@ -20,8 +20,8 @@ export interface RagSearchOpts {
   matchCount?: number;
   threshold?: number;
   filterType?: string | null;
-  /** Postgres fallback function: ({ data, error }) => Promise<...> */
-  pgFallback?: () => Promise<{ data: any; error: any }>;
+  /** Postgres fallback function: returns thenable resolving to { data, error } */
+  pgFallback?: () => PromiseLike<{ data: any; error: any }> | Promise<{ data: any; error: any }>;
   /** Map a Postgres row to RagHit shape */
   pgMap?: (row: any) => RagHit;
 }

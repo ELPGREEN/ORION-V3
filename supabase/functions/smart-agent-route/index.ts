@@ -44,7 +44,7 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("[smart-agent-route] Unhandled error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: (err as any)?.message ?? String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

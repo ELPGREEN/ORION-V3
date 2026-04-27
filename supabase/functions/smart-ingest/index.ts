@@ -644,7 +644,7 @@ Deno.serve(async (req) => {
     const supabaseUrl2 = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    EdgeRuntime.waitUntil(
+    (globalThis as any).EdgeRuntime?.waitUntil(
       (async () => {
         try {
           const supa = createClient(supabaseUrl2, serviceKey);
@@ -669,7 +669,7 @@ Deno.serve(async (req) => {
               headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
               body: JSON.stringify({}),
               signal: AbortSignal.timeout(5000),
-            }).catch(() => {});
+            }).then(() => {}, () => {});
           }
 
           await fetch(`${supabaseUrl2}/functions/v1/neural-pipeline-orchestrator`, {
@@ -677,7 +677,7 @@ Deno.serve(async (req) => {
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
             body: JSON.stringify({ action: "collect_feedback" }),
             signal: AbortSignal.timeout(30000),
-          }).catch(() => {});
+          }).then(() => {}, () => {});
         } catch (e) { console.warn("Background tasks failed:", e); }
       })()
     );

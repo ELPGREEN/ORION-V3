@@ -176,7 +176,7 @@ async function handleAutoCreate(body: Record<string, unknown>) {
 
   const _gkN3 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
   const _filtered3 = _gkN3.map(n => Deno.env.get(n)).filter(Boolean) as string[];
-  const GEMINI_KEY = _filtered3.length > 0 ? _filtered3[(globalThis.__rrAF = ((globalThis.__rrAF ?? -1) + 1) % _filtered3.length)] : "";
+  const GEMINI_KEY = _filtered3.length > 0 ? _filtered3[((globalThis as any).__rrAF = (((globalThis as any).__rrAF ?? -1) + 1) % _filtered3.length)] : "";
   if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not configured");
 
   // Ask AI to decide what agent to create
@@ -262,7 +262,7 @@ async function handleInvokeAgent(body: Record<string, unknown>) {
 
   if (error || !agent) return { success: false, error: "Agent not found or inactive" };
 
-  let result: Record<string, unknown>;
+  let result: Record<string, unknown> = { fallback: true };
 
   // If agent has HF model, use HF inference
   if (agent.hf_model_id) {
@@ -279,7 +279,7 @@ async function handleInvokeAgent(body: Record<string, unknown>) {
         });
         result = await hfRes.json();
       } catch (e) {
-        result = { error: `HF inference failed: ${e.message}`, fallback: true };
+        result = { error: `HF inference failed: ${(e as any)?.message ?? String(e)}`, fallback: true };
       }
     } else {
       result = { error: "No HF token available", fallback: true };
@@ -290,7 +290,7 @@ async function handleInvokeAgent(body: Record<string, unknown>) {
   if (!result || result.fallback) {
     const _gkN3 = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
   const _filtered3b = _gkN3.map(n => Deno.env.get(n)).filter(Boolean) as string[];
-  const GEMINI_KEY = _filtered3b.length > 0 ? _filtered3b[(globalThis.__rrAF = ((globalThis.__rrAF ?? -1) + 1) % _filtered3b.length)] : "";
+  const GEMINI_KEY = _filtered3b.length > 0 ? _filtered3b[((globalThis as any).__rrAF = (((globalThis as any).__rrAF ?? -1) + 1) % _filtered3b.length)] : "";
     if (!GEMINI_KEY) throw new Error("No Gemini key available");
 
     const aiRes = await fetch(`${GEMINI_API_BASE}/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`, {
@@ -340,7 +340,7 @@ async function handleCodeAnalysis(body: Record<string, unknown>) {
   const GITHUB_PAT = Deno.env.get("GITHUB_PAT_CHILD") || Deno.env.get("CHILD_GIT_TOKEN");
   const _gkN3c = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
   const _filt3c = _gkN3c.map(n => Deno.env.get(n)).filter(Boolean) as string[];
-  const GEMINI_KEY = _filt3c.length > 0 ? _filt3c[(globalThis.__rrAF = ((globalThis.__rrAF ?? -1) + 1) % _filt3c.length)] : "";
+  const GEMINI_KEY = _filt3c.length > 0 ? _filt3c[((globalThis as any).__rrAF = (((globalThis as any).__rrAF ?? -1) + 1) % _filt3c.length)] : "";
 
   if (!GITHUB_PAT || !GEMINI_KEY) throw new Error("Missing GitHub PAT or Gemini key");
 
@@ -412,7 +412,7 @@ async function handleSupabaseAnalysis() {
   const sb = getSupabase();
   const _gkN3d = ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"];
   const _filt3d = _gkN3d.map(n => Deno.env.get(n)).filter(Boolean) as string[];
-  const GEMINI_KEY = _filt3d.length > 0 ? _filt3d[(globalThis.__rrAF = ((globalThis.__rrAF ?? -1) + 1) % _filt3d.length)] : "";
+  const GEMINI_KEY = _filt3d.length > 0 ? _filt3d[((globalThis as any).__rrAF = (((globalThis as any).__rrAF ?? -1) + 1) % _filt3d.length)] : "";
   if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not configured");
 
   // Get all tables info

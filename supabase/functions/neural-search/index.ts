@@ -2464,12 +2464,12 @@ function getOpenAIKeys(): string[] {
   return [
     Deno.env.get("OPENAI_API_KEY"),
     Deno.env.get("OPENAI_API_KEY_2")
-  ].filter((k): k is string => Boolean(k) && !badKeys.has(k));
+  ].filter((k): k is string => Boolean(k) && !badKeys.has(k as string));
 }
 
 function getGeminiKeysLLM(): string[] {
   return ["GEMINI_API_KEY_GCP","GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","GEMINI_API_KEY_5","GEMINI_API_KEY_6","GEMINI_API_KEY_7"]
-    .map(n => Deno.env.get(n)).filter((k): k is string => Boolean(k) && !badKeys.has(k));
+    .map(n => Deno.env.get(n)).filter((k): k is string => Boolean(k) && !badKeys.has(k as string));
 }
 
 let keyIndex = 0;
@@ -3231,7 +3231,7 @@ Deno.serve(async (req) => {
         quality_score: Math.min(rlvrScore, 1.0),
         learned: rlvrScore >= 0.5,
         metadata: { checks, rlvr_score: rlvrScore, source: "neural_search_rlvr" },
-      }).catch(() => {});
+      }).then(() => {}, () => {});
       
       return new Response(JSON.stringify({
         mode: "rlvr", rlvr_score: rlvrScore, checks, factual_verified: rlvrScore >= 0.5,
@@ -3605,7 +3605,7 @@ Deno.serve(async (req) => {
         const qTable = adamState.qTable || {};
         const detectedArea = detectQueryCategory(query) || "civil";
         const qType = detectQueryType(query);
-        const qStateKey = getQStateKey(detectedArea, qType);
+        const qStateKey = getQStateKey(detectedArea, (qType as any)?.type ?? String(qType));
         selectedAction = selectAction(qTable, qStateKey, 0.1);
         
         if (!adamState.lastAction) adamState.lastAction = {};
@@ -3831,7 +3831,7 @@ Deno.serve(async (req) => {
 
     // ─── RLHF Feedback Loop: Log search interaction to neural_learning_data ───
     // Every search is a training signal — quality derived from result count + pipeline stages
-    EdgeRuntime.waitUntil((async () => {
+    (globalThis as any).EdgeRuntime?.waitUntil((async () => {
       try {
         let searchQuality = 0.4;
         if (results.length >= 5) searchQuality += 0.2;

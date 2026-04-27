@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
           descricao: `Seu plano foi ativado com sucesso. Orion e todos os recursos premium já estão disponíveis.`,
           link: "/dashboard/plano",
         })
-        .catch(() => {});
+        .then(() => {}, () => {});
     }
 
     // ═══════════════════════════════════════
@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
             descricao: "Sua assinatura foi cancelada. Você voltou ao plano gratuito com 1000 tokens de teste.",
             link: "/dashboard/plano",
           })
-          .catch(() => {});
+          .then(() => {}, () => {});
       }
     }
 
@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
               descricao: "Houve um problema com seu pagamento. Atualize seus dados de pagamento para manter o plano ativo.",
               link: "/dashboard/plano",
             })
-            .catch(() => {});
+            .then(() => {}, () => {});
 
           console.log(`❌ Payment failed for subscription ${subscriptionId}, user ${plan.user_id}`);
         }

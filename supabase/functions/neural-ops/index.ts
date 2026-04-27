@@ -433,7 +433,7 @@ async function handleFeedback(body: Record<string, unknown>) {
 // MOTHER API RECEIVER (from mother-api-receiver)
 // ═══════════════════════════════════════════════
 
-async function handleMotherAction(action: string, body: Record<string, unknown>) {
+async function handleMotherAction(action: string, body: Record<string, unknown>): Promise<any> {
   const sb = getSupabase();
   const data = (body.data || {}) as Record<string, unknown>;
 
@@ -473,7 +473,7 @@ async function handleMotherAction(action: string, body: Record<string, unknown>)
 // BRIDGE ACTION DISPATCHER
 // ═══════════════════════════════════════════════
 
-async function handleBridgeAction(action: string, body: Record<string, unknown>) {
+async function handleBridgeAction(action: string, body: Record<string, unknown>): Promise<any> {
   switch (action) {
     case "export_full": return handleExportFull();
     case "export_weights": return handleExportWeights();
@@ -512,7 +512,7 @@ async function handleValidate(body: Record<string, unknown>) {
 
   let verified;
   if (checkAgainstKnowledge) {
-    verified = await verifyAgainstKnowledge(responseToValidate, query || "");
+    verified = await verifyAgainstKnowledge(responseToValidate, query || "", "");
   }
 
   const disclaimer = generateDisclaimer(check, verified);
@@ -2496,7 +2496,8 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
     if (useReasoningModel && Deno.env.get("DEEPSEEK_API_KEY")) {
       try {
         attemptedProviders.push("deepseek_r1");
-        const r1Resp = await callDeepSeekR1Streaming(textOnlyMessages);
+        const r1TextOnly = stripImageFromMessages(messages, hasImage);
+        const r1Resp = await callDeepSeekR1Streaming(r1TextOnly);
         if (r1Resp.ok && r1Resp.body) {
           console.log("[Orion] ✅ Streaming via DeepSeek R1 (reasoning mode)");
           return new Response(r1Resp.body, {
