@@ -3,6 +3,8 @@
  * Autonomously detects architectural gaps and missing neural components.
  */
 
+import { readProjectFile } from '../orion-evolution/project-file-reader';
+
 export interface FlowGap {
   id: string;
   category: "neural_module" | "visual_flow" | "workflow";
@@ -31,37 +33,40 @@ const EXPECTED_VISUAL_FLOWS = [
 
 /**
  * Analyzes the current repository state to find missing neural "flows".
- * This is a "Jules-style" self-diagnostic tool.
+ * This uses the Project File Reader to verify existence of critical modules.
  */
 export async function analyzeNeuralFlowGaps(): Promise<FlowGap[]> {
   const gaps: FlowGap[] = [];
 
-  // In a real browser environment, we'd use a file system API or pre-calculated manifest.
-  // For Jules context, we are performing a simulated audit based on the known "Gold Standard" architecture.
-
-  // Note: Since this code runs in the browser, it can't directly use 'fs'.
-  // However, it can check if dynamic imports fail or if global registries are empty.
-
+  // Check Neural Modules
   for (const mod of EXPECTED_NEURAL_MODULES) {
-    // Check if the module is registered in the system (Simulated check)
-    // In production, this would check against a global 'NeuralRegistry'
-    gaps.push({
-      id: mod.file,
-      category: "neural_module",
-      description: mod.desc,
-      severity: mod.severity as any,
-      expectedFile: `src/lib/neural/${mod.file}`
-    });
+    const path = `src/lib/neural/${mod.file}`;
+    const exists = await readProjectFile(path);
+
+    if (!exists) {
+      gaps.push({
+        id: mod.file,
+        category: "neural_module",
+        description: mod.desc,
+        severity: mod.severity as any,
+        expectedFile: path
+      });
+    }
   }
 
+  // Check Visual Flows
   for (const diag of EXPECTED_VISUAL_FLOWS) {
-    gaps.push({
-      id: diag.file.split('/').pop() || diag.file,
-      category: "visual_flow",
-      description: diag.desc,
-      severity: diag.severity as any,
-      expectedFile: diag.file
-    });
+    const exists = await readProjectFile(diag.file);
+
+    if (!exists) {
+      gaps.push({
+        id: diag.file.split('/').pop() || diag.file,
+        category: "visual_flow",
+        description: diag.desc,
+        severity: diag.severity as any,
+        expectedFile: diag.file
+      });
+    }
   }
 
   return gaps;
@@ -75,19 +80,38 @@ export function generateFlowReport(gaps: FlowGap[]): string {
   report += `Analyzed ${EXPECTED_NEURAL_MODULES.length + EXPECTED_VISUAL_FLOWS.length} critical flow components.\n`;
   report += `Detected Gaps: ${gaps.length}\n\n`;
 
+  if (gaps.length === 0) {
+    report += "✅ All critical neural flows are implemented and verified.\n";
+    return report;
+  }
+
   report += "## 1. Missing Neural Modules (TensorFlow Ecosystem)\n";
-  gaps.filter(g => g.category === "neural_module").forEach(g => {
-    report += `- [ ] **${g.id}**: ${g.description} (Severity: ${g.severity.toUpperCase()})\n`;
-  });
+  const modGaps = gaps.filter(g => g.category === "neural_module");
+  if (modGaps.length > 0) {
+    modGaps.forEach(g => {
+      report += `- [ ] **${g.id}**: ${g.description} (Severity: ${g.severity.toUpperCase()})\n`;
+    });
+  } else {
+    report += "✅ All expected neural modules are present.\n";
+  }
 
   report += "\n## 2. Missing Visual Observability Flows (@xyflow/react)\n";
-  gaps.filter(g => g.category === "visual_flow").forEach(g => {
-    report += `- [ ] **${g.id}**: ${g.description} (Severity: ${g.severity.toUpperCase()})\n`;
-  });
+  const visualGaps = gaps.filter(g => g.category === "visual_flow");
+  if (visualGaps.length > 0) {
+    visualGaps.forEach(g => {
+      report += `- [ ] **${g.id}**: ${g.description} (Severity: ${g.severity.toUpperCase()})\n`;
+    });
+  } else {
+    report += "✅ All expected visual flows are present.\n";
+  }
 
   report += "\n## 3. Recommended Actions\n";
-  report += "1. Implement `frame-tensor-preprocessing.ts` to stabilize the computer vision loop.\n";
-  report += "2. Create `AgentDecisionGraph.tsx` to provide visual debugging for the reasoning engine.\n";
+  if (gaps.some(g => g.id === "frame-tensor-preprocessing.ts")) {
+    report += "1. Implement `frame-tensor-preprocessing.ts` to stabilize the computer vision loop.\n";
+  }
+  if (gaps.some(g => g.id === "AgentDecisionGraph.tsx")) {
+    report += "2. Create `AgentDecisionGraph.tsx` to provide visual debugging for the reasoning engine.\n";
+  }
   report += "3. Complete the TFX Pipeline integration for autonomous model retraining.\n";
 
   return report;
