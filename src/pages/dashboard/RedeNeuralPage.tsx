@@ -1178,7 +1178,7 @@ export default function RedeNeuralPage() {
 
         {/* Neural Vision Tab */}
         <TabsContent value="vision" className="space-y-4">
-          <NeuralVision skipWakeWord={false} />
+          <NeuralVision skipWakeWord={true} />
         </TabsContent>
 
         {/* Web APIs Tab */}
