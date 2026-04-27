@@ -44,6 +44,7 @@ const REGEX_RULES: IntentRule[] = [
   // Conversational / Greeting (Must be high priority to avoid tool triggers)
   { pattern: /\b(oi|ol[aá]|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|como\s+vai|e\s+a[ií])\b/i, intent: "general", confidence: 0.98 },
   { pattern: /\b(consegue\s+me\s+ouvir|est[aá]\s+me\s+ouvindo|me\s+ouve|teste\s+de\s+som|teste\s+mic)\b/i, intent: "general", confidence: 0.98 },
+  { pattern: /\b(voce\s+consegue\s+me\s+ouvir\s+perfeitamente|consegue\s+me\s+ouvir\s+perfeitamente|voce\s+esta\s+me\s+ouvindo|microfone\s+(?:esta\s+)?funcionando|audio\s+(?:esta\s+)?ok)\b/i, intent: "general", confidence: 0.99 },
   { pattern: /\b(quem\s+[eé]\s+voc[eê]|fala\s+(sobre|de)\s+voc[eê]|o\s+que\s+voc[eê]\s+[eé]|sua\s+identidade)\b/i, intent: "identity", confidence: 0.98 },
 
   // Vision
@@ -54,7 +55,7 @@ const REGEX_RULES: IntentRule[] = [
   // ═══ MEDIA rules BEFORE navigation — "abrir música" must NOT be caught by nav ═══
   
   // Media — YouTube (explicit platform mention)
-  { pattern: /\b(?:(?:abr[aei]?r?|tocar?|play|reproduz\w*|assistir?|ver|pesquisar?|buscar?|procurar?)\s+[\w\s]{0,20}(?:no\s+|do\s+|d[oa]\s+)?youtube|youtube\b)/i, intent: "media", confidence: 0.95, extractParams: (t) => {
+  { pattern: /\b(?:(?:abr[aei]?r?|tocar?|play|reproduz\w*|assistir?|pesquisar?|buscar?|procurar?)\s+[\w\s]{0,20}(?:no\s+|do\s+|d[oa]\s+)?youtube|youtube\b)/i, intent: "media", confidence: 0.95, extractParams: (t) => {
     const m = t.match(/(?:tocar?|play|reproduz\w*|assistir?|ver|pesquisar?|buscar?|procurar?|abr[aei]?r?)\s+(.+?)(?:\s+(?:no|do|da)\s+youtube)?$/i);
     return { query: m?.[1]?.replace(/(?:no|do|da)\s+youtube/i, "").trim() || "", platform: "youtube" };
   }},
