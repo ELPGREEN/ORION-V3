@@ -1,7 +1,7 @@
 /**
  * 🧠 Pentagon Reasoner — Lobo frontal real do Pentagon Pizza
- * Recebe percepção + memória, devolve plano em cadeia (chain-of-thought).
- * Usa Lovable AI Gateway com modelo de reasoning (Gemini 2.5 Pro / GPT-5).
+ * Usa OpenRouter com modelos free de reasoning (DeepSeek R1 / Nemotron / Qwen / Llama 3.3).
+ * Fallback em cascata se algum modelo estiver rate-limited.
  */
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,7 +25,7 @@ Receba percepção + memória + RAG e retorne JSON via tool call:
 - plan: 3-6 passos concretos para responder bem
 - rationale: por que esse plano (1-2 frases citando contexto/RAG quando houver)
 - confidence: 0..1
-- subTasks: ações paralelas se houver (ex.: "buscar jurisprudência X")
+- subTasks: ações paralelas se houver
 - responseHint: rascunho da resposta final em 1-3 frases, USANDO o contexto fornecido
 
 Regras:
@@ -54,6 +54,71 @@ const REASONING_TOOL = {
   },
 };
 
+// Cascata de modelos free do OpenRouter (do mais forte ao mais leve)
+const MODEL_CASCADE = [
+  "deepseek/deepseek-r1:free",
+  "nvidia/nemotron-nano-9b-v2:free",
+  "qwen/qwen3-coder:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "mistralai/mistral-small-3.1-24b-instruct:free",
+];
+
+async function callOpenRouter(
+  model: string,
+  apiKey: string,
+  userPayload: string,
+): Promise<Record<string, unknown> | null> {
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://iasofthub.com",
+      "X-Title": "Orion Pentagon Reasoner",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userPayload },
+      ],
+      tools: [REASONING_TOOL],
+      tool_choice: { type: "function", function: { name: "emit_reasoning_plan" } },
+      temperature: 0.4,
+      max_tokens: 1500,
+    }),
+  });
+
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    console.warn(`[pentagon-reasoner] ${model} failed ${res.status}: ${t.slice(0, 200)}`);
+    return null;
+  }
+
+  const data = await res.json();
+  const msg = data?.choices?.[0]?.message;
+  const toolCall = msg?.tool_calls?.[0];
+  const argsStr = toolCall?.function?.arguments;
+  if (argsStr) {
+    try {
+      return { ...JSON.parse(argsStr), _model: model };
+    } catch {
+      // try parsing content as JSON (some models return plain JSON)
+    }
+  }
+  if (typeof msg?.content === "string") {
+    const match = msg.content.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return { ...JSON.parse(match[0]), _model: model };
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -68,8 +133,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
+    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
+    if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY missing");
 
     const userPayload = [
       `PERGUNTA: ${query}`,
@@ -80,54 +145,38 @@ Deno.serve(async (req) => {
         : "",
       memoryContext ? `MEMÓRIA RECENTE:\n${memoryContext.slice(0, 4000)}` : "",
       ragSnippets?.length
-        ? `CONHECIMENTO INGERIDO (use isto!):\n${ragSnippets.slice(0, 6).map((s, i) => `[${i + 1}] ${s.slice(0, 800)}`).join("\n\n")}`
+        ? `CONHECIMENTO INGERIDO (use isto!):\n${ragSnippets
+            .slice(0, 6)
+            .map((s, i) => `[${i + 1}] ${s.slice(0, 800)}`)
+            .join("\n\n")}`
         : "",
     ]
       .filter(Boolean)
       .join("\n\n");
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPayload },
-        ],
-        tools: [REASONING_TOOL],
-        tool_choice: { type: "function", function: { name: "emit_reasoning_plan" } },
-      }),
-    });
-
-    if (!aiRes.ok) {
-      if (aiRes.status === 429) {
-        return new Response(JSON.stringify({ error: "rate_limited" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+    let parsed: Record<string, unknown> | null = null;
+    let usedModel = "";
+    for (const model of MODEL_CASCADE) {
+      parsed = await callOpenRouter(model, OPENROUTER_API_KEY, userPayload);
+      if (parsed && parsed.plan) {
+        usedModel = model;
+        break;
       }
-      if (aiRes.status === 402) {
-        return new Response(JSON.stringify({ error: "credits_exhausted" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await aiRes.text();
-      console.error("[pentagon-reasoner] gateway error", aiRes.status, t);
-      throw new Error(`gateway ${aiRes.status}`);
     }
 
-    const data = await aiRes.json();
-    const toolCall = data?.choices?.[0]?.message?.tool_calls?.[0];
-    let parsed: Record<string, unknown> = {};
-    try {
-      parsed = JSON.parse(toolCall?.function?.arguments ?? "{}");
-    } catch (e) {
-      console.warn("[pentagon-reasoner] parse failed", e);
+    if (!parsed) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "all_models_failed",
+          plan: ["analisar_demanda", "responder_com_contexto"],
+          rationale: "fallback local — todos os modelos OpenRouter indisponíveis",
+          confidence: 0.3,
+          subTasks: [],
+          responseHint: "",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     return new Response(
@@ -138,7 +187,7 @@ Deno.serve(async (req) => {
         confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.7,
         subTasks: parsed.subTasks ?? [],
         responseHint: parsed.responseHint ?? "",
-        model: "google/gemini-2.5-flash",
+        model: usedModel,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
@@ -149,7 +198,7 @@ Deno.serve(async (req) => {
         success: false,
         error: e instanceof Error ? e.message : "unknown",
         plan: ["analisar_demanda", "responder_com_contexto"],
-        rationale: "fallback local — reasoner LLM indisponível",
+        rationale: "fallback local — exception",
         confidence: 0.3,
         subTasks: [],
         responseHint: "",
