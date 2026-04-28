@@ -1918,8 +1918,8 @@ export function useOrionReasoning(
       // ═══ PIPELINED STREAMING TTS ═══
       // Each sentence gets its audio pre-fetched immediately.
       // While sentence N plays, sentence N+1's audio is already fetching.
-      const mod = _preloadedModules.geminiTTS || await import("@/lib/tts/geminiTTS");
-        const { fetchGeminiAudio, playAudioBlob } = mod;
+      const ttsMod = _preloadedModules.geminiTTS || await import("@/lib/tts/geminiTTS");
+      const { fetchGeminiAudio, playAudioBlob } = ttsMod;
       const { cleanTextForSpeech } = await import("@/hooks/useNeuralVoice");
 
       const localQueue: Array<{ text: string; audioPromise: Promise<Blob | null> }> = [];

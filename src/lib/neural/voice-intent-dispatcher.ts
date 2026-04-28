@@ -336,10 +336,6 @@ case "self_evolve":
         return ok(intent.intent, `📷 Visão: Processando comando visual '${intent.intent}'. Abra a câmera para usar.`, params, t0);
       }
 
-      case "explanation": {
-        return ok("explanation", "Para explicar algo, mencione o tema. Ex: 'explica o que é machine learning'", params, t0);
-      }
-
       case "llm_provider": {
         const { getProviderName, FREE_MODELS, createLLMClient } = await import("@/lib/integrations/llm-providers");
         const provider = (params.provider as string) || "openai";
