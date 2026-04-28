@@ -1,4 +1,4 @@
-# Orion Core - Auto-Evolution Test (Jules Integration)
+)
 
 # ORION — Plataforma Jurídica IA SaaS LegalTech
 
@@ -122,9 +122,6 @@ npx cap run android   # ou ios
 
 ## 📦 Deploy
 
-Frontend deployado via [Lovable](https://lovable.dev). Backend no Supabase Cloud.
-
-- **Produção**: https://orionelp.lovable.app
 
 ## 📄 Documentação
 
