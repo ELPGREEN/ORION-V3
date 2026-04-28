@@ -94,6 +94,31 @@ export {
   getP2PStatus,
   type AgentBroadcast as NeuralAgentBroadcast,
 } from "./neural-agent-bridge";
+export {
+  type SuperAgentPrompt,
+  SUPER_AGENTS,
+  type LegalAgentId,
+  type LegalSuperPrompt,
+  LEGAL_SUPER_AGENTS,
+  getSuperAgentPrompt,
+  getLegalSuperPrompt,
+  buildAgentMessages,
+  buildLegalMessages,
+  validateQualityGates,
+  type OpenPlatform,
+  type PlatformConfig,
+  PLATFORM_CONFIGS,
+  type FrameworkType,
+  type AgentFrameworkConfig,
+  FRAMEWORK_CONFIGS,
+  type ReasoningTechnique,
+  type ReasoningConfig,
+  REASONING_CONFIGS,
+  type AgentType,
+  ROLE_TO_TYPE,
+  buildReasoningChain,
+  detectPlatform,
+} from "./super-prompts";
 
 // ═══ LiteRT (Google AI Edge) ═══
 export * from "./litert-compiled-model";
