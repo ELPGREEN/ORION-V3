@@ -1,5 +1,31 @@
 import { OrbState } from "./EnergyOrb";
 import { VoiceState } from "@/hooks/useNeuralVoice";
+
+// ═══ Persistent Reusable Buffers for Zero-Allocation Hot Path ═══
+let _grayRawBuffer: Float32Array;
+let _blurBuffer: Float32Array;
+let _magBuffer: Float32Array;
+let _dirBuffer: Float32Array;
+let _nmsBuffer: Float32Array;
+let _binaryRawBuffer: Uint8Array;
+let _morphBuffer: Uint8Array;
+let _visitedBuffer: Uint8Array;
+let _lastW = 0, _lastH = 0;
+
+function ensureBufferSize(w: number, h: number) {
+  if (w === _lastW && h === _lastH) return;
+  const size = w * h;
+  _grayRawBuffer = new Float32Array(size);
+  _blurBuffer = new Float32Array(size);
+  _magBuffer = new Float32Array(size);
+  _dirBuffer = new Float32Array(size);
+  _nmsBuffer = new Float32Array(size);
+  _binaryRawBuffer = new Uint8Array(size);
+  _morphBuffer = new Uint8Array(size);
+  _visitedBuffer = new Uint8Array(size);
+  _lastW = w; _lastH = h;
+}
+
 // ═══ Inline stubs for removed vision modules ═══
 type SceneContext = { label: string; confidence: number; lighting: string };
 type YOLOClassification = { label: string; confidence: number; bbox: number[] };
@@ -9,7 +35,7 @@ type ImageQuality = { sharpness: number; exposure: number; overall: number };
 
 function gaussianBlur3x3(data: Float32Array, w: number, h: number): Float32Array {
   // Simple box blur approximation
-  const out = new Float32Array(w * h);
+  const out = _blurBuffer;
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       let sum = 0;
@@ -23,8 +49,8 @@ function gaussianBlur3x3(data: Float32Array, w: number, h: number): Float32Array
 }
 
 function sobelWithDirection(gray: Float32Array, w: number, h: number) {
-  const magnitude = new Float32Array(w * h);
-  const direction = new Float32Array(w * h);
+  const magnitude = _magBuffer;
+  const direction = _dirBuffer;
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       const gx = -gray[(y-1)*w+(x-1)] + gray[(y-1)*w+(x+1)] - 2*gray[y*w+(x-1)] + 2*gray[y*w+(x+1)] - gray[(y+1)*w+(x-1)] + gray[(y+1)*w+(x+1)];
@@ -37,7 +63,7 @@ function sobelWithDirection(gray: Float32Array, w: number, h: number) {
 }
 
 function nonMaxSuppression(mag: Float32Array, dir: Float32Array, w: number, h: number): Float32Array {
-  const out = new Float32Array(w * h);
+  const out = _nmsBuffer;
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       const idx = y * w + x;
@@ -54,7 +80,7 @@ function nonMaxSuppression(mag: Float32Array, dir: Float32Array, w: number, h: n
 }
 
 function morphClose3x3(binary: Uint8Array, w: number, h: number): Uint8Array {
-  const out = new Uint8Array(w * h);
+  const out = _morphBuffer;
   for (let y = 1; y < h - 1; y++) {
     for (let x = 1; x < w - 1; x++) {
       let max = 0;
@@ -91,7 +117,8 @@ function classifyScene(px: Uint8ClampedArray, w: number, h: number, _sobel: Floa
 function otsuThreshold(gray: Float32Array, _w: number, _h: number) {
   const hist = new Array(256).fill(0);
   for (let i = 0; i < gray.length; i++) hist[Math.min(255, Math.max(0, Math.round(gray[i])))]++;
-  let total = gray.length, sum = 0;
+  const total = gray.length;
+  let sum = 0;
   for (let i = 0; i < 256; i++) sum += i * hist[i];
   let sumB = 0, wB = 0, maxVar = 0, threshold = 128;
   for (let t = 0; t < 256; t++) {
@@ -159,11 +186,12 @@ export function processFrame(
   w: number, h: number,
   prevFrame: Uint8ClampedArray | null,
 ): { regions: Region[]; motion: MotionData; pixels: Uint8ClampedArray; shapeDescriptors?: ShapeDescriptor[]; sceneContext?: SceneContext; yoloClassifications?: YOLOClassification[]; textRegions?: TextRegion[]; otsuThreshold?: number; kmeansResult?: KMeansResult; imageQuality?: ImageQuality } {
+  ensureBufferSize(w, h);
   const imgData = ctx.getImageData(0, 0, w, h);
   const px = imgData.data;
 
   // ═══ Phase 1: Grayscale → Gaussian Blur → Sobel (LAPIX pipeline) ═══
-  const grayRaw = new Float32Array(w * h);
+  const grayRaw = _grayRawBuffer;
   for (let i = 0; i < w * h; i++) {
     const idx = i * 4;
     grayRaw[i] = 0.299 * px[idx] + 0.587 * px[idx + 1] + 0.114 * px[idx + 2];
@@ -398,7 +426,7 @@ function extractShapeDescriptors(
 ): ShapeDescriptor[] {
   // Threshold NMS-thinned edges to binary (LAPIX: limiarização)
   const EDGE_THRESHOLD = 30;
-  const binaryRaw = new Uint8Array(w * h);
+  const binaryRaw = _binaryRawBuffer;
   for (let i = 0; i < w * h; i++) {
     binaryRaw[i] = sobelNMS[i] > EDGE_THRESHOLD ? 1 : 0;
   }
@@ -407,7 +435,8 @@ function extractShapeDescriptors(
   const binary = morphClose3x3(binaryRaw, w, h);
 
   // Connected components via flood-fill (like cv2.findContours)
-  const visited = new Uint8Array(w * h);
+  const visited = _visitedBuffer;
+  visited.fill(0);
   const shapes: ShapeDescriptor[] = [];
   const MIN_AREA = (w * h) * 0.002;
   const MAX_AREA = (w * h) * 0.5;
