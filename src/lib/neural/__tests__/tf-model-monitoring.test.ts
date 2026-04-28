@@ -52,10 +52,16 @@ describe("TF Model Monitoring", () => {
       expect(degradations[0].severity).toBe("severe");
 
       // Moderate degradation in latency (100 -> 125 = 25% increase)
+      // Note: checkDegradation has default minAbsoluteDelta for latencyMs = 100
+      // 125-100 = 25, which is < 100, so it should NOT detect degradation with default delta
       degradations = checkDegradation(modelName, { accuracy: 0.9, latencyMs: 125 });
+      expect(degradations).toHaveLength(0);
+
+      // Latency degradation that exceeds minAbsoluteDelta (100 -> 210 = 110ms delta, 110% increase)
+      degradations = checkDegradation(modelName, { accuracy: 0.9, latencyMs: 210 });
       expect(degradations).toHaveLength(1);
       expect(degradations[0].metric).toBe("latencyMs");
-      expect(degradations[0].severity).toBe("moderate");
+      expect(degradations[0].severity).toBe("severe");
     });
   });
 

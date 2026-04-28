@@ -127,7 +127,7 @@ export function checkDegradation(
   modelName: string,
   currentMetrics: Record<string, number>,
   thresholdPercent: number = 10,
-  minAbsoluteDelta: Record<string, number> = { latencyMs: 50, errorRate: 0.05 }
+  minAbsoluteDelta: Record<string, number> = { latencyMs: 100, errorRate: 0.1 }
 ): PerformanceDegradation[] {
   try {
     const baseline = _baselines.get(modelName);

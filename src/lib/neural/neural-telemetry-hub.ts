@@ -238,20 +238,20 @@ export function feedReasoningMetrics(metrics: {
   });
 
   // 7. Check degradation + trigger Jules on persistent issues
-  // RELAXED: Use 40% threshold for orion-reasoning to prevent noise on minor jitters
-  // The minAbsoluteDelta is handled internally by checkDegradation (default 50ms)
+  // RELAXED: Use 50% threshold for orion-reasoning to prevent noise on minor jitters
+  // The minAbsoluteDelta is handled internally by checkDegradation (default 100ms)
   const degradations = _baselineSet
     ? checkDegradation("orion-reasoning", {
         accuracy: metrics.score,
         latencyMs: metrics.latencyMs,
         errorRate: metrics.score < 0.3 ? 1 : 0,
-      }, 40)
+      }, 50)
     : [];
 
-  // Jules auto-trigger for TF degradations
-  const significantDegradations = degradations.filter(d => d.severity === "moderate" || d.severity === "severe");
+  // Jules auto-trigger for TF degradations — restrict to SEVERE only
+  const significantDegradations = degradations.filter(d => d.severity === "severe");
   if (significantDegradations.length > 0) {
-    const degradDesc = significantDegradations.map(d => `${d.metric}: ${d.current.toFixed(2)} (baseline: ${d.baseline.toFixed(2)}, -${d.degradationPercent.toFixed(0)}%)`).join(", ");
+    const degradDesc = significantDegradations.map(d => `${d.metric}: ${d.current.toFixed(2)} (baseline: ${d.baseline.toFixed(2)}, ${d.degradationPercent > 0 ? "+" : ""}${d.degradationPercent.toFixed(0)}%)`).join(", ");
     recordTFFailure("model_monitoring", `Significant degradation detected: ${degradDesc}`).catch(() => {});
   }
 
