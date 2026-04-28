@@ -1,0 +1,87 @@
+// ═══════════════════════════════════════════════════════════════════
+// ORION-V3 Edge Functions - Código Completo
+// Copie cada seção para o Supabase Functions Editor
+// ═══════════════════════════════════════════════════════════════════
+
+/*
+=================================================================
+FUNÇÃO 1: ai-orchestrator (986 linhas)
+=================================================================
+Copie o arquivo: supabase/functions/ai-orchestrator/index.ts
+
+DEPENDÊNCIAS: @supabase/supabase-js
+RUNTIME: deno
+VARIÁVEIS DE AMBIENTE NECESSÁRIAS:
+- GEMINI_API_KEY (Google AI/ Gemini)
+- OPENROUTER_API_KEY (OpenRouter - opcional)
+- SUPABASE_URL (automático)
+- SUPABASE_SERVICE_ROLE_KEY (automático)
+
+FUNÇÃO: Orquestrador central de IA com múltiplos providers,
+roteamento inteligente, e auto-evolução.
+=================================================================
+*/
+
+/*
+=================================================================
+FUNÇÃO 2: generate-embeddings (maior que ai-orchestrator)
+=================================================================
+Copie o arquivo: supabase/functions/generate-embeddings/index.ts
+
+DEPENDÊNCIAS: @supabase/supabase-js
+RUNTIME: deno
+VARIÁVEIS DE AMBIENTE NECESSÁRIAS:
+- GEMINI_API_KEY (Google AI)
+- SUPABASE_URL (automático)
+- SUPABASE_SERVICE_ROLE_KEY (automático)
+
+FUNÇÃO: Gera embeddings vetoriais para RAG
+e busca semântica.
+=================================================================
+*/
+
+/*
+=================================================================
+FUNÇÃO 3: neural-search (~600 linhas)
+=================================================================
+Copie o arquivo: supabase/functions/neural-search/index.ts
+
+DEPENDÊNCIAS: @supabase/supabase-js
+RUNTIME: deno
+VARIÁVEIS DE AMBIENTE NECESSÁRIAS:
+- SUPABASE_URL (automático)
+- SUPABASE_SERVICE_ROLE_KEY (automático)
+
+FUNÇÃO: Busca semântica híbrida em documentos,
+jurisprudência e conhecimento.
+=================================================================
+*/
+
+/*
+=================================================================
+FUNÇÃO 4: queue-worker (~50 linhas)
+=================================================================
+Copie o arquivo: supabase/functions/queue-worker/index.ts
+
+DEPENDÊNCIAS: nenhuma (apenas runtime Deno)
+RUNTIME: deno
+VARIÁVEIS DE AMBIENTE NECESSÁRIAS: nenhuma
+
+FUNÇÃO: Processa tarefas assíncronas da fila.
+=================================================================
+*/
+
+// ═════════════════════════════════════════════════════════════
+// INSTRUÇÕES DE DEPLOY (SEM CLI):
+// ═════════════════════════════════════════════════════════════
+//
+// 1. Acesse: https://supabase.com/dashboard
+// 2. Selecione o projeto ORION-V3
+// 3. Vá em Edge Functions
+// 4. Clique em + New Function
+// 5. Dê o nome (ex: ai-orchestrator)
+// 6. Copie e cole o código do arquivo
+// 7. Clique em Deploy
+//
+// Repita para cada função.
+//

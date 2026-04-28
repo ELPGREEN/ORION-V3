@@ -61,8 +61,13 @@ export function VoiceIdentityGate({
     return () => window.removeEventListener("orion:show-identity-gate", handleOpen);
   }, []);
 
-  if (identityStatus !== "guest" && identityStatus !== "unknown" && !manuallyOpen) return null;
-  if (identityStatus === "unknown" && !manuallyOpen) return null;
+  const showForUnknown = identityStatus === "unknown";
+  const showForGuest = identityStatus === "guest";
+  const showForOwner = identityStatus === "owner";
+  const shouldShow = showForUnknown || showForGuest || showForOwner;
+
+  if (!shouldShow && !manuallyOpen) return null;
+  if (showForOwner && !manuallyOpen) return null;
 
   return (
     <AnimatePresence>

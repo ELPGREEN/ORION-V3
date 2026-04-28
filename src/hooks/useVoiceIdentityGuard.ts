@@ -42,6 +42,17 @@ export function useVoiceIdentityGuard() {
   const [isCheckingVoice, setIsCheckingVoice] = useState(false);
   const guestSessionIdRef = useRef<string | null>(null);
 
+  const setIdentityStatusLocked = useCallback((newStatus: IdentityStatus, force = false) => {
+    setIdentityStatus((current) => {
+      if (!force && (current === "creator" || current === "owner")) {
+        console.log("[VoiceGuard] 🔒 Identity locked - preserving creator/owner status");
+        return current;
+      }
+      console.log("[VoiceGuard] Identity change:", current, "->", newStatus);
+      return newStatus;
+    });
+  }, []);
+
   useEffect(() => {
     if (identityStatus !== "unknown" && identityStatus !== "verifying") {
       localStorage.setItem("orion_identity_status", identityStatus);
@@ -273,6 +284,7 @@ export function useVoiceIdentityGuard() {
 
   return {
     identityStatus,
+    setIdentityStatus: setIdentityStatusLocked,
     guestSession,
     isCheckingVoice,
     verifyVoiceIdentity,
@@ -281,6 +293,6 @@ export function useVoiceIdentityGuard() {
     endGuestSession,
     fetchGuestSessions,
     resetIdentity,
-    setIdentityStatus,
+    forceSetIdentity: setIdentityStatus,
   };
 }

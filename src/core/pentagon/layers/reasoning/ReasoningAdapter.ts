@@ -50,7 +50,9 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
       const isGeneric = rationale.length < 30 || /responder|pergunta|entendi/i.test(rationale);
 
       if (hasRag && isGeneric && !context?.forceRag) {
-         throw new Error("Generic rationale detected while RAG is available.");
+         console.warn("[Reasoning] ⚠️ Rationale too short/generic despite RAG available. Adding hint.");
+         result.rationale = `[Usar contexto disponível] ${rationale}`;
+         result.responseHint = "Considere os snippets RAG disponíveis para formular uma resposta mais específica.";
       }
 
       let baseResult: ExtendedReasoningResult = {
@@ -71,10 +73,6 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
       return baseResult;
     } catch (err) {
       console.error("[Reasoning] critical fail", err);
-      // If it's our internal validation error, re-throw for Orchestrator retry
-      if (err instanceof Error && err.message.includes("Generic rationale")) {
-        throw err;
-      }
       return this.fallback(perception, memory);
     }
   }

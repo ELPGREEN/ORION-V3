@@ -1,0 +1,11 @@
+# ORION-V3 Edge Functions Deploy
+# Copie e cole no terminal do Supabase
+
+# Deploy todas as funções críticas de uma vez:
+npx supabase functions deploy ai-orchestrator generate-embeddings neural-search queue-worker --project-ref dlwafedtlvbvuoaopvsl
+
+# OU deploy individualmente (uma por vez):
+npx supabase functions deploy ai-orchestrator --project-ref dlwafedtlvbvuoaopvsl
+npx supabase functions deploy generate-embeddings --project-ref dlwafedtlvbvuoaopvsl
+npx supabase functions deploy neural-search --project-ref dlwafedtlvbvuoaopvsl
+npx supabase functions deploy queue-worker --project-ref dlwafedtlvbvuoaopvsl
