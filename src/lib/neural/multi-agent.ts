@@ -87,28 +87,43 @@ const MEMORY_TTL: Record<MemoryLevel, number> = {
 };
 
 export function createDefaultAgents(): AgentState[] {
-  const roles: Array<{ role: AgentRole; tools: string[] }> = [
-    { role: "leitura", tools: ["read_code", "read_docs", "read_logs"] },
-    { role: "pesquisa", tools: ["web_search", "legal_search", "neural_search", "kb_search"] },
-    { role: "construcao", tools: ["generate_code", "generate_sql", "generate_doc", "generate_edge_fn"] },
-    { role: "planejador", tools: ["decompose_task", "create_dag"] },
-    { role: "supervisor", tools: ["orchestrate", "route", "merge", "escalate"] },
-    { role: "critico", tools: ["verify_facts", "hallucination_check", "quality_gate"] },
-    { role: "refinador", tools: ["iterate", "improve", "polish"] },
-    { role: "monitoramento", tools: ["track_metrics", "detect_anomaly"] },
-    { role: "colaborador", tools: ["request_human", "await_approval"] },
-    { role: "multimodal", tools: ["transcribe", "clip_embed", "stdp_bind"] },
-    { role: "self_model", tools: ["reflect", "metacognition", "autobiographical_memory", "emotion_update"] },
-  ];
+  // OpenRouter free models mapped to agent roles - optimized 2026
+  const AGENT_MODEL_MAP: Record<AgentRole, string> = {
+    leitura: "openrouter/free",           // Fast, general
+    pesquisa: "deepseek/deepseek-r1",   // Best reasoning
+    construcao: "qwen/qwen3-coder-480b", // Best coding
+    planejador: "meta-llama/llama-3.3-70b-instruct", // Strong planning
+    supervisor: "nvidia/nemotron-3-super-120b-a12b", // AI agents
+    critico: "deepseek/deepseek-r1",   // Reasoning/Critique
+    refinador: "mistralai/mistral-small-3.1-24b-instruct", // Fast refinement
+    monitoramento: "nvidia/nemotron-nano-9b-v2", // Light monitoring
+    colaborador: "openrouter/free",   // Human interaction
+    multimodal: "qwen/qwen2.5-vl-3b-instruct", // Vision
+    self_model: "meta-llama/llama-3.3-70b-instruct", // Self-reflection
+  };
 
-  return roles.map((r, i) => ({
-    id: `agent-${r.role}-${i}`,
-    role: r.role,
+  const AGENT_TOOLS: Record<AgentRole, string[]> = {
+    leitura: ["read_code", "read_docs", "read_logs"],
+    pesquisa: ["web_search", "legal_search", "neural_search", "kb_search", "rag检索"],
+    construcao: ["generate_code", "generate_sql", "generate_doc", "generate_edge_fn"],
+    planejador: ["decompose_task", "create_dag", "plan_execute"],
+    supervisor: ["orchestrate", "route", "merge", "escalate", "cascade_llm"],
+    critico: ["verify_facts", "hallucination_check", "quality_gate"],
+    refinador: ["iterate", "improve", "polish"],
+    monitoramento: ["track_metrics", "detect_anomaly", "alert"],
+    colaborador: ["request_human", "await_approval"],
+    multimodal: ["transcribe", "clip_embed", "vision_ocr"],
+    self_model: ["reflect", "metacognition", "autobiographical_memory"],
+  };
+
+  return Object.entries(AGENT_TOOLS).map(([role, tools], i) => ({
+    id: `agent-${role}-${i}`,
+    role: role as AgentRole,
     status: "idle",
-    reliabilityScore: 0.8,
-    qualityScore: 0.7,
-    neuromodulation: { dopamine: 0.5, serotonin: 0.5, norepinephrine: 0.3, acetylcholine: 0.4 },
-    tools: r.tools,
+    reliabilityScore: 0.85,
+    qualityScore: 0.78,
+    neuromodulation: { dopamine: 0.55, serotonin: 0.5, norepinephrine: 0.35, acetylcholine: 0.45 },
+    tools,
   }));
 }
 

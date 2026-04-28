@@ -8,7 +8,7 @@
  */
 
 // Server-side inference (via Edge Function)
-export { hfClient, default as HuggingFaceClient } from "./hf-inference-client";
+export { hfClient, default as HuggingFaceClient, LEGAL_MODELS } from "./hf-inference-client";
 export type { HFTask, HFInferenceOptions, HFInferenceResult, HFModelInfo, HFDatasetInfo } from "./hf-inference-client";
 
 // Browser-side inference (Transformers.js)

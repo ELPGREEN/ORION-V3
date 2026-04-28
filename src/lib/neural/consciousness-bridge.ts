@@ -113,6 +113,10 @@ let _bindingState: BindingState | null = null;
 let _qhrlHistory: QHRLResult[] = [];
 let _lastDAGPlan: DAGPlan | null = null;
 
+let _logCycleCounter = 0;
+let _lastLogTime = 0;
+const LOG_INTERVAL_MS = 60000;
+
 // ─── Types ───
 
 export interface HRLDecision {
@@ -704,17 +708,25 @@ export function runConsciousnessBridge(
       timestamp: snapshot.timestamp,
     };
   }
-  console.log(
-    `🌐 [Consciousness] Level=${snapshot.consciousnessLevel} Φ=${snapshot.phi.toFixed(3)} ` +
-     `PLV=${snapshot.globalPLV.toFixed(3)} γ-CTC=${snapshot.gammaCTC.toFixed(3)} ` +
-     `θ-γ MI=${snapshot.thetaGammaMI.toFixed(3)} ` +
-     `⚡ Tesla R=${snapshot.resonanceIndex.toFixed(3)} ${snapshot.teslaResonanceActive ? "🔴SUPERCOHERENT" : ""} ` +
-     `HRL=[${hrlDecision.planSteps} steps, Q=${hrlDecision.totalQValue.toFixed(2)}] ` +
-     `agents=[${snapshot.consciousAgents.join(",")}] ` +
-    `Body=[${snapshot.interoception ? `v=${snapshot.interoception.valence.toFixed(2)} a=${snapshot.interoception.arousal.toFixed(2)} pain=${snapshot.interoception.painIndex.toFixed(2)}` : "n/a"}] ` +
-    `Anomaly=${snapshot.anomalySeverity ?? "none"} Pipeline=${snapshot.pipelineHealth} ` +
-    `(${snapshot.processingTimeMs.toFixed(1)}ms)`
-  );
+  _logCycleCounter++;
+  const now = Date.now();
+  const timeSinceLastLog = now - _lastLogTime;
+  const shouldLog = snapshot.processingTimeMs > 50 || timeSinceLastLog >= LOG_INTERVAL_MS;
+
+  if (shouldLog) {
+    console.log(
+      `🌐 [Consciousness] Level=${snapshot.consciousnessLevel} Φ=${snapshot.phi.toFixed(3)} ` +
+       `PLV=${snapshot.globalPLV.toFixed(3)} γ-CTC=${snapshot.gammaCTC.toFixed(3)} ` +
+       `θ-γ MI=${snapshot.thetaGammaMI.toFixed(3)} ` +
+       `⚡ Tesla R=${snapshot.resonanceIndex.toFixed(3)} ${snapshot.teslaResonanceActive ? "🔴SUPERCOHERENT" : ""} ` +
+       `HRL=[${hrlDecision.planSteps} steps, Q=${hrlDecision.totalQValue.toFixed(2)}] ` +
+       `agents=[${snapshot.consciousAgents.join(",")}] ` +
+      `Body=[${snapshot.interoception ? `v=${snapshot.interoception.valence.toFixed(2)} a=${snapshot.interoception.arousal.toFixed(2)} pain=${snapshot.interoception.painIndex.toFixed(2)}` : "n/a"}] ` +
+      `Anomaly=${snapshot.anomalySeverity ?? "none"} Pipeline=${snapshot.pipelineHealth} ` +
+      `(${snapshot.processingTimeMs.toFixed(1)}ms) [cycle ${_logCycleCounter}]`
+    );
+    _lastLogTime = now;
+  }
 
   return snapshot;
 }

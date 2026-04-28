@@ -1074,10 +1074,10 @@ body.editor-fullscreen-active {
   /* Page dimensions */
   --page-width: 210mm;
   --page-height: 297mm;
-  /* Margins in mm (for @page, print, DOCX) */
-  --m-top: 25mm;
+  /* Margens jurídicos padrão brasileiro: 3cm esq, 2cm dir/sup/inf */
+  --m-top: 20mm;
   --m-bottom: 20mm;
-  --m-left: 20mm;
+  --m-left: 30mm;    /* 3cm esquerda (exigência legal) */
   --m-right: 20mm;
   /* Aliases kept for backward compat */
   --doc-margin-top: var(--m-top);
@@ -1085,9 +1085,9 @@ body.editor-fullscreen-active {
   --doc-margin-left: var(--m-left);
   --doc-margin-right: var(--m-right);
   /* Pixel equivalents at 96dpi (for editor padding) */
-  --doc-margin-left-px: 76px;   /* 20mm */
+  --doc-margin-left-px: 113px;   /* 30mm */
   --doc-margin-right-px: 76px;  /* 20mm */
-  --doc-margin-top-px: 95px;    /* 25mm */
+  --doc-margin-top-px: 76px;    /* 20mm */
   --doc-margin-bottom-px: 76px; /* 20mm */
   --doc-page-width: var(--page-width);
   --doc-page-height: var(--page-height);

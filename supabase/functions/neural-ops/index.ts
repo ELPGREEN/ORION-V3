@@ -155,11 +155,12 @@ async function callVertexAI(messages: any[], stream: boolean): Promise<Response 
     });
 
   const requestedMaxTokens = (messages as any).__maxTokens;
+  const isComplex = (messages as any).__intentType === "analysis" || (messages as any).__intentType === "document_generation";
   const geminiBody: any = {
     contents,
     generationConfig: {
       temperature: hasImage ? 0.25 : 0.4,
-      maxOutputTokens: requestedMaxTokens || (hasImage ? 6144 : 4096),
+      maxOutputTokens: requestedMaxTokens || (isComplex ? 16384 : (hasImage ? 6144 : 4096)),
       topP: hasImage ? 0.9 : 0.95,
       topK: hasImage ? 20 : 40,
       thinkingConfig: { thinkingBudget: 0 },
@@ -2294,7 +2295,8 @@ function convertToGeminiFormat(messages: any[]): any {
   }
 
   const requestedMaxTokens = (messages as any).__maxTokens;
-  const body: any = { contents, generationConfig: { temperature: 0.7, maxOutputTokens: requestedMaxTokens || 8192, thinkingConfig: { thinkingBudget: 0 } } };
+  const isComplex = (messages as any).__intentType === "analysis" || (messages as any).__intentType === "document_generation";
+  const body: any = { contents, generationConfig: { temperature: 0.7, maxOutputTokens: requestedMaxTokens || (isComplex ? 16384 : 8192), thinkingConfig: { thinkingBudget: 0 } } };
   if (systemParts.length > 0) {
     body.systemInstruction = { parts: [{ text: systemParts.join("\n\n") }] };
   }

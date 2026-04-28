@@ -74,6 +74,16 @@ export function markVisionEnd(): void {
   }
 }
 
+let _cachedLatency: PipelineLatency | null = null;
+let _cacheTime = 0;
+const CACHE_TTL_MS = 1000;
+
 export function getPipelineLatency(): PipelineLatency {
-  return { ..._latency };
+  const now = performance.now();
+  if (_cachedLatency && now - _cacheTime < CACHE_TTL_MS) {
+    return { ..._cachedLatency };
+  }
+  _cachedLatency = { ..._latency };
+  _cacheTime = now;
+  return _cachedLatency;
 }

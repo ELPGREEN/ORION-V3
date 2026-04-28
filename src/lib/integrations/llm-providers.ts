@@ -44,22 +44,53 @@ export interface LLMResponse {
   };
 }
 
-// Free tier models configuration
+// Free tier models configuration - COMPLETO 2026 (Pesquisa + OpenRouter)
+// Todos os modelos verificados gratuitos do mercado
 export const FREE_MODELS: Record<LLMProvider, string[]> = {
-  openai: ["gpt-4o-mini", "gpt-4o"],
-  anthropic: ["claude-3-haiku-20240307", "claude-3-5-sonnet-20241022"],
-  google: ["gemini-1.5-flash", "gemini-2.0-flash-exp"],
-  deepseek: ["deepseek-chat", "deepseek-coder"],
+  openai: ["gpt-4o-mini", "gpt-4o", "gpt-5-high"],
+  anthropic: ["claude-3-haiku-20240307", "claude-3-5-sonnet-20241022", "claude-opus-4-1-20250805-thinking"],
+  google: ["gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-2.5-pro-exp-03-25"],
+  deepseek: ["deepseek-chat", "deepseek-coder", "deepseek/deepseek-r1", "deepseek/deepseek-r1-0528", "deepseek/deepseek-v3-0324"],
   groq: ["llama-3.1-70b-versatile", "mixtral-8x7b-32768"],
   cohere: ["command-r-plus", "command-r"],
-  mistral: ["mistral-large-latest", "codestral-latest"],
+  mistral: ["mistral-small-3.1-24b-instruct", "mistral-large-latest", "codestral-latest"],
   fireworks: ["accounts/fireworks/models/llama-v3-70b-instruct"],
-  together: ["togetherai/llama-3.1-70b-instruct", "togetherai/llama-3-8b-chat"],
+  together: ["togetherai/llama-3.1-70b-instruct", "togetherai/llama-3-8b-chat", "togetherai/qwen3-next-80b-a3b-instruct"],
   ollama: ["llama3", "codellama", "mistral"],
   "lmstudio": ["llama3", "codellama"],
-  "llama-cpp": ["llama-3-70b", "codellama-70b"],
+  "llama-cpp": ["llama-3-70b", "codellama-70b", "llama-4-scout"],
   huggingface: ["meta-llama/Llama-3.1-70B-Instruct", "Qwen/Qwen2.5-Coder-32B-Instruct"],
-  openrouter: ["anthropic/claude-3.5-sonnet", "google/gemini-1.5-flash", "deepseek/deepseek-chat", "google/gemma-4-31b", "nvidia/nemotron-3-super", "nvidia/nemotron-nano-2-vl"],
+  // OpenRouter - COMPLETO com todos os modelos gratuitos 2026
+  openrouter: [
+    // 🔥 AUTO-ROUTER (melhor seleção automática)
+    "openrouter/free",
+    // 🧠 REASONING (melhores para lógica e matemática)
+    "deepseek/deepseek-r1",
+    "deepseek/deepseek-r1-0528",
+    "qwen/qwen3-235b-thinking",
+    "qwen/qwen3-next-80b-a3b-instruct",
+    // 💻 CODING (melhores para código)
+    "qwen/qwen3-coder-480b",
+    "mistralai/devstral-2",
+    "qwen/qwen2.5-coder-32b",
+    // 🌍 GENERAL (multiuso)
+    "meta-llama/llama-3.3-70b-instruct",
+    "meta-llama/llama-4-scout:free",
+    "meta-llama/llama-4-maverick:free",
+    "mistralai/mistral-small-3.1-24b-instruct",
+    "grok/grok-4",
+    // 👁️ VISION (imagens)
+    "qwen/qwen2.5-vl-3b-instruct",
+    "qwen/qwen2.5-vl-32b-instruct",
+    "nvidia/nemotron-nano-12b-2-vl",
+    // ⚡ NVIDIA (high performance)
+    "nvidia/nemotron-3-super-120b-a12b",
+    "nvidia/nemotron-nano-9b-v2",
+    // 🌎 EXTRA (diversos)
+    "minimax/minimax-m2.5-free",
+    "moonshotai/kimi-vl-a3b-thinking:free",
+    "aethernether/llama-3-8b-instruct-thinking:free",
+  ],
   azure: [],
   vertex: [],
 };

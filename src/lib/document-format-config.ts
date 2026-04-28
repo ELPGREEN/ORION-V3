@@ -26,63 +26,74 @@ export interface DocumentFormatConfig {
   standard?: string;
 }
 
-// ─── Shared base configs ───
+// ─── Formatação Jurídica Padrão Brasileiro ───
+// Requisitos: A4, margens 3cm esq/dir/sup/inf, Arial 12pt, 1.5 linhas, justificado, recuo 1.25cm
 
-const CNJ_BASE: DocumentFormatConfig = {
-  fontFamily: "Times New Roman",
+const JURIDICO_BR_BASE: DocumentFormatConfig = {
+  fontFamily: "Arial, sans-serif", // Arial 12pt
   fontSize: "12pt",
   lineHeight: "1.5",
   textAlign: "justify",
   rulerLeftIndent: 0,
-  rulerFirstLineIndent: 47, // ~1.25cm ABNT/CNJ
+  rulerFirstLineIndent: 47, // 1.25cm ( ABNT/CNJ
   rulerRightIndent: 0,
+  standard: "Jurídico BR",
+};
+
+// CNJ — petições para tribunais
+const CNJ_BASE: DocumentFormatConfig = {
+  ...JURIDICO_BR_BASE,
   standard: "CNJ",
 };
 
+// ABNT — documentos acadêmicos
 const ABNT_BASE: DocumentFormatConfig = {
-  ...CNJ_BASE,
+  ...JURIDICO_BR_BASE,
   standard: "ABNT",
 };
 
 const ABNT_ACADEMICO_BASE: DocumentFormatConfig = {
-  fontFamily: "Times New Roman",
+  fontFamily: "Arial, sans-serif",
   fontSize: "12pt",
   lineHeight: "1.5",
   textAlign: "justify",
   rulerLeftIndent: 0,
-  rulerFirstLineIndent: 47, // ~1.25cm ABNT NBR 14724
+  rulerFirstLineIndent: 47,
   rulerRightIndent: 0,
   standard: "ABNT NBR 14724",
 };
 
 const SENTENCA_BASE: DocumentFormatConfig = {
-  ...CNJ_BASE,
+  ...JURIDICO_BR_BASE,
   lineHeight: "2",
 };
 
+// Contratos — sem recuo de parágrafo
 const CONTRATO_BASE: DocumentFormatConfig = {
-  fontFamily: "Times New Roman",
+  fontFamily: "Arial, sans-serif",
   fontSize: "12pt",
   lineHeight: "1.5",
   textAlign: "justify",
   rulerLeftIndent: 0,
-  rulerFirstLineIndent: 0, // Contratos não usam recuo de parágrafo
+  rulerFirstLineIndent: 0,
   rulerRightIndent: 0,
 };
 
+// Internacional
 const INTERNACIONAL_BASE: DocumentFormatConfig = {
-  fontFamily: "Times New Roman",
+  fontFamily: "Arial, sans-serif",
   fontSize: "12pt",
   lineHeight: "1.5",
   textAlign: "justify",
   rulerLeftIndent: 0,
-  rulerFirstLineIndent: 0, // Estilo contratual internacional
+  rulerFirstLineIndent: 0,
   rulerRightIndent: 0,
   standard: "ICC/CISG",
 };
 
+// Trabalhista
 const TRABALHISTA_BASE: DocumentFormatConfig = {
-  ...CNJ_BASE,
+  ...JURIDICO_BR_BASE,
   standard: "TST",
 };
 

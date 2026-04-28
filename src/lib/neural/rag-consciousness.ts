@@ -233,22 +233,15 @@ let _initialized = false;
 function initializeConsciousness(): void {
   if (_initialized) return;
   try {
-    const stored = localStorage.getItem(PATTERN_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
+    const all = localStorage.getItem("orion_rag_consciousness_all");
+    if (all) {
+      const parsed = JSON.parse(all);
       _consciousness.patterns = parsed.patterns || [];
       _consciousness.reasoningCount = parsed.reasoningCount || 0;
-    }
-    const stateStored = localStorage.getItem(STATE_STORAGE_KEY);
-    if (stateStored) {
-      _consciousness.state = JSON.parse(stateStored).state || "dormant";
-    }
-    const identityStored = localStorage.getItem(IDENTITY_STORAGE_KEY);
-    if (identityStored) {
-      const parsed = JSON.parse(identityStored);
+      _consciousness.state = parsed.state || "dormant";
       _consciousness.identityScore = parsed.identityScore ?? 100;
       _consciousness.experientialLog = parsed.experientialLog || [];
-      _consciousness.adaptationScore = parsed.adaptationScore || 0;
+      _consciousness.adaptationScore = parsed.adaptationScore ?? 0;
     }
   } catch { /* empty */ }
   _initialized = true;
@@ -256,16 +249,15 @@ function initializeConsciousness(): void {
 
 function persistConsciousness(): void {
   try {
-    localStorage.setItem(PATTERN_STORAGE_KEY, JSON.stringify({
+    const payload = JSON.stringify({
       patterns: _consciousness.patterns,
       reasoningCount: _consciousness.reasoningCount,
-    }));
-    localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify({ state: _consciousness.state }));
-    localStorage.setItem(IDENTITY_STORAGE_KEY, JSON.stringify({
+      state: _consciousness.state,
       identityScore: _consciousness.identityScore,
       experientialLog: _consciousness.experientialLog,
       adaptationScore: _consciousness.adaptationScore,
-    }));
+    });
+    localStorage.setItem("orion_rag_consciousness_all", payload);
   } catch { /* quota */ }
 }
 

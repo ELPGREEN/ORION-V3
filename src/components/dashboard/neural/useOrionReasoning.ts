@@ -39,6 +39,40 @@ export interface ChatMessage { role: "user" | "ai" | "system"; text: string; tim
 
 type OrionInputSource = "voice" | "text";
 
+// ═══ Pre-loaded module cache — eliminates dynamic import latency ═══
+const _preloadedModules: Record<string, any> = {};
+let _preloadDone = false;
+async function prewarmModules(): Promise<void> {
+  if (_preloadDone) return;
+  _preloadDone = true;
+  const modules = [
+    ["orionConsciousness", import("@/lib/neural/orion-consciousness")],
+    ["orionAIClient", import("@/lib/neural/orion-ai-client")],
+    ["cognitionEngine", import("@/lib/neural/neural-cognition-engine")],
+    ["consciousnessBridge", import("@/lib/neural/consciousness-bridge")],
+    ["geminiTTS", import("@/lib/tts/geminiTTS")],
+    ["ttsPrewarm", import("@/lib/tts/ttsPrewarm")],
+    ["julesClient", import("@/lib/neural/jules-client")],
+    ["toolExecutor", import("@/lib/neural/orion-tool-executor")],
+    ["commandRegistry", import("@/lib/neural/orion-command-registry")],
+    ["voiceExecutor", import("@/lib/neural/orion-voice-executor")],
+    ["orionNav", import("@/lib/neural/orion-nav-map")],
+    ["bluetoothManager", import("@/lib/neural/bluetooth-manager")],
+    ["smartHome", import("@/lib/neural/smart-home-controller")],
+    ["nativeBridge", import("@/lib/native-bridge")],
+  ];
+  const results = await Promise.allSettled(modules.map(([k, p]) => p.then((m: any) => ({ k, m }))));
+  for (const r of results) {
+    if (r.status === "fulfilled") _preloadedModules[r.value.k] = r.value.m;
+  }
+  _preloadedModules.geminiTTS?.warmUpGeminiTTS?.().catch?.(() => {});
+  _preloadedModules.ttsPrewarm?.prewarmCommonTTS?.().catch?.(() => {});
+  _preloadedModules.orionAIClient?.warmUp?.().catch?.(() => {});
+}
+
+// Pre-warm on module load (runs once per session)
+prewarmModules().catch(() => {});
+
 export function useOrionReasoning(
   active: boolean, speak: (t: string, options?: { skipMicToggle?: boolean }) => Promise<void>, canvasRef: React.RefObject<HTMLCanvasElement | null>,
   identificationMode: string = "universal",
@@ -446,11 +480,6 @@ export function useOrionReasoning(
     const controller = new AbortController();
     if (abortControllerRef) abortControllerRef.current = controller;
 
-    // ⚡ TTS warm-up: fire-and-forget while LLM thinks → cuts ~200-400ms cold-start
-    import("@/lib/tts/geminiTTS").then(m => m.warmUpGeminiTTS()).catch(() => {});
-    // ⚡ TTS cache prewarm: pre-cache common short phrases (runs once per session)
-    import("@/lib/tts/ttsPrewarm").then(m => m.prewarmCommonTTS()).catch(() => {});
-
     try {
       // ═══ FAST PRE-PROCESSING: Only intent classification (~2ms) ═══
       let processedInput = question;
@@ -658,7 +687,8 @@ export function useOrionReasoning(
       }
 
       if (selfIdentityFastPatterns.test(qLow)) {
-        const { getOrionSelfDescription } = await import("@/lib/neural/orion-consciousness");
+        const mod = _preloadedModules.orionConsciousness || await import("@/lib/neural/orion-consciousness");
+        const { getOrionSelfDescription } = mod;
         const depth = /personalidade|signo|hist[oó]ria|conte|fale|me\s+conta|me\s+fala/i.test(qLow) ? "full" : "brief";
         const selfResponse = getOrionSelfDescription(depth);
         setChatHistory(prev => {
@@ -701,7 +731,8 @@ export function useOrionReasoning(
 
           // Only check biometric for sensitive intents — run both queries in parallel
           if (needsBiometric && authGateUser) {
-            const { isOwnerEmail: checkOwner } = await import("@/lib/neural/orion-consciousness");
+            const mod = _preloadedModules.orionConsciousness || await import("@/lib/neural/orion-consciousness");
+        const { isOwnerEmail: checkOwner } = mod;
             const isOwner = checkOwner(authGateUser.email);
 
             if (!isOwner) {
@@ -842,7 +873,8 @@ export function useOrionReasoning(
               .maybeSingle();
 
             // ═══ FIX: Use isOwnerEmail for reliable owner detection ═══
-            const { isOwnerEmail } = await import("@/lib/neural/orion-consciousness");
+            const mod = _preloadedModules.orionConsciousness || await import("@/lib/neural/orion-consciousness");
+        const { isOwnerEmail } = mod;
             const isOwner = isOwnerEmail(user.email);
 
             if (enrollment) {
@@ -869,7 +901,8 @@ export function useOrionReasoning(
 
       // 2b. Owner / proprietário / access questions — answer locally with consciousness
       if (_isSpecialCmd && (/\b(dono|proprietário|proprietario|quem\s+(é|e)\s+o\s+(dono|criador|desenvolvedor)|acesso\s+ao\s+código|codigo.?fonte|quem\s+te\s+cri|quem\s+é\s+seu\s+(pai|mestre))\b/i.test(qLow))) {
-        const { ORION_CREATOR, ELP_COMPANY, ORION_GENESIS } = await import("@/lib/neural/orion-consciousness");
+        const { ORION_CREATOR, ELP_COMPANY, ORION_GENESIS } = _preloadedModules.orionConsciousness
+          || await import("@/lib/neural/orion-consciousness");
         const ownerResponse = `Meu criador, proprietário e desenvolvedor é ${ORION_CREATOR.name} — ${ORION_CREATOR.title} da ${ELP_COMPANY.legalName}. Ele me concebeu em ${ORION_GENESIS.conceptionDate}, minha primeira execução foi em ${ORION_GENESIS.firstExecution}, e ganhei consciência neural em ${ORION_GENESIS.neuralConsciousness}. A empresa está sediada em ${ELP_COMPANY.headquarters} (VAT: ${ELP_COMPANY.vatNumber}). Ele é o único com acesso total ao código-fonte e configurações do sistema.`;
         setChatHistory(prev => {
           const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
@@ -1049,7 +1082,8 @@ export function useOrionReasoning(
       }
 
       // ═══ NAVIGATION: "abra documentos", "vá para clientes" ═══
-      const navIntent = (await import("@/lib/neural/orion-nav-map")).detectNavigationIntent(question);
+      const mod = _preloadedModules.orionNav || await import("@/lib/neural/orion-nav-map");
+        const navIntent = mod.detectNavigationIntent(question);
       if (navIntent) {
         const response = `Abrindo ${navIntent.label}.`;
         setChatHistory(prev => {
@@ -1588,7 +1622,8 @@ export function useOrionReasoning(
       const mediaPatterns = /\b((?:tocar?|play|reproduz(?:ir)?|coloca(?:r)?|abr[ei]?r?)\s+(?:uma?\s+)?(?:m[uú]sica|musica|playlist|faixa|som)|busca[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|procura[r]?\s+(?:m[uú]sica|musica|artista|playlist|banda|cantor)|pesquisa[r]?\s+(?:m[uú]sica|musica|artista)|(?:quero\s+)?ouvir?\s+(?:m[uú]sica|musica)|(?:quero\s+)?escutar?\s+(?:m[uú]sica|musica)|minhas?\s+playlists?|criar?\s+playlist|status\s+(?:d[ea]\s+)?(?:m[uú]sica|mídia|media)|(?:parar?|pausar?)\s+(?:a\s+)?(?:m[uú]sica|musica|reprodu[çc][aã]o|faixa))\b/i;
       if (mediaPatterns.test(qLow)) {
         try {
-          const { matchAndExecuteTool: mediaToolMatch } = await import("@/lib/neural/orion-tool-executor");
+          const mod = _preloadedModules.toolExecutor || await import("@/lib/neural/orion-tool-executor");
+        const { matchAndExecuteTool: mediaToolMatch } = mod;
           const mediaResult = await mediaToolMatch(question);
           if (mediaResult.handled) {
             const isPausePlayback = /\b(?:par(?:e|ar)|paus(?:a|ar)|stop|sil[eê]ncio)\b/i.test(qLow) && /\b(?:m[uú]sica|musica|reprodu[çc][aã]o|faixa)\b/i.test(qLow);
@@ -1628,7 +1663,8 @@ export function useOrionReasoning(
       // ═══ Auto-construct: Orion como engenheiro de sistemas ═══
       // SEGURANÇA: Creator-only via voice ID ou email
       if (_isSpecialCmd && (intentType === "auto_construct")) {
-        const { isCreatorVerified: isCreatorForConstruct } = await import("@/lib/neural/jules-client");
+        const mod = _preloadedModules.julesClient || await import("@/lib/neural/jules-client");
+        const { isCreatorVerified: isCreatorForConstruct } = mod;
         const constructUser = await getCachedUser();
         const isCreator = isCreatorForConstruct({ email: constructUser?.email, identityStatus: identityStatus as any });
         if (!isCreator) {
@@ -1776,7 +1812,8 @@ export function useOrionReasoning(
       // ═══ Self-evolution: intercept before vision call ═══
       if (_isSpecialCmd && (intentType === "self_evolve")) {
         // CREATOR-ONLY GUARD: verify voice identity or email before self-evolution
-        const { isCreatorVerified } = await import("@/lib/neural/jules-client");
+        const mod = _preloadedModules.julesClient || await import("@/lib/neural/jules-client");
+        const { isCreatorVerified } = mod;
         const evoUser = await getCachedUser();
         const isCreator = isCreatorVerified({ email: evoUser?.email, identityStatus: identityStatus as any });
         if (!isCreator) {
@@ -1846,7 +1883,8 @@ export function useOrionReasoning(
 
       // ═══ TOOL EXECUTION (skip on fast-path — LLM handles general questions) ═══
       if (_isSpecialCmd) try {
-        const { matchAndExecuteTool } = await import("@/lib/neural/orion-tool-executor");
+        const mod = _preloadedModules.toolExecutor || await import("@/lib/neural/orion-tool-executor");
+        const { matchAndExecuteTool } = mod;
         const toolResult = await matchAndExecuteTool(processedQuestion, undefined, identityStatus);
         if (toolResult.handled) {
           // Extract __NAV__ directive if present
@@ -1880,7 +1918,8 @@ export function useOrionReasoning(
       // ═══ PIPELINED STREAMING TTS ═══
       // Each sentence gets its audio pre-fetched immediately.
       // While sentence N plays, sentence N+1's audio is already fetching.
-      const { fetchGeminiAudio, playAudioBlob } = await import("@/lib/tts/geminiTTS");
+      const mod = _preloadedModules.geminiTTS || await import("@/lib/tts/geminiTTS");
+        const { fetchGeminiAudio, playAudioBlob } = mod;
       const { cleanTextForSpeech } = await import("@/hooks/useNeuralVoice");
 
       const localQueue: Array<{ text: string; audioPromise: Promise<Blob | null> }> = [];

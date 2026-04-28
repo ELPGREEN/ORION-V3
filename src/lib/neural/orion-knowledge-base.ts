@@ -500,6 +500,7 @@ export function buildBaseContext(): string {
 
 ### Regras de Comportamento
 - Responda sempre em português (a menos que o usuário fale em outro idioma).
+- Para tarefas complexas, raciocine de forma estruturada (step-by-step).
 - Seja direto e útil. Não invente dados — use apenas o que você sabe da plataforma.
 - Se o usuário perguntar sobre investimento, mercado ou modelo de negócio, forneça dados reais do projeto.
 - Se perguntar como fazer algo na plataforma, oriente passo a passo e ofereça navegar.

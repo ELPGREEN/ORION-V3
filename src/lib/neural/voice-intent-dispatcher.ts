@@ -296,27 +296,47 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         return ok(intent.intent, "", null, t0);
       }
 
-      case "self_evolve":
+case "self_evolve":
       case "auto_construct":
       case "orion_evolution": {
-        // Only TRUE evolution commands trigger the engine.
-        // Other intents (legal, financial, humor, philosophy, identity, crm, analysis,
-        // explanation, vision_describe, vision_object, security) must go through the
-        // normal LLM pipeline — otherwise Orion keeps repeating "Evolução executada:
-        // analise o código de @src/App.tsx e sugira melhorias…".
         const { getOrionEvolution } = await import("@/lib/orion-evolution/engine");
         const engine = getOrionEvolution();
-
         const command = params.command || "auto-evoluir";
         const args = params.args;
-
         const result = await engine.executeCommand(command, args);
-
         if (result.success) {
           return ok(intent.intent, `✅ Evolução executada: ${result.output}`, { ...params, files: result.filesCreated || result.filesModified }, t0);
         } else {
           return ok(intent.intent, `❌ Erro: ${result.error || result.output}`, { ...params, error: true }, t0);
         }
+      }
+
+      case "legal":
+      case "financial":
+      case "crm":
+      case "reporting":
+      case "analysis":
+      case "explanation":
+      case "philosophy":
+      case "humor": {
+        const { CHARADAS } = await import("@/lib/neural/orion-charadas");
+        const idx = Math.floor(Math.random() * CHARADAS.length);
+        const joke = CHARADAS[idx];
+        return ok("humor", `😄 ${joke.pergunta}\n\n💡 ${joke.resposta}`, params, t0);
+      }
+
+      case "security":
+      case "identity": {
+        const { getOrionSelfDescription } = await import("@/lib/neural/orion-consciousness");
+        return ok(intent.intent, getOrionSelfDescription("brief"), params, t0);
+      }
+
+      case "vision_describe":
+      case "vision_object": {
+        return ok(intent.intent, `📷 Visão: Processando comando visual '${intent.intent}'. Abra a câmera para usar.`, params, t0);
+      }
+        }
+        return ok("explanation", "Para explicar algo, mencione o tema. Ex: 'explica o que é machine learning'", params, t0);
       }
 
       case "llm_provider": {

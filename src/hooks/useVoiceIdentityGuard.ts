@@ -31,10 +31,22 @@ export interface GuestSession {
 
 export function useVoiceIdentityGuard() {
   const { user } = useAuth();
-  const [identityStatus, setIdentityStatus] = useState<IdentityStatus>("unknown");
+  const [identityStatus, setIdentityStatus] = useState<IdentityStatus>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("orion_identity_status");
+      if (stored && ["creator", "owner", "guest"].includes(stored)) return stored as IdentityStatus;
+    }
+    return "unknown";
+  });
   const [guestSession, setGuestSession] = useState<GuestSession | null>(null);
   const [isCheckingVoice, setIsCheckingVoice] = useState(false);
   const guestSessionIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (identityStatus !== "unknown" && identityStatus !== "verifying") {
+      localStorage.setItem("orion_identity_status", identityStatus);
+    }
+  }, [identityStatus]);
 
   const isCreatorAccount = user?.email ? isOwnerEmail(user.email) : false;
 

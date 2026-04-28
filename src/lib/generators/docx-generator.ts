@@ -119,16 +119,14 @@ function buildStyles(format: DocumentFormatConfig, opts: DocxExportOptions): str
     ? pxToMm(opts.rulerRightIndent)
     : 0;
 
-  /* Margins match CSS custom properties in index.css :root
-     --m-top: 25mm; --m-bottom: 20mm;
-     --m-left: 20mm; --m-right: 20mm; */
+  /* Margens jurídicos padrão brasileiro: 3cm esq, 2cm dir/sup/inf */
   return `
     body {
-      font-family: '${format.fontFamily}', serif;
+      font-family: '${format.fontFamily}', sans-serif;
       font-size: ${format.fontSize};
       line-height: ${format.lineHeight};
       text-align: ${format.textAlign};
-      margin: 25mm 20mm 20mm 20mm;
+      margin: 20mm 20mm 20mm 30mm;
     }
     p {
       text-indent: ${firstLineIndentMm}mm;

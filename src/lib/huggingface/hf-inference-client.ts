@@ -45,6 +45,19 @@ export interface HFDatasetInfo {
   description?: string;
 }
 
+// Models jurídicos PT-BR (legal-bert, NER, classification)
+const LEGAL_MODELS = {
+  // NER jurídico PT-BR (dominguesm/legal-bert-ner-base-cased-ptbr)
+  // Extrai: partes, datas, valores, obrigações, prazos, processos
+  ner_ptbr: "dominguesm/legal-bert-ner-base-cased-ptbr",
+  // Classification de documentos jurídicos
+  legal_classify: "raquelsilveira/legalbertpt_fp",
+  // Resumo de contratos
+  contract_summarize: "AventIQ-AI/t5-summarization-for-legal-contracts",
+  // Resumo jurídico genérico
+  legal_summarize: "stjiris/t5-portuguese-legal-summarization",
+};
+
 class HuggingFaceClient {
   /** Run inference on any HF model */
   async inference<T = unknown>(options: HFInferenceOptions): Promise<HFInferenceResult<T>> {
@@ -231,6 +244,60 @@ class HuggingFaceClient {
     });
     if (error) throw new Error(error.message);
     return data?.data || [];
+  }
+
+  // ── Funções Jurídicas PT-BR ──
+
+  /**
+   * NER Jurídico PT-BR — Extrai entidades de petições/contratos
+   * Entidades: partes, datas, valores, prazos, números de processos, obrigações
+   * Model: dominguesm/legal-bert-ner-base-cased-ptbr
+   */
+  async extractLegalEntities(text: string) {
+    return this.inference<Array<{ entity_group: string; word: string; score: number; start: number; end: number }>>({
+      task: "token-classification",
+      model: LEGAL_MODELS.ner_ptbr,
+      inputs: text,
+    });
+  }
+
+  /**
+   * Classificação de Documento Jurídico
+   * Detecta: petição inicial, contestação, recurso, agravo, etc.
+   * Model: raquelsilveira/legalbertpt_fp
+   */
+  async classifyLegalDocument(text: string) {
+    return this.inference<Array<Array<{ label: string; score: number }>>>({
+      task: "text-classification",
+      model: LEGAL_MODELS.legal_classify,
+      inputs: text,
+    });
+  }
+
+  /**
+   * Resumo de Contratos
+   * Model: AventIQ-AI/t5-summarization-for-legal-contracts
+   */
+  async summarizeContract(text: string) {
+    return this.inference<Array<{ summary_text: string }>>({
+      task: "summarization",
+      model: LEGAL_MODELS.contract_summarize,
+      inputs: text,
+      parameters: { max_length: 512, min_length: 50 },
+    });
+  }
+
+  /**
+   * Resumo Jurídico PT-BR
+   * Model: stjiris/t5-portuguese-legal-summarization
+   */
+  async summarizeLegal(text: string) {
+    return this.inference<Array<{ summary_text: string }>>({
+      task: "summarization",
+      model: LEGAL_MODELS.legal_summarize,
+      inputs: text,
+      parameters: { max_length: 300, min_length: 30 },
+    });
   }
 }
 

@@ -342,13 +342,27 @@ export function quantumRouteQuery(
     preferSpeed?: boolean;
     preferCost?: boolean;
     excludeProviders?: string[];
+    modelType?: "fast" | "balanced" | "reasoning" | "analysis" | "secure";
   } = {}
 ): QuantumRoutingResult {
   const start = performance.now();
   const features = extractQueryFeatures(query, options);
 
+  const modelTypeStrengths: Record<string, string[]> = {
+    fast: ["fast", "speed"],
+    balanced: ["general"],
+    reasoning: ["reasoning", "math"],
+    analysis: ["reasoning", "legal", "code"],
+    secure: ["general"],
+  };
+
   const scores = PROVIDER_REGISTRY
     .filter(p => !(options.excludeProviders || []).includes(p.id))
+    .filter(p => {
+      if (!options.modelType) return true;
+      const preferred = modelTypeStrengths[options.modelType] || [];
+      return preferred.some(s => p.strengths.includes(s)) || p.tier <= 1;
+    })
     .map((provider, idx) => {
       // Quantum score: encode features into VQC input
       const vqcInput = [

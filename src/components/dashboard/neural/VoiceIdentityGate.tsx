@@ -49,7 +49,6 @@ export function VoiceIdentityGate({
       setPin("");
       return;
     }
-    toast.success("👑 Modo proprietário ativado");
     setPin("");
     onUnlockWithPin?.();
   }, [pin, onUnlockWithPin]);

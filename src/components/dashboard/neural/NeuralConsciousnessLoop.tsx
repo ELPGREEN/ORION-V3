@@ -6,6 +6,7 @@
  * Sleeps 8 hours (00:00-08:00), then runs 16 hours in alternating phases.
  */
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -30,6 +31,8 @@ import { routeToTier } from "@/lib/neural/slim-model-router";
 import { documentCompleteness } from "@/lib/neural/masked-prediction";
 import { RAGEvolutionModal } from "./RAGEvolutionModal";
 import { getConsciousnessDiagnostics } from "@/lib/neural/rag-consciousness";
+import { useVoiceIdentityGuard } from "@/hooks/useVoiceIdentityGuard";
+import { useAuth } from "@/contexts/AuthContext";
 
 const segmentScene = async () => ({ masks: [], scores: [], labels: [] });
 
@@ -37,6 +40,8 @@ const segmentScene = async () => ({ masks: [], scores: [], labels: [] });
 // but I'll focus on the RAG Evolution Modal integration.
 
 export function NeuralConsciousnessLoop() {
+  const { user } = useAuth();
+  const { identityStatus } = useVoiceIdentityGuard();
   const [isEvolutionModalOpen, setIsEvolutionModalOpen] = useState(false);
   const [diag, setDiag] = useState(getConsciousnessDiagnostics());
 
@@ -117,7 +122,14 @@ export function NeuralConsciousnessLoop() {
 
             {/* Evolution Trigger Button */}
             <div className="p-4 bg-[hsl(var(--tron-neon))/5 border border-[hsl(var(--tron-neon))/20 rounded-lg flex items-center justify-between group hover:bg-[hsl(var(--tron-neon))/10 transition-all cursor-pointer"
-                 onClick={() => setIsEvolutionModalOpen(true)}>
+                 onClick={() => {
+                   const canAccess = identityStatus === "creator" || identityStatus === "owner";
+                   if (canAccess) {
+                     setIsEvolutionModalOpen(true);
+                   } else {
+                     toast.error("Modo restrito", { description: "Somente o criador pode ativar a evolução. Use seu PIN para desbloquear." });
+                   }
+                 }}>
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-[hsl(var(--tron-neon))/20 rounded-full">
                   <Rocket className="h-5 w-5 text-[hsl(var(--tron-neon))]" />
