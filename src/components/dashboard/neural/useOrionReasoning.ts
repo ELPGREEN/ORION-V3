@@ -33,6 +33,28 @@ import { learnFramework, getBestAPICapability } from "@/lib/neural/arc-api-learn
 import { checkCreditsAuto, formatCreditResponse, getCreditIntelligence } from "@/lib/neural/arc-stripe-intelligence";
 import { detectServiceFromQuery, autoChargeBeforeService, shouldServiceBeFree } from "@/lib/neural/arc-auto-charge";
 import { detectGoogleService, handleGoogleServiceRequest, checkUserQuota, getGoogleServicesStats } from "@/lib/neural/arc-google-monetization";
+// ═══ PENTAGON PIZZA INTEGRATION ═══
+import { PentagonPizzaOrchestrator } from "@/core/pentagon/orchestrator/PentagonPizzaOrchestrator";
+import {
+  PerceptionAdapter,
+  MemoryAdapter,
+  ReasoningAdapter,
+  MetaAdapter,
+  ActionAdapter
+} from "@/core/pentagon/layers";
+
+const pentagon = PentagonPizzaOrchestrator.getInstance();
+
+// Initialize on first use
+const initPentagon = async () => {
+    await pentagon.initialize([
+        new PerceptionAdapter(),
+        new MemoryAdapter(),
+        new ReasoningAdapter(),
+        new MetaAdapter(),
+        new ActionAdapter()
+    ]);
+};
 
 export interface ChatMessage { role: "user" | "ai" | "system"; text: string; time: string; confidence?: number; }
 
@@ -46,6 +68,16 @@ export function useOrionReasoning(
   speechQueueRef?: React.MutableRefObject<string[]>,
   bargeInCallbackRef?: React.MutableRefObject<(() => void) | null>,
   getBackgroundTranscripts?: () => BackgroundTranscript[],
+  useEffect(() => {
+    const handleState = (e: any) => {
+      const state = e.detail;
+      if (state.intensity > 0.5) {
+        setThought(`🧠 ${state.pillar.toUpperCase()}: ${state.activity}`);
+      }
+    };
+    window.addEventListener("pentagon_state_change", handleState);
+    return () => window.removeEventListener("pentagon_state_change", handleState);
+  }, []);
   identityStatus?: string,
   onActivateVision?: () => void,
   localDetectionsRef?: React.MutableRefObject<Array<{ name: string; category: string; confidence: number; bbox?: { x: number; y: number; w: number; h: number } }>>,
