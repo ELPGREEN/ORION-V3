@@ -1,9 +1,13 @@
 /**
- * ─── Neural Agent Bridge (v24.0 — Autonomous Agent Factory) ───
+ * ─── Neural Agent Bridge (v25.0 — Super Agents Integration) ───
  * Singleton bridge connecting API agents to the neural society,
- * now with autonomous agent creation (Orion self-generates agents),
- * interoceptive metrics (Layer 6), somatic markers (Layer 9),
- * and 2900+ HF model integration for embodied cognition.
+ * now with Super Agents, Tool Executor, and full integration.
+ * 
+ * Integrations:
+ * - Super Agents: 11 ORION + 7 Legal agents with full prompts
+ * - Tool Executor: OpenAI Function Calling format
+ * - IoT/Robotics: ROS2, MQTT, BLE integration
+ * - Platforms: Ollama, LM Studio, HuggingFace, OpenRouter
  */
 
 import type { AgentRole, AgentSocietyState, AgentState } from "./multi-agent";
@@ -19,6 +23,12 @@ import { getCachedInteroceptiveState, type InteroceptiveState } from "./interoce
 import { consultSomaticMarker, recordSomaticOutcome } from "./somatic-markers";
 import { sendDirect, getP2PPartners, getP2PNetworkStatus, hasResonanceLink, type P2PNetworkMetrics } from "./tesla-wireless-p2p";
 import { orionFactory, type AgentFactoryResult } from "./orion-autonomous-agent";
+import { SUPER_AGENTS, LEGAL_SUPER_AGENTS, getSuperAgentPrompt, getLegalSuperPrompt, type SuperAgentPrompt, type LegalSuperPrompt } from "./super-prompts";
+import { orionToolsToFunctionCalling, executeFunctionCall, getToolsForSuperAgent, type FunctionDefinition } from "./tool-executor";
+
+// ═══ IoT/Robotics Integration ═══
+import { iotBridge, type IoTDevice } from "./iot-device-bridge";
+import { ros2Bridge, type ROSTopic } from "./ros2-protocol-bridge";
 
 // ─── Singleton Society State ───
 
@@ -275,4 +285,73 @@ export async function orionCodeAnalysis(
  */
 export async function orionSupabaseAnalysis(): Promise<AgentFactoryResult> {
   return orionFactory.analyzeSupabase();
+}
+
+/** ═══════════════════════════════════════════════════════════════
+ * SUPER AGENTS INTEGRATION
+ * ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Get full prompt for any Super Agent
+ */
+export function getAgentPrompt(role: AgentRole): SuperAgentPrompt | undefined {
+  return SUPER_AGENTS[role];
+}
+
+/**
+ * Get full prompt for any Legal Super Agent  
+ */
+export function getLegalAgentPrompt(id: "orquestrador" | "planejamento" | "pesquisa" | "analise" | "sintese" | "redacao" | "citacao"): LegalSuperPrompt | undefined {
+  return LEGAL_SUPER_AGENTS[id];
+}
+
+/**
+ * Get all tools for a Super Agent in OpenAI Function format
+ */
+export function getAgentTools(role: AgentRole): FunctionDefinition[] {
+  return getToolsForSuperAgent(role);
+}
+
+/**
+ * Execute a tool call (for function calling response)
+ */
+export async function executeToolCall(
+  functionName: string,
+  arguments_: string
+): Promise<{ success: boolean; result?: unknown; error?: string }> {
+  const result = await executeFunctionCall({ name: functionName, arguments: arguments_ });
+  return {
+    success: result.success,
+    result: result.result,
+    error: result.error,
+  };
+}
+
+/** ═══════════════════════════════════════════════════════════════
+ * IOT/ROBOTICS INTEGRATION
+ * ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Get connected IoT devices
+ */
+export function getConnectedDevices(): IoTDevice[] {
+  return iotBridge.getDevices();
+}
+
+/**
+ * Get ROS2 topics
+ */
+export function getROSTopics(): ROSTopic[] {
+  return ros2Bridge.getTopics();
+}
+
+/**
+ * Execute command on IoT device
+ */
+export async function executeIoTCommand(
+  deviceId: string,
+  command: "on" | "off" | "toggle",
+  value?: unknown
+): Promise<boolean> {
+  return iotBridge.sendCommand(deviceId, command, value);
 }

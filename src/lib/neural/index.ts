@@ -92,6 +92,13 @@ export {
   getNeuralAgentContext,
   resetNeuralBridge,
   getP2PStatus,
+  getAgentPrompt,
+  getLegalAgentPrompt,
+  getAgentTools,
+  executeToolCall,
+  getConnectedDevices,
+  getROSTopics,
+  executeIoTCommand,
   type AgentBroadcast as NeuralAgentBroadcast,
 } from "./neural-agent-bridge";
 export {
@@ -119,6 +126,16 @@ export {
   buildReasoningChain,
   detectPlatform,
 } from "./super-prompts";
+export {
+  orionToolsToFunctionCalling,
+  getToolsForSuperAgent,
+  executeFunctionCall,
+  executeToolCalls,
+  runAgentLoop,
+  runReAct,
+  ORION_TOOLS,
+  executeTool,
+} from "./tool-executor";
 
 // ═══ LiteRT (Google AI Edge) ═══
 export * from "./litert-compiled-model";
