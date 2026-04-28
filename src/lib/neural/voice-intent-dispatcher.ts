@@ -335,7 +335,8 @@ case "self_evolve":
       case "vision_object": {
         return ok(intent.intent, `📷 Visão: Processando comando visual '${intent.intent}'. Abra a câmera para usar.`, params, t0);
       }
-        }
+
+      case "explanation": {
         return ok("explanation", "Para explicar algo, mencione o tema. Ex: 'explica o que é machine learning'", params, t0);
       }
 

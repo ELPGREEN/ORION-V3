@@ -14,7 +14,7 @@ import {
 import { SUPER_AGENTS, getSuperAgentPrompt, buildAgentMessages } from "./super-prompts";
 import { orionToolsToFunctionCalling, executeFunctionCall, getToolsForSuperAgent } from "./tool-executor";
 import { supabase } from "@/integrations/supabase/client";
-import { wrapEdgeFunction } from "./errors";
+import { wrapEdgeFunction } from "@/lib/errors";
 
 /** ═══════════════════════════════════════════════════════════════
  * ORION BRAIN CORE

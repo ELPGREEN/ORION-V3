@@ -2175,3 +2175,12 @@ span[data-suggestion-id] {
   .tron-danger-text { color: hsl(var(--tron-danger)); }
   .tron-info-text { color: hsl(var(--tron-info)); }
 }
+
+/* Hide scrollbar but allow scrolling */
+.scroll-hide::-webkit-scrollbar {
+  display: none;
+}
+.scroll-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

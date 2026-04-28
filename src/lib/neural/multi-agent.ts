@@ -20,7 +20,8 @@ import type { SpikeEvent } from "./stdp";
 export type AgentRole =
   | "leitura" | "pesquisa" | "construcao" | "planejador"
   | "supervisor" | "critico" | "refinador" | "monitoramento"
-  | "colaborador" | "multimodal" | "self_model";
+  | "colaborador" | "multimodal" | "self_model"
+  | "feynman";
 
 export type A2AMessageType =
   | "task_request" | "task_result" | "status_update"

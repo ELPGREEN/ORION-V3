@@ -614,7 +614,7 @@ export default function RedeNeuralPage() {
       {/* Playlist Orion centralizado no widget flutuante (GlobalOrionListener) — evita duplicação */}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="relative z-10">
-        <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#3B82F6]/15"
+        <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#3B82F6]/15 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar]:track:!bg-transparent scrollbar-hide"
           style={{ backgroundColor: "rgba(10,10,15,0.7)", boxShadow: "0 0 20px #3B82F60.05), inset 0 1px 0 #3B82F60.1)" }}>
           <TabsTrigger value="overview" className="text-xs shrink-0 gap-1 px-2.5 py-1.5">
             <BarChart3 className="h-3.5 w-3.5" />
