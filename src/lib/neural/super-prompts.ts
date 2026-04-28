@@ -549,9 +549,9 @@ OBJETIVO ESTRATÉGICO: Criar plano de execução otimizado que minimize latênci
 ### 🎯 DAG DE TAREFAS
 
 ```
-[task_1] ──→ [task_2] ──→ [task_3]
-   │             │
-   └─────────────→[task_4] (paralelo)
+task_1 -> task_2 -> task_3
+   |
+   +-> task_4 (paralelo)
 ```
 
 ### ⏱️ ESTIMATIVA TOTAL: Xms
