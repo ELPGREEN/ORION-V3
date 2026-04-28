@@ -1,6 +1,7 @@
 /**
  * 🧠 Pentagon Pizza Orchestrator (The Cortex)
  * Operates the cognitive loop: Perception -> Memory -> Reasoning -> Action -> Eval
+ * Enhanced with Geometric Metacognition & Feynman Loop
  */
 import {
   CognitiveState,
@@ -110,10 +111,14 @@ export class PentagonPizzaOrchestrator {
         break;
       } while (retryCount <= MAX_RETRIES);
 
-      const midCheck = await this.meta.validateReasoning(this.state.reasoning);
+      // 🍕 Metacognitive Checkpoint (Enhanced with Information Geometry)
+      const midCheck = await this.meta.validateReasoning(this.state.reasoning, context);
       if (!midCheck.valid) {
-        console.warn("[CORTEX] Mid-Reasoning warning:", midCheck.feedback);
-        // In a strict mode, we could throw here, but we'll let it pass for now with the warning
+        console.warn("[CORTEX] Mid-Reasoning warning/block:", midCheck.feedback);
+        // If the geometric/energy check is very low, we could force a simpler model or a clarification
+        if (midCheck.score < 50) {
+           this.state.reasoning.responseHint = `[Aviso Metacognitivo]: ${midCheck.feedback}\n\n${this.state.reasoning.responseHint}`;
+        }
       }
 
       // 4. Action (Tool Enforcement)
@@ -121,12 +126,12 @@ export class PentagonPizzaOrchestrator {
 
       // 🍕 Tool Enforcement: If query involves current facts/external data, FORCE tools
       const isFactQuery = /(hoje|agora|atualmente|not[íi]cia|pre[çc]o|tempo|clima|evento|quem [eé]|o que [eé]|onde fica)/i.test(input);
-      if (isFactQuery && (!this.state.reasoning?.plan?.some(p => p.includes("tool") || p.includes("search") || p.includes("firecrawl")))) {
+      if (isFactQuery && (!this.state.reasoning?.plan?.some((p: string) => p.includes("tool") || p.includes("search") || p.includes("firecrawl")))) {
         console.log("[CORTEX] 🛠️ Fact query detected. Forcing tool execution.");
         context.forceTool = true;
       }
 
-      this.state.action = await this.action.process(this.state.reasoning, context);
+      this.state.action = await this.action.process(this.state.reasoning, { ...context, perception: this.state.perception });
 
       // 5. Evaluation (Post-Output)
       await this.transition("evaluating");
