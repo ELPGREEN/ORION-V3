@@ -162,6 +162,25 @@ export * from "./tf-predictive-analytics";
 export * from "./tf-mlops-pipeline";
 export * from "./tf-inference-optimization";
 export * from "./tf-model-monitoring";
+
+// ═══ Sector Agents + ORION Brain ═══
+export {
+  ORION_BRAIN,
+  SECTOR_AGENTS,
+  ORQUESTRADOR,
+  detectSector,
+  getAgentForSector,
+  getAllAgents,
+  getPanelForSector,
+} from "./sector-agents";
+export {
+  orionBrain,
+  getOrionStatus,
+  getOrionHelp,
+  type OrionRequest,
+  type OrionResponse,
+  type OrionStatus,
+} from "./orion-brain";
 export {
   type ActivationName as TFAddonsActivationName,
   mish as tfAddonsMish,
