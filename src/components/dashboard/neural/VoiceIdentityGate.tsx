@@ -3,7 +3,7 @@
  * Shows when Orion detects a non-owner voice.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,16 @@ export function VoiceIdentityGate({
     onUnlockWithPin?.();
   }, [pin, onUnlockWithPin]);
 
-  if (identityStatus !== "guest") return null;
+  const [manuallyOpen, setManuallyOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpen = () => setManuallyOpen(true);
+    window.addEventListener("orion:show-identity-gate", handleOpen);
+    return () => window.removeEventListener("orion:show-identity-gate", handleOpen);
+  }, []);
+
+  if (identityStatus !== "guest" && identityStatus !== "unknown" && !manuallyOpen) return null;
+  if (identityStatus === "unknown" && !manuallyOpen) return null;
 
   return (
     <AnimatePresence>

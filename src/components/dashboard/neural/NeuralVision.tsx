@@ -237,7 +237,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         }
         const blob = new Blob(chunks, { type: recorder.mimeType });
         console.log("[NeuralVision] 🎤 Voice capture complete, blob size:", blob.size, "chunks:", chunks.length);
-        if (blob.size < 1400) {
+        if (blob.size < 500) {
           console.warn("[NeuralVision] ⚠️ Audio blob too small, will retry on next interaction");
           return;
         }

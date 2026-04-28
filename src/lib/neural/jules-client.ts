@@ -257,7 +257,8 @@ export async function orionSelfImprove(opts: {
   if (!opts._internalAutoTrigger) {
     if (!opts.callerIdentity || !isCreatorVerified(opts.callerIdentity)) {
       console.warn("[Orion→Jules] ❌ Blocked: caller is not the creator");
-      return { sessionId: "", success: false, error: "Apenas o criador pode acionar auto-evolução" };
+      if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion:show-identity-gate"));
+      return { sessionId: "", success: false, error: "Apenas o criador pode acionar auto-evolução. Verifique sua identidade no painel." };
     }
   }
   // Rate limit check

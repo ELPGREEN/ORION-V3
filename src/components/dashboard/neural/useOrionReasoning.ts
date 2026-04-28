@@ -1632,7 +1632,8 @@ export function useOrionReasoning(
         const constructUser = await getCachedUser();
         const isCreator = isCreatorForConstruct({ email: constructUser?.email, identityStatus: identityStatus as any });
         if (!isCreator) {
-          const denied = "⛔ Auto-construção é restrita ao criador do sistema. Sua identidade de voz não foi verificada como criador.";
+          const denied = "⛔ Auto-construção é restrita ao criador do sistema. Sua identidade de voz não foi verificada como criador. Verifique sua identidade no painel.";
+          window.dispatchEvent(new CustomEvent("orion:show-identity-gate"));
           setChatHistory(prev => {
             const clean = prev.filter(m => !(m.role === "ai" && m.text.startsWith("⏳")));
             return [...clean, { role: "ai" as const, text: denied, time: new Date().toLocaleTimeString("pt-BR") }];
@@ -1779,7 +1780,8 @@ export function useOrionReasoning(
         const evoUser = await getCachedUser();
         const isCreator = isCreatorVerified({ email: evoUser?.email, identityStatus: identityStatus as any });
         if (!isCreator) {
-          const denied = "⛔ Apenas o criador pode solicitar auto-evolução do sistema. Sua identidade de voz não foi verificada como criador.";
+          const denied = "⛔ Apenas o criador pode solicitar auto-evolução do sistema. Sua identidade de voz não foi verificada como criador. Verifique sua identidade no painel.";
+          window.dispatchEvent(new CustomEvent("orion:show-identity-gate"));
           addChat("ai", denied);
           setThought(denied);
           speak(denied).catch(() => {});

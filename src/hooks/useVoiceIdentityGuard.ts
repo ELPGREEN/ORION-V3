@@ -86,7 +86,7 @@ export function useVoiceIdentityGuard() {
         creatorTimbreNear,
       });
 
-      if (creatorSimilarity >= 0.44 || (creatorSimilarity >= 0.4 && creatorPitchNear && creatorTimbreNear)) {
+      if (creatorSimilarity >= 0.38 || (creatorSimilarity >= 0.4 && creatorPitchNear && creatorTimbreNear)) {
         console.log("[VoiceGuard] 👑 Voice matches CREATOR (Ericson Piccoli)! Score:", creatorSimilarity.toFixed(4));
         setIdentityStatus("creator");
         setIsCheckingVoice(false);
@@ -116,7 +116,7 @@ export function useVoiceIdentityGuard() {
         const similarity = compareFeaturesStatic(features, enrollment.voice_features);
         console.log("[VoiceGuard] 📊 Similarity score:", similarity.toFixed(4), "(threshold: 0.50)");
 
-        if (similarity >= 0.5) {
+        if (similarity >= 0.45) {
           const status: IdentityStatus = isOwnerEmail(user?.email) ? "creator" : "owner";
           console.log("[VoiceGuard] ✅ Voice MATCHED! Status:", status);
           setIdentityStatus(status);
@@ -142,7 +142,7 @@ export function useVoiceIdentityGuard() {
           bestSimilarity = Math.max(bestSimilarity, ownerSimilarity);
           console.log("[VoiceGuard] 🔍 Cross-account voice check, similarity:", ownerSimilarity.toFixed(4));
 
-          if (ownerSimilarity >= 0.52) {
+          if (ownerSimilarity >= 0.45) {
             console.log("[VoiceGuard] 👑 Voice matches an active enrollment! Granting creator access.");
             setIdentityStatus("creator");
             setIsCheckingVoice(false);

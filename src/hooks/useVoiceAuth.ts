@@ -51,7 +51,7 @@ export function useVoiceAuth() {
         recorder.onstop = () => {
           stream.getTracks().forEach(t => t.stop());
           const blob = new Blob(chunks, { type: mime });
-          if (blob.size < 4000) {
+          if (blob.size < 1000) {
             reject(new Error("Áudio muito curto ou silencioso. Fale claramente por 6 segundos."));
             return;
           }
@@ -181,7 +181,7 @@ export function useVoiceAuth() {
         enrolledPitch > 0 &&
         features.pitch_mean > 0 &&
         Math.abs(features.pitch_mean - enrolledPitch) <= 35;
-      const threshold = 0.55;
+      const threshold = 0.48;
       const match = similarity >= threshold || (similarity >= 0.5 && pitchClose);
 
       const logEntry: VoiceAuthLogInsert = {
