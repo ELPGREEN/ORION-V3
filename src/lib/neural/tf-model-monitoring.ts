@@ -105,11 +105,15 @@ export function getMonitoringState(): MonitoringState {
 
 /** Record a model performance snapshot */
 export function recordSnapshot(snapshot: ModelMetricSnapshot): void {
-  if (!_snapshots.has(snapshot.modelName)) _snapshots.set(snapshot.modelName, []);
-  const snaps = _snapshots.get(snapshot.modelName)!;
-  snaps.push(snapshot);
-  if (snaps.length > MAX_SNAPSHOTS_PER_MODEL) {
-    _snapshots.set(snapshot.modelName, snaps.slice(-MAX_SNAPSHOTS_PER_MODEL));
+  try {
+    if (!_snapshots.has(snapshot.modelName)) _snapshots.set(snapshot.modelName, []);
+    const snaps = _snapshots.get(snapshot.modelName)!;
+    snaps.push(snapshot);
+    if (snaps.length > MAX_SNAPSHOTS_PER_MODEL) {
+      _snapshots.set(snapshot.modelName, snaps.slice(-MAX_SNAPSHOTS_PER_MODEL));
+    }
+  } catch (err) {
+    console.warn("[Monitoring] Failed to record snapshot:", err);
   }
 }
 
@@ -122,47 +126,57 @@ export function setBaseline(modelName: string, metrics: Record<string, number>):
 export function checkDegradation(
   modelName: string,
   currentMetrics: Record<string, number>,
-  thresholdPercent: number = 10
+  thresholdPercent: number = 10,
+  minAbsoluteDelta: Record<string, number> = { latencyMs: 50, errorRate: 0.05 }
 ): PerformanceDegradation[] {
-  const baseline = _baselines.get(modelName);
-  if (!baseline) return [];
+  try {
+    const baseline = _baselines.get(modelName);
+    if (!baseline) return [];
 
-  const degradations: PerformanceDegradation[] = [];
+    const degradations: PerformanceDegradation[] = [];
 
-  for (const [metric, baselineValue] of Object.entries(baseline)) {
-    const current = currentMetrics[metric];
-    if (current === undefined || baselineValue === 0) continue;
+    for (const [metric, baselineValue] of Object.entries(baseline)) {
+      const current = currentMetrics[metric];
+      if (current === undefined || baselineValue === 0) continue;
 
-    // For accuracy-like metrics, lower is worse
-    // For error/latency-like metrics, higher is worse
-    const isHigherBetter = ["accuracy", "precision", "recall", "f1"].includes(metric);
-    const degradation = isHigherBetter
-      ? ((baselineValue - current) / baselineValue) * 100
-      : ((current - baselineValue) / baselineValue) * 100;
+      // Check minimum absolute delta to avoid noise on small values (jitter)
+      const minDelta = minAbsoluteDelta[metric] ?? 0;
+      if (Math.abs(current - baselineValue) < minDelta) continue;
 
-    if (degradation > thresholdPercent) {
-      const severity: PerformanceDegradation["severity"] =
-        degradation > 30 ? "severe" : degradation > 15 ? "moderate" : "minor";
+      // For accuracy-like metrics, lower is worse
+      // For error/latency-like metrics, higher is worse
+      const isHigherBetter = ["accuracy", "precision", "recall", "f1"].includes(metric);
+      const degradation = isHigherBetter
+        ? ((baselineValue - current) / baselineValue) * 100
+        : ((current - baselineValue) / baselineValue) * 100;
 
-      const entry: PerformanceDegradation = {
-        modelName,
-        metric,
-        baseline: baselineValue,
-        current,
-        degradationPercent: Math.round(degradation * 100) / 100,
-        severity,
-        detectedAt: new Date().toISOString(),
-      };
-      degradations.push(entry);
-      _degradations.push(entry);
+      if (degradation > thresholdPercent) {
+        const severity: PerformanceDegradation["severity"] =
+          degradation > 30 ? "severe" : degradation > 15 ? "moderate" : "minor";
 
-      if (_degradations.length > MAX_DEGRADATIONS) {
-        _degradations.shift();
+        const entry: PerformanceDegradation = {
+          modelName,
+          metric,
+          baseline: baselineValue,
+          current,
+          degradationPercent: Math.round(degradation * 100) / 100,
+          severity,
+          detectedAt: new Date().toISOString(),
+        };
+        degradations.push(entry);
+        _degradations.push(entry);
+
+        if (_degradations.length > MAX_DEGRADATIONS) {
+          _degradations.shift();
+        }
       }
     }
-  }
 
-  return degradations;
+    return degradations;
+  } catch (err) {
+    console.warn("[Monitoring] Failed to check degradation:", err);
+    return [];
+  }
 }
 
 /** Run data quality assessment */

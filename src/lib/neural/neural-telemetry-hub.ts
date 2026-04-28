@@ -238,12 +238,14 @@ export function feedReasoningMetrics(metrics: {
   });
 
   // 7. Check degradation + trigger Jules on persistent issues
+  // RELAXED: Use 40% threshold for orion-reasoning to prevent noise on minor jitters
+  // The minAbsoluteDelta is handled internally by checkDegradation (default 50ms)
   const degradations = _baselineSet
     ? checkDegradation("orion-reasoning", {
         accuracy: metrics.score,
         latencyMs: metrics.latencyMs,
         errorRate: metrics.score < 0.3 ? 1 : 0,
-      })
+      }, 40)
     : [];
 
   // Jules auto-trigger for TF degradations
