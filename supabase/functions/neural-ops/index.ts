@@ -17,6 +17,26 @@ import {
   verifyAgainstKnowledge,
 } from "../_shared/zilliz-anti-hallucination.ts";
 
+// ═══════════════════════════════════════════════════════════════
+// OPENROUTER MODELS — Free tier (no credit card required)
+// ═══════════════════════════════════════════════════════════════
+// Vision models in priority order (PRIMARY → FALLBACK)
+const VISION_MODELS = [
+  "meta-llama/llama-3.2-11b-vision-instruct:free", // 🥇 PRIMARY: 11B, fast, optimized for vision
+  "qwen/qwen2.5-vl-32b-instruct:free",      // 🔬 DETAILED: 32B, excellent for documents/charts
+  "moonshotai/kimi-vl-a3b-thinking:free",      // 🧠 THINKING: 3B with deep reasoning
+  "qwen/qwen2.5-vl-3b-instruct:free",       // 🌈 LIGHT: 3B, fast for general vision
+  "nvidia/nemotron-nano-12b-v2-vl:free",      // ⚡ NVIDIA: 12B, hybrid Transformer-Mamba
+];
+const TEXT_MODELS = [
+  "openrouter/free",                           // Auto-router (random free model)
+  "qwen/qwen3-coder-480b:free",             // Coding
+  "meta-llama/llama-3.3-70b-instruct:free",  // General
+];
+// Backward compatibility
+const OPENROUTER_VISION_MODEL = VISION_MODELS[0];
+const OPENROUTER_TEXT_MODEL = TEXT_MODELS[0];
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -1254,7 +1274,8 @@ async function fetchIdentityKnowledge(): Promise<string> {
 // ═══ WEB SEARCH / URL SCRAPE / YOUTUBE — inline context enrichment ═══
 
 function detectWebSearchIntent(query: string): boolean {
-  return /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|update|news|current|latest|trending)\b/i.test(query);
+  const q = query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents
+  return /\b(hoje|atual|atualmente|recente|noticia|preco\s+d[eo]s+|cotacao|quem\s+[ée]|qual\s+[ée]|onde\s+fica|resultado\s+d[eo]|placa[rz]|eletronico|ultimo|ultima|novo\s+|nova\s+|2024|2025|2026|tempo\s+d[eo]|na\s+noticia|clima|update|news|current|latest|trending|pesquisa|procure|busc[a-z]|encontre|achei)\b/i.test(q);
 }
 
 const VOICE_FAST_SHORTCUT_REGEX = /^(?:oi|ol[aá]|ola|opa|ei|hey|e\s*aí|e\s*ai|fala|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|valeu|obrigad[oa]|ok(?:ay)?|certo|beleza|sim|n[aã]o|nao|pode\s+repetir|repete|repita|me\s+ouve|me\s+escuta|t[aá]\s+me\s+ouvindo|consegue\s+me\s+ouvir)[\s!?.]*$/i;
@@ -1671,9 +1692,7 @@ async function callOpenRouterVision(messages: any[], stream: boolean = true): Pr
     Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url")
   );
   
-  const model = hasImage ? OPENROUTER_VISION_MODEL : OPENROUTER_TEXT_MODEL;
-  
-  console.log(`[OpenRouter Vision] Calling ${model} (stream=${stream}, vision=${hasImage})`);
+  const models = hasImage ? VISION_MODELS : TEXT_MODELS;
   
   // Convert messages to OpenAI format (PRESERVE image_url!)
   const openaiMessages = messages.map((m: any) => {
@@ -1696,50 +1715,52 @@ async function callOpenRouterVision(messages: any[], stream: boolean = true): Pr
     return { role, content: String(m.content) };
   });
   
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout for vision
-  
-  try {
-    const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": Deno.env.get("SUPABASE_URL") || "https://orion-ai.com",
-        "X-Title": "Orion Vision Multimodal",
-      },
-      body: JSON.stringify({
-        model,
-        messages: openaiMessages, // Now preserves image_url format!
-        temperature: hasImage ? 0.3 : 0.4,
-        max_tokens: hasImage ? 4096 : 2048,
-        stream,
-        top_p: 0.9,
-      }),
-      signal: controller.signal,
-    });
+  for (const model of models) {
+    console.log(`[OpenRouter Vision] Trying ${model} (stream=${stream}, vision=${hasImage})`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout for vision
     
-    clearTimeout(timeout);
-    
-    if (!resp.ok) {
-      const errorText = await resp.text();
-      console.error(`[OpenRouter Vision] ${resp.status}: ${errorText.slice(0, 200)}`);
-      throw new Error(`OpenRouter Vision ${resp.status}: ${errorText.slice(0, 100)}`);
+    try {
+      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": Deno.env.get("SUPABASE_URL") || "https://orion-ai.com",
+          "X-Title": "Orion Vision Multimodal",
+        },
+        body: JSON.stringify({
+          model,
+          messages: openaiMessages,
+          temperature: hasImage ? 0.3 : 0.4,
+          max_tokens: hasImage ? 4096 : 2048,
+          stream,
+          top_p: 0.9,
+        }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeout);
+      
+      if (!resp.ok) {
+        const errorText = await resp.text();
+        console.warn(`[OpenRouter Vision] ${model} failed: ${resp.status} ${errorText.slice(0, 200)}`);
+        continue; // try next model
+      }
+      
+      console.log(`[OpenRouter Vision] ✅ ${model} succeeded`);
+      return resp;
+    } catch (e) {
+      clearTimeout(timeout);
+      console.warn(`[OpenRouter Vision] ${model} error: ${e.message}`);
+      continue;
     }
-    
-    return resp;
-  } catch (e) {
-    clearTimeout(timeout);
-    throw e;
   }
+  
+  throw new Error(`All OpenRouter models failed for vision`);
 }
     
-    return resp;
-  } catch (e) {
-    clearTimeout(timeout);
-    throw e;
-  }
-}
+
 
 async function callGeminiAPI(messages: any[], stream: boolean, apiKeyEnv: string): Promise<Response> {
   const apiKey = Deno.env.get(apiKeyEnv);

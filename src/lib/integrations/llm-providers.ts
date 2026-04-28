@@ -60,37 +60,43 @@ export const FREE_MODELS: Record<LLMProvider, string[]> = {
   "lmstudio": ["llama3", "codellama"],
   "llama-cpp": ["llama-3-70b", "codellama-70b", "llama-4-scout"],
   huggingface: ["meta-llama/Llama-3.1-70B-Instruct", "Qwen/Qwen2.5-Coder-32B-Instruct"],
-  // OpenRouter - COMPLETO com todos os modelos gratuitos 2026
-  openrouter: [
-    // 🔥 AUTO-ROUTER (melhor seleção automática)
-    "openrouter/free",
-    // 🧠 REASONING (melhores para lógica e matemática)
-    "deepseek/deepseek-r1",
-    "deepseek/deepseek-r1-0528",
-    "qwen/qwen3-235b-thinking",
-    "qwen/qwen3-next-80b-a3b-instruct",
-    // 💻 CODING (melhores para código)
-    "qwen/qwen3-coder-480b",
-    "mistralai/devstral-2",
-    "qwen/qwen2.5-coder-32b",
-    // 🌍 GENERAL (multiuso)
-    "meta-llama/llama-3.3-70b-instruct",
-    "meta-llama/llama-4-scout:free",
-    "meta-llama/llama-4-maverick:free",
-    "mistralai/mistral-small-3.1-24b-instruct",
-    "grok/grok-4",
-    // 👁️ VISION (imagens)
-    "qwen/qwen2.5-vl-3b-instruct",
-    "qwen/qwen2.5-vl-32b-instruct",
-    "nvidia/nemotron-nano-12b-2-vl",
-    // ⚡ NVIDIA (high performance)
-    "nvidia/nemotron-3-super-120b-a12b",
-    "nvidia/nemotron-nano-9b-v2",
-    // 🌎 EXTRA (diversos)
-    "minimax/minimax-m2.5-free",
-    "moonshotai/kimi-vl-a3b-thinking:free",
-    "aethernether/llama-3-8b-instruct-thinking:free",
-  ],
+   // OpenRouter - COMPLETO com todos os modelos gratuitos 2026
+   openrouter: [
+     // 🔥 AUTO-ROUTER (melhor seleção automática)
+     "openrouter/free",
+     // 👁️ VISION PRIMARY (Llama 3.2 11B Vision - PRINCIPAL PARA ORION)
+     "meta-llama/llama-3.2-11b-vision-instruct:free",
+     // 👁️ VISION DETALHADA (Qwen2.5 VL 32B - análise complexa)
+     "qwen/qwen2.5-vl-32b-instruct:free",
+     // 👁️ VISION THINKING (Kimi VL A3B - raciocínio profundo)
+     "moonshotai/kimi-vl-a3b-thinking:free",
+     // 👁️ VISION LIGHT (Qwen2.5 VL 3B - rápido)
+     "qwen/qwen2.5-vl-3b-instruct:free",
+     // ⚡ NVIDIA VISION (Nemotron Nano 12B VL - alta vazão)
+     "nvidia/nemotron-nano-12b-v2-vl:free",
+     // ⚡ NVIDIA MEGA (Nemotron 3 Super 120B - pesado/Mo3E)
+     "nvidia/nemotron-3-super-120b-a12b:free",
+     // 🧠 REASONING (melhores para lógica e matemática)
+     "deepseek/deepseek-r1",
+     "deepseek/deepseek-r1-0528",
+     "qwen/qwen3-235b-thinking",
+     "qwen/qwen3-next-80b-a3b-instruct",
+     // 💻 CODING (melhores para código)
+     "qwen/qwen3-coder-480b",
+     "mistralai/devstral-2",
+     "qwen/qwen2.5-coder-32b",
+     // 🌍 GENERAL (multiuso)
+     "meta-llama/llama-3.3-70b-instruct",
+     "meta-llama/llama-4-scout:free",
+     "meta-llama/llama-4-maverick:free",
+     "mistralai/mistral-small-3.1-24b-instruct",
+     "grok/grok-4",
+     // 🌎 EXTRA (diversos)
+     "minimax/minimax-m2.5-free",
+     "aethernether/llama-3-8b-instruct-thinking:free",
+     // 🌟 GOOGLE VISION (Gemma 3 27B - documentos)
+     "google/gemma-3-27b-it:free",
+   ],
   azure: [],
   vertex: [],
 };

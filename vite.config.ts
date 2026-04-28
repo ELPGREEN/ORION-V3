@@ -74,26 +74,29 @@ export default defineConfig(() => ({
        devOptions: {
          enabled: false,
        },
-       workbox: {
-         navigateFallbackDenylist: [/^\/~oauth/],
-         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-         cleanupOutdatedCaches: true,
-         // Force cache invalidation for index.html when CSP changes
-         runtimeCaching: [
-           {
-             urlPattern: /^.*\/index\.html$/,
-             handler: "NetworkFirst",
-             options: {
-               cacheName: "html-cache",
-               networkTimeoutSeconds: 5,
-               expiration: {
-                 maxEntries: 10,
-                 maxAgeSeconds: 60, // 1 min - force revalidation often
-               },
-             },
-           },
-         ],
-       },
+        workbox: {
+          navigateFallbackDenylist: [/^\/~oauth/],
+          globPatterns: ["**/*.{js,css,ico,png,svg,woff2}"], // Removed html from pre-cache
+          cleanupOutdatedCaches: true,
+          // Never cache index.html - always fetch from network (CSP updates)
+          runtimeCaching: [
+            {
+              urlPattern: /^.*\/index\.html$/,
+              handler: "NetworkOnly", // Force network for HTML
+            },
+            {
+              urlPattern: /^.*\.(js|css|png|svg|woff2)$/,
+              handler: "CacheFirst",
+              options: {
+                cacheName: "assets-cache",
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 86400, // 24 hours
+                },
+              },
+            },
+          ],
+        },
        manifest: false, // Use existing public/manifest.json
        injectRegister: "script",
        includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],

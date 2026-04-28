@@ -392,6 +392,23 @@ Deno.serve(async (req) => {
         // ═══════════════════════════════════════════════════════════════
     // ACTION ROUTER (Evolution & ARC-AGI Consolidation)
     // ═══════════════════════════════════════════════════════════════
+
+    // Handle supagent_frontend_instruction -> forward to neural-ops
+    if (action === "supagent_frontend_instruction") {
+      console.log("[Orchestrator] Routing supagent_frontend_instruction to neural-ops");
+      try {
+        const { data, error } = await supabaseAdmin.functions.invoke("neural-ops", { body });
+        if (error) {
+          console.warn("[Orchestrator] neural-ops failed:", error);
+          return json({ error: `neural-ops failed: ${error.message}` }, 500);
+        }
+        return json(data);
+      } catch (e) {
+        console.error("[Orchestrator] Exception forwarding to neural-ops:", e);
+        return json({ error: `Forwarding failed: ${e.message}` }, 500);
+      }
+    }
+
     if (action === "evolve" || action === "arc") {
       if (subAction === "diagnostics") {
         const checks = {
@@ -525,7 +542,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     console.log("[Orchestrator] Received body:", JSON.stringify(body).slice(0, 200));
-    
+
     const { 
       action,
       subAction,
@@ -543,6 +560,17 @@ Deno.serve(async (req) => {
       thinking_enabled = false,
       tools,
     } = body;
+
+    // Handle supagent_frontend_instruction → forward to neural-ops
+    if (action === "supagent_frontend_instruction") {
+      console.log("[Orchestrator] Forwarding supagent_frontend_instruction to neural-ops");
+      const { data, error } = await supabaseAdmin.functions.invoke("neural-ops", { body });
+      if (error) {
+        console.warn("[Orchestrator] neural-ops failed:", error);
+        return json({ error: `neural-ops failed: ${error.message}` }, 500);
+      }
+      return json(data);
+    }
 
     // ═══ OPENROUTER PRIMÁRIO PARA TEXTO ═══
     const openRouterKey = Deno.env.get("OPENROUTER_API_KEY");
