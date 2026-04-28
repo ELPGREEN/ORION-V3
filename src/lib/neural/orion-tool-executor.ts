@@ -3470,9 +3470,10 @@ export async function matchAndExecuteTool(
       // Creator-only guard: block non-creator access
       if (tool.creatorOnly && identityStatus !== "creator") {
         console.warn(`[ToolExec] ❌ Blocked "${tool.name}" — identity "${identityStatus}" is not creator`);
+        if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion:show-identity-gate"));
         return {
           handled: true,
-          response: "⛔ Apenas o criador pode executar este comando.",
+          response: "⛔ Apenas o criador pode executar este comando. Verifique sua identidade no painel.",
           toolName: tool.name,
         };
       }
@@ -3493,7 +3494,6 @@ export async function matchAndExecuteTool(
 
   return { handled: false, response: "" };
 }
-
 /** List all available tool names for diagnostics */
 export function getAvailableTools(userRole?: AppRole): string[] {
   return TOOLS

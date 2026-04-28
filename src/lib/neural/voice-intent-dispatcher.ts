@@ -112,7 +112,8 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
   const CREATOR_ONLY_INTENTS = ["self_evolve", "auto_construct", "orion_evolution"];
   if (CREATOR_ONLY_INTENTS.includes(intent.intent) && identityStatus !== "creator" && identityStatus !== "owner") {
     console.warn(`[VoiceDispatch] ❌ Blocked "${intent.intent}" — voice ID is "${identityStatus}", not "creator"`);
-    return ok(intent.intent, "⛔ Apenas o criador pode solicitar auto-evolução do sistema.", null, t0);
+    window.dispatchEvent(new CustomEvent("orion:show-identity-gate"));
+    return ok(intent.intent, "⛔ Apenas o criador pode solicitar auto-evolução do sistema. Verifique sua identidade no painel.", null, t0);
   }
 
   // Log creator access for transparency
