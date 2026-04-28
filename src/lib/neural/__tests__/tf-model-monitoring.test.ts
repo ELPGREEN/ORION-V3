@@ -9,18 +9,16 @@ import {
   recordExperimentEvent,
   evaluateExperiment,
   getMonitoringState,
-  getDegradationHistory,
 } from "../tf-model-monitoring";
 
 describe("TF Model Monitoring", () => {
   beforeEach(() => {
-    // Reset internal state if needed, though most are Maps/arrays in the module
-    // Since they are not exported for reset, we'll rely on unique names
+    vi.useFakeTimers();
   });
 
   describe("Snapshots & Baselines", () => {
     it("should record snapshots and maintain limits", () => {
-      const modelName = "test-model-" + Date.now();
+      const modelName = "test-model-snaps-" + Math.random();
       for (let i = 0; i < 600; i++) {
         recordSnapshot({
           modelName,
@@ -33,26 +31,37 @@ describe("TF Model Monitoring", () => {
         });
       }
       const state = getMonitoringState();
-      // It should be capped at 500 per model
       expect(state.totalSnapshots).toBeGreaterThanOrEqual(500);
     });
 
     it("should detect degradation against baseline", () => {
-      const modelName = "degrade-model";
+      const modelName = "degrade-model-" + Math.random();
       setBaseline(modelName, { accuracy: 0.9, latencyMs: 100 });
 
-      // No degradation
+      // No degradation (below 15% threshold for accuracy, below 30% for latency)
       let degradations = checkDegradation(modelName, { accuracy: 0.89, latencyMs: 105 });
       expect(degradations).toHaveLength(0);
 
-      // Severe degradation in accuracy (0.9 -> 0.6 = 33% drop)
+      // Moderate degradation in accuracy (0.9 -> 0.6 = 33% drop)
+      // New moderate range is 25-50%
       degradations = checkDegradation(modelName, { accuracy: 0.6, latencyMs: 105 });
       expect(degradations).toHaveLength(1);
       expect(degradations[0].metric).toBe("accuracy");
+      expect(degradations[0].severity).toBe("moderate");
+
+      // Reset cooldown by advancing time
+      vi.advanceTimersByTime(11 * 60 * 1000);
+
+      // Severe degradation in accuracy (0.9 -> 0.4 = 55% drop)
+      degradations = checkDegradation(modelName, { accuracy: 0.4, latencyMs: 105 });
+      expect(degradations).toHaveLength(1);
       expect(degradations[0].severity).toBe("severe");
 
-      // Moderate degradation in latency (100 -> 125 = 25% increase)
-      degradations = checkDegradation(modelName, { accuracy: 0.9, latencyMs: 125 });
+      vi.advanceTimersByTime(11 * 60 * 1000);
+
+      // Moderate degradation in latency (100 -> 140 = 40% increase)
+      // Latency uses dynamicThreshold = 15 * 2 = 30%
+      degradations = checkDegradation(modelName, { accuracy: 0.9, latencyMs: 140 });
       expect(degradations).toHaveLength(1);
       expect(degradations[0].metric).toBe("latencyMs");
       expect(degradations[0].severity).toBe("moderate");
@@ -89,14 +98,12 @@ describe("TF Model Monitoring", () => {
 
       startExperiment(exp.id);
 
-      // Add samples for Control (var_0)
       for (let i = 0; i < 100; i++) {
-        recordExperimentEvent(exp.id, controlId, i < 10); // 10% conversion
+        recordExperimentEvent(exp.id, controlId, i < 10); // 10%
       }
 
-      // Add samples for Challenger (var_1) - significantly better
       for (let i = 0; i < 100; i++) {
-        recordExperimentEvent(exp.id, challengerId, i < 30); // 30% conversion
+        recordExperimentEvent(exp.id, challengerId, i < 30); // 30%
       }
 
       const results = evaluateExperiment(exp.id);

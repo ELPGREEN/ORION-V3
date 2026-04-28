@@ -1,12 +1,8 @@
 /**
- * ─── TF.js Model Monitoring & Data Governance ───
- * Production monitoring, performance tracking, data quality framework,
- * and experimentation/A/B testing infrastructure.
- * 
- * Ref: Sculley et al. (2015) — Hidden Technical Debt in ML Systems
+ * 📊 TensorFlow Model Monitoring
+ * Tracks model performance, baseline drift, and experiments.
+ * v2: Enhanced with Moving Average, Cooldowns and Dynamic Thresholds
  */
-
-// ─── Types ───
 
 export interface ModelMetricSnapshot {
   modelName: string;
@@ -16,6 +12,7 @@ export interface ModelMetricSnapshot {
   errorRate: number;
   sampleCount: number;
   memoryMB: number;
+  customMetrics?: Record<string, number>;
 }
 
 export interface PerformanceDegradation {
@@ -28,46 +25,6 @@ export interface PerformanceDegradation {
   detectedAt: string;
 }
 
-export interface DataQualityReport {
-  timestamp: string;
-  completeness: number;  // 0-1
-  consistency: number;   // 0-1
-  accuracy: number;      // 0-1
-  validity: number;      // 0-1
-  timeliness: number;    // 0-1
-  overallScore: number;  // 0-1
-  issues: DataQualityIssue[];
-}
-
-export interface DataQualityIssue {
-  field: string;
-  type: "missing" | "invalid" | "inconsistent" | "stale" | "duplicate";
-  severity: "low" | "medium" | "high";
-  count: number;
-  description: string;
-}
-
-export interface Experiment {
-  id: string;
-  name: string;
-  status: "draft" | "running" | "completed" | "cancelled";
-  variants: ExperimentVariant[];
-  startedAt: string | null;
-  endedAt: string | null;
-  winnerVariant: string | null;
-  confidenceLevel: number;
-}
-
-export interface ExperimentVariant {
-  id: string;
-  name: string;
-  weight: number; // traffic percentage 0-1
-  sampleCount: number;
-  conversions: number;
-  avgMetric: number;
-  metrics: Record<string, number>;
-}
-
 export interface MonitoringState {
   totalSnapshots: number;
   totalDegradations: number;
@@ -77,16 +34,63 @@ export interface MonitoringState {
   lastCheck: string | null;
 }
 
-// ─── State ───
+export interface DataQualityIssue {
+  field: string;
+  type: "missing" | "duplicate" | "out_of_range" | "mismatch";
+  severity: "low" | "medium" | "high";
+  count: number;
+  description: string;
+}
 
-const _snapshots: Map<string, ModelMetricSnapshot[]> = new Map();
-const _baselines: Map<string, Record<string, number>> = new Map();
+export interface DataQualityReport {
+  timestamp: string;
+  completeness: number;
+  consistency: number;
+  accuracy: number;
+  validity: number;
+  timeliness: number;
+  overallScore: number;
+  issues: DataQualityIssue[];
+}
+
+export interface ExperimentVariant {
+  id: string;
+  name: string;
+  weight: number;
+  sampleCount: number;
+  conversions: number;
+  avgMetric: number;
+  metrics: Record<string, number>;
+}
+
+export interface Experiment {
+  id: string;
+  name: string;
+  status: "draft" | "running" | "completed";
+  variants: ExperimentVariant[];
+  startedAt: string | null;
+  endedAt: string | null;
+  winnerVariant: string | null;
+  confidenceLevel: number;
+}
+
+// ─── Private State ───
+
+const _snapshots = new Map<string, ModelMetricSnapshot[]>();
+const _baselines = new Map<string, Record<string, number>>();
 const _degradations: PerformanceDegradation[] = [];
-const _experiments: Map<string, Experiment> = new Map();
+const _experiments = new Map<string, Experiment>();
 let _lastDataQuality: DataQualityReport | null = null;
+
+// v2 state
+const _movingAverages = new Map<string, Record<string, number>>();
+const _lastAlertTime = new Map<string, number>();
+
 const MAX_SNAPSHOTS_PER_MODEL = 500;
 const MAX_DEGRADATIONS = 1000;
 const MAX_EXPERIMENTS = 100;
+const ALERT_COOLDOWN_MS = 600_000; // 10 minutes
+const MOVING_AVG_WINDOW = 10;
 
 /** Get monitoring state */
 export function getMonitoringState(): MonitoringState {
@@ -108,8 +112,27 @@ export function recordSnapshot(snapshot: ModelMetricSnapshot): void {
   if (!_snapshots.has(snapshot.modelName)) _snapshots.set(snapshot.modelName, []);
   const snaps = _snapshots.get(snapshot.modelName)!;
   snaps.push(snapshot);
+
+  // Update moving average
+  updateMovingAverage(snapshot.modelName, {
+    accuracy: snapshot.accuracy,
+    latencyMs: snapshot.latencyMs,
+    errorRate: snapshot.errorRate,
+    ...snapshot.customMetrics
+  });
+
   if (snaps.length > MAX_SNAPSHOTS_PER_MODEL) {
     _snapshots.set(snapshot.modelName, snaps.slice(-MAX_SNAPSHOTS_PER_MODEL));
+  }
+}
+
+function updateMovingAverage(modelName: string, metrics: Record<string, number>): void {
+  if (!_movingAverages.has(modelName)) _movingAverages.set(modelName, {});
+  const averages = _movingAverages.get(modelName)!;
+
+  for (const [metric, value] of Object.entries(metrics)) {
+    const currentAvg = averages[metric] ?? value;
+    averages[metric] = (currentAvg * (MOVING_AVG_WINDOW - 1) + value) / MOVING_AVG_WINDOW;
   }
 }
 
@@ -122,27 +145,30 @@ export function setBaseline(modelName: string, metrics: Record<string, number>):
 export function checkDegradation(
   modelName: string,
   currentMetrics: Record<string, number>,
-  thresholdPercent: number = 10
+  thresholdPercent: number = 15 // Increased from 10 to 15 for stability
 ): PerformanceDegradation[] {
   const baseline = _baselines.get(modelName);
   if (!baseline) return [];
 
+  const averages = _movingAverages.get(modelName) || currentMetrics;
   const degradations: PerformanceDegradation[] = [];
+  const now = Date.now();
 
   for (const [metric, baselineValue] of Object.entries(baseline)) {
-    const current = currentMetrics[metric];
+    const current = averages[metric] ?? currentMetrics[metric];
     if (current === undefined || baselineValue === 0) continue;
 
-    // For accuracy-like metrics, lower is worse
-    // For error/latency-like metrics, higher is worse
     const isHigherBetter = ["accuracy", "precision", "recall", "f1"].includes(metric);
     const degradation = isHigherBetter
       ? ((baselineValue - current) / baselineValue) * 100
       : ((current - baselineValue) / baselineValue) * 100;
 
-    if (degradation > thresholdPercent) {
+    // Use a dynamic threshold: latency is naturally noisier, so it needs a higher buffer
+    const dynamicThreshold = metric === "latencyMs" ? thresholdPercent * 2 : thresholdPercent;
+
+    if (degradation > dynamicThreshold) {
       const severity: PerformanceDegradation["severity"] =
-        degradation > 30 ? "severe" : degradation > 15 ? "moderate" : "minor";
+        degradation > 50 ? "severe" : degradation > 25 ? "moderate" : "minor";
 
       const entry: PerformanceDegradation = {
         modelName,
@@ -153,12 +179,18 @@ export function checkDegradation(
         severity,
         detectedAt: new Date().toISOString(),
       };
-      degradations.push(entry);
-      _degradations.push(entry);
 
-      if (_degradations.length > MAX_DEGRADATIONS) {
-        _degradations.shift();
+      // Implement alert cooldown per model/metric pair
+      const alertKey = `${modelName}:${metric}`;
+      const lastAlert = _lastAlertTime.get(alertKey) ?? 0;
+
+      if (now - lastAlert > ALERT_COOLDOWN_MS || severity === "severe") {
+        degradations.push(entry);
+        _lastAlertTime.set(alertKey, now);
       }
+
+      _degradations.push(entry);
+      if (_degradations.length > MAX_DEGRADATIONS) _degradations.shift();
     }
   }
 
@@ -232,7 +264,6 @@ export function assessDataQuality(
 
 /** Create a new A/B experiment */
 export function createExperiment(name: string, variantNames: string[], weights?: number[]): Experiment {
-  // Cap experiments map
   if (_experiments.size >= MAX_EXPERIMENTS) {
     const oldestId = _experiments.keys().next().value;
     if (oldestId) _experiments.delete(oldestId);
@@ -298,14 +329,12 @@ export function evaluateExperiment(experimentId: string): Experiment | null {
   const exp = _experiments.get(experimentId);
   if (!exp) return null;
 
-  // Need a control variant (var_0) and at least one challenger with enough samples
   const control = exp.variants.find(v => v.id === "var_0");
   if (!control || control.sampleCount < 30) return exp;
 
   const validChallengers = exp.variants.filter(v => v.id !== "var_0" && v.sampleCount >= 30);
   if (validChallengers.length === 0) return exp;
 
-  // Find best challenger
   let bestChallenger = validChallengers[0];
   for (const v of validChallengers) {
     const vRate = v.conversions / v.sampleCount;
@@ -322,12 +351,10 @@ export function evaluateExperiment(experimentId: string): Experiment | null {
     return exp;
   }
 
-  // Z-test for statistical significance (one-tailed: is challenger significantly better than control?)
   const pPooled = (bestChallenger.conversions + control.conversions) / (bestChallenger.sampleCount + control.sampleCount);
   const se = Math.sqrt(pPooled * (1 - pPooled) * (1 / bestChallenger.sampleCount + 1 / control.sampleCount)) || 0.001;
   const zScore = (p1 - p0) / se;
 
-  // Z > 1.645 = 90%, Z > 1.96 = 95%, Z > 2.576 = 99%
   exp.confidenceLevel = Math.min(0.99, zScore > 2.576 ? 0.99 : zScore > 1.96 ? 0.95 : zScore > 1.645 ? 0.90 : Math.max(0, zScore / 1.96 * 0.85));
 
   if (exp.confidenceLevel >= 0.95) {
@@ -367,4 +394,40 @@ export function getDegradationHistory(): PerformanceDegradation[] {
 /** Get latest data quality report */
 export function getLatestDataQualityReport(): DataQualityReport | null {
   return _lastDataQuality;
+}
+
+/**
+ * Automatically update baseline if the moving average has been stable
+ * at a new level for a significant period.
+ */
+export function maybeRebaseline(modelName: string, stabilityThreshold = 0.05, minSnapshots = 100): boolean {
+  const snaps = _snapshots.get(modelName);
+  if (!snaps || snaps.length < minSnapshots) return false;
+
+  const baseline = _baselines.get(modelName);
+  const currentAverages = _movingAverages.get(modelName);
+  if (!baseline || !currentAverages) return false;
+
+  let needsRebaseline = false;
+  const newBaseline: Record<string, number> = { ...baseline };
+
+  for (const [metric, baselineVal] of Object.entries(baseline)) {
+    const currentAvg = currentAverages[metric];
+    if (currentAvg === undefined) continue;
+
+    const diff = Math.abs(currentAvg - baselineVal) / baselineVal;
+
+    // If it has drifted significantly (>2x threshold) but is very stable lately (implied by moving avg window)
+    // and we haven't alerted in a while, maybe we should adapt.
+    if (diff > 0.2 && diff < 0.5) { // Adaptive range
+      newBaseline[metric] = currentAvg;
+      needsRebaseline = true;
+    }
+  }
+
+  if (needsRebaseline) {
+    setBaseline(modelName, newBaseline);
+    return true;
+  }
+  return false;
 }

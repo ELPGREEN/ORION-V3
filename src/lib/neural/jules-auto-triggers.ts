@@ -1,5 +1,5 @@
 /**
- * Jules Auto-Improvement Triggers v2
+ * Jules Auto-Improvement Triggers v2.1
  * ────────────────────────────────────
  * Centralized failure tracking with DB persistence, cooldown,
  * follow-up loop, and post-merge resolution metrics.
@@ -13,7 +13,7 @@ import { shouldQuarantine } from "./jules-immune-system";
 // ─── Types ───
 
 const FAIL_STORE_KEY = "orion_jules_subsystem_fails";
-const COOLDOWN_MS = 600_000; // 10 min cooldown between triggers per subsystem
+const COOLDOWN_MS = 1_800_000; // Increased to 30 min cooldown between triggers per subsystem
 
 interface SubsystemFail {
   count: number;
@@ -94,20 +94,20 @@ export async function recordSubsystemFailure(
   store[subsystem] = entry;
   saveFailStore(store);
 
-  const THRESHOLD = 3;
+  const THRESHOLD = 5; // Increased threshold to 5 for less noise
 
   if (entry.count >= THRESHOLD && !entry.julesTriggered) {
     // Check cooldown
-    if (await isOnCooldown(subsystem)) {
-      console.log(`[Jules-Trigger] ${subsystem} on cooldown, skipping`);
+    const cooldown = await isOnCooldown(subsystem);
+    if (cooldown) {
+      console.log(`[Jules-Trigger] ${subsystem} is on cooldown, skipping trigger`);
       return { julesTriggered: false };
     }
 
-    console.log(`[Jules-Trigger] ${subsystem} failed ${entry.count}x — requesting self-improvement`);
     const latency = getPipelineLatency();
     const task = buildJulesTask(subsystem, error, latency, context);
-    const result = await orionSelfImprove({ task, autoPR: true, subsystem, _internalAutoTrigger: true });
 
+    const result = await orionSelfImprove(task, subsystem);
     if (result.success) {
       entry.julesTriggered = true;
       entry.lastSessionId = result.sessionId;
@@ -242,7 +242,7 @@ function buildJulesTask(
     `Fix recurring failure in Orion subsystem: ${info.desc}\n` +
     `File: ${info.file}\nError: ${error}\n${latencyInfo}\n` +
     (context ? `Context: ${context}\n` : "") +
-    `This has failed 3+ times in the last hour. ` +
+    `This has failed ${THRESHOLD}+ times in the last hour. ` +
     `Please diagnose the root cause, fix it, and add error handling to prevent recurrence.`
   );
 }
@@ -260,6 +260,9 @@ export const recordSTTFailure = (provider: "gcp" | "webspeech", error: string) =
 
 export const recordTTSFailure = (provider: "gemini" | "webspeech", error: string) =>
   recordSubsystemFailure(`tts_${provider}` as SubsystemKey, error);
+
+export const recordTTSPhonemeFailure = (error: string) =>
+  recordSubsystemFailure("tts_gemini" as SubsystemKey, `Phoneme Error: ${error}`);
 
 export const recordIoTFailure = (protocol: "mqtt" | "bluetooth" | "smart_home" | "ros2", error: string) =>
   recordSubsystemFailure(`iot_${protocol}` as SubsystemKey, error);
