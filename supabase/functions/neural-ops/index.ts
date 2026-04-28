@@ -1661,6 +1661,86 @@ async function buildOrionMessages(body: Record<string, unknown>) {
   return messages;
 }
 
+// ═══ OpenRouter Vision Call (Multimodal Llama 3.2 Vision) ═══
+async function callOpenRouterVision(messages: any[], stream: boolean = true): Promise<Response> {
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY missing for vision");
+  
+  // Check if messages contain images
+  const hasImage = messages.some((m: any) => 
+    Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url")
+  );
+  
+  const model = hasImage ? OPENROUTER_VISION_MODEL : OPENROUTER_TEXT_MODEL;
+  
+  console.log(`[OpenRouter Vision] Calling ${model} (stream=${stream}, vision=${hasImage})`);
+  
+  // Convert messages to OpenAI format (PRESERVE image_url!)
+  const openaiMessages = messages.map((m: any) => {
+    const role = m.role === "system" ? "system" : 
+                  m.role === "assistant" || m.role === "model" ? "assistant" : "user";
+    
+    // If content is already in OpenAI multimodal format, keep it
+    if (Array.isArray(m.content)) {
+      return {
+        role,
+        content: m.content.map((c: any) => {
+          if (c.type === "image_url") return c; // Keep image_url as-is
+          if (c.type === "text") return { type: "text", text: c.text };
+          return { type: "text", text: String(c) };
+        })
+      };
+    }
+    
+    // Text-only message
+    return { role, content: String(m.content) };
+  });
+  
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout for vision
+  
+  try {
+    const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": Deno.env.get("SUPABASE_URL") || "https://orion-ai.com",
+        "X-Title": "Orion Vision Multimodal",
+      },
+      body: JSON.stringify({
+        model,
+        messages: openaiMessages, // Now preserves image_url format!
+        temperature: hasImage ? 0.3 : 0.4,
+        max_tokens: hasImage ? 4096 : 2048,
+        stream,
+        top_p: 0.9,
+      }),
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeout);
+    
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      console.error(`[OpenRouter Vision] ${resp.status}: ${errorText.slice(0, 200)}`);
+      throw new Error(`OpenRouter Vision ${resp.status}: ${errorText.slice(0, 100)}`);
+    }
+    
+    return resp;
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
+  }
+}
+    
+    return resp;
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
+  }
+}
+
 async function callGeminiAPI(messages: any[], stream: boolean, apiKeyEnv: string): Promise<Response> {
   const apiKey = Deno.env.get(apiKeyEnv);
   if (!apiKey) throw new Error(`Missing ${apiKeyEnv}`);
@@ -2398,12 +2478,29 @@ async function handleOrionQuery(body: Record<string, unknown>, stream: boolean) 
   (messages as any).__maxTokens = requestedMaxTokens || defaultMax;
 
   const geminiKeys = ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3", "GEMINI_API_KEY_4", "GEMINI_API_KEY_5", "GEMINI_API_KEY_6", "GEMINI_API_KEY_7", "GEMINI_API_KEY_GCP"];
-  const hasImage = messages.some((m: any) => Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url"));
+    const hasImage = messages.some((m: any) => Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url"));
 
-  // ═══ STREAMING MODE ═══
-  // REGRA: VM Gemini Proxy (cache + speed) → Vertex AI (GCP credits) → Gemini API keys → fallbacks gratuitos
-  if (stream) {
-    const attemptedProviders: string[] = [];
+    // ═══ STREAMING MODE ═══
+    // REGRA: OpenRouter Vision (PRIMÁRIO para imagens) → VM Gemini Proxy → Vertex AI → Gemini API → fallbacks
+    if (stream) {
+      const attemptedProviders: string[] = [];
+
+      // ═══ PRIMARY: OpenRouter Vision (Llama 3.2 Vision) ═══
+      if (hasImage && Deno.env.get("OPENROUTER_API_KEY")) {
+        try {
+          attemptedProviders.push("openrouter_vision");
+          console.log("[Orion] Trying OpenRouter Vision (PRIMARY for images)...");
+          const orVisionResp = await callOpenRouterVision(messages, true);
+          if (orVisionResp.ok && orVisionResp.body) {
+            console.log("[Orion] ✅ Streaming via OpenRouter Vision (Llama 3.2 Vision)");
+            return new Response(orVisionResp.body, {
+              headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+            });
+          }
+        } catch (e) {
+          console.warn("[Orion] OpenRouter Vision failed:", e.message?.slice(0, 100));
+        }
+      }
 
     // ── ZERO: VM Gemini Proxy (text-only, cached, low-latency) ──
     // Timeout reduced to 2s — if VM doesn't respond fast, skip to Vertex AI

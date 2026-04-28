@@ -485,20 +485,124 @@ Deno.serve(async (req) => {
           try {
             const aiResp = await callOpenRouter([{ role: "user", content: userP }], systemP, 0.4, 1024);
             return new Response(JSON.stringify({ success: true, insight: aiResp, game_id, provider: "OpenRouter" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-          } catch (err) {
-            console.error("[Study] OpenRouter failed", err);
-            return new Response(JSON.stringify({ success: true, message: "Study session recorded", game_id }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-          }
-        }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("❌ neural-ops error:", msg);
+    return json({ error: msg }, 500);
+  }
+});
 
-        return new Response(JSON.stringify({ success: true, message: "ARC action received" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+// ═══ ADDED: Detailed logging for 400 errors ═══
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      console.warn("[Orchestrator] Missing auth header");
+      return new Response(
+        JSON.stringify({ error: "Autenticação obrigatória." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
+      authHeader.replace("Bearer ", "")
+    );
+    if (authError || !user) {
+      console.warn("[Orchestrator] Auth failed:", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "Não autorizado." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const body = await req.json();
+    console.log("[Orchestrator] Received body:", JSON.stringify(body).slice(0, 200));
+    
+    const { 
+      action,
+      subAction,
+      prompt, 
+      query,
+      systemPrompt, 
+      messages, 
+      preferredProvider, 
+      useCase, 
+      includeNeuralContext = true,
+      maxTokens = 4096,
+      temperature = 0.3,
+      jurisdiction = "brasil",
+      model_type,
+      thinking_enabled = false,
+      tools,
+    } = body;
+
+    // ═══ OPENROUTER PRIMÁRIO PARA TEXTO ═══
+    const openRouterKey = Deno.env.get("OPENROUTER_API_KEY");
+    if (openRouterKey && !preferredProvider?.includes("gemini")) {
+      try {
+        console.log("[Orchestrator] Trying OpenRouter as PRIMARY...");
+        const orModel = (preferredProvider && preferredProvider.includes("openrouter"))
+          ? preferredProvider.replace("openrouter/", "")
+          : "meta-llama/llama-3.3-70b-instruct"; // Free via OpenRouter
+        
+        const orMessages = messages || [{ role: "user", content: prompt || query || "Olá" }];
+        const orResult = await callOpenRouter(orMessages, systemPrompt || AGENT_V12_SYSTEM_PROMPT, temperature, maxTokens);
+        
+        return new Response(
+          JSON.stringify({
+            text: orResult,
+            model: `openrouter/${orModel}`,
+            provider: "openrouter",
+            tokenUsage: null,
+            timestamp: new Date().toISOString(),
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (orError) {
+        console.warn("[Orchestrator] OpenRouter failed, falling back to Gemini:", orError.message);
       }
     }
 
-    if (inputText.trim().length < 2) {
-      return new Response(JSON.stringify({ error: "Prompt vazio ou muito curto. Forneça pelo menos 2 caracteres." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Fallback to Gemini (original logic)
+    // ... rest of original code ...
+    
+    // If we get here, use Gemini
+    const geminiKey = _getNextGeminiKey();
+    const allLLMs = [
+      { id: "gemini_flash", key: geminiKey, model: "gemini-2.5-flash", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" },
+      { id: "gemini_3_flash", key: geminiKey, model: "gemini-3-flash-preview", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent" },
+      { id: "gemini_flash_lite", key: geminiKey, model: "gemini-2.5-flash-lite", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent" },
+      { id: "gemini_pro", key: geminiKey, model: "gemini-2.5-pro", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent" }
+    ];
+
+    // ... rest of Gemini logic ...
+    
+    // If no action, no interaction_type, no question, no imageBase64
+    if (!action && !body.interaction_type && !body.question && !body.imageBase64) {
+      console.warn("[Orchestrator] Missing required fields. Body:", JSON.stringify(body).slice(0, 200));
+      return new Response(
+        JSON.stringify({ error: "No action, interaction_type, question, or imageBase64 provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Continue with original routing...
+    // ... (rest of original code)
+    
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[Orchestrator] Top-level error:", msg);
+    return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+});
     }
 
     // 1. Build Neural Context (RAG) if enabled
@@ -536,7 +640,39 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 2. Select Provider — FREE Gemini models only (7-key rotation)
+    // 2. Select Provider — OpenRouter PRIMÁRIO, Gemini fallback (FREE)
+    const openRouterKey = Deno.env.get("OPENROUTER_API_KEY");
+    const preferOpenRouter = !!openRouterKey && !preferredProvider?.includes("gemini");
+
+    // If OpenRouter available and not explicitly requesting Gemini, use it as primary
+    if (preferOpenRouter) {
+      try {
+        const orModel = (preferredProvider && preferredProvider.includes("openrouter"))
+          ? preferredProvider.replace("openrouter/", "")
+          : "meta-llama/llama-3.3-70b-instruct"; // Smart default (free via OpenRouter)
+        const orResult = await callOpenRouter(
+          messages || [{ role: "user", content: prompt }],
+          finalSystemPrompt,
+          temperature,
+          maxTokens
+        );
+        return new Response(
+          JSON.stringify({
+            text: orResult,
+            model: `openrouter/${orModel}`,
+            provider: "openrouter",
+            tokenUsage: null,
+            timestamp: new Date().toISOString(),
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (orError) {
+        console.warn("[Orchestrator] OpenRouter failed, falling back to Gemini:", orError);
+        // Continue to Gemini fallback
+      }
+    }
+
+    // Fallback: Gemini (free tier) — only if OpenRouter not available or failed
     const geminiKey = _getNextGeminiKey();
     const allLLMs = [
       { id: "gemini_flash", key: geminiKey, model: "gemini-2.5-flash", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" },

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "NODE_OPTIONS=--max_old_space_size=6144 vite build",
+    "build": "node --max-old-space-size=6144 node_modules/vite/dist/node/cli.js build",
     "build:dev": "vite build --mode development",
     "sitemap": "node scripts/generate-sitemap.mjs",
     "lint": "eslint .",

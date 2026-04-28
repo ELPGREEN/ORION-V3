@@ -69,18 +69,35 @@ export default defineConfig(() => ({
   plugins: [
     sitemapPlugin(),
     react(),
-    VitePWA({
-      registerType: "prompt",
-      devOptions: {
-        enabled: false,
-      },
-      workbox: {
-        navigateFallbackDenylist: [/^\/~oauth/],
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        cleanupOutdatedCaches: true,
-      },
-      manifest: false, // Use existing public/manifest.json
-    }),
+     VitePWA({
+       registerType: "autoUpdate",
+       devOptions: {
+         enabled: false,
+       },
+       workbox: {
+         navigateFallbackDenylist: [/^\/~oauth/],
+         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+         cleanupOutdatedCaches: true,
+         // Force cache invalidation for index.html when CSP changes
+         runtimeCaching: [
+           {
+             urlPattern: /^.*\/index\.html$/,
+             handler: "NetworkFirst",
+             options: {
+               cacheName: "html-cache",
+               networkTimeoutSeconds: 5,
+               expiration: {
+                 maxEntries: 10,
+                 maxAgeSeconds: 60, // 1 min - force revalidation often
+               },
+             },
+           },
+         ],
+       },
+       manifest: false, // Use existing public/manifest.json
+       injectRegister: "script",
+       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
+     }),
   ],
   resolve: {
     alias: {

@@ -303,44 +303,58 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
         setActive(true); VS.active = true;
         return;
       }
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
-      const video = videoRef.current;
-      if (!video) {
-        // Element not mounted — stop stream, retry once after 100ms, then abort silently
-        stream.getTracks().forEach(t => t.stop());
-        streamRef.current = null;
-        const retryAttempted = (startCamera as any).__retried;
-        if (!retryAttempted) {
-          (startCamera as any).__retried = true;
-          setTimeout(() => {
+
+      // Timeout de 10s para getUserMedia (evita travamento)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+          audio: false,
+          signal: controller.signal as any,
+        });
+        clearTimeout(timeoutId);
+
+        const video = videoRef.current;
+        if (!video) {
+          stream.getTracks().forEach(t => t.stop());
+          streamRef.current = null;
+          const retryAttempted = (startCamera as any).__retried;
+          if (!retryAttempted) {
+            (startCamera as any).__retried = true;
+            setTimeout(() => {
+              (startCamera as any).__retried = false;
+              if (videoRef.current) startCameraRef.current?.(options);
+            }, 120);
+          } else {
             (startCamera as any).__retried = false;
-            if (videoRef.current) startCameraRef.current?.(options);
-          }, 120);
-        } else {
-          (startCamera as any).__retried = false;
-          toast.error("Vídeo não pronto. Tente novamente.");
+            toast.error("Vídeo não pronto. Tente novamente.");
+          }
+          return;
         }
-        return;
+        if (streamRef.current && streamRef.current !== stream) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+        streamRef.current = stream;
+        video.srcObject = stream;
+
+        // Aumentado para 8s (câmeras lentas em alguns dispositivos)
+        await new Promise<void>((resolve) => {
+          let settled = false;
+          const finish = () => { if (settled) return; settled = true; video.onloadeddata = null; video.onloadedmetadata = null; resolve(); };
+          if (video.readyState >= 2) { finish(); return; }
+          video.onloadeddata = finish;
+          video.onloadedmetadata = finish;
+          setTimeout(finish, 8000);
+          video.play().catch(() => {});
+        });
+        await video.play().catch(() => {});
+        setActive(true); VS.active = true;
+      } catch (mediaErr: any) {
+        clearTimeout(timeoutId);
+        throw mediaErr;
       }
-      if (streamRef.current && streamRef.current !== stream) {
-        stream.getTracks().forEach(t => t.stop());
-        return;
-      }
-      streamRef.current = stream;
-      video.srcObject = stream;
-      await new Promise<void>((resolve) => {
-        let settled = false;
-        const finish = () => { if (settled) return; settled = true; video.onloadeddata = null; video.onloadedmetadata = null; resolve(); };
-        if (video.readyState >= 2) { finish(); return; }
-        video.onloadeddata = finish;
-        video.onloadedmetadata = finish;
-        setTimeout(finish, 1500);
-        video.play().catch(() => {});
-      });
-      await video.play().catch(() => {});
-      setActive(true); VS.active = true;
-      // Models loaded on-demand. Toast removed — TTS is the only feedback,
-      // controlled centrally by the vision command lock to avoid double-speak.
     } catch (err: any) {
       streamRef.current?.getTracks().forEach(t => t.stop());
       streamRef.current = null;
@@ -351,6 +365,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       if (name === "NotAllowedError" || name === "SecurityError") userMsg = "Permissão da câmera negada. Autorize no navegador.";
       else if (name === "NotFoundError" || name === "OverconstrainedError") userMsg = "Nenhuma câmera disponível.";
       else if (name === "NotReadableError") userMsg = "Câmera em uso por outro app.";
+      else if (name === "AbortError" || name === "TimeoutError") userMsg = "Tempo esgotado. Verifique se a câmera está conectada.";
       toast.error(userMsg);
     }
   }, [speak]);
