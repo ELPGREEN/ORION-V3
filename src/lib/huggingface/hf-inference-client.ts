@@ -46,7 +46,7 @@ export interface HFDatasetInfo {
 }
 
 // Models jurídicos PT-BR (legal-bert, NER, classification)
-const LEGAL_MODELS = {
+export const LEGAL_MODELS = {
   // NER jurídico PT-BR (dominguesm/legal-bert-ner-base-cased-ptbr)
   // Extrai: partes, datas, valores, obrigações, prazos, processos
   ner_ptbr: "dominguesm/legal-bert-ner-base-cased-ptbr",
