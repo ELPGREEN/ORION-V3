@@ -34,6 +34,7 @@ export interface OrionResponse {
   toolsUsed?: string[];
   confidence?: number;
   needsResearch?: boolean;
+  panel?: string;
 }
 
 /**
