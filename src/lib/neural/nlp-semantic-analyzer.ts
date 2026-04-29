@@ -41,64 +41,53 @@ export type DiscourseType =
   | "factual"       // "quando...", "onde...", "quem..."
   | "conversational"; // general chat
 
-// ─── Legal Entity Extraction ───
+// ─── Constants & Pre-compiled RegExps ───
 
-const ENTITY_PATTERNS: Array<{ type: LegalEntity["type"]; regex: RegExp; normalize: (m: RegExpExecArray) => string }> = [
+const ARTICLE_REGEX = /\b(?:art\.?|artigo)\s*(\d+(?:\s*,\s*§\s*\d+)?(?:\s*,?\s*(?:inciso|inc\.?)\s*[IVXLCDM]+)?)/gi;
+const LAW_REGEX = /\b(?:lei|decreto|resolução|portaria|medida\s+provisória|mp|código)\s*(?:n[.º°]?\s*)?[\d.\/]+(?:\/\d{2,4})?/gi;
+const COURT_REGEX = /\b(STF|STJ|TST|TSE|TJ[A-Z]{2}|TRF\d?|TRT\d{1,2}|CNJ|CSJT|CNMP)\b/g;
+const TRIBUNAL_DECISION_REGEX = /\b(?:súmula|s[uú]mula\s+vinculante)\s*(?:n[.º°]?\s*)?\d+/gi;
+const DATE_REGEX = /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b/g;
+const MONETARY_REGEX = /R\$\s*[\d.,]+(?:\s*(?:mil|milhões?|bilhões?))?/gi;
+const PARTY_REGEX = /\b(?:réu|ré|autor|autora|reclamante|reclamado|impetrante|impetrado|apelante|apelado|requerente|requerido)\b/gi;
+
+const ENTITY_PATTERNS: Array<{ type: LegalEntity["type"]; regex: RegExp; normalize: (m: RegExpExecArray | RegExpMatchArray) => string }> = [
   {
     type: "article",
-    regex: /\b(?:art\.?|artigo)\s*(\d+(?:\s*,\s*§\s*\d+)?(?:\s*,?\s*(?:inciso|inc\.?)\s*[IVXLCDM]+)?)/gi,
-    normalize: (m) => `Art. ${m[1].replace(/\s+/g, " ")}`,
+    regex: ARTICLE_REGEX,
+    normalize: (m) => `Art. ${m[1]!.replace(/\s+/g, " ")}`,
   },
   {
     type: "law",
-    regex: /\b(?:lei|decreto|resolução|portaria|medida\s+provisória|mp|código)\s*(?:n[.º°]?\s*)?[\d.\/]+(?:\/\d{2,4})?/gi,
+    regex: LAW_REGEX,
     normalize: (m) => m[0].replace(/\s+/g, " ").trim(),
   },
   {
     type: "court",
-    regex: /\b(STF|STJ|TST|TSE|TJ[A-Z]{2}|TRF\d?|TRT\d{1,2}|CNJ|CSJT|CNMP)\b/g,
+    regex: COURT_REGEX,
     normalize: (m) => m[0].toUpperCase(),
   },
   {
     type: "tribunal_decision",
-    regex: /\b(?:súmula|s[uú]mula\s+vinculante)\s*(?:n[.º°]?\s*)?\d+/gi,
+    regex: TRIBUNAL_DECISION_REGEX,
     normalize: (m) => m[0].replace(/\s+/g, " ").trim(),
   },
   {
     type: "date",
-    regex: /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b/g,
-    normalize: (m) => m[1],
+    regex: DATE_REGEX,
+    normalize: (m) => m[1]!,
   },
   {
     type: "monetary",
-    regex: /R\$\s*[\d.,]+(?:\s*(?:mil|milhões?|bilhões?))?/gi,
+    regex: MONETARY_REGEX,
     normalize: (m) => m[0].replace(/\s+/g, " ").trim(),
   },
   {
     type: "party",
-    regex: /\b(?:réu|ré|autor|autora|reclamante|reclamado|impetrante|impetrado|apelante|apelado|requerente|requerido)\b/gi,
+    regex: PARTY_REGEX,
     normalize: (m) => m[0].toLowerCase(),
   },
 ];
-
-export function extractLegalEntities(text: string): LegalEntity[] {
-  const entities: LegalEntity[] = [];
-  for (const pattern of ENTITY_PATTERNS) {
-    const regex = new RegExp(pattern.regex.source, pattern.regex.flags);
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(text)) !== null) {
-      entities.push({
-        type: pattern.type,
-        value: match[0],
-        normalized: pattern.normalize(match),
-        position: match.index,
-      });
-    }
-  }
-  return entities.sort((a, b) => a.position - b.position);
-}
-
-// ─── Sentiment Analysis ───
 
 const SENTIMENT_MARKERS: Record<SentimentResult["primary"], RegExp[]> = {
   frustration: [
@@ -126,6 +115,53 @@ const SENTIMENT_MARKERS: Record<SentimentResult["primary"], RegExp[]> = {
   neutral: [],
 };
 
+const DOMAIN_PATTERNS: Record<string, RegExp> = {
+  civil: /\b(contrato|obriga[çc]|responsabilidade\s+civil|dano|indeni|penhora|execu[çc]|cobran[çc]|consumidor|CDC|locação|despejo)\b/i,
+  penal: /\b(crime|delito|pena|prisão|condenação|absolvição|inquérito|denúncia|furto|roubo|homicídio|lesão\s+corporal|tráfico|fraude|estelionato)\b/i,
+  trabalhista: /\b(CLT|trabalhist|empregad|salário|hora\s+extra|rescisão|FGTS|férias|13[°º]|aviso\s+prévio|justa\s+causa|insalubridade|periculosidade)\b/i,
+  tributario: /\b(tribut|imposto|ICMS|ISS|IRPF|IRPJ|contribui[çc]|fiscal|alíquota|isenção|imunidade|ITBI|IPTU|base\s+de\s+cálculo)\b/i,
+  constitucional: /\b(constitui[çc]|fundamental|CF\/88|habeas|mandado\s+de\s+segurança|ADPF|ADI|ADC|controle\s+de\s+constitucionalidade|cláusula\s+pétrea)\b/i,
+  administrativo: /\b(licitação|concurso\s+público|servidor|improbidade|pregão|edital|administra[çc]ão\s+pública|ato\s+administrativo|PAD)\b/i,
+  familia: /\b(divórcio|guarda|pensão\s+aliment|alimentos|inventário|partilha|casamento|união\s+estável|adoção|tutela|curatela)\b/i,
+  digital: /\b(LGPD|dados\s+pessoais|privacidade|Marco\s+Civil|internet|digital|cibernético|hacker|proteção\s+de\s+dados)\b/i,
+  ambiental: /\b(ambiental|meio\s+ambiente|poluição|desmatamento|licenciamento|IBAMA|fauna|flora|sustentabilidade)\b/i,
+  previdenciario: /\b(previdência|INSS|aposentadoria|benefício|auxílio|pensão\s+por\s+morte|BPC|LOAS|incapacidade)\b/i,
+};
+
+const DISCOURSE_DEFINITION_REGEX = /^(?:o\s+que\s+[eé]|defin[ai]|conceit[ou]|signific)/i;
+const DISCOURSE_COMPARISON_REGEX = /\b(?:diferen[çc]a|compar[ae]|versus|vs\.?|melhor\s+(?:entre|do\s+que))\b/i;
+const DISCOURSE_PROCEDURE_REGEX = /^(?:como\s+(?:fazer|funciona|proceder|solicitar)|passo\s+a\s+passo|procediment|qual\s+o\s+(?:procedimento|processo\s+para))/i;
+const DISCOURSE_ANALYSIS_REGEX = /\b(?:analis[ae]|avali[ae]|examin[ae]|verifiqu[ae]|coment[ae]\s+sobre)\b/i;
+const DISCOURSE_LISTING_REGEX = /\b(?:list[ae]|quais\s+são|enumere?|cit[ae]\s+(?:os|as)|diga\s+(?:os|as))\b/i;
+const DISCOURSE_OPINION_REGEX = /\b(?:voc[eê]\s+acha|na\s+sua\s+opinião|o\s+que\s+voc[eê]\s+pensa|recomend[ae])\b/i;
+const DISCOURSE_FACTUAL_REGEX = /^(?:quando|onde|quem|qual|quanto)\b/i;
+
+const COREFERENCE_SUBJECT_REGEX = /\b(?:sobre\s+)?([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)*)/;
+const COREFERENCE_TOPIC_REGEX = /\b(?:artigo|lei|decreto|contrato|processo|caso)\s+[\d.\/]+/i;
+const COREFERENCE_PRONOUN_REGEX = /\b(isso|isto|aquilo|o\s+mesmo|a\s+mesma|ele|ela|esse|essa|desse|dessa|nesse|nessa)\b/gi;
+
+const COMPLEXITY_CLAUSE_REGEX = /\b(?:e|ou|mas|porém|contudo|entretanto|todavia)\b/gi;
+
+// ─── Legal Entity Extraction ───
+
+export function extractLegalEntities(text: string): LegalEntity[] {
+  const entities: LegalEntity[] = [];
+  for (const pattern of ENTITY_PATTERNS) {
+    // Optimization: Use matchAll instead of manual RegExp loop to reduce overhead
+    for (const match of text.matchAll(pattern.regex)) {
+      entities.push({
+        type: pattern.type,
+        value: match[0],
+        normalized: pattern.normalize(match),
+        position: match.index!,
+      });
+    }
+  }
+  return entities.sort((a, b) => a.position - b.position);
+}
+
+// ─── Sentiment Analysis ───
+
 function analyzeSentiment(text: string): SentimentResult {
   let bestMatch: SentimentResult["primary"] = "neutral";
   let bestScore = 0;
@@ -135,10 +171,11 @@ function analyzeSentiment(text: string): SentimentResult {
     if (sentiment === "neutral") continue;
     let matchCount = 0;
     for (const pattern of patterns) {
-      if (pattern.test(text)) {
+      // Optimization: Combined test and match to avoid double regex execution
+      const m = text.match(pattern);
+      if (m) {
         matchCount++;
-        const m = text.match(pattern);
-        if (m) indicators.push(m[0].slice(0, 20));
+        indicators.push(m[0].slice(0, 20));
       }
     }
     if (matchCount > bestScore) {
@@ -155,19 +192,6 @@ function analyzeSentiment(text: string): SentimentResult {
 }
 
 // ─── Legal Domain Classification ───
-
-const DOMAIN_PATTERNS: Record<string, RegExp> = {
-  civil: /\b(contrato|obriga[çc]|responsabilidade\s+civil|dano|indeni|penhora|execu[çc]|cobran[çc]|consumidor|CDC|locação|despejo)\b/i,
-  penal: /\b(crime|delito|pena|prisão|condenação|absolvição|inquérito|denúncia|furto|roubo|homicídio|lesão\s+corporal|tráfico|fraude|estelionato)\b/i,
-  trabalhista: /\b(CLT|trabalhist|empregad|salário|hora\s+extra|rescisão|FGTS|férias|13[°º]|aviso\s+prévio|justa\s+causa|insalubridade|periculosidade)\b/i,
-  tributario: /\b(tribut|imposto|ICMS|ISS|IRPF|IRPJ|contribui[çc]|fiscal|alíquota|isenção|imunidade|ITBI|IPTU|base\s+de\s+cálculo)\b/i,
-  constitucional: /\b(constitui[çc]|fundamental|CF\/88|habeas|mandado\s+de\s+segurança|ADPF|ADI|ADC|controle\s+de\s+constitucionalidade|cláusula\s+pétrea)\b/i,
-  administrativo: /\b(licitação|concurso\s+público|servidor|improbidade|pregão|edital|administra[çc]ão\s+pública|ato\s+administrativo|PAD)\b/i,
-  familia: /\b(divórcio|guarda|pensão\s+aliment|alimentos|inventário|partilha|casamento|união\s+estável|adoção|tutela|curatela)\b/i,
-  digital: /\b(LGPD|dados\s+pessoais|privacidade|Marco\s+Civil|internet|digital|cibernético|hacker|proteção\s+de\s+dados)\b/i,
-  ambiental: /\b(ambiental|meio\s+ambiente|poluição|desmatamento|licenciamento|IBAMA|fauna|flora|sustentabilidade)\b/i,
-  previdenciario: /\b(previdência|INSS|aposentadoria|benefício|auxílio|pensão\s+por\s+morte|BPC|LOAS|incapacidade)\b/i,
-};
 
 export function classifyLegalDomain(text: string): string {
   let bestDomain = "geral";
@@ -189,13 +213,13 @@ export function classifyLegalDomain(text: string): string {
 function detectDiscourseType(text: string): DiscourseType {
   const t = text.toLowerCase().trim();
 
-  if (/^(?:o\s+que\s+[eé]|defin[ai]|conceit[ou]|signific)/i.test(t)) return "definition";
-  if (/\b(?:diferen[çc]a|compar[ae]|versus|vs\.?|melhor\s+(?:entre|do\s+que))\b/i.test(t)) return "comparison";
-  if (/^(?:como\s+(?:fazer|funciona|proceder|solicitar)|passo\s+a\s+passo|procediment|qual\s+o\s+(?:procedimento|processo\s+para))/i.test(t)) return "procedure";
-  if (/\b(?:analis[ae]|avali[ae]|examin[ae]|verifiqu[ae]|coment[ae]\s+sobre)\b/i.test(t)) return "analysis";
-  if (/\b(?:list[ae]|quais\s+são|enumere?|cit[ae]\s+(?:os|as)|diga\s+(?:os|as))\b/i.test(t)) return "listing";
-  if (/\b(?:voc[eê]\s+acha|na\s+sua\s+opinião|o\s+que\s+voc[eê]\s+pensa|recomend[ae])\b/i.test(t)) return "opinion";
-  if (/^(?:quando|onde|quem|qual|quanto)\b/i.test(t)) return "factual";
+  if (DISCOURSE_DEFINITION_REGEX.test(t)) return "definition";
+  if (DISCOURSE_COMPARISON_REGEX.test(t)) return "comparison";
+  if (DISCOURSE_PROCEDURE_REGEX.test(t)) return "procedure";
+  if (DISCOURSE_ANALYSIS_REGEX.test(t)) return "analysis";
+  if (DISCOURSE_LISTING_REGEX.test(t)) return "listing";
+  if (DISCOURSE_OPINION_REGEX.test(t)) return "opinion";
+  if (DISCOURSE_FACTUAL_REGEX.test(t)) return "factual";
 
   return "conversational";
 }
@@ -206,14 +230,14 @@ export function resolveCoreferences(text: string, recentContext: string = ""): s
   if (!recentContext) return text;
 
   // Extract main subject from recent context
-  const contextSubject = recentContext.match(/\b(?:sobre\s+)?([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)*)/)?.[1] || "";
-  const contextTopic = recentContext.match(/\b(?:artigo|lei|decreto|contrato|processo|caso)\s+[\d.\/]+/i)?.[0] || "";
+  const contextSubject = recentContext.match(COREFERENCE_SUBJECT_REGEX)?.[1] || "";
+  const contextTopic = recentContext.match(COREFERENCE_TOPIC_REGEX)?.[0] || "";
 
   let resolved = text;
 
   // Replace anaphoric pronouns
   if (contextSubject) {
-    resolved = resolved.replace(/\b(isso|isto|aquilo|o\s+mesmo|a\s+mesma|ele|ela|esse|essa|desse|dessa|nesse|nessa)\b/gi, (match) => {
+    resolved = resolved.replace(COREFERENCE_PRONOUN_REGEX, (match) => {
       return contextTopic || contextSubject || match;
     });
   }
@@ -226,7 +250,7 @@ export function resolveCoreferences(text: string, recentContext: string = ""): s
 function assessComplexity(text: string, entities: LegalEntity[]): "simple" | "medium" | "complex" {
   const wordCount = text.split(/\s+/).length;
   const entityCount = entities.length;
-  const hasMultipleClauses = (text.match(/\b(?:e|ou|mas|porém|contudo|entretanto|todavia)\b/gi) || []).length;
+  const hasMultipleClauses = (text.match(COMPLEXITY_CLAUSE_REGEX) || []).length;
 
   if (wordCount > 40 || entityCount > 3 || hasMultipleClauses > 3) return "complex";
   if (wordCount > 15 || entityCount > 1 || hasMultipleClauses > 1) return "medium";
