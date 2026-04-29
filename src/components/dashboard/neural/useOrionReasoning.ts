@@ -525,8 +525,20 @@ export function useOrionReasoning(
       // Ensures Neural Vision shares the same brain as chat/voice. Failures are non-fatal.
       try {
         const { getPentagonOrchestrator } = await import("@/core/pentagon");
-        const pResult = await getPentagonOrchestrator().runCycle(question, { userId: cachedAuthUser?.id || "anonymous", source, intent: effectiveIntentType, isOwner });
-        addLog("🍕 Pentagon cycle complete (success=" + pResult.success + ")");
+        const orchestrator = getPentagonOrchestrator();
+        let imageBase64: string | undefined;
+        if (needsImage && canvasRef.current) {
+           imageBase64 = canvasRef.current.toDataURL("image/jpeg", 0.6).split(",")[1];
+        }
+        const pResult = await orchestrator.runCycleStructured(question, {
+          userId: cachedAuthUser?.id || "anonymous",
+          source,
+          intent: effectiveIntentType,
+          isOwner,
+          sharedState: { imageBase64 }
+        });
+        const { stepsTaken, totalCost, durationMs } = pResult.metadata;
+        addLog(`🍕 Pentagon complete: ${stepsTaken} steps, ${durationMs}ms, $${totalCost.toFixed(3)}`);
       } catch (e) {
         addLog(`🍕 Pentagon unavailable: ${(e as Error)?.message}`);
       }

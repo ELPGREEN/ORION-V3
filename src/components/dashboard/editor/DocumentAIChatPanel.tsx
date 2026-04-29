@@ -1,3 +1,4 @@
+import { getPentagonOrchestrator } from "@/core/pentagon";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Minimize2, Maximize2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -622,7 +623,7 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
           forceAgentMap[selectedAgent]
         );
 
-        let responseText = "";
+
         let edgeAction: ChatAction = { type: "info" };
 
         if (agentResult.success) {
@@ -689,27 +690,33 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
         setLastAssistantText(responseText);
         if (convId) saveMessage(convId, { role: "assistant", content: responseText, neuralEnhanced: false }).catch(() => {});
       } else {
-        // Original flow for editor agents (revisor, pesquisador, estrategista, formatador)
-        setActiveSources(["aprimorar", "neural_search"]);
+        // 🍕 Unified Pentagon Flow (Phase 4)
+        setActiveSources(["aprimorar", "neural_search", "cortex"]);
 
-        // Only fetch neural context for queries that need it (fundamentação, pesquisa, análise)
-        const needsNeural = /fundament|jurisprud|lei\s|súmula|artigo|pesquis|analis|doutrina|precedent|acórdão|recurso|liminar|mandado|habeas/i.test(userMessage);
-        const neuralCtx = needsNeural ? await fetchNeuralContext(userMessage) : { context: "", sources: [], used: false };
-        const systemPrompt = buildSystemPrompt();
         const chatHistory = messages.slice(-6).map(m => ({ role: m.role, content: m.content.substring(0, 500) }));
+        const orchestrator = getPentagonOrchestrator();
 
-        const { data, error } = await supabase.functions.invoke("aprimorar-documento", {
-          body: {
-            currentText: documentContent, documentType, query: userMessage, mode: "chat",
-            chatHistory, contextSnippet: documentContent.replace(/<[^>]*>/g, "").substring(0, 2000),
-            systemOverride: systemPrompt + neuralCtx.context, isJudicial: true,
-          },
+        const pentagonResult = await orchestrator.runCycleStructured(userMessage, {
+          domain: documentType,
+          sharedState: {
+            documentContent,
+            documentType,
+            chatHistory,
+            userId: user?.id,
+            agent: selectedAgent,
+            wmContext: documentContent.replace(/<[^>]*>/g, "").substring(0, 2000)
+          }
         });
-        if (error) throw error;
 
-      const enrichedText = data?.enrichedText || data?.content;
-      const chatResponse = data?.chatResponse;
-      let responseText = "";
+        if (!pentagonResult.success && pentagonResult.error) {
+          throw new Error(pentagonResult.error);
+        }
+
+        let responseText = pentagonResult.output;
+        const metadata = pentagonResult.metadata;
+        const enrichedText = responseText;
+        const chatResponse = responseText;
+
       let editActionText: string | null = null;
 
       if (enrichedText && enrichedText !== documentContent) {
@@ -765,7 +772,8 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
       const suggestions = generateSuggestions(intent?.action, docAnalysis, documentType);
       const assistantMsg: Message = {
         id: crypto.randomUUID(), role: "assistant", content: text, timestamp: new Date(),
-        action, neuralUsed: neuralCtx.used, previewText, intent: intent?.action, sources: neuralCtx.sources, suggestions,
+        action, neuralUsed: !!pentagonResult.confidence, previewText, intent: intent?.action, sources: pentagonResult.sourcesUsed, suggestions,
+        metadata: { cost: metadata.totalCost, steps: metadata.stepsTaken, duration: metadata.durationMs, model: metadata.model },
       };
 
       setMessages(prev => [...prev, assistantMsg]);
@@ -777,7 +785,7 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
       // Fire-and-forget: logging is non-critical
       logNeural({
         interaction_type: "chat", input_text: userMessage, output_text: text.substring(0, 1000),
-        metadata: { intent: intent?.action, isEdit: true, documentType, neuralUsed: neuralCtx.used, docWordCount: docAnalysis.wordCount, category: intent?.category || "general", sourcesCount: neuralCtx.sources.length },
+        metadata: { intent: intent?.action, isEdit: true, documentType, neuralUsed: !!pentagonResult.confidence, docWordCount: docAnalysis.wordCount, category: metadata.model || "general", sourcesCount: pentagonResult.sourcesUsed?.length || 0, totalCost: metadata.totalCost },
       }).catch(() => {});
       } // close else block for non-edge agents
     } catch (err) {
