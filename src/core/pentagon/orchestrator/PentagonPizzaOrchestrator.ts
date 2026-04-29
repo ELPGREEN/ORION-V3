@@ -50,8 +50,8 @@ export class PentagonPizzaOrchestrator {
     const q = input.toLowerCase().trim();
     if (q.length < 2) return true;
 
-    // Explicit control commands + simple fact patterns (no anchor to allow matching questions)
-    if (/^(pare|parar|stop|cancelar|sil[êe]ncio|shh|quieto|voltar|ajuda|help|ola|ol[aá]|oi|bom dia|boa tarde|boa noite|tchau|adeus)$|^(quem [eé]|o que [eé]|onde fica|qual [oa])\b/i.test(q)) {
+    // Explicit control commands + simple fact patterns (using \b to allow matching questions starting with these)
+    if (/^(pare|parar|stop|cancelar|sil[êe]ncio|shh|quieto|voltar|ajuda|help|ola|ol[aá]|oi|bom dia|boa tarde|boa noite|tchau|adeus|quem [eé]|o que [eé]|onde fica|qual [oa])\b/i.test(q)) {
       return true;
     }
 
