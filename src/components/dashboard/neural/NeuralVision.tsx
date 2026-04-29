@@ -34,6 +34,7 @@ import { useSuperNetWS } from "./useSuperNetWS";
 import { useOrionReasoning } from "./useOrionReasoning";
 import { useWakeWord } from "./useWakeWord";
 import { initVoiceIdentityListener } from "@/lib/neural/orion-ai-client";
+import { setVSGetter } from "@/lib/neural/vision-state";
 import { CameraPiP, BoundingBoxOverlay } from "./VisionOverlayComponents";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
 import { FaceScannerOverlay } from "./FaceScannerOverlay";
@@ -222,6 +223,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     interimTranscriptRef.current = setInterimTranscript;
     (window as any).__orion_setInterimTranscript = setInterimTranscript;
     initVoiceIdentityListener();
+    setVSGetter(() => VS);
+    return () => { setVSGetter(null); };
   }, []);
 
   // ═══ SINGLE consolidated interim/clear transcript listeners ═══
