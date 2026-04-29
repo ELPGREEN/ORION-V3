@@ -64,10 +64,10 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
         model: result.model,
       };
 
-      // 🎓 Integration of Feynman Loop
+      // 🎓 Async non-blocking Feynman Loop — returns immediately, refines in background
       if (baseResult.confidence > 0.6 && perception.complexity === "complex" && !context?.skipFeynman) {
-        console.log("[Reasoning] Entering Feynman Loop for refinement...");
-        baseResult = await FeynmanReasoner.refine(baseResult, perception?.rawInput ?? "");
+        console.log("[Reasoning] 🔥 Firing async Feynman Loop (non-blocking)...");
+        this.fireAsyncFeynman(baseResult, perception?.rawInput ?? "", context);
       }
 
       return baseResult;
@@ -85,6 +85,28 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
       .map((s) => s.trim())
       .filter((s) => s.length > 80);
     return parts.slice(0, 6);
+  }
+
+  /**
+   * Fire-and-forget Feynman refinement — runs in background, updates memory/cache
+   */
+  private fireAsyncFeynman(baseResult: ExtendedReasoningResult, query: string, context: any): void {
+    FeynmanReasoner.refine(baseResult, query).then(refined => {
+      console.log("[Reasoning] ✅ Async Feynman refinement complete, confidence:", refined.confidence);
+      // Store refined explanation in session memory for next turn
+      if (refined.responseHint?.includes("[Feynman")) {
+        try {
+          const sessionKey = `feynman:${query.slice(0, 50)}`;
+          sessionStorage.setItem(sessionKey, JSON.stringify({
+            simplified: refined.responseHint,
+            gaps: refined.subTasks.filter(s => s.startsWith("Resolver lacuna")),
+            ts: Date.now(),
+          }));
+        } catch { /* sessionStorage unavailable */ }
+      }
+    }).catch(err => {
+      console.warn("[Reasoning] ⚠️ Async Feynman failed (non-fatal):", err);
+    });
   }
 
   private fallback(perception: PerceptionResult, memory: MemoryResult): ExtendedReasoningResult {

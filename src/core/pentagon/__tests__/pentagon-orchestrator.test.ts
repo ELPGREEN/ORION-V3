@@ -1,9 +1,20 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PentagonPizzaOrchestrator } from "../orchestrator/PentagonPizzaOrchestrator";
 
+vi.mock("@/lib/neural/quantum-llm-router", () => ({
+  quantumRouteQuery: vi.fn(() => ({
+    complexity: "complex",
+    allScores: [],
+    selectedProvider: { id: "test" },
+    routingLatencyMs: 0,
+  })),
+}));
+
 describe("PentagonPizzaOrchestrator", () => {
+  beforeEach(() => vi.clearAllMocks());
+
   it("should run a full cognitive cycle successfully", async () => {
-    const mockPerception = { process: vi.fn().mockResolvedValue({ intent: "legal", rawInput: "test" }) };
+    const mockPerception = { process: vi.fn().mockResolvedValue({ intent: "legal", rawInput: "analyze complex legal scenario" }) };
     const mockMemory = { process: vi.fn().mockResolvedValue({ mergedContext: "context" }), learn: vi.fn() };
     const mockReasoning = { process: vi.fn().mockResolvedValue({ plan: ["test"], confidence: 0.9, rationale: "ok" }) };
     const mockAction = { process: vi.fn().mockResolvedValue({ success: true, output: "done" }) };
@@ -21,7 +32,7 @@ describe("PentagonPizzaOrchestrator", () => {
       mockMeta
     );
 
-    const result = await orchestrator.runCycle("test input");
+    const result = await orchestrator.runCycle("Analyze this complex legal scenario with multiple parties and jurisdictional issues");
 
     expect(result.success).toBe(true);
     expect(result.output).toBe("done");
@@ -39,7 +50,7 @@ describe("PentagonPizzaOrchestrator", () => {
     };
 
     const orchestrator = new PentagonPizzaOrchestrator({}, {}, {}, {}, mockMeta);
-    const result = await orchestrator.runCycle("bad input");
+    const result = await orchestrator.runCycle("Analyze this complex legal scenario with multiple jurisdictional conflicts and statutory interpretation issues");
 
     expect(result.success).toBe(false);
     expect(result.data.error).toContain("Pre-Input Guard Breach");

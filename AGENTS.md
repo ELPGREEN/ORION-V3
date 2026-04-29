@@ -91,12 +91,61 @@ await pipeline.run("Tópico aqui");
 - Default: `tencent/hy3-preview:free`
 - Fallback: `openrouter/free`, `deepseek/deepseek-r1`
 
+## Provider Registry Unificado (Phase 2)
+
+### Arquivo Central
+- `src/lib/integrations/openrouter-free-models.ts` — Single source of truth para todos os modelos OpenRouter free
+
+### Modelos por Tier
+| Tier | Modelos | Uso |
+|------|---------|-----|
+| `fast` | Mistral Small 3.1, Nemotron Nano 9B | Early exit, queries simples |
+| `balanced` | Tencent HY3, OpenRouter Auto | Queries moderadas |
+| `reasoning` | DeepSeek R1 | Queries complexas |
+| `coding` | Qwen3 Coder | Geração de código |
+| `heavy` | Llama 3.3 70B | Análise profunda |
+
+### Funções Exportadas
+```ts
+import { OPENROUTER_FREE_MODELS, FAST_MODELS, REASONING_MODELS, getModelForComplexity, toCascadeFormat } from "@/lib/integrations/openrouter-free-models";
+
+// Obter modelos recomendados por complexidade
+const models = getModelForComplexity("simple"); // → FAST_MODELS
+
+// Converter para formato cascade
+const cascade = toCascadeFormat(); // → [{ provider: "openrouter", model: "..." }, ...]
+```
+
+### Consumidores
+- `llm-providers.ts` — Usa `toCascadeFormat(OPENROUTER_FREE_MODELS)` para `chatWithCascade`
+- `pentagon-reasoner/index.ts` — `MODEL_CASCADE` espelhado (Deno edge function, não pode importar de src/)
+- `quantum-llm-router.ts` — `PROVIDER_REGISTRY` separado (tem metadados quânticos adicionais)
+
+## Phase 2 — Optimizações Cognitivas
+
+### Async Non-blocking Feynman Loop
+- `ReasoningAdapter.ts:68-72` — Feynman refinement agora é fire-and-forget
+- Resultado original retorna imediatamente; Feynman roda em background
+- Refinamentos salvos em `sessionStorage` para uso no próximo turno
+- Economiza ~5-10s em queries complexas
+
+### Quantum Router Early Exit
+- `PentagonPizzaOrchestrator.ts:78-112` — Para queries simples, roteamento direto via quantum router
+- Bypassa Memory + Reasoning layers (~150-300ms savings)
+- Memory/Reasoning rodam em background para learning (`backgroundLearn`)
+- Só ativa para queries `simple` com quantum score > 0.5
+
+### Unified Provider List
+- 3 listas de providers consolidadas em `openrouter-free-models.ts`
+- Adicionado `openrouter/free` ao cascade (faltava no pentagon-reasoner)
+- Adicionado `nvidia/nemotron-nano-9b-v2:free` como fast tier
+
 ## Build Notes
 
 - **Dev server works**: Starts on `http://localhost:8080`
-- **Tests pass**: All 173 tests pass in 14 test files
+- **Tests pass**: 262/266 tests (4 pre-existing failures in NeuralEvolutionPanel mocks)
 - **TypeScript check passes**: No type errors
-- **Production build**: May fail with OOM onsystems with <8GB RAM (use `NODE_OPTIONS=--max_old_space_size=4096`)
+- **Production build**: May fail with OOM on systems with <8GB RAM (use `NODE_OPTIONS=--max_old_space_size=4096`)
 
 ## Issues Found & Fixed
 

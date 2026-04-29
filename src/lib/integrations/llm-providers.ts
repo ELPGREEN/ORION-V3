@@ -3,10 +3,12 @@
  * Supports multiple LLM providers like OpenCode
  * Uses AI SDK and Models.dev for 75+ providers
  *
- * Phase 1 Optimization: Circuit Breaker + Provider Cascade
+ * Phase 1: Circuit Breaker + Provider Cascade
+ * Phase 2: Unified provider registry via openrouter-free-models
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { OPENROUTER_FREE_MODELS, toCascadeFormat } from "./openrouter-free-models";
 
 export type LLMProvider =
   | "openai"
@@ -197,15 +199,10 @@ function getCircuitStats(): Record<string, { failures: number; isTripped: boolea
 
 // ═══════════════════════════════════════════════
 // Provider Cascade — Automatic Fallback Chain
+// Phase 2: Uses shared openrouter-free-models registry
 // ═══════════════════════════════════════════════
 
-const OPENROUTER_CASCADE = [
-  { provider: "openrouter" as LLMProvider, model: "mistralai/mistral-small-3.1-24b-instruct" },
-  { provider: "openrouter" as LLMProvider, model: "tencent/hy3-preview:free" },
-  { provider: "openrouter" as LLMProvider, model: "openrouter/free" },
-  { provider: "openrouter" as LLMProvider, model: "deepseek/deepseek-r1" },
-  { provider: "openrouter" as LLMProvider, model: "qwen/qwen3-coder-480b" },
-];
+const OPENROUTER_CASCADE = toCascadeFormat(OPENROUTER_FREE_MODELS);
 
 export async function chatWithCascade(
   messages: Array<{ role: string; content: string }>,
@@ -494,3 +491,4 @@ export function getProviderName(provider: LLMProvider): string {
 
 // Export circuit breaker utilities
 export { getCircuitStats, OPENROUTER_CASCADE };
+export { OPENROUTER_FREE_MODELS, FAST_MODELS, REASONING_MODELS, toCascadeFormat, getFreeModel, getModelForComplexity } from "./openrouter-free-models";

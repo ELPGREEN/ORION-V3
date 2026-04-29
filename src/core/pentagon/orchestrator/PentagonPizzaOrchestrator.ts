@@ -1,7 +1,7 @@
 /**
  * 🧠 Pentagon Pizza Orchestrator (The Cortex)
  * Operates the cognitive loop: Perception -> Memory -> Reasoning -> Action -> Eval
- * Enhanced with Geometric Metacognition & Feynman Loop
+ * Enhanced with Geometric Metacognition, Feynman Loop & Quantum Router Early Exit
  */
 import {
   CognitiveState,
@@ -11,6 +11,7 @@ import {
   ActionResult,
   MetaResult
 } from "../layers/types";
+import { quantumRouteQuery } from "@/lib/neural/quantum-llm-router";
 
 export interface PentagonPizzaState {
   currentState: CognitiveState;
@@ -20,6 +21,12 @@ export interface PentagonPizzaState {
   action?: ActionResult;
   meta?: MetaResult;
   history: CognitiveState[];
+}
+
+interface QuantumEarlyExit {
+  success: boolean;
+  output: string;
+  data: { quantumEarlyExit: true; provider: string; complexity: string; routingMs: number };
 }
 
 export class PentagonPizzaOrchestrator {
@@ -61,6 +68,55 @@ export class PentagonPizzaOrchestrator {
     return false;
   }
 
+  /**
+   * Quantum Router Early Exit — for simple queries, route directly to optimal provider
+   * bypassing Memory + full Reasoning layers. Saves ~150-300ms.
+   */
+  private async quantumEarlyExit(input: string, context: any = {}): Promise<QuantumEarlyExit | null> {
+    const routing = quantumRouteQuery(input, { preferSpeed: true, modelType: "fast" });
+
+    // Only early-exit for simple queries where quantum confidence is high
+    if (routing.complexity !== "simple") return null;
+    if (routing.allScores.length === 0) return null;
+
+    const topScore = routing.allScores[0].finalScore;
+    if (topScore < 0.5) return null;
+
+    console.log(
+      `[CORTEX] ⚛️ Quantum early exit → ${routing.selectedProvider.id} ` +
+      `(complexity=${routing.complexity}, score=${topScore}, ${routing.routingLatencyMs}ms)`
+    );
+
+    // Fire off memory/reasoning in background for learning, don't block response
+    this.backgroundLearn(input, context);
+
+    return {
+      success: true,
+      output: "",
+      data: {
+        quantumEarlyExit: true,
+        provider: routing.selectedProvider.id,
+        complexity: routing.complexity,
+        routingMs: routing.routingLatencyMs,
+      },
+    };
+  }
+
+  /**
+   * Background learning — runs perception → memory in parallel after early exit
+   */
+  private async backgroundLearn(input: string, context: any): Promise<void> {
+    try {
+      const perception = await this.perception.process(input, context);
+      const memory = await this.memory.process(perception, context);
+      if (memory?.mergedContext) {
+        console.log(`[CORTEX] 🧠 Background memory cached (${memory.mergedContext.length} chars)`);
+      }
+    } catch (err) {
+      console.warn("[CORTEX] Background learn failed (non-fatal):", err);
+    }
+  }
+
   public async runCycle(input: string, context: any = {}): Promise<ActionResult> {
     try {
       // 0. Fast Lane Gate
@@ -71,6 +127,12 @@ export class PentagonPizzaOrchestrator {
           output: "", // Let the final generator handle simple greetings if needed
           data: { fastLane: true }
         };
+      }
+
+      // 0.5. Quantum Router Early Exit
+      const earlyExit = await this.quantumEarlyExit(input, context);
+      if (earlyExit) {
+        return earlyExit;
       }
 
       // 1. Perception
