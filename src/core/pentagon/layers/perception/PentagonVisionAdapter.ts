@@ -1,14 +1,3 @@
-/**
- * ─── Pentagon Vision Adapter ───
- * Integrates openrouter-vision.ts into the Pentagon perception loop.
- *
- * Features:
- * - Accepts image/video frames as perception input
- * - Routes through openrouter-vision.ts smart analyze pipeline
- * - Merges vision description with semantic analysis
- * - Tracks vision cost in PentagonContext
- * - Supports batch frame analysis for video streams
- */
 import { IPentagonLayer, PerceptionResult, PentagonContext, recordToolCall, completeToolCall } from "../types";
 import { analyzeSemantics } from "@/lib/neural/nlp-semantic-analyzer";
 import { analyzeFrameSmart, analyzeFramesBatch, SmartVisionResult, resetVisionCache } from "@/lib/vision/openrouter-vision";
@@ -38,8 +27,7 @@ export interface VisionPerceptionResult extends PerceptionResult {
 export class PentagonVisionAdapter implements IPentagonLayer<VisionPerceptionInput, VisionPerceptionResult> {
   public async process(input: VisionPerceptionInput, context: PentagonContext): Promise<VisionPerceptionResult> {
     const t0 = performance.now();
-    const visionToolCall = recordToolCall(context, "search_web", {
-      tool: "vision_analysis",
+    const visionToolCall = recordToolCall(context, "vision_analysis", {
       frames: input.frames.length,
       question: input.question,
     });
@@ -110,14 +98,11 @@ export class PentagonVisionAdapter implements IPentagonLayer<VisionPerceptionInp
 
     return {
       intent: analysis.domain === "geral" ? "vision_analysis" : analysis.domain,
-      entities: entities as any,
+      entities: entities as Record<string, unknown>,
       sentiment: analysis.sentiment.primary,
       rawInput: combinedInput,
-      contextualMarkers: [
-        ...(analysis.entities || []).map((e: any) => e?.text ?? e?.value ?? "").filter(Boolean),
-        ...(visionDescription ? ["vision_input"] : []),
-      ],
-      complexity: analysis.complexity,
+      contextualMarkers: (analysis.entities || []).map((e: Record<string, unknown>) => e?.text ?? e?.value ?? "").filter(Boolean),
+      complexity: analysis.complexity as "simple" | "medium" | "complex",
       visionDescription,
       frameResults,
       framesSkipped,

@@ -1,10 +1,10 @@
-import { IPentagonLayer, ActionResult, PentagonContext, recordToolCall, completeToolCall } from "../types";
+import { IPentagonLayer, ReasoningResult, ActionResult, PentagonContext, recordToolCall, completeToolCall } from "../types";
 import { supabase } from "@/integrations/supabase/client";
 import { wrapEdgeFunction } from "@/lib/errors";
 
-export class ActionAdapter implements IPentagonLayer<any, ActionResult> {
-  public async process(reasoning: any, context: PentagonContext): Promise<ActionResult> {
-    const plan = reasoning.plan || [];
+export class ActionAdapter implements IPentagonLayer<ReasoningResult, ActionResult> {
+  public async process(reasoning: ReasoningResult, context: PentagonContext): Promise<ActionResult> {
+    const plan = (reasoning.plan || []) as string[];
 
     const forceTool = context?.forceTool || false;
     const shouldSearch = forceTool || plan.some((p: string) =>

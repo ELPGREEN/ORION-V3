@@ -1,8 +1,3 @@
-/**
- * 🧠 Reasoning Adapter — Lobo frontal real
- * Substitui o mock por um chamado real à edge function pentagon-reasoner
- * (Lovable AI Gateway → Gemini 2.5 Flash com tool calling estruturado).
- */
 import { supabase } from "@/integrations/supabase/client";
 import { IPentagonLayer, ReasoningResult, PerceptionResult, MemoryResult, PentagonContext } from "../types";
 import { FeynmanReasoner } from "./FeynmanReasoner";
@@ -43,7 +38,7 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
       }
 
       const hasRag = ragSnippets.length > 0;
-      const rationale = result.rationale || "";
+      const rationale = (result.rationale as string) || "";
       const isGeneric = rationale.length < 30 || /responder|pergunta|entendi/i.test(rationale);
 
       if (hasRag && isGeneric && !context?.forceRag) {
@@ -52,13 +47,13 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
          result.responseHint = "Considere os snippets RAG disponíveis para formular uma resposta mais específica.";
       }
 
-      let baseResult: ExtendedReasoningResult = {
-        plan: Array.isArray(result.plan) ? result.plan : ["responder"],
+      const baseResult: ExtendedReasoningResult = {
+        plan: Array.isArray(result.plan) ? (result.plan as string[]) : ["responder"],
         rationale: rationale,
         confidence: typeof result.confidence === "number" ? result.confidence : 0.7,
-        subTasks: Array.isArray(result.subTasks) ? result.subTasks : [],
-        responseHint: result.responseHint ?? "",
-        model: result.model,
+        subTasks: Array.isArray(result.subTasks) ? (result.subTasks as string[]) : [],
+        responseHint: (result.responseHint as string) ?? "",
+        model: result.model as string | undefined,
       };
 
       context.sharedState.reasoningModel = result.model;
@@ -84,7 +79,7 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
     return parts.slice(0, 6);
   }
 
-  private fireAsyncFeynman(baseResult: ExtendedReasoningResult, query: string, context: PentagonContext): void {
+  private fireAsyncFeynman(baseResult: ExtendedReasoningResult, query: string, _context: PentagonContext): void {
     FeynmanReasoner.refine(baseResult, query).then(refined => {
       console.log("[Reasoning] ✅ Async Feynman refinement complete, confidence:", refined.confidence);
       if (refined.responseHint?.includes("[Feynman")) {

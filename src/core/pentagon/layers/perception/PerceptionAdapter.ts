@@ -7,11 +7,11 @@ export class PerceptionAdapter implements IPentagonLayer<string, PerceptionResul
 
     return {
       intent: analysis.domain === "geral" ? "conversational" : analysis.domain,
-      entities: (analysis.entities || {}) as any,
+      entities: (analysis.entities || {}) as Record<string, unknown>,
       sentiment: analysis.sentiment.primary,
       rawInput: input,
-      contextualMarkers: (analysis.entities || []).map((e: any) => e?.text ?? e?.value ?? "").filter(Boolean),
-      complexity: analysis.complexity
+      contextualMarkers: (analysis.entities || []).map((e: Record<string, unknown>) => e?.text ?? e?.value ?? "").filter(Boolean),
+      complexity: analysis.complexity as "simple" | "medium" | "complex"
     };
   }
 }
