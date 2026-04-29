@@ -3,7 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Brain, User, Copy, Eye, Plus, Replace, CheckCircle2,
   ThumbsUp, ThumbsDown, ExternalLink, BookOpen, ArrowRight,
-  ShieldCheck, ShieldAlert, Shield, AlertTriangle, Globe,
+  ShieldCheck, ShieldAlert, Shield, AlertTriangle, Globe, Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -44,6 +44,26 @@ export interface Message {
   feedbackGiven?: "up" | "down";
   suggestions?: string[];
   confidenceScore?: number;
+  /** Pentagon cycle metadata */
+  pentagonMetadata?: {
+    cycleId: string;
+    stepsTaken: number;
+    totalCost: number;
+    durationMs: number;
+    earlyExit?: boolean;
+    earlyExitType?: string;
+  };
+  /** Pentagon tool calls */
+  toolCalls?: Array<{
+    tool: string;
+    args: Record<string, unknown>;
+    result?: unknown;
+    durationMs?: number;
+  }>;
+  /** Pentagon confidence */
+  pentagonConfidence?: number;
+  /** Pentagon sources used */
+  pentagonSourcesUsed?: string[];
 }
 
 const INTENT_COLORS: Record<string, string> = {
@@ -92,7 +112,7 @@ function MessageBadges({ msg, qualityResult, route }: {
   qualityResult?: QualityResult;
   route?: ReturnType<typeof detectPipelineRoute>;
 }) {
-  if (!msg.neuralUsed && !msg.intent && !qualityResult && !route) return null;
+  if (!msg.neuralUsed && !msg.intent && !qualityResult && !route && !msg.pentagonMetadata) return null;
   return (
     <div className="flex items-center gap-1 mb-2 flex-wrap">
       {route && (
@@ -112,7 +132,12 @@ function MessageBadges({ msg, qualityResult, route }: {
           {msg.intent}
         </Badge>
       )}
-      {msg.neuralUsed && (
+      {msg.pentagonMetadata && (
+        <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-purple-500/25 text-purple-400 font-normal">
+          <Zap className="h-2 w-2 mr-0.5" /> Pentagon
+        </Badge>
+      )}
+      {msg.neuralUsed && !msg.pentagonMetadata?.earlyExit && (
         <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-primary/25 text-primary font-normal">
           <Brain className="h-2 w-2 mr-0.5" /> Neural
         </Badge>
@@ -177,6 +202,65 @@ function SourcesCollapsible({ sources }: { sources: SourceItem[] }) {
               )}
             </div>
           ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function PentagonMetadataBlock({ msg }: { msg: Message }) {
+  if (!msg.pentagonMetadata) return null;
+  const meta = msg.pentagonMetadata;
+  return (
+    <Collapsible>
+      <CollapsibleTrigger className="flex items-center gap-1.5 text-[9px] text-purple-400/70 hover:text-purple-400 mt-2 transition-colors">
+        <Zap className="h-2.5 w-2.5" /> Pentagon Cycle ({meta.durationMs}ms, {meta.stepsTaken} steps)
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="mt-1.5 p-2 rounded-md bg-purple-500/5 border border-purple-500/10 text-[9px] space-y-1">
+          <div className="flex justify-between text-muted-foreground">
+            <span>Cycle ID</span>
+            <span className="text-purple-400 font-mono">{meta.cycleId.slice(-8)}</span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
+            <span>Steps</span>
+            <span>{meta.stepsTaken}</span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
+            <span>Cost</span>
+            <span>${meta.totalCost.toFixed(3)}</span>
+          </div>
+          <div className="flex justify-between text-muted-foreground">
+            <span>Duration</span>
+            <span>{meta.durationMs}ms</span>
+          </div>
+          {meta.earlyExit && (
+            <div className="flex justify-between text-muted-foreground">
+              <span>Early Exit</span>
+              <Badge variant="outline" className="text-[7px] h-3.5 px-1 border-emerald-500/25 text-emerald-400">
+                {meta.earlyExitType || "yes"}
+              </Badge>
+            </div>
+          )}
+          {msg.pentagonConfidence !== undefined && (
+            <div className="flex justify-between text-muted-foreground">
+              <span>Confidence</span>
+              <span className={msg.pentagonConfidence > 0.7 ? "text-emerald-400" : "text-amber-400"}>
+                {(msg.pentagonConfidence * 100).toFixed(0)}%
+              </span>
+            </div>
+          )}
+          {msg.toolCalls && msg.toolCalls.length > 0 && (
+            <div className="pt-1 border-t border-purple-500/10">
+              <p className="text-[8px] text-muted-foreground/50 uppercase tracking-wider mb-1">Tool Calls</p>
+              {msg.toolCalls.map((tc, i) => (
+                <div key={i} className="flex items-center justify-between text-muted-foreground py-0.5">
+                  <span className="font-mono text-purple-400/80">{tc.tool}</span>
+                  <span>{tc.durationMs ? `${tc.durationMs}ms` : "—"}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -398,6 +482,8 @@ export const ChatMessageList = forwardRef<HTMLDivElement, ChatMessageListProps>(
                 {msg.role === "assistant" && hallucinationMap.has(msg.id) && (
                   <HallucinationWarnings warnings={hallucinationMap.get(msg.id)!} />
                 )}
+
+                {msg.role === "assistant" && <PentagonMetadataBlock msg={msg} />}
 
                 {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
                   <SourcesCollapsible sources={msg.sources} />

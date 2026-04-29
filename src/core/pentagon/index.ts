@@ -7,12 +7,14 @@
  */
 import { PentagonPizzaOrchestrator } from "./orchestrator/PentagonPizzaOrchestrator";
 import { PerceptionAdapter } from "./layers/perception/PerceptionAdapter";
+import { PentagonVisionAdapter } from "./layers/perception/PentagonVisionAdapter";
 import { MemoryAdapter } from "./layers/memory/MemoryAdapter";
 import { ReasoningAdapter } from "./layers/reasoning/ReasoningAdapter";
 import { ActionAdapter } from "./layers/action/ActionAdapter";
 import { MetaAdapter } from "./layers/meta/MetaAdapter";
 
 let _instance: PentagonPizzaOrchestrator | null = null;
+let _visionInstance: PentagonPizzaOrchestrator | null = null;
 
 /**
  * Returns the unified Pentagon Pizza consciousness singleton.
@@ -33,6 +35,26 @@ export function getPentagonOrchestrator(): PentagonPizzaOrchestrator {
   return _instance;
 }
 
+/**
+ * Returns a Pentagon orchestrator with Vision perception layer.
+ * Use this for multimodal inputs (images, video frames).
+ */
+export function getPentagonVisionOrchestrator(): PentagonPizzaOrchestrator {
+  if (!_visionInstance) {
+    _visionInstance = new PentagonPizzaOrchestrator(
+      new PentagonVisionAdapter(),
+      new MemoryAdapter(),
+      new ReasoningAdapter(),
+      new ActionAdapter(),
+      new MetaAdapter()
+    );
+    console.log("[PENTAGON] 👁️ Vision consciousness initialized.");
+  }
+  return _visionInstance;
+}
+
 export { PentagonPizzaOrchestrator } from "./orchestrator/PentagonPizzaOrchestrator";
 export type { PentagonPizzaState } from "./orchestrator/PentagonPizzaOrchestrator";
+export { PentagonVisionAdapter } from "./layers/perception/PentagonVisionAdapter";
+export type { VisionPerceptionInput, VisionPerceptionResult } from "./layers/perception/PentagonVisionAdapter";
 export * from "./layers/types";
