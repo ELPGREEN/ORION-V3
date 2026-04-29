@@ -17,7 +17,8 @@ import { quantumRouteQuery, formatQuantumRoutingForAI } from "./quantum-llm-rout
 import { summarizeLongContextMamba } from "./mamba-orchestrator";
 import { buildWorkingMemoryPrompt, initWorkingMemory, pushToWorkingMemory } from "./orion-working-memory";
 import { stripMarkdown } from "@/lib/utils/text-utils";
-import { VS } from "@/components/dashboard/neural/useVisionProcessing";
+let _vsProxy: any = {};
+export function setVisionStateProxy(vs: any) { _vsProxy = vs; }
 // vision-local-learning removed — all identification via Gemini on-demand
 const canIdentifyLocally = (_shapes: any[]) => ({ allLocal: false, localMatches: [] as any[] });
 const getLearningStats = () => ({ totalPriors: 0, maturePriors: 0, totalObservations: 0, apiBypassRate: 0 });
@@ -252,13 +253,13 @@ export function isLocalFirstMode(): boolean {
 // ═══ Build local detections from client-side vision data ═══
 function buildLocalDetections(): Record<string, unknown> | undefined {
   try {
-    const regions = VS.regions || [];
-    const motion = VS.motion;
+    const regions = _vsProxy.regions || [];
+    const motion = _vsProxy.motion;
     const faces = regions.filter(r => r.category === "face");
 
     // ═══ YOLO FrameX Multi-Task Vision ═══
-    const multiTask = (VS as any).multiTaskResult;
-    const rtv = VS.realTimeVision;
+    const multiTask = (_vsProxy as any).multiTaskResult;
+    const rtv = _vsProxy.realTimeVision;
     let realTimeObjects: any[] | undefined;
     let realTimeFaces: any[] | undefined;
     let realTimeHands: any[] | undefined;
@@ -342,7 +343,7 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
     // Extract scene context if available
     let sceneCtx: any | undefined;
     try {
-      const sc = (VS as any).sceneContext;
+      const sc = (_vsProxy as any).sceneContext;
       if (sc) {
         sceneCtx = {
           lighting: sc.lighting,
@@ -358,7 +359,7 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
     // ═══ Face detection from 4-tier system ═══
     let faceDetectionData: any | undefined;
     try {
-      const detectedFaces = (VS as any).detectedFaces;
+      const detectedFaces = (_vsProxy as any).detectedFaces;
       if (detectedFaces && Array.isArray(detectedFaces) && detectedFaces.length > 0) {
         faceDetectionData = {
           count: detectedFaces.length,
@@ -374,7 +375,7 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
     // ═══ Face-api.js analysis (expressions, landmarks, descriptor) — ENHANCED ═══
     let faceApiData: any | undefined;
     try {
-      const faceApi = (VS as any).faceApiDetection;
+      const faceApi = (_vsProxy as any).faceApiDetection;
       if (faceApi) {
         // Extract top 3 expressions with scores for richer Gemini analysis
         let topExpressions: Array<{emotion: string; score: number}> | undefined;
@@ -410,7 +411,7 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
     // ═══ Pose detection data (MediaPipe PoseLandmarker) ═══
     let poseData: any | undefined;
     try {
-      const pose = (VS as any).poseDetection;
+      const pose = (_vsProxy as any).poseDetection;
       if (pose) {
         poseData = {
           landmarks: pose.landmarks?.length || 0,
@@ -425,7 +426,7 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
     // ═══ Hand gesture analysis ═══
     let gestureData: any | undefined;
     try {
-      const gestures = (VS as any).handGestures;
+      const gestures = (_vsProxy as any).handGestures;
       if (gestures && Array.isArray(gestures) && gestures.length > 0) {
         gestureData = gestures.slice(0, 2).map((g: any) => ({
           hand: g.handedness || "unknown",
@@ -439,7 +440,7 @@ function buildLocalDetections(): Record<string, unknown> | undefined {
     // Image quality assessment
     let qualityHints: any | undefined;
     try {
-      const iq = (VS as any).imageQuality;
+      const iq = (_vsProxy as any).imageQuality;
       if (iq) {
         qualityHints = {
           sharpness: iq.sharpness,
@@ -708,7 +709,7 @@ export async function analyzeFrameWithAI(
       try {
         // Extract shape descriptors from the current canvas
         const shapes: any[] = [];
-        const descriptor = shapes.length > 0 ? shapes[0] : (VS as any).shapeDescriptors?.[0];
+        const descriptor = shapes.length > 0 ? shapes[0] : (_vsProxy as any).shapeDescriptors?.[0];
         if (descriptor) {
           for (const obj of data.identifiedObjects) {
             if (obj.confidence >= 60) {
