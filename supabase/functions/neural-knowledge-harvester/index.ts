@@ -51,14 +51,36 @@ OBJETIVO:
 Aprender profundamente o tópico e melhorar sua própria capacidade de raciocínio.
 
 ETAPAS:
-1. EXPLICAÇÃO FUNDAMENTAL: Explique o tópico do zero até nível avançado.
-2. MODELO MENTAL: Crie uma representação estruturada (framework, mapa ou sistema).
-3. DECOMPOSIÇÃO: Quebre o tópico em subcomponentes essenciais.
-4. RELAÇÕES: Explique como esse tópico se conecta com: raciocínio, tomada de decisão e sistemas multi-LLM.
-5. APLICAÇÃO: Mostre como implementar isso em um agente inteligente.
-6. LIMITAÇÕES: Liste falhas, riscos e pontos de quebra.
-7. AUTOAVALIAÇÃO: Avalie sua própria resposta: clareza (0–1), profundidade (0–1), incerteza (0–1).
-8. MELHORIA: Reescreva os pontos mais fracos da sua resposta.
+
+1. EXPLICAÇÃO FUNDAMENTAL
+Explique o tópico do zero até nível avançado.
+
+2. MODELO MENTAL
+Crie uma representação estruturada (framework, mapa ou sistema).
+
+3. DECOMPOSIÇÃO
+Quebre o tópico em subcomponentes essenciais.
+
+4. RELAÇÕES
+Explique como esse tópico se conecta com:
+- raciocínio
+- tomada de decisão
+- sistemas multi-LLM
+
+5. APLICAÇÃO
+Mostre como implementar isso em um agente inteligente.
+
+6. LIMITAÇÕES
+Liste falhas, riscos e pontos de quebra.
+
+7. AUTOAVALIAÇÃO
+Avalie sua própria resposta:
+- clareza (0–1)
+- profundidade (0–1)
+- incerteza (0–1)
+
+8. MELHORIA
+Reescreva os pontos mais fracos da sua resposta.
 
 SAÍDA:
 Resposta estruturada + métricas + versão melhorada.`,
@@ -80,6 +102,7 @@ Tabela + explicação + modelo probabilístico.`,
   multi_llm_consensus: `TÓPICO: {topic}
 
 Simule 3 modelos diferentes:
+
 - Modelo A: rápido e superficial
 - Modelo B: técnico e detalhado
 - Modelo C: crítico e cético
@@ -100,7 +123,9 @@ SAÍDA:
   self_correction: `TÓPICO: {topic}
 
 1. Gere uma resposta inicial
-2. Ative modo crítico: o que pode estar errado? o que não foi comprovado?
+2. Ative modo crítico:
+   - o que pode estar errado?
+   - o que não foi comprovado?
 3. Corrija a resposta
 4. Marque partes com baixa confiança
 5. Gere versão final mais segura
@@ -110,7 +135,10 @@ Resposta original → crítica → versão corrigida`,
 
   agent_construction: `TÓPICO: {topic}
 
-Projete um módulo de agente baseado nisso. Inclua:
+Projete um módulo de agente baseado nisso.
+
+Inclua:
+
 1. Função principal
 2. Inputs / Outputs
 3. Fluxo de decisão
@@ -124,14 +152,21 @@ Arquitetura + lógica + pseudo-código`,
 
   simulation_scenarios: `TÓPICO: {topic}
 
-Crie 3 cenários: cenário ideal, cenário realista, cenário extremo.
+Crie 3 cenários:
+
+- cenário ideal
+- cenário realista
+- cenário extremo
+
 Para cada um:
 1. Como o sistema se comporta?
 2. Onde falha?
 3. Como se adapta?
 4. Qual probabilidade de sucesso?
 
-Finalize com: análise comparativa + estratégia ideal.`,
+Finalize com:
+- análise comparativa
+- estratégia ideal`,
 
   meta_learning: `TÓPICO: {topic}
 
@@ -140,7 +175,9 @@ Finalize com: análise comparativa + estratégia ideal.`,
 3. O que pode ser generalizado para outros problemas?
 4. Como isso melhora seu raciocínio futuro?
 
-Finalize com: regras de aprendizado + upgrades cognitivos sugeridos.`,
+Finalize com:
+- regras de aprendizado
+- upgrades cognitivos sugeridos`,
 
   memory_evolution: `TÓPICO: {topic}
 
@@ -155,11 +192,17 @@ Estrutura de memória + estratégia de retenção`,
   auto_challenge: `TÓPICO: {topic}
 
 Crie um teste para você mesmo:
+
 - 3 perguntas fáceis
 - 3 médias
 - 3 difíceis
 
-Responda tudo. Depois: avalie erros, explique falhas e corrija conhecimento.
+Responda tudo.
+
+Depois:
+- avalie erros
+- explique falhas
+- corrija conhecimento
 
 SAÍDA:
 teste + respostas + diagnóstico`,
@@ -167,6 +210,7 @@ teste + respostas + diagnóstico`,
   continuous_evolution_loop: `TÓPICO: {topic}
 
 LOOP:
+
 1. aprender
 2. aplicar
 3. avaliar
@@ -174,7 +218,11 @@ LOOP:
 5. otimizar
 
 Execute 2 ciclos completos.
-Mostre: evolução entre ciclos, melhoria de qualidade, redução de incerteza.`,
+
+Mostre:
+- evolução entre ciclos
+- melhoria de qualidade
+- redução de incerteza`,
 };
 
 interface HarvestResult {
