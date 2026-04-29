@@ -38,21 +38,27 @@ describe("TF Model Monitoring", () => {
     });
 
     it("should detect degradation against baseline", () => {
-      const modelName = "degrade-model";
+      const modelName = "degrade-model-" + Math.random();
       setBaseline(modelName, { accuracy: 0.9, latencyMs: 100 });
 
       // No degradation
       let degradations = checkDegradation(modelName, { accuracy: 0.89, latencyMs: 105 });
       expect(degradations).toHaveLength(0);
 
-      // Severe degradation in accuracy (0.9 -> 0.6 = 33% drop)
-      degradations = checkDegradation(modelName, { accuracy: 0.6, latencyMs: 105 });
+      // Use a fresh model name for severe degradation to avoid moving average jitter from previous call
+      const modelNameSevere = "degrade-model-severe-" + Math.random();
+      setBaseline(modelNameSevere, { accuracy: 0.9, latencyMs: 100 });
+      degradations = checkDegradation(modelNameSevere, { accuracy: 0.6, latencyMs: 105 });
+
       expect(degradations).toHaveLength(1);
       expect(degradations[0].metric).toBe("accuracy");
       expect(degradations[0].severity).toBe("severe");
 
       // Moderate degradation in latency (100 -> 125 = 25% increase)
-      degradations = checkDegradation(modelName, { accuracy: 0.9, latencyMs: 125 });
+      const modelNameModerate = "degrade-model-moderate-" + Math.random();
+      setBaseline(modelNameModerate, { accuracy: 0.9, latencyMs: 100 });
+      degradations = checkDegradation(modelNameModerate, { accuracy: 0.9, latencyMs: 125 });
+
       expect(degradations).toHaveLength(1);
       expect(degradations[0].metric).toBe("latencyMs");
       expect(degradations[0].severity).toBe("moderate");
