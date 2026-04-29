@@ -42,6 +42,7 @@ export interface PentagonContext {
   toolCalls: PentagonToolCall[];
   /** Domain context (e.g., "legal", "medical", "general") */
   domain?: string;
+  userId?: string;
   /** Force tool usage flag */
   forceTool?: boolean;
   /** Force RAG usage flag */
