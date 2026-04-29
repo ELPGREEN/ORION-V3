@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Zap, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Brain, Zap, CheckCircle, XCircle, Loader2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import { AUTOCOGNITIVE_PROTOCOLS, AutocognitiveProtocolId } from "@/lib/neural/autocognitive-protocols";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface HarvestDetail {
   topic: string;
@@ -33,6 +35,7 @@ export function KnowledgeHarvester() {
   const [summary, setSummary] = useState<HarvestSummary | null>(null);
   const [details, setDetails] = useState<HarvestDetail[]>([]);
   const [triggerTraining, setTriggerTraining] = useState(true);
+  const [selectedProtocol, setSelectedProtocol] = useState<AutocognitiveProtocolId | "none">("none");
 
   const startHarvest = async () => {
     const topicList = topics.split("\n").map((t) => t.trim()).filter(Boolean);
@@ -54,6 +57,7 @@ export function KnowledgeHarvester() {
           topics: topicList,
           triggerTraining,
           batchSize: 20,
+          protocol: selectedProtocol === "none" ? undefined : selectedProtocol,
         },
       });
 
@@ -91,17 +95,50 @@ export function KnowledgeHarvester() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-muted-foreground mb-1 block">
-              Tópicos de Treino (um por linha)
-            </label>
-            <Textarea
-              value={topics}
-              onChange={(e) => setTopics(e.target.value)}
-              rows={6}
-              placeholder="Explique habeas corpus..."
-              className="font-mono text-sm"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-muted-foreground mb-1 block">
+                Tópicos de Treino (um por linha)
+              </label>
+              <Textarea
+                value={topics}
+                onChange={(e) => setTopics(e.target.value)}
+                rows={6}
+                placeholder="Explique habeas corpus..."
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground mb-1 block flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                Protocolo Autocognitivo
+              </label>
+              <Select
+                value={selectedProtocol}
+                onValueChange={(v) => setSelectedProtocol(v as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um protocolo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (Coleta Simples)</SelectItem>
+                  {Object.values(AUTOCOGNITIVE_PROTOCOLS).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <div className="flex flex-col text-left">
+                        <span className="font-medium">{p.name}</span>
+                        <span className="text-[10px] text-muted-foreground leading-tight">{p.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedProtocol !== "none" && (
+                <div className="p-3 bg-primary/5 border border-primary/20 rounded-md text-[11px] font-mono text-primary animate-in fade-in slide-in-from-top-1">
+                  <p className="font-bold mb-1 uppercase tracking-tighter">Estrutura Esperada:</p>
+                  {AUTOCOGNITIVE_PROTOCOLS[selectedProtocol].expectedOutput}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
