@@ -93,6 +93,12 @@ const getVLMEmbedding = (
 // ─── Singleton Instances (v2 configs) ───
 let _kvCache: KVCacheBank | null = null;
 let _semanticCache: SemanticCache | null = null;
+let _pipelineMetrics = {
+  totalCalls: 0,
+  cacheHits: 0,
+  avgDurationMs: 0,
+  lastReset: Date.now(),
+};
 
 function getKVCache(): KVCacheBank {
   if (!_kvCache) _kvCache = new KVCacheBank({
@@ -108,6 +114,20 @@ function getKVCache(): KVCacheBank {
 function getSemanticCache(): SemanticCache {
   if (!_semanticCache) _semanticCache = new SemanticCache(168, 0.72);
   return _semanticCache;
+}
+
+/**
+ * Limpa caches e reseta métricas (útil para testes e manutenção)
+ */
+export function resetPipelineCaches(): void {
+  _kvCache = null;
+  _semanticCache = null;
+  _pipelineMetrics = {
+    totalCalls: 0,
+    cacheHits: 0,
+    avgDurationMs: 0,
+    lastReset: Date.now(),
+  };
 }
 
 // ─── Meta-Reasoning Types ───
@@ -198,21 +218,34 @@ function skipStage(name: string, reason: string): PipelineStageResult {
  * v2: 9 models, parallel experts, meta-reasoning, deep tier.
  */
 export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
+  // Validação de entrada
+  if (!input.query || typeof input.query !== "string") {
+    throw new Error("Pipeline requer query válida");
+  }
+
+  const sanitizedQuery = input.query.trim().substring(0, 10000);
+  if (sanitizedQuery.length === 0) {
+    throw new Error("Query não pode estar vazia");
+  }
+
   const pipelineStart = performance.now();
   const stages: PipelineStageResult[] = [];
   const modulesActivated: string[] = [];
+  
+  // Incrementa contador de métricas
+  _pipelineMetrics.totalCalls++;
 
   // ═══════════════════════════════════════
   // STAGE 1: SLM Router — Classify complexity & decide tier
   // ═══════════════════════════════════════
-  const { result: tokenization, stage: s1a } = runStage("SLM:Tokenize", () => slimTokenize(input.query));
+  const { result: tokenization, stage: s1a } = runStage("SLM:Tokenize", () => slimTokenize(sanitizedQuery));
   stages.push({ ...s1a, data: { tokens: tokenization.tokens.length, compression: tokenization.compressionRatio } });
 
   const { result: routing, stage: s1b } = runStage("SLM:Route", () =>
-    routeToTier(input.query, {
-      latencyBudgetMs: input.latencyBudgetMs,
-      forceFullPipeline: input.forceFullPipeline,
-      forceDeepPipeline: input.forceDeepPipeline,
+    routeToTier(sanitizedQuery, {
+      latencyBudgetMs: input.latencyBudgetMs ?? 5000,
+      forceFullPipeline: input.forceFullPipeline ?? false,
+      forceDeepPipeline: input.forceDeepPipeline ?? false,
     })
   );
   stages.push({ ...s1b, data: { tier: routing.tier, score: routing.complexity.score } });
@@ -222,32 +255,49 @@ export function executeNeuralPipeline(input: PipelineInput): PipelineOutput {
   // STAGE 2: CAG — KV Cache Lookup (2048 entries, 14-day TTL)
   // ═══════════════════════════════════════
   const kvCache = getKVCache();
-  const { result: cagResult, stage: s2 } = runStage("CAG:Lookup", () => kvCache.lookup(input.query));
+  const { result: cagResult, stage: s2 } = runStage("CAG:Lookup", () => kvCache.lookup(sanitizedQuery));
   stages.push({ ...s2, data: { hit: cagResult.hit, source: cagResult.source } });
   modulesActivated.push("CAG");
 
-  if (!cagResult.hit && input.context) {
-    kvCache.preprocess(`query_${Date.now()}`, "custom", input.context);
+  // Pre-processa contexto no cache apenas se não houver hit e contexto válido
+  const sanitizedContext = input.context?.trim().substring(0, 50000);
+  if (!cagResult.hit && sanitizedContext && sanitizedContext.length > 50) {
+    kvCache.preprocess(`query_${Date.now()}`, "custom", sanitizedContext);
   }
 
   // ═══════════════════════════════════════
   // STAGE 3: Semantic Cache (TF-IDF weighted, 7-day TTL)
   // ═══════════════════════════════════════
   const semCache = getSemanticCache();
+  const useCase = input.useCase?.trim().substring(0, 50) || "general";
   const { result: semanticCacheResult, stage: s3 } = runStage("RAG:SemanticCache", () =>
-    semCache.get(input.query, input.useCase || "general")
+    semCache.get(sanitizedQuery, useCase)
   );
   stages.push({ ...s3, data: { hit: semanticCacheResult.hit, source: semanticCacheResult.source } });
   modulesActivated.push("RAG");
 
   const cacheHit = cagResult.hit || semanticCacheResult.hit;
+  
+  // Atualiza métricas de cache
+  if (cacheHit) {
+    _pipelineMetrics.cacheHits++;
+  }
 
   // ═══════════════════════════════════════
   // STAGE 4: LCM — Concept Model (256-dim, 15 diffusion steps)
   // ═══════════════════════════════════════
-  const { result: conceptCategory, stage: s4a } = runStage("LCM:Classify", () => detectConceptCategory(input.query));
+  const { result: conceptCategory, stage: s4a } = runStage("LCM:Classify", () => detectConceptCategory(sanitizedQuery));
+  
+  // Ajusta steps de difusão baseado na complexidade para melhor performance
+  const diffusionSteps = routing.tier === "cached" || routing.tier === "edge" ? 8 : 15;
   const { result: conceptEmbedding, stage: s4b } = runStage("LCM:Embed", () =>
-    buildConceptEmbedding(input.query, { steps: 15, noiseSchedule: "cosine", learningRate: 0.01, embeddingDim: 256, quantizationBits: 8 })
+    buildConceptEmbedding(sanitizedQuery, { 
+      steps: diffusionSteps, 
+      noiseSchedule: "cosine", 
+      learningRate: 0.01, 
+      embeddingDim: 256, 
+      quantizationBits: 8 
+    })
   );
   stages.push({ ...s4a, data: { category: conceptCategory } });
   stages.push({ ...s4b, data: { segments: conceptEmbedding.segments.length, confidence: conceptEmbedding.confidence } });
@@ -651,10 +701,30 @@ export function postProcessResponse(
   biasWarnings: ReturnType<typeof detectBias>;
   bidirectionalScores: BidirectionalScore[];
 } {
-  const verdict = localJudgeScore(response, documentType);
-  const citations = extractCitations(response);
-  const biasWarnings = detectBias(response, documentType);
-  const scores = bidirectionalScore(response.slice(0, 3000));
+  // Validação de entrada
+  if (!response || typeof response !== "string") {
+    return {
+      verdict: {
+        overallScore: 0,
+        grade: "F",
+        citations: [],
+        fallacies: [],
+        dimensions: [],
+        recommendation: "Resposta inválida",
+      },
+      citations: [],
+      biasWarnings: [],
+      bidirectionalScores: [],
+    };
+  }
+
+  const sanitizedResponse = response.trim().substring(0, 50000);
+  const sanitizedDocType = documentType?.trim().substring(0, 50);
+  
+  const verdict = localJudgeScore(sanitizedResponse, sanitizedDocType);
+  const citations = extractCitations(sanitizedResponse);
+  const biasWarnings = detectBias(sanitizedResponse, sanitizedDocType);
+  const scores = bidirectionalScore(sanitizedResponse.slice(0, 3000));
 
   return { verdict, citations, biasWarnings, bidirectionalScores: scores };
 }
@@ -663,12 +733,20 @@ export function postProcessResponse(
  * Cache a successful response for future reuse.
  */
 export function cacheResponse(query: string, useCase: string, response: unknown): void {
+  // Validação de entrada
+  if (!query || typeof query !== "string" || query.trim().length === 0) {
+    return;
+  }
+
+  const sanitizedQuery = query.trim().substring(0, 5000);
+  const sanitizedUseCase = (useCase || "general").trim().substring(0, 50);
+
   const semCache = getSemanticCache();
-  semCache.set(query, useCase, response, 1);
+  semCache.set(sanitizedQuery, sanitizedUseCase, response, 1);
 
   const kvCache = getKVCache();
-  if (typeof response === "string" && response.length > 50) {
-    kvCache.preprocess(`resp_${Date.now()}`, "custom", response);
+  if (typeof response === "string" && response.length > 50 && response.length < 100000) {
+    kvCache.preprocess(`resp_${Date.now()}`, "custom", response.substring(0, 50000));
   }
 }
 
@@ -678,9 +756,36 @@ export function cacheResponse(query: string, useCase: string, response: unknown)
 export function getPipelineStats(): {
   cagStats: CAGStats;
   semanticCacheSize: number;
+  pipelineMetrics: {
+    totalCalls: number;
+    cacheHits: number;
+    cacheHitRate: number;
+    avgDurationMs: number;
+    lastReset: number;
+  };
 } {
+  const cacheHitRate = _pipelineMetrics.totalCalls > 0 
+    ? (_pipelineMetrics.cacheHits / _pipelineMetrics.totalCalls) * 100 
+    : 0;
+
   return {
     cagStats: getKVCache().stats(),
     semanticCacheSize: getSemanticCache().size(),
+    pipelineMetrics: {
+      ..._pipelineMetrics,
+      cacheHitRate: Math.round(cacheHitRate * 100) / 100,
+    },
   };
+}
+
+/**
+ * Atualiza métricas de duração média do pipeline.
+ * Chamado internamente após cada execução.
+ */
+export function updatePipelineMetrics(durationMs: number): void {
+  const { totalCalls, avgDurationMs } = _pipelineMetrics;
+  // Rolling average
+  _pipelineMetrics.avgDurationMs = totalCalls > 1
+    ? (avgDurationMs * (totalCalls - 1) + durationMs) / totalCalls
+    : durationMs;
 }

@@ -365,119 +365,217 @@ export default function RedeNeuralPage() {
   async function loadData(silent = false) {
     if (!silent) setLoading(true);
     try {
-      const { data: specs } = await supabase
-        .from("neural_specializations")
-        .select("id, name, description, category, accuracy_score, training_status, is_active, training_data, prompts, created_at, updated_at, user_id")
-        .order("created_at", { ascending: false });
-      if (specs) setSpecializations(specs as Specialization[]);
+      // Executa todas as queries em paralelo para melhor performance
+      const [
+        specsResult,
+        knowledgeResult,
+        processedCountResult,
+        provsResult,
+        totalResult,
+        learnedResult,
+      ] = await Promise.all([
+        supabase
+          .from("neural_specializations")
+          .select("id, name, description, category, accuracy_score, training_status, is_active, created_at")
+          .order("created_at", { ascending: false })
+          .limit(50),
+        supabase
+          .from("neural_knowledge_base")
+          .select("id, title, source_type, is_processed, created_at", { count: "exact" })
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("neural_knowledge_base")
+          .select("id", { count: "exact", head: true })
+          .eq("is_processed", true),
+        supabase
+          .from("ai_providers")
+          .select("id, provider_name, display_name, is_enabled, priority")
+          .order("priority")
+          .limit(20),
+        supabase
+          .from("neural_learning_data")
+          .select("id", { count: "exact", head: true }),
+        supabase
+          .from("neural_learning_data")
+          .select("id", { count: "exact", head: true })
+          .eq("learned", true),
+      ]);
 
-      const { data: knowledge, count: knowledgeCount } = await supabase
-        .from("neural_knowledge_base")
-        .select("id, title, source_type, is_processed, created_at", { count: "exact" })
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (knowledge) setKnowledgeEntries(knowledge as KnowledgeEntry[]);
-      setKnowledgeTotalCount(knowledgeCount || knowledge?.length || 0);
+      // Processa resultados com validação
+      if (specsResult.data) setSpecializations(specsResult.data as Specialization[]);
+      if (specsResult.error) console.warn("[RedeNeuralPage] Erro specs:", specsResult.error.message);
 
-      // Get real processed count
-      const { count: processedCount } = await supabase
-        .from("neural_knowledge_base")
-        .select("id", { count: "exact", head: true })
-        .eq("is_processed", true);
-      setKnowledgeProcessedCount(processedCount || 0);
+      if (knowledgeResult.data) setKnowledgeEntries(knowledgeResult.data as KnowledgeEntry[]);
+      setKnowledgeTotalCount(knowledgeResult.count ?? knowledgeResult.data?.length ?? 0);
+      if (knowledgeResult.error) console.warn("[RedeNeuralPage] Erro knowledge:", knowledgeResult.error.message);
 
-      const { data: provs } = await supabase
-        .from("ai_providers")
-        .select("*")
-        .order("priority");
-      if (provs) setProviders(provs as AIProvider[]);
+      setKnowledgeProcessedCount(processedCountResult.count ?? 0);
 
-      const { count: total } = await supabase
-        .from("neural_learning_data")
-        .select("*", { count: "exact", head: true });
+      if (provsResult.data) setProviders(provsResult.data as AIProvider[]);
+      if (provsResult.error) console.warn("[RedeNeuralPage] Erro providers:", provsResult.error.message);
 
-      const { count: learned } = await supabase
-        .from("neural_learning_data")
-        .select("*", { count: "exact", head: true })
-        .eq("learned", true);
+      const total = totalResult.count ?? 0;
+      const learned = learnedResult.count ?? 0;
 
       setLearningStats({
-        totalInteractions: total || 0,
-        learnedItems: learned || 0,
-        averageQuality: total && learned ? (learned / total) : 0,
+        totalInteractions: total,
+        learnedItems: learned,
+        averageQuality: total > 0 ? learned / total : 0,
       });
     } catch (error) {
-      console.error("[RedeNeuralPage] Erro ao carregar dados:", error);
+      console.error("[RedeNeuralPage] Erro crítico ao carregar dados:", error);
+      toast({ title: "Erro ao carregar dados", description: "Tente recarregar a página", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   }
 
   async function handleAddKnowledge() {
-    if (!newKnowledge.title || !newKnowledge.content) {
+    const trimmedTitle = newKnowledge.title.trim();
+    const trimmedContent = newKnowledge.content.trim();
+    
+    if (!trimmedTitle || !trimmedContent) {
       toast({ title: "Preencha título e conteúdo", variant: "destructive" });
+      return;
+    }
+
+    if (trimmedContent.length < 50) {
+      toast({ title: "Conteúdo muito curto", description: "Mínimo de 50 caracteres", variant: "destructive" });
+      return;
+    }
+
+    if (!user?.id) {
+      toast({ title: "Usuário não autenticado", variant: "destructive" });
       return;
     }
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.functions.invoke("neural-training", {
+      const parsedTags = newKnowledge.tags
+        .split(",")
+        .map((t) => t.trim().toLowerCase())
+        .filter((t) => t.length > 0 && t.length <= 50)
+        .slice(0, 10); // Limita a 10 tags
+
+      const { data, error } = await supabase.functions.invoke("neural-training", {
         body: {
           action: "add_knowledge",
-          userId: user?.id,
+          userId: user.id,
           data: {
-            ...newKnowledge,
-            tags: newKnowledge.tags.split(",").map((t) => t.trim()).filter(Boolean),
+            title: trimmedTitle.substring(0, 200),
+            content: trimmedContent.substring(0, 50000),
+            source_type: newKnowledge.source_type,
+            source_reference: newKnowledge.source_reference.trim().substring(0, 500),
+            tags: parsedTags,
           },
         },
       });
 
       if (error) throw error;
 
-      // 🧠 Neural: conhecimento adicionado manualmente = sinal de alta qualidade
+      // Neural feedback com contexto enriquecido
       logNeural({
         interaction_type: "document_viewed",
-        input_text: newKnowledge.title,
-        output_text: newKnowledge.content,
+        input_text: trimmedTitle,
+        output_text: trimmedContent.substring(0, 2000),
         quality_score: 0.85,
-        user_id: user?.id,
-        metadata: { source_type: newKnowledge.source_type, module: "rede_neural_knowledge", action: "add_knowledge" },
+        user_id: user.id,
+        metadata: { 
+          source_type: newKnowledge.source_type, 
+          module: "rede_neural_knowledge", 
+          action: "add_knowledge",
+          tags_count: parsedTags.length,
+          content_length: trimmedContent.length,
+          knowledge_id: data?.id,
+        },
       });
 
       toast({ title: "Conhecimento adicionado!", description: "O embedding será gerado automaticamente." });
       setNewKnowledge({ title: "", content: "", source_type: "jurisprudencia", source_reference: "", tags: "" });
       localStorage.removeItem(KNOWLEDGE_STORAGE_KEY);
-      loadData();
-    } catch (error) {
-      toast({ title: "Erro ao adicionar", variant: "destructive" });
+      loadData(true); // Silent reload para não bloquear UI
+    } catch (error: any) {
+      console.error("[RedeNeuralPage] Erro ao adicionar conhecimento:", error);
+      toast({ 
+        title: "Erro ao adicionar", 
+        description: error?.message || "Tente novamente",
+        variant: "destructive" 
+      });
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleCreateSpecialization() {
-    if (!newSpecialization.name) {
+    const trimmedName = newSpecialization.name.trim();
+    const trimmedDescription = newSpecialization.description.trim();
+    
+    if (!trimmedName) {
       toast({ title: "Preencha o nome da especialização", variant: "destructive" });
+      return;
+    }
+
+    if (trimmedName.length < 3) {
+      toast({ title: "Nome muito curto", description: "Mínimo de 3 caracteres", variant: "destructive" });
+      return;
+    }
+
+    if (!user?.id) {
+      toast({ title: "Usuário não autenticado", variant: "destructive" });
+      return;
+    }
+
+    // Verifica se já existe especialização com mesmo nome
+    const existingSpec = specializations.find(
+      (s) => s.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (existingSpec) {
+      toast({ title: "Especialização já existe", description: "Use um nome diferente", variant: "destructive" });
       return;
     }
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.functions.invoke("neural-training", {
+      const { data, error } = await supabase.functions.invoke("neural-training", {
         body: {
           action: "create_specialization",
-          userId: user?.id,
-          data: newSpecialization,
+          userId: user.id,
+          data: {
+            name: trimmedName.substring(0, 100),
+            description: trimmedDescription.substring(0, 500),
+            category: newSpecialization.category,
+          },
         },
       });
 
       if (error) throw error;
 
+      // Log neural para aprendizado
+      logNeural({
+        interaction_type: "neural_admin",
+        input_text: `Criar especialização: ${trimmedName}`,
+        output_text: `Especialização ${trimmedName} criada na categoria ${newSpecialization.category}`,
+        quality_score: 0.9,
+        user_id: user.id,
+        metadata: { 
+          module: "rede_neural_specializations", 
+          action: "create_specialization",
+          category: newSpecialization.category,
+          specialization_id: data?.id,
+        },
+      });
+
       toast({ title: "Especialização criada!", description: "O treinamento iniciará em breve." });
       setNewSpecialization({ name: "", description: "", category: "direito_civil" });
-      loadData();
-    } catch (error) {
-      toast({ title: "Erro ao criar especialização", variant: "destructive" });
+      loadData(true); // Silent reload
+    } catch (error: any) {
+      console.error("[RedeNeuralPage] Erro ao criar especialização:", error);
+      toast({ 
+        title: "Erro ao criar especialização", 
+        description: error?.message || "Tente novamente",
+        variant: "destructive" 
+      });
     } finally {
       setSubmitting(false);
     }

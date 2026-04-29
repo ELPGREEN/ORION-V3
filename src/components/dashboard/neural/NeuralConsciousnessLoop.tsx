@@ -45,12 +45,30 @@ export function NeuralConsciousnessLoop() {
   const [isEvolutionModalOpen, setIsEvolutionModalOpen] = useState(false);
   const [diag, setDiag] = useState(getConsciousnessDiagnostics());
 
-  // Real-time update for diagnostics
+  // Real-time update for diagnostics com cleanup adequado
   useEffect(() => {
-    const interval = setInterval(() => {
-      setDiag(getConsciousnessDiagnostics());
-    }, 5000);
-    return () => clearInterval(interval);
+    let isActive = true;
+    
+    const updateDiagnostics = () => {
+      if (isActive) {
+        try {
+          setDiag(getConsciousnessDiagnostics());
+        } catch (error) {
+          console.warn("[NeuralConsciousnessLoop] Erro ao atualizar diagnósticos:", error);
+        }
+      }
+    };
+    
+    // Update imediato
+    updateDiagnostics();
+    
+    // Interval com referência para cleanup
+    const intervalId = setInterval(updateDiagnostics, 5000);
+    
+    return () => {
+      isActive = false;
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Simulating the rest of the component state/logic for the purpose of the demo
