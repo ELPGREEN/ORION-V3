@@ -50,8 +50,8 @@ export class PentagonPizzaOrchestrator {
     const q = input.toLowerCase().trim();
     if (q.length < 2) return true;
 
-    // Explicit control commands
-    if (/^(pare|parar|stop|cancelar|sil[êe]ncio|shh|quieto|voltar|ajuda|help|ola|ol[aá]|oi|bom dia|boa tarde|boa noite|tchau|adeus)$/i.test(q)) {
+    // Explicit control commands + simple fact patterns (no anchor to allow matching questions)
+    if (/^(pare|parar|stop|cancelar|sil[êe]ncio|shh|quieto|voltar|ajuda|help|ola|ol[aá]|oi|bom dia|boa tarde|boa noite|tchau|adeus)$|^(quem [eé]|o que [eé]|onde fica|qual [oa])\b/i.test(q)) {
       return true;
     }
 
@@ -87,29 +87,11 @@ export class PentagonPizzaOrchestrator {
       // 3. Reasoning
       await this.transition("reasoning");
 
-      let retryCount = 0;
-      const MAX_RETRIES = 1;
-
-      do {
-        this.state.reasoning = await this.reasoning.process(
-          { perception: this.state.perception, memory: this.state.memory },
-          context
-        );
-
-        // 🍕 RAG Enforcement: If RAG is available but ignored, retry once
-        const hasRag = (this.state.memory?.ragSnippets?.length ?? 0) > 0;
-        const usesRag = this.state.reasoning?.rationale?.toLowerCase().includes("fonte") ||
-                        this.state.reasoning?.rationale?.toLowerCase().includes("[") ||
-                        (this.state.reasoning?.responseHint?.length ?? 0) > 100; // heuristic
-
-        if (hasRag && !usesRag && retryCount < MAX_RETRIES) {
-          console.warn("[CORTEX] ⚠️ Reasoning ignored RAG. Retrying with enforcement...");
-          context.forceRag = true;
-          retryCount++;
-          continue;
-        }
-        break;
-      } while (retryCount <= MAX_RETRIES);
+      // RAG Enforcement removed for performance — execute reasoning exactly once.
+      this.state.reasoning = await this.reasoning.process(
+        { perception: this.state.perception, memory: this.state.memory },
+        context
+      );
 
       // 🍕 Metacognitive Checkpoint (Enhanced with Information Geometry)
       const midCheck = await this.meta.validateReasoning(this.state.reasoning, context);

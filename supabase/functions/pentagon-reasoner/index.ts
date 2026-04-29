@@ -89,11 +89,12 @@ const FEYNMAN_TOOL = {
 };
 
 const MODEL_CASCADE = [
-  "deepseek/deepseek-r1:free",
+  "mistralai/mistral-small-3.1-24b-instruct:free",
+  "tencent/hy3-preview:free",
   "nvidia/nemotron-nano-9b-v2:free",
+  "deepseek/deepseek-r1:free",
   "qwen/qwen3-coder:free",
   "meta-llama/llama-3.3-70b-instruct:free",
-  "mistralai/mistral-small-3.1-24b-instruct:free",
 ];
 
 async function callOpenRouter(
@@ -104,45 +105,60 @@ async function callOpenRouter(
   tool: any,
   toolName: string
 ): Promise<Record<string, unknown> | null> {
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://iasofthub.com",
-      "X-Title": "Orion Pentagon Reasoner",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPayload },
-      ],
-      tools: [tool],
-      tool_choice: { type: "function", function: { name: toolName } },
-      temperature: 0.4,
-      max_tokens: 1500,
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 7000); // 7s timeout for high-speed loop
 
-  if (!res.ok) {
-    const t = await res.text().catch(() => "");
-    console.warn(`[pentagon-reasoner] ${model} failed ${res.status}: ${t.slice(0, 200)}`);
-    return null;
-  }
+  try {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://iasofthub.com",
+        "X-Title": "Orion Pentagon Reasoner",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPayload },
+        ],
+        tools: [tool],
+        tool_choice: { type: "function", function: { name: toolName } },
+        temperature: 0.4,
+        max_tokens: 1500,
+      }),
+      signal: controller.signal
+    });
 
-  const data = await res.json();
-  const msg = data?.choices?.[0]?.message;
-  const toolCall = msg?.tool_calls?.[0];
-  const argsStr = toolCall?.function?.arguments;
-  if (argsStr) {
-    try {
-      return { ...JSON.parse(argsStr), _model: model };
-    } catch {
-      // try parsing content as JSON
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      console.warn(`[pentagon-reasoner] ${model} failed ${res.status}: ${t.slice(0, 200)}`);
+      return null;
     }
+
+    const data = await res.json();
+    const msg = data?.choices?.[0]?.message;
+    const toolCall = msg?.tool_calls?.[0];
+    const argsStr = toolCall?.function?.arguments;
+    if (argsStr) {
+      try {
+        return { ...JSON.parse(argsStr), _model: model };
+      } catch {
+        // try parsing content as JSON
+      }
+    }
+    return null;
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      console.warn(`[pentagon-reasoner] ${model} timed out after 7s`);
+    } else {
+      console.error(`[pentagon-reasoner] ${model} error:`, err.message);
+    }
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  return null;
 }
 
 Deno.serve(async (req) => {
