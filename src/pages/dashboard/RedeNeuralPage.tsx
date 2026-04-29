@@ -152,8 +152,8 @@ function SmartUploadPanel({ userId, onUploaded }: { userId?: string; onUploaded:
       } catch (err: any) {
         const isTimeout = err.message?.includes("timeout") || err.message?.includes("TIMEOUT") || err.message?.includes("408");
         const errorMsg = isTimeout
-          ? "Processamento iniciado em segundo plano. Aguarde alguns minutos."
-          : `erro: ${err.message}`;
+          ? "Processamento em segundo plano. Aguarde alguns minutos."
+          : err.message || "Erro desconhecido";
         newResults.push({ fileName: file.name, status: `error: ${errorMsg}` });
       }
     }
@@ -407,6 +407,7 @@ export default function RedeNeuralPage() {
         averageQuality: total && learned ? (learned / total) : 0,
       });
     } catch (error) {
+      console.error("[RedeNeuralPage] Erro ao carregar dados:", error);
     } finally {
       setLoading(false);
     }
@@ -495,6 +496,8 @@ export default function RedeNeuralPage() {
 
       toast({ title: enabled ? "Provedor ativado" : "Provedor desativado" });
     } catch (error) {
+      console.error("[RedeNeuralPage] Erro ao alternar provedor:", error);
+      toast({ title: "Erro ao alternar provedor", variant: "destructive" });
     }
   }
 
@@ -511,6 +514,8 @@ export default function RedeNeuralPage() {
 
       toast({ title: active ? "Especialização ativada" : "Especialização desativada" });
     } catch (error) {
+      console.error("[RedeNeuralPage] Erro ao alternar especialização:", error);
+      toast({ title: "Erro ao alternar especialização", variant: "destructive" });
     }
   }
 
@@ -560,8 +565,8 @@ export default function RedeNeuralPage() {
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.04]"
         style={{
           backgroundImage: `
-            linear-gradient(#3B82F60.3) 1px, transparent 1px),
-            linear-gradient(90deg, #3B82F60.3) 1px, transparent 1px)
+            linear-gradient(rgba(59, 130, 246, 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.3) 1px, transparent 1px)
           `,
           backgroundSize: "60px 60px",
         }}
@@ -569,7 +574,7 @@ export default function RedeNeuralPage() {
       {/* Scanline overlay */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.015]"
         style={{
-          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, #3B82F60.08) 2px, #3B82F60.08) 4px)",
+          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(59, 130, 246, 0.08) 2px, rgba(59, 130, 246, 0.08) 4px)",
         }}
       />
       {/* Radial vignette */}
@@ -601,7 +606,7 @@ export default function RedeNeuralPage() {
             </Badge>
           </div>
           <p className="text-[10px] md:text-xs mt-0.5 hidden sm:block font-mono tracking-wide"
-            style={{ color: "#3B82F60.5)" }}>
+            style={{ color: "rgba(59, 130, 246, 0.5)" }}>
             Painel Admin · IAs · Ingestão · Especializações · Documentação
           </p>
         </div>
@@ -615,7 +620,7 @@ export default function RedeNeuralPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="relative z-10">
         <TabsList className="flex w-full overflow-x-auto fade-scroll-x gap-0.5 p-1.5 h-auto flex-nowrap rounded-lg border border-[#3B82F6]/15 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar]:track:!bg-transparent scrollbar-hide"
-          style={{ backgroundColor: "rgba(10,10,15,0.7)", boxShadow: "0 0 20px #3B82F60.05), inset 0 1px 0 #3B82F60.1)" }}>
+          style={{ backgroundColor: "rgba(10,10,15,0.7)", boxShadow: "0 0 20px rgba(59, 130, 246, 0.05), inset 0 1px 0 rgba(59, 130, 246, 0.1)" }}>
           <TabsTrigger value="overview" className="text-xs shrink-0 gap-1 px-2.5 py-1.5">
             <BarChart3 className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Visão Geral</span>
@@ -816,16 +821,16 @@ export default function RedeNeuralPage() {
 
           {/* Active Providers */}
           <Card className="relative overflow-hidden border-0"
-            style={{ backgroundColor: "rgba(10,10,15,0.6)", border: "1px solid #3B82F60.12)" }}>
+            style={{ backgroundColor: "rgba(10,10,15,0.6)", border: "1px solid rgba(59, 130, 246, 0.12)" }}>
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#3B82F6]/30 to-transparent" />
             <CardHeader>
-              <CardTitle className="text-sm font-mono font-medium tracking-wider uppercase" style={{ color: "#3B82F60.7)" }}>Provedores de IA Ativos</CardTitle>
+              <CardTitle className="text-sm font-mono font-medium tracking-wider uppercase" style={{ color: "rgba(59, 130, 246, 0.7)" }}>Provedores de IA Ativos</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {providers
                 .filter((p) => p.is_enabled)
                 .map((provider) => (
-                  <div key={provider.id} className="flex items-center justify-between p-2 rounded-md" style={{ backgroundColor: "#3B82F60.03)", border: "1px solid #3B82F60.08)" }}>
+                  <div key={provider.id} className="flex items-center justify-between p-2 rounded-md" style={{ backgroundColor: "rgba(59, 130, 246, 0.03)", border: "1px solid rgba(59, 130, 246, 0.08)" }}>
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full" style={{ backgroundColor: "#22c55e", boxShadow: "0 0 8px rgba(34,197,94,0.6)" }} />
                       <span className="text-sm font-mono" style={{ color: "rgba(255,255,255,0.7)" }}>{provider.display_name}</span>
