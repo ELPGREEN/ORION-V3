@@ -83,10 +83,15 @@ const _snapshots: Map<string, ModelMetricSnapshot[]> = new Map();
 const _baselines: Map<string, Record<string, number>> = new Map();
 const _degradations: PerformanceDegradation[] = [];
 const _experiments: Map<string, Experiment> = new Map();
+const _movingAverages: Map<string, Map<string, number[]>> = new Map();
+const _lastAlertTs: Map<string, Map<string, number>> = new Map();
 let _lastDataQuality: DataQualityReport | null = null;
+
 const MAX_SNAPSHOTS_PER_MODEL = 500;
 const MAX_DEGRADATIONS = 1000;
 const MAX_EXPERIMENTS = 100;
+const MOVING_AVERAGE_WINDOW = 10;
+const ALERT_COOLDOWN_MS = 600_000; // 10 minutes
 
 /** Get monitoring state */
 export function getMonitoringState(): MonitoringState {
@@ -118,7 +123,19 @@ export function setBaseline(modelName: string, metrics: Record<string, number>):
   _baselines.set(modelName, { ...metrics });
 }
 
-/** Check for performance degradation against baseline */
+/**
+ * Manually or automatically update the baseline if a new normal is detected.
+ * This prevents persistent alerts when environment conditions change permanently.
+ */
+export function maybeRebaseline(modelName: string, newMetrics: Record<string, number>): void {
+  const currentBaseline = _baselines.get(modelName) || {};
+  _baselines.set(modelName, { ...currentBaseline, ...newMetrics });
+  // Clear moving averages for this model to start fresh
+  _movingAverages.delete(modelName);
+  console.log(`[tf-model-monitoring] Re-baselined ${modelName}:`, newMetrics);
+}
+
+/** Check for performance degradation against baseline with moving average smoothing and alert cooldowns */
 export function checkDegradation(
   modelName: string,
   currentMetrics: Record<string, number>,
@@ -128,19 +145,40 @@ export function checkDegradation(
   if (!baseline) return [];
 
   const degradations: PerformanceDegradation[] = [];
+  const now = Date.now();
+
+  // Initialize model state if missing
+  if (!_movingAverages.has(modelName)) _movingAverages.set(modelName, new Map());
+  if (!_lastAlertTs.has(modelName)) _lastAlertTs.set(modelName, new Map());
+
+  const modelAverages = _movingAverages.get(modelName)!;
+  const modelAlerts = _lastAlertTs.get(modelName)!;
 
   for (const [metric, baselineValue] of Object.entries(baseline)) {
-    const current = currentMetrics[metric];
-    if (current === undefined || baselineValue === 0) continue;
+    const rawCurrent = currentMetrics[metric];
+    if (rawCurrent === undefined || baselineValue === 0) continue;
 
-    // For accuracy-like metrics, lower is worse
-    // For error/latency-like metrics, higher is worse
+    // 1. Update Moving Average
+    if (!modelAverages.has(metric)) modelAverages.set(metric, []);
+    const window = modelAverages.get(metric)!;
+    window.push(rawCurrent);
+    if (window.length > MOVING_AVERAGE_WINDOW) window.shift();
+
+    const currentAvg = window.reduce((a, b) => a + b, 0) / window.length;
+
+    // 2. Check for Degradation using smoothed value
     const isHigherBetter = ["accuracy", "precision", "recall", "f1"].includes(metric);
     const degradation = isHigherBetter
-      ? ((baselineValue - current) / baselineValue) * 100
-      : ((current - baselineValue) / baselineValue) * 100;
+      ? ((baselineValue - currentAvg) / baselineValue) * 100
+      : ((currentAvg - baselineValue) / baselineValue) * 100;
 
     if (degradation > thresholdPercent) {
+      // 3. Apply Alert Cooldown
+      const lastAlert = modelAlerts.get(metric) || 0;
+      if (now - lastAlert < ALERT_COOLDOWN_MS) {
+        continue; // Still on cooldown for this metric
+      }
+
       const severity: PerformanceDegradation["severity"] =
         degradation > 30 ? "severe" : degradation > 15 ? "moderate" : "minor";
 
@@ -148,13 +186,15 @@ export function checkDegradation(
         modelName,
         metric,
         baseline: baselineValue,
-        current,
+        current: Math.round(currentAvg * 100) / 100,
         degradationPercent: Math.round(degradation * 100) / 100,
         severity,
         detectedAt: new Date().toISOString(),
       };
+
       degradations.push(entry);
       _degradations.push(entry);
+      modelAlerts.set(metric, now);
 
       if (_degradations.length > MAX_DEGRADATIONS) {
         _degradations.shift();

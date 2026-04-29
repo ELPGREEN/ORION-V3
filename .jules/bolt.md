@@ -15,3 +15,7 @@
 ## 2026-04-29 — [Hot-Path Regex Optimization]
 Learning: Re-compiling RegExps inside high-frequency functions (like an NLP analyzer on every user input/voice chunk) causes avoidable CPU cycles. Module-level hoisting and matchAll/match optimizations provide measurable latency reduction.
 Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over manual while/exec loops for clarity and potential engine optimization. Eliminate redundant .test()/.match() double-taps.
+
+## 2026-06-26 - [Adaptive Performance Monitoring]
+**Learning:** Static performance baselines lead to "alert fatigue" in dynamic environments. Transient jitter (e.g., network spikes) can trigger false positives if monitoring isn't smoothed. Moving average windows and per-metric cooldowns are essential for stable system observability.
+**Action:** Implemented Moving Average (window=10) and Alert Cooldown (10min) in `tf-model-monitoring.ts`. Added `maybeRebaseline` to allow the system to adapt to "new normals" without manual configuration changes.
