@@ -33,6 +33,7 @@ import { VS, processFrame, type Region, type MotionData } from "./useVisionProce
 import { useSuperNetWS } from "./useSuperNetWS";
 import { useOrionReasoning } from "./useOrionReasoning";
 import { useWakeWord } from "./useWakeWord";
+import { initVoiceIdentityListener } from "@/lib/neural/orion-ai-client";
 import { CameraPiP, BoundingBoxOverlay } from "./VisionOverlayComponents";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
 import { FaceScannerOverlay } from "./FaceScannerOverlay";
@@ -220,6 +221,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   useEffect(() => {
     interimTranscriptRef.current = setInterimTranscript;
     (window as any).__orion_setInterimTranscript = setInterimTranscript;
+    initVoiceIdentityListener();
   }, []);
 
   // ═══ SINGLE consolidated interim/clear transcript listeners ═══

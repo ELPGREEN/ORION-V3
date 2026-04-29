@@ -68,7 +68,11 @@ const AUTH_CACHE_TTL = 60_000; // 60s
 
 // ═══ VOICE IDENTITY CACHE — persists across calls, updated by orion:voice-transcription event ═══
 let _cachedVoiceIdentity: string | undefined;
-if (typeof window !== "undefined") {
+let _voiceIdentityListenerAttached = false;
+
+export function initVoiceIdentityListener() {
+  if (_voiceIdentityListenerAttached || typeof window === "undefined") return;
+  _voiceIdentityListenerAttached = true;
   window.addEventListener("orion:voice-transcription", () => {
     _cachedVoiceIdentity = (window as any).__orionIdentityStatus || _cachedVoiceIdentity;
   });

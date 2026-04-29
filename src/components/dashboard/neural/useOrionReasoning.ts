@@ -70,8 +70,13 @@ async function prewarmModules(): Promise<void> {
   _preloadedModules.orionAIClient?.warmUp?.().catch?.(() => {});
 }
 
-// Pre-warm on module load (runs once per session)
-prewarmModules().catch(() => {});
+// Pre-warm is called lazily by the hook (not at module level to avoid TDZ)
+let _prewarmStarted = false;
+function lazyPrewarm() {
+  if (_prewarmStarted) return;
+  _prewarmStarted = true;
+  prewarmModules().catch(() => {});
+}
 
 export function useOrionReasoning(
   active: boolean, speak: (t: string, options?: { skipMicToggle?: boolean }) => Promise<void>, canvasRef: React.RefObject<HTMLCanvasElement | null>,
@@ -104,6 +109,9 @@ export function useOrionReasoning(
   // Always-fresh ref for `active` (camera state) — closure-stale bug fix
   const activeRef = useRef(active);
   useEffect(() => { activeRef.current = active; }, [active]);
+
+  // Lazy pre-warm modules on first mount (avoids TDZ during module evaluation)
+  useEffect(() => { lazyPrewarm(); }, []);
 
   /** Centralized cleanup — resets all processing flags. Use in try/finally. */
   const cleanupProcessing = useCallback(() => {
