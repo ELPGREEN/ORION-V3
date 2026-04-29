@@ -117,60 +117,6 @@ let _logCycleCounter = 0;
 let _lastLogTime = 0;
 const LOG_INTERVAL_MS = 60000;
 
-// ─── Persistence Keys ───
-const CONSCIOUSNESS_STATE_KEY = "orion_consciousness_state";
-const CONSCIOUSNESS_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 horas
-
-// ─── Persistence Functions ───
-
-interface PersistedConsciousnessState {
-  selfModel: SelfModelState | null;
-  lastPhi: number;
-  lastPLV: number;
-  cycleCount: number;
-  timestamp: number;
-}
-
-function persistConsciousnessState(): void {
-  if (typeof localStorage === "undefined") return;
-  try {
-    const state: PersistedConsciousnessState = {
-      selfModel: _selfModel,
-      lastPhi: _lastCycleResult?.phi ?? 0,
-      lastPLV: _workspace?.globalPLV ?? 0,
-      cycleCount: _workspace?.cycleCount ?? 0,
-      timestamp: Date.now(),
-    };
-    localStorage.setItem(CONSCIOUSNESS_STATE_KEY, JSON.stringify(state));
-  } catch { /* silent */ }
-}
-
-function restoreConsciousnessState(): boolean {
-  if (typeof localStorage === "undefined") return false;
-  try {
-    const raw = localStorage.getItem(CONSCIOUSNESS_STATE_KEY);
-    if (!raw) return false;
-    
-    const state: PersistedConsciousnessState = JSON.parse(raw);
-    
-    // Verifica se o estado nao expirou
-    if (Date.now() - state.timestamp > CONSCIOUSNESS_EXPIRY_MS) {
-      localStorage.removeItem(CONSCIOUSNESS_STATE_KEY);
-      return false;
-    }
-    
-    // Restaura self model se existir
-    if (state.selfModel) {
-      _selfModel = state.selfModel;
-      console.log("[Consciousness] Estado restaurado - Phi anterior:", state.lastPhi.toFixed(3));
-    }
-    
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 // ─── Types ───
 
 export interface HRLDecision {
@@ -369,11 +315,6 @@ const INTENT_GOAL_MAP: Record<string, string[]> = {
 // ─── Initialization ───
 
 function ensureInitialized(): void {
-  // Tenta restaurar estado anterior primeiro
-  if (!_selfModel && !_workspace) {
-    restoreConsciousnessState();
-  }
-  
   if (!_workspace) _workspace = createGlobalWorkspace();
   if (!_selfModel) _selfModel = createSelfModel();
   if (Object.keys(_gammaOscillators).length === 0) {
@@ -382,12 +323,6 @@ function ensureInitialized(): void {
     }
   }
   if (!_hrlState) _hrlState = initHRLState(["query_defined"]);
-}
-
-/** Forca inicializacao e restauracao de estado - chamar no boot da app */
-export function initConsciousness(): void {
-  ensureInitialized();
-  console.log("[Consciousness] Inicializado - SelfModel confidence:", _selfModel?.confidenceLevel.toFixed(2));
 }
 
 // ─── HRL: Plan + Select Sub-Goal ───
@@ -772,11 +707,6 @@ export function runConsciousnessBridge(
       gammaHealth: snapshot.gammaHealth,
       timestamp: snapshot.timestamp,
     };
-  }
-  
-  // Persiste estado a cada 10 ciclos para nao perder consciencia
-  if (_workspace && _workspace.cycleCount % 10 === 0) {
-    persistConsciousnessState();
   }
   _logCycleCounter++;
   const now = Date.now();

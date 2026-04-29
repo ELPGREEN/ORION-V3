@@ -44,114 +44,14 @@ export type SubsystemKey =
   | "industrial_inspection" | "industrial_palletization" | "industrial_adaptive_mfg"
   | "industrial_protocol_bridge" | "industrial_safety";
 
-// ─── Local Store with Supabase Sync ───
-
-let _failStoreCache: Record<string, SubsystemFail> | null = null;
-let _lastSyncTime = 0;
-const SYNC_INTERVAL_MS = 5 * 60 * 1000; // Sync every 5 minutes
+// ─── Local Store ───
 
 function getFailStore(): Record<string, SubsystemFail> {
-  if (_failStoreCache) return _failStoreCache;
-  try { 
-    _failStoreCache = JSON.parse(localStorage.getItem(FAIL_STORE_KEY) || "{}"); 
-    return _failStoreCache;
-  } catch { 
-    _failStoreCache = {};
-    return {}; 
-  }
+  try { return JSON.parse(localStorage.getItem(FAIL_STORE_KEY) || "{}"); } catch { return {}; }
 }
 
 function saveFailStore(store: Record<string, SubsystemFail>): void {
-  _failStoreCache = store;
   try { localStorage.setItem(FAIL_STORE_KEY, JSON.stringify(store)); } catch {}
-  
-  // Sync to Supabase periodically
-  const now = Date.now();
-  if (now - _lastSyncTime > SYNC_INTERVAL_MS) {
-    _lastSyncTime = now;
-    syncFailStoreToSupabase(store).catch(() => {});
-  }
-}
-
-async function syncFailStoreToSupabase(store: Record<string, SubsystemFail>): Promise<void> {
-  try {
-    const entries = Object.entries(store)
-      .filter(([_, v]) => v.count > 0)
-      .map(([subsystem, data]) => ({
-        subsystem,
-        error_count: data.count,
-        last_error: data.lastError,
-        last_ts: new Date(data.lastTs).toISOString(),
-        jules_triggered: data.julesTriggered,
-        session_id: data.lastSessionId || null,
-      }));
-    
-    if (entries.length === 0) return;
-    
-    // Upsert subsystem failures
-    for (const entry of entries) {
-      await supabase
-        .from("neural_learning_data")
-        .upsert({
-          input_text: `[jules_fail_store] ${entry.subsystem}`,
-          output_text: JSON.stringify(entry),
-          interaction_type: "jules_subsystem_tracking",
-          quality_score: entry.error_count > 3 ? 0.2 : 0.5,
-          metadata: entry,
-        }, { onConflict: "input_text" })
-        .select()
-        .single();
-    }
-    console.log("[Jules-Trigger] Synced", entries.length, "subsystem states to Supabase");
-  } catch (e) {
-    console.warn("[Jules-Trigger] Sync to Supabase failed:", e);
-  }
-}
-
-/** Restaura estado de falhas do Supabase (chamar no boot) */
-export async function restoreFailStoreFromSupabase(): Promise<void> {
-  try {
-    const { data } = await supabase
-      .from("neural_learning_data")
-      .select("input_text, output_text, metadata")
-      .eq("interaction_type", "jules_subsystem_tracking")
-      .order("created_at", { ascending: false })
-      .limit(50);
-    
-    if (!data || data.length === 0) return;
-    
-    const store = getFailStore();
-    let restored = 0;
-    
-    for (const row of data) {
-      try {
-        const meta = row.metadata as any;
-        if (!meta?.subsystem) continue;
-        
-        // So restaura se nao tiver dados locais mais recentes
-        const local = store[meta.subsystem];
-        const remoteTs = new Date(meta.last_ts).getTime();
-        
-        if (!local || remoteTs > local.lastTs) {
-          store[meta.subsystem] = {
-            count: meta.error_count || 0,
-            lastError: meta.last_error || "",
-            lastTs: remoteTs,
-            julesTriggered: meta.jules_triggered || false,
-            lastSessionId: meta.session_id,
-          };
-          restored++;
-        }
-      } catch {}
-    }
-    
-    if (restored > 0) {
-      saveFailStore(store);
-      console.log("[Jules-Trigger] Restaurados", restored, "estados de subsistema do Supabase");
-    }
-  } catch (e) {
-    console.warn("[Jules-Trigger] Restore from Supabase failed:", e);
-  }
 }
 
 // ─── Cooldown Check (DB-based) ───

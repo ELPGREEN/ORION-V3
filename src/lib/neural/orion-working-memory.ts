@@ -47,10 +47,9 @@ const WM_CAPACITY = 12; // ~7±2 chunks, extended for AI
 const PHONOLOGICAL_BUFFER_SIZE = 5;
 const INTERRUPT_THRESHOLD = 3; // Suppress after 3 repeats in 30s
 const INTERRUPT_WINDOW_MS = 30_000;
-const DECAY_RATE = 0.005; // Priority decay per second (reduzido para maior persistencia)
-const MIN_PRIORITY = 0.02;
+const DECAY_RATE = 0.02; // Priority decay per second
+const MIN_PRIORITY = 0.05;
 const WM_STORAGE_KEY = "orion_working_memory";
-const WM_SESSION_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 horas em vez de 10 minutos
 
 // ─── State ───
 let wmState: WorkingMemoryState = {
@@ -68,20 +67,15 @@ export function initWorkingMemory(): void {
     const stored = localStorage.getItem(WM_STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored) as WorkingMemoryState;
-      // Restore if within session expiry window (4 hours)
+      // Only restore if recent (< 10 min)
       const newest = parsed.items.reduce((max, i) => Math.max(max, i.timestamp), 0);
-      if (Date.now() - newest < WM_SESSION_EXPIRY_MS) {
+      if (Date.now() - newest < 10 * 60 * 1000) {
         wmState = parsed;
         applyDecay();
-        console.log("[WorkingMemory] Restaurado estado anterior com", wmState.items.length, "itens");
         return;
-      } else {
-        console.log("[WorkingMemory] Estado expirado, iniciando novo");
       }
     }
-  } catch (e) {
-    console.warn("[WorkingMemory] Erro ao restaurar estado:", e);
-  }
+  } catch { /* fresh start */ }
   
   wmState = {
     items: [],
