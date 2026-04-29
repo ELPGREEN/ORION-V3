@@ -3,6 +3,8 @@
  * Buffers speech locally and sends the FULL utterance after silence,
  * avoiding cut-off phrases and hallucinated chunk merges.
  *
+ * v3: Uses AudioWorkletProcessor (replaces deprecated ScriptProcessorNode)
+ *     with automatic fallback to ScriptProcessorNode for older browsers.
  * v2: Supports pause/resume to keep mic stream open continuously
  * without AudioContext teardown (eliminates mic cycling sounds).
  */
@@ -78,6 +80,46 @@ function calculateRMS(buffer: Float32Array): number {
   return Math.sqrt(sum / buffer.length);
 }
 
+/**
+ * Create AudioWorklet-based audio processor (preferred, non-deprecated)
+ */
+async function createAudioWorkletProcessor(
+  audioContext: AudioContext
+): Promise<AudioWorkletNode | null> {
+  try {
+    if (!audioContext.audioWorklet) return null;
+
+    // Create processor code as blob URL (no external file needed)
+    const processorCode = `
+      const SPEECH_RMS_THRESHOLD = 0.0025;
+      class OrionSTTProcessor extends AudioWorkletProcessor {
+        constructor() { super(); }
+        process(inputs, _outputs, _parameters) {
+          const input = inputs[0];
+          if (!input || !input[0]) return true;
+          const frame = input[0];
+          let rms = 0;
+          for (let i = 0; i < frame.length; i++) rms += frame[i] * frame[i];
+          rms = Math.sqrt(rms / frame.length);
+          this.port.postMessage({ type: 'frame', rms, audio: Array.from(frame) });
+          return true;
+        }
+      }
+      registerProcessor('orion-stt-processor', OrionSTTProcessor);
+    `;
+
+    const blob = new Blob([processorCode], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    await audioContext.audioWorklet.addModule(url);
+    URL.revokeObjectURL(url);
+
+    return new AudioWorkletNode(audioContext, 'orion-stt-processor');
+  } catch (err) {
+    console.warn('[GCP-STT] AudioWorklet init failed, falling back to ScriptProcessorNode:', err);
+    return null;
+  }
+}
+
 export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession {
   const {
     languageCode = "pt-BR",
@@ -92,6 +134,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   let audioContext: AudioContext | null = null;
   let mediaStream: MediaStream | null = null;
   let processor: ScriptProcessorNode | null = null;
+  let workletNode: AudioWorkletNode | null = null;
   let source: MediaStreamAudioSourceNode | null = null;
   let active = false;
   let paused = false;
@@ -102,6 +145,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
   let utteranceActive = false;
   let lastSpeechAt = 0;
   let utteranceStartedAt = 0;
+  let usingWorklet = false;
 
   const silenceDurationMs = DEFAULT_SILENCE_MS;
   const maxUtteranceMs = Math.max(18000, chunkIntervalMs * 10);
@@ -216,42 +260,82 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         return false;
       }
       source = audioContext.createMediaStreamSource(stream);
-      processor = audioContext.createScriptProcessor(PROCESSOR_BUFFER_SIZE, 1, 1);
 
-      processor.onaudioprocess = (e) => {
-        if (!active || paused) return;
+      // Try AudioWorklet first (modern, non-deprecated), fallback to ScriptProcessorNode
+      const worklet = await createAudioWorkletProcessor(audioContext);
+      if (worklet) {
+        usingWorklet = true;
+        workletNode = worklet;
 
-        const frame = new Float32Array(e.inputBuffer.getChannelData(0));
-        const rms = calculateRMS(frame);
-        const now = Date.now();
-        const isSpeech = rms >= SPEECH_RMS_THRESHOLD;
+        worklet.port.onmessage = (e) => {
+          if (!active || paused) return;
+          const { type, rms, audio } = e.data;
+          if (type !== 'frame') return;
 
-        if (isSpeech) {
-          if (!utteranceActive) {
-            utteranceActive = true;
-            utteranceStartedAt = now;
-            utteranceBuffers = [...preRollBuffers, frame];
-            onInterim?.("...");
-          } else {
+          const frame = new Float32Array(audio);
+          const isSpeech = rms >= SPEECH_RMS_THRESHOLD;
+          const now = Date.now();
+
+          if (isSpeech) {
+            if (!utteranceActive) {
+              utteranceActive = true;
+              utteranceStartedAt = now;
+              utteranceBuffers = [...preRollBuffers, frame];
+              onInterim?.("...");
+            } else {
+              utteranceBuffers.push(frame);
+            }
+            lastSpeechAt = now;
+          } else if (utteranceActive) {
             utteranceBuffers.push(frame);
+            const silenceElapsed = now - lastSpeechAt;
+            if (silenceElapsed >= silenceDurationMs && !sending) {
+              void flushUtterance(false);
+            }
           }
-          lastSpeechAt = now;
-        } else if (utteranceActive) {
-          // Keep trailing silence so the last phonemes are not clipped.
-          utteranceBuffers.push(frame);
+          pushPreRollFrame(frame);
+        };
 
-          // ⚡ Early-flush: don't wait for poll interval — fire as soon as silence threshold met
-          const silenceElapsed = now - lastSpeechAt;
-          if (silenceElapsed >= silenceDurationMs && !sending) {
-            void flushUtterance(false);
+        source.connect(workletNode);
+        workletNode.connect(audioContext.destination);
+        console.log("[GCP-STT] AudioWorklet processor active");
+      } else {
+        usingWorklet = false;
+        processor = audioContext.createScriptProcessor(PROCESSOR_BUFFER_SIZE, 1, 1);
+
+        processor.onaudioprocess = (e) => {
+          if (!active || paused) return;
+
+          const frame = new Float32Array(e.inputBuffer.getChannelData(0));
+          const rms = calculateRMS(frame);
+          const now = Date.now();
+          const isSpeech = rms >= SPEECH_RMS_THRESHOLD;
+
+          if (isSpeech) {
+            if (!utteranceActive) {
+              utteranceActive = true;
+              utteranceStartedAt = now;
+              utteranceBuffers = [...preRollBuffers, frame];
+              onInterim?.("...");
+            } else {
+              utteranceBuffers.push(frame);
+            }
+            lastSpeechAt = now;
+          } else if (utteranceActive) {
+            utteranceBuffers.push(frame);
+            const silenceElapsed = now - lastSpeechAt;
+            if (silenceElapsed >= silenceDurationMs && !sending) {
+              void flushUtterance(false);
+            }
           }
-        }
 
-        pushPreRollFrame(frame);
-      };
+          pushPreRollFrame(frame);
+        };
 
-      source.connect(processor);
-      processor.connect(audioContext.destination);
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+        console.log("[GCP-STT] ScriptProcessorNode fallback active (deprecated but functional)");
+      }
 
       active = true;
       paused = false;
@@ -274,7 +358,7 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
         signal.addEventListener("abort", stop, { once: true });
       }
 
-      console.log(`[GCP-STT] ⚡ Capture ON — silence: ${silenceDurationMs}ms, poll: ${FLUSH_POLL_MS}ms, early-flush: ON`);
+      console.log(`[GCP-STT] ⚡ Capture ON — ${usingWorklet ? "AudioWorklet" : "ScriptProcessor"} | silence: ${silenceDurationMs}ms, poll: ${FLUSH_POLL_MS}ms, early-flush: ON`);
       return true;
     } catch (err: any) {
       const msg = err?.message || String(err);
@@ -352,6 +436,10 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
     if (processor) {
       try { processor.disconnect(); } catch {}
       processor = null;
+    }
+    if (workletNode) {
+      try { workletNode.disconnect(); } catch {}
+      workletNode = null;
     }
     if (source) {
       try { source.disconnect(); } catch {}

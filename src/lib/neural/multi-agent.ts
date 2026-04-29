@@ -77,7 +77,7 @@ export interface AgentSocietyState {
 const ROLE_TO_NEURON: Record<AgentRole, number> = {
   leitura: 0, pesquisa: 1, construcao: 2, planejador: 3,
   supervisor: 4, critico: 5, refinador: 6, monitoramento: 7,
-  colaborador: 8, multimodal: 9, self_model: 10,
+  colaborador: 8, multimodal: 9, self_model: 10, feynman: 11,
 };
 
 const MEMORY_TTL: Record<MemoryLevel, number> = {
@@ -106,7 +106,7 @@ export function createDefaultAgents(): AgentState[] {
 
   const AGENT_TOOLS: Record<AgentRole, string[]> = {
     leitura: ["read_code", "read_docs", "read_logs"],
-    pesquisa: ["web_search", "legal_search", "neural_search", "kb_search", "rag检索"],
+    pesquisa: ["web_search", "legal_search", "neural_search", "kb_search", "rag_search"],
     construcao: ["generate_code", "generate_sql", "generate_doc", "generate_edge_fn"],
     planejador: ["decompose_task", "create_dag", "plan_execute"],
     supervisor: ["orchestrate", "route", "merge", "escalate", "cascade_llm"],
@@ -116,6 +116,7 @@ export function createDefaultAgents(): AgentState[] {
     colaborador: ["request_human", "await_approval"],
     multimodal: ["transcribe", "clip_embed", "vision_ocr"],
     self_model: ["reflect", "metacognition", "autobiographical_memory"],
+    feynman: ["simplify_explanation", "detect_knowledge_gaps", "conceptual_bridge"],
   };
 
   return Object.entries(AGENT_TOOLS).map(([role, tools], i) => ({
@@ -129,11 +130,11 @@ export function createDefaultAgents(): AgentState[] {
   }));
 }
 
-/** Initialize society state with STDP binding for 10 agent neurons */
+/** Initialize society state with STDP binding for 12 agent neurons */
 export function createAgentSociety(): AgentSocietyState {
   return {
     agents: createDefaultAgents(),
-    binding: initBindingState(10),
+    binding: initBindingState(12),
     coActivationLog: [],
   };
 }

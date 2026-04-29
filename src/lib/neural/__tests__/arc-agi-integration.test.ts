@@ -59,7 +59,7 @@ describe("ARC-AGI Integration Tests", () => {
 
   it("should integrate RAG with agents", () => {
     const agents = createDefaultAgents();
-    expect(agents.length).toBe(11);
+    expect(agents.length).toBe(12);
     
     // Find the pesquisa agent (research)
     const pesquisaAgent = agents.find(a => a.role === "pesquisa");

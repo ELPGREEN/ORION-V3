@@ -8,7 +8,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { OPENROUTER_FREE_MODELS, toCascadeFormat } from "./openrouter-free-models";
+import { OPENROUTER_FREE_MODELS, toCascadeFormat, CASCADE_DEADLINE_BUDGET_MS } from "./openrouter-free-models";
 
 export type LLMProvider =
   | "openai"
@@ -246,8 +246,14 @@ export async function chatWithCascade(
   }
 
   const errors: string[] = [];
+  const cascadeDeadline = Date.now() + CASCADE_DEADLINE_BUDGET_MS;
 
   for (const step of cascade) {
+    if (Date.now() >= cascadeDeadline) {
+      errors.push("cascade deadline exceeded");
+      break;
+    }
+
     // Skip if circuit is open
     if (isCircuitOpen(step.provider, step.model)) {
       errors.push(`${step.provider}:${step.model} circuit open`);

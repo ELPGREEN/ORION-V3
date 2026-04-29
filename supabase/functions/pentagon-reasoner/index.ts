@@ -89,16 +89,19 @@ const FEYNMAN_TOOL = {
 };
 
 // Phase 2: Unified cascade — mirrors src/lib/integrations/openrouter-free-models.ts
-// Optimized timeouts: aggressive for fast models, generous for reasoning
+// Optimized timeouts to fit within 24s budget (80% of Pentagon's 30s maxDuration)
 const MODEL_CASCADE = [
-  { model: "mistralai/mistral-small-3.1-24b-instruct:free", timeout: 2500 },
+  { model: "mistralai/mistral-small-3.1-24b-instruct:free", timeout: 3000 },
   { model: "nvidia/nemotron-nano-9b-v2:free", timeout: 3000 },
   { model: "tencent/hy3-preview:free", timeout: 4000 },
-  { model: "openrouter/free", timeout: 6000 },
-  { model: "deepseek/deepseek-r1:free", timeout: 8000 },
-  { model: "qwen/qwen3-coder:free", timeout: 6000 },
-  { model: "meta-llama/llama-3.3-70b-instruct:free", timeout: 8000 },
+  { model: "openrouter/free", timeout: 5000 },
+  { model: "deepseek/deepseek-r1:free", timeout: 6000 },
+  { model: "qwen/qwen3-coder:free", timeout: 4000 },
+  { model: "meta-llama/llama-3.3-70b-instruct:free", timeout: 5000 },
 ];
+
+// Cascade deadline budget: 24s hard limit (80% of 30s maxDuration)
+const CASCADE_DEADLINE_MS = 24000;
 
 async function callOpenRouter(
   model: string,
@@ -178,7 +181,12 @@ Deno.serve(async (req) => {
     if (mode === "feynman_simplification") {
       const userPayload = `Raciocínio Original: ${originalRationale}\n\nQuery do Usuário: ${query}`;
       let parsed: any = null;
+      const deadline = Date.now() + CASCADE_DEADLINE_MS;
       for (const step of MODEL_CASCADE) {
+        if (Date.now() >= deadline) {
+          console.warn(`[pentagon-reasoner] Cascade deadline reached during Feynman, stopping`);
+          break;
+        }
         parsed = await callOpenRouter(step.model, OPENROUTER_API_KEY, userPayload, FEYNMAN_PROMPT, FEYNMAN_TOOL, "emit_feynman_refinement", step.timeout);
         if (parsed) break;
       }
@@ -201,7 +209,12 @@ Deno.serve(async (req) => {
 
     let parsed: any = null;
     let usedModel = "";
+    const deadline = Date.now() + CASCADE_DEADLINE_MS;
     for (const step of MODEL_CASCADE) {
+      if (Date.now() >= deadline) {
+        console.warn(`[pentagon-reasoner] Cascade deadline reached, stopping`);
+        break;
+      }
       parsed = await callOpenRouter(step.model, OPENROUTER_API_KEY, userPayload, SYSTEM_PROMPT, REASONING_TOOL, "emit_reasoning_plan", step.timeout);
       if (parsed) {
         usedModel = step.model;

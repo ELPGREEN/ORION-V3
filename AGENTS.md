@@ -151,7 +151,7 @@ const cascade = toCascadeFormat(); // → [{ provider: "openrouter", model: "...
 
 | File | Line | Issue | Status |
 |------|------|-------|--------|
-| `src/lib/voice/voiceConfidenceFilter.ts` | 78 | Invalid syntax: `#` instead of `//` in comment | **FIXED** |
+| `src/lib/voice/voiceConfidenceFilter.ts` | 78 | Invalid syntax: `#` instead of `//` in comment | **REMOVED** (unused, referência removida) |
 
 ## Project Structure
 

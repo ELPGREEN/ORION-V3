@@ -57,27 +57,35 @@ const mockProposals = [
   },
 ];
 
-vi.mock("@/integrations/supabase/client", () => ({
-  supabase: {
-    from: vi.fn((table: string) => {
-      if (table === "neural_evolution_proposals") {
-        return createChain({ data: mockProposals, error: null });
-      }
-      if (table === "neural_prompt_versions") {
-        return createChain({ data: [], count: 0, error: null });
-      }
-      return createChain({ data: [], count: 0, error: null });
-    }),
-    functions: {
-      invoke: vi.fn((fn: string) => {
-        if (fn === "neural-evolution") {
-          return Promise.resolve({ data: { experiments: [] }, error: null });
+vi.mock("@/integrations/supabase/client", () => {
+  const mockChannel = {
+    on: vi.fn(() => mockChannel),
+    subscribe: vi.fn(() => mockChannel),
+  };
+  return {
+    supabase: {
+      from: vi.fn((table: string) => {
+        if (table === "neural_evolution_proposals") {
+          return createChain({ data: mockProposals, error: null });
         }
-        return Promise.resolve({ data: {}, error: null });
+        if (table === "neural_prompt_versions") {
+          return createChain({ data: [], count: 0, error: null });
+        }
+        return createChain({ data: [], count: 0, error: null });
       }),
+      channel: vi.fn(() => mockChannel),
+      removeChannel: vi.fn(),
+      functions: {
+        invoke: vi.fn((fn: string) => {
+          if (fn === "neural-evolution") {
+            return Promise.resolve({ data: { experiments: [] }, error: null });
+          }
+          return Promise.resolve({ data: {}, error: null });
+        }),
+      },
     },
-  },
-}));
+  };
+});
 
 describe("NeuralEvolutionPanel", () => {
   beforeEach(() => {
