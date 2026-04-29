@@ -917,7 +917,7 @@ export function useNeuralVoice(
           }
 
           const session = createGCPSTTSession({
-            languageCode: "pt-BR", onInterim: (text) => { if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false); },
+            languageCode: "pt-BR", onInterim: (text) => { if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false); try { window.dispatchEvent(new CustomEvent("orion:voice-interim-transcription", { detail: { text } })); } catch {} },
             sampleRate: 16000,
             chunkIntervalMs: gcpChunkIntervalMs,
             onFinal: (text, confidence) => {

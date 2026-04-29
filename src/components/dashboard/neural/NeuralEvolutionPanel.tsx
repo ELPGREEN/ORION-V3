@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { callEvolution } from "@/lib/neural/ai-service";
 import { useAuth } from "@/contexts/AuthContext";
 
+import { useNeuralConfig } from "@/hooks/useNeuralConfig";
 interface Proposal {
   id: string;
   proposal_type: string;
@@ -101,6 +102,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export function NeuralEvolutionPanel() {
+  const { config, updateConfig } = useNeuralConfig();
   const { toast } = useToast();
   const { user } = useAuth();
   const [proposals, setProposals] = useState<Proposal[]>([]);
@@ -499,6 +501,27 @@ export function NeuralEvolutionPanel() {
               {analyzing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
               {analyzing ? "Analisando..." : "Analisar Agora"}
             </Button>
+          </div>
+
+          <div className="mt-4 p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-lg flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="text-[11px] font-medium flex items-center gap-1.5">
+                <RefreshCw className={`h-3 w-3 ${config?.evolution_via_feedback ? "text-cyan-500 animate-spin" : "text-muted-foreground"}`} />
+                Evolução Orgânica (via Feedback)
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Ignora propostas manuais e evolui protocolos em tempo real com base nas correções do usuário
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className={`text-[9px] ${config?.evolution_via_feedback ? "text-cyan-500 border-cyan-500/30 bg-cyan-500/5" : ""}`}>
+                {config?.evolution_via_feedback ? "ATIVO" : "INATIVO"}
+              </Badge>
+              <Checkbox
+                checked={!!config?.evolution_via_feedback}
+                onCheckedChange={(checked) => updateConfig({ evolution_via_feedback: !!checked })}
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
