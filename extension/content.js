@@ -1358,6 +1358,11 @@
         break;
       case "ORION_NOTIFICATION":
         showNotification(message.text, message.notifType || "info"); break;
+      case "ORION_VOICE_TRANSCRIPTION":
+        if (overlayEl && !overlayEl.classList.contains("hidden")) {
+          displayTranscription(message.transcription || message.text || "");
+        }
+        break;
     }
     sendResponse({ ok: true });
     return true;

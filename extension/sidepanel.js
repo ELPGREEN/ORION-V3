@@ -1,10 +1,20 @@
 /**
- * Orion Extension v5.4 — Side Panel Logic
+ * Orion Extension v5.6 — Side Panel Logic
  * Accordion layout, voice commands, media, search, notes, bookmarks, history.
+ * Credentials: Secure config via chrome.storage (no hardcoded keys)
  */
 
-const SUPABASE_URL = "https://dlwafedtlvbvuoaopvsl.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsd2FmZWR0bHZidnVvYW9wdnNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MDI0MjEsImV4cCI6MjA4NDQ3ODQyMX0.ohz98f-MO3VNYoR6dth3zYhYqmviFs60ytJAQCwfJNk";
+import { getSupabaseConfig, APP_BASE } from "./config.js";
+
+let SUPABASE_URL, SUPABASE_ANON_KEY;
+
+// Lazy init credentials
+async function ensureConfig() {
+  if (SUPABASE_URL) return;
+  const cfg = await getSupabaseConfig();
+  SUPABASE_URL = cfg.url;
+  SUPABASE_ANON_KEY = cfg.key;
+}
 
 // ─── DOM ───
 const messagesEl = document.getElementById("sp-messages");
@@ -47,6 +57,7 @@ document.querySelectorAll(".sp-accordion-header").forEach((header) => {
 // ─── Auth ───
 // ═══════════════════════════════════════════════════
 async function supabaseAuth(endpoint, body) {
+  await ensureConfig();
   const res = await fetch(`${SUPABASE_URL}/auth/v1/${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
@@ -229,23 +240,25 @@ function handleWebSearch(query) {
 
   // Also try edge function for inline results
   if (authSession?.access_token) {
-    fetch(`${SUPABASE_URL}/functions/v1/pesquisa-unificada`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authSession.access_token}`,
-        apikey: SUPABASE_ANON_KEY,
-      },
-      body: JSON.stringify({ query, sources: ["web"], max_results: 3 }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.results?.length > 0) {
-          const summary = data.results.slice(0, 3).map((r, i) => `${i + 1}. ${r.title}`).join("\n");
-          addMessage(`📋 Resultados:\n${summary}`, "assistant");
-        }
+    ensureConfig().then(() =>
+      fetch(`${SUPABASE_URL}/functions/v1/pesquisa-unificada`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authSession.access_token}`,
+          apikey: SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ query, sources: ["web"], max_results: 3 }),
       })
-      .catch(() => {});
+        .then((r) => r.json())
+        .then((data) => {
+          if (data?.results?.length > 0) {
+            const summary = data.results.slice(0, 3).map((r, i) => `${i + 1}. ${r.title}`).join("\n");
+            addMessage(`📋 Resultados:\n${summary}`, "assistant");
+          }
+        })
+        .catch(() => {})
+    );
   }
 }
 

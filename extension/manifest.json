@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Orion — Assistente Neural",
-  "version": "5.4.0",
+  "version": "5.6.0",
   "description": "Assistente IA neural multi-agente com Vertex AI, visão, fala, raciocínio, pesquisa web, scraping, holographic video, pro-active research assistant, side panel, tradução, notas, bookmarks, anti-alucinação, YouTube PiP, PDF/image upload e auto-minimize.",
   "permissions": [
     "activeTab",

@@ -1,21 +1,40 @@
 /**
- * Orion Extension v5.5 — Background Service Worker
+ * Orion Extension v5.6 — Background Service Worker
  * Full integration with neural-ops via Supabase Edge Functions.
  *
  * SECURITY: Integrated Policy Guard (NemoClaw Style)
  * ARCHITECTURE: Blueprint System
  * INTELLIGENCE: Quantum Inference Routing
  * PROACTIVITY: Lifecycle Monitoring
+ * CREDENTIALS: Secure config via chrome.storage (no hardcoded keys)
  */
 
 import { validateAction } from "./policies.js";
 import { classifyActionToTask, getBlueprint } from "./agents.js";
 import { routeQuery } from "./router.js";
 import { onTabUpdated } from "./proactive.js";
+import { APP_BASE, getSupabaseConfig, receiveConfig } from "./config.js";
+import { initMirror, sendToApp } from "./mirror.js";
+
+// Initialize command mirror on startup
+initMirror();
 
 const APP_BASE = "https://www.iasofthub.com";
-const SUPABASE_URL = "https://dlwafedtlvbvuoaopvsl.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsd2FmZWR0bHZidnVvYW9wdnNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MDI0MjEsImV4cCI6MjA4NDQ3ODQyMX0.ohz98f-MO3VNYoR6dth3zYhYqmviFs60ytJAQCwfJNk";
+
+// Credentials fetched securely from main app on first use
+let _supabaseConfig = null;
+async function getSupabaseConfig() {
+  if (_supabaseConfig) return _supabaseConfig;
+  try {
+    const resp = await fetch(`${APP_BASE}/api/config`);
+    _supabaseConfig = await resp.json();
+  } catch {
+    // Fallback: read from chrome storage (set by main app via extension bridge)
+    const stored = await chrome.storage.local.get(["supabaseUrl", "supabaseAnonKey"]);
+    _supabaseConfig = { url: stored.supabaseUrl, key: stored.supabaseAnonKey };
+  }
+  return _supabaseConfig;
+}
 
 // State
 let orionState = {
@@ -26,6 +45,15 @@ let orionState = {
 
 // ═══ Proactive Listeners ═══
 chrome.tabs.onUpdated.addListener(onTabUpdated);
+
+// ═══ Config Sync from Main App ═══
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "ORION_PUSH_CONFIG") {
+    receiveConfig({ url: message.supabaseUrl, key: message.supabaseAnonKey });
+    sendResponse({ ok: true });
+    return false;
+  }
+});
 
 // ═══ Policy Enforcement Helper ═══
 async function secureAction(action, tab, data = {}) {
