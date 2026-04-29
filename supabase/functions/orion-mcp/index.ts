@@ -4,6 +4,8 @@
  * Exposes tools similar to OpenCode for self-programming
  * 
  * MCP allows AI models to call tools/actions directly
+ * Integrated with OpenRouter for LLM-powered tool execution
+ * Models: openrouter/free, tencent/hy3-preview:free, deepseek/deepseek-r1
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -13,6 +15,15 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// ═══ OpenRouter Configuration ═══
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1";
+const MCP_DEFAULT_MODEL = "tencent/hy3-preview:free";
+const MCP_FALLBACK_MODELS = [
+  "openrouter/free",
+  "deepseek/deepseek-r1",
+  "meta-llama/llama-3.3-70b-instruct",
+];
 
 interface MCPTool {
   name: string;
@@ -232,6 +243,142 @@ const ORION_TOOLS: MCPTool[] = [
   },
 ];
 
+// ═══ OpenRouter LLM Integration ═══
+
+interface OpenRouterMessage {
+  role: "system" | "user" | "assistant" | "tool";
+  content: string;
+}
+
+interface OpenRouterToolDefinition {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters: {
+      type: "object";
+      properties: Record<string, unknown>;
+      required?: string[];
+    };
+  };
+}
+
+function convertMCPToolToOpenRouter(tool: typeof ORION_TOOLS[0]): OpenRouterToolDefinition {
+  return {
+    type: "function",
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: {
+        type: "object",
+        properties: tool.inputSchema.properties,
+        required: tool.inputSchema.required,
+      },
+    },
+  };
+}
+
+async function callOpenRouterLLM(
+  messages: OpenRouterMessage[],
+  tools?: OpenRouterToolDefinition[],
+  model?: string
+): Promise<{ content: string; toolCalls?: Array<{ id: string; function: { name: string; arguments: string } }> }> {
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
+  if (!apiKey) {
+    throw new Error("OPENROUTER_API_KEY not configured in Supabase secrets");
+  }
+
+  const selectedModel = model || MCP_DEFAULT_MODEL;
+
+  const body: Record<string, unknown> = {
+    model: selectedModel,
+    messages,
+    max_tokens: 4096,
+    temperature: 0.7,
+  };
+
+  if (tools && tools.length > 0) {
+    body.tools = tools;
+  }
+
+  const response = await fetch(`${OPENROUTER_API_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+      "HTTP-Referer": "https://orion-ai.com",
+      "X-Title": "Orion MCP Server",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  const choice = data.choices?.[0]?.message;
+
+  return {
+    content: choice?.content || "",
+    toolCalls: choice?.tool_calls,
+  };
+}
+
+async function callOpenRouterWithTools(
+  query: string,
+  systemPrompt: string = "You are Orion AI, an intelligent assistant with access to powerful tools."
+): Promise<{ content: string; toolExecutions: Array<{ tool: string; result: string }> }> {
+  const messages: OpenRouterMessage[] = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: query },
+  ];
+
+  const tools = ORION_TOOLS.map(convertMCPToolToOpenRouter);
+  const toolExecutions: Array<{ tool: string; result: string }> = [];
+
+  // First LLM call with tools available
+  const response = await callOpenRouterLLM(messages, tools);
+
+  // If LLM requested tool calls, execute them
+  if (response.toolCalls && response.toolCalls.length > 0) {
+    for (const toolCall of response.toolCalls) {
+      const toolName = toolCall.function.name;
+      const toolArgs = JSON.parse(toolCall.function.arguments || "{}");
+
+      messages.push({
+        role: "assistant",
+        content: response.content,
+      });
+
+      // Execute the tool
+      const toolResult = await handleToolCall(
+        { name: toolName, arguments: toolArgs },
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+
+      const resultText = toolResult.result
+        ? JSON.stringify(toolResult.result)
+        : toolResult.error?.message || "No result";
+
+      toolExecutions.push({ tool: toolName, result: resultText });
+
+      messages.push({
+        role: "tool",
+        content: resultText,
+      });
+    }
+
+    // Final LLM call with tool results
+    const finalResponse = await callOpenRouterLLM(messages);
+    return { content: finalResponse.content, toolExecutions };
+  }
+
+  return { content: response.content, toolExecutions: [] };
+}
+
 // ═══ MCP Request Handlers ═══
 
 function handleToolsList(): MCPResponse {
@@ -426,7 +573,58 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         status: "ok", 
         tools: ORION_TOOLS.length,
-        version: "1.0.0"
+        version: "1.0.0",
+        openrouter: !!Deno.env.get("OPENROUTER_API_KEY"),
+        defaultModel: MCP_DEFAULT_MODEL,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // OpenRouter MCP chat endpoint - LLM with automatic tool calling
+    if (url.includes("/mcp/chat")) {
+      const body = await req.json() as { query: string; systemPrompt?: string; model?: string };
+      
+      if (!body.query) {
+        return new Response(JSON.stringify({ error: "Missing 'query' field" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const result = await callOpenRouterWithTools(
+        body.query,
+        body.systemPrompt,
+      );
+
+      return new Response(JSON.stringify({
+        content: result.content,
+        toolExecutions: result.toolExecutions,
+        model: body.model || MCP_DEFAULT_MODEL,
+        provider: "openrouter",
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // OpenRouter direct LLM endpoint (no tools)
+    if (url.includes("/mcp/llm")) {
+      const body = await req.json() as { messages: OpenRouterMessage[]; model?: string };
+      
+      if (!body.messages || !Array.isArray(body.messages)) {
+        return new Response(JSON.stringify({ error: "Missing 'messages' array" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const model = body.model || MCP_DEFAULT_MODEL;
+      const response = await callOpenRouterLLM(body.messages, undefined, model);
+
+      return new Response(JSON.stringify({
+        content: response.content,
+        model,
+        provider: "openrouter",
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

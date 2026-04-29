@@ -101,6 +101,7 @@ export function createDefaultAgents(): AgentState[] {
     colaborador: "openrouter/free",   // Human interaction
     multimodal: "qwen/qwen2.5-vl-3b-instruct", // Vision
     self_model: "meta-llama/llama-3.3-70b-instruct", // Self-reflection
+    feynman: "tencent/hy3-preview:free", // Feynman reasoning
   };
 
   const AGENT_TOOLS: Record<AgentRole, string[]> = {

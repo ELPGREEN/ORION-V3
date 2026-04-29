@@ -94,9 +94,11 @@ export const FREE_MODELS: Record<LLMProvider, string[]> = {
      // 🌎 EXTRA (diversos)
      "minimax/minimax-m2.5-free",
      "aethernether/llama-3-8b-instruct-thinking:free",
-     // 🌟 GOOGLE VISION (Gemma 3 27B - documentos)
-     "google/gemma-3-27b-it:free",
-   ],
+      // 🌟 GOOGLE VISION (Gemma 3 27B - documentos)
+      "google/gemma-3-27b-it:free",
+      // 🧩 TENCENT (Hy3 Preview - reasoning & coding)
+      "tencent/hy3-preview:free",
+    ],
   azure: [],
   vertex: [],
 };
@@ -255,10 +257,11 @@ export class OrionLLMClient {
   private parseResponse(data: Record<string, unknown>): LLMResponse {
     const choice = (data.choices as Array<{ message: { content: string } }>)?.[0];
     const usage = data.usage as { prompt_tokens: number; completion_tokens: number; total_tokens: number } | undefined;
+    const actualModel = data.model as string | undefined;
 
     return {
       content: choice?.message?.content || "",
-      model: this.config.model,
+      model: actualModel || this.config.model,
       provider: this.config.provider,
       usage: usage ? {
         input: usage.prompt_tokens || 0,

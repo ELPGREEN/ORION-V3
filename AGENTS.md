@@ -22,9 +22,74 @@ npx tsc --noEmit  # TypeScript check
 | `meta-llama/llama-3.3-70b-instruct` | General |
 | `nvidia/nemotron-3-super-120b-a12b` | AI Agents |
 | `mistralai/mistral-small-3.1-24b-instruct` | Fast |
+| `tencent/hy3-preview:free` | Reasoning & Coding (agente Feynman) |
 
 ### Provider no Orion
 Arquivo: `src/lib/integrations/llm-providers.ts`
+
+## Knowledge Harvester — Sistema Autocognitivo
+
+### Arquivos
+- `src/lib/neural/knowledge-harvester-prompts.ts` — 10 prompts estruturados + 100+ tópicos
+- `src/lib/neural/knowledge-harvester-pipeline.ts` — Pipeline multi-LLM com consenso
+- `src/hooks/useKnowledgeHarvester.ts` — React hook
+- `src/components/dashboard/neural/KnowledgeHarvesterPanel.tsx` — UI Component
+
+### 10 Prompts Autocognitivos
+| ID | Nome | Dificuldade |
+|----|------|-------------|
+| `master_study` | Estudo Profundo + Autocognição | advanced |
+| `probability_uncertainty` | Probabilidade e Incerteza | expert |
+| `multi_llm_consensus` | Consenso Multi-LLM | expert |
+| `anti_hallucination` | Auto-Correção (Anti-Alucinação) | advanced |
+| `agent_builder` | Construção de Agente | advanced |
+| `scenario_simulation` | Simulação e Cenários | intermediate |
+| `meta_learning` | Meta-Aprendizado | expert |
+| `memory_evolution` | Memória e Evolução | intermediate |
+| `self_test` | Auto-Desafio (Teste) | intermediate |
+| `evolution_loop` | Evolução Contínua (Loop) | expert |
+
+### Uso via Hook
+```ts
+import { useKnowledgeHarvester } from "@/hooks/useKnowledgeHarvester";
+
+const { run, runQuick, runFull, runRandom, results, isRunning, status } = useKnowledgeHarvester();
+
+await runQuick("Model routing adaptativo baseado em contexto e custo");
+await runFull("Memória episódica em agentes autônomos");
+await runRandom();
+```
+
+### Pipeline Config
+```ts
+import { createQuickHarvester, createFullHarvester, createCustomHarvester } from "@/lib/neural/knowledge-harvester-pipeline";
+
+const pipeline = createQuickHarvester();
+pipeline.on({
+  onResult: (r) => console.log(r.topic, r.confidence),
+  onComplete: (session) => console.log(session.overallConfidence),
+});
+await pipeline.run("Tópico aqui");
+```
+
+## MCP Integration (OpenRouter)
+
+### Arquivos
+- `src/lib/neural/openrouter-mcp-bridge.ts` — MCP client bridge com OpenRouter
+- `supabase/functions/orion-mcp/index.ts` — MCP Edge Function com tool calling
+
+### Endpoints MCP
+| Endpoint | Função |
+|----------|--------|
+| `/mcp/tools` | Lista ferramentas disponíveis |
+| `/mcp/call` | Chama ferramenta específica |
+| `/mcp/chat` | LLM com tool calling automático (OpenRouter) |
+| `/mcp/llm` | LLM direto sem ferramentas |
+| `/health` | Health check com status OpenRouter |
+
+### Modelos Default
+- Default: `tencent/hy3-preview:free`
+- Fallback: `openrouter/free`, `deepseek/deepseek-r1`
 
 ## Build Notes
 
