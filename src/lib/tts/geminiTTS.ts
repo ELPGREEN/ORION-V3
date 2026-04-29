@@ -240,9 +240,26 @@ export function playAudioBlob(
 
     audio.play().catch((err) => {
       console.warn("[Gemini TTS] audio.play() blocked:", err?.message);
-      signal.removeEventListener("abort", onAbort);
-      cleanup();
-      resolve({ audio: null, nextAudio });
+      // Try resuming AudioContext if blocked by autoplay policy
+      const ctx = (window as any).__orion_shared_audio_ctx__;
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().then(() => {
+          audio.play().catch((err2) => {
+            console.warn("[Gemini TTS] audio.play() still blocked after resume:", err2?.message);
+            signal.removeEventListener("abort", onAbort);
+            cleanup();
+            resolve({ audio: null, nextAudio });
+          });
+        }).catch(() => {
+          signal.removeEventListener("abort", onAbort);
+          cleanup();
+          resolve({ audio: null, nextAudio });
+        });
+      } else {
+        signal.removeEventListener("abort", onAbort);
+        cleanup();
+        resolve({ audio: null, nextAudio });
+      }
     });
   });
 }

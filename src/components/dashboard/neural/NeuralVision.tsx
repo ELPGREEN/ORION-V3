@@ -214,23 +214,48 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const voiceClone = useOrionVoiceClone();
 
   const voiceCheckDoneRef = useRef(false);
+  const interimTranscriptRef = useRef<((text: string) => void) | null>(null);
 
-  // Expose identityStatus globally so orion-ai-client can send it to neural-ops
-  // Listen for interim transcripts
+  // Expose interim transcript setter globally to avoid minification issues
   useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
+    interimTranscriptRef.current = setInterimTranscript;
+    (window as any).__orion_setInterimTranscript = setInterimTranscript;
   }, []);
 
-  // Clear interim when final arrives
+  // ═══ SINGLE consolidated interim/clear transcript listeners ═══
   useEffect(() => {
-    const handler = () => setInterimTranscript("");
+    const interimHandler = (e: any) => {
+      if (interimTranscriptRef.current) {
+        interimTranscriptRef.current(e.detail.text);
+      } else {
+        setInterimTranscript(e.detail.text);
+      }
+    };
+    const clearHandler = () => {
+      if (interimTranscriptRef.current) {
+        interimTranscriptRef.current("");
+      } else {
+        setInterimTranscript("");
+      }
+    };
+    window.addEventListener("orion:voice-interim-transcription", interimHandler);
+    window.addEventListener("orion:voice-transcription", clearHandler);
+    return () => {
+      window.removeEventListener("orion:voice-interim-transcription", interimHandler);
+      window.removeEventListener("orion:voice-transcription", clearHandler);
+    };
+  }, []);
+
+  // ═══ Voice Identity Check on first transcription ═══
+  useEffect(() => {
+    const handler = () => {
+      if (!voiceCheckDoneRef.current && identityStatus === "unknown") {
+        handleVoiceIdentityCheck();
+      }
+    };
     window.addEventListener("orion:voice-transcription", handler);
     return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
+  }, [identityStatus, handleVoiceIdentityCheck]);
   useEffect(() => {
     (window as any).__orionIdentityStatus = identityStatus;
   }, [identityStatus]);
@@ -269,48 +294,8 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     }
   }, [identityStatus, verifyVoiceIdentity, setIdentityStatus]);
 
-  // ═══ AUTO VOICE IDENTITY on first STT transcription ═══
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
-
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
-  useEffect(() => {
-    const handler = () => {
-      if (!voiceCheckDoneRef.current && identityStatus === "unknown") {
-        handleVoiceIdentityCheck();
-      }
-    };
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, [identityStatus, handleVoiceIdentityCheck]);
-
   // Track guest messages in chat
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     if (!guestSession || chatHistory.length === 0) return;
     const last = chatHistory[chatHistory.length - 1];
@@ -415,21 +400,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
       toast.error(userMsg);
     }
   }, [speak]);
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => { startCameraRef.current = startCamera; }, [startCamera]);
 
   const stopCamera = useCallback(() => {
@@ -675,21 +646,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   const { wakeWordActive, startWakeWordListener, stopWakeWordListener, enableWakeWord, getBackgroundTranscripts } = useWakeWord(listening, skipWakeWord ? false : speechOk, activateByWakeWord);
 
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => { bgTranscriptsGetterRef.current = getBackgroundTranscripts; }, [getBackgroundTranscripts]);
 
   const startDirectVoiceCapture = useCallback(() => {
@@ -730,21 +687,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // Auto-start direct voice capture on page load (no wake word needed).
   // Rule: mic always active, always listening — no "say Orion to activate" gate.
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     console.log("[NeuralVision] 🔄 Auto-start effect running", { speechOk, active: !!active });
     if (typeof document !== "undefined" && document.hidden) {
@@ -772,21 +715,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   // Hard gate: only react to ACTIVATE if last user transcript explicitly mentions vision keywords.
   // This blocks intent-classifier false positives (e.g. user says "sistema" → wrongly classified as vision_on).
   const lastTranscriptRef = useRef("");
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     const captureTranscript = (e: Event) => {
       const text = (e as CustomEvent).detail?.text || "";
@@ -796,21 +725,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     return () => window.removeEventListener("orion:voice-transcription", captureTranscript);
   }, []);
 
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     const VISION_KEYWORD_RE = /\b(vis[aã]o|c[aâ]mera|webcam|olhos?|enxerg|ver|veja|olha|olhe|mostr|filma|grava)/i;
     const handler = (e: Event) => {
@@ -859,21 +774,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
     return () => window.removeEventListener("orion-vision-command", handler);
   }, [active, startCamera, stopCamera, speakFast]);
 
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     const handler = (event: Event) => {
       const text = (event as CustomEvent).detail?.text;
@@ -891,21 +792,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   }, [abortControllerRef]);
 
 
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     if (autoActivatedRef.current) return;
 
@@ -932,21 +819,7 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
 
   // Re-enable wake word ONLY when user explicitly stops (not during auto-cycles)
   const wakeWordStabilityRef = useRef(0);
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     // When opened from GlobalOrionListener overlay, skip wake word entirely
     if (skipWakeWord) return;
@@ -977,42 +850,14 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   }, [skipWakeWord, active, listening, speechOk, wakeWordActive, enableWakeWord, startWakeWordListener, stopWakeWordListener, voiceActiveRef]);
 
   // Awareness sync
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     const iv = setInterval(() => setAwareness(VS.awareness), 400);
     return () => clearInterval(iv);
   }, []);
 
   // Processing loop
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     if (!active) return;
     let running = true;
@@ -1677,21 +1522,7 @@ function OrionStandalonePanel({
   const [activeTab, setActiveTab] = useState<"chat" | "pesquisa" | "video">("chat");
 
   // Listen for video commands to auto-switch to video tab
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -1706,21 +1537,7 @@ function OrionStandalonePanel({
   }, []);
 
   // Listen for search commands to auto-switch to pesquisa tab
-  // Listen for interim transcripts
-  useEffect(() => {
-    const handler = (e: any) => {
-      setInterimTranscript(e.detail.text);
-    };
-    window.addEventListener("orion:voice-interim-transcription", handler);
-    return () => window.removeEventListener("orion:voice-interim-transcription", handler);
-  }, []);
 
-  // Clear interim when final arrives
-  useEffect(() => {
-    const handler = () => setInterimTranscript("");
-    window.addEventListener("orion:voice-transcription", handler);
-    return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, []);
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
