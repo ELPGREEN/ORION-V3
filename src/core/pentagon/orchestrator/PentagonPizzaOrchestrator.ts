@@ -1,9 +1,3 @@
-/**
- * 🧠 Pentagon Pizza Orchestrator (The Cortex)
- * Operates the cognitive loop: Perception -> Memory -> Reasoning -> Action -> Eval
- * Enhanced with Geometric Metacognition, Feynman Loop, Quantum Router Early Exit,
- * Shared Context State, Stop Conditions, and Structured Output.
- */
 import {
   CognitiveState,
   PerceptionResult,
@@ -17,7 +11,9 @@ import {
   checkStopConditions,
   recordToolCall,
   completeToolCall,
+  IPentagonLayer
 } from "../layers/types";
+import { MetaAdapter } from "../layers/meta/MetaAdapter";
 import { quantumRouteQuery } from "@/lib/neural/quantum-llm-router";
 
 export interface PentagonPizzaState {
@@ -43,11 +39,11 @@ export class PentagonPizzaOrchestrator {
   };
 
   constructor(
-    private perception: any,
-    private memory: any,
-    private reasoning: any,
-    private action: any,
-    private meta: any
+    private perception: IPentagonLayer<any, PerceptionResult>,
+    private memory: IPentagonLayer<PerceptionResult, MemoryResult>,
+    private reasoning: IPentagonLayer<{ perception: PerceptionResult; memory: MemoryResult }, ReasoningResult>,
+    private action: IPentagonLayer<ReasoningResult, ActionResult>,
+    private meta: MetaAdapter
   ) {}
 
   private async transition(newState: CognitiveState) {
@@ -112,33 +108,16 @@ export class PentagonPizzaOrchestrator {
     }
   }
 
-  public async runCycle(input: string, contextOptions: any = {}): Promise<ActionResult> {
-    const ctx = createPentagonContext(input, {
-      maxSteps: contextOptions.maxSteps ?? 10,
-      maxCost: contextOptions.maxCost ?? 5.0,
-      maxDurationMs: contextOptions.maxDurationMs ?? 30000,
-      domain: contextOptions.domain,
-      forceTool: contextOptions.forceTool,
-      forceRag: contextOptions.forceRag,
-      skipFeynman: contextOptions.skipFeynman,
-    });
-
+  public async runCycle(input: string, contextOptions: Partial<PentagonContext> = {}): Promise<ActionResult> {
+    const ctx = createPentagonContext(input, contextOptions);
     return this.executeCycle(input, ctx);
   }
 
   /**
    * Run cycle with structured output format
    */
-  public async runCycleStructured(input: string, contextOptions: any = {}): Promise<PentagonStructuredOutput> {
-    const ctx = createPentagonContext(input, {
-      maxSteps: contextOptions.maxSteps ?? 10,
-      maxCost: contextOptions.maxCost ?? 5.0,
-      maxDurationMs: contextOptions.maxDurationMs ?? 30000,
-      domain: contextOptions.domain,
-      forceTool: contextOptions.forceTool,
-      forceRag: contextOptions.forceRag,
-      skipFeynman: contextOptions.skipFeynman,
-    });
+  public async runCycleStructured(input: string, contextOptions: Partial<PentagonContext> = {}): Promise<PentagonStructuredOutput> {
+    const ctx = createPentagonContext(input, contextOptions);
 
     const result = await this.executeCycle(input, ctx);
     const duration = Date.now() - ctx.startedAt;
@@ -162,7 +141,7 @@ export class PentagonPizzaOrchestrator {
         durationMs: tc.completedAt ? tc.completedAt - tc.startedAt : undefined,
       })),
       confidence: this.state.reasoning?.confidence,
-      error: result.data?.error,
+      error: result.data?.error as string | undefined,
       sourcesUsed: this.state.memory?.ragSnippets?.slice(0, 5),
     };
   }
@@ -191,36 +170,30 @@ export class PentagonPizzaOrchestrator {
       const preCheck = await this.meta.validateInput(input);
       if (!preCheck.valid) throw new Error(`Pre-Input Guard Breach: ${preCheck.feedback}`);
 
-      const preToolCall = recordToolCall(ctx, "search_web", { query: input });
       this.state.perception = await this.perception.process(input, ctx);
-      completeToolCall(preToolCall, this.state.perception);
 
       // 2. Memory
       ctx.stepCount++;
       if (checkStopConditions(ctx)) return this.stopResult(ctx);
       await this.transition("remembering");
 
-      const memToolCall = recordToolCall(ctx, "retrieve_memory", { query: input });
-      this.state.memory = await this.memory.process(this.state.perception, ctx);
-      completeToolCall(memToolCall, this.state.memory);
+      this.state.memory = await this.memory.process(this.state.perception!, ctx);
 
       // 3. Reasoning
       ctx.stepCount++;
       if (checkStopConditions(ctx)) return this.stopResult(ctx);
       await this.transition("reasoning");
 
-      const reasonToolCall = recordToolCall(ctx, "emit_reasoning_plan", { query: input });
       this.state.reasoning = await this.reasoning.process(
-        { perception: this.state.perception, memory: this.state.memory },
+        { perception: this.state.perception!, memory: this.state.memory! },
         ctx
       );
-      completeToolCall(reasonToolCall, this.state.reasoning);
       ctx.accumulatedCost += 0.05;
 
-      const midCheck = await this.meta.validateReasoning(this.state.reasoning, ctx);
+      const midCheck = await this.meta.validateReasoning(this.state.reasoning!, ctx);
       if (!midCheck.valid) {
         console.warn("[CORTEX] Mid-Reasoning warning/block:", midCheck.feedback);
-        if (midCheck.score < 50) {
+        if (midCheck.score < 50 && this.state.reasoning) {
            this.state.reasoning.responseHint = `[Aviso Metacognitivo]: ${midCheck.feedback}\n\n${this.state.reasoning.responseHint}`;
         }
       }
@@ -236,9 +209,9 @@ export class PentagonPizzaOrchestrator {
         ctx.forceTool = true;
       }
 
-      this.state.action = await this.action.process(this.state.reasoning, ctx);
+      this.state.action = await this.action.process(this.state.reasoning!, ctx);
 
-      const result = this.state.action;
+      const result = this.state.action!;
 
       Promise.resolve().then(async () => {
         try {
@@ -250,7 +223,7 @@ export class PentagonPizzaOrchestrator {
           completeToolCall(validateToolCall, this.state.meta);
 
           if (this.state.meta.score > 80) {
-            await this.memory.learn(this.state);
+            await (this.memory as any).learn(this.state);
           }
 
           if (this.state.meta.score >= 90) {

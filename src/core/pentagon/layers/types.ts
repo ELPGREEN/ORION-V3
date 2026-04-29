@@ -4,7 +4,7 @@
 
 export type CognitiveState = "idle" | "perceiving" | "remembering" | "reasoning" | "acting" | "evaluating";
 
-export type PentagonToolName = "emit_reasoning_plan" | "emit_feynman_refinement" | "search_web" | "retrieve_memory" | "validate_output";
+export type PentagonToolName = "emit_reasoning_plan" | "emit_feynman_refinement" | "search_web" | "retrieve_memory" | "validate_output" | "vision_analysis";
 
 export interface PentagonToolCall {
   tool: PentagonToolName;
@@ -85,7 +85,7 @@ export interface PentagonStructuredOutput {
 
 export interface PerceptionResult {
   intent: string;
-  entities: Record<string, any>;
+  entities: Record<string, unknown>;
   sentiment: string;
   rawInput: string;
   contextualMarkers: string[];
@@ -93,9 +93,9 @@ export interface PerceptionResult {
 }
 
 export interface MemoryResult {
-  shortTerm: any[];
-  longTerm: any[];
-  episodic: any[];
+  shortTerm: unknown[];
+  longTerm: unknown[];
+  episodic: unknown[];
   mergedContext: string;
   /** Snippets brutos extraídos do RAG/CRAG para citação direta no LLM final */
   ragSnippets?: string[];
@@ -114,7 +114,7 @@ export interface ReasoningResult {
 
 export interface ActionResult {
   success: boolean;
-  data: any;
+  data: Record<string, unknown>;
   output: string;
   roiImpact?: string;
 }
@@ -123,7 +123,7 @@ export interface MetaResult {
   valid: boolean;
   score: number;
   feedback: string;
-  adjustments?: Record<string, any>;
+  adjustments?: Record<string, unknown>;
   guardrailBreach?: string;
 }
 
@@ -132,8 +132,8 @@ export interface IPentagonLayer<TInput, TOutput> {
 }
 
 export interface IMemoryBackend {
-  store(key: string, data: any): Promise<void>;
-  retrieve(query: string, limit: number): Promise<any[]>;
+  store(key: string, data: unknown): Promise<void>;
+  retrieve(query: string, limit: number): Promise<unknown[]>;
   relate(nodeA: string, nodeB: string, relation: string): Promise<void>;
 }
 

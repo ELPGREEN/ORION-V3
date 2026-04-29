@@ -26,9 +26,9 @@ export interface PentagonChatMessage {
   /** Tool calls made during this cycle */
   toolCalls?: PentagonStructuredOutput["toolCalls"];
   /** Confidence score from reasoning */
-  confidence?: number;
+  pentagonConfidence?: number;
   /** Sources used (RAG snippets) */
-  sourcesUsed?: string[];
+  pentagonSourcesUsed?: string[];
   /** Whether neural search was used */
   neuralUsed?: boolean;
   /** User feedback */
@@ -125,15 +125,15 @@ export function usePentagonChat(options: PentagonChatOptions = {}) {
         let responseText = result.output || "Processado com sucesso.";
         let pentagonMeta: PentagonStructuredOutput["metadata"] | undefined;
         let toolCalls: PentagonStructuredOutput["toolCalls"] | undefined;
-        let confidence: number | undefined;
-        let sourcesUsed: string[] | undefined;
+        let pentagonConfidence: number | undefined;
+        let pentagonSourcesUsed: string[] | undefined;
 
         if (options.structured && "metadata" in result) {
           const structured = result as PentagonStructuredOutput;
           pentagonMeta = structured.metadata;
           toolCalls = structured.toolCalls;
-          confidence = structured.confidence;
-          sourcesUsed = structured.sourcesUsed;
+          pentagonConfidence = structured.confidence;
+          pentagonSourcesUsed = structured.sourcesUsed;
           setCurrentCycleId(structured.metadata.cycleId);
           setLastPerformance({
             steps: structured.metadata.stepsTaken,
@@ -168,8 +168,8 @@ export function usePentagonChat(options: PentagonChatOptions = {}) {
           timestamp: new Date(),
           pentagonMetadata: pentagonMeta,
           toolCalls,
-          confidence,
-          sourcesUsed,
+          pentagonConfidence,
+          pentagonSourcesUsed,
           neuralUsed: !!pentagonMeta?.earlyExit,
         };
 
@@ -195,7 +195,7 @@ export function usePentagonChat(options: PentagonChatOptions = {}) {
             cost: pentagonMeta?.totalCost,
             durationMs: pentagonMeta?.durationMs,
             earlyExit: pentagonMeta?.earlyExit,
-            confidence,
+            pentagonConfidence,
           },
         }).catch(() => {});
       } catch (err) {

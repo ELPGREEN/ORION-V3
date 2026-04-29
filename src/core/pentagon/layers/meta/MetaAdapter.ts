@@ -1,8 +1,7 @@
-import { MetaResult, PentagonContext } from "../types";
+import { MetaResult, PentagonContext, ReasoningResult, ActionResult } from "../types";
 import { gradeRetrieval } from "@/lib/neural/corrective-rag";
 import {
   estimateFisherMetric,
-  klDivergence,
   boltzmannScore,
   normal
 } from "@/lib/neural/tf-probability-ranking";
@@ -23,7 +22,7 @@ export class MetaAdapter {
     return { valid: true, score: 100, feedback: "Input validado e seguro." };
   }
 
-  public async validateReasoning(reasoning: any, _context: PentagonContext = {} as PentagonContext): Promise<MetaResult> {
+  public async validateReasoning(reasoning: ReasoningResult, _context: PentagonContext = {} as PentagonContext): Promise<MetaResult> {
     const { confidence, rationale } = reasoning;
 
     if (confidence < 0.6) {
@@ -62,12 +61,12 @@ export class MetaAdapter {
     return { valid: true, score: Math.min(100, stabilityScore * 100), feedback: "Raciocínio validado geometricamente." };
   }
 
-  public async validateOutput(action: any): Promise<MetaResult> {
+  public async validateOutput(action: ActionResult): Promise<MetaResult> {
     if (!action.success) {
       return { valid: false, score: 0, feedback: "Ação falhou na execução." };
     }
 
-    const grade = gradeRetrieval(action.output || "", action.data?.contextUsed || "");
+    const grade = gradeRetrieval(action.output || "", (action.data?.contextUsed as string) || "");
     const score = grade.confidence * 100;
 
     return {
@@ -78,7 +77,7 @@ export class MetaAdapter {
     };
   }
 
-  private calculateInconsistencyEnergy(reasoning: any): number {
+  private calculateInconsistencyEnergy(reasoning: ReasoningResult): number {
     let energy = 0;
     const rationale = reasoning.rationale || "";
     const plan = reasoning.plan || [];

@@ -1,9 +1,9 @@
-import { IPentagonLayer, MemoryResult, PentagonContext, recordToolCall, completeToolCall } from "../types";
+import { IPentagonLayer, PerceptionResult, MemoryResult, PentagonContext, recordToolCall, completeToolCall } from "../types";
 import { searchEpisodes, buildEpisodicContext } from "@/lib/neural/episodic-memory";
 import { executeCorrectiveRAG } from "@/lib/neural/corrective-rag";
 
-export class MemoryAdapter implements IPentagonLayer<any, MemoryResult> {
-  public async process(perception: any, context: PentagonContext): Promise<MemoryResult> {
+export class MemoryAdapter implements IPentagonLayer<PerceptionResult, MemoryResult> {
+  public async process(perception: PerceptionResult, context: PentagonContext): Promise<MemoryResult> {
     console.log("[MEMORY] Initiating Parallel Data Flow with CRAG...");
 
     const memToolCall = recordToolCall(context, "retrieve_memory", { query: perception.rawInput });
@@ -48,11 +48,11 @@ export class MemoryAdapter implements IPentagonLayer<any, MemoryResult> {
       finalMergedContext = finalMergedContext.slice(0, 2997) + "...";
     }
 
-    const externalData = cragData.externalData || [];
+    const externalData = (cragData.externalData || []) as unknown[];
     const ragSnippets: string[] = [];
     if (Array.isArray(externalData)) {
-      for (const item of externalData.slice(0, 6) as any[]) {
-        const text = typeof item === "string" ? item : (item?.content ?? item?.text ?? item?.snippet ?? "");
+      for (const item of externalData.slice(0, 6)) {
+        const text = typeof item === "string" ? item : ((item as any)?.content ?? (item as any)?.text ?? (item as any)?.snippet ?? "");
         if (text && text.length > 60) ragSnippets.push(String(text).slice(0, 500));
       }
     }
@@ -73,7 +73,7 @@ export class MemoryAdapter implements IPentagonLayer<any, MemoryResult> {
     };
   }
 
-  public async learn(state: any) {
+  public async learn(_state: any) {
     console.log("[MEMORY] Learning phase: Consolidation of breakthrough patterns.");
   }
 }
