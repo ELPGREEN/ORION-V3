@@ -403,9 +403,9 @@ export function DocumentAIChatPanel({
       headings.push(match[1].replace(/<[^>]*>/g, "").trim());
     }
     const headingsStr = headings.length > 0 ? `\nESTRUTURA: ${headings.join(" → ")}` : "";
-    const plainContent = plainText.substring(0, 5000);
+    const plainContent = plainText.substring(0, 2500);
 
-    const selectionContext = selectedText ? `\n\nTRECHO SELECIONADO:\n"${selectedText.substring(0, 1000)}"` : "";
+    const selectionContext = selectedText ? `\n\nTRECHO SELECIONADO:\n"${selectedText.substring(0, 800)}"` : "";
 
     const agentSuffix = AGENTS[selectedAgent].promptSuffix;
     const modeSuffix = MODES[selectedMode].promptSuffix;
@@ -543,8 +543,8 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
     if (pendingFiles.length > 0) {
       const attachmentsText = pendingFiles.map(f =>
         f.html
-          ? `[Documento "${f.fileName}"]\n═══ HTML ═══\n${f.html.substring(0, 3000)}\n═══ TEXTO ═══\n${f.text.substring(0, 2000)}\n═══ FIM ═══`
-          : `[Arquivo "${f.fileName}"]\n${f.text.substring(0, 3000)}`
+          ? `[Documento "${f.fileName}"]\n═══ HTML ═══\n${f.html.substring(0, 1500)}\n═══ TEXTO ═══\n${f.text.substring(0, 1000)}\n═══ FIM ═══`
+          : `[Arquivo "${f.fileName}"]\n${f.text.substring(0, 1500)}`
       ).join("\n\n");
       fullMessage = `${fullMessage}\n\n${attachmentsText}`;
       setPendingFiles([]);
@@ -603,7 +603,7 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
 
     let convId = activeConversationId;
     if (!convId) convId = await createConversation(userMessage.substring(0, 80));
-    if (convId) saveMessage(convId, { role: "user", content: userMessage.trim() });
+    if (convId) saveMessage(convId, { role: "user", content: userMessage.trim() }).catch(() => {});
 
     try {
       const isEdgeAgent = ["leitor", "construtor", "investigador"].includes(selectedAgent);
@@ -687,18 +687,21 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
         };
         setMessages(prev => [...prev, assistantMsg]);
         setLastAssistantText(responseText);
-        if (convId) saveMessage(convId, { role: "assistant", content: responseText, neuralEnhanced: false });
+        if (convId) saveMessage(convId, { role: "assistant", content: responseText, neuralEnhanced: false }).catch(() => {});
       } else {
         // Original flow for editor agents (revisor, pesquisador, estrategista, formatador)
         setActiveSources(["aprimorar", "neural_search"]);
-        const neuralCtx = await fetchNeuralContext(userMessage);
+
+        // Only fetch neural context for queries that need it (fundamentação, pesquisa, análise)
+        const needsNeural = /fundament|jurisprud|lei\s|súmula|artigo|pesquis|analis|doutrina|precedent|acórdão|recurso|liminar|mandado|habeas/i.test(userMessage);
+        const neuralCtx = needsNeural ? await fetchNeuralContext(userMessage) : { context: "", sources: [], used: false };
         const systemPrompt = buildSystemPrompt();
-        const chatHistory = messages.slice(-10).map(m => ({ role: m.role, content: m.content }));
+        const chatHistory = messages.slice(-6).map(m => ({ role: m.role, content: m.content.substring(0, 500) }));
 
         const { data, error } = await supabase.functions.invoke("aprimorar-documento", {
           body: {
             currentText: documentContent, documentType, query: userMessage, mode: "chat",
-            chatHistory, contextSnippet: documentContent.replace(/<[^>]*>/g, "").substring(0, 4000),
+            chatHistory, contextSnippet: documentContent.replace(/<[^>]*>/g, "").substring(0, 2000),
             systemOverride: systemPrompt + neuralCtx.context, isJudicial: true,
           },
         });
@@ -768,12 +771,14 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
       setMessages(prev => [...prev, assistantMsg]);
       setLastAssistantText(text);
 
-      if (convId) saveMessage(convId, { role: "assistant", content: text, intent: intent?.action, sources: neuralCtx.sources, neuralEnhanced: neuralCtx.used });
+      // Fire-and-forget: don't block UI on DB writes
+      if (convId) saveMessage(convId, { role: "assistant", content: text, intent: intent?.action, sources: neuralCtx.sources, neuralEnhanced: neuralCtx.used }).catch(() => {});
 
+      // Fire-and-forget: logging is non-critical
       logNeural({
-        interaction_type: "chat", input_text: userMessage, output_text: text.substring(0, 2000),
+        interaction_type: "chat", input_text: userMessage, output_text: text.substring(0, 1000),
         metadata: { intent: intent?.action, isEdit: true, documentType, neuralUsed: neuralCtx.used, docWordCount: docAnalysis.wordCount, category: intent?.category || "general", sourcesCount: neuralCtx.sources.length },
-      });
+      }).catch(() => {});
       } // close else block for non-edge agents
     } catch (err) {
       setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "❌ Erro ao processar. Verifique sua conexão e tente novamente.", timestamp: new Date() }]);

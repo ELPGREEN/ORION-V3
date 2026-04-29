@@ -89,14 +89,15 @@ const FEYNMAN_TOOL = {
 };
 
 // Phase 2: Unified cascade — mirrors src/lib/integrations/openrouter-free-models.ts
+// Optimized timeouts: aggressive for fast models, generous for reasoning
 const MODEL_CASCADE = [
-  { model: "mistralai/mistral-small-3.1-24b-instruct:free", timeout: 4000 },
-  { model: "nvidia/nemotron-nano-9b-v2:free", timeout: 4000 },
-  { model: "tencent/hy3-preview:free", timeout: 5000 },
-  { model: "openrouter/free", timeout: 8000 },
-  { model: "deepseek/deepseek-r1:free", timeout: 10000 },
-  { model: "qwen/qwen3-coder:free", timeout: 8000 },
-  { model: "meta-llama/llama-3.3-70b-instruct:free", timeout: 10000 },
+  { model: "mistralai/mistral-small-3.1-24b-instruct:free", timeout: 2500 },
+  { model: "nvidia/nemotron-nano-9b-v2:free", timeout: 3000 },
+  { model: "tencent/hy3-preview:free", timeout: 4000 },
+  { model: "openrouter/free", timeout: 6000 },
+  { model: "deepseek/deepseek-r1:free", timeout: 8000 },
+  { model: "qwen/qwen3-coder:free", timeout: 6000 },
+  { model: "meta-llama/llama-3.3-70b-instruct:free", timeout: 8000 },
 ];
 
 async function callOpenRouter(
@@ -189,11 +190,11 @@ Deno.serve(async (req) => {
     // Standard Mode
     const userPayload = [
       `PERGUNTA: ${query}`,
-      memoryContext ? `MEMÓRIA RECENTE:\n${memoryContext.slice(0, 4000)}` : "",
+      memoryContext ? `MEMÓRIA RECENTE:\n${memoryContext.slice(0, 2000)}` : "",
       ragSnippets?.length
         ? `CONHECIMENTO INGERIDO (use isto! USANDO GEOMETRIA DE INFORMAÇÃO):\n${ragSnippets
             .slice(0, 6)
-            .map((s, i) => `[${i + 1}] ${s.slice(0, 800)}`)
+            .map((s, i) => `[${i + 1}] ${s.slice(0, 500)}`)
             .join("\n\n")}`
         : "",
     ].filter(Boolean).join("\n\n");

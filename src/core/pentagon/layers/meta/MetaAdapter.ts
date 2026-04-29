@@ -1,4 +1,4 @@
-import { MetaResult } from "../types";
+import { MetaResult, PentagonContext } from "../types";
 import { gradeRetrieval } from "@/lib/neural/corrective-rag";
 import {
   estimateFisherMetric,
@@ -8,9 +8,6 @@ import {
 } from "@/lib/neural/tf-probability-ranking";
 
 export class MetaAdapter {
-  /**
-   * Pre-Input Guard: Sanitização e detecção de intenções maliciosas
-   */
   public async validateInput(input: string): Promise<MetaResult> {
     const maliciousPatterns = [/drop\s+table/i, /delete\s+from/i, /<script/i];
     const isMalicious = maliciousPatterns.some(p => p.test(input));
@@ -26,24 +23,16 @@ export class MetaAdapter {
     return { valid: true, score: 100, feedback: "Input validado e seguro." };
   }
 
-  /**
-   * Mid-Reasoning Checkpoint: Validação de alucinação e coerência jurídica
-   * Integrado com Geometria da Informação (Fisher Metric & KL Divergence)
-   */
-  public async validateReasoning(reasoning: any, context: any = {}): Promise<MetaResult> {
+  public async validateReasoning(reasoning: any, _context: PentagonContext = {} as PentagonContext): Promise<MetaResult> {
     const { confidence, rationale } = reasoning;
 
-    // 1. Classical Validation
     if (confidence < 0.6) {
       return { valid: false, score: confidence * 100, feedback: "Baixa confiança no raciocínio gerado.", guardrailBreach: "low_confidence" };
     }
 
-    // 2. Geometric Metacognition: Information Stretching
-    // Simula a estabilidade do conhecimento usando a Métrica de Fisher
     const knowledgeSamples = Array.from({ length: 50 }, () => Math.random());
     const fisherMetric = estimateFisherMetric(normal(confidence, 0.1), knowledgeSamples);
 
-    // Se a Métrica de Fisher for muito baixa, o "espaço de probabilidade" é plano demais (indecisão/vazio)
     if (fisherMetric < 0.05) {
        return {
          valid: false,
@@ -53,8 +42,6 @@ export class MetaAdapter {
        };
     }
 
-    // 3. Energy-Based Scoring (Boltzmann)
-    // Calcula a "Energia de Inconsistência"
     const inconsistencyEnergy = this.calculateInconsistencyEnergy(reasoning);
     const stabilityScore = boltzmannScore(inconsistencyEnergy, 1.0);
 
@@ -67,7 +54,6 @@ export class MetaAdapter {
       };
     }
 
-    // Verificação de alucinação simplificada (NeMo style)
     const hasHallucinationMarkers = /desconhecido|não\s+encontrado|erro/i.test(rationale);
     if (hasHallucinationMarkers && confidence > 0.9) {
       return { valid: false, score: 50, feedback: "Incoerência entre confiança e conteúdo (possível alucinação).", guardrailBreach: "hallucination_detected" };
@@ -76,15 +62,11 @@ export class MetaAdapter {
     return { valid: true, score: Math.min(100, stabilityScore * 100), feedback: "Raciocínio validado geometricamente." };
   }
 
-  /**
-   * Post-Output Judge: Verificação de qualidade, ROI e conformidade legal
-   */
   public async validateOutput(action: any): Promise<MetaResult> {
     if (!action.success) {
       return { valid: false, score: 0, feedback: "Ação falhou na execução." };
     }
 
-    // Simula a nota do Corrective RAG para o output
     const grade = gradeRetrieval(action.output || "", action.data?.contextUsed || "");
     const score = grade.confidence * 100;
 
@@ -101,14 +83,11 @@ export class MetaAdapter {
     const rationale = reasoning.rationale || "";
     const plan = reasoning.plan || [];
 
-    // Lacunas detectadas pelo Feynman aumentam a energia significativamente
     const gaps = (rationale.match(/lacuna|não\s+entendi|desconhecido/gi) || []).length;
     energy += gaps * 2.5;
 
-    // Planos vazios para queries complexas
     if (plan.length === 0 && rationale.length > 100) energy += 3.0;
 
-    // Baixa confiança base
     energy += (1 - (reasoning.confidence || 0)) * 5.0;
 
     return energy;

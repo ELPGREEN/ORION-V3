@@ -4,7 +4,7 @@
  * (Lovable AI Gateway → Gemini 2.5 Flash com tool calling estruturado).
  */
 import { supabase } from "@/integrations/supabase/client";
-import { IPentagonLayer, ReasoningResult, PerceptionResult, MemoryResult } from "../types";
+import { IPentagonLayer, ReasoningResult, PerceptionResult, MemoryResult, PentagonContext } from "../types";
 import { FeynmanReasoner } from "./FeynmanReasoner";
 
 interface ReasoningInput {
@@ -19,10 +19,9 @@ export interface ExtendedReasoningResult extends ReasoningResult {
 }
 
 export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, ExtendedReasoningResult> {
-  public async process(data: ReasoningInput, context: any = {}): Promise<ExtendedReasoningResult> {
+  public async process(data: ReasoningInput, context: PentagonContext): Promise<ExtendedReasoningResult> {
     const { perception, memory } = data;
 
-    // Extract RAG snippets from merged context (split by markers, fallback to chunks)
     const ragSnippets = this.extractSnippets(memory?.mergedContext ?? "");
 
     try {
@@ -34,7 +33,6 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
           memoryContext: memory?.mergedContext?.slice(0, 4000),
           ragSnippets,
           domain: context?.domain,
-          // 🍕 Force RAG instruction if retry was triggered
           forceRag: context?.forceRag || false,
         },
       });
@@ -44,7 +42,6 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
         return this.fallback(perception, memory);
       }
 
-      // 🍕 Validation: Penalize (throw internally for Orchestrator retry) if RAG is available but rationale is too short/generic
       const hasRag = ragSnippets.length > 0;
       const rationale = result.rationale || "";
       const isGeneric = rationale.length < 30 || /responder|pergunta|entendi/i.test(rationale);
@@ -64,7 +61,8 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
         model: result.model,
       };
 
-      // 🎓 Async non-blocking Feynman Loop — returns immediately, refines in background
+      context.sharedState.reasoningModel = result.model;
+
       if (baseResult.confidence > 0.6 && perception.complexity === "complex" && !context?.skipFeynman) {
         console.log("[Reasoning] 🔥 Firing async Feynman Loop (non-blocking)...");
         this.fireAsyncFeynman(baseResult, perception?.rawInput ?? "", context);
@@ -79,7 +77,6 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
 
   private extractSnippets(merged: string): string[] {
     if (!merged) return [];
-    // Split by common RAG separators or chunk into ~600 char pieces
     const parts = merged
       .split(/\n{2,}|\[\d+\]|---+/)
       .map((s) => s.trim())
@@ -87,13 +84,9 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
     return parts.slice(0, 6);
   }
 
-  /**
-   * Fire-and-forget Feynman refinement — runs in background, updates memory/cache
-   */
-  private fireAsyncFeynman(baseResult: ExtendedReasoningResult, query: string, context: any): void {
+  private fireAsyncFeynman(baseResult: ExtendedReasoningResult, query: string, context: PentagonContext): void {
     FeynmanReasoner.refine(baseResult, query).then(refined => {
       console.log("[Reasoning] ✅ Async Feynman refinement complete, confidence:", refined.confidence);
-      // Store refined explanation in session memory for next turn
       if (refined.responseHint?.includes("[Feynman")) {
         try {
           const sessionKey = `feynman:${query.slice(0, 50)}`;

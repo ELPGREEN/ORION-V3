@@ -15,7 +15,7 @@ describe("PentagonPizzaOrchestrator", () => {
 
   it("should run a full cognitive cycle successfully", async () => {
     const mockPerception = { process: vi.fn().mockResolvedValue({ intent: "legal", rawInput: "analyze complex legal scenario" }) };
-    const mockMemory = { process: vi.fn().mockResolvedValue({ mergedContext: "context" }), learn: vi.fn() };
+    const mockMemory = { process: vi.fn().mockResolvedValue({ mergedContext: "context" }), learn: vi.fn().mockResolvedValue(undefined) };
     const mockReasoning = { process: vi.fn().mockResolvedValue({ plan: ["test"], confidence: 0.9, rationale: "ok" }) };
     const mockAction = { process: vi.fn().mockResolvedValue({ success: true, output: "done" }) };
     const mockMeta = {
@@ -40,8 +40,12 @@ describe("PentagonPizzaOrchestrator", () => {
     expect(mockMemory.process).toHaveBeenCalled();
     expect(mockReasoning.process).toHaveBeenCalled();
     expect(mockAction.process).toHaveBeenCalled();
-    expect(mockMeta.validateOutput).toHaveBeenCalled();
-    expect(mockMemory.learn).toHaveBeenCalled();
+
+    // Wait for fire-and-forget eval/learn to complete
+    await vi.waitFor(() => {
+      expect(mockMeta.validateOutput).toHaveBeenCalled();
+      expect(mockMemory.learn).toHaveBeenCalled();
+    }, { timeout: 500 });
   });
 
   it("should fail the cycle if meta validation fails", async () => {

@@ -200,15 +200,51 @@ function getCircuitStats(): Record<string, { failures: number; isTripped: boolea
 // ═══════════════════════════════════════════════
 // Provider Cascade — Automatic Fallback Chain
 // Phase 2: Uses shared openrouter-free-models registry
+// Phase 4: LRU cache to avoid duplicate network calls
 // ═══════════════════════════════════════════════
 
 const OPENROUTER_CASCADE = toCascadeFormat(OPENROUTER_FREE_MODELS);
+
+// LRU cache: up to 50 entries, 60s TTL
+const responseCache = new Map<string, { response: LLMResponse; ts: number }>();
+const CACHE_MAX_SIZE = 50;
+const CACHE_TTL_MS = 60_000;
+
+function cacheKey(messages: Array<{ role: string; content: string }>): string {
+  const last = messages[messages.length - 1];
+  return `${last?.role}:${last?.content?.slice(0, 200)}`;
+}
+
+function getCached(key: string): LLMResponse | null {
+  const entry = responseCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL_MS) {
+    responseCache.delete(key);
+    return null;
+  }
+  return entry.response;
+}
+
+function setCache(key: string, response: LLMResponse): void {
+  if (responseCache.size >= CACHE_MAX_SIZE) {
+    const firstKey = responseCache.keys().next().value;
+    if (firstKey) responseCache.delete(firstKey);
+  }
+  responseCache.set(key, { response, ts: Date.now() });
+}
 
 export async function chatWithCascade(
   messages: Array<{ role: string; content: string }>,
   cascade: Array<{ provider: LLMProvider; model: string }> = OPENROUTER_CASCADE,
   maxTimeoutMs: number = 8000
 ): Promise<LLMResponse> {
+  const key = cacheKey(messages);
+  const cached = getCached(key);
+  if (cached) {
+    console.log(`[Cascade] Cache hit (${key.slice(0, 60)}...)`);
+    return cached;
+  }
+
   const errors: string[] = [];
 
   for (const step of cascade) {
@@ -239,6 +275,7 @@ export async function chatWithCascade(
       if (elapsed > 2000) {
         console.warn(`[Cascade] ${step.model} slow (${elapsed}ms)`);
       }
+      setCache(key, response);
       return response;
     } catch (error) {
       recordFailure(step.provider, step.model);

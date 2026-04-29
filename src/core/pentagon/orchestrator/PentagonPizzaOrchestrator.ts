@@ -1,7 +1,8 @@
 /**
  * 🧠 Pentagon Pizza Orchestrator (The Cortex)
  * Operates the cognitive loop: Perception -> Memory -> Reasoning -> Action -> Eval
- * Enhanced with Geometric Metacognition, Feynman Loop & Quantum Router Early Exit
+ * Enhanced with Geometric Metacognition, Feynman Loop, Quantum Router Early Exit,
+ * Shared Context State, Stop Conditions, and Structured Output.
  */
 import {
   CognitiveState,
@@ -9,7 +10,13 @@ import {
   MemoryResult,
   ReasoningResult,
   ActionResult,
-  MetaResult
+  MetaResult,
+  PentagonContext,
+  PentagonStructuredOutput,
+  createPentagonContext,
+  checkStopConditions,
+  recordToolCall,
+  completeToolCall,
 } from "../layers/types";
 import { quantumRouteQuery } from "@/lib/neural/quantum-llm-router";
 
@@ -49,33 +56,22 @@ export class PentagonPizzaOrchestrator {
     this.state.currentState = newState;
   }
 
-  /**
-   * Fast Lane: Deterministic check for greetings and control commands.
-   * Minimal cognitive overhead, bypassing the full Pentagon cycle for performance.
-   */
   private isFastLane(input: string, intent?: string): boolean {
     const q = input.toLowerCase().trim();
     if (q.length < 2) return true;
 
-    // Explicit control commands + simple fact patterns (no anchor to allow matching questions)
     if (/^(pare|parar|stop|cancelar|sil[êe]ncio|shh|quieto|voltar|ajuda|help|ola|ol[aá]|oi|bom dia|boa tarde|boa noite|tchau|adeus)$|^(quem [eé]|o que [eé]|onde fica|qual [oa])\b/i.test(q)) {
       return true;
     }
 
-    // High-confidence trivial intents from Fast Intent Classifier
     if (intent === "control" || intent === "greeting") return true;
 
     return false;
   }
 
-  /**
-   * Quantum Router Early Exit — for simple queries, route directly to optimal provider
-   * bypassing Memory + full Reasoning layers. Saves ~150-300ms.
-   */
-  private async quantumEarlyExit(input: string, context: any = {}): Promise<QuantumEarlyExit | null> {
+  private async quantumEarlyExit(input: string, context: PentagonContext): Promise<QuantumEarlyExit | null> {
     const routing = quantumRouteQuery(input, { preferSpeed: true, modelType: "fast" });
 
-    // Only early-exit for simple queries where quantum confidence is high
     if (routing.complexity !== "simple") return null;
     if (routing.allScores.length === 0) return null;
 
@@ -87,7 +83,9 @@ export class PentagonPizzaOrchestrator {
       `(complexity=${routing.complexity}, score=${topScore}, ${routing.routingLatencyMs}ms)`
     );
 
-    // Fire off memory/reasoning in background for learning, don't block response
+    context.accumulatedCost += 0.01;
+    recordToolCall(context, "search_web", { query: input });
+
     this.backgroundLearn(input, context);
 
     return {
@@ -102,10 +100,7 @@ export class PentagonPizzaOrchestrator {
     };
   }
 
-  /**
-   * Background learning — runs perception → memory in parallel after early exit
-   */
-  private async backgroundLearn(input: string, context: any): Promise<void> {
+  private async backgroundLearn(input: string, context: PentagonContext): Promise<void> {
     try {
       const perception = await this.perception.process(input, context);
       const memory = await this.memory.process(perception, context);
@@ -117,76 +112,159 @@ export class PentagonPizzaOrchestrator {
     }
   }
 
-  public async runCycle(input: string, context: any = {}): Promise<ActionResult> {
+  public async runCycle(input: string, contextOptions: any = {}): Promise<ActionResult> {
+    const ctx = createPentagonContext(input, {
+      maxSteps: contextOptions.maxSteps ?? 10,
+      maxCost: contextOptions.maxCost ?? 5.0,
+      maxDurationMs: contextOptions.maxDurationMs ?? 30000,
+      domain: contextOptions.domain,
+      forceTool: contextOptions.forceTool,
+      forceRag: contextOptions.forceRag,
+      skipFeynman: contextOptions.skipFeynman,
+    });
+
+    return this.executeCycle(input, ctx);
+  }
+
+  /**
+   * Run cycle with structured output format
+   */
+  public async runCycleStructured(input: string, contextOptions: any = {}): Promise<PentagonStructuredOutput> {
+    const ctx = createPentagonContext(input, {
+      maxSteps: contextOptions.maxSteps ?? 10,
+      maxCost: contextOptions.maxCost ?? 5.0,
+      maxDurationMs: contextOptions.maxDurationMs ?? 30000,
+      domain: contextOptions.domain,
+      forceTool: contextOptions.forceTool,
+      forceRag: contextOptions.forceRag,
+      skipFeynman: contextOptions.skipFeynman,
+    });
+
+    const result = await this.executeCycle(input, ctx);
+    const duration = Date.now() - ctx.startedAt;
+
+    return {
+      success: result.success,
+      output: result.output,
+      metadata: {
+        cycleId: ctx.cycleId,
+        cognitiveStates: this.state.history,
+        stepsTaken: ctx.stepCount,
+        totalCost: ctx.accumulatedCost,
+        durationMs: duration,
+        earlyExit: !!(result.data?.fastLane || result.data?.quantumEarlyExit),
+        earlyExitType: result.data?.fastLane ? "fast_lane" : result.data?.quantumEarlyExit ? "quantum" : ctx.stopReason === "quality_threshold_met" ? "quality_met" : ctx.stopReason ? "stop_condition" : undefined,
+      },
+      toolCalls: ctx.toolCalls.map(tc => ({
+        tool: tc.tool,
+        args: tc.args,
+        result: tc.result,
+        durationMs: tc.completedAt ? tc.completedAt - tc.startedAt : undefined,
+      })),
+      confidence: this.state.reasoning?.confidence,
+      error: result.data?.error,
+      sourcesUsed: this.state.memory?.ragSnippets?.slice(0, 5),
+    };
+  }
+
+  private async executeCycle(input: string, ctx: PentagonContext): Promise<ActionResult> {
     try {
-      // 0. Fast Lane Gate
-      if (this.isFastLane(input, context.intent)) {
+      if (this.isFastLane(input, ctx.sharedState?.intent as string | undefined)) {
         console.log("[CORTEX] ⚡ Fast Lane hit. Bypassing full cycle.");
         return {
           success: true,
-          output: "", // Let the final generator handle simple greetings if needed
+          output: "",
           data: { fastLane: true }
         };
       }
 
-      // 0.5. Quantum Router Early Exit
-      const earlyExit = await this.quantumEarlyExit(input, context);
+      const earlyExit = await this.quantumEarlyExit(input, ctx);
       if (earlyExit) {
-        return earlyExit;
+        return earlyExit as unknown as ActionResult;
       }
 
       // 1. Perception
+      ctx.stepCount++;
+      if (checkStopConditions(ctx)) return this.stopResult(ctx);
       await this.transition("perceiving");
+
       const preCheck = await this.meta.validateInput(input);
       if (!preCheck.valid) throw new Error(`Pre-Input Guard Breach: ${preCheck.feedback}`);
 
-      this.state.perception = await this.perception.process(input, context);
+      const preToolCall = recordToolCall(ctx, "search_web", { query: input });
+      this.state.perception = await this.perception.process(input, ctx);
+      completeToolCall(preToolCall, this.state.perception);
 
       // 2. Memory
+      ctx.stepCount++;
+      if (checkStopConditions(ctx)) return this.stopResult(ctx);
       await this.transition("remembering");
-      this.state.memory = await this.memory.process(this.state.perception, context);
+
+      const memToolCall = recordToolCall(ctx, "retrieve_memory", { query: input });
+      this.state.memory = await this.memory.process(this.state.perception, ctx);
+      completeToolCall(memToolCall, this.state.memory);
 
       // 3. Reasoning
+      ctx.stepCount++;
+      if (checkStopConditions(ctx)) return this.stopResult(ctx);
       await this.transition("reasoning");
 
-      // RAG Enforcement removed for performance — execute reasoning exactly once.
+      const reasonToolCall = recordToolCall(ctx, "emit_reasoning_plan", { query: input });
       this.state.reasoning = await this.reasoning.process(
         { perception: this.state.perception, memory: this.state.memory },
-        context
+        ctx
       );
+      completeToolCall(reasonToolCall, this.state.reasoning);
+      ctx.accumulatedCost += 0.05;
 
-      // 🍕 Metacognitive Checkpoint (Enhanced with Information Geometry)
-      const midCheck = await this.meta.validateReasoning(this.state.reasoning, context);
+      const midCheck = await this.meta.validateReasoning(this.state.reasoning, ctx);
       if (!midCheck.valid) {
         console.warn("[CORTEX] Mid-Reasoning warning/block:", midCheck.feedback);
-        // If the geometric/energy check is very low, we could force a simpler model or a clarification
         if (midCheck.score < 50) {
            this.state.reasoning.responseHint = `[Aviso Metacognitivo]: ${midCheck.feedback}\n\n${this.state.reasoning.responseHint}`;
         }
       }
 
-      // 4. Action (Tool Enforcement)
+      // 4. Action
+      ctx.stepCount++;
+      if (checkStopConditions(ctx)) return this.stopResult(ctx);
       await this.transition("acting");
 
-      // 🍕 Tool Enforcement: If query involves current facts/external data, FORCE tools
       const isFactQuery = /(hoje|agora|atualmente|not[íi]cia|pre[çc]o|tempo|clima|evento|quem [eé]|o que [eé]|onde fica)/i.test(input);
       if (isFactQuery && (!this.state.reasoning?.plan?.some((p: string) => p.includes("tool") || p.includes("search") || p.includes("firecrawl")))) {
         console.log("[CORTEX] 🛠️ Fact query detected. Forcing tool execution.");
-        context.forceTool = true;
+        ctx.forceTool = true;
       }
 
-      this.state.action = await this.action.process(this.state.reasoning, { ...context, perception: this.state.perception });
+      this.state.action = await this.action.process(this.state.reasoning, ctx);
 
-      // 5. Evaluation (Post-Output)
-      await this.transition("evaluating");
-      this.state.meta = await this.meta.validateOutput(this.state.action);
+      const result = this.state.action;
 
-      if (this.state.meta.score > 80) {
-        await this.memory.learn(this.state);
-      }
+      Promise.resolve().then(async () => {
+        try {
+          ctx.stepCount++;
+          await this.transition("evaluating");
 
-      await this.transition("idle");
-      return this.state.action;
+          const validateToolCall = recordToolCall(ctx, "validate_output", { output: result.output });
+          this.state.meta = await this.meta.validateOutput(result);
+          completeToolCall(validateToolCall, this.state.meta);
+
+          if (this.state.meta.score > 80) {
+            await this.memory.learn(this.state);
+          }
+
+          if (this.state.meta.score >= 90) {
+            ctx.stopReason = "quality_threshold_met";
+          }
+
+          await this.transition("idle");
+        } catch (err) {
+          console.warn("[CORTEX] Background eval/learn failed (non-fatal):", err);
+          await this.transition("idle");
+        }
+      });
+
+      return result;
 
     } catch (error: any) {
       console.error("[CORTEX] Critical Loop Failure:", error);
@@ -197,6 +275,17 @@ export class PentagonPizzaOrchestrator {
         data: { error: error.message }
       };
     }
+  }
+
+  private stopResult(ctx: PentagonContext): ActionResult {
+    console.log(`[CORTEX] 🛑 Cycle stopped: ${ctx.stopReason} (step=${ctx.stepCount}, cost=${ctx.accumulatedCost.toFixed(2)})`);
+    return {
+      success: ctx.stopReason === "quality_threshold_met",
+      output: ctx.stopReason === "timeout" ? "Tempo limite excedido." :
+              ctx.stopReason === "max_steps" ? "Limite de passos atingido." :
+              ctx.stopReason === "max_cost" ? "Limite de custo atingido." : "Ciclo interrompido.",
+      data: { stopReason: ctx.stopReason, stepsTaken: ctx.stepCount, totalCost: ctx.accumulatedCost }
+    };
   }
 
   public getState(): PentagonPizzaState {

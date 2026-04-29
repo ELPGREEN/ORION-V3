@@ -1,10 +1,9 @@
-import { IPentagonLayer, PerceptionResult } from "../types";
+import { IPentagonLayer, PerceptionResult, PentagonContext } from "../types";
 import { analyzeSemantics } from "@/lib/neural/nlp-semantic-analyzer";
 
 export class PerceptionAdapter implements IPentagonLayer<string, PerceptionResult> {
-  public async process(input: string, context: any): Promise<PerceptionResult> {
-    // Integra com o analisador semântico existente
-    const analysis = analyzeSemantics(input, context?.wmContext || "");
+  public async process(input: string, context: PentagonContext): Promise<PerceptionResult> {
+    const analysis = analyzeSemantics(input, (context.sharedState?.wmContext as string) || "");
 
     return {
       intent: analysis.domain === "geral" ? "conversational" : analysis.domain,
