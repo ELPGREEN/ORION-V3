@@ -2,16 +2,18 @@
  * ─── Orion LLM Provider Integration ───
  * Supports multiple LLM providers like OpenCode
  * Uses AI SDK and Models.dev for 75+ providers
+ *
+ * Phase 1 Optimization: Circuit Breaker + Provider Cascade
  */
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type LLMProvider = 
-  | "openai" 
-  | "anthropic" 
-  | "google" 
-  | "deepseek" 
-  | "groq" 
+export type LLMProvider =
+  | "openai"
+  | "anthropic"
+  | "google"
+  | "deepseek"
+  | "groq"
   | "cohere"
   | "mistral"
   | "fireworks"
@@ -44,8 +46,7 @@ export interface LLMResponse {
   };
 }
 
-// Free tier models configuration - COMPLETO 2026 (Pesquisa + OpenRouter)
-// Todos os modelos verificados gratuitos do mercado
+// Free tier models configuration - COMPLETO 2026
 export const FREE_MODELS: Record<LLMProvider, string[]> = {
   openai: ["gpt-4o-mini", "gpt-4o", "gpt-5-high"],
   anthropic: ["claude-3-haiku-20240307", "claude-3-5-sonnet-20241022", "claude-opus-4-1-20250805-thinking"],
@@ -60,50 +61,35 @@ export const FREE_MODELS: Record<LLMProvider, string[]> = {
   "lmstudio": ["llama3", "codellama"],
   "llama-cpp": ["llama-3-70b", "codellama-70b", "llama-4-scout"],
   huggingface: ["meta-llama/Llama-3.1-70B-Instruct", "Qwen/Qwen2.5-Coder-32B-Instruct"],
-   // OpenRouter - COMPLETO com todos os modelos gratuitos 2026
-   openrouter: [
-     // 🔥 AUTO-ROUTER (melhor seleção automática)
-     "openrouter/free",
-     // 👁️ VISION PRIMARY (Llama 3.2 11B Vision - PRINCIPAL PARA ORION)
-     "meta-llama/llama-3.2-11b-vision-instruct:free",
-     // 👁️ VISION DETALHADA (Qwen2.5 VL 32B - análise complexa)
-     "qwen/qwen2.5-vl-32b-instruct:free",
-     // 👁️ VISION THINKING (Kimi VL A3B - raciocínio profundo)
-     "moonshotai/kimi-vl-a3b-thinking:free",
-     // 👁️ VISION LIGHT (Qwen2.5 VL 3B - rápido)
-     "qwen/qwen2.5-vl-3b-instruct:free",
-     // ⚡ NVIDIA VISION (Nemotron Nano 12B VL - alta vazão)
-     "nvidia/nemotron-nano-12b-v2-vl:free",
-     // ⚡ NVIDIA MEGA (Nemotron 3 Super 120B - pesado/Mo3E)
-     "nvidia/nemotron-3-super-120b-a12b:free",
-     // 🧠 REASONING (melhores para lógica e matemática)
-     "deepseek/deepseek-r1",
-     "deepseek/deepseek-r1-0528",
-     "qwen/qwen3-235b-thinking",
-     "qwen/qwen3-next-80b-a3b-instruct",
-     // 💻 CODING (melhores para código)
-     "qwen/qwen3-coder-480b",
-     "mistralai/devstral-2",
-     "qwen/qwen2.5-coder-32b",
-     // 🌍 GENERAL (multiuso)
-     "meta-llama/llama-3.3-70b-instruct",
-     "meta-llama/llama-4-scout:free",
-     "meta-llama/llama-4-maverick:free",
-     "mistralai/mistral-small-3.1-24b-instruct",
-     "grok/grok-4",
-     // 🌎 EXTRA (diversos)
-     "minimax/minimax-m2.5-free",
-     "aethernether/llama-3-8b-instruct-thinking:free",
-      // 🌟 GOOGLE VISION (Gemma 3 27B - documentos)
-      "google/gemma-3-27b-it:free",
-      // 🧩 TENCENT (Hy3 Preview - reasoning & coding)
-      "tencent/hy3-preview:free",
-    ],
+  openrouter: [
+    "openrouter/free",
+    "meta-llama/llama-3.2-11b-vision-instruct:free",
+    "qwen/qwen2.5-vl-32b-instruct:free",
+    "moonshotai/kimi-vl-a3b-thinking:free",
+    "qwen/qwen2.5-vl-3b-instruct:free",
+    "nvidia/nemotron-nano-12b-v2-vl:free",
+    "nvidia/nemotron-3-super-120b-a12b:free",
+    "deepseek/deepseek-r1",
+    "deepseek/deepseek-r1-0528",
+    "qwen/qwen3-235b-thinking",
+    "qwen/qwen3-next-80b-a3b-instruct",
+    "qwen/qwen3-coder-480b",
+    "mistralai/devstral-2",
+    "qwen/qwen2.5-coder-32b",
+    "meta-llama/llama-3.3-70b-instruct",
+    "meta-llama/llama-4-scout:free",
+    "meta-llama/llama-4-maverick:free",
+    "mistralai/mistral-small-3.1-24b-instruct",
+    "grok/grok-4",
+    "minimax/minimax-m2.5-free",
+    "aethernether/llama-3-8b-instruct-thinking:free",
+    "google/gemma-3-27b-it:free",
+    "tencent/hy3-preview:free",
+  ],
   azure: [],
   vertex: [],
 };
 
-// Provider API endpoints
 const PROVIDER_ENDPOINTS: Record<LLMProvider, string> = {
   openai: "https://api.openai.com/v1",
   anthropic: "https://api.anthropic.com/v1",
@@ -123,6 +109,155 @@ const PROVIDER_ENDPOINTS: Record<LLMProvider, string> = {
   vertex: "",
 };
 
+// ═══════════════════════════════════════════════
+// Circuit Breaker — Provider Health Tracking
+// ═══════════════════════════════════════════════
+
+interface CircuitState {
+  failures: number;
+  lastFailure: number;
+  isTripped: boolean;
+  totalRequests: number;
+  totalSuccesses: number;
+}
+
+const circuitStates: Map<string, CircuitState> = new Map();
+
+const CIRCUIT_FAILURE_THRESHOLD = 3;
+const CIRCUIT_RECOVERY_TIMEOUT_MS = 30_000;
+const CIRCUIT_WINDOW_MS = 60_000;
+
+function getCircuitKey(provider: LLMProvider, model: string): string {
+  return `${provider}:${model}`;
+}
+
+function getCircuitState(key: string): CircuitState {
+  const existing = circuitStates.get(key);
+  if (existing) return existing;
+  const fresh: CircuitState = { failures: 0, lastFailure: 0, isTripped: false, totalRequests: 0, totalSuccesses: 0 };
+  circuitStates.set(key, fresh);
+  return fresh;
+}
+
+function recordSuccess(provider: LLMProvider, model: string): void {
+  const key = getCircuitKey(provider, model);
+  const state = getCircuitState(key);
+  state.totalRequests++;
+  state.totalSuccesses++;
+  if (state.failures > 0) {
+    state.failures = Math.max(0, state.failures - 1);
+  }
+  if (state.failures === 0 && state.isTripped) {
+    state.isTripped = false;
+    console.log(`[CircuitBreaker] ${key} recovered`);
+  }
+  // Decay old failures outside window
+  const now = Date.now();
+  if (now - state.lastFailure > CIRCUIT_WINDOW_MS) {
+    state.failures = 0;
+  }
+}
+
+function recordFailure(provider: LLMProvider, model: string): void {
+  const key = getCircuitKey(provider, model);
+  const state = getCircuitState(key);
+  state.totalRequests++;
+  state.failures++;
+  state.lastFailure = Date.now();
+  if (state.failures >= CIRCUIT_FAILURE_THRESHOLD) {
+    state.isTripped = true;
+    console.warn(`[CircuitBreaker] ${key} tripped (${state.failures} failures)`);
+  }
+}
+
+function isCircuitOpen(provider: LLMProvider, model: string): boolean {
+  const key = getCircuitKey(provider, model);
+  const state = getCircuitState(key);
+  if (!state.isTripped) return false;
+  // Check if recovery timeout has passed
+  if (Date.now() - state.lastFailure > CIRCUIT_RECOVERY_TIMEOUT_MS) {
+    state.isTripped = false;
+    state.failures = 0;
+    return false;
+  }
+  return true;
+}
+
+function getCircuitStats(): Record<string, { failures: number; isTripped: boolean; successRate: number }> {
+  const stats: Record<string, any> = {};
+  for (const [key, state] of circuitStates.entries()) {
+    stats[key] = {
+      failures: state.failures,
+      isTripped: state.isTripped,
+      successRate: state.totalRequests > 0 ? (state.totalSuccesses / state.totalRequests) : 0,
+    };
+  }
+  return stats;
+}
+
+// ═══════════════════════════════════════════════
+// Provider Cascade — Automatic Fallback Chain
+// ═══════════════════════════════════════════════
+
+const OPENROUTER_CASCADE = [
+  { provider: "openrouter" as LLMProvider, model: "mistralai/mistral-small-3.1-24b-instruct" },
+  { provider: "openrouter" as LLMProvider, model: "tencent/hy3-preview:free" },
+  { provider: "openrouter" as LLMProvider, model: "openrouter/free" },
+  { provider: "openrouter" as LLMProvider, model: "deepseek/deepseek-r1" },
+  { provider: "openrouter" as LLMProvider, model: "qwen/qwen3-coder-480b" },
+];
+
+export async function chatWithCascade(
+  messages: Array<{ role: string; content: string }>,
+  cascade: Array<{ provider: LLMProvider; model: string }> = OPENROUTER_CASCADE,
+  maxTimeoutMs: number = 8000
+): Promise<LLMResponse> {
+  const errors: string[] = [];
+
+  for (const step of cascade) {
+    // Skip if circuit is open
+    if (isCircuitOpen(step.provider, step.model)) {
+      errors.push(`${step.provider}:${step.model} circuit open`);
+      continue;
+    }
+
+    const apiKey = getApiKey(step.provider);
+    if (!apiKey) {
+      errors.push(`${step.provider}:${step.model} no API key`);
+      continue;
+    }
+
+    const client = createLLMClient(step.provider, step.model, apiKey);
+    const startTime = Date.now();
+
+    try {
+      const timeout = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error(`Timeout ${maxTimeoutMs}ms`)), maxTimeoutMs);
+      });
+
+      const response = await Promise.race([client.chat(messages), timeout]);
+
+      recordSuccess(step.provider, step.model);
+      const elapsed = Date.now() - startTime;
+      if (elapsed > 2000) {
+        console.warn(`[Cascade] ${step.model} slow (${elapsed}ms)`);
+      }
+      return response;
+    } catch (error) {
+      recordFailure(step.provider, step.model);
+      const msg = error instanceof Error ? error.message : String(error);
+      errors.push(`${step.provider}:${step.model} → ${msg}`);
+      console.warn(`[Cascade] ${step.provider}:${step.model} failed: ${msg}`);
+    }
+  }
+
+  throw new Error(`All providers in cascade failed:\n${errors.join("\n")}`);
+}
+
+// ═══════════════════════════════════════════════
+// Main Client
+// ═══════════════════════════════════════════════
+
 export class OrionLLMClient {
   private config: LLMConfig;
   private apiKey: string | null = null;
@@ -131,44 +266,26 @@ export class OrionLLMClient {
     this.config = config;
   }
 
-  /**
-   * Set API key for the provider
-   */
   setApiKey(key: string): void {
     this.apiKey = key;
   }
 
-  /**
-   * Get available free models for a provider
-   */
   static getFreeModels(provider: LLMProvider): string[] {
     return FREE_MODELS[provider] || [];
   }
 
-  /**
-   * Get all supported providers
-   */
   static getProviders(): LLMProvider[] {
     return Object.keys(FREE_MODELS) as LLMProvider[];
   }
 
-  /**
-   * Check if provider has free models
-   */
   static hasFreeTier(provider: LLMProvider): boolean {
     return (FREE_MODELS[provider] || []).length > 0;
   }
 
-  /**
-   * Get the API endpoint for a provider
-   */
   getEndpoint(): string {
     return this.config.baseURL || PROVIDER_ENDPOINTS[this.config.provider];
   }
 
-  /**
-   * Execute a chat completion request
-   */
   async chat(messages: Array<{ role: string; content: string }>): Promise<LLMResponse> {
     if (!this.apiKey) {
       throw new Error("API key not set. Use setApiKey() first.");
@@ -177,7 +294,6 @@ export class OrionLLMClient {
     const endpoint = this.getEndpoint();
     const model = this.config.model;
 
-    // Build request based on provider
     const requestBody = this.buildRequestBody(messages);
 
     try {
@@ -212,7 +328,6 @@ export class OrionLLMClient {
       temperature: this.config.temperature || 0.7,
     };
 
-    // Provider-specific adjustments
     switch (this.config.provider) {
       case "anthropic":
         return {
@@ -232,10 +347,7 @@ export class OrionLLMClient {
           },
         };
       case "openrouter":
-        return {
-          ...base,
-          // OpenRouter specific headers handled separately
-        };
+        return { ...base };
       default:
         return base;
     }
@@ -276,7 +388,7 @@ export class OrionLLMClient {
  * Factory to create LLM clients based on provider
  */
 export function createLLMClient(
-  provider: LLMProvider, 
+  provider: LLMProvider,
   model?: string,
   apiKey?: string,
   baseURL?: string
@@ -287,22 +399,15 @@ export function createLLMClient(
     apiKey,
     baseURL,
   };
-  
+
   const client = new OrionLLMClient(config);
   if (apiKey) {
     client.setApiKey(apiKey);
   }
-  
+
   return client;
 }
 
-/**
- * Get provider display name
- */
-/**
- * Get API key from environment variables
- * Supports multiple providers
- */
 export function getApiKey(provider: LLMProvider): string | null {
   const envKeys: Record<LLMProvider, string> = {
     openai: import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.OPENAI_API_KEY,
@@ -322,63 +427,48 @@ export function getApiKey(provider: LLMProvider): string | null {
     azure: import.meta.env.VITE_AZURE_API_KEY || import.meta.env.AZURE_API_KEY,
     vertex: import.meta.env.VITE_VERTEX_API_KEY || import.meta.env.VERTEX_API_KEY,
   };
-  
+
   return envKeys[provider] || null;
 }
 
-/**
- * Check which providers have API keys configured
- */
 export function getAvailableProviders(): LLMProvider[] {
   const providers = Object.keys(FREE_MODELS) as LLMProvider[];
   return providers.filter(p => getApiKey(p) !== null);
 }
 
-/**
- * Check if DeepSeek is available (has API key)
- */
 export function isDeepSeekAvailable(): boolean {
   return getApiKey("deepseek") !== null;
 }
 
-/**
- * Quick chat with DeepSeek (simplified)
- */
 export async function chatWithDeepSeek(
   messages: Array<{ role: string; content: string }>,
   model: string = "deepseek-chat"
 ): Promise<LLMResponse> {
   const apiKey = getApiKey("deepseek");
-  
+
   if (!apiKey) {
     throw new Error("DeepSeek API key not configured. Add VITE_DEEPSEEK_API_KEY to your .env file.");
   }
-  
+
   const client = createLLMClient("deepseek", model, apiKey);
   return client.chat(messages);
 }
 
-/**
- * Quick chat with any provider (simplified)
- */
 export async function chatWithProvider(
   provider: LLMProvider,
   messages: Array<{ role: string; content: string }>,
   model?: string
 ): Promise<LLMResponse> {
   const apiKey = getApiKey(provider);
-  
+
   if (!apiKey) {
     throw new Error(`${provider} API key not configured. Add VITE_${provider.toUpperCase()}_API_KEY to your .env file.`);
   }
-  
+
   const client = createLLMClient(provider, model, apiKey);
   return client.chat(messages);
 }
 
-/**
- * Get provider display name
- */
 export function getProviderName(provider: LLMProvider): string {
   const names: Record<LLMProvider, string> = {
     openai: "OpenAI (GPT)",
@@ -398,6 +488,9 @@ export function getProviderName(provider: LLMProvider): string {
     azure: "Azure OpenAI",
     vertex: "Google Vertex",
   };
-  
+
   return names[provider] || provider;
 }
+
+// Export circuit breaker utilities
+export { getCircuitStats, OPENROUTER_CASCADE };

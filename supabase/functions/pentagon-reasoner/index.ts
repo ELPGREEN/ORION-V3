@@ -89,12 +89,12 @@ const FEYNMAN_TOOL = {
 };
 
 const MODEL_CASCADE = [
-  "mistralai/mistral-small-3.1-24b-instruct:free",
-  "tencent/hy3-preview:free",
-  "nvidia/nemotron-nano-9b-v2:free",
-  "deepseek/deepseek-r1:free",
-  "qwen/qwen3-coder:free",
-  "meta-llama/llama-3.3-70b-instruct:free",
+  { model: "mistralai/mistral-small-3.1-24b-instruct:free", timeout: 4000 },
+  { model: "tencent/hy3-preview:free", timeout: 5000 },
+  { model: "nvidia/nemotron-nano-9b-v2:free", timeout: 4000 },
+  { model: "deepseek/deepseek-r1:free", timeout: 10000 },
+  { model: "qwen/qwen3-coder:free", timeout: 8000 },
+  { model: "meta-llama/llama-3.3-70b-instruct:free", timeout: 10000 },
 ];
 
 async function callOpenRouter(
@@ -103,10 +103,11 @@ async function callOpenRouter(
   userPayload: string,
   systemPrompt: string,
   tool: any,
-  toolName: string
+  toolName: string,
+  timeoutMs: number = 7000
 ): Promise<Record<string, unknown> | null> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 7000); // 7s timeout for high-speed loop
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -151,7 +152,7 @@ async function callOpenRouter(
     return null;
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      console.warn(`[pentagon-reasoner] ${model} timed out after 7s`);
+      console.warn(`[pentagon-reasoner] ${model} timed out after ${timeoutMs}ms`);
     } else {
       console.error(`[pentagon-reasoner] ${model} error:`, err.message);
     }
@@ -174,8 +175,8 @@ Deno.serve(async (req) => {
     if (mode === "feynman_simplification") {
       const userPayload = `Raciocínio Original: ${originalRationale}\n\nQuery do Usuário: ${query}`;
       let parsed: any = null;
-      for (const model of MODEL_CASCADE) {
-        parsed = await callOpenRouter(model, OPENROUTER_API_KEY, userPayload, FEYNMAN_PROMPT, FEYNMAN_TOOL, "emit_feynman_refinement");
+      for (const step of MODEL_CASCADE) {
+        parsed = await callOpenRouter(step.model, OPENROUTER_API_KEY, userPayload, FEYNMAN_PROMPT, FEYNMAN_TOOL, "emit_feynman_refinement", step.timeout);
         if (parsed) break;
       }
       return new Response(JSON.stringify({ success: true, ...parsed }), {
@@ -197,10 +198,10 @@ Deno.serve(async (req) => {
 
     let parsed: any = null;
     let usedModel = "";
-    for (const model of MODEL_CASCADE) {
-      parsed = await callOpenRouter(model, OPENROUTER_API_KEY, userPayload, SYSTEM_PROMPT, REASONING_TOOL, "emit_reasoning_plan");
+    for (const step of MODEL_CASCADE) {
+      parsed = await callOpenRouter(step.model, OPENROUTER_API_KEY, userPayload, SYSTEM_PROMPT, REASONING_TOOL, "emit_reasoning_plan", step.timeout);
       if (parsed) {
-        usedModel = model;
+        usedModel = step.model;
         break;
       }
     }
