@@ -10,6 +10,7 @@ export interface PerceptionResult {
   sentiment: string;
   rawInput: string;
   contextualMarkers: string[];
+  complexity: "simple" | "medium" | "complex";
 }
 
 export interface MemoryResult {

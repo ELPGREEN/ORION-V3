@@ -65,7 +65,7 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
       };
 
       // 🎓 Integration of Feynman Loop
-      if (baseResult.confidence > 0.6 && !context?.skipFeynman) {
+      if (baseResult.confidence > 0.6 && perception.complexity === "complex" && !context?.skipFeynman) {
         console.log("[Reasoning] Entering Feynman Loop for refinement...");
         baseResult = await FeynmanReasoner.refine(baseResult, perception?.rawInput ?? "");
       }
