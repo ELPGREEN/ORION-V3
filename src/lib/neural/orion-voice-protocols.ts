@@ -5,6 +5,7 @@
  * Loaded lazily from /data/orion_voice_protocols.json
  * Matched against user query to inject relevant context into LLM prompt.
  */
+import { getLearnedCorrection } from "./intent-feedback";
 
 interface Protocol {
   id: number;
@@ -77,8 +78,10 @@ export async function matchProtocols(query: string): Promise<{
   
   const q = query.toLowerCase().trim();
   const qNorm = normalizeAccents(query);
+  const learned = getLearnedCorrection(query);
+
   const result = {
-    quickResponse: null as string | null,
+    quickResponse: learned ? `[EVOLUÇÃO ORGÂNICA] O usuário corrigiu este tipo de input para o intent: ${learned.correctIntent}` : null as string | null,
     guards: [] as string[],
     connectors: [] as string[],
     coherenceRules: [] as string[],
