@@ -37,16 +37,39 @@ OBJETIVO:
 Aprender profundamente o tópico e melhorar sua própria capacidade de raciocínio.
 
 ETAPAS:
-1. EXPLICAÇÃO FUNDAMENTAL: Explique o tópico do zero até nível avançado.
-2. MODELO MENTAL: Crie uma representação estruturada (framework, mapa ou sistema).
-3. DECOMPOSIÇÃO: Quebre o tópico em subcomponentes essenciais.
-4. RELAÇÕES: Explique como esse tópico se conecta com: raciocínio, tomada de decisão e sistemas multi-LLM.
-5. APLICAÇÃO: Mostre como implementar isso em um agente inteligente.
-6. LIMITAÇÕES: Liste falhas, riscos e pontos de quebra.
-7. AUTOAVALIAÇÃO: Avalie sua própria resposta: clareza (0–1), profundidade (0–1), incerteza (0–1).
-8. MELHORIA: Reescreva os pontos mais fracos da sua resposta.
 
-SAÍDA: Resposta estruturada + métricas + versão melhorada.`,
+1. EXPLICAÇÃO FUNDAMENTAL
+Explique o tópico do zero até nível avançado.
+
+2. MODELO MENTAL
+Crie uma representação estruturada (framework, mapa ou sistema).
+
+3. DECOMPOSIÇÃO
+Quebre o tópico em subcomponentes essenciais.
+
+4. RELAÇÕES
+Explique como esse tópico se conecta com:
+- raciocínio
+- tomada de decisão
+- sistemas multi-LLM
+
+5. APLICAÇÃO
+Mostre como implementar isso em um agente inteligente.
+
+6. LIMITAÇÕES
+Liste falhas, riscos e pontos de quebra.
+
+7. AUTOAVALIAÇÃO
+Avalie sua própria resposta:
+- clareza (0–1)
+- profundidade (0–1)
+- incerteza (0–1)
+
+8. MELHORIA
+Reescreva os pontos mais fracos da sua resposta.
+
+SAÍDA:
+Resposta estruturada + métricas + versão melhorada.`,
     expectedOutput: "Resposta estruturada + métricas + versão melhorada.",
   },
 
@@ -65,7 +88,8 @@ Analise este tema como um sistema probabilístico.
 5. Onde está a maior incerteza?
 6. Como reduzir essa incerteza?
 
-SAÍDA: Tabela + explicação + modelo probabilístico.`,
+SAÍDA:
+Tabela + explicação + modelo probabilístico.`,
     expectedOutput: "Tabela + explicação + modelo probabilístico.",
   },
 
@@ -76,6 +100,7 @@ SAÍDA: Tabela + explicação + modelo probabilístico.`,
     promptTemplate: `TÓPICO: {topic}
 
 Simule 3 modelos diferentes:
+
 - Modelo A: rápido e superficial
 - Modelo B: técnico e detalhado
 - Modelo C: crítico e cético
@@ -87,8 +112,12 @@ PASSOS:
 4. Resolva conflitos
 5. Gere uma resposta final otimizada
 
-SAÍDA: respostas individuais + análise de conflito + resposta consolidada + nível de confiança (0–1).`,
-    expectedOutput: "respostas individuais + análise de conflito + resposta consolidada + nível de confiança (0–1).",
+SAÍDA:
+- respostas individuais
+- análise de conflito
+- resposta consolidada
+- nível de confiança (0–1)`,
+    expectedOutput: "- respostas individuais, análise de conflito, resposta consolidada, nível de confiança (0–1)",
   },
 
   self_correction: {
@@ -98,12 +127,15 @@ SAÍDA: respostas individuais + análise de conflito + resposta consolidada + n�
     promptTemplate: `TÓPICO: {topic}
 
 1. Gere uma resposta inicial
-2. Ative modo crítico: o que pode estar errado? o que não foi comprovado?
+2. Ative modo crítico:
+   - o que pode estar errado?
+   - o que não foi comprovado?
 3. Corrija a resposta
 4. Marque partes com baixa confiança
 5. Gere versão final mais segura
 
-SAÍDA: Resposta original → crítica → versão corrigida`,
+SAÍDA:
+Resposta original → crítica → versão corrigida`,
     expectedOutput: "Resposta original → crítica → versão corrigida",
   },
 
@@ -113,7 +145,10 @@ SAÍDA: Resposta original → crítica → versão corrigida`,
     description: "Projeta um módulo de agente baseado no tópico.",
     promptTemplate: `TÓPICO: {topic}
 
-Projete um módulo de agente baseado nisso. Inclua:
+Projete um módulo de agente baseado nisso.
+
+Inclua:
+
 1. Função principal
 2. Inputs / Outputs
 3. Fluxo de decisão
@@ -122,7 +157,8 @@ Projete um módulo de agente baseado nisso. Inclua:
 6. Possíveis falhas
 7. Como o módulo aprende com o tempo
 
-SAÍDA: Arquitetura + lógica + pseudo-código`,
+SAÍDA:
+Arquitetura + lógica + pseudo-código`,
     expectedOutput: "Arquitetura + lógica + pseudo-código",
   },
 
@@ -132,15 +168,22 @@ SAÍDA: Arquitetura + lógica + pseudo-código`,
     description: "Cria cenários ideal, realista e extremo para o sistema.",
     promptTemplate: `TÓPICO: {topic}
 
-Crie 3 cenários: cenário ideal, cenário realista, cenário extremo.
+Crie 3 cenários:
+
+- cenário ideal
+- cenário realista
+- cenário extremo
+
 Para cada um:
 1. Como o sistema se comporta?
 2. Onde falha?
 3. Como se adapta?
 4. Qual probabilidade de sucesso?
 
-Finalize com: análise comparativa + estratégia ideal.`,
-    expectedOutput: "análise comparativa + estratégia ideal.",
+Finalize com:
+- análise comparativa
+- estratégia ideal`,
+    expectedOutput: "análise comparativa + estratégia ideal",
   },
 
   meta_learning: {
@@ -154,8 +197,10 @@ Finalize com: análise comparativa + estratégia ideal.`,
 3. O que pode ser generalizado para outros problemas?
 4. Como isso melhora seu raciocínio futuro?
 
-Finalize com: regras de aprendizado + upgrades cognitivos sugeridos.`,
-    expectedOutput: "regras de aprendizado + upgrades cognitivos sugeridos.",
+Finalize com:
+- regras de aprendizado
+- upgrades cognitivos sugeridos`,
+    expectedOutput: "regras de aprendizado + upgrades cognitivos sugeridos",
   },
 
   memory_evolution: {
@@ -169,7 +214,8 @@ Finalize com: regras de aprendizado + upgrades cognitivos sugeridos.`,
 3. Como estruturar isso na memória (vetor, grafo, etc)?
 4. Como reutilizar esse conhecimento no futuro?
 
-SAÍDA: Estrutura de memória + estratégia de retenção`,
+SAÍDA:
+Estrutura de memória + estratégia de retenção`,
     expectedOutput: "Estrutura de memória + estratégia de retenção",
   },
 
@@ -180,13 +226,20 @@ SAÍDA: Estrutura de memória + estratégia de retenção`,
     promptTemplate: `TÓPICO: {topic}
 
 Crie um teste para você mesmo:
+
 - 3 perguntas fáceis
 - 3 médias
 - 3 difíceis
 
-Responda tudo. Depois: avalie erros, explique falhas e corrija conhecimento.
+Responda tudo.
 
-SAÍDA: teste + respostas + diagnóstico`,
+Depois:
+- avalie erros
+- explique falhas
+- corrija conhecimento
+
+SAÍDA:
+teste + respostas + diagnóstico`,
     expectedOutput: "teste + respostas + diagnóstico",
   },
 
@@ -197,6 +250,7 @@ SAÍDA: teste + respostas + diagnóstico`,
     promptTemplate: `TÓPICO: {topic}
 
 LOOP:
+
 1. aprender
 2. aplicar
 3. avaliar
@@ -204,7 +258,11 @@ LOOP:
 5. otimizar
 
 Execute 2 ciclos completos.
-Mostre: evolução entre ciclos, melhoria de qualidade, redução de incerteza.`,
-    expectedOutput: "evolução entre ciclos + melhoria de qualidade + redução de incerteza.",
+
+Mostre:
+- evolução entre ciclos
+- melhoria de qualidade
+- redução de incerteza`,
+    expectedOutput: "evolução entre ciclos + melhoria de qualidade + redução de incerteza",
   },
 };

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Brain, Zap, CheckCircle, XCircle, Loader2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { AUTOCOGNITIVE_PROTOCOLS, AutocognitiveProtocolId } from "@/lib/neural/autocognitive-protocols";
+import { HARVESTER_TOPICS } from "@/lib/neural/knowledge-harvester-topics";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface HarvestDetail {
@@ -88,11 +89,23 @@ export function KnowledgeHarvester() {
   return (
     <div className="space-y-4">
       <Card className="border-primary/20">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Brain className="h-5 w-5 text-primary" />
             Knowledge Harvester — Coleta Multi-LLM
           </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setTopics(HARVESTER_TOPICS.join("\n"));
+              toast.success(`${HARVESTER_TOPICS.length} tópicos técnicos carregados!`);
+            }}
+            className="text-xs gap-1"
+          >
+            <BookOpen className="h-3 w-3" />
+            Carregar Tópicos Sugeridos
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -100,13 +113,15 @@ export function KnowledgeHarvester() {
               <label className="text-sm font-medium text-muted-foreground mb-1 block">
                 Tópicos de Treino (um por linha)
               </label>
-              <Textarea
-                value={topics}
-                onChange={(e) => setTopics(e.target.value)}
-                rows={6}
-                placeholder="Explique habeas corpus..."
-                className="font-mono text-sm"
-              />
+              <div className="max-h-96 overflow-y-auto rounded-md border border-input focus-within:ring-1 focus-within:ring-ring">
+                <Textarea
+                  value={topics}
+                  onChange={(e) => setTopics(e.target.value)}
+                  rows={15}
+                  placeholder="Explique habeas corpus..."
+                  className="font-mono text-sm border-0 focus-visible:ring-0 resize-none min-h-[300px]"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground mb-1 block flex items-center gap-2">
