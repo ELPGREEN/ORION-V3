@@ -30,6 +30,8 @@ export interface NeuralAgentConfig {
   nickname: string;
   mirroring_enabled: boolean;
   personality_prompt: string;
+  evolution_via_feedback: boolean;
+  realtime_transcription: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -68,6 +70,8 @@ const DEFAULT_CONFIG: Partial<NeuralAgentConfig> = {
   nickname: "",
   mirroring_enabled: true,
   personality_prompt: "",
+  evolution_via_feedback: false,
+  realtime_transcription: true,
 };
 
 export function useNeuralConfig() {
