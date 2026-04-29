@@ -42,7 +42,7 @@ type OrionInputSource = "voice" | "text";
 // ═══ Pre-loaded module cache — eliminates dynamic import latency ═══
 const _preloadedModules: Record<string, any> = {};
 let _preloadDone = false;
-async function prewarmModules(): Promise<void> {
+export export export async function prewarmModules(): Promise<void> {
   if (_preloadDone) return;
   _preloadDone = true;
   const modules = [
@@ -71,7 +71,7 @@ async function prewarmModules(): Promise<void> {
 }
 
 // Pre-warm on module load (runs once per session)
-prewarmModules().catch(() => {});
+// Prewarm moved to lazy init in NeuralVision
 
 export function useOrionReasoning(
   active: boolean, speak: (t: string, options?: { skipMicToggle?: boolean }) => Promise<void>, canvasRef: React.RefObject<HTMLCanvasElement | null>,

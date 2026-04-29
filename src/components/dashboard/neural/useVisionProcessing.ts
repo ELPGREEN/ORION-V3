@@ -2,14 +2,14 @@ import { OrbState } from "./EnergyOrb";
 import { VoiceState } from "@/hooks/useNeuralVoice";
 
 // ═══ Persistent Reusable Buffers for Zero-Allocation Hot Path ═══
-let _grayRawBuffer: Float32Array;
-let _blurBuffer: Float32Array;
-let _magBuffer: Float32Array;
-let _dirBuffer: Float32Array;
-let _nmsBuffer: Float32Array;
-let _binaryRawBuffer: Uint8Array;
-let _morphBuffer: Uint8Array;
-let _visitedBuffer: Uint8Array;
+let _grayRawBuffer: Float32Array | undefined = undefined;
+let _blurBuffer: Float32Array | undefined = undefined;
+let _magBuffer: Float32Array | undefined = undefined;
+let _dirBuffer: Float32Array | undefined = undefined;
+let _nmsBuffer: Float32Array | undefined = undefined;
+let _binaryRawBuffer: Uint8Array | undefined = undefined;
+let _morphBuffer: Uint8Array | undefined = undefined;
+let _visitedBuffer: Uint8Array | undefined = undefined;
 let _lastW = 0, _lastH = 0;
 
 function ensureBufferSize(w: number, h: number) {

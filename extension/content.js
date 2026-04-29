@@ -1,8 +1,8 @@
 /**
- * Orion Extension v5.4 — Content Script
+ * Orion Extension v5.6 — Content Script
  * Floating widget with persistent chat, YouTube PiP, PDF/image upload,
  * page analysis, academic tools, auto-minimize on navigation.
- * Voice/STT/TTS: UNTOUCHED from v5.1.
+ * Voice/STT/TTS: UNTOUCHED from v5.6.
  * Domain: iasofthub.com
  */
 (function () {
@@ -442,8 +442,10 @@
   }
 
   function handleVoiceCommand(cmd) {
-    const lower = cmd.toLowerCase();
+    const lower = cmd.toLowerCase().trim();
+    if (!lower) return;
 
+    // ─── 1. Vision System Commands ───
     if (lower.includes("ativar visão") || lower.includes("ativar visao") || lower.includes("ativa visão") || lower.includes("ativa visao")) {
       requireAuth(() => activateVision()); return;
     }
@@ -454,18 +456,44 @@
       requireAuth(() => captureAndAnalyzeVision(cmd)); return;
     }
 
+    // ─── 2. Web & Research Commands ───
     if (lower.includes("pesquis") || lower.includes("busca") || lower.includes("procur")) {
       const searchQuery = lower.replace(/^(pesquis[ae]|busc[ae]|procur[ae])\s*/i, "").trim() || cmd;
       requireAuth(() => doWebSearch(searchQuery));
       return;
     }
-
     if (lower.includes("extrair página") || lower.includes("raspar") || lower.includes("scrape")) {
       requireAuth(() => doScrapeCurrentPage());
       return;
     }
 
-    // YouTube / Video commands
+    // ─── 3. Navigation Mirror (from Neurocore LAM) ───
+    const navMap = {
+      "dashboard": [/painel/i, /dashboard/i, /home/i],
+      "documentos": [/documento/i, /editor/i, /petição/i],
+      "processos": [/processo/i, /andamento/i],
+      "clientes": [/cliente/i, /crm/i],
+      "agenda": [/agenda/i, /calendário/i, /compromisso/i],
+      "financeiro": [/financeiro/i, /fatura/i, /pagamento/i],
+      "chat": [/chat/i, /convers/i, /falar/i],
+      "rede neural": [/rede neural/i, /consciência/i, /grafo/i],
+      "configurações": [/configuraç/i, /ajuste/i, /settings/i],
+      "métricas": [/métrica/i, /estatística/i, /performance/i],
+      "tarefas": [/tarefa/i, /task/i, /pendência/i]
+    };
+
+    if (lower.includes("abrir") || lower.includes("ir para") || lower.includes("navegar")) {
+      for (const [key, patterns] of Object.entries(navMap)) {
+        if (patterns.some(p => p.test(lower))) {
+           addChatMessage("assistant", `🚀 Navegando para ${key}...`);
+           chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: key });
+           showNotification(`🚀 Abrindo ${key}...`, "success");
+           return;
+        }
+      }
+    }
+
+    // ─── 4. YouTube / Video logic ───
     const ytVideoMatch = cmd.match(/(?:(?:abre?|abrir?|tocar?|play|reproduz(?:ir)?|assistir?|ver?)\s+(?:o?\s*)?(?:v[ií]deo|video|youtube)\s*(?:de\s+|do\s+|da\s+|sobre\s+)?(.+)|(?:v[ií]deo|video)\s+(?:de|do|da|sobre)\s+(.+))/i);
     if (ytVideoMatch) {
       const q = (ytVideoMatch[1] || ytVideoMatch[2] || cmd).trim();
@@ -473,76 +501,21 @@
       return;
     }
 
-    // ─── Panel navigation commands (improved) ───
-    if (/\b(?:ir|voltar?|vai?|navegar?|abrir?)\s+(?:para?\s+)?(?:o\s+)?painel(?:\s+(?:de\s+)?controle)?\b/i.test(lower) || 
-        /\bpainel\s+(?:de\s+)?controle\b/i.test(lower) ||
-        /\babrir?\s+dashboard\b/i.test(lower)) {
-      addChatMessage("assistant", "🚀 Indo para o painel de controle...");
-      chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "dashboard" });
-      showNotification("🚀 Abrindo painel de controle...", "success");
-      if (videoOverlay && !videoOverlayPaused) pauseVideo();
-      return;
+    // ─── 5. Panel Control ───
+    if (lower.includes("abrir side panel") || lower.includes("painel lateral")) {
+      chrome.runtime.sendMessage({ type: "OPEN_SIDE_PANEL" }); return;
     }
 
-    // Side panel commands
-    if (/\babrir?\s+(?:side\s*)?panel\s+lateral\b/i.test(lower) || /\babrir?\s+side\s*panel\b/i.test(lower)) {
-      addChatMessage("assistant", "📌 Abrindo painel lateral...");
-      chrome.runtime.sendMessage({ type: "OPEN_SIDE_PANEL" });
-      return;
-    }
-
-    // Video control commands
-    if (videoOverlay) {
-      if (lower.includes("fecha") || lower.includes("fechar") || lower.includes("para") || lower.includes("parar video") || lower.includes("encerrar video")) {
-        removeVideoOverlay();
-        addChatMessage("system", "✕ Vídeo encerrado.");
-        return;
-      }
-      if (lower.includes("mudo") || lower.includes("silencia") || lower.includes("tira o som")) {
-        if (!videoOverlayMuted) toggleVideoMute();
-        addChatMessage("system", "🔇 Vídeo em mudo.");
-        return;
-      }
-      if (lower.includes("com som") || lower.includes("ativa som") || lower.includes("desmuta")) {
-        if (videoOverlayMuted) toggleVideoMute();
-        addChatMessage("system", "🔊 Som ativado.");
-        return;
-      }
-      if (lower.includes("minimiza") || lower.includes("esconde video")) {
-        if (!videoOverlayMinimized) toggleVideoMinimize();
-        addChatMessage("system", "➖ Vídeo minimizado.");
-        return;
-      }
-      if (lower.includes("maximiza") || lower.includes("mostra video") || lower.includes("aumenta video")) {
-        if (videoOverlayMinimized) toggleVideoMinimize();
-        addChatMessage("system", "🔲 Vídeo maximizado.");
-        return;
-      }
-      if (videoOverlayPaused && (/\bcontinu/i.test(lower) || /\bresume\b/i.test(lower) || /\bplay\b/i.test(lower) || /\btocar?\b/i.test(lower))) {
-        resumeVideo();
-        addChatMessage("system", "▶ Vídeo retomado!");
-        return;
-      }
-    }
-
-    if (lower.includes("abrir dashboard")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "dashboard" }); return; }
-    if (lower.includes("abrir documento")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "documentos" }); return; }
-    if (lower.includes("abrir processo")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "processos" }); return; }
-    if (lower.includes("abrir chat")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "chat" }); return; }
-    if (lower.includes("abrir pesquisa")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "pesquisa" }); return; }
-    if (lower.includes("abrir stf")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "stf" }); return; }
-    if (lower.includes("abrir stj")) { chrome.runtime.sendMessage({ type: "OPEN_EXTERNAL_LINK", linkKey: "stj" }); return; }
-
-    // ─── Research commands — auto-detect and use page context ───
+    // ─── 6. Research fallback (auto-detect page context) ───
     requireAuth(() => {
       if (lower.includes("resum")) extractAndAnalyze("summarize");
       else if (lower.includes("traduz")) extractAndAnalyze("translate");
       else if (lower.includes("analis")) extractAndAnalyze("analyze");
       else if (lower.includes("leia") || lower.includes("ler")) readPageAloud();
-      else if (lower.includes("abrir")) chrome.runtime.sendMessage({ type: "OPEN_ORION_APP" });
       else sendAIQuery(cmd);
     });
   }
+
 
   // ═══ Vision System ═══
   function activateVision() {

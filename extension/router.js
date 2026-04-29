@@ -1,14 +1,11 @@
 /**
- * Orion Quantum Inference Router — Extension Edition
- * Simplified version of the Neurocore Quantum Router.
- *
- * Decides which LLM provider to use based on task and complexity.
+ * Orion Quantum Inference Router — Extension v5.6
  */
 
 const PROVIDERS = {
-  REASONING: "deepseek/deepseek-r1",    // Heavy lifting, logic, code
-  GENERAL: "google/gemini-2.0-flash", // Fast, multi-modal, general
-  FAST: "meta-llama/llama-3.3-70b",   // Low latency, summaries
+  REASONING: "deepseek/deepseek-r1:free",
+  GENERAL: "google/gemini-2.0-flash-exp:free",
+  FAST: "google/gemini-2.0-flash-lite-preview:free",
 };
 
 const TASK_ROUTING = {
@@ -20,26 +17,14 @@ const TASK_ROUTING = {
   general_chat: PROVIDERS.GENERAL,
 };
 
-/**
- * Routes a query to the optimal provider.
- */
 export function routeQuery(taskType, query = "") {
   let provider = TASK_ROUTING[taskType] || PROVIDERS.GENERAL;
-
-  // Simple heuristic for coding tasks in general chat
-  if (taskType === "general_chat") {
-    const codePatterns = /\b(código|função|api|erro|implemente|script|py|js|ts)\b/i;
-    if (codePatterns.test(query)) {
-      provider = PROVIDERS.REASONING;
-    }
-  }
-
-  // Measure Complexity (Simplified)
   const complexity = query.length > 500 ? "high" : "normal";
+
   if (complexity === "high" && provider === PROVIDERS.FAST) {
     provider = PROVIDERS.GENERAL;
   }
 
-  console.log(`[Orion Router] Routed task ${taskType} to ${provider} (Complexity: ${complexity})`);
+  console.log(`[Orion Router] Routed ${taskType} to ${provider} (${complexity})`);
   return { provider, complexity };
 }

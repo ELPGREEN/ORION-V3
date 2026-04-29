@@ -13,5 +13,6 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    lockTimeout: 30000, // Increase timeout to prevent race conditions in React Strict Mode
   }
 });

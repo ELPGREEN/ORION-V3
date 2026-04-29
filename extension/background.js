@@ -1,11 +1,6 @@
 /**
- * Orion Extension v5.5 — Background Service Worker
- * Full integration with neural-ops via Supabase Edge Functions.
- *
- * SECURITY: Integrated Policy Guard (NemoClaw Style)
- * ARCHITECTURE: Blueprint System
- * INTELLIGENCE: Quantum Inference Routing
- * PROACTIVITY: Lifecycle Monitoring
+ * Orion Extension v5.6 — Background Service Worker
+ * Mirror of Neurocore Orchestrator.
  */
 
 import { validateAction } from "./policies.js";
@@ -13,9 +8,11 @@ import { classifyActionToTask, getBlueprint } from "./agents.js";
 import { routeQuery } from "./router.js";
 import { onTabUpdated } from "./proactive.js";
 
-const APP_BASE = "https://www.iasofthub.com";
-const SUPABASE_URL = "https://dlwafedtlvbvuoaopvsl.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsd2FmZWR0bHZidnVvYW9wdnNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MDI0MjEsImV4cCI6MjA4NDQ3ODQyMX0.ohz98f-MO3VNYoR6dth3zYhYqmviFs60ytJAQCwfJNk";
+// Config (Protected)
+let config = {
+  supabaseUrl: "https://dlwafedtlvbvuoaopvsl.supabase.co",
+  supabaseKey: ""
+};
 
 // State
 let orionState = {
@@ -23,6 +20,13 @@ let orionState = {
   visionActive: false,
   apiStatus: { vision: "offline", reasoning: "online", search: "online" },
 };
+
+// Initialize config from storage
+chrome.storage.local.get(["supabaseUrl", "supabaseKey"], (res) => {
+  if (res.supabaseUrl) config.supabaseUrl = res.supabaseUrl;
+  if (res.supabaseKey) config.supabaseKey = res.supabaseKey;
+  console.log("[Orion] Config loaded from storage.");
+});
 
 // ═══ Proactive Listeners ═══
 chrome.tabs.onUpdated.addListener(onTabUpdated);
@@ -47,6 +51,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     switch (message.type) {
       case "ORION_QUICK_ACTION":
+        if (!config.supabaseKey) {
+          sendResponse({ error: "Supabase Key not configured. Please login via popup." });
+          return;
+        }
         const taskType = classifyActionToTask(message.action, message.data);
         const blueprint = getBlueprint(taskType);
         const routing = routeQuery(taskType, message.data?.query || message.data?.text);
@@ -61,12 +69,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case "GET_STATE":
         sendResponse(orionState);
         break;
+      case "UPDATE_CONFIG":
+        if (message.supabaseKey) config.supabaseKey = message.supabaseKey;
+        if (message.supabaseUrl) config.supabaseUrl = message.supabaseUrl;
+        chrome.storage.local.set(message);
+        sendResponse({ ok: true });
+        break;
     }
   })();
   return true;
 });
 
 async function handleQuickAction(action, data, tab, provider) {
+  // Mirror main app edge function logic here
   return { ok: true, provider };
 }
 
@@ -75,7 +90,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.notifications.create("orion-installed", {
     type: "basic",
     iconUrl: "icon128.png",
-    title: "Orion v5.5 Instalado!",
-    message: "Habilidades Proativas & Policy Guard ativos.",
+    title: "Orion v5.6 Instalado!",
+    message: "Habilidades Proativas & Mirror de Comandos ativos.",
   });
 });
