@@ -257,6 +257,7 @@ export function NeuralHealthDashboard() {
 
       setHealth({ cronJobs, queue, embeddings, recentErrors, overallHealth, adamSummary, pipeline });
     } catch (error) {
+      console.error("[NeuralHealthDashboard] Erro ao carregar saúde do sistema:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
