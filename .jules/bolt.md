@@ -19,3 +19,9 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 ## 2026-06-26 - [Adaptive Performance Monitoring]
 **Learning:** Static performance baselines lead to "alert fatigue" in dynamic environments. Transient jitter (e.g., network spikes) can trigger false positives if monitoring isn't smoothed. Moving average windows and per-metric cooldowns are essential for stable system observability.
 **Action:** Implemented Moving Average (window=10) and Alert Cooldown (10min) in `tf-model-monitoring.ts`. Added `maybeRebaseline` to allow the system to adapt to "new normals" without manual configuration changes.
+
+## 2026-06-27 - [NLP Semantic Analyzer Optimization (Bolt V2.0)]
+**Baseline:** 0.1809ms (mean latency, all cases) / 0.0070ms (conversational)
+**Nova Métrica:** 0.1471ms (mean latency, all cases) / 0.0007ms (conversational)
+**Delta (Δ):** ~18.6% (Overall) / >90% (Conversational Early Exit)
+**Learning:** Using `.test()` pre-checks before `match()`/`matchAll()` is more efficient than consolidation or raw matching in high-frequency loops. Explicit `lastIndex = 0` reset is critical when mixing `.test()` and `/g` regexes.
