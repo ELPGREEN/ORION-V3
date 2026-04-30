@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { VS, vsLog } from "./useVisionProcessing";
+import { VS, vsLog } from "@/lib/neural/vision-state";
 import { getQualityPreset, downscaleCanvas } from "@/lib/neural/quality-presets";
 
 const SUPERNET_WS_URL = localStorage.getItem("supernet_ws_url") || "";

@@ -1,5 +1,5 @@
-import { OrbState } from "./EnergyOrb";
-import { VoiceState } from "@/hooks/useNeuralVoice";
+import { OrbState } from "@/lib/neural/orb-state";
+import { VoiceState } from "@/lib/neural/voice-state-shared";
 
 // ═══ Persistent Reusable Buffers for Zero-Allocation Hot Path ═══
 let _grayRawBuffer: Float32Array;
@@ -138,51 +138,7 @@ function kMeansColorSegmentation(_px: Uint8ClampedArray, _w: number, _h: number,
 function assessImageQuality(_gray: Float32Array, _w: number, _h: number): ImageQuality { return { sharpness: 0, exposure: 0, overall: 0 }; }
 
 // ═══ Types ═══
-export interface Region {
-  label: string; category: string; confidence: number;
-  cx: number; cy: number; w: number; h: number;
-  avgR: number; avgG: number; avgB: number; edgeDensity: number;
-}
-export interface MotionData {
-  intensity: number; direction: string;
-  zones: boolean[]; vectors: { x: number; y: number; magnitude: number }[];
-}
-
-// ═══ Global shared store ═══
-export const VS = {
-  regions: [] as Region[],
-  motion: { intensity: 0, direction: "●", zones: Array(9).fill(false), vectors: [] } as MotionData,
-  shapeDescriptors: [] as ShapeDescriptor[],
-  sceneContext: null as SceneContext | null,
-  yoloClassifications: [] as YOLOClassification[],
-  textRegions: [] as TextRegion[],
-  otsuThresholdValue: 0,
-  kmeansResult: null as KMeansResult | null,
-  imageQuality: null as ImageQuality | null,
-  /** Real-time vision result (stub — ML engines removed) */
-  realTimeVision: null as any,
-  get active() { return OrbState.active; },
-  set active(v: boolean) { OrbState.active = v; },
-  get awareness() { return OrbState.awareness; },
-  set awareness(v: number) { OrbState.awareness = v; },
-  frames: 0,
-  debugLog: [] as string[],
-  supernetConnected: false,
-  supernetLatency: 0,
-  supernetAnalysis: "" as string,
-  get aiResponding() { return VoiceState.aiResponding; },
-  set aiResponding(v: boolean) { VoiceState.aiResponding = v; OrbState.aiResponding = v; },
-  get regions_sync() { return OrbState.regions; },
-  set regions_sync(v: any[]) { OrbState.regions = v; },
-};
-
-export function vsLog(msg: string) {
-  VS.debugLog = [...VS.debugLog.slice(-29), `[${new Date().toLocaleTimeString("pt-BR")}] ${msg}`];
-}
-
-// ═══ OpenCV-inspired processFrame — Sobel edge detection, histogram analysis, contour descriptors ═══
-export function processFrame(
-  ctx: CanvasRenderingContext2D,
+import { VS, vsLog, type Region, type MotionData, type ShapeDescriptor, type SceneContext, type YOLOClassification, type TextRegion, type KMeansResult, type ImageQuality } from "@/lib/neural/vision-state";
   w: number, h: number,
   prevFrame: Uint8ClampedArray | null,
 ): { regions: Region[]; motion: MotionData; pixels: Uint8ClampedArray; shapeDescriptors?: ShapeDescriptor[]; sceneContext?: SceneContext; yoloClassifications?: YOLOClassification[]; textRegions?: TextRegion[]; otsuThreshold?: number; kmeansResult?: KMeansResult; imageQuality?: ImageQuality } {

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
-import { vsLog } from "./useVisionProcessing";
+import { vsLog } from "@/lib/neural/vision-state";
 
 // ═══ Unified Mic Arbiter — shared with useNeuralVoice ═══
 import { claimMic, isMicOwner, registerMicRec, releaseMic } from "@/lib/voice/micArbiter";

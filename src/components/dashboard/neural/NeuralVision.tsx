@@ -20,6 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { IdentifiedObjectsPanel } from "./IdentifiedObjectsPanel";
 import { useGestureDetection, GESTURE_ACTIONS, type GestureType, type GestureAction } from "./useGestureDetection";
 import { PlasmaCanvas } from "./EnergyOrb";
+import { VS } from "@/lib/neural/vision-state";
+import { VS } from "@/lib/neural/vision-state";
 import { VoiceStateIndicator } from "./VoiceStateIndicator";
 import { useNeuralVoice } from "@/hooks/useNeuralVoice";
 import { useOrionVoiceClone, isVoiceCloneCommand } from "@/hooks/useOrionVoiceClone";
@@ -29,11 +31,11 @@ import { shouldSuppressVisionCommand } from "@/lib/voice/visionCommandLock";
 import { emitVisionDebug } from "@/lib/voice/visionDebugBus";
 
 // Extracted modules
-import { VS, processFrame, type Region, type MotionData } from "./useVisionProcessing";
+import { processFrame, type Region, type MotionData } from "./useVisionProcessing";
 import { useSuperNetWS } from "./useSuperNetWS";
 import { useOrionReasoning } from "./useOrionReasoning";
 import { useWakeWord } from "./useWakeWord";
-import { initVoiceIdentityListener, setVisionStateProxy } from "@/lib/neural/orion-ai-client";
+import { initVoiceIdentityListener } from "@/lib/neural/orion-ai-client";
 import { CameraPiP, BoundingBoxOverlay } from "./VisionOverlayComponents";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";
 import { FaceScannerOverlay } from "./FaceScannerOverlay";
@@ -218,9 +220,6 @@ export function NeuralVision({ skipWakeWord = false, initialCommand = "" }: { sk
   const interimTranscriptRef = useRef<((text: string) => void) | null>(null);
 
   // Expose interim transcript setter globally to avoid minification issues
-  useEffect(() => {
-    setVisionStateProxy(VS);
-  }, []);
   useEffect(() => {
     interimTranscriptRef.current = setInterimTranscript;
     (window as any).__orion_setInterimTranscript = setInterimTranscript;

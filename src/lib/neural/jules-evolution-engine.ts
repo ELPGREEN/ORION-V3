@@ -61,7 +61,6 @@ function bindGlobalListeners(): void {
 // ─── Bug Scanner ───
 
 export function scanForBugs(): ScanResult {
-  bindGlobalListeners();
   const cutoff = Date.now() - 300_000; // last 5 min
   const recentErrors = capturedErrors.filter((e) => e.timestamp > cutoff);
   const recentRejections = capturedRejections.filter((e) => e.timestamp > cutoff);

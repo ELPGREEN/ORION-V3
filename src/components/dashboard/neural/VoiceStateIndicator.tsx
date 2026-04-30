@@ -1,6 +1,6 @@
 // VoiceStateIndicator — template literals OK (cache-bust v2)
 import { useState, useEffect } from "react";
-import { OrbState } from "./EnergyOrb";
+import { OrbState } from "@/lib/neural/orb-state";
 
 type VoiceState = "idle" | "listening" | "thinking" | "speaking";
 

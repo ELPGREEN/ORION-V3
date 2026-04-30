@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { OrbState } from "./EnergyOrb";
+import { OrbState } from "@/lib/neural/orb-state";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { wrapEdgeFunction, wrapSupabase } from "@/lib/errors";
@@ -10,7 +10,7 @@ import {
   getMemoryFacts, addMemoryFacts, getSessionState, saveSessionState,
   syncMemoryToSupabase, loadMemoryFromSupabase, getLocalMemory,
 } from "@/lib/neural/orion-memory";
-import { VS, vsLog } from "./useVisionProcessing";
+import { VS, vsLog } from "@/lib/neural/vision-state";
 import { onAgentTaskComplete } from "@/lib/neural/neural-agent-bridge";
 import { iotBridge } from "@/lib/neural/iot-device-bridge";
 import { getDefenseMetrics, getRecentThreats } from "@/lib/neural/orion-defense-system";

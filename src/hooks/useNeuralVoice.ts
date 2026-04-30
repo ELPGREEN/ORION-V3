@@ -14,7 +14,7 @@
  * - Mic watchdog: auto-restarts GCP STT if it dies silently
  */
 import { useState, useRef, useEffect, useCallback } from "react";
-import { OrbState } from "@/components/dashboard/neural/EnergyOrb";
+import { OrbState } from "@/lib/neural/orb-state";
 import { toast } from "sonner";
 import { getOrionVoice, initVoicePicker, ORION_VOICE_PARAMS } from "@/lib/voice/voicePicker";
 import { detectTurnState, getOptimalSilenceDuration } from "@/lib/voice/turnDetection";
@@ -75,7 +75,8 @@ const RESTART_DELAY_MS = isMobile() ? 2000 : 500; // Optimized from 1500ms — 3
 const GCP_FINAL_MERGE_MS = 300; // Brief merge window to combine split STT segments into one command
 
 // ═══ Shared State ═══
-export const VoiceState = { aiResponding: false };
+import { VoiceState } from "@/lib/neural/voice-state-shared";
+export { VoiceState };
 
 let _voiceBootstrapDone = false;
 const _micPermissionToastShown = false;

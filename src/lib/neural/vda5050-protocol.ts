@@ -319,6 +319,20 @@ export class VDA5050FleetBridge {
   getAGV(manufacturer: string, serial: string): VDA5050AGVInfo | undefined {
     return this.agvs.get(this.agvKey(manufacturer, serial));
   }
+  private initialized = false;
+
+  initDefaults(): void {
+    if (this.initialized) return;
+    this.initialized = true;
+    this.registerAGV("Orion", "AGV-001", "Orion AGV Alpha");
+    this.registerAGV("Orion", "AGV-002", "Orion AGV Beta");
+    this.registerAGV("KUKA", "KMP-1500-001", "KUKA KMP 1500");
+    this.registerAGV("MiR", "MiR250-001", "MiR 250");
+  }
+
+  getAGVs(): VDA5050AGVInfo[] {
+    return Array.from(this.agvs.values());
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -326,9 +340,3 @@ export class VDA5050FleetBridge {
 // ═══════════════════════════════════════════════
 
 export const vda5050Bridge = new VDA5050FleetBridge();
-
-// Default AGVs
-vda5050Bridge.registerAGV("Orion", "AGV-001", "Orion AGV Alpha");
-vda5050Bridge.registerAGV("Orion", "AGV-002", "Orion AGV Beta");
-vda5050Bridge.registerAGV("KUKA", "KMP-1500-001", "KUKA KMP 1500");
-vda5050Bridge.registerAGV("MiR", "MiR250-001", "MiR 250");

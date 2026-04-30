@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
-import { vsLog } from "./useVisionProcessing";
+import { vsLog } from "@/lib/neural/vision-state";
 import { ensurePersistentMic } from "@/lib/voice/persistentMic";
 import { createGCPSTTSession, type GCPSTTSession } from "@/lib/voice/gcpSTT";
 

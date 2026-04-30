@@ -3,12 +3,15 @@ import App from "./App.tsx";
 import "./index.css";
 import { initFirebaseAnalytics } from "@/lib/firebase";
 import { installPentagonAutoCorrection } from "@/lib/neural/pentagon-runtime-correction";
+import { vda5050Bridge } from "@/lib/neural/vda5050-protocol";
 
 // Initialize Firebase Analytics in background
 initFirebaseAnalytics().catch(() => {});
 
 // Arm Pentagon runtime auto-correction listeners
 installPentagonAutoCorrection();
+
+vda5050Bridge.initDefaults();
 
 
 // Prevent service worker from registering in iframes or Lovable preview
