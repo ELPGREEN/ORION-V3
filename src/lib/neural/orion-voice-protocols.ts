@@ -43,7 +43,7 @@ async function ensureLoaded(): Promise<ProtocolDB> {
 }
 
 // Pre-load on module import
-ensureLoaded();
+// ensureLoaded();
 
 // Build search index by category for fast lookup
 const categoryIndex = new Map<string, Protocol[]>();

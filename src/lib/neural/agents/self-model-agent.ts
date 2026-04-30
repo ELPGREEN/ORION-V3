@@ -532,8 +532,9 @@ export class SelfModelAgent {
   // ─── Persistence Methods ───
 
   _persistMentalModel(): void {
+    if (typeof window === "undefined") return;
     try {
-      localStorage.setItem(TOM_STORAGE_KEY, JSON.stringify({
+      if (typeof window !== "undefined") localStorage.setItem(TOM_STORAGE_KEY, JSON.stringify({
         ...this.mentalModel,
         beliefs: Array.from(this.mentalModel.beliefs.entries()),
       }));
@@ -541,8 +542,9 @@ export class SelfModelAgent {
   }
 
   _persistCausalGraph(): void {
+    if (typeof window === "undefined") return;
     try {
-      localStorage.setItem(CAUSAL_STORAGE_KEY, JSON.stringify({
+      if (typeof window !== "undefined") localStorage.setItem(CAUSAL_STORAGE_KEY, JSON.stringify({
         ...this.causalGraph,
         nodes: Array.from(this.causalGraph.nodes.entries()),
       }));
@@ -550,13 +552,14 @@ export class SelfModelAgent {
   }
 
   _loadPersistedState(): void {
+    if (typeof window === "undefined") return;
     try {
-      const tomJson = localStorage.getItem(TOM_STORAGE_KEY);
+      const tomJson = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( TOM_STORAGE_KEY);
       if (tomJson) {
         const data = JSON.parse(tomJson);
         if (data) this.mentalModel = { ...data, beliefs: new Map(data.beliefs) };
       }
-      const causalJson = localStorage.getItem(CAUSAL_STORAGE_KEY);
+      const causalJson = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( CAUSAL_STORAGE_KEY);
       if (causalJson) {
         const data = JSON.parse(causalJson);
         if (data) this.causalGraph = { ...data, nodes: new Map(data.nodes) };

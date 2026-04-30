@@ -93,8 +93,9 @@ function countIntersection(setA: Set<string>, setB: Set<string>): number {
 }
 
 function loadEpisodes(): MemoryEntry[] {
+  if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( CACHE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     // Normalize: add accessCount/priority if missing
@@ -110,12 +111,13 @@ function loadEpisodes(): MemoryEntry[] {
 }
 
 function saveEpisodes(episodes: MemoryEntry[]): void {
+  if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(episodes));
+    if (typeof window !== "undefined") localStorage.setItem(CACHE_KEY, JSON.stringify(episodes));
   } catch {
     // Storage full — prune aggressively
     const pruned = episodes.slice(-20);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(pruned));
+    if (typeof window !== "undefined") localStorage.setItem(CACHE_KEY, JSON.stringify(pruned));
   }
 }
 
@@ -286,10 +288,11 @@ export function consolidateMemories(
 
   // Log consolidation
   try {
-    const log = JSON.parse(localStorage.getItem(CONSOLIDATION_LOG_KEY) || "[]");
+    if (typeof window === "undefined") return;
+    const log = JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( CONSOLIDATION_LOG_KEY) || "[]");
     log.push(result);
     // Keep only last 10 consolidation logs
-    localStorage.setItem(CONSOLIDATION_LOG_KEY, JSON.stringify(log.slice(-10)));
+    if (typeof window !== "undefined") localStorage.setItem(CONSOLIDATION_LOG_KEY, JSON.stringify(log.slice(-10)));
   } catch { /* ignore */ }
 
   return result;
@@ -314,7 +317,8 @@ export function scheduleConsolidation(config?: ConsolidationConfig): void {
  */
 export function getConsolidationHistory(): ConsolidationResult[] {
   try {
-    return JSON.parse(localStorage.getItem(CONSOLIDATION_LOG_KEY) || "[]");
+    if (typeof window === "undefined") return [];
+    return JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( CONSOLIDATION_LOG_KEY) || "[]");
   } catch {
     return [];
   }

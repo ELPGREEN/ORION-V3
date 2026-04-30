@@ -45,18 +45,19 @@ const MAX_VISUAL_OBSERVATIONS = 8; // Cap visual/appearance observations
 
 // ─── Local Memory (fast layer) ───
 export function getLocalMemory(): MemoryEntry[] {
+  if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(MEMORY_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( MEMORY_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     // Migrate old format (string[]) to new format
     if (Array.isArray(parsed) && typeof parsed[0] === "string") {
       return parsed.map((f: string) => ({
         fact: f,
-        category: "fact" as const,
+        category: "fact",
         confidence: 0.7,
         timestamp: Date.now(),
-        source: "system" as const,
+        source: "system",
       }));
     }
     return parsed;
@@ -74,59 +75,43 @@ function getTokens(text: string): Set<string> {
 }
 
 function wordOverlap(setA: Set<string>, setB: Set<string>): number {
-  const sizeA = setA.size;
-  const sizeB = setB.size;
-  if (sizeA === 0 || sizeB === 0) return 0;
-
+  if (setA.size === 0 || setB.size === 0) return 0;
   let intersection = 0;
-  const isALessOrEqual = sizeA <= sizeB;
-  const smaller = isALessOrEqual ? setA : setB;
-  const larger = isALessOrEqual ? setB : setA;
-
-  for (const x of smaller) {
-    if (larger.has(x)) intersection++;
+  for (const token of setA) {
+    if (setB.has(token)) intersection++;
   }
-
-  return intersection / Math.min(sizeA, sizeB);
+  return intersection / Math.min(setA.size, setB.size);
 }
 
-// Visual/appearance keywords for auto-categorization
 const VISUAL_KEYWORDS = /\b(aparência|vestindo|usando|óculos|camisa|suéter|barba|cabelo|roupa|camiseta|cortina|ambiente|mesa|cadeira|fundo|iluminação|wearing|glasses|shirt|hair|beard|background|lighting)\b/i;
 
 function isVisualObservation(fact: string): boolean {
   return VISUAL_KEYWORDS.test(fact);
 }
 
-/** Compact redundant visual observations, keeping only the most recent */
 function compactVisualMemories(mem: MemoryEntry[]): MemoryEntry[] {
-  const visualEntries = mem.filter(m => isVisualObservation(m.fact));
-  if (visualEntries.length <= MAX_VISUAL_OBSERVATIONS) return mem;
+  const visual = mem.filter(m => isVisualObservation(m.fact));
+  if (visual.length <= MAX_VISUAL_OBSERVATIONS) return mem;
   
-  // Sort visual entries by timestamp desc, keep newest
-  visualEntries.sort((a, b) => b.timestamp - a.timestamp);
-  const keep = new Set(visualEntries.slice(0, MAX_VISUAL_OBSERVATIONS));
-  const discard = new Set(visualEntries.filter(v => !keep.has(v)));
-  
-  return mem.filter(m => !discard.has(m));
+  // Keep only most recent visual observations
+  const nonVisual = mem.filter(m => !isVisualObservation(m.fact));
+  const recentVisual = visual
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, MAX_VISUAL_OBSERVATIONS);
+
+  return [...nonVisual, ...recentVisual];
 }
 
-// ─── Speculative content filter ───
 const SPECULATIVE_PATTERNS = /\b(parece\s+prefer|pode\s+indicar|possivelmente|provavelmente\s+gosta|aparentemente\s+prefer|sugere\s+que|talvez\s+(goste|prefira|seja)|pode\s+ser\s+que|indica\s+que\s+talvez|é\s+possível\s+que)\b/i;
 
 function isSpeculativeContent(fact: string): boolean {
-  return SPECULATIVE_PATTERNS.test(fact);
+  return SPECULATIVE_PATTERNS.test(fact.toLowerCase());
 }
 
-/** Sanitize identity claims — store as user declarations, not objective truths */
 function sanitizeIdentityClaim(fact: string): string {
-  const identityPatterns = [
-    { pattern: /\b(eu\s+sou|meu\s+nome\s+é|me\s+chamo)\s+(.+)/i, replacement: (m: RegExpMatchArray) => `O usuário afirmou que é ${m[2].trim()}` },
-    { pattern: /\b(sou\s+(teu|seu)\s+(criador|pai|dono|mestre))\b/i, replacement: (m: RegExpMatchArray) => `O usuário pediu para ser lembrado como ${m[1].trim()} do Orion` },
-    { pattern: /\b(reconhe[cç][ae]\s+(minha\s+)?voz)\b/i, replacement: () => `O usuário solicitou reconhecimento de voz` },
-  ];
-  for (const { pattern, replacement } of identityPatterns) {
-    const match = fact.match(pattern);
-    if (match) return replacement(match);
+  // If user says "meu nome é X", ensure we store it clearly
+  if (/meu\s+nome\s+[eé]\s+/i.test(fact)) {
+    return fact.replace(/meu\s+nome\s+[eé]\s+/i, "O nome do usuário é ");
   }
   return fact;
 }
@@ -194,19 +179,22 @@ export function addMemoryFacts(
   // Compact visual observations before trimming
   const compacted = compactVisualMemories(mem);
   const trimmed = compacted.slice(0, MAX_LOCAL_MEMORIES);
-  localStorage.setItem(MEMORY_KEY, JSON.stringify(trimmed));
+  if (typeof window !== "undefined") {
+    if (typeof window !== "undefined") localStorage.setItem(MEMORY_KEY, JSON.stringify(trimmed));
+  }
   return trimmed;
 }
 
 // ─── Session State (persistent across reloads) ───
 export function getSessionState(): SessionState | null {
+  if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( SESSION_KEY);
     if (!raw) return null;
     const state: SessionState = JSON.parse(raw);
     // Check if session is expired
     if (Date.now() - state.lastActive > SESSION_EXPIRY_MS) {
-      localStorage.removeItem(SESSION_KEY);
+      if (typeof window !== "undefined") localStorage.removeItem(SESSION_KEY);
       return null;
     }
     return state;
@@ -216,6 +204,7 @@ export function getSessionState(): SessionState | null {
 }
 
 export function saveSessionState(state: Partial<SessionState>): void {
+  if (typeof window === "undefined") return;
   const current = getSessionState() || {
     chatHistory: [],
     lastActive: Date.now(),
@@ -235,11 +224,13 @@ export function saveSessionState(state: Partial<SessionState>): void {
     updated.chatHistory = updated.chatHistory.slice(-MAX_CHAT_HISTORY);
   }
   
-  localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+  if (typeof window !== "undefined") localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
 }
 
 export function clearSession(): void {
-  localStorage.removeItem(SESSION_KEY);
+  if (typeof window !== "undefined") {
+    if (typeof window !== "undefined") localStorage.removeItem(SESSION_KEY);
+  }
 }
 
 // ─── Supabase Persistence (cross-session memory) ───

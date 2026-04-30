@@ -85,12 +85,12 @@ const API_DISCOVERY_KEY = "orion_arc_api_discovery";
 function initialize(): void {
   if (_initialized) return;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
       _gatewayState = { ..._gatewayState, ...parsed };
     }
-    const apiStored = localStorage.getItem(API_DISCOVERY_KEY);
+    const apiStored = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( API_DISCOVERY_KEY);
     if (apiStored) {
       _discoveredAPIs = JSON.parse(apiStored);
     }
@@ -100,8 +100,8 @@ function initialize(): void {
 
 function persist(): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(_gatewayState));
-    localStorage.setItem(API_DISCOVERY_KEY, JSON.stringify(_discoveredAPIs));
+    if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, JSON.stringify(_gatewayState));
+    if (typeof window !== "undefined") localStorage.setItem(API_DISCOVERY_KEY, JSON.stringify(_discoveredAPIs));
   } catch { /* quota */ }
 }
 
@@ -419,8 +419,8 @@ export function resetGateway(): void {
     totalRequests: 0,
   };
   _discoveredAPIs = [...OPEN_APIS];
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(API_DISCOVERY_KEY);
+  if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY);
+  if (typeof window !== "undefined") localStorage.removeItem(API_DISCOVERY_KEY);
 }
 
 // ═══ Diagnostics ═══

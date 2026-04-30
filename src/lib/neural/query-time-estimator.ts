@@ -58,8 +58,9 @@ const MODERATE_PATTERNS = [
 // ═══ Latency History ═══
 
 function loadHistory(): LatencyRecord[] {
+  if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( STORAGE_KEY);
     if (!raw) return [];
     const records: LatencyRecord[] = JSON.parse(raw);
     const cutoff = Date.now() - RECORD_TTL_MS;
@@ -70,11 +71,12 @@ function loadHistory(): LatencyRecord[] {
 }
 
 function saveHistory(records: LatencyRecord[]) {
+  if (typeof window === "undefined") return;
   try {
     const trimmed = records
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, MAX_RECORDS);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+    if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
   } catch {}
 }
 

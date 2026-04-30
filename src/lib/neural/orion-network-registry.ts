@@ -365,22 +365,24 @@ interface AgentAction {
 let _actionLog: AgentAction[] = [];
 
 function loadActionLog(): void {
+  if (_actionLog.length > 0 || typeof window === "undefined") return;
+  if (typeof window === "undefined") return;
   try {
-    const raw = localStorage.getItem(ACTION_LOG_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( ACTION_LOG_KEY);
     if (raw) _actionLog = JSON.parse(raw);
   } catch { _actionLog = []; }
 }
 
 function saveActionLog(): void {
-  try {
+  if (typeof window === "undefined") return;
+try {
     if (_actionLog.length > MAX_LOG_SIZE) {
       _actionLog = _actionLog.slice(-MAX_LOG_SIZE);
     }
-    localStorage.setItem(ACTION_LOG_KEY, JSON.stringify(_actionLog));
+    if (typeof window !== "undefined") localStorage.setItem(ACTION_LOG_KEY, JSON.stringify(_actionLog));
   } catch {}
 }
 
-loadActionLog();
 
 export function logAgentAction(
   role: AgentRole,
@@ -389,6 +391,7 @@ export function logAgentAction(
   confidence: number = 1.0,
   blocked: boolean = false
 ): void {
+  loadActionLog();
   const agent = ORION_AGENTS[role];
   if (!agent) return;
   
@@ -409,6 +412,7 @@ export function logAgentAction(
 }
 
 export function getAgentActions(role?: AgentRole, limit: number = 20): AgentAction[] {
+  loadActionLog();
   const filtered = role ? _actionLog.filter(a => a.agentRole === role) : _actionLog;
   return filtered.slice(-limit);
 }

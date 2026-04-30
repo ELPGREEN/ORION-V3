@@ -170,7 +170,7 @@ export function executeBrowserAction(action: BrowserAction): string {
       return action.description;
     }
     console.log("[browser-actions] Dispatching orion-video-command:", action.url, action.query);
-    window.dispatchEvent(new CustomEvent("orion-video-command", {
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion-video-command", {
       detail: { action: "play_video", url: action.url, query: action.query, title: action.query },
     }));
     return action.description;
@@ -187,7 +187,7 @@ export function executeBrowserAction(action: BrowserAction): string {
         query: q,
         fullCommand: q,
       });
-      window.dispatchEvent(new CustomEvent("orion-video-command", { detail: { action: q } }));
+      if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion-video-command", { detail: { action: q } }));
       return action.description;
     }
 

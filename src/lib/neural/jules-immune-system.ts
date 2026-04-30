@@ -34,16 +34,18 @@ interface QuarantineEntry {
 // ─── Store ───
 
 function loadStore(): ImmuneMemory {
+  if (typeof window === "undefined") return { antibodies: {}, quarantine: {} };
   try {
-    return JSON.parse(localStorage.getItem(IMMUNE_STORE_KEY) || '{"antibodies":{},"quarantine":{}}');
+    return JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( IMMUNE_STORE_KEY) || '{"antibodies":{},"quarantine":{}}');
   } catch {
     return { antibodies: {}, quarantine: {} };
   }
 }
 
 function saveStore(store: ImmuneMemory): void {
+  if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(IMMUNE_STORE_KEY, JSON.stringify(store));
+    if (typeof window !== "undefined") localStorage.setItem(IMMUNE_STORE_KEY, JSON.stringify(store));
   } catch {}
 }
 
@@ -188,7 +190,7 @@ export async function checkAndRegisterResolutions(): Promise<number> {
       // Clear the failure store for the resolved subsystems to prevent immediate re-quarantine
       try {
         const FAIL_STORE_KEY = "orion_jules_subsystem_fails";
-        const failStore = JSON.parse(localStorage.getItem(FAIL_STORE_KEY) || "{}");
+        const failStore = JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( FAIL_STORE_KEY) || "{}");
         let failStoreChanged = false;
         for (const session of data as any[]) {
           if (session.subsystem && failStore[session.subsystem]) {
@@ -197,7 +199,7 @@ export async function checkAndRegisterResolutions(): Promise<number> {
           }
         }
         if (failStoreChanged) {
-          localStorage.setItem(FAIL_STORE_KEY, JSON.stringify(failStore));
+          if (typeof window !== "undefined") localStorage.setItem(FAIL_STORE_KEY, JSON.stringify(failStore));
         }
       } catch (e) {
         console.warn("[Immune] Failed to clear failure store:", e);

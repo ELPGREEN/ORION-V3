@@ -82,7 +82,7 @@ const NEGATION_PAIRS = [
 
 function loadCache(): ReasoningCacheEntry[] {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( CACHE_KEY);
     if (!raw) return [];
     const entries: ReasoningCacheEntry[] = JSON.parse(raw);
     const now = Date.now();
@@ -97,7 +97,7 @@ function saveCache(entries: ReasoningCacheEntry[]) {
     const trimmed = entries
       .sort((a, b) => b.quality * b.hits - a.quality * a.hits)
       .slice(0, MAX_CACHE_ENTRIES);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(trimmed));
+    if (typeof window !== "undefined") localStorage.setItem(CACHE_KEY, JSON.stringify(trimmed));
   } catch {}
 }
 

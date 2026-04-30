@@ -135,7 +135,7 @@ function computeDataHash(snapshots: ReasoningSnapshot[]): string {
 
 function getCachedReflection(dataHash: string): { reflection: ReasoningReflection | null; tier: "hot" | "warm" | "cold" | "miss" } {
   try {
-    const raw = localStorage.getItem(REFLECTION_CACHE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( REFLECTION_CACHE_KEY);
     if (!raw) return { reflection: null, tier: "miss" };
 
     const entries: CacheEntry[] = JSON.parse(raw);
@@ -145,7 +145,7 @@ function getCachedReflection(dataHash: string): { reflection: ReasoningReflectio
     const age = Date.now() - entry.storedAt;
     entry.accessCount++;
     entry.lastAccessed = Date.now();
-    localStorage.setItem(REFLECTION_CACHE_KEY, JSON.stringify(entries));
+    if (typeof window !== "undefined") localStorage.setItem(REFLECTION_CACHE_KEY, JSON.stringify(entries));
 
     if (age < CACHE_TIERS.hot) return { reflection: entry.data, tier: "hot" };
     if (age < CACHE_TIERS.warm) return { reflection: entry.data, tier: "warm" };
@@ -158,7 +158,7 @@ function getCachedReflection(dataHash: string): { reflection: ReasoningReflectio
 
 function setCachedReflection(reflection: ReasoningReflection, dataHash: string): void {
   try {
-    const raw = localStorage.getItem(REFLECTION_CACHE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( REFLECTION_CACHE_KEY);
     let entries: CacheEntry[] = raw ? JSON.parse(raw) : [];
 
     // Remove existing entry with same hash
@@ -178,7 +178,7 @@ function setCachedReflection(reflection: ReasoningReflection, dataHash: string):
       dataHash,
     });
 
-    localStorage.setItem(REFLECTION_CACHE_KEY, JSON.stringify(entries));
+    if (typeof window !== "undefined") localStorage.setItem(REFLECTION_CACHE_KEY, JSON.stringify(entries));
   } catch {}
 }
 
@@ -856,7 +856,7 @@ export async function auditAndCreateProtocols(): Promise<number> {
 
   // Save to localStorage
   try {
-    const existing = JSON.parse(localStorage.getItem("orion_agentic_protocols") || "{}");
+    const existing = JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( "orion_agentic_protocols") || "{}");
     for (const p of protocols) {
       existing[p.intent] = {
         ...existing[p.intent],
@@ -868,7 +868,7 @@ export async function auditAndCreateProtocols(): Promise<number> {
         regressionCount: existing[p.intent]?.regressionCount || 0,
       };
     }
-    localStorage.setItem("orion_agentic_protocols", JSON.stringify(existing));
+    if (typeof window !== "undefined") localStorage.setItem("orion_agentic_protocols", JSON.stringify(existing));
   } catch {}
 
   // Save to Supabase

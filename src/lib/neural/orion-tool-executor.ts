@@ -2191,9 +2191,9 @@ const TOOLS: OrionTool[] = [
         
         // Save to localStorage so the GenerationBanner picks it up
         try {
-          localStorage.setItem("generation_queue_active_job", data.id);
-          localStorage.setItem("generation_queue_start_time", String(Date.now()));
-          window.dispatchEvent(new Event("generation-job-change"));
+          if (typeof window !== "undefined") localStorage.setItem("generation_queue_active_job", data.id);
+          if (typeof window !== "undefined") localStorage.setItem("generation_queue_start_time", String(Date.now()));
+          if (typeof window !== "undefined") window.dispatchEvent(new Event("generation-job-change"));
         } catch {}
         
         const tipoLabel = tipo.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());

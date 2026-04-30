@@ -198,7 +198,7 @@ export class IoTDeviceBridge {
       this._healthCheckResult = data;
 
       // Persist connection preference
-      try { localStorage.setItem(MQTT_PERSIST_KEY, "true"); } catch {}
+      if (typeof window !== "undefined") try { if (typeof window !== "undefined") localStorage.setItem(MQTT_PERSIST_KEY, "true"); } catch {}
 
       this.emit("connected", {
         url: this.brokerUrl,
@@ -243,7 +243,7 @@ export class IoTDeviceBridge {
     this._autoConnectInitialized = true;
 
     try {
-      const persisted = localStorage.getItem(MQTT_PERSIST_KEY);
+      const persisted = typeof window !== "undefined" ? (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( MQTT_PERSIST_KEY) : null;
       if (persisted === "true") {
         console.log("[IoTBridge] 🔄 Auto-reconnecting (persistent session)...");
         this.emit("reconnecting", { reason: "auto-connect" });
@@ -293,7 +293,7 @@ export class IoTDeviceBridge {
   private _scheduleReconnect(): void {
     // Don't reconnect if admin manually disconnected
     try {
-      if (localStorage.getItem(MQTT_PERSIST_KEY) !== "true") return;
+      if (typeof window === "undefined" || (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( MQTT_PERSIST_KEY) !== "true") return;
     } catch {}
 
     if (this._reconnectAttempts >= MQTT_MAX_RECONNECT_ATTEMPTS) {
@@ -568,7 +568,7 @@ export class IoTDeviceBridge {
    */
   disconnect(): void {
     // Clear persistence — prevents auto-reconnect
-    try { localStorage.removeItem(MQTT_PERSIST_KEY); } catch {}
+    if (typeof window !== "undefined") try { if (typeof window !== "undefined") localStorage.removeItem(MQTT_PERSIST_KEY); } catch {}
 
     // Cancel any pending reconnect
     if (this._reconnectTimeoutId !== null) {

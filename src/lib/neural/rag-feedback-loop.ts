@@ -57,17 +57,19 @@ let _profiles: Record<string, WeightProfile> = {};
 let _initialized = false;
 
 function initialize(): void {
+  if (_initialized || typeof window === "undefined") return;
   if (_initialized) return;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( STORAGE_KEY);
     if (stored) _profiles = JSON.parse(stored);
   } catch { /* empty */ }
   _initialized = true;
 }
 
 function persist(): void {
+  if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(_profiles));
+    if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, JSON.stringify(_profiles));
   } catch { /* quota exceeded */ }
 }
 
@@ -183,12 +185,13 @@ function clamp(v: number, min: number, max: number): number {
 }
 
 function storeFeedbackHistory(entry: FeedbackEntry): void {
+  if (typeof window === "undefined") return;
   try {
-    const stored = localStorage.getItem(HISTORY_KEY);
+    const stored = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( HISTORY_KEY);
     const history: FeedbackEntry[] = stored ? JSON.parse(stored) : [];
     history.push(entry);
     if (history.length > MAX_HISTORY) history.splice(0, history.length - MAX_HISTORY);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    if (typeof window !== "undefined") localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
   } catch { /* quota */ }
 }
 
@@ -204,6 +207,7 @@ export function getAllWeightProfiles(): Record<string, WeightProfile> {
  * Reset weights to defaults for a query type.
  */
 export function resetWeights(queryType?: string): void {
+  if (typeof window === "undefined") return;
   initialize();
   if (queryType) {
     delete _profiles[queryType];

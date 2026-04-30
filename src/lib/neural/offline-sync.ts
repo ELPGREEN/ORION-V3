@@ -123,14 +123,15 @@ export function getOfflineSyncState(): OfflineSyncState {
 }
 
 export function initOfflineSync(onStatusChange: (online: boolean) => void): () => void {
+  if (typeof window === "undefined") return () => {};
   const handleOnline = () => onStatusChange(true);
   const handleOffline = () => onStatusChange(false);
 
-  window.addEventListener("online", handleOnline);
-  window.addEventListener("offline", handleOffline);
+  if (typeof window !== "undefined") window.addEventListener("online", handleOnline);
+  if (typeof window !== "undefined") window.addEventListener("offline", handleOffline);
 
   return () => {
-    window.removeEventListener("online", handleOnline);
-    window.removeEventListener("offline", handleOffline);
+    if (typeof window !== "undefined") window.removeEventListener("online", handleOnline);
+    if (typeof window !== "undefined") window.removeEventListener("offline", handleOffline);
   };
 }

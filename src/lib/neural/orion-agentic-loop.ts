@@ -69,14 +69,14 @@ let _lastProtocolSync = 0;
 
 function loadProtocols() {
   try {
-    const raw = localStorage.getItem(PROTOCOL_STORAGE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( PROTOCOL_STORAGE_KEY);
     if (raw) _protocols = JSON.parse(raw);
   } catch {}
 }
 
 function saveProtocols() {
   try {
-    localStorage.setItem(PROTOCOL_STORAGE_KEY, JSON.stringify(_protocols));
+    if (typeof window !== "undefined") localStorage.setItem(PROTOCOL_STORAGE_KEY, JSON.stringify(_protocols));
     _protocolsDirty = true;
   } catch {}
 }
@@ -209,10 +209,10 @@ function finalizeThoughtEntry(entry: ThoughtEntry, result: string, success: bool
   entry.result = result;
   entry.success = success;
   try {
-    const history: ThoughtEntry[] = JSON.parse(localStorage.getItem(THOUGHT_HISTORY_KEY) || "[]");
+    const history: ThoughtEntry[] = JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( THOUGHT_HISTORY_KEY) || "[]");
     history.unshift(entry);
     if (history.length > 20) history.pop();
-    localStorage.setItem(THOUGHT_HISTORY_KEY, JSON.stringify(history));
+    if (typeof window !== "undefined") localStorage.setItem(THOUGHT_HISTORY_KEY, JSON.stringify(history));
   } catch {}
 }
 
@@ -346,7 +346,7 @@ export async function runAgenticCycle(
 
 export function getKnownSpeakers(): Record<string, { lastSeen: number; transcripts: number }> {
   try {
-    const raw = localStorage.getItem(KNOWN_SPEAKERS_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( KNOWN_SPEAKERS_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch { return {}; }
 }
@@ -360,7 +360,7 @@ export function addKnownSpeaker(name: string): void {
       lastSeen: Date.now(),
       transcripts: (speakers[name.toLowerCase()]?.transcripts || 0) + 1,
     };
-    localStorage.setItem(KNOWN_SPEAKERS_KEY, JSON.stringify(speakers));
+    if (typeof window !== "undefined") localStorage.setItem(KNOWN_SPEAKERS_KEY, JSON.stringify(speakers));
   } catch {}
 }
 
@@ -464,7 +464,7 @@ function getTimeOfDay(): "morning" | "afternoon" | "evening" | "night" {
 const JULES_FAIL_KEY = "orion_jules_fail_counts";
 
 function getJulesFailCounts(): Record<string, number> {
-  try { return JSON.parse(localStorage.getItem(JULES_FAIL_KEY) || "{}"); } catch { return {}; }
+  try { return JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( JULES_FAIL_KEY) || "{}"); } catch { return {}; }
 }
 
 async function triggerJulesSelfImprove(plan: AgenticPlan, verification: AgenticVerification): Promise<void> {
@@ -473,7 +473,7 @@ async function triggerJulesSelfImprove(plan: AgenticPlan, verification: AgenticV
   const counts = getJulesFailCounts();
   const key = plan.intent;
   counts[key] = (counts[key] || 0) + 1;
-  localStorage.setItem(JULES_FAIL_KEY, JSON.stringify(counts));
+  if (typeof window !== "undefined") localStorage.setItem(JULES_FAIL_KEY, JSON.stringify(counts));
 
   // Only trigger Jules after 3+ consecutive failures for the same intent
   if (counts[key] < 3) return;
@@ -500,7 +500,7 @@ async function triggerJulesSelfImprove(plan: AgenticPlan, verification: AgenticV
   if (result.success) {
     console.log(`[Orion→Jules] Session ${result.sessionId} created for self-improvement`);
     counts[key] = 0;
-    localStorage.setItem(JULES_FAIL_KEY, JSON.stringify(counts));
+    if (typeof window !== "undefined") localStorage.setItem(JULES_FAIL_KEY, JSON.stringify(counts));
   }
 }
 
@@ -513,4 +513,4 @@ function classifyDomain(intent: string, issues: string[]): "bug" | "perf" | "des
 }
 
 // Initialize protocols on module load
-loadProtocols();
+// loadProtocols();

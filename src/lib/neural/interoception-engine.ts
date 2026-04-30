@@ -245,7 +245,7 @@ export function computeInteroceptiveState(
 
   // Persist latest
   try {
-    localStorage.setItem(INTEROCEPTION_CACHE_KEY, JSON.stringify(state));
+    if (typeof window !== "undefined") localStorage.setItem(INTEROCEPTION_CACHE_KEY, JSON.stringify(state));
   } catch { /* silent */ }
 
   return state;
@@ -255,8 +255,9 @@ export function computeInteroceptiveState(
  * Get the cached interoceptive state (last computed).
  */
 export function getCachedInteroceptiveState(): InteroceptiveState | null {
+  if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(INTEROCEPTION_CACHE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( INTEROCEPTION_CACHE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;

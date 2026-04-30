@@ -63,20 +63,7 @@ let wmState: WorkingMemoryState = {
 
 // ─── Initialization ───
 export function initWorkingMemory(): void {
-  try {
-    const stored = localStorage.getItem(WM_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as WorkingMemoryState;
-      // Only restore if recent (< 10 min)
-      const newest = parsed.items.reduce((max, i) => Math.max(max, i.timestamp), 0);
-      if (Date.now() - newest < 10 * 60 * 1000) {
-        wmState = parsed;
-        applyDecay();
-        return;
-      }
-    }
-  } catch { /* fresh start */ }
-  
+  // Fresh default state
   wmState = {
     items: [],
     currentTopic: null,
@@ -85,6 +72,22 @@ export function initWorkingMemory(): void {
     phonologicalBuffer: [],
     centralExecutiveLoad: 0,
   };
+
+  if (typeof window === "undefined") return;
+
+  try {
+    if (typeof window === "undefined") return;
+    const stored = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( WM_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as WorkingMemoryState;
+      // Only restore if recent (< 10 min)
+      const newest = parsed.items?.reduce((max, i) => Math.max(max, i.timestamp), 0) || 0;
+      if (Date.now() - newest < 10 * 60 * 1000) {
+        wmState = parsed;
+        applyDecay();
+      }
+    }
+  } catch { /* fresh start */ }
 }
 
 // ─── Core Operations ───
@@ -355,7 +358,8 @@ function wordOverlapRatio(a: string, b: string): number {
 // ─── Persistence ───
 
 function persist(): void {
+  if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(WM_STORAGE_KEY, JSON.stringify(wmState));
+    if (typeof window !== "undefined") localStorage.setItem(WM_STORAGE_KEY, JSON.stringify(wmState));
   } catch { /* silent */ }
 }

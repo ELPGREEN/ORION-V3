@@ -42,7 +42,7 @@ function bindGlobalListeners(): void {
   if (listenersBound || typeof window === "undefined") return;
   listenersBound = true;
 
-  window.addEventListener("error", (e) => {
+  if (typeof window !== "undefined") window.addEventListener("error", (e) => {
     capturedErrors.push({
       message: `${e.message} at ${e.filename}:${e.lineno}`,
       source: e.filename || undefined,
@@ -51,7 +51,7 @@ function bindGlobalListeners(): void {
     if (capturedErrors.length > MAX_CAPTURED) capturedErrors.shift();
   });
 
-  window.addEventListener("unhandledrejection", (e) => {
+  if (typeof window !== "undefined") window.addEventListener("unhandledrejection", (e) => {
     const msg = e.reason?.message || e.reason?.toString?.() || "Unknown rejection";
     capturedRejections.push({ message: msg, timestamp: Date.now() });
     if (capturedRejections.length > MAX_CAPTURED) capturedRejections.shift();

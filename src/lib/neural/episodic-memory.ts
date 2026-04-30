@@ -44,7 +44,7 @@ const SUMMARY_MAX_LENGTH = 500;
 
 function getCachedEpisodes(): EpisodicEntry[] {
   try {
-    const raw = localStorage.getItem(EPISODIC_CACHE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( EPISODIC_CACHE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -53,7 +53,7 @@ function getCachedEpisodes(): EpisodicEntry[] {
 
 function saveCachedEpisodes(episodes: EpisodicEntry[]): void {
   const trimmed = episodes.slice(0, MAX_CACHED_EPISODES);
-  localStorage.setItem(EPISODIC_CACHE_KEY, JSON.stringify(trimmed));
+  if (typeof window !== "undefined") localStorage.setItem(EPISODIC_CACHE_KEY, JSON.stringify(trimmed));
 }
 
 // ─── Episode Creation ───
