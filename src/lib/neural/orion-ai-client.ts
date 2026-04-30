@@ -4,6 +4,7 @@
  *
  * PERF: Global auth cache (60s TTL), lazy module imports, single buildLocalDetections call
  */
+import { invokeViaRender } from "./render-proxy";
 import { supabase } from "@/integrations/supabase/client";
 import { wrapSupabase, wrapEdgeFunction } from "@/lib/errors";
 import {
@@ -687,7 +688,7 @@ export async function analyzeFrameWithAI(
     let data;
     try {
       data = await wrapEdgeFunction(
-        supabase.functions.invoke("neural-ops", {
+        invokeViaRender("neural-ops", {
           body: { imageBase64, context: enrichedContext, question, userMemory: getUserMemory(), dashboardContext: await fetchDashboardContext(), chatHistory: chatHistory?.slice(-4), identificationMode, intentType, localDetections, userName, voiceIdentityStatus: getCachedVoiceIdentity() || undefined },
         }),
         "neural-ops",
@@ -1190,21 +1191,17 @@ export function classifyIntent(question: string, recentIntents?: string[]): "vis
 export async function generateImageWithOrion(prompt: string): Promise<{ success: boolean; image?: string; mimeType?: string; text?: string; error?: string }> {
   try {
     const data = await wrapEdgeFunction(
-      supabase.functions.invoke("neural-ops", {
+      invokeViaRender("neural-ops", {
         body: { action: "generate_image", prompt },
       }),
       "neural-ops",
       { action: "generate_image" }
     );
-    return data || { success: false, error: "No data returned" };
+    return { success: !!data, ...(data || { error: "No data returned" }) };
   } catch (e: any) {
     return { success: false, error: e?.message || "Unknown error" };
   }
 }
-/**
- * Unified Interaction Processor (The Maestro)
- * High-level orchestrator that leverages all neural subsystems.
- */
 export async function processInteraction(params: {
   question: string;
   context?: string;
@@ -1267,7 +1264,7 @@ export async function processInteraction(params: {
   let responseText = "";
   try {
     const data = await wrapEdgeFunction(
-      supabase.functions.invoke("neural-ops", {
+      invokeViaRender("neural-ops", {
         body: {
           question,
           context: enrichedContext,

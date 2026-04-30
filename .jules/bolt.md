@@ -25,3 +25,9 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 **Nova Métrica:** 0.1471ms (mean latency, all cases) / 0.0007ms (conversational)
 **Delta (Δ):** ~18.6% (Overall) / >90% (Conversational Early Exit)
 **Learning:** Using `.test()` pre-checks before `match()`/`matchAll()` is more efficient than consolidation or raw matching in high-frequency loops. Explicit `lastIndex = 0` reset is critical when mixing `.test()` and `/g` regexes.
+
+## 2026-04-30 — [Supabase/Render Balanced Equilibrium]
+**Problem:** Supabase Egress quota was at 72% due to data-heavy Edge Function responses (AI, OCR, Documents).
+**Solution:** Offloaded AI Orchestration and high-bandwidth API proxying to Render service. Created a "Smart Gateway" pattern on frontend that attempts Render first and falls back to Supabase.
+**Impact:** Drastic reduction in Supabase Egress and Invocations. Zero-downtime reliability via automatic fallback.
+**Implementation:** `src/lib/neural/render-proxy.ts`, `server/index.ts` (Bun), and redirected `ai-service.ts` / `orion-ai-client.ts` calls.
