@@ -268,29 +268,32 @@ function activateDOMFortress() {
 }
 
 function poisonSession() {
+  if (typeof window === "undefined") return;
   try {
     const decoys = {
       "_api_token": `decoy_${Math.random().toString(36)}`,
       "_session_key": `fake_${Date.now().toString(36)}`,
       "_user_data": JSON.stringify({ role: "guest", permissions: [] }),
     };
-    Object.entries(decoys).forEach(([k, v]) => localStorage.setItem(k, v));
+    Object.entries(decoys).forEach(([k, v]) => { if (typeof window !== "undefined")  localStorage.setItem(k, v); });
   } catch {}
 }
 
 function banFingerprint(fp: string) {
+  if (typeof window === "undefined") return;
   _bannedFingerprints.add(fp);
   try {
-    const bans = JSON.parse(localStorage.getItem("_orion_bans") || "[]");
+    const bans = JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( "_orion_bans") || "[]");
     bans.push({ fp, until: Date.now() + 24 * 60 * 60 * 1000 });
-    localStorage.setItem("_orion_bans", JSON.stringify(bans));
+    if (typeof window !== "undefined") localStorage.setItem("_orion_bans", JSON.stringify(bans));
   } catch {}
 }
 
 function isFingerPrintBanned(fp: string): boolean {
+  if (typeof window === "undefined") return false;
   if (_bannedFingerprints.has(fp)) return true;
   try {
-    const bans = JSON.parse(localStorage.getItem("_orion_bans") || "[]");
+    const bans = JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( "_orion_bans") || "[]");
     const now = Date.now();
     const activeBan = bans.find((b: any) => b.fp === fp && b.until > now);
     if (activeBan) {
@@ -822,6 +825,7 @@ async function detectDNSLeak(): Promise<void> {
 // ─── Public API ───
 
 export function initOrionDefense(): void {
+  if (typeof window === "undefined") return;
   if (_initialized) return;
   _initialized = true;
   _fingerprint = generateFingerprint();
@@ -832,7 +836,7 @@ export function initOrionDefense(): void {
   }
 
   try {
-    const bans = JSON.parse(localStorage.getItem("_orion_bans") || "[]");
+    const bans = JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( "_orion_bans") || "[]");
     const now = Date.now();
     bans
       .filter((b: any) => b.until > now)
@@ -911,10 +915,11 @@ export function manualBan(fingerprint: string): void {
 }
 
 export function manualUnban(fingerprint: string): void {
+  if (typeof window === "undefined") return;
   _bannedFingerprints.delete(fingerprint);
   try {
-    const bans = JSON.parse(localStorage.getItem("_orion_bans") || "[]");
-    localStorage.setItem("_orion_bans", JSON.stringify(bans.filter((b: any) => b.fp !== fingerprint)));
+    const bans = JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( "_orion_bans") || "[]");
+    if (typeof window !== "undefined") localStorage.setItem("_orion_bans", JSON.stringify(bans.filter((b: any) => b.fp !== fingerprint)));
   } catch {}
 }
 

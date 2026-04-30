@@ -333,7 +333,7 @@ function handleIoTAlert(alert: IoTAlert): void {
 
   // Publicar no chat do Orion se for warning ou critical
   if (severity !== "info") {
-    window.dispatchEvent(
+    if (typeof window !== "undefined") window.dispatchEvent(
       new CustomEvent("orion-ai-chat", {
         detail: { role: "system", text: `⚠️ Alerta IoT: ${message}` },
       })

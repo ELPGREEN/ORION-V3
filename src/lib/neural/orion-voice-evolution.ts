@@ -529,8 +529,9 @@ let _supabaseSaveTimer: ReturnType<typeof setTimeout> | null = null;
 const SUPABASE_DEBOUNCE_MS = 5000;
 
 export function getVoiceEvolution(): VoiceEvolution {
+  if (typeof window === "undefined") return createInitialEvolution();
   try {
-    const stored = localStorage.getItem(EVOLUTION_KEY);
+    const stored = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( EVOLUTION_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
       if (parsed.version === 2) {
@@ -540,12 +541,12 @@ export function getVoiceEvolution(): VoiceEvolution {
       }
     }
     // Migrate from v1
-    const v1 = localStorage.getItem("orion_voice_evolution");
+    const v1 = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( "orion_voice_evolution");
     if (v1) {
       const old = JSON.parse(v1);
       const migrated = migrateFromV1(old);
       saveEvolution(migrated);
-      localStorage.removeItem("orion_voice_evolution");
+      if (typeof window !== "undefined") localStorage.removeItem("orion_voice_evolution");
       return migrated;
     }
   } catch {}
@@ -583,7 +584,7 @@ export async function syncVoiceEvolutionFromSupabase(): Promise<void> {
     // Merge strategy: use the one with the most recent lastEvolution
     if (remoteData.lastEvolution > localEvo.lastEvolution) {
       // Remote is newer — overwrite local
-      try { localStorage.setItem(EVOLUTION_KEY, JSON.stringify(remoteData)); } catch {}
+      try { if (typeof window !== "undefined") localStorage.setItem(EVOLUTION_KEY, JSON.stringify(remoteData)); } catch {}
       console.log("[VoiceEvolution] Synced from Supabase (remote was newer)");
     } else if (localEvo.lastEvolution > remoteData.lastEvolution && localEvo.evolutionCount > 0) {
       // Local is newer — push to Supabase
@@ -721,14 +722,15 @@ function createInitialEvolution(): VoiceEvolution {
 }
 
 function saveEvolution(evo: VoiceEvolution) {
+  if (typeof window === "undefined") return;
   // 1. Save to localStorage (fast cache)
   try {
-    localStorage.setItem(EVOLUTION_KEY, JSON.stringify(evo));
+    if (typeof window !== "undefined") localStorage.setItem(EVOLUTION_KEY, JSON.stringify(evo));
   } catch {
     // Storage full — trim absorbed content
     evo.phonemeBank.absorbedContent = evo.phonemeBank.absorbedContent.slice(-50);
     evo.phonemeBank.vocabularySet = evo.phonemeBank.vocabularySet.slice(-5000);
-    localStorage.setItem(EVOLUTION_KEY, JSON.stringify(evo));
+    if (typeof window !== "undefined") localStorage.setItem(EVOLUTION_KEY, JSON.stringify(evo));
   }
 
   // 2. Debounced save to Supabase
@@ -1604,7 +1606,8 @@ const BOOST_APPLIED_KEY = "orion_voice_boost_v1";
  * Retorna o novo nível ou null se já foi aplicado.
  */
 export function boostEvolution(): number | null {
-  if (_boostApplied || localStorage.getItem(BOOST_APPLIED_KEY)) {
+  if (typeof window === "undefined") return null;
+  if (_boostApplied || (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( BOOST_APPLIED_KEY)) {
     _boostApplied = true;
     return null;
   }
@@ -1700,7 +1703,7 @@ export function boostEvolution(): number | null {
   );
 
   _boostApplied = true;
-  localStorage.setItem(BOOST_APPLIED_KEY, Date.now().toString());
+  if (typeof window !== "undefined") localStorage.setItem(BOOST_APPLIED_KEY, Date.now().toString());
 
   const evo = getVoiceEvolution();
   console.log(`[VoiceEvolution] 🚀 Boost completo! Nível: ${evo.level}% | Estágio: ${evo.stage}`);

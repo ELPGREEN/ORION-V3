@@ -69,21 +69,23 @@ const LEARNED_APIS_KEY = "orion_arc_learned_apis";
 const FRAMEWORK_KNOWLEDGE_KEY = "orion_arc_framework_knowledge";
 
 function initialize(): void {
+  if (_initialized || typeof window === "undefined") return;
   if (_initialized) return;
   try {
-    const storedAPIs = localStorage.getItem(LEARNED_APIS_KEY);
+    const storedAPIs = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( LEARNED_APIS_KEY);
     if (storedAPIs) _learnedAPIs = JSON.parse(storedAPIs);
     
-    const storedFW = localStorage.getItem(FRAMEWORK_KNOWLEDGE_KEY);
+    const storedFW = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( FRAMEWORK_KNOWLEDGE_KEY);
     if (storedFW) _frameworkKnowledge = JSON.parse(storedFW);
   } catch { /* empty */ }
   _initialized = true;
 }
 
 function persist(): void {
+  if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(LEARNED_APIS_KEY, JSON.stringify(_learnedAPIs));
-    localStorage.setItem(FRAMEWORK_KNOWLEDGE_KEY, JSON.stringify(_frameworkKnowledge));
+    if (typeof window !== "undefined") localStorage.setItem(LEARNED_APIS_KEY, JSON.stringify(_learnedAPIs));
+    if (typeof window !== "undefined") localStorage.setItem(FRAMEWORK_KNOWLEDGE_KEY, JSON.stringify(_frameworkKnowledge));
   } catch { /* quota */ }
 }
 
@@ -355,8 +357,11 @@ export function getBestAPICapability(task: string): { api: string; capability: s
 export function resetAPIKnowledge(): void {
   _learnedAPIs = [];
   _frameworkKnowledge = [];
-  localStorage.removeItem(LEARNED_APIS_KEY);
-  localStorage.removeItem(FRAMEWORK_KNOWLEDGE_KEY);
+  if (typeof window === "undefined") return;
+  _learnedAPIs = [];
+  _frameworkKnowledge = [];
+  if (typeof window !== "undefined") localStorage.removeItem(LEARNED_APIS_KEY);
+  if (typeof window !== "undefined") localStorage.removeItem(FRAMEWORK_KNOWLEDGE_KEY);
 }
 
 // ═══ Diagnostics ═══

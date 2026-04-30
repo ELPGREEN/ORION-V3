@@ -600,12 +600,17 @@ let _somInstance: SelfOrganizingMap | null = null;
 
 function getSOM(): SelfOrganizingMap {
   if (_somInstance) return _somInstance;
+  if (typeof window === "undefined") {
+    _somInstance = new SelfOrganizingMap();
+    return _somInstance;
+  }
+  if (_somInstance) return _somInstance;
 
   _somInstance = new SelfOrganizingMap(DEFAULT_CONFIG);
 
   // Try restore from localStorage
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( STORAGE_KEY);
     if (saved && _somInstance.restore(saved)) {
       console.log("[SOM] Restored from localStorage", _somInstance.getStats());
       return _somInstance;
@@ -616,7 +621,7 @@ function getSOM(): SelfOrganizingMap {
   _somInstance.batchTrain(TRAINING_EXAMPLES, 5);
 
   // Persist
-  try { localStorage.setItem(STORAGE_KEY, _somInstance.serialize()); } catch {}
+  if (typeof window !== "undefined") try { if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, _somInstance.serialize()); } catch {}
 
   console.log("[SOM] Initialized with batch training", _somInstance.getStats());
   return _somInstance;
@@ -645,7 +650,7 @@ export function somLearn(query: string, handler: SOMHandler) {
 
   // Persist every 10 queries
   if (som.getStats().totalQueries % 10 === 0) {
-    try { localStorage.setItem(STORAGE_KEY, som.serialize()); } catch {}
+    if (typeof window !== "undefined") try { if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, som.serialize()); } catch {}
   }
 }
 
@@ -661,6 +666,6 @@ export function somGetStats() {
  */
 export function somReset() {
   _somInstance = null;
-  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  if (typeof window !== "undefined") try { if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY); } catch {}
   getSOM(); // Re-initialize
 }

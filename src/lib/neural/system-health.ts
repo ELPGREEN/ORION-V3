@@ -72,11 +72,12 @@ let healthCheckInterval: ReturnType<typeof setInterval> | null = null;
 // ─── Health Check Functions ───
 
 function checkLocalStorageHealth(): { local: number; session: number } {
+  if (typeof window === "undefined") return { local: 0, session: 0 };
   try {
     let localSize = 0;
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key) localSize += (localStorage.getItem(key) || "").length;
+      if (key) localSize += ((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( key) || "").length;
     }
     const sessionSize = (sessionStorage.length || 0) * 100; // rough estimate
     return { local: localSize, session: sessionSize };
@@ -246,7 +247,7 @@ export function startHealthChecks(): void {
 
     // Persist snapshot
     try {
-      localStorage.setItem(HEALTH_KEY, JSON.stringify(snapshot));
+      if (typeof window !== "undefined") localStorage.setItem(HEALTH_KEY, JSON.stringify(snapshot));
     } catch { /* storage full */ }
   }, CHECK_INTERVAL_MS);
 

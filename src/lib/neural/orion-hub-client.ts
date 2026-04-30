@@ -25,7 +25,7 @@ let _bootPolling = false;
 function setBootStatus(status: VmBootStatus) {
   _bootStatus = status;
   _bootListeners.forEach(fn => fn(status));
-  window.dispatchEvent(new CustomEvent("orion-vm-boot", { detail: { status } }));
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion-vm-boot", { detail: { status } }));
 }
 
 export function getBootStatus(): VmBootStatus { return _bootStatus; }

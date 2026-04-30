@@ -99,8 +99,9 @@ const PRUNE_INTERVAL = 86400000; // 24h
 let _store: SomaticMarkerStore = loadStore();
 
 function loadStore(): SomaticMarkerStore {
+  if (typeof window === "undefined") return { markers: new Map() };
   try {
-    const raw = localStorage.getItem(MARKER_CACHE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( MARKER_CACHE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
@@ -119,12 +120,13 @@ function loadStore(): SomaticMarkerStore {
 }
 
 function persistStore(): void {
+  if (typeof window === "undefined") return;
   try {
     const serializable = {
       ..._store,
       markers: Object.fromEntries(_store.markers),
     };
-    localStorage.setItem(MARKER_CACHE_KEY, JSON.stringify(serializable));
+    if (typeof window !== "undefined") localStorage.setItem(MARKER_CACHE_KEY, JSON.stringify(serializable));
   } catch { /* silent */ }
 }
 

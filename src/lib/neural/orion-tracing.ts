@@ -121,8 +121,9 @@ export function endTrace(traceId: string): Trace | null {
 // ─── Local Cache ───
 
 function getCachedTraces(): Trace[] {
+  if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(TRACE_CACHE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( TRACE_CACHE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -130,10 +131,11 @@ function getCachedTraces(): Trace[] {
 }
 
 function cacheTrace(trace: Trace): void {
+  if (typeof window === "undefined") return;
   const cached = getCachedTraces();
   cached.unshift(trace);
   const trimmed = cached.slice(0, MAX_CACHED_TRACES);
-  localStorage.setItem(TRACE_CACHE_KEY, JSON.stringify(trimmed));
+  if (typeof window !== "undefined") localStorage.setItem(TRACE_CACHE_KEY, JSON.stringify(trimmed));
 }
 
 // ─── Persistence ───

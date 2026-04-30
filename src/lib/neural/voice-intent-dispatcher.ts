@@ -112,7 +112,7 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
   const CREATOR_ONLY_INTENTS = ["self_evolve", "auto_construct", "orion_evolution"];
   if (CREATOR_ONLY_INTENTS.includes(intent.intent) && identityStatus !== "creator" && identityStatus !== "owner") {
     console.warn(`[VoiceDispatch] ❌ Blocked "${intent.intent}" — voice ID is "${identityStatus}", not "creator"`);
-    window.dispatchEvent(new CustomEvent("orion:show-identity-gate"));
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion:show-identity-gate"));
     return ok(intent.intent, "⛔ Apenas o criador pode solicitar auto-evolução do sistema. Verifique sua identidade no painel.", null, t0);
   }
 
@@ -148,7 +148,7 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         const route = routes[target.toLowerCase()] || null;
         if (route) {
           // Dispatch navigation event
-          window.dispatchEvent(new CustomEvent("orion-navigate", { detail: { path: route } }));
+          if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion-navigate", { detail: { path: route } }));
           return ok(intent.intent, `Navegando para ${target}`, { route }, t0);
         }
         return ok(intent.intent, `Não encontrei a página "${target}". Tente: painel, consulta, documentos, processos, clientes.`, null, t0);
@@ -261,28 +261,28 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
       }
 
       case "video_fullscreen": {
-        window.dispatchEvent(new CustomEvent("orion-video-command", {
+        if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion-video-command", {
           detail: { action: "aumentar_tela" }
         }));
         return ok(intent.intent, "Colocando vídeo em tela cheia.", null, t0);
       }
 
       case "video_reduce": {
-        window.dispatchEvent(new CustomEvent("orion-video-command", {
+        if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion-video-command", {
           detail: { action: "diminuir_tela" }
         }));
         return ok(intent.intent, "Reduzindo a tela do vídeo.", null, t0);
       }
 
       case "video_minimize": {
-        window.dispatchEvent(new CustomEvent("orion-video-command", {
+        if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion-video-command", {
           detail: { action: "minimize" }
         }));
         return ok(intent.intent, "Minimizando o vídeo.", null, t0);
       }
 
       case "vision_off": {
-        window.dispatchEvent(new CustomEvent("orion-vision-command", {
+        if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion-vision-command", {
           detail: { action: "deactivate_vision", userInitiated: true, silent: true }
         }));
         // Empty response — NeuralVision owns the TTS for vision actions to avoid double-speak
@@ -290,7 +290,7 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
       }
 
       case "vision_on": {
-        window.dispatchEvent(new CustomEvent("orion-vision-command", {
+        if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion-vision-command", {
           detail: { action: "activate_vision", userInitiated: true, silent: true }
         }));
         return ok(intent.intent, "", null, t0);

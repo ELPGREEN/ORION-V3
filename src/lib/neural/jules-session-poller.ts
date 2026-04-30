@@ -34,7 +34,7 @@ async function pollOnce(): Promise<void> {
           });
 
           // Dispatch custom event for UI notification
-          window.dispatchEvent(
+          if (typeof window !== "undefined") window.dispatchEvent(
             new CustomEvent("jules:pr-ready", {
               detail: {
                 sessionId: session.session_id,

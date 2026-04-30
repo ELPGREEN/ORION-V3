@@ -78,7 +78,7 @@ interface OrchestratorState {
 
 function loadState(): OrchestratorState {
   try {
-    const raw = localStorage.getItem(ORCHESTRATOR_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( ORCHESTRATOR_KEY);
     return raw ? JSON.parse(raw) : { queue: [], running: [], completed: [], failed: [] };
   } catch {
     return { queue: [], running: [], completed: [], failed: [] };
@@ -89,14 +89,14 @@ function saveState(state: OrchestratorState): void {
   // Trim completed/failed
   state.completed = state.completed.slice(0, 50);
   state.failed = state.failed.slice(0, 20);
-  localStorage.setItem(ORCHESTRATOR_KEY, JSON.stringify(state));
+  if (typeof window !== "undefined") localStorage.setItem(ORCHESTRATOR_KEY, JSON.stringify(state));
 }
 
 // ─── Checkpointing ───
 
 function getCheckpoints(): TaskCheckpoint[] {
   try {
-    const raw = localStorage.getItem(CHECKPOINT_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( CHECKPOINT_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -111,7 +111,7 @@ function saveCheckpoint(checkpoint: TaskCheckpoint): void {
   else all.push(checkpoint);
   
   const trimmed = all.slice(-MAX_CHECKPOINTS);
-  localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(trimmed));
+  if (typeof window !== "undefined") localStorage.setItem(CHECKPOINT_KEY, JSON.stringify(trimmed));
 }
 
 export function getTaskCheckpoint(taskId: string): TaskCheckpoint | null {
@@ -288,6 +288,6 @@ export function getRunningTasks(): OrionTask[] {
 // ─── Cleanup ───
 
 export function clearOrchestrator(): void {
-  localStorage.removeItem(ORCHESTRATOR_KEY);
-  localStorage.removeItem(CHECKPOINT_KEY);
+  if (typeof window !== "undefined") localStorage.removeItem(ORCHESTRATOR_KEY);
+  if (typeof window !== "undefined") localStorage.removeItem(CHECKPOINT_KEY);
 }

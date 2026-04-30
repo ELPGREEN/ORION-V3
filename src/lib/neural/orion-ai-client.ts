@@ -73,7 +73,7 @@ let _voiceIdentityListenerAttached = false;
 export function initVoiceIdentityListener() {
   if (_voiceIdentityListenerAttached || typeof window === "undefined") return;
   _voiceIdentityListenerAttached = true;
-  window.addEventListener("orion:voice-transcription", () => {
+  if (typeof window !== "undefined") window.addEventListener("orion:voice-transcription", () => {
     _cachedVoiceIdentity = (window as any).__orionIdentityStatus || _cachedVoiceIdentity;
   });
 }
@@ -194,7 +194,7 @@ function assertPentagonReadiness(question: string, intent: string, memory: any):
       `[Pentagon-Guard] ⚠️ Query séria sem RAG/memória — risco de alucinação. q="${question.slice(0, 80)}"`,
     );
     if (typeof window !== "undefined") {
-      window.dispatchEvent(
+      if (typeof window !== "undefined") window.dispatchEvent(
         new CustomEvent("orion:pentagon-warning", {
           detail: { type: "missing_rag", question: question.slice(0, 200), intent },
         }),

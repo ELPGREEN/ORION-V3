@@ -97,14 +97,14 @@ export function detectHardwareTier(): QualityLevel {
 
 /** Get saved quality level or auto-detect */
 export function getQualityLevel(): QualityLevel {
-  const saved = localStorage.getItem(QUALITY_STORAGE_KEY) as QualityLevel | null;
+  const saved = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( QUALITY_STORAGE_KEY) as QualityLevel | null;
   if (saved && saved in QUALITY_PRESETS) return saved;
   return detectHardwareTier();
 }
 
 /** Save quality level preference */
 export function setQualityLevel(level: QualityLevel): void {
-  localStorage.setItem(QUALITY_STORAGE_KEY, level);
+  if (typeof window !== "undefined") localStorage.setItem(QUALITY_STORAGE_KEY, level);
 }
 
 /** Get current quality preset config */

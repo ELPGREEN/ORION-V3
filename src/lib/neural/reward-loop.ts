@@ -53,8 +53,9 @@ const DEFAULT_WEIGHT = 0.5;
 // ─── State Management ───
 
 function getRewardState(): RewardState {
+  if (typeof window === "undefined") return { providerWeights: [], totalRewards: 0, lastUpdated: 0, strategyPerformance: [] };
   try {
-    const raw = localStorage.getItem(REWARD_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( REWARD_KEY);
     return raw ? JSON.parse(raw) : { providerWeights: [], totalSignals: 0, lastProcessed: 0 };
   } catch {
     return { providerWeights: [], totalSignals: 0, lastProcessed: 0 };
@@ -62,7 +63,8 @@ function getRewardState(): RewardState {
 }
 
 function saveRewardState(state: RewardState): void {
-  localStorage.setItem(REWARD_KEY, JSON.stringify(state));
+  if (typeof window === "undefined") return;
+  if (typeof window !== "undefined") localStorage.setItem(REWARD_KEY, JSON.stringify(state));
 }
 
 // ─── Core Reward Processing ───

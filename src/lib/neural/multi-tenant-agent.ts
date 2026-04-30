@@ -387,42 +387,42 @@ export function checkThrottle(tenantId: string, resource: "request" | "llm" | "m
   if (!policy) return { allowed: true };
   
   const now = Date.now();
-  const window = policy.currentWindow;
+  const win = policy.currentWindow;
   
   // Reset window if expired (1-minute rolling window)
-  if (now - window.windowStart > 60_000) {
-    window.windowStart = now;
-    window.requestCount = 0;
-    window.tokenCount = 0;
-    window.llmCallCount = 0;
-    window.memoryOpCount = 0;
-    window.toolInvocationCount = 0;
+  if (now - win.windowStart > 60_000) {
+    win.windowStart = now;
+    win.requestCount = 0;
+    win.tokenCount = 0;
+    win.llmCallCount = 0;
+    win.memoryOpCount = 0;
+    win.toolInvocationCount = 0;
   }
   
   switch (resource) {
     case "request":
-      if (window.requestCount >= policy.requestsPerMinute) {
+      if (win.requestCount >= policy.requestsPerMinute) {
         return { allowed: false, reason: `Rate limit exceeded: ${policy.requestsPerMinute} req/min (tier: ${policy.tier})` };
       }
-      window.requestCount++;
+      win.requestCount++;
       break;
     case "llm":
-      if (window.llmCallCount >= policy.llmCallsPerMinute) {
+      if (win.llmCallCount >= policy.llmCallsPerMinute) {
         return { allowed: false, reason: `LLM call limit exceeded: ${policy.llmCallsPerMinute}/min (tier: ${policy.tier})` };
       }
-      window.llmCallCount++;
+      win.llmCallCount++;
       break;
     case "memory":
-      if (window.memoryOpCount >= policy.memoryOpsPerMinute) {
+      if (win.memoryOpCount >= policy.memoryOpsPerMinute) {
         return { allowed: false, reason: `Memory op limit exceeded: ${policy.memoryOpsPerMinute}/min (tier: ${policy.tier})` };
       }
-      window.memoryOpCount++;
+      win.memoryOpCount++;
       break;
     case "tool":
-      if (window.toolInvocationCount >= policy.toolInvocationsPerMinute) {
+      if (win.toolInvocationCount >= policy.toolInvocationsPerMinute) {
         return { allowed: false, reason: `Tool invocation limit exceeded: ${policy.toolInvocationsPerMinute}/min (tier: ${policy.tier})` };
       }
-      window.toolInvocationCount++;
+      win.toolInvocationCount++;
       break;
   }
   

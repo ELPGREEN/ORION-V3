@@ -70,7 +70,7 @@ function safeCall<T>(fn: () => T, fallback: T): T {
 async function queryEpisodicMemory(question: string): Promise<{ hits: number; summary: string }> {
   try {
     const { searchEpisodes, buildEpisodicContext } = await import("./episodic-memory");
-    const userId = (typeof localStorage !== "undefined" && localStorage.getItem("orion_user_id")) || "session";
+    const userId = (typeof localStorage !== "undefined" && (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( "orion_user_id")) || "session";
     const episodes = await searchEpisodes(question, userId, 3);
     if (!episodes || episodes.length === 0) return { hits: 0, summary: "" };
     return { hits: episodes.length, summary: buildEpisodicContext(episodes).slice(0, 200) };
@@ -243,7 +243,7 @@ export async function postCognitionLearn(
   tasks.push((async () => {
     try {
       const { createEpisode } = await import("./episodic-memory");
-      const userId = (typeof localStorage !== "undefined" && localStorage.getItem("orion_user_id")) || "session";
+      const userId = (typeof localStorage !== "undefined" && (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( "orion_user_id")) || "session";
       const convId = `conv_${Date.now()}`;
       await createEpisode(convId, userId, [
         { role: "user", content: question },
