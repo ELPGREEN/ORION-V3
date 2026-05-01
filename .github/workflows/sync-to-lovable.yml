@@ -1,0 +1,96 @@
+name: Sync → Lovable
+
+# Sincroniza branches e tags do ORION-V3 → repo do Lovable.
+# Cria branches novas automaticamente. Não destrutivo.
+#
+# Pré-requisito no ORION-V3: secret LOVABLE_SYNC_TOKEN (PAT com `repo`)
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+  create:
+  delete:
+
+concurrency:
+  group: sync-lovable
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'ELPGREEN/ORION-V3' && github.actor != 'lovable-sync-bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync para repo do Lovable
+        env:
+          LOVABLE_SYNC_TOKEN: ${{ secrets.LOVABLE_SYNC_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.event.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          DELETED_REF: ${{ github.event.ref }}
+        run: |
+          if [ -z "$LOVABLE_SYNC_TOKEN" ]; then
+            echo "❌ LOVABLE_SYNC_TOKEN não configurado no ORION-V3."
+            exit 1
+          fi
+
+          git config user.email "orion-sync@elpgreen.dev"
+          git config user.name "lovable-sync-bot"
+
+          git remote add target "https://x-access-token:${LOVABLE_SYNC_TOKEN}@github.com/ELPGREEN/blank-canvas-magic-040-c1c0e681.git"
+
+          if [ "$EVENT_NAME" = "delete" ]; then
+            REF="${DELETED_REF#refs/heads/}"
+            REF="${REF#refs/tags/}"
+            echo "🗑️  Propagando deleção: $REF"
+            git push target --delete "$REF" || echo "⚠️ Já não existia."
+            exit 0
+          fi
+
+          if [ "$EVENT_NAME" = "create" ]; then
+            echo "🌱 Nova $REF_TYPE: $REF_NAME"
+            if [ "$REF_TYPE" = "branch" ]; then
+              git push target "refs/heads/$REF_NAME:refs/heads/$REF_NAME"
+            else
+              git push target "refs/tags/$REF_NAME:refs/tags/$REF_NAME"
+            fi
+            echo "✅ $REF_TYPE criada no Lovable."
+            exit 0
+          fi
+
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          IS_TAG="${GITHUB_REF#refs/tags/}"
+
+          if [ "$IS_TAG" != "$GITHUB_REF" ]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            echo "🏷️  Sincronizando tag: $TAG"
+            git push target "refs/tags/$TAG:refs/tags/$TAG" --force
+            exit 0
+          fi
+
+          echo "📡 Sincronizando branch: $BRANCH"
+
+          if git ls-remote --exit-code --heads target "$BRANCH" >/dev/null 2>&1; then
+            echo "   → Atualizando branch existente..."
+            git fetch target "$BRANCH" || true
+            git push target "HEAD:refs/heads/$BRANCH" || {
+              echo "⚠️ Push direto falhou — tentando merge..."
+              git merge --no-edit "target/$BRANCH" || {
+                echo "❌ Conflito — resolva manualmente."
+                exit 1
+              }
+              git push target "HEAD:refs/heads/$BRANCH"
+            }
+          else
+            echo "   → 🌱 Branch nova! Criando no Lovable..."
+            git push target "HEAD:refs/heads/$BRANCH"
+          fi
+
+          echo "✅ Sync ORION-V3 → Lovable concluído."
