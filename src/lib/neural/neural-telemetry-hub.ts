@@ -153,6 +153,7 @@ let _baselineSet = false;
 let _latencyHistory: number[] = [];
 let _phiHistory: number[] = [];
 let _lastInteroState: InteroceptiveState | null = null;
+let _consecutiveDegradationCount = 0;
 let _lastUserInput = "";
 
 // ─── Core Functions ───
@@ -238,19 +239,28 @@ export function feedReasoningMetrics(metrics: {
   });
 
   // 7. Check degradation + trigger Jules on persistent issues
+  // Use ignoreCooldown=true to correctly track consecutive hits even during cooldown
   const degradations = _baselineSet
     ? checkDegradation("orion-reasoning", {
         accuracy: metrics.score,
         latencyMs: metrics.latencyMs,
         errorRate: metrics.score < 0.3 ? 1 : 0,
-      })
+      }, 10, true)
     : [];
 
   // Jules auto-trigger for TF degradations
   const significantDegradations = degradations.filter(d => d.severity === "moderate" || d.severity === "severe");
   if (significantDegradations.length > 0) {
-    const degradDesc = significantDegradations.map(d => `${d.metric}: ${d.current.toFixed(2)} (baseline: ${d.baseline.toFixed(2)}, -${d.degradationPercent.toFixed(0)}%)`).join(", ");
-    recordTFFailure("model_monitoring", `Significant degradation detected: ${degradDesc}`).catch(() => {});
+    _consecutiveDegradationCount++;
+    if (_consecutiveDegradationCount >= 5) {
+      const degradDesc = significantDegradations.map(d =>
+        `${d.metric}: ${d.current.toFixed(2)} (baseline: ${d.baseline.toFixed(2)}, degradation: ${d.degradationPercent.toFixed(0)}%)`
+      ).join(", ");
+      recordTFFailure("model_monitoring", `Significant degradation detected: ${degradDesc}`).catch(() => {});
+      _consecutiveDegradationCount = 0; // Reset after alert
+    }
+  } else {
+    _consecutiveDegradationCount = 0;
   }
 
   // 8. Update pipeline health
