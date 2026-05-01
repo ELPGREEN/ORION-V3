@@ -302,7 +302,7 @@ export {
   searchCommands,
 } from "./orion-command-registry";
 export * from "./orion-introspection";
-export * from "./orion-ai-client";
+export * from "./ai-client";
 export * from "./orion-api-orchestrator";
 export * from "./orion-orchestrator-exec";
 export * from "./orion-agentic-loop";
