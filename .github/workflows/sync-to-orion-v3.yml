@@ -1,0 +1,56 @@
+name: Sync → ORION-V3!
+
+# Sincroniza branches e tags do Lovable → ORION-V3
+# Cria branches novas automaticamente no ORION-V3.
+
+on:
+  push:
+    branches: ['**']
+  create:
+  delete:
+
+jobs:
+  sync-lovable-to-orion:
+    if: github.repository == 'ELPGREEN/blank-canvas-magic-040-c1c0e681'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync para ORION-V3
+        env:
+          TOKEN: ${{ secrets.MIRROR_TOKEN }}
+          REPO: ELPGREEN/ORION-V3
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "❌ MIRROR_TOKEN não configurado no Lovable repo."
+            exit 1
+          fi
+          
+          git config user.email "lovable-sync@elpgreen.dev"
+          git config user.name "lovable-sync-bot"
+          
+          git remote add target "https://x-access-token:${TOKEN}@github.com/${REPO}.git"
+          
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          echo "🔄 Sincronizando branch: $BRANCH"
+          
+          if git ls-remote --exit-code --heads target "$BRANCH" >/dev/null 2>&1; then
+            echo "   → Atualizando branch existente..."
+            git fetch target "$BRANCH" || true
+            git push target "HEAD:refs/heads/$BRANCH" || {
+              echo "⚠️ Push direto falhou — tentando merge..."
+              git merge --no-edit "target/$BRANCH" || {
+                echo "❌ Conflito — resolva manualmente."
+                exit 1
+              }
+              git push target "HEAD:refs/heads/$BRANCH"
+            }
+          else
+            echo "   → 🌱 Branch nova! Criando no ORION-V3..."
+            git push target "HEAD:refs/heads/$BRANCH"
+          fi
+          
+          echo "✅ Sync Lovable → ORION-V3 concluído."
