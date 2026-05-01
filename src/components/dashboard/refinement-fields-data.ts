@@ -1,7 +1,7 @@
 // Extracted from RefinementQuestionsStep.tsx for maintainability
 // Contains mandatory refinement field definitions for 148+ document types
 
-import type { RefinementField } from "./RefinementQuestionsStep";
+import { RefinementField } from "./refinement-types";
 
 const MANDATORY_REFINEMENT_FIELDS: Record<string, RefinementField[]> = {
   // ═══════════════════════════════════════

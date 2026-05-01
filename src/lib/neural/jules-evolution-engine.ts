@@ -191,8 +191,8 @@ export function scanSecurity(): ScanResult {
   // Ignore known framework-managed/session keys such as Supabase auth tokens.
   try {
     const dangerousKeys = ["api_key", "secret", "token", "password", "private_key"];
-    for (let i = 0; i < localStorage.length; i++) {
-      const rawKey = localStorage.key(i) || "";
+    if (typeof localStorage !== "undefined") for (let i = 0; i < localStorage.length; i++) {
+      const rawKey = (typeof localStorage !== "undefined" ? localStorage.key(i) : null) || "";
       const key = rawKey.toLowerCase();
       const isKnownSafeKey = SAFE_LOCALSTORAGE_KEY_PATTERNS.some((pattern) => pattern.test(rawKey));
       if (isKnownSafeKey) continue;

@@ -943,7 +943,7 @@ export async function analyzeFrameStreaming(
         chatHistory: isVoiceFastShortcut ? chatHistory?.slice(-2) : chatHistory?.slice(-4),
         identificationMode, intentType,
         stream: true,
-maxTokens: (window as any).__cognitiveMaxTokens || 8192,
+maxTokens: (typeof window !== "undefined" ? (window as any).__cognitiveMaxTokens : 8192) || 8192,
         reasoningInstructions: (window as any).__cognitiveReasoningInstructions || undefined,
         inputSource: (window as any).__orionInputSource || "text",
         userName: (() => { try { const u = (window as any).__orionUserName; return u || undefined; } catch { return undefined; } })(),

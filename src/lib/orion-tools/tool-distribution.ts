@@ -4,7 +4,7 @@
  * Owner always bypasses all restrictions.
  */
 
-import type { ToolName } from "./index";
+import type { ToolName } from "./tool-types";
 import type { AppRole } from "@/hooks/useUserRole";
 
 export type PlanTier = "free" | "premium" | "pro" | "enterprise";

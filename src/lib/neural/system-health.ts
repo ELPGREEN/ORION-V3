@@ -75,8 +75,8 @@ function checkLocalStorageHealth(): { local: number; session: number } {
   if (typeof window === "undefined") return { local: 0, session: 0 };
   try {
     let localSize = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+    if (typeof localStorage !== "undefined") for (let i = 0; i < localStorage.length; i++) {
+      const key = typeof localStorage !== "undefined" ? localStorage.key(i) : null;
       if (key) localSize += ((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( key) || "").length;
     }
     const sessionSize = (sessionStorage.length || 0) * 100; // rough estimate

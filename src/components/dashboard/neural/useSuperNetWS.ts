@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { VS, vsLog } from "./useVisionProcessing";
 import { getQualityPreset, downscaleCanvas } from "@/lib/neural/quality-presets";
 
-const SUPERNET_WS_URL = localStorage.getItem("supernet_ws_url") || "";
 const WS_MAX_RETRIES = 5;
 const WS_BASE_DELAY = 5000;
 const WS_MAX_DELAY = 60000;
@@ -16,7 +15,13 @@ export function useSuperNetWS(active: boolean, canvasRef: React.RefObject<HTMLCa
   const [connected, setConnected] = useState(false);
   const [latency, setLatency] = useState(0);
   const [analysis, setAnalysis] = useState("");
-  const [wsUrl, setWsUrl] = useState(SUPERNET_WS_URL);
+
+  // Lazy initialize wsUrl from localStorage inside the hook
+  const [wsUrl, setWsUrl] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return ((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {}))("supernet_ws_url") || "";
+  });
+
   const isConfigured = wsUrl.trim().length > 0;
 
   const connect = useCallback(() => {
@@ -100,7 +105,12 @@ export function useSuperNetWS(active: boolean, canvasRef: React.RefObject<HTMLCa
   }, [active, isConfigured, connect]);
 
   const updateUrl = useCallback((url: string) => {
-    setWsUrl(url); localStorage.setItem("supernet_ws_url", url); retriesRef.current = 0; wsRef.current?.close();
+    setWsUrl(url);
+    if (typeof window !== "undefined") {
+      if (typeof window !== "undefined") localStorage.setItem("supernet_ws_url", url);
+    }
+    retriesRef.current = 0;
+    wsRef.current?.close();
     if (url.trim()) setTimeout(() => connect(), 500);
   }, [connect]);
 

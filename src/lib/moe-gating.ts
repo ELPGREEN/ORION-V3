@@ -9,7 +9,7 @@
  * - Enhanced load balancing
  */
 
-import type { AIProvider, AIUseCase } from "./ai-orchestrator";
+import { AIProvider, AIUseCase } from "./ai-types";
 
 export interface MoEConfig {
   experts: Array<{

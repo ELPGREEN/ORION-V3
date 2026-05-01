@@ -12,10 +12,12 @@ let _vsGetter: (() => any) | null = null;
 
 /** Register the VS store at component mount time */
 export function setVSGetter(fn: (() => any) | null) {
+  if (typeof window === "undefined") return;
   _vsGetter = fn;
 }
 
 /** Lazy access — returns undefined if not yet registered */
 export function getVS() {
+  if (typeof window === "undefined") return undefined;
   return _vsGetter?.();
 }

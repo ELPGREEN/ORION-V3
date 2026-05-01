@@ -12,16 +12,8 @@ import {
 } from "@/components/ui/select";
 import { Sparkles, SkipForward, ChevronLeft, ClipboardList, FileText, Users, Search, Upload, Scale, MessageSquare, Wand2, Eye, FileSearch, Mic, Shield, HelpCircle, PenTool, FileBarChart, Gavel, BookOpen, BriefcaseBusiness, FolderSearch, ClipboardCheck, Info, GraduationCap } from "lucide-react";
 
-export interface RefinementField {
-  key: string;
-  label: string;
-  type: "text" | "textarea" | "date" | "select" | "number";
-  options?: string[];
-  required: boolean;
-  placeholder?: string;
-  hint?: string;
-  validate?: "processo" | "cpf" | "cnpj" | "valor" | "email" | "oab" | "percentual";
-}
+import { RefinementField } from "./refinement-types";
+export type { RefinementField };
 
 // ═══════════════════════════════════════════════════════════════
 // MAPA DE PERGUNTAS OBRIGATÓRIAS POR TIPO DE DOCUMENTO

@@ -253,9 +253,9 @@ export function useOrionReasoning(
       if (errors.length === 0) {
         // No errors — run protocol audit every 30 min
         const lastAuditKey = "orion_last_protocol_audit";
-        const lastAudit = parseInt(localStorage.getItem(lastAuditKey) || "0");
+        const lastAudit = parseInt(((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {}))(lastAuditKey) || "0");
         if (now - lastAudit > 30 * 60 * 1000) {
-          localStorage.setItem(lastAuditKey, String(now));
+          if (typeof window !== "undefined") localStorage.setItem(lastAuditKey, String(now));
           auditAndCreateProtocols().then(count => {
             if (count > 0) vsLog(`📊 Protocol audit: ${count} protocolos criados/atualizados`);
           }).catch(() => {});

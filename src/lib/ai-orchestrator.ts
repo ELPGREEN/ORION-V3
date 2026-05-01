@@ -28,14 +28,9 @@ export { parseClientRequirements } from "./client-parser";
 
 // ─── Types ───
 
-export type AIProvider = "gemini" | "groq" | "github_models" | "anthropic" | "openai" | "mistral" | "deepseek" | "deepseek_reasoner";
-export type AIUseCase = "documents" | "chat" | "search" | "analysis" | "code_gen" | "translation";
-export type RoutingStrategy = "priority" | "round_robin" | "least_cost" | "moe_gating";
+import { AIProvider, AIUseCase, RoutingStrategy, AIRequestOptions, AIResponse } from "./ai-types";
+export type { AIProvider, AIUseCase, RoutingStrategy, AIRequestOptions, AIResponse };
 
-export interface AIRequestOptions {
-  prompt: string;
-  systemPrompt?: string;
-  messages?: Array<{ role: string; content: string }>;
   preferredProvider?: AIProvider;
   useCase?: AIUseCase;
   includeNeuralContext?: boolean;
@@ -62,14 +57,6 @@ export interface AIRequestOptions {
   tools?: Array<{ type: string; function: { name: string; description: string; parameters: Record<string, unknown> } }>;
 }
 
-export interface AIResponse {
-  content: string;
-  provider: string;
-  fallback: boolean;
-  neuralEnhanced: boolean;
-  // DeepSeek V3.2 Thinking Mode
-  reasoningContent?: string;
-  toolCalls?: Array<{ id: string; function: { name: string; arguments: string }; type: string }>;
   requiresToolExecution?: boolean;
   usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
   metadata: {
