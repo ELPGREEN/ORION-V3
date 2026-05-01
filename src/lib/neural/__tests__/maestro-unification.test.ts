@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { processInteraction } from "../orion-ai-client";
+import { processInteraction } from "../orion-ai-client/index";
 import { supabase } from "@/integrations/supabase/client";
 
 vi.mock("@/integrations/supabase/client", () => {
