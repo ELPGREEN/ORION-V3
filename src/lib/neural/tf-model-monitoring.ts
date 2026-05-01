@@ -85,6 +85,7 @@ const _degradations: PerformanceDegradation[] = [];
 const _experiments: Map<string, Experiment> = new Map();
 const _movingAverages: Map<string, Map<string, number[]>> = new Map();
 const _lastAlertTs: Map<string, Map<string, number>> = new Map();
+const _consecutiveModerateCount: Map<string, Map<string, number>> = new Map();
 let _lastDataQuality: DataQualityReport | null = null;
 
 const MAX_SNAPSHOTS_PER_MODEL = 500;
@@ -139,7 +140,8 @@ export function maybeRebaseline(modelName: string, newMetrics: Record<string, nu
 export function checkDegradation(
   modelName: string,
   currentMetrics: Record<string, number>,
-  thresholdPercent: number = 10
+  thresholdPercent: number = 10,
+  ignoreCooldown: boolean = false
 ): PerformanceDegradation[] {
   const baseline = _baselines.get(modelName);
   if (!baseline) return [];
@@ -172,15 +174,39 @@ export function checkDegradation(
       ? ((baselineValue - currentAvg) / baselineValue) * 100
       : ((currentAvg - baselineValue) / baselineValue) * 100;
 
-    if (degradation > thresholdPercent) {
-      // 3. Apply Alert Cooldown
-      const lastAlert = modelAlerts.get(metric) || 0;
-      if (now - lastAlert < ALERT_COOLDOWN_MS) {
-        continue; // Still on cooldown for this metric
-      }
+    // 2. Determine thresholds with dynamic latency tolerance (2x wider)
+    const isLatency = metric === "latencyMs";
+    const minorThreshold = isLatency ? 20 : thresholdPercent;
+    const moderateThreshold = isLatency ? 50 : 25;
+    const severeThreshold = isLatency ? 100 : 50;
+
+    if (degradation > minorThreshold) {
+      // Initialize consecutive count state if missing
+      if (!_consecutiveModerateCount.has(modelName)) _consecutiveModerateCount.set(modelName, new Map());
+      const modelModerateCounts = _consecutiveModerateCount.get(modelName)!;
+      if (!modelModerateCounts.has(metric)) modelModerateCounts.set(metric, 0);
 
       const severity: PerformanceDegradation["severity"] =
-        degradation > 30 ? "severe" : degradation > 15 ? "moderate" : "minor";
+        degradation > severeThreshold ? "severe" : degradation > moderateThreshold ? "moderate" : "minor";
+
+      // Track consecutive moderate degradations for auto-rebaseline
+      if (severity === "moderate") {
+        const count = (modelModerateCounts.get(metric) || 0) + 1;
+        modelModerateCounts.set(metric, count);
+        if (count >= 5) {
+          maybeRebaseline(modelName, { [metric]: currentAvg });
+          modelModerateCounts.set(metric, 0);
+          continue; // Re-baselined, skip alert for this cycle
+        }
+      } else {
+        modelModerateCounts.set(metric, 0); // Reset if not moderate
+      }
+
+      // 3. Apply Alert Cooldown
+      const lastAlert = modelAlerts.get(metric) || 0;
+      if (!ignoreCooldown && now - lastAlert < ALERT_COOLDOWN_MS) {
+        continue; // Still on cooldown for this metric
+      }
 
       const entry: PerformanceDegradation = {
         modelName,
@@ -198,6 +224,11 @@ export function checkDegradation(
 
       if (_degradations.length > MAX_DEGRADATIONS) {
         _degradations.shift();
+      }
+    } else {
+      // Reset counter if healthy
+      if (_consecutiveModerateCount.has(modelName)) {
+        _consecutiveModerateCount.get(modelName)!.set(metric, 0);
       }
     }
   }
