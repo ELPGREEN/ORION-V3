@@ -115,7 +115,7 @@ function quickMatchOptimized(
 }
 
 // Initialize on module load
-initializeIndices();
+// initializeIndices();
 
 /**
  * Patterns that should NEVER match the instant cache — always go to LLM.

@@ -1,3 +1,4 @@
+import { invokeViaRender } from "./render-proxy";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -8,7 +9,7 @@ export async function callAI(action: string, payload: any = {}) {
   console.log(`[AIService] Calling action: ${action}`, payload);
 
   try {
-    const { data, error } = await supabase.functions.invoke("ai-orchestrator", {
+    const { data, error } = await invokeViaRender("ai-orchestrator", {
       body: { action, ...payload }
     });
 

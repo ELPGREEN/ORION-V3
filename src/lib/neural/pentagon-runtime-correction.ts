@@ -8,7 +8,7 @@
  *
  * Two trigger sources:
  *  - Heuristic: scans user messages for "não era isso", "errado", etc.
- *  - Explicit: any code can dispatch `window.dispatchEvent(new CustomEvent("orion:user-correction", { detail }))`
+ *  - Explicit: any code can dispatch `if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("orion:user-correction", { detail }))`
  */
 import {
   recordCorrection,
@@ -40,14 +40,14 @@ export function installPentagonAutoCorrection(): void {
   if (_installed || typeof window === "undefined") return;
   _installed = true;
 
-  window.addEventListener("orion:user-correction", (e: Event) => {
+  if (typeof window !== "undefined") window.addEventListener("orion:user-correction", (e: Event) => {
     const detail = (e as CustomEvent<RuntimeCorrectionDetail>).detail;
     if (!detail?.userText) return;
     void handleCorrection(detail);
   });
 
   // Heuristic listener: any chat message dispatched as `orion:user-message`
-  window.addEventListener("orion:user-message", (e: Event) => {
+  if (typeof window !== "undefined") window.addEventListener("orion:user-message", (e: Event) => {
     const detail = (e as CustomEvent<{ text: string; previousAnswer?: string; originalIntent?: string; conversationId?: string }>).detail;
     if (!detail?.text) return;
     if (!isNegativeFeedback(detail.text)) return;
@@ -86,7 +86,7 @@ async function handleCorrection(detail: RuntimeCorrectionDetail): Promise<void> 
     }
 
     // 3. Notify Pentagon to bias future cycles
-    window.dispatchEvent(
+    if (typeof window !== "undefined") window.dispatchEvent(
       new CustomEvent("orion:pentagon-learned", {
         detail: { originalIntent, correctIntent, target, userText: detail.userText },
       }),

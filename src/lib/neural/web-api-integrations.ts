@@ -286,9 +286,9 @@ export class WebAPIManager {
     // ── Online/Offline events ──
     const onOnline = () => { this.env.onlineStatus = true; this.log("Network", "data", "Back online"); };
     const onOffline = () => { this.env.onlineStatus = false; this.log("Network", "data", "Gone offline"); };
-    window.addEventListener("online", onOnline);
-    window.addEventListener("offline", onOffline);
-    this.cleanups.push(() => { window.removeEventListener("online", onOnline); window.removeEventListener("offline", onOffline); });
+    if (typeof window !== "undefined") window.addEventListener("online", onOnline);
+    if (typeof window !== "undefined") window.addEventListener("offline", onOffline);
+    this.cleanups.push(() => { if (typeof window !== "undefined") window.removeEventListener("online", onOnline); if (typeof window !== "undefined") window.removeEventListener("offline", onOffline); });
 
     // ── Page Visibility API (ACTIVE) ──
     const onVis = () => { this.env.pageVisible = !document.hidden; this.log("Visibility", "data", this.env.pageVisible ? "Page visible" : "Page hidden"); };
@@ -310,16 +310,16 @@ export class WebAPIManager {
     const onDevOri = (e: DeviceOrientationEvent) => {
       this.env.orientation = { alpha: e.alpha || 0, beta: e.beta || 0, gamma: e.gamma || 0 };
     };
-    window.addEventListener("deviceorientation", onDevOri);
-    this.cleanups.push(() => window.removeEventListener("deviceorientation", onDevOri));
+    if (typeof window !== "undefined") window.addEventListener("deviceorientation", onDevOri);
+    this.cleanups.push(() => { if (typeof window !== "undefined")  window.removeEventListener("deviceorientation", onDevOri); });
 
     // ── Device Motion Events (ACTIVE) ──
     const onDevMotion = (e: DeviceMotionEvent) => {
       const a = e.accelerationIncludingGravity;
       if (a) this.env.deviceMotion = { x: a.x || 0, y: a.y || 0, z: a.z || 0, interval: e.interval || 0 };
     };
-    window.addEventListener("devicemotion", onDevMotion);
-    this.cleanups.push(() => window.removeEventListener("devicemotion", onDevMotion));
+    if (typeof window !== "undefined") window.addEventListener("devicemotion", onDevMotion);
+    this.cleanups.push(() => { if (typeof window !== "undefined")  window.removeEventListener("devicemotion", onDevMotion); });
 
     // ── Fullscreen API (ACTIVE) ──
     const onFs = () => { this.env.isFullscreen = !!document.fullscreenElement; this.log("Fullscreen", "data", this.env.isFullscreen ? "Entered fullscreen" : "Exited fullscreen"); };
@@ -334,22 +334,22 @@ export class WebAPIManager {
         this.log("Gamepad", "data", `${this.env.gamepads.length} gamepads`);
       }
     };
-    window.addEventListener("gamepadconnected", onGp);
-    window.addEventListener("gamepaddisconnected", onGp);
-    this.cleanups.push(() => { window.removeEventListener("gamepadconnected", onGp); window.removeEventListener("gamepaddisconnected", onGp); });
+    if (typeof window !== "undefined") window.addEventListener("gamepadconnected", onGp);
+    if (typeof window !== "undefined") window.addEventListener("gamepaddisconnected", onGp);
+    this.cleanups.push(() => { if (typeof window !== "undefined") window.removeEventListener("gamepadconnected", onGp); if (typeof window !== "undefined") window.removeEventListener("gamepaddisconnected", onGp); });
 
     // ── Pointer Events (ACTIVE tracking) ──
     const onPointer = (e: PointerEvent) => { this.env.pointerPosition = { x: e.clientX, y: e.clientY }; };
-    window.addEventListener("pointermove", onPointer, { passive: true });
-    this.cleanups.push(() => window.removeEventListener("pointermove", onPointer));
+    if (typeof window !== "undefined") window.addEventListener("pointermove", onPointer, { passive: true });
+    this.cleanups.push(() => { if (typeof window !== "undefined")  window.removeEventListener("pointermove", onPointer); });
 
     // ── Touch Events (ACTIVE tracking) ──
     const onTouch = (e: TouchEvent) => { this.env.activeTouches = e.touches.length; };
     const onTouchEnd = () => { this.env.activeTouches = 0; };
-    window.addEventListener("touchstart", onTouch, { passive: true });
-    window.addEventListener("touchmove", onTouch, { passive: true });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
-    this.cleanups.push(() => { window.removeEventListener("touchstart", onTouch); window.removeEventListener("touchmove", onTouch); window.removeEventListener("touchend", onTouchEnd); });
+    if (typeof window !== "undefined") window.addEventListener("touchstart", onTouch, { passive: true });
+    if (typeof window !== "undefined") window.addEventListener("touchmove", onTouch, { passive: true });
+    if (typeof window !== "undefined") window.addEventListener("touchend", onTouchEnd, { passive: true });
+    this.cleanups.push(() => { if (typeof window !== "undefined") window.removeEventListener("touchstart", onTouch); if (typeof window !== "undefined") window.removeEventListener("touchmove", onTouch); if (typeof window !== "undefined") window.removeEventListener("touchend", onTouchEnd); });
 
     // ── Selection API (ACTIVE monitoring) ──
     const onSelection = () => {

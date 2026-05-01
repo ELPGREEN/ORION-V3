@@ -94,7 +94,7 @@ let _state: MirroringState = loadState();
 
 function loadState(): MirroringState {
   try {
-    const raw = localStorage.getItem(MIRROR_CACHE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( MIRROR_CACHE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       return { ...parsed, profiles: new Map(Object.entries(parsed.profiles || {})) };
@@ -106,7 +106,7 @@ function loadState(): MirroringState {
 function persist(): void {
   try {
     const serializable = { ..._state, profiles: Object.fromEntries(_state.profiles) };
-    localStorage.setItem(MIRROR_CACHE_KEY, JSON.stringify(serializable));
+    if (typeof window !== "undefined") localStorage.setItem(MIRROR_CACHE_KEY, JSON.stringify(serializable));
   } catch { /* silent */ }
 }
 

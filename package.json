@@ -10,6 +10,7 @@
     "sitemap": "node scripts/generate-sitemap.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
+    "start": "bun server/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "cap:setup": "npx cap sync && bash scripts/cap-post-sync.sh",

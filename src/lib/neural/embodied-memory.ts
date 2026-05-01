@@ -91,8 +91,9 @@ const RECALL_BOOST = 0.15;
 let _state: EmbodiedMemoryState = loadState();
 
 function loadState(): EmbodiedMemoryState {
+  if (typeof window === "undefined") return defaultState();
   try {
-    const raw = localStorage.getItem(EMBODIED_CACHE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( EMBODIED_CACHE_KEY);
     return raw ? JSON.parse(raw) : defaultState();
   } catch {
     return defaultState();
@@ -104,8 +105,9 @@ function defaultState(): EmbodiedMemoryState {
 }
 
 function persist(): void {
+  if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(EMBODIED_CACHE_KEY, JSON.stringify(_state));
+    if (typeof window !== "undefined") localStorage.setItem(EMBODIED_CACHE_KEY, JSON.stringify(_state));
   } catch { /* silent */ }
 }
 

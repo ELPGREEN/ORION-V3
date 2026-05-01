@@ -29,9 +29,10 @@ function normalize(text: string): string {
 }
 
 function loadCorrections(): Map<string, IntentCorrection> {
+  if (typeof window === "undefined") return new Map();
   if (_corrections) return _corrections;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as Record<string, IntentCorrection>;
       _corrections = new Map(Object.entries(parsed));
@@ -45,6 +46,7 @@ function loadCorrections(): Map<string, IntentCorrection> {
 }
 
 function saveCorrections(): void {
+  if (typeof window === "undefined") return;
   if (!_corrections) return;
   try {
     // Evict oldest entries if over limit
@@ -54,7 +56,7 @@ function saveCorrections(): void {
       for (const [key] of toDelete) _corrections.delete(key);
     }
     const obj = Object.fromEntries(_corrections);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
   } catch {
     // localStorage full — silently fail
   }
@@ -134,7 +136,9 @@ export function getAllCorrections(): IntentCorrection[] {
  */
 export function clearCorrections(): void {
   _corrections = new Map();
-  localStorage.removeItem(STORAGE_KEY);
+  if (typeof window === "undefined") return;
+  _corrections = new Map();
+  if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY);
 }
 
 /**

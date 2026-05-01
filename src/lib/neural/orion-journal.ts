@@ -53,8 +53,9 @@ export function isDebugMode(): boolean {
 // ─── Local Storage ───
 
 function getLocalJournal(): ThoughtEntry[] {
+  if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(JOURNAL_KEY);
+    const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( JOURNAL_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -62,8 +63,9 @@ function getLocalJournal(): ThoughtEntry[] {
 }
 
 function saveLocalJournal(entries: ThoughtEntry[]): void {
+  if (typeof window === "undefined") return;
   const trimmed = entries.slice(0, MAX_LOCAL_ENTRIES);
-  localStorage.setItem(JOURNAL_KEY, JSON.stringify(trimmed));
+  if (typeof window !== "undefined") localStorage.setItem(JOURNAL_KEY, JSON.stringify(trimmed));
 }
 
 // ─── Recording ───

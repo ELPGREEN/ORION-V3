@@ -231,9 +231,10 @@ let _consciousness: RAGConsciousness = {
 let _initialized = false;
 
 function initializeConsciousness(): void {
+  if (_initialized || typeof window === "undefined") return;
   if (_initialized) return;
   try {
-    const all = localStorage.getItem("orion_rag_consciousness_all");
+    const all = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( "orion_rag_consciousness_all");
     if (all) {
       const parsed = JSON.parse(all);
       _consciousness.patterns = parsed.patterns || [];
@@ -248,6 +249,7 @@ function initializeConsciousness(): void {
 }
 
 function persistConsciousness(): void {
+  if (typeof window === "undefined") return;
   try {
     const payload = JSON.stringify({
       patterns: _consciousness.patterns,
@@ -257,7 +259,7 @@ function persistConsciousness(): void {
       experientialLog: _consciousness.experientialLog,
       adaptationScore: _consciousness.adaptationScore,
     });
-    localStorage.setItem("orion_rag_consciousness_all", payload);
+    if (typeof window !== "undefined") localStorage.setItem("orion_rag_consciousness_all", payload);
   } catch { /* quota */ }
 }
 
@@ -497,9 +499,19 @@ export function resetRAGConsciousness(): void {
     identityScore: 100,
     experientialLog: [],
   };
-  localStorage.removeItem(PATTERN_STORAGE_KEY);
-  localStorage.removeItem(STATE_STORAGE_KEY);
-  localStorage.removeItem(IDENTITY_STORAGE_KEY);
+  if (typeof window === "undefined") return;
+  _consciousness = {
+    state: "dormant",
+    patterns: [],
+    reasoningCount: 0,
+    lastReasoning: 0,
+    adaptationScore: 0,
+    identityScore: 100,
+    experientialLog: [],
+  };
+  if (typeof window !== "undefined") localStorage.removeItem(PATTERN_STORAGE_KEY);
+  if (typeof window !== "undefined") localStorage.removeItem(STATE_STORAGE_KEY);
+  if (typeof window !== "undefined") localStorage.removeItem(IDENTITY_STORAGE_KEY);
 }
 
 export function getConsciousnessDiagnostics(): {

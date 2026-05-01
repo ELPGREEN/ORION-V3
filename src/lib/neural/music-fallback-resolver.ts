@@ -53,7 +53,7 @@ export async function playMusicWithFallback(
     ts: Date.now(),
   };
   try {
-    localStorage.setItem("orion_last_music_resolved", JSON.stringify(detail));
+    if (typeof window !== "undefined") localStorage.setItem("orion_last_music_resolved", JSON.stringify(detail));
   } catch {
     /* quota / private mode */
   }

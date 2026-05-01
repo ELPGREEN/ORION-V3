@@ -47,11 +47,11 @@ export type SubsystemKey =
 // ─── Local Store ───
 
 function getFailStore(): Record<string, SubsystemFail> {
-  try { return JSON.parse(localStorage.getItem(FAIL_STORE_KEY) || "{}"); } catch { return {}; }
+  try { return JSON.parse((typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( FAIL_STORE_KEY) || "{}"); } catch { return {}; }
 }
 
 function saveFailStore(store: Record<string, SubsystemFail>): void {
-  try { localStorage.setItem(FAIL_STORE_KEY, JSON.stringify(store)); } catch {}
+  try { if (typeof window !== "undefined") localStorage.setItem(FAIL_STORE_KEY, JSON.stringify(store)); } catch {}
 }
 
 // ─── Cooldown Check (DB-based) ───
