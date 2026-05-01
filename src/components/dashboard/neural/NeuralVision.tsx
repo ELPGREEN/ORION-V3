@@ -33,7 +33,7 @@ import { VS, processFrame, type Region, type MotionData } from "./useVisionProce
 import { useSuperNetWS } from "./useSuperNetWS";
 import { useOrionReasoning } from "./useOrionReasoning";
 import { useWakeWord } from "./useWakeWord";
-import { initVoiceIdentityListener } from "@/lib/neural/orion-ai-client";
+import { initVoiceIdentityListener } from "@/lib/neural/ai-client";
 import { setVSGetter } from "@/lib/neural/vision-state";
 import { CameraPiP, BoundingBoxOverlay } from "./VisionOverlayComponents";
 import { wakeOrionVm } from "@/lib/orion-vm-wake";

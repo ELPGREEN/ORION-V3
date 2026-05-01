@@ -3,9 +3,9 @@
  * Extracted from orion-ai-client.ts (lines 494-540)
  */
 
-import { supabase } from "@/integrations/supabase/client";
-import { wrapSupabase } from "@/lib/errors";
-import { getMemoryFacts, addMemoryFacts } from "@/lib/neural/orion-memory";
+import { supabase } from "../../../integrations/supabase/client";
+import { wrapSupabase } from "../../../lib/errors";
+import { getMemoryFacts, addMemoryFacts } from "../orion-memory";
 
 // ═══ Dashboard context (cached 5 min) ═══
 let _dashboardContextCache: { data: string; ts: number } | null = null;

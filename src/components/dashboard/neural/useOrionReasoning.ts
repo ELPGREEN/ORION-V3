@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { wrapEdgeFunction, wrapSupabase } from "@/lib/errors";
 import { callEvolution } from "@/lib/neural/ai-service";
-import { analyzeFrameStreaming, analyzeFrameWithAI, classifyIntent } from "@/lib/neural/orion-ai-client";
+import { analyzeFrameStreaming, analyzeFrameWithAI, classifyIntent } from "@/lib/neural/ai-client";
 import { stripMarkdown } from "@/lib/utils/text-utils";
 import {
   getMemoryFacts, addMemoryFacts, getSessionState, saveSessionState,
@@ -47,7 +47,7 @@ async function prewarmModules(): Promise<void> {
   _preloadDone = true;
   const modules = [
     ["orionConsciousness", import("@/lib/neural/orion-consciousness")],
-    ["orionAIClient", import("@/lib/neural/orion-ai-client")],
+    ["orionAIClient", import("@/lib/neural/ai-client")],
     ["cognitionEngine", import("@/lib/neural/neural-cognition-engine")],
     ["consciousnessBridge", import("@/lib/neural/consciousness-bridge")],
     ["geminiTTS", import("@/lib/tts/geminiTTS")],

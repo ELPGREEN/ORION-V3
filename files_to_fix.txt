@@ -1,0 +1,15 @@
+src/components/dashboard/neural/useOrionReasoning.ts
+src/components/dashboard/neural/NeuralVision.tsx
+src/lib/neural/ai-client/voice-identity.ts
+src/lib/neural/ai-client/frame-analysis.ts
+src/lib/neural/ai-client/user-memory.ts
+src/lib/neural/ai-client/index.ts
+src/lib/neural/ai-client/image-gen.ts
+src/lib/neural/ai-client/interaction.ts
+src/lib/neural/ai-client/intent-router.ts
+src/lib/neural/ai-client/local-mode.ts
+src/lib/neural/vision-state.ts
+src/lib/neural/__tests__/voice-optimization.test.ts
+src/lib/neural/__tests__/maestro-unification.test.ts
+src/lib/neural/orion-introspection.ts
+src/lib/orion-evolution/commands/index.ts

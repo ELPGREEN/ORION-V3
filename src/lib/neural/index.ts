@@ -315,6 +315,7 @@ export * from "./orion-knowledge-base";
 export * from "./orion-journal";
 export * from "./orion-tracing";
 export * from "./orion-voice-evolution";
+export * from "./ai-client";
 export {
   type ReasoningSnapshot,
   type ReasoningReflection,
@@ -454,7 +455,7 @@ export * from "./agentic-patterns-engine";
 export * from "./agentic-protocols-tools";
 
 // ═══ Maestro Unified Core ═══
-export { processInteraction, classifyIntent as classifyMaestroIntent } from "./orion-ai-client";
+export { processInteraction, classifyIntent as classifyMaestroIntent } from "./ai-client/index";
 export { executeCorrectiveRAG, gradeRetrieval, type CRAGResult, type RetrievalGrade } from "./corrective-rag";
 export * from "./orion-maestro-unification";
 export * from "./mamba-orchestrator";

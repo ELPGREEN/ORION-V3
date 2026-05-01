@@ -2,8 +2,8 @@
  * Image Generation Client Helper
  * Extracted from orion-ai-client.ts (lines 1189-1203)
  */
-import { supabase } from "@/integrations/supabase/client";
-import { wrapEdgeFunction } from "@/lib/errors";
+import { supabase } from "../../../integrations/supabase/client";
+import { wrapEdgeFunction } from "../../../lib/errors";
 
 export async function generateImageWithOrion(
   prompt: string,

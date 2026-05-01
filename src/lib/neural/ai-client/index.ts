@@ -15,7 +15,7 @@
  */
 
 // Core exports (from interaction.ts — the Maestro)
-export { processInteraction } from "./ai-client/interaction";
+export { processInteraction } from "./interaction";
 
 // Frame analysis
 export {
@@ -23,26 +23,25 @@ export {
   analyzeFrameStreaming,
   buildLocalDetections,
   shouldUseVoiceFastShortcut,
-  AIAnalysisResult,
-} from "./ai-client/frame-analysis";
+} from "./frame-analysis";
 
 // Intent classification
-export { classifyIntent } from "./ai-client/intent-router";
+export { classifyIntent } from "./intent-router";
 
 // Image generation
-export { generateImageWithOrion } from "./ai-client/image-gen";
+export { generateImageWithOrion } from "./image-gen";
 
 // Voice identity
 export {
   initVoiceIdentityListener,
   getCachedVoiceIdentity,
-} from "./ai-client/voice-identity";
+} from "./voice-identity";
 
 // Local mode
 export {
   setLocalFirstMode,
   isLocalFirstMode,
-} from "./ai-client/local-mode";
+} from "./local-mode";
 
 // User memory
 export {
@@ -50,7 +49,7 @@ export {
   addUserMemory,
   fetchDashboardContext,
   getCachedAuthUser,
-} from "./ai-client/user-memory";
+} from "./user-memory";
 
 // Vision state (lazy getter pattern — breaks circular dependency)
 export {
@@ -59,4 +58,4 @@ export {
 } from "../vision-state";
 
 // Re-export types
-export type { AIAnalysisResult } from "./ai-client/frame-analysis";
+export type { AIAnalysisResult } from "./frame-analysis";

@@ -2,27 +2,28 @@
  * Frame Analysis — analyzeFrameWithAI, analyzeFrameStreaming, buildLocalDetections, shouldUseVoiceFastShortcut
  * Extracted from orion-ai-client.ts (lines 85-92, 252-470, 548-730, 732-1090)
  */
-import { supabase } from "@/integrations/supabase/client";
-import { wrapSupabase, wrapEdgeFunction } from "@/lib/errors";
+import { getCachedAuthUser } from "./user-memory";
+import { supabase } from "../../../integrations/supabase/client";
+import { wrapSupabase, wrapEdgeFunction } from "../../../lib/errors";
 import {
   getMemoryFacts,
   addMemoryFacts,
-} from "@/lib/neural/orion-memory";
-import { buildCognitionContext, postCognitionLearn } from "./neural-cognition-engine";
-import { executeCorrectiveRAG } from "./corrective-rag";
-import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "./orion-maestro-unification";
-import { quantumRouteQuery, formatQuantumRoutingForAI } from "./quantum-llm-router";
-import { summarizeLongContextMamba } from "./mamba-orchestrator";
-import { buildWorkingMemoryPrompt, initWorkingMemory, pushToWorkingMemory } from "./orion-working-memory";
-import { stripMarkdown } from "@/lib/utils/text-utils";
-import { getVS } from "./vision-state";
+} from "../orion-memory";
+import { buildCognitionContext, postCognitionLearn } from "../neural-cognition-engine";
+import { executeCorrectiveRAG } from "../corrective-rag";
+import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "../orion-maestro-unification";
+import { quantumRouteQuery, formatQuantumRoutingForAI } from "../quantum-llm-router";
+import { summarizeLongContextMamba } from "../mamba-orchestrator";
+import { buildWorkingMemoryPrompt, initWorkingMemory, pushToWorkingMemory } from "../orion-working-memory";
+import { stripMarkdown } from "../../../lib/utils/text-utils";
+import { getVS } from "../vision-state";
 // vision-local-learning removed — all identification via Gemini on-demand
 const canIdentifyLocally = (_shapes: any[]) => ({ allLocal: false, localMatches: [] as any[] });
 const getLearningStats = () => ({ totalPriors: 0, maturePriors: 0, totalObservations: 0, apiBypassRate: 0 });
 const learnFromDetection = (_obj: any, _desc: any) => {};
-import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
+import { generateLocalResponse, isLocalEngineAvailable } from "../../../lib/ai/local-llm-engine";
 // hf-vision-gate REMOVED — was downloading ~50MB of WASM models in browser
-import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
+import { matchProtocols } from "../orion-voice-protocols";
 
 // ═══ PRE-COMPILED REGEXES FOR PERFORMANCE ═══
 const SENTENCE_END_REGEX = /.*?[.!?…;]+\s/ys;
@@ -35,7 +36,7 @@ const SELF_IDENTITY_PATTERNS = /\b(quem\s+[eé]\s+voc[eê]|qual\s+[eé]\s+o\s+se
 const CONVERSATIONAL_COMPLAINT_PATTERNS = /\b(ent[aã]o|cara|mano|tu|voc[eê]|c[eê])\b.*\b(n[aã]o\s+me\s+responde|n[aã]o\s+responde|me\s+ignora|n[aã]o\s+entende|n[aã]o\s+capta|n[aã]o\s+peg[ao]|s[oó]\s+peg[ao]\s+duas?|tr[eê]s\s+palavras|frase\s+inteira|t[aá]\s+me\s+tirando|arquivo\s+srfx|srfx)\b/i;
 const VOICE_FAST_SHORTCUT_REGEX = /^(?:oi|ol[áa]|ola|opa|ei|hey|e\s*aí|e\s*ai|fala|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|valeu|obrigad[oa]|ok(?:ay)?|certo|beleza|sim|n[aã]o|nao|pode\s+repetir|repete|repita|me\s+ouve|me\s+escuta|t[aá]\s+me\s+tirando|arquivo\s+srfx|srfx)\b/i;
 const VOICE_COMPLEXITY_GUARD_REGEX = /\b(quem|qual|quais|como|por\s+que|porque|quando|onde|explica|explique|resuma|resume|analisa|analise|compare|detalha|detalhe|contexto|mem[óo]ria|hist[óo]rico|base|conteúdo|documento|contrato|lei|artigo|processo|cliente|jules|pentagon|pentagol|rede\s+neural)\b/i;
-const EXPLICIT_VISUAL_PATTERNS = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+vendo|v[eê]|v[êe] na c[aâ]mera)|o\s+que\s+tem\s+(na\s+frente|a[ií]|aqui)|descrev[ae]|s\s+mostre\s+o\s+que\s+v[eê]|analise\s+(a\s+)?(imagem|cena|ambiente|o\s+que\s+v[eê])|me\s+mostre\s+o\s+que\s+v[eê]|analise\s+(a\s+)?(imagem|cena|c[aâ]mera)|leia\s+(o\s+)?texto\s+(da\s+)?(imagem|c[aâ]mera)|identifique\s+(o\s+)?(objeto|rosto|texto)|quantos?\s+[^.?!]*\s+(tem|h[aá])\b)/i;
+const EXPLICIT_VISUAL_PATTERNS = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+vendo|v[eê]|v[êe] na c[aâ]mera)|o\s+que\s+tem\s+(na\s+frente|a[ií]|aqui)|descrev[ae]|s\s+mostre\s+o\s+que\s+v[eê]|analise\s+(a\s+)?(imagem|cena|ambiente|o\s+que\s+v[eê])|me\s+mostre\s+o\s+que\s+v[eê]|analise\s+(a\s+)?(imagem|cena|c[aâ]mera)|leia\s+(o\s+)?texto\s+(da\s+)?(imagem|c[aâ]mera)|identifique\s+(o\s+)?(objeto|rosto|texto)|quantos?\s+[^.?!]*\s+(tem|h[aá]))\b/i;
 const IMAGE_GEN_PATTERNS = /\b(gere?\s+(uma?\s+)?imagem|crie?\s+(uma?\s+)?imagem|desenh[ae]|ilustr[ae]|gerar?\s+foto|cri[ae]\s+(uma?\s+)?ilustra[çc][aã]o|generate\s+(an?\s+)?image|draw|create\s+(an?\s+)?image|make\s+(an?\s+)?image|paint|sketch)\b/i;
 const WEB_SEARCH_PATTERNS = /\b(hoje|atual|atualmente|recente|notícia|preço\s+d[eoa]|cotação|quem\s+é|quando\s+(foi|será|é)|onde\s+fica|resultado\s+d[eoa]|placar|eleição|último|última|novo\s+|nova\s+|2024|2025|2026|tempo\s+(em|na|no)|clima|previsão|lançamento|estreia|pesquis[ae]\s+na\s+web|busca\s+na\s+internet|search\s+for|look\s+up|news|current|latest|trending)\b/i;
 const AUTO_CONSTRUCT_VERB_PATTERNS = /\b(crie?|gere?|implemente?|desenvolv[ae]|programe?|codifique|escreva|refatore?|monte|construa)\b/i;
@@ -60,7 +61,7 @@ const KNOWLEDGE_PATTERNS = /\b(histór|ciência|matemática|física|química|pol
 const CONVERSATIONAL_PATTERNS = /\b(opini[ãa]o|acha\s+que|concorda|discorda|argumento|debate|sugir[ãa]o|recomend|aconselh|orienta[çc]ã|estrat[ée]gia|planej|organiz|prioriz|importa\b|melhor\s+forma|como\s+(posso|devo|faz)|me\s+ajud|preciso\s+de|tenho\s+que|deveria|poderia|gostaria|queria)\b/i;
 const EMOTIONAL_PATTERNS = /\b(sinto|sentindo|triste|feliz|ansios|preocupad|estressad|frustrad|animad|chateado|confus[oa]|nervos[oa]|calm[oa]|motiv|desanima|angústi|med[oa]|raiva|alegr|satisf)\b/i;
 
-function shouldUseVoiceFastShortcut(question: string): boolean {
+export function shouldUseVoiceFastShortcut(question: string): boolean {
   const normalized = question.trim();
   if (!normalized) return true;
   const words = normalized.split(/\s+/).filter(Boolean);
@@ -70,7 +71,7 @@ function shouldUseVoiceFastShortcut(question: string): boolean {
 }
 
 // ═══ Build local detections from client-side vision data ═══
-function buildLocalDetections(): Record<string, unknown> | undefined {
+export function buildLocalDetections(): Record<string, unknown> | undefined {
   try {
     const vs = getVS();
     if (!vs) return undefined;
@@ -667,5 +668,81 @@ export async function analyzeFrameStreaming(
   } catch (err: any) {
     console.warn("[OrionAI] Streaming error:", err?.message);
     return { description: null, learnedFacts: [], identifiedObjects: [] };
+  }
+}
+
+/**
+ * 🍕 PENTAGON PIZZA — Unified consciousness pre-pass.
+ * Mandatório e síncrono para garantir governança e alinhamento do orquestrador.
+ */
+export async function buildPentagonPromptContext(question: string, wmContext: string, intent: string): Promise<string> {
+  try {
+    const user = await getCachedAuthUser();
+    const { getPentagonOrchestrator } = await import("../../../core/pentagon");
+    const cortex = getPentagonOrchestrator();
+
+    // 🍕 Síncrono e obrigatório para tarefas cognitivas
+    const actionResult = await cortex.runCycle(question, { userId: user?.id || "anonymous", wmContext, intent });
+
+    const state = cortex.getState();
+    const reasoning: any = state.reasoning || {};
+    const memory: any = state.memory || {};
+    const perception: any = state.perception || {};
+
+    if (state.action?.data?.fastLane) return "";
+
+    const blocks: string[] = [];
+
+    // 🍕 Strict Governance Prompt: Prohibit generation from scratch
+    blocks.push(
+      "═══ DIRETRIZ DE GOVERNANÇA ═══\n" +
+      "Você é o Gerador Final de uma arquitetura de dois estágios. " +
+      "Sua única função é expandir e refinar o RASCUNHO DO LOBO FRONTAL fornecido abaixo. " +
+      "PROIBIÇÃO: Não ignore o rascunho nem gere uma resposta do zero. " +
+      "Se houver FONTES INGERIDAS, você DEVE citá-las usando [1], [2], etc."
+    );
+
+    // 1. responseHint = frontal lobe draft → HIGHEST priority for the LLM
+    if (typeof reasoning.responseHint === "string" && reasoning.responseHint.trim().length > 0) {
+      blocks.push(
+        `═══ RASCUNHO DO LOBO FRONTAL (OBRIGATÓRIO: Use como base exclusiva) ═══\n${reasoning.responseHint.trim()}`,
+      );
+    } else if (actionResult.success && actionResult.output) {
+       // If reasoning failed but action had output (e.g. tool enforcement)
+       blocks.push(`═══ DADOS DA FERRAMENTA (Use para responder) ═══\n${actionResult.output}`);
+    }
+
+    // 2. RAG snippets — cite directly
+    if (Array.isArray(memory.ragSnippets) && memory.ragSnippets.length > 0) {
+      const cited = memory.ragSnippets
+        .slice(0, 5)
+        .map((s: string, i: number) => `[${i + 1}] ${s.slice(0, 600)}`)
+        .join("\n\n");
+      blocks.push(`═══ FONTES INGERIDAS (CITE OBRIGATORIAMENTE) ═══\n${cited}`);
+    }
+
+    // 3. Reasoning trail
+    const trail: string[] = [];
+    if (perception.intent) trail.push(`Intento: ${perception.intent}`);
+    if (Array.isArray(reasoning.plan) && reasoning.plan.length > 0) {
+      trail.push(`Plano: ${reasoning.plan.slice(0, 5).join(" → ")}`);
+    }
+    if (reasoning.rationale) trail.push(`Raciocínio: ${String(reasoning.rationale).slice(0, 400)}`);
+    if (trail.length) blocks.push(`═══ CADEIA DE PENSAMENTO ═══\n${trail.join("\n")}`);
+
+    // 4. Memory context (truncated, fallback)
+    if (memory.mergedContext && (!memory.ragSnippets || memory.ragSnippets.length === 0)) {
+      blocks.push(`═══ MEMÓRIA INTEGRADA ═══\n${String(memory.mergedContext).slice(0, 800)}`);
+    }
+
+    if (typeof window !== "undefined") {
+      (window as any).__pentagonLastHint = reasoning.responseHint || null;
+      (window as any).__pentagonLastModel = reasoning.model || null;
+    }
+
+    return blocks.length > 0 ? blocks.join("\n\n") : "";
+  } catch (error) {
+    console.error("[Pentagon] Critical loop failed in context builder:", error);
+    return "ERRO DE GOVERNANÇA: Falha no loop cognitivo. Por favor, tente novamente.";
   }
 }

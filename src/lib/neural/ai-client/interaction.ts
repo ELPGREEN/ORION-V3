@@ -3,18 +3,18 @@
  * High-level orchestrator that leverages all neural subsystems.
  * Extracted from orion-ai-client.ts (lines 1204-1309)
  */
-import { supabase } from "@/integrations/supabase/client";
-import { wrapEdgeFunction } from "@/lib/errors";
-import { buildCognitionContext, postCognitionLearn } from "./neural-cognition-engine";
-import { executeCorrectiveRAG } from "./corrective-rag";
-import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "./orion-maestro-unification";
-import { quantumRouteQuery, formatQuantumRoutingForAI } from "./quantum-llm-router";
-import { summarizeLongContextMamba } from "./mamba-orchestrator";
-import { buildWorkingMemoryPrompt, pushToWorkingMemory, getMemoryFacts } from "./orion-working-memory";
-import { stripMarkdown } from "@/lib/utils/text-utils";
-import { classifyIntent } from "./ai-client/intent-router";
-import { buildPentagonPromptContext } from "./ai-client/frame-analysis";
-import { getUserMemory, getCachedAuthUser } from "./ai-client/user-memory";
+import { supabase } from "../../../integrations/supabase/client";
+import { wrapEdgeFunction } from "../../../lib/errors";
+import { buildCognitionContext, postCognitionLearn } from "../neural-cognition-engine";
+import { executeCorrectiveRAG } from "../corrective-rag";
+import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "../orion-maestro-unification";
+import { quantumRouteQuery, formatQuantumRoutingForAI } from "../quantum-llm-router";
+import { summarizeLongContextMamba } from "../mamba-orchestrator";
+import { buildWorkingMemoryPrompt, pushToWorkingMemory, getMemoryFacts } from "../orion-working-memory";
+import { stripMarkdown } from "../../../lib/utils/text-utils";
+import { classifyIntent } from "./intent-router";
+import { buildPentagonPromptContext } from "./frame-analysis";
+import { getUserMemory, getCachedAuthUser } from "./user-memory";
 
 export async function processInteraction(params: {
   question: string;
