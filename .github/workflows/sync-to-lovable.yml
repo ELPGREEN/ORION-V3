@@ -20,7 +20,11 @@ concurrency:
 
 jobs:
   sync:
-    if: github.repository == 'ELPGREEN/ORION-V3' && github.actor != 'lovable-sync-bot'
+    # Only run on pushes to this repo, skip if triggered by the sync bot (prevent loops)
+    if: |
+      github.repository == 'ELPGREEN/ORION-V3' &&
+      github.actor != 'lovable-sync-bot' &&
+      github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
