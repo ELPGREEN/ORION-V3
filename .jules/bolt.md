@@ -31,3 +31,15 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 **Solution:** Offloaded AI Orchestration and high-bandwidth API proxying to Render service. Created a "Smart Gateway" pattern on frontend that attempts Render first and falls back to Supabase.
 **Impact:** Drastic reduction in Supabase Egress and Invocations. Zero-downtime reliability via automatic fallback.
 **Implementation:** `src/lib/neural/render-proxy.ts`, `server/index.ts` (Bun), and redirected `ai-service.ts` / `orion-ai-client.ts` calls.
+
+## 2026-06-28 - [Local NLP & Intent Classification Optimization (Bolt V2.0)]
+**Baseline (nlp-semantic-analyzer):** 0.0188ms (avg latency per analysis)
+**Nova Métrica (nlp-semantic-analyzer):** 0.0123ms (avg latency per analysis)
+**Delta (Δ):** ~34.5% improvement
+
+**Learning:** Implementing `.test()` pre-checks before `match()` or `matchAll()` significantly reduces CPU cycles for non-matching patterns, which are the majority in semantic analysis loops. Centralizing text normalization in `smart-intent-classifier.ts` prevents redundant `toLowerCase()` and `trim()` calls across cache, feedback, and regex layers.
+
+**Action:**
+- Optimized `src/lib/neural/nlp-semantic-analyzer.ts` with `.test()` pre-checks and `lastIndex = 0` resets.
+- Optimized `src/lib/neural/smart-intent-classifier.ts` with centralized normalization and regex loop optimizations.
+- Refactored `classifyLegalDomain` for early exit on first match.

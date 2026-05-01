@@ -18,17 +18,16 @@ function normalizeForCache(text: string): string {
   return text.toLowerCase().trim().replace(/\s+/g, " ");
 }
 
-function getCached(text: string): ClassifiedIntent | null {
-  const key = normalizeForCache(text);
-  const entry = _cache.get(key);
+function getCached(normalizedText: string): ClassifiedIntent | null {
+  const entry = _cache.get(normalizedText);
   if (entry && Date.now() - entry.ts < CACHE_TTL) {
     return entry.result;
   }
   return null;
 }
 
-function setCache(text: string, result: ClassifiedIntent): void {
-  _cache.set(normalizeForCache(text), { result, ts: Date.now() });
+function setCache(normalizedText: string, result: ClassifiedIntent): void {
+  _cache.set(normalizedText, { result, ts: Date.now() });
 }
 
 // ─── Regex Fast-Path Rules ───
@@ -140,15 +139,15 @@ const REGEX_RULES: IntentRule[] = [
   { pattern: /\b(hoje|atual|notícia|preço\s+d[eoa]|cotação|2024|2025|2026|clima|previsão)\b/i, intent: "web_search", confidence: 0.82 },
 ];
 
-function regexClassify(text: string): ClassifiedIntent | null {
-  const q = text.toLowerCase().trim();
-  if (q.length < 2) return null;
+function regexClassify(normalizedText: string, originalText: string): ClassifiedIntent | null {
+  if (normalizedText.length < 2) return null;
   
   const matches: ClassifiedIntent[] = [];
 
   for (const rule of REGEX_RULES) {
-    if (rule.pattern.test(q)) {
-      const params = rule.extractParams ? rule.extractParams(text) : {};
+    if (rule.pattern.test(normalizedText)) {
+      rule.pattern.lastIndex = 0;
+      const params = rule.extractParams ? rule.extractParams(originalText) : {};
       matches.push({
         intent: rule.intent,
         confidence: rule.confidence,
@@ -219,16 +218,17 @@ const CONFIDENCE_THRESHOLD = 0.7;
  */
 export async function smartClassify(text: string): Promise<ClassifiedIntent> {
   const t0 = performance.now();
+  const normalized = normalizeForCache(text);
   
   // 1. Cache hit
-  const cached = getCached(text);
+  const cached = getCached(normalized);
   if (cached) {
     cached.classifyMs = Math.round(performance.now() - t0);
     return cached;
   }
   
   // 2. Learned feedback (user corrections)
-  const feedback = getLearnedCorrection(text);
+  const feedback = getLearnedCorrection(normalized);
   if (feedback) {
     const result: ClassifiedIntent = {
       intent: feedback.correctIntent,
@@ -238,15 +238,15 @@ export async function smartClassify(text: string): Promise<ClassifiedIntent> {
       classifyMs: Math.round(performance.now() - t0),
     };
     console.log(`[SmartClassifier] Feedback hit: "${text}" → ${feedback.correctIntent} (learned ${feedback.count}x)`);
-    setCache(text, result);
+    setCache(normalized, result);
     return result;
   }
   
   // 3. Regex fast-path
-  const regexResult = regexClassify(text);
+  const regexResult = regexClassify(normalized, text);
   if (regexResult && regexResult.confidence >= CONFIDENCE_THRESHOLD) {
     regexResult.classifyMs = Math.round(performance.now() - t0);
-    setCache(text, regexResult);
+    setCache(normalized, regexResult);
     return regexResult;
   }
   
@@ -254,7 +254,7 @@ export async function smartClassify(text: string): Promise<ClassifiedIntent> {
   const llmResult = await llmClassify(text);
   llmResult.classifyMs = Math.round(performance.now() - t0);
   if (llmResult.intent !== "general") {
-    setCache(text, llmResult);
+    setCache(normalized, llmResult);
   }
   return llmResult;
 }
@@ -264,12 +264,13 @@ export async function smartClassify(text: string): Promise<ClassifiedIntent> {
  * Returns null if no regex matches — caller decides fallback.
  */
 export function smartClassifySync(text: string): ClassifiedIntent | null {
-  const cached = getCached(text);
+  const normalized = normalizeForCache(text);
+  const cached = getCached(normalized);
   if (cached) return cached;
   
-  const result = regexClassify(text);
+  const result = regexClassify(normalized, text);
   if (result && result.confidence >= CONFIDENCE_THRESHOLD) {
-    setCache(text, result);
+    setCache(normalized, result);
     return result;
   }
   return null;

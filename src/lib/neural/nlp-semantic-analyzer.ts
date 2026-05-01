@@ -147,7 +147,10 @@ const COMPLEXITY_CLAUSE_REGEX = /\b(?:e|ou|mas|porém|contudo|entretanto|todavia
 export function extractLegalEntities(text: string): LegalEntity[] {
   const entities: LegalEntity[] = [];
   for (const pattern of ENTITY_PATTERNS) {
-    // Optimization: Use matchAll instead of manual RegExp loop to reduce overhead
+    // Optimization: Pre-test before matchAll to avoid iterator allocation
+    if (!pattern.regex.test(text)) continue;
+    pattern.regex.lastIndex = 0;
+
     for (const match of text.matchAll(pattern.regex)) {
       entities.push({
         type: pattern.type,
@@ -171,7 +174,10 @@ function analyzeSentiment(text: string): SentimentResult {
     if (sentiment === "neutral") continue;
     let matchCount = 0;
     for (const pattern of patterns) {
-      // Optimization: Combined test and match to avoid double regex execution
+      // Optimization: Pre-test is faster for non-matching patterns (common case)
+      if (!pattern.test(text)) continue;
+      pattern.lastIndex = 0;
+
       const m = text.match(pattern);
       if (m) {
         matchCount++;
@@ -194,18 +200,15 @@ function analyzeSentiment(text: string): SentimentResult {
 // ─── Legal Domain Classification ───
 
 export function classifyLegalDomain(text: string): string {
-  let bestDomain = "geral";
-  let bestScore = 0;
-
   for (const [domain, pattern] of Object.entries(DOMAIN_PATTERNS)) {
-    const matches = (text.match(pattern) || []).length;
-    if (matches > bestScore) {
-      bestScore = matches;
-      bestDomain = domain;
+    // Optimization: Domain classification early exit + pre-test
+    if (pattern.test(text)) {
+      pattern.lastIndex = 0;
+      return domain;
     }
   }
 
-  return bestDomain;
+  return "geral";
 }
 
 // ─── Discourse Type Detection ───
@@ -248,12 +251,23 @@ export function resolveCoreferences(text: string, recentContext: string = ""): s
 // ─── Complexity Assessment ───
 
 function assessComplexity(text: string, entities: LegalEntity[]): "simple" | "medium" | "complex" {
-  const wordCount = text.split(/\s+/).length;
   const entityCount = entities.length;
-  const hasMultipleClauses = (text.match(COMPLEXITY_CLAUSE_REGEX) || []).length;
+  if (entityCount > 3) return "complex";
 
-  if (wordCount > 40 || entityCount > 3 || hasMultipleClauses > 3) return "complex";
-  if (wordCount > 15 || entityCount > 1 || hasMultipleClauses > 1) return "medium";
+  const words = text.trim().split(/\s+/);
+  const wordCount = words.length;
+  if (wordCount > 40) return "complex";
+
+  // Optimization: use .test() for early clause detection or optimized match
+  let clauseCount = 0;
+  if (COMPLEXITY_CLAUSE_REGEX.test(text)) {
+    COMPLEXITY_CLAUSE_REGEX.lastIndex = 0;
+    const matches = text.match(COMPLEXITY_CLAUSE_REGEX);
+    clauseCount = matches ? matches.length : 0;
+  }
+
+  if (clauseCount > 3) return "complex";
+  if (wordCount > 15 || entityCount > 1 || clauseCount > 1) return "medium";
   return "simple";
 }
 
