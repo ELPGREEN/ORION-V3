@@ -73,7 +73,7 @@ const PROVIDER_REGISTRY: QuantumProviderProfile[] = [
   },
   // 💻 Coding FREE
   {
-    id: "qwen/qwen3-coder-480b",
+    id: "qwen/qwen3-coder",
     name: "Qwen3 Coder 480B (FREE)",
     tier: 0,
     maxTokens: 262000,
@@ -476,7 +476,7 @@ export function getQuantumProviderCascade(
   query: string,
   options: { preferSpeed?: boolean; preferCost?: boolean; modelType?: string } = {}
 ): string[] {
-  const result = quantumRouteQuery(query, options);
+  const result = quantumRouteQuery(query, options as Parameters<typeof quantumRouteQuery>[1]);
   return result.allScores.map(s => s.provider);
 }
 

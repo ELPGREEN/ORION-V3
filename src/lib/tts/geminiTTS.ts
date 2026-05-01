@@ -47,20 +47,19 @@ function isGeminiTTSCoolingDown(): boolean {
  */
 function splitIntoSentences(text: string): string[] {
   const trimmed = text.trim();
-  // ⚡ ULTRA: tiny first chunk = first audio in ~400-600ms instead of 1.5-2s
-  // Strategy: first chunk = up to 1st sentence boundary (max ~180 chars)
-  //           remaining chunks = ~1500 chars each (parallel fetch, gap-free play)
-  if (trimmed.length <= 180) return [trimmed];
+  // Short → single chunk (no gaps).
+  if (trimmed.length <= 220) return [trimmed];
 
   const sentences = trimmed.match(/[^.!?]+[.!?]+\s*|[^.!?]+$/g) || [trimmed];
   const chunks: string[] = [];
 
-  // First chunk: just the first sentence (or first ~180 chars if huge)
+  // First chunk: full first sentence (NEVER truncate — that cut Orion mid-word).
+  // If the very first "sentence" is unusually long (>400 chars, no punctuation),
+  // pack it whole anyway; Gemini handles up to ~5000 chars per request.
   let first = sentences[0] || "";
-  if (first.length > 220) first = first.slice(0, 200).replace(/\S+$/, "").trim() + "...";
   chunks.push(first.trim());
 
-  // Remaining: pack into ~1500-char chunks
+  // Remaining sentences packed into ~1500-char chunks at sentence boundaries.
   let current = "";
   for (let i = 1; i < sentences.length; i++) {
     const s = sentences[i];

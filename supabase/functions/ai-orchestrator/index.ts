@@ -8,6 +8,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const json = (body: unknown, status = 200): Response =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 // ═══ FREE-ONLY AI PROVIDERS — Google Gemini Free Tier (7-key rotation) ═══
 // All models below are 100% free via Google AI Studio / Gemini API
 // Gemini 2.5 Flash: 10 RPM, 250 RPD, 250K TPM — balanced default
@@ -334,180 +340,8 @@ async function callOpenRouter(messages: any[], systemPrompt: string, temperature
   throw lastError || new Error("OpenRouter failed");
 }
 
-// HANDLER PRINCIPAL
+// HANDLER PRINCIPAL (definido abaixo)
 // ═══════════════════════════════════════════════════════════════
-
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    // ─── Auth validation ───
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Autenticação obrigatória." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAdmin = createClient(supabaseUrl, serviceKey);
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
-      authHeader.replace("Bearer ", "")
-    );
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Não autorizado." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-
-    const body = await req.json();
-    const { 
-      action,
-      subAction,
-      prompt, 
-      query,
-      systemPrompt, 
-      messages, 
-      preferredProvider, 
-      useCase, 
-      includeNeuralContext = true,
-      maxTokens = 4096,
-      temperature = 0.3,
-      jurisdiction = "brasil",
-      model_type,
-      thinking_enabled = false,
-      tools,
-    } = body;
-
-    // ─── Validação de comprimento mínimo ───
-    const inputText = prompt || query || messages?.[messages.length - 1]?.content || "";
-
-        // ═══════════════════════════════════════════════════════════════
-    // ACTION ROUTER (Evolution & ARC-AGI Consolidation)
-    // ═══════════════════════════════════════════════════════════════
-
-    // Handle supagent_frontend_instruction -> forward to neural-ops
-    if (action === "supagent_frontend_instruction") {
-      console.log("[Orchestrator] Routing supagent_frontend_instruction to neural-ops");
-      try {
-        const { data, error } = await supabaseAdmin.functions.invoke("neural-ops", { body });
-        if (error) {
-          console.warn("[Orchestrator] neural-ops failed:", error);
-          return json({ error: `neural-ops failed: ${error.message}` }, 500);
-        }
-        return json(data);
-      } catch (e) {
-        console.error("[Orchestrator] Exception forwarding to neural-ops:", e);
-        return json({ error: `Forwarding failed: ${e.message}` }, 500);
-      }
-    }
-
-    if (action === "evolve" || action === "arc") {
-      if (subAction === "diagnostics") {
-        const checks = {
-          gemini_keys: _getGeminiKeys().length,
-          openrouter_key: !!Deno.env.get("OPENROUTER_API_KEY"),
-          supabase_url: !!Deno.env.get("SUPABASE_URL"),
-          service_role: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
-          environment: Deno.env.get("ENVIRONMENT") || "development"
-        };
-        const status = Object.values(checks).every(v => v !== 0 && v !== false) ? "healthy" : "degraded";
-        return new Response(JSON.stringify({ status, checks, timestamp: new Date().toISOString() }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      console.log(`[Orchestrator] Routing ${action}:${subAction}`);
-
-      // Evolution Handler (consolidating neural-evolution)
-      if (action === "evolve") {
-        if (subAction === "get_proposals") {
-          const { data, error } = await supabaseAdmin
-            .from("neural_evolution_proposals")
-            .select("*")
-            .order("created_at", { ascending: false });
-          if (error) throw error;
-          return new Response(JSON.stringify({ proposals: data || [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        if (subAction === "approve" || subAction === "reject") {
-          const { id } = body;
-          const status = subAction === "approve" ? "applied" : "rejected";
-          const { error } = await supabaseAdmin
-            .from("neural_evolution_proposals")
-            .update({ status, applied_at: status === "applied" ? new Date().toISOString() : null })
-            .eq("id", id);
-          if (error) throw error;
-          return new Response(JSON.stringify({ success: true, status }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        if (subAction === "auto_approve_pending" || subAction === "auto_apply_approved") {
-           return new Response(JSON.stringify({ success: true, message: "Auto-evolution tasks queued" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        return new Response(JSON.stringify({ success: true, message: "Evolution action processed" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      // ARC-AGI Handler (consolidating arc-* functions)
-      if (action === "arc") {
-        const ARC_KEY = Deno.env.get("ARC_AGI_API_KEY");
-        if (!ARC_KEY) throw new Error("ARC_AGI_API_KEY not configured");
-
-        const ARC_BASES: Record<string, string> = { "2": "https://two.arcprize.org/api", "3": "https://three.arcprize.org/api" };
-        const base = ARC_BASES[String(body.version || "3")] || ARC_BASES["3"];
-
-        if (subAction === "list_games") {
-          const r = await fetch(`${base}/games`, { headers: { "X-API-Key": ARC_KEY } });
-          const games = await r.json();
-          if (Array.isArray(games)) {
-            for (const g of games) {
-              await supabaseAdmin.from("arc_games").upsert({
-                game_id: g.game_id, title: g.title || null, description: g.description || null,
-                metadata: { ...g, arc_version: body.version || "3" }
-              }, { onConflict: "game_id" });
-            }
-          }
-          return new Response(JSON.stringify({ games, version: body.version || "3" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        if (subAction === "code_evolver") {
-          const { mode = "propose" } = body;
-          if (mode === "propose") {
-            const { data: cards } = await supabaseAdmin.from("arc_scorecards").select("*").eq("status", "closed").limit(5);
-            const systemP = "You are Orion Self-Evolver. Propose ONE architectural code improvement. Respond in JSON: {title, rationale, proposed_changes}";
-            const userP = `Recent failures context: ${JSON.stringify(cards)}. Propose improvement.`;
-            const aiResp = await callOpenRouter([{ role: "user", content: userP }], systemP, 0.3, 2048);
-            const match = aiResp.match(/\{[\s\S]*\}/);
-            const proposal = match ? JSON.parse(match[0]) : { title: "Heuristic Fix", rationale: "Stability", proposed_changes: aiResp };
-            const { data: inserted } = await supabaseAdmin.from("arc_evolution_proposals").insert({
-              title: proposal.title,
-              rationale: proposal.rationale,
-              proposed_changes: proposal.proposed_changes,
-              status: "pending"
-            }).select().single();
-            return new Response(JSON.stringify({ proposal: inserted, provider: "OpenRouter" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-          }
-          return new Response(JSON.stringify({ message: "Mode " + mode + " handled" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        if (subAction === "self_study") {
-          const { game_id, max_games = 1, version = "3" } = body;
-          const systemP = "You are Orion Learning Engine. Analyze ARC-AGI game " + game_id + " and provide transferable intelligence insights. Respond in JSON: {lesson, strategy, focus_area}";
-          const userP = "Extract strategy for ARC-AGI v" + version + " game " + (game_id || "random") + ".";
-          try {
-            const aiResp = await callOpenRouter([{ role: "user", content: userP }], systemP, 0.4, 1024);
-            return new Response(JSON.stringify({ success: true, insight: aiResp, game_id, provider: "OpenRouter" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("❌ neural-ops error:", msg);
-    return json({ error: msg }, 500);
-  }
-});
 
 // ═══ ADDED: Detailed logging for 400 errors ═══
 Deno.serve(async (req) => {
@@ -572,47 +406,8 @@ Deno.serve(async (req) => {
       return json(data);
     }
 
-    // ═══ OPENROUTER PRIMÁRIO PARA TEXTO ═══
-    const openRouterKey = Deno.env.get("OPENROUTER_API_KEY");
-    if (openRouterKey && !preferredProvider?.includes("gemini")) {
-      try {
-        console.log("[Orchestrator] Trying OpenRouter as PRIMARY...");
-        const orModel = (preferredProvider && preferredProvider.includes("openrouter"))
-          ? preferredProvider.replace("openrouter/", "")
-          : "meta-llama/llama-3.3-70b-instruct"; // Free via OpenRouter
-        
-        const orMessages = messages || [{ role: "user", content: prompt || query || "Olá" }];
-        const orResult = await callOpenRouter(orMessages, systemPrompt || AGENT_V12_SYSTEM_PROMPT, temperature, maxTokens);
-        
-        return new Response(
-          JSON.stringify({
-            text: orResult,
-            model: `openrouter/${orModel}`,
-            provider: "openrouter",
-            tokenUsage: null,
-            timestamp: new Date().toISOString(),
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      } catch (orError) {
-        console.warn("[Orchestrator] OpenRouter failed, falling back to Gemini:", orError.message);
-      }
-    }
 
-    // Fallback to Gemini (original logic)
-    // ... rest of original code ...
-    
-    // If we get here, use Gemini
-    const geminiKey = _getNextGeminiKey();
-    const allLLMs = [
-      { id: "gemini_flash", key: geminiKey, model: "gemini-2.5-flash", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" },
-      { id: "gemini_3_flash", key: geminiKey, model: "gemini-3-flash-preview", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent" },
-      { id: "gemini_flash_lite", key: geminiKey, model: "gemini-2.5-flash-lite", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent" },
-      { id: "gemini_pro", key: geminiKey, model: "gemini-2.5-pro", endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent" }
-    ];
 
-    // ... rest of Gemini logic ...
-    
     // If no action, no interaction_type, no question, no imageBase64
     if (!action && !body.interaction_type && !body.question && !body.imageBase64) {
       console.warn("[Orchestrator] Missing required fields. Body:", JSON.stringify(body).slice(0, 200));
@@ -620,17 +415,6 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "No action, interaction_type, question, or imageBase64 provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-    }
-
-    // Continue with original routing...
-    // ... (rest of original code)
-    
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[Orchestrator] Top-level error:", msg);
-    return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  }
-});
     }
 
     // 1. Build Neural Context (RAG) if enabled
@@ -668,7 +452,23 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 2. Select Provider — OpenRouter PRIMÁRIO, Gemini fallback (FREE)
+    // 2. Construct System Prompt with xAI/Grok directives (built early so OpenRouter can use it)
+    let finalSystemPrompt = systemPrompt || AGENT_V12_SYSTEM_PROMPT;
+    finalSystemPrompt += XAI_GROK_DIRECTIVES;
+
+    // Inject Jurisdiction Overlay
+    if (jurisdiction === "brasil") {
+      finalSystemPrompt += `\n\nJURISDIÇÃO: BRASIL. Use exclusivamente legislação brasileira (CF/88, CC/2002, CPC/2015). Priorize Súmulas do STJ/STF.`;
+    } else if (jurisdiction === "eua") {
+      finalSystemPrompt += `\n\nJURISDICTION: UNITED STATES. Use US Code, Federal Rules, SCOTUS precedents.`;
+    }
+
+    // Inject Neural Context
+    if (neuralContextText) {
+      finalSystemPrompt += neuralContextText;
+    }
+
+    // 3. Select Provider — OpenRouter PRIMÁRIO, Gemini fallback (FREE)
     const openRouterKey = Deno.env.get("OPENROUTER_API_KEY");
     const preferOpenRouter = !!openRouterKey && !preferredProvider?.includes("gemini");
 
@@ -731,22 +531,6 @@ Deno.serve(async (req) => {
     const mappedPreferred = preferredProvider ? (providerMapping[preferredProvider] || preferredProvider) : undefined;
     const provider = availableLLMs.find(p => p.id === mappedPreferred) || availableLLMs[0];
     if (!provider) throw new Error("No AI providers available (Gemini keys missing)");
-
-    // 3. Construct System Prompt with xAI/Grok directives
-    let finalSystemPrompt = systemPrompt || AGENT_V12_SYSTEM_PROMPT;
-    finalSystemPrompt += XAI_GROK_DIRECTIVES;
-    
-    // Inject Jurisdiction Overlay
-    if (jurisdiction === "brasil") {
-      finalSystemPrompt += `\n\nJURISDIÇÃO: BRASIL. Use exclusivamente legislação brasileira (CF/88, CC/2002, CPC/2015). Priorize Súmulas do STJ/STF.`;
-    } else if (jurisdiction === "eua") {
-      finalSystemPrompt += `\n\nJURISDICTION: UNITED STATES. Use US Code, Federal Rules, SCOTUS precedents.`;
-    }
-
-    // Inject Neural Context
-    if (neuralContextText) {
-      finalSystemPrompt += neuralContextText;
-    }
 
     // ─── Pre-Prompt Estratégico Jurídico (para documentos) ───
     if (useCase === "documents") {

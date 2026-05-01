@@ -3,19 +3,18 @@
  * Contains: startCamera, stopCamera, deactivateGracefully, camera state
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, MutableRefObject } from "react";
 import { toast } from "sonner";
 import { VS } from "./useVisionProcessing";
 import { resetVisionCache } from "@/lib/vision/vision-cache";
-import { speak, speakFast } from "@/hooks/useNeuralVoice";
 
 export interface NeuralVisionCameraProps {
   active: boolean;
   setActive: (active: boolean) => void;
   videoRef: React.RefObject<HTMLVideoElement>;
-  streamRef: React.RefObject<MediaStream | null>;
-  animRef: React.RefObject<number>;
-  prevRef: React.RefObject<Uint8ClampedArray | null>;
+  streamRef: MutableRefObject<MediaStream | null>;
+  animRef: MutableRefObject<number>;
+  prevRef: MutableRefObject<Uint8ClampedArray | null>;
   speak: (text: string) => Promise<void>;
 }
 
@@ -39,8 +38,7 @@ export function useNeuralVisionCamera(props: NeuralVisionCameraProps) {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
           audio: false,
-          signal: controller.signal as any,
-        });
+        } as MediaStreamConstraints);
         clearTimeout(timeoutId);
 
         const video = videoRef.current;

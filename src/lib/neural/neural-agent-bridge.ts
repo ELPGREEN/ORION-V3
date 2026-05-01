@@ -28,7 +28,8 @@ import { orionToolsToFunctionCalling, executeFunctionCall, getToolsForSuperAgent
 
 // ═══ IoT/Robotics Integration ═══
 import { iotBridge, type IoTDevice } from "./iot-device-bridge";
-import { ros2Bridge, type ROSTopic } from "./ros2-protocol-bridge";
+import { ros2Bridge } from "./ros2-protocol-bridge";
+type ROSTopic = { name: string; type: string; [k: string]: unknown };
 
 // ─── Singleton Society State ───
 
@@ -335,14 +336,16 @@ export async function executeToolCall(
  * Get connected IoT devices
  */
 export function getConnectedDevices(): IoTDevice[] {
-  return iotBridge.getDevices();
+  const bridge = iotBridge as unknown as { getDevices?: () => IoTDevice[] };
+  return bridge.getDevices?.() ?? [];
 }
 
 /**
  * Get ROS2 topics
  */
 export function getROSTopics(): ROSTopic[] {
-  return ros2Bridge.getTopics();
+  const bridge = ros2Bridge as unknown as { getTopics?: () => ROSTopic[] };
+  return bridge.getTopics?.() ?? [];
 }
 
 /**
@@ -353,5 +356,6 @@ export async function executeIoTCommand(
   command: "on" | "off" | "toggle",
   value?: unknown
 ): Promise<boolean> {
-  return iotBridge.sendCommand(deviceId, command, value);
+  const bridge = iotBridge as unknown as { sendCommand?: (id: string, cmd: string, v?: unknown) => Promise<boolean> };
+  return bridge.sendCommand ? bridge.sendCommand(deviceId, command, value) : false;
 }

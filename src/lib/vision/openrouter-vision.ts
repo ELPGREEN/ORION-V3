@@ -13,9 +13,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // ─── Config ───
+// Cascade real-time (todos free, validados em OpenRouter):
+//  1) Gemma 3 12B   — leve/rápido, 32K ctx, ideal para triagem em câmera
+//  2) Nemotron Nano 12B VL — Mamba-Transformer, ótimo para sequência de frames
+//  3) Gemma 4 26B (MoE a4b) — fallback robusto, suporta vídeo, 262K ctx
 const VISION_MODELS = [
-  { model: "google/gemini-2.0-flash-exp:free", timeout: 4000, detail: "low" as const },
-  { model: "meta-llama/llama-3.2-11b-vision-instruct:free", timeout: 5000, detail: "low" as const },
+  { model: "google/gemma-3-12b-it:free", timeout: 4000, detail: "low" as const },
+  { model: "nvidia/nemotron-nano-12b-v2-vl:free", timeout: 5000, detail: "low" as const },
+  { model: "google/gemma-4-26b-a4b-it:free", timeout: 6000, detail: "low" as const },
 ];
 
 const PIXEL_DIFF_THRESHOLD = 0.08;

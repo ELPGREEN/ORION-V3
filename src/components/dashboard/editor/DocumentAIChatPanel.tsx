@@ -607,6 +607,7 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
     if (convId) saveMessage(convId, { role: "user", content: userMessage.trim() }).catch(() => {});
 
     try {
+      let responseText = "";
       const isEdgeAgent = ["leitor", "construtor", "investigador"].includes(selectedAgent);
 
       if (isEdgeAgent) {
@@ -770,17 +771,17 @@ ${plainContent}${selectionContext}${agentSuffix}${modeSuffix}`;
       // (previously this forced append, inserting chat explanations into the document)
 
       const suggestions = generateSuggestions(intent?.action, docAnalysis, documentType);
-      const assistantMsg: Message = {
-        id: crypto.randomUUID(), role: "assistant", content: text, timestamp: new Date(),
-        action, neuralUsed: !!pentagonResult.confidence, previewText, intent: intent?.action, sources: pentagonResult.sourcesUsed, suggestions,
+      const assistantMsg = {
+        id: crypto.randomUUID(), role: "assistant" as const, content: text, timestamp: new Date(),
+        action, neuralUsed: !!pentagonResult.confidence, previewText, intent: intent?.action, sources: (pentagonResult.sourcesUsed || []).map((s: any) => typeof s === "string" ? { title: s, type: "neural" as const } : s), suggestions,
         metadata: { cost: metadata.totalCost, steps: metadata.stepsTaken, duration: metadata.durationMs, model: metadata.model },
-      };
+      } as Message;
 
       setMessages(prev => [...prev, assistantMsg]);
       setLastAssistantText(text);
 
       // Fire-and-forget: don't block UI on DB writes
-      if (convId) saveMessage(convId, { role: "assistant", content: text, intent: intent?.action, sources: neuralCtx.sources, neuralEnhanced: neuralCtx.used }).catch(() => {});
+      if (convId) saveMessage(convId, { role: "assistant", content: text, intent: intent?.action, sources: pentagonResult.sourcesUsed || [], neuralEnhanced: !!pentagonResult.confidence }).catch(() => {});
 
       // Fire-and-forget: logging is non-critical
       logNeural({

@@ -9,6 +9,7 @@
  * without AudioContext teardown (eliminates mic cycling sounds).
  */
 import { supabase } from "@/integrations/supabase/client";
+import { transcribeUtterance } from "@/lib/voice/sttEngine";
 
 interface GCPSTTOptions {
   languageCode?: string;
@@ -35,7 +36,7 @@ const PRE_ROLL_FRAMES = 8; // Extra pre-roll to preserve the start of softer wor
 const FLUSH_POLL_MS = 60; // Aggressive poll for instant turn detection
 const SPEECH_RMS_THRESHOLD = 0.0025; // Higher sensitivity — captures very quiet speech (PR: mobile fix)
 // Faster turn-end so Orion responds instantly after the user stops talking
-const DEFAULT_SILENCE_MS = 800;
+const DEFAULT_SILENCE_MS = 1800; // PT-BR natural pause tolerance (was 800ms — cut speakers mid-sentence)
 
 /** Convert Float32Array PCM → Int16 LINEAR16 base64 */
 function float32ToLinear16Base64(float32: Float32Array): string {
@@ -197,20 +198,23 @@ export function createGCPSTTSession(options: GCPSTTOptions = {}): GCPSTTSession 
       const base64 = float32ToLinear16Base64(downsampled);
       onInterim?.("...");
 
-      const { data, error } = await supabase.functions.invoke("google-stt", {
-        body: { audio: base64, sampleRate, languageCode },
-      });
-
-      if (error) {
-        console.warn("[GCP-STT] Edge function error:", error.message);
-        onError?.(error.message);
+      const audioDurationMs = Math.round((downsampled.length / sampleRate) * 1000);
+      try {
+        const result = await transcribeUtterance(
+          { audio: base64, sampleRate, languageCode },
+          audioDurationMs
+        );
+        if (result.text) {
+          console.log(
+            `[STT:${result.engine}${result.fallbackUsed ? "+fallback" : ""}] "${result.text}" ` +
+              `(conf: ${(result.confidence * 100).toFixed(1)}%, ${result.latencyMs.toFixed(0)}ms)`
+          );
+          onFinal?.(result.text, result.confidence);
+        }
+      } catch (err: any) {
+        console.warn("[STT] all engines failed:", err?.message);
+        onError?.(err?.message || "STT error");
         return;
-      }
-
-      if (data?.text) {
-        const confidence = data.confidence || 0;
-        console.log(`[GCP-STT] utterance="${data.text}" (conf: ${(confidence * 100).toFixed(1)}%)`);
-        onFinal?.(data.text, confidence);
       }
     } catch (err: any) {
       console.warn("[GCP-STT] Send error:", err.message);

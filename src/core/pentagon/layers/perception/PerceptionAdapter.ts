@@ -10,7 +10,7 @@ export class PerceptionAdapter implements IPentagonLayer<string, PerceptionResul
       entities: (analysis.entities || {}) as Record<string, unknown>,
       sentiment: analysis.sentiment.primary,
       rawInput: input,
-      contextualMarkers: (analysis.entities || []).map((e: Record<string, unknown>) => e?.text ?? e?.value ?? "").filter(Boolean),
+      contextualMarkers: (((analysis.entities as unknown) as Array<Record<string, unknown>>) || []).map((e) => String(e?.text ?? e?.value ?? "")).filter(Boolean),
       complexity: analysis.complexity as "simple" | "medium" | "complex"
     };
   }

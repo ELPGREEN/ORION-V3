@@ -5427,6 +5427,51 @@ export type Database = {
           },
         ]
       }
+      orion_audio_metrics: {
+        Row: {
+          audio_duration_ms: number | null
+          confidence: number | null
+          created_at: string
+          engine: string
+          error: string | null
+          fallback_used: boolean | null
+          id: string
+          metadata: Json | null
+          semantic_filter_used: boolean | null
+          stt_latency_ms: number | null
+          transcript_length: number | null
+          user_id: string | null
+        }
+        Insert: {
+          audio_duration_ms?: number | null
+          confidence?: number | null
+          created_at?: string
+          engine: string
+          error?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          metadata?: Json | null
+          semantic_filter_used?: boolean | null
+          stt_latency_ms?: number | null
+          transcript_length?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          audio_duration_ms?: number | null
+          confidence?: number | null
+          created_at?: string
+          engine?: string
+          error?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          metadata?: Json | null
+          semantic_filter_used?: boolean | null
+          stt_latency_ms?: number | null
+          transcript_length?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       orion_autonomous_agents: {
         Row: {
           agent_name: string
@@ -5497,6 +5542,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      orion_episodic_memory: {
+        Row: {
+          agent: string | null
+          command: string | null
+          created_at: string
+          embedding: string | null
+          episode_type: string
+          id: string
+          importance: number
+          metadata: Json
+          occurred_at: string
+          response: string | null
+          sentiment: string | null
+          tags: string[] | null
+          user_id: string
+        }
+        Insert: {
+          agent?: string | null
+          command?: string | null
+          created_at?: string
+          embedding?: string | null
+          episode_type: string
+          id?: string
+          importance?: number
+          metadata?: Json
+          occurred_at?: string
+          response?: string | null
+          sentiment?: string | null
+          tags?: string[] | null
+          user_id: string
+        }
+        Update: {
+          agent?: string | null
+          command?: string | null
+          created_at?: string
+          embedding?: string | null
+          episode_type?: string
+          id?: string
+          importance?: number
+          metadata?: Json
+          occurred_at?: string
+          response?: string | null
+          sentiment?: string | null
+          tags?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
       }
       orion_financial_entries: {
         Row: {
@@ -8062,6 +8155,19 @@ export type Database = {
           id: string
           source_type: string
           title: string
+        }[]
+      }
+      get_recent_episodes: {
+        Args: { p_limit?: number; p_types?: string[]; p_user_id: string }
+        Returns: {
+          agent: string
+          command: string
+          episode_type: string
+          id: string
+          importance: number
+          occurred_at: string
+          response: string
+          tags: string[]
         }[]
       }
       get_unread_count: { Args: { _user_id: string }; Returns: number }

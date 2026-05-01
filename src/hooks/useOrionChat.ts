@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback } from "react";
-import { orionBrain, getOrionHelp, getOrionStatus, getPanelForSector, type OrionResponse } from "@/lib/neural/orion-brain";
+import { orionBrain, getOrionHelp, getOrionStatus, getAgentForSector as getPanelForSector, type OrionResponse } from "@/lib/neural/orion-brain";
 import { detectSector, type Sector } from "@/lib/neural/sector-agents";
 import { toast } from "sonner";
 

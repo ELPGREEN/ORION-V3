@@ -30,7 +30,7 @@ const VISION_MODELS = [
 ];
 const TEXT_MODELS = [
   "openrouter/free",                           // Auto-router (random free model)
-  "qwen/qwen3-coder-480b:free",             // Coding
+  "qwen/qwen3-coder:free",             // Coding
   "meta-llama/llama-3.3-70b-instruct:free",  // General
 ];
 // Backward compatibility

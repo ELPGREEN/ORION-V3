@@ -75,7 +75,7 @@ export const FREE_MODELS: Record<LLMProvider, string[]> = {
     "deepseek/deepseek-r1-0528",
     "qwen/qwen3-235b-thinking",
     "qwen/qwen3-next-80b-a3b-instruct",
-    "qwen/qwen3-coder-480b",
+    "qwen/qwen3-coder",
     "mistralai/devstral-2",
     "qwen/qwen2.5-coder-32b",
     "meta-llama/llama-3.3-70b-instruct",
@@ -564,8 +564,6 @@ export function getProviderName(provider: LLMProvider): string {
   return names[provider] || provider;
 }
 
-// Export circuit breaker utilities
-export { getApiKey, getAvailableProviders, isDeepSeekAvailable };
-export { chatWithDeepSeek, chatWithProvider, getProviderName };
+// Re-export utilities that are NOT already declared above (avoid TS2323)
 export { getCircuitStats, OPENROUTER_CASCADE, getWebSearchModels, WEB_SEARCH_MODELS };
 export { OPENROUTER_FREE_MODELS, FAST_MODELS, REASONING_MODELS, toCascadeFormat, getFreeModel, getModelForComplexity } from "./openrouter-free-models";

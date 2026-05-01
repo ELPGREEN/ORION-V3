@@ -43,30 +43,102 @@ export interface OrionResponse {
 export async function orionBrain(request: OrionRequest): Promise<OrionResponse> {
   const { input, context = {}, userId } = request;
   const startTime = Date.now();
-  
+
   try {
+    // 0. Singularity Protocol — V3 orchestrator runs FIRST as a cognitive
+    //    pre-layer (episodic memory, internal auditor, self-healer).
+    //    Disabled via localStorage flag `orion_v3_disabled` for emergency rollback.
+    const v3Disabled =
+      typeof window !== "undefined" &&
+      window.localStorage?.getItem("orion_v3_disabled") === "1";
+    let v3Result: { summary: string; agent: string; confidence: number } | null = null;
+    let sensorialVisualContext: string | null = null;
+
+    if (!v3Disabled) {
+      try {
+        const { orchestrate } = await import("./orchestrator/orion-v3-orchestrator");
+        const r = await orchestrate({ command: input, source: "text" });
+        // Silence filter from sensorial gate (empty plan + empty summary)
+        if (r.plan.length === 0 && !r.summary) {
+          return {
+            success: true,
+            response: "",
+            sector: "voz",
+            agentUsed: "orion-v3:silence",
+            confidence: 1,
+          };
+        }
+        v3Result = {
+          summary: r.summary,
+          agent: r.decision.primary,
+          confidence: r.decision.confidence,
+        };
+      } catch (e) {
+        console.warn("[OrionBrain] V3 pre-layer failed, falling back:", e);
+      }
+    } else {
+      // V3 kill-switch active → still run the sensorial gate so the legacy
+      // pipeline respects silence and identification triggers.
+      try {
+        const { runSensorialGate } = await import(
+          "./orchestrator/sensorial-gate"
+        );
+        const gate = await runSensorialGate(input);
+        if (gate.skip) {
+          return {
+            success: true,
+            response: "",
+            sector: "voz",
+            agentUsed: "legacy:silence",
+            confidence: 1,
+          };
+        }
+        sensorialVisualContext = gate.visualContext;
+      } catch (e) {
+        console.warn("[OrionBrain] Sensorial gate failed:", e);
+      }
+    }
+
+    // Inject visual context (when present) into the request context so
+    // downstream processors (question/command/search) can see it.
+    if (sensorialVisualContext) {
+      (context as any).visualContext = sensorialVisualContext;
+    }
+
+
     // 1. Detectar setor
     const sector = detectSector(input);
     const agent = getAgentForSector(sector);
-    
+
     // 2. Determinar tipo de requisição
     const isCommand = isCommand_(input);
     const isQuestion = isQuestion_(input);
     const isSearch = isSearch_(input);
-    
-    // 3. Processar conforme tipo
+
+    // 3. Processar conforme tipo (panel/command/search keep precedence over V3)
     if (isCommand) {
       return await processCommand(input, sector, agent, context);
     }
-    
+
     if (isSearch) {
       return await processSearch(input, sector, agent, context);
     }
-    
+
+    // 4. For plain questions, prefer V3 answer when available + confident.
+    if (v3Result && v3Result.summary && v3Result.confidence >= 0.5) {
+      return {
+        success: true,
+        response: v3Result.summary,
+        sector,
+        agentUsed: `orion-v3:${v3Result.agent}`,
+        confidence: v3Result.confidence,
+      };
+    }
+
     if (isQuestion || true) {
       return await processQuestion(input, sector, agent, context);
     }
-    
+
   } catch (error) {
     console.error("[ORION Brain] Error:", error);
     return {
@@ -95,7 +167,14 @@ function isQuestion_(input: string): boolean {
 }
 
 function isSearch_(input: string): boolean {
-  return /^(pesquisar|buscar|procurar|achar|procur)/i.test(input);
+  const t = input.toLowerCase().trim();
+  // Verbs at start (original behavior)
+  if (/^(pesquis\w+|busc\w+|procur\w+|ach\w+|encontr\w+|consult\w+)/.test(t)) return true;
+  // Verb anywhere followed by "sobre / por / no / na / em" (e.g. "me pesquisa sobre X")
+  if (/\b(pesquis\w+|busc\w+|procur\w+)\s+(sobre|por|por que|no|na|em)\b/.test(t)) return true;
+  // Web/news intent keywords
+  if (/\b(últimas not[ií]cias|pre[çc]o de|cota[çc][aã]o|previs[aã]o do tempo|onde fica)\b/.test(t)) return true;
+  return false;
 }
 
 /** ══════════��════════════════════════════════════════════════════
@@ -328,5 +407,5 @@ ${getAllAgents().map(a => `- ${a.sector}: ${a.name}`).join("\n")}
  * ═══════════════════════════════════════════════════════ */
 
 export { ORION_BRAIN, SECTOR_AGENTS, ORQUESTRADOR };
-export type { Sector, SectorAgent, OrionRequest, OrionResponse, OrionStatus };
-export { detectSector, getAgentForSector, getAllAgents, getAgentForSector as getAgent }; // Legacy alias
+// Types already exported earlier in this file; legacy alias only
+export { detectSector, getAgentForSector, getAllAgents, getAgentForSector as getAgent };

@@ -5,16 +5,16 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { wrapEdgeFunction } from "@/lib/errors";
-import { buildCognitionContext, postCognitionLearn } from "./neural-cognition-engine";
-import { executeCorrectiveRAG } from "./corrective-rag";
-import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "./orion-maestro-unification";
-import { quantumRouteQuery, formatQuantumRoutingForAI } from "./quantum-llm-router";
-import { summarizeLongContextMamba } from "./mamba-orchestrator";
-import { buildWorkingMemoryPrompt, pushToWorkingMemory, getMemoryFacts } from "./orion-working-memory";
+import { buildCognitionContext, postCognitionLearn } from "../neural-cognition-engine";
+import { executeCorrectiveRAG } from "../corrective-rag";
+import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "../orion-maestro-unification";
+import { quantumRouteQuery, formatQuantumRoutingForAI } from "../quantum-llm-router";
+import { summarizeLongContextMamba } from "../mamba-orchestrator";
+import { buildWorkingMemoryPrompt, pushToWorkingMemory } from "../orion-working-memory";
+import { getMemoryFacts } from "../orion-memory";
 import { stripMarkdown } from "@/lib/utils/text-utils";
-import { classifyIntent } from "./ai-client/intent-router";
-import { buildPentagonPromptContext } from "./ai-client/frame-analysis";
-import { getUserMemory, getCachedAuthUser } from "./ai-client/user-memory";
+import { classifyIntent } from "./intent-router";
+import { getUserMemory, getCachedAuthUser } from "./user-memory";
 
 export async function processInteraction(params: {
   question: string;
@@ -34,12 +34,8 @@ export async function processInteraction(params: {
   const detectedIntent = intent || classifyIntent(question);
 
   // 🍕 PENTAGON PIZZA — Unified consciousness pre-pass.
-  // Mandatório e síncrono.
-  const pentagonContext = await buildPentagonPromptContext(
-    question,
-    [context, ...(chatHistory?.slice(-4).map((msg) => `${msg.role}: ${msg.text}`) || [])].filter(Boolean).join("\n"),
-    detectedIntent
-  );
+  // Lightweight stub: real Pentagon orchestration runs inside analyzeFrameWithAI.
+  const pentagonContext = "";
 
   // 1. Quantum LLM Routing & Maestro Monitoring
   const routing = quantumRouteQuery(question);

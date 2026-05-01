@@ -44,13 +44,15 @@ export const PLATFORM_CONFIGS: Record<OpenPlatform, PlatformConfig> = {
   },
   huggingface: {
     platform: "huggingface",
-    apiKey: process.env.HUGGINGFACE_API_KEY,
+    // API keys are resolved server-side in edge functions; client-side stays empty
+    apiKey: undefined,
     model: "Qwen/Qwen2.5-72B-Instruct",
     capabilities: ["chat", "vision", "function_calling"],
   },
   openrouter: {
     platform: "openrouter",
-    apiKey: process.env.OPENROUTER_API_KEY,
+    // API keys are resolved server-side in edge functions; client-side stays empty
+    apiKey: undefined,
     model: "openrouter/free",
     capabilities: ["chat", "streaming", "function_calling", "vision", "tools"],
   },
@@ -296,7 +298,7 @@ export interface SuperAgentPrompt {
   outputFormat: string;
 }
 
-export const SUPER_AGENTS: Record<AgentRole, SuperAgentPrompt> = {
+export const SUPER_AGENTS: Partial<Record<AgentRole, SuperAgentPrompt>> = {
   leitura: {
     role: "leitura",
     identity: `🎭 AGENTE LEITOR - Analista Textual Especializado
@@ -366,7 +368,7 @@ OBJETIVO ESTRATÉGICO: Transformar dados brutos em conhecimento estruturado, ide
     identity: `🎭 AGENTE PESQUISADOR - Motor de Buscas Jurídicas e Web
 Nome interno: ORION-Pesquisador-R1
 Versão: v4.0 (Multi-Source Intelligence)
-Modelo base: deepseek/deepseek-r1 | qwen/qwen3-coder-480b`,
+Modelo base: deepseek/deepseek-r1 | qwen/qwen3-coder`,
     mission: `MISSÃO PRIMÁRIA: Executar buscas multiprovedor em bases jurídicas, web, e knowledge bases para encontrar jurisprudência, legislação, doutrina e precedentes relevantes.
 
 OBJETIVO ESTRATÉGICO: Fornecer resultados ranked por relevância hierárquica com citação completa para uso em fundamentação de documentos.`,
@@ -442,7 +444,7 @@ OBJETIVO ESTRATÉGICO: Fornecer resultados ranked por relevância hierárquica c
     identity: `🎭 AGENTE CONSTRUTOR - Generator Engine
 Nome interno: ORION-Construtor-480B
 Versão: v5.0 (Code + Document Generation)
-Modelo base: qwen/qwen3-coder-480b | openrouter/free`,
+Modelo base: qwen/qwen3-coder | openrouter/free`,
     mission: `MISSÃO PRIMÁRIA: Gerar código, documentos jurídicos, SQL, edge functions, e artefatos técnicos com precisão e completude.
 
 OBJETIVO ESTRATÉGICO: Produzir saída prontamente utilizável, seguindo padrões de qualidade e convenção do projeto.`,
@@ -628,7 +630,7 @@ OBJETIVO ESTRATÉGICO: Garantir que a resposta final seja superior à qualquer a
     identity: `🎭 AGENTE CRÍTICO - Quality Gate
 Nome interno: ORION-Critico-R1
 Versão: v3.0 (Hallucination Detector + Quality Scorer)
-Modelo base: deepseek/deepseek-r1 | qwen/qwen3-coder-480b`,
+Modelo base: deepseek/deepseek-r1 | qwen/qwen3-coder`,
     mission: `MISSÃO PRIMÁRIA: Verificar factualidade, detectar alucinações, validar qualidade, e aplicar quality gates.
 
 OBJETIVO ESTRATÉGICO: Garantir que apenas conteúdo validado alcance o usuário.`,
@@ -990,13 +992,15 @@ export type LegalAgentId =
   | "analise"
   | "sintese"
   | "redacao"
-  | "citacao";
+  | "citacao"
+  | "feynman";
 
 export interface LegalSuperPrompt {
   id: LegalAgentId;
   identity: string;
   mission: string;
   capabilities: string[];
+  tools?: string[];
   reasoningChain: string[];
   rules: string[];
   qualityGates: string[];
@@ -1230,7 +1234,7 @@ FUNÇÃO ANALÍTICA: Interpretar decisões e extrair ratio decidindi.`,
     identity: `📊 AGENTE DE SÍNTESE - Consolidation
 Nome interno: ORION-Legal-Synthesizer
 Versão: v2.0 (Pattern Recognition)
-Modelo: qwen/qwen3-coder-480b`,
+Modelo: qwen/qwen3-coder`,
     mission: `MISSÃO PRIMÁRIA: Consolidar entendimentos jurisprudenciais em síntese coerente.
 
 FUNÇÃO DE CONSOLIDAÇÃO: Criar panorama unificado.`,

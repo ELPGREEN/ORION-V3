@@ -1,6 +1,8 @@
 project_id = "dlwafedtlvbvuoaopvsl"
 
 [functions]
+  [functions.video-frame-analysis]
+    verify_jwt = false
   [functions.admin-api]
     verify_jwt = false
   [functions.ai-autocomplete]
@@ -48,6 +50,8 @@ project_id = "dlwafedtlvbvuoaopvsl"
   [functions.get-api-keys]
     verify_jwt = false
   [functions.google-stt]
+    verify_jwt = false
+  [functions.groq-stt]
     verify_jwt = false
   [functions.hf-inference]
     verify_jwt = false

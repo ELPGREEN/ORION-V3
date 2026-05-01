@@ -58,7 +58,7 @@ import { VmBootLoader } from "./VmBootLoader";
 // Extracted subcomponents
 import { useNeuralVisionHandlers } from "./useNeuralVisionHandlers";
 import { OrionStandalonePanel } from "./OrionStandalonePanel";
-import { NeuralVisionCamera } from "./NeuralVisionCamera";
+import { useNeuralVisionCamera as NeuralVisionCamera } from "./NeuralVisionCamera";
 
 // MediaPipe Object Detector - faster and more accurate than DETR
 let mpObjectDetector: ObjectDetector | null = null;
@@ -177,7 +177,7 @@ export function NeuralVisionContainer({ skipWakeWord = false, initialCommand = "
   const lastFpsT = useRef(Date.now());
   const lastLocalDetectionRef = useRef(0);
   const localDetectionRunningRef = useRef(false);
-  const mlDetectionsRef = useRef<Array<{ name: string; category: string; confidence: number; bbox?: { x: number; y: number; w: number; h: number }>>([]);
+  const mlDetectionsRef = useRef<Array<{ name: string; category: string; confidence: number; bbox?: { x: number; y: number; w: number; h: number } }>>([]);
 
   // Build detection stats from current state
   const detectionStats: DetectionStats = {
@@ -216,12 +216,12 @@ export function NeuralVisionContainer({ skipWakeWord = false, initialCommand = "
     setInterimTranscript, interimTranscriptRef: useRef<((text: string) => void) | null>(null),
     awareness, setAwareness, fps, setFps, identificationMode, setIdentificationMode,
     mlDetections, setMlDetections, visionSettings, setVisionSettings,
-    speak, speakFast, startListening, stopListen, bargeIn,
+    speak, speakFast, startListening: (startListening as any), stopListen, bargeIn,
     abortControllerRef, speechQueueRef, bargeInCallbackRef,
     identityStatus, guestSession, isCheckingVoice, verifyVoiceIdentity,
-    startGuestSession, addGuestMessage, endGuestSession, setIdentityStatus,
+    startGuestSession: (startGuestSession as any), addGuestMessage, endGuestSession, setIdentityStatus,
     chatHistory: [], startCamera: async () => {}, stopCamera: () => {}, deactivateGracefully: () => {},
-  });
+  } as any);
 
   const { thought, log, aiDescription, askAI, askInput, setAskInput, chatHistory, isProcessing, detectedObjects } = useOrionReasoning(active, speak, canvasRef, identificationMode, bargeIn, abortControllerRef, speechQueueRef, bargeInCallbackRef, () => bgTranscriptsGetterRef.current(), identityStatus, ((opts) => startCameraRef.current?.(opts)) as any, mlDetectionsRef);
   const voiceClone = useOrionVoiceClone();
@@ -266,12 +266,13 @@ export function NeuralVisionContainer({ skipWakeWord = false, initialCommand = "
   useEffect(() => {
     const handler = () => {
       if (!voiceCheckDoneRef.current && identityStatus === "unknown") {
-        handleVoiceIdentityCheck();
+        // Defer call to break TDZ — handleVoiceIdentityCheck declared below
+        setTimeout(() => (window as any).__orionHandleVoiceIdentityCheck?.(), 0);
       }
     };
     window.addEventListener("orion:voice-transcription", handler);
     return () => window.removeEventListener("orion:voice-transcription", handler);
-  }, [identityStatus, handleVoiceIdentityCheck]);
+  }, [identityStatus]);
   useEffect(() => {
     (window as any).__orionIdentityStatus = identityStatus;
   }, [identityStatus]);
@@ -568,7 +569,7 @@ export function NeuralVisionContainer({ skipWakeWord = false, initialCommand = "
 
       if (frameCount % VISION_SUPERNET_FRAMESKIP === 0 && supernetConnected) {
         const data = ctx.getImageData(0, 0, w, h);
-        sendSuperNetFrame(data.data, w, h).catch(() => {});
+        try { (sendSuperNetFrame as any)(data.data, w, h); } catch {}
       }
 
       animRef.current = requestAnimationFrame(loop);

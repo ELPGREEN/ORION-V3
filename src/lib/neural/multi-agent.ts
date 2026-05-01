@@ -92,7 +92,7 @@ export function createDefaultAgents(): AgentState[] {
   const AGENT_MODEL_MAP: Record<AgentRole, string> = {
     leitura: "openrouter/free",           // Fast, general
     pesquisa: "deepseek/deepseek-r1",   // Best reasoning
-    construcao: "qwen/qwen3-coder-480b", // Best coding
+    construcao: "qwen/qwen3-coder", // Best coding
     planejador: "meta-llama/llama-3.3-70b-instruct", // Strong planning
     supervisor: "nvidia/nemotron-3-super-120b-a12b", // AI agents
     critico: "deepseek/deepseek-r1",   // Reasoning/Critique

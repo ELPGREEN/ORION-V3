@@ -84,7 +84,7 @@ function getAvgWeight(
 const ROLE_TO_NEURON: Record<AgentRole, number> = {
   leitura: 0, pesquisa: 1, construcao: 2, planejador: 3,
   supervisor: 4, critico: 5, refinador: 6, monitoramento: 7,
-  colaborador: 8, multimodal: 9, self_model: 10,
+  colaborador: 8, multimodal: 9, self_model: 10, feynman: 11,
 };
 
 // ─── Core API ───

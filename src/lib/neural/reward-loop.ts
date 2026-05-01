@@ -53,7 +53,7 @@ const DEFAULT_WEIGHT = 0.5;
 // ─── State Management ───
 
 function getRewardState(): RewardState {
-  if (typeof window === "undefined") return { providerWeights: [], totalRewards: 0, lastUpdated: 0, strategyPerformance: [] };
+  if (typeof window === "undefined") return { providerWeights: [], totalSignals: 0, lastProcessed: 0 };
   try {
     const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( REWARD_KEY);
     return raw ? JSON.parse(raw) : { providerWeights: [], totalSignals: 0, lastProcessed: 0 };

@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { MessageCircle, Globe, PlayCircle } from "lucide-react";
-import { ChatIARouter } from "@/pages/dashboard/ChatIARouter";
+import ChatIARouter from "@/pages/dashboard/ChatIARouter";
 import { OrionResearchBrowser } from "@/components/orion/OrionResearchBrowser";
 import { OrionEmbeddedVideo } from "@/components/orion/OrionEmbeddedVideo";
 

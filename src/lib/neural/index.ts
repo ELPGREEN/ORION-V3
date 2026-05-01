@@ -454,7 +454,7 @@ export * from "./agentic-patterns-engine";
 export * from "./agentic-protocols-tools";
 
 // ═══ Maestro Unified Core ═══
-export { processInteraction, classifyIntent as classifyMaestroIntent } from "./orion-ai-client/index";
+export { processInteraction, classifyIntent as classifyMaestroIntent } from "./ai-client/index";
 export { executeCorrectiveRAG, gradeRetrieval, type CRAGResult, type RetrievalGrade } from "./corrective-rag";
 export * from "./orion-maestro-unification";
 export * from "./mamba-orchestrator";

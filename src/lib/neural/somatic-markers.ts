@@ -99,7 +99,7 @@ const PRUNE_INTERVAL = 86400000; // 24h
 let _store: SomaticMarkerStore = loadStore();
 
 function loadStore(): SomaticMarkerStore {
-  if (typeof window === "undefined") return { markers: new Map() };
+  if (typeof window === "undefined") return { markers: new Map(), totalDecisions: 0, fastDecisions: 0, avgTimeSaved: 0, lastPruned: Date.now() };
   try {
     const raw = (typeof window !== "undefined" ? localStorage.getItem : () => null).bind(typeof window !== "undefined" ? localStorage : {})( MARKER_CACHE_KEY);
     if (raw) {

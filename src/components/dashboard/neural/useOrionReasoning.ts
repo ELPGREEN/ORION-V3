@@ -61,7 +61,7 @@ async function prewarmModules(): Promise<void> {
     ["smartHome", import("@/lib/neural/smart-home-controller")],
     ["nativeBridge", import("@/lib/native-bridge")],
   ];
-  const results = await Promise.allSettled(modules.map(([k, p]) => p.then((m: any) => ({ k, m }))));
+  const results = await Promise.allSettled(modules.map((entry: any) => (entry[1] as Promise<any>).then((m: any) => ({ k: entry[0], m }))));
   for (const r of results) {
     if (r.status === "fulfilled") _preloadedModules[r.value.k] = r.value.m;
   }
@@ -535,16 +535,16 @@ export function useOrionReasoning(
         const { getPentagonOrchestrator } = await import("@/core/pentagon");
         const orchestrator = getPentagonOrchestrator();
         let imageBase64: string | undefined;
-        if (needsImage && canvasRef.current) {
+        const _needsImage = effectiveIntentType !== "textual";
+        if (_needsImage && canvasRef.current) {
            imageBase64 = canvasRef.current.toDataURL("image/jpeg", 0.6).split(",")[1];
         }
         const pResult = await orchestrator.runCycleStructured(question, {
           userId: cachedAuthUser?.id || "anonymous",
-          source,
           intent: effectiveIntentType,
           isOwner,
-          sharedState: { imageBase64 }
-        });
+          sharedState: { imageBase64, source },
+        } as any);
         const { stepsTaken, totalCost, durationMs } = pResult.metadata;
         addLog(`🍕 Pentagon complete: ${stepsTaken} steps, ${durationMs}ms, $${totalCost.toFixed(3)}`);
       } catch (e) {

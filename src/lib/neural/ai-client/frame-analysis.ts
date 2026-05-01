@@ -8,14 +8,14 @@ import {
   getMemoryFacts,
   addMemoryFacts,
 } from "@/lib/neural/orion-memory";
-import { buildCognitionContext, postCognitionLearn } from "./neural-cognition-engine";
-import { executeCorrectiveRAG } from "./corrective-rag";
-import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "./orion-maestro-unification";
-import { quantumRouteQuery, formatQuantumRoutingForAI } from "./quantum-llm-router";
-import { summarizeLongContextMamba } from "./mamba-orchestrator";
-import { buildWorkingMemoryPrompt, initWorkingMemory, pushToWorkingMemory } from "./orion-working-memory";
+import { buildCognitionContext, postCognitionLearn } from "../neural-cognition-engine";
+import { executeCorrectiveRAG } from "../corrective-rag";
+import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "../orion-maestro-unification";
+import { quantumRouteQuery, formatQuantumRoutingForAI } from "../quantum-llm-router";
+import { summarizeLongContextMamba } from "../mamba-orchestrator";
+import { buildWorkingMemoryPrompt, initWorkingMemory, pushToWorkingMemory } from "../orion-working-memory";
 import { stripMarkdown } from "@/lib/utils/text-utils";
-import { getVS } from "./vision-state";
+import { getVS } from "../vision-state";
 // vision-local-learning removed — all identification via Gemini on-demand
 const canIdentifyLocally = (_shapes: any[]) => ({ allLocal: false, localMatches: [] as any[] });
 const getLearningStats = () => ({ totalPriors: 0, maturePriors: 0, totalObservations: 0, apiBypassRate: 0 });
@@ -23,6 +23,22 @@ const learnFromDetection = (_obj: any, _desc: any) => {};
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
 // hf-vision-gate REMOVED — was downloading ~50MB of WASM models in browser
 import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
+
+// ═══ LAZY LOADERS — extracted modules of split ai-client ═══
+import { isLocalFirstMode } from "./local-mode";
+import { getCachedAuthUser, getUserMemory, addUserMemory, fetchDashboardContext } from "./user-memory";
+import { getCachedVoiceIdentity } from "./voice-identity";
+const getConsciousness = async () => {
+  const m = await import("../rag-consciousness");
+  return m.getConsciousness();
+};
+const getIntrospection = async () => await import("../orion-introspection");
+const getKnowledgeBase = async () => await import("../orion-knowledge-base");
+async function buildPentagonPromptContext(_question: string, _context: string, _intent: string): Promise<string> {
+  // Lightweight stub — full Pentagon pre-pass is performed inside analyzeFrameWithAI / processInteraction.
+  // Returning empty string keeps prompts unchanged; orchestration path remains intact.
+  return "";
+}
 
 // ═══ PRE-COMPILED REGEXES FOR PERFORMANCE ═══
 const SENTENCE_END_REGEX = /.*?[.!?…;]+\s/ys;
@@ -60,7 +76,7 @@ const KNOWLEDGE_PATTERNS = /\b(histór|ciência|matemática|física|química|pol
 const CONVERSATIONAL_PATTERNS = /\b(opini[ãa]o|acha\s+que|concorda|discorda|argumento|debate|sugir[ãa]o|recomend|aconselh|orienta[çc]ã|estrat[ée]gia|planej|organiz|prioriz|importa\b|melhor\s+forma|como\s+(posso|devo|faz)|me\s+ajud|preciso\s+de|tenho\s+que|deveria|poderia|gostaria|queria)\b/i;
 const EMOTIONAL_PATTERNS = /\b(sinto|sentindo|triste|feliz|ansios|preocupad|estressad|frustrad|animad|chateado|confus[oa]|nervos[oa]|calm[oa]|motiv|desanima|angústi|med[oa]|raiva|alegr|satisf)\b/i;
 
-function shouldUseVoiceFastShortcut(question: string): boolean {
+export function shouldUseVoiceFastShortcut(question: string): boolean {
   const normalized = question.trim();
   if (!normalized) return true;
   const words = normalized.split(/\s+/).filter(Boolean);
@@ -70,7 +86,7 @@ function shouldUseVoiceFastShortcut(question: string): boolean {
 }
 
 // ═══ Build local detections from client-side vision data ═══
-function buildLocalDetections(): Record<string, unknown> | undefined {
+export function buildLocalDetections(): Record<string, unknown> | undefined {
   try {
     const vs = getVS();
     if (!vs) return undefined;
@@ -335,7 +351,9 @@ export async function analyzeFrameWithAI(
 
     let consciousnessContext = "";
     try {
-      const { buildOrionIdentityPrompt, isOwnerEmail } = await getConsciousness();
+      const consciousnessMod = await import("../orion-consciousness");
+      const buildOrionIdentityPrompt = (consciousnessMod as any).buildOrionIdentityPrompt || (() => "");
+      const isOwnerEmail = (consciousnessMod as any).isOwnerEmail || (() => false);
       const user = await getCachedAuthUser();
       const isOwner = isOwnerEmail(user?.email);
       const isIdentityQuestion = question && /\b(quem\s+(te\s+cri|[eé]\s+voc[eê])|([eé]\s+voc[eê]\s+)?fez|fez\s+(voc[eê]|isso)|(criador|dono|proprietário|proprietario)|who\s+(made|created|are)\s+you)\b/i.test(question);
@@ -539,12 +557,12 @@ export async function analyzeFrameStreaming(
     }
 
     // ═══ Pentagon Pizza — unified consciousness pre-pass ═══
+    const streamingContext = (chatHistory?.slice(-4).map(msg => `${msg.role}: ${msg.text}`) || []).join("\n");
     let pentagonContext = "";
     try {
-      const user = await getCachedAuthUser();
       pentagonContext = await buildPentagonPromptContext(
         question,
-        [context, ...(chatHistory?.slice(-4).map(msg => `${msg.role}: ${msg.text}`) || [])].filter(Boolean).join("\n"),
+        streamingContext,
         intentType
       );
     } catch {}
@@ -565,7 +583,7 @@ export async function analyzeFrameStreaming(
     // Execute Hybrid Corrective RAG
     const crag = await executeCorrectiveRAG({
       query: question,
-      context,
+      context: streamingContext,
       userId: (await getCachedAuthUser())?.id || "anonymous",
       forceWebSearch: intentType === "web_search"
     });

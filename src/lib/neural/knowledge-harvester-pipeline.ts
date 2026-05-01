@@ -100,7 +100,7 @@ export const FULL_PIPELINE: PipelineConfig = {
   models: [
     { provider: "openrouter", model: "openrouter/free" },
     { provider: "openrouter", model: "deepseek/deepseek-r1" },
-    { provider: "openrouter", model: "qwen/qwen3-coder-480b" },
+    { provider: "openrouter", model: "qwen/qwen3-coder" },
     { provider: "openrouter", model: "tencent/hy3-preview:free" },
   ],
   enableConsensus: true,
@@ -182,7 +182,7 @@ export class KnowledgeHarvesterPipeline {
           const modelResponses: HarvestResult[] = [];
 
           for (const modelConfig of this.config.models) {
-            if (this.state.status === "cancelled") break;
+            if ((this.state.status as string) === "cancelled") break;
 
             step++;
             this.updateProgress(step, totalSteps, promptId, modelConfig.model);
@@ -394,7 +394,8 @@ SAÍDA: Resposta consolidada + análise de consenso + confiança.`;
 
   private async saveToMemory(session: HarvestSession): Promise<void> {
     try {
-        await supabase.from("harvester_sessions").insert({
+      const sb = supabase as unknown as { from: (t: string) => { insert: (v: unknown) => Promise<unknown> } };
+      await sb.from("harvester_sessions").insert({
         id: session.id,
         topic: session.topic,
         results_count: session.results.length,
@@ -404,7 +405,7 @@ SAÍDA: Resposta consolidada + análise de consenso + confiança.`;
       });
 
       for (const result of session.results) {
-        await supabase.from("harvester_results").insert({
+        await sb.from("harvester_results").insert({
           session_id: session.id,
           prompt_id: result.promptId,
           topic: result.topic,

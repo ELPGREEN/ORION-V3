@@ -54,13 +54,17 @@ export interface IoTAlert {
 // CONFIGURAÇÃO
 // ============================================
 
+// Vite exposes env vars via import.meta.env (only VITE_-prefixed reach the client).
+// Fallbacks keep this safe when running in browser without process.* available.
+const _env = (typeof import.meta !== "undefined" && (import.meta as any).env) || {};
+
 const DEFAULT_CONFIG: NeurocoreConfig = {
-  enableROS2: process.env.NEUROCORE_ENABLE_ROS2 === "true",
-  enableMQTT: process.env.NEUROCORE_ENABLE_MQTT === "true",
-  enableLIBRAS: process.env.NEUROCORE_ENABLE_LIBRAS === "true",
-  enableIoTSurveillance: process.env.NEUROCORE_ENABLE_IOT_SURVEILLANCE === "true",
-  mqttBroker: process.env.MQTT_BROKER_URL || "mqtt://localhost:1883",
-  ros2BridgeUrl: process.env.ROS2_BRIDGE_URL || "http://localhost:5000",
+  enableROS2: _env.VITE_NEUROCORE_ENABLE_ROS2 === "true",
+  enableMQTT: _env.VITE_NEUROCORE_ENABLE_MQTT === "true",
+  enableLIBRAS: _env.VITE_NEUROCORE_ENABLE_LIBRAS === "true",
+  enableIoTSurveillance: _env.VITE_NEUROCORE_ENABLE_IOT_SURVEILLANCE === "true",
+  mqttBroker: _env.VITE_MQTT_BROKER_URL || "mqtt://localhost:1883",
+  ros2BridgeUrl: _env.VITE_ROS2_BRIDGE_URL || "http://localhost:5000",
 };
 
 let config = { ...DEFAULT_CONFIG };

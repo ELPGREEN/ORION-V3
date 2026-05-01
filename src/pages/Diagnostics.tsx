@@ -99,7 +99,7 @@ export default function Diagnostics() {
           setCurrentStage(stage);
           await new Promise((r) => setTimeout(r, 120));
         }
-        await cortex.runCycle("diagnostics ping", { source: "diagnostics" });
+        await cortex.runCycle("diagnostics ping", { source: "diagnostics" } as any);
       } catch (e) {
         log("warn", `Local orchestrator runCycle warn: ${(e as Error).message}`, "pentagon");
       }
@@ -212,7 +212,7 @@ export default function Diagnostics() {
         setCurrentStage(stage);
         await new Promise((r) => setTimeout(r, 150));
       }
-      await cortex.runCycle("descreva o que você vê", { source: "diagnostics-vision", hasVideo: true });
+      await cortex.runCycle("descreva o que você vê", { source: "diagnostics-vision", hasVideo: true } as any);
       setCurrentStage(null);
       log("ok", "✓ Vision cycle completed", "vision");
       setVisionStatus("pass");

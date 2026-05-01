@@ -226,4 +226,4 @@ export async function runReAct(
  * ═══════════════════════════════════════════════════════════════ */
 
 export { ORION_TOOLS, executeTool };
-export type { Tool, ToolName, FunctionDefinition, ToolExecutionResult, AgentLoopConfig, ReActStep };
+export type { Tool, ToolName };

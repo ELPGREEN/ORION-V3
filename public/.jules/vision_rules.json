@@ -1,0 +1,20 @@
+{
+  "vision_profile": "ORION_ELITE_AWARENESS",
+  "refresh_rate_ms": 200,
+  "priority_levels": {
+    "CRITICAL": ["Syntax Errors", "Terminal Crashes", "Security Leaks"],
+    "HIGH": ["Code Structure", "UI/UX Layout", "Active Windows"],
+    "NORMAL": ["Physical Objects", "User Presence", "Ambient Lighting"]
+  },
+  "behavior_flags": {
+    "auto_identify_on_ask": true,
+    "silence_on_no_input": true,
+    "ocr_enabled": true,
+    "describe_scene_delta_only": true
+  },
+  "model_mapping": {
+    "fast_analysis": "gemma-3n-e2b",
+    "deep_inspection": "qwen3-vl",
+    "fallback": "gemini-pro-vision"
+  }
+}

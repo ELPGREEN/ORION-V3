@@ -186,7 +186,7 @@ export function usePentagonChat(options: PentagonChatOptions = {}) {
 
         // Fire-and-forget: logging
         logNeural({
-          interaction_type: "pentagon_chat",
+          interaction_type: "chat" as const,
           input_text: userMessage,
           output_text: responseText.substring(0, 1000),
           metadata: {
@@ -246,7 +246,7 @@ export function usePentagonChat(options: PentagonChatOptions = {}) {
       const msg = messages.find((m) => m.id === msgId);
       if (msg) {
         logNeural({
-          interaction_type: "pentagon_feedback",
+          interaction_type: "avaliacao" as const,
           input_text: msg.content.substring(0, 500),
           output_text: type,
           quality_score: type === "up" ? 0.9 : 0.2,

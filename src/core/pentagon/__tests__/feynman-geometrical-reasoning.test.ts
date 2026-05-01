@@ -40,7 +40,8 @@ describe("Geometrical Metacognition & Feynman Loop", () => {
     const stableReasoning = {
       confidence: 0.9,
       rationale: "Raciocínio sólido e completo.",
-      plan: ["step1"]
+      plan: ["step1"],
+      subTasks: []
     };
 
     const result = await meta.validateReasoning(stableReasoning);

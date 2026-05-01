@@ -25,11 +25,11 @@ describe("PentagonPizzaOrchestrator", () => {
     };
 
     const orchestrator = new PentagonPizzaOrchestrator(
-      mockPerception,
-      mockMemory,
-      mockReasoning,
-      mockAction,
-      mockMeta
+      mockPerception as any,
+      mockMemory as any,
+      mockReasoning as any,
+      mockAction as any,
+      mockMeta as any
     );
 
     const result = await orchestrator.runCycle("Analyze this complex legal scenario with multiple parties and jurisdictional issues");
@@ -53,7 +53,7 @@ describe("PentagonPizzaOrchestrator", () => {
       validateInput: vi.fn().mockResolvedValue({ valid: false, feedback: "malicious" }),
     };
 
-    const orchestrator = new PentagonPizzaOrchestrator({}, {}, {}, {}, mockMeta);
+    const orchestrator = new PentagonPizzaOrchestrator({} as any, {} as any, {} as any, {} as any, mockMeta as any);
     const result = await orchestrator.runCycle("Analyze this complex legal scenario with multiple jurisdictional conflicts and statutory interpretation issues");
 
     expect(result.success).toBe(false);
