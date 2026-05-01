@@ -13,6 +13,7 @@
 
 import { vqcForward, initVQCParams, type VQCConfig } from "./vqc";
 import { classifyComplexity, type ComplexityLevel } from "./agent-planner";
+import { getWebSearchModels, supportsWebSearch, WEB_SEARCH_MODELS } from "@/lib/integrations/openrouter-free-models";
 
 // ─── Provider Registry ───
 
@@ -246,6 +247,7 @@ interface QueryFeatures {
   domainMatch: number[];    // per-provider domain affinity 0-1
   latencyPriority: number;  // 0=don't care, 1=need fast
   costSensitivity: number;  // 0=don't care, 1=cheapest
+  webSearchIntent: number;  // 0-1 normalized (does query need web search?)
 }
 
 function extractQueryFeatures(
@@ -264,8 +266,30 @@ function extractQueryFeatures(
   const estimatedTokens = wordCount * 1.5;
   const maxTokens = Math.max(...PROVIDER_REGISTRY.map(p => p.maxTokens));
 
-  // Domain affinity per provider
+  // Web search intent detection
   const lower = query.toLowerCase();
+  let webSearchIntent = 0;
+  
+  // Strong web search indicators
+  const webSearchPatterns = [
+    /hoje|atual|atualmente|recente/i,
+    /notícia|preço\s+d[eoa]|cotação/i,
+    /quem\s+é|quando\s+(foi|será|é)|onde\s+fica/i,
+    /resultado\s+d[eoa]|placar|eleição/i,
+    /último|última|novo\s+|nova\s+|2024|2025|2026/i,
+    /tempo\s+(em|na|no)|clima|previsão/i,
+    /lançamento|estreia|pesquis[ae]\s+na\s+web|busca\s+na\s+internet/i,
+    /search\s+for|look\s+up|news|current|latest|trending/i,
+  ];
+  
+  for (const pattern of webSearchPatterns) {
+    if (pattern.test(lower)) {
+      webSearchIntent += 0.15;
+    }
+  }
+  webSearchIntent = Math.min(webSearchIntent, 1.0); // Cap at 1.0
+
+  // Domain affinity per provider
   const domainMatch = PROVIDER_REGISTRY.map(provider => {
     let score = 0;
     for (const strength of provider.strengths) {
@@ -276,8 +300,19 @@ function extractQueryFeatures(
       if (strength === "speed" && /(?:rápido|urgente|imediato|agora)/i.test(lower)) score += 0.3;
       if (strength === "long_context" && wordCount > 200) score += 0.3;
       if (strength === "reasoning" && /(?:analis|compar|avali|complex|profund)/i.test(lower)) score += 0.3;
+      
+      // Boost providers with web search capability for web search queries
+      if (webSearchIntent > 0.3 && (strength === "web_search" || provider.id.includes("openrouter/free"))) {
+        score += webSearchIntent * 0.5;
+      }
     }
-    return Math.min(1, score + provider.reliabilityScore * 0.2);
+    
+    // Extra boost for known web-search-capable open-weight models
+    if (webSearchIntent > 0.3 && supportsWebSearch(provider.id)) {
+      score += webSearchIntent * 0.7;
+    }
+    
+    return Math.min(score + provider.reliabilityScore * 0.2, 1.0);
   });
 
   return {
@@ -286,13 +321,14 @@ function extractQueryFeatures(
     domainMatch,
     latencyPriority: options.preferSpeed ? 0.9 : 0.3,
     costSensitivity: options.preferCost ? 0.9 : 0.2,
+    webSearchIntent,
   };
 }
 
 // ─── VQC Config for Router ───
 
 const ROUTER_VQC_CONFIG: VQCConfig = {
-  nQubits: 4,
+  nQubits: 5, // Updated to 5 qubits to handle: complexity, domainMatch, latencyPriority, costSensitivity, webSearchIntent
   nLayers: 2,
   featureMap: "iqp",
   ansatz: "hardware_efficient",
@@ -304,20 +340,23 @@ const ROUTER_VQC_CONFIG: VQCConfig = {
 };
 
 // Pre-trained params (optimized for provider selection)
+// Updated for 5 qubits: [complexity, domainMatch, latencyPriority, costSensitivity, webSearchIntent]
 const ROUTER_PARAMS: number[][][] = [
-  // Layer 0
+  // Layer 0 - 5 qubits, 3 params each
   [
     [0.8, -0.3, 1.2],   // qubit 0: complexity encoder
     [-0.5, 1.1, 0.4],   // qubit 1: domain encoder
     [0.9, 0.7, -0.8],   // qubit 2: latency encoder
     [-0.2, 0.6, 1.5],   // qubit 3: cost encoder
+    [0.4, 0.9, -0.6],   // qubit 4: web search intent encoder (NEW)
   ],
-  // Layer 1
+  // Layer 1 - 5 qubits, 3 params each
   [
     [1.1, -0.7, 0.3],
     [0.4, 0.9, -1.0],
     [-0.6, 1.3, 0.5],
     [0.7, -0.4, 0.8],
+    [0.5, 0.8, -0.3],   // qubit 4: web search intent encoder (NEW)
   ],
 ];
 
@@ -330,11 +369,13 @@ export interface QuantumRoutingResult {
   complexity: string;
   features: QueryFeatures;
   routingLatencyMs: number;
+  webSearchRecommended?: boolean; // true if web search is recommended for this query
 }
 
 /**
  * Route a query to the optimal LLM provider using quantum scoring.
  * Combines VQC measurement probabilities with classical heuristics.
+ * Now includes web search intent detection for open-weight models via OpenRouter plugins.
  */
 export function quantumRouteQuery(
   query: string,
@@ -342,7 +383,7 @@ export function quantumRouteQuery(
     preferSpeed?: boolean;
     preferCost?: boolean;
     excludeProviders?: string[];
-    modelType?: "fast" | "balanced" | "reasoning" | "analysis" | "secure";
+    modelType?: "fast" | "balanced" | "reasoning" | "analysis" | "secure" | "web_search";
   } = {}
 ): QuantumRoutingResult {
   const start = performance.now();
@@ -354,6 +395,7 @@ export function quantumRouteQuery(
     reasoning: ["reasoning", "math"],
     analysis: ["reasoning", "legal", "code"],
     secure: ["general"],
+    web_search: ["web_search", "research", "current_events"],
   };
 
   const scores = PROVIDER_REGISTRY
@@ -370,6 +412,7 @@ export function quantumRouteQuery(
         features.domainMatch[idx] || 0,
         features.latencyPriority * (1 - provider.avgLatencyMs / 2000),
         features.costSensitivity * (1 - provider.costPerMToken),
+        features.webSearchIntent, // Include web search intent as 5th feature
       ];
 
       const quantumScore = vqcForward(vqcInput, ROUTER_PARAMS, ROUTER_VQC_CONFIG);
@@ -403,6 +446,11 @@ export function quantumRouteQuery(
     ? (best.finalScore - classicalBest.classicalScore) / classicalBest.classicalScore
     : 0;
 
+  // Web search recommendation
+  const webSearchRecommended = features.webSearchIntent > 0.3 || 
+    options.modelType === "web_search" ||
+    best.profile.strengths.some(s => s === "web_search");
+
   return {
     selectedProvider: best.profile,
     allScores: scores.map(s => ({
@@ -415,16 +463,18 @@ export function quantumRouteQuery(
     complexity: classifyComplexity(query),
     features,
     routingLatencyMs: Math.round(performance.now() - start),
+    webSearchRecommended,
   };
 }
 
 /**
  * Get the quantum-recommended provider chain (ordered by quantum score).
  * Use this as the fallback cascade instead of the static one.
+ * Now supports web_search modelType filtering.
  */
 export function getQuantumProviderCascade(
   query: string,
-  options: { preferSpeed?: boolean; preferCost?: boolean } = {}
+  options: { preferSpeed?: boolean; preferCost?: boolean; modelType?: string } = {}
 ): string[] {
   const result = quantumRouteQuery(query, options);
   return result.allScores.map(s => s.provider);
@@ -432,6 +482,7 @@ export function getQuantumProviderCascade(
 
 /**
  * Format routing result for AI context injection.
+ * Now includes web search recommendation.
  */
 export function formatQuantumRoutingForAI(result: QuantumRoutingResult): string {
   const lines = [
@@ -439,5 +490,10 @@ export function formatQuantumRoutingForAI(result: QuantumRoutingResult): string 
     `Complexity: ${result.complexity} | Advantage: +${(result.quantumAdvantage * 100).toFixed(1)}%`,
     `Cascade: ${result.allScores.map(s => `${s.provider}(${s.finalScore})`).join(" → ")}`,
   ];
+  
+  if (result.webSearchRecommended) {
+    lines.push(`🌐 Web Search: RECOMMENDED via OpenRouter plugins (${result.selectedProvider.name} supports web search)`);
+  }
+  
   return lines.join(" | ");
 }

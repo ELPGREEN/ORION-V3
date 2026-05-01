@@ -8,7 +8,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { OPENROUTER_FREE_MODELS, toCascadeFormat, CASCADE_DEADLINE_BUDGET_MS } from "./openrouter-free-models";
+import { OPENROUTER_FREE_MODELS, toCascadeFormat, CASCADE_DEADLINE_BUDGET_MS, getWebSearchModels, WEB_SEARCH_MODELS } from "./openrouter-free-models";
 
 export type LLMProvider =
   | "openai"
@@ -236,7 +236,8 @@ function setCache(key: string, response: LLMResponse): void {
 export async function chatWithCascade(
   messages: Array<{ role: string; content: string }>,
   cascade: Array<{ provider: LLMProvider; model: string }> = OPENROUTER_CASCADE,
-  maxTimeoutMs: number = 8000
+  maxTimeoutMs: number = 8000,
+  options: { webSearch?: boolean; webSearchModels?: string[] } = {}
 ): Promise<LLMResponse> {
   const key = cacheKey(messages);
   const cached = getCached(key);
@@ -248,7 +249,22 @@ export async function chatWithCascade(
   const errors: string[] = [];
   const cascadeDeadline = Date.now() + CASCADE_DEADLINE_BUDGET_MS;
 
-  for (const step of cascade) {
+  // If web search is requested, use web search models first
+  let effectiveCascade = cascade;
+  if (options.webSearch) {
+    const wsModels = options.webSearchModels || getWebSearchModels().map(m => m.id);
+    const wsCascade = wsModels.map(modelId => ({
+      provider: "openrouter" as LLMProvider,
+      model: modelId,
+    }));
+    // Merge: web search models first, then original cascade
+    const originalSet = new Set(cascade.map(c => c.model));
+    const filteredOriginal = cascade.filter(c => !wsModels.includes(c.model));
+    effectiveCascade = [...wsCascade, ...filteredOriginal];
+    console.log(`[Cascade] Web search enabled, using models: ${wsModels.join(", ")}`);
+  }
+
+  for (const step of effectiveCascade) {
     if (Date.now() >= cascadeDeadline) {
       errors.push("cascade deadline exceeded");
       break;
@@ -274,7 +290,18 @@ export async function chatWithCascade(
         setTimeout(() => reject(new Error(`Timeout ${maxTimeoutMs}ms`)), maxTimeoutMs);
       });
 
-      const response = await Promise.race([client.chat(messages), timeout]);
+      // Add OpenRouter web search plugin if enabled
+      const requestOptions: any = {};
+      if (options.webSearch && step.provider === "openrouter") {
+        requestOptions.plugins = [{
+          id: "web",
+          config: {
+            search_mode: "auto",
+          }
+        }];
+      }
+
+      const response = await Promise.race([client.chat(messages, requestOptions), timeout]);
 
       recordSuccess(step.provider, step.model);
       const elapsed = Date.now() - startTime;
@@ -326,7 +353,7 @@ export class OrionLLMClient {
     return this.config.baseURL || PROVIDER_ENDPOINTS[this.config.provider];
   }
 
-  async chat(messages: Array<{ role: string; content: string }>): Promise<LLMResponse> {
+  async chat(messages: Array<{ role: string; content: string }>, options: { plugins?: any[] } = {}): Promise<LLMResponse> {
     if (!this.apiKey) {
       throw new Error("API key not set. Use setApiKey() first.");
     }
@@ -334,7 +361,7 @@ export class OrionLLMClient {
     const endpoint = this.getEndpoint();
     const model = this.config.model;
 
-    const requestBody = this.buildRequestBody(messages);
+    const requestBody = this.buildRequestBody(messages, options);
 
     try {
       const response = await fetch(`${endpoint}/chat/completions`, {
@@ -360,7 +387,7 @@ export class OrionLLMClient {
     }
   }
 
-  private buildRequestBody(messages: Array<{ role: string; content: string }>): Record<string, unknown> {
+  private buildRequestBody(messages: Array<{ role: string; content: string }>, options: { plugins?: any[] } = {}): Record<string, unknown> {
     const base = {
       model: this.config.model,
       messages,
@@ -387,7 +414,10 @@ export class OrionLLMClient {
           },
         };
       case "openrouter":
-        return { ...base };
+        return { 
+          ...base,
+          ...(options.plugins && options.plugins.length > 0 ? { plugins: options.plugins } : {}),
+        };
       default:
         return base;
     }
@@ -482,7 +512,8 @@ export function isDeepSeekAvailable(): boolean {
 
 export async function chatWithDeepSeek(
   messages: Array<{ role: string; content: string }>,
-  model: string = "deepseek-chat"
+  model: string = "deepseek-chat",
+  options: { plugins?: any[] } = {}
 ): Promise<LLMResponse> {
   const apiKey = getApiKey("deepseek");
 
@@ -491,13 +522,14 @@ export async function chatWithDeepSeek(
   }
 
   const client = createLLMClient("deepseek", model, apiKey);
-  return client.chat(messages);
+  return client.chat(messages, options);
 }
 
 export async function chatWithProvider(
   provider: LLMProvider,
   messages: Array<{ role: string; content: string }>,
-  model?: string
+  model?: string,
+  options: { plugins?: any[] } = {}
 ): Promise<LLMResponse> {
   const apiKey = getApiKey(provider);
 
@@ -506,7 +538,7 @@ export async function chatWithProvider(
   }
 
   const client = createLLMClient(provider, model, apiKey);
-  return client.chat(messages);
+  return client.chat(messages, options);
 }
 
 export function getProviderName(provider: LLMProvider): string {
@@ -533,5 +565,7 @@ export function getProviderName(provider: LLMProvider): string {
 }
 
 // Export circuit breaker utilities
-export { getCircuitStats, OPENROUTER_CASCADE };
+export { getApiKey, getAvailableProviders, isDeepSeekAvailable };
+export { chatWithDeepSeek, chatWithProvider, getProviderName };
+export { getCircuitStats, OPENROUTER_CASCADE, getWebSearchModels, WEB_SEARCH_MODELS };
 export { OPENROUTER_FREE_MODELS, FAST_MODELS, REASONING_MODELS, toCascadeFormat, getFreeModel, getModelForComplexity } from "./openrouter-free-models";
