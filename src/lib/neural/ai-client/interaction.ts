@@ -15,6 +15,7 @@ import { getMemoryFacts } from "../orion-memory";
 import { stripMarkdown } from "@/lib/utils/text-utils";
 import { classifyIntent } from "./intent-router";
 import { getUserMemory, getCachedAuthUser } from "./user-memory";
+import { orchestrate } from "../orchestrator/orion-v3-orchestrator";
 
 export async function processInteraction(params: {
   question: string;
@@ -34,8 +35,13 @@ export async function processInteraction(params: {
   const detectedIntent = intent || classifyIntent(question);
 
   // 🍕 PENTAGON PIZZA — Unified consciousness pre-pass.
-  // Lightweight stub: real Pentagon orchestration runs inside analyzeFrameWithAI.
-  const pentagonContext = "";
+  const v3Response = await orchestrate({
+    command: question,
+    source: "text",
+    userId,
+    conversationContext: context
+  });
+  const pentagonContext = v3Response.summary ? `═══ RASCUNHO DO LOBO FRONTAL (Pentagon) ═══\n${v3Response.summary}\n` : "";
 
   // 1. Quantum LLM Routing & Maestro Monitoring
   const routing = quantumRouteQuery(question);
