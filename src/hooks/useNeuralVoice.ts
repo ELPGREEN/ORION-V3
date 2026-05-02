@@ -67,7 +67,7 @@ const NORMALIZE_DIACRITICS_REGEX = /[\u0300-\u036f]/g;
 const NORMALIZE_NON_ALPHANUMERIC_REGEX = /[^\p{L}\p{N}\s]/gu;
 
 const ECHO_WINDOW_MS = 18000;
-const ECHO_JACCARD_THRESHOLD = 0.45;
+const ECHO_JACCARD_THRESHOLD = 0.50;
 const MAX_CONSECUTIVE_ABORTS = 5;
 const MAX_CONSECUTIVE_NO_SPEECH = 8;
 const NO_SPEECH_TIMEOUT_MS = 3000; // Tolerate natural pauses before considering speech ended
@@ -927,7 +927,7 @@ export function useNeuralVoice(
           }
 
           const session = createGCPSTTSession({
-            languageCode: "pt-BR", onInterim: (text) => { if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false); try { window.dispatchEvent(new CustomEvent("orion:voice-interim-transcription", { detail: { text } })); } catch {} },
+            languageCode: "pt-BR", onInterim: (text) => { if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false); consecutiveNoSpeechRef.current = 0; try { window.dispatchEvent(new CustomEvent("orion:voice-interim-transcription", { detail: { text } })); } catch {} },
             sampleRate: 16000,
             chunkIntervalMs: gcpChunkIntervalMs,
             onFinal: (text, confidence) => {

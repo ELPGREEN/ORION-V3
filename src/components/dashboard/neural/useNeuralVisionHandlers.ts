@@ -154,7 +154,7 @@ export function useNeuralVisionHandlers(props: NeuralVisionHandlersProps) {
       }
 
       // Only dispatch if it's a concrete intent with decent confidence
-      if (intent.intent !== "unknown" && intent.confidence > 0.8) {
+      if (intent.intent !== "unknown" && intent.confidence > 0.85) {
         const result = await dispatchVoiceIntent(intent, identityStatus);
         console.log("[routeOrion] Dispatch result:", result);
 
@@ -204,6 +204,12 @@ export function useNeuralVisionHandlers(props: NeuralVisionHandlersProps) {
     if (VISION_AUTO_RESPONSE_BLOCK_RE.test(q) && lastHandledVoiceRef.current.text === q && Date.now() - lastHandledVoiceRef.current.ts < 5000) {
       console.log("[NeuralVision] 🧏 Suppressed duplicate auto-response:", q);
       emitVisionDebug({ kind: "guard-auto-response-block" as any, text: q, note: "duplicate within 5s" } as any);
+      return;
+    }
+
+    // General duplicate suppression
+    if (lastHandledVoiceRef.current.text === q && Date.now() - lastHandledVoiceRef.current.ts < 3000) {
+      console.log("[NeuralVision] 🧏 Suppressed immediate duplicate transcript:", q);
       return;
     }
 
