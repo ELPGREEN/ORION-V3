@@ -563,7 +563,7 @@ export function useNeuralVoice(
 
           lastProcessedTranscriptRef.current = normalized;
           lastProcessedAtRef.current = Date.now();
-          window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: fullText } }));
+          window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: fullText } })); window.dispatchEvent(new CustomEvent("orion:user-transcript", { detail: { text: fullText } }));
           markSTTEnd();
           onCmdRef.current(fullText);
         }, silenceMs);
@@ -996,7 +996,7 @@ export function useNeuralVoice(
                 lastProcessedTranscriptRef.current = mergedNormalized;
                 lastProcessedAtRef.current = now;
 
-                try { window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: mergedText } })); } catch {}
+                try { window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: mergedText } })); window.dispatchEvent(new CustomEvent("orion:user-transcript", { detail: { text: mergedText } })); } catch {}
 
                 markSTTEnd();
                 console.log(`[Voice] GCP STT merged in ${mergeWindow}ms (turn=${turnState}): "${mergedText}" (${(confidence * 100).toFixed(0)}%)`);
