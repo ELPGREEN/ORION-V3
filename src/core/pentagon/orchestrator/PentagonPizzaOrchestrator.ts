@@ -32,6 +32,14 @@ interface QuantumEarlyExit {
   data: { quantumEarlyExit: true; provider: string; complexity: string; routingMs: number };
 }
 
+const FAST_LANE_KEYWORDS = new Set([
+  "pare", "parar", "stop", "cancelar", "silêncio", "silencio", "shh", "quieto",
+  "voltar", "ajuda", "help", "ola", "olá", "oi", "bom dia", "boa tarde",
+  "boa noite", "tchau", "adeus"
+]);
+
+const FAST_LANE_PHRASE_REGEX = /^(?:quem [eé]|o que [eé]|onde fica|qual [oa])\b/i;
+
 export class PentagonPizzaOrchestrator {
   private state: PentagonPizzaState = {
     currentState: "idle",
@@ -52,11 +60,14 @@ export class PentagonPizzaOrchestrator {
     this.state.currentState = newState;
   }
 
-  private isFastLane(input: string, intent?: string): boolean {
-    const q = input.toLowerCase().trim();
+  /**
+   * Fast Lane check: Returns true if input is a simple command or greeting.
+   * Assumes input is already normalized (lowercase/trimmed).
+   */
+  private isFastLane(q: string, intent?: string): boolean {
     if (q.length < 2) return true;
 
-    if (/^(pare|parar|stop|cancelar|sil[êe]ncio|shh|quieto|voltar|ajuda|help|ola|ol[aá]|oi|bom dia|boa tarde|boa noite|tchau|adeus)$|^(quem [eé]|o que [eé]|onde fica|qual [oa])\b/i.test(q)) {
+    if (FAST_LANE_KEYWORDS.has(q) || FAST_LANE_PHRASE_REGEX.test(q)) {
       return true;
     }
 
@@ -148,7 +159,8 @@ export class PentagonPizzaOrchestrator {
 
   private async executeCycle(input: string, ctx: PentagonContext): Promise<ActionResult> {
     try {
-      if (this.isFastLane(input, ctx.sharedState?.intent as string | undefined)) {
+      const normalizedInput = input.toLowerCase().trim();
+      if (this.isFastLane(normalizedInput, ctx.sharedState?.intent as string | undefined)) {
         console.log("[CORTEX] ⚡ Fast Lane hit. Bypassing full cycle.");
         return {
           success: true,

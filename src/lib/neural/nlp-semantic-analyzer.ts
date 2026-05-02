@@ -45,7 +45,7 @@ export type DiscourseType =
 
 const ARTICLE_REGEX = /\b(?:art\.?|artigo)\s*(\d+(?:\s*,\s*§\s*\d+)?(?:\s*,?\s*(?:inciso|inc\.?)\s*[IVXLCDM]+)?)/gi;
 const LAW_REGEX = /\b(?:lei|decreto|resolução|portaria|medida\s+provisória|mp|código)\s*(?:n[.º°]?\s*)?[\d.\/]+(?:\/\d{2,4})?/gi;
-const COURT_REGEX = /\b(STF|STJ|TST|TSE|TJ[A-Z]{2}|TRF\d?|TRT\d{1,2}|CNJ|CSJT|CNMP)\b/g;
+const COURT_REGEX = /\b(?:STF|STJ|TST|TSE|TJ[A-Z]{2}|TRF\d?|TRT\d{1,2}|CNJ|CSJT|CNMP)\b/g;
 const TRIBUNAL_DECISION_REGEX = /\b(?:súmula|s[uú]mula\s+vinculante)\s*(?:n[.º°]?\s*)?\d+/gi;
 const DATE_REGEX = /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b/g;
 const MONETARY_REGEX = /R\$\s*[\d.,]+(?:\s*(?:mil|milhões?|bilhões?))?/gi;
@@ -91,41 +91,41 @@ const ENTITY_PATTERNS: Array<{ type: LegalEntity["type"]; regex: RegExp; normali
 
 const SENTIMENT_MARKERS: Record<SentimentResult["primary"], RegExp[]> = {
   frustration: [
-    /\b(não\s+funciona|não\s+consigo|impossível|absurdo|ridículo|péssimo|horrível|inaceitável|frustrad)\b/i,
+    /\b(?:não\s+funciona|não\s+consigo|impossível|absurdo|ridículo|péssimo|horrível|inaceitável|frustrad)\b/i,
     /[!]{2,}|\?{2,}/,
   ],
   urgency: [
-    /\b(urgente|urgência|imediato|agora|rápido|prazo|amanhã|hoje|emergência|socorro|help)\b/i,
-    /\b(preciso\s+urgente|por\s+favor\s+rápido)\b/i,
+    /\b(?:urgente|urgência|imediato|agora|rápido|prazo|amanhã|hoje|emergência|socorro|help)\b/i,
+    /\b(?:preciso\s+urgente|por\s+favor\s+rápido)\b/i,
   ],
   doubt: [
-    /\b(será\s+que|não\s+sei|dúvida|incert|talvez|possivelmente|pode\s+ser|acho\s+que)\b/i,
+    /\b(?:será\s+que|não\s+sei|dúvida|incert|talvez|possivelmente|pode\s+ser|acho\s+que)\b/i,
     /\?\s*$/,
   ],
   assertive: [
-    /\b(quero|preciso|necessito|exijo|demando|faça|execute|implemente|crie|gere)\b/i,
-    /\b(obrigatoriamente|necessariamente|impreterivelmente)\b/i,
+    /\b(?:quero|preciso|necessito|exijo|demando|faça|execute|implemente|crie|gere)\b/i,
+    /\b(?:obrigatoriamente|necessariamente|impreterivelmente)\b/i,
   ],
   gratitude: [
-    /\b(obrigad[oa]|valeu|agradeço|gratidão|parabéns|excelente|ótimo|perfeito|maravilh)\b/i,
+    /\b(?:obrigad[oa]|valeu|agradeço|gratidão|parabéns|excelente|ótimo|perfeito|maravilh)\b/i,
   ],
   confusion: [
-    /\b(não\s+entendi|confus|perdid|como\s+assim|o\s+que\s+significa|explique\s+melhor|não\s+compreendi)\b/i,
+    /\b(?:não\s+entendi|confus|perdid|como\s+assim|o\s+que\s+significa|explique\s+melhor|não\s+compreendi)\b/i,
   ],
   neutral: [],
 };
 
 const DOMAIN_PATTERNS: Record<string, RegExp> = {
-  civil: /\b(contrato|obriga[çc]|responsabilidade\s+civil|dano|indeni|penhora|execu[çc]|cobran[çc]|consumidor|CDC|locação|despejo)\b/i,
-  penal: /\b(crime|delito|pena|prisão|condenação|absolvição|inquérito|denúncia|furto|roubo|homicídio|lesão\s+corporal|tráfico|fraude|estelionato)\b/i,
-  trabalhista: /\b(CLT|trabalhist|empregad|salário|hora\s+extra|rescisão|FGTS|férias|13[°º]|aviso\s+prévio|justa\s+causa|insalubridade|periculosidade)\b/i,
-  tributario: /\b(tribut|imposto|ICMS|ISS|IRPF|IRPJ|contribui[çc]|fiscal|alíquota|isenção|imunidade|ITBI|IPTU|base\s+de\s+cálculo)\b/i,
-  constitucional: /\b(constitui[çc]|fundamental|CF\/88|habeas|mandado\s+de\s+segurança|ADPF|ADI|ADC|controle\s+de\s+constitucionalidade|cláusula\s+pétrea)\b/i,
-  administrativo: /\b(licitação|concurso\s+público|servidor|improbidade|pregão|edital|administra[çc]ão\s+pública|ato\s+administrativo|PAD)\b/i,
-  familia: /\b(divórcio|guarda|pensão\s+aliment|alimentos|inventário|partilha|casamento|união\s+estável|adoção|tutela|curatela)\b/i,
-  digital: /\b(LGPD|dados\s+pessoais|privacidade|Marco\s+Civil|internet|digital|cibernético|hacker|proteção\s+de\s+dados)\b/i,
-  ambiental: /\b(ambiental|meio\s+ambiente|poluição|desmatamento|licenciamento|IBAMA|fauna|flora|sustentabilidade)\b/i,
-  previdenciario: /\b(previdência|INSS|aposentadoria|benefício|auxílio|pensão\s+por\s+morte|BPC|LOAS|incapacidade)\b/i,
+  civil: /\b(?:contrato|obriga[çc]|responsabilidade\s+civil|dano|indeni|penhora|execu[çc]|cobran[çc]|consumidor|CDC|locação|despejo)\b/i,
+  penal: /\b(?:crime|delito|pena|prisão|condenação|absolvição|inquérito|denúncia|furto|roubo|homicídio|lesão\s+corporal|tráfico|fraude|estelionato)\b/i,
+  trabalhista: /\b(?:CLT|trabalhist|empregad|salário|hora\s+extra|rescisão|FGTS|férias|13[°º]|aviso\s+prévio|justa\s+causa|insalubridade|periculosidade)\b/i,
+  tributario: /\b(?:tribut|imposto|ICMS|ISS|IRPF|IRPJ|contribui[çc]|fiscal|alíquota|isenção|imunidade|ITBI|IPTU|base\s+de\s+cálculo)\b/i,
+  constitucional: /\b(?:constitui[çc]|fundamental|CF\/88|habeas|mandado\s+de\s+segurança|ADPF|ADI|ADC|controle\s+de\s+constitucionalidade|cláusula\s+pétrea)\b/i,
+  administrativo: /\b(?:licitação|concurso\s+público|servidor|improbidade|pregão|edital|administra[çc]ão\s+pública|ato\s+administrativo|PAD)\b/i,
+  familia: /\b(?:divórcio|guarda|pensão\s+aliment|alimentos|inventário|partilha|casamento|união\s+estável|adoção|tutela|curatela)\b/i,
+  digital: /\b(?:LGPD|dados\s+pessoais|privacidade|Marco\s+Civil|internet|digital|cibernético|hacker|proteção\s+de\s+dados)\b/i,
+  ambiental: /\b(?:ambiental|meio\s+ambiente|poluição|desmatamento|licenciamento|IBAMA|fauna|flora|sustentabilidade)\b/i,
+  previdenciario: /\b(?:previdência|INSS|aposentadoria|benefício|auxílio|pensão\s+por\s+morte|BPC|LOAS|incapacidade)\b/i,
 };
 
 const DISCOURSE_DEFINITION_REGEX = /^(?:o\s+que\s+[eé]|defin[ai]|conceit[ou]|signific)/i;
@@ -138,7 +138,7 @@ const DISCOURSE_FACTUAL_REGEX = /^(?:quando|onde|quem|qual|quanto)\b/i;
 
 const COREFERENCE_SUBJECT_REGEX = /\b(?:sobre\s+)?([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)*)/;
 const COREFERENCE_TOPIC_REGEX = /\b(?:artigo|lei|decreto|contrato|processo|caso)\s+[\d.\/]+/i;
-const COREFERENCE_PRONOUN_REGEX = /\b(isso|isto|aquilo|o\s+mesmo|a\s+mesma|ele|ela|esse|essa|desse|dessa|nesse|nessa)\b/gi;
+const COREFERENCE_PRONOUN_REGEX = /\b(?:isso|isto|aquilo|o\s+mesmo|a\s+mesma|ele|ela|esse|essa|desse|dessa|nesse|nessa)\b/gi;
 
 const COMPLEXITY_CLAUSE_REGEX = /\b(?:e|ou|mas|porém|contudo|entretanto|todavia)\b/gi;
 
@@ -147,7 +147,13 @@ const COMPLEXITY_CLAUSE_REGEX = /\b(?:e|ou|mas|porém|contudo|entretanto|todavia
 export function extractLegalEntities(text: string): LegalEntity[] {
   const entities: LegalEntity[] = [];
   for (const pattern of ENTITY_PATTERNS) {
-    // Optimization: Use matchAll instead of manual RegExp loop to reduce overhead
+    // Optimization: Pre-check with .test() to avoid matchAll overhead if no matches
+    if (pattern.regex.global) pattern.regex.lastIndex = 0;
+    if (!pattern.regex.test(text)) continue;
+
+    // Reset lastIndex again for matchAll
+    if (pattern.regex.global) pattern.regex.lastIndex = 0;
+
     for (const match of text.matchAll(pattern.regex)) {
       entities.push({
         type: pattern.type,
@@ -172,6 +178,10 @@ function analyzeSentiment(text: string): SentimentResult {
     let matchCount = 0;
     for (const pattern of patterns) {
       // Optimization: Combined test and match to avoid double regex execution
+      if (pattern.global) pattern.lastIndex = 0;
+      if (!pattern.test(text)) continue;
+
+      if (pattern.global) pattern.lastIndex = 0;
       const m = text.match(pattern);
       if (m) {
         matchCount++;
@@ -198,6 +208,10 @@ export function classifyLegalDomain(text: string): string {
   let bestScore = 0;
 
   for (const [domain, pattern] of Object.entries(DOMAIN_PATTERNS)) {
+    if (pattern.global) pattern.lastIndex = 0;
+    if (!pattern.test(text)) continue;
+
+    if (pattern.global) pattern.lastIndex = 0;
     const matches = (text.match(pattern) || []).length;
     if (matches > bestScore) {
       bestScore = matches;
