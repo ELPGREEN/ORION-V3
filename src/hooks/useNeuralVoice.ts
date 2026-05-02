@@ -67,7 +67,7 @@ const NORMALIZE_DIACRITICS_REGEX = /[\u0300-\u036f]/g;
 const NORMALIZE_NON_ALPHANUMERIC_REGEX = /[^\p{L}\p{N}\s]/gu;
 
 const ECHO_WINDOW_MS = 18000;
-const ECHO_JACCARD_THRESHOLD = 0.35;
+const ECHO_JACCARD_THRESHOLD = 0.45;
 const MAX_CONSECUTIVE_ABORTS = 5;
 const MAX_CONSECUTIVE_NO_SPEECH = 8;
 const NO_SPEECH_TIMEOUT_MS = 3000; // Tolerate natural pauses before considering speech ended
@@ -375,6 +375,7 @@ export function useNeuralVoice(
   const lastProcessedAtRef = useRef(0);
   const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consecutiveAbortsRef = useRef(0);
+  const consecutiveNoSpeechRef = useRef(0);
   const voiceActiveRef = useRef(false);
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   const singletonIdRef = useRef(0);
@@ -388,6 +389,7 @@ export function useNeuralVoice(
     if (val) {
       // Clear any stale "no sound" flag the moment we start listening again.
       setNoSpeechDetected(false);
+              consecutiveNoSpeechRef.current = 0;
       const cfg = getVoiceThresholds();
       if (cfg.suppressNoSpeechToast) return;
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
@@ -406,6 +408,7 @@ export function useNeuralVoice(
     } else {
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
       setNoSpeechDetected(false);
+              consecutiveNoSpeechRef.current = 0;
     }
   }, []);
   const gcpSessionRef = useRef<GCPSTTSession | null>(null);
@@ -506,6 +509,7 @@ export function useNeuralVoice(
       onResult: (e) => {
         if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; }
         setNoSpeechDetected(false);
+              consecutiveNoSpeechRef.current = 0;
         consecutiveAbortsRef.current = 0;
 
         let hasFinal = false;
@@ -575,6 +579,12 @@ export function useNeuralVoice(
       onError: (e) => {
         console.warn("[Voice] Shared Mic Error:", e.error);
         if (e.error === "no-speech") {
+          consecutiveNoSpeechRef.current++;
+          if (consecutiveNoSpeechRef.current >= MAX_CONSECUTIVE_NO_SPEECH) {
+            console.log("[Voice] Too many consecutive no-speech errors, stopping auto-restart.");
+            stop();
+            return;
+          }
           setListeningWithTimer(true); OrbState.voiceState = "listening";
         }
       }
@@ -885,8 +895,8 @@ export function useNeuralVoice(
       singletonIdRef.current = claimMic("command");
       intentionalStopRef.current = false;
       voiceActiveRef.current = true;
+      consecutiveNoSpeechRef.current = 0;
       clearRestartTimer();
-      onCmdRef.current = onCmd;
       setListeningWithTimer(false); OrbState.voiceState = "idle";
 
       // Prime microphone for reliable auto-start
@@ -922,6 +932,7 @@ export function useNeuralVoice(
             chunkIntervalMs: gcpChunkIntervalMs,
             onFinal: (text, confidence) => {
               if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false);
+              consecutiveNoSpeechRef.current = 0;
               if (!onCmdRef.current || intentionalStopRef.current) return;
               if (speakingRef.current || VoiceState.aiResponding) {
                 if (STOP_PATTERNS.test(text)) {
