@@ -30,6 +30,7 @@ jobs:
           fetch-depth: 0
 
       - name: Sync para repo do Lovable
+        continue-on-error: true
         env:
           LOVABLE_SYNC_TOKEN: ${{ secrets.LOVABLE_SYNC_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
