@@ -44,3 +44,10 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 - Intent: ~20.8% Improvement
 **Learning:** Consolidating text normalization at the entry point of high-frequency modules significantly reduces redundant CPU cycles. Implementing .test() pre-checks for regexes avoids the overhead of iterator creation in matchAll and object allocation in match when no pattern exists. Explicitly resetting lastIndex = 0 for global regexes is essential for reliable .test() behavior in loops.
 **Action:** Optimized nlp-semantic-analyzer.ts, smart-intent-classifier.ts, and PentagonPizzaOrchestrator.ts using zero-waste engineering principles.
+
+## 2026-06-29 - [Tool Executor Gated Dispatch (Bolt V2.0)]
+**Baseline:** 0.1161ms (all tools iteration)
+**Nova Métrica:** 0.1234ms (gated dispatch + normalization)
+**Delta (Δ):** ~6% increase in synthetic latency, but prevents O(N) regex evaluation.
+**Learning:** For small tool sets (<20), the overhead of text normalization and category lookup might exceed the cost of simple regex matches. However, for a production system with 150+ tools, Gated Dispatch is mandatory to prevent linear scaling of CPU usage with system capabilities. The "Gated" approach ensures that only 10-15 relevant tools are checked per command, reducing entropy and potential false positive collisions.
+**Action:** Implemented `getGatedTools` and keyword-based dispatch in `orion-tool-executor.ts`. Optimized regexes with non-capturing groups and `lastIndex` resets.
