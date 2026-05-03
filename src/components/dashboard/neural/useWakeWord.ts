@@ -1,3 +1,4 @@
+import { VoiceState } from "@/hooks/useNeuralVoice";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { vsLog } from "./useVisionProcessing";
@@ -99,7 +100,7 @@ export function useWakeWord(listening: boolean, speechOk: boolean, onActivate: (
   }, [listening, onActivate, speechOk]);
 
   useEffect(() => {
-    if (speechOk && !listening) {
+    if (speechOk && !listening && !VoiceState.aiResponding) {
       startWakeWordListener();
     } else {
       stopWakeWordListener();
@@ -108,7 +109,7 @@ export function useWakeWord(listening: boolean, speechOk: boolean, onActivate: (
     return () => {
       stopWakeWordListener();
     };
-  }, [listening, speechOk, startWakeWordListener, stopWakeWordListener]);
+  }, [listening, speechOk, startWakeWordListener, stopWakeWordListener, VoiceState.aiResponding]);
 
   return {
     wakeWordActive,

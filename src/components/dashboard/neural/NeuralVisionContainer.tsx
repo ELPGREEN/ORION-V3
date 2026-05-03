@@ -559,8 +559,8 @@ export function NeuralVisionContainer({ skipWakeWord = false, initialCommand = "
                 } : undefined,
                 source: "mediapipe_efficientdet"
               }));
-              setMlDetections(prev => [...prev, ...mapped]);
-              mlDetectionsRef.current = [...mlDetectionsRef.current, ...mapped];
+              setMlDetections(mapped);
+              mlDetectionsRef.current = mapped;
             }
           } catch (e) { console.warn("[Vision] MediaPipe detection error:", e); }
           localDetectionRunningRef.current = false;

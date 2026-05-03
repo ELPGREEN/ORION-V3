@@ -1,3 +1,4 @@
+import { VoiceState } from "@/hooks/useNeuralVoice";
 /**
  * Neural Vision Handlers — extracted from NeuralVision.tsx (lines 436-1100)
  * Contains: routeOrionCommand, voice command handling, camera controls
@@ -24,7 +25,7 @@ const VISION_POST_COMMAND_GUARD_MS = 8000;
 const VISION_TTS_ECHO_RE = /\b(vis[aã]o\s+(ativad[ao]|desativad[ao]|j[aá]\s+est[aá]\s+ativ[ao]|j[aá]\s+est[aá]\s+desativad[ao])|desativando\s+vis[aã]o)\b/i;
 const VISION_FOLLOW_UP_RE = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+)?(vendo|enxergando)|descrev|identific|analis|leia|ler|conte|mostr|mostre|tem\s+(na|no)|quem\s+[ée]|quantos?|qual\s+[ée]|onde\s+est[aá])\b/i;
 const VISION_AUTO_RESPONSE_BLOCK_RE = /\b(vejo|estou vendo|consigo ver|na imagem|na cena|detectei|identifiquei|aparece|parece haver|tem\s+(um|uma|dois|duas|v[aá]rios)|h[aá]\s+(um|uma|dois|duas|v[aá]rios))\b/i;
-const QUESTION_OR_COMMAND_RE = /^(quem|o\s+que|qual|como|onde|quando|por\s+que|quais|quanto|quantos|quantas|ser[aá]|seria|pode|consegue|me\s+diga|me\s+conte|fale|explique|mostre|veja|olhe|analise|descreva|identifique|leia|conte)\b|[?]$/i;
+const QUESTION_OR_COMMAND_RE = /^(?:(?:[óòôõoö][\s.]*r[iíìeéè][\s.]*[oóòôõaã][\s.]*[nmn]|orion|[oó]rion|ore[oó][nm]|oria[nm]|orie[nm]|[oó]rio[nm]|[oó]ria[nm]|oure[oó][nm]|o\s+rion|ori\s*on|painel)\s*[,;:\-–—]*\s*)?(quem|o\s+que|qual|como|onde|quando|por\s+que|quais|quanto|quantos|quantas|ser[aá]|seria|pode|consegue|me\s+diga|me\s+conte|fale|explique|mostre|veja|olhe|analise|descreva|identifique|leia|conte)\b|[?]$/i;
 const FILLER_NOISE_RE = /^(hum|eh|ah|uau|nossa|ok|ta|tá|bom|certo|legal|entendi|aham|ent[aã]o|tipo|sabe|vixi|opa|eita)\s*[.!]?$/i;
 
 const _ORION_SESSION_KEY = "orion-session-ready";
@@ -206,6 +207,13 @@ export function useNeuralVisionHandlers(props: NeuralVisionHandlersProps) {
       emitVisionDebug({ kind: "guard-auto-response-block" as any, text: q, note: "duplicate within 5s" } as any);
       return;
     }
+    // Vision auto-response suppression: if the AI just spoke about seeing something, dont trigger again immediately
+    const aiJustSpokeAboutVision = VISION_AUTO_RESPONSE_BLOCK_RE.test(VoiceState.lastSpokenText) && (Date.now() - VoiceState.lastSpokenAt < 10000);
+    if (aiJustSpokeAboutVision && !QUESTION_OR_COMMAND_RE.test(q)) {
+      console.log("[NeuralVision] 🧏 Suppressed trigger - AI recently reported vision analysis");
+      return;
+    }
+
 
     // General duplicate suppression
     if (lastHandledVoiceRef.current.text === q && Date.now() - lastHandledVoiceRef.current.ts < 3000) {

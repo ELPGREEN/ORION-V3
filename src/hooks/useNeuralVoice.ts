@@ -392,7 +392,7 @@ export function useNeuralVoice(
     } else {
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
       setNoSpeechDetected(false);
-              consecutiveNoSpeechRef.current = 0;
+
     }
   }, []);
   const gcpSessionRef = useRef<GCPSTTSession | null>(null);
@@ -492,8 +492,7 @@ export function useNeuralVoice(
       },
       onResult: (e) => {
         if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; }
-        setNoSpeechDetected(false);
-              consecutiveNoSpeechRef.current = 0;
+        setNoSpeechDetected(false); consecutiveNoSpeechRef.current = 0;
         consecutiveAbortsRef.current = 0;
 
         let hasFinal = false;
@@ -881,6 +880,7 @@ export function useNeuralVoice(
       intentionalStopRef.current = false;
       voiceActiveRef.current = true;
       consecutiveNoSpeechRef.current = 0;
+
       clearRestartTimer();
       setListeningWithTimer(false); OrbState.voiceState = "idle";
 
@@ -916,8 +916,8 @@ export function useNeuralVoice(
             sampleRate: 16000,
             chunkIntervalMs: gcpChunkIntervalMs,
             onFinal: (text, confidence) => {
-              if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false);
-              consecutiveNoSpeechRef.current = 0;
+              if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false); consecutiveNoSpeechRef.current = 0;
+
               if (!onCmdRef.current || intentionalStopRef.current) return;
               if (speakingRef.current || VoiceState.aiResponding) {
                 if (STOP_PATTERNS.test(text)) {
