@@ -58,13 +58,27 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
   // Keep ref in sync
   useEffect(() => { conversationModeRef.current = conversationMode; }, [conversationMode]);
 
-  const { listening: isListening, supported: isSupported, startListening, stop: stopListening, noSpeechDetected } = useNeuralVoice();
+  const { listening: isListening, supported: isSupported, startListening, stop: stopListening, noSpeechDetected, speak } = useNeuralVoice();
 
   // Bridge transcript callback (useNeuralVoice dispatches via global event/onResult elsewhere)
   useEffect(() => {
     const handler = (e: any) => {
       const text = e?.detail?.text;
       if (!text) return;
+
+      // Filter noise and check if it is a question (Respond only if asked)
+      const q = text.toLowerCase().trim();
+      const QUESTION_OR_COMMAND_RE = /^(quem|o\s+que|qual|como|onde|quando|por\s+que|quais|quanto|quantos|quantas|ser[aá]|seria|pode|consegue|me\s+diga|me\s+conte|fale|explique|mostre|veja|olhe|analise|descreva|identifique|leia|conte)\b|[?]$/i;
+      const FILLER_NOISE_RE = /^(hum|eh|ah|uau|nossa|ok|ta|tá|bom|certo|legal|entendi|aham|ent[aã]o|tipo|sabe|vixi|opa|eita)\s*[.!]?$/i;
+
+      const isQuestionOrCommand = QUESTION_OR_COMMAND_RE.test(q) || q.split(/\s+/).length >= 4;
+      const isNoise = FILLER_NOISE_RE.test(q);
+
+      if (conversationModeRef.current && (!isQuestionOrCommand || isNoise)) {
+        console.log("[VoiceButton] Suppressed non-question/noise transcript:", text);
+        return;
+      }
+
       onTranscript(text);
       if (conversationModeRef.current && onAutoSend) onAutoSend(text);
     };
@@ -87,17 +101,17 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
 
   // High-quality speak wrapper
   const doSpeak = useCallback(async (text: string, onComplete?: () => void) => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
     setIsSpeakingHQ(true);
     try {
-      await speakHighQuality(text, controller.signal);
+      await speak(text, {
+        voice: "Charon",
+        instructions: "Você é ORION, IA Lumen7 AquaMonkey. Fale CONTÍNUO sem pausas. Máximo 0.2s entre frases. Voz MASCULINA grave, calorosa."
+      });
     } finally {
       setIsSpeakingHQ(false);
       onComplete?.();
     }
-  }, []);
+  }, [speak]);
 
   const stopSpeakingHQ = useCallback(() => {
     abortRef.current?.abort();

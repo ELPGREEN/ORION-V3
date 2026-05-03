@@ -287,21 +287,30 @@ async function primeMicrophone(): Promise<void> {
 /** Jaccard word-overlap echo detection — aggressive to prevent self-hearing */
 function isEchoOf(input: string, spoken: string, cachedTokens?: Set<string>): boolean {
   if (!spoken) return false;
+  // Extremely short transcripts are likely echos if they match exactly
   if (input.length < 5) return input === spoken;
+  // Substring match (either direction, check more chars)
   if (spoken.includes(input.slice(0, 60)) || input.includes(spoken.slice(0, 60))) return true;
+  // Shorter substring check too
   if (input.length >= 10 && spoken.includes(input.slice(0, 25))) return true;
-
+  // Jaccard overlap
   const wordsA = new Set(input.split(/\s+/).filter(w => w.length > 2));
   const wordsB = cachedTokens || new Set(spoken.split(/\s+/).filter(w => w.length > 2));
   if (wordsA.size < 2 || wordsB.size < 2) return false;
 
   let overlap = 0;
+  // PERF: Iterate over the smaller set to find intersection
   if (wordsA.size <= wordsB.size) {
-    for (const w of wordsA) { if (wordsB.has(w)) overlap++; }
+    for (const w of wordsA) {
+      if (wordsB.has(w)) overlap++;
+    }
   } else {
-    for (const w of wordsB) { if (wordsA.has(w)) overlap++; }
+    for (const w of wordsB) {
+      if (wordsA.has(w)) overlap++;
+    }
   }
 
+  // Use min of both sets for stricter matching
   return overlap / Math.min(wordsA.size, wordsB.size) > ECHO_JACCARD_THRESHOLD;
 }
 
@@ -380,6 +389,10 @@ export function useNeuralVoice(
       // Clear any stale "no sound" flag the moment we start listening again.
       setNoSpeechDetected(false);
       const cfg = getVoiceThresholds();
+      if (cfg.suppressNoSpeechToast) return;
+      if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
+        if (!listeningRef.current) return;
+        // Healthy if EITHER GCP STT session is active OR shared mic (Web Speech
         // fallback) is started. Silence after that is just the user being quiet,
         // never "SEM SOM".
         const session = gcpSessionRef.current;
@@ -548,6 +561,7 @@ export function useNeuralVoice(
 
           lastProcessedTranscriptRef.current = normalized;
           lastProcessedAtRef.current = Date.now();
+          if (VoiceState.lastSpokenText && Date.now() - VoiceState.lastSpokenAt < ECHO_WINDOW_MS) { if (isEchoOf(normalized, VoiceState.lastSpokenText, VoiceState.lastSpokenTokens)) return; }
           window.dispatchEvent(new CustomEvent("orion:voice-transcription", { detail: { text: fullText } })); window.dispatchEvent(new CustomEvent("orion:user-transcript", { detail: { text: fullText } }));
           markSTTEnd();
           onCmdRef.current(fullText);
@@ -740,7 +754,7 @@ export function useNeuralVoice(
   }, []);
 
   // ═══ PRIMARY TTS — Gemini TTS → Web Speech fallback ═══
-  const speak = useCallback(async (text: string, options?: { skipMicToggle?: boolean; voice?: string; instructions?: string }) => {
+  const speak = useCallback(async (text: string, options?: { skipMicToggle?: boolean }) => {
     console.log("[Voice] speak() called:", text.slice(0, 80), "ttsOn:", ttsRef.current);
     if (!ttsRef.current || typeof window === "undefined") {
       console.warn("[Voice] speak() skipped — ttsOn:", ttsRef.current);
@@ -802,9 +816,9 @@ export function useNeuralVoice(
         console.log("[Voice] Trying Gemini TTS (Enceladus)...");
         const gemResult = await speakWithGeminiTTS(
           cleanText,
-          options?.voice || "Enceladus",
+          "Enceladus",
           cascadeAbort.signal,
-          options?.instructions || "Você é ORION, assistente IA pessoal. Voz MASCULINA jovem-adulta clara e confiante. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Tom natural e direto, com personalidade. NUNCA pare no meio de frase.",
+          "Você é ORION, assistente IA pessoal. Voz MASCULINA jovem-adulta clara e confiante. Fale CONTÍNUO sem pausas — máximo 0.15s entre frases. Tom natural e direto, com personalidade. NUNCA pare no meio de frase.",
           "pt-BR",
         );
         console.log("[Voice] Gemini TTS result:", gemResult.played ? "PLAYED" : "NOT PLAYED");
