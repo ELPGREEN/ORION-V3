@@ -77,8 +77,21 @@ async function callFirecrawl(query: string): Promise<any> {
 
 // ─── Tool Definition ───
 
+type ToolCategory =
+  | "conversational"
+  | "legal_docs"
+  | "crm_clients"
+  | "financial"
+  | "productivity"
+  | "iot_smart"
+  | "neural"
+  | "media_lab"
+  | "google"
+  | "other";
+
 interface OrionTool {
   name: string;
+  category?: ToolCategory;
   roles?: AppRole[];
   creatorOnly?: boolean;
   regex: RegExp;
@@ -92,6 +105,71 @@ const R_ADV_PROD: AppRole[] = ["advogado", "produtor"];
 const R_ADV_CLI: AppRole[] = ["advogado", "cliente"];
 const R_PROD: AppRole[] = ["produtor"];
 const R_PROD_AFIL: AppRole[] = ["produtor", "afiliado"];
+
+const TOOL_NAME_TO_CATEGORY: Record<string, ToolCategory> = {
+  joke: "conversational", fun_trivia: "conversational", kids_story: "conversational",
+  greeting: "conversational", thanks: "conversational", how_are_you: "conversational",
+  datetime: "conversational", motivation: "conversational", tongue_twister: "conversational",
+  poem: "conversational", horoscope: "conversational", sing: "conversational",
+  riddle: "conversational", compliment: "conversational", coin_flip: "conversational",
+  dice_roll: "conversational", random_number: "conversational", daily_tip: "conversational",
+  generate_proposal: "legal_docs", doc_create: "legal_docs", doc_list: "legal_docs",
+  doc_search: "legal_docs", doc_templates: "legal_docs", doc_folders: "legal_docs",
+  signatures_status: "legal_docs", sign_send: "legal_docs", sign_now: "legal_docs",
+  export_pdf: "legal_docs", gerar_documento: "legal_docs", doc_international: "legal_docs",
+  doc_translate: "legal_docs", doc_last: "legal_docs", ai_improve_doc: "legal_docs",
+  ai_rewrite_formal: "legal_docs", ai_reformulate_simplify: "legal_docs", ai_reformulate_expand: "legal_docs",
+  "hf-sentiment": "legal_docs", "hf-ner": "legal_docs", "hf-zero-shot": "legal_docs",
+  "hf-qa": "legal_docs", "hf-summarize": "legal_docs", "hf-pdf-analyze": "legal_docs",
+  aml_screening: "legal_docs", next_deadlines: "legal_docs", config_timbre: "legal_docs",
+  crm_list_clients: "crm_clients", crm_search_client: "crm_clients", crm_list_processos: "crm_clients",
+  crm_create_client: "crm_clients", crm_client_detail: "crm_clients", crm_andamentos: "crm_clients",
+  crm_conversations: "crm_clients", contacts_search: "crm_clients", contacts_list: "crm_clients",
+  deals_pipeline: "crm_clients", office_config: "crm_clients", open_process: "crm_clients",
+  update_client_status: "crm_clients", send_client_message: "crm_clients", minisite_preview: "crm_clients",
+  minisite_share: "crm_clients", reviews_list: "crm_clients", audit_log: "crm_clients",
+  articles_list: "crm_clients", company_intel: "crm_clients",
+  cambio: "financial", fin_list_invoices: "financial", fin_pending: "financial",
+  mkt_list_products: "financial", mkt_create_product: "financial", mkt_product_detail: "financial",
+  mkt_orders: "financial", mkt_affiliates: "financial", financial_analysis: "financial",
+  payments_check: "financial", subscriptions_info: "financial",
+  task_create: "productivity", task_complete: "productivity", task_pending: "productivity",
+  tasks_list: "productivity", notifications_list: "productivity", calendar_list: "productivity",
+  calendar_create: "productivity", reminder_create: "productivity", alarm_set: "productivity",
+  timer_set: "productivity", news: "productivity", weather: "productivity",
+  shopping_list_add: "productivity", shopping_list_view: "productivity", math_calc: "productivity",
+  call_contact: "productivity", cep: "productivity", cnpj: "productivity",
+  dicionario: "productivity", feriados: "productivity", prazo: "productivity",
+  bancos: "productivity", ibge: "productivity", web_search: "productivity",
+  orion_help: "productivity", config_update_data: "productivity", config_integrations: "productivity",
+  config_address: "productivity", urgent_deadlines: "productivity",
+  "iot-list-devices": "iot_smart", "iot-bluetooth-scan": "iot_smart", "iot-mqtt-status": "iot_smart",
+  "iot-light-control": "iot_smart", "smart-home-scan": "iot_smart", "smart-home-color": "iot_smart",
+  "smart-home-brightness": "iot_smart", "smart-home-status": "iot_smart", "smart-home-thermostat": "iot_smart",
+  "smart-home-routine-create": "iot_smart", "smart-home-camera": "iot_smart", "smart-home-announce": "iot_smart",
+  "smart-home-dropin": "iot_smart", "smart-home-turnoff-all": "iot_smart", "iot-temperature": "iot_smart",
+  "iot-robot-status": "iot_smart", "iot-alexa-connect": "iot_smart",
+  neural_status: "neural", neural_commands: "neural", neural_embeddings: "neural",
+  ai_metrics: "neural", neural_experiments: "neural", neural_evolution: "neural",
+  neural_knowledge: "neural", agent_leitura: "neural", agent_construcao: "neural",
+  agent_pesquisa: "neural", arch_jarvis_compare: "neural", arch_cv_industry_compare: "neural",
+  arch_neurocore_layers: "neural", arch_hotpatching_status: "neural", arch_specialized_models: "neural",
+  arch_exclusive_capabilities: "neural", arch_fallback_cascade: "neural", arch_system_health: "neural",
+  arch_consciousness_engine: "neural", arch_federation: "neural", arch_orion_shield: "neural",
+  self_analyze_code: "neural", self_find_gaps: "neural", self_suggest_improvements: "neural",
+  self_architecture_map: "neural", daily_summary: "neural", "hf-transformers-check": "neural",
+  "hf-lab-status": "neural", "face-enroll": "neural", "face-verify": "neural",
+  "voice-id-status": "neural", code_snippets: "neural",
+  music_play: "media_lab", music_pause: "media_lab", ambient_sounds: "media_lab",
+  ocr_scan: "media_lab", ocr_analyze_image: "media_lab", "hf-image-classify": "media_lab",
+  "hf-embeddings": "media_lab", "hf-transcribe": "media_lab", "hf-tts": "media_lab",
+  "hf-hybrid-vision": "media_lab", "open-laboratorio-ia": "media_lab",
+  gmail_list: "google", gmail_send: "google", drive_search: "google",
+  drive_upload: "google", sheets_read_or_create: "google", gdocs_create: "google",
+  gdocs_list: "google", "google-tasks-create": "google", "google-tasks-list": "google",
+  "google-slides-create": "google", "google-forms-create": "google", schedule_consultation: "google",
+  admin_emails: "google"
+};
 
 // Helper to extract patterns
 const extractCEP = (q: string) => q.match(/\d{5}-?\d{3}/)?.[0] || "";
@@ -150,7 +228,7 @@ function parseScheduleDateTime(text: string): { start: Date; end: Date } {
 
 function cleanScheduleSummary(text: string): string {
   return text
-    .replace(/\b(hoje|amanh[ãa]|depois de amanh[ãa]|essa semana|na agenda|no calend[aá]rio)\b/gi, "")
+    .replace(/\b(?:hoje|amanh[ãa]|depois de amanh[ãa]|essa semana|na agenda|no calend[aá]rio)\b/gi, "")
     .replace(/\b\d{4}-\d{2}-\d{2}\b/g, "")
     .replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{4})?\b/g, "")
     .replace(/\b(?:[àa]s?|as)\s*\d{1,2}(?::\d{2})?\b/gi, "")
@@ -3440,7 +3518,70 @@ const TOOLS: OrionTool[] = [
   ...CONVERSATION_FRAMEWORKS,
 ];
 
+/**
+ * ─── Intent Gater (BOLT V2.0) ───
+ * Groups tools by category and provides optimized discovery via keywords.
+ */
+const TOOLS_BY_CATEGORY: Map<ToolCategory, OrionTool[]> = new Map();
 
+// Initialize categories
+TOOLS.forEach(tool => {
+  const cat = TOOL_NAME_TO_CATEGORY[tool.name] || "other";
+  if (!TOOLS_BY_CATEGORY.has(cat)) TOOLS_BY_CATEGORY.set(cat, []);
+  TOOLS_BY_CATEGORY.get(cat)!.push(tool);
+});
+
+const GATER_KEYWORDS: Array<{ keywords: string[]; category: ToolCategory }> = [
+  { keywords: ["ola", "oi", "bom dia", "boa tarde", "boa noite", "obrigado", "valeu", "como vai", "piada", "charada", "historia", "poema", "rima", "horoscopo", "signo", "elogio", "motiv", "dica", "que horas", "que dia"], category: "conversational" },
+  { keywords: ["documento", "contrato", "peticao", "procuracao", "recurso", "parecer", "laudo", "oficio", "requerimento", "notificacao", "habeas", "embargo", "sentenca", "acordo", "jurisprudencia", "lei", "artigo", "assinar", "assinatura", "pdf", "exportar", "traduzir", "reescrever", "melhorar", "resumir", "entidade", "sentiment"], category: "legal_docs" },
+  { keywords: ["cliente", "processo", "andamento", "contato", "crm", "pipeline", "negocio", "oportunidade", "mini-site", "site", "loja", "escritorio", "mensagem"], category: "crm_clients" },
+  { keywords: ["cambio", "cotacao", "dolar", "euro", "fatura", "pagamento", "boleto", "inadimplente", "financeira", "receita", "produto", "venda", "afiliado", "comissao", "assinatura", "plano"], category: "financial" },
+  { keywords: ["tarefa", "lista", "agenda", "evento", "reuniao", "lembrar", "lembrete", "acordar", "despertar", "timer", "temporizador", "noticia", "clima", "tempo", "chover", "compra", "cep", "cnpj", "banco", "ibge", "municipio", "calcul", "ligar", "telefonar", "ajuda", "capacidade", "consegue", "sabe"], category: "productivity" },
+  { keywords: ["luz", "lampada", "termostato", "ar-condicionado", "rotina", "camera", "anunciar", "dropin", "bluetooth", "mqtt", "iot", "robo", "alexa"], category: "iot_smart" },
+  { keywords: ["status", "rede", "neural", "ia", "inteligencia", "metrica", "performance", "experimento", "evolucao", "proposta", "codigo", "analise", "lacuna", "melhoria", "arquitetura", "camada", "jarvis", "neurocore"], category: "neural" },
+  { keywords: ["tocar", "play", "ouvir", "musica", "video", "som", "chuva", "ondas", "natureza", "transcrever", "sintetizar", "voz", "falar", "visao", "laboratorio"], category: "media_lab" },
+  { keywords: ["gmail", "email", "drive", "planilha", "sheet", "google", "doc", "slides", "form", "task"], category: "google" }
+];
+
+function getGatedTools(text: string): OrionTool[] {
+  const normalized = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const categories = new Set<ToolCategory>();
+
+  for (const group of GATER_KEYWORDS) {
+    if (group.keywords.some(kw => normalized.includes(kw))) {
+      categories.add(group.category);
+    }
+  }
+
+  // Expansion rules
+  if (categories.has("google")) categories.add("productivity");
+
+  if (categories.size === 0) return TOOLS; // Fallback to all tools if no keywords matched
+
+  const result: OrionTool[] = [];
+  categories.forEach(cat => {
+    const catTools = TOOLS_BY_CATEGORY.get(cat);
+    if (catTools) result.push(...catTools);
+  });
+
+  // Add "other" tools as safety net
+  const otherTools = TOOLS_BY_CATEGORY.get("other");
+  if (otherTools) result.push(...otherTools);
+
+  // Add "conversational" if input is short
+  if (normalized.length < 15) {
+    const conv = TOOLS_BY_CATEGORY.get("conversational");
+    if (conv) result.push(...conv);
+  }
+
+  // Deduplicate by name
+  const seen = new Set<string>();
+  return result.filter(t => {
+    if (seen.has(t.name)) return false;
+    seen.add(t.name);
+    return true;
+  });
+}
 
 
 export async function matchAndExecuteTool(
@@ -3461,10 +3602,18 @@ export async function matchAndExecuteTool(
     };
   }
 
-  for (const tool of TOOLS) {
+  // [v3] BOLT V2.0: Gated Dispatch
+  const gatedTools = getGatedTools(normalized);
+
+  for (const tool of gatedTools) {
     // Role-based filtering: skip tools not available for this role
     if (userRole && tool.roles && !tool.roles.includes(userRole)) continue;
 
+    // Optimization: avoid match if regex is not global and we just need a simple test first
+    if (tool.regex.global) tool.regex.lastIndex = 0;
+    if (!tool.regex.test(normalized)) continue;
+
+    if (tool.regex.global) tool.regex.lastIndex = 0;
     const match = normalized.match(tool.regex);
     if (match) {
       // Creator-only guard: block non-creator access
