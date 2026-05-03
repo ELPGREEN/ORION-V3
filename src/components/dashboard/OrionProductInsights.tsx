@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, Loader2, Sparkles, Cpu, Target, BarChart3, Zap } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { processOrionRequest } from "@/lib/neural/orion-brain";
 
 interface Props {
   context: string;
@@ -17,11 +17,13 @@ export function OrionProductInsights({ context }: Props) {
   const generateInsights = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("orion-produtor-ai", {
-        body: { action: "analyze_performance", context },
+      const prompt = `Analise a performance de mercado e sugira estratégias de escalabilidade com base no contexto: ${context}`;
+      const response = await processOrionRequest(prompt, {
+        source: "system",
+        conversationContext: "Painel do Produtor"
       });
-      if (error) throw error;
-      setInsights(data.result);
+
+      setInsights(response.response);
     } catch (err: any) {
       toast.error("Erro no processamento preditivo: " + err.message);
     } finally {
@@ -69,7 +71,7 @@ export function OrionProductInsights({ context }: Props) {
                 <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
                 <Loader2 className="h-6 w-6 animate-spin text-primary relative" />
               </div>
-              <p className="text-[9px] font-mono animate-pulse uppercase tracking-[0.3em]">Auditing Sales Data...</p>
+              <p className="text-[9px] font-mono animate-pulse uppercase tracking-[0.3em]">Auditing Sales Data via Pentagon...</p>
             </div>
           )}
 
@@ -77,7 +79,7 @@ export function OrionProductInsights({ context }: Props) {
             <div className="text-xs text-muted-foreground leading-relaxed animate-in fade-in duration-500 font-sans">
               <div className="p-3 rounded border border-primary/10 bg-primary/5 mb-3">
                  <p className="text-[9px] font-bold uppercase tracking-tighter text-primary mb-1">PROPOSTA DE ESCALABILIDADE</p>
-                 <div className="text-foreground font-medium">
+                 <div className="text-foreground font-medium whitespace-pre-wrap">
                     {insights}
                  </div>
               </div>

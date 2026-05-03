@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Brain, Cpu, Bot, Wifi, Shield, Activity, Zap, Server } from "lucide-react";
 import { toast } from "sonner";
 import { StatusLED } from "@/components/dashboard/DashboardTheme";
+import { processOrionRequest } from "@/lib/neural/orion-brain";
 
 interface SubsystemStatus {
   name: string;
@@ -35,12 +35,14 @@ export default function OrionComandoTotal() {
     setLoading(action);
     setAiResponse(null);
     try {
-      const { data, error } = await supabase.functions.invoke("orion-produtor-ai", {
-        body: { action, context: `User: ${user.email}, Timestamp: ${new Date().toISOString()}` },
+      const prompt = `Executar comando de proprietário: ${label} (${action}). Contexto: Usuário ${user.email}, Setor de Monitoramento.`;
+      const response = await processOrionRequest(prompt, {
+        source: "system",
+        conversationContext: "Comando Total do Proprietário"
       });
-      if (error) throw error;
-      setAiResponse(data?.result || "Sem resposta.");
-      toast.success(`${label} concluído`);
+
+      setAiResponse(response.response || "Sem resposta.");
+      toast.success(`${label} concluído via Pentagon`);
     } catch (e: any) {
       toast.error(e.message || "Erro ao executar ação");
     } finally {
@@ -56,7 +58,6 @@ export default function OrionComandoTotal() {
 
   return (
     <Card className="border-[hsl(30,85%,52%,0.2)] bg-gradient-to-br from-card to-[hsl(30,85%,52%,0.04)] overflow-hidden relative">
-      {/* Industrial grid overlay */}
       <div className="absolute inset-0 pointer-events-none" style={{
         backgroundImage: "linear-gradient(hsl(30,85%,52%,0.02) 1px, transparent 1px), linear-gradient(90deg, hsl(30,85%,52%,0.02) 1px, transparent 1px)",
         backgroundSize: "30px 30px",
@@ -65,7 +66,7 @@ export default function OrionComandoTotal() {
         <CardTitle className="flex items-center justify-between text-lg font-serif">
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-[hsl(30,85%,52%)]" />
-            Orion — Comando Total
+            Orion — Comando Total (Pentagon)
           </div>
           <div className="flex items-center gap-3">
             <StatusLED status="online" label="CORE" />
@@ -74,10 +75,9 @@ export default function OrionComandoTotal() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 relative z-10">
-        {/* Subsystems Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {subsystems.map((s) => (
-            <div key={s.name} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-[hsl(220,20%,6%)] border border-[hsl(30,85%,52%,0.1)] hover:border-[hsl(30,85%,52%,0.25)] transition-colors">
+            <div key={s.name} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-[hsl(220,20%,6%)] border border border-[hsl(30,85%,52%,0.1)] hover:border-[hsl(30,85%,52%,0.25)] transition-colors">
               <s.icon className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-mono font-medium truncate text-foreground">{s.name}</p>
@@ -88,7 +88,6 @@ export default function OrionComandoTotal() {
           ))}
         </div>
 
-        {/* ROS2 Toggle */}
         <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(220,20%,6%)] border border-[hsl(30,85%,52%,0.1)]">
           <div className="flex items-center gap-2">
             <Bot className="h-4 w-4 text-[hsl(30,85%,52%)]" />
@@ -100,7 +99,6 @@ export default function OrionComandoTotal() {
           <Switch checked={rosEnabled} onCheckedChange={setRosEnabled} />
         </div>
 
-        {/* Owner Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {ownerActions.map((a) => (
             <Button
@@ -120,7 +118,6 @@ export default function OrionComandoTotal() {
           ))}
         </div>
 
-        {/* AI Response */}
         {aiResponse && (
           <div className="p-3 rounded-lg bg-[hsl(220,20%,6%)] border border-[hsl(30,85%,52%,0.15)] max-h-48 overflow-y-auto">
             <p className="text-xs font-mono whitespace-pre-wrap text-foreground/80">{aiResponse}</p>

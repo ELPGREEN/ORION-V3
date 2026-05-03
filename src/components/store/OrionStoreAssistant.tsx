@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, X, Send, Loader2, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from "react-markdown";
+import { processOrionRequest } from "@/lib/neural/orion-brain";
 
 interface OrionStoreAssistantProps {
   productTitle: string;
@@ -39,18 +39,16 @@ export function OrionStoreAssistant({ productTitle, productDescription, productP
 
     try {
       const priceStr = productPrice ? `R$ ${(productPrice / 100).toFixed(2)}` : "N/A";
-      const { data, error } = await supabase.functions.invoke("orion-produtor-ai", {
-        body: {
-          action: "product_faq",
-          product_title: productTitle,
-          product_description: productDescription || "",
-          context: `Preço: ${priceStr}. Pergunta: ${question}`,
-        },
+      const fullPrompt = `Pergunta sobre o produto "${productTitle}". Descrição: ${productDescription || "N/A"}. Preço: ${priceStr}. Pergunta do usuário: ${question}`;
+
+      const response = await processOrionRequest(fullPrompt, {
+        source: "text",
+        conversationContext: `Produto: ${productTitle}`
       });
-      if (error) throw error;
-      setMessages((prev) => [...prev, { role: "assistant", content: data.result }]);
+
+      setMessages((prev) => [...prev, { role: "assistant", content: response.response }]);
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Desculpe, não consegui responder agora. Tente novamente." }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Desculpe, meu núcleo neural está processando outras informações no momento. Tente novamente." }]);
     } finally {
       setLoading(false);
     }
@@ -77,7 +75,7 @@ export function OrionStoreAssistant({ productTitle, productDescription, productP
           <Bot className="h-5 w-5 text-primary" />
           <div>
             <p className="text-sm font-semibold text-foreground">Orion Assistente</p>
-            <p className="text-[10px] text-muted-foreground">Tire dúvidas sobre o produto</p>
+            <p className="text-[10px] text-muted-foreground">Governança Pentagon Ativa</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOpen(false)}>

@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Bot, Loader2, RefreshCw, Sparkles, Brain, Cpu, Zap } from "lucide-react";
+import { Bot, Loader2, Sparkles, Cpu, Zap, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from "react-markdown";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { processOrionRequest } from "@/lib/neural/orion-brain";
 
 export default function OrionAdvogadoInsights() {
   const { user } = useAuth();
@@ -18,11 +18,13 @@ export default function OrionAdvogadoInsights() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("orion-advogado-ai", {
-        body: { action: "deadline_analysis", user_id: user.id },
+      const prompt = "Realize uma análise preditiva de prazos e eficiência operacional para o painel do advogado. Identifique riscos e oportunidades.";
+      const response = await processOrionRequest(prompt, {
+        source: "system",
+        conversationContext: "Painel do Advogado"
       });
-      if (error) throw error;
-      setInsights(data?.result || "Sem insights disponíveis no momento.");
+
+      setInsights(response.response || "Sem insights disponíveis no momento.");
     } catch (err: any) {
       toast({ title: "Erro de Processamento Neural", description: err.message, variant: "destructive" });
     } finally {
@@ -77,7 +79,7 @@ export default function OrionAdvogadoInsights() {
               </div>
               <div className="text-center space-y-1">
                  <p className="text-[10px] font-mono animate-pulse uppercase tracking-[0.3em]">Processing Logic...</p>
-                 <p className="text-[8px] text-muted-foreground font-mono uppercase tracking-tighter opacity-50">Accessing Hybrid Cloud Infrastructure</p>
+                 <p className="text-[8px] text-muted-foreground font-mono uppercase tracking-tighter opacity-50">Pentagon Governance Active</p>
               </div>
             </div>
           )}
@@ -97,9 +99,6 @@ export default function OrionAdvogadoInsights() {
             </div>
           )}
         </ScrollArea>
-
-        {/* Decorative corner accent */}
-        <div className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-tl from-primary/10 to-transparent pointer-events-none opacity-20" />
       </CardContent>
     </Card>
   );
