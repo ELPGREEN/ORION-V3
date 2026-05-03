@@ -319,7 +319,7 @@ case "self_evolve":
       case "explanation":
       case "philosophy":
       case "humor": {
-        const { CHARADAS } = await import("@/lib/neural/orion-charadas");
+        const { CHARADAS } = await import("./orion-charadas");
         const idx = Math.floor(Math.random() * CHARADAS.length);
         const joke = CHARADAS[idx];
         return ok("humor", `😄 ${joke.pergunta}\n\n💡 ${joke.resposta}`, params, t0);
@@ -327,7 +327,7 @@ case "self_evolve":
 
       case "security":
       case "identity": {
-        const { getOrionSelfDescription } = await import("@/lib/neural/orion-consciousness");
+        const { getOrionSelfDescription } = await import("./orion-consciousness");
         return ok(intent.intent, getOrionSelfDescription("brief"), params, t0);
       }
 

@@ -176,7 +176,7 @@ const TOOLS: OrionTool[] = [
     regex: /cri(?:ar?|e)\s+(?:uma?\s+)?proposta|ger(?:ar?|e)\s+(?:uma?\s+)?proposta|proposta.*invest|fa(?:zer?|ça)\s+(?:uma?\s+)?proposta/i,
     extract: () => ({}),
     call: async () => {
-      const { buildProposalTemplate } = await import("@/lib/neural/orion-knowledge-base");
+      const { buildProposalTemplate } = await import("./orion-knowledge-base");
       return buildProposalTemplate();
     },
     
@@ -1430,7 +1430,7 @@ const TOOLS: OrionTool[] = [
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return "⚠️ Não autenticado.";
       // Owner bypass — full access
-      const { isOwnerEmail, ownerHasFullAccess } = await import("@/lib/neural/orion-consciousness");
+      const { isOwnerEmail, ownerHasFullAccess } = await import("./orion-consciousness");
       if (isOwnerEmail(user.email)) {
         const access = ownerHasFullAccess(user.email);
         return `👑 **Proprietário do Sistema — Acesso Total**\n• Plano: **${access.planType}**\n• Status: ✅ Ativo permanente\n• Funcionalidades: ${access.features.length} módulos desbloqueados\n\n${access.features.map(f => `✓ ${f}`).join("\n")}`;
@@ -2762,7 +2762,7 @@ const TOOLS: OrionTool[] = [
         return `✏️ **Reformulação IA**\n\nForneça o texto para reformular. Exemplos:\n• "Reformular texto: O réu não compareceu à audiência"\n• "Reescrever formalmente: o cara não veio"\n\n🎙️ Ou diga: **"Orion, abrir reformulação"**\n\n__NAV__/dashboard/reformulacao`;
       }
       try {
-        const { reformulateForComprehension } = await import("@/lib/neural/orion-reformulation");
+        const { reformulateForComprehension } = await import("./orion-reformulation");
         const result = await reformulateForComprehension(text, "formalize");
         return `✏️ **Reformulação IA** — Modo Formalizar\n\n📝 **Original:** "${text}"\n\n✅ **Reformulado:** "${result.reformulated}"\n\n📊 Confiança: ${(result.confidence * 100).toFixed(0)}% | ⏱️ ${result.processingTimeMs}ms`;
       } catch (e: any) {
@@ -2781,7 +2781,7 @@ const TOOLS: OrionTool[] = [
       const text = p.text as string;
       if (!text || text.length < 5) return "Forneça o texto para simplificar. Ex: 'Simplificar texto: destarte, o réu não logrou êxito...'";
       try {
-        const { reformulateForComprehension } = await import("@/lib/neural/orion-reformulation");
+        const { reformulateForComprehension } = await import("./orion-reformulation");
         const result = await reformulateForComprehension(text, "simplify");
         return `✏️ **Reformulação IA** — Modo Simplificar\n\n📝 **Original:** "${text}"\n\n✅ **Simplificado:** "${result.reformulated}"\n\n📊 Confiança: ${(result.confidence * 100).toFixed(0)}%`;
       } catch (e: any) {
@@ -3200,7 +3200,7 @@ const TOOLS: OrionTool[] = [
     extract: () => ({}),
     call: async () => {
       try {
-        const { getRandomCharada, formatCharadaOrion } = await import("@/lib/neural/orion-charadas");
+        const { getRandomCharada, formatCharadaOrion } = await import("./orion-charadas");
         return formatCharadaOrion(getRandomCharada());
       } catch {
         return "😄 Por que o programador foi ao oftalmologista? Porque não conseguia enxergar o C#!";

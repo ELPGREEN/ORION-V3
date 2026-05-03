@@ -23,7 +23,7 @@ import { routeToTier } from "@/lib/neural/slim-model-router";
 import { cognitiveRoute, validateLogicalConsistency, cacheReasoningPattern, type CognitiveRouting } from "@/lib/neural/cognitive-fast-reasoner";
 import { buildCognitionContext, postCognitionLearn } from "@/lib/neural/neural-cognition-engine";
 import { shouldRefine, buildRefinementPrompt } from "@/lib/neural/drafter-critic-loop";
-import { analyzeSemantics } from "@/lib/neural/nlp-semantic-analyzer";
+import { analyzeSemantics } from "@/lib/neural";
 import { getInstantResponse } from "@/lib/neural/instant-response-cache";
 import { quickLocalReformulate, analyzeComprehension } from "@/lib/neural/orion-reformulation";
 import { estimateResponseTime, recordLatency } from "@/lib/neural/query-time-estimator";

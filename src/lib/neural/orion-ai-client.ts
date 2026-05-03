@@ -9,7 +9,7 @@ import { wrapSupabase, wrapEdgeFunction } from "@/lib/errors";
 import {
   getMemoryFacts,
   addMemoryFacts,
-} from "@/lib/neural/orion-memory";
+} from "./orion-memory";
 import { buildCognitionContext, postCognitionLearn } from "./neural-cognition-engine";
 import { executeCorrectiveRAG } from "./corrective-rag";
 import { getAdaptiveNeurolinguisticHead, monitorMaestroPulse, dispatchMaestroEvolution } from "./orion-maestro-unification";
@@ -24,7 +24,7 @@ const getLearningStats = () => ({ totalPriors: 0, maturePriors: 0, totalObservat
 const learnFromDetection = (_obj: any, _desc: any) => {};
 import { generateLocalResponse, isLocalEngineAvailable } from "@/lib/ai/local-llm-engine";
 // hf-vision-gate REMOVED — was downloading ~50MB of WASM models in browser
-import { matchProtocols } from "@/lib/neural/orion-voice-protocols";
+import { matchProtocols } from "./orion-voice-protocols";
 
 // ═══ PRE-COMPILED REGEXES FOR PERFORMANCE ═══
 const SENTENCE_END_REGEX = /.*?[.!?…;]+\s/ys;
@@ -222,15 +222,15 @@ let _consciousnessModule: any = null;
 let _introspectionModule: any = null;
 
 async function getKnowledgeBase() {
-  if (!_knowledgeBaseModule) _knowledgeBaseModule = await import("@/lib/neural/orion-knowledge-base");
+  if (!_knowledgeBaseModule) _knowledgeBaseModule = await import("./orion-knowledge-base");
   return _knowledgeBaseModule;
 }
 async function getConsciousness() {
-  if (!_consciousnessModule) _consciousnessModule = await import("@/lib/neural/orion-consciousness");
+  if (!_consciousnessModule) _consciousnessModule = await import("./orion-consciousness");
   return _consciousnessModule;
 }
 async function getIntrospection() {
-  if (!_introspectionModule) _introspectionModule = await import("@/lib/neural/orion-introspection");
+  if (!_introspectionModule) _introspectionModule = await import("./orion-introspection");
   return _introspectionModule;
 }
 

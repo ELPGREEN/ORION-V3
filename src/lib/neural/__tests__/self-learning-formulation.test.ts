@@ -23,7 +23,7 @@ import {
   needsReformulation,
   reformulateForComprehension,
   COMPREHENSION_THRESHOLD,
-} from "@/lib/neural/orion-reformulation";
+} from "../orion-reformulation";
 
 import {
   recordCorrection,
@@ -31,16 +31,16 @@ import {
   isNegativeFeedback,
   extractCorrectionTarget,
   clearCorrections,
-} from "@/lib/neural/intent-feedback";
+} from "../intent-feedback";
 
-import { smartClassify } from "@/lib/neural/smart-intent-classifier";
+import { smartClassify } from "../smart-intent-classifier";
 
 import {
   runConsciousnessBridge,
   recordReasoningOutcome,
   getConsciousnessContextPrompt,
   type ReasoningContext,
-} from "@/lib/neural/consciousness-bridge";
+} from "../consciousness-bridge";
 
 import { OrionLLMClient, FREE_MODELS } from "@/lib/integrations/llm-providers";
 

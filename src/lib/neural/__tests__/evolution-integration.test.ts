@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { runFullScan, getHealthScore } from "../jules-evolution-engine";
 import { recordSubsystemFailure, getSubsystemFailureStatus } from "../jules-auto-triggers";
 import { getImmuneMemory, shouldQuarantine, checkAndRegisterResolutions } from "../jules-immune-system";
-import { isSubsystemHealthy } from "../index";
+import { isSubsystemHealthy } from "../subsystem-health-utils";
 import { supabase } from "@/integrations/supabase/client";
 
 vi.mock("@/integrations/supabase/client", () => ({

@@ -9,7 +9,7 @@ import {
   getHRLState,
   updateHRLFromOutcome,
   type ReasoningContext,
-} from "@/lib/neural/consciousness-bridge";
+} from "../consciousness-bridge";
 
 describe("Consciousness Bridge", () => {
   const baseContext: ReasoningContext = {
