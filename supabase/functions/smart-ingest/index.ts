@@ -242,8 +242,9 @@ Continue EXATAMENTE de onde parou. Retorne apenas o texto continuado, sem repeti
 // ─── Corpus Normalization ───
 function normalizeCorpus(text: string): string {
   let t = text;
-  // Remove control characters (except \n, \t, \r)
-  t = t.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+   // Remove control characters (except \n, \t, \r)
+   // eslint-disable-next-line no-control-regex
+   t = t.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
   // Collapse multiple spaces/tabs into single space
   t = t.replace(/[^\S\n\r]+/g, " ");
   // Normalize hyphens and dashes
@@ -520,7 +521,8 @@ Deno.serve(async (req) => {
     }
 
     // Strip null bytes
-    extractedText = extractedText.replace(/\u0000/g, "");
+     // eslint-disable-next-line no-control-regex
+     extractedText = extractedText.replace(/\u0000/g, "");
 
     // ─── Normalização de Corpus (Open Australian Legal LLM-inspired) ───
     extractedText = normalizeCorpus(extractedText);

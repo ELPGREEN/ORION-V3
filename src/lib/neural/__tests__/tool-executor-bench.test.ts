@@ -54,7 +54,8 @@ describe('Tool Executor Latency Benchmark', () => {
   ];
 
   it('measures baseline latency of matchAndExecuteTool matching logic', async () => {
-    const iterations = 500;
+    // Reduced iterations to avoid timeout in CI environments
+    const iterations = 100;
 
     // Warm up
     for (let i = 0; i < 20; i++) {

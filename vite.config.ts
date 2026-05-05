@@ -133,5 +133,7 @@ export default defineConfig(() => ({
     cssCodeSplit: true,
     sourcemap: false,
     target: "es2020",
+    // Reduce memory pressure
+    chunkSizeWarningLimit: 1000,
   },
 }));

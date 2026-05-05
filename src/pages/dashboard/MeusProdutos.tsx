@@ -143,7 +143,13 @@ export default function MeusProdutos() {
   };
 
   const openCreate = () => { setEditingId(null); setForm(emptyForm); setOpen(true); };
-  const handleSave = () => { editingId ? updateProduct.mutate() : createProduct.mutate(); };
+  const handleSave = () => {
+    if (editingId) {
+      updateProduct.mutate();
+    } else {
+      createProduct.mutate();
+    }
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
