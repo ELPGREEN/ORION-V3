@@ -6774,6 +6774,7 @@ export type Database = {
           fcm_token: string | null
           full_name: string | null
           id: string
+          niche: string | null
           oab_number: string | null
           oab_uf: string | null
           role: string | null
@@ -6790,6 +6791,7 @@ export type Database = {
           fcm_token?: string | null
           full_name?: string | null
           id?: string
+          niche?: string | null
           oab_number?: string | null
           oab_uf?: string | null
           role?: string | null
@@ -6806,6 +6808,7 @@ export type Database = {
           fcm_token?: string | null
           full_name?: string | null
           id?: string
+          niche?: string | null
           oab_number?: string | null
           oab_uf?: string | null
           role?: string | null

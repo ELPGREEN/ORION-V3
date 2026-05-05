@@ -136,6 +136,17 @@ const ClienteDashboard = lazy(lazyRetry(() => import("./pages/dashboard/ClienteD
 const AdvogadoDashboard = lazy(lazyRetry(() => import("./pages/dashboard/AdvogadoDashboard")));
 const AfiliadoDashboard = lazy(lazyRetry(() => import("./pages/dashboard/AfiliadoDashboard")));
 const DashboardHome = lazy(lazyRetry(() => import("./pages/dashboard/DashboardHome")));
+const FunilDeVendas = lazy(lazyRetry(() => import("./pages/templates/FunilDeVendas")));
+const FunilDeVendasLanding = lazy(lazyRetry(() => import("./pages/landings/FunilDeVendasLanding")));
+const CopyVsl = lazy(lazyRetry(() => import("./pages/templates/CopyVsl")));
+const PeticaoUmClique = lazy(lazyRetry(() => import("./pages/templates/PeticaoUmClique")));
+const DiagnosticoIndustrial = lazy(lazyRetry(() => import("./pages/templates/DiagnosticoIndustrial")));
+const Lancamento7Dias = lazy(lazyRetry(() => import("./pages/templates/Lancamento7Dias")));
+const TrafegoPago = lazy(lazyRetry(() => import("./pages/templates/TrafegoPago")));
+const ContratoIA = lazy(lazyRetry(() => import("./pages/templates/ContratoIA")));
+const AnaliseProcesso = lazy(lazyRetry(() => import("./pages/templates/AnaliseProcesso")));
+const PlanoManutencao = lazy(lazyRetry(() => import("./pages/templates/PlanoManutencao")));
+const Onboarding = lazy(lazyRetry(() => import("./pages/Onboarding")));
 // OrionOrchestratorPage removed — merged into RedeNeuralPage
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -211,6 +222,26 @@ const App = () => (
                   <Route path="/solucoes/afiliados" element={<SolucoesAfiliados />} />
                   <Route path="/solucoes/industria" element={<SolucoesIndustria />} />
                   <Route path="/investidores" element={<Investidores />} />
+                  <Route path="/templates/funil-de-vendas" element={<FunilDeVendas />} />
+                  <Route path="/funil-de-vendas" element={<FunilDeVendasLanding />} />
+                  <Route path="/templates/copy-vsl" element={<CopyVsl />} />
+                  <Route path="/copy-vsl" element={<CopyVsl />} />
+                  <Route path="/templates/peticao" element={<PeticaoUmClique />} />
+                  <Route path="/peticao-em-1-clique" element={<PeticaoUmClique />} />
+                  <Route path="/templates/diagnostico-industrial" element={<DiagnosticoIndustrial />} />
+                  <Route path="/diagnostico-industrial" element={<DiagnosticoIndustrial />} />
+                  <Route path="/templates/lancamento-7-dias" element={<Lancamento7Dias />} />
+                  <Route path="/lancamento-7-dias" element={<Lancamento7Dias />} />
+                  <Route path="/templates/trafego-pago" element={<TrafegoPago />} />
+                  <Route path="/trafego-pago" element={<TrafegoPago />} />
+                  <Route path="/templates/contrato-ia" element={<ContratoIA />} />
+                  <Route path="/contrato-ia" element={<ContratoIA />} />
+                  <Route path="/templates/analise-processo" element={<AnaliseProcesso />} />
+                  <Route path="/analise-processo" element={<AnaliseProcesso />} />
+                  <Route path="/templates/plano-manutencao" element={<PlanoManutencao />} />
+                  <Route path="/plano-manutencao" element={<PlanoManutencao />} />
+                  <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="/comecar" element={<Onboarding />} />
 
                   {/* Auth Protected Public Pages */}
                   <Route path="/consulta" element={<AuthGuard><ConsultaIA /></AuthGuard>} />

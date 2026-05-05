@@ -54,20 +54,26 @@ const DOT_CLEAN_REGEX = /\.+/g;
 const NEWLINE_CLEAN_REGEX = /\n+/g;
 const WHITESPACE_CLEAN_REGEX = /\s+/g;
 const ACTION_PHRASE_REGEX = "prepare-?se\\s+para\\s+(?:a\\s+)?a[cç][aã]o";
-const MAXIMO_PHRASE_REGEX = "(?:d(?:eb|r)i?n?(?:e|in)?|debr\\w{0,8}|dri)\\s+(?:[ée]\\s+)?(?:ao|o)\\s+m[aá]ximo";
+// Captura amplo: "debrin", "de brin", "debre", "de bri", "dri", "dre", "drin", etc. — com ou sem espaço, com ou sem "é/e/ao/o"
+const MAXIMO_PHRASE_REGEX = "(?:de\\s*)?(?:d(?:eb|r)\\w{0,6}|dri\\w{0,4}|drin|debrin|de\\s*brin\\w{0,4})\\s*(?:[ée]\\s+)?(?:ao|o)?\\s*m[aá]ximo";
 const FORBIDDEN_ORION_CATCHPHRASE_REGEXES = [
+  // Frase completa em qualquer ordem
   new RegExp(`${ACTION_PHRASE_REGEX}[\\s,.!?-]*(?:${MAXIMO_PHRASE_REGEX}\\s*(?:e\\s+)?)?deixa\\s+que\\s+eu\\s+te\\s+proteja`, "gi"),
   new RegExp(`${ACTION_PHRASE_REGEX}[^.!?\\n]*?(?:proteja|proteger)[^.!?\\n]*`, "gi"),
+  // Componentes isolados — qualquer um basta para remover
   new RegExp(ACTION_PHRASE_REGEX, "gi"),
   new RegExp(`${MAXIMO_PHRASE_REGEX}(?:\\s+e\\s+deixa\\s+que\\s+eu\\s+te\\s+proteja)?`, "gi"),
-  /deixa\s+que\s+eu\s+te\s+proteja/gi,
+  /(?:e\s+)?deixa\s+que\s+eu\s+(?:te\s+)?proteg\w*/gi,
+  /vou\s+te\s+proteger\w*/gi,
+  // Catchphrase compactada "debrin é o máximo" / "dri é o máximo" sozinha
+  /\b(?:de\s*)?(?:debr\w{0,6}|drin|dri)\s*[ée]?\s*(?:ao|o)?\s*m[aá]ximo\b/gi,
 ];
 
 const NORMALIZE_DIACRITICS_REGEX = /[\u0300-\u036f]/g;
 const NORMALIZE_NON_ALPHANUMERIC_REGEX = /[^\p{L}\p{N}\s]/gu;
 
 const ECHO_WINDOW_MS = 18000;
-const ECHO_JACCARD_THRESHOLD = 0.45;
+const ECHO_JACCARD_THRESHOLD = 0.35;
 const MAX_CONSECUTIVE_ABORTS = 5;
 const MAX_CONSECUTIVE_NO_SPEECH = 8;
 const NO_SPEECH_TIMEOUT_MS = 3000; // Tolerate natural pauses before considering speech ended
@@ -375,7 +381,6 @@ export function useNeuralVoice(
   const lastProcessedAtRef = useRef(0);
   const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consecutiveAbortsRef = useRef(0);
-  const consecutiveNoSpeechRef = useRef(0);
   const voiceActiveRef = useRef(false);
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   const singletonIdRef = useRef(0);
@@ -389,7 +394,6 @@ export function useNeuralVoice(
     if (val) {
       // Clear any stale "no sound" flag the moment we start listening again.
       setNoSpeechDetected(false);
-              consecutiveNoSpeechRef.current = 0;
       const cfg = getVoiceThresholds();
       if (cfg.suppressNoSpeechToast) return;
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
@@ -408,7 +412,6 @@ export function useNeuralVoice(
     } else {
       if (noSpeechTimerRef.current) clearTimeout(noSpeechTimerRef.current);
       setNoSpeechDetected(false);
-              consecutiveNoSpeechRef.current = 0;
     }
   }, []);
   const gcpSessionRef = useRef<GCPSTTSession | null>(null);
@@ -416,7 +419,6 @@ export function useNeuralVoice(
   const sentenceAccumulatorRef = useRef(""); // Accumulate partial sentences
   const sentenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const micWatchdogRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const suppressPendingFlushUntilRef = useRef(0);
 
   // ── Sync ──
   const updateAiResponding = useCallback((val: boolean) => {
@@ -509,7 +511,6 @@ export function useNeuralVoice(
       onResult: (e) => {
         if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; }
         setNoSpeechDetected(false);
-              consecutiveNoSpeechRef.current = 0;
         consecutiveAbortsRef.current = 0;
 
         let hasFinal = false;
@@ -579,12 +580,6 @@ export function useNeuralVoice(
       onError: (e) => {
         console.warn("[Voice] Shared Mic Error:", e.error);
         if (e.error === "no-speech") {
-          consecutiveNoSpeechRef.current++;
-          if (consecutiveNoSpeechRef.current >= MAX_CONSECUTIVE_NO_SPEECH) {
-            console.log("[Voice] Too many consecutive no-speech errors, stopping auto-restart.");
-            stop();
-            return;
-          }
           setListeningWithTimer(true); OrbState.voiceState = "listening";
         }
       }
@@ -600,20 +595,17 @@ export function useNeuralVoice(
     // Re-claim mic reservation
     singletonIdRef.current = claimMic("command");
 
-    // Flush any pending browser-STT buffer only when GCP STT is NOT the active path.
-    if (speechBufferRef.current.trim() && onCmdRef.current && !gcpSessionRef.current?.isActive()) {
-      const shouldSuppressPendingFlush = Date.now() < suppressPendingFlushUntilRef.current;
+    // Never auto-submit leftover browser-STT text after TTS resumes.
+    // This buffer is frequently stale/echo-tainted and was causing Orion to
+    // answer by itself during silence loops.
+    if (speechBufferRef.current.trim() && !gcpSessionRef.current?.isActive()) {
       const pending = speechBufferRef.current.trim();
       speechBufferRef.current = "";
       if (speechDebounceRef.current) {
         clearTimeout(speechDebounceRef.current);
         speechDebounceRef.current = null;
       }
-      if (!shouldSuppressPendingFlush) {
-        onCmdRef.current(pending);
-      } else {
-        console.log("[Voice] Suppressed stale pending transcript after TTS:", pending.slice(0, 80));
-      }
+      console.log("[Voice] Discarded stale pending transcript after TTS resume:", pending.slice(0, 80));
     }
 
     // ESSENCIAL: Delay de segurança após o TTS para evitar eco (mesmo com fone)
@@ -778,7 +770,6 @@ export function useNeuralVoice(
     lastSpokenTextRef.current = normText;
     lastSpokenTokensRef.current = new Set(normText.split(/\s+/).filter(w => w.length > 2));
     lastSpokenAtRef.current = Date.now();
-    suppressPendingFlushUntilRef.current = Date.now() + 2500;
     speechBufferRef.current = "";
     sentenceAccumulatorRef.current = "";
     if (speechDebounceRef.current) { clearTimeout(speechDebounceRef.current); speechDebounceRef.current = null; }
@@ -895,8 +886,8 @@ export function useNeuralVoice(
       singletonIdRef.current = claimMic("command");
       intentionalStopRef.current = false;
       voiceActiveRef.current = true;
-      consecutiveNoSpeechRef.current = 0;
       clearRestartTimer();
+      onCmdRef.current = onCmd;
       setListeningWithTimer(false); OrbState.voiceState = "idle";
 
       // Prime microphone for reliable auto-start
@@ -932,7 +923,6 @@ export function useNeuralVoice(
             chunkIntervalMs: gcpChunkIntervalMs,
             onFinal: (text, confidence) => {
               if (noSpeechTimerRef.current) { clearTimeout(noSpeechTimerRef.current); noSpeechTimerRef.current = null; } setNoSpeechDetected(false);
-              consecutiveNoSpeechRef.current = 0;
               if (!onCmdRef.current || intentionalStopRef.current) return;
               if (speakingRef.current || VoiceState.aiResponding) {
                 if (STOP_PATTERNS.test(text)) {

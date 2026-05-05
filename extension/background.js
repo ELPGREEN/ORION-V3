@@ -13,8 +13,7 @@ import { validateAction } from "./policies.js";
 import { classifyActionToTask, getBlueprint } from "./agents.js";
 import { routeQuery } from "./router.js";
 import { onTabUpdated } from "./proactive.js";
-import { APP_BASE, getSupabaseConfig, receiveConfig } from "./config.js";
-import { initMirror, sendToApp } from "./mirror.js";
+import { getSupabaseConfig, receiveConfig } from "./config.js";
 
 // Initialize command mirror on startup
 initMirror();

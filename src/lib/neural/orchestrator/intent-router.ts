@@ -67,13 +67,10 @@ async function classifyViaLLM(command: string): Promise<AgentId> {
 - bolt → engenharia/código/lógica/performance/bugs/deploy
 - palette → UI/UX/design/cor/layout/visual
 - harvester → pesquisa/conhecimento/RAG/transcrição/análise textual
-- justice → jurídico/jurisprudência/contratos/petições
-- sentinel → segurança/autenticação/monitoramento/saúde do sistema
-- factory → robótica/industrial/IoT/manufatura
 
 Comando: "${command}"
 
-Responda APENAS com uma palavra: bolt, palette, harvester, justice, sentinel, ou factory.`;
+Responda APENAS com uma palavra: bolt, palette, ou harvester.`;
 
   try {
     const res = await chatWithCascade(
@@ -85,13 +82,10 @@ Responda APENAS com uma palavra: bolt, palette, harvester, justice, sentinel, ou
     if (out.includes("bolt")) return "bolt";
     if (out.includes("palette")) return "palette";
     if (out.includes("harvester")) return "harvester";
-    if (out.includes("justice")) return "justice";
-    if (out.includes("sentinel")) return "sentinel";
-    if (out.includes("factory")) return "factory";
   } catch (err) {
-    console.warn("[IntentRouter] LLM classifier failed, defaulting to harvester:", err);
+    console.warn("[IntentRouter] LLM classifier failed, defaulting to bolt:", err);
   }
-  return "harvester";
+  return "bolt";
 }
 
 /**
@@ -103,10 +97,10 @@ export async function routeCommand(command: string): Promise<RoutingDecision> {
   const second = scores[1];
 
   // Strong winner: top has score ≥ 2 and is at least 2 ahead
-  if (top.score >= 2 && top.score - (second?.score || 0) >= 2) {
+  if (top.score >= 2 && top.score - second.score >= 2) {
     // Add secondary agent if its score is meaningful AND parallel-safe
     const agents: AgentId[] = [top.id];
-    if (second && second.score >= 2 && AGENT_REGISTRY[second.id].parallelSafe) {
+    if (second.score >= 2 && AGENT_REGISTRY[second.id].parallelSafe) {
       agents.push(second.id);
     }
     return {

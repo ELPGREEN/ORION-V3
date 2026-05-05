@@ -182,7 +182,8 @@ export default function Auth() {
         return;
       }
       toast({ title: "Conta criada!", description: `Bem-vindo como ${ACCOUNT_TYPES.find(t => t.value === accountType)?.label}.` });
-      navigate(returnTo);
+      const hasNiche = typeof window !== "undefined" && localStorage.getItem("orion_user_niche");
+      navigate(hasNiche ? returnTo : `/onboarding?next=${encodeURIComponent(returnTo)}`);
     } else if (signInError.message.includes("Email not confirmed")) {
       setEmailNotConfirmed(cadastroForm.email);
       toast({ title: "Conta criada!", description: "Verifique seu e-mail para confirmar a conta." });

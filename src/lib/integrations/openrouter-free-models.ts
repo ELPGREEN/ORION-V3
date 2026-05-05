@@ -6,9 +6,10 @@
  *  - quantum-llm-router.ts (PROVIDER_REGISTRY)
  *
  * Updated 2026-05-01: Frontier 2026 lineup. IDs validated against OpenRouter API.
- *  - Removed: mistralai/devstral-2512:free (free period ended)
- *  - Added: nvidia/nemotron-3-super-120b-a12b:free, openai/gpt-oss-120b:free
- *  - Fixed: IDs for 2026 active free tiers.
+ *  - Removed: ling-2.6-1t:free (sunset 2026-04-30)
+ *  - Removed: google/llama-3.3-70b:free (does not exist — Llama is Meta)
+ *  - Fixed: qwen3-coder:free real ID (was qwen3-coder-480b)
+ *  - Added: gemma-4-31b-it:free, devstral-2512:free
  */
 
 export interface FreeModelEntry {
@@ -58,6 +59,16 @@ export const OPENROUTER_FREE_MODELS: FreeModelEntry[] = [
     contextWindow: 262_000,
   },
   {
+    id: "mistralai/devstral-2512:free",
+    name: "Devstral 2 (Mistral)",
+    tier: "coding",
+    timeoutMs: 4500,
+    strengths: ["code", "multi_file", "agentic", "architecture"],
+    reliabilityScore: 0.93,
+    supportsWebSearch: false,
+    contextWindow: 262_000,
+  },
+  {
     id: "google/gemma-4-31b-it:free",
     name: "Gemma 4 31B",
     tier: "balanced",
@@ -88,34 +99,14 @@ export const OPENROUTER_FREE_MODELS: FreeModelEntry[] = [
     contextWindow: 200_000,
   },
   {
-    id: "nvidia/nemotron-3-super-120b-a12b:free",
-    name: "Nemotron 3 Super",
-    tier: "reasoning",
-    timeoutMs: 6000,
-    strengths: ["reasoning", "multi-agent", "expert-routing"],
-    reliabilityScore: 0.96,
-    supportsWebSearch: true,
-    contextWindow: 262_000,
-  },
-  {
     id: "deepseek/deepseek-r1:free",
     name: "DeepSeek R1",
     tier: "reasoning",
-    timeoutMs: 8000,
+    timeoutMs: 6000,
     strengths: ["reasoning", "math", "web_search", "research"],
     reliabilityScore: 0.95,
     supportsWebSearch: true, // supports tool calling for search
     contextWindow: 64_000,
-  },
-  {
-    id: "openai/gpt-oss-120b:free",
-    name: "GPT-OSS 120B",
-    tier: "heavy",
-    timeoutMs: 5000,
-    strengths: ["reasoning", "reliable", "coding"],
-    reliabilityScore: 0.97,
-    supportsWebSearch: true,
-    contextWindow: 131_000,
   },
   {
     id: "meta-llama/llama-3.3-70b-instruct:free",

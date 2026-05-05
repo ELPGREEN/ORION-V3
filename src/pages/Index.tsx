@@ -18,6 +18,7 @@ import {
 import { WhoIsItForSection } from '@/components/home/WhoIsItForSection';
 import { ImpactMetricsSection } from '@/components/home/ImpactMetricsSection';
 import { WelcomeSplash } from '@/components/home/WelcomeSplash';
+import { NicheToolsStrip } from '@/components/home/NicheToolsStrip';
 import { SectionReveal } from '@/components/common/SectionReveal';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -58,6 +59,7 @@ export default function Index() { const [fOpen, setFOpen] = useState(false);
 
       <Header />
       <HeroSection t={t} />
+      <NicheToolsStrip />
 
       {/* App purpose section — required for Google OAuth verification */}
       <section id="about" className="relative py-8 sm:py-10 bg-muted/5 border-y border-border/10">

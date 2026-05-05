@@ -24,8 +24,6 @@ const VISION_POST_COMMAND_GUARD_MS = 8000;
 const VISION_TTS_ECHO_RE = /\b(vis[aã]o\s+(ativad[ao]|desativad[ao]|j[aá]\s+est[aá]\s+ativ[ao]|j[aá]\s+est[aá]\s+desativad[ao])|desativando\s+vis[aã]o)\b/i;
 const VISION_FOLLOW_UP_RE = /\b(o\s+que\s+(voc[eê]\s+)?(est[aá]\s+)?(vendo|enxergando)|descrev|identific|analis|leia|ler|conte|mostr|mostre|tem\s+(na|no)|quem\s+[ée]|quantos?|qual\s+[ée]|onde\s+est[aá])\b/i;
 const VISION_AUTO_RESPONSE_BLOCK_RE = /\b(vejo|estou vendo|consigo ver|na imagem|na cena|detectei|identifiquei|aparece|parece haver|tem\s+(um|uma|dois|duas|v[aá]rios)|h[aá]\s+(um|uma|dois|duas|v[aá]rios))\b/i;
-const QUESTION_OR_COMMAND_RE = /^(quem|o\s+que|qual|como|onde|quando|por\s+que|quais|quanto|quantos|quantas|ser[aá]|seria|pode|consegue|me\s+diga|me\s+conte|fale|explique|mostre|veja|olhe|analise|descreva|identifique|leia|conte)\b|[?]$/i;
-const FILLER_NOISE_RE = /^(hum|eh|ah|uau|nossa|ok|ta|tá|bom|certo|legal|entendi|aham|ent[aã]o|tipo|sabe|vixi|opa|eita)\s*[.!]?$/i;
 
 const _ORION_SESSION_KEY = "orion-session-ready";
 
@@ -154,7 +152,7 @@ export function useNeuralVisionHandlers(props: NeuralVisionHandlersProps) {
       }
 
       // Only dispatch if it's a concrete intent with decent confidence
-      if (intent.intent !== "unknown" && intent.confidence > 0.8) {
+      if (intent.intent !== "unknown" && intent.confidence > 0.7) {
         const result = await dispatchVoiceIntent(intent, identityStatus);
         console.log("[routeOrion] Dispatch result:", result);
 
@@ -173,16 +171,6 @@ export function useNeuralVisionHandlers(props: NeuralVisionHandlersProps) {
       }
     } catch (err) {
       console.warn("[routeOrion] Dispatcher error, falling back to AI:", err);
-    }
-
-    // Strict question/command check - respond only if asked
-    const isQuestionOrCommand = QUESTION_OR_COMMAND_RE.test(q) || q.split(/\s+/).length >= 4;
-    const isNoise = FILLER_NOISE_RE.test(q);
-
-    if (!isQuestionOrCommand || isNoise) {
-      console.log("[NeuralVision] 🧏 Suppressed non-question/noise transcript:", q);
-      emitVisionDebug({ kind: "guard-noise-block" as any, text: q, note: !isQuestionOrCommand ? "not a question" : "noise" });
-      return;
     }
 
     // Fallback: send to Orion reasoning

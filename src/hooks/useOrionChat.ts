@@ -81,8 +81,8 @@ export function useOrionChat(options: UseOrionChatOptions = {}) {
     setCurrentSector(null);
   }, []);
 
-  const getHelp = useCallback(async (): Promise<string> => {
-    return await getOrionHelp();
+  const getHelp = useCallback((): string => {
+    return getOrionHelp();
   }, []);
 
   const getStatus = useCallback(() => {

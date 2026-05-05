@@ -104,12 +104,10 @@ export function recordCorrection(
 /**
  * Check if there's a learned correction for this text.
  * Returns the correct intent if found, null otherwise.
- *
- * BOLT V2.0: Accepts pre-normalized text to avoid redundant calls.
  */
-export function getLearnedCorrection(text: string, isNormalized = false): IntentCorrection | null {
+export function getLearnedCorrection(text: string): IntentCorrection | null {
   const corrections = loadCorrections();
-  const key = isNormalized ? text : normalize(text);
+  const key = normalize(text);
   
   // Exact match
   const exact = corrections.get(key);
@@ -117,7 +115,6 @@ export function getLearnedCorrection(text: string, isNormalized = false): Intent
   
   // Fuzzy match: find corrections with similar text (>80% overlap)
   for (const [, correction] of corrections) {
-    // originalText in correction is already normalized by recordCorrection
     if (fuzzyMatch(key, normalize(correction.originalText)) > 0.8) {
       return correction;
     }
@@ -181,45 +178,20 @@ export function extractCorrectionTarget(text: string): string | null {
   return null;
 }
 
-/**
- * Module-level cache for feedback tokens to avoid O(N^2) processing in fuzzy matching.
- */
-const _feedbackTokenCache = new Map<string, { set: Set<string>; array: string[] }>();
-
-function getFeedbackTokens(text: string): { set: Set<string>; array: string[] } {
-  let cached = _feedbackTokenCache.get(text);
-  if (!cached) {
-    const words = text.split(" ");
-    cached = { set: new Set(words), array: words };
-    _feedbackTokenCache.set(text, cached);
-
-    if (_feedbackTokenCache.size > 1000) {
-      const keys = _feedbackTokenCache.keys();
-      for (let i = 0; i < 100; i++) {
-        const k = keys.next().value;
-        if (k !== undefined) _feedbackTokenCache.delete(k);
-      }
-    }
-  }
-  return cached;
-}
-
-// Simple character-level similarity — Optimized for BOLT V2.0
+// Simple character-level similarity
 function fuzzyMatch(a: string, b: string): number {
   if (a === b) return 1;
-  if (!a || !b) return 0;
-
-  const tokensA = getFeedbackTokens(a);
-  const tokensB = getFeedbackTokens(b);
+  if (a.length === 0 || b.length === 0) return 0;
   
-  const [longer, shorter] = tokensA.array.length >= tokensB.array.length
-    ? [tokensA, tokensB]
-    : [tokensB, tokensA];
+  const longer = a.length > b.length ? a : b;
+  const shorter = a.length > b.length ? b : a;
   
   let matches = 0;
-  for (let i = 0; i < shorter.array.length; i++) {
-    if (longer.set.has(shorter.array[i])) matches++;
+  const words1 = new Set(longer.split(" "));
+  const words2 = shorter.split(" ");
+  for (const w of words2) {
+    if (words1.has(w)) matches++;
   }
   
-  return matches / Math.max(longer.set.size, shorter.array.length);
+  return matches / Math.max(words1.size, words2.length);
 }

@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ChevronDown } from "lucide-react";
-import { IconAutomation, IconShield, IconGlobe, IconNeuralAI, IconEye, IconBot } from "@/components/icons/SumerianTronIcons";
+import { ArrowRight, ChevronDown, Rocket, Scale, Factory } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroThreeBackground } from "./HeroThreeBackground";
 import { PlasmaCore } from "./PlasmaCore";
@@ -193,44 +192,48 @@ export function HeroSection({ t }: HeroSectionProps) {
               textShadow: '0 0 20px hsl(30 85% 52% / 0.4)',
             }}
           >
-            A IA QUE EVOLUI SOZINHA
+            DIGA SEU PROBLEMA — ORION ENTREGA
           </p>
 
-          <div
-            className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-3 sm:mb-4"
-            style={{
-              opacity: loaded ? 1 : 0,
-              transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 20px, 0)',
-              transition: 'opacity 0.8s ease 0.7s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.7s',
-            }}
-          >
-            {[
-              { Icon: IconNeuralAI, label: "Motor Neural" },
-              { Icon: IconEye, label: "Visão Computacional" },
-              { Icon: IconBot, label: "Voz Inteligente" },
-              { Icon: IconShield, label: "Cyber Shield" },
-              { Icon: IconGlobe, label: "5 Idiomas" },
-              { Icon: IconAutomation, label: "Auto-Evolução" },
-            ].map((item) => (
-              <div key={item.label} className="hud-frame flex items-center gap-1.5 px-3 py-1.5 border border-primary/20 bg-primary/5 text-[10px] text-muted-foreground backdrop-blur-sm">
-                <item.Icon className="h-3.5 w-3.5 text-primary" />
-                {item.label}
-              </div>
-            ))}
-          </div>
-
           <p
-            className="text-sm sm:text-base md:text-lg text-muted-foreground mb-4 sm:mb-5 max-w-2xl mx-auto leading-relaxed font-light text-center px-2"
+            className="text-sm sm:text-base md:text-lg text-foreground/90 mb-5 sm:mb-6 max-w-2xl mx-auto leading-relaxed font-light text-center px-2"
             style={{
               opacity: loaded ? 1 : 0,
               transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 30px, 0)',
               transition: 'opacity 0.8s ease 0.8s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.8s',
             }}
           >
-            Plataforma de IA empresarial com <span className="text-primary font-medium">17+ módulos integrados</span>,
-            visão computacional, voz inteligente e auto-evolução — tudo em um ecossistema
-            que substitui <span className="text-primary font-medium">8+ ferramentas</span>.
+            Não é mais um hub de ferramentas. É um <span className="text-primary font-medium">copiloto que entende seu contexto</span>,
+            monta a solução e <span className="text-primary font-medium">executa por você</span> —
+            do funil de vendas à petição jurídica, da automação ao chão de fábrica.
           </p>
+
+          {/* 3 portas verticais */}
+          <div
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto mb-5 sm:mb-6 px-2"
+            style={{
+              opacity: loaded ? 1 : 0,
+              transform: loaded ? 'translate3d(0,0,0)' : 'translate3d(0, 20px, 0)',
+              transition: 'opacity 0.8s ease 0.9s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.9s',
+            }}
+          >
+            {[
+              { Icon: Rocket, title: "Digital", desc: "Funis, copy/VSL e automação", href: "/templates/funil-de-vendas" },
+              { Icon: Scale, title: "Escritórios", desc: "Petição em 1 clique e CRM jurídico", href: "/templates/peticao" },
+              { Icon: Factory, title: "Indústria", desc: "Diagnóstico de linha + ROS2", href: "/templates/diagnostico-industrial" },
+            ].map(({ Icon, title, desc, href }) => (
+              <Link
+                key={title}
+                to={href}
+                className="group flex flex-col items-center gap-1.5 p-4 border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 backdrop-blur-sm transition-all"
+              >
+                <Icon className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                <div className="text-xs font-semibold text-foreground tracking-wide">{title}</div>
+                <div className="text-[10px] text-muted-foreground text-center leading-tight">{desc}</div>
+              </Link>
+            ))}
+          </div>
+
 
           <div
             className="flex flex-col sm:flex-row gap-3 justify-center px-4 sm:px-0"
@@ -241,14 +244,14 @@ export function HeroSection({ t }: HeroSectionProps) {
             }}
           >
             <Button size="lg" className="btn-gold px-8 py-4 sm:py-5 text-xs shimmer w-full sm:w-auto" asChild>
-              <Link to="/cadastro">
-                Começar Grátis
+              <Link to="/onboarding">
+                Começar agora
                 <ArrowRight className="ml-3 h-4 w-4" />
               </Link>
             </Button>
             <Button size="lg" className="btn-outline-gold px-8 py-4 sm:py-5 text-xs w-full sm:w-auto" asChild>
-              <Link to="/plataforma">
-                Ver Plataforma
+              <Link to="/orion">
+                Falar com Orion
               </Link>
             </Button>
           </div>
@@ -262,11 +265,12 @@ export function HeroSection({ t }: HeroSectionProps) {
               transition: 'opacity 1s ease 1.4s, transform 1s cubic-bezier(0.22, 1, 0.36, 1) 1.4s',
             }}
           >
-            <AnimatedStat end={17} suffix="+" label="Módulos IA" />
-            <AnimatedStat end={200} suffix="+" label="Padrões Visuais" />
-            <AnimatedStat end={100} suffix="+" label="Tipos de Docs" />
-            <AnimatedStat end={5} suffix="" label="Idiomas Nativos" />
+            <AnimatedStat end={3} suffix="" label="Verticais Prontas" />
+            <AnimatedStat end={10} suffix="x" label="Mais Rápido" />
+            <AnimatedStat end={80} suffix="%" label="Menos Custo" />
+            <AnimatedStat end={24} suffix="/7" label="Orion Ativo" />
           </div>
+
 
           <p
             className="mt-5 text-[9px] text-muted-foreground/50 tracking-[0.2em] uppercase"
