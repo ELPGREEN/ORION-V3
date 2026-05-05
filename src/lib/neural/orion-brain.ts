@@ -1,11 +1,12 @@
 /**
- * ─── ORION Brain Core v9.0 ───
+ * ─── ORION Brain Core v10.0 ───
  * Cérebro Central Indestrutível do Sistema ORION V3
  * Integra todos os subsistemas: Visão, Voz, RAG, Pentagon e V3 Orchestrator.
+ *
+ * BOLT V2.0: Zero Waste Mode - Unified orchestration and minimized entropy.
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { wrapEdgeFunction } from "@/lib/errors";
 import {
   Sector,
   SectorAgent,
@@ -16,8 +17,8 @@ import {
   getAgentForSector,
   getAllAgents
 } from "./sector-agents";
-import { buildAgentMessages } from "./super-prompts";
 import { orchestrate } from "./orchestrator/orion-v3-orchestrator";
+import { matchAndExecuteTool } from "./orion-tool-executor";
 
 export interface OrionResponse {
   success: boolean;
@@ -25,22 +26,47 @@ export interface OrionResponse {
   sector?: Sector;
   agentUsed?: string;
   confidence?: number;
+  panel?: string;
+}
+
+export interface OrionRequest {
+  input: string;
+  context?: Record<string, unknown>;
 }
 
 /**
  * Processar qualquer entrada do usuário (texto ou voz)
  */
 export async function processOrionRequest(
-  input: string,
-  context: Record<string, unknown> = {}
+  params: string | OrionRequest,
+  contextOptions: Record<string, unknown> = {}
 ): Promise<OrionResponse> {
   try {
-    const t0 = Date.now();
+    const input = typeof params === "string" ? params : params.input;
+    const context = typeof params === "string" ? contextOptions : { ...contextOptions, ...params.context };
+
+    if (!input || input.length < 2) {
+      return { success: true, response: "Estou ouvindo. Como posso ajudar?" };
+    }
+
     const user = await supabase.auth.getUser();
     const userId = user.data.user?.id || "anonymous";
 
-    // 🍕 PENTAGON PIZZA — Unified consciousness pre-pass.
-    // This handles intent routing, memory recall, and reasoning waves.
+    // 1. Try Tool Execution first (Fast Lane for explicit commands)
+    const toolResult = await matchAndExecuteTool(input);
+    if (toolResult.handled) {
+      const sector = detectSector(input);
+      return {
+        success: true,
+        response: toolResult.response,
+        sector,
+        agentUsed: toolResult.toolName,
+        confidence: 1.0,
+        panel: toolResult.response.includes("__NAV__") ? toolResult.response.split("__NAV__")[1].split(" ")[0] : undefined
+      };
+    }
+
+    // 2. 🍕 PENTAGON PIZZA — Unified consciousness orchestration.
     const v3Result = await orchestrate({
       command: input,
       source: context.source as any || "text",
@@ -48,27 +74,9 @@ export async function processOrionRequest(
       conversationContext: context.conversationContext as string || ""
     });
 
-    let sensorialVisualContext: string | undefined;
-
-    // Detectar setor
     const sector = detectSector(input);
-    const agent = getAgentForSector(sector);
 
-    // Determinar tipo de requisição
-    const isCommand = isCommand_(input);
-    const isSearch = isSearch_(input);
-
-    // 3. Processar conforme tipo
-    if (isCommand) {
-      return await processCommand(input, sector, agent, context);
-    }
-
-    if (isSearch) {
-      return await processSearch(input, sector, agent, context);
-    }
-
-    // 4. For plain questions or general interactions, use V3 result
-    if (v3Result && v3Result.summary && v3Result.confidence >= 0.5) {
+    if (v3Result && v3Result.summary) {
       return {
         success: true,
         response: v3Result.summary,
@@ -78,10 +86,14 @@ export async function processOrionRequest(
       };
     }
 
-    return await processQuestion(input, sector, agent, context);
+    return {
+      success: true,
+      response: "Entendido. Como posso prosseguir?",
+      sector,
+    };
 
   } catch (error) {
-    console.error("[ORION Brain] Error:", error);
+    console.error("[ORION Brain] Critical Error:", error);
     return {
       success: false,
       response: "Desculpe, houve um erro ao processar sua solicitação no meu núcleo neural.",
@@ -89,123 +101,16 @@ export async function processOrionRequest(
   }
 }
 
-function isCommand_(input: string): boolean {
-  const commands = [
-    "abre", "abra", "abrir", "executar", "rode", "rodar",
-    "liga", "ligar", "desliga", "desligar", "ativa", "ativar",
-    "desativa", "desativar", "criar", "gerar", "salvar", "enviar"
-  ];
-  return commands.some(cmd => input.toLowerCase().startsWith(cmd));
-}
+/** Alias for backward compatibility and useOrionChat */
+export const orionBrain = processOrionRequest;
 
-function isSearch_(input: string): boolean {
-  const t = input.toLowerCase().trim();
-  if (/^(pesquis\w+|busc\w+|procur\w+|ach\w+|encontr\w+|consult\w+)/.test(t)) return true;
-  if (/\b(pesquis\w+|busc\w+|procur\w+)\s+(sobre|por|por que|no|na|em)\b/.test(t)) return true;
-  if (/\b(últimas not[ií]cias|pre[çc]o de|cota[çc][aã]o|previs[aã]o do tempo|onde fica)\b/.test(t)) return true;
-  return false;
-}
-
-async function processCommand(
-  input: string, 
-  sector: Sector, 
-  agent: SectorAgent,
-  context: Record<string, unknown>
-): Promise<OrionResponse> {
-  const cmd = input.toLowerCase();
-  
-  if (cmd.startsWith("abre") || cmd.startsWith("abrir")) {
-    const panel = agent.panel;
-    if (panel) {
-      return {
-        success: true,
-        response: `Entendido. Abrindo ${agent.name} — Painel: ${panel}`,
-        sector,
-        agentUsed: agent.name,
-      };
-    }
-  }
-  
-  return {
-    success: true,
-    response: `Comando "${input}" executado pelo ${agent.name}.`,
-    sector,
-    agentUsed: agent.name,
-  };
-}
-
-async function processSearch(
-  input: string,
-  sector: Sector,
-  agent: SectorAgent,
-  context: Record<string, unknown>
-): Promise<OrionResponse> {
-  const query = input.replace(/^(pesquisar|buscar|procurar)\s+/i, "").trim();
-  
-  try {
-    const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: {
-        question: query,
-        intentType: sector === "pesquisa" ? "legal_search" : "web_search"
-      },
-    });
-
-    if (error) throw error;
-    
-    return {
-      success: true,
-      response: data?.output || "Pesquisa concluída.",
-      sector,
-      agentUsed: agent.name,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      response: `Não foi possível pesquisar: ${query}`,
-      sector,
-      agentUsed: agent.name,
-    };
-  }
-}
-
-async function processQuestion(
-  input: string,
-  sector: Sector,
-  agent: SectorAgent,
-  context: Record<string, unknown>
-): Promise<OrionResponse> {
-  try {
-    const messages = buildAgentMessages(
-      "pesquisa" as any,
-      input,
-      Object.keys(context).length > 0 ? JSON.stringify(context) : undefined
-    );
-    
-    const { data, error } = await supabase.functions.invoke("neural-ops", {
-      body: {
-        messages,
-        question: input,
-        intentType: "chat",
-      },
-    });
-
-    if (error) throw error;
-    
-    return {
-      success: true,
-      response: data?.output || "Processado pelo ORION.",
-      sector,
-      agentUsed: agent.name,
-      confidence: 0.9,
-    };
-  } catch (error) {
-    return {
-      success: true,
-      response: "Entendido. Estou sempre à disposição para ajudar.",
-      sector,
-      agentUsed: agent.name,
-    };
-  }
+/**
+ * Returns a detailed help message about Orion's capabilities.
+ */
+export async function getOrionHelp(): Promise<string> {
+  const { matchAndExecuteTool } = await import("./orion-tool-executor");
+  const result = await matchAndExecuteTool("help");
+  return result.response;
 }
 
 export function getOrionStatus() {

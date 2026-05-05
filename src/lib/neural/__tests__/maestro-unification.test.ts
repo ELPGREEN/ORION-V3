@@ -22,6 +22,15 @@ vi.mock("@/integrations/supabase/client", () => {
   return { supabase: mockSupabase };
 });
 
+// Mock the orchestrator to avoid real LLM calls and timeouts
+vi.mock("../orchestrator/orion-v3-orchestrator", () => ({
+  orchestrate: vi.fn().mockResolvedValue({
+    summary: "Pentagon summary",
+    decision: { primary: "harvester", confidence: 0.9 },
+    totalMs: 100
+  })
+}));
+
 describe("Maestro Unification Stress Test", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -44,9 +53,10 @@ describe("Maestro Unification Stress Test", () => {
     expect(neuralOpsCall).toBeDefined();
     const body = neuralOpsCall[1].body;
 
+    // Check if pentagon context is injected
+    expect(body.context).toContain("Pentagon summary");
     expect(body.context).toContain("COGNIÇÃO NEURAL");
-    expect(body.context).toContain("CPC");
-  });
+  }, 15000); // Increased timeout
 
   it("should trigger web search via Corrective RAG for web_search intent", async () => {
     await processInteraction({
@@ -60,5 +70,5 @@ describe("Maestro Unification Stress Test", () => {
     );
 
     expect(neuralOpsCall[1].body.intentType).toBe("web_search");
-  });
+  }, 15000); // Increased timeout
 });

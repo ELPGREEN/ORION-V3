@@ -37,84 +37,64 @@ const PROVIDER_REGISTRY: QuantumProviderProfile[] = [
     maxTokens: 200000,
     avgLatencyMs: 1000,
     costPerMToken: 0,
-    strengths: ["free", "auto-select", "variety"],
+    strengths: ["free", "auto-select", "variety", "web_search"],
     reliabilityScore: 0.98,
   },
   // 🧠 Reasoning FREE
   {
-    id: "deepseek/deepseek-r1",
+    id: "deepseek/deepseek-r1:free",
     name: "DeepSeek R1 (FREE)",
     tier: 0,
     maxTokens: 128000,
     avgLatencyMs: 800,
     costPerMToken: 0,
-    strengths: ["reasoning", "math", "code"],
+    strengths: ["reasoning", "math", "code", "web_search"],
     reliabilityScore: 0.95,
   },
   {
-    id: "deepseek/deepseek-r1-0528",
-    name: "DeepSeek R1 0528 (FREE)",
+    id: "nvidia/nemotron-3-super-120b-a12b:free",
+    name: "Nemotron 3 Super (FREE)",
     tier: 0,
-    maxTokens: 128000,
-    avgLatencyMs: 750,
+    maxTokens: 262000,
+    avgLatencyMs: 1100,
     costPerMToken: 0,
-    strengths: ["reasoning", "math"],
-    reliabilityScore: 0.95,
+    strengths: ["reasoning", "multi-agent", "web_search"],
+    reliabilityScore: 0.96,
   },
   {
-    id: "qwen/qwen3-235b-thinking",
-    name: "Qwen3 235B Thinking (FREE)",
+    id: "openai/gpt-oss-120b:free",
+    name: "GPT-OSS 120B (FREE)",
     tier: 0,
     maxTokens: 131000,
-    avgLatencyMs: 1200,
+    avgLatencyMs: 900,
     costPerMToken: 0,
-    strengths: ["reasoning", "planning"],
-    reliabilityScore: 0.94,
+    strengths: ["reasoning", "reliable", "web_search"],
+    reliabilityScore: 0.97,
   },
   // 💻 Coding FREE
   {
-    id: "qwen/qwen3-coder",
+    id: "qwen/qwen3-coder:free",
     name: "Qwen3 Coder 480B (FREE)",
     tier: 0,
     maxTokens: 262000,
     avgLatencyMs: 900,
     costPerMToken: 0,
-    strengths: ["code", "agentic", "tool-use"],
+    strengths: ["code", "agentic", "tool_use", "web_search"],
     reliabilityScore: 0.95,
-  },
-  {
-    id: "mistralai/devstral-2",
-    name: "Devstral 2 (FREE)",
-    tier: 0,
-    maxTokens: 262000,
-    avgLatencyMs: 850,
-    costPerMToken: 0,
-    strengths: ["code", "agentic"],
-    reliabilityScore: 0.93,
   },
   // 🌍 General FREE
   {
-    id: "meta-llama/llama-3.3-70b-instruct",
+    id: "meta-llama/llama-3.3-70b-instruct:free",
     name: "Llama 3.3 70B (FREE)",
     tier: 1,
     maxTokens: 128000,
     avgLatencyMs: 1000,
     costPerMToken: 0,
-    strengths: ["general", "planning", "reasoning"],
+    strengths: ["general", "planning", "reasoning", "web_search"],
     reliabilityScore: 0.94,
   },
   {
-    id: "meta-llama/llama-4-scout:free",
-    name: "Llama 4 Scout (FREE)",
-    tier: 1,
-    maxTokens: 256000,
-    avgLatencyMs: 1100,
-    costPerMToken: 0,
-    strengths: ["general", "long-context"],
-    reliabilityScore: 0.93,
-  },
-  {
-    id: "mistralai/mistral-small-3.1-24b-instruct",
+    id: "mistralai/mistral-small-3.1-24b-instruct:free",
     name: "Mistral Small 3.1 (FREE)",
     tier: 1,
     maxTokens: 128000,
@@ -124,49 +104,27 @@ const PROVIDER_REGISTRY: QuantumProviderProfile[] = [
     reliabilityScore: 0.96,
   },
   {
-    id: "grok/grok-4",
-    name: "Grok 4 (FREE)",
+    id: "google/gemma-4-31b-it:free",
+    name: "Gemma 4 31B (FREE)",
     tier: 1,
-    maxTokens: 131000,
+    maxTokens: 262000,
     avgLatencyMs: 800,
     costPerMToken: 0,
-    strengths: ["direct", "reasoning"],
-    reliabilityScore: 0.92,
-  },
-  // 👁️ Vision FREE
-  {
-    id: "qwen/qwen2.5-vl-3b-instruct",
-    name: "Qwen2.5 VL 3B (FREE)",
-    tier: 0,
-    maxTokens: 32768,
-    avgLatencyMs: 500,
-    costPerMToken: 0,
-    strengths: ["vision", "fast"],
+    strengths: ["reasoning", "code", "multimodal"],
     reliabilityScore: 0.94,
   },
   {
-    id: "nvidia/nemotron-nano-12b-2-vl",
-    name: "Nemotron Nano VL (FREE)",
+    id: "tencent/hy3-preview:free",
+    name: "Tencent HY3 Preview (FREE)",
     tier: 1,
-    maxTokens: 131000,
-    avgLatencyMs: 700,
+    maxTokens: 128000,
+    avgLatencyMs: 900,
     costPerMToken: 0,
-    strengths: ["vision", "nvidia"],
-    reliabilityScore: 0.93,
-  },
-  // ⚡ NVIDIA FREE
-  {
-    id: "nvidia/nemotron-3-super-120b-a12b",
-    name: "Nemotron 3 Super (FREE)",
-    tier: 1,
-    maxTokens: 262000,
-    avgLatencyMs: 1100,
-    costPerMToken: 0,
-    strengths: ["ai-agents", "hybrid"],
-    reliabilityScore: 0.93,
+    strengths: ["reasoning", "feynman"],
+    reliabilityScore: 0.94,
   },
   {
-    id: "nvidia/nemotron-nano-9b-v2",
+    id: "nvidia/nemotron-nano-9b-v2:free",
     name: "Nemotron Nano 9B V2 (FREE)",
     tier: 1,
     maxTokens: 128000,
@@ -174,17 +132,6 @@ const PROVIDER_REGISTRY: QuantumProviderProfile[] = [
     costPerMToken: 0,
     strengths: ["fast", "light"],
     reliabilityScore: 0.95,
-  },
-  // 🌎 Extra
-  {
-    id: "minimax/minimax-m2.5-free",
-    name: "MiniMax M2.5 (FREE)",
-    tier: 1,
-    maxTokens: 196000,
-    avgLatencyMs: 900,
-    costPerMToken: 0,
-    strengths: ["general"],
-    reliabilityScore: 0.91,
   },
   // Paid fallbacks
   {
@@ -442,14 +389,14 @@ export function quantumRouteQuery(
 
   // Quantum advantage: how much the quantum score improved vs pure classical
   const classicalBest = [...scores].sort((a, b) => b.classicalScore - a.classicalScore)[0];
-  const quantumAdvantage = best.finalScore > classicalBest.classicalScore
+  const quantumAdvantage = (best && classicalBest && classicalBest.classicalScore > 0)
     ? (best.finalScore - classicalBest.classicalScore) / classicalBest.classicalScore
     : 0;
 
   // Web search recommendation
   const webSearchRecommended = features.webSearchIntent > 0.3 || 
     options.modelType === "web_search" ||
-    best.profile.strengths.some(s => s === "web_search");
+    (best && best.profile.strengths.some(s => s === "web_search"));
 
   return {
     selectedProvider: best.profile,

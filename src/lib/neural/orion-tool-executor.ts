@@ -168,7 +168,8 @@ const TOOL_NAME_TO_CATEGORY: Record<string, ToolCategory> = {
   drive_upload: "google", sheets_read_or_create: "google", gdocs_create: "google",
   gdocs_list: "google", "google-tasks-create": "google", "google-tasks-list": "google",
   "google-slides-create": "google", "google-forms-create": "google", schedule_consultation: "google",
-  admin_emails: "google"
+  admin_emails: "google",
+  explain_decision: "neural"
 };
 
 // Helper to extract patterns
@@ -1559,6 +1560,16 @@ const TOOLS: OrionTool[] = [
       if (!data?.length) return "📧 Nenhum email administrativo.";
       const list = data.map((e: any) => `• ${e.from_email}: ${e.subject || "Sem assunto"} [${e.status}]`).join("\n");
       return `📧 **Emails Administrativos:**\n${list}`;
+    },
+  },
+
+  {
+    name: "explain_decision",
+    category: "neural",
+    regex: /(?:expliqu[ae]|por\s+que|motivo|razao|explicabilidade).*(?:decis[ao]|resultado|predi[çc][aã]o|shap|importancia)/i,
+    extract: () => ({}),
+    call: async () => {
+      return `🧠 **Lobo Frontal — Relatório de Explicabilidade**\n\nAcesse o painel de **Métricas Neurais** para visualizar a análise SHAP da última decisão. O Orion utiliza *Integrated Gradients* para mapear quais características (texto, contexto, histórico) mais influenciaram a resposta.\n\n__NAV__/dashboard/rede-neural?tab=explicabilidade`;
     },
   },
 
