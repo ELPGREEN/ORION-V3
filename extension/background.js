@@ -22,7 +22,7 @@ const APP_BASE = "https://www.iasofthub.com";
 
 // Credentials fetched securely from main app on first use
 let _supabaseConfig = null;
-async function getSupabaseConfig() {
+async function fetchSupabaseConfig() {
   if (_supabaseConfig) return _supabaseConfig;
   try {
     const resp = await fetch(`${APP_BASE}/api/config`);

@@ -7,7 +7,7 @@ const initialNodes = [
   { id: '2', position: { x: 0, y: 100 }, data: { label: 'STT (Google/Deepgram)' } },
   { id: '3', position: { x: 0, y: 200 }, data: { label: 'Intent Classifier' } },
   { id: '4', position: { x: 0, y: 300 }, data: { label: 'Orion Logic' } },
-  { id: '5', position: { x: 0, y: 400 }, data: { label: 'TTS (OpenAI/ElevenLabs)' }, type: 'output' },
+  { id: '5', position: { x: 0, y: 400 }, data: { label: 'TTS (Gemini/Local)' }, type: 'output' },
 ];
 
 const initialEdges = [
