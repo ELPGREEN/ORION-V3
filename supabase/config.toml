@@ -19,12 +19,6 @@ project_id = "dlwafedtlvbvuoaopvsl"
     verify_jwt = false
   [functions.chat-juridico]
     verify_jwt = false
-  [functions.claude-code-review]
-    verify_jwt = false
-  [functions.claude-legal-gen]
-    verify_jwt = false
-  [functions.claude-legal-review]
-    verify_jwt = false
   [functions.citation-verifier]
     verify_jwt = false
   [functions.classify-intent]
@@ -65,8 +59,6 @@ project_id = "dlwafedtlvbvuoaopvsl"
     verify_jwt = false
   [functions.neural-bridge]
     verify_jwt = false
-  [functions.neural-child-bridge]
-    verify_jwt = false
   [functions.neural-inference]
     verify_jwt = false
   [functions.neural-knowledge-harvester]
@@ -93,12 +85,6 @@ project_id = "dlwafedtlvbvuoaopvsl"
     verify_jwt = false
   [functions.orion-realtime-intel]
     verify_jwt = false
-  [functions.orion-vm-control]
-    verify_jwt = false
-  [functions.orion-vm-proxy]
-    verify_jwt = false
-  [functions.pdf-layout-analysis]
-    verify_jwt = false
   [functions.pesquisa-unificada]
     verify_jwt = false
   [functions.process-sale]
@@ -123,8 +109,6 @@ project_id = "dlwafedtlvbvuoaopvsl"
     verify_jwt = false
   [functions.verify-recaptcha]
     verify_jwt = false
-  [functions.webhook-gateway]
-    verify_jwt = false
   [functions.youtube-music-api]
     verify_jwt = false
   [functions.minimax-chat]
@@ -140,4 +124,23 @@ project_id = "dlwafedtlvbvuoaopvsl"
   [functions.zilliz-search]
     verify_jwt = false
   [functions.zilliz-vectors]
+    verify_jwt = false
+
+  [functions.funnel-builder]
+    verify_jwt = false
+  [functions.copy-vsl-builder]
+    verify_jwt = false
+  [functions.peticao-builder]
+    verify_jwt = false
+  [functions.industrial-diagnosis]
+    verify_jwt = false
+  [functions.launch-builder]
+    verify_jwt = false
+  [functions.ads-builder]
+    verify_jwt = false
+  [functions.contract-builder]
+    verify_jwt = false
+  [functions.case-analyzer]
+    verify_jwt = false
+  [functions.maintenance-planner]
     verify_jwt = false
