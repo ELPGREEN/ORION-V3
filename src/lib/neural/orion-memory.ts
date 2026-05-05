@@ -70,8 +70,40 @@ export function getMemoryFacts(): string[] {
   return getLocalMemory().map((m) => m.fact);
 }
 
+/** Optimized tokenization: avoids intermediate array creation and uses non-capturing split */
+const TOKEN_SPLIT_RE = /\s+/;
+
 function getTokens(text: string): Set<string> {
-  return new Set(text.toLowerCase().split(/\s+/).filter(w => w.length > 2));
+  const tokens = new Set<string>();
+  const words = text.toLowerCase().split(TOKEN_SPLIT_RE);
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    if (w.length > 2) {
+      tokens.add(w);
+    }
+  }
+  return tokens;
+}
+
+/**
+ * Module-level cache for tokens to avoid O(N^2) processing in high-frequency loops.
+ */
+const _tokenCache = new Map<string, Set<string>>();
+
+function getCachedTokens(text: string): Set<string> {
+  let tokens = _tokenCache.get(text);
+  if (!tokens) {
+    tokens = getTokens(text);
+    _tokenCache.set(text, tokens);
+    if (_tokenCache.size > 500) {
+      const keys = _tokenCache.keys();
+      for (let i = 0; i < 50; i++) {
+        const k = keys.next().value;
+        if (k !== undefined) _tokenCache.delete(k);
+      }
+    }
+  }
+  return tokens;
 }
 
 function wordOverlap(setA: Set<string>, setB: Set<string>): number {
@@ -83,7 +115,7 @@ function wordOverlap(setA: Set<string>, setB: Set<string>): number {
   return intersection / Math.min(setA.size, setB.size);
 }
 
-const VISUAL_KEYWORDS = /\b(aparência|vestindo|usando|óculos|camisa|suéter|barba|cabelo|roupa|camiseta|cortina|ambiente|mesa|cadeira|fundo|iluminação|wearing|glasses|shirt|hair|beard|background|lighting)\b/i;
+const VISUAL_KEYWORDS = /\b(?:aparência|vestindo|usando|óculos|camisa|suéter|barba|cabelo|roupa|camiseta|cortina|ambiente|mesa|cadeira|fundo|iluminação|wearing|glasses|shirt|hair|beard|background|lighting)\b/i;
 
 function isVisualObservation(fact: string): boolean {
   return VISUAL_KEYWORDS.test(fact);
@@ -102,7 +134,7 @@ function compactVisualMemories(mem: MemoryEntry[]): MemoryEntry[] {
   return [...nonVisual, ...recentVisual];
 }
 
-const SPECULATIVE_PATTERNS = /\b(parece\s+prefer|pode\s+indicar|possivelmente|provavelmente\s+gosta|aparentemente\s+prefer|sugere\s+que|talvez\s+(goste|prefira|seja)|pode\s+ser\s+que|indica\s+que\s+talvez|é\s+possível\s+que)\b/i;
+const SPECULATIVE_PATTERNS = /\b(?:parece\s+prefer|pode\s+indicar|possivelmente|provavelmente\s+gosta|aparentemente\s+prefer|sugere\s+que|talvez\s+(?:goste|prefira|seja)|pode\s+ser\s+que|indica\s+que\s+talvez|é\s+possível\s+que)\b/i;
 
 function isSpeculativeContent(fact: string): boolean {
   return SPECULATIVE_PATTERNS.test(fact.toLowerCase());
@@ -125,10 +157,10 @@ export function addMemoryFacts(
   const mem = getLocalMemory();
   const now = Date.now();
   
-  // PERF: Pre-tokenize existing memories once to avoid O(N^2) string processing
+  // PERF: Use cached tokens to avoid redundant processing
   const memCache = mem.map(m => {
     const low = m.fact.toLowerCase();
-    return { low, tokens: getTokens(low) };
+    return { low, tokens: getCachedTokens(low) };
   });
 
   for (let f of facts) {
@@ -143,10 +175,9 @@ export function addMemoryFacts(
     // Sanitize identity claims
     f = sanitizeIdentityClaim(f);
     const fLow = f.toLowerCase();
-    const fTokens = getTokens(fLow);
+    const fTokens = getCachedTokens(fLow);
     
     // Enhanced deduplication: exact, substring, or word overlap
-    // Visual observations use lower threshold (55%) to catch "wearing glasses" vs "has glasses" etc.
     const overlapThreshold = isVisualObservation(f) ? 0.55 : 0.7;
     const existingIdx = mem.findIndex((m, i) => {
       const cached = memCache[i];
@@ -154,10 +185,8 @@ export function addMemoryFacts(
     });
     
     if (existingIdx !== -1) {
-      // Update existing memory confidence and timestamp
       mem[existingIdx].confidence = Math.min(1, mem[existingIdx].confidence + 0.1);
       mem[existingIdx].timestamp = now;
-      // If correction, replace the fact
       if (category === "correction") {
         mem[existingIdx].fact = f;
         mem[existingIdx].category = "correction";
@@ -396,7 +425,7 @@ export interface MemoryRelation {
  */
 export function discoverRelationships(memories: MemoryEntry[]): MemoryRelation[] {
   const relations: MemoryRelation[] = [];
-  const tokenCache = memories.map(m => getTokens(m.fact));
+  const tokenCache = memories.map(m => getCachedTokens(m.fact));
 
   for (let i = 0; i < memories.length; i++) {
     for (let j = i + 1; j < memories.length; j++) {
