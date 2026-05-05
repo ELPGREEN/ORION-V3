@@ -4,8 +4,8 @@
  * Responde perguntas, executa comandos, coordena setores
  */
 
-import { useState, useCallback } from "react";
-import { orionBrain, getOrionHelp, getOrionStatus, getAgentForSector as getPanelForSector, type OrionResponse } from "@/lib/neural/orion-brain";
+import { useState, useCallback, useRef } from "react";
+import { orionBrain, getOrionHelp, getOrionStatus, type OrionResponse } from "@/lib/neural/orion-brain";
 import { detectSector, type Sector } from "@/lib/neural/sector-agents";
 import { toast } from "sonner";
 
@@ -28,6 +28,9 @@ export function useOrionChat(options: UseOrionChatOptions = {}) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentSector, setCurrentSector] = useState<Sector | null>(null);
 
+  // Guard for concurrent async getHelp calls
+  const isHelpFetching = useRef(false);
+
   const sendMessage = useCallback(async (input: string): Promise<void> => {
     if (!input.trim() || isProcessing) return;
     
@@ -41,7 +44,7 @@ export function useOrionChat(options: UseOrionChatOptions = {}) {
     setIsProcessing(true);
     
     try {
-      // Processar via ORION Brain
+      // Processar via ORION Brain (Unified v10.2 path)
       const response = await orionBrain({ input });
       
       // Adicionar resposta
@@ -82,7 +85,14 @@ export function useOrionChat(options: UseOrionChatOptions = {}) {
   }, []);
 
   const getHelp = useCallback(async (): Promise<string> => {
-    return await getOrionHelp();
+    if (isHelpFetching.current) return "Aguarde, já estou buscando a ajuda.";
+
+    try {
+      isHelpFetching.current = true;
+      return await getOrionHelp();
+    } finally {
+      isHelpFetching.current = false;
+    }
   }, []);
 
   const getStatus = useCallback(() => {

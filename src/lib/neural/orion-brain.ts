@@ -1,5 +1,5 @@
 /**
- * ─── ORION Brain Core v10.0 ───
+ * ─── ORION Brain Core v10.2 ───
  * Cérebro Central Indestrutível do Sistema ORION V3
  * Integra todos os subsistemas: Visão, Voz, RAG, Pentagon e V3 Orchestrator.
  *
@@ -9,12 +9,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sector,
-  SectorAgent,
   ORION_BRAIN,
-  SECTOR_AGENTS,
-  ORQUESTRADOR,
   detectSector,
-  getAgentForSector,
   getAllAgents
 } from "./sector-agents";
 import { orchestrate } from "./orchestrator/orion-v3-orchestrator";
@@ -53,17 +49,23 @@ export async function processOrionRequest(
     const userId = user.data.user?.id || "anonymous";
 
     // 1. Try Tool Execution first (Fast Lane for explicit commands)
-    const toolResult = await matchAndExecuteTool(input);
-    if (toolResult.handled) {
-      const sector = detectSector(input);
-      return {
-        success: true,
-        response: toolResult.response,
-        sector,
-        agentUsed: toolResult.toolName,
-        confidence: 1.0,
-        panel: toolResult.response.includes("__NAV__") ? toolResult.response.split("__NAV__")[1].split(" ")[0] : undefined
-      };
+    // BOLT V2.0: Targeted try-catch to allow graceful fallback to Pentagon if tool fails.
+    try {
+      const toolResult = await matchAndExecuteTool(input);
+      if (toolResult.handled) {
+        const sector = detectSector(input);
+        return {
+          success: true,
+          response: toolResult.response,
+          sector,
+          agentUsed: toolResult.toolName,
+          confidence: 1.0,
+          panel: toolResult.response.includes("__NAV__") ? toolResult.response.split("__NAV__")[1].split(" ")[0] : undefined
+        };
+      }
+    } catch (toolError) {
+      console.warn("[ORION Brain] Fast Lane tool failed, falling back to Pentagon:", toolError);
+      // Don't return, proceed to Pentagon orchestration
     }
 
     // 2. 🍕 PENTAGON PIZZA — Unified consciousness orchestration.
@@ -108,9 +110,13 @@ export const orionBrain = processOrionRequest;
  * Returns a detailed help message about Orion's capabilities.
  */
 export async function getOrionHelp(): Promise<string> {
-  const { matchAndExecuteTool } = await import("./orion-tool-executor");
-  const result = await matchAndExecuteTool("help");
-  return result.response;
+  try {
+    const result = await matchAndExecuteTool("help");
+    return result.response;
+  } catch (err) {
+    console.error("[ORION Brain] Help tool failed:", err);
+    return "Não foi possível carregar a ajuda no momento. Tente novamente mais tarde.";
+  }
 }
 
 export function getOrionStatus() {
