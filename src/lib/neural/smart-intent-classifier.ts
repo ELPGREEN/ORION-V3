@@ -231,7 +231,7 @@ export async function smartClassify(text: string): Promise<ClassifiedIntent> {
   }
   
   // 2. Learned feedback (user corrections)
-  const feedback = getLearnedCorrection(normalized);
+  const feedback = getLearnedCorrection(normalized, true);
   if (feedback) {
     const result: ClassifiedIntent = {
       intent: feedback.correctIntent,

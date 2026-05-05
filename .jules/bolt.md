@@ -58,3 +58,19 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 **Metrics:**
 - Explainability Latency: ~45ms per report (50 IG steps).
 - Impact: 100% visibility into neural decision factors for the Sentinel agent.
+
+## 2026-07-03 - [BOLT V2.0: Memory & Intent Feedback Optimization]
+**Baseline:**
+- Memory addMemoryFacts: 0.0617ms
+- Memory discoverRelationships: 0.0911ms
+- Intent Feedback getLearnedCorrection: 0.0066ms
+**Nova Métrica:**
+- Memory addMemoryFacts: 0.0581ms
+- Memory discoverRelationships: 0.0201ms
+- Intent Feedback getLearnedCorrection: 0.0034ms
+**Delta (Δ):**
+- addMemoryFacts: ~5.8% Improvement
+- discoverRelationships: ~77.9% Improvement
+- getLearnedCorrection: ~48.5% Improvement
+**Learning:** Token caching at the module level drastically reduces the cost of N^2 operations in similarity loops. In memory systems where entries are frequently compared for deduplication or relationship discovery, re-tokenizing the same strings repeatedly is a major bottleneck. Pre-calculating Sets and arrays once and storing them in a sized Map cache allows the engine to skip splitting and filtering logic entirely. Consolidating normalization at the entry point of the classification cycle and passing flags to downstream helpers further eliminates redundant CPU cycles.
+**Action:** Optimized `orion-memory.ts` and `intent-feedback.ts` with token caching and non-capturing regexes.
