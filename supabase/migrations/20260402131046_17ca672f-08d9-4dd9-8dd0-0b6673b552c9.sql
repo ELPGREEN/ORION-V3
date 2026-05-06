@@ -7,6 +7,7 @@ WHERE embedding IS NULL AND is_processed = true;
 CREATE OR REPLACE FUNCTION get_items_needing_embeddings(batch_limit int DEFAULT 100)
 RETURNS TABLE(id uuid, title text, content text, source_type text)
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = public
 AS $$
   SELECT nkb.id, nkb.title, nkb.content, nkb.source_type
   FROM neural_knowledge_base nkb
@@ -19,6 +20,7 @@ $$;
 CREATE OR REPLACE FUNCTION count_items_needing_embeddings()
 RETURNS bigint
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = public
 AS $$
   SELECT COUNT(*) FROM neural_knowledge_base WHERE embedding IS NULL;
 $$;

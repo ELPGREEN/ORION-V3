@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.23.8/mod.ts";
+import { validateBody, corsHeaders } from "../_shared/validator.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const RequestSchema = z.object({
+  text: z.string().min(2),
+});
 
 const SYSTEM_PROMPT = `Você é um classificador de intenções ultra-conservador do assistente Orion.
 
@@ -72,12 +73,10 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { text } = await req.json();
-    if (!text || typeof text !== "string" || text.length < 2) {
-      return new Response(JSON.stringify({ intent: "general", confidence: 0.3, params: {} }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const { data, error } = await validateBody(req, RequestSchema);
+    if (error) return error;
+
+    const { text } = data!;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -124,8 +123,8 @@ serve(async (req) => {
       });
     }
 
-    const data = await resp.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    const resultData = await resp.json();
+    const toolCall = resultData.choices?.[0]?.message?.tool_calls?.[0];
 
     if (toolCall?.function?.name === "classify") {
       try {

@@ -46,7 +46,7 @@ const SYSTEM_KEY_NAMES: Record<string, string[]> = {
   groq: ["GROQ_API_KEY"],
   openai: ["OPENAI_API_KEY"],
   mistral: ["MISTRAL_API_KEY"],
-  anthropic: ["ANTHROPIC_API_KEY", "ANTROPIC_API_KEY"],
+  anthropic: ["ANTHROPIC_API_KEY"],
   deepseek: ["DEEPSEEK_API_KEY"],
   huggingface: ["HUGGINGFACE_API_KEY", "HF_TOKEN", "CHAVE_API_HUGGINGFACE"],
   openrouter: ["OPENROUTER_API_KEY"],
@@ -67,6 +67,13 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { user_id, provider } = await req.json();
     if (!user_id || !provider) {
       return new Response(JSON.stringify({ error: "user_id and provider required" }), {
@@ -74,13 +81,22 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Try user key first
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: userKey } = await supabase
+    // 🔒 SECURITY: Verify that the token belongs to the requested user_id
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(authHeader.replace("Bearer ", ""));
+
+    if (authError || !user || user.id !== user_id) {
+      console.error("[get-api-keys] Auth violation or invalid user:", authError?.message);
+      return new Response(JSON.stringify({ error: "Unauthorized access to these keys" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Try user key first
+    const { data: userKey } = await supabaseAdmin
       .from("user_api_keys")
       .select("encrypted_key, iv")
       .eq("user_id", user_id)

@@ -145,6 +145,7 @@ CREATE OR REPLACE FUNCTION add_user_credits(
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
   -- Verificar se quem adiciona é admin/owner

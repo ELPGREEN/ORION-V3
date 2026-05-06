@@ -48,7 +48,7 @@ project_id = "dlwafedtlvbvuoaopvsl"
   [functions.gerar-documento]
     verify_jwt = false
   [functions.get-api-keys]
-    verify_jwt = false
+    verify_jwt = true
   [functions.google-stt]
     verify_jwt = false
   [functions.groq-stt]
