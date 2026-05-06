@@ -141,38 +141,24 @@ export function clearCorrections(): void {
   if (typeof window !== "undefined") localStorage.removeItem(STORAGE_KEY);
 }
 
+const NEGATIVE_FEEDBACK_RE = /(?:n[ãa]o\s+(?:era\s+)?isso|errad[oa]|n[ãa]o\s+(?:foi\s+)?(?:isso|o\s+que)|n[ãa]o\s+(?:é|eh)\s+(?:isso|o\s+que)|eu\s+(?:disse|falei|quis|queria)\s+|corrig[ae]|(?:t[áa]|ta|est[áa])\s+errad|wrong|not\s+(?:that|what|right))/i;
+
 /**
  * Detect if user is giving negative feedback about the last classification
  */
 export function isNegativeFeedback(text: string): boolean {
-  const patterns = [
-    /n[ãa]o\s+(?:era\s+)?isso/i,
-    /errad[oa]/i,
-    /n[ãa]o\s+(?:foi\s+)?(?:isso|o\s+que)/i,
-    /n[ãa]o\s+(?:é|eh)\s+(?:isso|o\s+que)/i,
-    /eu\s+(?:disse|falei|quis|queria)\s+/i,
-    /corrig[ae]/i,
-    /(?:tá|ta|está)\s+errad/i,
-    /wrong/i,
-    /not\s+(?:that|what|right)/i,
-  ];
-  return patterns.some(p => p.test(text.trim()));
+  return NEGATIVE_FEEDBACK_RE.test(text.trim());
 }
+
+const CORRECTION_TARGET_RE = /(?:(?:(?:eu\s+)?(?:quis|queria|quero)\s+(?:dizer\s+)?)|(?:(?:era\s+pra|deveria)\s+)|(?:(?:na\s+verdade|na\s+real)\s*,?\s*)|(?:(?:eu\s+)?(?:disse|falei)\s+))(.+)/i;
 
 /**
  * Extract what the user actually wanted from their correction text
  * e.g. "não era isso, eu queria abrir o youtube" → "abrir o youtube"
  */
 export function extractCorrectionTarget(text: string): string | null {
-  const patterns = [
-    /(?:eu\s+)?(?:quis|queria|quero)\s+(?:dizer\s+)?(.+)/i,
-    /(?:era\s+pra|deveria)\s+(.+)/i,
-    /(?:na\s+verdade|na\s+real)\s*,?\s*(.+)/i,
-    /(?:eu\s+)?(?:disse|falei)\s+(.+)/i,
-  ];
-  
-  for (const p of patterns) {
-    const m = text.match(p);
+  if (CORRECTION_TARGET_RE.test(text)) {
+    const m = text.match(CORRECTION_TARGET_RE);
     if (m?.[1]) return m[1].trim();
   }
   return null;

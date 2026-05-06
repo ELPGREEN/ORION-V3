@@ -42,32 +42,13 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 const MAX_CACHE_ENTRIES = 50;
 
 // Deep-mode triggers (require step-by-step reasoning)
-const DEEP_TRIGGERS = [
-  /compar[ea]/i, /diferen[cç]a entre/i, /analise/i, /análise/i,
-  /explique.*passo/i, /por que/i, /porque/i, /fundament/i,
-  /jurisprud/i, /constitucional/i, /hermenêutic/i,
-  /vantagens e desvantagens/i, /prós e contras/i,
-  /consequências/i, /implicações/i, /impacto/i,
-  /como funciona/i, /qual a relação/i, /qual o procedimento/i,
-  /requisitos para/i, /hipóteses de/i, /cabimento/i,
-  /tese.*defesa/i, /estratégia/i, /argumenta/i,
-];
+const DEEP_TRIGGERS_RE = /(?:compar[ea]|diferen[cç]a entre|analise|análise|explique.*passo|por\s+que|porque|fundament|jurisprud|constitucional|hermenêutic|vantagens\s+e\s+desvantagens|prós\s+e\s+contras|consequências|implicações|impacto|como\s+funciona|qual\s+a\s+relação|qual\s+o\s+procedimento|requisitos\s+para|hipóteses\s+de|cabimento|tese.*defesa|estratégia|argumenta)/i;
 
 // Conversational indicators (greetings, short casual queries — human-like response)
-const CONVERSATIONAL_INDICATORS = [
-  /^olá/i, /^oi\b/i, /^bom dia/i, /^boa tarde/i, /^boa noite/i,
-  /obrigad/i, /^ok\b/i, /^entendi/i, /^certo/i, /^beleza/i,
-  /^fala/i, /^eai/i, /^e\s*aí/i, /^opa/i, /^tudo\s*bem/i,
-  /^valeu/i, /^legal/i, /^pode\s+ser/i, /^como\s+vai/i,
-  /^hey/i, /^ei\b/i, /^tranquilo/i,
-];
+const CONVERSATIONAL_INDICATORS_RE = /^(?:olá|oi\b|bom\s+dia|boa\s+tarde|boa\s+noite|ok\b|entendi|certo|beleza|fala|eai|e\s*aí|opa|tudo\s*bem|valeu|legal|pode\s+ser|como\s+vai|hey|ei\b|tranquilo)|obrigad/i;
 
 // Fast-mode indicators (simple, direct answers)
-const FAST_INDICATORS = [
-  /^o que é\b/i, /^quem é\b/i, /^qual é\b/i, /^quando\b/i,
-  /^onde\b/i, /^quanto\b/i, /^sim ou não/i,
-  /^defin[ia]/i, /^conceito de/i, /^prazo\b/i,
-];
+const FAST_INDICATORS_RE = /^(?:o\s+que\s+[eé]\b|quem\s+[eé]\b|qual\s+[eé]\b|quando\b|onde\b|quanto\b|sim\s+ou\s+n[ãa]o|defin[ia]|conceito\s+de|prazo\b)/i;
 
 // Negation pairs for contradiction detection
 const NEGATION_PAIRS = [
@@ -149,16 +130,16 @@ export function classifyThinkingMode(query: string, tier: ModelTier): ThinkingMo
   if (tier === "deep") return "deep";
 
   // Conversational check first — greetings and very short casual queries
-  if (CONVERSATIONAL_INDICATORS.some(p => p.test(query))) return "conversational";
+  if (CONVERSATIONAL_INDICATORS_RE.test(query)) return "conversational";
   
   const wordCount = query.split(/\s+/).length;
-  if (wordCount <= 6 && !DEEP_TRIGGERS.some(p => p.test(query))) return "conversational";
+  if (wordCount <= 6 && !DEEP_TRIGGERS_RE.test(query)) return "conversational";
 
   // Check fast indicators
-  if (FAST_INDICATORS.some(p => p.test(query))) return "fast";
+  if (FAST_INDICATORS_RE.test(query)) return "fast";
 
   // Check deep triggers
-  if (DEEP_TRIGGERS.some(p => p.test(query))) return "deep";
+  if (DEEP_TRIGGERS_RE.test(query)) return "deep";
 
   // Word count heuristic
   if (wordCount > 60) return "deep";
@@ -234,6 +215,8 @@ export function cognitiveRoute(
   };
 }
 
+const CONTRAST_MARKERS_RE = /\b(?:porém|entretanto|todavia|contudo|no\s+entanto|mas)\b/gi;
+
 /**
  * Validate logical consistency of a response.
  * Detects internal contradictions in <5ms.
@@ -260,13 +243,13 @@ export function validateLogicalConsistency(response: string): LogicalConsistency
   }
 
   // Check for "however/but" patterns that might indicate self-contradiction
-  const contrastMarkers = ["porém", "entretanto", "todavia", "contudo", "no entanto", "mas "];
   let contrastCount = 0;
-  for (const marker of contrastMarkers) {
-    const regex = new RegExp(marker, "gi");
-    const matches = lower.match(regex);
-    if (matches) contrastCount += matches.length;
+  if (CONTRAST_MARKERS_RE.test(lower)) {
+    CONTRAST_MARKERS_RE.lastIndex = 0;
+    const matches = lower.match(CONTRAST_MARKERS_RE);
+    if (matches) contrastCount = matches.length;
   }
+
   if (contrastCount >= 3 && sentences.length < 8) {
     contradictions.push(
       `Excesso de ressalvas/contrastes (${contrastCount}) para resposta curta — pode indicar incerteza`

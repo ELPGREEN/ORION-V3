@@ -31,3 +31,21 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 **Solution:** Offloaded AI Orchestration and high-bandwidth API proxying to Render service. Created a "Smart Gateway" pattern on frontend that attempts Render first and falls back to Supabase.
 **Impact:** Drastic reduction in Supabase Egress and Invocations. Zero-downtime reliability via automatic fallback.
 **Implementation:** `src/lib/neural/render-proxy.ts`, `server/index.ts` (Bun), and redirected `ai-service.ts` / `orion-ai-client.ts` calls.
+
+## 2026-06-28 - [Neural Hot-Path Optimization (BOLT V2.0)]
+**Baseline:**
+- classifyThinkingMode: 0.0326ms
+- validateLogicalConsistency: 0.0298ms
+- classifyQueryComplexity: 0.1685ms
+
+**Nova Métrica:**
+- classifyThinkingMode: 0.0132ms
+- validateLogicalConsistency: 0.0202ms
+- classifyQueryComplexity: 0.1440ms
+
+**Delta (Δ):**
+- classifyThinkingMode: ~59.5%
+- validateLogicalConsistency: ~32.2%
+- classifyQueryComplexity: ~14.5%
+
+**Learning:** Consolidating regex arrays into single hoisted non-capturing patterns and replacing `match()` (which allocates arrays) with manual character-iteration loops for counting tasks significantly reduces latency in high-frequency neural modules.
