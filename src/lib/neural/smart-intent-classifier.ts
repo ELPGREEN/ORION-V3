@@ -42,26 +42,26 @@ interface IntentRule {
 
 const REGEX_RULES: IntentRule[] = [
   // Conversational / Greeting (Must be high priority to avoid tool triggers)
-  { pattern: /\b(oi|ol[aá]|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|como\s+vai|e\s+a[ií])\b/i, intent: "general", confidence: 0.98 },
-  { pattern: /\b(consegue\s+me\s+ouvir|est[aá]\s+me\s+ouvindo|me\s+ouve|teste\s+de\s+som|teste\s+mic)\b/i, intent: "general", confidence: 0.98 },
-  { pattern: /\b(voce\s+consegue\s+me\s+ouvir\s+perfeitamente|consegue\s+me\s+ouvir\s+perfeitamente|voce\s+esta\s+me\s+ouvindo|microfone\s+(?:esta\s+)?funcionando|audio\s+(?:esta\s+)?ok)\b/i, intent: "general", confidence: 0.99 },
-  { pattern: /\b(quem\s+[eé]\s+voc[eê]|fala\s+(sobre|de)\s+voc[eê]|o\s+que\s+voc[eê]\s+[eé]|sua\s+identidade)\b/i, intent: "identity", confidence: 0.98 },
+  { pattern: /\b(?:oi|ol[aá]|bom\s+dia|boa\s+tarde|boa\s+noite|tudo\s+bem|como\s+vai|e\s+a[ií])\b/i, intent: "general", confidence: 0.98 },
+  { pattern: /\b(?:consegue\s+me\s+ouvir|est[aá]\s+me\s+ouvindo|me\s+ouve|teste\s+de\s+som|teste\s+mic)\b/i, intent: "general", confidence: 0.98 },
+  { pattern: /\b(?:voce\s+consegue\s+me\s+ouvir\s+perfeitamente|consegue\s+me\s+ouvir\s+perfeitamente|voce\s+esta\s+me\s+ouvindo|microfone\s+(?:esta\s+)?funcionando|audio\s+(?:esta\s+)?ok)\b/i, intent: "general", confidence: 0.99 },
+  { pattern: /\b(?:quem\s+[eé]\s+voc[eê]|fala\s+(?:sobre|de)\s+voc[eê]|o\s+que\s+voc[eê]\s+[eé]|sua\s+identidade)\b/i, intent: "identity", confidence: 0.98 },
 
   // Vision
-  { pattern: /\b(?:(descreva|o\s+que)\s+(?:voc[eê]\s+)?(?:v[eê]|enxerga|est[aá]\s+(?:me\s+)?vendo))\b/i, intent: "vision_describe", confidence: 0.96 },
+  { pattern: /\b(?:(?:descreva|o\s+que)\s+(?:voc[eê]\s+)?(?:v[eê]|enxerga|est[aá]\s+(?:me\s+)?vendo))\b/i, intent: "vision_describe", confidence: 0.96 },
   // "Quem sou eu / quem é essa pessoa"
   { pattern: /\b(?:quem\s+(?:sou\s+eu|[eé]\s+(?:essa?|aquele?|ele|ela|est[ea])|somos|s[aã]o\s+(?:eles|elas))|reconhe[cç])\b/i, intent: "identity", confidence: 0.92 },
 
   // ═══ MEDIA rules BEFORE navigation — "abrir música" must NOT be caught by nav ═══
   
   // Media — YouTube (explicit platform mention)
-  { pattern: /\b(?:(?:abr[aei]?r?|tocar?|play|reproduz\w*|assistir?|pesquisar?|buscar?|procurar?)\s+[\w\s]{0,20}(?:no\s+|do\s+|d[oa]\s+)?youtube|youtube\b)/i, intent: "media", confidence: 0.95, extractParams: (t) => {
+  { pattern: /\b(?:(?:abr[aei]?r?|tocar?|play|reproduz\w*|assistir?|pesquisar?|buscar?|procurar?)\s+[\w\s]{0,20}(?:no|do|d[oa])\s+youtube|youtube\b)/i, intent: "media", confidence: 0.95, extractParams: (t) => {
     const m = t.match(/(?:tocar?|play|reproduz\w*|assistir?|ver|pesquisar?|buscar?|procurar?|abr[aei]?r?)\s+(.+?)(?:\s+(?:no|do|da)\s+youtube)?$/i);
     return { query: m?.[1]?.replace(/(?:no|do|da)\s+youtube/i, "").trim() || "", platform: "youtube" };
   }},
   
   // Media — Spotify (explicit platform mention)
-  { pattern: /\b(?:(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+[\w\s]{0,20}(?:no\s+|do\s+|d[oa]\s+)?spotify|spotify\b)/i, intent: "media", confidence: 0.95, extractParams: (t) => {
+  { pattern: /\b(?:(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+[\w\s]{0,20}(?:no|do|d[oa])\s+spotify|spotify\b)/i, intent: "media", confidence: 0.95, extractParams: (t) => {
     const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+?)(?:\s+(?:no|do|da)\s+spotify)?$/i);
     return { query: m?.[1]?.replace(/(?:no|do|da)\s+spotify/i, "").trim() || "", platform: "spotify" };
   }},
@@ -73,24 +73,24 @@ const REGEX_RULES: IntentRule[] = [
   }},
   
   // Media — generic (music/video keywords without platform)
-  { pattern: /\b(tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica\s+d[oae]\s+|v[ií]deo\s+d[oae]\s+|ouvir?\s+|escutar?\s+)/i, intent: "media", confidence: 0.75, extractParams: (t) => {
+  { pattern: /\b(?:tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica\s+d[oae]\s+|v[ií]deo\s+d[oae]\s+|ouvir?\s+|escutar?\s+)/i, intent: "media", confidence: 0.75, extractParams: (t) => {
     const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+)/i);
-    return { query: m?.[1]?.trim() || t, action: /\b(par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
+    return { query: m?.[1]?.trim() || t, action: /\b(?:par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
   }},
 
   // Media controls — only explicit controls, never commands with a target query
-  { pattern: /^\s*(pr[óò]xima?|pr[óò]ximo|avançar|seguinte|próxima\s+(m[uú]sica|faixa))\s*$/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "next" }) },
-  { pattern: /^\s*(anterior|voltar|retornar|voltar\s+(uma|à)\s+(m[uú]sica|faixa)|m[uú]sica\s+anterior)\s*$/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "prev" }) },
-  { pattern: /^\s*(pausar|parar|stop|pausa)\s*$/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "pause" }) },
-  { pattern: /^\s*(continuar|retomar|resume|play|reproduzir)\s*$/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "play" }) },
+  { pattern: /^\s*(?:pr[óò]xima?|pr[óò]ximo|avançar|seguinte|próxima\s+(?:m[uú]sica|faixa))\s*$/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "next" }) },
+  { pattern: /^\s*(?:anterior|voltar|retornar|voltar\s+(?:uma|à)\s+(?:m[uú]sica|faixa)|m[uú]sica\s+anterior)\s*$/i, intent: "media_control", confidence: 0.97, extractParams: () => ({ action: "prev" }) },
+  { pattern: /^\s*(?:pausar|parar|stop|pausa)\s*$/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "pause" }) },
+  { pattern: /^\s*(?:continuar|retomar|resume|play|reproduzir)\s*$/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "play" }) },
   // Navigation — AFTER media so "abrir música" is already caught
-  { pattern: /\b(v[aá]\s+para|naveg\w*\s+(para|pra)|ir\s+para|go\s+to)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
+  { pattern: /\b(?:v[aá]\s+para|naveg\w*\s+(?:para|pra)|ir\s+para|go\s+to)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
     const m = t.match(/(?:v[aá]\s+para|naveg\w*\s+(?:para|pra)|ir\s+para)\s+(.+)/i);
     return { target: m?.[1]?.trim() || "" };
   }},
   // Navigation — "abrir" only for non-media targets (page names)
-  { pattern: /\b(abr[aei]?r?)\s+(?:o\s+|a\s+|os\s+|as\s+)?(?:painel|dashboard|consulta|documentos?|processos?|clientes?|rede\s+neural|configura[çc][oõ]|loja|crm|analytics|extensão?)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
-    const m = t.match(/abr[aei]?r?\s+(?:o\s+|a\s+|os\s+|as\s+)?(.+)/i);
+  { pattern: /\b(?:abr[aei]?r?)\s+(?:[oa]s?\s+)?(?:painel|dashboard|consulta|documentos?|processos?|clientes?|rede\s+neural|configura[çc][oõ]|loja|crm|analytics|extensão?)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
+    const m = t.match(/abr[aei]?r?\s+(?:[oa]s?\s+)?(.+)/i);
     return { target: m?.[1]?.trim() || "" };
   }},
   
@@ -101,43 +101,43 @@ const REGEX_RULES: IntentRule[] = [
   }},
 
   // Search — generic → web_search (user wants internet search, not internal)
-  { pattern: /\b(procur|busc|encontr|pesquis)\w*\s+/i, intent: "web_search", confidence: 0.85, extractParams: (t) => {
+  { pattern: /\b(?:procur|busc|encontr|pesquis)\w*\s+/i, intent: "web_search", confidence: 0.85, extractParams: (t) => {
     const cleaned = t.replace(/\b(?:pesquis|busc|procur|encontr)\w*\s+(?:na\s+internet\s+|na\s+web\s+|online\s+)?/i, "").trim();
     return { query: cleaned || t };
   }},
   
   // Legal
-  { pattern: /\b(lei\b|artigo\s+\d|c[oó]digo\s+civil|jurisprud[eê]ncia|peti[çc][aã]o|habeas|direito\s+\w)/i, intent: "legal", confidence: 0.75 },
+  { pattern: /\b(?:lei\b|artigo\s+\d|c[oó]digo\s+civil|jurisprud[eê]ncia|peti[çc][aã]o|habeas|direito\s+\w)/i, intent: "legal", confidence: 0.75 },
   
   // Calendar
-  { pattern: /\b(agendar|marcar\s+(?:uma|reuni)|compromisso|desmarcar)\b/i, intent: "calendar", confidence: 0.90 },
+  { pattern: /\b(?:agendar|marcar\s+(?:uma|reuni)|compromisso|desmarcar)\b/i, intent: "calendar", confidence: 0.90 },
   
   // CRM
-  { pattern: /\b(pipeline|lead|oportunidade|neg[oó]cio|proposta|deal)\b/i, intent: "crm", confidence: 0.85 },
+  { pattern: /\b(?:pipeline|lead|oportunidade|neg[oó]cio|proposta|deal)\b/i, intent: "crm", confidence: 0.85 },
   
   // Image generation
-  { pattern: /\b(gere?\s+(uma?\s+)?imagem|crie?\s+(uma?\s+)?imagem|desenh[ae]|ilustr[ae])\b/i, intent: "image_generation", confidence: 0.95 },
+  { pattern: /\b(?:gere?\s+(?:uma?\s+)?imagem|crie?\s+(?:uma?\s+)?imagem|desenh[ae]|ilustr[ae])\b/i, intent: "image_generation", confidence: 0.95 },
   
   // Auto-construct
-  { pattern: /\b(constru[ai]|programe?|crie?\s+(uma?\s+)?fun[çc][ãa]o|implemente?|desenvolv[ae])\b/i, intent: "auto_construct", confidence: 0.75 },
+  { pattern: /\b(?:constru[ai]|programe?|crie?\s+(?:uma?\s+)?fun[çc][ãa]o|implemente?|desenvolv[ae])\b/i, intent: "auto_construct", confidence: 0.75 },
   
   // Self-evolve
-  { pattern: /\b(melhore-se|evolua|auto[-\s]?program|se\s+reprogram|upgrade)\b/i, intent: "self_evolve", confidence: 0.90 },
+  { pattern: /\b(?:melhore-se|evolua|auto[-\s]?program|se\s+reprogram|upgrade)\b/i, intent: "self_evolve", confidence: 0.90 },
   
   // Humor
-  { pattern: /\b(piada|engra[çc]ado|brincadeira|me\s+fa[çc]a\s+rir)\b/i, intent: "humor", confidence: 0.92 },
+  { pattern: /\b(?:piada|engra[çc]ado|brincadeira|me\s+fa[çc]a\s+rir)\b/i, intent: "humor", confidence: 0.92 },
   
   // Reporting
-  { pattern: /\b(relat[oó]rio|m[eé]tricas|estat[ií]sticas)\b/i, intent: "reporting", confidence: 0.85 },
+  { pattern: /\b(?:relat[oó]rio|m[eé]tricas|estat[ií]sticas)\b/i, intent: "reporting", confidence: 0.85 },
   
   // Explanation
-  { pattern: /\b(expliqu|o\s+que\s+[eé]\s+\w|como\s+funciona|me\s+ensin|defin[ie]|significa)\b/i, intent: "explanation", confidence: 0.85 },
+  { pattern: /\b(?:expliqu|o\s+que\s+[eé]\s+\w|como\s+funciona|me\s+ensin|defin[ie]|significa)\b/i, intent: "explanation", confidence: 0.85 },
   
   // Security
-  { pattern: /\b(seguran[çc]a|amea[çc]a|shield)\b/i, intent: "security", confidence: 0.75 },
+  { pattern: /\b(?:seguran[çc]a|amea[çc]a|shield)\b/i, intent: "security", confidence: 0.75 },
   
   // Web search (real-time data)
-  { pattern: /\b(hoje|atual|notícia|preço\s+d[eoa]|cotação|2024|2025|2026|clima|previsão)\b/i, intent: "web_search", confidence: 0.82 },
+  { pattern: /\b(?:hoje|atual|notícia|preço\s+d[eoa]|cotação|2024|2025|2026|clima|previsão)\b/i, intent: "web_search", confidence: 0.82 },
 ];
 
 function regexClassify(text: string): ClassifiedIntent | null {

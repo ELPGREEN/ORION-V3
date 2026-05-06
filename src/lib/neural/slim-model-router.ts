@@ -120,41 +120,17 @@ const COMPLEX_LEGAL_TERMS = [
 ];
 
 // Cross-domain indicators
-const CROSS_DOMAIN_PATTERNS = [
-  /(?:interface|intersecção|diálogo).*(?:entre|das?\s+áreas)/i,
-  /(?:civil|penal|trabalhist|tributári|constitucional).*(?:e|com|versus).*(?:civil|penal|trabalhist|tributári|constitucional)/i,
-  /(?:reflexos?|implicaç|repercuss).*(?:em\s+outr|nas?\s+demais|transversal)/i,
-];
+const CROSS_DOMAIN_RE = /(?:(?:interface|intersecção|diálogo).*(?:entre|das?\s+áreas)|(?:civil|penal|trabalhist|tributári|constitucional).*(?:e|com|versus).*(?:civil|penal|trabalhist|tributári|constitucional)|(?:reflexos?|implicaç|repercuss).*(?:em\s+outr|nas?\s+demais|transversal))/i;
 
 // Comparative law indicators
-const COMPARATIVE_LAW_PATTERNS = [
-  /(?:direito\s+comparado|legislação\s+estrangeira|modelo\s+europeu|sistema\s+anglo)/i,
-  /(?:common\s+law|civil\s+law|romano[- ]germânic)/i,
-  /(?:tribunal\s+europeu|corte\s+interamericana|TEDH|CIDH)/i,
-  /(?:ordenamento|sistema\s+jurídico).*(?:alemão|francês|italiano|americano|português)/i,
-];
+const COMPARATIVE_LAW_RE = /(?:(?:direito\s+comparado|legislação\s+estrangeira|modelo\s+europeu|sistema\s+anglo)|(?:common\s+law|civil\s+law|romano[- ]germânic)|(?:tribunal\s+europeu|corte\s+interamericana|TEDH|CIDH)|(?:ordenamento|sistema\s+jurídico).*(?:alemão|francês|italiano|americano|português))/i;
 
 // Chain-of-thought indicators
-const CHAIN_OF_THOUGHT_PATTERNS = [
-  /(?:passo\s+a\s+passo|etapa\s+por\s+etapa|raciocínio\s+detalhado)/i,
-  /(?:demonstr|comprova|fundament).*(?:cada|todos|todas).*(?:requisito|elemento|pressuposto)/i,
-  /(?:silogismo|premissa|conclusão\s+lógica)/i,
-  /(?:encadeamento|sequência|cadeia).*(?:argumentativ|lógic|causal)/i,
-];
+const CHAIN_OF_THOUGHT_RE = /(?:(?:passo\s+a\s+passo|etapa\s+por\s+etapa|raciocínio\s+detalhado)|(?:demonstr|comprova|fundament).*(?:cada|todos|todas).*(?:requisito|elemento|pressuposto)|(?:silogismo|premissa|conclusão\s+lógica)|(?:encadeamento|sequência|cadeia).*(?:argumentativ|lógic|causal))/i;
 
-const SIMPLE_PATTERNS = [
-  /^o que [eé]/i, /^qual [eéo]/i, /^quando/i, /^onde/i, /^quem/i,
-  /^defin[aie]/i, /^resuma/i, /^traduza/i, /^liste/i, /^calcule/i,
-];
+const SIMPLE_PATTERNS_RE = /^(?:o\s+que\s+[eé]|qual\s+[eéo]|quando|onde|quem|defin[aie]|resuma|traduza|liste|calcule)/i;
 
-const COMPLEX_PATTERNS = [
-  /compar[ae].*(?:com|entre|versus)/i,
-  /analis[ae].*(?:juridic|legal|constitucional)/i,
-  /(?:elabor|redigi|cri)[ae].*(?:petição|contrato|parecer|recurso)/i,
-  /(?:fundament|argument)[ae]/i,
-  /(?:tese|estratégia|planejamento)/i,
-  /(?:conflito|antinomia|colisão).*(?:norma|princípio|direito)/i,
-];
+const COMPLEX_PATTERNS_RE = /(?:compar[ea].*(?:com|entre|versus)|analis[ae].*(?:juridic|legal|constitucional)|(?:elabor|redigi|cri)[ae].*(?:petição|contrato|parecer|recurso)|(?:fundament|argument)[ae]|(?:tese|estratégia|planejamento)|(?:conflito|antinomia|colisão).*(?:norma|princípio|direito))/i;
 
 /**
  * Tokenize text with compact optimization for slim models.
@@ -195,18 +171,36 @@ export function classifyQueryComplexity(query: string): ComplexityAnalysis {
 
   // Feature extraction
   const hasLegalTerms = COMPLEX_LEGAL_TERMS.some((term) => lower.includes(term));
-  const hasMultipleClauses = (query.match(/[,;]/g) || []).length > 3;
-  const isSimplePattern = SIMPLE_PATTERNS.some((p) => p.test(query));
-  const isComplexPattern = COMPLEX_PATTERNS.some((p) => p.test(query));
+
+  // Efficient clause counting
+  let hasMultipleClauses = false;
+  let clauseCount = 0;
+  for (let i = 0; i < query.length; i++) {
+    if (query[i] === "," || query[i] === ";") clauseCount++;
+    if (clauseCount > 3) {
+      hasMultipleClauses = true;
+      break;
+    }
+  }
+
+  const isSimplePattern = SIMPLE_PATTERNS_RE.test(query);
+  const isComplexPattern = COMPLEX_PATTERNS_RE.test(query);
   const hasCodeOrMath = /[{}\[\]<>=+\-*/^%]/.test(query) || /\d{3,}/.test(query);
-  const sentenceCount = (query.match(/[.!?]/g) || []).length + 1;
+
+  // Efficient sentence counting
+  let sentenceCount = 1;
+  for (let i = 0; i < query.length; i++) {
+    const char = query[i];
+    if (char === "." || char === "!" || char === "?") sentenceCount++;
+  }
+
   const avgWordLength = tokenization.tokens.reduce((s, t) => s + t.length, 0) / (tokenCount || 1);
   const languageComplexity = Math.min(1, avgWordLength / 10);
 
   // v2: New feature detectors
-  const isCrossDomain = CROSS_DOMAIN_PATTERNS.some((p) => p.test(query));
-  const isComparativeLaw = COMPARATIVE_LAW_PATTERNS.some((p) => p.test(query));
-  const requiresChainOfThought = CHAIN_OF_THOUGHT_PATTERNS.some((p) => p.test(query));
+  const isCrossDomain = CROSS_DOMAIN_RE.test(query);
+  const isComparativeLaw = COMPARATIVE_LAW_RE.test(query);
+  const requiresChainOfThought = CHAIN_OF_THOUGHT_RE.test(query);
 
   // Count how many complex legal terms appear (density)
   const complexTermCount = COMPLEX_LEGAL_TERMS.filter((term) => lower.includes(term)).length;
