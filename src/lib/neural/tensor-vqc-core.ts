@@ -9,6 +9,7 @@
 
 import {
   type StateVector,
+  type DensityMatrix,
   tensorZero,
   applySingleGate,
   applyCNOT,
@@ -23,7 +24,7 @@ import {
   stateFidelity,
 } from "./tensor-state-vector";
 
-import type { VQCConfig } from "./vqc";
+import type { VQCConfig } from "./vqc-types";
 
 // ═══ Tensor Feature Maps ═══
 

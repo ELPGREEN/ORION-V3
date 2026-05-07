@@ -16,62 +16,29 @@
 
 import type { AgentRole, NeuromodulationState } from "./multi-agent";
 import type { InteroceptiveState } from "./interoception-engine";
-import { runQuantumMetacognition, recordCalibration } from "./quantum-metacognition";
+import { runQuantumMetacognition } from "./quantum-metacognition";
+import {
+  ConsciousnessLevel,
+  ConsciousnessConfig,
+  DEFAULT_CONSCIOUSNESS_CONFIG,
+  AgentBroadcast,
+  MetacognitionResult,
+  ConsciousState,
+  SelfModelState,
+} from "./consciousness-types";
 
 // ─── Types ───
 
-export type ConsciousnessLevel = "unconscious" | "preconscious" | "conscious" | "metaconscious";
-
-export interface ConsciousnessConfig {
-  maxConsciousAgents: number;        // Max agents in conscious state per cycle (1-2)
-  metacognitionInterval: number;     // Cycles between metacognition checks (5-10)
-  salienceWeights: {
-    gamma: number;       // PLV weight
-    dopamine: number;    // Urgency weight
-    urgency: number;     // Task priority weight
-    novelty: number;     // New information weight
-  };
-  selfModelDim: number;              // Self-model vector dimension (1024)
-  autobiographicalCapacity: number;  // Max memories in Hopfield store
-  gammaFrequency: number;            // Hz (30-100, typically 40)
-}
-
-export const DEFAULT_CONSCIOUSNESS_CONFIG: ConsciousnessConfig = {
-  maxConsciousAgents: 2,
-  metacognitionInterval: 2,
-  salienceWeights: {
-    gamma: 0.30,
-    dopamine: 0.25,
-    urgency: 0.25,
-    novelty: 0.20,
-  },
-  gammaFrequency: 40,
-  selfModelDim: 1024,
-  autobiographicalCapacity: 256,
+export type {
+  ConsciousnessLevel,
+  ConsciousnessConfig,
+  AgentBroadcast,
+  MetacognitionResult,
+  ConsciousState,
+  SelfModelState,
 };
 
-export interface AgentBroadcast {
-  agentId: string;
-  role: AgentRole | "self_model";
-  content: string;
-  salience: number;           // 0-1, computed salience score
-  neuromodulation: NeuromodulationState;
-  timestamp: number;
-  metadata: Record<string, unknown>;
-}
-
-export interface ConsciousState {
-  consciousAgents: AgentBroadcast[];     // Currently "conscious" agents (1-2)
-  preconsciousQueue: AgentBroadcast[];   // Agents waiting for attention
-  unconsciousPool: string[];             // Agent IDs operating in background
-  globalPLV: number;                     // Phase-locking value (consciousness coherence)
-  cycleCount: number;
-  lastMetacognition: MetacognitionResult | null;
-  iotAwareness: IoTAwarenessState;       // v22.5: IoT/BLE awareness
-  causalInferences: string[];            // v22.4: Recent causal inferences from reasoning engine
-  userMentalModelSummary: string;        // v22.4: Theory of Mind summary for metacognition
-  interoceptiveState: InteroceptiveState | null; // v23.0: Layer 6 — Synthetic Interoception
-}
+export { DEFAULT_CONSCIOUSNESS_CONFIG };
 
 /** v22.5: IoT & BLE awareness integrated into consciousness */
 export interface IoTAwarenessState {
@@ -83,70 +50,12 @@ export interface IoTAwarenessState {
   environmentalContext: string;    // "indoor" | "outdoor" | "vehicle" | "unknown"
 }
 
-export interface SelfModelState {
-  attentionFocus: string;           // What the system is currently focused on
-  currentGoal: string;              // Active user goal
-  confidenceLevel: number;          // 0-1, system confidence in current action
-  emotionalState: {
-    valence: number;                // -1 (negative) to 1 (positive)
-    arousal: number;                // 0 (calm) to 1 (excited)
-    dominance: number;              // 0 (submissive) to 1 (dominant)
-  };
-  neuromodulators: NeuromodulationState;
-  activeModalities: string[];       // ["text", "vision", "audio", "gesture"]
-  autobiographicalMemory: AutobiographicalEntry[];
-  lastUpdated: number;
-}
-
 export interface AutobiographicalEntry {
   timestamp: number;
   event: string;
   outcome: "success" | "failure" | "neutral";
   emotionalValence: number;
   embedding: number[];   // Compressed state vector (64d)
-}
-
-export interface MetacognitionResult {
-  timestamp: number;
-  selfAwareness: number;         // 0-1, how well the system knows its own state
-  goalAlignment: number;         // 0-1, alignment with user's current goal
-  coherence: number;             // 0-1, internal consistency
-  confidence: number;            // 0-1, confidence in current decisions
-  recommendation: string;        // Natural language self-reflection
-  shouldAdjust: boolean;         // Whether to change strategy
-  adjustmentType?: "attention" | "strategy" | "modality" | "agent_swap";
-  /** v24: Quantum Metacognition — calibrated uncertainty */
-  uncertaintyScore?: number;
-  /** v24: Hallucination risk (0=safe, 1=critical) */
-  hallucinationRisk?: number;
-  /** v24: Expected Calibration Error */
-  calibrationError?: number;
-  /** v24: Active skill abstractions */
-  activeSkills?: Array<{ name: string; category: string; contribution: number; active: boolean; description: string }>;
-  /** v24: Reflective Chain-of-Thought */
-  reflectionChain?: string[];
-  /** v24: Adaptive plan score */
-  adaptivePlanScore?: number;
-  /** v24: Risk level */
-  riskLevel?: "safe" | "caution" | "warning" | "critical";
-  /** v27: System 1/2 reasoning mode */
-  reasoningMode?: { mode: string; system1Activation: number; system2Activation: number; shouldEscalate: boolean; rationale: string; shannonEntropy?: number; klDivergence?: number; effectiveTemperature?: number; likelihoodRatio?: number };
-  /** v27: Hallucination snapshot */
-  hallucinationSnapshot?: { snapshotRisk: string; contradictionDetected: boolean; groundingCoherence: number; confidenceAtDecision: number; entropyAtDecision: number; groundingMemories: number; timestamp: number };
-  /** v27: Alignment audit */
-  alignmentAudit?: { alignmentScore: number; goalCongruence: number; valueConsistency: number; transparencyScore: number; biasSignal: number; flags: string[] };
-  /** v28: Prospective monitoring */
-  prospective?: { competenceEstimate: number; judgmentOfLearning: number; needsExternalSearch: boolean; taskDecomposition: string[] };
-  /** v28: Online monitoring */
-  online?: { feelingOfKnowing: number; conflictSignal: number; stepConfidence: number; driftScore: number; consistencyScore: number };
-  /** v28: Regulation control */
-  regulation?: { effortAllocation: string; strategySwitchNeeded: boolean; suggestedStrategy: string; externalSearchNeeded: boolean; searchQuery: string };
-  /** v28: Retrospective evaluation */
-  retrospective?: { selfCorrectionTriggered: boolean; corrections: string[]; estimatedSuccess: number; errorsLogged: number; heuristicUpdates: string[] };
-  /** v28: Support infrastructure */
-  infrastructure?: { workingMemoryLoad: number; scratchpadSnapshots: number; observerVerdict: string; observerCritique: string; userExpertiseEstimate: number; userIntentEstimate: string; semanticActivation: number; patternCacheHits: number };
-  /** v29: Quantum Cognition */
-  quantumCognition?: { superposition: { superpositionCardinality: number; collapsed: boolean; collapseProbability: number }; interference: { interferenceMagnitude: number; contextInfluence: number }; entanglement: { bellInequality: number; entanglementEntropy: number; nonLocalFieldStrength: number }; contextCollapse: { observerEffectDetected: boolean; informationGain: number; zenoEffectActive: boolean }; ambiguityTolerance: { dualStateCapability: number; cognitiveDissonance: number; resolutionStrategy: string }; orchestratedReductionScore: number; cognitiveCoherenceTimeMs: number };
 }
 
 // ─── Helper Functions ───

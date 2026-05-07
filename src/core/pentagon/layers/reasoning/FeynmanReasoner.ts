@@ -3,7 +3,7 @@
  * Implements the Feynman Technique: "If you can't explain it simply, you don't understand it well enough."
  */
 import { supabase } from "@/integrations/supabase/client";
-import { ExtendedReasoningResult } from "./ReasoningAdapter";
+import { ExtendedReasoningResult } from "./reasoning-types";
 
 export class FeynmanReasoner {
   /**

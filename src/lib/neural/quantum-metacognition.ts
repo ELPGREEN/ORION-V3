@@ -52,7 +52,7 @@ import {
   type WaveFunctionMetrics,
 } from "./quantum-wave-function";
 
-import type { SelfModelState, ConsciousState, MetacognitionResult } from "./global-workspace";
+import type { SelfModelState, ConsciousState, MetacognitionResult } from "./consciousness-types";
 
 // ═══════════════════════════════════════════════════════════════════
 //  TYPES
