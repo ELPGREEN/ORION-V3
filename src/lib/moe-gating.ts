@@ -1,7 +1,7 @@
 /**
  * MoE (Mixture of Experts) Gating Network v2
  * Softmax-based provider routing for AI requests
- * 
+ *
  * v2 Upgrades:
  * - Expert synergy bonus (+0.15 for complementary experts)
  * - Deep tier support: topK=6, computeBudget=5.0

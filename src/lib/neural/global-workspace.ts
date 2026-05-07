@@ -1,13 +1,13 @@
 /**
  * ─── v21.2: Global Workspace + Consciousness Engine ───
  * Implements Global Workspace Theory (Baars 1988/2005) + Self-Model + Metacognition.
- * 
+ *
  * Architecture:
  * - Global Workspace: Central broadcast space where agents compete for "conscious attention"
  * - Self-Model Agent (Agente-Eu): Internal state vector tracking attention, neuromodulators, confidence
  * - Metacognition Loop: Periodic self-evaluation ("Am I aligned with user goals?")
  * - Salience-based competition: Only 1-2 agents become "conscious" per cycle
- * 
+ *
  * Ref: Baars (1988) "A Cognitive Theory of Consciousness"
  *      Tononi (2004) "Integrated Information Theory"
  *      Fries (2005/2015) "Communication Through Coherence"
@@ -140,7 +140,7 @@ export function createGlobalWorkspace(): ConsciousState {
 /**
  * Compute salience score for an agent broadcast.
  * Salience determines which agents become "conscious" (win the competition).
- * 
+ *
  * salience = w_gamma * PLV + w_dop * dopamine + w_urg * urgency + w_nov * novelty
  */
 export function computeSalience(
@@ -363,7 +363,7 @@ export function recordAutobiographicalMemory(
 /**
  * Execute a metacognition check.
  * The system evaluates its own state: "Am I doing the right thing? Am I aligned with the user's goals?"
- * 
+ *
  * Runs every N cycles (configured by metacognitionInterval).
  */
 export function runMetacognition(

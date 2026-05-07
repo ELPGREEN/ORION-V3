@@ -1,9 +1,9 @@
 /**
  * ─── Tensor VQC: Variational Quantum Circuit on Full State Vector ───
- * 
+ *
  * VQC forward pass using proper 2^n state vector instead of
  * separable qubit array. Entangling layers use real CNOT/CZ gates.
- * 
+ *
  * Drop-in replacement for vqcForward when tensor mode is desired.
  */
 
@@ -102,7 +102,7 @@ export function tensorIQPFeatureMap(
 
 /**
  * Full VQC forward pass on tensor state vector.
- * 
+ *
  * 1. Feature map encoding (proper entangling)
  * 2. Parameterized ansatz layers (RX-RY-RZ + CNOT entangling)
  * 3. Measurement: expectation value of Z on first qubit
