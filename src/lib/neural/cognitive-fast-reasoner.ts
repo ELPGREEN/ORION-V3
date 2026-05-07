@@ -129,17 +129,13 @@ export function classifyThinkingMode(query: string, tier: ModelTier): ThinkingMo
   if (tier === "cached" || tier === "edge") return "fast";
   if (tier === "deep") return "deep";
 
-  // Conversational check first — greetings and very short casual queries
+  // BOLT V2.0 optimization: .test() guards to avoid split() and complex regex when possible
   if (CONVERSATIONAL_INDICATORS_RE.test(query)) return "conversational";
-  
-  const wordCount = query.split(/\s+/).length;
-  if (wordCount <= 6 && !DEEP_TRIGGERS_RE.test(query)) return "conversational";
-
-  // Check fast indicators
   if (FAST_INDICATORS_RE.test(query)) return "fast";
-
-  // Check deep triggers
   if (DEEP_TRIGGERS_RE.test(query)) return "deep";
+
+  const wordCount = query.split(/\s+/).length;
+  if (wordCount <= 6) return "conversational";
 
   // Word count heuristic
   if (wordCount > 60) return "deep";

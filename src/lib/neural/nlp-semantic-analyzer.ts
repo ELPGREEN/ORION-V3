@@ -147,7 +147,10 @@ const COMPLEXITY_CLAUSE_REGEX = /\b(?:e|ou|mas|porém|contudo|entretanto|todavia
 export function extractLegalEntities(text: string): LegalEntity[] {
   const entities: LegalEntity[] = [];
   for (const pattern of ENTITY_PATTERNS) {
-    // Optimization: Use matchAll instead of manual RegExp loop to reduce overhead
+    // BOLT V2.0 optimization: individual .test() pre-check before matchAll
+    if (!pattern.regex.test(text)) continue;
+    pattern.regex.lastIndex = 0; // reset after test()
+
     for (const match of text.matchAll(pattern.regex)) {
       entities.push({
         type: pattern.type,
@@ -171,7 +174,10 @@ function analyzeSentiment(text: string): SentimentResult {
     if (sentiment === "neutral") continue;
     let matchCount = 0;
     for (const pattern of patterns) {
-      // Optimization: Combined test and match to avoid double regex execution
+      // BOLT V2.0 optimization: individual .test() pre-check
+      if (!pattern.test(text)) continue;
+      pattern.lastIndex = 0;
+
       const m = text.match(pattern);
       if (m) {
         matchCount++;
@@ -198,6 +204,10 @@ export function classifyLegalDomain(text: string): string {
   let bestScore = 0;
 
   for (const [domain, pattern] of Object.entries(DOMAIN_PATTERNS)) {
+    // BOLT V2.0 optimization: individual .test() pre-check
+    if (!pattern.test(text)) continue;
+    pattern.lastIndex = 0;
+
     const matches = (text.match(pattern) || []).length;
     if (matches > bestScore) {
       bestScore = matches;
