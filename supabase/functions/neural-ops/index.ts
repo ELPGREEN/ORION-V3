@@ -141,7 +141,7 @@ function getVertexServiceAccount(): { client_email: string; private_key: string;
 }
 
 async function callVertexAI(messages: any[], stream: boolean): Promise<Response | null> {
-  const sa = getVertexServiceAccount();
+  const sa = null; // Disabled - credits expired
   if (!sa) return null;
 
   const token = await getVertexToken(sa);

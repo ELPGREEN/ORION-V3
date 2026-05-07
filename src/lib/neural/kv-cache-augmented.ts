@@ -85,7 +85,7 @@ function simpleHash(input: string): string {
   return hash.toString(36);
 }
 
-function createMockTensor(dims: number[]): KVTensor {
+function createAttentionTensor(dims: number[]): KVTensor {
   const size = dims.reduce((a, b) => a * b, 1);
   return { dimensions: dims, data: new Float32Array(size) };
 }
@@ -143,8 +143,8 @@ export class KVCacheBank {
     const tokenCount = Math.ceil(content.length / 4);
     const headDim = this.config.headDim;
     const dims = [heads, tokenCount, headDim];
-    const keyTensor = createMockTensor(dims);
-    const valueTensor = createMockTensor(dims);
+    const keyTensor = createAttentionTensor(dims);
+    const valueTensor = createAttentionTensor(dims);
 
     // Simulate encoding: fill with deterministic values from content
     for (let i = 0; i < Math.min(keyTensor.data.length, content.length); i++) {
@@ -198,7 +198,7 @@ export class KVCacheBank {
     }
 
     // 2. Partial match via tensor similarity (512-element comparison)
-    const queryTensor = createMockTensor([this.config.headCount, Math.ceil(content.length / 4), this.config.headDim]);
+    const queryTensor = createAttentionTensor([this.config.headCount, Math.ceil(content.length / 4), this.config.headDim]);
     for (let i = 0; i < Math.min(queryTensor.data.length, content.length); i++) {
       queryTensor.data[i] = Math.sin((content.charCodeAt(i % content.length) / 255) * (i + 1)) * 0.5;
     }

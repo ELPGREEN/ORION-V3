@@ -141,3 +141,21 @@ project_id = "dlwafedtlvbvuoaopvsl"
     verify_jwt = false
   [functions.zilliz-vectors]
     verify_jwt = false
+  [functions.funnel-builder]
+    verify_jwt = false
+  [functions.peticao-builder]
+    verify_jwt = false
+  [functions.industrial-diagnosis]
+    verify_jwt = false
+  [functions.contract-builder]
+    verify_jwt = false
+  [functions.launch-builder]
+    verify_jwt = false
+  [functions.ads-builder]
+    verify_jwt = false
+  [functions.case-analyzer]
+    verify_jwt = false
+  [functions.copy-vsl-builder]
+    verify_jwt = false
+  [functions.maintenance-planner]
+    verify_jwt = false

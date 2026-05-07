@@ -1,1 +1,0 @@
-Fixed migration CI failure by adding existence check for 'public.wrapper' before revoking permissions.

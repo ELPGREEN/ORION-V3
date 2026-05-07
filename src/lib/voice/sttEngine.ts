@@ -1,10 +1,6 @@
 /**
  * STT engine selector + audio metrics logger.
- *
- * Default: keeps current `google-stt` (mic-continuous, no behavior change).
- * Opt-in via flag `orion_fast_stt` in localStorage → routes to `groq-stt` (Whisper Large v3 Turbo).
- * On Groq failure (any non-2xx, network error, or empty result), falls back to google-stt automatically
- * so the mic-continuous contract is never broken.
+ * Optimized for Zero-Cost: Prefers Groq Whisper (Free/Fast) over Google Cloud.
  */
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,29 +22,28 @@ export interface STTInvokeResult {
 }
 
 /**
- * Fast STT (Groq Whisper Turbo) is ON by default.
- * Set `localStorage.orion_fast_stt = "0"` to opt-out and force google-stt.
- * Any other value (including unset) → fast path enabled.
+ * Fast STT (Groq Whisper Turbo) is the MANDATORY primary.
+ * Google Cloud STT is only a legacy fallback that will likely fail if credits expired.
  */
 function readFlag(): boolean {
-  try {
-    if (typeof window === "undefined") return true;
-    return window.localStorage.getItem("orion_fast_stt") !== "0";
-  } catch {
-    return true;
-  }
+  return true; // Always try fast path first
 }
 
 async function invokeGoogle(args: STTInvokeArgs) {
   const t0 = performance.now();
-  const { data, error } = await supabase.functions.invoke("google-stt", { body: args });
-  const latency = performance.now() - t0;
-  if (error) throw new Error(error.message || "google-stt error");
-  return {
-    text: (data?.text || "").trim(),
-    confidence: typeof data?.confidence === "number" ? data.confidence : 0,
-    latency,
-  };
+  try {
+    const { data, error } = await supabase.functions.invoke("google-stt", { body: args });
+    const latency = performance.now() - t0;
+    if (error) throw new Error(error.message || "google-stt error");
+    return {
+      text: (data?.text || "").trim(),
+      confidence: typeof data?.confidence === "number" ? data.confidence : 0,
+      latency,
+    };
+  } catch (e: any) {
+    console.warn("[STT] Google STT failed (Likely expired credits):", e.message);
+    throw e;
+  }
 }
 
 async function invokeGroq(args: STTInvokeArgs) {
@@ -63,7 +58,6 @@ async function invokeGroq(args: STTInvokeArgs) {
   };
 }
 
-/** Best-effort metrics logger — never throws, never blocks. */
 function logMetric(payload: {
   engine: STTEngine;
   stt_latency_ms: number;
@@ -76,7 +70,7 @@ function logMetric(payload: {
   try {
     supabase.auth.getUser().then(({ data }) => {
       const userId = data.user?.id;
-      if (!userId) return; // RLS requires authenticated user
+      if (!userId) return;
       void supabase.from("orion_audio_metrics").insert({
         user_id: userId,
         engine: payload.engine,
@@ -88,62 +82,59 @@ function logMetric(payload: {
         error: payload.error ?? null,
       });
     });
-  } catch {
-    /* ignore */
-  }
+  } catch { /* ignore */ }
 }
 
-/**
- * Transcribe an utterance using the configured engine, with automatic fallback.
- */
 export async function transcribeUtterance(args: STTInvokeArgs, audioDurationMs?: number): Promise<STTInvokeResult> {
-  const fastWanted = readFlag();
-  let fallbackUsed = false;
   let lastError: string | undefined;
 
-  if (fastWanted) {
-    try {
-      const r = await invokeGroq(args);
-      if (r.text) {
-        logMetric({
-          engine: "groq-stt",
-          stt_latency_ms: r.latency,
-          confidence: r.confidence,
-          audio_duration_ms: audioDurationMs,
-          transcript_length: r.text.length,
-          fallback_used: false,
-        });
-        return { ...r, engine: "groq-stt", fallbackUsed: false, latencyMs: r.latency };
-      }
-      // Empty text → fall through to google
-      lastError = "groq returned empty";
-    } catch (e: any) {
-      lastError = e?.message || "groq error";
-      console.warn("[STT] groq failed, falling back to google-stt:", lastError);
+  // PRIMARY: Groq (Whisper) — Free/Cheap & High Quality
+  try {
+    const r = await invokeGroq(args);
+    if (r.text) {
+      logMetric({
+        engine: "groq-stt",
+        stt_latency_ms: r.latency,
+        confidence: r.confidence,
+        audio_duration_ms: audioDurationMs,
+        transcript_length: r.text.length,
+        fallback_used: false,
+      });
+      return { ...r, engine: "groq-stt", fallbackUsed: false, latencyMs: r.latency };
     }
-    fallbackUsed = true;
+    lastError = "groq returned empty";
+  } catch (e: any) {
+    lastError = e?.message || "groq error";
+    console.warn("[STT] groq failed, trying google-stt as last resort:", lastError);
   }
 
-  const r = await invokeGoogle(args);
-  logMetric({
-    engine: "google-stt",
-    stt_latency_ms: r.latency,
-    confidence: r.confidence,
-    audio_duration_ms: audioDurationMs,
-    transcript_length: r.text.length,
-    fallback_used: fallbackUsed,
-    error: lastError,
-  });
-  return { ...r, engine: "google-stt", fallbackUsed, latencyMs: r.latency };
+  // FALLBACK: Google (Might fail if credits expired)
+  try {
+    const r = await invokeGoogle(args);
+    logMetric({
+      engine: "google-stt",
+      stt_latency_ms: r.latency,
+      confidence: r.confidence,
+      audio_duration_ms: audioDurationMs,
+      transcript_length: r.text.length,
+      fallback_used: true,
+      error: lastError,
+    });
+    return { ...r, engine: "google-stt", fallbackUsed: true, latencyMs: r.latency };
+  } catch (e: any) {
+    return {
+      text: "",
+      confidence: 0,
+      engine: "google-stt",
+      fallbackUsed: true,
+      latencyMs: 0,
+      error: `All STT engines failed. Groq: ${lastError}, Google: ${e.message}`
+    };
+  }
 }
 
-/** Toggle helper for UI/devtools. Fast (Groq) is the default. */
 export const sttEngineFlag = {
-  isFastEnabled: readFlag,
-  enableFast() {
-    try { window.localStorage.removeItem("orion_fast_stt"); } catch {}
-  },
-  disableFast() {
-    try { window.localStorage.setItem("orion_fast_stt", "0"); } catch {}
-  },
+  isFastEnabled: () => true,
+  enableFast() {},
+  disableFast() {},
 };

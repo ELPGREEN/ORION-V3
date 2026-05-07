@@ -273,8 +273,6 @@ export async function payoutToOwnerStripe(
 
 // ═══ Auto-Generate Revenue Triggers ═══
 
-// These functions are called when Orion performs billable actions
-
 export function shouldChargeForService(serviceType: string): boolean {
   const billableServices = [
     "legal_research",
@@ -296,22 +294,43 @@ export async function recordBillableAction(
 ): Promise<void> {
   if (!shouldChargeForAction(actionType)) return;
   
-  // For now, just log - actual charging would require payment setup
-  console.log(`[Revenue] Action: ${actionType}, User: ${userId}, Meta: ${JSON.stringify(metadata)}`);
+  // Real billing logic
+  await generateServiceRevenue(
+    actionType as keyof typeof SERVICE_PRICES,
+    `Auto-billable action: ${actionType}`,
+    userId
+  );
+
+  console.log(`[Revenue] Action billed: ${actionType}, User: ${userId}`);
 }
 
 function shouldChargeForAction(actionType: string): boolean {
-  return false; // Disabled by default - needs payment setup
+  // Enabled by default for known billable services
+  return shouldChargeForService(actionType);
 }
 
 // ═══ Revenue Dashboard Data ═══
+
+async function getDailyRevenue(dateStr: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("orion_revenues")
+    .select("amount")
+    .gte("created_at", `${dateStr}T00:00:00Z`)
+    .lte("created_at", `${dateStr}T23:59:59Z`);
+
+  if (error || !data) return 0;
+  return data.reduce((sum, rev) => sum + (rev.amount || 0), 0);
+}
 
 export async function getRevenueDashboard(): Promise<{
   summary: RevenueSummary;
   recentTransactions: RevenueEntry[];
   earningsChart: { date: string; amount: number }[];
 }> {
-  const summary = await getRevenueSummary("current_user");
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id || "unknown";
+
+  const summary = await getRevenueSummary(userId);
   
   const { data: recent } = await supabase
     .from("orion_revenues")
@@ -319,14 +338,17 @@ export async function getRevenueDashboard(): Promise<{
     .order("created_at", { ascending: false })
     .limit(10);
   
-  // Generate mock chart data (last 7 days)
+  // Generate real chart data (last 7 days)
   const earningsChart = [];
   for (let i = 6; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split("T")[0];
+    const amount = await getDailyRevenue(dateStr);
+
     earningsChart.push({
-      date: date.toISOString().split("T")[0],
-      amount: Math.floor(Math.random() * 5000), // Mock data
+      date: dateStr,
+      amount,
     });
   }
   

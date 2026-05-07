@@ -10,7 +10,6 @@ const corsHeaders = {
  * face-auth — Facial authentication and enrollment
  */
 Deno.serve(async (req) => {
-  // Fix Bug 3: Correct OPTIONS handler for CORS
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -18,15 +17,13 @@ Deno.serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: req.headers.get("Authorization")! },
-        },
-      }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Get user from JWT
+    const authHeader = req.headers.get("Authorization")!;
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(authHeader.replace("Bearer ", ""));
+
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -34,11 +31,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { action, images, lgpdConsent, clientDescriptor, userId } = await req.json();
+    const body = await req.json();
+    const { action, images, lgpdConsent, descriptors } = body;
 
     if (action === "check") {
-      // Mock check - in production would query a vector DB like Zilliz or a profile table
-      return new Response(JSON.stringify({ enrolled: false, message: "No enrollment found" }), {
+      const { data, error } = await supabaseClient
+        .from("face_auth_enrollments")
+        .select("id, updated_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({
+        enrolled: !!data,
+        lastUpdated: data?.updated_at,
+        message: data ? "Enrollment found" : "No enrollment found"
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -50,14 +59,32 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Implementation logic for enrollment (storing descriptors/images)
-      console.log(`Enrolling user ${user.id} with ${images?.length || 0} images`);
-      return new Response(JSON.stringify({ success: true, message: "Enrollment successful" }), {
+
+      const { data, error } = await supabaseClient
+        .from("face_auth_enrollments")
+        .upsert({
+          user_id: user.id,
+          face_embedding_data: { descriptors: descriptors || [] },
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ success: true, message: "Enrollment successful", id: data.id }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (action === "delete") {
+      const { error } = await supabaseClient
+        .from("face_auth_enrollments")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
       return new Response(JSON.stringify({ success: true, message: "Enrollment deleted" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -69,6 +96,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (err) {
+    console.error("[FaceAuth] Error:", err);
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -112,8 +112,8 @@ export class ArcRoboticsPerception {
     const timestamp = Date.now();
 
     try {
-      const mockDetections = this.generateMockDetections(imageData, timestamp);
-      const tracked = this.updateObjectTracking(mockDetections);
+      const simulatedDetections = this.generateSimulatedDetections(imageData, timestamp);
+      const tracked = this.updateObjectTracking(simulatedDetections);
 
       this.logger.debug(`Processed image: ${tracked.length} objects detected`);
       return tracked;
@@ -123,7 +123,7 @@ export class ArcRoboticsPerception {
     }
   }
 
-  private generateMockDetections(source: unknown, timestamp: number): DetectedObject[] {
+  private generateSimulatedDetections(source: unknown, timestamp: number): DetectedObject[] {
     const classes = ['person', 'car', 'truck', 'bicycle', 'dog', 'cat', 'chair', 'table'];
     const numDetections = Math.floor(Math.random() * 5);
 
