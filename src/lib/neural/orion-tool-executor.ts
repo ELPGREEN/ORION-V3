@@ -77,8 +77,20 @@ async function callFirecrawl(query: string): Promise<any> {
 
 // ─── Tool Definition ───
 
+export type ToolCategory =
+  | "conversational"
+  | "legal_docs"
+  | "crm_clients"
+  | "financial"
+  | "productivity"
+  | "iot_smart"
+  | "neural"
+  | "media_lab"
+  | "google";
+
 interface OrionTool {
   name: string;
+  category: ToolCategory;
   roles?: AppRole[];
   creatorOnly?: boolean;
   regex: RegExp;
@@ -169,10 +181,27 @@ const extractUF = (q: string) => {
   return "";
 };
 
+/**
+ * Central keyword mapping for Gated Dispatch.
+ * Allows skipping irrelevant tool groups in <0.01ms.
+ */
+const CATEGORY_KEYWORDS: Record<ToolCategory, RegExp> = {
+  conversational: /(?:oi|ola|bom dia|boa tarde|boa noite|piada|historia|poema|como vai|tudo bem|obrigado|valeu|ajuda|help|consegue|sabe|capacidade|quem|horas|data|dia|motiv|trava|signo|canta|adivinha|elogia|moeda|dado|numero|sortei|dica)/i,
+  legal_docs: /(?:contrato|peticao|recurso|prazo|assinatura|pdf|processo|proposta|habeas|contestacao|notificacao|acordo|parecer|memorial|mandado|embargo|cumprimento|reclamacao|denuncia|queixa|impugnacao|excecao|reconvencao|tutela|cautelar|oficio|requerimento|gerar|criar|documento|aml|compliance|empresa)/i,
+  crm_clients: /(?:cliente|andamento|conversa|mensagem|chat|consulta|avaliacao|log|atividade|auditoria|pipeline|funil|negocio|minisite|loja|tarefa|contato)/i,
+  financial: /(?:fatura|pagamento|receita|financeira|inadimpl|produto|venda|pedido|order|comissao|afiliado|assinatura|plano|subscription|cambio|cotacao|dolar|euro|bitcoin)/i,
+  productivity: /(?:cep|cnpj|dicionario|significado|feriado|banco|ibge|cidade|municipio|resumo|briefing|artigo|blog|snippet|codigo|tempo|clima|compras|lembre|acorde|desperta|alarme|calcul|ligar para|telefonar|timer|cronometro)/i,
+  iot_smart: /(?:luz|lampada|temperatura|ar condicionado|ac|aquecedor|rotina|camera|anuncio|broadcast|dropin|robo|robot|alexa|echo|bluetooth|ble|mqtt|dispositivo|smart|home|casa)/i,
+  neural: /(?:neural|agente|rede|saude|operacao|metricas|performance|ia|ai|experimento|evolucao|conhecimento|transformers|rosto|face|biometria|voz|identific)/i,
+  media_lab: /(?:ocr|digitaliza|escanear|traduz|sentimento|entidade|ner|classifica|pergunta|responde|sumariza|imagem|foto|pdf|embeddings|transcreve|fala|tts|audio|musica|toca|play|ouvir|escutar|youtube)/i,
+  google: /(?:google|gmail|drive|agenda|calendario|doc|planilha|sheet|tasks|slides|apresentacao|forms|formulario)/i,
+};
+
 const TOOLS: OrionTool[] = [
   // ═══ PROPOSAL GENERATION ═══
   {
     name: "generate_proposal",
+    category: "legal_docs",
     regex: /cri(?:ar?|e)\s+(?:uma?\s+)?proposta|ger(?:ar?|e)\s+(?:uma?\s+)?proposta|proposta.*invest|fa(?:zer?|ça)\s+(?:uma?\s+)?proposta/i,
     extract: () => ({}),
     call: async () => {
@@ -184,6 +213,7 @@ const TOOLS: OrionTool[] = [
   // ═══ HELP / CAPABILITIES ═══
   {
     name: "orion_help",
+    category: "conversational",
     regex: /(?:o\s+que\s+(?:voc[eê]|vc|tu)\s+(?:pode|consegue|sabe)|(?:me\s+)?ajud[ae]|suas?\s+(?:capacidades?|habilidades?|fun[çc][oõ]es?|ferramentas?|comandos?)|(?:quais?|quantas?)\s+(?:s[aã]o\s+)?(?:suas?\s+)?(?:ferramentas?|comandos?|fun[çc][oõ]es?)|(?:help|ajuda)|o\s+que\s+(?:posso\s+)?(?:fazer|pedir)|(?:como\s+)?(?:posso\s+)?(?:te\s+)?usar|(?:lista|mostr)\w+\s+(?:suas?\s+)?(?:ferramentas?|capacidades?|comandos?))/i,
     extract: () => ({}),
     call: async (_p) => {
@@ -324,6 +354,7 @@ const TOOLS: OrionTool[] = [
   // ═══ UTILS-API ═══
   {
     name: "cep",
+    category: "productivity",
     regex: /(?:consulte?|busque?|pesquise?|qual)\s*(?:o\s+)?(?:endere[cç]o|cep)|cep\s*\d{5}/i,
     extract: (_m, q) => ({ cep: extractCEP(q) }),
     call: async (p) => {
@@ -334,6 +365,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "cnpj",
+    category: "productivity",
     regex: /(?:consulte?|busque?|pesquise?|dados?\s*d[aeo]?)\s*(?:o\s+)?(?:cnpj|empresa)|cnpj\s*\d/i,
     extract: (_m, q) => ({ cnpj: extractCNPJ(q) }),
     call: async (p) => {
@@ -344,6 +376,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "cambio",
+    category: "productivity",
     regex: /(?:cota[çc][aã]o|c[aâ]mbio|pre[çc]o|valor|quanto\s+(?:t[aá]|est[aá]|custa))\s*(?:d[aoe]?\s+)?(?:d[oó]lar|euro|libra|iene|bitcoin|real|usd|eur|gbp|jpy|btc|brl)/i,
     extract: (_m, q) => {
       const qLower = q.toLowerCase();
@@ -363,6 +396,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "dicionario",
+    category: "productivity",
     regex: /(?:significado|defini[çc][aã]o|o\s+que\s+[eé]|o\s+que\s+significa)\s+(?:de\s+|da\s+|do\s+)?["""']?(\w+)/i,
     extract: (m, _q) => ({ word: m[1] || "" }),
     call: async (p) => {
@@ -382,6 +416,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "feriados",
+    category: "productivity",
     regex: /feriado|pr[oó]ximo\s+feriado|dias?\s+(?:santo|livre)/i,
     extract: (_m, q) => {
       const yearMatch = q.match(/\d{4}/);
@@ -399,6 +434,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "prazo",
+    category: "legal_docs",
     regex: /(?:calcul|cont)\w*\s+(?:o\s+)?prazo|prazo\s+processual|dias?\s+[uú]teis?\s+a\s+partir/i,
     extract: (_m, q) => {
       const dias = extractNumber(q) || 15;
@@ -412,6 +448,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "bancos",
+    category: "productivity",
     regex: /lista\s+de\s+bancos|bancos?\s+(?:brasileiros?|do\s+brasil)|c[oó]digo\s+(?:do\s+)?banco/i,
     extract: (_m, q) => {
       const code = q.match(/(?:c[oó]digo|banco)\s*(\d{3})/i)?.[1];
@@ -432,6 +469,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "ibge",
+    category: "productivity",
     regex: /munic[ií]pios?\s+d[eao]|cidades?\s+d[eao]|ibge/i,
     extract: (_m, q) => ({ uf: extractUF(q) }),
     call: async (p) => {
@@ -449,6 +487,7 @@ const TOOLS: OrionTool[] = [
   // ═══ CALENDÁRIO (LOCAL + GOOGLE SYNC) ═══
   {
     name: "calendar_list",
+    category: "google",
     roles: R_ADV_PROD,
     regex: /(?:meus?\s+)?(?:eventos?|agenda|compromissos?|calend[aá]rio)|o\s+que\s+tenho\s+(?:hoje|amanh[aã]|essa?\s+semana)/i,
     extract: () => ({}),
@@ -501,6 +540,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "calendar_create",
+    category: "google",
     roles: R_ADV_PROD,
     regex: /(?:agende|marque|crie?\s+evento|adicione?\s+(?:na\s+)?agenda|marcar?\s+reuni[aã]o)/i,
     extract: (_m, q) => {
@@ -549,6 +589,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "gmail_list",
+    category: "google",
     roles: R_ADV_PROD,
     regex: /(?:meus?\s+)?(?:e-?mails?|inbox|caixa\s+de\s+entrada|mensagens?\s+(?:do\s+)?gmail)/i,
     extract: () => ({}),
@@ -564,6 +605,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "gmail_send",
+    category: "google",
     roles: R_ADV_PROD,
     regex: /(?:envie?|mande?|escreva?)\s+(?:um?\s+)?e-?mail\s+(?:para|pra)/i,
     extract: (_m, q) => {
@@ -587,6 +629,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "drive_search",
+    category: "google",
     roles: R_ADV_PROD,
     regex: /(?:procure?|busque?|pesquise?)\s+(?:no\s+)?drive|(?:meus?\s+)?arquivos?\s+(?:no\s+)?(?:drive|google)/i,
     extract: (_m, q) => {
@@ -604,6 +647,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "sheets_read_or_create",
+    category: "google",
     roles: R_ADV_PROD,
     regex: /(?:leia|abra|mostre?|dados?\s+d[ae]|cri(?:e|ar)|novo?a?)\s+(?:um?a?\s+)?(?:google\s+)?(?:planilha|sheet)/i,
     extract: (_m, q) => {
@@ -625,6 +669,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "contacts_search",
+    category: "crm_clients",
     roles: R_ADV_PROD,
     regex: /(?:dados?|detalhes?|consulte?|procure?|busque?|encontre|ache)\s+(?:o\s+)?contato\s+(.+)/i,
     extract: (m) => ({ query: m[1]?.trim() || "" }),
@@ -653,6 +698,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "contacts_list",
+    category: "crm_clients",
     roles: R_ADV_PROD,
     regex: /(?:meus?\s+)?contatos?|lista\s+de\s+contatos?/i,
     extract: () => ({}),
@@ -689,6 +735,7 @@ const TOOLS: OrionTool[] = [
   // ═══ PESQUISA WEB ═══
   {
     name: "web_search",
+    category: "productivity",
     regex: /(?:pesquis|busc)\w+\s+(?:na\s+)?(?:web|internet|online|google)|(?:me\s+)?(?:encontre|ache)\s+(?:na\s+)?(?:web|internet)/i,
     extract: (_m, q) => {
       const clean = q.replace(/(?:pesquis|busc)\w+\s+(?:na\s+)?(?:web|internet|online|google)|(?:me\s+)?(?:encontre|ache)\s+(?:na\s+)?(?:web|internet)/gi, "").trim();
@@ -708,6 +755,7 @@ const TOOLS: OrionTool[] = [
   // ═══ NEURAL STATUS ═══
   {
     name: "neural_status",
+    category: "neural",
     roles: R_ADV,
     regex: /status\s+(?:da\s+)?(?:rede\s+)?neural|sa[uú]de\s+(?:do\s+)?sistema|como\s+(?:est[aá]|vai)\s+(?:a\s+)?rede/i,
     extract: () => ({}),
@@ -729,6 +777,7 @@ const TOOLS: OrionTool[] = [
   // ═══ EDITOR — Document Creation ═══
   {
     name: "doc_create",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:cri(?:e|ar)|gerar?|novo?a?)\s+(?:um?\s+)?(?:documento|contrato|peti[çc][aã]o|procura[çc][aã]o|recurso|parecer|laudo|of[ií]cio|requerimento|notifica[çc][aã]o)/i,
     extract: (_m, q) => {
@@ -741,6 +790,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "doc_list",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:list(?:e|ar)|mostr(?:e|ar)|ver|todos?\s+(?:os?\s+)?)?(?:meus?\s+)?documentos/i,
     extract: () => ({}),
@@ -753,6 +803,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "doc_search",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:procur|busc|encontr|ach)\w+\s+(?:o\s+|a\s+|um\s+)?(?:documento|contrato|peti[çc][aã]o)\s+(.+)/i,
     extract: (m, _q) => ({ query: m[1]?.trim() || "" }),
@@ -768,6 +819,7 @@ const TOOLS: OrionTool[] = [
   // ═══ CRM — Clients ═══
   {
     name: "crm_list_clients",
+    category: "crm_clients",
     roles: R_ADV,
     regex: /(?:list(?:e|ar)|mostr(?:e|ar)|ver|todos?\s+(?:os?\s+)?)?(?:meus?\s+)?clientes/i,
     extract: () => ({}),
@@ -780,6 +832,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "crm_search_client",
+    category: "crm_clients",
     roles: R_ADV,
     regex: /(?:procur|busc|encontr)\w+\s+(?:o\s+|a\s+)?cliente\s+(.+)/i,
     extract: (m) => ({ query: m[1]?.trim() || "" }),
@@ -795,6 +848,7 @@ const TOOLS: OrionTool[] = [
   // ═══ CRM — Processos ═══
   {
     name: "crm_list_processos",
+    category: "crm_clients",
     roles: R_ADV,
     regex: /(?:list(?:e|ar)|mostr(?:e|ar)|ver|todos?\s+(?:os?\s+)?)?(?:meus?\s+)?processos/i,
     extract: () => ({}),
@@ -809,6 +863,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Financial ═══
   {
     name: "fin_list_invoices",
+    category: "financial",
     roles: R_ADV_PROD,
     regex: /(?:list(?:e|ar)|mostr(?:e|ar)|ver|todas?\s+(?:as?\s+)?)?(?:minhas?\s+)?faturas/i,
     extract: () => ({}),
@@ -821,6 +876,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "fin_pending",
+    category: "financial",
     roles: R_ADV_PROD,
     regex: /faturas?\s+(?:pendentes?|em\s+aberto|atrasad[ao]s?)|inadimplentes/i,
     extract: () => ({}),
@@ -835,6 +891,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Consultas ═══
   {
     name: "consultas_list",
+    category: "crm_clients",
     roles: R_ADV_CLI,
     regex: /(?:list(?:e|ar)|mostr(?:e|ar)|ver|todas?\s+(?:as?\s+)?)?(?:minhas?\s+)?consultas/i,
     extract: () => ({}),
@@ -849,6 +906,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Tarefas ═══
   {
     name: "tasks_list",
+    category: "crm_clients",
     roles: R_ADV_PROD,
     regex: /(?:list(?:e|ar)|mostr(?:e|ar)|ver|todas?\s+(?:as?\s+)?)?(?:minhas?\s+)?tarefas/i,
     extract: () => ({}),
@@ -863,6 +921,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Marketplace ═══
   {
     name: "mkt_list_products",
+    category: "financial",
     roles: R_PROD,
     regex: /(?:list(?:e|ar)|mostr(?:e|ar)|ver|todos?\s+(?:os?\s+)?)?(?:meus?\s+)?produtos/i,
     extract: () => ({}),
@@ -877,6 +936,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Neural — Command Registry Stats ═══
   {
     name: "neural_commands",
+    category: "neural",
     roles: R_ADV,
     regex: /(?:comandos?\s+neurais?|quantos?\s+comandos?|registry|registro\s+de\s+comandos)/i,
     extract: () => ({}),
@@ -891,6 +951,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Neural — Embeddings Count ═══
   {
     name: "neural_embeddings",
+    category: "neural",
     roles: R_ADV,
     regex: /quantos?\s+embeddings?|embeddings?\s+(?:count|total|cadastrad)/i,
     extract: () => ({}),
@@ -904,6 +965,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Neural — AI Metrics & Performance (unificado) ═══
   {
     name: "ai_metrics",
+    category: "neural",
     roles: R_ADV,
     regex: /m[eé]tricas?\s+(?:da?\s+)?ia|performance\s+(?:da?\s+)?ia|estat[ií]sticas?\s+ia|qualidade\s+(?:da\s+)?ia|sucesso\s+(?:da\s+)?ia/i,
     extract: () => ({}),
@@ -928,6 +990,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Neural — Experiments ═══
   {
     name: "neural_experiments",
+    category: "neural",
     roles: R_ADV,
     regex: /experimentos?\s+(?:ab|a\/b)|testes?\s+ab/i,
     extract: () => ({}),
@@ -942,6 +1005,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Neural — Evolution (CREATOR-ONLY) ═══
   {
     name: "neural_evolution",
+    category: "neural",
     roles: R_ADV,
     creatorOnly: true,
     regex: /evolu[çc][aã]o\s+neural|propostas?\s+(?:de\s+)?evolu[çc][aã]o|auto[\s-]?evolu[çc][aã]o/i,
@@ -957,6 +1021,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Reports ═══
   {
     name: "daily_summary",
+    category: "productivity",
     roles: R_ADV,
     regex: /resum(?:o|ir)\s+(?:do\s+)?(?:dia|executivo|geral)|briefing|dashboard\s+summary/i,
     extract: () => ({}),
@@ -981,6 +1046,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Agent Routing (from AssistenteIA) ═══
   {
     name: "agent_leitura",
+    category: "neural",
     roles: R_ADV,
     regex: /(?:agente?\s+)?leitor|(?:agente?\s+)?leitura|analis[ae]\s+(?:o\s+)?(?:código|documento|log|banco|schema|tabela)/i,
     extract: (_m, q) => ({ query: q }),
@@ -995,6 +1061,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "agent_construcao",
+    category: "neural",
     roles: R_ADV,
     regex: /(?:agente?\s+)?construtor|(?:agente?\s+)?construção|(?:gerar?|cri[ae]r?|elabor[ae]r?)\s+(?:componente|sql|edge\s*function|peça)/i,
     extract: (_m, q) => ({ query: q }),
@@ -1011,6 +1078,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "agent_pesquisa",
+    category: "neural",
     roles: R_ADV,
     regex: /(?:agente?\s+)?pesquisador|(?:agente?\s+)?pesquisa|pesquis[ae]\s+jurisprud|buscar?\s+(?:súmula|legislaç|jurisprud|artigo|lei|doutrina)/i,
     extract: (_m, q) => ({ query: q }),
@@ -1029,6 +1097,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Financial Analysis ═══
   {
     name: "financial_analysis",
+    category: "financial",
     roles: R_ADV_PROD,
     regex: /anális[ei]\s+financ|situação\s+financ|faturamento|receita|inadimpl/i,
     extract: () => ({}),
@@ -1049,6 +1118,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Urgent Deadlines ═══
   {
     name: "urgent_deadlines",
+    category: "productivity",
     roles: R_ADV_PROD,
     regex: /prazos?\s+urgent|tarefas?\s+urgent|próximos?\s+(?:7|sete)\s+dias|pendênci/i,
     extract: () => ({}),
@@ -1075,6 +1145,7 @@ const TOOLS: OrionTool[] = [
   // ═══ OCR / Vision ═══
   {
     name: "ocr_scan",
+    category: "media_lab",
     roles: R_ADV_PROD,
     regex: /(?:ocr|digitali[zs]|escan(?:ear|eie)|extrair?\s+texto)\s+(?:d[aoe]\s+)?(?:imagem|foto|documento|pdf|página)/i,
     extract: (_m, q) => ({ query: q }),
@@ -1084,6 +1155,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "ocr_analyze_image",
+    category: "media_lab",
     roles: R_ADV_PROD,
     regex: /(?:analis|identific|reconhe[cç])\w+\s+(?:essa?\s+)?(?:imagem|foto|cena|objeto|tela)/i,
     extract: (_m, q) => ({ query: q }),
@@ -1095,6 +1167,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Tradução ═══
   {
     name: "translate_text",
+    category: "media_lab",
     roles: R_ADV_PROD,
     regex: /(?:traduz[aie]?r?|translate)\s+(?:para\s+)?(?:(?:o\s+)?(?:ingl[eê]s|espanhol|franc[eê]s|alem[aã]o|italiano|portugu[eê]s|chin[eê]s|japon[eê]s|coreano|russo|[aá]rabe)|(?:en|es|fr|de|it|pt|zh|ja|ko|ru|ar))\b/i,
     extract: (_m, q) => {
@@ -1135,6 +1208,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Google Docs — Create & Edit ═══
   {
     name: "gdocs_create",
+    category: "google",
     roles: R_ADV_PROD,
     regex: /(?:cri(?:e|ar)|novo?a?)\s+(?:um?\s+)?(?:google\s+)?doc(?:ument)?s?\b/i,
     extract: (_m, q) => {
@@ -1152,6 +1226,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "gdocs_list",
+    category: "google",
     roles: R_ADV_PROD,
     regex: /(?:list(?:e|ar)|mostr(?:e|ar))\s+(?:meus?\s+)?(?:google\s+)?docs/i,
     extract: () => ({}),
@@ -1173,6 +1248,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Google Drive — Upload ═══
   {
     name: "drive_upload",
+    category: "google",
     roles: R_ADV_PROD,
     regex: /(?:envie?|upload|salve?)\s+(?:no\s+|para\s+o\s+)?drive/i,
     extract: (_m, q) => ({ query: q }),
@@ -1184,6 +1260,7 @@ const TOOLS: OrionTool[] = [
   // ═══ CRM — Create Client ═══
   {
     name: "crm_create_client",
+    category: "crm_clients",
     roles: R_ADV,
     regex: /(?:cadastr|cri|adicion)\w+\s+(?:um?\s+)?(?:novo?\s+)?cliente/i,
     extract: (_m, q) => ({ query: q }),
@@ -1193,6 +1270,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "crm_client_detail",
+    category: "crm_clients",
     roles: R_ADV,
     regex: /(?:dados?|detalhes?|informa[çc][oõ]es?)\s+d[eo]\s+cliente\s+(.+)/i,
     extract: (m) => ({ name: m[1]?.trim() || "" }),
@@ -1208,6 +1286,7 @@ const TOOLS: OrionTool[] = [
   // ═══ CRM — Andamentos ═══
   {
     name: "crm_andamentos",
+    category: "crm_clients",
     roles: R_ADV,
     regex: /(?:andamentos?|movimenta[çc][oõ]es?)\s+d[eo]\s+processo/i,
     extract: (_m, q) => ({ query: q }),
@@ -1222,6 +1301,7 @@ const TOOLS: OrionTool[] = [
   // ═══ CRM — Chat/Conversations ═══
   {
     name: "crm_conversations",
+    category: "crm_clients",
     roles: R_ADV,
     regex: /(?:conversas?|mensagens?|chat)\s+(?:com\s+)?(?:clientes?|recentes?)/i,
     extract: () => ({}),
@@ -1236,6 +1316,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Marketplace — Create Product ═══
   {
     name: "mkt_create_product",
+    category: "financial",
     roles: R_PROD,
     regex: /(?:cri(?:e|ar)|cadastr|adicion)\w+\s+(?:um?\s+)?(?:novo?\s+)?produto/i,
     extract: (_m, q) => ({ query: q }),
@@ -1245,6 +1326,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "mkt_product_detail",
+    category: "financial",
     roles: R_PROD,
     regex: /(?:dados?|detalhes?)\s+d[eo]\s+produto\s+(.+)/i,
     extract: (m) => ({ name: m[1]?.trim() || "" }),
@@ -1258,6 +1340,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "mkt_orders",
+    category: "financial",
     roles: R_PROD,
     regex: /(?:list(?:e|ar)|mostr(?:e|ar)|ver|todos?\s+(?:os?\s+)?)?(?:meus?\s+)?(?:pedidos|vendas|orders)/i,
     extract: () => ({}),
@@ -1270,6 +1353,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "mkt_affiliates",
+    category: "financial",
     roles: R_PROD_AFIL,
     regex: /(?:comiss[oõ]es?|afiliados?|links?\s+de\s+afiliado)/i,
     extract: () => ({}),
@@ -1288,6 +1372,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Editor — Templates ═══
   {
     name: "doc_templates",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:modelos?|templates?)\s+(?:de\s+)?(?:documentos?|contratos?|peti[çc][oõ]es?)/i,
     extract: () => ({}),
@@ -1300,6 +1385,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "doc_folders",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:pastas?|diret[oó]rios?)\s+(?:de\s+)?documentos/i,
     extract: () => ({}),
@@ -1316,6 +1402,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Assinaturas Digitais ═══
   {
     name: "signatures_status",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:assinatura|envelope)\s+(?:digital|eletrônic|pendente)|status\s+(?:d[ae]\s+)?assinatura/i,
     extract: () => ({}),
@@ -1332,6 +1419,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Avaliações ═══
   {
     name: "reviews_list",
+    category: "crm_clients",
     roles: R_ADV_PROD,
     regex: /(?:avalia[çc][oõ]es?|depoimentos?|notas?\s+(?:dos?\s+)?clientes?)/i,
     extract: () => ({}),
@@ -1347,6 +1435,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Audit Log ═══
   {
     name: "audit_log",
+    category: "crm_clients",
     roles: R_ADV,
     regex: /(?:log\s+de\s+)?(?:auditoria|atividades?\s+recentes?|hist[oó]rico\s+de\s+a[çc][oõ]es)/i,
     extract: () => ({}),
@@ -1361,6 +1450,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Deals Pipeline ═══
   {
     name: "deals_pipeline",
+    category: "crm_clients",
     roles: R_ADV,
     regex: /(?:pipeline|funil|neg[oó]cios?|deals?|oportunidades?)/i,
     extract: () => ({}),
@@ -1376,6 +1466,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Escritório Config ═══
   {
     name: "office_config",
+    category: "crm_clients",
     roles: R_ADV,
     regex: /(?:configura[çc][oõ]es?|dados?)\s+(?:do\s+)?escrit[oó]rio|meu\s+escrit[oó]rio/i,
     extract: () => ({}),
@@ -1391,6 +1482,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Neural — Knowledge Base ═══
   {
     name: "neural_knowledge",
+    category: "neural",
     roles: R_ADV,
     regex: /base\s+(?:de\s+)?conhecimento|knowledge\s+base|(?:quantos?\s+)?(?:registros?\s+)?(?:na\s+)?base\s+neural/i,
     extract: () => ({}),
@@ -1410,6 +1502,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Articles / Blog ═══
   {
     name: "articles_list",
+    category: "productivity",
     roles: R_ADV_PROD,
     regex: /(?:artigos?|publica[çc][oõ]es?|blog|posts?)\s+(?:recentes?|publicad)/i,
     extract: () => ({}),
@@ -1424,6 +1517,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Subscriptions ═══
   {
     name: "subscriptions_info",
+    category: "financial",
     regex: /(?:minha?\s+)?(?:assinatura|plano|subscription)|qual\s+(?:meu\s+)?plano/i,
     extract: () => ({}),
     call: async () => {
@@ -1445,6 +1539,7 @@ const TOOLS: OrionTool[] = [
   // ═══ AML Screening ═══
   {
     name: "aml_screening",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:screening|triagem|verificação)\s+(?:aml|pld|compliance)|(?:verific|consult)\w+\s+(?:san[çc][oõ]es|listas?\s+restritivas?)/i,
     extract: (_m, q) => ({ query: q }),
@@ -1459,6 +1554,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Company Intelligence ═══
   {
     name: "company_intel",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /intelig[eê]ncia\s+(?:da\s+)?empresa|(?:dados?\s+)?(?:d[ae]\s+)?empresa\s+(.+)/i,
     extract: (m, q) => ({ company: m[1]?.trim() || q }),
@@ -1473,6 +1569,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Email Admin ═══
   {
     name: "admin_emails",
+    category: "productivity",
     roles: R_ADV,
     regex: /(?:e-?mails?\s+)?(?:admin|administrativ|do\s+sistema)|caixa\s+(?:de\s+)?(?:entrada\s+)?admin/i,
     extract: () => ({}),
@@ -1487,6 +1584,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Code Snippets ═══
   {
     name: "code_snippets",
+    category: "productivity",
     roles: R_ADV,
     regex: /(?:snippets?|trechos?\s+de\s+c[oó]digo|c[oó]digos?\s+salvos?)/i,
     extract: () => ({}),
@@ -1501,6 +1599,7 @@ const TOOLS: OrionTool[] = [
   // ═══ Mini-Site ═══
   {
     name: "minisite_preview",
+    category: "crm_clients",
     roles: R_ADV_PROD,
     regex: /(?:ver|preview|visualizar|abrir)\s+(?:o?\s+)?(?:meu\s+)?(?:mini[\s-]?site|site\s+p[uú]blico|minha\s+loja|meu\s+site)/i,
     extract: () => ({}),
@@ -1516,6 +1615,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "minisite_share",
+    category: "crm_clients",
     roles: R_ADV_PROD,
     regex: /(?:compartilh|divulg|envi)\w+\s+(?:o?\s+)?(?:meu\s+)?(?:mini[\s-]?site|site|loja|link\s+(?:do\s+)?(?:meu\s+)?site)/i,
     extract: () => ({}),
@@ -1533,6 +1633,7 @@ const TOOLS: OrionTool[] = [
   // ═══ BIOMETRIA FACIAL ═══
   {
     name: "face-enroll",
+    category: "neural",
     regex: /cadastr(?:ar|o)\s*(?:meu\s*)?rosto|registr(?:ar|o)\s*face|face\s*enroll/i,
     extract: () => ({}),
     call: async () => {
@@ -1541,6 +1642,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "face-verify",
+    category: "neural",
     regex: /verific(?:ar|ação)\s*(?:meu\s*)?rosto|face\s*verif/i,
     extract: () => ({}),
     call: async () => {
@@ -1554,6 +1656,7 @@ const TOOLS: OrionTool[] = [
   // ═══ BIOMETRIA VOCAL ═══
   {
     name: "voice-id-status",
+    category: "neural",
     regex: /(?:status|verificar)\s*(?:minha\s*)?(?:voz|voice\s*id|biometria\s*vocal)/i,
     extract: () => ({}),
     call: async () => {
@@ -1563,6 +1666,7 @@ const TOOLS: OrionTool[] = [
   // ═══ IoT / DISPOSITIVOS ═══
   {
     name: "iot-list-devices",
+    category: "iot_smart",
     regex: /(?:listar|mostrar|quais)\s*(?:são\s+)?(?:os?\s+)?dispositivos|devices?\s*(?:conectados|list)|(?:meus?\s+)?dispositivos?\s*(?:iot|smart)/i,
     extract: () => ({}),
     call: async () => {
@@ -1583,6 +1687,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "iot-bluetooth-scan",
+    category: "iot_smart",
     regex: /(?:conectar|ligar|scan|escanear|buscar)\s*(?:dispositivo\s+)?bluetooth|ble\s*scan|parear?\s*(?:dispositivo|bluetooth)/i,
     extract: () => ({}),
     call: async () => {
@@ -1604,6 +1709,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "iot-mqtt-status",
+    category: "iot_smart",
     regex: /(?:status|conectar|verificar)\s*(?:d[eo]\s+)?mqtt|broker\s*(?:status|conectar)|(?:conectar|verificar)\s*(?:d[eo]\s+)?(?:iot|dispositivos?\s*smart)/i,
     extract: () => ({}),
     call: async () => {
@@ -1630,6 +1736,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "iot-light-control",
+    category: "iot_smart",
     regex: /(?:ligar?|acender?|desligar?|apagar?)\s+(?:a\s+)?(?:luz|lâmpada|lampada|luzes?|todas?\s+(?:as\s+)?luzes?|tudo)\s*(?:d[aoe]\s+)?(.+)?/i,
     extract: (m, q) => {
       const room = m[1]?.trim().toLowerCase() || "sala";
@@ -1659,6 +1766,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "smart-home-scan",
+    category: "iot_smart",
     regex: /(?:escanear|scan|buscar|procurar|descobrir)\s+(?:dispositivos?\s+)?(?:smart|inteligent|casa|home|iot)|(?:dispositivos?\s+)?(?:smart|inteligent)\s*(?:home)?/i,
     extract: () => ({}),
     call: async () => {
@@ -1679,6 +1787,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "smart-home-color",
+    category: "iot_smart",
     regex: /(?:mudar?|alterar?|trocar?|coloca[r]?)\s+(?:a\s+)?(?:cor|color)\s+(?:d[aoe]\s+)?(?:luz|lâmpada|lampada)?\s*(?:para?\s+)?(\w+)/i,
     extract: (m) => ({ color: m[1]?.trim().toLowerCase() || "branco" }),
     call: async (p) => {
@@ -1692,6 +1801,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "smart-home-brightness",
+    category: "iot_smart",
     regex: /(?:brilho|brightness|intensidade)\s+(?:d[aoe]\s+)?(?:luz|lâmpada)?\s*(?:para?\s+)?(\d+)/i,
     extract: (m) => ({ level: parseInt(m[1]) }),
     call: async (p) => {
@@ -1705,6 +1815,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "smart-home-status",
+    category: "iot_smart",
     regex: /(?:status|estado)\s+(?:d[aoe]\s+)?(?:casa\s+inteligente|smart\s*home|luzes?|lâmpadas?)/i,
     extract: () => ({}),
     call: async () => {
@@ -1720,6 +1831,7 @@ const TOOLS: OrionTool[] = [
   // ═══ GOOGLE TASKS (Voice) ═══
   {
     name: "google-tasks-create",
+    category: "google",
     regex: /(?:cri(?:ar?|e)|adicionar?|nova)\s+tarefa\s+(?:no\s+google\s+)?(?:tasks?\s+)?[:\-]?\s*(.+)/i,
     extract: (m) => ({ title: (m[1] || "").trim() }),
     call: async (p) => {
@@ -1735,6 +1847,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "google-tasks-list",
+    category: "google",
     regex: /(?:listar?|mostrar?|ver|quais)\s+(?:minhas?\s+)?tarefas?\s+(?:no\s+)?(?:google\s+)?tasks?/i,
     extract: () => ({}),
     call: async () => {
@@ -1755,6 +1868,7 @@ const TOOLS: OrionTool[] = [
   // ═══ GOOGLE SLIDES (Voice) ═══
   {
     name: "google-slides-create",
+    category: "google",
     regex: /(?:cri(?:ar?|e)|nova)\s+apresenta[çc][aã]o\s+(?:no\s+google\s+)?(?:slides?\s+)?[:\-]?\s*(.+)/i,
     extract: (m) => ({ title: (m[1] || "").trim() }),
     call: async (p) => {
@@ -1769,6 +1883,7 @@ const TOOLS: OrionTool[] = [
   // ═══ GOOGLE FORMS (Voice) ═══
   {
     name: "google-forms-create",
+    category: "google",
     regex: /(?:cri(?:ar?|e)|novo)\s+formul[aá]rio\s+(?:no\s+google\s+)?(?:forms?\s+)?[:\-]?\s*(.+)/i,
     extract: (m) => ({ title: (m[1] || "").trim() }),
     call: async (p) => {
@@ -1782,6 +1897,7 @@ const TOOLS: OrionTool[] = [
 
   {
     name: "iot-temperature",
+    category: "iot_smart",
     regex: /(?:qual|ver|mostrar?|pegar?)\s*(?:a\s+)?(?:temperatura|temp)\s*(?:d[aoe]\s+)?(.+)?|temperatura\s+(.+)/i,
     extract: (m) => ({ room: (m[1] || m[2] || "sala").trim().toLowerCase() }),
     call: async (p) => {
@@ -1799,6 +1915,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "iot-robot-status",
+    category: "iot_smart",
     regex: /(?:status|como\s+(?:tá|está))\s*(?:d[eo]\s+)?(?:robô|robo|robot)|(?:robô|robo|robot)\s*(?:status|info)/i,
     extract: () => ({}),
     call: async () => {
@@ -1815,6 +1932,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "iot-alexa-connect",
+    category: "iot_smart",
     regex: /(?:conectar|parear|ligar)\s*(?:a\s+|com\s+)?(?:alexa|echo)|alexa\s*(?:conectar|parear)/i,
     extract: () => ({}),
     call: async () => {
@@ -1832,6 +1950,7 @@ const TOOLS: OrionTool[] = [
 
   {
     name: "hf-sentiment",
+    category: "media_lab",
     regex: /(?:analis[ea]r?|verific(?:ar|a)|detectar?)\s*(?:o\s+)?sentimento|sentiment(?:o|)\s*(?:d[eao]|analysis)/i,
     extract: (_m, q) => {
       // Extract text after sentiment keywords
@@ -1855,6 +1974,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "hf-ner",
+    category: "media_lab",
     regex: /(?:extra(?:ir|ia)|identific(?:ar|a)|reconhec(?:er|a))\s*(?:as?\s+)?entidade|(?:ner|entidade|entity)\s*(?:d[eao]|extraction|recogni)/i,
     extract: (_m, q) => {
       const textMatch = q.match(/(?:entidade[s]?|ner|entity)\s*(?:d[eao]\s+)?(?:texto\s+)?["""]?(.+?)["""]?\s*$/i);
@@ -1882,6 +2002,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "hf-zero-shot",
+    category: "media_lab",
     regex: /(?:classific(?:ar|a|ação)|categoriz(?:ar|a))\s*(?:o?\s+)?(?:texto|documento|mensagem)|zero[- ]?shot/i,
     extract: (_m, q) => {
       const textMatch = q.match(/(?:classific|categoriz)\w+\s+(?:o?\s+)?(?:texto\s+)?["""]?(.+?)["""]?\s*$/i);
@@ -1903,6 +2024,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "hf-qa",
+    category: "media_lab",
     regex: /(?:respond(?:er|a)|pergunt(?:ar|a))\s*(?:sobre|com\s*base)|question\s*answer/i,
     extract: (_m, q) => {
       // Try to extract question and context from the command
@@ -1926,6 +2048,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "hf-summarize",
+    category: "media_lab",
     regex: /(?:resum(?:ir|a|o)|sumariz(?:ar|a)|sintetiz(?:ar|a))\s*(?:o?\s+)?(?:texto|documento|artigo)/i,
     extract: (_m, q) => {
       const textMatch = q.match(/(?:resum|sumariz|sintetiz)\w+\s+(?:o?\s+)?(?:texto\s+)?["""]?(.+?)["""]?\s*$/i);
@@ -1945,6 +2068,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "hf-image-classify",
+    category: "media_lab",
     regex: /(?:classific(?:ar|a)|identific(?:ar|a)|reconhec(?:er|a))\s*(?:esta?\s+)?(?:imagem|foto|image)|image\s*classif/i,
     extract: () => ({}),
     call: async () => {
@@ -1953,6 +2077,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "hf-pdf-analyze",
+    category: "media_lab",
     regex: /(?:analis[ea]r?|process(?:ar|a)|le(?:r|ia))\s*(?:este?\s+)?(?:pdf|documento\s*pdf)|pdf\s*(?:analy|vision)/i,
     extract: () => ({}),
     call: async () => {
@@ -1968,6 +2093,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "hf-embeddings",
+    category: "media_lab",
     regex: /(?:gerar?|criar?|extrair?|calcular?)\s*(?:os?\s+)?embed(?:dings?)?|embed(?:dings?)\s*(?:d[eao]|local)/i,
     extract: (_m, q) => {
       const textMatch = q.match(/embed\w*\s+(?:d[eao]\s+)?["""]?(.+?)["""]?\s*$/i);
@@ -1989,6 +2115,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "hf-transformers-check",
+    category: "neural",
     regex: /(?:verificar?|checar?|testar?)\s*transformers|transformers\.?js\s*(?:status|disponível|ok)/i,
     extract: () => ({}),
     call: async () => {
@@ -2007,6 +2134,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "hf-lab-status",
+    category: "neural",
     regex: /(?:status|capacidade|habilidade)\s*(?:d[eao]\s+)?(?:laborat[oó]rio|lab)\s*ia|lab(?:orat[oó]rio)?\s*ia\s*(?:status|info)/i,
     extract: () => ({}),
     call: async () => {
@@ -2037,6 +2165,7 @@ const TOOLS: OrionTool[] = [
   // ═══ LAB IA — AUDIO TRANSCRIPTION (Whisper) ═══
   {
     name: "hf-transcribe",
+    category: "media_lab",
     regex: /(?:transcrever?|transcri[çc][aã]o|transcreva)\s*(?:o?\s+)?(?:áudio|audio|som|grava[çc][aã]o)|whisper\s*(?:transcri|asr)/i,
     extract: () => ({}),
     call: async () => {
@@ -2053,6 +2182,7 @@ const TOOLS: OrionTool[] = [
   // ═══ LAB IA — TEXT-TO-SPEECH ═══
   {
     name: "hf-tts",
+    category: "media_lab",
     regex: /(?:sintetiz(?:ar|a)|gerar?|criar?)\s*(?:a?\s+)?(?:voz|fala|áudio|audio)\s*(?:d[eao]|para|com)?|text.to.speech|tts\s*(?:gerar|criar)/i,
     extract: (_m, q) => {
       const textMatch = q.match(/(?:sintetiz|gerar?\s*voz|tts)\w*\s+(?:d[eao]\s+|para\s+)?["""]?(.+?)["""]?\s*$/i);
@@ -2078,6 +2208,7 @@ const TOOLS: OrionTool[] = [
   // ═══ LAB IA — HYBRID VISION (direct execution) ═══
   {
     name: "hf-hybrid-vision",
+    category: "media_lab",
     regex: /(?:vis[aã]o\s*h[ií]brida|hybrid\s*vision|analisar?\s*(?:com\s+)?vis[aã]o\s*(?:local|h[ií]brida))/i,
     extract: (_m, q) => {
       const modeMatch = q.match(/(?:modo|mode)\s+(identif|descrev|analis|ensin)/i);
@@ -2104,6 +2235,7 @@ const TOOLS: OrionTool[] = [
   // ═══ LAB IA — OPEN LAB SHORTCUT ═══
   {
     name: "open-laboratorio-ia",
+    category: "media_lab",
     regex: /(?:abr(?:ir|a)|ir\s*(?:para|ao)|mostrar?|exibir?|navegar?\s*(?:para|ao))\s*(?:o?\s+)?(?:laborat[oó]rio|lab)\s*(?:ia|de\s*ia)/i,
     extract: () => ({}),
     call: async () => {
@@ -2114,6 +2246,7 @@ const TOOLS: OrionTool[] = [
   // ═══ DOCUMENT GENERATION — invoke gerar-documento via generation_queue ═══
   {
     name: "gerar_documento",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:gere|gerar|crie|criar|elabore|elaborar|fa[çc]a|redigir|redija|monte|montar|prepare|preparar)\s+(?:um\s+|uma\s+|o\s+|a\s+)?(?:documento|peti[çc][aã]o|contrato|recurso|procura[çc][aã]o|habeas|contesta[çc][aã]o|notifica[çc][aã]o|acordo|parecer|memorial|mandado|embargo|cumprimento|reclama[çc][aã]o|den[uú]ncia|queixa|impugna[çc][aã]o|exceção|reconven[çc][aã]o|tutela|cautelar|requerimento|of[ií]cio)/i,
     extract: (_m, q) => {
@@ -2217,6 +2350,7 @@ const TOOLS: OrionTool[] = [
 
   {
     name: "arch_jarvis_compare",
+    category: "neural",
     regex: /(?:compar|versus|vs|diferença|diferencial).*(?:jarvis|j\.a\.r\.v\.i\.s)/i,
     extract: () => ({}),
     call: async () => {
@@ -2226,6 +2360,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "arch_cv_industry_compare",
+    category: "neural",
     regex: /(?:compar|versus|vs|diferença).*(?:vis[ãa]o\s*computacional|industrial|ind[uú]stria)|enegep|romeral|zancul|vis[ãa]o.*ind[uú]stria/i,
     extract: () => ({}),
     call: async () => {
@@ -2235,6 +2370,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "arch_neurocore_layers",
+    category: "neural",
     regex: /(?:camadas?|layers?|hierarquia|stack).*(?:neurocore|neural|arquitetura)/i,
     extract: () => ({}),
     call: async () => {
@@ -2249,6 +2385,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "arch_hotpatching_status",
+    category: "neural",
     regex: /(?:hotpatch|auto.?modific|self.?modif|patch|override)/i,
     extract: () => ({}),
     call: async () => {
@@ -2269,6 +2406,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "arch_specialized_models",
+    category: "neural",
     regex: /(?:modelos?|models?).*(?:especializ|neural|pipeline)|(?:9\s*modelos|nove\s*modelos)/i,
     extract: () => ({}),
     call: async () => {
@@ -2287,6 +2425,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "arch_exclusive_capabilities",
+    category: "neural",
     regex: /(?:exclusiv|diferencial|único|unic).*(?:orion|sistema|capacidade)|(?:o que.*orion.*tem.*jarvis.*não)/i,
     extract: () => ({}),
     call: async () => {
@@ -2296,6 +2435,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "arch_fallback_cascade",
+    category: "neural",
     regex: /(?:fallback|cascata|cascade|redundância|resili[eê]ncia).*(?:ia|ai|modelo|provider)/i,
     extract: () => ({}),
     call: async () => {
@@ -2311,6 +2451,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "arch_system_health",
+    category: "neural",
     regex: /(?:saúde|health|diagnóstico|status).*(?:sistema|orion|neural)|autodiagn[oó]stico/i,
     extract: () => ({}),
     call: async () => {
@@ -2324,6 +2465,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "arch_consciousness_engine",
+    category: "neural",
     regex: /(?:consciência|consciousness|phi|iit|global\s*workspace|agente.?eu)/i,
     extract: () => ({}),
     call: async () => {
@@ -2338,6 +2480,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "arch_federation",
+    category: "neural",
     regex: /(?:federa[çc][ãa]o|federation|mãe.?filha|mother.?child|neural.?bridge)/i,
     extract: () => ({}),
     call: async () => {
@@ -2351,6 +2494,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "arch_orion_shield",
+    category: "neural",
     regex: /(?:shield|defesa|14\s*camadas|security\s*layers|anti.?crack)/i,
     extract: () => ({}),
     call: async () => {
@@ -2365,6 +2509,7 @@ const TOOLS: OrionTool[] = [
   // ═══ SELF-ANALYSIS — Code introspection via GitHub API ═══
   {
     name: "self_analyze_code",
+    category: "neural",
     regex: /(?:analis[ae]r?\s+(?:seu|meu|próprio|teu)\s+código|self.?analy|auto.?analis|estudar?\s+(?:seu|o)\s+código|ver?\s+(?:seu|o)\s+código|inspecionar?\s+código|code\s+review|revisar?\s+código|source\s+code)/i,
     extract: (_match: RegExpMatchArray, q: string) => {
       const fileMatch = q.match(/arquivo\s+(\S+\.tsx?)|file\s+(\S+\.tsx?)/i);
@@ -2402,6 +2547,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "self_find_gaps",
+    category: "neural",
     regex: /(?:lacunas?\s+(?:do|no)\s+código|gaps?\s+(?:in|no)\s+code|código\s+(?:faltando|incompleto)|find\s+gaps|buscar?\s+lacunas)/i,
     extract: () => ({}),
     call: async () => {
@@ -2424,6 +2570,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "self_suggest_improvements",
+    category: "neural",
     creatorOnly: true,
     regex: /(?:sugir[ae]?\s+melhorias?|melhorar?\s+(?:o\s+)?código|improve\s+code|otimizar?\s+código|code\s+improvements?)/i,
     extract: (_match: RegExpMatchArray, q: string) => {
@@ -2451,6 +2598,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "self_architecture_map",
+    category: "neural",
     regex: /(?:mapa?\s+(?:da\s+)?arquitetura|architecture\s+map|dependências?\s+(?:do\s+)?código|dependency\s+graph|grafo?\s+(?:de\s+)?dependências?)/i,
     extract: () => ({}),
     call: async () => {
@@ -2483,6 +2631,7 @@ const TOOLS: OrionTool[] = [
   // ═══ MEDIA — YouTube only (Spotify/Amazon/Audiobook removed) ═══
   {
     name: "music_play",
+    category: "media_lab",
     regex: /(?:tocar?|play|coloca|bota|põe|reproduz(?:ir)?|ouvir?|escutar?)\s+(?:(?:a\s+)?(?:música|musica|m[uú]sica|song|track|faixa)\s+(?:d[oea]\s+)?)?(.+)/i,
     extract: (m) => ({ query: m[1].trim() }),
     call: async (p) => {
@@ -2492,6 +2641,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "music_pause",
+    category: "media_lab",
     regex: /(?:^|\s)(?:par(?:a|e)\s+(?:a\s+)?(?:m[uú]sica|musica|reprodu[çc][ãa]o)|paus(?:a|e|ar)\s+(?:a\s+)?(?:m[uú]sica|musica|reprodu[çc][ãa]o)?|pause\s+(?:the\s+)?music|stop\s+(?:the\s+)?music|para(?:r)?\s+de\s+tocar)(?:\s|$|[.!?])/i,
     extract: () => ({}),
     call: async () => {
@@ -2505,6 +2655,7 @@ const TOOLS: OrionTool[] = [
   // ═══ TASK CREATION (Voice) ═══
   {
     name: "task_create",
+    category: "productivity",
     roles: R_ADV_PROD,
     regex: /(?:cri(?:ar?|e)|nova|adicionar?)\s+(?:uma?\s+)?tarefa\s+(.+)/i,
     extract: (m, q) => {
@@ -2533,6 +2684,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "task_complete",
+    category: "productivity",
     roles: R_ADV_PROD,
     regex: /(?:conclu(?:ir|a)|finaliz(?:ar|e)|complet(?:ar|e)|fechar?)\s+(?:a?\s+)?tarefa\s*(.*)/i,
     extract: (m) => ({ query: m[1]?.trim() || "" }),
@@ -2564,6 +2716,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "task_pending",
+    category: "productivity",
     roles: R_ADV_PROD,
     regex: /tarefas?\s+pendentes?|(?:quais?\s+)?tarefas?\s+(?:tenho|faltam|estão\s+(?:em\s+)?aberto)/i,
     extract: () => ({}),
@@ -2585,6 +2738,7 @@ const TOOLS: OrionTool[] = [
   // ═══ NOTIFICATIONS ═══
   {
     name: "notifications_list",
+    category: "productivity",
     regex: /(?:ver|mostrar?|listar?|(?:minhas?\s+)?)?notifica[çc][oõ]es?/i,
     extract: () => ({}),
     call: async () => {
@@ -2605,6 +2759,7 @@ const TOOLS: OrionTool[] = [
   // ═══ SIGNATURE — Send & Sign ═══
   {
     name: "sign_send",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:envi(?:ar|e)|mandar?)\s+(?:para\s+)?assinatura|(?:solicitar?)\s+assinatura/i,
     extract: () => ({}),
@@ -2614,6 +2769,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "sign_now",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /assinar?\s+(?:o\s+)?(?:contrato|documento)\s*(?:agora)?|assinatura\s+agora/i,
     extract: () => ({}),
@@ -2625,6 +2781,7 @@ const TOOLS: OrionTool[] = [
   // ═══ EXPORT PDF ═══
   {
     name: "export_pdf",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /export(?:ar|e)?\s+(?:em\s+)?pdf|baixar?\s+(?:em\s+)?pdf|download\s+pdf/i,
     extract: () => ({}),
@@ -2636,6 +2793,7 @@ const TOOLS: OrionTool[] = [
   // ═══ OPEN PROCESS BY NUMBER ═══
   {
     name: "open_process",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:abr(?:ir|a)|ver|mostrar?)\s+(?:o\s+)?processo\s+(\d[\d.-]*)/i,
     extract: (m) => ({ numero: m[1]?.trim() || "" }),
@@ -2654,6 +2812,7 @@ const TOOLS: OrionTool[] = [
   // ═══ UPDATE CLIENT STATUS ═══
   {
     name: "update_client_status",
+    category: "productivity",
     roles: R_ADV,
     regex: /(?:atualiz(?:ar|e)|mudar?|alterar?)\s+(?:o\s+)?status\s+(?:do\s+)?cliente/i,
     extract: (_m, q) => ({ query: q }),
@@ -2665,6 +2824,7 @@ const TOOLS: OrionTool[] = [
   // ═══ PAYMENTS ═══
   {
     name: "payments_check",
+    category: "financial",
     regex: /(?:ver|verificar?|checar?|consultar?)\s+(?:os?\s+)?pagamentos?|pagamentos?\s+(?:recentes?|pendentes?)/i,
     extract: () => ({}),
     call: async () => {
@@ -2678,6 +2838,7 @@ const TOOLS: OrionTool[] = [
   // ═══ CONFIGURAÇÕES ═══
   {
     name: "config_update_data",
+    category: "productivity",
     regex: /(?:atualiz(?:ar|e)|editar?)\s+(?:meus?\s+)?(?:dados|perfil|informações)/i,
     extract: () => ({}),
     call: async () => {
@@ -2686,6 +2847,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "config_integrations",
+    category: "productivity",
     regex: /(?:configur(?:ar|e)|ver)\s+integra[çc][oõ]es?/i,
     extract: () => ({}),
     call: async () => {
@@ -2696,6 +2858,7 @@ const TOOLS: OrionTool[] = [
   // ═══ TIMBRE / OFFICE IDENTITY ═══
   {
     name: "config_timbre",
+    category: "productivity",
     roles: R_ADV,
     regex: /(?:configur(?:ar|e)|atualiz(?:ar|e))\s+(?:o\s+)?timbre|timbre\s+(?:do\s+)?escrit[oó]rio/i,
     extract: () => ({}),
@@ -2705,6 +2868,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "config_address",
+    category: "productivity",
     roles: R_ADV,
     regex: /(?:atualiz(?:ar|e))\s+(?:o\s+)?(?:endere[çc]o|contatos?)\s*(?:do\s+escrit[oó]rio)?/i,
     extract: () => ({}),
@@ -2716,6 +2880,7 @@ const TOOLS: OrionTool[] = [
   // ═══ AGENDA shortcuts ═══
   {
     name: "schedule_consultation",
+    category: "productivity",
     roles: R_ADV_CLI,
     regex: /(?:agendar?|marcar?)\s+(?:uma?\s+)?consulta/i,
     extract: (_m, q) => ({ rawText: q }),
@@ -2730,6 +2895,7 @@ const TOOLS: OrionTool[] = [
   // ═══ SEND MESSAGE TO CLIENT ═══
   {
     name: "send_client_message",
+    category: "productivity",
     roles: R_ADV,
     regex: /(?:envi(?:ar|e)|mandar?)\s+mensagem\s+(?:para|pro|pra)\s+(?:o\s+)?cliente/i,
     extract: () => ({}),
@@ -2741,6 +2907,7 @@ const TOOLS: OrionTool[] = [
   // ═══ IMPROVE DOCUMENT WITH AI ═══
   {
     name: "ai_improve_doc",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:melhorar?|aprimorar?|reescrev(?:er|a))\s+(?:esse?\s+|este?\s+|o\s+)?(?:documento|texto|contrato)/i,
     extract: () => ({}),
@@ -2750,6 +2917,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "ai_rewrite_formal",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:reescrev(?:er|a)|reformul(?:ar|e))\s+(?:esse?\s+)?(?:texto|trecho|frase)\s*(?:formalmente|de\s+forma\s+formal)?/i,
     extract: (_m, q) => {
@@ -2772,6 +2940,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "ai_reformulate_simplify",
+    category: "legal_docs",
     regex: /(?:simplific(?:ar|a|e)|tornar?\s+(?:mais\s+)?simples|descomplicar?)\s+(?:esse?\s+)?(?:texto|trecho|frase)\s*["""]?(.+?)["""]?\s*$/i,
     extract: (m, q) => {
       const textMatch = q.match(/(?:simplific|tornar?\s+(?:mais\s+)?simples|descomplicar?)\w*\s+(?:esse?\s+)?(?:texto|trecho|frase)\s*["""]?(.+?)["""]?\s*$/i);
@@ -2791,6 +2960,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "ai_reformulate_expand",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:expand(?:ir|a)|desenvolv(?:er|a)|aprofundar?)\s+(?:esse?\s+)?(?:texto|trecho|argumento|frase)/i,
     extract: (_m, q) => {
@@ -2825,6 +2995,7 @@ const TOOLS: OrionTool[] = [
   // ═══ INTERNATIONAL DOCUMENTS ═══
   {
     name: "doc_international",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:gerar?|cri(?:ar|e))\s+(?:um?\s+)?(?:contrato|documento)\s+internacional/i,
     extract: (_m, q) => ({ query: q }),
@@ -2834,6 +3005,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "doc_translate",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /traduz(?:ir|a)\s+(?:o\s+)?documento/i,
     extract: () => ({}),
@@ -2845,6 +3017,7 @@ const TOOLS: OrionTool[] = [
   // ═══ LAST DOCUMENT ═══
   {
     name: "doc_last",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:abr(?:ir|a)|ver|mostrar?)\s+(?:o\s+)?(?:meu\s+)?[uú]ltimo\s+documento/i,
     extract: () => ({}),
@@ -2861,6 +3034,7 @@ const TOOLS: OrionTool[] = [
   // ═══ PRÓXIMOS PRAZOS ═══
   {
     name: "next_deadlines",
+    category: "legal_docs",
     roles: R_ADV,
     regex: /(?:pr[oó]ximos?\s+)?prazos|ver\s+prazos/i,
     extract: () => ({}),
@@ -2875,6 +3049,7 @@ const TOOLS: OrionTool[] = [
 
   {
     name: "smart-home-thermostat",
+    category: "iot_smart",
     regex: /(?:abai?x(?:ar|e)|aument(?:ar|e)|ajust(?:ar|e)|configur(?:ar|e)|coloc(?:ar|a)|set(?:ar)?)\s+(?:o\s+)?(?:termostato|thermostat|ar[\s-]?condicionado|ac|aquecedor)\s*(?:para?\s+)?(\d+)\s*(?:°?[cC]|graus?)?/i,
     extract: (m, q) => ({ temperature: parseInt(m[1]) || 22, _raw: q }),
     call: async (p) => {
@@ -2895,6 +3070,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "smart-home-routine-create",
+    category: "iot_smart",
     regex: /(?:cri(?:ar|e)|fazer?|configur(?:ar|e))\s+(?:uma?\s+)?rotina\s+(?:para\s+)?(.+)/i,
     extract: (m) => ({ description: m[1]?.trim() || "" }),
     call: async (p) => {
@@ -2916,6 +3092,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "smart-home-camera",
+    category: "iot_smart",
     regex: /(?:ver|mostrar?|abrir?|visualizar?)\s+(?:a\s+)?(?:câmera|camera|câmeras|cameras)|(?:câmera|camera)\s+(?:d[aoe]\s+)?(.+)/i,
     extract: (m) => ({ room: m[1]?.trim() || "principal" }),
     call: async () => {
@@ -2924,6 +3101,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "smart-home-announce",
+    category: "iot_smart",
     regex: /(?:anunci(?:ar|e)|aviso?\s+(?:para|em)|falar?\s+(?:em|para)\s+toda\s+(?:a\s+)?casa|broadcast)/i,
     extract: (_m, q) => ({ message: q.replace(/anunci(?:ar|e)|aviso?\s+(?:para|em)|falar?\s+(?:em|para)\s+toda\s+(?:a\s+)?casa|broadcast/gi, "").trim() }),
     call: async (p) => {
@@ -2939,6 +3117,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "smart-home-dropin",
+    category: "iot_smart",
     regex: /drop\s*in\s+(?:n[ao]\s+)?(.+)|intercomunica[çc][aã]o\s+(?:com\s+)?(?:a\s+)?(.+)/i,
     extract: (m) => ({ room: (m[1] || m[2] || "").trim() }),
     call: async (p) => {
@@ -2954,6 +3133,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "smart-home-turnoff-all",
+    category: "iot_smart",
     regex: /(?:desligar?|apagar?)\s+tudo|(?:desligar?|apagar?)\s+todas?\s+(?:as?\s+)?(?:luzes|lâmpadas|lampadas)/i,
     extract: () => ({}),
     call: async () => {
@@ -2979,6 +3159,7 @@ const TOOLS: OrionTool[] = [
 
   {
     name: "weather",
+    category: "productivity",
     regex: /(?:como\s+(?:vai|está|tá|fica)\s+(?:o\s+)?(?:tempo|clima)|previs[aã]o\s+(?:do\s+)?tempo|vai\s+chover|tempo\s+(?:hoje|amanh[aã])|clima\s+(?:hoje|amanh[aã])|(?:qual|como)\s+(?:é|está)\s+(?:o\s+)?(?:tempo|clima))/i,
     extract: (_m, q) => {
       const cityMatch = q.match(/(?:em|de|para)\s+(\w[\w\s]+?)(?:\?|$|hoje|amanh)/i);
@@ -3001,6 +3182,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "news",
+    category: "productivity",
     regex: /(?:not[ií]cias?\s+(?:do\s+)?(?:dia|hoje|recentes?|principais?)|principais?\s+not[ií]cias?|(?:quais?\s+)?(?:são\s+)?(?:as\s+)?not[ií]cias|headlines?|manchetes?)/i,
     extract: (_m, q) => {
       const topicMatch = q.match(/not[ií]cias?\s+(?:sobre|de)\s+(.+)/i);
@@ -3021,6 +3203,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "shopping_list_add",
+    category: "productivity",
     regex: /(?:adicion(?:ar|e)|coloc(?:ar|a)|bot(?:ar|a))\s+(.+?)\s+(?:na|à|a)\s+lista\s+(?:de\s+)?compras/i,
     extract: (m) => ({ item: m[1]?.trim() || "" }),
     call: async (p) => {
@@ -3044,6 +3227,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "shopping_list_view",
+    category: "productivity",
     regex: /(?:ver|mostrar?|listar?|(?:minha\s+)?)?lista\s+(?:de\s+)?compras/i,
     extract: () => ({}),
     call: async () => {
@@ -3063,6 +3247,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "reminder_create",
+    category: "productivity",
     regex: /(?:lembr(?:e|ar)|me\s+lembr(?:e|ar)|remind(?:er|me))\s+(?:de\s+|que\s+)?(.+)/i,
     extract: (m, q) => {
       const rawText = m[1]?.trim() || q;
@@ -3091,6 +3276,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "alarm_set",
+    category: "productivity",
     regex: /(?:me\s+)?(?:acord(?:e|ar)|despert(?:e|ar)|alarm(?:e|ar?))\s+(?:às?\s+)?(\d{1,2})[h:]?(\d{0,2})?\s*(?:com\s+(.+))?/i,
     extract: (m) => ({
       hour: parseInt(m[1]) || 7,
@@ -3122,6 +3308,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "ambient_sounds",
+    category: "productivity",
     regex: /(?:tocar?|play|coloca|reproduz(?:ir)?)\s+(?:som\s+de\s+|ru[ií]do\s+de\s+|barulho\s+de\s+)?(?:chuva|lareira|ondas?|mar|floresta|passaros?|pássaros?|rio|cachoeira|vento|fogueira|natureza|branco|white\s*noise)/i,
     extract: (_m, q) => {
       const soundMatch = q.match(/(?:chuva|lareira|ondas?|mar|floresta|passaros?|pássaros?|rio|cachoeira|vento|fogueira|natureza|branco|white\s*noise)/i);
@@ -3151,6 +3338,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "math_calc",
+    category: "productivity",
     regex: /(?:quanto\s+[eé]|calcul(?:e|ar)|(?:qual|quanto)\s+(?:é|da|dá))\s+(\d[\d\s+\-*/x×÷.,()]+\d)/i,
     extract: (m) => ({ expression: m[1]?.trim() || "" }),
     call: async (p) => {
@@ -3165,6 +3353,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "call_contact",
+    category: "productivity",
     regex: /(?:lig(?:ue|ar)|telefonar?|chamar?)\s+(?:para\s+)?(?:o\s+|a\s+)?(.+)/i,
     extract: (m) => ({ name: m[1]?.trim() || "" }),
     call: async (p) => {
@@ -3183,6 +3372,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "timer_set",
+    category: "productivity",
     regex: /(?:timer|temporizador|cronômetro|cronometro)\s+(?:de\s+)?(\d+)\s*(?:min(?:utos?)?|seg(?:undos?)?|h(?:oras?)?)/i,
     extract: (m, q) => {
       const value = parseInt(m[1]) || 5;
@@ -3196,6 +3386,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "joke",
+    category: "conversational",
     regex: /(?:cont(?:e|ar)\s+(?:uma?\s+)?piada|piada|charada|imit(?:e|ar)\s+(?:um?\s+)?(?:animal|gato|cachorro)|faça?\s+graça|brincar?|me\s+divirta|me\s+faz\s+rir|humor)/i,
     extract: () => ({}),
     call: async () => {
@@ -3209,6 +3400,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "fun_trivia",
+    category: "conversational",
     regex: /(?:fato\s+curioso|curiosidade|quiz|trivia|me\s+(?:conta|diga)\s+(?:um?\s+)?(?:fato|curiosidade)|sabias?\s+que)/i,
     extract: () => ({}),
     call: async () => {
@@ -3224,6 +3416,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "kids_story",
+    category: "conversational",
     regex: /(?:cont(?:e|ar)\s+(?:uma?\s+)?hist[oó]ria|hist[oó]ria\s+infantil|hist[oó]ria\s+para?\s+(?:crian[çc]a|dormir)|conte\s+para\s+(?:as?\s+)?crian[çc]as?)/i,
     extract: () => ({}),
     call: async () => {
@@ -3233,6 +3426,7 @@ const TOOLS: OrionTool[] = [
   // ═══ CONVERSATIONAL PROTOCOLS — Instant voice interaction frameworks ═══
   {
     name: "greeting",
+    category: "conversational",
     regex: /^(?:bom\s+dia|boa\s+(?:tarde|noite)|oi+|ol[aá]|e\s*a[ií]|fala|salve|hey|hello|hi|good\s+(?:morning|afternoon|evening))[.!?]?\s*$/i,
     extract: () => ({}),
     call: async () => {
@@ -3249,6 +3443,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "thanks",
+    category: "conversational",
     regex: /^(?:obrigad[oa]|valeu|thank(?:s| you)|agradec|muito\s+obrigad|brigad[oa]|grato|grata)[.!?]?\s*$/i,
     extract: () => ({}),
     call: async () => {
@@ -3264,6 +3459,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "how_are_you",
+    category: "conversational",
     regex: /(?:como\s+(?:voc[eê]|tu|ce)\s+(?:est[aá]|vai|t[aá])|tudo\s+(?:bem|certo|joia|tranquilo)|(?:est[aá]|t[aá])\s+bem|how\s+are\s+you|what'?s\s+up)/i,
     extract: () => ({}),
     call: async () => {
@@ -3278,6 +3474,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "datetime",
+    category: "conversational",
     regex: /(?:que\s+horas?\s+(?:s[aã]o|é)|hora\s+(?:certa|atual|agora)|que\s+dia\s+(?:[eé]\s+)?hoje|data\s+(?:de\s+)?hoje|what\s+time|today'?s?\s+date)/i,
     extract: () => ({}),
     call: async () => {
@@ -3289,6 +3486,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "motivation",
+    category: "conversational",
     regex: /(?:me\s+(?:motiv|inspir|anim)|(?:frase|mensagem)\s+(?:motivacional|inspiradora|de\s+motivação)|preciso\s+de\s+(?:motivação|ânimo|força)|estou\s+(?:desanimad|desmotivad|triste|mal)|motivat(?:ion|e)|inspir(?:e|ation))/i,
     extract: () => ({}),
     call: async () => {
@@ -3304,6 +3502,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "tongue_twister",
+    category: "conversational",
     regex: /(?:trava[\s-]?l[ií]ngua|tongue\s*twister|fal[ae]\s+(?:um?\s+)?trava)/i,
     extract: () => ({}),
     call: async () => {
@@ -3318,6 +3517,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "poem",
+    category: "conversational",
     regex: /(?:(?:fal[ae]|recit[ae]|fa[çc]a|cri[ae]|escrev[ae])\s+(?:um[a]?\s+)?(?:poesia|poema|rima|verso)|poesia|poema|rima\s+(?:pra|para)\s+(?:mim|eu)|me\s+(?:recit|fal)\w+\s+(?:um[a]?\s+)?(?:poema|poesia|verso))/i,
     extract: () => ({}),
     call: async () => {
@@ -3331,6 +3531,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "horoscope",
+    category: "conversational",
     regex: /(?:hor[oó]scopo|signo|astrolog|previs[ãa]o\s+(?:astrol[oó]gica|dos?\s+signos?)|meu\s+signo|qual\s+(?:[eé]\s+)?meu\s+signo)/i,
     extract: (_m: RegExpMatchArray, q: string) => {
       const signMatch = q.match(/(?:de\s+|para\s+)?(?:áries|touro|gêmeos|câncer|leão|virgem|libra|escorpião|sagitário|capricórnio|aquário|peixes)/i);
@@ -3350,6 +3551,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "sing",
+    category: "conversational",
     regex: /(?:cant[ae]|cantar?\s+(?:uma?\s+)?(?:m[uú]sica|can[çc][aã]o)|sing|me\s+cant[ae]|fa[çc]a\s+(?:uma?\s+)?can[çc][aã]o)/i,
     extract: () => ({}),
     call: async () => {
@@ -3363,6 +3565,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "riddle",
+    category: "conversational",
     regex: /(?:adivinha[çc][aã]o|adivinh[ae]|enigma|me\s+(?:fa[çc]a|dê)\s+(?:um[a]?\s+)?(?:adivinha|enigma|desafio\s+mental)|desafio\s+(?:mental|lógico|de\s+lógica))/i,
     extract: () => ({}),
     call: async () => {
@@ -3377,6 +3580,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "compliment",
+    category: "conversational",
     regex: /(?:me\s+elogia|(?:fal[ae]|diga)\s+(?:algo|alguma\s+coisa)\s+(?:legal|bom|bonit|positiv)|me\s+(?:anima|alegra|fa[çc]a\s+(?:um\s+)?elogio)|elogio|compliment)/i,
     extract: () => ({}),
     call: async () => {
@@ -3391,6 +3595,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "coin_flip",
+    category: "conversational",
     regex: /(?:jog(?:ue|ar)\s+(?:uma?\s+)?moeda|cara\s+ou\s+coroa|flip\s+(?:a\s+)?coin|moeda|heads\s+or\s+tails)/i,
     extract: () => ({}),
     call: async () => {
@@ -3400,6 +3605,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "dice_roll",
+    category: "conversational",
     regex: /(?:jog(?:ue|ar)\s+(?:um?\s+)?dado|rol(?:e|ar)\s+(?:um?\s+)?dado|roll\s+(?:a\s+)?d(?:ice|6|20)|dado|d20|d6)/i,
     extract: (_m: RegExpMatchArray, q: string) => {
       const dMatch = q.match(/d(\d+)/i);
@@ -3413,6 +3619,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "random_number",
+    category: "conversational",
     regex: /(?:n[uú]mero\s+aleat[oó]rio|(?:escolha|gere|sortei[ae])\s+(?:um\s+)?n[uú]mero|random\s+number|sortei[ao]|sorte(?:ar|ie))\s*(?:(?:de|entre)\s+(\d+)\s+(?:a|e|at[eé])\s+(\d+))?/i,
     extract: (m: RegExpMatchArray) => ({ min: m[1] ? parseInt(m[1]) : 1, max: m[2] ? parseInt(m[2]) : 100 }),
     call: async (p: Record<string, unknown>) => {
@@ -3424,6 +3631,7 @@ const TOOLS: OrionTool[] = [
   },
   {
     name: "daily_tip",
+    category: "conversational",
     regex: /(?:dica\s+(?:do\s+dia|diária|rápida)|me\s+(?:dê|dá)\s+(?:uma?\s+)?dica|tip\s+of\s+the\s+day|produtividade|dica\s+(?:de\s+)?(?:tecnologia|tech|saúde|produtividade))/i,
     extract: () => ({}),
     call: async () => {
@@ -3461,9 +3669,20 @@ export async function matchAndExecuteTool(
     };
   }
 
+  // [v3] Gated Dispatch: Identify relevant categories to skip ~90% of regex evaluations
+  const activeCategories = new Set<ToolCategory>();
+  for (const [category, regex] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (regex.test(normalized)) {
+      activeCategories.add(category as ToolCategory);
+    }
+  }
+
   for (const tool of TOOLS) {
     // Role-based filtering: skip tools not available for this role
     if (userRole && tool.roles && !tool.roles.includes(userRole)) continue;
+
+    // Gated Dispatch filter: skip if category doesn't match current keywords
+    if (activeCategories.size > 0 && !activeCategories.has(tool.category)) continue;
 
     const match = normalized.match(tool.regex);
     if (match) {
