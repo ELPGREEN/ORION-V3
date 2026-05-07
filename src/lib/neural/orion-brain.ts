@@ -15,7 +15,6 @@ import { SUPER_AGENTS, getSuperAgentPrompt, buildAgentMessages } from "./super-p
 import { orionToolsToFunctionCalling, executeFunctionCall, getToolsForSuperAgent } from "./tool-executor";
 import { supabase } from "@/integrations/supabase/client";
 import { wrapEdgeFunction } from "@/lib/errors";
-import { analyzeSemantics, type SemanticAnalysis } from "./nlp-semantic-analyzer";
 
 /** ═══════════════════════════════════════════════════════════════
  * ORION BRAIN CORE
@@ -44,10 +43,6 @@ export interface OrionResponse {
 export async function orionBrain(request: OrionRequest): Promise<OrionResponse> {
   const { input, context = {}, userId } = request;
   const startTime = Date.now();
-
-  // BOLT V2.0: Centralized NLP analysis for all downstream layers
-  const analysis = analyzeSemantics(input);
-  (context as any).nlp = analysis;
 
   try {
     // 0. Singularity Protocol — V3 orchestrator runs FIRST as a cognitive
@@ -115,10 +110,10 @@ export async function orionBrain(request: OrionRequest): Promise<OrionResponse> 
     const sector = detectSector(input);
     const agent = getAgentForSector(sector);
 
-    // 2. Determinar tipo de requisição (utilizando análise semântica)
-    const isCommand = isCommand_(input, analysis);
-    const isQuestion = isQuestion_(input, analysis);
-    const isSearch = isSearch_(input, analysis);
+    // 2. Determinar tipo de requisição
+    const isCommand = isCommand_(input);
+    const isQuestion = isQuestion_(input);
+    const isSearch = isSearch_(input);
 
     // 3. Processar conforme tipo (panel/command/search keep precedence over V3)
     if (isCommand) {
@@ -157,10 +152,7 @@ export async function orionBrain(request: OrionRequest): Promise<OrionResponse> 
  * TYPE DETECTION
  * ═══════════════════════════════════════════════════════════════ */
 
-function isCommand_(input: string, analysis?: SemanticAnalysis): boolean {
-  if (analysis) {
-    if (analysis.discourseType === "procedure" || analysis.sentiment.primary === "assertive") return true;
-  }
+function isCommand_(input: string): boolean {
   const commands = [
     "abre", "abra", "abrir", "abre", "executar", "rode", "rodar",
     "liga", "ligar", "desliga", "desligar", "ativa", "ativar",
@@ -169,19 +161,12 @@ function isCommand_(input: string, analysis?: SemanticAnalysis): boolean {
   return commands.some(cmd => input.toLowerCase().startsWith(cmd));
 }
 
-function isQuestion_(input: string, analysis?: SemanticAnalysis): boolean {
-  if (analysis) {
-    if (analysis.discourseType === "definition" || analysis.discourseType === "factual") return true;
-  }
+function isQuestion_(input: string): boolean {
   return input.endsWith("?") || 
     /^(o que|qual|como|por que|quando|onde|quem)/i.test(input);
 }
 
-function isSearch_(input: string, analysis?: SemanticAnalysis): boolean {
-  if (analysis) {
-    if (analysis.discourseType === "listing") return true;
-    if (analysis.entities.some(e => e.type === "court" || e.type === "tribunal_decision")) return true;
-  }
+function isSearch_(input: string): boolean {
   const t = input.toLowerCase().trim();
   // Verbs at start (original behavior)
   if (/^(pesquis\w+|busc\w+|procur\w+|ach\w+|encontr\w+|consult\w+)/.test(t)) return true;

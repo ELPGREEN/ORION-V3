@@ -147,9 +147,11 @@ const COMPLEXITY_CLAUSE_REGEX = /\b(?:e|ou|mas|porém|contudo|entretanto|todavia
 export function extractLegalEntities(text: string): LegalEntity[] {
   const entities: LegalEntity[] = [];
   for (const pattern of ENTITY_PATTERNS) {
-    // BOLT V2.0 optimization: individual .test() pre-check before matchAll
+    // Optimization: Check with .test() before matchAll for high-frequency skip
     if (!pattern.regex.test(text)) continue;
-    pattern.regex.lastIndex = 0; // reset after test()
+
+    // Explicit lastIndex reset for global regexes after .test()
+    if (pattern.regex.global) pattern.regex.lastIndex = 0;
 
     for (const match of text.matchAll(pattern.regex)) {
       entities.push({
@@ -174,14 +176,14 @@ function analyzeSentiment(text: string): SentimentResult {
     if (sentiment === "neutral") continue;
     let matchCount = 0;
     for (const pattern of patterns) {
-      // BOLT V2.0 optimization: individual .test() pre-check
-      if (!pattern.test(text)) continue;
-      pattern.lastIndex = 0;
-
-      const m = text.match(pattern);
-      if (m) {
-        matchCount++;
-        indicators.push(m[0].slice(0, 20));
+      // Optimization: Use .test() to avoid allocation if no match
+      if (pattern.test(text)) {
+        if (pattern.global) pattern.lastIndex = 0;
+        const m = text.match(pattern);
+        if (m) {
+          matchCount++;
+          indicators.push(m[0].slice(0, 20));
+        }
       }
     }
     if (matchCount > bestScore) {
@@ -201,14 +203,9 @@ function analyzeSentiment(text: string): SentimentResult {
 
 export function classifyLegalDomain(text: string): string {
   for (const [domain, pattern] of Object.entries(DOMAIN_PATTERNS)) {
-    // BOLT V2.0 optimization: individual .test() pre-check
-    if (!pattern.test(text)) continue;
-    pattern.lastIndex = 0;
-
-    const matches = (text.match(pattern) || []).length;
-    if (matches > bestScore) {
-      bestScore = matches;
-      bestDomain = domain;
+    // Optimization: Use .test() with early exit for "first match wins" logic
+    if (pattern.test(text)) {
+      return domain;
     }
   }
 
