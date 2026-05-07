@@ -14,6 +14,7 @@ import { validateNeuralResponse, dispatchAntiHallucinationReport } from "./analy
 import { getProviderWeight } from "./neural/reward-loop";
 import { executeCorrectiveRAG } from "./neural/corrective-rag";
 import { SearchAgent } from "./neural/agents/search-agent";
+import { AIProvider, AIUseCase, AIRequestOptions, RoutingStrategy } from "./ai-types";
 
 // Re-export split modules for backwards compatibility
 export { moeGating, DEFAULT_MOE_CONFIG, type MoEConfig } from "./moe-gating";
@@ -28,39 +29,7 @@ export { parseClientRequirements } from "./client-parser";
 
 // ─── Types ───
 
-export type AIProvider = "gemini" | "groq" | "github_models" | "anthropic" | "openai" | "mistral" | "deepseek" | "deepseek_reasoner";
-export type AIUseCase = "documents" | "chat" | "search" | "analysis" | "code_gen" | "translation";
-export type RoutingStrategy = "priority" | "round_robin" | "least_cost" | "moe_gating";
-
-export interface AIRequestOptions {
-  prompt: string;
-  systemPrompt?: string;
-  messages?: Array<{ role: string; content: string }>;
-  preferredProvider?: AIProvider;
-  useCase?: AIUseCase;
-  includeNeuralContext?: boolean;
-  maxTokens?: number;
-  temperature?: number;
-  routingStrategy?: RoutingStrategy;
-  modelType?: "fast" | "balanced" | "reasoning" | "analysis" | "secure";
-  enableMoE?: boolean;
-  topKExperts?: number;
-  enableCoT?: boolean;
-  enableRoPE?: boolean;
-  agentId?: string;
-  agentContext?: Record<string, unknown>;
-  parentTraceId?: string;
-  ragMode?: "standard" | "agentic" | "corrective" | "self_rag";
-  ragTopK?: number;
-  ragRerank?: boolean;
-  // Neural pipeline options
-  documentContext?: string;
-  documentType?: string;
-  enableNeuralPipeline?: boolean;
-  // DeepSeek V3.2 Thinking Mode
-  thinkingEnabled?: boolean;
-  tools?: Array<{ type: string; function: { name: string; description: string; parameters: Record<string, unknown> } }>;
-}
+export type { AIProvider, AIUseCase, AIRequestOptions, RoutingStrategy };
 
 export interface AIResponse {
   content: string;
@@ -169,7 +138,7 @@ export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIR
 
   // ═══ Run Neural Pipeline (real processing) ═══
   const shouldRunPipeline = options.enableNeuralPipeline !== false; // Default: enabled
-  
+
   if (shouldRunPipeline) {
     try {
       pipelineOutput = executeNeuralPipeline({
@@ -227,14 +196,14 @@ export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIR
     const groqWeight = getProviderWeight("groq", domain);
     const mistralWeight = getProviderWeight("mistral", domain);
     const deepseekWeight = getProviderWeight("deepseek", domain);
-    
+
     // If reward loop has strong preference (>0.7), use it — Groq/Mistral priority
     const bestReward = [
       { provider: "groq" as AIProvider, weight: groqWeight },
       { provider: "mistral" as AIProvider, weight: mistralWeight },
       { provider: "deepseek" as AIProvider, weight: deepseekWeight },
     ].sort((a, b) => b.weight - a.weight)[0];
-    
+
     if (bestReward.weight > 0.7) {
       effectiveOptions.preferredProvider = bestReward.provider;
     } else if (options.enableMoE && options.useCase) {
@@ -263,7 +232,7 @@ export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIR
     );
 
     const response = data as AIResponse;
-    
+
     // Handle DeepSeek V3.2 tool_calls response
     if ((data as any).requires_tool_execution) {
       return {
@@ -324,13 +293,13 @@ export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIR
           .filter(w => w.severity === "high")
           .map(w => `⚠️ ${w.entity}: ${w.reason}`)
           .join("\n");
-        
+
         response.content += `\n\n---\n**⚠️ Alertas de verificação (confiança: ${antiHalReport.overallConfidence}%):**\n${warningText}`;
-        
+
         if (antiHalReport.sourceGrounding.ungroundedClaims.length > 0) {
           response.content += `\n**📌 Citações não verificadas:** ${antiHalReport.sourceGrounding.ungroundedClaims.join(", ")}`;
         }
-        
+
         console.warn(`[AntiHallucination:Neural] FE=${antiHalReport.freeEnergy.freeEnergy}, QFE=${antiHalReport.quantumFreeEnergy?.freeEnergy ?? "N/A"}, confidence=${antiHalReport.overallConfidence}%, grounding=${antiHalReport.sourceGrounding.groundingScore}%`);
       } else if (antiHalReport.freeEnergy.severity === "low" && antiHalReport.freeEnergy.disclaimer) {
         response.content += `\n\n${antiHalReport.freeEnergy.disclaimer}`;

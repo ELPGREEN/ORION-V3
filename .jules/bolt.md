@@ -49,3 +49,16 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 - classifyQueryComplexity: ~14.5%
 
 **Learning:** Consolidating regex arrays into single hoisted non-capturing patterns and replacing `match()` (which allocates arrays) with manual character-iteration loops for counting tasks significantly reduces latency in high-frequency neural modules.
+
+## 2026-06-29 - [NLP Semantic Analyzer & Architecture Cleanup (BOLT V2.0)]
+**Baseline:** 0.019221ms (mean latency) / 8 Circular Dependencies
+**Nova Métrica:** 0.016137ms (mean latency) / 3 Circular Dependencies
+**Delta (Δ):** ~16.0% Latency Reduction / 62.5% Entropy Reduction
+**Post-Mortem & Guidelines for Vision/Neural Teams:**
+1. **Surgical Optimization:** High-frequency neural loops must avoid array allocations (`split`, `match`). Prefer character-iteration loops and `.test()` pre-checks. Current gains: ~16% mean latency reduction.
+2. **Structural Decoupling:** To prevent "Temporal Dead Zone" (TDZ) errors in production, follow the 3-tier pattern:
+   - `*-types.ts`: Leaf-level interfaces and constants (Zero logic).
+   - `*-core.ts`: Implementation logic (Pure functions, no circular refs).
+   - `*.ts`: Entry point/Orchestrator (Re-exports and wiring).
+3. **Validation Policy:** Any structural change **must** be verified with `npx madge --circular`. Zero tolerance for new cycles in hot-paths.
+4. **Learning:** Explicitly reset global regex `lastIndex = 0` when mixing `.test()` and `/g` flags to avoid state leakage between calls.

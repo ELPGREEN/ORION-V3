@@ -1,37 +1,37 @@
 /**
  * ─── Quantum Metacognition Engine v28 ───
  * Complete metacognitive architecture for LLM-inspired consciousness.
- * 
+ *
  * 5 Layers × 18 Subsystems:
- * 
+ *
  * Layer 1 — Prospective Monitoring (Before Task):
  *   1.  Competence Estimator — predict solvability before attempting
  *   2.  Judgment of Learning (JOL) — assess internal knowledge solidity
- * 
+ *
  * Layer 2 — Online Monitoring (During Execution):
  *   3.  Feeling of Knowing (FOK) — detect tip-of-tongue states
  *   4.  Conflict Monitor — detect contradictions in real-time
  *   5.  Confidence Calibrator (ECE) — assign 0-100% accuracy per step
  *   6.  Drift Detector — detect reasoning going off-topic
  *   7.  Consistency Checker — cross-step contradiction detection
- * 
+ *
  * Layer 3 — Regulation & Control (Metacognitive Action):
  *   8.  System 1/2 Transition Gate — effort allocation with Shannon entropy + KL divergence
  *   9.  Strategy Switcher — abandon failing strategies
  *   10. External Search Recognizer — identify when RAG/browsing is needed
  *   11. Adaptive Planner — multi-criteria action scoring
- * 
+ *
  * Layer 4 — Retrospective Evaluation (After Task):
  *   12. Self-Correction Loop — review output for hallucinations
  *   13. Episodic Error Memory — log failures for future avoidance
  *   14. Success Evaluator — register if reasoning led to correct answer
- * 
+ *
  * Layer 5 — Support Infrastructure:
  *   15. Working Memory Buffer (Scratchpad) — snapshot storage for backtracking
  *   16. Observer Module (Critic) — separate judgment layer
  *   17. Theory of Mind — adjust for user's knowledge/intent
  *   18. Semantic Association Core — spreading activation + pattern recognition
- * 
+ *
  * Plus existing:
  *   - Hallucination Snapshot Detector
  *   - Alignment Audit
@@ -52,7 +52,7 @@ import {
   type WaveFunctionMetrics,
 } from "./quantum-wave-function";
 
-import type { SelfModelState, ConsciousState, MetacognitionResult } from "./global-workspace";
+import type { SelfModelState, ConsciousState, MetacognitionResult } from "./consciousness-types";
 
 // ═══════════════════════════════════════════════════════════════════
 //  TYPES
@@ -636,7 +636,7 @@ function runRetrospectiveEvaluation(
   const recentErrors = _episodicErrors.slice(-10);
   const hallucinationErrors = recentErrors.filter(e => e.errorType === "hallucination_risk").length;
   const driftErrors = recentErrors.filter(e => e.errorType === "topic_drift").length;
-  
+
   if (hallucinationErrors > 3) heuristicUpdates.push("Padrão: alucinação recorrente → ativar verificação de fatos por padrão");
   if (driftErrors > 2) heuristicUpdates.push("Padrão: desvio frequente → reduzir janela de contexto");
 
@@ -1270,10 +1270,10 @@ function buildCognitiveWaveFunction(selfModel: SelfModelState, workspace: Consci
 
 /**
  * Execute quantum metacognition analysis (v29).
- * 
+ *
  * Full 5-layer metacognitive architecture + Quantum Cognition Layer:
  * - Prospective monitoring (before task)
- * - Online monitoring (during execution) 
+ * - Online monitoring (during execution)
  * - Regulation & control (metacognitive action)
  * - Retrospective evaluation (after task)
  * - Support infrastructure (observer, ToM, scratchpad)

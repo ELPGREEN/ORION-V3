@@ -200,9 +200,6 @@ function analyzeSentiment(text: string): SentimentResult {
 // ─── Legal Domain Classification ───
 
 export function classifyLegalDomain(text: string): string {
-  let bestDomain = "geral";
-  let bestScore = 0;
-
   for (const [domain, pattern] of Object.entries(DOMAIN_PATTERNS)) {
     // BOLT V2.0 optimization: individual .test() pre-check
     if (!pattern.test(text)) continue;
@@ -215,7 +212,7 @@ export function classifyLegalDomain(text: string): string {
     }
   }
 
-  return bestDomain;
+  return "geral";
 }
 
 // ─── Discourse Type Detection ───
@@ -258,12 +255,30 @@ export function resolveCoreferences(text: string, recentContext: string = ""): s
 // ─── Complexity Assessment ───
 
 function assessComplexity(text: string, entities: LegalEntity[]): "simple" | "medium" | "complex" {
-  const wordCount = text.split(/\s+/).length;
-  const entityCount = entities.length;
-  const hasMultipleClauses = (text.match(COMPLEXITY_CLAUSE_REGEX) || []).length;
+  // Optimization: Manual word count to avoid large array allocation from split()
+  let wordCount = 0;
+  let inWord = false;
+  for (let i = 0; i < text.length; i++) {
+    if (/\s/.test(text[i])) {
+      inWord = false;
+    } else if (!inWord) {
+      wordCount++;
+      inWord = true;
+    }
+  }
 
-  if (wordCount > 40 || entityCount > 3 || hasMultipleClauses > 3) return "complex";
-  if (wordCount > 15 || entityCount > 1 || hasMultipleClauses > 1) return "medium";
+  const entityCount = entities.length;
+
+  // Optimization: Use .test() in a loop to count clauses instead of match() array allocation
+  let clauseCount = 0;
+  COMPLEXITY_CLAUSE_REGEX.lastIndex = 0;
+  while (COMPLEXITY_CLAUSE_REGEX.test(text)) {
+    clauseCount++;
+    if (clauseCount > 3) break; // Early exit for "complex"
+  }
+
+  if (wordCount > 40 || entityCount > 3 || clauseCount > 3) return "complex";
+  if (wordCount > 15 || entityCount > 1 || clauseCount > 1) return "medium";
   return "simple";
 }
 
