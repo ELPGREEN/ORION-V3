@@ -4,33 +4,33 @@ project_id = "dlwafedtlvbvuoaopvsl"
   [functions.video-frame-analysis]
     verify_jwt = false
   [functions.admin-api]
-    verify_jwt = false
+    verify_jwt = true
   [functions.ai-autocomplete]
-    verify_jwt = false
+    verify_jwt = true
   [functions.ai-orchestrator]
     verify_jwt = false
   [functions.amazon-auth]
     verify_jwt = false
   [functions.analyze-reference-doc]
-    verify_jwt = false
+    verify_jwt = true
   [functions.aprimorar-documento]
-    verify_jwt = false
+    verify_jwt = true
   [functions.auth-email-hook]
     verify_jwt = false
   [functions.chat-juridico]
-    verify_jwt = false
+    verify_jwt = true
   [functions.claude-code-review]
-    verify_jwt = false
+    verify_jwt = true
   [functions.claude-legal-gen]
-    verify_jwt = false
+    verify_jwt = true
   [functions.claude-legal-review]
-    verify_jwt = false
+    verify_jwt = true
   [functions.citation-verifier]
     verify_jwt = false
   [functions.classify-intent]
     verify_jwt = false
   [functions.create-client-profile]
-    verify_jwt = false
+    verify_jwt = true
   [functions.editorial-orchestrator]
     verify_jwt = false
   [functions.firebase-admin]
@@ -44,9 +44,9 @@ project_id = "dlwafedtlvbvuoaopvsl"
   [functions.generate-embeddings]
     verify_jwt = false
   [functions.generate-pdf]
-    verify_jwt = false
+    verify_jwt = true
   [functions.gerar-documento]
-    verify_jwt = false
+    verify_jwt = true
   [functions.get-api-keys]
     verify_jwt = true
   [functions.google-stt]
@@ -56,11 +56,11 @@ project_id = "dlwafedtlvbvuoaopvsl"
   [functions.hf-inference]
     verify_jwt = false
   [functions.ingest-legal]
-    verify_jwt = false
+    verify_jwt = true
   [functions.jules-proxy]
     verify_jwt = false
   [functions.kb-ingest]
-    verify_jwt = false
+    verify_jwt = true
   [functions.legislacao-federal]
     verify_jwt = false
   [functions.neural-bridge]
@@ -76,21 +76,21 @@ project_id = "dlwafedtlvbvuoaopvsl"
   [functions.neural-pipeline-orchestrator]
     verify_jwt = false
   [functions.neural-search]
-    verify_jwt = false
+    verify_jwt = true
   [functions.notifications]
     verify_jwt = false
   [functions.ocr-document]
-    verify_jwt = false
+    verify_jwt = true
   [functions.orion-advogado-ai]
-    verify_jwt = false
+    verify_jwt = true
   [functions.orion-agent-factory]
-    verify_jwt = false
+    verify_jwt = true
   [functions.orion-agent-hub]
-    verify_jwt = false
+    verify_jwt = true
   [functions.orion-intelligence]
-    verify_jwt = false
+    verify_jwt = true
   [functions.orion-produtor-ai]
-    verify_jwt = false
+    verify_jwt = true
   [functions.orion-realtime-intel]
     verify_jwt = false
   [functions.orion-vm-control]
@@ -102,15 +102,15 @@ project_id = "dlwafedtlvbvuoaopvsl"
   [functions.pesquisa-unificada]
     verify_jwt = false
   [functions.process-sale]
-    verify_jwt = false
+    verify_jwt = true
   [functions.queue-worker]
     verify_jwt = false
   [functions.secretaria-ia]
-    verify_jwt = false
+    verify_jwt = true
   [functions.smart-agent-route]
     verify_jwt = false
   [functions.smart-ingest]
-    verify_jwt = false
+    verify_jwt = true
   [functions.spotify-api]
     verify_jwt = false
   [functions.stripe-api]
@@ -142,20 +142,20 @@ project_id = "dlwafedtlvbvuoaopvsl"
   [functions.zilliz-vectors]
     verify_jwt = false
   [functions.funnel-builder]
-    verify_jwt = false
+    verify_jwt = true
   [functions.peticao-builder]
-    verify_jwt = false
+    verify_jwt = true
   [functions.industrial-diagnosis]
-    verify_jwt = false
+    verify_jwt = true
   [functions.contract-builder]
-    verify_jwt = false
+    verify_jwt = true
   [functions.launch-builder]
-    verify_jwt = false
+    verify_jwt = true
   [functions.ads-builder]
-    verify_jwt = false
+    verify_jwt = true
   [functions.case-analyzer]
-    verify_jwt = false
+    verify_jwt = true
   [functions.copy-vsl-builder]
-    verify_jwt = false
+    verify_jwt = true
   [functions.maintenance-planner]
-    verify_jwt = false
+    verify_jwt = true

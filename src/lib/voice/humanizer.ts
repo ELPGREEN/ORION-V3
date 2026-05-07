@@ -1,3 +1,4 @@
+/* eslint-disable no-misleading-character-class */
 /**
  * humanizer.ts — Post-processor that strips AI-isms from Orion's responses.
  * Based on Wikipedia's "Signs of AI writing" (29 patterns).

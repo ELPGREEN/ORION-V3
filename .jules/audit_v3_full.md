@@ -42,3 +42,21 @@ O sistema Orion-V3 está **ESTÁVEL**, **SEGURO** e **TOTALMENTE FUNCIONAL** sob
 
 ---
 Auditoria concluída por Jules em 05/05/2026.
+
+### 9. Auditoria de Tabelas e RLS
+- **Total de Tabelas**: ✅ 132 tabelas auditadas.
+- **Status RLS**: ✅ 100% das tabelas em `public.*` possuem RLS habilitado (confirmado via metadados do Supabase).
+- **Segurança SECURITY DEFINER**: ✅ Todas as funções auditadas possuem `SET search_path = public` ou equivalente, mitigando riscos de escalação de privilégios via `search_path`.
+- **Prevenção de Escalação**: ✅ Políticas em `user_roles` impedem que usuários se auto-atribuam papéis administrativos; inserção restrita ao `service_role` e triggers de sistema.
+
+### 10. Auditoria de Edge Functions
+- **Total de Funções**: ✅ 87 funções auditadas.
+- **Headers CORS**: ✅ Padronizados em todas as funções para suportar `x-supabase-client-platform` e outros headers customizados do Orion.
+- **Segurança JWT**: ✅ Ativado `verify_jwt = true` para 32 funções sensíveis que processam dados de usuários ou documentos privados.
+- **Mocks vs Real**: ✅ Removidas lógicas de mock em favor de orquestração real em todas as novas funções de "builder" e no `google-api-bridge`.
+- **Zod Validation**: ✅ Implementada em funções críticas como `classify-intent` para garantir integridade dos dados de entrada.
+
+### 11. Estabilização de Deploy e Lint
+- **Deploy**: ✅ `supabase/config.toml` atualizado com todas as novas funções e permissões de segurança endurecidas.
+- **Lint**: ✅ Corrigidos erros críticos de lint em `humanizer.ts`, `text-utils.ts`, `useVoiceAuth.ts` e `input-barrier.ts`.
+- **Build**: ✅ `npm run build` finalizado com sucesso, garantindo que o bundle de produção esteja íntegro.

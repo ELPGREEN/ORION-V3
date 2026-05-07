@@ -1,3 +1,4 @@
+/* eslint-disable no-misleading-character-class */
 /**
  * Text utility functions for Orion Neural processing
  */

@@ -30,7 +30,7 @@ export interface PluginHooks {
 export interface PluginContext {
   registerTool: (tool: PluginTool) => void;
   registerCommand: (command: PluginCommand) => void;
-  registerHook: (hook: keyof PluginHooks, handler: Function) => void;
+  registerHook: (hook: keyof PluginHooks, handler: (...args: any[]) => any) => void;
   getConfig: (key: string) => unknown;
   setConfig: (key: string, value: unknown) => void;
   log: (level: string, message: string) => void;
@@ -211,7 +211,7 @@ class PluginManager {
     return results.filter(r => r !== undefined);
   }
 
-  registerHook(hook: string, handler: Function): void {
+  registerHook(hook: string, handler: (...args: any[]) => any): void {
     if (!this.hooks.has(hook)) {
       this.hooks.set(hook, []);
     }
