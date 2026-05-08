@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   checkDegradation,
   setBaseline,
@@ -60,24 +60,27 @@ describe("TF Monitoring Auto-Rebaseline", () => {
 
   it("should respect dynamic latency tolerance (2x wider)", () => {
     const uniqueModel = `model-latency-${Date.now()}`;
-    const baseline = { latencyMs: 100 };
+    const baseline = { latencyMs: 200 }; // Increased baseline to 200
     setBaseline(uniqueModel, baseline);
 
-    // 20% degradation for latency should be minor
-    const minorLatency = { latencyMs: 125 }; // 25% degradation
+    // 25% degradation for latency should be minor (250ms)
+    // Delta is 50ms, which is >= 50ms threshold.
+    const minorLatency = { latencyMs: 250 };
     let degradations = checkDegradation(uniqueModel, minorLatency);
     expect(degradations[0].severity).toBe("minor");
 
-    // 50% degradation for latency should be moderate
-    const moderateLatency = { latencyMs: 160 }; // 60% degradation
+    // 60% degradation for latency should be moderate (320ms)
+    // Delta is 120ms
+    const moderateLatency = { latencyMs: 320 };
     // Need to bypass alert cooldown or use different model
     const uniqueModel2 = `model-latency-2-${Date.now()}`;
     setBaseline(uniqueModel2, baseline);
     degradations = checkDegradation(uniqueModel2, moderateLatency);
     expect(degradations[0].severity).toBe("moderate");
 
-    // 100% degradation for latency should be severe
-    const severeLatency = { latencyMs: 210 }; // 110% degradation
+    // 110% degradation for latency should be severe (420ms)
+    // Delta is 220ms
+    const severeLatency = { latencyMs: 420 };
     const uniqueModel3 = `model-latency-3-${Date.now()}`;
     setBaseline(uniqueModel3, baseline);
     degradations = checkDegradation(uniqueModel3, severeLatency);
