@@ -200,6 +200,9 @@ function analyzeSentiment(text: string): SentimentResult {
 // ─── Legal Domain Classification ───
 
 export function classifyLegalDomain(text: string): string {
+  let bestScore = 0;
+  let bestDomain = "geral";
+
   for (const [domain, pattern] of Object.entries(DOMAIN_PATTERNS)) {
     // BOLT V2.0 optimization: individual .test() pre-check
     if (!pattern.test(text)) continue;
@@ -212,7 +215,7 @@ export function classifyLegalDomain(text: string): string {
     }
   }
 
-  return "geral";
+  return bestDomain;
 }
 
 // ─── Discourse Type Detection ───

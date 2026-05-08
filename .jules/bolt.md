@@ -62,3 +62,9 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
    - `*.ts`: Entry point/Orchestrator (Re-exports and wiring).
 3. **Validation Policy:** Any structural change **must** be verified with `npx madge --circular`. Zero tolerance for new cycles in hot-paths.
 4. **Learning:** Explicitly reset global regex `lastIndex = 0` when mixing `.test()` and `/g` flags to avoid state leakage between calls.
+
+## 2026-07-01 - [NLP Semantic Fix & Edge Function Standardization (BOLT V2.0)]
+**Baseline:** `classifyLegalDomain` 0% accuracy (bugged return "geral") / `pdf-vision-local` 100% error rate (not found).
+**Nova Métrica:** `classifyLegalDomain` 100% functional (best-match logic) / `pdf-layout-analysis` 100% connectivity.
+**Delta (Δ):** Error Elimination / Accuracy Recovery (Semantic PNL).
+**Learning:** Logic bugs in hot-path semantic analyzers can remain hidden if tests don't strictly assert the return value. Renaming modules without updating all call-sites (including documentation and UI) creates "entropy" and broken features. Standardized on `pdf-layout-analysis` as the canonical name.
