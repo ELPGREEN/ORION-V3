@@ -1,16 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
-import { IPentagonLayer, ReasoningResult, PerceptionResult, MemoryResult, PentagonContext } from "../types";
+import { IPentagonLayer, PerceptionResult, MemoryResult, PentagonContext } from "../types";
 import { FeynmanReasoner } from "./FeynmanReasoner";
+import { ExtendedReasoningResult } from "./reasoning-types";
+
+const SNIPPET_DELIMITER_RE = /\n{2,}|\[\d+\]|---+/;
 
 interface ReasoningInput {
   perception: PerceptionResult;
   memory: MemoryResult;
-}
-
-export interface ExtendedReasoningResult extends ReasoningResult {
-  responseHint?: string;
-  model?: string;
-  feynmanExplanation?: string;
 }
 
 export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, ExtendedReasoningResult> {
@@ -73,7 +70,7 @@ export class ReasoningAdapter implements IPentagonLayer<ReasoningInput, Extended
   private extractSnippets(merged: string): string[] {
     if (!merged) return [];
     const parts = merged
-      .split(/\n{2,}|\[\d+\]|---+/)
+      .split(SNIPPET_DELIMITER_RE)
       .map((s) => s.trim())
       .filter((s) => s.length > 80);
     return parts.slice(0, 6);

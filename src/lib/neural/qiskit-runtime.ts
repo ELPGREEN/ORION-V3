@@ -16,9 +16,10 @@ import { qubitZero, measureProbability } from "./qubit-core";
 import { rotationX, rotationY, rotationZ } from "./quantum-gates";
 import { applyNoise, applyDecoherence } from "./quantum-decoherence";
 import type { NoiseModelType, DecoherenceModel } from "./quantum-decoherence";
-import { vqcForward, tensorVQCForward } from "./vqc";
-import type { VQCConfig } from "./vqc";
-import { DEFAULT_VQC_CONFIG } from "./vqc";
+import { tensorVQCForward } from "./tensor-vqc-core";
+import { vqcForward } from "./vqc-core";
+import type { VQCConfig } from "./vqc-types";
+import { DEFAULT_VQC_CONFIG } from "./vqc-types";
 
 /** Use tensor VQC when nQubits ≤ 12 for real entanglement */
 function vqcForwardAuto(input: number[], params: number[][][], config: VQCConfig): number {
