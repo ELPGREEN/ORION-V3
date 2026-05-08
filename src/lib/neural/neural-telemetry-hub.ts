@@ -156,6 +156,16 @@ let _lastInteroState: InteroceptiveState | null = null;
 let _consecutiveDegradationCount = 0;
 let _lastUserInput = "";
 
+// Listen for re-baselining to reset consecutive degradation counts
+if (typeof window !== "undefined") {
+  window.addEventListener("tf:model:rebaselined", (e: any) => {
+    if (e.detail?.modelName === "orion-reasoning") {
+      console.log("[telemetry-hub] Resetting consecutive degradation count due to re-baseline");
+      _consecutiveDegradationCount = 0;
+    }
+  });
+}
+
 // ─── Core Functions ───
 
 /**

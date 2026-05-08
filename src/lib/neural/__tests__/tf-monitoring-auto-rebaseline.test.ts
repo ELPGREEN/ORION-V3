@@ -60,27 +60,27 @@ describe("TF Monitoring Auto-Rebaseline", () => {
 
   it("should respect dynamic latency tolerance (2x wider)", () => {
     const uniqueModel = `model-latency-${Date.now()}`;
-    const baseline = { latencyMs: 200 }; // Increased baseline to 200
+    const baseline = { latencyMs: 300 }; // Increased baseline to 300
     setBaseline(uniqueModel, baseline);
 
-    // 25% degradation for latency should be minor (250ms)
-    // Delta is 50ms, which is >= 50ms threshold.
-    const minorLatency = { latencyMs: 250 };
+    // 40% degradation for latency should be minor (420ms)
+    // Delta is 120ms, which is >= 100ms threshold.
+    const minorLatency = { latencyMs: 420 };
     let degradations = checkDegradation(uniqueModel, minorLatency);
     expect(degradations[0].severity).toBe("minor");
 
-    // 60% degradation for latency should be moderate (320ms)
-    // Delta is 120ms
-    const moderateLatency = { latencyMs: 320 };
+    // 60% degradation for latency should be moderate (480ms)
+    // Delta is 180ms
+    const moderateLatency = { latencyMs: 480 };
     // Need to bypass alert cooldown or use different model
     const uniqueModel2 = `model-latency-2-${Date.now()}`;
     setBaseline(uniqueModel2, baseline);
     degradations = checkDegradation(uniqueModel2, moderateLatency);
     expect(degradations[0].severity).toBe("moderate");
 
-    // 110% degradation for latency should be severe (420ms)
-    // Delta is 220ms
-    const severeLatency = { latencyMs: 420 };
+    // 110% degradation for latency should be severe (630ms)
+    // Delta is 330ms
+    const severeLatency = { latencyMs: 630 };
     const uniqueModel3 = `model-latency-3-${Date.now()}`;
     setBaseline(uniqueModel3, baseline);
     degradations = checkDegradation(uniqueModel3, severeLatency);

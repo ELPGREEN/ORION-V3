@@ -122,6 +122,9 @@ export function recordSnapshot(snapshot: ModelMetricSnapshot): void {
 /** Set a performance baseline for a model */
 export function setBaseline(modelName: string, metrics: Record<string, number>): void {
   _baselines.set(modelName, { ...metrics });
+  // Clear moving averages to allow the new baseline to take effect immediately
+  _movingAverages.delete(modelName);
+  _consecutiveModerateCount.delete(modelName);
 }
 
 /**
@@ -133,6 +136,12 @@ export function maybeRebaseline(modelName: string, newMetrics: Record<string, nu
   _baselines.set(modelName, { ...currentBaseline, ...newMetrics });
   // Clear moving averages for this model to start fresh
   _movingAverages.delete(modelName);
+
+  // Dispatch event for telemetry hub to reset its counters
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("tf:model:rebaselined", { detail: { modelName, newMetrics } }));
+  }
+
   console.log(`[tf-model-monitoring] Re-baselined ${modelName}:`, newMetrics);
 }
 
@@ -165,8 +174,9 @@ export function checkDegradation(
     const window = modelAverages.get(metric)!;
 
     // Clamp extreme outliers to avoid poisoning the moving average permanently
+    // If metric is latency and it's > 10x baseline, we treat it as a massive spike and cap it tightly
     const clampedCurrent = metric === "latencyMs"
-      ? Math.min(rawCurrent, baselineValue * 5)
+      ? (rawCurrent > baselineValue * 10 ? baselineValue * 2 : Math.min(rawCurrent, baselineValue * 5))
       : rawCurrent;
 
     window.push(clampedCurrent);
@@ -187,7 +197,10 @@ export function checkDegradation(
     const severeThreshold = isLatency ? 100 : 50;
 
     // 2b. Add absolute delta check for latency to avoid noise on fast models
-    if (isLatency && Math.abs(currentAvg - baselineValue) < 50) {
+    // If the baseline is very low (e.g. < 50ms), we use a tighter threshold.
+    // If baseline is higher, we use 100ms.
+    const absoluteThreshold = baselineValue < 50 ? 50 : 100;
+    if (isLatency && Math.abs(currentAvg - baselineValue) < absoluteThreshold) {
       if (_consecutiveModerateCount.has(modelName)) {
         _consecutiveModerateCount.get(modelName)!.set(metric, 0);
       }
@@ -210,7 +223,7 @@ export function checkDegradation(
         if (count >= 5) {
           maybeRebaseline(modelName, { [metric]: currentAvg });
           modelModerateCounts.set(metric, 0);
-          continue; // Re-baselined, skip alert for this cycle
+          // Don't continue, allow the alert to be recorded for the hit that triggered rebaseline
         }
       } else {
         modelModerateCounts.set(metric, 0); // Reset if not moderate
@@ -232,6 +245,7 @@ export function checkDegradation(
         detectedAt: new Date().toISOString(),
       };
 
+      console.warn(`[tf-model-monitoring] Degradation detected on ${modelName}/${metric}: ${entry.current} (baseline: ${entry.baseline}, degradation: ${entry.degradationPercent}%)`);
       degradations.push(entry);
       _degradations.push(entry);
       modelAlerts.set(metric, now);
