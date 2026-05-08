@@ -1,12 +1,5 @@
-/**
- * ─── useOrionChat Hook ───
- * Integra ORION Brain com sistema de chat/voice
- * Responde perguntas, executa comandos, coordena setores
- */
-
 import { useState, useCallback } from "react";
-import { orionBrain, getOrionHelp, getOrionStatus, getAgentForSector as getPanelForSector, type OrionResponse } from "@/lib/neural/orion-brain";
-import { detectSector, type Sector } from "@/lib/neural/sector-agents";
+import { orionBrain } from "@/lib/neural/orion-brain";
 import { toast } from "sonner";
 
 export interface UseOrionChatOptions {
@@ -18,7 +11,6 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  sector?: Sector;
   timestamp: number;
 }
 
@@ -26,94 +18,75 @@ export function useOrionChat(options: UseOrionChatOptions = {}) {
   const { autoSpeak = false, onPanelOpen } = options;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentSector, setCurrentSector] = useState<Sector | null>(null);
 
   const sendMessage = useCallback(async (input: string): Promise<void> => {
     if (!input.trim() || isProcessing) return;
     
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input,
-      timestamp: Date.now(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
+    const userMsg: ChatMessage = { id: Date.now().toString(), role: "user", content: input, timestamp: Date.now() };
+    setMessages((prev) => [...prev, userMsg]);
     setIsProcessing(true);
     
     try {
-      // Processar via ORION Brain
-      const response = await orionBrain({ input });
+      const response = await orionBrain({ input, stream: autoSpeak });
+      const assistantId = (Date.now() + 1).toString();
+      const assistantMsg: ChatMessage = { id: assistantId, role: "assistant", content: response.response, timestamp: Date.now() };
+      setMessages((prev) => [...prev, assistantMsg]);
       
-      // Adicionar resposta
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: response.response,
-        sector: response.sector,
-        timestamp: Date.now(),
-      };
+      if (response.panel && onPanelOpen) onPanelOpen(response.panel);
       
-      setMessages((prev) => [...prev, assistantMessage]);
-      setCurrentSector(response.sector || null);
-      
-      // Abrir painel se necessário
-      if (response.panel && onPanelOpen) {
-        onPanelOpen(response.panel);
-      }
-      
-      // Speak se enabled
-      if (autoSpeak && "speechSynthesis" in window) {
+      if (autoSpeak && response.stream) {
+        const { streamOrionSpeech } = await import("@/lib/tts/geminiTTS");
+        const abort = new AbortController();
+        const [s1, s2] = response.stream.tee();
+
+        const updateUI = async () => {
+          const reader = s1.getReader();
+          const decoder = new TextDecoder();
+          let fullText = "";
+          try {
+            while(true) {
+              const {done, value} = await reader.read();
+              if(done) break;
+              const chunk = decoder.decode(value);
+              const lines = chunk.split("\n");
+              for(const line of lines) {
+                if(line.startsWith("data: ")) {
+                  try {
+                    const data = JSON.parse(line.slice(6));
+                    if(data.type === "token") {
+                      fullText += data.content;
+                      setMessages(prev => prev.map(m => m.id === assistantId ? {...m, content: fullText} : m));
+                    }
+                  } catch{}
+                }
+              }
+            }
+          } finally { reader.releaseLock(); }
+        };
+        updateUI();
+
+        await streamOrionSpeech(s2 as any, "Enceladus", abort.signal);
+      } else if (autoSpeak && response.response) {
         const utterance = new SpeechSynthesisUtterance(response.response);
         utterance.lang = "pt-BR";
         speechSynthesis.speak(utterance);
       }
       
     } catch (error) {
-      console.error("[OrionChat] Error:", error);
+      console.error("[OrionChat]", error);
       toast.error("Erro ao processar mensagem");
     } finally {
       setIsProcessing(false);
     }
   }, [isProcessing, autoSpeak, onPanelOpen]);
 
-  const clearChat = useCallback(() => {
-    setMessages([]);
-    setCurrentSector(null);
-  }, []);
-
-  const getHelp = useCallback((): string => {
-    return getOrionHelp();
-  }, []);
-
-  const getStatus = useCallback(() => {
-    return getOrionStatus();
-  }, []);
-
-  return {
-    messages,
-    isProcessing,
-    currentSector,
-    sendMessage,
-    clearChat,
-    getHelp,
-    getStatus,
-  };
+  return { messages, isProcessing, sendMessage, clearChat: () => setMessages([]), getHelp: () => "Help", getStatus: () => "Status" };
 }
 
-/**
- * Hook para integrar ORION com Voice Input
- */
-export function useOrionVoice(/** @deprecated Use useOrionChat instead */ options?: UseOrionChatOptions) {
-  return useOrionChat(options);
+export function useOrionVoice(opts?: any) {
+  return useOrionChat(opts);
 }
 
-/**
- * Detectar setor de uma entrada (para uso externo)
- */
 export function useSectorDetector() {
-  const detect = useCallback((input: string): Sector => {
-    return detectSector(input);
-  }, []);
-
-  return { detect };
+  return { detect: () => "geral" };
 }

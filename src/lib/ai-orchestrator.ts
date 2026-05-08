@@ -79,7 +79,7 @@ function detectArchitectureQuery(prompt: string): boolean {
 
 // ─── Core Orchestrator ───
 
-export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIResponse> {
+export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIResponse | ReadableStream> {
   const startTime = Date.now();
 
   const effectiveOptions = { ...options };
