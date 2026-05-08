@@ -160,10 +160,16 @@ export function checkDegradation(
     const rawCurrent = currentMetrics[metric];
     if (rawCurrent === undefined || baselineValue === 0) continue;
 
-    // 1. Update Moving Average
+    // 1. Update Moving Average with outlier clamping (5x baseline)
     if (!modelAverages.has(metric)) modelAverages.set(metric, []);
     const window = modelAverages.get(metric)!;
-    window.push(rawCurrent);
+
+    // Clamp extreme outliers to avoid poisoning the moving average permanently
+    const clampedCurrent = metric === "latencyMs"
+      ? Math.min(rawCurrent, baselineValue * 5)
+      : rawCurrent;
+
+    window.push(clampedCurrent);
     if (window.length > MOVING_AVERAGE_WINDOW) window.shift();
 
     const currentAvg = window.reduce((a, b) => a + b, 0) / window.length;
@@ -180,6 +186,14 @@ export function checkDegradation(
     const moderateThreshold = isLatency ? 50 : 25;
     const severeThreshold = isLatency ? 100 : 50;
 
+    // 2b. Add absolute delta check for latency to avoid noise on fast models
+    if (isLatency && Math.abs(currentAvg - baselineValue) < 50) {
+      if (_consecutiveModerateCount.has(modelName)) {
+        _consecutiveModerateCount.get(modelName)!.set(metric, 0);
+      }
+      continue;
+    }
+
     if (degradation > minorThreshold) {
       // Initialize consecutive count state if missing
       if (!_consecutiveModerateCount.has(modelName)) _consecutiveModerateCount.set(modelName, new Map());
@@ -189,8 +203,8 @@ export function checkDegradation(
       const severity: PerformanceDegradation["severity"] =
         degradation > severeThreshold ? "severe" : degradation > moderateThreshold ? "moderate" : "minor";
 
-      // Track consecutive moderate degradations for auto-rebaseline
-      if (severity === "moderate") {
+      // Track consecutive moderate/severe degradations for auto-rebaseline
+      if (severity === "moderate" || severity === "severe") {
         const count = (modelModerateCounts.get(metric) || 0) + 1;
         modelModerateCounts.set(metric, count);
         if (count >= 5) {

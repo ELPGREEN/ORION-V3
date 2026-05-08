@@ -27,16 +27,25 @@ describe("TF Model Monitoring - Performance Enhancements", () => {
 
     // Large spike (300)
     // Average: (8*100 + 110 + 300) / 10 = 121. 21% degradation.
+    // NOTE: Absolute delta must be >= 50ms for latency.
+    // 121 - 100 = 21ms, which is < 50ms.
     const degradations2 = checkDegradation(modelName, { latencyMs: 300 });
-    expect(degradations2.length).toBe(1);
-    expect(degradations2[0].degradationPercent).toBe(21);
+    expect(degradations2.length).toBe(0); // Expected 0 now due to absolute delta threshold
+
+    // Even larger spike (600)
+    // Average: (7*100 + 110 + 300 + 500) / 10 = 161 (Clamped to 500)
+    // Average: (7*100 + 110 + 300 + 500) / 10 = 161. 61% degradation.
+    // Delta = 61ms, which is > 50ms.
+    const degradations3 = checkDegradation(modelName, { latencyMs: 600 });
+    expect(degradations3.length).toBe(1);
+    expect(degradations3[0].degradationPercent).toBe(61);
   });
 
   it("should respect alert cooldowns", () => {
     const modelName = "cooldown-model-" + Math.random();
     setBaseline(modelName, { latencyMs: 100 });
 
-    // Trigger first alert
+    // Trigger first alert (must exceed 50ms delta)
     const first = checkDegradation(modelName, { latencyMs: 500 });
     expect(first.length).toBe(1);
 
