@@ -45,6 +45,8 @@ export interface AIRequestOptions {
   modelType?: "fast" | "balanced" | "reasoning" | "analysis" | "secure";
   enableMoE?: boolean;
   topKExperts?: number;
+  stream?: boolean;
+  inputSource?: "voice" | "text";
   enableCoT?: boolean;
   enableRoPE?: boolean;
   agentId?: string;
@@ -110,7 +112,7 @@ function detectArchitectureQuery(prompt: string): boolean {
 
 // ─── Core Orchestrator ───
 
-export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIResponse> {
+export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIResponse | ReadableStream> {
   const startTime = Date.now();
 
   const effectiveOptions = { ...options };
@@ -227,6 +229,21 @@ export async function callAIOrchestrator(options: AIRequestOptions): Promise<AIR
     const groqWeight = getProviderWeight("groq", domain);
     const mistralWeight = getProviderWeight("mistral", domain);
     const deepseekWeight = getProviderWeight("deepseek", domain);
+  if (effectiveOptions.stream) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-orchestrator`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+      body: JSON.stringify(effectiveOptions),
+    });
+    if (!response.ok) throw new Error(`Streaming failed: ${response.status}`);
+    return response.body!;
+  }
+
     
     // If reward loop has strong preference (>0.7), use it — Groq/Mistral priority
     const bestReward = [

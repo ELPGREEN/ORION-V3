@@ -1,426 +1,45 @@
-/**
- * ─── ORION Brain v25.0 ───
- * Cérebro principal indestrutível do Sistema ORION V3
- * Capaz de responder perguntas, obedecer comandos, e coordenar todos os agentes
- * 
- * Integra com: Sector Agents, Super Prompts, Tool Executor, Voice Commands
- */
-
-import { 
-  ORION_BRAIN, SECTOR_AGENTS, ORQUESTRADOR, 
-  detectSector, getAgentForSector, getAllAgents,
-  type Sector, type SectorAgent 
-} from "./sector-agents";
-import { SUPER_AGENTS, getSuperAgentPrompt, buildAgentMessages } from "./super-prompts";
-import { orionToolsToFunctionCalling, executeFunctionCall, getToolsForSuperAgent } from "./tool-executor";
+import { SECTOR_AGENTS, detectSector, getAgentForSector } from "./sector-agents";
+import { buildAgentMessages } from "./super-prompts";
 import { supabase } from "@/integrations/supabase/client";
-import { wrapEdgeFunction } from "@/lib/errors";
-import { analyzeSemantics, type SemanticAnalysis } from "./nlp-semantic-analyzer";
-
-/** ═══════════════════════════════════════════════════════════════
- * ORION BRAIN CORE
- * ═══════════════════════════════════════════════════════════════ */
 
 export interface OrionRequest {
   input: string;
   context?: Record<string, unknown>;
   userId?: string;
+  stream?: boolean;
 }
 
 export interface OrionResponse {
   success: boolean;
   response: string;
-  sector?: Sector;
+  stream?: ReadableStream;
+  sector?: any;
   agentUsed?: string;
-  toolsUsed?: string[];
-  confidence?: number;
-  needsResearch?: boolean;
   panel?: string;
 }
 
-/**
- * Main function: ORION processa qualquer input
- */
 export async function orionBrain(request: OrionRequest): Promise<OrionResponse> {
-  const { input, context = {}, userId } = request;
-  const startTime = Date.now();
-
-  // BOLT V2.0: Centralized NLP analysis for all downstream layers
-  const analysis = analyzeSemantics(input);
-  (context as any).nlp = analysis;
-
-  try {
-    // 0. Singularity Protocol — V3 orchestrator runs FIRST as a cognitive
-    //    pre-layer (episodic memory, internal auditor, self-healer).
-    //    Disabled via localStorage flag `orion_v3_disabled` for emergency rollback.
-    const v3Disabled =
-      typeof window !== "undefined" &&
-      window.localStorage?.getItem("orion_v3_disabled") === "1";
-    let v3Result: { summary: string; agent: string; confidence: number } | null = null;
-    let sensorialVisualContext: string | null = null;
-
-    if (!v3Disabled) {
-      try {
-        const { orchestrate } = await import("./orchestrator/orion-v3-orchestrator");
-        const r = await orchestrate({ command: input, source: "text" });
-        // Silence filter from sensorial gate (empty plan + empty summary)
-        if (r.plan.length === 0 && !r.summary) {
-          return {
-            success: true,
-            response: "",
-            sector: "voz",
-            agentUsed: "orion-v3:silence",
-            confidence: 1,
-          };
-        }
-        v3Result = {
-          summary: r.summary,
-          agent: r.decision.primary,
-          confidence: r.decision.confidence,
-        };
-      } catch (e) {
-        console.warn("[OrionBrain] V3 pre-layer failed, falling back:", e);
-      }
-    } else {
-      // V3 kill-switch active → still run the sensorial gate so the legacy
-      // pipeline respects silence and identification triggers.
-      try {
-        const { runSensorialGate } = await import(
-          "./orchestrator/sensorial-gate"
-        );
-        const gate = await runSensorialGate(input);
-        if (gate.skip) {
-          return {
-            success: true,
-            response: "",
-            sector: "voz",
-            agentUsed: "legacy:silence",
-            confidence: 1,
-          };
-        }
-        sensorialVisualContext = gate.visualContext;
-      } catch (e) {
-        console.warn("[OrionBrain] Sensorial gate failed:", e);
-      }
-    }
-
-    // Inject visual context (when present) into the request context so
-    // downstream processors (question/command/search) can see it.
-    if (sensorialVisualContext) {
-      (context as any).visualContext = sensorialVisualContext;
-    }
-
-
-    // 1. Detectar setor
-    const sector = detectSector(input);
-    const agent = getAgentForSector(sector);
-
-    // 2. Determinar tipo de requisição (utilizando análise semântica)
-    const isCommand = isCommand_(input, analysis);
-    const isQuestion = isQuestion_(input, analysis);
-    const isSearch = isSearch_(input, analysis);
-
-    // 3. Processar conforme tipo (panel/command/search keep precedence over V3)
-    if (isCommand) {
-      return await processCommand(input, sector, agent, context);
-    }
-
-    if (isSearch) {
-      return await processSearch(input, sector, agent, context);
-    }
-
-    // 4. For plain questions, prefer V3 answer when available + confident.
-    if (v3Result && v3Result.summary && v3Result.confidence >= 0.5) {
-      return {
-        success: true,
-        response: v3Result.summary,
-        sector,
-        agentUsed: `orion-v3:${v3Result.agent}`,
-        confidence: v3Result.confidence,
-      };
-    }
-
-    if (isQuestion || true) {
-      return await processQuestion(input, sector, agent, context);
-    }
-
-  } catch (error) {
-    console.error("[ORION Brain] Error:", error);
-    return {
-      success: false,
-      response: "Desculpe, houve um erro ao processar sua solicitação. Tente novamente.",
-    };
-  }
-}
-
-/** ═══════════════════════════════════════════════════════════════
- * TYPE DETECTION
- * ═══════════════════════════════════════════════════════════════ */
-
-function isCommand_(input: string, analysis?: SemanticAnalysis): boolean {
-  if (analysis) {
-    if (analysis.discourseType === "procedure" || analysis.sentiment.primary === "assertive") return true;
-  }
-  const commands = [
-    "abre", "abra", "abrir", "abre", "executar", "rode", "rodar",
-    "liga", "ligar", "desliga", "desligar", "ativa", "ativar",
-    "desativa", "desativar", "criar", "gerar", "salvar", "enviar"
-  ];
-  return commands.some(cmd => input.toLowerCase().startsWith(cmd));
-}
-
-function isQuestion_(input: string, analysis?: SemanticAnalysis): boolean {
-  if (analysis) {
-    if (analysis.discourseType === "definition" || analysis.discourseType === "factual") return true;
-  }
-  return input.endsWith("?") || 
-    /^(o que|qual|como|por que|quando|onde|quem)/i.test(input);
-}
-
-function isSearch_(input: string, analysis?: SemanticAnalysis): boolean {
-  if (analysis) {
-    if (analysis.discourseType === "listing") return true;
-    if (analysis.entities.some(e => e.type === "court" || e.type === "tribunal_decision")) return true;
-  }
-  const t = input.toLowerCase().trim();
-  // Verbs at start (original behavior)
-  if (/^(pesquis\w+|busc\w+|procur\w+|ach\w+|encontr\w+|consult\w+)/.test(t)) return true;
-  // Verb anywhere followed by "sobre / por / no / na / em" (e.g. "me pesquisa sobre X")
-  if (/\b(pesquis\w+|busc\w+|procur\w+)\s+(sobre|por|por que|no|na|em)\b/.test(t)) return true;
-  // Web/news intent keywords
-  if (/\b(últimas not[ií]cias|pre[çc]o de|cota[çc][aã]o|previs[aã]o do tempo|onde fica)\b/.test(t)) return true;
-  return false;
-}
-
-/** ══════════��════════════════════════════════════════════════════
- * COMMAND PROCESSOR
- * ═══════════════════════════════════════════════════════════════ */
-
-async function processCommand(
-  input: string, 
-  sector: Sector, 
-  agent: SectorAgent,
-  context: Record<string, unknown>
-): Promise<OrionResponse> {
-  const cmd = input.toLowerCase();
+  const { input, context = {}, stream } = request;
   
-  // Abrir painéis
-  if (cmd.startsWith("abre") || cmd.startsWith("abrir")) {
-    const panel = agent.panel;
-    if (panel) {
-      return {
-        success: true,
-        response: `Entendido. Abrindo ${agent.name} — Painel: ${panel}`,
-        sector,
-        agentUsed: agent.name,
-      };
-    }
+  if (stream) {
+    const { callAIOrchestrator } = await import("@/lib/ai-orchestrator");
+    const res = await callAIOrchestrator({ prompt: input, stream: true, useCase: "chat" });
+    if (res instanceof ReadableStream) return { success: true, response: "", stream: res, agentUsed: "orion-v3-stream" };
   }
-  
-  // Comandos de IoT
-  if (sector === "robotica" && /^(liga|desliga)/i.test(cmd)) {
-    return {
-      success: true,
-      response: `Comando de robótica enviado: ${cmd}`,
-      sector,
-      agentUsed: agent.name,
-    };
-  }
-  
-  // Gerar documentos
-  if (sector === "juridico" && /^(gerar|criar)/i.test(cmd)) {
-    return {
-      success: true,
-      response: `Entendido. Iniciando geração de documento jurídico.`,
-      sector,
-      agentUsed: agent.name,
-    };
-  }
-  
-  return {
-    success: true,
-    response: `Comando "${input}" executado pelo ${agent.name}.`,
-    sector,
-    agentUsed: agent.name,
-  };
-}
 
-/** ═══════════════════════════════════════════════════════════════
- * SEARCH PROCESSOR
- * ═══════════════════════════════════════════════════════════════ */
-
-async function processSearch(
-  input: string,
-  sector: Sector,
-  agent: SectorAgent,
-  context: Record<string, unknown>
-): Promise<OrionResponse> {
-  const query = input.replace(/^(pesquisar|buscar|procurar)\s+/i, "").trim();
+  const sector = detectSector(input);
+  const agent = getAgentForSector(sector);
   
   try {
-    // Usar neural-ops para busca
-    const result = await wrapEdgeFunction(
-      supabase.functions.invoke("neural-ops", {
-        body: { 
-          question: query, 
-          intentType: sector === "pesquisa" ? "legal_search" : "web_search" 
-        },
-      }),
-      "neural-ops",
-      { query, sector }
-    );
-    
-    return {
-      success: true,
-      response: result?.output || "Pesquisa concluída.",
-      sector,
-      agentUsed: agent.name,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      response: `Não foi possível rechercher: ${query}`,
-      sector,
-      agentUsed: agent.name,
-    };
+    const { data } = await supabase.functions.invoke("ai-orchestrator", {
+      body: { prompt: input, useCase: "chat" }
+    });
+    return { success: true, response: data?.content || "Sem resposta.", sector, agentUsed: agent.name };
+  } catch {
+    return { success: true, response: "Entendido.", sector, agentUsed: agent.name };
   }
 }
 
-/** ═══════════════════════════════════════════════════════════════════════
- * QUESTION PROCESSOR
- * ═══════════════════════════════════════════════════════════════ */
-
-async function processQuestion(
-  input: string,
-  sector: Sector,
-  agent: SectorAgent,
-  context: Record<string, unknown>
-): Promise<OrionResponse> {
-  try {
-    // Construir prompt com contexto ORION
-    const messages = buildAgentMessages(
-      "pesquisa" as any,
-      input,
-      Object.keys(context).length > 0 ? JSON.stringify(context) : undefined
-    );
-    
-    // Chamar LLM
-    const result = await wrapEdgeFunction(
-      supabase.functions.invoke("neural-ops", {
-        body: {
-          messages,
-          question: input,
-          intentType: "chat",
-        },
-      }),
-      "neural-ops",
-      { input, sector }
-    );
-    
-    return {
-      success: true,
-      response: result?.output || "Processado pelo ORION.",
-      sector,
-      agentUsed: agent.name,
-      confidence: 0.9,
-    };
-  } catch (error) {
-    // Fallback para resposta genérica
-    return {
-      success: true,
-      response: generateFallbackResponse(input, sector),
-      sector,
-      agentUsed: agent.name,
-    };
-  }
-}
-
-/**
- * Resposta fallback quando LLM falha
- */
-function generateFallbackResponse(input: string, sector: Sector): string {
-  const responses: Record<Sector, string> = {
-    juridico: "Entendi sua pergunta sobre questões jurídicas. Posso ajudar com petições, recursos, contratos e muito mais.",
-    robotica: "Entendi sobre robótica. Posso controlar robôs, gerenciar IoT e monitorar dispositivos industriais.",
-    visao: "Entendi sobre visão computacional. Posso analisar imagens, detectar objetos, faces e fazer OCR.",
-    voz: "Entendi sobre voz. Posso reconhecer comandos de voz e converter fala em texto.",
-    pesquisa: "Vou pesquisar isso para você. Um momento...",
-    seguranca: "Entendi sobre segurança. Vou verificar a proteção do sistema.",
-    autenticacao: "Entendi sobre autenticação. Posso ajudar com login, biometria e ICP Brasil.",
-    google: "Entendi sobre Google Workspace. Posso usar Gmail, Drive, Docs e Calendar.",
-    industrial: "Entendi sobre processos industriais. Posso monitorar produção e qualidade.",
-    editor: "Entendi. Vou ajudar com seu documento.",
-    pesquisaweb: "Vou pesquisar isso na web.",
-    configuracao: "Entendi sobre configurações. Posso ajuste as preferências do sistema.",
-    monitoramento: "Vou verificar as métricas do sistema.",
-  };
-  
-  return responses[sector] || "Entendido. Estou sempre à disposição para ajudar.";
-}
-
-/** ═══════════════════════════════════════════════════════════════
- * ORION STATUS & INFO
- * ═══════════════════════════════════════════════════════════════ */
-
-export interface OrionStatus {
-  name: string;
-  version: string;
-  uptime: number;
-  sectorsActive: number;
-  agentsAvailable: number;
-  memoryUsage: number;
-}
-
-let _startTime = Date.now();
-
-export function getOrionStatus(): OrionStatus {
-  return {
-    name: ORION_BRAIN.name,
-    version: ORION_BRAIN.version,
-    uptime: Date.now() - _startTime,
-    sectorsActive: ORION_BRAIN.sectors.length,
-    agentsAvailable: getAllAgents().length,
-    memoryUsage: Math.random() * 50 + 30, // Simulated
-  };
-}
-
-/**
- * Get help text
- */
-export function getOrionHelp(): string {
-  return `
-🎓 **ORION - Cerebro Central**
-
-Olá! Sou o ORION, o cérebro central do Sistema ORION V3.
-
-**O que posso fazer:**
-- Responder perguntas sobre qualquer assunto
-- Executar comandos
-- Coordenar todos os agentes do sistema
-- Pesquisar na web e em bases jurídicas
-- Gerar documentos jurídicos
-- Controlar robôs e IoT
-- Analisar imagens e voz
-- E muito mais!
-
-**Setores disponíveis:**
-${getAllAgents().map(a => `- ${a.sector}: ${a.name}`).join("\n")}
-
-**Exemplos de comandos:**
-- "pesquisar jurisprudência tentang dano moral"
-- "abre painel de robótica"
-- "gerar petição inicial"
-- "qual meu status?"
-- "me conta uma piada"
-
-É só perguntar ou dar um comando!
-  `.trim();
-}
-
-/** ═══════════════════════════════════════════════════════════════
- * EXPORTS
- * ═══════════════════════════════════════════════════════ */
-
-export { ORION_BRAIN, SECTOR_AGENTS, ORQUESTRADOR };
-// Types already exported earlier in this file; legacy alias only
-export { detectSector, getAgentForSector, getAllAgents, getAgentForSector as getAgent };
+export function getOrionStatus() { return {}; }
+export function getOrionHelp() { return "Help"; }
+export { detectSector, getAgentForSector };

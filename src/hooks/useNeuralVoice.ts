@@ -324,6 +324,7 @@ function isEchoOf(input: string, spoken: string, cachedTokens?: Set<string>): bo
 // ═══ Interface ═══
 
 export interface UseNeuralVoiceReturn {
+  speakStream: (stream: ReadableStream) => Promise<void>;
   listening: boolean;
   noSpeechDetected: boolean;
   supported: boolean;
@@ -747,6 +748,21 @@ export function useNeuralVoice(
   }, []);
 
   // ═══ PRIMARY TTS — Gemini TTS → Web Speech fallback ═══
+  const speakStream = useCallback(async (stream: ReadableStream) => {
+    if (!ttsRef.current) return;
+    speakingRef.current = true;
+    updateAiResponding(true);
+    const abort = new AbortController();
+    abortControllerRef.current = abort;
+    try {
+      const { streamOrionSpeech } = await import("@/lib/tts/geminiTTS");
+      await streamOrionSpeech(stream, "Enceladus", abort.signal);
+    } finally {
+      speakingRef.current = false;
+      updateAiResponding(false);
+    }
+  }, [updateAiResponding]);
+
   const speak = useCallback(async (text: string, options?: { skipMicToggle?: boolean }) => {
     console.log("[Voice] speak() called:", text.slice(0, 80), "ttsOn:", ttsRef.current);
     if (!ttsRef.current || typeof window === "undefined") {
@@ -1085,6 +1101,7 @@ export function useNeuralVoice(
   }, [clearRestartTimer]);
 
   return {
+    speakStream,
     listening, supported, ttsOn, setTtsOn,
     noSpeechDetected,
     speak, speakFast, startListening, stop,

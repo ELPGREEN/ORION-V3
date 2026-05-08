@@ -13,6 +13,8 @@ const OrionOrchestratorWidget = lazy(() => import("@/components/dashboard/OrionO
 
 export default function ProprietarioDashboard() {
   const navigate = useNavigate();
+const OrionRealTimeTester = lazy(() => import("@/components/dashboard/neural/OrionRealTimeTester").then(m => ({ default: m.OrionRealTimeTester })));
+const OrionDiagnostics = lazy(() => import("@/components/dashboard/neural/OrionDiagnostics").then(m => ({ default: m.OrionDiagnostics })));
   const { user } = useAuth();
   const userName = user?.user_metadata?.nome || user?.email?.split("@")[0] || "Proprietário";
 

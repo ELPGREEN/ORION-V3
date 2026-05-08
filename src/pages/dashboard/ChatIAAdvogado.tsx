@@ -36,6 +36,7 @@ export default function ChatIAAdvogado() {
   const [loading, setLoading] = useState(false);
   const [activeSources, setActiveSources] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [autoSpeak, setAutoSpeak] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const {
@@ -111,8 +112,12 @@ export default function ChatIAAdvogado() {
       const contentType = response.headers.get("content-type") || "";
 
       if (contentType.includes("text/event-stream") && response.body) {
+        const [s1, s2] = response.body.tee();
+        if (autoSpeak) {
+           import("@/lib/tts/geminiTTS").then(m => m.streamOrionSpeech(s2 as any, "Enceladus", new AbortController().signal));
+        }
         // ── STREAMING ──
-        const reader = response.body.getReader();
+        const reader = s1.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
         let streamedContent = "";
@@ -121,7 +126,8 @@ export default function ChatIAAdvogado() {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          buffer += decoder.decode(value, { stream: true });
+          const chunk = decoder.decode(value, { stream: true });
+buffer += chunk;
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
 

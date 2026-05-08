@@ -35,12 +35,41 @@ export default function OrionComandoTotal() {
     setLoading(action);
     setAiResponse(null);
     try {
-      const { data, error } = await supabase.functions.invoke("orion-produtor-ai", {
-        body: { action, context: `User: ${user.email}, Timestamp: ${new Date().toISOString()}` },
+      // ⚡ New High-Speed Streaming Path
+      const { data: stream } = await supabase.functions.invoke("ai-orchestrator", {
+        body: { prompt: `Execute ${action} and provide summary.`, stream: true, useCase: "chat" }
       });
-      if (error) throw error;
-      setAiResponse(data?.result || "Sem resposta.");
-      toast.success(`${label} concluído`);
+
+      if (stream) {
+        const { streamOrionSpeech } = await import("@/lib/tts/geminiTTS");
+        const abort = new AbortController();
+        const [s1, s2] = stream.tee();
+
+        (async () => {
+          const reader = s1.getReader();
+          const decoder = new TextDecoder();
+          let full = "";
+          while(true) {
+            const {done, value} = await reader.read();
+            if(done) break;
+            const lines = decoder.decode(value).split("\n");
+            for(const line of lines) {
+              if(line.startsWith("data: ")) {
+                try {
+                   const parsed = JSON.parse(line.slice(6));
+                   if(parsed.type === "token") {
+                     full += parsed.content;
+                     setAiResponse(full);
+                   }
+                } catch{}
+              }
+            }
+          }
+        })();
+
+        await streamOrionSpeech(s2 as any, "Enceladus", abort.signal);
+      }
+      toast.success(`${label} em execução`);
     } catch (e: any) {
       toast.error(e.message || "Erro ao executar ação");
     } finally {
@@ -56,11 +85,6 @@ export default function OrionComandoTotal() {
 
   return (
     <Card className="border-[hsl(30,85%,52%,0.2)] bg-gradient-to-br from-card to-[hsl(30,85%,52%,0.04)] overflow-hidden relative">
-      {/* Industrial grid overlay */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: "linear-gradient(hsl(30,85%,52%,0.02) 1px, transparent 1px), linear-gradient(90deg, hsl(30,85%,52%,0.02) 1px, transparent 1px)",
-        backgroundSize: "30px 30px",
-      }} />
       <CardHeader className="pb-3 relative z-10">
         <CardTitle className="flex items-center justify-between text-lg font-serif">
           <div className="flex items-center gap-2">
@@ -74,10 +98,9 @@ export default function OrionComandoTotal() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 relative z-10">
-        {/* Subsystems Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {subsystems.map((s) => (
-            <div key={s.name} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-[hsl(220,20%,6%)] border border-[hsl(30,85%,52%,0.1)] hover:border-[hsl(30,85%,52%,0.25)] transition-colors">
+            <div key={s.name} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-[hsl(220,20%,6%)] border border-[hsl(30,85%,52%,0.1)] transition-colors">
               <s.icon className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-mono font-medium truncate text-foreground">{s.name}</p>
@@ -88,44 +111,30 @@ export default function OrionComandoTotal() {
           ))}
         </div>
 
-        {/* ROS2 Toggle */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(220,20%,6%)] border border-[hsl(30,85%,52%,0.1)]">
-          <div className="flex items-center gap-2">
-            <Bot className="h-4 w-4 text-[hsl(30,85%,52%)]" />
-            <div>
-              <p className="text-sm font-medium font-mono">Automação Robótica via Orion</p>
-              <p className="text-[10px] text-muted-foreground">Habilitar comandos ROS2 pelo Orion IA</p>
-            </div>
+        {aiResponse && (
+          <div className="p-4 rounded-lg bg-black/60 border border-primary/30 animate-in fade-in slide-in-from-top-2">
+            <p className="text-xs font-mono text-primary mb-1 uppercase tracking-tighter flex items-center gap-2">
+              <Zap className="h-3 w-3" /> Resposta em Tempo Real:
+            </p>
+            <p className="text-sm leading-relaxed text-foreground">{aiResponse}</p>
           </div>
-          <Switch checked={rosEnabled} onCheckedChange={setRosEnabled} />
-        </div>
+        )}
 
-        {/* Owner Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {ownerActions.map((a) => (
+        <div className="grid grid-cols-3 gap-2">
+          {ownerActions.map((act) => (
             <Button
-              key={a.action}
+              key={act.action}
               variant="outline"
               size="sm"
-              className="justify-start gap-2 h-auto py-2.5 border-[hsl(30,85%,52%,0.15)] hover:border-[hsl(30,85%,52%,0.4)] hover:bg-[hsl(30,85%,52%,0.05)]"
               disabled={loading !== null}
-              onClick={() => callOwnerAction(a.action, a.label)}
+              className="flex-col h-auto py-3 gap-2 border-[hsl(30,85%,52%,0.15)] hover:bg-[hsl(30,85%,52%,0.05)]"
+              onClick={() => callOwnerAction(act.action, act.label)}
             >
-              {loading === a.action ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <a.icon className="h-3.5 w-3.5 text-[hsl(30,85%,52%)]" />}
-              <div className="text-left">
-                <p className="text-xs font-mono font-medium">{a.label}</p>
-                <p className="text-[10px] text-muted-foreground">{a.desc}</p>
-              </div>
+              {loading === act.action ? <Loader2 className="h-4 w-4 animate-spin" /> : <act.icon className="h-4 w-4 text-[hsl(30,85%,52%)]" />}
+              <span className="text-[10px] uppercase font-bold">{act.label}</span>
             </Button>
           ))}
         </div>
-
-        {/* AI Response */}
-        {aiResponse && (
-          <div className="p-3 rounded-lg bg-[hsl(220,20%,6%)] border border-[hsl(30,85%,52%,0.15)] max-h-48 overflow-y-auto">
-            <p className="text-xs font-mono whitespace-pre-wrap text-foreground/80">{aiResponse}</p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
