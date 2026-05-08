@@ -177,7 +177,7 @@ export async function pdfToHtml(
 }
 
 /**
- * analyzeDocument — Roteia via Edge Function autenticada (pdf-vision-local)
+ * analyzeDocument — Roteia via Edge Function autenticada (pdf-layout-analysis)
  * com fallback direto ao HF Space se a Edge Function falhar.
  */
 export async function analyzeDocument(
@@ -196,7 +196,7 @@ export async function analyzeDocument(
   // Tentar via Edge Function autenticada
   try {
     const { supabase } = await import("@/integrations/supabase/client");
-    const { data, error } = await supabase.functions.invoke("pdf-vision-local", {
+    const { data, error } = await supabase.functions.invoke("pdf-layout-analysis", {
       body: { pdfBase64, mode },
     });
 

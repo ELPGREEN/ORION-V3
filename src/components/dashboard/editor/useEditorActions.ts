@@ -651,7 +651,7 @@ export function useEditorActions(params: UseEditorActionsParams) {
       });
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
-      const { data, error } = await supabase.functions.invoke("pdf-vision-local", {
+      const { data, error } = await supabase.functions.invoke("pdf-layout-analysis", {
         body: { pdfBase64: base64, mode: "html" },
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });

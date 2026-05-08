@@ -38,6 +38,16 @@ const PROVIDER_ENDPOINTS: Record<string, string> = {
 
 const OPENROUTER_CASCADE = toCascadeFormat(OPENROUTER_FREE_MODELS);
 
+export const FREE_MODELS: Record<string, string[]> = {
+  openrouter: OPENROUTER_FREE_MODELS.map(m => m.id),
+  google: ["gemini-2.0-flash-exp", "gemini-1.5-flash"],
+  groq: ["llama-3.3-70b-versatile", "mixtral-8x7b-32768"],
+  deepseek: ["deepseek-chat", "deepseek-reasoner"],
+  mistral: ["mistral-small-latest"],
+  anthropic: ["claude-3-haiku-20240307"],
+  openai: ["gpt-4o-mini"],
+};
+
 export async function chatWithCascade(
   messages: Array<{ role: string; content: string }>,
   cascade: Array<{ provider: LLMProvider; model: string }> = OPENROUTER_CASCADE,
@@ -82,6 +92,18 @@ export async function chatWithCascade(
 export class OrionLLMClient {
   constructor(private config: LLMConfig) {}
   setApiKey(key: string) { this.config.apiKey = key; }
+
+  static getProviders(): LLMProvider[] {
+    return ["openai", "anthropic", "google", "deepseek", "groq", "mistral", "openrouter", "gemini"] as LLMProvider[];
+  }
+
+  static getFreeModels(provider: string): string[] {
+    return FREE_MODELS[provider] || [];
+  }
+
+  static hasFreeTier(provider: string): boolean {
+    return !!FREE_MODELS[provider] && FREE_MODELS[provider].length > 0;
+  }
 
   async chat(messages: any[], options: { stream?: boolean } = {}): Promise<LLMResponse> {
     const endpoint = PROVIDER_ENDPOINTS[this.config.provider] || PROVIDER_ENDPOINTS.openrouter;

@@ -4953,7 +4953,7 @@ VOZ / TTS (8):
   orion-fast-whisper-stt
 
 VISAO (4):
-  orion-fast-vision-hybrid, yolov8-inspect, pdf-vision-local, face-auth
+  orion-fast-vision-hybrid, yolov8-inspect, pdf-layout-analysis, face-auth
 
 RAG / INGESTAO (5):
   generate-embeddings, kb-ingest, smart-ingest, neural-knowledge-harvester,

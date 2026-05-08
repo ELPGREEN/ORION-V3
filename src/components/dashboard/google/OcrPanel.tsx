@@ -38,7 +38,7 @@ export function OcrPanel() {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
       // A quick probe — if the function returns 503 (not configured), it's unavailable
-      const response = await supabase.functions.invoke("pdf-vision-local", {
+      const response = await supabase.functions.invoke("pdf-layout-analysis", {
         body: { pdfBase64: "dGVzdA==", mode: "analyze" },
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
@@ -132,11 +132,11 @@ export function OcrPanel() {
           console.warn("[OcrPanel] Gradio fallback to Edge Function:", gradioErr);
           // Fallback: Edge Function
           const [analyzeRes, markdownRes] = await Promise.all([
-            supabase.functions.invoke("pdf-vision-local", {
+            supabase.functions.invoke("pdf-layout-analysis", {
               body: { pdfBase64: base64, mode: "analyze" },
               headers: token ? { Authorization: `Bearer ${token}` } : undefined,
             }),
-            supabase.functions.invoke("pdf-vision-local", {
+            supabase.functions.invoke("pdf-layout-analysis", {
               body: { pdfBase64: base64, mode: "markdown" },
               headers: token ? { Authorization: `Bearer ${token}` } : undefined,
             }),
