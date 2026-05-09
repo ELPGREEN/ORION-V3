@@ -13,9 +13,10 @@ export interface ClassifiedIntent {
 // ─── Local Cache (TTL 5min) ───
 const _cache = new Map<string, { result: ClassifiedIntent; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
+const EXTRA_SPACES_REGEX = /\s+/g;
 
 function normalizeForCache(text: string): string {
-  return text.toLowerCase().trim().replace(/\s+/g, " ");
+  return text.toLowerCase().trim().replace(EXTRA_SPACES_REGEX, " ");
 }
 
 function getCached(text: string): ClassifiedIntent | null {

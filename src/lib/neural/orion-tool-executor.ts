@@ -106,11 +106,19 @@ const R_PROD: AppRole[] = ["produtor"];
 const R_PROD_AFIL: AppRole[] = ["produtor", "afiliado"];
 
 // Helper to extract patterns
-const extractCEP = (q: string) => q.match(/\d{5}-?\d{3}/)?.[0] || "";
-const extractCNPJ = (q: string) => q.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/)?.[0] || q.match(/\d{14}/)?.[0] || "";
-const extractDate = (q: string) => q.match(/\d{4}-\d{2}-\d{2}/)?.[0] || q.match(/(\d{2})\/(\d{2})\/(\d{4})/)?.slice(1).reverse().join("-") || "";
-const extractNumber = (q: string) => parseInt(q.match(/\d+/)?.[0] || "0", 10);
-const normalizeText = (q: string) => q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const CEP_REGEX = /\d{5}-?\d{3}/;
+const CNPJ_REGEX = /\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/;
+const CNPJ_SHORT_REGEX = /\d{14}/;
+const DATE_ISO_REGEX = /\d{4}-\d{2}-\d{2}/;
+const DATE_BR_REGEX = /(\d{2})\/(\d{2})\/(\d{4})/;
+const NUMBER_REGEX = /\d+/;
+const DIACRITICS_REGEX = /[\u0300-\u036f]/g;
+
+const extractCEP = (q: string) => q.match(CEP_REGEX)?.[0] || "";
+const extractCNPJ = (q: string) => q.match(CNPJ_REGEX)?.[0] || q.match(CNPJ_SHORT_REGEX)?.[0] || "";
+const extractDate = (q: string) => q.match(DATE_ISO_REGEX)?.[0] || q.match(DATE_BR_REGEX)?.slice(1).reverse().join("-") || "";
+const extractNumber = (q: string) => parseInt(q.match(NUMBER_REGEX)?.[0] || "0", 10);
+const normalizeText = (q: string) => q.toLowerCase().normalize("NFD").replace(DIACRITICS_REGEX, "");
 
 function parseScheduleDateTime(text: string): { start: Date; end: Date } {
   const normalized = normalizeText(text);

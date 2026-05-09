@@ -116,16 +116,16 @@ const SENTIMENT_MARKERS: Record<SentimentResult["primary"], RegExp[]> = {
 };
 
 const DOMAIN_PATTERNS: Record<string, RegExp> = {
-  civil: /\b(contrato|obriga[çc]|responsabilidade\s+civil|dano|indeni|penhora|execu[çc]|cobran[çc]|consumidor|CDC|locação|despejo)\b/i,
-  penal: /\b(crime|delito|pena|prisão|condenação|absolvição|inquérito|denúncia|furto|roubo|homicídio|lesão\s+corporal|tráfico|fraude|estelionato)\b/i,
-  trabalhista: /\b(CLT|trabalhist|empregad|salário|hora\s+extra|rescisão|FGTS|férias|13[°º]|aviso\s+prévio|justa\s+causa|insalubridade|periculosidade)\b/i,
-  tributario: /\b(tribut|imposto|ICMS|ISS|IRPF|IRPJ|contribui[çc]|fiscal|alíquota|isenção|imunidade|ITBI|IPTU|base\s+de\s+cálculo)\b/i,
-  constitucional: /\b(constitui[çc]|fundamental|CF\/88|habeas|mandado\s+de\s+segurança|ADPF|ADI|ADC|controle\s+de\s+constitucionalidade|cláusula\s+pétrea)\b/i,
-  administrativo: /\b(licitação|concurso\s+público|servidor|improbidade|pregão|edital|administra[çc]ão\s+pública|ato\s+administrativo|PAD)\b/i,
-  familia: /\b(divórcio|guarda|pensão\s+aliment|alimentos|inventário|partilha|casamento|união\s+estável|adoção|tutela|curatela)\b/i,
-  digital: /\b(LGPD|dados\s+pessoais|privacidade|Marco\s+Civil|internet|digital|cibernético|hacker|proteção\s+de\s+dados)\b/i,
-  ambiental: /\b(ambiental|meio\s+ambiente|poluição|desmatamento|licenciamento|IBAMA|fauna|flora|sustentabilidade)\b/i,
-  previdenciario: /\b(previdência|INSS|aposentadoria|benefício|auxílio|pensão\s+por\s+morte|BPC|LOAS|incapacidade)\b/i,
+  civil: /\b(contrato|obriga[çc]|responsabilidade\s+civil|dano|indeni|penhora|execu[çc]|cobran[çc]|consumidor|CDC|locação|despejo)\b/gi,
+  penal: /\b(crime|delito|pena|prisão|condenação|absolvição|inquérito|denúncia|furto|roubo|homicídio|lesão\s+corporal|tráfico|fraude|estelionato)\b/gi,
+  trabalhista: /\b(CLT|trabalhist|empregad|salário|hora\s+extra|rescisão|FGTS|férias|13[°º]|aviso\s+prévio|justa\s+causa|insalubridade|periculosidade)\b/gi,
+  tributario: /\b(tribut|imposto|ICMS|ISS|IRPF|IRPJ|contribui[çc]|fiscal|alíquota|isenção|imunidade|ITBI|IPTU|base\s+de\s+cálculo)\b/gi,
+  constitucional: /\b(constitui[çc]|fundamental|CF\/88|habeas|mandado\s+de\s+segurança|ADPF|ADI|ADC|controle\s+de\s+constitucionalidade|cláusula\s+pétrea)\b/gi,
+  administrativo: /\b(licitação|concurso\s+público|servidor|improbidade|pregão|edital|administra[çc]ão\s+pública|ato\s+administrativo|PAD)\b/gi,
+  familia: /\b(divórcio|guarda|pensão\s+aliment|alimentos|inventário|partilha|casamento|união\s+estável|adoção|tutela|curatela)\b/gi,
+  digital: /\b(LGPD|dados\s+pessoais|privacidade|Marco\s+Civil|internet|digital|cibernético|hacker|proteção\s+de\s+dados)\b/gi,
+  ambiental: /\b(ambiental|meio\s+ambiente|poluição|desmatamento|licenciamento|IBAMA|fauna|flora|sustentabilidade)\b/gi,
+  previdenciario: /\b(previdência|INSS|aposentadoria|benefício|auxílio|pensão\s+por\s+morte|BPC|LOAS|incapacidade)\b/gi,
 };
 
 const DISCOURSE_DEFINITION_REGEX = /^(?:o\s+que\s+[eé]|defin[ai]|conceit[ou]|signific)/i;
@@ -141,6 +141,7 @@ const COREFERENCE_TOPIC_REGEX = /\b(?:artigo|lei|decreto|contrato|processo|caso)
 const COREFERENCE_PRONOUN_REGEX = /\b(isso|isto|aquilo|o\s+mesmo|a\s+mesma|ele|ela|esse|essa|desse|dessa|nesse|nessa)\b/gi;
 
 const COMPLEXITY_CLAUSE_REGEX = /\b(?:e|ou|mas|porém|contudo|entretanto|todavia)\b/gi;
+const WHITESPACE_REGEX = /\s/;
 
 // ─── Legal Entity Extraction ───
 
@@ -205,12 +206,19 @@ export function classifyLegalDomain(text: string): string {
 
   for (const [domain, pattern] of Object.entries(DOMAIN_PATTERNS)) {
     // BOLT V2.0 optimization: individual .test() pre-check
-    if (!pattern.test(text)) continue;
+    // Reset lastIndex BEFORE testing
     pattern.lastIndex = 0;
+    if (!pattern.test(text)) continue;
 
-    const matches = (text.match(pattern) || []).length;
-    if (matches > bestScore) {
-      bestScore = matches;
+    // Reset lastIndex BEFORE counting
+    pattern.lastIndex = 0;
+    let count = 0;
+    while (pattern.test(text)) {
+      count++;
+    }
+
+    if (count > bestScore) {
+      bestScore = count;
       bestDomain = domain;
     }
   }
@@ -262,7 +270,7 @@ function assessComplexity(text: string, entities: LegalEntity[]): "simple" | "me
   let wordCount = 0;
   let inWord = false;
   for (let i = 0; i < text.length; i++) {
-    if (/\s/.test(text[i])) {
+    if (WHITESPACE_REGEX.test(text[i])) {
       inWord = false;
     } else if (!inWord) {
       wordCount++;
