@@ -83,8 +83,8 @@ const MAX_SESSIONS_PER_HOUR = 3;
 
 // ─── Branch Validation ───
 
-const GITHUB_REPO_OWNER = "ELPGREEN";
-const GITHUB_REPO_NAME = "ORION-V3";
+const GITHUB_REPO_OWNER = import.meta.env.VITE_GITHUB_OWNER || "ELPGREEN";
+const GITHUB_REPO_NAME = import.meta.env.VITE_GITHUB_REPO || "orion-v4-3ad4af9d";
 
 /**
  * Verifies if a branch exists on the GitHub remote.
@@ -240,7 +240,7 @@ export async function julesFollowUp(
 
 // ─── Orion Self-Improvement Interface ───
 
-const DEFAULT_SOURCE = "sources/github/ELPGREEN/ORION-V3";
+const DEFAULT_SOURCE = `sources/github/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`;
 
 export async function orionSelfImprove(opts: {
   task: string;

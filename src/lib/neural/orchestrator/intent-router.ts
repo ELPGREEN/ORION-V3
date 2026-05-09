@@ -1,5 +1,5 @@
 /**
- * Orion-V3 Intent Router
+ * Orion Intent Router
  * Classifies a natural-language command into one or more agents.
  *
  * Two-stage routing:

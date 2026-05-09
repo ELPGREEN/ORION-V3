@@ -1,6 +1,6 @@
 /**
  * Sensorial Gate — Bridge between voice (STT) and vision (MCP/Gemini)
- * for the Orion-V3 orchestrator.
+ * for the Orion orchestrator.
  *
  * Responsibilities:
  *  1. SILENCE FILTER: kill the "talking-to-the-void" loop. If there is no

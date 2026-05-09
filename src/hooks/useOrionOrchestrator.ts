@@ -1,5 +1,5 @@
 /**
- * useOrionOrchestrator — React hook to drive the Orion-V3 agent kernel
+ * useOrionOrchestrator — React hook to drive the Orion agent kernel
  * from voice or text. Compatible with the existing always-on STT engine.
  */
 
@@ -8,7 +8,7 @@ import {
   orchestrate,
   type OrchestrationRequest,
   type OrchestrationResponse,
-} from "@/lib/neural/orchestrator/orion-v3-orchestrator";
+} from "@/lib/neural/orchestrator/orion-orchestrator";
 
 export interface UseOrionOrchestratorState {
   isRunning: boolean;

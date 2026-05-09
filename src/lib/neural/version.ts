@@ -7,8 +7,8 @@
  *   3. Keep the PR title / changelog in sync.
  */
 
-export const ORION_VERSION = "v21.2" as const;
-export const HUD_VERSION = "v8.0" as const;
+export const ORION_VERSION = "v25.0" as const;
+export const HUD_VERSION = "v10.1" as const;
 
 /** "ORION v21.2 • HUD v8.0 • CLEARANCE L5" */
 export const ORION_HUD_CLEARANCE_LABEL =

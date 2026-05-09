@@ -30,7 +30,7 @@ export async function orionBrain(request: OrionRequest): Promise<OrionResponse> 
   if (stream) {
     const { callAIOrchestrator } = await import("@/lib/ai-orchestrator");
     const res = await callAIOrchestrator({ prompt: input, stream: true, useCase: "chat" });
-    if (res instanceof ReadableStream) return { success: true, response: "", stream: res, agentUsed: "orion-v3-stream" };
+    if (res instanceof ReadableStream) return { success: true, response: "", stream: res, agentUsed: "orion-v4-stream" };
   }
 
   try {

@@ -38,13 +38,13 @@ describe("JarvisHUD version contract", () => {
     expect(body).not.toMatch(/HUD v\d+\.\d+/);
   });
 
-  it("constants match the PR contract: ORION v21.2 + HUD v8.0", () => {
-    expect(ORION_VERSION).toBe("v21.2");
-    expect(HUD_VERSION).toBe("v8.0");
+  it("constants match the PR contract: ORION v25.0 + HUD v10.1", () => {
+    expect(ORION_VERSION).toBe("v25.0");
+    expect(HUD_VERSION).toBe("v10.1");
     expect(ORION_HUD_CLEARANCE_LABEL).toBe(
-      "ORION v21.2 • HUD v8.0 • CLEARANCE L5",
+      "ORION v25.0 • HUD v10.1 • CLEARANCE L5",
     );
-    expect(ORION_HUD_COMPACT_LABEL).toBe("v21.2 · HUD v8.0");
+    expect(ORION_HUD_COMPACT_LABEL).toBe("v25.0 · HUD v10.1");
   });
 
   it("has no stale v22.x markers anywhere in the file", () => {

@@ -1,5 +1,5 @@
 /**
- * Orion V3 - Anti-Hallucination Optimizer
+ * Orion - Anti-Hallucination Optimizer
  * 
  * Proposta de otimização para reduzir alucinações:
  * 

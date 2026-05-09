@@ -1,5 +1,5 @@
 /**
- * Orion-V3 Agent Registry
+ * Orion Agent Registry
  * Defines the three core sub-agents and their capabilities.
  * Each agent has a clear domain — the orchestrator routes to exactly one
  * (or sequences multiple) based on intent classification.

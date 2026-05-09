@@ -1,5 +1,5 @@
 /**
- * Orion-V3 Master Orchestrator
+ * Orion Master Orchestrator
  * The "agent kernel" — receives a command (text or voice transcript),
  * routes it to the right sub-agent(s), and returns a unified response.
  */

@@ -5,7 +5,7 @@
  * Stores divergences in sessionStorage for the next turn to incorporate.
  */
 
-import type { AgentResult } from "./orion-v3-orchestrator";
+import type { AgentResult } from "./orion-orchestrator";
 
 const CRITICAL_KEYWORDS = [
   "deploy", "migration", "produc", "production", "production",

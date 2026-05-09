@@ -3,7 +3,7 @@
  * Used to offload heavy logic from Supabase Edge Functions to save Egress.
  */
 
-export const RENDER_BACKEND_URL = "https://orion-v3.onrender.com";
+export const RENDER_BACKEND_URL = import.meta.env.VITE_RENDER_BACKEND_URL || "https://orion-v3.onrender.com";
 
 export const isRenderAvailable = async () => {
   try {
