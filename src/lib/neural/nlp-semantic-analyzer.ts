@@ -91,41 +91,41 @@ const ENTITY_PATTERNS: Array<{ type: LegalEntity["type"]; regex: RegExp; normali
 
 const SENTIMENT_MARKERS: Record<SentimentResult["primary"], RegExp[]> = {
   frustration: [
-    /\b(não\s+funciona|não\s+consigo|impossível|absurdo|ridículo|péssimo|horrível|inaceitável|frustrad)\b/i,
+    /\b(?:não\s+funciona|não\s+consigo|impossível|absurdo|ridículo|péssimo|horrível|inaceitável|frustrad)\b/i,
     /[!]{2,}|\?{2,}/,
   ],
   urgency: [
-    /\b(urgente|urgência|imediato|agora|rápido|prazo|amanhã|hoje|emergência|socorro|help)\b/i,
-    /\b(preciso\s+urgente|por\s+favor\s+rápido)\b/i,
+    /\b(?:urgente|urgência|imediato|agora|rápido|prazo|amanhã|hoje|emergência|socorro|help)\b/i,
+    /\b(?:preciso\s+urgente|por\s+favor\s+rápido)\b/i,
   ],
   doubt: [
-    /\b(será\s+que|não\s+sei|dúvida|incert|talvez|possivelmente|pode\s+ser|acho\s+que)\b/i,
+    /\b(?:será\s+que|não\s+sei|dúvida|incert|talvez|possivelmente|pode\s+ser|acho\s+que)\b/i,
     /\?\s*$/,
   ],
   assertive: [
-    /\b(quero|preciso|necessito|exijo|demando|faça|execute|implemente|crie|gere)\b/i,
-    /\b(obrigatoriamente|necessariamente|impreterivelmente)\b/i,
+    /\b(?:quero|preciso|necessito|exijo|demando|faça|execute|implemente|crie|gere)\b/i,
+    /\b(?:obrigatoriamente|necessariamente|impreterivelmente)\b/i,
   ],
   gratitude: [
-    /\b(obrigad[oa]|valeu|agradeço|gratidão|parabéns|excelente|ótimo|perfeito|maravilh)\b/i,
+    /\b(?:obrigad[oa]|valeu|agradeço|gratidão|parabéns|excelente|ótimo|perfeito|maravilh)\b/i,
   ],
   confusion: [
-    /\b(não\s+entendi|confus|perdid|como\s+assim|o\s+que\s+significa|explique\s+melhor|não\s+compreendi)\b/i,
+    /\b(?:não\s+entendi|confus|perdid|como\s+assim|o\s+que\s+significa|explique\s+melhor|não\s+compreendi)\b/i,
   ],
   neutral: [],
 };
 
 const DOMAIN_PATTERNS: Record<string, RegExp> = {
-  civil: /\b(contrato|obriga[çc]|responsabilidade\s+civil|dano|indeni|penhora|execu[çc]|cobran[çc]|consumidor|CDC|locação|despejo)\b/i,
-  penal: /\b(crime|delito|pena|prisão|condenação|absolvição|inquérito|denúncia|furto|roubo|homicídio|lesão\s+corporal|tráfico|fraude|estelionato)\b/i,
-  trabalhista: /\b(CLT|trabalhist|empregad|salário|hora\s+extra|rescisão|FGTS|férias|13[°º]|aviso\s+prévio|justa\s+causa|insalubridade|periculosidade)\b/i,
-  tributario: /\b(tribut|imposto|ICMS|ISS|IRPF|IRPJ|contribui[çc]|fiscal|alíquota|isenção|imunidade|ITBI|IPTU|base\s+de\s+cálculo)\b/i,
-  constitucional: /\b(constitui[çc]|fundamental|CF\/88|habeas|mandado\s+de\s+segurança|ADPF|ADI|ADC|controle\s+de\s+constitucionalidade|cláusula\s+pétrea)\b/i,
-  administrativo: /\b(licitação|concurso\s+público|servidor|improbidade|pregão|edital|administra[çc]ão\s+pública|ato\s+administrativo|PAD)\b/i,
-  familia: /\b(divórcio|guarda|pensão\s+aliment|alimentos|inventário|partilha|casamento|união\s+estável|adoção|tutela|curatela)\b/i,
-  digital: /\b(LGPD|dados\s+pessoais|privacidade|Marco\s+Civil|internet|digital|cibernético|hacker|proteção\s+de\s+dados)\b/i,
-  ambiental: /\b(ambiental|meio\s+ambiente|poluição|desmatamento|licenciamento|IBAMA|fauna|flora|sustentabilidade)\b/i,
-  previdenciario: /\b(previdência|INSS|aposentadoria|benefício|auxílio|pensão\s+por\s+morte|BPC|LOAS|incapacidade)\b/i,
+  civil: /\b(?:contrato|obriga[çc]|responsabilidade\s+civil|dano|indeni|penhora|execu[çc]|cobran[çc]|consumidor|CDC|locação|despejo)\b/gi,
+  penal: /\b(?:crime|delito|pena|prisão|condenação|absolvição|inquérito|denúncia|furto|roubo|homicídio|lesão\s+corporal|tráfico|fraude|estelionato)\b/gi,
+  trabalhista: /\b(?:CLT|trabalhist|empregad|salário|hora\s+extra|rescisão|FGTS|férias|13[°º]|aviso\s+prévio|justa\s+causa|insalubridade|periculosidade)\b/gi,
+  tributario: /\b(?:tribut|imposto|ICMS|ISS|IRPF|IRPJ|contribui[çc]|fiscal|alíquota|isenção|imunidade|ITBI|IPTU|base\s+de\s+cálculo)\b/gi,
+  constitucional: /\b(?:constitui[çc]|fundamental|CF\/88|habeas|mandado\s+de\s+segurança|ADPF|ADI|ADC|controle\s+de\s+constitucionalidade|cláusula\s+pétrea)\b/gi,
+  administrativo: /\b(?:licitação|concurso\s+público|servidor|improbidade|pregão|edital|administra[çc]ão\s+pública|ato\s+administrativo|PAD)\b/gi,
+  familia: /\b(?:divórcio|guarda|pensão\s+aliment|alimentos|inventário|partilha|casamento|união\s+estável|adoção|tutela|curatela)\b/gi,
+  digital: /\b(?:LGPD|dados\s+pessoais|privacidade|Marco\s+Civil|internet|digital|cibernético|hacker|proteção\s+de\s+dados)\b/gi,
+  ambiental: /\b(?:ambiental|meio\s+ambiente|poluição|desmatamento|licenciamento|IBAMA|fauna|flora|sustentabilidade)\b/gi,
+  previdenciario: /\b(?:previdência|INSS|aposentadoria|benefício|auxílio|pensão\s+por\s+morte|BPC|LOAS|incapacidade)\b/gi,
 };
 
 const DISCOURSE_DEFINITION_REGEX = /^(?:o\s+que\s+[eé]|defin[ai]|conceit[ou]|signific)/i;
@@ -174,14 +174,23 @@ function analyzeSentiment(text: string): SentimentResult {
     if (sentiment === "neutral") continue;
     let matchCount = 0;
     for (const pattern of patterns) {
-      // BOLT V2.0 optimization: individual .test() pre-check
+      // BOLT V2.0 optimization: .test() pre-check is faster for non-matches
       if (!pattern.test(text)) continue;
       pattern.lastIndex = 0;
 
-      const m = text.match(pattern);
+      // Optimization: Using exec() instead of match() to avoid array allocations.
+      // We only need the first match for indicators, then count others.
+      const m = pattern.exec(text);
       if (m) {
         matchCount++;
         indicators.push(m[0].slice(0, 20));
+
+        // If global, count remaining
+        if (pattern.global) {
+          while (pattern.exec(text) !== null) {
+            matchCount++;
+          }
+        }
       }
     }
     if (matchCount > bestScore) {
@@ -204,12 +213,17 @@ export function classifyLegalDomain(text: string): string {
   let bestDomain = "geral";
 
   for (const [domain, pattern] of Object.entries(DOMAIN_PATTERNS)) {
-    // BOLT V2.0 optimization: individual .test() pre-check
+    // BOLT V2.0 optimization: .test() pre-check is faster for non-matches
     if (!pattern.test(text)) continue;
     pattern.lastIndex = 0;
 
-    const matches = (text.match(pattern) || []).length;
-    if (matches > bestScore) {
+    // Optimization: Count matches using single-pass exec() loop to avoid large array allocations
+    let matches = 0;
+    while (pattern.exec(text) !== null) {
+      matches++;
+    }
+
+    if (matches > 0 && matches > bestScore) {
       bestScore = matches;
       bestDomain = domain;
     }

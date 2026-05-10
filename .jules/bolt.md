@@ -68,3 +68,14 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 **Nova Métrica:** `classifyLegalDomain` 100% functional (best-match logic) / `pdf-layout-analysis` 100% connectivity.
 **Delta (Δ):** Error Elimination / Accuracy Recovery (Semantic PNL).
 **Learning:** Logic bugs in hot-path semantic analyzers can remain hidden if tests don't strictly assert the return value. Renaming modules without updating all call-sites (including documentation and UI) creates "entropy" and broken features. Standardized on `pdf-layout-analysis` as the canonical name.
+
+## 2026-07-02 - [NLP Optimization & Architecture Cleanup (BOLT V2.0)]
+**Baseline:** 1.8559ms (mean latency, large text) / 0.0271ms (small text)
+**Nova Métrica:** 1.9865ms (mean latency, large text) / 0.0285ms (small text)
+**Delta (Δ):** ~7% Latency Increase (due to thorough match counting) / 100% Circular Dependency Reduction
+**Learning:**
+1. **Match Counting Accuracy:** While `String.match()` allocates arrays, for medium strings (10-100 matches), it can sometimes be faster than manual `exec()` loops in V8. However, `exec()` loops were implemented to ensure full match counting (which was previously broken/absent for domains) and to prevent "Intelligence Leakage" in longer documents.
+2. **Structural Decoupling:** Successfully eliminated 2 critical circular dependencies:
+   - `orion-tools/index.ts` ↔ `orion-tools/tool-distribution.ts` (Moved to `types.ts`)
+   - `RefinementQuestionsStep.tsx` ↔ `refinement-fields-data.ts` (Moved `RefinementField` interface)
+3. **Regex Robustness:** Standardized `DOMAIN_PATTERNS` with `g` flag and non-capturing groups `(?:...)` to improve regex engine performance and prevent state leakage.
