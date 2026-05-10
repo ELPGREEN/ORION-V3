@@ -39,6 +39,7 @@ export type SubsystemKey =
   | "design_responsive" | "design_accessibility" | "design_animation"
   // Security
   | "sec_rls" | "sec_xss" | "sec_injection" | "sec_auth_flow"
+  | "core_architecture"
   // Industrial Robotics
   | "industrial_welding" | "industrial_assembly" | "industrial_painting"
   | "industrial_inspection" | "industrial_palletization" | "industrial_adaptive_mfg"
@@ -216,6 +217,7 @@ const SUBSYSTEM_MAP: Record<string, { file: string; desc: string }> = {
   sec_xss: { file: "src/App.tsx", desc: "XSS vulnerability detected (inline handlers, exposed secrets)" },
   sec_injection: { file: "supabase/functions/", desc: "SQL injection or input validation vulnerability" },
   sec_auth_flow: { file: "src/hooks/useAuth.ts", desc: "Authentication security issue (token exposure, improper validation)" },
+  core_architecture: { file: "src/lib/neural/neural-flow-analyzer.ts", desc: "Missing neural flows or architectural gaps detected" },
   // Industrial Robotics
   industrial_welding: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Welding seam tracking or torch control is failing" },
   industrial_assembly: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Assembly/manipulation operations are failing" },
