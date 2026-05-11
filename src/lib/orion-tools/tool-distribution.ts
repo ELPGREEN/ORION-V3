@@ -4,53 +4,14 @@
  * Owner always bypasses all restrictions.
  */
 
-import type { ToolName } from "./index";
 import type { AppRole } from "@/hooks/useUserRole";
-
-export type PlanTier = "free" | "premium" | "pro" | "enterprise";
-
-export type ToolCategory =
-  | "chat"
-  | "voice"
-  | "vision"
-  | "browser"
-  | "editor"
-  | "legal"
-  | "robotics"
-  | "jules"
-  | "stripe"
-  | "memory"
-  | "analytics";
-
-/** Extended tool keys (beyond the base ToolName list) used by the distribution. */
-export type DistributableTool =
-  | ToolName
-  | "orion_chat"
-  | "orion_voice"
-  | "orion_memory"
-  | "browser_use"
-  | "browser_use_legal"
-  | "sales_editor"
-  | "legal_agents"
-  | "legal_rag"
-  | "robotics"
-  | "jules"
-  | "computer_use"
-  | "stripe_payments"
-  | "stripe_payouts"
-  | "analytics_dashboard"
-  | "spotify_integration"
-  | "youtube_integration"
-  | "firecrawl"
-  | "gemini_tts"
-  | "ocr_documents"
-  | "vision_products"
-  | "calendar"
-  | "translation"
-  | "currency_converter"
-  | "arc_abstract_reasoning"
-  | "arc_gateway"
-  | "arc_api_learner";
+import type {
+  ToolName,
+  DistributableTool,
+  PlanTier,
+  ToolCategory,
+  AllowResult
+} from "./types";
 
 export const TOOL_CATEGORIES: Record<DistributableTool, ToolCategory> = {
   // chat
@@ -264,12 +225,6 @@ export const ADMIN_OR_OWNER_TOOLS: DistributableTool[] = [
   "jules",
 ];
 
-export interface AllowResult {
-  allowed: boolean;
-  reason?: "owner_only" | "role_blocked" | "plan_required";
-  requiredPlan?: PlanTier;
-}
-
 /** Core check: is this tool allowed for the given role/plan/owner status? */
 export function checkToolAccess(
   tool: DistributableTool,
@@ -345,3 +300,5 @@ export function getCategoriesSummary(tools: DistributableTool[]): Record<ToolCat
   }
   return summary;
 }
+
+export type { DistributableTool, PlanTier };
