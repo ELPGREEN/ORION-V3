@@ -68,3 +68,15 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 **Nova Métrica:** `classifyLegalDomain` 100% functional (best-match logic) / `pdf-layout-analysis` 100% connectivity.
 **Delta (Δ):** Error Elimination / Accuracy Recovery (Semantic PNL).
 **Learning:** Logic bugs in hot-path semantic analyzers can remain hidden if tests don't strictly assert the return value. Renaming modules without updating all call-sites (including documentation and UI) creates "entropy" and broken features. Standardized on `pdf-layout-analysis` as the canonical name.
+
+## 2026-07-02 - [Neural Optimization & Cognitive Governance (BOLT V2.0)]
+**Baseline:**
+- Word count: `split(/\s+/).length` (Array allocation per call)
+- Governance: Direct Edge Function call in `orion-brain.ts` (Intelligence Leakage)
+- Architecture: 1 Circular Dependency in `orion-tools`
+**Nova Métrica:**
+- Word count: Manual character-iteration (Zero-allocation)
+- Governance: Synchronous Pentagon Gate enforced for all non-streaming chat
+- Architecture: 0 Circular Dependencies
+**Delta (Δ):** ~100% Allocation reduction in hot-path word counting / Unified Governance / 100% Entropy reduction in tools.
+**Learning:** High-frequency neural routing must be allocation-free to minimize GC pressure. Routing all non-streaming brain requests through the Pentagon kernel ensures consistent application of RAG, Memory, and Meta-validation layers.

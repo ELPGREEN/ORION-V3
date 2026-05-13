@@ -1,6 +1,7 @@
 import { SECTOR_AGENTS, detectSector, getAgentForSector } from "./sector-agents";
 import { buildAgentMessages } from "./super-prompts";
 import { supabase } from "@/integrations/supabase/client";
+import { getPentagonOrchestrator } from "@/core/pentagon";
 
 export interface OrionRequest {
   input: string;
@@ -16,6 +17,7 @@ export interface OrionResponse {
   sector?: any;
   agentUsed?: string;
   panel?: string;
+  metadata?: any;
 }
 
 export async function orionBrain(request: OrionRequest): Promise<OrionResponse> {
@@ -27,16 +29,35 @@ export async function orionBrain(request: OrionRequest): Promise<OrionResponse> 
     if (res instanceof ReadableStream) return { success: true, response: "", stream: res, agentUsed: "orion-v3-stream" };
   }
 
+  // BOLT V2.0: Enforce Cognitive Governance via Pentagon Orchestrator
+  // This prevents "Intelligence Leakage" by ensuring all cognitive layers are applied.
+  const orchestrator = getPentagonOrchestrator();
   const sector = detectSector(input);
-  const agent = getAgentForSector(sector);
   
   try {
-    const { data } = await supabase.functions.invoke("ai-orchestrator", {
-      body: { prompt: input, useCase: "chat" }
+    const result = await orchestrator.runCycleStructured(input, {
+      userId: request.userId,
+      sharedState: context,
     });
-    return { success: true, response: data?.content || "Sem resposta.", sector, agentUsed: agent.name };
-  } catch {
-    return { success: true, response: "Entendido.", sector, agentUsed: agent.name };
+
+    return {
+      success: result.success,
+      response: result.output || "Sem resposta.",
+      sector,
+      agentUsed: "pentagon-orchestrator",
+      metadata: result.metadata
+    };
+  } catch (err) {
+    console.warn("[OrionBrain] Pentagon Cycle failed, falling back to legacy:", err);
+    const agent = getAgentForSector(sector);
+    try {
+      const { data } = await supabase.functions.invoke("ai-orchestrator", {
+        body: { prompt: input, useCase: "chat" }
+      });
+      return { success: true, response: data?.content || "Entendido.", sector, agentUsed: agent.name };
+    } catch {
+      return { success: true, response: "Entendido.", sector, agentUsed: agent.name };
+    }
   }
 }
 

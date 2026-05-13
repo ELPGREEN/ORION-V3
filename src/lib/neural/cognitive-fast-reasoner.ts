@@ -134,7 +134,18 @@ export function classifyThinkingMode(query: string, tier: ModelTier): ThinkingMo
   if (FAST_INDICATORS_RE.test(query)) return "fast";
   if (DEEP_TRIGGERS_RE.test(query)) return "deep";
 
-  const wordCount = query.split(/\s+/).length;
+  // BOLT V2.0 optimization: manual word count to avoid array allocation from split()
+  let wordCount = 0;
+  let inWord = false;
+  for (let i = 0; i < query.length; i++) {
+    if (/\s/.test(query[i])) {
+      inWord = false;
+    } else if (!inWord) {
+      wordCount++;
+      inWord = true;
+    }
+  }
+
   if (wordCount <= 6) return "conversational";
 
   // Word count heuristic

@@ -136,20 +136,29 @@ const COMPLEX_PATTERNS_RE = /(?:compar[ea].*(?:com|entre|versus)|analis[ae].*(?:
  * Tokenize text with compact optimization for slim models.
  */
 export function slimTokenize(text: string): SlimTokenization {
-  const fullTokens = text.split(/\s+/).filter(Boolean);
-  
   const stopWords = new Set([
     "o", "a", "os", "as", "de", "do", "da", "dos", "das", "em", "no", "na",
     "nos", "nas", "por", "para", "com", "sem", "sob", "sobre", "que", "e",
     "ou", "mas", "se", "um", "uma", "uns", "umas", "ao", "aos", "à", "às",
   ]);
 
-  const compactTokens = fullTokens.filter((t) => !stopWords.has(t.toLowerCase()));
+  const fullTokens: string[] = [];
+  const compactTokens: string[] = [];
+  const keyTerms: string[] = [];
   
-  const keyTerms = compactTokens.filter((t) => {
-    const lower = t.toLowerCase();
-    return t.length > 4 || COMPLEX_LEGAL_TERMS.some((term) => lower.includes(term));
-  });
+  // BOLT V2.0: Single-pass tokenization and filtering
+  const words = text.split(/\s+/);
+  for (const w of words) {
+    if (!w) continue;
+    fullTokens.push(w);
+    const low = w.toLowerCase();
+    if (!stopWords.has(low)) {
+      compactTokens.push(w);
+      if (w.length > 4 || COMPLEX_LEGAL_TERMS.some(term => low.includes(term))) {
+        keyTerms.push(w);
+      }
+    }
+  }
 
   return {
     tokens: fullTokens,
@@ -164,8 +173,23 @@ export function slimTokenize(text: string): SlimTokenization {
  */
 export function classifyQueryComplexity(query: string): ComplexityAnalysis {
   const lower = query.toLowerCase();
-  const tokenization = slimTokenize(query);
-  const tokenCount = tokenization.tokens.length;
+
+  // BOLT V2.0 optimization: manual word count and length sum to avoid slimTokenize() allocation
+  let tokenCount = 0;
+  let totalWordLength = 0;
+  let inWord = false;
+  for (let i = 0; i < query.length; i++) {
+    if (/\s/.test(query[i])) {
+      inWord = false;
+    } else if (!inWord) {
+      tokenCount++;
+      inWord = true;
+      totalWordLength++;
+    } else {
+      totalWordLength++;
+    }
+  }
+
   const reasoning: string[] = [];
   let score = 0;
 
@@ -194,7 +218,7 @@ export function classifyQueryComplexity(query: string): ComplexityAnalysis {
     if (char === "." || char === "!" || char === "?") sentenceCount++;
   }
 
-  const avgWordLength = tokenization.tokens.reduce((s, t) => s + t.length, 0) / (tokenCount || 1);
+  const avgWordLength = totalWordLength / (tokenCount || 1);
   const languageComplexity = Math.min(1, avgWordLength / 10);
 
   // v2: New feature detectors
