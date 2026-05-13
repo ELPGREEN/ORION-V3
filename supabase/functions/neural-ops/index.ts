@@ -3097,7 +3097,7 @@ async function handleImageGeneration(body: Record<string, unknown>) {
 
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
 
   try {
     const body = await req.json();
