@@ -57,6 +57,9 @@ const HALLUCINATION_PHRASES = [
   "incapaz de processar imagens",
 ];
 
+// BOLT V2.0: Consolidate phrases into a single optimized RegExp
+const HALLUCINATION_REGEX = new RegExp(`(?:${HALLUCINATION_PHRASES.join("|")})`, "gi");
+
 const FABRICATION_PATTERNS = [
   /Lei\s+n[°º.]?\s*\d{5,}\/\d{4}/i, // Leis com números absurdamente altos
   /Art(?:igo)?\.?\s*\d{4,}/i, // Artigos com 4+ dígitos (improvável)
@@ -81,20 +84,66 @@ const UNCERTAINTY_PHRASES = [
   "não encontrei",
 ];
 
+// BOLT V2.0: Consolidate uncertainty phrases
+const UNCERTAINTY_REGEX = new RegExp(`(?:${UNCERTAINTY_PHRASES.join("|")})`, "gi");
+
 // ═══ Core Functions ═══
+
+/**
+ * BOLT V2.0: Count words using character iteration to avoid array allocations.
+ */
+function countWords(text: string): number {
+  let count = 0;
+  let inWord = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    if (char <= 32) {
+      inWord = false;
+    } else if (!inWord) {
+      count++;
+      inWord = true;
+    }
+  }
+  return count;
+}
+
+/**
+ * BOLT V2.0: Optimized tokenization to avoid large array allocations.
+ */
+function getTokensEfficiently(text: string, minLength: number): Set<string> {
+  const tokens = new Set<string>();
+  let start = -1;
+  const lower = text.toLowerCase();
+
+  for (let i = 0; i < lower.length; i++) {
+    const char = lower.charCodeAt(i);
+    if (char <= 32) {
+      if (start !== -1) {
+        if (i - start > minLength) {
+          tokens.add(lower.substring(start, i));
+        }
+        start = -1;
+      }
+    } else if (start === -1) {
+      start = i;
+    }
+  }
+
+  if (start !== -1 && lower.length - start > minLength) {
+    tokens.add(lower.substring(start));
+  }
+
+  return tokens;
+}
 
 /**
  * Compute semantic overlap between query intent keywords and response.
  */
 function computeSemanticCoherence(query: string, response: string): number {
-  const queryWords = new Set(
-    query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const queryWords = getTokensEfficiently(query, 3);
   if (queryWords.size === 0) return 1;
 
-  const responseWords = new Set(
-    response.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const responseWords = getTokensEfficiently(response, 3);
 
   let overlap = 0;
   for (const w of queryWords) {
@@ -108,15 +157,17 @@ function computeSemanticCoherence(query: string, response: string): number {
  */
 function detectFabricationSignals(response: string): PredictionError[] {
   const errors: PredictionError[] = [];
-  const lower = response.toLowerCase();
 
-  // Check hallucination phrases
-  const matchedPhrases = HALLUCINATION_PHRASES.filter(p => lower.includes(p));
-  if (matchedPhrases.length > 0) {
+  // BOLT V2.0: Optimized match counting
+  HALLUCINATION_REGEX.lastIndex = 0;
+  const matches = response.match(HALLUCINATION_REGEX);
+  const matchedCount = matches ? matches.length : 0;
+
+  if (matchedCount > 0) {
     errors.push({
       source: "hedging_language",
-      delta: Math.min(matchedPhrases.length * 0.15, 0.6),
-      detail: `${matchedPhrases.length} frase(s) evasiva(s) detectada(s)`,
+      delta: Math.min(matchedCount * 0.15, 0.6),
+      detail: `${matchedCount} frase(s) evasiva(s) detectada(s)`,
     });
   }
 
@@ -137,8 +188,8 @@ function detectFabricationSignals(response: string): PredictionError[] {
  * Check response length proportionality to query complexity.
  */
 function checkProportionality(query: string, response: string): PredictionError | null {
-  const queryWords = query.split(/\s+/).length;
-  const responseWords = response.split(/\s+/).length;
+  const queryWords = countWords(query);
+  const responseWords = countWords(response);
 
   // Very short response to complex query = suspicious
   if (queryWords > 10 && responseWords < 15) {
@@ -228,13 +279,16 @@ export function computeFreeEnergy(
     });
   }
 
-  // 7. Uncertainty phrases penalty (OPTIMIZED)
-  const uncertaintyMatches = UNCERTAINTY_PHRASES.filter(p => response.toLowerCase().includes(p));
-  if (uncertaintyMatches.length > 2) {
+  // 7. Uncertainty phrases penalty (OPTIMIZED BOLT V2.0)
+  UNCERTAINTY_REGEX.lastIndex = 0;
+  const uncertaintyMatches = response.match(UNCERTAINTY_REGEX);
+  const uncertaintyCount = uncertaintyMatches ? uncertaintyMatches.length : 0;
+
+  if (uncertaintyCount > 2) {
     errors.push({
       source: "uncertainty_excessive",
       delta: 0.1,
-      detail: `Excesso de expressões de incerteza (${uncertaintyMatches.length}): ${uncertaintyMatches.slice(0, 3).join(", ")}`,
+      detail: `Excesso de expressões de incerteza (${uncertaintyCount}): ${uncertaintyMatches!.slice(0, 3).join(", ")}`,
     });
   }
 
@@ -411,7 +465,7 @@ export function computeQuantumFreeEnergy(
   let wf = createWaveFunction("free_energy", dimensions);
 
   // 3. Apply decoherence based on response length (longer → more noise)
-  const responseLength = response.split(/\s+/).length;
+  const responseLength = countWords(response);
   const noiseLevel = Math.min(0.15, responseLength / 10000);
   wf = decohere(wf, noiseLevel);
 

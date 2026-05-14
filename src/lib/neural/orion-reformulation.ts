@@ -69,6 +69,24 @@ const COMPLEX_PATTERNS = [
   /\b(outrossim|destarte|conquanto|malgrado|inobstante)\b/i,
 ];
 
+/**
+ * BOLT V2.0: Count words using character iteration to avoid array allocations.
+ */
+function countWords(text: string): number {
+  let count = 0;
+  let inWord = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    if (char <= 32) {
+      inWord = false;
+    } else if (!inWord) {
+      count++;
+      inWord = true;
+    }
+  }
+  return count;
+}
+
 export function analyzeComprehension(text: string): ComprehensionAnalysis {
   const issues: string[] = [];
   let score = 1.0;
@@ -78,9 +96,11 @@ export function analyzeComprehension(text: string): ComprehensionAnalysis {
     return { score: 0.1, isAmbiguous: true, isTruncated: true, isColloquial: false, isComplex: false, suggestedMode: "clarify", issues: ["Input muito curto"] };
   }
 
+  const wordCount = countWords(trimmed);
+
   // Check ambiguity — only penalize if VERY short + ambiguous
   const isAmbiguous = AMBIGUITY_PATTERNS.some(p => p.test(trimmed));
-  if (isAmbiguous && trimmed.split(/\s+/).length <= 3) { score -= 0.15; issues.push("Referências ambíguas detectadas"); }
+  if (isAmbiguous && wordCount <= 3) { score -= 0.15; issues.push("Referências ambíguas detectadas"); }
 
   // Check truncation — lighter penalty
   const isTruncated = TRUNCATION_PATTERNS.some(p => p.test(trimmed));
@@ -96,7 +116,6 @@ export function analyzeComprehension(text: string): ComprehensionAnalysis {
   if (isComplex && trimmed.length > 200) { score -= 0.1; issues.push("Estrutura complexa com jargão misto"); }
 
   // Word count penalty only for single-word non-truncated inputs
-  const wordCount = trimmed.split(/\s+/).length;
   if (wordCount <= 1 && !isTruncated) { score -= 0.1; }
 
   // Questions are inherently comprehensible — boost
@@ -140,14 +159,17 @@ const COLLOQUIAL_MAP: Record<string, string> = {
   "c": "com", "kd": "cadê", "cade": "cadê",
 };
 
-export function quickLocalReformulate(text: string): string {
-  let result = text;
+// BOLT V2.0: Optimized pre-compiled colloquial regex
+const COLLOQUIAL_MAP_REGEX = new RegExp(
+  `\\b(${Object.keys(COLLOQUIAL_MAP).join("|")})\\b`,
+  "gi"
+);
 
-  // Replace colloquial terms
-  for (const [abbrev, full] of Object.entries(COLLOQUIAL_MAP)) {
-    const regex = new RegExp(`\\b${abbrev}\\b`, "gi");
-    result = result.replace(regex, full);
-  }
+export function quickLocalReformulate(text: string): string {
+  // Replace colloquial terms using a single optimized pass
+  let result = text.replace(COLLOQUIAL_MAP_REGEX, (match) => {
+    return COLLOQUIAL_MAP[match.toLowerCase()] || match;
+  });
 
   // Remove laugh expressions
   result = result.replace(/\b(kkkk*|rs+|haha+|huahua+)\b/gi, "").trim();

@@ -70,8 +70,44 @@ export function getMemoryFacts(): string[] {
   return getLocalMemory().map((m) => m.fact);
 }
 
+// BOLT V2.0: Module-level cache for tokens to avoid redundant re-tokenization
+const _tokenCache = new Map<string, Set<string>>();
+
 function getTokens(text: string): Set<string> {
-  return new Set(text.toLowerCase().split(/\s+/).filter(w => w.length > 2));
+  const cached = _tokenCache.get(text);
+  if (cached) return cached;
+
+  const tokens = new Set<string>();
+  let start = -1;
+  const lower = text.toLowerCase();
+
+  for (let i = 0; i < lower.length; i++) {
+    const char = lower.charCodeAt(i);
+    if (char <= 32) { // Whitespace
+      if (start !== -1) {
+        if (i - start > 2) { // filter(w => w.length > 2)
+          tokens.add(lower.substring(start, i));
+        }
+        start = -1;
+      }
+    } else if (start === -1) {
+      start = i;
+    }
+  }
+
+  if (start !== -1 && lower.length - start > 2) {
+    tokens.add(lower.substring(start));
+  }
+
+  _tokenCache.set(text, tokens);
+
+  // LRU-like cleanup: keep cache under 500 entries
+  if (_tokenCache.size > 500) {
+    const firstKey = _tokenCache.keys().next().value;
+    if (firstKey !== undefined) _tokenCache.delete(firstKey);
+  }
+
+  return tokens;
 }
 
 function wordOverlap(setA: Set<string>, setB: Set<string>): number {
@@ -396,6 +432,7 @@ export interface MemoryRelation {
  */
 export function discoverRelationships(memories: MemoryEntry[]): MemoryRelation[] {
   const relations: MemoryRelation[] = [];
+  // BOLT V2.0: Optimized map using pre-cached tokens
   const tokenCache = memories.map(m => getTokens(m.fact));
 
   for (let i = 0; i < memories.length; i++) {
