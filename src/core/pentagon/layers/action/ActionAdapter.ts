@@ -4,16 +4,17 @@ import { supabase } from '@/integrations/supabase/client';
 export class ActionAdapter implements PentagonLayer {
   public pillar: PentagonPillar = 'action';
 
-  public async process(input: any): Promise<unknown> {
-    const { data, error } = await supabase.functions.invoke('neural-ops', {
+  public async process(input: unknown): Promise<unknown> {
+    const data = input as { text: string; compressedContext: string; intent: string; routing?: { selectedProvider?: { id: string } } };
+    const { data: response, error } = await supabase.functions.invoke('neural-ops', {
       body: {
-        question: input.text,
-        context: input.compressedContext,
-        intentType: input.intent,
-        provider: input.routing?.selectedProvider?.id
+        question: data.text,
+        context: data.compressedContext,
+        intentType: data.intent,
+        provider: data.routing?.selectedProvider?.id
       }
     });
     if (error) throw error;
-    return { ...input, response: data.content || '', status: 'COMPLETE' };
+    return { ...data, response: response.content || '', status: 'COMPLETE' };
   }
 }

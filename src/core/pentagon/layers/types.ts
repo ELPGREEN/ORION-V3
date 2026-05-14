@@ -20,3 +20,18 @@ export interface PentagonLayer {
   pillar: PentagonPillar;
   process(input: unknown): Promise<unknown>;
 }
+
+export interface PentagonCycleResult {
+  text: string;
+  intent: string;
+  confidence: number;
+  routing?: any;
+  compressedContext?: string;
+  metaLayer?: {
+    strictGrounding: boolean;
+    antiHallucinationLevel: string;
+    conscienceFlag: string;
+  };
+  response?: string;
+  status: string;
+}

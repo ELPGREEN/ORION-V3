@@ -1,3 +1,4 @@
+import { updateConsciousnessState } from "@/lib/neural/rag-consciousness";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { OrbState } from "./EnergyOrb";
 import { useNavigate } from "react-router-dom";
@@ -68,9 +69,15 @@ export function useOrionReasoning(
   speechQueueRef?: React.MutableRefObject<string[]>,
   bargeInCallbackRef?: React.MutableRefObject<(() => void) | null>,
   getBackgroundTranscripts?: () => BackgroundTranscript[],
+  identityStatus?: string,
+  onActivateVision?: () => void,
+  localDetectionsRef?: React.MutableRefObject<Array<{ name: string; category: string; confidence: number; bbox?: { x: number; y: number; w: number; h: number } }>>,
+) {
+  const navigate = useNavigate();
+
   useEffect(() => {
-    const handleState = (e: any) => {
-      const state = e.detail;
+    const handleState = (e: CustomEvent) => {
+      const state = e.detail as any;
       if (state.intensity > 0.5) {
         setThought(`🧠 ${state.pillar.toUpperCase()}: ${state.activity}`);
       }
@@ -78,11 +85,6 @@ export function useOrionReasoning(
     window.addEventListener("pentagon_state_change", handleState);
     return () => window.removeEventListener("pentagon_state_change", handleState);
   }, []);
-  identityStatus?: string,
-  onActivateVision?: () => void,
-  localDetectionsRef?: React.MutableRefObject<Array<{ name: string; category: string; confidence: number; bbox?: { x: number; y: number; w: number; h: number } }>>,
-) {
-  const navigate = useNavigate();
   const lastAIRef = useRef(0);
   const [log, setLog] = useState<string[]>([]);
   const logRef = useRef<string[]>([]);
@@ -463,6 +465,7 @@ export function useOrionReasoning(
     isProcessingRef.current = true;
     VS.aiResponding = true;
     setThought("🤔 Analisando...");
+    updateConsciousnessState("analyzing");
     addChat("user", question);
     addChat("ai", "⏳ ...");
     addLog(`💬 Pergunta [${source}]: ${question}`);

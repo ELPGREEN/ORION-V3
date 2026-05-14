@@ -1,3 +1,4 @@
+import { updateConsciousnessState } from "@/lib/neural/rag-consciousness";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { vsLog } from "./useVisionProcessing";
@@ -57,6 +58,7 @@ export function useWakeWord(listening: boolean, speechOk: boolean, onActivate: (
             wakeWordCooldownRef.current = true;
             const command = extractCommandFromTranscript(transcript);
             vsLog("🎯 Wake word detectado via Persistent STT");
+            updateConsciousnessState("observing");
             toast.success("🎯 Ativado!", { duration: 2000 });
 
             window.dispatchEvent(new CustomEvent("orion:wake-word-detected", {

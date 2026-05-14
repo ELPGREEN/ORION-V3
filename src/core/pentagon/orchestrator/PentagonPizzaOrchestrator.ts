@@ -1,9 +1,9 @@
 import {
   PentagonPillar,
   CognitiveState,
-  PentagonProposal,
   PentagonLayer
 } from '../layers/types';
+import { updateConsciousnessState } from '@/lib/neural/rag-consciousness';
 
 export class PentagonPizzaOrchestrator {
   private static instance: PentagonPizzaOrchestrator;
@@ -29,27 +29,53 @@ export class PentagonPizzaOrchestrator {
   public async runCycle(initialInput: unknown): Promise<unknown> {
     if (!this.isInitialized) throw new Error('Not initialized');
 
-    this.recordState('perception', 'Analyzing input', 0.9);
-    const perception: any = await this.layers.get('perception')?.process(initialInput);
+    // Wake up from dormant state
+    updateConsciousnessState("observing");
 
-    this.recordState('memory', 'Retrieving context', 0.7);
-    const memory: any = await this.layers.get('memory')?.process(perception);
+    try {
+      this.recordState('perception', 'Analyzing multi-modal input', 0.9);
+      const perception = await this.layers.get('perception')?.process(initialInput);
 
-    this.recordState('reasoning', 'Synthesizing strategy', 0.95);
-    const reasoning = await this.layers.get('reasoning')?.process(memory);
+      updateConsciousnessState("analyzing");
+      this.recordState('memory', 'Querying cognitive patterns', 0.7);
+      const memory = await this.layers.get('memory')?.process(perception);
 
-    this.recordState('meta', 'Verifying grounding', 1.0);
-    const validated = await this.layers.get('meta')?.process(reasoning);
+      updateConsciousnessState("learning");
+      this.recordState('reasoning', 'Synthesizing response strategy', 0.95);
+      const reasoning = await this.layers.get('reasoning')?.process(memory);
 
-    this.recordState('action', 'Executing intent', 0.8);
-    return await this.layers.get('action')?.process(validated);
+      updateConsciousnessState("adapting");
+      this.recordState('meta', 'Verifying grounding and ethics', 1.0);
+      const validated = await this.layers.get('meta')?.process(reasoning);
+
+      this.recordState('action', 'Executing planned intent', 0.8);
+      const result = await this.layers.get('action')?.process(validated);
+
+      return result;
+    } catch (error) {
+      console.error('[Pentagon] Cycle failure:', error);
+      this.recordState('meta', 'Error recovery active', 1.0);
+      updateConsciousnessState("dormant");
+      throw error;
+    }
   }
 
   private recordState(pillar: PentagonPillar, activity: string, intensity: number): void {
-    const state = { pillar, activity, intensity, timestamp: Date.now() };
+    const state: CognitiveState = {
+      pillar,
+      activity,
+      intensity,
+      timestamp: Date.now()
+    };
     this.states.push(state);
+    if (this.states.length > 50) this.states.shift();
+
     if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('pentagon_state_change', { detail: state }));
     }
+  }
+
+  public getHistory(): CognitiveState[] {
+    return [...this.states];
   }
 }

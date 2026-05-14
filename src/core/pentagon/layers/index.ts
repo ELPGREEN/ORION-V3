@@ -1,5 +1,6 @@
-export * from './perception/PerceptionAdapter';
-export * from './memory/MemoryAdapter';
-export * from './reasoning/ReasoningAdapter';
-export * from './meta/MetaAdapter';
-export * from './action/ActionAdapter';
+export * from './types';
+export { PerceptionAdapter } from './perception/PerceptionAdapter';
+export { MemoryAdapter } from './memory/MemoryAdapter';
+export { ReasoningAdapter } from './reasoning/ReasoningAdapter';
+export { MetaAdapter } from './meta/MetaAdapter';
+export { ActionAdapter } from './action/ActionAdapter';
