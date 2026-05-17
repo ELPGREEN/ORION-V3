@@ -9,6 +9,61 @@
 import { detectHallucinations, type HallucinationWarning } from "@/lib/analysis/hallucinationDetector";
 import { checkResponseQuality, type QualityResult } from "@/lib/analysis/responseQualityChecker";
 
+// ═══ Helpers (Zero-Allocation Optimized) ═══
+
+/**
+ * Counts words in a string using character iteration to avoid array allocations.
+ */
+function countWords(text: string): number {
+  let count = 0;
+  let inWord = false;
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+    const isWhitespace = charCode <= 32;
+    if (!isWhitespace && !inWord) {
+      count++;
+      inWord = true;
+    } else if (isWhitespace) {
+      inWord = false;
+    }
+  }
+  return count;
+}
+
+/**
+ * Extracts tokens from a string efficiently for semantic overlap checks.
+ */
+function getTokensEfficiently(text: string, minLength: number = 3): Set<string> {
+  const tokens = new Set<string>();
+  let start = -1;
+  const lower = text.toLowerCase();
+
+  for (let i = 0; i < lower.length; i++) {
+    const charCode = lower.charCodeAt(i);
+    const isAlphanumeric = (charCode >= 97 && charCode <= 122) || // a-z
+                           (charCode >= 48 && charCode <= 57) || // 0-9
+                           (charCode >= 192 && charCode <= 255); // Accented chars
+
+    if (isAlphanumeric) {
+      if (start === -1) start = i;
+    } else {
+      if (start !== -1) {
+        if (i - start > minLength) {
+          tokens.add(lower.substring(start, i));
+        }
+        start = -1;
+      }
+    }
+  }
+
+  // Last word
+  if (start !== -1 && lower.length - start > minLength) {
+    tokens.add(lower.substring(start));
+  }
+
+  return tokens;
+}
+
 // ═══ Types ═══
 
 export interface PredictionError {
@@ -34,52 +89,19 @@ const FREE_ENERGY_THRESHOLD_LOW = 25;  // OPTIMIZED: was 35 - more sensitive
 const FREE_ENERGY_THRESHOLD_HIGH = 50; // OPTIMIZED: was 60 - correct more often
 const BLOCK_THRESHOLD = 75;           // NEW: block responses above this
 
-const HALLUCINATION_PHRASES = [
-  "como modelo de linguagem",
-  "não tenho acesso a informações em tempo real",
-  "não posso fornecer consultoria jurídica",
-  "peço desculpas pelo erro",
-  "me desculpe, mas não",
-  "infelizmente não tenho como verificar",
-  "baseado no meu treinamento",
-  "até minha data de corte",
-  "é importante consultar um advogado",
-  "não posso garantir a precisão",
-  // ═══ Anti-hallucination: Vision denial phrases ═══
-  "não tenho capacidade de visão",
-  "não consigo ver imagens",
-  "não tenho acesso a imagens",
-  "não posso ver o que você",
-  "como um modelo de texto",
-  "sou um assistente de texto",
-  "não possuo visão",
-  "não tenho olhos",
-  "incapaz de processar imagens",
-];
+const HALLUCINATION_REGEX = /(?:como modelo de linguagem|não tenho acesso a informações em tempo real|não posso fornecer consultoria jurídica|peço desculpas pelo erro|me desculpe, mas não|infelizmente não tenho como verificar|baseado no meu treinamento|até minha data de corte|é importante consultar um advogado|não posso garantir a precisão|não tenho capacidade de visão|não consigo ver imagens|não tenho acesso a imagens|não posso ver o que você|como um modelo de texto|sou um assistente de texto|não possuo visão|não tenho olhos|incapaz de processar imagens)/gi;
 
 const FABRICATION_PATTERNS = [
-  /Lei\s+n[°º.]?\s*\d{5,}\/\d{4}/i, // Leis com números absurdamente altos
-  /Art(?:igo)?\.?\s*\d{4,}/i, // Artigos com 4+ dígitos (improvável)
-  /Súmula\s+(?:Vinculante\s+)?\d{3,}/i, // Súmulas com 3+ dígitos
-  /(?:RE|REsp)\s+\d{10,}/i, // Processos com números excessivamente longos
-  /(?:20[3-9]\d|21\d{2})\/\d{2}\/\d{2}/i, // Datas futuras impossíveis (2030+)
-  /\d{5}[-.\s]?\d{4}/i, // Telefones fabricados
+  /Lei\s+n[°º.]?\s*\d{5,}\/\d{4}/gi, // Leis com números absurdamente altos
+  /Art(?:igo)?\.?\s*\d{4,}/gi, // Artigos com 4+ dígitos (improvável)
+  /Súmula\s+(?:Vinculante\s+)?\d{3,}/gi, // Súmulas com 3+ dígitos
+  /(?:RE|REsp)\s+\d{10,}/gi, // Processos com números excessivamente longos
+  /(?:20[3-9]\d|21\d{2})\/\d{2}\/\d{2}/gi, // Datas futuras impossíveis (2030+)
+  /\d{5}[-.\s]?\d{4}/gi, // Telefones fabricados
 ];
 
 // NEW: Uncertainty phrases that penalize responses
-const UNCERTAINTY_PHRASES = [
-  "não tenho certeza",
-  "pode ser que",
-  "talvez",
-  "provavelmente",
-  "creio que",
-  "acredito que",
-  "na minha opinião",
-  "não posso confirmar",
-  "não tenho informações",
-  "falha ao",
-  "não encontrei",
-];
+const UNCERTAINTY_REGEX = /(?:não tenho certeza|pode ser que|talvez|provavelmente|creio que|acredito que|na minha opinião|não posso confirmar|não tenho informações|falha ao|não encontrei)/gi;
 
 // ═══ Core Functions ═══
 
@@ -87,14 +109,10 @@ const UNCERTAINTY_PHRASES = [
  * Compute semantic overlap between query intent keywords and response.
  */
 function computeSemanticCoherence(query: string, response: string): number {
-  const queryWords = new Set(
-    query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const queryWords = getTokensEfficiently(query);
   if (queryWords.size === 0) return 1;
 
-  const responseWords = new Set(
-    response.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const responseWords = getTokensEfficiently(response);
 
   let overlap = 0;
   for (const w of queryWords) {
@@ -108,25 +126,32 @@ function computeSemanticCoherence(query: string, response: string): number {
  */
 function detectFabricationSignals(response: string): PredictionError[] {
   const errors: PredictionError[] = [];
-  const lower = response.toLowerCase();
 
   // Check hallucination phrases
-  const matchedPhrases = HALLUCINATION_PHRASES.filter(p => lower.includes(p));
-  if (matchedPhrases.length > 0) {
+  HALLUCINATION_REGEX.lastIndex = 0;
+  const matches = response.match(HALLUCINATION_REGEX);
+  if (matches && matches.length > 0) {
     errors.push({
       source: "hedging_language",
-      delta: Math.min(matchedPhrases.length * 0.15, 0.6),
-      detail: `${matchedPhrases.length} frase(s) evasiva(s) detectada(s)`,
+      delta: Math.min(matches.length * 0.15, 0.6),
+      detail: `${matches.length} frase(s) evasiva(s) detectada(s)`,
     });
   }
 
   // Check fabrication patterns
-  const fabrications = FABRICATION_PATTERNS.filter(p => p.test(response));
-  if (fabrications.length > 0) {
+  let fabCount = 0;
+  for (const p of FABRICATION_PATTERNS) {
+    p.lastIndex = 0;
+    if (p.test(response)) {
+      fabCount++;
+    }
+  }
+
+  if (fabCount > 0) {
     errors.push({
       source: "fabrication_pattern",
-      delta: fabrications.length * 0.25,
-      detail: `${fabrications.length} referência(s) com formato suspeito`,
+      delta: fabCount * 0.25,
+      detail: `${fabCount} referência(s) com formato suspeito`,
     });
   }
 
@@ -137,8 +162,8 @@ function detectFabricationSignals(response: string): PredictionError[] {
  * Check response length proportionality to query complexity.
  */
 function checkProportionality(query: string, response: string): PredictionError | null {
-  const queryWords = query.split(/\s+/).length;
-  const responseWords = response.split(/\s+/).length;
+  const queryWords = countWords(query);
+  const responseWords = countWords(response);
 
   // Very short response to complex query = suspicious
   if (queryWords > 10 && responseWords < 15) {
@@ -229,8 +254,9 @@ export function computeFreeEnergy(
   }
 
   // 7. Uncertainty phrases penalty (OPTIMIZED)
-  const uncertaintyMatches = UNCERTAINTY_PHRASES.filter(p => response.toLowerCase().includes(p));
-  if (uncertaintyMatches.length > 2) {
+  UNCERTAINTY_REGEX.lastIndex = 0;
+  const uncertaintyMatches = response.match(UNCERTAINTY_REGEX);
+  if (uncertaintyMatches && uncertaintyMatches.length > 2) {
     errors.push({
       source: "uncertainty_excessive",
       delta: 0.1,
@@ -411,7 +437,7 @@ export function computeQuantumFreeEnergy(
   let wf = createWaveFunction("free_energy", dimensions);
 
   // 3. Apply decoherence based on response length (longer → more noise)
-  const responseLength = response.split(/\s+/).length;
+  const responseLength = countWords(response);
   const noiseLevel = Math.min(0.15, responseLength / 10000);
   wf = decohere(wf, noiseLevel);
 
