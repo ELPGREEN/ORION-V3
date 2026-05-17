@@ -6,6 +6,10 @@ on:
   create:
   delete:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   mirror:
     if: github.repository == "ELPGREEN/ORION-V3" && github.actor != "lovable-sync-bot" && github.actor != "github-actions[bot]"
