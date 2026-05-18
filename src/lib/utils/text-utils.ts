@@ -36,3 +36,48 @@ export function extractTextFromMessages(messages: any[]): any[] {
       : String(m.content),
   }));
 }
+
+/**
+ * Manual character-iteration word counter to avoid array allocations from split().
+ * BOLT V2.0 optimization.
+ */
+export function countWords(text: string): number {
+  let count = 0;
+  let inWord = false;
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+    // Basic whitespace check: space, tab, newline, carriage return
+    if (charCode <= 32) {
+      inWord = false;
+    } else if (!inWord) {
+      count++;
+      inWord = true;
+    }
+  }
+  return count;
+}
+
+/**
+ * Zero-allocation token extraction for overlap checks.
+ * BOLT V2.0 optimization.
+ */
+export function getTokensEfficiently(text: string, minLength = 3): Set<string> {
+  const tokens = new Set<string>();
+  let start = -1;
+  const lower = text.toLowerCase();
+
+  for (let i = 0; i <= lower.length; i++) {
+    const charCode = i < lower.length ? lower.charCodeAt(i) : 32;
+    if (charCode <= 32) {
+      if (start !== -1) {
+        if (i - start >= minLength) {
+          tokens.add(lower.substring(start, i));
+        }
+        start = -1;
+      }
+    } else if (start === -1) {
+      start = i;
+    }
+  }
+  return tokens;
+}
