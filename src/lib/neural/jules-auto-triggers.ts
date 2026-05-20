@@ -39,6 +39,8 @@ export type SubsystemKey =
   | "design_responsive" | "design_accessibility" | "design_animation"
   // Security
   | "sec_rls" | "sec_xss" | "sec_injection" | "sec_auth_flow"
+  // Architecture
+  | "core_architecture"
   // Industrial Robotics
   | "industrial_welding" | "industrial_assembly" | "industrial_painting"
   | "industrial_inspection" | "industrial_palletization" | "industrial_adaptive_mfg"
@@ -226,6 +228,7 @@ const SUBSYSTEM_MAP: Record<string, { file: string; desc: string }> = {
   industrial_protocol_bridge: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Industrial protocol bridge (OPC UA/ROS2/etc) is failing" },
   industrial_safety: { file: "src/lib/neural/jules-orion-fusion.ts", desc: "Industrial safety system violation detected" },
   industrial_sensor: { file: "src/lib/neural/jules-industrial-scanner.ts", desc: "Faulty industrial sensor isolated" },
+  core_architecture: { file: "src/lib/neural/neural-flow-analyzer.ts", desc: "Neural flow architectural gaps detected" },
 };
 
 function buildJulesTask(

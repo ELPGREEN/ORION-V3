@@ -41,31 +41,41 @@ export async function analyzeNeuralFlowGaps(): Promise<FlowGap[]> {
   // Check Neural Modules
   for (const mod of EXPECTED_NEURAL_MODULES) {
     const path = `src/lib/neural/${mod.file}`;
-    const exists = await readProjectFile(path);
+    try {
+      const exists = await readProjectFile(path);
 
-    if (!exists) {
-      gaps.push({
-        id: mod.file,
-        category: "neural_module",
-        description: mod.desc,
-        severity: mod.severity as any,
-        expectedFile: path
-      });
+      if (exists === null) {
+        console.warn(`[Neural-Flow] Missing neural module: ${path}`);
+        gaps.push({
+          id: mod.file,
+          category: "neural_module",
+          description: mod.desc,
+          severity: mod.severity as any,
+          expectedFile: path
+        });
+      }
+    } catch (err) {
+      console.error(`[Neural-Flow] Error checking neural module ${path}:`, err);
     }
   }
 
   // Check Visual Flows
   for (const diag of EXPECTED_VISUAL_FLOWS) {
-    const exists = await readProjectFile(diag.file);
+    try {
+      const exists = await readProjectFile(diag.file);
 
-    if (!exists) {
-      gaps.push({
-        id: diag.file.split('/').pop() || diag.file,
-        category: "visual_flow",
-        description: diag.desc,
-        severity: diag.severity as any,
-        expectedFile: diag.file
-      });
+      if (exists === null) {
+        console.warn(`[Neural-Flow] Missing visual flow component: ${diag.file}`);
+        gaps.push({
+          id: diag.file.split('/').pop() || diag.file,
+          category: "visual_flow",
+          description: diag.desc,
+          severity: diag.severity as any,
+          expectedFile: diag.file
+        });
+      }
+    } catch (err) {
+      console.error(`[Neural-Flow] Error checking visual flow ${diag.file}:`, err);
     }
   }
 
