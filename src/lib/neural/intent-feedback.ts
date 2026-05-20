@@ -24,8 +24,10 @@ export interface IntentCorrection {
 // In-memory mirror of localStorage
 let _corrections: Map<string, IntentCorrection> | null = null;
 
+const WHITESPACE_REGEX = /\s+/g;
+
 function normalize(text: string): string {
-  return text.toLowerCase().trim().replace(/\s+/g, " ").slice(0, 200);
+  return text.toLowerCase().trim().replace(WHITESPACE_REGEX, " ").slice(0, 200);
 }
 
 function loadCorrections(): Map<string, IntentCorrection> {
@@ -164,20 +166,48 @@ export function extractCorrectionTarget(text: string): string | null {
   return null;
 }
 
-// Simple character-level similarity
+// BOLT V2.0: Optimized low-allocation word-based similarity
 function fuzzyMatch(a: string, b: string): number {
   if (a === b) return 1;
-  if (a.length === 0 || b.length === 0) return 0;
-  
-  const longer = a.length > b.length ? a : b;
-  const shorter = a.length > b.length ? b : a;
-  
+  const lenA = a.length;
+  const lenB = b.length;
+  if (lenA === 0 || lenB === 0) return 0;
+
+  // Optimized word-based overlap
   let matches = 0;
-  const words1 = new Set(longer.split(" "));
-  const words2 = shorter.split(" ");
-  for (const w of words2) {
-    if (words1.has(w)) matches++;
-  }
+  let wordCountA = 0;
+  let wordCountB = 0;
   
-  return matches / Math.max(words1.size, words2.length);
+  // Count words in A and check exact word overlap in B
+  let start = 0;
+  for (let i = 0; i <= lenA; i++) {
+    if (i === lenA || a[i] === " ") {
+      if (i > start) {
+        wordCountA++;
+        const word = a.substring(start, i);
+        // Ensure exact word match in B (not substring)
+        const idx = b.indexOf(word);
+        if (idx !== -1) {
+          const before = idx === 0 || b[idx - 1] === " ";
+          const after = (idx + word.length) === lenB || b[idx + word.length] === " ";
+          if (before && after) {
+            matches++;
+          }
+        }
+      }
+      start = i + 1;
+    }
+  }
+
+  // Count words in B
+  start = 0;
+  for (let i = 0; i <= lenB; i++) {
+    if (i === lenB || b[i] === " ") {
+      if (i > start) wordCountB++;
+      start = i + 1;
+    }
+  }
+
+  const maxWords = wordCountA > wordCountB ? wordCountA : wordCountB;
+  return maxWords === 0 ? 0 : matches / maxWords;
 }

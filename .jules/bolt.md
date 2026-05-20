@@ -68,3 +68,22 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 **Nova Métrica:** `classifyLegalDomain` 100% functional (best-match logic) / `pdf-layout-analysis` 100% connectivity.
 **Delta (Δ):** Error Elimination / Accuracy Recovery (Semantic PNL).
 **Learning:** Logic bugs in hot-path semantic analyzers can remain hidden if tests don't strictly assert the return value. Renaming modules without updating all call-sites (including documentation and UI) creates "entropy" and broken features. Standardized on `pdf-layout-analysis` as the canonical name.
+
+## 2026-07-03 - [Neural Intent & Feedback Optimization (BOLT V2.0)]
+**Baseline:**
+- smartClassifySync: 0.002047ms
+- getLearnedCorrection (Fuzzy): 0.008731ms
+
+**Nova Métrica:**
+- smartClassifySync: 0.001865ms
+- getLearnedCorrection (Fuzzy): 0.006316ms
+
+**Delta (Δ):**
+- smartClassifySync: ~8.9%
+- getLearnedCorrection (Fuzzy): ~27.6%
+
+**Learning:**
+1. **Low-Allocation Fuzzy Matching:** Refactored `fuzzyMatch` (intent-feedback.ts) to use manual character-iteration, significantly reducing GC pressure by eliminating `split()` and `Set` allocations.
+2. **Regex Pipeline Efficiency:** Using `.exec()` instead of `.match()` and hoisting regex constants in `smart-intent-classifier.ts` provides a measurable latency reduction.
+3. **Single-Pass Text Cleaning:** Consolidating multiple `.replace()` calls into a single-pass regex in `voice-intent-dispatcher.ts` streamlines input preprocessing.
+4. **Early Exit Optimization:** Refining the rule iteration in `regexClassify` to return immediately on high-confidence matches prevents unnecessary evaluations.

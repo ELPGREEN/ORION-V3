@@ -13,9 +13,10 @@ export interface ClassifiedIntent {
 // ─── Local Cache (TTL 5min) ───
 const _cache = new Map<string, { result: ClassifiedIntent; ts: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
+const WHITESPACE_REGEX = /\s+/g;
 
 function normalizeForCache(text: string): string {
-  return text.toLowerCase().trim().replace(/\s+/g, " ");
+  return text.toLowerCase().trim().replace(WHITESPACE_REGEX, " ");
 }
 
 function getCached(text: string): ClassifiedIntent | null {
@@ -56,25 +57,25 @@ const REGEX_RULES: IntentRule[] = [
   
   // Media — YouTube (explicit platform mention)
   { pattern: /\b(?:(?:abr[aei]?r?|tocar?|play|reproduz\w*|assistir?|pesquisar?|buscar?|procurar?)\s+[\w\s]{0,20}(?:no|do|d[oa])\s+youtube|youtube\b)/i, intent: "media", confidence: 0.95, extractParams: (t) => {
-    const m = t.match(/(?:tocar?|play|reproduz\w*|assistir?|ver|pesquisar?|buscar?|procurar?|abr[aei]?r?)\s+(.+?)(?:\s+(?:no|do|da)\s+youtube)?$/i);
+    const m = /(?:tocar?|play|reproduz\w*|assistir?|ver|pesquisar?|buscar?|procurar?|abr[aei]?r?)\s+(.+?)(?:\s+(?:no|do|da)\s+youtube)?$/i.exec(t);
     return { query: m?.[1]?.replace(/(?:no|do|da)\s+youtube/i, "").trim() || "", platform: "youtube" };
   }},
   
   // Media — Spotify (explicit platform mention)
   { pattern: /\b(?:(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+[\w\s]{0,20}(?:no|do|d[oa])\s+spotify|spotify\b)/i, intent: "media", confidence: 0.95, extractParams: (t) => {
-    const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+?)(?:\s+(?:no|do|da)\s+spotify)?$/i);
+    const m = /(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+?)(?:\s+(?:no|do|da)\s+spotify)?$/i.exec(t);
     return { query: m?.[1]?.replace(/(?:no|do|da)\s+spotify/i, "").trim() || "", platform: "spotify" };
   }},
   
   // Media — "abrir música/vídeo" patterns (MUST be before navigation)
   { pattern: /\b(?:abr[aei]?r?|tocar?|play|reproduz\w*|ouvir?|escutar?|assistir?|colocar?)\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)/i, intent: "media", confidence: 0.96, extractParams: (t) => {
-    const m = t.match(/(?:abr[aei]?r?\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o)\s+(?:d[oae]\s+)?|tocar?\s+|play\s+|reproduz\w*\s+|ouvir?\s+|escutar?\s+|assistir?\s+|colocar?\s+)(.+)/i);
+    const m = /(?:abr[aei]?r?\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o)\s+(?:d[oae]\s+)?|tocar?\s+|play\s+|reproduz\w*\s+|ouvir?\s+|escutar?\s+|assistir?\s+|colocar?\s+)(.+)/i.exec(t);
     return { query: m?.[1]?.trim() || t, action: "play" };
   }},
   
   // Media — generic (music/video keywords without platform)
   { pattern: /\b(?:tocar?\s+|play\s+|reproduz\w*\s+|m[uú]sica\s+d[oae]\s+|v[ií]deo\s+d[oae]\s+|ouvir?\s+|escutar?\s+)/i, intent: "media", confidence: 0.75, extractParams: (t) => {
-    const m = t.match(/(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+)/i);
+    const m = /(?:tocar?|play|reproduz\w*|ouvir?|escutar?)\s+(.+)/i.exec(t);
     return { query: m?.[1]?.trim() || t, action: /\b(?:par[ae]|stop|paus)\b/i.test(t) ? "pause" : "play" };
   }},
 
@@ -85,18 +86,18 @@ const REGEX_RULES: IntentRule[] = [
   { pattern: /^\s*(?:continuar|retomar|resume|play|reproduzir)\s*$/i, intent: "media_control", confidence: 0.95, extractParams: () => ({ action: "play" }) },
   // Navigation — AFTER media so "abrir música" is already caught
   { pattern: /\b(?:v[aá]\s+para|naveg\w*\s+(?:para|pra)|ir\s+para|go\s+to)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
-    const m = t.match(/(?:v[aá]\s+para|naveg\w*\s+(?:para|pra)|ir\s+para)\s+(.+)/i);
+    const m = /(?:v[aá]\s+para|naveg\w*\s+(?:para|pra)|ir\s+para)\s+(.+)/i.exec(t);
     return { target: m?.[1]?.trim() || "" };
   }},
   // Navigation — "abrir" only for non-media targets (page names)
   { pattern: /\b(?:abr[aei]?r?)\s+(?:[oa]s?\s+)?(?:painel|dashboard|consulta|documentos?|processos?|clientes?|rede\s+neural|configura[çc][oõ]|loja|crm|analytics|extensão?)\b/i, intent: "navigation", confidence: 0.92, extractParams: (t) => {
-    const m = t.match(/abr[aei]?r?\s+(?:[oa]s?\s+)?(.+)/i);
+    const m = /abr[aei]?r?\s+(?:[oa]s?\s+)?(.+)/i.exec(t);
     return { target: m?.[1]?.trim() || "" };
   }},
   
   // ═══ "buscar música/vídeo" → media (NOT search) ═══
   { pattern: /\b(?:busc|procur|pesquis|encontr)\w*\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)\b/i, intent: "media", confidence: 0.95, extractParams: (t) => {
-    const m = t.match(/(?:busc|procur|pesquis|encontr)\w*\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)\s+(?:d[oae]\s+)?(.+)/i);
+    const m = /(?:busc|procur|pesquis|encontr)\w*\s+(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)\s+(?:d[oae]\s+)?(.+)/i.exec(t);
     return { query: m?.[1]?.trim() || t.replace(/.*(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o)\s*/i, "").trim(), action: "play" };
   }},
 
@@ -144,31 +145,38 @@ function regexClassify(text: string): ClassifiedIntent | null {
   const q = text.toLowerCase().trim();
   if (q.length < 2) return null;
   
+  let firstMatch: ClassifiedIntent | null = null;
   const matches: ClassifiedIntent[] = [];
 
-  for (const rule of REGEX_RULES) {
+  for (let i = 0; i < REGEX_RULES.length; i++) {
+    const rule = REGEX_RULES[i];
     if (rule.pattern.test(q)) {
       const params = rule.extractParams ? rule.extractParams(text) : {};
-      matches.push({
+      const match: ClassifiedIntent = {
         intent: rule.intent,
         confidence: rule.confidence,
         params,
         source: "regex",
         classifyMs: 0,
-      });
+      };
       // If very high confidence, return immediately
-      if (rule.confidence >= 0.96) return matches[0];
+      if (rule.confidence >= 0.96) return match;
+
+      if (!firstMatch) firstMatch = match;
+      matches.push(match);
     }
   }
 
   if (matches.length === 0) return null;
+  if (matches.length === 1) return firstMatch;
 
   // Sort by confidence
   matches.sort((a, b) => b.confidence - a.confidence);
 
   const primary = matches[0];
-  if (matches.length > 1) {
-    primary.alternatives = matches.slice(1, 4).map(m => m.intent);
+  primary.alternatives = [];
+  for (let i = 1; i < Math.min(matches.length, 4); i++) {
+    primary.alternatives.push(matches[i].intent);
   }
 
   return primary;

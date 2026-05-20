@@ -49,10 +49,9 @@ const PARAM_EXTRACTORS: Record<string, (text: string) => Record<string, string>>
   media: (text) => {
     const match = text.match(/(?:tocar?|play|reproduz\w*|abr[aei]?r?|busc\w*|procur\w*|pesquis\w*|ouvir?|escutar?|assistir?|colocar?|encontr\w*)\s+(.+)/i);
     let query = match?.[1]?.trim() || text;
+    // BOLT V2.0: Single-pass regex for cleaning media queries
     query = query
-      .replace(/^(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)\s+/i, "")
-      .replace(/^(?:d[oae]\s+|d[oa]\s+banda\s+|d[oa]\s+cantor\w*\s+|d[oa]\s+artista\s+|d[oa]\s+grupo\s+)/i, "")
-      .replace(/^(?:qualquer\s+(?:uma?\s+)?(?:d[oae]\s+)?)/i, "")
+      .replace(/^(?:(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)|d[oae]|d[oa]\s+(?:banda|cantor\w*|artista|grupo)|qualquer\s+(?:uma?\s+)?)\s+/i, "")
       .trim();
     return { query: query || text, action: /\b(par[ae]|stop|paus)\b/i.test(text) ? "pause" : "play" };
   },
@@ -236,11 +235,9 @@ export async function dispatchVoiceIntent(intent: VoiceIntent, identityStatus?: 
         const { playMusicWithFallback } = await import("./music-fallback-resolver");
         // Clean query: strip action verbs, "música/vídeo de/do", articles — extract just the artist/song
         let musicQuery = params.query || intent.rawText;
+        // BOLT V2.0: Optimized single-pass cleaning regex
         musicQuery = musicQuery
-          .replace(/^(?:abr[aei]?r?|tocar?|play|reproduz\w*|ouvir?|escutar?|assistir?|colocar?|busc\w*|procur\w*|pesquis\w*|encontr\w*)\s+/i, "")
-          .replace(/^(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)\s+/i, "")
-          .replace(/^(?:d[oae]\s+|d[oa]\s+banda\s+|d[oa]\s+cantor\s+|d[oa]\s+cantora\s+|d[oa]\s+artista\s+|d[oa]\s+grupo\s+)/i, "")
-          .replace(/^(?:qualquer\s+(?:uma?\s+)?(?:d[oae]\s+)?)/i, "")
+          .replace(/^(?:abr[aei]?r?|tocar?|play|reproduz\w*|ouvir?|escutar?|assistir?|colocar?|busc\w*|procur\w*|pesquis\w*|encontr\w*|(?:uma?\s+)?(?:m[uú]sica|v[ií]deo|som|can[çc][aã]o|playlist|álbum|album)|d[oae]|d[oa]\s+(?:banda|cantor\w*|artista|grupo)|qualquer\s+(?:uma?\s+)?(?:d[oae]\s+)?)\s+/i, "")
           .trim() || "music";
         console.log(`[VoiceDispatch] Media query cleaned: "${musicQuery}" (raw: "${intent.rawText}")`);
         // Only YouTube is supported — platform hints are ignored.
