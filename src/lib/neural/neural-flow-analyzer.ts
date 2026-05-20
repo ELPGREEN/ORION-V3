@@ -44,6 +44,7 @@ export async function analyzeNeuralFlowGaps(): Promise<FlowGap[]> {
     const exists = await readProjectFile(path);
 
     if (!exists) {
+      console.warn(`[Neural-Flow] Missing critical module: ${path}`);
       gaps.push({
         id: mod.file,
         category: "neural_module",
@@ -59,6 +60,7 @@ export async function analyzeNeuralFlowGaps(): Promise<FlowGap[]> {
     const exists = await readProjectFile(diag.file);
 
     if (!exists) {
+      console.warn(`[Neural-Flow] Missing visual flow component: ${diag.file}`);
       gaps.push({
         id: diag.file.split('/').pop() || diag.file,
         category: "visual_flow",

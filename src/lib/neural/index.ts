@@ -162,6 +162,10 @@ export * from "./tf-predictive-analytics";
 export * from "./tf-mlops-pipeline";
 export * from "./tf-inference-optimization";
 export * from "./tf-model-monitoring";
+export * from "./tf-compression";
+export * from "./tf-explainability";
+export * from "./tf-data-validation";
+export * from "./tf-transform";
 
 // ═══ Sector Agents + ORION Brain ═══
 export {
@@ -706,3 +710,6 @@ export {
 // ═══ Neural Flow Analysis & Preprocessing (Auto-Evolution) ═══
 export * from "./neural-flow-analyzer";
 export * from "./frame-tensor-preprocessing";
+export * from "./tfm-vision-augment";
+export * from "./tfm-vision-models";
+export * from "./tfm-vision-ops";
