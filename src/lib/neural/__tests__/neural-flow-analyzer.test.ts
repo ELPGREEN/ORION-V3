@@ -14,9 +14,11 @@ describe('NeuralFlowAnalyzer', () => {
     expect(gaps.some(g => g.id === 'tf-explainability.ts')).toBe(true);
   });
 
-  it('should not detect a gap for existing files', async () => {
+  it('should not detect a gap for existing and registered files', async () => {
     vi.mocked(readProjectFile).mockImplementation(async (path) => {
       if (path === 'src/lib/neural/frame-tensor-preprocessing.ts') return 'exists';
+      if (path === 'src/lib/neural/index.ts') return 'export * from "./frame-tensor-preprocessing";';
+      if (path === 'src/components/dashboard/neural/index.ts') return '';
       return null;
     });
 

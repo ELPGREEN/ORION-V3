@@ -1,6 +1,7 @@
 /**
- * tf-compression - Orion Core
+ * ─── TensorFlow Compression (BOLT V2.0) ───
  * Model quantization and pruning for mobile edge.
+ * Vectorized simulation for browser-based neural optimization.
  */
 
 import * as tf from '@tensorflow/tfjs';
@@ -17,12 +18,13 @@ export function pruneWeights(weights: tf.Tensor, threshold: number): tf.Tensor {
 
 /**
  * Int8 Quantization simulation.
+ * Optimized with epsilon to prevent NaN on constant tensors.
  */
 export function simulateQuantization(tensor: tf.Tensor): tf.Tensor {
   return tf.tidy(() => {
     const min = tensor.min();
     const max = tensor.max();
-    const range = max.sub(min);
+    const range = max.sub(min).add(1e-7);
 
     // Scale to 0-255 (uint8 range)
     const scaled = tensor.sub(min).div(range).mul(255).round();

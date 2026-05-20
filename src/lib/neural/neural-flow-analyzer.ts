@@ -33,17 +33,28 @@ const EXPECTED_VISUAL_FLOWS = [
 
 /**
  * Analyzes the current repository state to find missing neural "flows".
- * This uses the Project File Reader to verify existence of critical modules.
+ * BOLT V2.0: Dual-layer verification (physical file existence + barrel registration).
  */
 export async function analyzeNeuralFlowGaps(): Promise<FlowGap[]> {
   const gaps: FlowGap[] = [];
+
+  // Load barrel files for registration check
+  const neuralBarrel = await readProjectFile("src/lib/neural/index.ts") || "";
+  const visualBarrel = await readProjectFile("src/components/dashboard/neural/index.ts") || "";
 
   // Check Neural Modules
   for (const mod of EXPECTED_NEURAL_MODULES) {
     const path = `src/lib/neural/${mod.file}`;
     const exists = await readProjectFile(path);
 
-    if (!exists) {
+    // Check if exported in barrel (vqc.ts special case, or generic check)
+    const baseName = mod.file.replace(/\.(ts|tsx)$/, "");
+    const isRegistered = neuralBarrel.includes(baseName);
+
+    if (!exists || !isRegistered) {
+      const reason = !exists ? "Physical file missing" : "Not registered in barrel (src/lib/neural/index.ts)";
+      console.warn(`[Neural-Flow] Gap detected in ${mod.file}: ${reason}`);
+
       gaps.push({
         id: mod.file,
         category: "neural_module",
@@ -58,7 +69,13 @@ export async function analyzeNeuralFlowGaps(): Promise<FlowGap[]> {
   for (const diag of EXPECTED_VISUAL_FLOWS) {
     const exists = await readProjectFile(diag.file);
 
-    if (!exists) {
+    const baseName = (diag.file.split('/').pop() || "").replace(/\.(ts|tsx)$/, "");
+    const isRegistered = visualBarrel.includes(baseName);
+
+    if (!exists || !isRegistered) {
+      const reason = !exists ? "Physical file missing" : "Not registered in barrel (src/components/dashboard/neural/index.ts)";
+      console.warn(`[Neural-Flow] Gap detected in ${diag.file}: ${reason}`);
+
       gaps.push({
         id: diag.file.split('/').pop() || diag.file,
         category: "visual_flow",

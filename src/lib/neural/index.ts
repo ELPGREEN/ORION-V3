@@ -162,6 +162,15 @@ export * from "./tf-predictive-analytics";
 export * from "./tf-mlops-pipeline";
 export * from "./tf-inference-optimization";
 export * from "./tf-model-monitoring";
+export * from "./tf-explainability";
+export * from "./tf-data-validation";
+export * from "./tf-transform";
+export { simulateQuantization } from "./tf-compression"; // named export to avoid collision with tf-inference-optimization
+
+// ═══ TFM Vision (Model Garden) ═══
+export * from "./tfm-vision-augment";
+export * from "./tfm-vision-models";
+export * from "./tfm-vision-ops";
 
 // ═══ Sector Agents + ORION Brain ═══
 export {
