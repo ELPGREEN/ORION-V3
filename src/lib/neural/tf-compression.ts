@@ -8,7 +8,7 @@ import * as tf from '@tensorflow/tfjs';
 /**
  * Simple weight pruning based on magnitude threshold.
  */
-export function pruneWeights(weights: tf.Tensor, threshold: number): tf.Tensor {
+export function pruneWeightsByMagnitude(weights: tf.Tensor, threshold: number): tf.Tensor {
   return tf.tidy(() => {
     const mask = tf.abs(weights).greater(threshold);
     return weights.mul(mask);

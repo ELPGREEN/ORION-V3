@@ -33,40 +33,62 @@ const EXPECTED_VISUAL_FLOWS = [
 
 /**
  * Analyzes the current repository state to find missing neural "flows".
- * This uses the Project File Reader to verify existence of critical modules.
+ * This uses the Project File Reader to verify existence of critical modules,
+ * and also checks for runtime registration in barrel files.
  */
 export async function analyzeNeuralFlowGaps(): Promise<FlowGap[]> {
   const gaps: FlowGap[] = [];
 
-  // Check Neural Modules
-  for (const mod of EXPECTED_NEURAL_MODULES) {
-    const path = `src/lib/neural/${mod.file}`;
-    const exists = await readProjectFile(path);
+  try {
+    // Load barrel contents once
+    const indexContent = await readProjectFile("src/lib/neural/index.ts");
+    const visualIndexContent = await readProjectFile("src/components/dashboard/neural/index.ts");
 
-    if (!exists) {
-      gaps.push({
-        id: mod.file,
-        category: "neural_module",
-        description: mod.desc,
-        severity: mod.severity as any,
-        expectedFile: path
-      });
+    // Check Neural Modules
+    for (const mod of EXPECTED_NEURAL_MODULES) {
+      const path = `src/lib/neural/${mod.file}`;
+
+      // 1. Physical file check
+      const fileContent = await readProjectFile(path);
+      const fileExists = !!fileContent;
+
+      // 2. Runtime registration check (barrel export)
+      const isExported = indexContent ? indexContent.includes(mod.file.replace('.ts', '')) : false;
+
+      if (!fileExists || !isExported) {
+        gaps.push({
+          id: mod.file,
+          category: "neural_module",
+          description: mod.desc + (!fileExists ? " (File missing)" : " (Missing barrel export)"),
+          severity: mod.severity as any,
+          expectedFile: path
+        });
+      }
     }
-  }
 
-  // Check Visual Flows
-  for (const diag of EXPECTED_VISUAL_FLOWS) {
-    const exists = await readProjectFile(diag.file);
+    // Check Visual Flows
+    for (const diag of EXPECTED_VISUAL_FLOWS) {
+      // 1. Physical file check
+      const fileContent = await readProjectFile(diag.file);
+      const fileExists = !!fileContent;
 
-    if (!exists) {
-      gaps.push({
-        id: diag.file.split('/').pop() || diag.file,
-        category: "visual_flow",
-        description: diag.desc,
-        severity: diag.severity as any,
-        expectedFile: diag.file
-      });
+      // 2. Visual flow registration check
+      const fileName = diag.file.split('/').pop()?.replace('.tsx', '') || "";
+      const isExported = visualIndexContent ? visualIndexContent.includes(fileName) : false;
+
+      if (!fileExists || !isExported) {
+        gaps.push({
+          id: diag.file.split('/').pop() || diag.file,
+          category: "visual_flow",
+          description: diag.desc + (!fileExists ? " (File missing)" : " (Missing barrel export)"),
+          severity: diag.severity as any,
+          expectedFile: diag.file
+        });
+      }
     }
+  } catch (error) {
+    console.error("[Neural-Flow] Analysis failed:", error);
+    // Return empty gaps on error to prevent cascading failures, but log it
   }
 
   return gaps;
