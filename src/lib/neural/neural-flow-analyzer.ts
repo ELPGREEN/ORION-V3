@@ -4,6 +4,8 @@
  */
 
 import { readProjectFile } from '../orion-evolution/project-file-reader';
+import * as NeuralModules from './index';
+import * as VisualFlows from '../../components/dashboard/neural';
 
 export interface FlowGap {
   id: string;
@@ -33,39 +35,58 @@ const EXPECTED_VISUAL_FLOWS = [
 
 /**
  * Analyzes the current repository state to find missing neural "flows".
- * This uses the Project File Reader to verify existence of critical modules.
+ * Uses dual-layer verification: Direct File Access (Project File Reader)
+ * and Runtime Registry Check (Barrel Exports).
  */
 export async function analyzeNeuralFlowGaps(): Promise<FlowGap[]> {
   const gaps: FlowGap[] = [];
 
-  // Check Neural Modules
+  // 1. Check Neural Modules
   for (const mod of EXPECTED_NEURAL_MODULES) {
-    const path = `src/lib/neural/${mod.file}`;
-    const exists = await readProjectFile(path);
+    try {
+      const path = `src/lib/neural/${mod.file}`;
 
-    if (!exists) {
-      gaps.push({
-        id: mod.file,
-        category: "neural_module",
-        description: mod.desc,
-        severity: mod.severity as any,
-        expectedFile: path
-      });
+      // Dual-check: 1) Physical file existence via bundler glob
+      const fileExists = await readProjectFile(path);
+
+      // 2) Registry check: Is it exported in the barrel file?
+      // We strip .ts extension to match export names or sub-modules
+      const exportName = mod.file.replace(/\.ts$/, '');
+      const isExported = exportName in NeuralModules;
+
+      if (!fileExists && !isExported) {
+        gaps.push({
+          id: mod.file,
+          category: "neural_module",
+          description: mod.desc,
+          severity: mod.severity as any,
+          expectedFile: path
+        });
+      }
+    } catch (err) {
+      console.warn(`[FlowAnalyzer] Error checking module ${mod.file}:`, err);
     }
   }
 
-  // Check Visual Flows
+  // 2. Check Visual Flows
   for (const diag of EXPECTED_VISUAL_FLOWS) {
-    const exists = await readProjectFile(diag.file);
+    try {
+      const fileExists = await readProjectFile(diag.file);
 
-    if (!exists) {
-      gaps.push({
-        id: diag.file.split('/').pop() || diag.file,
-        category: "visual_flow",
-        description: diag.desc,
-        severity: diag.severity as any,
-        expectedFile: diag.file
-      });
+      const componentName = diag.file.split('/').pop()?.replace(/\.tsx$/, '') || '';
+      const isRegistered = componentName in VisualFlows;
+
+      if (!fileExists && !isRegistered) {
+        gaps.push({
+          id: componentName || diag.file,
+          category: "visual_flow",
+          description: diag.desc,
+          severity: diag.severity as any,
+          expectedFile: diag.file
+        });
+      }
+    } catch (err) {
+      console.warn(`[FlowAnalyzer] Error checking visual flow ${diag.file}:`, err);
     }
   }
 
