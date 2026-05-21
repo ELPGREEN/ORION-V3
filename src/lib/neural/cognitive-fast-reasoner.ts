@@ -6,6 +6,7 @@
  */
 
 import type { ModelTier } from "./slim-model-router";
+import { countWords } from "@/lib/utils/text-utils";
 
 // ═══ Types ═══
 
@@ -134,7 +135,7 @@ export function classifyThinkingMode(query: string, tier: ModelTier): ThinkingMo
   if (FAST_INDICATORS_RE.test(query)) return "fast";
   if (DEEP_TRIGGERS_RE.test(query)) return "deep";
 
-  const wordCount = query.split(/\s+/).length;
+  const wordCount = countWords(query);
   if (wordCount <= 6) return "conversational";
 
   // Word count heuristic

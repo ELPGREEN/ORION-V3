@@ -15,6 +15,7 @@ import { buildWorkingMemoryPrompt, initWorkingMemory } from "./orion-working-mem
 import { buildEpisodicContext, searchEpisodes, type EpisodicSearchResult } from "./episodic-memory";
 import { buildHealthContext } from "./system-health";
 import { buildTracingContext } from "./orion-tracing";
+import { getTokensEfficiently } from "@/lib/utils/text-utils";
 
 // ─── Types ───
 export interface MemoryEntry {
@@ -71,7 +72,7 @@ export function getMemoryFacts(): string[] {
 }
 
 function getTokens(text: string): Set<string> {
-  return new Set(text.toLowerCase().split(/\s+/).filter(w => w.length > 2));
+  return getTokensEfficiently(text, 2);
 }
 
 function wordOverlap(setA: Set<string>, setB: Set<string>): number {

@@ -9,6 +9,7 @@
  */
 
 import { addMemoryFacts } from "./orion-memory";
+import { getTokensEfficiently } from "@/lib/utils/text-utils";
 
 const STORAGE_KEY = "orion_intent_feedback";
 const MAX_ENTRIES = 500;
@@ -173,11 +174,12 @@ function fuzzyMatch(a: string, b: string): number {
   const shorter = a.length > b.length ? b : a;
   
   let matches = 0;
-  const words1 = new Set(longer.split(" "));
-  const words2 = shorter.split(" ");
+  const words1 = getTokensEfficiently(longer);
+  const words2 = getTokensEfficiently(shorter);
+
   for (const w of words2) {
     if (words1.has(w)) matches++;
   }
   
-  return matches / Math.max(words1.size, words2.length);
+  return matches / Math.max(words1.size, words2.size);
 }

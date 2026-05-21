@@ -8,6 +8,7 @@
 
 import { detectHallucinations, type HallucinationWarning } from "@/lib/analysis/hallucinationDetector";
 import { checkResponseQuality, type QualityResult } from "@/lib/analysis/responseQualityChecker";
+import { countWords, getTokensEfficiently } from "@/lib/utils/text-utils";
 
 // ═══ Types ═══
 
@@ -87,14 +88,10 @@ const UNCERTAINTY_PHRASES = [
  * Compute semantic overlap between query intent keywords and response.
  */
 function computeSemanticCoherence(query: string, response: string): number {
-  const queryWords = new Set(
-    query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const queryWords = getTokensEfficiently(query, 3);
   if (queryWords.size === 0) return 1;
 
-  const responseWords = new Set(
-    response.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const responseWords = getTokensEfficiently(response, 3);
 
   let overlap = 0;
   for (const w of queryWords) {
@@ -137,8 +134,8 @@ function detectFabricationSignals(response: string): PredictionError[] {
  * Check response length proportionality to query complexity.
  */
 function checkProportionality(query: string, response: string): PredictionError | null {
-  const queryWords = query.split(/\s+/).length;
-  const responseWords = response.split(/\s+/).length;
+  const queryWords = countWords(query);
+  const responseWords = countWords(response);
 
   // Very short response to complex query = suspicious
   if (queryWords > 10 && responseWords < 15) {
@@ -411,7 +408,7 @@ export function computeQuantumFreeEnergy(
   let wf = createWaveFunction("free_energy", dimensions);
 
   // 3. Apply decoherence based on response length (longer → more noise)
-  const responseLength = response.split(/\s+/).length;
+  const responseLength = countWords(response);
   const noiseLevel = Math.min(0.15, responseLength / 10000);
   wf = decohere(wf, noiseLevel);
 
