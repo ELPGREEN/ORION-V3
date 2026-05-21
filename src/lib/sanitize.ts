@@ -5,19 +5,29 @@ import DOMPurify from "dompurify";
  * Uses DOMPurify with a permissive config suitable for legal documents.
  * FIX: XSS - Central sanitization utility (Audit C1)
  */
+/**
+ * Hook to force rel="noopener noreferrer" on target="_blank" links
+ * This is a security best practice to prevent tabnabbing.
+ */
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+  if ("target" in node && node.getAttribute("target") === "_blank") {
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+});
+
 export function sanitizeHTML(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [
       "h1", "h2", "h3", "h4", "h5", "h6",
       "p", "br", "hr", "div", "span",
-      "strong", "b", "em", "i", "u", "s", "sub", "sup",
+      "strong", "b", "em", "i", "u", "s", "sub", "sup", "del", "mark",
       "ul", "ol", "li",
       "table", "thead", "tbody", "tr", "th", "td",
       "blockquote", "pre", "code",
-      "a", "img",
+      "a", "img", "article", "section",
     ],
     ALLOWED_ATTR: [
-      "href", "target", "rel", "src", "alt", "width", "height",
+      "href", "target", "rel", "src", "alt", "title", "width", "height",
       "class", "id", "style", "colspan", "rowspan",
     ],
     ALLOW_DATA_ATTR: false,
