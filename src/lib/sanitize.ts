@@ -1,6 +1,17 @@
 import DOMPurify from "dompurify";
 
 /**
+ * Global hook to enforce security headers on external links.
+ * Adds rel="noopener noreferrer" to any link with target="_blank".
+ * FIX: Tabnabbing protection (Audit C2)
+ */
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+  if ("target" in node && node.getAttribute("target") === "_blank") {
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+});
+
+/**
  * Sanitizes HTML content to prevent XSS attacks.
  * Uses DOMPurify with a permissive config suitable for legal documents.
  * FIX: XSS - Central sanitization utility (Audit C1)
@@ -15,9 +26,10 @@ export function sanitizeHTML(html: string): string {
       "table", "thead", "tbody", "tr", "th", "td",
       "blockquote", "pre", "code",
       "a", "img",
+      "del", "mark", "article", "section",
     ],
     ALLOWED_ATTR: [
-      "href", "target", "rel", "src", "alt", "width", "height",
+      "href", "target", "rel", "src", "alt", "width", "height", "title",
       "class", "id", "style", "colspan", "rowspan",
     ],
     ALLOW_DATA_ATTR: false,
