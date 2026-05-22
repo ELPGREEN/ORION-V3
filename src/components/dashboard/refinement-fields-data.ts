@@ -1,7 +1,16 @@
 // Extracted from RefinementQuestionsStep.tsx for maintainability
 // Contains mandatory refinement field definitions for 148+ document types
 
-import type { RefinementField } from "./RefinementQuestionsStep";
+export interface RefinementField {
+  key: string;
+  label: string;
+  type: "text" | "textarea" | "date" | "select" | "number";
+  options?: string[];
+  required: boolean;
+  placeholder?: string;
+  hint?: string;
+  validate?: "processo" | "cpf" | "cnpj" | "valor" | "email" | "oab" | "percentual";
+}
 
 const MANDATORY_REFINEMENT_FIELDS: Record<string, RefinementField[]> = {
   // ═══════════════════════════════════════

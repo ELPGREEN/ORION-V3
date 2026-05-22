@@ -10,7 +10,7 @@ const LINK_REGEX = /\[([^\]]+)\]\([^)]+\)/g;
 // URLs, comments, tags, borders, and specific emojis.
 // This reduces string allocations and CPU cycles in the hot-path AI streaming response loop.
 // Note: LINK_REGEX is handled separately because it uses a capture group for replacement.
-const MARKDOWN_CLEANUP_REGEX = /```json[\s\S]*?```|\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}|\[LEARN:[^\]]+\]|[\*_]{1,3}|^#{1,6}\s+|https?:\/\/\S+|\/\/[^\n]*|<[^>]*>|[─═╔╗╚╝║]|[🔹⭐◽📋🔄✅❌📌🔧⚙️🛡️⚠️📊📈📉🔍🔎💡🔗📁📂🗂️🗃️]/gm;
+const MARKDOWN_CLEANUP_REGEX = /```json[\s\S]*?```|\{"identifiedObjects"\s*:\s*\[[\s\S]*?\]\s*\}|\[LEARN:[^\]]+\]|[\*_]{1,3}|^#{1,6}\s+|https?:\/\/\S+|\/\/[^\n]*|<[^>]*>|(?:─|═|╔|╗|╚|╝|║)|(?:🔹|⭐|◽|📋|🔄|✅|❌|📌|🔧|⚙️|🛡️|⚠️|📊|📈|📉|🔍|🔎|💡|🔗|📁|📂|🗂️|🗃️)/gmu;
 
 /**
  * Strip markdown formatting, JSON blocks, and special characters from AI output.
@@ -28,6 +28,69 @@ export function stripMarkdown(text: string): string {
  * Extract text-only content from OpenAI-style messages (strip images).
  * Shared utility for LLM provider calls.
  */
+/**
+ * Count words in a string using manual character iteration to eliminate
+ * heap allocations (avoids split() array churn).
+ * BOLT V2.0 optimization for neural hot-paths.
+ */
+export function countWords(text: string): number {
+  if (!text) return 0;
+  let count = 0;
+  let inWord = false;
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+    // Consider characters > 32 as part of a word (roughly covers non-whitespace)
+    if (charCode > 32) {
+      if (!inWord) {
+        count++;
+        inWord = true;
+      }
+    } else {
+      inWord = false;
+    }
+  }
+  return count;
+}
+
+/**
+ * Extract tokens (words > 3 chars) using manual iteration to avoid
+ * split().filter() array churn. Returns a Set of lowercase tokens.
+ * BOLT V2.0 optimization for semantic overlap loops.
+ */
+export function getTokensEfficiently(text: string, minLength: number = 4): Set<string> {
+  const tokens = new Set<string>();
+  if (!text) return tokens;
+
+  let start = -1;
+  const lower = text.toLowerCase();
+
+  for (let i = 0; i < lower.length; i++) {
+    const charCode = lower.charCodeAt(i);
+    // Basic alphanumeric check (a-z, 0-9) + common accented chars
+    const isAlphaNum = (charCode >= 97 && charCode <= 122) ||
+                       (charCode >= 48 && charCode <= 57) ||
+                       (charCode >= 192 && charCode <= 255);
+
+    if (isAlphaNum) {
+      if (start === -1) start = i;
+    } else {
+      if (start !== -1) {
+        if (i - start >= minLength) {
+          tokens.add(lower.substring(start, i));
+        }
+        start = -1;
+      }
+    }
+  }
+
+  // Last token
+  if (start !== -1 && lower.length - start >= minLength) {
+    tokens.add(lower.substring(start));
+  }
+
+  return tokens;
+}
+
 export function extractTextFromMessages(messages: any[]): any[] {
   return messages.map((m: any) => ({
     role: m.role === "system" ? "system" : m.role === "assistant" ? "assistant" : "user",

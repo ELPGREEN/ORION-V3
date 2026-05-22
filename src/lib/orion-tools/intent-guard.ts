@@ -4,7 +4,7 @@
  * Used by useOrionReasoning to block intents the user cannot access.
  */
 
-import type { DistributableTool } from "@/lib/orion-tools/tool-distribution";
+import type { DistributableTool, PlanTier } from "@/lib/orion-tools/types";
 
 export const INTENT_TOOL_MAP: Record<string, DistributableTool> = {
   // Robotics
@@ -60,7 +60,7 @@ export interface IntentBlockMessage {
   message?: string;
 }
 
-import { checkToolAccess, type PlanTier } from "@/lib/orion-tools/tool-distribution";
+import { checkToolAccess } from "@/lib/orion-tools/tool-distribution";
 import type { AppRole } from "@/hooks/useUserRole";
 
 const PLAN_LABEL: Record<PlanTier, string> = {
