@@ -12,7 +12,7 @@ import { ptBR } from "date-fns/locale";
 import { ArrowLeft, Calendar, User, Tag, Share2, BookOpen, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
-import DOMPurify from "dompurify";
+import { sanitizeHTML } from "@/lib/sanitize";
 import { ImageCarousel } from "@/components/publicacoes/ImageCarousel";
 
 const isHtmlContent = (content: string) => /<(?:p|h[1-6]|div|ul|ol|li|blockquote|table|br|hr|strong|em)\b/i.test(content);
@@ -278,10 +278,7 @@ export default function PublicacaoDetalhe() {
                       [&_a]:text-primary [&_a]:hover:underline [&_a]:transition-colors
                       [&_hr]:my-10 [&_hr]:border-border/30"
                     dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(publicacao.conteudo, {
-                        ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','br','hr','strong','b','em','i','u','a','ul','ol','li','blockquote','table','thead','tbody','tr','th','td','img','span','div','sub','sup','s','del','mark','code','pre'],
-                        ALLOWED_ATTR: ['href','src','alt','title','target','rel','class','style'],
-                      }),
+                      __html: sanitizeHTML(publicacao.conteudo),
                     }}
                   />
                 ) : (
