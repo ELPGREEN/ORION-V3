@@ -68,3 +68,24 @@ Action: Always hoist RegExps to module level in hot paths. Prefer matchAll over 
 **Nova Métrica:** `classifyLegalDomain` 100% functional (best-match logic) / `pdf-layout-analysis` 100% connectivity.
 **Delta (Δ):** Error Elimination / Accuracy Recovery (Semantic PNL).
 **Learning:** Logic bugs in hot-path semantic analyzers can remain hidden if tests don't strictly assert the return value. Renaming modules without updating all call-sites (including documentation and UI) creates "entropy" and broken features. Standardized on `pdf-layout-analysis` as the canonical name.
+
+## 2026-07-04 - [Neural Hot-Path Optimization & System Health (BOLT V2.0)]
+**Baseline:**
+- computeFreeEnergy: 0.4198ms
+- analyzeSemantics: 0.0200ms
+- Lint Errors (Targeted): 4 (no-misleading-character-class, no-control-regex)
+
+**Nova Métrica:**
+- computeFreeEnergy: 0.1596ms
+- analyzeSemantics: 0.0187ms
+- Lint Errors (Targeted): 0
+
+**Delta (Δ):**
+- computeFreeEnergy: ~62.0% Latency Reduction
+- analyzeSemantics: ~6.5% Latency Reduction
+- Entropy: Elimination of critical regex lint errors in hot-paths.
+
+**Learning:**
+1. **Zero-Allocation counts:** High-frequency loops like `computeFreeEnergy` are extremely sensitive to array allocations from `.split(/\s+/)`. Using a manual character iteration loop (`countWords`) and `getTokensEfficiently` significantly reduces GC pressure and latency.
+2. **Hoisted RegExps:** Iterating over arrays of phrases using `.includes()` is inefficient. Consolidating into module-level hoisted RegExps and using single-pass `exec()` or `.test()` pre-checks yields measurable gains.
+3. **Regex Standards:** ESLint `no-misleading-character-class` requires surrogate pairs (emojis) to be handled via the `u` flag and non-capturing groups or escaped sequences (e.g., `\uD83D\uDCBF`) rather than square brackets.

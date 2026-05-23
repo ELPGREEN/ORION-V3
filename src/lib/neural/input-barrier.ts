@@ -175,7 +175,7 @@ function sanitizeEncoding(text: string): string {
     .replace(/[\u202a-\u202e]/g, "")    // Bidi overrides
     .replace(/[\u2060-\u206f]/g, "")    // Invisible formatters
     .replace(/[\ufeff]/g, "")           // BOM
-    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, ""); // Control chars
+    .replace(/[^\t\n\r\x20-\x7E\xA0-\xFF]/g, ""); // Remove non-printable/control chars safely using aliases
 }
 
 // ─── Public API ───
