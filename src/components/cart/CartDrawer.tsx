@@ -83,20 +83,29 @@ export function CartDrawer() {
                     <div className="flex items-center gap-2 mt-2">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="h-7 w-7 rounded-md bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors"
+                        className="h-7 w-7 rounded-md bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        aria-label="Diminuir quantidade"
+                        title="Diminuir quantidade"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
                       <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="h-7 w-7 rounded-md bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors"
+                        className="h-7 w-7 rounded-md bg-muted flex items-center justify-center hover:bg-muted-foreground/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        aria-label="Aumentar quantidade"
+                        title="Aumentar quantidade"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
-                  <button onClick={() => removeFromCart(item.id)} className="text-muted-foreground hover:text-destructive transition-colors self-start">
+                  <button
+                    onClick={() => removeFromCart(item.id)}
+                    className="text-muted-foreground hover:text-destructive transition-colors self-start p-1 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
+                    aria-label="Remover item"
+                    title="Remover item"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
