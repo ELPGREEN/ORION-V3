@@ -15,6 +15,7 @@ import { buildWorkingMemoryPrompt, initWorkingMemory } from "./orion-working-mem
 import { buildEpisodicContext, searchEpisodes, type EpisodicSearchResult } from "./episodic-memory";
 import { buildHealthContext } from "./system-health";
 import { buildTracingContext } from "./orion-tracing";
+import { getTokensEfficiently } from "@/lib/utils/text-utils";
 
 // ─── Types ───
 export interface MemoryEntry {
@@ -71,7 +72,7 @@ export function getMemoryFacts(): string[] {
 }
 
 function getTokens(text: string): Set<string> {
-  return new Set(text.toLowerCase().split(/\s+/).filter(w => w.length > 2));
+  return getTokensEfficiently(text, 3);
 }
 
 function wordOverlap(setA: Set<string>, setB: Set<string>): number {
@@ -390,17 +391,30 @@ export interface MemoryRelation {
   strength: number;
 }
 
+// BOLT V2.0: Module-level cache for tokens to prevent O(N^2) allocations in similarity loops
+const _tokenCache = new Map<string, Set<string>>();
+
 /**
  * Finds relationships between memory entries based on token overlap
  * and semantic patterns.
+ * BOLT V2.0: Optimized with token caching and getTokensEfficiently.
  */
 export function discoverRelationships(memories: MemoryEntry[]): MemoryRelation[] {
   const relations: MemoryRelation[] = [];
-  const tokenCache = memories.map(m => getTokens(m.fact));
+
+  const currentTokenCache = memories.map(m => {
+    if (_tokenCache.has(m.fact)) return _tokenCache.get(m.fact)!;
+    const tokens = getTokens(m.fact);
+    _tokenCache.set(m.fact, tokens);
+    return tokens;
+  });
+
+  // Cleanup old cache entries periodically
+  if (_tokenCache.size > 200) _tokenCache.clear();
 
   for (let i = 0; i < memories.length; i++) {
     for (let j = i + 1; j < memories.length; j++) {
-      const overlap = wordOverlap(tokenCache[i], tokenCache[j]);
+      const overlap = wordOverlap(currentTokenCache[i], currentTokenCache[j]);
 
       if (overlap > 0.4) {
         relations.push({

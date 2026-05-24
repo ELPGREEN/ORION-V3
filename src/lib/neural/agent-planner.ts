@@ -30,32 +30,22 @@ export interface DAGPlan {
   estimatedDuration: number;
 }
 
-const COMPLEX_KEYWORDS = [
-  "habeas corpus", "mandado de segurança", "ação direta",
-  "recurso extraordinário", "recurso especial"
-];
-
-const MODERATE_KEYWORDS = [
-  "petição inicial", "recurso", "parecer", "contestação", "apelação"
-];
-
-const MULTI_STEP_MARKERS = [
-  "e depois", "em seguida", "primeiro", "segundo", "além disso"
-];
+// BOLT V2.0: Consolidate patterns into single-pass RegExps to avoid O(N) loops
+const COMPLEX_REGEX = /(?:habeas corpus|mandado de segurança|ação direta|recurso extraordinário|recurso especial)/gi;
+const MODERATE_REGEX = /(?:petição inicial|recurso|parecer|contestação|apelação)/gi;
+const MULTI_STEP_REGEX = /(?:e depois|em seguida|primeiro|segundo|além disso)/gi;
 
 export function classifyComplexity(query: string): ComplexityLevel {
-  const lower = query.toLowerCase();
   let score = 0;
 
-  for (const kw of COMPLEX_KEYWORDS) {
-    if (lower.includes(kw)) score += 2;
-  }
-  for (const kw of MODERATE_KEYWORDS) {
-    if (lower.includes(kw)) score += 1;
-  }
-  for (const mk of MULTI_STEP_MARKERS) {
-    if (lower.includes(mk)) score += 1.5;
-  }
+  COMPLEX_REGEX.lastIndex = 0;
+  while (COMPLEX_REGEX.exec(query) !== null) score += 2;
+
+  MODERATE_REGEX.lastIndex = 0;
+  while (MODERATE_REGEX.exec(query) !== null) score += 1;
+
+  MULTI_STEP_REGEX.lastIndex = 0;
+  while (MULTI_STEP_REGEX.exec(query) !== null) score += 1.5;
 
   if (score >= 5) return "critical";
   if (score >= 3) return "complex";

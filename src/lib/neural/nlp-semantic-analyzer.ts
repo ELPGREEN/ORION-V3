@@ -6,6 +6,8 @@
  * no LLM calls or network requests.
  */
 
+import { countWords } from "@/lib/utils/text-utils";
+
 // ─── Types ───
 
 export interface LegalEntity {
@@ -258,17 +260,8 @@ export function resolveCoreferences(text: string, recentContext: string = ""): s
 // ─── Complexity Assessment ───
 
 function assessComplexity(text: string, entities: LegalEntity[]): "simple" | "medium" | "complex" {
-  // Optimization: Manual word count to avoid large array allocation from split()
-  let wordCount = 0;
-  let inWord = false;
-  for (let i = 0; i < text.length; i++) {
-    if (/\s/.test(text[i])) {
-      inWord = false;
-    } else if (!inWord) {
-      wordCount++;
-      inWord = true;
-    }
-  }
+  // BOLT V2.0: Use zero-allocation word count helper
+  const wordCount = countWords(text);
 
   const entityCount = entities.length;
 

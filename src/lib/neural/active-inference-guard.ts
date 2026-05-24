@@ -8,6 +8,7 @@
 
 import { detectHallucinations, type HallucinationWarning } from "@/lib/analysis/hallucinationDetector";
 import { checkResponseQuality, type QualityResult } from "@/lib/analysis/responseQualityChecker";
+import { countWords, getTokensEfficiently } from "@/lib/utils/text-utils";
 
 // ═══ Types ═══
 
@@ -34,28 +35,8 @@ const FREE_ENERGY_THRESHOLD_LOW = 25;  // OPTIMIZED: was 35 - more sensitive
 const FREE_ENERGY_THRESHOLD_HIGH = 50; // OPTIMIZED: was 60 - correct more often
 const BLOCK_THRESHOLD = 75;           // NEW: block responses above this
 
-const HALLUCINATION_PHRASES = [
-  "como modelo de linguagem",
-  "não tenho acesso a informações em tempo real",
-  "não posso fornecer consultoria jurídica",
-  "peço desculpas pelo erro",
-  "me desculpe, mas não",
-  "infelizmente não tenho como verificar",
-  "baseado no meu treinamento",
-  "até minha data de corte",
-  "é importante consultar um advogado",
-  "não posso garantir a precisão",
-  // ═══ Anti-hallucination: Vision denial phrases ═══
-  "não tenho capacidade de visão",
-  "não consigo ver imagens",
-  "não tenho acesso a imagens",
-  "não posso ver o que você",
-  "como um modelo de texto",
-  "sou um assistente de texto",
-  "não possuo visão",
-  "não tenho olhos",
-  "incapaz de processar imagens",
-];
+// BOLT V2.0: Consolidate phrases into a single RegExp for O(N) single-pass matching
+const HALLUCINATION_REGEX = /(?:como modelo de linguagem|não tenho acesso a informações em tempo real|não posso fornecer consultoria jurídica|peço desculpas pelo erro|me desculpe, mas não|infelizmente não tenho como verificar|baseado no meu treinamento|até minha data de corte|é importante consultar um advogado|não posso garantir a precisão|não tenho capacidade de visão|não consigo ver imagens|não tenho acesso a imagens|não posso ver o que você|como um modelo de texto|sou um assistente de texto|não possuo visão|não tenho olhos|incapaz de processar imagens)/gi;
 
 const FABRICATION_PATTERNS = [
   /Lei\s+n[°º.]?\s*\d{5,}\/\d{4}/i, // Leis com números absurdamente altos
@@ -66,35 +47,20 @@ const FABRICATION_PATTERNS = [
   /\d{5}[-.\s]?\d{4}/i, // Telefones fabricados
 ];
 
-// NEW: Uncertainty phrases that penalize responses
-const UNCERTAINTY_PHRASES = [
-  "não tenho certeza",
-  "pode ser que",
-  "talvez",
-  "provavelmente",
-  "creio que",
-  "acredito que",
-  "na minha opinião",
-  "não posso confirmar",
-  "não tenho informações",
-  "falha ao",
-  "não encontrei",
-];
+// BOLT V2.0: Consolidate uncertainty phrases
+const UNCERTAINTY_REGEX = /(?:não tenho certeza|pode ser que|talvez|provavelmente|creio que|acredito que|na minha opinião|não posso confirmar|não tenho informações|falha ao|não encontrei)/gi;
 
 // ═══ Core Functions ═══
 
 /**
  * Compute semantic overlap between query intent keywords and response.
+ * BOLT V2.0: Optimized with getTokensEfficiently to eliminate split() allocations.
  */
 function computeSemanticCoherence(query: string, response: string): number {
-  const queryWords = new Set(
-    query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const queryWords = getTokensEfficiently(query, 4);
   if (queryWords.size === 0) return 1;
 
-  const responseWords = new Set(
-    response.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const responseWords = getTokensEfficiently(response, 4);
 
   let overlap = 0;
   for (const w of queryWords) {
@@ -105,28 +71,37 @@ function computeSemanticCoherence(query: string, response: string): number {
 
 /**
  * Detect hedging/fabrication language patterns.
+ * BOLT V2.0: Optimized with single-pass regex loops.
  */
 function detectFabricationSignals(response: string): PredictionError[] {
   const errors: PredictionError[] = [];
-  const lower = response.toLowerCase();
 
-  // Check hallucination phrases
-  const matchedPhrases = HALLUCINATION_PHRASES.filter(p => lower.includes(p));
-  if (matchedPhrases.length > 0) {
+  // Check hallucination phrases via single-pass exec loop
+  let matchCount = 0;
+  HALLUCINATION_REGEX.lastIndex = 0;
+  while (HALLUCINATION_REGEX.exec(response) !== null) {
+    matchCount++;
+  }
+
+  if (matchCount > 0) {
     errors.push({
       source: "hedging_language",
-      delta: Math.min(matchedPhrases.length * 0.15, 0.6),
-      detail: `${matchedPhrases.length} frase(s) evasiva(s) detectada(s)`,
+      delta: Math.min(matchCount * 0.15, 0.6),
+      detail: `${matchCount} frase(s) evasiva(s) detectada(s)`,
     });
   }
 
   // Check fabrication patterns
-  const fabrications = FABRICATION_PATTERNS.filter(p => p.test(response));
-  if (fabrications.length > 0) {
+  let fabCount = 0;
+  for (const p of FABRICATION_PATTERNS) {
+    if (p.test(response)) fabCount++;
+  }
+
+  if (fabCount > 0) {
     errors.push({
       source: "fabrication_pattern",
-      delta: fabrications.length * 0.25,
-      detail: `${fabrications.length} referência(s) com formato suspeito`,
+      delta: fabCount * 0.25,
+      detail: `${fabCount} referência(s) com formato suspeito`,
     });
   }
 
@@ -135,10 +110,11 @@ function detectFabricationSignals(response: string): PredictionError[] {
 
 /**
  * Check response length proportionality to query complexity.
+ * BOLT V2.0: Optimized with zero-allocation countWords.
  */
 function checkProportionality(query: string, response: string): PredictionError | null {
-  const queryWords = query.split(/\s+/).length;
-  const responseWords = response.split(/\s+/).length;
+  const queryWords = countWords(query);
+  const responseWords = countWords(response);
 
   // Very short response to complex query = suspicious
   if (queryWords > 10 && responseWords < 15) {
@@ -228,13 +204,18 @@ export function computeFreeEnergy(
     });
   }
 
-  // 7. Uncertainty phrases penalty (OPTIMIZED)
-  const uncertaintyMatches = UNCERTAINTY_PHRASES.filter(p => response.toLowerCase().includes(p));
-  if (uncertaintyMatches.length > 2) {
+  // 7. Uncertainty phrases penalty (BOLT V2.0: Single-pass regex)
+  let uncertaintyCount = 0;
+  UNCERTAINTY_REGEX.lastIndex = 0;
+  while (UNCERTAINTY_REGEX.exec(response) !== null) {
+    uncertaintyCount++;
+  }
+
+  if (uncertaintyCount > 2) {
     errors.push({
       source: "uncertainty_excessive",
       delta: 0.1,
-      detail: `Excesso de expressões de incerteza (${uncertaintyMatches.length}): ${uncertaintyMatches.slice(0, 3).join(", ")}`,
+      detail: `Excesso de expressões de incerteza (${uncertaintyCount})`,
     });
   }
 
