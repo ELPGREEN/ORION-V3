@@ -1,5 +1,5 @@
 import ReactMarkdown from "react-markdown";
-import DOMPurify from "dompurify";
+import { sanitizeHTML } from "@/lib/sanitize";
 
 interface MarkdownPreviewProps {
   content: string;
@@ -20,16 +20,7 @@ export function MarkdownPreview({ content }: MarkdownPreviewProps) {
 
   // If content is HTML (from TipTap), render as sanitized HTML
   if (isHtml(content)) {
-    const clean = DOMPurify.sanitize(content, {
-      ALLOWED_TAGS: [
-        "p", "br", "strong", "b", "em", "i", "u", "s", "del",
-        "h1", "h2", "h3", "h4", "h5", "h6",
-        "ul", "ol", "li", "blockquote", "hr", "a", "img",
-        "table", "thead", "tbody", "tr", "th", "td",
-        "code", "pre", "mark", "span", "div", "article", "section",
-      ],
-      ALLOWED_ATTR: ["href", "src", "alt", "title", "class", "target", "rel", "style"],
-    });
+    const clean = sanitizeHTML(content);
     return (
       <div className="p-4 sm:p-6 overflow-y-auto max-h-[400px]">
         <article
