@@ -81,11 +81,15 @@ export function FindReplaceBar({ editor, onClose }: FindReplaceBarProps) {
         <Input
           className="h-7 text-xs pr-12"
           placeholder="Buscar..."
+          aria-label="Termo para buscar"
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
           autoFocus
           onKeyDown={(e) => {
-            if (e.key === "Enter") { e.shiftKey ? handlePrev() : handleNext(); }
+            if (e.key === "Enter") {
+              if (e.shiftKey) handlePrev();
+              else handleNext();
+            }
             if (e.key === "Escape") handleClose();
           }}
         />
@@ -96,10 +100,26 @@ export function FindReplaceBar({ editor, onClose }: FindReplaceBarProps) {
         )}
       </div>
 
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePrev} disabled={resultCount === 0} title="Anterior">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        onClick={handlePrev}
+        disabled={resultCount === 0}
+        title="Anterior"
+        aria-label="Ir para o resultado anterior"
+      >
         <ChevronUp className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleNext} disabled={resultCount === 0} title="Próximo">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        onClick={handleNext}
+        disabled={resultCount === 0}
+        title="Próximo"
+        aria-label="Ir para o próximo resultado"
+      >
         <ChevronDown className="h-3.5 w-3.5" />
       </Button>
       <Button
@@ -108,6 +128,7 @@ export function FindReplaceBar({ editor, onClose }: FindReplaceBarProps) {
         className={`h-7 w-7 ${caseSensitive ? "bg-primary/20 text-primary" : "text-muted-foreground"}`}
         onClick={handleToggleCase}
         title="Diferenciar maiúsculas"
+        aria-label="Diferenciar maiúsculas e minúsculas"
       >
         <CaseSensitive className="h-3.5 w-3.5" />
       </Button>
@@ -117,6 +138,7 @@ export function FindReplaceBar({ editor, onClose }: FindReplaceBarProps) {
       <Input
         className="h-7 text-xs flex-1 min-w-[120px] max-w-[200px]"
         placeholder="Substituir por..."
+        aria-label="Termo para substituir"
         value={replace}
         onChange={(e) => {
           setReplace(e.target.value);
@@ -125,14 +147,37 @@ export function FindReplaceBar({ editor, onClose }: FindReplaceBarProps) {
         onKeyDown={(e) => { if (e.key === "Escape") handleClose(); }}
       />
 
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleReplace} disabled={resultCount === 0} title="Substituir">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        onClick={handleReplace}
+        disabled={resultCount === 0}
+        title="Substituir"
+        aria-label="Substituir ocorrência atual"
+      >
         <Replace className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleReplaceAll} disabled={resultCount === 0} title="Substituir todos">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        onClick={handleReplaceAll}
+        disabled={resultCount === 0}
+        title="Substituir todos"
+        aria-label="Substituir todas as ocorrências"
+      >
         <ReplaceAll className="h-3.5 w-3.5" />
       </Button>
 
-      <Button variant="ghost" size="icon" className="h-7 w-7 ml-auto" onClick={handleClose} title="Fechar">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 ml-auto"
+        onClick={handleClose}
+        title="Fechar"
+        aria-label="Fechar barra de busca"
+      >
         <X className="h-3.5 w-3.5" />
       </Button>
     </div>
