@@ -140,6 +140,8 @@ const COREFERENCE_SUBJECT_REGEX = /\b(?:sobre\s+)?([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A
 const COREFERENCE_TOPIC_REGEX = /\b(?:artigo|lei|decreto|contrato|processo|caso)\s+[\d.\/]+/i;
 const COREFERENCE_PRONOUN_REGEX = /\b(isso|isto|aquilo|o\s+mesmo|a\s+mesma|ele|ela|esse|essa|desse|dessa|nesse|nessa)\b/gi;
 
+import { countWords } from "@/lib/utils/text-utils";
+
 const COMPLEXITY_CLAUSE_REGEX = /\b(?:e|ou|mas|porém|contudo|entretanto|todavia)\b/gi;
 
 // ─── Legal Entity Extraction ───
@@ -258,18 +260,8 @@ export function resolveCoreferences(text: string, recentContext: string = ""): s
 // ─── Complexity Assessment ───
 
 function assessComplexity(text: string, entities: LegalEntity[]): "simple" | "medium" | "complex" {
-  // Optimization: Manual word count to avoid large array allocation from split()
-  let wordCount = 0;
-  let inWord = false;
-  for (let i = 0; i < text.length; i++) {
-    if (/\s/.test(text[i])) {
-      inWord = false;
-    } else if (!inWord) {
-      wordCount++;
-      inWord = true;
-    }
-  }
-
+  // BOLT V2.0: Unified zero-allocation word count
+  const wordCount = countWords(text);
   const entityCount = entities.length;
 
   // Optimization: Use .test() in a loop to count clauses instead of match() array allocation

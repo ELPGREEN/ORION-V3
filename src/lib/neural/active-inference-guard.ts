@@ -8,6 +8,7 @@
 
 import { detectHallucinations, type HallucinationWarning } from "@/lib/analysis/hallucinationDetector";
 import { checkResponseQuality, type QualityResult } from "@/lib/analysis/responseQualityChecker";
+import { countWords, getTokensEfficiently } from "@/lib/utils/text-utils";
 
 // ═══ Types ═══
 
@@ -45,7 +46,6 @@ const HALLUCINATION_PHRASES = [
   "até minha data de corte",
   "é importante consultar um advogado",
   "não posso garantir a precisão",
-  // ═══ Anti-hallucination: Vision denial phrases ═══
   "não tenho capacidade de visão",
   "não consigo ver imagens",
   "não tenho acesso a imagens",
@@ -57,16 +57,6 @@ const HALLUCINATION_PHRASES = [
   "incapaz de processar imagens",
 ];
 
-const FABRICATION_PATTERNS = [
-  /Lei\s+n[°º.]?\s*\d{5,}\/\d{4}/i, // Leis com números absurdamente altos
-  /Art(?:igo)?\.?\s*\d{4,}/i, // Artigos com 4+ dígitos (improvável)
-  /Súmula\s+(?:Vinculante\s+)?\d{3,}/i, // Súmulas com 3+ dígitos
-  /(?:RE|REsp)\s+\d{10,}/i, // Processos com números excessivamente longos
-  /(?:20[3-9]\d|21\d{2})\/\d{2}\/\d{2}/i, // Datas futuras impossíveis (2030+)
-  /\d{5}[-.\s]?\d{4}/i, // Telefones fabricados
-];
-
-// NEW: Uncertainty phrases that penalize responses
 const UNCERTAINTY_PHRASES = [
   "não tenho certeza",
   "pode ser que",
@@ -81,20 +71,29 @@ const UNCERTAINTY_PHRASES = [
   "não encontrei",
 ];
 
+// BOLT V2.0: Consolidate phrases into hoisted RegExps to avoid O(N) loops
+const HALLUCINATION_REGEX = new RegExp(`\\b(?:${HALLUCINATION_PHRASES.join("|")})\\b`, "gi");
+const UNCERTAINTY_REGEX = new RegExp(`\\b(?:${UNCERTAINTY_PHRASES.join("|")})\\b`, "gi");
+
+const FABRICATION_PATTERNS = [
+  /Lei\s+n[°º.]?\s*\d{5,}\/\d{4}/i, // Leis com números absurdamente altos
+  /Art(?:igo)?\.?\s*\d{4,}/i, // Artigos com 4+ dígitos (improvável)
+  /Súmula\s+(?:Vinculante\s+)?\d{3,}/i, // Súmulas com 3+ dígitos
+  /(?:RE|REsp)\s+\d{10,}/i, // Processos com números excessivamente longos
+  /(?:20[3-9]\d|21\d{2})\/\d{2}\/\d{2}/i, // Datas futuras impossíveis (2030+)
+  /\d{5}[-.\s]?\d{4}/i, // Telefones fabricados
+];
+
 // ═══ Core Functions ═══
 
 /**
  * Compute semantic overlap between query intent keywords and response.
  */
 function computeSemanticCoherence(query: string, response: string): number {
-  const queryWords = new Set(
-    query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const queryWords = getTokensEfficiently(query);
   if (queryWords.size === 0) return 1;
 
-  const responseWords = new Set(
-    response.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const responseWords = getTokensEfficiently(response);
 
   let overlap = 0;
   for (const w of queryWords) {
@@ -108,26 +107,27 @@ function computeSemanticCoherence(query: string, response: string): number {
  */
 function detectFabricationSignals(response: string): PredictionError[] {
   const errors: PredictionError[] = [];
-  const lower = response.toLowerCase();
 
-  // Check hallucination phrases
-  const matchedPhrases = HALLUCINATION_PHRASES.filter(p => lower.includes(p));
-  if (matchedPhrases.length > 0) {
+  // BOLT V2.0: Single-pass regex check for hallucination phrases
+  HALLUCINATION_REGEX.lastIndex = 0;
+  const hallucinationMatches = response.match(HALLUCINATION_REGEX);
+  if (hallucinationMatches) {
     errors.push({
       source: "hedging_language",
-      delta: Math.min(matchedPhrases.length * 0.15, 0.6),
-      detail: `${matchedPhrases.length} frase(s) evasiva(s) detectada(s)`,
+      delta: Math.min(hallucinationMatches.length * 0.15, 0.6),
+      detail: `${hallucinationMatches.length} frase(s) evasiva(s) detectada(s)`,
     });
   }
 
   // Check fabrication patterns
-  const fabrications = FABRICATION_PATTERNS.filter(p => p.test(response));
-  if (fabrications.length > 0) {
-    errors.push({
-      source: "fabrication_pattern",
-      delta: fabrications.length * 0.25,
-      detail: `${fabrications.length} referência(s) com formato suspeito`,
-    });
+  for (const p of FABRICATION_PATTERNS) {
+    if (p.test(response)) {
+      errors.push({
+        source: "fabrication_pattern",
+        delta: 0.25,
+        detail: `Referência com formato suspeito detectada`,
+      });
+    }
   }
 
   return errors;
@@ -137,8 +137,8 @@ function detectFabricationSignals(response: string): PredictionError[] {
  * Check response length proportionality to query complexity.
  */
 function checkProportionality(query: string, response: string): PredictionError | null {
-  const queryWords = query.split(/\s+/).length;
-  const responseWords = response.split(/\s+/).length;
+  const queryWords = countWords(query);
+  const responseWords = countWords(response);
 
   // Very short response to complex query = suspicious
   if (queryWords > 10 && responseWords < 15) {
@@ -228,9 +228,10 @@ export function computeFreeEnergy(
     });
   }
 
-  // 7. Uncertainty phrases penalty (OPTIMIZED)
-  const uncertaintyMatches = UNCERTAINTY_PHRASES.filter(p => response.toLowerCase().includes(p));
-  if (uncertaintyMatches.length > 2) {
+  // 7. Uncertainty phrases penalty (BOLT V2.0: Use hoisted regex)
+  UNCERTAINTY_REGEX.lastIndex = 0;
+  const uncertaintyMatches = response.match(UNCERTAINTY_REGEX);
+  if (uncertaintyMatches && uncertaintyMatches.length > 2) {
     errors.push({
       source: "uncertainty_excessive",
       delta: 0.1,
@@ -411,7 +412,7 @@ export function computeQuantumFreeEnergy(
   let wf = createWaveFunction("free_energy", dimensions);
 
   // 3. Apply decoherence based on response length (longer → more noise)
-  const responseLength = response.split(/\s+/).length;
+  const responseLength = countWords(response);
   const noiseLevel = Math.min(0.15, responseLength / 10000);
   wf = decohere(wf, noiseLevel);
 
