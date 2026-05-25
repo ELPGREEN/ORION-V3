@@ -165,6 +165,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
             : "text-muted-foreground hover:text-foreground hover:bg-accent"
         )}
         title={conversationMode ? "Desativar modo conversa" : "Ativar modo conversa por voz"}
+        aria-label={conversationMode ? "Desativar modo conversa por voz" : "Ativar modo conversa por voz"}
       >
         <Headphones className="h-5 w-5" />
         {conversationMode && (
@@ -186,6 +187,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
               : "text-muted-foreground hover:text-foreground hover:bg-accent"
           )}
           title={isListening ? "Parar gravação" : "Comando de voz"}
+          aria-label={isListening ? "Parar gravação de voz" : "Comando de voz"}
         >
           {isListening ? (
             <>
@@ -216,6 +218,7 @@ export function VoiceInputButton({ onTranscript, onAutoSend, speakText, isProces
             isSpeakingHQ ? "text-cyan-400 bg-cyan-400/10" : "text-muted-foreground hover:text-foreground"
           )}
           title={isSpeakingHQ ? "Parar fala" : "Ouvir resposta"}
+          aria-label={isSpeakingHQ ? "Parar fala" : "Ouvir resposta"}
         >
           {isSpeakingHQ ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </Button>

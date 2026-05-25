@@ -183,7 +183,13 @@ export default function ChatJuridico() {
       <header className="sticky top-0 z-50 bg-secondary border-b border-sidebar-border">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="text-secondary-foreground" asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-secondary-foreground"
+              asChild
+              aria-label="Voltar para o Dashboard"
+            >
               <Link to="/dashboard"><ArrowLeft className="h-5 w-5" /></Link>
             </Button>
             <div className="flex items-center gap-2">
@@ -349,27 +355,45 @@ export default function ChatJuridico() {
                     <div className="space-y-2 mt-2">
                       <ProviderDiagnosticPanel diagnostics={message.diagnostics} />
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => copyToClipboard(message.content)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-muted-foreground"
+                          onClick={() => copyToClipboard(message.content)}
+                          aria-label="Copiar resposta"
+                        >
                           <Copy className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => logNeural({
-                          interaction_type: "chat",
-                          input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
-                          output_text: message.content,
-                          quality_score: 0.9,
-                          user_id: user?.id,
-                          metadata: { thumbs: "up", provider: message.provider, module: "chat_juridico" },
-                        })}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-muted-foreground"
+                          onClick={() => logNeural({
+                            interaction_type: "chat",
+                            input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
+                            output_text: message.content,
+                            quality_score: 0.9,
+                            user_id: user?.id,
+                            metadata: { thumbs: "up", provider: message.provider, module: "chat_juridico" },
+                          })}
+                          aria-label="Resposta útil"
+                        >
                           <ThumbsUp className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground" onClick={() => logNeural({
-                          interaction_type: "chat",
-                          input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
-                          output_text: message.content,
-                          quality_score: 0.2,
-                          user_id: user?.id,
-                          metadata: { thumbs: "down", provider: message.provider, module: "chat_juridico" },
-                        })}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-muted-foreground"
+                          onClick={() => logNeural({
+                            interaction_type: "chat",
+                            input_text: messages.find(m => m.role === "user" && messages.indexOf(m) < messages.indexOf(message))?.content || "",
+                            output_text: message.content,
+                            quality_score: 0.2,
+                            user_id: user?.id,
+                            metadata: { thumbs: "down", provider: message.provider, module: "chat_juridico" },
+                          })}
+                          aria-label="Resposta não útil"
+                        >
                           <ThumbsDown className="h-3 w-3" />
                         </Button>
                       </div>
@@ -434,7 +458,13 @@ export default function ChatJuridico() {
           <div className="flex gap-2">
             <Textarea ref={textareaRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
               placeholder="Digite sua dúvida jurídica..." className="min-h-[48px] max-h-[200px] resize-none" rows={1} disabled={loading} />
-            <Button onClick={() => handleSend()} disabled={!input.trim() || loading} size="icon" className="h-12 w-12">
+            <Button
+              onClick={() => handleSend()}
+              disabled={!input.trim() || loading}
+              size="icon"
+              className="h-12 w-12"
+              aria-label="Enviar mensagem"
+            >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
             </Button>
           </div>
