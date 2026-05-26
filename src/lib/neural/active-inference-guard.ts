@@ -8,6 +8,7 @@
 
 import { detectHallucinations, type HallucinationWarning } from "@/lib/analysis/hallucinationDetector";
 import { checkResponseQuality, type QualityResult } from "@/lib/analysis/responseQualityChecker";
+import { countWords, getTokensEfficiently } from "@/lib/utils/text-utils";
 
 // ═══ Types ═══
 
@@ -34,28 +35,8 @@ const FREE_ENERGY_THRESHOLD_LOW = 25;  // OPTIMIZED: was 35 - more sensitive
 const FREE_ENERGY_THRESHOLD_HIGH = 50; // OPTIMIZED: was 60 - correct more often
 const BLOCK_THRESHOLD = 75;           // NEW: block responses above this
 
-const HALLUCINATION_PHRASES = [
-  "como modelo de linguagem",
-  "não tenho acesso a informações em tempo real",
-  "não posso fornecer consultoria jurídica",
-  "peço desculpas pelo erro",
-  "me desculpe, mas não",
-  "infelizmente não tenho como verificar",
-  "baseado no meu treinamento",
-  "até minha data de corte",
-  "é importante consultar um advogado",
-  "não posso garantir a precisão",
-  // ═══ Anti-hallucination: Vision denial phrases ═══
-  "não tenho capacidade de visão",
-  "não consigo ver imagens",
-  "não tenho acesso a imagens",
-  "não posso ver o que você",
-  "como um modelo de texto",
-  "sou um assistente de texto",
-  "não possuo visão",
-  "não tenho olhos",
-  "incapaz de processar imagens",
-];
+// PERF: Pre-compiled RegExps for O(N) single-pass detection
+const HALLUCINATION_REGEX = /\b(como modelo de linguagem|não tenho acesso a informações em tempo real|não posso fornecer consultoria jurídica|peço desculpas pelo erro|me desculpe, mas não|infelizmente não tenho como verificar|baseado no meu treinamento|até minha data de corte|é importante consultar um advogado|não posso garantir a precisão|não tenho capacidade de visão|não consigo ver imagens|não tenho acesso a imagens|não posso ver o que você|como um modelo de texto|sou um assistente de texto|não possuo visão|não tenho olhos|incapaz de processar imagens)\b/gi;
 
 const FABRICATION_PATTERNS = [
   /Lei\s+n[°º.]?\s*\d{5,}\/\d{4}/i, // Leis com números absurdamente altos
@@ -67,19 +48,7 @@ const FABRICATION_PATTERNS = [
 ];
 
 // NEW: Uncertainty phrases that penalize responses
-const UNCERTAINTY_PHRASES = [
-  "não tenho certeza",
-  "pode ser que",
-  "talvez",
-  "provavelmente",
-  "creio que",
-  "acredito que",
-  "na minha opinião",
-  "não posso confirmar",
-  "não tenho informações",
-  "falha ao",
-  "não encontrei",
-];
+const UNCERTAINTY_REGEX = /\b(não tenho certeza|pode ser que|talvez|provavelmente|creio que|acredito que|na minha opinião|não posso confirmar|não tenho informações|falha ao|não encontrei)\b/gi;
 
 // ═══ Core Functions ═══
 
@@ -87,14 +56,10 @@ const UNCERTAINTY_PHRASES = [
  * Compute semantic overlap between query intent keywords and response.
  */
 function computeSemanticCoherence(query: string, response: string): number {
-  const queryWords = new Set(
-    query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const queryWords = getTokensEfficiently(query, 4);
   if (queryWords.size === 0) return 1;
 
-  const responseWords = new Set(
-    response.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const responseWords = getTokensEfficiently(response, 4);
 
   let overlap = 0;
   for (const w of queryWords) {
@@ -108,11 +73,11 @@ function computeSemanticCoherence(query: string, response: string): number {
  */
 function detectFabricationSignals(response: string): PredictionError[] {
   const errors: PredictionError[] = [];
-  const lower = response.toLowerCase();
 
-  // Check hallucination phrases
-  const matchedPhrases = HALLUCINATION_PHRASES.filter(p => lower.includes(p));
-  if (matchedPhrases.length > 0) {
+  // Check hallucination phrases (OPTIMIZED: single-pass regex)
+  HALLUCINATION_REGEX.lastIndex = 0;
+  const matchedPhrases = response.match(HALLUCINATION_REGEX);
+  if (matchedPhrases && matchedPhrases.length > 0) {
     errors.push({
       source: "hedging_language",
       delta: Math.min(matchedPhrases.length * 0.15, 0.6),
@@ -137,8 +102,8 @@ function detectFabricationSignals(response: string): PredictionError[] {
  * Check response length proportionality to query complexity.
  */
 function checkProportionality(query: string, response: string): PredictionError | null {
-  const queryWords = query.split(/\s+/).length;
-  const responseWords = response.split(/\s+/).length;
+  const queryWords = countWords(query);
+  const responseWords = countWords(response);
 
   // Very short response to complex query = suspicious
   if (queryWords > 10 && responseWords < 15) {
@@ -228,9 +193,10 @@ export function computeFreeEnergy(
     });
   }
 
-  // 7. Uncertainty phrases penalty (OPTIMIZED)
-  const uncertaintyMatches = UNCERTAINTY_PHRASES.filter(p => response.toLowerCase().includes(p));
-  if (uncertaintyMatches.length > 2) {
+  // 7. Uncertainty phrases penalty (OPTIMIZED: single-pass regex)
+  UNCERTAINTY_REGEX.lastIndex = 0;
+  const uncertaintyMatches = response.match(UNCERTAINTY_REGEX);
+  if (uncertaintyMatches && uncertaintyMatches.length > 2) {
     errors.push({
       source: "uncertainty_excessive",
       delta: 0.1,
@@ -411,7 +377,7 @@ export function computeQuantumFreeEnergy(
   let wf = createWaveFunction("free_energy", dimensions);
 
   // 3. Apply decoherence based on response length (longer → more noise)
-  const responseLength = response.split(/\s+/).length;
+  const responseLength = countWords(response);
   const noiseLevel = Math.min(0.15, responseLength / 10000);
   wf = decohere(wf, noiseLevel);
 

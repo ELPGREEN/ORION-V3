@@ -15,6 +15,7 @@ import { buildWorkingMemoryPrompt, initWorkingMemory } from "./orion-working-mem
 import { buildEpisodicContext, searchEpisodes, type EpisodicSearchResult } from "./episodic-memory";
 import { buildHealthContext } from "./system-health";
 import { buildTracingContext } from "./orion-tracing";
+import { getTokensEfficiently } from "@/lib/utils/text-utils";
 
 // ─── Types ───
 export interface MemoryEntry {
@@ -68,10 +69,6 @@ export function getLocalMemory(): MemoryEntry[] {
 
 export function getMemoryFacts(): string[] {
   return getLocalMemory().map((m) => m.fact);
-}
-
-function getTokens(text: string): Set<string> {
-  return new Set(text.toLowerCase().split(/\s+/).filter(w => w.length > 2));
 }
 
 function wordOverlap(setA: Set<string>, setB: Set<string>): number {
@@ -128,7 +125,7 @@ export function addMemoryFacts(
   // PERF: Pre-tokenize existing memories once to avoid O(N^2) string processing
   const memCache = mem.map(m => {
     const low = m.fact.toLowerCase();
-    return { low, tokens: getTokens(low) };
+    return { low, tokens: getTokensEfficiently(low) };
   });
 
   for (let f of facts) {
@@ -143,7 +140,7 @@ export function addMemoryFacts(
     // Sanitize identity claims
     f = sanitizeIdentityClaim(f);
     const fLow = f.toLowerCase();
-    const fTokens = getTokens(fLow);
+    const fTokens = getTokensEfficiently(fLow);
     
     // Enhanced deduplication: exact, substring, or word overlap
     // Visual observations use lower threshold (55%) to catch "wearing glasses" vs "has glasses" etc.
@@ -396,7 +393,7 @@ export interface MemoryRelation {
  */
 export function discoverRelationships(memories: MemoryEntry[]): MemoryRelation[] {
   const relations: MemoryRelation[] = [];
-  const tokenCache = memories.map(m => getTokens(m.fact));
+  const tokenCache = memories.map(m => getTokensEfficiently(m.fact));
 
   for (let i = 0; i < memories.length; i++) {
     for (let j = i + 1; j < memories.length; j++) {
