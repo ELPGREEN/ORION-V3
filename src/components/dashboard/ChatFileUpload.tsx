@@ -437,6 +437,7 @@ export function ChatFileUpload({ onTextExtracted, onInsertInDocument, onSave, co
           className="h-9 w-9 shrink-0 text-muted-foreground hover:text-primary"
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || loading}
+          aria-label="Enviar imagem, PDF, DOCX ou TXT"
           title="Enviar imagem, PDF, DOCX ou TXT">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
         </Button>
@@ -470,7 +471,11 @@ export function ChatFileUpload({ onTextExtracted, onInsertInDocument, onSave, co
                     {result.html ? " • com formatação" : ""}
                   </p>
                 </div>
-                <button onClick={dismiss} className="text-muted-foreground hover:text-foreground">
+                <button
+                  onClick={dismiss}
+                  aria-label="Fechar"
+                  className="text-muted-foreground hover:text-foreground"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </div>
@@ -480,8 +485,11 @@ export function ChatFileUpload({ onTextExtracted, onInsertInDocument, onSave, co
                 <div className="text-[9px] text-muted-foreground">
                   <p className="line-clamp-3 whitespace-pre-wrap">{previewText}{previewText.length >= 500 && !showFullPreview ? "..." : ""}</p>
                   {result.text.length > 500 && (
-                    <button onClick={() => setShowFullPreview(!showFullPreview)}
-                      className="text-primary/70 hover:text-primary flex items-center gap-0.5 mt-0.5">
+                    <button
+                      onClick={() => setShowFullPreview(!showFullPreview)}
+                      aria-label={showFullPreview ? "Ver menos" : "Ver mais"}
+                      className="text-primary/70 hover:text-primary flex items-center gap-0.5 mt-0.5"
+                    >
                       {showFullPreview ? <EyeOff className="h-2.5 w-2.5" /> : <Eye className="h-2.5 w-2.5" />}
                       <span>{showFullPreview ? "Ver menos" : "Ver mais"}</span>
                     </button>
@@ -525,6 +533,7 @@ export function ChatFileUpload({ onTextExtracted, onInsertInDocument, onSave, co
         className="h-12 w-12 p-0 flex items-center justify-center flex-shrink-0 text-muted-foreground hover:text-primary border border-border hover:border-primary/40 transition-colors"
         onClick={() => fileInputRef.current?.click()}
         disabled={disabled || loading}
+        aria-label="Enviar imagem, PDF, DOCX ou TXT"
         title="Enviar imagem, PDF, DOCX ou TXT">
         {loading ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : <FileUp className="h-5 w-5" />}
       </Button>
@@ -552,7 +561,13 @@ export function ChatFileUpload({ onTextExtracted, onInsertInDocument, onSave, co
                 {getFileIcon(result.fileType)}
                 <span className="text-xs font-medium text-foreground">{fileTypeLabel} Processado</span>
               </div>
-              <button onClick={dismiss} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
+              <button
+                onClick={dismiss}
+                aria-label="Fechar"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
             {preview && <img src={preview} alt="Preview" className="w-full h-24 object-contain rounded border border-border" />}
             <div className="flex items-center gap-2 flex-wrap">
