@@ -25,6 +25,63 @@ export function stripMarkdown(text: string): string {
 }
 
 /**
+ * BOLT V2.0 - Zero-Allocation Word Counter
+ * Replaces text.split(/\s+/).length to avoid heap allocations.
+ */
+export function countWords(text: string): number {
+  if (!text) return 0;
+  let count = 0;
+  let inWord = false;
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+    if (charCode > 32) { // Non-whitespace
+      if (!inWord) {
+        count++;
+        inWord = true;
+      }
+    } else {
+      inWord = false;
+    }
+  }
+  return count;
+}
+
+/**
+ * BOLT V2.0 - Efficient Tokenizer (Best Effort)
+ * Returns a generator to avoid array allocations if possible,
+ * or handles common filtering in a single pass.
+ */
+export function getTokensEfficiently(text: string, minLength = 0): string[] {
+  if (!text) return [];
+  const tokens: string[] = [];
+  let start = -1;
+
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+    if (charCode > 32) {
+      if (start === -1) start = i;
+    } else {
+      if (start !== -1) {
+        const token = text.substring(start, i).toLowerCase();
+        if (token.length >= minLength) {
+          tokens.push(token);
+        }
+        start = -1;
+      }
+    }
+  }
+
+  if (start !== -1) {
+    const token = text.substring(start).toLowerCase();
+    if (token.length >= minLength) {
+      tokens.push(token);
+    }
+  }
+
+  return tokens;
+}
+
+/**
  * Extract text-only content from OpenAI-style messages (strip images).
  * Shared utility for LLM provider calls.
  */

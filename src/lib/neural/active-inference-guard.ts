@@ -8,6 +8,7 @@
 
 import { detectHallucinations, type HallucinationWarning } from "@/lib/analysis/hallucinationDetector";
 import { checkResponseQuality, type QualityResult } from "@/lib/analysis/responseQualityChecker";
+import { countWords, getTokensEfficiently } from "@/lib/utils/text-utils";
 
 // ═══ Types ═══
 
@@ -57,13 +58,15 @@ const HALLUCINATION_PHRASES = [
   "incapaz de processar imagens",
 ];
 
+const HALLUCINATION_REGEX = new RegExp(`(?:${HALLUCINATION_PHRASES.join("|")})`, "gi");
+
 const FABRICATION_PATTERNS = [
-  /Lei\s+n[°º.]?\s*\d{5,}\/\d{4}/i, // Leis com números absurdamente altos
-  /Art(?:igo)?\.?\s*\d{4,}/i, // Artigos com 4+ dígitos (improvável)
-  /Súmula\s+(?:Vinculante\s+)?\d{3,}/i, // Súmulas com 3+ dígitos
-  /(?:RE|REsp)\s+\d{10,}/i, // Processos com números excessivamente longos
-  /(?:20[3-9]\d|21\d{2})\/\d{2}\/\d{2}/i, // Datas futuras impossíveis (2030+)
-  /\d{5}[-.\s]?\d{4}/i, // Telefones fabricados
+  /Lei\s+n[°º.]?\s*\d{5,}\/\d{4}/gi, // Leis com números absurdamente altos
+  /Art(?:igo)?\.?\s*\d{4,}/gi, // Artigos com 4+ dígitos (improvável)
+  /Súmula\s+(?:Vinculante\s+)?\d{3,}/gi, // Súmulas com 3+ dígitos
+  /(?:RE|REsp)\s+\d{10,}/gi, // Processos com números excessivamente longos
+  /(?:20[3-9]\d|21\d{2})\/\d{2}\/\d{2}/gi, // Datas futuras impossíveis (2030+)
+  /\d{5}[-.\s]?\d{4}/gi, // Telefones fabricados
 ];
 
 // NEW: Uncertainty phrases that penalize responses
@@ -81,20 +84,19 @@ const UNCERTAINTY_PHRASES = [
   "não encontrei",
 ];
 
+const UNCERTAINTY_REGEX = new RegExp(`(?:${UNCERTAINTY_PHRASES.join("|")})`, "gi");
+
 // ═══ Core Functions ═══
 
 /**
  * Compute semantic overlap between query intent keywords and response.
  */
 function computeSemanticCoherence(query: string, response: string): number {
-  const queryWords = new Set(
-    query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
-  if (queryWords.size === 0) return 1;
+  const queryTokens = getTokensEfficiently(query, 4);
+  if (queryTokens.length === 0) return 1;
 
-  const responseWords = new Set(
-    response.toLowerCase().split(/\s+/).filter(w => w.length > 3)
-  );
+  const queryWords = new Set(queryTokens);
+  const responseWords = new Set(getTokensEfficiently(response, 4));
 
   let overlap = 0;
   for (const w of queryWords) {
@@ -108,11 +110,11 @@ function computeSemanticCoherence(query: string, response: string): number {
  */
 function detectFabricationSignals(response: string): PredictionError[] {
   const errors: PredictionError[] = [];
-  const lower = response.toLowerCase();
 
-  // Check hallucination phrases
-  const matchedPhrases = HALLUCINATION_PHRASES.filter(p => lower.includes(p));
-  if (matchedPhrases.length > 0) {
+  // Check hallucination phrases using pre-compiled regex
+  HALLUCINATION_REGEX.lastIndex = 0;
+  const matchedPhrases = response.match(HALLUCINATION_REGEX);
+  if (matchedPhrases && matchedPhrases.length > 0) {
     errors.push({
       source: "hedging_language",
       delta: Math.min(matchedPhrases.length * 0.15, 0.6),
@@ -121,12 +123,17 @@ function detectFabricationSignals(response: string): PredictionError[] {
   }
 
   // Check fabrication patterns
-  const fabrications = FABRICATION_PATTERNS.filter(p => p.test(response));
-  if (fabrications.length > 0) {
+  let fabCount = 0;
+  for (const p of FABRICATION_PATTERNS) {
+    p.lastIndex = 0;
+    if (p.test(response)) fabCount++;
+  }
+
+  if (fabCount > 0) {
     errors.push({
       source: "fabrication_pattern",
-      delta: fabrications.length * 0.25,
-      detail: `${fabrications.length} referência(s) com formato suspeito`,
+      delta: fabCount * 0.25,
+      detail: `${fabCount} referência(s) com formato suspeito`,
     });
   }
 
@@ -137,8 +144,8 @@ function detectFabricationSignals(response: string): PredictionError[] {
  * Check response length proportionality to query complexity.
  */
 function checkProportionality(query: string, response: string): PredictionError | null {
-  const queryWords = query.split(/\s+/).length;
-  const responseWords = response.split(/\s+/).length;
+  const queryWords = countWords(query);
+  const responseWords = countWords(response);
 
   // Very short response to complex query = suspicious
   if (queryWords > 10 && responseWords < 15) {
@@ -228,9 +235,10 @@ export function computeFreeEnergy(
     });
   }
 
-  // 7. Uncertainty phrases penalty (OPTIMIZED)
-  const uncertaintyMatches = UNCERTAINTY_PHRASES.filter(p => response.toLowerCase().includes(p));
-  if (uncertaintyMatches.length > 2) {
+  // 7. Uncertainty phrases penalty (BOLT V2.0 - Regex Optimized)
+  UNCERTAINTY_REGEX.lastIndex = 0;
+  const uncertaintyMatches = response.match(UNCERTAINTY_REGEX);
+  if (uncertaintyMatches && uncertaintyMatches.length > 2) {
     errors.push({
       source: "uncertainty_excessive",
       delta: 0.1,
@@ -411,7 +419,7 @@ export function computeQuantumFreeEnergy(
   let wf = createWaveFunction("free_energy", dimensions);
 
   // 3. Apply decoherence based on response length (longer → more noise)
-  const responseLength = response.split(/\s+/).length;
+  const responseLength = countWords(response);
   const noiseLevel = Math.min(0.15, responseLength / 10000);
   wf = decohere(wf, noiseLevel);
 
