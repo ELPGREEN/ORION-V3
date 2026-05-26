@@ -441,7 +441,7 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════
     if (action === "report_to_mother") {
       const MOTHER_URL = "https://dlwafedtlvbvuoaopvsl.supabase.co/functions/v1/stripe-commission-webhook";
-      const MOTHER_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsd2FmZWR0bHZidnVvYW9wdnNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MDI0MjEsImV4cCI6MjA4NDQ3ODQyMX0.ohz98f-MO3VNYoR6dth3zYhYqmviFs60ytJAQCwfJNk";
+      const MOTHER_ANON_KEY = Deno.env.get("MOTHER_ANON_KEY") || "";
       const MOTHER_COMMISSION = 3, PLATFORM_FEE = 7;
       const { stripe_payment_id, customer_email: ce, customer_name: cn, amount_cents, currency: cur = "brl", metadata: meta } = body;
       if (!stripe_payment_id || !amount_cents) throw new Error("stripe_payment_id and amount_cents required");

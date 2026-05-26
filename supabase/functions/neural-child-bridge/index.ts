@@ -21,8 +21,7 @@ const corsHeaders = {
 };
 
 const MOTHER_URL = "https://dlwafedtlvbvuoaopvsl.supabase.co/functions/v1/neural-bridge";
-const MOTHER_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsd2FmZWR0bHZidnVvYW9wdnNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MDI0MjEsImV4cCI6MjA4NDQ3ODQyMX0.ohz98f-MO3VNYoR6dth3zYhYqmviFs60ytJAQCwfJNk";
+const MOTHER_ANON_KEY = Deno.env.get("MOTHER_ANON_KEY") || "";
 
 const CHILD_VERSION = "3.0.0";
 
@@ -285,6 +284,20 @@ async function routeViaMother(body: Record<string, unknown>): Promise<Record<str
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // 🛡️ Sentinel: Basic authorization check
+  const authHeader = req.headers.get("Authorization");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  // Require valid service role key for all non-OPTIONS requests
+  // Fail closed: if serviceKey is missing, we still deny access
+  if (!serviceKey || !authHeader || authHeader !== `Bearer ${serviceKey}`) {
+    console.error("🛡️ Sentinel: Unauthorized access attempt to neural-child-bridge");
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
